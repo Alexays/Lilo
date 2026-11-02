@@ -11,8 +11,7 @@ final class PermissionRequestQueueTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         wc = MainWindowController(context: browserContext.context)
-        wc.bridgeRouter = BridgeRouter(chromeWebView: wc.chromeWebView)
-        if wc.profileContext == nil, let profileId = browserContext.context.profileManager.defaultProfile?.id {
+        if wc.profileContext == nil, let profileId = browserContext.context.profileManager!.defaultProfile?.id {
             wc.profileContext = try browserContext.context.profileContexts.context(for: profileId)
         }
     }
@@ -51,7 +50,7 @@ final class PermissionRequestQueueTests: XCTestCase {
     }
 
     func testADecisionStaysInItsProfile() throws {
-        let work = try browserContext.context.profileManager.createProfile(name: "Work")
+        let work = try browserContext.context.profileManager!.createProfile(name: "Work")
         let workPermissions = try browserContext.context.profileContexts.context(for: work.id).sitePermissions
         wc.enqueuePermissionRequest(tabId: UUID(), type: "camera", origin: "https://call.example") { _ in }
 
@@ -63,8 +62,8 @@ final class PermissionRequestQueueTests: XCTestCase {
 
     func testAPrivateSpaceInheritsOnlyBlocksAndKeepsItsOwnAnswersForItsLife() throws {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let secret = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: true)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let secret = try context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: true)
         let permissions = try context.profileContexts.context(for: profileId).sitePermissions
         permissions.upsert(origin: "https://call.example", type: "camera", granted: true)
         permissions.upsert(origin: "https://ads.example", type: "location", granted: false)
@@ -90,7 +89,7 @@ final class PermissionRequestQueueTests: XCTestCase {
 
         XCTAssertEqual(window.storedPermissionDecision(type: "camera", origin: "https://call.example", tabId: tab.id), false)
         XCTAssertEqual(permissions.decision(forOrigin: "https://call.example", type: "camera"), true, "the profile keeps its own decision")
-        try context.spaceManager.deleteSpace(id: secret.id)
+        try context.spaceManager!.deleteSpace(id: secret.id)
         XCTAssertNil(context.privateSitePermissions[secret.id])
     }
 

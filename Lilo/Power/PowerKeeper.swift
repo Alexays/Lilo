@@ -278,7 +278,7 @@ final class PowerKeeper {
         batteryPercent = percent
         unreadableReadings = onBattery && percent == nil ? unreadableReadings + 1 : 0
         if batteryTooLow, !wasLow, link != nil {
-            notify("Sleep is back on".localized, String(format: "The battery is below %d%%.".localized, settings.batteryFloor))
+            unsafe notify("Sleep is back on".localized, String(format: "The battery is below %d%%.".localized, settings.batteryFloor))
         }
         update()
     }
@@ -455,17 +455,17 @@ final class PowerKeeper {
     }
 
     private func summarize(_ period: (battery: Int?, finished: Int)) {
-        var parts = [String(format: "%d commands finished".localized, period.finished)]
+        var parts = unsafe [String(format: "%d commands finished".localized, period.finished)]
         if let oldest = awaitingSince.values.min() {
             let formatter = DateComponentsFormatter()
             formatter.unitsStyle = .abbreviated
             formatter.allowedUnits = [.hour, .minute]
             formatter.maximumUnitCount = 2
             let waited = formatter.string(from: max(60, Date().timeIntervalSince(oldest))) ?? ""
-            parts.append(String(format: "%d wait for your answer, the oldest for %@".localized, awaitingSince.count, waited))
+            unsafe parts.append(String(format: "%d wait for your answer, the oldest for %@".localized, awaitingSince.count, waited))
         }
         if let before = period.battery, let after = batteryPercent {
-            parts.append(String(format: "battery from %d%% to %d%%".localized, before, after))
+            unsafe parts.append(String(format: "battery from %d%% to %d%%".localized, before, after))
         }
         notify("While the lid was closed".localized, parts.joined(separator: ", "))
     }

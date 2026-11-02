@@ -19,7 +19,7 @@ enum FolderLockKeychain {
     static func setPassword(_ password: String, folderId: UUID) -> Bool {
         guard !password.isEmpty else { return false }
         var salt = [UInt8](repeating: 0, count: saltLength)
-        guard SecRandomCopyBytes(kSecRandomDefault, saltLength, &salt) == errSecSuccess,
+        guard unsafe SecRandomCopyBytes(kSecRandomDefault, saltLength, &salt) == errSecSuccess,
               let hash = derive(password, salt: salt) else { return false }
         let attributes: [String: Any] = [
             kSecValueData as String: Data(salt + hash),
@@ -37,7 +37,7 @@ enum FolderLockKeychain {
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+        guard unsafe SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
               let stored = result as? Data, stored.count == saltLength + hashLength,
               let hash = derive(password, salt: Array(stored.prefix(saltLength))) else { return false }
         // Constant time: the comparison never stops at the first differing byte.
@@ -51,7 +51,7 @@ enum FolderLockKeychain {
     private static func derive(_ password: String, salt: [UInt8]) -> [UInt8]? {
         var hash = [UInt8](repeating: 0, count: hashLength)
         let status = password.withCString { chars in
-            CCKeyDerivationPBKDF(
+            unsafe CCKeyDerivationPBKDF(
                 CCPBKDFAlgorithm(kCCPBKDF2), chars, strlen(chars), salt, salt.count,
                 CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256), rounds, &hash, hashLength
             )
@@ -71,7 +71,7 @@ enum FolderLockKeychain {
 /// System authentication for folder locks: Touch ID, or the macOS account password.
 enum FolderLockAuth {
     static var biometricsAvailable: Bool {
-        LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+        unsafe LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
     }
 
     /// Read once, for the chrome to offer Touch ID; enabling and unlocking check `biometricsAvailable`.

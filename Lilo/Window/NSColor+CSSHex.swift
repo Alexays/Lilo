@@ -32,7 +32,7 @@ extension NSColor {
 
         func componentHex(_ value: CGFloat) -> String {
             let clampedValue = max(0, min(1, value))
-            return String(format: "%02x", Int(round(clampedValue * 255.0)))
+            return unsafe String(format: "%02x", Int(round(clampedValue * 255.0)))
         }
 
         return "#\(componentHex(srgbColor.redComponent))\(componentHex(srgbColor.greenComponent))\(componentHex(srgbColor.blueComponent))"

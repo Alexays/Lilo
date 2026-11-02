@@ -20,7 +20,7 @@ final class EyeDropperBridge: NSObject, WKScriptMessageHandlerWithReply {
         }
         guard let color = await sample()?.usingColorSpace(.sRGB) else { return (nil, "AbortError: The user canceled the selection") }
         let channel = { (value: CGFloat) in Int((min(max(value, 0), 1) * 255).rounded()) }
-        return (String(format: "#%02x%02x%02x", channel(color.redComponent), channel(color.greenComponent), channel(color.blueComponent)), nil)
+        return unsafe (String(format: "#%02x%02x%02x", channel(color.redComponent), channel(color.greenComponent), channel(color.blueComponent)), nil)
     }
 
     /// `window.EyeDropper` for `PageWorld`, in secure contexts.

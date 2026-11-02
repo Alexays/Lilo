@@ -294,7 +294,8 @@ html[data-tab-position='bottom'] {
 }
 
 /* Changing edge: only the tabs and the page toolbar move; the rest of the chrome swaps in place. */
-.sidebar,
+/* The real sidebar only: a second element with this name (a theme preview's) cancels the morph. */
+#chrome-root > .sidebar,
 .tab-strip-host {
   view-transition-name: tabs;
 }

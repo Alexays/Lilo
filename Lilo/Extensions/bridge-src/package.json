@@ -1,7 +1,7 @@
 {
   "name": "lilo-extension-bridge",
   "private": true,
-  "version": "0.14.1",
+  "version": "0.14.3",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -13,9 +13,9 @@
     "test": "node --test --experimental-strip-types 'src/**/*.test.ts'"
   },
   "devDependencies": {
-    "@types/node": "22.20.5",
-    "chrome-types": "0.1.457",
-    "esbuild": "0.24.2",
+    "@types/node": "26.6.6",
+    "chrome-types": "0.1.461",
+    "esbuild": "0.28.2",
     "typescript": "5.9.3"
   }
 }

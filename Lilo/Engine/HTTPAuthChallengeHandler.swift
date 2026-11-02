@@ -27,7 +27,7 @@ struct HTTPAuthChallengeHandler {
         }
 
         let realm = space.realm ?? "Restricted Area".localized
-        let message = challenge.previousFailureCount > 0
+        let message = unsafe challenge.previousFailureCount > 0
             ? String(format: "Saved credentials were rejected by %@.\nRealm: %@".localized, space.host, realm)
             : String(format: "%@ requires a username and password.\nRealm: %@".localized, space.host, realm)
 

@@ -51,7 +51,7 @@ extension MainWindowController {
         let representation = NSCIImageRep(ciImage: scaled)
         let image = NSImage(size: NSSize(width: side, height: side))
         image.addRepresentation(representation)
-        image.accessibilityDescription = String(format: "QR code for %@".localized, url.host() ?? url.absoluteString)
+        image.accessibilityDescription = unsafe String(format: "QR code for %@".localized, url.host() ?? url.absoluteString)
         return image
     }
 

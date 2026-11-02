@@ -54,7 +54,7 @@ enum AgentMCP {
             }
             let requested = params["protocolVersion"] as? String ?? ""
             return result(id: id, [
-                "protocolVersion": supportedProtocolVersions.contains(requested) ? requested : supportedProtocolVersions.last!,
+                "protocolVersion": supportedProtocolVersions.contains(requested) ? requested : supportedProtocolVersions.last ?? "",
                 "capabilities": ["tools": [String: Any]()],
                 "serverInfo": [
                     "name": "lilo",
@@ -107,7 +107,7 @@ enum AgentMCP {
             // A client that asked for progress hears from a long call regularly: MCP clients give up on a quiet
             // request after their own timeout (60 s in the SDKs), well before a script's or a profile wait's.
             nonisolated(unsafe) let progressToken = (params["_meta"] as? [String: Any])?["progressToken"]
-            let heartbeat = progressToken.map { token in
+            let heartbeat = unsafe progressToken.map { token in
                 Task {
                     var beats = 0
                     while true {

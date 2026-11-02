@@ -174,14 +174,13 @@ final class ChromeDragRoutingTests: XCTestCase {
     /// enters the chrome, and takes them back as it leaves.
     func testDragOffersItsLinksToTheChromeWhileOverIt() async throws {
         let harness = makeControllerHarness()
-        let router = BridgeRouter(chromeWebView: harness.controller.chromeWebView)
+        let router = harness.controller.bridgeRouter
         var offers: [[String: Any]] = []
         router.javaScriptSink = { _, arguments, completion in
             let messages = arguments["messages"] as? [[String: Any]] ?? (arguments["message"] as? [String: Any]).map { [$0] } ?? []
             offers += messages.filter { $0["event"] as? String == "linkDrag" }
             completion()
         }
-        harness.controller.bridgeRouter = router
         harness.controller.chromeInteractiveZones.registerZones([(id: "sidebar", rect: NSRect(x: 0, y: 0, width: 50, height: 50))])
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

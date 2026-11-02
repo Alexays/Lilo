@@ -9,8 +9,6 @@ final class TabBridgeHandlerTests: XCTestCase {
 
     private func makeWindowControllerAndHandler() -> (MainWindowController, TabBridgeHandler) {
         let windowController = MainWindowController()
-        // `applyBrowserCommand` emits a bridge event on every mutation, which force-unwraps `bridgeRouter`.
-        windowController.bridgeRouter = BridgeRouter(chromeWebView: windowController.chromeWebView)
         let handler = TabBridgeHandler(
             tabManager: windowController.tabManager,
             windowController: windowController,
@@ -244,8 +242,8 @@ final class TabBridgeHandlerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let history = try context.profileContexts.context(for: profileId).history
         try history.recordVisit(url: "https://www.video.test/watch?v=abc", title: "Video")
         try history.recordVisit(url: "https://bare.test/page", title: "Bare")
@@ -287,8 +285,8 @@ final class TabBridgeHandlerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let windowController = makeTestWindow(context, showing: space.id)
         let handler = TabBridgeHandler(
             tabManager: windowController.tabManager,

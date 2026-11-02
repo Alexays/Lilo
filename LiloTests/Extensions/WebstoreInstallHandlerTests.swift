@@ -21,8 +21,8 @@ final class WebstoreInstallHandlerTests: XCTestCase {
 
     func testTheStoreSeesADisabledExtensionAndCannotReinstallIt() async throws {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let registry = try context.profileContexts.context(for: profileId).extensions
         // A store copy: named by its 32-letter id under the profile's extensions folder.
         let storeId = "abcdefghijklmnopabcdefghijklmnop"

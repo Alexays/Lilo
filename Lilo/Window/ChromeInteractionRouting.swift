@@ -118,8 +118,8 @@ final class TrackingAreaSuspender {
         // window-wide cursor invalidation would be pure churn.
         if restoredAny, let rootView {
             updateTrackingAreasRecursively(in: rootView)
-            rootView.window?.invalidateCursorRects(for: rootView)
-            rootView.window?.resetCursorRects()
+            unsafe rootView.window?.invalidateCursorRects(for: rootView)
+            unsafe rootView.window?.resetCursorRects()
         }
 
         rootView = nil
@@ -150,7 +150,7 @@ final class ChromeInteractionShieldView: NSView {
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         // `point` is in the superview's coordinates, and the chrome web view that hosts the shield is flipped.
-        guard input?.router.target(forWindowPoint: superview?.convert(point, to: nil) ?? point) == .chrome else { return nil }
+        guard unsafe input?.router.target(forWindowPoint: superview?.convert(point, to: nil) ?? point) == .chrome else { return nil }
         return self
     }
 
@@ -316,7 +316,7 @@ final class ChromeInputController {
         overlay.wantsLayer = true
         overlay.layer?.backgroundColor = NSColor.clear.cgColor
         overlay.zones = controller.chromeInteractiveZones.currentZones()
-        if overlay.superview == nil {
+        if unsafe overlay.superview == nil {
             contentView.addSubview(overlay, positioned: .above, relativeTo: nil)
         }
         debugOverlay = overlay
@@ -407,7 +407,7 @@ final class ChromeInputController {
         case .clearChromeHover:
             // Re-hit-test at the now-content point, where `#chrome-root` is pointer-events:none, so `:hover`
             // clears and mouseleave fires. A capture-end resample has no event and maps the live pointer.
-            let windowPoint = event?.locationInWindow ?? chrome.window?.convertPoint(fromScreen: NSEvent.mouseLocation) ?? .zero
+            let windowPoint = unsafe event?.locationInWindow ?? chrome.window?.convertPoint(fromScreen: NSEvent.mouseLocation) ?? .zero
             chrome.liloSimulateMouseExit(atWindowPoint: windowPoint)
         case .emitContentInteraction(let isMouseDown):
             // Native focus is already AppKit's, so this only blurs `document.activeElement` inside `#chrome-root`.
@@ -455,13 +455,13 @@ extension MainWindowController {
         if focusOwner != .content {
             window?.makeFirstResponder(contentView)
         }
-        bridgeRouter?.send(event: "contentInteraction", data: ["isMouseDown": true])
+        bridgeRouter.send(event: "contentInteraction", data: ["isMouseDown": true])
     }
 
     /// Hands the keyboard back to what the content area shows (a shown peek, the terminal or the page)
     /// when a chrome bar closes. A blank tab has no page to take it.
     func focusPage() {
-        if let peek = pagePopups.values.first(where: { $0.peekView?.superview != nil }) {
+        if let peek = pagePopups.values.first(where: { unsafe $0.peekView?.superview != nil }) {
             focusContent(peek.engine.wkWebView)
         } else if let terminal = activeTerminalView {
             focusContent(terminal)

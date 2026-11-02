@@ -75,7 +75,7 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
         guard !(webView.navigationDelegate is FrameCookiesNavigationDelegate) else { return }
         let delegate = FrameCookiesNavigationDelegate(frameCookies: self, original: webView.navigationDelegate as? NSObject)
         // The web view holds its navigation delegate weakly.
-        objc_setAssociatedObject(webView, &FrameCookiesNavigationDelegate.key, delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        unsafe objc_setAssociatedObject(webView, &FrameCookiesNavigationDelegate.key, delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         webView.navigationDelegate = delegate
     }
 
@@ -87,8 +87,8 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
     /// responses go through WKWebView._setResourceLoadDelegate:, which sees their headers, unless the page has one already.
     private func keepCookies(of webView: WKWebView) {
         let setter = NSSelectorFromString("_setResourceLoadDelegate:"), getter = NSSelectorFromString("_resourceLoadDelegate")
-        guard webView.responds(to: setter), webView.responds(to: getter), webView.perform(getter) == nil else { return }
-        webView.perform(setter, with: responseCookies)
+        guard webView.responds(to: setter), webView.responds(to: getter), unsafe webView.perform(getter) == nil else { return }
+        unsafe webView.perform(setter, with: responseCookies)
     }
 
     /// Stores the cookies a response from a framed site sets, as the site's own; partitioned ones belong to another top-level site.
@@ -240,18 +240,18 @@ private final class FrameCookiesNavigationDelegate: NSObject, WKNavigationDelega
 
     init(frameCookies: ExtensionFrameCookies, original: NSObject?) {
         self.frameCookies = frameCookies
-        self.original = original
+        unsafe self.original = original
     }
 
-    nonisolated override func responds(to aSelector: Selector!) -> Bool {
-        super.responds(to: aSelector) || original?.responds(to: aSelector) == true
+    nonisolated override func responds(to aSelector: Selector?) -> Bool {
+        unsafe super.responds(to: aSelector) || original?.responds(to: aSelector) == true
     }
 
-    nonisolated override func forwardingTarget(for aSelector: Selector!) -> Any? { original }
+    nonisolated override func forwardingTarget(for aSelector: Selector?) -> Any? { unsafe original }
 
     // The variant WebKit's popup delegate implements: the one with preferences would take precedence over it.
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void) {
-        let forward = { [original] in
+        let forward = { [original = unsafe original] in
             if (original as? WKNavigationDelegate)?.webView?(webView, decidePolicyFor: navigationAction, decisionHandler: decisionHandler) == nil {
                 decisionHandler(.allow)
             }

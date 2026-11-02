@@ -246,7 +246,7 @@ final class WKEngineFactory {
             for controller in self.liveContentControllers.allObjects {
                 guard let owner = self.contentControllerOwners.object(forKey: controller), owner.profileId == profileId else { continue }
                 if controller.responds(to: removeSelector) {
-                    removed.forEach { _ = controller.perform(removeSelector, with: $0) }
+                    removed.forEach { _ = unsafe controller.perform(removeSelector, with: $0) }
                 }
                 if let install { self.installExtensionUserScripts(added, of: install, on: controller, isPrivate: owner.isPrivate) }
             }
@@ -392,11 +392,11 @@ final class WKEngineFactory {
            configurationClass.instancesRespond(to: NSSelectorFromString("setTotalQuotaRatio:")),
            WKWebsiteDataStore.instancesRespond(to: initWithConfiguration),
            // alloc hands over its reference, which init returns: the result is taken unretained.
-           let configuration = configurationClass.perform(alloc).takeRetainedValue()
+           let configuration = unsafe configurationClass.perform(alloc).takeRetainedValue()
                .perform(initWithIdentifier, with: identifier)?.takeUnretainedValue() as? NSObject {
             configuration.setValue(0.6, forKey: "originQuotaRatio")
             configuration.setValue(0.8, forKey: "totalQuotaRatio")
-            store = WKWebsiteDataStore.perform(alloc).takeRetainedValue()
+            store = unsafe WKWebsiteDataStore.perform(alloc).takeRetainedValue()
                 .perform(initWithConfiguration, with: configuration)?.takeUnretainedValue() as? WKWebsiteDataStore
         }
         let resolved = store ?? WKWebsiteDataStore(forIdentifier: identifier)
@@ -417,7 +417,7 @@ final class WKEngineFactory {
         if cookieStore.responds(to: setPolicy) {
             typealias SetPolicy = @convention(c) (AnyObject, Selector, UInt, @escaping @convention(block) () -> Void) -> Void
             let policy: HTTPCookie.AcceptPolicy = trackingPreventionEnabled ? .onlyFromMainDocumentDomain : .always
-            unsafeBitCast(cookieStore.method(for: setPolicy), to: SetPolicy.self)(cookieStore, setPolicy, policy.rawValue) {}
+            unsafe unsafeBitCast(cookieStore.method(for: setPolicy), to: SetPolicy.self)(cookieStore, setPolicy, policy.rawValue) {}
         }
         return store
     }
@@ -438,7 +438,7 @@ final class WKEngineFactory {
                 guard let self, let store else { return }
                 applyingTrackingPrevention(to: store)
             }
-            store.perform(clear, with: cleared)
+            unsafe store.perform(clear, with: cleared)
         }
     }
 
@@ -453,12 +453,12 @@ final class WKEngineFactory {
         let configuration = configurationClass.init()
         guard configuration.responds(to: NSSelectorFromString("setPrewarmsProcessesAutomatically:")) else { return nil }
         configuration.setValue(true, forKey: "prewarmsProcessesAutomatically")
-        let pool = poolClass.perform(selector, with: configuration)?.takeUnretainedValue() as? NSObject
+        let pool = unsafe poolClass.perform(selector, with: configuration)?.takeUnretainedValue() as? NSObject
         // Safari's cache model (kWKCacheModelPrimaryWebBrowser), app-wide: WebKit's default for an app caps the HTTP disk cache
         // at 75 MB, so a few heavy sites evict the next one's scripts; this one allows 1 GB and a larger memory cache.
         typealias SetCacheModel = @convention(c) (UnsafeRawPointer, UInt32) -> Void
-        if let pool, let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "WKContextSetCacheModel") {
-            unsafeBitCast(symbol, to: SetCacheModel.self)(Unmanaged.passUnretained(pool).toOpaque(), 2)
+        if let pool, let symbol = unsafe dlsym(UnsafeMutableRawPointer(bitPattern: -2), "WKContextSetCacheModel") {
+            unsafe unsafeBitCast(symbol, to: SetCacheModel.self)(Unmanaged.passUnretained(pool).toOpaque(), 2)
         }
         return pool
     }()
@@ -552,7 +552,7 @@ final class WKEngineFactory {
     /// First 8 bytes of SHA-256 as hex: a process-stable cache tag (unlike `hashValue`, which is
     /// per-launch randomized and would force a full recompile on every launch).
     nonisolated static func stableHash8(_ s: String) -> String {
-        SHA256.hash(data: Data(s.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
+        SHA256.hash(data: Data(s.utf8)).prefix(8).map { unsafe String(format: "%02x", $0) }.joined()
     }
 
     /// Ready-to-inject filter user scripts, each nil when its table is absent or empty.
@@ -607,7 +607,7 @@ final class WKEngineFactory {
         let linkTable = hostTable(json("links"), name: "LINK")
         let keyedTable = hostTable(json("keyed"), name: "KEYED")
         for table in [siteTable, linkTable, keyedTable] { cosmeticValues.merge(table ?? [:]) { $1 } }
-        let hasGeneric = !(cosmeticValues["__LILO_COSMETIC_CLASSES__"]!.isEmpty && cosmeticValues["__LILO_COSMETIC_IDS__"]!.isEmpty)
+        let hasGeneric = cosmeticValues["__LILO_COSMETIC_CLASSES__"]?.isEmpty == false || cosmeticValues["__LILO_COSMETIC_IDS__"]?.isEmpty == false
         let cosmetics = hasGeneric || siteTable != nil || linkTable != nil || keyedTable != nil ? cosmeticValues : nil
         return FilterScripts(
             genericCosmetics: splice(cosmetics, into: "GenericCosmetics"),
@@ -650,7 +650,7 @@ final class WKEngineFactory {
         let removeSelector = NSSelectorFromString("_removeUserScript:")
         for controller in liveContentControllers.allObjects {
             if controller.responds(to: removeSelector) {
-                previous.forEach { _ = controller.perform(removeSelector, with: $0) }
+                previous.forEach { _ = unsafe controller.perform(removeSelector, with: $0) }
                 installedFilterUserScripts.forEach { controller.addUserScript($0) }
             } else {
                 controller.removeAllUserScripts()
@@ -820,6 +820,15 @@ final class WKEngineFactory {
             ?? "\(os.majorVersion).\(os.minorVersion)"
         return "Version/\(version) Safari/605.1.15"
     }()
+
+    /// The WebKit pages run on, as "WebKit <build>", "(Lilo fork)" added when it is the fork embedded in the app.
+    static let webKitDescription: String = {
+        let bundle = Bundle(for: WKWebView.self)
+        let build = "WebKit \(bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")"
+        return isForkedWebKit ? "\(build) (Lilo fork)" : build
+    }()
+
+    static let isForkedWebKit = !Bundle(for: WKWebView.self).bundlePath.hasPrefix("/System/")
 
     private func configuredWebViewConfiguration(
         from configuration: Configuration,
@@ -1014,7 +1023,7 @@ final class WKEngineFactory {
                 if let name = (scriptlet.first as? String)?.drop(while: { $0 == "@" }), !name.isEmpty { uses[String(name), default: 0] += 1 }
             }
         }
-        let names = uses.keys.sorted { (uses[$0]!, $1) > (uses[$1]!, $0) }
+        let names = uses.keys.sorted { (uses[$0, default: 0], $1) > (uses[$1, default: 0], $0) }
         let nameRefs = Dictionary(uniqueKeysWithValues: names.enumerated().map { ($1, String($0, radix: 36)) })
         func encoded(_ text: String) -> String {
             var out = String.UnicodeScalarView()
@@ -1024,7 +1033,7 @@ final class WKEngineFactory {
                 case 0x22: out.append("¬")
                 case 0x0A, 0x0D: out.append("¶")
                 case 0x20...0x7E, 0xA0...0xA3, 0xA5, 0xA8...0xAB, 0xAD...0xB4, 0xB7...0xFF: out.append(Unicode.Scalar(UInt8(unit)))
-                default: out.append(contentsOf: String(format: "µ%04x", unit).unicodeScalars)
+                default: unsafe out.append(contentsOf: String(format: "µ%04x", unit).unicodeScalars)
                 }
             }
             return String(out)
@@ -1041,10 +1050,9 @@ final class WKEngineFactory {
                 let parts: [String]
                 if let string = value as? String {
                     parts = [string]
-                } else if let scriptlet = value as? [Any], let name = scriptlet.first as? String {
+                } else if let scriptlet = value as? [Any], let name = scriptlet.first as? String,
+                          case let bare = String(name.drop { $0 == "@" }), let ref = bare.isEmpty ? "" : nameRefs[bare] {
                     // An exception keeps its `@`, and `@` alone excepts every scriptlet.
-                    let bare = String(name.drop { $0 == "@" })
-                    let ref = bare.isEmpty ? "" : nameRefs[bare]!
                     parts = [(name.hasPrefix("@") ? "@" : "") + ref] + (scriptlet.dropFirst().first as? [String] ?? [])
                 } else {
                     continue

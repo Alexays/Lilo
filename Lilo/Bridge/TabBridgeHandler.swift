@@ -490,7 +490,7 @@ final class TabBridgeHandler: BridgeHandler {
         case "unlockTabFolder":
             guard let id = message.uuid("id"), let folder = tabManager.folder(id: id), let lock = folder.lock else { return nil }
             let method = message.string("method")
-            let reason = String(format: "Unlock %@".localized, folder.name)
+            let reason = unsafe String(format: "Unlock %@".localized, folder.name)
             let granted: Bool
             switch method {
             case "biometrics", "deviceOwner":
@@ -503,7 +503,7 @@ final class TabBridgeHandler: BridgeHandler {
             }
             guard granted,
                   tryApplyStateCommand(.setFolderUnlocked(spaceId: folder.spaceId, folderId: id, isUnlocked: true)) != nil else {
-                windowController?.bridgeRouter?.send(event: "folderUnlockFailed", data: ["id": id.uuidString])
+                windowController?.bridgeRouter.send(event: "folderUnlockFailed", data: ["id": id.uuidString])
                 return nil
             }
             windowController?.revealUnlockedFolder(id)
@@ -531,7 +531,7 @@ final class TabBridgeHandler: BridgeHandler {
                 let password = message.string("password") ?? ""
                 guard FolderLockAuth.biometricsAvailable,
                       await Task.detached(operation: { FolderLockKeychain.verify(password, folderId: id) }).value else {
-                    windowController?.bridgeRouter?.send(event: "folderPasswordRejected", data: ["id": id.uuidString])
+                    windowController?.bridgeRouter.send(event: "folderPasswordRejected", data: ["id": id.uuidString])
                     return nil
                 }
             }
@@ -758,7 +758,7 @@ final class TabBridgeHandler: BridgeHandler {
         let scale = Double(targetWidth) / Double(max(image.width, 1))
         let targetHeight = max(1, Int(Double(image.height) * scale))
         guard scale < 1 else { return jpegDataURL(from: image) }
-        guard let context = CGContext(
+        guard let context = unsafe CGContext(
             data: nil, width: targetWidth, height: targetHeight,
             bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpaceCreateDeviceRGB(),

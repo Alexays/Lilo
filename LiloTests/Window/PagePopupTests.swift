@@ -14,8 +14,8 @@ final class PagePopupTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         controller = makeTestWindow(context, showing: space.id, size: NSSize(width: 1000, height: 800))
         opener = try XCTUnwrap(controller.createTabStateFirst(url: nil))
         let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
@@ -208,7 +208,7 @@ final class PagePopupTests: XCTestCase {
     }
 
     func testAPeekShowsTheSpaceSurfaceUnderItsPage() async throws {
-        controller.context.settingsStore.set("singleWindow", value: "true")
+        controller.context.settingsStore!.set("singleWindow", value: "true")
         try await openFromPage("width=400,height=300")
         let peek = try XCTUnwrap(controller.pagePopups.values.first)
         XCTAssertNotNil(peek.peekView)
@@ -238,7 +238,7 @@ final class PagePopupTests: XCTestCase {
     }
 
     func testCloseTabWithAPeekClosesThePeekNotTheTab() async throws {
-        controller.context.settingsStore.set("singleWindow", value: "true")
+        controller.context.settingsStore!.set("singleWindow", value: "true")
         let tabs = openTabCount
         try await openFromPage("width=400,height=300")
 
@@ -249,7 +249,7 @@ final class PagePopupTests: XCTestCase {
     }
 
     func testClickOutsideThePeekCardDismissesIt() async throws {
-        controller.context.settingsStore.set("singleWindow", value: "true")
+        controller.context.settingsStore!.set("singleWindow", value: "true")
         let window = NSWindow(contentRect: controller.contentContainerView.frame, styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer { window.close() }
@@ -269,7 +269,7 @@ final class PagePopupTests: XCTestCase {
     }
 
     func testSingleWindowModeShowsThePopupOverItsOpenerOnly() async throws {
-        controller.context.settingsStore.set("singleWindow", value: "true")
+        controller.context.settingsStore!.set("singleWindow", value: "true")
         try await openFromPage("width=400,height=300")
 
         let peek = try XCTUnwrap(controller.pagePopups.values.first?.peekView)
@@ -413,7 +413,7 @@ final class PagePopupTests: XCTestCase {
     }
 
     func testPinnedTabsFollowLinksWhenPeekingIsTurnedOff() throws {
-        controller.context.settingsStore.set("peekPinnedTabLinks", value: "false")
+        controller.context.settingsStore!.set("peekPinnedTabLinks", value: "false")
         try pinOpener()
 
         XCTAssertEqual(try decidePolicy(forClickOn: "https://other.test/article"), .allow)
@@ -471,7 +471,7 @@ final class PagePopupTests: XCTestCase {
     }
 
     func testALinkPeekLeavesAPopupPeekOpen() async throws {
-        controller.context.settingsStore.set("singleWindow", value: "true")
+        controller.context.settingsStore!.set("singleWindow", value: "true")
         try await openFromPage("width=400,height=300")
         let popup = try XCTUnwrap(controller.pagePopups.values.first)
 

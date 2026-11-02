@@ -34,7 +34,7 @@ enum AgentScreenshot {
         if let ref, try await AgentTools.frame(holding: ref, in: engine) != nil {
             throw AgentToolError("\(ref) is inside a frame: capture the frame's element instead")
         }
-        let deviceScale = control.inspectors[tabId].map(\.deviceScaleFactor).flatMap { $0 > 0 ? $0 : nil }
+        let deviceScale = unsafe control.inspectors[tabId].map(\.deviceScaleFactor).flatMap { $0 > 0 ? $0 : nil }
             ?? webView.window?.backingScaleFactor ?? 2
         let zoom = CGFloat(engine.pageZoom)
         let viewSize: CGSize
@@ -178,7 +178,7 @@ enum AgentScreenshot {
         guard size.width * size.height * zoom * zoom * scale * scale <= maxContentsPixels, configuration.responds(to: option) else { return nil }
         // A BOOL argument: perform(_:with:) would pass an object pointer instead.
         typealias Setter = @convention(c) (AnyObject, Selector, Bool) -> Void
-        unsafeBitCast(configuration.method(for: option), to: Setter.self)(configuration, option, true)
+        unsafe unsafeBitCast(configuration.method(for: option), to: Setter.self)(configuration, option, true)
         return (try? await webView.takeSnapshot(configuration: configuration))?.snapshotPixels
     }
 
@@ -189,7 +189,7 @@ enum AgentScreenshot {
         return fitted
     }
 
-    private static func format(_ scale: CGFloat) -> String { String(format: "%g", (scale * 100).rounded() / 100) }
+    private static func format(_ scale: CGFloat) -> String { unsafe String(format: "%g", (scale * 100).rounded() / 100) }
 
     /// Puts the page back as it was: its scroll position, then whatever the expansion changed.
     private static func finish(_ engine: WKWebViewTab, restore: Any?, expanded: Bool) async {
@@ -210,7 +210,7 @@ enum AgentScreenshot {
     nonisolated private static func draw(_ chunks: [Data], size: CGSize, scale: CGFloat, backdrop: CGColor) -> CGImage? {
         let width = Int((size.width * scale).rounded()), height = Int((size.height * scale).rounded())
         guard width > 0, height > 0, let space = CGColorSpace(name: CGColorSpace.sRGB),
-              let canvas = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+              let canvas = unsafe CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
                                      bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
         canvas.setFillColor(backdrop)
         canvas.fill(CGRect(x: 0, y: 0, width: width, height: height))

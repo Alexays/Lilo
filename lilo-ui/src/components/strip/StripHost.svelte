@@ -1,7 +1,7 @@
 <script lang="ts">
   import TabStrip from "./TabStrip.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
-  import { hasActivePanel, isDesignSystemShellOpen } from "../../stores/panels.svelte";
+  import { hasActivePanel, isDesignSystemShellOpen, isHistoryShellOpen, isSettingsShellOpen } from "../../stores/panels.svelte";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
   import { isSidebarOverlay, isSidebarShown } from "../../stores/ui.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
@@ -11,7 +11,9 @@
 
   // The strip takes the page's color, as the page toolbar does; read apart from the tab, as there.
   const pageColor = $derived(getActiveTab()?.pageColor);
-  const style = $derived(pageBarStyle(pageColor, accent));
+  // Settings and History cover the page: the strip leaves its color and paints the Space's own.
+  const coversPage = $derived(isSettingsShellOpen() || isHistoryShellOpen());
+  const style = $derived(coversPage ? undefined : pageBarStyle(pageColor, accent));
 
   // Settings is not among them: in a strip it is a page of its own, its navigation inside.
   const isPanelOpen = $derived(hasActivePanel() || isDesignSystemShellOpen());
@@ -35,6 +37,7 @@
   {style}
   class:strip-hidden={!isSidebarShown()}
   class:strip-overlay={isSidebarOverlay()}
+  class:covers-page={coversPage}
   use:reportInteractiveZone={{ id: "tab-strip", active: isSidebarShown() }}
   onmouseenter={onenter}
   onmouseleave={onleave}
@@ -109,8 +112,14 @@
     padding: var(--content-inset) var(--content-inset) 0;
   }
 
-  :global(html[data-tab-position='top']) .tab-strip-host:not(.strip-overlay) {
+  :global(html[data-tab-position='top']) .tab-strip-host:not(.strip-overlay):not(.covers-page) {
     background-color: transparent;
+  }
+
+  :global(html[data-material='grain']) .tab-strip-host.covers-page {
+    background-image: var(--grain-texture);
+    background-size: 160px;
+    background-blend-mode: overlay;
   }
 
   .tab-strip-host.strip-hidden {

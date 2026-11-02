@@ -25,8 +25,8 @@ final class TopHitPreloadTests: XCTestCase {
 
     private func makeWindow() throws -> (MainWindowController, TabBridgeHandler) {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: false)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: false)
         let window = makeTestWindow(context, showing: space.id)
         window.setupBridgeLate()
         let tabs = TabBridgeHandler(tabManager: window.tabManager, windowController: window, stateCommandHandler: window.applyBrowserCommand)

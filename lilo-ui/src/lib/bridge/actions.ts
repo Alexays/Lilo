@@ -60,6 +60,9 @@ export const chromeActions = {
 	showSidebarContextMenu: (
 		payload: BridgeCommandPayloadMap["showSidebarContextMenu"],
 	): void => emit("showSidebarContextMenu", payload),
+	reportChromeError: (
+		payload: BridgeCommandPayloadMap["reportChromeError"],
+	): void => emit("reportChromeError", payload),
 	traceSpaceSwipe: (
 		payload: BridgeCommandPayloadMap["traceSpaceSwipe"],
 	): void => emit("traceSpaceSwipe", payload),

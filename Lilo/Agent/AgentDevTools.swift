@@ -350,7 +350,7 @@ enum AgentDevTools {
         if webView.responds(to: pidSelector), let pid = (webView.value(forKey: "_webProcessIdentifier") as? NSNumber)?.int32Value, pid > 0 {
             var usage = rusage_info_v4()
             let status = withUnsafeMutablePointer(to: &usage) {
-                $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { proc_pid_rusage(pid, RUSAGE_INFO_V4, $0) }
+                unsafe $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { unsafe proc_pid_rusage(pid, RUSAGE_INFO_V4, $0) }
             }
             if status == 0 { result["memoryFootprintMB"] = (Double(usage.ri_phys_footprint) / 1_048_576 * 10).rounded() / 10 }
         }

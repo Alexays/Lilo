@@ -74,12 +74,12 @@ final class TabModalDialogView: NSView {
                 options: [.usesLineFragmentOrigin, .usesFontLeading]
             ).height)
             let messageView = NSTextView(usingTextLayoutManager: false)
-            messageView.textStorage?.setAttributedString(text)
+            unsafe messageView.textStorage?.setAttributedString(text)
             messageView.isEditable = false
             messageView.drawsBackground = false
             messageView.textContainerInset = .zero
-            messageView.textContainer?.lineFragmentPadding = 0
-            messageView.textContainer?.widthTracksTextView = true
+            unsafe messageView.textContainer?.lineFragmentPadding = 0
+            unsafe messageView.textContainer?.widthTracksTextView = true
             messageView.isVerticallyResizable = true
             messageView.autoresizingMask = .width
             messageView.frame = NSRect(x: 0, y: 0, width: Self.contentWidth, height: height)
@@ -161,8 +161,8 @@ final class TabModalDialogView: NSView {
 
         // Tab cycles through the dialog only: the page under it never takes the keyboard.
         let keyViews = accessories.filter { $0 is NSControl } + buttons
-        for (index, view) in keyViews.enumerated() { view.nextKeyView = keyViews[(index + 1) % keyViews.count] }
-        nextKeyView = keyViews.first
+        for (index, view) in keyViews.enumerated() { unsafe view.nextKeyView = keyViews[(index + 1) % keyViews.count] }
+        unsafe nextKeyView = keyViews.first
 
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
@@ -184,9 +184,9 @@ final class TabModalDialogView: NSView {
             context.duration = 0.15
             animator().alphaValue = 1
         }
-        guard let window = webView.window, !webView.isHiddenOrHasHiddenAncestor else { return }
+        guard let window = unsafe webView.window, !webView.isHiddenOrHasHiddenAncestor else { return }
         focus()
-        NSAccessibility.post(element: window, notification: .announcementRequested, userInfo: [
+        unsafe NSAccessibility.post(element: window, notification: .announcementRequested, userInfo: [
             .announcement: announcement, .priority: NSAccessibilityPriorityLevel.high.rawValue
         ])
     }
@@ -195,7 +195,7 @@ final class TabModalDialogView: NSView {
     /// itself, which answers Return and Escape when keyboard navigation leaves buttons out of focus.
     @discardableResult
     func focus() -> Bool {
-        guard let window else { return false }
+        guard let window = unsafe window else { return false }
         return window.makeFirstResponder(lastResponder ?? initialResponder) || window.makeFirstResponder(self)
     }
 
@@ -205,9 +205,9 @@ final class TabModalDialogView: NSView {
     private func finish(_ accepted: Bool) {
         guard let completion else { return }
         self.completion = nil
-        let page = superview
-        let hadKeyboard = (window?.firstResponder as? NSView)?.isDescendant(of: self) == true
-        let window = window
+        let page = unsafe superview
+        let hadKeyboard = unsafe (window?.firstResponder as? NSView)?.isDescendant(of: self) == true
+        let window = unsafe window
         removeFromSuperview()
         if hadKeyboard, let page { window?.makeFirstResponder(page) }
         completion(accepted)
@@ -219,15 +219,15 @@ final class TabModalDialogView: NSView {
 
     override func viewWillMove(toWindow newWindow: NSWindow?) {
         super.viewWillMove(toWindow: newWindow)
-        guard newWindow == nil, let responder = window?.firstResponder as? NSView else { return }
+        guard newWindow == nil, let responder = unsafe window?.firstResponder as? NSView else { return }
         // A field being edited hands the window its field editor, which is not kept.
-        let held = (responder as? NSText)?.delegate as? NSView ?? responder
+        let held = unsafe (responder as? NSText)?.delegate as? NSView ?? responder
         if held.isDescendant(of: self) { lastResponder = held }
     }
 
     // Keys reach the dialog only while it has the keyboard: the window offers key equivalents to every view.
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        guard let responder = window?.firstResponder as? NSView, responder.isDescendant(of: self) else { return false }
+        guard let responder = unsafe window?.firstResponder as? NSView, responder.isDescendant(of: self) else { return false }
         guard event.modifierFlags.isDisjoint(with: [.command, .control, .option, .shift]) else {
             return super.performKeyEquivalent(with: event)
         }
@@ -253,7 +253,7 @@ final class TabModalDialogView: NSView {
 
     // The page under the dialog gets no pointer input: a click outside the panel only brings the keyboard back.
     override func mouseDown(with event: NSEvent) {
-        if let responder = window?.firstResponder as? NSView, responder.isDescendant(of: self) { return }
+        if let responder = unsafe window?.firstResponder as? NSView, responder.isDescendant(of: self) { return }
         focus()
     }
 

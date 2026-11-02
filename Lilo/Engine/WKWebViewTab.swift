@@ -405,9 +405,9 @@ final class WKWebViewTab: NSObject {
             // Off screen nobody can reload it: a page stuck in a loop would burn a core until its tab closes.
             hiddenHangKill = Task { [weak self] in
                 try? await Task.sleep(for: Self.hiddenHangLimit)
-                guard let self, !Task.isCancelled, isUnresponsive, webView.window == nil, webView.responds(to: Self.killContentProcess) else { return }
+                guard let self, !Task.isCancelled, isUnresponsive, unsafe webView.window == nil, webView.responds(to: Self.killContentProcess) else { return }
                 if !isPrivateBrowsing { Self.logger.info("kill process hung off screen host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
-                webView.perform(Self.killContentProcess)
+                unsafe webView.perform(Self.killContentProcess)
             }
         }
     }
@@ -483,7 +483,7 @@ final class WKWebViewTab: NSObject {
         DispatchQueue.main.async {
             MainActor.assumeIsolated {
                 var view = window?.firstResponder as? NSView
-                while let current = view, !(current is WKWebView) { view = current.superview }
+                while let current = view, !(current is WKWebView) { view = unsafe current.superview }
                 activatedWebView = view as? WKWebView
                 activationTime = time
             }
@@ -503,7 +503,7 @@ final class WKWebViewTab: NSObject {
         let selector = NSSelectorFromString("_setWindowOcclusionDetectionEnabled:")
         guard webView.responds(to: selector) else { return }
         typealias Setter = @convention(c) (AnyObject, Selector, Bool) -> Void
-        unsafeBitCast(webView.method(for: selector), to: Setter.self)(webView, selector, enabled)
+        unsafe unsafeBitCast(webView.method(for: selector), to: Setter.self)(webView, selector, enabled)
     }
 
     /// A PiP request whose `window.open` never came must not outlive the page: its next popup would be taken for
@@ -638,7 +638,7 @@ final class WKWebViewTab: NSObject {
         webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
         _ = Self.activationMonitor
         let setIconLoadingDelegate = NSSelectorFromString("_setIconLoadingDelegate:")
-        if webView.responds(to: setIconLoadingDelegate) { webView.perform(setIconLoadingDelegate, with: self) }
+        if webView.responds(to: setIconLoadingDelegate) { unsafe webView.perform(setIconLoadingDelegate, with: self) }
         findController.onResult = { [weak self] result in
             guard let self else { return }
             delegate?.tab(self, didFind: result)
@@ -777,7 +777,7 @@ final class WKWebViewTab: NSObject {
     func preconnect(to url: URL) {
         let selector = NSSelectorFromString("_preconnectToServer:")
         guard webView.responds(to: selector) else { return }
-        webView.perform(selector, with: url)
+        unsafe webView.perform(selector, with: url)
     }
 
     /// Forgets the origins learned for every site, as clearing history or the cache does.
@@ -832,7 +832,7 @@ final class WKWebViewTab: NSObject {
         let selector = NSSelectorFromString("_logUserInteraction:completionHandler:")
         guard store.responds(to: selector) else { return }
         typealias LogUserInteraction = @convention(c) (AnyObject, Selector, NSURL, @escaping @convention(block) () -> Void) -> Void
-        unsafeBitCast(store.method(for: selector), to: LogUserInteraction.self)(store, selector, url as NSURL) {}
+        unsafe unsafeBitCast(store.method(for: selector), to: LogUserInteraction.self)(store, selector, url as NSURL) {}
     }
 
     func reload() {
@@ -841,7 +841,7 @@ final class WKWebViewTab: NSObject {
         // A hung process never gets to the reload: it goes, and the termination recovery loads the page again.
         if isUnresponsive, webView.responds(to: Self.killContentProcess) {
             if !isPrivateBrowsing { Self.logger.info("kill unresponsive process for reload host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
-            webView.perform(Self.killContentProcess)
+            unsafe webView.perform(Self.killContentProcess)
             return
         }
         if !isPrivateBrowsing { Self.logger.info("load source=app-reload host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
@@ -954,12 +954,12 @@ final class WKWebViewTab: NSObject {
         printInfo.isHorizontallyCentered = false; printInfo.isVerticallyCentered = false
         webView.configuration.preferences.shouldPrintBackgrounds = PrintOptionsController.printsBackgrounds
         let framePrint = NSSelectorFromString("_printOperationWithPrintInfo:forFrame:")
-        let op = frame.flatMap { webView.responds(to: framePrint) ? webView.perform(framePrint, with: printInfo, with: $0)?.takeUnretainedValue() as? NSPrintOperation : nil }
+        let op = frame.flatMap { unsafe webView.responds(to: framePrint) ? webView.perform(framePrint, with: printInfo, with: $0)?.takeUnretainedValue() as? NSPrintOperation : nil }
             ?? webView.printOperation(with: printInfo)
         op.showsPrintPanel = true; op.showsProgressPanel = true
         op.printPanel.addAccessoryController(PrintOptionsController(webView: webView))
         guard let completion else {
-            op.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
+            unsafe op.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
             return
         }
         let proxy = PrintCompletionProxy { [weak self] in
@@ -967,7 +967,7 @@ final class WKWebViewTab: NSObject {
             completion()
         }
         pendingPrintProxy = proxy
-        op.runModal(
+        unsafe op.runModal(
             for: window,
             delegate: proxy,
             didRun: #selector(PrintCompletionProxy.printOperationDidRun(_:success:contextInfo:)),
@@ -1023,7 +1023,7 @@ final class WKWebViewTab: NSObject {
         // site's next pages. Killed after the delegate goes, so no termination recovery reloads it.
         if wasUnresponsive, webView.responds(to: Self.killContentProcess) {
             if !isPrivateBrowsing { Self.logger.info("kill unresponsive process for teardown host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
-            webView.perform(Self.killContentProcess)
+            unsafe webView.perform(Self.killContentProcess)
         }
         runQueuedDialog(presenting: false)
         dismissModalDialogs()
@@ -1064,7 +1064,7 @@ final class WKWebViewTab: NSObject {
             _ = tryClose()
         }
         let close = NSSelectorFromString("_close")
-        if webView.responds(to: close) { webView.perform(close) }
+        if webView.responds(to: close) { unsafe webView.perform(close) }
     }
 
     func selectedTextForFind() async -> String? { await findController.selectedText() }
@@ -1139,13 +1139,13 @@ final class WKWebViewTab: NSObject {
         ]
         // WebKit samples the top edge once a load paints, never on scroll; it skips a fixed header, which scrolls content under it.
         if webView.responds(to: NSSelectorFromString("_sampledPageTopColor")) {
-            webView.addObserver(self, forKeyPath: "_sampledPageTopColor", options: [.new], context: nil)
+            unsafe webView.addObserver(self, forKeyPath: "_sampledPageTopColor", options: [.new], context: nil)
             isSampledColorObserverRegistered = true
         }
         // _isPlayingAudio is not in the public macOS SDK; use string-key KVO, only when WebKit still
         // has it, since KVO on a missing key raises.
         if webView.responds(to: NSSelectorFromString("_isPlayingAudio")) {
-            webView.addObserver(self, forKeyPath: "_isPlayingAudio", options: [.initial, .new], context: nil)
+            unsafe webView.addObserver(self, forKeyPath: "_isPlayingAudio", options: [.initial, .new], context: nil)
             isAudioPlayingObserverRegistered = true
         }
     }
@@ -1189,7 +1189,7 @@ final class WKWebViewTab: NSObject {
                 tab.emitPageColor()
             }
         default:
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+            unsafe super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
     }
 
@@ -1258,11 +1258,11 @@ final class WKWebViewTab: NSObject {
 
     /// The edge as CSS hex stops from left to right, a single color when they barely differ.
     static func edgeStops(_ image: NSImage) -> String? {
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+        guard let cgImage = unsafe image.cgImage(forProposedRect: nil, context: nil, hints: nil),
               let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
         var pixels = [UInt8](repeating: 0, count: edgeSamples * 4)
         let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(data: buffer.baseAddress, width: edgeSamples, height: 1, bitsPerComponent: 8, bytesPerRow: edgeSamples * 4,
+            guard let context = unsafe CGContext(data: buffer.baseAddress, width: edgeSamples, height: 1, bitsPerComponent: 8, bytesPerRow: edgeSamples * 4,
                                           space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return false }
             context.draw(cgImage, in: CGRect(x: 0, y: 0, width: edgeSamples, height: 1))
             return true
@@ -1272,8 +1272,11 @@ final class WKWebViewTab: NSObject {
         let stops = (0..<edgeStopCount).map { stop in
             (0..<3).map { channel in (0..<perStop).reduce(0) { $0 + Int(pixels[(stop * perStop + $1) * 4 + channel]) } / perStop }
         }
-        let hex = { (rgb: [Int]) in String(format: "#%02x%02x%02x", rgb[0], rgb[1], rgb[2]) }
-        let spread = (0..<3).map { channel in stops.map { $0[channel] }.max()! - stops.map { $0[channel] }.min()! }.max()!
+        let hex = { (rgb: [Int]) in unsafe String(format: "#%02x%02x%02x", rgb[0], rgb[1], rgb[2]) }
+        let spread = (0..<3).map { channel in
+            let values = stops.map { $0[channel] }
+            return (values.max() ?? 0) - (values.min() ?? 0)
+        }.max() ?? 0
         guard spread > 6 else { return hex((0..<3).map { channel in stops.reduce(0) { $0 + $1[channel] } / edgeStopCount }) }
         return stops.map(hex).joined(separator: ",")
     }
@@ -1531,7 +1534,7 @@ final class WKWebViewTab: NSObject {
         }
         // WebKit only clears its suspended flag in resume(), which needs a running process. Respawning
         // off-screen pages the system killed under memory pressure would keep that pressure up.
-        if isFrozen || webView.window == nil {
+        if unsafe isFrozen || webView.window == nil {
             isPageLost = true
             return
         }
@@ -1809,7 +1812,7 @@ extension WKWebViewTab: WKNavigationDelegate {
         return webViewURL ?? pendingMainFrameURL
     }
 
-    nonisolated func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
+    nonisolated func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation?) {
         onMain { tab in
             StartupMetrics.markOnce("firstContentServerRedirected")
             if let url = Self.visibleURL(webViewURL: webView.url, pendingMainFrameURL: tab.pendingMainFrameURL) { tab.pendingMainFrameURL = url }
@@ -1817,7 +1820,7 @@ extension WKWebViewTab: WKNavigationDelegate {
         }
     }
 
-    nonisolated func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+    nonisolated func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {
         onMain { tab in
             tab.navigationStartUptime = DispatchTime.now().uptimeNanoseconds
             tab.endNavigationSignpost("replaced")
@@ -1832,7 +1835,7 @@ extension WKWebViewTab: WKNavigationDelegate {
         }
     }
 
-    nonisolated func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+    nonisolated func webView(_ webView: WKWebView, didCommit navigation: WKNavigation?) {
         onMain { tab in
             CosmeticStyleSheets.shared.removeSheets(of: webView)
             // A dialog of the page that left must not cover the new one, which a process swap commits while the old
@@ -1905,7 +1908,7 @@ extension WKWebViewTab: WKNavigationDelegate {
         }
     }
 
-    nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
         onMain { tab in
             tab.pendingMainFrameURL = tab.currentURL
             tab.showListingRows()
@@ -1925,7 +1928,7 @@ extension WKWebViewTab: WKNavigationDelegate {
         }
     }
 
-    nonisolated func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    nonisolated func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
         onMain { tab in
             tab.endNavigationSignpost("fail")
             guard !Self.shouldIgnoreNavigationFailure(error) else { return }
@@ -1933,7 +1936,7 @@ extension WKWebViewTab: WKNavigationDelegate {
         }
     }
 
-    nonisolated func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+    nonisolated func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
         onMain { tab in
             tab.endNavigationSignpost("fail")
             // The error page names the address that failed, as in Chrome.
@@ -2083,7 +2086,7 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webViewWebProcessDidBecomeUnresponsive(_ webView: WKWebView) {
         onMain { tab in
             // A page waiting on a dialog is blocked by design too.
-            guard tab.pendingPrintProxy == nil, tab.queuedDialog == nil, tab.modalDialogs.isEmpty, webView.window?.attachedSheet == nil else { return }
+            guard tab.pendingPrintProxy == nil, tab.queuedDialog == nil, tab.modalDialogs.isEmpty, unsafe webView.window?.attachedSheet == nil else { return }
             tab.isUnresponsive = true
         }
     }
@@ -2202,7 +2205,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                     if let answer { completionHandler(answer.0, answer.1) } else { prompt() }
                 }
             } else if method == NSURLAuthenticationMethodClientCertificate, !isAgentControlled {
-                ClientCertificateChallengeHandler.resolve(challenge, dataStore: webView.configuration.websiteDataStore, in: webView.window, completion: completionHandler)
+                unsafe ClientCertificateChallengeHandler.resolve(challenge, dataStore: webView.configuration.websiteDataStore, in: webView.window, completion: completionHandler)
             } else {
                 completionHandler(.performDefaultHandling, nil)
             }
@@ -2324,9 +2327,9 @@ extension WKWebViewTab: WKUIDelegate {
         nonisolated(unsafe) let menu = menu
         nonisolated(unsafe) let element = element
         MainActor.assumeIsolated {
-            contextMenuElement = element
-            contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
-            completionHandler(menu)
+            contextMenuElement = unsafe element
+            unsafe contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
+            unsafe completionHandler(menu)
         }
     }
 
@@ -2406,7 +2409,7 @@ extension WKWebViewTab: WKUIDelegate {
     @objc(_webView:takeFocus:)
     nonisolated func webView(_ webView: WKWebView, takeFocus direction: Int) {
         DispatchQueue.main.async {
-            if direction == 0 { webView.window?.selectPreviousKeyView(webView) } else { webView.window?.selectNextKeyView(webView) }
+            if direction == 0 { unsafe webView.window?.selectPreviousKeyView(webView) } else { unsafe webView.window?.selectNextKeyView(webView) }
         }
     }
 
@@ -2446,7 +2449,7 @@ extension WKWebViewTab: WKUIDelegate {
     ) {
         // WebKit calls its UI delegate on the main thread, where the handle is used.
         nonisolated(unsafe) let frame = frame as AnyObject
-        onMain { $0.printPage(in: webView.window, frame: frame, completion: completionHandler) }
+        onMain { unsafe $0.printPage(in: webView.window, frame: frame, completion: completionHandler) }
     }
 
     // SpeechRecognition (WKUIDelegatePrivate): WebKit denies outright without this hook. Recognition
@@ -2503,10 +2506,10 @@ extension WKWebViewTab: WKUIDelegate {
     /// It spans only the page's width: sites read `outerWidth - innerWidth` over 160 as open devtools, which the sidebar would pass.
     @objc(_webView:getWindowFrameWithCompletionHandler:)
     func webView(_ webView: WKWebView, getWindowFrameWith completionHandler: @escaping (CGRect) -> Void) {
-        let window = webView.window ?? NSApp.mainWindow ?? NSApp.windows.first { $0.isVisible }
+        let window = unsafe webView.window ?? NSApp.mainWindow ?? NSApp.windows.first { $0.isVisible }
         guard var frame = window?.frame else { return completionHandler(NSScreen.main?.visibleFrame ?? .zero) }
         if webView.bounds.width > 0 {
-            if let window = webView.window { frame.origin.x = window.convertToScreen(webView.convert(webView.bounds, to: nil)).minX }
+            if let window = unsafe webView.window { frame.origin.x = window.convertToScreen(webView.convert(webView.bounds, to: nil)).minX }
             frame.size.width = webView.bounds.width
         }
         completionHandler(frame)
@@ -2642,7 +2645,7 @@ extension WKWebViewTab: WKUIDelegate {
     }
 
     /// In a window and not hidden: a background tab, a tab of another space or a hidden peek is not.
-    private var isOnScreen: Bool { webView.window != nil && !webView.isHiddenOrHasHiddenAncestor }
+    private var isOnScreen: Bool { unsafe webView.window != nil && !webView.isHiddenOrHasHiddenAncestor }
 
     /// Runs `dialog` now when the tab is on screen; otherwise holds it until the tab is shown, and
     /// marks the tab as waiting for the user meanwhile.

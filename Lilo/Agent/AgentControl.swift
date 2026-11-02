@@ -186,7 +186,7 @@ final class AgentControl {
             })
             let profileId = context.settingsStore?.get(Self.agentsProfileKey) ?? ""
             for window in context.windows.windows {
-                window.bridgeRouter?.send(event: "agentActivity", data: [
+                window.bridgeRouter.send(event: "agentActivity", data: [
                     "clients": clients, "agentsSpaceIds": spaceIds.map(\.uuidString), "agentsProfileId": profileId,
                     "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString),
                     "isolatedSpaceIds": sessions.compactMap(\.isolatedSpaceId).map(\.uuidString),
@@ -234,9 +234,9 @@ final class AgentControl {
             var code: SecCode?
             var staticCode: SecStaticCode?
             var url: CFURL?
-            guard pid > 0, SecCodeCopyGuestWithAttributes(nil, [kSecGuestAttributePid: pid] as CFDictionary, [], &code) == errSecSuccess,
-                  let code, SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode,
-                  SecCodeCopyPath(staticCode, [], &url) == errSecSuccess, let url else { return nil }
+            guard pid > 0, unsafe SecCodeCopyGuestWithAttributes(nil, [kSecGuestAttributePid: pid] as CFDictionary, [], &code) == errSecSuccess,
+                  let code, unsafe SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode,
+                  unsafe SecCodeCopyPath(staticCode, [], &url) == errSecSuccess, let url else { return nil }
             return (code, staticCode, (url as URL).resolvingSymlinksInPath().path)
         }
         // lilo-mcp only relays: the agent is the process that launched it. An update replacing lilo-mcp on disk leaves
@@ -246,23 +246,23 @@ final class AgentControl {
         var pid = peer
         let helper = URL(fileURLWithPath: AgentClientConfig.helperPath).resolvingSymlinksInPath().path
         var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
-        if client?.path == helper || (client == nil && (proc_pidpath(peer, &path, UInt32(path.count)) <= 0
+        if unsafe client?.path == helper || (client == nil && (proc_pidpath(peer, &path, UInt32(path.count)) <= 0
             || URL(fileURLWithPath: String(cString: path)).resolvingSymlinksInPath().path == helper)) {
             var info = proc_bsdinfo()
-            guard proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0 else { return ("", "", peer) }
+            guard unsafe proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0 else { return ("", "", peer) }
             pid = pid_t(info.pbi_ppid)
             client = code(pid)
         }
         guard let client else { return ("", "", pid) }
         let executable = (client.path as NSString).abbreviatingWithTildeInPath
         var info: CFDictionary?
-        SecCodeCopySigningInformation(client.staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info)
+        unsafe SecCodeCopySigningInformation(client.staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info)
         let signing = info as? [String: Any]
         var requirement: SecRequirement?
         // The team only counts once Apple's chain vouches for it; a quote would let a name rewrite the requirement.
         if let team = signing?[kSecCodeInfoTeamIdentifier as String] as? String,
            let identifier = signing?[kSecCodeInfoIdentifier as String] as? String, !(team + identifier).contains("\""),
-           SecRequirementCreateWithString(
+           unsafe SecRequirementCreateWithString(
                "identifier \"\(identifier)\" and anchor apple generic and certificate leaf[subject.OU] = \"\(team)\"" as CFString, [], &requirement
            ) == errSecSuccess, SecCodeCheckValidity(client.code, [], requirement) == errSecSuccess {
             return ("\(identifier) \(team)", executable, pid)
@@ -347,7 +347,7 @@ final class AgentControl {
             "requestId": requestId, "clientName": Self.displayName(name), "executable": executable, "profileName": profileName ?? "",
             "action": action ?? NSNull()
         ]
-        for window in windows { window.bridgeRouter?.send(event: "agentControlRequested", data: request) }
+        for window in windows { window.bridgeRouter.send(event: "agentControlRequested", data: request) }
         if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in self?.answerConsent(requestId, granted: nil) }
         return await withTaskCancellationHandler {
@@ -437,7 +437,7 @@ final class AgentControl {
             context?.settingsStore?.set(Self.alwaysAllowedSitesKey, value: list)
         }
         for window in context?.windows.windows ?? [] {
-            window.bridgeRouter?.send(event: "permissionRequestClosed", data: ["requestId": requestId])
+            window.bridgeRouter.send(event: "permissionRequestClosed", data: ["requestId": requestId])
         }
         answer.resume(returning: granted)
     }
@@ -532,7 +532,7 @@ final class AgentControl {
                 if let reply {
                     // A screenshot's reply is megabytes of JSON: encoded off the main thread.
                     nonisolated(unsafe) let reply = reply
-                    guard let line = await Task.detached(operation: { AgentConnection.line(reply) }).value else { return }
+                    guard let line = await Task.detached(operation: { unsafe AgentConnection.line(reply) }).value else { return }
                     session.connection.send(line)
                 }
             }

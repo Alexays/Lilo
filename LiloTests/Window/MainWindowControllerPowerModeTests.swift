@@ -5,13 +5,11 @@ import XCTest
 @MainActor
 final class MainWindowControllerPowerModeTests: XCTestCase {
     // The lifecycle observers are wired (and the initial state applied) during init, before
-    // setupBridgeEarly() creates the bridge, so a constrained-power callback (Low Power Mode / thermal
-    // pressure) that runs that early must tolerate a nil `bridgeRouter` instead of trapping on it.
+    // setupBridgeEarly() connects the chrome, so a constrained-power callback (Low Power Mode / thermal
+    // pressure) that runs that early must not trap.
     func testConstrainedPowerCallbackBeforeBridgeDoesNotCrash() {
+        // Under XCTest, init returns before runStartupSequence: exactly the early window under test.
         let wc = MainWindowController()
-        // Precondition: under XCTest, init returns before runStartupSequence, so the bridge that
-        // setupBridgeEarly() would create is absent: exactly the early window under test.
-        XCTAssertNil(wc.bridgeRouter as BridgeRouter?, "Bridge must be absent to exercise the early path")
 
         // Simulate the OS reporting constrained power before the bridge is ready.
         wc.context.hiddenSpaceLifecycle.onConstrainedPowerChange?(true)

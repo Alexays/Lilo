@@ -67,7 +67,7 @@ final class ProfileBridgeHandler: BridgeHandler {
         case "getProfileStats":
             do {
                 let counts = try await profileManager.extensionCounts()
-                windowController?.bridgeRouter?.send(event: "profileStats", data: ["extensionCounts": counts])
+                windowController?.bridgeRouter.send(event: "profileStats", data: ["extensionCounts": counts])
             } catch { Self.logger.error("getProfileStats failed: \(error.localizedDescription)") }
 
         default:

@@ -5,11 +5,15 @@ import {
 	takeBootstrapInitialState,
 } from "./lib/bridge";
 import { chromeActions } from "./lib/bridge/actions";
+import { reportChromeError } from "./lib/chromeErrors";
 import { setLocale } from "./lib/i18n/state.svelte";
 import { resolveLocale } from "./lib/i18n/translate";
 import { initChromeStores } from "./stores/init";
 import "./styles/global.css";
 import "./styles/utilities.css";
+
+addEventListener("error", (event) => reportChromeError(event.error ?? event.message));
+addEventListener("unhandledrejection", (event) => reportChromeError(event.reason));
 
 const initialState = takeBootstrapInitialState();
 initChromeStores(initialState);

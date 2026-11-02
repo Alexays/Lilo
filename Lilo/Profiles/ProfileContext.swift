@@ -57,6 +57,9 @@ final class ProfileContextCache {
     private var contexts: [UUID: ProfileContext] = [:]
     private var mostRecentUnpinned: UUID?
     var pinnedProfileIds: Set<UUID> = []
+    /// Profiles with a live page, never evicted: WebKit kills the content process of a page whose
+    /// extension controller unloads its last context while that page loads a frame.
+    var isInUse: (UUID) -> Bool = { _ in false }
 
     init(makeContext: @escaping (UUID) throws -> ProfileContext) {
         self.makeContext = makeContext
@@ -83,7 +86,7 @@ final class ProfileContextCache {
             contexts[profileId] = context
         }
         if !pinnedProfileIds.contains(profileId) { mostRecentUnpinned = profileId }
-        for (id, evicted) in contexts where !pinnedProfileIds.contains(id) && id != mostRecentUnpinned {
+        for (id, evicted) in contexts where !pinnedProfileIds.contains(id) && id != mostRecentUnpinned && !isInUse(id) {
             evicted.extensions.teardown()
             contexts.removeValue(forKey: id)
         }

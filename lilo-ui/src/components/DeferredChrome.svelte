@@ -21,6 +21,7 @@
   import TabSwitcher from "./sidebar/TabSwitcher.svelte";
   import SidebarLinkDrop from "./sidebar/SidebarLinkDrop.svelte";
   import WhatsNewHost from "./whatsnew/WhatsNewHost.svelte";
+  import ErrorBoundary from "./ui/ErrorBoundary.svelte";
   import { isDesignSystemShellOpen } from "../stores/panels.svelte";
   import { isSidebarVisible } from "../stores/ui.svelte";
 
@@ -32,10 +33,10 @@
   });
 </script>
 
-<CommandBar />
-<SettingsShell />
-<HistoryShell />
-<OnboardingShell />
+<ErrorBoundary><CommandBar /></ErrorBoundary>
+<ErrorBoundary><SettingsShell /></ErrorBoundary>
+<ErrorBoundary><HistoryShell /></ErrorBoundary>
+<ErrorBoundary><OnboardingShell /></ErrorBoundary>
 <WhatsNewHost />
 <!-- Design System showcase is a contributor tool. Shipped in every build so it's reachable from
      installed/release apps too; self-gates via its UiShellFrame `active`.

@@ -19,7 +19,7 @@ final class InteractionStateRestoreTests: XCTestCase {
 
     private func makeWindow() throws -> (MainWindowController, Space) {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         return (makeTestWindow(context, showing: space.id), space)
     }
 
@@ -40,7 +40,7 @@ final class InteractionStateRestoreTests: XCTestCase {
 
         window.saveSessionBeforeQuit()
 
-        let pool = try browserContext.context.dbManager.pool(for: space.profileId)
+        let pool = try browserContext.context.dbManager!.pool(for: space.profileId)
         XCTAssertNotNil(try InteractionStateStore(dbPool: pool).load(spaceId: space.id)[background.id])
     }
 

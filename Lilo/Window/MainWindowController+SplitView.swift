@@ -56,7 +56,7 @@ final class SplitDividerView: NSView {
 
     override func viewDidChangeBackingProperties() {
         super.viewDidChangeBackingProperties()
-        let scale = window?.backingScaleFactor ?? 2
+        let scale = unsafe window?.backingScaleFactor ?? 2
         corners.forEach { $0.contentsScale = scale }
     }
 
@@ -143,7 +143,7 @@ final class SplitDividerView: NSView {
     override func mouseMoved(with event: NSEvent) { (isVertical ? NSCursor.resizeUpDown : NSCursor.resizeLeftRight).set() }
 
     override func mouseDragged(with event: NSEvent) {
-        guard let superview else { return }
+        guard let superview = unsafe superview else { return }
         onDrag?(superview.convert(event.locationInWindow, from: nil))
     }
 
@@ -338,7 +338,7 @@ final class SplitPanesController {
             divider.isVertical = cut.vertical
             divider.cutBounds = cut.bounds
             divider.frame = cut.divider
-            if divider.superview !== container {
+            if unsafe divider.superview !== container {
                 container.addSubview(divider, positioned: .below, relativeTo: focusRing)
             }
         }
@@ -397,7 +397,7 @@ final class SplitPanesController {
     /// and focuses the pane it lands in, so a drag that crosses a divider stays with its page.
     func view(for event: NSEvent) -> NSView? {
         // A peek covers every pane: a press on it must not activate the pane underneath, which would dismiss it.
-        guard let split, let container = controller.contentContainerView,
+        guard let split, case let container = controller.contentContainerView,
               !container.subviews.contains(where: { $0 is PagePeekView }) else { return nil }
         switch event.type {
         case .leftMouseDragged, .leftMouseUp, .rightMouseDragged, .rightMouseUp, .otherMouseDragged, .otherMouseUp:
@@ -424,7 +424,7 @@ final class SplitPanesController {
     /// offers it as a split pane; the rest of the pane, where a page's own fields and drop targets sit, keeps the drop.
     func isLinkDrag(_ sender: any NSDraggingInfo) -> Bool {
         let tabManager = controller.tabManager
-        guard tabManager.activeTab != nil, let container = controller.contentContainerView,
+        guard tabManager.activeTab != nil, case let container = controller.contentContainerView,
               (sender.draggingSource as? NSView)?.isDescendant(of: container) != true else { return false }
         let local = container.convert(sender.draggingLocation, from: nil)
         let paneFrames = split?.layout.paneIds.compactMap { tabManager.loadedContentView(forTabId: $0)?.frame } ?? []
@@ -460,7 +460,7 @@ extension MainWindowController {
                 activeView.frame = contentContainerView.bounds
                 activeView.autoresizingMask = [.width, .height]
             }
-            if activeView.superview !== contentContainerView { contentContainerView.addSubview(activeView) }
+            if unsafe activeView.superview !== contentContainerView { contentContainerView.addSubview(activeView) }
             return
         }
         updateDisplayedTabs(Set(split.layout.paneIds))
@@ -477,7 +477,7 @@ extension MainWindowController {
         // frame for it. Joining panes go to the back, under the dividers and the focus ring.
         splitPanes.show(split)
         for view in paneViews {
-            if view.superview !== contentContainerView { contentContainerView.addSubview(view, positioned: .below, relativeTo: nil) }
+            if unsafe view.superview !== contentContainerView { contentContainerView.addSubview(view, positioned: .below, relativeTo: nil) }
             view.isHidden = false
         }
     }

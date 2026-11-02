@@ -11,7 +11,7 @@ extension MainWindowController {
     func setupViews() {
         guard let contentView = window?.contentView else { return }
 
-        contentContainerView = ContentContainerView(frame: contentFrameRect())
+        contentContainerView.frame = contentFrameRect()
         contentContainerView.autoresizingMask = [.width, .height]
         contentContainerView.wantsLayer = true
         contentView.addSubview(contentContainerView)
@@ -45,7 +45,7 @@ extension MainWindowController {
         config.websiteDataStore = chromeDataStore
         let setRelatedWebView = NSSelectorFromString("_setRelatedWebView:")
         if let lastChromeWebView, config.responds(to: setRelatedWebView) {
-            config.perform(setRelatedWebView, with: lastChromeWebView)
+            unsafe config.perform(setRelatedWebView, with: lastChromeWebView)
         }
         config.userContentController = WKUserContentController()
         config.setURLSchemeHandler(ChromeUISchemeHandler(), forURLScheme: ChromeUISchemeHandler.scheme)
@@ -69,10 +69,10 @@ extension MainWindowController {
     static func preloadChromeWebView() {
         guard _preloadedWebView == nil else { return }
         let webView = makeChromeWebView(frame: .zero)
-        let cachedWidth = UserDefaults.lilo.double(forKey: "cachedSidebarWidth")
+        let cachedWidth = unsafe UserDefaults.lilo.double(forKey: "cachedSidebarWidth")
         let sidebarWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: sidebarWidthRange) : defaultSidebarWidth
-        let bgColor = UserDefaults.lilo.string(forKey: cachedWindowBgColorKey) ?? ""
-        webView.configuration.userContentController.addUserScript(
+        let bgColor = unsafe UserDefaults.lilo.string(forKey: cachedWindowBgColorKey) ?? ""
+        unsafe webView.configuration.userContentController.addUserScript(
             buildBootstrapScript(
                 sidebarWidth: sidebarWidth, windowBackgroundColor: bgColor,
                 tabLayout: TabLayout.cached.shown(toolbarVisible: UserDefaults.lilo.object(forKey: "cachedToolbarVisible") as? Bool ?? true)
@@ -84,11 +84,11 @@ extension MainWindowController {
     }
 
     func restoreWindowChromeState() {
-        let cachedWidth = UserDefaults.lilo.double(forKey: "cachedSidebarWidth")
-        let cachedBgColor = UserDefaults.lilo.string(forKey: Self.cachedWindowBgColorKey)
+        let cachedWidth = unsafe UserDefaults.lilo.double(forKey: "cachedSidebarWidth")
+        let cachedBgColor = unsafe UserDefaults.lilo.string(forKey: Self.cachedWindowBgColorKey)
 
-        sidebarVisible = UserDefaults.lilo.object(forKey: "cachedSidebarVisible") as? Bool ?? true
-        toolbarVisible = UserDefaults.lilo.object(forKey: "cachedToolbarVisible") as? Bool ?? true
+        sidebarVisible = unsafe UserDefaults.lilo.object(forKey: "cachedSidebarVisible") as? Bool ?? true
+        toolbarVisible = unsafe UserDefaults.lilo.object(forKey: "cachedToolbarVisible") as? Bool ?? true
         sidebarOverlayVisible = false
         sidebarExpandedWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: Self.sidebarWidthRange) : Self.defaultSidebarWidth
         sidebarWidth = fittedSidebarWidth
@@ -108,9 +108,9 @@ extension MainWindowController {
                 sidebarVisible = dbVisible
                 toolbarVisible = dbToolbarVisible
                 sidebarExpandedWidth = dbWidth
-                UserDefaults.lilo.set(dbVisible, forKey: "cachedSidebarVisible")
-                UserDefaults.lilo.set(dbToolbarVisible, forKey: "cachedToolbarVisible")
-                UserDefaults.lilo.set(Double(dbWidth), forKey: "cachedSidebarWidth")
+                unsafe UserDefaults.lilo.set(dbVisible, forKey: "cachedSidebarVisible")
+                unsafe UserDefaults.lilo.set(dbToolbarVisible, forKey: "cachedToolbarVisible")
+                unsafe UserDefaults.lilo.set(Double(dbWidth), forKey: "cachedSidebarWidth")
                 applySidebarLayout(animated: false, syncTrafficLights: true)
             }
             let dbLayout = settings.tabLayout
@@ -122,8 +122,8 @@ extension MainWindowController {
 
         // The database keeps one color for both appearances: it only fills a missing mirror.
         let cacheKey = Self.cachedWindowBgColorKey
-        if UserDefaults.lilo.string(forKey: cacheKey) == nil, let dbBgColor = storedWindowBackgroundColor {
-            UserDefaults.lilo.set(dbBgColor, forKey: cacheKey)
+        if unsafe UserDefaults.lilo.string(forKey: cacheKey) == nil, let dbBgColor = storedWindowBackgroundColor {
+            unsafe UserDefaults.lilo.set(dbBgColor, forKey: cacheKey)
             applyWindowChromeColors(currentWindowBackgroundCSSColor())
         }
     }
@@ -173,7 +173,7 @@ extension MainWindowController {
             let work = DispatchWorkItem { [weak self] in
                 guard let self else { return }
                 context.settingsStore?.windowBackgroundColor = trimmedColor
-                UserDefaults.lilo.set(trimmedColor, forKey: cacheKey)
+                unsafe UserDefaults.lilo.set(trimmedColor, forKey: cacheKey)
             }
             pendingWindowBackgroundPersistWork = work
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
@@ -182,9 +182,9 @@ extension MainWindowController {
         guard resolvedColor != lastAppliedWindowChromeColor else { return }
 
         // Over glass the glass itself carries the Space's tint; the frame adds only a hint, so the desktop shows through.
-        let frameColor = glassView == nil ? resolvedColor : resolvedColor.withAlphaComponent(0.15)
+        let frameColor = glassView == nil ? resolvedColor : resolvedColor.withAlphaComponent(0.06)
         window?.backgroundColor = glassView == nil ? resolvedColor : .clear
-        glassView?.tintColor = resolvedColor.withAlphaComponent(0.4)
+        glassView?.tintColor = resolvedColor.withAlphaComponent(0.2)
         let surfaceColor = resolvedColor.contentSurfaceColor
         // The popups, peeks and Little windows of this Space wear its color in their title bar and under their page.
         for popup in pagePopups.values where context.browserState.owningSpaceId(forTab: popup.openerTabId) == tabManager.currentSpaceId {
@@ -204,10 +204,10 @@ extension MainWindowController {
         for divider in splitPanes.dividers.values { divider.setFrameColor(resolvedColor, animated: true) }
         sidePanel.setFrameColor(resolvedColor)
         // A Changes view paints the frame color under its cards.
-        for case let view as ChangesView in contentContainerView?.subviews ?? [] { view.needsDisplay = true }
+        for case let view as ChangesView in contentContainerView.subviews { view.needsDisplay = true }
         changesPeek?.view.needsDisplay = true
 
-        guard let contentLayer = contentContainerView?.layer else { return }
+        guard let contentLayer = contentContainerView.layer else { return }
         contentLayer.backgroundColor = surfaceColor.cgColor
         contentLayer.borderColor = resolvedColor.contentSurfaceBorderColor.cgColor
 
@@ -227,9 +227,9 @@ extension MainWindowController {
         if glassView == nil {
             window?.backgroundColor = color
         } else {
-            glassView?.tintColor = color.withAlphaComponent(0.4)
+            glassView?.tintColor = color.withAlphaComponent(0.2)
         }
-        windowFrameView?.setFrameColor(glassView == nil ? color : color.withAlphaComponent(0.15), animated: false)
+        windowFrameView?.setFrameColor(glassView == nil ? color : color.withAlphaComponent(0.06), animated: false)
         lastAppliedWindowChromeColor = nil
     }
 
@@ -255,14 +255,14 @@ extension MainWindowController {
                 view.removeFromSuperview()
                 guard let self, glassView == nil else { return }
                 self.window?.isOpaque = true
-                contentContainerView?.layer?.cornerRadius = 0
-                contentContainerView?.layer?.masksToBounds = false
+                contentContainerView.layer?.cornerRadius = 0
+                contentContainerView.layer?.masksToBounds = false
             })
         }
         // The frame's corner bites go translucent over glass, so the page rounds its own corners until they are opaque again.
         if glass {
-            contentContainerView?.layer?.cornerRadius = WindowFrameView.contentCornerRadius
-            contentContainerView?.layer?.masksToBounds = true
+            contentContainerView.layer?.cornerRadius = WindowFrameView.contentCornerRadius
+            contentContainerView.layer?.masksToBounds = true
         }
         lastAppliedWindowChromeColor = nil
         applyWindowChromeColors(storedWindowBackgroundColor)
@@ -291,10 +291,10 @@ extension MainWindowController {
             context.showFatalDatabaseAlert(error)
             return
         }
-        let startupSnapshot: BrowserContext.StartupSnapshot = context.startupSnapshot
+        guard let startupSnapshot = context.startupSnapshot, let dbManager = context.dbManager,
+              let settingsStore = context.settingsStore else { return }
         // Decode the space this window shows first off the main actor while the extension, download
         // and bridge wiring runs; the startup sequence awaits it before restoring.
-        let dbManager: DatabaseManager = context.dbManager
         let preloadSpace: Space? = switch launch {
         case .restoreSession: Self.predictedInitialSpace(from: startupSnapshot)
         // A space another window already shows is restored from its live state.
@@ -313,7 +313,7 @@ extension MainWindowController {
                 return loaded.state
             }
         }
-        context.applyLifecyclePreset(context.settingsStore.lifecyclePreset)
+        context.applyLifecyclePreset(settingsStore.lifecyclePreset)
         applyTerminalSettings()
         Task { @MainActor [context] in await context.startContentBlocker() }
         let permissionDecisionHandler: GeolocationBridge.PermissionDecisionHandler = { [weak context] webView, type, origin, completion in
@@ -328,7 +328,7 @@ extension MainWindowController {
         context.engineFactory.notificationDecisionHandler = { [weak context] webView, origin in
             guard let context, let webView, let window = context.windows.window(for: webView) else { return nil }
             return window.storedPermissionDecision(type: "notifications", origin: origin, tabId: window.tabManager.engineTab(forWebView: webView)?.id)
-                ?? (context.settingsStore.refusesPermissionRequests("notifications") ? false : nil)
+                ?? (context.settingsStore?.refusesPermissionRequests("notifications") != false ? false : nil)
         }
         setupTabShare()
         setupTabDock()
@@ -386,7 +386,6 @@ extension MainWindowController {
 
     func setupBridgeEarly() {
         chromeWebView.navigationDelegate = self
-        bridgeRouter = BridgeRouter(chromeWebView: chromeWebView)
         // Factory handlers are shared by every window: each resolves the window that shows the page.
         context.engineFactory.formDirtyHandler = { [weak context] webView, dirty in
             guard let tab = context?.windows.windowAndEngine(for: webView)?.engine else { return }
@@ -444,9 +443,8 @@ extension MainWindowController {
     }
 
     func setupBridgeLate() {
-        // Runs after bootstrap: the context's stores are open.
-        let spaceManager: SpaceManager = context.spaceManager
-        let settingsStore: SettingsStore = context.settingsStore
+        guard let spaceManager = context.spaceManager, let settingsStore = context.settingsStore,
+              let profileManager = context.profileManager, let dbManager = context.dbManager else { return }
         let engineFactory = context.engineFactory
 
         bridgeRouter.register(handler: SpaceBridgeHandler(
@@ -455,7 +453,7 @@ extension MainWindowController {
         ))
 
         bridgeRouter.register(handler: ProfileBridgeHandler(
-            profileManager: context.profileManager,
+            profileManager: profileManager,
             windowController: self
         ))
 
@@ -528,7 +526,7 @@ extension MainWindowController {
             // The profile's own store, never a private space's ephemeral one: the clear-data page acts on the profile.
             dataStoreProvider: { [weak self] in
                 guard let self, let profileId = profileContext?.profileId else { return nil }
-                return context.profileManager.dataStore(for: profileId)
+                return profileManager.dataStore(for: profileId)
             },
             lifecycleDiagnosticsProvider: { [weak self] in self?.context.browserState.lifecycleDiagnostics() },
             extensionDiagnosticsProvider: { [weak self] in self?.extensionDiagnosticsSnapshots() ?? [] },
@@ -547,10 +545,10 @@ extension MainWindowController {
                 activeSpaceId: { [weak self] in self?.tabManager.currentSpaceId },
                 tree: { [weak self] spaceId in self?.context.browserState.space(id: spaceId)?.spaceTab.state.tree },
                 apply: { [weak self] command in _ = try self?.applyBrowserCommand(command) },
-                findProfile: { [weak self] name in self?.context.profileManager.profiles.first { $0.name == name }?.id },
+                findProfile: { [weak self] name in self?.context.profileManager?.profiles.first { $0.name == name }?.id },
                 createProfile: { [weak self] name in
-                    guard let self else { throw ImportError.malformed("window closed") }
-                    return try self.context.profileManager.createProfile(name: name).id
+                    guard self != nil else { throw ImportError.malformed("window closed") }
+                    return try profileManager.createProfile(name: name).id
                 },
                 findSpace: { name, profileId in spaceManager.spaces(for: profileId).first { $0.name == name }?.id },
                 createSpace: { name, icon, color, profileId in
@@ -558,26 +556,26 @@ extension MainWindowController {
                     return try spaceManager.createSpace(name: name, icon: icon, color: color, profileId: profileId).id
                 },
                 loadSpaceState: { [weak self] spaceId, profileId in
-                    guard let self, let pool = try? self.context.dbManager.pool(for: profileId) else { return nil }
+                    guard self != nil, let pool = try? dbManager.pool(for: profileId) else { return nil }
                     return try? SpaceTabStateStore(dbPool: pool).load(spaceId: spaceId)
                 },
                 saveSpaceStates: { [weak self] states, profileId in
-                    guard let self else { return }
+                    guard self != nil else { return }
                     // Space tab trees live in the owning profile's database (see SessionPersistence's tabDBPool).
-                    try SpaceTabStateStore(dbPool: try self.context.dbManager.pool(for: profileId)).saveMany(states)
+                    try SpaceTabStateStore(dbPool: try dbManager.pool(for: profileId)).saveMany(states)
                 },
                 historyStore: { [weak self] profileId in
                     guard let self else { throw ImportError.malformed("window closed") }
                     if let store = self.context.profileContexts.existingContext(for: profileId)?.history { return store }
-                    return HistoryStore(dbPool: try self.context.dbManager.pool(for: profileId))
+                    return HistoryStore(dbPool: try dbManager.pool(for: profileId))
                 },
                 faviconStore: { [weak self] profileId in
-                    guard let self else { throw ImportError.malformed("window closed") }
-                    return FaviconStore(dbPool: try self.context.dbManager.pool(for: profileId))
+                    guard self != nil else { throw ImportError.malformed("window closed") }
+                    return FaviconStore(dbPool: try dbManager.pool(for: profileId))
                 },
                 setCookies: { [weak self] cookies, profileId in
-                    guard let self else { return }
-                    let store = self.context.profileManager.dataStore(for: profileId).backingStore.httpCookieStore
+                    guard self != nil else { return }
+                    let store = profileManager.dataStore(for: profileId).backingStore.httpCookieStore
                     // All writes are queued at once; WebKit applies them in order and we wait for the last.
                     await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
                         let group = DispatchGroup()
@@ -607,7 +605,7 @@ extension MainWindowController {
                     let message = BridgeMessage(dictionary: ["action": "setSetting", "payload": ["key": "pinnedExtensions", "value": ids.joined(separator: ",")]])
                     if let message { _ = await settingsHandler.handle(message: message) }
                 },
-                otherBookmarksTitle: { String(format: "Other Bookmarks (%@)".localized, $0) },
+                otherBookmarksTitle: { unsafe String(format: "Other Bookmarks (%@)".localized, $0) },
                 warmFavicons: { [weak self] entries in
                     entries.forEach { self?.context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor) }
                 }
@@ -616,7 +614,7 @@ extension MainWindowController {
         // As in Chrome, a revoked permission stops what the origin's pages in this profile use: capture, location watches.
         settingsHandler.onSitePermissionRevoked = { [weak self] origin, type in
             guard let self, let profileId = profileContext?.profileId else { return }
-            let dataStore = context.profileManager.dataStore(for: profileId).backingStore
+            let dataStore = profileManager.dataStore(for: profileId).backingStore
             if type == "location" { return context.engineFactory.revokeGeolocation(origin: origin, in: dataStore) }
             for tabId in context.browserState.allTabIds() {
                 guard let webView = context.browserState.liveEngine(forTab: tabId)?.wkWebView, webView.configuration.websiteDataStore === dataStore,
@@ -627,7 +625,7 @@ extension MainWindowController {
             }
         }
         settingsHandler.onHistoryCleared = { [weak self] cutoff in
-            guard let self, let profileId = profileContext?.profileId, let spaceManager = context.spaceManager else { return }
+            guard let self, let profileId = profileContext?.profileId else { return }
             context.recentlyClosed.removePages(closedSince: cutoff) { spaceManager.space(with: $0)?.profileId == profileId }
         }
         settingsHandler.onZoomLevelReset = { [weak self] host in
@@ -636,7 +634,7 @@ extension MainWindowController {
             engine.setPageZoom(settingsStore.defaultZoom)
             bridgeRouter.send(event: "zoomChanged", data: ["level": settingsStore.defaultZoom])
         }
-        let deviceSetup = context.deviceSetupController
+        let deviceSetup = context.deviceSetupController(settingsStore: settingsStore)
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
         settingsHandler.onFolderAutoLockChanged = { [weak self] in self?.context.folderAutoLock.limitDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
@@ -726,9 +724,9 @@ extension MainWindowController {
                         guard response == .OK, let url = panel.url else { return }
                         do {
                             try data.write(to: url)
-                            self?.bridgeRouter?.send(event: "screenshotSaved", data: ["path": url.path])
+                            self?.bridgeRouter.send(event: "screenshotSaved", data: ["path": url.path])
                         } catch {
-                            self?.bridgeRouter?.send(
+                            unsafe self?.bridgeRouter.send(
                                 event: "screenshotError",
                                 data: ["message": String(format: "Could not save the screenshot: %@".localized, error.localizedDescription)]
                             )
@@ -742,10 +740,10 @@ extension MainWindowController {
                 NSPasteboard.general.setData(data, forType: .png)
             },
             onSaved: { [weak self] path in
-                self?.bridgeRouter?.send(event: "screenshotSaved", data: ["path": path])
+                self?.bridgeRouter.send(event: "screenshotSaved", data: ["path": path])
             },
             onError: { [weak self] message in
-                self?.bridgeRouter?.send(event: "screenshotError", data: ["message": message])
+                self?.bridgeRouter.send(event: "screenshotError", data: ["message": message])
             },
             capture: { ChromeUISchemeHandler.screenshot(id: $0) },
             discardCapture: { ChromeUISchemeHandler.discardScreenshot(id: $0) }
@@ -826,8 +824,10 @@ extension MainWindowController {
             data["spaces"] = spaceManager.spaces.map(\.bridgeData)
             data["activeSpaceId"] = tabManager.currentSpaceId?.uuidString ?? ""
         }
-        data["profiles"] = context.profileManager.profiles.map(\.bridgeData)
-        data["activeProfileId"] = context.profileManager.activeProfileId?.uuidString ?? ""
+        if let profileManager = context.profileManager {
+            data["profiles"] = profileManager.profiles.map(\.bridgeData)
+            data["activeProfileId"] = profileManager.activeProfileId?.uuidString ?? ""
+        }
         data["extensions"] = profileContext?.extensions.extensionBridgePayloads(activeTab: tabManager.activeOpenTabId.flatMap { tabManager.tabAdapter(for: $0) }) ?? []
         data["tracingEnabled"] = StartupMetrics.tracingEnabled
         return data
@@ -1033,7 +1033,9 @@ extension MainWindowController {
         StartupMetrics.markOnce("firstContentViewShown")
         // An agent tab may live in another profile than this window's: its zoom stays what the agent measures with.
         if !engine.isAgentControlled {
-            profileContext?.zoom.applyZoom(to: engine, forURL: engine.currentURL, default: context.settingsStore.defaultZoom)
+            if let settingsStore = context.settingsStore {
+            profileContext?.zoom.applyZoom(to: engine, forURL: engine.currentURL, default: settingsStore.defaultZoom)
+        }
         }
     }
 
@@ -1050,7 +1052,7 @@ extension MainWindowController {
             placeDocumentPiP()
             return false
         }
-        guard context.settingsStore.autoPictureInPicture else { return false }
+        guard context.settingsStore?.autoPictureInPicture == true else { return false }
         if engine.isInCall, engine.callControls.hasPictureInPictureAction, !engine.shouldRetainForWebInspector {
             autoEnterDocumentPiP(engine)
             return false
@@ -1120,18 +1122,18 @@ extension MainWindowController {
 // Relayed by the browser context, which is the single ProfileManager delegate.
 extension MainWindowController {
     func profileWasCreated(_ profile: Profile) {
-        bridgeRouter?.send(event: "profileCreated", data: profile.bridgeData)
+        bridgeRouter.send(event: "profileCreated", data: profile.bridgeData)
     }
 
     func profileWasDeleted(_ profile: Profile) {
-        bridgeRouter?.send(event: "profileDeleted", data: ["id": profile.id.uuidString])
+        bridgeRouter.send(event: "profileDeleted", data: ["id": profile.id.uuidString])
     }
 
     func profileWasUpdated(_ profile: Profile) {
-        bridgeRouter?.send(event: "profileUpdated", data: profile.bridgeData)
+        bridgeRouter.send(event: "profileUpdated", data: profile.bridgeData)
     }
 
     func profileWasActivated(_ id: UUID) {
-        bridgeRouter?.send(event: "profileActivated", data: ["id": id.uuidString])
+        bridgeRouter.send(event: "profileActivated", data: ["id": id.uuidString])
     }
 }

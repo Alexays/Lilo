@@ -6,7 +6,7 @@ import Synchronization
 /// A shell on a pty, parsed by libghostty-vt. A gather thread drains the pty into a ring of
 /// buffers, a parse thread feeds the terminal, and a serial queue writes input.
 /// Owners must call `terminate()`: the threads keep the session alive until the shell is gone.
-final class TerminalSession: @unchecked Sendable {
+@safe final class TerminalSession: @unchecked Sendable {
     enum State: String, Sendable {
         case idle, busy, succeeded, failed, exited
     }
@@ -131,27 +131,27 @@ final class TerminalSession: @unchecked Sendable {
     ) {
         self.initialCommand = initialCommand
         self.prefillCommand = prefillCommand
-        let account = getpwuid(getuid())
-        let shell = account.map { String(cString: $0.pointee.pw_shell) } ?? "/bin/zsh"
+        let account = unsafe getpwuid(getuid())
+        let shell = unsafe account.map { unsafe String(cString: $0.pointee.pw_shell) } ?? "/bin/zsh"
         reportsExitCode = command != nil
         if let command {
             self.command = command
         } else {
-            let user = account.map { String(cString: $0.pointee.pw_name) } ?? NSUserName()
+            let user = unsafe account.map { unsafe String(cString: $0.pointee.pw_name) } ?? NSUserName()
             // login records the session and keeps our environment (-p) and cwd (-l); bash then
             // replaces itself with the user's shell as a login shell.
             self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c", "exec -l '\(shell)'"]
         }
         shellName = URL(fileURLWithPath: command?.first ?? shell).lastPathComponent
         var isDirectory: ObjCBool = false
-        initialCwd = FileManager.default.fileExists(atPath: cwd, isDirectory: &isDirectory) && isDirectory.boolValue
+        initialCwd = unsafe FileManager.default.fileExists(atPath: cwd, isDirectory: &isDirectory) && isDirectory.boolValue
             ? cwd : NSHomeDirectory()
         windowSize = winsize(ws_row: rows, ws_col: cols, ws_xpixel: 0, ws_ypixel: 0)
         for _ in 0..<Self.slotCount { freeSlots.signal() }
         restoredContent = restored != nil
         terminal = restored ?? VTTerminal(cols: cols, rows: rows, scrollbackBytes: scrollbackBytes)
         compressionActivity.store(terminal.compressionActivity, ordering: .relaxed)
-        terminal.onWritePty = { [unowned self] bytes in send(Array(bytes)) }
+        unsafe terminal.onWritePty = { [unowned self] bytes in unsafe send(Array(bytes)) }
         terminal.onTitleChanged = { [unowned self] in
             // Agents lead their title with a spinner frame: without it, the status changes only
             // when the text does.
@@ -207,8 +207,8 @@ final class TerminalSession: @unchecked Sendable {
     }
 
     deinit {
-        ring.deallocate()
-        slotLengths.deallocate()
+        unsafe ring.deallocate()
+        unsafe slotLengths.deallocate()
     }
 
     var status: Status { statusLock.withLock { $0 } }
@@ -220,31 +220,31 @@ final class TerminalSession: @unchecked Sendable {
     /// Call once, on the main thread; later calls do nothing.
     func start() throws {
         guard pid == 0 else { return }
-        var spawnAttributes = posix_spawnattr_t(bitPattern: 0)
-        posix_spawnattr_init(&spawnAttributes)
-        defer { posix_spawnattr_destroy(&spawnAttributes) }
+        var spawnAttributes = unsafe posix_spawnattr_t(bitPattern: 0)
+        unsafe posix_spawnattr_init(&spawnAttributes)
+        defer { unsafe posix_spawnattr_destroy(&spawnAttributes) }
         // SETEXEC turns the forked child into the program in one call, so nothing allocates after fork.
-        posix_spawnattr_setflags(&spawnAttributes, Int16(POSIX_SPAWN_SETEXEC | POSIX_SPAWN_CLOEXEC_DEFAULT | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK))
+        unsafe posix_spawnattr_setflags(&spawnAttributes, Int16(POSIX_SPAWN_SETEXEC | POSIX_SPAWN_CLOEXEC_DEFAULT | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK))
         var defaultSignals = sigset_t()
-        sigfillset(&defaultSignals)
-        posix_spawnattr_setsigdefault(&spawnAttributes, &defaultSignals)
+        unsafe sigfillset(&defaultSignals)
+        unsafe posix_spawnattr_setsigdefault(&spawnAttributes, &defaultSignals)
         var noSignals = sigset_t()
-        sigemptyset(&noSignals)
-        posix_spawnattr_setsigmask(&spawnAttributes, &noSignals)
+        unsafe sigemptyset(&noSignals)
+        unsafe posix_spawnattr_setsigmask(&spawnAttributes, &noSignals)
 
-        var actions = posix_spawn_file_actions_t(bitPattern: 0)
-        posix_spawn_file_actions_init(&actions)
-        defer { posix_spawn_file_actions_destroy(&actions) }
+        var actions = unsafe posix_spawn_file_actions_t(bitPattern: 0)
+        unsafe posix_spawn_file_actions_init(&actions)
+        defer { unsafe posix_spawn_file_actions_destroy(&actions) }
         // forkpty wires the tty to 0, 1 and 2; CLOEXEC_DEFAULT closes every other inherited fd.
-        for fd: Int32 in 0...2 { posix_spawn_file_actions_addinherit_np(&actions, fd) }
-        posix_spawn_file_actions_addchdir(&actions, initialCwd)
+        for fd: Int32 in 0...2 { unsafe posix_spawn_file_actions_addinherit_np(&actions, fd) }
+        unsafe posix_spawn_file_actions_addchdir(&actions, initialCwd)
 
-        let argv = command.map { strdup($0) } + [nil]
-        let envp = environment().map { strdup($0) } + [nil]
-        defer { (argv + envp).forEach { free($0) } }
-        guard pipe(&quitPipe) == 0 else { throw Self.posixError(errno) }
+        let argv = unsafe command.map { unsafe strdup($0) } + [nil]
+        let envp = unsafe environment().map { unsafe strdup($0) } + [nil]
+        defer { unsafe (argv + envp).forEach { unsafe free($0) } }
+        guard unsafe pipe(&quitPipe) == 0 else { throw Self.posixError(errno) }
         var execPipe: [Int32] = [-1, -1]
-        guard pipe(&execPipe) == 0 else {
+        guard unsafe pipe(&execPipe) == 0 else {
             let error = errno
             quitPipe.forEach { close($0) }
             throw Self.posixError(error)
@@ -255,9 +255,9 @@ final class TerminalSession: @unchecked Sendable {
         // posix_spawn alone cannot give the child a controlling tty (setsid, then TIOCSCTTY), so
         // forkpty does that in the child before it execs.
         var pty: Int32 = -1
-        let child = forkpty(&pty, nil, nil, &windowSize)
+        let child = unsafe forkpty(&pty, nil, nil, &windowSize)
         if child == 0 {
-            posix_spawn(nil, argv[0], &actions, &spawnAttributes, argv, envp)
+            unsafe posix_spawn(nil, argv[0], &actions, &spawnAttributes, argv, envp)
             _exit(127)
         }
         let error = errno
@@ -265,7 +265,7 @@ final class TerminalSession: @unchecked Sendable {
         // so closing the pty hangs up no one. Its exec closes the pipe's last write end.
         close(execPipe[1])
         var byte: UInt8 = 0
-        while read(execPipe[0], &byte, 1) < 0, errno == EINTR {}
+        while unsafe read(execPipe[0], &byte, 1) < 0, errno == EINTR {}
         close(execPipe[0])
         guard child > 0 else {
             close(quitPipe[0])
@@ -273,9 +273,9 @@ final class TerminalSession: @unchecked Sendable {
             throw Self.posixError(error)
         }
         var attributes = termios()
-        tcgetattr(pty, &attributes)
+        unsafe tcgetattr(pty, &attributes)
         attributes.c_iflag |= tcflag_t(IUTF8)
-        tcsetattr(pty, TCSANOW, &attributes)
+        unsafe tcsetattr(pty, TCSANOW, &attributes)
         _ = fcntl(pty, F_SETFD, FD_CLOEXEC)
         _ = fcntl(pty, F_SETFL, fcntl(pty, F_GETFL) | O_NONBLOCK)
         let fd = pty
@@ -288,7 +288,7 @@ final class TerminalSession: @unchecked Sendable {
             let reset = "\u{1b}[?1049l\u{1b}[<99u\u{1b}[!p\u{1b}[?1000l\u{1b}[?1002l\u{1b}[?1003l\u{1b}[?1006l\u{1b}[?1004l\u{1b}[?2004l\r\n\u{1b}[2m"
                 + "Restored from the last session".localized + "\u{1b}[0m\r\n"
             let bytes = Array(reset.utf8)
-            withLockedTerminal { terminal in bytes.withUnsafeBytes { terminal.write($0) } }
+            withLockedTerminal { terminal in bytes.withUnsafeBytes { unsafe terminal.write($0) } }
         }
 
         let source = DispatchSource.makeProcessSource(identifier: child, eventMask: .exit, queue: .main)
@@ -297,8 +297,8 @@ final class TerminalSession: @unchecked Sendable {
             // The exit event can come a moment before the child is waitable: that wait blocks off the main thread,
             // which still reaps, so the pid never names another process while the session holds it.
             DispatchQueue.global(qos: .userInitiated).async { [self] in
-                var info = siginfo_t()
-                while waitid(P_PID, id_t(child), &info, WEXITED | WNOWAIT) < 0, errno == EINTR {}
+                var info = unsafe siginfo_t()
+                while unsafe waitid(P_PID, id_t(child), &info, WEXITED | WNOWAIT) < 0, errno == EINTR {}
                 DispatchQueue.main.async { [self] in reapChild() }
             }
         }
@@ -378,12 +378,12 @@ final class TerminalSession: @unchecked Sendable {
         writeQueue.async { [self] in
             var offset = 0
             while offset < bytes.count, ptyFD >= 0, !terminated.load(ordering: .relaxed) {
-                let count = bytes.withUnsafeBytes { Darwin.write(ptyFD, $0.baseAddress! + offset, bytes.count - offset) }
+                let count = bytes.withUnsafeBytes { unsafe Darwin.write(ptyFD, $0.baseAddress.map { unsafe $0 + offset }, bytes.count - offset) }
                 if count > 0 {
                     offset += count
                 } else if count < 0, errno == EAGAIN {
                     var output = pollfd(fd: ptyFD, events: Int16(POLLOUT), revents: 0)
-                    _ = poll(&output, 1, 100)
+                    _ = unsafe poll(&output, 1, 100)
                 } else if count >= 0 || errno != EINTR {
                     return
                 }
@@ -402,7 +402,7 @@ final class TerminalSession: @unchecked Sendable {
         let size = windowSize
         writeQueue.async { [self] in
             var size = size
-            if ptyFD >= 0 { _ = ioctl(ptyFD, TIOCSWINSZ, &size) }
+            if ptyFD >= 0 { _ = unsafe ioctl(ptyFD, TIOCSWINSZ, &size) }
         }
     }
 
@@ -426,7 +426,7 @@ final class TerminalSession: @unchecked Sendable {
         killUntilReaped()
         writeQueue.async { [self] in
             var byte: UInt8 = 0
-            if quitPipe[1] >= 0 { _ = Darwin.write(quitPipe[1], &byte, 1) }
+            if quitPipe[1] >= 0 { _ = unsafe Darwin.write(quitPipe[1], &byte, 1) }
         }
     }
 
@@ -449,8 +449,8 @@ final class TerminalSession: @unchecked Sendable {
             guard group > 0, let process = Self.processName(group) else { return }
             var info = proc_vnodepathinfo()
             let infoSize = Int32(MemoryLayout<proc_vnodepathinfo>.size)
-            let cwd = proc_pidinfo(group, PROC_PIDVNODEPATHINFO, 0, &info, infoSize) == infoSize
-                ? withUnsafeBytes(of: &info.pvi_cdir.vip_path) { String(cString: $0.bindMemory(to: CChar.self).baseAddress!) }
+            let cwd = unsafe proc_pidinfo(group, PROC_PIDVNODEPATHINFO, 0, &info, infoSize) == infoSize
+                ? withUnsafeBytes(of: &info.pvi_cdir.vip_path) { unsafe $0.bindMemory(to: CChar.self).baseAddress.map { unsafe String(cString: $0) } }
                 : nil
             let isShell = process == shellName || process == "login"
             updateStatus { status in
@@ -470,25 +470,25 @@ final class TerminalSession: @unchecked Sendable {
     /// shells (ssh) reporting their own prompts, and the write queue can be stuck on a full pty.
     func foregroundProgram() -> String? {
         guard pid > 0, status.state != .exited else { return nil }
-        var info = kinfo_proc()
-        var size = MemoryLayout<kinfo_proc>.size
+        var info = unsafe kinfo_proc()
+        var size = unsafe MemoryLayout<kinfo_proc>.size
         var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
-        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return nil }
-        let group = info.kp_eproc.e_tpgid
+        guard unsafe sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return nil }
+        let group = unsafe info.kp_eproc.e_tpgid
         guard group > 0, group != pid else { return nil }
         // Under login, the shell is login's child; anything it runs is further down.
         if !reportsExitCode {
             mib[3] = group
-            size = MemoryLayout<kinfo_proc>.size
-            guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0, info.kp_eproc.e_ppid != pid else { return nil }
+            size = unsafe MemoryLayout<kinfo_proc>.size
+            guard unsafe sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0, unsafe info.kp_eproc.e_ppid != pid else { return nil }
         }
         return Self.processName(group)
     }
 
     private static func processName(_ pid: pid_t) -> String? {
         var name = [CChar](repeating: 0, count: 2 * Int(MAXCOMLEN) + 1)
-        guard proc_name(pid, &name, UInt32(name.count)) > 0 else { return nil }
-        return name.withUnsafeBufferPointer { String(cString: $0.baseAddress!) }
+        guard unsafe proc_name(pid, &name, UInt32(name.count)) > 0 else { return nil }
+        return name.withUnsafeBufferPointer { unsafe $0.baseAddress.map { unsafe String(cString: $0) } }
     }
 
     /// The line counts were read less than an interval ago.
@@ -574,7 +574,7 @@ final class TerminalSession: @unchecked Sendable {
             freeSlots.wait()
             fds[0].revents = 0
             fds[1].revents = 0
-            guard poll(&fds, 2, -1) >= 0 || errno == EINTR || errno == EAGAIN, fds[1].revents == 0 else { break }
+            guard unsafe poll(&fds, 2, -1) >= 0 || errno == EINTR || errno == EAGAIN, fds[1].revents == 0 else { break }
             let wanted = inBackground.load(ordering: .relaxed) ? QOS_CLASS_UTILITY
                 : focused.load(ordering: .relaxed) ? QOS_CLASS_USER_INTERACTIVE : QOS_CLASS_USER_INITIATED
             if wanted != qos {
@@ -582,12 +582,12 @@ final class TerminalSession: @unchecked Sendable {
                 pthread_set_qos_class_self_np(qos, 0)
             }
 
-            let buffer = ring + slot * Self.slotSize
+            let buffer = unsafe ring + slot * Self.slotSize
             var filled = 0
             var hangup = false
             let started = clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
             while filled < Self.slotSize {
-                let count = read(fd, buffer + filled, Self.slotSize - filled)
+                let count = unsafe read(fd, buffer + filled, Self.slotSize - filled)
                 if count > 0 {
                     filled += count
                     continue
@@ -601,17 +601,17 @@ final class TerminalSession: @unchecked Sendable {
                 let elapsed = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - started
                 if filled < 1024 || elapsed > 3_000_000 { break }
                 var input = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
-                _ = poll(&input, 1, Int32((3_000_000 - elapsed + 999_999) / 1_000_000))
+                _ = unsafe poll(&input, 1, Int32((3_000_000 - elapsed + 999_999) / 1_000_000))
             }
             if filled > 0 {
                 // Programs turn echo off before printing their password prompt, so output is when to look.
                 // A prompt ends a batch without a newline: lines of a flood skip the syscall, unless a password read may be ending.
                 var attributes = termios()
-                if filled < 1024 || buffer.load(fromByteOffset: filled - 1, as: UInt8.self) != 0x0A || readsPassword.load(ordering: .relaxed), tcgetattr(fd, &attributes) == 0 {
+                if unsafe filled < 1024 || buffer.load(fromByteOffset: filled - 1, as: UInt8.self) != 0x0A || readsPassword.load(ordering: .relaxed), unsafe tcgetattr(fd, &attributes) == 0 {
                     let secret = attributes.c_lflag & tcflag_t(ECHO) == 0 && attributes.c_lflag & tcflag_t(ICANON) != 0
                     if readsPassword.exchange(secret, ordering: .relaxed) != secret { updateStatus { $0.readsPassword = secret } }
                 }
-                slotLengths[slot] = filled
+                unsafe slotLengths[slot] = filled
                 filledSlots.signal()
                 slot = (slot + 1) % Self.slotCount
                 continue // A hangup shows up again on the next pass, after this batch is queued.
@@ -620,7 +620,7 @@ final class TerminalSession: @unchecked Sendable {
             freeSlots.signal()
         }
         // The slot taken at the top of the loop carries the end marker.
-        slotLengths[slot] = -1
+        unsafe slotLengths[slot] = -1
         filledSlots.signal()
     }
 
@@ -629,7 +629,7 @@ final class TerminalSession: @unchecked Sendable {
         var qos = QOS_CLASS_USER_INITIATED
         while true {
             filledSlots.wait()
-            let length = slotLengths[slot]
+            let length = unsafe slotLengths[slot]
             if length < 0 { break }
             let wanted = inBackground.load(ordering: .relaxed) ? QOS_CLASS_UTILITY
                 : focused.load(ordering: .relaxed) ? QOS_CLASS_USER_INTERACTIVE : QOS_CLASS_USER_INITIATED
@@ -637,9 +637,9 @@ final class TerminalSession: @unchecked Sendable {
                 qos = wanted
                 pthread_set_qos_class_self_np(qos, 0)
             }
-            let bytes = UnsafeRawBufferPointer(start: ring + slot * Self.slotSize, count: length)
+            let bytes = unsafe UnsafeRawBufferPointer(start: ring + slot * Self.slotSize, count: length)
             let (focusReport, pastesBracketed) = lock.withLockUnchecked {
-                terminal.write(bytes)
+                unsafe terminal.write(bytes)
                 tracksMouse.store(terminal.tracksMouse, ordering: .relaxed)
                 reportsKeyReleases.store(terminal.reportsKeyReleases, ordering: .relaxed)
                 compressionActivity.store(terminal.compressionActivity, ordering: .relaxed)
@@ -686,7 +686,7 @@ final class TerminalSession: @unchecked Sendable {
 
     private func reapChild() {
         var status: Int32 = 0
-        guard pid > 0, waitpid(pid, &status, WNOHANG) == pid else { return }
+        guard pid > 0, unsafe waitpid(pid, &status, WNOHANG) == pid else { return }
         processSource?.cancel()
         // Shell convention: 128 + signal number for a process killed by a signal.
         let signal = status & 0x7f

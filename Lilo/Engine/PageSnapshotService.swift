@@ -68,7 +68,7 @@ final class PageSnapshotService {
 
         // Display scale, unless that overruns the pixel budget, which leaves a page within the height
         // limit at 1x or better at common window widths.
-        var scale = webView.window?.backingScaleFactor ?? 2
+        var scale = unsafe webView.window?.backingScaleFactor ?? 2
         if width * height * scale * scale > Self.maxSnapshotPixels {
             scale = (Self.maxSnapshotPixels / (width * height)).squareRoot()
         }
@@ -154,7 +154,7 @@ final class PageSnapshotService {
     /// leak into the result at all; pre-filled because such a context starts out zeroed, i.e. black.
     private static func opaqueCanvas(width: Int, height: Int, backdrop: CGColor) -> CGContext? {
         guard width > 0, height > 0,
-              let canvas = CGContext(
+              let canvas = unsafe CGContext(
                   data: nil,
                   width: width,
                   height: height,
@@ -243,7 +243,7 @@ private final class RegionSelectionOverlay: NSView {
         guard let hit = super.hitTest(point) else { return nil }
         // WebKit only passes a move on to the page when this hit test lands inside the web view: landing outside keeps
         // hover and cursor changes off the page under the overlay, as when the overlay was a page element.
-        if let type = NSApp.currentEvent?.type, type == .mouseMoved || type == .mouseEntered { return window?.contentView }
+        if let type = NSApp.currentEvent?.type, type == .mouseMoved || type == .mouseEntered { return unsafe window?.contentView }
         return hit
     }
 
@@ -266,14 +266,14 @@ private final class RegionSelectionOverlay: NSView {
             finish(nil)
             return
         }
-        guard window != nil else { return }
+        guard unsafe window != nil else { return }
         // A monitor, as key focus is usually in the chrome; an IME composition keeps its Escape.
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard event.keyCode == 53 else { return event }
             let eventWindow = event.window
             let cancelled = MainActor.assumeIsolated {
-                guard let self, eventWindow === self.window,
-                      (self.window?.firstResponder as? NSTextInputClient)?.hasMarkedText() != true else { return false }
+                guard let self, unsafe eventWindow === self.window,
+                      unsafe (self.window?.firstResponder as? NSTextInputClient)?.hasMarkedText() != true else { return false }
                 self.finish(nil)
                 return true
             }
@@ -415,6 +415,6 @@ extension NSImage {
     /// The bitmap a WebKit snapshot holds: `cgImage(forProposedRect:)` redraws it for the screen,
     /// a half-float copy in the display profile on an EDR screen that costs ~16 ms at 1080p.
     var snapshotPixels: CGImage? {
-        representations.first?.cgImage(forProposedRect: nil, context: nil, hints: nil) ?? cgImage(forProposedRect: nil, context: nil, hints: nil)
+        unsafe representations.first?.cgImage(forProposedRect: nil, context: nil, hints: nil) ?? cgImage(forProposedRect: nil, context: nil, hints: nil)
     }
 }

@@ -21,6 +21,7 @@ Rules for coding agents (and humans) working in Lilo. Bias toward small, KISS ch
 - **Comments** only for what the code cannot say: a constraint, a non-obvious why, a deliberate oddity. Never restate the next line or record history. Code, comments and commit messages are in English; user-facing copy is translated.
 - **No real user data** in tests, fixtures, docs, commits or release notes: a URL, page title, folder name or account seen while debugging is replaced by a made-up equivalent (`example.com` hosts, generic names) that reproduces the same case.
 - **Commits** follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) (`fix(sidebar): ...`), one logical change each.
+- **The WebKit fork is optional.** Lilo is built for the WebKit that ships with macOS, and every feature works on it alone: the fork only brings engine bug and performance fixes early, and runs only while it holds every security fix of the installed macOS. Never build on an API or behavior only the fork has. See [docs/WEBKIT_FORK.md](docs/WEBKIT_FORK.md).
 - One web engine (WebKit), direct dependencies only. Terminal tabs use libghostty-vt from a pinned Ghostty commit: `make vt-build` downloads it prebuilt and checksum-pinned, `make vt-build-source` compiles it with Zig.
 
 ## Gotchas

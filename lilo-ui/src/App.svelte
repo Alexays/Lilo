@@ -2,6 +2,7 @@
   import { setThemeContext } from "./stores/theme.svelte";
   import { onMount, untrack } from "svelte";
   import Sidebar from "./components/sidebar/Sidebar.svelte";
+  import ErrorBoundary from "./components/ui/ErrorBoundary.svelte";
   import SplitDropZone from "./components/page/SplitDropZone.svelte";
   import { chromeActions } from "./lib/bridge/actions";
   import {
@@ -358,6 +359,7 @@
 
   <SplitDropZone />
 
+  <ErrorBoundary>
   {#if !isVerticalLayout()}
     <!-- Loaded on demand: the default left layout's first paint carries none of it. -->
     {#await import("./components/strip/StripHost.svelte") then host}
@@ -391,6 +393,7 @@
     {/if}
   </div>
   {/if}
+  </ErrorBoundary>
 
   <!-- Always mounted; active prop + CSS visibility controlled by sidebar mode -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->

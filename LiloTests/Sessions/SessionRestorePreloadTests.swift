@@ -173,7 +173,6 @@ final class SessionRestorePreloadTests: XCTestCase {
 
     private func makeWindow(_ browserContext: TemporaryBrowserContext) -> MainWindowController {
         let window = MainWindowController(context: browserContext.context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         window.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         return window
     }
@@ -182,11 +181,11 @@ final class SessionRestorePreloadTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let shown = try context.spaceManager.createSpace(name: "Shown", profileId: profileId)
-        let hidden = try context.spaceManager.createSpace(name: "Hidden", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let shown = try context.spaceManager!.createSpace(name: "Shown", profileId: profileId)
+        let hidden = try context.spaceManager!.createSpace(name: "Hidden", profileId: profileId)
         let tabId = UUID()
-        let pool = try context.dbManager.pool(for: profileId)
+        let pool = try context.dbManager!.pool(for: profileId)
         try SpaceTabStateStore(dbPool: pool).saveMany([(spaceId: hidden.id, state: SpaceTabState(
             activeTabId: tabId,
             activationHistory: [],
@@ -213,10 +212,10 @@ final class SessionRestorePreloadTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let kept = try context.spaceManager.createSpace(name: "Kept", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let kept = try context.spaceManager!.createSpace(name: "Kept", profileId: profileId)
         let gone = UUID()
-        let pool = try context.dbManager.pool(for: profileId)
+        let pool = try context.dbManager!.pool(for: profileId)
         let store = SpaceTabStateStore(dbPool: pool)
         let empty = SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)
         try store.saveMany([(spaceId: kept.id, state: empty), (spaceId: gone, state: empty)])
@@ -233,10 +232,10 @@ final class SessionRestorePreloadTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let left = try context.spaceManager.createSpace(name: "Left", profileId: profileId)
-        let next = try context.spaceManager.createSpace(name: "Next", profileId: profileId)
-        let pool = try context.dbManager.pool(for: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let left = try context.spaceManager!.createSpace(name: "Left", profileId: profileId)
+        let next = try context.spaceManager!.createSpace(name: "Next", profileId: profileId)
+        let pool = try context.dbManager!.pool(for: profileId)
         let store = InteractionStateStore(dbPool: pool)
         let window = makeWindow(browserContext)
         window.switchToSpace(left.id)
@@ -262,9 +261,9 @@ final class SessionRestorePreloadTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        _ = try context.spaceManager.createSpace(name: "S", profileId: profileId)
-        context.settingsStore.sessionCleanShutdown = false
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        _ = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
+        context.settingsStore!.sessionCleanShutdown = false
         let window = makeWindow(browserContext)
         let recorder = BridgeEventRecorder(window.bridgeRouter)
 
@@ -280,8 +279,8 @@ final class SessionRestorePreloadTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-snapshots-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }

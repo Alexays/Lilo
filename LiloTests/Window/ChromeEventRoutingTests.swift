@@ -171,7 +171,6 @@ private struct PositionalHarness {
 @MainActor
 private func makeHarness() -> PositionalHarness {
     let controller = MainWindowController()
-    controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
     let host = controller.window!.contentView!
     let content = TestContentEventView(frame: host.bounds)
     host.addSubview(content)

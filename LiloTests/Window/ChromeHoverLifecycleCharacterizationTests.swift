@@ -21,7 +21,6 @@ final class ChromeHoverLifecycleCharacterizationTests: XCTestCase {
 
     func testHoverEntryThenExitTogglesInteractiveState() {
         let controller = MainWindowController()
-        controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
         let chromeFrame = NSRect(x: 0, y: 0, width: 400, height: 200)
         controller.chromeWebView.frame = chromeFrame
         // The classifier converts via chromeWebView.convert(_, from: nil), which needs the overlay in the window hierarchy.

@@ -13,9 +13,9 @@ final class RecentTabsTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        work = try context.spaceManager.createSpace(name: "Work", profileId: profileId)
-        play = try context.spaceManager.createSpace(name: "Play", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        work = try context.spaceManager!.createSpace(name: "Work", profileId: profileId)
+        play = try context.spaceManager!.createSpace(name: "Play", profileId: profileId)
     }
 
     override func tearDown() {
@@ -27,7 +27,6 @@ final class RecentTabsTests: XCTestCase {
 
     private func makeWindow() -> MainWindowController {
         let window = MainWindowController(context: browserContext.context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         window.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         browserContext.context.windows.add(window)
         return window
@@ -101,9 +100,9 @@ final class RecentTabsTests: XCTestCase {
     func testClosedTabsAndPrivateAndAgentsSpacesAreLeftOut() throws {
         let window = makeWindow()
         let context = browserContext.context
-        let agents = try context.spaceManager.createSpace(name: "Agents", profileId: work.profileId)
+        let agents = try context.spaceManager!.createSpace(name: "Agents", profileId: work.profileId)
         context.settingsStore?.set(AgentControl.agentsSpaceKey, value: agents.id.uuidString)
-        let secret = try context.spaceManager.createSpace(name: "Private", profileId: work.profileId, isPrivate: true)
+        let secret = try context.spaceManager!.createSpace(name: "Private", profileId: work.profileId, isPrivate: true)
         window.switchToSpace(agents.id)
         let agentTab = try openTab("agent", in: window)
         window.switchToSpace(secret.id)

@@ -14,7 +14,7 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
         guard let pool = (NSClassFromString("WKProcessPool") as? NSObject.Type)?.init() else { return }
         for name in ["_registerURLSchemeAsSecure:", "_registerURLSchemeAsBypassingContentSecurityPolicy:"] {
             let selector = NSSelectorFromString(name)
-            if pool.responds(to: selector) { pool.perform(selector, with: scheme) }
+            if pool.responds(to: selector) { unsafe pool.perform(selector, with: scheme) }
         }
     }()
 
@@ -62,12 +62,12 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
     // so a stopped task is never answered (WKURLSchemeTask raises on that).
     nonisolated func webView(_ webView: WKWebView, start urlSchemeTask: any WKURLSchemeTask) {
         nonisolated(unsafe) let urlSchemeTask = urlSchemeTask
-        MainActor.assumeIsolated { start(urlSchemeTask, webView: webView) }
+        MainActor.assumeIsolated { unsafe start(urlSchemeTask, webView: webView) }
     }
 
     nonisolated func webView(_ webView: WKWebView, stop urlSchemeTask: any WKURLSchemeTask) {
         nonisolated(unsafe) let urlSchemeTask = urlSchemeTask
-        MainActor.assumeIsolated { _ = waiters.removeValue(forKey: ObjectIdentifier(urlSchemeTask)) }
+        MainActor.assumeIsolated { _ = unsafe waiters.removeValue(forKey: ObjectIdentifier(urlSchemeTask)) }
     }
 
     private func start(_ task: any WKURLSchemeTask, webView: WKWebView) {

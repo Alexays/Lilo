@@ -157,7 +157,8 @@ final class TerminalFrameBuilder {
         func copy(_ row: [GlyphInstance]) {
             guard written + row.count <= capacity else { return }
             row.withUnsafeBufferPointer { source in
-                (destination + written).update(from: source.baseAddress!, count: source.count)
+                guard let base = source.baseAddress else { return }
+                unsafe (destination + written).update(from: base, count: source.count)
             }
             written += row.count
         }
@@ -208,18 +209,18 @@ final class TerminalFrameBuilder {
                 instances.append(solid(column: x, slot: slot, top: lineTop, width: font.cellWidth * span, height: font.lineThickness, color: color))
             }
 
-            let codepoints = cell.codepoints
+            let codepoints = unsafe cell.codepoints
             let face = (cell.bold ? 1 : 0) | (cell.italic ? 2 : 0)
             let isCursorCell = x == blockCursorX
             // A space draws nothing and no ligature crosses one: ending the run there keeps shaping
             // per word, so a ticking counter reshapes itself, not its whole line.
-            guard !codepoints.isEmpty, codepoints.count > 1 || codepoints[0] != 0x20, !cell.invisible else {
+            guard !codepoints.isEmpty, unsafe codepoints.count > 1 || codepoints[0] != 0x20, !cell.invisible else {
                 flushRun(slot: slot, into: &instances, cursorX: blockCursorX)
                 return
             }
-            if codepoints.count == 1, GlyphAtlas.isSprite(codepoints[0]) {
+            if codepoints.count == 1, unsafe GlyphAtlas.isSprite(codepoints[0]) {
                 flushRun(slot: slot, into: &instances, cursorX: blockCursorX)
-                if let sprite = atlas.sprite(
+                if let sprite = unsafe atlas.sprite(
                     codepoints[0], cellWidth: font.cellWidth, cellHeight: font.cellHeight,
                     baseline: font.baseline, thickness: font.lineThickness
                 ) {
@@ -238,7 +239,7 @@ final class TerminalFrameBuilder {
                 runColors.removeAll(keepingCapacity: true)
                 runWide.removeAll(keepingCapacity: true)
             }
-            runKey.append(contentsOf: codepoints)
+            unsafe runKey.append(contentsOf: codepoints)
             runKey.append(span == 2 ? RunShaper.wideCellEnd : RunShaper.narrowCellEnd)
             runColors.append(color)
             runWide.append(span == 2)

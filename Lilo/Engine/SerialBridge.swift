@@ -130,18 +130,18 @@ final class SerialBridge: NSObject, WKScriptMessageHandlerWithReply {
     // MARK: - System devices and picker
 
     nonisolated static func systemDevices() -> [Device] {
-        guard let matching = IOServiceMatching(kIOSerialBSDServiceValue) as NSMutableDictionary? else { return [] }
+        guard let matching = unsafe IOServiceMatching(kIOSerialBSDServiceValue) as NSMutableDictionary? else { return [] }
         matching[kIOSerialBSDTypeKey] = kIOSerialBSDAllTypes
         var iterator: io_iterator_t = 0
-        guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator) == KERN_SUCCESS else { return [] }
+        guard unsafe IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator) == KERN_SUCCESS else { return [] }
         defer { IOObjectRelease(iterator) }
         var devices: [Device] = []
         while case let service = IOIteratorNext(iterator), service != 0 {
             defer { IOObjectRelease(service) }
-            guard let path = IORegistryEntryCreateCFProperty(service, kIOCalloutDeviceKey as CFString, kCFAllocatorDefault, 0)?
+            guard let path = unsafe IORegistryEntryCreateCFProperty(service, kIOCalloutDeviceKey as CFString, kCFAllocatorDefault, 0)?
                 .takeRetainedValue() as? String else { continue }
             func parentProperty(_ key: String) -> Any? {
-                IORegistryEntrySearchCFProperty(service, kIOServicePlane, key as CFString, kCFAllocatorDefault,
+                unsafe IORegistryEntrySearchCFProperty(service, kIOServicePlane, key as CFString, kCFAllocatorDefault,
                                                 IOOptionBits(kIORegistryIterateRecursively | kIORegistryIterateParents))
             }
             let name = parentProperty("USB Product Name") as? String ?? parentProperty("kUSBProductString") as? String
@@ -152,9 +152,9 @@ final class SerialBridge: NSObject, WKScriptMessageHandlerWithReply {
     }
 
     static func presentPicker(devices: [Device], host: String, webView: WKWebView) async -> Device? {
-        guard let window = webView.window else { return nil }
+        guard let window = unsafe webView.window else { return nil }
         let alert = NSAlert()
-        alert.messageText = String(format: "%@ wants to connect to a serial port".localized, host)
+        alert.messageText = unsafe String(format: "%@ wants to connect to a serial port".localized, host)
         guard !devices.isEmpty else {
             alert.informativeText = "No compatible devices found.".localized
             alert.addButton(withTitle: "OK".localized)
@@ -180,7 +180,7 @@ final class SerialConnection: @unchecked Sendable {
         case open(Int32), configure(Int32)
         var errorDescription: String? {
             switch self {
-            case let .open(code), let .configure(code): String(cString: strerror(code))
+            case let .open(code), let .configure(code): unsafe String(cString: strerror(code))
             }
         }
     }
@@ -200,7 +200,7 @@ final class SerialConnection: @unchecked Sendable {
 
     init(path: String, options: [String: Any]) throws {
         // Non-blocking open: a port without carrier would otherwise hang here.
-        fd = Darwin.open(path, O_RDWR | O_NOCTTY | O_NONBLOCK)
+        fd = unsafe Darwin.open(path, O_RDWR | O_NOCTTY | O_NONBLOCK)
         guard fd >= 0 else { throw Failure.open(errno) }
         do { try configure(options) } catch {
             Darwin.close(fd)
@@ -211,8 +211,8 @@ final class SerialConnection: @unchecked Sendable {
     private func configure(_ options: [String: Any]) throws {
         _ = fcntl(fd, F_SETFL, 0)
         var settings = termios()
-        guard tcgetattr(fd, &settings) == 0 else { throw Failure.configure(errno) }
-        cfmakeraw(&settings)
+        guard unsafe tcgetattr(fd, &settings) == 0 else { throw Failure.configure(errno) }
+        unsafe cfmakeraw(&settings)
         settings.c_cflag |= tcflag_t(CREAD | CLOCAL)
         settings.c_cflag &= ~tcflag_t(CSIZE)
         settings.c_cflag |= tcflag_t((options["dataBits"] as? Int) == 7 ? CS7 : CS8)
@@ -228,15 +228,15 @@ final class SerialConnection: @unchecked Sendable {
             settings.c_cflag &= ~tcflag_t(CRTSCTS)
         }
         let baudRate = speed_t(options["baudRate"] as? Int ?? 9600)
-        cfsetspeed(&settings, baudRate)
-        guard tcsetattr(fd, TCSANOW, &settings) == 0 else {
+        unsafe cfsetspeed(&settings, baudRate)
+        guard unsafe tcsetattr(fd, TCSANOW, &settings) == 0 else {
             // Drivers that refuse a non-standard rate in termios take it through IOSSIOSPEED.
-            cfsetspeed(&settings, speed_t(B9600))
-            guard tcsetattr(fd, TCSANOW, &settings) == 0 else { throw Failure.configure(errno) }
+            unsafe cfsetspeed(&settings, speed_t(B9600))
+            guard unsafe tcsetattr(fd, TCSANOW, &settings) == 0 else { throw Failure.configure(errno) }
             var speed = baudRate
             // IOSSIOSPEED from IOKit/serial/ioss.h, a macro Swift does not import.
             let ioSSIOSpeed: UInt = 0x8008_5402
-            guard withUnsafeMutablePointer(to: &speed, { ioctl(fd, ioSSIOSpeed, $0) }) == 0 else { throw Failure.configure(errno) }
+            guard withUnsafeMutablePointer(to: &speed, { unsafe ioctl(fd, ioSSIOSpeed, $0) }) == 0 else { throw Failure.configure(errno) }
             return
         }
     }
@@ -245,7 +245,7 @@ final class SerialConnection: @unchecked Sendable {
         let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: queue)
         source.setEventHandler { [weak self] in
             guard let self else { return }
-            let count = read(fd, &readBuffer, Self.readChunk)
+            let count = unsafe read(fd, &readBuffer, Self.readChunk)
             guard count > 0 else {
                 // EOF or an error such as ENXIO: the device went away.
                 self.close()
@@ -274,10 +274,10 @@ final class SerialConnection: @unchecked Sendable {
         await withCheckedContinuation { continuation in
             queue.async { [self] in
                 guard !isClosed else { return continuation.resume(returning: false) }
-                let written = data.withUnsafeBytes { bytes -> Bool in
+                let written = unsafe data.withUnsafeBytes { bytes -> Bool in
                     var offset = 0
                     while offset < bytes.count {
-                        let result = Darwin.write(fd, bytes.baseAddress! + offset, bytes.count - offset)
+                        let result = unsafe Darwin.write(fd, bytes.baseAddress.map { unsafe $0 + offset }, bytes.count - offset)
                         if result < 0 { if errno == EINTR || errno == EAGAIN { continue } else { return false } }
                         offset += result
                     }
@@ -296,7 +296,7 @@ final class SerialConnection: @unchecked Sendable {
                 func apply(_ on: Bool?, _ bit: Int32) -> Bool {
                     guard let on else { return true }
                     var bits = bit
-                    return withUnsafeMutablePointer(to: &bits) { ioctl(fd, on ? TIOCMBIS : TIOCMBIC, $0) } == 0
+                    return withUnsafeMutablePointer(to: &bits) { unsafe ioctl(fd, on ? TIOCMBIS : TIOCMBIC, $0) } == 0
                 }
                 var ok = apply(dataTerminalReady, TIOCM_DTR) && apply(requestToSend, TIOCM_RTS)
                 if let breakOn { ok = ok && ioctl(fd, breakOn ? TIOCSBRK : TIOCCBRK) == 0 }
@@ -309,7 +309,7 @@ final class SerialConnection: @unchecked Sendable {
         await withCheckedContinuation { continuation in
             queue.async { [self] in
                 var bits: Int32 = 0
-                guard !isClosed, withUnsafeMutablePointer(to: &bits, { ioctl(fd, TIOCMGET, $0) }) == 0 else {
+                guard !isClosed, withUnsafeMutablePointer(to: &bits, { unsafe ioctl(fd, TIOCMGET, $0) }) == 0 else {
                     return continuation.resume(returning: nil)
                 }
                 continuation.resume(returning: [
