@@ -89,21 +89,25 @@ export default {
     // Static assets ignore Range: stream the requested bytes through instead of buffering the film.
     const [start, end] = range;
     let offset = 0;
+
     const body = source.body.pipeThrough(
       new TransformStream<Uint8Array, Uint8Array>({
         transform(chunk, controller) {
           const from = Math.max(start - offset, 0);
           const to = Math.min(end - offset, chunk.byteLength);
           offset += chunk.byteLength;
+
           if (from < to) {
             controller.enqueue(chunk.subarray(from, to));
           }
+
           if (offset >= end) {
             controller.terminate();
           }
         },
       })
     );
+
     headers.set("Content-Range", `bytes ${start}-${end - 1}/${length}`);
     headers.set("Content-Length", String(end - start));
 
