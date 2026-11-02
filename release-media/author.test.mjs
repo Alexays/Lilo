@@ -67,6 +67,30 @@ test("an unsupported new visual feature refuses the release instead of falling b
     );
 });
 
+for (const kind of ["Added", "Changed", "Breaking"]) {
+  for (const [description, note] of [
+    ["memory", "A split view shows two documents side by side with lower memory use."],
+    ["cache", "A preview pane shows documents fetched from the cache."],
+    ["CPU", "A separate window compares two documents with lower CPU use."],
+  ])
+    test(`${kind} visual changes mentioning ${description} still require supported media`, () => {
+      assert.throws(
+        () => chooseMedia("0.15.0", `### ${kind}\n\n- ${note}\n`, catalog),
+        /blocked.*no genuine native capture/,
+      );
+    });
+}
+
+test("nonvisual performance changes need no artificial media", () => {
+  for (const kind of ["Added", "Changed", "Breaking"])
+    for (const note of [
+      "Audio processing uses less CPU.",
+      "Audio processing uses less memory.",
+      "The cache refreshes only after authentication changes.",
+    ])
+      assert.equal(chooseMedia("0.15.0", `### ${kind}\n\n- ${note}\n`, catalog).kind, "none");
+});
+
 test("a rendering-tool name cannot hide an unsupported product interface", () => {
   assert.throws(
     () =>
