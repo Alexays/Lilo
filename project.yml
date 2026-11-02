@@ -31,6 +31,9 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # libghostty-vt bundles C++ (simdutf, highway). The header room takes the dyld environment of LiloFork.
         OTHER_LDFLAGS: $(inherited) -lc++ -Wl,-headerpad,0x200
+        # SE-0458: every unsafe construct is marked `unsafe`, and an unmarked one fails the build.
+        SWIFT_STRICT_MEMORY_SAFETY: YES
+        OTHER_SWIFT_FLAGS: $(inherited) -Werror StrictMemorySafety
 
       configs:
         Debug:

@@ -47,6 +47,8 @@ let package = Package(
                 .copy("Agent/AgentInspector.js"),
                 .copy("Agent/InspectorCDP.js")
             ],
+            // Mirrors the Xcode target's SWIFT_STRICT_MEMORY_SAFETY and its warning-as-error group.
+            swiftSettings: [.unsafeFlags(["-strict-memory-safety", "-Werror", "StrictMemorySafety"])],
             linkerSettings: [.linkedLibrary("c++")]
         ),
         .binaryTarget(name: "GhosttyVt", path: "Vendor/GhosttyVt.xcframework"),
