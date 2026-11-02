@@ -40,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var readyUpdate: (version: String, install: () -> Void)?
 
     static func main() {
+        WebKitFork.execIfCovered()
         StartupMetrics.mark("main")
         // A write to a peer that went away (socket, pipe, child) must fail with EPIPE, not kill
         // Lilo. Children start with SIGPIPE at its default: Process and the terminal spawn reset it.

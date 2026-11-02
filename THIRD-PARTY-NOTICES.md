@@ -20,6 +20,14 @@ Declared in `project.yml` and `Package.swift`, pinned in `Package.resolved`.
   components Sparkle bundles: bsdiff/bspatch (BSD-2-Clause), sais-lite (MIT),
   ed25519 (zlib) and SUSignatureVerifier (BSD-2-Clause)
 
+## WebKit (Lilo's fork)
+
+- Built from the fork commit pinned in the `Makefile` (`make webkit-fork`), https://github.com/Alexays/WebKit,
+  and embedded as dynamic frameworks in `Contents/Frameworks` of releases that carry it ([docs/WEBKIT_FORK.md](docs/WEBKIT_FORK.md))
+- License: BSD-2-Clause for WebKit and most of JavaScriptCore; LGPL-2.1 or later for WebCore and parts of
+  JavaScriptCore, whose complete source is the fork's repository. The frameworks stay separately replaceable.
+  WebKit bundles further components (ANGLE, libwebrtc, among others) under their own licenses, listed in its source
+
 ## libghostty-vt (Ghostty)
 
 - Built from the Ghostty commit pinned in the `Makefile` (`make vt-build` downloads that build, `make vt-build-source` compiles it)

@@ -347,6 +347,7 @@
 		87A0CE80FFCC0F5E733B2A03 /* SpaceTabStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D45E0B4C896809F3CA2B68 /* SpaceTabStateTests.swift */; };
 		87BF52E44AC92861055E6CC5 /* BrowserImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 792B9177EDFB6A1F310FE9C0 /* BrowserImporterTests.swift */; };
 		8854035A1251D7D7CF6BE4B8 /* LiloIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B16C04BF2BF41B09F5677A /* LiloIntents.swift */; };
+		88E60B6C386F499FD87AB954 /* WebKitFork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54606608AFEE53B274E62005 /* WebKitFork.swift */; };
 		8970298C0A01596DFEFECAAD /* AgentMCP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7863654FA36B9E0C0EEC0F66 /* AgentMCP.swift */; };
 		8985EC5F55E26007FF6BBEBB /* PageSnapshotServiceRegionSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EF66358C163103565EB5C8 /* PageSnapshotServiceRegionSelectionTests.swift */; };
 		8995FD4F3170A33E155E98BA /* BrowserRuntimeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 928C080C4829A483987A5E7A /* BrowserRuntimeCoordinator.swift */; };
@@ -984,6 +985,7 @@
 		5135E1934C469BB54C50A03D /* SidebarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarState.swift; sourceTree = "<group>"; };
 		513EBD65646989BED9E5174A /* BrowserChangePresenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserChangePresenterTests.swift; sourceTree = "<group>"; };
 		525B826141A01CE9CBD3F341 /* TinyHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyHTTPServer.swift; sourceTree = "<group>"; };
+		54606608AFEE53B274E62005 /* WebKitFork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebKitFork.swift; sourceTree = "<group>"; };
 		552F286BB712D9077DE2C288 /* TabDockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabDockController.swift; sourceTree = "<group>"; };
 		5537BF194F8979E3F679D931 /* AppShortcuts.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = AppShortcuts.strings; path = pl.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		55B565E0D10F787EA3146788 /* ChromeCaptureMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeCaptureMachineTests.swift; sourceTree = "<group>"; };
@@ -1915,6 +1917,7 @@
 				95FBBE6257717CF53BCEF12A /* StartupMetrics.swift */,
 				8C8117873E496B7FC7690DCA /* SystemMediaDevices.swift */,
 				CF609A8B52AFEC50BDA5B16C /* ThemePreference.swift */,
+				54606608AFEE53B274E62005 /* WebKitFork.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -3260,6 +3263,7 @@
 				A68A9C12CDC7AE222658DA72 /* WKSecurityOrigin+PermissionKey.swift in Sources */,
 				5F27C5D6A74210B50D42EECC /* WKWebViewTab.swift in Sources */,
 				D71375871CA896E95512C8DA /* WebInspectorSupport.swift in Sources */,
+				88E60B6C386F499FD87AB954 /* WebKitFork.swift in Sources */,
 				9CE567CCD7E28B4C22A3527B /* WebSocketBridgeHandler.swift in Sources */,
 				9AB332BFECE445B61BEF2D0D /* WebViewPrivateAccessors.swift in Sources */,
 				478DF92B2DE96A37675787C7 /* WebstoreInstallHandler.swift in Sources */,
@@ -3700,7 +3704,7 @@
 				);
 				LILO_APP_NAME = "Lilo Debug";
 				LILO_BUNDLE_ID_SUFFIX = .debug;
-				OTHER_LDFLAGS = "$(inherited) -lc++";
+				OTHER_LDFLAGS = "$(inherited) -lc++ -Wl,-headerpad,0x200";
 				PRODUCT_BUNDLE_IDENTIFIER = "fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = Lilo;
 				SDKROOT = macosx;
@@ -3761,7 +3765,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LILO_APP_NAME = Lilo;
-				OTHER_LDFLAGS = "$(inherited) -lc++";
+				OTHER_LDFLAGS = "$(inherited) -lc++ -Wl,-headerpad,0x200";
 				PRODUCT_BUNDLE_IDENTIFIER = "fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = Lilo;
 				SDKROOT = macosx;
