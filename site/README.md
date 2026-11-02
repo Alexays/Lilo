@@ -78,7 +78,7 @@ The imported history in `.changes/v0.1.5.md` contains several earlier versions. 
 
 ## Deployment
 
-Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/`; a small Worker handles MP4 byte ranges without an Astro server adapter. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
+Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/` as static assets, with no Worker code. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
 
 Set the build watch paths to `site/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `release-media/assets/**`, `release-media/catalog.ts`, `release-media/backlog.json`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
 

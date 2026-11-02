@@ -6,27 +6,6 @@ test.use({
   trace: { mode: "retain-on-failure", screenshots: false },
 });
 
-test("the deployed media route supports bounded byte ranges and invalid ranges", async ({
-  request,
-}) => {
-  const url = "/release-media/0.11.0/spaces.mp4";
-  const partial = await request.get(url, { headers: { Range: "bytes=0-1" } });
-  expect(partial.status()).toBe(206);
-  expect(partial.headers()["content-range"]).toMatch(/^bytes 0-1\/\d+$/u);
-  const partialBody = await partial.body();
-  expect(partialBody.length).toBe(2);
-  const suffix = await request.get(url, { headers: { Range: "bytes=-16" } });
-  expect(suffix.status()).toBe(206);
-  const suffixBody = await suffix.body();
-  expect(suffixBody.length).toBe(16);
-
-  const invalid = await request.get(url, {
-    headers: { Range: "bytes=999999999-" },
-  });
-
-  expect(invalid.status()).toBe(416);
-});
-
 for (const lang of ["en", "fr"]) {
   for (const width of [1280, 390]) {
     test(`${lang} release media plays with sound at ${width}px and stays still until requested`, async ({
