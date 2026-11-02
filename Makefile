@@ -233,11 +233,16 @@ release-media-test:
 	@node --test release-media/*.test.mjs
 
 .PHONY: release-media-capture release-media-import release-media-render release-media-lock release-media-check release-media-publish-check
-.PHONY: release-media-review release-media-fix release-media-test release-media-inspect release-media-hyperframes release-media-audit release-media-author
+.PHONY: release-media-review release-media-fix release-media-inspect release-media-hyperframes release-media-audit release-media-author
 
 ## Capture genuine native sources for the 0.8.0 announcement (RELEASE=0.8.0)
+# The capture and review UI builds differ from the app's: dropping the stamp makes the next build replace them.
+# Every capture scenario skips for a release without one, so a missing receipt is the failure.
 release-media-capture:
-	@LILO_RELEASE_MEDIA_CAPTURE_ONLY=1 TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_FIXTURE_VERSION='$(or $(FIXTURE),$(RELEASE))' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory ui-build swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
+	@$(if $(RELEASE),rm -f '$(CURDIR)/build/release-media/native/$(RELEASE)/capture.json')
+	@LILO_RELEASE_MEDIA_CAPTURE_ONLY=1 TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_FIXTURE_VERSION='$(or $(FIXTURE),$(RELEASE))' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory ui-build swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1; \
+		status=$$?; rm -f '$(UI_STAMP)'; exit $$status
+	@$(if $(RELEASE),test -f '$(CURDIR)/build/release-media/native/$(RELEASE)/capture.json' || { echo 'No native capture scenario for $(RELEASE)' >&2; exit 1; })
 
 ## Import verified native release sources (RELEASE=0.8.0)
 release-media-import:
@@ -275,7 +280,8 @@ release-media-publish-check:
 release-media-review:
 	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
 	@LILO_RELEASE_MEDIA_PREVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory ui-build
-	@TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/reviews/$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_REVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests/testReviewBundledWhatsNewMedia TEST_WORKERS=1
+	@TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/reviews/$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_REVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests/testReviewBundledWhatsNewMedia TEST_WORKERS=1; \
+		status=$$?; rm -f '$(UI_STAMP)'; exit $$status
 
 ## Run the pinned production HyperFrames authoring tools (HF_ARGS='help')
 release-media-hyperframes: release-media/node_modules/.lilo-installed
