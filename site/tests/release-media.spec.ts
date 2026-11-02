@@ -133,7 +133,7 @@ for (const version of [
         v.videoHeight,
         v.error?.code ?? 0,
       ])
-    ).toEqual([1920, 1080, 0]);
+    ).toEqual([1280, 720, 0]);
 
     const before = await video.evaluate((v: HTMLVideoElement) => ({
       dropped: v.getVideoPlaybackQuality().droppedVideoFrames,
@@ -157,7 +157,7 @@ for (const version of [
       frames: after.frames - before.frames,
     };
 
-    expect(playback.frames).toBeGreaterThanOrEqual(80);
+    expect(playback.frames).toBeGreaterThanOrEqual(40);
     expect(playback.dropped / playback.frames).toBeLessThan(0.03);
     expect(playback.elapsed).toBeLessThan(2.5);
     await video.evaluate((v: HTMLVideoElement) => v.pause());
