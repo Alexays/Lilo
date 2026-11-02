@@ -2,7 +2,7 @@
   "release": "0.8.0",
   "kind": "video",
   "passed": true,
-  "renderSha256": "90d6dd7f386ab97bbd2a52585110d97e5367bccefa1fab5c20cc996bbbcfa012",
+  "renderSha256": "ee8c501209f037087e140d3d9729c0d6d12956b125105d1c22afb5e4682e5474",
   "sourceHashes": true,
   "renderHashes": true,
   "strictCompositionCheck": true,

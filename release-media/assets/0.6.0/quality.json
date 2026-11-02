@@ -2,7 +2,7 @@
   "release": "0.6.0",
   "kind": "screenshot",
   "passed": true,
-  "renderSha256": "0a843c2bf5b9074872a08048ca961f99fb5a769c5594ff850ba524b17aa6890f",
+  "renderSha256": "ca0ba18058d343423d94812a4d476e5251c8153b76e1a6cf0da88fd374b46192",
   "sourceHashes": true,
   "renderHashes": true,
   "strictCompositionCheck": true,

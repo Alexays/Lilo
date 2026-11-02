@@ -280,6 +280,8 @@ for (const [version, entry] of selected(catalog)) {
       "2",
       "-movflags",
       "+faststart",
+      "-t",
+      String(duration),
       path.join(folder, `${entry.feature}.mp4`),
     ]);
   }
