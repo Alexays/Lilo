@@ -1,0 +1,3 @@
+kind: Fixed
+body: Tabs morph to their new edge again when extensions are installed, instead of jumping there.
+time: 2026-11-02T14:37:35.601348+01:00
