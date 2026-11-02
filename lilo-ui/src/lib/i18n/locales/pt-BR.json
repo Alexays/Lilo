@@ -2240,10 +2240,6 @@
 			"Changed": "Melhorias",
 			"Fixed": "Correções"
 		},
-		"art": {
-			"inbox": "Caixa de entrada",
-			"chat": "Conversa da equipe"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "Leve tudo para a barra lateral.",
@@ -2269,9 +2265,7 @@
 				"headline": "Cada Space do seu jeito.",
 				"description": "Escolha vidro, granulação ou uma cor sólida para cada espaço.",
 				"materialTitle": "Vidro, granulado ou sólido.",
-				"materialDescription": "Escolha o material de cada Space na prévia da janela, em Aparência: Liquid Glass tingido com a cor dele ou um granulado fino.",
-				"colorsTitle": "Cores que seguem você.",
-				"colorsDescription": "Use a cor do site aberto ou do papel de parede, ou deixe sua cor ficar mais quente à noite."
+				"materialDescription": "Escolha o material de cada Space na prévia da janela, em Aparência: Liquid Glass tingido com a cor dele ou um granulado fino."
 			},
 			"v0100": {
 				"headline": "Recomece sem perder nada.",

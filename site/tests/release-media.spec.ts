@@ -47,7 +47,7 @@ for (const lang of ["en", "fr"]) {
 
       const description =
         lang === "fr"
-          ? "Choisissez du verre, du grain ou de l’uni pour chaque Space."
+          ? "Choisissez du verre, du grain ou de l'uni pour chaque Space."
           : "Choose glass, grain or solid for each Space.";
 
       const languageLabel =

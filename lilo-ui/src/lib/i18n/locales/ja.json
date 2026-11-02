@@ -2240,10 +2240,6 @@
 			"Changed": "改善",
 			"Fixed": "修正"
 		},
-		"art": {
-			"inbox": "受信トレイ",
-			"chat": "チームチャット"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "何でもサイドバーへ。",
@@ -2269,9 +2265,7 @@
 				"headline": "Space ごとに自分らしく。",
 				"description": "スペースごとに、ガラス、グレイン、ソリッドを選べます。",
 				"materialTitle": "ガラス、グレイン、ソリッド。",
-				"materialDescription": "「外観」のウインドウプレビューで各 Space の素材を選べます。色で染めた Liquid Glass か、細かなフィルムグレイン。",
-				"colorsTitle": "あなたに合わせる色。",
-				"colorsDescription": "開いているサイトや壁紙の色を使ったり、夕方に色を暖かくしたりできます。"
+				"materialDescription": "「外観」のウインドウプレビューで各 Space の素材を選べます。色で染めた Liquid Glass か、細かなフィルムグレイン。"
 			},
 			"v0100": {
 				"headline": "新しく始めても、何も失わない。",

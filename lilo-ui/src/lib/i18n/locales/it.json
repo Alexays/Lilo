@@ -2240,10 +2240,6 @@
 			"Changed": "Miglioramenti",
 			"Fixed": "Correzioni"
 		},
-		"art": {
-			"inbox": "Posta in arrivo",
-			"chat": "Chat del team"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "Porta tutto nella barra laterale.",
@@ -2269,9 +2265,7 @@
 				"headline": "Ogni Space a modo tuo.",
 				"description": "Scegli vetro, grana o un colore uniforme per ogni spazio.",
 				"materialTitle": "Vetro, grana o pieno.",
-				"materialDescription": "Scegli il materiale di ogni Space nell'anteprima della sua finestra, in Aspetto: Liquid Glass tinto del suo colore o una grana fine.",
-				"colorsTitle": "Colori che ti seguono.",
-				"colorsDescription": "Prendi il colore del sito aperto o del tuo sfondo, o lascia che il tuo colore si scaldi la sera."
+				"materialDescription": "Scegli il materiale di ogni Space nell'anteprima della sua finestra, in Aspetto: Liquid Glass tinto del suo colore o una grana fine."
 			},
 			"v0100": {
 				"headline": "Ricomincia senza perdere nulla.",

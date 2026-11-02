@@ -5,7 +5,8 @@ import { SUPPORTED_LOCALES } from "./src/lib/i18n/translate";
 import { localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./src/components/whatsnew/releaseNotes";
 
 function bundledRelease(): string {
-	const version = process.env.LILO_RELEASE_MEDIA_PREVIEW_VERSION || (JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string }).version;
+	const installed = (JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string }).version;
+	const version = process.env.LILO_RELEASE_MEDIA_PREVIEW_VERSION || installed;
 	if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error("Invalid release preview version");
 	let markdown = "";
 	try { markdown = readFileSync(new URL(`../.changes/v${version}.md`, import.meta.url), "utf8"); } catch { /* Development builds may not have prepared notes. */ }
@@ -18,6 +19,8 @@ function bundledRelease(): string {
 		const catalog = JSON.parse(readFileSync(new URL(`./src/lib/i18n/locales/${locale}.json`, import.meta.url), "utf8"));
 		release.editorial[locale] = localizeReleaseEditorial(editorial, catalog);
 	}
+	// The sheet shows notes only for the version the app reports: a preview presents its release as the installed one.
+	release.version = installed;
 	return JSON.stringify(release);
 }
 

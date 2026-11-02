@@ -2240,10 +2240,6 @@
 			"Changed": "İyileştirmeler",
 			"Fixed": "Düzeltmeler"
 		},
-		"art": {
-			"inbox": "Gelen Kutusu",
-			"chat": "Ekip sohbeti"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "Her şeyi kenar çubuğuna getirin.",
@@ -2269,9 +2265,7 @@
 				"headline": "Her Space size göre.",
 				"description": "Her alan için cam, gren veya düz renk seçin.",
 				"materialTitle": "Cam, gren ya da düz.",
-				"materialDescription": "Her Space'in malzemesini Görünüm'deki pencere önizlemesinde seçin: rengine boyanmış Liquid Glass ya da ince bir film greni.",
-				"colorsTitle": "Sizi takip eden renkler.",
-				"colorsDescription": "Açık sitenin ya da duvar kâğıdınızın rengini alın veya renginizin akşam ısınmasına izin verin."
+				"materialDescription": "Her Space'in malzemesini Görünüm'deki pencere önizlemesinde seçin: rengine boyanmış Liquid Glass ya da ince bir film greni."
 			},
 			"v0100": {
 				"headline": "Temiz bir başlangıç, hiçbir şey kaybolmadan.",

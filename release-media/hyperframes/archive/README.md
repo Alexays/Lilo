@@ -16,13 +16,13 @@ All inputs are genuine captures from `public/native/<release>/`, with their orig
 
 ## Action timing and geometry
 
-- **Pinned tabs:** double-click at 2.05/2.20s; native input at 2.25s; six letters at 3.00–3.75s; confirmation at 4.90s. The 2112×264 source is displayed at 1680×210.
+- **Pinned tabs:** double-click at 2.05/2.20s; native input at 2.25s; six letters at 3.00-3.75s; confirmation at 4.90s. The 2112×264 source is displayed at 1680×210.
 - **Tab edges:** native layout transitions at 2.80, 5.50 and 8.20s. Each 2560×1600 native window is displayed at 1184×740.
 - **Calls:** microphone at 4.00s, native result at 4.05s; camera at 6.30s, result at 6.35s. Native 1984×272 call-card sources display at 1560×213.87. Pointer targets are the actual recorded microphone/camera columns at x1167/x1323, y587.
-- **History:** focus at 1.80s; six captured query changes at 2.60–3.40s; filtered native rows at 4.50s. Search and results display at 1280px, below their 1536px and 2400px source widths.
-- **Archive:** archive button at 2.40s, row choice at 4.30s, restored-row reveal at 4.45–5.10s. The insertion boundary is `(161.109375 − 123) × 1440 / 264 = 207.8693px`, and the captured new row adds `180 × 1440 / 1584 = 163.6364px`. Three clipped CSS image layers of the real result supply the pixels above, inside and below that boundary; these are static graphic mattes rather than three separately timed media entries.
+- **History:** focus at 1.80s; six captured query changes at 2.60-3.40s; filtered native rows at 4.50s. Search and results display at 1280px, below their 1536px and 2400px source widths.
+- **Archive:** archive button at 2.40s, row choice at 4.30s, restored-row reveal at 4.45-5.10s. The insertion boundary is `(161.109375 − 123) × 1440 / 264 = 207.8693px`, and the captured new row adds `180 × 1440 / 1584 = 163.6364px`. Three clipped CSS image layers of the real result supply the pixels above, inside and below that boundary; these are static graphic mattes rather than three separately timed media entries.
 - **Spaces:** Glass at 3.20s, Grain at 6.50s, second native Space at 10.80s. The largest window display is 1536px, below its 2560px source. Controls display at 1400px, below their 1552px source.
-- **Drop:** press at 2.00s, move from 2.10–3.50s, native indicator from 3.00s, release at 3.60s. The native receipt supplies insertion point x134/y162.109375 and insertion boundary y161.109375. The new row adds the same 163.6364 display pixels as the archive. The link is a real, owned fixture-page capture; its optional transparent cutout must preserve its original link glyphs.
+- **Drop:** press at 2.00s, move from 2.10-3.50s, native indicator from 3.00s, release at 3.60s. The native receipt supplies insertion point x134/y162.109375 and insertion boundary y161.109375. The new row adds the same 163.6364 display pixels as the archive. The link is a real, owned fixture-page capture; its optional transparent cutout must preserve its original link glyphs.
 
 The factual source for each film is its selected exact note in `backlog.json`: pinned names persist; tabs can occupy any edge; native call controls work while browsing; History searches real visits; archived tabs return in one click; materials apply per Space; and external drops open at their chosen sidebar location. The films deliberately show these concrete subjects rather than enumerate unrelated fixes.
 

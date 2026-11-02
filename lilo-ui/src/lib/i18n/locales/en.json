@@ -2232,7 +2232,6 @@
 		"reopen": "Always here in Help → What’s New.",
 		"continue": "Back to browsing",
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
-		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
 			"v0140": {
 				"headline": "Bring anything into your sidebar.",
@@ -2258,9 +2257,7 @@
 				"headline": "Make each Space your own.",
 				"description": "Pick glass, grain or solid for each Space.",
 				"materialTitle": "Glass, grain or solid.",
-				"materialDescription": "Pick each Space's material on its window preview in Appearance: Liquid Glass tinted with its color, or a fine film grain.",
-				"colorsTitle": "Colors that follow you.",
-				"colorsDescription": "Take the color of the site you're on or of your wallpaper, or let your color warm up in the evening."
+				"materialDescription": "Pick each Space's material on its window preview in Appearance: Liquid Glass tinted with its color, or a fine film grain."
 			},
 			"v0100": {
 				"headline": "A fresh start, nothing lost.",

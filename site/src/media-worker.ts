@@ -60,35 +60,53 @@ export default {
     headers.set("Accept-Ranges", "bytes");
     const requested = request.headers.get("Range");
     const ifRange = request.headers.get("If-Range");
+    const etag = headers.get("ETag");
+    const length = Number(headers.get("Content-Length"));
 
+    // RFC 9110: anything but a single byte range is ignored, and a weak validator never matches If-Range.
     if (
       !requested ||
+      !/^bytes=\d*-\d*$/u.test(requested) ||
       request.method === "HEAD" ||
+      !source.body ||
+      !Number.isSafeInteger(length) ||
       (ifRange &&
-        ifRange !== headers.get("ETag") &&
+        (ifRange.startsWith("W/") || ifRange !== etag) &&
         ifRange !== headers.get("Last-Modified"))
     ) {
       return new Response(source.body, { headers, status: 200 });
     }
 
-    // Static assets ignore Range. These small release films need real partial responses for native seeking.
-    const body = await source.arrayBuffer();
-    const range = byteRange(requested, body.byteLength);
+    const range = byteRange(requested, length);
 
     if (!range) {
-      headers.set("Content-Range", `bytes */${body.byteLength}`);
+      headers.set("Content-Range", `bytes */${length}`);
       headers.set("Content-Length", "0");
 
       return new Response(null, { headers, status: 416 });
     }
 
+    // Static assets ignore Range: stream the requested bytes through instead of buffering the film.
     const [start, end] = range;
-    headers.set(
-      "Content-Range",
-      `bytes ${start}-${end - 1}/${body.byteLength}`
+    let offset = 0;
+    const body = source.body.pipeThrough(
+      new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, controller) {
+          const from = Math.max(start - offset, 0);
+          const to = Math.min(end - offset, chunk.byteLength);
+          offset += chunk.byteLength;
+          if (from < to) {
+            controller.enqueue(chunk.subarray(from, to));
+          }
+          if (offset >= end) {
+            controller.terminate();
+          }
+        },
+      })
     );
+    headers.set("Content-Range", `bytes ${start}-${end - 1}/${length}`);
     headers.set("Content-Length", String(end - start));
 
-    return new Response(body.slice(start, end), { headers, status: 206 });
+    return new Response(body, { headers, status: 206 });
   },
 };

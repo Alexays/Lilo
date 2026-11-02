@@ -2240,10 +2240,6 @@
 			"Changed": "개선",
 			"Fixed": "수정"
 		},
-		"art": {
-			"inbox": "받은 편지함",
-			"chat": "팀 채팅"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "무엇이든 사이드바로.",
@@ -2269,9 +2265,7 @@
 				"headline": "Space마다 나만의 스타일로.",
 				"description": "공간마다 유리, 그레인 또는 단색을 선택하세요.",
 				"materialTitle": "유리, 그레인 또는 단색.",
-				"materialDescription": "모양의 창 미리보기에서 각 Space의 재질을 고르세요. 색상으로 물든 Liquid Glass 또는 고운 필름 그레인.",
-				"colorsTitle": "나를 따르는 색상.",
-				"colorsDescription": "열린 사이트나 배경화면의 색상을 사용하거나, 저녁에 색상이 따뜻해지게 하세요."
+				"materialDescription": "모양의 창 미리보기에서 각 Space의 재질을 고르세요. 색상으로 물든 Liquid Glass 또는 고운 필름 그레인."
 			},
 			"v0100": {
 				"headline": "새로 시작해도 잃는 것은 없습니다.",
