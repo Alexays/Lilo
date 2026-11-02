@@ -10,7 +10,7 @@ SITE = "https://getlilo.app"
 DIST = Path(__file__).resolve().parent / "dist"
 
 VOID = {"meta", "link", "br", "img", "input", "hr", "source"}
-BLOCK = {"main", "section", "article", "header", "div", "p", "h1", "h2", "h3", "h4", "details", "summary", "table", "footer", "ul", "ol", "li", "time"}
+BLOCK = {"main", "section", "article", "header", "div", "p", "h1", "h2", "h3", "h4", "details", "summary", "table", "footer", "ul", "ol", "li", "time", "figure", "figcaption"}
 # Interactive mockups and decoration: their text is illustration, not page content.
 SKIP_TAGS = {"script", "style", "svg", "button", "head", "nav"}
 SKIP_CLASSES = {"window", "store", "termcard", "tag", "mark", "nav", "skip-link"}

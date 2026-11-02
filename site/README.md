@@ -43,6 +43,12 @@ The Undici override patches the HTTP clients used by Miniflare and guarded-fetch
 
 The build runs `generate.py` after Astro to derive a Markdown copy of each page, `llms-full.txt`, and FAQ structured data matching the visible questions and answers. These outputs live in `dist/` and are not committed. Both `/llms.txt` and `/llms-full.txt` are included in the deployed site. Edit the Astro sources, then rebuild.
 
+## Static release films
+
+The 0.8.0 changelog entry plays the approved MP4 and poster from `../release-media/assets/`. The shared catalog also supplies native What's New media. Both players show localized captions and identify the English illustration. They use standard video controls, stay still until requested, and pause offscreen or when the page is hidden. See [release-media/README.md](../release-media/README.md) for provenance and staging.
+
+The media Worker handles byte ranges for MP4 seeking. Static pages and other assets retain Cloudflare's asset routing. The existing 0.7.0 WebP recording and capture commands remain available.
+
 ## Release stories and recordings
 
 The changelog reads the generated root `CHANGELOG.md`. Optional stories in `src/content/releases/<version>.json` add a translated introduction and up to three highlights. Each highlight lists the exact English release notes it describes; the build rejects missing translations, unknown versions and notes from another release. Use the existing story as an example, and edit the copy with Humanizer.
@@ -101,9 +107,9 @@ The imported history in `.changes/v0.1.5.md` contains several earlier versions. 
 
 ## Deployment
 
-Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/`; no Worker script or Astro server adapter is needed. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
+Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/`; a small Worker handles MP4 byte ranges without an Astro server adapter. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
 
-Set the build watch paths to `site/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
+Set the build watch paths to `site/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `release-media/assets/**`, `release-media/catalog.ts`, `release-media/backlog.json`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
 
 For a manual deployment, authenticate with Cloudflare first, then run:
 

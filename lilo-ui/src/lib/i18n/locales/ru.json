@@ -2239,6 +2239,7 @@
 		"Date Modified": "Дата изменения"
 	},
 	"whatsNew": {
+		"mediaLanguage": "Иллюстрация на английском языке",
 		"version": "Lilo {version}",
 		"title": "Что нового в Lilo",
 		"description": "Небольшие улучшения для повседневной работы в браузере.",

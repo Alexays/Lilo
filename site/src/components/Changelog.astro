@@ -1,11 +1,13 @@
 ---
 import changelog from "../../../CHANGELOG.md?raw";
+import { mediaForRelease } from "../../../release-media/catalog";
 import Layout from "../layouts/Layout.astro";
 import { parseChangelog } from "../lib/changelog.ts";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
 import { parseReleaseStories } from "../lib/release-stories";
 import PageSection from "./PageSection.astro";
+import ReleaseMedia from "./ReleaseMedia.astro";
 import ReleaseStory from "./ReleaseStory.astro";
 
 interface Props {
@@ -15,6 +17,10 @@ interface Props {
 const { lang } = Astro.props;
 const text = copy[lang];
 const releases = parseChangelog(changelog);
+
+const media = new Map(
+  releases.map((release) => [release.version, mediaForRelease(release.version)])
+);
 
 const stories = parseReleaseStories(
   changelog,
@@ -75,14 +81,17 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
           </a>
         </header>
         <div class="release-content">
+          {media.get(release.version) && (
+            <ReleaseMedia media={media.get(release.version)!} lang={lang} />
+          )}
           {stories.has(release.version) ? (
-            <>
-              <ReleaseStory lang={lang} story={stories.get(release.version)!} />
-              <details class="release-details">
-                <summary>{text.releaseAllChanges}</summary>
-                <div class="release-body" lang="en" set:html={release.html} />
-              </details>
-            </>
+            <ReleaseStory lang={lang} story={stories.get(release.version)!} />
+          ) : null}
+          {stories.has(release.version) || media.get(release.version) ? (
+            <details class="release-details">
+              <summary>{text.releaseAllChanges}</summary>
+              <div class="release-body" lang="en" set:html={release.html} />
+            </details>
           ) : (
             <div class="release-body" lang="en" set:html={release.html} />
           )}

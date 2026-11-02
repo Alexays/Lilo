@@ -1,4 +1,5 @@
 import type { Locale } from "../../lib/i18n/translate";
+import type { ReleaseMedia } from "../../../../release-media/catalog";
 
 export type ReleaseKind = "Breaking" | "Added" | "Changed" | "Fixed";
 const illustrations = ["unread", "calls", "share", "address", "history", "pip", "languages", "fresh", "archive", "material", "colors", "seasons", "drop", "dialogs"] as const;
@@ -27,6 +28,7 @@ export interface ReleaseNotes {
 	date: string;
 	groups: { kind: ReleaseKind; entries: string[] }[];
 	editorial?: Partial<Record<Locale, ReleaseEditorialCopy | null>> | null;
+	media?: ReleaseMedia | null;
 }
 
 export function parseReleaseNotes(markdown: string, version: string): ReleaseNotes {

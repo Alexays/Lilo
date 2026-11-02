@@ -2219,6 +2219,7 @@
 		"Date Modified": "変更日"
 	},
 	"whatsNew": {
+		"mediaLanguage": "英語の紹介映像・画像",
 		"version": "Lilo {version}",
 		"title": "Lilo の新機能",
 		"description": "毎日のブラウジングを少し快適にする改善です。",

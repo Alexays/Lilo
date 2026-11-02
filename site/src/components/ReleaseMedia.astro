@@ -1,0 +1,111 @@
+---
+import type { ReleaseMedia } from "../../../release-media/catalog";
+import type { Locale } from "../lib/i18n";
+import { copy } from "../lib/i18n";
+
+interface Props {
+  media: ReleaseMedia;
+  lang: Locale;
+}
+
+const { media, lang } = Astro.props;
+const captionId = `release-media-caption-${media.poster}`;
+---
+
+<figure class="release-media" lang={lang}>
+  {media.kind === "video" ? (
+    <video
+      controls
+      playsinline
+      preload="none"
+      poster={media.poster}
+      width={media.width}
+      height={media.height}
+      lang="en"
+      aria-labelledby={captionId}
+    >
+      <source src={media.video} type="video/mp4" />
+      <a href={media.video} lang={lang}>
+        {media.alt[lang]}
+      </a>
+    </video>
+  ) : (
+    <img
+      src={media.poster}
+      width={media.width}
+      height={media.height}
+      alt={media.alt.en}
+      lang="en"
+      aria-labelledby={captionId}
+      loading="lazy"
+      decoding="async"
+    />
+  )}
+  <figcaption id={captionId} lang={lang}>
+    <span>{media.alt[lang]}</span>{" "}
+    <span class="media-language">{copy[lang].releaseMediaLanguage}</span>
+  </figcaption>
+</figure>
+
+<script>
+  const videos = [
+    ...document.querySelectorAll<HTMLVideoElement>(".release-media video"),
+  ];
+
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting && entry.target instanceof HTMLVideoElement) {
+        entry.target.pause();
+      }
+    }
+  });
+
+  for (const video of videos) {
+    observer.observe(video);
+    video.addEventListener("play", () => {
+      for (const other of videos) {
+        if (other !== video) {
+          other.pause();
+        }
+      }
+    });
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      for (const video of videos) {
+        video.pause();
+      }
+    }
+  });
+</script>
+
+<style>
+  .release-media {
+    margin: 0 0 28px;
+  }
+  video,
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    background: #15151b;
+  }
+  video:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+  figcaption {
+    margin-top: 10px;
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .media-language {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+  }
+</style>

@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, type FakeHostWorld } from "./fakeHost";
 import { initialWorld } from "./fixtures";
 import type { ReleaseNotes } from "../src/components/whatsnew/releaseNotes";
+import { mediaForRelease } from "../../release-media/catalog";
 
 const release: ReleaseNotes = {
 	version: "0.6.0", date: "2026-01-15",
@@ -35,6 +36,23 @@ async function bootReleaseChrome(page: Page, world: FakeHostWorld = initialWorld
 async function openWhatsNew(page: Page, automatic = false, version = "0.6.0") {
 	await page.evaluate(({ automatic, version }) => window.__lilo!.receive({ event: "openWhatsNew", automatic, version }), { automatic, version });
 }
+
+test("release media labels its English film in the app language", async ({ page }) => {
+	await bootReleaseChrome(page, initialWorld(), undefined, { ...release, media: mediaForRelease("0.8.0") });
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { locale: "fr" } }));
+	await openWhatsNew(page);
+	const dialog = page.getByRole("dialog");
+	const caption = dialog.locator("figcaption");
+	await expect(caption).toBeVisible();
+	await expect(caption).toHaveAttribute("lang", "fr");
+	await expect(caption).toHaveText("Trouvez un onglet et changez celui que vous partagez. Illustration en anglais");
+	const video = dialog.locator("video");
+	await expect(video).toHaveAttribute("lang", "en");
+	await expect(video).toHaveAccessibleName("Trouvez un onglet et changez celui que vous partagez. Illustration en anglais");
+	await expect(video).toHaveAttribute("controls", "");
+	await expect(video).toHaveAttribute("preload", "none");
+	await expect(video).toHaveJSProperty("paused", true);
+});
 
 test("the sheet presents installed highlights, all changes and one acknowledgment", async ({ page }) => {
 	const resourceReads = await bootReleaseChrome(page);

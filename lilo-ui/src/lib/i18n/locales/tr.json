@@ -2219,6 +2219,7 @@
 		"Date Modified": "Değiştirilme tarihi"
 	},
 	"whatsNew": {
+		"mediaLanguage": "İngilizce görsel",
 		"version": "Lilo {version}",
 		"title": "Lilo'daki yenilikler",
 		"description": "Günlük gezintinizi kolaylaştıran birkaç küçük iyileştirme.",

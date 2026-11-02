@@ -22,6 +22,8 @@ Vendor/
 
 # Node / Svelte
 node_modules/
+lilo-ui/public/release-media/*
+!lilo-ui/public/release-media/.gitkeep
 site/.wrangler/
 site/.astro/
 site/dist/

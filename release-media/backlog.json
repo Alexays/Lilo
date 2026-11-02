@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "releases": {
+    "0.8.0": {
+      "kind": "video",
+      "feature": "tab-share",
+      "reason": "Searching the picker and changing the shared tab explains a new interaction.",
+      "notes": [
+        "While a call shares a tab, its call card shows what is shared, shares the shown tab instead in one click without interrupting the call's stream, and stops the share. A shared tab also gets back to full frame rate as soon as it is scrolled or typed in.",
+        "The tab share picker shows tab previews, suggests the tabs likely to be shared first, groups the others by Space, searches by title or address and works from the keyboard. The tab asking to share is no longer offered."
+      ],
+      "alt": {
+        "en": "Find a tab and switch what you share.",
+        "fr": "Trouvez un onglet et changez celui que vous partagez."
+      }
+    }
+  }
+}

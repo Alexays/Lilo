@@ -190,6 +190,40 @@ class SiteTests(unittest.TestCase):
                 demo_link = next(node for node in nodes(highlights[0]) if node.tag == "a")
                 self.assertEqual(demo_link.attrs["href"], ("/fr/" if language == "fr" else "/") + "#browser-demo")
 
+    def test_approved_film_has_localized_caption_and_native_mp4_controls(self):
+        for language, page in [("en", "changelog/index.html"), ("fr", "fr/changelog/index.html")]:
+            with self.subTest(language=language):
+                parsed = tree(DIST / page)
+                media = [node for node in parsed if "release-media" in node.classes]
+                self.assertEqual(len(media), 1)
+                release = next(node for node in parsed if node.attrs.get("id") == "v0.8.0")
+                film = next(node for node in nodes(release) if "release-media" in node.classes)
+                content = list(nodes(film))
+                video = next(node for node in content if node.tag == "video")
+                caption = next(node for node in content if node.tag == "figcaption")
+                self.assertEqual(video.attrs.get("aria-labelledby"), caption.attrs["id"])
+                self.assertEqual(video.attrs.get("lang"), "en")
+                self.assertEqual(caption.attrs.get("lang"), language)
+                self.assertIn("English-language illustration" if language == "en" else "Illustration en anglais", inline_text(caption))
+                caption_text = " ".join(inline_text(caption).split())
+                markdown = (DIST / page).with_suffix(".md").read_text()
+                self.assertIn("\n\n" + caption_text + "\n", markdown)
+                self.assertIn("controls", video.attrs)
+                self.assertIn("playsinline", video.attrs)
+                self.assertNotIn("autoplay", video.attrs)
+                self.assertNotIn("muted", video.attrs)
+                self.assertEqual(video.attrs["preload"], "none")
+                self.assertEqual(video.attrs["poster"], "/release-media/0.8.0/tab-share.png")
+                source = next(node for node in content if node.tag == "source")
+                self.assertEqual(source.attrs["type"], "video/mp4")
+                self.assertEqual(source.attrs["src"], "/release-media/0.8.0/tab-share.mp4")
+                for asset in [video.attrs["poster"], source.attrs["src"]]:
+                    self.assertTrue((DIST / asset.lstrip("/")).is_file())
+                disclosure = next(node for node in nodes(release) if node.tag == "details")
+                self.assertNotIn("open", disclosure.attrs)
+                current = next(node for node in parsed if node.attrs.get("id") == "v0.14.1")
+                self.assertFalse(any("release-media" in node.classes for node in nodes(current)))
+
     def test_release_recording_has_local_animation_controls_and_a_contextual_action(self):
         for page in ["changelog/index.html", "fr/changelog/index.html"]:
             with self.subTest(page=page):
@@ -232,7 +266,7 @@ class SiteTests(unittest.TestCase):
                 sources = {node.attrs["src"] for node in scripts}
                 self.assertTrue(shared.issubset(sources))
                 if page in ["index.html", "fr/index.html", "changelog/index.html", "fr/changelog/index.html"]:
-                    self.assertEqual(len(scripts), 4)
+                    self.assertEqual(len(scripts), 5 if page.endswith("changelog/index.html") else 4)
                 else:
                     self.assertEqual(sources, shared)
         self.assertFalse((DIST / "app.js").exists())
