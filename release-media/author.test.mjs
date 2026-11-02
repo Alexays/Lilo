@@ -101,10 +101,10 @@ for (const note of [
     assert.equal(chooseMedia("0.15.0", `### Changed\n\n- ${note}\n`, catalog).kind, "none");
   });
 
-test("Added and Breaking interface changes cannot use the Changed optimization exemption", () => {
-  for (const kind of ["Added", "Breaking"])
+test("explicit new interface changes cannot use the Changed optimization exemption", () => {
+  for (const kind of ["Added", "Changed", "Breaking"])
     assert.throws(
-      () => chooseMedia("0.15.0", `### ${kind}\n\n- A preview pane uses less memory.\n`, catalog),
+      () => chooseMedia("0.15.0", `### ${kind}\n\n- A new preview pane uses less memory.\n`, catalog),
       /blocked.*no genuine native capture/,
     );
 });

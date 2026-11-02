@@ -69,6 +69,7 @@ function internalChange({ kind, text }) {
     return true;
   if (
     kind === "Changed" &&
+    !/^(?:(?:a|an|the) )?(?:new|adding|introducing)\b/i.test(text) &&
     !/\b(?:and|but|while|which|that)\b/i.test(text) &&
     /^[^.!?;:\n]+\b(?:uses?|consumes?|needs?|requires?) (?:less|fewer) (?:CPU(?: time| cycles)?|memory)\.?$/i.test(
       text,
