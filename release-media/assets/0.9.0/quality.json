@@ -2,7 +2,7 @@
   "release": "0.9.0",
   "kind": "video",
   "passed": true,
-  "renderSha256": "70a8da687020133cf056a6a27bf1f00269d61cd2aced6f0dc9b485e7004c6370",
+  "renderSha256": "bd34a31f907fad4d412fe6d5637df967b049d36cd07e525ba143e8f97fee83f2",
   "sourceHashes": true,
   "renderHashes": true,
   "strictCompositionCheck": true,
@@ -50,17 +50,17 @@
     }
   ],
   "decode": true,
-  "fps": 60,
-  "frames": 900,
+  "fps": 30,
+  "frames": 450,
   "audio": {
     "integratedLoudnessLUFS": -15.9,
-    "truePeakDbFS": -2.1
+    "truePeakDbFS": -1.4
   },
   "motion": {
-    "measuredFrames": 899,
-    "movingFrameRatio": 0.2936596218020022,
-    "longestStillSeconds": 2.6166666666666667,
-    "largestLumaChange": 11.3326
+    "measuredFrames": 449,
+    "movingFrameRatio": 0.32293986636971045,
+    "longestStillSeconds": 2.6,
+    "largestLumaChange": 19.7287
   },
-  "posterSSIM": 0.999016
+  "posterSSIM": 0.997323
 }
