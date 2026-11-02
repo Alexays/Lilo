@@ -9,17 +9,17 @@
     "directory": "hyperframes/archive/0.9.0",
     "variant": null
   },
-  "width": 1920,
-  "height": 1080,
-  "fps": 60,
-  "frames": 900,
-  "posterFrame": 840,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "frames": 450,
+  "posterFrame": 420,
   "hashes": {
     "history.png": "cdbe2f274efb77415a9b2ea83fbf3ef79341c70d92cafa225106ab99008439c4",
-    "history.mp4": "04ba00af2ccedf5c3cba673bf3e8d498979150310a98cd964c04762782284733"
+    "history.mp4": "aea45a4b7dc73cad5109f1958ae3bb5c7d0e3abbc322c9aa41a18ab7a52621d2"
   },
   "recipeHashes": {
-    "render.mjs": "7bcb846b407273392788f3145e846042890597d6c812b07071b83c2c12676737",
+    "render.mjs": "08c41259c7238526290bb6b1a770dbb10bf34ccab690fa93e82b53b41d55b4e0",
     "pipeline.mjs": "82ad9dd2bd2193de51afc4637f3a4ef073409c35da88ff99a9d7cdc087969d05",
     "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
     "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",

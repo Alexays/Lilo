@@ -78,7 +78,7 @@ The imported history in `.changes/v0.1.5.md` contains several earlier versions. 
 
 ## Deployment
 
-The tag-triggered GitHub release workflow builds the Astro website from verified native release media, then hands `site/dist/` to its deployment job as a same-run artifact. After media validation and the signed draft succeed, `make site-deploy-verified` repeats the publication gate and deploys that exact output without rebuilding. A small Worker serves byte ranges for release MP4s, while pages and other files remain static. No Astro server adapter is used. `wrangler.toml` keeps the custom domain, headers, redirects and 404 behavior.
+The tag-triggered GitHub release workflow builds the Astro website from verified native release media, then hands `site/dist/` to its deployment job as a same-run artifact. After media validation and the signed draft succeed, `make site-deploy-verified` repeats the publication gate and deploys that exact output without rebuilding. Everything, release films included, deploys as static assets with no Worker code. `wrangler.toml` keeps the custom domain, headers, redirects and 404 behavior.
 
 Alexays must add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to the GitHub `release` environment before deployment can succeed. See [Cloudflare setup](../docs/RELEASING.md#cloudflare-deployment-once) for token scope and secret configuration. When enabling this release deployment, disable the previous Cloudflare Workers Builds production branch deploy so an independent Git build cannot replace the verified artifact. Missing credentials or a failed media gate leave the release workflow failed and the GitHub release as a draft. The site's `.nvmrc` selects Node 22.23.4.
 

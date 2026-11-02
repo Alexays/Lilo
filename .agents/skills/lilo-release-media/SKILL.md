@@ -24,7 +24,7 @@ Use Make:
 
 `make release-media-ci RELEASE=x.y.z` runs selection, fresh native capture, import, render, inspection, bundled What's New playback and publication checks. Tagged CI captures the exact source commit and app version before signing; deployment uses that run's validated website artifact. A failed audit, missing capability, broken capture, stale hash or failed media check blocks publication. Preserve a catalog publication kill switch; never re-enable it merely to make a workflow green.
 
-Films use lossless PNG capture and 1080p60 H.264/AAC. Strict HyperFrames checks cover structure, runtime, layout, contrast, motion and audio. Encoded checks verify frame count, decode, sound, bounded motion, native/recipe/output hashes, cutout RGB preservation and poster similarity. Announcement reading holds may last up to three seconds; signal checks complement visual review rather than judging artistic quality.
+Films use lossless PNG capture and ship as 720p30 H.264/AAC, small enough to serve whole. Strict HyperFrames checks cover structure, runtime, layout, contrast, motion and audio. Encoded checks verify frame count, decode, sound, bounded motion, native/recipe/output hashes, cutout RGB preservation and poster similarity. Announcement reading holds may last up to three seconds; signal checks complement visual review rather than judging artistic quality.
 
 Use the committed CC0 soundtrack and licensed editorial Foley. Music rights and hashes live in `release-media/public/audio/music.license.json`; attribution is optional, so no music credit overlay is needed. Never remove a required credit from a different track. Keep sound controls, explicit play, keyboard access and offscreen pause in both compact players.
 

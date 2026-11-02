@@ -29,7 +29,8 @@ const releases = new Map(
 );
 if (!same([...releases.keys()].sort(), Object.keys(catalog.releases).sort()))
   throw Error("Every published release needs a video, screenshot or none decision.");
-const passesMotion = (m, frames) =>
+// The flash limit is per 60 fps frame: a slower film shows the same change across fewer frames.
+const passesMotion = (m, frames, fps) =>
   m?.measuredFrames === frames - 1 &&
   Number.isFinite(m.movingFrameRatio) &&
   m.movingFrameRatio >= 0.2 &&
@@ -37,7 +38,7 @@ const passesMotion = (m, frames) =>
   Number.isFinite(m.longestStillSeconds) &&
   m.longestStillSeconds <= 3 &&
   Number.isFinite(m.largestLumaChange) &&
-  m.largestLumaChange <= 45;
+  m.largestLumaChange <= (45 * 60) / fps;
 const passesQuality = (q, render, hash) =>
   q?.passed === true &&
   q.renderSha256 === hash &&
@@ -47,7 +48,7 @@ const passesQuality = (q, render, hash) =>
   q.strictCompositionCheck === true &&
   (render.kind !== "video" ||
     (q.decode === true &&
-      passesMotion(q.motion, render.frames) &&
+      passesMotion(q.motion, render.frames, render.fps) &&
       q.posterSSIM >= 0.98 &&
       q.audio?.integratedLoudnessLUFS >= -19 &&
       q.audio?.integratedLoudnessLUFS <= -13 &&
@@ -133,9 +134,9 @@ try {
       render.release !== version ||
       render.kind !== entry.kind ||
       render.feature !== entry.feature ||
-      render.width !== 1920 ||
-      render.height !== 1080 ||
-      render.fps !== 60
+      render.width !== (entry.kind === "video" ? 1280 : 1920) ||
+      render.height !== (entry.kind === "video" ? 720 : 1080) ||
+      render.fps !== (entry.kind === "video" ? 30 : 60)
     )
       throw Error(`Stale HyperFrames render: ${version}`);
     if (!same(render.nativeReceipts, native.receipts))
@@ -241,17 +242,17 @@ try {
         audio = probe.streams.find((s) => s.codec_type === "audio");
       if (
         video?.codec_name !== "h264" ||
-        video.width !== 1920 ||
-        video.height !== 1080 ||
+        video.width !== 1280 ||
+        video.height !== 720 ||
         video.pix_fmt !== "yuv420p" ||
-        video.avg_frame_rate !== "60/1" ||
+        video.avg_frame_rate !== "30/1" ||
         Number(video.nb_read_frames) !== render.frames ||
         audio?.codec_name !== "aac" ||
         Number(audio.sample_rate) !== 48000 ||
         audio.channels !== 2 ||
-        Math.abs(Number(probe.format.duration) - render.frames / 60) > 0.05
+        Math.abs(Number(probe.format.duration) - render.frames / 30) > 0.05
       )
-        throw Error(`Incorrect 1080p60 H.264/AAC output: ${version}`);
+        throw Error(`Incorrect 720p30 H.264/AAC output: ${version}`);
       const { stderr: analysis } = await run(
         "ffmpeg",
         [
@@ -292,10 +293,10 @@ try {
       const motion = {
         measuredFrames: deltas.length,
         movingFrameRatio: deltas.filter((d) => d >= 0.04).length / deltas.length,
-        longestStillSeconds: longest / 60,
+        longestStillSeconds: longest / 30,
         largestLumaChange: Math.max(...deltas),
       };
-      if (!passesMotion(motion, render.frames))
+      if (!passesMotion(motion, render.frames, render.fps))
         throw Error(`Motion quality failed for ${version}: ${JSON.stringify(motion)}`);
       const frame = path.join(scratch, `${version}.png`);
       await run("ffmpeg", [
@@ -316,7 +317,7 @@ try {
         "-i",
         poster,
         "-lavfi",
-        "ssim",
+        "[1]scale=1280:720:flags=lanczos[poster];[0][poster]ssim",
         "-f",
         "null",
         "-",
@@ -325,7 +326,7 @@ try {
       if (!(ssim >= 0.98)) throw Error(`Encoded UI is too blurry: ${version}`);
       Object.assign(report, {
         decode: true,
-        fps: 60,
+        fps: 30,
         frames: render.frames,
         audio: { integratedLoudnessLUFS: loudness, truePeakDbFS: peak },
         motion,
