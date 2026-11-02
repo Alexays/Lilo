@@ -60,6 +60,6 @@ python3 docs/reviews/pr149-split/audit_integrated.py --repo . \
   43b7cad3 6180105e a6bd513d 7c7c4e84 cc119f39
 ```
 
-Use the full tips in `integrated-stack.json` if branches have advanced. The scripts deliberately fail when source changes no longer match this recorded review.
+These commands reproduce the recorded snapshots. To audit later revisions, pass their five tips instead. The scripts fail when source no longer matches the recorded review.
 
 Sequence Work into Verifiable Units shaped the base chain and checks. Build the Lever produced these audit scripts. Separate Before Serializing Shared State kept concurrent edits in separate worktrees while one checkout ran native verification.
