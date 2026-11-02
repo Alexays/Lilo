@@ -12,7 +12,7 @@
         1280,
         800
       ],
-      "sha256" : "1722d540ba54b2f9c0ee13e61109f4fca56ee1168bffae6450c41d81ceff562b",
+      "sha256" : "dfe6c9caf58112a399a2ffe5fe3828e882adb1e76e6b84326df97b4b3e4cf88e",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     },
@@ -26,7 +26,7 @@
         1280,
         800
       ],
-      "sha256" : "7998a0995e981917eee6aa08ff3b40c233bda22409034654129d9f0e6309d9d8",
+      "sha256" : "ea360b0d948bc72444c785870c6325c0c777ac690fd24776dd76148db17a3989",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     },
@@ -40,7 +40,7 @@
         1280,
         800
       ],
-      "sha256" : "b03cbcd6d70fbc33c1cdabcadbef61f3cfd5bb3aaca1778383746e44a60c5dfb",
+      "sha256" : "d46d3db6b3135038e7a788cc48881c61497847e239ed017d05c065febf87960b",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     },
@@ -54,12 +54,12 @@
         1280,
         800
       ],
-      "sha256" : "ef5962565b560a62627656d4e9fc59959616e5ad9c82d75a8bef5962e9a4daa0",
+      "sha256" : "2c80aca2a8f50569b3dd078ce2c0f1a13b861693117bd4ef253c2552d976bfd0",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     }
   ],
-  "capturedAt" : "2026-11-01T12:42:01Z",
+  "capturedAt" : "2026-11-02T13:15:39Z",
   "checks" : {
     "nativeTabPositions" : [
       "left",
@@ -71,7 +71,7 @@
   },
   "feature" : "tab-edges",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "e1b599c3a0984ef1edbab898cbc2ee6e5c76273e",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
   "release" : "0.2.0",
   "schemaVersion" : 1
 }

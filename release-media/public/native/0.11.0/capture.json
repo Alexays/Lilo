@@ -12,23 +12,9 @@
         1280,
         800
       ],
-      "sha256" : "5eb24e66d7ad1b36a8a2aad49c392f6357596c7bbe219b5eeedf537ecde85302",
+      "sha256" : "15d83624d63e286a78e61cd91c4a8e6e030c78224faf598398b11e654e6d7a3b",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
-    },
-    {
-      "file" : "solid-editor.png",
-      "height" : 2752,
-      "pixelsPerPoint" : 8,
-      "rectPoints" : [
-        532,
-        149,
-        332,
-        344
-      ],
-      "sha256" : "dd182a4af1ff36d35913df4de643bd2b0de1f2e66e7d1e6e2c3acf4fd4b07e79",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 2656
     },
     {
       "file" : "solid-controls.png",
@@ -43,20 +29,6 @@
       "sha256" : "f7035efa7557a367a5e2865cf4a98bbab34112324499e19077946781b094d2e6",
       "tool" : "WKWebView.takeSnapshot",
       "width" : 1552
-    },
-    {
-      "file" : "glass-editor.png",
-      "height" : 2752,
-      "pixelsPerPoint" : 8,
-      "rectPoints" : [
-        532,
-        149,
-        332,
-        344
-      ],
-      "sha256" : "a3e828438c76cc662e6b2ea443c7f147e182f267775e2374888379b864918d9f",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 2656
     },
     {
       "file" : "glass-controls.png",
@@ -82,35 +54,21 @@
         1280,
         800
       ],
-      "sha256" : "e5db121bc7a44e1b1c9bb7cadf7c479cf7e4ff858fe1908b2317d5b40ad0a3ce",
+      "sha256" : "39642672b170be796e372a3de3b82bf7c6425719f3ae6b78dbb2e3b8518673ba",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
-    },
-    {
-      "file" : "grain-editor.png",
-      "height" : 2752,
-      "pixelsPerPoint" : 8,
-      "rectPoints" : [
-        432,
-        149,
-        333,
-        344
-      ],
-      "sha256" : "24b0f302deac3dd5aab6566d69e9909dce3380f21d08f1c0cedace0c7beb8cca",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 2664
     },
     {
       "file" : "grain-controls.png",
       "height" : 240,
       "pixelsPerPoint" : 8,
       "rectPoints" : [
-        502,
+        506,
         312,
         194,
         30
       ],
-      "sha256" : "6ebafff24b5b0be87ca7f98ff2f2ea5e1d382ce51d6d9bd2ef41cca21461ca6b",
+      "sha256" : "fa2054544c3104c92935813eddf337abc791969c1d5358319804d8cdf20ce4ab",
       "tool" : "WKWebView.takeSnapshot",
       "width" : 1552
     },
@@ -124,7 +82,7 @@
         1280,
         800
       ],
-      "sha256" : "405c4429222874a391ae8b1d70c8b3003b9c5ff4905b67ac38c3493030dd575c",
+      "sha256" : "eef74bbd7b9ce7b05570b711b94d382d7320238a93bcea9c82dd3985176e5bde",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     },
@@ -138,12 +96,12 @@
         1280,
         800
       ],
-      "sha256" : "9da4770e09b58eeb9a1e51d286df21ef126f11bbe386c51483c734381a3b882b",
+      "sha256" : "3ea5b2d564eec79463ac87d849962b9a27d4e98d4a977ac01a1d29649955999a",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     }
   ],
-  "capturedAt" : "2026-11-01T10:54:51Z",
+  "capturedAt" : "2026-11-02T13:15:36Z",
   "checks" : {
     "savedMaterial" : "grain",
     "secondSpaceMaterial" : "glass",
@@ -151,7 +109,7 @@
   },
   "feature" : "spaces",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
   "release" : "0.11.0",
   "schemaVersion" : 1
 }

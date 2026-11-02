@@ -4,23 +4,19 @@
   "release": "0.8.0",
   "kind": "video",
   "feature": "tab-share",
-  "appVersion": "0.14.1",
-  "appBuild": "31",
-  "productSourceCommit": "8c534c42e97bfcdd9a2d2cead5f58eb687b3b0f0",
   "width": 1920,
   "height": 1080,
   "fps": 60,
   "frames": 1560,
   "posterFrame": 1440,
-  "renderMilliseconds": 70571.417167,
   "hashes": {
     "tab-share.png": "3e36ede8fd9dd50a1cb6a4b177decc719bfe9e95d0aed489c45b4ac30f36d329",
-    "tab-share.mp4": "f1768eb0c4a886bb7c8b098a8405a5aa1046e9093171bf3edd71a0d12347fa66"
+    "tab-share.mp4": "aa16aba87dba2611a438190372217cac3ae9e18488dbf31b2c22c77913f176ed"
   },
   "recipeHashes": {
-    "render.mjs": "26c101dfb8e69e7616c6fa0df8671b23b24c1018ed21fc7db8dd1fb111d4cadf",
-    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
-    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "render.mjs": "22ac935ac5e5cb9c499936f1f653bcb1fa31a1446b3aabc7ca600b7eed8b0faf",
+    "pipeline.mjs": "558c62d71f60b02f27a1ddc4a9f717e0af9c018b4e9707a29572cf7cdb565b08",
+    "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
     "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
     "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
     "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
@@ -35,133 +31,62 @@
     "hyperframes/0.8.0/compositions/room.html": "15ade3c24d99fc71c34686c18f8ceab094865e3165ff2f75593eb304f5621af3",
     "hyperframes/0.8.0/compositions/switch.html": "8880047a9e49a92178140e4039dfe89f0048036360bbf0a5d725b0b11880df2f",
     "hyperframes/0.8.0/index.html": "ad6e13e5ce4e6e141bf752e8c50eecfd366a0405ec504552bf20270cf6766859",
-    "hyperframes/0.8.0/metadata.json": "760663a42ab6526ca7011cbb14d9ede652f5a4d60822053070fd8424f663f616"
+    "hyperframes/0.8.0/metadata.json": "43b6fe934ddf8149898ec36209e22a0901b6a365dda1d4f9a7f71f26c7c7416a"
   },
   "nativeReceipts": [
     {
       "path": "public/native/0.8.0/address-bar/capture.json",
-      "sha256": "c3995112591040f5432e9652dd032c34ad5bcf8bd109bee5c0d06423ac60f33c",
+      "sha256": "dea98e8c470cb0cae8d6d4c3c4588f4b7c4aafb08ad02860e907abbd8a8200b7",
       "appVersion": "0.14.1",
       "appBuild": "31",
-      "productSourceCommit": "afd2b5a0cf88de0155ae5cdf124a4ac97a4a91dc"
+      "productSourceCommit": "5153405324fb2b0dc59c3d8313873b3ef2c30c97"
     },
     {
       "path": "public/native/0.8.0/capture.json",
-      "sha256": "053a9bec2ae24a1e8edd21d8c9d09665ea0fbbff7794a2c23ee852b4c22694e6",
+      "sha256": "b1c62e99e6eee93aaef6687c8cf1cee1a62b0799beda2601b8ef82c0cab9543b",
       "appVersion": "0.14.1",
       "appBuild": "31",
-      "productSourceCommit": "8c534c42e97bfcdd9a2d2cead5f58eb687b3b0f0"
+      "productSourceCommit": "5153405324fb2b0dc59c3d8313873b3ef2c30c97"
     }
   ],
-  "nativeReceiptSha256": "053a9bec2ae24a1e8edd21d8c9d09665ea0fbbff7794a2c23ee852b4c22694e6",
   "cutouts": [
     {
       "file": "picker.png",
-      "width": 5440,
-      "height": 2520,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          5440,
-          2520
-        ],
-        "radius": 128
-      },
-      "beforeRgbSha256": "a692fa8b5761daa4e3f16a7789695ec5b982ba111f594918bac952706cb22ee0",
-      "afterRgbSha256": "a692fa8b5761daa4e3f16a7789695ec5b982ba111f594918bac952706cb22ee0",
-      "beforeAlphaSha256": "3e3bd22702caa03f122f7030c25113a05fda726541663bee02ca5fd08b223afc",
-      "afterAlphaSha256": "34d22a2c6631eb7b03ac26b588df174665a4b678ed488226aabe56715bc32a16",
+      "rgbSha256": "a692fa8b5761daa4e3f16a7789695ec5b982ba111f594918bac952706cb22ee0",
+      "alphaSha256": "34d22a2c6631eb7b03ac26b588df174665a4b678ed488226aabe56715bc32a16",
       "transparentPixels": 13692,
-      "partialPixels": 11686549,
       "opaquePixels": 2008559,
       "source": "public/native/0.8.0/picker.png"
     },
     {
       "file": "match.png",
-      "width": 1240,
-      "height": 984,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          1240,
-          984
-        ],
-        "radius": 80
-      },
-      "beforeRgbSha256": "e6e600bdc9047607d9353e6dcc5259ad51dd3c95ffec0ce68da8124d588dab4b",
-      "afterRgbSha256": "e6e600bdc9047607d9353e6dcc5259ad51dd3c95ffec0ce68da8124d588dab4b",
-      "beforeAlphaSha256": "73888ed4bc4c5d4b17ef0ed2aa28edc3328eb35abe4d910d7c7060906afd2356",
-      "afterAlphaSha256": "32a3c2944668daee46e4aef29a56a2e2157584457b8cd913df729e614bbd14de",
+      "rgbSha256": "e6e600bdc9047607d9353e6dcc5259ad51dd3c95ffec0ce68da8124d588dab4b",
+      "alphaSha256": "32a3c2944668daee46e4aef29a56a2e2157584457b8cd913df729e614bbd14de",
       "transparentPixels": 5268,
-      "partialPixels": 340074,
       "opaquePixels": 874818,
       "source": "public/native/0.8.0/match.png"
     },
     {
       "file": "sharing.png",
-      "width": 1984,
-      "height": 520,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          1984,
-          520
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "ff7e08b91a6f02840c198d855aab63fbc5952284be3c1df39afbac88d1063e4d",
-      "afterRgbSha256": "ff7e08b91a6f02840c198d855aab63fbc5952284be3c1df39afbac88d1063e4d",
-      "beforeAlphaSha256": "12c2046e193161224aff7ac2d8ab601cbb8f888c62e23a2dc5d299a935fe9a2c",
-      "afterAlphaSha256": "d9735677c5f23ae96c70f67ddc749e8ec0e294ae5bd8a8571feecb3752988347",
+      "rgbSha256": "ff7e08b91a6f02840c198d855aab63fbc5952284be3c1df39afbac88d1063e4d",
+      "alphaSha256": "d9735677c5f23ae96c70f67ddc749e8ec0e294ae5bd8a8571feecb3752988347",
       "transparentPixels": 1848,
-      "partialPixels": 288,
       "opaquePixels": 1029544,
       "source": "public/native/0.8.0/sharing.png"
     },
     {
       "file": "switched.png",
-      "width": 1984,
-      "height": 520,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          1984,
-          520
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "63c97a2ad541ba4a29941b7270240225a08d30fb19cb270dbd42ebc839c40e3e",
-      "afterRgbSha256": "63c97a2ad541ba4a29941b7270240225a08d30fb19cb270dbd42ebc839c40e3e",
-      "beforeAlphaSha256": "12c2046e193161224aff7ac2d8ab601cbb8f888c62e23a2dc5d299a935fe9a2c",
-      "afterAlphaSha256": "d9735677c5f23ae96c70f67ddc749e8ec0e294ae5bd8a8571feecb3752988347",
+      "rgbSha256": "63c97a2ad541ba4a29941b7270240225a08d30fb19cb270dbd42ebc839c40e3e",
+      "alphaSha256": "d9735677c5f23ae96c70f67ddc749e8ec0e294ae5bd8a8571feecb3752988347",
       "transparentPixels": 1848,
-      "partialPixels": 288,
       "opaquePixels": 1029544,
       "source": "public/native/0.8.0/switched.png"
     },
     {
       "file": "search-0.png",
-      "width": 2016,
-      "height": 232,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          5136,
-          232
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "bc7c92c15a0b65c1e4bda39a77ab07fcad7818f01cbd56a828b5b9cf217f5e4c",
-      "afterRgbSha256": "bc7c92c15a0b65c1e4bda39a77ab07fcad7818f01cbd56a828b5b9cf217f5e4c",
-      "beforeAlphaSha256": "f9324c7f845258216f9184e60db5135c4213583805b83e48b3a5492df37782ee",
-      "afterAlphaSha256": "bba9ac2c0256ecbc182b461506e46d4c04a258c99a92620c7495cd7ec3cff4a3",
+      "rgbSha256": "bc7c92c15a0b65c1e4bda39a77ab07fcad7818f01cbd56a828b5b9cf217f5e4c",
+      "alphaSha256": "bba9ac2c0256ecbc182b461506e46d4c04a258c99a92620c7495cd7ec3cff4a3",
       "transparentPixels": 924,
-      "partialPixels": 456004,
       "opaquePixels": 10784,
       "source": "public/native/0.8.0/search-0.png",
       "crop": [
@@ -173,23 +98,9 @@
     },
     {
       "file": "search-1.png",
-      "width": 2016,
-      "height": 232,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          5136,
-          232
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "0a9533f0af7ceb668548369ea1970570d9428dd1aee9260aefa70c4748331866",
-      "afterRgbSha256": "0a9533f0af7ceb668548369ea1970570d9428dd1aee9260aefa70c4748331866",
-      "beforeAlphaSha256": "8a5e3874dee1aaebe75d257a7ffc9fff1eb262fa22730503851000fced801923",
-      "afterAlphaSha256": "57500a8703615bb9f737761d58b96d7fe7b96aae30f44c4c4ede0bed02591f17",
+      "rgbSha256": "0a9533f0af7ceb668548369ea1970570d9428dd1aee9260aefa70c4748331866",
+      "alphaSha256": "57500a8703615bb9f737761d58b96d7fe7b96aae30f44c4c4ede0bed02591f17",
       "transparentPixels": 924,
-      "partialPixels": 463876,
       "opaquePixels": 2912,
       "source": "public/native/0.8.0/search-1.png",
       "crop": [
@@ -201,23 +112,9 @@
     },
     {
       "file": "search-2.png",
-      "width": 2016,
-      "height": 232,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          5136,
-          232
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "3fb8f9a1a4df1c8377c666654ab137f4040c51284704e8dc0779baae3cbcde82",
-      "afterRgbSha256": "3fb8f9a1a4df1c8377c666654ab137f4040c51284704e8dc0779baae3cbcde82",
-      "beforeAlphaSha256": "23d9afd2919f986988fa6df4f2a98462f829913f90ef28adb09553a41696495d",
-      "afterAlphaSha256": "df3b73dc7194ae56b32755056640de4e03c0960c1848e9014d435559b166f33e",
+      "rgbSha256": "3fb8f9a1a4df1c8377c666654ab137f4040c51284704e8dc0779baae3cbcde82",
+      "alphaSha256": "df3b73dc7194ae56b32755056640de4e03c0960c1848e9014d435559b166f33e",
       "transparentPixels": 924,
-      "partialPixels": 463447,
       "opaquePixels": 3341,
       "source": "public/native/0.8.0/search-2.png",
       "crop": [
@@ -229,23 +126,9 @@
     },
     {
       "file": "search-3.png",
-      "width": 2016,
-      "height": 232,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          5136,
-          232
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "c29fcbf59dad5fd3ef3b06ba78d4ac155a5db802940ca474319d3e3da5094cc9",
-      "afterRgbSha256": "c29fcbf59dad5fd3ef3b06ba78d4ac155a5db802940ca474319d3e3da5094cc9",
-      "beforeAlphaSha256": "461c681434b44cf5e73c6d0d59abe86cf09a427991065da42f12f55ea8794443",
-      "afterAlphaSha256": "0c8c83fb049a8d74f857c515755963d2cf484897e4790a16cac6b48b2143abea",
+      "rgbSha256": "c29fcbf59dad5fd3ef3b06ba78d4ac155a5db802940ca474319d3e3da5094cc9",
+      "alphaSha256": "0c8c83fb049a8d74f857c515755963d2cf484897e4790a16cac6b48b2143abea",
       "transparentPixels": 924,
-      "partialPixels": 462481,
       "opaquePixels": 4307,
       "source": "public/native/0.8.0/search-3.png",
       "crop": [
@@ -257,23 +140,9 @@
     },
     {
       "file": "search-4.png",
-      "width": 2016,
-      "height": 232,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          5136,
-          232
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "a68e84ce23bbdf3644cc1f6e4025838c5788715806d78db54eca0ef74175fe6a",
-      "afterRgbSha256": "a68e84ce23bbdf3644cc1f6e4025838c5788715806d78db54eca0ef74175fe6a",
-      "beforeAlphaSha256": "7f192cc7522808383c7750d7496bd9b00f0dbacedebea019ec6ac1b303735281",
-      "afterAlphaSha256": "9ba66b067ec4cb630da8afb27da382ca369d8818340110e691c0d77fd879640f",
+      "rgbSha256": "a68e84ce23bbdf3644cc1f6e4025838c5788715806d78db54eca0ef74175fe6a",
+      "alphaSha256": "9ba66b067ec4cb630da8afb27da382ca369d8818340110e691c0d77fd879640f",
       "transparentPixels": 924,
-      "partialPixels": 461991,
       "opaquePixels": 4797,
       "source": "public/native/0.8.0/search-4.png",
       "crop": [
@@ -285,23 +154,9 @@
     },
     {
       "file": "search-5.png",
-      "width": 2016,
-      "height": 232,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          5136,
-          232
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "b56372793c1c9bdaadbda9ef3d9a32f73fa73b9a1e91f1507f54bf0708b794fe",
-      "afterRgbSha256": "b56372793c1c9bdaadbda9ef3d9a32f73fa73b9a1e91f1507f54bf0708b794fe",
-      "beforeAlphaSha256": "b1bc3546cc4db36a21158ca6e97a79eafe1c778512b97a968c3ccdd8048f9fc8",
-      "afterAlphaSha256": "984cfbb7b6e0a65227c84cb9d59b9504a65555079886cf8fcbff7c2c3795f807",
+      "rgbSha256": "b56372793c1c9bdaadbda9ef3d9a32f73fa73b9a1e91f1507f54bf0708b794fe",
+      "alphaSha256": "984cfbb7b6e0a65227c84cb9d59b9504a65555079886cf8fcbff7c2c3795f807",
       "transparentPixels": 924,
-      "partialPixels": 460868,
       "opaquePixels": 5920,
       "source": "public/native/0.8.0/search-5.png",
       "crop": [
@@ -313,23 +168,9 @@
     },
     {
       "file": "share-button.png",
-      "width": 592,
-      "height": 296,
-      "shape": {
-        "rect": [
-          60,
-          40,
-          476,
-          216
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "4e4580244b8bc1503bbbd90b4930dde9f348a3a2412470b8aaa9943dd4ed575b",
-      "afterRgbSha256": "4e4580244b8bc1503bbbd90b4930dde9f348a3a2412470b8aaa9943dd4ed575b",
-      "beforeAlphaSha256": "5c3ff4182fde15efb1922ef32970c871bfc27d9f5f453117b68875123766cdc4",
-      "afterAlphaSha256": "e6cc6aad3e2fe00bbb273a4238ac01dc7ce0167eaf3fd6dc0cadc716d079e5a9",
+      "rgbSha256": "4e4580244b8bc1503bbbd90b4930dde9f348a3a2412470b8aaa9943dd4ed575b",
+      "alphaSha256": "e6cc6aad3e2fe00bbb273a4238ac01dc7ce0167eaf3fd6dc0cadc716d079e5a9",
       "transparentPixels": 74264,
-      "partialPixels": 348,
       "opaquePixels": 100620,
       "source": "public/native/0.8.0/filtered.png",
       "crop": [
@@ -341,23 +182,9 @@
     },
     {
       "file": "setting-before.png",
-      "width": 2448,
-      "height": 320,
-      "shape": {
-        "rect": [
-          100,
-          88,
-          2300,
-          224
-        ],
-        "radius": 80
-      },
-      "beforeRgbSha256": "1d393508b699e7589d5b8a5a17c91a0d9bff3ce545a1ea78fc3f66ad9d951f2c",
-      "afterRgbSha256": "1d393508b699e7589d5b8a5a17c91a0d9bff3ce545a1ea78fc3f66ad9d951f2c",
-      "beforeAlphaSha256": "4906d41eb9f0e85453e32a26196d1ab336acb703b05510d42ea28e0dadc0d5cd",
-      "afterAlphaSha256": "5a705493f1d84ae484db86999c84a3143373db88e10e98c35e7fd8928e8405c7",
+      "rgbSha256": "1d393508b699e7589d5b8a5a17c91a0d9bff3ce545a1ea78fc3f66ad9d951f2c",
+      "alphaSha256": "5a705493f1d84ae484db86999c84a3143373db88e10e98c35e7fd8928e8405c7",
       "transparentPixels": 273428,
-      "partialPixels": 468,
       "opaquePixels": 509464,
       "source": "public/native/0.8.0/address-bar/setting-visible.png",
       "crop": [
@@ -369,23 +196,9 @@
     },
     {
       "file": "setting-after.png",
-      "width": 2448,
-      "height": 320,
-      "shape": {
-        "rect": [
-          100,
-          88,
-          2300,
-          224
-        ],
-        "radius": 80
-      },
-      "beforeRgbSha256": "46e8f8d99dc8f992a90acfa1b2708a314b08c477fa2d8afe7ebc103bd442872e",
-      "afterRgbSha256": "46e8f8d99dc8f992a90acfa1b2708a314b08c477fa2d8afe7ebc103bd442872e",
-      "beforeAlphaSha256": "4906d41eb9f0e85453e32a26196d1ab336acb703b05510d42ea28e0dadc0d5cd",
-      "afterAlphaSha256": "5a705493f1d84ae484db86999c84a3143373db88e10e98c35e7fd8928e8405c7",
+      "rgbSha256": "e12a1246c8c9f270b8cd25d75a2d31eb057385dcf8cdea4644a3de545efbc880",
+      "alphaSha256": "5a705493f1d84ae484db86999c84a3143373db88e10e98c35e7fd8928e8405c7",
       "transparentPixels": 273428,
-      "partialPixels": 468,
       "opaquePixels": 509464,
       "source": "public/native/0.8.0/address-bar/setting-hidden.png",
       "crop": [
@@ -395,26 +208,5 @@
         320
       ]
     }
-  ],
-  "publication": "quality-gated",
-  "strictCompositionCheck": true,
-  "music": {
-    "file": "music.ogg",
-    "title": "Week 37 - Schmoovin",
-    "artist": "Abstraction / Tallbeard Studios",
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attributionRequired": false,
-    "commercialUse": true,
-    "modificationAllowed": true,
-    "sourceUrl": "https://tallbeard.itch.io/music-loop-bundle",
-    "sourceArchive": "music-loop-bundle-2026-q3.zip",
-    "archiveUploadId": 19538393,
-    "sourceTrack": "Week 37 - Schmoovin.ogg",
-    "sha256": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
-    "licenseFile": "music.LICENSE.txt",
-    "licenseSha256": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
-    "verifiedAt": "2026-11-02",
-    "acquisition": "Creator-provided free download, without an account or payment. Only this track and the bundled license are retained."
-  }
+  ]
 }

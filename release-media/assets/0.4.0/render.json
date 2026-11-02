@@ -4,22 +4,18 @@
   "release": "0.4.0",
   "kind": "screenshot",
   "feature": "updates",
-  "appVersion": "0.14.1",
-  "appBuild": "31",
-  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
   "width": 1920,
   "height": 1080,
   "fps": 60,
   "frames": 1,
   "posterFrame": 0,
-  "renderMilliseconds": 1734.3616250000196,
   "hashes": {
     "updates.png": "779dcdd748c753da006532c7a34f092052524cc6dc34af81e918c6e54c0489a9"
   },
   "recipeHashes": {
-    "render.mjs": "26c101dfb8e69e7616c6fa0df8671b23b24c1018ed21fc7db8dd1fb111d4cadf",
-    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
-    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "render.mjs": "22ac935ac5e5cb9c499936f1f653bcb1fa31a1446b3aabc7ca600b7eed8b0faf",
+    "pipeline.mjs": "558c62d71f60b02f27a1ddc4a9f717e0af9c018b4e9707a29572cf7cdb565b08",
+    "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
     "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
     "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
     "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
@@ -32,38 +28,20 @@
   "nativeReceipts": [
     {
       "path": "public/native/0.4.0/capture.json",
-      "sha256": "d9829f569890884d83263205a2cf8e228d3bc5a504d794dd2da9a03dc0d2f79c",
+      "sha256": "4c2e3d5d32818e9ecc57a23eda50b6e04f7145b7f5bf14012bcc82b3d67303cc",
       "appVersion": "0.14.1",
       "appBuild": "31",
-      "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f"
+      "productSourceCommit": "6905252c253e7803410b690b2095fbdb8691a28f"
     }
   ],
-  "nativeReceiptSha256": "d9829f569890884d83263205a2cf8e228d3bc5a504d794dd2da9a03dc0d2f79c",
   "cutouts": [
     {
       "file": "updates.png",
-      "width": 2144,
-      "height": 520,
-      "shape": {
-        "rect": [
-          80,
-          84,
-          1984,
-          356
-        ],
-        "radius": 80
-      },
-      "beforeRgbSha256": "d19a4fef479e0e4e06e44c794b5a549a89162002b83c67bfc74397f904f8ee5a",
-      "afterRgbSha256": "d19a4fef479e0e4e06e44c794b5a549a89162002b83c67bfc74397f904f8ee5a",
-      "beforeAlphaSha256": "ee6a52dacf9c1ffe41c1cb0e41f7be69e58ba1a62af8b556455944d42fce3b92",
-      "afterAlphaSha256": "86d000507bbc1c01580feb785507210e6f50eb5af4a638d2425032a841ae63f1",
+      "rgbSha256": "d19a4fef479e0e4e06e44c794b5a549a89162002b83c67bfc74397f904f8ee5a",
+      "alphaSha256": "86d000507bbc1c01580feb785507210e6f50eb5af4a638d2425032a841ae63f1",
       "transparentPixels": 413844,
-      "partialPixels": 468,
       "opaquePixels": 700568,
       "source": "public/native/0.4.0/updates.png"
     }
-  ],
-  "publication": "quality-gated",
-  "strictCompositionCheck": true,
-  "music": null
+  ]
 }

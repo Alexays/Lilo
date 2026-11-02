@@ -17,14 +17,14 @@
       "width" : 1584
     }
   ],
-  "capturedAt" : "2026-11-01T10:54:55Z",
+  "capturedAt" : "2026-11-02T13:15:42Z",
   "checks" : {
     "medium" : "screenshot",
     "unreadSource" : "Actual generic title unread detection on owned fixture pages"
   },
   "feature" : "unread",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
   "release" : "0.6.0",
   "schemaVersion" : 1
 }

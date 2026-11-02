@@ -3,20 +3,6 @@
   "appVersion" : "0.14.1",
   "assets" : [
     {
-      "file" : "history.png",
-      "height" : 2352,
-      "pixelsPerPoint" : 3,
-      "rectPoints" : [
-        268,
-        8,
-        1004,
-        784
-      ],
-      "sha256" : "769ec14a2324704436257114943510b2099b2aa1fb46e2f013abdf9e2b7c7ece",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 3012
-    },
-    {
       "file" : "rows.png",
       "height" : 960,
       "pixelsPerPoint" : 8,
@@ -26,23 +12,9 @@
         300,
         120
       ],
-      "sha256" : "308608b8e4e376a1891c3ff9a7cc9a0b85c8176762c9624e32503c26728034c6",
+      "sha256" : "6ff48564ab2cb242b2e898b28d576d496a902ea86628056fa13283845c241ee7",
       "tool" : "WKWebView.takeSnapshot",
       "width" : 2400
-    },
-    {
-      "file" : "search-empty.png",
-      "height" : 256,
-      "pixelsPerPoint" : 8,
-      "rectPoints" : [
-        36,
-        76,
-        192,
-        32
-      ],
-      "sha256" : "7f71da97b55c13e4da9f654bc3659e37ccca7f9fb23f66ae5b920d7cc741a1d7",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 1536
     },
     {
       "file" : "search-0.png",
@@ -152,7 +124,7 @@
         1004,
         784
       ],
-      "sha256" : "d9732bfb2a4d8d5bb44b48b3a170bd7b22997f3309fbc409549f655f4bb0a368",
+      "sha256" : "fbe933edaa0a9242b860dc3dde11046da059031103d267401a93e5e9fcede225",
       "tool" : "WKWebView.takeSnapshot",
       "width" : 3012
     },
@@ -169,23 +141,9 @@
       "sha256" : "9fe7ae837481ff60d7035c339f80b3648a4e82038c2d3efe96b0a1ca397900c2",
       "tool" : "WKWebView.takeSnapshot",
       "width" : 2400
-    },
-    {
-      "file" : "search.png",
-      "height" : 256,
-      "pixelsPerPoint" : 8,
-      "rectPoints" : [
-        36,
-        76,
-        192,
-        32
-      ],
-      "sha256" : "6ce76399218209b4cd962962556317953d85a365709f45baefdf6d17c32cf9ca",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 1536
     }
   ],
-  "capturedAt" : "2026-11-01T11:58:47Z",
+  "capturedAt" : "2026-11-02T13:15:30Z",
   "checks" : {
     "filteredOut" : "Field guide",
     "nativeHistoryStoreVisits" : 4,
@@ -193,7 +151,7 @@
   },
   "feature" : "history",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "8c534c42e97bfcdd9a2d2cead5f58eb687b3b0f0",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
   "release" : "0.9.0",
   "schemaVersion" : 1
 }

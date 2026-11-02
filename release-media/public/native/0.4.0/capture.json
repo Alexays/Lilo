@@ -17,14 +17,14 @@
       "width" : 2144
     }
   ],
-  "capturedAt" : "2026-11-01T10:54:57Z",
+  "capturedAt" : "2026-11-02T13:15:44Z",
   "checks" : {
     "fixtureInput" : "Synthetic updateReady event; no real update downloaded or installed",
     "medium" : "screenshot"
   },
   "feature" : "updates",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
   "release" : "0.4.0",
   "schemaVersion" : 1
 }

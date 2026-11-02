@@ -12,7 +12,7 @@
         1280,
         800
       ],
-      "sha256" : "9e80f11b70e859a0e7ca566e46737fa22a43e68baaefb6e042b4d0739b06c9c4",
+      "sha256" : "cce303573718abded225161c3a383b6f109f0ce29ef4dd46b4469c98097c9c33",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     },
@@ -40,7 +40,7 @@
         920,
         75
       ],
-      "sha256" : "9c4b5ac9a550abe000e190f89a3c7fa0bb75cec36797d3345292312110571079",
+      "sha256" : "029faf545696018e4fb13357b0e5dc32cf3004228a90d6dc9bb30d88f7c6be40",
       "tool" : "WKWebView.takeSnapshot",
       "width" : 7360
     },
@@ -54,26 +54,12 @@
         1280,
         800
       ],
-      "sha256" : "3d23a18630a2f29a63bea761538cde79b9fc77319e38f3feb95a59d48f52ae8f",
+      "sha256" : "39d8bdecbca779d10ee41e5c0fea8a29fea0ca8fad080ab65948581f003c778e",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
-    },
-    {
-      "file" : "command-bar.png",
-      "height" : 1236,
-      "pixelsPerPoint" : 4,
-      "rectPoints" : [
-        460,
-        64,
-        620,
-        309
-      ],
-      "sha256" : "0d7d64d0ed28155ffa508be5a410c256b04be361924240f74ae9a4b239f7487a",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 2480
     }
   ],
-  "capturedAt" : "2026-11-02T08:04:45Z",
+  "capturedAt" : "2026-11-02T13:42:13Z",
   "checks" : {
     "actualSettingsBridge" : true,
     "addressPlacementAfter" : "hidden",
@@ -85,7 +71,7 @@
   },
   "feature" : "address-bar",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "afd2b5a0cf88de0155ae5cdf124a4ac97a4a91dc",
-  "release" : "0.8.0-announcement",
+  "productSourceCommit" : "5153405324fb2b0dc59c3d8313873b3ef2c30c97",
+  "release" : "0.8.0",
   "schemaVersion" : 1
 }

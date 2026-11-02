@@ -2,7 +2,7 @@
   "release": "0.9.0",
   "kind": "video",
   "passed": true,
-  "renderSha256": "7e766ef13452998b3c638126745709d97504d5957af9498847967d75929d26f7",
+  "renderSha256": "c065e9a9732e0f9eac265d45e10693966e2941a11c16e80bdbc1d89619359914",
   "sourceHashes": true,
   "renderHashes": true,
   "strictCompositionCheck": true,
@@ -60,7 +60,7 @@
     "measuredFrames": 899,
     "movingFrameRatio": 0.2936596218020022,
     "longestStillSeconds": 2.6166666666666667,
-    "largestLumaChange": 11.3336
+    "largestLumaChange": 11.3326
   },
   "posterSSIM": 0.999016
 }

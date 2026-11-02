@@ -12,12 +12,12 @@
         1280,
         800
       ],
-      "sha256" : "8bf448a88525427c75efdc2571903e61578fd6ccc6756d6168cc18a5dba423ab",
+      "sha256" : "062cec358441c8a703fe9bd77fd8397117e7b7f410f8e8aba6ed331e6e013639",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     }
   ],
-  "capturedAt" : "2026-11-01T10:54:48Z",
+  "capturedAt" : "2026-11-02T13:15:33Z",
   "checks" : {
     "addressPlacement" : "page",
     "medium" : "screenshot",
@@ -25,7 +25,7 @@
   },
   "feature" : "site-colors",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
   "release" : "0.12.0",
   "schemaVersion" : 1
 }

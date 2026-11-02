@@ -12,19 +12,19 @@
         1280,
         800
       ],
-      "sha256" : "9c6395518fab87ec74e0b1f4dc99d43f71dce65ba385d203a3e0129bd424b4c5",
+      "sha256" : "db5c87426d6d30e390131f033ba3f97d42924b5b1e524bb6e32e927df94e2df4",
       "tool" : "ScreenCaptureKit desktop-independent native window",
       "width" : 2560
     }
   ],
-  "capturedAt" : "2026-11-01T10:54:44Z",
+  "capturedAt" : "2026-11-02T13:15:29Z",
   "checks" : {
     "medium" : "screenshot",
     "syntheticContent" : true
   },
   "feature" : "browser",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
   "release" : "0.1.0",
   "schemaVersion" : 1
 }

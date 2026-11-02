@@ -2,7 +2,7 @@
   "release": "0.7.0",
   "kind": "video",
   "passed": true,
-  "renderSha256": "f17f0c6460ca58da7050b8674a7c4812175f68c07bdf08087a47db438f1a5bc2",
+  "renderSha256": "341f179ec4eb609afe923c7454158707d59ea7fc8797a272b5675f1189b44aeb",
   "sourceHashes": true,
   "renderHashes": true,
   "strictCompositionCheck": true,
@@ -33,9 +33,9 @@
   },
   "motion": {
     "measuredFrames": 839,
-    "movingFrameRatio": 0.27175208581644816,
+    "movingFrameRatio": 0.27056019070321813,
     "longestStillSeconds": 2.5833333333333335,
-    "largestLumaChange": 5.24136
+    "largestLumaChange": 4.36781
   },
   "posterSSIM": 0.999238
 }

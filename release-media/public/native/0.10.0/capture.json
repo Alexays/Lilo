@@ -45,14 +45,14 @@
       "width" : 1584
     }
   ],
-  "capturedAt" : "2026-11-01T12:13:20Z",
+  "capturedAt" : "2026-11-02T13:15:25Z",
   "checks" : {
     "insertionY" : 161.109375,
     "restoredNativeArchiveEntry" : true
   },
   "feature" : "archive",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "e1b599c3a0984ef1edbab898cbc2ee6e5c76273e",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
   "release" : "0.10.0",
   "schemaVersion" : 1
 }

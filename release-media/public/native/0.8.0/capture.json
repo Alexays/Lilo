@@ -17,20 +17,6 @@
       "width" : 5440
     },
     {
-      "file" : "search-empty.png",
-      "height" : 232,
-      "pixelsPerPoint" : 8,
-      "rectPoints" : [
-        449,
-        120,
-        642,
-        29
-      ],
-      "sha256" : "79f16e032a805fb6e4f2447b44b3e229a9e7548fe20ddf13fb74609302da637e",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 5136
-    },
-    {
       "file" : "search-0.png",
       "height" : 232,
       "pixelsPerPoint" : 8,
@@ -129,20 +115,6 @@
       "width" : 5440
     },
     {
-      "file" : "search.png",
-      "height" : 232,
-      "pixelsPerPoint" : 8,
-      "rectPoints" : [
-        449,
-        120,
-        642,
-        29
-      ],
-      "sha256" : "1d3db55c8bafd186bd31ce90883b40b0627eb8704ba62a450b1cd7890e9c2eb5",
-      "tool" : "WKWebView.takeSnapshot",
-      "width" : 5136
-    },
-    {
       "file" : "match.png",
       "height" : 984,
       "pixelsPerPoint" : 8,
@@ -185,7 +157,7 @@
       "width" : 1984
     }
   ],
-  "capturedAt" : "2026-11-01T11:55:14Z",
+  "capturedAt" : "2026-11-02T13:42:16Z",
   "checks" : {
     "nativeShareSourceChanged" : true,
     "pickerSearch" : "Field",
@@ -195,7 +167,7 @@
   },
   "feature" : "tab-share",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "8c534c42e97bfcdd9a2d2cead5f58eb687b3b0f0",
+  "productSourceCommit" : "5153405324fb2b0dc59c3d8313873b3ef2c30c97",
   "release" : "0.8.0",
   "schemaVersion" : 1
 }

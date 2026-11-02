@@ -4,23 +4,19 @@
   "release": "0.14.0",
   "kind": "video",
   "feature": "drop",
-  "appVersion": "0.14.1",
-  "appBuild": "31",
-  "productSourceCommit": "e1b599c3a0984ef1edbab898cbc2ee6e5c76273e",
   "width": 1920,
   "height": 1080,
   "fps": 60,
   "frames": 780,
   "posterFrame": 720,
-  "renderMilliseconds": 36628.705,
   "hashes": {
     "drop.png": "335f516adf51202b7ecf7fb152a8bb69603b41e06e4c9a9ef2663ee127a7f094",
-    "drop.mp4": "7e8545d6a320d015572454f470e79167d63f76f214eecf434cf52e266f9a48fb"
+    "drop.mp4": "49441b4d161851bc4217d52feae1b22599387916b3b4572ab8eb9d6dfed4b3bc"
   },
   "recipeHashes": {
-    "render.mjs": "26c101dfb8e69e7616c6fa0df8671b23b24c1018ed21fc7db8dd1fb111d4cadf",
-    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
-    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "render.mjs": "22ac935ac5e5cb9c499936f1f653bcb1fa31a1446b3aabc7ca600b7eed8b0faf",
+    "pipeline.mjs": "558c62d71f60b02f27a1ddc4a9f717e0af9c018b4e9707a29572cf7cdb565b08",
+    "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
     "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
     "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
     "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
@@ -29,43 +25,21 @@
     "public/audio/switch.wav": "0d07c6daac595425c820d92966bbc35cbd6590f4bde8a59199743b9bf45da77e",
     "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
     "hyperframes/assets/logo.svg": "9345636a0774cc6d4439f5e90303d7f172c9f089c3dabcbe436e3f0d63f1ce49",
-    "hyperframes/archive/0.14.0/compositions/ending.html": "51b05cba485c14f3a07285913267776786d2781fb85e523891367830478a52f2",
     "hyperframes/archive/0.14.0/compositions/feature.html": "fed3158f9d5744ff341d0c53271edd0dcd8d1cfce07b7ef1e284c5200a831370",
     "hyperframes/archive/0.14.0/index.html": "6560a1e09f05831882214d4a2c90c2001b38ca5aab8f054cf31fa6da83888a17",
-    "hyperframes/archive/0.14.0/metadata.json": "d33356dfe5bca1b71fdd60ec56998696f2bd17105c9e4b8a6444474c3cff9322",
+    "hyperframes/archive/0.14.0/metadata.json": "af9d3b83e9bdcf0f744a3a958c19ff1d044f45740cf29b15989c060cf425010b",
+    "hyperframes/archive/ending.html": "51bef5e03fdc91b4d1063d860e1fe7730e6f5cae85b62ba30bc327981eba8edd",
     "hyperframes/archive/shared.css": "36cbfda538846c5d2a96ed082be6297f2a015e6cb824f46f3eefff66ae84b2d2",
     "hyperframes/archive/shared.js": "71b6e4139f3dc008e640b269b5a7b24ab525366b6edc0ab519b33d8c783ec114"
   },
   "nativeReceipts": [
     {
       "path": "public/native/0.14.0/capture.json",
-      "sha256": "6403b7154429b4e807a6d1cb859d302d8d453d4b73b51963587454922d027069",
+      "sha256": "957fb24723453a0ac49e0b32d781a6ea851139a5637a1cf76baaf9a099f181ba",
       "appVersion": "0.14.1",
       "appBuild": "31",
-      "productSourceCommit": "e1b599c3a0984ef1edbab898cbc2ee6e5c76273e"
+      "productSourceCommit": "6905252c253e7803410b690b2095fbdb8691a28f"
     }
   ],
-  "nativeReceiptSha256": "6403b7154429b4e807a6d1cb859d302d8d453d4b73b51963587454922d027069",
-  "cutouts": [],
-  "publication": "quality-gated",
-  "strictCompositionCheck": true,
-  "music": {
-    "file": "music.ogg",
-    "title": "Week 37 - Schmoovin",
-    "artist": "Abstraction / Tallbeard Studios",
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attributionRequired": false,
-    "commercialUse": true,
-    "modificationAllowed": true,
-    "sourceUrl": "https://tallbeard.itch.io/music-loop-bundle",
-    "sourceArchive": "music-loop-bundle-2026-q3.zip",
-    "archiveUploadId": 19538393,
-    "sourceTrack": "Week 37 - Schmoovin.ogg",
-    "sha256": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
-    "licenseFile": "music.LICENSE.txt",
-    "licenseSha256": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
-    "verifiedAt": "2026-11-02",
-    "acquisition": "Creator-provided free download, without an account or payment. Only this track and the bundled license are retained."
-  }
+  "cutouts": []
 }

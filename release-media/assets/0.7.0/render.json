@@ -4,23 +4,19 @@
   "release": "0.7.0",
   "kind": "video",
   "feature": "calls",
-  "appVersion": "0.14.1",
-  "appBuild": "31",
-  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
   "width": 1920,
   "height": 1080,
   "fps": 60,
   "frames": 840,
   "posterFrame": 780,
-  "renderMilliseconds": 38054.4375,
   "hashes": {
     "calls.png": "fa5dfb6df36f6399afa677cd7a2748f870881940adcbe921de8d93ade5fe21fb",
-    "calls.mp4": "83e9a60e20873d0543dce74ee00a6496c63c3d5cf32f0690d05abf2834e788d5"
+    "calls.mp4": "9269ce9ff49eb0b12ef099a099a89b311c94c112c526629dd2a90df5a343eba7"
   },
   "recipeHashes": {
-    "render.mjs": "26c101dfb8e69e7616c6fa0df8671b23b24c1018ed21fc7db8dd1fb111d4cadf",
-    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
-    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "render.mjs": "22ac935ac5e5cb9c499936f1f653bcb1fa31a1446b3aabc7ca600b7eed8b0faf",
+    "pipeline.mjs": "558c62d71f60b02f27a1ddc4a9f717e0af9c018b4e9707a29572cf7cdb565b08",
+    "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
     "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
     "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
     "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
@@ -29,110 +25,46 @@
     "public/audio/switch.wav": "0d07c6daac595425c820d92966bbc35cbd6590f4bde8a59199743b9bf45da77e",
     "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
     "hyperframes/assets/logo.svg": "9345636a0774cc6d4439f5e90303d7f172c9f089c3dabcbe436e3f0d63f1ce49",
-    "hyperframes/archive/0.7.0/compositions/ending.html": "36476feb6580c132c83acddf22d7552bb14803ff744c207aad6ff1e3057b9735",
     "hyperframes/archive/0.7.0/compositions/feature.html": "76b8e19ff4758903a25e8cee9bced587008005aa48de33b68d39bfd76c13b0c3",
     "hyperframes/archive/0.7.0/index.html": "4e34d0cc04ab7ef43f2df932638bcb4ba5e5f48eb9437254d545c9cf5950e8f8",
-    "hyperframes/archive/0.7.0/metadata.json": "8d918fdb9f1d3407455ed01e8fa8adb54c4898c1528ff7073b1948012438a113",
+    "hyperframes/archive/0.7.0/metadata.json": "f8770e2126b03c2fc7ea41f3995124f464b015207becbf434a500baf977d67e1",
+    "hyperframes/archive/ending.html": "51bef5e03fdc91b4d1063d860e1fe7730e6f5cae85b62ba30bc327981eba8edd",
     "hyperframes/archive/shared.css": "36cbfda538846c5d2a96ed082be6297f2a015e6cb824f46f3eefff66ae84b2d2",
     "hyperframes/archive/shared.js": "71b6e4139f3dc008e640b269b5a7b24ab525366b6edc0ab519b33d8c783ec114"
   },
   "nativeReceipts": [
     {
       "path": "public/native/0.7.0/capture.json",
-      "sha256": "ead749d799d8520bfd239e39a179d56aaf4294cd4338e6addafad2973352ea47",
+      "sha256": "dd9efb57a73a7f6d6eeeccf4f4921262086ac403b65a8645acbadea5589966cd",
       "appVersion": "0.14.1",
       "appBuild": "31",
-      "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f"
+      "productSourceCommit": "6905252c253e7803410b690b2095fbdb8691a28f"
     }
   ],
-  "nativeReceiptSha256": "ead749d799d8520bfd239e39a179d56aaf4294cd4338e6addafad2973352ea47",
   "cutouts": [
     {
       "file": "connected.png",
-      "width": 1984,
-      "height": 272,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          1984,
-          272
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "100de5af60d720ced2a30197986ed440d6a29f9eb9899eca25aa3c122e13043e",
-      "afterRgbSha256": "100de5af60d720ced2a30197986ed440d6a29f9eb9899eca25aa3c122e13043e",
-      "beforeAlphaSha256": "c84f3f9f5e06a0688534216a21a09fd614dc43cee35d8384a5742d78cbe6868b",
-      "afterAlphaSha256": "be5f333bad13cd927a03a8498625e26bb7384ba69ff598fe10dcd1703dfc6b4c",
+      "rgbSha256": "100de5af60d720ced2a30197986ed440d6a29f9eb9899eca25aa3c122e13043e",
+      "alphaSha256": "be5f333bad13cd927a03a8498625e26bb7384ba69ff598fe10dcd1703dfc6b4c",
       "transparentPixels": 1848,
-      "partialPixels": 288,
       "opaquePixels": 537512,
       "source": "public/native/0.7.0/connected.png"
     },
     {
       "file": "muted.png",
-      "width": 1984,
-      "height": 272,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          1984,
-          272
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "a1289a28ec4df6cd890c3537d34b608e9ad821327fed9acf167f147094a452da",
-      "afterRgbSha256": "a1289a28ec4df6cd890c3537d34b608e9ad821327fed9acf167f147094a452da",
-      "beforeAlphaSha256": "c84f3f9f5e06a0688534216a21a09fd614dc43cee35d8384a5742d78cbe6868b",
-      "afterAlphaSha256": "be5f333bad13cd927a03a8498625e26bb7384ba69ff598fe10dcd1703dfc6b4c",
+      "rgbSha256": "a1289a28ec4df6cd890c3537d34b608e9ad821327fed9acf167f147094a452da",
+      "alphaSha256": "be5f333bad13cd927a03a8498625e26bb7384ba69ff598fe10dcd1703dfc6b4c",
       "transparentPixels": 1848,
-      "partialPixels": 288,
       "opaquePixels": 537512,
       "source": "public/native/0.7.0/muted.png"
     },
     {
       "file": "camera-off.png",
-      "width": 1984,
-      "height": 272,
-      "shape": {
-        "rect": [
-          0,
-          0,
-          1984,
-          272
-        ],
-        "radius": 48
-      },
-      "beforeRgbSha256": "ba1b5ecc3d7188e474f5daa80dfdbaccb24e9866da78f81e130fb308d07bbb58",
-      "afterRgbSha256": "ba1b5ecc3d7188e474f5daa80dfdbaccb24e9866da78f81e130fb308d07bbb58",
-      "beforeAlphaSha256": "c84f3f9f5e06a0688534216a21a09fd614dc43cee35d8384a5742d78cbe6868b",
-      "afterAlphaSha256": "be5f333bad13cd927a03a8498625e26bb7384ba69ff598fe10dcd1703dfc6b4c",
+      "rgbSha256": "ba1b5ecc3d7188e474f5daa80dfdbaccb24e9866da78f81e130fb308d07bbb58",
+      "alphaSha256": "be5f333bad13cd927a03a8498625e26bb7384ba69ff598fe10dcd1703dfc6b4c",
       "transparentPixels": 1848,
-      "partialPixels": 288,
       "opaquePixels": 537512,
       "source": "public/native/0.7.0/camera-off.png"
     }
-  ],
-  "publication": "quality-gated",
-  "strictCompositionCheck": true,
-  "music": {
-    "file": "music.ogg",
-    "title": "Week 37 - Schmoovin",
-    "artist": "Abstraction / Tallbeard Studios",
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attributionRequired": false,
-    "commercialUse": true,
-    "modificationAllowed": true,
-    "sourceUrl": "https://tallbeard.itch.io/music-loop-bundle",
-    "sourceArchive": "music-loop-bundle-2026-q3.zip",
-    "archiveUploadId": 19538393,
-    "sourceTrack": "Week 37 - Schmoovin.ogg",
-    "sha256": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
-    "licenseFile": "music.LICENSE.txt",
-    "licenseSha256": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
-    "verifiedAt": "2026-11-02",
-    "acquisition": "Creator-provided free download, without an account or payment. Only this track and the bundled license are retained."
-  }
+  ]
 }

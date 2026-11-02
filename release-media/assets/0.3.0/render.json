@@ -4,22 +4,18 @@
   "release": "0.3.0",
   "kind": "screenshot",
   "feature": "settings",
-  "appVersion": "0.14.1",
-  "appBuild": "31",
-  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
   "width": 1920,
   "height": 1080,
   "fps": 60,
   "frames": 1,
   "posterFrame": 0,
-  "renderMilliseconds": 1840.8022499999497,
   "hashes": {
-    "settings.png": "b4f37c28f9daa079047232a551699300a682bdaf1c1a03b7a948b8f3db256768"
+    "settings.png": "ff341e08232777e1bdd4b28a71a31f62b7c666a5d3eec7d78caf4a718b661a61"
   },
   "recipeHashes": {
-    "render.mjs": "26c101dfb8e69e7616c6fa0df8671b23b24c1018ed21fc7db8dd1fb111d4cadf",
-    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
-    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "render.mjs": "22ac935ac5e5cb9c499936f1f653bcb1fa31a1446b3aabc7ca600b7eed8b0faf",
+    "pipeline.mjs": "558c62d71f60b02f27a1ddc4a9f717e0af9c018b4e9707a29572cf7cdb565b08",
+    "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
     "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
     "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
     "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
@@ -32,15 +28,11 @@
   "nativeReceipts": [
     {
       "path": "public/native/0.3.0/capture.json",
-      "sha256": "9cd92a470040d302ac06126fc4e78db481f6ff9e94d690f41277e270b2e4d5ba",
+      "sha256": "fee7dda1c779bf830eb6d649b2db94aed3533d14a6f37fd3f53384e75023777b",
       "appVersion": "0.14.1",
       "appBuild": "31",
-      "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f"
+      "productSourceCommit": "6905252c253e7803410b690b2095fbdb8691a28f"
     }
   ],
-  "nativeReceiptSha256": "9cd92a470040d302ac06126fc4e78db481f6ff9e94d690f41277e270b2e4d5ba",
-  "cutouts": [],
-  "publication": "quality-gated",
-  "strictCompositionCheck": true,
-  "music": null
+  "cutouts": []
 }
