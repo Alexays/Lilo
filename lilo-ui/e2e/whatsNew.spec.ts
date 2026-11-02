@@ -13,13 +13,13 @@ const release: ReleaseNotes = {
 		en: {
 			headline: "A little more in the loop.", description: "A few improvements.",
 			highlights: [
-				{ illustration: "unread", title: "Catch what you missed.", description: "Unread counts on your tabs." },
-				{ illustration: "calls", title: "Stay in the conversation.", description: "Smoother video calls." },
+				{ title: "Catch what you missed.", description: "Unread counts on your tabs." },
+				{ title: "Stay in the conversation.", description: "Smoother video calls." },
 			],
 		},
 		fr: {
 			headline: "Toujours dans la boucle.", description: "De petites améliorations.",
-			highlights: [{ illustration: "unread", title: "Ne manquez plus un message.", description: "Les messages non lus dans vos onglets." }],
+			highlights: [{ title: "Ne manquez plus un message.", description: "Les messages non lus dans vos onglets." }],
 		},
 	},
 };

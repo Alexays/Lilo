@@ -96,7 +96,7 @@ for (const [version, entry] of selected(catalog)) {
   await rm(path.join(folder, "render.json"), { force: true });
   await rm(project, { recursive: true, force: true });
   await mkdir(project, { recursive: true });
-  const recipe = entry.recipeVersion ?? fixtures[entry.feature];
+  const recipe = fixtures[entry.feature];
   const metadata =
     entry.kind === "video"
       ? await json(path.join(recipeDirectory(entry), "metadata.json"))
@@ -105,9 +105,27 @@ for (const [version, entry] of selected(catalog)) {
   if (!(duration > 0 && duration <= 40)) throw Error(`Invalid storyboard duration: ${version}`);
   if (entry.kind === "video") {
     await cp(recipeDirectory(entry), project, { recursive: true });
-    if (recipe !== "0.8.0")
+    if (recipe === "0.8.0" && entry.variant === "share")
+      for (const scene of ["find", "switch", "end"])
+        await copyFile(
+          path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
+          path.join(project, "compositions", `${scene}.html`),
+        );
+    if (recipe !== "0.8.0") {
       for (const file of ["shared.css", "shared.js"])
         await copyFile(path.join(root, "hyperframes/archive", file), path.join(project, file));
+      const index = await readFile(path.join(project, "index.html"), "utf8");
+      const endingDuration = index.match(/id="ending"[^>]*data-duration="([^"]+)"/)?.[1];
+      if (!endingDuration || !metadata.caption) throw Error(`Missing ending: ${version}`);
+      const ending = (await readFile(path.join(root, "hyperframes/archive/ending.html"), "utf8"))
+        .replaceAll("{{VERSION}}", version)
+        .replaceAll(
+          "{{CAPTION}}",
+          metadata.caption.replaceAll("&", "&amp;").replaceAll("<", "&lt;"),
+        )
+        .replaceAll("{{DURATION}}", endingDuration);
+      await writeFile(path.join(project, "compositions/ending.html"), ending);
+    }
     if (recipe !== version)
       for (const file of (await filesBelow(project)).filter((file) => file.endsWith(".html")))
         await writeFile(file, (await readFile(file, "utf8")).replaceAll(recipe, version));
@@ -229,7 +247,6 @@ for (const [version, entry] of selected(catalog)) {
       );
     await writeFile(path.join(project, "index.html"), html);
   }
-  const started = performance.now();
   await cliRun(["check", project, "--json", "--strict"], project, path.join(project, "check.json"));
   if (entry.kind === "video") {
     const job = createRenderJob({
@@ -311,36 +328,21 @@ for (const [version, entry] of selected(catalog)) {
     hashes[`${entry.feature}.${ext}`] = sha(
       await readFile(path.join(folder, `${entry.feature}.${ext}`)),
     );
-  await copyFile(
-    path.join(root, "public/native", version, "capture.json"),
-    path.join(folder, "capture.json"),
-  );
-  const primary = native.receipts.find(
-    (receipt) => receipt.path === `public/native/${version}/capture.json`,
-  );
   const render = {
     schemaVersion: 2,
     engine: "hyperframes",
     release: version,
     kind: entry.kind,
     feature: entry.feature,
-    appVersion: primary.appVersion,
-    appBuild: primary.appBuild,
-    productSourceCommit: primary.productSourceCommit,
     width: 1920,
     height: 1080,
     fps: 60,
     frames: entry.kind === "video" ? Math.round(duration * 60) : 1,
     posterFrame,
-    renderMilliseconds: performance.now() - started,
     hashes,
     recipeHashes: recipes,
     nativeReceipts: native.receipts,
-    nativeReceiptSha256: primary.sha256,
     cutouts,
-    publication: "quality-gated",
-    strictCompositionCheck: true,
-    music: entry.kind === "video" ? musicLicense : null,
   };
   await writeFile(path.join(folder, "render.json"), JSON.stringify(render, null, 2) + "\n");
   console.log(`Rendered HyperFrames ${version}: ${entry.kind} ${entry.feature}`);

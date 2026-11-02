@@ -77,13 +77,11 @@ export async function isolateNativePng(file, { rect, radius }) {
   const after = channelHashes(decoded.data);
   if (before.rgb !== after.rgb) throw Error("Alpha isolation changed native RGB pixels.");
   let transparentPixels = 0,
-    partialPixels = 0,
     opaquePixels = 0;
   for (let offset = 3; offset < decoded.data.length; offset += 4) {
     const alpha = decoded.data[offset];
     if (alpha === 0) transparentPixels++;
     else if (alpha === 255) opaquePixels++;
-    else partialPixels++;
   }
   if (!transparentPixels || !opaquePixels)
     throw Error("Native cutout must retain opaque UI and clear its exterior.");
@@ -97,15 +95,9 @@ export async function isolateNativePng(file, { rect, radius }) {
   }
   return {
     file: path.basename(file),
-    width: info.width,
-    height: info.height,
-    shape: { rect: [...rect], radius },
-    beforeRgbSha256: before.rgb,
-    afterRgbSha256: after.rgb,
-    beforeAlphaSha256: before.alpha,
-    afterAlphaSha256: after.alpha,
+    rgbSha256: after.rgb,
+    alphaSha256: after.alpha,
     transparentPixels,
-    partialPixels,
     opaquePixels,
   };
 }

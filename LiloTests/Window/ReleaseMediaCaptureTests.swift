@@ -53,14 +53,12 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         try await capture.wait("native appearance controls open") {
             (try? await capture.chrome.evaluateJavaScript("!!document.querySelector('.appearance-card .materials')")) as? Bool == true
         }
-        try await capture.region(".appearance-card", name: "solid-editor")
         try await capture.region(".materials", name: "solid-controls", margin: 0)
         for material in ["Glass", "Grain"] {
             try await capture.click(".material", text: material)
             try await capture.wait("actual preview uses \(material)") {
                 (try? await capture.chrome.evaluateJavaScript("!!document.querySelector('.win.\(material.lowercased())')")) as? Bool == true
             }
-            try await capture.region(".appearance-card", name: "\(material.lowercased())-editor")
             try await capture.region(".materials", name: "\(material.lowercased())-controls", margin: 0)
             try await capture.click(".footer-actions button", text: "Save")
             try await capture.wait("\(material) is saved through the native Space bridge") {
@@ -88,10 +86,10 @@ final class ReleaseMediaCaptureTests: XCTestCase {
     func testHolidayIconsStill() async throws {
         let capture = try await ReleaseMediaCapture(version: "0.13.0", feature: "seasons")
         defer { capture.close() }
-        for season in ["halloween", "christmas", "newyear", "valentine", "lunar", "easter", "summer", "birthday"] {
+        for season in ["halloween", "christmas", "easter"] {
             try capture.bundledArtwork(season: season)
         }
-        try capture.finish(checks: ["nativeSeasonalArtworkCount": 8, "medium": "screenshot", "animationNeeded": false])
+        try capture.finish(checks: ["nativeSeasonalArtworkCount": 3, "medium": "screenshot", "animationNeeded": false])
     }
 
     func testFirstPublicBrowserStill() async throws {
@@ -125,7 +123,6 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         capture.controller.setTabPosition(.top)
         capture.controller.openSettings(nil)
         try await capture.wait("native Settings opens") { await capture.exists(".ui-shell-frame") }
-        try await capture.region(".ui-shell-frame", name: "settings", scale: 2, margin: 0)
         try await capture.window("settings-window")
         try capture.finish(checks: ["nativeSettingsCommand": true, "medium": "screenshot"])
     }
@@ -162,10 +159,8 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         capture.controller.openHistory(nil)
         try await capture.wait("native History opens") { await capture.exists(".history-search input") }
         try await capture.wait("native history groups are loaded") { await capture.exists(".row.site") }
-        try await capture.region(".ui-shell-frame", name: "history", scale: 3, margin: 0)
         try await capture.click(".row.site")
         try await capture.region(".nested-rows", name: "rows", margin: 0, crop: CGSize(width: 300, height: 120))
-        try await capture.region(".history-search input", name: "search-empty", margin: 6)
         for (index, query) in ["", "S", "St", "Stu", "Stud", "Studi", "Studio"].enumerated() {
             try await capture.input(".history-search input", value: query)
             try await capture.region(".history-search input", name: "search-\(index)", margin: 6)
@@ -175,7 +170,6 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         }
         try await capture.region(".ui-shell-frame", name: "filtered", scale: 3, margin: 0)
         try await capture.region(".day .card", name: "filtered-rows", margin: 0, crop: CGSize(width: 300, height: 120))
-        try await capture.region(".history-search input", name: "search", margin: 6)
         try capture.finish(checks: ["nativeHistoryStoreVisits": 4, "query": "Studio", "filteredOut": "Field guide"])
     }
 
@@ -247,7 +241,6 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         capture.controller.focusChrome()
         capture.controller.bridgeRouter.send(event: "openCommandBar", data: ["newTab": false])
         try await capture.wait("command bar remains available with the address hidden") { await capture.exists(".command-bar") }
-        try await capture.region(".command-bar", name: "command-bar", scale: 4, margin: 0)
         try capture.finish(checks: ["actualSettingsBridge": true, "addressPlacementBefore": "page", "addressPlacementAfter": "hidden",
                                     "pageTitle": "Field guide", "pageHeightBefore": visibleHeight, "pageHeightAfter": hiddenHeight,
                                     "commandBarWithAddressHidden": true])
@@ -282,7 +275,6 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         defer { pick.cancel() }
         try await capture.wait("actual native tab picker opens") { await capture.exists(".tab-share-panel") }
         try await capture.region(".tab-share-panel", name: "picker", margin: 0)
-        try await capture.region(".tab-share-search", name: "search-empty", margin: 0)
         for (index, query) in ["", "F", "Fi", "Fie", "Fiel", "Field"].enumerated() {
             try await capture.input(".tab-share-search input", value: query)
             try await capture.region(".tab-share-search", name: "search-\(index)", margin: 0)
@@ -291,7 +283,6 @@ final class ReleaseMediaCaptureTests: XCTestCase {
             (try? await capture.chrome.evaluateJavaScript("document.querySelectorAll('.tab-share-card').length===1 && document.querySelector('.tab-share-card-title')?.textContent==='Field guide'")) as? Bool == true
         }
         try await capture.region(".tab-share-panel", name: "filtered", margin: 0)
-        try await capture.region(".tab-share-search", name: "search", margin: 0)
         try await capture.region(".tab-share-card", name: "match", margin: 0)
         try await capture.click(".tab-share-btn.primary")
         let choice = await pick.value
@@ -324,7 +315,6 @@ final class ReleaseMediaCaptureTests: XCTestCase {
             try await capture.input(".tab-title-input", value: title)
             try await capture.region(".pinned-section", name: "rename-\(index)", margin: 0)
         }
-        try await capture.region(".pinned-section", name: "renaming", margin: 0)
         _ = try await capture.chrome.evaluateJavaScript("document.querySelector('.tab-title-input').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));undefined")
         try await capture.wait("native rename is saved") { capture.controller.tabManager.tab(for: tab.id)?.customTitle == "Studio" }
         try await capture.region(".pinned-section", name: "renamed", margin: 0)

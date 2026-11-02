@@ -10,6 +10,5 @@ The creator dedicates the bundle to **CC0 1.0 Universal** and explicitly permits
 
 The committed OGG is the original creator-provided track. Render preparation trims it, changes its gain and adds fades; it does not synthesize a replacement. CI reads the committed source and needs no music service or network request.
 
-`make release-media-music` verifies the bundled file or restores it from the creator’s free archive, checking the pinned track hash. The fetcher uses the anonymous “No thanks, just take me to the downloads” endpoint, then extracts the single track and original license. It never submits payment information or uses an account. The full downloaded archive is held only in memory and discarded.
 
 License verified on 2026-11-02. Sound quality and pacing still require listening review in the final film.

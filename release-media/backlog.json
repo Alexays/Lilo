@@ -16,8 +16,7 @@
       "alt": {
         "en": "Drop links into the sidebar.",
         "fr": "Déposez des liens dans la barre latérale."
-      },
-      "recipeVersion": "0.14.0"
+      }
     },
     "0.13.1": {
       "kind": "none",
@@ -33,8 +32,7 @@
       "alt": {
         "en": "Lilo’s app icons dressed for the holidays.",
         "fr": "Les icônes de Lilo aux couleurs des fêtes."
-      },
-      "recipeVersion": "0.13.0"
+      }
     },
     "0.12.0": {
       "kind": "screenshot",
@@ -46,8 +44,7 @@
       "alt": {
         "en": "The address toolbar takes the page’s color.",
         "fr": "La barre d’adresse prend la couleur de la page."
-      },
-      "recipeVersion": "0.12.0"
+      }
     },
     "0.11.1": {
       "kind": "none",
@@ -63,8 +60,7 @@
       "alt": {
         "en": "Choose glass, grain or solid for each Space.",
         "fr": "Choisissez du verre, du grain ou de l’uni pour chaque Space."
-      },
-      "recipeVersion": "0.11.0"
+      }
     },
     "0.10.1": {
       "kind": "none",
@@ -80,8 +76,7 @@
       "alt": {
         "en": "Bring recently archived tabs back.",
         "fr": "Retrouvez les onglets récemment archivés."
-      },
-      "recipeVersion": "0.10.0"
+      }
     },
     "0.9.0": {
       "kind": "video",
@@ -93,8 +88,7 @@
       "alt": {
         "en": "Find a page in your browsing history.",
         "fr": "Retrouvez une page dans votre historique."
-      },
-      "recipeVersion": "0.9.0"
+      }
     },
     "0.8.0": {
       "kind": "video",
@@ -107,8 +101,7 @@
       "alt": {
         "en": "Find a tab and switch what you share.",
         "fr": "Trouvez un onglet et changez celui que vous partagez."
-      },
-      "recipeVersion": "0.8.0"
+      }
     },
     "0.7.0": {
       "kind": "video",
@@ -120,8 +113,7 @@
       "alt": {
         "en": "Keep call controls close while you browse.",
         "fr": "Gardez les commandes d’appel à portée de main."
-      },
-      "recipeVersion": "0.7.0"
+      }
     },
     "0.6.0": {
       "kind": "screenshot",
@@ -133,8 +125,7 @@
       "alt": {
         "en": "Unread counts on tabs and bookmarks.",
         "fr": "Les messages non lus sur les onglets et favoris."
-      },
-      "recipeVersion": "0.6.0"
+      }
     },
     "0.5.0": {
       "kind": "none",
@@ -154,8 +145,7 @@
       "alt": {
         "en": "An update ready to install from the sidebar.",
         "fr": "Une mise à jour prête à installer depuis la barre latérale."
-      },
-      "recipeVersion": "0.4.0"
+      }
     },
     "0.3.3": {
       "kind": "none",
@@ -179,8 +169,7 @@
       "alt": {
         "en": "Settings as a page beside your tabs.",
         "fr": "Les réglages dans une page à côté de vos onglets."
-      },
-      "recipeVersion": "0.3.0"
+      }
     },
     "0.2.4": {
       "kind": "none",
@@ -208,8 +197,7 @@
       "alt": {
         "en": "Put your tabs on any edge of the window.",
         "fr": "Placez vos onglets sur le bord de votre choix."
-      },
-      "recipeVersion": "0.2.0"
+      }
     },
     "0.1.5": {
       "kind": "none",
@@ -229,8 +217,7 @@
       "alt": {
         "en": "Give a pinned tab a lasting name.",
         "fr": "Donnez un nom durable à un onglet épinglé."
-      },
-      "recipeVersion": "0.1.3"
+      }
     },
     "0.1.2": {
       "kind": "none",
@@ -250,8 +237,7 @@
       "alt": {
         "en": "The first public Lilo browser release.",
         "fr": "La première version publique du navigateur Lilo."
-      },
-      "recipeVersion": "0.1.0"
+      }
     }
   }
 }

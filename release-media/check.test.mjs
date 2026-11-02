@@ -44,6 +44,7 @@ test("publication fails closed against the measured HyperFrames film and its sou
     "package-lock.json",
     "public/audio",
     "hyperframes/assets",
+    "hyperframes/archive/ending.html",
     "hyperframes/archive/shared.css",
     "hyperframes/archive/shared.js",
   ])

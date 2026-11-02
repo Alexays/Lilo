@@ -1,69 +1,49 @@
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { fixtures, sha } from "./pipeline.mjs";
 
 // Specific product capabilities, ordered by how much a demonstrated interaction explains.
 const capabilities = [
   [
     "tab-share",
-    "0.8.0",
     /tab share picker|share (?:this|the shown|a different|another|the current) tab|switch(?:es|ing)? (?:the |a )?shared tab|chang(?:e|es|ing) (?:the )?shared tab/i,
   ],
-  [
-    "spaces",
-    "0.11.0",
-    /(?:glass|grain|material).{0,80}\bspace|\bspace.{0,80}(?:glass|grain|material)/i,
-  ],
+  ["spaces", /(?:glass|grain|material).{0,80}\bspace|\bspace.{0,80}(?:glass|grain|material)/i],
   [
     "drop",
-    "0.14.0",
     /\bdropp?ing\b.{0,180}(?:sidebar|tab strip)|\bdrop\b.{0,80}(?:link|file|address).{0,80}(?:sidebar|tab)/i,
   ],
   [
     "tab-edges",
-    "0.2.0",
     /tabs? on (?:any|each|every|all|the four) (?:edge|side)|tabs?.{0,50}(?:four|any) edges?|sidebar.{0,60}drag.{0,30}edge/i,
   ],
   [
     "history",
-    "0.9.0",
     /\bhistory (?:page|search)\b|(?:browse|search|filter).{0,45}(?:browsing |whole |full )?history\b/i,
   ],
   [
     "archive",
-    "0.10.0",
     /recent archive|archived tabs.{0,80}(?:back|restore)|tabs.{0,80}archived.{0,80}(?:back|restore)|(?:restore|bring back).{0,50}archiv/i,
   ],
   [
     "calls",
-    "0.7.0",
     /call card.{0,100}(?:mute|microphone|camera)|(?:sidebar.{0,45}call controls|call controls.{0,45}sidebar)/i,
   ],
-  [
-    "pinned-tabs",
-    "0.1.3",
-    /rename.{0,30}pinned tab|pinned tab.{0,80}(?:rename|lasting name|name stays)/i,
-  ],
+  ["pinned-tabs", /rename.{0,30}pinned tab|pinned tab.{0,80}(?:rename|lasting name|name stays)/i],
   [
     "seasons",
-    "0.13.0",
     /seasonal icon|icon.{0,60}(?:holiday|dresses|halloween|christmas)|(?:holiday|halloween|christmas).{0,50}icon/i,
   ],
   [
     "site-colors",
-    "0.12.0",
     /(?:bar|toolbar|tabs).{0,80}(?:takes|matches|adopts|blends).{0,45}(?:site|page).{0,25}colou?r|(?:site|page).{0,35}colou?r.{0,45}(?:toolbar|address bar)/i,
   ],
-  ["settings", "0.3.0", /settings opens? as (?:a )?page|settings.{0,90}sections.{0,30}beside/i],
-  ["unread", "0.6.0", /unread (?:count|badge|dot)|(?:tabs|bookmarks).{0,90}unread/i],
-  [
-    "updates",
-    "0.4.0",
-    /restart card|update.{0,80}card.{0,60}restart|restart.{0,50}(?:card|sidebar)/i,
-  ],
-  ["browser", "0.1.0", /first public release.{0,60}native.{0,30}browser/i],
+  ["settings", /settings opens? as (?:a )?page|settings.{0,90}sections.{0,30}beside/i],
+  ["unread", /unread (?:count|badge|dot)|(?:tabs|bookmarks).{0,90}unread/i],
+  ["updates", /restart card|update.{0,80}card.{0,60}restart|restart.{0,50}(?:card|sidebar)/i],
+  ["browser", /first public release.{0,60}native.{0,30}browser/i],
 ];
 
 function bullets(markdown) {
@@ -100,14 +80,9 @@ function internalChange(text) {
 export function chooseMedia(version, markdown, catalog) {
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw Error(`Invalid release media version: ${version}`);
   const entries = catalog.releases ?? catalog;
-  const existing = entries[version];
-  const notesSha256 = createHash("sha256").update(markdown).digest("hex");
-  if (existing?.notesSha256 && existing.notesSha256 !== notesSha256)
-    return chooseMedia(
-      version,
-      markdown,
-      Object.fromEntries(Object.entries(entries).filter(([key]) => key !== version)),
-    );
+  let existing = entries[version];
+  const notesSha256 = sha(markdown);
+  if (existing?.notesSha256 && existing.notesSha256 !== notesSha256) existing = undefined;
   if (existing) {
     if (!["video", "screenshot", "none"].includes(existing.kind) || !existing.reason?.trim())
       throw Error(`Missing media decision for ${version}`);
@@ -123,7 +98,7 @@ export function chooseMedia(version, markdown, catalog) {
       throw Error(
         `Missing native capability, translated description or exact source notes for ${version}`,
       );
-    return { ...existing, recipeVersion: existing.recipeVersion ?? capability[1] };
+    return { ...existing };
   }
   const changes = bullets(markdown).filter((note) =>
     ["Added", "Changed", "Breaking"].includes(note.kind),
@@ -131,7 +106,7 @@ export function chooseMedia(version, markdown, catalog) {
   const visual = changes.filter((note) => !internalChange(note.text));
   const unsupported = visual.find(
     (note) =>
-      !capabilities.some(([, , pattern]) => pattern.test(note.text)) &&
+      !capabilities.some(([, pattern]) => pattern.test(note.text)) &&
       (note.kind !== "Changed" ||
         /\b(?:button|card|picker|panel|dialog|sheet|menu|settings|sidebar|toolbar|layout|appearance|theme|icon|tab|space|view|pane|page|window|screen|preview|prompt)\b/i.test(
           note.text,
@@ -141,9 +116,10 @@ export function chooseMedia(version, markdown, catalog) {
     throw Error(
       `Release ${version} is blocked: no genuine native capture and HyperFrames storyboard supports: ${unsupported.text}. Add that capability in the feature pull request.`,
     );
-  for (const [feature, fixture, pattern] of capabilities) {
+  for (const [feature, pattern] of capabilities) {
     const matches = visual.filter((note) => pattern.test(note.text));
     if (!matches.length) continue;
+    const fixture = fixtures[feature];
     const reference = entries[fixture];
     if (!reference || reference.feature !== feature || !reference.alt?.en || !reference.alt?.fr)
       throw Error(`Missing canonical native media recipe for ${feature} (${fixture})`);
@@ -151,7 +127,6 @@ export function chooseMedia(version, markdown, catalog) {
       kind: reference.kind,
       feature,
       notesSha256,
-      recipeVersion: fixture,
       ...(feature === "tab-share" ? { variant: "share" } : {}),
       reason:
         reference.kind === "video"
@@ -184,7 +159,7 @@ async function main() {
   const catalog = JSON.parse(await readFile(file, "utf8"));
   const releases = releaseSections(await readFile(path.join(root, "CHANGELOG.md"), "utf8"));
   const selected = process.env.LILO_RELEASE_MEDIA_VERSION;
-  const query = process.argv.includes("--fixture") || process.argv.includes("--kind");
+  const query = process.argv.includes("--fixture");
   if (query && !selected) throw Error("A selected RELEASE=x.y.z is required for media queries");
   const decisions = {};
   for (const version of selected ? [selected] : releases.keys()) {
@@ -203,7 +178,7 @@ async function main() {
   }
   if (query) {
     const entry = decisions[selected];
-    console.log(process.argv.includes("--kind") ? entry.kind : (entry.recipeVersion ?? ""));
+    console.log(fixtures[entry.feature] ?? "");
     return;
   }
   if (!selected) {

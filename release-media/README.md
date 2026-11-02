@@ -20,7 +20,7 @@ Isolated interface pieces are RGBA PNG cutouts. Only alpha changes; all captured
 - `make release-media-render RELEASE=x.y.z`: generate the MP4 or screenshot; omit RELEASE to render the archive.
 - `make release-media-check release-media-test release-media-inspect`: verify encoded media, run refusal tests and extract compact review sheets.
 - `make release-media-publish-check`: require current passing receipts for every published asset.
-- `make release-media-ci RELEASE=x.y.z`: select, capture, import, render, inspect and quality-gate the release automatically.
+- `make release-media-ci RELEASE=x.y.z`: select, capture, import, render, inspect, review in native What’s New and quality-gate the release automatically.
 
 `make release-version` invokes this pipeline and builds the site. Tagged CI repeats the native capture on macOS from the exact tag, then passes one verified artifact to signing and website deployment. A failed or missing check blocks publication. The complete signing/deployment setup is in [RELEASING.md](../docs/RELEASING.md).
 
@@ -32,6 +32,6 @@ Each `quality.json` binds to the exact `render.json`, source receipts, recipes a
 
 ## Sound
 
-The soundtrack is **Week 37–Schmoovin** by Abstraction/Tallbeard Studios, licensed CC0. Attribution is optional; films have no music credit overlay. The original audio, creator’s waiver, source URL and checksums are committed under `public/audio/music.*`. `make release-media-music` verifies the cached file or retrieves the creator-provided free download. CI uses committed assets and needs no music account or download.
+The soundtrack is **Week 37–Schmoovin** by Abstraction/Tallbeard Studios, licensed CC0. Attribution is optional; films have no music credit overlay. The original audio, creator’s waiver, source URL and checksums are committed under `public/audio/music.*`. CI uses committed assets and needs no music account or download.
 
 Editorial click/transition sounds retain their CC0 provenance in `public/audio/README.md`. They explain visible actions and are not represented as sounds made by Lilo itself. License notices for dependencies and referenced motion techniques remain in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

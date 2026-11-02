@@ -8,13 +8,6 @@ const translatedText = z.strictObject({
 });
 
 const storySchema = z.strictObject({
-  capture: z
-    .strictObject({
-      highlight: z.string().min(1),
-      scenario: z.literal("peek"),
-      source: z.enum(["demo", "native"]).default("demo"),
-    })
-    .optional(),
   highlights: z
     .array(
       z.strictObject({
@@ -62,10 +55,7 @@ export const parseReleaseStories = (markdown: string, entries: unknown[]) => {
 
     const ids = new Set(story.highlights.map((highlight) => highlight.id));
 
-    if (
-      ids.size !== story.highlights.length ||
-      (story.capture && !ids.has(story.capture.highlight))
-    ) {
+    if (ids.size !== story.highlights.length) {
       throw new Error(`Invalid highlight IDs in story ${story.version}`);
     }
 

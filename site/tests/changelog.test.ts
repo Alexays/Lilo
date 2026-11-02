@@ -76,7 +76,6 @@ const storyHistory = `# Changelog
 `;
 
 const exampleStory = () => ({
-  capture: { highlight: "peek", scenario: "peek" },
   highlights: [
     {
       body: {
@@ -94,30 +93,6 @@ const exampleStory = () => ({
   },
   title: { en: "Peek", fr: "Aperçu" },
   version: "0.9.0",
-});
-
-test("release stories can use a recording from installed Lilo", () => {
-  const story = exampleStory();
-
-  const native = {
-    ...story,
-    capture: { ...story.capture, source: "native" },
-  };
-
-  assert.equal(
-    parseReleaseStories(storyHistory, [native]).get(native.version)?.capture
-      ?.source,
-    "native"
-  );
-});
-
-test("release stories can omit the recording", () => {
-  const { capture: _capture, ...story } = exampleStory();
-
-  assert.equal(
-    parseReleaseStories(storyHistory, [story]).get(story.version)?.capture,
-    undefined
-  );
 });
 
 test("joins a story to its release while leaving ordinary releases available", () => {
@@ -181,7 +156,7 @@ test("rejects a story sourced from another release or an unpublished version", (
   );
 });
 
-test("rejects missing translations, duplicate releases and invalid capture references", () => {
+test("rejects missing translations, duplicate releases and duplicate highlight IDs", () => {
   assert.throws(() =>
     parseReleaseStories(storyHistory, [
       { ...exampleStory(), title: { en: "Peek" } },
@@ -190,16 +165,6 @@ test("rejects missing translations, duplicate releases and invalid capture refer
   assert.throws(
     () => parseReleaseStories(storyHistory, [exampleStory(), exampleStory()]),
     /duplicate release/u
-  );
-  assert.throws(
-    () =>
-      parseReleaseStories(storyHistory, [
-        {
-          ...exampleStory(),
-          capture: { highlight: "missing", scenario: "peek" },
-        },
-      ]),
-    /Invalid highlight IDs/u
   );
   const duplicate = exampleStory();
   duplicate.highlights.push(duplicate.highlights[0]);

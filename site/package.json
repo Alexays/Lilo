@@ -3,8 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "capture:release": "node captures/release-capture.ts",
-    "capture:import": "node captures/import-native.ts",
     "dev": "astro dev --host 127.0.0.1",
     "preview": "wrangler dev --ip 127.0.0.1",
     "build": "astro build && python3 generate.py",

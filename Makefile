@@ -76,18 +76,17 @@ TEST := $(TEST_LOCK) $(TEST_CONFIG) test-without-building $(TEST_TIMEOUTS)
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
-.PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
+.PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
-	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
+	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test
 .PHONY: release-media-capture release-media-import release-media-render release-media-lock release-media-check release-media-publish-check
 .PHONY: release-media-review release-media-stage
-.PHONY: release-media-fix
-.PHONY: release-media-test
-.PHONY: site-deploy-verified release-media-inspect release-media-hyperframes release-media-audit release-media-author release-tag-check release-media-ci release-media-package
+.PHONY: release-media-fix release-media-test
+.PHONY: site-deploy-verified release-media-inspect release-media-hyperframes release-media-audit release-media-author release-tag-check release-media-ci
 
 ## List the targets
 help:
@@ -223,7 +222,7 @@ ui-build: $(UI_DEPS)
 
 ## Capture genuine native sources for the release-media backlog (RELEASE=x.y.z narrows the capture)
 release-media-capture:
-	@LILO_RELEASE_MEDIA_CAPTURE_ONLY=1 TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_FIXTURE_VERSION='$(or $(FIXTURE),$(RELEASE))' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
+	@LILO_RELEASE_MEDIA_CAPTURE_ONLY=1 TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_FIXTURE_VERSION='$(or $(FIXTURE),$(RELEASE))' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory ui-build swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
 
 ## Import verified native release sources (RELEASE=x.y.z narrows the import)
 release-media-import:
@@ -232,10 +231,6 @@ release-media-import:
 ## Update the pinned HyperFrames dependency lockfile
 release-media-lock:
 	@PUPPETEER_SKIP_DOWNLOAD=1 npm --prefix release-media install --package-lock-only --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
-
-## Fetch the original CC0 soundtrack with no attribution requirement
-release-media-music:
-	@python3 release-media/public/audio/music.fetch.py
 
 ## Format the authored release-media scripts and literal compositions
 release-media-fix: $(SITE_DEPS)
@@ -294,20 +289,12 @@ release-tag-check: $(CHANGIE)
 ## Capture, render and quality-gate this release before packaging
 release-media-ci: release-media-author release-media-audit
 	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
-	@set -eu; kind=$$(LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs --kind); \
-	if [ "$$kind" != none ]; then \
-		fixture=$$(LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs --fixture); \
+	@set -eu; fixture=$$(LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs --fixture); \
+	if [ -n "$$fixture" ]; then \
 		$(MAKE) --no-print-directory release-media-capture RELEASE='$(RELEASE)' FIXTURE="$$fixture" && \
-		$(MAKE) --no-print-directory release-media-import release-media-render release-media-check release-media-inspect RELEASE='$(RELEASE)'; \
+		$(MAKE) --no-print-directory release-media-import release-media-render release-media-check release-media-inspect release-media-review RELEASE='$(RELEASE)'; \
 	fi
 	@$(MAKE) --no-print-directory release-media-publish-check RELEASE='$(RELEASE)'
-
-## Package the validated site and shared release media for the release workflow
-release-media-package:
-	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
-	@$(MAKE) --no-print-directory release-media-publish-check RELEASE=
-	@test -f site/dist/index.html || { echo 'Validated site/dist artifact is required' >&2; exit 1; }
-	@python3 -c 'import pathlib,zipfile; r=pathlib.Path("."); out=r/"build/release-media/Lilo-changelog-$(RELEASE).zip"; out.parent.mkdir(parents=True,exist_ok=True); dirs=[r/"site/dist",r/"release-media/assets",r/"release-media/public",r/"release-media/hyperframes"]; files=[p for d in dirs for p in d.rglob("*") if p.is_file()]+[p for p in (r/"release-media").glob("*") if p.is_file()]; z=zipfile.ZipFile(out,"w",zipfile.ZIP_DEFLATED); [z.write(p,p.as_posix()) for p in files]; z.close(); print(out)'
 
 # Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
 # UI source change, refreshes both.
@@ -634,7 +621,7 @@ logs-stream:
 
 ## Serve getlilo.app with Astro and live reload on localhost:8787
 site-dev: $(SITE_DEPS)
-	@npm --prefix site run dev -- --port $(or $(SITE_DEV_PORT),8787)
+	@npm --prefix site run dev
 
 ## Stop Astro when it has started its dev server in the background
 site-dev-stop: $(SITE_DEPS)
@@ -672,22 +659,6 @@ site-test: site-generate
 ## Exercise the interactive website demo with production headers (SITE_E2E_ARGS passes Playwright flags)
 site-e2e: site-generate
 	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
-
-## Capture a prepared release's recording and posters (RELEASE=x.y.z; RECAPTURE=1 replaces archived media)
-site-release-capture: $(SITE_DEPS)
-	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' npm --prefix site run capture:release
-
-## Encode reviewed native Lilo frames (FRAMES=/path/to/manifest.json; RECAPTURE=1 replaces archived media)
-site-release-import: $(SITE_DEPS)
-	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_FRAMES='$(FRAMES)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' npm --prefix site run capture:import
-
-# Playwright owns this foreground server; it leaves the maintainer's dev server alone.
-site-capture-server: $(SITE_DEPS)
-	@ASTRO_DEV_BACKGROUND=0 npm --prefix site run dev -- --port 8791 --ignore-lock
-
-## Install the release recording encoder at the website's pinned Sharp version
-site-capture-deps:
-	@npm --prefix site install --save-dev --save-exact sharp@0.35.5
 
 ## Update the website's dependencies and lockfile after changing package.json
 site-lock:

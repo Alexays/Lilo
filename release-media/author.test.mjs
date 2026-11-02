@@ -31,7 +31,6 @@ test("a new tab-sharing release chooses its supported native movie and exact sou
   const result = chooseMedia("0.15.0", `### Added\n\n- ${note}\n`, catalog);
   assert.equal(result.kind, "video");
   assert.equal(result.feature, "tab-share");
-  assert.equal(result.recipeVersion, "0.8.0");
   assert.deepEqual(result.notes, [note]);
   assert.deepEqual(result.alt, catalog.releases["0.8.0"].alt);
 });
@@ -43,7 +42,6 @@ test("finished artwork chooses a screenshot", () => {
     catalog,
   );
   assert.equal(result.kind, "screenshot");
-  assert.equal(result.recipeVersion, "0.13.0");
 });
 
 test("fix-only releases and nonvisual API changes need no artificial media", () => {
@@ -139,7 +137,6 @@ test("existing editorial decisions keep their subject but must still match their
     catalog,
   );
   assert.equal(result.reason, catalog.releases["0.8.0"].reason);
-  assert.equal(result.recipeVersion, "0.8.0");
   assert.throws(
     () => chooseMedia("0.8.0", "### Fixed\n\n- An unrelated fix.\n", catalog),
     /exact source notes/,
@@ -187,16 +184,21 @@ test("CI media queries are read-only and reject an unknown prepared version", as
           },
         },
       );
-    for (const [flag, expected] of [
-      ["--kind", "video\n"],
-      ["--fixture", "0.8.0\n"],
-    ]) {
+    for (const [flag, expected] of [["--fixture", "0.8.0\n"]]) {
       const result = query("0.15.0", flag);
       assert.equal(result.status, 0, result.stderr);
       assert.equal(result.stdout, expected);
       assert.equal(await readFile(file, "utf8"), before);
     }
-    const missing = query("9.9.9", "--kind");
+    await writeFile(
+      path.join(root, ".changes/v0.15.1.md"),
+      "## [0.15.1]\n\n### Fixed\n\n- A sleeping tab wakes correctly.\n",
+    );
+    const textOnly = query("0.15.1", "--fixture");
+    assert.equal(textOnly.status, 0, textOnly.stderr);
+    assert.equal(textOnly.stdout, "\n");
+    assert.equal(await readFile(file, "utf8"), before);
+    const missing = query("9.9.9", "--fixture");
     assert.notEqual(missing.status, 0);
     assert.match(missing.stderr, /Unknown release media version: 9.9.9/);
     assert.equal(await readFile(file, "utf8"), before);
@@ -209,7 +211,6 @@ test("CI media queries are read-only and reject an unknown prepared version", as
       "blocked",
       "authoring must not re-enable a publication kill switch",
     );
-    assert.equal(after.releases["0.15.0"].recipeVersion, "0.8.0");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

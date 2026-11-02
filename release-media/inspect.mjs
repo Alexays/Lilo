@@ -1,19 +1,15 @@
 import { execFile } from "node:child_process";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { root, json, selected } from "./pipeline.mjs";
 import { promisify } from "node:util";
 
 const run = promisify(execFile);
-const root = path.dirname(fileURLToPath(import.meta.url));
-const catalog = JSON.parse(await readFile(path.join(root, "backlog.json"), "utf8"));
-const selected = process.env.LILO_RELEASE_MEDIA_VERSION;
-if (selected && !Object.hasOwn(catalog.releases, selected))
-  throw Error("Unknown release media version");
-for (const [version, entry] of Object.entries(catalog.releases)) {
-  if (entry.kind !== "video" || (selected && selected !== version)) continue;
+const catalog = await json(path.join(root, "backlog.json"));
+for (const [version, entry] of selected(catalog)) {
+  if (entry.kind !== "video") continue;
   const folder = path.join(root, "assets", version);
-  const render = JSON.parse(await readFile(path.join(folder, "render.json"), "utf8"));
+  const render = await json(path.join(folder, "render.json"));
   const output = path.join(root, "../build/release-media/inspection", version);
   await mkdir(output, { recursive: true });
   await run("ffmpeg", [

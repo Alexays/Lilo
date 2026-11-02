@@ -8,11 +8,6 @@
     "en": "Keep a link or a call close while you carry on browsing. Lilo also speaks four more languages.",
     "fr": "Gardez un lien ou un appel à portée de main pendant que vous naviguez. Lilo parle aussi quatre langues de plus."
   },
-  "capture": {
-    "scenario": "peek",
-    "source": "native",
-    "highlight": "peek"
-  },
   "highlights": [
     {
       "id": "calls",

@@ -268,14 +268,7 @@ final class DocumentPiPControllerTests: XCTestCase {
             context.map { MainWindowController.prepareDocumentPiP(in: $0, webView: webView, size: size, userActivated: activated) } ?? false
         }
         engine.wkWebView.loadHTMLString(html + "<p>call</p>", baseURL: URL(string: "https://call.example/"))
-        let loaded = await pollUntil(timeout: 5) {
-            await withCheckedContinuation { continuation in
-                WebViewPrivateAccessors(engine.wkWebView).evaluateWithoutUserGesture("document.body?.textContent === 'call'") { value in
-                    continuation.resume(returning: value as? Bool == true)
-                }
-            }
-        }
-        XCTAssertTrue(loaded)
+        _ = await pollUntil(timeout: 5) { (try? await engine.wkWebView.evaluateJavaScript("document.body?.textContent === 'call'")) as? Bool == true }
         addTeardownBlock { @MainActor in
             window.documentPiP.close()
             browserContext.tearDown()
@@ -429,7 +422,7 @@ final class DocumentPiPControllerTests: XCTestCase {
         let (_, window, engine) = try await makeWindowTab("""
         <script>
         navigator.mediaSession.setActionHandler('enterpictureinpicture', () => setTimeout(() => {
-          documentPictureInPicture.requestWindow({ width: 300, height: 300 }).then(() => { window.late = 'opened'; }, e => { window.late = e.name; });
+          documentPictureInPicture.requestWindow({ width: 300, height: 300 }).catch(e => { window.late = e.name; });
         }, 300));
         </script>
         """)
@@ -438,17 +431,8 @@ final class DocumentPiPControllerTests: XCTestCase {
         window.autoEnterDocumentPiP(engine)
         window.showContentView(for: engine)
 
-        // Observing the page must not create the gesture whose absence this test verifies.
-        var answer: String?
-        _ = await pollUntil(timeout: 5) {
-            await withCheckedContinuation { continuation in
-                WebViewPrivateAccessors(engine.wkWebView).evaluateWithoutUserGesture("window.late") { value in
-                    answer = value as? String
-                    continuation.resume(returning: answer != nil)
-                }
-            }
-        }
-        XCTAssertEqual(answer, "NotAllowedError", "the user is back on the call: a late answer opens no window over it")
+        let answered = await pollUntil(timeout: 5) { (try? await engine.wkWebView.evaluateJavaScript("window.late")) as? String == "NotAllowedError" }
+        XCTAssertTrue(answered, "the user is back on the call: a late answer opens no window over it")
         XCTAssertNil(window.documentPiP.webView)
     }
 

@@ -32,12 +32,8 @@ export async function filesBelow(directory) {
   return result.sort();
 }
 export function recipeDirectory(entry) {
-  const version = entry.recipeVersion ?? fixtures[entry.feature];
-  if (
-    !version ||
-    version !== fixtures[entry.feature] ||
-    (entry.variant && (entry.variant !== "share" || entry.feature !== "tab-share"))
-  )
+  const version = fixtures[entry.feature];
+  if (!version || (entry.variant && (entry.variant !== "share" || entry.feature !== "tab-share")))
     throw Error(`No genuine capture capability for ${entry.feature}`);
   return path.join(
     root,
@@ -61,8 +57,15 @@ export async function recipeHashes(entry) {
   ].map((file) => path.join(root, file));
   if (entry.kind === "video") {
     files.push(...(await filesBelow(recipeDirectory(entry))));
-    if ((entry.recipeVersion ?? fixtures[entry.feature]) !== "0.8.0")
+    if (fixtures[entry.feature] === "0.8.0" && entry.variant === "share")
       files.push(
+        ...["find", "switch", "end"].map((scene) =>
+          path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
+        ),
+      );
+    if (fixtures[entry.feature] !== "0.8.0")
+      files.push(
+        path.join(root, "hyperframes/archive/ending.html"),
         path.join(root, "hyperframes/archive/shared.css"),
         path.join(root, "hyperframes/archive/shared.js"),
       );
@@ -73,8 +76,11 @@ export async function recipeHashes(entry) {
     ),
   );
 }
-export async function nativeSources(version, entry) {
-  const folder = path.join(root, "public/native", version);
+export async function nativeSources(
+  version,
+  entry,
+  folder = path.join(root, "public/native", version),
+) {
   const receipts = [];
   const assets = [];
   for (const file of (await filesBelow(folder)).filter(
@@ -110,7 +116,11 @@ export async function nativeSources(version, entry) {
       productSourceCommit: receipt.productSourceCommit,
     });
   }
-  if (!receipts.some((receipt) => receipt.path === `public/native/${version}/capture.json`))
+  if (
+    !receipts.some(
+      (receipt) => receipt.path === path.relative(root, path.join(folder, "capture.json")),
+    )
+  )
     throw Error(`Missing genuine native capture: ${version}`);
   return { receipts, assets };
 }

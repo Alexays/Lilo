@@ -2,11 +2,8 @@ import type { Locale } from "../../lib/i18n/translate";
 import type { ReleaseMedia } from "../../../../release-media/catalog";
 
 export type ReleaseKind = "Breaking" | "Added" | "Changed" | "Fixed";
-const illustrations = ["unread", "calls", "share", "address", "history", "pip", "languages", "fresh", "archive", "material", "colors", "seasons", "drop", "dialogs"] as const;
-export type ReleaseIllustration = typeof illustrations[number];
 
 export interface ReleaseHighlight {
-	illustration: ReleaseIllustration;
 	titleKey: string;
 	descriptionKey: string;
 }
@@ -20,7 +17,7 @@ export interface ReleaseEditorial {
 export interface ReleaseEditorialCopy {
 	headline: string;
 	description: string;
-	highlights: { illustration: ReleaseIllustration; title: string; description: string }[];
+	highlights: { title: string; description: string }[];
 }
 
 export interface ReleaseNotes {
@@ -76,9 +73,8 @@ export function releaseHighlightsForVersion(registry: unknown, version: string):
 	if (!record(entry) || !key(entry.headlineKey) || !key(entry.descriptionKey) || !Array.isArray(entry.highlights)) return null;
 	const highlights: ReleaseHighlight[] = [];
 	for (const value of entry.highlights) {
-		if (!record(value) || !illustrations.includes(value.illustration as ReleaseIllustration)
-			|| !key(value.titleKey) || !key(value.descriptionKey)) continue;
-		highlights.push({ illustration: value.illustration as ReleaseIllustration, titleKey: value.titleKey.trim(), descriptionKey: value.descriptionKey.trim() });
+		if (!record(value) || !key(value.titleKey) || !key(value.descriptionKey)) continue;
+		highlights.push({ titleKey: value.titleKey.trim(), descriptionKey: value.descriptionKey.trim() });
 		if (highlights.length === 3) break;
 	}
 	return highlights.length ? { headlineKey: entry.headlineKey.trim(), descriptionKey: entry.descriptionKey.trim(), highlights } : null;
@@ -91,7 +87,7 @@ export function localizeReleaseEditorial(editorial: ReleaseEditorial | null, cat
 		return typeof value === "string" ? value : "";
 	};
 	const headline = text(editorial.headlineKey), description = text(editorial.descriptionKey);
-	const highlights = editorial.highlights.map((item) => ({ illustration: item.illustration, title: text(item.titleKey), description: text(item.descriptionKey) }))
+	const highlights = editorial.highlights.map((item) => ({ title: text(item.titleKey), description: text(item.descriptionKey) }))
 		.filter((item) => item.title && item.description);
 	return headline && description && highlights.length ? { headline, description, highlights } : null;
 }

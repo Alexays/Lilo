@@ -511,12 +511,11 @@ final class SidePanelTests: XCTestCase {
 
         /// `proxied` serves it through a CONNECT proxy, which the profile's store must use (`proxyConfiguration`).
         init(proxied: Bool = false) async throws {
-            // In-flight connections can finish after WebKit teardown releases the fixture.
             if proxied {
-                proxy = try await TinyCONNECTProxy { [weak self] _, request in self?.respond(request) ?? ("503 Service Unavailable", [], Data()) }
+                proxy = try await TinyCONNECTProxy { [unowned self] _, request in respond(request) }
                 base = "http://framed.test"
             } else {
-                let server = try await TinyHTTPServer { [weak self] request in self?.respond(request) ?? ("503 Service Unavailable", [], Data()) }
+                let server = try await TinyHTTPServer { [unowned self] request in respond(request) }
                 self.server = server
                 base = "http://127.0.0.1:\(server.port)"
             }

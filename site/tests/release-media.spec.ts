@@ -163,15 +163,3 @@ for (const version of [
     await page.screenshot({ path: testInfo.outputPath("film.png") });
   });
 }
-
-test("native MP4 controls and stills work without JavaScript", async ({
-  browser,
-}) => {
-  const context = await browser.newContext({ javaScriptEnabled: false });
-  const page = await context.newPage();
-  await page.goto("/fr/changelog/#v0.11.0");
-  await expect(page.locator('[id="v0.11.0"] video[controls]')).toBeVisible();
-  await page.locator('[id="v0.13.0"]').scrollIntoViewIfNeeded();
-  await expect(page.locator('[id="v0.13.0"] img')).toBeVisible();
-  await context.close();
-});

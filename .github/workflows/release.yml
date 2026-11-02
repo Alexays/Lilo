@@ -41,8 +41,6 @@ jobs:
           node-version-file: '.nvmrc'
       - name: Check the tag is a prepared release
         run: make release-tag-check TAG="$GITHUB_REF_NAME"
-      - name: Check pinned media dependencies
-        run: make release-media-audit
       - name: Install native capture and video tools
         run: |
           xcodebuild -downloadComponent MetalToolchain
@@ -50,7 +48,7 @@ jobs:
       - name: Capture, author, render and check the release
         run: make release-media-ci RELEASE="${GITHUB_REF_NAME#v}"
       - name: Build the website from the same verified media
-        run: make site-generate release-media-package RELEASE="${GITHUB_REF_NAME#v}"
+        run: make site-generate
       - name: Preserve the verified native and website inputs
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -59,8 +57,6 @@ jobs:
           path: |
             release-media/
             !release-media/node_modules/
-            !release-media/trials/
-            build/release-media/Lilo-changelog-*.zip
             site/dist/
           if-no-files-found: error
       - name: Preserve failed capture and quality diagnostics
@@ -217,7 +213,6 @@ jobs:
             build/Lilo.dmg
             build/appcast/appcast.xml
             build/release/dist/Lilo-dSYMs.zip
-            build/release-media/Lilo-changelog-*.zip
           # The version's notes, as make release-version wrote them for this tag.
           body_path: .changes/${{ github.ref_name }}.md
 

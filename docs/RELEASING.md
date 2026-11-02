@@ -133,9 +133,10 @@ window instead of upscaling a lower-resolution capture; an unavailable desktop b
    notes, generated changelog, app/package versions and feature highlights must agree with the tag.
    This job has read-only repository permissions and no signing environment or signing secrets.
 2. It runs `make release-media-ci RELEASE=X.Y.Z`, which authors the release's selected subject,
-   captures the real app, renders HyperFrames media and runs the full quality and publication gates.
+   captures the real app, renders HyperFrames media, verifies bundled What’s New playback and runs
+   the full quality and publication gates.
    Any failure stops the signing job. Failed capture/quality diagnostics are kept as Actions artifacts.
-3. It builds the website from these exact media and runs `make release-media-package RELEASE=X.Y.Z`.
+3. It builds the website from these exact media.
    The verified media, native receipts, recipes and static website output are uploaded as a
    same-workflow artifact. The app signing job has an explicit dependency on this job's success.
 4. **Build and sign** downloads that artifact and repeats the prepared-tag and hash-based publication
@@ -151,7 +152,7 @@ window instead of upscaling a lower-resolution capture; an unavailable desktop b
 7. Checksum-pinned Sparkle tools create `appcast.xml`, signed with `SPARKLE_ED_PRIVATE_KEY`.
    `SURequireSignedFeed` requires valid EdDSA signatures on the feed and update archive.
 8. CI creates a **draft** GitHub release with the DMG, appcast, debug symbols and
-   `Lilo-changelog-X.Y.Z.zip`. The notes come from the tag's prepared release file. Installed copies
+   notes from the tag's prepared release file. Installed copies
    discover the update only when the draft is published.
 9. **Deploy verified changelog website** waits for media validation and the signed draft. It downloads
    the same run's website artifact, repeats the tag and media publication checks, and runs
@@ -164,8 +165,8 @@ captures, run the media quality gate, and exercise the compact changelog players
 artifacts contain encoded output and compact-frame sheets. The native source captures in this
 archive retain their recorded version and commit.
 
-The release artifact includes the validated website output for review and recovery. Production
-release deployment uses this exact artifact through GitHub Actions. Alexays must configure the
+The same-run Actions artifact includes the validated website output for review and recovery.
+Production deployment uses this exact artifact. Alexays must configure the
 Cloudflare secrets below before the first automatic deployment can succeed; generating an artifact
 alone does not publish it. Disable the earlier Cloudflare Workers Builds production branch deploy
 when enabling this job, so a separate Git build cannot replace the verified release output.
