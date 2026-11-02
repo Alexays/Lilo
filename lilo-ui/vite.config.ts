@@ -94,9 +94,14 @@ export default defineConfig({
 		copyPublicDir: false,
 		// WebKit supports <link rel="modulepreload"> natively.
 		modulePreload: { polyfill: false },
-		rollupOptions: {
+		rolldownOptions: {
 			output: {
 				entryFileNames: "index.js",
+				// The first frame in one chunk beside the entry: every boundary between chunks costs
+				// import and export plumbing on each launch. The entry stays index.js, which the app times.
+				codeSplitting: {
+					groups: [{ name: "initial", tags: ["$initial"], test: (id) => !/\/(index\.html|src\/main\.ts)$/.test(id) }],
+				},
 			},
 		},
 	},
