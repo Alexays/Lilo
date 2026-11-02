@@ -49,14 +49,16 @@ jobs:
         run: make release-media-ci RELEASE="${GITHUB_REF_NAME#v}"
       - name: Build the website from the same verified media
         run: make site-generate
+      # Data only: the signing job runs its own checkout's scripts, never ones this secretless job could have rewritten.
       - name: Preserve the verified native and website inputs
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-media-${{ github.sha }}
           overwrite: true
           path: |
-            release-media/
-            !release-media/node_modules/
+            release-media/assets/
+            release-media/public/native/
+            release-media/backlog.json
             site/dist/
           if-no-files-found: error
       - name: Preserve failed capture and quality diagnostics
@@ -255,11 +257,12 @@ jobs:
           path: .
       - name: Install pinned deployment dependencies
         run: npm --prefix site ci --ignore-scripts
-      - name: Recheck and deploy the verified website without rebuilding
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Recheck the tag and media
         run: |
           make release-tag-check TAG="$GITHUB_REF_NAME"
           make release-media-publish-check RELEASE="${GITHUB_REF_NAME#v}"
-          make site-deploy-verified
+      - name: Deploy the verified website without rebuilding
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: make site-deploy-verified

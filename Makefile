@@ -205,6 +205,7 @@ release-status: $(CHANGIE)
 
 ## Collect release notes, bump the app and build versions, and refresh the website
 release-version: $(CHANGIE)
+	@CHANGIE='$(CHANGIE)' node release-media/author.mjs --pending
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
 	@release=$$('$(CHANGIE)' latest --remove-prefix); \
 	$(MAKE) --no-print-directory release-media-ci RELEASE="$$release"

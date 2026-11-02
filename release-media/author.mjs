@@ -152,6 +152,26 @@ async function main() {
   const root = path.resolve(mediaRoot, "..");
   const file = path.join(root, "release-media/backlog.json");
   const catalog = JSON.parse(await readFile(file, "utf8"));
+  // Checked by make release-version before it consumes the fragments, never on every pull request.
+  if (process.argv.includes("--pending")) {
+    const pending = await readdir(path.join(root, ".changes/unreleased")).catch((error) => {
+      if (error.code === "ENOENT") return [];
+      throw error;
+    });
+    if (!pending.some((name) => name.endsWith(".yaml"))) return;
+    if (!process.env.CHANGIE)
+      throw Error("Use make release-version so pinned Changie can validate pending notes");
+    const notes = execFileSync(
+      process.env.CHANGIE,
+      ["batch", "auto", "--dry-run", "--allow-no-changes=false"],
+      { cwd: root, encoding: "utf8" },
+    );
+    const pendingVersion = releaseSections(notes).keys().next().value;
+    if (!pendingVersion) throw Error("Changie did not produce a pending release to validate");
+    chooseMedia(pendingVersion, notes, catalog);
+    console.log(`Verified pending release media for ${pendingVersion}`);
+    return;
+  }
   const releases = releaseSections(await readFile(path.join(root, "CHANGELOG.md"), "utf8"));
   const selected = process.env.LILO_RELEASE_MEDIA_VERSION;
   const query = process.argv.includes("--fixture");
@@ -180,22 +200,6 @@ async function main() {
     for (const version of Object.keys(catalog.releases))
       if (!releases.has(version))
         throw Error(`Media decision has no published release: ${version}`);
-    const pending = await readdir(path.join(root, ".changes/unreleased")).catch((error) => {
-      if (error.code === "ENOENT") return [];
-      throw error;
-    });
-    if (pending.some((name) => name.endsWith(".yaml"))) {
-      if (!process.env.CHANGIE)
-        throw Error("Use make release-media-author so pinned Changie can validate pending notes");
-      const notes = execFileSync(
-        process.env.CHANGIE,
-        ["batch", "auto", "--dry-run", "--allow-no-changes=false"],
-        { cwd: root, encoding: "utf8" },
-      );
-      const pendingVersion = releaseSections(notes).keys().next().value;
-      if (!pendingVersion) throw Error("Changie did not produce a pending release to validate");
-      chooseMedia(pendingVersion, notes, catalog);
-    }
   }
   await writeFile(
     file,

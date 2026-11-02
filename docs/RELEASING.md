@@ -30,8 +30,8 @@ A feature release (`x.y.0`) ships with its highlights: an entry in
 cut one without them and leaves the notes in place; `make release-status` warns early. Patch
 releases need neither.
 
-`make release-version` collects the pending notes into a release file, consumes the fragments, and
-regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
+`make release-version` first checks that the pending notes have a native media story, then collects
+them into a release file, consumes the fragments, and regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
 extension bridge package versions and their lockfiles. It then runs `make release-media-ci` for the
 prepared version: choose the native subject, capture, render and verify it. Finally `make site-generate`
 builds the Astro website, including its changelog and app metadata, in the git-ignored `site/dist/` directory.
@@ -129,7 +129,7 @@ window instead of upscaling a lower-resolution capture; an unavailable desktop b
    notes, generated changelog, app/package versions and feature highlights must agree with the tag.
    This job has read-only repository permissions and no signing environment or signing secrets.
 2. It runs `make release-media-ci RELEASE=X.Y.Z`, which authors the release's selected subject,
-   captures the real app, renders HyperFrames media, verifies bundled What’s New playback and runs
+   captures the real app, renders HyperFrames media, verifies bundled What's New playback and runs
    the full quality and publication gates.
    Any failure stops the signing job. Failed capture/quality diagnostics are kept as Actions artifacts.
 3. It builds the website from these exact media.
