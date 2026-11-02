@@ -53,7 +53,7 @@ for (const lang of ["en", "fr"]) {
           v.videoHeight,
           v.error?.code ?? 0,
         ])
-      ).toEqual([1920, 1080, 0]);
+      ).toEqual([1280, 720, 0]);
       await video.evaluate((v: HTMLVideoElement) => {
         v.pause();
         v.currentTime = 5;
