@@ -35,7 +35,7 @@ extension MainWindowController {
         var missingHosts = Set<String>()
         let spaceId = tabManager.currentSpaceId
         for entry in context.tabArchive.entries where entry.spaceId == spaceId {
-            guard let host = entry.url.host?.lowercased(), favicons[host] == nil else { continue }
+            guard let host = entry.url.faviconKey, favicons[host] == nil else { continue }
             if let cached = context.faviconService.cached(for: host) {
                 favicons[host] = cached.dataURL
             } else {

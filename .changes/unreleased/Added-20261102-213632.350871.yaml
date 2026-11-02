@@ -1,0 +1,3 @@
+kind: Added
+body: 'On Apple silicon, Lilo runs its own build of WebKit while it holds every security fix of your macOS, bringing engine fixes ahead of macOS: faster style sheet changes on large pages, and images with sizes=auto that stop reloading as the page resizes'
+time: 2026-11-02T21:36:32.350871+01:00

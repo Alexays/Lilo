@@ -112,7 +112,7 @@ final class SessionsBridgeHandlerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileIds = try ["A", "B"].map { try context.profileManager.createProfile(name: $0).id }
+        let profileIds = try ["A", "B"].map { try context.profileManager!.createProfile(name: $0).id }
         context.profileContexts.pinnedProfileIds = Set(profileIds)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sessions-events-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -130,7 +130,7 @@ final class SessionsBridgeHandlerTests: XCTestCase {
             listeners[index].registry.gapEvents.undelivered(to: listeners[index].extensionId)
                 .filter { $0.namespace == "sessions" }.map(\.event)
         }
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileIds[0])
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileIds[0])
 
         context.recentlyClosed.push(.page(URL(string: "https://example.com")!), spaceId: space.id, parentFolderId: nil, section: nil, sortOrder: nil)
         context.recentlyClosed.push(.terminal(.init(cwd: "/tmp")), spaceId: space.id, parentFolderId: nil, section: nil, sortOrder: nil)

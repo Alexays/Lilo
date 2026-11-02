@@ -20,8 +20,8 @@ final class TabRenameTests: XCTestCase {
 
     private func makePinnedTab() throws -> (MainWindowController, TabBridgeHandler, UUID, Tab) {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let window = makeTestWindow(context, showing: space.id)
         let handler = TabBridgeHandler(tabManager: window.tabManager, windowController: window, stateCommandHandler: window.applyBrowserCommand)
         let home = URL(string: "https://mail.example/inbox")
@@ -53,7 +53,7 @@ final class TabRenameTests: XCTestCase {
 
         let spaceId = try XCTUnwrap(renamed.spaceId)
         let state = try XCTUnwrap(window.context.browserState.spaceTabState(forSpace: spaceId))
-        let store = try SpaceTabStateStore(dbPool: window.context.dbManager.pool(for: profileId))
+        let store = try SpaceTabStateStore(dbPool: window.context.dbManager!.pool(for: profileId))
         try store.saveMany([(spaceId: spaceId, state: state)])
         let relaunched = try XCTUnwrap(store.load(spaceId: spaceId))
         XCTAssertEqual(SpaceTab(spaceId: spaceId, state: relaunched).tab(id: tab.id)?.customTitle, "Mail")

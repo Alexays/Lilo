@@ -19,8 +19,8 @@ final class WindowGapAPITests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         registry = try context.profileContexts.context(for: profileId).extensions
         window = makeTestWindow(context, showing: space.id, size: NSSize(width: 1000, height: 800))
         window.setupExtensions()
@@ -283,7 +283,7 @@ final class WindowGapAPITests: XCTestCase {
         let result = try XCTUnwrap(settings.result as? [String: Any])
         XCTAssertEqual(result["mode"] as? String, "automatic")
         XCTAssertEqual(result["scope"] as? String, "per-origin")
-        XCTAssertEqual(result["defaultZoomFactor"] as? Double, browserContext.context.settingsStore.defaultZoom)
+        XCTAssertEqual(result["defaultZoomFactor"] as? Double, browserContext.context.settingsStore!.defaultZoom)
     }
 
     func testManualZoomLeavesTheZoomToTheExtension() async throws {
@@ -310,7 +310,7 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertNil(disabled.error)
         window.zoomActiveTab(in: true)
 
-        XCTAssertEqual(engine.pageZoom, browserContext.context.settingsStore.defaultZoom, accuracy: 0.001)
+        XCTAssertEqual(engine.pageZoom, browserContext.context.settingsStore!.defaultZoom, accuracy: 0.001)
     }
 
     // MARK: - tabs split views
@@ -393,8 +393,8 @@ final class WindowGapAPITests: XCTestCase {
     /// space T, each its own window.
     func testAnExtensionWithoutPrivateAccessNeverReachesAPrivateTab() async throws {
         let thisWindow = try XCTUnwrap(window.tabManager.windowAdapter)
-        let privateSpace = try browserContext.context.spaceManager.createSpace(name: "P", profileId: space.profileId, isPrivate: true)
-        let otherSpace = try browserContext.context.spaceManager.createSpace(name: "T", profileId: space.profileId)
+        let privateSpace = try browserContext.context.spaceManager!.createSpace(name: "P", profileId: space.profileId, isPrivate: true)
+        let otherSpace = try browserContext.context.spaceManager!.createSpace(name: "T", profileId: space.profileId)
         window.switchToSpace(privateSpace.id)
         let privateWindow = try XCTUnwrap(window.tabManager.windowAdapter)
         let privateTab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://allowed.test/private")))
@@ -442,7 +442,7 @@ final class WindowGapAPITests: XCTestCase {
     func testEachSpaceIsAWindowThatKeepsItsTabsInTheBackground() async throws {
         let first = try openTab("https://allowed.test/first")
         let spaceWindow = try XCTUnwrap(window.tabManager.windowAdapter)
-        let other = try browserContext.context.spaceManager.createSpace(name: "T", profileId: space.profileId)
+        let other = try browserContext.context.spaceManager!.createSpace(name: "T", profileId: space.profileId)
 
         window.switchToSpace(other.id)
         let otherWindow = try XCTUnwrap(window.tabManager.windowAdapter)
@@ -469,7 +469,7 @@ final class WindowGapAPITests: XCTestCase {
         let kept = try openTab("https://allowed.test/kept")
         let moved = try openTab("https://allowed.test/moved")
         let spaceWindow = try XCTUnwrap(window.tabManager.windowAdapter)
-        let other = try browserContext.context.spaceManager.createSpace(name: "T", profileId: space.profileId)
+        let other = try browserContext.context.spaceManager!.createSpace(name: "T", profileId: space.profileId)
         window.switchToSpace(other.id)
         let otherWindow = try XCTUnwrap(window.tabManager.windowAdapter)
         window.switchToSpace(space.id)

@@ -48,7 +48,7 @@ final class WebstoreInstallHandler: NSObject, WKScriptMessageHandlerWithReply {
                     ?? registry.disabledStoredExtensions.first(where: { $0.id == id })?.name else { return (nil, "not_installed") }
             let alert = NSAlert()
             alert.alertStyle = .warning
-            alert.messageText = String(format: "Remove %@?".localized, name)
+            alert.messageText = unsafe String(format: "Remove %@?".localized, name)
             alert.addButton(withTitle: "Remove".localized)
             alert.addButton(withTitle: "Cancel".localized)
             guard alert.runModal() == .alertFirstButtonReturn else { return (nil, "user_cancelled") }

@@ -40,7 +40,6 @@ final class ChromeProcessRecoveryTests: XCTestCase {
 
     func testChromeTerminationReleasesTheBridgeCallItNeverCompletes() {
         let wc = MainWindowController()
-        wc.bridgeRouter = BridgeRouter(chromeWebView: wc.chromeWebView)
         var shipped: [String] = []
         var heldCompletions: [@MainActor () -> Void] = []
         wc.bridgeRouter.javaScriptSink = { _, arguments, completion in

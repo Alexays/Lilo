@@ -525,6 +525,7 @@ export interface BridgeCommandPayloadMap {
 	startupMark: { event: string; at: number };
 	chromeVisualReady: { at: number };
 	initialStateApplied: EmptyPayload;
+	reportChromeError: { message: string; stack?: string };
 	traceSpaceSwipe: {
 		stage: string;
 		source?: "click" | "swipe" | "ui";
@@ -1197,6 +1198,9 @@ export interface BridgeAgentClientsSnapshot {
 
 export interface BridgeUpdaterStatus {
 	version: string;
+	/** CFBundleVersion of the WebKit pages run on; `webKitFork` when it is Lilo's fork embedded in the app. */
+	webKitVersion: string;
+	webKitFork: boolean;
 	/** False in builds that never check for updates (local and debug builds). */
 	available: boolean;
 	automatic: boolean;

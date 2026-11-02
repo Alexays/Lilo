@@ -14,7 +14,7 @@ final class PowerBridgeHandler: GapHandler {
     nonisolated(unsafe) private var unloadObserver: Any?
 
     init() {
-        unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
+        unsafe unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let profileId = note.userInfo?["profileId"] as? UUID, let extensionId = note.userInfo?["extensionId"] as? String else { return }
             MainActor.assumeIsolated {
                 guard let self, self.levels.removeValue(forKey: "\(profileId)/\(extensionId)") != nil else { return }
@@ -24,8 +24,8 @@ final class PowerBridgeHandler: GapHandler {
     }
 
     deinit {
-        unloadObserver.map { NotificationCenter.default.removeObserver($0) }
-        assertion.map { _ = IOPMAssertionRelease($0.id) }
+        unsafe unloadObserver.map { NotificationCenter.default.removeObserver($0) }
+        unsafe assertion.map { _ = IOPMAssertionRelease($0.id) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -44,17 +44,17 @@ final class PowerBridgeHandler: GapHandler {
 
     private func updateAssertion() {
         let level = levels.isEmpty ? nil : levels.values.contains("display") ? "display" : "system"
-        guard level != assertion?.level else { return }
-        if let held = assertion {
+        guard unsafe level != assertion?.level else { return }
+        if let held = unsafe assertion {
             IOPMAssertionRelease(held.id)
-            assertion = nil
+            unsafe assertion = nil
         }
         guard let level else { return }
         // Chrome's wake lock types on macOS: kPreventAppSuspension is no idle sleep, kPreventDisplaySleep no display sleep.
         let type = level == "display" ? kIOPMAssertionTypePreventUserIdleDisplaySleep : kIOPMAssertionTypePreventUserIdleSystemSleep
         var id = IOPMAssertionID(0)
-        if IOPMAssertionCreateWithName(type as CFString, IOPMAssertionLevel(kIOPMAssertionLevelOn), "Extension keep-awake request" as CFString, &id) == kIOReturnSuccess {
-            assertion = (id, level)
+        if unsafe IOPMAssertionCreateWithName(type as CFString, IOPMAssertionLevel(kIOPMAssertionLevelOn), "Extension keep-awake request" as CFString, &id) == kIOReturnSuccess {
+            unsafe assertion = (id, level)
         }
     }
 }

@@ -78,7 +78,7 @@ final class DeviceSetupController {
             guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return nil }
             let displayId = CGDirectDisplayID(number.uint32Value)
             guard CGDisplayIsBuiltin(displayId) == 0,
-                  let uuid = CGDisplayCreateUUIDFromDisplayID(displayId)?.takeRetainedValue(),
+                  let uuid = unsafe CGDisplayCreateUUIDFromDisplayID(displayId)?.takeRetainedValue(),
                   let uuidString = CFUUIDCreateString(nil, uuid) as String? else { return nil }
             return (uuidString, screen.localizedName)
         }

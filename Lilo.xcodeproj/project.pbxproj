@@ -348,6 +348,7 @@
 		87A0CE80FFCC0F5E733B2A03 /* SpaceTabStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D45E0B4C896809F3CA2B68 /* SpaceTabStateTests.swift */; };
 		87BF52E44AC92861055E6CC5 /* BrowserImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 792B9177EDFB6A1F310FE9C0 /* BrowserImporterTests.swift */; };
 		8854035A1251D7D7CF6BE4B8 /* LiloIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B16C04BF2BF41B09F5677A /* LiloIntents.swift */; };
+		88E60B6C386F499FD87AB954 /* WebKitFork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54606608AFEE53B274E62005 /* WebKitFork.swift */; };
 		8970298C0A01596DFEFECAAD /* AgentMCP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7863654FA36B9E0C0EEC0F66 /* AgentMCP.swift */; };
 		8985EC5F55E26007FF6BBEBB /* PageSnapshotServiceRegionSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EF66358C163103565EB5C8 /* PageSnapshotServiceRegionSelectionTests.swift */; };
 		8995FD4F3170A33E155E98BA /* BrowserRuntimeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 928C080C4829A483987A5E7A /* BrowserRuntimeCoordinator.swift */; };
@@ -417,6 +418,7 @@
 		9F25E508E4E60060142B1564 /* WKWebViewTabCommitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 682D3D1F1970F982CF1B53DE /* WKWebViewTabCommitTests.swift */; };
 		9F2A10535E31D10005486BCC /* TabsBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4A29B20C87F53245DEF9AE /* TabsBridgeHandler.swift */; };
 		9F575C7A5DB240BC0B070255 /* InjectedScriptsBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4844240CAFC16B5664ADF10 /* InjectedScriptsBenchmarkTests.swift */; };
+		9F8127AB82590EC4E5755079 /* DeclarativeNetRequestMerge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C5246025382370EB7F259B /* DeclarativeNetRequestMerge.swift */; };
 		9FA900096D3A598FFCC5EB78 /* AgentRetentionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6B4B22F615E0081122FB33 /* AgentRetentionTests.swift */; };
 		9FB68FB5024E0DE94E54CEF3 /* BrowserContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3426D93F6917E7CFB6E4B6E9 /* BrowserContextTests.swift */; };
 		9FC375482ED3106C4CA62D70 /* MainWindowController+TabShare.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D478A3354B6B8FADAE26AE3 /* MainWindowController+TabShare.swift */; };
@@ -614,6 +616,7 @@
 		DFE84DF26A5EA74CC64BFFF0 /* PerfSignposts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6C133268E79C157E6C2D45 /* PerfSignposts.swift */; };
 		E02826AC84647672FAE862ED /* AgentInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4549E15BF0BBE811DBBC6B7B /* AgentInspector.swift */; };
 		E057394D5C9BBFCEABADA463 /* ExtensionStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79F51236521456CD8B541DD7 /* ExtensionStorage.swift */; };
+		E08CDE3CE98664B6A5357D25 /* DeclarativeNetRequestMergeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91924230611A1600D94EF9F8 /* DeclarativeNetRequestMergeTests.swift */; };
 		E0F3214D71BE29635ED9E1A5 /* BlockerLayersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 339032779E0E89C768271912 /* BlockerLayersTests.swift */; };
 		E14C493ED82CBFA44E7BC3EF /* SidebarDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D4B8DA08C136C82AE88833 /* SidebarDiffTests.swift */; };
 		E160267D387E4C481F6DBFF6 /* TemporaryProfileDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF2A6D8AA9663C63227724B /* TemporaryProfileDatabase.swift */; };
@@ -979,10 +982,12 @@
 		50161F1234611D849C5A3968 /* DownloadStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadStoreTests.swift; sourceTree = "<group>"; };
 		502A94CAA975A5A19D0F37A7 /* BrowserContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserContext.swift; sourceTree = "<group>"; };
 		504B756029FD96861BFCE401 /* ExtensionAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionAccess.swift; sourceTree = "<group>"; };
+		50C5246025382370EB7F259B /* DeclarativeNetRequestMerge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarativeNetRequestMerge.swift; sourceTree = "<group>"; };
 		50F18350F0E5A5E8CD4A5A6B /* SidePanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidePanelController.swift; sourceTree = "<group>"; };
 		5135E1934C469BB54C50A03D /* SidebarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarState.swift; sourceTree = "<group>"; };
 		513EBD65646989BED9E5174A /* BrowserChangePresenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserChangePresenterTests.swift; sourceTree = "<group>"; };
 		525B826141A01CE9CBD3F341 /* TinyHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyHTTPServer.swift; sourceTree = "<group>"; };
+		54606608AFEE53B274E62005 /* WebKitFork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebKitFork.swift; sourceTree = "<group>"; };
 		552F286BB712D9077DE2C288 /* TabDockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabDockController.swift; sourceTree = "<group>"; };
 		5537BF194F8979E3F679D931 /* AppShortcuts.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = AppShortcuts.strings; path = pl.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		55B565E0D10F787EA3146788 /* ChromeCaptureMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeCaptureMachineTests.swift; sourceTree = "<group>"; };
@@ -1160,6 +1165,7 @@
 		9106EF60CBC6AD48FB25741C /* InFlightDownloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InFlightDownloads.swift; sourceTree = "<group>"; };
 		9150C2D6070742D02D55202D /* AgentScreenshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentScreenshot.swift; sourceTree = "<group>"; };
 		91771224C81841AE85FBE7C2 /* DownloadTabClosingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTabClosingTests.swift; sourceTree = "<group>"; };
+		91924230611A1600D94EF9F8 /* DeclarativeNetRequestMergeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarativeNetRequestMergeTests.swift; sourceTree = "<group>"; };
 		919CA9E629FDB10D67535409 /* smoke-probes.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "smoke-probes.js"; sourceTree = "<group>"; };
 		91C30864516C6565D3FC915A /* WKSecurityOrigin+PermissionKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WKSecurityOrigin+PermissionKey.swift"; sourceTree = "<group>"; };
 		91C5B0C26FF97F4BF43C2820 /* CaptureRetentionIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureRetentionIntegrationTests.swift; sourceTree = "<group>"; };
@@ -1667,6 +1673,7 @@
 				E5F834BC33C928E74307353F /* ChromeWebStoreInstallerTests.swift */,
 				346117E9777FF549049D7B0C /* CommandKeyMatchingTests.swift */,
 				3E9C56F09119F923EA1F30B7 /* DebuggerGapAPITests.swift */,
+				91924230611A1600D94EF9F8 /* DeclarativeNetRequestMergeTests.swift */,
 				D2DEE2C9CA17BFDCCDC68024 /* DeviceGapAPITests.swift */,
 				FC8452A9EEDFBEA6C2DD96A8 /* DownloadsGapAPITests.swift */,
 				3AE50E8E127854FD0D0AD526 /* ExtensionBackgroundPreparerTests.swift */,
@@ -1912,6 +1919,7 @@
 				95FBBE6257717CF53BCEF12A /* StartupMetrics.swift */,
 				8C8117873E496B7FC7690DCA /* SystemMediaDevices.swift */,
 				CF609A8B52AFEC50BDA5B16C /* ThemePreference.swift */,
+				54606608AFEE53B274E62005 /* WebKitFork.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -2354,6 +2362,7 @@
 				1A999EE18A124B5BB2C3A479 /* BackgroundSupervisor.swift */,
 				339391BB6F08298773CD855D /* ChromeWebStoreInstaller.swift */,
 				C0C4913FAB70E74B607BFB04 /* CookieChangeTracker.swift */,
+				50C5246025382370EB7F259B /* DeclarativeNetRequestMerge.swift */,
 				504B756029FD96861BFCE401 /* ExtensionAccess.swift */,
 				E5B4870907772C4F74BBDA94 /* ExtensionBackgroundPreparer.swift */,
 				99125D1239CB69A1C1CF265E /* ExtensionControllerDelegate.swift */,
@@ -3028,6 +3037,7 @@
 				E59077FB3BA624F2F01CA948 /* Database.swift in Sources */,
 				7989A1D317C95F1C3D365CF1 /* DebuggerBridgeHandler.swift in Sources */,
 				C1382419D14894DC7DABD390 /* DeclarativeNetRequestBridgeHandler.swift in Sources */,
+				9F8127AB82590EC4E5755079 /* DeclarativeNetRequestMerge.swift in Sources */,
 				DD3FAA9CA145952D0D439639 /* DefaultBrowserService.swift in Sources */,
 				1264B7F28050437AB896696C /* DeviceSetupController.swift in Sources */,
 				E6062DC0DD6D3A983CD4E74F /* DeviceSetupMemory.swift in Sources */,
@@ -3257,6 +3267,7 @@
 				A68A9C12CDC7AE222658DA72 /* WKSecurityOrigin+PermissionKey.swift in Sources */,
 				5F27C5D6A74210B50D42EECC /* WKWebViewTab.swift in Sources */,
 				D71375871CA896E95512C8DA /* WebInspectorSupport.swift in Sources */,
+				88E60B6C386F499FD87AB954 /* WebKitFork.swift in Sources */,
 				9CE567CCD7E28B4C22A3527B /* WebSocketBridgeHandler.swift in Sources */,
 				9AB332BFECE445B61BEF2D0D /* WebViewPrivateAccessors.swift in Sources */,
 				478DF92B2DE96A37675787C7 /* WebstoreInstallHandler.swift in Sources */,
@@ -3351,6 +3362,7 @@
 				C8494FBCE4E371EA6CD315C9 /* CosmeticStyleSheetsTests.swift in Sources */,
 				D0816FE4D1EFA8FB76928DBD /* DatabaseManagerTests.swift in Sources */,
 				DC265FBFABB1F42A3AD073A4 /* DebuggerGapAPITests.swift in Sources */,
+				E08CDE3CE98664B6A5357D25 /* DeclarativeNetRequestMergeTests.swift in Sources */,
 				4B5E639E0B036FA2729D245F /* DeviceGapAPITests.swift in Sources */,
 				B36C5B9B863534F7E9999629 /* DeviceSetupMemoryTests.swift in Sources */,
 				F46F6BF57ABC9A50E4C306CE /* DockMenuTests.swift in Sources */,
@@ -3696,10 +3708,12 @@
 				);
 				LILO_APP_NAME = "Lilo Debug";
 				LILO_BUNDLE_ID_SUFFIX = .debug;
-				OTHER_LDFLAGS = "$(inherited) -lc++";
+				OTHER_LDFLAGS = "$(inherited) -lc++ -Wl,-headerpad,0x200";
+				OTHER_SWIFT_FLAGS = "$(inherited) -Werror StrictMemorySafety";
 				PRODUCT_BUNDLE_IDENTIFIER = "fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = Lilo;
 				SDKROOT = macosx;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
 			};
 			name = Debug;
 		};
@@ -3757,10 +3771,12 @@
 					"@executable_path/../Frameworks",
 				);
 				LILO_APP_NAME = Lilo;
-				OTHER_LDFLAGS = "$(inherited) -lc++";
+				OTHER_LDFLAGS = "$(inherited) -lc++ -Wl,-headerpad,0x200";
+				OTHER_SWIFT_FLAGS = "$(inherited) -Werror StrictMemorySafety";
 				PRODUCT_BUNDLE_IDENTIFIER = "fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = Lilo;
 				SDKROOT = macosx;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
 			};
 			name = Release;
 		};

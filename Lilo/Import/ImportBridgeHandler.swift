@@ -28,7 +28,7 @@ final class ImportBridgeHandler: BridgeHandler {
         self.holdExtensionTabs = holdExtensionTabs
         self.makeImporter = makeImporter
         // Granting Full Disk Access happens in System Settings: rescan when the user comes back.
-        activeObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+        unsafe activeObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
                 // Back in Lilo, the user is done with System Settings: the rescan below tells whether access was granted.
                 self?.accessPanel?.close()
@@ -39,7 +39,7 @@ final class ImportBridgeHandler: BridgeHandler {
     }
 
     deinit {
-        if let activeObserver { NotificationCenter.default.removeObserver(activeObserver) }
+        if let activeObserver = unsafe activeObserver { NotificationCenter.default.removeObserver(activeObserver) }
     }
 
     private func scan() async {
@@ -120,7 +120,7 @@ final class ImportBridgeHandler: BridgeHandler {
     private static func icon(bundleId: String) -> String? {
         if let cached = icons[bundleId] { return cached }
         guard let app = BrowserImportScanner.appURL(bundleId: bundleId),
-              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 64, pixelsHigh: 64, bitsPerSample: 8, samplesPerPixel: 4,
+              let rep = unsafe NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 64, pixelsHigh: 64, bitsPerSample: 8, samplesPerPixel: 4,
                                          hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)

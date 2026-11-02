@@ -130,7 +130,7 @@ final class ExtensionUserScripts {
         let json = (try? JSONSerialization.data(withJSONObject: allowed)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
         let removeSelector = NSSelectorFromString("_removeUserScript:")
         if let previous = switchScript, pageScripts.responds(to: removeSelector) {
-            _ = pageScripts.perform(removeSelector, with: previous)
+            _ = unsafe pageScripts.perform(removeSelector, with: previous)
         }
         let script = WKUserScript(source: "globalThis.__liloUserScriptsAllowedIds = \(json);", injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page)
         pageScripts.addUserScript(script)
@@ -354,15 +354,15 @@ final class ExtensionUserScripts {
         let initializer = NSSelectorFromString("_initWithSource:injectionTime:forMainFrameOnly:includeMatchPatternStrings:excludeMatchPatternStrings:associatedURL:contentWorld:")
         let alloc = NSSelectorFromString("alloc")
         guard WKUserScript.instancesRespond(to: initializer),
-              let allocMethod = class_getClassMethod(WKUserScript.self, alloc),
-              let initImplementation = class_getMethodImplementation(WKUserScript.self, initializer) else { return nil }
+              let allocMethod = unsafe class_getClassMethod(WKUserScript.self, alloc),
+              let initImplementation = unsafe class_getMethodImplementation(WKUserScript.self, initializer) else { return nil }
         typealias Alloc = @convention(c) (AnyClass, Selector) -> Unmanaged<AnyObject>
         typealias Init = @convention(c) (Unmanaged<AnyObject>, Selector, NSString, Int, Bool, NSArray, NSArray, NSURL?, WKContentWorld) -> Unmanaged<WKUserScript>
-        let allocate = unsafeBitCast(method_getImplementation(allocMethod), to: Alloc.self)
-        let initialize = unsafeBitCast(initImplementation, to: Init.self)
+        let allocate = unsafe unsafeBitCast(method_getImplementation(allocMethod), to: Alloc.self)
+        let initialize = unsafe unsafeBitCast(initImplementation, to: Init.self)
         return { source, injectionTime, mainFrameOnly, include, exclude, world in
             // `alloc` hands over a +1 instance that the initializer consumes; it returns its own +1.
-            initialize(
+            unsafe initialize(
                 allocate(WKUserScript.self, alloc), initializer, source as NSString, injectionTime.rawValue, mainFrameOnly,
                 include as NSArray, exclude as NSArray, nil, world
             ).takeRetainedValue()

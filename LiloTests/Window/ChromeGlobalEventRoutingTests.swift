@@ -8,7 +8,7 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
     /// A window showing a tab whose web view holds two committed pages, the second current.
     private func makeTabWithHistory(_ browserContext: TemporaryBrowserContext) async throws -> (MainWindowController, WKWebViewTab, first: URL, second: URL) {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: context.profileManager!.createProfile(name: "P").id)
         let controller = makeTestWindow(context, showing: space.id)
         let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
         let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
@@ -161,7 +161,7 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: context.profileManager!.createProfile(name: "P").id)
         let controller = makeTestWindow(context, showing: space.id)
         let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
         let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
@@ -185,7 +185,6 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
 
     func testCmdLRemainsReservedToLilo() {
         let controller = MainWindowController()
-        controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
         let event = NSEvent.keyEvent(
             with: .keyDown,
             location: .zero,
@@ -329,7 +328,6 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
 
     func testOpenHistoryMenuActionFocusesChromeBeforeOpeningCommandBar() {
         let controller = MainWindowController()
-        controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
         let sink = TestGlobalKeySinkView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
 
         controller.chromeWebView.frame = controller.window!.contentView!.bounds

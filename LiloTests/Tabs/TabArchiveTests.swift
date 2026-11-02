@@ -20,8 +20,8 @@ final class TabArchiveTests: XCTestCase {
 
     private func makeWindow(isPrivate: Bool = false) throws -> (MainWindowController, Space) {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: isPrivate)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: isPrivate)
         let window = makeTestWindow(context, showing: space.id)
         return (window, space)
     }
@@ -56,7 +56,7 @@ final class TabArchiveTests: XCTestCase {
         XCTAssertEqual(window.context.tabArchive.entries.map(\.url.absoluteString), ["https://idle.example/"])
         XCTAssertEqual(window.archivedTabSummaries().compactMap { $0["url"] as? String }, ["https://idle.example/"])
 
-        try window.context.spaceManager.updateSpace(id: space.id) { $0.archiveAfterHours = 168 }
+        try window.context.spaceManager!.updateSpace(id: space.id) { $0.archiveAfterHours = 168 }
         let weekly = try openTab(window, "https://weekly.example/")
         window.context.archiveIdleTabs(now: Date().addingTimeInterval(13 * hour))
         XCTAssertTrue(openTabIds(window).contains(weekly.id), "the space's own delay applies")
@@ -87,7 +87,7 @@ final class TabArchiveTests: XCTestCase {
         XCTAssertTrue(window.context.tabArchive.entries.isEmpty)
 
         window.context.browserState.displayedTabIds.remove(shown.id)
-        try window.context.spaceManager.updateSpace(id: space.id) { $0.archiveAfterHours = 0 }
+        try window.context.spaceManager!.updateSpace(id: space.id) { $0.archiveAfterHours = 0 }
         window.context.archiveIdleTabs(now: Date().addingTimeInterval(30 * 24 * hour))
         XCTAssertTrue(openTabIds(window).contains(shown.id), "Never keeps every tab")
     }
@@ -200,14 +200,14 @@ final class TabArchiveTests: XCTestCase {
 
     func testTheArchiveDelayIsSavedWithTheSpace() async throws {
         let (window, space) = try makeWindow()
-        let handler = SpaceBridgeHandler(spaceManager: window.context.spaceManager, windowController: window)
+        let handler = SpaceBridgeHandler(spaceManager: window.context.spaceManager!, windowController: window)
 
         _ = await handler.handle(message: BridgeMessage(dictionary: [
             "action": "updateSpace", "payload": ["id": space.id.uuidString, "archiveAfterHours": 720]
         ])!)
 
-        XCTAssertEqual(window.context.spaceManager.space(with: space.id)?.archiveAfterHours, 720)
-        let pool = window.context.dbManager.globalPool
+        XCTAssertEqual(window.context.spaceManager!.space(with: space.id)?.archiveAfterHours, 720)
+        let pool = window.context.dbManager!.globalPool
         let saved = await pollUntil(timeout: 5) {
             (try? pool.read { db in try Space.fetchOne(db, key: space.id.uuidString) })?.archiveAfterHours == 720
         }
@@ -229,7 +229,7 @@ final class TabArchiveTests: XCTestCase {
         XCTAssertFalse(context.startsFresh(keeping), "a Space that never archives never starts fresh on its own")
 
         context.launchAbsence = nil
-        context.settingsStore.set("emptyWindowOnLaunch", value: "true")
+        context.settingsStore!.set("emptyWindowOnLaunch", value: "true")
         XCTAssertTrue(context.startsFresh(keeping))
     }
 

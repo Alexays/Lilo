@@ -23,7 +23,7 @@ final class PageCaptureBridgeHandler: GapHandler {
             webView.createWebArchiveData { continuation.resume(returning: try? $0.get()) }
         }
         guard let archive,
-              let root = (try? PropertyListSerialization.propertyList(from: archive, format: nil)) as? [String: Any],
+              let root = unsafe (try? PropertyListSerialization.propertyList(from: archive, format: nil)) as? [String: Any],
               let mhtml = Self.mhtml(root, url: url, title: webView.title ?? "") else {
             return BridgeError("Failed to generate MHTML.")
         }

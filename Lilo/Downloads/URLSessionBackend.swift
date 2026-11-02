@@ -55,17 +55,17 @@ final class URLSessionBackend: NSObject {
 
     private func registerRecord(for taskId: Int, destination: URL, replacesExisting: Bool = false) {
         taskRecordsLock.lock(); defer { taskRecordsLock.unlock() }
-        taskRecords[taskId] = TaskRecord(destination: destination, replacesExisting: replacesExisting)
+        unsafe taskRecords[taskId] = TaskRecord(destination: destination, replacesExisting: replacesExisting)
     }
 
     private func removeRecord(for taskId: Int) {
         taskRecordsLock.lock(); defer { taskRecordsLock.unlock() }
-        taskRecords.removeValue(forKey: taskId)
+        unsafe taskRecords.removeValue(forKey: taskId)
     }
 
     private nonisolated func record(for taskId: Int) -> TaskRecord? {
         taskRecordsLock.lock(); defer { taskRecordsLock.unlock() }
-        return taskRecords[taskId]
+        return unsafe taskRecords[taskId]
     }
 
     /// Start a new download from a URL (called by chrome.downloads.download()).

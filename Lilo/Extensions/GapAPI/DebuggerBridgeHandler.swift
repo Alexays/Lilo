@@ -52,7 +52,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     override init() {
         super.init()
         let center = NotificationCenter.default
-        observers = [
+        unsafe observers = [
             center.addObserver(forName: .webViewTabWillTearDown, object: nil, queue: .main) { [weak self] note in
                 guard let object = note.object else { return }
                 let engine = ObjectIdentifier(object as AnyObject)
@@ -76,7 +76,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     }
 
     deinit {
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     /// A window's bridge, which shows the debugging banner and cancels it.

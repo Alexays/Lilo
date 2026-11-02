@@ -28,7 +28,7 @@ extension MainWindowController {
                 height: features.height.map { CGFloat($0.doubleValue) } ?? 600
             ),
             topLeft: features.x.flatMap { x in features.y.map { NSPoint(x: x.doubleValue, y: $0.doubleValue) } },
-            inPeek: context.settingsStore.singleWindow
+            inPeek: context.settingsStore?.singleWindow == true
         )
         return engine.wkWebView
     }
@@ -105,7 +105,7 @@ extension MainWindowController {
             openLinkPeek(url, from: tab.id)
             return true
         }
-        guard source.isPinned || source.isBookmarked, context.settingsStore.get("peekPinnedTabLinks") != "false",
+        guard source.isPinned || source.isBookmarked, context.settingsStore?.get("peekPinnedTabLinks") != "false",
               let host = url.host?.lowercased(), let pageHost = tab.currentURL?.host?.lowercased() else { return false }
         let pageSite = CookiesBridgeHandler.registrableDomain(of: pageHost)
         guard CookiesBridgeHandler.registrableDomain(of: host) != pageSite else { return false }
@@ -164,7 +164,7 @@ extension MainWindowController {
                 continue
             }
             popup.canOpenInSplit = canSplit(beside: popup.openerTabId)
-            let isNew = peek.superview == nil
+            let isNew = unsafe peek.superview == nil
             peek.frame = contentContainerView.bounds
             peek.autoresizingMask = [.width, .height]
             contentContainerView.addSubview(peek, positioned: .above, relativeTo: nil)
@@ -178,12 +178,12 @@ extension MainWindowController {
 
     /// The page the window's keys and page actions go to: the shown peek's, else the active tab's.
     var focusedEngineTab: WKWebViewTab? {
-        pagePopups.values.first { $0.peekView?.superview != nil }?.engine ?? tabManager.activeEngineTab
+        pagePopups.values.first { unsafe $0.peekView?.superview != nil }?.engine ?? tabManager.activeEngineTab
     }
 
     /// File > Open as Tab in the browser window: the shown peek's page, when there is one.
     @objc func openPageAsTab(_ sender: Any?) {
-        pagePopups.values.first { $0.peekView?.superview != nil }?.openAsTab()
+        pagePopups.values.first { unsafe $0.peekView?.superview != nil }?.openAsTab()
     }
 
     /// Brings a popup to the front: its window, or its opener tab with the peek over it.

@@ -108,6 +108,28 @@ test("resolveTargetFromPoint resolves vertical insertion from row midpoints", ()
 	});
 });
 
+test("applyTargetHysteresis does not hold the way back to the row a drag started from", () => {
+	// "d" was dragged up: its placeholder sits at index 2 and pushed "c" onto d's original row.
+	const zone: DndZoneSnapshot = {
+		id: "tabs",
+		axis: "vertical",
+		rect: rect(0, 0, 240, 150),
+		items: [
+			{ id: "a", rect: rect(0, 0, 240, 30) },
+			{ id: "b", rect: rect(0, 30, 240, 30) },
+			{ id: "c", rect: rect(0, 90, 240, 30) },
+			{ id: "e", rect: rect(0, 120, 240, 30) },
+		],
+		home: 3,
+	};
+	const atSlot = { zoneId: "tabs", index: 2, axis: "vertical" } as const;
+	const point = { x: 20, y: 106 };
+	const next = resolveTargetFromPoint(point, zone);
+
+	assert.equal(applyTargetHysteresis(point, zone, next, atSlot)?.index, 3);
+	assert.equal(applyTargetHysteresis(point, { ...zone, home: undefined }, next, atSlot)?.index, 2);
+});
+
 test("resolveTargetFromPoint resolves grid insertion by row order", () => {
 	const zone: DndZoneSnapshot = {
 		id: "bookmarks",

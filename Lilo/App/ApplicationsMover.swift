@@ -29,7 +29,7 @@ enum ApplicationsMover {
             let ownBuild = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
             if installedBuild.map({ $0.compare(ownBuild, options: .numeric) == .orderedAscending }) ?? true {
                 if FileManager.default.fileExists(atPath: destination.path) {
-                    try FileManager.default.trashItem(at: destination, resultingItemURL: nil)
+                    unsafe try FileManager.default.trashItem(at: destination, resultingItemURL: nil)
                 }
                 try FileManager.default.copyItem(at: source, to: destination)
             }

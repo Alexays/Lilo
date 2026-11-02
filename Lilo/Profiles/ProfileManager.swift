@@ -32,7 +32,7 @@ final class ProfileManager {
     /// for the profile the session restore will almost certainly need.
     nonisolated static let cachedLastActiveProfileIdKey = "cachedLastActiveProfileId"
 
-    init(dbManager: DatabaseManager, engineFactory: WKEngineFactory, defaults: UserDefaults = .lilo, makeProfileId: @escaping @MainActor () -> UUID = UUID.init) {
+    init(dbManager: DatabaseManager, engineFactory: WKEngineFactory, defaults: UserDefaults = unsafe .lilo, makeProfileId: @escaping @MainActor () -> UUID = UUID.init) {
         self.dbManager = dbManager
         self.engineFactory = engineFactory
         self.defaults = defaults

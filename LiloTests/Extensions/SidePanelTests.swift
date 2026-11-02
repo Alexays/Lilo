@@ -28,13 +28,12 @@ final class SidePanelTests: XCTestCase {
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         registry = try context.profileContexts.context(for: profileId).extensions
         extensionId = try await install("Panel")
 
         window = MainWindowController(context: context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         window.window?.setContentSize(NSSize(width: 1200, height: 800))
         window.setupViews()
         context.windows.add(window)

@@ -1381,6 +1381,8 @@ export const createDemoHost = (
         available: false,
         lastCheck: null,
         version,
+        webKitFork: false,
+        webKitVersion: "",
       }),
     requestDownloadsSnapshot: () => emit("downloadsSnapshot", { items: [] }),
     scanImportSources: () => {

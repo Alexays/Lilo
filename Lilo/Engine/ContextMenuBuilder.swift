@@ -75,7 +75,7 @@ final class ContextMenuBuilder: NSObject {
     ) {
         // WebKit's "Search with Google" hands the selection to the system's search service, which opens the default browser.
         if let searchEngineName, let item = menu.items.first(where: { $0.identifier?.rawValue.localizedCaseInsensitiveContains("SearchWeb") ?? false }) {
-            item.title = String(format: "Search with %@".localized, searchEngineName)
+            item.title = unsafe String(format: "Search with %@".localized, searchEngineName)
             item.target = self
             item.action = #selector(contextMenuSearchWeb)
         }

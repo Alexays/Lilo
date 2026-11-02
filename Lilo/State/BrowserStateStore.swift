@@ -487,12 +487,11 @@ final class BrowserStateStore {
     }
 
     func activateSpace(id: UUID, loadSnapshot: () -> SpaceSnapshot) -> SpaceSnapshot {
-        if spaces[id] == nil {
-            spaces[id] = normalizedSnapshot(loadSnapshot(), spaceId: id)
-        }
+        var snapshot = spaces[id] ?? normalizedSnapshot(loadSnapshot(), spaceId: id)
         visibleSpaceIds.insert(id)
-        spaces[id]?.lastAccessedAt = Date()
-        return spaces[id]!
+        snapshot.lastAccessedAt = Date()
+        spaces[id] = snapshot
+        return snapshot
     }
 
     @discardableResult
@@ -1083,6 +1082,10 @@ extension BrowserStateStore {
     /// Tabs whose engine is parked live in a hidden space.
     var parkedEngineTabIds: Set<UUID> { Set(spaces.values.flatMap(\.engines.keys)) }
 
+    func hasLiveEngine(inSpace spaceId: UUID) -> Bool {
+        spaces[spaceId]?.engines.isEmpty == false || liveHost(for: spaceId) != nil
+    }
+
     /// Every space's live engines, keyed by tab.
     private var enginesAcrossSpaces: [UUID: WKWebViewTab] {
         var engines: [UUID: WKWebViewTab] = [:]
@@ -1125,7 +1128,7 @@ extension BrowserStateStore {
         ids.sort { lhs, rhs in
             withUnsafeBytes(of: lhs.uuid) { lhsBytes in
                 withUnsafeBytes(of: rhs.uuid) { rhsBytes in
-                    memcmp(lhsBytes.baseAddress, rhsBytes.baseAddress, lhsBytes.count) < 0
+                    unsafe memcmp(lhsBytes.baseAddress, rhsBytes.baseAddress, lhsBytes.count) < 0
                 }
             }
         }

@@ -46,17 +46,21 @@ final class RunShaper {
         let attributes = [NSAttributedString.Key(kCTFontAttributeName as String): faces[Int(key[0])]]
         let line = CTLineCreateWithAttributedString(NSAttributedString(string: String(text), attributes: attributes))
         var shaped: [ShapedGlyph] = []
+        // A CF array of CTRuns; as? cannot cast to CF types.
+        // swiftlint:disable:next force_cast
         for run in CTLineGetGlyphRuns(line) as! [CTRun] {
             let count = CTRunGetGlyphCount(run)
             guard count > 0 else { continue }
+            // A run always has a font.
+            // swiftlint:disable:next force_cast
             let runFont = (CTRunGetAttributes(run) as NSDictionary)[kCTFontAttributeName as String] as! CTFont
             let fontIndex = index(of: runFont)
             var glyphs = [CGGlyph](repeating: 0, count: count)
             var positions = [CGPoint](repeating: .zero, count: count)
             var indices = [CFIndex](repeating: 0, count: count)
-            CTRunGetGlyphs(run, CFRange(location: 0, length: 0), &glyphs)
-            CTRunGetPositions(run, CFRange(location: 0, length: 0), &positions)
-            CTRunGetStringIndices(run, CFRange(location: 0, length: 0), &indices)
+            unsafe CTRunGetGlyphs(run, CFRange(location: 0, length: 0), &glyphs)
+            unsafe CTRunGetPositions(run, CFRange(location: 0, length: 0), &positions)
+            unsafe CTRunGetStringIndices(run, CFRange(location: 0, length: 0), &indices)
             // Positions are relative to each cluster's first glyph, so proportional fallback fonts
             // (CJK, emoji) cannot drift off the grid.
             var clusterCell = -1

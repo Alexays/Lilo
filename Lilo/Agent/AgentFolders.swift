@@ -145,7 +145,7 @@ extension AgentControl {
             return tab
         }
         guard let commander = context?.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
-        let engine = makeHiddenEngine(tabId: nil, space: space, nativeConfiguration: nativeConfiguration, commander: commander)
+        let engine = try makeHiddenEngine(tabId: nil, space: space, nativeConfiguration: nativeConfiguration, commander: commander)
         let tab = Tab(id: engine.id, url: url, spaceId: space.id)
         _ = try commander.applyBrowserCommand(.createTab(spaceId: space.id, tab: tab, activate: false))
         if let folderId {
@@ -163,7 +163,7 @@ extension AgentControl {
     func openTab(from opener: WKWebViewTab, url: URL?, configuration: WKWebViewConfiguration? = nil) -> WKWebView? {
         guard let context, let (spaceId, tab) = context.browserState.durableTab(for: opener.id),
               tab.groupId != nil || sessions.contains(where: { $0.isolatedSpaceId == spaceId }),
-              let space = context.spaceManager.space(with: spaceId),
+              let space = context.spaceManager?.space(with: spaceId),
               let created = try? createTab(
                   inFolder: tab.groupId, space: space, host: context.windows.windows(showing: spaceId).first, url: url,
                   nativeConfiguration: configuration
@@ -188,11 +188,12 @@ extension AgentControl {
     /// belongs to that window.
     private func makeHiddenEngine(
         tabId: UUID?, space: Space, nativeConfiguration: WKWebViewConfiguration? = nil, commander: MainWindowController
-    ) -> WKWebViewTab {
+    ) throws -> WKWebViewTab {
         let context = commander.context
+        guard let profileManager = context.profileManager else { throw AgentToolError("Lilo is not ready yet") }
         let dataStore = space.isPrivate
-            ? context.profileManager.ephemeralDataStore(for: space.id)
-            : context.profileManager.dataStore(for: space.profileId)
+            ? profileManager.ephemeralDataStore(for: space.id)
+            : profileManager.dataStore(for: space.profileId)
         let engine = context.engineFactory.createTab(configuration: .init(
             dataStore: dataStore, tabId: tabId, nativeConfiguration: nativeConfiguration, profileId: space.profileId
         ))
@@ -240,11 +241,11 @@ extension AgentControl {
             throw AgentToolError("Tab \(number) not found: use tabs_context_mcp to list your tabs")
         }
         // A tab whose engine was let go (its folder moved to another profile) gets a new one, unshown.
-        guard let engine = host?.tabManager.ensureLiveEngine(forTabId: tab.id)
+        guard let engine = try host?.tabManager.ensureLiveEngine(forTabId: tab.id)
             ?? context?.windows.window(forTab: tab.id)?.tabManager.engineTab(for: tab.id)
             ?? context?.browserState.engine(tabId: tab.id, spaceId: space.id)
             ?? context?.windows.activeWindow.map({ commander in
-                let engine = makeHiddenEngine(tabId: tab.id, space: space, commander: commander)
+                let engine = try makeHiddenEngine(tabId: tab.id, space: space, commander: commander)
                 if let url = tab.url { engine.loadURL(url) }
                 return engine
             }) else {
@@ -275,14 +276,14 @@ extension AgentControl {
     /// drives the tab, the page renders and runs timers at full rate though nobody sees it: what the agent
     /// measures in it is not the throttling of a hidden page.
     func attach(_ engine: WKWebViewTab, to host: MainWindowController?) {
-        let parked = engine.view.window === parkingWindow
+        let parked = unsafe engine.view.window === parkingWindow
         engine.setWindowOcclusionDetection(false)
         if let host {
-            guard engine.view.window == nil || parked else { return }
+            guard unsafe engine.view.window == nil || parked else { return }
             engine.fitView(in: host.contentContainerView.bounds)
             engine.view.isHidden = false
             host.contentContainerView.addSubview(engine.view, positioned: .below, relativeTo: nil)
-        } else if engine.view.window == nil {
+        } else if unsafe engine.view.window == nil {
             engine.fitView(in: parkingWindow.contentView?.bounds ?? .zero)
             engine.view.isHidden = false
             parkingWindow.contentView?.addSubview(engine.view)
@@ -332,11 +333,11 @@ extension AgentControl {
                 // Undo resize_window, and stop rendering a page nobody looks at any more.
                 engine.setWindowOcclusionDetection(true)
                 AgentFrameView.remove(from: engine.wkWebView)
-                if engine.view.window === parkingWindow { engine.view.removeFromSuperview() }
+                if unsafe engine.view.window === parkingWindow { engine.view.removeFromSuperview() }
                 engine.agentViewport = nil
                 engine.view.autoresizingMask = [.width, .height]
-                if let container = engine.view.superview { engine.view.frame = container.bounds }
-                if let host = context.windows.windows.first(where: { $0.contentContainerView === engine.view.superview }),
+                if let container = unsafe engine.view.superview { engine.view.frame = container.bounds }
+                if let host = context.windows.windows.first(where: { unsafe $0.contentContainerView === engine.view.superview }),
                    !host.displayedTabIds.contains(id) {
                     engine.view.removeFromSuperview()
                 }
@@ -347,7 +348,7 @@ extension AgentControl {
             if engine.agentViewport == nil {
                 engine.agentViewport = parkingWindow.contentView?.bounds.size
                 if engine.pageZoom != 1 { engine.setPageZoom(1) }
-                if let container = engine.view.superview { engine.fitView(in: container.bounds) }
+                if let container = unsafe engine.view.superview { engine.fitView(in: container.bounds) }
             }
             AgentFrameView.show(on: engine.wkWebView, agentName: agentName(forTab: id))
             let capture = AgentCapture(webView: engine.wkWebView)

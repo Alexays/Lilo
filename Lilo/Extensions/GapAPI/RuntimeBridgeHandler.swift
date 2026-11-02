@@ -75,19 +75,19 @@ final class RuntimeBridgeHandler: GapHandler {
     nonisolated(unsafe) private var observers: [Any] = []
 
     init() {
-        observers.append(NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
+        unsafe observers.append(NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let extensionId = note.userInfo?["extensionId"] as? String else { return }
             let registry = note.object as? ProfileExtensionRegistry
             MainActor.assumeIsolated { self?.extensionDidUnload(extensionId, registry: registry) }
         })
-        observers.append(NotificationCenter.default.addObserver(forName: .extensionPageChannelDidClose, object: nil, queue: .main) { [weak self] note in
+        unsafe observers.append(NotificationCenter.default.addObserver(forName: .extensionPageChannelDidClose, object: nil, queue: .main) { [weak self] note in
             guard let extensionId = note.userInfo?["extensionId"] as? String, let channel = note.userInfo?["channel"] as? Int else { return }
             let events = (note.object as AnyObject?).map(ObjectIdentifier.init)
             MainActor.assumeIsolated { self?.pageDidClose(channel, extensionId: extensionId, events: events) }
         })
         // As in Chrome, a stopped worker's ports disconnect: an idle one is about to be unloaded, and a new one holds none.
         for name in [Notification.Name.extensionWorkerDidStop, .extensionWorkerDidStart] {
-            observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
+            unsafe observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
                 guard let extensionId = note.userInfo?["extensionId"] as? String else { return }
                 let events = (note.object as AnyObject?).map(ObjectIdentifier.init)
                 let stopped = name == .extensionWorkerDidStop ? note.userInfo?["instance"] as? String : nil
@@ -97,7 +97,7 @@ final class RuntimeBridgeHandler: GapHandler {
     }
 
     deinit {
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {

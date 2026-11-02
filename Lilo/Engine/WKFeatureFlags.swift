@@ -39,7 +39,7 @@ enum WKFeatureFlags {
     /// Metal device would block the main thread.
     private static let graphicsOverrides: [String: Bool] = {
         var present: Int32 = 0, size = MemoryLayout<Int32>.size
-        guard sysctlbyname("kern.hv_vmm_present", &present, &size, nil, 0) == 0, present == 1 else { return [:] }
+        guard unsafe sysctlbyname("kern.hv_vmm_present", &present, &size, nil, 0) == 0, present == 1 else { return [:] }
         return ["CanvasUsesAcceleratedDrawing": false, "UseGPUProcessForCanvasRenderingEnabled": false]
     }()
     /// WebKit's own Screen Time client is off, as in Safari: Lilo's `STWebpageController` is the single one.
@@ -86,7 +86,7 @@ enum WKFeatureFlags {
         // Lilo's parity defaults first, then user overrides win.
         let effective = baselineOverrides.merging(overrides) { _, user in user }
         guard !effective.isEmpty, preferences.responds(to: setSelector) else { return }
-        let setFn = unsafeBitCast(preferences.method(for: setSelector), to: SetFn.self)
+        let setFn = unsafe unsafeBitCast(preferences.method(for: setSelector), to: SetFn.self)
         for (key, enabled) in effective {
             guard let feature = featureObjects[key] else { continue }
             setFn(preferences, setSelector, ObjCBool(enabled), feature)
@@ -97,7 +97,7 @@ enum WKFeatureFlags {
         let selector = NSSelectorFromString(selectorName)
         let cls: AnyObject = WKPreferences.self  // both enumerators are class methods
         guard cls.responds(to: selector),
-              let array = cls.perform(selector)?.takeUnretainedValue() as? [NSObject] else { return [] }
+              let array = unsafe cls.perform(selector)?.takeUnretainedValue() as? [NSObject] else { return [] }
         return array
     }
 

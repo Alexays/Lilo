@@ -8,7 +8,7 @@ enum SafariReader {
         if kinds.contains(.bookmarks) {
             result.attempt(.bookmarks) { bundle in
                 let data = try Data(contentsOf: safariURL.appendingPathComponent("Bookmarks.plist"))
-                guard let root = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
+                guard let root = unsafe try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
                     throw ImportError.malformed("Bookmarks.plist")
                 }
                 for child in root["Children"] as? [[String: Any]] ?? [] {
@@ -24,7 +24,7 @@ enum SafariReader {
         if kinds.contains(.tabs) {
             result.attempt(.tabs) { bundle in
                 let data = try Data(contentsOf: safariURL.appendingPathComponent("LastSession.plist"))
-                let session = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+                let session = unsafe try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
                 bundle.openTabs = (session?["SessionWindows"] as? [[String: Any]] ?? []).flatMap { window in
                     (window["TabStates"] as? [[String: Any]] ?? []).compactMap { tab in
                         guard let url = tab["TabURL"] as? String, url.hasPrefix("http") else { return nil }

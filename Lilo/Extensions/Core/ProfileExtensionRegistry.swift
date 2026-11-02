@@ -155,7 +155,7 @@ final class ProfileExtensionRegistry {
     nonisolated(unsafe) private var menuActionObserver: Any?
 
     deinit {
-        menuActionObserver.map { NotificationCenter.default.removeObserver($0) }
+        unsafe menuActionObserver.map { NotificationCenter.default.removeObserver($0) }
     }
 
     func noteUserGesture(extensionId: String) {
@@ -173,12 +173,12 @@ final class ProfileExtensionRegistry {
             gestureMenuItems.setObject(extensionId as NSString, forKey: item)
             noteUserGestures(choosing: item.submenu?.items ?? [], extensionId: extensionId)
         }
-        guard menuActionObserver == nil else { return }
-        menuActionObserver = NotificationCenter.default.addObserver(forName: NSMenu.didSendActionNotification, object: nil, queue: .main) { [weak self] note in
+        guard unsafe menuActionObserver == nil else { return }
+        unsafe menuActionObserver = NotificationCenter.default.addObserver(forName: NSMenu.didSendActionNotification, object: nil, queue: .main) { [weak self] note in
             guard let item = note.userInfo?["MenuItem"] as? NSMenuItem else { return }
             nonisolated(unsafe) let chosen = item
             MainActor.assumeIsolated {
-                guard let self, let id = self.gestureMenuItems.object(forKey: chosen) else { return }
+                guard let self, let id = unsafe self.gestureMenuItems.object(forKey: chosen) else { return }
                 self.noteUserGesture(extensionId: id as String)
             }
         }
@@ -506,6 +506,7 @@ final class ProfileExtensionRegistry {
         self.profileId = profileId
         self.extensionStorage = extensionStorage
         self.extensionsBaseDirectory = extensionsBaseDirectory
+        _ = DeclarativeNetRequestMerge.install
         let config = WKWebExtensionController.Configuration(identifier: profileId)
         let userContentController = config.webViewConfiguration.userContentController
         // Extension pages, workers and the cookies API see this profile's data, not the app default
@@ -525,7 +526,7 @@ final class ProfileExtensionRegistry {
         let activePatterns = NSSelectorFromString("_setActiveContentRuleListActionPatterns:")
         if config.webViewConfiguration.defaultWebpagePreferences.responds(to: activePatterns) {
             let patterns = [ExtensionFrameCookies.identifier(for: profileId): Set(["*://*/*"])] as NSDictionary
-            config.webViewConfiguration.defaultWebpagePreferences.perform(activePatterns, with: patterns)
+            unsafe config.webViewConfiguration.defaultWebpagePreferences.perform(activePatterns, with: patterns)
         }
 
         // WebKit snapshots the configuration at controller-creation time: set everything up first.
@@ -536,7 +537,7 @@ final class ProfileExtensionRegistry {
         let delaysLaunch = NSSelectorFromString("_setDelaysWebProcessLaunchUntilFirstLoad:")
         if config.webViewConfiguration.responds(to: delaysLaunch) {
             typealias SetBool = @convention(c) (NSObject, Selector, Bool) -> Void
-            unsafeBitCast(config.webViewConfiguration.method(for: delaysLaunch), to: SetBool.self)(config.webViewConfiguration, delaysLaunch, false)
+            unsafe unsafeBitCast(config.webViewConfiguration.method(for: delaysLaunch), to: SetBool.self)(config.webViewConfiguration, delaysLaunch, false)
         }
 
         // Injected into every frame of the WebViews the controller manages but web pages', where it would only exit.
@@ -749,14 +750,14 @@ final class ProfileExtensionRegistry {
         context.uniqueIdentifier = extensionId
         // WebKit's default host is a fresh UUID per launch, which strands restored extension tabs and
         // their pages' origin storage.
-        context.baseURL = URL(string: "chrome-extension://\(extensionId)")!
+        if let baseURL = URL(string: "chrome-extension://\(extensionId)") { context.baseURL = baseURL }
 
         // A release attaches Web Inspector to extension internals only once Lilo's developer tools are unlocked. WebKit never
         // unloads an inspectable worker: the extension smoke turns it off to unload workers as a release build does.
         #if DEBUG
         context.isInspectable = ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil
         #else
-        context.isInspectable = UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey)
+        context.isInspectable = unsafe UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey)
         #endif
         if context.isInspectable { context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background" }
 
@@ -1224,7 +1225,7 @@ final class ProfileExtensionRegistry {
         let key = IconCacheKey(image: ObjectIdentifier(image), appearance: appearance.name, scale: scale)
         if let cached = iconDataURLCache[key] { return cached.dataURL }
         // Drawn at the sharpest screen's scale: the image holds a representation per scale, and its TIFF all of them.
-        guard let rep = NSBitmapImageRep(
+        guard let rep = unsafe NSBitmapImageRep(
             bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
             bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
         ) else { return "" }
@@ -1467,7 +1468,7 @@ extension WKWebExtensionContext {
         let setMode = NSSelectorFromString("_setContentSecurityPolicyModeForExtension:")
         if configuration.responds(to: setMode) {
             typealias SetMode = @convention(c) (AnyObject, Selector, Int) -> Void
-            unsafeBitCast(configuration.method(for: setMode), to: SetMode.self)(configuration, setMode, 0)
+            unsafe unsafeBitCast(configuration.method(for: setMode), to: SetMode.self)(configuration, setMode, 0)
         }
         return configuration
     }

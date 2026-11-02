@@ -21,7 +21,7 @@ private final class LiloWindow: NSWindow {
         if let controller = windowController as? MainWindowController, controller.isShowingWhatsNew,
            responder is NSView, !controller.contains(responder: responder) { return false }
         if let view = responder as? NSView,
-           let webView = sequence(first: view, next: \.superview).lazy.compactMap({ $0 as? WKWebView }).first,
+           let webView = sequence(first: view, next: unsafe \.superview).lazy.compactMap({ $0 as? WKWebView }).first,
            let controller = windowController as? MainWindowController,
            let engine = controller.tabManager.engineTab(forWebView: webView),
            engine.isAgentControlled, !controller.displayedTabIds.contains(engine.id) {
@@ -61,7 +61,7 @@ final class ContentContainerView: NSView {
     /// container uncovered; takes it away otherwise. A fixed-size page that is not the shown one changes nothing.
     func updateStage(under view: NSView, fixedSize: Bool) {
         if fixedSize, subviews.last(where: { $0 !== stage }) !== view { return }
-        guard fixedSize, view.superview === self, !view.frame.contains(bounds) else {
+        guard fixedSize, unsafe view.superview === self, !view.frame.contains(bounds) else {
             stage.removeFromSuperview()
             return
         }
@@ -74,7 +74,7 @@ final class ContentContainerView: NSView {
         let shown = subviews.filter { !$0.isHidden }
         // Only what VoiceOver reads covers a page: the split focus ring sits on the pane it rings. The stage
         // reads as nothing but covers what is below it.
-        let exposed = shown.map { $0 === stage || !NSAccessibility.unignoredChildren(from: [$0]).isEmpty }
+        let exposed = shown.map { unsafe $0 === stage || !NSAccessibility.unignoredChildren(from: [$0]).isEmpty }
         let uncovered = shown.indices.filter { index in
             // An agent's page keeps its own size and may run past the container; the panes of a
             // split above it cover it together.
@@ -83,7 +83,7 @@ final class ContentContainerView: NSView {
         }.map { shown[$0] }
         guard uncovered.count < shown.count else { return super.accessibilityChildren() }
         // A web view hands VoiceOver a remote element, not itself: resolve each kept view to what it exposes.
-        return NSAccessibility.unignoredChildren(from: uncovered)
+        return unsafe NSAccessibility.unignoredChildren(from: uncovered)
     }
 }
 
@@ -185,10 +185,10 @@ final class MainWindowController: NSWindowController {
     let chromeInteractiveZones = ChromeInteractiveZoneStore()
     /// Whether the find bar was open as the active page's last navigation started: its commit then closes the bar.
     var findBarOpenAtNavigationStart = false
-    // Built by the startup steps (setupBridgeEarly, setupViews), once the window exists.
-    var bridgeRouter: BridgeRouter!
+    let bridgeRouter: BridgeRouter
     let chromeWebView: OverlayWebView
-    var contentContainerView: NSView!
+    /// Sized and added to the window by setupViews.
+    var contentContainerView: NSView = ContentContainerView()
     /// Keeps a backgrounded call visible: its web view moves into an always-on-top panel.
     let floatingTabPanel = FloatingTabPanelController()
     /// Page popups this window opened, keyed by their engine id.
@@ -553,6 +553,7 @@ final class MainWindowController: NSWindowController {
         didStartChromeUILoad = Self._preloadedWebView != nil
         chromeWebView = Self._preloadedWebView ?? Self.makeChromeWebView(frame: .zero)
         Self._preloadedWebView = nil
+        bridgeRouter = BridgeRouter(chromeWebView: chromeWebView)
         StartupMetrics.mark("prewarmChromeWebView")
         super.init(window: window)
         window.delegate = self
@@ -565,7 +566,7 @@ final class MainWindowController: NSWindowController {
             // Finder hands file reference URLs (file:///.file/id=...): the tab shows and loads the file's path instead.
             let urls = (pasteboard?.readObjects(forClasses: [NSURL.self]) as? [NSURL] ?? []).map { $0.filePathURL ?? $0 as URL }
             let text = urls.isEmpty ? pasteboard?.string(forType: .string).flatMap { $0.count <= 2048 ? $0 : nil } : nil
-            self?.bridgeRouter?.send(event: "linkDrag", data: ["urls": urls.map(\.absoluteString), "text": text ?? ""])
+            self?.bridgeRouter.send(event: "linkDrag", data: ["urls": urls.map(\.absoluteString), "text": text ?? ""])
         }
         tabManager.browserStateStore = context.browserState
         tabManager.delegate = self
@@ -580,7 +581,7 @@ final class MainWindowController: NSWindowController {
     /// AppKit's frame autosave never persists this window (the key is absent after moves, resizes
     /// and zooms), so the frame is written by hand from the delegate callbacks and on quit.
     private static func savedWindowFrame() -> NSRect? {
-        guard let s = UserDefaults.lilo.string(forKey: windowFrameKey) else { return nil }
+        guard let s = unsafe UserDefaults.lilo.string(forKey: windowFrameKey) else { return nil }
         let r = NSRectFromString(s)
         guard !r.isEmpty,
               NSScreen.screens.contains(where: { $0.visibleFrame.intersects(r) }) else { return nil }
@@ -591,7 +592,7 @@ final class MainWindowController: NSWindowController {
     func saveWindowFrame() {
         context.scheduleWindowsSave()
         guard context.windows.windows.first === self, let frame = window?.frame else { return }
-        UserDefaults.lilo.set(NSStringFromRect(frame), forKey: Self.windowFrameKey)
+        unsafe UserDefaults.lilo.set(NSStringFromRect(frame), forKey: Self.windowFrameKey)
     }
 
     private static func makeWindow(frame: NSRect?) -> NSWindow {
@@ -812,7 +813,7 @@ extension MainWindowController: NSWindowDelegate {
         }
         if let profileContext, let spaceId = tabManager.currentSpaceId { bindExtensionRegistry(profileContext.extensions, spaceId: spaceId) }
         profileContext?.extensions.notifyWindowFocused(true)
-        bridgeRouter?.send(event: "windowFocusChanged", data: ["focused": true])
+        bridgeRouter.send(event: "windowFocusChanged", data: ["focused": true])
         // Handoff offers the page of the window the user is in.
         browsingActivity?.becomeCurrent()
     }
@@ -827,7 +828,7 @@ extension MainWindowController: NSWindowDelegate {
         // The chrome UI cannot read this from its own DOM `blur`: that also fires when the content
         // WebView takes the first responder on a plain tab activation, with the window still key
         // (see lib/hoverClear.ts). Only the native window-key transition means "focus really left".
-        bridgeRouter?.send(event: "windowFocusChanged", data: ["focused": false])
+        bridgeRouter.send(event: "windowFocusChanged", data: ["focused": false])
     }
 
     func windowDidResize(_ notification: Notification) {
@@ -913,7 +914,7 @@ extension MainWindowController: NSWindowDelegate {
         chromeInput.stop()
         // Whatever still holds this controller, the chrome page and its WebContent process end with the window.
         let close = NSSelectorFromString("_close")
-        if chromeWebView.responds(to: close) { chromeWebView.perform(close) }
+        if chromeWebView.responds(to: close) { unsafe chromeWebView.perform(close) }
     }
 
     /// The empty toolbar only sizes the windowed title bar: shown for good in full screen, it would cover the
@@ -936,7 +937,7 @@ extension MainWindowController: NSWindowDelegate {
         guard let window else { return }
         let isVisible = window.occlusionState.contains(.visible)
         // A window loaded before its setup (an extension's windows.create) can hear this before it has a router.
-        bridgeRouter?.isSilenced = !isVisible
+        bridgeRouter.isSilenced = !isVisible
         context.windowVisibilityChanged()
     }
 

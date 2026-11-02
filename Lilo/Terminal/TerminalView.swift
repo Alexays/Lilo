@@ -128,7 +128,7 @@ final class TerminalView: NSView {
     override var acceptsFirstResponder: Bool { true }
 
     override func becomeFirstResponder() -> Bool {
-        setFocus(window?.isKeyWindow == true)
+        unsafe setFocus(window?.isKeyWindow == true)
         return true
     }
 
@@ -160,7 +160,7 @@ final class TerminalView: NSView {
         super.viewDidMoveToWindow()
         windowObservers.forEach { NotificationCenter.default.removeObserver($0) }
         windowObservers = []
-        guard let window else {
+        guard let window = unsafe window else {
             setFocus(false)
             renderLoop.setVisible(false, releaseResources: true)
             // Resizing frees the layer's full-size drawables; updateGrid restores the size on return.
@@ -175,7 +175,7 @@ final class TerminalView: NSView {
             windowObservers.append(center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self else { return }
-                    self.setFocus(self.window?.isKeyWindow == true && self.window?.firstResponder === self)
+                    unsafe self.setFocus(self.window?.isKeyWindow == true && self.window?.firstResponder === self)
                 }
             })
         }
@@ -211,7 +211,7 @@ final class TerminalView: NSView {
     }
 
     private func updateVisibility() {
-        guard let window else { return }
+        guard let window = unsafe window else { return }
         renderLoop.setVisible(window.occlusionState.contains(.visible) && !isHiddenOrHasHiddenAncestor, releaseResources: false)
     }
 
@@ -221,7 +221,7 @@ final class TerminalView: NSView {
         fontFamily = family
         fontSize = size
         fontScale = 0
-        if window != nil { updateFont() }
+        if unsafe window != nil { updateFont() }
     }
 
     /// Zooms this terminal only; `nil` goes back to the size from the settings. Returns the zoom
@@ -232,13 +232,13 @@ final class TerminalView: NSView {
         if zoom != self.zoom {
             self.zoom = zoom
             fontScale = 0
-            if window != nil { updateFont() }
+            if unsafe window != nil { updateFont() }
         }
         return Double((fontSize + zoom) / fontSize)
     }
 
     private func updateFont() {
-        let scale = window?.backingScaleFactor ?? 2
+        let scale = unsafe window?.backingScaleFactor ?? 2
         guard scale != fontScale else { return }
         fontScale = scale
         metalLayer.contentsScale = scale
@@ -485,7 +485,10 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
             return
         }
         let fresh = self.builder == nil
-        let builder = self.builder ?? TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: renderer.device))
+        guard let builder = self.builder ?? GlyphAtlas(device: renderer.device).map({ TerminalFrameBuilder(font: font, atlas: $0) }) else {
+            link?.isPaused = true
+            return
+        }
         if fresh {
             if let highlightColors {
                 builder.selectionBackground = highlightColors.selection

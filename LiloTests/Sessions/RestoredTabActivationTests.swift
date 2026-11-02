@@ -21,7 +21,6 @@ final class RestoredTabActivationTests: XCTestCase {
 
     private func makeRestoredController() throws -> (MainWindowController, UUID) {
         let windowController = MainWindowController(context: browserContext.context)
-        windowController.bridgeRouter = BridgeRouter(chromeWebView: windowController.chromeWebView)
         // Startup is skipped under XCTest, so what showing a tab needs is wired by hand.
         windowController.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
         windowController.window?.contentView?.addSubview(windowController.contentContainerView)

@@ -63,11 +63,11 @@ final class SettingsBrowsingDataTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "Private", profileId: profileId, isPrivate: true)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "Private", profileId: profileId, isPrivate: true)
         let window = makeTestWindow(context, showing: space.id)
         defer { window.close() }
-        let cookieStore = context.profileManager.dataStore(for: profileId).backingStore.httpCookieStore
+        let cookieStore = context.profileManager!.dataStore(for: profileId).backingStore.httpCookieStore
         await cookieStore.setCookie(try XCTUnwrap(HTTPCookie(properties: [
             .domain: "example.com", .path: "/", .name: "sid", .value: "1", .expires: Date(timeIntervalSinceNow: 3600)
         ])))
@@ -86,8 +86,8 @@ final class SettingsBrowsingDataTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
-        let otherSpace = try context.spaceManager.createSpace(name: "O", profileId: try context.profileManager.createProfile(name: "O").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
+        let otherSpace = try context.spaceManager!.createSpace(name: "O", profileId: try context.profileManager!.createProfile(name: "O").id)
         let window = makeTestWindow(context, showing: space.id)
         window.setupBridgeLate()
         let terminal = RecentlyClosedStack.Entry.Content.terminal(.init(cwd: "/"))

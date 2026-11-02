@@ -113,7 +113,7 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
         opener = nil
         webView.uiDelegate = nil
         let close = NSSelectorFromString("_close")
-        if webView.responds(to: close) { webView.perform(close) }
+        if webView.responds(to: close) { unsafe webView.perform(close) }
         webView.removeFromSuperview()
         panel?.orderOut(nil)
         onClosed?(openerId, replacing)
@@ -140,7 +140,7 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
     /// Per display, not per model name: two monitors of one model each keep their own corner.
     static func frameKey(for screen: NSScreen) -> String {
         guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
-              let uuid = CGDisplayCreateUUIDFromDisplayID(number.uint32Value)?.takeRetainedValue(),
+              let uuid = unsafe CGDisplayCreateUUIDFromDisplayID(number.uint32Value)?.takeRetainedValue(),
               let identifier = CFUUIDCreateString(nil, uuid) as String? else {
             return "LiloDocumentPiPFrame." + screen.localizedName
         }
@@ -245,7 +245,7 @@ private final class PiPContentView: NSView {
     func host(_ webView: NSView) {
         webView.frame = bounds
         webView.autoresizingMask = [.width, .height]
-        if webView.superview !== self { addSubview(webView, positioned: .below, relativeTo: bar) }
+        if unsafe webView.superview !== self { addSubview(webView, positioned: .below, relativeTo: bar) }
     }
 
     override func layout() {
@@ -307,7 +307,7 @@ private final class PiPHoverBar: NSView {
 
     override func mouseDown(with event: NSEvent) {
         // Runs the drag to its end, so the panel snaps once the user lets go.
-        window?.performDrag(with: event)
+        unsafe window?.performDrag(with: event)
         onMoveEnded?()
     }
 

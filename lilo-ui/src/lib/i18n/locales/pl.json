@@ -500,7 +500,8 @@
 				"check": "Sprawdź teraz",
 				"lastChecked": "Sprawdzono {time}",
 				"unavailable": "Ta wersja nie uaktualnia się automatycznie.",
-				"developerTools": "Własne narzędzia programistyczne Lilo są teraz w menu Programowanie."
+				"developerTools": "Własne narzędzia programistyczne Lilo są teraz w menu Programowanie.",
+				"webKitFork": "WebKit {version}, fork Lilo"
 			},
 			"autoUpdate": {
 				"title": "Instaluj uaktualnienia automatycznie",
@@ -1707,7 +1708,7 @@
 			"subtitle": "To wszystko, czego potrzebujesz.",
 			"go": "Zaczynajmy",
 			"search": "Naciśnij ⌘T, aby wyszukać lub wpisać adres.",
-			"tabs": "Karty są po lewej, zawsze na widoku.",
+			"tabs": "Karty są zawsze na widoku, przy wybranej krawędzi.",
 			"split": "Przeciągnij kartę do krawędzi strony, aby zobaczyć dwie strony obok siebie."
 		},
 		"devTips": {
@@ -1715,7 +1716,7 @@
 			"subtitle": "Skróty działają nawet bez menu Programowanie.",
 			"inspector": "Naciśnij ⌥⌘I, aby otworzyć Inspektora WWW na stronie.",
 			"localhost": "Przeciągnij kartę localhost do krawędzi strony, aby zobaczyć ją obok dokumentacji.",
-			"agents": "Agenci otwierają swoje karty w przestrzeni Agenci po lewej."
+			"agents": "Agenci otwierają swoje karty w przestrzeni Agenci."
 		},
 		"arrival": {
 			"title": "Witaj w Lilo.",
@@ -1898,6 +1899,7 @@
 		"What’s New": "Co nowego",
 		"Report an Issue…": "Zgłoś problem…",
 		"Your internet, in bloom.": "Twój internet rozkwita.",
+		"WebKit %@, Lilo fork": "WebKit %@, fork Lilo",
 		"Recently Visited": "Ostatnio odwiedzone",
 		"No History": "Brak historii",
 		"%@ wants to connect to a serial port": "%@ chce połączyć się z portem szeregowym",

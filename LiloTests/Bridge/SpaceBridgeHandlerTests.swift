@@ -9,15 +9,14 @@ final class SpaceBridgeHandlerTests: XCTestCase {
         defer { browserContext.tearDown() }
         let context = browserContext.context
         let window = MainWindowController(context: context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
-        let handler = SpaceBridgeHandler(spaceManager: context.spaceManager, windowController: window)
-        let profileCount = context.profileManager.profiles.count
+        let handler = SpaceBridgeHandler(spaceManager: context.spaceManager!, windowController: window)
+        let profileCount = context.profileManager!.profiles.count
 
         _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
             "action": "updateSpace", "payload": ["id": UUID().uuidString, "newProfileName": "Work"]
         ])))
 
-        XCTAssertEqual(context.profileManager.profiles.count, profileCount)
+        XCTAssertEqual(context.profileManager!.profiles.count, profileCount)
     }
 
     func testTheColorModeAndMaterialAreSavedAndUnknownOnesIgnored() async throws {
@@ -25,25 +24,24 @@ final class SpaceBridgeHandlerTests: XCTestCase {
         defer { browserContext.tearDown() }
         let context = browserContext.context
         let window = MainWindowController(context: context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
-        let handler = SpaceBridgeHandler(spaceManager: context.spaceManager, windowController: window)
-        let profileId = try XCTUnwrap(context.profileManager.profiles.first?.id)
-        let space = try context.spaceManager.createSpace(profileId: profileId)
+        let handler = SpaceBridgeHandler(spaceManager: context.spaceManager!, windowController: window)
+        let profileId = try XCTUnwrap(context.profileManager!.profiles.first?.id)
+        let space = try context.spaceManager!.createSpace(profileId: profileId)
         XCTAssertEqual(space.colorMode, Space.fixedColorMode)
 
         for (mode, expected) in [("time", "time"), ("sepia", "time"), ("wallpaper", "wallpaper")] {
             _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
                 "action": "updateSpace", "payload": ["id": space.id.uuidString, "colorMode": mode]
             ])))
-            XCTAssertEqual(context.spaceManager.space(with: space.id)?.colorMode, expected, mode)
+            XCTAssertEqual(context.spaceManager!.space(with: space.id)?.colorMode, expected, mode)
         }
         for (material, expected) in [("glass", "glass"), ("velvet", "glass"), ("grain", "grain")] {
             _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
                 "action": "updateSpace", "payload": ["id": space.id.uuidString, "material": material]
             ])))
-            XCTAssertEqual(context.spaceManager.space(with: space.id)?.material, expected, material)
+            XCTAssertEqual(context.spaceManager!.space(with: space.id)?.material, expected, material)
         }
-        let pool = context.dbManager.globalPool
+        let pool = context.dbManager!.globalPool
         let saved = await pollUntil(timeout: 5) {
             let saved = try? pool.read { db in try Space.fetchOne(db, key: space.id.uuidString) }
             return saved?.colorMode == "wallpaper" && saved?.material == "grain"

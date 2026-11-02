@@ -15,7 +15,7 @@ final class RuntimeGapAPITests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
+        let profileId = try context.profileManager!.createProfile(name: "P").id
         registry = try context.profileContexts.context(for: profileId).extensions
         router = context.engineFactory.gapRouter
         directory = FileManager.default.temporaryDirectory.appendingPathComponent("runtime-gap-\(UUID().uuidString)", isDirectory: true)

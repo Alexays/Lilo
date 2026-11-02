@@ -58,7 +58,7 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
             if reply["mode"] as? String == "system", let id = body["id"] as? String {
                 // The page's user activation was spent on the async picker; app-injected JS carries
                 // a fresh one, and native getDisplayMedia also rejects a document without focus.
-                requester.window?.makeFirstResponder(requester)
+                unsafe requester.window?.makeFirstResponder(requester)
                 _ = try? await requester.evaluateJavaScript(PageWorld.push("nativeDisplay", [id]), in: message.frameInfo, contentWorld: PageWorld.bridgeWorld)
             }
             return (reply, nil)

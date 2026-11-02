@@ -45,7 +45,7 @@ final class TtsBridgeHandler: NSObject, GapHandler, AVSpeechSynthesizerDelegate 
         self.registriesProvider = registriesProvider
         super.init()
         let center = NotificationCenter.default
-        observers = [
+        unsafe observers = [
             center.addObserver(forName: AVSpeechSynthesizer.availableVoicesDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self else { return }
@@ -64,7 +64,7 @@ final class TtsBridgeHandler: NSObject, GapHandler, AVSpeechSynthesizerDelegate 
     }
 
     deinit {
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {

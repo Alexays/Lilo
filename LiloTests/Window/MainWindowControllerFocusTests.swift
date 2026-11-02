@@ -21,7 +21,6 @@ final class MainWindowControllerFocusTests: XCTestCase {
     /// wired bridge, chrome view installed + content sink registered.
     private func makeController() -> (MainWindowController, NSView) {
         let controller = MainWindowController(context: browserContext.context)
-        controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
         let sink = TestFocusContentView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
         controller.chromeInput.router.updateContentView(sink)
         controller.chromeWebView.frame = controller.window!.contentView!.bounds

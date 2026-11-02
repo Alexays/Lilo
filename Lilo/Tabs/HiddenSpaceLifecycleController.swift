@@ -106,7 +106,7 @@ final class HiddenSpaceLifecycleController {
         // Releasing a suspended dispatch source traps; balance it before the last reference drops
         // (a controller discarded without teardown() may still hold a suspended sweep source).
         if idleSweepSuspended { idleSweepTimer?.resume() }
-        if let powerSourceNotification { CFRunLoopSourceInvalidate(powerSourceNotification) }
+        if let powerSourceNotification = unsafe powerSourceNotification { CFRunLoopSourceInvalidate(powerSourceNotification) }
     }
 
     func applyConfig(_ newConfig: LifecyclePolicyConfig) {
@@ -337,20 +337,20 @@ final class HiddenSpaceLifecycleController {
         isOnBatteryPower = Self.systemIsOnBatteryPower()
         // The limited-power notification fires only on an AC/battery switch, not on every
         // percent change like IOPSNotificationCreateRunLoopSource.
-        if let source = IOPSCreateLimitedPowerNotification({ context in
-            guard let context else { return }
-            let controller = Unmanaged<HiddenSpaceLifecycleController>.fromOpaque(context).takeUnretainedValue()
+        if let source = unsafe IOPSCreateLimitedPowerNotification({ context in
+            guard let context = unsafe context else { return }
+            let controller = unsafe Unmanaged<HiddenSpaceLifecycleController>.fromOpaque(context).takeUnretainedValue()
             MainActor.assumeIsolated { controller.reevaluateBatteryPower() }
-        }, Unmanaged.passUnretained(self).toOpaque())?.takeRetainedValue() {
+        }, unsafe Unmanaged.passUnretained(self).toOpaque())?.takeRetainedValue() {
             CFRunLoopAddSource(CFRunLoopGetMain(), source, .defaultMode)
-            powerSourceNotification = source
+            unsafe powerSourceNotification = source
         }
         startIdleSweep()
     }
 
     static func systemIsOnBatteryPower() -> Bool {
-        let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue()
-        guard let type = IOPSGetProvidingPowerSourceType(snapshot)?.takeUnretainedValue() else { return false }
+        let snapshot = unsafe IOPSCopyPowerSourcesInfo()?.takeRetainedValue()
+        guard let type = unsafe IOPSGetProvidingPowerSourceType(snapshot)?.takeUnretainedValue() else { return false }
         return (type as String) == kIOPMBatteryPowerKey
     }
 
@@ -407,8 +407,8 @@ final class HiddenSpaceLifecycleController {
         cancelIdleSweep()
         memoryPressureSource?.cancel()
         memoryPressureSource = nil
-        if let powerSourceNotification { CFRunLoopSourceInvalidate(powerSourceNotification) }
-        powerSourceNotification = nil
+        if let powerSourceNotification = unsafe powerSourceNotification { CFRunLoopSourceInvalidate(powerSourceNotification) }
+        unsafe powerSourceNotification = nil
         [foregroundObserver, backgroundObserver, thermalObserver, powerStateObserver]
             .compactMap { $0 }
             .forEach { NotificationCenter.default.removeObserver($0) }

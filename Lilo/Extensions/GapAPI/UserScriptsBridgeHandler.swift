@@ -240,10 +240,10 @@ final class UserScriptsBridgeHandler: NSObject, GapHandler, WKScriptMessageHandl
         guard webView.responds(to: selector) else { return [(0, nil)] }
         typealias Frames = @convention(c) (NSObject, Selector, @escaping @convention(block) (AnyObject?) -> Void) -> Void
         let tree: AnyObject? = await withCheckedContinuation { continuation in
-            unsafeBitCast(webView.method(for: selector), to: Frames.self)(webView, selector) { tree in
+            unsafe unsafeBitCast(webView.method(for: selector), to: Frames.self)(webView, selector) { tree in
                 // Delivered on the main thread and read on the main actor only.
                 nonisolated(unsafe) let tree = tree
-                continuation.resume(returning: tree)
+                unsafe continuation.resume(returning: tree)
             }
         }
         var frames: [(id: Int, info: WKFrameInfo?)] = []

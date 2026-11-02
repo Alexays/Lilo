@@ -38,7 +38,7 @@ final class AgentUnattendedTests: AgentToolTestCase {
     }
 
     func testDownloadsOfAgentTabsSkipTheSavePanel() async throws {
-        context.settingsStore.askDownloadLocation = true
+        context.settingsStore!.askDownloadLocation = true
         window.setupDownloads()
         let tab = try await newAgentTab()
         let choose = try XCTUnwrap(context.downloadManager.chooseDestination)

@@ -90,7 +90,7 @@ enum KeyboardShortcuts {
         Action("history.clearBrowsingData", "Clear Browsing Data…", "History", ["⇧⌘delete"]),
         Action("space.next", "Next Space", "Spaces", ["⌃⌘right"]),
         Action("space.previous", "Previous Space", "Spaces", ["⌃⌘left"])
-    ] + (1...9).map { Action("space.select\($0)", String(format: "Space %d".localized, $0), "Spaces", ["⌃\($0)"]) } + [
+    ] + (1...9).map { Action("space.select\($0)", unsafe String(format: "Space %d".localized, $0), "Spaces", ["⌃\($0)"]) } + [
         Action("space.new", "New Space…", "Spaces"),
         Action("space.edit", "Edit Space…", "Spaces"),
         Action("tab.previous", "Show Previous Tab", "Tab", ["⇧⌘[", "⌥⌘left"]),
@@ -98,7 +98,7 @@ enum KeyboardShortcuts {
         // After tab.next and tab.previous, so a combo the user gave those keeps sidebar order.
         Action("tab.recentNext", "Switch to Recent Tab", "Tab", ["⌃tab"]),
         Action("tab.recentPrevious", "Switch to Recent Tab Backwards", "Tab", ["⌃⇧tab"])
-    ] + (1...9).map { Action("tab.select\($0)", $0 == 9 ? "Last Tab" : String(format: "Tab %d".localized, $0), "Tab", ["⌘\($0)"]) } + [
+    ] + (1...9).map { Action("tab.select\($0)", unsafe $0 == 9 ? "Last Tab" : String(format: "Tab %d".localized, $0), "Tab", ["⌘\($0)"]) } + [
         Action("tab.duplicate", "Duplicate Tab", "Tab"),
         Action("tab.pin", "Pin Tab", "Tab"),
         Action("tab.bookmark", "Bookmark This Page", "Tab"),
@@ -247,7 +247,7 @@ enum KeyboardShortcuts {
 
     /// Keys without a printable character, by key code: their name, glyph and menu key equivalent.
     private static let namedKeys: [UInt16: (name: String, glyph: String, equivalent: String)] = {
-        func char(_ code: Int) -> String { String(UnicodeScalar(code)!) }
+        func char(_ code: Int) -> String { UnicodeScalar(code).map { String($0) } ?? "" }
         var keys: [UInt16: (name: String, glyph: String, equivalent: String)] = [
             123: ("left", "←", char(NSLeftArrowFunctionKey)), 124: ("right", "→", char(NSRightArrowFunctionKey)),
             125: ("down", "↓", char(NSDownArrowFunctionKey)), 126: ("up", "↑", char(NSUpArrowFunctionKey)),
@@ -290,19 +290,19 @@ enum KeyboardShortcuts {
     static func keyStroke(_ combo: String) -> (keyCode: UInt16, modifiers: NSEvent.ModifierFlags)? {
         let (key, modifiers) = parse(combo)
         if let code = namedKeys.first(where: { $0.value.name == key })?.key { return (code, modifiers) }
-        guard let source = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
-              let property = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else { return nil }
-        let layoutData = Unmanaged<CFData>.fromOpaque(property).takeUnretainedValue() as Data
-        return layoutData.withUnsafeBytes { bytes -> (UInt16, NSEvent.ModifierFlags)? in
-            guard let layout = bytes.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self) else { return nil }
+        guard let source = unsafe TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+              let property = unsafe TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else { return nil }
+        let layoutData = unsafe Unmanaged<CFData>.fromOpaque(property).takeUnretainedValue() as Data
+        return unsafe layoutData.withUnsafeBytes { bytes -> (UInt16, NSEvent.ModifierFlags)? in
+            guard let layout = unsafe bytes.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self) else { return nil }
             var chars = [UniChar](repeating: 0, count: 4)
             // Ascending, so a main-row key wins over the keypad key typing the same character.
             for code in UInt16(0)..<128 {
                 var deadKeys: UInt32 = 0
                 var length = 0
-                let status = UCKeyTranslate(layout, code, UInt16(kUCKeyActionDisplay), 0, UInt32(LMGetKbdType()),
+                let status = unsafe UCKeyTranslate(layout, code, UInt16(kUCKeyActionDisplay), 0, UInt32(LMGetKbdType()),
                                             OptionBits(kUCKeyTranslateNoDeadKeysMask), &deadKeys, chars.count, &length, &chars)
-                if status == noErr, String(utf16CodeUnits: chars, count: length).lowercased() == key { return (code, modifiers) }
+                if status == noErr, unsafe String(utf16CodeUnits: chars, count: length).lowercased() == key { return (code, modifiers) }
             }
             return nil
         }

@@ -500,7 +500,8 @@
 				"check": "지금 확인",
 				"lastChecked": "확인: {time}",
 				"unavailable": "이 빌드는 자동으로 업데이트되지 않습니다.",
-				"developerTools": "Lilo 자체 개발 도구는 이제 개발자용 메뉴에 있습니다."
+				"developerTools": "Lilo 자체 개발 도구는 이제 개발자용 메뉴에 있습니다.",
+				"webKitFork": "WebKit {version}, Lilo 포크"
 			},
 			"autoUpdate": {
 				"title": "업데이트 자동 설치",
@@ -1687,7 +1688,7 @@
 			"subtitle": "이것만 알면 준비가 끝납니다.",
 			"go": "시작하기",
 			"search": "⌘T를 눌러 검색하거나 주소를 입력하세요.",
-			"tabs": "탭은 항상 왼쪽에 표시됩니다.",
+			"tabs": "탭은 고른 가장자리에 항상 표시됩니다.",
 			"split": "탭을 페이지 가장자리로 드래그하면 두 페이지를 나란히 볼 수 있습니다."
 		},
 		"devTips": {
@@ -1695,7 +1696,7 @@
 			"subtitle": "개발자용 메뉴가 없어도 단축키를 사용할 수 있습니다.",
 			"inspector": "⌥⌘I를 누르면 페이지의 웹 속성이 열립니다.",
 			"localhost": "localhost를 페이지 가장자리로 드래그하면 문서 옆에서 볼 수 있습니다.",
-			"agents": "에이전트는 왼쪽의 에이전트 스페이스에서 탭을 엽니다."
+			"agents": "에이전트는 에이전트 스페이스에서 탭을 엽니다."
 		},
 		"arrival": {
 			"title": "Lilo에 오신 것을 환영합니다.",
@@ -1878,6 +1879,7 @@
 		"What’s New": "새로운 기능",
 		"Report an Issue…": "문제 신고…",
 		"Your internet, in bloom.": "나의 인터넷이 피어나는 곳.",
+		"WebKit %@, Lilo fork": "WebKit %@, Lilo 포크",
 		"Recently Visited": "최근 방문",
 		"No History": "방문 기록 없음",
 		"%@ wants to connect to a serial port": "%@에서 직렬 포트에 연결하려고 합니다",
