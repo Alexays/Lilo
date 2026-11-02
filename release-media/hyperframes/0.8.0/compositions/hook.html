@@ -1,0 +1,39 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; color: #f4f2fa; }
+    #hook-world { position: absolute; inset: 0; background: #191820; }
+    #hook-title-clip { position: absolute; left: 158px; top: 104px; width: 1640px; height: 338px; }
+    #hook-title { margin: 0; font-size: 164px; font-weight: 660; line-height: 1.02; letter-spacing: -8px; }
+    #hook-line-mask { display: block; overflow: hidden; }
+    #hook-line-one, #hook-line-two { display: block; }
+    #hook-line-two { color: #b8a9e8; }
+    #hook-card-clip { position: absolute; left: 180px; top: 536px; width: 1560px; height: 409px; }
+    #hook-card { width: 100%; height: 100%; transform-origin: 50% 50%; }
+    #hook-card-pixels { display: block; width: 100%; height: 100%; }
+    #hook-cover-clip { position: absolute; inset: 0; pointer-events: none; }
+    #hook-cover { position: absolute; left: 1266px; top: 838px; width: 1px; height: 1px; border-radius: 0; background: #eeedf2; transform-origin: 50% 50%; }
+  </style>
+  <div id="root" data-composition-id="hook" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="hook-world" aria-hidden="true"></div>
+    <div id="hook-title-clip" class="clip" data-start="0" data-duration="3.2" data-track-index="1">
+      <h1 id="hook-title"><span id="hook-line-one">Share the</span><span id="hook-line-mask"><span id="hook-line-two">right tab.</span></span></h1>
+    </div>
+    <div id="hook-card-clip" class="clip" data-start="0" data-duration="3.2" data-track-index="2">
+      <div id="hook-card"><img id="hook-card-pixels" src="assets/native/sharing.png" alt="Native Lilo call card sharing Field guide" /></div>
+    </div>
+    <div id="hook-cover-clip" class="clip" data-start="0" data-duration="3.2" data-track-index="3" data-layout-allow-overflow><div id="hook-cover"></div></div>
+  </div>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo('#hook-line-one', { opacity: .25 }, { opacity: 1, duration: .35, ease: 'none' }, 0)
+        .fromTo('#hook-line-two', { yPercent: 110 }, { yPercent: 0, duration: .7, ease: 'expo.out' }, .12)
+        .fromTo('#hook-card', { y: 44, scale: .96 }, { y: 0, scale: 1, duration: .9, ease: 'power4.out' }, 0)
+        .to('#hook-card', { x: -1880, duration: .65, ease: 'power3.in' }, 2.5)
+        .to('#hook-title', { x: -1900, duration: .6, ease: 'power3.in' }, 2.6)
+        .fromTo('#hook-cover', { scale: 0 }, { scale: 4300, duration: .62, ease: 'power3.inOut' }, 2.58)
+        .to({}, { duration: 3.2 }, 0);
+      window.__timelines.hook = tl;
+    })();
+  </script>
+</template>

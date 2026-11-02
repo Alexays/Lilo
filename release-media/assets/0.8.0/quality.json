@@ -1,0 +1,91 @@
+{
+  "release": "0.8.0",
+  "kind": "video",
+  "passed": true,
+  "renderSha256": "888424e239f8da0b8cab32dedd0a73015166d35a1794ceaf5efd0f6ad0eb2907",
+  "sourceHashes": true,
+  "renderHashes": true,
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [
+    {
+      "file": "picker.png",
+      "rgbPreserved": true,
+      "transparentPixels": 13692
+    },
+    {
+      "file": "match.png",
+      "rgbPreserved": true,
+      "transparentPixels": 5268
+    },
+    {
+      "file": "sharing.png",
+      "rgbPreserved": true,
+      "transparentPixels": 1848
+    },
+    {
+      "file": "switched.png",
+      "rgbPreserved": true,
+      "transparentPixels": 1848
+    },
+    {
+      "file": "search-0.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-1.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-2.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-3.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-4.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-5.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "share-button.png",
+      "rgbPreserved": true,
+      "transparentPixels": 74264
+    },
+    {
+      "file": "setting-before.png",
+      "rgbPreserved": true,
+      "transparentPixels": 273428
+    },
+    {
+      "file": "setting-after.png",
+      "rgbPreserved": true,
+      "transparentPixels": 273428
+    }
+  ],
+  "decode": true,
+  "fps": 60,
+  "frames": 1560,
+  "audio": {
+    "integratedLoudnessLUFS": -16.1,
+    "truePeakDbFS": -2.5
+  },
+  "motion": {
+    "measuredFrames": 1559,
+    "movingFrameRatio": 0.3707504810776139,
+    "longestStillSeconds": 2.85,
+    "largestLumaChange": 38.0682
+  },
+  "posterSSIM": 0.999007
+}

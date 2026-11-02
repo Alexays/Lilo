@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[{"id":"release","type":"string","label":"Release","default":"0.8.0"},{"id":"headline","type":"string","label":"Headline","default":"Share the right tab."},{"id":"accent","type":"color","label":"Accent","default":"#aa9bd6"}]'>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1920, initial-scale=1" />
+    <title>Lilo 0.8.0 — The handoff</title>
+    <style>
+      @font-face { font-family: LiloInter; src: url('assets/fonts/inter.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: block; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #191820; }
+      body { font-family: LiloInter, sans-serif; -webkit-font-smoothing: antialiased; }
+      #main { position: relative; width: 1920px; height: 1080px; overflow: hidden; --accent: #aa9bd6; }
+      #main > [data-composition-src] { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+    </style>
+    <script src="assets/vendor/gsap.min.js"></script>
+  </head>
+  <body>
+    <main id="main" data-composition-id="main" data-start="0" data-duration="26" data-width="1920" data-height="1080" data-fps="60" aria-label="Lilo 0.8.0 release announcement">
+      <div id="hook" class="clip" data-composition-id="hook" data-composition-src="compositions/hook.html" data-start="0" data-duration="3.2" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:1"></div>
+      <div id="find" class="clip" data-composition-id="find" data-composition-src="compositions/find.html" data-start="3" data-duration="5.6" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:2"></div>
+      <div id="switch" class="clip" data-composition-id="switch" data-composition-src="compositions/switch.html" data-start="8.4" data-duration="6.6" data-track-index="3" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:3"></div>
+      <div id="room" class="clip" data-composition-id="room" data-composition-src="compositions/room.html" data-start="14.6" data-duration="8.4" data-track-index="4" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:4"></div>
+      <div id="end" class="clip" data-composition-id="end" data-composition-src="compositions/end.html" data-start="22" data-duration="4" data-track-index="5" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:5"></div>
+      <audio id="score" class="clip" src="assets/audio/score.wav" data-start="0" data-duration="26" data-track-index="6" data-volume="1"></audio>
+      <audio id="key-0" class="clip" src="assets/audio/mouse-click.wav" data-start="4.850" data-duration="0.11" data-fade-out="0.03" data-track-index="7" data-volume="0.06"></audio>
+      <audio id="key-1" class="clip" src="assets/audio/mouse-click.wav" data-start="5.000" data-duration="0.11" data-fade-out="0.03" data-track-index="7" data-volume="0.06"></audio>
+      <audio id="key-2" class="clip" src="assets/audio/mouse-click.wav" data-start="5.150" data-duration="0.11" data-fade-out="0.03" data-track-index="7" data-volume="0.06"></audio>
+      <audio id="key-3" class="clip" src="assets/audio/mouse-click.wav" data-start="5.300" data-duration="0.11" data-fade-out="0.03" data-track-index="7" data-volume="0.06"></audio>
+      <audio id="key-4" class="clip" src="assets/audio/mouse-click.wav" data-start="5.450" data-duration="0.11" data-fade-out="0.03" data-track-index="7" data-volume="0.06"></audio>
+      <audio id="share-click" class="clip" src="assets/audio/mouse-click.wav" data-start="7.500" data-duration="0.22" data-fade-out="0.04" data-track-index="7" data-volume="0.3"></audio>
+      <audio id="switch-click" class="clip" src="assets/audio/mouse-click.wav" data-start="10.750" data-duration="0.397007" data-track-index="7" data-volume="0.35"></audio>
+      <audio id="hidden-click" class="clip" src="assets/audio/mouse-click.wav" data-start="17.250" data-duration="0.397007" data-track-index="7" data-volume="0.3"></audio>
+      <audio id="share-handoff" class="clip" src="assets/audio/switch.wav" data-start="7.750" data-duration="0.33" data-track-index="7" data-volume="0.2"></audio>
+      <audio id="page-reveal" class="clip" src="assets/audio/switch.wav" data-start="18.850" data-duration="0.33" data-track-index="7" data-volume="0.14"></audio>
+    </main>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const mainTimeline = gsap.timeline({ paused: true });
+      mainTimeline.to({}, { duration: 26 });
+      window.__timelines.main = mainTimeline;
+    </script>
+  </body>
+</html>

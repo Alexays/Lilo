@@ -1,0 +1,77 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "address-visible.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "cce303573718abded225161c3a383b6f109f0ce29ef4dd46b4469c98097c9c33",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "setting-visible.png",
+      "height" : 600,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        292,
+        693,
+        920,
+        75
+      ],
+      "sha256" : "79972982c56060056ccb1dfb029eb963579bc74c8961500b67aee5844156846f",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 7360
+    },
+    {
+      "file" : "setting-hidden.png",
+      "height" : 600,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        292,
+        657,
+        920,
+        75
+      ],
+      "sha256" : "029faf545696018e4fb13357b0e5dc32cf3004228a90d6dc9bb30d88f7c6be40",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 7360
+    },
+    {
+      "file" : "address-hidden.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "39d8bdecbca779d10ee41e5c0fea8a29fea0ca8fad080ab65948581f003c778e",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    }
+  ],
+  "capturedAt" : "2026-11-02T13:42:13Z",
+  "checks" : {
+    "actualSettingsBridge" : true,
+    "addressPlacementAfter" : "hidden",
+    "addressPlacementBefore" : "page",
+    "commandBarWithAddressHidden" : true,
+    "pageHeightAfter" : 784,
+    "pageHeightBefore" : 748,
+    "pageTitle" : "Field guide"
+  },
+  "feature" : "address-bar",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "5153405324fb2b0dc59c3d8313873b3ef2c30c97",
+  "release" : "0.8.0",
+  "schemaVersion" : 1
+}

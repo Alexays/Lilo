@@ -227,6 +227,63 @@ release-media-stage:
 release-media-test:
 	@node --test release-media/*.test.mjs
 
+.PHONY: release-media-capture release-media-import release-media-render release-media-lock release-media-check release-media-publish-check
+.PHONY: release-media-review release-media-fix release-media-test release-media-inspect release-media-hyperframes release-media-audit release-media-author
+
+## Capture genuine native sources for the 0.8.0 announcement (RELEASE=0.8.0)
+release-media-capture:
+	@LILO_RELEASE_MEDIA_CAPTURE_ONLY=1 TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_FIXTURE_VERSION='$(or $(FIXTURE),$(RELEASE))' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory ui-build swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
+
+## Import verified native release sources (RELEASE=0.8.0)
+release-media-import:
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/import.mjs
+
+## Update the pinned HyperFrames dependency lockfile
+release-media-lock:
+	@PUPPETEER_SKIP_DOWNLOAD=1 npm --prefix release-media install --package-lock-only --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
+
+## Format the authored release-media scripts and literal compositions
+release-media-fix: $(SITE_DEPS)
+	@site/node_modules/.bin/oxfmt --write 'release-media/*.mjs' 'release-media/*.ts' release-media/package.json release-media/backlog.json
+
+release-media/node_modules/.lilo-installed: release-media/package.json release-media/package-lock.json
+	@PUPPETEER_SKIP_DOWNLOAD=1 npm --prefix release-media ci --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
+	@touch $@
+
+## Render the 0.8.0 native announcement
+release-media-render: release-media/node_modules/.lilo-installed
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/render.mjs
+
+## Verify every backlog decision, native source hash, encoded film, sound and compression quality
+release-media-check:
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/check.mjs
+
+## Extract compact-layout frames from the actual encoded films (RELEASE=x.y.z narrows the inspection)
+release-media-inspect:
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/inspect.mjs
+
+## Refuse publication unless release media passes its current quality gates
+release-media-publish-check:
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/check.mjs --publish
+
+## Review a historical release's actual bundled What's New and MP4 playback in native Lilo
+release-media-review:
+	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
+	@LILO_RELEASE_MEDIA_PREVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory ui-build
+	@TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/reviews/$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_REVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests/testReviewBundledWhatsNewMedia TEST_WORKERS=1
+
+## Run the pinned production HyperFrames authoring tools (HF_ARGS='help')
+release-media-hyperframes: release-media/node_modules/.lilo-installed
+	@cd release-media && DO_NOT_TRACK=1 ./node_modules/.bin/hyperframes $(HF_ARGS)
+
+## Require a clean production dependency audit
+release-media-audit: release-media/node_modules/.lilo-installed
+	@npm --prefix release-media audit --audit-level=moderate --cache '$(CURDIR)/build/npm-release-media'
+
+## Select a meaningful native visual story from exact release notes
+release-media-author: $(CHANGIE)
+	@CHANGIE='$(CHANGIE)' LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs
+
 # Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
 # UI source change, refreshes both.
 $(CHROME_UI_ASSETS):

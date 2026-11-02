@@ -26,12 +26,14 @@ final class TestRunCleanup: NSObject, XCTestObservation {
         self.init(webKitRoot: FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/WebKit/\(host)"),
                   keepsExisting: !host.hasSuffix(".tests"))
         XCTestObservationCenter.shared.addTestObserver(self)
-        // The windows tests open stay out of Mission Control and the window cycle: parallel hosts open hundreds of them.
-        NotificationCenter.default.addObserver(forName: NSApplication.didUpdateNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated {
-                for window in NSApp.windows where !window.collectionBehavior.contains(.transient) {
-                    window.collectionBehavior.subtract([.managed, .stationary, .canJoinAllSpaces, .moveToActiveSpace])
-                    window.collectionBehavior.formUnion([.transient, .ignoresCycle])
+        // Native capture needs visible windows; ordinary parallel tests keep theirs out of Mission Control.
+        if ProcessInfo.processInfo.environment["LILO_RELEASE_MEDIA_OUT"] == nil {
+            NotificationCenter.default.addObserver(forName: NSApplication.didUpdateNotification, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated {
+                    for window in NSApp.windows where !window.collectionBehavior.contains(.transient) {
+                        window.collectionBehavior.subtract([.managed, .stationary, .canJoinAllSpaces, .moveToActiveSpace])
+                        window.collectionBehavior.formUnion([.transient, .ignoresCycle])
+                    }
                 }
             }
         }
