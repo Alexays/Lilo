@@ -525,6 +525,7 @@ export interface BridgeCommandPayloadMap {
 	startupMark: { event: string; at: number };
 	chromeVisualReady: { at: number };
 	initialStateApplied: EmptyPayload;
+	reportChromeError: { message: string; stack?: string };
 	traceSpaceSwipe: {
 		stage: string;
 		source?: "click" | "swipe" | "ui";

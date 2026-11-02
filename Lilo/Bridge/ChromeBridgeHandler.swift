@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 /// Handles chrome UI bridge messages: sidebar resize, interactive zones, readiness.
 /// Tab/navigation actions are handled by TabBridgeHandler.
@@ -22,6 +23,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "startupMark",
         "chromeVisualReady",
         "initialStateApplied",
+        "reportChromeError",
         "permissionResponse",
         "extensionPermissionResponse",
         "updateWindowBackground",
@@ -37,6 +39,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "loadBypassingContentBlocker"
     ]
 
+    private static let logger = Logger(liloCategory: "chrome-ui")
     private let interactiveZoneStore: ChromeInteractiveZoneStore
     private weak var windowController: MainWindowController?
 
@@ -128,6 +131,10 @@ final class ChromeBridgeHandler: BridgeHandler {
         case "startupMark":
             let event = message.string("event", default: "").trimmingCharacters(in: .whitespacesAndNewlines)
             if !event.isEmpty { StartupMetrics.mark(event, occurredAt: message.double("at")) }
+
+        case "reportChromeError":
+            // Public: the chrome's own messages and bundle stack, which a release log would otherwise redact.
+            Self.logger.error("\(message.string("message", default: ""), privacy: .public)\n\(message.string("stack", default: ""), privacy: .public)")
 
         case "initialStateApplied":
             // At launch the first paint loads the tab after the extensions (restoreExtensionsThenActiveTab); a reloaded chrome's tab is live.
