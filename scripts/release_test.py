@@ -54,9 +54,12 @@ class ReleaseTests(unittest.TestCase):
     def snapshot(self):
         return {str(p.relative_to(self.root)): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
 
-    def run_release(self, command, success=True):
+    def run_release(self, command, success=True, tag=None):
+        arguments = [sys.executable, str(ROOT / "scripts/release.py"), command, "--changie", CHANGIE]
+        if tag is not None:
+            arguments.extend(["--tag", tag])
         result = subprocess.run(
-            [sys.executable, str(ROOT / "scripts/release.py"), command, "--changie", CHANGIE],
+            arguments,
             cwd=self.root, capture_output=True, text=True, check=False,
         )
         if success:
@@ -212,6 +215,49 @@ class ReleaseTests(unittest.TestCase):
         self.run_release("version")
         self.run_release("status")
         self.assertEqual(self.read("CHANGELOG.md"), "# Changelog\n\n" + HISTORY)
+
+    def test_a_prepared_tag_is_read_only(self):
+        before = self.snapshot()
+        self.run_release("tag", tag="v0.1.4")
+        self.assertEqual(self.snapshot(), before)
+
+    def test_a_tag_requires_its_own_prepared_notes(self):
+        before = self.snapshot()
+        refused = self.run_release("tag", success=False, tag="v0.1.5")
+        self.assertIn(".changes/v0.1.5.md", refused.stderr)
+        self.assertEqual(self.snapshot(), before)
+        self.write(".changes/v0.1.4.md", "## [0.1.3]\n\n- Wrong notes.\n")
+        refused = self.run_release("tag", success=False, tag="v0.1.4")
+        self.assertIn("does not contain release 0.1.4", refused.stderr)
+
+    def test_a_tag_refuses_stale_app_or_package_versions(self):
+        for file in [CONFIG, DIRECTORIES[0] / "package.json", DIRECTORIES[1] / "package-lock.json"]:
+            with self.subTest(file=file):
+                original = self.read(file)
+                self.write(file, original.replace("0.1.4", "0.1.3"))
+                before = self.snapshot()
+                refused = self.run_release("tag", success=False, tag="v0.1.4")
+                self.assertIn("versions do not match", refused.stderr)
+                self.assertEqual(self.snapshot(), before)
+                self.write(file, original)
+
+    def test_a_tag_refuses_a_stale_generated_changelog(self):
+        self.write("CHANGELOG.md", "Out of date.\n")
+        refused = self.run_release("tag", success=False, tag="v0.1.4")
+        self.assertIn("CHANGELOG.md is out of sync", refused.stderr)
+
+    def test_a_tag_cannot_select_an_older_prepared_release(self):
+        self.write(".changes/v0.1.5.md", "## [0.1.5]\n\n- New release.\n")
+        refused = self.run_release("tag", success=False, tag="v0.1.4")
+        self.assertIn("not Changie's prepared latest release", refused.stderr)
+
+    def test_a_tag_rejects_non_version_paths(self):
+        for tag in ["", "main", "0.1.4", "v../0.1.4", "v0.1.4/../0.1.5"]:
+            with self.subTest(tag=tag):
+                before = self.snapshot()
+                refused = self.run_release("tag", success=False, tag=tag)
+                self.assertIn("Invalid release tag", refused.stderr)
+                self.assertEqual(self.snapshot(), before)
 
 
 if __name__ == "__main__":

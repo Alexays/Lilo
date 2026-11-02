@@ -49,14 +49,38 @@ def check_highlights(version):
         raise ValueError(f"Release {version} adds features: write {' and '.join(missing)} first (docs/RELEASING.md)")
 
 
+def check_tag(tag):
+    """A tag may build only the prepared version whose notes it names."""
+    if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
+        raise ValueError(f"Invalid release tag: {tag}")
+    version = tag.removeprefix("v")
+    notes = Path(f".changes/{tag}.md")
+    if not re.search(rf"^## \[{re.escape(version)}\](?:\s|$)", notes.read_text(), re.MULTILINE):
+        raise ValueError(f"{notes} does not contain release {version}; run make release-version before tagging")
+    if version_updates(version, released=False):
+        raise ValueError(f"App and package versions do not match {tag}; run make release-version before tagging")
+    check_highlights(version)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["status", "version"])
+    parser.add_argument("command", choices=["status", "version", "tag"])
     parser.add_argument("--changie", required=True)
+    parser.add_argument("--tag", default="")
     args = parser.parse_args()
 
     def changie(*arguments):
         return subprocess.check_output([args.changie, *arguments], text=True)
+
+    if args.command == "tag":
+        check_tag(args.tag)
+        latest = changie("latest", "--remove-prefix").strip()
+        if args.tag != f"v{latest}":
+            raise ValueError(f"Release tag {args.tag} is not Changie's prepared latest release v{latest}")
+        if Path("CHANGELOG.md").read_text() != changie("merge", "--dry-run"):
+            raise ValueError("CHANGELOG.md is out of sync with Changie; run make release-version")
+        print(f"Prepared release {args.tag} is ready for native media validation.")
+        return
 
     pending = list(Path(".changes/unreleased").glob("*.yaml"))
     if args.command == "version":

@@ -1,27 +1,31 @@
 ---
 name: lilo-release-media
-description: Author and quality-check the 0.8.0 tab-sharing announcement from genuine native Lilo captures.
+description: Author and quality-gate HyperFrames announcements or screenshots from genuine native Lilo captures.
 ---
 
 # Lilo release media
 
-This optional workflow supports the approved 0.8.0 announcement. Playback consumes its committed MP4 and PNG without media-production tools. Ordinary builds, releases, signing, and deployment remain independent from this workflow.
+Use the exact release notes and changed implementation to choose the story. An interaction gets a HyperFrames film; a finished visual state gets a screenshot; routine fixes stay text-only. Never substitute a screenshot for a failed required film. `make release-media-author` checks known capture capabilities and exact source notes, including pending changes. Unknown visual work fails closed: add its native capture and storyboard in the feature pull request, so release preparation needs no editorial work after merge.
 
-Use the exact release notes and preserve the catalog's editorial decision. The native capture cases cover tab sharing, the address setting, and bundled playback review. Add genuine native capture and composition coverage before supporting another product feature. Do not recreate browser controls or use the website demo as evidence.
+Capture the compiled native app with a disposable profile, owned example.com pages and synthetic call handlers. Extend concrete cases in `LiloTests/Window/ReleaseMediaCaptureTests.swift`. Keep actual app version/build/source commit in every receipt, separately from the release being illustrated. Never recreate browser controls or use the website demo as evidence.
 
-Capture the compiled native app with a disposable profile, synthetic example.com pages and call handlers, and an owned backdrop. Keep the actual app version, build, and source commit in every receipt. Keep these fields separate from the illustrated release.
+Author literal editable HTML scenes under `release-media/hyperframes/`, with one paused GSAP timeline per composition, registered after synchronous construction. Use local assets, stable timed clip IDs, explicit durations and native state changes. No timers, unseeded randomness or network-fetched UI. Follow the approved 0.8.0 film for readable typography, deliberate transitions and pointer actions. Its share-only variant avoids announcing the address-bar feature in an unrelated release.
 
-Author literal editable HTML scenes under `release-media/hyperframes/`. Use local assets and deterministic paused GSAP timelines. Native cutouts preserve RGB bytes and canvas dimensions. Change only alpha outside the interface. Keep complete windows and real page content. Do not apply CSS blur or 3D tilt to native pixels.
+Use real source geometry for pointer targets and transparent PNG cutouts. Preserve captured RGB bytes and canvas sizes; change only alpha outside the native interface. Keep the UI’s own surfaces and complete window/page content. Check physical pixel density before enlargement. No CSS blur or 3D tilt on native UI. Titles settle while the product acts; do not add idle motion to satisfy a gate.
 
-Use these explicit Make targets.
+Use Make:
 
-1. Run `make release-media-author RELEASE=0.8.0`.
-2. Run `make release-media-capture RELEASE=0.8.0`.
-3. Run `make release-media-import release-media-render RELEASE=0.8.0`.
-4. Run `make release-media-check release-media-inspect RELEASE=0.8.0`.
-5. Review the encoded compact frames and both localized players. Run `make release-media-review RELEASE=0.8.0` for actual bundled playback, then restore `make ui-build`.
-6. Run `make release-media-test release-media-publish-check RELEASE=0.8.0` and `make validate`.
+1. `make release-media-author`
+2. `make release-media-capture RELEASE=x.y.z FIXTURE=a.b.c`
+3. `make release-media-import release-media-render RELEASE=x.y.z`
+4. `make release-media-check release-media-test release-media-inspect`
+5. Review encoded frames at 342px, play the English/French changelog at desktop/mobile widths, and check native What’s New using `make release-media-review RELEASE=x.y.z`. Restore `make ui-build` after the native preview.
+6. `make validate` and the release-media CI job must pass.
 
-Keep the committed CC0 soundtrack and licensed editorial sounds. Preserve their rights files and hashes. Preserve the catalog publication kill switch. Never rewrite passing receipts to hide changed inputs. Regenerate render and quality receipts through the actual tools.
+`make release-media-ci RELEASE=x.y.z` runs selection, fresh native capture, import, render, inspection, bundled What’s New playback and publication checks. Tagged CI captures the exact source commit and app version before signing; deployment uses that run’s validated website artifact. A failed audit, missing capability, broken capture, stale hash or failed media check blocks publication. Preserve a catalog publication kill switch; never re-enable it merely to make a workflow green.
 
-See `release-media/README.md` for requirements and the encoded quality contract.
+Films use lossless PNG capture and 1080p60 H.264/AAC. Strict HyperFrames checks cover structure, runtime, layout, contrast, motion and audio. Encoded checks verify frame count, decode, sound, bounded motion, native/recipe/output hashes, cutout RGB preservation and poster similarity. Announcement reading holds may last up to three seconds; signal checks complement visual review rather than judging artistic quality.
+
+Use the committed CC0 soundtrack and licensed editorial Foley. Music rights and hashes live in `release-media/public/audio/music.license.json`; attribution is optional, so no music credit overlay is needed. Never remove a required credit from a different track. Keep sound controls, explicit play, keyboard access and offscreen pause in both compact players.
+
+See `release-media/README.md` and `docs/RELEASING.md` for production commands and Alexays’s one-time Cloudflare release-environment setup.

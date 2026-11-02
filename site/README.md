@@ -78,9 +78,9 @@ The imported history in `.changes/v0.1.5.md` contains several earlier versions. 
 
 ## Deployment
 
-Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/`; a small Worker handles MP4 byte ranges without an Astro server adapter. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
+The tag-triggered GitHub release workflow builds the Astro website from verified native release media, then hands `site/dist/` to its deployment job as a same-run artifact. After media validation and the signed draft succeed, `make site-deploy-verified` repeats the publication gate and deploys that exact output without rebuilding. A small Worker serves byte ranges for release MP4s, while pages and other files remain static. No Astro server adapter is used. `wrangler.toml` keeps the custom domain, headers, redirects and 404 behavior.
 
-Set the build watch paths to `site/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `release-media/assets/**`, `release-media/catalog.ts`, `release-media/backlog.json`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
+Alexays must add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to the GitHub `release` environment before deployment can succeed. See [Cloudflare setup](../docs/RELEASING.md#cloudflare-deployment-once) for token scope and secret configuration. When enabling this release deployment, disable the previous Cloudflare Workers Builds production branch deploy so an independent Git build cannot replace the verified artifact. Missing credentials or a failed media gate leave the release workflow failed and the GitHub release as a draft. The site's `.nvmrc` selects Node 22.23.4.
 
 For a manual deployment, authenticate with Cloudflare first, then run:
 

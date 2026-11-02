@@ -86,7 +86,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: release-media-capture release-media-import release-media-render release-media-lock release-media-check release-media-publish-check
 .PHONY: release-media-review release-media-stage
 .PHONY: release-media-fix release-media-test
-.PHONY: release-media-inspect release-media-hyperframes release-media-audit release-media-author
+.PHONY: site-deploy-verified release-media-inspect release-media-hyperframes release-media-audit release-media-author release-tag-check release-media-ci
 
 ## List the targets
 help:
@@ -201,6 +201,8 @@ release-status: $(CHANGIE)
 ## Collect release notes, bump the app and build versions, and refresh the website
 release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
+	@release=$$('$(CHANGIE)' latest --remove-prefix); \
+	$(MAKE) --no-print-directory release-media-ci RELEASE="$$release"
 	@$(MAKE) --no-print-directory site-generate
 
 ## Announce a published GitHub release on Discord (needs GITHUB_EVENT_PATH and DISCORD_WEBHOOK_URL)
@@ -279,6 +281,20 @@ release-media-audit: release-media/node_modules/.lilo-installed
 ## Select a meaningful native visual story from exact release notes
 release-media-author: $(CHANGIE)
 	@CHANGIE='$(CHANGIE)' LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs
+
+## Verify this tag is a prepared release
+release-tag-check: $(CHANGIE)
+	@python3 scripts/release.py tag --tag '$(TAG)' --changie '$(CHANGIE)'
+
+## Capture, render and quality-gate this release before packaging
+release-media-ci: release-media-author release-media-audit
+	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
+	@set -eu; fixture=$$(LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs --fixture); \
+	if [ -n "$$fixture" ]; then \
+		$(MAKE) --no-print-directory release-media-capture RELEASE='$(RELEASE)' FIXTURE="$$fixture" && \
+		$(MAKE) --no-print-directory release-media-import release-media-render release-media-check release-media-inspect release-media-review RELEASE='$(RELEASE)'; \
+	fi
+	@$(MAKE) --no-print-directory release-media-publish-check RELEASE='$(RELEASE)'
 
 # Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
 # UI source change, refreshes both.
@@ -489,7 +505,7 @@ release: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release
 
 ## Build the UI bundle and notarize the release artifacts
-release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+release-notarize: release-media-publish-check vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release notarize
 
 # CI's release path: the UI is built or restored beforehand and the committed bridge bundles are checked
@@ -669,6 +685,12 @@ site-demo-icons:
 ## Check the Cloudflare deployment without publishing
 site-deploy-check: site-generate
 	@npm --prefix site run deploy:check
+
+## Deploy the validated CI website artifact without rebuilding its media
+site-deploy-verified: $(SITE_DEPS)
+	@$(MAKE) --no-print-directory release-media-publish-check RELEASE=
+	@test -f site/dist/index.html || { echo 'Validated site/dist artifact is required' >&2; exit 1; }
+	@cd site && ./node_modules/.bin/wrangler deploy
 
 ## Deploy getlilo.app to Cloudflare (requires authentication)
 site-deploy: $(SITE_DEPS)
