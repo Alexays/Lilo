@@ -18,11 +18,10 @@ final class DebuggerGapAPITests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         registry = try context.profileContexts.context(for: profileId).extensions
         window = MainWindowController(context: context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         // Off screen and transparent, as the agent tests do: the page renders, nothing shows.
         let nsWindow = try XCTUnwrap(window.window)
         nsWindow.alphaValue = 0

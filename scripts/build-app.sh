@@ -186,6 +186,11 @@ if [ "$SIGNING" = "distribution" ] && [ -n "${LILO_PROVISIONING_PROFILE:-}" ]; t
     codesign --force --sign "$IDENTITY" --options runtime --timestamp --entitlements "$ENTITLEMENTS" "$APP"
 fi
 
+# Lilo's WebKit fork, when `make webkit-fork` fetched one: signed as the app is, before notarization.
+if [ -d "$ROOT/Vendor/WebKitFork" ]; then
+    "$ROOT/scripts/embed-webkit-fork.sh" "$APP" "$ROOT/Vendor/WebKitFork"
+fi
+
 NOTARIZATION="skipped"
 if [ "$NOTARIZE" = true ]; then
     if [ -n "${LILO_NOTARY_PROFILE:-}" ]; then

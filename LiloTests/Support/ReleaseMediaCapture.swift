@@ -38,13 +38,14 @@ final class ReleaseMediaCapture {
         try? FileManager.default.removeItem(at: output.appendingPathComponent("failure.json"))
         fixture = try await TemporaryBrowserContext()
         let context = fixture.context
-        context.settingsStore.set("onboardingCompleted", value: "true")
-        context.settingsStore.set("theme", value: "dark")
-        context.settingsStore.set("tabPosition", value: "left")
-        context.settingsStore.set("addressPlacement", value: "tabs")
-        context.settingsStore.didPromptDefaultBrowser = true
-        let profile = try context.profileManager.createProfile(name: "Studio")
-        space = try context.spaceManager.createSpace(name: "Research", icon: "🌿", color: "#8b79c6", profileId: profile.id)
+        let settingsStore = try XCTUnwrap(context.settingsStore)
+        settingsStore.set("onboardingCompleted", value: "true")
+        settingsStore.set("theme", value: "dark")
+        settingsStore.set("tabPosition", value: "left")
+        settingsStore.set("addressPlacement", value: "tabs")
+        settingsStore.didPromptDefaultBrowser = true
+        let profile = try XCTUnwrap(context.profileManager).createProfile(name: "Studio")
+        space = try XCTUnwrap(context.spaceManager).createSpace(name: "Research", icon: "🌿", color: "#8b79c6", profileId: profile.id)
         controller = MainWindowController(context: context)
         context.windows.add(controller)
         controller.restoreWindowChromeState()
@@ -52,7 +53,7 @@ final class ReleaseMediaCapture {
         controller.setupViews()
         controller.setupBridgeLate()
         controller.setupTabShare()
-        controller.applyTabLayout(context.settingsStore.tabLayout, animated: false)
+        controller.applyTabLayout(settingsStore.tabLayout, animated: false)
         controller.switchToSpace(space.id)
         controller.didCompleteSessionRestore = true
         let window = try XCTUnwrap(controller.window)

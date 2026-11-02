@@ -36,7 +36,6 @@ final class WhatsNewPresentationTests: XCTestCase {
         controller.chromeWebView.frame = root.bounds
         root.addSubview(controller.chromeWebView)
         controller.contentContainerView = content
-        controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
         controller.bridgeRouter.javaScriptSink = { _, _, completion in completion() }
         XCTAssertTrue(window.makeFirstResponder(field))
         // The host has dispatched a request; the JS mount acknowledgment reaches the real native views.

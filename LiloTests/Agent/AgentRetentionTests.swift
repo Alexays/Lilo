@@ -11,8 +11,8 @@ final class AgentRetentionTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         window = makeTestWindow(context, showing: space.id)
         window.createTabStateFirst(url: URL(string: "https://example.com"))
     }

@@ -19,8 +19,8 @@ final class TopHitPreloadBenchmarkTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: false)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: false)
         let window = makeTestWindow(context, showing: space.id, size: NSSize(width: 1200, height: 800))
         window.setupBridgeLate()
         let tabs = TabBridgeHandler(tabManager: window.tabManager, windowController: window, stateCommandHandler: window.applyBrowserCommand)

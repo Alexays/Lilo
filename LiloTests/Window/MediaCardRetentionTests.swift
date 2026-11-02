@@ -12,8 +12,8 @@ final class MediaCardRetentionTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         window = makeTestWindow(context, showing: space.id)
         window.createTabStateFirst(url: URL(string: "https://example.com"))
     }
@@ -33,7 +33,7 @@ final class MediaCardRetentionTests: XCTestCase {
         window.controlMedia(tabId: tab.id, action: "pause")
         window.tab(engine, didUpdateAudioPlaying: false)
         let context = window.context
-        let other = try context.spaceManager.createSpace(name: "Other", profileId: profileId)
+        let other = try context.spaceManager!.createSpace(name: "Other", profileId: profileId)
         window.switchToSpace(other.id)
         XCTAssertTrue(context.browserState.liveEngine(forTab: tab.id) === engine, "a tab paused from the card keeps its engine")
         // A tab still loading is never frozen.

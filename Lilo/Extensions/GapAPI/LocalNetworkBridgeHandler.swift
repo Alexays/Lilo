@@ -47,7 +47,7 @@ final class LocalNetworkBridgeHandler: GapHandler {
     init(registriesProvider: @escaping () -> [ProfileExtensionRegistry]) {
         self.registriesProvider = registriesProvider
         // A load restores a worker's listeners; a listener change, an unload or a closed page may start or stop a browse.
-        observers = [Notification.Name.extensionRuntimeLoaded, .extensionGapListenersChanged, .extensionDidUnload, .extensionPageChannelDidClose].map { name in
+        unsafe observers = [Notification.Name.extensionRuntimeLoaded, .extensionGapListenersChanged, .extensionDidUnload, .extensionPageChannelDidClose].map { name in
             NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.update() }
             }
@@ -55,7 +55,7 @@ final class LocalNetworkBridgeHandler: GapHandler {
     }
 
     deinit {
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -78,15 +78,15 @@ final class LocalNetworkBridgeHandler: GapHandler {
     /// Chrome's list: each IPv4 and IPv6 address of the interfaces that are up, loopback aside.
     private static func networkInterfaces() -> [[String: Any]] {
         var list: UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&list) == 0, let first = list else { return [] }
-        defer { freeifaddrs(list) }
+        guard unsafe getifaddrs(&list) == 0, let first = unsafe list else { return [] }
+        defer { unsafe freeifaddrs(list) }
         var interfaces: [[String: Any]] = []
-        for entry in sequence(first: first, next: { $0.pointee.ifa_next }).map(\.pointee) {
-            let flags = Int32(entry.ifa_flags)
-            guard flags & IFF_UP != 0, flags & IFF_LOOPBACK == 0, let address = entry.ifa_addr else { continue }
-            let family = Int32(address.pointee.sa_family)
-            guard family == AF_INET || family == AF_INET6, let text = numericHost(address), text != "0.0.0.0", text != "::" else { continue }
-            interfaces.append(["name": String(cString: entry.ifa_name), "address": text, "prefixLength": prefixLength(entry.ifa_netmask, family: family)])
+        for unsafe entry in unsafe sequence(first: first, next: { unsafe $0.pointee.ifa_next }).map(\.pointee) {
+            let flags = unsafe Int32(entry.ifa_flags)
+            guard flags & IFF_UP != 0, flags & IFF_LOOPBACK == 0, let address = unsafe entry.ifa_addr else { continue }
+            let family = unsafe Int32(address.pointee.sa_family)
+            guard family == AF_INET || family == AF_INET6, let text = unsafe numericHost(address), text != "0.0.0.0", text != "::" else { continue }
+            unsafe interfaces.append(["name": String(cString: entry.ifa_name), "address": text, "prefixLength": prefixLength(entry.ifa_netmask, family: family)])
         }
         return interfaces
     }
@@ -94,20 +94,21 @@ final class LocalNetworkBridgeHandler: GapHandler {
     /// The address as Chrome prints it: a link-local one without its scope ("%en0").
     nonisolated fileprivate static func numericHost(_ address: UnsafePointer<sockaddr>) -> String? {
         var buffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-        guard getnameinfo(address, socklen_t(address.pointee.sa_len), &buffer, socklen_t(buffer.count), nil, 0, NI_NUMERICHOST) == 0 else { return nil }
-        let text = buffer.withUnsafeBufferPointer { String(cString: $0.baseAddress!) }
-        return text.split(separator: "%", maxSplits: 1).first.map(String.init)
+        guard unsafe getnameinfo(address, socklen_t(address.pointee.sa_len), &buffer, socklen_t(buffer.count), nil, 0, NI_NUMERICHOST) == 0 else { return nil }
+        let text = buffer.withUnsafeBufferPointer { unsafe $0.baseAddress.map { unsafe String(cString: $0) } }
+        return text?.split(separator: "%", maxSplits: 1).first.map(String.init)
     }
 
     /// The set bits of the netmask, read no further than its `sa_len`: the kernel truncates an IPv4 mask's sockaddr.
     private static func prefixLength(_ netmask: UnsafeMutablePointer<sockaddr>?, family: Int32) -> Int {
-        guard let netmask else { return 0 }
-        let (offset, length) = family == AF_INET
-            ? (MemoryLayout<sockaddr_in>.offset(of: \.sin_addr)!, 4)
-            : (MemoryLayout<sockaddr_in6>.offset(of: \.sin6_addr)!, 16)
-        let available = max(0, min(length, Int(netmask.pointee.sa_len) - offset))
+        guard let netmask = unsafe netmask else { return 0 }
+        let length = family == AF_INET ? 4 : 16
+        guard let offset = family == AF_INET
+            ? MemoryLayout<sockaddr_in>.offset(of: \.sin_addr)
+            : MemoryLayout<sockaddr_in6>.offset(of: \.sin6_addr) else { return 0 }
+        let available = unsafe max(0, min(length, Int(netmask.pointee.sa_len) - offset))
         let bytes = UnsafeRawPointer(netmask)
-        return (0..<available).reduce(0) { $0 + bytes.load(fromByteOffset: offset + $1, as: UInt8.self).nonzeroBitCount }
+        return (0..<available).reduce(0) { unsafe $0 + bytes.load(fromByteOffset: offset + $1, as: UInt8.self).nonzeroBitCount }
     }
 
     // MARK: - mdns
@@ -235,7 +236,7 @@ final class LocalNetworkBridgeHandler: GapHandler {
 /// Resolves one service instance to its host, port and TXT strings, then to an address, IPv4 first as Chrome
 /// picks it. dns_sd calls back on the main queue; an instance that does not resolve within 5 s ends as nil.
 @MainActor
-private final class ServiceResolution {
+@safe private final class ServiceResolution {
     private var ref: DNSServiceRef?
     private var hostPort = ""
     private var txt: [String] = []
@@ -247,20 +248,20 @@ private final class ServiceResolution {
 
     init(name: String, type: String, done: @escaping (LocalNetworkBridgeHandler.Service?) -> Void) {
         self.done = done
-        let context = Unmanaged.passUnretained(self).toOpaque()
-        let status = DNSServiceResolve(&ref, 0, 0, name, type, "local.", { _, _, _, error, _, host, port, txtLength, txtRecord, context in
-            guard let context else { return }
-            let host = error == DNSServiceErrorType(kDNSServiceErr_NoError) ? host.map { String(cString: $0) } : nil
-            let record = txtRecord.map { Array(UnsafeBufferPointer(start: $0, count: Int(txtLength))) } ?? []
+        let context = unsafe Unmanaged.passUnretained(self).toOpaque()
+        let status = unsafe DNSServiceResolve(&ref, 0, 0, name, type, "local.", { _, _, _, error, _, host, port, txtLength, txtRecord, context in
+            guard let context = unsafe context else { return }
+            let host = unsafe error == DNSServiceErrorType(kDNSServiceErr_NoError) ? host.map { unsafe String(cString: $0) } : nil
+            let record = unsafe txtRecord.map { unsafe Array(UnsafeBufferPointer(start: $0, count: Int(txtLength))) } ?? []
             MainActor.assumeIsolated {
-                Unmanaged<ServiceResolution>.fromOpaque(context).takeUnretainedValue().resolved(host: host, port: UInt16(bigEndian: port), txt: record)
+                unsafe Unmanaged<ServiceResolution>.fromOpaque(context).takeUnretainedValue().resolved(host: host, port: UInt16(bigEndian: port), txt: record)
             }
-        }, context)
-        guard status == DNSServiceErrorType(kDNSServiceErr_NoError), let ref else {
+        }, unsafe context)
+        guard status == DNSServiceErrorType(kDNSServiceErr_NoError), let ref = unsafe ref else {
             finish(nil)
             return
         }
-        DNSServiceSetDispatchQueue(ref, .main)
+        unsafe DNSServiceSetDispatchQueue(ref, .main)
         timeout = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(5))
             guard !Task.isCancelled, let self else { return }
@@ -275,8 +276,8 @@ private final class ServiceResolution {
     }
 
     private func resolved(host: String?, port: UInt16, txt record: [UInt8]) {
-        if let ref { DNSServiceRefDeallocate(ref) }
-        ref = nil
+        if let ref = unsafe ref { unsafe DNSServiceRefDeallocate(ref) }
+        unsafe ref = nil
         guard let host else { return finish(nil) }
         hostPort = "\(host.hasSuffix(".") ? String(host.dropLast()) : host):\(port)"
         // A TXT record is a run of strings, each after its length byte.
@@ -286,18 +287,18 @@ private final class ServiceResolution {
             if end > index + 1, let text = String(bytes: record[(index + 1)..<end], encoding: .utf8) { txt.append(text) }
             index = end
         }
-        let context = Unmanaged.passUnretained(self).toOpaque()
+        let context = unsafe Unmanaged.passUnretained(self).toOpaque()
         let protocols = DNSServiceProtocol(kDNSServiceProtocol_IPv4 | kDNSServiceProtocol_IPv6)
-        let status = DNSServiceGetAddrInfo(&ref, 0, 0, protocols, host, { _, _, _, error, _, address, _, context in
-            guard let context, error == DNSServiceErrorType(kDNSServiceErr_NoError), let address,
-                  let ip = LocalNetworkBridgeHandler.numericHost(address) else { return }
-            let isIPv4 = Int32(address.pointee.sa_family) == AF_INET
+        let status = unsafe DNSServiceGetAddrInfo(&ref, 0, 0, protocols, host, { _, _, _, error, _, address, _, context in
+            guard let context = unsafe context, error == DNSServiceErrorType(kDNSServiceErr_NoError), let address = unsafe address,
+                  let ip = unsafe LocalNetworkBridgeHandler.numericHost(address) else { return }
+            let isIPv4 = unsafe Int32(address.pointee.sa_family) == AF_INET
             MainActor.assumeIsolated {
-                Unmanaged<ServiceResolution>.fromOpaque(context).takeUnretainedValue().found(ip, isIPv4: isIPv4)
+                unsafe Unmanaged<ServiceResolution>.fromOpaque(context).takeUnretainedValue().found(ip, isIPv4: isIPv4)
             }
-        }, context)
-        guard status == DNSServiceErrorType(kDNSServiceErr_NoError), let ref else { return finish(nil) }
-        DNSServiceSetDispatchQueue(ref, .main)
+        }, unsafe context)
+        guard status == DNSServiceErrorType(kDNSServiceErr_NoError), let ref = unsafe ref else { return finish(nil) }
+        unsafe DNSServiceSetDispatchQueue(ref, .main)
     }
 
     /// An IPv6 address waits for an IPv4 one until the timeout.
@@ -306,8 +307,8 @@ private final class ServiceResolution {
     }
 
     private func finish(_ ip: String?) {
-        if let ref { DNSServiceRefDeallocate(ref) }
-        ref = nil
+        if let ref = unsafe ref { unsafe DNSServiceRefDeallocate(ref) }
+        unsafe ref = nil
         timeout?.cancel()
         timeout = nil
         let done = done

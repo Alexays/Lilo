@@ -17,8 +17,8 @@ extension MainWindowController {
         // Help can queue a request before the deferred chrome has installed its listener.
         if pendingWhatsNewAutomatic != nil { presentPendingWhatsNew(); return }
         #if !DEBUG
-        guard context.windows.windows.first === self,
-              context.whatsNew.reserveAutomatic(version: whatsNewVersion, freshInstall: context.settingsStore.shouldShowOnboarding)
+        guard context.windows.windows.first === self, let settingsStore = context.settingsStore,
+              context.whatsNew.reserveAutomatic(version: whatsNewVersion, freshInstall: settingsStore.shouldShowOnboarding)
         else { return }
         pendingWhatsNewAutomatic = true
         presentPendingWhatsNew()
@@ -37,7 +37,7 @@ extension MainWindowController {
         guard whatsNewRequested, !isShowingWhatsNew, version == whatsNewVersion else { return }
         whatsNewReturnResponder = window?.firstResponder
         isShowingWhatsNew = true
-        contentContainerView?.setAccessibilityHidden(true)
+        contentContainerView.setAccessibilityHidden(true)
         focusChrome()
         acknowledgeVisibleWhatsNew()
     }
@@ -52,10 +52,10 @@ extension MainWindowController {
         whatsNewRequested = false
         guard isShowingWhatsNew else { return }
         isShowingWhatsNew = false
-        contentContainerView?.setAccessibilityHidden(false)
+        contentContainerView.setAccessibilityHidden(false)
         let previous = whatsNewReturnResponder
         whatsNewReturnResponder = nil
-        if let view = previous as? NSView, view.window === window {
+        if let view = previous as? NSView, unsafe view.window === window {
             if contains(responder: view) { window?.makeFirstResponder(view) } else { focusContent(view) }
         } else if let terminal = activeTerminalView {
             focusContent(terminal)

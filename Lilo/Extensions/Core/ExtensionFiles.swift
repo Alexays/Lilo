@@ -37,7 +37,7 @@ final class ExtensionFiles {
                 hasher.update(data: Data("\(file.path) \(values?.fileSize ?? -1) \(values?.contentModificationDate?.timeIntervalSince1970 ?? 0)\n".utf8))
             }
         }
-        let stamp = Data(hasher.finalize().map { String(format: "%02x", $0) }.joined().utf8)
+        let stamp = Data(hasher.finalize().map { unsafe String(format: "%02x", $0) }.joined().utf8)
         if (try? Data(contentsOf: stampURL)) == stamp { return clone }
 
         try fm.createDirectory(at: unpackedDirectory, withIntermediateDirectories: true)
@@ -62,12 +62,12 @@ final class ExtensionFiles {
     /// Named from the canonical path, as a path-derived extension id is.
     private nonisolated static func unpackedClone(of url: URL, in unpackedDirectory: URL) -> URL {
         let digest = SHA256.hash(data: Data(url.standardizedFileURL.resolvingSymlinksInPath().path.utf8))
-        return unpackedDirectory.appendingPathComponent(digest.prefix(8).map { String(format: "%02x", $0) }.joined(), isDirectory: true)
+        return unpackedDirectory.appendingPathComponent(digest.prefix(8).map { unsafe String(format: "%02x", $0) }.joined(), isDirectory: true)
     }
 
     /// An APFS clone shares the source's blocks until either side writes; another volume gets a full copy.
     nonisolated static func clone(_ source: URL, to destination: URL) throws {
-        if clonefile(source.path, destination.path, 0) == 0 { return }
+        if unsafe clonefile(source.path, destination.path, 0) == 0 { return }
         try FileManager.default.copyItem(at: source, to: destination)
     }
 
@@ -186,7 +186,7 @@ final class ExtensionFiles {
             return ExtensionArchiveSafety.chromeExtensionId(forPublicKey: publicKey)
         }
         let digest = SHA256.hash(data: Data(canonical.path.utf8))
-        let hex = digest.map { String(format: "%02x", $0) }.joined()
+        let hex = digest.map { unsafe String(format: "%02x", $0) }.joined()
         return "extension-\(hex.prefix(16))"
     }
 

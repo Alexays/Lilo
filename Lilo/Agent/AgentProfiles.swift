@@ -10,10 +10,10 @@ extension AgentControl {
 
     /// The agents' own profile, created the first time: no cookie, sign-in or history of the user's.
     func agentsProfileId() throws -> UUID {
-        guard let context else { throw AgentToolError("Lilo is not ready yet") }
+        guard let context, let profileManager = context.profileManager else { throw AgentToolError("Lilo is not ready yet") }
         let stored = context.settingsStore?.get(Self.agentsProfileKey).flatMap(UUID.init(uuidString:))
-        if let id = context.profileManager.profiles.first(where: { $0.id == stored })?.id { return id }
-        let created = try context.profileManager.createProfile(name: "Agents")
+        if let id = profileManager.profiles.first(where: { $0.id == stored })?.id { return id }
+        let created = try profileManager.createProfile(name: "Agents")
         context.settingsStore?.set(Self.agentsProfileKey, value: created.id.uuidString)
         return created.id
     }
@@ -22,12 +22,13 @@ extension AgentControl {
     /// profile, by its id, and never while a space of the user's lives in it.
     @discardableResult
     func wipeAgentsProfile() async -> Bool {
-        guard let context, let id = context.settingsStore?.get(Self.agentsProfileKey).flatMap(UUID.init(uuidString:)),
-              context.profileManager.profiles.contains(where: { $0.id == id }) else { return false }
+        guard let context, let profileManager = context.profileManager, let spaceManager = context.spaceManager,
+              let id = context.settingsStore?.get(Self.agentsProfileKey).flatMap(UUID.init(uuidString:)),
+              profileManager.profiles.contains(where: { $0.id == id }) else { return false }
         let agentsSpaces = context.settingsStore?.agentsSpaceIds ?? []
         // A private space keeps its data in memory, never in the profile.
-        guard context.spaceManager.spaces(for: id).allSatisfy({ agentsSpaces.contains($0.id) || $0.isPrivate }) else { return false }
-        await context.profileManager.dataStore(for: id).removeAllData(modifiedSince: .distantPast)
+        guard spaceManager.spaces(for: id).allSatisfy({ agentsSpaces.contains($0.id) || $0.isPrivate }) else { return false }
+        await profileManager.dataStore(for: id).removeAllData(modifiedSince: .distantPast)
         if let history = try? context.profileContexts.context(for: id).history {
             try? await Task.detached { try history.clearAll() }.value
         }
@@ -60,7 +61,7 @@ extension AgentControl {
     /// An agent starting over: wipes the agents' profile and reloads its tabs, signed in nowhere.
     func resetProfile(for session: AgentSession, wait: Any?) async throws -> String {
         if let profileId = session.profileId {
-            let name = context?.profileManager.profiles.first { $0.id == profileId }?.name ?? ""
+            let name = context?.profileManager?.profiles.first { $0.id == profileId }?.name ?? ""
             throw AgentToolError("You are in the user's profile \(name), which is never reset: switch_profile to Agents first")
         }
         try await ensureAlone(session, wait: wait)
@@ -93,12 +94,14 @@ extension AgentControl {
     /// Profiles for `list_profiles`: which one the session works in, which one the user works in now,
     /// and which one is the agents' ephemeral one.
     func profileList(for session: AgentSession) throws -> [[String: Any]] {
-        guard let context, let spaces = context.spaceManager else { throw AgentToolError("Lilo is not ready yet") }
+        guard let context, let spaces = context.spaceManager, let profileManager = context.profileManager else {
+            throw AgentToolError("Lilo is not ready yet")
+        }
         let current = try session.profileId ?? agentsProfileId()
         // A private space's browsing is not the agents' business, not even which profile it is based on.
         let user = context.windows.activeWindow?.tabManager.currentSpaceId.flatMap(spaces.space(with:)).flatMap { $0.isPrivate ? nil : $0.profileId }
         let agents = try agentsProfileId()
-        return context.profileManager.profiles.map {
+        return profileManager.profiles.map {
             ["id": $0.id.uuidString, "name": $0.name, "current": $0.id == current, "usedByUser": $0.id == user, "ephemeral": $0.id == agents]
         }
     }
@@ -107,8 +110,8 @@ extension AgentControl {
     /// the address-bar drawer, as for the first connection. Back to the agents' own one needs no asking.
     /// Only this conversation's folder moves, to the Agents space of that profile.
     func switchProfile(_ query: String, for session: AgentSession) async throws -> String {
-        guard let context else { throw AgentToolError("Lilo is not ready yet") }
-        guard let profile = context.profileManager.profiles.first(where: {
+        guard let context, let profileManager = context.profileManager else { throw AgentToolError("Lilo is not ready yet") }
+        guard let profile = profileManager.profiles.first(where: {
             $0.id.uuidString == query || $0.name.compare(query, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
         }) else { throw AgentToolError("No profile \"\(query)\": list_profiles gives their names") }
         let agents = try agentsProfileId()

@@ -149,6 +149,23 @@ test("the rows stay where the drag showed them once the drop lands", async ({
 	expect(await rowTops(activePane)).toEqual(during);
 });
 
+test("a row dragged away and back to the middle of its starting row drops where it was", async ({
+	page,
+}) => {
+	await bootChrome(page, folderWorld());
+	const activePane = pane(page, 0);
+	const home = (await activePane.locator('.tab-list > [data-dnd-item-id="tab-gamma"]').boundingBox())!;
+
+	await pressAndLift(page, '.tab-list [data-tab-id="tab-gamma"]');
+	await glideTo(page, '.tab-list > [data-dnd-item-id="tab-beta"]', 5);
+	await expect.poll(() => rootIds(activePane)).toEqual(["folder-docs", "dnd-shadow:tab-gamma", "tab-beta", "folder-empty", "folder-shut"]);
+	await page.mouse.move(home.x + home.width / 2, home.y + home.height / 2 + 2, { steps: 6 });
+	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await page.mouse.up();
+
+	await expect.poll(() => rootIds(activePane)).toEqual(["folder-docs", "tab-beta", "tab-gamma", "folder-empty", "folder-shut"]);
+});
+
 test("a folder's last tab dragged out leaves the folder as it will look after the drop", async ({
 	page,
 }) => {

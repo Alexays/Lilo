@@ -33,10 +33,10 @@ final class ScriptTab: NSObject {
         MainActor.assumeIsolated {
             guard let tabId, let windowSpecifier = owner?.window?.objectSpecifier,
                   let windowClass = windowSpecifier.keyClassDescription else { return }
-            specifier = NSUniqueIDSpecifier(containerClassDescription: windowClass, containerSpecifier: windowSpecifier,
+            unsafe specifier = NSUniqueIDSpecifier(containerClassDescription: windowClass, containerSpecifier: windowSpecifier,
                                             key: "scriptTabs", uniqueID: tabId.uuidString)
         }
-        return specifier
+        return unsafe specifier
     }
 
     @objc var uniqueID: String { tabId?.uuidString ?? "" }

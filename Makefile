@@ -40,6 +40,11 @@ VT_URL = https://github.com/Alexays/Lilo/releases/download/ghostty-vt-$(shell pr
 VT_SHA256 := 33b7d83fcdc8ada0ab3a377bd9f0cb0880ad40401cf12acb9bbde99d7ba606f2
 GHOSTTY_DIR := build/ghostty
 VT_STAMP := Vendor/.ghostty-sha
+# Lilo's WebKit fork (docs/WEBKIT_FORK.md): the zip scripts/package-webkit-fork.sh makes, published as a
+# release of Alexays/WebKit. With both empty, releases run on the WebKit of macOS.
+WEBKIT_FORK_URL := https://github.com/Alexays/WebKit/releases/download/lilo-20261102-be4ef2d4594/WebKitFork.zip
+WEBKIT_FORK_SHA256 := bf066e1de6329d0c80b1a1081e11eefb5074be26dd4b9426c82f5e5f883a212a
+WEBKIT_FORK_STAMP := Vendor/.webkit-fork-sha256
 DMGBUILD_VERSION := 1.6.5
 DMGBUILD_DIR := build/dmgbuild-$(DMGBUILD_VERSION)
 # Inside the checkout, so a worktree's build goes with the worktree instead of staying in ~/Library.
@@ -79,7 +84,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test
@@ -489,17 +494,17 @@ agent-call:
 	@node scripts/agent_call.mjs build/debug/export/Lilo.app/Contents/MacOS/lilo-mcp "$(CALLS)"
 
 ## Build the UI bundle and create release artifacts
-release: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+release: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(if $(WEBKIT_FORK_URL),webkit-fork)
 	@scripts/build-app.sh release
 
 ## Build the UI bundle and notarize the release artifacts
-release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(if $(WEBKIT_FORK_URL),webkit-fork)
 	@scripts/build-app.sh release notarize
 
 # CI's release path: the UI is built or restored beforehand and the committed bridge bundles are checked
 # against bridge-src on main, so neither needs npm here.
 ## Archive and export the release app from the UI already built (CI)
-release-archive: release-media-stage vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+release-archive: release-media-stage vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(if $(WEBKIT_FORK_URL),webkit-fork)
 	@scripts/build-app.sh release
 
 # dmgbuild writes the window layout into .DS_Store itself, so no Finder or AppleScript is involved.
@@ -536,6 +541,18 @@ vt-build:
 		/bin/rm -f "$$zip"; exec $(MAKE) --no-print-directory vt-build-source; \
 	fi; \
 	/bin/rm -rf Vendor/GhosttyVt.xcframework && unzip -q "$$zip" -d Vendor && /bin/rm -f "$$zip" && echo $(GHOSTTY_SHA) > $(VT_STAMP)
+
+## Download the pinned WebKit fork into Vendor/WebKitFork, which scripts/build-app.sh then embeds
+webkit-fork:
+	@[ -n "$(WEBKIT_FORK_URL)" ] || { echo "make webkit-fork: no fork is pinned (WEBKIT_FORK_URL is empty)." >&2; exit 1; }; \
+	[ "$$(cat $(WEBKIT_FORK_STAMP) 2>/dev/null)" = "$(WEBKIT_FORK_SHA256)" ] && exit 0; \
+	zip=build/WebKitFork.zip; mkdir -p build Vendor; \
+	curl -fsSL --retry 2 -o "$$zip" "$(WEBKIT_FORK_URL)"; \
+	if ! echo "$(WEBKIT_FORK_SHA256)  $$zip" | shasum -a 256 -c --status; then \
+		echo "make webkit-fork: $(WEBKIT_FORK_URL) has sha256 $$(shasum -a 256 "$$zip" | cut -d' ' -f1), not WEBKIT_FORK_SHA256." >&2; \
+		/bin/rm -f "$$zip"; exit 1; \
+	fi; \
+	/bin/rm -rf Vendor/WebKitFork && ditto -x -k "$$zip" Vendor && /bin/rm -f "$$zip" && echo $(WEBKIT_FORK_SHA256) > $(WEBKIT_FORK_STAMP)
 
 ## Build libghostty-vt from the pinned Ghostty commit with Zig 0.16, instead of downloading it
 vt-build-source:

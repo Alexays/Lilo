@@ -5,7 +5,7 @@ import IOKit.ps
 /// Whether the Mac is closed and unused: lid down with no external display, from root-domain interest notifications and screen changes.
 /// The callback context is unretained: deinit removes the notification before it can dangle.
 @MainActor
-final class LidObserver {
+@safe final class LidObserver {
     private(set) var isClosed: Bool
     var onChange: ((Bool) -> Void)?
     private let rootDomain: io_service_t
@@ -15,29 +15,29 @@ final class LidObserver {
     nonisolated(unsafe) private var screens: NSObjectProtocol?
 
     init() {
-        rootDomain = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPMrootDomain"))
+        rootDomain = unsafe IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPMrootDomain"))
         isClosed = Self.readClosed(rootDomain)
-        screens = NotificationCenter.default.addObserver(
+        unsafe screens = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.scheduleRefresh() }
         }
-        port = IONotificationPortCreate(kIOMainPortDefault)
-        IONotificationPortSetDispatchQueue(port, .main)
-        let context = Unmanaged.passUnretained(self).toOpaque()
-        IOServiceAddInterestNotification(port, rootDomain, kIOGeneralInterest, { context, _, _, _ in
-            guard let context else { return }
-            let observer = Unmanaged<LidObserver>.fromOpaque(context).takeUnretainedValue()
+        unsafe port = unsafe IONotificationPortCreate(kIOMainPortDefault)
+        unsafe IONotificationPortSetDispatchQueue(port, .main)
+        let context = unsafe Unmanaged.passUnretained(self).toOpaque()
+        unsafe IOServiceAddInterestNotification(port, rootDomain, kIOGeneralInterest, { context, _, _, _ in
+            guard let context = unsafe context else { return }
+            let observer = unsafe Unmanaged<LidObserver>.fromOpaque(context).takeUnretainedValue()
             MainActor.assumeIsolated { observer.scheduleRefresh() }
-        }, context, &notification)
+        }, unsafe context, &notification)
     }
 
     // Dropped on the main thread, where the port delivers: no callback races the teardown.
     deinit {
         IOObjectRelease(notification)
-        IONotificationPortDestroy(port)
+        unsafe IONotificationPortDestroy(port)
         IOObjectRelease(rootDomain)
-        if let screens { NotificationCenter.default.removeObserver(screens) }
+        if let screens = unsafe screens { NotificationCenter.default.removeObserver(screens) }
     }
 
     // A lid that flaps while closing settles within 2 s; an opening lid is reported at once, so
@@ -60,12 +60,12 @@ final class LidObserver {
     }
 
     private static func readClosed(_ service: io_service_t) -> Bool {
-        let lid = (IORegistryEntryCreateCFProperty(service, "AppleClamshellState" as CFString, kCFAllocatorDefault, 0)?
+        let lid = unsafe (IORegistryEntryCreateCFProperty(service, "AppleClamshellState" as CFString, kCFAllocatorDefault, 0)?
             .takeRetainedValue() as? Bool) ?? false
         guard lid else { return false }
         var ids = [CGDirectDisplayID](repeating: 0, count: 8)
         var count: UInt32 = 0
-        CGGetOnlineDisplayList(8, &ids, &count)
+        unsafe CGGetOnlineDisplayList(8, &ids, &count)
         return !ids.prefix(Int(count)).contains { CGDisplayIsBuiltin($0) == 0 }
     }
 }
@@ -82,18 +82,18 @@ final class PowerSourceMonitor {
 
     init() {
         read()
-        let context = Unmanaged.passUnretained(self).toOpaque()
-        source = IOPSNotificationCreateRunLoopSource({ context in
-            guard let context else { return }
-            let monitor = Unmanaged<PowerSourceMonitor>.fromOpaque(context).takeUnretainedValue()
+        let context = unsafe Unmanaged.passUnretained(self).toOpaque()
+        unsafe source = unsafe IOPSNotificationCreateRunLoopSource({ context in
+            guard let context = unsafe context else { return }
+            let monitor = unsafe Unmanaged<PowerSourceMonitor>.fromOpaque(context).takeUnretainedValue()
             MainActor.assumeIsolated { monitor.refresh() }
-        }, context)?.takeRetainedValue()
-        if let source { CFRunLoopAddSource(CFRunLoopGetMain(), source, .defaultMode) }
+        }, unsafe context)?.takeRetainedValue()
+        if let source = unsafe source { CFRunLoopAddSource(CFRunLoopGetMain(), source, .defaultMode) }
     }
 
     // The source's context is an unretained `self`.
     deinit {
-        if let source { CFRunLoopSourceInvalidate(source) }
+        if let source = unsafe source { CFRunLoopSourceInvalidate(source) }
     }
 
     private func refresh() {
@@ -102,11 +102,11 @@ final class PowerSourceMonitor {
     }
 
     private func read() {
-        let info = IOPSCopyPowerSourcesInfo().takeRetainedValue()
-        onBattery = (IOPSGetProvidingPowerSourceType(info)?.takeUnretainedValue() as String?) == kIOPSBatteryPowerValue
-        let sources = IOPSCopyPowerSourcesList(info).takeRetainedValue() as [CFTypeRef]
+        let info = unsafe IOPSCopyPowerSourcesInfo().takeRetainedValue()
+        onBattery = unsafe (IOPSGetProvidingPowerSourceType(info)?.takeUnretainedValue() as String?) == kIOPSBatteryPowerValue
+        let sources = unsafe IOPSCopyPowerSourcesList(info).takeRetainedValue() as [CFTypeRef]
         let battery = sources.lazy
-            .compactMap { IOPSGetPowerSourceDescription(info, $0)?.takeUnretainedValue() as? [String: Any] }
+            .compactMap { unsafe IOPSGetPowerSourceDescription(info, $0)?.takeUnretainedValue() as? [String: Any] }
             .first { $0[kIOPSTypeKey] as? String == kIOPSInternalBatteryType }
         percent = battery.flatMap { description in
             guard let current = description[kIOPSCurrentCapacityKey] as? Int,

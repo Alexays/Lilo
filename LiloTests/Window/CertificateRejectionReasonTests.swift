@@ -50,11 +50,11 @@ final class CertificateExceptionTests: XCTestCase {
 
     func testAnExceptionHoldsInEveryWindowOfItsProfileOnly() throws {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "A").id
-        let work = try context.spaceManager.createSpace(name: "Work", profileId: profileId)
-        let home = try context.spaceManager.createSpace(name: "Home", profileId: profileId)
-        let otherProfile = try context.spaceManager.createSpace(name: "Other", profileId: try context.profileManager.createProfile(name: "B").id)
-        let secret = try context.spaceManager.createSpace(name: "Private", profileId: profileId, isPrivate: true)
+        let profileId = try context.profileManager!.createProfile(name: "A").id
+        let work = try context.spaceManager!.createSpace(name: "Work", profileId: profileId)
+        let home = try context.spaceManager!.createSpace(name: "Home", profileId: profileId)
+        let otherProfile = try context.spaceManager!.createSpace(name: "Other", profileId: try context.profileManager!.createProfile(name: "B").id)
+        let secret = try context.spaceManager!.createSpace(name: "Private", profileId: profileId, isPrivate: true)
         let trust = try selfSignedTrust()
         let first = makeTestWindow(context, showing: work.id), second = makeTestWindow(context, showing: home.id)
 
@@ -76,9 +76,9 @@ final class CertificateExceptionTests: XCTestCase {
 
     func testAPrivateSpaceKeepsItsOwnException() throws {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "A").id
-        let work = try context.spaceManager.createSpace(name: "Work", profileId: profileId)
-        let secret = try context.spaceManager.createSpace(name: "Private", profileId: profileId, isPrivate: true)
+        let profileId = try context.profileManager!.createProfile(name: "A").id
+        let work = try context.spaceManager!.createSpace(name: "Work", profileId: profileId)
+        let secret = try context.spaceManager!.createSpace(name: "Private", profileId: profileId, isPrivate: true)
         let trust = try selfSignedTrust()
         let window = makeTestWindow(context, showing: secret.id)
 
@@ -94,7 +94,7 @@ final class CertificateExceptionTests: XCTestCase {
     func testACertificateErrorOnAnHSTSHostOffersNoException() throws {
         try XCTSkipIf(dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_CFNetworkIsKnownHSTSHostWithSession") == nil, "no CFNetwork HSTS lookup")
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "Work", profileId: try context.profileManager.createProfile(name: "A").id)
+        let space = try context.spaceManager!.createSpace(name: "Work", profileId: try context.profileManager!.createProfile(name: "A").id)
         let window = makeTestWindow(context, showing: space.id)
         let tab = try engine(showing: "https://example.com/", in: space, of: window)
         let untrusted = NSError(domain: NSURLErrorDomain, code: NSURLErrorServerCertificateUntrusted)

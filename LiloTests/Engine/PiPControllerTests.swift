@@ -124,7 +124,7 @@ final class PiPControllerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         addTeardownBlock { @MainActor in browserContext.tearDown() }
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "Video", profileId: context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "Video", profileId: context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         let engine = try XCTUnwrap(window.createTabStateFirst(url: nil).flatMap { window.tabManager.engineTab(for: $0.id) })
         await show(engine, Self.playingVideo)
@@ -158,9 +158,9 @@ final class PiPControllerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         addTeardownBlock { @MainActor in browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let videoSpace = try context.spaceManager.createSpace(name: "Video", profileId: profileId)
-        let otherSpace = try context.spaceManager.createSpace(name: "Other", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let videoSpace = try context.spaceManager!.createSpace(name: "Video", profileId: profileId)
+        let otherSpace = try context.spaceManager!.createSpace(name: "Other", profileId: profileId)
         let window = makeTestWindow(context, showing: videoSpace.id)
         let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
         let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
@@ -195,7 +195,7 @@ final class PiPControllerTests: XCTestCase {
     func testPausedVideoInPiPKeepsItsTabFromFreezeAndDiscard() async throws {
         let browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let controller = makeTestWindow(context, showing: space.id)
         // WebKit holds a video's way into PiP until its page shows.
         let window = NSWindow(contentRect: controller.contentContainerView.frame, styleMask: [.titled], backing: .buffered, defer: false)

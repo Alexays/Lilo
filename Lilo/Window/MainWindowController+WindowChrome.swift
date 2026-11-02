@@ -34,8 +34,9 @@ extension MainWindowController {
     }
 
     func clearPersistentSiteData() async {
-        for profile in context.profileManager?.profiles ?? [] {
-            await context.profileManager.dataStore(for: profile.id).removeAllData(modifiedSince: .distantPast)
+        guard let profileManager = context.profileManager else { return }
+        for profile in profileManager.profiles {
+            await profileManager.dataStore(for: profile.id).removeAllData(modifiedSince: .distantPast)
         }
     }
 
@@ -76,12 +77,12 @@ extension MainWindowController {
         if layout.canHideToolbar && !tabLayout.canHideToolbar && !toolbarVisible {
             toolbarVisible = true
             context.settingsStore?.toolbarVisible = true
-            UserDefaults.lilo.set(true, forKey: "cachedToolbarVisible")
-            bridgeRouter?.send(event: "toolbarVisibilityChanged", data: ["visible": true])
+            unsafe UserDefaults.lilo.set(true, forKey: "cachedToolbarVisible")
+            bridgeRouter.send(event: "toolbarVisibilityChanged", data: ["visible": true])
         }
         tabLayout = layout
         applySidebarLayout(animated: animated, syncTrafficLights: true)
-        bridgeRouter?.send(event: "tabLayoutChanged", data: ["position": layout.position.rawValue, "address": layout.address.rawValue])
+        bridgeRouter.send(event: "tabLayoutChanged", data: ["position": layout.position.rawValue, "address": layout.address.rawValue])
     }
 
     /// The setting is app-wide: every window moves, and the next launch paints the new layout first.
@@ -106,8 +107,8 @@ extension MainWindowController {
         pendingSidebarWidthPersistWork?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            context.settingsStore.sidebarWidth = sidebarExpandedWidth
-            UserDefaults.lilo.set(Double(sidebarExpandedWidth), forKey: "cachedSidebarWidth")
+            context.settingsStore?.sidebarWidth = sidebarExpandedWidth
+            unsafe UserDefaults.lilo.set(Double(sidebarExpandedWidth), forKey: "cachedSidebarWidth")
         }
         pendingSidebarWidthPersistWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
@@ -130,8 +131,8 @@ extension MainWindowController {
         guard tabLayout.canHideToolbar else { return }
 
         toolbarVisible.toggle()
-        context.settingsStore.toolbarVisible = toolbarVisible
-        UserDefaults.lilo.set(toolbarVisible, forKey: "cachedToolbarVisible")
+        context.settingsStore?.toolbarVisible = toolbarVisible
+        unsafe UserDefaults.lilo.set(toolbarVisible, forKey: "cachedToolbarVisible")
         applySidebarLayout(animated: true, syncTrafficLights: true)
 
         bridgeRouter.send(event: "toolbarVisibilityChanged", data: ["visible": toolbarVisible])
@@ -142,8 +143,8 @@ extension MainWindowController {
 
         sidebarVisible.toggle()
         sidebarOverlayVisible = false
-        context.settingsStore.sidebarVisible = sidebarVisible
-        UserDefaults.lilo.set(sidebarVisible, forKey: "cachedSidebarVisible")
+        context.settingsStore?.sidebarVisible = sidebarVisible
+        unsafe UserDefaults.lilo.set(sidebarVisible, forKey: "cachedSidebarVisible")
         applySidebarLayout(animated: true, syncTrafficLights: true)
 
         bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": sidebarVisible, "width": sidebarExpandedWidth])
@@ -168,7 +169,7 @@ extension MainWindowController {
             return
         }
 
-        panel.beginSheet(
+        unsafe panel.beginSheet(
             for: window,
             modalDelegate: nil,
             didEnd: nil,
@@ -184,7 +185,7 @@ extension MainWindowController {
         // Skip the bridge send when the visibility hasn't changed (common during live resize).
         if lastSentTrafficLightsVisible != visible {
             lastSentTrafficLightsVisible = visible
-            bridgeRouter?.send(event: "windowChromeStateChanged", data: ["trafficLightsVisible": visible])
+            bridgeRouter.send(event: "windowChromeStateChanged", data: ["trafficLightsVisible": visible])
         }
         guard let window else { return }
         trafficLightAnimator.sync(
@@ -224,7 +225,7 @@ extension MainWindowController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.restoreExtensionsThenActiveTab() }
         // A terminal has no URL either, but it is not a new tab waiting for one. The onboarding opens
         // the bar itself when it ends: shown now, it would stack over the onboarding.
-        if !context.settingsStore.shouldShowOnboarding, tabManager.activeTab.map({ $0.url == nil && $0.kind == .web }) ?? false {
+        if context.settingsStore?.shouldShowOnboarding == false, tabManager.activeTab.map({ $0.url == nil && $0.kind == .web }) ?? false {
             bridgeRouter.send(event: "openCommandBar", data: ["newTab": true])
         }
     }
@@ -233,7 +234,7 @@ extension MainWindowController {
         whatsNewUIReady = false
         didReceiveChromeReady = true
         #if DEBUG
-        chromeInput.setDebugOverlayShown(UserDefaults.lilo.bool(forKey: Self.hitboxDebugDefaultsKey))
+        unsafe chromeInput.setDebugOverlayShown(UserDefaults.lilo.bool(forKey: Self.hitboxDebugDefaultsKey))
         #endif
         dispatchChromeInitialStateIfPossible()
     }
@@ -331,7 +332,7 @@ extension MainWindowController {
     func openExternalURL(_ url: URL) {
         guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" || scheme == "file" else { return }
         let destination = didCompleteSessionRestore
-            ? context.settingsStore.externalLinkDestination(for: url) { [context] in context.spaceManager?.space(with: $0) != nil }
+            ? context.settingsStore?.externalLinkDestination(for: url) { [context] in context.spaceManager?.space(with: $0) != nil } ?? .currentSpace
             : .currentSpace
         if destination == .littleWindow {
             openLittleWindow(url: url)

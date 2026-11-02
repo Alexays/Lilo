@@ -17,11 +17,11 @@ final class LittleWindowTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(LittleWindowController.frameName)")
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        home = try context.spaceManager.createSpace(name: "Home", profileId: profileId)
-        work = try context.spaceManager.createSpace(name: "Work", profileId: profileId)
-        let otherProfileId = try context.profileManager.createProfile(name: "Q").id
-        otherProfileSpace = try context.spaceManager.createSpace(name: "Other", profileId: otherProfileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        home = try context.spaceManager!.createSpace(name: "Home", profileId: profileId)
+        work = try context.spaceManager!.createSpace(name: "Work", profileId: profileId)
+        let otherProfileId = try context.profileManager!.createProfile(name: "Q").id
+        otherProfileSpace = try context.spaceManager!.createSpace(name: "Other", profileId: otherProfileId)
         controller = makeTestWindow(context, showing: home.id, size: NSSize(width: 1000, height: 800))
         controller.didCompleteSessionRestore = true
     }
@@ -130,7 +130,7 @@ final class LittleWindowTests: XCTestCase {
     }
 
     func testTheTitleBarWearsTheColorOfItsSpace() throws {
-        let red = try browserContext.context.spaceManager.createSpace(name: "Red", color: "#ff0000", profileId: home.profileId)
+        let red = try browserContext.context.spaceManager!.createSpace(name: "Red", color: "#ff0000", profileId: home.profileId)
         let engine = WKWebViewTab(webView: WKWebView(frame: .zero))
         let other = LittleWindowController(engine: engine, spaceId: red.id, dataStore: browserContext.context.engineFactory.defaultDataStore(), owner: controller)
         defer { other.window.close() }
@@ -151,7 +151,7 @@ final class LittleWindowTests: XCTestCase {
     }
 
     func testAtItsSmallestTheWindowKeepsRoomForTheAddress() throws {
-        let space = try browserContext.context.spaceManager.createSpace(name: "A Space With A Rather Long Name", profileId: home.profileId)
+        let space = try browserContext.context.spaceManager!.createSpace(name: "A Space With A Rather Long Name", profileId: home.profileId)
         controller.switchToSpace(space.id)
         let engine = WKWebViewTab(webView: WKWebView(frame: .zero))
         let little = LittleWindowController(engine: engine, spaceId: space.id, dataStore: browserContext.context.engineFactory.defaultDataStore(), owner: controller)

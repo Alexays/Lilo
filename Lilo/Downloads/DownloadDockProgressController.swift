@@ -26,14 +26,14 @@ final class DownloadDockProgressController {
     private lazy var progressView = DockProgressView()
 
     init() {
-        activeObserver = NotificationCenter.default.addObserver(
+        unsafe activeObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification,
             object: NSApplication.shared,
             queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.syncSpinTimer() }
         }
-        resignObserver = NotificationCenter.default.addObserver(
+        unsafe resignObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didResignActiveNotification,
             object: NSApplication.shared,
             queue: .main
@@ -43,8 +43,8 @@ final class DownloadDockProgressController {
     }
 
     deinit {
-        spinTimer?.invalidate()
-        [activeObserver, resignObserver].compactMap { $0 }.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe spinTimer?.invalidate()
+        unsafe [activeObserver, resignObserver].compactMap { $0 }.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func attach(to manager: DownloadManager) {
@@ -110,7 +110,7 @@ final class DownloadDockProgressController {
     }
 
     private func startSpinTimerIfNeeded() {
-        guard spinTimer == nil else { return }
+        guard unsafe spinTimer == nil else { return }
         // 6 Hz at ~one rotation per second: coarse enough to stay cheap, smooth enough for a
         // 32pt Dock badge.
         let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 6.0, repeats: true) { [weak self] _ in
@@ -122,12 +122,12 @@ final class DownloadDockProgressController {
             }
         }
         timer.tolerance = 0.03
-        spinTimer = timer
+        unsafe spinTimer = timer
     }
 
     private func stopSpinTimer() {
-        spinTimer?.invalidate()
-        spinTimer = nil
+        unsafe spinTimer?.invalidate()
+        unsafe spinTimer = nil
     }
 }
 

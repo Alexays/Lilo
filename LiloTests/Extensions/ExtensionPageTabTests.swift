@@ -28,8 +28,8 @@ final class ExtensionPageTabTests: XCTestCase {
     /// A window showing an extension's page in its active tab, plus a blank tab to leave it for.
     private func openExtensionPage(permissions: [String] = [], hostPermissions: [String] = []) async throws -> (window: MainWindowController, registry: ProfileExtensionRegistry, extensionId: String, pageURL: URL, tabId: UUID, otherId: UUID) {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         // Installed before a window shows the profile: its restore sweeps folders no record names.
         let registry = try context.profileContexts.context(for: profileId).extensions
         let extDir = try createMinimalExtension(named: "vault", in: tempDir)
@@ -192,7 +192,7 @@ final class ExtensionPageTabTests: XCTestCase {
     /// With "Prefer a single window" on, a normal window opens as tabs of the current one, and removing it closes those tabs only.
     func testASingleWindowWindowsCreateRemovesOnlyTheTabsItOpened() async throws {
         let (window, _, _, _, tabId, _) = try await openExtensionPage()
-        window.context.settingsStore.set("singleWindow", value: "true")
+        window.context.settingsStore!.set("singleWindow", value: "true")
         let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
         let tabsBefore = window.tabManager.openTabs.map(\.id)
 
@@ -247,7 +247,7 @@ final class ExtensionPageTabTests: XCTestCase {
         let (window, _, _, pageURL, tabId, _) = try await openExtensionPage()
         let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
         let shownId = try XCTUnwrap(window.tabManager.currentSpaceId)
-        let behind = try browserContext.context.spaceManager.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
+        let behind = try browserContext.context.spaceManager!.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
         window.switchToSpace(behind.id)
         window.switchToSpace(shownId)
 
@@ -349,8 +349,8 @@ final class ExtensionPageTabTests: XCTestCase {
     /// A window of a new profile with an extension made of `files` loaded and its worker running.
     private func loadClosingExtension(_ files: [String: String]) async throws -> (window: MainWindowController, registry: ProfileExtensionRegistry, id: String) {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let registry = try context.profileContexts.context(for: profileId).extensions
         let extDir = tempDir.appendingPathComponent("closing")
         try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)

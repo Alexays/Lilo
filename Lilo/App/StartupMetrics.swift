@@ -25,11 +25,11 @@ enum StartupMetrics {
     /// Process launch on the uptime clock, from the kernel's start time: dyld and pre-main work count.
     private static let startTime: UInt64 = {
         let now = DispatchTime.now().uptimeNanoseconds
-        var info = kinfo_proc()
-        var size = MemoryLayout<kinfo_proc>.stride
+        var info = unsafe kinfo_proc()
+        var size = unsafe MemoryLayout<kinfo_proc>.stride
         var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
-        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0 else { return now }
-        let launch = info.kp_proc.p_un.__p_starttime
+        guard unsafe sysctl(&mib, 4, &info, &size, nil, 0) == 0 else { return now }
+        let launch = unsafe info.kp_proc.p_un.__p_starttime
         let elapsed = Date().timeIntervalSince1970 - (Double(launch.tv_sec) + Double(launch.tv_usec) / 1_000_000)
         return now - min(now, UInt64(max(0, elapsed) * 1_000_000_000))
     }()
@@ -81,14 +81,14 @@ enum StartupMetrics {
     }
 
     private static func format(_ milliseconds: Double) -> String {
-        String(format: "%.1f", milliseconds)
+        unsafe String(format: "%.1f", milliseconds)
     }
 
     /// Traces are diagnostics-only; marks stay ungated because the Diagnostics panel needs them.
     #if DEBUG
     static let tracingEnabled = true
     #else
-    static let tracingEnabled = UserDefaults.lilo.bool(forKey: "LiloTracingEnabled")
+    static let tracingEnabled = unsafe UserDefaults.lilo.bool(forKey: "LiloTracingEnabled")
     #endif
 
     static func trace(_ category: String, _ message: @autoclosure () -> String) {

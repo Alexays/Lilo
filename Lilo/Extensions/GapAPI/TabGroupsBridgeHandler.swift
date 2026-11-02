@@ -411,7 +411,7 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     static func hex(forChromeColor name: String) -> String? {
         guard let rgb = palette.first(where: { $0.name == name.lowercased() })?.rgb else { return nil }
-        return String(format: "#%02x%02x%02x", rgb.0, rgb.1, rgb.2)
+        return unsafe String(format: "#%02x%02x%02x", rgb.0, rgb.1, rgb.2)
     }
 
     /// Nearest Chrome palette color to an arbitrary folder hex (squared RGB distance). Folders can

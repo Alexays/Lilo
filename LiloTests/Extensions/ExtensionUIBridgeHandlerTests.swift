@@ -16,15 +16,15 @@ final class ExtensionUIBridgeHandlerTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let windowProfileId = try context.profileManager.createProfile(name: "Window").id
-        otherProfileId = try context.profileManager.createProfile(name: "Other").id
+        let windowProfileId = try context.profileManager!.createProfile(name: "Window").id
+        otherProfileId = try context.profileManager!.createProfile(name: "Other").id
         let installing = try context.profileContexts.context(for: otherProfileId).extensions
         let source = try createMinimalExtension(named: "other_profile_extension", displayName: "Other Vault", in: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
         try await installing.load(from: source)
         extensionId = try XCTUnwrap(installing.loadedExtensions.first?.id)
         context.profileContexts.removeContext(for: otherProfileId)
 
-        let space = try context.spaceManager.createSpace(name: "S", profileId: windowProfileId)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: windowProfileId)
         let window = makeTestWindow(context, showing: space.id)
         window.setupBridgeLate()
         handler = try XCTUnwrap(window.bridgeRouter.handlers["getProfileExtensions"] as? ExtensionUIBridgeHandler)

@@ -39,7 +39,7 @@ enum JSDialogPresenter {
             && (origin.protocol != page?.scheme || origin.host != page?.host() || origin.port != page?.port ?? 0)
         if let page, let host = page.host(), page.scheme == "https" || page.scheme == "http" {
             let site = page.port.map { "\(host):\($0)" } ?? host
-            return String(format: (isEmbedded ? "An embedded page on %@ says" : "%@ says").localized, site)
+            return unsafe String(format: (isEmbedded ? "An embedded page on %@ says" : "%@ says").localized, site)
         }
         return (isEmbedded ? "An embedded page on this page says" : "This page says").localized
     }
@@ -51,7 +51,7 @@ enum JSDialogPresenter {
         completion: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         DispatchQueue.main.async {
-            guard let w = webView.window else { completion(true); return }
+            guard let w = unsafe webView.window else { completion(true); return }
             let alert = NSAlert()
             alert.messageText = "Leave this page?".localized
             alert.informativeText = "Changes you made may not be saved.".localized
@@ -66,7 +66,7 @@ enum JSDialogPresenter {
         completion: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         DispatchQueue.main.async {
-            guard let w = webView.window else { completion(false); return }
+            guard let w = unsafe webView.window else { completion(false); return }
             let alert = NSAlert()
             alert.messageText = "Confirm Form Resubmission".localized
             alert.informativeText = "This page used information you entered. Loading it again sends that information again, which may repeat an action such as a purchase.".localized
@@ -83,9 +83,9 @@ enum JSDialogPresenter {
         completion: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         DispatchQueue.main.async {
-            guard let w = webView.window else { completion(false); return }
+            guard let w = unsafe webView.window else { completion(false); return }
             let alert = NSAlert()
-            alert.messageText = String(format: "Allow \"%@\" to use cookies on \"%@\"?".localized, requestingDomain, currentDomain)
+            alert.messageText = unsafe String(format: "Allow \"%@\" to use cookies on \"%@\"?".localized, requestingDomain, currentDomain)
             alert.informativeText = "This lets the embedded site recognize you across sites. Only allow if you trust it.".localized
             alert.addButton(withTitle: "Allow".localized); alert.addButton(withTitle: "Don't Allow".localized)
             alert.beginSheetModal(for: w) { completion($0 == .alertFirstButtonReturn) }
@@ -107,7 +107,7 @@ enum JSDialogPresenter {
             let extensions = parameters.responds(to: accepted) ? parameters.value(forKey: "_allowedFileExtensions") as? [String] : nil
             let types = (extensions ?? []).compactMap { UTType(filenameExtension: $0) }
             if !parameters.allowsDirectories, !types.isEmpty { panel.allowedContentTypes = types }
-            if let window = webView.window {
+            if let window = unsafe webView.window {
                 panel.beginSheetModal(for: window) { response in
                     completion(response == .OK ? panel.urls : nil)
                 }

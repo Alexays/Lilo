@@ -29,7 +29,7 @@ final class PageFindController: NSObject {
         countsMatches = [setFindDelegate, NSSelectorFromString("_findString:options:maxCount:"), NSSelectorFromString("_hideFindUI")]
             .allSatisfy(webView.responds(to:))
         super.init()
-        if countsMatches { webView.perform(setFindDelegate, with: self) }
+        if countsMatches { unsafe webView.perform(setFindDelegate, with: self) }
     }
 
     func selectedText() async -> String? {
@@ -54,7 +54,7 @@ final class PageFindController: NSObject {
         if countsMatches {
             // WebKit numbers matches from the first one a search selects, wherever it is: a search from the top, with
             // WebKit's count reset, numbers them in page order.
-            webView.perform(NSSelectorFromString("_hideFindUI"))
+            unsafe webView.perform(NSSelectorFromString("_hideFindUI"))
             WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("getSelection().removeAllRanges()", in: nil, in: .defaultClient)
         }
         search(backwards: false)
@@ -71,7 +71,7 @@ final class PageFindController: NSObject {
     func dismiss() {
         guard !query.isEmpty else { return }
         let hideFindUI = NSSelectorFromString("_hideFindUI")
-        if webView.responds(to: hideFindUI) { webView.perform(hideFindUI) }
+        if webView.responds(to: hideFindUI) { unsafe webView.perform(hideFindUI) }
     }
 
     private func findAgain(backwards: Bool) {

@@ -36,12 +36,12 @@ enum AgentClientConfig {
             let installed = binary("claude", home: home, extra: [home.appending(path: ".claude/local/claude").path])
             let found = installed == nil ? await run("/bin/zsh", ["-lc", "command -v claude"], timeout: 5).output : installed
             guard let claude = found?.trimmingCharacters(in: .whitespacesAndNewlines), !claude.isEmpty else {
-                throw AgentToolError(String(format: "Claude Code is not installed. Once it is, run: %@".localized, "claude mcp add --scope user lilo -- \(helperPath)"))
+                throw unsafe AgentToolError(String(format: "Claude Code is not installed. Once it is, run: %@".localized, "claude mcp add --scope user lilo -- \(helperPath)"))
             }
             // `add` refuses a name already taken, by this Lilo or one that moved.
             _ = await run(claude, ["mcp", "remove", "--scope", "user", "lilo"], timeout: 15)
             let added = await run(claude, ["mcp", "add", "--scope", "user", "lilo", "--", helperPath], timeout: 15)
-            guard added.status == 0 else { throw AgentToolError(String(format: "Claude Code refused the server: %@".localized, added.output ?? "")) }
+            guard added.status == 0 else { throw unsafe AgentToolError(String(format: "Claude Code refused the server: %@".localized, added.output ?? "")) }
             return "Added Lilo to Claude Code".localized
         case .claudeDesktop:
             try mergeServer(into: claudeDesktopConfig(home: home))
@@ -129,7 +129,7 @@ enum AgentClientConfig {
     /// JSON (comments, a trailing comma) is left alone: rewriting it would drop the user's other servers.
     private static func mergeServer(into url: URL) throws {
         if let data = try? Data(contentsOf: url), (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] == nil {
-            throw AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, genericConfigJSON))
+            throw unsafe AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, genericConfigJSON))
         }
         var config = readJSON(url)
         var servers = config["mcpServers"] as? [String: Any] ?? [:]
@@ -201,7 +201,7 @@ enum AgentClientConfig {
                 let reader = pipe.fileHandleForReading.fileDescriptor
                 _ = fcntl(reader, F_SETFL, O_NONBLOCK)
                 var buffer = [UInt8](repeating: 0, count: 65_536)
-                let count = read(reader, &buffer, buffer.count)
+                let count = unsafe read(reader, &buffer, buffer.count)
                 continuation.resume(returning: (process.terminationStatus, count > 0 ? String(bytes: buffer[..<count], encoding: .utf8) : ""))
             }
         }

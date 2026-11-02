@@ -24,6 +24,8 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
     static func publishScreenshot(_ png: Data) -> (id: String, url: URL) {
         let id = UUID().uuidString
         screenshots[id] = png
+        // A fixed scheme and a UUID always parse.
+        // swiftlint:disable:next force_unwrapping
         return (id, URL(string: "lilo-chrome://ui/\(screenshotPrefix)\(id).png")!)
     }
 
@@ -87,7 +89,7 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         // The literal lives in the binary for the process lifetime, so Data can borrow it.
-        let data = Data(
+        let data = unsafe Data(
             bytesNoCopy: UnsafeMutableRawPointer(mutating: asset.text.utf8Start),
             count: asset.text.utf8CodeUnitCount,
             deallocator: .none
@@ -162,7 +164,7 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
         let icon = NSWorkspace.shared.icon(for: UTType(filenameExtension: ext) ?? .data)
         let rect = NSRect(x: 0, y: 0, width: fileIconPointSize, height: fileIconPointSize)
         let data = icon.bestRepresentation(for: rect, context: nil, hints: nil)
-            .flatMap { $0.cgImage(forProposedRect: nil, context: nil, hints: nil) }
+            .flatMap { unsafe $0.cgImage(forProposedRect: nil, context: nil, hints: nil) }
             .flatMap { NSBitmapImageRep(cgImage: $0).representation(using: .png, properties: [:]) }
             ?? Data()
         dataByPath[path] = data

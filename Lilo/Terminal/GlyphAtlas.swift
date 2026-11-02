@@ -39,15 +39,16 @@ final class GlyphAtlas {
     private var colorShelf = Shelf()
     private var scratch: [UInt8] = []
 
-    init(device: MTLDevice) {
-        func texture(_ format: MTLPixelFormat, _ size: Int) -> MTLTexture {
+    init?(device: MTLDevice) {
+        func texture(_ format: MTLPixelFormat, _ size: Int) -> MTLTexture? {
             let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: size, height: size, mipmapped: false)
             descriptor.storageMode = .shared
             descriptor.usage = .shaderRead
-            return device.makeTexture(descriptor: descriptor)!
+            return device.makeTexture(descriptor: descriptor)
         }
-        grayTexture = texture(.r8Unorm, 1024)
-        colorTexture = texture(.bgra8Unorm, 512)
+        guard let gray = texture(.r8Unorm, 1024), let color = texture(.bgra8Unorm, 512) else { return nil }
+        grayTexture = gray
+        colorTexture = color
     }
 
     /// Returns nil for glyphs with no ink (spaces).
@@ -55,7 +56,7 @@ final class GlyphAtlas {
         let key = Key(font: fontIndex, glyph: glyph)
         if let cached = entries[key] { return cached }
         var glyph = glyph
-        let bounds = CTFontGetBoundingRectsForGlyphs(font, .horizontal, &glyph, nil, 1)
+        let bounds = unsafe CTFontGetBoundingRectsForGlyphs(font, .horizontal, &glyph, nil, 1)
         guard bounds.width > 0, bounds.height > 0 else {
             entries[key] = .some(nil)
             return nil
@@ -68,7 +69,7 @@ final class GlyphAtlas {
         let height = Int(bounds.maxY.rounded(.up)) - bottom + 1
         let entry = rasterize(width: width, height: height, color: isColor, left: left, top: bottom + height) { context in
             var origin = CGPoint(x: -CGFloat(left), y: -CGFloat(bottom))
-            CTFontDrawGlyphs(font, &glyph, &origin, 1, context)
+            unsafe CTFontDrawGlyphs(font, &glyph, &origin, 1, context)
         }
         entries[key] = .some(entry)
         return entry
@@ -86,7 +87,7 @@ final class GlyphAtlas {
         return entry
     }
 
-    private static let srgb = CGColorSpace(name: CGColorSpace.sRGB)!
+    private static let srgb = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
     private static let gray = CGColorSpaceCreateDeviceGray()
 
     static func isSprite(_ codepoint: UInt32) -> Bool {
@@ -103,24 +104,26 @@ final class GlyphAtlas {
         let bytesPerRow = width * (color ? 4 : 1)
         scratch.removeAll(keepingCapacity: true)
         scratch.append(contentsOf: repeatElement(0, count: bytesPerRow * height))
-        scratch.withUnsafeMutableBytes { bytes in
-            let context = CGContext(
-                data: bytes.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: bytesPerRow,
+        let drawn = scratch.withUnsafeMutableBytes { bytes in
+            guard let base = bytes.baseAddress, let context = unsafe CGContext(
+                data: base, width: width, height: height, bitsPerComponent: 8, bytesPerRow: bytesPerRow,
                 space: color ? Self.srgb : Self.gray,
                 bitmapInfo: color
                     ? CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
                     : CGImageAlphaInfo.none.rawValue
-            )!
+            ) else { return false }
             context.setAllowsAntialiasing(true)
             context.setShouldSmoothFonts(false)
             context.setFillColor(gray: 1, alpha: 1)
             context.setStrokeColor(gray: 1, alpha: 1)
             draw(context)
-            texture.replace(
+            unsafe texture.replace(
                 region: MTLRegionMake2D(origin.x, origin.y, width, height), mipmapLevel: 0,
-                withBytes: bytes.baseAddress!, bytesPerRow: bytesPerRow
+                withBytes: base, bytesPerRow: bytesPerRow
             )
+            return true
         }
+        guard drawn else { return nil }
         return AtlasGlyph(
             x: UInt16(origin.x), y: UInt16(origin.y), width: UInt16(width), height: UInt16(height),
             left: Int16(left), top: Int16(top), isColor: color

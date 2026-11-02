@@ -44,7 +44,8 @@ final class ReleaseMediaCaptureTests: XCTestCase {
     func testAddressBarAnnouncement() async throws {
         let capture = try await ReleaseMediaCapture(version: "0.8.0-announcement", feature: "address-bar")
         defer { capture.close() }
-        capture.context.settingsStore.set("addressPlacement", value: "page")
+        let settingsStore = try XCTUnwrap(capture.context.settingsStore)
+        settingsStore.set("addressPlacement", value: "page")
         capture.controller.applyStoredTabLayoutEverywhere()
         let tab = try await capture.page(title: "Field guide", color: "#553f69")
         let engine = try XCTUnwrap(capture.controller.tabManager.engineTab(for: tab.id))
@@ -62,7 +63,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         try await capture.region(selector, name: "setting-visible", margin: 10)
         try await capture.click(".ui-segmented[aria-label='Address'] button", text: "Hidden")
         try await capture.wait("Hidden persists through the real Settings bridge") {
-            capture.context.settingsStore.tabLayout.address == .hidden && capture.controller.tabLayout.address == .hidden
+            settingsStore.tabLayout.address == .hidden && capture.controller.tabLayout.address == .hidden
         }
         try await capture.region(selector, name: "setting-hidden", margin: 10)
         try await capture.click(".section-nav-panel .panel-close")

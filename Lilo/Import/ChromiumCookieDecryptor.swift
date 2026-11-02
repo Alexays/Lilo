@@ -13,8 +13,8 @@ struct ChromiumCookieDecryptor {
         var key = Data(count: kCCKeySizeAES128)
         let salt = [UInt8]("saltysalt".utf8)
         let passwordBytes = Array(password.utf8)
-        key.withUnsafeMutableBytes { keyBuffer in
-            _ = CCKeyDerivationPBKDF(
+        unsafe key.withUnsafeMutableBytes { keyBuffer in
+            _ = unsafe CCKeyDerivationPBKDF(
                 CCPBKDFAlgorithm(kCCPBKDF2), password, passwordBytes.count,
                 salt, salt.count, CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA1), 1003,
                 keyBuffer.bindMemory(to: UInt8.self).baseAddress, kCCKeySizeAES128)
@@ -28,11 +28,11 @@ struct ChromiumCookieDecryptor {
         let iv = Data(repeating: 0x20, count: kCCBlockSizeAES128)
         var output = Data(count: cipher.count + kCCBlockSizeAES128)
         var length = 0
-        let status = output.withUnsafeMutableBytes { out in
-            cipher.withUnsafeBytes { input in
-                key.withUnsafeBytes { keyBytes in
-                    iv.withUnsafeBytes { ivBytes in
-                        CCCrypt(CCOperation(kCCDecrypt), CCAlgorithm(kCCAlgorithmAES), CCOptions(kCCOptionPKCS7Padding),
+        let status = unsafe output.withUnsafeMutableBytes { out in
+            unsafe cipher.withUnsafeBytes { input in
+                unsafe key.withUnsafeBytes { keyBytes in
+                    unsafe iv.withUnsafeBytes { ivBytes in
+                        unsafe CCCrypt(CCOperation(kCCDecrypt), CCAlgorithm(kCCAlgorithmAES), CCOptions(kCCOptionPKCS7Padding),
                                 keyBytes.baseAddress, kCCKeySizeAES128, ivBytes.baseAddress,
                                 input.baseAddress, cipher.count, out.baseAddress, out.count, &length)
                     }
@@ -57,7 +57,7 @@ struct ChromiumCookieDecryptor {
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        let status = unsafe SecItemCopyMatching(query as CFDictionary, &item)
         guard status == errSecSuccess, let data = item as? Data, let password = String(data: data, encoding: .utf8) else {
             throw ImportError.keychain(status)
         }

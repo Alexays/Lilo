@@ -309,7 +309,7 @@ extension MainWindowController {
         if tabManager.activeSplit?.layout.paneIds.contains(id) != true {
             view.frame = contentContainerView.bounds
             view.autoresizingMask = [.width, .height]
-            if view.superview !== contentContainerView { contentContainerView.addSubview(view) }
+            if unsafe view.superview !== contentContainerView { contentContainerView.addSubview(view) }
         }
         processOutgoingContentViews(outgoing)
         view.isHidden = false
@@ -343,7 +343,7 @@ extension MainWindowController {
         let took = formatter.string(from: duration) ?? ""
         let command = status.command.isEmpty ? (tabManager.tab(for: id)?.title ?? "") : status.command
         let failed = status.state == .failed
-        postTerminalNotification(
+        unsafe postTerminalNotification(
             id: id,
             title: failed ? "Command failed".localized : "Command finished".localized,
             body: failed
@@ -381,7 +381,7 @@ extension MainWindowController {
         let alert = NSAlert()
         alert.messageText = "Close this terminal?".localized
         alert.informativeText = tabManager.terminalHost.runningCommand(id).map {
-            String(format: "%@ is still running and will be stopped.".localized, $0)
+            unsafe String(format: "%@ is still running and will be stopped.".localized, $0)
         } ?? "A command is still running in it and will be stopped.".localized
         alert.addButton(withTitle: "Close".localized)
         alert.addButton(withTitle: "Cancel".localized)
@@ -543,7 +543,7 @@ extension BrowserContext {
             if NSApp.dockTile.badgeLabel != badge { NSApp.dockTile.badgeLabel = badge }
             var sent: [ObjectIdentifier: NSArray] = [:]
             for window in windows.windows {
-                guard let router = window.bridgeRouter else { continue }
+                let router = window.bridgeRouter
                 let key = ObjectIdentifier(window)
                 let terminals = window.terminalSummaries()
                 let bridged = terminals as NSArray

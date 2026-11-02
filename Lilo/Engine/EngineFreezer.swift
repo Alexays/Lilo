@@ -43,10 +43,10 @@ final class CompositeFreezer {
     /// background process can stretch past any extension loan: on a page frozen meanwhile the call fails instead of raising.
     private static let failsAsyncJavaScriptWhileSuspended: Void = {
         let selector = NSSelectorFromString("_callAsyncJavaScript:arguments:inFrame:inContentWorld:withUserGesture:completionHandler:")
-        guard let method = class_getInstanceMethod(WKWebView.self, selector) else { return }
+        guard let method = unsafe class_getInstanceMethod(WKWebView.self, selector) else { return }
         typealias Completion = @convention(block) (Any?, Error?) -> Void
         typealias CallMethod = @convention(c) (WKWebView, Selector, NSString, NSDictionary?, WKFrameInfo?, WKContentWorld, Bool, Completion?) -> Void
-        let original = unsafeBitCast(method_getImplementation(method), to: CallMethod.self)
+        let original = unsafe unsafeBitCast(method_getImplementation(method), to: CallMethod.self)
         typealias CallBlock = @convention(block) (WKWebView, NSString, NSDictionary?, WKFrameInfo?, WKContentWorld, Bool, Completion?) -> Void
         let call: CallBlock = { webView, body, arguments, frame, world, userGesture, completion in
             guard MainActor.assumeIsolated({ suspendedWebViews.contains(webView) }) else {
@@ -54,7 +54,7 @@ final class CompositeFreezer {
             }
             completion?(nil, WKError(.javaScriptExceptionOccurred))
         }
-        method_setImplementation(method, imp_implementationWithBlock(call))
+        unsafe method_setImplementation(method, imp_implementationWithBlock(call))
     }()
 
     func freeze(_ webView: WKWebView) {

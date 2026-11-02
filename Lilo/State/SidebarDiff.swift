@@ -31,7 +31,7 @@ enum SidebarDiff {
         var delta = SidebarDelta()
         // Both sides served by one projection memo entry (an activation) share their buffers: equal without a walk.
         func sameStorage<T>(_ lhs: [T], _ rhs: [T]) -> Bool {
-            lhs.count == rhs.count && lhs.withUnsafeBufferPointer { lhs in rhs.withUnsafeBufferPointer { lhs.baseAddress == $0.baseAddress } }
+            lhs.count == rhs.count && lhs.withUnsafeBufferPointer { lhs in rhs.withUnsafeBufferPointer { unsafe lhs.baseAddress == $0.baseAddress } }
         }
         if sameStorage(previous.tabs, current.tabs), sameStorage(previous.folders, current.folders),
            sameStorage(previous.treeItems, current.treeItems) {

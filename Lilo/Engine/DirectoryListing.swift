@@ -40,7 +40,7 @@ enum DirectoryListing {
     /// The page of the folder at `url`, its table empty until `rows(of:)` fills it.
     static func page(for url: URL) -> String {
         let path = url.path(percentEncoded: false)
-        let title = ViewSourceSchemeHandler.escape(String(format: "Index of %@".localized, path.hasSuffix("/") ? path : path + "/"))
+        let title = unsafe ViewSourceSchemeHandler.escape(String(format: "Index of %@".localized, path.hasSuffix("/") ? path : path + "/"))
         let parent = path == "/" ? "" : "<p><a href=\"../\"><svg aria-hidden=\"true\"><use href=\"#up\"/></svg>\("Parent folder".localized)</a></p>"
         return """
             <!DOCTYPE html>

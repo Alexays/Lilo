@@ -22,7 +22,6 @@ final class ProcessManagerBridgeHandlerTests: XCTestCase {
         killSpy: KillSpy,
         diagnostics: @escaping @MainActor @Sendable (WKWebViewTab) -> WebViewProcessDiagnostics
     ) -> ProcessManagerBridgeHandler {
-        windowController.bridgeRouter = BridgeRouter(chromeWebView: windowController.chromeWebView)
         return ProcessManagerBridgeHandler(
             browserStateStore: store,
             tabManager: windowController.tabManager,

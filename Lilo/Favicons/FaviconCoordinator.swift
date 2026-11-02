@@ -21,7 +21,7 @@ final class FaviconCoordinator {
     /// Show a cached favicon immediately if available, expired or not. Returns the icon shown.
     @discardableResult
     func applyCached(from tab: WKWebViewTab) -> FaviconService.Resolved? {
-        guard let pageHost = tab.currentURL?.host?.lowercased(),
+        guard let pageHost = tab.currentURL?.faviconKey,
               let cached = service.cached(for: pageHost) else { return nil }
         applyFavicon(tab.id, cached.dataURL, cached.dominantColor)
         // Persistent data stores are keyed by profile id; ephemeral (private) ones have no identifier.
@@ -35,7 +35,7 @@ final class FaviconCoordinator {
     /// these hosts doesn't re-download. Called when a space's tabs enter the runtime.
     func warm(from tabs: [Tab]) {
         for tab in tabs {
-            guard let dataURL = tab.faviconDataURL, let host = tab.url?.host else { continue }
+            guard let dataURL = tab.faviconDataURL, let host = tab.url?.faviconKey else { continue }
             service.warmIfAbsent(host: host, dataURL: dataURL, dominantColor: tab.faviconDominantColor)
         }
     }
@@ -50,7 +50,7 @@ final class FaviconCoordinator {
         // A site can switch icons on the same host (after signing in, say): an icon the page no
         // longer offers is refetched before its TTL runs out.
         let offered = shown?.iconURL.map { url in icons.contains { $0.url.absoluteString == url } } ?? false
-        guard let pageHost = tab.currentURL?.host?.lowercased(), (shown?.isExpired ?? true) || !offered,
+        guard let pageHost = tab.currentURL?.faviconKey, (shown?.isExpired ?? true) || !offered,
               failedAt[pageHost].map({ Date().timeIntervalSince($0) >= Self.failureRetryInterval }) ?? true,
               !icons.isEmpty else {
             icons.forEach { $0.decide(nil) }

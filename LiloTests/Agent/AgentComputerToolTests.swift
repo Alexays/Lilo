@@ -198,8 +198,8 @@ final class AgentComputerToolTests: AgentToolTestCase {
     }
 
     func testAgentTabIgnoresTheWindowsDefaultZoom() async throws {
-        context.settingsStore.defaultZoom = 0.8
-        defer { context.settingsStore.defaultZoom = 1 }
+        context.settingsStore!.defaultZoom = 0.8
+        defer { context.settingsStore!.defaultZoom = 1 }
         let tab = try await newAgentTab()
 
         _ = await client.callTool("navigate", ["tabId": tab, "url": "data:text/html,<p>page</p>"])
@@ -423,7 +423,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
         }
         let tab = try await newAgentTab()
         _ = await client.callTool("navigate", ["tabId": tab, "url": "http://127.0.0.1:\(server.port)/"])
-        context.settingsStore.set(AgentControl.asksBeforeActionsKey, value: "false")
+        context.settingsStore!.set(AgentControl.asksBeforeActionsKey, value: "false")
         let wait = AgentInteractionTools.requestWait
         defer { AgentInteractionTools.requestWait = wait }
         AgentInteractionTools.requestWait = .seconds(2)

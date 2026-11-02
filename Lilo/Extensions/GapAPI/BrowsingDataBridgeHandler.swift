@@ -56,7 +56,7 @@ final class BrowsingDataBridgeHandler: GapHandler {
         // (hosted apps) names nothing in Lilo, and WebKit cannot single out extension pages' data.
         if !siteTypes.isEmpty, originTypes == nil || originTypes?["unprotectedWeb"] as? Bool == true,
            let store = call.registry.controller.configuration.defaultWebsiteDataStore {
-            let types = siteTypes.reduce(into: Set<String>()) { $0.formUnion(Self.websiteDataTypes[$1]!) }
+            let types = siteTypes.reduce(into: Set<String>()) { $0.formUnion(Self.websiteDataTypes[$1] ?? []) }
             // Records list http(s) and file sites only, so going through them spares extension pages'
             // own data as Chrome does; WebKit cannot also bound them by time.
             if !hosts.isEmpty || (sinceMs <= 0 && originTypes?["extension"] as? Bool != true) {

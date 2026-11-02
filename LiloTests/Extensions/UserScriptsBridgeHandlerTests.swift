@@ -205,8 +205,8 @@ final class UserScriptsExecuteTests: XCTestCase {
     /// A window whose tab shows an https://example.com page, and an extension allowed to script it.
     private func scriptedPage(_ html: String = "<title>Page</title>") async throws -> (registry: ProfileExtensionRegistry, extensionId: String, page: WKWebView) {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let registry = try context.profileContexts.context(for: profileId).extensions
         let dir = tempDir.appendingPathComponent("scripts", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -315,8 +315,8 @@ final class UserScriptsExecuteTests: XCTestCase {
 
     func testAnExtensionPageDetectsTheUserScriptsSwitchAtOnce() async throws {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "Q").id
-        let space = try context.spaceManager.createSpace(name: "T", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "Q").id
+        let space = try context.spaceManager!.createSpace(name: "T", profileId: profileId)
         let registry = try context.profileContexts.context(for: profileId).extensions
         let dir = tempDir.appendingPathComponent("page-detects", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

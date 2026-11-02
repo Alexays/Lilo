@@ -500,6 +500,8 @@ export const createDemoSettings = ({
         available: false,
         lastCheck: null,
         version,
+        webKitFork: false,
+        webKitVersion: "",
       }),
     getWebsiteData: publishSites,
     getZoomLevels: publishZoom,

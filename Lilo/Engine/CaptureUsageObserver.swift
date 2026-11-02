@@ -33,7 +33,7 @@ final class CaptureUsageObserver: NSObject {
         // _displayCaptureState (screen-share state) is private; observe via string-key KVO, only when
         // WebKit still has it, since KVO on a missing key raises.
         guard webView.responds(to: NSSelectorFromString("_displayCaptureState")) else { return }
-        webView.addObserver(self, forKeyPath: "_displayCaptureState", options: [.new], context: nil)
+        unsafe webView.addObserver(self, forKeyPath: "_displayCaptureState", options: [.new], context: nil)
         displayCaptureRegistered = true
     }
 
@@ -57,7 +57,7 @@ final class CaptureUsageObserver: NSObject {
         if keyPath == "_displayCaptureState" {
             Task { @MainActor [weak self] in self?.recompute() }
         } else {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+            unsafe super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
     }
 

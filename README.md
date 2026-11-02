@@ -57,9 +57,11 @@ What changes is the engine: WebKit instead of Chromium. With the same tabs, Chro
 
 Most Arc alternatives are Chromium with a new sidebar. Lilo keeps the sidebar and changes the rest.
 
-- **Not Chromium.** No bundled browser engine, no Electron: Swift, AppKit and the system WebKit,
-  with the sidebar and settings in Svelte. Lower memory use, a battery that lasts the day, and
-  Apple's security updates with every macOS release.
+- **Not Chromium.** No Chromium, no Electron: Swift, AppKit and WebKit, with the sidebar and
+  settings in Svelte. Lower memory use, a battery that lasts the day, and Apple's security updates
+  with every macOS release. Lilo runs on the WebKit that ships with macOS, Safari's engine; on Apple
+  silicon it can also bring engine fixes ahead of macOS with its own build, used only while that build
+  holds every security fix of your macOS ([how](docs/WEBKIT_FORK.md)).
 - **Private by default.** No account, no telemetry, no analytics, no server: nothing you do is
   sent to the project. Ads and trackers are blocked out of the box, cross-site tracking is blocked
   as in Safari, and Global Privacy Control is on (macOS 27). Every request Lilo makes on its own is
@@ -203,6 +205,7 @@ Apple ID.
 ## Documentation
 
 - [docs/](docs/README.md): architecture, debugging, localization, releasing, AI agents
+- [docs/WEBKIT_FORK.md](docs/WEBKIT_FORK.md): Lilo's WebKit build, its patches and how it stays as secure as macOS
 - [COMPATIBILITY.md](COMPATIBILITY.md): what still differs from Chrome for extensions and sites
 - [PRIVACY.md](PRIVACY.md): every request Lilo makes on its own
 - [ROADMAP.md](ROADMAP.md): what is shipped, what is next, and the non-goals

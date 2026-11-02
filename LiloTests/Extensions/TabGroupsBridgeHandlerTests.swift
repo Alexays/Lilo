@@ -53,8 +53,8 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let registry = try context.profileContexts.context(for: profileId).extensions
         let window = makeTestWindow(context, showing: space.id)
         defer { window.close() }
@@ -68,7 +68,7 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         let extensionId = try XCTUnwrap(registry.loadedExtensions.first?.id)
 
         try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: TabFolder(spaceId: space.id, name: "First", color: "#1a73e8"), section: .unpinned))
-        let other = try context.spaceManager.createSpace(name: "T", profileId: profileId)
+        let other = try context.spaceManager!.createSpace(name: "T", profileId: profileId)
         window.switchToSpace(other.id)
         try window.applyBrowserCommand(.createFolder(spaceId: other.id, folder: TabFolder(spaceId: other.id, name: "Shown", color: "#1a73e8"), section: .unpinned))
         try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: TabFolder(spaceId: space.id, name: "Behind", color: "#1a73e8"), section: .unpinned))
@@ -103,8 +103,8 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
     /// A window on a new space of a new profile, whose extension holds `tabGroups`.
     private func groupsCaller(in browserContext: TemporaryBrowserContext) async throws -> GroupsCaller {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let registry = try context.profileContexts.context(for: profileId).extensions
         let window = makeTestWindow(context, showing: space.id)
         window.setupExtensions()
@@ -144,7 +144,7 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         let caller = try await groupsCaller(in: browserContext)
         let window = caller.window
         let behind = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
-        let shown = try browserContext.context.spaceManager.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
+        let shown = try browserContext.context.spaceManager!.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
         window.switchToSpace(shown.id)
         let front = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
         let position = { (id: UUID) throws -> [String: Int] in

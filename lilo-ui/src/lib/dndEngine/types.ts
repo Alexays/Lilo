@@ -48,6 +48,8 @@ export type DndZoneSnapshot = {
 	axis: DndAxis;
 	rect: DndRect;
 	items: DndItemRect[];
+	// In the zone a drag started from, the dragged row's index there before it was lifted.
+	home?: number;
 };
 
 export type DndResolvedTarget = {

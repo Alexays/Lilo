@@ -500,7 +500,8 @@
 				"check": "Check now",
 				"lastChecked": "Checked {time}",
 				"unavailable": "This build does not update itself.",
-				"developerTools": "Lilo's own developer tools are now in the Develop menu."
+				"developerTools": "Lilo's own developer tools are now in the Develop menu.",
+				"webKitFork": "WebKit {version}, Lilo fork"
 			},
 			"autoUpdate": {
 				"title": "Install updates automatically",
@@ -1687,7 +1688,7 @@
 			"subtitle": "That is all you need.",
 			"go": "Let's go",
 			"search": "Press ⌘T to search or type an address.",
-			"tabs": "Your tabs live on the left, always in view.",
+			"tabs": "Your tabs stay in view, on the edge you picked.",
 			"split": "Drag a tab to the edge of the page to see two pages side by side."
 		},
 		"devTips": {
@@ -1695,7 +1696,7 @@
 			"subtitle": "The shortcuts work even without the Develop menu.",
 			"inspector": "Press ⌥⌘I to open the Web Inspector on the page.",
 			"localhost": "Drag your localhost to the edge of the page to see it next to the docs.",
-			"agents": "Your agents open their tabs in the Agents space, on the left."
+			"agents": "Your agents open their tabs in the Agents space."
 		},
 		"arrival": {
 			"title": "Welcome to Lilo.",
@@ -1878,6 +1879,7 @@
 		"What’s New": "What’s New",
 		"Report an Issue…": "Report an Issue…",
 		"Your internet, in bloom.": "Your internet, in bloom.",
+		"WebKit %@, Lilo fork": "WebKit %@, Lilo fork",
 		"Recently Visited": "Recently Visited",
 		"No History": "No History",
 		"%@ wants to connect to a serial port": "%@ wants to connect to a serial port",

@@ -39,7 +39,7 @@ extension MainWindowController {
             context.browserState.pictureInPictureOpenerIds.remove(openerId)
             // Kept in the window only to draw its PiP window: a background tab leaves it again.
             if !replaced, tabManager.activeOpenTabId != openerId, !context.browserState.displayedTabIds.contains(openerId),
-               let engine = tabManager.engineTab(for: openerId), engine.view.superview === contentContainerView,
+               let engine = tabManager.engineTab(for: openerId), unsafe engine.view.superview === contentContainerView,
                !engine.shouldRetainForWebInspector, !engine.isTabShareSource, !engine.isAgentControlled {
                 engine.view.removeFromSuperview()
             }
@@ -51,7 +51,7 @@ extension MainWindowController {
     /// Docks `engine` in the sidebar slot; the chrome mounts the slot on the bridge event and the
     /// zone stream then positions the native container.
     func dockInCallTab(_ engine: WKWebViewTab) {
-        guard let contentView = window?.contentView, tabLayout.position.isVertical, context.settingsStore.dockCallsInSidebar else {
+        guard let contentView = window?.contentView, tabLayout.position.isVertical, context.settingsStore?.dockCallsInSidebar != false else {
             floatingTabPanel.float(engine)
             return
         }

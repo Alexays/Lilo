@@ -34,7 +34,7 @@ final class FloatingTabPanelController: NSObject, NSWindowDelegate {
         view.frame = contentView.bounds
         view.autoresizingMask = [.width, .height]
         view.isHidden = false
-        if view.superview !== contentView { contentView.addSubview(view) }
+        if unsafe view.superview !== contentView { contentView.addSubview(view) }
         panel.orderFrontRegardless()
     }
 

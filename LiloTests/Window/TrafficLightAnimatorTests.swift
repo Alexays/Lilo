@@ -55,7 +55,7 @@ final class TrafficLightAnimatorTests: XCTestCase {
         let saved = keys.map { UserDefaults.lilo.object(forKey: $0) }
         defer { for (key, value) in zip(keys, saved) { UserDefaults.lilo.set(value, forKey: key) } }
         keys.forEach(UserDefaults.lilo.removeObject(forKey:))
-        browserContext.context.settingsStore.sidebarVisible = false
+        browserContext.context.settingsStore!.sidebarVisible = false
 
         let controller = MainWindowController(context: browserContext.context)
         // Startup is skipped under XCTest: its two sidebar steps run by hand around the database.

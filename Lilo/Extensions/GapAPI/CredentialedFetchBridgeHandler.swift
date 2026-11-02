@@ -21,14 +21,14 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
 
     override init() {
         super.init()
-        proxyObserver = NotificationCenter.default.addObserver(forName: .extensionProxyDidChange, object: nil, queue: .main) { [weak self] note in
+        unsafe proxyObserver = NotificationCenter.default.addObserver(forName: .extensionProxyDidChange, object: nil, queue: .main) { [weak self] note in
             guard let registry = note.object as? ProfileExtensionRegistry else { return }
             MainActor.assumeIsolated { self?.sessions.removeValue(forKey: registry.profileId)?.finishTasksAndInvalidate() }
         }
     }
 
     deinit {
-        if let proxyObserver { NotificationCenter.default.removeObserver(proxyObserver) }
+        if let proxyObserver = unsafe proxyObserver { NotificationCenter.default.removeObserver(proxyObserver) }
     }
 
     private func session(for registry: ProfileExtensionRegistry) -> URLSession {

@@ -13,7 +13,7 @@ final class MenuValidationTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         window = makeTestWindow(context, showing: space.id)
     }
 
@@ -70,8 +70,8 @@ final class MenuValidationTests: XCTestCase {
 
     func testDynamicMenuActionsWaitForTheHighlightsToClose() throws {
         let context = browserContext.context
-        let space = try XCTUnwrap(context.spaceManager.space(with: try XCTUnwrap(window.tabManager.currentSpaceId)))
-        _ = try context.spaceManager.createSpace(name: "Other", profileId: space.profileId)
+        let space = try XCTUnwrap(context.spaceManager!.space(with: try XCTUnwrap(window.tabManager.currentSpaceId)))
+        _ = try context.spaceManager!.createSpace(name: "Other", profileId: space.profileId)
         _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
         let delegate = AppDelegate()
         delegate.browserContext.windows.add(window)

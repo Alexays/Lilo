@@ -21,11 +21,11 @@ final class BrowserContextQuitSaveTests: XCTestCase {
 
     func testQuitSaveWritesEachSpaceIntoItsOwnProfilePool() throws {
         let context = browserContext.context
-        let profileA = try context.profileManager.createProfile(name: "A").id
-        let profileB = try context.profileManager.createProfile(name: "B").id
-        let spaceA = try context.spaceManager.createSpace(name: "A", profileId: profileA)
-        let spaceB = try context.spaceManager.createSpace(name: "B", profileId: profileB)
-        let privateA = try context.spaceManager.createSpace(name: "P", profileId: profileA, isPrivate: true)
+        let profileA = try context.profileManager!.createProfile(name: "A").id
+        let profileB = try context.profileManager!.createProfile(name: "B").id
+        let spaceA = try context.spaceManager!.createSpace(name: "A", profileId: profileA)
+        let spaceB = try context.spaceManager!.createSpace(name: "B", profileId: profileB)
+        let privateA = try context.spaceManager!.createSpace(name: "P", profileId: profileA, isPrivate: true)
         for space in [spaceA, spaceB, privateA] {
             let state = SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)
             context.browserState.storeSpace(id: space.id, snapshot: .init(spaceTab: SpaceTab(spaceId: space.id, state: state), engines: [:]))
@@ -33,8 +33,8 @@ final class BrowserContextQuitSaveTests: XCTestCase {
 
         context.saveSpaceStatesBeforeQuit()
 
-        let storeA = SpaceTabStateStore(dbPool: try context.dbManager.pool(for: profileA))
-        let storeB = SpaceTabStateStore(dbPool: try context.dbManager.pool(for: profileB))
+        let storeA = SpaceTabStateStore(dbPool: try context.dbManager!.pool(for: profileA))
+        let storeB = SpaceTabStateStore(dbPool: try context.dbManager!.pool(for: profileB))
         XCTAssertNotNil(try storeA.load(spaceId: spaceA.id))
         XCTAssertNil(try storeA.load(spaceId: spaceB.id), "a space must never be written into another profile's database")
         XCTAssertNotNil(try storeB.load(spaceId: spaceB.id))
@@ -45,8 +45,8 @@ final class BrowserContextQuitSaveTests: XCTestCase {
         let page = Data("<script>addEventListener('beforeunload', (event) => event.isTrusted && localStorage.setItem(location.pathname, 'saved'))</script>".utf8)
         let server = try await TinyHTTPServer { _ in ("200 OK", ["Content-Type: text/html"], page) }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let window = makeTestWindow(context, showing: try context.spaceManager.createSpace(name: "S", profileId: profileId).id)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let window = makeTestWindow(context, showing: try context.spaceManager!.createSpace(name: "S", profileId: profileId).id)
         var engines: [WKWebViewTab] = []
         for path in ["/suspended", "/shown"] {
             let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)\(path)")))
@@ -62,7 +62,7 @@ final class BrowserContextQuitSaveTests: XCTestCase {
         }
         context.closePagesBeforeQuit()
 
-        let reader = context.engineFactory.createTab(configuration: .init(dataStore: context.profileManager.dataStore(for: profileId)))
+        let reader = context.engineFactory.createTab(configuration: .init(dataStore: context.profileManager!.dataStore(for: profileId)))
         defer { reader.teardown() }
         reader.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/reader"))))
         var saved: [String: String] = [:]
