@@ -1,3 +1,0 @@
-kind: Fixed
-body: Dragging a tab or folder in the sidebar and bringing it back to where it started drops it there again, instead of one row off.
-time: 2026-10-31T17:09:37.981383+01:00

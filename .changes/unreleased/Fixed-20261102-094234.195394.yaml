@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'A call in a space of another profile no longer drops when you switch spaces: that profile''s extensions stay loaded while its pages are open.'
-time: 2026-11-02T09:42:34.195394+01:00

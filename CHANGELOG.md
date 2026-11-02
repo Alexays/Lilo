@@ -4,6 +4,14 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.2] - 2026-11-02
+
+### Fixed
+
+- Dragging a tab or folder in the sidebar and bringing it back to where it started drops it there again, instead of one row off.
+- A call in a space of another profile no longer drops when you switch spaces: that profile's extensions stay loaded while its pages are open.
+
+[0.14.2]: https://github.com/Alexays/Lilo/compare/v0.14.1...v0.14.2
 ## [0.14.1] - 2026-10-31
 
 ### Fixed
