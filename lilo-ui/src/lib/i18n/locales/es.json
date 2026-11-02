@@ -1687,7 +1687,7 @@
 			"subtitle": "Eso es todo lo que necesitas.",
 			"go": "Vamos",
 			"search": "Pulsa ⌘T para buscar o escribir una dirección.",
-			"tabs": "Tus pestañas están a la izquierda, siempre a la vista.",
+			"tabs": "Tus pestañas siguen a la vista, en el borde que elegiste.",
 			"split": "Arrastra una pestaña al borde de la página para ver dos páginas una al lado de la otra."
 		},
 		"devTips": {
@@ -1695,7 +1695,7 @@
 			"subtitle": "Los atajos funcionan incluso sin el menú Desarrollo.",
 			"inspector": "Pulsa ⌥⌘I para abrir el inspector web de la página.",
 			"localhost": "Arrastra tu localhost al borde de la página para verlo junto a la documentación.",
-			"agents": "Tus agentes abren sus pestañas en el espacio Agentes, a la izquierda."
+			"agents": "Tus agentes abren sus pestañas en el espacio Agentes."
 		},
 		"arrival": {
 			"title": "Te damos la bienvenida a Lilo.",

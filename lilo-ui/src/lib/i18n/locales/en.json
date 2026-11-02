@@ -1687,7 +1687,7 @@
 			"subtitle": "That is all you need.",
 			"go": "Let's go",
 			"search": "Press ⌘T to search or type an address.",
-			"tabs": "Your tabs live on the left, always in view.",
+			"tabs": "Your tabs stay in view, on the edge you picked.",
 			"split": "Drag a tab to the edge of the page to see two pages side by side."
 		},
 		"devTips": {
@@ -1695,7 +1695,7 @@
 			"subtitle": "The shortcuts work even without the Develop menu.",
 			"inspector": "Press ⌥⌘I to open the Web Inspector on the page.",
 			"localhost": "Drag your localhost to the edge of the page to see it next to the docs.",
-			"agents": "Your agents open their tabs in the Agents space, on the left."
+			"agents": "Your agents open their tabs in the Agents space."
 		},
 		"arrival": {
 			"title": "Welcome to Lilo.",

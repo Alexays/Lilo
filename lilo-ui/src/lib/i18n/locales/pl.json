@@ -1707,7 +1707,7 @@
 			"subtitle": "To wszystko, czego potrzebujesz.",
 			"go": "Zaczynajmy",
 			"search": "Naciśnij ⌘T, aby wyszukać lub wpisać adres.",
-			"tabs": "Karty są po lewej, zawsze na widoku.",
+			"tabs": "Karty są zawsze na widoku, przy wybranej krawędzi.",
 			"split": "Przeciągnij kartę do krawędzi strony, aby zobaczyć dwie strony obok siebie."
 		},
 		"devTips": {
@@ -1715,7 +1715,7 @@
 			"subtitle": "Skróty działają nawet bez menu Programowanie.",
 			"inspector": "Naciśnij ⌥⌘I, aby otworzyć Inspektora WWW na stronie.",
 			"localhost": "Przeciągnij kartę localhost do krawędzi strony, aby zobaczyć ją obok dokumentacji.",
-			"agents": "Agenci otwierają swoje karty w przestrzeni Agenci po lewej."
+			"agents": "Agenci otwierają swoje karty w przestrzeni Agenci."
 		},
 		"arrival": {
 			"title": "Witaj w Lilo.",

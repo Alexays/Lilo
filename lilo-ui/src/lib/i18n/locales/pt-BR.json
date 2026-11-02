@@ -1687,7 +1687,7 @@
 			"subtitle": "É tudo de que você precisa.",
 			"go": "Vamos lá",
 			"search": "Pressione ⌘T para buscar ou digitar um endereço.",
-			"tabs": "Suas abas ficam à esquerda, sempre à vista.",
+			"tabs": "Suas abas ficam à vista, na borda que você escolheu.",
 			"split": "Arraste uma aba para a borda da página para ver duas páginas lado a lado."
 		},
 		"devTips": {
@@ -1695,7 +1695,7 @@
 			"subtitle": "Os atalhos funcionam mesmo sem o menu Desenvolvedor.",
 			"inspector": "Pressione ⌥⌘I para abrir o Inspetor Web na página.",
 			"localhost": "Arraste seu localhost para a borda da página para vê-lo ao lado da documentação.",
-			"agents": "Seus agentes abrem suas abas no espaço Agentes, à esquerda."
+			"agents": "Seus agentes abrem suas abas no espaço Agentes."
 		},
 		"arrival": {
 			"title": "Boas-vindas ao Lilo.",

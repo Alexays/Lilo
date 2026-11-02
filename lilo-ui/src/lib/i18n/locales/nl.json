@@ -1687,7 +1687,7 @@
 			"subtitle": "Meer heb je niet nodig.",
 			"go": "Daar gaan we",
 			"search": "Druk op ⌘T om te zoeken of een adres te typen.",
-			"tabs": "Je tabbladen staan links, altijd in beeld.",
+			"tabs": "Je tabbladen blijven in beeld, aan de rand die je koos.",
 			"split": "Sleep een tabblad naar de rand van de pagina om twee pagina's naast elkaar te zien."
 		},
 		"devTips": {
@@ -1695,7 +1695,7 @@
 			"subtitle": "De sneltoetsen werken ook zonder het Ontwikkel-menu.",
 			"inspector": "Druk op ⌥⌘I om het webinfovenster voor de pagina te openen.",
 			"localhost": "Sleep je localhost naar de rand van de pagina om deze naast de documentatie te zien.",
-			"agents": "Je agents openen hun tabbladen in de Agents-ruimte, aan de linkerkant."
+			"agents": "Je agents openen hun tabbladen in de Agents-ruimte."
 		},
 		"arrival": {
 			"title": "Welkom bij Lilo.",

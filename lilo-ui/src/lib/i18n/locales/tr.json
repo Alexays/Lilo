@@ -1687,7 +1687,7 @@
 			"subtitle": "İhtiyacınız olan her şey bu kadar.",
 			"go": "Başlayalım",
 			"search": "Aramak veya adres yazmak için ⌘T tuşlarına basın.",
-			"tabs": "Sekmeleriniz solda, her zaman gözünüzün önünde.",
+			"tabs": "Sekmeleriniz seçtiğiniz kenarda, her zaman gözünüzün önünde.",
 			"split": "İki sayfayı yan yana görmek için sekmeyi sayfanın kenarına sürükleyin."
 		},
 		"devTips": {
@@ -1695,7 +1695,7 @@
 			"subtitle": "Kestirmeler Geliştirme menüsü olmadan da çalışır.",
 			"inspector": "Sayfanın Web Denetçisi'ni açmak için ⌥⌘I tuşlarına basın.",
 			"localhost": "localhost'u belgelerin yanında görmek için sayfanın kenarına sürükleyin.",
-			"agents": "Ajanlarınız sekmelerini soldaki Ajanlar alanında açar."
+			"agents": "Ajanlarınız sekmelerini Ajanlar alanında açar."
 		},
 		"arrival": {
 			"title": "Lilo'ya hoş geldiniz.",

@@ -1687,7 +1687,7 @@
 			"subtitle": "Mehr brauchst du nicht.",
 			"go": "Los geht’s",
 			"search": "Drücke ⌘T zum Suchen oder zur Eingabe einer Adresse.",
-			"tabs": "Deine Tabs sind links, immer im Blick.",
+			"tabs": "Deine Tabs bleiben im Blick, am Rand deiner Wahl.",
 			"split": "Ziehe einen Tab an den Seitenrand, um zwei Seiten nebeneinander anzuzeigen."
 		},
 		"devTips": {
@@ -1695,7 +1695,7 @@
 			"subtitle": "Die Kurzbefehle funktionieren auch ohne das Menü „Entwickler“.",
 			"inspector": "Drücke ⌥⌘I, um die Webinformationen der Seite zu öffnen.",
 			"localhost": "Ziehe deinen localhost an den Seitenrand, um ihn neben der Dokumentation anzuzeigen.",
-			"agents": "Deine Agenten öffnen ihre Tabs im Space „Agenten“ auf der linken Seite."
+			"agents": "Deine Agenten öffnen ihre Tabs im Space „Agenten“."
 		},
 		"arrival": {
 			"title": "Willkommen bei Lilo.",

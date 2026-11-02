@@ -1687,7 +1687,7 @@
 			"subtitle": "È tutto ciò che serve.",
 			"go": "Cominciamo",
 			"search": "Premi ⌘T per cercare o inserire un indirizzo.",
-			"tabs": "Le schede sono a sinistra, sempre in vista.",
+			"tabs": "Le schede restano in vista, sul bordo che hai scelto.",
 			"split": "Trascina una scheda sul bordo della pagina per vedere due pagine affiancate."
 		},
 		"devTips": {
@@ -1695,7 +1695,7 @@
 			"subtitle": "Le abbreviazioni funzionano anche senza il menu Sviluppo.",
 			"inspector": "Premi ⌥⌘I per aprire Inspector web sulla pagina.",
 			"localhost": "Trascina il tuo localhost sul bordo della pagina per vederlo accanto alla documentazione.",
-			"agents": "Gli agenti aprono le proprie schede nello spazio Agenti, a sinistra."
+			"agents": "Gli agenti aprono le proprie schede nello spazio Agenti."
 		},
 		"arrival": {
 			"title": "Ti diamo il benvenuto in Lilo.",

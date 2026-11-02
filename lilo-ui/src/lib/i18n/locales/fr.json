@@ -1687,7 +1687,7 @@
 			"subtitle": "C'est tout ce qu'il faut savoir.",
 			"go": "C'est parti",
 			"search": "Appuyez sur ⌘T pour chercher ou taper une adresse.",
-			"tabs": "Vos onglets sont rangés à gauche, toujours visibles.",
+			"tabs": "Vos onglets restent visibles, sur le bord choisi.",
 			"split": "Glissez un onglet sur le bord de la page pour voir deux pages côte à côte."
 		},
 		"devTips": {
@@ -1695,7 +1695,7 @@
 			"subtitle": "Les raccourcis marchent même sans le menu Développement.",
 			"inspector": "Appuyez sur ⌥⌘I pour ouvrir le Web Inspector sur la page.",
 			"localhost": "Glissez votre localhost sur le bord de la page pour le voir à côté de la doc.",
-			"agents": "Vos agents ouvrent leurs onglets dans l'espace Agents, à gauche."
+			"agents": "Vos agents ouvrent leurs onglets dans l'espace Agents."
 		},
 		"arrival": {
 			"title": "Bienvenue dans Lilo.",
