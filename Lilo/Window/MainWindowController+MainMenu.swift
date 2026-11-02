@@ -84,8 +84,9 @@ extension MainWindowController {
 
     func populateSpacesMenu(_ menu: NSMenu) {
         menu.items.filter { $0.tag == Self.spaceMenuItemTag }.forEach(menu.removeItem)
-        let agentsSpaceIds = context.settingsStore.agentsSpaceIds
-        let agentsProfileId = context.settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
+        // The menu bar can open before the first launch has created the settings store.
+        let agentsSpaceIds = context.settingsStore?.agentsSpaceIds ?? []
+        let agentsProfileId = context.settingsStore?.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
         // Below Next Space, Previous Space and their separator.
         for (index, space) in switchableSpaces.enumerated() {
             let item: NSMenuItem
