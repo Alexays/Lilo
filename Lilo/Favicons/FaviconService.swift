@@ -172,10 +172,10 @@ final class FaviconService {
         if let store {
             var missingHosts = Set<String>()
             for tab in tabs {
-                if tab.faviconDataURL?.isEmpty ?? true, let host = tab.url?.host?.lowercased(), cache.get(host) == nil {
+                if tab.faviconDataURL?.isEmpty ?? true, let host = tab.url?.faviconKey, cache.get(host) == nil {
                     missingHosts.insert(host)
                 }
-                if tab.homeFaviconDataURL?.isEmpty ?? true, let host = tab.homeURL?.host?.lowercased(), cache.get(host) == nil {
+                if tab.homeFaviconDataURL?.isEmpty ?? true, let host = tab.homeURL?.faviconKey, cache.get(host) == nil {
                     missingHosts.insert(host)
                 }
             }
@@ -184,16 +184,16 @@ final class FaviconService {
             }
         }
 
-        func rehydrate(host rawHost: String?, dataURL: inout String?, dominantColor: inout String?) {
-            guard dataURL?.isEmpty ?? true, let host = rawHost?.lowercased(), let cached = cached(for: host) else { return }
+        func rehydrate(host: String?, dataURL: inout String?, dominantColor: inout String?) {
+            guard dataURL?.isEmpty ?? true, let host, let cached = cached(for: host) else { return }
             dataURL = cached.dataURL
             if dominantColor == nil { dominantColor = cached.dominantColor }
         }
 
         for index in tabs.indices {
             var tab = tabs[index]
-            rehydrate(host: tab.url?.host, dataURL: &tab.faviconDataURL, dominantColor: &tab.faviconDominantColor)
-            rehydrate(host: tab.homeURL?.host, dataURL: &tab.homeFaviconDataURL, dominantColor: &tab.homeFaviconDominantColor)
+            rehydrate(host: tab.url?.faviconKey, dataURL: &tab.faviconDataURL, dominantColor: &tab.faviconDominantColor)
+            rehydrate(host: tab.homeURL?.faviconKey, dataURL: &tab.homeFaviconDataURL, dominantColor: &tab.homeFaviconDominantColor)
             tabs[index] = tab
         }
     }
@@ -323,5 +323,14 @@ final class FaviconService {
         }
         guard bestDist >= 0 else { return nil }
         return String(format: "#%02X%02X%02X", fbR, fbG, fbB)
+    }
+}
+
+extension URL {
+    /// The favicon cache and store key: the lowercased host, with the port when the URL names one,
+    /// so two servers on one host (localhost:8080, localhost:3000) keep their own icons.
+    var faviconKey: String? {
+        guard let host = host?.lowercased() else { return nil }
+        return port.map { "\(host):\($0)" } ?? host
     }
 }

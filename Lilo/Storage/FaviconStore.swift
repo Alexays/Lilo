@@ -1,7 +1,7 @@
 import Foundation
 import GRDB
 
-/// Per-profile persisted favicons keyed by lowercased host. Bounded: every upsert batch evicts
+/// Per-profile persisted favicons keyed by `URL.faviconKey` (lowercased host, port kept). Bounded: every upsert batch evicts
 /// rows beyond the newest `maxRows` (by updatedAt), so the table never grows past the cap.
 struct FaviconStore: Sendable {
     struct Entry: Equatable, Sendable {

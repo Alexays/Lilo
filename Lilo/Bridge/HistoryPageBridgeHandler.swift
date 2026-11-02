@@ -73,7 +73,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
                     // Favicons are keyed by the page's own host; the chrome looks them up by site.
                     var siteByHost: [String: String] = [:]
                     for row in page.rows {
-                        guard let host = URL(string: row.url)?.host?.lowercased(), !sentHosts.contains(row.host) else { continue }
+                        guard let host = URL(string: row.url)?.faviconKey, !sentHosts.contains(row.host) else { continue }
                         siteByHost[host] = row.host
                     }
                     let entries = try favicons.entries(forHosts: Set(siteByHost.keys))
