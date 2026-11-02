@@ -362,6 +362,7 @@ class SiteTests(unittest.TestCase):
         headers = (DIST / "_headers").read_text()
         self.assertIn("script-src 'self'", headers)
         self.assertIn("/_astro/*", headers)
+        self.assertRegex(headers, r"/release-media/\*\s+Accept-Ranges: bytes")
         self.assertIn('name="robots" content="noindex"', (DIST / "404.html").read_text())
         for prefix in ["/changelog", "/fr/changelog"]:
             self.assertIn(f"{prefix} {prefix}/ 301", redirects)

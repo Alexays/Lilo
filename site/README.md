@@ -47,7 +47,7 @@ The build runs `generate.py` after Astro to derive a Markdown copy of each page,
 
 The 0.8.0 changelog entry plays the approved MP4 and poster from `../release-media/assets/`. The shared catalog also supplies native What's New media. Both players show localized captions and identify the English illustration. They use standard video controls, stay still until requested, and pause offscreen or when the page is hidden. See [release-media/README.md](../release-media/README.md) for provenance and staging.
 
-The media Worker handles byte ranges for MP4 seeking. Static pages and other assets retain Cloudflare's asset routing. The existing 0.7.0 WebP recording and capture commands remain available.
+The films are plain static assets. Cloudflare answers every request whole, and `_headers` advertises byte ranges so Chromium also seeks the fully buffered compact film. The existing 0.7.0 WebP recording and capture commands remain available.
 
 ## Release stories and recordings
 
@@ -107,7 +107,7 @@ The imported history in `.changes/v0.1.5.md` contains several earlier versions. 
 
 ## Deployment
 
-Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/`; a small Worker handles MP4 byte ranges without an Astro server adapter. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
+Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/` as static assets, with no Worker code. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
 
 Set the build watch paths to `site/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `release-media/assets/**`, `release-media/catalog.ts`, `release-media/backlog.json`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
 
