@@ -1,0 +1,115 @@
+{
+  "recordedAt": "2026-11-02T21:09:04.385454+00:00",
+  "repository": "Alexays/Lilo",
+  "originalPullRequest": 149,
+  "originalImplementation": "41d8db0d9c09bff20981a9b10839634bd5fa6b36",
+  "mainSnapshot": "196d1c7c06bc23ab1b833341eb0612454d548497",
+  "pullRequests": [
+    {
+      "additions": 25,
+      "baseRefName": "main",
+      "baseRefOid": "196d1c7c06bc23ab1b833341eb0612454d548497",
+      "changedFiles": 3,
+      "deletions": 5,
+      "headRefName": "codex/pr149-1-pip",
+      "headRefOid": "43b7cad3a023b84b9466e3fe866558d7d46abdda",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "title": "fix(pip): preserve cancellation of automatic opening",
+      "url": "https://github.com/Alexays/Lilo/pull/152"
+    },
+    {
+      "additions": 841,
+      "baseRefName": "codex/pr149-1-pip",
+      "baseRefOid": "43b7cad3a023b84b9466e3fe866558d7d46abdda",
+      "changedFiles": 53,
+      "deletions": 29,
+      "headRefName": "codex/pr149-2-playback",
+      "headRefOid": "6180105e9359dd44fcda89bb3f76a38be8aa9b8a",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "title": "feat(changelog): play the approved release film",
+      "url": "https://github.com/Alexays/Lilo/pull/153"
+    },
+    {
+      "additions": 6607,
+      "baseRefName": "codex/pr149-2-playback",
+      "baseRefOid": "6180105e9359dd44fcda89bb3f76a38be8aa9b8a",
+      "changedFiles": 60,
+      "deletions": 67,
+      "headRefName": "codex/pr149-3-authoring",
+      "headRefOid": "a6bd513d7861c371195f4e7666aa768674a7886b",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "title": "feat(media): add optional native announcement authoring",
+      "url": "https://github.com/Alexays/Lilo/pull/154"
+    },
+    {
+      "additions": 3634,
+      "baseRefName": "codex/pr149-3-authoring",
+      "baseRefOid": "a6bd513d7861c371195f4e7666aa768674a7886b",
+      "changedFiles": 198,
+      "deletions": 1871,
+      "headRefName": "codex/pr149-4-backfill",
+      "headRefOid": "7c7c4e8416d7eddd874e4e9ed4bb206433eca355",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "title": "feat(changelog): backfill native release media",
+      "url": "https://github.com/Alexays/Lilo/pull/155"
+    },
+    {
+      "additions": 388,
+      "baseRefName": "codex/pr149-4-backfill",
+      "baseRefOid": "7c7c4e8416d7eddd874e4e9ed4bb206433eca355",
+      "changedFiles": 10,
+      "deletions": 86,
+      "headRefName": "codex/pr149-5-release",
+      "headRefOid": "cc119f393fd7ff916eb6d6c85dcd2d2929263b3c",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "state": "OPEN",
+      "title": "ci(release): gate signing and deployment on verified media",
+      "url": "https://github.com/Alexays/Lilo/pull/156"
+    }
+  ],
+  "makeGateExitCodes": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "nativeSuiteScope": [
+    "full",
+    "full",
+    "capture suite plus live capture/review",
+    "capture suite plus all live historical captures",
+    "capture suite; native source unchanged from parent"
+  ],
+  "playbackBrowserCases": {
+    "app": 21,
+    "website": 18
+  },
+  "backfillBrowserCases": {
+    "app": 21,
+    "website": 23
+  },
+  "authoringToolingTests": 70,
+  "backfillAndPolicyToolingTests": 73,
+  "releaseTests": 26,
+  "archiveReceiptChains": 14,
+  "originalSplitAssertions": 884,
+  "integratedAssertions": 1031,
+  "expectedRefusal": {
+    "command": "make release-media-author",
+    "exitCode": 2,
+    "version": "0.15.0",
+    "reason": "New WebKit Settings/About UI has no genuine native capture and storyboard capability."
+  },
+  "productionActionsPerformed": [],
+  "hostedCI": "Children target parent branches. Existing main-only hosted PR checks run after retargeting. No CI result is inferred from local gates."
+}

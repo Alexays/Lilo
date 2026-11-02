@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "checks": 884,
+  "base": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "final": "41d8db0d9c09bff20981a9b10839634bd5fa6b36",
+  "stages": [
+    "c22517f72156a20bcb3645d166a29be555df63dc",
+    "d0c6e11a7a8ed00d6c22fe3d38ce2d62f4bf747a",
+    "9d5783eeb3e55aabe3db5b287440325f33b7bed1",
+    "ee35e79b3d729f284a86ab20a4dde6ec7fc49797",
+    "43d004b3f645fcfa682e5a8843134d9379dfc013"
+  ],
+  "changed_paths": 273,
+  "covered_paths": 274,
+  "final_tree": "4e66c75bd3f247b35d5dc1657a4666a62754345c",
+  "failures": []
+}

@@ -1,0 +1,110 @@
+{
+  "passed": true,
+  "complete_stack": true,
+  "checks": 1031,
+  "original_base": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "original_final": "41d8db0d9c09bff20981a9b10839634bd5fa6b36",
+  "current_main": "196d1c7c06bc23ab1b833341eb0612454d548497",
+  "original_changed_paths": 273,
+  "new_main_changed_paths": 344,
+  "main_only_changed_paths_preserved_per_stage": 321,
+  "overlapping_changed_paths": 23,
+  "covered_paths": 274,
+  "published_releases": 33,
+  "new_nonvisual_releases": [
+    "0.14.2",
+    "0.14.3"
+  ],
+  "stages": [
+    {
+      "stage": 1,
+      "tip": "43b7cad3a023b84b9466e3fe866558d7d46abdda",
+      "frozen_tip": "c22517f72156a20bcb3645d166a29be555df63dc",
+      "independent_merge_tree": "96db9fd3495faf8e485d3048a6ffb94ccd317efb",
+      "actual_tree": "96db9fd3495faf8e485d3048a6ffb94ccd317efb",
+      "make_conflict_resolutions": [],
+      "capture_optional_access_adaptations": [],
+      "documentation_count_adaptations": [],
+      "catalog_decisions": null,
+      "unexpected_paths": [],
+      "main_only_preservation_failures": []
+    },
+    {
+      "stage": 2,
+      "tip": "6180105e9359dd44fcda89bb3f76a38be8aa9b8a",
+      "frozen_tip": "d0c6e11a7a8ed00d6c22fe3d38ce2d62f4bf747a",
+      "independent_merge_tree": "ff8859617a0e4d809e242f27d7a8e9a20f1f3b71",
+      "actual_tree": "d2101b42b021832a7c9fedb8c6986f1da70ffb45",
+      "make_conflict_resolutions": [
+        "release-archive"
+      ],
+      "capture_optional_access_adaptations": [],
+      "documentation_count_adaptations": [],
+      "catalog_decisions": null,
+      "unexpected_paths": [],
+      "main_only_preservation_failures": []
+    },
+    {
+      "stage": 3,
+      "tip": "a6bd513d7861c371195f4e7666aa768674a7886b",
+      "frozen_tip": "9d5783eeb3e55aabe3db5b287440325f33b7bed1",
+      "independent_merge_tree": "0541a77f10fe1d6106ae08b78ce051a41682ab87",
+      "actual_tree": "2ff4249fba99632142d9e0242369cca0932ea72b",
+      "make_conflict_resolutions": [
+        "release-archive"
+      ],
+      "capture_optional_access_adaptations": [
+        "LiloTests/Support/ReleaseMediaCapture.swift",
+        "LiloTests/Window/ReleaseMediaCaptureTests.swift"
+      ],
+      "documentation_count_adaptations": [],
+      "catalog_decisions": 33,
+      "unexpected_paths": [],
+      "main_only_preservation_failures": []
+    },
+    {
+      "stage": 4,
+      "tip": "7c7c4e8416d7eddd874e4e9ed4bb206433eca355",
+      "frozen_tip": "ee35e79b3d729f284a86ab20a4dde6ec7fc49797",
+      "independent_merge_tree": "78aa76391571aa06662cfcb350fe668e1dbf6e9b",
+      "actual_tree": "3abf69ef48c3555724de764c5980b1974a1b204f",
+      "make_conflict_resolutions": [
+        ".PHONY",
+        "release-archive"
+      ],
+      "capture_optional_access_adaptations": [
+        "LiloTests/Support/ReleaseMediaCapture.swift",
+        "LiloTests/Window/ReleaseMediaCaptureTests.swift"
+      ],
+      "documentation_count_adaptations": [
+        "release-media/README.md"
+      ],
+      "catalog_decisions": 33,
+      "unexpected_paths": [],
+      "main_only_preservation_failures": []
+    },
+    {
+      "stage": 5,
+      "tip": "cc119f393fd7ff916eb6d6c85dcd2d2929263b3c",
+      "frozen_tip": "43d004b3f645fcfa682e5a8843134d9379dfc013",
+      "independent_merge_tree": "d299bb6501737730bd9219c7d6a647273d55b592",
+      "actual_tree": "f507279a21487a3c6ce59e4b59cad0abdc58c702",
+      "make_conflict_resolutions": [
+        ".PHONY",
+        "release-notarize",
+        "release-archive"
+      ],
+      "capture_optional_access_adaptations": [
+        "LiloTests/Support/ReleaseMediaCapture.swift",
+        "LiloTests/Window/ReleaseMediaCaptureTests.swift"
+      ],
+      "documentation_count_adaptations": [
+        "release-media/README.md"
+      ],
+      "catalog_decisions": 33,
+      "unexpected_paths": [],
+      "main_only_preservation_failures": []
+    }
+  ],
+  "failures": []
+}

@@ -1,0 +1,274 @@
+status	path	stages	hunk_plan
+A	.agents/skills/lilo-release-media/SKILL.md	3,5	PR3 opt-in authoring instructions; PR5 required CI/release/deployment instructions.
+A	.changes/unreleased/Changed-20261101-125840.670751.yaml	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+A	.changes/unreleased/Fixed-20261101-134845.757200.yaml	1	Automatic PiP cancellation fix and its positive/negative regression cases.
+A	.changes/unreleased/Fixed-20261102-213555.701648.yaml	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+A	.gitattributes	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+M	.github/workflows/build.yml	2,5	PR2 cache inputs and unconditional Node setup for archive staging; PR5 changes outputs, media job and release-tooling gate.
+M	.github/workflows/release.yml	5	Mandatory tag capture, signing, publication and deployment integration.
+M	.gitignore	2,3	PR2 ignore staged native media except .gitkeep; PR3 ignore authoring scratch output.
+M	Lilo.xcodeproj/project.pbxproj	2,3	PR2 folder resource registration; PR3 capture Swift source registration. Regenerate with make project-sync at each boundary.
+M	Lilo/Bridge/ChromeUISchemeHandler.swift	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+M	Lilo/Engine/MediaControl.swift	1	Automatic PiP cancellation fix and its positive/negative regression cases.
+M	LiloTests/Bridge/ChromeUISchemeHandlerTests.swift	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+M	LiloTests/PictureInPicture/DocumentPiPControllerTests.swift	1	Automatic PiP cancellation fix and its positive/negative regression cases.
+A	LiloTests/Support/ReleaseMediaCapture.swift	3,4	PR3 only review/full 0.8.0 share and address-bar capture; PR4 remaining historical fixture helpers/cases.
+M	LiloTests/Support/TestRunCleanup.swift	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	LiloTests/Window/ReleaseMediaCaptureTests.swift	3,4	PR3 only review/full 0.8.0 share and address-bar capture; PR4 remaining historical fixture helpers/cases.
+M	Makefile	2,3,4,5	PR2 source inputs/stage target/ui-build/release-archive; PR3 explicit optional authoring targets; PR4 retire old capture targets and their release-version call; PR5 mandatory CI/version/notarize/deploy gates.
+M	docs/RELEASING.md	5	Mandatory tag capture, signing, publication and deployment integration.
+A	docs/screenshots/changelog-media-holiday-icons-mobile.png	4	Historical content playback evidence.
+A	docs/screenshots/changelog-media-spaces.png	4	Historical content playback evidence.
+A	docs/screenshots/changelog-media-tab-share.png	2	Approved 0.8.0 playback evidence.
+A	docs/screenshots/whats-new-media-0.13.0.png	4	Historical content playback evidence.
+A	docs/screenshots/whats-new-media-0.8.0.png	2	Approved 0.8.0 playback evidence.
+M	lilo-ui/e2e/whatsNew.spec.ts	2,4	PR2 caption/video case uses 0.8.0 and retains illustration fields; PR4 final 0.6.0 screenshot case and art-field removal.
+A	lilo-ui/public/release-media/.gitkeep	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+M	lilo-ui/releaseNotesPlugin.ts	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+A	lilo-ui/src/components/whatsnew/ReleaseMedia.svelte	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+D	lilo-ui/src/components/whatsnew/WhatsNewArt.svelte	4	Retire native hand-authored art/illustration metadata only when archive replacements exist.
+M	lilo-ui/src/components/whatsnew/WhatsNewSheet.svelte	2,4	PR2 media metadata/player/focus behavior while preserving old illustration types, parser and fallback; PR4 remove old art path and restore final layout/types.
+M	lilo-ui/src/components/whatsnew/releaseHighlights.json	4	Retire native hand-authored art/illustration metadata only when archive replacements exist.
+M	lilo-ui/src/components/whatsnew/releaseNotes.test.ts	4	Retire native hand-authored art/illustration metadata only when archive replacements exist.
+M	lilo-ui/src/components/whatsnew/releaseNotes.ts	2,4	PR2 media metadata/player/focus behavior while preserving old illustration types, parser and fallback; PR4 remove old art path and restore final layout/types.
+M	lilo-ui/src/lib/i18n/locales/de.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/en.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/es.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/fr.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/it.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/ja.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/ko.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/nl.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/pl.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/pt-BR.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/ru.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/tr.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/uk.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/zh-Hans.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/src/lib/i18n/locales/zh-Hant.json	2,4	PR2 mediaLanguage in every catalog; PR4 historical 0.11.0 description correction.
+M	lilo-ui/vite.config.ts	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+M	project.yml	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+A	release-media/README.md	2,3,4,5	PR2 playback contract; PR3 optional authoring; PR4 historical coverage/provenance; PR5 mandatory release/deployment policy.
+A	release-media/THIRD_PARTY_NOTICES.md	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+A	release-media/assets/0.1.0/browser.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.1.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.1.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.1.3/pinned-tabs.mp4	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.1.3/pinned-tabs.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.1.3/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.1.3/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.10.0/archive.mp4	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.10.0/archive.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.10.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.10.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.11.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.11.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.11.0/spaces.mp4	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.11.0/spaces.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.12.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.12.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.12.0/site-colors.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.13.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.13.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.13.0/seasons.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.14.0/drop.mp4	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.14.0/drop.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.14.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.14.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.2.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.2.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.2.0/tab-edges.mp4	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.2.0/tab-edges.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.3.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.3.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.3.0/settings.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.4.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.4.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.4.0/updates.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.6.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.6.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.6.0/unread.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.7.0/calls.mp4	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.7.0/calls.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.7.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.7.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.8.0/quality.json	3,4	PR3 rebind receipts to trimmed authoring source hashes without changing binaries; PR4 restore verified final receipts.
+A	release-media/assets/0.8.0/render.json	3,4	PR3 rebind receipts to trimmed authoring source hashes without changing binaries; PR4 restore verified final receipts.
+A	release-media/assets/0.8.0/tab-share.mp4	2	Approved binary playback content, byte-identical throughout the stack.
+A	release-media/assets/0.8.0/tab-share.png	2	Approved binary playback content, byte-identical throughout the stack.
+A	release-media/assets/0.9.0/history.mp4	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.9.0/history.png	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.9.0/quality.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/assets/0.9.0/render.json	4	Historical rendered content and its quality/render receipts.
+A	release-media/author.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/author.test.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/backlog.json	2,4	PR2 only 0.8.0 visual entry with absent versions yielding no media; PR4 full historical decisions.
+A	release-media/catalog.ts	2,4	PR2 only 0.8.0 visual entry with absent versions yielding no media; PR4 full historical decisions.
+A	release-media/check.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/check.test.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/fixtures.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/hyperframes/0.8.0/compositions/end.html	3	Literal editable full approved 0.8.0 composition.
+A	release-media/hyperframes/0.8.0/compositions/find.html	3	Literal editable full approved 0.8.0 composition.
+A	release-media/hyperframes/0.8.0/compositions/hook.html	3	Literal editable full approved 0.8.0 composition.
+A	release-media/hyperframes/0.8.0/compositions/room.html	3	Literal editable full approved 0.8.0 composition.
+A	release-media/hyperframes/0.8.0/compositions/switch.html	3	Literal editable full approved 0.8.0 composition.
+A	release-media/hyperframes/0.8.0/index.html	3	Literal editable full approved 0.8.0 composition.
+A	release-media/hyperframes/0.8.0/metadata.json	3	Literal editable full approved 0.8.0 composition.
+A	release-media/hyperframes/archive/0.1.3/compositions/feature.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.1.3/index.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.1.3/metadata.json	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.10.0/compositions/feature.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.10.0/index.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.10.0/metadata.json	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.11.0/compositions/feature.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.11.0/index.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.11.0/metadata.json	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.14.0/compositions/feature.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.14.0/index.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.14.0/metadata.json	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.2.0/compositions/feature.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.2.0/index.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.2.0/metadata.json	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.7.0/compositions/feature.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.7.0/index.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.7.0/metadata.json	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.8.0/compositions/hook.html	3	Optional reusable share-only variant of shipped tab-sharing capability.
+A	release-media/hyperframes/archive/0.8.0/index.html	3	Optional reusable share-only variant of shipped tab-sharing capability.
+A	release-media/hyperframes/archive/0.8.0/metadata.json	3	Optional reusable share-only variant of shipped tab-sharing capability.
+A	release-media/hyperframes/archive/0.9.0/compositions/feature.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.9.0/index.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/0.9.0/metadata.json	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/README.md	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/ending.html	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/shared.css	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/archive/shared.js	4	Historical composition recipe/shared archive inputs.
+A	release-media/hyperframes/assets/Inter-OFL.txt	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/hyperframes/assets/inter.woff2	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/hyperframes/assets/logo.svg	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/import.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/import.test.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/inspect.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/package-lock.json	3	Optional pinned authoring dependencies and pixel-preserving cutout implementation.
+A	release-media/package.json	3	Optional pinned authoring dependencies and pixel-preserving cutout implementation.
+A	release-media/pipeline.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/png-cutouts.mjs	3	Optional pinned authoring dependencies and pixel-preserving cutout implementation.
+A	release-media/public/audio/README.md	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/public/audio/mouse-click.wav	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/public/audio/music.LICENSE.txt	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/public/audio/music.README.md	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/public/audio/music.license.json	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/public/audio/music.ogg	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/public/audio/switch.wav	3	Optional native authoring inputs, rights/checksums and visible-window capture environment.
+A	release-media/public/native/0.1.0/browser.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/pinned.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/rename-0.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/rename-1.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/rename-2.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/rename-3.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/rename-4.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/rename-5.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/rename-6.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.1.3/renamed.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.10.0/archive.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.10.0/before.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.10.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.10.0/restored.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.11.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.11.0/glass-controls.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.11.0/glass-space.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.11.0/glass-window.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.11.0/grain-controls.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.11.0/grain-window.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.11.0/solid-controls.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.11.0/solid-window.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.12.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.12.0/site-colors.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.13.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.13.0/christmas.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.13.0/easter.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.13.0/halloween.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.14.0/before.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.14.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.14.0/dropped.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.14.0/link.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.14.0/target.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.2.0/bottom.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.2.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.2.0/left.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.2.0/right.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.2.0/top.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.3.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.3.0/settings-window.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.4.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.4.0/updates.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.6.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.6.0/unread.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.7.0/browsing.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.7.0/camera-off.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.7.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.7.0/connected.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.7.0/muted.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.8.0/address-bar/address-hidden.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/address-bar/address-visible.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/address-bar/capture.json	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/address-bar/setting-hidden.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/address-bar/setting-visible.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/capture.json	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/filtered.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/match.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/picker.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/search-0.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/search-1.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/search-2.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/search-3.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/search-4.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/search-5.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/sharing.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.8.0/switched.png	3	Genuine source pixels and receipts for the full approved 0.8.0 announcement.
+A	release-media/public/native/0.9.0/capture.json	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/filtered-rows.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/filtered.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/rows.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/search-0.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/search-1.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/search-2.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/search-3.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/search-4.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/search-5.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/public/native/0.9.0/search-6.png	4	Historical native capture pixels and receipts, recorded using the receipt app version.
+A	release-media/render.mjs	3,4	PR3 tab-share-only fixtures/recipes/tests and scoped catalog validation; PR4 full historical cases and final source/receipt hashes.
+A	release-media/stage-native.mjs	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+A	release-media/stage-native.test.mjs	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+M	scripts/release.py	5	Mandatory tag capture, signing, publication and deployment integration.
+M	scripts/release_test.py	5	Mandatory tag capture, signing, publication and deployment integration.
+M	site/README.md	2,4,5	PR2 playback/Worker instructions retain old recording docs; PR4 retire old capture instructions; PR5 deployment ownership and secrets.
+D	site/captures/import-native.ts	4	Historical backfill and atomic old recording/parser/capture retirement.
+D	site/captures/peek.spec.ts	4	Historical backfill and atomic old recording/parser/capture retirement.
+D	site/captures/recording.ts	4	Historical backfill and atomic old recording/parser/capture retirement.
+D	site/captures/release-capture.ts	4	Historical backfill and atomic old recording/parser/capture retirement.
+M	site/generate.py	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+M	site/package.json	4,5	PR4 remove legacy capture scripts; PR5 gate deploy with publication check.
+D	site/playwright.capture.config.ts	4	Historical backfill and atomic old recording/parser/capture retirement.
+M	site/public/_headers	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+A	site/public/release-media	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+D	site/src/assets/releases/0.7.0/capture.json	4	Historical backfill and atomic old recording/parser/capture retirement.
+D	site/src/assets/releases/0.7.0/peek-native.png	4	Historical backfill and atomic old recording/parser/capture retirement.
+D	site/src/assets/releases/0.7.0/peek-native.webp	4	Historical backfill and atomic old recording/parser/capture retirement.
+M	site/src/components/Changelog.astro	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+A	site/src/components/ReleaseMedia.astro	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+D	site/src/components/ReleaseRecording.astro	4	Historical backfill and atomic old recording/parser/capture retirement.
+M	site/src/components/ReleaseStory.astro	4	Historical backfill and atomic old recording/parser/capture retirement.
+M	site/src/content/releases/0.10.0.json	4	Historical backfill and atomic old recording/parser/capture retirement.
+M	site/src/content/releases/0.11.0.json	4	Historical backfill and atomic old recording/parser/capture retirement.
+M	site/src/content/releases/0.7.0.json	4	Historical backfill and atomic old recording/parser/capture retirement.
+M	site/src/lib/i18n.ts	2,4	PR2 add releaseMediaLanguage while keeping old recording labels; PR4 remove old recording labels.
+M	site/src/lib/release-stories.ts	4	Historical backfill and atomic old recording/parser/capture retirement.
+A	site/src/media-worker.ts	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
+M	site/tests/changelog.spec.ts	2,4	PR2 retain 0.7.0 legacy coverage and add only approved 0.8.0 player cases; PR4 restore final archive-wide expectations.
+M	site/tests/changelog.test.ts	4	Historical backfill and atomic old recording/parser/capture retirement.
+D	site/tests/release-capture.test.ts	4	Historical backfill and atomic old recording/parser/capture retirement.
+A	site/tests/release-media.spec.ts	2,4	PR2 retain 0.7.0 legacy coverage and add only approved 0.8.0 player cases; PR4 restore final archive-wide expectations.
+M	site/tests/test_site.py	2,4	PR2 retain 0.7.0 legacy coverage and add only approved 0.8.0 player cases; PR4 restore final archive-wide expectations.
+M	site/wrangler.toml	2	Static playback metadata, players, range serving, localization, staging or bundled-resource wiring.
