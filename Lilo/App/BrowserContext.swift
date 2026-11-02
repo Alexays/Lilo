@@ -135,6 +135,9 @@ final class BrowserContext {
             return context
         }
         weakSelf = self
+        profileContexts.isInUse = { [browserState] profileId in
+            weakSelf?.spaceManager?.spaces.contains { $0.profileId == profileId && browserState.hasLiveEngine(inSpace: $0.id) } == true
+        }
         engineFactory.profileContexts = profileContexts
         engineFactory.downloadManager = downloadManager
         faviconService.storeForProfile = { [profileContexts] in profileContexts.existingContext(for: $0)?.favicons }

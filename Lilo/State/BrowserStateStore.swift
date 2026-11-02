@@ -1083,6 +1083,10 @@ extension BrowserStateStore {
     /// Tabs whose engine is parked live in a hidden space.
     var parkedEngineTabIds: Set<UUID> { Set(spaces.values.flatMap(\.engines.keys)) }
 
+    func hasLiveEngine(inSpace spaceId: UUID) -> Bool {
+        spaces[spaceId]?.engines.isEmpty == false || liveHost(for: spaceId) != nil
+    }
+
     /// Every space's live engines, keyed by tab.
     private var enginesAcrossSpaces: [UUID: WKWebViewTab] {
         var engines: [UUID: WKWebViewTab] = [:]
