@@ -134,9 +134,9 @@ try {
       render.release !== version ||
       render.kind !== entry.kind ||
       render.feature !== entry.feature ||
-      render.width !== 1280 ||
-      render.height !== 720 ||
-      render.fps !== 30
+      render.width !== (entry.kind === "video" ? 1280 : 1920) ||
+      render.height !== (entry.kind === "video" ? 720 : 1080) ||
+      render.fps !== (entry.kind === "video" ? 30 : 60)
     )
       throw Error(`Stale HyperFrames render: ${version}`);
     if (!same(render.nativeReceipts, native.receipts))
