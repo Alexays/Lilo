@@ -1,0 +1,3 @@
+kind: Fixed
+body: Returning to a call cancels its automatic Picture-in-Picture opening, including a delayed response from the page.
+time: 2026-11-01T13:48:45.7572+02:00
