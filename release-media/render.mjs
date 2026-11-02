@@ -15,6 +15,7 @@ import {
   recipeHashes,
   same,
   filesBelow,
+  sharedTabShareScenes,
 } from "./pipeline.mjs";
 
 const run = promisify(execFile);
@@ -106,7 +107,7 @@ for (const [version, entry] of selected(catalog)) {
   if (entry.kind === "video") {
     await cp(recipeDirectory(entry), project, { recursive: true });
     if (recipe === "0.8.0" && entry.variant === "share")
-      for (const scene of ["find", "switch", "end"])
+      for (const scene of sharedTabShareScenes)
         await copyFile(
           path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
           path.join(project, "compositions", `${scene}.html`),

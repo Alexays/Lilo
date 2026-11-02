@@ -6,6 +6,14 @@ import { fileURLToPath } from "node:url";
 export const root = path.dirname(fileURLToPath(import.meta.url));
 export const sha = (data) => createHash("sha256").update(data).digest("hex");
 export const json = async (file) => JSON.parse(await readFile(file, "utf8"));
+export const sharedTabShareScenes = ["find", "switch", "end"];
+export function releaseSections(markdown) {
+  return new Map(
+    [...markdown.matchAll(/^## \[([^\]]+)\][^\n]*\n([\s\S]*?)(?=^## \[|$(?![\s\S]))/gm)].map(
+      (match) => [match[1], match[0]],
+    ),
+  );
+}
 export const fixtures = {
   browser: "0.1.0",
   "pinned-tabs": "0.1.3",
@@ -59,7 +67,7 @@ export async function recipeHashes(entry) {
     files.push(...(await filesBelow(recipeDirectory(entry))));
     if (fixtures[entry.feature] === "0.8.0" && entry.variant === "share")
       files.push(
-        ...["find", "switch", "end"].map((scene) =>
+        ...sharedTabShareScenes.map((scene) =>
           path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
         ),
       );

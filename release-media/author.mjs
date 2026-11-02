@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fixtures, sha, root as mediaRoot } from "./pipeline.mjs";
+import { fixtures, sha, releaseSections, root as mediaRoot } from "./pipeline.mjs";
 
 // Specific product capabilities, ordered by how much a demonstrated interaction explains.
 const capabilities = [
@@ -141,14 +141,6 @@ export function chooseMedia(version, markdown, catalog) {
     notesSha256,
     reason: "Routine fixes or internal changes have no new visual interaction to demonstrate.",
   };
-}
-
-function releaseSections(markdown) {
-  return new Map(
-    [...markdown.matchAll(/^## \[([^\]]+)\][^\n]*\n([\s\S]*?)(?=^## \[|$(?![\s\S]))/gm)].map(
-      (match) => [match[1], match[0]],
-    ),
-  );
 }
 
 async function main() {
