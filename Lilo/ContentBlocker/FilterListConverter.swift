@@ -407,8 +407,8 @@ enum FilterListConverter {
         return (classes, ids, keyed, links, cssRules)
     }
 
-    /// A class or id (`.ad`, `#banner`) every element `selector` hides carries, from its last compound:
-    /// `div.ad > span` hides spans, whatever their class. nil for a selector list or an escape.
+    /// A class or id (`.ad`, `#banner`) `selector` needs in the page, from its last compound, else from an earlier one: `#bar ~ *`
+    /// matches nothing without `#bar`, and native it would test every element of every page. nil for a selector list or an escape.
     private static func elementToken(of selector: String) -> String? {
         guard !selector.contains("\\"), !selector.contains(",") else { return nil }
         // The last compound starts after the last combinator outside brackets, parentheses and quoted values.
@@ -430,25 +430,29 @@ enum FilterListConverter {
             }
         }
         guard quote == nil else { return nil }
-        let compound = selector[start...]
-        depth = 0
-        for index in compound.indices {
-            let character = compound[index]
-            if let open = quote {
-                if character == open { quote = nil }
-            } else if character == "\"" || character == "'" {
-                quote = character
-            } else if character == "[" || character == "(" {
-                depth += 1
-            } else if character == "]" || character == ")" {
-                depth -= 1
-            } else if depth == 0, character == "." || character == "#" {
-                let token = compound[compound.index(after: index)...]
-                    .prefix { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") }
-                if !token.isEmpty { return String(character) + token }
+        // Outside brackets, parentheses (`:not(.ad)` needs no `.ad`) and quoted values.
+        func firstToken(in part: Substring) -> String? {
+            var depth = 0
+            var quote: Character?
+            for index in part.indices {
+                let character = part[index]
+                if let open = quote {
+                    if character == open { quote = nil }
+                } else if character == "\"" || character == "'" {
+                    quote = character
+                } else if character == "[" || character == "(" {
+                    depth += 1
+                } else if character == "]" || character == ")" {
+                    depth -= 1
+                } else if depth == 0, character == "." || character == "#" {
+                    let token = part[part.index(after: index)...]
+                        .prefix { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") }
+                    if !token.isEmpty { return String(character) + token }
+                }
             }
+            return nil
         }
-        return nil
+        return firstToken(in: selector[start...]) ?? firstToken(in: selector[...])
     }
 
     /// A link's `[href]` value naming a host (`a[href^="https://ads.example.com/"]`) means the selector
