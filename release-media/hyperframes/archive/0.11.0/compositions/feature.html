@@ -1,0 +1,42 @@
+<template>
+  <style>#root{position:absolute;inset:0;overflow:hidden;color:#26232f}#space-window{transform-origin:50% 0}.headline{font-size:120px}#moods-title{font-size:112px;letter-spacing:-5px}</style>
+  <div id="root" data-composition-id="feature" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="world" aria-hidden="true"></div>
+      <div id="space-title-clip" class="clip headline-clip" data-start="0" data-duration="14.95" data-track-index="1"><h1 id="space-title" class="headline">Make a Space yours.</h1></div><div id="glass-title-clip" class="clip headline-clip" data-start="0" data-duration="14.95" data-track-index="2"><h1 id="glass-title" class="headline">Glass.</h1></div><div id="grain-title-clip" class="clip headline-clip" data-start="0" data-duration="14.95" data-track-index="2"><h1 id="grain-title" class="headline">Grain.</h1></div><div id="moods-title-clip" class="clip headline-clip" data-start="0" data-duration="14.95" data-track-index="2"><h1 id="moods-title" class="headline">Every Space, its own feel.</h1></div><div id="space-window-clip" class="clip" data-start="0" data-duration="14.95" data-track-index="3" style="position:absolute;left:320px;top:240px;width:1280px;height:800px"><div id="space-window" class="native"><img id="space-solid" class="pixels" src="assets/native/solid-window.png" alt="Native Lilo solid window" /><img id="space-glass" class="pixels" src="assets/native/glass-window.png" alt="Native Lilo glass window" /><img id="space-grain" class="pixels" src="assets/native/grain-window.png" alt="Native Lilo grain window" /></div></div><div id="space-controls-clip" class="clip" data-start="0" data-duration="14.95" data-track-index="4" style="position:absolute;left:260px;top:720px;width:1400px;height:216.49px"><div id="space-controls" class="native"><img id="controls-solid" class="pixels" src="assets/native/solid-controls.png" alt="Native Lilo solid controls" /><img id="controls-glass" class="pixels" src="assets/native/glass-controls.png" alt="Native Lilo glass controls" /><img id="controls-grain" class="pixels" src="assets/native/grain-controls.png" alt="Native Lilo grain controls" /></div></div><div id="other-space-clip" class="clip" data-start="0" data-duration="14.95" data-track-index="5" style="position:absolute;left:320px;top:240px;width:1280px;height:800px"><div id="other-space" class="native"><img id="other-space-pixels" class="pixels" src="assets/native/glass-space.png" alt="Native Lilo glass space" /></div></div><div id="space-pointer-clip" class="clip cursor-clip" data-start="0" data-duration="14.95" data-track-index="30"><div id="space-pointer" class="cursor"><svg width="64" height="86" viewBox="0 0 26 36" aria-hidden="true"><path d="M2 2v28l7.1-7.1 5.3 11.2 5-2.4-5.4-10.9H24L2 2Z" fill="#fff" stroke="#18151f" stroke-width="1.8" stroke-linejoin="round" /></svg></div></div>
+  </div>
+  <script>
+      (() => {
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo('#space-title', { opacity: .3, y: 20 }, { opacity: 1, y: 0, duration: .65, ease: 'power4.out' }, 0)
+          .fromTo('#space-window', { scale: .95, y: 50 }, { scale: 1, y: 0, duration: .8, ease: 'expo.out' }, 0)
+          .set(['#space-glass','#space-grain','#controls-glass','#controls-grain'], { opacity: 0 }, 0)
+          .to('#space-window', { scale: 1.2, y: -40, duration: .7, ease: 'power2.inOut' }, 1.5)
+          .fromTo('#space-controls', { opacity: 0, y: 260 }, { opacity: 1, y: 0, duration: .65, ease: 'power4.out' }, 1.5)
+          .fromTo('#space-pointer', { opacity: 0, x: 1680, y: 1000 }, { opacity: 1, x: 958, y: 828, duration: .7, ease: 'power2.inOut' }, 2.3)
+          .set('#controls-solid', { opacity: 0 }, 3.2).set('#controls-glass', { opacity: 1 }, 3.2)
+          .to('#space-glass', { opacity: 1, duration: .3 }, 3.25)
+          .to('#world', { backgroundColor: '#c6b6df', duration: .5, ease: 'power2.inOut' }, 3.2)
+          .to('#space-title', { opacity: 0, duration: .2 }, 3.9)
+          .fromTo('#glass-title', { opacity: 0 }, { opacity: 1, duration: .3 }, 4.15)
+          .to('#space-pointer', { x: 1425, duration: .7, ease: 'power2.inOut' }, 5.6)
+          .set('#controls-glass', { opacity: 0 }, 6.5).set('#controls-grain', { opacity: 1 }, 6.5)
+          .to('#space-grain', { opacity: 1, duration: .3 }, 6.55)
+          .to('#world', { backgroundColor: '#d8cbd5', duration: .5, ease: 'power2.inOut' }, 6.5)
+          .to('#glass-title', { opacity: 0, duration: .2 }, 6.9)
+          .fromTo('#grain-title', { opacity: 0 }, { opacity: 1, duration: .3 }, 7.15)
+          .to('#space-pointer', { opacity: 0, duration: .2 }, 7.3)
+          .to('#space-controls', { opacity: 0, y: -55, duration: .45, ease: 'power3.in' }, 8.6)
+          .to('#space-window', { scale: 1, y: 0, duration: .8, ease: 'power2.inOut' }, 8.7)
+          .to('#grain-title', { opacity: 0, duration: .2 }, 9.8)
+          .fromTo('#moods-title', { opacity: 0 }, { opacity: 1, duration: .35 }, 10.05)
+          .to('#space-window', { opacity: 0, duration: .45 }, 10.8)
+          .fromTo('#other-space', { opacity: 0, x: 1700 }, { opacity: 1, x: 0, duration: .7, ease: 'power4.out' }, 10.8)
+          .to('#other-space', { opacity: 0, y: -60, duration: .55, ease: 'power3.in' }, 13.8);
+        pressPointer(tl, '#space-pointer', 3.2); pressPointer(tl, '#space-pointer', 6.5);
+        tl.to('.headline', { opacity: 0, duration: .2 }, 14.4);
+        tl.to({}, { duration: 14.95 }, 0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines.feature = tl;
+      })();
+    </script>
+</template>

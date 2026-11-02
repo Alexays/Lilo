@@ -10,20 +10,6 @@
   },
   "highlights": [
     {
-      "id": "fresh-start",
-      "title": {
-        "en": "Come back to a clean window.",
-        "fr": "Retrouvez une fenêtre au propre."
-      },
-      "body": {
-        "en": "After a long enough absence, Lilo opens with no tab selected, and your pinned and bookmarked tabs back on their home page. The tabs it archived meanwhile come back with Undo. Turn on Open to an empty window to start this way at every launch.",
-        "fr": "Après une absence assez longue, Lilo s'ouvre sans onglet sélectionné, vos onglets épinglés et favoris revenus à leur page d'accueil. Les onglets archivés entre-temps reviennent avec Annuler. Activez Ouvrir une fenêtre vide pour partir ainsi à chaque lancement."
-      },
-      "notes": [
-        "After a long enough absence, Lilo opens on a clean window: no tab selected, pinned and bookmarked tabs back on their home page, and the tabs it archived meanwhile offered back with Undo. The new Open to an empty window setting does this on every launch."
-      ]
-    },
-    {
       "id": "archived-tabs",
       "title": {
         "en": "Archived tabs, one click away.",
@@ -35,6 +21,20 @@
       },
       "notes": [
         "The tabs Lilo archived in the last day wait next to New Tab, or in the tab bar, ready to come back in one click."
+      ]
+    },
+    {
+      "id": "fresh-start",
+      "title": {
+        "en": "Come back to a clean window.",
+        "fr": "Retrouvez une fenêtre au propre."
+      },
+      "body": {
+        "en": "After a long enough absence, Lilo opens with no tab selected, and your pinned and bookmarked tabs back on their home page. The tabs it archived meanwhile come back with Undo. Turn on Open to an empty window to start this way at every launch.",
+        "fr": "Après une absence assez longue, Lilo s'ouvre sans onglet sélectionné, vos onglets épinglés et favoris revenus à leur page d'accueil. Les onglets archivés entre-temps reviennent avec Annuler. Activez Ouvrir une fenêtre vide pour partir ainsi à chaque lancement."
+      },
+      "notes": [
+        "After a long enough absence, Lilo opens on a clean window: no tab selected, pinned and bookmarked tabs back on their home page, and the tabs it archived meanwhile offered back with Undo. The new Open to an empty window setting does this on every launch."
       ]
     }
   ]

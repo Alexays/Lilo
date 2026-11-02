@@ -1,0 +1,73 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "connected.png",
+      "height" : 272,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        10,
+        700,
+        248,
+        34
+      ],
+      "sha256" : "7a1d42a16773286726f62a25d505e7ebdb15994fb8315f7f62c5a06486b421a6",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1984
+    },
+    {
+      "file" : "browsing.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "ea6c4c0a029bfd2da544a41cec6f6f045d6b51f8b67a91090f59505399cae8f7",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "muted.png",
+      "height" : 272,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        10,
+        700,
+        248,
+        34
+      ],
+      "sha256" : "d178b65bc082f21de613634be0923bd8fc930dac18624db08808739dffa762b6",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1984
+    },
+    {
+      "file" : "camera-off.png",
+      "height" : 272,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        10,
+        700,
+        248,
+        34
+      ],
+      "sha256" : "f0ec18dcbf22c21b8116bb294869fccc239ccbde370d50e3ca802335a647976e",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1984
+    }
+  ],
+  "capturedAt" : "2026-11-02T13:15:26Z",
+  "checks" : {
+    "hardwareOrRemoteCallUsed" : false,
+    "realMediaSessionHandlers" : true,
+    "syntheticDeviceUsage" : true
+  },
+  "feature" : "calls",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
+  "release" : "0.7.0",
+  "schemaVersion" : 1
+}

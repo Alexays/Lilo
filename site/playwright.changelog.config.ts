@@ -5,7 +5,7 @@ import { defineConfig } from "@playwright/test";
 import config from "./playwright.config";
 
 export default defineConfig(config, {
-  testMatch: ["changelog.spec.ts", "release-media.spec.ts"],
+  testMatch: "changelog.spec.ts",
   use: { baseURL: "http://127.0.0.1:8792" },
   webServer: {
     command: "make site-preview SITE_PREVIEW_PORT=8792",

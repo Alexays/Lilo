@@ -1,0 +1,41 @@
+{
+  "release": "0.11.0",
+  "kind": "video",
+  "passed": true,
+  "renderSha256": "7388cbdbfaf47c6a12fbbbf15446011c7b3938476a641b63e8ca7925ced08a9c",
+  "sourceHashes": true,
+  "renderHashes": true,
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [
+    {
+      "file": "solid-controls.png",
+      "rgbPreserved": true,
+      "transparentPixels": 12028
+    },
+    {
+      "file": "glass-controls.png",
+      "rgbPreserved": true,
+      "transparentPixels": 12028
+    },
+    {
+      "file": "grain-controls.png",
+      "rgbPreserved": true,
+      "transparentPixels": 12028
+    }
+  ],
+  "decode": true,
+  "fps": 60,
+  "frames": 1080,
+  "audio": {
+    "integratedLoudnessLUFS": -16,
+    "truePeakDbFS": -2.5
+  },
+  "motion": {
+    "measuredFrames": 1079,
+    "movingFrameRatio": 0.36793327154772937,
+    "longestStillSeconds": 2.5833333333333335,
+    "largestLumaChange": 6.80151
+  },
+  "posterSSIM": 0.999005
+}

@@ -1,0 +1,66 @@
+{
+  "release": "0.9.0",
+  "kind": "video",
+  "passed": true,
+  "renderSha256": "70a8da687020133cf056a6a27bf1f00269d61cd2aced6f0dc9b485e7004c6370",
+  "sourceHashes": true,
+  "renderHashes": true,
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [
+    {
+      "file": "search-0.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-1.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-2.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-3.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-4.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-5.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-6.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "filtered-rows.png",
+      "rgbPreserved": true,
+      "transparentPixels": 10448
+    }
+  ],
+  "decode": true,
+  "fps": 60,
+  "frames": 900,
+  "audio": {
+    "integratedLoudnessLUFS": -15.9,
+    "truePeakDbFS": -2.1
+  },
+  "motion": {
+    "measuredFrames": 899,
+    "movingFrameRatio": 0.2936596218020022,
+    "longestStillSeconds": 2.6166666666666667,
+    "largestLumaChange": 11.3326
+  },
+  "posterSSIM": 0.999016
+}

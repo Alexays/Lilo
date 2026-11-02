@@ -1,0 +1,31 @@
+<template>
+  <style>#root{position:absolute;inset:0;overflow:hidden;color:#26232f}</style>
+  <div id="root" data-composition-id="feature" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="world" aria-hidden="true"></div>
+      <div id="name-title-clip" class="clip headline-clip" data-start="0" data-duration="9.15" data-track-index="1"><h1 id="name-title" class="headline">Give it a name.</h1></div><div id="keep-title-clip" class="clip headline-clip" data-start="0" data-duration="9.15" data-track-index="2"><h1 id="keep-title" class="headline">A name that stays.</h1></div><div id="pin-clip" class="clip" data-start="0" data-duration="9.15" data-track-index="3" style="position:absolute;left:120px;top:480px;width:1680px;height:210px"><div id="pin" class="native"><img id="pin-before" class="pixels" src="assets/native/pinned.png" alt="Native Lilo pinned" /><img id="pin-letter-0" class="pixels" src="assets/native/rename-0.png" alt="Native Lilo rename 0" /><img id="pin-letter-1" class="pixels" src="assets/native/rename-1.png" alt="Native Lilo rename 1" /><img id="pin-letter-2" class="pixels" src="assets/native/rename-2.png" alt="Native Lilo rename 2" /><img id="pin-letter-3" class="pixels" src="assets/native/rename-3.png" alt="Native Lilo rename 3" /><img id="pin-letter-4" class="pixels" src="assets/native/rename-4.png" alt="Native Lilo rename 4" /><img id="pin-letter-5" class="pixels" src="assets/native/rename-5.png" alt="Native Lilo rename 5" /><img id="pin-letter-6" class="pixels" src="assets/native/rename-6.png" alt="Native Lilo rename 6" /><img id="pin-after" class="pixels" src="assets/native/renamed.png" alt="Native Lilo renamed" /></div></div><div id="pin-pointer-clip" class="clip cursor-clip" data-start="0" data-duration="9.15" data-track-index="30"><div id="pin-pointer" class="cursor"><svg width="64" height="86" viewBox="0 0 26 36" aria-hidden="true"><path d="M2 2v28l7.1-7.1 5.3 11.2 5-2.4-5.4-10.9H24L2 2Z" fill="#fff" stroke="#18151f" stroke-width="1.8" stroke-linejoin="round" /></svg></div></div>
+  </div>
+  <script>
+      (() => {
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo('#name-title', { opacity: .3, y: 20 }, { opacity: 1, y: 0, duration: .65, ease: 'power4.out' }, 0)
+          .fromTo('#pin', { x: -90, y: 50 }, { x: 0, y: 0, duration: .8, ease: 'expo.out' }, 0)
+          .set(['#pin-letter-0','#pin-letter-1','#pin-letter-2','#pin-letter-3','#pin-letter-4','#pin-letter-5','#pin-letter-6','#pin-after'], { opacity: 0 }, 0)
+          .fromTo('#pin-pointer', { opacity: 0, x: 1620, y: 850 }, { opacity: 1, x: 690, y: 585, duration: .7, ease: 'power2.inOut' }, 1.25)
+          .set('#pin-before', { opacity: 0 }, 2.25).set('#pin-letter-0', { opacity: 1 }, 2.25);
+        [1,2,3,4,5,6].forEach(index => {
+          const time = 3 + (index - 1) * .15;
+          tl.set(`#pin-letter-${index - 1}`, { opacity: 0 }, time).set(`#pin-letter-${index}`, { opacity: 1 }, time);
+        });
+        pressPointer(tl, '#pin-pointer', 2.05); pressPointer(tl, '#pin-pointer', 2.2);
+        tl.to('#pin-pointer', { opacity: 0, duration: .2 }, 3.9)
+          .set('#pin-letter-6', { opacity: 0 }, 4.9).set('#pin-after', { opacity: 1 }, 4.9)
+          .to('#name-title', { opacity: 0, duration: .2 }, 4.65)
+          .fromTo('#keep-title', { opacity: 0 }, { opacity: 1, duration: .4 }, 4.95)
+          .to('#pin', { y: -75, opacity: 0, duration: .6, ease: 'power3.in' }, 7.6);
+        tl.to('.headline', { opacity: 0, duration: .2 }, 8.6);
+        tl.to({}, { duration: 9.15 }, 0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines.feature = tl;
+      })();
+    </script>
+</template>

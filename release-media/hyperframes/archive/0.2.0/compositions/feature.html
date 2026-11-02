@@ -1,0 +1,28 @@
+<template>
+  <style>#root{position:absolute;inset:0;overflow:hidden;color:#26232f}</style>
+  <div id="root" data-composition-id="feature" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="world" aria-hidden="true"></div>
+      <div id="edge-title-clip" class="clip headline-clip" data-start="0" data-duration="12.15" data-track-index="1"><h1 id="edge-title" class="headline">Tabs. Every edge.</h1></div><div id="edge-left-clip" class="clip" data-start="0" data-duration="12.15" data-track-index="3" style="position:absolute;left:368px;top:315px;width:1184px;height:740px;overflow:hidden"><div id="edge-left" class="native"><img id="edge-left-pixels" class="pixels" src="assets/native/left.png" alt="Native Lilo left" /></div></div><div id="label-left-clip" class="clip" data-start="0" data-duration="12.15" data-track-index="15" style="position:absolute;left:150px;top:230px;width:500px;height:90px"><p id="label-left" style="margin:0;font-size:74px;font-weight:500;letter-spacing:-3px;color:#776692">Left</p></div><div id="edge-right-clip" class="clip" data-start="0" data-duration="12.15" data-track-index="4" style="position:absolute;left:368px;top:315px;width:1184px;height:740px;overflow:hidden"><div id="edge-right" class="native"><img id="edge-right-pixels" class="pixels" src="assets/native/right.png" alt="Native Lilo right" /></div></div><div id="label-right-clip" class="clip" data-start="0" data-duration="12.15" data-track-index="16" style="position:absolute;left:150px;top:230px;width:500px;height:90px"><p id="label-right" style="margin:0;font-size:74px;font-weight:500;letter-spacing:-3px;color:#776692">Right</p></div><div id="edge-top-clip" class="clip" data-start="0" data-duration="12.15" data-track-index="5" style="position:absolute;left:368px;top:315px;width:1184px;height:740px;overflow:hidden"><div id="edge-top" class="native"><img id="edge-top-pixels" class="pixels" src="assets/native/top.png" alt="Native Lilo top" /></div></div><div id="label-top-clip" class="clip" data-start="0" data-duration="12.15" data-track-index="17" style="position:absolute;left:150px;top:230px;width:500px;height:90px"><p id="label-top" style="margin:0;font-size:74px;font-weight:500;letter-spacing:-3px;color:#776692">Top</p></div><div id="edge-bottom-clip" class="clip" data-start="0" data-duration="12.15" data-track-index="6" style="position:absolute;left:368px;top:315px;width:1184px;height:740px;overflow:hidden"><div id="edge-bottom" class="native"><img id="edge-bottom-pixels" class="pixels" src="assets/native/bottom.png" alt="Native Lilo bottom" /></div></div><div id="label-bottom-clip" class="clip" data-start="0" data-duration="12.15" data-track-index="18" style="position:absolute;left:150px;top:230px;width:500px;height:90px"><p id="label-bottom" style="margin:0;font-size:74px;font-weight:500;letter-spacing:-3px;color:#776692">Bottom</p></div>
+  </div>
+  <script>
+      (() => {
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo('#edge-title', { opacity: .3, y: 20 }, { opacity: 1, y: 0, duration: .7, ease: 'power4.out' }, 0)
+          .fromTo('#edge-left', { scale: .93, y: 50 }, { scale: 1, y: 0, duration: .8, ease: 'expo.out' }, 0)
+          .set(['#edge-right','#edge-top','#edge-bottom','#label-right','#label-top','#label-bottom'], { opacity: 0 }, 0)
+          .fromTo('#label-left', { opacity: 0 }, { opacity: 1, duration: .3 }, .6);
+        [['left','right',2.8,1300,0],['right','top',5.5,0,-900],['top','bottom',8.2,0,900]].forEach(([old,next,time,x,y]) => {
+          tl.to(`#edge-${old}`, { opacity: 0, scale: .96, duration: .45, ease: 'power2.inOut' }, time)
+            .to(`#label-${old}`, { opacity: 0, duration: .15 }, time)
+            .fromTo(`#edge-${next}`, { opacity: 0, x, y }, { opacity: 1, x: 0, y: 0, duration: .65, ease: 'power4.out' }, time)
+            .to(`#label-${next}`, { opacity: 1, duration: .25 }, time + .2);
+        });
+        tl.to('#edge-bottom', { opacity: 0, y: -45, duration: .55, ease: 'power3.in' }, 10.9)
+          .to('#label-bottom', { opacity: 0, duration: .25 }, 11);
+        tl.to('.headline', { opacity: 0, duration: .2 }, 11.6);
+        tl.to({}, { duration: 12.15 }, 0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines.feature = tl;
+      })();
+    </script>
+</template>

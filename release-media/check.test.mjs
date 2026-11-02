@@ -5,7 +5,7 @@ import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const json = (value) => JSON.stringify(value, null, 2) + "\n";
@@ -14,7 +14,7 @@ test("publication fails closed against the measured HyperFrames film and its sou
   const scratch = await mkdtemp(path.join(tmpdir(), "lilo-publication-test-"));
   t.after(() => rm(scratch, { recursive: true, force: true }));
   const folder = path.join(scratch, "release-media");
-  const version = "0.8.0";
+  const version = "0.11.0";
   const backlog = JSON.parse(await readFile(path.join(root, "backlog.json"), "utf8"));
   const entry = backlog.releases[version];
   const catalog = {
@@ -24,19 +24,23 @@ test("publication fails closed against the measured HyperFrames film and its sou
   };
   const assets = path.join(folder, "assets", version);
   await mkdir(path.join(folder, "public/native"), { recursive: true });
-  await mkdir(path.join(folder, "hyperframes"), { recursive: true });
+  await mkdir(path.join(folder, "hyperframes/archive"), { recursive: true });
   await cp(path.join(root, "assets", version), assets, { recursive: true });
   await cp(path.join(root, "public/native", version), path.join(folder, "public/native", version), {
     recursive: true,
   });
   await cp(
-    path.join(root, "hyperframes", version),
-    path.join(folder, "hyperframes", version),
+    path.join(root, "hyperframes/archive", version),
+    path.join(folder, "hyperframes/archive", version),
     {
       recursive: true,
     },
   );
   await cp(path.join(root, "public/audio"), path.join(folder, "public/audio"), { recursive: true });
+  await cp(
+    path.join(root, "hyperframes/archive/ending.html"),
+    path.join(folder, "hyperframes/archive/ending.html"),
+  );
   for (const file of ["check.mjs", "pipeline.mjs", "fixtures.mjs"])
     await cp(path.join(root, file), path.join(folder, file));
   for (const file of [
@@ -44,6 +48,8 @@ test("publication fails closed against the measured HyperFrames film and its sou
     "png-cutouts.mjs",
     "package-lock.json",
     "hyperframes/assets",
+    "hyperframes/archive/shared.css",
+    "hyperframes/archive/shared.js",
   ])
     await cp(path.join(root, file), path.join(folder, file), { recursive: true });
   await writeFile(path.join(folder, "backlog.json"), json(catalog));
@@ -84,26 +90,26 @@ test("publication fails closed against the measured HyperFrames film and its sou
 
   await t.test("publishes the measured film using Node alone", () => {
     assert.equal(render.engine, "hyperframes");
-    assert.match(run(), /Quality-gated 0\.8\.0: video tab-share/u);
+    assert.match(run(), /Quality-gated 0\.11\.0: video spaces/u);
   });
   await t.test("an unrelated fixture preserves publication of the measured film", () =>
     withChangedFile(
       path.join(folder, "fixtures.mjs"),
       (bytes) => Buffer.concat([bytes, Buffer.from('\nfixtures["unrelated"] = "99.0.0";\n')]),
-      () => assert.match(run(), /Quality-gated 0\.8\.0: video tab-share/u),
+      () => assert.match(run(), /Quality-gated 0\.11\.0: video spaces/u),
     ),
   );
   await t.test("soundtrack documentation does not invalidate the measured film", () =>
     withChangedFile(
       path.join(folder, "public/audio/music.README.md"),
       (bytes) => Buffer.concat([bytes, Buffer.from("\nClarified soundtrack documentation.\n")]),
-      () => assert.match(run(), /Quality-gated 0\.8\.0: video tab-share/u),
+      () => assert.match(run(), /Quality-gated 0\.11\.0: video spaces/u),
     ),
   );
   await t.test("a changed selected fixture refuses the measured film", () =>
     withChangedFile(
       path.join(folder, "fixtures.mjs"),
-      (bytes) => bytes.toString().replace('"tab-share": "0.8.0"', '"tab-share": "0.10.0"'),
+      (bytes) => bytes.toString().replace('spaces: "0.11.0"', 'spaces: "0.10.0"'),
       () => assert.throws(run, /HyperFrames recipe changed/u),
     ),
   );
@@ -216,13 +222,13 @@ test("publication fails closed against the measured HyperFrames film and its sou
     [
       "an omitted poster digest",
       (value) => {
-        delete value.hashes["tab-share.png"];
+        delete value.hashes["spaces.png"];
       },
     ],
     [
       "an omitted film digest",
       (value) => {
-        delete value.hashes["tab-share.mp4"];
+        delete value.hashes["spaces.mp4"];
       },
     ],
     [
@@ -234,7 +240,7 @@ test("publication fails closed against the measured HyperFrames film and its sou
     [
       "an invalid digest",
       (value) => {
-        value.hashes["tab-share.mp4"] = "invalid";
+        value.hashes["spaces.mp4"] = "invalid";
       },
     ],
   ])
@@ -259,7 +265,7 @@ test("publication fails closed against the measured HyperFrames film and its sou
     });
   await t.test("changed encoded bytes are refused", () =>
     withChangedFile(
-      path.join(assets, "tab-share.mp4"),
+      path.join(assets, "spaces.mp4"),
       () => "changed encoded bytes",
       () => assert.throws(run, /Rendered media changed/u),
     ),
@@ -281,23 +287,23 @@ test("publication fails closed against the measured HyperFrames film and its sou
   );
   await t.test("changed composition code invalidates the render", () =>
     withChangedFile(
-      path.join(folder, "hyperframes", version, "index.html"),
+      path.join(folder, "hyperframes/archive", version, "index.html"),
       (bytes) => Buffer.concat([bytes, Buffer.from("\n<!-- changed composition -->\n")]),
       () => assert.throws(run, /HyperFrames recipe changed/u),
     ),
   );
   await t.test("a changed selected scene invalidates the render", () =>
     withChangedFile(
-      path.join(folder, "hyperframes", version, "compositions/find.html"),
+      path.join(folder, "hyperframes/archive", version, "compositions/feature.html"),
       (bytes) => Buffer.concat([bytes, Buffer.from("\n<!-- changed selected scene -->\n")]),
       () => assert.throws(run, /HyperFrames recipe changed/u),
     ),
   );
   await t.test("an unrelated composition does not invalidate the render", async () => {
-    const unrelated = path.join(folder, "hyperframes/99.0.0");
+    const unrelated = path.join(folder, "hyperframes/archive/99.0.0");
     await mkdir(unrelated);
     await writeFile(path.join(unrelated, "index.html"), "Unrelated composition");
-    assert.match(run(), /Quality-gated 0\.8\.0: video tab-share/u);
+    assert.match(run(), /Quality-gated 0\.11\.0: video spaces/u);
   });
   for (const file of ["render.mjs", "public/audio/music.ogg", "public/audio/mouse-click.wav"])
     await t.test(`changing ${file} invalidates the film`, () =>
@@ -307,9 +313,9 @@ test("publication fails closed against the measured HyperFrames film and its sou
         () => assert.throws(run, /HyperFrames recipe changed/u),
       ),
     );
-  await t.test("changing the ending invalidates the selected film", () =>
+  await t.test("changing the shared ending invalidates a film that uses it", () =>
     withChangedFile(
-      path.join(folder, "hyperframes", version, "compositions/end.html"),
+      path.join(folder, "hyperframes/archive/ending.html"),
       (bytes) => Buffer.concat([bytes, Buffer.from("\n<!-- changed shared ending -->\n")]),
       () => assert.throws(run, /HyperFrames recipe changed/u),
     ),
@@ -323,13 +329,116 @@ test("publication fails closed against the measured HyperFrames film and its sou
       /native capture is not from this tag/u,
     );
   });
-  await t.test("unselected publication retains verified captures", () => {
+  await t.test("publishing the archive retains verified historical captures", () => {
     assert.match(
       run({ GITHUB_REF_TYPE: "tag", GITHUB_SHA: "new-release-commit" }),
-      /Quality-gated 0\.8\.0/u,
+      /Quality-gated 0\.11\.0/u,
     );
   });
   await t.test("restoring the verified inputs makes publication pass again", () => {
-    assert.match(run(), /Quality-gated 0\.8\.0: video tab-share/u);
+    assert.match(run(), /Quality-gated 0\.11\.0: video spaces/u);
   });
+});
+
+test("screenshots publish independently of unused video assets", async (t) => {
+  const scratch = await mkdtemp(path.join(tmpdir(), "lilo-screenshot-publication-test-"));
+  t.after(() => rm(scratch, { recursive: true, force: true }));
+  const folder = path.join(scratch, "release-media");
+  const version = "0.6.0";
+  const backlog = JSON.parse(await readFile(path.join(root, "backlog.json"), "utf8"));
+  const entry = backlog.releases[version];
+  for (const file of [
+    "check.mjs",
+    "pipeline.mjs",
+    "fixtures.mjs",
+    "render.mjs",
+    "png-cutouts.mjs",
+    "package-lock.json",
+    `assets/${version}`,
+    `public/native/${version}`,
+    "public/audio",
+    "hyperframes/assets",
+  ])
+    await cp(path.join(root, file), path.join(folder, file), { recursive: true });
+  await writeFile(
+    path.join(folder, "backlog.json"),
+    json({ publication: "quality-gated", releases: { [version]: entry } }),
+  );
+  await writeFile(
+    path.join(scratch, "CHANGELOG.md"),
+    `## [${version}]\n${entry.notes.join("\n")}\n`,
+  );
+  const run = () =>
+    execFileSync(process.execPath, [path.join(folder, "check.mjs"), "--publish"], {
+      env: { PATH: "" },
+      stdio: "pipe",
+    }).toString();
+  assert.match(run(), /Quality-gated 0\.6\.0: screenshot unread/u);
+  for (const file of [
+    "public/audio/music.ogg",
+    "public/audio/music.license.json",
+    "public/audio/mouse-click.wav",
+    "public/audio/switch.wav",
+    "hyperframes/assets/logo.svg",
+  ]) {
+    await writeFile(path.join(folder, file), "unused video asset changed");
+    assert.match(run(), /Quality-gated 0\.6\.0: screenshot unread/u);
+  }
+  await writeFile(
+    path.join(folder, "fixtures.mjs"),
+    (await readFile(path.join(folder, "fixtures.mjs"), "utf8")).replace(
+      'unread: "0.6.0"',
+      'unread: "0.3.0"',
+    ),
+  );
+  assert.throws(run, /HyperFrames recipe changed/u);
+});
+
+test("selected recipe dependencies exclude the fixture registry and unused video assets", async (t) => {
+  const scratch = await mkdtemp(path.join(tmpdir(), "lilo-recipe-dependencies-test-"));
+  t.after(() => rm(scratch, { recursive: true, force: true }));
+  for (const file of [
+    "pipeline.mjs",
+    "fixtures.mjs",
+    "render.mjs",
+    "png-cutouts.mjs",
+    "package-lock.json",
+    "public/audio",
+    "hyperframes/assets",
+    "hyperframes/archive/0.11.0",
+    "hyperframes/archive/ending.html",
+    "hyperframes/archive/shared.css",
+    "hyperframes/archive/shared.js",
+  ])
+    await cp(path.join(root, file), path.join(scratch, file), { recursive: true });
+  const { resolveRecipe, recipeHashes } = await import(
+    pathToFileURL(path.join(scratch, "pipeline.mjs"))
+  );
+  const screenshot = { kind: "screenshot", feature: "unread" };
+  const video = { kind: "video", feature: "spaces" };
+  const stillRecipe = resolveRecipe(screenshot);
+  const filmRecipe = resolveRecipe(video);
+  assert.deepEqual(stillRecipe, { fixture: "0.6.0", directory: null, variant: null });
+  assert.deepEqual(filmRecipe, {
+    fixture: "0.11.0",
+    directory: "hyperframes/archive/0.11.0",
+    variant: null,
+  });
+  assert.deepEqual(resolveRecipe({ kind: "video", feature: "tab-share", variant: "share" }), {
+    fixture: "0.8.0",
+    directory: "hyperframes/archive/0.8.0",
+    variant: "share",
+  });
+  const stillHashes = await recipeHashes(screenshot, stillRecipe);
+  const filmHashes = await recipeHashes(video, filmRecipe);
+  assert.equal(Object.hasOwn(stillHashes, "fixtures.mjs"), false);
+  assert.equal(Object.hasOwn(filmHashes, "fixtures.mjs"), false);
+  assert.equal(Object.hasOwn(stillHashes, "public/audio/music.ogg"), false);
+  assert.equal(Object.hasOwn(stillHashes, "hyperframes/assets/logo.svg"), false);
+  assert.equal(Object.hasOwn(filmHashes, "public/audio/music.ogg"), true);
+  await writeFile(path.join(scratch, "public/audio/music.ogg"), "changed soundtrack");
+  assert.deepEqual(await recipeHashes(screenshot, stillRecipe), stillHashes);
+  assert.notDeepEqual(await recipeHashes(video, filmRecipe), filmHashes);
+  await writeFile(path.join(scratch, "render.mjs"), "changed shared renderer");
+  assert.notDeepEqual(await recipeHashes(screenshot, stillRecipe), stillHashes);
 });

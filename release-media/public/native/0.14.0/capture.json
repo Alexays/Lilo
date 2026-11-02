@@ -1,0 +1,78 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "link.png",
+      "height" : 304,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        92,
+        526,
+        91,
+        38
+      ],
+      "sha256" : "07d9d83c4d0d7a884290645b23645191dd5e1c6b168a3ce48cff9661d6095ea6",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 728
+    },
+    {
+      "file" : "before.png",
+      "height" : 630,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        105
+      ],
+      "sha256" : "7fefc2199aec8305b9c526727b6b21bccf61f089ef65919725f465637d8e3a74",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    },
+    {
+      "file" : "target.png",
+      "height" : 630,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        105
+      ],
+      "sha256" : "c7ed77f0320e97a0392ac0fb932b71435166fb4b8bf43590bdc8ffac43d17fbd",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    },
+    {
+      "file" : "dropped.png",
+      "height" : 810,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        135
+      ],
+      "sha256" : "878f119759e615c04a839d56a715461dce7a505e7ceee87156504a1fcf85fcf6",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    }
+  ],
+  "capturedAt" : "2026-11-02T13:15:28Z",
+  "checks" : {
+    "actualBrowserCommandOpenedLink" : true,
+    "actualNativeDropIndicator" : true,
+    "insertionPoint" : {
+      "x" : 134,
+      "y" : 162.109375
+    },
+    "insertionY" : 161.109375,
+    "syntheticExternalDragPayload" : true
+  },
+  "feature" : "drop",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
+  "release" : "0.14.0",
+  "schemaVersion" : 1
+}

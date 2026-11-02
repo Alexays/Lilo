@@ -1,0 +1,11 @@
+{
+  "release": "0.1.0",
+  "kind": "screenshot",
+  "passed": true,
+  "renderSha256": "9e60ab5424a4efac61379c176589fbc3f7cc8e61fab7e9c96d4420c1e31b9a21",
+  "sourceHashes": true,
+  "renderHashes": true,
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": []
+}

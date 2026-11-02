@@ -1,0 +1,30 @@
+<template>
+  <style>#root{position:absolute;inset:0;overflow:hidden;color:#26232f}</style>
+  <div id="root" data-composition-id="feature" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="world" aria-hidden="true"></div>
+      <div id="call-title-clip" class="clip headline-clip" data-start="0" data-duration="10.95" data-track-index="1"><h1 id="call-title" class="headline">Keep your call close.</h1></div><div id="carry-title-clip" class="clip headline-clip" data-start="0" data-duration="10.95" data-track-index="2"><h1 id="carry-title" class="headline">Carry on browsing.</h1></div><div id="call-context-clip" class="clip" data-start="0" data-duration="10.95" data-track-index="3" style="position:absolute;left:368px;top:270px;width:1184px;height:740px"><div id="call-context" class="native"><img id="call-context-pixels" class="pixels" src="assets/native/browsing.png" alt="Native Lilo browsing" /></div></div><div id="call-card-clip" class="clip" data-start="0" data-duration="10.95" data-track-index="4" style="position:absolute;left:180px;top:480px;width:1560px;height:213.87px"><div id="call-card" class="native"><img id="call-connected" class="pixels" src="assets/native/connected.png" alt="Native Lilo connected" /><img id="call-muted" class="pixels" src="assets/native/muted.png" alt="Native Lilo muted" /><img id="call-camera-off" class="pixels" src="assets/native/camera-off.png" alt="Native Lilo camera off" /></div></div><div id="call-pointer-clip" class="clip cursor-clip" data-start="0" data-duration="10.95" data-track-index="30"><div id="call-pointer" class="cursor"><svg width="64" height="86" viewBox="0 0 26 36" aria-hidden="true"><path d="M2 2v28l7.1-7.1 5.3 11.2 5-2.4-5.4-10.9H24L2 2Z" fill="#fff" stroke="#18151f" stroke-width="1.8" stroke-linejoin="round" /></svg></div></div>
+  </div>
+  <script>
+      (() => {
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo('#call-title', { opacity: .3, y: 20 }, { opacity: 1, y: 0, duration: .65, ease: 'power4.out' }, 0)
+          .fromTo('#call-context', { scale: .94, y: 40 }, { scale: 1, y: 0, duration: .8, ease: 'expo.out' }, 0)
+          .to('#call-context', { opacity: 0, duration: .45 }, 1.5)
+          .fromTo('#call-card', { opacity: 0, x: -465, y: 350, scale: .15 }, { opacity: 1, x: 0, y: 0, scale: 1, duration: .8, ease: 'power4.out' }, 1.5)
+          .set(['#call-muted','#call-camera-off'], { opacity: 0 }, 0)
+          .fromTo('#call-pointer', { opacity: 0, x: 1660, y: 850 }, { opacity: 1, x: 1167, y: 587, duration: .7, ease: 'power2.inOut' }, 3.1)
+          .set('#call-connected', { opacity: 0 }, 4.05).set('#call-muted', { opacity: 1 }, 4.05)
+          .to('#call-pointer', { x: 1323, duration: .65, ease: 'power2.inOut' }, 5.4)
+          .set('#call-muted', { opacity: 0 }, 6.35).set('#call-camera-off', { opacity: 1 }, 6.35)
+          .to('#call-pointer', { opacity: 0, duration: .2 }, 6.7)
+          .to('#call-title', { opacity: 0, duration: .2 }, 6.8)
+          .fromTo('#carry-title', { opacity: 0 }, { opacity: 1, duration: .4 }, 7.05)
+          .to('#call-card', { opacity: 0, y: -60, duration: .6, ease: 'power3.in' }, 9.2);
+        pressPointer(tl, '#call-pointer', 4); pressPointer(tl, '#call-pointer', 6.3);
+        tl.to('.headline', { opacity: 0, duration: .2 }, 10.4);
+        tl.to({}, { duration: 10.95 }, 0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines.feature = tl;
+      })();
+    </script>
+</template>

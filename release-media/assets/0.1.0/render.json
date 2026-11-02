@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 3,
+  "engine": "hyperframes",
+  "release": "0.1.0",
+  "kind": "screenshot",
+  "feature": "browser",
+  "recipe": {
+    "fixture": "0.1.0",
+    "directory": null,
+    "variant": null
+  },
+  "width": 1920,
+  "height": 1080,
+  "fps": 60,
+  "frames": 1,
+  "posterFrame": 0,
+  "hashes": {
+    "browser.png": "4ff538154c0dc2f1a7f84faa484854af2215ac9b6174568d5dd6fdb137bedea8"
+  },
+  "recipeHashes": {
+    "render.mjs": "7bcb846b407273392788f3145e846042890597d6c812b07071b83c2c12676737",
+    "pipeline.mjs": "82ad9dd2bd2193de51afc4637f3a4ef073409c35da88ff99a9d7cdc087969d05",
+    "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
+    "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
+    "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4"
+  },
+  "nativeReceipts": [
+    {
+      "path": "public/native/0.1.0/capture.json",
+      "sha256": "444d228ac189a2d817d665b436d2a18a53f934f0427905e1e3a98df6d93573f7",
+      "appVersion": "0.14.1",
+      "appBuild": "31",
+      "productSourceCommit": "6905252c253e7803410b690b2095fbdb8691a28f"
+    }
+  ],
+  "cutouts": []
+}

@@ -225,6 +225,13 @@ final class ReleaseMediaCapture {
         try save(NSBitmapImageRep(cgImage: image), name: name, tool: "ScreenCaptureKit desktop-independent native window", points: filter.contentRect, scale: CGFloat(filter.pointPixelScale))
     }
 
+    func bundledArtwork(season: String, variant: String = "classic") throws {
+        let url = try XCTUnwrap(Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons/\(season)"))
+        let data = try Data(contentsOf: url)
+        let bitmap = try XCTUnwrap(NSBitmapImageRep(data: data))
+        try save(bitmap, name: season, tool: "actual compiled native bundle AppIcons/\(season)/\(variant).png", points: CGRect(x: 0, y: 0, width: bitmap.pixelsWide, height: bitmap.pixelsHigh), scale: 1)
+    }
+
     func finish(checks: [String: Any]) throws {
         let env = ProcessInfo.processInfo.environment
         let receipt: [String: Any] = [

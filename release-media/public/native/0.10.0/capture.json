@@ -1,0 +1,58 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "before.png",
+      "height" : 450,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        75
+      ],
+      "sha256" : "bffcc4984049f7457c695faf71c2fd0f637bd2afba5b9bf3c6c828b40f9af156",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    },
+    {
+      "file" : "archive.png",
+      "height" : 840,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        190,
+        193,
+        240,
+        105
+      ],
+      "sha256" : "001acabe1f41df5762ef0cdbcd7664d68b8be6750e72f857470a51d3d494b682",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1920
+    },
+    {
+      "file" : "restored.png",
+      "height" : 630,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        105
+      ],
+      "sha256" : "bbf86e86cfadf5fa0bf801d4ec873c1e078fc5287009d524fd4913df477cda7b",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    }
+  ],
+  "capturedAt" : "2026-11-02T13:15:25Z",
+  "checks" : {
+    "insertionY" : 161.109375,
+    "restoredNativeArchiveEntry" : true
+  },
+  "feature" : "archive",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
+  "release" : "0.10.0",
+  "schemaVersion" : 1
+}

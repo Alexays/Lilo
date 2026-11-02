@@ -1,7 +1,6 @@
 ---
 import type { Locale } from "../lib/i18n";
 import type { ReleaseStory } from "../lib/release-stories";
-import ReleaseRecording from "./ReleaseRecording.astro";
 
 interface Props {
   lang: Locale;
@@ -17,10 +16,7 @@ const { lang, story } = Astro.props;
   <div class="highlights">
     {story.highlights.map((highlight) => (
       <section
-        class:list={[
-          "release-highlight",
-          { lead: highlight.id === story.capture?.highlight },
-        ]}
+        class="release-highlight"
         id={`v${story.version}-${highlight.id}`}
         lang={lang}
         aria-labelledby={`v${story.version}-${highlight.id}-title`}
@@ -50,9 +46,6 @@ const { lang, story } = Astro.props;
             </svg>
           </a>
         )}
-        {story.capture && highlight.id === story.capture.highlight && (
-          <ReleaseRecording capture={story.capture} lang={lang} story={story} />
-        )}
       </section>
     ))}
   </div>
@@ -80,9 +73,6 @@ const { lang, story } = Astro.props;
   }
   .release-highlight {
     min-width: 0;
-  }
-  .lead {
-    grid-column: 1 / -1;
   }
   h4 {
     margin: 0;

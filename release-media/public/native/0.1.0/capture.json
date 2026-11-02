@@ -1,0 +1,30 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "browser.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "db5c87426d6d30e390131f033ba3f97d42924b5b1e524bb6e32e927df94e2df4",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    }
+  ],
+  "capturedAt" : "2026-11-02T13:15:29Z",
+  "checks" : {
+    "medium" : "screenshot",
+    "syntheticContent" : true
+  },
+  "feature" : "browser",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
+  "release" : "0.1.0",
+  "schemaVersion" : 1
+}

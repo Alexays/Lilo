@@ -1,0 +1,30 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "settings-window.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "01fc4076bf869b0b5c9f77286a3411e6bc17bcec36c2b03bc1584958a50d942e",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    }
+  ],
+  "capturedAt" : "2026-11-02T13:15:32Z",
+  "checks" : {
+    "medium" : "screenshot",
+    "nativeSettingsCommand" : true
+  },
+  "feature" : "settings",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
+  "release" : "0.3.0",
+  "schemaVersion" : 1
+}

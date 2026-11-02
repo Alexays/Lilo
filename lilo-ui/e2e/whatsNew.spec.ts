@@ -14,13 +14,13 @@ const release: ReleaseNotes = {
 		en: {
 			headline: "A little more in the loop.", description: "A few improvements.",
 			highlights: [
-				{ illustration: "unread", title: "Catch what you missed.", description: "Unread counts on your tabs." },
-				{ illustration: "calls", title: "Stay in the conversation.", description: "Smoother video calls." },
+				{ title: "Catch what you missed.", description: "Unread counts on your tabs." },
+				{ title: "Stay in the conversation.", description: "Smoother video calls." },
 			],
 		},
 		fr: {
 			headline: "Toujours dans la boucle.", description: "De petites améliorations.",
-			highlights: [{ illustration: "unread", title: "Ne manquez plus un message.", description: "Les messages non lus dans vos onglets." }],
+			highlights: [{ title: "Ne manquez plus un message.", description: "Les messages non lus dans vos onglets." }],
 		},
 	},
 };
@@ -37,21 +37,18 @@ async function openWhatsNew(page: Page, automatic = false, version = "0.6.0") {
 	await page.evaluate(({ automatic, version }) => window.__lilo!.receive({ event: "openWhatsNew", automatic, version }), { automatic, version });
 }
 
-test("release media labels its English film in the app language", async ({ page }) => {
-	await bootReleaseChrome(page, initialWorld(), undefined, { ...release, media: mediaForRelease("0.8.0") });
+test("release media keeps its English illustration labeled in the app language", async ({ page }) => {
+	await bootReleaseChrome(page, initialWorld(), undefined, { ...release, media: mediaForRelease(release.version) });
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { locale: "fr" } }));
 	await openWhatsNew(page);
 	const dialog = page.getByRole("dialog");
 	const caption = dialog.locator("figcaption");
 	await expect(caption).toBeVisible();
 	await expect(caption).toHaveAttribute("lang", "fr");
-	await expect(caption).toHaveText("Trouvez un onglet et changez celui que vous partagez. Illustration en anglais");
-	const video = dialog.locator("video");
-	await expect(video).toHaveAttribute("lang", "en");
-	await expect(video).toHaveAccessibleName("Trouvez un onglet et changez celui que vous partagez. Illustration en anglais");
-	await expect(video).toHaveAttribute("controls", "");
-	await expect(video).toHaveAttribute("preload", "none");
-	await expect(video).toHaveJSProperty("paused", true);
+	await expect(caption).toHaveText("Les messages non lus sur les onglets et favoris. Illustration en anglais");
+	const illustration = dialog.locator("img");
+	await expect(illustration).toHaveAttribute("lang", "en");
+	await expect(illustration).toHaveAccessibleName("Les messages non lus sur les onglets et favoris. Illustration en anglais");
 });
 
 test("the sheet presents installed highlights, all changes and one acknowledgment", async ({ page }) => {

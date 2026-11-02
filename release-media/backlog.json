@@ -4,43 +4,91 @@
   "releases": {
     "0.14.1": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "A single compatibility bug fix; no new feature or meaningful visual state to demonstrate."
     },
     "0.14.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "video",
+      "feature": "drop",
+      "reason": "Dropping content into the sidebar is a new interaction whose placement and result benefit from motion.",
+      "notes": [
+        "Dropping a link, an address or a file from another app on the sidebar opens it: between two tabs as a new tab there, in a folder at its end, on a tab in that tab."
+      ],
+      "alt": {
+        "en": "Drop links into the sidebar.",
+        "fr": "Déposez des liens dans la barre latérale."
+      }
     },
     "0.13.1": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Compatibility and keyboard fixes with a small About-window copy update; notes are enough."
     },
     "0.13.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "screenshot",
+      "feature": "seasons",
+      "reason": "The finished holiday icon artwork explains the feature; motion adds no useful information.",
+      "notes": [
+        "Lilo's app icon dresses up for Halloween, Christmas, New Year, Valentine's Day, Lunar New Year, Easter, the summer solstice and its own birthday, in a version drawn for each icon. Turn it off in Settings > Appearance > Seasonal icon."
+      ],
+      "alt": {
+        "en": "Lilo’s app icons dressed for the holidays.",
+        "fr": "Les icônes de Lilo aux couleurs des fêtes."
+      }
     },
     "0.12.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "screenshot",
+      "feature": "site-colors",
+      "reason": "One native window shows the toolbar blending into a site; a film is unnecessary.",
+      "notes": [
+        "The bar above the page, or the tabs on top, takes the site's color, gradients and images included, and slides with the page as one card. The window keeps a border all around, the traffic lights stay in the same place in every layout, and with the sidebar on the left its toggle sits just before the back arrow."
+      ],
+      "alt": {
+        "en": "The address toolbar takes the page’s color.",
+        "fr": "La barre d’adresse prend la couleur de la page."
+      }
     },
     "0.11.1": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Performance and reliability improvements plus small agent artwork changes; no separate visual story is necessary."
     },
     "0.11.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "video",
+      "feature": "spaces",
+      "reason": "Choosing material and switching between personalized Spaces is a meaningful visual transformation.",
+      "notes": [
+        "Each Space can be made of glass, with Liquid Glass tinted by its color, or of grain, its color under a fine film grain: pick it on the window preview under Appearance, in the Space editor or during setup."
+      ],
+      "alt": {
+        "en": "Choose glass, grain or solid for each Space.",
+        "fr": "Choisissez du verre, du grain ou de l’uni pour chaque Space."
+      }
     },
     "0.10.1": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Two compatibility fixes; no new feature."
     },
     "0.10.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "video",
+      "feature": "archive",
+      "reason": "Opening the recent archive and bringing tabs back is a new workflow.",
+      "notes": [
+        "The tabs Lilo archived in the last day wait next to New Tab, or in the tab bar, ready to come back in one click."
+      ],
+      "alt": {
+        "en": "Bring recently archived tabs back.",
+        "fr": "Retrouvez les onglets récemment archivés."
+      }
     },
     "0.9.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "video",
+      "feature": "history",
+      "reason": "Searching and filtering the new full history page is worth demonstrating.",
+      "notes": [
+        "Browse your whole history in a History page (⌘Y), each day's visits grouped by site: filter by period, site or terminal, search, and delete what you pick."
+      ],
+      "alt": {
+        "en": "Find a page in your browsing history.",
+        "fr": "Retrouvez une page dans votre historique."
+      }
     },
     "0.8.0": {
       "kind": "video",
@@ -56,84 +104,140 @@
       }
     },
     "0.7.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "video",
+      "feature": "calls",
+      "reason": "The new sidebar call controls are useful away from the call tab.",
+      "notes": [
+        "A call card in the sidebar mutes the microphone, turns the camera off and leaves the call of a Meet-like tab from anywhere, and ⇧⌘M mutes the call's microphone during a call."
+      ],
+      "alt": {
+        "en": "Keep call controls close while you browse.",
+        "fr": "Gardez les commandes d’appel à portée de main."
+      }
     },
     "0.6.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "screenshot",
+      "feature": "unread",
+      "reason": "An unread badge is a finished visual state; no film is needed.",
+      "notes": [
+        "Tabs and bookmarks of messaging sites like Slack, Gmail or Google Chat show their unread count, or a dot when a page sent a notification you have not seen yet."
+      ],
+      "alt": {
+        "en": "Unread counts on tabs and bookmarks.",
+        "fr": "Les messages non lus sur les onglets et favoris."
+      }
     },
     "0.5.0": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Agent API and progress improvements have no useful new native visual state."
     },
     "0.4.1": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Website, privacy and prefetch improvements do not justify a native product film."
     },
     "0.4.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "screenshot",
+      "feature": "updates",
+      "reason": "The new restart card can be understood in one native screenshot.",
+      "notes": [
+        "Lilo checks for and downloads updates on its own, then offers a Restart card at the bottom of the sidebar (an icon in a top or bottom tab bar) instead of an alert; ignored, the update installs when Lilo quits"
+      ],
+      "alt": {
+        "en": "An update ready to install from the sidebar.",
+        "fr": "Une mise à jour prête à installer depuis la barre latérale."
+      }
     },
     "0.3.3": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Agent isolation and permission-layout refinements are clear in the notes."
     },
     "0.3.2": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Bug fixes only."
     },
     "0.3.1": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "A small provider configuration addition does not need media."
     },
     "0.3.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "screenshot",
+      "feature": "settings",
+      "reason": "The page layout for Settings is a static visual improvement.",
+      "notes": [
+        "With the tabs on top or at the bottom, Settings opens as a page: its sections sit beside the content in one card, and the tab strip shows an active Settings tab that closes it."
+      ],
+      "alt": {
+        "en": "Settings as a page beside your tabs.",
+        "fr": "Les réglages dans une page à côté de vos onglets."
+      }
     },
     "0.2.4": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Bug fixes only; no new feature to demonstrate."
     },
     "0.2.3": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Bug fixes only; no new feature to demonstrate."
     },
     "0.2.2": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Bug fixes only; no new feature to demonstrate."
     },
     "0.2.1": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Bug fixes only; no new feature to demonstrate."
     },
     "0.2.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "video",
+      "feature": "tab-edges",
+      "reason": "Moving tabs between the window’s four edges is a major spatial interaction.",
+      "notes": [
+        "Put your tabs on any edge of the window: left, right, top or bottom, with the address with the tabs or above the page. Pick it in Settings, during the setup, from the command bar, or by holding the sidebar's top and dragging it to an edge."
+      ],
+      "alt": {
+        "en": "Put your tabs on any edge of the window.",
+        "fr": "Placez vos onglets sur le bord de votre choix."
+      }
     },
     "0.1.5": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Incremental Settings and setup refinements; no new feature worth a standalone visual."
     },
     "0.1.4": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Setup copy and layout refinements; the release notes explain the change."
     },
     "0.1.3": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "video",
+      "feature": "pinned-tabs",
+      "reason": "Giving a pinned tab a lasting name is a new interaction worth a short demonstration.",
+      "notes": [
+        "Rename a pinned tab from its menu or by double-clicking its title: the name stays across page title changes, navigations and relaunches, and an empty name brings the page title back."
+      ],
+      "alt": {
+        "en": "Give a pinned tab a lasting name.",
+        "fr": "Donnez un nom durable à un onglet épinglé."
+      }
     },
     "0.1.2": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Small Settings artwork and connection-progress improvements; notes are enough."
     },
     "0.1.1": {
       "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "reason": "Bug fixes only; no new feature to demonstrate."
     },
     "0.1.0": {
-      "kind": "none",
-      "reason": "Historical release media backfill is deferred. Existing website illustrations remain available through their legacy paths."
+      "kind": "screenshot",
+      "feature": "browser",
+      "reason": "The first public release benefits from one product overview, rather than a feature movie.",
+      "notes": [
+        "First public release: a native macOS browser for people who live in a sidebar, with Spaces that keep their own sign-ins, Chrome Web Store extensions, terminal tabs, and an Arc import. Requires macOS 26 or later."
+      ],
+      "alt": {
+        "en": "The first public Lilo browser release.",
+        "fr": "La première version publique du navigateur Lilo."
+      }
     }
   }
 }

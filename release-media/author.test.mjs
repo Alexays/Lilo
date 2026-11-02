@@ -16,7 +16,13 @@ const catalog = {
       notes: ["The tab share picker searches tabs by title."],
       alt: { en: "Find and share a tab.", fr: "Trouvez et partagez un onglet." },
     },
-
+    "0.13.0": {
+      kind: "screenshot",
+      feature: "seasons",
+      reason: "Show finished seasonal artwork.",
+      notes: ["A seasonal icon dresses up for the holidays."],
+      alt: { en: "Seasonal icons.", fr: "Les icônes de saison." },
+    },
   },
 };
 
@@ -27,6 +33,15 @@ test("a new tab-sharing release chooses its supported native movie and exact sou
   assert.equal(result.feature, "tab-share");
   assert.deepEqual(result.notes, [note]);
   assert.deepEqual(result.alt, catalog.releases["0.8.0"].alt);
+});
+
+test("finished artwork chooses a screenshot", () => {
+  const result = chooseMedia(
+    "0.15.0",
+    "### Added\n\n- A seasonal icon dresses up for the holidays.\n",
+    catalog,
+  );
+  assert.equal(result.kind, "screenshot");
 });
 
 test("fix-only releases and nonvisual API changes need no artificial media", () => {
@@ -122,7 +137,7 @@ test("a rendering-tool name cannot hide an unsupported product interface", () =>
 test("a supported important interaction is chosen from a larger release", () => {
   const result = chooseMedia(
     "0.15.0",
-    "### Added\n\n- The agent API accepts longer messages.\n- The tab share picker previews tabs.\n",
+    "### Added\n\n- A seasonal icon dresses up for the holidays.\n- The tab share picker previews tabs.\n",
     catalog,
   );
   assert.equal(result.kind, "video");

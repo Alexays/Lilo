@@ -1,0 +1,17 @@
+{
+  "release": "0.4.0",
+  "kind": "screenshot",
+  "passed": true,
+  "renderSha256": "3f6414507e62d8d580aad643d21ebb6124ee5b47d23ebddc65e01b6ce0a50777",
+  "sourceHashes": true,
+  "renderHashes": true,
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [
+    {
+      "file": "updates.png",
+      "rgbPreserved": true,
+      "transparentPixels": 413844
+    }
+  ]
+}

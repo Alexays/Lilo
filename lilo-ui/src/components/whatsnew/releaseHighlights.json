@@ -4,12 +4,10 @@
 		"descriptionKey": "whatsNew.releases.v0140.description",
 		"highlights": [
 			{
-				"illustration": "drop",
 				"titleKey": "whatsNew.releases.v0140.dropTitle",
 				"descriptionKey": "whatsNew.releases.v0140.dropDescription"
 			},
 			{
-				"illustration": "dialogs",
 				"titleKey": "whatsNew.releases.v0140.dialogsTitle",
 				"descriptionKey": "whatsNew.releases.v0140.dialogsDescription"
 			}
@@ -20,7 +18,6 @@
 		"descriptionKey": "whatsNew.releases.v0130.description",
 		"highlights": [
 			{
-				"illustration": "seasons",
 				"titleKey": "whatsNew.releases.v0130.seasonsTitle",
 				"descriptionKey": "whatsNew.releases.v0130.seasonsDescription"
 			}
@@ -31,7 +28,6 @@
 		"descriptionKey": "whatsNew.releases.v0120.description",
 		"highlights": [
 			{
-				"illustration": "address",
 				"titleKey": "whatsNew.releases.v0120.addressTitle",
 				"descriptionKey": "whatsNew.releases.v0120.addressDescription"
 			}
@@ -42,14 +38,8 @@
 		"descriptionKey": "whatsNew.releases.v0110.description",
 		"highlights": [
 			{
-				"illustration": "material",
 				"titleKey": "whatsNew.releases.v0110.materialTitle",
 				"descriptionKey": "whatsNew.releases.v0110.materialDescription"
-			},
-			{
-				"illustration": "colors",
-				"titleKey": "whatsNew.releases.v0110.colorsTitle",
-				"descriptionKey": "whatsNew.releases.v0110.colorsDescription"
 			}
 		]
 	},
@@ -58,14 +48,12 @@
 		"descriptionKey": "whatsNew.releases.v0100.description",
 		"highlights": [
 			{
-				"illustration": "fresh",
-				"titleKey": "whatsNew.releases.v0100.freshTitle",
-				"descriptionKey": "whatsNew.releases.v0100.freshDescription"
-			},
-			{
-				"illustration": "archive",
 				"titleKey": "whatsNew.releases.v0100.archiveTitle",
 				"descriptionKey": "whatsNew.releases.v0100.archiveDescription"
+			},
+			{
+				"titleKey": "whatsNew.releases.v0100.freshTitle",
+				"descriptionKey": "whatsNew.releases.v0100.freshDescription"
 			}
 		]
 	}

@@ -1,6 +1,6 @@
 import { createRenderJob, executeRenderJob, resolveConfig } from "@hyperframes/producer";
 import { execFile } from "node:child_process";
-import { cp, copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { isolateNativePng } from "./png-cutouts.mjs";
@@ -13,6 +13,7 @@ import {
   resolveRecipe,
   recipeHashes,
   same,
+  filesBelow,
   sharedTabShareScenes,
 } from "./pipeline.mjs";
 
@@ -53,6 +54,21 @@ async function cliRun(args, project, log) {
   }
 }
 
+function stillHtml(feature) {
+  const data = {
+    browser: ["A place to begin.", "browser", 1664],
+    settings: ["Settings, in one place.", "settings-window", 1664],
+    updates: ["Ready when you are.", "updates", 1560],
+    unread: ["Unread, at a glance.", "unread", 1460],
+    "site-colors": ["A little more colour.", "site-colors", 1664],
+    seasons: ["Dressed for the occasion.", "halloween", 480],
+  }[feature];
+  if (!data) throw Error(`Missing screenshot composition: ${feature}`);
+  const [title, file, width] = data;
+  const pictures = feature === "seasons" ? ["halloween", "christmas", "easter"] : [file];
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><style>@font-face{font-family:LiloInter;src:url('assets/fonts/inter.woff2')}html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#eeedf2;font-family:LiloInter,sans-serif;color:#26232f}#main{position:relative;width:1920px;height:1080px}h1{position:absolute;left:158px;top:55px;margin:0;font-size:112px;line-height:1.1;letter-spacing:-5px}.pictures{position:absolute;left:128px;right:128px;top:240px;bottom:50px;display:flex;gap:40px;align-items:center;justify-content:center}.pictures img{display:block;max-height:790px;width:${width}px;object-fit:contain;max-width:100%}</style><main id="main" data-composition-id="main" data-width="1920" data-height="1080" data-duration="1" data-no-timeline="true"><h1>${title}</h1><div class="pictures">${pictures.map((name) => `<img id="${name}" src="assets/native/${name}.png" alt="Native Lilo ${feature}"/>`).join("")}</div></main></html>`;
+}
+
 for (const [version, entry] of entries) {
   if (entry.kind === "none") continue;
   const native = await nativeSources(version, entry);
@@ -86,16 +102,39 @@ for (const [version, entry] of entries) {
   await rm(path.join(folder, "render.json"), { force: true });
   await rm(project, { recursive: true, force: true });
   await mkdir(project, { recursive: true });
-  const metadata = await json(path.join(root, recipe.directory, "metadata.json"));
+  const metadata =
+    entry.kind === "video"
+      ? await json(path.join(root, recipe.directory, "metadata.json"))
+      : { duration: 1, posterFrame: 0 };
   const duration = metadata.duration;
   if (!(duration > 0 && duration <= 40)) throw Error(`Invalid storyboard duration: ${version}`);
-  await cp(path.join(root, recipe.directory), project, { recursive: true });
-  if (recipe.variant === "share")
-    for (const scene of sharedTabShareScenes)
-      await copyFile(
-        path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
-        path.join(project, "compositions", `${scene}.html`),
-      );
+  if (entry.kind === "video") {
+    await cp(path.join(root, recipe.directory), project, { recursive: true });
+    if (recipe.fixture === "0.8.0" && recipe.variant === "share")
+      for (const scene of sharedTabShareScenes)
+        await copyFile(
+          path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
+          path.join(project, "compositions", `${scene}.html`),
+        );
+    if (recipe.fixture !== "0.8.0") {
+      for (const file of ["shared.css", "shared.js"])
+        await copyFile(path.join(root, "hyperframes/archive", file), path.join(project, file));
+      const index = await readFile(path.join(project, "index.html"), "utf8");
+      const endingDuration = index.match(/id="ending"[^>]*data-duration="([^"]+)"/)?.[1];
+      if (!endingDuration || !metadata.caption) throw Error(`Missing ending: ${version}`);
+      const ending = (await readFile(path.join(root, "hyperframes/archive/ending.html"), "utf8"))
+        .replaceAll("{{VERSION}}", version)
+        .replaceAll(
+          "{{CAPTION}}",
+          metadata.caption.replaceAll("&", "&amp;").replaceAll("<", "&lt;"),
+        )
+        .replaceAll("{{DURATION}}", endingDuration);
+      await writeFile(path.join(project, "compositions/ending.html"), ending);
+    }
+    if (recipe.fixture !== version)
+      for (const file of (await filesBelow(project)).filter((file) => file.endsWith(".html")))
+        await writeFile(file, (await readFile(file, "utf8")).replaceAll(recipe.fixture, version));
+  } else await writeFile(path.join(project, "index.html"), stillHtml(entry.feature));
   await cp(path.join(root, "public/native", version), path.join(project, "assets/native"), {
     recursive: true,
   });
@@ -168,6 +207,19 @@ for (const [version, entry] of entries) {
     add("share-button", [60, 40, 476, 216], 48);
     for (const file of ["setting-before", "setting-after"]) add(file, [100, 88, 2300, 224], 80);
   }
+  if (entry.feature === "pinned-tabs")
+    for (const asset of native.assets)
+      add(path.basename(asset.path, ".png"), [80, 32, 1984, 232], 96);
+  if (entry.feature === "calls")
+    for (const file of ["connected", "muted", "camera-off"]) add(file, [0, 0, 1984, 272], 48);
+  if (entry.feature === "history") {
+    for (let i = 0; i <= 6; i++) add(`search-${i}`, [48, 48, 1440, 160], 48);
+    add("filtered-rows", [0, 0, 2400, 672], 112);
+  }
+  if (entry.feature === "archive") add("archive", [0, 0, 1920, 840], 128);
+  if (entry.feature === "updates") add("updates", [80, 84, 1984, 356], 80);
+  if (entry.feature === "spaces")
+    for (const name of ["solid", "glass", "grain"]) add(`${name}-controls`, [0, 0, 1552, 240], 120);
   const cutouts = [];
   for (const [file, rect, radius] of shapes) {
     const cut = cuts.find((item) => item.target === file);

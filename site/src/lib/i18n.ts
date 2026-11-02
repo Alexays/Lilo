@@ -126,11 +126,6 @@ export const copy = {
     releaseAllChanges: "All changes in this release",
     releaseLink: "View on GitHub",
     releaseMediaLanguage: "English-language illustration",
-    releasePeekImage:
-      "Lilo with a linked page open in Peek above the original page. The source tab stays selected in the sidebar.",
-    releasePlayRecording: "Play walkthrough",
-    releaseReplayRecording: "Replay",
-    releaseStopRecording: "Stop",
     releases: "Release notes",
     reportBug: "Report a bug",
     resources: "Resources",
@@ -269,11 +264,6 @@ export const copy = {
     releaseAllChanges: "Tous les changements de cette version",
     releaseLink: "Voir sur GitHub",
     releaseMediaLanguage: "Illustration en anglais",
-    releasePeekImage:
-      "Lilo avec un lien ouvert dans un aperçu au-dessus de la page d'origine. L'onglet de départ reste sélectionné dans la barre latérale.",
-    releasePlayRecording: "Lire l'animation",
-    releaseReplayRecording: "Revoir",
-    releaseStopRecording: "Arrêter",
     releases: "Notes de version",
     reportBug: "Signaler un bug",
     resources: "Ressources",

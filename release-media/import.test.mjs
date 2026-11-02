@@ -21,7 +21,7 @@ test("imports only verified receipt files and preserves the last import on a cor
     await cp(fileURLToPath(new URL(file, import.meta.url)), path.join(media, file));
   await writeFile(
     path.join(media, "backlog.json"),
-    JSON.stringify({ releases: { [version]: { kind: "video", feature: "tab-share" } } }),
+    JSON.stringify({ releases: { [version]: { kind: "screenshot", feature: "settings" } } }),
   );
   const expected = new Map();
   for (const [directory, file, bytes] of [
@@ -31,7 +31,7 @@ test("imports only verified receipt files and preserves the last import on a cor
     const receipt = Buffer.from(
       JSON.stringify({
         release: version,
-        feature: "tab-share",
+        feature: "settings",
         appVersion: "0.15.0",
         appBuild: "1",
         productSourceCommit: "synthetic-source-commit",

@@ -26,13 +26,13 @@ export async function filesBelow(directory) {
 }
 export function resolveRecipe(entry) {
   const fixture = fixtures[entry.feature];
-  if (entry.kind !== "video" || !fixture || (entry.variant && entry.variant !== "share"))
+  if (!fixture || (entry.variant && (entry.variant !== "share" || entry.feature !== "tab-share")))
     throw Error(`No genuine capture capability for ${entry.feature}`);
   const directory =
     fixture === "0.8.0" && entry.variant !== "share" ? fixture : `archive/${fixture}`;
   return {
     fixture,
-    directory: `hyperframes/${directory}`,
+    directory: entry.kind === "video" ? `hyperframes/${directory}` : null,
     variant: entry.variant ?? null,
   };
 }
@@ -61,6 +61,12 @@ export async function recipeHashes(entry, recipe) {
         ...sharedTabShareScenes.map((scene) =>
           path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
         ),
+      );
+    if (recipe.fixture !== "0.8.0")
+      files.push(
+        path.join(root, "hyperframes/archive/ending.html"),
+        path.join(root, "hyperframes/archive/shared.css"),
+        path.join(root, "hyperframes/archive/shared.js"),
       );
   }
   return Object.fromEntries(

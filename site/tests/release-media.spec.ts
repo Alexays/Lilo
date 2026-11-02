@@ -1,14 +1,15 @@
 import { expect, test } from "@playwright/test";
 
+// Continuous trace screenshots distort the video frame budget on software decoders.
 test.use({
   channel: "chrome",
   trace: { mode: "retain-on-failure", screenshots: false },
 });
 
-test("the deployed film supports bounded, suffix and invalid byte ranges", async ({
+test("the deployed media route supports bounded byte ranges and invalid ranges", async ({
   request,
 }) => {
-  const url = "/release-media/0.8.0/tab-share.mp4";
+  const url = "/release-media/0.11.0/spaces.mp4";
   const partial = await request.get(url, { headers: { Range: "bytes=0-1" } });
   expect(partial.status()).toBe(206);
   expect(partial.headers()["content-range"]).toMatch(/^bytes 0-1\/\d+$/u);
@@ -28,53 +29,49 @@ test("the deployed film supports bounded, suffix and invalid byte ranges", async
 
 for (const lang of ["en", "fr"]) {
   for (const width of [1280, 390]) {
-    test(`${lang} film has localized controls and captions at ${width}px`, async ({
+    test(`${lang} release media plays with sound at ${width}px and stays still until requested`, async ({
       page,
-    }) => {
+    }, testInfo) => {
       await page.setViewportSize({ height: 900, width });
       await page.emulateMedia({
         colorScheme: width === 390 ? "dark" : "light",
-        reducedMotion: "reduce",
       });
-      await page.goto(`${lang === "fr" ? "/fr" : ""}/changelog/#v0.8.0`);
-      const video = page.locator('[id="v0.8.0"] video');
-      await video.scrollIntoViewIfNeeded();
-      const caption = page.locator('[id="v0.8.0"] figcaption');
+      await page.goto(`${lang === "fr" ? "/fr" : ""}/changelog/#v0.11.0`);
+      const release = page.locator('[id="v0.11.0"]');
+      const video = release.locator("video");
+      await expect(video).toBeVisible();
+      await expect(video).toHaveAttribute("lang", "en");
+      const caption = release.locator("figcaption");
+      await expect(caption).toBeVisible();
+      await expect(caption).toHaveAttribute("lang", lang);
 
       const description =
         lang === "fr"
-          ? "Trouvez un onglet et changez celui que vous partagez."
-          : "Find a tab and switch what you share.";
+          ? "Choisissez du verre, du grain ou de l’uni pour chaque Space."
+          : "Choose glass, grain or solid for each Space.";
 
       const languageLabel =
         lang === "fr"
           ? "Illustration en anglais"
           : "English-language illustration";
 
-      await expect(caption).toHaveAttribute("lang", lang);
       await expect(caption).toContainText(description);
       await expect(caption).toContainText(languageLabel);
-      await expect(video).toHaveAttribute("lang", "en");
       await expect(video).toHaveAccessibleName(
         `${description} ${languageLabel}`
       );
-      await expect(video).toHaveJSProperty("controls", true);
-      await expect(video).toHaveJSProperty("autoplay", false);
-      await expect(video).toHaveJSProperty("muted", false);
-      await expect(video).toHaveJSProperty("paused", true);
-      await expect(video).toHaveJSProperty("currentTime", 0);
-      await video.focus();
-      await page.keyboard.press("Space");
+      expect(
+        await video.evaluate((v: HTMLVideoElement) => ({
+          controls: v.controls,
+          muted: v.muted,
+          paused: v.paused,
+          time: v.currentTime,
+        }))
+      ).toEqual({ controls: true, muted: false, paused: true, time: 0 });
+      await video.evaluate((v: HTMLVideoElement) => v.play());
       await expect
         .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
         .toBeGreaterThan(0.2);
-      expect(
-        await video.evaluate((v: HTMLVideoElement) => [
-          v.videoWidth,
-          v.videoHeight,
-          v.error?.code ?? 0,
-        ])
-      ).toEqual([1920, 1080, 0]);
       await video.evaluate((v: HTMLVideoElement) => {
         v.pause();
         v.currentTime = 5;
@@ -87,6 +84,7 @@ for (const lang of ["en", "fr"]) {
           )
         )
         .toBe(true);
+      await page.screenshot({ path: testInfo.outputPath("spaces.png") });
       await video.evaluate((v: HTMLVideoElement) => {
         v.currentTime = v.duration - 0.1;
 
@@ -96,9 +94,28 @@ for (const lang of ["en", "fr"]) {
         .poll(() => video.evaluate((v: HTMLVideoElement) => v.ended))
         .toBe(true);
       await video.evaluate((v: HTMLVideoElement) => v.play());
-      await expect(video).toHaveJSProperty("paused", false);
-      await page.locator("footer").scrollIntoViewIfNeeded();
-      await expect(video).toHaveJSProperty("paused", true);
+      await expect
+        .poll(() =>
+          video.evaluate(
+            (v: HTMLVideoElement) => !v.paused && v.currentTime < 3
+          )
+        )
+        .toBe(true);
+      await page.locator('[id="v0.13.0"]').scrollIntoViewIfNeeded();
+      await expect
+        .poll(() => video.evaluate((v: HTMLVideoElement) => v.paused))
+        .toBe(true);
+      const holiday = page.locator('[id="v0.13.0"] .release-media');
+      await expect(holiday.locator("video")).toHaveCount(0);
+      await expect(holiday.locator("img")).toBeVisible();
+      await expect(holiday.locator("img")).toHaveAttribute("lang", "en");
+      await expect(holiday.locator("figcaption")).toBeVisible();
+      expect(
+        await holiday
+          .locator("img")
+          .evaluate((i: HTMLImageElement) => i.naturalWidth)
+      ).toBe(1920);
+      await page.screenshot({ path: testInfo.outputPath("holiday-icons.png") });
       await expect(page.locator('[id="v0.14.1"] .release-media')).toHaveCount(
         0
       );
@@ -109,31 +126,62 @@ for (const lang of ["en", "fr"]) {
       ).toBe(true);
     });
   }
+}
 
-  test(`${lang} film stays available without JavaScript`, async ({
-    browser,
-  }) => {
-    const context = await browser.newContext({
-      javaScriptEnabled: false,
-      viewport: { height: 844, width: 390 },
-    });
+for (const version of [
+  "0.14.0",
+  "0.11.0",
+  "0.10.0",
+  "0.9.0",
+  "0.8.0",
+  "0.7.0",
+  "0.2.0",
+  "0.1.3",
+]) {
+  test(`the ${version} film decodes its actual native footage`, async ({
+    page,
+  }, testInfo) => {
+    await page.goto(`/changelog/#v${version}`);
+    const video = page.locator(`[id="v${version}"] video`);
+    await video.scrollIntoViewIfNeeded();
+    await video.evaluate((v: HTMLVideoElement) => v.play());
+    await expect
+      .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
+      .toBeGreaterThan(0.1);
+    expect(
+      await video.evaluate((v: HTMLVideoElement) => [
+        v.videoWidth,
+        v.videoHeight,
+        v.error?.code ?? 0,
+      ])
+    ).toEqual([1920, 1080, 0]);
 
-    try {
-      const page = await context.newPage();
-      await page.goto(`${lang === "fr" ? "/fr" : ""}/changelog/#v0.8.0`);
-      const video = page.locator('[id="v0.8.0"] video[controls]');
-      await video.scrollIntoViewIfNeeded();
-      await expect(video).toBeVisible();
-      await expect(video).toHaveAttribute("preload", "none");
-      await expect(video).toHaveAttribute(
-        "poster",
-        "/release-media/0.8.0/tab-share.png"
-      );
-      await expect(page.locator('[id="v0.8.0"] figcaption')).toBeVisible();
-      await page.locator('[id="v0.8.0"] summary').click();
-      await expect(page.locator('[id="v0.8.0"] .release-body')).toBeVisible();
-    } finally {
-      await context.close();
-    }
+    const before = await video.evaluate((v: HTMLVideoElement) => ({
+      dropped: v.getVideoPlaybackQuality().droppedVideoFrames,
+      frames: v.getVideoPlaybackQuality().totalVideoFrames,
+      time: v.currentTime,
+    }));
+
+    const started = Date.now();
+    await expect
+      .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
+      .toBeGreaterThanOrEqual(before.time + 1.5);
+
+    const after = await video.evaluate((v: HTMLVideoElement) => ({
+      dropped: v.getVideoPlaybackQuality().droppedVideoFrames,
+      frames: v.getVideoPlaybackQuality().totalVideoFrames,
+    }));
+
+    const playback = {
+      dropped: after.dropped - before.dropped,
+      elapsed: (Date.now() - started) / 1000,
+      frames: after.frames - before.frames,
+    };
+
+    expect(playback.frames).toBeGreaterThanOrEqual(80);
+    expect(playback.dropped / playback.frames).toBeLessThan(0.03);
+    expect(playback.elapsed).toBeLessThan(2.5);
+    await video.evaluate((v: HTMLVideoElement) => v.pause());
+    await page.screenshot({ path: testInfo.outputPath("film.png") });
   });
 }

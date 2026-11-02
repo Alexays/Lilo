@@ -1,34 +1,36 @@
-# Author the 0.8.0 announcement
+# Release media
 
-The approved 0.8.0 film and PNG play from committed assets. Native builds, release preparation, signing, and website deployment do not run the authoring tools.
+HyperFrames produces the MP4 announcements and PNG screenshots shared by the public changelog and native What’s New. The archive covers 31 releases: eight interaction films, six screenshots and seventeen text-only maintenance releases. Each media decision names exact source notes in `backlog.json`. Visible captions use the reader’s language and label the retained English-language illustrations.
 
-This optional workflow supports the 0.8.0 tab-sharing announcement. Other catalog versions have explicit deferred-backfill decisions. Their existing website illustrations keep their legacy paths. The fixture registry contains only tab sharing. The native tests capture its search and switch workflow, the announcement's address-bar change, and bundled What's New playback.
+## Native sources and authoring
 
-## Capture and render
+All UI imagery comes from compiled native Lilo with disposable profiles, owned example.com pages and synthetic call handlers. Receipts under `public/native/<version>` identify the actual app version/build, source commit, geometry and PNG hashes. Historical releases are illustrated using that recorded app version; the historical release binary is not implied.
 
-Use a Retina macOS desktop with screen-recording access, Node, and FFmpeg. The render target installs the pinned HyperFrames dependencies. Captures use a disposable profile, synthetic example.com pages and call handlers, and an owned backdrop. Native receipts identify the actual app version, build, source commit, geometry, and PNG hashes. The illustrated release does not imply a historical binary.
+`make release-media-author` checks published and pending notes. It selects a supported meaningful visual workflow, chooses a screenshot for a finished visual state, and leaves routine fixes text-only. Unknown visual features fail closed. The feature implementation must include its native capture and literal HyperFrames storyboard; the release step does not invent UI. The reusable capture capabilities are in `pipeline.mjs`, with their concrete tests in `LiloTests/Window/ReleaseMediaCaptureTests.swift`.
 
-1. Run `make release-media-author RELEASE=0.8.0` to check the exact source notes and catalog decision.
-2. Run `make release-media-capture RELEASE=0.8.0` to capture tab sharing and the address setting.
-3. Run `make release-media-import RELEASE=0.8.0` to verify and import every source receipt before replacing the previous import.
-4. Run `make release-media-render RELEASE=0.8.0` to stage the literal HTML compositions and encode the film and poster.
-5. Run `make release-media-check release-media-inspect RELEASE=0.8.0` to measure the encoded result and extract compact review sheets.
-6. Run `make release-media-test release-media-publish-check RELEASE=0.8.0` to exercise refusal checks and verify the exact committed bytes.
-7. Run `make release-media-review RELEASE=0.8.0` to review bundled native playback. Run `make ui-build` afterwards to restore the installed release's bundle.
-8. Run `make validate` before submitting code changes.
+Literal HTML scenes live in `hyperframes/`. The 26-second 0.8.0 story is the approved full announcement. Future tab-sharing-only releases use its 18.6-second variant, which does not claim the address-bar change is new. Each film has deliberate pointer actions, native state changes, readable titles and an ending. New compositions use local fonts/assets and deterministic paused GSAP timelines.
 
-The 26-second full announcement lives in `hyperframes/0.8.0`. The share-only variant reuses its search, switch, and ending scenes. Every composition uses local fonts, native captures, and deterministic paused GSAP timelines.
+Isolated interface pieces are RGBA PNG cutouts. Only alpha changes; all captured RGB bytes and canvas dimensions remain unchanged. The gate independently compares the processed assets with their original native sources. Complete browser windows retain their real page content. Native pixels receive no CSS blur or 3D tilt.
 
-## Verify the result
+## Make workflow
 
-Native cutouts preserve captured RGB bytes and canvas dimensions. Only alpha changes outside the interface. Complete windows retain their actual page content. Strict HyperFrames checks cover structure, runtime, layout, contrast, motion, and audio.
+- `make release-media-author`: select/check the story from release notes.
+- `make release-media-capture RELEASE=x.y.z FIXTURE=a.b.c`: run the selected genuine native workflow; omit arguments to capture the archive.
+- `make release-media-import RELEASE=x.y.z`: verify and import the native receipts, including secondary captures.
+- `make release-media-render RELEASE=x.y.z`: generate the MP4 or screenshot; omit RELEASE to render the archive.
+- `make release-media-check release-media-test release-media-inspect`: verify encoded media, run refusal tests and extract compact review sheets.
+- `make release-media-publish-check`: require current passing receipts for every published asset.
 
-Films use 1920 by 1080 pixels at 60 fps, H.264 CRF16, and stereo AAC at 48 kHz and 192 kbps. Encoded checks verify frame count, full decode, source and recipe hashes, cutout pixels, loudness, true peak, bounded frame changes, and poster SSIM of at least 0.98. Reading holds may last up to three seconds. Compact visual review remains necessary.
+Run these explicit Make targets when authoring or checking media. `make release-version` prepares release notes and builds the site. Media production, signing, and website deployment remain separate.
 
-Each `quality.json` binds to the exact `render.json`, source receipts, recipes, and output hashes. Changing a selected composition or the shared renderer invalidates the receipt. An unrelated fixture does not. A fresh checkout needs fresh staging inputs before encoded quality generation. Publication verification uses Node alone and remains an explicit target. No ordinary release or deployment command invokes it.
+## Quality contract
 
-Automatic authoring retains fail-closed checks for unsupported visual changes and preserves a catalog publication kill switch. This extraction includes only the tab-sharing capability. Extend capture and composition coverage before authoring another feature.
+Films use 1920×1080, 60 fps, lossless PNG capture, H.264 CRF16 and stereo AAC 48k/192k. HyperFrames structural/runtime/layout/contrast/motion/audio checks run in strict mode. Encoded QA checks frame count, full decode, native/source/recipe/render hashes, transparent cutouts, loudness and true peak, bounded frame changes and poster SSIM ≥0.98. The announcement contract permits reading holds up to 3 seconds, requires at least 20% changing frames and bounds deliberate scene transitions. These signal checks complement compact visual review; they do not judge the music artistically.
 
-## Sound and rights
+Each `quality.json` binds to the exact `render.json`, source receipts, recipes and PNG/MP4 hashes. The render receipt records its resolved fixture, composition directory and variant. Adding an unrelated fixture does not invalidate existing media; changing the selected recipe or shared renderer does. Screenshot receipts omit unused audio and logo inputs. The optional publication check uses Node alone. Quality generation requires the local CLI/browser, Sharp and FFmpeg. A fresh checkout regenerates staging inputs; verified local renders can be reused when those inputs remain present and unchanged. No boolean manual-approval field bypasses the gate. Setting `backlog.json` publication to `blocked` remains a kill switch that automatic authoring preserves.
 
-The committed soundtrack is Week 37-Schmoovin by Abstraction/Tallbeard Studios under CC0. Its creator waiver, source URL, and checksums live under `public/audio/music.*`. Attribution is optional. Editorial click and transition sounds retain their CC0 provenance in `public/audio/README.md`. They do not represent sounds made by Lilo. Dependency, font, logo, and motion references remain in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+## Sound
+
+The soundtrack is **Week 37–Schmoovin** by Abstraction/Tallbeard Studios, licensed CC0. Attribution is optional; films have no music credit overlay. The original audio, creator’s waiver, source URL and checksums are committed under `public/audio/music.*`. The workflow uses committed assets and needs no music account or download.
+
+Editorial click/transition sounds retain their CC0 provenance in `public/audio/README.md`. They explain visible actions and are not represented as sounds made by Lilo itself. License notices for dependencies and referenced motion techniques remain in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

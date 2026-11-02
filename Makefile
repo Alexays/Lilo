@@ -76,14 +76,17 @@ TEST := $(TEST_LOCK) $(TEST_CONFIG) test-without-building $(TEST_TIMEOUTS)
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
-.PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
+.PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
-	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
+	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test
-.PHONY: release-media-stage release-media-test
+.PHONY: release-media-capture release-media-import release-media-render release-media-lock release-media-check release-media-publish-check
+.PHONY: release-media-review release-media-stage
+.PHONY: release-media-fix release-media-test
+.PHONY: release-media-inspect release-media-hyperframes release-media-audit release-media-author
 
 ## List the targets
 help:
@@ -198,10 +201,6 @@ release-status: $(CHANGIE)
 ## Collect release notes, bump the app and build versions, and refresh the website
 release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
-	@release=$$('$(CHANGIE)' latest --remove-prefix); \
-	if [ -f "site/src/content/releases/$$release.json" ]; then \
-		$(MAKE) --no-print-directory site-release-capture RELEASE="$$release"; \
-	fi
 	@$(MAKE) --no-print-directory site-generate
 
 ## Announce a published GitHub release on Discord (needs GITHUB_EVENT_PATH and DISCORD_WEBHOOK_URL)
@@ -219,22 +218,11 @@ ui-build: $(UI_DEPS)
 	@python3 scripts/embed_chrome_ui.py
 	@python3 scripts/generate_native_strings.py
 
-## Stage only the installed release's binary media for the native bundle
-release-media-stage:
-	@node release-media/stage-native.mjs
-
-## Verify native release-media staging without external build tools
-release-media-test:
-	@node --test release-media/*.test.mjs
-
-.PHONY: release-media-capture release-media-import release-media-render release-media-lock release-media-check release-media-publish-check
-.PHONY: release-media-review release-media-fix release-media-test release-media-inspect release-media-hyperframes release-media-audit release-media-author
-
-## Capture genuine native sources for the 0.8.0 announcement (RELEASE=0.8.0)
+## Capture genuine native sources for the release-media backlog (RELEASE=x.y.z narrows the capture)
 release-media-capture:
 	@LILO_RELEASE_MEDIA_CAPTURE_ONLY=1 TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_FIXTURE_VERSION='$(or $(FIXTURE),$(RELEASE))' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory ui-build swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
 
-## Import verified native release sources (RELEASE=0.8.0)
+## Import verified native release sources (RELEASE=x.y.z narrows the import)
 release-media-import:
 	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/import.mjs
 
@@ -244,19 +232,23 @@ release-media-lock:
 
 ## Format the authored release-media scripts and literal compositions
 release-media-fix: $(SITE_DEPS)
-	@site/node_modules/.bin/oxfmt --write 'release-media/*.mjs' 'release-media/*.ts' release-media/package.json release-media/backlog.json
+	@site/node_modules/.bin/oxfmt --write 'release-media/*.mjs' 'release-media/*.ts' 'release-media/hyperframes/archive/*.js' release-media/package.json release-media/backlog.json
 
 release-media/node_modules/.lilo-installed: release-media/package.json release-media/package-lock.json
 	@PUPPETEER_SKIP_DOWNLOAD=1 npm --prefix release-media ci --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
 	@touch $@
 
-## Render the 0.8.0 native announcement
+## Render selected native release films and stills (RELEASE=x.y.z narrows the render)
 release-media-render: release-media/node_modules/.lilo-installed
 	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/render.mjs
 
 ## Verify every backlog decision, native source hash, encoded film, sound and compression quality
 release-media-check:
 	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/check.mjs
+
+## Verify publication refuses failed, stale or changed media without external build tools
+release-media-test:
+	@node --test release-media/*.test.mjs
 
 ## Extract compact-layout frames from the actual encoded films (RELEASE=x.y.z narrows the inspection)
 release-media-inspect:
@@ -265,6 +257,10 @@ release-media-inspect:
 ## Refuse publication unless release media passes its current quality gates
 release-media-publish-check:
 	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/check.mjs --publish
+
+## Stage only the installed release's binary media for the native bundle
+release-media-stage:
+	@node release-media/stage-native.mjs
 
 ## Review a historical release's actual bundled What's New and MP4 playback in native Lilo
 release-media-review:
@@ -647,22 +643,6 @@ site-test: site-generate
 ## Exercise the interactive website demo with production headers (SITE_E2E_ARGS passes Playwright flags)
 site-e2e: site-generate
 	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
-
-## Capture a prepared release's recording and posters (RELEASE=x.y.z; RECAPTURE=1 replaces archived media)
-site-release-capture: $(SITE_DEPS)
-	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' npm --prefix site run capture:release
-
-## Encode reviewed native Lilo frames (FRAMES=/path/to/manifest.json; RECAPTURE=1 replaces archived media)
-site-release-import: $(SITE_DEPS)
-	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_FRAMES='$(FRAMES)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' npm --prefix site run capture:import
-
-# Playwright owns this foreground server; it leaves the maintainer's dev server alone.
-site-capture-server: $(SITE_DEPS)
-	@ASTRO_DEV_BACKGROUND=0 npm --prefix site run dev -- --port 8791 --ignore-lock
-
-## Install the release recording encoder at the website's pinned Sharp version
-site-capture-deps:
-	@npm --prefix site install --save-dev --save-exact sharp@0.35.5
 
 ## Update the website's dependencies and lockfile after changing package.json
 site-lock:

@@ -1,0 +1,25 @@
+{
+  "release": "0.2.0",
+  "kind": "video",
+  "passed": true,
+  "renderSha256": "66220a4b7b7b267466ee9efa378a335900c4dc1764ae36d89e383acb948dd442",
+  "sourceHashes": true,
+  "renderHashes": true,
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [],
+  "decode": true,
+  "fps": 60,
+  "frames": 900,
+  "audio": {
+    "integratedLoudnessLUFS": -15.9,
+    "truePeakDbFS": -2.6
+  },
+  "motion": {
+    "measuredFrames": 899,
+    "movingFrameRatio": 0.2324805339265851,
+    "longestStillSeconds": 2.3833333333333333,
+    "largestLumaChange": 6.92991
+  },
+  "posterSSIM": 0.999062
+}

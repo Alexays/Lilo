@@ -8,12 +8,21 @@
     "en": "Keep a link or a call close while you carry on browsing. Lilo also speaks four more languages.",
     "fr": "Gardez un lien ou un appel à portée de main pendant que vous naviguez. Lilo parle aussi quatre langues de plus."
   },
-  "capture": {
-    "scenario": "peek",
-    "source": "native",
-    "highlight": "peek"
-  },
   "highlights": [
+    {
+      "id": "calls",
+      "title": {
+        "en": "Your call stays close.",
+        "fr": "Votre appel reste à portée de main."
+      },
+      "body": {
+        "en": "For supported calls, mute your microphone, turn off your camera or leave from the sidebar. You can keep reading in another tab. During a call, ⇧⌘M mutes your microphone.",
+        "fr": "Pour les appels compatibles, coupez le micro, éteignez la caméra ou quittez l'appel depuis la barre latérale, tout en lisant un autre onglet. Pendant un appel, ⇧⌘M coupe le micro."
+      },
+      "notes": [
+        "A call card in the sidebar mutes the microphone, turns the camera off and leaves the call of a Meet-like tab from anywhere, and ⇧⌘M mutes the call's microphone during a call."
+      ]
+    },
     {
       "id": "peek",
       "action": {
@@ -36,20 +45,6 @@
       },
       "notes": [
         "Try Peek, background tabs, Split View and Little windows from links in the website demo's local example pages."
-      ]
-    },
-    {
-      "id": "calls",
-      "title": {
-        "en": "Your call stays close.",
-        "fr": "Votre appel reste à portée de main."
-      },
-      "body": {
-        "en": "For supported calls, mute your microphone, turn off your camera or leave from the sidebar. You can keep reading in another tab. During a call, ⇧⌘M mutes your microphone.",
-        "fr": "Pour les appels compatibles, coupez le micro, éteignez la caméra ou quittez l'appel depuis la barre latérale, tout en lisant un autre onglet. Pendant un appel, ⇧⌘M coupe le micro."
-      },
-      "notes": [
-        "A call card in the sidebar mutes the microphone, turns the camera off and leaves the call of a Meet-like tab from anywhere, and ⇧⌘M mutes the call's microphone during a call."
       ]
     },
     {

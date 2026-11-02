@@ -1,0 +1,35 @@
+<template>
+  <style>#root{position:absolute;inset:0;overflow:hidden;color:#26232f}#returned-title{font-size:120px}</style>
+  <div id="root" data-composition-id="feature" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="world" aria-hidden="true"></div>
+      <div id="archive-title-clip" class="clip headline-clip" data-start="0" data-duration="9.85" data-track-index="1"><h1 id="archive-title" class="headline">Bring a tab back.</h1></div><div id="returned-title-clip" class="clip headline-clip" data-start="0" data-duration="9.85" data-track-index="2"><h1 id="returned-title" class="headline">Right where you left it.</h1></div><div id="archive-before-clip" class="clip" data-start="0" data-duration="9.85" data-track-index="3" style="position:absolute;left:240px;top:400px;width:1440px;height:409.09px"><div id="archive-before" class="native"><img id="archive-before-pixels" class="pixels" src="assets/native/before.png" alt="Native Lilo before" /></div></div><div id="archive-menu-clip" class="clip" data-start="0" data-duration="9.85" data-track-index="4" style="position:absolute;left:240px;top:330px;width:1440px;height:630px"><div id="archive-menu" class="native"><img id="archive-menu-pixels" class="pixels" src="assets/native/archive.png" alt="Native Lilo archive" /></div></div><div id="archive-restored-clip" class="clip" data-start="0" data-duration="9.85" data-track-index="5" style="position:absolute;left:240px;top:350px;width:1440px;height:572.7272727272727px"><div id="archive-restored" class="native" style="overflow:hidden;border-radius:28px">
+        <div id="archive-above" class="pixels" role="img" aria-label="Native restored tab strip above insertion" style="background-image:url('assets/native/restored.png');background-size:100% 100%;clip-path:inset(0 0 364.85795454545456px 0)"></div>
+        <div id="archive-inserted" class="pixels" role="img" aria-label="Native restored Field guide tab" style="background-image:url('assets/native/restored.png');background-size:100% 100%;"></div>
+        <div id="archive-below" class="pixels" role="img" aria-label="Native New Tab row moving below the restored tab" style="background-image:url('assets/native/restored.png');background-size:100% 100%;clip-path:inset(371.5056818181818px 0 0 0)"></div>
+      </div></div><div id="archive-pointer-clip" class="clip cursor-clip" data-start="0" data-duration="9.85" data-track-index="30"><div id="archive-pointer" class="cursor"><svg width="64" height="86" viewBox="0 0 26 36" aria-hidden="true"><path d="M2 2v28l7.1-7.1 5.3 11.2 5-2.4-5.4-10.9H24L2 2Z" fill="#fff" stroke="#18151f" stroke-width="1.8" stroke-linejoin="round" /></svg></div></div>
+  </div>
+  <script>
+      (() => {
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo('#archive-title', { opacity: .3, y: 20 }, { opacity: 1, y: 0, duration: .65, ease: 'power4.out' }, 0)
+          .fromTo('#archive-before', { y: 50, scale: .96 }, { y: 0, scale: 1, duration: .8, ease: 'expo.out' }, 0)
+          .fromTo('#archive-pointer', { opacity: 0, x: 1650, y: 900 }, { opacity: 1, x: 1336, y: 682, duration: .7, ease: 'power2.inOut' }, 1.5)
+          .to('#archive-before', { opacity: 0, duration: .2 }, 2.4)
+          .fromTo('#archive-menu', { opacity: 0, scale: .45, x: 350, y: 150 }, { opacity: 1, scale: 1, x: 0, y: 0, duration: .6, ease: 'power4.out' }, 2.4)
+          .to('#archive-pointer', { x: 860, y: 580, duration: .65, ease: 'power2.inOut' }, 3.3)
+          .to('#archive-pointer', { opacity: 0, duration: .2 }, 4.5)
+          .to('#archive-menu', { opacity: 0, duration: .2 }, 4.4)
+          .fromTo('#archive-restored', { opacity: 0 }, { opacity: 1, duration: .01 }, 4.45)
+          .fromTo('#archive-inserted', { clipPath: 'inset(207.8693181818182px 0 364.85795454545456px 0)' }, { clipPath: 'inset(207.8693181818182px 0 201.22159090909093px 0)', duration: .65, ease: 'power2.inOut' }, 4.45)
+          .fromTo('#archive-below', { y: -163.63636363636363 }, { y: 0, duration: .65, ease: 'power2.inOut' }, 4.45)
+          .to('#archive-title', { opacity: 0, duration: .2 }, 5.2)
+          .fromTo('#returned-title', { opacity: 0 }, { opacity: 1, duration: .4 }, 5.45)
+          .to('#archive-restored', { opacity: 0, y: -70, duration: .6, ease: 'power3.in' }, 8.0);
+        pressPointer(tl, '#archive-pointer', 2.4); pressPointer(tl, '#archive-pointer', 4.3);
+        tl.to('.headline', { opacity: 0, duration: .2 }, 9.3);
+        tl.to({}, { duration: 9.85 }, 0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines.feature = tl;
+      })();
+    </script>
+</template>

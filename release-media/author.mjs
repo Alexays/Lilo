@@ -10,6 +10,40 @@ const capabilities = [
     "tab-share",
     /tab share picker|share (?:this|the shown|a different|another|the current) tab|switch(?:es|ing)? (?:the |a )?shared tab|chang(?:e|es|ing) (?:the )?shared tab/i,
   ],
+  ["spaces", /(?:glass|grain|material).{0,80}\bspace|\bspace.{0,80}(?:glass|grain|material)/i],
+  [
+    "drop",
+    /\bdropp?ing\b.{0,180}(?:sidebar|tab strip)|\bdrop\b.{0,80}(?:link|file|address).{0,80}(?:sidebar|tab)/i,
+  ],
+  [
+    "tab-edges",
+    /tabs? on (?:any|each|every|all|the four) (?:edge|side)|tabs?.{0,50}(?:four|any) edges?|sidebar.{0,60}drag.{0,30}edge/i,
+  ],
+  [
+    "history",
+    /\bhistory (?:page|search)\b|(?:browse|search|filter).{0,45}(?:browsing |whole |full )?history\b/i,
+  ],
+  [
+    "archive",
+    /recent archive|archived tabs.{0,80}(?:back|restore)|tabs.{0,80}archived.{0,80}(?:back|restore)|(?:restore|bring back).{0,50}archiv/i,
+  ],
+  [
+    "calls",
+    /call card.{0,100}(?:mute|microphone|camera)|(?:sidebar.{0,45}call controls|call controls.{0,45}sidebar)/i,
+  ],
+  ["pinned-tabs", /rename.{0,30}pinned tab|pinned tab.{0,80}(?:rename|lasting name|name stays)/i],
+  [
+    "seasons",
+    /seasonal icon|icon.{0,60}(?:holiday|dresses|halloween|christmas)|(?:holiday|halloween|christmas).{0,50}icon/i,
+  ],
+  [
+    "site-colors",
+    /(?:bar|toolbar|tabs).{0,80}(?:takes|matches|adopts|blends).{0,45}(?:site|page).{0,25}colou?r|(?:site|page).{0,35}colou?r.{0,45}(?:toolbar|address bar)/i,
+  ],
+  ["settings", /settings opens? as (?:a )?page|settings.{0,90}sections.{0,30}beside/i],
+  ["unread", /unread (?:count|badge|dot)|(?:tabs|bookmarks).{0,90}unread/i],
+  ["updates", /restart card|update.{0,80}card.{0,60}restart|restart.{0,50}(?:card|sidebar)/i],
+  ["browser", /first public release.{0,60}native.{0,30}browser/i],
 ];
 
 const visualWords =
@@ -99,7 +133,10 @@ export function chooseMedia(version, markdown, catalog) {
       feature,
       notesSha256,
       ...(feature === "tab-share" ? { variant: "share" } : {}),
-      reason: "The release adds an interaction covered by a genuine native capture and motion recipe.",
+      reason:
+        reference.kind === "video"
+          ? "The release adds an interaction covered by a genuine native capture and motion recipe."
+          : "The release adds a finished visual state covered by a genuine native screenshot recipe.",
       notes: matches.map((note) => note.text),
       alt: { ...reference.alt },
     };

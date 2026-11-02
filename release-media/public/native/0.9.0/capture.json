@@ -1,0 +1,157 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "rows.png",
+      "height" : 960,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        342,
+        176,
+        300,
+        120
+      ],
+      "sha256" : "6ff48564ab2cb242b2e898b28d576d496a902ea86628056fa13283845c241ee7",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2400
+    },
+    {
+      "file" : "search-0.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "7f71da97b55c13e4da9f654bc3659e37ccca7f9fb23f66ae5b920d7cc741a1d7",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    },
+    {
+      "file" : "search-1.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "6f475a9f4040e89ff0839d52b7d3fb5028e19053bbc7bcfc184ed18cdf8dce40",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    },
+    {
+      "file" : "search-2.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "b074cbe3945b97dcc21a8f4d5559d5cba54d5833e5a2de14f269f311a3a1ae09",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    },
+    {
+      "file" : "search-3.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "b4ae3db4b944516acf0742329521f44331e7f87cd75a198d1fe81568976e3785",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    },
+    {
+      "file" : "search-4.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "f3d8afd6a2201ef67c23509921c57d441a6c9f3806c58563135b902550cc3eeb",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    },
+    {
+      "file" : "search-5.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "3c43c0a8a14e0d6d6a055f4905ea1262984420b91be7328a43cd65a3f59c8034",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    },
+    {
+      "file" : "search-6.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "6ce76399218209b4cd962962556317953d85a365709f45baefdf6d17c32cf9ca",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    },
+    {
+      "file" : "filtered.png",
+      "height" : 2352,
+      "pixelsPerPoint" : 3,
+      "rectPoints" : [
+        268,
+        8,
+        1004,
+        784
+      ],
+      "sha256" : "fbe933edaa0a9242b860dc3dde11046da059031103d267401a93e5e9fcede225",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 3012
+    },
+    {
+      "file" : "filtered-rows.png",
+      "height" : 672,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        302,
+        134,
+        300,
+        84
+      ],
+      "sha256" : "9fe7ae837481ff60d7035c339f80b3648a4e82038c2d3efe96b0a1ca397900c2",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2400
+    }
+  ],
+  "capturedAt" : "2026-11-02T13:15:30Z",
+  "checks" : {
+    "filteredOut" : "Field guide",
+    "nativeHistoryStoreVisits" : 4,
+    "query" : "Studio"
+  },
+  "feature" : "history",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "6905252c253e7803410b690b2095fbdb8691a28f",
+  "release" : "0.9.0",
+  "schemaVersion" : 1
+}

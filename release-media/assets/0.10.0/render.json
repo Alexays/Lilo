@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 3,
+  "engine": "hyperframes",
+  "release": "0.10.0",
+  "kind": "video",
+  "feature": "archive",
+  "recipe": {
+    "fixture": "0.10.0",
+    "directory": "hyperframes/archive/0.10.0",
+    "variant": null
+  },
+  "width": 1920,
+  "height": 1080,
+  "fps": 60,
+  "frames": 780,
+  "posterFrame": 720,
+  "hashes": {
+    "archive.png": "f87c18869a4c884104cef67f8a8fcf00004d128fd77e94ff5b9f4a081ac39577",
+    "archive.mp4": "aa5e8b48343a9c5537d0fc82adde90f9cb70eba56221e962ce3b673838e81180"
+  },
+  "recipeHashes": {
+    "render.mjs": "7bcb846b407273392788f3145e846042890597d6c812b07071b83c2c12676737",
+    "pipeline.mjs": "82ad9dd2bd2193de51afc4637f3a4ef073409c35da88ff99a9d7cdc087969d05",
+    "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
+    "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
+    "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+    "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
+    "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
+    "public/audio/music.LICENSE.txt": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
+    "public/audio/mouse-click.wav": "887a9259203cafa24ad90274029d574ba29438bcdc87e6f384e4472f85736348",
+    "public/audio/switch.wav": "0d07c6daac595425c820d92966bbc35cbd6590f4bde8a59199743b9bf45da77e",
+    "hyperframes/assets/logo.svg": "9345636a0774cc6d4439f5e90303d7f172c9f089c3dabcbe436e3f0d63f1ce49",
+    "hyperframes/archive/0.10.0/compositions/feature.html": "192464edd5478b420b99a4dd90a7dcba949e1bdcd370d727c132e55a13a65e47",
+    "hyperframes/archive/0.10.0/index.html": "56fd34e2469e14a8c894d2a770835e40bcd5a60cd8db4cda797140117dfe63b4",
+    "hyperframes/archive/0.10.0/metadata.json": "038e7b99ac4e07172cfb6a905f2d477ed566ee3d698372c6f9249776a28a13e6",
+    "hyperframes/archive/ending.html": "51bef5e03fdc91b4d1063d860e1fe7730e6f5cae85b62ba30bc327981eba8edd",
+    "hyperframes/archive/shared.css": "36cbfda538846c5d2a96ed082be6297f2a015e6cb824f46f3eefff66ae84b2d2",
+    "hyperframes/archive/shared.js": "71b6e4139f3dc008e640b269b5a7b24ab525366b6edc0ab519b33d8c783ec114"
+  },
+  "nativeReceipts": [
+    {
+      "path": "public/native/0.10.0/capture.json",
+      "sha256": "8dba1d7d6ce61f22291bcbec3b2b3e01ce040462aa58f42fc17583df5895ed1c",
+      "appVersion": "0.14.1",
+      "appBuild": "31",
+      "productSourceCommit": "6905252c253e7803410b690b2095fbdb8691a28f"
+    }
+  ],
+  "cutouts": [
+    {
+      "file": "archive.png",
+      "rgbSha256": "8085f109009123a54c85c94d268eff5d9d7c8e8ea3e92f33920ec895cb664c87",
+      "alphaSha256": "8d531cb8a538b38d25f99a6bed6993554fd6222e34c9b4e610455016fbeae985",
+      "transparentPixels": 13692,
+      "opaquePixels": 1588763,
+      "source": "public/native/0.10.0/archive.png"
+    }
+  ]
+}
