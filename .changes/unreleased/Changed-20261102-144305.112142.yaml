@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Pages load faster with an ad-blocking extension: its site exceptions no longer slow down every request of every page, which mattered most on apps like Gmail and Drive.'
+time: 2026-11-02T14:43:05.112142+01:00

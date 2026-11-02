@@ -506,6 +506,7 @@ final class ProfileExtensionRegistry {
         self.profileId = profileId
         self.extensionStorage = extensionStorage
         self.extensionsBaseDirectory = extensionsBaseDirectory
+        _ = DeclarativeNetRequestMerge.install
         let config = WKWebExtensionController.Configuration(identifier: profileId)
         let userContentController = config.webViewConfiguration.userContentController
         // Extension pages, workers and the cookies API see this profile's data, not the app default
