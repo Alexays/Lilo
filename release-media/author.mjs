@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fixtures, sha, releaseSections, root as mediaRoot } from "./pipeline.mjs";
+import { fixtures } from "./fixtures.mjs";
+import { sha, releaseSections, root as mediaRoot } from "./pipeline.mjs";
 
 // Specific product capabilities, ordered by how much a demonstrated interaction explains.
 const capabilities = [

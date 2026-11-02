@@ -215,7 +215,7 @@ test("CI media queries are read-only and reject an unknown prepared version", as
   try {
     await mkdir(path.join(root, "release-media"));
     await mkdir(path.join(root, ".changes"));
-    for (const file of ["author.mjs", "pipeline.mjs"])
+    for (const file of ["author.mjs", "pipeline.mjs", "fixtures.mjs"])
       await cp(
         fileURLToPath(new URL(file, import.meta.url)),
         path.join(root, "release-media", file),

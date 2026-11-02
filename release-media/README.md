@@ -1,6 +1,6 @@
 # Release media
 
-HyperFrames produces the MP4 announcements and PNG screenshots shared by the public changelog and native What’s New. The archive covers 31 releases: eight interaction films, six screenshots and seventeen text-only maintenance releases. Each media decision names exact source notes in `backlog.json`.
+HyperFrames produces the MP4 announcements and PNG screenshots shared by the public changelog and native What’s New. The archive covers 31 releases: eight interaction films, six screenshots and seventeen text-only maintenance releases. Each media decision names exact source notes in `backlog.json`. Visible captions use the reader’s language and label the retained English-language illustrations.
 
 ## Native sources and authoring
 
@@ -28,7 +28,9 @@ Isolated interface pieces are RGBA PNG cutouts. Only alpha changes; all captured
 
 Films use 1920×1080, 60 fps, lossless PNG capture, H.264 CRF16 and stereo AAC 48k/192k. HyperFrames structural/runtime/layout/contrast/motion/audio checks run in strict mode. Encoded QA checks frame count, full decode, native/source/recipe/render hashes, transparent cutouts, loudness and true peak, bounded frame changes and poster SSIM ≥0.98. The announcement contract permits reading holds up to 3 seconds, requires at least 20% changing frames and bounds deliberate scene transitions. These signal checks complement compact visual review; they do not judge the music artistically.
 
-Each `quality.json` binds to the exact `render.json`, source receipts, recipes and PNG/MP4 hashes. Deployment checks use Node alone. Quality generation requires the local CLI/browser, Sharp and FFmpeg. A fresh checkout regenerates staging inputs; verified local renders can be reused when those inputs remain present and unchanged. No boolean manual-approval field bypasses the gate. Setting `backlog.json` publication to `blocked` remains a kill switch that automatic authoring preserves.
+Each `quality.json` binds to the exact `render.json`, source receipts, recipes and PNG/MP4 hashes. The render receipt records its resolved fixture, composition directory and variant. Adding an unrelated fixture does not invalidate existing media; changing the selected recipe or shared renderer does. Screenshot receipts omit unused audio and logo inputs. Deployment checks use Node alone. Quality generation requires the local CLI/browser, Sharp and FFmpeg. A fresh checkout regenerates staging inputs; verified local renders can be reused when those inputs remain present and unchanged. No boolean manual-approval field bypasses the gate. Setting `backlog.json` publication to `blocked` remains a kill switch that automatic authoring preserves.
+
+CI checks the committed publication receipts on every pull request. Archive rendering runs only for authoring, capture or build wiring changes. Website and app UI changes run the media browser checks without rerendering the archive. Documentation-only changes skip both expensive paths.
 
 ## Sound
 

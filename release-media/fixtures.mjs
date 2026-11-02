@@ -1,0 +1,16 @@
+export const fixtures = {
+  browser: "0.1.0",
+  "pinned-tabs": "0.1.3",
+  "tab-edges": "0.2.0",
+  settings: "0.3.0",
+  updates: "0.4.0",
+  unread: "0.6.0",
+  calls: "0.7.0",
+  "tab-share": "0.8.0",
+  history: "0.9.0",
+  archive: "0.10.0",
+  spaces: "0.11.0",
+  "site-colors": "0.12.0",
+  seasons: "0.13.0",
+  drop: "0.14.0",
+};

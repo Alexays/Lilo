@@ -1,9 +1,14 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "engine": "hyperframes",
   "release": "0.7.0",
   "kind": "video",
   "feature": "calls",
+  "recipe": {
+    "fixture": "0.7.0",
+    "directory": "hyperframes/archive/0.7.0",
+    "variant": null
+  },
   "width": 1920,
   "height": 1080,
   "fps": 60,
@@ -14,16 +19,16 @@
     "calls.mp4": "9269ce9ff49eb0b12ef099a099a89b311c94c112c526629dd2a90df5a343eba7"
   },
   "recipeHashes": {
-    "render.mjs": "22ac935ac5e5cb9c499936f1f653bcb1fa31a1446b3aabc7ca600b7eed8b0faf",
-    "pipeline.mjs": "558c62d71f60b02f27a1ddc4a9f717e0af9c018b4e9707a29572cf7cdb565b08",
+    "render.mjs": "7bcb846b407273392788f3145e846042890597d6c812b07071b83c2c12676737",
+    "pipeline.mjs": "82ad9dd2bd2193de51afc4637f3a4ef073409c35da88ff99a9d7cdc087969d05",
     "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
     "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
+    "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
     "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
     "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
     "public/audio/music.LICENSE.txt": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
     "public/audio/mouse-click.wav": "887a9259203cafa24ad90274029d574ba29438bcdc87e6f384e4472f85736348",
     "public/audio/switch.wav": "0d07c6daac595425c820d92966bbc35cbd6590f4bde8a59199743b9bf45da77e",
-    "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
     "hyperframes/assets/logo.svg": "9345636a0774cc6d4439f5e90303d7f172c9f089c3dabcbe436e3f0d63f1ce49",
     "hyperframes/archive/0.7.0/compositions/feature.html": "76b8e19ff4758903a25e8cee9bced587008005aa48de33b68d39bfd76c13b0c3",
     "hyperframes/archive/0.7.0/index.html": "4e34d0cc04ab7ef43f2df932638bcb4ba5e5f48eb9437254d545c9cf5950e8f8",

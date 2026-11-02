@@ -9,6 +9,7 @@ import {
   json,
   selected,
   nativeSources,
+  resolveRecipe,
   recipeHashes,
   same,
   releaseSections,
@@ -127,7 +128,7 @@ try {
     const bytes = await readFile(path.join(folder, "render.json")),
       render = JSON.parse(bytes);
     if (
-      render.schemaVersion !== 2 ||
+      render.schemaVersion !== 3 ||
       render.engine !== "hyperframes" ||
       render.release !== version ||
       render.kind !== entry.kind ||
@@ -139,7 +140,11 @@ try {
       throw Error(`Stale HyperFrames render: ${version}`);
     if (!same(render.nativeReceipts, native.receipts))
       throw Error(`Native receipt changed: ${version}`);
-    if (!same(render.recipeHashes, await recipeHashes(entry)))
+    const recipe = resolveRecipe(entry);
+    if (
+      !same(render.recipe, recipe) ||
+      !same(render.recipeHashes, await recipeHashes(entry, recipe))
+    )
       throw Error(`HyperFrames recipe changed: ${version}`);
     if (
       publishing &&

@@ -8,10 +8,9 @@ import {
   root,
   sha,
   json,
-  fixtures,
   selected,
   nativeSources,
-  recipeDirectory,
+  resolveRecipe,
   recipeHashes,
   same,
   filesBelow,
@@ -20,20 +19,23 @@ import {
 
 const run = promisify(execFile);
 const catalog = await json(path.join(root, "backlog.json"));
+const entries = selected(catalog);
 const cli = path.join(root, "node_modules/hyperframes/bin/hyperframes.mjs");
 const env = { ...process.env, DO_NOT_TRACK: "1", PRODUCER_BROWSER_GPU_MODE: "software" };
 await run(process.execPath, [cli, "browser", "ensure"], { env });
 const browserPath = (await run(process.execPath, [cli, "browser", "path"], { env })).stdout.trim();
 env.HYPERFRAMES_BROWSER_PATH = browserPath;
-const musicLicense = await json(path.join(root, "public/audio/music.license.json"));
-if (
-  musicLicense.license !== "CC0-1.0" ||
-  musicLicense.attributionRequired !== false ||
-  sha(await readFile(path.join(root, "public/audio/music.ogg"))) !== musicLicense.sha256 ||
-  sha(await readFile(path.join(root, "public/audio/music.LICENSE.txt"))) !==
-    musicLicense.licenseSha256
-)
-  throw Error("A verified CC0 soundtrack without an attribution requirement is required");
+if (entries.some(([, entry]) => entry.kind === "video")) {
+  const musicLicense = await json(path.join(root, "public/audio/music.license.json"));
+  if (
+    musicLicense.license !== "CC0-1.0" ||
+    musicLicense.attributionRequired !== false ||
+    sha(await readFile(path.join(root, "public/audio/music.ogg"))) !== musicLicense.sha256 ||
+    sha(await readFile(path.join(root, "public/audio/music.LICENSE.txt"))) !==
+      musicLicense.licenseSha256
+  )
+    throw Error("A verified CC0 soundtrack without an attribution requirement is required");
+}
 
 async function cliRun(args, project, log) {
   try {
@@ -67,18 +69,21 @@ function stillHtml(feature) {
   return `<!doctype html><html lang="en"><meta charset="utf-8"><style>@font-face{font-family:LiloInter;src:url('assets/fonts/inter.woff2')}html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#eeedf2;font-family:LiloInter,sans-serif;color:#26232f}#main{position:relative;width:1920px;height:1080px}h1{position:absolute;left:158px;top:55px;margin:0;font-size:112px;line-height:1.1;letter-spacing:-5px}.pictures{position:absolute;left:128px;right:128px;top:240px;bottom:50px;display:flex;gap:40px;align-items:center;justify-content:center}.pictures img{display:block;max-height:790px;width:${width}px;object-fit:contain;max-width:100%}</style><main id="main" data-composition-id="main" data-width="1920" data-height="1080" data-duration="1" data-no-timeline="true"><h1>${title}</h1><div class="pictures">${pictures.map((name) => `<img id="${name}" src="assets/native/${name}.png" alt="Native Lilo ${feature}"/>`).join("")}</div></main></html>`;
 }
 
-for (const [version, entry] of selected(catalog)) {
+for (const [version, entry] of entries) {
   if (entry.kind === "none") continue;
   const native = await nativeSources(version, entry);
-  const recipes = await recipeHashes(entry);
+  const recipe = resolveRecipe(entry);
+  const recipes = await recipeHashes(entry, recipe);
   const folder = path.join(root, "assets", version);
   const project = path.join(root, "../build/release-media/projects", version);
   const staged = await json(path.join(project, "check.json")).catch(() => null);
   const previous = await json(path.join(folder, "render.json")).catch(() => null);
   if (
-    previous?.engine === "hyperframes" &&
+    previous?.schemaVersion === 3 &&
+    previous.engine === "hyperframes" &&
     staged?.ok === true &&
     staged.strict === true &&
+    same(previous.recipe, recipe) &&
     same(previous.recipeHashes, recipes) &&
     same(previous.nativeReceipts, native.receipts)
   ) {
@@ -97,22 +102,21 @@ for (const [version, entry] of selected(catalog)) {
   await rm(path.join(folder, "render.json"), { force: true });
   await rm(project, { recursive: true, force: true });
   await mkdir(project, { recursive: true });
-  const recipe = fixtures[entry.feature];
   const metadata =
     entry.kind === "video"
-      ? await json(path.join(recipeDirectory(entry), "metadata.json"))
+      ? await json(path.join(root, recipe.directory, "metadata.json"))
       : { duration: 1, posterFrame: 0 };
   const duration = metadata.duration;
   if (!(duration > 0 && duration <= 40)) throw Error(`Invalid storyboard duration: ${version}`);
   if (entry.kind === "video") {
-    await cp(recipeDirectory(entry), project, { recursive: true });
-    if (recipe === "0.8.0" && entry.variant === "share")
+    await cp(path.join(root, recipe.directory), project, { recursive: true });
+    if (recipe.fixture === "0.8.0" && recipe.variant === "share")
       for (const scene of sharedTabShareScenes)
         await copyFile(
           path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
           path.join(project, "compositions", `${scene}.html`),
         );
-    if (recipe !== "0.8.0") {
+    if (recipe.fixture !== "0.8.0") {
       for (const file of ["shared.css", "shared.js"])
         await copyFile(path.join(root, "hyperframes/archive", file), path.join(project, file));
       const index = await readFile(path.join(project, "index.html"), "utf8");
@@ -127,29 +131,34 @@ for (const [version, entry] of selected(catalog)) {
         .replaceAll("{{DURATION}}", endingDuration);
       await writeFile(path.join(project, "compositions/ending.html"), ending);
     }
-    if (recipe !== version)
+    if (recipe.fixture !== version)
       for (const file of (await filesBelow(project)).filter((file) => file.endsWith(".html")))
-        await writeFile(file, (await readFile(file, "utf8")).replaceAll(recipe, version));
+        await writeFile(file, (await readFile(file, "utf8")).replaceAll(recipe.fixture, version));
   } else await writeFile(path.join(project, "index.html"), stillHtml(entry.feature));
   await cp(path.join(root, "public/native", version), path.join(project, "assets/native"), {
     recursive: true,
   });
-  for (const dir of ["audio", "fonts", "vendor"])
+  for (const dir of ["fonts", ...(entry.kind === "video" ? ["audio", "vendor"] : [])])
     await mkdir(path.join(project, "assets", dir), { recursive: true });
   await copyFile(
     path.join(root, "hyperframes/assets/inter.woff2"),
     path.join(project, "assets/fonts/inter.woff2"),
   );
-  await copyFile(
-    path.join(root, "hyperframes/assets/logo.svg"),
-    path.join(project, "assets/logo.svg"),
-  );
-  await copyFile(
-    path.join(root, "node_modules/gsap/dist/gsap.min.js"),
-    path.join(project, "assets/vendor/gsap.min.js"),
-  );
-  for (const file of ["mouse-click.wav", "switch.wav"])
-    await copyFile(path.join(root, "public/audio", file), path.join(project, "assets/audio", file));
+  if (entry.kind === "video") {
+    await copyFile(
+      path.join(root, "hyperframes/assets/logo.svg"),
+      path.join(project, "assets/logo.svg"),
+    );
+    await copyFile(
+      path.join(root, "node_modules/gsap/dist/gsap.min.js"),
+      path.join(project, "assets/vendor/gsap.min.js"),
+    );
+    for (const file of ["mouse-click.wav", "switch.wav"])
+      await copyFile(
+        path.join(root, "public/audio", file),
+        path.join(project, "assets/audio", file),
+      );
+  }
   const cuts = [];
   async function crop(file, rect, target) {
     await run("ffmpeg", [
@@ -240,7 +249,7 @@ for (const [version, entry] of selected(catalog)) {
       path.join(project, "assets/audio/score.wav"),
     ]);
     let html = await readFile(path.join(project, "index.html"), "utf8");
-    html = html.replaceAll(recipe, version);
+    html = html.replaceAll(recipe.fixture, version);
     if (!html.includes("assets/audio/score.wav"))
       html = html.replace(
         "</main>",
@@ -330,11 +339,12 @@ for (const [version, entry] of selected(catalog)) {
       await readFile(path.join(folder, `${entry.feature}.${ext}`)),
     );
   const render = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     engine: "hyperframes",
     release: version,
     kind: entry.kind,
     feature: entry.feature,
+    recipe,
     width: 1920,
     height: 1080,
     fps: 60,

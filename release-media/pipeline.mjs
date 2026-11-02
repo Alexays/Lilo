@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { fixtures } from "./fixtures.mjs";
 
 export const root = path.dirname(fileURLToPath(import.meta.url));
 export const sha = (data) => createHash("sha256").update(data).digest("hex");
@@ -14,22 +15,6 @@ export function releaseSections(markdown) {
     ),
   );
 }
-export const fixtures = {
-  browser: "0.1.0",
-  "pinned-tabs": "0.1.3",
-  "tab-edges": "0.2.0",
-  settings: "0.3.0",
-  updates: "0.4.0",
-  unread: "0.6.0",
-  calls: "0.7.0",
-  "tab-share": "0.8.0",
-  history: "0.9.0",
-  archive: "0.10.0",
-  spaces: "0.11.0",
-  "site-colors": "0.12.0",
-  seasons: "0.13.0",
-  drop: "0.14.0",
-};
 export async function filesBelow(directory) {
   const result = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -39,39 +24,45 @@ export async function filesBelow(directory) {
   }
   return result.sort();
 }
-export function recipeDirectory(entry) {
-  const version = fixtures[entry.feature];
-  if (!version || (entry.variant && (entry.variant !== "share" || entry.feature !== "tab-share")))
+export function resolveRecipe(entry) {
+  const fixture = fixtures[entry.feature];
+  if (!fixture || (entry.variant && (entry.variant !== "share" || entry.feature !== "tab-share")))
     throw Error(`No genuine capture capability for ${entry.feature}`);
-  return path.join(
-    root,
-    "hyperframes",
-    version === "0.8.0" && entry.variant !== "share" ? version : `archive/${version}`,
-  );
+  const directory =
+    fixture === "0.8.0" && entry.variant !== "share" ? fixture : `archive/${fixture}`;
+  return {
+    fixture,
+    directory: entry.kind === "video" ? `hyperframes/${directory}` : null,
+    variant: entry.variant ?? null,
+  };
 }
-export async function recipeHashes(entry) {
+export async function recipeHashes(entry, recipe) {
   const files = [
     "render.mjs",
     "pipeline.mjs",
     "png-cutouts.mjs",
     "package-lock.json",
-    "public/audio/music.ogg",
-    "public/audio/music.license.json",
-    "public/audio/music.LICENSE.txt",
-    "public/audio/mouse-click.wav",
-    "public/audio/switch.wav",
     "hyperframes/assets/inter.woff2",
-    "hyperframes/assets/logo.svg",
   ].map((file) => path.join(root, file));
   if (entry.kind === "video") {
-    files.push(...(await filesBelow(recipeDirectory(entry))));
-    if (fixtures[entry.feature] === "0.8.0" && entry.variant === "share")
+    files.push(
+      ...[
+        "public/audio/music.ogg",
+        "public/audio/music.license.json",
+        "public/audio/music.LICENSE.txt",
+        "public/audio/mouse-click.wav",
+        "public/audio/switch.wav",
+        "hyperframes/assets/logo.svg",
+      ].map((file) => path.join(root, file)),
+      ...(await filesBelow(path.join(root, recipe.directory))),
+    );
+    if (recipe.fixture === "0.8.0" && recipe.variant === "share")
       files.push(
         ...sharedTabShareScenes.map((scene) =>
           path.join(root, "hyperframes/0.8.0/compositions", `${scene}.html`),
         ),
       );
-    if (fixtures[entry.feature] !== "0.8.0")
+    if (recipe.fixture !== "0.8.0")
       files.push(
         path.join(root, "hyperframes/archive/ending.html"),
         path.join(root, "hyperframes/archive/shared.css"),

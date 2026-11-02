@@ -17,7 +17,7 @@ test("imports only verified receipt files and preserves the last import on a cor
   await mkdir(media);
   await mkdir(path.join(source, "detail"), { recursive: true });
   await mkdir(target, { recursive: true });
-  for (const file of ["import.mjs", "pipeline.mjs"])
+  for (const file of ["import.mjs", "pipeline.mjs", "fixtures.mjs"])
     await cp(fileURLToPath(new URL(file, import.meta.url)), path.join(media, file));
   await writeFile(
     path.join(media, "backlog.json"),
