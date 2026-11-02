@@ -148,9 +148,12 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 
 ### Passkeys / WebAuthn
 
-- **Status:** Basic `navigator.credentials.create()` / `.get({publicKey})` and security keys work
-  out of the box - WKWebView drives WebAuthn through WebKit's own system passkey sheet, scoped to
-  the live page origin. No app code, entitlement, or Team ID is required.
+- **Status:** needs the `com.apple.developer.web-browser.public-key-credential` entitlement, which
+  Apple grants per app ID. Without it, WebKit's `getCanCurrentProcessAccessPasskeysForRelyingParty`
+  check fails: `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()` is false and
+  `navigator.credentials.create()` / `.get()` reject at once with `NotAllowedError` (checked on
+  macOS 27). Release builds carry it once the profile is configured, see
+  [docs/RELEASING.md](docs/RELEASING.md#browser-passkey-entitlement); ad-hoc and Debug builds never do.
 - **Not pursued:** A custom `ASAuthorizationPlatformPublicKeyCredentialProvider` integration would
   only duplicate WebKit. `com.apple.developer.associated-domains` (`webcredentials:`) governs the
   app's *own* domains and cannot scope arbitrary websites - it is not how a browser hosts WebAuthn.
@@ -259,10 +262,16 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 
 ### Apple Pay on the web
 
-- **Symptom:** checkout pages offer no Apple Pay button; `window.ApplePaySession` and
-  `window.PaymentRequest` are undefined in Lilo's pages (checked on macOS 27).
-- **Root cause:** WebKit does not expose Apple Pay or the Payment Request API to a third-party
-  WKWebView host on macOS. There is no app-side remedy; sites fall back to card entry.
+- **Symptom:** `window.PaymentRequest` is undefined and `ApplePaySession`, when present, is the
+  Apple Pay JS SDK's stand-in, which pays through a code scanned with an iPhone (checked on macOS 27).
+- **Root cause:** WebKit exposes both only with the private `_applePayEnabled` setting, off on macOS
+  outside Safari. Turned on, `canMakePayments()` is true but the system sheet closes at once:
+  PassKit refuses a host without Safari's private `com.apple.private.in-app-payments` and
+  `com.apple.payment.all-access` entitlements ("not entitled for merchant session"), which Apple
+  grants no third-party app. `com.apple.developer.in-app-payments` covers an app's own merchant IDs,
+  not a website's.
+- **Lilo's handling:** the setting stays off: a native `ApplePaySession` would take the place of the
+  SDK's stand-in and then fail.
 
 ### Microphone quality during calls
 - **Symptom:** A call's microphone sounds duller and more processed than in Chrome: nothing above 12 kHz reaches the page.
