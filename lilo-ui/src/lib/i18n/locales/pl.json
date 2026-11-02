@@ -2239,6 +2239,7 @@
 		"Date Modified": "Data modyfikacji"
 	},
 	"whatsNew": {
+		"mediaLanguage": "Ilustracja w języku angielskim",
 		"version": "Lilo {version}",
 		"title": "Co nowego w Lilo",
 		"description": "Kilka drobnych usprawnień codziennego przeglądania.",

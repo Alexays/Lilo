@@ -40,6 +40,26 @@ for (const lang of ["en", "fr"]) {
       const release = page.locator('[id="v0.11.0"]');
       const video = release.locator("video");
       await expect(video).toBeVisible();
+      await expect(video).toHaveAttribute("lang", "en");
+      const caption = release.locator("figcaption");
+      await expect(caption).toBeVisible();
+      await expect(caption).toHaveAttribute("lang", lang);
+
+      const description =
+        lang === "fr"
+          ? "Choisissez du verre, du grain ou de l’uni pour chaque Space."
+          : "Choose glass, grain or solid for each Space.";
+
+      const languageLabel =
+        lang === "fr"
+          ? "Illustration en anglais"
+          : "English-language illustration";
+
+      await expect(caption).toContainText(description);
+      await expect(caption).toContainText(languageLabel);
+      await expect(video).toHaveAccessibleName(
+        `${description} ${languageLabel}`
+      );
       expect(
         await video.evaluate((v: HTMLVideoElement) => ({
           controls: v.controls,
@@ -88,6 +108,8 @@ for (const lang of ["en", "fr"]) {
       const holiday = page.locator('[id="v0.13.0"] .release-media');
       await expect(holiday.locator("video")).toHaveCount(0);
       await expect(holiday.locator("img")).toBeVisible();
+      await expect(holiday.locator("img")).toHaveAttribute("lang", "en");
+      await expect(holiday.locator("figcaption")).toBeVisible();
       expect(
         await holiday
           .locator("img")

@@ -86,10 +86,6 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
           )}
           {stories.has(release.version) ? (
             <ReleaseStory lang={lang} story={stories.get(release.version)!} />
-          ) : media.get(release.version) ? (
-            <h3 class="media-headline">
-              {media.get(release.version)!.alt[lang]}
-            </h3>
           ) : null}
           {stories.has(release.version) || media.get(release.version) ? (
             <details class="release-details">
@@ -153,12 +149,6 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
   }
   .release-content {
     min-width: 0;
-  }
-  .media-headline {
-    font-size: clamp(28px, 4vw, 40px);
-    line-height: 1.15;
-    letter-spacing: -0.035em;
-    text-wrap: balance;
   }
   .release-details {
     margin-top: 32px;

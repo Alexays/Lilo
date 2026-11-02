@@ -1,6 +1,7 @@
 ---
 import type { ReleaseMedia } from "../../../release-media/catalog";
 import type { Locale } from "../lib/i18n";
+import { copy } from "../lib/i18n";
 
 interface Props {
   media: ReleaseMedia;
@@ -8,9 +9,10 @@ interface Props {
 }
 
 const { media, lang } = Astro.props;
+const captionId = `release-media-caption-${media.poster}`;
 ---
 
-<figure class="release-media">
+<figure class="release-media" lang={lang}>
   {media.kind === "video" ? (
     <video
       controls
@@ -19,21 +21,30 @@ const { media, lang } = Astro.props;
       poster={media.poster}
       width={media.width}
       height={media.height}
-      aria-label={media.alt[lang]}
+      lang="en"
+      aria-labelledby={captionId}
     >
       <source src={media.video} type="video/mp4" />
-      <a href={media.video}>{media.alt[lang]}</a>
+      <a href={media.video} lang={lang}>
+        {media.alt[lang]}
+      </a>
     </video>
   ) : (
     <img
       src={media.poster}
       width={media.width}
       height={media.height}
-      alt={media.alt[lang]}
+      alt={media.alt.en}
+      lang="en"
+      aria-labelledby={captionId}
       loading="lazy"
       decoding="async"
     />
   )}
+  <figcaption id={captionId} lang={lang}>
+    <span>{media.alt[lang]}</span>{" "}
+    <span class="media-language">{copy[lang].releaseMediaLanguage}</span>
+  </figcaption>
 </figure>
 
 <script>
@@ -85,5 +96,16 @@ const { media, lang } = Astro.props;
   video:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 4px;
+  }
+  figcaption {
+    margin-top: 10px;
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .media-language {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
   }
 </style>

@@ -2219,6 +2219,7 @@
 		"Date Modified": "Date de modification"
 	},
 	"whatsNew": {
+		"mediaLanguage": "Illustration en anglais",
 		"version": "Lilo {version}",
 		"title": "Les nouveautés de Lilo",
 		"description": "De petites améliorations pour votre navigation au quotidien.",

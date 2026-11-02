@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, type FakeHostWorld } from "./fakeHost";
 import { initialWorld } from "./fixtures";
 import type { ReleaseNotes } from "../src/components/whatsnew/releaseNotes";
+import { mediaForRelease } from "../../release-media/catalog";
 
 const release: ReleaseNotes = {
 	version: "0.6.0", date: "2026-01-15",
@@ -35,6 +36,20 @@ async function bootReleaseChrome(page: Page, world: FakeHostWorld = initialWorld
 async function openWhatsNew(page: Page, automatic = false, version = "0.6.0") {
 	await page.evaluate(({ automatic, version }) => window.__lilo!.receive({ event: "openWhatsNew", automatic, version }), { automatic, version });
 }
+
+test("release media keeps its English illustration labeled in the app language", async ({ page }) => {
+	await bootReleaseChrome(page, initialWorld(), undefined, { ...release, media: mediaForRelease(release.version) });
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { locale: "fr" } }));
+	await openWhatsNew(page);
+	const dialog = page.getByRole("dialog");
+	const caption = dialog.locator("figcaption");
+	await expect(caption).toBeVisible();
+	await expect(caption).toHaveAttribute("lang", "fr");
+	await expect(caption).toHaveText("Les messages non lus sur les onglets et favoris. Illustration en anglais");
+	const illustration = dialog.locator("img");
+	await expect(illustration).toHaveAttribute("lang", "en");
+	await expect(illustration).toHaveAccessibleName("Les messages non lus sur les onglets et favoris. Illustration en anglais");
+});
 
 test("the sheet presents installed highlights, all changes and one acknowledgment", async ({ page }) => {
 	const resourceReads = await bootReleaseChrome(page);
