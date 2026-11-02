@@ -17,8 +17,8 @@ extension MainWindowController {
         // Help can queue a request before the deferred chrome has installed its listener.
         if pendingWhatsNewAutomatic != nil { presentPendingWhatsNew(); return }
         #if !DEBUG
-        guard context.windows.windows.first === self,
-              context.whatsNew.reserveAutomatic(version: whatsNewVersion, freshInstall: context.settingsStore.shouldShowOnboarding)
+        guard context.windows.windows.first === self, let settingsStore = context.settingsStore,
+              context.whatsNew.reserveAutomatic(version: whatsNewVersion, freshInstall: settingsStore.shouldShowOnboarding)
         else { return }
         pendingWhatsNewAutomatic = true
         presentPendingWhatsNew()

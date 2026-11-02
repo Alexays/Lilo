@@ -88,7 +88,7 @@ enum StartupMetrics {
     #if DEBUG
     static let tracingEnabled = true
     #else
-    static let tracingEnabled = UserDefaults.lilo.bool(forKey: "LiloTracingEnabled")
+    static let tracingEnabled = unsafe UserDefaults.lilo.bool(forKey: "LiloTracingEnabled")
     #endif
 
     static func trace(_ category: String, _ message: @autoclosure () -> String) {

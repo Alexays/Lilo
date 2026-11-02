@@ -757,7 +757,7 @@ final class ProfileExtensionRegistry {
         #if DEBUG
         context.isInspectable = ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil
         #else
-        context.isInspectable = UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey)
+        context.isInspectable = unsafe UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey)
         #endif
         if context.isInspectable { context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background" }
 

@@ -194,7 +194,7 @@ extension AppDelegate {
         #if DEBUG
         let developerTools = true
         #else
-        let developerTools = UserDefaults.lilo.bool(forKey: Self.developerToolsKey)
+        let developerTools = unsafe UserDefaults.lilo.bool(forKey: Self.developerToolsKey)
         #endif
         let separator = NSMenuItem.separator()
         developMenu.addItem(separator)
