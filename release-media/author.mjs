@@ -45,6 +45,9 @@ const capabilities = [
   ["browser", /first public release.{0,60}native.{0,30}browser/i],
 ];
 
+const visualWords =
+  /\b(?:button|card|picker|panel|dialog|sheet|menu|settings|sidebar|toolbar|layout|appearance|theme|icon|tab|space|view|pane|page|window|screen|preview|prompt)\b/i;
+
 function bullets(markdown) {
   const result = [];
   let kind = "";
@@ -64,12 +67,8 @@ function internalChange(text) {
     )
   )
     return true;
-  const surface =
-    /\b(?:button|card|picker|panel|dialog|sheet|menu|settings|sidebar|toolbar|layout|appearance|theme|icon)\b/i.test(
-      text,
-    );
   return (
-    !surface &&
+    !visualWords.test(text) &&
     /\b(?:API|MCP|AI agents?|bridge|CPU|memory|cache|prefetch|frames per second|frame rate|latency|timers?|echo cancellation)\b/i.test(
       text,
     )
@@ -106,10 +105,7 @@ export function chooseMedia(version, markdown, catalog) {
   const unsupported = visual.find(
     (note) =>
       !capabilities.some(([, pattern]) => pattern.test(note.text)) &&
-      (note.kind !== "Changed" ||
-        /\b(?:button|card|picker|panel|dialog|sheet|menu|settings|sidebar|toolbar|layout|appearance|theme|icon|tab|space|view|pane|page|window|screen|preview|prompt)\b/i.test(
-          note.text,
-        )),
+      (note.kind !== "Changed" || visualWords.test(note.text)),
   );
   if (unsupported)
     throw Error(
