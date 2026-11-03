@@ -70,15 +70,12 @@
 </div>
 
 <style>
+  /* Four tracks for both rows, so the address's three windows shrink with the four tab positions. */
   .options {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 96px));
     gap: 12px;
     margin-top: 10px;
-  }
-
-  .options.address {
-    grid-template-columns: repeat(3, minmax(0, 96px));
   }
 
   .options.compact {
