@@ -38,6 +38,12 @@ extension MainWindowController {
         host.onDesktopNotification = { [weak context] id, title, body in
             context?.windows.window(forTab: id)?.terminalPostedNotification(id, title: title, body: body)
         }
+        // The page toolbar takes a terminal's background as it takes a site's color.
+        host.onBackgroundChange = { [weak context] id, background in
+            guard let window = context?.windows.window(forTab: id) else { return }
+            window.updateAndEmit(id) { $0.pageColor = background.hexString }
+            if id == window.tabManager.activeTab?.id { window.syncPageBar() }
+        }
         // A Ghostty "light:A,dark:B" theme switches with Lilo's appearance, live.
         if context.terminalAppearanceObservation == nil {
             context.terminalAppearanceObservation = NSApp.observe(\.effectiveAppearance) { [weak context] _, _ in

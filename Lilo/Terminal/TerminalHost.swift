@@ -31,6 +31,8 @@ final class TerminalHost {
     var onCommandFinished: ((UUID, TerminalSession.Status) -> Void)?
     /// A program in the tab asked for a desktop notification: title (may be empty) and body.
     var onDesktopNotification: ((UUID, String, String) -> Void)?
+    /// A terminal's background, given again whenever the theme or the surface changes it.
+    var onBackgroundChange: ((UUID, VTColor) -> Void)?
     /// Told every terminal's status, to keep the Mac awake while a command works.
     weak var powerKeeper: PowerKeeper?
     /// Diffs take the terminal theme's colors.
@@ -159,7 +161,8 @@ final class TerminalHost {
             }
             self?.onOpenURL?(id, url)
         }
-        apply(colors: appearance.theme.resolved(surface: surface, accent: accent), to: view)
+        let colors = appearance.theme.resolved(surface: surface, accent: accent)
+        apply(colors: colors, to: view)
         do {
             try session.start()
         } catch {
@@ -168,6 +171,7 @@ final class TerminalHost {
             return nil
         }
         views[id] = view
+        onBackgroundChange?(id, colors.background)
         saveDue[id] = .now + Self.forcedSaveInterval
         // A shell that changes nothing posts no status, and the tab would still read as never started.
         onStatusChange?(id, session.status)
@@ -407,8 +411,9 @@ final class TerminalHost {
         if scrollbackChanged { restores = [:] }
         let colors = appearance.theme.resolved(surface: surface, accent: accent)
         changesHost?.useTerminalColors(colors)
-        for view in views.values {
+        for (id, view) in views {
             apply(colors: colors, to: view)
+            onBackgroundChange?(id, colors.background)
             view.optionAsMeta = appearance.optionAsMeta
             if scrollbackChanged { view.session.withLockedTerminal { $0.setScrollbackLimit(appearance.scrollbackBytes) } }
             if fontChanged { view.setFont(family: appearance.fontFamily, size: appearance.fontSize) }
@@ -424,7 +429,10 @@ final class TerminalHost {
         self.accent = accent
         let colors = appearance.theme.resolved(surface: surface, accent: accent)
         changesHost?.useTerminalColors(colors)
-        for view in views.values { apply(colors: colors, to: view) }
+        for (id, view) in views {
+            apply(colors: colors, to: view)
+            onBackgroundChange?(id, colors.background)
+        }
     }
 
     /// Colors of the current appearance on the current surface, for previews.
