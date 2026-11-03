@@ -42,8 +42,8 @@ GHOSTTY_DIR := build/ghostty
 VT_STAMP := Vendor/.ghostty-sha
 # Lilo's WebKit fork (docs/WEBKIT_FORK.md): the zip scripts/package-webkit-fork.sh makes, published as a
 # release of Alexays/WebKit. With both empty, releases run on the WebKit of macOS.
-WEBKIT_FORK_URL := https://github.com/Alexays/WebKit/releases/download/lilo-20261102-be4ef2d4594/WebKitFork.zip
-WEBKIT_FORK_SHA256 := bf066e1de6329d0c80b1a1081e11eefb5074be26dd4b9426c82f5e5f883a212a
+WEBKIT_FORK_URL :=
+WEBKIT_FORK_SHA256 :=
 WEBKIT_FORK_STAMP := Vendor/.webkit-fork-sha256
 DMGBUILD_VERSION := 1.6.5
 DMGBUILD_DIR := build/dmgbuild-$(DMGBUILD_VERSION)
