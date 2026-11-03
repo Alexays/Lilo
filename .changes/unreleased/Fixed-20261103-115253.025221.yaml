@@ -1,0 +1,3 @@
+kind: Fixed
+body: After dragging the window by the bar over the page, the pointer works on the page again instead of staying on the toolbar
+time: 2026-11-03T11:52:53.025221+01:00

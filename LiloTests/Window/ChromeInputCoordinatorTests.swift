@@ -61,11 +61,23 @@ final class ChromeInputCoordinatorTests: XCTestCase {
         // Start a mouse-button capture on chrome.
         _ = coordinator.routePositional(sample(.chrome, isMouseDown: true), family: .leftMouseDown)
         XCTAssertTrue(coordinator.isCapturing)
-        // A move that drifts onto content while captured.
-        let effects = coordinator.updatePointer(sample(.content))
+        // Another press that drifts onto content while captured.
+        let effects = coordinator.updatePointer(sample(.content, isMouseDown: true))
         // No hover transition fires mid-capture.
         XCTAssertFalse(containsHover(effects))
         XCTAssertEqual(effects, InteractionEffect.none)
+    }
+
+    // A window drag from a chrome bar takes the mouse-up: the next plain move must free the pointer for the page.
+    func testPlainMoveAfterAnUndeliveredReleaseEndsTheChromeGrab() {
+        let coordinator = ChromeInputCoordinator()
+        _ = coordinator.updatePointer(sample(.chrome, isMouseDown: true))
+        _ = coordinator.routePositional(sample(.chrome, isMouseDown: true), family: .leftMouseDown)
+
+        let effects = coordinator.updatePointer(sample(.content))
+
+        XCTAssertFalse(coordinator.isCapturing)
+        XCTAssertTrue(effects.contains(.hover(.setContentTrackingSuspended(false))))
     }
 
     // MARK: Rule 1: capture dominates positional (scroll-fling latch).

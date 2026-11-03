@@ -47,6 +47,11 @@ final class ChromeInputCoordinator {
     /// Hover and cursor feeder, fed only by the global monitor. While capturing, the hover machine is
     /// not invoked at all; a plain move with an unchanged target returns the shared empty list.
     func updatePointer(_ sample: PointerSample) -> [InteractionEffect] {
+        // A plain move comes only with every button up: a release the app never got (a window drag or a menu
+        // takes it) must not keep the grab, which would hold the cursor and hover on the chrome over the page.
+        if !sample.isMouseDown, capture.isCapturing {
+            _ = capture.routeMouse(phase: .up, classification: sample.target)
+        }
         // Rules 1 and 3: capture dominates, so no hover transitions mid-gesture.
         if capture.isCapturing {
             return InteractionEffect.none
