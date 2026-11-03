@@ -1771,11 +1771,12 @@
     padding: 8px 0;
   }
 
-  /* Sits on the divider line, shown while the pointer is over the list. */
+  /* Sits on the divider line, shown while the pointer is over the list. Inset like the rows'
+     20px close buttons, so both share one vertical axis. */
   .clear-unpinned {
     position: absolute;
     top: 50%;
-    right: 10px;
+    right: 6px;
     display: grid;
     place-items: center;
     width: 20px;
