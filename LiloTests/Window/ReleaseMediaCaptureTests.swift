@@ -1,4 +1,5 @@
 import AppKit
+import WebKit
 import XCTest
 @testable import Lilo
 
@@ -118,14 +119,31 @@ final class ReleaseMediaCaptureTests: XCTestCase {
     }
 
     func testSettingsPageStill() async throws {
-        let capture = try await ReleaseMediaCapture(version: "0.3.0", feature: "settings")
+        let fixture = "0.3.0"
+        let capture = try await ReleaseMediaCapture(version: fixture, feature: "settings")
         defer { capture.close() }
         try await capture.page()
         capture.controller.setTabPosition(.top)
         capture.controller.openSettings(nil)
         try await capture.wait("native Settings opens") { await capture.exists(".ui-shell-frame") }
-        try await capture.window("settings-window")
-        try capture.finish(checks: ["nativeSettingsCommand": true, "medium": "screenshot"])
+        var checks: [String: Any] = ["nativeSettingsCommand": true, "medium": "screenshot"]
+        if capture.version == fixture {
+            try await capture.window("settings-window")
+        } else {
+            let version = try XCTUnwrap(Bundle(for: WKWebView.self).object(forInfoDictionaryKey: "CFBundleVersion") as? String)
+            XCTAssertFalse(version.isEmpty)
+            let row = "[data-setting-id=appUpdates]"
+            try await capture.wait("Settings reports the running WebKit build") {
+                let text = try? await capture.chrome.evaluateJavaScript(
+                    "document.querySelector('\(row) .ui-list-row-description')?.textContent"
+                ) as? String
+                return text?.contains("WebKit") == true && text?.contains(version) == true
+            }
+            _ = try await capture.chrome.evaluateJavaScript("document.querySelector('\(row)').scrollIntoView({block:'center'});undefined")
+            try await capture.region("\(row) .ui-list-row-copy", name: "settings-window", margin: 4, crop: CGSize(width: 440, height: 100))
+            checks["settingsWebKitVersion"] = version
+        }
+        try capture.finish(checks: checks)
     }
 
     func testUpdateCardStill() async throws {

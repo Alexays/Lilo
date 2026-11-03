@@ -41,6 +41,17 @@ const capabilities = [
     /(?:bar|toolbar|tabs).{0,80}(?:takes|matches|adopts|blends).{0,45}(?:site|page).{0,25}colou?r|(?:site|page).{0,35}colou?r.{0,45}(?:toolbar|address bar)/i,
   ],
   ["settings", /settings opens? as (?:a )?page|settings.{0,90}sections.{0,30}beside/i],
+  [
+    "settings",
+    /\bsettings, the about panel and bug reports show which webkit lilo runs on\b/i,
+    {
+      kind: "screenshot",
+      alt: {
+        en: "Lilo Settings shows the version of WebKit the browser is running.",
+        fr: "Les réglages de Lilo affichent la version de WebKit utilisée.",
+      },
+    },
+  ],
   ["unread", /unread (?:count|badge|dot)|(?:tabs|bookmarks).{0,90}unread/i],
   ["updates", /restart card|update.{0,80}card.{0,60}restart|restart.{0,50}(?:card|sidebar)/i],
   ["browser", /first public release.{0,60}native.{0,30}browser/i],
@@ -121,11 +132,11 @@ export function chooseMedia(version, markdown, catalog) {
     throw Error(
       `Release ${version} is blocked: no genuine native capture and HyperFrames storyboard supports: ${unsupported.text}. Add that capability in the feature pull request.`,
     );
-  for (const [feature, pattern] of capabilities) {
+  for (const [feature, pattern, template] of capabilities) {
     const matches = visual.filter((note) => pattern.test(note.text));
     if (!matches.length) continue;
     const fixture = fixtures[feature];
-    const reference = entries[fixture];
+    const reference = template ? { feature, ...template } : entries[fixture];
     if (!reference || reference.feature !== feature || !reference.alt?.en || !reference.alt?.fr)
       throw Error(`Missing canonical native media recipe for ${feature} (${fixture})`);
     return {

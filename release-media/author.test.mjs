@@ -44,6 +44,16 @@ test("finished artwork chooses a screenshot", () => {
   assert.equal(result.kind, "screenshot");
 });
 
+test("pending WebKit engine information has a native still before its first release", () => {
+  const note =
+    "Settings, the About panel and bug reports show which WebKit Lilo runs on: the one of macOS, or Lilo's build with engine fixes ahead of macOS";
+  const result = chooseMedia("0.15.0", `### Added\n\n- ${note}\n`, catalog);
+  assert.equal(result.kind, "screenshot");
+  assert.equal(result.feature, "settings");
+  assert.deepEqual(result.notes, [note]);
+  assert.ok(result.alt.en && result.alt.fr);
+});
+
 test("fix-only releases and nonvisual API changes need no artificial media", () => {
   for (const notes of [
     "### Fixed\n\n- Closing a tab no longer logs an error.\n",
