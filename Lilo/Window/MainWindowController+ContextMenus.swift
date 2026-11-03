@@ -459,6 +459,11 @@ extension MainWindowController {
             }
         }
         menu.addItem(.separator())
+        let clear = menu.addItem("Clear Unpinned Tabs".localized, icon: .clearUnpinned) {
+            self.switchToSpace(targetSpaceId)
+            self.clearUnpinnedTabs(nil)
+        }
+        if context.browserState.spaceTabState(forSpace: targetSpaceId)?.tree.unpinned.isEmpty != false { clear.action = nil }
         let restore = menu.addItem("Restore Closed Tab".localized, icon: .restoreClosedTab) { _ = self.restoreClosedTabStateFirst() }
         if context.recentlyClosed.recentEntries.isEmpty { restore.action = nil }
         if context.settingsStore?.agentsSpaceIds.contains(targetSpaceId) == true, !context.agentControl.sessions.isEmpty {

@@ -667,6 +667,17 @@ export const buildContextMenu = (
 
     entries.push(
       separator,
+      item(
+        "clearUnpinned",
+        "Clear Unpinned Tabs",
+        command("clearUnpinnedTabs", {}),
+        {
+          disabled: !snapshot.treeItems.some(
+            (treeItem) =>
+              treeItem.spaceId === spaceId && treeItem.section === "unpinned"
+          ),
+        }
+      ),
       item("restore", "Restore Closed Tab", command("restoreClosedTab", {}), {
         disabled: !snapshot.canRestoreClosedTab,
       })
