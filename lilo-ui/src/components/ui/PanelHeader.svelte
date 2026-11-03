@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
   import { chromeActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
+  import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
 
   interface Props {
     title: string;
@@ -14,7 +15,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="panel-header" ondblclick={() => chromeActions.maximizeWindow()}>
+<div class="panel-header" ondblclick={() => chromeActions.maximizeWindow()} onpointerdown={pressTabsHeader}>
   <div class="panel-header-bar">
     {#if actions}
       <div class="panel-header-actions">{@render actions()}</div>
