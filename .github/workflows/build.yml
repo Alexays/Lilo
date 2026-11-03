@@ -135,9 +135,9 @@ jobs:
     # The macOS 27 image whose default Xcode is 27 (the SDK Lilo builds against); macos-26 only has Xcode 26.
     runs-on: xcode-27
     timeout-minutes: 60
-    # Each shard builds incrementally from the cache, then runs a third of the test classes. Shard 1, the lightest, also
-    # takes the project check, SwiftLint and the slow tests. Three shards and the Release build stay within the free
-    # plan's five concurrent macOS jobs.
+    # Each shard builds incrementally from the cache, then runs a third of the test classes. Shard 1 also takes the
+    # project check and SwiftLint, shard 3, the lightest, the slow tests. Three shards and the Release build stay within
+    # the free plan's five concurrent macOS jobs.
     strategy:
       fail-fast: false
       matrix:
@@ -180,7 +180,7 @@ jobs:
       # swift-test builds Debug itself.
       - run: make swift-test SWIFT_TEST_SHARD=${{ matrix.shard }}/3 RESULT_BUNDLE=build/swift-test.xcresult
       - run: make swift-test-slow RESULT_BUNDLE=build/swift-test-slow.xcresult
-        if: matrix.shard == 1
+        if: matrix.shard == 3
       # Every shard builds the same products: one saves them.
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.shard == 1
