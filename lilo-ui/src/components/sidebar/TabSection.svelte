@@ -960,7 +960,9 @@
 
 {#snippet newTabRowBody()}
   <span class="new-tab-icon">
-    <span class="new-tab-plus">+</span>
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+      <path d="M6 1.5v9M1.5 6h9" />
+    </svg>
   </span>
   <span class="new-tab-label">{t("tabSection.newTab")}</span>
 {/snippet}
@@ -1158,9 +1160,13 @@
               class="clear-unpinned"
               disabled={!interactive}
               use:tooltip={{ text: t("tabSection.clearUnpinnedTooltip"), shortcut: shortcutKeys("tab.clearUnpinned") }}
+              aria-label={t("tabSection.clearUnpinnedTooltip")}
               onclick={() => tabActions.clearUnpinned()}
             >
-              {t("tabSection.clearUnpinned")}
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="1" y="2" width="10" height="2.5" rx="0.8" />
+                <path d="M2 4.5v4.5a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.5M4.75 6.75h2.5" />
+              </svg>
             </button>
           {/if}
         </div>
@@ -1689,16 +1695,6 @@
     text-overflow: ellipsis;
   }
 
-  .new-tab-plus {
-    width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-xl);
-    line-height: 1;
-  }
-
   /* Inset by the rows' 6px padding: from the favicon column to the close buttons' edge. */
   .pinned-tab-divider {
     height: 1px;
@@ -1819,15 +1815,15 @@
     position: absolute;
     top: 50%;
     right: 10px;
+    display: grid;
+    place-items: center;
+    width: 20px;
     height: 16px;
-    padding: 0 6px;
+    padding: 0;
     border: none;
     border-radius: var(--radius-sm);
     background: var(--sidebar-bg);
     color: var(--text-muted);
-    font: inherit;
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
     cursor: pointer;
     opacity: 0;
     transform: translateY(-50%);
