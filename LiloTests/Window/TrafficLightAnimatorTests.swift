@@ -33,16 +33,19 @@ final class TrafficLightAnimatorTests: XCTestCase {
         XCTAssertEqual(corner.minX, corner.minY, accuracy: 0.5, "as far in from the left as from the top")
 
         let besidePageToolbar = try closeButtonFrame(controller, layout: TabLayout(position: .left, address: .page))
-        XCTAssertEqual(besidePageToolbar.minX, MainWindowController.sidebarContentInset)
+        XCTAssertEqual(besidePageToolbar.minX, MainWindowController.trafficLightsInset)
         XCTAssertEqual(besidePageToolbar.midY, 26, accuracy: 0.5, "on the page toolbar's line")
 
         let addressHidden = try closeButtonFrame(controller, layout: TabLayout(position: .left, address: .hidden))
-        XCTAssertEqual(addressHidden.minX, MainWindowController.sidebarContentInset)
+        XCTAssertEqual(addressHidden.minX, MainWindowController.trafficLightsInset)
         XCTAssertEqual(addressHidden.midY, 26, accuracy: 0.5, "on the line of the sidebar header's buttons")
 
         let strip = try closeButtonFrame(controller, layout: TabLayout(position: .top, address: .page))
         XCTAssertGreaterThan(strip.minX, corner.minX)
         XCTAssertEqual(strip.midY, 26, accuracy: 0.5, "the middle of the 52pt chrome header")
+
+        let compactBar = try closeButtonFrame(controller, layout: TabLayout(position: .bottom, address: .hidden))
+        XCTAssertEqual(compactBar, corner, "the bar left without an address holds them as the corner does")
 
         XCTAssertEqual(try closeButtonFrame(controller, layout: .default), corner)
     }

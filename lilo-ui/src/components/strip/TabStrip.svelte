@@ -1,7 +1,6 @@
 <script lang="ts">
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import NavControls from "../sidebar/NavControls.svelte";
-  import KeepAwakeIndicator from "../sidebar/KeepAwakeIndicator.svelte";
   import URLDisplay from "../urlbar/URLDisplay.svelte";
   import StripTab from "./StripTab.svelte";
   import StripFolder from "./StripFolder.svelte";
@@ -266,11 +265,12 @@
   oncontextmenu={showSidebarMenu}
 >
   {#if edge === "top" && areTrafficLightsVisible()}<div class="lights-spacer"></div>{/if}
+  <!-- First after the lights, as in the sidebar header: the toggle keeps its place in every layout. -->
+  <NavControls show="toggle" />
+  <StripSpaceMenu compact={compactSpace} />
   {#if edge === "top" || !isSidebarVisible()}
     <NavControls show="history" />
   {/if}
-
-  <StripSpaceMenu compact={compactSpace} />
 
   <!-- Laid out by the strip; only the tabs are in the list. -->
   <div class="strip-tabs" role="tablist" aria-orientation="horizontal" aria-label={t("strip.ariaLabel")}>
@@ -430,8 +430,6 @@
         </svg>
       </button>
     {/if}
-    <KeepAwakeIndicator />
-    <NavControls show="toggle" />
   </div>
 </nav>
 
@@ -461,12 +459,15 @@
     flex: none;
   }
 
-  .tab-strip > :global(.nav-controls) {
+  /* The toggle, the Space and the history are three groups, the same 12px apart. */
+  .tab-strip > :global(.nav-controls),
+  .tab-strip > :global(.space-chip) {
     margin-right: 6px;
   }
 
+  /* The toggle stands 14px from the lights, as in the sidebar header. */
   .lights-spacer {
-    width: 60px;
+    width: 67px;
     flex: none;
   }
 

@@ -898,6 +898,9 @@ extension MainWindowController {
 
     var shownTabLayout: TabLayout { tabLayout.shown(toolbarVisible: toolbarVisible) }
 
+    /// The bar over the page holds only the lights and the history: it takes a title bar's height.
+    var hasCompactPageToolbar: Bool { tabLayout.position == .bottom && shownTabLayout.address != .page }
+
     /// Right and bottom always keep a toolbar over the page: the traffic lights stay top-left.
     var hasPageToolbar: Bool {
         switch tabLayout.position {
@@ -919,7 +922,7 @@ extension MainWindowController {
         case .top: edges.top = Self.topStripHeight + (shownTabLayout.address == .page ? Self.pageToolbarHeight : 0)
         case .bottom: edges.bottom = Self.bottomDockHeight + Self.bottomDockMargin * 2
         }
-        if hasPageToolbar { edges.top = Self.pageToolbarHeight }
+        if hasPageToolbar { edges.top = hasCompactPageToolbar ? Self.compactToolbarHeight : Self.pageToolbarHeight }
         return edges
     }
 

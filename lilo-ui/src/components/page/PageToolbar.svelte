@@ -14,6 +14,8 @@
   // Read apart from the tab, whose every progress tick would otherwise derive the style again.
   const pageColor = $derived(getActiveTab()?.pageColor);
   const style = $derived(pageBarStyle(pageColor, accent));
+  // With the tabs at the bottom and no address here, the bar names the page as a title bar does.
+  const title = $derived(getTabPosition() === "bottom" && !isAddressInPageToolbar() ? getActiveTab()?.title ?? "" : null);
 
   // The traffic lights sit top-left of the window: room for them when the toolbar starts there.
   const besideTrafficLights = $derived(!row && (getTabPosition() !== "left" || !isSidebarVisible()) && areTrafficLightsVisible());
@@ -78,6 +80,8 @@
   {/if}
   {#if isAddressInPageToolbar()}
     <div class="address" bind:this={addressEl}><URLDisplay /></div>
+  {:else if title !== null}
+    <span class="title">{title}</span>
   {/if}
 </div>
 
@@ -151,6 +155,23 @@
 
   .row .address {
     top: calc((var(--page-toolbar-height) - 32px) / 2);
+  }
+
+  /* Clicks go through to the bar, which drags and zooms the window. */
+  .title {
+    position: absolute;
+    top: var(--content-inset);
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 2 * 180px);
+    line-height: calc(var(--page-toolbar-height) - var(--content-inset));
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+    pointer-events: none;
   }
 
   .address > :global(.url-display) {

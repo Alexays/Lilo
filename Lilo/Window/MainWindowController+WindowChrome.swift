@@ -179,9 +179,10 @@ extension MainWindowController {
         )
     }
 
-    /// Shows the traffic lights with the sidebar, and hides them when it is collapsed.
-    static let sidebarContentInset: CGFloat = 10
+    /// How far in from the window's left edge the lights sit over the sidebar, in every layout.
+    static let trafficLightsInset: CGFloat = 15
 
+    /// Shows the traffic lights with the sidebar, and hides them when it is collapsed.
     func syncTrafficLights(animated: Bool) {
         let visible = areTrafficLightsVisible()
         // Skip the bridge send when the visibility hasn't changed (common during live resize).
@@ -205,8 +206,9 @@ extension MainWindowController {
         guard let window else { return }
         let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
         let overSidebar = !window.styleMask.contains(.fullScreen) && ((tabLayout.position == .left && sidebarVisible) || overlayCoversLights)
-        let corner = overSidebar && tabLayout.shown(toolbarVisible: toolbarVisible) == .default
-        let inset: CGFloat? = overSidebar ? (corner ? 15 : Self.sidebarContentInset) : nil
+        let compactBar = !window.styleMask.contains(.fullScreen) && sidebarVisible && hasCompactPageToolbar
+        let corner = (overSidebar && tabLayout.shown(toolbarVisible: toolbarVisible) == .default) || compactBar
+        let inset: CGFloat? = overSidebar || compactBar ? Self.trafficLightsInset : nil
         trafficLightAnimator.place(window: window, inset: inset, square: corner)
     }
 

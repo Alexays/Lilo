@@ -68,7 +68,12 @@ final class WindowChromeLayoutTests: XCTestCase {
         for position in TabPosition.allCases {
             layOut(window, position, address: .hidden)
             XCTAssertEqual(window.tabLayout.address, .hidden)
-            XCTAssertEqual(window.contentEdges().top, position == .left ? 8 : 44, "\(position)")
+            let top: CGFloat = switch position {
+            case .left: 8
+            case .bottom: MainWindowController.compactToolbarHeight
+            case .right, .top: 44
+            }
+            XCTAssertEqual(window.contentEdges().top, top, "\(position)")
         }
     }
 

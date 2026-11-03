@@ -292,6 +292,12 @@ html[data-tab-position='bottom'] {
   --tabs-bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
 }
 
+/* With no address over the page, its bar holds only the lights and the history: a title bar's height,
+   as MainWindowController.compactToolbarHeight. */
+html[data-tab-position='bottom']:not([data-address='page']) {
+  --page-toolbar-height: 36px;
+}
+
 /* Changing edge: only the tabs and the page toolbar move; the rest of the chrome swaps in place. */
 /* The real sidebar only: a second element with this name (a theme preview's) cancels the morph. */
 #chrome-root > .sidebar,
