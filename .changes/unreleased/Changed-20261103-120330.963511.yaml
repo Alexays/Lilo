@@ -1,3 +1,0 @@
-kind: Changed
-body: When a secure connection fails before the site presents a certificate, the error page now says so and gives macOS's reason instead of blaming the certificate, and an error reached through a redirect names the address that was opened
-time: 2026-11-03T12:03:30.963511+01:00
