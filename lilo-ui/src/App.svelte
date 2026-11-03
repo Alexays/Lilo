@@ -126,6 +126,7 @@
     const variables = deriveSidebarThemeVariables(
       themeSidebarColor,
       colorSchemeQuery.matches,
+      shownMaterial === "glass",
     );
 
     for (const [name, value] of Object.entries(variables)) {

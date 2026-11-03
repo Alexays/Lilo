@@ -183,6 +183,7 @@ export function ensureContrast(foreground: string, background: string, minimum: 
 export function deriveSidebarThemeVariables(
 	input: string | undefined,
 	prefersDark: boolean,
+	glass = false,
 ): Record<string, string> {
 	const fallback = prefersDark ? DEFAULT_DARK_SIDEBAR : DEFAULT_LIGHT_SIDEBAR;
 	const fallbackColor = parseHexColor(fallback) ?? LIGHT_CANVAS;
@@ -220,11 +221,14 @@ export function deriveSidebarThemeVariables(
 			}
 		}
 	}
-	return surfaceVariables(sidebar, accentSource, prefersDark);
+	return surfaceVariables(sidebar, accentSource, prefersDark, glass);
 }
 
-/** Every sidebar variable over `sidebar`, its accent drawn from `accentSource`. */
-export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: boolean): Record<string, string> {
+/**
+ * Every sidebar variable over `sidebar`, its accent drawn from `accentSource`. On `glass`, the fills keep their
+ * color at 70%, so the glass shows through them while their text keeps about the contrast it has on the solid fill.
+ */
+export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: boolean, glass = false): Record<string, string> {
 	const darkAccent = toHex(mix(accentSource, WHITE, 0.18));
 	const sidebarHex = toHex(sidebar);
 	const sidebarContrast = pickContrast(sidebar);
@@ -252,24 +256,22 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 	const danger = toHex(
 		mix(dangerSource, contrastColor, prefersDark ? 0.06 : 0.1),
 	);
+	const fill = (amount: number): string =>
+		glass ? `color-mix(in srgb, ${tone(sidebar, contrastColor, amount)} 70%, transparent)` : tone(sidebar, contrastColor, amount);
 
 	return {
 		"--sidebar-bg": sidebarHex,
 		"--sidebar-contrast": sidebarContrast,
 		"--sidebar-secondary": ensureContrast(tone(sidebar, contrastColor, 0.76), sidebarHex, TEXT_CONTRAST, sidebarContrast),
 		"--sidebar-muted": ensureContrast(tone(sidebar, contrastColor, 0.58), sidebarHex, TEXT_CONTRAST, sidebarContrast),
-		"--sidebar-panel": tone(sidebar, contrastColor, prefersDark ? 0.12 : 0.05),
-		"--sidebar-subtle": tone(sidebar, contrastColor, prefersDark ? 0.08 : 0.03),
-		"--sidebar-hover": tone(sidebar, contrastColor, prefersDark ? 0.18 : 0.1),
-		"--sidebar-active": tone(sidebar, contrastColor, prefersDark ? DARK_ACTIVE_LIFT : 0.16),
+		"--sidebar-panel": fill(prefersDark ? 0.12 : 0.05),
+		"--sidebar-subtle": fill(prefersDark ? 0.08 : 0.03),
+		"--sidebar-hover": fill(prefersDark ? 0.18 : 0.1),
+		"--sidebar-active": fill(prefersDark ? DARK_ACTIVE_LIFT : 0.16),
 		"--sidebar-selected": prefersDark
-			? tone(sidebar, contrastColor, DARK_SELECTED_LIFT)
-			: "#ffffff",
-		"--sidebar-elevated": tone(
-			sidebar,
-			contrastColor,
-			prefersDark ? 0.16 : 0.08,
-		),
+			? fill(DARK_SELECTED_LIFT)
+			: glass ? "color-mix(in srgb, #ffffff 70%, transparent)" : "#ffffff",
+		"--sidebar-elevated": fill(prefersDark ? 0.16 : 0.08),
 		"--sidebar-border": tone(sidebar, contrastColor, prefersDark ? 0.24 : 0.14),
 		"--sidebar-separator": tone(
 			sidebar,
