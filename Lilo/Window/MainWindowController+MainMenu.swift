@@ -87,6 +87,7 @@ extension MainWindowController {
         // The menu bar can open before the first launch has created the settings store.
         let agentsSpaceIds = context.settingsStore?.agentsSpaceIds ?? []
         let agentsProfileId = context.settingsStore?.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
+        let isolatedSpaceIds = Set(context.agentControl.sessions.compactMap(\.isolatedSpaceId))
         // Below Next Space, Previous Space and their separator.
         for (index, space) in switchableSpaces.enumerated() {
             let item: NSMenuItem
@@ -97,6 +98,8 @@ extension MainWindowController {
                 item.image = AgentCursorView.menuImage
             } else {
                 item = NSMenuItem(title: "\(space.icon)  \(space.name)", action: #selector(switchToSpaceFromMenu(_:)), keyEquivalent: "")
+                // An agent's private Space reads like the user's own one but for this mark.
+                if isolatedSpaceIds.contains(space.id) { item.image = AgentCursorView.menuImage }
             }
             if index < 9 { KeyboardShortcuts.show("space.select\(index + 1)", on: item) }
             item.tag = Self.spaceMenuItemTag
