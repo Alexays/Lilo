@@ -131,6 +131,20 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertTrue(closed, "tabs.remove closes the tab in the window that holds it")
     }
 
+    func testAnExtensionRemovingAPinnedTabTakesItOutOfTheSidebar() async throws {
+        let (window, registry, extensionId, _, _, otherId) = try await openExtensionPage()
+        let context = try XCTUnwrap(registry.context(for: extensionId))
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        try window.applyBrowserCommand(.setPinned(spaceId: spaceId, tabId: otherId, isPinned: true))
+        let adapter = try XCTUnwrap(window.tabManager.tabAdapter(for: otherId))
+
+        var closeError: Error?
+        adapter.close(for: context) { closeError = $0 }
+        XCTAssertNil(closeError)
+        let removed = await pollUntil { window.tabManager.tab(for: otherId) == nil }
+        XCTAssertTrue(removed, "tabs.remove on a pinned tab leaves no pinned placeholder behind")
+    }
+
     func testAWindowsCreatePopupIsListedAmongTheExtensionViews() async throws {
         let (_, registry, extensionId, pageURL, _, _) = try await openExtensionPage()
         let context = try XCTUnwrap(registry.context(for: extensionId))

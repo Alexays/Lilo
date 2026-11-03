@@ -194,7 +194,13 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
         guard let window = owningWindow else { completionHandler(Self.windowUnavailableError); return }
         completionHandler(nil)
         // After WebKit's call returns: closing tears down the tab WebKit is still calling into.
-        Task { @MainActor [tabId] in window.closeTabStateFirst(id: tabId) }
+        Task { @MainActor [tabId] in
+            // As in Chrome, a pinned tab an extension removes leaves the sidebar instead of staying as a placeholder.
+            if let tabContext = window.tabManager.context(for: tabId), tabContext.tab.isPinned {
+                _ = try? window.applyBrowserCommand(.setPinned(spaceId: tabContext.spaceId, tabId: tabId, isPinned: false))
+            }
+            window.closeTabStateFirst(id: tabId)
+        }
     }
 
     // MARK: - Snapshot / Locale
