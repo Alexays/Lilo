@@ -1,0 +1,158 @@
+---
+import PageSection from "../../components/PageSection.astro";
+import Layout from "../../layouts/Layout.astro";
+import { copy } from "../../lib/i18n";
+import { webkitPatches } from "../../lib/webkit-patches";
+
+const lang = "en";
+const text = copy[lang];
+
+const schema = [
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/",
+        name: "Lilo Browser",
+        position: 1,
+      },
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/webkit/",
+        name: "Lilo and WebKit",
+        position: 2,
+      },
+    ],
+  },
+  {
+    "@id": "https://getlilo.app/webkit/#faq",
+    "@type": "FAQPage",
+    inLanguage: "en",
+    mainEntity: [],
+    url: "https://getlilo.app/webkit/",
+  },
+];
+---
+
+<Layout
+  lang={lang}
+  title="Lilo and WebKit: the engine fixes Lilo sends upstream"
+  description="Lilo is a Mac browser on WebKit, the engine Safari uses. When the engine makes a page slow or broken, Lilo fixes WebKit itself and sends each patch upstream, with its bug, pull request and measured gain."
+  schema={schema}
+  hero={{
+    heading: text.webkitHeading,
+    description: text.webkitIntroduction,
+    tag: text.webkit,
+    link: { href: "#patches", label: text.webkitHeroLink },
+  }}
+  closing={{
+    heading: text.webkitClosingHeading,
+    description: text.webkitClosingDescription,
+  }}
+>
+  <PageSection id="patches">
+    <div class="head">
+      <span class="tag">Sent upstream</span>
+      <h2>Fixes in WebKit itself.</h2>
+      <p>
+        Each one has a WebKit bug and a pull request, and leaves this list once
+        it lands in WebKit.
+      </p>
+    </div>
+    <div class="feat-list">
+      {webkitPatches.map((patch) => (
+        <div>
+          {patch.fix.en}{" "}
+          <a href={`https://bugs.webkit.org/show_bug.cgi?id=${patch.bug}`}>
+            Bug {patch.bug}
+          </a>
+          ,{" "}
+          <a
+            href={`https://github.com/WebKit/WebKit/pull/${patch.pullRequest}`}
+          >
+            pull request #{patch.pullRequest}
+          </a>
+          .
+        </div>
+      ))}
+    </div>
+  </PageSection>
+
+  <PageSection id="method">
+    <div class="head">
+      <span class="tag">How we work</span>
+      <h2>Measure, reduce, fix the engine.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Measured on real pages.</b> We profile the sites people use most,
+        compare them with Chrome and with the WebKit of macOS, then reduce each
+        slowdown to a small page any WebKit developer can run.
+      </div>
+      <div>
+        <b>Generic, never per site.</b> No hostname checks and no quirks for one
+        site: a fix changes how the engine works, so every page gets it.
+      </div>
+      <div>
+        <b>Upstream first.</b> Every patch goes to WebKit with its bug, a
+        performance test and the numbers, for WebKit's own reviewers.
+      </div>
+      <div>
+        <b>Never a requirement.</b> Lilo works fully on the WebKit of macOS. Its
+        own WebKit build only brings fixes earlier, and runs only while it holds
+        every security fix of your macOS.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="faq" layout="faq">
+    <div class="head" style="margin:0">
+      <span class="tag">Questions</span>
+      <h2>Lilo and its engine.</h2>
+    </div>
+    <div class="faq-list">
+      <details>
+        <summary>Is Lilo just a wrapper around WKWebView?</summary>
+        <p>
+          Lilo shows pages with WKWebView, the way Mac apps embed WebKit. Around
+          it, Lilo is a browser of its own in Swift and AppKit: Spaces, Chrome
+          extensions on WebKit's extension runtime with Swift handlers for the
+          APIs it lacks, terminal tabs and an MCP server. And when the engine is
+          the problem, Lilo fixes the engine.
+        </p>
+      </details>
+      <details>
+        <summary>Do I need anything to get these fixes?</summary>
+        <p>
+          No. Once a fix lands in WebKit, it ships with the next Safari and
+          macOS updates, and Lilo runs on that same WebKit. Lilo's own WebKit
+          build can bring the fixes sooner, and you can read
+          <a href="https://github.com/Alexays/Lilo/blob/main/docs/WEBKIT_FORK.md">
+            how it stays safe
+          </a>
+          .
+        </p>
+      </details>
+      <details>
+        <summary>Why fix WebKit instead of switching to Chromium?</summary>
+        <p>
+          WebKit is the engine already in macOS: it draws less power, follows
+          every macOS release, and keeps Lilo a native Mac app. Fixing it helps
+          Safari and every Mac app that shows the web, not only Lilo.
+        </p>
+      </details>
+      <details>
+        <summary>Can I report a slow page?</summary>
+        <p>
+          Yes.
+          <a href="https://github.com/Alexays/Lilo/issues">
+            Open an issue
+          </a>{" "}
+          with the page and what you did. If the engine is the cause, the fix
+          goes to WebKit.
+        </p>
+      </details>
+    </div>
+  </PageSection>
+</Layout>

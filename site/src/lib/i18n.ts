@@ -138,6 +138,14 @@ export const copy = {
     toggleTheme: "Toggle theme",
     version: "Version",
     viewExtension: "View extension",
+    webkit: "Lilo and WebKit",
+    webkitClosingDescription:
+      "Try Lilo on the sites you use. Each fix it sends to WebKit reaches Safari once it lands.",
+    webkitClosingHeading: "A browser that improves its engine.",
+    webkitHeading: "Lilo fixes WebKit, for everyone.",
+    webkitHeroLink: "See the patches",
+    webkitIntroduction:
+      "Lilo runs on WebKit, the engine Safari uses. When a page is slow or broken because of the engine, we fix it in WebKit itself and send the fix upstream, so Safari and every Mac app that shows the web get it too.",
   },
   fr: {
     agentsClosingDescription:
@@ -280,6 +288,14 @@ export const copy = {
     toggleTheme: "Changer de thème",
     version: "Version",
     viewExtension: "Voir l’extension",
+    webkit: "Lilo et WebKit",
+    webkitClosingDescription:
+      "Essayez Lilo sur vos sites. Chaque correctif envoyé à WebKit arrive dans Safari une fois intégré.",
+    webkitClosingHeading: "Un navigateur qui améliore son moteur.",
+    webkitHeading: "Lilo corrige WebKit, pour tout le monde.",
+    webkitHeroLink: "Voir les correctifs",
+    webkitIntroduction:
+      "Lilo repose sur WebKit, le moteur de Safari. Quand une page est lente ou cassée à cause du moteur, nous corrigeons WebKit lui-même et envoyons le correctif en amont : Safari et toutes les apps Mac qui affichent le web en profitent aussi.",
   },
 } satisfies Record<Locale, Record<string, string>>;
 

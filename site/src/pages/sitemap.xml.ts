@@ -10,6 +10,7 @@ export const GET = () => {
     "arc-alternative/",
     "compare/",
     "ai-agents/",
+    "webkit/",
     "changelog/",
   ];
 

@@ -14,8 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from generate import DIST, Node, Tree, plain, sync_json_ld
 
 PAGES = ["index.html", "moving/index.html", "arc-alternative/index.html", "compare/index.html", "ai-agents/index.html",
-         "changelog/index.html", "fr/index.html", "fr/moving/index.html", "fr/arc-alternative/index.html",
-         "fr/compare/index.html", "fr/ai-agents/index.html", "fr/changelog/index.html"]
+         "webkit/index.html", "changelog/index.html", "fr/index.html", "fr/moving/index.html", "fr/arc-alternative/index.html",
+         "fr/compare/index.html", "fr/ai-agents/index.html", "fr/webkit/index.html",
+         "fr/changelog/index.html"]
 
 
 def nodes(node):
@@ -309,6 +310,17 @@ class SiteTests(unittest.TestCase):
                 for group in groups[1:]:
                     headers = [node for node in nodes(group) if node.attrs.get("scope") == "rowgroup"]
                     self.assertEqual(len(headers), 1)
+
+    def test_webkit_page_lists_the_patches_of_the_fork_documentation(self):
+        doc = (DIST.parents[1] / "docs/WEBKIT_FORK.md").read_text()
+        table = re.search(r"^## Patches\n(.*?)^## ", doc, re.S | re.M)[1]
+        rows = re.findall(r"^\| \[(\d+)\]\(.*?\| \[WebKit/WebKit#(\d+)\]", table, re.M)
+        self.assertGreater(len(rows), 0)
+        for page in ["webkit/index.html", "fr/webkit/index.html"]:
+            with self.subTest(page=page):
+                source = (DIST / page).read_text()
+                self.assertEqual(re.findall(r"show_bug\.cgi\?id=(\d+)", source), [bug for bug, _ in rows])
+                self.assertEqual(re.findall(r"github\.com/WebKit/WebKit/pull/(\d+)", source), [pr for _, pr in rows])
 
     def test_faq_json_ld_preserves_html_examples_without_closing_the_script(self):
         source = r'''<script type="application/ld+json">{"@graph":[{"@type":"FAQPage","description":"Use \u003c/script> literally","mainEntity":[]}]}</script>

@@ -1,0 +1,166 @@
+---
+import PageSection from "../../../components/PageSection.astro";
+import Layout from "../../../layouts/Layout.astro";
+import { copy } from "../../../lib/i18n";
+import { webkitPatches } from "../../../lib/webkit-patches";
+
+const lang = "fr";
+const text = copy[lang];
+
+const schema = [
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/fr/",
+        name: "Lilo Browser",
+        position: 1,
+      },
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/fr/webkit/",
+        name: "Lilo et WebKit",
+        position: 2,
+      },
+    ],
+  },
+  {
+    "@id": "https://getlilo.app/fr/webkit/#faq",
+    "@type": "FAQPage",
+    inLanguage: "fr",
+    mainEntity: [],
+    url: "https://getlilo.app/fr/webkit/",
+  },
+];
+---
+
+<Layout
+  lang={lang}
+  title="Lilo et WebKit : les correctifs moteur que Lilo envoie en amont"
+  description="Lilo est un navigateur Mac basé sur WebKit, le moteur de Safari. Quand le moteur rend une page lente ou cassée, Lilo corrige WebKit lui-même et envoie chaque correctif en amont, avec son bug, sa pull request et le gain mesuré."
+  schema={schema}
+  hero={{
+    heading: text.webkitHeading,
+    description: text.webkitIntroduction,
+    tag: text.webkit,
+    link: { href: "#patches", label: text.webkitHeroLink },
+  }}
+  closing={{
+    heading: text.webkitClosingHeading,
+    description: text.webkitClosingDescription,
+  }}
+>
+  <PageSection id="patches">
+    <div class="head">
+      <span class="tag">Envoyés en amont</span>
+      <h2>Des correctifs dans WebKit lui-même.</h2>
+      <p>
+        Chacun a son bug WebKit et sa pull request, et quitte cette liste une
+        fois intégré à WebKit.
+      </p>
+    </div>
+    <div class="feat-list">
+      {webkitPatches.map((patch) => (
+        <div>
+          {patch.fix.fr}{" "}
+          <a href={`https://bugs.webkit.org/show_bug.cgi?id=${patch.bug}`}>
+            Bug {patch.bug}
+          </a>
+          ,{" "}
+          <a
+            href={`https://github.com/WebKit/WebKit/pull/${patch.pullRequest}`}
+          >
+            pull request #{patch.pullRequest}
+          </a>
+          .
+        </div>
+      ))}
+    </div>
+  </PageSection>
+
+  <PageSection id="method">
+    <div class="head">
+      <span class="tag">Notre méthode</span>
+      <h2>Mesurer, réduire, corriger le moteur.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Mesuré sur de vraies pages.</b> Nous profilons les sites les plus
+        utilisés, les comparons avec Chrome et avec le WebKit de macOS, puis
+        réduisons chaque lenteur à une petite page que tout développeur WebKit
+        peut lancer.
+      </div>
+      <div>
+        <b>Générique, jamais par site.</b> Aucun test de nom de domaine ni
+        exception pour un site : un correctif change le fonctionnement du
+        moteur, donc toutes les pages en profitent.
+      </div>
+      <div>
+        <b>En amont d'abord.</b> Chaque correctif part chez WebKit avec son bug,
+        un test de performance et les chiffres, pour les relecteurs de WebKit.
+      </div>
+      <div>
+        <b>Jamais obligatoire.</b> Lilo fonctionne entièrement sur le WebKit de
+        macOS. Son propre build de WebKit ne fait qu'avancer les correctifs, et
+        ne tourne que s'il contient tous les correctifs de sécurité de votre
+        macOS.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="faq" layout="faq">
+    <div class="head" style="margin:0">
+      <span class="tag">Questions</span>
+      <h2>Lilo et son moteur.</h2>
+    </div>
+    <div class="faq-list">
+      <details>
+        <summary>Lilo n'est-il qu'une enveloppe autour de WKWebView ?</summary>
+        <p>
+          Lilo affiche les pages avec WKWebView, comme les apps Mac intègrent
+          WebKit. Autour, Lilo est un navigateur à part entière en Swift et
+          AppKit : espaces, extensions Chrome sur le moteur d'extensions de
+          WebKit avec des gestionnaires Swift pour les API qui lui manquent,
+          onglets de terminal et serveur MCP. Et quand le moteur pose problème,
+          Lilo corrige le moteur.
+        </p>
+      </details>
+      <details>
+        <summary>
+          Dois-je faire quelque chose pour profiter de ces correctifs ?
+        </summary>
+        <p>
+          Non. Une fois intégré à WebKit, un correctif arrive avec les mises à
+          jour suivantes de Safari et de macOS, et Lilo tourne sur ce même
+          WebKit. Le build de WebKit propre à Lilo peut les apporter plus tôt,
+          et vous pouvez lire
+          <a href="https://github.com/Alexays/Lilo/blob/main/docs/WEBKIT_FORK.md">
+            comment il reste sûr
+          </a>
+          .
+        </p>
+      </details>
+      <details>
+        <summary>
+          Pourquoi corriger WebKit plutôt que passer à Chromium ?
+        </summary>
+        <p>
+          WebKit est le moteur déjà présent dans macOS : il consomme moins
+          d'énergie, suit chaque version de macOS, et garde Lilo une vraie app
+          Mac. Le corriger aide Safari et toutes les apps Mac qui affichent le
+          web, pas seulement Lilo.
+        </p>
+      </details>
+      <details>
+        <summary>Puis-je signaler une page lente ?</summary>
+        <p>
+          Oui.
+          <a href="https://github.com/Alexays/Lilo/issues">Ouvrez une issue</a>
+          avec la page et ce que vous faisiez. Si le moteur en est la cause, le
+          correctif part chez WebKit.
+        </p>
+      </details>
+    </div>
+  </PageSection>
+</Layout>
