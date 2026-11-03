@@ -20,6 +20,7 @@ to build it and send a change.
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Requirements, setup, the make targets, tests, code style, common tasks, pull requests |
 | [AGENTS.md](../AGENTS.md) | The house rules, written for coding agents and humans alike |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Where code lives, the overlay and bridge, windows and shared state, the extension runtime, private WebKit API, glossary |
+| [CHROME-COST.md](CHROME-COST.md) | What the web view that draws the sidebar and panels costs: memory, idle work, launch and frame pacing, measured |
 | [DEBUGGING.md](DEBUGGING.md) | Inspectors, the diagnostics panel, logs, debug switches, energy measurement, common failures |
 | [I18N.md](I18N.md) | Translating the interface and native strings, adding a language |
 | [PRELOAD-TOP-HIT.md](PRELOAD-TOP-HIT.md) | Loading the command bar's top hit before Return: the confidence rule, what history and extensions see, the cost and the benchmark |

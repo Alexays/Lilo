@@ -114,6 +114,8 @@ User-facing docs and the interface capitalize these names as below; code identif
 
 The chrome web view loads its bundle from `lilo-chrome://ui/index.html`, an app-private custom scheme served by `ChromeUISchemeHandler` (`Lilo/Bridge/`). The assets are compiled into the binary: `make ui-build` turns the Vite output into `Lilo/Generated/ChromeUIAssets.swift`.
 
+What this web view costs in memory, idle work, launch time and frame pacing is measured in [CHROME-COST.md](CHROME-COST.md).
+
 ## Windows and shared state
 
 `BrowserContext` (`Lilo/App/`) owns everything that exists once per app: the databases, settings, profiles and spaces, the engine factory, downloads, the content blocker, terminal sessions and `BrowserStateStore`. Per-profile data (history, bookmarks, zoom, favicons, session persistence, extension registry) lives in a `ProfileContext`, built on demand and cached: profiles a window shows stay loaded, plus the most recently left one.
