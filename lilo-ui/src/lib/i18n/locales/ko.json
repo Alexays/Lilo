@@ -732,8 +732,6 @@
 		"ariaLabel": "사이드바"
 	},
 	"spaceBar": {
-		"editSpace": "스페이스 편집",
-		"privateSpace": "개인정보 보호 스페이스",
 		"defaultSpaceName": "스페이스"
 	},
 	"mediaCard": {

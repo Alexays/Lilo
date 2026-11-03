@@ -732,8 +732,6 @@
 		"ariaLabel": "侧边栏"
 	},
 	"spaceBar": {
-		"editSpace": "编辑空间",
-		"privateSpace": "隐私空间",
 		"defaultSpaceName": "空间"
 	},
 	"mediaCard": {

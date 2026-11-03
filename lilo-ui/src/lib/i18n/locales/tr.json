@@ -732,8 +732,6 @@
 		"ariaLabel": "Kenar çubuğu"
 	},
 	"spaceBar": {
-		"editSpace": "Alanı düzenle",
-		"privateSpace": "Özel alan",
 		"defaultSpaceName": "Alan"
 	},
 	"mediaCard": {

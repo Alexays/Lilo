@@ -732,8 +732,6 @@
 		"ariaLabel": "Barra lateral"
 	},
 	"spaceBar": {
-		"editSpace": "Editar espacio",
-		"privateSpace": "Espacio privado",
 		"defaultSpaceName": "Espacio"
 	},
 	"mediaCard": {

@@ -27,7 +27,6 @@
   import { t } from "../../lib/i18n/state.svelte";
 
   let spaceContentEl: HTMLDivElement | undefined = $state();
-  let spaceRowEndWidth = $state(0);
   const spaces = $derived(getPagedSpaces());
   const visualIndex = $derived(getSpacePagerVirtualIndex());
   const isOverlayPanelOpen = $derived(
@@ -99,7 +98,6 @@
     class="sidebar-layout"
     class:pushed={isOverlayPanelOpen}
     class:compact-header={isSidebarVisible() && hasPageToolbar()}
-    class:lights-only={isSidebarVisible() && hasPageToolbar() && getTabPosition() === "left"}
     class:address-corner={getTabPosition() === "left" && getAddressPlacement() === "tabs"}
     inert={isOverlayPanelOpen}
     role="complementary"
@@ -120,19 +118,19 @@
       {#if !hasPageToolbar() || getTabPosition() !== "left"}
         <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
       {/if}
+      <!-- With the address hidden, the page's buttons stay on the header's line. -->
+      {#if !isAddressVisible()}
+        <div class="page-actions">
+          <URLDisplay actionsOnly />
+        </div>
+      {/if}
     </div>
     {#if isAddressVisible() && !isAddressInPageToolbar()}
       <URLDisplay />
     {/if}
 
     <!-- Space content: native horizontal scroll with snap paging -->
-    <div class="space-content" class:page-buttons={!isAddressVisible()} style={`--space-row-reserve: ${spaceRowEndWidth ? spaceRowEndWidth + 8 : 0}px;`}>
-      <!-- Over the Space header but outside the pages: it does not swipe, it is about the page. -->
-      <div class="space-row-end" bind:clientWidth={spaceRowEndWidth}>
-        {#if !isAddressVisible()}
-          <URLDisplay actionsOnly />
-        {/if}
-      </div>
+    <div class="space-content">
       <div class="space-track" bind:this={spaceContentEl}>
         <div class="space-slider">
           {#each spaces as space, index (space.id)}
@@ -214,14 +212,19 @@
     margin-top: var(--content-inset);
   }
 
-  /* On the left the toggle goes with the page toolbar: the Space comes up under the lights. */
-  .lights-only .sidebar-header {
-    height: 26px;
-  }
-
   .compact-header .sidebar-header :global(.nav-controls) {
     flex: none;
     margin-left: auto;
+  }
+
+  /* On the right the toggle keeps the row's end, and the page's buttons sit before it. */
+  .compact-header .page-actions {
+    order: -1;
+    margin-left: auto;
+  }
+
+  .compact-header .sidebar-header:has(.page-actions) :global(.nav-controls) {
+    margin-left: 0;
   }
 
   .sidebar-layout.pushed {
@@ -236,32 +239,24 @@
     flex: 1;
     min-height: 0;
     position: relative;
-    /* Keeps the Space row's z-index local, so the URL bar's details card covers it. */
+    /* Keeps the pages' z-index local, so the URL bar's details card covers them. */
     isolation: isolate;
   }
 
-  /* Centred on the Space header's row, aligned with its right edge. */
-  .space-row-end {
-    position: absolute;
-    top: 4px;
+  .page-actions {
+    flex: none;
     height: 28px;
-    right: calc(var(--sidebar-right-pad, 10px) + 6px);
-    z-index: 20;
+    margin-left: 4px;
     display: flex;
     align-items: center;
     gap: 4px;
   }
 
-  /* Like the address bar, the page's buttons show on hover; only the extensions stay out. */
-  .space-content:has(:global(.space-label:hover), .space-row-end:hover, .space-row-end:focus-within) :global(.url-actions-reveal) {
+  /* Like the address bar, the page's buttons show on hover of their line; only the extensions stay out. */
+  .sidebar-header:is(:hover, :focus-within) :global(.url-actions-reveal) {
     opacity: 1;
     pointer-events: auto;
     transform: translateY(-50%) translateX(0) scale(1);
-  }
-
-  /* They land on the name's edit pencil, which the whole name already stands for. */
-  .page-buttons :global(.space-edit-icon) {
-    display: none;
   }
 
   .space-track {
@@ -331,14 +326,9 @@
     padding-top: 0;
   }
 
-  /* Lifted, the lights sit 5pt further in. */
-  .address-corner .sidebar-header:not(.no-traffic-lights) .header-spacer {
-    width: 81px;
-  }
-
-  /* Reserve space for macOS traffic light buttons, which line up with the sidebar's content */
+  /* Reserve space for macOS traffic light buttons, 15pt in from the window's edge. */
   .header-spacer {
-    width: 76px;
+    width: 81px;
     flex-shrink: 0;
     transition: width 220ms var(--motion-ease-spring);
   }

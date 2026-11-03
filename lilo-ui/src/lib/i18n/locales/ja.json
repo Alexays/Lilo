@@ -732,8 +732,6 @@
 		"ariaLabel": "サイドバー"
 	},
 	"spaceBar": {
-		"editSpace": "スペースを編集",
-		"privateSpace": "プライベートスペース",
 		"defaultSpaceName": "スペース"
 	},
 	"mediaCard": {

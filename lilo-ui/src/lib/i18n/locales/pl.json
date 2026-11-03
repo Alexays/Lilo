@@ -738,8 +738,6 @@
 		"ariaLabel": "Pasek boczny"
 	},
 	"spaceBar": {
-		"editSpace": "Edytuj przestrzeń",
-		"privateSpace": "Przestrzeń prywatna",
 		"defaultSpaceName": "Przestrzeń"
 	},
 	"mediaCard": {

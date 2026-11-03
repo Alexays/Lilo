@@ -25,8 +25,8 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 		await bootChrome(page, { ...initialWorld(), tabPosition: position, addressPlacement: "hidden" }, strip ? ".tab-strip .strip-tab" : undefined);
 		await expect(page.locator(".url-display")).toHaveCount(0);
 		await expect(page.locator(".page-toolbar")).toHaveCount(position === "right" || position === "bottom" ? 1 : 0);
-		// The page's buttons move up to the Space row.
-		await expect(page.locator(".space-row-end .url-screenshot-btn")).toHaveCount(strip ? 0 : 1);
+		// The page's buttons move up to the sidebar header's line.
+		await expect(page.locator(".page-actions .url-screenshot-btn")).toHaveCount(strip ? 0 : 1);
 
 		await receive(page, { event: "toggleCommandBar", prefill: "https://example.com", selectAll: true });
 		await expect(page.getByRole("combobox", { name: "Search or enter address" })).toHaveValue("https://example.com");
@@ -38,14 +38,10 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 	});
 }
 
-test("the page's buttons cover the Space name on hover without truncating it", async ({ page }) => {
+test("the page's buttons show on hover of the sidebar header", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), addressPlacement: "hidden" });
-	const name = page.locator(".space-pane").first().locator(".space-name");
-	const before = (await name.boundingBox())!.width;
-
-	await page.locator(".space-pane").first().locator(".space-label").hover();
-	await expect(page.locator(".space-row-end .url-actions-reveal")).toHaveCSS("opacity", "1");
-	expect((await name.boundingBox())!.width).toBe(before);
+	await page.locator(".sidebar-header").hover();
+	await expect(page.locator(".page-actions .url-actions-reveal")).toHaveCSS("opacity", "1");
 });
 
 test("with tabs on the left the sidebar and the address toolbar hide one without the other", async ({ page }) => {

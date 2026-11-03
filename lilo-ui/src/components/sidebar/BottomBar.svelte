@@ -27,6 +27,7 @@
   } from "../../stores/dropConfirmation.svelte";
   import {
     getActiveSpaceId,
+    getFocusedSpaceId,
     getSpaces,
     type SpaceState,
   } from "../../stores/spaces.svelte";
@@ -119,16 +120,20 @@
       observer.disconnect();
     };
   });
+  // Tiles that scroll never open on a name (no room), so the active one's box is final: one glide brings it
+  // in view, clear of the fades.
+  // On the switch's target, so the bar glides along with the pages rather than after them.
   $effect(() => {
-    const spaceId = getActiveSpaceId();
+    const spaceId = getFocusedSpaceId();
     const el = spaceScrollerEl;
-    const tile = el?.querySelector(`[data-space-dnd-id="${CSS.escape(spaceId)}"]`);
-    if (!el || !tile) return;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+    const tile = el.querySelector(`[data-space-dnd-id="${CSS.escape(spaceId)}"]`);
+    if (!tile) return;
     // Not scrollIntoView: it would also scroll every ancestor, up to a page embedding the UI.
     const bar = el.getBoundingClientRect();
     const box = tile.getBoundingClientRect();
-    if (box.left < bar.left) el.scrollLeft += box.left - bar.left;
-    else if (box.right > bar.right) el.scrollLeft += box.right - bar.right;
+    const left = box.left - 18 < bar.left ? box.left - 18 - bar.left : box.right + 18 > bar.right ? box.right + 18 - bar.right : 0;
+    if (left) el.scrollBy({ left, behavior: prefersReducedMotion() ? "instant" : "smooth" });
   });
 
   // What needs a look in the other Spaces, shown on their icons: a terminal waiting for an answer
@@ -421,6 +426,23 @@
 
     return `opacity: ${opacity.toFixed(3)}; --space-icon-active-opacity: ${activeOpacity.toFixed(3)}; --space-icon-hover-opacity: ${hoverOpacity.toFixed(3)};`;
   }
+
+  // Natural width of each Space's name, capped to the room the bar leaves; the active tile opens to fit it.
+  let labelWidths: Record<string, number> = $state({});
+  let iconsWrapWidth = $state(0);
+  // The tiles, the name's padding and the bar's own inset come off; too little left and the tile stays an icon.
+  const labelRoom = $derived.by(() => {
+    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 39 - 16);
+    return room < 32 ? 0 : room;
+  });
+
+  function getLabelStyle(index: number, spaceId: string): string {
+    const proximity = Math.max(0, 1 - Math.abs(index - visualIndex));
+    if (proximity === 0 || labelRoom === 0) return "width: 0; opacity: 0;";
+    // The name fades in late and out early, so a half-open tile never shows half a word.
+    const shown = proximity * proximity;
+    return `width: ${(((labelWidths[spaceId] ?? 0) + 8) * proximity).toFixed(2)}px; opacity: ${shown.toFixed(3)}; --label-shift: ${((1 - proximity) * -6).toFixed(2)}px;`;
+  }
 </script>
 
 {#snippet spaceIconButton(space: SpaceState, index: number, profile: BridgeProfileSnapshot | undefined)}
@@ -444,14 +466,20 @@
     oncontextmenu={(event) => showNativeSidebarContextMenu(event, space.id)}
     onkeydown={(event) => handleSpaceKeydown(event, space.id)}
   >
-    {#if isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)}
-      <!-- Loaded on demand: the tile shows only once an agent connects, so the first frame goes without. -->
-      {#await import("./AgentMascot.svelte") then { default: AgentMascot }}
-        <AgentMascot mood={getAgentMood(space.id)} ghost={isIsolatedAgentSpace(space.id)} />
-      {/await}
-    {:else}
-      {space.icon || "🌐"}
-    {/if}
+    <span class="space-glyph" data-onboarding-anchor={space.id === getActiveSpaceId() ? "space-icon" : undefined}>
+      {#if isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)}
+        <!-- Loaded on demand: the tile shows only once an agent connects, so the first frame goes without. -->
+        {#await import("./AgentMascot.svelte") then { default: AgentMascot }}
+          <AgentMascot mood={getAgentMood(space.id)} ghost={isIsolatedAgentSpace(space.id)} />
+        {/await}
+      {:else}
+        {space.icon || "🌐"}
+      {/if}
+    </span>
+    <!-- Opens with the pager's own position, so the name follows a swipe frame by frame. -->
+    <span class="space-label" style={getLabelStyle(index, space.id)} aria-hidden="true">
+      <span class="space-label-text" bind:clientWidth={labelWidths[space.id]}>{space.name}</span>
+    </span>
   </div>
 {/snippet}
 
@@ -507,6 +535,8 @@
 
   <div
     class="space-icons-wrap"
+    style:--label-room="{labelRoom}px"
+    bind:clientWidth={iconsWrapWidth}
   >
     <SpaceMoveHint
       active={sidebarItemDragActive}
@@ -822,9 +852,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 36px;
-    width: 36px;
+    flex: none;
     min-width: 36px;
+    /* The margin an icon tile has around it, kept by the open one so the tiles stay evenly spaced. */
+    padding-inline: 4px;
+    box-sizing: border-box;
     min-height: 36px;
   }
 
@@ -832,9 +864,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 38px;
-    width: 38px;
+    flex: none;
     min-width: 38px;
+    padding-inline: 1px;
+    box-sizing: border-box;
     min-height: 36px;
     flex-shrink: 0;
     position: relative;
@@ -979,7 +1012,7 @@
   }
 
   .space-icon-btn {
-    width: 28px;
+    min-width: 28px;
     height: 28px;
     border-radius: var(--radius-sm);
     border: none;
@@ -998,6 +1031,38 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
+  }
+
+  .space-glyph {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Its width and opacity come from the pager each frame: no transition, or it would lag a swipe. */
+  .space-label {
+    position: relative;
+    flex: none;
+    height: 28px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .space-label-text {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    max-width: var(--label-room, 96px);
+    transform: translate(var(--label-shift, 0), -50%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: 16px;
   }
 
   .space-icon-btn::before,

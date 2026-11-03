@@ -738,8 +738,6 @@
 		"ariaLabel": "Бічна панель"
 	},
 	"spaceBar": {
-		"editSpace": "Редагувати простір",
-		"privateSpace": "Приватний простір",
 		"defaultSpaceName": "Простір"
 	},
 	"mediaCard": {

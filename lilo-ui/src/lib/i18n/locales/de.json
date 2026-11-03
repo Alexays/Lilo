@@ -732,8 +732,6 @@
 		"ariaLabel": "Seitenleiste"
 	},
 	"spaceBar": {
-		"editSpace": "Space bearbeiten",
-		"privateSpace": "Privater Space",
 		"defaultSpaceName": "Space"
 	},
 	"mediaCard": {

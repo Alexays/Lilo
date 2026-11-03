@@ -732,8 +732,6 @@
 		"ariaLabel": "Navigatiekolom"
 	},
 	"spaceBar": {
-		"editSpace": "Wijzig ruimte",
-		"privateSpace": "Privéruimte",
 		"defaultSpaceName": "Ruimte"
 	},
 	"mediaCard": {

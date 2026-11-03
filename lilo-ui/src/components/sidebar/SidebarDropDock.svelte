@@ -72,7 +72,8 @@
 <style>
   .drop-dock {
     position: absolute;
-    inset: 0 var(--sidebar-right-pad, 10px) 0 10px;
+    inset: 0 var(--sidebar-right-pad, 10px) auto 10px;
+    height: 36px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -107,7 +108,7 @@
     gap: 6px;
     border-radius: var(--radius-md);
     border: 1px dashed color-mix(in srgb, var(--dock-color) 45%, transparent);
-    /* Opaque over the sidebar so the space name underneath never shows through. */
+    /* Opaque: it floats over the first tabs. */
     background: color-mix(in srgb, var(--dock-color) 10%, var(--sidebar-bg));
     color: color-mix(in srgb, var(--dock-color) 80%, var(--text-primary));
     font-size: var(--font-size-xs);

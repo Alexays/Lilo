@@ -2,7 +2,6 @@
   import BookmarkedTabs from "./BookmarkedTabs.svelte";
   import TabSection from "./TabSection.svelte";
   import UndoCloseToast from "./UndoCloseToast.svelte";
-  import SpaceBar from "../spaces/SpaceBar.svelte";
   import SidebarDropDock from "./SidebarDropDock.svelte";
   import SelectionIndicator from "./SelectionIndicator.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
@@ -96,7 +95,6 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="space-page" oncontextmenu={openContextMenu}>
   <div class="space-bar-slot">
-    <SpaceBar {spaceId} {interactive} />
     {#if hydrated}
       <SidebarDropDock {spaceId} />
     {/if}
@@ -160,18 +158,11 @@
 </div>
 
 <style>
+  /* Takes no room: the drop dock floats over the top of the list while a drag runs. */
   .space-bar-slot {
     position: relative;
-    flex-shrink: 0;
-  }
-
-  .space-bar-slot > :global(:first-child) {
-    transition: opacity var(--motion-duration-normal) var(--motion-ease-organic);
-  }
-
-  /* The drop dock replaces the space header while it is up. */
-  .space-bar-slot:has(:global(.drop-dock.visible)) > :global(:first-child) {
-    opacity: 0;
+    height: 0;
+    z-index: 4;
   }
 
   .space-page {
