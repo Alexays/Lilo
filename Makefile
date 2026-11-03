@@ -272,9 +272,13 @@ test-build: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 
 # RESULT_BUNDLE=path writes an .xcresult bundle (used by CI to upload results on failure).
 # Test classes run in parallel app instances, one per performance core: more only adds load and timing flakes.
-## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER="LiloTests/Class LiloTests/Other/testCase" narrows the run)
+# SWIFT_TEST_SHARD=i/n deals the test classes, sorted by name, round-robin: neighbors like the Agent*Tests split up.
+SWIFT_TEST_SHARD_CLASSES = $(shell grep -rhE '^final class [A-Za-z0-9_]+: *(XCTestCase|AgentToolTestCase)' LiloTests \
+	| sed -E 's/^final class ([A-Za-z0-9_]+).*/LiloTests\/\1/' | sort \
+	| awk -v i=$(word 1,$(subst /, ,$(SWIFT_TEST_SHARD))) -v n=$(word 2,$(subst /, ,$(SWIFT_TEST_SHARD))) 'NR % n == i % n')
+## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER="LiloTests/Class LiloTests/Other/testCase" narrows the run, SWIFT_TEST_SHARD=1/3 runs a third)
 swift-test: test-build
-	@$(TEST) $(addprefix -only-testing:,$(or $(SWIFT_TEST_FILTER),LiloTests)) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
+	@$(TEST) $(addprefix -only-testing:,$(or $(SWIFT_TEST_FILTER),$(if $(SWIFT_TEST_SHARD),$(SWIFT_TEST_SHARD_CLASSES)),LiloTests)) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
