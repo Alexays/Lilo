@@ -114,7 +114,7 @@ User-facing docs and the interface capitalize these names as below; code identif
 
 The chrome web view loads its bundle from `lilo-chrome://ui/index.html`, an app-private custom scheme served by `ChromeUISchemeHandler` (`Lilo/Bridge/`). The assets are compiled into the binary: `make ui-build` turns the Vite output into `Lilo/Generated/ChromeUIAssets.swift`.
 
-What this web view costs in memory, idle work, launch time and frame pacing is measured in [CHROME-COST.md](CHROME-COST.md).
+Why the chrome is a web view rather than native, what it costs (measured) and when a screen moves to native: [WEB-CHROME.md](WEB-CHROME.md).
 
 ## Windows and shared state
 
