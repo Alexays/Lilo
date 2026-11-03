@@ -164,6 +164,16 @@ test("moving a tab lists only the Spaces it can go to, all of them before typing
 	assert.deepEqual(picker("side").results.map((result) => result.payload.spaceId), ["side"]);
 });
 
+test("a bookmark never moves to a private Space, which would close with it", () => {
+	seed([tab("docs", "home", { title: "Docs", isBookmarked: true })]);
+	const picker = computeResults(
+		{ parsed: parseInput(""), historyResults: [], searchSuggestions: [], searchEngine: "google", spaces, moveTabId: "docs" },
+		0,
+	);
+
+	assert.deepEqual(picker.results.map((result) => result.payload.spaceId), ["work", "side"]);
+});
+
 test("a history row for a page open in another tab switches to that tab instead of opening it twice", () => {
 	seed([tab("waybar", "home", { title: "Waybar", url: "https://github.com/Alexays/Waybar" })]);
 	const history = (query: string) => toHistoryResults([

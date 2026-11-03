@@ -121,10 +121,11 @@ extension MainWindowController {
     }
 
     /// The other Spaces a tab of the current Space can move to: the keyboard path for a drop on a Space. Never an
-    /// Agents space or an agent's private one: their tabs are the agents'.
+    /// Agents space or an agent's private one: their tabs are the agents'. Never a private one for a bookmark: it would close with it.
     func addMoveToSpaceItems(to menu: NSMenu, tabId id: UUID) {
         let agentSpaceIds = Set(context.settingsStore?.agentsSpaceIds ?? []).union(context.agentControl.sessions.compactMap(\.isolatedSpaceId))
-        for space in switchableSpaces where space.id != tabManager.currentSpaceId && !agentSpaceIds.contains(space.id) {
+        let isBookmarked = tabManager.tab(for: id)?.isBookmarked == true
+        for space in switchableSpaces where space.id != tabManager.currentSpaceId && !agentSpaceIds.contains(space.id) && !(isBookmarked && space.isPrivate) {
             menu.addItem("\(space.icon)  \(space.name)") { [weak self] in
                 guard let self else { return }
                 do { try moveToSpace(.tab, id: id, targetSpaceId: space.id) } catch {

@@ -25,6 +25,7 @@ import {
 	getActiveTab,
 	getBookmarkedTabs,
 	getOpenTabs,
+	getTabsById,
 	tabDisplayTitle,
 	type TabState,
 } from "./tabs.svelte";
@@ -484,11 +485,13 @@ function spaceResults(
 ): { results: CommandResult[]; topScore: number } {
 	const activeSpaceId = getActiveSpaceId();
 	const showProfile = getProfiles().length > 1;
+	// A bookmark stays one in a private Space, and would close with it.
+	const movesBookmark = (tabId ? getTabsById().get(tabId) : getActiveTab())?.isBookmarked;
 	const entries: { row: SpaceRow; space: BridgeSpaceSnapshot; title: string; profile: string; haystack: string }[] = [];
 	for (const row of rows) {
 		for (const space of spaces) {
 			// Agents spaces and an agent's private one hold the agents' tabs: never a tab's destination, and listed only while in use.
-			if (space.id === activeSpaceId || isHiddenAgentsSpace(space.id) || (row.kind === "moveToSpace" && (isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)))) continue;
+			if (space.id === activeSpaceId || isHiddenAgentsSpace(space.id) || (row.kind === "moveToSpace" && (isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id) || (movesBookmark && space.isPrivate)))) continue;
 			const title = row.titleKey ? t(row.titleKey, { name: space.name }) : space.name;
 			const profile = showProfile ? (getProfileById(space.profileId)?.name ?? "") : "";
 			entries.push({ row, space, title, profile, haystack: `${title} ${profile}`.toLowerCase() });

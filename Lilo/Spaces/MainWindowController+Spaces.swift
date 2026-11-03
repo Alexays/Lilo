@@ -192,6 +192,8 @@ extension MainWindowController {
         }
 
         guard sourceSpaceId != targetSpaceId else { return }
+        // A bookmark keeps its place in a private Space, so it would be lost when that Space closes.
+        if kind == .tab, targetSpace.isPrivate, tabManager.tab(for: id)?.isBookmarked == true { return }
 
         if context.browserState.space(id: targetSpaceId) == nil {
             context.browserState.storeSpace(
