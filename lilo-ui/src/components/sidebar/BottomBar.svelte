@@ -33,7 +33,6 @@
   import {
     isDownloadsVisible,
     openAddEditor,
-    openDownloadsPanel,
   } from "../../stores/panels.svelte";
   import { getSpacePagerVirtualIndex, spaceTracingEnabled, switchSpaceAnimated } from "../../stores/pager.svelte";
   import {
@@ -50,6 +49,7 @@
     markDownloadsSeen,
   } from "../../stores/downloads.svelte";
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
+  import { getRecentArchivedTabs } from "../../stores/archivedTabs.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import {
@@ -90,8 +90,13 @@
   const downloadProgress = $derived(aggregateDownloadProgress(activeDownloads));
   const unseenDownloads = $derived(getUnseenDownloads());
 
+  const showDownloads = $derived(isDownloadUiEnabled() && (hasSessionDownloads() || activeDownloadCount > 0));
+  const recentArchived = $derived(getRecentArchivedTabs());
+  let slotButton: HTMLButtonElement | undefined = $state();
+  let menuOpen = $state(false);
+
   $effect(() => {
-    if (isDownloadsVisible()) markDownloadsSeen();
+    if (isDownloadsVisible() || (menuOpen && showDownloads)) markDownloadsSeen();
   });
 
   let spaceScrollerEl: HTMLDivElement | undefined = $state();
@@ -452,44 +457,49 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="bottom-bar" oncontextmenu={showNativeSidebarContextMenu}>
-  <!-- Two slots one button wide frame the tiles: the left one (downloads) stays reserved when empty,
+  <!-- Two slots one button wide frame the tiles: the left one (downloads and archived tabs) stays reserved when empty,
        so the tiles stay centered and never shift as it comes and goes. -->
   <div class="bottom-side">
-    <!-- From the first download of the session on, so finished files stay one click away. -->
-    {#if isDownloadUiEnabled() && (hasSessionDownloads() || activeDownloadCount > 0)}
+    {#if showDownloads || recentArchived.length > 0}
       <div class="download-btn-wrap">
         <button
+          bind:this={slotButton}
           class="bottom-btn"
           class:active-indicator={isDownloadsVisible()}
-          class:settled={activeDownloadCount === 0 && !unseenDownloads}
-          use:tooltip={{ text: t("bottomBar.downloads"), shortcut: shortcutKeys("downloads.show") }}
+          use:tooltip={t("bottomBar.library")}
           aria-label={activeDownloadCount > 0
             ? t("bottomBar.downloadsActiveCount", { count: activeDownloadCount })
-            : t("bottomBar.downloads")}
-          onclick={() => openDownloadsPanel()}
+            : t("bottomBar.library")}
+          aria-expanded={menuOpen}
+          onclick={() => (menuOpen = !menuOpen)}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M8 2v8M5 7l3 3 3-3" />
-            <path d="M3 12h10" />
+          {#if activeDownloadCount > 0}
+            <!-- Static between progress ticks: a looping fill would keep WebKit's display link up. -->
+            <span
+              class="download-fill"
+              style={`transform: scaleY(${downloadProgress >= 0 ? downloadProgress : 0.25})`}
+              aria-hidden="true"
+            ></span>
+          {/if}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 1.75v6.5M5.5 5.75 8 8.25l2.5-2.5" />
+            <path d="M1.75 9.5h3.1l.9 1.75h4.5l.9-1.75h3.1M1.75 9.5v2.75a2 2 0 0 0 2 2h8.5a2 2 0 0 0 2-2V9.5" />
           </svg>
         </button>
-        {#if activeDownloadCount > 0}
-          {@const circ = 2 * Math.PI * 12}
-          <!-- Static even when the size is unknown: a looping ring would keep WebKit's display link up. -->
-          <svg class="download-ring" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-            <circle class="download-ring-track" cx="14" cy="14" r="12" stroke-width="1.5" fill="none" />
-            <circle
-              class="download-ring-fill"
-              cx="14" cy="14" r="12"
-              stroke-width="1.5"
-              fill="none"
-              stroke-dasharray={circ}
-              stroke-dashoffset={circ * (1 - (downloadProgress >= 0 ? downloadProgress : 0.25))}
-            />
-          </svg>
-        {/if}
         {#if unseenDownloads}
           <span class="download-dot" class:failed={unseenDownloads === "failed"} aria-hidden="true"></span>
+        {/if}
+        <!-- Loaded on first open: the menu costs the chrome's first frame nothing. -->
+        {#if menuOpen && slotButton}
+          {#await import("./ArchivedTabsMenu.svelte") then menu}
+            <menu.default
+              anchor={slotButton}
+              label={t("bottomBar.library")}
+              tabs={recentArchived}
+              downloads={showDownloads ? getDownloads() : null}
+              onclose={() => (menuOpen = false)}
+            />
+          {/await}
         {/if}
       </div>
     {/if}
@@ -669,10 +679,6 @@
     color: var(--accent);
   }
 
-  .bottom-btn.settled {
-    opacity: 0.55;
-  }
-
   .download-btn-wrap {
     position: relative;
     width: 28px;
@@ -680,21 +686,29 @@
     flex-shrink: 0;
   }
 
-  .download-ring {
+  /* Rises behind the icon as the running downloads arrive. */
+  .download-fill {
     position: absolute;
     inset: 0;
+    background: color-mix(in srgb, var(--accent) 32%, transparent);
+    transform-origin: bottom;
     pointer-events: none;
-    transform: rotate(-90deg);
+    transition: transform 0.3s ease;
   }
 
-  .download-ring-track {
-    stroke: var(--bg-hover);
+  .download-btn-wrap .bottom-btn {
+    position: relative;
+    overflow: hidden;
   }
 
-  .download-ring-fill {
-    stroke: var(--accent);
-    stroke-linecap: round;
-    transition: stroke-dashoffset 0.3s ease;
+  .download-btn-wrap .bottom-btn svg {
+    position: relative;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .download-fill {
+      transition: none;
+    }
   }
 
   /* Ended since the downloads were last looked at: blue when all went well, red when one failed. */

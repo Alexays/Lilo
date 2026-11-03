@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "Tout voir",
 		"cancel": "Annuler",
 		"save": "Enregistrer",
 		"delete": "Supprimer",
@@ -720,6 +721,7 @@
 		"ariaLabel": "Onglets"
 	},
 	"bottomBar": {
+		"library": "Téléchargements et onglets archivés",
 		"downloads": "Téléchargements",
 		"downloadsActiveCount": "Téléchargements, {count} en cours",
 		"spaces": "Espaces",
@@ -1399,7 +1401,8 @@
 		"title": "Archivés récemment",
 		"buttonLabel": {"one": "{count} onglet archivé récemment", "other": "{count} onglets archivés récemment"},
 		"restore": "Restaurer",
-		"showAll": "Voir tous les onglets archivés"
+		"showAll": "Voir tous les onglets archivés",
+		"showAllDownloads": "Voir tous les téléchargements"
 	},
 	"undoToast": {
 		"closed": "« {title} » fermé",

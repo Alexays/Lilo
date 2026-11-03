@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "Tümünü göster",
 		"cancel": "Vazgeç",
 		"save": "Kaydet",
 		"delete": "Sil",
@@ -720,6 +721,7 @@
 		"ariaLabel": "Sekmeler"
 	},
 	"bottomBar": {
+		"library": "İndirmeler ve arşivlenen sekmeler",
 		"downloads": "İndirilenler",
 		"downloadsActiveCount": "İndirilenler, {count} etkin",
 		"spaces": "Alanlar",
@@ -1399,7 +1401,8 @@
 		"title": "Son arşivlenenler",
 		"buttonLabel": {"one": "Son arşivlenen {count} sekme", "other": "Son arşivlenen {count} sekme"},
 		"restore": "Geri yükle",
-		"showAll": "Tüm arşivlenmiş sekmeleri göster"
+		"showAll": "Tüm arşivlenmiş sekmeleri göster",
+		"showAllDownloads": "Tüm indirmeleri göster"
 	},
 	"undoToast": {
 		"closed": "“{title}” kapatıldı",

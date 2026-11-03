@@ -15,6 +15,7 @@ test("a panel takes the focus when it opens and hands it back to its button when
 	await startDownload(page);
 	const button = page.getByRole("button", { name: /^Downloads/ });
 	await button.click();
+	await page.getByRole("menuitem", { name: "Show all downloads" }).click();
 
 	const panel = page.getByRole("dialog", { name: "Downloads" });
 	await expect(panel).toBeVisible();

@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "모두 보기",
 		"cancel": "취소",
 		"save": "저장",
 		"delete": "삭제",
@@ -720,6 +721,7 @@
 		"ariaLabel": "탭"
 	},
 	"bottomBar": {
+		"library": "다운로드 및 보관된 탭",
 		"downloads": "다운로드",
 		"downloadsActiveCount": "다운로드, {count}개 진행 중",
 		"spaces": "스페이스",
@@ -1399,7 +1401,8 @@
 		"title": "최근 보관됨",
 		"buttonLabel": {"one": "최근 보관한 탭 {count}개", "other": "최근 보관한 탭 {count}개"},
 		"restore": "복원",
-		"showAll": "보관한 모든 탭 보기"
+		"showAll": "보관한 모든 탭 보기",
+		"showAllDownloads": "모든 다운로드 보기"
 	},
 	"undoToast": {
 		"closed": "‘{title}’ 닫힘",

@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "Alles tonen",
 		"cancel": "Annuleer",
 		"save": "Bewaar",
 		"delete": "Verwijder",
@@ -720,6 +721,7 @@
 		"ariaLabel": "Tabbladen"
 	},
 	"bottomBar": {
+		"library": "Downloads en gearchiveerde tabbladen",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} actief",
 		"spaces": "Ruimtes",
@@ -1399,7 +1401,8 @@
 		"title": "Onlangs gearchiveerd",
 		"buttonLabel": {"one": "{count} onlangs gearchiveerd tabblad", "other": "{count} onlangs gearchiveerde tabbladen"},
 		"restore": "Herstellen",
-		"showAll": "Alle gearchiveerde tabbladen tonen"
+		"showAll": "Alle gearchiveerde tabbladen tonen",
+		"showAllDownloads": "Alle downloads tonen"
 	},
 	"undoToast": {
 		"closed": "\"{title}\" gesloten",

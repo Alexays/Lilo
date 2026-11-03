@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "显示全部",
 		"cancel": "取消",
 		"save": "存储",
 		"delete": "删除",
@@ -720,6 +721,7 @@
 		"ariaLabel": "标签页"
 	},
 	"bottomBar": {
+		"library": "下载项和已归档的标签页",
 		"downloads": "下载",
 		"downloadsActiveCount": "下载，{count} 项进行中",
 		"spaces": "空间",
@@ -1399,7 +1401,8 @@
 		"title": "最近归档",
 		"buttonLabel": {"one": "最近归档的 {count} 个标签页", "other": "最近归档的 {count} 个标签页"},
 		"restore": "恢复",
-		"showAll": "显示所有已归档的标签页"
+		"showAll": "显示所有已归档的标签页",
+		"showAllDownloads": "显示所有下载项"
 	},
 	"undoToast": {
 		"closed": "“{title}”已关闭",

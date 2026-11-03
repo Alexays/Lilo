@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "すべて表示",
 		"cancel": "キャンセル",
 		"save": "保存",
 		"delete": "削除",
@@ -720,6 +721,7 @@
 		"ariaLabel": "タブ"
 	},
 	"bottomBar": {
+		"library": "ダウンロードとアーカイブしたタブ",
 		"downloads": "ダウンロード",
 		"downloadsActiveCount": "ダウンロード、{count}件進行中",
 		"spaces": "スペース",
@@ -1399,7 +1401,8 @@
 		"title": "最近アーカイブしたタブ",
 		"buttonLabel": {"one": "最近アーカイブしたタブ {count}個", "other": "最近アーカイブしたタブ {count}個"},
 		"restore": "復元",
-		"showAll": "アーカイブしたすべてのタブを表示"
+		"showAll": "アーカイブしたすべてのタブを表示",
+		"showAllDownloads": "すべてのダウンロードを表示"
 	},
 	"undoToast": {
 		"closed": "「{title}」を閉じました",

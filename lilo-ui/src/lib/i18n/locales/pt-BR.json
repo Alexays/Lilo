@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "Ver tudo",
 		"cancel": "Cancelar",
 		"save": "Salvar",
 		"delete": "Apagar",
@@ -720,6 +721,7 @@
 		"ariaLabel": "Abas"
 	},
 	"bottomBar": {
+		"library": "Downloads e abas arquivadas",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} ativos",
 		"spaces": "Espaços",
@@ -1399,7 +1401,8 @@
 		"title": "Arquivadas recentemente",
 		"buttonLabel": {"one": "{count} aba arquivada recentemente", "other": "{count} abas arquivadas recentemente"},
 		"restore": "Restaurar",
-		"showAll": "Mostrar todas as abas arquivadas"
+		"showAll": "Mostrar todas as abas arquivadas",
+		"showAllDownloads": "Mostrar todos os downloads"
 	},
 	"undoToast": {
 		"closed": "\"{title}\" fechada",

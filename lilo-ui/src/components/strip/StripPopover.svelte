@@ -10,10 +10,11 @@
   let popover: HTMLDivElement | undefined = $state();
   let height = $state(0);
   const rect = $derived(anchor.getBoundingClientRect());
-  // Toward the page, clear of the strip itself: under a top strip, over a bottom dock.
+  // Toward the page, clear of the strip itself: under a top strip, over a bottom dock or an anchor with no room below.
   const strip = $derived((anchor.closest(".tab-strip") ?? anchor).getBoundingClientRect());
+  const above = $derived(getTabPosition() === "bottom" || strip.bottom + 4 + height > window.innerHeight - 8);
   const top = $derived(Math.max(8, Math.min(
-    getTabPosition() === "bottom" ? strip.top - 8 - height : strip.bottom + 4,
+    above ? strip.top - 8 - height : strip.bottom + 4,
     window.innerHeight - height - 8,
   )));
   const left = $derived(Math.max(8, Math.min(rect.left, window.innerWidth - 248)));

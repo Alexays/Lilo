@@ -337,7 +337,7 @@
       <!-- Loaded on first open: the menu costs the chrome's first frame nothing. -->
       {#if archiveOpen && archiveButton}
         {#await import("../sidebar/ArchivedTabsMenu.svelte") then menu}
-          <menu.default anchor={archiveButton} tabs={recentArchived} onclose={() => (archiveOpen = false)} />
+          <menu.default anchor={archiveButton} tabs={recentArchived} downloads={null} onclose={() => (archiveOpen = false)} />
         {/await}
       {/if}
     {/if}

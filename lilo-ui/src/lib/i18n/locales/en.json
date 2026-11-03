@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "Show all",
 		"cancel": "Cancel",
 		"save": "Save",
 		"delete": "Delete",
@@ -720,6 +721,7 @@
 		"ariaLabel": "Tabs"
 	},
 	"bottomBar": {
+		"library": "Downloads and archived tabs",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} active",
 		"spaces": "Spaces",
@@ -1399,7 +1401,8 @@
 		"title": "Recently archived",
 		"buttonLabel": {"one": "{count} recently archived tab", "other": "{count} recently archived tabs"},
 		"restore": "Restore",
-		"showAll": "Show all archived tabs"
+		"showAll": "Show all archived tabs",
+		"showAllDownloads": "Show all downloads"
 	},
 	"undoToast": {
 		"closed": "\"{title}\" closed",

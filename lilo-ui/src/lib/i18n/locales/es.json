@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "Ver todo",
 		"cancel": "Cancelar",
 		"save": "Guardar",
 		"delete": "Eliminar",
@@ -720,6 +721,7 @@
 		"ariaLabel": "Pestañas"
 	},
 	"bottomBar": {
+		"library": "Descargas y pestañas archivadas",
 		"downloads": "Descargas",
 		"downloadsActiveCount": "Descargas, {count} activas",
 		"spaces": "Espacios",
@@ -1399,7 +1401,8 @@
 		"title": "Archivadas recientemente",
 		"buttonLabel": {"one": "{count} pestaña archivada recientemente", "other": "{count} pestañas archivadas recientemente"},
 		"restore": "Restaurar",
-		"showAll": "Ver todas las pestañas archivadas"
+		"showAll": "Ver todas las pestañas archivadas",
+		"showAllDownloads": "Mostrar todas las descargas"
 	},
 	"undoToast": {
 		"closed": "«{title}» cerrada",

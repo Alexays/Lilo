@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "顯示全部",
 		"cancel": "取消",
 		"save": "儲存",
 		"delete": "刪除",
@@ -720,6 +721,7 @@
 		"ariaLabel": "分頁"
 	},
 	"bottomBar": {
+		"library": "下載項目與已封存的分頁",
 		"downloads": "下載項目",
 		"downloadsActiveCount": "下載項目，{count} 個進行中",
 		"spaces": "空間",
@@ -1399,7 +1401,8 @@
 		"title": "最近封存",
 		"buttonLabel": {"one": "最近封存的 {count} 個分頁", "other": "最近封存的 {count} 個分頁"},
 		"restore": "回復",
-		"showAll": "顯示所有已封存的分頁"
+		"showAll": "顯示所有已封存的分頁",
+		"showAllDownloads": "顯示所有下載項目"
 	},
 	"undoToast": {
 		"closed": "已關閉「{title}」",

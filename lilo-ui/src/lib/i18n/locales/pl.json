@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "Pokaż wszystko",
 		"cancel": "Anuluj",
 		"save": "Zachowaj",
 		"delete": "Usuń",
@@ -726,6 +727,7 @@
 		"ariaLabel": "Karty"
 	},
 	"bottomBar": {
+		"library": "Pobrane i zarchiwizowane karty",
 		"downloads": "Pobrane",
 		"downloadsActiveCount": "Pobrane, aktywne: {count}",
 		"spaces": "Przestrzenie",
@@ -1409,7 +1411,8 @@
 		"title": "Ostatnio zarchiwizowane",
 		"buttonLabel": {"one": "{count} ostatnio zarchiwizowana karta", "few": "{count} ostatnio zarchiwizowane karty", "many": "{count} ostatnio zarchiwizowanych kart", "other": "{count} ostatnio zarchiwizowanej karty"},
 		"restore": "Przywróć",
-		"showAll": "Pokaż wszystkie zarchiwizowane karty"
+		"showAll": "Pokaż wszystkie zarchiwizowane karty",
+		"showAllDownloads": "Pokaż wszystkie pobrane"
 	},
 	"undoToast": {
 		"closed": "Zamknięto „{title}”",

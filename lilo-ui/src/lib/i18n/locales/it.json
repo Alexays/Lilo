@@ -1,5 +1,6 @@
 {
 	"common": {
+		"showAll": "Mostra tutto",
 		"cancel": "Annulla",
 		"save": "Salva",
 		"delete": "Elimina",
@@ -720,6 +721,7 @@
 		"ariaLabel": "Schede"
 	},
 	"bottomBar": {
+		"library": "Download e schede archiviate",
 		"downloads": "Download",
 		"downloadsActiveCount": "Download, {count} attivi",
 		"spaces": "Spazi",
@@ -1399,7 +1401,8 @@
 		"title": "Archiviate di recente",
 		"buttonLabel": {"one": "{count} scheda archiviata di recente", "other": "{count} schede archiviate di recente"},
 		"restore": "Ripristina",
-		"showAll": "Mostra tutte le schede archiviate"
+		"showAll": "Mostra tutte le schede archiviate",
+		"showAllDownloads": "Mostra tutti i download"
 	},
 	"undoToast": {
 		"closed": "\"{title}\" chiusa",
