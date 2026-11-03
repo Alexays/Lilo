@@ -133,12 +133,10 @@
      Svelte transitions, which need a function. */
   --motion-ease-bounce: linear(0, 0.029, 0.103, 0.202, 0.313, 0.426, 0.535, 0.634, 0.721, 0.796, 0.858, 0.908, 0.947, 0.976, 0.997, 1.012, 1.021, 1.026, 1.028, 1.028, 1.026, 1.024, 1.021, 1.018, 1.014, 1.011, 1.009, 1.007, 1.005, 1.003, 1.002, 1.001, 1);
 
-  /* Mirror MainWindowController's topStripHeight, pageToolbarHeight, bottomDockHeight and bottomDockMargin. */
+  /* Mirror MainWindowController's topStripHeight and pageToolbarHeight; the tabs at the bottom take the top strip's height. */
   /* A bar over the page is a card inside the content inset, centered on the traffic lights at 26px. */
   --top-strip-height: 44px;
   --page-toolbar-height: 44px;
-  --bottom-dock-height: 52px;
-  --bottom-dock-margin: 10px;
   /* The sidebar narrows before the content gets under 320px, as MainWindowController.minimumContentWidth does. */
   --sidebar-fitted-width: min(var(--sidebar-width), 100vw - 2 * var(--content-inset) - 320px);
   /* The sidebar's column spans the content gutter too. */
@@ -289,7 +287,7 @@ html[data-tab-position='top'][data-address='page'] {
 html[data-tab-position='bottom'] {
   --tabs-left: var(--content-inset);
   --tabs-top: var(--page-toolbar-height);
-  --tabs-bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
+  --tabs-bottom: var(--top-strip-height);
 }
 
 /* With no address over the page, its bar holds only the lights and the history: a title bar's height,

@@ -78,7 +78,7 @@
   .slot.left { left: 8px; top: 8px; bottom: 8px; width: var(--sidebar-width); }
   .slot.right { right: 8px; top: 8px; bottom: 8px; width: var(--sidebar-width); }
   .slot.top { left: 8px; right: 8px; top: 4px; height: calc(var(--top-strip-height) - 8px); }
-  .slot.bottom { left: var(--bottom-dock-margin); right: var(--bottom-dock-margin); bottom: var(--bottom-dock-margin); height: var(--bottom-dock-height); border-radius: var(--radius-xl); }
+  .slot.bottom { left: 8px; right: 8px; bottom: 4px; height: calc(var(--top-strip-height) - 8px); }
 
   .hud {
     position: fixed;

@@ -83,9 +83,10 @@
 {/if}
 
 <style>
+  /* The toolbar buttons' size, as it sits among them. */
   .space-chip {
     flex: none;
-    height: 32px;
+    height: 28px;
     max-width: 180px;
     display: flex;
     align-items: center;
@@ -102,7 +103,7 @@
   }
 
   .space-chip.icon-only {
-    width: 32px;
+    width: 28px;
     justify-content: center;
     padding: 0;
   }

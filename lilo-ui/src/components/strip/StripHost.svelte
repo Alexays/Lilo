@@ -9,8 +9,9 @@
 
   let { accent, onenter, onleave }: { accent: string; onenter: () => void; onleave: () => void } = $props();
 
-  // The strip takes the page's color, as the page toolbar does; read apart from the tab, as there.
-  const pageColor = $derived(getActiveTab()?.pageColor);
+  // On top the strip takes the page's color, as the page toolbar does; read apart from the tab, as there. The bottom
+  // one sits on the window's surface: the page's bottom edge is whatever scrolls by.
+  const pageColor = $derived(getTabPosition() === "top" ? getActiveTab()?.pageColor : undefined);
   // Settings and History cover the page: the strip leaves its color and paints the Space's own.
   const coversPage = $derived(isSettingsShellOpen() || isHistoryShellOpen());
   const style = $derived(coversPage ? undefined : pageBarStyle(pageColor, accent));
@@ -104,16 +105,20 @@
 
   :global(html[data-tab-position='bottom']) .tab-strip-host {
     top: auto;
-    bottom: var(--bottom-dock-margin);
-    background-color: transparent;
+    bottom: 0;
   }
 
-  /* On top, inside the frame's border, over the bar the native frame draws; floating in, the strip paints its own. */
+  /* Inside the frame's border, over the bar the native frame draws, the bottom one mirroring the top; floating in,
+     the strip paints its own. */
   :global(html[data-tab-position='top']) .tab-strip-host {
     padding: var(--content-inset) var(--content-inset) 0;
   }
 
-  :global(html[data-tab-position='top']) .tab-strip-host:not(.strip-overlay):not(.covers-page) {
+  :global(html[data-tab-position='bottom']) .tab-strip-host {
+    padding: 0 var(--content-inset) var(--content-inset);
+  }
+
+  :global(html:is([data-tab-position='top'], [data-tab-position='bottom'])) .tab-strip-host:not(.strip-overlay):not(.covers-page) {
     background-color: transparent;
   }
 
@@ -129,7 +134,7 @@
   }
 
   :global(html[data-tab-position='bottom']) .tab-strip-host.strip-hidden {
-    transform: translateY(calc(100% + var(--bottom-dock-margin)));
+    transform: translateY(100%);
   }
 
   .tab-strip-host.strip-overlay {

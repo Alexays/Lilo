@@ -255,7 +255,7 @@
 <nav
   bind:this={stripEl}
   class="tab-strip"
-  class:dock={edge === "bottom"}
+  class:bottom={edge === "bottom"}
   aria-label={t("strip.ariaLabel")}
   onkeydown={handleArrows}
   onpointerdown={startWindowDrag}
@@ -265,12 +265,15 @@
   oncontextmenu={showSidebarMenu}
 >
   {#if edge === "top" && areTrafficLightsVisible()}<div class="lights-spacer"></div>{/if}
-  <!-- First after the lights, as in the sidebar header: the toggle keeps its place in every layout. -->
-  <NavControls show="toggle" />
   <StripSpaceMenu compact={compactSpace} />
-  {#if edge === "top" || !isSidebarVisible()}
-    <NavControls show="history" />
-  {/if}
+  <!-- The window's tools share one capsule, apart from the Space and the tabs. -->
+  <div class="tools">
+    <NavControls show="toggle" />
+    {#if edge === "top" || !isSidebarVisible()}
+      <span class="tools-separator" aria-hidden="true"></span>
+      <NavControls show="history" />
+    {/if}
+  </div>
 
   <!-- Laid out by the strip; only the tabs are in the list. -->
   <div class="strip-tabs" role="tablist" aria-orientation="horizontal" aria-label={t("strip.ariaLabel")}>
@@ -444,28 +447,35 @@
     min-width: 0;
   }
 
-  /* Floating, off the window's edges, toward the page. */
-  .tab-strip.dock {
-    height: var(--bottom-dock-height);
-    margin: 0 var(--bottom-dock-margin);
-    padding: 0 10px;
-    border-radius: var(--radius-xl);
-    background: color-mix(in srgb, var(--sidebar-bg) 55%, var(--bg-elevated));
-    box-shadow: 0 0 0 0.5px var(--border), 0 6px 20px var(--sidebar-shadow);
-  }
 
   /* The sidebar header spreads its controls; the strip keeps them together. */
   .tab-strip :global(.nav-controls) {
     flex: none;
   }
 
-  /* The toggle, the Space and the history are three groups, the same 12px apart. */
-  .tab-strip > :global(.nav-controls),
-  .tab-strip > :global(.space-chip) {
+  /* The Space, the tools and the tabs are three groups, the same 12px apart. */
+  .tab-strip > :global(.space-chip),
+  .tools {
     margin-right: 6px;
   }
 
-  /* The toggle stands 14px from the lights, as in the sidebar header. */
+  /* The buttons' own height, so a hovered one fills the capsule's ends. */
+  .tools {
+    flex: none;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  }
+
+  .tools-separator {
+    width: 1px;
+    height: 14px;
+    margin: 0 2px;
+    background: var(--separator);
+  }
+
+  /* The Space stands 14px from the lights, as the toggle does in the sidebar header. */
   .lights-spacer {
     width: 67px;
     flex: none;
@@ -660,17 +670,17 @@
   }
 
   /* An open drawer grows the address toward the page, never shifting the bar itself. */
-  .tab-strip:not(.dock) .strip-address {
+  .tab-strip:not(.bottom) .strip-address {
     align-self: flex-start;
     margin-top: calc((var(--top-strip-height) - var(--content-inset) - 32px) / 2);
   }
 
-  .dock .strip-address {
+  .bottom .strip-address {
     align-self: flex-end;
-    margin-bottom: calc((var(--bottom-dock-height) - 32px) / 2);
+    margin-bottom: calc((var(--top-strip-height) - var(--content-inset) - 32px) / 2);
   }
 
-  .dock .strip-address > :global(.url-display) {
+  .bottom .strip-address > :global(.url-display) {
     display: flex;
     flex-direction: column-reverse;
   }

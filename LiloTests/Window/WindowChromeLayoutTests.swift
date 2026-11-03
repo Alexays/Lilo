@@ -50,7 +50,7 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(window.contentContainerView.frame, window.contentFrameRect())
     }
 
-    func testTopStripAndBottomDockReserveTheirHeight() throws {
+    func testTopAndBottomStripsReserveTheirHeight() throws {
         let window = try makeSizedWindow()
 
         layOut(window, .top)
@@ -60,7 +60,7 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(window.contentFrameRect().height, 800 - 44 - 44 - 8, "the address row sits under the strip")
 
         layOut(window, .bottom)
-        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 72, width: 1200 - 16, height: 800 - 72 - 44))
+        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 44, width: 1200 - 16, height: 800 - 44 - 44), "the top strip's mirror")
     }
 
     func testHidingTheAddressReclaimsItsRowButKeepsNavigation() throws {
@@ -174,7 +174,7 @@ final class WindowChromeLayoutTests: XCTestCase {
 
         for window in [first, second] {
             XCTAssertEqual(window.tabLayout, TabLayout(position: .bottom, address: .page))
-            XCTAssertEqual(window.contentFrameRect().minY, 72, "the page sits above the dock")
+            XCTAssertEqual(window.contentFrameRect().minY, 44, "the page sits above the strip")
         }
         XCTAssertEqual(TabLayout.cached.position, .bottom, "the next launch paints it first")
     }

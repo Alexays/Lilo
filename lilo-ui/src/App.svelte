@@ -519,7 +519,7 @@
 
   :global(html[data-tab-position='bottom']) .sidebar-overlay-tolerance {
     top: auto;
-    bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
+    bottom: var(--top-strip-height);
   }
 
   /* Lifted by a held press: the tabs float until dropped on an edge. */

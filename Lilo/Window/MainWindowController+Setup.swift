@@ -920,7 +920,7 @@ extension MainWindowController {
         case .left: edges.left += sidebarWidth
         case .right: edges.right += sidebarWidth
         case .top: edges.top = Self.topStripHeight + (shownTabLayout.address == .page ? Self.pageToolbarHeight : 0)
-        case .bottom: edges.bottom = Self.bottomDockHeight + Self.bottomDockMargin * 2
+        case .bottom: edges.bottom = Self.topStripHeight
         }
         if hasPageToolbar { edges.top = hasCompactPageToolbar ? Self.compactToolbarHeight : Self.pageToolbarHeight }
         return edges

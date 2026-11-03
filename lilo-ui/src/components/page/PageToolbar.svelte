@@ -122,10 +122,13 @@
     padding-top: 0;
   }
 
-  /* The sidebar header spreads its controls; the toolbar keeps them together on the left. */
+  /* The sidebar header spreads its controls; the toolbar keeps them together on the left, in the capsule the
+     tab strip gives its tools. */
   .page-toolbar > :global(.nav-controls) {
     flex: none;
     gap: 2px;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--text-primary) 6%, transparent);
   }
 
   /* Matches the sidebar header's reserve for the traffic lights. */
