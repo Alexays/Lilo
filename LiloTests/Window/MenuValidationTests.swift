@@ -210,6 +210,20 @@ final class MenuValidationTests: XCTestCase {
         XCTAssertEqual(readability as? String, "undefined")
     }
 
+    func testAPrivateSpaceIsASpaceShortcutAndATabCanMoveToIt() throws {
+        let manager = try XCTUnwrap(browserContext.context.spaceManager)
+        let shown = try XCTUnwrap(manager.space(with: window.tabManager.currentSpaceId))
+        let secret = try manager.createSpace(name: "Private", profileId: shown.profileId, isPrivate: true)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
+
+        let moveMenu = NSMenu()
+        window.addMoveToSpaceItems(to: moveMenu, tabId: tab.id)
+        XCTAssertEqual(moveMenu.items.map(\.title), ["\(secret.icon)  \(secret.name)"])
+
+        window.switchToSpace(ordinal: 2)
+        XCTAssertEqual(window.tabManager.currentSpaceId, secret.id)
+    }
+
     func testDuplicateTabOpensTheCopyRightBelowTheOriginal() throws {
         let original = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/a")))
         _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/b")))

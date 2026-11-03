@@ -31,7 +31,7 @@ import {
 import { getFoldersById, getLockedFolderRoots } from "./folders.svelte";
 import { getActiveSpaceId } from "./spaces.svelte";
 import { getProfileById, getProfiles } from "./profiles.svelte";
-import { isAgentsSpace, isHiddenAgentsSpace } from "./agents.svelte";
+import { isAgentsSpace, isHiddenAgentsSpace, isIsolatedAgentSpace } from "./agents.svelte";
 
 export type ResultKind =
 	| "tab"
@@ -472,7 +472,7 @@ function getActionResults(query: string, limit: number, wordStart = false): Comm
 
 type SpaceRow = { kind: "space" | "moveToSpace"; titleKey?: string };
 
-// One row per kind and Space other than the active one (never another window's private Space). A row
+// One row per kind and Space other than the active one. A row
 // matches on its title, then its Space's profile, shown as the subtitle once there are several profiles.
 function spaceResults(
 	spaces: BridgeSpaceSnapshot[],
@@ -487,8 +487,8 @@ function spaceResults(
 	const entries: { row: SpaceRow; space: BridgeSpaceSnapshot; title: string; profile: string; haystack: string }[] = [];
 	for (const row of rows) {
 		for (const space of spaces) {
-			// Agents spaces hold the agents' tabs: never a tab's destination, and listed only while in use.
-			if (space.id === activeSpaceId || space.isPrivate || isHiddenAgentsSpace(space.id) || (row.kind === "moveToSpace" && isAgentsSpace(space.id))) continue;
+			// Agents spaces and an agent's private one hold the agents' tabs: never a tab's destination, and listed only while in use.
+			if (space.id === activeSpaceId || isHiddenAgentsSpace(space.id) || (row.kind === "moveToSpace" && (isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)))) continue;
 			const title = row.titleKey ? t(row.titleKey, { name: space.name }) : space.name;
 			const profile = showProfile ? (getProfileById(space.profileId)?.name ?? "") : "";
 			entries.push({ row, space, title, profile, haystack: `${title} ${profile}`.toLowerCase() });

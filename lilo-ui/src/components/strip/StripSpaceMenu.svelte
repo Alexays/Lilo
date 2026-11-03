@@ -18,7 +18,7 @@
   const iconOnly = $derived(compact && (activeIsAgents || !!active?.icon));
   // The Spaces native switches between, in the order its space.selectN shortcuts number them.
   const spaces = $derived(
-    getSpaces().filter((space) => space.id === getActiveSpaceId() || (!space.isPrivate && !isHiddenAgentsSpace(space.id))),
+    getSpaces().filter((space) => space.id === getActiveSpaceId() || !isHiddenAgentsSpace(space.id)),
   );
 
   function pick(spaceId: string) {
