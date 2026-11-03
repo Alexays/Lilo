@@ -24,16 +24,19 @@
   $effect(() => {
     const el = addressEl;
     if (!el) return;
+    // Layout offsets of the shell, not the text's painted box: an address change flies the text in
+    // and out under transforms, which would skew the balance mid-motion.
     const measure = () => {
       const trigger = el.querySelector<HTMLElement>(".url-trigger");
-      const text = el.querySelector<HTMLElement>(".url-text-content");
-      if (!trigger || !text) return;
-      const field = trigger.getBoundingClientRect();
-      const box = text.getBoundingClientRect();
-      // Left padding moves the centered text by half its width.
-      const current = parseFloat(el.style.getPropertyValue("--address-balance")) || 0;
-      const next = Math.max(0, Math.round(current + (field.left + field.right) - (box.left + box.right)));
-      if (next !== current) el.style.setProperty("--address-balance", `${next}px`);
+      const shell = el.querySelector<HTMLElement>(".url-text-shell");
+      if (!trigger || !shell) return;
+      // The room right of the shell minus the room left of it, less its sliding end margin: the
+      // styles below add that margin back with the same slide.
+      const endMargin = parseFloat(getComputedStyle(shell).marginRight) || 0;
+      const next = Math.max(0, Math.round(trigger.clientWidth - shell.offsetWidth - 2 * shell.offsetLeft - endMargin));
+      if (next !== (parseFloat(el.style.getPropertyValue("--address-balance")) || 0)) {
+        el.style.setProperty("--address-balance", `${next}px`);
+      }
     };
     // The field renders after this container, and its address and buttons change: watch both.
     const resize = new ResizeObserver(measure);
@@ -159,8 +162,13 @@
     justify-content: center;
   }
 
+  /* The cluster's share mirrors URLHost's end margin and its slide. */
   .address :global(.url-text-shell) {
-    padding-left: var(--address-balance, 0px);
+    padding-left: calc(var(--address-balance, 0px) + var(--url-cluster-width, 0px) + 4px);
+    transition:
+      margin-right 320ms var(--motion-ease-spring),
+      padding-left 320ms var(--motion-ease-spring),
+      --url-reveal-mask var(--motion-duration-normal) ease;
   }
 
   .address :global(.url-text-content) {

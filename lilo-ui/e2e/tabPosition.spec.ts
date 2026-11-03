@@ -383,6 +383,50 @@ test("the page toolbar centers the address on the page", async ({ page }) => {
 	expect(Math.abs(address.x + address.width / 2 - (toolbar.x + toolbar.width / 2))).toBeLessThanOrEqual(2);
 });
 
+test("the page toolbar address glides to center when a switch swaps the extension set", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "bottom" }, ".tab-strip");
+	await page.evaluate(() =>
+		window.__lilo!.receive({
+			event: "extensionsChanged",
+			ids: ["ext-vault"],
+			extensions: [{ id: "ext-vault", name: "Vault", version: "1.0", description: "", isEnabled: true, hasPopup: true, hasBackground: false, hasContentScripts: false, badgeText: "", badgeColor: "#5b5bd6" }],
+		}),
+	);
+	await page.locator(".extension-menu-btn").click();
+	const row = page.locator(".extensions-popover-row").filter({ hasText: "Vault" });
+	await row.hover();
+	await row.locator(".row-pin").click();
+	await page.keyboard.press("Escape");
+	await page.waitForTimeout(800);
+
+	// The text's offset from the field's center, every frame, as a space switch would: the address
+	// and the extension set change together.
+	const sampling = page.evaluate(
+		() =>
+			new Promise<number[]>((resolve) => {
+				const samples: number[] = [];
+				const start = performance.now();
+				const tick = () => {
+					const field = document.querySelector(".page-toolbar .url-trigger")!.getBoundingClientRect();
+					const lines = document.querySelectorAll(".page-toolbar .url-text-content");
+					const text = lines[lines.length - 1].getBoundingClientRect();
+					samples.push(Math.round(text.left + text.width / 2 - (field.left + field.width / 2)));
+					if (performance.now() - start < 1200) requestAnimationFrame(tick);
+					else resolve(samples);
+				};
+				requestAnimationFrame(tick);
+				window.__lilo!.receive({ event: "extensionsChanged", ids: [], extensions: [] });
+			}),
+	);
+	await page.locator(".tab-strip .strip-tab").filter({ hasText: "Beta Mail" }).click();
+	const offsets = (await sampling).map(Math.abs);
+
+	// Past its farthest point the text only closes in on the center: no jump away and back.
+	const peak = offsets.indexOf(Math.max(...offsets));
+	for (let i = peak + 1; i < offsets.length; i++) expect(offsets[i]).toBeLessThanOrEqual(offsets[i - 1]);
+	expect(offsets[offsets.length - 1]).toBeLessThanOrEqual(1);
+});
+
 test("the active pill names its site when the strip holds the address", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "tabs" }, ".tab-strip .strip-tab");
 	const site = page.locator(".strip-tab.active .strip-tab-site");
