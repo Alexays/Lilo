@@ -22,6 +22,7 @@ WebKit and the fork is rebased past it. The patches live on the `lilo` branch of
 |---|---|---|
 | [329822](https://bugs.webkit.org/show_bug.cgi?id=329822) | Removing or changing a style sheet recomputes the style of every element (Gmail: 25 ms to 4 ms per removal) | [WebKit/WebKit#79315](https://github.com/WebKit/WebKit/pull/79315) |
 | [328920](https://bugs.webkit.org/show_bug.cgi?id=328920) | `sizes=auto`: each width change queues another source selection that re-requests the image | [WebKit/WebKit#79337](https://github.com/WebKit/WebKit/pull/79337) |
+| [329909](https://bugs.webkit.org/show_bug.cgi?id=329909) | Changing an inherited custom property compares every descendant's custom property maps in full (2000 root variables: 44 ms to 10 ms) | [WebKit/WebKit#79412](https://github.com/WebKit/WebKit/pull/79412) |
 
 ## Security
 
