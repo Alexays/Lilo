@@ -283,11 +283,6 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 		"--sidebar-shadow": prefersDark
 			? "rgba(9, 12, 18, 0.28)"
 			: "rgba(52, 63, 98, 0.14)",
-		"--sidebar-swatch-ring": tone(
-			sidebar,
-			contrastColor,
-			prefersDark ? 0.28 : 0.18,
-		),
 	};
 }
 

@@ -23,7 +23,7 @@
   --separator: rgba(0, 0, 0, 0.06);
 
   --danger: #ef4444;
-  --danger-text: #b42318;
+  --danger-text: var(--danger-deep);
   /* The light theme's danger text in both themes: the base the error surfaces tint from. */
   --danger-deep: #b42318;
   /* A program or page waiting on the user. */
@@ -215,7 +215,6 @@
     --border: rgba(255, 255, 255, 0.08);
     --separator: rgba(255, 255, 255, 0.06);
 
-    --sidebar-bg: var(--bg-secondary);
     --sidebar-contrast: #f7f8fc;
     --tile-blue: #0a84ff;
     --tile-indigo: #5e5ce6;

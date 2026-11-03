@@ -130,10 +130,11 @@ extension MainWindowController {
 
     // MARK: - Window Chrome Colors
 
+    /// The chrome's `--bg-secondary`, the sidebar of a Space without a color.
+    static var defaultSidebarCSSColor: String { prefersDarkSidebarAppearance() ? "#1a1a2e" : "#e2daf1" }
+
     static func defaultSidebarBackgroundColor() -> NSColor {
-        return prefersDarkSidebarAppearance()
-            ? NSColor(cssHex: "#1a1a2e") ?? .windowBackgroundColor
-            : NSColor(cssHex: "#e2daf1") ?? .windowBackgroundColor
+        NSColor(cssHex: defaultSidebarCSSColor) ?? .windowBackgroundColor
     }
 
     static func prefersDarkSidebarAppearance() -> Bool {
@@ -151,7 +152,7 @@ extension MainWindowController {
     }
 
     static func resolvedSidebarBackgroundCSSColor(accentColor: String?) -> String? {
-        let fallbackAccentColor = prefersDarkSidebarAppearance() ? "#1a1a2e" : "#e2daf1"
+        let fallbackAccentColor = defaultSidebarCSSColor
         let resolvedAccentColor = NSColor(cssHex: accentColor ?? fallbackAccentColor)
             ?? NSColor(cssHex: fallbackAccentColor)
 
