@@ -6,7 +6,7 @@ const DEFAULT_NEVER_FREEZE = [
 	"com.docker.docker", "com.electron.dockerdesktop", "dev.kdrag0n.MacVirt",
 ];
 
-let _state = $state.raw<BridgeKeepAwakeState>({ keepsAwake: false, agents: [], tabIds: [], holdsLidClosed: false, helperStatus: "notRegistered" });
+let _state = $state.raw<BridgeKeepAwakeState>({ helperStatus: "notRegistered" });
 let _runningApps = $state.raw<BridgeRunningApp[]>([]);
 let _terminals = $state.raw<BridgeTerminalSummary[]>([]);
 let _appNames = $state.raw<Record<string, string>>({});

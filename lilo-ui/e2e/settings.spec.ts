@@ -477,7 +477,7 @@ test("a build that cannot run the sleep helper offers no lid mode", async ({ pag
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { terminalLidClosed: "true" } }));
 	await page.evaluate(() => window.__lilo!.receive({
-		event: "keepAwakeChanged", keepsAwake: false, agents: [], tabIds: [], holdsLidClosed: false, helperStatus: "unsigned",
+		event: "keepAwakeChanged", helperStatus: "unsigned",
 	}));
 	await page.locator(".section-nav-button").filter({ hasText: "Terminal" }).click();
 

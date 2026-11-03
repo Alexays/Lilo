@@ -735,16 +735,7 @@
 		"signedInAs": "{space}, профиль: {profile}"
 	},
 	"sidebar": {
-		"keepAwake": "Сон отключён",
-		"keepAwakeLid": "Сон отключён, крышка закрыта",
-		"keepAwakeHint": "Mac не перейдёт в режим сна",
-		"keepAwakeBecause": "Пока выполняется",
-		"keepAwakeStop": "Разрешить сон",
-		"keepAwakeStopHint": "До запуска следующей команды",
-		"terminalsWaitingFor": "Ожидание: {duration}",
-		"terminalsWorkingFor": "Работает: {duration}",
-		"ariaLabel": "Боковая панель",
-		"agentWorking": "Работает в пространстве «Агенты»"
+		"ariaLabel": "Боковая панель"
 	},
 	"spaceBar": {
 		"editSpace": "Изменить пространство",
@@ -1760,6 +1751,14 @@
 		"selectRow": "Выбрать {title}"
 	},
 	"native": {
+		"Staying awake": "Сон отключён",
+		"Awake, lid closed": "Сон отключён, крышка закрыта",
+		"Waiting for %@": "Ожидание: %@",
+		"Working for %@": "Работает: %@",
+		"Working": "Выполняется команда",
+		"Working in the Agents space": "Работает в пространстве «Агенты»",
+		"Let sleep": "Разрешить сон",
+		"Until the next command starts": "До запуска следующей команды",
 		"Turn Lilo on in the list, or drag this icon into it.": "Включите Lilo в списке или перетащите туда этот значок.",
 		"Drag into the Full Disk Access list": "Перетащите в список «Полный доступ к диску»",
 		"Move Lilo to Applications?": "Переместить Lilo в «Программы»?",

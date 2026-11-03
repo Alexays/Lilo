@@ -735,16 +735,7 @@
 		"signedInAs": "{space}, вхід як {profile}"
 	},
 	"sidebar": {
-		"keepAwake": "Сон вимкнено",
-		"keepAwakeLid": "Сон вимкнено, кришка закрита",
-		"keepAwakeHint": "Mac не переходитиме в режим сну",
-		"keepAwakeBecause": "Поки це працює",
-		"keepAwakeStop": "Дозволити сон",
-		"keepAwakeStopHint": "До запуску наступної команди",
-		"terminalsWaitingFor": "Очікування протягом {duration}",
-		"terminalsWorkingFor": "Працює протягом {duration}",
-		"ariaLabel": "Бічна панель",
-		"agentWorking": "Працює в просторі «Агенти»"
+		"ariaLabel": "Бічна панель"
 	},
 	"spaceBar": {
 		"editSpace": "Редагувати простір",
@@ -1760,6 +1751,14 @@
 		"selectRow": "Вибрати {title}"
 	},
 	"native": {
+		"Staying awake": "Сон вимкнено",
+		"Awake, lid closed": "Сон вимкнено, кришка закрита",
+		"Waiting for %@": "Очікування протягом %@",
+		"Working for %@": "Працює протягом %@",
+		"Working": "Виконує команду",
+		"Working in the Agents space": "Працює в просторі «Агенти»",
+		"Let sleep": "Дозволити сон",
+		"Until the next command starts": "До запуску наступної команди",
 		"Turn Lilo on in the list, or drag this icon into it.": "Увімкніть Lilo в списку або перетягніть у нього цю іконку.",
 		"Drag into the Full Disk Access list": "Перетягніть у список «Повний доступ до диска»",
 		"Move Lilo to Applications?": "Перемістити Lilo до «Програм»?",

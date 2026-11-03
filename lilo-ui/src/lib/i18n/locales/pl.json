@@ -735,16 +735,7 @@
 		"signedInAs": "{space}, zalogowano jako {profile}"
 	},
 	"sidebar": {
-		"keepAwake": "Usypianie wstrzymane",
-		"keepAwakeLid": "Usypianie wstrzymane, pokrywa zamknięta",
-		"keepAwakeHint": "Mac nie przejdzie w stan uśpienia",
-		"keepAwakeBecause": "Podczas tej pracy",
-		"keepAwakeStop": "Zezwól na uśpienie",
-		"keepAwakeStopHint": "Do rozpoczęcia następnego polecenia",
-		"terminalsWaitingFor": "Oczekiwanie od {duration}",
-		"terminalsWorkingFor": "Praca od {duration}",
-		"ariaLabel": "Pasek boczny",
-		"agentWorking": "Pracuje w przestrzeni Agenci"
+		"ariaLabel": "Pasek boczny"
 	},
 	"spaceBar": {
 		"editSpace": "Edytuj przestrzeń",
@@ -1760,6 +1751,14 @@
 		"selectRow": "Zaznacz {title}"
 	},
 	"native": {
+		"Staying awake": "Usypianie wstrzymane",
+		"Awake, lid closed": "Usypianie wstrzymane, pokrywa zamknięta",
+		"Waiting for %@": "Oczekiwanie od %@",
+		"Working for %@": "Praca od %@",
+		"Working": "Wykonuje polecenie",
+		"Working in the Agents space": "Pracuje w przestrzeni Agenci",
+		"Let sleep": "Zezwól na uśpienie",
+		"Until the next command starts": "Do rozpoczęcia następnego polecenia",
 		"Turn Lilo on in the list, or drag this icon into it.": "Włącz Lilo na liście lub przeciągnij na nią tę ikonę.",
 		"Drag into the Full Disk Access list": "Przeciągnij na listę Pełny dostęp do dysku",
 		"Move Lilo to Applications?": "Przenieść Lilo do Aplikacji?",

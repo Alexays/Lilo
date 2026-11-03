@@ -729,16 +729,7 @@
 		"signedInAs": "{space}, {profile} 프로필로 로그인됨"
 	},
 	"sidebar": {
-		"keepAwake": "잠자기 방지 중",
-		"keepAwakeLid": "덮개가 닫혀도 잠자기 방지 중",
-		"keepAwakeHint": "Mac이 잠자기 상태로 전환되지 않습니다",
-		"keepAwakeBecause": "이 작업이 실행되는 동안",
-		"keepAwakeStop": "잠자기 허용",
-		"keepAwakeStopHint": "다음 명령이 시작될 때까지",
-		"terminalsWaitingFor": "{duration} 동안 대기 중",
-		"terminalsWorkingFor": "{duration} 동안 작업 중",
-		"ariaLabel": "사이드바",
-		"agentWorking": "에이전트 스페이스에서 작업 중"
+		"ariaLabel": "사이드바"
 	},
 	"spaceBar": {
 		"editSpace": "스페이스 편집",
@@ -1740,6 +1731,14 @@
 		"selectRow": "{title} 선택"
 	},
 	"native": {
+		"Staying awake": "잠자기 방지 중",
+		"Awake, lid closed": "덮개가 닫혀도 잠자기 방지 중",
+		"Waiting for %@": "%@ 동안 대기 중",
+		"Working for %@": "%@ 동안 작업 중",
+		"Working": "명령 실행 중",
+		"Working in the Agents space": "에이전트 스페이스에서 작업 중",
+		"Let sleep": "잠자기 허용",
+		"Until the next command starts": "다음 명령이 시작될 때까지",
 		"Turn Lilo on in the list, or drag this icon into it.": "목록에서 Lilo를 켜거나 이 아이콘을 목록으로 드래그하세요.",
 		"Drag into the Full Disk Access list": "전체 디스크 접근 권한 목록으로 드래그",
 		"Move Lilo to Applications?": "Lilo를 응용 프로그램으로 이동하겠습니까?",

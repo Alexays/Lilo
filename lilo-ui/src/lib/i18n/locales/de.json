@@ -729,16 +729,7 @@
 		"signedInAs": "{space}, angemeldet als {profile}"
 	},
 	"sidebar": {
-		"keepAwake": "Bleibt wach",
-		"keepAwakeLid": "Wach bei geschlossenem Deckel",
-		"keepAwakeHint": "Der Mac geht nicht in den Ruhezustand",
-		"keepAwakeBecause": "Solange dies arbeitet",
-		"keepAwakeStop": "Ruhezustand erlauben",
-		"keepAwakeStopHint": "Bis der nächste Befehl startet",
-		"terminalsWaitingFor": "Wartet seit {duration}",
-		"terminalsWorkingFor": "Arbeitet seit {duration}",
-		"ariaLabel": "Seitenleiste",
-		"agentWorking": "Arbeitet im Space „Agenten“"
+		"ariaLabel": "Seitenleiste"
 	},
 	"spaceBar": {
 		"editSpace": "Space bearbeiten",
@@ -1740,6 +1731,14 @@
 		"selectRow": "{title} auswählen"
 	},
 	"native": {
+		"Staying awake": "Bleibt wach",
+		"Awake, lid closed": "Wach bei geschlossenem Deckel",
+		"Waiting for %@": "Wartet seit %@",
+		"Working for %@": "Arbeitet seit %@",
+		"Working": "Befehl wird ausgeführt",
+		"Working in the Agents space": "Arbeitet im Space „Agenten“",
+		"Let sleep": "Ruhezustand erlauben",
+		"Until the next command starts": "Bis der nächste Befehl startet",
 		"Turn Lilo on in the list, or drag this icon into it.": "Aktiviere Lilo in der Liste oder ziehe dieses Symbol hinein.",
 		"Drag into the Full Disk Access list": "In die Liste „Festplattenvollzugriff“ ziehen",
 		"Move Lilo to Applications?": "Lilo nach „Programme“ bewegen?",

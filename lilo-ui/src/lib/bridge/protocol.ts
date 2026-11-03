@@ -754,7 +754,6 @@ export interface BridgeCommandPayloadMap {
 	getAgentActivity: EmptyPayload;
 	/** `alwaysAllowSite`: the site whose consequential actions the user always allows from now on. */
 	agentControlResponse: { requestId: string; granted: boolean; alwaysAllowSite?: string };
-	snoozeKeepAwake: EmptyPayload;
 	openLoginItemsSettings: EmptyPayload;
 	getRunningApps: EmptyPayload;
 	showNextWaitingTerminal: EmptyPayload;
@@ -1171,14 +1170,8 @@ export interface BridgeTerminalOptions {
 	ghosttyFont: string;
 }
 
-/** Whether a working terminal command keeps the Mac awake, and the root helper's install status. */
+/** The install status of the root helper that keeps the Mac awake with the lid closed. */
 export interface BridgeKeepAwakeState {
-	keepsAwake: boolean;
-	/** Display names of the browser agents among the work keeping the Mac awake. */
-	agents: string[];
-	/** Terminal tabs whose command keeps the Mac awake. */
-	tabIds: string[];
-	holdsLidClosed: boolean;
 	helperStatus: "unsigned" | "notRegistered" | "requiresApproval" | "enabled" | "notFound";
 }
 

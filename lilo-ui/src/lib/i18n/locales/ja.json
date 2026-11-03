@@ -729,16 +729,7 @@
 		"signedInAs": "{space}、{profile}としてサインイン"
 	},
 	"sidebar": {
-		"keepAwake": "スリープを防止中",
-		"keepAwakeLid": "蓋を閉じた状態でスリープを防止中",
-		"keepAwakeHint": "Mac はスリープしません",
-		"keepAwakeBecause": "この処理の実行中",
-		"keepAwakeStop": "スリープを許可",
-		"keepAwakeStopHint": "次のコマンドが始まるまで",
-		"terminalsWaitingFor": "{duration}待機中",
-		"terminalsWorkingFor": "{duration}実行中",
-		"ariaLabel": "サイドバー",
-		"agentWorking": "エージェントスペースで作業中"
+		"ariaLabel": "サイドバー"
 	},
 	"spaceBar": {
 		"editSpace": "スペースを編集",
@@ -1740,6 +1731,14 @@
 		"selectRow": "{title} を選択"
 	},
 	"native": {
+		"Staying awake": "スリープを防止中",
+		"Awake, lid closed": "蓋を閉じた状態でスリープを防止中",
+		"Waiting for %@": "%@待機中",
+		"Working for %@": "%@実行中",
+		"Working": "コマンドを実行中",
+		"Working in the Agents space": "エージェントスペースで作業中",
+		"Let sleep": "スリープを許可",
+		"Until the next command starts": "次のコマンドが始まるまで",
 		"Turn Lilo on in the list, or drag this icon into it.": "リストで Lilo をオンにするか、このアイコンをリストにドラッグしてください。",
 		"Drag into the Full Disk Access list": "「フルディスクアクセス」のリストにドラッグ",
 		"Move Lilo to Applications?": "Lilo を「アプリケーション」に移動しますか？",

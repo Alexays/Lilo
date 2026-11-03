@@ -3,7 +3,6 @@
   import NavControls from "./NavControls.svelte";
   import URLDisplay from "../urlbar/URLDisplay.svelte";
   import SpacePage from "./SpacePage.svelte";
-  import KeepAwakeIndicator from "./KeepAwakeIndicator.svelte";
   import BottomBar from "./BottomBar.svelte";
   import PipDock from "./PipDock.svelte";
   import MediaCard from "./MediaCard.svelte";
@@ -128,9 +127,8 @@
 
     <!-- Space content: native horizontal scroll with snap paging -->
     <div class="space-content" class:page-buttons={!isAddressVisible()} style={`--space-row-reserve: ${spaceRowEndWidth ? spaceRowEndWidth + 8 : 0}px;`}>
-      <!-- Over the Space header but outside the pages: it does not swipe, it is about the page and the Mac. -->
+      <!-- Over the Space header but outside the pages: it does not swipe, it is about the page. -->
       <div class="space-row-end" bind:clientWidth={spaceRowEndWidth}>
-        <KeepAwakeIndicator />
         {#if !isAddressVisible()}
           <URLDisplay actionsOnly />
         {/if}

@@ -1355,13 +1355,7 @@ export const createDemoHost = (
     getExtensionDebuggers: () => emit("extensionDebuggers", { debuggers: [] }),
     getFeatureFlags: () => emit("featureFlagsLoaded", { flags: [] }),
     getKeepAwakeState: () =>
-      emit("keepAwakeChanged", {
-        agents: [],
-        helperStatus: "unsigned",
-        holdsLidClosed: false,
-        keepsAwake: false,
-        tabIds: [],
-      }),
+      emit("keepAwakeChanged", { helperStatus: "unsigned" }),
     getMediaActivity: () => emit("mediaActivity", { calls: [], tabs: [] }),
     getOnboardingState: () =>
       emit("onboardingState", { show: false, step: 0, usage: "browse" }),

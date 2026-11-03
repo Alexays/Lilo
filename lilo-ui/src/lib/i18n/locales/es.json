@@ -729,16 +729,7 @@
 		"signedInAs": "{space}, sesión iniciada como {profile}"
 	},
 	"sidebar": {
-		"keepAwake": "Se mantiene activo",
-		"keepAwakeLid": "Activo, tapa cerrada",
-		"keepAwakeHint": "El Mac no entrará en reposo",
-		"keepAwakeBecause": "Mientras se ejecuta esto",
-		"keepAwakeStop": "Permitir reposo",
-		"keepAwakeStopHint": "Hasta que empiece el siguiente comando",
-		"terminalsWaitingFor": "Esperando desde hace {duration}",
-		"terminalsWorkingFor": "En ejecución desde hace {duration}",
-		"ariaLabel": "Barra lateral",
-		"agentWorking": "Trabajando en el espacio Agentes"
+		"ariaLabel": "Barra lateral"
 	},
 	"spaceBar": {
 		"editSpace": "Editar espacio",
@@ -1740,6 +1731,14 @@
 		"selectRow": "Seleccionar {title}"
 	},
 	"native": {
+		"Staying awake": "Se mantiene activo",
+		"Awake, lid closed": "Activo, tapa cerrada",
+		"Waiting for %@": "Esperando desde hace %@",
+		"Working for %@": "En ejecución desde hace %@",
+		"Working": "Ejecutando un comando",
+		"Working in the Agents space": "Trabajando en el espacio Agentes",
+		"Let sleep": "Permitir reposo",
+		"Until the next command starts": "Hasta que empiece el siguiente comando",
 		"Turn Lilo on in the list, or drag this icon into it.": "Activa Lilo en la lista o arrastra este icono a ella.",
 		"Drag into the Full Disk Access list": "Arrastra a la lista de Acceso total al disco",
 		"Move Lilo to Applications?": "¿Mover Lilo a Aplicaciones?",

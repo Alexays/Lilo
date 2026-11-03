@@ -338,7 +338,6 @@ export const agentActions = {
 
 export const keepAwakeActions = {
 	load: emitEmpty("getKeepAwakeState"),
-	snooze: emitEmpty("snoozeKeepAwake"),
 	openLoginItems: emitEmpty("openLoginItemsSettings"),
 	loadRunningApps: emitEmpty("getRunningApps"),
 	loadAppNames: (ids: string[]): void => emit("getAppNames", { ids }),

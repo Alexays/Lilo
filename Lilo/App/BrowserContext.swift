@@ -59,6 +59,8 @@ final class BrowserContext {
     /// The media and call tabs last sent to each window, so unchanged lists cost no bridge message.
     var sentMediaActivity: [ObjectIdentifier: NSDictionary] = [:]
     let powerKeeper = PowerKeeper()
+    /// Absent under tests, which would fill the menu bar.
+    private var keepAwakeStatusItem: KeepAwakeStatusItem?
     var recentlyClosed = RecentlyClosedStack() {
         didSet {
             saveClosedTerminals()
@@ -263,6 +265,7 @@ final class BrowserContext {
         terminalHost.powerKeeper = powerKeeper
         terminalHost.changesHost = changesHost
         if !ProcessInfo.isRunningUnderXCTest {
+            keepAwakeStatusItem = KeepAwakeStatusItem(context: self)
             powerKeeper.start(lidActions: { [weak self] in
                 SystemLidActions(
                     freezeWebTabs: { [weak self] in self?.browserState.freezeAllEngines() ?? [] },
@@ -272,15 +275,9 @@ final class BrowserContext {
         }
         powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
         powerKeeper.onChange = { [weak self] state in
-            // Browser agents hold the Mac like quiet commands: the popover names them beside the terminals.
-            let holding = (self?.agentControl.sessions ?? []).filter { state.working.contains($0.id) }
-            let agents = Set(holding.map { AgentControl.displayName($0.clientName) }).sorted()
+            self?.keepAwakeStatusItem?.update(state)
             for window in self?.windows.windows ?? [] {
-                window.bridgeRouter.send(event: "keepAwakeChanged", data: [
-                    "keepsAwake": state.keepsAwake, "agents": agents,
-                    "tabIds": state.working.map(\.uuidString),
-                    "holdsLidClosed": state.holdsLidClosed, "helperStatus": state.helperStatus
-                ])
+                window.bridgeRouter.send(event: "keepAwakeChanged", data: ["helperStatus": state.helperStatus])
             }
         }
         NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in

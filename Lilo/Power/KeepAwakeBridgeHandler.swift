@@ -4,7 +4,7 @@ import ServiceManagement
 /// The keep-awake state for the chrome, its snooze, and what the settings page needs.
 @MainActor
 final class KeepAwakeBridgeHandler: BridgeHandler {
-    let handledActions: Set<String> = ["getKeepAwakeState", "snoozeKeepAwake", "openLoginItemsSettings", "getRunningApps", "getAppNames"]
+    let handledActions: Set<String> = ["getKeepAwakeState", "openLoginItemsSettings", "getRunningApps", "getAppNames"]
 
     private let powerKeeper: PowerKeeper
     private weak var bridgeRouter: BridgeRouter?
@@ -24,8 +24,6 @@ final class KeepAwakeBridgeHandler: BridgeHandler {
             resendTerminals()
             powerKeeper.refreshHelperStatus()
             powerKeeper.republish()
-        case "snoozeKeepAwake":
-            powerKeeper.snooze()
         case "openLoginItemsSettings":
             SMAppService.openSystemSettingsLoginItems()
         case "getRunningApps":

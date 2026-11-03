@@ -729,16 +729,7 @@
 		"signedInAs": "{space}, aangemeld als {profile}"
 	},
 	"sidebar": {
-		"keepAwake": "Blijft wakker",
-		"keepAwakeLid": "Wakker, klep gesloten",
-		"keepAwakeHint": "De Mac gaat niet in sluimerstand",
-		"keepAwakeBecause": "Zolang dit bezig is",
-		"keepAwakeStop": "Sta sluimerstand toe",
-		"keepAwakeStopHint": "Tot het volgende commando begint",
-		"terminalsWaitingFor": "Wacht al {duration}",
-		"terminalsWorkingFor": "Al {duration} bezig",
-		"ariaLabel": "Navigatiekolom",
-		"agentWorking": "Werkt in de Agents-ruimte"
+		"ariaLabel": "Navigatiekolom"
 	},
 	"spaceBar": {
 		"editSpace": "Wijzig ruimte",
@@ -1740,6 +1731,14 @@
 		"selectRow": "{title} selecteren"
 	},
 	"native": {
+		"Staying awake": "Blijft wakker",
+		"Awake, lid closed": "Wakker, klep gesloten",
+		"Waiting for %@": "Wacht al %@",
+		"Working for %@": "Al %@ bezig",
+		"Working": "Commando wordt uitgevoerd",
+		"Working in the Agents space": "Werkt in de Agents-ruimte",
+		"Let sleep": "Sta sluimerstand toe",
+		"Until the next command starts": "Tot het volgende commando begint",
 		"Turn Lilo on in the list, or drag this icon into it.": "Schakel Lilo in de lijst in of sleep dit symbool ernaartoe.",
 		"Drag into the Full Disk Access list": "Sleep naar de lijst Volledige schijftoegang",
 		"Move Lilo to Applications?": "Lilo naar Apps verplaatsen?",

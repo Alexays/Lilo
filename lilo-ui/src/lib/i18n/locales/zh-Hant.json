@@ -729,16 +729,7 @@
 		"signedInAs": "{space}，以 {profile} 登入"
 	},
 	"sidebar": {
-		"keepAwake": "保持喚醒中",
-		"keepAwakeLid": "上蓋已闔上，保持喚醒",
-		"keepAwakeHint": "Mac 不會進入睡眠",
-		"keepAwakeBecause": "在此工作進行期間",
-		"keepAwakeStop": "允許睡眠",
-		"keepAwakeStopHint": "直到下一個指令開始",
-		"terminalsWaitingFor": "已等待 {duration}",
-		"terminalsWorkingFor": "已執行 {duration}",
-		"ariaLabel": "側邊欄",
-		"agentWorking": "正在「代理程式」空間中工作"
+		"ariaLabel": "側邊欄"
 	},
 	"spaceBar": {
 		"editSpace": "編輯空間",
@@ -1740,6 +1731,14 @@
 		"selectRow": "選取 {title}"
 	},
 	"native": {
+		"Staying awake": "保持喚醒中",
+		"Awake, lid closed": "上蓋已闔上，保持喚醒",
+		"Waiting for %@": "已等待 %@",
+		"Working for %@": "已執行 %@",
+		"Working": "指令執行中",
+		"Working in the Agents space": "正在「代理程式」空間中工作",
+		"Let sleep": "允許睡眠",
+		"Until the next command starts": "直到下一個指令開始",
 		"Turn Lilo on in the list, or drag this icon into it.": "在清單中開啟 Lilo，或將此圖像拖入清單。",
 		"Drag into the Full Disk Access list": "拖入「完整磁碟取用權」清單",
 		"Move Lilo to Applications?": "要將 Lilo 移至「應用程式」嗎？",

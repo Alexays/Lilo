@@ -729,16 +729,7 @@
 		"signedInAs": "{space}, {profile} olarak oturum açıldı"
 	},
 	"sidebar": {
-		"keepAwake": "Uyanık kalıyor",
-		"keepAwakeLid": "Uyanık, kapak kapalı",
-		"keepAwakeHint": "Mac uykuya geçmeyecek",
-		"keepAwakeBecause": "Bu işlem çalışırken",
-		"keepAwakeStop": "Uykuya izin ver",
-		"keepAwakeStopHint": "Sonraki komut başlayana kadar",
-		"terminalsWaitingFor": "{duration} süredir bekliyor",
-		"terminalsWorkingFor": "{duration} süredir çalışıyor",
-		"ariaLabel": "Kenar çubuğu",
-		"agentWorking": "Ajanlar alanında çalışıyor"
+		"ariaLabel": "Kenar çubuğu"
 	},
 	"spaceBar": {
 		"editSpace": "Alanı düzenle",
@@ -1740,6 +1731,14 @@
 		"selectRow": "{title} öğesini seç"
 	},
 	"native": {
+		"Staying awake": "Uyanık kalıyor",
+		"Awake, lid closed": "Uyanık, kapak kapalı",
+		"Waiting for %@": "%@ süredir bekliyor",
+		"Working for %@": "%@ süredir çalışıyor",
+		"Working": "Komut çalışıyor",
+		"Working in the Agents space": "Ajanlar alanında çalışıyor",
+		"Let sleep": "Uykuya izin ver",
+		"Until the next command starts": "Sonraki komut başlayana kadar",
 		"Turn Lilo on in the list, or drag this icon into it.": "Listede Lilo'yu açın veya bu simgeyi listeye sürükleyin.",
 		"Drag into the Full Disk Access list": "Tam Disk Erişimi listesine sürükleyin",
 		"Move Lilo to Applications?": "Lilo, Uygulamalar'a taşınsın mı?",
