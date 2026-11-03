@@ -4,6 +4,13 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.5] - 2026-11-03
+
+### Changed
+
+- In the default layout the traffic lights sit as far from the left as from the top; with the address over the page they keep to its toolbar's line and the Space comes up under them
+
+[0.14.5]: https://github.com/Alexays/Lilo/compare/v0.14.4...v0.14.5
 ## [0.14.4] - 2026-11-03
 
 ### Changed
