@@ -184,7 +184,8 @@
 <style>
   .sidebar-viewport {
     position: relative;
-    overflow: hidden;
+    /* clip, not hidden: a focus reveal while a panel slides in would scroll it, with no way back. */
+    overflow: clip;
     height: 100%;
     contain: content;
   }

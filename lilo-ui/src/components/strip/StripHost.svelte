@@ -66,7 +66,8 @@
     top: calc(var(--chrome-content-top) + 4px);
     bottom: calc(var(--chrome-content-bottom) + 4px);
     width: var(--sidebar-width);
-    overflow: hidden;
+    /* clip, not hidden: a focus reveal while a panel slides in would scroll it, with no way back. */
+    overflow: clip;
     border-radius: var(--float-radius-popover);
     background-color: var(--sidebar-bg);
     box-shadow: var(--chrome-overlay-shadow);
