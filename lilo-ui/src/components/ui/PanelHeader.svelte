@@ -45,13 +45,14 @@
     align-items: center;
     justify-content: flex-end;
     gap: 2px;
-    height: 52px;
-    padding-left: 63px;
+    height: 44px;
+    padding-left: 68px;
   }
 
   /* Outside the default layout the lights sit on a 40pt line: page toolbar, tab strip or address-less header. */
   :global(html:not([data-tab-position='left'][data-address='tabs'])) .panel-header-bar {
     height: var(--page-toolbar-height);
+    padding-left: 63px;
   }
 
   .panel-title {

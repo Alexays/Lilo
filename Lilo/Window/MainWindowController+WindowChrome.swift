@@ -180,6 +180,8 @@ extension MainWindowController {
     }
 
     /// Shows the traffic lights with the sidebar, and hides them when it is collapsed.
+    static let sidebarContentInset: CGFloat = 10
+
     func syncTrafficLights(animated: Bool) {
         let visible = areTrafficLightsVisible()
         // Skip the bridge send when the visibility hasn't changed (common during live resize).
@@ -188,12 +190,24 @@ extension MainWindowController {
             bridgeRouter.send(event: "windowChromeStateChanged", data: ["trafficLightsVisible": visible])
         }
         guard let window else { return }
+        placeTrafficLights()
         trafficLightAnimator.sync(
             window: window,
             visible: visible,
             animated: animated,
             duration: WindowFrameView.toggleDuration
         )
+    }
+
+    /// Over the sidebar the lights line up with its content, 10pt in. The default layout's address bar comes
+    /// up under them, in a 44pt header: there they sit as far from the top as from the left, 15pt.
+    func placeTrafficLights() {
+        guard let window else { return }
+        let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
+        let overSidebar = !window.styleMask.contains(.fullScreen) && ((tabLayout.position == .left && sidebarVisible) || overlayCoversLights)
+        let corner = overSidebar && tabLayout.shown(toolbarVisible: toolbarVisible) == .default
+        let inset: CGFloat? = overSidebar ? (corner ? 15 : Self.sidebarContentInset) : nil
+        trafficLightAnimator.place(window: window, inset: inset, square: corner)
     }
 
     func sendInitialState() {

@@ -466,7 +466,7 @@
   }
 
   .lights-spacer {
-    width: 51px;
+    width: 60px;
     flex: none;
   }
 

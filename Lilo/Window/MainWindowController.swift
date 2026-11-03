@@ -557,7 +557,7 @@ final class MainWindowController: NSWindowController {
         StartupMetrics.mark("prewarmChromeWebView")
         super.init(window: window)
         window.delegate = self
-        trafficLightAnimator.holdAtLeadingInset(window: window)
+        placeTrafficLights()
         chromeWebView.eventRouter = chromeInput.router
         chromeInput.router.routesDragToChrome = { [weak self] in self?.splitPanes.isLinkDrag($0) ?? false }
         chromeInput.router.chromeDragChanged = { [weak self] sender in

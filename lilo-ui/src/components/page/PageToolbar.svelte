@@ -123,7 +123,7 @@
 
   /* Matches the sidebar header's reserve for the traffic lights. */
   .lights-spacer {
-    width: 63px;
+    width: 72px;
     flex-shrink: 0;
     /* Opens and shuts as the bar slides under the lights or away from them. */
     transition:

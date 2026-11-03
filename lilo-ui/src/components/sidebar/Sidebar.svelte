@@ -23,7 +23,7 @@
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getReadyUpdate } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
-  import { getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
+  import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { t } from "../../lib/i18n/state.svelte";
 
@@ -100,6 +100,8 @@
     class="sidebar-layout"
     class:pushed={isOverlayPanelOpen}
     class:compact-header={isSidebarVisible() && hasPageToolbar()}
+    class:lights-only={isSidebarVisible() && hasPageToolbar() && getTabPosition() === "left"}
+    class:address-corner={getTabPosition() === "left" && getAddressPlacement() === "tabs"}
     inert={isOverlayPanelOpen}
     role="complementary"
     aria-label={t("sidebar.ariaLabel")}
@@ -214,6 +216,11 @@
     margin-top: var(--content-inset);
   }
 
+  /* On the left the toggle goes with the page toolbar: the Space comes up under the lights. */
+  .lights-only .sidebar-header {
+    height: 26px;
+  }
+
   .compact-header .sidebar-header :global(.nav-controls) {
     flex: none;
     margin-left: auto;
@@ -317,7 +324,21 @@
     flex-shrink: 0;
   }
 
-  /* Reserve space for macOS traffic light buttons */
+  /* The default layout lifts the lights 4pt, the address bar following them. */
+  .address-corner .sidebar-header {
+    height: 44px;
+  }
+
+  .address-corner > :global(.url-display) {
+    padding-top: 0;
+  }
+
+  /* Lifted, the lights sit 5pt further in. */
+  .address-corner .sidebar-header:not(.no-traffic-lights) .header-spacer {
+    width: 81px;
+  }
+
+  /* Reserve space for macOS traffic light buttons, which line up with the sidebar's content */
   .header-spacer {
     width: 76px;
     flex-shrink: 0;

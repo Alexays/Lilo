@@ -1,28 +1,38 @@
 import AppKit
 
 extension MainWindowController {
-    /// Fades the window's traffic lights in and out with the sidebar, and holds them at the address
-    /// bar's inset. The empty unified toolbar of the window centers them in the 52pt chrome header.
+    /// Fades the window's traffic lights in and out with the sidebar, and moves them in from the corner
+    /// where the sidebar asks. Elsewhere they stay where the empty unified toolbar of the window centers
+    /// them, in the 52pt chrome header.
     @MainActor
     final class TrafficLightAnimator: NSObject {
-        /// The address bar's left edge in the sidebar: the close button lines up with it.
-        static let leadingInset: CGFloat = 10
 
         private var shown: Bool?
-        private var shift: CGFloat = 0
-        private var heldX: [ObjectIdentifier: CGFloat] = [:]
+        private var observed = false
+        private var offset = CGSize.zero
+        /// Where AppKit puts each button, and where it was moved to.
+        private var appKitOrigins: [ObjectIdentifier: NSPoint] = [:]
+        private var heldOrigins: [ObjectIdentifier: NSPoint] = [:]
 
-        /// AppKit puts the buttons back at its own spot on every title change, resize and full-screen
-        /// transition, so each such move is undone, before Core Animation commits it.
-        func holdAtLeadingInset(window: NSWindow) {
+        /// Puts the close button `inset` from the window's left edge, and as far from its top when `square`;
+        /// nil leaves them to AppKit. AppKit puts the buttons back at its own spot on every title change,
+        /// resize and full-screen transition, so each such move is undone, before Core Animation commits it.
+        func place(window: NSWindow, inset: CGFloat?, square: Bool) {
             let buttons = [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].compactMap(window.standardWindowButton)
-            guard let close = buttons.first else { return }
-            shift = close.frame.minX - Self.leadingInset
-            for button in buttons {
-                button.postsFrameChangedNotifications = true
-                NotificationCenter.default.addObserver(self, selector: #selector(buttonMoved(_:)), name: NSView.frameDidChangeNotification, object: button)
-                hold(button)
+            if !observed {
+                observed = true
+                for button in buttons {
+                    button.postsFrameChangedNotifications = true
+                    NotificationCenter.default.addObserver(self, selector: #selector(buttonMoved(_:)), name: NSView.frameDidChangeNotification, object: button)
+                }
             }
+            guard let close = buttons.first, let titlebar = unsafe close.superview else { return }
+            let appKit = appKitOrigins[ObjectIdentifier(close)] ?? close.frame.origin
+            let appKitTop = titlebar.isFlipped ? appKit.y : titlebar.bounds.height - appKit.y - close.frame.height
+            let next = inset.map { CGSize(width: $0 - appKit.x, height: square ? appKitTop - $0 : 0) } ?? .zero
+            guard next != offset || heldOrigins.isEmpty else { return }
+            offset = next
+            buttons.forEach(hold)
         }
 
         @objc private func buttonMoved(_ notification: Notification) {
@@ -38,10 +48,12 @@ extension MainWindowController {
 
         private func hold(_ button: NSView) {
             let id = ObjectIdentifier(button)
-            guard heldX[id] != button.frame.minX else { return }
-            let x = button.frame.minX - shift
-            heldX[id] = x
-            button.setFrameOrigin(NSPoint(x: x, y: button.frame.minY))
+            if heldOrigins[id] != button.frame.origin { appKitOrigins[id] = button.frame.origin }
+            guard let appKit = appKitOrigins[id] else { return }
+            let up = unsafe button.superview?.isFlipped == true ? -offset.height : offset.height
+            let origin = NSPoint(x: appKit.x + offset.width, y: appKit.y + up)
+            heldOrigins[id] = origin
+            if button.frame.origin != origin { button.setFrameOrigin(origin) }
         }
 
         func sync(window: NSWindow, visible: Bool, animated: Bool, duration: TimeInterval) {
