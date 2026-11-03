@@ -19,6 +19,13 @@ final class CertificateRejectionReasonTests: XCTestCase {
         XCTAssertTrue(reason.contains("example.com"), reason)
     }
 
+    func testAHandshakeFailureNamesTheTLSStatus() throws {
+        let status = NSError(domain: NSOSStatusErrorDomain, code: -9836)  // errSSLBadProtocolVersion, unavailable in Swift
+        let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorSecureConnectionFailed, userInfo: [NSUnderlyingErrorKey: status])
+        let reason = try XCTUnwrap(MainWindowController.certificateRejectionReason(error, trust: nil))
+        XCTAssertTrue(reason.contains("-9836"), reason)
+    }
+
     func testOtherErrorsHaveNoCertificateReason() throws {
         let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut)
         XCTAssertNil(MainWindowController.certificateRejectionReason(error, trust: try selfSignedTrust()))
@@ -88,6 +95,25 @@ final class CertificateExceptionTests: XCTestCase {
 
         let regular = try engine(showing: "https://example.com/", in: work, of: window)
         XCTAssertFalse(window.tab(regular, shouldAllowInsecureServerTrust: trust, forHost: "example.com", port: 443))
+    }
+
+    func testAFailureAfterARedirectNamesTheRequestedAddressAndCertificatePresence() throws {
+        let context = browserContext.context
+        let space = try context.spaceManager!.createSpace(name: "Work", profileId: try context.profileManager!.createProfile(name: "A").id)
+        let window = makeTestWindow(context, showing: space.id)
+        let tab = try engine(showing: "http://example.com/", in: space, of: window)
+        tab.webView(tab.wkWebView, didStartProvisionalNavigation: nil)
+        let handshake = NSError(domain: NSURLErrorDomain, code: NSURLErrorSecureConnectionFailed)
+
+        window.tab(tab, didNavigate: .failed(URL(string: "https://block.example.net/"), handshake))
+        XCTAssertEqual(window.tabManager.activeTab?.navigationErrorRedirectedFrom, "http://example.com/")
+        XCTAssertEqual(window.tabManager.activeTab?.navigationErrorNoCertificate, true)
+
+        let untrusted = NSError(domain: NSURLErrorDomain, code: NSURLErrorServerCertificateUntrusted,
+                                userInfo: [NSURLErrorFailingURLPeerTrustErrorKey: try selfSignedTrust()])
+        window.tab(tab, didNavigate: .failed(URL(string: "https://example.com/"), untrusted))
+        XCTAssertEqual(window.tabManager.activeTab?.navigationErrorRedirectedFrom, "")
+        XCTAssertEqual(window.tabManager.activeTab?.navigationErrorNoCertificate, false)
     }
 
     /// The HSTS preload list covers all of `.app`: its certificate errors offer no exception.

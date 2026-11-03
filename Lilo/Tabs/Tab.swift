@@ -59,6 +59,8 @@ struct Tab: Sendable, Equatable {
     var navigationErrorDescription: String = ""
     var navigationErrorURL: String = ""
     var navigationErrorUsesHSTS = false
+    var navigationErrorNoCertificate = false
+    var navigationErrorRedirectedFrom = ""
     var isNotSecure = false
     var groupId: UUID?
     var spaceId: UUID?
@@ -232,6 +234,10 @@ struct Tab: Sendable, Equatable {
                 put(field, navigationErrorURL)
             case .navigationErrorUsesHSTS:
                 put(field, navigationErrorUsesHSTS)
+            case .navigationErrorNoCertificate:
+                put(field, navigationErrorNoCertificate)
+            case .navigationErrorRedirectedFrom:
+                put(field, navigationErrorRedirectedFrom)
             case .isNotSecure:
                 put(field, isNotSecure)
             case .faviconDataURL:
@@ -302,7 +308,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let isAgentControlled: Bool
     let hasNavigationError: Bool; let navigationErrorCode: Int
     let navigationErrorDomain: String; let navigationErrorDescription: String; let navigationErrorURL: String
-    let navigationErrorUsesHSTS: Bool
+    let navigationErrorUsesHSTS: Bool; let navigationErrorNoCertificate: Bool; let navigationErrorRedirectedFrom: String
     let isNotSecure: Bool
     let windowId: UUID?
     let hasUnsavedFormData: Bool
@@ -331,6 +337,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         hasNavigationError = tab.hasNavigationError; navigationErrorCode = tab.navigationErrorCode
         navigationErrorDomain = tab.navigationErrorDomain; navigationErrorDescription = tab.navigationErrorDescription; navigationErrorURL = tab.navigationErrorURL
         navigationErrorUsesHSTS = tab.navigationErrorUsesHSTS
+        navigationErrorNoCertificate = tab.navigationErrorNoCertificate; navigationErrorRedirectedFrom = tab.navigationErrorRedirectedFrom
         isNotSecure = tab.isNotSecure
         windowId = tab.windowId
         hasUnsavedFormData = tab.hasUnsavedFormData
@@ -361,6 +368,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         tab.hasNavigationError = hasNavigationError; tab.navigationErrorCode = navigationErrorCode
         tab.navigationErrorDomain = navigationErrorDomain; tab.navigationErrorDescription = navigationErrorDescription; tab.navigationErrorURL = navigationErrorURL
         tab.navigationErrorUsesHSTS = navigationErrorUsesHSTS
+        tab.navigationErrorNoCertificate = navigationErrorNoCertificate; tab.navigationErrorRedirectedFrom = navigationErrorRedirectedFrom
         tab.isNotSecure = isNotSecure
         tab.windowId = windowId
         tab.hasUnsavedFormData = hasUnsavedFormData

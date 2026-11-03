@@ -434,6 +434,8 @@ final class WKWebViewTab: NSObject {
     private var navigationSignpost: PerfSignpostState?
     /// Trust presented by the main host on its latest challenge; what "Visit Anyway" pins the exception to.
     private(set) var lastServerTrust: SecTrust?
+    /// The main-frame URL the current navigation started at, before any server redirect.
+    private(set) var requestedMainFrameURL: URL?
     /// The next main-frame load runs without content rule lists: the error page's "Visit Anyway" on a blocked page.
     var bypassesContentBlockersOnce = false
     /// Set once the page itself asked to close (window.close, or beforeunload answered "leave"),
@@ -1827,6 +1829,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.navigationSignpost = PerfSignposts.navigation.beginInterval("load", id: PerfSignposts.navigation.makeSignpostID(from: tab))
             StartupMetrics.markOnce("firstContentNavigationStarted")
             tab.lastServerTrust = nil
+            tab.requestedMainFrameURL = tab.pendingMainFrameURL
             tab.showsFailureOverPage = false
             tab.preconnectLearnedOrigins()
             tab.delegate?.tab(tab, didNavigate: .started(tab.currentURL))

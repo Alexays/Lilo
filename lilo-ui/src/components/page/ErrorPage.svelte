@@ -31,6 +31,8 @@
 
   // TLS / certificate failures: offer an explicit, deliberate override.
   const CERT_ERROR_CODES = new Set([-1200, -1201, -1202, -1203, -1204]);
+  // A TLS handshake that failed before any certificate: there is nothing to make an exception for.
+  const isHandshakeFailure = $derived(error != null && CERT_ERROR_CODES.has(error.code) && !!activeTab?.navigationErrorNoCertificate);
 
   const errorTitle = $derived.by((): string => {
     if (!error) return "";
@@ -39,6 +41,7 @@
     if (code === -1003 || code === -1006) return t("errorPage.serverNotFound");
     if (code === -1001) return t("errorPage.timedOut");
     if (code === -1009) return t("errorPage.noInternet");
+    if (isHandshakeFailure) return t("errorPage.secureConnectionFailed");
     if (CERT_ERROR_CODES.has(code)) return t("errorPage.notSecure");
     if (code === -1004 || code === -1005) return t("errorPage.connectionFailed");
     if (code === -1008) return t("errorPage.noSavedCopy");
@@ -61,6 +64,7 @@
     if (!error) return "";
     const code = error.code;
     if (code === -1009) return t("errorPage.hintNoInternet");
+    if (isHandshakeFailure) return t("errorPage.hintSecureConnectionFailed");
     if (CERT_ERROR_CODES.has(code)) return t("errorPage.hintNotSecure");
     if (code === -1003 || code === -1006) return t("errorPage.hintServerNotFound");
     if (code === -1001) return t("errorPage.hintTimedOut");
@@ -79,7 +83,7 @@
 
   const isCertError = $derived(error != null && CERT_ERROR_CODES.has(error.code));
   // As in Chrome, a host that requires HTTPS (HSTS) gets no way past its certificate error.
-  const canVisitAnyway = $derived(isCertError && !activeTab?.navigationErrorUsesHSTS);
+  const canVisitAnyway = $derived(isCertError && !isHandshakeFailure && !activeTab?.navigationErrorUsesHSTS);
   // WebKitErrorFrameLoadBlockedByContentBlocker: trying again only gets blocked again.
   const isBlockedByContentBlocker = $derived(error?.code === 104);
   const errorHost = $derived.by(() => {
@@ -111,6 +115,9 @@
       <p class="error-description">{errorHint}</p>
       {#if error.url}
         <p class="error-url">{error.url}</p>
+      {/if}
+      {#if activeTab?.navigationErrorRedirectedFrom}
+        <p class="error-url">{t("errorPage.redirectedFrom", { url: activeTab.navigationErrorRedirectedFrom })}</p>
       {/if}
       <p class="error-code">
         {#if isCertError}{error.description}<br />{/if}{error.domain} {error.code}

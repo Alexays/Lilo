@@ -107,6 +107,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 (t.hasNavigationError, t.navigationErrorCode) = (false, 0)
                 (t.navigationErrorDomain, t.navigationErrorDescription, t.navigationErrorURL) = ("", "", "")
                 t.navigationErrorUsesHSTS = false
+                (t.navigationErrorNoCertificate, t.navigationErrorRedirectedFrom) = (false, "")
             case .failed(let url, let error):
                 let nsError = error as NSError
                 let isError = !WKWebViewTab.shouldIgnoreNavigationFailure(error)
@@ -115,9 +116,14 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 t.navigationErrorDomain = isError ? nsError.domain : ""
                 t.navigationErrorDescription = isError
                     ? Self.certificateRejectionReason(nsError, trust: tab.lastServerTrust) ?? nsError.localizedDescription : ""
-                t.navigationErrorURL = isError ? (url ?? resolvedURL)?.absoluteString ?? "" : ""
-                t.navigationErrorUsesHSTS = isError && nsError.domain == NSURLErrorDomain && (-1204 ... -1200).contains(nsError.code)
-                    && (url ?? resolvedURL).map(Self.isKnownHSTSHost) == true
+                let failedURL = url ?? resolvedURL
+                t.navigationErrorURL = isError ? failedURL?.absoluteString ?? "" : ""
+                let isTLSError = isError && nsError.domain == NSURLErrorDomain && (-1204 ... -1200).contains(nsError.code)
+                t.navigationErrorUsesHSTS = isTLSError && failedURL.map(Self.isKnownHSTSHost) == true
+                t.navigationErrorNoCertificate = isTLSError && nsError.userInfo[NSURLErrorFailingURLPeerTrustErrorKey] == nil
+                let requested = tab.requestedMainFrameURL
+                let wasRedirected = requested?.host.map { $0.lowercased() != failedURL?.host?.lowercased() } ?? false
+                t.navigationErrorRedirectedFrom = isError && wasRedirected ? requested?.absoluteString ?? "" : ""
             }
         }
         // Side effect, kept out of the mutate closure above: the closure must stay a pure
@@ -285,14 +291,18 @@ extension MainWindowController: WKWebViewTab.Delegate {
         return { lookup($0 as CFURL, nil).boolValue }
     }()
 
-    /// macOS's reason for rejecting a failed navigation's certificate, naming the certificates it blames.
+    /// macOS's reason for a failed navigation's TLS error: the certificates it blames, else the TLS layer's status.
     static func certificateRejectionReason(_ error: NSError, trust: SecTrust?) -> String? {
-        guard error.domain == NSURLErrorDomain, (-1204 ... -1200).contains(error.code), let trust else { return nil }
-        // Local checks only: this runs on the main thread, and the network process has already fetched what it could.
-        SecTrustSetNetworkFetchAllowed(trust, false)
-        var reason: CFError?
-        guard unsafe !SecTrustEvaluateWithError(trust, &reason), let reason else { return nil }
-        return (reason as Error).localizedDescription
+        guard error.domain == NSURLErrorDomain, (-1204 ... -1200).contains(error.code) else { return nil }
+        if let trust {
+            // Local checks only: this runs on the main thread, and the network process has already fetched what it could.
+            SecTrustSetNetworkFetchAllowed(trust, false)
+            var reason: CFError?
+            if unsafe !SecTrustEvaluateWithError(trust, &reason), let reason { return (reason as Error).localizedDescription }
+        }
+        guard let status = error.userInfo[NSUnderlyingErrorKey] as? NSError, status.domain == NSOSStatusErrorDomain,
+              let code = OSStatus(exactly: status.code), let message = SecCopyErrorMessageString(code, nil) as String? else { return nil }
+        return "\(error.localizedDescription) (\(message), \(code))"
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool) {

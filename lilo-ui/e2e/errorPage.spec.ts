@@ -50,3 +50,18 @@ test("a certificate error on a host that requires https offers no way past it", 
 	await expect(page.locator(".error-page .error-title")).toHaveText("Connection Not Secure");
 	await expect(page.getByRole("button", { name: "Visit Anyway" })).toHaveCount(0);
 });
+
+test("a tls failure before any certificate says so and offers no way past it", async ({ page }) => {
+	const world = failedWorld(-1200);
+	world.tabsBySpace[SPACE_1][0].navigationErrorNoCertificate = true;
+	await bootChrome(page, world);
+	await expect(page.locator(".error-page .error-title")).toHaveText("Secure Connection Failed");
+	await expect(page.getByRole("button", { name: "Visit Anyway" })).toHaveCount(0);
+});
+
+test("a redirected navigation names the address it was requested at", async ({ page }) => {
+	const world = failedWorld(-1200);
+	world.tabsBySpace[SPACE_1][0].navigationErrorRedirectedFrom = "http://example.org/";
+	await bootChrome(page, world);
+	await expect(page.locator(".error-page")).toContainText("Redirected from http://example.org/");
+});
