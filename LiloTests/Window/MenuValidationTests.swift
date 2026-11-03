@@ -210,6 +210,36 @@ final class MenuValidationTests: XCTestCase {
         XCTAssertEqual(readability as? String, "undefined")
     }
 
+    func testAPrivateSpaceIsASpaceShortcutAndATabCanMoveToIt() throws {
+        let manager = try XCTUnwrap(browserContext.context.spaceManager)
+        let shown = try XCTUnwrap(manager.space(with: window.tabManager.currentSpaceId))
+        let secret = try manager.createSpace(name: "Private", profileId: shown.profileId, isPrivate: true)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
+
+        let moveMenu = NSMenu()
+        window.addMoveToSpaceItems(to: moveMenu, tabId: tab.id)
+        XCTAssertEqual(moveMenu.items.map(\.title), ["\(secret.icon)  \(secret.name)"])
+
+        window.switchToSpace(ordinal: 2)
+        XCTAssertEqual(window.tabManager.currentSpaceId, secret.id)
+    }
+
+    func testABookmarkNeverMovesToAPrivateSpace() throws {
+        let manager = try XCTUnwrap(browserContext.context.spaceManager)
+        let shownId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let shown = try XCTUnwrap(manager.space(with: shownId))
+        let secret = try manager.createSpace(name: "Private", profileId: shown.profileId, isPrivate: true)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
+        window.applyContextMenuStateCommands([.setBookmarked(spaceId: shownId, tabId: tab.id, isBookmarked: true)])
+
+        let moveMenu = NSMenu()
+        window.addMoveToSpaceItems(to: moveMenu, tabId: tab.id)
+        XCTAssertEqual(moveMenu.items, [])
+
+        try window.moveToSpace(.tab, id: tab.id, targetSpaceId: secret.id)
+        XCTAssertEqual(browserContext.context.browserState.space(id: shownId)?.spaceTab.tab(id: tab.id)?.isBookmarked, true)
+    }
+
     func testDuplicateTabOpensTheCopyRightBelowTheOriginal() throws {
         let original = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/a")))
         _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/b")))

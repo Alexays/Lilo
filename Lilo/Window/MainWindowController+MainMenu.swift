@@ -6,11 +6,11 @@ extension MainWindowController {
     /// Tags the Space rows the Spaces menu rebuilds between its fixed items.
     private static let spaceMenuItemTag = 7002
 
-    /// The Spaces the Spaces menu lists and ⌃1 to ⌃9 count: a private or hidden agents one only while it is shown here.
+    /// The Spaces the Spaces menu lists and ⌃1 to ⌃9 count, as the bar shows them: a hidden agents one only while it is shown here.
     var switchableSpaces: [Space] {
         let hiddenAgentsSpaceIds = context.agentControl.hiddenAgentsSpaceIds
         return (context.spaceManager?.spaces ?? []).filter {
-            $0.id == tabManager.currentSpaceId || (!$0.isPrivate && !hiddenAgentsSpaceIds.contains($0.id))
+            $0.id == tabManager.currentSpaceId || !hiddenAgentsSpaceIds.contains($0.id)
         }
     }
 
@@ -87,6 +87,7 @@ extension MainWindowController {
         // The menu bar can open before the first launch has created the settings store.
         let agentsSpaceIds = context.settingsStore?.agentsSpaceIds ?? []
         let agentsProfileId = context.settingsStore?.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
+        let isolatedSpaceIds = Set(context.agentControl.sessions.compactMap(\.isolatedSpaceId))
         // Below Next Space, Previous Space and their separator.
         for (index, space) in switchableSpaces.enumerated() {
             let item: NSMenuItem
@@ -97,6 +98,8 @@ extension MainWindowController {
                 item.image = AgentCursorView.menuImage
             } else {
                 item = NSMenuItem(title: "\(space.icon)  \(space.name)", action: #selector(switchToSpaceFromMenu(_:)), keyEquivalent: "")
+                // An agent's private Space reads like the user's own one but for this mark.
+                if isolatedSpaceIds.contains(space.id) { item.image = AgentCursorView.menuImage }
             }
             if index < 9 { KeyboardShortcuts.show("space.select\(index + 1)", on: item) }
             item.tag = Self.spaceMenuItemTag
@@ -121,10 +124,11 @@ extension MainWindowController {
     }
 
     /// The other Spaces a tab of the current Space can move to: the keyboard path for a drop on a Space. Never an
-    /// Agents space: its tabs are the agents'.
+    /// Agents space or an agent's private one: their tabs are the agents'. Never a private one for a bookmark: it would close with it.
     func addMoveToSpaceItems(to menu: NSMenu, tabId id: UUID) {
-        let agentsSpaceIds = context.settingsStore?.agentsSpaceIds ?? []
-        for space in switchableSpaces where space.id != tabManager.currentSpaceId && !agentsSpaceIds.contains(space.id) {
+        let agentSpaceIds = Set(context.settingsStore?.agentsSpaceIds ?? []).union(context.agentControl.sessions.compactMap(\.isolatedSpaceId))
+        let isBookmarked = tabManager.tab(for: id)?.isBookmarked == true
+        for space in switchableSpaces where space.id != tabManager.currentSpaceId && !agentSpaceIds.contains(space.id) && !(isBookmarked && space.isPrivate) {
             menu.addItem("\(space.icon)  \(space.name)") { [weak self] in
                 guard let self else { return }
                 do { try moveToSpace(.tab, id: id, targetSpaceId: space.id) } catch {

@@ -118,7 +118,7 @@ test("bookmarks: of two equal matches, the one whose page history visits more ra
 	assert.deepEqual(search("#guide", history).results.map((result) => result.id), ["bookmark-guide-b", "bookmark-guide-a"]);
 });
 
-test("typing a Space's name offers to switch to it, with its emoji and profile; never the active or a private one", () => {
+test("typing a Space's name offers to switch to it, with its emoji and profile; never the active one", () => {
 	seed([]);
 
 	const work = search("work").sections.find((section) => section.id === "spaces")?.items.map((entry) => entry.result);
@@ -126,7 +126,7 @@ test("typing a Space's name offers to switch to it, with its emoji and profile; 
 		{ kind: "space", title: "Work", icon: "💼", subtitle: "Acme", spaceId: "work" },
 	]);
 	assert.equal(search("home").results.some((result) => result.kind === "space"), false);
-	assert.equal(search("secret").results.some((result) => result.kind === "space"), false);
+	assert.deepEqual(search("secret").results.filter((result) => result.kind === "space").map((result) => result.payload.spaceId), ["secret"]);
 	// A profile's name finds its Spaces: switching profile is switching to one of them.
 	assert.deepEqual(
 		search("acme").results.filter((result) => result.kind === "space").map((result) => result.payload.spaceId),
@@ -145,7 +145,7 @@ test("the : scope lists Switch to and Move Tab to rows for the matching Spaces",
 	assert.equal(rows[1]?.payload.tabId, undefined, "a Move row without a tab moves the current one");
 	assert.deepEqual(
 		search(":move").results.filter((result) => result.kind === "moveToSpace").map((result) => result.payload.spaceId),
-		["work", "side"],
+		["work", "secret", "side"],
 	);
 });
 
@@ -159,8 +159,19 @@ test("moving a tab lists only the Spaces it can go to, all of them before typing
 	assert.deepEqual(picker("").results.map(({ kind, title, payload }) => ({ kind, title, ...payload })), [
 		{ kind: "moveToSpace", title: "Work", spaceId: "work", tabId: "docs" },
 		{ kind: "moveToSpace", title: "Side Project", spaceId: "side", tabId: "docs" },
+		{ kind: "moveToSpace", title: "Secret", spaceId: "secret", tabId: "docs" },
 	]);
 	assert.deepEqual(picker("side").results.map((result) => result.payload.spaceId), ["side"]);
+});
+
+test("a bookmark never moves to a private Space, which would close with it", () => {
+	seed([tab("docs", "home", { title: "Docs", isBookmarked: true })]);
+	const picker = computeResults(
+		{ parsed: parseInput(""), historyResults: [], searchSuggestions: [], searchEngine: "google", spaces, moveTabId: "docs" },
+		0,
+	);
+
+	assert.deepEqual(picker.results.map((result) => result.payload.spaceId), ["work", "side"]);
 });
 
 test("a history row for a page open in another tab switches to that tab instead of opening it twice", () => {
