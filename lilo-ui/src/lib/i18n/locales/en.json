@@ -2235,6 +2235,14 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0150": {
+				"headline": "A calmer sidebar, an awake menu bar.",
+				"description": "The sidebar keeps to your tabs, and the menu bar tells you when Lilo keeps your Mac awake.",
+				"spaceTitle": "Your Space, named where you switch.",
+				"spaceDescription": "The bottom bar opens the active Space's icon on its name as you switch or swipe, and downloads and archived tabs share one button beside it.",
+				"awakeTitle": "Awake, in the menu bar.",
+				"awakeDescription": "While a command keeps the Mac awake, the menu bar shows what holds it and lets it sleep in one click."
+			},
 			"v0140": {
 				"headline": "Bring anything into your sidebar.",
 				"description": "Drop links and files right where you want them, and a page's dialogs now stay in their own tab.",

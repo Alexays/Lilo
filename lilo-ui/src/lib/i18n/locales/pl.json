@@ -2268,6 +2268,14 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0150": {
+				"headline": "Spokojniejszy pasek boczny, czujny pasek menu.",
+				"description": "Pasek boczny służy kartom, a pasek menu mówi, kiedy Lilo nie pozwala Macowi zasnąć.",
+				"spaceTitle": "Twoja przestrzeń, nazwana tam, gdzie ją zmieniasz.",
+				"spaceDescription": "Dolny pasek otwiera ikonę aktywnej przestrzeni na jej nazwie, gdy zmieniasz lub przesuwasz, a pobrane pliki i zarchiwizowane karty dzielą jeden przycisk obok.",
+				"awakeTitle": "Czuwanie w pasku menu.",
+				"awakeDescription": "Gdy polecenie nie pozwala Macowi zasnąć, pasek menu pokazuje, co go wstrzymuje, i pozwala uśpić go jednym kliknięciem."
+			},
 			"v0140": {
 				"headline": "Przeciągnij wszystko na pasek boczny.",
 				"description": "Upuszczaj linki i pliki dokładnie tam, gdzie chcesz, a okna dialogowe strony zostają teraz w jej karcie.",

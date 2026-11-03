@@ -2246,6 +2246,14 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0150": {
+				"headline": "Una barra laterale più calma, una barra dei menu sveglia.",
+				"description": "La barra laterale resta ai tuoi pannelli, e la barra dei menu ti dice quando Lilo tiene sveglio il Mac.",
+				"spaceTitle": "Il tuo spazio, con il suo nome dove cambi.",
+				"spaceDescription": "La barra in basso apre l'icona dello spazio attivo sul suo nome quando cambi o scorri, e download e pannelli archiviati condividono un solo pulsante accanto.",
+				"awakeTitle": "Sveglio, nella barra dei menu.",
+				"awakeDescription": "Finché un comando tiene sveglio il Mac, la barra dei menu mostra cosa lo trattiene e lo lascia dormire con un clic."
+			},
 			"v0140": {
 				"headline": "Porta tutto nella barra laterale.",
 				"description": "Rilascia link e file proprio dove vuoi, e le finestre di dialogo di una pagina ora restano nella loro scheda.",

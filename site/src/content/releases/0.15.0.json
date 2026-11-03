@@ -1,0 +1,42 @@
+{
+  "version": "0.15.0",
+  "title": {
+    "en": "A calmer sidebar, an awake menu bar.",
+    "fr": "Une barre latérale plus calme, une barre des menus éveillée."
+  },
+  "introduction": {
+    "en": "The sidebar keeps to your tabs, and the menu bar tells you when Lilo keeps your Mac awake.",
+    "fr": "La barre latérale se consacre à vos onglets, et la barre des menus vous dit quand Lilo garde votre Mac éveillé."
+  },
+  "highlights": [
+    {
+      "id": "space-name",
+      "title": {
+        "en": "Your Space, named where you switch.",
+        "fr": "Votre espace, nommé là où vous en changez."
+      },
+      "body": {
+        "en": "The bottom bar opens the active Space's icon on its name as you switch or swipe, and downloads and archived tabs share one button beside it.",
+        "fr": "La barre du bas ouvre l'icône de l'espace actif sur son nom quand vous changez d'espace ou balayez, et téléchargements et onglets archivés partagent un seul bouton à côté."
+      },
+      "notes": [
+        "The sidebar names the active Space in its bottom bar, its icon opening on the name as you switch or swipe, instead of a header above the tabs",
+        "Downloads and recently archived tabs share one button in the bottom-left corner of the sidebar: its background fills as a file downloads, and its menu pauses, resumes or retries downloads in place"
+      ]
+    },
+    {
+      "id": "awake",
+      "title": {
+        "en": "Awake, in the menu bar.",
+        "fr": "Éveillé, dans la barre des menus."
+      },
+      "body": {
+        "en": "While a command keeps the Mac awake, the menu bar shows what holds it and lets it sleep in one click.",
+        "fr": "Tant qu'une commande garde le Mac éveillé, la barre des menus montre ce qui le retient et le laisse dormir en un clic."
+      },
+      "notes": [
+        "While a command keeps the Mac awake, Lilo shows it in the menu bar instead of the sidebar, with what holds the Mac and a way to let it sleep"
+      ]
+    }
+  ]
+}

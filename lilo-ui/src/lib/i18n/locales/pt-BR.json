@@ -2246,6 +2246,14 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0150": {
+				"headline": "Uma barra lateral mais calma, uma barra de menus acordada.",
+				"description": "A barra lateral fica com suas abas, e a barra de menus avisa quando o Lilo mantém seu Mac acordado.",
+				"spaceTitle": "Seu espaço, com nome onde você troca.",
+				"spaceDescription": "A barra inferior abre o ícone do espaço ativo com o nome dele ao trocar ou deslizar, e downloads e abas arquivadas dividem um só botão ao lado.",
+				"awakeTitle": "Acordado, na barra de menus.",
+				"awakeDescription": "Enquanto um comando mantém o Mac acordado, a barra de menus mostra o que o segura e deixa ele dormir com um clique."
+			},
 			"v0140": {
 				"headline": "Leve tudo para a barra lateral.",
 				"description": "Solte links e arquivos exatamente onde quiser, e as caixas de diálogo de uma página agora ficam na própria aba.",

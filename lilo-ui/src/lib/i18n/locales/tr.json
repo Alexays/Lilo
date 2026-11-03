@@ -2246,6 +2246,14 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0150": {
+				"headline": "Daha sakin bir kenar çubuğu, uyanık bir menü çubuğu.",
+				"description": "Kenar çubuğu sekmelerinize ayrılır, menü çubuğu ise Lilo Mac'inizi uyanık tuttuğunda bunu gösterir.",
+				"spaceTitle": "Alanınızın adı, geçiş yaptığınız yerde.",
+				"spaceDescription": "Alt çubuk, geçiş yaptığınızda veya kaydırdığınızda etkin alanın simgesini adıyla açar; indirmeler ve arşivlenen sekmeler yanında tek bir düğmeyi paylaşır.",
+				"awakeTitle": "Uyanık, menü çubuğunda.",
+				"awakeDescription": "Bir komut Mac'i uyanık tuttuğu sürece menü çubuğu onu neyin tuttuğunu gösterir ve tek tıkla uyumasına izin verir."
+			},
 			"v0140": {
 				"headline": "Her şeyi kenar çubuğuna getirin.",
 				"description": "Bağlantıları ve dosyaları tam istediğiniz yere bırakın; bir sayfanın iletişim kutuları artık kendi sekmesinde kalıyor.",

@@ -2246,6 +2246,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0150": {
+				"headline": "Eine ruhigere Seitenleiste, eine wache Menüleiste.",
+				"description": "Die Seitenleiste gehört deinen Tabs, und die Menüleiste zeigt, wann Lilo deinen Mac wach hält.",
+				"spaceTitle": "Dein Space, benannt, wo du wechselst.",
+				"spaceDescription": "Die untere Leiste öffnet das Symbol des aktiven Space mit seinem Namen, wenn du wechselst oder wischst, und Downloads und archivierte Tabs teilen sich eine Taste daneben.",
+				"awakeTitle": "Wach, in der Menüleiste.",
+				"awakeDescription": "Solange ein Befehl den Mac wach hält, zeigt die Menüleiste, was ihn hält, und lässt ihn mit einem Klick schlafen."
+			},
 			"v0140": {
 				"headline": "Zieh alles in deine Seitenleiste.",
 				"description": "Leg Links und Dateien genau dort ab, wo du sie willst, und die Dialoge einer Seite bleiben jetzt in ihrem Tab.",

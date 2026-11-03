@@ -2235,6 +2235,14 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0150": {
+				"headline": "Une barre latérale plus calme, une barre des menus éveillée.",
+				"description": "La barre latérale se consacre à vos onglets, et la barre des menus vous dit quand Lilo garde votre Mac éveillé.",
+				"spaceTitle": "Votre espace, nommé là où vous en changez.",
+				"spaceDescription": "La barre du bas ouvre l'icône de l'espace actif sur son nom quand vous changez d'espace ou balayez, et téléchargements et onglets archivés partagent un seul bouton à côté.",
+				"awakeTitle": "Éveillé, dans la barre des menus.",
+				"awakeDescription": "Tant qu'une commande garde le Mac éveillé, la barre des menus montre ce qui le retient et le laisse dormir en un clic."
+			},
 			"v0140": {
 				"headline": "Glissez tout dans votre barre latérale.",
 				"description": "Déposez liens et fichiers exactement où vous voulez, et les dialogues d'une page restent désormais dans leur onglet.",

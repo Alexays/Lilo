@@ -2246,6 +2246,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0150": {
+				"headline": "Een rustigere zijbalk, een wakkere menubalk.",
+				"description": "De zijbalk is er voor je tabbladen, en de menubalk laat zien wanneer Lilo je Mac wakker houdt.",
+				"spaceTitle": "Je ruimte, met naam waar je wisselt.",
+				"spaceDescription": "De onderste balk opent het symbool van de actieve ruimte op zijn naam als je wisselt of veegt, en downloads en gearchiveerde tabbladen delen één knop ernaast.",
+				"awakeTitle": "Wakker, in de menubalk.",
+				"awakeDescription": "Zolang een opdracht de Mac wakker houdt, toont de menubalk wat hem vasthoudt en laat je hem met één klik slapen."
+			},
 			"v0140": {
 				"headline": "Sleep alles naar je zijbalk.",
 				"description": "Zet links en bestanden precies neer waar je ze wilt, en de dialogen van een pagina blijven nu in hun eigen tabblad.",

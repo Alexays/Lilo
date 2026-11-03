@@ -2246,6 +2246,14 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0150": {
+				"headline": "Una barra lateral más tranquila, una barra de menús despierta.",
+				"description": "La barra lateral se dedica a tus pestañas, y la barra de menús te avisa cuando Lilo mantiene tu Mac despierto.",
+				"spaceTitle": "Tu espacio, con su nombre donde cambias.",
+				"spaceDescription": "La barra inferior abre el icono del espacio activo con su nombre al cambiar o deslizar, y las descargas y las pestañas archivadas comparten un solo botón a su lado.",
+				"awakeTitle": "Despierto, en la barra de menús.",
+				"awakeDescription": "Mientras un comando mantiene el Mac despierto, la barra de menús muestra qué lo retiene y te deja dormirlo con un clic."
+			},
 			"v0140": {
 				"headline": "Lleva lo que quieras a tu barra lateral.",
 				"description": "Suelta enlaces y archivos justo donde los quieres, y los diálogos de una página ahora se quedan en su pestaña.",

@@ -1,4 +1,20 @@
 {
+	"0.15.0": {
+		"headlineKey": "whatsNew.releases.v0150.headline",
+		"descriptionKey": "whatsNew.releases.v0150.description",
+		"highlights": [
+			{
+				"illustration": "spaceName",
+				"titleKey": "whatsNew.releases.v0150.spaceTitle",
+				"descriptionKey": "whatsNew.releases.v0150.spaceDescription"
+			},
+			{
+				"illustration": "awake",
+				"titleKey": "whatsNew.releases.v0150.awakeTitle",
+				"descriptionKey": "whatsNew.releases.v0150.awakeDescription"
+			}
+		]
+	},
 	"0.14.0": {
 		"headlineKey": "whatsNew.releases.v0140.headline",
 		"descriptionKey": "whatsNew.releases.v0140.description",

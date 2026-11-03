@@ -4,6 +4,30 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.0] - 2026-11-03
+
+### Added
+
+- Right-clicking a Space offers Clear Unpinned Tabs, which archives its unpinned tabs
+
+### Changed
+
+- Downloads and recently archived tabs share one button in the bottom-left corner of the sidebar: its background fills as a file downloads, and its menu pauses, resumes or retries downloads in place
+- While a command keeps the Mac awake, Lilo shows it in the menu bar instead of the sidebar, with what holds the Mac and a way to let it sleep
+- The traffic lights sit further from the window's edge over the sidebar
+- A terminal tab gives the toolbar above it its background color, as a website does
+- With the tabs at the top or the bottom, the button that shows and hides them and then the Space menu come right after the traffic lights, ahead of the back and forward buttons
+- With the tabs at the bottom and no address above the page, the bar above it shrinks to a title bar that names the page
+- The sidebar names the active Space in its bottom bar, its icon opening on the name as you switch or swipe, instead of a header above the tabs
+- The toolbar above a website continues the top of the page, no longer the color the site declares for it
+
+### Fixed
+
+- ⌃1 to ⌃9, Next and Previous Space and the Spaces menu now reach a private Space, and a tab can move to it from Move Tab to Space and the command bar
+- A tab an extension opens pinned in the background, such as a coupon extension's, no longer stays in the pinned section once the extension closes it
+- The address in the page toolbar no longer jumps sideways when switching to a space with different extensions
+
+[0.15.0]: https://github.com/Alexays/Lilo/compare/v0.14.5...v0.15.0
 ## [0.14.5] - 2026-11-03
 
 ### Changed
