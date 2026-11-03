@@ -1126,9 +1126,6 @@ final class WKWebViewTab: NSObject {
             webView.observe(\.hasOnlySecureContent, options: []) { [weak self] _, _ in
                 self?.onMain { $0.updateNotSecure() }
             },
-            webView.observe(\.themeColor) { [weak self] _, _ in
-                self?.onMain { $0.emitPageColor() }
-            },
             // A page following prefers-color-scheme repaints in the other appearance; moving between windows does not count.
             webView.observe(\.effectiveAppearance) { [weak self] view, _ in
                 let dark = view.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
@@ -1196,8 +1193,8 @@ final class WKWebViewTab: NSObject {
     }
 
     /// WebKit's sample of the top edge first, which the bar blends into. A top it does not sample (a sticky header,
-    /// an image, a gradient) is read off the loaded page's pixels, closer to what shows than a theme-color, which
-    /// some sites leave dark over a light page; until then the previous page's color stays, never a flash.
+    /// an image, a gradient) is read off the loaded page's pixels: the bar continues what shows, never a theme-color
+    /// declared apart from it. Until then the previous page's color stays, never a flash.
     /// `loaded` comes from didFinish, while the web view still reports itself loading.
     private func emitPageColor(loaded: Bool = false) {
         pageEdgeCapture &+= 1
@@ -1234,20 +1231,19 @@ final class WKWebViewTab: NSObject {
         delegate?.tab(self, didUpdatePageColor: color)
     }
 
-    /// A capture of a band along the top, rendered straight to 32 pixels; theme-color when there is none to take. A
-    /// page drawn by script after its load gets a second look a moment later.
+    /// A capture of a band along the top, rendered straight to 32 pixels. A page drawn by script after its load gets
+    /// a second look a moment later.
     private func captureTopEdge(again: Bool = true) {
         let capture = pageEdgeCapture
         let width = webView.bounds.width
-        let themeColor = Self.opaque(webView.themeColor)?.cssHexString
-        guard width > 0 else { return sendPageColor(themeColor) }
+        guard width > 0 else { return }
         let configuration = WKSnapshotConfiguration()
         configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, width / CGFloat(Self.edgeSamples)))
         configuration.snapshotWidth = NSNumber(value: Self.edgeSamples)
         Task { [weak self] in
             let image = try? await self?.webView.takeSnapshot(configuration: configuration)
             guard let self, capture == pageEdgeCapture else { return }
-            sendPageColor(image.flatMap(Self.edgeStops) ?? themeColor)
+            if let stops = image.flatMap(Self.edgeStops) { sendPageColor(stops) }
             guard again else { return }
             try? await Task.sleep(for: .seconds(1))
             guard capture == pageEdgeCapture else { return }

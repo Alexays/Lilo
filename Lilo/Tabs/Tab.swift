@@ -14,7 +14,7 @@ struct Tab: Sendable, Equatable {
     var title: String
     var faviconDataURL: String?
     var faviconDominantColor: String?
-    /// The solid color along the page's top edge, else hex stops read off that edge, else its theme-color.
+    /// The solid color along the page's top edge, else hex stops read off that edge.
     var pageColor: String?
     var isLoading: Bool = false
     var estimatedProgress: Double = 0
