@@ -67,7 +67,7 @@ test("the address setting offers Hidden on the right and can restore the address
 	await receive(page, { event: "openSettings" });
 	await page.locator(".section-nav-button").filter({ hasText: "Appearance" }).click();
 	const address = page.getByRole("radiogroup", { name: "Address", exact: true });
-	await expect(address.getByRole("radio", { name: "With the tabs", exact: true })).toHaveCount(0);
+	await expect(address.getByRole("radio", { name: "With the tabs", exact: true })).toBeDisabled();
 	await address.getByRole("radio", { name: "Hidden", exact: true }).click();
 	expect((await sentCommands(page)).filter((command) => command.action === "setSetting").at(-1)?.payload).toEqual({ key: "addressPlacement", value: "hidden" });
 	await receive(page, { event: "tabLayoutChanged", position: "right", address: "hidden" });

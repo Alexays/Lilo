@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TabPositionPicker from "../settings/TabPositionPicker.svelte";
+  import LayoutPicker from "../settings/LayoutPicker.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { goBack, goNext } from "../../stores/onboarding.svelte";
 </script>
@@ -8,7 +8,7 @@
 <h3>{t("onboarding.tabs.title")}</h3>
 <p class="ob-sub">{t("onboarding.tabs.subtitle")}</p>
 
-<TabPositionPicker compact />
+<LayoutPicker compact />
 
 <div class="ob-foot">
   <button class="ob-btn ghost" onclick={goBack}>{t("onboarding.back")}</button>
