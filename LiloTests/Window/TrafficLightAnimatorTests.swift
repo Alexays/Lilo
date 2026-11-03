@@ -23,14 +23,18 @@ final class TrafficLightAnimatorTests: XCTestCase {
         return NSPoint(x: frame.midX, y: window.frame.height - frame.midY)
     }
 
-    func testTrafficLightsStayCenteredInTheHeaderWhenTheTitleChanges() throws {
+    func testTrafficLightsStayAtTheAddressInsetWhenTheTitleChanges() throws {
         let window = try XCTUnwrap(MainWindowController(context: browserContext.context).window)
         let centered = try closeButtonCenterFromTop(window)
         XCTAssertEqual(centered.y, 26, accuracy: 0.5, "the middle of the 52pt chrome header")
+        let close = try XCTUnwrap(window.standardWindowButton(.closeButton))
+        XCTAssertEqual(close.convert(close.bounds, to: nil).minX, MainWindowController.TrafficLightAnimator.leadingInset)
 
         // A terminal program animates its title (a spinner), which the window title follows.
         for title in ["◐ agent", "◓ agent", "◑ agent"] {
             window.title = title
+            window.layoutIfNeeded()
+            RunLoop.main.run(mode: .default, before: .now)
             XCTAssertEqual(try closeButtonCenterFromTop(window), centered)
         }
     }

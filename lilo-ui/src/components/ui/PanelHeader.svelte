@@ -46,7 +46,7 @@
     justify-content: flex-end;
     gap: 2px;
     height: 52px;
-    padding-left: 72px;
+    padding-left: 63px;
   }
 
   /* Outside the default layout the lights sit on a 40pt line: page toolbar, tab strip or address-less header. */

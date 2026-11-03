@@ -319,7 +319,7 @@
 
   /* Reserve space for macOS traffic light buttons */
   .header-spacer {
-    width: 85px;
+    width: 76px;
     flex-shrink: 0;
     transition: width 220ms var(--motion-ease-spring);
   }

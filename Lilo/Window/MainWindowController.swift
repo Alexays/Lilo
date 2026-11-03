@@ -557,6 +557,7 @@ final class MainWindowController: NSWindowController {
         StartupMetrics.mark("prewarmChromeWebView")
         super.init(window: window)
         window.delegate = self
+        trafficLightAnimator.holdAtLeadingInset(window: window)
         chromeWebView.eventRouter = chromeInput.router
         chromeInput.router.routesDragToChrome = { [weak self] in self?.splitPanes.isLinkDrag($0) ?? false }
         chromeInput.router.chromeDragChanged = { [weak self] sender in
@@ -606,7 +607,6 @@ final class MainWindowController: NSWindowController {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         // An empty unified toolbar makes AppKit center the traffic lights in the 52pt chrome header.
-        // Buttons moved by hand go back to their default spot on every title change.
         window.toolbar = NSToolbar(identifier: "LiloChrome")
         window.toolbarStyle = .unified
         let contentView = LiloContentView(frame: window.contentView?.bounds ?? .zero)
