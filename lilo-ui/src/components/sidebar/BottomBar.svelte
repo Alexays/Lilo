@@ -961,23 +961,12 @@
 
   /* The Space's profile, barely there at rest: on the wrapper, so the icon's opacity leaves it alone. */
   .space-drag-wrapper.tinted {
-    background: color-mix(in srgb, var(--space-tint) 12%, transparent);
+    background: color-mix(in srgb, var(--space-tint) 8%, transparent);
   }
 
-  @media (prefers-color-scheme: dark) {
-    .space-drag-wrapper.tinted {
-      background: color-mix(in srgb, var(--space-tint) 10%, transparent);
-    }
-  }
-
-  /* The active tile is a light pastel in both themes, so its icon takes a dark ink. */
-  .tinted .space-icon-btn {
-    color: color-mix(in srgb, var(--on-pastel) calc(var(--space-icon-active-opacity, 0) * 100%), var(--text-primary));
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--space-tint) calc(var(--space-icon-active-opacity, 0) * 50%), transparent);
-  }
-
+  /* The active tile keeps the plain highlight, warmed by the profile rather than painted with it. */
   .tinted .space-icon-btn::before {
-    background: color-mix(in srgb, var(--space-tint) 70%, white);
+    background: color-mix(in srgb, var(--space-tint) 26%, var(--bg-active));
   }
 
   /* An acting agent glows behind the tile, never a line, so it never reads as the profile. Only
