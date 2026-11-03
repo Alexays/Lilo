@@ -540,14 +540,9 @@
   }
 
   /* The panel stands in for the sidebar, so it is made of the same material. */
-  :global(html[data-material='glass']) .editor-panel {
-    background: transparent;
-  }
-
+  :global(html[data-material='glass']) .editor-panel,
   :global(html[data-material='grain']) .editor-panel {
-    background-image: var(--grain-texture);
-    background-size: 160px;
-    background-blend-mode: overlay;
+    background: transparent;
   }
 
   /* Sized to its content: the footer follows the last field instead of the panel's bottom. */

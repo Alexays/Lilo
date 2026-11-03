@@ -78,7 +78,8 @@ final class WindowFrameView: NSView {
     /// with the hole in the same transaction, and squares the hole's top corners in its own colors.
     private let barLayer = CAGradientLayer()
     private var barColors: [CGColor]?
-    /// Film grain over the bands and bites for the Grain material, masked off the content hole. Built on first use.
+    /// Film grain over the bands and bites for the Grain material, masked off the content hole: the window's only grain,
+    /// which the chrome lets through as it does the glass, so one texture covers the frame. Built on first use.
     private var grainLayer: CALayer?
     private let grainMask = CAShapeLayer()
 
@@ -191,10 +192,10 @@ final class WindowFrameView: NSView {
     private func makeGrainLayer() -> CALayer {
         let grain = CALayer()
         if let tile = Self.grainTile() {
-            // Half a point per noise pixel: one per Retina pixel, as fine as the chrome's SVG grain.
+            // Half a point per noise pixel: one per Retina pixel.
             grain.backgroundColor = NSColor(patternImage: NSImage(cgImage: tile, size: NSSize(width: tile.width / 2, height: tile.height / 2))).cgColor
         }
-        // Blended like the chrome sidebar's `background-blend-mode: overlay`, so both read as one surface.
+        // Overlay, like the Space editor's previews (`grain.svg` with `background-blend-mode: overlay`).
         grain.compositingFilter = "overlayBlendMode"
         grain.opacity = 0
         grainMask.fillRule = .evenOdd
@@ -205,15 +206,21 @@ final class WindowFrameView: NSView {
         return grain
     }
 
-    /// Gray noise matching the chrome's `grain.svg`: contrast 2.4 around mid-gray, at 42% alpha (premultiplied).
+    /// Gray noise matching the previews' `grain.svg`: contrast 2.4 around mid-gray, at 42% alpha (premultiplied).
     private static func grainTile() -> CGImage? {
         let side = 320
+        let white = (0..<side * side).map { _ in (Double.random(in: 0...1) + .random(in: 0...1) + .random(in: 0...1)) / 3 }
         var pixels = [UInt8](repeating: 0, count: side * side * 2)
-        for index in stride(from: 0, to: pixels.count, by: 2) {
-            let noise = (Double.random(in: 0...1) + .random(in: 0...1) + .random(in: 0...1)) / 3
-            let gray = min(max(2.4 * noise - 0.7, 0), 1)
-            pixels[index] = UInt8(gray * 0.42 * 255)
-            pixels[index + 1] = UInt8(0.42 * 255)
+        for y in 0..<side {
+            for x in 0..<side {
+                // Blended with its four neighbors, wrapping so the tile still repeats seamlessly: softer, like the SVG's fractal noise.
+                let sample = { (dx: Int, dy: Int) in white[(y + dy + side) % side * side + (x + dx + side) % side] }
+                let soft = (2 * sample(0, 0) + sample(-1, 0) + sample(1, 0) + sample(0, -1) + sample(0, 1)) / 6
+                let gray = min(max(2.4 * soft - 0.7, 0), 1)
+                let index = (y * side + x) * 2
+                pixels[index] = UInt8(gray * 0.42 * 255)
+                pixels[index + 1] = UInt8(0.42 * 255)
+            }
         }
         guard let provider = CGDataProvider(data: Data(pixels) as CFData) else { return nil }
         return unsafe CGImage(

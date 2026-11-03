@@ -558,14 +558,15 @@
     z-index: 10;
   }
 
-  /* Glass shows the native glass under the chrome. Floating over the page, the sidebar has only the page
-     under it, which the chrome cannot blur: it keeps its solid color there. */
-  :global(html[data-material='glass']) .sidebar:not(.sidebar-overlay) {
+  /* Glass and grain are drawn natively under the whole chrome, so the sidebar lets them through. Floating over
+     the page, it has only the page under it: it keeps its solid color there, and paints its own grain. */
+  :global(html[data-material='glass']) .sidebar:not(.sidebar-overlay),
+  :global(html[data-material='grain']) .sidebar:not(.sidebar-overlay) {
     background-color: transparent;
   }
 
   /* One static tile the compositor repeats: no work after the first paint. */
-  :global(html[data-material='grain']) .sidebar {
+  :global(html[data-material='grain']) .sidebar.sidebar-overlay {
     background-image: var(--grain-texture);
     background-size: 160px;
     background-blend-mode: overlay;
