@@ -18,6 +18,7 @@ export const TEXT_CONTRAST = 4.5;
 export const ICON_CONTRAST = 3;
 // The dark sidebar's lifted rows, this far toward the text color, which its darkening keeps legible.
 const DARK_SELECTED_LIFT = 0.2;
+const ELEVATED_FILL = 0.08;
 const DARK_ACTIVE_LIFT = 0.28;
 const ACTIVE_TAB_TINT = 0.18;
 // The accent's least OKLCH chroma, unless the Space is a gray (under GRAY_CHROMA).
@@ -213,10 +214,11 @@ export function deriveSidebarThemeVariables(
 	return surfaceVariables(sidebar, accentSource, prefersDark, glass);
 }
 
-/** `#1d1d1f` or `#f8f9fd`, whichever contrasts more with `color`; pure black or white when that one is under AA. */
+/** `#1d1d1f` or `#f8f9fd`, whichever contrasts more with `color`; pure black or white when that one is under AA
+ * on the elevated fill cards draw on `color`, a step toward the text. */
 function textColor(color: RGB): RGB {
 	const soft = contrastRatio(color, DARK_CONTRAST_RGB) >= contrastRatio(color, LIGHT_CONTRAST_RGB) ? DARK_CONTRAST_RGB : LIGHT_CONTRAST_RGB;
-	if (contrastRatio(color, soft) >= TEXT_CONTRAST) return soft;
+	if (contrastRatio(mix(color, soft, ELEVATED_FILL), soft) >= TEXT_CONTRAST) return soft;
 	return contrastRatio(color, WHITE) >= contrastRatio(color, BLACK) ? WHITE : BLACK;
 }
 
@@ -273,11 +275,13 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 	const fill = (amount: number): string =>
 		glass ? `color-mix(in srgb, ${tone(sidebar, contrastColor, amount)} 70%, transparent)` : tone(sidebar, contrastColor, amount);
 	const layer = (percent: number): string => `color-mix(in srgb, ${sidebarContrast} ${percent}%, transparent)`;
+	// Secondary text also sits on quiet fields (the address), a hover layer darker or lighter than the sidebar.
+	const quietField = tone(sidebar, contrastColor, prefersDark ? 0.08 : 0.06);
 
 	return {
 		"--sidebar-bg": sidebarHex,
 		"--sidebar-contrast": sidebarContrast,
-		"--sidebar-secondary": ensureContrast(tone(sidebar, contrastColor, 0.76), sidebarHex, TEXT_CONTRAST, sidebarContrast),
+		"--sidebar-secondary": ensureContrast(tone(sidebar, contrastColor, 0.76), quietField, TEXT_CONTRAST, sidebarContrast),
 		"--sidebar-muted": ensureContrast(tone(sidebar, contrastColor, 0.58), sidebarHex, TEXT_CONTRAST, sidebarContrast),
 		"--sidebar-panel": fill(prefersDark ? 0.12 : 0.05),
 		"--sidebar-subtle": fill(prefersDark ? 0.08 : 0.03),
@@ -289,7 +293,7 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 		"--sidebar-sel": `color-mix(in srgb, ${selectedLayer}, transparent)`,
 		"--sidebar-sel-solid": toHex(selectedSolid),
 		"--sidebar-sel-ring": layer(6),
-		"--sidebar-elevated": fill(prefersDark ? 0.16 : 0.08),
+		"--sidebar-elevated": fill(prefersDark ? 0.16 : ELEVATED_FILL),
 		"--sidebar-border": tone(sidebar, contrastColor, prefersDark ? 0.24 : 0.14),
 		"--sidebar-separator": layer(prefersDark ? 14 : 12),
 		"--sidebar-accent": accentHex,

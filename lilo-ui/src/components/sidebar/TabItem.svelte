@@ -1032,8 +1032,9 @@
 
   /* The attention amber, pulled toward the text color so it reads on light and dark sidebars. */
   .hang-icon,
+  /* The text color: any tint of it falls under AA on a mid-tone Space; the hang icon carries the state. */
   .hang-timer {
-    color: color-mix(in srgb, var(--attention) 20%, var(--text-primary));
+    color: var(--text-primary);
   }
 
   .hang-icon {
