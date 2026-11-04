@@ -993,7 +993,7 @@ extension MainWindowController {
     /// A page loading before it has one shows the surface under it, which the bar takes meanwhile.
     func syncPageBar() {
         let tab = tabManager.activeTab
-        let colors = tab?.pageColor?.split(separator: ",").compactMap { NSColor(cssHex: String($0))?.cgColor } ?? []
+        let colors = (systemScreenBarColor ?? tab?.pageColor)?.split(separator: ",").compactMap { NSColor(cssHex: String($0))?.cgColor } ?? []
         let loading = tab?.kind == .web && tab?.url != nil
         windowFrameView?.setBarColors(colors.isEmpty ? (loading ? [currentContentSurfaceColor.cgColor] : nil) : colors)
     }

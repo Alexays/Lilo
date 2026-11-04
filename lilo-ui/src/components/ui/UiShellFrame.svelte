@@ -107,7 +107,7 @@
     pointer-events: auto;
     overflow: hidden;
     border-radius: var(--chrome-overlay-boundary-radius);
-    background: color-mix(in srgb, var(--bg-primary) 96%, var(--sidebar-bg));
+    background: var(--shell-bg);
     color: var(--text-primary);
   }
 
@@ -170,7 +170,7 @@
     gap: 6px;
     margin-bottom: 12px;
     padding: 28px 0 8px;
-    background: color-mix(in srgb, var(--bg-primary) 96%, var(--sidebar-bg));
+    background: var(--shell-bg);
   }
 
   /* Content fades out under the title instead of being cut at its edge; at rest it covers only the header's margin. */
@@ -179,7 +179,7 @@
     position: absolute;
     inset: 100% 0 auto;
     height: 14px;
-    background: linear-gradient(color-mix(in srgb, var(--bg-primary) 96%, var(--sidebar-bg)), transparent);
+    background: linear-gradient(var(--shell-bg), transparent);
     pointer-events: none;
   }
 

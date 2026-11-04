@@ -247,6 +247,8 @@ final class MainWindowController: NSWindowController {
     var sidebarRevealedByLock = false
     var restoredStartupSpaceIdsByProfile: [UUID: [String: UUID]] = [:]
     var storedWindowBackgroundColor: String?
+    /// The CSS background of the system screen covering the page, which the bar takes over the page's color.
+    var systemScreenBarColor: String?
     /// Set while the chrome shows a Space that follows the wallpaper.
     var wallpaperColorObservers: [(NotificationCenter, NSObjectProtocol)] = []
     var sentWallpaperKey: String?

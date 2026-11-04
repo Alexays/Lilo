@@ -8,11 +8,12 @@
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { pageBarStyle } from "../../lib/pageBarTheme";
+  import { shellBarColor } from "../../stores/theme.svelte";
 
   let { row = false, accent }: { row?: boolean; accent: string } = $props();
 
   // Read apart from the tab, whose every progress tick would otherwise derive the style again.
-  const pageColor = $derived(getActiveTab()?.pageColor);
+  const pageColor = $derived(shellBarColor() ?? getActiveTab()?.pageColor);
   const style = $derived(pageBarStyle(pageColor, accent));
   // With the tabs at the bottom and no address here, the bar names the page as a title bar does.
   const title = $derived(getTabPosition() === "bottom" && !isAddressInPageToolbar() ? getActiveTab()?.title ?? "" : null);

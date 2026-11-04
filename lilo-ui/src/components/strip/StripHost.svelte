@@ -7,14 +7,16 @@
   import { isSidebarOverlay, isSidebarShown } from "../../stores/ui.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { pageBarStyle } from "../../lib/pageBarTheme";
+  import { shellBarColor } from "../../stores/theme.svelte";
 
   let { accent, onenter, onleave }: { accent: string; onenter: () => void; onleave: () => void } = $props();
 
-  // On top the strip takes the page's color, as the page toolbar does; read apart from the tab, as there. The bottom
+  // On top the strip takes the bar's color, as the page toolbar does; read apart from the tab, as there. The bottom
   // one sits on the window's surface: the page's bottom edge is whatever scrolls by.
-  const pageColor = $derived(getTabPosition() === "top" ? getActiveTab()?.pageColor : undefined);
-  // A system screen covers the page: the strip leaves its color and paints the Space's own.
-  const coversPage = $derived(getPageShell() !== null);
+  const onTop = $derived(getTabPosition() === "top");
+  const pageColor = $derived(onTop ? shellBarColor() ?? getActiveTab()?.pageColor : undefined);
+  // A system screen covers the page: the bottom strip paints the Space's own color.
+  const coversPage = $derived(getPageShell() !== null && !onTop);
   const style = $derived(coversPage ? undefined : pageBarStyle(pageColor, accent));
 
   // System screens are not among them: in a strip each is a page of its own, its navigation inside. Nor is the Space

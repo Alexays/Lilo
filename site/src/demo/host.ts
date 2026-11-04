@@ -2925,6 +2925,7 @@ export const createDemoHost = (
     "stopLoading",
     "updateExtensionPopupAnchor",
     "updateWindowBackground",
+    "setPageBarColor",
     "ready",
     "requestWhatsNew",
     "initialStateApplied",

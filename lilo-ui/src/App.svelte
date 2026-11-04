@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { setThemeContext } from "./stores/theme.svelte";
+  import { setThemeContext, shellBarColor } from "./stores/theme.svelte";
   import { onMount, untrack } from "svelte";
   import Sidebar from "./components/sidebar/Sidebar.svelte";
   import ErrorBoundary from "./components/ui/ErrorBoundary.svelte";
@@ -128,6 +128,8 @@
       colorSchemeQuery.matches,
       shownMaterial === "glass",
     );
+    // The system screens' background: `--bg-primary` (global.css) faintly tinted by the sidebar.
+    variables["--shell-bg"] = interpolateHexColors(colorSchemeQuery.matches ? "#0f0f1a" : "#ffffff", variables["--sidebar-bg"], 0.04);
 
     for (const [name, value] of Object.entries(variables)) {
       if (lastThemeVars[name] !== value) {
@@ -135,7 +137,7 @@
         lastThemeVars[name] = value;
       }
     }
-    setThemeContext(variables["--sidebar-bg"], colorSchemeQuery.matches);
+    setThemeContext(variables["--sidebar-bg"], colorSchemeQuery.matches, variables["--shell-bg"]);
     if (root.dataset.material !== shownMaterial) root.dataset.material = shownMaterial;
   }
 
@@ -266,6 +268,12 @@
   $effect(() => {
     applySidebarTheme();
     scheduleSidebarBackgroundReport();
+  });
+
+  let sentBarColor: string | undefined;
+  $effect(() => {
+    const color = shellBarColor();
+    if (color !== sentBarColor) chromeActions.setPageBarColor((sentBarColor = color));
   });
 
   // Mid-swipe the theme only switches at the midpoint, so the frame around the page takes the sidebar's color

@@ -27,6 +27,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "permissionResponse",
         "extensionPermissionResponse",
         "updateWindowBackground",
+        "setPageBarColor",
         "setWallpaperColorWatch",
         "sidebarOverlayChanged",
         "showTabContextMenu",
@@ -161,6 +162,10 @@ final class ChromeBridgeHandler: BridgeHandler {
             if let color = message.string("color") { windowController?.applyWindowChromeColors(color) }
             if let accent = message.string("accent") { windowController?.sidePanel.setAccentColor(accent) }
             windowController?.applyWindowMaterial(message.string("material"))
+
+        case "setPageBarColor":
+            windowController?.systemScreenBarColor = message.string("color")
+            windowController?.syncPageBar()
 
         case "setWallpaperColorWatch":
             windowController?.setWallpaperColorWatch(message.bool("enabled"))

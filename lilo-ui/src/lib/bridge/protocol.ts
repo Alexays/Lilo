@@ -613,6 +613,8 @@ export interface BridgeCommandPayloadMap {
 	extensionPermissionResponse: { requestId: string; granted: boolean };
 	/** `swiping`: one frame of a Space swipe, for the frame around the page alone. `accent`: the sidebar's, for native edges. */
 	updateWindowBackground: { color: string; material: SpaceMaterial; swiping?: boolean; accent?: string };
+	/** The bar's color while a system screen covers the page; none gives it back to the page's. */
+	setPageBarColor: { color?: string };
 	setWallpaperColorWatch: { enabled: boolean };
 	sidebarOverlayChanged: { visible: boolean };
 	showTabSecurityInfo: EmptyPayload;
