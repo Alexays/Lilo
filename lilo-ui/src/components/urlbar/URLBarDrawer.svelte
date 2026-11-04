@@ -8,6 +8,7 @@
   import { portal } from "../../lib/actions/portal";
   import {
     getActiveUrlBarDrawer,
+    pinSiteDrawer,
     setSiteDrawerOpen,
     type UrlBarDrawer,
   } from "../../stores/urlBarDrawer.svelte";
@@ -15,7 +16,7 @@
   import PermissionRequestDrawer from "./PermissionRequestDrawer.svelte";
   import SiteDrawer from "./SiteDrawer.svelte";
 
-  let { onpin, ...site }: ComponentProps<typeof SiteDrawer> & { onpin: () => void } = $props();
+  let site: ComponentProps<typeof SiteDrawer> = $props();
 
   // Matches the fade out below.
   const CLOSE_MS = 120;
@@ -79,7 +80,7 @@
     class:wide={shown.kind === "site"}
     role="group"
     use:reportInteractiveZone={{ id: "url-bar-drawer", active: open }}
-    onpointerdown={onpin}
+    onpointerdown={pinSiteDrawer}
     {@attach shown.kind === "site" &&
       dismissable({ onDismiss: () => setSiteDrawerOpen(false), ignore: ".url-display", escape: true })}
   >
@@ -152,7 +153,7 @@
     left: calc(var(--arrow-inset) - 6px);
     width: 12px;
     height: 12px;
-    border-radius: 2px 0 0 0;
+    border-top-left-radius: var(--radius-2xs);
     background: inherit;
     box-shadow: -1px -1px 0 0 var(--float-border);
     transform: rotate(45deg);
@@ -191,7 +192,8 @@
   :global(html[data-tab-position='bottom']) .url-drawer::before {
     top: auto;
     bottom: -6px;
-    border-radius: 0 0 2px 0;
+    border-top-left-radius: 0;
+    border-bottom-right-radius: var(--radius-2xs);
     box-shadow: 1px 1px 0 0 var(--float-border);
   }
 

@@ -53,6 +53,8 @@ const SITE_DRAWER = { kind: "site" } as const;
 let _queue = $state.raw<PermissionRequest[]>([]);
 let _defaultBrowserInvite = $state(false);
 let _siteOpen = $state(false);
+// Opened by resting on the address: shown over a waiting request, since it leaves with the pointer.
+let _sitePeek = $state(false);
 let _trackersBlocked = $state(0);
 let _blockerAllowlist = $state.raw<string[]>([]);
 // Zoom the host reported for the active tab; null until it changes during this session.
@@ -134,6 +136,7 @@ export function getActiveUrlBarDrawer(): UrlBarDrawer | null {
 	const tabId = getActiveTabId();
 	const spaceId = getActiveSpaceId();
 	return (
+		(_sitePeek ? SITE_DRAWER : null) ??
 		_queue.find((request) => request.kind === "sitePermission" && request.tabId === tabId) ??
 		_queue.find((request) => request.kind === "agentControl" && request.action) ??
 		_queue.find((request) => request.kind === "extensionPermission" && request.spaceId === spaceId) ??
@@ -167,11 +170,21 @@ export function dismissSitePermissionRequest(requestId: string): void {
 }
 
 export function isSiteDrawerOpen(): boolean {
-	return _siteOpen;
+	return _siteOpen || _sitePeek;
 }
 
 export function setSiteDrawerOpen(open: boolean): void {
 	_siteOpen = open;
+	_sitePeek = false;
+}
+
+export function setSiteDrawerPeek(peek: boolean): void {
+	_sitePeek = peek;
+}
+
+/** A press inside a peeking drawer keeps it once the pointer leaves. */
+export function pinSiteDrawer(): void {
+	if (_sitePeek) setSiteDrawerOpen(true);
 }
 
 export function dismissDefaultBrowserInvite(): void {

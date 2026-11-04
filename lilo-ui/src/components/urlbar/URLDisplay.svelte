@@ -16,6 +16,7 @@
     isBlockerAllowlisted,
     isSiteDrawerOpen,
     setSiteDrawerOpen,
+    setSiteDrawerPeek,
   } from "../../stores/urlBarDrawer.svelte";
   import { restingBlur, restingFly } from "../../lib/motion/restingTransitions";
   import { cubicOut, quintOut } from "svelte/easing";
@@ -203,22 +204,22 @@
 
   // On a web page the details are the Site drawer's: opened by a rest or a focus, it leaves with
   // the pointer or the focus until a press inside it keeps it.
-  let siteDrawerTransient = false;
-
   function openDetails() {
     detailsOpen = true;
     if (showsLocation || activeKind !== "web" || urlVisual.isPlaceholder || isCommandBarOpen() || isSiteDrawerOpen()) return;
-    siteDrawerTransient = true;
-    setSiteDrawerOpen(true);
+    setSiteDrawerPeek(true);
   }
 
   function closeDetails() {
     cancelDetailsTimer();
     detailsOpen = false;
-    if (!siteDrawerTransient) return;
-    siteDrawerTransient = false;
-    setSiteDrawerOpen(false);
+    setSiteDrawerPeek(false);
   }
+
+  // The command bar edits this address: details about it would only cover the tab list.
+  $effect(() => {
+    if (isCommandBarOpen()) untrack(closeDetails);
+  });
 
   function trackDetails(event: PointerEvent) {
     const target = event.target as Element;
@@ -272,7 +273,6 @@
 
   function toggleSiteDrawer(e: MouseEvent) {
     e.stopPropagation();
-    siteDrawerTransient = false;
     setSiteDrawerOpen(!isSiteDrawerOpen());
   }
 
@@ -443,7 +443,6 @@
 
   const urlVisual = $derived.by(() => buildURLVisual(activeTabURL));
 
-  // The command bar edits this address: a card about it would only cover the tab list.
   const detailsAvailable = $derived(showsLocation && !isCommandBarOpen());
   // A terminal's folder is already the bar's bold part, so its card has no title.
   const detailsTitle = $derived(showsLocation ? "" : getActiveTab()?.title || urlVisual.displayHost);
@@ -999,7 +998,6 @@
     title={getActiveTab()?.title || urlVisual.displayHost}
     location={detailsLocation}
     rows={detailsRows}
-    onpin={() => (siteDrawerTransient = false)}
   />
 
   {#if detailsOpen && detailsAvailable}
