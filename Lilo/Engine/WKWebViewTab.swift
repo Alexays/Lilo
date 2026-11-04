@@ -1235,15 +1235,14 @@ final class WKWebViewTab: NSObject {
         delegate?.tab(self, didUpdatePageColor: color)
     }
 
-    /// A capture of a band along the top, rendered straight to 32 pixels. A page drawn by script after its load gets
-    /// a second look a moment later.
+    /// A capture of the thin band of the page that meets the bar. A page drawn by script after its load gets a second
+    /// look a moment later.
     private func captureTopEdge(again: Bool = true) {
         let capture = pageEdgeCapture
         let width = webView.bounds.width
         guard width > 0 else { return }
         let configuration = WKSnapshotConfiguration()
-        configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, width / CGFloat(Self.edgeSamples)))
-        configuration.snapshotWidth = NSNumber(value: Self.edgeSamples)
+        configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, Self.edgeBand))
         Task { [weak self] in
             let image = try? await self?.webView.takeSnapshot(configuration: configuration)
             guard let self, capture == pageEdgeCapture else { return }
@@ -1255,24 +1254,37 @@ final class WKWebViewTab: NSObject {
         }
     }
 
-    private static let edgeSamples = 32
+    /// Points of the page's top read for its color: the rows the bar continues, not the header's content below them.
+    private static let edgeBand: CGFloat = 8
+    private static let edgeSamples = 256
+    private static let edgeRows = 8
     private static let edgeStopCount = 8
 
     /// The edge as CSS hex stops from left to right, a single color when they barely differ.
     static func edgeStops(_ image: NSImage) -> String? {
         guard let cgImage = unsafe image.cgImage(forProposedRect: nil, context: nil, hints: nil),
               let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
-        var pixels = [UInt8](repeating: 0, count: edgeSamples * 4)
+        var pixels = [UInt8](repeating: 0, count: edgeSamples * edgeRows * 4)
         let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = unsafe CGContext(data: buffer.baseAddress, width: edgeSamples, height: 1, bitsPerComponent: 8, bytesPerRow: edgeSamples * 4,
+            guard let context = unsafe CGContext(data: buffer.baseAddress, width: edgeSamples, height: edgeRows, bitsPerComponent: 8, bytesPerRow: edgeSamples * 4,
                                           space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return false }
-            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: edgeSamples, height: 1))
+            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: edgeSamples, height: edgeRows))
             return true
         }
         guard drawn else { return nil }
         let perStop = edgeSamples / edgeStopCount
+        // A median, not a mean: a logo, a line of text or a thin accent stripe in the band is outvoted by the background.
+        var block = [Int](repeating: 0, count: perStop * edgeRows)
         let stops = (0..<edgeStopCount).map { stop in
-            (0..<3).map { channel in (0..<perStop).reduce(0) { $0 + Int(pixels[(stop * perStop + $1) * 4 + channel]) } / perStop }
+            (0..<3).map { channel in
+                for row in 0..<edgeRows {
+                    for column in 0..<perStop {
+                        block[row * perStop + column] = Int(pixels[(row * edgeSamples + stop * perStop + column) * 4 + channel])
+                    }
+                }
+                block.sort()
+                return block[block.count / 2]
+            }
         }
         let hex = { (rgb: [Int]) in unsafe String(format: "#%02x%02x%02x", rgb[0], rgb[1], rgb[2]) }
         let spread = (0..<3).map { channel in
