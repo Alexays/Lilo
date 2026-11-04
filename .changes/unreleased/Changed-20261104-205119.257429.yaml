@@ -1,3 +1,3 @@
 kind: Changed
-body: 'Sidebar rows share one anatomy: every tab, folder, terminal and agent row is 32 pt high with its icon, title and one accessory, open folders drop their tinted background, and the New Tab row keeps New Tab and New Terminal (Ask an Agent stays on ⇧⌘A and the Agents button).'
+body: 'Sidebar rows share one anatomy: every tab, folder, terminal and agent row is 32 pt high with its icon, title and one accessory, and the New Tab row keeps New Tab and New Terminal (Ask an Agent stays on ⇧⌘A and the Agents button).'
 time: 2026-11-04T20:51:19.257429+01:00

@@ -166,3 +166,31 @@ test("every palette folder color clears 3:1 on the sidebar", () => {
 		}
 	}
 });
+
+test("an open folder's block keeps text, muted text and the folder color legible", () => {
+	const palette = ["#5b7cff", "#5fd79a", "#ffcc57", "#ff8a5b", "#f06aa6", "#9b7cff", "#4ecdc4", "#8a9ba8"];
+	for (const space of ["#b18cff", "#1a1a2e", "#5b7cfa", "#ffcc57", "#808080", "#2e7d32"]) {
+		for (const dark of [false, true]) {
+			const theme = deriveSidebarThemeVariables(space, dark);
+			const sidebar = rgb(theme["--sidebar-bg"]);
+			for (const color of palette) {
+				const vars = deriveFolderColorVariables(color, theme["--sidebar-bg"], dark);
+				const [, layerHex, percent] = /(#[0-9a-f]{6}) (\d+)%/.exec(vars["--folder-open-bg"]) ?? [];
+				const layer = rgb(layerHex);
+				const amount = Number(percent) / 100;
+				const open = {
+					r: sidebar.r + (layer.r - sidebar.r) * amount,
+					g: sidebar.g + (layer.g - sidebar.g) * amount,
+					b: sidebar.b + (layer.b - sidebar.b) * amount,
+				};
+				const label = `${color} on ${space} ${dark ? "dark" : "light"}`;
+				for (const text of ["--sidebar-contrast", "--sidebar-muted"]) {
+					const ratio = contrastRatio(rgb(theme[text]), open);
+					assert.ok(ratio >= TEXT_CONTRAST, `${text} ${label}: ${ratio.toFixed(2)}:1`);
+				}
+				const ratio = contrastRatio(rgb(vars["--folder-accent"]), open);
+				assert.ok(ratio >= ICON_CONTRAST, `folder ${label}: ${ratio.toFixed(2)}:1`);
+			}
+		}
+	}
+});

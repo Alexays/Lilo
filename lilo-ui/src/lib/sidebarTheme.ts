@@ -26,6 +26,8 @@ const ACCENT_CHROMA = 0.1;
 const GRAY_CHROMA = 0.02;
 // The least OKLCH chroma a darkened dark sidebar keeps (the Space's own when lower), so its hue stays visible.
 const DARK_TINT_CHROMA = 0.06;
+// How much of an open folder's block shows over the sidebar.
+const FOLDER_OPEN_LAYER = 0.25;
 const WHITE: RGB = { r: 255, g: 255, b: 255 };
 const BLACK: RGB = { r: 0, g: 0, b: 0 };
 const LIGHT_DANGER = "#d96a74";
@@ -306,9 +308,24 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 	};
 }
 
-/** A folder's color guarded to 3:1 on the sidebar (the sidebar's text color when it cannot be). */
-export function deriveFolderColorVariables(folderColor: string, sidebarBg: string, prefersDark: boolean): { "--folder-accent": string } {
+/**
+ * A folder's open block, a layer of its hue taken away from the sidebar's text so text keeps its contrast on it, and
+ * its color guarded to 3:1 on the sidebar and on that block (the sidebar's text color when it cannot be).
+ */
+export function deriveFolderColorVariables(
+	folderColor: string,
+	sidebarBg: string,
+	prefersDark: boolean,
+): { "--folder-accent": string; "--folder-open-bg": string } {
 	const sidebar = parseHexColor(sidebarBg) ?? (prefersDark ? DARK_CANVAS : LIGHT_CANVAS);
 	const folder = parseHexColor(folderColor) ?? sidebar;
-	return { "--folder-accent": ensureContrast(toHex(folder), sidebarBg, ICON_CONTRAST, toHex(textColor(sidebar))) };
+	const text = textColor(sidebar);
+	const [, a, b] = toOklab(folder);
+	const layer = fromOklab(relativeLuminance(text) < 0.5 ? 0.97 : 0.2, a, b);
+	const open = toHex(mix(sidebar, layer, FOLDER_OPEN_LAYER));
+	const textHex = toHex(text);
+	return {
+		"--folder-accent": ensureContrast(ensureContrast(toHex(folder), open, ICON_CONTRAST, textHex), sidebarBg, ICON_CONTRAST, textHex),
+		"--folder-open-bg": `color-mix(in srgb, ${toHex(layer)} ${FOLDER_OPEN_LAYER * 100}%, transparent)`,
+	};
 }

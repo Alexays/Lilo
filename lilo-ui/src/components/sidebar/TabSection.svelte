@@ -1421,6 +1421,61 @@
     transition: background var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
+  /* One tinted block per open root folder: subfolders inside it show through, drawing only their rail. */
+  .folder-open-rail > .folder-drop-zone {
+    --folder-rail-color: color-mix(in srgb, var(--folder-accent) 60%, var(--text-primary) 12%);
+    background: var(--folder-open-bg);
+  }
+
+  .indented-tab-wrapper.folder-open-rail > .folder-drop-zone,
+  .folder-open-rail > .folder-drop-zone.conversation {
+    background: none;
+  }
+
+  /* The trunk drops from under the folder glyph's center (16px), and ticks end 2px short of the
+     children's icons (24px indent + 8px inset). Middle children draw the trunk plus a tick, the last
+     one an L, so no strokes overlap. */
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper::before,
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper::before {
+    left: 15.5px;
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid var(--folder-rail-color);
+  }
+
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:first-child::before {
+    top: -7px;
+  }
+
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:not(:last-child)::after {
+    left: 16.5px;
+    top: calc(50% - 0.5px);
+    width: 13.5px;
+    border-top: 1px solid var(--folder-rail-color);
+  }
+
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:last-child::before {
+    bottom: calc(50% - 0.5px);
+    width: 14.5px;
+    border-bottom: 1px solid var(--folder-rail-color);
+    border-bottom-left-radius: var(--radius-sm);
+  }
+
+  /* A subfolder's branch meets its header row, not the middle of its open block. */
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper.child-folder:not(:last-child)::after {
+    top: 15.5px;
+  }
+
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper.child-folder:last-child::before {
+    bottom: calc(100% - 16.5px);
+  }
+
   /* A conversation's pages hang on one straight violet rail under the agent's tile. */
   .folder-open-rail .conversation-contents > .child-tab-wrapper::before {
     content: "";
