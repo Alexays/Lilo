@@ -18,14 +18,12 @@
 </script>
 
 <div class="extension-list-pane">
-  <div class="extension-filter">
-    <UiSearchField
-      placeholder={t("extensions.searchPlaceholder")}
-      ariaLabel={t("extensions.searchPlaceholder")}
-      value={query}
-      onchange={(value) => (query = value)}
-    />
-  </div>
+  <UiSearchField
+    placeholder={t("extensions.searchPlaceholder")}
+    ariaLabel={t("extensions.searchPlaceholder")}
+    value={query}
+    onchange={(value) => (query = value)}
+  />
 
   <div class="extension-body">
     {#if extensions.length === 0}
@@ -53,21 +51,15 @@
 
 <style>
   .extension-list-pane {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .extension-filter {
-    padding: 8px 0 2px;
-    flex-shrink: 0;
+    display: grid;
+    gap: var(--space-12);
   }
 
   .extension-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 0 12px;
+    overflow: clip;
+    border-radius: var(--radius-box);
+    background: var(--group-box-bg);
+    box-shadow: inset 0 0 0 1px var(--separator);
   }
 
   .empty-state {
@@ -81,9 +73,7 @@
     margin-top: 8px;
   }
 
-  .extension-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  .extension-list > :global(* + *) {
+    border-top: 1px solid var(--separator);
   }
 </style>

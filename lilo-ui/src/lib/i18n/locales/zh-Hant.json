@@ -28,19 +28,15 @@
 		"terminalTheme": "主題",
 		"terminalThemeDescription": "Lilo 會配合各空間的顏色，確保所有顏色清晰可辨。",
 		"terminalImport": "匯入...",
-		"terminalImportTitle": "匯入主題",
-		"terminalImportDescription": "iTerm2 色彩預設組（.itermcolors）、VS Code 色彩主題（.json）或 Ghostty 主題檔案。",
 		"terminalFont": "字體",
-		"terminalFontDescription": "支援連字的字體（如 JetBrains Mono 或 Fira Code）會顯示連字。",
+		"terminalFontDescription": "支援連字的字體（如 JetBrains Mono 或 Fira Code）會顯示連字。字級以點為單位，套用至所有終端機分頁。",
 		"terminalFontSystem": "系統（SF Mono）",
 		"terminalFontSize": "大小",
-		"terminalFontSizeDescription": "以點為單位，套用至所有終端機分頁。",
 		"terminalScrollback": "每個終端機的歷史記錄",
 		"terminalScrollbackDescription": "10 MB 約可容納 100,000 行。",
 		"terminalBehaviorGroup": "行為",
 		"terminalNotify": "長時間執行的指令完成時通知",
 		"terminalNotifyDescription": "指令執行超過 10 秒，且你正在別處時通知。",
-		"terminalSleepGroup": "睡眠",
 		"terminalPreventSleepDescription": "指令正在等待你回應，或已靜默 5 分鐘時，不會防止睡眠。",
 		"terminalLidStatus": {
 			"unsigned": "需要已簽署的 Lilo 版本。",
@@ -79,7 +75,7 @@
 			"pride": "彩虹",
 			"clay": "陶土"
 		},
-		"importBrowsersAction": "匯入",
+		"importBrowsersAction": "匯入...",
 		"passwordManagerAction": "選擇",
 		"passwordManagerChange": "更改",
 		"replayOnboardingAction": "重播",
@@ -146,14 +142,14 @@
 			"privacy": "隱私權",
 			"extensions": "延伸功能",
 			"advanced": "進階",
-			"agents": "AI 代理程式"
+			"agents": "代理程式"
 		},
 		"groups": {
 			"browser": "瀏覽器",
 			"search": "搜尋",
 			"downloads": "下載項目",
 			"theme": "主題",
-			"tabLayout": "分頁",
+			"tabLayout": "佈局",
 			"pages": "網頁",
 			"spaces": "空間",
 			"playback": "播放",
@@ -161,21 +157,20 @@
 			"contentBlocking": "內容阻擋",
 			"protection": "保護",
 			"browsingData": "瀏覽資料",
-			"tools": "工具",
+			"tools": "開發者工具",
 			"permissions": "權限",
 			"zoom": "縮放",
 			"siteData": "資料",
 			"sites": "網站（{count}）",
 			"updates": "更新",
 			"passwords": "密碼",
-			"agentAccess": "取用權限",
-			"agentClients": "代理程式",
+			"agentAccess": "使用 Lilo 的代理程式",
+			"agentClients": "可使用 Lilo 的 App",
 			"lilo": "Lilo",
 			"tabsWindows": "分頁與視窗",
 			"sitePermissions": "網站權限",
 			"profiles": "個人檔案",
 			"otherAppLinks": "來自其他 App 的連結",
-			"blockerCategories": "Lilo 阻擋的內容",
 			"blockerExceptions": "清單與例外",
 			"agentConversations": "對話"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "清除瀏覽資料",
 				"description": "清除指定期間的歷史記錄、Cookie、快取與網站資料。",
-				"keywords": "歷史記錄 cookie 快取 刪除 清除"
+				"keywords": "歷史記錄 cookie 快取 刪除 清除",
+				"action": "清除瀏覽資料..."
 			},
 			"loadUnpacked": {
 				"title": "載入未封裝的延伸功能",
@@ -470,8 +466,8 @@
 				"keywords": "密碼 鎖定 資料夾 隱私權"
 			},
 			"agentControl": {
-				"title": "允許 AI 代理程式使用 Lilo",
-				"description": "Claude Code、Codex 或 Cursor 在專屬的「代理程式」空間中工作。Lilo 本身不含 AI。",
+				"title": "允許代理程式使用 Lilo",
+				"description": "Claude Code、Codex 或 Cursor 在專屬的「代理程式」空間中工作。",
 				"keywords": "代理程式 ai mcp claude codex cursor 自動化 遠端 控制"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "與你的代理程式對話",
-				"description": "在分頁中與 Claude Code、Codex、Gemini 等代理程式對話，使用你自己的訂閱。Lilo 本身不含 AI。",
+				"description": "在分頁中與 Claude Code、Codex、Gemini 等代理程式對話，使用你自己的訂閱。",
 				"keywords": "代理程式 AI ACP 聊天 對話 詢問 Claude Codex Gemini Copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "拷貝設定",
 			"clientDescription": "將 Lilo 加入其 MCP 伺服器。",
 			"clientConnected": "Lilo 已在其 MCP 伺服器中。",
-			"lastSeen": "上次活動於 {time}",
 			"revoke": "移除",
-			"readyDescription": "首次連接時，Lilo 會詢問你。",
 			"status": {
 				"acting": "正在執行動作",
 				"connected": "已連接",
 				"allowed": "已允許",
 				"notInstalled": "未安裝",
 				"ready": "已設定"
-			}
+			},
+			"allowedSeen": "已允許，上次連線 {time}",
+			"readyLine": "已設定。首次連線時 Lilo 會詢問你。"
 		},
 		"navGroups": {
 			"tools": "工具"
@@ -637,7 +633,7 @@
 			"lastProfile": "最後一個個人檔案會保留：每個空間都需要一個。",
 			"extensionCount": "{count} 個延伸功能",
 			"extensionCountOne": "1 個延伸功能",
-			"newProfile": "新增個人檔案",
+			"newProfile": "新增個人檔案...",
 			"newProfileDetail": "全新的 Cookie、登入狀態與延伸功能",
 			"namePlaceholder": "個人檔案名稱",
 			"create": "建立",
@@ -674,7 +670,6 @@
 			"emptyPattern": "規則需要可比對的主機名稱或文字。"
 		},
 		"shortcuts": {
-			"intro": "點按快速鍵，再按下新的按鍵組合。Esc 會取消，Delete 會移除此動作的快速鍵。",
 			"searchPlaceholder": "搜尋快速鍵",
 			"preset": "預設組",
 			"presetDescription": "會取代所有你更改過的快速鍵。",
@@ -691,9 +686,10 @@
 			"conflict": "{keys} 已用於 {name}。",
 			"replace": "取代",
 			"cancel": "取消",
-			"noResults": "沒有符合的快速鍵。"
+			"noResults": "沒有符合的快速鍵。",
+			"note": "按一下快速鍵，然後按下新的按鍵",
+			"recordingHint": "按 Esc 取消，按 Delete 移除此動作的快速鍵。"
 		},
-		"terminalAppearanceGroup": "外觀",
 		"terminalSleepMode": "執行指令時保持 Mac 喚醒",
 		"terminalSleepModes": {
 			"off": "關閉",
@@ -708,7 +704,36 @@
 			"requiresApproval": "需要核准",
 			"enabled": "已允許",
 			"notFound": "遺失"
-		}
+		},
+		"notes": {
+			"live": "選擇後立即生效",
+			"spaces": {
+				"one": "{count} 個空間",
+				"other": "{count} 個空間"
+			},
+			"profiles": {
+				"one": "{count} 個設定檔",
+				"other": "{count} 個設定檔"
+			},
+			"blocking": "正在阻擋 {total} 類中的 {count} 類",
+			"blockingOff": "阻擋已關閉",
+			"extensions": {
+				"one": "{profile} 中有 {count} 個延伸功能",
+				"other": "{profile} 中有 {count} 個延伸功能"
+			},
+			"terminal": "變更會套用到每個終端機分頁",
+			"agents": "Lilo 本身不含 AI",
+			"advanced": "供開發與測試使用",
+			"searchMatches": {
+				"one": "{count} 項設定符合「{query}」",
+				"other": "{count} 項設定符合「{query}」"
+			}
+		},
+		"callDock": {
+			"sidebar": "在側邊欄中",
+			"floating": "浮動視窗"
+		},
+		"terminalImportCaption": "可匯入 iTerm2 顏色預設 (.itermcolors)、VS Code 顏色主題 (.json) 或 Ghostty 主題檔案。"
 	},
 	"nav": {
 		"navigationControls": "導覽控制項",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "延伸功能及其資料都會刪除。",
 		"actionFailed": "動作失敗。點按以關閉。",
 		"degradedTitle": "背景已停止：部分功能可能無法運作。",
-		"loadUnpacked": "載入未封裝的延伸功能…",
+		"loadUnpacked": "載入未封裝的延伸功能...",
 		"addressBarMenu": "延伸功能",
 		"hostAccessRequestAllow": "允許",
 		"hostAccessRequestTooltip": "允許此延伸功能取用此網站",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "移除此延伸功能",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "評論、詳細資訊與開發者網頁",
-		"webStoreOpen": "開啟"
+		"webStoreOpen": "開啟",
+		"installed": "已安裝"
 	},
 	"commandBar": {
 		"hintPeek": "預覽",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "全部重設",
-		"warning": "內部除錯項目是 WebKit 開發者旗標，可能導致網站無法正常運作。更改後須重新載入網頁才會生效。",
-		"sectionExperimental": "實驗性：{count}",
+		"warning": "內部除錯項目是 WebKit 開發者旗標，可能導致網站無法正常運作。",
 		"sectionDebug": "內部除錯：{count}",
 		"modifiedBadge": "已修改",
 		"title": "WebKit 旗標",
-		"resetTitle": "已更改的旗標"
+		"resetTitle": "已更改的旗標",
+		"reloadNote": "重新載入頁面以套用變更"
 	},
 	"urlToast": {
 		"reEnableBlocking": "重新啟用此網站的阻擋功能",

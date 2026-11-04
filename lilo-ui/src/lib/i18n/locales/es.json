@@ -28,19 +28,15 @@
 		"terminalTheme": "Tema",
 		"terminalThemeDescription": "Lilo sigue el color de cada Espacio y mantiene todos los colores legibles.",
 		"terminalImport": "Importar...",
-		"terminalImportTitle": "Importar un tema",
-		"terminalImportDescription": "Un preajuste de color de iTerm2 (.itermcolors), un tema de color de VS Code (.json) o un archivo de tema de Ghostty.",
 		"terminalFont": "Tipo de letra",
-		"terminalFontDescription": "Se muestran las ligaduras de los tipos de letra que las incluyen, como JetBrains Mono o Fira Code.",
+		"terminalFontDescription": "Se muestran las ligaduras de los tipos de letra que las incluyen, como JetBrains Mono o Fira Code. Tamaño en puntos, para todas las pestañas de terminal.",
 		"terminalFontSystem": "Sistema (SF Mono)",
 		"terminalFontSize": "Tamaño",
-		"terminalFontSizeDescription": "En puntos, para todas las pestañas de terminal.",
 		"terminalScrollback": "Historial por terminal",
 		"terminalScrollbackDescription": "10 MB equivalen a unas 100.000 líneas.",
 		"terminalBehaviorGroup": "Comportamiento",
 		"terminalNotify": "Avisar cuando termine un comando largo",
 		"terminalNotifyDescription": "Tras 10 segundos, cuando estés en otra parte.",
-		"terminalSleepGroup": "Reposo",
 		"terminalPreventSleepDescription": "No se aplica a comandos que esperan tu respuesta o llevan 5 minutos sin actividad.",
 		"terminalLidStatus": {
 			"unsigned": "Requiere una versión firmada de Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Orgullo",
 			"clay": "Arcilla"
 		},
-		"importBrowsersAction": "Importar",
+		"importBrowsersAction": "Importar...",
 		"passwordManagerAction": "Elegir",
 		"passwordManagerChange": "Cambiar",
 		"replayOnboardingAction": "Repetir",
@@ -141,19 +137,19 @@
 			"terminal": "Terminal",
 			"general": "General",
 			"appearance": "Aspecto",
-			"tabs": "Pestañas y espacios",
+			"tabs": "Pestañas y Espacios",
 			"media": "Audio y vídeo",
 			"privacy": "Privacidad",
 			"extensions": "Extensiones",
 			"advanced": "Avanzado",
-			"agents": "Agentes de IA"
+			"agents": "Agentes"
 		},
 		"groups": {
 			"browser": "Navegador",
 			"search": "Buscar",
 			"downloads": "Descargas",
 			"theme": "Tema",
-			"tabLayout": "Pestañas",
+			"tabLayout": "Disposición",
 			"pages": "Páginas",
 			"spaces": "Espacios",
 			"playback": "Reproducción",
@@ -161,21 +157,20 @@
 			"contentBlocking": "Bloqueo de contenido",
 			"protection": "Protección",
 			"browsingData": "Datos de navegación",
-			"tools": "Herramientas",
+			"tools": "Herramientas para desarrolladores",
 			"permissions": "Permisos",
 			"zoom": "Zoom",
 			"siteData": "Datos",
 			"sites": "Sitios ({count})",
 			"updates": "Actualizaciones",
 			"passwords": "Contraseñas",
-			"agentAccess": "Acceso",
-			"agentClients": "Agentes",
+			"agentAccess": "Agentes que usan Lilo",
+			"agentClients": "Apps que pueden usar Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Pestañas y ventanas",
 			"sitePermissions": "Permisos de sitios",
 			"profiles": "Perfiles",
 			"otherAppLinks": "Enlaces desde otras apps",
-			"blockerCategories": "Qué bloquea Lilo",
 			"blockerExceptions": "Listas y excepciones",
 			"agentConversations": "Conversaciones"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Borrar datos de navegación",
 				"description": "Historial, cookies, caché y datos de sitios de un periodo determinado.",
-				"keywords": "historial cookies caché eliminar borrar"
+				"keywords": "historial cookies caché eliminar borrar",
+				"action": "Borrar datos de navegación..."
 			},
 			"loadUnpacked": {
 				"title": "Cargar una extensión sin empaquetar",
@@ -470,8 +466,8 @@
 				"keywords": "contraseña bloqueo carpeta privacidad"
 			},
 			"agentControl": {
-				"title": "Permitir que agentes de IA usen Lilo",
-				"description": "Claude Code, Codex o Cursor trabajan en su propio espacio Agentes. Lilo no tiene IA propia.",
+				"title": "Permitir que los agentes usen Lilo",
+				"description": "Claude Code, Codex o Cursor trabajan en su propio espacio Agentes.",
 				"keywords": "agente ia mcp claude codex cursor automatización control remoto"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Conversaciones con tus agentes",
-				"description": "Habla con Claude Code, Codex, Gemini y otros agentes en una pestaña, con tus propias suscripciones. Lilo no tiene IA propia.",
+				"description": "Habla con Claude Code, Codex, Gemini y otros agentes en una pestaña, con tus propias suscripciones.",
 				"keywords": "agente ia acp chat conversación preguntar claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "Copiar configuración",
 			"clientDescription": "Añade Lilo a sus servidores MCP.",
 			"clientConnected": "Lilo está en sus servidores MCP.",
-			"lastSeen": "Última conexión {time}",
 			"revoke": "Quitar",
-			"readyDescription": "Lilo te pregunta la primera vez que se conecta.",
 			"status": {
 				"acting": "Actuando ahora",
 				"connected": "Conectado",
 				"allowed": "Permitido",
 				"notInstalled": "Sin instalar",
 				"ready": "Configurado"
-			}
+			},
+			"allowedSeen": "Permitido, visto por última vez {time}",
+			"readyLine": "Configurado. Lilo te pregunta la primera vez que se conecta."
 		},
 		"navGroups": {
 			"tools": "Herramientas"
@@ -637,7 +633,7 @@
 			"lastProfile": "El último perfil se conserva: cada espacio necesita uno.",
 			"extensionCount": "{count} extensiones",
 			"extensionCountOne": "1 extensión",
-			"newProfile": "Nuevo perfil",
+			"newProfile": "Nuevo perfil...",
 			"newProfileDetail": "Cookies, sesiones y extensiones nuevas",
 			"namePlaceholder": "Nombre del perfil",
 			"create": "Crear",
@@ -674,7 +670,6 @@
 			"emptyPattern": "Una regla necesita un dominio o texto con el que coincidir."
 		},
 		"shortcuts": {
-			"intro": "Haz clic en un atajo y pulsa las nuevas teclas. Esc cancela; Suprimir deja la acción sin atajo.",
 			"searchPlaceholder": "Buscar atajos",
 			"preset": "Preajuste",
 			"presetDescription": "Sustituye todos los atajos que hayas cambiado.",
@@ -691,9 +686,10 @@
 			"conflict": "{name} ya usa {keys}.",
 			"replace": "Sustituir",
 			"cancel": "Cancelar",
-			"noResults": "Ningún atajo coincide."
+			"noResults": "Ningún atajo coincide.",
+			"note": "Haz clic en un atajo y pulsa las nuevas teclas",
+			"recordingHint": "Esc cancela; Suprimir deja la acción sin atajo."
 		},
-		"terminalAppearanceGroup": "Aspecto",
 		"terminalSleepMode": "Mantener el Mac activo durante los comandos",
 		"terminalSleepModes": {
 			"off": "Desactivado",
@@ -708,7 +704,36 @@
 			"requiresApproval": "Requiere autorización",
 			"enabled": "Permitido",
 			"notFound": "Falta"
-		}
+		},
+		"notes": {
+			"live": "Los cambios se aplican al elegir",
+			"spaces": {
+				"one": "{count} espacio",
+				"other": "{count} espacios"
+			},
+			"profiles": {
+				"one": "{count} perfil",
+				"other": "{count} perfiles"
+			},
+			"blocking": "Bloqueando {count} de {total} tipos",
+			"blockingOff": "El bloqueo está desactivado",
+			"extensions": {
+				"one": "{count} extensión en {profile}",
+				"other": "{count} extensiones en {profile}"
+			},
+			"terminal": "Los cambios se aplican a cada pestaña de terminal",
+			"agents": "Lilo no tiene IA propia",
+			"advanced": "Para desarrollo y pruebas",
+			"searchMatches": {
+				"one": "{count} ajuste coincide con «{query}»",
+				"other": "{count} ajustes coinciden con «{query}»"
+			}
+		},
+		"callDock": {
+			"sidebar": "En la barra lateral",
+			"floating": "Ventana flotante"
+		},
+		"terminalImportCaption": "Importar acepta un preajuste de colores de iTerm2 (.itermcolors), un tema de colores de VS Code (.json) o un archivo de tema de Ghostty."
 	},
 	"nav": {
 		"navigationControls": "Controles de navegación",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "Se eliminarán la extensión y sus datos.",
 		"actionFailed": "La acción ha fallado. Pulsa para cerrar.",
 		"degradedTitle": "Segundo plano detenido: algunas funciones podrían no funcionar.",
-		"loadUnpacked": "Cargar extensión sin empaquetar…",
+		"loadUnpacked": "Cargar extensión sin empaquetar...",
 		"addressBarMenu": "Extensiones",
 		"hostAccessRequestAllow": "Permitir",
 		"hostAccessRequestTooltip": "Permitir que esta extensión acceda a este sitio",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "Quitar esta extensión",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Reseñas, detalles y página del desarrollador",
-		"webStoreOpen": "Abrir"
+		"webStoreOpen": "Abrir",
+		"installed": "Instaladas"
 	},
 	"commandBar": {
 		"hintPeek": "Vista previa",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "Restablecer todo",
-		"warning": "Las opciones de depuración interna son para desarrolladores de WebKit y pueden impedir que funcionen los sitios. Recarga la página para aplicar un cambio.",
-		"sectionExperimental": "Experimentales: {count}",
+		"warning": "Las opciones de depuración interna son para desarrolladores de WebKit y pueden impedir que funcionen los sitios.",
 		"sectionDebug": "Depuración interna: {count}",
 		"modifiedBadge": "Modificado",
 		"title": "Opciones de WebKit",
-		"resetTitle": "Opciones modificadas"
+		"resetTitle": "Opciones modificadas",
+		"reloadNote": "Recarga una página para que el cambio surta efecto"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Reactivar el bloqueo en este sitio",

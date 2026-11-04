@@ -28,19 +28,15 @@
 		"terminalTheme": "主题",
 		"terminalThemeDescription": "Lilo 会随空间的颜色调整，并确保所有颜色清晰可辨。",
 		"terminalImport": "导入...",
-		"terminalImportTitle": "导入主题",
-		"terminalImportDescription": "iTerm2 颜色预置（.itermcolors）、VS Code 颜色主题（.json）或 Ghostty 主题文件。",
 		"terminalFont": "字体",
-		"terminalFontDescription": "支持连字的字体（如 JetBrains Mono 或 Fira Code）会显示连字。",
+		"terminalFontDescription": "支持连字的字体（如 JetBrains Mono 或 Fira Code）会显示连字。字号以磅为单位，应用于所有终端标签页。",
 		"terminalFontSystem": "系统（SF Mono）",
 		"terminalFontSize": "大小",
-		"terminalFontSizeDescription": "以磅为单位，应用于所有终端标签页。",
 		"terminalScrollback": "每个终端的历史记录",
 		"terminalScrollbackDescription": "10 MB 约可存储 100,000 行。",
 		"terminalBehaviorGroup": "行为",
 		"terminalNotify": "长时间运行的命令完成时通知",
 		"terminalNotifyDescription": "命令运行超过 10 秒，且你正在其他位置时通知。",
-		"terminalSleepGroup": "睡眠",
 		"terminalPreventSleepDescription": "命令正在等待输入或已静默 5 分钟时，不会阻止睡眠。",
 		"terminalLidStatus": {
 			"unsigned": "需要已签名的 Lilo 版本。",
@@ -79,7 +75,7 @@
 			"pride": "彩虹",
 			"clay": "陶土"
 		},
-		"importBrowsersAction": "导入",
+		"importBrowsersAction": "导入...",
 		"passwordManagerAction": "选取",
 		"passwordManagerChange": "更改",
 		"replayOnboardingAction": "重新播放",
@@ -146,14 +142,14 @@
 			"privacy": "隐私",
 			"extensions": "扩展",
 			"advanced": "高级",
-			"agents": "AI 智能体"
+			"agents": "智能体"
 		},
 		"groups": {
 			"browser": "浏览器",
 			"search": "搜索",
 			"downloads": "下载",
 			"theme": "主题",
-			"tabLayout": "标签页",
+			"tabLayout": "布局",
 			"pages": "网页",
 			"spaces": "空间",
 			"playback": "播放",
@@ -161,21 +157,20 @@
 			"contentBlocking": "内容拦截",
 			"protection": "保护",
 			"browsingData": "浏览数据",
-			"tools": "工具",
+			"tools": "开发者工具",
 			"permissions": "权限",
 			"zoom": "缩放",
 			"siteData": "数据",
 			"sites": "网站（{count}）",
 			"updates": "更新",
 			"passwords": "密码",
-			"agentAccess": "访问权限",
-			"agentClients": "智能体",
+			"agentAccess": "使用 Lilo 的智能体",
+			"agentClients": "可使用 Lilo 的应用",
 			"lilo": "Lilo",
 			"tabsWindows": "标签页与窗口",
 			"sitePermissions": "网站权限",
 			"profiles": "个人资料",
 			"otherAppLinks": "其他 App 中的链接",
-			"blockerCategories": "Lilo 拦截的内容",
 			"blockerExceptions": "列表与例外",
 			"agentConversations": "对话"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "清除浏览数据",
 				"description": "清除指定时间范围内的历史记录、Cookie、缓存和网站数据。",
-				"keywords": "历史记录 Cookie 缓存 删除 抹掉"
+				"keywords": "历史记录 Cookie 缓存 删除 抹掉",
+				"action": "清除浏览数据..."
 			},
 			"loadUnpacked": {
 				"title": "载入解压缩的扩展",
@@ -470,8 +466,8 @@
 				"keywords": "密码 锁定 文件夹 隐私"
 			},
 			"agentControl": {
-				"title": "允许 AI 智能体使用 Lilo",
-				"description": "Claude Code、Codex 或 Cursor 会在专属的“智能体”空间中工作。Lilo 本身不内置 AI。",
+				"title": "允许智能体使用 Lilo",
+				"description": "Claude Code、Codex 或 Cursor 会在专属的“智能体”空间中工作。",
 				"keywords": "智能体 AI MCP Claude Codex Cursor 自动化 远程控制"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "与你的智能体对话",
-				"description": "在标签页中与 Claude Code、Codex、Gemini 等智能体对话，使用你自己的订阅。Lilo 本身不内置 AI。",
+				"description": "在标签页中与 Claude Code、Codex、Gemini 等智能体对话，使用你自己的订阅。",
 				"keywords": "智能体 AI ACP 聊天 对话 询问 Claude Codex Gemini Copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "拷贝配置",
 			"clientDescription": "将 Lilo 添加到其 MCP 服务器。",
 			"clientConnected": "Lilo 已在其 MCP 服务器中。",
-			"lastSeen": "上次连接于 {time}",
 			"revoke": "移除",
-			"readyDescription": "首次连接时，Lilo 会征求你的同意。",
 			"status": {
 				"acting": "正在操作",
 				"connected": "已连接",
 				"allowed": "已允许",
 				"notInstalled": "未安装",
 				"ready": "已配置"
-			}
+			},
+			"allowedSeen": "已允许，上次连接 {time}",
+			"readyLine": "已配置。首次连接时 Lilo 会询问你。"
 		},
 		"navGroups": {
 			"tools": "工具"
@@ -637,7 +633,7 @@
 			"lastProfile": "最后一个个人资料必须保留：每个空间都需要一个个人资料。",
 			"extensionCount": "{count} 个扩展",
 			"extensionCountOne": "1 个扩展",
-			"newProfile": "新建个人资料",
+			"newProfile": "新建个人资料...",
 			"newProfileDetail": "独立的 Cookie、登录信息和扩展",
 			"namePlaceholder": "个人资料名称",
 			"create": "创建",
@@ -674,7 +670,6 @@
 			"emptyPattern": "规则需要一个主机名或要匹配的文字。"
 		},
 		"shortcuts": {
-			"intro": "点按快捷键，然后按下新按键。按 Esc 取消，按 Delete 清除该操作的快捷键。",
 			"searchPlaceholder": "搜索快捷键",
 			"preset": "预置",
 			"presetDescription": "替换你更改过的所有快捷键。",
@@ -691,9 +686,10 @@
 			"conflict": "{keys} 已用于“{name}”。",
 			"replace": "替换",
 			"cancel": "取消",
-			"noResults": "没有匹配的快捷键。"
+			"noResults": "没有匹配的快捷键。",
+			"note": "点按一个快捷键，然后按下新的按键",
+			"recordingHint": "按 Esc 取消，按 Delete 移除该操作的快捷键。"
 		},
-		"terminalAppearanceGroup": "外观",
 		"terminalSleepMode": "命令运行时保持 Mac 唤醒",
 		"terminalSleepModes": {
 			"off": "关闭",
@@ -708,7 +704,36 @@
 			"requiresApproval": "需要批准",
 			"enabled": "已允许",
 			"notFound": "缺失"
-		}
+		},
+		"notes": {
+			"live": "选择后立即生效",
+			"spaces": {
+				"one": "{count} 个空间",
+				"other": "{count} 个空间"
+			},
+			"profiles": {
+				"one": "{count} 个配置文件",
+				"other": "{count} 个配置文件"
+			},
+			"blocking": "正在拦截 {total} 类中的 {count} 类",
+			"blockingOff": "拦截已关闭",
+			"extensions": {
+				"one": "{profile} 中有 {count} 个扩展",
+				"other": "{profile} 中有 {count} 个扩展"
+			},
+			"terminal": "更改适用于每个终端标签页",
+			"agents": "Lilo 本身不内置 AI",
+			"advanced": "供开发和测试使用",
+			"searchMatches": {
+				"one": "{count} 项设置与“{query}”匹配",
+				"other": "{count} 项设置与“{query}”匹配"
+			}
+		},
+		"callDock": {
+			"sidebar": "在边栏中",
+			"floating": "浮动窗口"
+		},
+		"terminalImportCaption": "可导入 iTerm2 颜色预设 (.itermcolors)、VS Code 颜色主题 (.json) 或 Ghostty 主题文件。"
 	},
 	"nav": {
 		"navigationControls": "导航控制",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "此扩展及其数据将被删除。",
 		"actionFailed": "操作失败。点按以关闭。",
 		"degradedTitle": "后台已停止：部分功能可能无法使用。",
-		"loadUnpacked": "载入解压缩的扩展…",
+		"loadUnpacked": "载入解压缩的扩展...",
 		"addressBarMenu": "扩展",
 		"hostAccessRequestAllow": "允许",
 		"hostAccessRequestTooltip": "允许此扩展访问此网站",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "移除此扩展",
 		"webStoreTitle": "Chrome 网上应用店",
 		"webStoreHint": "评价、详细信息和开发者页面",
-		"webStoreOpen": "打开"
+		"webStoreOpen": "打开",
+		"installed": "已安装"
 	},
 	"commandBar": {
 		"hintPeek": "预览",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "全部还原",
-		"warning": "内部调试条目是 WebKit 开发者开关，可能导致网站无法正常使用。更改后需重新载入网页才能生效。",
-		"sectionExperimental": "实验性：{count}",
+		"warning": "内部调试条目是 WebKit 开发者开关，可能导致网站无法正常使用。",
 		"sectionDebug": "内部调试：{count}",
 		"modifiedBadge": "已修改",
 		"title": "WebKit 开关",
-		"resetTitle": "已更改的开关"
+		"resetTitle": "已更改的开关",
+		"reloadNote": "重新载入页面以使更改生效"
 	},
 	"urlToast": {
 		"reEnableBlocking": "重新启用此网站的拦截",

@@ -39,15 +39,15 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-8) var(--space-12);
-    min-height: 52px;
-    padding: var(--space-10) 0;
+    padding: 11px 14px;
   }
 
   .ui-list-row-icon {
     flex: none;
     display: grid;
     place-items: center;
-    width: 18px;
+    min-width: 18px;
+    margin-right: 2px;
     color: var(--text-secondary);
   }
 

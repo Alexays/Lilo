@@ -28,19 +28,15 @@
 		"terminalTheme": "Thema",
 		"terminalThemeDescription": "Lilo volgt de kleur van elke ruimte en houdt alle kleuren leesbaar.",
 		"terminalImport": "Importeer...",
-		"terminalImportTitle": "Importeer een thema",
-		"terminalImportDescription": "Een iTerm2-kleurvoorinstelling (.itermcolors), een VS Code-kleurthema (.json) of een Ghostty-themabestand.",
 		"terminalFont": "Lettertype",
-		"terminalFontDescription": "Lettertypen met ligaturen, zoals JetBrains Mono en Fira Code, geven deze weer.",
+		"terminalFontDescription": "Lettertypen met ligaturen, zoals JetBrains Mono en Fira Code, geven deze weer. Grootte in punten, voor alle terminaltabbladen.",
 		"terminalFontSystem": "Systeem (SF Mono)",
 		"terminalFontSize": "Grootte",
-		"terminalFontSizeDescription": "In punten, voor alle terminaltabbladen.",
 		"terminalScrollback": "Geschiedenis per terminal",
 		"terminalScrollbackDescription": "10 MB is ongeveer 100.000 regels.",
 		"terminalBehaviorGroup": "Gedrag",
 		"terminalNotify": "Meld wanneer een lang commando klaar is",
 		"terminalNotifyDescription": "Na 10 seconden, wanneer je ergens anders bent.",
-		"terminalSleepGroup": "Sluimerstand",
 		"terminalPreventSleepDescription": "Niet voor een commando dat op je wacht of al 5 minuten stil is.",
 		"terminalLidStatus": {
 			"unsigned": "Vereist een ondertekende versie van Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Pride",
 			"clay": "Klei"
 		},
-		"importBrowsersAction": "Importeer",
+		"importBrowsersAction": "Importeer...",
 		"passwordManagerAction": "Kies",
 		"passwordManagerChange": "Wijzig",
 		"replayOnboardingAction": "Speel opnieuw af",
@@ -141,19 +137,19 @@
 			"terminal": "Terminal",
 			"general": "Algemeen",
 			"appearance": "Weergave",
-			"tabs": "Tabbladen en ruimtes",
+			"tabs": "Tabbladen en Ruimtes",
 			"media": "Audio en video",
 			"privacy": "Privacy",
 			"extensions": "Extensies",
 			"advanced": "Geavanceerd",
-			"agents": "AI-agents"
+			"agents": "Agents"
 		},
 		"groups": {
 			"browser": "Browser",
 			"search": "Zoeken",
 			"downloads": "Downloads",
 			"theme": "Thema",
-			"tabLayout": "Tabbladen",
+			"tabLayout": "Indeling",
 			"pages": "Pagina's",
 			"spaces": "Ruimtes",
 			"playback": "Afspelen",
@@ -161,21 +157,20 @@
 			"contentBlocking": "Materiaalblokkering",
 			"protection": "Bescherming",
 			"browsingData": "Browsegegevens",
-			"tools": "Hulpmiddelen",
+			"tools": "Ontwikkelaarstools",
 			"permissions": "Bevoegdheden",
 			"zoom": "Zoom",
 			"siteData": "Gegevens",
 			"sites": "Websites ({count})",
 			"updates": "Updates",
 			"passwords": "Wachtwoorden",
-			"agentAccess": "Toegang",
-			"agentClients": "Agents",
+			"agentAccess": "Agents die Lilo gebruiken",
+			"agentClients": "Apps die Lilo kunnen gebruiken",
 			"lilo": "Lilo",
 			"tabsWindows": "Tabbladen en vensters",
 			"sitePermissions": "Websitebevoegdheden",
 			"profiles": "Profielen",
 			"otherAppLinks": "Links uit andere apps",
-			"blockerCategories": "Wat Lilo blokkeert",
 			"blockerExceptions": "Lijsten en uitzonderingen",
 			"agentConversations": "Gesprekken"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Wis browsegegevens",
 				"description": "Geschiedenis, cookies, cache en websitegegevens over een periode.",
-				"keywords": "geschiedenis cookies cache verwijder wis"
+				"keywords": "geschiedenis cookies cache verwijder wis",
+				"action": "Browsegegevens wissen..."
 			},
 			"loadUnpacked": {
 				"title": "Laad een uitgepakte extensie",
@@ -470,8 +466,8 @@
 				"keywords": "wachtwoord vergrendel map privacy"
 			},
 			"agentControl": {
-				"title": "Laat AI-agents Lilo gebruiken",
-				"description": "Claude Code, Codex of Cursor werken in hun eigen Agents-ruimte. Lilo heeft zelf geen AI.",
+				"title": "Laat agents Lilo gebruiken",
+				"description": "Claude Code, Codex of Cursor werken in hun eigen Agents-ruimte.",
 				"keywords": "agent ai mcp claude codex cursor automatisering afstandsbediening"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Gesprekken met je agents",
-				"description": "Praat in een tabblad met Claude Code, Codex, Gemini en andere agents, met je eigen abonnementen. Lilo heeft zelf geen AI.",
+				"description": "Praat in een tabblad met Claude Code, Codex, Gemini en andere agents, met je eigen abonnementen.",
 				"keywords": "agent ai acp chat gesprek vragen claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "Kopieer configuratie",
 			"clientDescription": "Voegt Lilo toe aan de MCP-servers.",
 			"clientConnected": "Lilo staat in de MCP-servers.",
-			"lastSeen": "Laatst gezien {time}",
 			"revoke": "Verwijder",
-			"readyDescription": "Lilo vraagt je bij de eerste verbinding om toestemming.",
 			"status": {
 				"acting": "Nu bezig",
 				"connected": "Verbonden",
 				"allowed": "Toegestaan",
 				"notInstalled": "Niet geïnstalleerd",
 				"ready": "Geconfigureerd"
-			}
+			},
+			"allowedSeen": "Toegestaan, laatst gezien {time}",
+			"readyLine": "Ingesteld. Lilo vraagt het je bij de eerste verbinding."
 		},
 		"navGroups": {
 			"tools": "Hulpmiddelen"
@@ -637,7 +633,7 @@
 			"lastProfile": "Je laatste profiel blijft bestaan: elke ruimte heeft er één nodig.",
 			"extensionCount": "{count} extensies",
 			"extensionCountOne": "1 extensie",
-			"newProfile": "Nieuw profiel",
+			"newProfile": "Nieuw profiel...",
 			"newProfileDetail": "Nieuwe cookies, aanmeldingen en extensies",
 			"namePlaceholder": "Profielnaam",
 			"create": "Maak aan",
@@ -674,7 +670,6 @@
 			"emptyPattern": "Een regel heeft een host of tekst nodig om te vergelijken."
 		},
 		"shortcuts": {
-			"intro": "Klik op een sneltoets en druk de nieuwe toetsen in. Esc annuleert, Delete verwijdert de sneltoets voor de actie.",
 			"searchPlaceholder": "Zoek sneltoetsen",
 			"preset": "Voorinstelling",
 			"presetDescription": "Vervangt alle sneltoetsen die je hebt gewijzigd.",
@@ -691,9 +686,10 @@
 			"conflict": "{keys} wordt al gebruikt door {name}.",
 			"replace": "Vervang",
 			"cancel": "Annuleer",
-			"noResults": "Geen overeenkomende sneltoetsen."
+			"noResults": "Geen overeenkomende sneltoetsen.",
+			"note": "Klik op een sneltoets en druk dan op de nieuwe toetsen",
+			"recordingHint": "Esc annuleert, Delete laat de actie zonder sneltoets."
 		},
-		"terminalAppearanceGroup": "Weergave",
 		"terminalSleepMode": "Houd de Mac wakker tijdens commando's",
 		"terminalSleepModes": {
 			"off": "Uit",
@@ -708,7 +704,36 @@
 			"requiresApproval": "Toestemming nodig",
 			"enabled": "Toegestaan",
 			"notFound": "Ontbreekt"
-		}
+		},
+		"notes": {
+			"live": "Wijzigingen gelden meteen",
+			"spaces": {
+				"one": "{count} ruimte",
+				"other": "{count} ruimtes"
+			},
+			"profiles": {
+				"one": "{count} profiel",
+				"other": "{count} profielen"
+			},
+			"blocking": "{count} van {total} soorten geblokkeerd",
+			"blockingOff": "Blokkeren staat uit",
+			"extensions": {
+				"one": "{count} extensie in {profile}",
+				"other": "{count} extensies in {profile}"
+			},
+			"terminal": "Wijzigingen gelden voor elk terminaltabblad",
+			"agents": "Lilo heeft zelf geen AI",
+			"advanced": "Voor ontwikkeling en testen",
+			"searchMatches": {
+				"one": "{count} instelling past bij \"{query}\"",
+				"other": "{count} instellingen passen bij \"{query}\""
+			}
+		},
+		"callDock": {
+			"sidebar": "In de zijbalk",
+			"floating": "Zwevend venster"
+		},
+		"terminalImportCaption": "Importeren neemt een iTerm2-kleurvoorinstelling (.itermcolors), een VS Code-kleurthema (.json) of een Ghostty-themabestand."
 	},
 	"nav": {
 		"navigationControls": "Navigatieknoppen",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "De extensie en alle gegevens worden verwijderd.",
 		"actionFailed": "Actie mislukt. Tik om te sluiten.",
 		"degradedTitle": "Achtergrond gestopt: sommige functies werken mogelijk niet.",
-		"loadUnpacked": "Laad uitgepakte extensie…",
+		"loadUnpacked": "Laad uitgepakte extensie...",
 		"addressBarMenu": "Extensies",
 		"hostAccessRequestAllow": "Sta toe",
 		"hostAccessRequestTooltip": "Geef deze extensie toegang tot deze website",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "Verwijder deze extensie",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Recensies, details en de pagina van de ontwikkelaar",
-		"webStoreOpen": "Open"
+		"webStoreOpen": "Open",
+		"installed": "Geïnstalleerd"
 	},
 	"commandBar": {
 		"hintPeek": "Voorvertoning",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "Stel alles opnieuw in",
-		"warning": "Interne debugopties zijn WebKit-ontwikkelaarsvlaggen en kunnen websites verstoren. Herlaad een pagina om een wijziging toe te passen.",
-		"sectionExperimental": "Experimenteel: {count}",
+		"warning": "Interne debugopties zijn WebKit-ontwikkelaarsvlaggen en kunnen websites verstoren.",
 		"sectionDebug": "Interne debugopties: {count}",
 		"modifiedBadge": "Gewijzigd",
 		"title": "WebKit-vlaggen",
-		"resetTitle": "Gewijzigde vlaggen"
+		"resetTitle": "Gewijzigde vlaggen",
+		"reloadNote": "Herlaad een pagina om een wijziging toe te passen"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Schakel blokkering op deze website weer in",

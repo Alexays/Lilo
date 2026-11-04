@@ -28,19 +28,15 @@
 		"terminalTheme": "Thème",
 		"terminalThemeDescription": "Lilo suit la couleur de chaque Space et garde chaque couleur lisible dessus.",
 		"terminalImport": "Importer...",
-		"terminalImportTitle": "Importer un thème",
-		"terminalImportDescription": "Un préréglage de couleurs iTerm2 (.itermcolors), un thème de couleurs VS Code (.json) ou un fichier de thème Ghostty.",
 		"terminalFont": "Police",
-		"terminalFontDescription": "Les polices à ligatures, comme JetBrains Mono ou Fira Code, les affichent.",
+		"terminalFontDescription": "Les polices à ligatures, comme JetBrains Mono ou Fira Code, les affichent. Taille en points, pour tous les onglets terminal.",
 		"terminalFontSystem": "Système (SF Mono)",
 		"terminalFontSize": "Taille",
-		"terminalFontSizeDescription": "En points, pour tous les onglets terminal.",
 		"terminalScrollback": "Historique par terminal",
 		"terminalScrollbackDescription": "10 Mo font environ 100 000 lignes.",
 		"terminalBehaviorGroup": "Comportement",
 		"terminalNotify": "Prévenir quand une longue commande se termine",
 		"terminalNotifyDescription": "Au-delà de 10 secondes, si vous êtes ailleurs.",
-		"terminalSleepGroup": "Veille",
 		"terminalPreventSleepDescription": "Pas pour une commande qui vous attend ou muette depuis 5 minutes.",
 		"terminalLidStatus": {
 			"unsigned": "Nécessite une version signée de Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Fierté",
 			"clay": "Bonbon"
 		},
-		"importBrowsersAction": "Importer",
+		"importBrowsersAction": "Importer...",
 		"passwordManagerAction": "Choisir",
 		"passwordManagerChange": "Changer",
 		"replayOnboardingAction": "Revoir",
@@ -141,19 +137,19 @@
 			"terminal": "Terminal",
 			"general": "Général",
 			"appearance": "Apparence",
-			"tabs": "Onglets et espaces",
+			"tabs": "Onglets et Espaces",
 			"media": "Audio et vidéo",
 			"privacy": "Confidentialité",
 			"extensions": "Extensions",
 			"advanced": "Avancé",
-			"agents": "Agents IA"
+			"agents": "Agents"
 		},
 		"groups": {
 			"browser": "Navigateur",
 			"search": "Recherche",
 			"downloads": "Téléchargements",
 			"theme": "Thème",
-			"tabLayout": "Onglets",
+			"tabLayout": "Disposition",
 			"pages": "Pages",
 			"spaces": "Espaces",
 			"playback": "Lecture",
@@ -161,21 +157,20 @@
 			"contentBlocking": "Blocage de contenu",
 			"protection": "Protection",
 			"browsingData": "Données de navigation",
-			"tools": "Outils",
+			"tools": "Outils de développement",
 			"permissions": "Permissions",
 			"zoom": "Zoom",
 			"siteData": "Données",
 			"sites": "Sites ({count})",
 			"updates": "Mises à jour",
 			"passwords": "Mots de passe",
-			"agentAccess": "Accès",
-			"agentClients": "Agents",
+			"agentAccess": "Agents qui utilisent Lilo",
+			"agentClients": "Apps qui peuvent utiliser Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Onglets et fenêtres",
 			"sitePermissions": "Autorisations des sites",
 			"profiles": "Profils",
 			"otherAppLinks": "Liens venant d'autres apps",
-			"blockerCategories": "Ce que Lilo bloque",
 			"blockerExceptions": "Listes et exceptions",
 			"agentConversations": "Conversations"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Effacer les données de navigation",
 				"description": "Historique, cookies, cache et données des sites, sur une période.",
-				"keywords": "historique cookies cache supprimer"
+				"keywords": "historique cookies cache supprimer",
+				"action": "Effacer les données de navigation..."
 			},
 			"loadUnpacked": {
 				"title": "Charger une extension non empaquetée",
@@ -470,8 +466,8 @@
 				"keywords": "mot de passe verrou dossier confidentialité"
 			},
 			"agentControl": {
-				"title": "Laisser les agents IA utiliser Lilo",
-				"description": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents. Lilo n'embarque aucune IA.",
+				"title": "Laisser les agents utiliser Lilo",
+				"description": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents.",
 				"keywords": "agent ia mcp claude codex cursor automatisation pilotage"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Conversations avec vos agents",
-				"description": "Parlez à Claude Code, Codex, Gemini et d'autres agents dans un onglet, avec vos propres abonnements. Lilo n'embarque aucune IA.",
+				"description": "Parlez à Claude Code, Codex, Gemini et d'autres agents dans un onglet, avec vos propres abonnements.",
 				"keywords": "agent ia acp chat conversation demander claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "Copier la configuration",
 			"clientDescription": "Ajoute Lilo à ses serveurs MCP.",
 			"clientConnected": "Lilo figure dans ses serveurs MCP.",
-			"lastSeen": "Vu {time}",
 			"revoke": "Retirer",
-			"readyDescription": "Lilo vous demande à sa première connexion.",
 			"status": {
 				"acting": "En train d'agir",
 				"connected": "Connecté",
 				"allowed": "Autorisé",
 				"notInstalled": "Non installé",
 				"ready": "Configuré"
-			}
+			},
+			"allowedSeen": "Autorisé, vu {time}",
+			"readyLine": "Configuré. Lilo vous demande à sa première connexion."
 		},
 		"navGroups": {
 			"tools": "Outils"
@@ -637,7 +633,7 @@
 			"lastProfile": "Votre dernier profil reste : chaque espace en a besoin.",
 			"extensionCount": "{count} extensions",
 			"extensionCountOne": "1 extension",
-			"newProfile": "Nouveau profil",
+			"newProfile": "Nouveau profil...",
 			"newProfileDetail": "Cookies, connexions et extensions vierges",
 			"namePlaceholder": "Nom du profil",
 			"create": "Créer",
@@ -674,7 +670,6 @@
 			"emptyPattern": "Une règle a besoin d'un hôte ou d'un texte à chercher."
 		},
 		"shortcuts": {
-			"intro": "Cliquez sur un raccourci, puis tapez les nouvelles touches. Échap annule, Supprimer laisse l'action sans raccourci.",
 			"searchPlaceholder": "Rechercher un raccourci",
 			"preset": "Préréglage",
 			"presetDescription": "Remplace tous les raccourcis que vous avez modifiés.",
@@ -691,9 +686,10 @@
 			"conflict": "{keys} est déjà utilisé par {name}.",
 			"replace": "Remplacer",
 			"cancel": "Annuler",
-			"noResults": "Aucun raccourci ne correspond."
+			"noResults": "Aucun raccourci ne correspond.",
+			"note": "Cliquez sur un raccourci, puis appuyez sur les nouvelles touches",
+			"recordingHint": "Échap annule, Suppr laisse l'action sans raccourci."
 		},
-		"terminalAppearanceGroup": "Apparence",
 		"terminalSleepMode": "Garder le Mac éveillé pendant les commandes",
 		"terminalSleepModes": {
 			"off": "Non",
@@ -708,7 +704,36 @@
 			"requiresApproval": "À autoriser",
 			"enabled": "Autorisé",
 			"notFound": "Introuvable"
-		}
+		},
+		"notes": {
+			"live": "Les changements s'appliquent aussitôt",
+			"spaces": {
+				"one": "{count} espace",
+				"other": "{count} espaces"
+			},
+			"profiles": {
+				"one": "{count} profil",
+				"other": "{count} profils"
+			},
+			"blocking": "{count} types bloqués sur {total}",
+			"blockingOff": "Le blocage est désactivé",
+			"extensions": {
+				"one": "{count} extension dans {profile}",
+				"other": "{count} extensions dans {profile}"
+			},
+			"terminal": "Les changements s'appliquent à chaque onglet de terminal",
+			"agents": "Lilo n'embarque aucune IA",
+			"advanced": "Pour le développement et les tests",
+			"searchMatches": {
+				"one": "{count} réglage correspond à « {query} »",
+				"other": "{count} réglages correspondent à « {query} »"
+			}
+		},
+		"callDock": {
+			"sidebar": "Dans la barre latérale",
+			"floating": "Fenêtre flottante"
+		},
+		"terminalImportCaption": "L'import accepte un préréglage de couleurs iTerm2 (.itermcolors), un thème de couleurs VS Code (.json) ou un fichier de thème Ghostty."
 	},
 	"nav": {
 		"navigationControls": "Commandes de navigation",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "L'extension et ses données seront supprimées.",
 		"actionFailed": "Échec de l'action. Cliquez pour ignorer.",
 		"degradedTitle": "Arrière-plan arrêté : certaines fonctionnalités peuvent ne pas fonctionner.",
-		"loadUnpacked": "Charger une extension décompressée…",
+		"loadUnpacked": "Charger une extension décompressée...",
 		"addressBarMenu": "Extensions",
 		"hostAccessRequestAllow": "Autoriser",
 		"hostAccessRequestTooltip": "Autoriser cette extension à accéder à ce site",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "Supprimer cette extension",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Avis, détails et page du développeur",
-		"webStoreOpen": "Ouvrir"
+		"webStoreOpen": "Ouvrir",
+		"installed": "Installées"
 	},
 	"commandBar": {
 		"hintPeek": "Aperçu",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "Tout réinitialiser",
-		"warning": "Les entrées de débogage interne sont des indicateurs développeur de WebKit et peuvent casser des sites. Rechargez une page pour qu'une modification prenne effet.",
-		"sectionExperimental": "Expérimental : {count}",
+		"warning": "Les entrées de débogage interne sont des indicateurs développeur de WebKit et peuvent casser des sites.",
 		"sectionDebug": "Débogage interne : {count}",
 		"modifiedBadge": "Modifié",
 		"title": "Indicateurs WebKit",
-		"resetTitle": "Indicateurs modifiés"
+		"resetTitle": "Indicateurs modifiés",
+		"reloadNote": "Rechargez une page pour qu'un changement s'applique"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Réactiver le blocage sur ce site",

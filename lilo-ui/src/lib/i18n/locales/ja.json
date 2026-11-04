@@ -28,19 +28,15 @@
 		"terminalTheme": "テーマ",
 		"terminalThemeDescription": "各スペースの色に合わせ、すべての色を読みやすく表示します。",
 		"terminalImport": "読み込む...",
-		"terminalImportTitle": "テーマを読み込む",
-		"terminalImportDescription": "iTerm2 のカラープリセット（.itermcolors）、VS Code のカラーテーマ（.json）、または Ghostty のテーマファイル。",
 		"terminalFont": "フォント",
-		"terminalFontDescription": "JetBrains Mono や Fira Code など、合字に対応したフォントでは合字を表示します。",
+		"terminalFontDescription": "JetBrains Mono や Fira Code など、合字に対応したフォントでは合字を表示します。サイズはポイント単位で、すべてのターミナルタブに適用されます。",
 		"terminalFontSystem": "システム（SF Mono）",
 		"terminalFontSize": "サイズ",
-		"terminalFontSizeDescription": "すべてのターミナルタブに適用するポイント単位のサイズ。",
 		"terminalScrollback": "ターミナルごとの履歴",
 		"terminalScrollbackDescription": "10 MB で約100,000行です。",
 		"terminalBehaviorGroup": "動作",
 		"terminalNotify": "長いコマンドの完了を通知",
 		"terminalNotifyDescription": "実行に10秒以上かかり、別の場所で作業している場合に通知します。",
-		"terminalSleepGroup": "スリープ",
 		"terminalPreventSleepDescription": "入力待ちのコマンドや、5分間出力のないコマンドには適用しません。",
 		"terminalLidStatus": {
 			"unsigned": "署名済みの Lilo ビルドが必要です。",
@@ -79,7 +75,7 @@
 			"pride": "プライド",
 			"clay": "クレイ"
 		},
-		"importBrowsersAction": "読み込む",
+		"importBrowsersAction": "読み込む...",
 		"passwordManagerAction": "選択",
 		"passwordManagerChange": "変更",
 		"replayOnboardingAction": "もう一度見る",
@@ -146,14 +142,14 @@
 			"privacy": "プライバシー",
 			"extensions": "機能拡張",
 			"advanced": "詳細",
-			"agents": "AI エージェント"
+			"agents": "エージェント"
 		},
 		"groups": {
 			"browser": "ブラウザ",
 			"search": "検索",
 			"downloads": "ダウンロード",
 			"theme": "テーマ",
-			"tabLayout": "タブ",
+			"tabLayout": "レイアウト",
 			"pages": "ページ",
 			"spaces": "スペース",
 			"playback": "再生",
@@ -161,21 +157,20 @@
 			"contentBlocking": "コンテンツブロック",
 			"protection": "保護",
 			"browsingData": "閲覧データ",
-			"tools": "ツール",
+			"tools": "開発ツール",
 			"permissions": "アクセス権",
 			"zoom": "ズーム",
 			"siteData": "データ",
 			"sites": "サイト（{count}）",
 			"updates": "アップデート",
 			"passwords": "パスワード",
-			"agentAccess": "アクセス",
-			"agentClients": "エージェント",
+			"agentAccess": "Lilo を使うエージェント",
+			"agentClients": "Lilo を使えるアプリ",
 			"lilo": "Lilo",
 			"tabsWindows": "タブとウインドウ",
 			"sitePermissions": "サイトのアクセス権",
 			"profiles": "プロファイル",
 			"otherAppLinks": "ほかのアプリからのリンク",
-			"blockerCategories": "Lilo がブロックするもの",
 			"blockerExceptions": "リストと例外",
 			"agentConversations": "会話"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "閲覧データを消去",
 				"description": "指定した期間の履歴、Cookie、キャッシュ、サイトデータ。",
-				"keywords": "履歴 Cookie キャッシュ 削除 消去"
+				"keywords": "履歴 Cookie キャッシュ 削除 消去",
+				"action": "閲覧データを消去..."
 			},
 			"loadUnpacked": {
 				"title": "パッケージ化されていない機能拡張を読み込む",
@@ -470,8 +466,8 @@
 				"keywords": "パスワード ロック フォルダ プライバシー"
 			},
 			"agentControl": {
-				"title": "AI エージェントに Lilo の使用を許可",
-				"description": "Claude Code、Codex、Cursor は専用のエージェントスペースで作業します。Lilo 自体に AI は搭載していません。",
+				"title": "エージェントに Lilo の使用を許可",
+				"description": "Claude Code、Codex、Cursor は専用のエージェントスペースで作業します。",
 				"keywords": "エージェント AI MCP Claude Codex Cursor 自動化 リモート 操作"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "エージェントとの会話",
-				"description": "Claude Code、Codex、Gemini などのエージェントと、ご自身のサブスクリプションでタブ内で会話できます。Lilo 自体に AI は搭載していません。",
+				"description": "Claude Code、Codex、Gemini などのエージェントと、ご自身のサブスクリプションでタブ内で会話できます。",
 				"keywords": "エージェント AI ACP チャット 会話 質問 Claude Codex Gemini Copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "構成をコピー",
 			"clientDescription": "MCP サーバーに Lilo を追加します。",
 			"clientConnected": "MCP サーバーに Lilo が追加されています。",
-			"lastSeen": "最終接続：{time}",
 			"revoke": "取り除く",
-			"readyDescription": "初回の接続時に Lilo が確認します。",
 			"status": {
 				"acting": "操作中",
 				"connected": "接続済み",
 				"allowed": "許可済み",
 				"notInstalled": "未インストール",
 				"ready": "構成済み"
-			}
+			},
+			"allowedSeen": "許可済み、最終接続 {time}",
+			"readyLine": "設定済み。初回接続時に Lilo が確認します。"
 		},
 		"navGroups": {
 			"tools": "ツール"
@@ -637,7 +633,7 @@
 			"lastProfile": "最後のプロファイルは削除できません。すべてのスペースにプロファイルが必要です。",
 			"extensionCount": "機能拡張：{count}個",
 			"extensionCountOne": "機能拡張：1個",
-			"newProfile": "新規プロファイル",
+			"newProfile": "新規プロファイル...",
 			"newProfileDetail": "新しい Cookie、サインイン、機能拡張",
 			"namePlaceholder": "プロファイル名",
 			"create": "作成",
@@ -674,7 +670,6 @@
 			"emptyPattern": "一致させるホストまたはテキストが必要です。"
 		},
 		"shortcuts": {
-			"intro": "ショートカットをクリックして、新しいキーを押してください。Esc でキャンセル、Delete でショートカットを解除します。",
 			"searchPlaceholder": "ショートカットを検索",
 			"preset": "プリセット",
 			"presetDescription": "変更したすべてのショートカットを置き換えます。",
@@ -691,9 +686,10 @@
 			"conflict": "{keys} はすでに「{name}」で使用されています。",
 			"replace": "置き換える",
 			"cancel": "キャンセル",
-			"noResults": "一致するショートカットがありません。"
+			"noResults": "一致するショートカットがありません。",
+			"note": "ショートカットをクリックして、新しいキーを押します",
+			"recordingHint": "Esc でキャンセル、Delete でショートカットなしにします。"
 		},
-		"terminalAppearanceGroup": "外観",
 		"terminalSleepMode": "コマンド実行中に Mac をスリープさせない",
 		"terminalSleepModes": {
 			"off": "オフ",
@@ -708,7 +704,36 @@
 			"requiresApproval": "承認が必要",
 			"enabled": "許可済み",
 			"notFound": "見つかりません"
-		}
+		},
+		"notes": {
+			"live": "選ぶとすぐに反映されます",
+			"spaces": {
+				"one": "{count} 個のスペース",
+				"other": "{count} 個のスペース"
+			},
+			"profiles": {
+				"one": "{count} 個のプロファイル",
+				"other": "{count} 個のプロファイル"
+			},
+			"blocking": "{total} 種類中 {count} 種類をブロック",
+			"blockingOff": "ブロックはオフです",
+			"extensions": {
+				"one": "{profile} の拡張機能 {count} 個",
+				"other": "{profile} の拡張機能 {count} 個"
+			},
+			"terminal": "変更はすべてのターミナルタブに反映されます",
+			"agents": "Lilo 自体に AI は搭載していません",
+			"advanced": "開発とテスト用",
+			"searchMatches": {
+				"one": "「{query}」に一致する設定 {count} 件",
+				"other": "「{query}」に一致する設定 {count} 件"
+			}
+		},
+		"callDock": {
+			"sidebar": "サイドバー内",
+			"floating": "フローティングウインドウ"
+		},
+		"terminalImportCaption": "読み込めるのは iTerm2 のカラープリセット (.itermcolors)、VS Code のカラーテーマ (.json)、Ghostty のテーマファイルです。"
 	},
 	"nav": {
 		"navigationControls": "ナビゲーションコントロール",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "機能拡張とそのデータを削除します。",
 		"actionFailed": "操作に失敗しました。クリックして閉じてください。",
 		"degradedTitle": "バックグラウンドが停止しています。一部の機能が動作しない場合があります。",
-		"loadUnpacked": "パッケージ化されていない機能拡張を読み込む…",
+		"loadUnpacked": "パッケージ化されていない機能拡張を読み込む...",
 		"addressBarMenu": "機能拡張",
 		"hostAccessRequestAllow": "許可",
 		"hostAccessRequestTooltip": "この機能拡張にこのサイトへのアクセスを許可",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "この機能拡張を取り除く",
 		"webStoreTitle": "Chrome ウェブストア",
 		"webStoreHint": "レビュー、詳細、開発者のページ",
-		"webStoreOpen": "開く"
+		"webStoreOpen": "開く",
+		"installed": "インストール済み"
 	},
 	"commandBar": {
 		"hintPeek": "プレビュー",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "すべてリセット",
-		"warning": "内部デバッグの項目は WebKit 開発者向けのフラグで、サイトが動作しなくなる場合があります。変更はページの再読み込み後に反映されます。",
-		"sectionExperimental": "実験的：{count}",
+		"warning": "内部デバッグの項目は WebKit 開発者向けのフラグで、サイトが動作しなくなる場合があります。",
 		"sectionDebug": "内部デバッグ：{count}",
 		"modifiedBadge": "変更済み",
 		"title": "WebKit のフラグ",
-		"resetTitle": "変更したフラグ"
+		"resetTitle": "変更したフラグ",
+		"reloadNote": "変更を反映するにはページを再読み込みしてください"
 	},
 	"urlToast": {
 		"reEnableBlocking": "このサイトでブロックを再び有効にする",

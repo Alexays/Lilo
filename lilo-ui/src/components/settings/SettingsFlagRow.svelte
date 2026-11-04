@@ -9,13 +9,16 @@
   let { flag }: { flag: BridgeFeatureFlagSnapshot } = $props();
 </script>
 
-<UiListRow title={flag.name || flag.key} description={flag.details || (flag.name ? flag.key : undefined)}>
-  {#snippet action()}
-    {#if flag.modified}<UiBadge tone="accent">{t("featureFlags.modifiedBadge")}</UiBadge>{/if}
-    <UiToggle
-      checked={flag.enabled}
-      ariaLabel={flag.name}
-      onchange={(enabled) => featureFlagsActions.setFlag(flag.key, enabled)}
-    />
-  {/snippet}
-</UiListRow>
+<!-- The key says which flag it is; the details, when WebKit has some, show on hover. -->
+<div title={flag.details || undefined}>
+  <UiListRow title={flag.name || flag.key} description={flag.name ? flag.key : flag.details || undefined}>
+    {#snippet action()}
+      {#if flag.modified}<UiBadge tone="accent">{t("featureFlags.modifiedBadge")}</UiBadge>{/if}
+      <UiToggle
+        checked={flag.enabled}
+        ariaLabel={flag.name}
+        onchange={(enabled) => featureFlagsActions.setFlag(flag.key, enabled)}
+      />
+    {/snippet}
+  </UiListRow>
+</div>

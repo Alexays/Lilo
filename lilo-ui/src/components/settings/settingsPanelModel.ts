@@ -115,96 +115,13 @@ export interface SettingModel {
   id: SettingId;
   section: SettingsSectionId;
   /** Catalog key of the group heading the setting sits under. */
-  groupKey: SettingsGroupKey;
+  groupKey: string;
   /** The switch this setting only means something under: shown while it is on. */
   requires?: SettingId;
 }
 
-/** A SettingsIcon glyph: a section's own, or one drawn for a group heading. */
-export type SettingsGlyph =
-  | SettingsSectionId
-  | "compass"
-  | "arrowOutOfBox"
-  | "magnifier"
-  | "magnifierPlus"
-  | "folder"
-  | "play"
-  | "petals"
-  | "halfCircle"
-  | "page"
-  | "stack"
-  | "person"
-  | "noSign"
-  | "hand"
-  | "lock"
-  | "clock"
-  | "arrowsCircle"
-  | "key"
-  | "moon"
-  | "grid"
-  | "code"
-  | "flag"
-  | "globe"
-  | "cylinder"
-  | "text"
-  | "command"
-  | "laptop"
-  | "microphone";
-
-export interface SettingsGroupIcon {
-  glyph: SettingsGlyph;
-  tint: "blue" | "indigo" | "purple" | "orange" | "pink" | "green" | "teal" | "gray" | "lilo" | "agents";
-}
-
-// Every titled list in Settings, by its title's catalog key. The tint says what a group is about:
-// blue the web, indigo organizing tabs and links, green protection, teal stored data, gray tools.
-export const SETTINGS_GROUP_ICONS = {
-  "settings.groups.browser": { glyph: "compass", tint: "blue" },
-  "settings.groups.otherAppLinks": { glyph: "arrowOutOfBox", tint: "indigo" },
-  "settings.groups.search": { glyph: "magnifier", tint: "orange" },
-  "settings.groups.downloads": { glyph: "folder", tint: "teal" },
-  "settings.groups.playback": { glyph: "play", tint: "pink" },
-  "settings.groups.calls": { glyph: "microphone", tint: "pink" },
-  "settings.groups.lilo": { glyph: "petals", tint: "lilo" },
-  "settings.groups.theme": { glyph: "halfCircle", tint: "purple" },
-  "settings.groups.tabLayout": { glyph: "tabs", tint: "indigo" },
-  "settings.groups.pages": { glyph: "page", tint: "blue" },
-  "settings.groups.spaces": { glyph: "stack", tint: "indigo" },
-  "settings.groups.profiles": { glyph: "person", tint: "blue" },
-  "settings.groups.tabsWindows": { glyph: "tabs", tint: "indigo" },
-  "settings.groups.contentBlocking": { glyph: "noSign", tint: "green" },
-  "settings.groups.blockerCategories": { glyph: "privacy", tint: "green" },
-  "settings.groups.blockerExceptions": { glyph: "globe", tint: "green" },
-  "settings.groups.sitePermissions": { glyph: "hand", tint: "blue" },
-  "settings.groups.protection": { glyph: "lock", tint: "green" },
-  "settings.groups.browsingData": { glyph: "clock", tint: "teal" },
-  "settings.groups.updates": { glyph: "arrowsCircle", tint: "gray" },
-  "settings.groups.passwords": { glyph: "key", tint: "green" },
-  "settings.groups.agentConversations": { glyph: "agents", tint: "purple" },
-  "settings.groups.agentAccess": { glyph: "agents", tint: "agents" },
-  "settings.groups.agentClients": { glyph: "grid", tint: "agents" },
-  "settings.groups.tools": { glyph: "code", tint: "gray" },
-  "settings.groups.permissions": { glyph: "hand", tint: "blue" },
-  "settings.groups.zoom": { glyph: "magnifierPlus", tint: "blue" },
-  "settings.groups.siteData": { glyph: "cylinder", tint: "teal" },
-  "settings.groups.sites": { glyph: "globe", tint: "blue" },
-  "settings.blockerSites.listTitle": { glyph: "globe", tint: "green" },
-  "settings.terminalAppearanceGroup": { glyph: "halfCircle", tint: "purple" },
-  "settings.terminalBehaviorGroup": { glyph: "terminal", tint: "gray" },
-  "settings.terminalSleepGroup": { glyph: "moon", tint: "indigo" },
-  "settings.terminalLidGroup": { glyph: "laptop", tint: "indigo" },
-  // The Shortcuts page titles each list with a menu's name, so they all share one tile.
-  "settings.shortcuts": { glyph: "command", tint: "indigo" },
-  "featureFlags.title": { glyph: "flag", tint: "gray" },
-  "featureFlags.sectionExperimental": { glyph: "advanced", tint: "gray" },
-  "extensions.detailDescription": { glyph: "text", tint: "gray" },
-  "extensions.detailCapabilities": { glyph: "extensions", tint: "gray" },
-  "extensions.detailPermissions": { glyph: "hand", tint: "blue" },
-  "extensions.detailShortcuts": { glyph: "command", tint: "indigo" },
-  "extensions.detailSiteAccess": { glyph: "globe", tint: "blue" },
-} satisfies Record<string, SettingsGroupIcon>;
-
-export type SettingsGroupKey = keyof typeof SETTINGS_GROUP_ICONS;
+/** A SettingsIcon glyph: a section's own, or one drawn for a navigation list. */
+export type SettingsGlyph = SettingsSectionId | "halfCircle" | "page" | "stack" | "clock" | "grid" | "globe" | "arrowOutOfBox" | "folder" | "play";
 
 /** Boolean settings: stored key and the value an unset key means. */
 export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback: boolean }>> = {
@@ -279,11 +196,11 @@ export const SETTINGS: SettingModel[] = [
   { id: "littleWindowHotKey", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "peekPinnedTabLinks", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "contentBlocker", section: "privacy", groupKey: "settings.groups.contentBlocking" },
-  { id: "blockerTrackers", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
-  { id: "blockerCookieNotices", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
-  { id: "blockerBadware", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
-  { id: "blockerAnnoyances", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
-  { id: "blockerRegional", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
+  { id: "blockerTrackers", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerCookieNotices", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerBadware", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerAnnoyances", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerRegional", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
   { id: "filterLists", section: "privacy", groupKey: "settings.groups.blockerExceptions", requires: "contentBlocker" },
   { id: "blockerSites", section: "privacy", groupKey: "settings.groups.blockerExceptions", requires: "contentBlocker" },
   { id: "blockerAllowedDomains", section: "privacy", groupKey: "settings.groups.blockerExceptions", requires: "contentBlocker" },
@@ -323,7 +240,7 @@ export function settingDescriptionKey(id: SettingId): string {
 }
 
 interface SettingsGroupModel {
-  groupKey: SettingsGroupKey;
+  groupKey: string;
   settings: SettingId[];
 }
 

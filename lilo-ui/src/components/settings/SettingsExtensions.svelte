@@ -14,7 +14,6 @@
   import { closeSettingsShell, closeSettingsSubpage, openSettingsSubpage } from "../../stores/panels.svelte";
   import { getActiveProfileId, getProfileById, getProfiles } from "../../stores/profiles.svelte";
   import UiConfirmModal from "../ui/UiConfirmModal.svelte";
-  import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
   import UiSelect from "../ui/UiSelect.svelte";
@@ -76,8 +75,8 @@
   {#if profiles.length > 1}
     <UiInsetList>
       <UiListRow title={t("extensions.profileTitle")} description={t("extensions.profileHint")}>
-        {#snippet icon()}<span class="profile-dot" style:background={shownProfile?.color}></span>{/snippet}
         {#snippet action()}
+          <span class="profile-dot" style:background={shownProfile?.color} aria-hidden="true"></span>
           <UiSelect
             value={shownProfile?.id ?? ""}
             options={profiles.map((profile) => ({ value: profile.id, label: profile.name }))}
@@ -88,21 +87,25 @@
       </UiListRow>
     </UiInsetList>
   {/if}
-  {#if extensions}
-    <ExtensionList
-      {extensions}
-      onopen={(id) => openSettingsSubpage("extensions", `extension:${id}`)}
-      onmenu={(id, anchor) =>
-        extensionActions.showContextMenu(id, anchor.x, anchor.y, anchor.width, anchor.height, undefined, otherProfileId || undefined)}
-    />
-  {/if}
-  <div class="add-row">
-    <!-- The store installs into the profile of the window it opens in. -->
-    {#if otherProfileId}
-      <span class="add-hint">{t("extensions.addInstallsIn", { profile: getProfileById(getActiveProfileId())?.name ?? "" })}</span>
+  <UiInsetList title={t("extensions.installed")} boxed={false}>
+    {#snippet accessory()}
+      <span class="add-row">
+        <!-- The store installs into the profile of the window it opens in. -->
+        {#if otherProfileId}
+          <span>{t("extensions.addInstallsIn", { profile: getProfileById(getActiveProfileId())?.name ?? "" })}</span>
+        {/if}
+        <button class="add-button" type="button" onclick={addExtensions}>{t("extensions.addExtensions")}</button>
+      </span>
+    {/snippet}
+    {#if extensions}
+      <ExtensionList
+        {extensions}
+        onopen={(id) => openSettingsSubpage("extensions", `extension:${id}`)}
+        onmenu={(id, anchor) =>
+          extensionActions.showContextMenu(id, anchor.x, anchor.y, anchor.width, anchor.height, undefined, otherProfileId || undefined)}
+      />
     {/if}
-    <UiButton onclick={addExtensions}>{t("extensions.addExtensions")}</UiButton>
-  </div>
+  </UiInsetList>
   <SettingsGroups section="extensions" />
 {/if}
 
@@ -118,16 +121,30 @@
 <style>
   .add-row {
     display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 10px;
+    align-items: baseline;
+    gap: var(--space-12);
   }
 
-  .add-hint {
-    min-width: 0;
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+  /* The list's main action: a text button at the end of its header. */
+  .add-button {
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: none;
+    color: var(--accent-ink);
+    font-family: inherit;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+  }
+
+  .add-button:hover {
+    text-decoration: underline;
+  }
+
+  .add-button:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
   }
 
   .profile-dot {

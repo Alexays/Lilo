@@ -4,7 +4,6 @@
   import { getFeatureFlags } from "../../stores/settings.svelte";
   import SettingsFlagRow from "./SettingsFlagRow.svelte";
   import SettingsGroups from "./SettingsGroups.svelte";
-  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiLinkRow from "../ui/UiLinkRow.svelte";
@@ -20,7 +19,7 @@
 <SettingsGroups section="advanced" />
 
 <UiInsetList title={t("featureFlags.title")}>
-  {#snippet icon()}<SettingsGroupIcon group="featureFlags.title" />{/snippet}
+  {#snippet accessory()}{t("featureFlags.reloadNote")}{/snippet}
   <UiListRow title={t("featureFlags.resetTitle")} description={t("featureFlags.warning")}>
     {#snippet action()}
       <UiButton disabled={modifiedCount === 0} onclick={() => featureFlagsActions.resetAll()}>
@@ -28,18 +27,9 @@
       </UiButton>
     {/snippet}
   </UiListRow>
-</UiInsetList>
-
-{#if experimental.length > 0}
-  <UiInsetList title={t("featureFlags.sectionExperimental", { count: experimental.length })}>
-    {#snippet icon()}<SettingsGroupIcon group="featureFlags.sectionExperimental" />{/snippet}
-    {#each experimental as flag (flag.key)}<SettingsFlagRow {flag} />{/each}
-  </UiInsetList>
-{/if}
-
-<!-- Internal WebKit switches can break sites: folded away until asked for. -->
-{#if debug.length > 0}
-  <UiInsetList>
+  {#each experimental as flag (flag.key)}<SettingsFlagRow {flag} />{/each}
+  <!-- Internal WebKit switches can break sites: folded away until asked for. -->
+  {#if debug.length > 0}
     <UiLinkRow
       title={t("featureFlags.sectionDebug", { count: debug.length })}
       expanded={showDebug}
@@ -48,5 +38,5 @@
     {#if showDebug}
       {#each debug as flag (flag.key)}<SettingsFlagRow {flag} />{/each}
     {/if}
-  </UiInsetList>
-{/if}
+  {/if}
+</UiInsetList>

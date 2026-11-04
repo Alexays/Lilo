@@ -32,11 +32,9 @@
   .ui-link-row {
     display: block;
     width: 100%;
-    padding: 0 var(--space-8);
-    margin: 0 calc(-1 * var(--space-8));
-    box-sizing: content-box;
+    padding: 0;
     border: 0;
-    border-radius: var(--radius-md);
+    border-radius: 0;
     background: transparent;
     color: inherit;
     font: inherit;

@@ -14,6 +14,8 @@
     eyebrow?: string;
     title: string;
     description?: string;
+    /** A short count or note at the right of the title. */
+    note?: string;
     /** Shows a back control before the title (drill-in pages). */
     onback?: () => void;
     /** A navigation column on the card's left, told whether it is narrowed to icons; the content centers beside it. */
@@ -28,6 +30,7 @@
     eyebrow,
     title,
     description,
+    note,
     onback,
     nav,
     children,
@@ -83,6 +86,7 @@
           <h2 class="ui-shell-frame-title">{title}</h2>
           {#if description}<p class="ui-shell-frame-description">{description}</p>{/if}
         </div>
+        {#if note}<p class="ui-shell-frame-note">{note}</p>{/if}
       </header>
 
       <main class="ui-shell-frame-main">
@@ -133,11 +137,10 @@
   }
 
   .with-nav .ui-shell-frame-scroll {
-    padding: var(--space-24) var(--space-32) var(--space-32);
+    padding: 0 var(--space-32) var(--space-32);
   }
 
   .with-nav .ui-shell-frame-header {
-    top: calc(-1 * var(--space-24));
     padding-top: var(--space-24);
   }
 
@@ -150,7 +153,7 @@
   .ui-shell-frame-scroll {
     height: 100%;
     overflow-y: auto;
-    padding: 28px 34px 42px;
+    padding: 0 40px 40px;
   }
 
   .ui-shell-frame-header,
@@ -160,13 +163,13 @@
 
   .ui-shell-frame-header {
     position: sticky;
-    top: -28px;
+    top: 0;
     z-index: 1;
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 14px;
-    padding: 28px 0 10px;
+    margin-bottom: 12px;
+    padding: 28px 0 8px;
     background: color-mix(in srgb, var(--bg-primary) 96%, var(--sidebar-bg));
   }
 
@@ -229,6 +232,15 @@
     font-weight: var(--font-weight-semibold);
   }
 
+  .ui-shell-frame-note {
+    flex: none;
+    max-width: 50%;
+    margin: 0 0 0 auto;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    text-align: right;
+  }
+
   .ui-shell-frame-description {
     margin: 0;
     max-width: 58ch;
@@ -239,11 +251,10 @@
 
   @media (max-width: 720px) {
     .ui-shell-frame-scroll {
-      padding: 20px 18px 30px;
+      padding: 0 18px 30px;
     }
 
     .ui-shell-frame-header {
-      top: -20px;
       padding-top: 20px;
     }
   }

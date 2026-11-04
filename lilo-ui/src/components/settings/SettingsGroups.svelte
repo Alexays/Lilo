@@ -5,14 +5,20 @@
   import { isAgentsSpace } from "../../stores/agents.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import SettingRow from "./SettingRow.svelte";
-  import { isToggleOn, parseBlockerSites, sectionGroups } from "./settingsPanelModel";
+  import { isToggleOn, parseBlockerSites, SETTINGS, type SettingId, sectionGroups } from "./settingsPanelModel";
   import SettingsAgentRows from "./SettingsAgentRows.svelte";
   import SettingsProfiles from "./SettingsProfiles.svelte";
   import SettingsSpaceRow from "./SettingsSpaceRow.svelte";
-  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
 
   let { section }: { section: SettingsSectionId } = $props();
+
+  // Visual choices that share a row two by two, so the page holds on one screen.
+  const PAIRED: Partial<Record<SettingId, SettingId>> = {
+    theme: "appIcon",
+    tabPosition: "addressPlacement",
+    defaultZoom: "minimumFontSize",
+  };
 
   // A setting under a switch shows only while that switch is on; the always-allowed sites while there are some.
   const groups = $derived(
@@ -23,24 +29,67 @@
         (setting.id !== "agentAlwaysAllowed" || parseBlockerSites(getSetting("agentAlwaysAllowedSites", "")).length > 0),
     ),
   );
+
+  function rows(settings: SettingId[]): SettingId[][] {
+    const result: SettingId[][] = [];
+    for (const id of settings) {
+      const previous = result.at(-1);
+      if (previous?.length === 1 && PAIRED[previous[0]] === id) previous.push(id);
+      else result.push([id]);
+    }
+    return result;
+  }
+
+  // Indented under its switch when that switch sits in the same box.
+  function nested(id: SettingId, settings: SettingId[]): boolean {
+    const requires = SETTINGS.find((setting) => setting.id === id)?.requires;
+    return !!requires && settings.includes(requires);
+  }
 </script>
 
 {#each groups as group (group.groupKey)}
-  <UiInsetList title={t(group.groupKey)}>
-    {#snippet icon()}<SettingsGroupIcon group={group.groupKey} />{/snippet}
-    {#if group.groupKey === "settings.groups.spaces"}
-      <!-- The Agents space is Lilo's, for agents: like the profiles page, the list leaves it out. -->
-      {#each getSpaces().filter((space) => !isAgentsSpace(space.id)) as space (space.id)}<SettingsSpaceRow {space} />{/each}
-    {:else if group.groupKey === "settings.groups.profiles"}
+  {#if group.groupKey === "settings.groups.profiles"}
+    <!-- Cards, not rows: each holds its own menu, and the last one creates a profile. -->
+    <UiInsetList title={t(group.groupKey)} boxed={false}>
       <SettingsProfiles />
-    {:else if group.groupKey === "settings.groups.agentClients"}
-      <SettingsAgentRows />
-    {/if}
-    <!-- The profile cards hold their own "New profile" control, the agent rows their "Other agents" row. -->
-    {#each group.groupKey === "settings.groups.profiles" || group.groupKey === "settings.groups.agentClients" ? [] : group.settings as id (id)}
-      <div class="setting-row" data-setting-id={id}>
-        <SettingRow {id} />
-      </div>
-    {/each}
-  </UiInsetList>
+    </UiInsetList>
+  {:else if group.groupKey === "settings.groups.agentClients"}
+    <SettingsAgentRows title={t(group.groupKey)} />
+  {:else}
+    <UiInsetList title={t(group.groupKey)}>
+      {#if group.groupKey === "settings.groups.spaces"}
+        <!-- The Agents space is Lilo's, for agents: like the profiles page, the list leaves it out. -->
+        {#each getSpaces().filter((space) => !isAgentsSpace(space.id)) as space (space.id)}<SettingsSpaceRow {space} />{/each}
+      {/if}
+      {#each rows(group.settings) as row (row[0])}
+        {#if row.length === 2}
+          <div class="setting-pair">
+            {#each row as id (id)}
+              <div class="setting-row" data-setting-id={id}><SettingRow {id} /></div>
+            {/each}
+          </div>
+        {:else}
+          <div class="setting-row" class:nested={nested(row[0], group.settings)} data-setting-id={row[0]}>
+            <SettingRow id={row[0]} />
+          </div>
+        {/if}
+      {/each}
+    </UiInsetList>
+  {/if}
 {/each}
+
+<style>
+  .setting-pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  /* A hairline between the two halves. */
+  .setting-pair > .setting-row + .setting-row {
+    box-shadow: -1px 0 var(--separator);
+  }
+
+  .nested :global(.ui-list-row) {
+    padding-left: 38px;
+  }
+</style>

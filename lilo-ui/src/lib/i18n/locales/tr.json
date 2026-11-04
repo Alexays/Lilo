@@ -28,19 +28,15 @@
 		"terminalTheme": "Tema",
 		"terminalThemeDescription": "Lilo her Alanın rengini kullanır ve üzerindeki tüm renklerin okunaklı kalmasını sağlar.",
 		"terminalImport": "İçe Aktar...",
-		"terminalImportTitle": "Tema içe aktar",
-		"terminalImportDescription": "iTerm2 renk önayarı (.itermcolors), VS Code renk teması (.json) veya Ghostty tema dosyası.",
 		"terminalFont": "Font",
-		"terminalFontDescription": "JetBrains Mono veya Fira Code gibi bitişik harfleri destekleyen fontlarda bunlar gösterilir.",
+		"terminalFontDescription": "JetBrains Mono veya Fira Code gibi bitişik harfleri destekleyen fontlarda bunlar gösterilir. Boyut punto cinsinden, tüm terminal sekmeleri için.",
 		"terminalFontSystem": "Sistem (SF Mono)",
 		"terminalFontSize": "Boyut",
-		"terminalFontSizeDescription": "Tüm terminal sekmeleri için punto cinsinden.",
 		"terminalScrollback": "Terminal başına geçmiş",
 		"terminalScrollbackDescription": "10 MB yaklaşık 100.000 satırdır.",
 		"terminalBehaviorGroup": "Davranış",
 		"terminalNotify": "Uzun süren bir komut bittiğinde bildir",
 		"terminalNotifyDescription": "10 saniyeden uzun sürdüğünde ve başka bir yerdeyseniz.",
-		"terminalSleepGroup": "Uyku",
 		"terminalPreventSleepDescription": "Yanıtınızı bekleyen veya 5 dakikadır çıktı vermeyen komutlar için geçerli değildir.",
 		"terminalLidStatus": {
 			"unsigned": "İmzalanmış bir Lilo derlemesi gerektirir.",
@@ -79,7 +75,7 @@
 			"pride": "Onur",
 			"clay": "Kil"
 		},
-		"importBrowsersAction": "İçe Aktar",
+		"importBrowsersAction": "İçe Aktar...",
 		"passwordManagerAction": "Seç",
 		"passwordManagerChange": "Değiştir",
 		"replayOnboardingAction": "Yeniden Göster",
@@ -141,19 +137,19 @@
 			"terminal": "Terminal",
 			"general": "Genel",
 			"appearance": "Görünüm",
-			"tabs": "Sekmeler ve alanlar",
+			"tabs": "Sekmeler ve Alanlar",
 			"media": "Ses ve video",
 			"privacy": "Gizlilik",
 			"extensions": "Genişletmeler",
 			"advanced": "İleri Düzey",
-			"agents": "Yapay zekâ ajanları"
+			"agents": "Ajanlar"
 		},
 		"groups": {
 			"browser": "Tarayıcı",
 			"search": "Arama",
 			"downloads": "İndirilenler",
 			"theme": "Tema",
-			"tabLayout": "Sekmeler",
+			"tabLayout": "Yerleşim",
 			"pages": "Sayfalar",
 			"spaces": "Alanlar",
 			"playback": "Oynatma",
@@ -161,21 +157,20 @@
 			"contentBlocking": "İçerik engelleme",
 			"protection": "Koruma",
 			"browsingData": "Tarama verileri",
-			"tools": "Araçlar",
+			"tools": "Geliştirici araçları",
 			"permissions": "İzinler",
 			"zoom": "Büyütme",
 			"siteData": "Veriler",
 			"sites": "Siteler ({count})",
 			"updates": "Güncellemeler",
 			"passwords": "Parolalar",
-			"agentAccess": "Erişim",
-			"agentClients": "Ajanlar",
+			"agentAccess": "Lilo'yu kullanan ajanlar",
+			"agentClients": "Lilo'yu kullanabilen uygulamalar",
 			"lilo": "Lilo",
 			"tabsWindows": "Sekmeler ve pencereler",
 			"sitePermissions": "Site izinleri",
 			"profiles": "Profiller",
 			"otherAppLinks": "Diğer uygulamalardan gelen bağlantılar",
-			"blockerCategories": "Lilo'nun engelledikleri",
 			"blockerExceptions": "Listeler ve istisnalar",
 			"agentConversations": "Sohbetler"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Tarama verilerini temizle",
 				"description": "Bir zaman aralığındaki geçmiş, çerezler, önbellek ve site verileri.",
-				"keywords": "geçmiş çerez önbellek sil temizle"
+				"keywords": "geçmiş çerez önbellek sil temizle",
+				"action": "Tarama Verilerini Temizle..."
 			},
 			"loadUnpacked": {
 				"title": "Paketten çıkarılmış genişletme yükle",
@@ -470,8 +466,8 @@
 				"keywords": "parola kilit klasör gizlilik"
 			},
 			"agentControl": {
-				"title": "Yapay zekâ ajanları Lilo'yu kullanabilsin",
-				"description": "Claude Code, Codex veya Cursor, kendilerine ait Ajanlar alanında çalışır. Lilo'nun kendi yapay zekâsı yoktur.",
+				"title": "Ajanlar Lilo'yu kullanabilsin",
+				"description": "Claude Code, Codex veya Cursor, kendilerine ait Ajanlar alanında çalışır.",
 				"keywords": "ajan yapay zekâ mcp claude codex cursor otomasyon uzaktan denetim"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Ajanlarınızla sohbetler",
-				"description": "Claude Code, Codex, Gemini ve diğer ajanlarla kendi aboneliklerinizle bir sekmede konuşun. Lilo'nun kendi yapay zekâsı yoktur.",
+				"description": "Claude Code, Codex, Gemini ve diğer ajanlarla kendi aboneliklerinizle bir sekmede konuşun.",
 				"keywords": "ajan yapay zeka ai acp sohbet sor claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "Yapılandırmayı kopyala",
 			"clientDescription": "Lilo'yu istemcinin MCP sunucularına ekler.",
 			"clientConnected": "Lilo, istemcinin MCP sunucularında bulunuyor.",
-			"lastSeen": "Son görülme: {time}",
 			"revoke": "Kaldır",
-			"readyDescription": "Lilo ilk bağlantıda size sorar.",
 			"status": {
 				"acting": "İşlem yapıyor",
 				"connected": "Bağlı",
 				"allowed": "İzin verildi",
 				"notInstalled": "Yüklü değil",
 				"ready": "Yapılandırıldı"
-			}
+			},
+			"allowedSeen": "İzin verildi, son görülme {time}",
+			"readyLine": "Yapılandırıldı. Lilo ilk bağlantıda size sorar."
 		},
 		"navGroups": {
 			"tools": "Araçlar"
@@ -637,7 +633,7 @@
 			"lastProfile": "Son profiliniz kalır. Her alanın bir profile ihtiyacı vardır.",
 			"extensionCount": "{count} genişletme",
 			"extensionCountOne": "1 genişletme",
-			"newProfile": "Yeni profil",
+			"newProfile": "Yeni profil...",
 			"newProfileDetail": "Yeni çerezler, oturumlar ve genişletmeler",
 			"namePlaceholder": "Profil adı",
 			"create": "Oluştur",
@@ -674,7 +670,6 @@
 			"emptyPattern": "Kuralın eşleşeceği bir sunucu adı veya metin gerekir."
 		},
 		"shortcuts": {
-			"intro": "Bir kestirmeyi tıklayıp yeni tuşlara basın. Esc vazgeçer, Delete ise işlemin kestirmesini kaldırır.",
 			"searchPlaceholder": "Kestirmelerde ara",
 			"preset": "Önayar",
 			"presetDescription": "Değiştirdiğiniz tüm kestirmelerin yerini alır.",
@@ -691,9 +686,10 @@
 			"conflict": "{keys}, zaten {name} tarafından kullanılıyor.",
 			"replace": "Değiştir",
 			"cancel": "Vazgeç",
-			"noResults": "Eşleşen kestirme yok."
+			"noResults": "Eşleşen kestirme yok.",
+			"note": "Bir kısayola tıklayın, sonra yeni tuşlara basın",
+			"recordingHint": "Esc iptal eder, Delete eylemi kısayolsuz bırakır."
 		},
-		"terminalAppearanceGroup": "Görünüm",
 		"terminalSleepMode": "Komutlar çalışırken Mac'i uyanık tut",
 		"terminalSleepModes": {
 			"off": "Kapalı",
@@ -708,7 +704,36 @@
 			"requiresApproval": "Onay gerekiyor",
 			"enabled": "İzin verildi",
 			"notFound": "Eksik"
-		}
+		},
+		"notes": {
+			"live": "Değişiklikler seçtiğiniz anda uygulanır",
+			"spaces": {
+				"one": "{count} alan",
+				"other": "{count} alan"
+			},
+			"profiles": {
+				"one": "{count} profil",
+				"other": "{count} profil"
+			},
+			"blocking": "{total} türden {count} tanesi engelleniyor",
+			"blockingOff": "Engelleme kapalı",
+			"extensions": {
+				"one": "{profile} içinde {count} uzantı",
+				"other": "{profile} içinde {count} uzantı"
+			},
+			"terminal": "Değişiklikler her terminal sekmesine uygulanır",
+			"agents": "Lilo'nun kendi yapay zekâsı yoktur",
+			"advanced": "Geliştirme ve test için",
+			"searchMatches": {
+				"one": "\"{query}\" ile eşleşen {count} ayar",
+				"other": "\"{query}\" ile eşleşen {count} ayar"
+			}
+		},
+		"callDock": {
+			"sidebar": "Kenar çubuğunda",
+			"floating": "Yüzen pencere"
+		},
+		"terminalImportCaption": "İçe aktarma bir iTerm2 renk ön ayarı (.itermcolors), bir VS Code renk teması (.json) veya bir Ghostty tema dosyası alır."
 	},
 	"nav": {
 		"navigationControls": "Gezinme denetimleri",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "Genişletme ve verileri silinecek.",
 		"actionFailed": "İşlem başarısız oldu. Kapatmak için tıklayın.",
 		"degradedTitle": "Arka plan durdu: Bazı özellikler çalışmayabilir.",
-		"loadUnpacked": "Paketten çıkarılmış genişletme yükle…",
+		"loadUnpacked": "Paketten çıkarılmış genişletme yükle...",
 		"addressBarMenu": "Genişletmeler",
 		"hostAccessRequestAllow": "İzin Ver",
 		"hostAccessRequestTooltip": "Bu genişletmenin bu siteye erişmesine izin ver",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "Bu genişletmeyi kaldır",
 		"webStoreTitle": "Chrome Web Mağazası",
 		"webStoreHint": "Yorumlar, ayrıntılar ve geliştiricinin sayfası",
-		"webStoreOpen": "Aç"
+		"webStoreOpen": "Aç",
+		"installed": "Yüklü"
 	},
 	"commandBar": {
 		"hintPeek": "Önizle",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "Tümünü sıfırla",
-		"warning": "İç hata ayıklama seçenekleri WebKit geliştirici bayraklarıdır ve siteleri bozabilir. Değişikliğin etkili olması için sayfayı yeniden yükleyin.",
-		"sectionExperimental": "Deneysel: {count}",
+		"warning": "İç hata ayıklama seçenekleri WebKit geliştirici bayraklarıdır ve siteleri bozabilir.",
 		"sectionDebug": "İç Hata Ayıklama: {count}",
 		"modifiedBadge": "Değiştirildi",
 		"title": "WebKit bayrakları",
-		"resetTitle": "Değiştirilen bayraklar"
+		"resetTitle": "Değiştirilen bayraklar",
+		"reloadNote": "Değişikliğin geçerli olması için sayfayı yeniden yükleyin"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Bu sitede engellemeyi yeniden aç",

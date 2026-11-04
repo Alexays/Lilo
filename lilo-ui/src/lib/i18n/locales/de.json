@@ -28,19 +28,15 @@
 		"terminalTheme": "Design",
 		"terminalThemeDescription": "Lilo übernimmt die Farbe des jeweiligen Spaces und sorgt dafür, dass alle Farben darauf lesbar bleiben.",
 		"terminalImport": "Importieren...",
-		"terminalImportTitle": "Design importieren",
-		"terminalImportDescription": "Eine iTerm2-Farbvorlage (.itermcolors), ein VS Code-Farbdesign (.json) oder eine Ghostty-Designdatei.",
 		"terminalFont": "Schrift",
-		"terminalFontDescription": "Ligaturen werden angezeigt, wenn die Schrift sie unterstützt, etwa JetBrains Mono oder Fira Code.",
+		"terminalFontDescription": "Ligaturen werden angezeigt, wenn die Schrift sie unterstützt, etwa JetBrains Mono oder Fira Code. Größe in Punkt, für jeden Terminal-Tab.",
 		"terminalFontSystem": "System (SF Mono)",
 		"terminalFontSize": "Größe",
-		"terminalFontSizeDescription": "In Punkt, für jeden Terminal-Tab.",
 		"terminalScrollback": "Verlauf pro Terminal",
 		"terminalScrollbackDescription": "10 MB entsprechen etwa 100.000 Zeilen.",
 		"terminalBehaviorGroup": "Verhalten",
 		"terminalNotify": "Benachrichtigen, wenn ein langer Befehl beendet ist",
 		"terminalNotifyDescription": "Nach 10 Sekunden, wenn du anderswo bist.",
-		"terminalSleepGroup": "Ruhezustand",
 		"terminalPreventSleepDescription": "Nicht bei Befehlen, die auf dich warten oder seit 5 Minuten keine Ausgabe erzeugen.",
 		"terminalLidStatus": {
 			"unsigned": "Erfordert eine signierte Version von Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Pride",
 			"clay": "Ton"
 		},
-		"importBrowsersAction": "Importieren",
+		"importBrowsersAction": "Importieren...",
 		"passwordManagerAction": "Auswählen",
 		"passwordManagerChange": "Ändern",
 		"replayOnboardingAction": "Wiederholen",
@@ -146,14 +142,14 @@
 			"privacy": "Datenschutz",
 			"extensions": "Erweiterungen",
 			"advanced": "Erweitert",
-			"agents": "KI-Agenten"
+			"agents": "Agenten"
 		},
 		"groups": {
 			"browser": "Browser",
 			"search": "Suche",
 			"downloads": "Downloads",
 			"theme": "Design",
-			"tabLayout": "Tabs",
+			"tabLayout": "Layout",
 			"pages": "Seiten",
 			"spaces": "Spaces",
 			"playback": "Wiedergabe",
@@ -161,21 +157,20 @@
 			"contentBlocking": "Inhaltsblocker",
 			"protection": "Schutz",
 			"browsingData": "Browserdaten",
-			"tools": "Werkzeuge",
+			"tools": "Entwicklerwerkzeuge",
 			"permissions": "Berechtigungen",
 			"zoom": "Zoom",
 			"siteData": "Daten",
 			"sites": "Websites ({count})",
 			"updates": "Updates",
 			"passwords": "Passwörter",
-			"agentAccess": "Zugriff",
-			"agentClients": "Agenten",
+			"agentAccess": "Agenten, die Lilo nutzen",
+			"agentClients": "Apps, die Lilo nutzen können",
 			"lilo": "Lilo",
 			"tabsWindows": "Tabs und Fenster",
 			"sitePermissions": "Websiteberechtigungen",
 			"profiles": "Profile",
 			"otherAppLinks": "Links aus anderen Apps",
-			"blockerCategories": "Was Lilo blockiert",
 			"blockerExceptions": "Listen und Ausnahmen",
 			"agentConversations": "Unterhaltungen"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Browserdaten löschen",
 				"description": "Verlauf, Cookies, Cache und Websitedaten für einen Zeitraum.",
-				"keywords": "verlauf cookies cache löschen entfernen"
+				"keywords": "verlauf cookies cache löschen entfernen",
+				"action": "Browserdaten löschen ..."
 			},
 			"loadUnpacked": {
 				"title": "Entpackte Erweiterung laden",
@@ -470,8 +466,8 @@
 				"keywords": "passwort sperre ordner datenschutz"
 			},
 			"agentControl": {
-				"title": "KI-Agenten die Nutzung von Lilo erlauben",
-				"description": "Claude Code, Codex oder Cursor arbeiten in ihrem eigenen Space „Agenten“. Lilo hat keine eigene KI.",
+				"title": "Agenten die Nutzung von Lilo erlauben",
+				"description": "Claude Code, Codex oder Cursor arbeiten in ihrem eigenen Space „Agenten“.",
 				"keywords": "agent ki mcp claude codex cursor automatisierung fernsteuerung"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Unterhaltungen mit deinen Agenten",
-				"description": "Sprich in einem Tab mit Claude Code, Codex, Gemini und anderen Agenten, mit deinen eigenen Abos. Lilo hat keine eigene KI.",
+				"description": "Sprich in einem Tab mit Claude Code, Codex, Gemini und anderen Agenten, mit deinen eigenen Abos.",
 				"keywords": "agent ki acp chat unterhaltung fragen claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "Konfiguration kopieren",
 			"clientDescription": "Fügt Lilo zu seinen MCP-Servern hinzu.",
 			"clientConnected": "Lilo ist in seinen MCP-Servern eingetragen.",
-			"lastSeen": "Zuletzt gesehen {time}",
 			"revoke": "Entfernen",
-			"readyDescription": "Lilo fragt dich beim ersten Verbinden.",
 			"status": {
 				"acting": "Handelt gerade",
 				"connected": "Verbunden",
 				"allowed": "Erlaubt",
 				"notInstalled": "Nicht installiert",
 				"ready": "Konfiguriert"
-			}
+			},
+			"allowedSeen": "Erlaubt, zuletzt gesehen {time}",
+			"readyLine": "Eingerichtet. Lilo fragt dich bei der ersten Verbindung."
 		},
 		"navGroups": {
 			"tools": "Werkzeuge"
@@ -637,7 +633,7 @@
 			"lastProfile": "Dein letztes Profil bleibt erhalten. Jeder Space benötigt eines.",
 			"extensionCount": "{count} Erweiterungen",
 			"extensionCountOne": "1 Erweiterung",
-			"newProfile": "Neues Profil",
+			"newProfile": "Neues Profil...",
 			"newProfileDetail": "Neue Cookies, Anmeldungen und Erweiterungen",
 			"namePlaceholder": "Profilname",
 			"create": "Erstellen",
@@ -674,7 +670,6 @@
 			"emptyPattern": "Eine Regel benötigt einen Host oder einen Text zum Abgleichen."
 		},
 		"shortcuts": {
-			"intro": "Klicke auf einen Kurzbefehl und drücke dann die neuen Tasten. Esc bricht ab, die Löschtaste entfernt den Kurzbefehl der Aktion.",
 			"searchPlaceholder": "Kurzbefehle durchsuchen",
 			"preset": "Vorlage",
 			"presetDescription": "Ersetzt jeden von dir geänderten Kurzbefehl.",
@@ -691,9 +686,10 @@
 			"conflict": "{keys} wird bereits von {name} verwendet.",
 			"replace": "Ersetzen",
 			"cancel": "Abbrechen",
-			"noResults": "Keine passenden Kurzbefehle."
+			"noResults": "Keine passenden Kurzbefehle.",
+			"note": "Klicke auf einen Kurzbefehl und drücke dann die neuen Tasten",
+			"recordingHint": "Esc bricht ab, Entfernen lässt die Aktion ohne Kurzbefehl."
 		},
-		"terminalAppearanceGroup": "Erscheinungsbild",
 		"terminalSleepMode": "Mac während laufender Befehle wach halten",
 		"terminalSleepModes": {
 			"off": "Aus",
@@ -708,7 +704,36 @@
 			"requiresApproval": "Erlaubnis erforderlich",
 			"enabled": "Erlaubt",
 			"notFound": "Fehlt"
-		}
+		},
+		"notes": {
+			"live": "Änderungen gelten sofort",
+			"spaces": {
+				"one": "{count} Space",
+				"other": "{count} Spaces"
+			},
+			"profiles": {
+				"one": "{count} Profil",
+				"other": "{count} Profile"
+			},
+			"blocking": "{count} von {total} Arten blockiert",
+			"blockingOff": "Blockieren ist aus",
+			"extensions": {
+				"one": "{count} Erweiterung in {profile}",
+				"other": "{count} Erweiterungen in {profile}"
+			},
+			"terminal": "Änderungen gelten für jeden Terminal-Tab",
+			"agents": "Lilo hat keine eigene KI",
+			"advanced": "Für Entwicklung und Tests",
+			"searchMatches": {
+				"one": "{count} Einstellung passt zu „{query}“",
+				"other": "{count} Einstellungen passen zu „{query}“"
+			}
+		},
+		"callDock": {
+			"sidebar": "In der Seitenleiste",
+			"floating": "Schwebendes Fenster"
+		},
+		"terminalImportCaption": "Importieren nimmt ein iTerm2-Farbschema (.itermcolors), ein VS-Code-Farbdesign (.json) oder eine Ghostty-Theme-Datei."
 	},
 	"nav": {
 		"navigationControls": "Navigationssteuerung",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "Die Erweiterung und ihre Daten werden gelöscht.",
 		"actionFailed": "Aktion fehlgeschlagen. Zum Schließen klicken.",
 		"degradedTitle": "Hintergrund angehalten: Einige Funktionen funktionieren möglicherweise nicht.",
-		"loadUnpacked": "Entpackte Erweiterung laden…",
+		"loadUnpacked": "Entpackte Erweiterung laden...",
 		"addressBarMenu": "Erweiterungen",
 		"hostAccessRequestAllow": "Erlauben",
 		"hostAccessRequestTooltip": "Dieser Erweiterung Zugriff auf diese Website erlauben",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "Diese Erweiterung entfernen",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Rezensionen, Details und die Seite des Entwicklers",
-		"webStoreOpen": "Öffnen"
+		"webStoreOpen": "Öffnen",
+		"installed": "Installiert"
 	},
 	"commandBar": {
 		"hintPeek": "Vorschau",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "Alle zurücksetzen",
-		"warning": "Interne Debug-Einträge sind WebKit-Entwicklerschalter und können Websites beeinträchtigen. Lade eine Seite neu, damit Änderungen wirksam werden.",
-		"sectionExperimental": "Experimentell: {count}",
+		"warning": "Interne Debug-Einträge sind WebKit-Entwicklerschalter und können Websites beeinträchtigen.",
 		"sectionDebug": "Internes Debugging: {count}",
 		"modifiedBadge": "Geändert",
 		"title": "WebKit-Funktionsschalter",
-		"resetTitle": "Geänderte Schalter"
+		"resetTitle": "Geänderte Schalter",
+		"reloadNote": "Lade eine Seite neu, damit eine Änderung wirkt"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Blockierung auf dieser Website wieder aktivieren",

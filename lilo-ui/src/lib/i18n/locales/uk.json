@@ -28,19 +28,15 @@
 		"terminalTheme": "Тема",
 		"terminalThemeDescription": "Lilo підлаштовує тему під колір кожного простору, щоб усі кольори добре розрізнялися.",
 		"terminalImport": "Імпортувати...",
-		"terminalImportTitle": "Імпортувати тему",
-		"terminalImportDescription": "Набір кольорів iTerm2 (.itermcolors), колірна тема VS Code (.json) або файл теми Ghostty.",
 		"terminalFont": "Шрифт",
-		"terminalFontDescription": "Шрифти з лігатурами, як-от JetBrains Mono та Fira Code, відображають їх.",
+		"terminalFontDescription": "Шрифти з лігатурами, як-от JetBrains Mono та Fira Code, відображають їх. Розмір у пунктах, для всіх вкладок термінала.",
 		"terminalFontSystem": "Системний (SF Mono)",
 		"terminalFontSize": "Розмір",
-		"terminalFontSizeDescription": "У пунктах, для всіх вкладок термінала.",
 		"terminalScrollback": "Історія кожного термінала",
 		"terminalScrollbackDescription": "10 МБ — це близько 100 000 рядків.",
 		"terminalBehaviorGroup": "Поведінка",
 		"terminalNotify": "Сповіщати про завершення довгої команди",
 		"terminalNotifyDescription": "Після 10 секунд, якщо ви працюєте в іншому місці.",
-		"terminalSleepGroup": "Сон",
 		"terminalPreventSleepDescription": "Не для команд, які чекають на відповідь або нічого не виводять 5 хвилин.",
 		"terminalLidStatus": {
 			"unsigned": "Потрібна підписана збірка Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Прайд",
 			"clay": "Глина"
 		},
-		"importBrowsersAction": "Імпортувати",
+		"importBrowsersAction": "Імпортувати...",
 		"passwordManagerAction": "Вибрати",
 		"passwordManagerChange": "Змінити",
 		"replayOnboardingAction": "Показати знову",
@@ -146,14 +142,14 @@
 			"privacy": "Приватність",
 			"extensions": "Розширення",
 			"advanced": "Додатково",
-			"agents": "Агенти ШІ"
+			"agents": "Агенти"
 		},
 		"groups": {
 			"browser": "Браузер",
 			"search": "Пошук",
 			"downloads": "Завантаження",
 			"theme": "Тема",
-			"tabLayout": "Вкладки",
+			"tabLayout": "Розташування",
 			"pages": "Сторінки",
 			"spaces": "Простори",
 			"playback": "Відтворення",
@@ -161,21 +157,20 @@
 			"contentBlocking": "Блокування вмісту",
 			"protection": "Захист",
 			"browsingData": "Дані перегляду",
-			"tools": "Інструменти",
+			"tools": "Інструменти розробника",
 			"permissions": "Дозволи",
 			"zoom": "Масштаб",
 			"siteData": "Дані",
 			"sites": "Сайти ({count})",
 			"updates": "Оновлення",
 			"passwords": "Паролі",
-			"agentAccess": "Доступ",
-			"agentClients": "Агенти",
+			"agentAccess": "Агенти, що використовують Lilo",
+			"agentClients": "Програми, що можуть використовувати Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Вкладки й вікна",
 			"sitePermissions": "Дозволи сайтів",
 			"profiles": "Профілі",
 			"otherAppLinks": "Посилання з інших програм",
-			"blockerCategories": "Що блокує Lilo",
 			"blockerExceptions": "Списки й винятки",
 			"agentConversations": "Розмови"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Очистити дані перегляду",
 				"description": "Історія, файли cookie, кеш і дані сайтів за вибраний період.",
-				"keywords": "історія файли cookie кеш видалення очищення"
+				"keywords": "історія файли cookie кеш видалення очищення",
+				"action": "Очистити дані перегляду..."
 			},
 			"loadUnpacked": {
 				"title": "Завантажити розпаковане розширення",
@@ -470,8 +466,8 @@
 				"keywords": "пароль блокування папка приватність"
 			},
 			"agentControl": {
-				"title": "Дозволити агентам ШІ використовувати Lilo",
-				"description": "Claude Code, Codex і Cursor працюють у власному просторі «Агенти». У Lilo немає власного ШІ.",
+				"title": "Дозволити агентам використовувати Lilo",
+				"description": "Claude Code, Codex і Cursor працюють у власному просторі «Агенти».",
 				"keywords": "агент ШІ MCP Claude Codex Cursor автоматизація віддалене керування"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Розмови з вашими агентами",
-				"description": "Спілкуйтеся з Claude Code, Codex, Gemini та іншими агентами у вкладці, з власними підписками. У Lilo немає власного ШІ.",
+				"description": "Спілкуйтеся з Claude Code, Codex, Gemini та іншими агентами у вкладці, з власними підписками.",
 				"keywords": "агент ші ai acp чат розмова запитати claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -606,16 +602,16 @@
 			"copy": "Копіювати конфігурацію",
 			"clientDescription": "Додає Lilo до його серверів MCP.",
 			"clientConnected": "Lilo є серед його серверів MCP.",
-			"lastSeen": "Останній зв’язок: {time}",
 			"revoke": "Вилучити",
-			"readyDescription": "Lilo запитає дозволу під час першого підключення.",
 			"status": {
 				"acting": "Діє зараз",
 				"connected": "Підключено",
 				"allowed": "Дозволено",
 				"notInstalled": "Не інстальовано",
 				"ready": "Налаштовано"
-			}
+			},
+			"allowedSeen": "Дозволено, востаннє {time}",
+			"readyLine": "Налаштовано. Lilo запитає вас під час першого підключення."
 		},
 		"navGroups": {
 			"tools": "Інструменти"
@@ -643,7 +639,7 @@
 			"lastProfile": "Останній профіль залишається: кожному простору потрібен профіль.",
 			"extensionCount": "Розширення: {count}",
 			"extensionCountOne": "1 розширення",
-			"newProfile": "Новий профіль",
+			"newProfile": "Новий профіль...",
 			"newProfileDetail": "Нові файли cookie, сеанси входу й розширення",
 			"namePlaceholder": "Назва профілю",
 			"create": "Створити",
@@ -680,7 +676,6 @@
 			"emptyPattern": "Для правила потрібен хост або текст для зіставлення."
 		},
 		"shortcuts": {
-			"intro": "Клацніть скорочення й натисніть нові клавіші. Esc скасовує, Delete вилучає скорочення для дії.",
 			"searchPlaceholder": "Пошук скорочень",
 			"preset": "Набір",
 			"presetDescription": "Замінює всі змінені скорочення.",
@@ -697,9 +692,10 @@
 			"conflict": "{keys} вже використовується для {name}.",
 			"replace": "Замінити",
 			"cancel": "Скасувати",
-			"noResults": "Відповідних скорочень немає."
+			"noResults": "Відповідних скорочень немає.",
+			"note": "Клацніть сполучення, потім натисніть нові клавіші",
+			"recordingHint": "Esc скасовує, Delete залишає дію без сполучення."
 		},
-		"terminalAppearanceGroup": "Вигляд",
 		"terminalSleepMode": "Не переводити Mac у сон під час команд",
 		"terminalSleepModes": {
 			"off": "Вимкнено",
@@ -714,7 +710,44 @@
 			"requiresApproval": "Потрібен дозвіл",
 			"enabled": "Дозволена",
 			"notFound": "Відсутня"
-		}
+		},
+		"notes": {
+			"live": "Зміни застосовуються одразу",
+			"spaces": {
+				"one": "{count} простір",
+				"few": "{count} простори",
+				"many": "{count} просторів",
+				"other": "{count} простору"
+			},
+			"profiles": {
+				"one": "{count} профіль",
+				"few": "{count} профілі",
+				"many": "{count} профілів",
+				"other": "{count} профілю"
+			},
+			"blocking": "Блокується {count} з {total} типів",
+			"blockingOff": "Блокування вимкнено",
+			"extensions": {
+				"one": "{count} розширення в {profile}",
+				"few": "{count} розширення в {profile}",
+				"many": "{count} розширень у {profile}",
+				"other": "{count} розширення в {profile}"
+			},
+			"terminal": "Зміни діють у кожній вкладці термінала",
+			"agents": "У Lilo немає власного ШІ",
+			"advanced": "Для розробки й тестування",
+			"searchMatches": {
+				"one": "{count} налаштування відповідає «{query}»",
+				"few": "{count} налаштування відповідають «{query}»",
+				"many": "{count} налаштувань відповідають «{query}»",
+				"other": "{count} налаштування відповідають «{query}»"
+			}
+		},
+		"callDock": {
+			"sidebar": "На бічній панелі",
+			"floating": "Плаваюче вікно"
+		},
+		"terminalImportCaption": "Імпорт приймає колірний пресет iTerm2 (.itermcolors), колірну тему VS Code (.json) або файл теми Ghostty."
 	},
 	"nav": {
 		"navigationControls": "Елементи навігації",
@@ -1013,7 +1046,7 @@
 		"removeConfirmMessage": "Розширення та його дані буде видалено.",
 		"actionFailed": "Не вдалося виконати дію. Клацніть, щоб закрити.",
 		"degradedTitle": "Фон зупинено: деякі функції можуть не працювати.",
-		"loadUnpacked": "Завантажити розпаковане розширення…",
+		"loadUnpacked": "Завантажити розпаковане розширення...",
 		"addressBarMenu": "Розширення",
 		"hostAccessRequestAllow": "Дозволити",
 		"hostAccessRequestTooltip": "Дозволити цьому розширенню доступ до цього сайту",
@@ -1044,7 +1077,8 @@
 		"removeTitle": "Вилучити це розширення",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Відгуки, відомості та сторінка розробника",
-		"webStoreOpen": "Відкрити"
+		"webStoreOpen": "Відкрити",
+		"installed": "Встановлені"
 	},
 	"commandBar": {
 		"hintPeek": "Попередній перегляд",
@@ -1313,12 +1347,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "Скинути всі",
-		"warning": "Параметри внутрішнього налагодження — це прапорці розробників WebKit, які можуть порушити роботу сайтів. Перезавантажте сторінку, щоб застосувати зміну.",
-		"sectionExperimental": "Експериментальні: {count}",
+		"warning": "Параметри внутрішнього налагодження — це прапорці розробників WebKit, які можуть порушити роботу сайтів.",
 		"sectionDebug": "Внутрішнє налагодження: {count}",
 		"modifiedBadge": "Змінено",
 		"title": "Прапорці WebKit",
-		"resetTitle": "Змінені прапорці"
+		"resetTitle": "Змінені прапорці",
+		"reloadNote": "Перезавантажте сторінку, щоб зміна набула чинності"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Знову ввімкнути блокування на цьому сайті",

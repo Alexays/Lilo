@@ -28,19 +28,15 @@
 		"terminalTheme": "Motyw",
 		"terminalThemeDescription": "Lilo dopasowuje się do koloru każdej przestrzeni i dba o czytelność wszystkich barw.",
 		"terminalImport": "Importuj...",
-		"terminalImportTitle": "Importuj motyw",
-		"terminalImportDescription": "Zestaw kolorów iTerm2 (.itermcolors), motyw kolorystyczny VS Code (.json) lub plik motywu Ghostty.",
 		"terminalFont": "Czcionka",
-		"terminalFontDescription": "Czcionki z ligaturami, takie jak JetBrains Mono i Fira Code, wyświetlają je.",
+		"terminalFontDescription": "Czcionki z ligaturami, takie jak JetBrains Mono i Fira Code, wyświetlają je. Rozmiar w punktach, dla wszystkich kart terminala.",
 		"terminalFontSystem": "Systemowa (SF Mono)",
 		"terminalFontSize": "Rozmiar",
-		"terminalFontSizeDescription": "W punktach, dla wszystkich kart terminala.",
 		"terminalScrollback": "Historia każdego terminala",
 		"terminalScrollbackDescription": "10 MB to około 100 000 wierszy.",
 		"terminalBehaviorGroup": "Działanie",
 		"terminalNotify": "Powiadamiaj o zakończeniu długiego polecenia",
 		"terminalNotifyDescription": "Po 10 sekundach, gdy jesteś w innym miejscu.",
-		"terminalSleepGroup": "Usypianie",
 		"terminalPreventSleepDescription": "Nie dotyczy poleceń czekających na odpowiedź ani bez wyjścia przez 5 minut.",
 		"terminalLidStatus": {
 			"unsigned": "Wymaga podpisanej wersji Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Duma",
 			"clay": "Glina"
 		},
-		"importBrowsersAction": "Importuj",
+		"importBrowsersAction": "Importuj...",
 		"passwordManagerAction": "Wybierz",
 		"passwordManagerChange": "Zmień",
 		"replayOnboardingAction": "Pokaż ponownie",
@@ -141,19 +137,19 @@
 			"terminal": "Terminal",
 			"general": "Ogólne",
 			"appearance": "Wygląd",
-			"tabs": "Karty i przestrzenie",
+			"tabs": "Karty i Przestrzenie",
 			"media": "Dźwięk i wideo",
 			"privacy": "Prywatność",
 			"extensions": "Rozszerzenia",
 			"advanced": "Zaawansowane",
-			"agents": "Agenci AI"
+			"agents": "Agenci"
 		},
 		"groups": {
 			"browser": "Przeglądarka",
 			"search": "Wyszukiwanie",
 			"downloads": "Pobrane",
 			"theme": "Motyw",
-			"tabLayout": "Karty",
+			"tabLayout": "Układ",
 			"pages": "Strony",
 			"spaces": "Przestrzenie",
 			"playback": "Odtwarzanie",
@@ -161,21 +157,20 @@
 			"contentBlocking": "Blokowanie zawartości",
 			"protection": "Ochrona",
 			"browsingData": "Dane przeglądania",
-			"tools": "Narzędzia",
+			"tools": "Narzędzia deweloperskie",
 			"permissions": "Uprawnienia",
 			"zoom": "Powiększenie",
 			"siteData": "Dane",
 			"sites": "Witryny ({count})",
 			"updates": "Uaktualnienia",
 			"passwords": "Hasła",
-			"agentAccess": "Dostęp",
-			"agentClients": "Agenci",
+			"agentAccess": "Agenci korzystający z Lilo",
+			"agentClients": "Aplikacje, które mogą korzystać z Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Karty i okna",
 			"sitePermissions": "Uprawnienia witryn",
 			"profiles": "Profile",
 			"otherAppLinks": "Łącza z innych aplikacji",
-			"blockerCategories": "Co blokuje Lilo",
 			"blockerExceptions": "Listy i wyjątki",
 			"agentConversations": "Rozmowy"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Wyczyść dane przeglądania",
 				"description": "Historia, pliki cookie, pamięć podręczna i dane witryn z wybranego okresu.",
-				"keywords": "historia pliki cookie pamięć podręczna usuń wyczyść"
+				"keywords": "historia pliki cookie pamięć podręczna usuń wyczyść",
+				"action": "Wyczyść dane przeglądania..."
 			},
 			"loadUnpacked": {
 				"title": "Wczytaj rozpakowane rozszerzenie",
@@ -470,8 +466,8 @@
 				"keywords": "hasło blokada folder prywatność"
 			},
 			"agentControl": {
-				"title": "Pozwól agentom AI korzystać z Lilo",
-				"description": "Claude Code, Codex i Cursor pracują we własnej przestrzeni Agenci. Lilo nie ma własnej AI.",
+				"title": "Pozwól agentom korzystać z Lilo",
+				"description": "Claude Code, Codex i Cursor pracują we własnej przestrzeni Agenci.",
 				"keywords": "agent AI MCP Claude Codex Cursor automatyzacja zdalne sterowanie"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Rozmowy z agentami",
-				"description": "Rozmawiaj z Claude Code, Codex, Gemini i innymi agentami w karcie, korzystając z własnych subskrypcji. Lilo nie ma własnej AI.",
+				"description": "Rozmawiaj z Claude Code, Codex, Gemini i innymi agentami w karcie, korzystając z własnych subskrypcji.",
 				"keywords": "agent ai acp czat rozmowa zapytaj claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -606,16 +602,16 @@
 			"copy": "Kopiuj konfigurację",
 			"clientDescription": "Dodaje Lilo do jego serwerów MCP.",
 			"clientConnected": "Lilo jest na liście jego serwerów MCP.",
-			"lastSeen": "Ostatnio widziany {time}",
 			"revoke": "Usuń",
-			"readyDescription": "Lilo zapyta przy pierwszym połączeniu.",
 			"status": {
 				"acting": "Działa teraz",
 				"connected": "Połączony",
 				"allowed": "Dozwolony",
 				"notInstalled": "Niezainstalowany",
 				"ready": "Skonfigurowany"
-			}
+			},
+			"allowedSeen": "Dozwolony, ostatnio {time}",
+			"readyLine": "Skonfigurowano. Lilo zapyta przy pierwszym połączeniu."
 		},
 		"navGroups": {
 			"tools": "Narzędzia"
@@ -643,7 +639,7 @@
 			"lastProfile": "Ostatni profil pozostaje: każda przestrzeń go potrzebuje.",
 			"extensionCount": "Rozszerzenia: {count}",
 			"extensionCountOne": "1 rozszerzenie",
-			"newProfile": "Nowy profil",
+			"newProfile": "Nowy profil...",
 			"newProfileDetail": "Nowe pliki cookie, logowania i rozszerzenia",
 			"namePlaceholder": "Nazwa profilu",
 			"create": "Utwórz",
@@ -680,7 +676,6 @@
 			"emptyPattern": "Reguła wymaga hosta lub tekstu do dopasowania."
 		},
 		"shortcuts": {
-			"intro": "Kliknij skrót, a potem naciśnij nowe klawisze. Esc anuluje, Delete usuwa skrót danej czynności.",
 			"searchPlaceholder": "Szukaj skrótów",
 			"preset": "Zestaw",
 			"presetDescription": "Zastępuje wszystkie zmienione skróty.",
@@ -697,9 +692,10 @@
 			"conflict": "{keys} jest już używane przez {name}.",
 			"replace": "Zastąp",
 			"cancel": "Anuluj",
-			"noResults": "Brak pasujących skrótów."
+			"noResults": "Brak pasujących skrótów.",
+			"note": "Kliknij skrót, a potem naciśnij nowe klawisze",
+			"recordingHint": "Esc anuluje, Delete zostawia czynność bez skrótu."
 		},
-		"terminalAppearanceGroup": "Wygląd",
 		"terminalSleepMode": "Zapobiegaj usypianiu Maca podczas poleceń",
 		"terminalSleepModes": {
 			"off": "Wyłączone",
@@ -714,7 +710,44 @@
 			"requiresApproval": "Wymaga zgody",
 			"enabled": "Dozwolona",
 			"notFound": "Brak"
-		}
+		},
+		"notes": {
+			"live": "Zmiany działają od razu",
+			"spaces": {
+				"one": "{count} przestrzeń",
+				"few": "{count} przestrzenie",
+				"many": "{count} przestrzeni",
+				"other": "{count} przestrzeni"
+			},
+			"profiles": {
+				"one": "{count} profil",
+				"few": "{count} profile",
+				"many": "{count} profili",
+				"other": "{count} profilu"
+			},
+			"blocking": "Blokowane: {count} z {total} rodzajów",
+			"blockingOff": "Blokowanie jest wyłączone",
+			"extensions": {
+				"one": "{count} rozszerzenie w {profile}",
+				"few": "{count} rozszerzenia w {profile}",
+				"many": "{count} rozszerzeń w {profile}",
+				"other": "{count} rozszerzenia w {profile}"
+			},
+			"terminal": "Zmiany dotyczą każdej karty terminala",
+			"agents": "Lilo nie ma własnej AI",
+			"advanced": "Do programowania i testów",
+			"searchMatches": {
+				"one": "{count} ustawienie pasuje do „{query}”",
+				"few": "{count} ustawienia pasują do „{query}”",
+				"many": "{count} ustawień pasuje do „{query}”",
+				"other": "{count} ustawienia pasuje do „{query}”"
+			}
+		},
+		"callDock": {
+			"sidebar": "Na pasku bocznym",
+			"floating": "Pływające okno"
+		},
+		"terminalImportCaption": "Import przyjmuje ustawienie kolorów iTerm2 (.itermcolors), motyw kolorów VS Code (.json) lub plik motywu Ghostty."
 	},
 	"nav": {
 		"navigationControls": "Przyciski nawigacji",
@@ -1013,7 +1046,7 @@
 		"removeConfirmMessage": "Rozszerzenie i jego dane zostaną usunięte.",
 		"actionFailed": "Czynność nie powiodła się. Kliknij, aby zamknąć.",
 		"degradedTitle": "Tło zatrzymane: niektóre funkcje mogą nie działać.",
-		"loadUnpacked": "Wczytaj rozpakowane rozszerzenie…",
+		"loadUnpacked": "Wczytaj rozpakowane rozszerzenie...",
 		"addressBarMenu": "Rozszerzenia",
 		"hostAccessRequestAllow": "Zezwól",
 		"hostAccessRequestTooltip": "Zezwól temu rozszerzeniu na dostęp do tej witryny",
@@ -1044,7 +1077,8 @@
 		"removeTitle": "Usuń to rozszerzenie",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Opinie, szczegóły i strona twórcy",
-		"webStoreOpen": "Otwórz"
+		"webStoreOpen": "Otwórz",
+		"installed": "Zainstalowane"
 	},
 	"commandBar": {
 		"hintPeek": "Podgląd",
@@ -1313,12 +1347,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "Wyzeruj wszystkie",
-		"warning": "Wpisy debugowania wewnętrznego to flagi programistów WebKit i mogą zakłócić działanie witryn. Wczytaj stronę ponownie, aby zastosować zmianę.",
-		"sectionExperimental": "Eksperymentalne: {count}",
+		"warning": "Wpisy debugowania wewnętrznego to flagi programistów WebKit i mogą zakłócić działanie witryn.",
 		"sectionDebug": "Debugowanie wewnętrzne: {count}",
 		"modifiedBadge": "Zmieniono",
 		"title": "Flagi WebKit",
-		"resetTitle": "Zmienione flagi"
+		"resetTitle": "Zmienione flagi",
+		"reloadNote": "Odśwież stronę, aby zmiana zadziałała"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Włącz ponownie blokowanie na tej witrynie",

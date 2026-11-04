@@ -28,19 +28,15 @@
 		"terminalTheme": "테마",
 		"terminalThemeDescription": "각 스페이스의 색상에 맞추고 모든 색상을 읽기 쉽게 표시합니다.",
 		"terminalImport": "가져오기...",
-		"terminalImportTitle": "테마 가져오기",
-		"terminalImportDescription": "iTerm2 색상 프리셋(.itermcolors), VS Code 색상 테마(.json) 또는 Ghostty 테마 파일.",
 		"terminalFont": "서체",
-		"terminalFontDescription": "JetBrains Mono나 Fira Code처럼 합자를 지원하는 서체는 합자를 표시합니다.",
+		"terminalFontDescription": "JetBrains Mono나 Fira Code처럼 합자를 지원하는 서체는 합자를 표시합니다. 크기는 포인트 단위로 모든 터미널 탭에 적용됩니다.",
 		"terminalFontSystem": "시스템(SF Mono)",
 		"terminalFontSize": "크기",
-		"terminalFontSizeDescription": "모든 터미널 탭에 적용되는 포인트 단위 크기입니다.",
 		"terminalScrollback": "터미널별 기록",
 		"terminalScrollbackDescription": "10 MB는 약 100,000줄입니다.",
 		"terminalBehaviorGroup": "동작",
 		"terminalNotify": "오래 걸리는 명령이 완료되면 알림",
 		"terminalNotifyDescription": "10초 이상 걸린 명령이 완료되고 다른 곳을 보고 있을 때 알립니다.",
-		"terminalSleepGroup": "잠자기",
 		"terminalPreventSleepDescription": "입력을 기다리거나 5분 동안 출력이 없는 명령에는 적용하지 않습니다.",
 		"terminalLidStatus": {
 			"unsigned": "서명된 Lilo 빌드가 필요합니다.",
@@ -79,7 +75,7 @@
 			"pride": "프라이드",
 			"clay": "점토"
 		},
-		"importBrowsersAction": "가져오기",
+		"importBrowsersAction": "가져오기...",
 		"passwordManagerAction": "선택",
 		"passwordManagerChange": "변경",
 		"replayOnboardingAction": "다시 보기",
@@ -146,14 +142,14 @@
 			"privacy": "개인정보 보호",
 			"extensions": "확장 프로그램",
 			"advanced": "고급",
-			"agents": "AI 에이전트"
+			"agents": "에이전트"
 		},
 		"groups": {
 			"browser": "브라우저",
 			"search": "검색",
 			"downloads": "다운로드",
 			"theme": "테마",
-			"tabLayout": "탭",
+			"tabLayout": "레이아웃",
 			"pages": "페이지",
 			"spaces": "스페이스",
 			"playback": "재생",
@@ -161,21 +157,20 @@
 			"contentBlocking": "콘텐츠 차단",
 			"protection": "보호",
 			"browsingData": "인터넷 사용 기록",
-			"tools": "도구",
+			"tools": "개발자 도구",
 			"permissions": "권한",
 			"zoom": "확대/축소",
 			"siteData": "데이터",
 			"sites": "사이트({count})",
 			"updates": "업데이트",
 			"passwords": "암호",
-			"agentAccess": "접근",
-			"agentClients": "에이전트",
+			"agentAccess": "Lilo를 사용하는 에이전트",
+			"agentClients": "Lilo를 사용할 수 있는 앱",
 			"lilo": "Lilo",
 			"tabsWindows": "탭 및 윈도우",
 			"sitePermissions": "사이트 권한",
 			"profiles": "프로필",
 			"otherAppLinks": "다른 앱의 링크",
-			"blockerCategories": "Lilo가 차단하는 항목",
 			"blockerExceptions": "목록 및 예외",
 			"agentConversations": "대화"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "인터넷 사용 기록 지우기",
 				"description": "선택한 기간의 방문 기록, 쿠키, 캐시, 사이트 데이터.",
-				"keywords": "방문 기록 쿠키 캐시 삭제 지우기"
+				"keywords": "방문 기록 쿠키 캐시 삭제 지우기",
+				"action": "방문 기록 데이터 지우기..."
 			},
 			"loadUnpacked": {
 				"title": "압축 해제된 확장 프로그램 로드",
@@ -470,8 +466,8 @@
 				"keywords": "암호 잠금 폴더 개인정보"
 			},
 			"agentControl": {
-				"title": "AI 에이전트의 Lilo 사용 허용",
-				"description": "Claude Code, Codex, Cursor가 별도의 에이전트 스페이스에서 작업합니다. Lilo에는 자체 AI가 없습니다.",
+				"title": "에이전트의 Lilo 사용 허용",
+				"description": "Claude Code, Codex, Cursor가 별도의 에이전트 스페이스에서 작업합니다.",
 				"keywords": "에이전트 ai mcp claude codex cursor 자동화 원격 제어"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "에이전트와의 대화",
-				"description": "Claude Code, Codex, Gemini 등 여러 에이전트와 내 구독으로 탭에서 대화합니다. Lilo에는 자체 AI가 없습니다.",
+				"description": "Claude Code, Codex, Gemini 등 여러 에이전트와 내 구독으로 탭에서 대화합니다.",
 				"keywords": "에이전트 AI ACP 채팅 대화 질문 Claude Codex Gemini Copilot"
 			},
 			"agentsNotifyDone": {
@@ -600,16 +596,16 @@
 			"copy": "설정 복사",
 			"clientDescription": "이 클라이언트의 MCP 서버에 Lilo를 추가합니다.",
 			"clientConnected": "이 클라이언트의 MCP 서버에 Lilo가 있습니다.",
-			"lastSeen": "마지막 연결: {time}",
 			"revoke": "제거",
-			"readyDescription": "처음 연결할 때 Lilo가 허용 여부를 묻습니다.",
 			"status": {
 				"acting": "작업 중",
 				"connected": "연결됨",
 				"allowed": "허용됨",
 				"notInstalled": "설치되지 않음",
 				"ready": "설정됨"
-			}
+			},
+			"allowedSeen": "허용됨, 마지막 접속 {time}",
+			"readyLine": "구성됨. 처음 연결할 때 Lilo가 묻습니다."
 		},
 		"navGroups": {
 			"tools": "도구"
@@ -637,7 +633,7 @@
 			"lastProfile": "모든 스페이스에는 프로필이 필요하므로 마지막 프로필은 유지됩니다.",
 			"extensionCount": "확장 프로그램 {count}개",
 			"extensionCountOne": "확장 프로그램 1개",
-			"newProfile": "새 프로필",
+			"newProfile": "새 프로필...",
 			"newProfileDetail": "새로운 쿠키, 로그인 및 확장 프로그램",
 			"namePlaceholder": "프로필 이름",
 			"create": "생성",
@@ -674,7 +670,6 @@
 			"emptyPattern": "규칙에는 일치시킬 호스트나 텍스트가 필요합니다."
 		},
 		"shortcuts": {
-			"intro": "단축키를 클릭한 다음 새 키를 누르세요. Esc는 취소하고 Delete는 동작의 단축키를 지웁니다.",
 			"searchPlaceholder": "단축키 검색",
 			"preset": "프리셋",
 			"presetDescription": "변경한 모든 단축키를 대체합니다.",
@@ -691,9 +686,10 @@
 			"conflict": "{keys} 키를 이미 {name}에서 사용 중입니다.",
 			"replace": "대체",
 			"cancel": "취소",
-			"noResults": "일치하는 단축키가 없습니다."
+			"noResults": "일치하는 단축키가 없습니다.",
+			"note": "단축키를 클릭한 다음 새 키를 누르세요",
+			"recordingHint": "Esc는 취소, Delete는 단축키를 지웁니다."
 		},
-		"terminalAppearanceGroup": "모양",
 		"terminalSleepMode": "명령 실행 중 Mac 잠자기 방지",
 		"terminalSleepModes": {
 			"off": "끔",
@@ -708,7 +704,36 @@
 			"requiresApproval": "승인 필요",
 			"enabled": "허용됨",
 			"notFound": "없음"
-		}
+		},
+		"notes": {
+			"live": "선택하는 즉시 적용됩니다",
+			"spaces": {
+				"one": "스페이스 {count}개",
+				"other": "스페이스 {count}개"
+			},
+			"profiles": {
+				"one": "프로필 {count}개",
+				"other": "프로필 {count}개"
+			},
+			"blocking": "{total}가지 중 {count}가지 차단 중",
+			"blockingOff": "차단이 꺼져 있습니다",
+			"extensions": {
+				"one": "{profile}의 확장 프로그램 {count}개",
+				"other": "{profile}의 확장 프로그램 {count}개"
+			},
+			"terminal": "모든 터미널 탭에 적용됩니다",
+			"agents": "Lilo에는 자체 AI가 없습니다",
+			"advanced": "개발 및 테스트용",
+			"searchMatches": {
+				"one": "'{query}'와 일치하는 설정 {count}개",
+				"other": "'{query}'와 일치하는 설정 {count}개"
+			}
+		},
+		"callDock": {
+			"sidebar": "사이드바에",
+			"floating": "플로팅 윈도우"
+		},
+		"terminalImportCaption": "iTerm2 색상 프리셋(.itermcolors), VS Code 색상 테마(.json), Ghostty 테마 파일을 가져올 수 있습니다."
 	},
 	"nav": {
 		"navigationControls": "탐색 제어",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "확장 프로그램과 해당 데이터가 삭제됩니다.",
 		"actionFailed": "동작에 실패했습니다. 클릭하여 닫으세요.",
 		"degradedTitle": "백그라운드가 중단되어 일부 기능이 작동하지 않을 수 있습니다.",
-		"loadUnpacked": "압축 해제된 확장 프로그램 로드…",
+		"loadUnpacked": "압축 해제된 확장 프로그램 로드...",
 		"addressBarMenu": "확장 프로그램",
 		"hostAccessRequestAllow": "허용",
 		"hostAccessRequestTooltip": "이 확장 프로그램의 사이트 접근 허용",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "이 확장 프로그램 제거",
 		"webStoreTitle": "Chrome 웹 스토어",
 		"webStoreHint": "리뷰, 세부사항 및 개발자 페이지",
-		"webStoreOpen": "열기"
+		"webStoreOpen": "열기",
+		"installed": "설치됨"
 	},
 	"commandBar": {
 		"hintPeek": "미리보기",
@@ -1303,12 +1329,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "모두 재설정",
-		"warning": "내부 디버그 항목은 WebKit 개발자용 플래그로, 사이트 작동에 영향을 줄 수 있습니다. 변경사항을 적용하려면 페이지를 새로고침하세요.",
-		"sectionExperimental": "실험 기능: {count}",
+		"warning": "내부 디버그 항목은 WebKit 개발자용 플래그로, 사이트 작동에 영향을 줄 수 있습니다.",
 		"sectionDebug": "내부 디버그: {count}",
 		"modifiedBadge": "변경됨",
 		"title": "WebKit 플래그",
-		"resetTitle": "변경된 플래그"
+		"resetTitle": "변경된 플래그",
+		"reloadNote": "변경 사항을 적용하려면 페이지를 새로 고치세요"
 	},
 	"urlToast": {
 		"reEnableBlocking": "이 사이트에서 차단 다시 활성화",

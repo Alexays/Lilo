@@ -83,7 +83,6 @@
   .settings-section-page {
     display: grid;
     gap: 22px;
-    max-width: 900px;
   }
 
   /* Opacity only: a transform here would trap the confirm sheets' positioning. */

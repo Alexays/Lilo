@@ -28,19 +28,15 @@
 		"terminalTheme": "Тема",
 		"terminalThemeDescription": "Lilo подстраивается под цвет каждого пространства и сохраняет читаемость всех цветов.",
 		"terminalImport": "Импортировать...",
-		"terminalImportTitle": "Импорт темы",
-		"terminalImportDescription": "Цветовая схема iTerm2 (.itermcolors), тема VS Code (.json) или файл темы Ghostty.",
 		"terminalFont": "Шрифт",
-		"terminalFontDescription": "Шрифты с лигатурами, например JetBrains Mono или Fira Code, отображают их.",
+		"terminalFontDescription": "Шрифты с лигатурами, например JetBrains Mono или Fira Code, отображают их. Размер в пунктах, для всех вкладок терминала.",
 		"terminalFontSystem": "Системный (SF Mono)",
 		"terminalFontSize": "Размер",
-		"terminalFontSizeDescription": "В пунктах, для всех вкладок терминала.",
 		"terminalScrollback": "История терминала",
 		"terminalScrollbackDescription": "10 МБ — это около 100 000 строк.",
 		"terminalBehaviorGroup": "Поведение",
 		"terminalNotify": "Уведомлять о завершении долгих команд",
 		"terminalNotifyDescription": "Если команда шла более 10 секунд и вы переключились в другое место.",
-		"terminalSleepGroup": "Сон",
 		"terminalPreventSleepDescription": "Кроме команд, ожидающих вашего ввода или не выводящих ничего 5 минут.",
 		"terminalLidStatus": {
 			"unsigned": "Требуется подписанная сборка Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Прайд",
 			"clay": "Глина"
 		},
-		"importBrowsersAction": "Импортировать",
+		"importBrowsersAction": "Импортировать...",
 		"passwordManagerAction": "Выбрать",
 		"passwordManagerChange": "Изменить",
 		"replayOnboardingAction": "Повторить",
@@ -146,14 +142,14 @@
 			"privacy": "Конфиденциальность",
 			"extensions": "Расширения",
 			"advanced": "Дополнительно",
-			"agents": "ИИ-агенты"
+			"agents": "Агенты"
 		},
 		"groups": {
 			"browser": "Браузер",
 			"search": "Поиск",
 			"downloads": "Загрузки",
 			"theme": "Тема",
-			"tabLayout": "Вкладки",
+			"tabLayout": "Расположение",
 			"pages": "Страницы",
 			"spaces": "Пространства",
 			"playback": "Воспроизведение",
@@ -161,21 +157,20 @@
 			"contentBlocking": "Блокировка контента",
 			"protection": "Защита",
 			"browsingData": "Данные браузера",
-			"tools": "Инструменты",
+			"tools": "Инструменты разработчика",
 			"permissions": "Разрешения",
 			"zoom": "Масштаб",
 			"siteData": "Данные",
 			"sites": "Сайты ({count})",
 			"updates": "Обновления",
 			"passwords": "Пароли",
-			"agentAccess": "Доступ",
-			"agentClients": "Агенты",
+			"agentAccess": "Агенты, использующие Lilo",
+			"agentClients": "Приложения, которые могут использовать Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Вкладки и окна",
 			"sitePermissions": "Разрешения сайтов",
 			"profiles": "Профили",
 			"otherAppLinks": "Ссылки из других приложений",
-			"blockerCategories": "Что блокирует Lilo",
 			"blockerExceptions": "Списки и исключения",
 			"agentConversations": "Разговоры"
 		},
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Очистить данные браузера",
 				"description": "История, cookie, кэш и данные сайтов за выбранный период.",
-				"keywords": "история cookie кэш удалить очистить"
+				"keywords": "история cookie кэш удалить очистить",
+				"action": "Очистить данные браузера..."
 			},
 			"loadUnpacked": {
 				"title": "Загрузить распакованное расширение",
@@ -470,8 +466,8 @@
 				"keywords": "пароль блокировка папка конфиденциальность"
 			},
 			"agentControl": {
-				"title": "Разрешить ИИ-агентам доступ к Lilo",
-				"description": "Claude Code, Codex или Cursor работают в отдельном пространстве «Агенты». У Lilo нет собственного ИИ.",
+				"title": "Разрешить агентам доступ к Lilo",
+				"description": "Claude Code, Codex или Cursor работают в отдельном пространстве «Агенты».",
 				"keywords": "агент ии ai mcp claude codex cursor автоматизация удалённое управление"
 			},
 			"agentAskBeforeActions": {
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Разговоры с вашими агентами",
-				"description": "Общайтесь с Claude Code, Codex, Gemini и другими агентами во вкладке, используя свои подписки. У Lilo нет собственного ИИ.",
+				"description": "Общайтесь с Claude Code, Codex, Gemini и другими агентами во вкладке, используя свои подписки.",
 				"keywords": "агент ии ai acp чат разговор спросить claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -606,16 +602,16 @@
 			"copy": "Скопировать конфигурацию",
 			"clientDescription": "Добавляет Lilo к его MCP-серверам.",
 			"clientConnected": "Lilo добавлен к его MCP-серверам.",
-			"lastSeen": "Последнее подключение {time}",
 			"revoke": "Убрать",
-			"readyDescription": "Lilo запросит разрешение при первом подключении.",
 			"status": {
 				"acting": "Выполняет действие",
 				"connected": "Подключён",
 				"allowed": "Разрешён",
 				"notInstalled": "Не установлен",
 				"ready": "Настроен"
-			}
+			},
+			"allowedSeen": "Разрешён, последний раз {time}",
+			"readyLine": "Настроено. Lilo спросит вас при первом подключении."
 		},
 		"navGroups": {
 			"tools": "Инструменты"
@@ -643,7 +639,7 @@
 			"lastProfile": "Последний профиль нельзя удалить: каждому пространству нужен профиль.",
 			"extensionCount": "Расширений: {count}",
 			"extensionCountOne": "1 расширение",
-			"newProfile": "Новый профиль",
+			"newProfile": "Новый профиль...",
 			"newProfileDetail": "Без cookie, учётных записей и расширений",
 			"namePlaceholder": "Название профиля",
 			"create": "Создать",
@@ -680,7 +676,6 @@
 			"emptyPattern": "Укажите домен или текст для сопоставления."
 		},
 		"shortcuts": {
-			"intro": "Нажмите на сочетание, затем нажмите новые клавиши. Esc отменяет, Delete убирает сочетание у действия.",
 			"searchPlaceholder": "Поиск сочетаний",
 			"preset": "Набор",
 			"presetDescription": "Заменяет все изменённые вами сочетания.",
@@ -697,9 +692,10 @@
 			"conflict": "{keys} уже используется для «{name}».",
 			"replace": "Заменить",
 			"cancel": "Отмена",
-			"noResults": "Сочетания не найдены."
+			"noResults": "Сочетания не найдены.",
+			"note": "Нажмите на сочетание, затем новые клавиши",
+			"recordingHint": "Esc отменяет, Delete оставляет действие без сочетания."
 		},
-		"terminalAppearanceGroup": "Оформление",
 		"terminalSleepMode": "Не давать Mac засыпать во время команд",
 		"terminalSleepModes": {
 			"off": "Выкл.",
@@ -714,7 +710,44 @@
 			"requiresApproval": "Нужно разрешение",
 			"enabled": "Разрешён",
 			"notFound": "Отсутствует"
-		}
+		},
+		"notes": {
+			"live": "Изменения применяются сразу",
+			"spaces": {
+				"one": "{count} пространство",
+				"few": "{count} пространства",
+				"many": "{count} пространств",
+				"other": "{count} пространства"
+			},
+			"profiles": {
+				"one": "{count} профиль",
+				"few": "{count} профиля",
+				"many": "{count} профилей",
+				"other": "{count} профиля"
+			},
+			"blocking": "Блокируется {count} из {total} типов",
+			"blockingOff": "Блокировка выключена",
+			"extensions": {
+				"one": "{count} расширение в {profile}",
+				"few": "{count} расширения в {profile}",
+				"many": "{count} расширений в {profile}",
+				"other": "{count} расширения в {profile}"
+			},
+			"terminal": "Изменения действуют во всех вкладках терминала",
+			"agents": "У Lilo нет собственного ИИ",
+			"advanced": "Для разработки и тестирования",
+			"searchMatches": {
+				"one": "{count} настройка соответствует «{query}»",
+				"few": "{count} настройки соответствуют «{query}»",
+				"many": "{count} настроек соответствуют «{query}»",
+				"other": "{count} настройки соответствуют «{query}»"
+			}
+		},
+		"callDock": {
+			"sidebar": "На боковой панели",
+			"floating": "Плавающее окно"
+		},
+		"terminalImportCaption": "Импорт принимает цветовой пресет iTerm2 (.itermcolors), цветовую тему VS Code (.json) или файл темы Ghostty."
 	},
 	"nav": {
 		"navigationControls": "Навигация",
@@ -1013,7 +1046,7 @@
 		"removeConfirmMessage": "Расширение и его данные будут удалены.",
 		"actionFailed": "Не удалось выполнить действие. Нажмите, чтобы скрыть.",
 		"degradedTitle": "Фоновая работа остановлена: некоторые функции могут не работать.",
-		"loadUnpacked": "Загрузить распакованное расширение…",
+		"loadUnpacked": "Загрузить распакованное расширение...",
 		"addressBarMenu": "Расширения",
 		"hostAccessRequestAllow": "Разрешить",
 		"hostAccessRequestTooltip": "Разрешить этому расширению доступ к сайту",
@@ -1044,7 +1077,8 @@
 		"removeTitle": "Удалить это расширение",
 		"webStoreTitle": "Интернет-магазин Chrome",
 		"webStoreHint": "Отзывы, сведения и страница разработчика",
-		"webStoreOpen": "Открыть"
+		"webStoreOpen": "Открыть",
+		"installed": "Установленные"
 	},
 	"commandBar": {
 		"hintPeek": "Быстрый просмотр",
@@ -1313,12 +1347,12 @@
 	},
 	"featureFlags": {
 		"resetAll": "Сбросить всё",
-		"warning": "Внутренние отладочные параметры предназначены для разработчиков WebKit и могут нарушить работу сайтов. Чтобы применить изменения, перезагрузите страницу.",
-		"sectionExperimental": "Экспериментальные: {count}",
+		"warning": "Внутренние отладочные параметры предназначены для разработчиков WebKit и могут нарушить работу сайтов.",
 		"sectionDebug": "Внутренняя отладка: {count}",
 		"modifiedBadge": "Изменено",
 		"title": "Флаги WebKit",
-		"resetTitle": "Изменённые флаги"
+		"resetTitle": "Изменённые флаги",
+		"reloadNote": "Перезагрузите страницу, чтобы изменение вступило в силу"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Включить блокировку на этом сайте",

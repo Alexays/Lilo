@@ -28,19 +28,15 @@
 		"terminalTheme": "Theme",
 		"terminalThemeDescription": "Lilo follows each Space's color and keeps every color readable on it.",
 		"terminalImport": "Import...",
-		"terminalImportTitle": "Import a theme",
-		"terminalImportDescription": "An iTerm2 color preset (.itermcolors), a VS Code color theme (.json) or a Ghostty theme file.",
 		"terminalFont": "Font",
-		"terminalFontDescription": "Fonts with ligatures, like JetBrains Mono or Fira Code, show them.",
+		"terminalFontDescription": "Fonts with ligatures, like JetBrains Mono or Fira Code, show them. Size in points, for every terminal tab.",
 		"terminalFontSystem": "System (SF Mono)",
 		"terminalFontSize": "Size",
-		"terminalFontSizeDescription": "In points, for every terminal tab.",
 		"terminalScrollback": "History per terminal",
 		"terminalScrollbackDescription": "10 MB is about 100,000 lines.",
 		"terminalBehaviorGroup": "Behavior",
 		"terminalNotify": "Notify when a long command finishes",
 		"terminalNotifyDescription": "After 10 seconds, when you are elsewhere.",
-		"terminalSleepGroup": "Sleep",
 		"terminalPreventSleepDescription": "Not for a command waiting for you or silent for 5 minutes.",
 		"terminalLidStatus": {
 			"unsigned": "Requires a signed build of Lilo.",
@@ -79,11 +75,11 @@
 			"pride": "Pride",
 			"clay": "Clay"
 		},
-		"importBrowsersAction": "Import",
+		"importBrowsersAction": "Import...",
 		"passwordManagerAction": "Choose",
 		"passwordManagerChange": "Change",
 		"replayOnboardingAction": "Replay",
-		"defaultBrowserSet": "Set as default",
+		"defaultBrowserSet": "Set as Default",
 		"defaultBrowserLater": "Later",
 		"defaultBrowserBannerText": "Make Lilo your default browser?",
 		"defaultBrowserSetSuccess": "Lilo is now your default browser.",
@@ -129,8 +125,8 @@
 		"downloadsFolderFallback": "Downloads",
 		"lifecycle": {
 			"balanced": "Balanced",
-			"conservative": "Keep loaded",
-			"aggressive": "Save memory",
+			"conservative": "Keep Loaded",
+			"aggressive": "Save Memory",
 			"conservativeDesc": "Paused after 15 min, rarely emptied. Fewer reloads, more memory.",
 			"balancedDesc": "Paused after 5 min, emptied only when memory runs low. Recommended.",
 			"aggressiveDesc": "Paused after 2 min, emptied after 10 min. Best battery life; tabs reload more often."
@@ -141,19 +137,19 @@
 			"terminal": "Terminal",
 			"general": "General",
 			"appearance": "Appearance",
-			"tabs": "Tabs and spaces",
+			"tabs": "Tabs and Spaces",
 			"media": "Audio and video",
 			"privacy": "Privacy",
 			"extensions": "Extensions",
 			"advanced": "Advanced",
-			"agents": "AI agents"
+			"agents": "Agents"
 		},
 		"groups": {
 			"browser": "Browser",
 			"search": "Search",
 			"downloads": "Downloads",
 			"theme": "Theme",
-			"tabLayout": "Tabs",
+			"tabLayout": "Layout",
 			"pages": "Pages",
 			"spaces": "Spaces",
 			"playback": "Playback",
@@ -161,21 +157,20 @@
 			"contentBlocking": "Content blocking",
 			"protection": "Protection",
 			"browsingData": "Browsing data",
-			"tools": "Tools",
+			"tools": "Developer tools",
 			"permissions": "Permissions",
 			"zoom": "Zoom",
 			"siteData": "Data",
 			"sites": "Sites ({count})",
 			"updates": "Updates",
 			"passwords": "Passwords",
-			"agentAccess": "Access",
-			"agentClients": "Agents",
+			"agentAccess": "Agents using Lilo",
+			"agentClients": "Apps that can use Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Tabs and windows",
 			"sitePermissions": "Site permissions",
 			"profiles": "Profiles",
 			"otherAppLinks": "Links from other apps",
-			"blockerCategories": "What Lilo blocks",
 			"blockerExceptions": "Lists and exceptions",
 			"agentConversations": "Conversations"
 		},
@@ -303,7 +298,7 @@
 				"keywords": "scale size text"
 			},
 			"newSpace": {
-				"title": "New space",
+				"title": "New Space",
 				"description": "Spaces keep tabs, colors, and data apart.",
 				"keywords": "add create profile workspace",
 				"action": "Create"
@@ -417,7 +412,8 @@
 			"clearData": {
 				"title": "Clear browsing data",
 				"description": "History, cookies, cache, and site data over a time range.",
-				"keywords": "history cookies cache delete erase"
+				"keywords": "history cookies cache delete erase",
+				"action": "Clear Browsing Data..."
 			},
 			"loadUnpacked": {
 				"title": "Load an unpacked extension",
@@ -470,8 +466,8 @@
 				"keywords": "password lock folder privacy"
 			},
 			"agentControl": {
-				"title": "Let AI agents use Lilo",
-				"description": "Claude Code, Codex or Cursor work in their own Agents space. Lilo has no AI of its own.",
+				"title": "Let agents use Lilo",
+				"description": "Claude Code, Codex or Cursor work in their own Agents Space.",
 				"keywords": "agent ai mcp claude codex cursor automation remote control"
 			},
 			"agentAskBeforeActions": {
@@ -497,7 +493,7 @@
 				"title": "Lilo {version}",
 				"description": "Lilo checks for new versions on its own.",
 				"keywords": "update version upgrade release",
-				"check": "Check now",
+				"check": "Check Now",
 				"lastChecked": "Checked {time}",
 				"unavailable": "This build does not update itself.",
 				"developerTools": "Lilo's own developer tools are now in the Develop menu.",
@@ -546,7 +542,7 @@
 			},
 			"agentsEnabled": {
 				"title": "Conversations with your agents",
-				"description": "Talk to Claude Code, Codex, Gemini and other agents in a tab, with your own subscriptions. Lilo has no AI of its own.",
+				"description": "Talk to Claude Code, Codex, Gemini and other agents in a tab, with your own subscriptions.",
 				"keywords": "agent ai acp chat conversation ask claude codex gemini copilot"
 			},
 			"agentsNotifyDone": {
@@ -564,12 +560,12 @@
 			"forget": "Forget"
 		},
 		"filterLists": {
-			"update": "Update now",
+			"update": "Update Now",
 			"summary": "{lists} lists",
 			"updated": "updated {time}"
 		},
 		"extensionUpdates": {
-			"checkNow": "Check now",
+			"checkNow": "Check Now",
 			"checking": "Checking for updates...",
 			"upToDate": "Up to date",
 			"updated": {
@@ -597,27 +593,27 @@
 				"cursor": "Cursor"
 			},
 			"connect": "Connect",
-			"copy": "Copy configuration",
+			"copy": "Copy Configuration",
 			"clientDescription": "Adds Lilo to its MCP servers.",
 			"clientConnected": "Lilo is in its MCP servers.",
-			"lastSeen": "Last seen {time}",
 			"revoke": "Remove",
-			"readyDescription": "Lilo asks you the first time it connects.",
 			"status": {
 				"acting": "Acting now",
 				"connected": "Connected",
 				"allowed": "Allowed",
 				"notInstalled": "Not installed",
 				"ready": "Configured"
-			}
+			},
+			"allowedSeen": "Allowed, last seen {time}",
+			"readyLine": "Configured. Lilo asks you the first time it connects."
 		},
 		"navGroups": {
 			"tools": "Tools"
 		},
 		"autoplay": {
-			"audio": "Block if it has sound",
-			"all": "Block all",
-			"none": "Allow all"
+			"audio": "Block If It Has Sound",
+			"all": "Block All",
+			"none": "Allow All"
 		},
 		"permissionDefaults": {
 			"ask": "Ask",
@@ -637,7 +633,7 @@
 			"lastProfile": "Your last profile stays: every space needs one.",
 			"extensionCount": "{count} extensions",
 			"extensionCountOne": "1 extension",
-			"newProfile": "New profile",
+			"newProfile": "New Profile...",
 			"newProfileDetail": "Fresh cookies, sign-ins and extensions",
 			"namePlaceholder": "Profile name",
 			"create": "Create",
@@ -665,7 +661,7 @@
 			"match": "Match",
 			"pattern": "Pattern",
 			"destination": "Opens in",
-			"add": "Add rule",
+			"add": "Add Rule",
 			"save": "Add",
 			"cancel": "Cancel",
 			"moveUp": "Move up",
@@ -674,7 +670,6 @@
 			"emptyPattern": "A rule needs a host or text to match."
 		},
 		"shortcuts": {
-			"intro": "Click a shortcut, then press the new keys. Esc cancels, Delete leaves the action without a shortcut.",
 			"searchPlaceholder": "Search shortcuts",
 			"preset": "Preset",
 			"presetDescription": "Replaces every shortcut you changed.",
@@ -682,23 +677,24 @@
 			"presetArc": "Arc",
 			"controlTabOrder": "Control-Tab switches tabs in",
 			"controlTabOrderDescription": "Recent order shows your last tabs, from every Space, until you release Control.",
-			"controlTabRecent": "Recent order",
-			"controlTabSidebar": "Sidebar order",
-			"resetAll": "Reset all",
+			"controlTabRecent": "Recent Order",
+			"controlTabSidebar": "Sidebar Order",
+			"resetAll": "Reset All",
 			"reset": "Reset",
 			"none": "None",
-			"pressKeys": "Press keys",
+			"pressKeys": "Press Keys",
 			"conflict": "{keys} is already used by {name}.",
 			"replace": "Replace",
 			"cancel": "Cancel",
-			"noResults": "No shortcut matches."
+			"noResults": "No shortcut matches.",
+			"note": "Click a shortcut, then press the new keys",
+			"recordingHint": "Esc cancels, Delete leaves the action without a shortcut."
 		},
-		"terminalAppearanceGroup": "Appearance",
 		"terminalSleepMode": "Keep the Mac awake during commands",
 		"terminalSleepModes": {
 			"off": "Off",
 			"command": "On",
-			"lid": "Lid closed too"
+			"lid": "Lid Closed Too"
 		},
 		"terminalLidGroup": "Lid closed",
 		"terminalLidHelper": "System helper",
@@ -708,7 +704,36 @@
 			"requiresApproval": "Needs approval",
 			"enabled": "Allowed",
 			"notFound": "Missing"
-		}
+		},
+		"notes": {
+			"live": "Changes apply as you pick",
+			"spaces": {
+				"one": "{count} Space",
+				"other": "{count} Spaces"
+			},
+			"profiles": {
+				"one": "{count} profile",
+				"other": "{count} profiles"
+			},
+			"blocking": "Blocking {count} of {total} kinds",
+			"blockingOff": "Blocking is off",
+			"extensions": {
+				"one": "{count} extension in {profile}",
+				"other": "{count} extensions in {profile}"
+			},
+			"terminal": "Changes apply to every terminal tab",
+			"agents": "Lilo has no AI of its own",
+			"advanced": "For developers and testing",
+			"searchMatches": {
+				"one": "{count} setting matches \"{query}\"",
+				"other": "{count} settings match \"{query}\""
+			}
+		},
+		"callDock": {
+			"sidebar": "In the sidebar",
+			"floating": "Floating window"
+		},
+		"terminalImportCaption": "Import takes an iTerm2 color preset (.itermcolors), a VS Code color theme (.json) or a Ghostty theme file."
 	},
 	"nav": {
 		"navigationControls": "Navigation controls",
@@ -1007,7 +1032,7 @@
 		"removeConfirmMessage": "The extension and its data will be deleted.",
 		"actionFailed": "Action failed. Tap to dismiss.",
 		"degradedTitle": "Background stopped: some features may not work.",
-		"loadUnpacked": "Load unpacked extension…",
+		"loadUnpacked": "Load Unpacked Extension...",
 		"addressBarMenu": "Extensions",
 		"hostAccessRequestAllow": "Allow",
 		"hostAccessRequestTooltip": "Let this extension access this site",
@@ -1015,7 +1040,7 @@
 		"unpinFromAddressBar": "Unpin from the address bar",
 		"pinnedSection": "Pinned",
 		"manageExtensions": "Manage extensions",
-		"addExtensions": "Add extensions",
+		"addExtensions": "Add Extensions",
 		"profileTitle": "Profile",
 		"profileHint": "Each profile has its own extensions.",
 		"addInstallsIn": "Installs into {profile}, the profile of this window.",
@@ -1038,7 +1063,8 @@
 		"removeTitle": "Remove this extension",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Reviews, details and the developer's page",
-		"webStoreOpen": "Open"
+		"webStoreOpen": "Open",
+		"installed": "Installed"
 	},
 	"commandBar": {
 		"hintPeek": "Peek",
@@ -1302,13 +1328,13 @@
 		"kindModel": "3D models"
 	},
 	"featureFlags": {
-		"resetAll": "Reset all",
-		"warning": "Internal-debug entries are WebKit developer flags and can break sites. Reload a page for a change to take effect.",
-		"sectionExperimental": "Experimental: {count}",
+		"resetAll": "Reset All",
+		"warning": "Internal-debug entries are WebKit developer flags and can break sites.",
 		"sectionDebug": "Internal Debug: {count}",
 		"modifiedBadge": "Modified",
 		"title": "WebKit flags",
-		"resetTitle": "Changed flags"
+		"resetTitle": "Changed flags",
+		"reloadNote": "Reload a page for a change to take effect"
 	},
 	"urlToast": {
 		"reEnableBlocking": "Re-enable blocking on this site",

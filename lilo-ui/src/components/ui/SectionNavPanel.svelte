@@ -3,6 +3,7 @@
   import PanelHeader from "./PanelHeader.svelte";
   import SettingsIcon from "../settings/SettingsIcon.svelte";
   import { tooltip } from "../../lib/tooltip";
+  import { getActiveSpace } from "../../stores/spaces.svelte";
 
   interface SectionNavSection {
     id: Id;
@@ -11,8 +12,6 @@
     /** Search hits in this section; shown at the row's end. */
     count?: number;
     dimmed?: boolean;
-    /** Something in the section waits on the user: a dot at the row's end. */
-    attention?: boolean;
   }
 
   interface SectionNavGroup {
@@ -40,7 +39,7 @@
 </script>
 
 <div class="panel-shell section-nav-panel" class:compact>
-  <PanelHeader {title} {onclose} />
+  <PanelHeader {title} {onclose} backLabel={getActiveSpace()?.name ?? ""} />
 
   {#if toolbar && !compact}
     <div class="section-nav-toolbar">{@render toolbar()}</div>
@@ -72,8 +71,6 @@
             <span class="section-nav-label">{section.label}</span>
             {#if section.count}
               <span class="section-nav-count">{section.count}</span>
-            {:else if section.attention}
-              <span class="section-nav-attention" aria-hidden="true"></span>
             {/if}
           </button>
         {/each}
@@ -113,7 +110,7 @@
     color: var(--text-muted);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
@@ -206,7 +203,7 @@
     padding: 0;
   }
 
-  .compact :is(.section-nav-count, .section-nav-attention) {
+  .compact .section-nav-count {
     display: none;
   }
 
@@ -217,13 +214,5 @@
     height: 1px;
     overflow: hidden;
     clip-path: inset(50%);
-  }
-
-  .section-nav-attention {
-    flex: none;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
   }
 </style>
