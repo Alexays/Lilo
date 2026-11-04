@@ -212,7 +212,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 4px;
+    margin-top: var(--space-12);
     padding: 10px 12px;
     border-radius: var(--radius-md);
     background: var(--bg-hover);
