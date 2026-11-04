@@ -268,7 +268,7 @@
 
   function handleSpaceDragMove(drag: DndActiveDrag): void {
     if (drag.source.item.kind !== "space" || drag.source.item.isPrivate) return;
-    if (drag.target?.zoneId !== "bottom-bar-spaces") return;
+    if (drag.target?.zoneId !== "bottom-bar-spaces" || drag.target.index === undefined) return;
 
     suppressClickUntil = Date.now() + 160;
     draggedSpaceId = drag.source.item.id;

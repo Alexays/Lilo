@@ -16,6 +16,21 @@ function unpinnedIds(paneLocator: Locator): Promise<(string | null)[]> {
 		.evaluateAll((rows) => rows.map((row) => row.getAttribute("data-tab-id")));
 }
 
+test("dropping on a tab's center splits beside that tab, even when it is inactive", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const target = '.tab-list [data-tab-id="tab-beta"]';
+	await pressAndLift(page, '.tab-list [data-tab-id="tab-gamma"]');
+	await glideTo(page, target);
+	await expect(pane(page, 0).locator(target).getByText("Split view")).toBeVisible();
+	await page.mouse.up();
+
+	const commands = await sentCommands(page);
+	expect(commands.filter((c) => c.action === "splitTab")).toEqual([
+		{ action: "splitTab", payload: { tabId: "tab-gamma", side: "right", targetTabId: "tab-beta" } },
+	]);
+	expect(commands.some((c) => c.action === "commitSidebarDrop")).toBe(false);
+});
+
 test("reorder within the unpinned list changes the DOM order", async ({
 	page,
 }) => {
@@ -49,9 +64,9 @@ test("dragging an unpinned row into the pinned list pins it", async ({
 	await bootChrome(page, initialWorld());
 	const activePane = pane(page, 0);
 
-	const from = await centerOf(page, '.tab-list [data-tab-id="tab-gamma"]');
-	const to = await centerOf(page, ".pinned-list");
-	await dragFromTo(page, from, to);
+	await pressAndLift(page, '.tab-list [data-tab-id="tab-gamma"]');
+	await glideTo(page, '.pinned-list [data-tab-id="tab-home"]', 5);
+	await page.mouse.up();
 
 	await expect(
 		activePane.locator('.pinned-list [data-tab-id="tab-gamma"]'),

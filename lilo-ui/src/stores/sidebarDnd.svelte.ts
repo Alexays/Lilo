@@ -10,7 +10,7 @@ import {
 	type SidebarZoneRef,
 } from "../lib/dndEngine/adapters/sidebar";
 import { folderDropIndex } from "../lib/sidebarDnd/folderTargeting";
-import { folderActions } from "../lib/bridge/actions";
+import { folderActions, tabActions } from "../lib/bridge/actions";
 import type {
 	BridgeSidebarDropPayload,
 	BridgeSidebarItemKind,
@@ -27,19 +27,21 @@ const AUTO_EXPAND_MS = 600;
 let dragVersion = $state(0);
 let hadActiveDrag = false;
 let publishedDragActive = false;
-// The last placeholder shown, kept in place while a collapsed folder is the target.
+// The last placeholder shown, kept in place for a drop onto a tab or collapsed folder.
 let heldPlaceholder: SidebarPlaceholder | null = null;
 dndEngineStore.subscribe(() => {
 	dragVersion += 1;
-	const isActive = dndEngineStore.activeDrag !== null;
+	const drag = dndEngineStore.activeDrag;
+	const isActive = drag !== null;
 	// A fresh gesture drops whatever hold the previous drop left behind.
-	if (isActive && !hadActiveDrag) {
+	if (drag && !hadActiveDrag) {
 		resetSidebarDrag();
-		heldPlaceholder = null;
+		const zone = zoneRef(drag.source.zoneId);
+		heldPlaceholder = zone && drag.home !== undefined && drag.home >= 0 ? { zone, index: drag.home } : null;
 	}
 	hadActiveDrag = isActive;
-	const snapshot = snapshotFrom(dndEngineStore.activeDrag);
-	heldPlaceholder = snapshot?.placeholder ?? null;
+	const snapshot = snapshotFrom(drag);
+	if (!drag || drag.started) heldPlaceholder = snapshot?.placeholder ?? null;
 	// A tab strip's folder chip has nowhere to open.
 	const opensInPlace = snapshot?.target && dndEngineStore.zones.get(snapshot.target.id)?.axis === "vertical";
 	scheduleAutoExpand(snapshot?.intoCollapsedFolder && opensInPlace ? snapshot.target?.parentFolderId ?? null : null);
@@ -120,22 +122,24 @@ function snapshotFrom(drag: DndActiveDrag | null): SidebarDragSnapshot | null {
 	if (!isSidebarKind(drag.source.item.kind)) return null;
 	const source = zoneRef(drag.source.zoneId);
 	if (!source) return null;
-	const target = zoneRef(drag.target?.zoneId);
-	const intoCollapsedFolder = target !== null &&
+	const onItemId = drag.target?.onItemId;
+	const target = onItemId ? heldPlaceholder?.zone ?? null : zoneRef(drag.target?.zoneId);
+	const intoCollapsedFolder = !onItemId && target !== null &&
 		dndEngineStore.getZoneMeta(target.id)?.isCollapsed === true;
 	// A collapsed folder shows no rows to aim between: the tab goes last.
 	const targetIndex = !target
 		? 0
 		: intoCollapsedFolder
 			? Number.POSITIVE_INFINITY
-			: resolvedTargetIndex(drag, target, drag.target?.index ?? 0);
+			: onItemId ? heldPlaceholder?.index ?? 0 : resolvedTargetIndex(drag, target, drag.target?.index ?? 0);
 	return {
 		itemId: drag.source.item.id,
 		kind: drag.source.item.kind,
 		source,
 		target,
 		targetIndex,
-		placeholder: intoCollapsedFolder
+		onItemId,
+		placeholder: intoCollapsedFolder || onItemId
 			? heldPlaceholder
 			: target && { zone: target, index: targetIndex },
 		intoCollapsedFolder,
@@ -189,8 +193,18 @@ export function commitSidebarDrop(
 	commit: (payload: BridgeSidebarDropPayload) => void,
 	activeDrag: DndActiveDrag,
 ): void {
+	const target = activeDrag.target;
+	if (target?.zoneId !== zone.id) {
+		resetSidebarDrag();
+		return;
+	}
+	if (target.onItemId) {
+		resetSidebarDrag();
+		tabActions.splitTab(activeDrag.source.item.id, "right", target.onItemId);
+		return;
+	}
 	const drag = snapshotFrom(activeDrag);
-	if (!drag?.target || drag.target.id !== zone.id) {
+	if (!drag?.target) {
 		resetSidebarDrag();
 		return;
 	}

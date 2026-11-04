@@ -173,8 +173,8 @@ export type SidebarDragSnapshot = {
 	source: SidebarZoneRef;
 	target: SidebarZoneRef | null;
 	targetIndex: number;
-	// Where the drop placeholder renders: the target, except over a collapsed folder, where
-	// it stays where it was (hidden) so the rows do not slide out from under the pointer.
+	onItemId?: string;
+	// Keep the slot when aiming onto a tab or collapsed folder so the rows don't slide under the pointer.
 	placeholder: SidebarPlaceholder | null;
 	intoCollapsedFolder: boolean;
 };

@@ -5,6 +5,32 @@ import XCTest
 
 @MainActor
 final class ChromeDragRoutingTests: XCTestCase {
+    func testTabDropSplitsBesideTheTargetEvenWhenAnotherSplitIsShowing() async throws {
+        let browser = try await TemporaryBrowserContext()
+        defer { browser.tearDown() }
+        let context = browser.context
+        let space = try context.spaceManager!.createSpace(name: "Work", profileId: try context.profileManager!.createProfile(name: "Test").id)
+        let controller = makeTestWindow(context, showing: space.id)
+        let tabs = try ["left", "right", "target", "source"].map { name in
+            try XCTUnwrap(controller.createTabStateFirst(url: URL(string: "data:text/html,\(name)"), activate: false)).id
+        }
+        controller.activateTabStateFirst(id: tabs[0])
+        controller.dropTab(tabs[1], at: nil, side: .edge(vertical: false, before: false))
+        let original = try XCTUnwrap(controller.tabManager.activeSplit)
+        XCTAssertEqual(original.layout.paneIds, [tabs[0], tabs[1]])
+        let undo = try XCTUnwrap(controller.window?.undoManager)
+        undo.removeAllActions()
+
+        controller.dropTab(tabs[3], at: tabs[2], side: .edge(vertical: false, before: false))
+
+        XCTAssertEqual(controller.tabManager.activeSplit?.layout.paneIds, [tabs[2], tabs[3]])
+        XCTAssertEqual(controller.tabManager.activeOpenTabId, tabs[3])
+        undo.undo()
+        XCTAssertEqual(controller.tabManager.activeSplit, original)
+        XCTAssertNil(controller.tabManager.tab(for: tabs[2])?.groupId)
+        XCTAssertNil(controller.tabManager.tab(for: tabs[3])?.groupId)
+    }
+
     func testOverlayWebViewRelaysContentDestinationResultsOutsideInteractiveZones() {
         let harness = makeHarness()
         let drag = TestDraggingInfo(location: NSPoint(x: 150, y: 150))

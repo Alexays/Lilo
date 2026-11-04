@@ -86,7 +86,7 @@
   }
 
   function handleLayerDragMove(drag: DndActiveDrag): void {
-    if (drag.target?.zoneId !== LAYER_ZONE) { visualLayers = null; return; }
+    if (drag.target?.zoneId !== LAYER_ZONE || drag.target.index === undefined) { visualLayers = null; return; }
     visualLayers = projectLayerOrder(drag.source.item.id, drag.target.index);
   }
 

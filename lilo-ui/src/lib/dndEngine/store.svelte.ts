@@ -18,6 +18,8 @@ export type DndZoneParams = {
 	meta?: DndZoneMeta;
 	getItems?: () => DndItem[];
 	canResolve?: (context: DndTargetContext) => boolean;
+	// Some zones accept a drop onto a row without accepting insertion between rows.
+	resolveOnItem?: (context: DndTargetContext) => string | undefined;
 	onDragMove?: DndItemDragCallback;
 	onDragLeave?: DndItemDragCallback;
 	onDrop?: DndItemDragCallback;
@@ -75,6 +77,7 @@ export class DndEngineStore {
 	private lastNotifiedStarted = false;
 	private lastNotifiedZoneId = "";
 	private lastNotifiedIndex = -1;
+	private lastNotifiedOnItemId: string | undefined;
 
 	get activeDrag(): DndActiveDrag | null {
 		return this.drag;
@@ -102,12 +105,14 @@ export class DndEngineStore {
 		const started = drag?.started ?? false;
 		const zoneId = drag?.target?.zoneId ?? "";
 		const index = drag?.target?.index ?? -1;
+		const onItemId = drag?.target?.onItemId;
 		if (
 			active === this.lastNotifiedActive &&
 			sourceId === this.lastNotifiedSourceId &&
 			started === this.lastNotifiedStarted &&
 			zoneId === this.lastNotifiedZoneId &&
-			index === this.lastNotifiedIndex
+			index === this.lastNotifiedIndex &&
+			onItemId === this.lastNotifiedOnItemId
 		) {
 			return;
 		}
@@ -116,6 +121,7 @@ export class DndEngineStore {
 		this.lastNotifiedStarted = started;
 		this.lastNotifiedZoneId = zoneId;
 		this.lastNotifiedIndex = index;
+		this.lastNotifiedOnItemId = onItemId;
 		for (const listener of this.listeners) listener();
 	}
 
@@ -261,14 +267,14 @@ export class DndEngineStore {
 			}
 			if (!isPointInsideRect(point, snapshot.rect)) continue;
 			insideAnyZone = true;
-			if (zone.canResolve && !zone.canResolve({
-				point,
-				zone: snapshot,
-				dragSource: drag.source.item,
-			})) {
+			const context = { point, zone: snapshot, dragSource: drag.source.item };
+			const onItemId = zone.resolveOnItem?.(context);
+			if (!onItemId && zone.canResolve && !zone.canResolve(context)) {
 				continue;
 			}
-			const target = resolveTargetFromPoint(point, snapshot);
+			const target = onItemId
+				? { zoneId: snapshot.id, axis: snapshot.axis, onItemId }
+				: resolveTargetFromPoint(point, snapshot);
 			if (target && (!resolvedZone || rectArea(snapshot.rect) < rectArea(resolvedZone.rect))) {
 				resolvedTarget = target;
 				resolvedZone = snapshot;
@@ -278,7 +284,7 @@ export class DndEngineStore {
 		if (!resolvedTarget || !resolvedZone) {
 			// Only true gaps hold: a point inside a zone that refused it is a real "no target".
 			const previous = drag.target;
-			if (insideAnyZone || !previous) return null;
+			if (insideAnyZone || !previous || previous.onItemId) return null;
 			const previousZone = zones.find((zone) => zone.id === previous.zoneId);
 			if (!previousZone || !isPointInsideRect(point, previousZone.rect, GAP_HOLD_PX)) return null;
 			return { ...previous, zoneRect: previousZone.rect };

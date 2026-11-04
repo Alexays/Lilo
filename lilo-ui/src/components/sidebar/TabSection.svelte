@@ -21,7 +21,7 @@
   import TabItem from "./TabItem.svelte";
   import SavedTabEditor from "./SavedTabEditor.svelte";
   import { closeTabEditor, getEditingTab } from "../../stores/tabRename.svelte";
-  import type { BridgeSplitLayout } from "../../lib/bridge/protocol";
+  import { MAX_SPLIT_PANES, type BridgeSplitLayout } from "../../lib/bridge/protocol";
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
@@ -91,6 +91,8 @@
   const activeTabId = $derived(getActiveTabId(spaceId));
   const slotClass = $derived(isPinned ? "pinned-tab-slot" : "tab-drop-slot");
   const sidebarDrag = $derived(getSidebarDrag());
+  const splitDropTabId = $derived(interactive ? sidebarDrag?.onItemId : undefined);
+  const hidePlaceholder = $derived(sidebarDrag?.intoCollapsedFolder || !!sidebarDrag?.onItemId);
   const dragActive = $derived(isSidebarDragActive());
   const dragTargetsRoot = $derived(
     sidebarDrag !== null && sidebarDrag.target?.parentFolderId === null,
@@ -546,6 +548,21 @@
     });
   }
 
+  function splitTargetAt({ point, zone, dragSource }: DndTargetContext): string | undefined {
+    if (!interactive || dragSource.kind !== "tab") return undefined;
+    const source = tabsById.get(dragSource.id);
+    if (!source || source.isClosed || source.isBookmarked) return undefined;
+    const row = zone.items.find(({ rect }) => {
+      const edge = rect.height / 3;
+      return point.y >= rect.top + edge && point.y <= rect.bottom - edge && point.x >= rect.left && point.x <= rect.right;
+    });
+    const tab = row && tabsById.get(row.id);
+    if (!tab || tab.isClosed || tab.id === editingTab?.id) return undefined;
+    const layout = tab.groupId ? foldersById.get(tab.groupId)?.splitLayout : undefined;
+    if (layout && source.groupId !== tab.groupId && splitPanes(layout).length >= MAX_SPLIT_PANES) return undefined;
+    return tab.id;
+  }
+
   // A tab dropped outside the window opens in a new window where it was dropped.
   function moveTabOutOfWindow(drag: DndActiveDrag, point: { screenX: number; screenY: number }): void {
     resetSidebarDrag();
@@ -750,7 +767,7 @@
   {#if isShadowItem(entry)}
     <div
       class="sidebar-dnd-placeholder"
-      class:held={sidebarDrag?.intoCollapsedFolder}
+      class:held={hidePlaceholder}
       data-variant={section}
       aria-hidden="true"
     ></div>
@@ -769,6 +786,7 @@
         meta: { section, spaceId: spaceId, parentFolderId: entry.id },
         getItems: () => childZoneItems(entry.id),
         canResolve: () => false,
+        resolveOnItem: splitTargetAt,
         onDrop: (drag) => handleFolderDrop(entry.id, drag),
         onCancel: resetSidebarDrag,
       }}
@@ -798,6 +816,7 @@
           interactive={interactive}
           disableTooltip={dragActive}
           actionsInert={dragActive}
+          splitDropTarget={splitDropTabId === tab.id}
           tabStop={tab.id === tabStopId}
         />
       {/if}
@@ -823,6 +842,7 @@
       },
       getItems: () => childZoneItems(folder.id),
       canResolve: (context) => canResolveFolderZone(folder.id, context),
+      resolveOnItem: (context) => childrenShown && !folder.isLocked ? splitTargetAt(context) : undefined,
       onDrop: (drag) => handleFolderDrop(folder.id, drag),
       onCancel: resetSidebarDrag,
     }}
@@ -885,7 +905,7 @@
                 {#if isShadowItem(childEntry)}
                   <div
                     class="sidebar-dnd-placeholder folder"
-                    class:held={sidebarDrag?.intoCollapsedFolder}
+                    class:held={hidePlaceholder}
                     data-variant="folder"
                     aria-hidden="true"
                   ></div>
@@ -909,6 +929,7 @@
                         interactive={interactive && childrenShown}
                         disableTooltip={dragActive || !childrenShown}
                         actionsInert={dragActive}
+                        splitDropTarget={splitDropTabId === tab.id}
                         level={level + 1}
                         tabStop={tab.id === tabStopId}
                       />
@@ -947,6 +968,7 @@
           disableTooltip={dragActive}
           tooltipAnchor=".split-row"
           actionsInert={dragActive}
+          splitDropTarget={splitDropTabId === tab.id}
           tabStop={tab.id === tabStopId}
         />
       </div>
@@ -1089,6 +1111,7 @@
           meta: { section, spaceId: spaceId, parentFolderId: null },
           getItems: () => rootZoneItems,
           canResolve: canResolveRootZone,
+          resolveOnItem: splitTargetAt,
           onDrop: handleRootDrop,
           onCancel: resetSidebarDrag,
         }}
@@ -1111,6 +1134,7 @@
         meta: { section, spaceId: spaceId, parentFolderId: null },
         getItems: () => rootZoneItems,
         canResolve: canResolveRootZone,
+        resolveOnItem: splitTargetAt,
         onDrop: handleRootDrop,
         onCancel: resetSidebarDrag,
       }}
@@ -1531,7 +1555,7 @@
     }
   }
 
-  /* Keeps its slot while a collapsed folder takes the drop, so nothing reflows. */
+  /* Keep the slot while a row takes the drop, so it stays under the pointer. */
   .sidebar-dnd-placeholder.held {
     visibility: hidden;
   }

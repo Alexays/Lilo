@@ -3,7 +3,7 @@ import {
 	type DndItemParams,
 	type DndZoneParams,
 } from "./store.svelte";
-import type { DndItem } from "./types";
+import type { DndItem, DndResolvedTarget } from "./types";
 import { isPointInsideRect } from "./geometry";
 import { on } from "../bridge";
 import { createFrameScheduler } from "../motion/frameScheduler";
@@ -61,8 +61,7 @@ export function dndItem(
 	let hasStarted = false;
 	let didNotifyStart = false;
 	let didCapturePointer = false;
-	let lastNotifiedTargetZoneId: string | null = null;
-	let lastNotifiedTargetIndex = -1;
+	let lastNotifiedTarget: DndResolvedTarget | null = null;
 	let previewElement: HTMLElement | null = null;
 	let disposeWindowFocus: (() => void) | null = null;
 	let disposeCancelDrag: (() => void) | null = null;
@@ -98,7 +97,7 @@ export function dndItem(
 		updateDragPreview(previewElement, drag);
 		setPreviewCompact(
 			previewElement,
-			!!drag.target && dndEngineStore.getZoneMeta(drag.target.zoneId)?.compactPreview === true,
+			!!drag.target && (drag.target.onItemId !== undefined || dndEngineStore.getZoneMeta(drag.target.zoneId)?.compactPreview === true),
 		);
 		autoScrollFrame.schedule(autoScroll);
 		if (!didNotifyStart) {
@@ -106,10 +105,7 @@ export function dndItem(
 			capturePointer(lastEvent);
 			current.onDragStart?.(drag);
 			dndEngineStore.invalidateLayoutSnapshot();
-			if (drag.target) {
-				lastNotifiedTargetZoneId = drag.target.zoneId;
-				lastNotifiedTargetIndex = drag.target.index;
-			}
+			lastNotifiedTarget = drag.target;
 			scheduleSettleResolve();
 			return;
 		}
@@ -132,18 +128,17 @@ export function dndItem(
 	): void {
 		notifyTargetLeave(drag, target?.zoneId ?? null);
 		if (!target) {
-			lastNotifiedTargetZoneId = null;
-			lastNotifiedTargetIndex = -1;
+			lastNotifiedTarget = null;
 			return;
 		}
 		if (
-			target.zoneId === lastNotifiedTargetZoneId &&
-			target.index === lastNotifiedTargetIndex
+			target.zoneId === lastNotifiedTarget?.zoneId &&
+			target.index === lastNotifiedTarget.index &&
+			target.onItemId === lastNotifiedTarget.onItemId
 		) {
 			return;
 		}
-		lastNotifiedTargetZoneId = target.zoneId;
-		lastNotifiedTargetIndex = target.index;
+		lastNotifiedTarget = target;
 		notifyDragMove(drag);
 		scheduleSettleResolve();
 	}
@@ -261,8 +256,7 @@ export function dndItem(
 		didCapturePointer = false;
 		autoScrollZone = null;
 		autoScrollContainer = null;
-		lastNotifiedTargetZoneId = null;
-		lastNotifiedTargetIndex = -1;
+		lastNotifiedTarget = null;
 		destroyDragPreview();
 		addWindowPointerListeners();
 		dndEngineStore.startDrag({
@@ -290,6 +284,10 @@ export function dndItem(
 		settleFrame.cancel();
 		autoScrollFrame.cancel();
 		releasePointer();
+		const lastPoint = dndEngineStore.activeDrag?.currentPoint;
+		if (hasStarted && lastPoint && (lastPoint.x !== event.clientX || lastPoint.y !== event.clientY)) {
+			dndEngineStore.updatePointer(pointerPoint(event), true);
+		}
 		const previewDropRect = dndEngineStore.activeDrag?.started && previewElement
 			? targetDropRect(dndEngineStore.activeDrag)
 			: null;
@@ -302,8 +300,7 @@ export function dndItem(
 			destroyDragPreview();
 			activePointerId = null;
 			lastEvent = null;
-			lastNotifiedTargetZoneId = null;
-			lastNotifiedTargetIndex = -1;
+			lastNotifiedTarget = null;
 			return;
 		}
 		if (drag?.started) {
@@ -331,8 +328,7 @@ export function dndItem(
 		}
 		activePointerId = null;
 		lastEvent = null;
-		lastNotifiedTargetZoneId = null;
-		lastNotifiedTargetIndex = -1;
+		lastNotifiedTarget = null;
 	}
 
 	function handlePointerCancel(event: PointerEvent): void {
@@ -371,8 +367,7 @@ export function dndItem(
 		}
 		activePointerId = null;
 		lastEvent = null;
-		lastNotifiedTargetZoneId = null;
-		lastNotifiedTargetIndex = -1;
+		lastNotifiedTarget = null;
 	}
 
 	node.addEventListener("pointerdown", handlePointerDown);
@@ -411,8 +406,9 @@ export function dndItem(
 		drag: NonNullable<typeof dndEngineStore.activeDrag>,
 		nextZoneId: string | null,
 	): void {
-		if (!lastNotifiedTargetZoneId || lastNotifiedTargetZoneId === nextZoneId) return;
-		const previousCallbacks = dndEngineStore.getZoneCallbacks(lastNotifiedTargetZoneId);
+		const previousZoneId = lastNotifiedTarget?.zoneId;
+		if (!previousZoneId || previousZoneId === nextZoneId) return;
+		const previousCallbacks = dndEngineStore.getZoneCallbacks(previousZoneId);
 		previousCallbacks?.onDragLeave?.(drag);
 	}
 }
@@ -453,12 +449,13 @@ function createDragPreview(node: HTMLElement, rect: DOMRect, item: DndItem, grab
 function updateDragPreview(preview: HTMLElement, drag: NonNullable<typeof dndEngineStore.activeDrag>): void {
 	// Kept inside the window: a pane grabbed by its middle and aimed at the left edge of the
 	// split row would otherwise slide half off-screen.
-	const { left, width } = drag.source.sourceRect;
+	const { left, top, width } = drag.source.sourceRect;
 	const minX = PREVIEW_EDGE_PX - left;
 	const maxX = window.innerWidth - PREVIEW_EDGE_PX - left - width;
 	const deltaX = Math.min(Math.max(drag.currentPoint.x - drag.startPoint.x, minX), Math.max(minX, maxX));
-	const deltaY = drag.currentPoint.y - drag.startPoint.y;
-	preview.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+	// Keep the drop label visible above the dragged tab.
+	const y = drag.target?.onItemId ? drag.currentPoint.y + 12 - top : drag.currentPoint.y - drag.startPoint.y;
+	preview.style.transform = `translate3d(${deltaX}px, ${y}px, 0)`;
 }
 
 function setPreviewCompact(preview: HTMLElement, compact: boolean): void {
@@ -589,6 +586,7 @@ function removePreviewWhenFinished(animation: Animation, preview: HTMLElement): 
 function targetDropRect(
 	drag: NonNullable<typeof dndEngineStore.activeDrag>,
 ): DOMRect | null {
+	if (drag.target?.onItemId) return null;
 	const shadow = document.querySelector<HTMLElement>(
 		`[data-dnd-item-id="dnd-shadow:${drag.source.item.id}"]`,
 	);

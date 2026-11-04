@@ -102,6 +102,7 @@ export function applyTargetHysteresis(
 ): DndResolvedTarget | null {
 	if (!next || !previous) return next;
 	if (zone.axis === "grid") return next;
+	if (next.index === undefined || previous.index === undefined) return next;
 	if (next.zoneId !== previous.zoneId) return next;
 	if (next.index === previous.index) return next;
 	if (Math.abs(next.index - previous.index) > 1) return next;
