@@ -991,6 +991,10 @@ extension MainWindowController {
     /// The bar over the page takes the active page's color, drawn with the frame so it slides with the page exactly.
     /// A page loading before it has one shows the surface under it, which the bar takes meanwhile.
     func syncPageBar() {
+        if pageCovered {
+            windowFrameView?.setBarColors(nil)
+            return
+        }
         let tab = tabManager.activeTab
         let colors = tab?.pageColor?.split(separator: ",").compactMap { NSColor(cssHex: String($0))?.cgColor } ?? []
         let loading = tab?.kind == .web && tab?.url != nil

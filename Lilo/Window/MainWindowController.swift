@@ -243,6 +243,8 @@ final class MainWindowController: NSWindowController {
     var toolbarVisible = true
     var tabLayout = TabLayout.cached
     var sidebarOverlayVisible = false
+    /// A chrome surface (Settings, History) hides the page: the bar over it leaves the page's color.
+    var pageCovered = false
     var sidebarCollapseLocked = false
     var sidebarRevealedByLock = false
     var restoredStartupSpaceIdsByProfile: [UUID: [String: UUID]] = [:]

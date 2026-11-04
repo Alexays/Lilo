@@ -2934,6 +2934,7 @@ export const createDemoHost = (
     "removeInteractiveZone",
     "setSidebarCollapseLocked",
     "sidebarOverlayChanged",
+    "pageCoverChanged",
     "startWindowDrag",
     "traceSpaceSwipe",
     "traceSpaceDnd",
