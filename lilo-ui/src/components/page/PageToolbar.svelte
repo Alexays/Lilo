@@ -17,6 +17,8 @@
   // With the tabs at the bottom and no address here, the bar names the page as a title bar does.
   const title = $derived(getTabPosition() === "bottom" && !isAddressInPageToolbar() ? getActiveTab()?.title ?? "" : null);
 
+  const navigationInStrip = $derived(getTabPosition() === "bottom" && !isAddressInPageToolbar());
+
   // The traffic lights sit top-left of the window: room for them when the toolbar starts there.
   const besideTrafficLights = $derived(!row && (getTabPosition() !== "left" || !isSidebarVisible()) && areTrafficLightsVisible());
 
@@ -74,8 +76,9 @@
     <div class="lights-spacer" class:shut={!besideTrafficLights}></div>
   {/if}
   <!-- Under a top strip, the strip already holds the navigation: this row is the address alone. Without
-       the tabs, or beside the left sidebar, it holds their toggle too. -->
-  {#if !row}
+       the tabs, or beside the left sidebar, it holds their toggle too. Over a bottom strip, the history
+       stays with the address: without one here, it goes down to the strip. -->
+  {#if !row && !(navigationInStrip && isSidebarVisible())}
     <NavControls show={!isSidebarVisible() || getTabPosition() === "left" ? "all" : isAddressInRightTabs() ? "toggle" : "history"} />
   {/if}
   {#if isAddressInPageToolbar()}

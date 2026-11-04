@@ -308,7 +308,7 @@
   <!-- The window's tools share one capsule, apart from the Space and the tabs. -->
   <div class="tools">
     <NavControls show="toggle" />
-    {#if edge === "top" || !isSidebarVisible()}
+    {#if edge === "top" || !isSidebarVisible() || !isAddressInPageToolbar()}
       <span class="tools-separator" aria-hidden="true"></span>
       <NavControls show="history" />
     {/if}
