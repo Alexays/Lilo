@@ -1349,6 +1349,7 @@
 		"reloadNote": "重新载入页面以使更改生效"
 	},
 	"urlToast": {
+		"pageActions": "页面操作",
 		"reEnableBlocking": "重新启用此网站的拦截",
 		"trackerBlockedOnPage": "已在此网页拦截 {count} 个跟踪器",
 		"trackersBlockedOnPage": "已在此网页拦截 {count} 个跟踪器",

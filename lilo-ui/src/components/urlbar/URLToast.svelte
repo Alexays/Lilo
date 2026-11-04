@@ -275,12 +275,6 @@
       transform 260ms var(--motion-ease-spring);
   }
 
-  /* On the Space row they cover the name's end, on the row's hover, without re-truncating it. */
-  :global(.actions-only) .url-actions {
-    position: static;
-    transform: none;
-  }
-
   .url-blocker-btn {
     color: var(--success-vivid);
     background: color-mix(in srgb, var(--success) 20%, var(--bg-active)) !important;

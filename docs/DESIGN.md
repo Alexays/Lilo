@@ -14,6 +14,8 @@ Four elements keep the same place in all twelve layouts (tabs left, right, top, 
 | Update card | At the bottom of the tab collection, with its animation: it is meant to make people want to update |
 
 - With the sidebar hidden, nothing stays over the page: the left edge slides the sidebar back with its landmarks, and ⇧⌘S toggles it.
+- Back and Reload never leave their line; on a narrow sidebar only an unavailable Forward gives way. Each layout has a minimum sidebar width that keeps its top line whole, nothing past the edge: 203 pt with the address in the sidebar, 243 pt with the address hidden and Agents on, 215 pt without Agents.
+- With the address hidden, the page's buttons (site controls, content blocking, screenshot, copy link, extensions) wait behind one button at the end of the top line and open in a row under it.
 - Every layout setting changes the screen. A combination with no effect is disabled, with a sentence saying why.
 - Tabs at the bottom: navigation and address share that bottom bar. The top of the window is the page.
 
@@ -60,7 +62,7 @@ A piece of information takes the form of its family, never another.
 
 Nothing else. A badge sits on a fixed landmark or a tab row, never on a navigation button.
 
-- The Agents button is the only entry point to Agents in the chrome: a 28 px square beside Reload, shown whenever Agents are on. A ring turns around the mascot while an agent works; the 6 px orange dot says one waits for you, its label and tooltip say how many; both can show at once. Its popover starts with New; with no conversation to list, the button opens New directly.
+- The Agents button is the only entry point to Agents in the chrome: a 28 px square beside Reload, shown whenever Agents are on. A ring turns around the mascot while an agent works; the 6 px orange dot says one waits for you, its label and tooltip say how many; both can show at once. Its popover starts with New; with no conversation to list, the button opens New directly. When the top line can no longer hold it beside Reload with the address in the sidebar, it moves into the address field as a 24 px button at its trailing end, ring and dot included: ask an agent about this page.
 
 ## Tab rows
 

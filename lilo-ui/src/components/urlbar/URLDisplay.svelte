@@ -22,7 +22,6 @@
   import { cubicOut, quintOut } from "svelte/easing";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { springEase } from "../../lib/motion/spring";
-  import NavControls from "../sidebar/NavControls.svelte";
   import URLHost from "./URLHost.svelte";
   import URLToast from "./URLToast.svelte";
   import URLProgress from "./URLProgress.svelte";
@@ -41,9 +40,9 @@
   } from "../../lib/urlProgress";
   import type { ToastVariant, URLVisual } from "../../lib/urlVisual";
 
-  // With the address hidden, only the page's buttons stay, on the Space row. With nav, the field holds
-  // Back, Forward and Reload while the sidebar is too narrow for them on its top line.
-  let { actionsOnly = false, nav = false }: { actionsOnly?: boolean; nav?: boolean } = $props();
+  // With the address hidden, only the page's buttons stay, on the top line. With agents, the field holds
+  // the Agents button while the sidebar is too narrow for it on its top line.
+  let { actionsOnly = false, agents = false }: { actionsOnly?: boolean; agents?: boolean } = $props();
 
   const TOAST_DURATION_MS = 1440;
   const DETAILS_DELAY_MS = 400;
@@ -225,7 +224,7 @@
 
   function trackDetails(event: PointerEvent) {
     const target = event.target as Element;
-    if (target.closest(".url-actions, .changes-button, .permissions-btn, .nav-controls")) return closeDetails();
+    if (target.closest(".url-actions, .changes-button, .permissions-btn, .field-agents")) return closeDetails();
     if (detailsOpen || detailsTimer !== null || !target.closest(".url-trigger")) return;
     detailsTimer = setTimeout(() => {
       detailsTimer = null;
@@ -269,7 +268,7 @@
   onMount(() => settingsActions.loadDefaultBrowserStatus());
 
   function handleClick(event: MouseEvent) {
-    if ((event.target as Element).closest(".nav-controls")) return;
+    if ((event.target as Element).closest(".field-agents")) return;
     closeDetails();
     openCommandBar(activeTabURL, false, true);
   }
@@ -899,13 +898,17 @@
 {/snippet}
 
 {#if actionsOnly}
-  <!-- Keeps the bar's class: the screenshot and extension menus hang from it. -->
-  <div class="url-trigger actions-only">
-    {@render permissionsButton()}
-    {#if !showsLocation}
-      {@render actions()}
-    {/if}
-  </div>
+  <!-- Loaded only with the address hidden, where the page's buttons wait behind one on the top line. -->
+  {#if captureActive || !showsLocation}
+    {#await import("./PageActions.svelte") then menu}
+      <menu.default>
+        {@render permissionsButton()}
+        {#if !showsLocation}
+          {@render actions()}
+        {/if}
+      </menu.default>
+    {/await}
+  {/if}
 {:else}
 <div
   class="url-display"
@@ -917,7 +920,7 @@
   <div class="url-surface">
     <div
       class="url-trigger"
-      class:with-nav={nav}
+      class:with-agents={agents}
       draggable={draggableURL}
       ondragstart={dragURL}
       onclick={handleClick}
@@ -936,9 +939,6 @@
         aria-label={t("urlBar.addressBar", { url: showsLocation ? activeCwd : `${urlVisual.host}${urlVisual.path}` })}
       ></button>
       {@render permissionsButton()}
-      {#if nav}
-        <NavControls show="history" inline />
-      {/if}
 
       {#if showsLocation && !toastVisible}
         <span class="location-shell">
@@ -986,6 +986,15 @@
 
       {#if !showsLocation}
         {@render actions()}
+      {/if}
+
+      {#if agents}
+        <!-- Rendered at once, so the pins reserve its room before the badge's chunk arrives. -->
+        <span class="field-agents">
+          {#await import("../agents/AgentsBadge.svelte") then badge}
+            <badge.default />
+          {/await}
+        </span>
       {/if}
 
       <URLProgress
@@ -1057,23 +1066,21 @@
     outline: none;
   }
 
-  /* Room for the 24 px history buttons at both ends; the extension cluster moves off Reload. */
-  @container sidebar (width < 244px) {
-    .url-trigger.with-nav {
-      padding: 4px;
-    }
-
-    .with-nav :global(.url-actions) {
-      right: 32px;
-    }
+  /* The 24 px Agents button ends the row and the extension cluster moves off it; Sidebar's 239 px query hides
+     the top line's. */
+  .field-agents {
+    display: none;
   }
 
-  .url-trigger.actions-only {
-    width: auto;
-    min-height: 0;
-    padding: 0;
-    overflow: visible;
-    cursor: default;
+  @container sidebar (width < 239px) {
+    .field-agents {
+      display: flex;
+      margin: -4px -4px -4px 0;
+    }
+
+    .with-agents :global(.url-actions) {
+      right: 32px;
+    }
   }
 
   .url-trigger-button {

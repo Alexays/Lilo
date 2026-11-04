@@ -91,7 +91,7 @@ final class MainWindowController: NSWindowController {
     nonisolated static let logger = Logger(liloCategory: "MainWindowController")
 
     static let defaultSidebarWidth: CGFloat = 260
-    static let sidebarWidthRange: ClosedRange<CGFloat> = 170...480
+    static let sidebarWidthRange: ClosedRange<CGFloat> = 203...480
     static let contentInset: CGFloat = 8
     /// Matches the 320px of `--sidebar-fitted-width` in the chrome UI's global.css.
     static let minimumContentWidth: CGFloat = 320

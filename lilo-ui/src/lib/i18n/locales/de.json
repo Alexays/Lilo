@@ -1349,6 +1349,7 @@
 		"reloadNote": "Lade eine Seite neu, damit eine Änderung wirkt"
 	},
 	"urlToast": {
+		"pageActions": "Seitenaktionen",
 		"reEnableBlocking": "Blockierung auf dieser Website wieder aktivieren",
 		"trackerBlockedOnPage": "{count} Tracker auf dieser Seite blockiert",
 		"trackersBlockedOnPage": "{count} Tracker auf dieser Seite blockiert",

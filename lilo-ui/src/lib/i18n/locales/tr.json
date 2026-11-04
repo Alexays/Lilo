@@ -1349,6 +1349,7 @@
 		"reloadNote": "Değişikliğin geçerli olması için sayfayı yeniden yükleyin"
 	},
 	"urlToast": {
+		"pageActions": "Sayfa işlemleri",
 		"reEnableBlocking": "Bu sitede engellemeyi yeniden aç",
 		"trackerBlockedOnPage": "Bu sayfada {count} izleyici engellendi",
 		"trackersBlockedOnPage": "Bu sayfada {count} izleyici engellendi",

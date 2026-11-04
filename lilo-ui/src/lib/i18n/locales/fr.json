@@ -1349,6 +1349,7 @@
 		"reloadNote": "Rechargez une page pour qu'un changement s'applique"
 	},
 	"urlToast": {
+		"pageActions": "Actions de la page",
 		"reEnableBlocking": "Réactiver le blocage sur ce site",
 		"trackerBlockedOnPage": "{count} traqueur bloqué sur cette page",
 		"trackersBlockedOnPage": "{count} traqueurs bloqués sur cette page",

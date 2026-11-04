@@ -95,6 +95,24 @@
     outline-offset: 1px;
   }
 
+  /* In the address field, where a narrow sidebar moves it, it takes the field's 24 px buttons. */
+  :global(.field-agents) .agents-button {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* The field paints --bg-hover itself, so a hover needs a tint above it. */
+  :global(.field-agents) .agents-button:is(:hover, .open) {
+    background: var(--text-primary-tint-12);
+  }
+
+  /* The waiting dot's ring takes the field's translucent fill, laid over the sidebar's. */
+  :global(.field-agents) .dot {
+    box-shadow:
+      0 0 0 2px var(--bg-hover),
+      0 0 0 2px var(--sidebar-bg);
+  }
+
   .ring {
     overflow: visible;
   }

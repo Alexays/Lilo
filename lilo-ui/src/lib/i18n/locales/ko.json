@@ -1349,6 +1349,7 @@
 		"reloadNote": "변경 사항을 적용하려면 페이지를 새로 고치세요"
 	},
 	"urlToast": {
+		"pageActions": "페이지 동작",
 		"reEnableBlocking": "이 사이트에서 차단 다시 활성화",
 		"trackerBlockedOnPage": "이 페이지에서 추적기 {count}개 차단됨",
 		"trackersBlockedOnPage": "이 페이지에서 추적기 {count}개 차단됨",

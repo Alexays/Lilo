@@ -29,7 +29,8 @@
     showSidebarOverlay,
   } from "./stores/ui.svelte";
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
-  import { getTabPosition, hasPageToolbar, isPageToolbarShown, isVerticalLayout } from "./stores/tabLayout.svelte";
+  import { getSetting } from "./stores/settings.svelte";
+  import { getTabPosition, hasPageToolbar, isAddressVisible, isPageToolbarShown, isVerticalLayout } from "./stores/tabLayout.svelte";
   import { isLiftingTabs } from "./stores/tabEdgeDrag.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
@@ -118,6 +119,19 @@
   let lastThemeVars: Record<string, string> = {};
   let sidebarOverlayHideTimeout: ReturnType<typeof setTimeout> | null = null;
   const sidebarResizeFrame = createFrameScheduler();
+  // The narrowest sidebar whose top line holds every button whole; Swift's range keeps the lowest of them.
+  // With the address hidden the line also holds Agents and the page's overflow button.
+  const sidebarMinWidth = $derived(
+    getTabPosition() === "left" && !isAddressVisible() ? (getSetting("agentsEnabled", "false") === "true" ? 243 : 215) : 203,
+  );
+
+  // A width kept from a roomier layout widens to the new one's minimum.
+  $effect(() => {
+    const root = document.documentElement;
+    if (!(parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width")) < sidebarMinWidth)) return;
+    root.style.setProperty("--sidebar-width", `${sidebarMinWidth}px`);
+    chromeActions.sidebarResized(sidebarMinWidth);
+  });
   let pendingSidebarWidth = 260;
   let isSidebarResizing = $state(false);
 
@@ -244,7 +258,7 @@
     function onMove(ev: MouseEvent) {
       // On the right the handle sits on the sidebar's left edge: dragging left widens it.
       const delta = getTabPosition() === "right" ? startX - ev.clientX : ev.clientX - startX;
-      const newWidth = Math.max(170, Math.min(480, startWidth + delta));
+      const newWidth = Math.max(sidebarMinWidth, Math.min(480, startWidth + delta));
       scheduleSidebarWidth(newWidth);
     }
 

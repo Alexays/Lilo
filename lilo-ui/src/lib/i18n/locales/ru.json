@@ -1367,6 +1367,7 @@
 		"reloadNote": "Перезагрузите страницу, чтобы изменение вступило в силу"
 	},
 	"urlToast": {
+		"pageActions": "Действия со страницей",
 		"reEnableBlocking": "Включить блокировку на этом сайте",
 		"trackerBlockedOnPage": "На странице заблокирован {count} трекер",
 		"trackersBlockedOnPage": "На странице заблокировано трекеров: {count}",

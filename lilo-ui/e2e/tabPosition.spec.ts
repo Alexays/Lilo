@@ -25,8 +25,8 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 		await bootChrome(page, { ...initialWorld(), tabPosition: position, addressPlacement: "hidden" }, strip ? ".tab-strip .strip-tab" : undefined);
 		await expect(page.locator(".url-display")).toHaveCount(0);
 		await expect(page.locator(".page-toolbar")).toHaveCount(position === "right" || position === "bottom" ? 1 : 0);
-		// The page's buttons move up to the sidebar header's line.
-		await expect(page.locator(".page-actions .url-screenshot-btn")).toHaveCount(strip ? 0 : 1);
+		// The page's buttons wait behind one on the sidebar header's line.
+		await expect(page.locator(".page-actions .page-actions-btn")).toHaveCount(strip ? 0 : 1);
 
 		await receive(page, { event: "toggleCommandBar", prefill: "https://example.com", selectAll: true });
 		await expect(page.getByRole("combobox", { name: "Search or enter address" })).toHaveValue("https://example.com");
@@ -38,10 +38,11 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 	});
 }
 
-test("the page's buttons show on hover of the sidebar header", async ({ page }) => {
+test("the page's buttons open in a row from the sidebar header's button", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), addressPlacement: "hidden" });
-	await page.locator(".sidebar-header").hover();
-	await expect(page.locator(".page-actions .url-actions-reveal")).toHaveCSS("opacity", "1");
+	await page.locator(".page-actions .page-actions-btn").click();
+	await expect(page.locator(".actions-only .url-screenshot-btn")).toBeVisible();
+	await expect(page.locator(".actions-only .url-copy-btn")).toBeVisible();
 });
 
 test("with tabs on the left the sidebar and the address toolbar hide one without the other", async ({ page }) => {

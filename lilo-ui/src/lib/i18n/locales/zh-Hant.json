@@ -1349,6 +1349,7 @@
 		"reloadNote": "重新載入頁面以套用變更"
 	},
 	"urlToast": {
+		"pageActions": "頁面操作",
 		"reEnableBlocking": "重新啟用此網站的阻擋功能",
 		"trackerBlockedOnPage": "此網頁已阻擋 {count} 個追蹤器",
 		"trackersBlockedOnPage": "此網頁已阻擋 {count} 個追蹤器",

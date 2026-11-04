@@ -1349,6 +1349,7 @@
 		"reloadNote": "変更を反映するにはページを再読み込みしてください"
 	},
 	"urlToast": {
+		"pageActions": "ページのアクション",
 		"reEnableBlocking": "このサイトでブロックを再び有効にする",
 		"trackerBlockedOnPage": "このページで{count}件のトラッカーをブロック",
 		"trackersBlockedOnPage": "このページで{count}件のトラッカーをブロック",

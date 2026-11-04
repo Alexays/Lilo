@@ -1367,6 +1367,7 @@
 		"reloadNote": "Перезавантажте сторінку, щоб зміна набула чинності"
 	},
 	"urlToast": {
+		"pageActions": "Дії зі сторінкою",
 		"reEnableBlocking": "Знову ввімкнути блокування на цьому сайті",
 		"trackerBlockedOnPage": "Заблоковано трекерів на цій сторінці: {count}",
 		"trackersBlockedOnPage": "Заблоковано трекерів на цій сторінці: {count}",

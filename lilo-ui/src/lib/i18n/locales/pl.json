@@ -1367,6 +1367,7 @@
 		"reloadNote": "Odśwież stronę, aby zmiana zadziałała"
 	},
 	"urlToast": {
+		"pageActions": "Akcje strony",
 		"reEnableBlocking": "Włącz ponownie blokowanie na tej witrynie",
 		"trackerBlockedOnPage": "Zablokowane elementy śledzące na tej stronie: {count}",
 		"trackersBlockedOnPage": "Zablokowane elementy śledzące na tej stronie: {count}",

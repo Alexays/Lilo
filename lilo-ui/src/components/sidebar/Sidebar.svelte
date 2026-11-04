@@ -79,6 +79,11 @@
     if (getReadyUpdate()) updateCardLoaded = true;
   });
 
+  const agentsEnabled = $derived(getSetting("agentsEnabled", "false") === "true");
+  const addressCorner = $derived(getTabPosition() === "left" && getAddressPlacement() === "tabs");
+  // Only beside the traffic lights does a narrow sidebar run out of room on the top line.
+  const agentsMove = $derived(agentsEnabled && addressCorner && isAddressVisible() && areTrafficLightsVisible());
+
   // Latched on first open: the panels chunk loads once, then stays mounted so close animations
   // and later opens keep working.
   let panelsLoaded = $state(false);
@@ -92,7 +97,7 @@
     class="sidebar-layout"
     class:pushed={isOverlayPanelOpen}
     class:compact-header={isSidebarVisible() && hasPageToolbar()}
-    class:address-corner={getTabPosition() === "left" && getAddressPlacement() === "tabs"}
+    class:address-corner={addressCorner}
     inert={isOverlayPanelOpen}
     role="complementary"
     aria-label={t("sidebar.ariaLabel")}
@@ -104,6 +109,7 @@
       class="sidebar-header"
       class:no-traffic-lights={!areTrafficLightsVisible() || getTabPosition() === "right"}
       class:address-hidden={!isAddressVisible()}
+      class:agents-move={agentsMove}
       ondblclick={() => chromeActions.maximizeWindow()}
       onpointerdown={pressTabsHeader}
     >
@@ -114,7 +120,7 @@
         <NavControls collapseLocked={isOverlayPanelOpen} show={!isSidebarVisible() || !hasPageToolbar() ? "all" : isAddressInRightTabs() ? "history" : "toggle"} />
       {/if}
       <!-- Loaded only once the feature is on: no conversation code ships to the chrome otherwise. -->
-      {#if getSetting("agentsEnabled", "false") === "true"}
+      {#if agentsEnabled}
         <div class="agents-slot">
           {#await import("../agents/AgentsBadge.svelte") then badge}
             <badge.default />
@@ -129,7 +135,7 @@
       {/if}
     </div>
     {#if isAddressVisible() && !isAddressInPageToolbar()}
-      <URLDisplay nav={getTabPosition() === "left" && getAddressPlacement() === "tabs"} />
+      <URLDisplay agents={agentsMove} />
     {/if}
 
     <!-- Space content: native horizontal scroll with snap paging -->
@@ -190,7 +196,7 @@
     overflow: clip;
     height: 100%;
     contain: content;
-    /* Its width is the sidebar's plus the 8 px inset: the 244 px queries below mean a 236 px sidebar. */
+    /* Its width is the sidebar's plus the 8 px inset: the 239 px query below means a 231 px sidebar. */
     container: sidebar / inline-size;
   }
 
@@ -258,13 +264,6 @@
     gap: 4px;
   }
 
-  /* Like the address bar, the page's buttons show on hover of their line; only the extensions stay out. */
-  .sidebar-header:is(:hover, :focus-within) :global(.url-actions-reveal) {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(-50%) translateX(0) scale(1);
-  }
-
   .space-track {
     flex: 1;
     min-height: 0;
@@ -328,35 +327,28 @@
     flex-shrink: 0;
   }
 
-  /* Too narrow for the whole line, the history buttons move into the address field and Agents keeps its place. */
-  @container sidebar (width < 244px) {
-    .address-corner .sidebar-header :global(.history) {
+  /* Once the line can no longer keep 6 px between the toggle and Back, Agents moves into the address field. */
+  @container sidebar (width < 239px) {
+    .agents-move .agents-slot {
       display: none;
     }
   }
 
-  /* With the address hidden, the history buttons give way instead, so Agents keeps its place: an unavailable
-     Forward first, then Forward, then Reload. */
-  @container sidebar (width < 244px) {
+  /* Back and Reload always stay: short of room beside the toggle for all three with 6 px before Back, only an
+     unavailable Forward gives way, and with the address hidden the buttons take 24 px. App's per-layout minimum
+     width keeps the rest whole. */
+  .sidebar-layout:not(.compact-header) .sidebar-header :global(.nav-controls) {
+    container: nav / inline-size;
+  }
+
+  @container nav (width < 122px) {
+    .sidebar-header :global(.forward:disabled) {
+      display: none;
+    }
+
     .address-hidden :global(.nav-btn.history) {
       width: 24px;
       height: 24px;
-    }
-
-    .address-hidden :global(.forward:disabled) {
-      display: none;
-    }
-  }
-
-  @container sidebar (width < 229px) {
-    .address-hidden :global(.forward) {
-      display: none;
-    }
-  }
-
-  @container sidebar (width < 203px) {
-    .address-hidden :global(.reload) {
-      display: none;
     }
   }
 

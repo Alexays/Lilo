@@ -1349,6 +1349,7 @@
 		"reloadNote": "Herlaad een pagina om een wijziging toe te passen"
 	},
 	"urlToast": {
+		"pageActions": "Pagina-acties",
 		"reEnableBlocking": "Schakel blokkering op deze website weer in",
 		"trackerBlockedOnPage": "{count} tracker geblokkeerd op deze pagina",
 		"trackersBlockedOnPage": "{count} trackers geblokkeerd op deze pagina",
