@@ -159,7 +159,7 @@
   :where(.onb) :global(.ob-head) { flex: none; margin-bottom: 28px; }
   :where(.onb) :global(h2) { margin: 0; font-size: var(--font-size-headline); font-weight: var(--font-weight-semibold); letter-spacing: -0.4px; color: var(--text-primary); }
   :where(.onb) :global(.ob-sub) { max-width: 720px; margin: 8px 0 0; font-size: var(--font-size-body-lg); line-height: 1.45; color: var(--text-secondary); }
-  :where(.onb) :global(.ob-body) { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: -4px -4px 0; padding: 4px; }
+  :where(.onb) :global(.ob-body) { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: -8px -8px 0; padding: 8px; }
   :where(.onb) :global(.ob-foot) { flex: none; display: flex; align-items: center; gap: 8px; padding-top: 16px; }
   :where(.onb) :global(.ob-foot > :first-child) { margin-right: auto; }
 
