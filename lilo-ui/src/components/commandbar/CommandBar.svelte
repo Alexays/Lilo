@@ -612,7 +612,10 @@
                 value={fieldText}
                 oninput={(e) => {
                   const field = e.target as HTMLInputElement;
-                  setQuery(tokenPrefix ? (field.value ? `${tokenPrefix} ${field.value}` : tokenPrefix) : field.value, !(e instanceof InputEvent && e.inputType.startsWith("delete")));
+                  // A prefix typed first takes over from the token, as a press on its chip would.
+                  const ownPrefix = SCOPE_HINTS.some((hint) => hint.prefix && field.value.startsWith(hint.prefix));
+                  const typed = tokenPrefix && !ownPrefix ? (field.value ? `${tokenPrefix} ${field.value}` : tokenPrefix) : field.value;
+                  setQuery(typed, !(e instanceof InputEvent && e.inputType.startsWith("delete")));
                   // A prefix just typed becomes the token: the field drops it, which the value binding would not see.
                   if (field.value !== fieldText) field.value = fieldText;
                   trackCaret();
@@ -637,7 +640,7 @@
                 onmousedown={(e) => e.preventDefault()}
                 onclick={() => setCommandBarScope(hint.scope)}
               >
-                <span>{hint.label}</span>
+                <span class="scope-hint-label">{hint.label}</span>
                 {#if hint.prefix}
                   <span class="scope-hint-prefix" aria-hidden="true">{hint.prefix}</span>
                 {/if}
@@ -771,7 +774,7 @@
     align-items: center;
     gap: 12px;
     height: 56px;
-    padding: 0 20px;
+    padding: 0 16px;
   }
 
   .command-bar-icon {
@@ -875,10 +878,12 @@
     outline-offset: -2px;
   }
 
+  /* One slot for every prefix, so the labels line up whatever the glyph. */
   .scope-hint-prefix {
-    min-width: 0.6em;
+    display: inline-block;
+    width: 1em;
     color: var(--text-muted);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     text-align: center;
   }
 
@@ -920,7 +925,8 @@
 
   .command-bar-result {
     display: grid;
-    grid-template-columns: 32px minmax(0, 1fr) auto;
+    /* The helper shows whole while the title keeps its room, then gives way first. */
+    grid-template-columns: 32px minmax(min(180px, 50%), 1fr) minmax(0, max-content);
     align-items: center;
     gap: 14px;
     height: 52px;
@@ -1025,10 +1031,6 @@
     line-height: 16px;
   }
 
-  .result-helper {
-    max-width: 240px;
-  }
-
   .result-hl {
     background: transparent;
     color: var(--accent-ink);
@@ -1054,7 +1056,7 @@
   .command-bar-tile .result-icon {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: var(--radius-box);
     font-size: var(--font-size-xl);
   }
 
@@ -1131,7 +1133,7 @@
     box-shadow: inset 0 0 0 1px var(--float-border);
     color: var(--text-secondary);
     font-family: inherit;
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-variant-numeric: tabular-nums;
     line-height: 20px;
     text-align: center;

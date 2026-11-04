@@ -45,7 +45,7 @@ hairlines.
 | `--radius-xs` | 4px | Keycaps, small favicons, chips inside a row |
 | `--radius-sm` | 6px | Icon buttons and icon tiles up to 30px, tooltips |
 | `--radius-md` | 10px | Controls, rows, fields, banners, cards inside a panel |
-| `--radius-box` | 12px | Grouped boxes of rows (Settings), app tiles |
+| `--radius-box` | 12px | Grouped boxes of rows (Settings, drawers), app tiles and icon tiles of 32px and up |
 | `--radius-lg` | 14px | Cards and floating bars, containers of `md` rows |
 | `--radius-xl` | 16px | Overlay panels and sheets |
 | `--radius-chip` | 999px | Pills and round badges |

@@ -74,7 +74,7 @@
             class="tab-switcher-tile"
             class:selected={index === selected}
             aria-selected={index === selected}
-            aria-label={title(tab)}
+            aria-label={t("tabSwitcher.selected", { title: title(tab), detail: detail(tab, index) })}
             tabindex="-1"
             data-index={index}
             data-tab-id={tab.id}
@@ -154,7 +154,7 @@
     width: 96px;
     padding: 12px 6px 10px;
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-box);
     background: transparent;
     color: var(--text-secondary);
     font-family: inherit;
@@ -210,7 +210,7 @@
     width: 44px;
     height: 44px;
     flex-shrink: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-box);
     display: grid;
     place-items: center;
     background: var(--terminal-tile-bg);
