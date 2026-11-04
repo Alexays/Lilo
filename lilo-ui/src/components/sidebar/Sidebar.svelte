@@ -353,6 +353,6 @@
 
   /* Full screen: the toggle lines up with the URL field below it. */
   .sidebar-header.no-traffic-lights .header-spacer {
-    width: 10px;
+    width: 8px;
   }
 </style>
