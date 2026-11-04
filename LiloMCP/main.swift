@@ -185,7 +185,7 @@ let bridge = Bridge(lilo: connection ?? -1)
 if connection == nil {
     bridge.unavailable = FileManager.default.fileExists(atPath: socketPath)
         ? "Lilo is not responding: quit and reopen Lilo, then reconnect the lilo MCP server."
-        : "Lilo is not accepting agents: in Lilo, turn on Settings > AI agents > Let AI agents use Lilo, then reconnect the lilo MCP server."
+        : "Lilo is not accepting agents: in Lilo, turn on Settings > AI agents > Let agents use Lilo, then reconnect the lilo MCP server."
 }
 
 Thread.detachNewThread {

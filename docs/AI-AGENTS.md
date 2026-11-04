@@ -6,7 +6,7 @@ server inside the app bundle.
 
 ## Turning it on
 
-Settings > AI agents > "Let AI agents use Lilo". Lilo can write the MCP configuration for the
+Settings > AI agents > "Let agents use Lilo". Lilo can write the MCP configuration for the
 clients it finds. The first time a client connects, Lilo asks you to allow it; the approval is
 tied to the program behind the connection (its code signature, or its path when unsigned), not to
 the name the client announces.
