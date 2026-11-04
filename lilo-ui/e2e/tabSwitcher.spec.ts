@@ -40,11 +40,11 @@ test("the switcher lists recent tabs, previous one selected, with their Space an
 	await expect(list).toBeVisible();
 	const options = list.getByRole("option");
 	await expect(options).toHaveCount(4);
-	await expect(options.nth(0)).toContainText("Work · current");
-	await expect(options.nth(1)).toContainText("Play · 2 min ago");
-	await expect(options.nth(2)).toContainText("Work · 3 h ago");
-	await expect(options.nth(3)).toContainText("lilo");
-	await expect(options.nth(3)).toContainText("Work · terminal");
+	await expect(options.nth(0)).toHaveAccessibleName(/Work · current$/);
+	await expect(options.nth(1)).toHaveAccessibleName(/Play · 2 min ago$/);
+	await expect(options.nth(2)).toHaveAccessibleName(/Work · 3 h ago$/);
+	await expect(options.nth(3)).toHaveAccessibleName(/^lilo, Work · terminal$/);
+	await expect(page.locator(".tab-switcher-detail")).toHaveText("Play · 2 min ago");
 	await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
 	await expect(page.locator(".tab-switcher-live")).toHaveText("Zeta Chat, Play · 2 min ago");
 	await expect(page.getByText("Release Control to open")).toBeVisible();

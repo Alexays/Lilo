@@ -39,7 +39,8 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 		await button.click();
 		await menu.getByRole("menuitem", { name: "Show all archived tabs" }).click();
 		await expect(menu).toHaveCount(0);
-		await expect(page.locator(".command-bar-input")).toHaveValue("<");
+		await expect(page.locator(".scope-token")).toHaveText("Archived");
+		await expect(page.locator(".command-bar-input")).toHaveValue("");
 	});
 }
 

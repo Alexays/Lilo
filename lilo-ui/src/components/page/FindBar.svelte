@@ -324,8 +324,9 @@
     white-space: nowrap;
   }
 
+  /* Darkened toward the text: the danger color alone falls short of AA on the field's tint. */
   .find-status.not-found {
-    color: var(--danger-text);
+    color: color-mix(in srgb, var(--danger-text) 75%, var(--text-primary));
   }
 
   /* Out of the row, not out of the accessibility tree: a hidden live region announces nothing. */

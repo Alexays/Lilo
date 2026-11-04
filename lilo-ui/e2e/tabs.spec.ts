@@ -131,7 +131,8 @@ async function bootOnALoneBlankTab(page: Page): Promise<void> {
 	await bootChrome(page, world);
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar", newTab: true }));
 	await page.locator(".command-bar-input").press("Escape");
-	await expect(page.locator(".command-bar-input")).toHaveCount(0);
+	// Dismissing the floating bar leaves it in place on the blank tab.
+	await expect(page.locator(".command-bar-backdrop.docked")).toBeVisible();
 }
 
 test("Command-T brings the bar back on a Space's lone blank tab", async ({ page }) => {

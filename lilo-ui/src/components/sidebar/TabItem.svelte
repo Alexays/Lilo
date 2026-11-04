@@ -38,7 +38,7 @@
   import { titleUnread, unreadBadgeText } from "../../lib/titleUnread";
   import { getOpenTabs, isBlankTab, type TabState } from "../../stores/tabs.svelte";
   import { getSpaceById } from "../../stores/spaces.svelte";
-  import { isCommandBarOpen, openCommandBar } from "../../stores/commandBar.svelte";
+  import { isCommandBarDocked, isCommandBarOpen, openCommandBar, refocusCommandBar } from "../../stores/commandBar.svelte";
   import { cubicOut } from "svelte/easing";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { isUserScrolling } from "../../lib/motion/userScroll";
@@ -116,6 +116,10 @@
   function switchToTab() {
     if (!interactive) return;
     // A Space's last tab outlives its dismissed bar: its row stands in for New Tab, hidden while it is active.
+    if (isActive && isBlankTab(tab) && isCommandBarDocked()) {
+      refocusCommandBar();
+      return;
+    }
     if (isActive && isBlankTab(tab) && !isCommandBarOpen()) {
       openCommandBar("", true);
       return;

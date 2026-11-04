@@ -230,6 +230,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+		await page.locator(".command-bar-input").fill("beta");
 		await page.locator(".command-bar-result.selected .result-subtitle").waitFor();
 
 		expect(await textContrast(page, ".scope-hint:not(.selected)")).toBeGreaterThanOrEqual(4.5);
@@ -274,6 +275,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 		}).toPass();
 		await page.evaluate(() => window.__lilo!.receive({ event: "findInPageResult", query: "zz", matchFound: false }));
 		await expect(page.locator(".find-status")).not.toBeEmpty();
+		// Measured once the bar has faded in: its opacity counts in the contrast.
+		await page.locator(".find-bar").evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)));
 
 		expect(await textContrast(page, ".find-status")).toBeGreaterThanOrEqual(4.5);
 	});

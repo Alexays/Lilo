@@ -168,7 +168,7 @@ test("finishing the onboarding leaves the default-browser invite closed", async 
 	await page.locator(".toast button").click();
 
 	await expect(page.locator(".toast")).toHaveCount(0);
-	await expect(page.locator(".url-drawer-content > *")).toHaveCount(0);
+	await expect(page.locator(".url-drawer")).toHaveCount(0);
 });
 
 test("a first run reveals the chrome with the intro already on it", async ({ page }) => {
