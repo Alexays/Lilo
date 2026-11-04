@@ -1446,7 +1446,7 @@
 		"closed": "\"{title}\" fechada",
 		"closedCount": "{count} abas fechadas",
 		"undo": "Desfazer",
-		"undoLabel": "Desfazer: {closed}",
+		"reopen": "Reabrir",
 		"archived": "“{title}” arquivada",
 		"archivedCount": {"one": "{count} aba arquivada", "other": "{count} abas arquivadas"}
 	},

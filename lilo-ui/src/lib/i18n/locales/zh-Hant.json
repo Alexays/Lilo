@@ -1446,7 +1446,7 @@
 		"closed": "已關閉「{title}」",
 		"closedCount": "已關閉 {count} 個分頁",
 		"undo": "還原",
-		"undoLabel": "還原：{closed}",
+		"reopen": "重新打開",
 		"archived": "已封存「{title}」",
 		"archivedCount": {"one": "已封存 {count} 個分頁", "other": "已封存 {count} 個分頁"}
 	},

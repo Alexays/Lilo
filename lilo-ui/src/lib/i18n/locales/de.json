@@ -1446,7 +1446,7 @@
 		"closed": "„{title}“ geschlossen",
 		"closedCount": "{count} Tabs geschlossen",
 		"undo": "Widerrufen",
-		"undoLabel": "Widerrufen: {closed}",
+		"reopen": "Wieder öffnen",
 		"archived": "„{title}“ archiviert",
 		"archivedCount": {"one": "{count} Tab archiviert", "other": "{count} Tabs archiviert"}
 	},

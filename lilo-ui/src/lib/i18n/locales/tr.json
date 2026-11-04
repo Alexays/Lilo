@@ -1446,7 +1446,7 @@
 		"closed": "“{title}” kapatıldı",
 		"closedCount": "{count} sekme kapatıldı",
 		"undo": "Geri Al",
-		"undoLabel": "Geri al: {closed}",
+		"reopen": "Yeniden aç",
 		"archived": "“{title}” arşivlendi",
 		"archivedCount": {"one": "{count} sekme arşivlendi", "other": "{count} sekme arşivlendi"}
 	},

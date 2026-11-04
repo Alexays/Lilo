@@ -1466,7 +1466,7 @@
 		"closed": "Закрыто: «{title}»",
 		"closedCount": "Закрыто вкладок: {count}",
 		"undo": "Отменить",
-		"undoLabel": "Отменить: {closed}",
+		"reopen": "Открыть снова",
 		"archived": "«{title}» в архиве",
 		"archivedCount": {"one": "В архиве {count} вкладка", "few": "В архиве {count} вкладки", "many": "В архиве {count} вкладок", "other": "В архиве {count} вкладки"}
 	},

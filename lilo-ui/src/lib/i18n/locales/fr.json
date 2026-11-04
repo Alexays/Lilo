@@ -1446,7 +1446,7 @@
 		"closed": "« {title} » fermé",
 		"closedCount": "{count} onglets fermés",
 		"undo": "Annuler",
-		"undoLabel": "Annuler : {closed}",
+		"reopen": "Rouvrir",
 		"archived": "« {title} » archivé",
 		"archivedCount": {"one": "{count} onglet archivé", "other": "{count} onglets archivés"}
 	},

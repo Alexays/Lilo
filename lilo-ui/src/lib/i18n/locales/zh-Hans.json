@@ -1446,7 +1446,7 @@
 		"closed": "“{title}”已关闭",
 		"closedCount": "已关闭 {count} 个标签页",
 		"undo": "撤销",
-		"undoLabel": "撤销：{closed}",
+		"reopen": "重新打开",
 		"archived": "已归档“{title}”",
 		"archivedCount": {"one": "已归档 {count} 个标签页", "other": "已归档 {count} 个标签页"}
 	},

@@ -8,6 +8,7 @@
   import OnboardingShell from "./onboarding/OnboardingShell.svelte";
   import ContextTips from "./onboarding/ContextTips.svelte";
   import NoticeCapsule from "./banners/NoticeCapsule.svelte";
+  import UndoToast from "./page/UndoToast.svelte";
   import FindBar from "./page/FindBar.svelte";
   import HoverLinkBar from "./page/HoverLinkBar.svelte";
   import ErrorPage from "./page/ErrorPage.svelte";
@@ -88,6 +89,7 @@
   {/await}
 {/if}
 <NoticeCapsule />
+<UndoToast />
 <FindBar />
 <HoverLinkBar />
 <TabSharePicker />

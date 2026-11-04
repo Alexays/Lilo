@@ -1446,7 +1446,7 @@
 		"closed": "\"{title}\" gesloten",
 		"closedCount": "{count} tabbladen gesloten",
 		"undo": "Herstel",
-		"undoLabel": "Herstel: {closed}",
+		"reopen": "Heropenen",
 		"archived": "‘{title}’ gearchiveerd",
 		"archivedCount": {"one": "{count} tabblad gearchiveerd", "other": "{count} tabbladen gearchiveerd"}
 	},

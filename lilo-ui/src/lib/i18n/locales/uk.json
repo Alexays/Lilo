@@ -1466,7 +1466,7 @@
 		"closed": "«{title}» закрито",
 		"closedCount": "Закрито вкладок: {count}",
 		"undo": "Скасувати",
-		"undoLabel": "Скасувати: {closed}",
+		"reopen": "Відкрити знову",
 		"archived": "«{title}» в архіві",
 		"archivedCount": {"one": "В архіві {count} вкладка", "few": "В архіві {count} вкладки", "many": "В архіві {count} вкладок", "other": "В архіві {count} вкладки"}
 	},

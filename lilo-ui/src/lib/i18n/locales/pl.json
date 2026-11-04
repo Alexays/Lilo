@@ -1466,7 +1466,7 @@
 		"closed": "Zamknięto „{title}”",
 		"closedCount": "Zamknięte karty: {count}",
 		"undo": "Cofnij",
-		"undoLabel": "Cofnij: {closed}",
+		"reopen": "Otwórz ponownie",
 		"archived": "„{title}” zarchiwizowano",
 		"archivedCount": {"one": "Zarchiwizowano {count} kartę", "few": "Zarchiwizowano {count} karty", "many": "Zarchiwizowano {count} kart", "other": "Zarchiwizowano {count} karty"}
 	},

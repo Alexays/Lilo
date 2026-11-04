@@ -1446,7 +1446,7 @@
 		"closed": "«{title}» cerrada",
 		"closedCount": "{count} pestañas cerradas",
 		"undo": "Deshacer",
-		"undoLabel": "Deshacer: {closed}",
+		"reopen": "Reabrir",
 		"archived": "«{title}» archivada",
 		"archivedCount": {"one": "{count} pestaña archivada", "other": "{count} pestañas archivadas"}
 	},

@@ -6,7 +6,7 @@ function tabClosed(title: string) {
 	return { event: "tabClosedUndoable", title };
 }
 
-test("the toast shows on close and Undo posts restoreClosedTab", async ({
+test("the toast shows on close and Reopen posts restoreClosedTab", async ({
 	page,
 }) => {
 	await bootChrome(page, initialWorld());
@@ -18,9 +18,9 @@ test("the toast shows on close and Undo posts restoreClosedTab", async ({
 
 	const toast = page.locator(".undo-toast");
 	await expect(toast).toBeVisible();
-	await expect(toast).toHaveAttribute("aria-label", /Alpha Docs/);
+	await expect(toast).toContainText(/Alpha Docs/);
 
-	await toast.click();
+	await toast.getByRole("button", { name: "Reopen" }).click();
 
 	await expect(toast).toHaveCount(0);
 	const commands = await sentCommands(page);
@@ -35,7 +35,7 @@ test("a second close replaces the current toast", async ({ page }) => {
 		tabClosed("Alpha Docs"),
 	);
 	const toast = page.locator(".undo-toast");
-	await expect(toast).toHaveAttribute("aria-label", /Alpha Docs/);
+	await expect(toast).toContainText(/Alpha Docs/);
 
 	await page.evaluate(
 		(msg) => window.__lilo!.receive(msg),
@@ -43,7 +43,7 @@ test("a second close replaces the current toast", async ({ page }) => {
 	);
 
 	await expect(toast).toHaveCount(1);
-	await expect(toast).toHaveAttribute("aria-label", /Beta Mail/);
+	await expect(toast).toContainText(/Beta Mail/);
 });
 
 test("keyboard focus pauses the countdown ring along with the timer", async ({ page }) => {
@@ -54,7 +54,7 @@ test("keyboard focus pauses the countdown ring along with the timer", async ({ p
 		tabClosed("Alpha Docs"),
 	);
 	const toast = page.locator(".undo-toast");
-	await toast.focus();
+	await toast.getByRole("button").focus();
 
-	await expect(toast.locator(".undo-ring circle")).toHaveCSS("animation-play-state", "paused");
+	await expect(toast.locator(".undo-ring .remaining")).toHaveCSS("animation-play-state", "paused");
 });

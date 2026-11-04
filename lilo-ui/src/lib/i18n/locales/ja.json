@@ -1446,7 +1446,7 @@
 		"closed": "「{title}」を閉じました",
 		"closedCount": "{count}個のタブを閉じました",
 		"undo": "取り消す",
-		"undoLabel": "取り消す：{closed}",
+		"reopen": "もう一度開く",
 		"archived": "「{title}」をアーカイブしました",
 		"archivedCount": {"one": "{count}個のタブをアーカイブしました", "other": "{count}個のタブをアーカイブしました"}
 	},

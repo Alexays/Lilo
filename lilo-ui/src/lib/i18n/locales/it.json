@@ -1446,7 +1446,7 @@
 		"closed": "\"{title}\" chiusa",
 		"closedCount": "{count} schede chiuse",
 		"undo": "Annulla",
-		"undoLabel": "Annulla: {closed}",
+		"reopen": "Riapri",
 		"archived": "«{title}» archiviata",
 		"archivedCount": {"one": "{count} scheda archiviata", "other": "{count} schede archiviate"}
 	},

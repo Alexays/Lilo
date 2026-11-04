@@ -151,3 +151,28 @@ test("undo of a Clear brings its tabs back from the archive in one request", asy
 	assert.deepEqual(posted.slice(before), [{ action: "restoreArchivedTabs", payload: { ids: ["a", "b"] } }]);
 	assert.equal(store.getUndoToast(), null);
 });
+
+test("a toast of another kind waits for the current one, then gets its full 5s", async () => {
+	stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/undoToast.svelte.ts");
+	store.initUndoToastStore();
+
+	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+	try {
+		closeTab("Alpha Docs");
+		mock.timers.tick(3000);
+		store.showUndoToast("Blocker off", () => {});
+		assert.equal(store.getUndoToast()?.title, "Alpha Docs");
+		mock.timers.tick(2000);
+		assert.equal(store.getUndoToast()?.label, "Blocker off");
+		closeTab("Beta Mail");
+		closeTab("Gamma Notes");
+		mock.timers.tick(5000);
+		assert.equal(store.getUndoToast()?.title, "Gamma Notes", "only the newest close waits");
+		mock.timers.tick(5000);
+		assert.equal(store.getUndoToast(), null);
+	} finally {
+		mock.timers.reset();
+	}
+});

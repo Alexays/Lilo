@@ -1,7 +1,6 @@
 <script lang="ts">
   import BookmarkedTabs from "./BookmarkedTabs.svelte";
   import TabSection from "./TabSection.svelte";
-  import UndoCloseToast from "./UndoCloseToast.svelte";
   import SidebarDropDock from "./SidebarDropDock.svelte";
   import SelectionIndicator from "./SelectionIndicator.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
@@ -147,9 +146,6 @@
         <div class="skeleton-new-tab-label skeleton-shimmer"></div>
       </div>
     </div>
-  {/if}
-  {#if interactive}
-    <UndoCloseToast />
   {/if}
 </div>
 

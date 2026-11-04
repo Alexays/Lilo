@@ -1446,7 +1446,7 @@
 		"closed": "‘{title}’ 닫힘",
 		"closedCount": "탭 {count}개 닫힘",
 		"undo": "실행 취소",
-		"undoLabel": "실행 취소: {closed}",
+		"reopen": "다시 열기",
 		"archived": "'{title}' 보관됨",
 		"archivedCount": {"one": "탭 {count}개 보관됨", "other": "탭 {count}개 보관됨"}
 	},
