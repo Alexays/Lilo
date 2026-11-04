@@ -1088,11 +1088,15 @@ final class WKWebViewTab: NSObject {
                     // A failed provisional load clears the web view's URL: the pending one stays shown. A navigation
                     // the page started shows once it commits, a same-document one at once (see currentURL).
                     let nextURL = tab.isPageNavigationPending ? tab.currentURL : url ?? tab.pendingMainFrameURL
-                    guard tab.lastNavigationEmissionState.url != nextURL else { return }
+                    let previousURL = tab.lastNavigationEmissionState.url
+                    guard previousURL != nextURL else { return }
                     tab.lastNavigationEmissionState.url = nextURL; tab.pendingMainFrameURL = nextURL
                     tab.delegate?.tab(tab, didUpdateURL: nextURL)
-                    // A route changed by script, with no load: the page's color may have changed with it.
-                    if !tab.webView.isLoading { tab.recapturePageColor() }
+                    // A route changed by script, with no load: the page's color may have changed with it. A fragment
+                    // alone never does, and scroll-spy pages rewrite it while scrolling, so it takes no snapshot.
+                    let fragmentOnly = previousURL?.absoluteString.prefix { $0 != "#" }
+                        == nextURL?.absoluteString.prefix { $0 != "#" }
+                    if !tab.webView.isLoading, !fragmentOnly { tab.recapturePageColor() }
                 }
             },
             webView.observe(\.title, options: [.new]) { [weak self] _, change in
