@@ -44,7 +44,7 @@ test("another profile lists its own extensions, and its actions name it", async 
 	await showWork(page);
 
 	await expect(page.locator(".extension-row .row-name")).toHaveText(["Work Vault"]);
-	await expect(page.locator(".add-hint")).toHaveText("Installs into Personal, the profile of this window.");
+	await expect(page.locator(".add-row > span")).toHaveText("Installs into Personal, the profile of this window.");
 	await page.locator(".ui-toggle", { has: page.getByRole("checkbox", { name: "Work Vault enabled" }) }).click();
 	await expect.poll(async () => (await sentCommands(page)).findLast((c) => c.action === "enableExtension")?.payload)
 		.toEqual({ id: "ext-work", profileId: WORK.id });
@@ -55,7 +55,7 @@ test("another profile lists its own extensions, and its actions name it", async 
 
 	await profileSelect(page).selectOption(PERSONAL.id);
 	await expect(page.locator(".extension-row .row-name")).toHaveText(["Home Blocker"]);
-	await expect(page.locator(".add-hint")).toHaveCount(0);
+	await expect(page.locator(".add-row > span")).toHaveCount(0);
 });
 
 test("another profile's detail page waits for its full rows", async ({ page }) => {

@@ -36,7 +36,7 @@ test.describe("Brazilian Portuguese at the minimum window size", () => {
 			settings: { agentControlEnabled: "true", terminalLidClosed: "true" },
 		}));
 
-		for (const section of ["Geral", "Aparência", "Abas e espaços", "Privacidade", "Terminal", "Agentes de IA", "Avançado"]) {
+		for (const section of ["Geral", "Aparência", "Abas e Espaços", "Privacidade", "Terminal", "Agentes", "Avançado"]) {
 			await page.locator(".section-nav-button").filter({ hasText: section }).click();
 			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
 			await expect(rows.first()).toBeVisible();

@@ -34,7 +34,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		await page.emulateMedia({ colorScheme });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
-		for (const section of ["Terminal", "Allgemein", "Erscheinungsbild", "Tabs und Spaces", "Audio und Video", "Datenschutz", "Erweitert", "KI-Agenten"]) {
+		for (const section of ["Terminal", "Allgemein", "Erscheinungsbild", "Tabs und Spaces", "Audio und Video", "Datenschutz", "Erweitert", "Agenten"]) {
 			await page.getByRole("button", { name: section, exact: true }).click();
 			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
 			await expect(rows.first()).toBeVisible();

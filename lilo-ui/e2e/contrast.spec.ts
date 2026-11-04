@@ -152,9 +152,8 @@ for (const color of ["#fff4cc", "#ffffff", "#20242e", "#ff00ff", "#f0a8c8"]) {
 			const active = ".tab-item.active:not(.travel-hold)";
 			await page.locator(active).first().waitFor();
 
-			const title = await cssColor(page, `${active} .tab-title`, "color");
-			const row = await cssColor(page, active, "backgroundColor");
-			expect(await ratio(page, title, row)).toBeGreaterThanOrEqual(4.5);
+			// The selected surface is a translucent layer: it counts composited over the sidebar.
+			expect(await textContrast(page, `${active} .tab-title`)).toBeGreaterThanOrEqual(4.5);
 		});
 	}
 }
@@ -275,8 +274,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 		}).toPass();
 		await page.evaluate(() => window.__lilo!.receive({ event: "findInPageResult", query: "zz", matchFound: false }));
 		await expect(page.locator(".find-status")).not.toBeEmpty();
-		// Measured once the bar has faded in: its opacity counts in the contrast.
-		await page.locator(".find-bar").evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)));
+		// Measured once the bar has faded in and the status has taken its color: both count in the contrast.
+		await page.locator(".find-bar").evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((animation) => animation.finished)));
 
 		expect(await textContrast(page, ".find-status")).toBeGreaterThanOrEqual(4.5);
 	});

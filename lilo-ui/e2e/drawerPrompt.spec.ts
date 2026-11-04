@@ -103,7 +103,8 @@ for (const [position, address] of [["left", "tabs"], ["left", "page"], ["left", 
 				window.__lilo!.receive({ event: "agentControlRequested", requestId: "a1", clientName: "Claude", executable: "", profileName: "", action: { kind: "click", label: "Send", site: "mail.example.com", tab: "Inbox" } }),
 			);
 
-			const allow = page.locator(".url-drawer .prompt-actions button").last();
+			// The default answer, not the menu of its variants beside it.
+			const allow = page.locator(".url-drawer .prompt-actions button:not(.chevron)").last();
 			await expect(allow).toBeInViewport({ ratio: 1 });
 			await allow.click();
 			await expect.poll(() => sentCommands(page).then((all) => all.some((m) => m.action === "agentControlResponse"))).toBe(true);

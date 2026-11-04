@@ -62,12 +62,12 @@ test("with tabs on the left the sidebar and the address toolbar hide one without
 	await expect(page.locator(".sidebar-header")).toHaveCSS("height", "52px");
 });
 
-test("the address setting offers Hidden on the right and can restore the address", async ({ page }) => {
+test("the address setting offers every placement on the right and can restore the address", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "right" });
 	await receive(page, { event: "openSettings" });
 	await page.locator(".section-nav-button").filter({ hasText: "Appearance" }).click();
 	const address = page.getByRole("radiogroup", { name: "Address", exact: true });
-	await expect(address.getByRole("radio", { name: "With the tabs", exact: true })).toBeDisabled();
+	await expect(address.getByRole("radio", { name: "With the tabs", exact: true })).toBeEnabled();
 	await address.getByRole("radio", { name: "Hidden", exact: true }).click();
 	expect((await sentCommands(page)).filter((command) => command.action === "setSetting").at(-1)?.payload).toEqual({ key: "addressPlacement", value: "hidden" });
 	await receive(page, { event: "tabLayoutChanged", position: "right", address: "hidden" });
