@@ -101,10 +101,11 @@ A request tied to a tab lives in a single drawer; the row keeps only the orange 
 
 The sidebar paints the Space's effective color as is, never toned down: the chosen color, or what its color mode makes of it (lit by the time of day, taken from the page or the wallpaper). Everything on it derives from that effective color and its text color, so it stays legible on any color, at any time of day, on Glass or Grain:
 
-- Text is `#1d1d1f` or `#f8f9fd`, whichever contrasts more; under 4.5:1, pure black or white. Secondary text and icons stay at 4.5:1 or more.
+- Contrast is measured with APCA (the perceptual model of the WCAG 3 drafts), not the WCAG 2 ratio, which picks dark text on a medium blue or a saturated red where white reads far better.
+- Text is `#1d1d1f` or `#f8f9fd`, whichever reads better by APCA; under Lc 60, pure black or white of that polarity, the best the color allows. Secondary text stays at Lc 60 and icons at Lc 45 where the color allows it, else they take the text color.
 - Hover, pressed, separators and quiet fields are translucent layers of the text color, never a new hue.
 - The selected tab, the update card and the pinned tiles are a lighter shade of the Space color, never a white chip: they belong to the sidebar.
-- The accent (count badges, the update card's button) is the Space's own hue, shifted until it reaches 3:1 against the sidebar and 4.5:1 for its label.
+- The accent (count badges, the update card's button) is the Space's own hue, darker or lighter until it reaches Lc 45 against the sidebar and the selected surface, and Lc 60 for its label.
 - A badge that sits on the color (the orange dot, a count) gets a 2 px ring in the sidebar color.
 
 ## Loading and empty states

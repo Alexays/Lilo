@@ -13,12 +13,14 @@ const DARK_CANVAS: RGB = { r: 43, g: 47, b: 60 };
 const DARK_CONTRAST = "#f8f9fd";
 const LIGHT_CONTRAST_RGB: RGB = { r: 0x1d, g: 0x1d, b: 0x1f };
 const DARK_CONTRAST_RGB: RGB = { r: 0xf8, g: 0xf9, b: 0xfd };
-// WCAG AA: text, and icons or states.
-export const TEXT_CONTRAST = 4.5;
-export const ICON_CONTRAST = 3;
+// APCA lightness contrast (Lc): fluent text, and icons or states.
+export const TEXT_CONTRAST = 60;
+export const ICON_CONTRAST = 45;
 // The dark sidebar's lifted rows, this far toward the text color, which its darkening keeps legible.
 const DARK_SELECTED_LIFT = 0.2;
 const ELEVATED_FILL = 0.08;
+// The light-text selected surface, this far toward the text color.
+const SELECTED_LIFT = 0.14;
 const DARK_ACTIVE_LIFT = 0.28;
 const ACTIVE_TAB_TINT = 0.18;
 // The accent's least OKLCH chroma, unless the Space is a gray (under GRAY_CHROMA).
@@ -163,17 +165,23 @@ function tone(background: RGB, foreground: RGB, amount: number): string {
 
 /**
  * `foreground`, darkened on a light `background` or lightened on a dark one until it clears
- * `minimum`; `fallback` (the text color) when even black or white does not.
+ * `minimum` by `measure`; `fallback` (the text color) when even black or white does not.
  */
-export function ensureContrast(foreground: string, background: string, minimum: number, fallback: string): string {
+export function ensureContrast(
+	foreground: string,
+	background: string,
+	minimum: number,
+	fallback: string,
+	measure: (text: RGB, background: RGB) => number = apcaContrast,
+): string {
 	const fg = parseHexColor(foreground);
 	const bg = parseHexColor(background);
 	if (!fg || !bg) return fallback;
-	if (contrastRatio(fg, bg) >= minimum) return toHex(fg);
-	const target = relativeLuminance(bg) > 0.18 ? BLACK : WHITE;
+	if (measure(fg, bg) >= minimum) return toHex(fg);
+	const target = measure(BLACK, bg) >= measure(WHITE, bg) ? BLACK : WHITE;
 	for (let step = 0.05; step <= 1.0001; step += 0.05) {
 		const candidate = mix(fg, target, step);
-		if (contrastRatio(candidate, bg) >= minimum) return toHex(candidate);
+		if (measure(candidate, bg) >= minimum) return toHex(candidate);
 	}
 	return fallback;
 }
@@ -190,10 +198,11 @@ export function deriveSidebarThemeVariables(
 	const tinted = mix(accentSource, DARK_CANVAS, 0.58);
 	const darkAccent = toHex(mix(accentSource, WHITE, 0.18));
 	let sidebar = tinted;
-	// Darken a too-light dark background in OKLCH, keeping the Space's hue, until primary text clears AA on a
-	// lifted row and on that row tinted by the lightened Space color. NSColor+CSSHex mirrors it.
+	// Darken a too-light dark background in OKLCH, keeping the Space's hue, until primary text clears 4.5:1 on a lifted
+	// row and on that row tinted by the lightened Space color. NSColor+CSSHex mirrors it on WCAG 2 ratios: APCA would
+	// leave dark sidebars far lighter, and the text is always light there.
 	const textFails = (candidate: RGB): boolean => {
-		const accent = parseHexColor(ensureContrast(darkAccent, toHex(candidate), ICON_CONTRAST, DARK_CONTRAST)) ?? WHITE;
+		const accent = parseHexColor(ensureContrast(darkAccent, toHex(candidate), 3, DARK_CONTRAST, contrastRatio)) ?? WHITE;
 		const selected = mix(candidate, DARK_CONTRAST_RGB, DARK_SELECTED_LIFT);
 		const activeTab = {
 			r: selected.r + (accent.r - selected.r) * ACTIVE_TAB_TINT,
@@ -201,8 +210,8 @@ export function deriveSidebarThemeVariables(
 			b: selected.b + (accent.b - selected.b) * ACTIVE_TAB_TINT,
 		};
 		return (
-			contrastRatio(activeTab, DARK_CONTRAST_RGB) < TEXT_CONTRAST ||
-			contrastRatio(mix(candidate, DARK_CONTRAST_RGB, DARK_ACTIVE_LIFT), DARK_CONTRAST_RGB) < TEXT_CONTRAST
+			contrastRatio(DARK_CONTRAST_RGB, activeTab) < 4.5 ||
+			contrastRatio(DARK_CONTRAST_RGB, mix(candidate, DARK_CONTRAST_RGB, DARK_ACTIVE_LIFT)) < 4.5
 		);
 	};
 	if (textFails(sidebar)) {
@@ -216,32 +225,52 @@ export function deriveSidebarThemeVariables(
 	return surfaceVariables(sidebar, accentSource, prefersDark, glass);
 }
 
-/** `#1d1d1f` or `#f8f9fd`, whichever contrasts more with `color`; pure black or white when that one is under AA
- * on the elevated fill cards draw on `color`, a step toward the text. */
+// APCA 0.0.98G luminance: WCAG 2's ratio favors dark text on saturated mid tones (a medium blue or red) that read
+// far better with light text, so the text's polarity is chosen perceptually.
+export function apcaLuminance(color: RGB): number {
+	const y = 0.2126729 * (color.r / 255) ** 2.4 + 0.7151522 * (color.g / 255) ** 2.4 + 0.072175 * (color.b / 255) ** 2.4;
+	return y > 0.022 ? y : y + (0.022 - y) ** 1.414;
+}
+
+/** APCA lightness contrast of `text` on `background`, as an absolute Lc (0 to about 106). */
+export function apcaContrast(text: RGB, background: RGB): number {
+	const t = apcaLuminance(text);
+	const b = apcaLuminance(background);
+	const contrast = b > t ? (b ** 0.56 - t ** 0.57) * 1.14 : (b ** 0.65 - t ** 0.62) * 1.14;
+	return Math.abs(contrast) < 0.1 ? 0 : (Math.abs(contrast) - 0.027) * 100;
+}
+
+/** `#1d1d1f` or `#f8f9fd`, whichever reads better on `color` by APCA; pure black or white of the same polarity when
+ * that one is under the text threshold on the surface that moves furthest toward the text (cards, or the selected row under light text). */
 function textColor(color: RGB): RGB {
-	const soft = contrastRatio(color, DARK_CONTRAST_RGB) >= contrastRatio(color, LIGHT_CONTRAST_RGB) ? DARK_CONTRAST_RGB : LIGHT_CONTRAST_RGB;
-	if (contrastRatio(mix(color, soft, ELEVATED_FILL), soft) >= TEXT_CONTRAST) return soft;
-	return contrastRatio(color, WHITE) >= contrastRatio(color, BLACK) ? WHITE : BLACK;
+	const light = apcaContrast(DARK_CONTRAST_RGB, color) >= apcaContrast(LIGHT_CONTRAST_RGB, color);
+	const soft = light ? DARK_CONTRAST_RGB : LIGHT_CONTRAST_RGB;
+	if (apcaContrast(soft, mix(color, soft, light ? SELECTED_LIFT : ELEVATED_FILL)) >= TEXT_CONTRAST) return soft;
+	return light ? WHITE : BLACK;
 }
 
 /**
- * The Space's own hue, its chroma raised to `ACCENT_CHROMA` (a gray stays gray), moved away from the sidebar's
- * lightness until it clears 3:1 on the sidebar and on the selected surface, and its label, white or `#1d1d1f`, 4.5:1.
+ * The Space's own hue, its chroma raised to `ACCENT_CHROMA` (a gray stays gray), darkened, or lightened toward white when
+ * no darker shade can, until it clears the icon threshold on the sidebar and on the selected surface, and its label,
+ * white or `#1d1d1f`, the text one. Lightening fades the chroma with it: a clipped sRGB channel would turn the hue.
  */
 function spaceAccent(source: RGB, sidebar: RGB, selected: RGB, fallback: RGB): { accent: RGB; label: RGB } {
 	const [lightness, a, b] = toOklab(source);
 	const chroma = Math.hypot(a, b);
 	const scale = chroma < GRAY_CHROMA ? 1 : Math.max(chroma, ACCENT_CHROMA) / chroma;
-	const direction = relativeLuminance(sidebar) > 0.18 ? -1 : 1;
-	for (let step = 0; step <= 100; step += 1) {
-		const accent = fromOklab(lightness + (direction * step) / 100, a * scale, b * scale);
-		const label = contrastRatio(accent, WHITE) >= contrastRatio(accent, LIGHT_CONTRAST_RGB) ? WHITE : LIGHT_CONTRAST_RGB;
-		if (
-			contrastRatio(accent, sidebar) >= ICON_CONTRAST &&
-			contrastRatio(accent, selected) >= ICON_CONTRAST &&
-			contrastRatio(accent, label) >= TEXT_CONTRAST
-		) {
-			return { accent, label };
+	for (const direction of [-1, 1]) {
+		for (let step = 0; step <= 100; step += 1) {
+			const shifted = lightness + (direction * step) / 100;
+			const fit = direction < 0 ? 1 : Math.max(0, Math.min(1, (1 - shifted) / (1 - lightness)));
+			const accent = fromOklab(shifted, a * scale * fit, b * scale * fit);
+			const label = apcaContrast(WHITE, accent) >= apcaContrast(LIGHT_CONTRAST_RGB, accent) ? WHITE : LIGHT_CONTRAST_RGB;
+			if (
+				apcaContrast(accent, sidebar) >= ICON_CONTRAST &&
+				apcaContrast(accent, selected) >= ICON_CONTRAST &&
+				apcaContrast(label, accent) >= TEXT_CONTRAST
+			) {
+				return { accent, label };
+			}
 		}
 	}
 	return { accent: fallback, label: textColor(fallback) };
@@ -259,8 +288,8 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 	const darkText = relativeLuminance(contrastColor) < 0.5;
 	// One selected surface for the selected row, the pinned tiles, the current Space and the update card: a lighter
 	// shade of the sidebar, white over it under dark text, the text color over it under light text.
-	const selectedLayer = darkText ? "#ffffff 40%" : `${sidebarContrast} 14%`;
-	const selectedSolid = darkText ? mix(sidebar, WHITE, 0.4) : mix(sidebar, contrastColor, 0.14);
+	const selectedLayer = darkText ? "#ffffff 40%" : `${sidebarContrast} ${SELECTED_LIFT * 100}%`;
+	const selectedSolid = darkText ? mix(sidebar, WHITE, 0.4) : mix(sidebar, contrastColor, SELECTED_LIFT);
 	const { accent, label } = spaceAccent(accentSource, sidebar, selectedSolid, contrastColor);
 	const accentHex = toHex(accent);
 	const accentHover = ensureContrast(
@@ -310,7 +339,7 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 
 /**
  * A folder's open block, a layer of its hue taken away from the sidebar's text so text keeps its contrast on it, and
- * its color guarded to 3:1 on the sidebar and on that block (the sidebar's text color when it cannot be).
+ * its color guarded to the icon threshold on the sidebar and on that block (the sidebar's text color when it cannot be).
  */
 export function deriveFolderColorVariables(
 	folderColor: string,

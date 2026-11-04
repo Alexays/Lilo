@@ -2,23 +2,28 @@ import { expect, test, type Page } from "@playwright/test";
 import { bootChrome } from "./fakeHost";
 import { initialWorld, SPACE_1 } from "./fixtures";
 import { treeItem } from "../src/stores/testFixtures";
+import { apcaContrast, contrastRatio, ICON_CONTRAST, TEXT_CONTRAST } from "../src/lib/sidebarTheme";
 
-/** WCAG contrast of two computed CSS colors (rgb, rgba or color(srgb) over an opaque base). */
-async function ratio(page: Page, foreground: string, background: string): Promise<number> {
-	return page.evaluate(([fg, bg]) => {
+/**
+ * Contrast of a text and its background color as channel triples: the WCAG 2 ratio, or with `apca` the APCA Lc the
+ * colors derived from the Space color are chosen by.
+ */
+function measure([text, background]: number[][], apca: boolean): number {
+	const [t, b] = [text, background].map(([r, g, b]) => ({ r, g, b }));
+	return apca ? apcaContrast(t, b) : contrastRatio(t, b);
+}
+
+/** Contrast of two computed CSS colors (rgb, rgba or color(srgb) over an opaque base). */
+async function ratio(page: Page, foreground: string, background: string, apca = false): Promise<number> {
+	const colors = await page.evaluate(([fg, bg]) => {
 		// A color-mix() computes to color(srgb r g b), channels from 0 to 1.
 		const parse = (value: string) => {
 			const channels = (value.match(/[\d.]+/g) ?? ["0", "0", "0"]).slice(0, 3).map(Number);
 			return value.startsWith("color(") ? channels.map((c) => c * 255) : channels;
 		};
-		const channel = (c: number) => {
-			const v = c / 255;
-			return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-		};
-		const luminance = (rgb: number[]) => 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
-		const [a, b] = [luminance(parse(fg)), luminance(parse(bg))].sort((x, y) => y - x);
-		return (a + 0.05) / (b + 0.05);
+		return [parse(fg), parse(bg)];
 	}, [foreground, background]);
+	return measure(colors, apca);
 }
 
 /** How far a row's (possibly translucent) background stands out from the sidebar, as a contrast ratio. */
@@ -82,7 +87,7 @@ test("an open folder's icon reads on its background", async ({ page }) => {
 	const icon = await page.locator(".folder-row .folder-icon").first().evaluate((el) => getComputedStyle(el).color);
 	const background = await page.locator(".folder-open-rail .folder-drop-zone").first().evaluate((el) => getComputedStyle(el).backgroundColor);
 
-	expect(await ratio(page, icon, background)).toBeGreaterThanOrEqual(3);
+	expect(await ratio(page, icon, background, true)).toBeGreaterThanOrEqual(ICON_CONTRAST);
 });
 
 test("an open folder's papers stand out from its background in light mode", async ({ page }) => {
@@ -122,7 +127,7 @@ test("the active capture button is solid accent with a readable icon", async ({ 
 	// The button eases into its active color: read it once the transition is over.
 	await expect.poll(() => cssColor(page, ".url-screenshot-btn.active", "backgroundColor")).toBe(accent);
 	const background = await cssColor(page, ".url-screenshot-btn.active", "backgroundColor");
-	expect(await ratio(page, await cssColor(page, ".url-screenshot-btn.active", "color"), background)).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, ".url-screenshot-btn.active", "color"), background, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 });
 
 test("a closed tab's title reads at full strength and says it sleeps without color", async ({ page }) => {
@@ -136,9 +141,9 @@ test("a closed tab's title reads at full strength and says it sleeps without col
 	expect(await page.locator(closed).first().evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
 	expect(await page.locator(`${closed} .tab-title`).first().evaluate((el) => getComputedStyle(el).fontStyle)).toBe("italic");
 	const sidebar = await cssColor(page, ".sidebar", "backgroundColor");
-	expect(await ratio(page, await cssColor(page, `${closed} .tab-title`, "color"), sidebar)).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, `${closed} .tab-title`, "color"), sidebar, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 	await page.locator(closed).first().hover();
-	expect(await ratio(page, await cssColor(page, `${closed} .tab-title`, "color"), sidebar)).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, `${closed} .tab-title`, "color"), sidebar, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 });
 
 for (const color of ["#fff4cc", "#ffffff", "#20242e", "#ff00ff", "#f0a8c8"]) {
@@ -153,7 +158,7 @@ for (const color of ["#fff4cc", "#ffffff", "#20242e", "#ff00ff", "#f0a8c8"]) {
 			await page.locator(active).first().waitFor();
 
 			// The selected surface is a translucent layer: it counts composited over the sidebar.
-			expect(await textContrast(page, `${active} .tab-title`)).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, `${active} .tab-title`, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 	}
 }
@@ -172,7 +177,7 @@ for (const color of ["#20242e", "#000000", "#4a90d9"]) {
 			await page.locator(timer).waitFor();
 
 			const sidebar = await cssColor(page, ".sidebar", "backgroundColor");
-			expect(await ratio(page, await cssColor(page, timer, "color"), sidebar)).toBeGreaterThanOrEqual(4.5);
+			expect(await ratio(page, await cssColor(page, timer, "color"), sidebar, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 	}
 }
@@ -183,17 +188,17 @@ test("the screenshot panel's primary button and labels read", async ({ page }) =
 	await page.locator(".screenshot-panel .btn.primary").first().waitFor();
 
 	const button = ".screenshot-panel .btn.primary";
-	expect(await ratio(page, await cssColor(page, button, "color"), await cssColor(page, button, "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, button, "color"), await cssColor(page, button, "backgroundColor"), true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 	const card = await cssColor(page, ".screenshot-panel .card", "backgroundColor");
-	expect(await ratio(page, await cssColor(page, ".screenshot-panel .group-label", "color"), card)).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, ".screenshot-panel .group-label", "color"), card, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 });
 
 /**
- * WCAG contrast of an element's text against what lies behind it: translucent layers are composited down to the
+ * Contrast of an element's text against what lies behind it: translucent layers are composited down to the
  * first opaque one, and the opacity of the elements in between fades the text.
  */
-async function textContrast(page: Page, selector: string): Promise<number> {
-	return page.locator(selector).first().evaluate((el) => {
+async function textContrast(page: Page, selector: string, apca = false): Promise<number> {
+	const colors = await page.locator(selector).first().evaluate((el) => {
 		const context = document.createElement("canvas").getContext("2d", { willReadFrequently: true })!;
 		const rgba = (value: string): number[] => {
 			context.clearRect(0, 0, 1, 1);
@@ -213,15 +218,9 @@ async function textContrast(page: Page, selector: string): Promise<number> {
 		}
 		const background = layers.reverse().reduce((below, layer) => over(layer, below), [255, 255, 255]);
 		const color = rgba(getComputedStyle(el).color);
-		const text = over([color[0], color[1], color[2], color[3] * opacity], background);
-		const channel = (c: number) => {
-			const v = c / 255;
-			return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-		};
-		const luminance = (rgb: number[]) => 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
-		const [a, b] = [luminance(text), luminance(background)].sort((x, y) => y - x);
-		return (a + 0.05) / (b + 0.05);
+		return [over([color[0], color[1], color[2], color[3] * opacity], background), background];
 	});
+	return measure(colors, apca);
 }
 
 for (const colorScheme of ["light", "dark"] as const) {
@@ -255,10 +254,10 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 			world.spaces[0].color = color;
 			await bootChrome(page, world);
 
-			expect(await textContrast(page, ".url-path")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".url-path", true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 			await page.evaluate(() => window.__lilo!.receive({ event: "urlCopied" }));
 			await page.locator(".url-host.feedback").waitFor();
-			expect(await textContrast(page, ".url-host.feedback")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".url-host.feedback", true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 	}
 }
@@ -469,7 +468,7 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff", "#00c000"]) {
 			const reload = '[data-modal="page-hang-card"] .ui-button.primary';
 			await page.locator(reload).waitFor();
 			expect(await cssColor(page, reload, "backgroundColor")).toBe(spaceAccent);
-			expect(await textContrast(page, reload)).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, reload, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 			await page.locator(reload).click();
 			await receive({ event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: true, host: "example.com", site: "example.com" });
 			await receive({ event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: false, host: "example.com", site: "example.com" });
@@ -479,7 +478,7 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff", "#00c000"]) {
 			await receive({ event: "tabSharePickerRequested", requestId: "r", origin: "meet.example.com", shareableTabIds: ["tab-alpha"] });
 			await page.locator('[data-modal="tab-share-picker"] .ui-button.primary').waitFor();
 			expect(await cssColor(page, '[data-modal="tab-share-picker"] .ui-button.primary', "backgroundColor")).toBe(spaceAccent);
-			expect(await textContrast(page, '[data-modal="tab-share-picker"] .ui-button.primary')).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, '[data-modal="tab-share-picker"] .ui-button.primary', true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 
 		test(`a copied capture's card reads on a ${color} Space in ${colorScheme} mode`, async ({ page }) => {
@@ -492,14 +491,14 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff", "#00c000"]) {
 			await page.locator(edit).waitFor();
 			await page.waitForFunction(() => document.querySelector(".capture-card")!.getAnimations().length === 0);
 
-			// A mid or saturated accent takes a white label, its fill darkened until it reads.
-			if (color === "#4a90d9" || color === "#ff00ff") expect(await cssColor(page, edit, "color")).toBe("rgb(255, 255, 255)");
+			// A dark accent takes a white label, its fill darkened until it reads.
+			if (color === "#ff00ff") expect(await cssColor(page, edit, "color")).toBe("rgb(255, 255, 255)");
 			for (const selector of [edit, ".capture-card .action:not(.primary):not(.dismiss)", ".capture-card .dismiss", ".capture-card .badge"]) {
-				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(4.5);
+				expect(await textContrast(page, selector, true), selector).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 			}
 			await page.locator(edit).hover();
 			await page.waitForTimeout(100);
-			expect(await textContrast(page, edit), "hovered Edit").toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, edit, true), "hovered Edit").toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 	}
 }

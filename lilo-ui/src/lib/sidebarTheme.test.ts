@@ -1,17 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { contrastRatio, deriveFolderColorVariables, deriveSidebarThemeVariables, ensureContrast, ICON_CONTRAST, TEXT_CONTRAST } from "./sidebarTheme";
+import { apcaContrast, deriveFolderColorVariables, deriveSidebarThemeVariables, ensureContrast, ICON_CONTRAST, TEXT_CONTRAST } from "./sidebarTheme";
 
 function rgb(hex: string): { r: number; g: number; b: number } {
 	const value = Number.parseInt(hex.slice(1), 16);
 	return { r: (value >> 16) & 0xff, g: (value >> 8) & 0xff, b: value & 0xff };
 }
 
-test("dark theme keeps primary text at AA contrast for a light accent", () => {
+test("dark theme keeps primary text at the text threshold for a light accent", () => {
 	for (const accent of ["#ffffff", "#ffe9a8", "#9ad6ff"]) {
 		const vars = deriveSidebarThemeVariables(accent, true);
-		const ratio = contrastRatio(rgb(vars["--sidebar-bg"]), rgb(vars["--sidebar-contrast"]));
-		assert.ok(ratio >= 4.5, `${accent}: ${ratio.toFixed(2)}:1`);
+		const ratio = apcaContrast(rgb(vars["--sidebar-contrast"]), rgb(vars["--sidebar-bg"]));
+		assert.ok(ratio >= TEXT_CONTRAST, `${accent}: ${ratio.toFixed(0)} Lc`);
 	}
 });
 
@@ -21,20 +21,29 @@ test("a light sidebar paints the Space color itself", () => {
 	}
 });
 
-test("text under AA in the soft tones turns pure black or white", () => {
-	assert.equal(deriveSidebarThemeVariables("#e5484d", false)["--sidebar-contrast"], "#000000");
-	assert.equal(deriveSidebarThemeVariables("#92a8ff", false)["--sidebar-contrast"], "#1d1d1f");
+test("text takes the polarity that reads better, pure black or white under the text threshold", () => {
+	assert.equal(deriveSidebarThemeVariables("#ffe14d", false)["--sidebar-contrast"], "#1d1d1f");
 	assert.equal(deriveSidebarThemeVariables("#1f2440", false)["--sidebar-contrast"], "#f8f9fd");
+	// No text reaches the threshold on these, so the best of their polarity is used.
+	assert.equal(deriveSidebarThemeVariables("#92a8ff", false)["--sidebar-contrast"], "#000000");
+	assert.equal(deriveSidebarThemeVariables("#00c000", false)["--sidebar-contrast"], "#000000");
 });
 
-test("the accent keeps the Space's hue and clears 3:1 on the sidebar and the selected surface", () => {
-	for (const space of ["#92a8ff", "#9bd3b4", "#e5484d", "#1f2440", "#ffe14d", "#5a7fc4", "#f4bb8c"]) {
+test("a medium blue, red or violet Space gets light text", () => {
+	for (const space of ["#5c7cf6", "#e5484d", "#7b61ff"]) {
+		const text = deriveSidebarThemeVariables(space, false)["--sidebar-contrast"];
+		assert.ok(["#f8f9fd", "#ffffff"].includes(text), `${space}: ${text}`);
+	}
+});
+
+test("the accent keeps the Space's hue and clears the icon threshold on the sidebar and the selected surface", () => {
+	for (const space of ["#92a8ff", "#9bd3b4", "#e5484d", "#5c7cf6", "#7b61ff", "#1f2440", "#ffe14d", "#5a7fc4", "#f4bb8c"]) {
 		for (const dark of [false, true]) {
 			const vars = deriveSidebarThemeVariables(space, dark);
 			const accent = rgb(vars["--sidebar-accent"]);
 			const label = `${space} ${dark ? "dark" : "light"}`;
-			assert.ok(contrastRatio(accent, rgb(vars["--sidebar-bg"])) >= ICON_CONTRAST, label);
-			assert.ok(contrastRatio(accent, rgb(vars["--sidebar-sel-solid"])) >= ICON_CONTRAST, label);
+			assert.ok(apcaContrast(accent, rgb(vars["--sidebar-bg"])) >= ICON_CONTRAST, label);
+			assert.ok(apcaContrast(accent, rgb(vars["--sidebar-sel-solid"])) >= ICON_CONTRAST, label);
 			const drift = Math.abs(((oklch(vars["--sidebar-accent"]).h - oklch(space).h + 540) % 360) - 180);
 			assert.ok(drift <= 12, `${label}: hue drift ${drift.toFixed(0)}`);
 		}
@@ -47,42 +56,45 @@ test("ensureContrast leaves a passing color unchanged", () => {
 
 test("ensureContrast darkens on a light background and lightens on a dark one", () => {
 	const onLight = ensureContrast("#c9b8f0", "#e2daf1", ICON_CONTRAST, "#1d1d1f");
-	assert.ok(contrastRatio(rgb(onLight), rgb("#e2daf1")) >= ICON_CONTRAST);
+	assert.ok(apcaContrast(rgb(onLight), rgb("#e2daf1")) >= ICON_CONTRAST);
 	assert.ok(channelSum(onLight) < channelSum("#c9b8f0"));
 
 	const onDark = ensureContrast("#3a3550", "#1a1a2e", ICON_CONTRAST, "#f8f9fd");
-	assert.ok(contrastRatio(rgb(onDark), rgb("#1a1a2e")) >= ICON_CONTRAST);
+	assert.ok(apcaContrast(rgb(onDark), rgb("#1a1a2e")) >= ICON_CONTRAST);
 	assert.ok(channelSum(onDark) > channelSum("#3a3550"));
 });
 
 test("ensureContrast falls back when no step reaches the threshold", () => {
-	assert.equal(ensureContrast("#808080", "#808080", 21, "#1d1d1f"), "#1d1d1f");
+	assert.equal(ensureContrast("#808080", "#808080", 110, "#1d1d1f"), "#1d1d1f");
 });
 
 test("every derived text and icon color clears its threshold", () => {
-	for (const input of ["#b18cff", "#fff4cc", "#ffe9a8", "#9ad6ff", "#ff6a00", "#1a1a2e", undefined]) {
+	for (const input of ["#b18cff", "#5c7cf6", "#00c000", "#fff4cc", "#ffe9a8", "#9ad6ff", "#ff6a00", "#1a1a2e", undefined]) {
 		for (const dark of [false, true]) {
 			const vars = deriveSidebarThemeVariables(input, dark);
 			const bg = rgb(vars["--sidebar-bg"]);
 			const label = `${input ?? "default"} ${dark ? "dark" : "light"}`;
+			// Under the threshold, the text is pure black or white, the best the Space color allows, and the others match it.
+			const best = ["#000000", "#ffffff"].includes(vars["--sidebar-contrast"]);
 			for (const name of ["--sidebar-contrast", "--sidebar-secondary", "--sidebar-muted", "--sidebar-danger"]) {
-				assert.ok(contrastRatio(rgb(vars[name]), bg) >= TEXT_CONTRAST, `${label} ${name}`);
+				const ratio = apcaContrast(rgb(vars[name]), bg);
+				assert.ok(ratio >= TEXT_CONTRAST || (best && vars[name] === vars["--sidebar-contrast"]), `${label} ${name}: ${ratio.toFixed(0)} Lc`);
 			}
-			assert.ok(contrastRatio(rgb(vars["--sidebar-accent"]), bg) >= ICON_CONTRAST, `${label} --sidebar-accent`);
+			assert.ok(apcaContrast(rgb(vars["--sidebar-accent"]), bg) >= ICON_CONTRAST, `${label} --sidebar-accent`);
 			assert.ok(
-				contrastRatio(rgb(vars["--sidebar-accent-text"]), rgb(vars["--sidebar-accent"])) >= TEXT_CONTRAST,
+				apcaContrast(rgb(vars["--sidebar-accent-text"]), rgb(vars["--sidebar-accent"])) >= TEXT_CONTRAST,
 				`${label} accent text`,
 			);
 		}
 	}
 });
 
-test("primary text clears AA on every row surface for any Space color", () => {
+test("primary text clears the text threshold on every row surface for any Space color", () => {
 	const spaces = [
 		"#000000", "#20242e", "#1a1a2e", "#3f4656", // very dark
 		"#ffffff", "#fff4cc", "#e0ffff", "#ffffa0", // very light
 		"#ff0000", "#00c000", "#0040ff", "#ff00ff", "#ffaa00", "#00e0e0", "#44dd77", "#aaee11", // saturated mid tones
-		"#e5484d", "#5a7fc4", // mid luminance
+		"#e5484d", "#5a7fc4", "#5c7cf6", "#7b61ff", "#b18cff", // mid luminance
 	];
 	const over = (base: string, layer: string, amount: number) => {
 		const [a, b] = [rgb(base), rgb(layer)];
@@ -92,6 +104,7 @@ test("primary text clears AA on every row surface for any Space color", () => {
 		for (const dark of [false, true]) {
 			const vars = deriveSidebarThemeVariables(space, dark);
 			const text = rgb(vars["--sidebar-contrast"]);
+			const best = ["#000000", "#ffffff"].includes(vars["--sidebar-contrast"]);
 			const label = `${space} ${dark ? "dark" : "light"}`;
 			const surfaces = {
 				sidebar: rgb(vars["--sidebar-bg"]),
@@ -99,8 +112,8 @@ test("primary text clears AA on every row surface for any Space color", () => {
 				selected: rgb(vars["--sidebar-sel-solid"]),
 			};
 			for (const [name, surface] of Object.entries(surfaces)) {
-				const ratio = contrastRatio(text, surface);
-				assert.ok(ratio >= TEXT_CONTRAST, `${label} on ${name}: ${ratio.toFixed(2)}:1`);
+				const ratio = apcaContrast(text, surface);
+				assert.ok(ratio >= (best ? ICON_CONTRAST : TEXT_CONTRAST), `${label} on ${name}: ${ratio.toFixed(0)} Lc`);
 			}
 		}
 	}
@@ -153,15 +166,15 @@ function channelSum(hex: string): number {
 	return r + g + b;
 }
 
-test("every palette folder color clears 3:1 on the sidebar", () => {
+test("every palette folder color clears the icon threshold on the sidebar", () => {
 	const palette = ["#5b7cff", "#5fd79a", "#ffcc57", "#ff8a5b", "#f06aa6", "#9b7cff", "#4ecdc4", "#8a9ba8"];
 	for (const space of ["#b18cff", "#1a1a2e"]) {
 		for (const dark of [false, true]) {
 			const sidebar = deriveSidebarThemeVariables(space, dark)["--sidebar-bg"];
 			for (const color of palette) {
 				const vars = deriveFolderColorVariables(color, sidebar, dark);
-				const ratio = contrastRatio(rgb(vars["--folder-accent"]), rgb(sidebar));
-				assert.ok(ratio >= ICON_CONTRAST, `${color} on ${space} ${dark ? "dark" : "light"}: ${ratio.toFixed(2)}:1`);
+				const ratio = apcaContrast(rgb(vars["--folder-accent"]), rgb(sidebar));
+				assert.ok(ratio >= ICON_CONTRAST, `${color} on ${space} ${dark ? "dark" : "light"}: ${ratio.toFixed(0)} Lc`);
 			}
 		}
 	}
@@ -185,11 +198,11 @@ test("an open folder's block keeps text, muted text and the folder color legible
 				};
 				const label = `${color} on ${space} ${dark ? "dark" : "light"}`;
 				for (const text of ["--sidebar-contrast", "--sidebar-muted"]) {
-					const ratio = contrastRatio(rgb(theme[text]), open);
-					assert.ok(ratio >= TEXT_CONTRAST, `${text} ${label}: ${ratio.toFixed(2)}:1`);
+					const ratio = apcaContrast(rgb(theme[text]), open);
+					assert.ok(ratio >= TEXT_CONTRAST, `${text} ${label}: ${ratio.toFixed(0)} Lc`);
 				}
-				const ratio = contrastRatio(rgb(vars["--folder-accent"]), open);
-				assert.ok(ratio >= ICON_CONTRAST, `folder ${label}: ${ratio.toFixed(2)}:1`);
+				const ratio = apcaContrast(rgb(vars["--folder-accent"]), open);
+				assert.ok(ratio >= ICON_CONTRAST, `folder ${label}: ${ratio.toFixed(0)} Lc`);
 			}
 		}
 	}
