@@ -18,14 +18,14 @@ export function themeSidebarBackground(): string {
 	return context.sidebarBg;
 }
 
-/** The inline style giving a folder row its guarded color and open background. */
+/** The inline style giving a folder row its guarded color. */
 export function folderColorStyle(color: string | undefined): string {
 	const { sidebarBg, prefersDark } = context;
 	const key = color ?? "";
 	const cached = cache.get(key);
 	if (cached) return cached;
 	const vars = deriveFolderColorVariables(key, sidebarBg, prefersDark);
-	const style = `--folder-accent: ${vars["--folder-accent"]}; --folder-open-bg: ${vars["--folder-open-bg"]};`;
+	const style = `--folder-accent: ${vars["--folder-accent"]};`;
 	cache.set(key, style);
 	return style;
 }

@@ -10,7 +10,10 @@ export function pageBarStyle(pageColor: string | undefined, accentInput: string)
 	const average = (channel: keyof RGB) => Math.round(rgb.reduce((sum, stop) => sum + stop[channel], 0) / rgb.length);
 	const page = { r: average("r"), g: average("g"), b: average("b") };
 	const vars = surfaceVariables(page, parseHexColor(accentInput) ?? page, relativeLuminance(page) < 0.18);
-	// A white active tab on a white page would show only its shadow: it takes a shade of the page instead.
-	if (contrastRatio(page, { r: 255, g: 255, b: 255 }) < 1.1) vars["--sidebar-selected"] = vars["--sidebar-panel"];
+	// A white active tab on a white page would show only its edge: it takes a shade of the page instead.
+	if (contrastRatio(page, { r: 255, g: 255, b: 255 }) < 1.1) {
+		vars["--sidebar-selected"] = vars["--sidebar-panel"];
+		vars["--sidebar-sel"] = vars["--sidebar-panel"];
+	}
 	return Object.entries(vars).map(([name, value]) => `${name}: ${value}`).join("; ");
 }

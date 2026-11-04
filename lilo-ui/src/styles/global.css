@@ -374,6 +374,14 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
     --sidebar-right-pad: 10px;
 }
 
+/* Increase contrast firms up the layers drawn on the Space color. */
+@media (prefers-contrast: more) {
+  .tabs-surface {
+    --separator: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
+    --sidebar-sel-ring: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
+  }
+}
+
 .chrome-floating-surface {
   background: var(--chrome-overlay-surface);
   border: 1px solid var(--chrome-overlay-border);
