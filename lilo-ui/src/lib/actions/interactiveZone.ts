@@ -5,12 +5,15 @@ import { createFrameScheduler } from "../motion/frameScheduler";
 type InteractiveZoneConfig = {
 	id: string;
 	active?: boolean;
+	/** Px the zone reaches past the top and bottom edges: an arrow or a hover bridge drawn outside the box. */
+	outsetY?: number;
 };
 
 type InteractiveZoneEntry = {
 	el: HTMLElement;
 	zoneId: string;
 	active: boolean;
+	outsetY: number;
 	lastRect: { x: number; y: number; width: number; height: number } | null;
 };
 
@@ -62,7 +65,9 @@ function reportEntry(entry: InteractiveZoneEntry, batch: ZoneRect[]): void {
 		return;
 	}
 
-	const { x, y, width, height } = rect;
+	const { x, width } = rect;
+	const y = rect.y - entry.outsetY;
+	const height = rect.height + 2 * entry.outsetY;
 	const last = entry.lastRect;
 	if (last && last.x === x && last.y === y && last.width === width && last.height === height) {
 		return;
@@ -153,6 +158,7 @@ export function reportInteractiveZone(
 		el,
 		zoneId: config.id,
 		active: config.active ?? true,
+		outsetY: config.outsetY ?? 0,
 		lastRect: null,
 	};
 

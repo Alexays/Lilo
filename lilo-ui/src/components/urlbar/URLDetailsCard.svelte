@@ -52,7 +52,7 @@
 
 <div
   class="url-details float-surface"
-  use:reportInteractiveZone={{ id: "url-details" }}
+  use:reportInteractiveZone={{ id: "url-details", outsetY: 2 }}
   role="group"
   aria-label={title || location.before + location.strong + location.after}
   transition:fly={{ y: -4, duration: prefersReducedMotion() ? 0 : 160, easing: cubicOut }}

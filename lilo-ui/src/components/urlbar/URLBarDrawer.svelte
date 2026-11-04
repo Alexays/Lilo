@@ -79,7 +79,7 @@
     class:open
     class:wide={shown.kind === "site"}
     role="group"
-    use:reportInteractiveZone={{ id: "url-bar-drawer", active: open }}
+    use:reportInteractiveZone={{ id: "url-bar-drawer", active: open, outsetY: 12 }}
     onpointerdown={pinSiteDrawer}
     {@attach shown.kind === "site" &&
       dismissable({ onDismiss: () => setSiteDrawerOpen(false), ignore: ".url-display", escape: true })}
@@ -102,7 +102,7 @@
     style:width="{POPOVER_WIDTH}px"
     style:--arrow-x="{anchorRect.left + anchorRect.width / 2 - popoverLeft}px"
     use:portal
-    use:reportInteractiveZone={{ id: "extension-request", active: open }}
+    use:reportInteractiveZone={{ id: "extension-request", active: open, outsetY: 6 }}
   >
     <PermissionRequestDrawer request={shown} />
   </div>
@@ -159,7 +159,7 @@
     transform: rotate(45deg);
   }
 
-  /* Bridges the gap to the address, so the pointer reaches the drawer without leaving it. */
+  /* Bridges the gap to the address, so the pointer reaches the drawer without leaving it. Its zone's outsetY covers it. */
   .url-drawer::after {
     content: "";
     position: absolute;

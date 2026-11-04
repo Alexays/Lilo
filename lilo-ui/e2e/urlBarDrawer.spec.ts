@@ -26,6 +26,27 @@ test("the site-controls button opens the Site drawer, which sets a permission", 
 	expect(set?.payload).toEqual({ origin: "https://example.com", type: "camera", allow: false });
 });
 
+test("the Site drawer's click zone reaches up over its arrow to the address", async ({ page }) => {
+	await bootChrome(page, worldWithActiveCamera());
+	await page.locator(".permissions-btn").click();
+	const drawer = page.locator(".url-drawer.open");
+	await expect(drawer).toBeVisible();
+	await page.waitForFunction(() => document.querySelector(".url-drawer")!.getAnimations().length === 0);
+
+	const box = await drawer.evaluate((el) => el.getBoundingClientRect().toJSON() as DOMRect);
+	const address = await page.locator(".url-display").evaluate((el) => el.getBoundingClientRect().bottom);
+	await expect
+		.poll(async () => {
+			const zone = (await sentCommands(page))
+				.filter((c) => c.action === "registerInteractiveZones")
+				.flatMap((c) => (c.payload as { zones: { id: string; y: number; height: number }[] }).zones)
+				.filter((z) => z.id === "url-bar-drawer")
+				.at(-1);
+			return !!zone && zone.y <= address && zone.y + zone.height >= box.bottom;
+		})
+		.toBe(true);
+});
+
 test("Escape closes the Site drawer", async ({ page }) => {
 	await bootChrome(page, worldWithActiveCamera());
 	await page.locator(".permissions-btn").click();
