@@ -11,6 +11,7 @@
 
 <script lang="ts">
   import { scale } from "svelte/transition";
+  import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { hostOf } from "../../lib/url";
@@ -281,7 +282,13 @@
 
 <div class="prompt-field">
   {#if open}
-    <div class="picker float-surface" id={listId} role="listbox" aria-label={ariaLabel}>
+    <div
+      class="picker float-surface"
+      id={listId}
+      role="listbox"
+      aria-label={ariaLabel}
+      use:reportInteractiveZone={{ id: `prompt-picker-${listId}` }}
+    >
       {#each items as item, index (item.key)}
         {#if index === 0 || items[index - 1].group !== item.group}
           <div class="picker-group" role="presentation">{item.group}</div>
