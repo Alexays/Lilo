@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "{name} alanının sekmeleri geri yüklenemedi. Bir yedek kopya saklandı."
 	},
-	"confirmSheet": {
-		"dismiss": "Onayı kapat"
-	},
 	"tabShare": {
 		"title": "{origin} bir sekme paylaşmak istiyor",
 		"pickTab": "Paylaşılacak sekmeyi seçin",

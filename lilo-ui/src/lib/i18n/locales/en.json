@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "Could not restore the tabs of the space {name}. A backup copy was kept."
 	},
-	"confirmSheet": {
-		"dismiss": "Dismiss confirmation"
-	},
 	"tabShare": {
 		"title": "{origin} wants to share a tab",
 		"pickTab": "Choose a tab to share",

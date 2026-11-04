@@ -4,7 +4,7 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
-  import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
+  import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import { getAgentsProfileId, getAgentsSpaceIds, isAgentsSpace } from "../../stores/agents.svelte";
   import { getProfileById, getProfileExtensionCounts, getProfiles } from "../../stores/profiles.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
@@ -515,7 +515,7 @@
       </div>
     </div>
 
-    <BottomConfirmSheet
+    <UiConfirmModal
       visible={showDeleteConfirmSheet}
       title={t("spaceEditor.deleteConfirmTitle", {
         name: s.name || t("spaceEditor.thisSpace"),

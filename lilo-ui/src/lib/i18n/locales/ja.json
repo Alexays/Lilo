@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "スペース「{name}」のタブを復元できませんでした。バックアップは保持されています。"
 	},
-	"confirmSheet": {
-		"dismiss": "確認を閉じる"
-	},
 	"tabShare": {
 		"title": "{origin}がタブの共有を求めています",
 		"pickTab": "共有するタブを選択",

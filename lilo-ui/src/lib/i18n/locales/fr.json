@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "Impossible de restaurer les onglets de l'espace {name}. Une copie de sauvegarde a été conservée."
 	},
-	"confirmSheet": {
-		"dismiss": "Ignorer la confirmation"
-	},
 	"tabShare": {
 		"title": "{origin} veut partager un onglet",
 		"pickTab": "Choisissez un onglet à partager",

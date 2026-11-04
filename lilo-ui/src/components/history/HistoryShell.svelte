@@ -8,7 +8,7 @@
   import { hostOf } from "../../lib/url";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import UiShellFrame from "../ui/UiShellFrame.svelte";
-  import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
+  import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import HistoryNav from "./HistoryNav.svelte";
   import { groupHistoryDays, rowKey, timeLabel, timeRangeLabel, type HistoryCluster } from "./historyPageModel";
   import { isHistoryShellOpen } from "../../stores/panels.svelte";
@@ -370,7 +370,7 @@
     {/if}
   </div>
 
-  <BottomConfirmSheet
+  <UiConfirmModal
     visible={siteToDelete !== null}
     title={t("historyPage.deleteSiteTitle", { host: siteToDelete ?? "" })}
     message={t("historyPage.deleteSiteMessage")}

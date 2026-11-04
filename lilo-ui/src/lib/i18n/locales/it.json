@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "Impossibile ripristinare le schede dello spazio {name}. È stata conservata una copia di backup."
 	},
-	"confirmSheet": {
-		"dismiss": "Chiudi conferma"
-	},
 	"tabShare": {
 		"title": "{origin} vuole condividere una scheda",
 		"pickTab": "Scegli una scheda da condividere",

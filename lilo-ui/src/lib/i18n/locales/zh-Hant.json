@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "無法回復空間 {name} 的分頁。已保留備份。"
 	},
-	"confirmSheet": {
-		"dismiss": "關閉確認提示"
-	},
 	"tabShare": {
 		"title": "{origin} 想要分享分頁",
 		"pickTab": "選擇要分享的分頁",

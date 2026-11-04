@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "Die Tabs des Spaces {name} konnten nicht wiederhergestellt werden. Eine Sicherungskopie wurde aufbewahrt."
 	},
-	"confirmSheet": {
-		"dismiss": "Bestätigung schließen"
-	},
 	"tabShare": {
 		"title": "{origin} möchte einen Tab teilen",
 		"pickTab": "Tab zum Teilen auswählen",

@@ -2,7 +2,8 @@
   import type { Snippet } from "svelte";
 
   interface Props {
-    variant?: "primary" | "secondary" | "ghost" | "danger";
+    /** `danger` stands apart as red text; `destructive` is a default button that destroys. */
+    variant?: "primary" | "secondary" | "ghost" | "danger" | "destructive";
     disabled?: boolean;
     /** Waiting on what the click started: a spinner, and no second click. */
     busy?: boolean;
@@ -24,6 +25,7 @@
   class:primary={variant === "primary"}
   class:ghost={variant === "ghost"}
   class:danger={variant === "danger"}
+  class:destructive={variant === "destructive"}
   class:busy
   type="button"
   disabled={disabled || busy}
@@ -87,6 +89,15 @@
 
   .ui-button.danger:not(:disabled):hover {
     background: color-mix(in srgb, var(--danger) 18%, transparent);
+  }
+
+  .ui-button.destructive {
+    background: var(--danger-deep);
+    color: var(--on-color);
+  }
+
+  .ui-button.destructive:not(:disabled):hover {
+    background: color-mix(in srgb, var(--danger-deep) 88%, black);
   }
 
   .ui-button:focus-visible {

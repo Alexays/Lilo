@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "Não foi possível restaurar as abas do espaço {name}. Uma cópia de segurança foi mantida."
 	},
-	"confirmSheet": {
-		"dismiss": "Dispensar confirmação"
-	},
 	"tabShare": {
 		"title": "{origin} quer compartilhar uma aba",
 		"pickTab": "Escolha uma aba para compartilhar",

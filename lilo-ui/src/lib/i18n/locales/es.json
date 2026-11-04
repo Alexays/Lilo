@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "No se han podido restaurar las pestañas del espacio {name}. Se ha conservado una copia de seguridad."
 	},
-	"confirmSheet": {
-		"dismiss": "Cerrar confirmación"
-	},
 	"tabShare": {
 		"title": "{origin} quiere compartir una pestaña",
 		"pickTab": "Elige una pestaña para compartir",

@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "{name} 스페이스의 탭을 복원할 수 없습니다. 백업 사본은 보관했습니다."
 	},
-	"confirmSheet": {
-		"dismiss": "확인 창 닫기"
-	},
 	"tabShare": {
 		"title": "{origin}에서 탭을 공유하려고 합니다",
 		"pickTab": "공유할 탭 선택",

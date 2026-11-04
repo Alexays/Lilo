@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "无法恢复空间“{name}”的标签页。已保留备份副本。"
 	},
-	"confirmSheet": {
-		"dismiss": "关闭确认"
-	},
 	"tabShare": {
 		"title": "{origin} 想要共享标签页",
 		"pickTab": "选取要共享的标签页",

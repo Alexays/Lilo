@@ -13,7 +13,7 @@
   } from "../../stores/extensions.svelte";
   import { closeSettingsShell, closeSettingsSubpage, openSettingsSubpage } from "../../stores/panels.svelte";
   import { getActiveProfileId, getProfileById, getProfiles } from "../../stores/profiles.svelte";
-  import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
+  import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
@@ -106,7 +106,7 @@
   <SettingsGroups section="extensions" />
 {/if}
 
-<BottomConfirmSheet
+<UiConfirmModal
   visible={removeTarget !== null}
   title={t("extensions.removeConfirmTitle", { name: removeTarget ? resolveDisplayName(removeTarget) : "" })}
   message={t("extensions.removeConfirmMessage")}

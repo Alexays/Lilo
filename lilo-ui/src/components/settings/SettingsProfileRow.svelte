@@ -8,7 +8,7 @@
   import { closeSettingsShell, openSettings, openSettingsSubpage } from "../../stores/panels.svelte";
   import { getActiveProfileId } from "../../stores/profiles.svelte";
   import type { SpaceState } from "../../stores/spaces.svelte";
-  import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
+  import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import { PASTEL_COLORS, profileRemoval } from "./profilesModel";
   import UiSelect from "../ui/UiSelect.svelte";
   import UiTextField from "../ui/UiTextField.svelte";
@@ -206,7 +206,7 @@
   {/if}
 </article>
 
-<BottomConfirmSheet
+<UiConfirmModal
   visible={confirmingRemove}
   title={t("settings.profiles.deleteTitle", { name: profile.name })}
   message={removal.moving.length > 0 ? t("settings.profiles.deleteMessageSpaces") : t("settings.profiles.deleteMessage")}
@@ -229,7 +229,7 @@
       />
     </div>
   {/if}
-</BottomConfirmSheet>
+</UiConfirmModal>
 
 <style>
   .profile-card {

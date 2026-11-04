@@ -1375,9 +1375,6 @@
 	"sessionRestore": {
 		"degraded": "Nie udało się przywrócić kart przestrzeni {name}. Zachowano kopię zapasową."
 	},
-	"confirmSheet": {
-		"dismiss": "Zamknij potwierdzenie"
-	},
 	"tabShare": {
 		"title": "{origin} chce udostępnić kartę",
 		"pickTab": "Wybierz kartę do udostępnienia",

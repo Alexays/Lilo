@@ -1365,9 +1365,6 @@
 	"sessionRestore": {
 		"degraded": "De tabbladen van ruimte {name} konden niet worden hersteld. Er is een reservekopie bewaard."
 	},
-	"confirmSheet": {
-		"dismiss": "Sluit bevestiging"
-	},
 	"tabShare": {
 		"title": "{origin} wil een tabblad delen",
 		"pickTab": "Kies een tabblad om te delen",

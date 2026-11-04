@@ -64,14 +64,14 @@ test.describe("in French", () => {
 		expect(copy.height).toBeLessThan(40);
 	});
 
-	test("the force quit sheet's buttons each hold on one line in the narrowest sidebar", async ({ page }) => {
+	test("the force quit confirmation's buttons each hold on one line in the narrowest sidebar", async ({ page }) => {
 		await openWithProcesses(page, [{ id: "p1", tabIds: ["tab-alpha"], bytes: 100_000_000 }]);
 		await page.evaluate(() => document.documentElement.style.setProperty("--sidebar-width", "200px"));
 		await page.locator(".process-panel .tab-row").first().click();
 		await page.locator(".process-panel .small-button.danger").click();
-		await expect(page.locator(".confirm-sheet.visible")).toBeVisible();
+		await expect(page.locator('[data-modal="confirm-modal"]')).toBeVisible();
 
-		const lines = await page.locator(".confirm-sheet .sheet-btn").evaluateAll((buttons) =>
+		const lines = await page.locator('[data-modal="confirm-modal"] .ui-button').evaluateAll((buttons) =>
 			buttons.map((button) => {
 				const range = document.createRange();
 				range.selectNodeContents(button);

@@ -321,7 +321,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 			expect(await textContrast(page, ".ui-button.danger")).toBeGreaterThanOrEqual(4.5);
 		});
 
-		test("a confirm sheet's danger button reads", async ({ page }) => {
+		test("a confirm modal's destructive button reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
 			await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
 			await page.locator(".process-panel").waitFor();
@@ -342,9 +342,9 @@ for (const colorScheme of ["light", "dark"] as const) {
 			);
 			await page.locator(".process-panel .tab-row").first().click();
 			await page.locator(".process-panel .small-button.danger").click();
-			const confirm = page.locator(".sheet-btn-danger");
+			const confirm = page.locator(".ui-button.destructive");
 			await expect(confirm).toBeVisible();
-			expect(await textContrast(page, ".sheet-btn-danger")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".ui-button.destructive")).toBeGreaterThanOrEqual(4.5);
 		});
 
 		test("a success badge reads", async ({ page }) => {
