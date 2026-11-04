@@ -102,13 +102,15 @@
 
 {#if inline}
   <div class="box">
-    <div class="row materials" role="radiogroup" aria-label={t("spaceEditor.materialLabel")}>
-      {#each MATERIALS as value (value)}
-        <button class="material" role="radio" aria-checked={material === value} onclick={() => onmaterial(value)}>
-          <span class="thumbnail"><AppearancePreview material={value} {desktop} thumbnail /></span>
-          {t(`spaceEditor.material.${value}`)}
-        </button>
-      {/each}
+    <div class="row">
+      <div class="materials" role="radiogroup" aria-label={t("spaceEditor.materialLabel")}>
+        {#each MATERIALS as value (value)}
+          <button class="material" role="radio" aria-checked={material === value} onclick={() => onmaterial(value)}>
+            <span class="swatch-material {value}" style:--desktop={desktop}></span>
+            <span class="material-name">{t(`spaceEditor.material.${value}`)}</span>
+          </button>
+        {/each}
+      </div>
     </div>
     <div class="row">
       <span id="{id}-label">{t("spaceEditor.color")}</span>
@@ -121,7 +123,11 @@
     </div>
     {#if !auto}
       <div class="row" use:tooltip={t("spaceEditor.followDayHint")}>
-        <span>{t("spaceEditor.followDay")}</span>
+        <!-- Day to night, as the onboarding draws it: the switch says the rest, its label and tooltip the words. -->
+        <span class="day-icons" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 2v1.3M8 12.7V14M2 8h1.3M12.7 8H14M3.8 3.8l.9.9M11.3 11.3l.9.9M3.8 12.2l.9-.9M11.3 4.7l.9-.9M8 5.4a2.6 2.6 0 1 0 0 5.2a2.6 2.6 0 0 0 0-5.2Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>
+          <svg width="13" height="13" viewBox="0 0 16 16"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5Z" fill="currentColor" /></svg>
+        </span>
         <UiToggle checked={mode === "time"} ariaLabel={t("spaceEditor.followDay")} onchange={(on) => onmode(on ? "time" : "fixed")} />
       </div>
     {/if}
@@ -190,52 +196,78 @@
     border-top: 1px solid var(--separator);
   }
 
+  /* The onboarding's material bar, on the Space color: each choice shows its material in a small square. */
   .materials {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--text-primary-tint-12);
   }
 
   .material {
+    flex: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     min-width: 0;
-    padding: 0;
+    height: var(--control-height-sm);
+    padding: 0 6px;
     border: 0;
+    border-radius: calc(var(--radius-sm) - 2px);
     background: none;
     color: var(--text-secondary);
     font-family: inherit;
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     cursor: pointer;
   }
 
   .material[aria-checked="true"] {
+    background: color-mix(in srgb, var(--sidebar-contrast) 22%, transparent);
     color: var(--text-primary);
     font-weight: var(--font-weight-semibold);
   }
 
-  .thumbnail {
-    width: 100%;
-    aspect-ratio: 3 / 2;
-    overflow: hidden;
-    border-radius: var(--radius-md);
-    box-shadow: inset 0 0 0 1px var(--text-primary-tint-12);
-    pointer-events: none;
-  }
-
-  .material[aria-checked="true"] .thumbnail {
-    box-shadow: 0 0 0 2px var(--bg-elevated), 0 0 0 4px var(--accent);
-  }
-
   .material:focus-visible {
-    outline: none;
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
-  .material:focus-visible .thumbnail {
-    outline: var(--focus-outline);
-    outline-offset: 4px;
+  .swatch-material {
+    position: relative;
+    flex: none;
+    width: 14px;
+    height: 14px;
+    overflow: hidden;
+    border-radius: var(--radius-xs);
+    background-color: var(--sidebar-bg);
+    box-shadow: inset 0 0 0 1px var(--text-primary-tint-12);
+  }
+
+  .swatch-material.glass {
+    background: linear-gradient(color-mix(in srgb, var(--sidebar-bg) 45%, transparent), color-mix(in srgb, var(--sidebar-bg) 45%, transparent)), var(--desktop);
+  }
+
+  .day-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+  }
+
+  .material-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .swatch-material.grain {
+    background-image: var(--grain-texture);
+    background-size: 40px;
+    background-blend-mode: overlay;
   }
 
   .color-button {

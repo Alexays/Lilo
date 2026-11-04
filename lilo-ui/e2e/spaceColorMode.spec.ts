@@ -69,8 +69,8 @@ test("each color source and material previews on the whole chrome, and is sent a
 	await expect.poll(() => lastCommand(page, "setWallpaperColorWatch")).toEqual({ enabled: true });
 	await page.evaluate(() => window.__lilo!.receive({ event: "wallpaperColorChanged", color: "#2f9e8f", thumbnail: "data:image/jpeg;base64,AAAA" }));
 	await expect.poll(() => sidebarBackground(page)).not.toBe(tinted);
-	// The material thumbnails stand the window on the wallpaper itself.
-	expect(await page.locator(".desk").first().evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("data:image/jpeg");
+	// The Glass swatch shows the wallpaper itself through the Space color.
+	expect(await page.locator(".swatch-material.glass").evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("data:image/jpeg");
 
 	// A color takes back from Lilo's pick.
 	await colorButton(page).click();
