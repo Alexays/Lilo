@@ -2,7 +2,7 @@
      you to its conversation. Mounted on the body, so it may run past a narrow sidebar over the page. -->
 <script lang="ts">
   import "../../lib/i18n/agentsCatalog";
-  import MascotGlyph from "./MascotGlyph.svelte";
+  import AgentTile from "./AgentTile.svelte";
   import PermissionButtons from "./PermissionButtons.svelte";
   import { dismissable } from "../../lib/actions/dismissable";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
@@ -50,7 +50,7 @@
   let popover: HTMLDivElement | undefined = $state();
 
   $effect(() => {
-    popover?.querySelector<HTMLElement>(".float-row, .float-button")?.focus();
+    popover?.querySelector<HTMLElement>(".float-row, .new")?.focus();
   });
 
   function line(summary: BridgeConversationSummary): string {
@@ -63,7 +63,7 @@
 
   function handleKeydown(event: KeyboardEvent): void {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    const rows = Array.from(popover?.querySelectorAll<HTMLElement>(".float-row, .float-button") ?? []);
+    const rows = Array.from(popover?.querySelectorAll<HTMLElement>(".float-row, .new") ?? []);
     if (rows.length === 0) return;
     event.preventDefault();
     const index = rows.indexOf(document.activeElement as HTMLElement);
@@ -82,12 +82,12 @@
   use:portal
   use:reportInteractiveZone={{ id: "agents-popover" }}
   onkeydown={handleKeydown}
-  {@attach dismissable({ onDismiss: onclose, ignore: ".agents-pill", escape: true, returnFocus: anchor })}
+  {@attach dismissable({ onDismiss: onclose, ignore: ".agents-button, .ui-split-menu", escape: true, returnFocus: anchor })}
 >
   <div class="head">
     <span class="float-popover-title">{t("agents.badge.title")}</span>
     <button
-      class="float-button new"
+      class="new"
       onclick={() => {
         onclose();
         openAskBar();
@@ -114,16 +114,24 @@
                 onclose();
               }}
             >
-              <MascotGlyph />
+              <span class="icon">
+                <AgentTile agentId={summary.agentId} />
+                {#if summary.permission}<span class="dot" aria-hidden="true"></span>{/if}
+              </span>
               <span class="text">
                 <span class="name">{summary.title || t("agents.row.untitled")}</span>
-                {#if detail}<span class="detail" class:error={summary.state === "failed"}>{detail}</span>{/if}
+                {#if detail}
+                  <span
+                    class="detail"
+                    class:command={!!summary.permission}
+                    class:finished={!summary.permission && section.key === "done" && summary.unread}
+                    class:error={summary.state === "failed"}
+                  >{detail}</span>
+                {/if}
               </span>
               {#if otherSpace}<span class="space" aria-hidden="true">{summary.spaceName}</span>{/if}
               {#if section.key === "running"}
                 <span class="spinner" aria-hidden="true"></span>
-              {:else if section.key === "done" && summary.unread}
-                <span class="unread" aria-hidden="true"></span>
               {/if}
             </button>
             {#if summary.permission}
@@ -144,6 +152,8 @@
   .popover {
     position: fixed;
     z-index: var(--z-popover);
+    padding: var(--space-8);
+    border-radius: var(--radius-lg);
     transform-origin: calc(100% - 12px) 0;
   }
 
@@ -155,28 +165,47 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 2px 2px 8px;
+    padding: 4px 4px 0 8px;
   }
 
   .head .float-popover-title {
     flex: 1;
   }
 
+  /* The panel's main action, a text button on the right of its title. */
   .new {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    height: var(--control-height-sm);
+    padding: 0 var(--space-6);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--accent-ink, var(--accent));
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+  }
+
+  .new:hover {
+    background: var(--bg-hover);
+  }
+
+  .new:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   .keys {
-    font-size: var(--font-size-2xs);
     color: var(--text-muted);
+    font-weight: var(--font-weight-regular);
   }
 
   .list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
     max-height: 420px;
     overflow-y: auto;
   }
@@ -188,15 +217,17 @@
   }
 
   .section-label {
-    padding: 6px 8px 2px;
+    padding: 14px 8px 4px;
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--text-muted);
   }
 
   /* Rows follow the popover in, 20ms apart; the cap keeps a long list from trailing. */
   .item {
-    border-radius: calc(var(--float-radius-popover) - 6px);
+    border-radius: var(--radius-md);
     animation: agents-popover-row-in var(--motion-duration-normal) var(--motion-ease-organic) both;
     animation-delay: calc(40ms + var(--stagger) * 20ms);
   }
@@ -209,13 +240,32 @@
   }
 
   .item.waiting {
-    background: color-mix(in srgb, var(--attention) 9%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--attention) 35%, transparent);
+    background: color-mix(in srgb, var(--text-primary) 5%, transparent);
   }
 
   .item .float-row {
     align-items: flex-start;
+    gap: 10px;
     padding-block: 8px;
+    border-radius: var(--radius-md);
+  }
+
+  .icon {
+    position: relative;
+    flex: none;
+    display: grid;
+    margin-top: 1px;
+  }
+
+  .dot {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--attention);
+    box-shadow: 0 0 0 2px var(--float-surface);
   }
 
   .text {
@@ -242,6 +292,14 @@
     text-overflow: ellipsis;
   }
 
+  .detail.command {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .detail.finished {
+    color: var(--accent-ink, var(--accent));
+  }
+
   .detail.error {
     color: var(--danger-text);
   }
@@ -249,10 +307,8 @@
   .space {
     flex: none;
     max-width: 30%;
-    padding: 1px 7px;
-    border-radius: var(--radius-chip);
-    background: var(--text-primary-tint-10);
-    font-size: var(--font-size-xs);
+    margin-top: 1px;
+    font-size: var(--font-size-sm);
     color: var(--text-muted);
     overflow: hidden;
     white-space: nowrap;
@@ -260,23 +316,16 @@
   }
 
   .answers {
-    padding: 0 8px 8px 32px;
-  }
-
-  .unread {
-    flex: none;
-    width: 6px;
-    height: 6px;
-    margin-top: 6px;
-    border-radius: 50%;
-    background: var(--accent);
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 8px 8px 34px;
   }
 
   /* About 30 s of turns, then a still arc: a turn left running must not keep the display link up. */
   .spinner {
     flex: none;
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
     margin-top: 3px;
     box-sizing: border-box;
     border-radius: 50%;
@@ -306,8 +355,8 @@
 
   .empty {
     margin: 0;
-    padding: 8px;
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
+    padding: 12px 8px 8px;
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
   }
 </style>

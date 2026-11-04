@@ -28,6 +28,8 @@
   --danger-deep: #b42318;
   /* A program or page waiting on the user. */
   --attention: #ffb547;
+  /* A count on --attention: dark enough for 4.5:1 on the orange. */
+  --attention-text: #4a2a00;
   --success: #15803d;
   --success-text: #166534;
   --keep-awake: #c98a12;

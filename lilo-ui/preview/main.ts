@@ -1,5 +1,5 @@
 // The chrome UI in any browser, against the e2e fake host seeded with a sample world (make ui-preview).
-// ?world=default|empty|onboarding|agents (two agent conversations, one open), &theme=light|dark (the system's otherwise), &open=settings|commandbar,
+// ?world=default|empty|onboarding|agents (agent conversations, one open), &theme=light|dark (the system's otherwise), &open=settings|commandbar,
 // &tabs=left|right|top|bottom, &address=tabs|page|hidden, &update=1 (a downloaded update waiting for a relaunch), &open=whatsnew.
 import type { Page } from "@playwright/test";
 import { version as appVersion } from "../package.json";
@@ -191,7 +191,8 @@ const replies: Record<string, (payload: Record<string, unknown>) => Record<strin
 		conversations: [
 			{ tabId: "tab-conv-login", agentId: "claude-acp", title: "Fix login redirect loop", state: "idle", unread: false, spaceId: WORK, spaceName: "Work", running: true },
 			{ tabId: "tab-conv-tests", agentId: "claude-acp", title: "Add checkout tests", state: "busy", unread: false, spaceId: WORK, spaceName: "Work", running: true,
-				permission: { requestId: "r1", title: "Run npm test -- checkout", options: [{ optionId: "a", name: "Allow", kind: "allow_once" }, { optionId: "b", name: "Always allow", kind: "allow_always" }, { optionId: "c", name: "Deny", kind: "reject_once" }] } },
+				permission: { requestId: "r1", title: "Run npm test -- checkout", options: [{ optionId: "a", name: "Allow", kind: "allow_once" }, { optionId: "b", name: "Always allow", kind: "allow_always" }, { optionId: "c", name: "Deny", kind: "reject_once" }, { optionId: "d", name: "Never allow", kind: "reject_always" }] } },
+			{ tabId: "tab-conv-deps", agentId: "codex-acp", title: "Update dependencies", state: "busy", unread: false, spaceId: HOME, spaceName: "Personal", running: true },
 		],
 	}),
 	searchConversationFiles: ({ cwd, query }) => {
