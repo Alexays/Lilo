@@ -135,7 +135,7 @@ test("the downloads, diagnostics and process manager panels name every control",
 test("a download row nests no control in another, and its main button selects and opens it", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await receive(page, { event: "openDownloads" });
-	await page.locator(".downloads-panel").waitFor();
+	await page.locator("section[aria-label=\"Downloads\"]").waitFor();
 	await receive(page, {
 		event: "downloadsSnapshot",
 		items: [{ id: 1, url: "https://example.com/a.zip", filename: "a.zip", bytesReceived: 2, totalBytes: 2, state: "complete", startedAt: Date.now() / 1000, fileMissing: false, source: "wk" }],

@@ -49,9 +49,9 @@ test("settings, downloads and the process manager take the focus when they open"
 	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
-	await expect(page.locator(".downloads-filter input")).toBeFocused();
+	await expect(page.locator(".section-nav-toolbar input")).toBeFocused();
 	await page.keyboard.press("Escape");
 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
-	await expect(page.locator(".process-panel button").first()).toBeFocused();
+	await expect(page.locator(".section-nav-panel")).toBeFocused();
 });

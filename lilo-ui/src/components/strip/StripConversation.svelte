@@ -12,7 +12,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { MOTION } from "../../lib/motion/timings";
-  import { closeHistoryShell, closeSettingsShell } from "../../stores/panels.svelte";
+  import { closePageShell } from "../../stores/panels.svelte";
   import { optimisticallyActivateTab } from "../../stores/sidebar.svelte";
   import { tabDisplayTitle, type TabState } from "../../stores/tabs.svelte";
 
@@ -53,8 +53,7 @@
 
   function activate(target: TabState): void {
     pagesOpen = false;
-    closeSettingsShell();
-    closeHistoryShell();
+    closePageShell();
     optimisticallyActivateTab(target.id);
     tabActions.switchTo(target.id);
   }

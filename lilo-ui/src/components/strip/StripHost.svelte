@@ -1,7 +1,7 @@
 <script lang="ts">
   import TabStrip from "./TabStrip.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
-  import { hasActivePanel, isDesignSystemShellOpen, isHistoryShellOpen, isSettingsShellOpen } from "../../stores/panels.svelte";
+  import { getPageShell, hasActivePanel, isDesignSystemShellOpen } from "../../stores/panels.svelte";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
   import { isSidebarOverlay, isSidebarShown } from "../../stores/ui.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
@@ -12,11 +12,11 @@
   // On top the strip takes the page's color, as the page toolbar does; read apart from the tab, as there. The bottom
   // one sits on the window's surface: the page's bottom edge is whatever scrolls by.
   const pageColor = $derived(getTabPosition() === "top" ? getActiveTab()?.pageColor : undefined);
-  // Settings and History cover the page: the strip leaves its color and paints the Space's own.
-  const coversPage = $derived(isSettingsShellOpen() || isHistoryShellOpen());
+  // A system screen covers the page: the strip leaves its color and paints the Space's own.
+  const coversPage = $derived(getPageShell() !== null);
   const style = $derived(coversPage ? undefined : pageBarStyle(pageColor, accent));
 
-  // Settings is not among them: in a strip it is a page of its own, its navigation inside.
+  // System screens are not among them: in a strip each is a page of its own, its navigation inside.
   const isPanelOpen = $derived(hasActivePanel() || isDesignSystemShellOpen());
   // Latched like the sidebar's: the panels chunk loads on first open, then stays for close animations.
   let panelsLoaded = $state(false);

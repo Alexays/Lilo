@@ -9,9 +9,12 @@
     id: Id;
     label: string;
     icon?: ComponentProps<typeof SettingsIcon>["name"];
-    /** Search hits in this section; shown at the row's end. */
-    count?: number;
+    /** Search hits or items in this section, or a running timer; shown at the row's end. */
+    count?: number | string;
     dimmed?: boolean;
+    /** An action rather than a view, in red: it sits last, aligned with the labels. */
+    danger?: boolean;
+    disabled?: boolean;
   }
 
   interface SectionNavGroup {
@@ -57,8 +60,10 @@
           <button
             class:active={section.id === activeId}
             class:dimmed={section.dimmed}
+            class:danger={section.danger}
             class="section-nav-button"
             type="button"
+            disabled={section.disabled}
             aria-current={section.id === activeId ? "page" : undefined}
             onclick={() => onSelect(section.id)}
             use:tooltip={{ text: section.label, placement: "right", disabled: !compact }}
@@ -67,6 +72,8 @@
               <span class="section-nav-icon" aria-hidden="true">
                 <SettingsIcon name={section.icon} />
               </span>
+            {:else if section.danger}
+              <span class="section-nav-icon" aria-hidden="true"></span>
             {/if}
             <span class="section-nav-label">{section.label}</span>
             {#if section.count}
@@ -159,6 +166,19 @@
 
   .section-nav-button.dimmed {
     color: var(--text-muted);
+  }
+
+  .section-nav-button.danger {
+    color: var(--danger-text);
+  }
+
+  .section-nav-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .section-nav-button:disabled:hover {
+    background: transparent;
   }
 
   .section-nav-button:focus-visible {

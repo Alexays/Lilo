@@ -1,11 +1,13 @@
 // The chrome UI in any browser, against the e2e fake host seeded with a sample world (make ui-preview).
 // ?world=default|empty|onboarding|agents (agent conversations, one open), &theme=light|dark (the system's otherwise), &open=settings|commandbar,
-// &tabs=left|right|top|bottom, &address=tabs|page|hidden, &update=1 (a downloaded update waiting for a relaunch), &open=whatsnew.
+// &tabs=left|right|top|bottom, &address=tabs|page|hidden, &update=1 (a downloaded update waiting for a relaunch),
+// &open=whatsnew|history|downloads|processes|diagnostics|space|newspace.
 import type { Page } from "@playwright/test";
 import { version as appVersion } from "../package.json";
 import { installFakeHost, type FakeHostWorld } from "../e2e/fakeHost";
 import { LILO_SHORTCUT_KEYS } from "../e2e/fixtures";
 import { tab, treeItem } from "../src/stores/testFixtures";
+import { systemReplies } from "./systemData";
 
 const params = new URLSearchParams(location.search);
 const worldName = params.get("world") ?? "default";
@@ -182,6 +184,7 @@ const settings: Record<string, string> = {
 
 // The answers the Swift side gives to what the surfaces ask for when they open.
 const replies: Record<string, (payload: Record<string, unknown>) => Record<string, unknown>> = {
+	...systemReplies(WORK),
 	getSettings: () => ({ event: "settingsLoaded", settings }),
 	getAppIcons: () => ({ event: "appIconsLoaded", icons: [{ id: "classic", dataURL: appIcon() }] }),
 	dismissUpdate: () => ({ event: "updateReady", version: null }),
@@ -297,4 +300,10 @@ if (worldName === "onboarding") lilo.receive({ event: "onboardingState", show: t
 const open = params.get("open");
 if (open === "settings") lilo.receive({ event: "openSettings" });
 if (open === "commandbar") lilo.receive({ event: "toggleCommandBar" });
+if (open === "history") lilo.receive({ event: "openHistory" });
+if (open === "downloads") lilo.receive({ event: "openDownloads" });
+if (open === "processes") lilo.receive({ event: "openProcessManager" });
+if (open === "diagnostics") lilo.receive({ event: "openDiagnostics" });
+if (open === "space") lilo.receive({ event: "openSpaceEditor" });
+if (open === "newspace") lilo.receive({ event: "openAddSpaceEditor" });
 if (open === "whatsnew") lilo.receive({ event: "openWhatsNew", version: appVersion, automatic: false });

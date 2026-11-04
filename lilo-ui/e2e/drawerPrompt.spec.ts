@@ -144,14 +144,14 @@ test("Escape dismisses a site's permission request: denied for now, not remember
 test("Escape that closes a panel leaves a site's permission request waiting", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
-	await page.locator(".downloads-panel").waitFor();
+	await page.locator("section[aria-label=\"Downloads\"]").waitFor();
 	await page.evaluate(() =>
 		window.__lilo!.receive({ event: "permissionRequest", requestId: "req-1", tabId: "tab-alpha", type: "camera", origin: "meet.example.com" }),
 	);
 
 	await page.keyboard.press("Escape");
 
-	await expect(page.locator(".downloads-panel")).toHaveCount(0);
+	await expect(page.locator("section[aria-label=\"Downloads\"]")).toHaveCount(0);
 	await expect(page.locator(".url-drawer.open")).toBeVisible();
 	expect((await sentCommands(page)).some((command) => command.action === "permissionResponse")).toBe(false);
 });

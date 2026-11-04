@@ -26,10 +26,15 @@ test("shells and panels are mutually exclusive surfaces with per-shell sections"
 	assert.equal(panels.getSettingsShellSection(), "privacy");
 	assert.equal(panels.getDesignSystemShellSection(), "controls");
 
-	// Opening a panel closes any shell, and vice versa.
+	// Downloads is a system screen of its own.
 	panels.openDownloadsPanel();
 	assert.equal(panels.isDesignSystemShellOpen(), false);
-	assert.equal(panels.getActivePanel(), "downloads");
+	assert.equal(panels.getPageShell(), "downloads");
+
+	// Opening a panel closes any shell, and vice versa.
+	panels.openAddEditor();
+	assert.equal(panels.getPageShell(), null);
+	assert.equal(panels.getActivePanel(), "editor");
 
 	panels.openSettings("advanced");
 	assert.equal(panels.getActivePanel(), null);

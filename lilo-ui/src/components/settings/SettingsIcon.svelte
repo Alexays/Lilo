@@ -76,6 +76,33 @@
     <rect x="11" y="3.4" width="5.6" height="5.6" rx="1.6" />
     <rect x="3.4" y="11" width="5.6" height="5.6" rx="1.6" />
     <rect x="11" y="11" width="5.6" height="5.6" rx="1.6" />
+  {:else if name === "tray"}
+    <path d="M3 11.6V15a1.6 1.6 0 0 0 1.6 1.6h10.8A1.6 1.6 0 0 0 17 15v-3.4" />
+    <path d="M3 11.6h4l1 1.8h4l1-1.8h4" />
+    <path d="M10 3v7" />
+    <path d="m7.4 7.6 2.6 2.6 2.6-2.6" />
+  {:else if name === "moon"}
+    <path d="M16.2 11.6A6.6 6.6 0 0 1 8.4 3.8a6.6 6.6 0 1 0 7.8 7.8Z" />
+  {:else if name === "chip"}
+    <rect x="5.6" y="5.6" width="8.8" height="8.8" rx="1.8" />
+    <path d="M8 3v2.6M12 3v2.6M8 14.4V17M12 14.4V17M3 8h2.6M3 12h2.6M14.4 8H17M14.4 12H17" />
+  {:else if name === "stopwatch"}
+    <circle cx="10" cy="11" r="6" />
+    <path d="M10 8v3l2 1.4" />
+    <path d="M8 2.8h4" />
+  {:else if name === "list"}
+    <path d="M4 5.6h12" />
+    <path d="M4 10h12" />
+    <path d="M4 14.4h7.6" />
+  {:else if name === "record"}
+    <circle cx="10" cy="10" r="7" />
+    <circle class="filled" cx="10" cy="10" r="3.2" />
+  {:else if name === "copy"}
+    <rect x="7.2" y="7.2" width="9.6" height="9.6" rx="2" />
+    <path d="M12.8 7.2V5.2a2 2 0 0 0-2-2H5.2a2 2 0 0 0-2 2v5.6a2 2 0 0 0 2 2h2" />
+  {:else if name === "refresh"}
+    <path d="M16.2 10a6.2 6.2 0 1 1-2-4.6" />
+    <path d="M16.4 3.4v3.8h-3.8" />
   {:else if name === "globe"}
     <circle cx="10" cy="10" r="7" />
     <ellipse cx="10" cy="10" rx="3" ry="7" />

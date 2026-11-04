@@ -24,7 +24,7 @@
   import AgentConnectModal from "./agents/AgentConnectModal.svelte";
   import SettingsBrowsingData from "./settings/SettingsBrowsingData.svelte";
   import ErrorBoundary from "./ui/ErrorBoundary.svelte";
-  import { isClearBrowsingDataOpen, isDesignSystemShellOpen } from "../stores/panels.svelte";
+  import { getPageShell, isClearBrowsingDataOpen, isDesignSystemShellOpen } from "../stores/panels.svelte";
   import { isSidebarVisible } from "../stores/ui.svelte";
   import { getSetting } from "../stores/settings.svelte";
   import { getSplitPanes } from "../stores/splitPanes.svelte";
@@ -37,6 +37,19 @@
   let designSystemLoaded = $state(false);
   $effect(() => {
     if (isDesignSystemShellOpen()) designSystemLoaded = true;
+  });
+  // The rarer system screens load on their first open, and stay for their close animation.
+  const lazyShells = {
+    downloads: () => import("./downloads/DownloadsShell.svelte"),
+    processes: () => import("./diagnostics/ProcessManagerShell.svelte"),
+    diagnostics: () => import("./diagnostics/DiagnosticsShell.svelte"),
+  };
+  let shellsLoaded = $state<(keyof typeof lazyShells)[]>([]);
+  $effect(() => {
+    const shell = getPageShell();
+    if (shell && shell in lazyShells && !shellsLoaded.includes(shell as keyof typeof lazyShells)) {
+      shellsLoaded = [...shellsLoaded, shell as keyof typeof lazyShells];
+    }
   });
   let askBarLoaded = $state(false);
   $effect(() => {
@@ -60,6 +73,11 @@
 <ErrorBoundary><CommandBar /></ErrorBoundary>
 <ErrorBoundary><SettingsShell /></ErrorBoundary>
 <ErrorBoundary><HistoryShell /></ErrorBoundary>
+{#each shellsLoaded as shell (shell)}
+  {#await lazyShells[shell]() then module}
+    <ErrorBoundary><module.default /></ErrorBoundary>
+  {/await}
+{/each}
 <ErrorBoundary><OnboardingShell /></ErrorBoundary>
 <WhatsNewHost />
 <!-- Design System showcase is a contributor tool. Shipped in every build so it's reachable from

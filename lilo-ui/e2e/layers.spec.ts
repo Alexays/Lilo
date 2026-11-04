@@ -10,16 +10,17 @@ function startDownload(page: Page): Promise<void> {
 	}));
 }
 
-test("a panel takes the focus when it opens and hands it back to its button when it closes", async ({ page }) => {
+test("a system screen takes the focus when it opens and hands it back to its button when it closes", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await startDownload(page);
 	const button = page.getByRole("button", { name: /^Downloads/ });
 	await button.click();
 	await page.getByRole("menuitem", { name: "Show all downloads" }).click();
 
-	const panel = page.getByRole("dialog", { name: "Downloads" });
+	const panel = page.getByRole("region", { name: "Downloads" });
 	await expect(panel).toBeVisible();
-	await expect.poll(() => panel.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+	// Its navigation in the sidebar takes it: the search field.
+	await expect(page.locator(".section-nav-toolbar input")).toBeFocused();
 
 	await page.keyboard.press("Escape");
 	await expect(panel).toHaveCount(0);
@@ -29,7 +30,7 @@ test("a panel takes the focus when it opens and hands it back to its button when
 test("Escape closes the command bar over a panel, not the panel", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
-	await expect(page.getByRole("dialog", { name: "Downloads" })).toBeVisible();
+	await expect(page.getByRole("region", { name: "Downloads" })).toBeVisible();
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 	// Escape reaches the command bar through its focused field.
 	await expect(page.locator(".command-bar-input")).toBeFocused();
@@ -37,7 +38,7 @@ test("Escape closes the command bar over a panel, not the panel", async ({ page 
 	await page.keyboard.press("Escape");
 
 	await expect(page.locator(".command-bar")).toBeHidden();
-	await expect(page.getByRole("dialog", { name: "Downloads" })).toBeVisible();
+	await expect(page.getByRole("region", { name: "Downloads" })).toBeVisible();
 });
 
 test("Return on the delete confirmation's focused Keep button keeps the space", async ({ page }) => {
