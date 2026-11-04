@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "주소",
 				"description": "탭과 함께 표시하거나 페이지 위에 표시하거나 숨깁니다. 명령 막대에서 주소를 입력할 수 있습니다.",
-				"keywords": "주소 막대 url 도구 막대 위치 숨기기 숨김",
-				"lockedRight": "탭이 오른쪽에 있으면 주소를 페이지 위에 표시하거나 숨길 수 있습니다."
+				"keywords": "주소 막대 url 도구 막대 위치 숨기기 숨김"
 			},
 			"theme": {
 				"title": "테마",

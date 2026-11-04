@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "Adres",
 				"description": "Przy kartach, nad stroną lub ukryty. Adres możesz wpisać w pasku poleceń.",
-				"keywords": "pasek adresu URL narzędzi lokalizacja ukryj ukryty",
-				"lockedRight": "Gdy karty są po prawej, pokaż adres nad stroną lub go ukryj."
+				"keywords": "pasek adresu URL narzędzi lokalizacja ukryj ukryty"
 			},
 			"theme": {
 				"title": "Motyw",

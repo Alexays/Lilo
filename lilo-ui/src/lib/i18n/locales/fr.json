@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "Adresse",
 				"description": "Avec les onglets, au-dessus de la page ou masquée. Utilisez la barre de commandes pour saisir une adresse.",
-				"keywords": "barre adresse url barre d outils masquer masquée cacher",
-				"lockedRight": "Avec les onglets à droite, affichez l'adresse au-dessus de la page ou masquez-la."
+				"keywords": "barre adresse url barre d outils masquer masquée cacher"
 			},
 			"theme": {
 				"title": "Thème",

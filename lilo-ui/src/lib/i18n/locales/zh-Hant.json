@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "網址",
 				"description": "與分頁放在一起、位於網頁上方或隱藏。使用指令列輸入網址。",
-				"keywords": "網址列 url 工具列 位置 隱藏",
-				"lockedRight": "分頁位於右側時，請將網址顯示於網頁上方或隱藏。"
+				"keywords": "網址列 url 工具列 位置 隱藏"
 			},
 			"theme": {
 				"title": "主題",

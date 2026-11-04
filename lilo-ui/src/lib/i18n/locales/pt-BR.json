@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "Endereço",
 				"description": "Junto às abas, acima da página ou oculto. Use a barra de comandos para digitar um endereço.",
-				"keywords": "endereço barra url ferramentas local ocultar oculto esconder",
-				"lockedRight": "Com as abas à direita, mostre o endereço acima da página ou oculte-o."
+				"keywords": "endereço barra url ferramentas local ocultar oculto esconder"
 			},
 			"theme": {
 				"title": "Tema",

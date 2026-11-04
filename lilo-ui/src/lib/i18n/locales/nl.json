@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "Adres",
 				"description": "Bij de tabbladen, boven de pagina of verborgen. Gebruik de commandobalk om een adres in te voeren.",
-				"keywords": "adresbalk url knoppenbalk locatie verberg verborgen",
-				"lockedRight": "Met tabbladen aan de rechterkant kun je het adres boven de pagina tonen of verbergen."
+				"keywords": "adresbalk url knoppenbalk locatie verberg verborgen"
 			},
 			"theme": {
 				"title": "Thema",

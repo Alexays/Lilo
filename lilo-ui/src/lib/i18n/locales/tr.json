@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "Adres",
 				"description": "Sekmelerin yanında, sayfanın üstünde veya gizli. Adres girmek için komut çubuğunu kullanın.",
-				"keywords": "adres çubuğu url araç çubuğu konum gizle gizli",
-				"lockedRight": "Sekmeler sağdayken adresi sayfanın üstünde gösterin veya gizleyin."
+				"keywords": "adres çubuğu url araç çubuğu konum gizle gizli"
 			},
 			"theme": {
 				"title": "Tema",

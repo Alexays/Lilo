@@ -22,7 +22,7 @@
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getReadyUpdate, getSetting } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
-  import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
+  import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressInRightTabs, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { t } from "../../lib/i18n/state.svelte";
 
@@ -100,7 +100,7 @@
   >
     <!-- Fixed header: does NOT swipe -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <!-- On the right, the traffic lights and the history buttons live in the page toolbar. -->
+    <!-- On the right, the traffic lights live in the page toolbar, and the history buttons unless the address is here. -->
     <div
       class="sidebar-header"
       class:no-traffic-lights={!areTrafficLightsVisible() || getTabPosition() === "right"}
@@ -111,7 +111,7 @@
       <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. On the
            left, the page toolbar stays with the sidebar hidden and holds the toggle ahead of the history buttons. -->
       {#if !hasPageToolbar() || getTabPosition() !== "left"}
-        <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
+        <NavControls collapseLocked={isOverlayPanelOpen} show={!isSidebarVisible() || !hasPageToolbar() ? "all" : isAddressInRightTabs() ? "history" : "toggle"} />
       {/if}
       <!-- Loaded only once the feature is on: no conversation code ships to the chrome otherwise. -->
       {#if getSetting("agentsEnabled", "false") === "true"}

@@ -53,12 +53,7 @@ export function applyTabLayoutInitialState(data: Pick<BridgeInitialStatePayload,
 	_toolbarVisible = data.toolbarVisible ?? true;
 	const position = data.tabPosition ?? "left";
 	const address = data.addressPlacement ?? defaultAddress(position);
-	apply(position, position === "right" && address === "tabs" ? "page" : address);
-}
-
-/** The right sidebar's first line is the toolbar's, leaving no room for an address. */
-export function canPlaceAddressWithTabs(): boolean {
-	return _position !== "right";
+	apply(position, address);
 }
 
 export function initTabLayoutStore(): void {
@@ -104,6 +99,11 @@ export function hasPageToolbar(): boolean {
 /** The tabs' own toolbar goes with them; the address's own one, on the left and the top, stays on its own. */
 export function isPageToolbarShown(): boolean {
 	return canHideToolbar() ? _toolbarVisible : hasPageToolbar() && isSidebarVisible();
+}
+
+/** On the right, an address with the tabs heads their column with the history buttons; the toggle stays by the lights. */
+export function isAddressInRightTabs(): boolean {
+	return _position === "right" && _address === "tabs";
 }
 
 export function isAddressInPageToolbar(): boolean {

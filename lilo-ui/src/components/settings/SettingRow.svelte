@@ -1,6 +1,5 @@
 <script lang="ts">
   import LayoutPicker from "./LayoutPicker.svelte";
-  import { canPlaceAddressWithTabs } from "../../stores/tabLayout.svelte";
   import { extensionActions, profileActions, settingsActions } from "../../lib/bridge/actions";
   import { isAgentsSpace } from "../../stores/agents.svelte";
   import { getLocale, setLocale, t } from "../../lib/i18n/state.svelte";
@@ -125,7 +124,6 @@
   });
   const description = $derived.by(() => {
     if (id === "lifecyclePreset") return t(`settings.lifecycle.${lifecyclePreset}Desc`);
-    if (id === "addressPlacement" && !canPlaceAddressWithTabs()) return t("settings.items.addressPlacement.lockedRight");
     if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
     if (id === "appUpdates") {
       if (versionClicks >= 7) return t("settings.items.appUpdates.developerTools");

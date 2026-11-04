@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "Indirizzo",
 				"description": "Con le schede, sopra la pagina o nascosto. Usa la barra dei comandi per inserire un indirizzo.",
-				"keywords": "barra indirizzi url strumenti posizione nascondi nascosto",
-				"lockedRight": "Con le schede a destra, mostra l'indirizzo sopra la pagina o nascondilo."
+				"keywords": "barra indirizzi url strumenti posizione nascondi nascosto"
 			},
 			"theme": {
 				"title": "Tema",

@@ -284,8 +284,7 @@
 			"addressPlacement": {
 				"title": "Dirección",
 				"description": "Con las pestañas, encima de la página u oculta. Usa la barra de comandos para introducir una dirección.",
-				"keywords": "dirección barra url herramientas ubicación ocultar oculta",
-				"lockedRight": "Con las pestañas a la derecha, muestra la dirección encima de la página u ocúltala."
+				"keywords": "dirección barra url herramientas ubicación ocultar oculta"
 			},
 			"theme": {
 				"title": "Tema",
