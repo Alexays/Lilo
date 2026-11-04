@@ -13,6 +13,8 @@
 		onRename?: () => void;
 		onRenameCommit?: (payload: { name: string; color: string }) => void;
 		onRenameCancel?: () => void;
+		/** A color picked in the editor, not applied yet. */
+		onDraftColor?: (color: string) => void;
 		onContextMenu?: (rect: DOMRect) => void;
 		isRenaming?: boolean;
 		/** Depth in the sidebar tree, 1 at the root. */
@@ -29,6 +31,7 @@
 		onRename,
 		onRenameCommit,
 		onRenameCancel,
+		onDraftColor,
 		onContextMenu,
 		isRenaming = false,
 		level = 1,
@@ -351,7 +354,7 @@
 								style={`--swatch-color: ${color};`}
 								aria-label={t("tabFolder.setFolderColor", { color })}
 								onmousedown={(e) => e.preventDefault()}
-								onclick={() => { draftColor = color; }}
+								onclick={() => { draftColor = color; onDraftColor?.(color); }}
 							></button>
 						{/each}
 					</div>

@@ -145,6 +145,16 @@
   const pinnedDividerHidden = $derived(pinnedRootCount === 0 && !dragActive);
   const folderContentUnmountDelayMs = MOTION.folderCollapseMs;
   let renamingFolderId: string | null = $state(null);
+  // The color picked in a folder's editor, painted on its block and rail before it is applied, and kept until the
+  // applied color comes back from native so the block never flashes its old color.
+  let draftFolderColor: { id: string; color: string } | null = $state(null);
+  const shownFolderColor = (folder: FolderState | undefined): string | undefined =>
+    folder && draftFolderColor?.id === folder.id ? draftFolderColor.color : folder?.color;
+  $effect(() => {
+    if (draftFolderColor && renamingFolderId !== draftFolderColor.id && foldersById.get(draftFolderColor.id)?.color === draftFolderColor.color) {
+      draftFolderColor = null;
+    }
+  });
   const editingTab = $derived(interactive ? getEditingTab() : null);
   let tabListBodyEl: HTMLDivElement | undefined = $state();
   let tabListEl: HTMLDivElement | undefined = $state();
@@ -603,6 +613,7 @@
 
   function commitRename(folder: FolderState, name: string, color: string): void {
     renamingFolderId = null;
+    draftFolderColor = color === folder.color ? null : { id: folder.id, color };
     folderActions.update({ id: folder.id, name, color });
   }
 
@@ -893,7 +904,11 @@
           folderActions.setCollapsed(folder.id, collapsed)}
         onRename={() => (renamingFolderId = folder.id)}
         onRenameCommit={({ name, color }) => commitRename(folder, name, color)}
-        onRenameCancel={() => (renamingFolderId = null)}
+        onRenameCancel={() => {
+          renamingFolderId = null;
+          draftFolderColor = null;
+        }}
+        onDraftColor={(color) => (draftFolderColor = { id: folder.id, color })}
         onDelete={() => folderActions.delete(folder.id)}
         onContextMenu={(rect) => folderActions.showContextMenu(folder.id, rect.left, rect.top, rect.width, rect.height)}
       />
@@ -946,7 +961,7 @@
                   <div
                     class="indented-tab-wrapper"
                     class:folder-open-rail={!childFolder.isCollapsed}
-                    style={folderColorStyle(childFolder.color)}
+                    style={folderColorStyle(shownFolderColor(childFolder))}
                   >
                     {@render folderBlock(childFolder, childrenShown, level + 1)}
                   </div>
@@ -1060,7 +1075,7 @@
     class:recent-drop={entry.id === recentlyDraggedId}
     class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
     data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-    style={entry.kind === "folder" ? folderColorStyle(entryFolder?.color) : undefined}
+    style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : undefined}
     use:dndItem={{
       item: entry,
       zoneId: rootZone.id,
@@ -1099,7 +1114,7 @@
         class:recent-drop={entry.id === recentlyDraggedId}
         class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
         data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-        style={entry.kind === "folder" ? folderColorStyle(entryFolder?.color) : undefined}
+        style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : undefined}
         use:dndItem={{
           item: entry,
           zoneId: rootZone.id,
