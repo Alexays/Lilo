@@ -6,6 +6,8 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { tabActions } from "../../lib/bridge/actions";
   import { isSidebarVisible } from "../../stores/ui.svelte";
+  import { tooltip } from "../../lib/tooltip";
+  import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
 
   type FindStatus = "idle" | "found" | "not-found";
 
@@ -186,56 +188,67 @@
 {#if visible}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="find-bar"
+    class="find-bar float-surface"
     class:sidebar-hidden={!isSidebarVisible()}
     use:reportInteractiveZone={{ id: "findBar", active: visible }}
     onkeydown={handleKeydown}
   >
-    <input
-      bind:this={inputEl}
-      bind:value={query}
-      class="find-input"
-      class:not-found={status === "not-found"}
-      placeholder={t("findBar.placeholder")}
-      aria-label={t("findBar.inputLabel")}
-      oninput={scheduleSearch}
-      spellcheck="false"
-    />
-    <!-- Always mounted: a live region only announces changes made while it is in the DOM. -->
-    <span class="find-status" class:not-found={status === "not-found"} role="status"
-      >{#if status === "not-found"}{t("findBar.noResults")}{:else if match}{t("findBar.matchCount", { current: match.index, total: match.count })}{/if}</span
-    >
+    <div class="find-field" class:not-found={status === "not-found"}>
+      <svg class="find-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5" />
+        <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+      <input
+        bind:this={inputEl}
+        bind:value={query}
+        class="find-input"
+        placeholder={t("findBar.placeholder")}
+        aria-label={t("findBar.inputLabel")}
+        oninput={scheduleSearch}
+        spellcheck="false"
+      />
+      <!-- Always mounted: a live region only announces changes made while it is in the DOM. -->
+      <span class="find-status" class:not-found={status === "not-found"} role="status"
+        >{#if status === "not-found"}{t("findBar.noResults")}{:else if match}{t("findBar.matchCount", { current: match.index, total: match.count })}{/if}</span
+      >
+    </div>
     <button
       class="find-btn case-btn"
       class:active={caseSensitive}
       onclick={toggleCaseSensitive}
       aria-label={t("findBar.matchCase")}
-      aria-pressed={caseSensitive}>Aa</button
+      aria-pressed={caseSensitive}
+      use:tooltip={{ text: t("findBar.matchCase"), placement: "bottom" }}>Aa</button
     >
-    <button
-      class="find-btn"
-      onclick={previous}
-      disabled={!canNavigate}
-      aria-label={t("findBar.previousMatch")}
-    >
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-        <path d="m2.5 7.5 3.5-3.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </button>
-    <button
-      class="find-btn"
-      onclick={next}
-      disabled={!canNavigate}
-      aria-label={t("findBar.nextMatch")}
-    >
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-        <path d="m2.5 4.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </button>
+    <div class="find-steps">
+      <button
+        class="find-btn"
+        onclick={previous}
+        disabled={!canNavigate}
+        aria-label={t("findBar.previousMatch")}
+        use:tooltip={{ text: t("findBar.previousMatch"), shortcut: shortcutKeys("find.previous"), placement: "bottom", disabled: !canNavigate }}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="m2.5 7.5 3.5-3.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+      <button
+        class="find-btn"
+        onclick={next}
+        disabled={!canNavigate}
+        aria-label={t("findBar.nextMatch")}
+        use:tooltip={{ text: t("findBar.nextMatch"), shortcut: shortcutKeys("find.next"), placement: "bottom", disabled: !canNavigate }}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="m2.5 4.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
     <button
       class="find-btn close-btn"
       onclick={dismiss}
       aria-label={t("findBar.closeFindBar")}
+      use:tooltip={{ text: t("findBar.closeFindBar"), placement: "bottom" }}
     >
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
         <path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
@@ -252,39 +265,51 @@
     max-width: calc(100vw - var(--chrome-content-left-visible) - var(--chrome-content-right) - 2 * var(--chrome-overlay-edge-gap));
     display: flex;
     align-items: center;
-    gap: var(--density-1);
-    background: var(--chrome-floating-surface);
-    border: 1px solid var(--chrome-overlay-border);
+    gap: 8px;
+    padding: 8px;
     border-radius: var(--radius-lg);
-    padding: var(--density-1) 8px;
-    box-shadow: var(--chrome-floating-shadow);
-    backdrop-filter: blur(var(--chrome-floating-blur));
     pointer-events: auto;
     z-index: 1000;
+    animation: find-bar-in var(--motion-duration-overlay) var(--motion-ease-spring);
+    transform-origin: 100% 0;
   }
 
   .find-bar.sidebar-hidden {
     max-width: calc(100vw - var(--chrome-content-left-hidden) - var(--chrome-content-right) - 2 * var(--chrome-overlay-edge-gap));
   }
 
-  .find-input {
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: var(--font-size-md);
-    padding: 4px 8px;
-    width: 220px;
+  /* Only the field gives way in a narrow window. */
+  .find-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 240px;
     min-width: 0;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-hover);
   }
 
-  .find-input:focus {
+  .find-field:focus-within {
     outline: var(--focus-outline);
     outline-offset: 1px;
   }
 
-  .find-input.not-found {
-    border-color: color-mix(in srgb, var(--danger) 58%, var(--border));
+  .find-icon {
+    flex: none;
+    color: var(--text-secondary);
+  }
+
+  .find-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    outline: none;
   }
 
   .find-input::placeholder {
@@ -292,17 +317,15 @@
   }
 
   .find-status {
-    color: var(--text-secondary);
-    font-size: var(--font-size-xs);
+    flex: none;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
     font-variant-numeric: tabular-nums;
-    line-height: 1;
-    padding: 0 var(--density-1);
     white-space: nowrap;
   }
 
   .find-status.not-found {
     color: var(--danger-text);
-    font-weight: var(--font-weight-semibold);
   }
 
   /* Out of the row, not out of the accessibility tree: a hidden live region announces nothing. */
@@ -310,50 +333,73 @@
     position: absolute;
   }
 
-  /* Only the input gives way in a narrow window. */
-  .find-btn {
-    flex: none;
-    width: 24px;
-    height: 24px;
-    border: none;
-    background: none;
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    cursor: pointer;
-    border-radius: var(--radius-sm);
+  .find-steps {
     display: flex;
+    flex: none;
+    border-radius: var(--radius-sm);
+    background: var(--bg-hover);
+  }
+
+  .find-btn {
+    display: flex;
+    flex: none;
     align-items: center;
     justify-content: center;
+    width: 24px;
+    height: 24px;
     padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+  }
+
+  .find-steps .find-btn {
+    width: 28px;
   }
 
   .find-btn:hover:not(:disabled) {
     background: var(--bg-hover);
-    color: var(--text-primary);
   }
 
   .find-btn:focus-visible {
     outline: var(--focus-outline);
-    outline-offset: 1px;
+    outline-offset: -1px;
   }
 
   .find-btn.active {
-    background: color-mix(in srgb, var(--accent) 16%, transparent);
-    color: var(--text-primary);
+    background: var(--accent-tint-14);
+    color: var(--accent-ink);
   }
 
   .find-btn:disabled {
-    color: var(--text-muted);
     cursor: default;
     opacity: var(--disabled-opacity);
   }
 
-  .close-btn {
-    margin-left: 2px;
+  .case-btn {
+    width: 28px;
+    font-weight: var(--font-weight-medium);
   }
 
-  .case-btn {
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
+  @keyframes find-bar-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .find-bar {
+      animation: find-bar-fade 150ms ease;
+    }
+
+    @keyframes find-bar-fade {
+      from {
+        opacity: 0;
+      }
+    }
   }
 </style>

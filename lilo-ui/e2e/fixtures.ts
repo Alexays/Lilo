@@ -27,6 +27,8 @@ export const LILO_SHORTCUT_KEYS: Record<string, string> = {
 	"tab.mute": "⇧⌘M",
 	"page.copyURL": "⇧⌘C",
 	"find.show": "⌘F",
+	"find.next": "⌘G",
+	"find.previous": "⇧⌘G",
 	"terminal.newTab": "⌃`",
 	"terminal.nextWaiting": "⌃⌘J",
 	"terminal.showChanges": "⌃⌘G",
