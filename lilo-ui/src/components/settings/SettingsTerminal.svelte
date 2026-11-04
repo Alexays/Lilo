@@ -262,6 +262,8 @@
 
   .theme {
     display: grid;
+    /* Packed at the top: a stretched track would grow the thumbnail through its aspect ratio when a long name wraps. */
+    align-content: start;
     gap: var(--space-6);
     padding: 0;
     border: 0;
