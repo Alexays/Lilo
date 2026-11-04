@@ -847,7 +847,7 @@
 {/snippet}
 
 <!-- `shown`: every folder above this one is open. Subfolders render through this same snippet,
-     one indent deeper, along their parent's rail. -->
+     one indent deeper. -->
 {#snippet folderBlock(folder: FolderState, shown: boolean, level: number)}
   {@const conversation = getConversationTab(folder.id, spaceId)}
   {@const children = visibleChildren(folder.id)}
@@ -1436,35 +1436,14 @@
     transition: background var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
-  /* One tinted block per open root folder: subfolders inside it show through, drawing only their rail. */
+  /* One tinted block per open root folder, the only mark of what it holds: subfolders inside it show through. */
   .folder-open-rail > .folder-drop-zone {
-    --folder-rail-color: color-mix(in srgb, var(--folder-accent) 60%, var(--text-primary) 12%);
     background: var(--folder-open-bg);
   }
 
   .indented-tab-wrapper.folder-open-rail > .folder-drop-zone,
   .folder-open-rail > .folder-drop-zone.conversation {
     background: none;
-  }
-
-  /* One straight rail per open folder, under its glyph's center (16px) and stopping short of the last child;
-     the 14px indent starts the children's icons 6px past it. */
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper::before {
-    content: "";
-    position: absolute;
-    left: 15.5px;
-    top: 0;
-    bottom: 0;
-    border-left: 1px solid var(--folder-rail-color);
-    pointer-events: none;
-  }
-
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:first-child::before {
-    top: -7px;
-  }
-
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:last-child::before {
-    bottom: 6px;
   }
 
   /* A conversation's pages hang on one straight violet rail under the agent's tile. */
@@ -1552,7 +1531,7 @@
   .indented-tab-wrapper {
     width: 100%;
     min-width: 0;
-    padding-left: 14px;
+    padding-left: 12px;
     box-sizing: border-box;
   }
 
