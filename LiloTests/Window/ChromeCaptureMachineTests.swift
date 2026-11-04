@@ -79,6 +79,23 @@ final class ChromeCaptureMachineTests: XCTestCase {
         XCTAssertEqual(machine.routeGesture(phase: .began, classification: .chrome).target, .chrome)
     }
 
+    // The fingers lift (.ended) before momentum begins: the momentum still goes to the surface the fling began on.
+    func testMomentumAfterTheFingersLiftStaysOnTheFlingSurface() {
+        let machine = ChromeCaptureMachine()
+        _ = machine.routeGesture(phase: .began, classification: .chrome)
+        XCTAssertEqual(machine.routeGesture(phase: .ended, classification: .chrome).target, .chrome)
+        XCTAssertFalse(machine.isCapturing)
+        XCTAssertEqual(machine.routeGesture(phase: .momentumBegan, classification: .content).target, .chrome)
+        XCTAssertEqual(machine.routeGesture(phase: .changed, classification: .content).target, .chrome)
+        XCTAssertTrue(machine.isCapturing)
+        XCTAssertEqual(machine.routeGesture(phase: .ended, classification: .content).target, .chrome)
+        XCTAssertFalse(machine.isCapturing)
+        // A cancelled gesture has no momentum to carry.
+        _ = machine.routeGesture(phase: .began, classification: .chrome)
+        _ = machine.routeGesture(phase: .cancelled, classification: .chrome)
+        XCTAssertEqual(machine.routeGesture(phase: .momentumBegan, classification: .content).target, .content)
+    }
+
     func testGesturePhaseCancelledReleasesLatch() {
         let machine = ChromeCaptureMachine()
         XCTAssertEqual(machine.routeGesture(phase: .began, classification: .chrome).target, .chrome)

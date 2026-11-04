@@ -239,7 +239,7 @@ final class ChromeEventRouter {
 extension NSEvent {
     /// The single NSEvent-to-phase mapping; the capture machine never reads NSEvent. Only scroll,
     /// zoom, rotate and swipe carry a phase, so no other family ever latches. Momentum arrives after
-    /// `phase` has ended, so its .began and .changed must hold the latch and only its .ended releases.
+    /// `phase` has ended: its .began relatches to the surface the fling started on, its .ended releases.
     func captureGesturePhase(for family: ChromeEventRouter.EventFamily) -> ChromeCaptureMachine.GesturePhase {
         switch family {
         case .scrollWheel, .magnify, .rotate, .swipe, .smartMagnify:
@@ -258,7 +258,9 @@ extension NSEvent {
             return .cancelled
         default:
             switch momentumPhase {
-            case .began, .changed, .stationary:
+            case .began:
+                return .momentumBegan
+            case .changed, .stationary:
                 return .changed
             case .ended, .cancelled:
                 return .ended

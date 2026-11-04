@@ -37,11 +37,15 @@ final class ChromeCaptureMachine {
     enum MousePhase: Equatable { case down, dragged, up }
     /// Mirrors `NSEvent.Phase` collapsed to what matters: a gesture begins, changes,
     /// ends, is cancelled, or carries no phase at all (a classic mouse-wheel line scroll).
-    enum GesturePhase: Equatable { case began, changed, ended, cancelled, none }
+    /// `momentumBegan` is the first inertial event after the fingers lift.
+    enum GesturePhase: Equatable { case began, changed, ended, cancelled, momentumBegan, none }
     enum DragPhase: Equatable { case entered, updated, exited, concluded }
 
     private var mouseLatch: ChromeEventRouter.Target = .none
     private var gestureLatch: ChromeEventRouter.Target = .none
+    /// The surface the last finger gesture ended on: its momentum, if any follows, goes there too.
+    /// Not a grab, so hover runs between the lift and the first momentum event.
+    private var lastGestureTarget: ChromeEventRouter.Target = .none
     private var dragTarget: ChromeEventRouter.Target = .none
 
     /// True while any of the three lifetimes holds a grab. The coordinator gates hover /
@@ -85,13 +89,20 @@ final class ChromeCaptureMachine {
             return Outcome(target: classification, effects: [])
         case .changed:
             return Outcome(target: gestureLatch != .none ? gestureLatch : classification, effects: [])
+        case .momentumBegan:
+            // AppKit ends the finger phase before momentum begins: the fling keeps the surface it started on.
+            gestureLatch = lastGestureTarget != .none ? lastGestureTarget : classification
+            lastGestureTarget = .none
+            return Outcome(target: gestureLatch, effects: [])
         case .ended, .cancelled:
             let effective = gestureLatch != .none ? gestureLatch : classification
             let held = gestureLatch != .none
             gestureLatch = .none
+            lastGestureTarget = phase == .ended ? effective : .none
             return Outcome(target: effective, effects: held ? [.resamplePointer] : [])
         case .none:
             // Phaseless scroll never latches: route to wherever the pointer is now.
+            lastGestureTarget = .none
             return Outcome(target: classification, effects: [])
         }
     }
