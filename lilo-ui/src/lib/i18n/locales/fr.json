@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "« {name} » a commencé à déboguer ce navigateur",
-		"cancel": "Annuler"
+		"stop": "Arrêter le débogage"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "{count} autre avis",
+			"other": "{count} autres avis"
+		},
+		"more": "{count} de plus"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Votre session précédente a été restaurée après une fermeture inattendue."

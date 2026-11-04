@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "„{name}“ hat das Debugging dieses Browsers gestartet",
-		"cancel": "Abbrechen"
+		"stop": "Debugging beenden"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "{count} weiterer Hinweis",
+			"other": "{count} weitere Hinweise"
+		},
+		"more": "{count} weitere"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Deine vorherige Sitzung wurde nach einem unerwarteten Beenden wiederhergestellt."

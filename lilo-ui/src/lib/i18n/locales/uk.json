@@ -1408,7 +1408,16 @@
 	},
 	"extensionDebugger": {
 		"message": "«{name}» почало налагоджувати цей браузер",
-		"cancel": "Скасувати"
+		"stop": "Зупинити налагодження"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "ще {count} сповіщення",
+			"few": "ще {count} сповіщення",
+			"many": "ще {count} сповіщень",
+			"other": "ще {count} сповіщення"
+		},
+		"more": "ще {count}"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Після неочікуваного завершення відновлено попередній сеанс."

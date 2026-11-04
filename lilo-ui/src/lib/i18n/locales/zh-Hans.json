@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "“{name}”已开始调试此浏览器",
-		"cancel": "取消"
+		"stop": "停止调试"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "还有 {count} 条通知",
+			"other": "还有 {count} 条通知"
+		},
+		"more": "还有 {count} 条"
 	},
 	"crashRecovery": {
 		"sessionRestored": "意外退出后，已恢复上次会话。"

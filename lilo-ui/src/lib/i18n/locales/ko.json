@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "‘{name}’ 확장 프로그램이 이 브라우저의 디버깅을 시작했습니다",
-		"cancel": "취소"
+		"stop": "디버깅 중지"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "알림 {count}개 더",
+			"other": "알림 {count}개 더"
+		},
+		"more": "{count}개 더"
 	},
 	"crashRecovery": {
 		"sessionRestored": "예기치 않게 종료된 후 이전 세션이 복원되었습니다."

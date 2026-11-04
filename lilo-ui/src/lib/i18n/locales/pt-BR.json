@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "\"{name}\" começou a depurar este navegador",
-		"cancel": "Cancelar"
+		"stop": "Parar depuração"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "mais {count} aviso",
+			"other": "mais {count} avisos"
+		},
+		"more": "mais {count}"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Sua sessão anterior foi restaurada após um encerramento inesperado."

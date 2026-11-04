@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "\"{name}\" ha iniziato il debug di questo browser",
-		"cancel": "Annulla"
+		"stop": "Interrompi debug"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "{count} altro avviso",
+			"other": "{count} altri avvisi"
+		},
+		"more": "altri {count}"
 	},
 	"crashRecovery": {
 		"sessionRestored": "La sessione precedente è stata ripristinata dopo una chiusura imprevista."

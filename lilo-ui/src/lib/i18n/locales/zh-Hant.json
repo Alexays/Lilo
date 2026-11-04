@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "「{name}」已開始對此瀏覽器進行除錯",
-		"cancel": "取消"
+		"stop": "停止偵錯"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "還有 {count} 則通知",
+			"other": "還有 {count} 則通知"
+		},
+		"more": "還有 {count} 則"
 	},
 	"crashRecovery": {
 		"sessionRestored": "意外結束後，已回復先前的工作階段。"

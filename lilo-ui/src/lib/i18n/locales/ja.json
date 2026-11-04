@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "「{name}」がこのブラウザのデバッグを開始しました",
-		"cancel": "キャンセル"
+		"stop": "デバッグを停止"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "他{count}件のお知らせ",
+			"other": "他{count}件のお知らせ"
+		},
+		"more": "他{count}件"
 	},
 	"crashRecovery": {
 		"sessionRestored": "予期しない終了の後、前回のセッションを復元しました。"

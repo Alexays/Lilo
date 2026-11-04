@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "\"{name}\" is begonnen met het debuggen van deze browser",
-		"cancel": "Annuleer"
+		"stop": "Debuggen stoppen"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "nog {count} melding",
+			"other": "nog {count} meldingen"
+		},
+		"more": "nog {count}"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Je vorige sessie is hersteld na onverwacht stoppen."

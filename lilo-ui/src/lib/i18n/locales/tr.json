@@ -1390,7 +1390,14 @@
 	},
 	"extensionDebugger": {
 		"message": "“{name}” bu tarayıcıda hata ayıklamaya başladı",
-		"cancel": "Vazgeç"
+		"stop": "Hata ayıklamayı durdur"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "{count} bildirim daha",
+			"other": "{count} bildirim daha"
+		},
+		"more": "{count} tane daha"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Beklenmedik bir çıkışın ardından önceki oturumunuz geri yüklendi."

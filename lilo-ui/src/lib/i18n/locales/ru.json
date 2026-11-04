@@ -1408,7 +1408,16 @@
 	},
 	"extensionDebugger": {
 		"message": "«{name}» начал отладку браузера",
-		"cancel": "Отмена"
+		"stop": "Остановить отладку"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "ещё {count} уведомление",
+			"few": "ещё {count} уведомления",
+			"many": "ещё {count} уведомлений",
+			"other": "ещё {count} уведомления"
+		},
+		"more": "ещё {count}"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Предыдущий сеанс восстановлен после неожиданного завершения работы."

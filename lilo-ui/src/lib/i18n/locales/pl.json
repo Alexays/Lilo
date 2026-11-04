@@ -1408,7 +1408,16 @@
 	},
 	"extensionDebugger": {
 		"message": "„{name}” rozpoczęło debugowanie tej przeglądarki",
-		"cancel": "Anuluj"
+		"stop": "Zatrzymaj debugowanie"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "jeszcze {count} powiadomienie",
+			"few": "jeszcze {count} powiadomienia",
+			"many": "jeszcze {count} powiadomień",
+			"other": "jeszcze {count} powiadomienia"
+		},
+		"more": "jeszcze {count}"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Po nieoczekiwanym zakończeniu przywrócono poprzednią sesję."

@@ -7,9 +7,7 @@
   import HistoryShell from "./history/HistoryShell.svelte";
   import OnboardingShell from "./onboarding/OnboardingShell.svelte";
   import ContextTips from "./onboarding/ContextTips.svelte";
-  import CrashRecoveryBanner from "./banners/CrashRecoveryBanner.svelte";
-  import SessionRestoreDegradedBanner from "./banners/SessionRestoreDegradedBanner.svelte";
-  import ExtensionDebuggerBanner from "./banners/ExtensionDebuggerBanner.svelte";
+  import NoticeCapsule from "./banners/NoticeCapsule.svelte";
   import FindBar from "./page/FindBar.svelte";
   import HoverLinkBar from "./page/HoverLinkBar.svelte";
   import ErrorPage from "./page/ErrorPage.svelte";
@@ -26,7 +24,6 @@
   import SettingsBrowsingData from "./settings/SettingsBrowsingData.svelte";
   import ErrorBoundary from "./ui/ErrorBoundary.svelte";
   import { getPageShell, isClearBrowsingDataOpen, isDesignSystemShellOpen } from "../stores/panels.svelte";
-  import { isSidebarVisible } from "../stores/ui.svelte";
   import { getSetting } from "../stores/settings.svelte";
   import { getSplitPanes } from "../stores/splitPanes.svelte";
   import { getActiveTab, getTabsById } from "../stores/tabs.svelte";
@@ -90,13 +87,7 @@
     <shell.default />
   {/await}
 {/if}
-<!-- Single fixed host over the page so simultaneous banners stack instead of overlapping; each
-     banner still gates its own visibility. -->
-<div class="banner-host chrome-content-overlay-root" class:sidebar-hidden={!isSidebarVisible()}>
-  <CrashRecoveryBanner />
-  <SessionRestoreDegradedBanner />
-  <ExtensionDebuggerBanner />
-</div>
+<NoticeCapsule />
 <FindBar />
 <HoverLinkBar />
 <TabSharePicker />
@@ -126,14 +117,3 @@
 <ScreenshotEditor />
 <CaptureCard />
 
-<style>
-  .banner-host {
-    bottom: auto;
-    padding: 8px 16px 0;
-    /* One centered column as wide as the widest banner: stacked banners line up. */
-    display: grid;
-    justify-content: center;
-    gap: 8px;
-    z-index: 10000;
-  }
-</style>
