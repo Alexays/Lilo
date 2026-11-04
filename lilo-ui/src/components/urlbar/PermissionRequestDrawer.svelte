@@ -1,4 +1,4 @@
-<!-- A site or extension permission request, asked from the address bar. -->
+<!-- A site, extension or agent action permission request, asked from the address bar. -->
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
   import { type PermissionRequest, dismissSitePermissionRequest, respondToPermissionRequest } from "../../stores/urlBarDrawer.svelte";
@@ -37,6 +37,7 @@
   {#if request.kind === "sitePermission"}
     <strong>{request.origin}</strong> {t(sitePermissionAskKey(request.type))}
   {:else if request.kind === "agentControl"}
+    <!-- Only an agent's action comes here: one asking to connect gets the modal. -->
     <strong>{request.clientName}</strong>
     {#if agentAction}
       {t({
@@ -50,11 +51,6 @@
         tab: agentAction.tab,
       })}
       <span class="request-note">{t("settings.items.agentAskBeforeActions.description")}</span>
-    {:else}
-      {request.profileName ? t("permissionPrompt.agentProfile", { profile: request.profileName }) : t("permissionPrompt.agentControl")}
-    {/if}
-    {#if request.executable}
-      <ul class="request-lines"><li>{t("permissionPrompt.agentExecutable", { path: request.executable })}</li></ul>
     {/if}
   {:else}
     <strong>{request.extensionName}</strong> {t("permissionPrompt.requestsAccess")}

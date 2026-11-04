@@ -6,7 +6,7 @@
   import UiSearchField from "../ui/UiSearchField.svelte";
   import UiShellFrame from "../ui/UiShellFrame.svelte";
   import UiToggle from "../ui/UiToggle.svelte";
-  import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
+  import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import PanelHeader from "../ui/PanelHeader.svelte";
   import TabFolderItem from "../sidebar/TabFolderItem.svelte";
   import TabItem from "../sidebar/TabItem.svelte";
@@ -93,6 +93,7 @@
   ];
 
   let demoFolderCollapsed = $state(false);
+  let demoConfirmOpen = $state(false);
 
   const demoFolder = $derived({
     id: "demo-folder",
@@ -259,18 +260,18 @@
 
             <article class="component-card wide">
               <div class="component-card-header">
-                <span>Confirmation sheet</span>
-                <UiBadge>BottomConfirmSheet</UiBadge>
+                <span>Confirmation modal</span>
+                <UiBadge>UiConfirmModal</UiBadge>
               </div>
-              <div class="sheet-demo-stage">
-                <BottomConfirmSheet
-                  visible
+              <div class="control-demo">
+                <UiButton onclick={() => (demoConfirmOpen = true)}>Show</UiButton>
+                <UiConfirmModal
+                  visible={demoConfirmOpen}
                   title="Remove extension?"
-                  message="This keeps the action close to the panel that triggered it."
+                  message="Centered on the page area, which it dims; Esc cancels and Command-Return confirms."
                   confirmLabel="Remove"
-                  cancelLabel="Cancel"
-                  confirmAction={() => undefined}
-                  cancelAction={() => undefined}
+                  confirmAction={() => (demoConfirmOpen = false)}
+                  cancelAction={() => (demoConfirmOpen = false)}
                 />
               </div>
             </article>
@@ -280,7 +281,7 @@
             <UiListRow title="PanelHeader" description="52px bar with traffic-light spacer, actions and close control, then a full-width title row." />
             <UiListRow title="Toolbar" description="Panel search and clear actions sit above the working content, not inside row bodies." />
             <UiListRow title="Progress row" description="Long-running work shows file identity, short status, and a compact progress track." />
-            <UiListRow title="Bottom sheet" description="Use for destructive confirmation that belongs to the current panel." />
+            <UiListRow title="Modal" description="UiModal: centered on the page area, blocking, closed by its buttons and Esc. The default button is last on the right." />
           </UiInsetList>
         {:else if activeSection === "controls"}
           <section class="component-grid" aria-label="Control examples">
@@ -524,14 +525,6 @@
     height: 100%;
     border-radius: inherit;
     background: var(--accent);
-  }
-
-  .sheet-demo-stage {
-    position: relative;
-    min-height: 176px;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--sidebar-bg) 72%, var(--bg-primary));
   }
 
   .control-demo {

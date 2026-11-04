@@ -15,6 +15,7 @@
   import { startOnboarding } from "../../stores/onboarding.svelte";
   import {
     closeSettingsShell,
+    openClearBrowsingData,
     openAddEditor,
     openDesignSystem,
     openDiagnostics,
@@ -67,7 +68,7 @@
     shortcuts: () => openSettingsSubpage("general", "shortcuts"),
     sites: () => openSettingsSubpage("privacy", "sites"),
     blockerSites: () => openSettingsSubpage("privacy", "blockerSites"),
-    clearData: () => openSettingsSubpage("privacy", "browsingData"),
+    clearData: openClearBrowsingData,
     processManager: openProcessManager,
     diagnostics: openDiagnostics,
     designSystem: openDesignSystem,

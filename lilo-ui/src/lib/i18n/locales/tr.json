@@ -121,7 +121,6 @@
 			"storage": "Depolama"
 		},
 		"manageHistory": "Geçmişi yönet",
-		"manageHistoryDesc": "Sayfaları tek tek görüntüleyin, arayın ve silin",
 		"historyTimeRange": "Geçmiş zaman aralığı",
 		"historyRangeHour": "Son saat",
 		"historyRangeDay": "Son 24 saat",
@@ -185,7 +184,7 @@
 		"searchEmpty": "“{query}” ile eşleşen ayar yok.",
 		"clearData": {
 			"total": "bu profil tarafından saklanıyor",
-			"measuring": "Bu profilin sakladığı veriler ölçülüyor...",
+			"title": "Tarama Verilerini Temizle",
 			"freed": "{size} alan boşaltılacak",
 			"rangeNote": "Yalnızca seçilen dönemde saklanan veriler temizlenir.",
 			"hints": {
@@ -1344,6 +1343,7 @@
 	},
 	"pageHang": {
 		"title": "{host} yanıt vermiyor",
+		"message": "Bekleyebilir veya yeniden yükleyebilirsiniz. Diğer sekmeleriniz çalışmaya devam ediyor.",
 		"stuckFor": "{seconds} sn boyunca takıldı. Diğer sekmeleriniz çalışmaya devam ediyor.",
 		"reload": "Yeniden Yükle",
 		"wait": "Bekle",
@@ -1367,14 +1367,11 @@
 	"sessionRestore": {
 		"degraded": "{name} alanının sekmeleri geri yüklenemedi. Bir yedek kopya saklandı."
 	},
-	"confirmSheet": {
-		"dismiss": "Onayı kapat"
-	},
 	"tabShare": {
 		"title": "{origin} bir sekme paylaşmak istiyor",
 		"pickTab": "Paylaşılacak sekmeyi seçin",
 		"noTabs": "Paylaşılacak açık sekme yok",
-		"shareSystem": "Pencere veya ekran…",
+		"shareSystem": "Pencere veya ekran...",
 		"search": "Sekmelerde ara",
 		"suggested": "Önerilenler",
 		"currentSpace": "Geçerli alan",
@@ -1525,9 +1522,16 @@
 			"notifications": "bildirim göstermek istiyor",
 			"media": "kameranızı veya mikrofonunuzu kullanmak istiyor"
 		},
-		"agentControl": "Lilo'yu denetlemek istiyor: Kendi klasöründe sekme açmak, sayfalarını okumak ve oturumlarınızı kullanarak işlem yapmak.",
-		"agentProfile": "Oturumlarını kullanarak işlem yapmak için sekmelerini {profile} profiline taşımak istiyor.",
-		"agentExecutable": "Program: {path}",
+		"dontAllow": "İzin Verme",
+		"agentConnect": {
+			"title": "{client}, Lilo'yu denetlemek istiyor",
+			"openTabs": "Ajanlar Space'inde kendi klasöründe sekme açmak",
+			"readPages": "Açtığı sayfaları okumak",
+			"actSignedIn": "Oturumlarınızı kullanarak işlem yapmak",
+			"asksFirst": "Göndermeden, ödemeden, silmeden veya yayımlamadan önce sorar.",
+			"profileTitle": "{client}, {profile} profilini kullanmak istiyor",
+			"profileMessage": "Sekmelerini oraya taşır ve o profilin oturumlarıyla işlem yapar."
+		},
 		"agentClick": "{tab} ({site}) içinde “{label}” öğesini tıklamak istiyor.",
 		"agentSubmit": "{tab} ({site}) içinde “{label}” öğesini göndermek için Enter'a basmak istiyor.",
 		"agentUpload": "{label} dosyasını {site} sitesine yüklemek istiyor.",
@@ -2266,7 +2270,7 @@
 		},
 		"originalNotes": "Özgün sürüm notları.",
 		"unavailable": "Bu derlemede sürüm notları kullanılamıyor.",
-		"reopen": "Her zaman Yardım → Yenilikler bölümünde.",
+		"reopen": "Her zaman Yardım > Yenilikler bölümünde.",
 		"continue": "Gezinmeye dön",
 		"kinds": {
 			"Breaking": "Uyumluluğu bozan değişiklikler",

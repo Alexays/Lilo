@@ -94,6 +94,21 @@ const _panels = $state<PanelsState>({
 	editor: { ...EMPTY_EDITOR_STATE },
 });
 
+// A modal over whatever the page area shows: Settings, History or the page itself.
+let _clearBrowsingDataOpen = $state(false);
+
+export function isClearBrowsingDataOpen(): boolean {
+	return _clearBrowsingDataOpen;
+}
+
+export function openClearBrowsingData(): void {
+	_clearBrowsingDataOpen = true;
+}
+
+export function closeClearBrowsingData(): void {
+	_clearBrowsingDataOpen = false;
+}
+
 function openShell(kind: ShellKind): void {
 	_panels.activePanel = null;
 	_shell.activeSurface = kind;
@@ -120,7 +135,7 @@ export function initPanelsStore(): void {
 
 	on("openClearBrowsingData", () => {
 		openSettings("privacy");
-		openSettingsSubpage("privacy", "browsingData");
+		openClearBrowsingData();
 	});
 
 	on("openDesignSystem", () => {

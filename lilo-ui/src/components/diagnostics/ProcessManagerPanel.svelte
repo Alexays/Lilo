@@ -19,7 +19,7 @@
   } from "../../stores/panels.svelte";
   import { getSidebarsBySpace } from "../../stores/sidebar.svelte";
   import { tabDisplayTitle } from "../../stores/tabs.svelte";
-  import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
+  import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import PanelHeader from "../ui/PanelHeader.svelte";
   import UiSearchField from "../ui/UiSearchField.svelte";
   import { filterTabUsages, processOverview } from "./processManagerModel";
@@ -363,7 +363,7 @@
       {/if}
     </div>
 
-    <BottomConfirmSheet
+    <UiConfirmModal
       visible={_pendingAction !== null}
       title={_pendingAction ? pendingActionTitle(_pendingAction) : ""}
       confirmLabel={_pendingAction?.kind === "terminate"

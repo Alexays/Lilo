@@ -191,7 +191,7 @@ test("the screenshot editor names every control", async ({ page }) => {
 test("the tab share picker names every control", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await receive(page, { event: "tabSharePickerRequested", requestId: "r", origin: "meet.example.com", shareableTabIds: ["tab-alpha"] });
-	await expect(page.locator(".tab-share-panel")).toBeVisible();
+	await expect(page.locator('[data-modal="tab-share-picker"]')).toBeVisible();
 	expect(await a11yProblems(page)).toEqual([]);
 });
 
@@ -207,6 +207,6 @@ test("the page overlays name every control", async ({ page }) => {
 	expect(await a11yProblems(page), "error page").toEqual([]);
 
 	await receive(page, { event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: false, host: "example.com", site: "example.com" });
-	await expect(page.locator(".page-hang")).toBeVisible();
+	await expect(page.locator('[data-modal="page-hang-card"]')).toBeVisible();
 	expect(await a11yProblems(page), "hang card").toEqual([]);
 });

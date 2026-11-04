@@ -21,8 +21,10 @@
   import TabSwitcher from "./sidebar/TabSwitcher.svelte";
   import SidebarLinkDrop from "./sidebar/SidebarLinkDrop.svelte";
   import WhatsNewHost from "./whatsnew/WhatsNewHost.svelte";
+  import AgentConnectModal from "./agents/AgentConnectModal.svelte";
+  import SettingsBrowsingData from "./settings/SettingsBrowsingData.svelte";
   import ErrorBoundary from "./ui/ErrorBoundary.svelte";
-  import { isDesignSystemShellOpen } from "../stores/panels.svelte";
+  import { isClearBrowsingDataOpen, isDesignSystemShellOpen } from "../stores/panels.svelte";
   import { isSidebarVisible } from "../stores/ui.svelte";
   import { getSetting } from "../stores/settings.svelte";
   import { getSplitPanes } from "../stores/splitPanes.svelte";
@@ -78,6 +80,8 @@
 <FindBar />
 <HoverLinkBar />
 <TabSharePicker />
+<AgentConnectModal />
+{#if isClearBrowsingDataOpen()}<SettingsBrowsingData />{/if}
 <TabPreviewCard />
 <TabSwitcher />
 <SidebarLinkDrop />

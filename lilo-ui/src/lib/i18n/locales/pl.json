@@ -121,7 +121,6 @@
 			"storage": "Dane witryn"
 		},
 		"manageHistory": "Zarządzaj historią",
-		"manageHistoryDesc": "Przeglądaj, szukaj i usuwaj strony",
 		"historyTimeRange": "Zakres czasu historii",
 		"historyRangeHour": "Ostatnia godzina",
 		"historyRangeDay": "Ostatnie 24 godziny",
@@ -185,7 +184,7 @@
 		"searchEmpty": "Brak ustawień pasujących do „{query}”.",
 		"clearData": {
 			"total": "danych zapisanych przez ten profil",
-			"measuring": "Obliczanie danych zapisanych przez ten profil...",
+			"title": "Wyczyść dane przeglądania",
 			"freed": "Zostanie zwolnione {size}",
 			"rangeNote": "Usunięte zostaną tylko dane zapisane w wybranym okresie.",
 			"hints": {
@@ -1354,6 +1353,7 @@
 	},
 	"pageHang": {
 		"title": "{host} nie odpowiada",
+		"message": "Możesz poczekać lub załadować ją ponownie. Pozostałe karty nadal działają.",
 		"stuckFor": "Brak odpowiedzi od {seconds} s. Pozostałe karty nadal działają.",
 		"reload": "Wczytaj ponownie",
 		"wait": "Poczekaj",
@@ -1377,14 +1377,11 @@
 	"sessionRestore": {
 		"degraded": "Nie udało się przywrócić kart przestrzeni {name}. Zachowano kopię zapasową."
 	},
-	"confirmSheet": {
-		"dismiss": "Zamknij potwierdzenie"
-	},
 	"tabShare": {
 		"title": "{origin} chce udostępnić kartę",
 		"pickTab": "Wybierz kartę do udostępnienia",
 		"noTabs": "Brak otwartych kart do udostępnienia",
-		"shareSystem": "Okno lub ekran…",
+		"shareSystem": "Okno lub ekran...",
 		"search": "Szukaj kart",
 		"suggested": "Sugerowane",
 		"currentSpace": "Bieżąca przestrzeń",
@@ -1535,9 +1532,16 @@
 			"notifications": "chce wyświetlać powiadomienia",
 			"media": "chce używać kamery lub mikrofonu"
 		},
-		"agentControl": "chce sterować Lilo: otwierać karty we własnym folderze, czytać ich strony i działać na nich z użyciem Twoich zalogowanych kont.",
-		"agentProfile": "chce przenieść swoje karty do profilu {profile}, aby korzystać z jego zalogowanych kont.",
-		"agentExecutable": "Program: {path}",
+		"dontAllow": "Nie zezwalaj",
+		"agentConnect": {
+			"title": "{client} chce sterować Lilo",
+			"openTabs": "Otwierać karty we własnym folderze Space Agenci",
+			"readPages": "Czytać otwierane strony",
+			"actSignedIn": "Działać na nich z użyciem Twoich zalogowanych kont",
+			"asksFirst": "Pyta przed wysłaniem, zapłatą, usunięciem lub publikacją.",
+			"profileTitle": "{client} chce używać profilu {profile}",
+			"profileMessage": "Przenosi tam swoje karty, aby działać z użyciem kont zalogowanych w tym profilu."
+		},
 		"agentClick": "chce kliknąć „{label}” w {tab} ({site}).",
 		"agentSubmit": "chce nacisnąć Enter, aby przesłać „{label}” w {tab} ({site}).",
 		"agentUpload": "chce przesłać {label} do {site}.",
@@ -2288,7 +2292,7 @@
 		},
 		"originalNotes": "Oryginalne informacje o wydaniu.",
 		"unavailable": "Informacje o wydaniu są niedostępne w tej wersji.",
-		"reopen": "Zawsze dostępne w Pomoc → Co nowego.",
+		"reopen": "Zawsze dostępne w Pomoc > Co nowego.",
 		"continue": "Wróć do przeglądania",
 		"kinds": {
 			"Breaking": "Zmiany niezgodne wstecznie",

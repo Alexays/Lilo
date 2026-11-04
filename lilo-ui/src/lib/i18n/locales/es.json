@@ -121,7 +121,6 @@
 			"storage": "Almacenamiento"
 		},
 		"manageHistory": "Gestionar historial",
-		"manageHistoryDesc": "Explora, busca y elimina página a página",
 		"historyTimeRange": "Intervalo del historial",
 		"historyRangeHour": "Última hora",
 		"historyRangeDay": "Últimas 24 horas",
@@ -185,7 +184,7 @@
 		"searchEmpty": "Ningún ajuste coincide con «{query}».",
 		"clearData": {
 			"total": "almacenados por este perfil",
-			"measuring": "Calculando lo que almacena este perfil...",
+			"title": "Borrar datos de navegación",
 			"freed": "Se liberarán {size}",
 			"rangeNote": "Solo se borra lo almacenado durante el periodo elegido.",
 			"hints": {
@@ -1344,6 +1343,7 @@
 	},
 	"pageHang": {
 		"title": "{host} no responde",
+		"message": "Puedes esperar o volver a cargarla. Las otras pestañas siguen funcionando.",
 		"stuckFor": "Sin responder desde hace {seconds} s. Las otras pestañas siguen funcionando.",
 		"reload": "Recargar",
 		"wait": "Esperar",
@@ -1367,9 +1367,6 @@
 	"sessionRestore": {
 		"degraded": "No se han podido restaurar las pestañas del espacio {name}. Se ha conservado una copia de seguridad."
 	},
-	"confirmSheet": {
-		"dismiss": "Cerrar confirmación"
-	},
 	"tabShare": {
 		"title": "{origin} quiere compartir una pestaña",
 		"pickTab": "Elige una pestaña para compartir",
@@ -1381,7 +1378,7 @@
 		"keyHint": "Flechas para elegir, Retorno para compartir",
 		"noTabs": "No hay pestañas abiertas para compartir",
 		"noMatch": "Ninguna pestaña coincide",
-		"shareSystem": "Ventana o pantalla…",
+		"shareSystem": "Ventana o pantalla...",
 		"shareAudio": "Compartir también el sonido",
 		"systemAudio": {
 			"undetermined": "macOS lo pedirá una vez. Las voces de la llamada nunca se comparten.",
@@ -1525,9 +1522,16 @@
 			"notifications": "quiere mostrar notificaciones",
 			"media": "quiere usar tu cámara o tu micrófono"
 		},
-		"agentControl": "quiere controlar Lilo: abrir pestañas en su propia carpeta, leer sus páginas y actuar en ellas con tus sesiones iniciadas.",
-		"agentProfile": "quiere mover sus pestañas al perfil {profile} para actuar con sus sesiones iniciadas.",
-		"agentExecutable": "Programa: {path}",
+		"dontAllow": "No permitir",
+		"agentConnect": {
+			"title": "{client} quiere controlar Lilo",
+			"openTabs": "Abrir pestañas en su propia carpeta del Space Agentes",
+			"readPages": "Leer las páginas que abre",
+			"actSignedIn": "Actuar en ellas con tus sesiones iniciadas",
+			"asksFirst": "Pregunta antes de enviar, pagar, eliminar o publicar.",
+			"profileTitle": "{client} quiere usar el perfil {profile}",
+			"profileMessage": "Mueve allí sus pestañas para actuar con las sesiones iniciadas de ese perfil."
+		},
 		"agentClick": "quiere hacer clic en «{label}» en {tab} ({site}).",
 		"agentSubmit": "quiere pulsar Intro para enviar «{label}» en {tab} ({site}).",
 		"agentUpload": "quiere subir {label} a {site}.",
@@ -2266,7 +2270,7 @@
 		},
 		"originalNotes": "Notas de versión originales, en inglés.",
 		"unavailable": "Las notas de versión no están disponibles en esta compilación.",
-		"reopen": "Siempre en Ayuda → Novedades.",
+		"reopen": "Siempre en Ayuda > Novedades.",
 		"continue": "Volver a navegar",
 		"kinds": {
 			"Breaking": "Cambios importantes",

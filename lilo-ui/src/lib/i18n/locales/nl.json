@@ -121,7 +121,6 @@
 			"storage": "Opslag"
 		},
 		"manageHistory": "Geschiedenis beheren",
-		"manageHistoryDesc": "Pagina's bekijken, zoeken en verwijderen",
 		"historyTimeRange": "Periode voor geschiedenis",
 		"historyRangeHour": "Afgelopen uur",
 		"historyRangeDay": "Afgelopen 24 uur",
@@ -185,7 +184,7 @@
 		"searchEmpty": "Geen instellingen gevonden voor \"{query}\".",
 		"clearData": {
 			"total": "opgeslagen door dit profiel",
-			"measuring": "Opgeslagen gegevens van dit profiel meten...",
+			"title": "Browsegegevens wissen",
 			"freed": "Er komt {size} vrij",
 			"rangeNote": "Alleen gegevens die in de gekozen periode zijn opgeslagen, worden gewist.",
 			"hints": {
@@ -1344,6 +1343,7 @@
 	},
 	"pageHang": {
 		"title": "{host} reageert niet",
+		"message": "Je kunt wachten of de pagina opnieuw laden. Je andere tabbladen blijven werken.",
 		"stuckFor": "Al {seconds} s vastgelopen. Je andere tabbladen blijven werken.",
 		"reload": "Herlaad",
 		"wait": "Wacht",
@@ -1367,14 +1367,11 @@
 	"sessionRestore": {
 		"degraded": "De tabbladen van ruimte {name} konden niet worden hersteld. Er is een reservekopie bewaard."
 	},
-	"confirmSheet": {
-		"dismiss": "Sluit bevestiging"
-	},
 	"tabShare": {
 		"title": "{origin} wil een tabblad delen",
 		"pickTab": "Kies een tabblad om te delen",
 		"noTabs": "Geen geopende tabbladen om te delen",
-		"shareSystem": "Venster of scherm…",
+		"shareSystem": "Venster of scherm...",
 		"search": "Tabbladen zoeken",
 		"suggested": "Voorgesteld",
 		"currentSpace": "Huidige ruimte",
@@ -1525,9 +1522,16 @@
 			"notifications": "wil meldingen tonen",
 			"media": "wil je camera of microfoon gebruiken"
 		},
-		"agentControl": "wil Lilo bedienen: tabbladen in een eigen map openen, de pagina's lezen en daar acties uitvoeren met jouw aanmeldingen.",
-		"agentProfile": "wil de eigen tabbladen naar profiel {profile} verplaatsen om de aanmeldingen daarvan te gebruiken.",
-		"agentExecutable": "Programma: {path}",
+		"dontAllow": "Niet toestaan",
+		"agentConnect": {
+			"title": "{client} wil Lilo bedienen",
+			"openTabs": "Tabbladen openen in een eigen map van de Agents-Space",
+			"readPages": "De pagina's lezen die het opent",
+			"actSignedIn": "Daar handelen met jouw aanmeldingen",
+			"asksFirst": "Het vraagt het eerst voordat het iets verstuurt, betaalt, verwijdert of publiceert.",
+			"profileTitle": "{client} wil profiel {profile} gebruiken",
+			"profileMessage": "Het verplaatst de eigen tabbladen daarheen, om met de aanmeldingen van dat profiel te handelen."
+		},
 		"agentClick": "wil op \"{label}\" klikken in {tab} ({site}).",
 		"agentSubmit": "wil op Enter drukken om \"{label}\" te versturen in {tab} ({site}).",
 		"agentUpload": "wil {label} uploaden naar {site}.",
@@ -2266,7 +2270,7 @@
 		},
 		"originalNotes": "Oorspronkelijke versie-informatie.",
 		"unavailable": "Versie-informatie is niet beschikbaar in deze versie.",
-		"reopen": "Altijd te vinden via Help → Nieuw in Lilo.",
+		"reopen": "Altijd te vinden via Help > Nieuw in Lilo.",
 		"continue": "Terug naar surfen",
 		"kinds": {
 			"Breaking": "Incompatibele wijzigingen",

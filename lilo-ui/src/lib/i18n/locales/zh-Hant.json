@@ -121,7 +121,6 @@
 			"storage": "儲存空間"
 		},
 		"manageHistory": "管理瀏覽記錄",
-		"manageHistoryDesc": "逐頁瀏覽、搜尋和刪除",
 		"historyTimeRange": "歷史記錄時間範圍",
 		"historyRangeHour": "過去一小時",
 		"historyRangeDay": "過去 24 小時",
@@ -185,7 +184,7 @@
 		"searchEmpty": "沒有符合「{query}」的設定。",
 		"clearData": {
 			"total": "由此個人檔案儲存",
-			"measuring": "正在計算此個人檔案儲存的資料...",
+			"title": "清除瀏覽資料",
 			"freed": "將釋出 {size}",
 			"rangeNote": "只會清除所選期間內儲存的資料。",
 			"hints": {
@@ -1344,6 +1343,7 @@
 	},
 	"pageHang": {
 		"title": "{host} 沒有回應",
+		"message": "你可以等待或重新載入。其他分頁仍可正常運作。",
 		"stuckFor": "已停滯 {seconds} 秒。其他分頁仍可正常運作。",
 		"reload": "重新載入",
 		"wait": "等待",
@@ -1367,14 +1367,11 @@
 	"sessionRestore": {
 		"degraded": "無法回復空間 {name} 的分頁。已保留備份。"
 	},
-	"confirmSheet": {
-		"dismiss": "關閉確認提示"
-	},
 	"tabShare": {
 		"title": "{origin} 想要分享分頁",
 		"pickTab": "選擇要分享的分頁",
 		"noTabs": "沒有可分享的已開啟分頁",
-		"shareSystem": "視窗或螢幕…",
+		"shareSystem": "視窗或螢幕...",
 		"search": "搜尋分頁",
 		"suggested": "建議",
 		"currentSpace": "目前空間",
@@ -1525,9 +1522,16 @@
 			"notifications": "想要顯示通知",
 			"media": "想要使用相機或麥克風"
 		},
-		"agentControl": "想要控制 Lilo：在自己的資料夾中開啟分頁、讀取網頁，並使用你的登入狀態執行動作。",
-		"agentProfile": "想要將其分頁移至個人檔案 {profile}，使用該檔案的登入狀態執行動作。",
-		"agentExecutable": "程式：{path}",
+		"dontAllow": "不允許",
+		"agentConnect": {
+			"title": "{client} 想要控制 Lilo",
+			"openTabs": "在「代理程式」Space 的專屬資料夾中開啟分頁",
+			"readPages": "讀取它開啟的網頁",
+			"actSignedIn": "使用你的登入狀態執行動作",
+			"asksFirst": "傳送、付款、刪除或發佈前會先詢問。",
+			"profileTitle": "{client} 想要使用個人檔案 {profile}",
+			"profileMessage": "它會將分頁移至該個人檔案，使用該檔案的登入狀態執行動作。"
+		},
 		"agentClick": "想要在 {tab}（{site}）中點按「{label}」。",
 		"agentSubmit": "想要在 {tab}（{site}）中按 Enter 送出「{label}」。",
 		"agentUpload": "想要將 {label} 上傳至 {site}。",
@@ -2266,7 +2270,7 @@
 		},
 		"originalNotes": "原始版本說明。",
 		"unavailable": "此版本沒有可用的版本說明。",
-		"reopen": "隨時可在「輔助說明」→「最新內容」找到。",
+		"reopen": "隨時可在「輔助說明」>「最新內容」找到。",
 		"continue": "返回瀏覽",
 		"kinds": {
 			"Breaking": "不相容變更",

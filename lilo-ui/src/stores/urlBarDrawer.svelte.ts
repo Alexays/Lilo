@@ -1,5 +1,6 @@
 // Everything that drops out of the address bar: permission requests, the default-browser invite,
-// and the Site drawer the user opens. One drawer shows at a time, picked by priority.
+// and the Site drawer the user opens. One drawer shows at a time, picked by priority. An agent asking
+// to connect is no drawer: it waits here too, but shows as a modal.
 
 import { on } from "../lib/bridge";
 import { agentActions, chromeActions, extensionActions, settingsActions } from "../lib/bridge/actions";
@@ -123,7 +124,7 @@ export function initUrlBarDrawerStore(): void {
 }
 
 /**
- * Priority: a site prompt from the active tab, an agent asking to control Lilo whatever is shown, an extension
+ * Priority: a site prompt from the active tab, an agent's action whatever is shown, an extension
  * prompt from the active space, the default-browser invite, then the Site drawer the user opened. The agent goes
  * before extensions: its question times out as a refusal, theirs waits.
  */
@@ -132,12 +133,17 @@ export function getActiveUrlBarDrawer(): UrlBarDrawer | null {
 	const spaceId = getActiveSpaceId();
 	return (
 		_queue.find((request) => request.kind === "sitePermission" && request.tabId === tabId) ??
-		_queue.find((request) => request.kind === "agentControl") ??
+		_queue.find((request) => request.kind === "agentControl" && request.action) ??
 		_queue.find((request) => request.kind === "extensionPermission" && request.spaceId === spaceId) ??
 		// The onboarding has its own default-browser step.
 		(_defaultBrowserInvite && !getOnboarding().visible ? DEFAULT_BROWSER_DRAWER : null) ??
 		(_siteOpen ? SITE_DRAWER : null)
 	);
+}
+
+/** An agent asking to connect, or to move to another profile: the modal's question, first come first asked. */
+export function getAgentConnectRequest(): AgentControlRequest | null {
+	return _queue.find((request): request is AgentControlRequest => request.kind === "agentControl" && !request.action) ?? null;
 }
 
 /** `alwaysAllowSite` answers an agent's action, allowing it on that site from now on. */

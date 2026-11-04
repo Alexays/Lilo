@@ -27,7 +27,6 @@
     if (query.trim()) return t("settings.searchResultsTitle");
     if (subpage === "engines") return t(settingTitleKey("searchEngines"));
     if (subpage === "shortcuts") return t(settingTitleKey("shortcuts"));
-    if (subpage === "browsingData") return t("settings.groups.browsingData");
     if (subpage === "sites") return t(settingTitleKey("sites"));
     if (subpage === "blockerSites") return t(settingTitleKey("blockerSites"));
     if (subpage?.startsWith("site:")) return subpage.slice("site:".length);
