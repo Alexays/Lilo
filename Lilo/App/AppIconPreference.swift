@@ -85,12 +85,19 @@ enum AppIconPreference {
         NSWorkspace.shared.setIcon(image, forFile: Bundle.main.bundlePath, options: [])
     }
 
-    /// 128 px PNG data URLs for the settings grid, built once from the bundled images.
+    /// 128 px PNG data URLs for the settings grid, built once from the bundled images, with each variant's Halloween
+    /// version for the seasonal switch's preview.
     @MainActor static let previews: [[String: String]] = variants.compactMap { variant in
         let image = variant == "classic"
             ? Bundle.main.image(forResource: "AppIcon")
             : Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
-        guard let image else { return nil }
+        guard let image, let dataURL = pngDataURL(image) else { return nil }
+        let seasonal = Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons/halloween")
+            .flatMap(NSImage.init(contentsOf:)).flatMap { pngDataURL($0) }
+        return ["id": variant, "dataURL": dataURL, "seasonalDataURL": seasonal].compactMapValues { $0 }
+    }
+
+    @MainActor private static func pngDataURL(_ image: NSImage) -> String? {
         let rep = unsafe NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 128, pixelsHigh: 128, bitsPerSample: 8, samplesPerPixel: 4,
                                    hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
         guard let rep else { return nil }
@@ -99,7 +106,7 @@ enum AppIconPreference {
         image.draw(in: NSRect(x: 0, y: 0, width: 128, height: 128))
         NSGraphicsContext.restoreGraphicsState()
         guard let png = rep.representation(using: .png, properties: [:]) else { return nil }
-        return ["id": variant, "dataURL": "data:image/png;base64," + png.base64EncodedString()]
+        return "data:image/png;base64," + png.base64EncodedString()
     }
 
     /// The Dock tile only redraws on display(), so the swap is driven frame by frame. It stops early

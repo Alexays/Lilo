@@ -1010,7 +1010,7 @@ export interface BridgeEventPayloadMap {
 	importProgress: ImportProgress;
 	importFinished: { summary: ImportSummaryItem[] };
 	onboardingState: { show: boolean; step: number; usage: string };
-	appIconsLoaded: { icons: { id: string; dataURL: string }[] };
+	appIconsLoaded: { icons: { id: string; dataURL: string; seasonalDataURL?: string }[] };
 	// A space's persisted tab state was unreadable at restore: it was quarantined and the space
 	// restored empty. The banner names the space so the user knows what degraded.
 	sessionRestoreDegraded: { spaceName: string };

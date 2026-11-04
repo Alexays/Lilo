@@ -33,7 +33,7 @@ let _deviceSetup = $state.raw<BridgeDeviceSetupSnapshot>({ label: "" });
 let _blockerStatus = $state.raw<BridgeContentBlockerStatus | null>(null);
 let _terminalOptions = $state.raw<BridgeTerminalOptions | null>(null);
 let _status = $state<BridgeSettingsActionStatusPayload | null>(null);
-let _appIcons = $state.raw<{ id: string; dataURL: string }[]>([]);
+let _appIcons = $state.raw<{ id: string; dataURL: string; seasonalDataURL?: string }[]>([]);
 let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowed: [] });
 let _updater = $state.raw<BridgeUpdaterStatus | null>(null);
 let _readyUpdate = $state<string | null>(null);
@@ -183,7 +183,7 @@ export function getBrowsingDataSizes(): BridgeBrowsingDataSizes | null {
 	return _browsingDataSizes;
 }
 
-export function getAppIcons(): { id: string; dataURL: string }[] {
+export function getAppIcons(): { id: string; dataURL: string; seasonalDataURL?: string }[] {
 	return _appIcons;
 }
 
