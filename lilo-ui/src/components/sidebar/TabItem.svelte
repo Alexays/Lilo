@@ -570,7 +570,7 @@
   </div>
 
   <!-- The close button floats over the end of this box, which fades under it: nothing reflows. -->
-  <div class="tab-body" class:under-close={interactive && isCloseVisible && !isRenaming}>
+  <div class="tab-body" class:under-close={interactive && isCloseVisible && !isRenaming} class:with-sound={tab.isAudioPlaying || tab.isMuted}>
     {#if isRenaming}
       <input
         bind:this={renameInput}
@@ -838,6 +838,15 @@
     --close-fade: 20px;
     mask-image: linear-gradient(to left, transparent var(--close-fade), #000 calc(var(--close-fade) + 14px));
     transition: --close-fade var(--transition-fast);
+  }
+
+  /* The sound steps aside from the close button, so it can still be muted on hover. */
+  .tab-body.under-close.with-sound {
+    mask-image: none;
+  }
+
+  .tab-body.under-close .sound-button {
+    margin-right: 24px;
   }
 
   :global(html.sidebar-dnd-active) .tab-body.under-close {
