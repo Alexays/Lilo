@@ -847,7 +847,7 @@
 {/snippet}
 
 <!-- `shown`: every folder above this one is open. Subfolders render through this same snippet,
-     one indent and one branch of their parent's line deeper. -->
+     one indent deeper, along their parent's rail. -->
 {#snippet folderBlock(folder: FolderState, shown: boolean, level: number)}
   {@const conversation = getConversationTab(folder.id, spaceId)}
   {@const children = visibleChildren(folder.id)}
@@ -1447,48 +1447,24 @@
     background: none;
   }
 
-  /* The trunk drops from under the folder glyph's center (16px), and ticks end 2px short of the
-     children's icons (24px indent + 8px inset). Middle children draw the trunk plus a tick, the last
-     one an L, so no strokes overlap. */
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper::before,
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:not(:last-child)::after {
+  /* One straight rail per open folder, under its glyph's center (16px) and stopping short of the last child;
+     the 14px indent starts the children's icons 6px past it. */
+  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper::before {
     content: "";
     position: absolute;
-    pointer-events: none;
-  }
-
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper::before {
     left: 15.5px;
     top: 0;
     bottom: 0;
     border-left: 1px solid var(--folder-rail-color);
+    pointer-events: none;
   }
 
   .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:first-child::before {
     top: -7px;
   }
 
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:not(:last-child)::after {
-    left: 16.5px;
-    top: calc(50% - 0.5px);
-    width: 13.5px;
-    border-top: 1px solid var(--folder-rail-color);
-  }
-
   .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper:last-child::before {
-    bottom: calc(50% - 0.5px);
-    width: 14.5px;
-    border-bottom: 1px solid var(--folder-rail-color);
-    border-bottom-left-radius: var(--radius-sm);
-  }
-
-  /* A subfolder's branch meets its header row, not the middle of its open block. */
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper.child-folder:not(:last-child)::after {
-    top: 15.5px;
-  }
-
-  .folder-open-rail .folder-contents:not(.conversation-contents) > .child-tab-wrapper.child-folder:last-child::before {
-    bottom: calc(100% - 16.5px);
+    bottom: 6px;
   }
 
   /* A conversation's pages hang on one straight violet rail under the agent's tile. */
@@ -1576,7 +1552,7 @@
   .indented-tab-wrapper {
     width: 100%;
     min-width: 0;
-    padding-left: 24px;
+    padding-left: 14px;
     box-sizing: border-box;
   }
 

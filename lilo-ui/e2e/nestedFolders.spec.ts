@@ -246,7 +246,7 @@ test("five levels fit a 200 px sidebar: each indents, titles ellipsize, nothing 
 		await expect(row).toBeVisible();
 		lefts.push((await row.boundingBox())!.x);
 	}
-	for (let level = 1; level < 5; level++) expect(lefts[level] - lefts[level - 1]).toBeCloseTo(24, 0);
+	for (let level = 1; level < 5; level++) expect(lefts[level] - lefts[level - 1]).toBeCloseTo(14, 0);
 
 	const sidebarRight = await page.locator(".sidebar").evaluate((el) => el.getBoundingClientRect().right);
 	const overflow = await pane(page).evaluate((root, right) => {
