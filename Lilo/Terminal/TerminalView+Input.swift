@@ -233,18 +233,25 @@ extension TerminalView {
             scrollRemainder -= CGFloat(lines) * cellHeight
             // Programs that take the wheel themselves get whole lines, never a pixel offset.
             if terminal.tracksMouse || terminal.isAlternateScreen {
+                renderLoop.lockedScrollOffset = 0
+                renderLoop.scrolled(movedRows: false)
                 guard lines != 0 else { return [] }
+                var bytes: [UInt8] = []
                 if terminal.tracksMouse {
                     let report = input.encodeMouse(
                         .press, button: lines > 0 ? .wheelUp : .wheelDown, position: location.pixel,
                         modifiers: event.modifierFlags, geometry: geometry, terminal: terminal
                     )
-                    return Array(repeating: report, count: abs(lines)).flatMap { $0 }
+                    bytes.reserveCapacity(report.count * abs(lines))
+                    for _ in 0..<abs(lines) { bytes += report }
+                    return bytes
                 }
                 // Full-screen programs without mouse support (less, man) scroll with the arrow keys.
                 let applicationCursor = terminal.mode(1)
                 let arrow = lines > 0 ? (applicationCursor ? "\u{1b}OA" : "\u{1b}[A") : (applicationCursor ? "\u{1b}OB" : "\u{1b}[B")
-                return Array(repeating: Array(arrow.utf8), count: abs(lines)).flatMap { $0 }
+                bytes.reserveCapacity(3 * abs(lines))
+                for _ in 0..<abs(lines) { bytes += arrow.utf8 }
+                return bytes
             }
             // History scrolls by whole rows; the rest of a trackpad gesture shifts the grid by pixels.
             if lines != 0 { terminal.scrollViewport(by: -lines) }
@@ -253,10 +260,10 @@ extension TerminalView {
                 scrollRemainder = 0
             }
             renderLoop.lockedScrollOffset = Float(scrollRemainder)
+            renderLoop.scrolled(movedRows: lines != 0)
             return []
         }
         if !bytes.isEmpty { session.write(bytes) }
-        renderLoop.scrolled()
     }
 
     // MARK: - Links

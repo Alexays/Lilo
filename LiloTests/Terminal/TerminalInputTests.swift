@@ -329,6 +329,54 @@ final class TerminalInputTests: XCTestCase {
         XCTAssertEqual(view.hoveredLink?.rows.keys.sorted(), [0])
     }
 
+    /// A full-screen program scrolls by whole lines: a pixel offset left from history is dropped.
+    @MainActor
+    func testScrollingAFullScreenProgramDropsThePixelOffset() async throws {
+        let session = TerminalSession(cwd: NSTemporaryDirectory(), cols: 40, rows: 5, command: ["/bin/sh", "-c", "printf '\\033[?1049h'; sleep 2"])
+        let view = try XCTUnwrap(TerminalView(session: session))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer {
+            view.shutdown()
+            session.terminate()
+            window.close()
+        }
+        view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
+        window.contentView?.addSubview(view)
+        try session.start()
+        let switched = await pollUntil(timeout: 5) { session.withLockedTerminal { $0.isAlternateScreen } }
+        XCTAssertTrue(switched)
+        view.renderLoop.lockedScrollOffset = 7
+
+        let scroll = try XCTUnwrap(CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 1, wheel1: 2, wheel2: 0, wheel3: 0))
+        view.scrollWheel(with: try XCTUnwrap(NSEvent(cgEvent: scroll)))
+
+        XCTAssertEqual(view.renderLoop.lockedScrollOffset, 0)
+    }
+
+    /// A zoom changes the row height: a sub-row scroll offset measured in the old one is dropped.
+    @MainActor
+    func testZoomDropsTheSubRowScrollOffset() throws {
+        let session = TerminalSession(cwd: NSTemporaryDirectory(), cols: 40, rows: 5, command: ["/bin/cat"])
+        let view = try XCTUnwrap(TerminalView(session: session))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer {
+            view.shutdown()
+            session.terminate()
+            window.close()
+        }
+        view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
+        window.contentView?.addSubview(view)
+        view.scrollRemainder = 7
+        view.renderLoop.lockedScrollOffset = 7
+
+        view.setZoom(by: 4)
+
+        XCTAssertEqual(view.scrollRemainder, 0)
+        XCTAssertEqual(view.renderLoop.lockedScrollOffset, 0)
+    }
+
     private func makeTerminal() -> VTTerminal {
         VTTerminal(cols: 20, rows: 4, scrollbackBytes: 100_000)
     }

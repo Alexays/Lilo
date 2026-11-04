@@ -243,6 +243,11 @@ final class TerminalView: NSView {
         fontScale = scale
         metalLayer.contentsScale = scale
         let font = TerminalFont(family: fontFamily, pointSize: fontSize + zoom, scale: scale)
+        if font.cellHeight != self.font?.cellHeight {
+            // A sub-row offset measured in the old row height would shift the new grid by a wrong fraction.
+            scrollRemainder = 0
+            session.withLockedTerminal { _ in renderLoop.lockedScrollOffset = 0 }
+        }
         self.font = font
         renderLoop.setFont(font, padding: SIMD2(Float(Self.padding.width * scale), Float(Self.padding.height * scale)))
         grid = (0, 0)
@@ -300,6 +305,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
     private var builder: TerminalFrameBuilder?
     private var padding = SIMD2<Float>.zero
     private var scrollOffset: Float = 0
+    /// Only `lockedScrollOffset` changed: the next frame redraws the same rows at the new offset.
+    private var offsetMoved = false
     private var lastScroll: CFTimeInterval = 0
     private var highlightColors: (selection: VTColor, match: VTColor, marks: (success: VTColor, failure: VTColor))?
     private var hoveredLink: TerminalLink?
@@ -395,11 +402,24 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
     /// offset and jump a line.
     var lockedScrollOffset: Float = 0
 
-    /// Draws the next frames at up to 120 Hz while the content moves under the fingers.
-    func scrolled() {
+    private static let scrollRate = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
+
+    /// Draws the next frames at up to 120 Hz while the content moves under the fingers. Called under
+    /// the terminal lock after setting `lockedScrollOffset`: a moved row is flagged before the lock
+    /// opens, so a frame redrawing only the offset never pairs it with the previous row.
+    func scrolled(movedRows: Bool) {
+        if movedRows { needsUpdate.store(true, ordering: .releasing) }
         perform { [self] in
             lastScroll = CACurrentMediaTime()
-            requestFrame()
+            // From idle the link runs at 30 Hz: the gesture's first frames would wait for its next tick.
+            if link?.preferredFrameRateRange != Self.scrollRate { link?.preferredFrameRateRange = Self.scrollRate }
+            if movedRows {
+                requestFrame()
+            } else {
+                offsetMoved = true
+                needsFrame = true
+                link?.isPaused = !visible
+            }
         }
     }
 
@@ -509,7 +529,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
                 renderState.beginUpdate(from: terminal)
                 highlights = searchState.viewportMatches(terminal: terminal)
                 marks = terminal.visibleCommandMarks()
-                scrollOffset = lockedScrollOffset
+                // Full-screen programs scroll by whole lines: an offset left from history never shows.
+                scrollOffset = terminal.isAlternateScreen ? 0 : lockedScrollOffset
             }
             renderState.endUpdate()
             changed = builder.update(from: renderState, highlights: highlights)
@@ -517,7 +538,15 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
             let markWidth = max(2, Int(padding.x / 5))
             if builder.updateCommandMarks(marks, hoveredRow: hoveredMarkRow, x: -Int(padding.x * 2 / 3), width: markWidth) { changed = true }
             renderState.clean()
+        } else if offsetMoved {
+            session.withLockedTerminal { terminal in
+                // The terminal changed since the check above: this offset may belong to a row the
+                // drawn one is not, so it waits for the full update of the next frame.
+                guard !needsUpdate.load(ordering: .acquiring) else { return }
+                scrollOffset = terminal.isAlternateScreen ? 0 : lockedScrollOffset
+            }
         }
+        offsetMoved = false
 
         let now = CACurrentMediaTime()
         if changed {
@@ -539,7 +568,7 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
         // ProMotion for the cursor's glide and scrolling, 60 Hz for fresh output where the user types;
         // background output (an agent's spinner) gets 30 Hz.
         let rate = now - slideStart < Self.slideDuration || now - lastScroll < 0.25
-            ? CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
+            ? Self.scrollRate
             : focused && now - lastChange < 0.25
             ? CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
             : CAFrameRateRange(minimum: 20, maximum: 30, preferred: 30)
