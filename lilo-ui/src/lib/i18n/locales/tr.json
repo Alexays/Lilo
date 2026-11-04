@@ -1487,7 +1487,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "şunlara erişim istiyor:",
 		"more": "+{count} tane daha",
-		"deny": "Reddet",
+		"deny": "İzin Verme",
+		"moreAnswers": "Diğer Yanıtlar",
 		"allow": "İzin Ver",
 		"allowOnce": "Bir Kez İzin Ver",
 		"alwaysAllowOnSite": "Bu Sitede Her Zaman İzin Ver",
@@ -2506,9 +2507,10 @@
 		},
 		"question": {
 			"allow": "İzin Ver",
-			"allowAlways": "Her zaman",
-			"reject": "Reddet",
-			"rejectAlways": "Asla"
+			"allowAlways": "Her Zaman İzin Ver",
+			"reject": "İzin Verme",
+			"rejectAlways": "Asla İzin Verme",
+			"more": "Diğer Yanıtlar"
 		},
 		"badge": {
 			"title": "Ajanlar",

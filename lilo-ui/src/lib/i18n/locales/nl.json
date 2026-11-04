@@ -1487,7 +1487,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "vraagt toegang tot:",
 		"more": "+{count} meer",
-		"deny": "Weiger",
+		"deny": "Sta niet toe",
+		"moreAnswers": "Meer antwoorden",
 		"allow": "Sta toe",
 		"allowOnce": "Sta één keer toe",
 		"alwaysAllowOnSite": "Sta altijd toe op deze website",
@@ -2506,9 +2507,10 @@
 		},
 		"question": {
 			"allow": "Sta toe",
-			"allowAlways": "Altijd",
-			"reject": "Weiger",
-			"rejectAlways": "Nooit"
+			"allowAlways": "Sta altijd toe",
+			"reject": "Sta niet toe",
+			"rejectAlways": "Sta nooit toe",
+			"more": "Meer antwoorden"
 		},
 		"badge": {
 			"title": "Agents",

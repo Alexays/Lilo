@@ -66,7 +66,7 @@ test("a site permission request asks in plain language and sends the answer", as
 
 	const drawer = page.locator(".url-drawer.open");
 	await expect(drawer).toContainText("meet.example.com wants to use your camera");
-	await drawer.getByRole("button", { name: "Allow" }).click();
+	await drawer.getByRole("button", { name: "Allow", exact: true }).click();
 
 	await expect(page.locator(".url-drawer.open")).toHaveCount(0);
 	const response = (await sentCommands(page)).find((c) => c.action === "permissionResponse");

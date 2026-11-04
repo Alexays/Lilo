@@ -1,16 +1,18 @@
-<!-- A question asked from the address bar: icon, message, an optional second answer on its own row,
-     then a quiet dismiss beside the accent confirm. Shared by the permission requests and the
-     default-browser invite. -->
+<!-- A question asked from the address bar: icon, message, then a quiet dismiss beside the accent
+     confirm, which carries a variant of its answer in its menu. Shared by the permission requests and
+     the default-browser invite. -->
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { t } from "../../lib/i18n/state.svelte";
   import UiButton from "../ui/UiButton.svelte";
+  import UiSplitButton from "../ui/UiSplitButton.svelte";
   import URLDrawerIcon, { type UrlDrawerIconName } from "./URLDrawerIcon.svelte";
 
   interface Props {
     icon: UrlDrawerIconName;
     dismissLabel: string;
     confirmLabel: string;
-    /** A second way to agree, shown above the two. */
+    /** A second way to agree, in the confirm button's menu. */
     alternateLabel?: string;
     confirmDisabled?: boolean;
     showActions?: boolean;
@@ -42,10 +44,18 @@
 </div>
 {#if showActions}
   <div class="prompt-actions">
-    {#if alternateLabel && onalternate}<UiButton onclick={onalternate}>{alternateLabel}</UiButton>{/if}
     <div class="prompt-answers">
-      <UiButton variant="ghost" onclick={ondismiss}>{dismissLabel}</UiButton>
-      <UiButton variant="primary" disabled={confirmDisabled} onclick={onconfirm}>{confirmLabel}</UiButton>
+      <UiButton onclick={ondismiss}>{dismissLabel}</UiButton>
+      {#if alternateLabel && onalternate}
+        <UiSplitButton
+          menuLabel={t("permissionPrompt.moreAnswers")}
+          variants={[{ label: alternateLabel, onclick: onalternate }]}
+          disabled={confirmDisabled}
+          onclick={onconfirm}
+        >{confirmLabel}</UiSplitButton>
+      {:else}
+        <UiButton variant="primary" disabled={confirmDisabled} onclick={onconfirm}>{confirmLabel}</UiButton>
+      {/if}
     </div>
   </div>
 {/if}
@@ -83,9 +93,7 @@
 
   .prompt-actions {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
+    justify-content: flex-end;
     padding: 8px 2px 2px;
   }
 
@@ -104,6 +112,17 @@
     text-align: end;
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+
+  /* The split confirm matches the drawer's other buttons. */
+  .prompt-actions :global(.ui-split-button) {
+    height: auto;
+    min-height: var(--control-height-md);
+    border-radius: var(--radius-md);
+  }
+
+  .prompt-actions :global(.ui-split-button .main) {
+    font-size: var(--font-size-md);
   }
 
   /* The drawer is already painted --bg-hover: a secondary button in that same fill disappears. */

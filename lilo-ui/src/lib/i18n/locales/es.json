@@ -1487,7 +1487,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "solicita acceso a:",
 		"more": "+{count} más",
-		"deny": "Denegar",
+		"deny": "No permitir",
+		"moreAnswers": "Más respuestas",
 		"allow": "Permitir",
 		"allowOnce": "Permitir una vez",
 		"alwaysAllowOnSite": "Permitir siempre en este sitio",
@@ -2506,9 +2507,10 @@
 		},
 		"question": {
 			"allow": "Permitir",
-			"allowAlways": "Siempre",
-			"reject": "Denegar",
-			"rejectAlways": "Nunca"
+			"allowAlways": "Permitir siempre",
+			"reject": "No permitir",
+			"rejectAlways": "No permitir nunca",
+			"more": "Más respuestas"
 		},
 		"badge": {
 			"title": "Agentes",

@@ -12,7 +12,7 @@ async function expectActionsInside(page: Page) {
 	}
 }
 
-test("an agent's three answers fit the drawer, a long site included", async ({ page }) => {
+test("an agent's answers fit the drawer, a long site included", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() =>
 		window.__lilo!.receive({

@@ -1497,7 +1497,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "запитує доступ до:",
 		"more": "ще {count}",
-		"deny": "Відхилити",
+		"deny": "Не дозволяти",
+		"moreAnswers": "Інші відповіді",
 		"allow": "Дозволити",
 		"allowOnce": "Дозволити раз",
 		"alwaysAllowOnSite": "Завжди дозволяти на цьому сайті",
@@ -2546,9 +2547,10 @@
 		},
 		"question": {
 			"allow": "Дозволити",
-			"allowAlways": "Завжди",
-			"reject": "Відхилити",
-			"rejectAlways": "Ніколи"
+			"allowAlways": "Завжди дозволяти",
+			"reject": "Не дозволяти",
+			"rejectAlways": "Ніколи не дозволяти",
+			"more": "Інші відповіді"
 		},
 		"badge": {
 			"title": "Агенти",

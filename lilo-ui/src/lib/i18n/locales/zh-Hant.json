@@ -1487,7 +1487,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "要求取用：",
 		"more": "另有 {count} 項",
-		"deny": "拒絕",
+		"deny": "不允許",
+		"moreAnswers": "更多選項",
 		"allow": "允許",
 		"allowOnce": "允許一次",
 		"alwaysAllowOnSite": "一律允許此網站",
@@ -2507,8 +2508,9 @@
 		"question": {
 			"allow": "允許",
 			"allowAlways": "一律允許",
-			"reject": "拒絕",
-			"rejectAlways": "一律拒絕"
+			"reject": "不允許",
+			"rejectAlways": "一律不允許",
+			"more": "更多選項"
 		},
 		"badge": {
 			"title": "代理程式",

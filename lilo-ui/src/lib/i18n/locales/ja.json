@@ -1487,7 +1487,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "が次のアクセスを求めています：",
 		"more": "ほか{count}件",
-		"deny": "拒否",
+		"deny": "許可しない",
+		"moreAnswers": "その他の応答",
 		"allow": "許可",
 		"allowOnce": "1回だけ許可",
 		"alwaysAllowOnSite": "このサイトで常に許可",
@@ -2507,8 +2508,9 @@
 		"question": {
 			"allow": "許可",
 			"allowAlways": "常に許可",
-			"reject": "拒否",
-			"rejectAlways": "常に拒否"
+			"reject": "許可しない",
+			"rejectAlways": "常に許可しない",
+			"more": "その他の応答"
 		},
 		"badge": {
 			"title": "エージェント",

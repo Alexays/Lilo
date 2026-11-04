@@ -1487,7 +1487,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "请求访问：",
 		"more": "另有 {count} 项",
-		"deny": "拒绝",
+		"deny": "不允许",
+		"moreAnswers": "更多选项",
 		"allow": "允许",
 		"allowOnce": "允许一次",
 		"alwaysAllowOnSite": "在此网站上始终允许",
@@ -2507,8 +2508,9 @@
 		"question": {
 			"allow": "允许",
 			"allowAlways": "始终允许",
-			"reject": "拒绝",
-			"rejectAlways": "始终拒绝"
+			"reject": "不允许",
+			"rejectAlways": "始终不允许",
+			"more": "更多选项"
 		},
 		"badge": {
 			"title": "智能体",

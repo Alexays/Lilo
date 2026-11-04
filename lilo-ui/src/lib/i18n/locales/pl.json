@@ -1497,7 +1497,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "prosi o dostęp do:",
 		"more": "+{count} więcej",
-		"deny": "Odmów",
+		"deny": "Nie zezwalaj",
+		"moreAnswers": "Więcej odpowiedzi",
 		"allow": "Zezwól",
 		"allowOnce": "Zezwól raz",
 		"alwaysAllowOnSite": "Zawsze zezwalaj na tej witrynie",
@@ -2546,9 +2547,10 @@
 		},
 		"question": {
 			"allow": "Zezwól",
-			"allowAlways": "Zawsze",
-			"reject": "Odmów",
-			"rejectAlways": "Nigdy"
+			"allowAlways": "Zawsze zezwalaj",
+			"reject": "Nie zezwalaj",
+			"rejectAlways": "Nigdy nie zezwalaj",
+			"more": "Więcej odpowiedzi"
 		},
 		"badge": {
 			"title": "Agenci",

@@ -49,6 +49,7 @@
         site: agentAction.site,
         tab: agentAction.tab,
       })}
+      <span class="request-note">{t("settings.items.agentAskBeforeActions.description")}</span>
     {:else}
       {request.profileName ? t("permissionPrompt.agentProfile", { profile: request.profileName }) : t("permissionPrompt.agentControl")}
     {/if}
@@ -76,6 +77,13 @@
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
     line-height: 1.5;
+  }
+
+  .request-note {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
   }
 
   .more {

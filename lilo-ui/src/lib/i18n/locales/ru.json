@@ -1497,7 +1497,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "запрашивает доступ к:",
 		"more": "ещё +{count}",
-		"deny": "Запретить",
+		"deny": "Не разрешать",
+		"moreAnswers": "Другие ответы",
 		"allow": "Разрешить",
 		"allowOnce": "Разрешить один раз",
 		"alwaysAllowOnSite": "Всегда разрешать на этом сайте",
@@ -2546,9 +2547,10 @@
 		},
 		"question": {
 			"allow": "Разрешить",
-			"allowAlways": "Всегда",
-			"reject": "Запретить",
-			"rejectAlways": "Никогда"
+			"allowAlways": "Всегда разрешать",
+			"reject": "Не разрешать",
+			"rejectAlways": "Никогда не разрешать",
+			"more": "Другие ответы"
 		},
 		"badge": {
 			"title": "Агенты",

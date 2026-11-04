@@ -1487,7 +1487,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "다음 접근 권한을 요청합니다:",
 		"more": "+{count}개 더 보기",
-		"deny": "거부",
+		"deny": "허용 안 함",
+		"moreAnswers": "기타 응답",
 		"allow": "허용",
 		"allowOnce": "한 번 허용",
 		"alwaysAllowOnSite": "이 사이트에서 항상 허용",
@@ -2507,8 +2508,9 @@
 		"question": {
 			"allow": "허용",
 			"allowAlways": "항상 허용",
-			"reject": "거부",
-			"rejectAlways": "항상 거부"
+			"reject": "허용 안 함",
+			"rejectAlways": "항상 허용 안 함",
+			"more": "기타 응답"
 		},
 		"badge": {
 			"title": "에이전트",

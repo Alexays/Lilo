@@ -1,55 +1,104 @@
 <script lang="ts">
   import "../../lib/i18n/agentsCatalog";
+  import UiSplitButton from "../ui/UiSplitButton.svelte";
   import { conversationActions } from "./conversationActions";
   import type { BridgePermissionOption } from "../../lib/bridge/protocol";
   import { t } from "../../lib/i18n/state.svelte";
+  import { formatShortcut } from "../../lib/inputParser";
   import { tooltip } from "../../lib/tooltip";
 
-  let { tabId, requestId, options }: { tabId: string; requestId: string; options: BridgePermissionOption[] } = $props();
+  let {
+    tabId,
+    requestId,
+    options,
+    keys = false,
+  }: {
+    tabId: string;
+    requestId: string;
+    options: BridgePermissionOption[];
+    /** Shows Esc and Return on the two answers, where those keys answer. */
+    keys?: boolean;
+  } = $props();
 
-  const ORDER: BridgePermissionOption["kind"][] = ["allow_once", "allow_always", "reject_once", "reject_always"];
   const LABEL_KEYS: Record<BridgePermissionOption["kind"], string> = {
     allow_once: "agents.question.allow",
     allow_always: "agents.question.allowAlways",
     reject_once: "agents.question.reject",
     reject_always: "agents.question.rejectAlways",
   };
-  const sorted = $derived([...options].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind)));
+  // Allow is the default, Don't Allow the cancel; "always" and "never" are variants in Allow's menu.
+  const answers = $derived.by(() => {
+    const byKind = (kind: BridgePermissionOption["kind"]) => options.find((option) => option.kind === kind);
+    const allow = byKind("allow_once") ?? byKind("allow_always");
+    const reject = byKind("reject_once") ?? byKind("reject_always");
+    const variants = (["allow_always", "reject_always"] as const)
+      .map(byKind)
+      .filter((option): option is BridgePermissionOption => !!option && option !== allow && option !== reject);
+    return { allow, reject, variants };
+  });
+
+  function answer(option: BridgePermissionOption): void {
+    conversationActions.answer(tabId, requestId, option.optionId);
+  }
 </script>
 
-<!-- Short labels fit a sidebar row; the agent's own wording names each button to VoiceOver and in its tooltip. -->
+<!-- Short labels fit a row; the agent's own wording names each answer to VoiceOver and in its tooltip. -->
 <div class="permission-buttons">
-  {#each sorted as option (option.optionId)}
+  {#if answers.reject}
+    {@const option = answers.reject}
     {@const label = t(LABEL_KEYS[option.kind])}
     <button
       type="button"
-      class="permission-button"
-      data-kind={option.kind}
+      class="reject"
       aria-label={option.name}
       use:tooltip={{ text: option.name, disabled: option.name === label }}
       onclick={(event) => {
         event.stopPropagation();
-        conversationActions.answer(tabId, requestId, option.optionId);
+        answer(option);
       }}
-    >{label}</button>
-  {/each}
+    >{label}{#if keys}<kbd aria-hidden="true">Esc</kbd>{/if}</button>
+  {/if}
+  {#if answers.allow}
+    {@const option = answers.allow}
+    {@const label = t(LABEL_KEYS[option.kind])}
+    {#if answers.variants.length > 0}
+      <UiSplitButton
+        menuLabel={t("agents.question.more")}
+        variants={answers.variants.map((variant) => ({ label: t(LABEL_KEYS[variant.kind]), onclick: () => answer(variant) }))}
+        onclick={() => answer(option)}
+      >{label}{#if keys}<kbd aria-hidden="true">{formatShortcut("Enter")}</kbd>{/if}</UiSplitButton>
+    {:else}
+      <button
+        type="button"
+        class="allow"
+        aria-label={option.name}
+        onclick={(event) => {
+          event.stopPropagation();
+          answer(option);
+        }}
+      >{label}{#if keys}<kbd aria-hidden="true">{formatShortcut("Enter")}</kbd>{/if}</button>
+    {/if}
+  {/if}
 </div>
 
 <style>
   .permission-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-6);
+    justify-content: flex-end;
+    gap: var(--space-8);
   }
 
-  .permission-button {
+  .reject,
+  .allow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
     height: var(--control-height-sm);
     max-width: 100%;
     padding: 0 var(--space-10);
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--text-primary-tint-10);
-    color: var(--text-primary);
     font-family: inherit;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
@@ -57,41 +106,37 @@
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    transition:
-      background var(--transition-fast),
-      color var(--transition-fast),
-      transform var(--motion-duration-fast) var(--motion-ease-standard);
+    transition: background var(--transition-fast);
   }
 
-  .permission-button:active {
-    transform: scale(0.97);
+  .reject {
+    background: var(--bg-primary);
+    box-shadow: inset 0 0 0 1px var(--border);
+    color: var(--text-primary);
   }
 
-  .permission-button:hover {
-    background: var(--text-primary-tint-12);
+  .reject:hover {
+    background: var(--bg-hover);
   }
 
-  .permission-button[data-kind="allow_once"] {
+  .allow {
     background: var(--accent);
     color: var(--accent-text);
   }
 
-  .permission-button[data-kind="allow_once"]:hover {
+  .allow:hover {
     background: var(--accent-hover);
   }
 
-  .permission-button[data-kind^="reject"] {
-    background: transparent;
-    color: var(--text-secondary);
-  }
-
-  .permission-button[data-kind^="reject"]:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-  }
-
-  .permission-button:focus-visible {
+  .reject:focus-visible,
+  .allow:focus-visible {
     outline: var(--focus-outline);
     outline-offset: 1px;
+  }
+
+  kbd {
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    opacity: 0.6;
   }
 </style>
