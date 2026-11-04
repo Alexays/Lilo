@@ -503,3 +503,19 @@ test("a locked folder unlocks from its chip", async ({ page }) => {
 	const unlock = (await sentCommands(page)).filter((c) => c.action === "unlockTabFolder").at(-1);
 	expect(unlock?.payload).toEqual({ id: "folder-docs", password: "secret" });
 });
+
+test("the space editor drops from the strip's Space button, over the page, and a press outside closes it", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await receive(page, { event: "openSpaceEditor", id: "space-1" });
+
+	const editor = page.locator(".strip-editor .editor-panel");
+	await expect(editor).toBeVisible();
+	await expect(page.locator(".strip-panels.open")).toHaveCount(0);
+	const chip = (await page.locator(".tab-strip .space-chip").boundingBox())!;
+	const box = (await editor.boundingBox())!;
+	expect(box.y).toBeGreaterThan(chip.y + chip.height);
+	expect(Math.abs(box.x - chip.x)).toBeLessThan(2);
+
+	await page.mouse.click(box.x + box.width + 200, box.y + 200);
+	await expect(editor).toHaveCount(0);
+});

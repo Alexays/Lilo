@@ -20,11 +20,9 @@
   import { getActiveUrlBarDrawer } from "../../stores/urlBarDrawer.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import {
-    closeHistoryShell,
-    closeSettingsShell,
+    closePageShell,
+    getPageShell,
     isDownloadsVisible,
-    isHistoryShellOpen,
-    isSettingsShellOpen,
     openDownloadsPanel,
   } from "../../stores/panels.svelte";
   import { LINE_ICONS } from "../commandbar/commandBarIcons";
@@ -52,15 +50,21 @@
   const recentArchived = $derived(getRecentArchivedTabs());
   let archiveButton: HTMLButtonElement | undefined = $state();
   let archiveOpen = $state(false);
-  // Settings is a page of its own here: its pill is the active one, the page's tab steps back.
-  // Settings and History open over the page as a surface of their own: the strip shows it as the active tab.
-  const surface = $derived(
-    isSettingsShellOpen()
-      ? { icon: LINE_ICONS.gear, label: t("settings.panelTitle"), close: closeSettingsShell }
-      : isHistoryShellOpen()
-        ? { icon: LINE_ICONS.history, label: t("historyPage.title"), close: closeHistoryShell }
-        : null,
-  );
+  // A system screen opens over the page as a surface of its own: its pill is the active tab, the page's tab steps back.
+  const SURFACES = {
+    settings: { icon: LINE_ICONS.gear, labelKey: "settings.panelTitle" },
+    history: { icon: LINE_ICONS.history, labelKey: "historyPage.title" },
+    downloads: { icon: LINE_ICONS.download, labelKey: "downloadsPanel.title" },
+    processes: {
+      icon: "M4.5 4.5h7v7h-7zM6.5 2v2.5M9.5 2v2.5M6.5 11.5V14M9.5 11.5V14M2 6.5h2.5M2 9.5h2.5M11.5 6.5H14M11.5 9.5H14",
+      labelKey: "processManager.title",
+    },
+    diagnostics: { icon: LINE_ICONS.pulse, labelKey: "diagnostics.title" },
+  } as const;
+  const surface = $derived.by(() => {
+    const shell = getPageShell();
+    return shell ? { icon: SURFACES[shell].icon, label: t(SURFACES[shell].labelKey), close: closePageShell } : null;
+  });
   const shownActiveId = $derived(surface ? "" : activeTabId);
   const editsAddress = $derived(getAddressPlacement() === "tabs");
   // The address field itself shows only when it has something to say (a permission prompt), or while

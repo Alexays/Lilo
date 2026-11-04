@@ -71,7 +71,7 @@
       if (openable) downloadActions.startDrag(download.id);
     }}
   >
-    <img src={fileIconURL(download)} alt="" width="30" height="30" draggable="false" />
+    <img src={fileIconURL(download)} alt="" width="40" height="40" draggable="false" />
   </button>
 
   <button
@@ -137,35 +137,30 @@
 </div>
 
 <style>
+  /* An object row: 40 px file icon, name, one detail line, the accessories on the right. Its hover
+     reaches past the content edge so the icon lines up with the page title. */
   .download-row {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
-    height: 48px;
-    padding: 0 6px 0 8px;
+    gap: 14px;
+    min-height: 56px;
+    margin-inline: -12px;
+    padding: 8px 12px;
     border-radius: var(--radius-md);
-    border: 1px solid transparent;
     outline: none;
     cursor: default;
-    transition:
-      background var(--motion-duration-fast) ease,
-      border-color var(--motion-duration-fast) ease;
+    transition: background var(--motion-duration-fast) ease;
   }
 
   .download-row:hover,
   .download-row.selected {
-    background: color-mix(in srgb, var(--bg-hover) 46%, transparent);
-    border-color: color-mix(in srgb, var(--text-primary) 6%, transparent);
+    background: var(--bg-hover);
   }
 
   .download-row:has(.row-main:focus-visible) {
     outline: var(--focus-outline);
     outline-offset: -2px;
-  }
-
-  .download-row.error {
-    background: color-mix(in srgb, var(--danger) 6%, transparent);
   }
 
   .download-row.missing .file-icon,
@@ -178,8 +173,8 @@
     z-index: 1;
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     border: 0;
     background: none;
     padding: 0;
@@ -187,8 +182,8 @@
   }
 
   .file-icon img {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     pointer-events: none;
   }
 
@@ -225,9 +220,9 @@
   .row-name {
     display: block;
     color: var(--text-primary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
-    line-height: 1.25;
+    line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -236,8 +231,8 @@
   .row-meta {
     display: block;
     color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    line-height: 1.25;
+    font-size: var(--font-size-sm);
+    line-height: 1.3;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     overflow: hidden;
@@ -245,52 +240,44 @@
   }
 
   .row-meta.tone-error {
-    color: var(--danger);
+    color: var(--danger-text);
   }
 
   .row-button {
     position: relative;
     z-index: 1;
     flex-shrink: 0;
-    width: 24px;
-    height: 24px;
+    width: var(--control-height-sm);
+    height: var(--control-height-sm);
     display: grid;
     place-items: center;
     padding: 0;
     background: none;
     border: none;
     border-radius: var(--radius-sm);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     cursor: pointer;
   }
 
   .row-button:hover {
-    background: color-mix(in srgb, var(--bg-hover) 70%, transparent);
+    background: var(--bg-active);
     color: var(--text-primary);
   }
 
-  .row-action {
-    color: var(--text-secondary);
+  .row-button:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   .download-row.error .row-action {
-    color: var(--danger);
-  }
-
-  .row-menu {
-    opacity: 0;
-  }
-
-  .download-row:hover .row-menu,
-  .download-row.selected .row-menu,
-  .download-row:focus-within .row-menu {
-    opacity: 1;
+    color: var(--danger-text);
   }
 
   .row-progress {
     display: block;
-    height: 3px;
-    margin-top: 2px;
+    width: min(100%, 420px);
+    height: 4px;
+    margin-top: 4px;
     border-radius: var(--radius-chip);
     overflow: hidden;
     background: var(--text-primary-tint-10);
@@ -300,12 +287,18 @@
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: color-mix(in srgb, var(--accent) 86%, var(--text-primary));
+    background: var(--accent);
     /* Sliding a full-width fill under the clipping track keeps its rounded end undistorted. */
     transition: transform 180ms ease;
   }
 
   .row-progress.paused .row-progress-fill {
     background: color-mix(in srgb, var(--text-muted) 72%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .row-progress-fill {
+      transition: none;
+    }
   }
 </style>

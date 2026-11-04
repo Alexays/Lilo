@@ -1,7 +1,8 @@
 <script lang="ts">
   import TabStrip from "./TabStrip.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
-  import { hasActivePanel, isDesignSystemShellOpen, isHistoryShellOpen, isSettingsShellOpen } from "../../stores/panels.svelte";
+  import { dismissable } from "../../lib/actions/dismissable";
+  import { closeEditor, editorState, getActivePanel, getPageShell, isDesignSystemShellOpen, isEditorOpen } from "../../stores/panels.svelte";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
   import { isSidebarOverlay, isSidebarShown } from "../../stores/ui.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
@@ -12,12 +13,13 @@
   // On top the strip takes the page's color, as the page toolbar does; read apart from the tab, as there. The bottom
   // one sits on the window's surface: the page's bottom edge is whatever scrolls by.
   const pageColor = $derived(getTabPosition() === "top" ? getActiveTab()?.pageColor : undefined);
-  // Settings and History cover the page: the strip leaves its color and paints the Space's own.
-  const coversPage = $derived(isSettingsShellOpen() || isHistoryShellOpen());
+  // A system screen covers the page: the strip leaves its color and paints the Space's own.
+  const coversPage = $derived(getPageShell() !== null);
   const style = $derived(coversPage ? undefined : pageBarStyle(pageColor, accent));
 
-  // Settings is not among them: in a strip it is a page of its own, its navigation inside.
-  const isPanelOpen = $derived(hasActivePanel() || isDesignSystemShellOpen());
+  // System screens are not among them: in a strip each is a page of its own, its navigation inside. Nor is the Space
+  // editor: it drops from the strip's Space button, over the page it repaints.
+  const isPanelOpen = $derived((getActivePanel() !== null && !isEditorOpen()) || isDesignSystemShellOpen());
   // Latched like the sidebar's: the panels chunk loads on first open, then stays for close animations.
   let panelsLoaded = $state(false);
   $effect(() => {
@@ -30,7 +32,28 @@
     else delete document.documentElement.dataset.stripPanelOpen;
     return () => delete document.documentElement.dataset.stripPanelOpen;
   });
+
+  // Under a top strip, over a bottom one, aligned on the Space button and clear of the page's bars; it scrolls when
+  // the window is short.
+  let viewport = $state({ width: window.innerWidth, height: window.innerHeight });
+  const editorAt = $derived.by(() => {
+    if (!isEditorOpen()) return null;
+    void viewport;
+    const chip = document.querySelector(".tab-strip-host .space-chip")?.getBoundingClientRect();
+    const strip = document.querySelector(".tab-strip-host")?.getBoundingClientRect();
+    if (!chip || !strip) return null;
+    const left = Math.max(8, Math.min(chip.left, viewport.width - EDITOR_WIDTH - 8));
+    return getTabPosition() === "bottom"
+      ? { left, bottom: viewport.height - strip.top + 6, maxHeight: `calc(${strip.top - 12}px - var(--chrome-content-top))` }
+      : { left, top: strip.bottom + 6, maxHeight: `calc(${viewport.height - strip.bottom - 12}px - var(--chrome-content-bottom))` };
+  });
+  const EDITOR_WIDTH = 320;
+  // A Space being edited applies each change as it goes, so a press outside just closes it; a new one waits for
+  // Create Space or Cancel.
+  const dismissEditor = dismissable({ onDismiss: closeEditor, ignore: `[aria-expanded="true"], .ui-modal` });
 </script>
+
+<svelte:window onresize={() => (viewport = { width: window.innerWidth, height: window.innerHeight })} />
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
@@ -60,7 +83,62 @@
   {/await}
 {/if}
 
+{#if editorAt}
+  {#await import("../spaces/SpaceEditor.svelte") then editor}
+    <div
+      class="strip-editor tabs-surface"
+      class:below={editorAt.top !== undefined}
+      style:left="{editorAt.left}px"
+      style:top={editorAt.top !== undefined ? `${editorAt.top}px` : null}
+      style:bottom={editorAt.bottom !== undefined ? `${editorAt.bottom}px` : null}
+      style:max-height={editorAt.maxHeight}
+      style:width="{EDITOR_WIDTH}px"
+      use:reportInteractiveZone={{ id: "strip-editor" }}
+      {@attach editorState().mode === "edit" ? dismissEditor : undefined}
+    >
+      <editor.default inPopover />
+    </div>
+  {/await}
+{/if}
+
 <style>
+  .strip-editor {
+    position: fixed;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    overflow: clip;
+    border-radius: var(--float-radius-popover);
+    background-color: var(--sidebar-bg);
+    box-shadow: var(--chrome-overlay-shadow);
+    pointer-events: auto;
+    transform-origin: left bottom;
+    animation: editor-in 200ms var(--motion-ease-spring) both;
+  }
+
+  .strip-editor.below {
+    transform-origin: left top;
+  }
+
+  :global(html[data-material='grain']) .strip-editor {
+    background-image: var(--grain-texture);
+    background-size: 160px;
+    background-blend-mode: overlay;
+  }
+
+  @keyframes editor-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .strip-editor {
+      animation: none;
+    }
+  }
+
   .strip-panels {
     position: fixed;
     left: var(--content-inset);

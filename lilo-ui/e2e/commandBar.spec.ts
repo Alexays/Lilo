@@ -328,7 +328,7 @@ test("the command bar opens the downloads list, its row naming the Downloads key
 	await expect(page.locator(".command-bar-result.selected .result-helper")).toHaveText("⌥⌘L");
 	await input.press("Enter");
 
-	await expect(page.locator(".downloads-panel")).toBeVisible();
+	await expect(page.locator("section[aria-label=\"Downloads\"]")).toBeVisible();
 });
 
 for (const [how, click] of [

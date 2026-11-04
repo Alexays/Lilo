@@ -7,22 +7,19 @@
   import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import { getAgentsProfileId, getAgentsSpaceIds, isAgentsSpace } from "../../stores/agents.svelte";
   import { getProfileById, getProfileExtensionCounts, getProfiles } from "../../stores/profiles.svelte";
-  import { getSpaces } from "../../stores/spaces.svelte";
-  import { getWallpaperThumbnail } from "../../stores/spaceColor.svelte";
-  import { lightForDayPart } from "../../lib/spaceColor";
+  import { getActiveSpace, getSpaces } from "../../stores/spaces.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
   import AppearancePicker from "./AppearancePicker.svelte";
-  import { on } from "../../lib/bridge";
-  import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import PanelHeader from "../ui/PanelHeader.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiSelect from "../ui/UiSelect.svelte";
-  import { nextProfileColor, PASTEL_COLOR_NAMES, PASTEL_COLORS, spacesByProfile, userProfiles } from "../settings/profilesModel";
+  import { nextProfileColor, spacesByProfile, userProfiles } from "../settings/profilesModel";
   import {
     canSave,
     initialProfileChoice,
     spaceEditorSubmission,
+    spaceEditorUpdate,
     type ProfileChoice,
   } from "./spaceEditorModel";
   import {
@@ -48,15 +45,15 @@
     "🎨",
   ];
 
+  /** In a popover under a tab strip's Space button rather than in the sidebar: no window controls to clear. */
+  let { inPopover = false }: { inPopover?: boolean } = $props();
+
   let showEmojiPopover = $state(false);
   // The quick picks' ··· tile widens the popover into the full picker, loaded on first use.
   let showFullPicker = $state(false);
   let emojiButton: HTMLButtonElement | undefined = $state();
   let moreButton: HTMLButtonElement | undefined = $state();
   let showDeleteConfirmSheet = $state(false);
-  // The appearance card floats beside the editor, anchored at its summary row.
-  let appearanceButton: HTMLButtonElement | undefined = $state();
-  let appearanceAt = $state<{ top: number; left: number } | null>(null);
   let choice = $state<ProfileChoice>({ kind: "profile", id: "" });
   let newProfileName = $state("");
 
@@ -66,6 +63,7 @@
   // What the "New profile" choice will wear: the color Swift would pick, sent along explicitly.
   const newProfileColor = $derived(nextProfileColor(getProfiles()));
   const editingSpace = $derived(getSpaces().find((space) => space.id === editorState().spaceId));
+  const editing = $derived(editorState().mode === "edit");
   const editingPrivate = $derived(editorState().mode === "edit" && editingSpace?.isPrivate === true);
   // Each agent picks its own profile: an Agents space keeps the one it was made for.
   const editingAgents = $derived(editorState().mode === "edit" && isAgentsSpace(editorState().spaceId));
@@ -113,6 +111,55 @@
     profileActions.loadStats();
   });
 
+  // A Space being edited changes as it is edited: each pause sends what differs from it, and closing sends the rest.
+  let pendingUpdate: ReturnType<typeof spaceEditorUpdate> = null;
+  let updateTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function sendUpdate(): void {
+    clearTimeout(updateTimer);
+    if (pendingUpdate) spaceActions.update(pendingUpdate);
+    pendingUpdate = null;
+  }
+
+  $effect(() => {
+    const s = editorState();
+    const space = s.open && s.mode === "edit" ? editingSpace : undefined;
+    untrack(() => {
+      if (pendingUpdate && pendingUpdate.id !== space?.id) sendUpdate();
+      pendingUpdate = space ? spaceEditorUpdate(s, space) : null;
+      clearTimeout(updateTimer);
+      if (pendingUpdate) updateTimer = setTimeout(sendUpdate, 250);
+    });
+  });
+
+  // Closing the editor unmounts it: what is still waiting goes out first.
+  $effect(() => sendUpdate);
+
+  // Signed in as follows the Space's profile, a new one included once Swift has made it.
+  const editingProfileId = $derived(editingSpace?.profileId);
+  $effect(() => {
+    const id = editingProfileId;
+    untrack(() => {
+      if (id && editing && !editingPrivate) {
+        choice = { kind: "profile", id };
+        newProfileName = "";
+      }
+    });
+  });
+
+  function chooseProfile(next: ProfileChoice): void {
+    choice = next;
+    if (editing && next.kind === "profile" && next.id !== editingSpace?.profileId) {
+      spaceActions.update({ id: editorState().spaceId, profileId: next.id });
+    }
+  }
+
+  function createProfile(): void {
+    const name = newProfileName.trim();
+    if (!editing || choice.kind !== "new" || !name) return;
+    spaceActions.update({ id: editorState().spaceId, newProfileName: name, newProfileColor });
+  }
+
   $effect(() => {
     if (!showEmojiPopover) {
       return;
@@ -157,20 +204,16 @@
       .join(" · ");
   }
 
-  function save() {
+  function create() {
     const s = editorState();
     if (!canSave(s.name, choice, newProfileName)) return;
-    showDeleteConfirmSheet = false;
-    const submission = spaceEditorSubmission(s, choice, { name: newProfileName, color: newProfileColor });
-    if (submission.action === "createSpace") spaceActions.create(submission.payload);
-    else spaceActions.update(submission.payload);
+    spaceActions.create(spaceEditorSubmission(s, choice, { name: newProfileName, color: newProfileColor }));
     closeEditor();
   }
 
-  // Leaving for the profiles keeps the edits made so far, as if saved first.
+  // Leaving for the profiles keeps the new Space, as if created first; an edited one has its edits already.
   function manageProfiles() {
-    const s = editorState();
-    if (canSave(s.name, choice, newProfileName)) save();
+    if (!editing) create();
     openSettings("tabs");
     revealSetting("tabs", "newProfile");
   }
@@ -209,48 +252,6 @@
     moreButton?.focus();
   }
 
-  const APPEARANCE_WIDTH = 304;
-
-  function toggleAppearance(): void {
-    if (appearanceAt) {
-      appearanceAt = null;
-      return;
-    }
-    const panel = appearanceButton?.closest(".editor-panel")?.getBoundingClientRect();
-    const row = appearanceButton?.getBoundingClientRect();
-    if (!panel || !row) return;
-    // Beside the editor, on whichever side has room (the sidebar can sit on the right).
-    const left = panel.right + 10 + APPEARANCE_WIDTH <= window.innerWidth ? panel.right + 10 : panel.left - 10 - APPEARANCE_WIDTH;
-    appearanceAt = { top: Math.max(12, Math.min(row.top - 24, window.innerHeight - 470)), left };
-  }
-
-  async function closeAppearance(): Promise<void> {
-    appearanceAt = null;
-    await tick();
-    appearanceButton?.focus();
-  }
-
-  // Moved out of the editor panel, which clips and transforms what it holds; closes on a press outside,
-  // the page's included (those reach the chrome only as contentInteraction).
-  function floatAppearance(node: HTMLElement): () => void {
-    document.getElementById("chrome-root")?.appendChild(node);
-    const outside = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (!node.contains(target) && !appearanceButton?.contains(target)) appearanceAt = null;
-    };
-    window.addEventListener("pointerdown", outside, true);
-    const disposeContent = on("contentInteraction", ({ isMouseDown }) => {
-      if (isMouseDown) appearanceAt = null;
-    });
-    return () => {
-      window.removeEventListener("pointerdown", outside, true);
-      disposeContent();
-      node.remove();
-    };
-  }
-
-  const colorIndex = $derived(PASTEL_COLORS.indexOf(editorState().color));
-
   function handleKeydown(e: KeyboardEvent) {
     if (e.defaultPrevented) return;
     if (e.key === "Escape") {
@@ -263,13 +264,19 @@
       return;
     }
     // The delete confirmation's own buttons take Return: its focused Cancel must never delete.
-    if (showDeleteConfirmSheet) return;
-    // Command-Return submits from anywhere; plain Return only from a text field, where it
-    // would otherwise do nothing.
-    const inTextField = e.target instanceof HTMLInputElement && e.target.type === "text";
-    if (e.key === "Enter" && (e.metaKey || inTextField)) {
+    if (showDeleteConfirmSheet || e.key !== "Enter") return;
+    const target = e.target as HTMLElement;
+    if (target.classList.contains("new-profile-input")) {
       e.preventDefault();
-      save();
+      if (editing) createProfile();
+      else create();
+      return;
+    }
+    // Command-Return creates from anywhere, plain Return from the name field; an edited Space is done.
+    if (e.metaKey || target.classList.contains("identity-name-input")) {
+      e.preventDefault();
+      if (editing) closeEditor();
+      else create();
     }
   }
 </script>
@@ -312,15 +319,21 @@
   {@const s = editorState()}
   <div
     class="panel-shell editor-panel"
+    class:popover={inPopover}
     role="dialog"
     aria-label={t("spaceEditor.dialogLabel")}
     tabindex="0"
     onkeydown={handleKeydown}
   >
-    <PanelHeader
-      title={s.mode === "add" ? t("spaceEditor.newSpace") : t("spaceEditor.editSpace")}
-      onclose={closeEditor}
-    />
+    {#if inPopover}
+      <h2 class="popover-title">{s.mode === "add" ? t("spaceEditor.newSpace") : t("spaceEditor.editSpace")}</h2>
+    {:else}
+      <PanelHeader
+        title={s.mode === "add" ? t("spaceEditor.newSpace") : t("spaceEditor.editSpace")}
+        backLabel={getActiveSpace()?.name ?? ""}
+        onclose={closeEditor}
+      />
+    {/if}
 
     <div class="editor-body">
       <div class="preview-card" style={identityTint(s.color)}>
@@ -398,36 +411,16 @@
       </div>
 
       <div class="field">
-        <span class="field-label" id="space-appearance-label">{t("spaceEditor.appearanceLabel")}</span>
-        <button class="appearance-row" bind:this={appearanceButton} aria-labelledby="space-appearance-label space-appearance-value space-appearance-chip" aria-expanded={appearanceAt !== null} onclick={toggleAppearance}>
-          <span class="appearance-chip {s.material}" class:split={s.colorMode === "time"} id="space-appearance-chip"
-            role="img" aria-label={s.colorMode === "time" ? t("spaceEditor.followDay") : undefined}
-            style:--night={lightForDayPart(s.color, "night")} style:background-color={s.color}
-            style:background-image={s.colorMode === "wallpaper" && getWallpaperThumbnail() ? `url("${getWallpaperThumbnail()}")` : null}></span>
-          <span class="appearance-text" id="space-appearance-value">
-            <span>{s.colorMode === "page" || s.colorMode === "wallpaper"
-              ? t(`spaceEditor.colorFrom.${s.colorMode}`)
-              : colorIndex >= 0 ? t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[colorIndex]}`) : t("spaceEditor.customColor")}</span>
-            <span class="appearance-detail">
-              {t(`spaceEditor.material.${s.material}`)}
-            </span>
-          </span>
-          <svg class="appearance-chevron" class:open={appearanceAt !== null} width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
-        </button>
-        {#if appearanceAt}
-          <div class="appearance-card" role="dialog" tabindex="-1" aria-labelledby="space-appearance-label" style:top="{appearanceAt.top}px" style:left="{appearanceAt.left}px"
-            {@attach floatAppearance} use:reportInteractiveZone={{ id: "space-appearance" }} onkeydown={(e) => { if (e.key === "Escape") { e.preventDefault(); closeAppearance(); } }}
-            transition:scale={{ start: 0.96, duration: prefersReducedMotion() ? 0 : 180 }}>
-            <AppearancePicker
-              mode={s.colorMode}
-              color={s.color}
-              material={s.material}
-              onmode={(colorMode) => updateEditorState({ colorMode })}
-              oncolor={(color) => updateEditorState({ color })}
-              onmaterial={(material) => updateEditorState({ material })}
-            />
-          </div>
-        {/if}
+        <span class="field-label">{t("spaceEditor.appearanceLabel")}</span>
+        <AppearancePicker
+          inline
+          mode={s.colorMode}
+          color={s.color}
+          material={s.material}
+          onmode={(colorMode) => updateEditorState({ colorMode })}
+          oncolor={(color) => updateEditorState({ color })}
+          onmaterial={(material) => updateEditorState({ material })}
+        />
       </div>
 
       {#if !editingAgents}
@@ -443,7 +436,7 @@
                   kind: "profile",
                   color: profile.color,
                   checked: choice.kind === "profile" && choice.id === profile.id,
-                  select: () => (choice = { kind: "profile", id: profile.id }),
+                  select: () => chooseProfile({ kind: "profile", id: profile.id }),
                   label: profile.name,
                   detail: profileMeta(profile.id),
                 })}
@@ -461,6 +454,7 @@
                   type="text"
                   {@attach (node) => node.focus()}
                   bind:value={newProfileName}
+                  onblur={createProfile}
                   placeholder={t("spaceEditor.profileNamePlaceholder")}
                   aria-label={t("spaceEditor.profileNamePlaceholder")}
                   spellcheck="false"
@@ -496,24 +490,26 @@
       {/if}
     </div>
 
-    <div class="editor-footer">
-      {#if s.mode === "edit" && isLastSpace}
-        <!-- Tooltip on a wrapper span: disabled buttons swallow the pointer events. -->
-        <span class="delete-space-wrap" use:tooltip={t("spaceEditor.lastSpaceHint")}>
-          <UiButton variant="danger" disabled>{t("common.delete")}</UiButton>
-        </span>
-      {:else if s.mode === "edit"}
-        <UiButton variant="danger" onclick={openDeleteConfirmSheet}>{t("common.delete")}</UiButton>
-      {:else}
-        <kbd class="submit-shortcut">⌘↩</kbd>
-      {/if}
-      <div class="footer-actions">
-        <UiButton variant="ghost" onclick={closeEditor}>{t("common.cancel")}</UiButton>
-        <UiButton variant="primary" disabled={!saveEnabled} onclick={save}>
-          {s.mode === "add" ? t("spaceEditor.create") : t("common.save")}
-        </UiButton>
+    {#if s.mode === "edit"}
+      <div class="editor-footer">
+        {#if isLastSpace}
+          <!-- Tooltip on a wrapper span: disabled buttons swallow the pointer events. -->
+          <span class="delete-space-wrap" use:tooltip={t("spaceEditor.lastSpaceHint")}>
+            <button class="delete-space" disabled>{t("spaceEditor.deleteSpaceEllipsis")}</button>
+          </span>
+        {:else}
+          <button class="delete-space" onclick={openDeleteConfirmSheet}>{t("spaceEditor.deleteSpaceEllipsis")}</button>
+        {/if}
       </div>
-    </div>
+    {:else}
+      <div class="editor-footer">
+        <kbd class="submit-shortcut">⌘↩</kbd>
+        <div class="footer-actions">
+          <UiButton variant="ghost" onclick={closeEditor}>{t("common.cancel")}</UiButton>
+          <UiButton variant="primary" disabled={!saveEnabled} onclick={create}>{t("spaceEditor.create")}</UiButton>
+        </div>
+      </div>
+    {/if}
 
     <UiConfirmModal
       visible={showDeleteConfirmSheet}
@@ -603,100 +599,6 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-  }
-
-  .appearance-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px;
-    border: 0;
-    border-radius: var(--radius-lg);
-    background: var(--bg-hover);
-    color: var(--text-primary);
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .appearance-row:focus-visible {
-    outline: var(--focus-outline);
-    outline-offset: 2px;
-  }
-
-  .appearance-chip {
-    flex: none;
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius-md);
-    background-position: center;
-    background-size: cover;
-    box-shadow: inset 0 0 0 1px var(--text-primary-tint-12), inset 0 1px 0 color-mix(in srgb, white 45%, transparent);
-  }
-
-  .appearance-chip.glass {
-    box-shadow: inset 1px 1.5px 0 color-mix(in srgb, white 85%, transparent), inset 0 0 0 1px var(--text-primary-tint-12);
-  }
-
-  .appearance-chip.grain {
-    background-image: var(--grain-texture);
-    background-size: 60px;
-    background-blend-mode: overlay;
-  }
-
-  /* Following the time of day: the color by day and by night, split across the chip. */
-  .appearance-chip.split {
-    background-image: linear-gradient(135deg, transparent 50%, var(--night) 50%);
-  }
-
-  .appearance-chip.grain.split {
-    background-image: var(--grain-texture), linear-gradient(135deg, transparent 50%, var(--night) 50%);
-  }
-
-  .appearance-text {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-width: 0;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-  }
-
-  .appearance-detail {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text-secondary);
-    font-size: var(--font-size-xs);
-    font-weight: normal;
-  }
-
-  /* Following the time of day: the color by day and by night, split across the chip. */
-
-
-
-
-  .appearance-chevron {
-    color: var(--text-muted);
-    transition: transform 0.25s var(--motion-ease-spring);
-  }
-
-  .appearance-chevron.open {
-    transform: rotate(180deg);
-  }
-
-  .appearance-card {
-    position: fixed;
-    pointer-events: auto;
-    z-index: 50;
-    width: 304px;
-    padding: 16px;
-    border-radius: var(--radius-xl);
-    background: var(--chrome-floating-surface);
-    box-shadow: var(--chrome-overlay-shadow), 0 0 0 0.5px var(--text-primary-tint-12);
-    -webkit-backdrop-filter: blur(24px) saturate(1.4);
-    backdrop-filter: blur(24px) saturate(1.4);
-    transform-origin: left 40px;
   }
 
   .field-label-row {
@@ -861,6 +763,47 @@
 
   .delete-space-wrap {
     display: inline-flex;
+  }
+
+  /* Destructive and last, as red text: never a button that competes with the edits above. */
+  .delete-space {
+    padding: 2px 4px;
+    margin-left: -4px;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: none;
+    color: var(--danger-text);
+    font-family: inherit;
+    font-size: var(--font-size-md);
+    cursor: pointer;
+  }
+
+  .delete-space:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  .delete-space:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .delete-space:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
+
+  .popover-title {
+    margin: 0;
+    padding: 14px 16px 10px;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .editor-panel.popover {
+    flex: 0 1 auto;
+    height: auto;
+    min-height: 0;
   }
 
   .emoji-picker-shell {

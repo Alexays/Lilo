@@ -10,6 +10,8 @@
 
   interface Props {
     icon: UrlDrawerIconName;
+    /** A picture standing for who asks (an extension's icon), in place of the symbol. */
+    iconImage?: string;
     dismissLabel: string;
     confirmLabel: string;
     /** A second way to agree, in the confirm button's menu. */
@@ -25,6 +27,7 @@
 
   let {
     icon,
+    iconImage,
     dismissLabel,
     confirmLabel,
     alternateLabel,
@@ -39,7 +42,11 @@
 </script>
 
 <div class="drawer-prompt" role="alert">
-  <span class="prompt-icon"><URLDrawerIcon name={icon} /></span>
+  {#if iconImage}
+    <img class="prompt-image" src={iconImage} alt="" draggable="false" />
+  {:else}
+    <span class="prompt-icon"><URLDrawerIcon name={icon} /></span>
+  {/if}
   <div class="prompt-message" class:error>{@render children()}</div>
 </div>
 {#if showActions}
@@ -72,6 +79,14 @@
     flex: none;
     padding-top: 1px;
     color: var(--text-secondary);
+  }
+
+  .prompt-image {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    object-fit: contain;
   }
 
   .prompt-message {

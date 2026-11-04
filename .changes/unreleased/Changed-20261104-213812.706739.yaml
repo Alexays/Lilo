@@ -1,0 +1,3 @@
+kind: Changed
+body: The Space editor applies each change as you make it, with no Save button, and picks the material, the color and the time of day switch right in the sidebar, which repaints as its own preview. With the tabs on top or at the bottom, it drops from the strip's Space button over the page.
+time: 2026-11-04T21:38:12.706739+01:00

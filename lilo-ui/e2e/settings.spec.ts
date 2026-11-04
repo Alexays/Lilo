@@ -112,11 +112,13 @@ test("an extension's page is built from the settings lists and names the extensi
 	// The header is the only place naming it: a narrow window wraps the name rather than cutting it.
 	await page.setViewportSize({ width: 600, height: 400 });
 	expect(await title.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
-	await expect(frame.locator(".ui-inset-list-title")).toContainText(["Description", "Capabilities", "Site access"]);
+	await expect(frame.locator(".detail-description")).toHaveText("Dark mode for every website.");
+	await expect(frame.locator(".detail-head .detail-chip")).toHaveText(["Action popup", "Background page", "Content scripts"]);
+	await expect(frame.locator(".ui-inset-list-title")).toContainText(["Site access"]);
 	await expect(frame.locator(".ui-list-row").filter({ hasText: "Enabled" }).getByRole("checkbox")).toBeChecked();
 	await expect(frame.getByRole("textbox", { name: "Site access" })).toHaveClass(/ui-text-field/);
 	await expect(frame.getByRole("button", { name: "Add" })).toHaveClass(/ui-button/);
-	await expect(frame.locator(".ui-button.danger")).toHaveCount(1);
+	await expect(frame.getByRole("button", { name: "Remove Extension..." })).toBeVisible();
 
 	await frame.getByRole("textbox", { name: "Site access" }).fill("docs.example.com");
 	await frame.getByRole("button", { name: "Add" }).click();

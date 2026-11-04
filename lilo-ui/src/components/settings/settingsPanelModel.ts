@@ -121,7 +121,10 @@ export interface SettingModel {
 }
 
 /** A SettingsIcon glyph: a section's own, or one drawn for a navigation list. */
-export type SettingsGlyph = SettingsSectionId | "halfCircle" | "page" | "stack" | "clock" | "grid" | "globe" | "arrowOutOfBox" | "folder" | "play";
+export type SettingsGlyph =
+  | SettingsSectionId
+  | "halfCircle" | "page" | "stack" | "clock" | "grid" | "globe" | "arrowOutOfBox" | "folder" | "play"
+  | "tray" | "moon" | "chip" | "stopwatch" | "list" | "record" | "copy" | "refresh";
 
 /** Boolean settings: stored key and the value an unset key means. */
 export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback: boolean }>> = {

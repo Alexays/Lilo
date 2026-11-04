@@ -9,10 +9,9 @@
   import { getCallCardTab } from "../../stores/media.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
   import {
+    getPageShell,
     hasActivePanel,
     isDesignSystemShellOpen,
-    isHistoryShellOpen,
-    isSettingsShellOpen,
   } from "../../stores/panels.svelte";
   import {
     getPagedSpaces,
@@ -30,7 +29,7 @@
   const spaces = $derived(getPagedSpaces());
   const visualIndex = $derived(getSpacePagerVirtualIndex());
   const isOverlayPanelOpen = $derived(
-    hasActivePanel() || isSettingsShellOpen() || isDesignSystemShellOpen() || isHistoryShellOpen(),
+    hasActivePanel() || getPageShell() !== null || isDesignSystemShellOpen(),
   );
 
   // At rest the pager sits on an integer index and the other panes are clipped off-screen.

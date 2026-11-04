@@ -324,7 +324,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		test("a confirm modal's destructive button reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
 			await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
-			await page.locator(".process-panel").waitFor();
+			await page.getByRole("region", { name: "Process Manager" }).waitFor();
 			await page.evaluate(() =>
 				window.__lilo!.receive({
 					event: "processSnapshotUpdated",
@@ -340,8 +340,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 					],
 				}),
 			);
-			await page.locator(".process-panel .tab-row").first().click();
-			await page.locator(".process-panel .small-button.danger").click();
+			await page.locator(".object-row .row-hit").first().click();
+			await page.locator(".object-row.expanded .ui-button.danger").click();
 			const confirm = page.locator(".ui-button.destructive");
 			await expect(confirm).toBeVisible();
 			expect(await textContrast(page, ".ui-button.destructive")).toBeGreaterThanOrEqual(4.5);
@@ -409,10 +409,10 @@ for (const colorScheme of ["light", "dark"] as const) {
 	});
 }
 
-test("the slowest startup step's time reads on the sidebar", async ({ page }) => {
+test("the slowest startup step's time reads", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openDiagnostics" }));
-	await page.locator(".diagnostics-panel").waitFor();
+	await page.getByRole("region", { name: "Diagnostics" }).waitFor();
 	await page.evaluate(() =>
 		window.__lilo!.receive({
 			event: "startupMetricsLoaded",
@@ -424,15 +424,15 @@ test("the slowest startup step's time reads on the sidebar", async ({ page }) =>
 
 	const slowest = ".waterfall-row.slowest .waterfall-value";
 	await page.locator(slowest).waitFor();
-	expect(await ratio(page, await cssColor(page, slowest, "color"), await cssColor(page, ".sidebar", "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+	expect(await textContrast(page, slowest)).toBeGreaterThanOrEqual(4.5);
 });
 
 for (const colorScheme of ["light", "dark"] as const) {
-	test(`a failed download's error reads on the sidebar in ${colorScheme} mode`, async ({ page }) => {
+	test(`a failed download's error reads in ${colorScheme} mode`, async ({ page }) => {
 		await page.emulateMedia({ colorScheme });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
-		await page.locator(".downloads-panel").waitFor();
+		await page.getByRole("region", { name: "Downloads" }).waitFor();
 		await page.evaluate(() =>
 			window.__lilo!.receive({
 				event: "downloadsSnapshot",
@@ -442,7 +442,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 
 		const error = ".download-row .row-meta.tone-error";
 		await page.locator(error).waitFor();
-		expect(await ratio(page, await cssColor(page, error, "color"), await cssColor(page, ".sidebar", "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+		expect(await textContrast(page, error)).toBeGreaterThanOrEqual(4.5);
 	});
 }
 
@@ -510,7 +510,8 @@ for (const color of ["#4a90d9", "#20242e", "#ff00ff"]) {
 			world.spaces[0].color = color;
 			await bootChrome(page, world);
 			await page.evaluate(() => window.__lilo!.receive({ event: "openDiagnostics" }));
-			const unselected = ".diagnostics-panel .ui-segmented button:not(.active)";
+			await page.locator(".section-nav-panel").getByRole("button", { name: /^Log/ }).click();
+			const unselected = ".ui-shell-frame .ui-segmented button:not(.active)";
 			await page.locator(unselected).first().waitFor();
 
 			expect(await textContrast(page, unselected)).toBeGreaterThanOrEqual(4.5);
@@ -526,7 +527,7 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 			world.spaces[0].color = color;
 			await bootChrome(page, world);
 			await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
-			await page.locator(".process-panel").waitFor();
+			await page.getByRole("region", { name: "Process Manager" }).waitFor();
 			const tab = (id: string) => ({ id, spaceId: "space-1", title: id, url: `https://example.com/${id}`, lifecycle: "active", isAudioPlaying: false, isMicrophoneActive: false, isCameraActive: false, isScreenSharing: false });
 			await page.evaluate(
 				(tabs) => window.__lilo!.receive({
@@ -535,9 +536,9 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 				}),
 				[tab("tab-beta"), tab("tab-gamma")],
 			);
-			await page.locator(".process-panel .tab-row").first().click();
+			await page.locator(".object-row .row-hit").first().click();
 
-			for (const selector of [".tab-entry.expanded .tab-title", ".tab-entry.expanded .tab-state", ".tab-entry.expanded .favicon-fallback", ".details-url", ".details-meta", ".details .small-button.danger", ".reclaim .link-button"]) {
+			for (const selector of [".object-row.expanded .name", ".object-row.expanded .detail", ".object-row.expanded .favicon-fallback", ".object-row.expanded .ui-button.danger", ".reclaim .ui-button"]) {
 				if (await page.locator(selector).count() === 0) continue;
 				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(4.5);
 			}
@@ -549,9 +550,9 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 			world.spaces[0].color = color;
 			await bootChrome(page, world);
 			await page.evaluate(() => window.__lilo!.receive({ event: "openDiagnostics" }));
-			await page.locator(".diagnostics-panel .ui-segmented button").nth(1).click();
+			await page.locator(".section-nav-panel").getByRole("button", { name: /^Memory/ }).click();
 
-			expect(await textContrast(page, ".diagnostics-panel .link-button")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".ui-shell-frame .ui-list-row .ui-button >> nth=-1")).toBeGreaterThanOrEqual(4.5);
 		});
 	}
 }

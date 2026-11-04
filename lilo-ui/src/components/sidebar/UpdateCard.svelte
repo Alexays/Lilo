@@ -72,7 +72,7 @@
   .update-card {
     position: relative;
     padding: 1px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-box);
     isolation: isolate;
     container-type: inline-size;
     animation: update-rise 520ms var(--motion-ease-bounce) both;
@@ -110,10 +110,10 @@
     align-items: center;
     gap: 12px;
     width: 100%;
-    height: 50px;
-    padding: 0 10px;
+    height: 56px;
+    padding: 0 12px;
     border: none;
-    border-radius: calc(var(--radius-md) - 1px);
+    border-radius: calc(var(--radius-box) - 1px);
     background:
       radial-gradient(120% 140% at 0% 0%, var(--accent-tint-14), transparent 60%),
       var(--sidebar-sel-solid);
@@ -171,7 +171,7 @@
   .update-title {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-semibold);
@@ -182,7 +182,7 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 1px 6px;
+    padding: 1px 8px;
     border-radius: var(--radius-chip);
     background: var(--accent-tint-14);
     color: var(--accent-ink);
@@ -200,14 +200,14 @@
 
   .update-go {
     flex-shrink: 0;
-    height: 24px;
+    height: var(--control-height-md);
     box-sizing: border-box;
-    padding: 0 12px;
+    padding: 0 14px;
     border-radius: var(--radius-chip);
     background: var(--accent);
     color: var(--accent-text);
-    font-size: var(--font-size-sm);
-    line-height: 24px;
+    font-size: var(--font-size-md);
+    line-height: var(--control-height-md);
     font-weight: var(--font-weight-semibold);
     box-shadow: var(--shadow-control), inset 0 1px 0 color-mix(in srgb, white 25%, transparent);
     transition:
@@ -243,8 +243,8 @@
     right: -6px;
     display: grid;
     place-items: center;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     border: 1px solid var(--border);
     border-radius: 50%;

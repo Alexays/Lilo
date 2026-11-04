@@ -262,3 +262,24 @@ test("the Extensions settings page opens the Chrome Web Store in a new tab", asy
 	await expect.poll(async () => (await sentCommands(page)).find((c) => c.action === "createTab")?.payload.url)
 		.toBe("https://chromewebstore.google.com");
 });
+
+test("an extension's permission request floats from the extensions button instead of pushing the tabs", async ({ page }) => {
+	await bootWithExtensions(page);
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "extensionPermissionRequested", requestId: "e1", extensionId: "ext-marks", extensionName: "Raindrop",
+		permissions: ["bookmarks", "tabs", "contextMenus", "clipboardWrite", "notifications", "storage"], origins: [], type: "permissions",
+	}));
+
+	const request = page.locator(".extension-request.open");
+	await expect(request).toContainText("Raindrop requests access to:");
+	await expect(request.locator(".request-lines li")).toHaveText([
+		"Read and change your bookmarks", "See your open tabs", "Add items to context menus", "Change what you copy and paste", "+2 more",
+	]);
+	await expect(page.locator(".url-drawer.open")).toHaveCount(0);
+	const button = (await page.locator(".extension-menu-btn").boundingBox())!;
+	expect((await request.boundingBox())!.y).toBeGreaterThan(button.y + button.height);
+
+	await request.getByRole("button", { name: "Allow", exact: true }).click();
+	await expect(page.locator(".extension-request")).toHaveCount(0);
+	expect((await sentCommands(page)).some((command) => command.action === "extensionPermissionResponse" && command.payload.granted === true)).toBe(true);
+});

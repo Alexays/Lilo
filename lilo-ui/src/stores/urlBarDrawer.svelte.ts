@@ -21,6 +21,7 @@ interface ExtensionPermissionRequest {
 	kind: "extensionPermission";
 	requestId: string;
 	spaceId: string;
+	extensionId: string;
 	extensionName: string;
 	permissions: string[];
 	origins: string[];
@@ -81,6 +82,7 @@ export function initUrlBarDrawerStore(): void {
 				requestId: data.requestId,
 				// An extension prompt belongs to the space it was granted in.
 				spaceId: getActiveSpaceId(),
+				extensionId: data.extensionId,
 				extensionName: data.extensionName,
 				permissions: data.permissions ?? [],
 				origins: data.origins ?? [],
