@@ -166,7 +166,7 @@
     inset: -12px 0 100% 0;
   }
 
-  :global(html[data-tab-position='bottom']) .url-drawer::after {
+  :global(.tab-strip.bottom) .url-drawer::after {
     inset: 100% 0 -12px 0;
   }
 
@@ -182,14 +182,14 @@
     right: calc(var(--arrow-inset) - 6px);
   }
 
-  /* Over a bottom bar, it opens upward. */
-  :global(html[data-tab-position='bottom']) .url-drawer {
+  /* From the address in a bottom bar, it opens upward. */
+  :global(.tab-strip.bottom) .url-drawer {
     top: auto;
     bottom: calc(100% + 6px);
     transform-origin: var(--arrow-inset) 100%;
   }
 
-  :global(html[data-tab-position='bottom']) .url-drawer::before {
+  :global(.tab-strip.bottom) .url-drawer::before {
     top: auto;
     bottom: -6px;
     border-top-left-radius: 0;

@@ -392,8 +392,8 @@
     left: auto;
   }
 
-  /* Over a bottom dock, it opens upward. */
-  :global(html[data-tab-position='bottom']) .url-details {
+  /* From the address in a bottom bar, it opens upward. */
+  :global(.tab-strip.bottom) .url-details {
     top: auto;
     bottom: calc(100% + 2px);
   }
