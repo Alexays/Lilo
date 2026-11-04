@@ -1,5 +1,6 @@
 import AppKit
 import CoreServices
+import ImageIO
 import OSLog
 
 /// A repository's changes: a header with the mode and layout, then two cards on the window's frame
@@ -725,6 +726,11 @@ final class ChangesDiffView: NSView {
     /// Paths whose fold the reader flipped from the default; kept across reloads.
     private var toggledPaths: Set<String> = []
     private var shapedLines: [Int: Shaped] = [:]
+    /// Line numbers shaped so far, colored by the context like `shapedLines`.
+    private var numberLines: [Int32: CTLine] = [:]
+    private lazy var signLines = (added: Self.contextColored("+", font: font), removed: Self.contextColored("-", font: font))
+    /// The file headers' fold chevrons, drawn in `palette.numbers` and rebuilt when it changes.
+    private var chevrons: (color: NSColor, folded: NSImage?, open: NSImage?)?
     private var numberWidth: CGFloat = 30
     private var widestLine = 0
     private var selection: ClosedRange<Int>?
@@ -836,6 +842,7 @@ final class ChangesDiffView: NSView {
 
     private func rebuild() {
         shapedLines = [:]
+        numberLines = [:]
         accessibilityRows = [:]
         selection = nil
         rows = []
@@ -1100,14 +1107,17 @@ final class ChangesDiffView: NSView {
     /// The sign, the word highlight and the text of a line, from `x`.
     private func drawLine(_ index: Int, diff: GitDiff, x: CGFloat, rect: NSRect, context: CGContext) {
         let line = diff.lines[index]
-        let sign: String
-        let color: NSColor
+        let sign: (line: CTLine, color: NSColor)?
         switch line.kind {
-        case .added: (sign, color) = ("+", Self.palette.added)
-        case .removed: (sign, color) = ("-", Self.palette.removed)
-        default: (sign, color) = ("", Self.palette.text)
+        case .added: sign = (signLines.added, Self.palette.added)
+        case .removed: sign = (signLines.removed, Self.palette.removed)
+        default: sign = nil
         }
-        if !sign.isEmpty { drawText(sign, font: font, color: color, at: NSPoint(x: x + 4, y: rect.minY), context: context) }
+        if let sign {
+            context.setFillColor(sign.color.cgColor)
+            context.textPosition = CGPoint(x: x + 4, y: rect.minY + 3.5 + ascent)
+            CTLineDraw(sign.line, context)
+        }
         let textX = x + Self.signWidth
         let shaped = shape(index, diff: diff)
         if let highlight = shaped.highlight {
@@ -1123,21 +1133,25 @@ final class ChangesDiffView: NSView {
 
     private func shape(_ index: Int, diff: GitDiff) -> Shaped {
         if let cached = shapedLines[index] { return cached }
-        if shapedLines.count > 20_000 { shapedLines.removeAll(keepingCapacity: true) }
+        // Lines far from the one in view go: the reader's neighborhood stays shaped.
+        if shapedLines.count > 20_000 { shapedLines = shapedLines.filter { abs($0.key - index) < 5_000 } }
         let text = displayText(diff.lines[index], diff: diff)
         var highlight: Range<Int>?
         let partner = partners.isEmpty ? -1 : partners[index]
         if partner >= 0 {
             highlight = Self.changedRange(Array(text.utf16), Array(displayText(diff.lines[Int(partner)], diff: diff).utf16))
         }
-        let attributed = NSAttributedString(string: text, attributes: [
+        let result = Shaped(line: Self.contextColored(text, font: font), highlight: highlight)
+        shapedLines[index] = result
+        return result
+    }
+
+    private static func contextColored(_ text: String, font: NSFont) -> CTLine {
+        CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [
             .font: font,
             // The context's fill color draws the text: a shaped line survives an appearance change.
             NSAttributedString.Key(kCTForegroundColorFromContextAttributeName as String): true
-        ])
-        let result = Shaped(line: CTLineCreateWithAttributedString(attributed), highlight: highlight)
-        shapedLines[index] = result
-        return result
+        ]))
     }
 
     private func displayText(_ line: GitDiff.Line, diff: GitDiff) -> String {
@@ -1163,9 +1177,17 @@ final class ChangesDiffView: NSView {
 
     private func drawNumber(_ number: Int32, right: CGFloat, y: CGFloat, context: CGContext) {
         guard number > 0 else { return }
-        let text = String(number)
-        let width = CGFloat(text.count) * numberAdvance
-        drawText(text, font: numberFont, color: Self.palette.numbers, at: NSPoint(x: right - width, y: y + 1.5), context: context)
+        let line: CTLine
+        if let cached = numberLines[number] {
+            line = cached
+        } else {
+            line = Self.contextColored(String(number), font: numberFont)
+            numberLines[number] = line
+        }
+        let width = CGFloat(CTLineGetGlyphCount(line)) * numberAdvance
+        context.setFillColor(Self.palette.numbers.cgColor)
+        context.textPosition = CGPoint(x: right - width, y: y + 1.5 + 3.5 + numberFont.ascender)
+        CTLineDraw(line, context)
     }
 
     private func drawText(_ text: String, font: NSFont, color: NSColor, at point: NSPoint, context: CGContext) {
@@ -1190,10 +1212,14 @@ final class ChangesDiffView: NSView {
         NSRect(x: rect.minX, y: rect.maxY - 1, width: rect.width, height: 1).fill()
         context.textMatrix = CGAffineTransform(scaleX: 1, y: -1)
 
-        let chevron = isFolded(file) ? "chevron.right" : "chevron.down"
-        let configuration = NSImage.SymbolConfiguration(pointSize: 9, weight: .bold)
-            .applying(.init(paletteColors: [Self.palette.numbers]))
-        if let image = NSImage(systemSymbolName: chevron, accessibilityDescription: nil)?.withSymbolConfiguration(configuration) {
+        if chevrons?.color != Self.palette.numbers {
+            let configuration = NSImage.SymbolConfiguration(pointSize: 9, weight: .bold)
+                .applying(.init(paletteColors: [Self.palette.numbers]))
+            chevrons = (Self.palette.numbers,
+                        NSImage(systemSymbolName: "chevron.right", accessibilityDescription: nil)?.withSymbolConfiguration(configuration),
+                        NSImage(systemSymbolName: "chevron.down", accessibilityDescription: nil)?.withSymbolConfiguration(configuration))
+        }
+        if let image = isFolded(file) ? chevrons?.folded : chevrons?.open {
             let size = image.size
             image.draw(in: NSRect(x: rect.minX + 12 + (10 - size.width) / 2, y: rect.midY - size.height / 2, width: size.width, height: size.height),
                        from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
@@ -1240,7 +1266,7 @@ final class ChangesDiffView: NSView {
             frame.fill()
             var text = pane.label
             if case let image?? = pane.image {
-                let pixels = image.representations.first.map { NSSize(width: $0.pixelsWide, height: $0.pixelsHigh) } ?? image.size
+                let pixels = image.size
                 let scale = min(1, frame.width / max(1, pixels.width), frame.height / max(1, pixels.height))
                 let size = NSSize(width: pixels.width * scale, height: pixels.height * scale)
                 let target = NSRect(x: frame.midX - size.width / 2, y: frame.midY - size.height / 2, width: size.width, height: size.height)
@@ -1285,11 +1311,29 @@ final class ChangesDiffView: NSView {
         guard loadingImages.insert(key).inserted else { return nil }
         Task.detached(priority: .userInitiated) {
             let data = old ? diff.oldContent(of: file) : diff.newContent(of: file)
+            // Decoded here, once, at most pane size: drawn as read, the image would decode on the
+            // main thread at its first draw.
+            let decoded = data.flatMap { data -> (image: CGImage, size: NSSize)? in
+                guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+                      let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+                      let width = properties[kCGImagePropertyPixelWidth] as? Int,
+                      let height = properties[kCGImagePropertyPixelHeight] as? Int,
+                      let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                          kCGImageSourceCreateThumbnailFromImageAlways: true,
+                          kCGImageSourceCreateThumbnailWithTransform: true,
+                          kCGImageSourceShouldCacheImmediately: true,
+                          kCGImageSourceThumbnailMaxPixelSize: 2048
+                      ] as CFDictionary) else { return nil }
+                // Orientations 5 to 8 turn the stored pixels a quarter.
+                let turned = (properties[kCGImagePropertyOrientation] as? Int ?? 1) >= 5
+                return (image, turned ? NSSize(width: height, height: width) : NSSize(width: width, height: height))
+            }
             await MainActor.run { [weak self] in
                 guard let self else { return }
                 loadingImages.remove(key)
-                if let image = data.flatMap(NSImage.init(data:)) {
-                    images.setObject(image, forKey: key as NSString)
+                // Sized in the original's pixels, which the caption shows.
+                if let decoded {
+                    images.setObject(NSImage(cgImage: decoded.image, size: decoded.size), forKey: key as NSString)
                 } else {
                     unreadableImages.insert(key)
                 }
