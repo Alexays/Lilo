@@ -4,7 +4,7 @@ import { initArchivedTabsStore } from "./archivedTabs.svelte";
 import { initBannersStore } from "./banners.svelte";
 import { initOnboardingStore } from "./onboarding.svelte";
 import { initPageHangStore } from "./pageHang.svelte";
-import { initCommandBarStore } from "./commandBar.svelte";
+import { applyCommandBarInitialState, initCommandBarStore } from "./commandBar.svelte";
 import { initDownloadsStore } from "./downloads.svelte";
 import {
 	applyExtensionInitialState,
@@ -100,6 +100,7 @@ const CRITICAL_STATE_APPLIERS: InitialStateApplier[] = [
 	applyProfileInitialState,
 	applySidebarTabInitialState,
 	applySidebarFolderInitialState,
+	applyCommandBarInitialState,
 ];
 
 const DEFERRED_STATE_APPLIERS: InitialStateApplier[] = [

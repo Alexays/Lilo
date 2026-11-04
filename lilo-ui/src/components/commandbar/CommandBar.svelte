@@ -4,10 +4,9 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { createFrameScheduler } from "../../lib/motion/frameScheduler";
   import { t } from "../../lib/i18n/state.svelte";
-  import { formatShortcut, parseInput, setTopLevelDomains, type CommandScope } from "../../lib/inputParser";
+  import { formatShortcut, parseInput, scopePrefix, setTopLevelDomains, type CommandScope } from "../../lib/inputParser";
   import { TOP_LEVEL_DOMAINS } from "../../lib/topLevelDomains.gen";
-  import { cubicInOut } from "svelte/easing";
-  import { fade, scale } from "svelte/transition";
+  import { fade } from "svelte/transition";
   import {
     autocompleteSelected,
     closeCommandBar,
@@ -28,6 +27,7 @@
     getSelectedResult,
     getSelectedResultKeys,
     cancelMoveTab,
+    isCommandBarDocked,
     isCommandBarOpen,
     isMovingTab,
     runSelectedResultKey,
@@ -41,13 +41,12 @@
   import { getAgentMood, isAgentsSpace } from "../../stores/agents.svelte";
   import { postMessage } from "../../lib/bridge";
   import { isSidebarVisible } from "../../stores/ui.svelte";
+  import { isDesignSystemShellOpen, isHistoryShellOpen, isSettingsShellOpen } from "../../stores/panels.svelte";
+  import { getOnboarding } from "../../stores/onboarding.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import { getTabs } from "../../stores/tabs.svelte";
   import type { CommandResult } from "../../stores/commandBarSearch.svelte";
-  import {
-    buildTabFaviconLookup,
-    resolveResultIcon,
-  } from "./commandBarIcons";
+  import { buildTabFaviconLookup, LINE_ICONS, resolveResultIcon } from "./commandBarIcons";
 
   setTopLevelDomains(TOP_LEVEL_DOMAINS);
 
@@ -103,8 +102,20 @@
   }
 
   const commandBarOpen = $derived(isCommandBarOpen());
+  const docked = $derived(isCommandBarDocked());
+  // In place on a blank tab, the bar steps aside for a screen that covers the page.
+  const shown = $derived(
+    commandBarOpen &&
+      !(docked && (isSettingsShellOpen() || isHistoryShellOpen() || isDesignSystemShellOpen() || getOnboarding().visible)),
+  );
   const activeScope = $derived(getActiveScope());
   const query = $derived(getQuery());
+  // A typed scope prefix shows as a token before the field; the query keeps it.
+  const tokenPrefix = $derived(
+    activeScope !== "all" && !isMovingTab() && query.trimStart().startsWith(scopePrefix(activeScope)) ? scopePrefix(activeScope) : "",
+  );
+  const fieldText = $derived(tokenPrefix ? query.trimStart().slice(tokenPrefix.length).trimStart() : query);
+  const tokenLabel = $derived(tokenPrefix ? SCOPE_HINTS.find((hint) => hint.scope === activeScope)?.labelKey : undefined);
   // What was typed past the scope prefix: a bare prefix is an empty scope, not a search.
   const scopedQuery = $derived(parseInput(query, activeScope).query.trim());
   const results = $derived(getResults());
@@ -113,6 +124,10 @@
   const selectedResult = $derived(getSelectedResult());
   const selectedKeys = $derived(getSelectedResultKeys());
   const movingTab = $derived(isMovingTab());
+  const tileSection = $derived(sections.find((section) => section.tiles));
+  const firstTile = $derived(tileSection?.items[0]?.index ?? -1);
+  const lastTile = $derived(tileSection?.items.at(-1)?.index ?? -1);
+  const inTiles = (index: number) => firstTile >= 0 && index >= firstTile && index <= lastTile;
   const autocompleteSuggestion = $derived(getAutocompleteSuggestion());
   const autocompleteSuffix = $derived(
     autocompleteSuggestion &&
@@ -130,7 +145,7 @@
   }
   // Built once per open: tracking the tabs would rebuild it on every favicon or title update.
   const tabFavicons = $derived.by(() => {
-    void commandBarOpen;
+    void shown;
     return untrack(() => buildTabFaviconLookup(getTabs()));
   });
 
@@ -241,7 +256,7 @@
 
   $effect(() => {
     void getCommandBarOpenRequestId();
-    if (commandBarOpen && inputEl) {
+    if (shown && inputEl) {
       const selectAll = consumeSelectAllOnOpen();
       requestAnimationFrame(() => focusCommandBarInput(selectAll));
     }
@@ -287,7 +302,7 @@
   // The backdrop leaves the sidebar uncovered, so clicks there never reach it: dismiss on any
   // pointerdown outside the panel (the sidebar click itself still goes through, no preventDefault).
   $effect(() => {
-    if (!commandBarOpen) {
+    if (!commandBarOpen || docked) {
       return;
     }
 
@@ -338,22 +353,35 @@
           cancelMoveTab();
         } else if (escapeLeavesScope) {
           setCommandBarScope("all");
-        } else {
+        } else if (!docked) {
           closeCommandBar();
           postMessage("focusPage");
         }
         break;
+      // A row of tiles counts as one row for the up and down arrows; the side arrows walk it.
       case "ArrowDown":
         e.preventDefault();
+        if (inTiles(selectedIndex)) setSelectedIndex(lastTile);
         selectNext();
         break;
       case "ArrowUp":
         e.preventDefault();
+        if (inTiles(selectedIndex)) setSelectedIndex(firstTile);
         selectPrev();
+        if (inTiles(getSelectedIndex())) setSelectedIndex(firstTile);
+        break;
+      case "ArrowLeft":
+        if (inTiles(selectedIndex)) {
+          e.preventDefault();
+          setSelectedIndex(Math.max(firstTile, selectedIndex - 1));
+        }
         break;
       case "ArrowRight":
-        // Accept the inline completion; otherwise the arrow moves the caret.
-        if (completionShown) {
+        if (inTiles(selectedIndex)) {
+          e.preventDefault();
+          setSelectedIndex(Math.min(lastTile, selectedIndex + 1));
+        } else if (completionShown) {
+          // Accept the inline completion; otherwise the arrow moves the caret.
           e.preventDefault();
           setQuery(autocompleteSuggestion);
         }
@@ -383,6 +411,12 @@
         break;
       case "Backspace":
       case "Delete":
+        // Backspace before the field's text takes the scope token away and keeps the text.
+        if (e.key === "Backspace" && tokenPrefix && !e.metaKey && inputEl?.selectionStart === 0 && inputEl.selectionEnd === 0) {
+          e.preventDefault();
+          setCommandBarScope("all");
+          break;
+        }
         if (!e.metaKey && completionShown) {
           e.preventDefault();
           dismissAutofill();
@@ -406,6 +440,14 @@
         }
         break;
     }
+  }
+
+  // An address reads without its scheme, its highlights shifted along.
+  function detail(result: CommandResult): { text: string; highlights?: number[] } {
+    const text = result.subtitle ?? "";
+    const scheme = result.url && text === result.url ? (/^https?:\/\//i.exec(text)?.[0].length ?? 0) : 0;
+    if (!scheme) return { text, highlights: result.subtitleHighlights };
+    return { text: text.slice(scheme), highlights: result.subtitleHighlights?.map((i) => i - scheme).filter((i) => i >= 0) };
   }
 
   function placeholder(): string {
@@ -478,64 +520,113 @@
 <!-- Single line: whitespace inside would render between the highlight segments. -->
 {#snippet highlightedText(text: string, highlights?: number[])}{#each segments(text, highlights) as seg, segIndex (`${seg.text}-${seg.highlighted ? '1' : '0'}-${segIndex}`)}{#if seg.highlighted}<mark class="result-hl">{seg.text}</mark>{:else}{seg.text}{/if}{/each}{/snippet}
 
-{#if commandBarOpen}
+{#snippet resultIcon(result: CommandResult)}
+  {@const iconSpec = resolveResultIcon(result, tabFavicons)}
+  {#if result.kind === "space" && isAgentsSpace(String(result.payload.spaceId))}
+    <span class="result-icon">
+      {#await import("../sidebar/AgentMascot.svelte") then { default: AgentMascot }}
+        <AgentMascot mood={getAgentMood(String(result.payload.spaceId))} />
+      {/await}
+    </span>
+  {:else if result.kind === "tab" && result.payload.agentId !== undefined}
+    <span class="result-icon">
+      {#await import("../agents/AgentTile.svelte") then { default: AgentTile }}
+        <AgentTile agentId={String(result.payload.agentId)} />
+      {/await}
+      {#if result.payload.waiting}<span class="result-icon-dot" aria-hidden="true"></span>{/if}
+    </span>
+  {:else if iconSpec.type === "favicon"}
+    <span class="result-icon result-icon-site" style:--site-hue={iconSpec.hue}>
+      <span class="result-favicon-fallback" aria-hidden="true">{iconSpec.fallback}</span>
+      <img
+        class="result-favicon-image"
+        src={iconSpec.src}
+        alt=""
+        draggable="false"
+        onerror={(event) => {
+          (event.currentTarget as HTMLImageElement).hidden = true;
+        }}
+      />
+    </span>
+  {:else if iconSpec.type === "line"}
+    <span class="result-icon" class:result-icon-terminal={result.kind === "terminalTab" || result.kind === "closedTerminal"}>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d={result.kind === "terminalTab" || result.kind === "closedTerminal" ? LINE_ICONS.prompt : iconSpec.path} stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      {#if result.payload.waiting}<span class="result-icon-dot" aria-hidden="true"></span>{/if}
+    </span>
+  {:else if iconSpec.type === "glyph"}
+    <span class="result-icon result-icon-glyph">{iconSpec.glyph}</span>
+  {:else}
+    <span class="result-icon result-icon-site result-icon-letter" style:--site-hue={iconSpec.hue}>{iconSpec.letter}</span>
+  {/if}
+{/snippet}
+
+{#if shown}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="command-bar-backdrop chrome-content-overlay-root"
     class:sidebar-hidden={!isSidebarVisible()}
+    class:docked
     use:reportInteractiveZone={{
       id: "command-bar-backdrop",
-      active: commandBarOpen,
+      active: shown,
     }}
-    out:fade={{ duration: prefersReducedMotion() ? 0 : 145, easing: cubicInOut }}
+    out:fade={{ duration: prefersReducedMotion() ? 0 : 120 }}
     onkeydown={handleKeydown}
   >
     <div
       bind:this={commandBarEl}
-      class="command-bar chrome-floating-surface"
-      out:scale={{ duration: prefersReducedMotion() ? 0 : 165, start: 1, opacity: 1, easing: cubicInOut }}
+      class="command-bar float-surface"
     >
       <div bind:this={commandBarContentEl} class="command-bar-content">
-        <div class="command-bar-input-row">
-          <span class="command-bar-icon" aria-hidden="true">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <circle cx="5" cy="5" r="3.4" stroke="currentColor" stroke-width="1.4" />
-              <path d="M7.6 7.6 10.4 10.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        <div class="command-bar-header">
+          <div class="command-bar-input-row">
+            <svg class="command-bar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5" />
+              <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
             </svg>
-          </span>
-          <div class="command-bar-input-wrap">
-            {#if autocompleteSuffix && caretAtEnd}
-              <div class="command-bar-autocomplete" aria-hidden="true">
-                <span class="command-bar-autocomplete-query">{query.trim()}</span
-                ><span>{autocompleteSuffix}</span>
-              </div>
+            {#if tokenLabel}
+              <span class="scope-token">{t(tokenLabel)}</span>
             {/if}
-            <input
-              bind:this={inputEl}
-              class="command-bar-input"
-              type="text"
-              placeholder={placeholder()}
-              spellcheck="false"
-              autocomplete="off"
-              role="combobox"
-              aria-label={t("commandBar.inputLabel")}
-              aria-expanded={sections.length > 0}
-              aria-autocomplete="list"
-              aria-controls="cb-results"
-              aria-activedescendant={results.length > 0 ? `cb-result-${selectedIndex}` : undefined}
-              value={query}
-              oninput={(e) => {
-                setQuery((e.target as HTMLInputElement).value, !(e instanceof InputEvent && e.inputType.startsWith("delete")));
-                trackCaret();
-              }}
-              onkeyup={trackCaret}
-              onpointerup={trackCaret}
-              onselect={trackCaret}
-            />
+            <div class="command-bar-input-wrap">
+              {#if autocompleteSuffix && caretAtEnd}
+                <div class="command-bar-autocomplete" aria-hidden="true">
+                  <span class="command-bar-autocomplete-query">{fieldText}</span
+                  ><span>{autocompleteSuffix}</span>
+                </div>
+              {/if}
+              <input
+                bind:this={inputEl}
+                class="command-bar-input"
+                type="text"
+                placeholder={placeholder()}
+                spellcheck="false"
+                autocomplete="off"
+                role="combobox"
+                aria-label={tokenLabel ? `${t("commandBar.inputLabel")}, ${t(tokenLabel)}` : t("commandBar.inputLabel")}
+                aria-expanded={sections.length > 0}
+                aria-autocomplete="list"
+                aria-controls="cb-results"
+                aria-activedescendant={results.length > 0 ? `cb-result-${selectedIndex}` : undefined}
+                value={fieldText}
+                oninput={(e) => {
+                  const field = e.target as HTMLInputElement;
+                  setQuery(tokenPrefix ? (field.value ? `${tokenPrefix} ${field.value}` : tokenPrefix) : field.value, !(e instanceof InputEvent && e.inputType.startsWith("delete")));
+                  // A prefix just typed becomes the token: the field drops it, which the value binding would not see.
+                  if (field.value !== fieldText) field.value = fieldText;
+                  trackCaret();
+                }}
+                onkeyup={trackCaret}
+                onpointerup={trackCaret}
+                onselect={trackCaret}
+              />
+            </div>
+            {#if autocompleteSuggestion && caretAtEnd}
+              <span class="key-hint"><span>{t("commandBar.hintComplete")}</span><kbd>tab</kbd></span>
+            {/if}
           </div>
-        </div>
 
-        <div class="command-bar-toolbar">
           <div class="command-bar-scopes">
             {#each scopeHints as hint (hint.scope)}
               <button
@@ -546,14 +637,13 @@
                 onmousedown={(e) => e.preventDefault()}
                 onclick={() => setCommandBarScope(hint.scope)}
               >
+                <span>{hint.label}</span>
                 {#if hint.prefix}
-                  <span class="scope-hint-prefix">{hint.prefix}</span>
+                  <span class="scope-hint-prefix" aria-hidden="true">{hint.prefix}</span>
                 {/if}
-                <span class="scope-hint-label">{hint.label}</span>
               </button>
             {/each}
           </div>
-
         </div>
 
         {#if sections.length > 0}
@@ -562,14 +652,14 @@
               <div class="command-bar-section" role="group" aria-label={section.title}>
                 <div class="command-bar-section-header" aria-hidden="true">
                   <span class="command-bar-section-title">{section.title}</span>
+                  {#if section.subtitle}<span class="command-bar-section-subtitle">{section.subtitle}</span>{/if}
                 </div>
 
-                <div class="command-bar-section-results">
+                <div class={section.tiles ? "command-bar-tiles" : "command-bar-section-results"}>
                   {#each section.items as entry (entry.result.id)}
-                    {@const iconSpec = resolveResultIcon(entry.result, tabFavicons)}
                     <div
                       id={`cb-result-${entry.index}`}
-                      class="command-bar-result"
+                      class={section.tiles ? "command-bar-tile" : "command-bar-result"}
                       class:selected={entry.index === selectedIndex}
                       role="option"
                       tabindex="-1"
@@ -577,56 +667,25 @@
                       onmousedown={(e) => runClickedRow(e, entry.index, entry.result)}
                       onmousemove={(e) => selectUnderPointer(e, entry.index)}
                     >
-                      {#if entry.result.kind === "space" && isAgentsSpace(String(entry.result.payload.spaceId))}
-                        <span class="result-icon">
-                          {#await import("../sidebar/AgentMascot.svelte") then { default: AgentMascot }}
-                            <AgentMascot mood={getAgentMood(String(entry.result.payload.spaceId))} />
-                          {/await}
-                        </span>
-                      {:else if entry.result.kind === "tab" && entry.result.payload.agentId !== undefined}
-                        <span class="result-icon result-icon-favicon result-icon-agent">
-                          {#await import("../agents/AgentTile.svelte") then { default: AgentTile }}
-                            <AgentTile agentId={String(entry.result.payload.agentId)} />
-                          {/await}
-                          {#if entry.result.payload.waiting}<span class="result-icon-dot" aria-hidden="true"></span>{/if}
-                        </span>
-                      {:else if iconSpec.type === "favicon"}
-                        <span class="result-icon result-icon-favicon">
-                          <span class="result-favicon-fallback" aria-hidden="true">{iconSpec.fallback}</span>
-                          <img
-                            class="result-favicon-image"
-                            src={iconSpec.src}
-                            alt=""
-                            draggable="false"
-                            onerror={(event) => {
-                              (event.currentTarget as HTMLImageElement).hidden = true;
-                            }}
-                          />
-                        </span>
-                      {:else if iconSpec.type === "line"}
-                        <span class={`result-icon result-icon-line result-icon-${entry.result.kind}`}>
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <path d={iconSpec.path} stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                          </svg>
-                        </span>
-                      {:else if iconSpec.type === "glyph"}
-                        <span class={`result-icon result-icon-${entry.result.kind}`}>{iconSpec.glyph}</span>
+                      {@render resultIcon(entry.result)}
+                      {#if section.tiles}
+                        <span class="tile-title">{entry.result.title}</span>
                       {:else}
-                        <span class="result-icon result-icon-letter">{iconSpec.letter}</span>
-                      {/if}
-
-                      <div class="result-main">
-                        <div class="result-topline">
+                        {@const subtitle = detail(entry.result)}
+                        <div class="result-main">
                           <span class="result-title">{@render highlightedText(entry.result.title, entry.result.titleHighlights)}</span>
+                          {#if subtitle.text}
+                            <span class="result-subtitle">{@render highlightedText(subtitle.text, subtitle.highlights)}</span>
+                          {/if}
                         </div>
 
-                        {#if entry.result.subtitle}
-                          <div class="result-subtitle">{@render highlightedText(entry.result.subtitle, entry.result.subtitleHighlights)}</div>
+                        {#if entry.result.helper}
+                          {#if entry.result.kind === "action"}
+                            <kbd class="result-shortcut">{entry.result.helper}</kbd>
+                          {:else}
+                            <span class="result-helper">{entry.result.helper}</span>
+                          {/if}
                         {/if}
-                      </div>
-
-                      {#if entry.result.helper}
-                        <span class="result-helper">{entry.result.helper}</span>
                       {/if}
                     </div>
                   {/each}
@@ -643,17 +702,16 @@
 
         <div class="command-bar-footer" aria-hidden="true">
           <span class="footer-hints">
-            <span class="footer-hint"><kbd>{formatShortcut("Enter")}</kbd><span>{selectedResult?.hint || t("common.open")}</span></span>
+            <span class="key-hint key-hint-default"><span>{selectedResult?.hint || t("common.open")}</span><kbd>{formatShortcut("Enter")}</kbd></span>
             {#each selectedKeys as key (key)}
-              <span class="footer-hint">
-                <kbd>{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd><span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span>
+              <span class="key-hint">
+                <span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd>{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
               </span>
             {/each}
-            {#if autocompleteSuggestion && caretAtEnd}
-              <span class="footer-hint"><kbd>Tab</kbd><span>{t("commandBar.hintComplete")}</span></span>
-            {/if}
           </span>
-          <span class="footer-hint"><kbd>Esc</kbd><span>{t(movingTab || escapeLeavesScope ? "common.back" : "common.close")}</span></span>
+          {#if !docked || movingTab || escapeLeavesScope}
+            <span class="key-hint"><span>{t(movingTab || escapeLeavesScope ? "common.back" : "common.close")}</span><kbd>esc</kbd></span>
+          {/if}
         </div>
       </div>
     </div>
@@ -661,68 +719,39 @@
 {/if}
 
 <style>
+  /* Clear: the page stays in view under the bar; the backdrop only catches the page area's clicks. */
   .command-bar-backdrop {
-    --command-bar-shell-padding: 16px;
-    --command-bar-anchor-top: clamp(18px, 5vh, 52px);
     position: fixed;
-    isolation: isolate;
-    overflow: hidden;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: var(--command-bar-shell-padding);
-    padding-top: calc(
-      var(--command-bar-shell-padding) + var(--command-bar-anchor-top)
-    );
+    padding: 64px 16px 16px;
     z-index: 60;
     pointer-events: auto;
-    background: var(--chrome-overlay-backdrop-tint);
-    backdrop-filter: blur(var(--chrome-overlay-backdrop-blur)) saturate(1.04);
-    animation: command-bar-backdrop-fade var(--motion-duration-slow)
-      var(--motion-ease-organic);
   }
 
-  .command-bar-backdrop::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(
-        circle at 50% 38%,
-        color-mix(in srgb, white 18%, transparent),
-        transparent 42%
-      ),
-      linear-gradient(180deg, color-mix(in srgb, white 6%, transparent), transparent 32%);
-    opacity: 0.9;
-    pointer-events: none;
-    animation: command-bar-atmosphere var(--motion-duration-slow)
-      var(--motion-ease-organic);
+  .command-bar-backdrop.docked {
+    padding-top: clamp(40px, 13vh, 104px);
   }
 
   .command-bar {
-    --cb-result-hover: color-mix(
-      in srgb,
-      var(--bg-hover) 78%,
-      color-mix(in srgb, white 18%, transparent)
-    );
-    width: min(620px, calc(100% - 28px));
-    max-height: min(
-      520px,
-      calc(
-        100% - var(--command-bar-anchor-top) -
-          (var(--command-bar-shell-padding) * 2)
-      )
-    );
-    color: var(--text-primary);
+    width: min(680px, 100%);
+    max-height: 100%;
+    border-radius: var(--radius-lg);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     transform-origin: 50% 0;
-    background: var(--chrome-overlay-surface-strong);
-    animation: command-bar-rise 380ms var(--motion-ease-bounce);
+    animation: command-bar-in var(--motion-duration-overlay) var(--motion-ease-spring);
     transition: height var(--motion-duration-normal) var(--motion-ease-organic);
-    will-change: transform, opacity;
     contain: layout style;
+  }
+
+  /* Part of the page rather than over it: a quiet edge, no shadow to lift it. */
+  .docked .command-bar {
+    max-height: calc(100% - 40px);
+    box-shadow: 0 0 0 1px var(--float-border);
+    animation: none;
   }
 
   .command-bar-content {
@@ -732,134 +761,100 @@
     min-height: 0;
   }
 
+  .command-bar-header {
+    flex: none;
+    border-bottom: 1px solid var(--separator);
+  }
+
   .command-bar-input-row {
-    align-items: center;
-    border: 1px solid var(--chrome-overlay-border);
-    border-radius: var(--radius-md);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
     display: flex;
-    gap: 8px;
-    /* Edges line up down the panel: input, chips and rows at the results' 10px inset; the search
-       icon, section titles, row tiles and footer keys 9px further in. */
-    margin: 14px 10px 0;
-    padding: 8px;
-    background: color-mix(in srgb, var(--bg-primary) 74%, transparent);
-    flex: 0 0 auto;
-    animation: command-bar-content-fade var(--motion-duration-normal) 40ms both;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    padding: 0 20px;
   }
 
   .command-bar-icon {
-    align-items: center;
-    background: color-mix(in srgb, var(--bg-hover) 74%, transparent);
-    border-radius: var(--radius-sm);
-    color: color-mix(in srgb, var(--text-primary) 66%, transparent);
-    display: inline-flex;
-    flex-shrink: 0;
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-bold);
-    height: 22px;
-    justify-content: center;
-    width: 22px;
+    flex: none;
+    color: var(--text-secondary);
+  }
+
+  .command-bar-input,
+  .command-bar-autocomplete {
+    font: inherit;
+    font-size: var(--font-size-modal);
+    letter-spacing: 0;
+    line-height: 24px;
   }
 
   .command-bar-input {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-family:
-      "SF Pro Display",
-      "SF Pro Text",
-      -apple-system,
-      BlinkMacSystemFont,
-      sans-serif;
-    font-size: var(--font-size-lg);
-    letter-spacing: 0;
-    line-height: 20px;
-    outline: none;
     position: relative;
-    width: 100%;
     z-index: 1;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    outline: none;
   }
 
   .command-bar-input::placeholder {
-    color: color-mix(in srgb, var(--text-muted) 88%, transparent);
+    color: var(--text-muted);
   }
 
   .command-bar-input-wrap {
+    position: relative;
     flex: 1;
     min-width: 0;
-    position: relative;
   }
 
   .command-bar-autocomplete {
-    color: color-mix(in srgb, var(--text-muted) 52%, transparent);
-    font-family:
-      "SF Pro Display",
-      "SF Pro Text",
-      -apple-system,
-      BlinkMacSystemFont,
-      sans-serif;
-    font-size: var(--font-size-lg);
-    inset: 0;
-    letter-spacing: 0;
-    line-height: 20px;
-    overflow: hidden;
-    pointer-events: none;
     position: absolute;
+    inset: 0;
+    overflow: hidden;
+    color: var(--text-muted);
+    pointer-events: none;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: pre;
   }
 
   .command-bar-autocomplete-query {
     color: transparent;
   }
 
-  .command-bar-toolbar {
-    align-items: center;
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 6px;
-    justify-content: flex-start;
-    overflow: hidden;
-    padding: 8px 10px 4px;
-    flex: 0 0 auto;
-    animation: command-bar-content-fade var(--motion-duration-normal) 55ms both;
-  }
-
   .command-bar-scopes {
     display: flex;
-    flex: 1 1 auto;
     /* A narrow bar wraps the chips: clipped, the last scopes could not be clicked. */
     flex-wrap: wrap;
     gap: 4px;
-    min-width: 0;
+    padding: 0 16px 12px;
+  }
+
+  .scope-hint,
+  .scope-token {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    line-height: 1;
   }
 
   .scope-hint {
-    align-items: center;
+    border: none;
     background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius-chip);
     color: var(--text-secondary);
     cursor: pointer;
-    display: inline-flex;
-    gap: 4px;
-    flex: 0 0 auto;
-    padding: 2px 6px;
-    font-size: var(--font-size-2xs);
-    font-weight: var(--font-weight-semibold);
-    letter-spacing: 0.01em;
-    line-height: 1;
-    transition:
-      background var(--transition-fast),
-      border-color var(--transition-fast),
-      color var(--transition-fast);
+    transition: background var(--transition-fast), color var(--transition-fast);
     -webkit-appearance: none;
     appearance: none;
   }
 
   .scope-hint:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--bg-hover) 64%, transparent);
+    background: var(--bg-hover);
     color: var(--text-primary);
   }
 
@@ -869,399 +864,314 @@
     opacity: var(--disabled-opacity);
   }
 
-  .scope-hint.selected {
-    background: color-mix(in srgb, var(--bg-hover) 88%, transparent);
-    border-color: color-mix(
-      in srgb,
-      var(--accent) 10%,
-      var(--chrome-overlay-border)
-    );
-    color: var(--text-primary);
+  .scope-hint.selected,
+  .scope-token {
+    background: var(--accent-tint-14);
+    color: var(--accent-ink);
   }
 
   .scope-hint:focus-visible {
-    border-color: color-mix(
-      in srgb,
-      var(--accent) 22%,
-      var(--chrome-overlay-border)
-    );
-    outline: none;
+    outline: var(--focus-outline);
+    outline-offset: -2px;
   }
 
-  /* One slot width for every prefix glyph, in the label's font so both share a line box. */
   .scope-hint-prefix {
-    color: currentColor;
-    font-weight: var(--font-weight-bold);
+    min-width: 0.6em;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
     text-align: center;
-    width: 1em;
+  }
+
+  .scope-hint.selected .scope-hint-prefix {
+    color: inherit;
   }
 
   .command-bar-results {
-    display: grid;
-    gap: 8px;
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 4px 10px 10px;
-    animation: command-bar-content-fade var(--motion-duration-overlay) 70ms both;
+    padding: 0 8px 8px;
   }
 
-  .command-bar-section {
-    display: grid;
-    gap: 4px;
-  }
-
-  /* On the search icon's edge: the input row's padding plus its 1px border. */
   .command-bar-section-header {
-    padding: 0 calc(var(--space-8) + 1px);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 22px 8px 8px;
+  }
+
+  .command-bar-section:first-child .command-bar-section-header {
+    padding-top: 16px;
   }
 
   .command-bar-section-title {
-    color: var(--text-primary);
-    font-size: var(--font-size-3xs);
-    font-weight: var(--font-weight-bold);
-    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
-  .command-bar-section-results {
-    display: grid;
-    gap: 4px;
+  .command-bar-section-subtitle {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
   }
 
   .command-bar-result {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
     align-items: center;
-    border: 1px solid transparent;
+    gap: 14px;
+    height: 52px;
+    padding: 0 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
-    display: grid;
-    gap: 8px;
-    /* The helper chip shows whole while it fits; past that it truncates, the title keeping a readable minimum. */
-    grid-template-columns: auto minmax(min(180px, 50%), 1fr) minmax(0, max-content);
-    min-height: 38px;
-    padding: 6px 8px;
-    transition:
-      background var(--transition-fast),
-      border-color var(--transition-fast);
   }
 
-  .command-bar-result:hover,
-  .command-bar-result.selected {
-    background: var(--cb-result-hover);
-    border-color: color-mix(
-      in srgb,
-      var(--accent) 12%,
-      var(--chrome-overlay-border)
-    );
+  .command-bar-result.selected,
+  .command-bar-tile.selected {
+    background: var(--bg-hover);
   }
 
   .result-icon {
-    align-items: center;
-    border-radius: var(--radius-sm);
-    display: inline-flex;
-    flex-shrink: 0;
-    font-size: var(--font-size-2xs);
-    font-weight: var(--font-weight-bold);
-    height: 22px;
-    justify-content: center;
-    letter-spacing: -0.03em;
-    width: 22px;
-  }
-
-  .result-icon-agent {
-    overflow: visible;
-  }
-
-  /* A conversation waiting on you: the orange dot on its icon, as on its tab row. */
-  .result-icon-dot {
-    position: absolute;
-    right: -2px;
-    bottom: -2px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--attention);
-    box-shadow: 0 0 0 2px var(--chrome-overlay-surface);
-  }
-
-  .result-icon-action {
-    background: var(--accent-tint-14);
-    color: var(--text-primary);
-  }
-
-  /* A block svg centers on the tile's box, not on a text line's baseline. */
-  .result-icon-line svg {
-    display: block;
-  }
-
-  .result-icon-favicon {
     position: relative;
-    background: color-mix(
-      in srgb,
-      var(--bg-hover) 74%,
-      color-mix(in srgb, white 30%, transparent)
-    );
-    color: var(--text-primary);
-    overflow: hidden;
-  }
-
-  .result-favicon-fallback {
-    position: absolute;
-    inset: 0;
     display: grid;
     place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-hover);
+    color: var(--text-primary);
   }
 
-  /* A favicon with transparent parts would show the initial through it: the initial waits for a failed load. */
-  .result-icon-favicon:has(> img:not([hidden])) .result-favicon-fallback {
+  .result-icon-glyph {
+    font-size: var(--font-size-xl);
+  }
+
+  .result-icon-terminal {
+    background: var(--terminal-tile-bg);
+    box-shadow: inset 0 0 0 1px var(--terminal-tile-border);
+    color: var(--terminal-tile-text);
+  }
+
+  /* A site without a favicon: its domain's letter on the domain's own hue. */
+  .result-icon-site {
+    background: hsl(var(--site-hue) 62% 90%);
+    color: hsl(var(--site-hue) 45% 28%);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .result-icon-site:has(> img:not([hidden])) {
+    background: var(--bg-hover);
+  }
+
+  /* The letter waits for a failed load: a favicon with transparent parts would show it through. */
+  .result-icon-site:has(> img:not([hidden])) .result-favicon-fallback {
     visibility: hidden;
   }
 
+  .result-favicon-fallback {
+    grid-area: 1 / 1;
+  }
+
   .result-favicon-image {
-    position: absolute;
-    inset: 3px;
-    width: 16px;
-    height: 16px;
+    grid-area: 1 / 1;
+    width: 20px;
+    height: 20px;
     object-fit: contain;
     border-radius: var(--radius-xs);
   }
 
-  .result-icon-letter {
-    background: color-mix(
-      in srgb,
-      var(--bg-hover) 74%,
-      color-mix(in srgb, white 30%, transparent)
-    );
-    color: var(--text-secondary);
+  /* Your action is awaited: the orange dot on the icon, as on its tab row. */
+  .result-icon-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--attention);
+    box-shadow: 0 0 0 2px var(--float-surface);
   }
 
   .result-main {
     display: grid;
-    gap: 1px;
     min-width: 0;
   }
 
-  .result-topline {
-    display: flex;
+  .result-title,
+  .result-subtitle,
+  .result-helper,
+  .tile-title {
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .result-title {
     color: var(--text-primary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    line-height: 18px;
   }
 
-  .result-subtitle {
+  .result-subtitle,
+  .result-helper {
     color: var(--text-secondary);
-    font-size: var(--font-size-2xs);
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: var(--font-size-sm);
+    line-height: 16px;
+  }
+
+  .result-helper {
+    max-width: 240px;
   }
 
   .result-hl {
     background: transparent;
-    color: color-mix(in srgb, var(--accent) 55%, var(--text-primary));
-    font-weight: var(--font-weight-bold);
-  }
-
-  .result-helper {
-    background: color-mix(in srgb, var(--bg-hover) 82%, transparent);
-    border: 1px solid
-      color-mix(in srgb, var(--chrome-overlay-border) 82%, transparent);
-    border-radius: var(--radius-chip);
-    color: var(--text-secondary);
-    min-width: 0;
-    overflow: hidden;
-    padding: 0 8px;
-    text-overflow: ellipsis;
-  }
-
-  /* Row chips and footer keys: one pill, in the system font, its text centered by the line box. */
-  .result-helper,
-  kbd {
-    box-sizing: border-box;
-    font-family: inherit;
-    font-size: var(--font-size-2xs);
-    font-variant-numeric: tabular-nums;
+    color: var(--accent-ink);
     font-weight: var(--font-weight-semibold);
-    height: 16px;
-    line-height: 14px;
-    text-align: center;
-    white-space: nowrap;
+  }
+
+  .command-bar-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .command-bar-tile {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    width: 84px;
+    padding: 8px 4px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+
+  .command-bar-tile .result-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: var(--font-size-xl);
+  }
+
+  .tile-title {
+    max-width: 100%;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    line-height: 16px;
   }
 
   .command-bar-empty {
     display: grid;
-    gap: 6px;
-    padding: 20px 16px 18px;
+    gap: 4px;
+    padding: 24px 16px;
     text-align: center;
   }
 
   .command-bar-empty-title {
+    margin: 0;
     color: var(--text-primary);
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
-    margin: 0;
+    font-weight: var(--font-weight-medium);
   }
 
   .command-bar-empty-subtitle {
-    color: var(--text-muted);
-    font-size: var(--font-size-2xs);
-    line-height: 1.45;
+    max-width: 40ch;
     margin: 0 auto;
-    max-width: 34ch;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
   }
 
   .command-bar-footer {
-    align-items: center;
-    border-top: 1px solid color-mix(in srgb, var(--chrome-overlay-border) 70%, transparent);
     display: flex;
-    flex: 0 0 auto;
-    gap: 12px;
-    padding: 8px 20px 8px;
-    animation: command-bar-content-fade var(--motion-duration-normal) 55ms both;
-  }
-
-  .footer-hint {
+    flex: none;
     align-items: center;
-    color: var(--text-secondary);
-    display: inline-flex;
-    font-size: var(--font-size-2xs);
-    line-height: 16px;
-    font-weight: var(--font-weight-semibold);
-    gap: 4px;
-    opacity: 0.85;
-    white-space: nowrap;
+    gap: 20px;
+    height: 48px;
+    padding: 0 20px;
+    border-top: 1px solid var(--separator);
   }
 
-  /* A hint that does not fit wraps onto a second line the fixed height hides: it drops whole,
-     never as a cut word, and Esc keeps its place. */
+  /* A hint that does not fit wraps onto a hidden second line: it drops whole, and Esc keeps its place. */
   .footer-hints {
     display: flex;
     flex: 1;
     flex-wrap: wrap;
-    gap: 0 10px;
-    height: 16px;
+    gap: 0 20px;
+    height: 20px;
     min-width: 0;
     overflow: hidden;
   }
 
-  .result-icon-space,
-  .result-icon-moveToSpace {
-    font-family: inherit;
-    font-size: var(--font-size-lg);
+  .key-hint {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  .key-hint-default {
+    color: var(--text-primary);
   }
 
   kbd {
-    background: color-mix(in srgb, var(--bg-primary) 76%, transparent);
-    border: 1px solid var(--chrome-overlay-border);
+    box-sizing: border-box;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
     border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    min-width: 18px;
-    padding: 0 4px;
+    background: var(--bg-hover);
+    box-shadow: inset 0 0 0 1px var(--float-border);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    line-height: 20px;
+    text-align: center;
   }
 
-  @keyframes command-bar-rise {
+  @keyframes command-bar-in {
     from {
       opacity: 0;
-      transform: translateY(28px) scale(0.955);
-    }
-  }
-
-  @keyframes command-bar-backdrop-fade {
-    from {
-      opacity: 0;
-    }
-
-    to {
-      opacity: 1;
+      transform: scale(0.96);
     }
   }
 
-  @keyframes command-bar-atmosphere {
-    from {
-      opacity: 0;
-      transform: scale(1.04);
-    }
-
-    to {
-      opacity: 0.9;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes command-bar-content-fade {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
+  @media (prefers-color-scheme: dark) {
+    .result-icon-site {
+      background: hsl(var(--site-hue) 40% 30%);
+      color: hsl(var(--site-hue) 70% 92%);
     }
   }
 
   @media (max-width: 640px) {
     .command-bar-backdrop {
-      --command-bar-shell-padding: 8px;
-      --command-bar-anchor-top: clamp(8px, 2.5vh, 18px);
+      padding: 12px 8px 8px;
     }
 
-    .command-bar {
-      width: calc(100% - 10px);
-      max-height: calc(
-        100% - var(--command-bar-anchor-top) -
-          (var(--command-bar-shell-padding) * 2)
-      );
-    }
-
-    .command-bar-input-row {
-      margin-left: 6px;
-      margin-right: 6px;
-    }
-
-    .command-bar-toolbar {
-      padding-left: 6px;
-      padding-right: 6px;
-    }
-
-    .command-bar-footer {
-      display: none;
-    }
-
+    .command-bar-footer,
     .result-helper {
       display: none;
-    }
-
-    .command-bar-toolbar {
-      align-items: flex-start;
-    }
-
-    .command-bar-results {
-      padding-left: 6px;
-      padding-right: 6px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .command-bar-backdrop,
-    .command-bar-backdrop::before,
-    .command-bar,
-    .command-bar-input-row,
-    .command-bar-toolbar,
-    .command-bar-results,
-    .command-bar-footer {
-      animation: none;
+    .command-bar {
+      animation: command-bar-fade 150ms ease;
       transition: none;
+    }
+
+    @keyframes command-bar-fade {
+      from {
+        opacity: 0;
+      }
     }
   }
 </style>

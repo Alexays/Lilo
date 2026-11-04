@@ -36,6 +36,8 @@ import {
 export type ResultKey = "newTab" | "split" | "peek" | "copy" | "close" | "remove" | "move";
 
 let _open = $state(false);
+// Open in place on a blank active tab: nothing to dismiss, it leaves when the tab gets a page.
+let _docked = $state(false);
 let _query = $state("");
 let _results = $state.raw<CommandResult[]>([]);
 let _sections = $state.raw<CommandSection[]>([]);
@@ -82,6 +84,7 @@ let _preloadURL = "";
 const PRELOAD_MIN_VISITS = 3;
 
 export const isCommandBarOpen = (): boolean => _open;
+export const isCommandBarDocked = (): boolean => _docked;
 export const getQuery = (): string => _query;
 export const getResults = (): CommandResult[] => _results;
 export const getSections = (): CommandSection[] => _sections;
@@ -129,20 +132,34 @@ function getTrackedBlankTab(): TabState | undefined {
 }
 
 // Never close the last open tab: closing it would close the whole window. Defer instead and
-// close it once another tab is active (see handleSidebarApplied).
-function closeBlankTabKeepingWindow(tabId: string): void {
+// close it once another tab is active (see handleSidebarApplied). True when the tab is closed now.
+function closeBlankTabKeepingWindow(tabId: string): boolean {
 	if (getOpenTabs().length <= 1) {
 		_blankTabToCloseOnActivation = tabId;
-		return;
+		return false;
 	}
 	tabActions.close(tabId);
+	return true;
 }
 
-function closeTrackedBlankTab(): void {
+/** A window that starts on a blank tab shows the bar in place. */
+export function applyCommandBarInitialState(): void {
+	dockOnBlankTab();
+}
+
+function dockOnBlankTab(): void {
+	if (_open || !isBlankTab(getActiveTab())) return;
+	// Settling in place keeps the deferred close of the blank tab: it still goes once another tab is active.
+	const deferredClose = _blankTabToCloseOnActivation;
+	openCommandBar();
+	_blankTabToCloseOnActivation = deferredClose;
+	_docked = true;
+	computeResults();
+}
+
+function closeTrackedBlankTab(): boolean {
 	const blankTab = getTrackedBlankTab();
-	if (isBlankTab(blankTab)) {
-		closeBlankTabKeepingWindow(blankTab.id);
-	}
+	return isBlankTab(blankTab) && closeBlankTabKeepingWindow(blankTab.id);
 }
 
 function finishExecution(closeBlankTab = false): void {
@@ -155,6 +172,13 @@ function finishExecution(closeBlankTab = false): void {
  * registration order cannot matter.
  */
 function handleSidebarApplied(event: SidebarAppliedEvent): void {
+	if (applyBlankTabRules(event)) return;
+	if (_docked && !isBlankTab(event.activeTab)) closeCommandBar();
+	else dockOnBlankTab();
+}
+
+// True when the active blank tab is being closed: the bar then does not settle on it.
+function applyBlankTabRules(event: SidebarAppliedEvent): boolean {
 	const activeTab = event.activeTab;
 	noteActiveTab(event.activeTabId);
 
@@ -175,11 +199,8 @@ function handleSidebarApplied(event: SidebarAppliedEvent): void {
 	}
 
 	if (_pendingBlankTabClose) {
-		if (isBlankTab(activeTab)) {
-			closeBlankTabKeepingWindow(activeTab.id);
-		}
 		_pendingBlankTabClose = false;
-		return;
+		return isBlankTab(activeTab) && closeBlankTabKeepingWindow(activeTab.id);
 	}
 
 	if (
@@ -190,7 +211,7 @@ function handleSidebarApplied(event: SidebarAppliedEvent): void {
 		activeTab.id !== _dismissBlankTabId
 	) {
 		closeCommandBar();
-		return;
+		return false;
 	}
 
 	if (_open && _closeBlankTabOnDismiss && _dismissBlankTabId) {
@@ -207,6 +228,7 @@ function handleSidebarApplied(event: SidebarAppliedEvent): void {
 			closeCommandBar();
 		}
 	}
+	return false;
 }
 
 function shiftSelection(delta: number): void {
@@ -256,6 +278,7 @@ function computeResults(options: { pinSelection?: boolean } = {}): void {
 			archivedTabs: _archivedTabs,
 			spaces: getPagedSpaces(),
 			moveTabId: _moveTabId,
+			docked: _docked,
 			autofill: _autofill,
 			omnibox: {
 				active: !!_omniboxSessionId,
@@ -438,6 +461,7 @@ export function openCommandBar(
 	selectAllOnOpen = false,
 ): void {
 	_open = true;
+	_docked = false;
 	_query = prefill ?? "";
 	_selectedIndex = 0;
 	_selectionMoved = false;
@@ -451,10 +475,19 @@ export function openCommandBar(
 	scheduleSearchSuggest(_query);
 }
 
+/** Back to the open bar's field, its text selected: Cmd+L keeps what was typed. */
+export function refocusCommandBar(): void {
+	_selectAllOnOpen = true;
+	_openRequestId += 1;
+}
+
 export function closeCommandBar(): void {
 	clearOmniboxSession(true);
-	const closeBlankTab = !_executed && _closeBlankTabOnDismiss;
+	const executed = _executed;
+	const closeBlankTab = !executed && _closeBlankTabOnDismiss;
+	let closingBlankTab = false;
 	_open = false;
+	_docked = false;
 	_query = "";
 	_results = [];
 	_sections = [];
@@ -484,17 +517,20 @@ export function closeCommandBar(): void {
 	}
 	if (closeBlankTab) {
 		if (_dismissBlankTabId) {
-			closeTrackedBlankTab();
+			closingBlankTab = closeTrackedBlankTab();
 			_pendingBlankTabClose = false;
 		} else {
 			// New tab not yet reflected in store; close it once the state arrives.
 			_pendingBlankTabClose = true;
+			closingBlankTab = true;
 		}
 	} else {
 		_pendingBlankTabClose = false;
 	}
 	_closeBlankTabOnDismiss = false;
 	_dismissBlankTabId = "";
+	// Dismissed over a blank tab that stays, the bar settles in place on it.
+	if (!executed && !closingBlankTab) dockOnBlankTab();
 }
 
 // A navigation has to land on the page: the system screens and the design system shell cover it.
@@ -663,6 +699,10 @@ export function initCommandBarStore(): void {
 		_terminals = data.terminals;
 		computeResults({ pinSelection: true });
 	});
+	// After the conversations store took the list, whatever the listeners' order.
+	on("conversationsChanged", () => queueMicrotask(() => {
+		if (_docked) computeResults({ pinSelection: true });
+	}));
 	on("archivedTabs", (data) => {
 		if (!_open) return;
 		_archivedTabs = data.tabs;
@@ -698,11 +738,8 @@ export function initCommandBarStore(): void {
 	);
 	on("closeCommandBarAfterNavigation", closeCommandBarAfterNavigation);
 	on("toggleCommandBar", (data) => {
-		if (_open) {
-			// Cmd+L on an open bar keeps the typed text and reselects it.
-			_selectAllOnOpen = true;
-			_openRequestId += 1;
-		} else {
+		if (_open) refocusCommandBar();
+		else {
 			openCommandBar(data?.prefill ?? "", false, data?.selectAll ?? false);
 		}
 	});

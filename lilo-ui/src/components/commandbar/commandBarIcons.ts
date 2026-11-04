@@ -9,10 +9,10 @@ interface TabFaviconLookup {
 }
 
 type ResultIconSpec =
-  | { type: "favicon"; src: string; fallback: string }
+  | { type: "favicon"; src: string; fallback: string; hue: number }
   | { type: "line"; path: string }
   | { type: "glyph"; glyph: string }
-  | { type: "letter"; letter: string };
+  | { type: "letter"; letter: string; hue: number };
 
 // Path data on a 16x16 grid, drawn centered on (8, 8) and stroked like the address bar's icons.
 export const LINE_ICONS: Record<string, string> = {
@@ -69,7 +69,7 @@ interface TabLike {
   faviconDataURL?: string;
 }
 
-const GLYPH_KINDS = new Set(["action", "terminal", "terminalTab", "closedTerminal", "clearArchive", "showAllHistory", "space", "moveToSpace"]);
+const GLYPH_KINDS = new Set(["action", "search", "terminal", "terminalTab", "closedTerminal", "clearArchive", "showAllHistory", "space", "moveToSpace"]);
 
 // Tab snapshots are replaced, never mutated, on every patch: keying the parsed host by
 // identity spares a URL parse per tab on each rebuild.
@@ -96,6 +96,13 @@ function monogram(host: string | null): string {
   return host ? host.charAt(0).toUpperCase() : "?";
 }
 
+// The hue a domain's letter tile is drawn on: the same site keeps its color from row to row.
+function hostHue(host: string | null): number {
+  let hash = 0;
+  for (const character of host ?? "") hash = (hash * 31 + character.charCodeAt(0)) % 360;
+  return hash;
+}
+
 export function resolveResultIcon(
   result: ResultLike,
   lookup: TabFaviconLookup,
@@ -107,17 +114,18 @@ export function resolveResultIcon(
 
   const host = hostOf(result.url);
   const fallback = monogram(host);
+  const hue = hostHue(host);
 
   const tabId = result.payload["tabId"];
   if (typeof tabId === "string") {
     const src = lookup.byTabId.get(tabId);
-    if (src) return { type: "favicon", src, fallback };
+    if (src) return { type: "favicon", src, fallback, hue };
   }
 
   if (host) {
     const src = lookup.byHost.get(host);
-    if (src) return { type: "favicon", src, fallback };
+    if (src) return { type: "favicon", src, fallback, hue };
   }
 
-  return { type: "letter", letter: fallback };
+  return { type: "letter", letter: fallback, hue };
 }
