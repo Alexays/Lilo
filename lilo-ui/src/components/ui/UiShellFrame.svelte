@@ -170,6 +170,16 @@
     background: color-mix(in srgb, var(--bg-primary) 96%, var(--sidebar-bg));
   }
 
+  /* Content fades out under the title instead of being cut at its edge; at rest it covers only the header's margin. */
+  .ui-shell-frame-header::after {
+    content: "";
+    position: absolute;
+    inset: 100% 0 auto;
+    height: 14px;
+    background: linear-gradient(color-mix(in srgb, var(--bg-primary) 96%, var(--sidebar-bg)), transparent);
+    pointer-events: none;
+  }
+
   .ui-shell-frame-back {
     flex: none;
     display: grid;
