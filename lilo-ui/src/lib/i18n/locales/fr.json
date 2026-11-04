@@ -121,7 +121,6 @@
 			"storage": "Stockage"
 		},
 		"manageHistory": "Gérer l'historique",
-		"manageHistoryDesc": "Parcourir, rechercher et supprimer page par page",
 		"historyTimeRange": "Période de l'historique",
 		"historyRangeHour": "Dernière heure",
 		"historyRangeDay": "Dernières 24 heures",
@@ -185,7 +184,7 @@
 		"searchEmpty": "Aucun réglage ne correspond à « {query} ».",
 		"clearData": {
 			"total": "stockés par ce profil",
-			"measuring": "Mesure de ce que stocke ce profil...",
+			"title": "Effacer les données de navigation",
 			"freed": "{size} seront libérés",
 			"rangeNote": "Seul ce qui a été stocké pendant la période choisie est effacé.",
 			"hints": {
@@ -1342,6 +1341,7 @@
 	},
 	"pageHang": {
 		"title": "{host} ne répond plus",
+		"message": "Vous pouvez attendre ou la recharger. Vos autres onglets fonctionnent normalement.",
 		"stuckFor": "La page est bloquée depuis {seconds} s. Vos autres onglets fonctionnent normalement.",
 		"reload": "Recharger",
 		"wait": "Attendre",
@@ -1376,7 +1376,7 @@
 		"keyHint": "Flèches pour choisir, Entrée pour partager",
 		"noTabs": "Aucun onglet ouvert à partager",
 		"noMatch": "Aucun onglet ne correspond",
-		"shareSystem": "Fenêtre ou écran…",
+		"shareSystem": "Fenêtre ou écran...",
 		"shareAudio": "Partager aussi le son",
 		"systemAudio": {
 			"undetermined": "macOS demandera une fois. Les voix de l'appel ne sont jamais partagées.",
@@ -1519,9 +1519,16 @@
 			"notifications": "veut afficher des notifications",
 			"media": "veut utiliser votre caméra ou votre micro"
 		},
-		"agentControl": "veut piloter Lilo : ouvrir des onglets dans son propre dossier, lire leurs pages et y agir avec vos connexions.",
-		"agentProfile": "veut passer ses onglets sur le profil {profile}, pour agir avec ses connexions.",
-		"agentExecutable": "Programme : {path}",
+		"dontAllow": "Ne pas autoriser",
+		"agentConnect": {
+			"title": "{client} veut piloter Lilo",
+			"openTabs": "Ouvrir des onglets dans son propre dossier du Space Agents",
+			"readPages": "Lire les pages qu'il ouvre",
+			"actSignedIn": "Y agir avec vos connexions",
+			"asksFirst": "Il demande avant d'envoyer, de payer, de supprimer ou de publier.",
+			"profileTitle": "{client} veut utiliser le profil {profile}",
+			"profileMessage": "Il y déplace ses onglets, pour agir avec les connexions de ce profil."
+		},
 		"agentClick": "veut cliquer sur « {label} » dans {tab} ({site}).",
 		"agentSubmit": "veut appuyer sur Entrée pour valider « {label} » dans {tab} ({site}).",
 		"agentUpload": "veut envoyer {label} à {site}.",
@@ -2257,7 +2264,7 @@
 		"changes": { "one": "{count} changement", "other": "{count} changements" },
 		"originalNotes": "Notes de version originales, en anglais.",
 		"unavailable": "Les notes de version ne sont pas disponibles dans cette version de développement.",
-		"reopen": "À retrouver dans Aide → Nouveautés.",
+		"reopen": "À retrouver dans Aide > Nouveautés.",
 		"continue": "Reprendre la navigation",
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },

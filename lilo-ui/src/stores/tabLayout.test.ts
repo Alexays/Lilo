@@ -88,7 +88,7 @@ test("a waiting request temporarily reveals a hidden address", async () => {
 	drawers.initUrlBarDrawerStore();
 	store.applyTabLayoutInitialState({ addressPlacement: "hidden" });
 
-	receive({ event: "agentControlRequested", requestId: "a1", clientName: "Agent", executable: "", profileName: "" });
+	receive({ event: "agentControlRequested", requestId: "a1", clientName: "Agent", executable: "", profileName: "", action: { kind: "click", label: "Send", site: "example.com", tab: "Inbox" } });
 	assert.equal(store.isAddressVisible(), true);
 
 	drawers.respondToPermissionRequest(drawers.getActiveUrlBarDrawer(), false);

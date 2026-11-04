@@ -315,10 +315,10 @@ for (const colorScheme of ["light", "dark"] as const) {
 	test.describe(`in ${colorScheme} mode`, () => {
 		test.use({ colorScheme, reducedMotion: "reduce" });
 
-		test("a danger button's label reads", async ({ page }) => {
+		test("a destructive button's label reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
 			await page.evaluate(() => window.__lilo!.receive({ event: "openClearBrowsingData" }));
-			expect(await textContrast(page, ".ui-button.danger")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".ui-button.destructive")).toBeGreaterThanOrEqual(4.5);
 		});
 
 		test("a confirm modal's destructive button reads", async ({ page }) => {
@@ -465,20 +465,20 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff", "#00c000"]) {
 			const receive = (message: Record<string, unknown>) => page.evaluate((msg) => window.__lilo!.receive(msg), message);
 
 			await receive({ event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: false, host: "example.com", site: "example.com" });
-			const reload = ".page-hang .ui-button.primary";
+			const reload = '[data-modal="page-hang-card"] .ui-button.primary';
 			await page.locator(reload).waitFor();
 			expect(await cssColor(page, reload, "backgroundColor")).toBe(spaceAccent);
 			expect(await textContrast(page, reload)).toBeGreaterThanOrEqual(4.5);
 			await page.locator(reload).click();
 			await receive({ event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: true, host: "example.com", site: "example.com" });
 			await receive({ event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: false, host: "example.com", site: "example.com" });
-			await page.locator(".page-hang .report").waitFor();
-			expect(await textContrast(page, ".page-hang .report")).toBeGreaterThanOrEqual(4.5);
+			await page.locator('[data-modal="page-hang-card"] .report').waitFor();
+			expect(await textContrast(page, '[data-modal="page-hang-card"] .report')).toBeGreaterThanOrEqual(4.5);
 
 			await receive({ event: "tabSharePickerRequested", requestId: "r", origin: "meet.example.com", shareableTabIds: ["tab-alpha"] });
-			await page.locator(".tab-share-btn.primary").waitFor();
-			expect(await cssColor(page, ".tab-share-btn.primary", "backgroundColor")).toBe(spaceAccent);
-			expect(await textContrast(page, ".tab-share-btn.primary")).toBeGreaterThanOrEqual(4.5);
+			await page.locator('[data-modal="tab-share-picker"] .ui-button.primary').waitFor();
+			expect(await cssColor(page, '[data-modal="tab-share-picker"] .ui-button.primary', "backgroundColor")).toBe(spaceAccent);
+			expect(await textContrast(page, '[data-modal="tab-share-picker"] .ui-button.primary')).toBeGreaterThanOrEqual(4.5);
 		});
 
 		test(`a copied capture's card reads on a ${color} Space in ${colorScheme} mode`, async ({ page }) => {

@@ -121,7 +121,6 @@
 			"storage": "Storage"
 		},
 		"manageHistory": "Manage History",
-		"manageHistoryDesc": "Browse, search and delete pages one by one",
 		"historyTimeRange": "History time range",
 		"historyRangeHour": "Last hour",
 		"historyRangeDay": "Last 24 hours",
@@ -185,7 +184,7 @@
 		"searchEmpty": "No settings match \"{query}\".",
 		"clearData": {
 			"total": "stored by this profile",
-			"measuring": "Measuring what this profile stores...",
+			"title": "Clear Browsing Data",
 			"freed": "{size} will be freed",
 			"rangeNote": "Only what was stored during the chosen period is cleared.",
 			"hints": {
@@ -1342,6 +1341,7 @@
 	},
 	"pageHang": {
 		"title": "{host} isn't responding",
+		"message": "You can wait for it or reload it. Your other tabs keep working.",
 		"stuckFor": "Stuck for {seconds} s. Your other tabs keep working.",
 		"reload": "Reload",
 		"wait": "Wait",
@@ -1349,7 +1349,7 @@
 		"repeatTitle": "{host} froze again",
 		"repeatMessage": "Second time in a row. On some sites the content blocker causes this: reload with it off for this site.",
 		"repeatMessagePlain": "Second time in a row.",
-		"reloadWithoutBlocker": "Reload without blocker",
+		"reloadWithoutBlocker": "Reload Without Blocker",
 		"report": "Report a problem",
 		"recovered": "Page responding again",
 		"blockerOff": "Content blocker off on {host}",
@@ -1370,13 +1370,13 @@
 		"pickTab": "Choose a tab to share",
 		"search": "Search tabs",
 		"suggested": "Suggested",
-		"currentSpace": "Current space",
+		"currentSpace": "Current Space",
 		"playing": "Playing audio",
 		"share": "Share",
 		"keyHint": "Arrows to choose, Return to share",
 		"noTabs": "No open tabs to share",
 		"noMatch": "No tab matches",
-		"shareSystem": "Window or screen…",
+		"shareSystem": "Window or Screen...",
 		"shareAudio": "Share audio too",
 		"systemAudio": {
 			"undetermined": "macOS will ask once. The call's voices are never shared.",
@@ -1519,9 +1519,16 @@
 			"notifications": "wants to show notifications",
 			"media": "wants to use your camera or microphone"
 		},
-		"agentControl": "wants to control Lilo: open tabs in its own folder, read their pages and act in them with your sign-ins.",
-		"agentProfile": "wants to move its tabs to the profile {profile}, to act with its sign-ins.",
-		"agentExecutable": "Program: {path}",
+		"dontAllow": "Don't Allow",
+		"agentConnect": {
+			"title": "{client} wants to control Lilo",
+			"openTabs": "Open tabs in its own folder of the Agents Space",
+			"readPages": "Read the pages it opens",
+			"actSignedIn": "Act in them with your sign-ins",
+			"asksFirst": "It asks before sending, paying, deleting or publishing.",
+			"profileTitle": "{client} wants to use the profile {profile}",
+			"profileMessage": "It moves its tabs there, to act with that profile's sign-ins."
+		},
 		"agentClick": "wants to click \"{label}\" in {tab} ({site}).",
 		"agentSubmit": "wants to press Enter to submit \"{label}\" in {tab} ({site}).",
 		"agentUpload": "wants to upload {label} to {site}.",
@@ -2251,14 +2258,14 @@
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
-		"title": "What’s new in Lilo",
+		"title": "What's new in Lilo",
 		"description": "A few small improvements for your everyday browsing.",
 		"allChanges": "Everything in this update",
 		"changes": { "one": "{count} change", "other": "{count} changes" },
 		"originalNotes": "Original release notes.",
-		"unavailable": "Release notes aren’t available in this build.",
-		"reopen": "Always here in Help → What’s New.",
-		"continue": "Back to browsing",
+		"unavailable": "Release notes aren't available in this build.",
+		"reopen": "Always here in Help > What's New.",
+		"continue": "Back to Browsing",
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {

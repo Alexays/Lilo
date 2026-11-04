@@ -121,7 +121,6 @@
 			"storage": "Archiviazione"
 		},
 		"manageHistory": "Gestisci cronologia",
-		"manageHistoryDesc": "Sfoglia, cerca ed elimina pagina per pagina",
 		"historyTimeRange": "Intervallo della cronologia",
 		"historyRangeHour": "Ultima ora",
 		"historyRangeDay": "Ultime 24 ore",
@@ -185,7 +184,7 @@
 		"searchEmpty": "Nessuna impostazione corrisponde a \"{query}\".",
 		"clearData": {
 			"total": "archiviati da questo profilo",
-			"measuring": "Calcolo dei dati archiviati da questo profilo...",
+			"title": "Cancella dati di navigazione",
 			"freed": "Verranno liberati {size}",
 			"rangeNote": "Vengono cancellati solo i dati archiviati nel periodo scelto.",
 			"hints": {
@@ -1342,6 +1341,7 @@
 	},
 	"pageHang": {
 		"title": "{host} non risponde",
+		"message": "Puoi attendere o ricaricarla. Le altre schede continuano a funzionare.",
 		"stuckFor": "Bloccato da {seconds} s. Le altre schede continuano a funzionare.",
 		"reload": "Ricarica",
 		"wait": "Attendi",
@@ -1369,7 +1369,7 @@
 		"title": "{origin} vuole condividere una scheda",
 		"pickTab": "Scegli una scheda da condividere",
 		"noTabs": "Nessuna scheda aperta da condividere",
-		"shareSystem": "Finestra o schermo…",
+		"shareSystem": "Finestra o schermo...",
 		"search": "Cerca schede",
 		"suggested": "Suggerite",
 		"currentSpace": "Spazio attuale",
@@ -1519,9 +1519,16 @@
 			"notifications": "vuole mostrare notifiche",
 			"media": "vuole usare la fotocamera o il microfono"
 		},
-		"agentControl": "vuole controllare Lilo: aprire schede nella propria cartella, leggerne le pagine e agire usando i tuoi accessi.",
-		"agentProfile": "vuole spostare le proprie schede nel profilo {profile}, per agire usando i suoi accessi.",
-		"agentExecutable": "Programma: {path}",
+		"dontAllow": "Non consentire",
+		"agentConnect": {
+			"title": "{client} vuole controllare Lilo",
+			"openTabs": "Aprire schede nella propria cartella dello Space Agenti",
+			"readPages": "Leggere le pagine che apre",
+			"actSignedIn": "Agire usando i tuoi accessi",
+			"asksFirst": "Chiede prima di inviare, pagare, eliminare o pubblicare.",
+			"profileTitle": "{client} vuole usare il profilo {profile}",
+			"profileMessage": "Sposta lì le proprie schede, per agire con gli accessi di quel profilo."
+		},
 		"agentClick": "vuole fare clic su \"{label}\" in {tab} ({site}).",
 		"agentSubmit": "vuole premere Invio per inviare \"{label}\" in {tab} ({site}).",
 		"agentUpload": "vuole caricare {label} su {site}.",
@@ -2260,7 +2267,7 @@
 		},
 		"originalNotes": "Note di rilascio originali.",
 		"unavailable": "Le note di rilascio non sono disponibili in questa versione.",
-		"reopen": "Sempre qui in Aiuto → Novità.",
+		"reopen": "Sempre qui in Aiuto > Novità.",
 		"continue": "Torna a navigare",
 		"kinds": {
 			"Breaking": "Modifiche incompatibili",

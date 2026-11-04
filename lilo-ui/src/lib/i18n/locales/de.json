@@ -121,7 +121,6 @@
 			"storage": "Speicher"
 		},
 		"manageHistory": "Verlauf verwalten",
-		"manageHistoryDesc": "Seiten einzeln durchsehen, suchen und löschen",
 		"historyTimeRange": "Zeitraum des Verlaufs",
 		"historyRangeHour": "Letzte Stunde",
 		"historyRangeDay": "Letzte 24 Stunden",
@@ -185,7 +184,7 @@
 		"searchEmpty": "Keine Einstellungen zu „{query}“ gefunden.",
 		"clearData": {
 			"total": "von diesem Profil gespeichert",
-			"measuring": "Gespeicherte Daten dieses Profils werden ermittelt...",
+			"title": "Browserdaten löschen",
 			"freed": "{size} werden freigegeben",
 			"rangeNote": "Nur Daten aus dem gewählten Zeitraum werden gelöscht.",
 			"hints": {
@@ -1342,6 +1341,7 @@
 	},
 	"pageHang": {
 		"title": "{host} reagiert nicht",
+		"message": "Du kannst warten oder die Seite neu laden. Deine anderen Tabs funktionieren weiterhin.",
 		"stuckFor": "Reagiert seit {seconds} s nicht. Deine anderen Tabs funktionieren weiterhin.",
 		"reload": "Neu laden",
 		"wait": "Warten",
@@ -1369,7 +1369,7 @@
 		"title": "{origin} möchte einen Tab teilen",
 		"pickTab": "Tab zum Teilen auswählen",
 		"noTabs": "Keine offenen Tabs zum Teilen",
-		"shareSystem": "Fenster oder Bildschirm…",
+		"shareSystem": "Fenster oder Bildschirm...",
 		"search": "Tabs durchsuchen",
 		"suggested": "Vorgeschlagen",
 		"currentSpace": "Aktueller Space",
@@ -1519,9 +1519,16 @@
 			"notifications": "möchte Mitteilungen anzeigen",
 			"media": "möchte deine Kamera oder dein Mikrofon verwenden"
 		},
-		"agentControl": "möchte Lilo steuern: Tabs in einem eigenen Ordner öffnen, ihre Seiten lesen und dort mit deinen Anmeldungen handeln.",
-		"agentProfile": "möchte seine Tabs in das Profil {profile} verschieben, um dessen Anmeldungen zu verwenden.",
-		"agentExecutable": "Programm: {path}",
+		"dontAllow": "Nicht erlauben",
+		"agentConnect": {
+			"title": "{client} möchte Lilo steuern",
+			"openTabs": "Tabs in einem eigenen Ordner des Agents-Space öffnen",
+			"readPages": "Die Seiten lesen, die es öffnet",
+			"actSignedIn": "Dort mit deinen Anmeldungen handeln",
+			"asksFirst": "Es fragt, bevor es etwas sendet, bezahlt, löscht oder veröffentlicht.",
+			"profileTitle": "{client} möchte das Profil {profile} verwenden",
+			"profileMessage": "Es verschiebt seine Tabs dorthin, um mit den Anmeldungen dieses Profils zu handeln."
+		},
 		"agentClick": "möchte in {tab} ({site}) auf „{label}“ klicken.",
 		"agentSubmit": "möchte in {tab} ({site}) die Eingabetaste drücken, um „{label}“ abzusenden.",
 		"agentUpload": "möchte {label} auf {site} hochladen.",
@@ -2260,7 +2267,7 @@
 		},
 		"originalNotes": "Ursprüngliche Versionshinweise.",
 		"unavailable": "In dieser Version sind keine Versionshinweise verfügbar.",
-		"reopen": "Jederzeit unter Hilfe → Neuigkeiten zu finden.",
+		"reopen": "Jederzeit unter Hilfe > Neuigkeiten zu finden.",
 		"continue": "Weiter surfen",
 		"kinds": {
 			"Breaking": "Änderungen mit Inkompatibilitäten",

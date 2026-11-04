@@ -13,7 +13,7 @@
     showHistorySite,
     showHistoryTerminal,
   } from "../../stores/history.svelte";
-  import { isHistoryShellOpen, openSettings, openSettingsSubpage } from "../../stores/panels.svelte";
+  import { isHistoryShellOpen, openClearBrowsingData } from "../../stores/panels.svelte";
 
   let { compact = false }: { compact?: boolean } = $props();
   let searchEl: HTMLDivElement | undefined = $state();
@@ -71,8 +71,7 @@
 
   function select(id: string): void {
     if (id === "clearBrowsingData") {
-      openSettings("privacy");
-      openSettingsSubpage("privacy", "browsingData");
+      openClearBrowsingData();
     } else if (id.startsWith("site:")) showHistorySite(id.slice("site:".length));
     else if (id.startsWith("terminal:")) showHistoryTerminal(id.slice("terminal:".length));
     else showHistoryPeriod(id as BridgeHistoryPeriod);

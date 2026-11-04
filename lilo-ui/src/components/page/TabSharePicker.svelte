@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
-  import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { t } from "../../lib/i18n/state.svelte";
   import { getActiveSpaceId, getSpaces, type SpaceState } from "../../stores/spaces.svelte";
   import { isAgentsSpace } from "../../stores/agents.svelte";
@@ -19,8 +18,9 @@
     requestTabShareThumbnail,
     resolveTabShare,
   } from "../../stores/tabShare.svelte";
-  import { isSidebarVisible } from "../../stores/ui.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
+  import UiButton from "../ui/UiButton.svelte";
+  import UiModal from "../ui/UiModal.svelte";
 
   /** Tabs sharing a folder; `path` runs from the root folder down, empty for loose tabs. */
   interface TabGroup {
@@ -220,7 +220,6 @@
           : "",
   );
 
-  let panelEl = $state<HTMLDivElement>();
   let listEl = $state<HTMLDivElement>();
 
   // Snapshots only for cards scrolled into view: a long tab list costs nothing past its first rows.
@@ -233,7 +232,8 @@
           if (entry.isIntersecting && id) requestTabShareThumbnail(id);
         }
       },
-      { root: listEl, rootMargin: "80px" },
+      // The modal's body is what scrolls.
+      { root: listEl.parentElement, rootMargin: "80px" },
     );
   });
   $effect(() => {
@@ -253,8 +253,8 @@
   // The nearest card in the arrow's direction, by on-screen position: rows differ in length
   // between sections, so an index step would land on the wrong card.
   function moveSelection(key: string) {
-    if (!panelEl) return;
-    const cards = [...panelEl.querySelectorAll<HTMLElement>("[data-share-tab-id]")];
+    if (!listEl) return;
+    const cards = [...listEl.querySelectorAll<HTMLElement>("[data-share-tab-id]")];
     const current = cards.find((card) => card.dataset.shareTabId === selectedId);
     if (!current) return;
     const from = current.getBoundingClientRect();
@@ -282,16 +282,8 @@
     if (tabId) resolveTabShare("tab", tabId);
   }
 
-  // A modal: Tab cycles through the picker's controls instead of reaching the sidebar behind it.
-  // Capture phase, so Escape cancels the picker alone, not the panel or bar under it.
+  // Capture phase, ahead of the modal: arrows and Return pick a card even from the search field.
   function handleKeydown(e: KeyboardEvent) {
-    if (e.target instanceof Element && e.target.closest("dialog[open]")) return;
-    if (e.key === "Escape") {
-      e.preventDefault();
-      e.stopPropagation();
-      resolveTabShare("cancel");
-      return;
-    }
     if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement)) {
       e.preventDefault();
       share(selectedId);
@@ -302,21 +294,6 @@
     if (e.key === "ArrowUp" || e.key === "ArrowDown" || ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !inField)) {
       e.preventDefault();
       moveSelection(e.key);
-      return;
-    }
-    if (e.key !== "Tab" || !panelEl) return;
-    const controls = [...panelEl.querySelectorAll<HTMLElement>("input:not(:disabled), button:not(:disabled)")];
-    if (controls.length === 0) return;
-    e.preventDefault();
-    const index = controls.indexOf(document.activeElement as HTMLElement);
-    const step = e.shiftKey ? -1 : 1;
-    const next = index < 0 ? (e.shiftKey ? controls.length - 1 : 0) : (index + step + controls.length) % controls.length;
-    controls[next].focus();
-  }
-
-  function handleBackdropClick(e: MouseEvent) {
-    if (e.target === e.currentTarget) {
-      resolveTabShare("cancel");
     }
   }
 
@@ -373,7 +350,7 @@
       {/if}
     </span>
     <span class="tab-share-meta">
-      <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={14} radius={4} />
+      <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
       <span class="tab-share-card-title">{tabDisplayTitle(tab.title)}</span>
     </span>
     {#if placement}
@@ -383,169 +360,110 @@
 {/snippet}
 
 {#if request}
-  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="tab-share-backdrop chrome-content-overlay-root"
-    class:sidebar-hidden={!isSidebarVisible()}
-    use:reportInteractiveZone={{ id: "tab-share-picker" }}
-    onclick={handleBackdropClick}
-  >
-    <div
-      class="tab-share-panel chrome-floating-surface"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t("tabShare.title", { origin: request.origin })}
-      tabindex="-1"
-      bind:this={panelEl}
-    >
-      <header class="tab-share-header">
-        <div class="tab-share-heading">
-          <h2 class="tab-share-title">
-            {t("tabShare.title", { origin: request.origin })}
-          </h2>
-          <p class="tab-share-subtitle">{t("tabShare.pickTab")}</p>
-        </div>
-        <div class="tab-share-tools">
-          <label class="tab-share-search">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <circle cx="5.2" cy="5.2" r="3.7" stroke="currentColor" stroke-width="1.3" />
-              <path d="M8 8l2.6 2.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
-            </svg>
-            <input
-              type="search"
-              placeholder={t("tabShare.search")}
-              aria-label={t("tabShare.search")}
-              bind:value={query}
-              {@attach (node) => node.focus()}
-            />
-          </label>
-          {#if request.allowsSystem}
-            <button class="tab-share-btn" onclick={() => resolveTabShare("system", undefined, systemAudioOn)}>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+  <UiModal zone="tab-share-picker" width={640} scrolls oncancel={() => resolveTabShare("cancel")} ondefault={() => share(selectedId)}>
+    {#snippet header(titleId)}
+      <h2 class="tab-share-title" id={titleId}>{t("tabShare.title", { origin: request.origin })}</h2>
+      <p class="tab-share-subtitle">{t("tabShare.pickTab")}</p>
+      <div class="tab-share-tools">
+        <label class="tab-share-search">
+          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <circle cx="5.2" cy="5.2" r="3.7" stroke="currentColor" stroke-width="1.2" />
+            <path d="M8 8l2.6 2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          </svg>
+          <input type="search" placeholder={t("tabShare.search")} aria-label={t("tabShare.search")} bind:value={query} data-autofocus />
+        </label>
+        {#if request.allowsSystem}
+          <UiButton onclick={() => resolveTabShare("system", undefined, systemAudioOn)}>
+            <span class="tab-share-system">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <rect x="1.5" y="2" width="11" height="7.5" rx="1.3" stroke="currentColor" stroke-width="1.2" />
                 <path d="M5 12h4M7 9.5V12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
               </svg>
               {t("tabShare.shareSystem")}
-            </button>
-            {#if audio}
-              <label class="tab-share-sound" class:disabled={systemAudioBlocked}>
-                <input
-                  type="checkbox"
-                  checked={systemAudioOn}
-                  disabled={systemAudioBlocked}
-                  aria-describedby={systemAudioNote ? "tab-share-system-note" : undefined}
-                  onchange={(event) => (systemAudioChoice = event.currentTarget.checked)}
-                />
-                {t("tabShare.shareAudio")}
-              </label>
-            {/if}
+            </span>
+          </UiButton>
+          {#if audio}
+            <label class="tab-share-sound" class:disabled={systemAudioBlocked}>
+              <input
+                type="checkbox"
+                checked={systemAudioOn}
+                disabled={systemAudioBlocked}
+                aria-describedby={systemAudioNote ? "tab-share-system-note" : undefined}
+                onchange={(event) => (systemAudioChoice = event.currentTarget.checked)}
+              />
+              {t("tabShare.shareAudio")}
+            </label>
           {/if}
-        </div>
-        {#if systemAudioNote}
-          <p class="tab-share-note" id="tab-share-system-note">{systemAudioNote}</p>
         {/if}
-      </header>
-
-      <div class="tab-share-list" bind:this={listEl}>
-        {#each sections as section (section.id)}
-          {@const open = !section.collapsible || expanded.has(section.id)}
-          <section class="tab-share-section">
-            {#if section.collapsible}
-              <button class="tab-share-group toggle" aria-expanded={open} onclick={() => toggleSection(section.id)}>
-                <svg class="chevron" class:open width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                  <path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                {@render sectionLabel(section)}
-                <span class="count">{section.groups.reduce((sum, group) => sum + group.tabs.length, 0)}</span>
-              </button>
-            {:else if section.label}
-              <h3 class="tab-share-group">
-                {@render sectionLabel(section)}
-                {#if section.space}
-                  <span class="tab-share-current-space">{t("tabShare.currentSpace")}</span>
-                {/if}
-              </h3>
-            {/if}
-            {#if open}
-              {#each section.groups.filter(groupShown) as group (group.id)}
-                {@const groupIsOpen = groupOpen(group)}
-                {#if group.collapsed}
-                  <h4 class="tab-share-folder">
-                    <button class="toggle" aria-expanded={groupIsOpen} onclick={() => toggleSection(group.id)}>
-                      <svg class="chevron" class:open={groupIsOpen} width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                        <path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                      {@render folderLabel(group)}
-                    </button>
-                  </h4>
-                {:else if group.path.length && group.tabs.length}
-                  <!-- An open folder holding only subfolders needs no heading: theirs carry its name. -->
-                  <h4 class="tab-share-folder">{@render folderLabel(group)}</h4>
-                {/if}
-                {#if groupIsOpen && group.tabs.length}
-                  <div class="tab-share-grid">
-                    {#each group.tabs as tab (tab.id)}
-                      {@render card(tab, section.showsPlacement ? placementLabel(tab.id) : "")}
-                    {/each}
-                  </div>
-                {/if}
-              {/each}
-            {/if}
-          </section>
-        {:else}
-          <p class="tab-share-empty">{t(query.trim() ? "tabShare.noMatch" : "tabShare.noTabs")}</p>
-        {/each}
       </div>
+      {#if systemAudioNote}
+        <p class="tab-share-note" id="tab-share-system-note">{systemAudioNote}</p>
+      {/if}
+    {/snippet}
 
-      <footer class="tab-share-footer">
-        <span class="tab-share-hint">{t("tabShare.keyHint")}</span>
-        <div class="tab-share-actions">
-          <button class="tab-share-btn" onclick={() => resolveTabShare("cancel")}>
-            {t("common.cancel")}
-          </button>
-          <button class="tab-share-btn primary" disabled={!selectedId} onclick={() => share(selectedId)}>
-            {t("tabShare.share")}
-          </button>
-        </div>
-      </footer>
+    <div class="tab-share-list" bind:this={listEl}>
+      {#each sections as section (section.id)}
+        {@const open = !section.collapsible || expanded.has(section.id)}
+        <section class="tab-share-section" class:collapsible={section.collapsible}>
+          {#if section.collapsible}
+            <button class="tab-share-group toggle" aria-expanded={open} onclick={() => toggleSection(section.id)}>
+              <svg class="chevron" class:open width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                <path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              {@render sectionLabel(section)}
+              <span class="count">{section.groups.reduce((sum, group) => sum + group.tabs.length, 0)}</span>
+            </button>
+          {:else if section.label}
+            <h3 class="tab-share-group">
+              {@render sectionLabel(section)}
+              {#if section.space}
+                <span class="tab-share-current-space">{t("tabShare.currentSpace")}</span>
+              {/if}
+            </h3>
+          {/if}
+          {#if open}
+            {#each section.groups.filter(groupShown) as group (group.id)}
+              {@const groupIsOpen = groupOpen(group)}
+              {#if group.collapsed}
+                <h4 class="tab-share-folder">
+                  <button class="toggle" aria-expanded={groupIsOpen} onclick={() => toggleSection(group.id)}>
+                    <svg class="chevron" class:open={groupIsOpen} width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                      <path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    {@render folderLabel(group)}
+                  </button>
+                </h4>
+              {:else if group.path.length && group.tabs.length}
+                <!-- An open folder holding only subfolders needs no heading: theirs carry its name. -->
+                <h4 class="tab-share-folder">{@render folderLabel(group)}</h4>
+              {/if}
+              {#if groupIsOpen && group.tabs.length}
+                <div class="tab-share-grid">
+                  {#each group.tabs as tab (tab.id)}
+                    {@render card(tab, section.showsPlacement ? placementLabel(tab.id) : "")}
+                  {/each}
+                </div>
+              {/if}
+            {/each}
+          {/if}
+        </section>
+      {:else}
+        <p class="tab-share-empty">{t(query.trim() ? "tabShare.noMatch" : "tabShare.noTabs")}</p>
+      {/each}
     </div>
-  </div>
+
+    {#snippet leading()}<span class="tab-share-hint">{t("tabShare.keyHint")}</span>{/snippet}
+    {#snippet actions()}
+      <UiButton onclick={() => resolveTabShare("cancel")}>{t("common.cancel")}</UiButton>
+      <UiButton variant="primary" disabled={!selectedId} onclick={() => share(selectedId)}>{t("tabShare.share")}</UiButton>
+    {/snippet}
+  </UiModal>
 {/if}
 
 <style>
-  .tab-share-backdrop {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: clamp(18px, 6vh, 64px) 16px 16px;
-    z-index: 61;
-    pointer-events: auto;
-    overflow: hidden;
-    background: var(--chrome-overlay-backdrop-tint);
-    backdrop-filter: blur(var(--chrome-overlay-backdrop-blur)) saturate(1.04);
-  }
-
-  .tab-share-panel {
-    width: min(680px, 100%);
-    max-height: calc(100% - 24px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    color: var(--text-primary);
-    outline: none;
-    animation: tab-share-rise 340ms var(--motion-ease-bounce);
-  }
-
-  .tab-share-header {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px 18px 12px;
-  }
-
   .tab-share-title {
     margin: 0;
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-modal);
     font-weight: var(--font-weight-semibold);
     line-height: 1.3;
     overflow-wrap: break-word;
@@ -553,15 +471,16 @@
 
   .tab-share-subtitle {
     margin: 2px 0 0;
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
   }
 
   .tab-share-tools {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
     flex-wrap: wrap;
+    margin-top: var(--space-16);
   }
 
   .tab-share-search {
@@ -569,11 +488,11 @@
     min-width: 160px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    height: 28px;
-    padding: 0 9px;
+    gap: var(--space-8);
+    height: var(--control-height-md);
+    padding: 0 var(--space-8);
     border-radius: var(--radius-sm);
-    background: var(--text-primary-tint-10);
+    background: var(--bg-hover);
     color: var(--text-muted);
   }
 
@@ -589,36 +508,44 @@
     background: transparent;
     color: var(--text-primary);
     font-family: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
+  }
+
+  .tab-share-system {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
   }
 
   .tab-share-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 2px 18px 14px;
-    overflow-y: auto;
-    flex: 1 1 auto;
-    min-height: 0;
+    gap: var(--space-12);
   }
 
   .tab-share-section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-8);
+  }
+
+  /* Other Spaces fold into one row each, between separators. */
+  .tab-share-section.collapsible {
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--separator);
   }
 
   .tab-share-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-8);
     margin: 0;
     padding: 2px 0;
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: var(--text-secondary);
   }
 
   .tab-share-group.toggle {
@@ -635,8 +562,7 @@
   }
 
   .tab-share-group .count {
-    font-weight: var(--font-weight-medium);
-    opacity: 0.7;
+    font-weight: var(--font-weight-regular);
   }
 
   .chevron {
@@ -648,37 +574,37 @@
   }
 
   .tab-share-space-icon {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     letter-spacing: 0;
   }
 
   .tab-share-current-space {
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-regular);
     letter-spacing: 0;
     text-transform: none;
-    opacity: 0.7;
   }
 
   .tab-share-folder {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-8);
     min-width: 0;
-    margin: 4px 0 0;
+    margin: var(--space-4) 0 0;
     padding: 0 2px;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
-    color: var(--text-secondary);
+    color: var(--text-primary);
   }
 
   .tab-share-folder svg {
     flex-shrink: 0;
+    color: var(--text-secondary);
   }
 
   .tab-share-folder .toggle {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-8);
     min-width: 0;
     margin-left: -2px;
     padding: 0 2px;
@@ -690,17 +616,13 @@
     cursor: pointer;
   }
 
-  .tab-share-folder .toggle:hover {
-    color: var(--text-primary);
-  }
-
   /* A deep path gives way before the folder's own name does. */
   .tab-share-folder .parents {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--text-muted);
+    color: var(--text-secondary);
   }
 
   .tab-share-folder .name {
@@ -713,8 +635,8 @@
 
   .tab-share-folder .count {
     flex-shrink: 0;
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
+    font-weight: var(--font-weight-regular);
+    color: var(--text-secondary);
   }
 
   .tab-share-placement {
@@ -723,44 +645,34 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
   }
 
+  /* Three equal cards a row at the modal's width. */
   .tab-share-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--space-8);
   }
 
   .tab-share-card {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-8);
     min-width: 0;
-    padding: 5px;
-    border: 2px solid transparent;
+    padding: 0;
+    border: none;
     border-radius: var(--radius-md);
     background: transparent;
     color: var(--text-primary);
     font-family: inherit;
     text-align: left;
     cursor: pointer;
-    transition: background var(--transition-fast), border-color var(--transition-fast);
-  }
-
-  .tab-share-card:hover {
-    background: var(--bg-hover);
-  }
-
-  .tab-share-card.selected {
-    border-color: var(--accent);
-    background: var(--text-primary-tint-10);
   }
 
   .tab-share-card:focus-visible {
-    outline: var(--focus-outline);
-    outline-offset: 1px;
+    outline: none;
   }
 
   .tab-share-thumb {
@@ -771,8 +683,19 @@
     aspect-ratio: 16 / 10;
     max-width: 100%;
     overflow: hidden;
-    border-radius: var(--radius-sm);
-    background: var(--text-primary-tint-10);
+    border-radius: var(--radius-md);
+    background: var(--bg-hover);
+    box-shadow: inset 0 0 0 1px var(--separator);
+    transition: box-shadow var(--transition-fast);
+  }
+
+  .tab-share-card:hover .tab-share-thumb {
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+
+  .tab-share-card.selected .tab-share-thumb,
+  .tab-share-card:focus-visible .tab-share-thumb {
+    box-shadow: 0 0 0 3px var(--accent);
   }
 
   .tab-share-thumb img {
@@ -796,7 +719,7 @@
   .tab-share-meta {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-8);
     min-width: 0;
     padding: 0 2px;
   }
@@ -807,36 +730,26 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
   }
 
   .tab-share-empty {
     margin: 0;
-    padding: 24px 10px;
-    font-size: var(--font-size-md);
-    color: var(--text-muted);
+    padding: var(--space-24) var(--space-12);
+    color: var(--text-secondary);
     text-align: center;
   }
 
-  .tab-share-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 10px 12px 10px 18px;
-    border-top: 1px solid var(--separator);
-  }
-
   .tab-share-hint {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
+    flex: 1;
+    min-width: 0;
   }
 
   .tab-share-sound {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     color: var(--text-primary);
     cursor: pointer;
   }
@@ -852,74 +765,12 @@
   }
 
   .tab-share-note {
-    margin: 0;
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-  }
-
-  .tab-share-actions {
-    display: flex;
-    gap: 8px;
-    margin-left: auto;
-  }
-
-  .tab-share-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
+    margin: var(--space-8) 0 0;
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    font-family: inherit;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: background var(--transition-fast);
-  }
-
-  .tab-share-btn:hover {
-    background: var(--bg-hover);
-  }
-
-  .tab-share-btn.primary {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--accent-text);
-  }
-
-  .tab-share-btn.primary:hover {
-    background: var(--accent-hover);
-  }
-
-  .tab-share-btn:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
-
-  .tab-share-btn:focus-visible {
-    outline: var(--focus-outline);
-    outline-offset: 1px;
-  }
-
-  @keyframes tab-share-rise {
-    from {
-      opacity: 0;
-      transform: translateY(-6px) scale(0.985);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
+    color: var(--text-secondary);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .tab-share-panel {
-      animation: none;
-    }
-
     .chevron {
       transition: none;
     }

@@ -121,7 +121,6 @@
 			"storage": "存储空间"
 		},
 		"manageHistory": "管理历史记录",
-		"manageHistoryDesc": "逐页浏览、搜索和删除",
 		"historyTimeRange": "历史记录时间范围",
 		"historyRangeHour": "最近一小时",
 		"historyRangeDay": "最近 24 小时",
@@ -185,7 +184,7 @@
 		"searchEmpty": "没有与“{query}”匹配的设置。",
 		"clearData": {
 			"total": "由此个人资料存储",
-			"measuring": "正在计算此个人资料存储的数据...",
+			"title": "清除浏览数据",
 			"freed": "将释放 {size}",
 			"rangeNote": "仅清除所选时间范围内存储的数据。",
 			"hints": {
@@ -1342,6 +1341,7 @@
 	},
 	"pageHang": {
 		"title": "{host} 无响应",
+		"message": "你可以等待或重新载入。其他标签页仍可正常使用。",
 		"stuckFor": "已停滞 {seconds} 秒。其他标签页仍可正常使用。",
 		"reload": "重新载入",
 		"wait": "等待",
@@ -1376,7 +1376,7 @@
 		"keyHint": "用方向键选择，按 Return 共享",
 		"noTabs": "没有可共享的打开标签页",
 		"noMatch": "没有匹配的标签页",
-		"shareSystem": "窗口或屏幕…",
+		"shareSystem": "窗口或屏幕...",
 		"shareAudio": "同时共享声音",
 		"systemAudio": {
 			"undetermined": "macOS 只会询问一次。通话中的声音永远不会被共享。",
@@ -1519,9 +1519,16 @@
 			"notifications": "想要显示通知",
 			"media": "想要使用你的摄像头或麦克风"
 		},
-		"agentControl": "想要控制 Lilo：在自己的文件夹中打开标签页、读取其中的网页，并使用你的登录信息进行操作。",
-		"agentProfile": "想要将其标签页移至个人资料“{profile}”，以使用其中的登录信息操作。",
-		"agentExecutable": "程序：{path}",
+		"dontAllow": "不允许",
+		"agentConnect": {
+			"title": "{client} 想要控制 Lilo",
+			"openTabs": "在“智能体” Space 的专属文件夹中打开标签页",
+			"readPages": "读取它打开的网页",
+			"actSignedIn": "使用你的登录信息进行操作",
+			"asksFirst": "发送、付款、删除或发布前会先询问。",
+			"profileTitle": "{client} 想要使用个人资料“{profile}”",
+			"profileMessage": "它会将标签页移至该个人资料，以使用其中的登录信息操作。"
+		},
 		"agentClick": "想要在 {tab}（{site}）中点按“{label}”。",
 		"agentSubmit": "想要在 {tab}（{site}）中按 Enter 提交“{label}”。",
 		"agentUpload": "想要将 {label} 上传到 {site}。",
@@ -2260,7 +2267,7 @@
 		},
 		"originalNotes": "原始版本说明（英文）。",
 		"unavailable": "此构建版本暂未提供版本说明。",
-		"reopen": "随时可从「帮助 → 更新内容」再次查看。",
+		"reopen": "随时可从「帮助 > 更新内容」再次查看。",
 		"continue": "继续浏览",
 		"kinds": {
 			"Breaking": "重大变更",

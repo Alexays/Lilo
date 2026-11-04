@@ -22,7 +22,7 @@ test("picking a tab resolves the request with that tab's id", async ({
 		requestPicker("req-1", "meet.example.com"),
 	);
 
-	const picker = page.locator(".tab-share-backdrop");
+	const picker = page.locator('[data-modal="tab-share-picker"]');
 	await expect(picker).toBeVisible();
 	await expect(picker.locator(".tab-share-title")).toContainText(
 		"meet.example.com",
@@ -35,7 +35,7 @@ test("picking a tab resolves the request with that tab's id", async ({
 	await beta.click();
 	await expect(beta).toHaveAttribute("aria-pressed", "true");
 	await expect(picker).toBeVisible();
-	await picker.locator(".tab-share-btn.primary").click();
+	await picker.getByRole("button", { name: "Share", exact: true }).click();
 
 	await expect(picker).toHaveCount(0);
 	const commands = await sentCommands(page);
@@ -53,7 +53,7 @@ test("the first card is selected from the start, so Return shares it", async ({
 		(msg) => window.__lilo!.receive(msg),
 		{ ...requestPicker("req-1", "meet.example.com"), suggestedTabIds: ["tab-beta"] },
 	);
-	const picker = page.locator(".tab-share-backdrop");
+	const picker = page.locator('[data-modal="tab-share-picker"]');
 	await expect(picker.locator(".tab-share-search input")).toBeFocused();
 	await expect(picker.locator('[data-share-tab-id="tab-beta"]')).toHaveAttribute("aria-pressed", "true");
 
@@ -77,7 +77,7 @@ test("tabs are grouped by folder, and suggestions name where they live", async (
 			suggestedTabIds: ["tab-beta"],
 		},
 	);
-	const picker = page.locator(".tab-share-backdrop");
+	const picker = page.locator('[data-modal="tab-share-picker"]');
 	const [suggested, work] = [0, 1].map((index) => picker.locator(".tab-share-section").nth(index));
 
 	await expect(suggested.locator(".tab-share-placement")).toHaveText(["Projects"]);
@@ -110,7 +110,7 @@ test("a folder collapsed in the sidebar opens on demand, its subfolders with it"
 		(msg) => window.__lilo!.receive(msg),
 		{ ...requestPicker("req-1", "meet.example.com"), shareableTabIds: ["tab-alpha", "tab-beta", "tab-gamma"] },
 	);
-	const picker = page.locator(".tab-share-backdrop");
+	const picker = page.locator('[data-modal="tab-share-picker"]');
 	const folders = picker.locator(".tab-share-folder");
 	const clients = folders.filter({ hasText: "Clients" }).locator(".toggle");
 
@@ -139,8 +139,8 @@ test("the system picker button resolves with choice system", async ({
 		requestPicker("req-1", "meet.example.com"),
 	);
 
-	const picker = page.locator(".tab-share-backdrop");
-	await picker.locator(".tab-share-btn").first().click();
+	const picker = page.locator('[data-modal="tab-share-picker"]');
+	await picker.getByRole("button", { name: "Window or Screen..." }).click();
 
 	await expect(picker).toHaveCount(0);
 	const commands = await sentCommands(page);
@@ -155,7 +155,7 @@ test("Tab keeps focus inside the picker", async ({ page }) => {
 		(msg) => window.__lilo!.receive(msg),
 		{ ...requestPicker("req-1", "meet.example.com"), allowsSystem: true },
 	);
-	const picker = page.locator(".tab-share-panel");
+	const picker = page.locator('[data-modal="tab-share-picker"]');
 	await expect(picker.locator(".tab-share-search input")).toBeFocused();
 
 	for (let i = 0; i < 5; i++) {
@@ -173,11 +173,11 @@ test("Escape cancels the request", async ({ page }) => {
 		(msg) => window.__lilo!.receive(msg),
 		requestPicker("req-1", "meet.example.com"),
 	);
-	await expect(page.locator(".tab-share-backdrop")).toBeVisible();
+	await expect(page.locator('[data-modal="tab-share-picker"]')).toBeVisible();
 
 	await page.keyboard.press("Escape");
 
-	await expect(page.locator(".tab-share-backdrop")).toHaveCount(0);
+	await expect(page.locator('[data-modal="tab-share-picker"]')).toHaveCount(0);
 	const commands = await sentCommands(page);
 	expect(commands.find((c) => c.action === "tabShare.resolve")?.payload).toEqual(
 		{ requestId: "req-1", choice: "cancel" },
@@ -193,7 +193,7 @@ test("a second request is auto-cancelled while the first stays open", async ({
 		(msg) => window.__lilo!.receive(msg),
 		requestPicker("req-1", "meet.example.com"),
 	);
-	await expect(page.locator(".tab-share-backdrop")).toBeVisible();
+	await expect(page.locator('[data-modal="tab-share-picker"]')).toBeVisible();
 
 	await page.evaluate(
 		(msg) => window.__lilo!.receive(msg),

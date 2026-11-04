@@ -5,7 +5,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { showProfileExtensions } from "../../stores/extensions.svelte";
-  import { closeSettingsShell, openSettings, openSettingsSubpage } from "../../stores/panels.svelte";
+  import { closeSettingsShell, openClearBrowsingData, openSettings } from "../../stores/panels.svelte";
   import { getActiveProfileId } from "../../stores/profiles.svelte";
   import type { SpaceState } from "../../stores/spaces.svelte";
   import UiConfirmModal from "../ui/UiConfirmModal.svelte";
@@ -137,7 +137,7 @@
           </button>
           <!-- The clear-data flow acts on the window's own profile only. -->
           {#if isActive}
-            <button class="float-row" role="menuitem" onclick={() => pick(() => openSettingsSubpage("privacy", "browsingData"))}>
+            <button class="float-row" role="menuitem" onclick={() => pick(openClearBrowsingData)}>
               {t("settings.profiles.clearData")}
             </button>
           {/if}

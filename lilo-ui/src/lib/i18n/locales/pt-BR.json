@@ -121,7 +121,6 @@
 			"storage": "Armazenamento"
 		},
 		"manageHistory": "Gerenciar histórico",
-		"manageHistoryDesc": "Navegue, busque e apague página por página",
 		"historyTimeRange": "Período do histórico",
 		"historyRangeHour": "Última hora",
 		"historyRangeDay": "Últimas 24 horas",
@@ -185,7 +184,7 @@
 		"searchEmpty": "Nenhum ajuste corresponde a \"{query}\".",
 		"clearData": {
 			"total": "armazenados por este perfil",
-			"measuring": "Medindo o que este perfil armazena...",
+			"title": "Limpar dados de navegação",
 			"freed": "{size} serão liberados",
 			"rangeNote": "Somente os dados armazenados durante o período escolhido são apagados.",
 			"hints": {
@@ -1342,6 +1341,7 @@
 	},
 	"pageHang": {
 		"title": "{host} não está respondendo",
+		"message": "Você pode esperar ou recarregar. Suas outras abas continuam funcionando.",
 		"stuckFor": "Sem responder há {seconds} s. Suas outras abas continuam funcionando.",
 		"reload": "Recarregar",
 		"wait": "Aguardar",
@@ -1376,7 +1376,7 @@
 		"keyHint": "Setas para escolher, Return para compartilhar",
 		"noTabs": "Nenhuma aba aberta para compartilhar",
 		"noMatch": "Nenhuma aba corresponde",
-		"shareSystem": "Janela ou tela…",
+		"shareSystem": "Janela ou tela...",
 		"shareAudio": "Compartilhar o som também",
 		"systemAudio": {
 			"undetermined": "O macOS vai pedir uma vez. As vozes da chamada nunca são compartilhadas.",
@@ -1519,9 +1519,16 @@
 			"notifications": "quer mostrar notificações",
 			"media": "quer usar sua câmera ou seu microfone"
 		},
-		"agentControl": "quer controlar o Lilo: abrir abas na própria pasta, ler suas páginas e agir nelas usando suas sessões.",
-		"agentProfile": "quer mover suas abas para o perfil {profile} para agir usando as sessões dele.",
-		"agentExecutable": "Programa: {path}",
+		"dontAllow": "Não permitir",
+		"agentConnect": {
+			"title": "{client} quer controlar o Lilo",
+			"openTabs": "Abrir abas na própria pasta do Space Agentes",
+			"readPages": "Ler as páginas que abre",
+			"actSignedIn": "Agir nelas usando suas sessões",
+			"asksFirst": "Ele pergunta antes de enviar, pagar, apagar ou publicar.",
+			"profileTitle": "{client} quer usar o perfil {profile}",
+			"profileMessage": "Ele move as abas para lá, para agir com as sessões desse perfil."
+		},
 		"agentClick": "quer clicar em \"{label}\" em {tab} ({site}).",
 		"agentSubmit": "quer pressionar Enter para enviar \"{label}\" em {tab} ({site}).",
 		"agentUpload": "quer enviar {label} para {site}.",
@@ -2260,7 +2267,7 @@
 		},
 		"originalNotes": "Notas de versão originais, em inglês.",
 		"unavailable": "As notas de versão não estão disponíveis nesta compilação.",
-		"reopen": "Sempre em Ajuda → Novidades.",
+		"reopen": "Sempre em Ajuda > Novidades.",
 		"continue": "Voltar à navegação",
 		"kinds": {
 			"Breaking": "Mudanças importantes",

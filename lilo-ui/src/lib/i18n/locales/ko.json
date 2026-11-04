@@ -121,7 +121,6 @@
 			"storage": "저장 공간"
 		},
 		"manageHistory": "방문 기록 관리",
-		"manageHistoryDesc": "페이지별로 보기, 검색, 삭제",
 		"historyTimeRange": "방문 기록 기간",
 		"historyRangeHour": "지난 1시간",
 		"historyRangeDay": "지난 24시간",
@@ -185,7 +184,7 @@
 		"searchEmpty": "‘{query}’에 해당하는 설정이 없습니다.",
 		"clearData": {
 			"total": "이 프로필이 저장한 데이터",
-			"measuring": "이 프로필이 저장한 데이터를 확인하는 중...",
+			"title": "방문 기록 데이터 지우기",
 			"freed": "{size} 확보 예정",
 			"rangeNote": "선택한 기간에 저장된 데이터만 지워집니다.",
 			"hints": {
@@ -1342,6 +1341,7 @@
 	},
 	"pageHang": {
 		"title": "{host} 응답 없음",
+		"message": "기다리거나 새로고침할 수 있습니다. 다른 탭은 계속 사용할 수 있습니다.",
 		"stuckFor": "{seconds}초 동안 응답하지 않습니다. 다른 탭은 계속 사용할 수 있습니다.",
 		"reload": "새로고침",
 		"wait": "기다리기",
@@ -1369,7 +1369,7 @@
 		"title": "{origin}에서 탭을 공유하려고 합니다",
 		"pickTab": "공유할 탭 선택",
 		"noTabs": "공유할 열린 탭 없음",
-		"shareSystem": "윈도우 또는 화면…",
+		"shareSystem": "윈도우 또는 화면...",
 		"search": "탭 검색",
 		"suggested": "추천",
 		"currentSpace": "현재 스페이스",
@@ -1519,9 +1519,16 @@
 			"notifications": "알림을 표시하려고 합니다",
 			"media": "카메라 또는 마이크를 사용하려고 합니다"
 		},
-		"agentControl": "Lilo를 제어하려고 합니다. 자체 폴더에서 탭을 열고 페이지를 읽으며 사용자의 로그인으로 작업합니다.",
-		"agentProfile": "탭을 {profile} 프로필로 이동하여 해당 프로필의 로그인으로 작업하려고 합니다.",
-		"agentExecutable": "프로그램: {path}",
+		"dontAllow": "허용 안 함",
+		"agentConnect": {
+			"title": "{client}이(가) Lilo를 제어하려고 합니다",
+			"openTabs": "에이전트 Space의 자체 폴더에서 탭 열기",
+			"readPages": "연 페이지 읽기",
+			"actSignedIn": "사용자의 로그인으로 작업하기",
+			"asksFirst": "보내기, 결제, 삭제, 게시 전에는 먼저 묻습니다.",
+			"profileTitle": "{client}이(가) {profile} 프로필을 사용하려고 합니다",
+			"profileMessage": "탭을 해당 프로필로 옮겨 그 프로필의 로그인으로 작업합니다."
+		},
 		"agentClick": "{tab}({site})에서 ‘{label}’ 항목을 클릭하려고 합니다.",
 		"agentSubmit": "{tab}({site})에서 Enter를 눌러 ‘{label}’ 항목을 제출하려고 합니다.",
 		"agentUpload": "{label} 항목을 {site}에 업로드하려고 합니다.",
@@ -2260,7 +2267,7 @@
 		},
 		"originalNotes": "원본 릴리즈 노트.",
 		"unavailable": "이 빌드에서는 릴리즈 노트를 사용할 수 없습니다.",
-		"reopen": "도움말 → 새로운 기능에서 언제든 볼 수 있습니다.",
+		"reopen": "도움말 > 새로운 기능에서 언제든 볼 수 있습니다.",
 		"continue": "인터넷 사용으로 돌아가기",
 		"kinds": {
 			"Breaking": "호환성에 영향을 주는 변경사항",

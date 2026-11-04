@@ -121,7 +121,6 @@
 			"storage": "ストレージ"
 		},
 		"manageHistory": "履歴を管理",
-		"manageHistoryDesc": "ページごとに表示・検索・削除",
 		"historyTimeRange": "履歴の期間",
 		"historyRangeHour": "過去1時間",
 		"historyRangeDay": "過去24時間",
@@ -185,7 +184,7 @@
 		"searchEmpty": "「{query}」に一致する設定がありません。",
 		"clearData": {
 			"total": "このプロファイルが保存しているデータ",
-			"measuring": "このプロファイルの保存データを計測中...",
+			"title": "閲覧データを消去",
 			"freed": "{size}が解放されます",
 			"rangeNote": "選択した期間に保存されたデータだけを消去します。",
 			"hints": {
@@ -1342,6 +1341,7 @@
 	},
 	"pageHang": {
 		"title": "{host}が応答していません",
+		"message": "待つか再読み込みできます。ほかのタブは使えます。",
 		"stuckFor": "{seconds}秒間応答がありません。ほかのタブは使えます。",
 		"reload": "再読み込み",
 		"wait": "待機",
@@ -1369,7 +1369,7 @@
 		"title": "{origin}がタブの共有を求めています",
 		"pickTab": "共有するタブを選択",
 		"noTabs": "共有できるタブが開いていません",
-		"shareSystem": "ウインドウまたは画面…",
+		"shareSystem": "ウインドウまたは画面...",
 		"search": "タブを検索",
 		"suggested": "候補",
 		"currentSpace": "現在のスペース",
@@ -1519,9 +1519,16 @@
 			"notifications": "が通知の表示を求めています",
 			"media": "がカメラまたはマイクの使用を求めています"
 		},
-		"agentControl": "が Lilo の操作を求めています。専用フォルダでタブを開き、ページを読み取り、あなたのサインイン情報を使って操作します。",
-		"agentProfile": "がタブをプロファイル「{profile}」に移動し、そのサインイン情報を使って操作することを求めています。",
-		"agentExecutable": "プログラム：{path}",
+		"dontAllow": "許可しない",
+		"agentConnect": {
+			"title": "{client} が Lilo の操作を求めています",
+			"openTabs": "エージェント Space の専用フォルダでタブを開く",
+			"readPages": "開いたページを読み取る",
+			"actSignedIn": "あなたのサインイン情報で操作する",
+			"asksFirst": "送信、支払い、削除、公開の前には確認を求めます。",
+			"profileTitle": "{client} がプロファイル「{profile}」の使用を求めています",
+			"profileMessage": "タブをそのプロファイルに移動し、そのサインイン情報で操作します。"
+		},
 		"agentClick": "が{tab}（{site}）で「{label}」をクリックしようとしています。",
 		"agentSubmit": "が{tab}（{site}）で Enter を押して「{label}」を送信しようとしています。",
 		"agentUpload": "が{label}を{site}にアップロードしようとしています。",
@@ -2260,7 +2267,7 @@
 		},
 		"originalNotes": "元のリリースノート。",
 		"unavailable": "このビルドではリリースノートを利用できません。",
-		"reopen": "「ヘルプ」→「新機能」からいつでも開けます。",
+		"reopen": "「ヘルプ」>「新機能」からいつでも開けます。",
 		"continue": "ブラウジングに戻る",
 		"kinds": {
 			"Breaking": "互換性のない変更",
