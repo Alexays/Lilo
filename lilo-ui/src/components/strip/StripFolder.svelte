@@ -145,14 +145,14 @@
     height: 32px;
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 0 9px;
+    gap: 8px;
+    padding: 0 8px;
     border: 0;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     background: transparent;
     color: var(--text-primary);
     font: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     white-space: nowrap;
   }
 
@@ -164,7 +164,8 @@
 
   .strip-folder.active,
   .strip-split.active {
-    background: var(--bg-selected);
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
   }
 
   .strip-folder.drop-target {

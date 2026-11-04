@@ -113,6 +113,11 @@
   let overflowEnd = $state(false);
   let compactSpace = $state(false);
   let spaceChipWidth = 0;
+  // Today's inactive pills fold to their icon once their titles would go under FOLD_MIN_WIDTH.
+  let folded = $state(false);
+  const FOLD_MIN_WIDTH = 96;
+  const FOLDED_WIDTH = 32;
+  const FOLDABLE = ".today-list > .strip-slot:not(.active, .icon-only):not(:has(> .strip-folder, > .strip-split, > .strip-conversation.active))";
 
   function measureEdges(): void {
     if (!scrollerEl) return;
@@ -120,25 +125,33 @@
     overflowEnd = scrollerEl.scrollLeft + scrollerEl.clientWidth < scrollerEl.scrollWidth - 1;
   }
 
-  // Scrolling leaves the chip's fit unchanged: only a resize or a new set of pills measures it again.
+  // Scrolling leaves the fit unchanged: only a resize or a new set of pills measures it again.
+  // Out of room, the Space chip drops its name, then today's pills fold to their icon, then the row scrolls.
+  // Each step comes back only once it fits beside the rest, so the row cannot flip between two states.
   function measureOverflow(): void {
     measureEdges();
     if (!scrollerEl) return;
-    // The Space chip drops its name before the tabs scroll, and takes it back only once it fits beside them:
-    // the pills grow into the room it frees, so the row cannot flip between the two.
     const chip = stripEl?.querySelector<HTMLElement>(".space-chip");
-    if (!chip) return;
-    if (!compactSpace) {
-      if (scrollerEl.scrollWidth > scrollerEl.clientWidth + 1) {
+    if (scrollerEl.scrollWidth > scrollerEl.clientWidth + 1) {
+      if (chip && !compactSpace) {
         spaceChipWidth = chip.offsetWidth;
         compactSpace = true;
+        // Still out of room once the chip is compact: the pills fold too.
+        void tick().then(measureOverflow);
+      } else {
+        folded = true;
       }
       return;
     }
     const list = scrollerEl.querySelector(".today-list");
     if (!list) return;
     const end = list.lastElementChild?.getBoundingClientRect().right ?? list.getBoundingClientRect().left;
-    if (list.getBoundingClientRect().right - end >= spaceChipWidth - chip.offsetWidth) compactSpace = false;
+    const room = list.getBoundingClientRect().right - end;
+    if (folded) {
+      if (room >= scrollerEl.querySelectorAll(FOLDABLE).length * (FOLD_MIN_WIDTH - FOLDED_WIDTH)) folded = false;
+      return;
+    }
+    if (chip && compactSpace && room >= spaceChipWidth - chip.offsetWidth) compactSpace = false;
   }
 
   $effect(() => {
@@ -305,7 +318,7 @@
   {/if}
 
   <!-- Every tab scrolls as one row, as in the sidebar. -->
-  <div class="scroller" class:overflow-start={overflowStart} class:overflow-end={overflowEnd} bind:this={scrollerEl}>
+  <div class="scroller" class:folded class:overflow-start={overflowStart} class:overflow-end={overflowEnd} bind:this={scrollerEl}>
     {#if view.bookmarked.length}
       {@render zoneOf("bookmarked")}
     {/if}
@@ -516,12 +529,12 @@
   .group {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
     flex: none;
   }
 
   .divider {
-    width: 1px;
+    width: 0.5px;
     height: 18px;
     margin: 0 4px;
     flex: none;
@@ -537,7 +550,7 @@
     background: var(--zone-color);
   }
 
-  /* Today's pills shrink to their icon, then the whole row scrolls sideways. */
+  /* Today's pills shrink, fold to their icon, then the whole row scrolls sideways. */
   .scroller {
     flex: 1 1 200px;
     min-width: 0;
@@ -578,6 +591,13 @@
   .strip-slot {
     display: flex;
     flex: 0 1 170px;
+    min-width: 96px;
+  }
+
+  /* FOLDABLE in the script: an inactive tab or conversation pill, folded to its icon. */
+  .folded .today-list > .strip-slot:not(.active, .icon-only):not(:has(> :global(.strip-folder), > :global(.strip-split), > :global(.strip-conversation.active))) {
+    flex: none;
+    width: 32px;
     min-width: 32px;
   }
 
@@ -591,6 +611,7 @@
   .strip-slot:has(> :global(.strip-folder)),
   .strip-slot:has(> :global(.strip-split)) {
     flex: none;
+    min-width: 32px;
   }
 
   .strip-slot:empty {
@@ -605,10 +626,10 @@
   .today-list .strip-slot + .strip-slot::before {
     content: "";
     position: absolute;
-    left: -2.5px;
+    left: -2.25px;
     top: 9px;
     bottom: 9px;
-    width: 1px;
+    width: 0.5px;
     background: var(--separator);
   }
 
@@ -638,7 +659,7 @@
   .strip-placeholder {
     width: 100%;
     height: 32px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--zone-color) 42%, transparent);
     background: color-mix(in srgb, var(--zone-color) 12%, transparent);
@@ -650,10 +671,10 @@
     height: 32px;
     display: flex;
     align-items: center;
-    border-radius: var(--radius-sm);
-    background: var(--bg-selected);
+    border-radius: var(--radius-md);
+    background: var(--sidebar-sel);
     color: var(--text-primary);
-    box-shadow: var(--shadow-control);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
   }
 
   .strip-surface-main {
@@ -666,7 +687,7 @@
     background: transparent;
     color: inherit;
     font: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     cursor: default;
   }
 
@@ -773,7 +794,7 @@
     height: 7px;
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
   }
 
   @keyframes update-btn-pop {

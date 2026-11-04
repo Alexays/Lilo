@@ -115,7 +115,7 @@
     height: 32px;
     display: flex;
     align-items: center;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     color: var(--text-secondary);
     transition: background-color var(--motion-duration-fast) ease;
   }
@@ -131,9 +131,9 @@
 
   .strip-tab.active {
     flex: 0 0 260px;
-    background: var(--bg-selected);
+    background: var(--sidebar-sel);
     color: var(--text-primary);
-    box-shadow: var(--shadow-control);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
   }
 
   .strip-tab.icon-only {
@@ -152,7 +152,7 @@
     background: transparent;
     color: inherit;
     font: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     cursor: default;
   }
 
@@ -175,7 +175,7 @@
     height: 6px;
     border-radius: 50%;
     background: var(--text-muted);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
   }
 
   .capture-pip.live {

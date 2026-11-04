@@ -135,7 +135,8 @@
     height: 32px;
     display: flex;
     align-items: center;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
+    container-type: inline-size;
     color: var(--text-secondary);
     transition: background-color var(--motion-duration-fast) ease;
   }
@@ -145,9 +146,9 @@
   }
 
   .strip-conversation.active {
-    background: var(--bg-selected);
+    background: var(--sidebar-sel);
     color: var(--text-primary);
-    box-shadow: var(--shadow-control);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
   }
 
   .main {
@@ -162,7 +163,7 @@
     background: transparent;
     color: inherit;
     font: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     cursor: default;
   }
 
@@ -308,5 +309,19 @@
   .main:focus-visible {
     outline: var(--focus-outline);
     outline-offset: -2px;
+  }
+
+  /* Folded to its icon, as a tab pill is; the state badge stays on the icon. */
+  @container (max-width: 47px) {
+    .title,
+    .diff,
+    .pages {
+      display: none;
+    }
+
+    .main {
+      justify-content: center;
+      padding: 0;
+    }
   }
 </style>
