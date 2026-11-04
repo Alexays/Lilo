@@ -1,11 +1,12 @@
-<!-- The recent tabs switcher: over the top of the sidebar, or of the page while the sidebar is hidden. The keyboard stays
-     with native (the page keeps focus), so the selection is announced through a live region. -->
+<!-- The recent tabs switcher: a row of tiles centered on the page area. The keyboard stays with native (the page
+     keeps focus), so the selection is announced through a live region. -->
 <script lang="ts">
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import type { BridgeRecentTab } from "../../lib/bridge/protocol";
   import { t } from "../../lib/i18n/state.svelte";
   import { terminalTitle } from "../../lib/terminalTitle";
+  import { isSidebarVisible } from "../../stores/ui.svelte";
   import { tabDisplayTitle } from "../../stores/tabs.svelte";
   import {
     closeTabSwitcher,
@@ -50,160 +51,166 @@
       lastPointer = "";
       return;
     }
-    list?.querySelector(`[data-index="${selected}"]`)?.scrollIntoView({ block: "nearest" });
+    list?.querySelector(`[data-index="${selected}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
   });
 </script>
 
 {#if visible}
-  <div class="tab-switcher float-surface" use:reportInteractiveZone={{ id: "tab-switcher" }}>
-    <div class="tab-switcher-title" id="tab-switcher-title">{t("tabSwitcher.title")}</div>
-    <div
-      class="tab-switcher-list"
-      role="listbox"
-      aria-labelledby="tab-switcher-title"
-      aria-activedescendant={`tab-switcher-row-${selected}`}
-      tabindex="-1"
-      bind:this={list}
-    >
-      {#each tabs as tab, index (tab.id)}
-        <button
-          type="button"
-          role="option"
-          id={`tab-switcher-row-${index}`}
-          class="tab-switcher-row"
-          class:selected={index === selected}
-          aria-selected={index === selected}
-          tabindex="-1"
-          data-index={index}
-          data-tab-id={tab.id}
-          onpointermove={(event) => {
-            const at = `${event.clientX},${event.clientY}`;
-            if (lastPointer && at !== lastPointer) selectSwitcherTab(index);
-            lastPointer = at;
-          }}
-          onclick={() => closeTabSwitcher(index)}
-        >
-          {#if tab.kind === "terminal"}
-            <span class="terminal-tile" aria-hidden="true">
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                <path d="m3.5 4.5 3.5 3.5-3.5 3.5" />
-                <path d="M8.5 11.5h4" />
-              </svg>
-            </span>
-          {:else}
-            <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
-          {/if}
-          <span class="tab-switcher-text">
-            <span class="tab-switcher-row-title">{title(tab)}</span>
-            <span class="tab-switcher-row-detail">{detail(tab, index)}</span>
-          </span>
-        </button>
-      {/each}
+  <div class="tab-switcher-area" class:sidebar-hidden={!isSidebarVisible()}>
+    <div class="tab-switcher float-surface" use:reportInteractiveZone={{ id: "tab-switcher" }}>
+      <div
+        class="tab-switcher-list"
+        role="listbox"
+        aria-label={t("tabSwitcher.title")}
+        aria-activedescendant={`tab-switcher-row-${selected}`}
+        tabindex="-1"
+        bind:this={list}
+      >
+        {#each tabs as tab, index (tab.id)}
+          <button
+            type="button"
+            role="option"
+            id={`tab-switcher-row-${index}`}
+            class="tab-switcher-tile"
+            class:selected={index === selected}
+            aria-selected={index === selected}
+            aria-label={title(tab)}
+            tabindex="-1"
+            data-index={index}
+            data-tab-id={tab.id}
+            onpointermove={(event) => {
+              const at = `${event.clientX},${event.clientY}`;
+              if (lastPointer && at !== lastPointer) selectSwitcherTab(index);
+              lastPointer = at;
+            }}
+            onclick={() => closeTabSwitcher(index)}
+          >
+            {#if tab.kind === "terminal"}
+              <span class="terminal-tile" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                  <path d="m3.5 4.5 3.5 3.5-3.5 3.5" />
+                  <path d="M8.5 11.5h4" />
+                </svg>
+              </span>
+            {:else}
+              <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={44} radius={12} />
+            {/if}
+            <span class="tab-switcher-label" aria-hidden="true">{title(tab)}</span>
+          </button>
+        {/each}
+      </div>
+      {#if tabs[selected]}
+        <div class="tab-switcher-selection" aria-hidden="true">
+          <div class="tab-switcher-title">{title(tabs[selected])}</div>
+          <div class="tab-switcher-detail">{detail(tabs[selected], selected)}</div>
+        </div>
+      {/if}
+      <div class="tab-switcher-hint">{t("tabSwitcher.hint")}</div>
     </div>
-    <div class="tab-switcher-hint">{t("tabSwitcher.hint")}</div>
   </div>
 {/if}
 <div class="tab-switcher-live" role="status" aria-live="polite">{announcement}</div>
 
 <style>
-  .tab-switcher {
+  .tab-switcher-area {
     position: fixed;
-    top: 52px;
-    /* Over the sidebar rows' own span, so none peeks out beside it. */
-    left: 10px;
-    width: calc(var(--sidebar-width) - 12px);
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 6px;
-    border-radius: var(--float-radius-popover);
-    background: var(--chrome-overlay-surface);
-    -webkit-backdrop-filter: blur(var(--chrome-floating-blur));
-    backdrop-filter: blur(var(--chrome-floating-blur));
-    pointer-events: auto;
+    inset: var(--chrome-content-top) var(--chrome-content-right) var(--chrome-content-bottom) var(--chrome-content-left-visible);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    pointer-events: none;
     z-index: var(--z-popover);
-    animation: float-popover-in 160ms var(--motion-ease-spring) both;
   }
 
-  .tab-switcher-title {
-    padding: 4px 8px 6px;
-    color: var(--text-secondary);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+  .tab-switcher-area.sidebar-hidden {
+    left: var(--chrome-content-left-hidden);
   }
 
-  /* About ten rows, then it scrolls. */
-  .tab-switcher-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    max-height: 460px;
-    overflow-y: auto;
-    scrollbar-width: none;
-  }
-
-  .tab-switcher-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-    width: 100%;
-    padding: 8px;
-    border: 0;
-    border-radius: calc(var(--float-radius-popover) - 4px);
-    background: transparent;
-    color: var(--text-primary);
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .tab-switcher-row.selected {
-    background: var(--sidebar-accent);
-    color: var(--sidebar-accent-text);
-  }
-
-  .tab-switcher-text {
+  .tab-switcher {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    max-width: min(720px, 100%);
+    border-radius: var(--radius-lg);
+    pointer-events: auto;
+    overflow: hidden;
+    animation: float-popover-in var(--motion-duration-overlay) var(--motion-ease-spring) both;
   }
 
-  .tab-switcher-row-title,
-  .tab-switcher-row-detail {
+  .tab-switcher-list {
+    display: flex;
+    gap: 4px;
+    padding: 16px 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab-switcher-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    width: 96px;
+    padding: 12px 6px 10px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+  }
+
+  .tab-switcher-tile.selected {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .tab-switcher-label {
+    max-width: 100%;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
-  .tab-switcher-row-title {
+  .tab-switcher-selection {
+    padding: 12px 24px 16px;
+    text-align: center;
+  }
+
+  .tab-switcher-title,
+  .tab-switcher-detail {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .tab-switcher-title {
+    color: var(--text-primary);
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-medium);
   }
 
-  .tab-switcher-row-detail {
-    color: var(--text-secondary);
-    font-size: var(--font-size-xs);
-  }
-
-  .tab-switcher-row.selected .tab-switcher-row-detail {
-    color: color-mix(in srgb, var(--sidebar-accent-text) 80%, transparent);
+  .tab-switcher-detail {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
   }
 
   .tab-switcher-hint {
-    padding: 6px 8px 2px;
-    color: var(--text-secondary);
-    font-size: var(--font-size-xs);
+    padding: 10px 16px;
+    border-top: 1px solid var(--separator);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    text-align: center;
   }
 
-  /* TabItem's terminal tile, at the favicon's box. */
+  /* TabItem's terminal tile, at the tile's size. */
   .terminal-tile {
-    width: 16px;
-    height: 16px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
-    border-radius: var(--radius-xs);
+    border-radius: 12px;
     display: grid;
     place-items: center;
     background: var(--terminal-tile-bg);
@@ -228,20 +235,13 @@
 
   @media (prefers-reduced-motion: reduce) {
     .tab-switcher {
-      animation: none;
+      animation: tab-switcher-fade 150ms ease both;
     }
   }
 
-  :global(html[data-tab-position='right']) .tab-switcher {
-    left: auto;
-    right: 10px;
-  }
-
-  /* No sidebar column in the strip layouts: centered on the page. */
-  :global(html[data-tab-position='top']) .tab-switcher,
-  :global(html[data-tab-position='bottom']) .tab-switcher {
-    top: calc(var(--chrome-content-top) + 12px);
-    left: calc(50vw - 130px);
-    width: 260px;
+  @keyframes tab-switcher-fade {
+    from {
+      opacity: 0;
+    }
   }
 </style>

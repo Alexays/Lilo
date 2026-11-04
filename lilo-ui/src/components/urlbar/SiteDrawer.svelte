@@ -172,7 +172,7 @@
   .box {
     margin: 0;
     border: 1px solid var(--float-border);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     background: var(--bg-hover);
     overflow: hidden;
   }
