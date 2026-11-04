@@ -24,7 +24,6 @@
   import { MAX_SPLIT_PANES, type BridgeSplitLayout } from "../../lib/bridge/protocol";
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
-  import { openAskBar } from "../../stores/conversations.svelte";
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import { tabActions, folderActions, sidebarActions } from "../../lib/bridge/actions";
@@ -157,12 +156,12 @@
   const VIRTUAL_BUFFER_PX = 320;
   // The window moves in steps of this many pixels, so a scroll frame inside a step re-renders nothing.
   const VIRTUAL_WINDOW_STEP_PX = 160;
-  // Mirror the row CSS (28px rows, 2px --sidebar-tab-row-gap, 2px folder-contents
-  // top margin, 26px empty-folder placeholder); the buffer absorbs small drift.
-  const VIRTUAL_ROW_H = 28;
-  const VIRTUAL_ROW_GAP = 2;
-  const VIRTUAL_FOLDER_TOP_MARGIN = 2;
-  const VIRTUAL_EMPTY_FOLDER_H = 26;
+  // Mirror the row CSS (32px rows, no --sidebar-tab-row-gap, no folder-contents top
+  // margin, 32px empty-folder placeholder); the buffer absorbs small drift.
+  const VIRTUAL_ROW_H = 32;
+  const VIRTUAL_ROW_GAP = 0;
+  const VIRTUAL_FOLDER_TOP_MARGIN = 0;
+  const VIRTUAL_EMPTY_FOLDER_H = 32;
 
   type ListSegment =
     | { spacer: true; key: string; height: number }
@@ -1049,17 +1048,6 @@
             </svg>
           </button>
         {/if}
-        {#if getSetting("agentsEnabled", "false") === "true"}
-          <button
-            class="new-terminal-button ask-agent-button"
-            aria-label={t("tabSection.askAgent")}
-            use:tooltip={{ text: t("tabSection.askAgent"), shortcut: shortcutKeys("agents.ask") }}
-            disabled={!interactive}
-            onclick={openAskBar}
-          >
-            {#await import("../agents/MascotGlyph.svelte") then { default: MascotGlyph }}<MascotGlyph />{/await}
-          </button>
-        {/if}
       </div>
     {/if}
   {/if}
@@ -1235,7 +1223,7 @@
 
 <style>
   .pinned-section {
-    --sidebar-tab-row-gap: 2px;
+    --sidebar-tab-row-gap: 0px;
     position: relative;
     flex-shrink: 0;
     min-height: 0;
@@ -1244,7 +1232,7 @@
   .pinned-section-body {
     display: grid;
     gap: 6px;
-    padding: 4px var(--sidebar-right-pad, 10px) 4px 10px;
+    padding: 4px var(--sidebar-right-pad, 8px) 4px 8px;
     box-sizing: border-box;
     transition: padding 150ms var(--motion-ease-spring);
   }
@@ -1291,8 +1279,8 @@
   }
 
   .pinned-list.drag-active.is-empty {
-    height: 28px;
-    min-height: 28px;
+    height: 32px;
+    min-height: 32px;
     overflow: hidden;
     border-color: transparent;
     background: transparent;
@@ -1354,7 +1342,7 @@
   }
 
   .tab-list-shell {
-    --sidebar-tab-row-gap: 2px;
+    --sidebar-tab-row-gap: 0px;
     flex: 1 0 auto;
     position: relative;
     /* Paint containment would clip the sticky divider against the shared scroller. */
@@ -1363,7 +1351,7 @@
 
   .tab-list-body {
     position: relative;
-    padding: 4px var(--sidebar-right-pad, 10px) 4px 10px;
+    padding: 4px var(--sidebar-right-pad, 8px) 4px 8px;
   }
 
   .tab-list-body.has-pinned-divider {
@@ -1392,7 +1380,7 @@
   }
 
   .tab-list.drag-active.is-empty {
-    min-height: 28px;
+    min-height: 32px;
     opacity: 1;
     transform: scaleY(1);
     overflow: hidden;
@@ -1433,88 +1421,15 @@
     transition: background var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
-  /* Child combinator: an open subfolder draws its lines in its own color. */
-  .folder-open-rail > .folder-drop-zone {
-    --folder-rail-color: color-mix(in srgb, var(--folder-accent) 58%, var(--text-primary) 14%);
-    background: var(--folder-open-bg);
-  }
-
-  /* One tinted block per root folder: subfolders inside it show through their lines alone. */
-  .indented-tab-wrapper.folder-open-rail > .folder-drop-zone {
-    background: none;
-  }
-
-  /* The trunk drops from the folder glyph's left edge (centered on the favicon column) so
-     children only indent 12px. Middle children draw a straight trunk plus a tick, the last one
-     an L, so no strokes overlap. */
-  .folder-open-rail .child-tab-wrapper::before,
-  .folder-open-rail .child-tab-wrapper:not(:last-child)::after {
+  /* A conversation's pages hang on one straight violet rail under the agent's tile. */
+  .folder-open-rail .conversation-contents > .child-tab-wrapper::before {
     content: "";
     position: absolute;
-    pointer-events: none;
-  }
-
-  .folder-open-rail .child-tab-wrapper::before {
-    left: 7.5px;
-    top: calc(-1 * var(--sidebar-tab-row-gap));
-    bottom: 0;
-    border-left: 1px solid var(--folder-rail-color);
-  }
-
-  .folder-open-rail .child-tab-wrapper:first-child::before {
-    top: -9px;
-  }
-
-  .folder-open-rail .child-tab-wrapper:not(:last-child)::after {
-    left: 8.5px;
-    top: calc(50% - 0.5px);
-    width: 8px;
-    border-top: 1px solid var(--folder-rail-color);
-  }
-
-  .folder-open-rail .child-tab-wrapper:last-child::before {
-    bottom: calc(50% - 0.5px);
-    width: 9px;
-    border-bottom: 1px solid var(--folder-rail-color);
-    border-bottom-left-radius: var(--radius-sm);
-  }
-
-  /* A subfolder's branch meets its header row, not the middle of its open block. */
-  .folder-open-rail .child-tab-wrapper.child-folder:not(:last-child)::after {
-    top: 13.5px;
-  }
-
-  .folder-open-rail .child-tab-wrapper.child-folder:last-child::before {
-    bottom: calc(100% - 14.5px);
-  }
-
-  /* A conversation's pages hang on one straight violet rail under the agent's tile, on no tint. */
-  .folder-open-rail > .folder-drop-zone.conversation {
-    background: none;
-  }
-
-  .folder-open-rail .conversation-contents > .child-tab-wrapper::before,
-  .folder-open-rail .conversation-contents > .child-tab-wrapper:last-child::before {
+    left: 15px;
     top: 0;
-    bottom: calc(-1 * var(--sidebar-tab-row-gap));
-    width: auto;
-    border-left: 2px solid color-mix(in srgb, var(--agents) 70%, transparent);
-    border-bottom: none;
-    border-radius: 0;
-  }
-
-  .folder-open-rail .conversation-contents > .child-tab-wrapper:last-child::before {
     bottom: 0;
-  }
-
-  .folder-open-rail .conversation-contents > .child-tab-wrapper:not(:last-child)::after {
-    content: none;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .folder-open-rail > .folder-drop-zone {
-      --folder-rail-color: color-mix(in srgb, var(--folder-accent) 62%, var(--text-primary) 12%);
-    }
+    border-left: 2px solid color-mix(in srgb, var(--agents) 70%, transparent);
+    pointer-events: none;
   }
 
   .folder-header-drop {
@@ -1560,7 +1475,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--sidebar-tab-row-gap);
-    margin-top: 2px;
     min-width: 0;
     overflow: hidden;
   }
@@ -1571,15 +1485,15 @@
   }
 
   .folder-contents.drag-active.is-empty {
-    min-height: 26px;
+    min-height: 32px;
   }
 
   .folder-empty-placeholder {
-    margin-left: 12px;
-    height: 26px;
+    margin-left: 24px;
+    height: 32px;
     display: flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 8px;
     box-sizing: border-box;
     color: var(--text-muted);
     font-size: var(--font-size-sm);
@@ -1588,10 +1502,11 @@
     background: color-mix(in srgb, var(--folder-accent, var(--text-primary)) 5%, transparent);
   }
 
+  /* Children's icons line up under their folder's title: a 16px icon and its 8px gap. */
   .indented-tab-wrapper {
     width: 100%;
     min-width: 0;
-    padding-left: 12px;
+    padding-left: 24px;
     box-sizing: border-box;
   }
 
@@ -1629,7 +1544,7 @@
   }
 
   .sidebar-dnd-placeholder {
-    height: 28px;
+    height: 32px;
     width: 100%;
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--text-primary) 18%, transparent);
@@ -1654,14 +1569,13 @@
   }
 
   .sidebar-dnd-placeholder.folder {
-    margin-left: 12px;
-    width: calc(100% - 12px);
+    margin-left: 24px;
+    width: calc(100% - 24px);
   }
 
   .new-tab-line {
     display: flex;
     align-items: center;
-    gap: 2px;
   }
 
   .new-tab-row {
@@ -1670,8 +1584,8 @@
     gap: 8px;
     flex: 1;
     min-width: 0;
-    height: 28px;
-    padding: 6px;
+    height: 32px;
+    padding: 0 8px;
     border: none;
     background: none;
     color: var(--text-muted);
@@ -1692,7 +1606,7 @@
   /* The tab rows' hover recipe (TabItem). */
   .new-tab-row:hover,
   .new-terminal-button:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--bg-selected) 20%, transparent);
+    background: var(--bg-hover);
   }
 
   .new-tab-row:focus-visible,
@@ -1701,10 +1615,11 @@
     outline-offset: -2px;
   }
 
-  /* The margin centers it on the rows' close buttons (20px, inset by the row's 6px padding). */
+  /* Centered on the rows' accessory slot: 20px, inset by the row's 8px padding. */
   .new-terminal-button {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+    margin-left: 2px;
     margin-right: 2px;
     flex-shrink: 0;
     display: flex;
@@ -1723,15 +1638,6 @@
 
   .new-terminal-button:hover:not(:disabled) {
     color: var(--text-primary);
-  }
-
-  .ask-agent-button svg {
-    opacity: 0.85;
-    transition: opacity var(--transition-fast);
-  }
-
-  .ask-agent-button:hover:not(:disabled) svg {
-    opacity: 1;
   }
 
   .new-tab-line.exiting {
@@ -1757,11 +1663,11 @@
     text-overflow: ellipsis;
   }
 
-  /* Inset by the rows' 6px padding: from the favicon column to the close buttons' edge. */
+  /* Inset by the rows' 8px padding: from the favicon column to the close buttons' edge. */
   .pinned-tab-divider {
-    height: 1px;
-    margin: 0 6px;
-    background: var(--text-primary-tint-10);
+    height: 0.5px;
+    margin: 0 8px;
+    background: var(--separator);
     border-radius: var(--radius-chip);
     opacity: 0.9;
     transform: scaleX(1);
@@ -1844,7 +1750,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: calc(var(--sidebar-tab-row-gap) + 2px) 0;
+    padding: 4px 0;
     position: sticky;
     top: 0;
     z-index: 1;
@@ -1865,7 +1771,7 @@
      only read as an empty gap. A drag grows it back, animated. */
   .pinned-tab-divider-shell.collapsed {
     min-height: 0;
-    padding: calc(var(--sidebar-tab-row-gap) / 2) 0;
+    padding: 0;
   }
 
   .pinned-tab-divider-shell.pinned-transfer-gate {
@@ -1877,7 +1783,7 @@
   .clear-unpinned {
     position: absolute;
     top: 50%;
-    right: 6px;
+    right: 8px;
     display: grid;
     place-items: center;
     width: 20px;
@@ -1913,9 +1819,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 2px;
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--bg-hover) 70%, transparent);
+    background: var(--bg-hover);
   }
 
   .split-pane {

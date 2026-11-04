@@ -38,11 +38,9 @@ struct TabLayout: Equatable {
         canHideToolbar && !toolbarVisible ? TabLayout(position: position, address: .hidden) : self
     }
 
-    /// An address nobody chose follows the position. On the right a visible address sits above the
-    /// page: the sidebar's first line is the toolbar's, with no room for it.
+    /// An address nobody chose follows the position.
     init(position: TabPosition, storedAddress: String?) {
-        let address = storedAddress.flatMap(AddressPlacement.init(rawValue:)) ?? .default(for: position)
-        self.init(position: position, address: position == .right && address == .tabs ? .page : address)
+        self.init(position: position, address: storedAddress.flatMap(AddressPlacement.init(rawValue:)) ?? .default(for: position))
     }
 
     init(storedPosition: String?, storedAddress: String?) {

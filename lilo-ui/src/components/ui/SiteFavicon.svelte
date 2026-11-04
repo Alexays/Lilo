@@ -198,8 +198,8 @@
 
   .site-favicon-fallback {
     color: hsl(calc(var(--favicon-hue) - 18) 42% 28%);
-    font-size: clamp(10px, calc(var(--favicon-size) * 0.56), 13px);
-    font-weight: var(--font-weight-bold);
+    font-size: clamp(11px, calc(var(--favicon-size) * 0.69), 13px);
+    font-weight: var(--font-weight-semibold);
     line-height: 1;
     text-transform: uppercase;
     letter-spacing: 0.01em;

@@ -432,7 +432,7 @@
   let iconsWrapWidth = $state(0);
   // The tiles, the name's padding and the bar's own inset come off; too little left and the tile stays an icon.
   const labelRoom = $derived.by(() => {
-    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 39 - 16);
+    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 32 - 16);
     return room < 32 ? 0 : room;
   });
 
@@ -660,7 +660,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px var(--sidebar-right-pad, 10px);
+    padding: 8px var(--sidebar-right-pad, 8px);
     flex-shrink: 0;
     contain: layout style;
   }
@@ -750,7 +750,7 @@
     height: 7px;
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
     pointer-events: none;
   }
 
@@ -760,7 +760,7 @@
 
   .space-icons {
     display: flex;
-    gap: 1px;
+    gap: 4px;
     align-items: center;
     justify-content: center;
     position: relative;
@@ -865,8 +865,7 @@
     align-items: center;
     justify-content: center;
     flex: none;
-    min-width: 38px;
-    padding-inline: 1px;
+    min-width: 28px;
     box-sizing: border-box;
     min-height: 36px;
     flex-shrink: 0;
@@ -874,8 +873,8 @@
   }
 
   .space-dnd-placeholder {
-    width: 38px;
-    min-width: 38px;
+    width: 28px;
+    min-width: 28px;
     height: 36px;
     border-radius: var(--radius-md);
     box-sizing: border-box;
@@ -966,7 +965,7 @@
 
   /* The active tile keeps the plain highlight, warmed by the profile rather than painted with it. */
   .tinted .space-icon-btn::before {
-    background: color-mix(in srgb, var(--space-tint) 26%, var(--bg-active));
+    background: color-mix(in srgb, var(--space-tint) 26%, var(--sidebar-sel));
   }
 
   /* An acting agent glows behind the tile, never a line, so it never reads as the profile. Only
@@ -1063,8 +1062,10 @@
     pointer-events: none;
   }
 
+  /* The current Space sits on the sidebar's selected surface. */
   .space-icon-btn::before {
-    background: var(--bg-active);
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
     opacity: var(--space-icon-active-opacity, 0);
     transition: opacity var(--motion-duration-normal) var(--motion-ease-spring);
     z-index: -1;

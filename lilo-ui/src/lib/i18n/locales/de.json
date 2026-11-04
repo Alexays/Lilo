@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "Adresse",
 				"description": "Bei den Tabs, über der Seite oder ausgeblendet. Eine Adresse kannst du über die Befehlsleiste eingeben.",
-				"keywords": "adressleiste url symbolleiste adresse verbergen ausgeblendet",
-				"lockedRight": "Wenn die Tabs rechts sind, kann die Adresse über der Seite angezeigt oder ausgeblendet werden."
+				"keywords": "adressleiste url symbolleiste adresse verbergen ausgeblendet"
 			},
 			"theme": {
 				"title": "Design",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "Nicht angeheftete Tabs archivieren",
 		"pinnedTabs": "Angeheftete Tabs",
 		"openTabs": "Offene Tabs",
-		"dropToPin": "Zum Anheften ablegen",
-		"askAgent": "Einen Agenten fragen"
+		"dropToPin": "Zum Anheften ablegen"
 	},
 	"bookmarks": {
 		"groupLabel": "Tabs mit Lesezeichen",

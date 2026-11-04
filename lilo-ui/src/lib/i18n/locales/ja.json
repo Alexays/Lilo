@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "アドレス",
 				"description": "タブと同じ場所、ページの上、非表示から選べます。アドレスはコマンドバーで入力できます。",
-				"keywords": "アドレスバー URL ツールバー 場所 非表示",
-				"lockedRight": "タブが右側にある場合は、アドレスをページの上に表示するか非表示にします。"
+				"keywords": "アドレスバー URL ツールバー 場所 非表示"
 			},
 			"theme": {
 				"title": "テーマ",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "固定されていないタブをアーカイブ",
 		"pinnedTabs": "固定タブ",
 		"openTabs": "開いているタブ",
-		"dropToPin": "ドロップして固定",
-		"askAgent": "エージェントに質問"
+		"dropToPin": "ドロップして固定"
 	},
 	"bookmarks": {
 		"groupLabel": "ブックマーク済みのタブ",

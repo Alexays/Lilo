@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "Endereço",
 				"description": "Junto às abas, acima da página ou oculto. Use a barra de comandos para digitar um endereço.",
-				"keywords": "endereço barra url ferramentas local ocultar oculto esconder",
-				"lockedRight": "Com as abas à direita, mostre o endereço acima da página ou oculte-o."
+				"keywords": "endereço barra url ferramentas local ocultar oculto esconder"
 			},
 			"theme": {
 				"title": "Tema",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "Arquivar abas não fixadas",
 		"pinnedTabs": "Abas fixadas",
 		"openTabs": "Abas abertas",
-		"dropToPin": "Solte para fixar",
-		"askAgent": "Perguntar a um agente"
+		"dropToPin": "Solte para fixar"
 	},
 	"bookmarks": {
 		"groupLabel": "Abas nos favoritos",

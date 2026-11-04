@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "Adres",
 				"description": "Sekmelerin yanında, sayfanın üstünde veya gizli. Adres girmek için komut çubuğunu kullanın.",
-				"keywords": "adres çubuğu url araç çubuğu konum gizle gizli",
-				"lockedRight": "Sekmeler sağdayken adresi sayfanın üstünde gösterin veya gizleyin."
+				"keywords": "adres çubuğu url araç çubuğu konum gizle gizli"
 			},
 			"theme": {
 				"title": "Tema",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "Sabitlenmemiş sekmeleri arşivle",
 		"pinnedTabs": "Sabitlenmiş sekmeler",
 		"openTabs": "Açık sekmeler",
-		"dropToPin": "Sabitlemek için bırakın",
-		"askAgent": "Bir ajana sor"
+		"dropToPin": "Sabitlemek için bırakın"
 	},
 	"bookmarks": {
 		"groupLabel": "Yer imli sekmeler",

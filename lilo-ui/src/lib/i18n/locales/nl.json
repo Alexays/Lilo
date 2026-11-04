@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "Adres",
 				"description": "Bij de tabbladen, boven de pagina of verborgen. Gebruik de commandobalk om een adres in te voeren.",
-				"keywords": "adresbalk url knoppenbalk locatie verberg verborgen",
-				"lockedRight": "Met tabbladen aan de rechterkant kun je het adres boven de pagina tonen of verbergen."
+				"keywords": "adresbalk url knoppenbalk locatie verberg verborgen"
 			},
 			"theme": {
 				"title": "Thema",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "Archiveer niet-vastgemaakte tabbladen",
 		"pinnedTabs": "Vastgemaakte tabbladen",
 		"openTabs": "Geopende tabbladen",
-		"dropToPin": "Laat los om vast te maken",
-		"askAgent": "Vraag een agent"
+		"dropToPin": "Laat los om vast te maken"
 	},
 	"bookmarks": {
 		"groupLabel": "Bladwijzertabbladen",

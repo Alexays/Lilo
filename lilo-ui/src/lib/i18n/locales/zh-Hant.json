@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "網址",
 				"description": "與分頁放在一起、位於網頁上方或隱藏。使用指令列輸入網址。",
-				"keywords": "網址列 url 工具列 位置 隱藏",
-				"lockedRight": "分頁位於右側時，請將網址顯示於網頁上方或隱藏。"
+				"keywords": "網址列 url 工具列 位置 隱藏"
 			},
 			"theme": {
 				"title": "主題",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "封存未釘選分頁",
 		"pinnedTabs": "釘選分頁",
 		"openTabs": "已開啟分頁",
-		"dropToPin": "放下以釘選",
-		"askAgent": "詢問代理程式"
+		"dropToPin": "放下以釘選"
 	},
 	"bookmarks": {
 		"groupLabel": "書籤分頁",

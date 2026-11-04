@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "Address",
 				"description": "With the tabs, above the page, or hidden. Use the command bar to enter an address.",
-				"keywords": "address bar url toolbar location hide hidden",
-				"lockedRight": "With the tabs on the right, show the address above the page or hide it."
+				"keywords": "address bar url toolbar location hide hidden"
 			},
 			"theme": {
 				"title": "Theme",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "Archive unpinned tabs",
 		"pinnedTabs": "Pinned tabs",
 		"openTabs": "Open tabs",
-		"dropToPin": "Drop to pin",
-		"askAgent": "Ask an Agent"
+		"dropToPin": "Drop to pin"
 	},
 	"bookmarks": {
 		"groupLabel": "Bookmarked tabs",

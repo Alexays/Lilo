@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "Adresse",
 				"description": "Avec les onglets, au-dessus de la page ou masquée. Utilisez la barre de commandes pour saisir une adresse.",
-				"keywords": "barre adresse url barre d outils masquer masquée cacher",
-				"lockedRight": "Avec les onglets à droite, affichez l'adresse au-dessus de la page ou masquez-la."
+				"keywords": "barre adresse url barre d outils masquer masquée cacher"
 			},
 			"theme": {
 				"title": "Thème",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "Archiver les onglets non épinglés",
 		"pinnedTabs": "Onglets épinglés",
 		"openTabs": "Onglets ouverts",
-		"dropToPin": "Déposer pour épingler",
-		"askAgent": "Demander à un agent"
+		"dropToPin": "Déposer pour épingler"
 	},
 	"bookmarks": {
 		"groupLabel": "Onglets favoris",

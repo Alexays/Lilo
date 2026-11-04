@@ -283,8 +283,7 @@
 			"addressPlacement": {
 				"title": "地址",
 				"description": "与标签页放在一起、显示在网页上方或隐藏。可使用命令栏输入地址。",
-				"keywords": "地址栏 URL 工具栏 位置 隐藏",
-				"lockedRight": "标签页位于右侧时，可将地址显示在网页上方或隐藏。"
+				"keywords": "地址栏 URL 工具栏 位置 隐藏"
 			},
 			"theme": {
 				"title": "主题",
@@ -851,8 +850,7 @@
 		"clearUnpinnedTooltip": "归档未固定的标签页",
 		"pinnedTabs": "固定标签页",
 		"openTabs": "打开的标签页",
-		"dropToPin": "放下以固定",
-		"askAgent": "询问智能体"
+		"dropToPin": "放下以固定"
 	},
 	"bookmarks": {
 		"groupLabel": "书签标签页",

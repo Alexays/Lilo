@@ -4,7 +4,7 @@
   import URLDisplay from "../urlbar/URLDisplay.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
-  import { getTabPosition, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
+  import { getTabPosition, isAddressInPageToolbar, isAddressInRightTabs } from "../../stores/tabLayout.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { pageBarStyle } from "../../lib/pageBarTheme";
@@ -76,7 +76,7 @@
   <!-- Under a top strip, the strip already holds the navigation: this row is the address alone. Without
        the tabs, or beside the left sidebar, it holds their toggle too. -->
   {#if !row}
-    <NavControls show={isSidebarVisible() && getTabPosition() !== "left" ? "history" : "all"} />
+    <NavControls show={!isSidebarVisible() || getTabPosition() === "left" ? "all" : isAddressInRightTabs() ? "toggle" : "history"} />
   {/if}
   {#if isAddressInPageToolbar()}
     <div class="address" bind:this={addressEl}><URLDisplay /></div>
