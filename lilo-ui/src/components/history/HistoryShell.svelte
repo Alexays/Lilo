@@ -383,6 +383,10 @@
 <style>
   .day {
     margin-bottom: var(--space-20);
+    /* Days out of view skip layout and paint; the estimate (a header and about ten 38px rows) is replaced by
+       the real height once a day has rendered, so the scrollbar settles instead of jumping. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 420px;
   }
 
   .day-header {
@@ -623,8 +627,8 @@
     margin: var(--space-8) auto 0;
     padding: var(--space-6) var(--space-6) var(--space-6) var(--space-16);
     border-radius: var(--radius-chip);
-    background: var(--chrome-floating-surface);
-    backdrop-filter: blur(var(--chrome-floating-blur));
+    /* Opaque rather than blurred: a backdrop blur over the list repaints on every scroll frame. */
+    background: var(--bg-elevated);
     box-shadow: var(--float-shadow);
     white-space: nowrap;
   }
