@@ -33,6 +33,7 @@ import { getFoldersById, getLockedFolderRoots } from "./folders.svelte";
 import { getActiveSpaceId } from "./spaces.svelte";
 import { getProfileById, getProfiles } from "./profiles.svelte";
 import { isAgentsSpace, isHiddenAgentsSpace, isIsolatedAgentSpace } from "./agents.svelte";
+import { getConversationSummary } from "./conversations.svelte";
 
 export type ResultKind =
 	| "tab"
@@ -251,6 +252,21 @@ function toTabResult(tab: TabState, highlights?: number[]): CommandResult {
 	const { titleHighlights, subtitleHighlights } = highlights
 		? splitHighlights(highlights, title.length)
 		: { titleHighlights: undefined, subtitleHighlights: undefined };
+	// A conversation has no address: its row says what it waits on or that it works, and in which Space.
+	if (tab.kind === "agent") {
+		const summary = getConversationSummary(tab.id);
+		const waiting = !!summary?.permission || !!tab.awaitingInputSince;
+		const subtitle = summary?.permission
+			? t("commandBar.agentWaiting", { request: summary.permission.title })
+			: tab.terminalState === "busy" || tab.terminalState === "starting" ? t("commandBar.agentWorking") : undefined;
+		return createResult(
+			`tab-${tab.id}`,
+			"tab",
+			title,
+			{ tabId: tab.id, agentId: tab.agentId ?? "", waiting },
+			{ subtitle, helper: summary?.spaceName || undefined, hint: t("commandBar.hintSwitch"), titleHighlights },
+		);
+	}
 	return createResult(
 		`tab-${tab.id}`,
 		"tab",

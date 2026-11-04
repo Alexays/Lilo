@@ -1,11 +1,10 @@
-<!-- A conversation folder as one strip tab: the agent, the title, its state. The count opens its pages;
-     while the agent waits, its amber pip opens the question, so nothing covers the page unasked. -->
+<!-- A conversation folder as one strip tab, with the grammar of the sidebar's row: the agent's icon with
+     its state as a badge, the title, the diff. Hovered, the diff gives way to the button for its pages. -->
 <script lang="ts">
   import "../../lib/i18n/agentsCatalog";
   import { backOut } from "svelte/easing";
   import { fade, scale } from "svelte/transition";
-  import MascotGlyph from "../agents/MascotGlyph.svelte";
-  import PermissionButtons from "../agents/PermissionButtons.svelte";
+  import AgentTile from "../agents/AgentTile.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import StripPopover from "./StripPopover.svelte";
   import { folderActions, tabActions } from "../../lib/bridge/actions";
@@ -13,7 +12,6 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { MOTION } from "../../lib/motion/timings";
-  import { getConversationSummary } from "../../stores/conversations.svelte";
   import { closeHistoryShell, closeSettingsShell } from "../../stores/panels.svelte";
   import { optimisticallyActivateTab } from "../../stores/sidebar.svelte";
   import { tabDisplayTitle, type TabState } from "../../stores/tabs.svelte";
@@ -34,23 +32,27 @@
 
   const active = $derived(tab.id === activeTabId);
   const title = $derived(tabDisplayTitle(tab.title ?? "") || t("agents.row.untitled"));
-  const waiting = $derived(!!tab.awaitingInputSince && !active);
+  const waiting = $derived(!!tab.awaitingInputSince);
   const busy = $derived(tab.terminalState === "busy" || tab.terminalState === "starting");
   const unread = $derived(!!tab.hasUnreadOutput && !active);
-  const permission = $derived(active ? undefined : getConversationSummary(tab.id)?.permission);
+  const added = $derived(tab.diffAdded ?? 0);
+  const removed = $derived(tab.diffRemoved ?? 0);
   const label = $derived(
-    [title, waiting ? t("tabItem.terminalAttention") : busy ? t("agents.row.working") : "", unread ? t("tabItem.terminalUnread") : ""]
+    [
+      title,
+      waiting ? t("tabItem.terminalAttention") : busy ? t("agents.row.working") : "",
+      unread ? t("tabItem.terminalUnread") : "",
+      added || removed ? t("agents.row.changes", { added, removed }) : "",
+    ]
       .filter(Boolean)
       .join(", "),
   );
 
   let element: HTMLDivElement | undefined = $state();
   let pagesOpen = $state(false);
-  let questionOpen = $state(false);
 
   function activate(target: TabState): void {
     pagesOpen = false;
-    questionOpen = false;
     closeSettingsShell();
     closeHistoryShell();
     optimisticallyActivateTab(target.id);
@@ -69,47 +71,47 @@
   bind:this={element}
   class="strip-conversation"
   class:active
-  class:waiting
+  class:has-pages={pages.length > 0}
   data-tab-id={tab.id}
   oncontextmenu={showMenu}
 >
   <button class="main" role="tab" aria-selected={active} aria-label={label} tabindex={active ? 0 : -1} data-roving onclick={() => activate(tab)}>
-    <MascotGlyph />
+    <span class="icon">
+      <AgentTile agentId={tab.agentId ?? ""} />
+      {#if waiting}
+        <span
+          class="badge attention"
+          aria-hidden="true"
+          in:scale={{ start: 0.3, duration: prefersReducedMotion() ? 0 : 360, easing: backOut }}
+          out:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}
+        ></span>
+      {:else if busy}
+        <span class="badge spinner" aria-hidden="true" transition:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}></span>
+      {:else if unread}
+        <span class="badge unread" aria-hidden="true" transition:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}></span>
+      {/if}
+    </span>
     <span class="title">{title}</span>
+    {#if added || removed}
+      <span class="diff" aria-hidden="true">
+        {#if added}<span class="added">+{added}</span>{/if}
+        {#if removed}<span class="removed">-{removed}</span>{/if}
+      </span>
+    {/if}
   </button>
   {#if pages.length > 0}
     <button
-      class="side-button count"
+      class="pages"
       tabindex="-1"
       data-roving
       aria-label={t("agents.row.pages", { count: pages.length })}
       aria-expanded={pagesOpen}
-      onclick={() => {
-        questionOpen = false;
-        pagesOpen = !pagesOpen;
-      }}
-    >{pages.length}</button>
-  {/if}
-  {#if waiting && permission}
-    <button
-      class="side-button"
-      tabindex="-1"
-      data-roving
-      aria-label={t("tabItem.terminalAttention")}
-      aria-expanded={questionOpen}
-      onclick={() => {
-        pagesOpen = false;
-        questionOpen = !questionOpen;
-      }}
-    ><span
-      class="pip attention"
-      aria-hidden="true"
-      in:scale={{ start: 0.3, duration: prefersReducedMotion() ? 0 : 360, easing: backOut }}
-    ></span></button>
-  {:else if busy}
-    <span class="state" aria-hidden="true"><span class="spinner" in:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs }}></span></span>
-  {:else if unread}
-    <span class="state" aria-hidden="true"><span class="pip unread" in:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs }}></span></span>
+      onclick={() => (pagesOpen = !pagesOpen)}
+    >
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <path d="M2.25 3.75 5 6.5l2.75-2.75" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
   {/if}
 </div>
 
@@ -124,26 +126,10 @@
   </StripPopover>
 {/if}
 
-<!-- Closes by itself once answered: the permission leaves the summary. -->
-{#if questionOpen && permission && element}
-  <StripPopover anchor={element} onclose={() => (questionOpen = false)} label={title}>
-    <div class="question">
-      <div class="question-head">
-        <MascotGlyph />
-        <span class="question-name">{title}</span>
-      </div>
-      <p class="question-title">{permission.title}</p>
-      <div class="question-actions">
-        <PermissionButtons tabId={tab.id} requestId={permission.requestId} options={permission.options} />
-        <button class="open" onclick={() => activate(tab)}>{t("common.open")}</button>
-      </div>
-    </div>
-  </StripPopover>
-{/if}
-
 <style>
   /* StripTab's pill, at its resting width. */
   .strip-conversation {
+    position: relative;
     flex: 0 1 200px;
     min-width: 32px;
     height: 32px;
@@ -164,11 +150,6 @@
     box-shadow: var(--shadow-control);
   }
 
-  .strip-conversation.waiting {
-    background: color-mix(in srgb, var(--attention) 14%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--attention) 40%, transparent);
-  }
-
   .main {
     flex: 1;
     min-width: 0;
@@ -185,66 +166,42 @@
     cursor: default;
   }
 
-  .title {
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .side-button,
-  .state {
+  .icon {
+    position: relative;
     flex: none;
-    min-width: 20px;
-    height: 20px;
-    margin-right: 4px;
     display: grid;
-    place-items: center;
   }
 
-  .side-button {
-    padding: 0 4px;
-    border: 0;
-    border-radius: var(--radius-xs);
-    background: transparent;
-    color: var(--text-muted);
-    font: inherit;
-    font-size: var(--font-size-xs);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .side-button:hover,
-  .side-button[aria-expanded="true"] {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-  }
-
-  .pip {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-  }
-
-  .pip.attention {
-    background: var(--attention);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--attention) 25%, transparent);
-  }
-
-  .pip.unread {
+  /* On the icon's corner, ringed in the bar's colour so it reads on any icon. */
+  .badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
     width: 6px;
     height: 6px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
+  }
+
+  .badge.attention {
+    background: var(--attention);
+  }
+
+  .badge.unread {
     background: var(--accent);
   }
 
   /* About 30 s of turns, then a still arc: a turn left running must not keep the display link up. */
-  .spinner {
-    width: 11px;
-    height: 11px;
+  .badge.spinner {
+    width: 8px;
+    height: 8px;
+    right: -4px;
+    bottom: -4px;
     box-sizing: border-box;
-    border-radius: 50%;
     border: 1.5px solid var(--text-primary-tint-12);
     border-top-color: var(--agents);
     border-right-color: var(--agents);
+    background: var(--sidebar-bg);
     animation: strip-conversation-spin 0.9s linear 33 forwards;
   }
 
@@ -255,9 +212,66 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .spinner {
+    .badge.spinner {
       animation: none;
     }
+  }
+
+  .title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: left;
+  }
+
+  .diff {
+    flex: none;
+    display: inline-flex;
+    gap: 4px;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .added {
+    color: color-mix(in srgb, var(--diff-added) 70%, var(--text-primary));
+  }
+
+  .removed {
+    color: color-mix(in srgb, var(--diff-removed) 70%, var(--text-primary));
+  }
+
+  /* The accessory slot: the diff at rest, the pages button while hovered or open. */
+  .pages {
+    display: none;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--text-muted);
+    place-items: center;
+  }
+
+  .strip-conversation:hover .pages,
+  .pages[aria-expanded="true"],
+  .pages:focus-visible {
+    display: grid;
+  }
+
+  .strip-conversation.has-pages:hover .diff {
+    display: none;
+  }
+
+  .pages:hover,
+  .pages[aria-expanded="true"] {
+    background: var(--bg-hover);
+    color: var(--text-primary);
   }
 
   /* StripFolder's popover rows. */
@@ -290,64 +304,7 @@
     text-overflow: ellipsis;
   }
 
-  .question {
-    display: grid;
-    gap: 6px;
-    padding: 4px 6px 6px;
-  }
-
-  .question-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
-
-  .question-name {
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-  }
-
-  .question-title {
-    margin: 0 0 4px;
-    font-size: var(--font-size-sm);
-    line-height: 1.35;
-    color: var(--text-secondary);
-    overflow-wrap: anywhere;
-  }
-
-  .question-actions {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .open {
-    flex: none;
-    margin-left: auto;
-    height: var(--control-height-sm);
-    padding: 0 var(--space-10);
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-secondary);
-    font: inherit;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-  }
-
-  .open:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-  }
-
-  .open:focus-visible,
-  .side-button:focus-visible,
+  .pages:focus-visible,
   .main:focus-visible {
     outline: var(--focus-outline);
     outline-offset: -2px;

@@ -1,0 +1,3 @@
+kind: Changed
+body: A conversation's row shows its agent's icon, its changes on the right and its state as a badge on the icon, in the sidebar, the tab strip and the Command bar; a question waits in the conversation and the Agents list, leaving the row only an orange dot.
+time: 2026-11-04T20:47:56.216634+01:00

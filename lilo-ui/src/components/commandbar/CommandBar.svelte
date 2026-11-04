@@ -583,6 +583,13 @@
                             <AgentMascot mood={getAgentMood(String(entry.result.payload.spaceId))} />
                           {/await}
                         </span>
+                      {:else if entry.result.kind === "tab" && entry.result.payload.agentId !== undefined}
+                        <span class="result-icon result-icon-favicon result-icon-agent">
+                          {#await import("../agents/AgentTile.svelte") then { default: AgentTile }}
+                            <AgentTile agentId={String(entry.result.payload.agentId)} />
+                          {/await}
+                          {#if entry.result.payload.waiting}<span class="result-icon-dot" aria-hidden="true"></span>{/if}
+                        </span>
                       {:else if iconSpec.type === "favicon"}
                         <span class="result-icon result-icon-favicon">
                           <span class="result-favicon-fallback" aria-hidden="true">{iconSpec.fallback}</span>
@@ -960,6 +967,22 @@
     justify-content: center;
     letter-spacing: -0.03em;
     width: 22px;
+  }
+
+  .result-icon-agent {
+    overflow: visible;
+  }
+
+  /* A conversation waiting on you: the orange dot on its icon, as on its tab row. */
+  .result-icon-dot {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--attention);
+    box-shadow: 0 0 0 2px var(--chrome-overlay-surface);
   }
 
   .result-icon-action {
