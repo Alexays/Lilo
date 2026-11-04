@@ -60,7 +60,7 @@ A piece of information takes the form of its family, never another.
 
 Nothing else. A badge sits on a fixed landmark or a tab row, never on a navigation button.
 
-- The Agents button is the only entry point to Agents in the chrome: a 28 px square beside Reload, shown whenever Agents are on. A ring turns around the mascot while an agent works; an orange count badge (dark text on `--attention`) says how many wait for you; both can show at once. Its popover starts with New; with no conversation to list, the button opens New directly.
+- The Agents button is the only entry point to Agents in the chrome: a 28 px square beside Reload, shown whenever Agents are on. A ring turns around the mascot while an agent works; the 6 px orange dot says one waits for you, its label and tooltip say how many; both can show at once. Its popover starts with New; with no conversation to list, the button opens New directly.
 
 ## Tab rows
 

@@ -1,5 +1,5 @@
-<!-- The one entry point to Agents in the chrome: the mascot, a ring while agents work, an orange count for
-     those waiting on you. It opens the list of every conversation, across Spaces, starting with New, or New itself when there is none. -->
+<!-- The one entry point to Agents in the chrome: the mascot, a ring while agents work, an orange dot while
+     one waits on you. It opens the list of every conversation, across Spaces, starting with New, or New itself when there is none. -->
 <script lang="ts">
   import "../../lib/i18n/agentsCatalog";
   import { backOut } from "svelte/easing";
@@ -48,14 +48,14 @@
       <circle cx="12" cy="12" r="11" pathLength="100" />
     </svg>
   {/if}
-  <!-- Kept in the key block even at zero, so a change pops it but the first draw does not. -->
+  <!-- Keyed on the count, so each new wait pops the dot again; the count itself is in the label. -->
   {#key waiting}
     <span
-      class="count"
+      class="dot"
       hidden={waiting === 0}
       aria-hidden="true"
-      in:scale={{ start: 0.6, duration: prefersReducedMotion() ? 0 : 260, easing: backOut }}
-    >{waiting}</span>
+      in:scale={{ start: 0.4, duration: prefersReducedMotion() ? 0 : 260, easing: backOut }}
+    ></span>
   {/key}
 </button>
 
@@ -122,26 +122,19 @@
     }
   }
 
-  .count {
+  .dot {
     position: absolute;
-    top: 0;
-    right: 0;
-    min-width: 14px;
-    height: 14px;
-    padding: 0 4px;
-    box-sizing: border-box;
-    border-radius: var(--radius-chip);
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
     background: var(--attention);
     box-shadow: 0 0 0 2px var(--sidebar-bg);
-    color: var(--attention-text);
-    font-size: var(--font-size-2xs);
-    font-weight: var(--font-weight-bold);
-    font-variant-numeric: tabular-nums;
-    line-height: 14px;
-    text-align: center;
+    pointer-events: none;
   }
 
-  .count[hidden] {
+  .dot[hidden] {
     display: none;
   }
 </style>
