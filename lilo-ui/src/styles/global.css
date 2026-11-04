@@ -379,6 +379,9 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
     --accent: var(--sidebar-accent);
     --accent-hover: var(--sidebar-accent-hover);
     --accent-text: var(--sidebar-accent-text);
+    /* Mixed again here: inherited from :root, they would keep the app's default accent. */
+    --accent-ink: color-mix(in srgb, var(--sidebar-accent) 70%, var(--sidebar-contrast));
+    --accent-tint-14: color-mix(in srgb, var(--sidebar-accent) 14%, transparent);
     --danger: var(--sidebar-danger);
     --sidebar-right-pad: 8px;
 }
