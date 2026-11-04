@@ -2384,6 +2384,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "Wszystkie uprawnienia",
+		"inUse": "Teraz w użyciu",
 		"zoom": "Powiększenie",
 		"zoomIn": "Powiększ",
 		"zoomOut": "Pomniejsz",

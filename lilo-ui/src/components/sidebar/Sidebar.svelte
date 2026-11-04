@@ -191,9 +191,9 @@
     contain: content;
   }
 
-  /* The address details card grows past a narrow sidebar, over the page; the clip only matters while
+  /* The address details card or drawer grows past a narrow sidebar, over the page; the clip only matters while
      a side panel slides, which the card never shows over. */
-  .sidebar-viewport:has(:global(.url-details)) {
+  .sidebar-viewport:has(:global(.url-details, .url-drawer)) {
     overflow: visible;
     contain: layout style;
   }

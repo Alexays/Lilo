@@ -137,9 +137,10 @@ export function getActiveUrlBarDrawer(): UrlBarDrawer | null {
 		_queue.find((request) => request.kind === "sitePermission" && request.tabId === tabId) ??
 		_queue.find((request) => request.kind === "agentControl" && request.action) ??
 		_queue.find((request) => request.kind === "extensionPermission" && request.spaceId === spaceId) ??
+		// The Site drawer is asked for by the user; the invite can wait for it to close.
+		(_siteOpen ? SITE_DRAWER : null) ??
 		// The onboarding has its own default-browser step.
-		(_defaultBrowserInvite && !getOnboarding().visible ? DEFAULT_BROWSER_DRAWER : null) ??
-		(_siteOpen ? SITE_DRAWER : null)
+		(_defaultBrowserInvite && !getOnboarding().visible ? DEFAULT_BROWSER_DRAWER : null)
 	);
 }
 

@@ -2343,6 +2343,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "All permissions",
+		"inUse": "In use now",
 		"zoom": "Zoom",
 		"zoomIn": "Zoom in",
 		"zoomOut": "Zoom out",

@@ -12,7 +12,6 @@
   import { getExtensions } from "../../stores/extensions.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import {
-    getActiveUrlBarDrawer,
     getTrackersBlocked,
     isBlockerAllowlisted,
     isSiteDrawerOpen,
@@ -202,9 +201,23 @@
     detailsTimer = null;
   }
 
+  // On a web page the details are the Site drawer's: opened by a rest or a focus, it leaves with
+  // the pointer or the focus until a press inside it keeps it.
+  let siteDrawerTransient = false;
+
+  function openDetails() {
+    detailsOpen = true;
+    if (showsLocation || activeKind !== "web" || urlVisual.isPlaceholder || isCommandBarOpen() || isSiteDrawerOpen()) return;
+    siteDrawerTransient = true;
+    setSiteDrawerOpen(true);
+  }
+
   function closeDetails() {
     cancelDetailsTimer();
     detailsOpen = false;
+    if (!siteDrawerTransient) return;
+    siteDrawerTransient = false;
+    setSiteDrawerOpen(false);
   }
 
   function trackDetails(event: PointerEvent) {
@@ -213,7 +226,7 @@
     if (detailsOpen || detailsTimer !== null || !target.closest(".url-trigger")) return;
     detailsTimer = setTimeout(() => {
       detailsTimer = null;
-      detailsOpen = true;
+      openDetails();
     }, DETAILS_DELAY_MS);
   }
 
@@ -224,7 +237,7 @@
 
   // A keyboard focus opens it at once: the certificate lives there.
   function focusDetails(event: FocusEvent) {
-    if ((event.currentTarget as HTMLElement).matches(":focus-visible")) detailsOpen = true;
+    if ((event.currentTarget as HTMLElement).matches(":focus-visible")) openDetails();
   }
 
   $effect(() => {
@@ -233,7 +246,7 @@
   });
 
   $effect(() => {
-    if (!detailsOpen) return;
+    if (!detailsOpen && !isSiteDrawerOpen()) return;
     startTabMemoryLiveRefresh(activeTabId);
     return stopTabMemoryLiveRefresh;
   });
@@ -241,17 +254,12 @@
   const activeTabProgress = $derived(getActiveTab()?.progress ?? 0);
   const permissionOrigin = $derived(permissionOriginFromURL(activeTabURL));
 
-  const drawerActive = $derived(getActiveUrlBarDrawer() !== null);
-
-  // Navigating to another origin (or the capture ending) invalidates the Site drawer.
+  // Navigating to another origin invalidates the Site drawer.
   $effect(() => {
     if (permissionOrigin !== lastPermissionOrigin) {
       lastPermissionOrigin = permissionOrigin;
       setSiteDrawerOpen(false);
     }
-  });
-  $effect(() => {
-    if (!captureActive && isSiteDrawerOpen()) setSiteDrawerOpen(false);
   });
 
   // Asked once at startup so the invite can appear without opening Settings.
@@ -264,6 +272,7 @@
 
   function toggleSiteDrawer(e: MouseEvent) {
     e.stopPropagation();
+    siteDrawerTransient = false;
     setSiteDrawerOpen(!isSiteDrawerOpen());
   }
 
@@ -434,11 +443,8 @@
 
   const urlVisual = $derived.by(() => buildURLVisual(activeTabURL));
 
-  // The command bar edits this address: a card about it would only cover the tab list. The Site drawer
-  // already shows what it would; a waiting request does not stop the user looking at the site.
-  const detailsAvailable = $derived(
-    getActiveUrlBarDrawer()?.kind !== "site" && !isCommandBarOpen() && (showsLocation || (activeKind === "web" && !urlVisual.isPlaceholder)),
-  );
+  // The command bar edits this address: a card about it would only cover the tab list.
+  const detailsAvailable = $derived(showsLocation && !isCommandBarOpen());
   // A terminal's folder is already the bar's bold part, so its card has no title.
   const detailsTitle = $derived(showsLocation ? "" : getActiveTab()?.title || urlVisual.displayHost);
 
@@ -449,7 +455,7 @@
   });
 
   const detailsRows = $derived.by((): DetailRow[] => {
-    if (!detailsOpen) return [];
+    if (!detailsOpen && !isSiteDrawerOpen()) return [];
     const rows: DetailRow[] = [];
     if (showsLocation) {
       if (activeBranch) rows.push({ label: t("urlBar.details.branch"), value: activeBranch, look: "tag" });
@@ -906,7 +912,7 @@
   onpointerleave={closeDetails}
   onfocusout={leaveDetailsFocus}
 >
-  <div class="url-surface" class:drawer-open={drawerActive}>
+  <div class="url-surface">
     <div
       class="url-trigger"
       draggable={draggableURL}
@@ -985,8 +991,16 @@
       />
     </div>
 
-    <URLBarDrawer host={urlVisual.host} origin={permissionOrigin} />
   </div>
+
+  <URLBarDrawer
+    host={urlVisual.host}
+    origin={permissionOrigin}
+    title={getActiveTab()?.title || urlVisual.displayHost}
+    location={detailsLocation}
+    rows={detailsRows}
+    onpin={() => (siteDrawerTransient = false)}
+  />
 
   {#if detailsOpen && detailsAvailable}
     <URLDetailsCard
@@ -1007,7 +1021,6 @@
     flex-shrink: 0;
   }
 
-  /* One shape for the bar and its drawer: the drawer grows inside this surface. */
   .url-surface {
     border-radius: var(--radius-md);
     background: var(--bg-hover);
@@ -1015,7 +1028,7 @@
     transition: background var(--transition-fast);
   }
 
-  .url-surface:not(.drawer-open):hover {
+  .url-surface:hover {
     background: var(--bg-active);
   }
 

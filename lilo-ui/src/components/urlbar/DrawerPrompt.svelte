@@ -1,5 +1,5 @@
-<!-- A question asked from the address bar: icon, message, then a quiet dismiss beside the accent
-     confirm, which carries a variant of its answer in its menu. Shared by the permission requests and
+<!-- A question asked from the address bar: an icon tile, the message, then a quiet dismiss beside the
+     accent confirm, which carries a variant of its answer in its menu. Shared by the permission requests and
      the default-browser invite. -->
 <script lang="ts">
   import type { Snippet } from "svelte";
@@ -48,7 +48,6 @@
     <span class="prompt-icon"><URLDrawerIcon name={icon} /></span>
   {/if}
   <div class="prompt-message" class:error>{@render children()}</div>
-</div>
 {#if showActions}
   <div class="prompt-actions">
     <div class="prompt-answers">
@@ -66,19 +65,24 @@
     </div>
   </div>
 {/if}
+</div>
 
 <style>
   .drawer-prompt {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 4px 6px 0;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 4px;
   }
 
   .prompt-icon {
-    flex: none;
-    padding-top: 1px;
-    color: var(--text-secondary);
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: var(--accent-tint-12);
+    color: var(--accent-ink);
   }
 
   .prompt-image {
@@ -90,7 +94,7 @@
   }
 
   .prompt-message {
-    flex: 1;
+    align-self: center;
     min-width: 0;
     color: var(--text-primary);
     font-size: var(--font-size-md);
@@ -107,9 +111,10 @@
   }
 
   .prompt-actions {
+    grid-column: 2;
     display: flex;
     justify-content: flex-end;
-    padding: 8px 2px 2px;
+    padding-top: 12px;
   }
 
   .prompt-answers {
@@ -138,14 +143,5 @@
 
   .prompt-actions :global(.ui-split-button .main) {
     font-size: var(--font-size-md);
-  }
-
-  /* The drawer is already painted --bg-hover: a secondary button in that same fill disappears. */
-  .prompt-actions :global(.ui-button:not(.primary, .ghost)) {
-    background: var(--text-primary-tint-10);
-  }
-
-  .prompt-actions :global(.ui-button:not(.primary, .ghost, :disabled):hover) {
-    background: var(--text-primary-tint-12);
   }
 </style>

@@ -2354,6 +2354,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "Tüm izinler",
+		"inUse": "Şu anda kullanımda",
 		"zoom": "Büyütme",
 		"zoomIn": "Büyüt",
 		"zoomOut": "Küçült",

@@ -2354,6 +2354,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "Alle bevoegdheden",
+		"inUse": "Nu in gebruik",
 		"zoom": "Zoom",
 		"zoomIn": "Zoom in",
 		"zoomOut": "Zoom uit",

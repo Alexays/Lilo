@@ -1,6 +1,6 @@
-<!-- The drawer that grows out of the address bar. It lives inside the bar's own surface, so the
-     two read as one shape. Opening rides Lilo's spring and staggers the rows in; closing is
-     quick and plain. A different drawer waits for the current one to close before opening. -->
+<!-- The drawer anchored to the address by an arrow. It floats over the tab list or the page and
+     never pushes them. It comes in from its arrow and fades out; a different drawer waits for the
+     current one to leave before showing. -->
 <script lang="ts">
   import { untrack, type ComponentProps } from "svelte";
   import { dismissable } from "../../lib/actions/dismissable";
@@ -15,10 +15,10 @@
   import PermissionRequestDrawer from "./PermissionRequestDrawer.svelte";
   import SiteDrawer from "./SiteDrawer.svelte";
 
-  let site: ComponentProps<typeof SiteDrawer> = $props();
+  let { onpin, ...site }: ComponentProps<typeof SiteDrawer> & { onpin: () => void } = $props();
 
-  // Matches the collapse transition below.
-  const CLOSE_MS = 200;
+  // Matches the fade out below.
+  const CLOSE_MS = 120;
 
   const active = $derived(getActiveUrlBarDrawer());
   let shown = $state.raw<UrlBarDrawer | null>(null);
@@ -32,7 +32,7 @@
 
   function show(next: UrlBarDrawer | null): void {
     shown = next;
-    // A frame at 0fr first, so the content mounts collapsed and the growth animates.
+    // A frame closed first, so the drawer mounts small and grows from its arrow.
     if (next) requestAnimationFrame(() => { if (shown === next) open = true; });
   }
 
@@ -72,89 +72,128 @@
 
 <!-- The Site drawer is the user's own: Escape, a press outside the address bar, or a click in the
      page closes it. Requests stay until answered. -->
-<div
-  class="url-drawer"
-  class:open={open && !extensionAnchor}
-  use:reportInteractiveZone={{ id: "url-bar-drawer", active: open }}
-  {@attach shown?.kind === "site" &&
-    dismissable({ onDismiss: () => setSiteDrawerOpen(false), ignore: ".url-display", escape: true })}
->
-  <div class="url-drawer-clip">
-    <div class="url-drawer-content">
-      {#if shown?.kind === "site"}
-        <SiteDrawer {...site} />
-      {:else if shown?.kind === "defaultBrowser"}
-        <DefaultBrowserDrawer />
-      {:else if shown && !extensionAnchor}
-        <PermissionRequestDrawer request={shown} />
-      {/if}
-    </div>
-  </div>
-  {#if shown?.kind === "extensionPermission" && anchorRect}
-    <div
-      class="extension-request float-surface"
-      class:open
-      style:top="{anchorRect.bottom + 10}px"
-      style:left="{popoverLeft}px"
-      style:width="{POPOVER_WIDTH}px"
-      style:--arrow-x="{anchorRect.left + anchorRect.width / 2 - popoverLeft}px"
-      use:portal
-      use:reportInteractiveZone={{ id: "extension-request", active: open }}
-    >
+{#if shown && !extensionAnchor}
+  <div
+    class="url-drawer float-surface"
+    class:open
+    class:wide={shown.kind === "site"}
+    role="group"
+    use:reportInteractiveZone={{ id: "url-bar-drawer", active: open }}
+    onpointerdown={onpin}
+    {@attach shown.kind === "site" &&
+      dismissable({ onDismiss: () => setSiteDrawerOpen(false), ignore: ".url-display", escape: true })}
+  >
+    {#if shown.kind === "site"}
+      <SiteDrawer {...site} />
+    {:else if shown.kind === "defaultBrowser"}
+      <DefaultBrowserDrawer />
+    {:else}
       <PermissionRequestDrawer request={shown} />
-    </div>
-  {/if}
-</div>
+    {/if}
+  </div>
+{/if}
+{#if shown?.kind === "extensionPermission" && anchorRect}
+  <div
+    class="extension-request float-surface"
+    class:open
+    style:top="{anchorRect.bottom + 10}px"
+    style:left="{popoverLeft}px"
+    style:width="{POPOVER_WIDTH}px"
+    style:--arrow-x="{anchorRect.left + anchorRect.width / 2 - popoverLeft}px"
+    use:portal
+    use:reportInteractiveZone={{ id: "extension-request", active: open }}
+  >
+    <PermissionRequestDrawer request={shown} />
+  </div>
+{/if}
 
 <style>
+  /* Under the address and at least as wide, over the page when the sidebar is narrow. */
   .url-drawer {
+    --arrow-inset: 28px;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 8px;
+    right: var(--sidebar-right-pad, 8px);
+    min-width: 260px;
+    z-index: 30;
+    box-sizing: border-box;
     display: grid;
-    /* minmax: without it the column takes the content's min-content width and overflows. */
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 200ms var(--motion-ease-standard);
+    padding: 12px;
+    border-radius: var(--radius-lg);
+    opacity: 0;
+    transform: scale(0.96);
+    transform-origin: var(--arrow-inset) 0;
+    transition:
+      opacity var(--motion-duration-fast) ease,
+      transform var(--motion-duration-fast) ease;
+  }
+
+  .url-drawer.wide {
+    right: auto;
+    width: max(360px, calc(100% - 16px));
+    padding: 16px 20px 12px;
   }
 
   .url-drawer.open {
-    grid-template-rows: 1fr;
-    transition: grid-template-rows 380ms var(--motion-ease-bounce);
-  }
-
-  .url-drawer-clip {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .url-drawer-content {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1px;
-    padding: 0 4px 6px;
-  }
-
-  /* Rows leave first on close, then arrive one after another once the surface has grown. */
-  .url-drawer-content > :global(*) {
-    opacity: 0;
-    transform: translateY(-4px);
-    transition:
-      opacity var(--motion-duration-fast) ease,
-      transform 120ms ease;
-  }
-
-  .url-drawer.open .url-drawer-content > :global(*) {
     opacity: 1;
     transform: none;
     transition:
-      opacity var(--motion-duration-normal) ease-out,
-      transform 320ms var(--motion-ease-spring);
-    transition-delay: 60ms;
+      opacity var(--motion-duration-overlay) ease-out,
+      transform var(--motion-duration-overlay) var(--motion-ease-spring);
   }
 
-  .url-drawer.open .url-drawer-content > :global(:nth-child(2)) { transition-delay: 88ms; }
-  .url-drawer.open .url-drawer-content > :global(:nth-child(3)) { transition-delay: 116ms; }
-  .url-drawer.open .url-drawer-content > :global(:nth-child(4)) { transition-delay: 144ms; }
-  .url-drawer.open .url-drawer-content > :global(:nth-child(5)) { transition-delay: 172ms; }
-  .url-drawer.open .url-drawer-content > :global(:nth-child(n + 6)) { transition-delay: 200ms; }
+  /* The arrow: a corner of the surface pointing at the address. */
+  .url-drawer::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: calc(var(--arrow-inset) - 6px);
+    width: 12px;
+    height: 12px;
+    border-radius: 2px 0 0 0;
+    background: inherit;
+    box-shadow: -1px -1px 0 0 var(--float-border);
+    transform: rotate(45deg);
+  }
+
+  /* Bridges the gap to the address, so the pointer reaches the drawer without leaving it. */
+  .url-drawer::after {
+    content: "";
+    position: absolute;
+    inset: -12px 0 100% 0;
+  }
+
+  :global(html[data-tab-position='bottom']) .url-drawer::after {
+    inset: 100% 0 -12px 0;
+  }
+
+  /* With the tabs on the right, it grows over the page to the left. */
+  :global(html[data-tab-position='right']) .url-drawer {
+    left: auto;
+    right: var(--sidebar-right-pad, 8px);
+    transform-origin: calc(100% - var(--arrow-inset)) 0;
+  }
+
+  :global(html[data-tab-position='right']) .url-drawer::before {
+    left: auto;
+    right: calc(var(--arrow-inset) - 6px);
+  }
+
+  /* Over a bottom bar, it opens upward. */
+  :global(html[data-tab-position='bottom']) .url-drawer {
+    top: auto;
+    bottom: calc(100% + 6px);
+    transform-origin: var(--arrow-inset) 100%;
+  }
+
+  :global(html[data-tab-position='bottom']) .url-drawer::before {
+    top: auto;
+    bottom: -6px;
+    border-radius: 0 0 2px 0;
+    box-shadow: 1px 1px 0 0 var(--float-border);
+  }
 
   .extension-request {
     position: fixed;
@@ -192,11 +231,11 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .url-drawer,
     .extension-request,
-    .url-drawer.open,
-    .url-drawer-content > :global(*),
-    .url-drawer.open .url-drawer-content > :global(*) {
-      transition: none;
+    .url-drawer.open {
+      transform: none;
+      transition: opacity 150ms ease;
     }
   }
 </style>

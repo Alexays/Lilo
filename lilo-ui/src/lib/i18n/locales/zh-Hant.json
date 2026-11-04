@@ -2354,6 +2354,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "所有權限",
+		"inUse": "正在使用",
 		"zoom": "縮放",
 		"zoomIn": "放大",
 		"zoomOut": "縮小",

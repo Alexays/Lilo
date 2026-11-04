@@ -2354,6 +2354,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "Tutti i permessi",
+		"inUse": "In uso ora",
 		"zoom": "Zoom",
 		"zoomIn": "Ingrandisci",
 		"zoomOut": "Riduci",

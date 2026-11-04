@@ -2354,6 +2354,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "すべてのアクセス権",
+		"inUse": "現在使用中",
 		"zoom": "ズーム",
 		"zoomIn": "拡大",
 		"zoomOut": "縮小",
