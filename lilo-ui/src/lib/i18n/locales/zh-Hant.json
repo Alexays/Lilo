@@ -1745,6 +1745,7 @@
 	"historyPage": {
 		"title": "瀏覽記錄",
 		"navLabel": "瀏覽記錄檢視",
+		"cmdClickNote": "⌘-點按在新分頁中打開",
 		"searchPlaceholder": "搜尋瀏覽記錄",
 		"periodAll": "所有瀏覽記錄",
 		"periodToday": "今天",

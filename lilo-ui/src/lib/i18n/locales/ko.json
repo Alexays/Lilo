@@ -1745,6 +1745,7 @@
 	"historyPage": {
 		"title": "방문 기록",
 		"navLabel": "방문 기록 보기",
+		"cmdClickNote": "⌘-클릭하면 새 탭에서 열립니다",
 		"searchPlaceholder": "방문 기록 검색",
 		"periodAll": "전체 기록",
 		"periodToday": "오늘",

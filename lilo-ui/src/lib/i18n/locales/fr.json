@@ -1745,6 +1745,7 @@
 	"historyPage": {
 		"title": "Historique",
 		"navLabel": "Vues de l'historique",
+		"cmdClickNote": "⌘-clic ouvre dans un nouvel onglet",
 		"searchPlaceholder": "Rechercher dans l'historique",
 		"periodAll": "Tout l'historique",
 		"periodToday": "Aujourd'hui",

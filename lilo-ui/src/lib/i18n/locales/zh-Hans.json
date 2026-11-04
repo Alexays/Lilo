@@ -1745,6 +1745,7 @@
 	"historyPage": {
 		"title": "历史记录",
 		"navLabel": "历史记录视图",
+		"cmdClickNote": "⌘-点按在新标签页中打开",
 		"searchPlaceholder": "搜索历史记录",
 		"periodAll": "全部历史记录",
 		"periodToday": "今天",

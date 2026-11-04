@@ -1773,6 +1773,7 @@
 	"historyPage": {
 		"title": "Historia",
 		"navLabel": "Widoki historii",
+		"cmdClickNote": "⌘-kliknięcie otwiera w nowej karcie",
 		"searchPlaceholder": "Szukaj w historii",
 		"periodAll": "Cała historia",
 		"periodToday": "Dzisiaj",

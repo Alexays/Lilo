@@ -1745,6 +1745,7 @@
 	"historyPage": {
 		"title": "Verlauf",
 		"navLabel": "Verlaufsansichten",
+		"cmdClickNote": "⌘-Klick öffnet in einem neuen Tab",
 		"searchPlaceholder": "Verlauf durchsuchen",
 		"periodAll": "Gesamter Verlauf",
 		"periodToday": "Heute",

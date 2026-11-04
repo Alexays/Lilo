@@ -1745,6 +1745,7 @@
 	"historyPage": {
 		"title": "Cronologia",
 		"navLabel": "Viste della cronologia",
+		"cmdClickNote": "⌘-clic apre in una nuova scheda",
 		"searchPlaceholder": "Cerca nella cronologia",
 		"periodAll": "Tutta la cronologia",
 		"periodToday": "Oggi",

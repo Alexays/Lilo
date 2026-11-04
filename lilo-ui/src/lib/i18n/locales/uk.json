@@ -1773,6 +1773,7 @@
 	"historyPage": {
 		"title": "Історія",
 		"navLabel": "Розділи історії",
+		"cmdClickNote": "⌘-клік відкриває в новій вкладці",
 		"searchPlaceholder": "Пошук в історії",
 		"periodAll": "Уся історія",
 		"periodToday": "Сьогодні",

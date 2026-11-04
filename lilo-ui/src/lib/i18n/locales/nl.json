@@ -1745,6 +1745,7 @@
 	"historyPage": {
 		"title": "Geschiedenis",
 		"navLabel": "Geschiedenisweergaven",
+		"cmdClickNote": "⌘-klik opent in een nieuw tabblad",
 		"searchPlaceholder": "Geschiedenis doorzoeken",
 		"periodAll": "Alle geschiedenis",
 		"periodToday": "Vandaag",

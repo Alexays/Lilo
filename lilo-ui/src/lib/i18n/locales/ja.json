@@ -1745,6 +1745,7 @@
 	"historyPage": {
 		"title": "履歴",
 		"navLabel": "履歴の表示",
+		"cmdClickNote": "⌘-クリックで新しいタブで開きます",
 		"searchPlaceholder": "履歴を検索",
 		"periodAll": "すべての履歴",
 		"periodToday": "今日",
