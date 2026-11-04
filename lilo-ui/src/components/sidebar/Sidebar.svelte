@@ -103,6 +103,7 @@
     <div
       class="sidebar-header"
       class:no-traffic-lights={!areTrafficLightsVisible() || getTabPosition() === "right"}
+      class:address-hidden={!isAddressVisible()}
       ondblclick={() => chromeActions.maximizeWindow()}
       onpointerdown={pressTabsHeader}
     >
@@ -128,7 +129,7 @@
       {/if}
     </div>
     {#if isAddressVisible() && !isAddressInPageToolbar()}
-      <URLDisplay />
+      <URLDisplay nav={getTabPosition() === "left" && getAddressPlacement() === "tabs"} />
     {/if}
 
     <!-- Space content: native horizontal scroll with snap paging -->
@@ -189,6 +190,8 @@
     overflow: clip;
     height: 100%;
     contain: content;
+    /* Its width is the sidebar's plus the 8 px inset: the 244 px queries below mean a 236 px sidebar. */
+    container: sidebar / inline-size;
   }
 
   /* The address details card or drawer grows past a narrow sidebar, over the page; the clip only matters while
@@ -323,6 +326,38 @@
     height: 52px;
     padding: 0 var(--sidebar-right-pad, 8px) 0 0;
     flex-shrink: 0;
+  }
+
+  /* Too narrow for the whole line, the history buttons move into the address field and Agents keeps its place. */
+  @container sidebar (width < 244px) {
+    .address-corner .sidebar-header :global(.history) {
+      display: none;
+    }
+  }
+
+  /* With the address hidden, the history buttons give way instead, so Agents keeps its place: an unavailable
+     Forward first, then Forward, then Reload. */
+  @container sidebar (width < 244px) {
+    .address-hidden :global(.nav-btn.history) {
+      width: 24px;
+      height: 24px;
+    }
+
+    .address-hidden :global(.forward:disabled) {
+      display: none;
+    }
+  }
+
+  @container sidebar (width < 229px) {
+    .address-hidden :global(.forward) {
+      display: none;
+    }
+  }
+
+  @container sidebar (width < 203px) {
+    .address-hidden :global(.reload) {
+      display: none;
+    }
   }
 
   /* The default layout lifts the lights 4pt, the address bar following them. */

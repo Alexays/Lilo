@@ -9,8 +9,13 @@
 
   type HistoryDirection = "back" | "forward";
 
-  // The page toolbar can take the history buttons while the sidebar keeps its toggle.
-  let { collapseLocked = false, show = "all" }: { collapseLocked?: boolean; show?: "all" | "toggle" | "history" } = $props();
+  // The page toolbar can take the history buttons while the sidebar keeps its toggle. Inline, they sit
+  // inside the sidebar's address field, shown only while the sidebar is too narrow for them on its top line.
+  let {
+    collapseLocked = false,
+    show = "all",
+    inline = false,
+  }: { collapseLocked?: boolean; show?: "all" | "toggle" | "history"; inline?: boolean } = $props();
 
   const HISTORY_MENU_PRESS_DELAY_MS = 320;
   const HISTORY_MENU_CLICK_SUPPRESSION_MS = 520;
@@ -103,6 +108,7 @@
 
 <div
   class="nav-controls"
+  class:inline
   role="navigation"
   aria-label={t("nav.navigationControls")}
   onpointerdown={handleWindowDragPointerDown}
@@ -138,7 +144,7 @@
   {#if show !== "toggle"}
 
   <button
-    class="nav-btn"
+    class="nav-btn history"
     aria-label={t("nav.goBack")}
     disabled={!canGoBack}
     use:tooltip={{ text: t("nav.goBack"), shortcut: shortcutKeys("history.back"), placement: "bottom", disabled: !canGoBack }}
@@ -161,7 +167,7 @@
   </button>
 
   <button
-    class="nav-btn"
+    class="nav-btn history forward"
     aria-label={t("nav.goForward")}
     disabled={!canGoForward}
     use:tooltip={{ text: t("nav.goForward"), shortcut: shortcutKeys("history.forward"), placement: "bottom", disabled: !canGoForward }}
@@ -184,7 +190,7 @@
   </button>
 
   <button
-    class="nav-btn"
+    class="nav-btn history reload"
     class:loading={isLoading}
     aria-label={isLoading ? t("nav.stopLoading") : t("nav.reload")}
     disabled={!isLoading && !hasReloadTarget}
@@ -253,6 +259,41 @@
     flex: 1;
     user-select: none;
     -webkit-user-select: none;
+  }
+
+  .nav-controls.inline {
+    display: none;
+  }
+
+  /* The buttons join the address's row: Back leads it, Reload ends it, Forward shows only when it can go. */
+  @container sidebar (width < 244px) {
+    .nav-controls.inline {
+      display: contents;
+    }
+  }
+
+  .inline .nav-btn {
+    width: 24px;
+    height: 24px;
+    order: -1;
+  }
+
+  .inline .reload {
+    order: 1;
+  }
+
+  /* The field paints --bg-hover itself, so a hover needs a tint above it. */
+  .inline .nav-btn:hover:not(:disabled) {
+    background: var(--text-primary-tint-12);
+  }
+
+  .inline .nav-btn:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
+
+  .inline .forward:disabled {
+    display: none;
   }
 
   .nav-spacer {

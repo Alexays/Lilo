@@ -22,6 +22,7 @@
   import { cubicOut, quintOut } from "svelte/easing";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { springEase } from "../../lib/motion/spring";
+  import NavControls from "../sidebar/NavControls.svelte";
   import URLHost from "./URLHost.svelte";
   import URLToast from "./URLToast.svelte";
   import URLProgress from "./URLProgress.svelte";
@@ -40,8 +41,9 @@
   } from "../../lib/urlProgress";
   import type { ToastVariant, URLVisual } from "../../lib/urlVisual";
 
-  // With the address hidden, only the page's buttons stay, on the Space row.
-  let { actionsOnly = false }: { actionsOnly?: boolean } = $props();
+  // With the address hidden, only the page's buttons stay, on the Space row. With nav, the field holds
+  // Back, Forward and Reload while the sidebar is too narrow for them on its top line.
+  let { actionsOnly = false, nav = false }: { actionsOnly?: boolean; nav?: boolean } = $props();
 
   const TOAST_DURATION_MS = 1440;
   const DETAILS_DELAY_MS = 400;
@@ -223,7 +225,7 @@
 
   function trackDetails(event: PointerEvent) {
     const target = event.target as Element;
-    if (target.closest(".url-actions, .changes-button, .permissions-btn")) return closeDetails();
+    if (target.closest(".url-actions, .changes-button, .permissions-btn, .nav-controls")) return closeDetails();
     if (detailsOpen || detailsTimer !== null || !target.closest(".url-trigger")) return;
     detailsTimer = setTimeout(() => {
       detailsTimer = null;
@@ -266,7 +268,8 @@
   // Asked once at startup so the invite can appear without opening Settings.
   onMount(() => settingsActions.loadDefaultBrowserStatus());
 
-  function handleClick() {
+  function handleClick(event: MouseEvent) {
+    if ((event.target as Element).closest(".nav-controls")) return;
     closeDetails();
     openCommandBar(activeTabURL, false, true);
   }
@@ -914,6 +917,7 @@
   <div class="url-surface">
     <div
       class="url-trigger"
+      class:with-nav={nav}
       draggable={draggableURL}
       ondragstart={dragURL}
       onclick={handleClick}
@@ -932,6 +936,9 @@
         aria-label={t("urlBar.addressBar", { url: showsLocation ? activeCwd : `${urlVisual.host}${urlVisual.path}` })}
       ></button>
       {@render permissionsButton()}
+      {#if nav}
+        <NavControls show="history" inline />
+      {/if}
 
       {#if showsLocation && !toastVisible}
         <span class="location-shell">
@@ -1048,6 +1055,17 @@
     cursor: pointer;
     text-align: left;
     outline: none;
+  }
+
+  /* Room for the 24 px history buttons at both ends; the extension cluster moves off Reload. */
+  @container sidebar (width < 244px) {
+    .url-trigger.with-nav {
+      padding: 4px;
+    }
+
+    .with-nav :global(.url-actions) {
+      right: 32px;
+    }
   }
 
   .url-trigger.actions-only {

@@ -244,7 +244,7 @@
     function onMove(ev: MouseEvent) {
       // On the right the handle sits on the sidebar's left edge: dragging left widens it.
       const delta = getTabPosition() === "right" ? startX - ev.clientX : ev.clientX - startX;
-      const newWidth = Math.max(200, Math.min(480, startWidth + delta));
+      const newWidth = Math.max(170, Math.min(480, startWidth + delta));
       scheduleSidebarWidth(newWidth);
     }
 

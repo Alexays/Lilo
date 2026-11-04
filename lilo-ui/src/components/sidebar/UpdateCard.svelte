@@ -223,6 +223,21 @@
     transform: scale(0.95);
   }
 
+  /* Narrower still, Restart goes under the text, so the version and the status stay whole. */
+  @container (max-width: 200px) {
+    .update-main {
+      flex-wrap: wrap;
+      row-gap: 8px;
+      height: auto;
+      padding: 10px 12px 12px;
+    }
+
+    .update-go {
+      flex-basis: 100%;
+      text-align: center;
+    }
+  }
+
   .update-spinner {
     flex-shrink: 0;
     margin-right: 4px;
