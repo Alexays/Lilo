@@ -160,16 +160,17 @@ test.describe("pinned extensions beyond the address bar's room", () => {
 	}
 
 	test("a narrow sidebar shows fewer icons and lists the rest in pin order, a wide one brings them back", async ({ page }) => {
-		await bootPinned(page, 220);
+		// Just above the width where the history buttons move into the field.
+		await bootPinned(page, 250);
 		const icons = page.locator(".extension-cluster .extension-icon:not(.extension-menu-btn)");
-		await expect(icons).toHaveCount(3);
-		await expect(page.locator(".url-text-shell")).toHaveCSS("margin-right", "96px");
+		await expect(icons).toHaveCount(5);
+		await expect(page.locator(".url-text-shell")).toHaveCSS("margin-right", "144px");
 
 		const narrow = await split(page);
-		expect(narrow.inline).toEqual(["Alpha", "Bravo", "Charlie"]);
-		expect(narrow.overflow).toEqual(["Delta", "Echo", "Foxtrot", "Golf", "Hotel"]);
+		expect(narrow.inline).toEqual(["Alpha", "Bravo", "Charlie", "Delta", "Echo"]);
+		expect(narrow.overflow).toEqual(["Foxtrot", "Golf", "Hotel"]);
 		// The inline pins and the unpinned extension follow, below a separator.
-		expect(narrow.rows.slice(7)).toEqual(["Alpha", "Bravo", "Charlie", "Unpinned"]);
+		expect(narrow.rows.slice(5)).toEqual(["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Unpinned"]);
 		await expectNothingClipped(page);
 		// Hotel's badge stays visible: in its row, and as the menu button's dot.
 		await expect(page.locator(".cluster-dot")).toBeVisible();
@@ -180,6 +181,12 @@ test.describe("pinned extensions beyond the address bar's room", () => {
 		expect(wide.inline).toEqual(["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf"]);
 		expect(wide.overflow).toEqual(["Hotel"]);
 		await expect(page.locator(".url-text-shell")).toHaveCSS("margin-right", "192px");
+		await expectNothingClipped(page);
+
+		// Narrower, the history buttons share the field and the pins give them room.
+		await page.evaluate(() => document.documentElement.style.setProperty("--sidebar-width", "210px"));
+		await expect(page.locator(".url-trigger .nav-btn").first()).toBeVisible();
+		await expect(icons).toHaveCount(0);
 		await expectNothingClipped(page);
 	});
 

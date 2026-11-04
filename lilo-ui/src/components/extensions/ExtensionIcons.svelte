@@ -47,7 +47,11 @@
   // The address bar's width, set by the resize observer below. Only a change of the count reaches
   // the icons, so a sidebar drag never re-renders them between two fits.
   let barWidth = $state(0);
-  const inlineCount = $derived(fitPinnedCount(barWidth, pinnedIds.length));
+  // History buttons a narrow sidebar moves into the field take their room from the pins: all three 24 px buttons
+  // and their gaps, Forward included while hidden, so going back or forward never reflows the pins.
+  const FIELD_NAV_PX = 3 * 26;
+  let navWidth = $state(0);
+  const inlineCount = $derived(fitPinnedCount(barWidth - navWidth, pinnedIds.length));
   const inlineIds = $derived(pinnedIds.slice(0, inlineCount));
   const pinned = $derived(
     inlineIds.map((id) => extensions.find((ext) => ext.id === id) as ExtensionState),
@@ -156,9 +160,13 @@
     const cluster = clusterEl;
     const bar = cluster?.closest(".url-trigger");
     if (!cluster || !bar) return;
+    const nav = bar.querySelector(".nav-controls");
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        if (entry.target === bar) barWidth = entry.borderBoxSize[0].inlineSize;
+        if (entry.target !== bar) continue;
+        barWidth = entry.borderBoxSize[0].inlineSize;
+        // The buttons switch in through a container query, so this is read only as the bar resizes.
+        navWidth = nav && getComputedStyle(nav).display !== "none" ? FIELD_NAV_PX : 0;
       }
       schedulePopupAnchors();
     });
