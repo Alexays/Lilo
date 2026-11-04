@@ -41,8 +41,11 @@
     if (pagerAtRest) {
       return distance > 0.5 ? "visibility: hidden; opacity: 0.12;" : "opacity: 1;";
     }
-    // Mid-swipe the opacity follows the finger frame by frame: it composites, so it costs no repaint.
-    return `opacity: ${(0.12 + Math.max(0, 1 - distance) * 0.88).toFixed(3)};`;
+    const proximity = Math.max(0, 1 - distance);
+    // Mid-swipe the opacity follows the finger frame by frame. The blur moves in three steps, so its
+    // style, and its transition, change three times a swipe rather than every frame.
+    const blur = Math.round(((1 - proximity) * 4.5) / 1.5) * 1.5;
+    return `opacity: ${(0.12 + proximity * 0.88).toFixed(3)};${blur > 0 ? ` filter: blur(${blur}px);` : ""}`;
   }
 
   $effect(() => {
@@ -290,12 +293,15 @@
     scroll-snap-align: start;
     scroll-snap-stop: always;
     /* A stable layer: one created at the start of each swipe and dropped at its end hitches both ends. */
-    will-change: opacity;
+    will-change: opacity, filter;
+    transition: filter 220ms var(--motion-ease-spring);
   }
 
-  /* Only at rest: a transition restarted by every swipe frame would trail the finger. */
+  /* Opacity eases only at rest: a transition restarted by every swipe frame would trail the finger. */
   .resting {
-    transition: opacity var(--motion-duration-fast) linear;
+    transition:
+      opacity var(--motion-duration-fast) linear,
+      filter 220ms var(--motion-ease-spring);
   }
 
   /* A hidden neighbor pane stays mounted: its looping animations would still tick unseen. Only the
