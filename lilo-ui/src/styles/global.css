@@ -46,6 +46,8 @@
   --focus-outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
 
   --sidebar-width: 260px;
+  /* Mirrors MainWindowController.sidebarRailWidth. */
+  --sidebar-rail-width: 62px;
   --sidebar-bg: var(--bg-secondary);
   --sidebar-contrast: #1d1d1f;
   --content-inset: 8px;
@@ -335,6 +337,15 @@ html[data-tab-position='bottom']:not([data-address='page']) {
 /* A strip's floating panel column: overlays on the page start past it. */
 html[data-strip-panel-open] {
   --chrome-content-left: calc(var(--sidebar-width) + 2 * var(--content-inset));
+}
+
+/* Folded to its icon rail, the sidebar docks only the rail beside the page; unfolded, it floats over the page. */
+html[data-sidebar-rail]:not([data-tabs-hidden])[data-tab-position='left'] {
+  --tabs-left: calc(var(--sidebar-rail-width) + var(--content-inset));
+}
+
+html[data-sidebar-rail]:not([data-tabs-hidden])[data-tab-position='right'] {
+  --tabs-right: calc(var(--sidebar-rail-width) + var(--content-inset));
 }
 
 /* Hidden or floating over the page, the tabs leave it every edge. */

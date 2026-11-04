@@ -79,6 +79,11 @@ final class SettingsStore {
         set { set("sidebarWidth", value: String(newValue)) }
     }
 
+    var sidebarRail: Bool {
+        get { get("sidebarRail") == "true" }
+        set { set("sidebarRail", value: newValue ? "true" : "false") }
+    }
+
     /// One Agents space per profile agents work in, comma-separated.
     var agentsSpaceIds: [UUID] {
         (get(AgentControl.agentsSpaceKey) ?? "").split(separator: ",").compactMap { UUID(uuidString: String($0)) }

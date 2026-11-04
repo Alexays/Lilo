@@ -15,6 +15,8 @@ Four elements keep the same place in all twelve layouts (tabs left, right, top, 
 
 - With the sidebar hidden, nothing stays over the page: the left edge slides the sidebar back with its landmarks, and ⇧⌘S toggles it.
 - Back and Reload never leave their line; on a narrow sidebar only an unavailable Forward gives way. Each layout has a minimum sidebar width that keeps its top line whole, nothing past the edge: 203 pt with the address in the sidebar, 243 pt with the address hidden and Agents on, 215 pt without Agents.
+- With the tabs on the left or the right, dragging the sidebar's edge under 150 pt folds it to a 62 pt icon rail, and back past 150 pt unfolds it at its width; the minimums above hold only outside the rail. Top to bottom, centered: the traffic lights' row, the toggle, Search (the command bar carries the address, the history and Agents), the favorites, pinned and today's tabs as 16 pt icons in 30 pt targets (the active one on the selected surface, its badges kept), folders by their icon, then the update and the Spaces as dots at the bottom. Each icon has its tooltip.
+- Resting on the rail outside an icon floats the full sidebar out over the page at its width, with a shadow on its page edge; it never pushes the page, and leaving it folds it back. A folder unfolds it too.
 - With the address hidden, the page's buttons (site controls, content blocking, screenshot, copy link, extensions) wait behind one button at the end of the top line and open in a row under it.
 - Every layout setting changes the screen. A combination with no effect is disabled, with a sentence saying why.
 - Tabs at the bottom: navigation and address share that bottom bar. The top of the window is the page.

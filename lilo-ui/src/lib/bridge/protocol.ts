@@ -546,6 +546,7 @@ export interface BridgeInitialStatePayload {
 	activeTabId: string;
 	sidebarWidth: number;
 	sidebarVisible: boolean;
+	sidebarRail?: boolean;
 	toolbarVisible?: boolean;
 	trafficLightsVisible?: boolean;
 	tabPosition?: TabPosition;
@@ -600,6 +601,7 @@ export interface BridgeCommandPayloadMap {
 		visualOrder: string;
 	};
 	sidebarResized: { width: number };
+	setSidebarRail: { rail: boolean };
 	toggleSidebar: EmptyPayload;
 	setSidebarCollapseLocked: { locked: boolean };
 	maximizeWindow: EmptyPayload;

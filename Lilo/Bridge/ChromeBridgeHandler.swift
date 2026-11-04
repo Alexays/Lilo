@@ -8,6 +8,7 @@ final class ChromeBridgeHandler: BridgeHandler {
 
     let handledActions: Set<String> = [
         "sidebarResized",
+        "setSidebarRail",
         "toggleSidebar",
         "setSidebarCollapseLocked",
         "maximizeWindow",
@@ -59,6 +60,9 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "sidebarResized":
             if let width = message.cgFloat("width") { windowController?.updateSidebarWidth(width) }
+
+        case "setSidebarRail":
+            windowController?.setSidebarRail(message.bool("rail"))
 
         case "toggleSidebar":
             windowController?.toggleSidebar()

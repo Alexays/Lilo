@@ -91,6 +91,7 @@ extension MainWindowController {
         toolbarVisible = unsafe UserDefaults.lilo.object(forKey: "cachedToolbarVisible") as? Bool ?? true
         sidebarOverlayVisible = false
         sidebarExpandedWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: Self.sidebarWidthRange) : Self.defaultSidebarWidth
+        sidebarRail = unsafe UserDefaults.lilo.bool(forKey: "cachedSidebarRail")
         sidebarWidth = fittedSidebarWidth
         // Every layout keeps the lights where the 52pt sidebar header centers them.
         window?.toolbarStyle = .unified
@@ -104,13 +105,16 @@ extension MainWindowController {
             let dbVisible = settings.sidebarVisible
             let dbToolbarVisible = settings.toolbarVisible
             let dbWidth = CGFloat(settings.sidebarWidth).clamped(to: Self.sidebarWidthRange)
-            if sidebarVisible != dbVisible || toolbarVisible != dbToolbarVisible || sidebarExpandedWidth != dbWidth {
+            let dbRail = settings.sidebarRail
+            if sidebarVisible != dbVisible || toolbarVisible != dbToolbarVisible || sidebarExpandedWidth != dbWidth || sidebarRail != dbRail {
                 sidebarVisible = dbVisible
                 toolbarVisible = dbToolbarVisible
                 sidebarExpandedWidth = dbWidth
+                sidebarRail = dbRail
                 unsafe UserDefaults.lilo.set(dbVisible, forKey: "cachedSidebarVisible")
                 unsafe UserDefaults.lilo.set(dbToolbarVisible, forKey: "cachedToolbarVisible")
                 unsafe UserDefaults.lilo.set(Double(dbWidth), forKey: "cachedSidebarWidth")
+                unsafe UserDefaults.lilo.set(dbRail, forKey: "cachedSidebarRail")
                 applySidebarLayout(animated: false, syncTrafficLights: true)
             }
             let dbLayout = settings.tabLayout
@@ -813,6 +817,7 @@ extension MainWindowController {
             "activeTabId": tabManager.activeOpenTabId?.uuidString ?? "",
             "sidebarWidth": sidebarExpandedWidth,
             "sidebarVisible": sidebarVisible,
+            "sidebarRail": sidebarRail,
             "toolbarVisible": toolbarVisible,
             "trafficLightsVisible": areTrafficLightsVisible(),
             "tabPosition": tabLayout.position.rawValue,

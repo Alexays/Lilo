@@ -21,6 +21,7 @@ export interface FakeHostWorld {
 	profiles?: BridgeProfileSnapshot[];
 	activeProfileId?: string;
 	sidebarWidth?: number;
+	sidebarRail?: boolean;
 	tabPosition?: TabPosition;
 	addressPlacement?: AddressPlacement;
 	// The native bindings' keys by action id, as the host sends them after the initial state.
@@ -306,6 +307,7 @@ export async function installFakeHost(
 				activeTabId: state.activeTabBySpace[state.activeSpaceId] ?? "",
 				sidebarWidth: state.sidebarWidth ?? 260,
 				sidebarVisible: true,
+				sidebarRail: state.sidebarRail,
 				tabPosition: state.tabPosition,
 				addressPlacement: state.addressPlacement,
 				spaces: state.spaces,
