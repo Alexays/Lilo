@@ -7,7 +7,7 @@ import DemoPage from "./DemoPage.svelte";
 import DemoExplore from "./DemoExplore.svelte";
 import DemoPreview from "./DemoPreview.svelte";
 import Fleuron from "../../../lilo-ui/src/components/onboarding/Fleuron.svelte";
-import BottomConfirmSheet from "../../../lilo-ui/src/components/ui/BottomConfirmSheet.svelte";
+import UiConfirmModal from "../../../lilo-ui/src/components/ui/UiConfirmModal.svelte";
 import type { DemoFeatureId } from "../lib/i18n.ts";
 import { buildContextMenu, folderTabCount } from "./context-menu.ts";
 import type { ContextAction, ContextMenuItem } from "./context-menu.ts";
@@ -445,17 +445,15 @@ export const requestFolderDeletion = (id: string) => {
   {/if}
 {/if}
 
-<div class="demo-confirmation">
-  <BottomConfirmSheet
-    visible={confirmation !== null}
-    title={confirmation?.title ?? ""}
-    message={confirmation?.message ?? ""}
-    confirmLabel={nativeText("Delete")}
-    cancelLabel={nativeText("Cancel")}
-    confirmAction={confirmDeletion}
-    cancelAction={cancelDeletion}
-  />
-</div>
+<UiConfirmModal
+  visible={confirmation !== null}
+  title={confirmation?.title ?? ""}
+  message={confirmation?.message ?? ""}
+  confirmLabel={nativeText("Delete")}
+  cancelLabel={nativeText("Cancel")}
+  confirmAction={confirmDeletion}
+  cancelAction={cancelDeletion}
+/>
 
 {#if snapshot.notice}
   <div class="notice" role="status"><span>{snapshot.notice}</span><button aria-label={text.closeNotice} onclick={() => host.clearNotice()}>×</button></div>
@@ -501,7 +499,6 @@ export const requestFolderDeletion = (id: string) => {
   .menu-chevron { padding-left: 12px; font-size: 20px; line-height: 16px; }
   .menu-mac { margin-left: 12px; font-size: 10px; }
   .native-menu hr { border: 0; border-top: 1px solid var(--border); margin: 4px 7px; }
-  .demo-confirmation { position: fixed; inset: 0; z-index: 60002; pointer-events: none; }
   .notice { position: fixed; bottom: 18px; left: calc(50% + 90px); transform: translateX(-50%); z-index: 100000; display: flex; align-items: center; gap: 15px; max-width: 430px; padding: 12px 15px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elevated); color: var(--text-primary); font: 12px/1.5 -apple-system, sans-serif; box-shadow: 0 5px 20px #00000020; }
   .notice button { border: 0; padding: 0 3px; background: none; color: var(--text-secondary); font: 18px/1 -apple-system, sans-serif; cursor: pointer; }
   .restore-window { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 20px; color: var(--text-primary); font: 14px/1.5 -apple-system, sans-serif; }
