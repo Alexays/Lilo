@@ -1,5 +1,5 @@
 <!-- The one entry point to Agents in the chrome: the mascot, a ring while agents work, an orange count for
-     those waiting on you. It opens the list of every conversation, across Spaces, starting with New. -->
+     those waiting on you. It opens the list of every conversation, across Spaces, starting with New, or New itself when there is none. -->
 <script lang="ts">
   import "../../lib/i18n/agentsCatalog";
   import { backOut } from "svelte/easing";
@@ -10,7 +10,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { tooltip } from "../../lib/tooltip";
-  import { getConversationSummaries, getWaitingCount } from "../../stores/conversations.svelte";
+  import { getConversationSummaries, getWaitingCount, openAskBar } from "../../stores/conversations.svelte";
 
   $effect(() => {
     conversationActions.loadSummaries();
@@ -20,6 +20,11 @@
   const waiting = $derived(getWaitingCount());
   const working = $derived(summaries.some((summary) => summary.state === "busy" || summary.state === "starting"));
   const label = $derived(waiting > 0 ? t("agents.badge.waiting", { count: waiting }) : t("agents.badge.title"));
+
+  // The popover's own filter: with nothing it would list, the button starts a conversation instead.
+  const listed = $derived(
+    summaries.some((s) => s.permission || s.state === "busy" || s.state === "starting" || s.state === "failed" || s.unread || s.title),
+  );
 
   let open = $state(false);
   let button: HTMLButtonElement | undefined = $state();
@@ -32,7 +37,10 @@
   aria-label={label}
   aria-expanded={open}
   use:tooltip={{ text: label, placement: "bottom", disabled: open }}
-  onclick={() => (open = !open)}
+  onclick={() => {
+    if (!open && !listed) openAskBar();
+    else open = !open;
+  }}
 >
   <MascotGlyph />
   {#if working}
