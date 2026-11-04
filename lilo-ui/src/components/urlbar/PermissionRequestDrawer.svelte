@@ -4,12 +4,15 @@
   import { type PermissionRequest, dismissSitePermissionRequest, respondToPermissionRequest } from "../../stores/urlBarDrawer.svelte";
   import { extensionPermissionLines, permissionRequestIcon, sitePermissionAskKey } from "./urlBarDrawerModel";
   import DrawerPrompt from "./DrawerPrompt.svelte";
+  import { getExtensions } from "../../stores/extensions.svelte";
+  import { extensionIconSrc } from "../extensions/extensionPanelModel";
 
   let { request }: { request: PermissionRequest } = $props();
 
   const MAX_LINES = 4;
   // An agent about to send, pay, delete or publish.
   const agentAction = $derived(request.kind === "agentControl" ? (request.action ?? null) : null);
+  const extension = $derived(request.kind === "extensionPermission" ? getExtensions().find((candidate) => candidate.id === request.extensionId) : undefined);
   const lines = $derived(request.kind === "extensionPermission" ? extensionPermissionLines(request, (key) => t(key)) : []);
 
   // Read once the whole dispatch is over: an Escape any other surface took (a panel, the command
@@ -27,6 +30,7 @@
 
 <DrawerPrompt
   icon={permissionRequestIcon(request)}
+  iconImage={extension && extensionIconSrc(extension)}
   dismissLabel={t("permissionPrompt.deny")}
   confirmLabel={t(agentAction ? "permissionPrompt.allowOnce" : "permissionPrompt.allow")}
   alternateLabel={agentAction?.site && agentAction.kind !== "upload" ? t("permissionPrompt.alwaysAllowOnSite") : undefined}

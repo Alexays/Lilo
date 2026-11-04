@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Extensions look the part: the extensions popover has full rows and buttons, an extension''s page opens on its icon, description and capabilities with Remove Extension last, and a permission request floats from the extensions button with the extension''s icon instead of pushing the tabs down.'
+time: 2026-11-04T21:43:42.896639+01:00
