@@ -11,7 +11,7 @@ import { prefersReducedMotion } from "../motion/reducedMotion";
 
 const DRAG_START_THRESHOLD_PX = 4;
 const AUTO_SCROLL_EDGE_PX = 40;
-const AUTO_SCROLL_MAX_STEP_PX = 16;
+const AUTO_SCROLL_MAX_SPEED_PX_PER_S = 960;
 
 // Spring ease for Web Animations API previews. Mirrors the CSS `--motion-ease-spring`
 // token (global.css); WAAPI easing must be a literal string, not a CSS var reference.
@@ -57,6 +57,8 @@ export function dndItem(
 	const autoScrollFrame = createFrameScheduler();
 	let autoScrollZone: HTMLElement | null = null;
 	let autoScrollContainer: HTMLElement | null = null;
+	let autoScrollAt = 0;
+	let autoScrollRemainder = 0;
 	let lastEvent: PointerEvent | null = null;
 	let hasStarted = false;
 	let didNotifyStart = false;
@@ -154,7 +156,7 @@ export function dndItem(
 
 	// Scrolls the list under the target zone while the pointer rests near its leading or
 	// trailing edge (on the zone's axis), faster the deeper it goes; each scroll re-resolves
-	// through handleScroll.
+	// through handleLayoutShift.
 	function autoScroll(): void {
 		const drag = dndEngineStore.activeDrag;
 		if (!drag?.started) return;
@@ -175,7 +177,19 @@ export function dndItem(
 			? position - start - AUTO_SCROLL_EDGE_PX
 			: Math.max(0, position - end + AUTO_SCROLL_EDGE_PX);
 		if (depth === 0) return;
-		const step = Math.sign(depth) * Math.ceil(Math.min(1, Math.abs(depth) / AUTO_SCROLL_EDGE_PX) * AUTO_SCROLL_MAX_STEP_PX);
+		// Speed is per second, so a 120 Hz display scrolls no faster than a 60 Hz one; a frame gap longer
+		// than 60 Hz (the first frame, a stall) counts as one 60 Hz frame so the list never jumps.
+		const now = performance.now();
+		const elapsed = Math.min(now - autoScrollAt, 1000 / 60);
+		autoScrollAt = now;
+		autoScrollRemainder += Math.sign(depth) * Math.min(1, Math.abs(depth) / AUTO_SCROLL_EDGE_PX) * AUTO_SCROLL_MAX_SPEED_PX_PER_S * elapsed / 1000;
+		// Whole pixels only: a sub-pixel write may not move the list at all, which would end the loop.
+		const step = Math.trunc(autoScrollRemainder);
+		if (step === 0) {
+			autoScrollFrame.schedule(autoScroll);
+			return;
+		}
+		autoScrollRemainder -= step;
 		const before = horizontal ? container.scrollLeft : container.scrollTop;
 		if (horizontal) container.scrollLeft += step;
 		else container.scrollTop += step;
@@ -184,9 +198,10 @@ export function dndItem(
 
 	// A scroll, or a transition settling (the empty drop zones revealed at drag start),
 	// moves rows under a pointer that may not move at all.
-	function handleLayoutShift(): void {
+	function handleLayoutShift(event: Event): void {
 		if (!hasStarted) return;
-		dndEngineStore.invalidateLayoutSnapshot();
+		if (event.type === "scroll" && event.target instanceof Element) dndEngineStore.followScroll(event.target);
+		else dndEngineStore.invalidateLayoutSnapshot();
 		pointerFrame.schedule(resolvePointerFrame);
 	}
 

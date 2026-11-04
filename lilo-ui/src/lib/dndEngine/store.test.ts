@@ -420,3 +420,48 @@ test("DndEngineStore keeps an item's new node when its old node unmounts after i
 
 	assert.deepEqual(store.getZoneSnapshot("pinned")?.items.map((entry) => entry.rect.left), [0]);
 });
+
+test("DndEngineStore moves the cached layout with a scrolled container instead of re-measuring", () => {
+	const store = new DndEngineStore();
+	const list = elementRect(0, 0, 240, 400);
+	const rowA = elementRect(0, 0, 240, 30);
+	const rowB = elementRect(0, 34, 240, 30);
+	const outside = elementRect(0, 500, 240, 100);
+	const inside = new Set<unknown>([list, rowA, rowB]);
+	const scroller = { scrollLeft: 0, scrollTop: 0, contains: (node: unknown) => inside.has(node) } as unknown as Element;
+	store.registerZone(list, {
+		id: "list",
+		axis: "vertical",
+		getItems: () => [{ id: "tab-a", kind: "tab" }, { id: "tab-b", kind: "tab" }],
+	});
+	store.registerZone(outside, { id: "dock", axis: "vertical", getItems: () => [] });
+	store.registerItem(rowA, { item: { id: "tab-a", kind: "tab" }, zoneId: "list" });
+	store.registerItem(rowB, { item: { id: "tab-b", kind: "tab" }, zoneId: "list" });
+	store.startDrag({
+		item: { id: "tab-dragged", kind: "tab" },
+		zoneId: "dock",
+		element: outside,
+		sourceRect: outside.getBoundingClientRect(),
+	}, { x: 10, y: 510 });
+
+	// The first scroll of a container has no known offset to move from: it re-measures.
+	store.followScroll(scroller);
+	store.updatePointer({ x: 10, y: 10 }, true);
+	// The first target re-measures once more for its placeholder.
+	store.updatePointer({ x: 10, y: 10 }, true);
+	const measures = store.measureCount;
+
+	(scroller as { scrollTop: number }).scrollTop = 20;
+	store.followScroll(scroller);
+	assert.equal(store.measureCount, measures, "a scroll moves the cached rects without measuring");
+	assert.deepEqual(store.getZoneSnapshot("list")?.items.map((item) => item.rect.top), [-20, 14]);
+	assert.equal(store.getZoneSnapshot("list")?.rect.top, -20);
+	assert.equal(store.getZoneSnapshot("dock")?.rect.top, 500, "a zone outside the scroller stays put");
+
+	// A measure taken after the scroll already holds it: its late event must not move the rects again.
+	(scroller as { scrollTop: number }).scrollTop = 50;
+	store.invalidateLayoutSnapshot();
+	assert.deepEqual(store.getZoneSnapshot("list")?.items.map((item) => item.rect.top), [0, 34]);
+	store.followScroll(scroller);
+	assert.deepEqual(store.getZoneSnapshot("list")?.items.map((item) => item.rect.top), [0, 34]);
+});

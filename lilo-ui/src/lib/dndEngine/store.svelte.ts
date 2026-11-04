@@ -71,6 +71,8 @@ export class DndEngineStore {
 	private layoutSnapshot: DndZoneSnapshot[] | null = null;
 	private layoutSnapshotStale = true;
 	private layoutMeasureCount = 0;
+	// Scroll offset of each container that scrolled during the drag, as of the cached layout.
+	private scrollOffsets = new Map<Element, DndPoint>();
 	private listeners = new Set<() => void>();
 	private lastNotifiedActive = false;
 	private lastNotifiedSourceId = "";
@@ -173,6 +175,7 @@ export class DndEngineStore {
 	startDrag(source: DndDragSource, startPoint: DndPoint): void {
 		this.layoutSnapshot = null;
 		this.layoutSnapshotStale = true;
+		this.scrollOffsets.clear();
 		this.drag = {
 			source,
 			home: this.zones.get(source.zoneId)?.getItems?.().findIndex((item) => item.id === source.item.id),
@@ -214,6 +217,7 @@ export class DndEngineStore {
 		this.drag = null;
 		this.layoutSnapshot = null;
 		this.layoutSnapshotStale = true;
+		this.scrollOffsets.clear();
 		// Observers must not see the drag end until pointerup dispatch is over, or a listener torn down on "drag ended"
 		// misses a drop onto the space bar. A microtask is too early (checkpoints run between listeners).
 		setTimeout(() => this.notifyIfChanged(), 0);
@@ -222,6 +226,29 @@ export class DndEngineStore {
 
 	invalidateLayoutSnapshot(): void {
 		this.layoutSnapshotStale = true;
+	}
+
+	// Everything inside a scrolled container moves by the scroll delta, so the cached rects follow it
+	// unmeasured. Zones and items are never sticky inside their scroller, or they would not move with it.
+	followScroll(container: Element): void {
+		const previous = this.scrollOffsets.get(container);
+		const offset = { x: container.scrollLeft, y: container.scrollTop };
+		this.scrollOffsets.set(container, offset);
+		if (!previous || !this.layoutSnapshot || this.layoutSnapshotStale) {
+			this.layoutSnapshotStale = true;
+			return;
+		}
+		const dx = previous.x - offset.x;
+		const dy = previous.y - offset.y;
+		if (dx === 0 && dy === 0) return;
+		for (const zone of this.layoutSnapshot) {
+			const element = this.zones.get(zone.id)?.element;
+			if (element && element !== container && container.contains(element)) zone.rect = shiftRect(zone.rect, dx, dy);
+			for (const item of zone.items) {
+				const itemElement = this.itemElements.get(item.id);
+				if (itemElement && container.contains(itemElement)) item.rect = shiftRect(item.rect, dx, dy);
+			}
+		}
 	}
 
 	getZoneSnapshot(zoneId: string): DndZoneSnapshot | null {
@@ -310,6 +337,10 @@ export class DndEngineStore {
 		const offsets = rowAnimationOffsets();
 		this.layoutSnapshot = Array.from(this.zones.values()).map((zone) => this.snapshotForZone(zone, offsets));
 		this.layoutSnapshotStale = false;
+		// The new rects hold the current scroll offsets: a scroll event still on its way must not shift them again.
+		for (const container of this.scrollOffsets.keys()) {
+			this.scrollOffsets.set(container, { x: container.scrollLeft, y: container.scrollTop });
+		}
 		return this.layoutSnapshot;
 	}
 
@@ -371,6 +402,17 @@ function settledRect(element: HTMLElement, offsets: AnimationOffsets): DndRect {
 		top: rect.top - dy,
 		right: rect.right - dx,
 		bottom: rect.bottom - dy,
+		width: rect.width,
+		height: rect.height,
+	};
+}
+
+function shiftRect(rect: DndRect, dx: number, dy: number): DndRect {
+	return {
+		left: rect.left + dx,
+		top: rect.top + dy,
+		right: rect.right + dx,
+		bottom: rect.bottom + dy,
 		width: rect.width,
 		height: rect.height,
 	};
