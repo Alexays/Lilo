@@ -7,7 +7,7 @@
   import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import { getAgentsProfileId, getAgentsSpaceIds, isAgentsSpace } from "../../stores/agents.svelte";
   import { getProfileById, getProfileExtensionCounts, getProfiles } from "../../stores/profiles.svelte";
-  import { getActiveSpace, getSpaces } from "../../stores/spaces.svelte";
+  import { getSpaces } from "../../stores/spaces.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
   import AppearancePicker from "./AppearancePicker.svelte";
@@ -330,7 +330,6 @@
     {:else}
       <PanelHeader
         title={s.mode === "add" ? t("spaceEditor.newSpace") : t("spaceEditor.editSpace")}
-        backLabel={getActiveSpace()?.name ?? ""}
         onclose={closeEditor}
       />
     {/if}

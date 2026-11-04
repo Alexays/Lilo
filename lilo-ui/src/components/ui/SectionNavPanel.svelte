@@ -3,7 +3,6 @@
   import PanelHeader from "./PanelHeader.svelte";
   import SettingsIcon from "../settings/SettingsIcon.svelte";
   import { tooltip } from "../../lib/tooltip";
-  import { getActiveSpace } from "../../stores/spaces.svelte";
 
   interface SectionNavSection {
     id: Id;
@@ -42,7 +41,7 @@
 </script>
 
 <div class="panel-shell section-nav-panel" class:compact>
-  <PanelHeader {title} {onclose} backLabel={getActiveSpace()?.name ?? ""} />
+  <PanelHeader {title} {onclose} />
 
   {#if toolbar && !compact}
     <div class="section-nav-toolbar">{@render toolbar()}</div>

@@ -7,13 +7,11 @@
   interface Props {
     title: string;
     onclose: () => void;
-    /** Turns the close button into a back button with this name (a system screen's way back to its Space). */
-    backLabel?: string;
     /** Optional controls rendered just left of the close button (e.g. undo/redo). */
     actions?: Snippet;
   }
 
-  let { title, onclose, backLabel, actions }: Props = $props();
+  let { title, onclose, actions }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -22,14 +20,6 @@
     {#if actions}
       <div class="panel-header-actions">{@render actions()}</div>
     {/if}
-    {#if backLabel !== undefined}
-      <button class="panel-back" onclick={onclose}>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path d="M7.5 2.5 4 6l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <span class="panel-back-label">{backLabel || t("common.back")}</span>
-      </button>
-    {:else}
     <button class="panel-close" onclick={onclose} aria-label={t("common.close")}>
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
         <path
@@ -40,7 +30,6 @@
         />
       </svg>
     </button>
-    {/if}
   </div>
   <h2 class="panel-title">{title}</h2>
 </div>
@@ -96,41 +85,11 @@
     margin-right: var(--sidebar-right-pad, 10px);
   }
 
-  .panel-back {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    min-width: 0;
-    height: var(--control-height-md);
-    margin-right: auto;
-    padding: 0 var(--space-8) 0 var(--space-4);
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: var(--font-size-md);
-    cursor: pointer;
-  }
-
-  .panel-back svg {
-    flex: none;
-    color: var(--text-secondary);
-  }
-
-  .panel-back-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .panel-back:hover,
   .panel-close:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
   }
 
-  .panel-back:focus-visible,
   .panel-close:focus-visible {
     outline: var(--focus-outline);
     outline-offset: 1px;

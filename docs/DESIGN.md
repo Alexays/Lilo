@@ -28,11 +28,11 @@ A piece of information takes the form of its family, never another.
 | Drawer | Floats over the content, anchored to its source by an arrow | Site permissions, agent or extension requests | Its buttons, Esc |
 | Popover | Anchored to its button | Extensions, Agents, archived tabs | Esc, click outside |
 | Modal | Centered on the page area, dimming it, blocking, no close button | Clear browsing data, agent connection, What's New; an unresponsive page | Its buttons, Esc |
-| System screen | With a sidebar, the sidebar becomes its navigation and the page area its content; with tabs at the top or bottom, a tab with the same navigation inside | Settings, History, Downloads, Processes | Its back button, Esc |
+| System screen | With a sidebar, the sidebar becomes its navigation and the page area its content; with tabs at the top or bottom, a tab with the same navigation inside | Settings, History, Downloads, Processes | Its close button, Esc |
 | Sidebar editor | Inside the sidebar alone; the page stays visible and the sidebar repaints live as its own preview | New Space, Space editor | Its buttons, Esc |
 
 - Nothing pushes the tab list or the page: a drawer or a popover covers, it never inserts itself.
-- A system screen in the sidebar is one navigation level: a back button named after the Space at the top, then the title, the search field and the navigation list, in the same places for every system screen. It slides in from the side and back; nothing else in the sidebar changes shape.
+- A system screen in the sidebar is one navigation level: a close button on the right of the traffic lights line, then the title, the search field and the navigation list, in the same places for every system screen. It slides in from the side and back; nothing else in the sidebar changes shape.
 - The page area of a system screen holds its content: a 20 px semibold title top left, a short count or note top right, then the content. It is never left blank or showing an unrelated page.
 - A system screen edits live: no Cancel and Save pair. A destructive action sits last, as red text under a separator, aligned with the labels.
 - A setting that only matters under a switch is a nested row in the same box, indented 38 px, and disappears when the switch is off.
