@@ -185,7 +185,7 @@
     left: calc(var(--arrow-x) - 6px);
     width: 12px;
     height: 12px;
-    border-radius: 2px 0 0;
+    border-radius: var(--radius-2xs) 0 0;
     background: inherit;
     box-shadow: -1px -1px 0 var(--float-border);
     transform: rotate(45deg);

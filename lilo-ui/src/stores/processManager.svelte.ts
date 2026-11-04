@@ -14,7 +14,6 @@ const _overview = $derived(processOverview(_snapshot));
 
 // Favicons and sleeping tabs come from the sidebar, which knows every open tab.
 const _sidebarTabs = $derived.by(() => {
-	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole by the $derived, never mutated after
 	const byId = new Map<string, { tab: BridgeTabSnapshot; spaceId: string }>();
 	for (const [spaceId, state] of Object.entries(getSidebarsBySpace())) {
 		for (const tab of state.tabs) {
