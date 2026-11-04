@@ -6,10 +6,13 @@
   import { portal } from "../../lib/actions/portal";
   import { tooltip } from "../../lib/tooltip";
   import { t } from "../../lib/i18n/state.svelte";
+  import { getEnabledExtensions } from "../../stores/extensions.svelte";
 
   let { children }: { children: Snippet } = $props();
 
   let button: HTMLButtonElement | undefined = $state();
+  // A badge behind the closed row would go unseen: the button carries it, as the extensions menu does.
+  const badged = $derived(getEnabledExtensions().some((ext) => ext.badgeText));
   let at: { top: number; right: number } | null = $state(null);
 
   function toggle() {
@@ -30,6 +33,9 @@
   <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
     <circle cx="3.5" cy="8" r="1.25" /><circle cx="8" cy="8" r="1.25" /><circle cx="12.5" cy="8" r="1.25" />
   </svg>
+  {#if badged && !at}
+    <span class="badge-dot" aria-hidden="true"></span>
+  {/if}
 </button>
 
 {#if at && button}
@@ -51,6 +57,7 @@
 
 <style>
   .page-actions-btn {
+    position: relative;
     display: grid;
     place-items: center;
     width: 20px;
@@ -91,5 +98,17 @@
     transform: none;
     opacity: 1;
     pointer-events: auto;
+  }
+
+  .badge-dot {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 1.5px solid color-mix(in srgb, var(--bg-primary) 88%, transparent);
+    pointer-events: none;
   }
 </style>
