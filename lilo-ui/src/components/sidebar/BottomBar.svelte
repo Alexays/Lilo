@@ -32,6 +32,7 @@
     type SpaceState,
   } from "../../stores/spaces.svelte";
   import {
+    getPageShell,
     isDownloadsVisible,
     openAddEditor,
   } from "../../stores/panels.svelte";
@@ -44,6 +45,7 @@
   import {
     aggregateDownloadProgress,
     getDownloads,
+    getRecentDownloads,
     getUnseenDownloads,
     hasSessionDownloads,
     isActiveDownload,
@@ -91,13 +93,21 @@
   const downloadProgress = $derived(aggregateDownloadProgress(activeDownloads));
   const unseenDownloads = $derived(getUnseenDownloads());
 
-  const showDownloads = $derived(isDownloadUiEnabled() && (hasSessionDownloads() || activeDownloadCount > 0));
+  const recentDownloads = $derived(getRecentDownloads());
+  const showDownloads = $derived(
+    isDownloadUiEnabled() && (hasSessionDownloads() || getDownloads().length > 0 || recentDownloads.length > 0),
+  );
   const recentArchived = $derived(getRecentArchivedTabs());
   let slotButton: HTMLButtonElement | undefined = $state();
   let menuOpen = $state(false);
 
   $effect(() => {
     if (isDownloadsVisible() || (menuOpen && showDownloads)) markDownloadsSeen();
+  });
+
+  // A system screen opened from elsewhere (a shortcut, the menu bar) takes the page: the menu goes with it.
+  $effect(() => {
+    if (getPageShell() !== null) menuOpen = false;
   });
 
   let spaceScrollerEl: HTMLDivElement | undefined = $state();
@@ -524,7 +534,7 @@
               anchor={slotButton}
               label={t("bottomBar.library")}
               tabs={recentArchived}
-              downloads={showDownloads ? getDownloads() : null}
+              downloads={showDownloads ? [...getDownloads(), ...recentDownloads] : null}
               onclose={() => (menuOpen = false)}
             />
           {/await}

@@ -7,7 +7,7 @@
   import { progress } from "../../lib/downloadFormat";
   import { isActiveDownload } from "../../stores/downloads.svelte";
   import { openDownloadsPanel } from "../../stores/panels.svelte";
-  import { fileIconURL, inlineAction, type InlineAction } from "../downloads/downloadsPanelModel";
+  import { fileIconURL, inlineAction, metaLine, type InlineAction } from "../downloads/downloadsPanelModel";
   import { getArchivedFavicons } from "../../stores/archivedTabs.svelte";
   import { openCommandBar } from "../../stores/commandBar.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
@@ -62,6 +62,12 @@
     openDownloadsPanel();
   }
 
+  function openDownload(download: BridgeDownloadSnapshot): void {
+    if (download.state !== "complete" || download.error) return showDownloads();
+    downloadActions.open(download.id);
+    onclose();
+  }
+
   function showAll(): void {
     onclose();
     openCommandBar("<");
@@ -79,7 +85,7 @@
     {#each downloads as download (download.id)}
       {@const action = inlineAction(download)}
       <div class="download-row" class:with-action={!!action}>
-        <button class="menu-row download" role="menuitem" onclick={showDownloads}>
+        <button class="menu-row download" role="menuitem" onclick={() => openDownload(download)}>
           <span class="file-tile"><img src={fileIconURL(download)} alt="" width="20" height="20" draggable="false" /></span>
           <span class="row-text">
             <span class="row-title">{download.filename}</span>
@@ -90,6 +96,8 @@
                 </span>
                 <span class="row-meta">{Math.round(progress(download))}%</span>
               </span>
+            {:else if download.state === "complete" && !download.error}
+              <span class="row-meta detail">{metaLine(download, getLocale(), now).detail}</span>
             {:else}
               <span class="row-meta failed">{t("downloadsPanel.stateFailed")}</span>
             {/if}
@@ -295,6 +303,13 @@
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     font-variant-numeric: tabular-nums;
+  }
+
+  .row-meta.detail {
+    flex-shrink: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .row-meta.failed {
