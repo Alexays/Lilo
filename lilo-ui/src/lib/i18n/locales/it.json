@@ -937,6 +937,7 @@
 		"thisSpace": "questo spazio",
 		"deleteConfirmMessage": "Lo spazio e tutte le sue schede verranno eliminati definitivamente.",
 		"deleteSpace": "Elimina spazio",
+		"deleteSpaceEllipsis": "Elimina spazio...",
 		"keepSpace": "Mantieni spazio",
 		"moreEmojis": "Altre emoji",
 		"lastSpaceHint": "L'ultimo spazio non può essere eliminato.",

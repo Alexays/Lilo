@@ -937,6 +937,7 @@
 		"thisSpace": "this space",
 		"deleteConfirmMessage": "The space and all its tabs are deleted permanently.",
 		"deleteSpace": "Delete Space",
+		"deleteSpaceEllipsis": "Delete Space...",
 		"keepSpace": "Keep Space",
 		"moreEmojis": "More emojis",
 		"lastSpaceHint": "The last space cannot be deleted.",

@@ -937,6 +937,7 @@
 		"thisSpace": "este espacio",
 		"deleteConfirmMessage": "El espacio y todas sus pestañas se eliminan de forma permanente.",
 		"deleteSpace": "Eliminar Espacio",
+		"deleteSpaceEllipsis": "Eliminar Espacio...",
 		"keepSpace": "Conservar Espacio",
 		"moreEmojis": "Más emojis",
 		"lastSpaceHint": "No se puede eliminar el último espacio.",

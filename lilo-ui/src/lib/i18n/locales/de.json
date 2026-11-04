@@ -937,6 +937,7 @@
 		"thisSpace": "diesen Space",
 		"deleteConfirmMessage": "Der Space und alle seine Tabs werden dauerhaft gelöscht.",
 		"deleteSpace": "Space löschen",
+		"deleteSpaceEllipsis": "Space löschen...",
 		"keepSpace": "Space behalten",
 		"moreEmojis": "Weitere Emojis",
 		"lastSpaceHint": "Der letzte Space kann nicht gelöscht werden.",

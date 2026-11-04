@@ -937,6 +937,7 @@
 		"thisSpace": "此空間",
 		"deleteConfirmMessage": "空間及其所有分頁都會永久刪除。",
 		"deleteSpace": "刪除空間",
+		"deleteSpaceEllipsis": "刪除空間...",
 		"keepSpace": "保留空間",
 		"moreEmojis": "更多表情符號",
 		"lastSpaceHint": "無法刪除最後一個空間。",

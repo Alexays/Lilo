@@ -199,7 +199,6 @@ for (const colorScheme of ["light", "dark"] as const) {
 		const spaceBackground = await sidebarBackground(page);
 
 		await page.evaluate(() => window.__lilo!.receive({ event: "openAddSpaceEditor" }));
-		await page.getByRole("button", { name: "Appearance" }).click();
 		await page.locator(".swatches .swatch").nth(5).click();
 
 		await expect.poll(() => sidebarBackground(page)).not.toBe(spaceBackground);
@@ -210,8 +209,6 @@ for (const colorScheme of ["light", "dark"] as const) {
 			return background(".editor-panel") === background(".sidebar");
 		})).toBe(true);
 
-		// The first Escape closes the appearance card, the second the editor.
-		await page.keyboard.press("Escape");
 		await page.keyboard.press("Escape");
 		await expect.poll(() => sidebarBackground(page)).toBe(spaceBackground);
 		await expect.poll(() => reportedBackground(page)).toBe(spaceBackground);
@@ -242,7 +239,7 @@ test("a profile in the Signed in as list wears a dot of its color, not its initi
 for (const sidebarWidth of [MIN_SIDEBAR_WIDTH, 260, 320]) {
 	test(`the selected New profile row and its name field stay inside the list at ${sidebarWidth} px`, async ({ page }) => {
 		await openNewSpaceEditor(page, sidebarWidth);
-		const row = page.getByRole("radio", { name: /New profile/ });
+		const row = page.getByRole("radio", { name: /New Profile/ });
 		await row.click();
 		const input = page.locator(".new-profile-input");
 		await expect(input).toBeFocused();
@@ -262,22 +259,6 @@ test.describe("in French", () => {
 	test.use({ locale: "fr-FR" });
 
 	test.use({ reducedMotion: "reduce" });
-
-	test("the edit footer keeps Delete, Cancel and Save inside the narrowest sidebar", async ({ page }) => {
-		const world = initialWorld();
-		world.sidebarWidth = MIN_SIDEBAR_WIDTH;
-		await bootChrome(page, world);
-		await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
-		await expect(page.locator(".editor-footer .ui-button")).toHaveCount(3);
-		const outside = await page.locator(".editor-footer").evaluate((footer) => {
-			const frame = footer.getBoundingClientRect();
-			return [...footer.querySelectorAll(".ui-button")]
-				.map((button) => button.getBoundingClientRect())
-				.filter((box) => box.left < frame.left - 0.5 || box.right > frame.right + 0.5)
-				.map((box) => [Math.round(box.left), Math.round(box.right), Math.round(frame.left), Math.round(frame.right)]);
-		});
-		expect(outside).toEqual([]);
-	});
 
 	test("the picker searches, names and labels emoji in French, English keywords still matching", async ({ page }) => {
 		const french = frenchNames(page);
@@ -299,15 +280,23 @@ test("leaving for the profiles keeps the edits made to the space", async ({ page
 	const name = page.locator(".editor-panel input").first();
 	await name.fill("Renamed");
 	await page.locator(".manage-link").click();
-	const update = (await sentCommands(page)).filter((command) => command.action === "updateSpace").at(-1);
-	expect(update?.payload).toMatchObject({ name: "Renamed" });
+	await expect.poll(async () => (await sentCommands(page)).filter((command) => command.action === "updateSpace").at(-1)?.payload).toMatchObject({ name: "Renamed" });
+});
+
+test("an edited space takes each change as it is made, with Delete Space as its only button", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
+	await expect(page.locator(".editor-footer button")).toHaveText(["Delete Space..."]);
+
+	await page.locator(".swatches .swatch").nth(5).click();
+	await expect.poll(async () => Object.keys((await sentCommands(page)).find((command) => command.action === "updateSpace")?.payload ?? {}))
+		.toEqual(["id", "color"]);
 });
 
 // WebKit ends a color input's picker, the color panel's eyedropper included, as soon as the input blurs.
 test("the pointer leaving for the page keeps the custom color picker connected", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
-	await page.getByRole("button", { name: "Appearance" }).click();
 	const picker = page.locator(".swatch.custom input");
 	await picker.focus();
 	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: false }));
@@ -324,7 +313,6 @@ test("a custom color keeps the hue wheel around it, and the swatch still opens t
 	world.spaces[0].color = "#4a90d9";
 	await bootChrome(page, world);
 	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), world.spaces[0].id);
-	await page.getByRole("button", { name: "Appearance" }).click();
 	const custom = page.locator(".swatches .swatch.custom");
 	await expect(custom).toHaveClass(/selected/);
 	expect(await custom.evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("conic-gradient");

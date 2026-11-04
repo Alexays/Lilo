@@ -44,7 +44,7 @@ test("Escape closes the command bar over a panel, not the panel", async ({ page 
 test("Return on the delete confirmation's focused Keep button keeps the space", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), SPACE_1);
-	await page.locator(".editor-panel").getByRole("button", { name: "Delete" }).click();
+	await page.locator(".editor-panel").getByRole("button", { name: "Delete Space..." }).click();
 	const keep = page.getByRole("button", { name: "Keep Space" });
 	await expect(keep).toBeFocused();
 
@@ -58,16 +58,16 @@ test("Return on the delete confirmation's focused Keep button keeps the space", 
 test("Tab stays inside the delete confirmation", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), SPACE_1);
-	await page.locator(".editor-panel").getByRole("button", { name: "Delete" }).click();
+	await page.locator(".editor-panel").getByRole("button", { name: "Delete Space..." }).click();
 	const keep = page.getByRole("button", { name: "Keep Space" });
 	await expect(keep).toBeFocused();
 
 	await page.keyboard.press("Tab");
-	await expect(page.getByRole("button", { name: "Delete Space" })).toBeFocused();
+	await expect(page.getByRole("button", { name: "Delete Space", exact: true })).toBeFocused();
 	await page.keyboard.press("Tab");
 	await expect(keep).toBeFocused();
 	await page.keyboard.press("Shift+Tab");
-	await expect(page.getByRole("button", { name: "Delete Space" })).toBeFocused();
+	await expect(page.getByRole("button", { name: "Delete Space", exact: true })).toBeFocused();
 });
 
 test("the next onboarding step takes the focus from the button that led to it", async ({ page }) => {

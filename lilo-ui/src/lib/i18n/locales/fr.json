@@ -937,6 +937,7 @@
 		"thisSpace": "cet espace",
 		"deleteConfirmMessage": "L'espace et tous ses onglets sont supprimés définitivement.",
 		"deleteSpace": "Supprimer l'espace",
+		"deleteSpaceEllipsis": "Supprimer l'espace...",
 		"keepSpace": "Conserver l'espace",
 		"moreEmojis": "Plus d'emojis",
 		"lastSpaceHint": "Le dernier espace ne peut pas être supprimé.",

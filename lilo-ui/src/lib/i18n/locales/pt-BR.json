@@ -937,6 +937,7 @@
 		"thisSpace": "este espaço",
 		"deleteConfirmMessage": "O espaço e todas as suas abas serão apagados permanentemente.",
 		"deleteSpace": "Apagar Espaço",
+		"deleteSpaceEllipsis": "Apagar Espaço...",
 		"keepSpace": "Manter Espaço",
 		"moreEmojis": "Mais emojis",
 		"lastSpaceHint": "O último espaço não pode ser apagado.",

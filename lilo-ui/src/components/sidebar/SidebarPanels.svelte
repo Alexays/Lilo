@@ -50,17 +50,9 @@
   {#if isDesignSystemShellOpen()}
     <DesignSystemPanel />
   {/if}
-  {#if activePanel === "editor"}
+  <!-- With a tab strip the editor drops from the strip's Space button instead. -->
+  {#if activePanel === "editor" && isVerticalLayout()}
     <SpaceEditor />
-  {/if}
-  {#if activePanel === "diagnostics"}
-    <DiagnosticsPanel />
-  {/if}
-  {#if activePanel === "processes"}
-    <ProcessManagerPanel />
-  {/if}
-  {#if activePanel === "downloads"}
-    <DownloadsPanel />
   {/if}
   {#if activePanel === "screenshot"}
     <ScreenshotPanel />

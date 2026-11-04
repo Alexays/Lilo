@@ -4,16 +4,18 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import type { SpaceMaterial } from "../../lib/bridge/protocol";
 
-  let { material, desktop, onmaterial, followsDay, onday, site }: {
+  let { material, desktop, onmaterial, followsDay = null, onday, site = null, thumbnail = false }: {
     material: SpaceMaterial;
     /** The wallpaper, or what stands in for it, as a CSS background. */
     desktop: string;
-    onmaterial: (material: SpaceMaterial) => void;
+    onmaterial?: (material: SpaceMaterial) => void;
     /** Whether the color changes with the time of day; null hides the switch. */
-    followsDay: boolean | null;
-    onday: (on: boolean) => void;
+    followsDay?: boolean | null;
+    onday?: (on: boolean) => void;
     /** The site whose color the Space takes; `example` when none is open yet, which only the preview shows. */
-    site: { color: string; favicon?: string; example: boolean } | null;
+    site?: { color: string; favicon?: string; example: boolean } | null;
+    /** The same window drawn small, without its controls: a material's thumbnail. */
+    thumbnail?: boolean;
   } = $props();
 
   const MATERIALS: SpaceMaterial[] = ["solid", "glass", "grain"];
@@ -34,13 +36,13 @@
     if (step === 0) return;
     event.preventDefault();
     const next = (Math.max(MATERIALS.indexOf(material), 0) + step + MATERIALS.length) % MATERIALS.length;
-    onmaterial(MATERIALS[next]);
+    onmaterial?.(MATERIALS[next]);
     (event.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("button")[next]?.focus();
   }
 </script>
 
-<div class="desk" style:background={desktop} style:transform="perspective(700px) rotateX({tilt.x}deg) rotateY({tilt.y}deg)"
-  onpointermove={trackLight} onpointerleave={() => (tilt = { x: 0, y: 0 })} role="presentation">
+<div class="desk" class:thumbnail style:background={desktop} style:transform={thumbnail ? null : `perspective(700px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`}
+  onpointermove={thumbnail ? undefined : trackLight} onpointerleave={() => (tilt = { x: 0, y: 0 })} role="presentation">
   <!-- Today's window, drawn small in the Space's color and material. -->
   <div class="win {material}" class:example={site?.example} style:--site={site?.color} aria-hidden="true">
     <div class="side">
@@ -64,12 +66,13 @@
       <i style:width="42%"></i><i></i><i style:width="86%"></i><i style:width="64%"></i><span class="block"></span>
     </div>
   </div>
+  {#if !thumbnail}
   <div class="sheen" style:background="radial-gradient(200px circle at {light.x * 100}% {light.y * 100}%, rgba(255, 255, 255, 0.3), transparent 60%)"></div>
   {#if followsDay !== null}
     <!-- Turned on, the desktop passes to evening and back once: what the switch does, shown. -->
     <div class="dusk" class:on={followsDay}></div>
     <button class="day" class:on={followsDay} aria-pressed={followsDay} aria-label={t("spaceEditor.followDay")}
-      use:tooltip={`${t("spaceEditor.followDay")}. ${t("spaceEditor.followDayHint")}`} onclick={() => onday(!followsDay)}>
+      use:tooltip={`${t("spaceEditor.followDay")}. ${t("spaceEditor.followDayHint")}`} onclick={() => onday?.(!followsDay)}>
       <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v1.3M8 12.7V14M2 8h1.3M12.7 8H14M3.8 3.8l.9.9M11.3 11.3l.9.9M3.8 12.2l.9-.9M11.3 4.7l.9-.9M8 5.4a2.6 2.6 0 1 0 0 5.2a2.6 2.6 0 0 0 0-5.2Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>
       <svg class="to" width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 4h6M4.5 1.5 7 4 4.5 6.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
       <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5Z" fill="currentColor" /></svg>
@@ -79,11 +82,12 @@
   <!-- A glass bar on the window: the material is picked where it shows. -->
   <div class="materials" role="radiogroup" tabindex="-1" aria-label={t("spaceEditor.materialLabel")} onkeydown={handleKeydown}>
     {#each MATERIALS as value (value)}
-      <button class="material" role="radio" aria-checked={material === value} tabindex={material === value ? 0 : -1} onclick={() => onmaterial(value)}>
+      <button class="material" role="radio" aria-checked={material === value} tabindex={material === value ? 0 : -1} onclick={() => onmaterial?.(value)}>
         <span class="mini {value}" style:--desktop={desktop}></span>{t(`spaceEditor.material.${value}`)}
       </button>
     {/each}
   </div>
+  {/if}
 </div>
 
 <style>
@@ -95,6 +99,15 @@
     overflow: hidden;
     box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.2);
     transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* A material's thumbnail: the window at a third of its size, cropped by the thumbnail's frame. */
+  .desk.thumbnail {
+    width: 260px;
+    height: 176px;
+    border-radius: 0;
+    box-shadow: none;
+    zoom: 0.36;
   }
 
   /* Runs off the bottom and fades there, under the material bar. */

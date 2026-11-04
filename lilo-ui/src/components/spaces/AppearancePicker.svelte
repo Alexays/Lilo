@@ -7,16 +7,21 @@
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { isChromaticHex } from "../../lib/sidebarTheme";
   import { PASTEL_COLOR_NAMES, PASTEL_COLORS } from "../settings/profilesModel";
+  import UiToggle from "../ui/UiToggle.svelte";
   import AppearancePreview from "./AppearancePreview.svelte";
 
-  let { mode, color, material, onmode, oncolor, onmaterial }: {
+  let { mode, color, material, onmode, oncolor, onmaterial, inline = false }: {
     mode: SpaceColorMode;
     color: string;
     material: SpaceMaterial;
     onmode: (mode: SpaceColorMode) => void;
     oncolor: (color: string) => void;
     onmaterial: (material: SpaceMaterial) => void;
+    /** Laid out in the sidebar, which repaints as its own preview: material thumbnails and a time-of-day switch row. */
+    inline?: boolean;
   } = $props();
+
+  const MATERIALS: SpaceMaterial[] = ["solid", "glass", "grain"];
 
   const AUTO_SOURCES = ["page", "wallpaper"] as const;
   // Stands in for the wallpaper until its picture arrives.
@@ -51,11 +56,22 @@
   }
 </script>
 
-<div class="picker">
-  <!-- The time of day changes a chosen color only: Lilo's picks bring their own. -->
-  <AppearancePreview {material} {desktop} {onmaterial} followsDay={auto ? null : mode === "time"}
-    site={mode === "page" ? { color: siteColor ?? EXAMPLE_SITE, favicon: siteColor ? favicon : undefined, example: !siteColor } : null}
-    onday={(on) => onmode(on ? "time" : "fixed")} />
+<div class="picker" class:inline>
+  {#if inline}
+    <div class="materials" role="radiogroup" aria-label={t("spaceEditor.materialLabel")}>
+      {#each MATERIALS as value (value)}
+        <button class="material" role="radio" aria-checked={material === value} onclick={() => onmaterial(value)}>
+          <span class="thumbnail"><AppearancePreview material={value} {desktop} thumbnail /></span>
+          {t(`spaceEditor.material.${value}`)}
+        </button>
+      {/each}
+    </div>
+  {:else}
+    <!-- The time of day changes a chosen color only: Lilo's picks bring their own. -->
+    <AppearancePreview {material} {desktop} {onmaterial} followsDay={auto ? null : mode === "time"}
+      site={mode === "page" ? { color: siteColor ?? EXAMPLE_SITE, favicon: siteColor ? favicon : undefined, example: !siteColor } : null}
+      onday={(on) => onmode(on ? "time" : "fixed")} />
+  {/if}
 
   <div class="group">
     <div class="name-row">
@@ -96,6 +112,12 @@
     </div>
   </div>
 
+  {#if inline && !auto}
+    <div class="day-row" use:tooltip={t("spaceEditor.followDayHint")}>
+      <span>{t("spaceEditor.followDay")}</span>
+      <UiToggle checked={mode === "time"} ariaLabel={t("spaceEditor.followDay")} onchange={(on) => onmode(on ? "time" : "fixed")} />
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -104,6 +126,68 @@
     flex-direction: column;
     gap: 16px;
     container-type: inline-size;
+  }
+
+  .picker.inline {
+    gap: 12px;
+  }
+
+  .materials {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .material {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+  }
+
+  .material[aria-checked="true"] {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .thumbnail {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--text-primary-tint-12);
+    pointer-events: none;
+  }
+
+  .material[aria-checked="true"] .thumbnail {
+    box-shadow: 0 0 0 2px var(--bg-elevated), 0 0 0 4px var(--accent);
+  }
+
+  .material:focus-visible {
+    outline: none;
+  }
+
+  .material:focus-visible .thumbnail {
+    outline: var(--focus-outline);
+    outline-offset: 4px;
+  }
+
+  .day-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 28px;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
   }
 
   .group {

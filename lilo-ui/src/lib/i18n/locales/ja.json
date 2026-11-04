@@ -937,6 +937,7 @@
 		"thisSpace": "このスペース",
 		"deleteConfirmMessage": "スペースとすべてのタブが完全に削除されます。",
 		"deleteSpace": "スペースを削除",
+		"deleteSpaceEllipsis": "スペースを削除...",
 		"keepSpace": "スペースを残す",
 		"moreEmojis": "その他の絵文字",
 		"lastSpaceHint": "最後のスペースは削除できません。",

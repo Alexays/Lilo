@@ -937,6 +937,7 @@
 		"thisSpace": "bu alan",
 		"deleteConfirmMessage": "Alan ve tüm sekmeleri kalıcı olarak silinir.",
 		"deleteSpace": "Alanı Sil",
+		"deleteSpaceEllipsis": "Alanı Sil...",
 		"keepSpace": "Alanı Koru",
 		"moreEmojis": "Daha fazla emoji",
 		"lastSpaceHint": "Son alan silinemez.",

@@ -15,9 +15,9 @@ const fromWallpaper = (page: Page) => page.getByRole("button", { name: "Color of
 async function openAppearance(page: Page): Promise<void> {
 	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), SPACE_1);
 	await expect(page.locator(".editor-panel")).toBeVisible();
-	await page.getByRole("button", { name: "Appearance" }).click();
-	await expect(page.getByRole("dialog", { name: "Appearance" })).toBeVisible();
 }
+
+const dayToggle = (page: Page) => page.locator(".ui-toggle", { has: page.getByRole("checkbox", { name: "Change with the time of day" }) });
 
 // 19:00, the evening: a Space following the time is warmer than its base color.
 async function bootInTheEvening(page: Page, world: FakeHostWorld): Promise<void> {
@@ -31,14 +31,14 @@ function worldOnAColorfulSite(): FakeHostWorld {
 	return world;
 }
 
-test("each color source and material previews on the whole chrome, and Save sends them", async ({ page }) => {
+test("each color source and material previews on the whole chrome, and is sent as it is picked", async ({ page }) => {
 	await bootInTheEvening(page, worldOnAColorfulSite());
 	const fixed = await sidebarBackground(page);
 	await openAppearance(page);
 
 	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
 
-	await page.getByRole("button", { name: "Change with the time of day" }).click();
+	await dayToggle(page).click();
 	await expect.poll(() => sidebarBackground(page)).not.toBe(fixed);
 	// The base color is still the user's to pick while it follows the day.
 	const evening = await sidebarBackground(page);
@@ -49,8 +49,8 @@ test("each color source and material previews on the whole chrome, and Save send
 	// The active tab's site brings the color: the title says so, and the day has nothing to change.
 	await fromTab(page).click();
 	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "true");
-	await expect(page.locator(".appearance-card .name")).toHaveText("Color of the active tab");
-	await expect(page.getByRole("button", { name: "Change with the time of day" })).toHaveCount(0);
+	await expect(page.locator(".editor-panel .name-row .name")).toHaveText("Color of the active tab");
+	await expect(dayToggle(page)).toHaveCount(0);
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 	const tinted = await sidebarBackground(page);
 
@@ -58,8 +58,8 @@ test("each color source and material previews on the whole chrome, and Save send
 	await expect.poll(() => lastCommand(page, "setWallpaperColorWatch")).toEqual({ enabled: true });
 	await page.evaluate(() => window.__lilo!.receive({ event: "wallpaperColorChanged", color: "#2f9e8f", thumbnail: "data:image/jpeg;base64,AAAA" }));
 	await expect.poll(() => sidebarBackground(page)).not.toBe(tinted);
-	// The preview stands the window on the wallpaper itself.
-	expect(await page.locator(".desk").evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("data:image/jpeg");
+	// The material thumbnails stand the window on the wallpaper itself.
+	expect(await page.locator(".desk").first().evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("data:image/jpeg");
 
 	// A color takes back from Lilo's pick.
 	await page.locator(".swatches .swatch").nth(4).click();
@@ -69,12 +69,9 @@ test("each color source and material previews on the whole chrome, and Save send
 	await expect.poll(() => page.evaluate(() => document.documentElement.dataset.material)).toBe("grain");
 
 	await page.keyboard.press("Escape");
-	await expect(page.getByRole("dialog", { name: "Appearance" })).toHaveCount(0);
-	await expect(page.locator(".editor-panel")).toBeVisible();
-	await page.keyboard.press("Meta+Enter");
 	await expect(page.locator(".editor-panel")).toHaveCount(0);
 	expect(await lastCommand(page, "updateSpace")).toMatchObject({ id: SPACE_1, colorMode: "wallpaper", material: "grain" });
-	// Back on the saved fixed Space (the host has not echoed the change): the wallpaper is no longer watched.
+	// Back on the fixed Space (the host has not echoed the change): the wallpaper is no longer watched.
 	await expect.poll(() => lastCommand(page, "setWallpaperColorWatch")).toEqual({ enabled: false });
 });
 

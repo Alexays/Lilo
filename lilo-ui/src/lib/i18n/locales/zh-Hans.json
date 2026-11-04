@@ -937,6 +937,7 @@
 		"thisSpace": "此空间",
 		"deleteConfirmMessage": "此空间及其所有标签页将被永久删除。",
 		"deleteSpace": "删除空间",
+		"deleteSpaceEllipsis": "删除空间...",
 		"keepSpace": "保留空间",
 		"moreEmojis": "更多表情符号",
 		"lastSpaceHint": "无法删除最后一个空间。",
