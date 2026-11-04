@@ -717,6 +717,7 @@
 			},
 			"blocking": "{count} van {total} soorten geblokkeerd",
 			"blockingOff": "Blokkeren staat uit",
+			"profile": "Profiel {name}",
 			"extensions": {
 				"one": "{count} extensie in {profile}",
 				"other": "{count} extensies in {profile}"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "Meer acties voor {name}",
 		"openDetailsLabel": "Toon details van {name}",
 		"detailEnabled": "Ingeschakeld",
-		"detailDescription": "Beschrijving",
-		"detailCapabilities": "Mogelijkheden",
 		"detailPermissions": "Bevoegdheden",
 		"detailSiteAccess": "Toegang tot websites",
 		"siteAccessAll": "Werkt op elke website waarvoor toegang is gevraagd.",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "Inhoudsscripts",
 		"removeConfirmTitle": "{name} verwijderen?",
 		"removeConfirmMessage": "De extensie en alle gegevens worden verwijderd.",
+		"removeExtension": "Extensie verwijderen...",
 		"actionFailed": "Actie mislukt. Tik om te sluiten.",
 		"degradedTitle": "Achtergrond gestopt: sommige functies werken mogelijk niet.",
 		"loadUnpacked": "Laad uitgepakte extensie...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "Typ een sneltoets",
 		"executeAction": "Activeer de extensie",
 		"shortcutNone": "Niet ingesteld",
-		"removeTitle": "Verwijder deze extensie",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Recensies, details en de pagina van de ontwikkelaar",
 		"webStoreOpen": "Open",

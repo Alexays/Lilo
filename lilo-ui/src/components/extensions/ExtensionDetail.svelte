@@ -102,8 +102,37 @@
   }
 </script>
 
-<!-- The shell's header names the extension: the page opens on its state, built from the settings lists. -->
+<!-- The shell's header names the extension: the page opens on what it is, then its state, built from the settings lists. -->
 <div class="extension-detail">
+  <div class="detail-head">
+    <span class="detail-icon">
+      {#if extensionIconSrc(extension)}
+        <img
+          src={extensionIconSrc(extension)}
+          alt=""
+          draggable="false"
+          onerror={(event) => {
+            (event.currentTarget as HTMLImageElement).hidden = true;
+          }}
+          onload={(event) => {
+            (event.currentTarget as HTMLImageElement).hidden = false;
+          }}
+        />
+      {/if}
+      {displayInitial(extension)}
+    </span>
+    {#if extension.description || capabilities.length > 0}
+      <div class="detail-about">
+        {#if extension.description}<p class="detail-description">{extension.description}</p>{/if}
+        {#if capabilities.length > 0}
+          <span class="detail-chips">
+            {#each capabilities as capability (capability)}<span class="detail-chip">{t(DETAIL_LABEL_KEYS[capability])}</span>{/each}
+          </span>
+        {/if}
+      </div>
+    {/if}
+  </div>
+
   {#if degraded}
     <div class="detail-notice" role="status">
       <span class="detail-notice-dot" aria-hidden="true"></span>
@@ -145,24 +174,6 @@
 
   <UiInsetList>
     <UiListRow title={t("extensions.detailEnabled")} description={`v${extension.version} · ${extension.id}`}>
-      {#snippet icon()}
-        <span class="detail-icon">
-          {#if extensionIconSrc(extension)}
-            <img
-              src={extensionIconSrc(extension)}
-              alt=""
-              draggable="false"
-              onerror={(event) => {
-                (event.currentTarget as HTMLImageElement).hidden = true;
-              }}
-              onload={(event) => {
-                (event.currentTarget as HTMLImageElement).hidden = false;
-              }}
-            />
-          {/if}
-          {displayInitial(extension)}
-        </span>
-      {/snippet}
       {#snippet action()}
         {#if pending}
           <ExtensionSpinner />
@@ -198,18 +209,6 @@
       {/if}
     {/if}
   </UiInsetList>
-
-  {#if extension.description}
-    <UiInsetList title={t("extensions.detailDescription")}>
-      <p class="detail-text">{extension.description}</p>
-    </UiInsetList>
-  {/if}
-
-  {#if capabilities.length > 0}
-    <UiInsetList title={t("extensions.detailCapabilities")}>
-      <p class="detail-text">{capabilities.map((capability) => t(DETAIL_LABEL_KEYS[capability])).join(" · ")}</p>
-    </UiInsetList>
-  {/if}
 
   {#if permissions.length > 0}
     <UiInsetList title={t("extensions.detailPermissions")}>
@@ -287,8 +286,8 @@
     </UiInsetList>
   {/if}
 
+  {#if extension.webStoreURL}
   <UiInsetList>
-    {#if extension.webStoreURL}
       <UiListRow title={t("extensions.webStoreTitle")} description={t("extensions.webStoreHint")}>
         {#snippet action()}
           <UiButton
@@ -299,13 +298,13 @@
           >
         {/snippet}
       </UiListRow>
-    {/if}
-    <UiListRow title={t("extensions.removeTitle")} description={t("extensions.removeConfirmMessage")}>
-      {#snippet action()}
-        <UiButton variant="danger" disabled={pending} onclick={onremove}>{t("common.remove")}</UiButton>
-      {/snippet}
-    </UiListRow>
   </UiInsetList>
+  {/if}
+
+  <!-- Destructive and last, as red text under a separator; its confirmation follows. -->
+  <div class="detail-remove">
+    <button type="button" disabled={pending} onclick={onremove}>{t("extensions.removeExtension")}</button>
+  </div>
 </div>
 
 <style>
@@ -314,18 +313,40 @@
     gap: 22px;
   }
 
+  .detail-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .detail-about {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding-top: 2px;
+  }
+
+  .detail-description {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
   .detail-icon {
     position: relative;
+    flex: none;
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
     overflow: hidden;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     background: var(--accent);
     color: var(--accent-text);
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
   }
 
   /* The accent tile backs only the initial: a loaded logo sits on the row as it is. */
@@ -342,10 +363,6 @@
     object-fit: contain;
   }
 
-  .extension-detail :global(.ui-list-row-icon:has(.detail-icon)) {
-    width: 28px;
-  }
-
   .detail-text {
     margin: 0;
     padding: 11px 14px;
@@ -358,20 +375,50 @@
   .detail-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
   }
 
   .detail-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 8px;
-    border-radius: var(--radius-sm);
+    padding: 3px 10px;
+    border-radius: var(--radius-chip);
     background: var(--bg-hover);
-    color: var(--text-secondary);
-    font-family: ui-monospace, monospace;
-    font-size: var(--font-size-xs);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
     overflow-wrap: anywhere;
+  }
+
+  .detail-remove {
+    padding-top: 14px;
+    border-top: 1px solid var(--separator);
+  }
+
+  .detail-remove button {
+    padding: 2px 4px;
+    margin-left: 10px;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: none;
+    color: var(--danger-text);
+    font-family: inherit;
+    font-size: var(--font-size-md);
+    cursor: pointer;
+  }
+
+  .detail-remove button:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  .detail-remove button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .detail-remove button:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   .detail-chip-remove {

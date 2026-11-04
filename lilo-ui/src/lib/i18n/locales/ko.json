@@ -717,6 +717,7 @@
 			},
 			"blocking": "{total}가지 중 {count}가지 차단 중",
 			"blockingOff": "차단이 꺼져 있습니다",
+			"profile": "{name} 프로필",
 			"extensions": {
 				"one": "{profile}의 확장 프로그램 {count}개",
 				"other": "{profile}의 확장 프로그램 {count}개"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "{name} 추가 동작",
 		"openDetailsLabel": "{name} 세부사항 보기",
 		"detailEnabled": "활성화됨",
-		"detailDescription": "설명",
-		"detailCapabilities": "기능",
 		"detailPermissions": "권한",
 		"detailSiteAccess": "사이트 접근",
 		"siteAccessAll": "요청한 모든 사이트에서 실행됩니다.",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "콘텐츠 스크립트",
 		"removeConfirmTitle": "{name} 확장 프로그램을 제거하겠습니까?",
 		"removeConfirmMessage": "확장 프로그램과 해당 데이터가 삭제됩니다.",
+		"removeExtension": "확장 프로그램 제거...",
 		"actionFailed": "동작에 실패했습니다. 클릭하여 닫으세요.",
 		"degradedTitle": "백그라운드가 중단되어 일부 기능이 작동하지 않을 수 있습니다.",
 		"loadUnpacked": "압축 해제된 확장 프로그램 로드...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "단축키 입력",
 		"executeAction": "확장 프로그램 활성화",
 		"shortcutNone": "설정되지 않음",
-		"removeTitle": "이 확장 프로그램 제거",
 		"webStoreTitle": "Chrome 웹 스토어",
 		"webStoreHint": "리뷰, 세부사항 및 개발자 페이지",
 		"webStoreOpen": "열기",

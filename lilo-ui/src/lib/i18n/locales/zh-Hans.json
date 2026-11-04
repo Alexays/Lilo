@@ -717,6 +717,7 @@
 			},
 			"blocking": "正在拦截 {total} 类中的 {count} 类",
 			"blockingOff": "拦截已关闭",
+			"profile": "{name} 配置文件",
 			"extensions": {
 				"one": "{profile} 中有 {count} 个扩展",
 				"other": "{profile} 中有 {count} 个扩展"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "{name} 的更多操作",
 		"openDetailsLabel": "显示 {name} 的详细信息",
 		"detailEnabled": "已启用",
-		"detailDescription": "描述",
-		"detailCapabilities": "功能",
 		"detailPermissions": "权限",
 		"detailSiteAccess": "网站访问权限",
 		"siteAccessAll": "在其请求的所有网站上运行。",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "内容脚本",
 		"removeConfirmTitle": "移除“{name}”？",
 		"removeConfirmMessage": "此扩展及其数据将被删除。",
+		"removeExtension": "移除扩展...",
 		"actionFailed": "操作失败。点按以关闭。",
 		"degradedTitle": "后台已停止：部分功能可能无法使用。",
 		"loadUnpacked": "载入解压缩的扩展...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "输入快捷键",
 		"executeAction": "激活扩展",
 		"shortcutNone": "未设置",
-		"removeTitle": "移除此扩展",
 		"webStoreTitle": "Chrome 网上应用店",
 		"webStoreHint": "评价、详细信息和开发者页面",
 		"webStoreOpen": "打开",

@@ -717,6 +717,7 @@
 			},
 			"blocking": "{total} 種類中 {count} 種類をブロック",
 			"blockingOff": "ブロックはオフです",
+			"profile": "{name} プロファイル",
 			"extensions": {
 				"one": "{profile} の拡張機能 {count} 個",
 				"other": "{profile} の拡張機能 {count} 個"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "{name}のその他の操作",
 		"openDetailsLabel": "{name}の詳細を表示",
 		"detailEnabled": "有効",
-		"detailDescription": "説明",
-		"detailCapabilities": "機能",
 		"detailPermissions": "アクセス権",
 		"detailSiteAccess": "サイトへのアクセス",
 		"siteAccessAll": "要求したすべてのサイトで実行します。",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "コンテンツスクリプト",
 		"removeConfirmTitle": "{name}を取り除きますか？",
 		"removeConfirmMessage": "機能拡張とそのデータを削除します。",
+		"removeExtension": "機能拡張を取り除く...",
 		"actionFailed": "操作に失敗しました。クリックして閉じてください。",
 		"degradedTitle": "バックグラウンドが停止しています。一部の機能が動作しない場合があります。",
 		"loadUnpacked": "パッケージ化されていない機能拡張を読み込む...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "ショートカットを入力",
 		"executeAction": "機能拡張を起動",
 		"shortcutNone": "未設定",
-		"removeTitle": "この機能拡張を取り除く",
 		"webStoreTitle": "Chrome ウェブストア",
 		"webStoreHint": "レビュー、詳細、開発者のページ",
 		"webStoreOpen": "開く",

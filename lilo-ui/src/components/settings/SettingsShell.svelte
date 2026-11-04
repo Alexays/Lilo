@@ -53,6 +53,10 @@
       return count ? t("settings.notes.searchMatches", { count, query: query.trim() }) : "";
     }
     if (subpage === "shortcuts") return t("settings.shortcuts.note");
+    if (subpage?.startsWith("extension:")) {
+      const profile = getProfileById(getShownExtensions()?.find((candidate) => `extension:${candidate.id}` === subpage)?.profileId ?? "");
+      return profile ? t("settings.notes.profile", { name: profile.name }) : "";
+    }
     if (subpage) return "";
     switch (section) {
       case "general":

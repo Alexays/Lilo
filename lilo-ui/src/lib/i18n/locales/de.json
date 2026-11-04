@@ -717,6 +717,7 @@
 			},
 			"blocking": "{count} von {total} Arten blockiert",
 			"blockingOff": "Blockieren ist aus",
+			"profile": "Profil {name}",
 			"extensions": {
 				"one": "{count} Erweiterung in {profile}",
 				"other": "{count} Erweiterungen in {profile}"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "Weitere Aktionen für {name}",
 		"openDetailsLabel": "Details zu {name} anzeigen",
 		"detailEnabled": "Aktiviert",
-		"detailDescription": "Beschreibung",
-		"detailCapabilities": "Funktionen",
 		"detailPermissions": "Berechtigungen",
 		"detailSiteAccess": "Websitezugriff",
 		"siteAccessAll": "Wird auf allen angeforderten Websites ausgeführt.",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "Inhaltsskripte",
 		"removeConfirmTitle": "{name} entfernen?",
 		"removeConfirmMessage": "Die Erweiterung und ihre Daten werden gelöscht.",
+		"removeExtension": "Erweiterung entfernen...",
 		"actionFailed": "Aktion fehlgeschlagen. Zum Schließen klicken.",
 		"degradedTitle": "Hintergrund angehalten: Einige Funktionen funktionieren möglicherweise nicht.",
 		"loadUnpacked": "Entpackte Erweiterung laden...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "Kurzbefehl eingeben",
 		"executeAction": "Erweiterung aktivieren",
 		"shortcutNone": "Nicht festgelegt",
-		"removeTitle": "Diese Erweiterung entfernen",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Rezensionen, Details und die Seite des Entwicklers",
 		"webStoreOpen": "Öffnen",

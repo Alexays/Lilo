@@ -717,6 +717,7 @@
 			},
 			"blocking": "正在阻擋 {total} 類中的 {count} 類",
 			"blockingOff": "阻擋已關閉",
+			"profile": "{name} 設定檔",
 			"extensions": {
 				"one": "{profile} 中有 {count} 個延伸功能",
 				"other": "{profile} 中有 {count} 個延伸功能"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "{name} 的更多動作",
 		"openDetailsLabel": "顯示 {name} 的詳細資訊",
 		"detailEnabled": "已啟用",
-		"detailDescription": "說明",
-		"detailCapabilities": "功能",
 		"detailPermissions": "權限",
 		"detailSiteAccess": "網站取用權限",
 		"siteAccessAll": "在所有已要求取用的網站上執行。",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "內容指令碼",
 		"removeConfirmTitle": "要移除 {name} 嗎？",
 		"removeConfirmMessage": "延伸功能及其資料都會刪除。",
+		"removeExtension": "移除延伸功能...",
 		"actionFailed": "動作失敗。點按以關閉。",
 		"degradedTitle": "背景已停止：部分功能可能無法運作。",
 		"loadUnpacked": "載入未封裝的延伸功能...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "輸入快速鍵",
 		"executeAction": "啟動延伸功能",
 		"shortcutNone": "未設定",
-		"removeTitle": "移除此延伸功能",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "評論、詳細資訊與開發者網頁",
 		"webStoreOpen": "開啟",

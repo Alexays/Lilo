@@ -717,6 +717,7 @@
 			},
 			"blocking": "Blocco attivo per {count} tipi su {total}",
 			"blockingOff": "Il blocco è disattivato",
+			"profile": "Profilo {name}",
 			"extensions": {
 				"one": "{count} estensione in {profile}",
 				"other": "{count} estensioni in {profile}"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "Altre azioni per {name}",
 		"openDetailsLabel": "Mostra dettagli di {name}",
 		"detailEnabled": "Attiva",
-		"detailDescription": "Descrizione",
-		"detailCapabilities": "Funzionalità",
 		"detailPermissions": "Permessi",
 		"detailSiteAccess": "Accesso ai siti",
 		"siteAccessAll": "Viene eseguita su tutti i siti per cui ha richiesto l'accesso.",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "Script di contenuto",
 		"removeConfirmTitle": "Rimuovere {name}?",
 		"removeConfirmMessage": "L'estensione e i suoi dati verranno eliminati.",
+		"removeExtension": "Rimuovi estensione...",
 		"actionFailed": "Azione non riuscita. Tocca per chiudere.",
 		"degradedTitle": "Esecuzione in background interrotta: alcune funzioni potrebbero non essere disponibili.",
 		"loadUnpacked": "Carica estensione non pacchettizzata...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "Digita un'abbreviazione",
 		"executeAction": "Attiva l'estensione",
 		"shortcutNone": "Non impostata",
-		"removeTitle": "Rimuovi questa estensione",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Recensioni, dettagli e pagina dello sviluppatore",
 		"webStoreOpen": "Apri",

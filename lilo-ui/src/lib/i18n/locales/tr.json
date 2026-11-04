@@ -717,6 +717,7 @@
 			},
 			"blocking": "{total} türden {count} tanesi engelleniyor",
 			"blockingOff": "Engelleme kapalı",
+			"profile": "{name} profili",
 			"extensions": {
 				"one": "{profile} içinde {count} uzantı",
 				"other": "{profile} içinde {count} uzantı"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "{name} için diğer işlemler",
 		"openDetailsLabel": "{name} ayrıntılarını göster",
 		"detailEnabled": "Etkin",
-		"detailDescription": "Açıklama",
-		"detailCapabilities": "Yetenekler",
 		"detailPermissions": "İzinler",
 		"detailSiteAccess": "Site erişimi",
 		"siteAccessAll": "İstediği tüm sitelerde çalışır.",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "İçerik betikleri",
 		"removeConfirmTitle": "{name} kaldırılsın mı?",
 		"removeConfirmMessage": "Genişletme ve verileri silinecek.",
+		"removeExtension": "Genişletmeyi kaldır...",
 		"actionFailed": "İşlem başarısız oldu. Kapatmak için tıklayın.",
 		"degradedTitle": "Arka plan durdu: Bazı özellikler çalışmayabilir.",
 		"loadUnpacked": "Paketten çıkarılmış genişletme yükle...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "Bir kestirme girin",
 		"executeAction": "Genişletmeyi etkinleştir",
 		"shortcutNone": "Ayarlanmadı",
-		"removeTitle": "Bu genişletmeyi kaldır",
 		"webStoreTitle": "Chrome Web Mağazası",
 		"webStoreHint": "Yorumlar, ayrıntılar ve geliştiricinin sayfası",
 		"webStoreOpen": "Aç",

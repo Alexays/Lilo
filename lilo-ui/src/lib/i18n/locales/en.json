@@ -717,6 +717,7 @@
 			},
 			"blocking": "Blocking {count} of {total} kinds",
 			"blockingOff": "Blocking is off",
+			"profile": "{name} profile",
 			"extensions": {
 				"one": "{count} extension in {profile}",
 				"other": "{count} extensions in {profile}"
@@ -1020,8 +1021,6 @@
 		"menuButtonLabel": "More actions for {name}",
 		"openDetailsLabel": "Show details for {name}",
 		"detailEnabled": "Enabled",
-		"detailDescription": "Description",
-		"detailCapabilities": "Capabilities",
 		"detailPermissions": "Permissions",
 		"detailSiteAccess": "Site access",
 		"siteAccessAll": "Runs on every site it asked for.",
@@ -1034,6 +1033,7 @@
 		"capabilityContent": "Content scripts",
 		"removeConfirmTitle": "Remove {name}?",
 		"removeConfirmMessage": "The extension and its data will be deleted.",
+		"removeExtension": "Remove Extension...",
 		"actionFailed": "Action failed. Tap to dismiss.",
 		"degradedTitle": "Background stopped: some features may not work.",
 		"loadUnpacked": "Load Unpacked Extension...",
@@ -1064,7 +1064,6 @@
 		"shortcutRecording": "Type a shortcut",
 		"executeAction": "Activate the extension",
 		"shortcutNone": "Not set",
-		"removeTitle": "Remove this extension",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Reviews, details and the developer's page",
 		"webStoreOpen": "Open",
