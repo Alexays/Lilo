@@ -42,6 +42,7 @@
   import { isCommandBarOpen, openCommandBar } from "../../stores/commandBar.svelte";
   import { cubicOut } from "svelte/easing";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { isUserScrolling } from "../../lib/motion/userScroll";
   import { springEase } from "../../lib/motion/spring";
 
   let {
@@ -128,7 +129,7 @@
   function scrollActiveTabIntoView(el: HTMLElement): void {
     if (document.body.classList.contains("sidebar-dnd-active")) return;
     const container = el.closest<HTMLElement>(".space-scroll");
-    if (!container) return;
+    if (!container || isUserScrolling(container)) return;
 
     const rowRect = el.getBoundingClientRect();
     const viewRect = container.getBoundingClientRect();

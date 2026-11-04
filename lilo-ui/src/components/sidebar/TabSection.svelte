@@ -728,8 +728,14 @@
     }
     if (!next) return;
     event.preventDefault();
-    next.focus();
-    next.scrollIntoView({ block: "nearest" });
+    next.focus({ preventScroll: true });
+    // Only the Space's own list scrolls: scrollIntoView would also nudge the pager under it.
+    const scroller = next.closest<HTMLElement>(".space-scroll");
+    if (!scroller) return;
+    const rowRect = next.getBoundingClientRect();
+    const viewRect = scroller.getBoundingClientRect();
+    if (rowRect.top < viewRect.top) scroller.scrollTop += rowRect.top - viewRect.top;
+    else if (rowRect.bottom > viewRect.bottom) scroller.scrollTop += rowRect.bottom - viewRect.bottom;
   }
 
   // Reused while a folder's visible children stay the same: a new item array on every tab patch would re-run the

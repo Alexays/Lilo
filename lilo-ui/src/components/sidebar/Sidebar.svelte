@@ -38,19 +38,11 @@
 
   function getPaneStyle(index: number): string {
     const distance = Math.abs(index - visualIndex);
-    // Hide off-screen panes outright and keep the focused pane free of blur and compositing hints.
     if (pagerAtRest) {
       return distance > 0.5 ? "visibility: hidden; opacity: 0.12;" : "opacity: 1;";
     }
-    const proximity = Math.max(0, 1 - distance);
-    const opacity = 0.12 + proximity * 0.88;
-    // Blur is quantized (0/1.5/3/4.5px) so mid-swipe frames reuse the pane's rasterized blur
-    // instead of re-blurring at a new radius every frame; the 220ms filter transition eases
-    // between steps. Opacity stays continuous: it composites for free.
-    const blur = Math.round(((1 - proximity) * 4.5) / 1.5) * 1.5;
-    const willChange = distance <= 1.5 ? "will-change: opacity, filter; " : "";
-    const filter = blur > 0 ? ` filter: blur(${blur}px);` : "";
-    return `${willChange}opacity: ${opacity.toFixed(3)};${filter}`;
+    // Mid-swipe the opacity follows the finger frame by frame: it composites, so it costs no repaint.
+    return `opacity: ${(0.12 + Math.max(0, 1 - distance) * 0.88).toFixed(3)};`;
   }
 
   $effect(() => {
@@ -136,6 +128,7 @@
           {#each spaces as space, index (space.id)}
             <div
               class="space-pane"
+              class:resting={pagerAtRest}
               class:pane-hidden={pagerAtRest && Math.abs(index - visualIndex) > 0.5}
               style={getPaneStyle(index)}
             >
@@ -266,7 +259,6 @@
     overflow-y: hidden;
     position: relative;
     scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
     overscroll-behavior-x: contain;
     overscroll-behavior-y: none;
     scrollbar-width: none;
@@ -297,15 +289,18 @@
     min-width: 0;
     scroll-snap-align: start;
     scroll-snap-stop: always;
-    transition:
-      opacity var(--motion-duration-fast) linear,
-      filter 220ms var(--motion-ease-spring);
+    /* A stable layer: one created at the start of each swipe and dropped at its end hitches both ends. */
+    will-change: opacity;
   }
 
-  /* A hidden neighbor pane stays mounted: its looping animations would still tick unseen. */
-  .space-pane.pane-hidden :global(*),
-  .space-pane.pane-hidden :global(*::before),
-  .space-pane.pane-hidden :global(*::after) {
+  /* Only at rest: a transition restarted by every swipe frame would trail the finger. */
+  .resting {
+    transition: opacity var(--motion-duration-fast) linear;
+  }
+
+  /* A hidden neighbor pane stays mounted: its looping animations would still tick unseen. Only the
+     looping ones are named (the skeleton pauses itself), so hiding a pane restyles a few nodes, not every row. */
+  .space-pane.pane-hidden :global(:is(.mascot *, .tab-loader span, .hang-icon)) {
     animation-play-state: paused !important;
   }
 

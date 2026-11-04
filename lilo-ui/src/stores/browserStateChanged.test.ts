@@ -331,7 +331,6 @@ test("native browserStateChanged without a pending transition aligns the pager",
 	const pagerElement = {
 		clientWidth: 320,
 		scrollLeft: 0,
-		style: { scrollBehavior: "" },
 		addEventListener() {},
 		removeEventListener() {},
 		scrollTo({ left }: { left: number }) {
@@ -420,7 +419,6 @@ test("a space created and shown in one batch gets the pager once its page is lai
 		set scrollLeft(value: number) {
 			left = Math.min(value, (laidOutPages - 1) * 320);
 		},
-		style: { scrollBehavior: "" },
 		addEventListener() {},
 		removeEventListener() {},
 		scrollTo({ left }: { left: number }) {
@@ -530,7 +528,6 @@ test("native browserStateChanged during a user swipe does not snap the pager ear
 		clientWidth: 320,
 		scrollLeft: 0,
 		onscrollend: null,
-		style: { scrollBehavior: "" },
 		addEventListener(type: string, listener: EventListener) {
 			listeners.set(type, listener);
 		},

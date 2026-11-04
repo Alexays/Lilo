@@ -250,10 +250,7 @@ export function setSpacePagerElement(element?: HTMLDivElement): void {
 			});
 
 			if (Math.abs(pagerElement.scrollLeft - alignedScrollLeft) >= pagerSnapTolerance) {
-				const previousScrollBehavior = pagerElement.style.scrollBehavior;
-				pagerElement.style.scrollBehavior = "auto";
 				pagerElement.scrollLeft = alignedScrollLeft;
-				pagerElement.style.scrollBehavior = previousScrollBehavior;
 				updateVirtualIndex();
 			}
 		}
@@ -820,14 +817,9 @@ function forcePagerToSpace(
 	const targetLeft = getTargetLeftForSpace(targetId, spaces);
 	if (targetLeft === null) return;
 
-	const previousScrollBehavior = pagerElement.style.scrollBehavior;
-	pagerElement.style.scrollBehavior = "auto";
-
 	if (Math.abs(pagerElement.scrollLeft - targetLeft) >= pagerSnapTolerance) {
 		pagerElement.scrollLeft = targetLeft;
 	}
-
-	pagerElement.style.scrollBehavior = previousScrollBehavior;
 
 	updateVirtualIndex();
 }

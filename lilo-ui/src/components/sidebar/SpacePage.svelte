@@ -8,6 +8,7 @@
   import { getActiveTabId, getTabsById, isSpaceHydrated } from "../../stores/tabs.svelte";
   import { getSpacePagerVirtualIndex } from "../../stores/pager.svelte";
   import { isChromaticHex } from "../../lib/sidebarTheme";
+  import { trackUserScroll } from "../../lib/motion/userScroll";
 
   let {
     spaceId,
@@ -56,10 +57,12 @@
     const content = spaceScrollContentEl;
     if (!el || !content) return;
     el.addEventListener("scroll", updateScrollCues, { passive: true });
+    const stopTracking = trackUserScroll(el);
     const observer = new ResizeObserver(updateScrollCues);
     observer.observe(content);
     return () => {
       el.removeEventListener("scroll", updateScrollCues);
+      stopTracking();
       observer.disconnect();
     };
   });

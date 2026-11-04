@@ -33,6 +33,7 @@
   import { dndItem, dndZone } from "../../lib/dndEngine/action";
   import { dndItemsForFolderTabs, dndItemsForSidebarItems, flipDurationForSidebarDndItem, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { isUserScrolling, trackUserScroll } from "../../lib/motion/userScroll";
   import { translateFlip } from "../../lib/motion/translateFlip";
   import { springEase } from "../../lib/motion/spring";
   import { tick } from "svelte";
@@ -112,10 +113,16 @@
   let compactSpace = $state(false);
   let spaceChipWidth = 0;
 
-  function measureOverflow(): void {
+  function measureEdges(): void {
     if (!scrollerEl) return;
     overflowStart = scrollerEl.scrollLeft > 1;
     overflowEnd = scrollerEl.scrollLeft + scrollerEl.clientWidth < scrollerEl.scrollWidth - 1;
+  }
+
+  // Scrolling leaves the chip's fit unchanged: only a resize or a new set of pills measures it again.
+  function measureOverflow(): void {
+    measureEdges();
+    if (!scrollerEl) return;
     // The Space chip drops its name before the tabs scroll, and takes it back only once it fits beside them:
     // the pills grow into the room it frees, so the row cannot flip between the two.
     const chip = stripEl?.querySelector<HTMLElement>(".space-chip");
@@ -133,24 +140,33 @@
     if (list.getBoundingClientRect().right - end >= spaceChipWidth - chip.offsetWidth) compactSpace = false;
   }
 
-  // A mouse wheel scrolls vertically: the strip turns it sideways. It has to be non-passive to keep the page still.
   $effect(() => {
     const el = scrollerEl;
     if (!el) return;
+    const resize = new ResizeObserver(measureOverflow);
+    resize.observe(el);
+    el.addEventListener("scroll", measureEdges, { passive: true });
+    const stopTracking = trackUserScroll(el);
+    return () => {
+      resize.disconnect();
+      el.removeEventListener("scroll", measureEdges);
+      stopTracking();
+    };
+  });
+
+  // A mouse wheel scrolls vertically: the strip turns it sideways. It has to be non-passive to keep the page
+  // still, so it is attached only while the pills overflow: a non-passive listener holds every wheel scroll back.
+  const overflowing = $derived(overflowStart || overflowEnd);
+  $effect(() => {
+    const el = scrollerEl;
+    if (!el || !overflowing) return;
     const wheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || el.scrollWidth <= el.clientWidth) return;
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
       event.preventDefault();
       el.scrollLeft += event.deltaY;
     };
-    const resize = new ResizeObserver(measureOverflow);
-    resize.observe(el);
     el.addEventListener("wheel", wheel, { passive: false });
-    el.addEventListener("scroll", measureOverflow, { passive: true });
-    return () => {
-      resize.disconnect();
-      el.removeEventListener("wheel", wheel);
-      el.removeEventListener("scroll", measureOverflow);
-    };
+    return () => el.removeEventListener("wheel", wheel);
   });
 
   // The active pill comes into view, and the strip keeps exactly one tab stop.
@@ -158,7 +174,7 @@
     void shownActiveId;
     void baseItems;
     void tick().then(() => {
-      scrollerEl?.querySelector(surface ? ".strip-surface" : `[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      if (scrollerEl && !isUserScrolling(scrollerEl)) scrollerEl.querySelector(surface ? ".strip-surface" : `[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
       const rovers = stripEl ? [...stripEl.querySelectorAll<HTMLElement>("[data-roving]")] : [];
       if (rovers.length && !rovers.some((rover) => rover.tabIndex === 0)) rovers[0].tabIndex = 0;
       measureOverflow();

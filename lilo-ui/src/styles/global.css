@@ -336,10 +336,6 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
   --tabs-top: var(--page-toolbar-height);
 }
 
-html[data-booting='true'] .space-track {
-  scroll-behavior: auto;
-}
-
 /* Snaps (no `left` transition) on sidebar toggle: animating a layout property here
    would force a chrome re-layout per frame; the native frame curtain carries the motion. */
 .chrome-content-overlay-root {

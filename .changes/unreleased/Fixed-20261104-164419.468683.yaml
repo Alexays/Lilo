@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Smoother scrolling: swiping between spaces follows the finger without the blur lag, a fling that starts on the sidebar no longer spills onto the page, the terminal reaches 120 Hz from the first frame of a scroll, and image diffs in Changes scroll without stalls.'
+time: 2026-11-04T16:44:19.468683+01:00
