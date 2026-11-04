@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "Archivia le schede non fissate",
 		"pinnedTabs": "Schede fissate",
 		"openTabs": "Schede aperte",
-		"dropToPin": "Rilascia per fissare",
-		"askAgent": "Chiedi a un agente"
+		"dropToPin": "Rilascia per fissare"
 	},
 	"bookmarks": {
 		"groupLabel": "Schede nei segnalibri",

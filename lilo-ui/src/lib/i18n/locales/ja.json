@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "固定されていないタブをアーカイブ",
 		"pinnedTabs": "固定タブ",
 		"openTabs": "開いているタブ",
-		"dropToPin": "ドロップして固定",
-		"askAgent": "エージェントに質問"
+		"dropToPin": "ドロップして固定"
 	},
 	"bookmarks": {
 		"groupLabel": "ブックマーク済みのタブ",

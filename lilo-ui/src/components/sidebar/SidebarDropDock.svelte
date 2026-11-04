@@ -72,7 +72,7 @@
 <style>
   .drop-dock {
     position: absolute;
-    inset: 0 var(--sidebar-right-pad, 10px) auto 10px;
+    inset: 0 var(--sidebar-right-pad, 8px) auto 8px;
     height: 36px;
     display: flex;
     align-items: center;

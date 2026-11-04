@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "Archiveer niet-vastgemaakte tabbladen",
 		"pinnedTabs": "Vastgemaakte tabbladen",
 		"openTabs": "Geopende tabbladen",
-		"dropToPin": "Laat los om vast te maken",
-		"askAgent": "Vraag een agent"
+		"dropToPin": "Laat los om vast te maken"
 	},
 	"bookmarks": {
 		"groupLabel": "Bladwijzertabbladen",

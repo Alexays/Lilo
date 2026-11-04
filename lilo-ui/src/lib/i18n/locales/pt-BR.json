@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "Arquivar abas não fixadas",
 		"pinnedTabs": "Abas fixadas",
 		"openTabs": "Abas abertas",
-		"dropToPin": "Solte para fixar",
-		"askAgent": "Perguntar a um agente"
+		"dropToPin": "Solte para fixar"
 	},
 	"bookmarks": {
 		"groupLabel": "Abas nos favoritos",

@@ -161,8 +161,8 @@
     gap: 8px;
     width: 100%;
     min-width: 0;
-    height: 28px;
-    padding: 6px;
+    height: 32px;
+    padding: 0 8px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -174,7 +174,7 @@
   }
 
   .conversation-row:hover {
-    background: color-mix(in srgb, var(--bg-selected) 20%, transparent);
+    background: var(--bg-hover);
   }
 
   .conversation-row:focus-visible {
@@ -183,7 +183,8 @@
   }
 
   .conversation-row.active {
-    background: color-mix(in srgb, var(--accent) 18%, var(--bg-selected));
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
   }
 
   .icon {
@@ -276,8 +277,8 @@
   .hover-button {
     display: none;
     flex: none;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     border: none;
     border-radius: var(--radius-sm);
@@ -292,7 +293,7 @@
   }
 
   .hover-button:hover {
-    background: var(--text-primary-tint-12);
+    background: var(--bg-active);
     color: var(--text-primary);
   }
 

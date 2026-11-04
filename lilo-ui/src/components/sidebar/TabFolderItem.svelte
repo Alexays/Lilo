@@ -455,8 +455,8 @@
 		gap: 8px;
 		width: 100%;
 		min-width: 0;
-		height: 28px;
-		padding: 6px;
+		height: 32px;
+		padding: 0 8px;
 		box-sizing: border-box;
 		border-radius: var(--radius-md);
 		cursor: pointer;
@@ -468,9 +468,9 @@
 			transform 220ms var(--motion-ease-spring);
 	}
 
-	/* The tab rows' hover recipe (TabItem), tinted with the folder's color. */
+	/* The tab rows' hover recipe (TabItem). */
 	.folder-row:hover {
-		background: color-mix(in srgb, var(--folder-accent) 4%, color-mix(in srgb, var(--bg-selected) 20%, transparent));
+		background: var(--bg-hover);
 	}
 
 	.folder-row:focus-visible {
@@ -552,7 +552,7 @@
 		opacity: 0.9;
 	}
 
-	/* Near-white papers vanish on a light sidebar's open-folder tint. */
+	/* Near-white papers vanish on a light sidebar. */
 	@media (prefers-color-scheme: light) {
 		.folder-file-fill {
 			fill: color-mix(in srgb, white 20%, var(--folder-accent) 80%);

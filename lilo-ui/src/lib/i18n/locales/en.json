@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "Archive unpinned tabs",
 		"pinnedTabs": "Pinned tabs",
 		"openTabs": "Open tabs",
-		"dropToPin": "Drop to pin",
-		"askAgent": "Ask an Agent"
+		"dropToPin": "Drop to pin"
 	},
 	"bookmarks": {
 		"groupLabel": "Bookmarked tabs",

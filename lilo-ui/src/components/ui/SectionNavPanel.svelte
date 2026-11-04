@@ -88,7 +88,7 @@
   }
 
   .section-nav-toolbar {
-    padding: 0 var(--sidebar-right-pad, 10px) 8px 10px;
+    padding: 0 var(--sidebar-right-pad, 8px) 8px 8px;
   }
 
   /* minmax(0, ...) so a long label ellipsizes instead of widening every row past the panel. */
@@ -98,7 +98,7 @@
     align-content: start;
     min-height: 0;
     overflow-y: auto;
-    padding: 4px var(--sidebar-right-pad, 10px) 14px 10px;
+    padding: 4px var(--sidebar-right-pad, 8px) 14px 8px;
   }
 
   .section-nav-group {

@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "Archiver les onglets non épinglés",
 		"pinnedTabs": "Onglets épinglés",
 		"openTabs": "Onglets ouverts",
-		"dropToPin": "Déposer pour épingler",
-		"askAgent": "Demander à un agent"
+		"dropToPin": "Déposer pour épingler"
 	},
 	"bookmarks": {
 		"groupLabel": "Onglets favoris",

@@ -34,7 +34,6 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { getActingAgentTabIds, isAgentsSpace } from "../../stores/agents.svelte";
   import { getHangSeconds, getPageHang } from "../../stores/pageHang.svelte";
-  import { isChromaticHex } from "../../lib/sidebarTheme";
   import { terminalFolder, terminalTitle, formatTerminalDuration } from "../../lib/terminalTitle";
   import { titleUnread, unreadBadgeText } from "../../lib/titleUnread";
   import { getOpenTabs, isBlankTab, type TabState } from "../../stores/tabs.svelte";
@@ -428,21 +427,12 @@
   data-tab-id={tab.id}
   class="tab-item"
   class:active={isActive}
-  class:needs-attention={awaitingInput}
   class:travel-hold={travelHold}
   class:closed={tab.isClosed}
   class:loading={tab.isLoading}
   class:split-drop-target={splitDropTarget}
   class:interactive
-  style={`${
-    tab.faviconDominantColor
-      ? `--tab-glow: ${tab.faviconDominantColor};`
-      : ""
-  }${
-    isActive && isChromaticHex(tab.faviconDominantColor)
-      ? `--tab-tint: ${tab.faviconDominantColor};`
-      : ""
-  }`}
+  style={tab.faviconDominantColor ? `--tab-glow: ${tab.faviconDominantColor};` : undefined}
   role="treeitem"
   tabindex={interactive && tabStop ? 0 : -1}
   aria-level={level}
@@ -560,9 +550,9 @@
         />
       </div>
     {/if}
-    <!-- One corner mark at a time: the agent's, else what the tab captures, else its sound. -->
-    {#if agentActing}
-      <span class="agent-pip" aria-hidden="true" in:pipPop out:pipPop={{ leaving: true }}></span>
+    <!-- One corner mark at a time: the orange dot for a page or an agent's action waiting on you, else what the tab captures. -->
+    {#if agentActing || (awaitingInput && !isTerminal && tab.kind !== "agent")}
+      <span class="attention-pip" aria-hidden="true" in:pipPop out:pipPop={{ leaving: true }}></span>
     {:else if isCapturing}
       <span
         class="capture-pip"
@@ -572,28 +562,6 @@
         in:pipPop
         out:pipPop={{ leaving: true }}
       ></span>
-    {:else if tab.isAudioPlaying || tab.isMuted}
-      <button
-        type="button"
-        class="sound-badge"
-        aria-label={tab.isMuted ? t("tabItem.unmute") : t("tabItem.mute")}
-        tabindex={interactive ? 0 : -1}
-        inert={actionsInert || undefined}
-        use:tooltip={{ text: tab.isMuted ? t("tabItem.unmute") : t("tabItem.mute"), placement: tooltipSide() }}
-        onclick={toggleMute}
-        in:pipPop
-        out:pipPop={{ leaving: true }}
-      >
-        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          {#if tab.isMuted}
-            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" opacity="0.55"/>
-            <path d="M8 4.5L10.5 7M10.5 4.5L8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          {:else}
-            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor"/>
-            <path d="M8.6 4C9.8 4.9 9.8 7.1 8.6 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          {/if}
-        </svg>
-      </button>
     {/if}
   </div>
 
@@ -629,6 +597,27 @@
       <span class="unread-dot" aria-hidden="true"></span>
     {:else if pageUnreadCount}
       <span class="unread-count" aria-hidden="true">{unreadBadgeText(pageUnreadCount)}</span>
+    {/if}
+    {#if tab.isAudioPlaying || tab.isMuted}
+      <button
+        type="button"
+        class="sound-button"
+        aria-label={tab.isMuted ? t("tabItem.unmute") : t("tabItem.mute")}
+        tabindex={interactive ? 0 : -1}
+        inert={actionsInert || undefined}
+        use:tooltip={{ text: tab.isMuted ? t("tabItem.unmute") : t("tabItem.mute"), placement: tooltipSide() }}
+        onclick={toggleMute}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          {#if tab.isMuted}
+            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" opacity="0.55"/>
+            <path d="M8 4.5L10.5 7M10.5 4.5L8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          {:else}
+            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor"/>
+            <path d="M8.6 4C9.8 4.9 9.8 7.1 8.6 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          {/if}
+        </svg>
+      </button>
     {/if}
     {#if tab.hasPopup}
       <span
@@ -689,8 +678,8 @@
     gap: 8px;
     width: 100%;
     min-width: 0;
-    padding: 6px;
-    height: 28px;
+    padding: 0 8px;
+    height: 32px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
     cursor: default;
@@ -711,9 +700,8 @@
     cursor: pointer;
   }
 
-  /* A fifth of the selected row's surface: hover leans the way selection does, clearly weaker. */
   .tab-item:hover {
-    background: color-mix(in srgb, var(--tab-glow, transparent) 3%, color-mix(in srgb, var(--bg-selected) 20%, transparent));
+    background: var(--bg-hover);
   }
 
   .tab-item:focus-visible {
@@ -724,7 +712,8 @@
   /* `.travel-hold` keeps the row's highlight back while the SelectionIndicator ghost flies here; the recipe must stay
      identical to `.selection-ghost` so landing is seamless. */
   .tab-item.active:not(.travel-hold) {
-    background: color-mix(in srgb, var(--tab-tint, var(--accent)) 18%, var(--bg-selected));
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
   }
 
   .tab-item.split-drop-target {
@@ -842,7 +831,7 @@
   }
 
   .tab-body.under-close {
-    --close-fade: 22px;
+    --close-fade: 20px;
     mask-image: linear-gradient(to left, transparent var(--close-fade), #000 calc(var(--close-fade) + 14px));
     transition: --close-fade var(--transition-fast);
   }
@@ -854,7 +843,7 @@
   .tab-actions {
     position: absolute;
     top: 0;
-    right: 6px;
+    right: 8px;
     bottom: 0;
     display: flex;
     align-items: center;
@@ -913,46 +902,42 @@
     height: 6px;
     border-radius: 50%;
     background: var(--text-muted);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
   }
 
   .capture-pip.live {
     background: var(--danger-vivid);
   }
 
-  .sound-badge {
-    position: absolute;
-    right: -5px;
-    bottom: -5px;
-    width: 11px;
-    height: 11px;
+  /* The accessory slot: the close button covers it on hover, through the body's fade. */
+  .sound-button {
+    flex: none;
+    width: 20px;
+    height: 20px;
     padding: 0;
     border: none;
-    border-radius: 50%;
+    border-radius: var(--radius-sm);
     display: grid;
     place-items: center;
-    background: var(--sidebar-bg);
-    color: var(--text-muted);
+    background: transparent;
+    color: var(--text-secondary);
     cursor: pointer;
     transition:
       background var(--transition-fast),
-      color var(--transition-fast),
-      transform var(--transition-fast);
+      color var(--transition-fast);
   }
 
-  .sound-badge:hover {
-    background: color-mix(in srgb, var(--text-primary) 12%, var(--sidebar-bg));
+  .sound-button:hover {
+    background: var(--bg-active);
     color: var(--text-primary);
-    transform: scale(1.3);
   }
 
-  .sound-badge:focus-visible {
+  .sound-button:focus-visible {
     outline: var(--focus-outline);
   }
 
   /* A pointer target well past the glyph, still inside the favicon's corner. */
-  .capture-pip::before,
-  .sound-badge::before {
+  .capture-pip::before {
     content: "";
     position: absolute;
     inset: -5px;
@@ -988,16 +973,15 @@
     color: var(--terminal-tile-text);
   }
 
-  /* Static like the terminal pip: the agent acts in bursts, and a loop would keep the display link up. */
-  .agent-pip {
+  .attention-pip {
     position: absolute;
     right: -3px;
     bottom: -3px;
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--agents);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    background: var(--attention);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
   }
 
   .agent-tile {
@@ -1015,7 +999,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
     transition: background var(--motion-duration-normal) ease;
   }
 
@@ -1031,11 +1015,6 @@
 
   .terminal-pip[data-state="attention"] {
     background: var(--attention);
-  }
-
-  .tab-item.needs-attention {
-    background: color-mix(in srgb, var(--attention) 14%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--attention) 40%, transparent);
   }
 
   /* The attention amber, pulled toward the text color so it reads on light and dark sidebars. */
@@ -1108,18 +1087,18 @@
 
   .unread-count {
     flex: none;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 5px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
     box-sizing: border-box;
     border-radius: var(--radius-chip);
     background: var(--accent);
     color: var(--accent-text);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-2xs);
     font-weight: var(--font-weight-semibold);
     font-variant-numeric: tabular-nums;
     font-feature-settings: "case";
-    line-height: 16px;
+    line-height: 14px;
     text-align: center;
   }
 </style>

@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "고정되지 않은 탭 보관",
 		"pinnedTabs": "고정된 탭",
 		"openTabs": "열린 탭",
-		"dropToPin": "놓아서 고정",
-		"askAgent": "에이전트에게 묻기"
+		"dropToPin": "놓아서 고정"
 	},
 	"bookmarks": {
 		"groupLabel": "책갈피로 저장된 탭",

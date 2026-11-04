@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "封存未釘選分頁",
 		"pinnedTabs": "釘選分頁",
 		"openTabs": "已開啟分頁",
-		"dropToPin": "放下以釘選",
-		"askAgent": "詢問代理程式"
+		"dropToPin": "放下以釘選"
 	},
 	"bookmarks": {
 		"groupLabel": "書籤分頁",

@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "Sabitlenmemiş sekmeleri arşivle",
 		"pinnedTabs": "Sabitlenmiş sekmeler",
 		"openTabs": "Açık sekmeler",
-		"dropToPin": "Sabitlemek için bırakın",
-		"askAgent": "Bir ajana sor"
+		"dropToPin": "Sabitlemek için bırakın"
 	},
 	"bookmarks": {
 		"groupLabel": "Yer imli sekmeler",

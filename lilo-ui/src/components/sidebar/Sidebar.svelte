@@ -322,7 +322,7 @@
     display: flex;
     align-items: center;
     height: 52px;
-    padding: 0 var(--sidebar-right-pad, 10px) 0 0;
+    padding: 0 var(--sidebar-right-pad, 8px) 0 0;
     flex-shrink: 0;
   }
 

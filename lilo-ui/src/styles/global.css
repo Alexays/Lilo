@@ -371,7 +371,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
     --accent-hover: var(--sidebar-accent-hover);
     --accent-text: var(--sidebar-accent-text);
     --danger: var(--sidebar-danger);
-    --sidebar-right-pad: 10px;
+    --sidebar-right-pad: 8px;
 }
 
 /* Increase contrast firms up the layers drawn on the Space color. */

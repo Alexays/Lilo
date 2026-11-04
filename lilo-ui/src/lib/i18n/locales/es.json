@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "Archivar pestañas sin fijar",
 		"pinnedTabs": "Pestañas fijadas",
 		"openTabs": "Pestañas abiertas",
-		"dropToPin": "Suelta para fijar",
-		"askAgent": "Preguntar a un agente"
+		"dropToPin": "Suelta para fijar"
 	},
 	"bookmarks": {
 		"groupLabel": "Pestañas guardadas en marcadores",

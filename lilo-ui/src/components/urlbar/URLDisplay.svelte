@@ -1003,7 +1003,7 @@
   .url-display {
     position: relative;
     z-index: 20;
-    padding: 4px var(--sidebar-right-pad, 10px) 4px 10px;
+    padding: 4px var(--sidebar-right-pad, 8px) 4px 8px;
     flex-shrink: 0;
   }
 

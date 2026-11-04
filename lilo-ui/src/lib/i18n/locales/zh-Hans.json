@@ -852,8 +852,7 @@
 		"clearUnpinnedTooltip": "归档未固定的标签页",
 		"pinnedTabs": "固定标签页",
 		"openTabs": "打开的标签页",
-		"dropToPin": "放下以固定",
-		"askAgent": "询问智能体"
+		"dropToPin": "放下以固定"
 	},
 	"bookmarks": {
 		"groupLabel": "书签标签页",
