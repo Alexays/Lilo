@@ -364,6 +364,11 @@
     {#await import("./components/page/PageToolbar.svelte") then toolbar}
       <toolbar.default row={getTabPosition() === "top" && isSidebarVisible()} accent={themeSidebarColor} />
     {/await}
+  {:else if !isSidebarShown()}
+    <!-- With no bar left to show it, a page's load shows in the inset above it. -->
+    {#await import("./components/page/PageLoadLine.svelte") then line}
+      <line.default />
+    {/await}
   {/if}
 
   <SplitDropZone />
