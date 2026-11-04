@@ -896,6 +896,11 @@
 			"page": "Cor da aba ativa",
 			"wallpaper": "Cor do seu papel de parede"
 		},
+		"color": "Cor",
+		"colorSource": {
+			"page": "Página",
+			"wallpaper": "Papel de parede"
+		},
 		"colorSourceHint": {
 			"page": "O Lilo usa a cor do site na aba ativa.",
 			"wallpaper": "O Lilo usa a cor do seu papel de parede."

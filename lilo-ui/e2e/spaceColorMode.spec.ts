@@ -17,6 +17,9 @@ async function openAppearance(page: Page): Promise<void> {
 	await expect(page.locator(".editor-panel")).toBeVisible();
 }
 
+// The sources and swatches sit in the popover the Color row opens.
+const colorButton = (page: Page) => page.locator(".color-button");
+
 const dayToggle = (page: Page) => page.locator(".ui-toggle", { has: page.getByRole("checkbox", { name: "Change with the time of day" }) });
 
 // 19:00, the evening: a Space following the time is warmer than its base color.
@@ -36,20 +39,28 @@ test("each color source and material previews on the whole chrome, and is sent a
 	const fixed = await sidebarBackground(page);
 	await openAppearance(page);
 
+	await colorButton(page).click();
 	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
+	await page.keyboard.press("Escape");
+	await expect(colorButton(page)).toBeFocused();
+	await expect(page.locator(".editor-panel")).toBeVisible();
 
 	await dayToggle(page).click();
 	await expect.poll(() => sidebarBackground(page)).not.toBe(fixed);
 	// The base color is still the user's to pick while it follows the day.
 	const evening = await sidebarBackground(page);
-	// Past the tab and the wallpaper, the first color.
+	// Past the tab and the wallpaper, the first color: picking it closes the popover.
+	await colorButton(page).click();
 	await page.locator(".swatches .swatch").nth(2).click();
+	await expect(page.locator(".swatches")).toHaveCount(0);
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 
-	// The active tab's site brings the color: the title says so, and the day has nothing to change.
+	// The active tab's site brings the color: the Color row says so, and the day has nothing to change.
+	await colorButton(page).click();
 	await fromTab(page).click();
+	await expect(colorButton(page)).toHaveText("Page");
+	await colorButton(page).click();
 	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "true");
-	await expect(page.locator(".editor-panel .name-row .name")).toHaveText("Color of the active tab");
 	await expect(dayToggle(page)).toHaveCount(0);
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 	const tinted = await sidebarBackground(page);
@@ -62,7 +73,9 @@ test("each color source and material previews on the whole chrome, and is sent a
 	expect(await page.locator(".desk").first().evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("data:image/jpeg");
 
 	// A color takes back from Lilo's pick.
+	await colorButton(page).click();
 	await page.locator(".swatches .swatch").nth(4).click();
+	await colorButton(page).click();
 	await expect(fromWallpaper(page)).toHaveAttribute("aria-pressed", "false");
 	await fromWallpaper(page).click();
 	await page.getByRole("radiogroup", { name: "Material" }).getByRole("radio", { name: "Grain" }).click();

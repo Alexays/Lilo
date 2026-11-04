@@ -896,6 +896,11 @@
 			"page": "Kleur van het actieve tabblad",
 			"wallpaper": "Kleur van je achtergrond"
 		},
+		"color": "Kleur",
+		"colorSource": {
+			"page": "Pagina",
+			"wallpaper": "Achtergrond"
+		},
 		"colorSourceHint": {
 			"page": "Lilo neemt de kleur van de site in het actieve tabblad over.",
 			"wallpaper": "Lilo neemt de kleur van je achtergrond over."

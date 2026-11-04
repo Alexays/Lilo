@@ -896,6 +896,11 @@
 			"page": "Etkin sekmenin rengi",
 			"wallpaper": "Duvar kâğıdınızın rengi"
 		},
+		"color": "Renk",
+		"colorSource": {
+			"page": "Sayfa",
+			"wallpaper": "Duvar kâğıdı"
+		},
 		"colorSourceHint": {
 			"page": "Lilo etkin sekmedeki sitenin rengini alır.",
 			"wallpaper": "Lilo duvar kâğıdınızın rengini alır."

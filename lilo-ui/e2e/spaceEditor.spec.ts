@@ -199,6 +199,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		const spaceBackground = await sidebarBackground(page);
 
 		await page.evaluate(() => window.__lilo!.receive({ event: "openAddSpaceEditor" }));
+		await page.locator(".color-button").click();
 		await page.locator(".swatches .swatch").nth(5).click();
 
 		await expect.poll(() => sidebarBackground(page)).not.toBe(spaceBackground);
@@ -288,6 +289,7 @@ test("an edited space takes each change as it is made, with Delete Space as its 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
 	await expect(page.locator(".editor-footer button")).toHaveText(["Delete Space..."]);
 
+	await page.locator(".color-button").click();
 	await page.locator(".swatches .swatch").nth(5).click();
 	await expect.poll(async () => Object.keys((await sentCommands(page)).find((command) => command.action === "updateSpace")?.payload ?? {}))
 		.toEqual(["id", "color"]);
@@ -297,6 +299,7 @@ test("an edited space takes each change as it is made, with Delete Space as its 
 test("the pointer leaving for the page keeps the custom color picker connected", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
+	await page.locator(".color-button").click();
 	const picker = page.locator(".swatch.custom input");
 	await picker.focus();
 	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: false }));
@@ -304,8 +307,9 @@ test("the pointer leaving for the page keeps the custom color picker connected",
 	await picker.fill("#123456");
 	await expect(page.locator(".swatches .swatch.custom")).toHaveClass(/selected/);
 	await expect(page.locator(".swatches .swatch.custom")).toHaveCSS("background-image", /rgb\(18, 52, 86\)/);
+	// A press in the page closes the popover, the picker with it.
 	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: true }));
-	await expect(picker).not.toBeFocused();
+	await expect(picker).toHaveCount(0);
 });
 
 test("a custom color keeps the hue wheel around it, and the swatch still opens the color picker", async ({ page }) => {
@@ -313,6 +317,8 @@ test("a custom color keeps the hue wheel around it, and the swatch still opens t
 	world.spaces[0].color = "#4a90d9";
 	await bootChrome(page, world);
 	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), world.spaces[0].id);
+	await expect(page.locator(".color-button")).toHaveText("#4A90D9");
+	await page.locator(".color-button").click();
 	const custom = page.locator(".swatches .swatch.custom");
 	await expect(custom).toHaveClass(/selected/);
 	expect(await custom.evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("conic-gradient");

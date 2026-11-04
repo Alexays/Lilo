@@ -896,6 +896,11 @@
 			"page": "アクティブなタブの色",
 			"wallpaper": "壁紙の色"
 		},
+		"color": "カラー",
+		"colorSource": {
+			"page": "ページ",
+			"wallpaper": "壁紙"
+		},
 		"colorSourceHint": {
 			"page": "アクティブなタブのサイトの色を使います。",
 			"wallpaper": "壁紙の色を使います。"

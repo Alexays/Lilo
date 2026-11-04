@@ -896,6 +896,11 @@
 			"page": "Color de la pestaña activa",
 			"wallpaper": "Color de tu fondo de pantalla"
 		},
+		"color": "Color",
+		"colorSource": {
+			"page": "Página",
+			"wallpaper": "Fondo de pantalla"
+		},
 		"colorSourceHint": {
 			"page": "Lilo toma el color del sitio de la pestaña activa.",
 			"wallpaper": "Lilo toma el color de tu fondo de pantalla."

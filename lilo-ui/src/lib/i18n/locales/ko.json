@@ -896,6 +896,11 @@
 			"page": "활성 탭의 색상",
 			"wallpaper": "배경화면의 색상"
 		},
+		"color": "색상",
+		"colorSource": {
+			"page": "페이지",
+			"wallpaper": "배경화면"
+		},
 		"colorSourceHint": {
 			"page": "Lilo가 활성 탭에 열린 사이트의 색상을 사용합니다.",
 			"wallpaper": "Lilo가 배경화면의 색상을 사용합니다."

@@ -910,6 +910,11 @@
 			"page": "Цвет активной вкладки",
 			"wallpaper": "Цвет ваших обоев"
 		},
+		"color": "Цвет",
+		"colorSource": {
+			"page": "Страница",
+			"wallpaper": "Обои"
+		},
 		"colorSourceHint": {
 			"page": "Lilo берёт цвет сайта в активной вкладке.",
 			"wallpaper": "Lilo берёт цвет ваших обоев."

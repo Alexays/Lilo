@@ -896,6 +896,11 @@
 			"page": "Color of the active tab",
 			"wallpaper": "Color of your wallpaper"
 		},
+		"color": "Color",
+		"colorSource": {
+			"page": "Page",
+			"wallpaper": "Wallpaper"
+		},
 		"colorSourceHint": {
 			"page": "Lilo takes the color of the site in the active tab.",
 			"wallpaper": "Lilo takes the color of your wallpaper."

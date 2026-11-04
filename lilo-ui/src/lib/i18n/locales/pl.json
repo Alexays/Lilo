@@ -910,6 +910,11 @@
 			"page": "Kolor aktywnej karty",
 			"wallpaper": "Kolor Twojej tapety"
 		},
+		"color": "Kolor",
+		"colorSource": {
+			"page": "Strona",
+			"wallpaper": "Tapeta"
+		},
 		"colorSourceHint": {
 			"page": "Lilo przyjmuje kolor strony w aktywnej karcie.",
 			"wallpaper": "Lilo przyjmuje kolor Twojej tapety."

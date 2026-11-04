@@ -896,6 +896,11 @@
 			"page": "Colore della scheda attiva",
 			"wallpaper": "Colore del tuo sfondo"
 		},
+		"color": "Colore",
+		"colorSource": {
+			"page": "Pagina",
+			"wallpaper": "Sfondo"
+		},
 		"colorSourceHint": {
 			"page": "Lilo prende il colore del sito nella scheda attiva.",
 			"wallpaper": "Lilo prende il colore del tuo sfondo."

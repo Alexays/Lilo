@@ -8,6 +8,7 @@
   import { isChromaticHex } from "../../lib/sidebarTheme";
   import { PASTEL_COLOR_NAMES, PASTEL_COLORS } from "../settings/profilesModel";
   import UiToggle from "../ui/UiToggle.svelte";
+  import StripPopover from "../strip/StripPopover.svelte";
   import AppearancePreview from "./AppearancePreview.svelte";
 
   let { mode, color, material, onmode, oncolor, onmaterial, preview = true, inline = false }: {
@@ -19,7 +20,7 @@
     onmaterial: (material: SpaceMaterial) => void;
     /** False when the caller draws its own preview, with the material and time of day controls. */
     preview?: boolean;
-    /** Laid out in the sidebar, which repaints as its own preview: material thumbnails and a time-of-day switch row. */
+    /** Laid out in the sidebar, which repaints as its own preview: one grouped box, the palette in a popover. */
     inline?: boolean;
   } = $props();
 
@@ -46,6 +47,20 @@
   const siteColor = $derived(isChromaticHex(activeTab?.faviconDominantColor) ? activeTab?.faviconDominantColor : undefined);
   const EXAMPLE_SITE = "#e5484d";
 
+  const id = $props.id();
+  let trigger: HTMLButtonElement | undefined = $state();
+  let palette: HTMLDivElement | undefined = $state();
+  let open = $state(false);
+  const shortName = $derived(auto ? t(`spaceEditor.colorSource.${mode}`)
+    : index >= 0 ? t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[index]}`) : color.toUpperCase());
+
+  // Escape and a pick leave the focus in the closing popover: it goes back to the trigger.
+  function close(): void {
+    if (!open) return;
+    if (palette?.contains(document.activeElement)) trigger?.focus();
+    open = false;
+  }
+
   function pickColor(value: string): void {
     oncolor(value);
     if (auto) onmode("fixed");
@@ -58,9 +73,36 @@
   }
 </script>
 
-<div class="picker" class:inline>
-  {#if inline}
-    <div class="materials" role="radiogroup" aria-label={t("spaceEditor.materialLabel")}>
+{#snippet swatches()}
+  <div class="swatches">
+    {#each AUTO_SOURCES as value (value)}
+      <button class="swatch from-{value}" class:selected={mode === value} style:--desktop={desktop} aria-pressed={mode === value}
+        aria-label={t(`spaceEditor.colorFrom.${value}`)} use:tooltip={t(`spaceEditor.colorSourceHint.${value}`)} onclick={() => { onmode(value); close(); }}>
+        {#if value === "page"}
+          {#if favicon}
+            <img class="favicon" src={favicon} alt="" />
+          {:else}
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2" /><path d="M2 8h12M8 2c-2.2 2.4-2.2 9.6 0 12M8 2c2.2 2.4 2.2 9.6 0 12" fill="none" stroke="currentColor" stroke-width="1.2" /></svg>
+          {/if}
+        {/if}
+      </button>
+    {/each}
+    <span class="divider" aria-hidden="true"></span>
+    {#each PASTEL_COLORS as swatch, i (swatch)}
+      <button class="swatch" class:selected={!auto && color === swatch} style:background={swatch} aria-pressed={!auto && color === swatch}
+        aria-label={t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[i]}`)} onclick={() => { pickColor(swatch); close(); }}></button>
+    {/each}
+    <!-- WebKit opens the macOS color panel for a color input. -->
+    <label class="swatch custom" class:selected={!auto && index < 0}
+      style:background={!auto && index < 0 ? `radial-gradient(circle closest-side, ${color} 0 52%, transparent 56%), var(--hue-wheel)` : null}>
+      <input type="color" aria-label={t("spaceEditor.customColor")} value={color} oninput={(e) => pickColor((e.currentTarget as HTMLInputElement).value)} />
+    </label>
+  </div>
+{/snippet}
+
+{#if inline}
+  <div class="box">
+    <div class="row materials" role="radiogroup" aria-label={t("spaceEditor.materialLabel")}>
       {#each MATERIALS as value (value)}
         <button class="material" role="radio" aria-checked={material === value} onclick={() => onmaterial(value)}>
           <span class="thumbnail"><AppearancePreview material={value} {desktop} thumbnail /></span>
@@ -68,59 +110,53 @@
         </button>
       {/each}
     </div>
-  {:else if preview}
-    <!-- The time of day changes a chosen color only: Lilo's picks bring their own. -->
-    <AppearancePreview {material} {desktop} {onmaterial} followsDay={auto ? null : mode === "time"}
-      site={mode === "page" ? { color: siteColor ?? EXAMPLE_SITE, favicon: siteColor ? favicon : undefined, example: !siteColor } : null}
-      onday={(on) => onmode(on ? "time" : "fixed")} />
-  {/if}
-
-  <div class="group">
-    <div class="name-row">
-      {#if auto}
-        <span class="name">{t(`spaceEditor.colorFrom.${mode}`)}</span>
-        {#if mode === "page" && !siteColor}<span class="note">{t("spaceEditor.noSiteYet")}</span>{/if}
-      {:else if index >= 0}
-        <span class="name">{t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[index]}`)}</span>
-      {:else}
-        <!-- A custom color is named by its hex, which can be typed. -->
-        <input class="name hex" value={color.toUpperCase()} spellcheck="false" aria-label={t("spaceEditor.hexColor")}
-          onchange={(e) => setHex(e.currentTarget as HTMLInputElement)} onkeydown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()} />
-      {/if}
+    <div class="row">
+      <span id="{id}-label">{t("spaceEditor.color")}</span>
+      <button class="color-button" bind:this={trigger} aria-haspopup="menu" aria-expanded={open} aria-labelledby="{id}-label {id}-name"
+        use:tooltip={mode === "page" && !siteColor ? t("spaceEditor.noSiteYet") : ""} onclick={() => (open = !open)}>
+        <span class="dot"></span>
+        <span id="{id}-name" class="short-name">{shortName}</span>
+        <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
     </div>
-    <div class="swatches">
-      {#each AUTO_SOURCES as value (value)}
-        <button class="swatch from-{value}" class:selected={mode === value} style:--desktop={desktop} aria-pressed={mode === value}
-          aria-label={t(`spaceEditor.colorFrom.${value}`)} use:tooltip={t(`spaceEditor.colorSourceHint.${value}`)} onclick={() => onmode(value)}>
-          {#if value === "page"}
-            {#if favicon}
-              <img class="favicon" src={favicon} alt="" />
-            {:else}
-              <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2" /><path d="M2 8h12M8 2c-2.2 2.4-2.2 9.6 0 12M8 2c2.2 2.4 2.2 9.6 0 12" fill="none" stroke="currentColor" stroke-width="1.2" /></svg>
-            {/if}
-          {/if}
-        </button>
-      {/each}
-      <span class="divider" aria-hidden="true"></span>
-      {#each PASTEL_COLORS as swatch, i (swatch)}
-        <button class="swatch" class:selected={!auto && color === swatch} style:background={swatch} aria-pressed={!auto && color === swatch}
-          aria-label={t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[i]}`)} onclick={() => pickColor(swatch)}></button>
-      {/each}
-      <!-- WebKit opens the macOS color panel for a color input. -->
-      <label class="swatch custom" class:selected={!auto && index < 0}
-        style:background={!auto && index < 0 ? `radial-gradient(circle closest-side, ${color} 0 52%, transparent 56%), var(--hue-wheel)` : null}>
-        <input type="color" aria-label={t("spaceEditor.customColor")} value={color} oninput={(e) => pickColor((e.currentTarget as HTMLInputElement).value)} />
-      </label>
+    {#if !auto}
+      <div class="row" use:tooltip={t("spaceEditor.followDayHint")}>
+        <span>{t("spaceEditor.followDay")}</span>
+        <UiToggle checked={mode === "time"} ariaLabel={t("spaceEditor.followDay")} onchange={(on) => onmode(on ? "time" : "fixed")} />
+      </div>
+    {/if}
+  </div>
+  {#if open && trigger}
+    <StripPopover anchor={trigger} label={t("spaceEditor.color")} onclose={close}>
+      <div class="palette" bind:this={palette}>{@render swatches()}</div>
+    </StripPopover>
+  {/if}
+{:else}
+  <div class="picker">
+    {#if preview}
+      <!-- The time of day changes a chosen color only: Lilo's picks bring their own. -->
+      <AppearancePreview {material} {desktop} {onmaterial} followsDay={auto ? null : mode === "time"}
+        site={mode === "page" ? { color: siteColor ?? EXAMPLE_SITE, favicon: siteColor ? favicon : undefined, example: !siteColor } : null}
+        onday={(on) => onmode(on ? "time" : "fixed")} />
+    {/if}
+
+    <div class="group">
+      <div class="name-row">
+        {#if auto}
+          <span class="name">{t(`spaceEditor.colorFrom.${mode}`)}</span>
+          {#if mode === "page" && !siteColor}<span class="note">{t("spaceEditor.noSiteYet")}</span>{/if}
+        {:else if index >= 0}
+          <span class="name">{t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[index]}`)}</span>
+        {:else}
+          <!-- A custom color is named by its hex, which can be typed. -->
+          <input class="name hex" value={color.toUpperCase()} spellcheck="false" aria-label={t("spaceEditor.hexColor")}
+            onchange={(e) => setHex(e.currentTarget as HTMLInputElement)} onkeydown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()} />
+        {/if}
+      </div>
+      {@render swatches()}
     </div>
   </div>
-
-  {#if inline && !auto}
-    <div class="day-row" use:tooltip={t("spaceEditor.followDayHint")}>
-      <span>{t("spaceEditor.followDay")}</span>
-      <UiToggle checked={mode === "time"} ariaLabel={t("spaceEditor.followDay")} onchange={(on) => onmode(on ? "time" : "fixed")} />
-    </div>
-  {/if}
-</div>
+{/if}
 
 <style>
   .picker {
@@ -130,8 +166,28 @@
     container-type: inline-size;
   }
 
-  .picker.inline {
-    gap: 12px;
+  /* A Settings grouped box laid on the Space color: the hover layer, the quiet field secondary text keeps 4.5:1 on. */
+  .box {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-box);
+    background: var(--bg-hover);
+    box-shadow: inset 0 0 0 1px var(--separator);
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 28px;
+    padding: 11px 14px;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+  }
+
+  .row + .row {
+    border-top: 1px solid var(--separator);
   }
 
   .materials {
@@ -182,14 +238,56 @@
     outline-offset: 4px;
   }
 
-  .day-row {
+  .color-button {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-height: 28px;
-    color: var(--text-primary);
+    gap: 6px;
+    min-width: 0;
+    height: var(--control-height-sm);
+    margin-right: -8px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
     font-size: var(--font-size-md);
+    cursor: pointer;
+  }
+
+  .color-button:hover,
+  .color-button[aria-expanded="true"] {
+    background: var(--bg-hover);
+  }
+
+  .color-button:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
+
+  .dot {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--sidebar-bg);
+    box-shadow: inset 0 0 0 1px var(--text-primary-tint-12);
+  }
+
+  .short-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .palette {
+    padding: 4px;
+  }
+
+  /* Out of the picker's container: the eight columns share the popover's width. */
+  .palette .swatches {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .group {

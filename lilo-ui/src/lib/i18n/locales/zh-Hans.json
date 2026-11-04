@@ -896,6 +896,11 @@
 			"page": "当前标签页的颜色",
 			"wallpaper": "墙纸的颜色"
 		},
+		"color": "颜色",
+		"colorSource": {
+			"page": "网页",
+			"wallpaper": "墙纸"
+		},
 		"colorSourceHint": {
 			"page": "Lilo 采用当前标签页中网站的颜色。",
 			"wallpaper": "Lilo 采用你的墙纸颜色。"

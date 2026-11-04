@@ -896,6 +896,11 @@
 			"page": "目前分頁的顏色",
 			"wallpaper": "背景圖片的顏色"
 		},
+		"color": "顏色",
+		"colorSource": {
+			"page": "網頁",
+			"wallpaper": "背景圖片"
+		},
 		"colorSourceHint": {
 			"page": "Lilo 採用目前分頁中網站的顏色。",
 			"wallpaper": "Lilo 採用你的背景圖片顏色。"

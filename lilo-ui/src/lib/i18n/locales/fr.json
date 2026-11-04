@@ -896,6 +896,11 @@
 			"page": "Couleur de l'onglet actif",
 			"wallpaper": "Couleur de votre fond d'écran"
 		},
+		"color": "Couleur",
+		"colorSource": {
+			"page": "Page",
+			"wallpaper": "Fond d'écran"
+		},
 		"colorSourceHint": {
 			"page": "Lilo prend la couleur du site de l'onglet actif.",
 			"wallpaper": "Lilo prend la couleur de votre fond d'écran."
