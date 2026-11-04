@@ -64,5 +64,5 @@ test("the library menu lists running downloads above the archived tabs, with the
 	expect((await sentCommands(page)).some((command) => command.action === "pauseDownload")).toBe(true);
 	await menu.getByRole("menuitem", { name: "Show all downloads" }).click();
 	await expect(menu).toHaveCount(0);
-	await expect(page.locator(".downloads-filter")).toBeVisible();
+	await expect(page.getByRole("region", { name: "Downloads" })).toBeVisible();
 });
