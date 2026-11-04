@@ -7,6 +7,7 @@
   import { nextProfileColor, PASTEL_COLORS, spacesByProfile, userProfiles } from "./profilesModel";
   import SettingsProfileRow from "./SettingsProfileRow.svelte";
   import UiButton from "../ui/UiButton.svelte";
+  import AgentMascot from "../sidebar/AgentMascot.svelte";
 
   const users = $derived(userProfiles(getProfiles(), getAgentsProfileId()));
   const usage = $derived(spacesByProfile(getSpaces(), getAgentsSpaceIds()));
@@ -87,12 +88,7 @@
   {#if getAgentsProfileId()}
     <div class="agents-row">
       <span class="agents-avatar" aria-hidden="true">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2.5" y="5" width="11" height="8" rx="2.5" />
-          <path d="M8 5V2.5M6.5 2.5h3M1 8.5v2M15 8.5v2" />
-          <circle cx="5.75" cy="9" r="0.6" fill="currentColor" />
-          <circle cx="10.25" cy="9" r="0.6" fill="currentColor" />
-        </svg>
+        <AgentMascot />
       </span>
       <span><b>{t("settings.profiles.agentsTitle")}</b> {t("settings.profiles.agentsDetail")}</span>
     </div>
@@ -217,8 +213,5 @@
     height: 26px;
     border-radius: var(--radius-sm);
     background: var(--agents);
-    color: var(--on-color);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
   }
 </style>
