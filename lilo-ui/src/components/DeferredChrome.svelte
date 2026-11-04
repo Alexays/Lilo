@@ -6,6 +6,7 @@
   import SettingsShell from "./settings/SettingsShell.svelte";
   import HistoryShell from "./history/HistoryShell.svelte";
   import OnboardingShell from "./onboarding/OnboardingShell.svelte";
+  import ContextTips from "./onboarding/ContextTips.svelte";
   import CrashRecoveryBanner from "./banners/CrashRecoveryBanner.svelte";
   import SessionRestoreDegradedBanner from "./banners/SessionRestoreDegradedBanner.svelte";
   import ExtensionDebuggerBanner from "./banners/ExtensionDebuggerBanner.svelte";
@@ -61,6 +62,7 @@
 <ErrorBoundary><SettingsShell /></ErrorBoundary>
 <ErrorBoundary><HistoryShell /></ErrorBoundary>
 <ErrorBoundary><OnboardingShell /></ErrorBoundary>
+<ContextTips />
 <WhatsNewHost />
 <!-- Design System showcase is a contributor tool. Shipped in every build so it's reachable from
      installed/release apps too; self-gates via its UiShellFrame `active`.

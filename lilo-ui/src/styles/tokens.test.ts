@@ -8,11 +8,10 @@ const componentsRoot = new URL("../components/", import.meta.url).pathname;
 // Components that paint fixed artwork rather than chrome, so their literal colors are the point.
 const colorAllowlist = new Set([
 	"diagnostics/DesignSystemShell.svelte", // a sample extension's own icon
-	"onboarding/OnboardingAppearance.svelte", // theme previews
 	"onboarding/OnboardingImport.svelte", // other browsers' brand colors
-	"onboarding/OnboardingIntro.svelte", // the welcome backdrop
-	"onboarding/OnboardingTips.svelte", // illustrations
+	"onboarding/OnboardingShell.svelte", // the welcome backdrop
 	"onboarding/OnboardingUsage.svelte", // illustrations
+	"onboarding/OnboardingYourLilo.svelte", // the window drawn over the wallpaper
 	"screenshot/ScreenshotEditor.svelte", // always-dark editing canvas
 	"settings/ThemePicker.svelte", // previews of each theme's own palette
 	"spaces/AppearancePreview.svelte", // the window drawn over the wallpaper

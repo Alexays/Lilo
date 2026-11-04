@@ -1601,13 +1601,14 @@
 		"continue": "Continua",
 		"back": "Indietro",
 		"skip": "Salta",
+		"letsGo": "Cominciamo",
 		"resume": "Riprendi configurazione",
 		"usage": {
 			"title": "Come userai Lilo?",
 			"subtitle": "La configurazione si adatta alla tua risposta. Puoi modificare tutto nelle Impostazioni.",
 			"browse": "Per navigare",
 			"browseDesc": "I tuoi segnalibri, il tuo stile, l'essenziale",
-			"agents": "Con i miei agenti IA",
+			"agents": "Con i miei agenti",
 			"agentsDesc": "Claude, Codex o Cursor lavorano al tuo fianco",
 			"develop": "Per sviluppare",
 			"developDesc": "Tutto questo, più il terminale"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "Reinstallazione estensioni: {current} di {total}"
 			},
 			"partial": "Impossibile importare alcuni dati: {list}. Puoi riprovare più tardi dalle Impostazioni.",
-			"moreOptions": "Scegli cosa importare",
-			"lessOptions": "Nascondi opzioni",
 			"profiles": "Profili di {browser}",
 			"kinds": "Cosa importare",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "In attesa dell'approvazione di Apple"
 			}
 		},
-		"appearance": {
-			"title": "Il tuo stile",
-			"subtitle": "Chiaro, scuro o come il Mac, e da dove proviene il colore. La finestra si aggiorna subito.",
+		"yourLilo": {
+			"title": "Il tuo Lilo",
+			"subtitle": "Uno stile e un posto per i tuoi pannelli. La finestra segue le tue scelte.",
 			"theme": "Tema",
 			"system": "Automatico",
 			"light": "Chiaro",
-			"dark": "Scuro"
-		},
-		"tabs": {
-			"title": "Le tue schede, dal lato che vuoi",
-			"subtitle": "Scegli un bordo e guarda la finestra adattarsi. Puoi trascinare le schede su un altro bordo in qualsiasi momento."
+			"dark": "Scuro",
+			"tabs": "Pannelli",
+			"color": "Colore",
+			"essentials": "L'essenziale"
 		},
 		"essentials": {
-			"title": "L'essenziale",
-			"subtitle": "Due impostazioni che fanno la differenza. Puoi cambiarle quando vuoi.",
 			"blocker": "Blocca pubblicità e tracker",
 			"blockerDesc": "Consigliato: le pagine si caricano più velocemente e ti seguono meno.",
 			"default": "Apri i link in Lilo",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "Fatto"
 		},
 		"agents": {
-			"title": "I tuoi agenti IA",
+			"title": "I tuoi agenti",
 			"subtitle": "Claude Code, Codex o Cursor lavorano nel proprio spazio Agenti, senza toccare la tastiera. Lilo non ha una propria IA.",
-			"allow": "Consenti agli agenti IA di usare Lilo",
+			"allow": "Consenti agli agenti di usare Lilo",
 			"copied": "Copiato",
-			"connectNamed": "Connetti {name}"
+			"connectNamed": "Connetti {name}",
+			"onThisMac": "Su questo Mac"
 		},
 		"tips": {
-			"title": "3 consigli per iniziare",
-			"subtitle": "È tutto ciò che serve.",
-			"go": "Cominciamo",
 			"search": "Premi ⌘T per cercare o inserire un indirizzo.",
-			"tabs": "Le schede restano in vista, sul bordo che hai scelto.",
 			"split": "Trascina una scheda sul bordo della pagina per vedere due pagine affiancate."
 		},
 		"devTips": {
-			"title": "3 consigli per sviluppare",
-			"subtitle": "Le abbreviazioni funzionano anche senza il menu Sviluppo.",
 			"inspector": "Premi ⌥⌘I per aprire Inspector web sulla pagina.",
 			"localhost": "Trascina il tuo localhost sul bordo della pagina per vederlo accanto alla documentazione.",
 			"agents": "Gli agenti aprono le proprie schede nello spazio Agenti."

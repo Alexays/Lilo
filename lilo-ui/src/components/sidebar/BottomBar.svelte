@@ -466,7 +466,7 @@
     oncontextmenu={(event) => showNativeSidebarContextMenu(event, space.id)}
     onkeydown={(event) => handleSpaceKeydown(event, space.id)}
   >
-    <span class="space-glyph" data-onboarding-anchor={space.id === getActiveSpaceId() ? "space-icon" : undefined}>
+    <span class="space-glyph">
       {#if isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)}
         <!-- Loaded on demand: the tile shows only once an agent connects, so the first frame goes without. -->
         {#await import("./AgentMascot.svelte") then { default: AgentMascot }}

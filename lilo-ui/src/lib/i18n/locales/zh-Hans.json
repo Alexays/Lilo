@@ -1601,13 +1601,14 @@
 		"continue": "继续",
 		"back": "返回",
 		"skip": "跳过",
+		"letsGo": "出发",
 		"resume": "继续设置",
 		"usage": {
 			"title": "你会如何使用 Lilo？",
 			"subtitle": "设置会根据你的选择调整。所有选项之后都可在“设置”中更改。",
 			"browse": "浏览网页",
 			"browseDesc": "你的书签、你的风格，以及常用功能",
-			"agents": "与 AI 智能体协作",
+			"agents": "与智能体协作",
 			"agentsDesc": "Claude、Codex 或 Cursor 在你身边工作",
 			"develop": "开发",
 			"developDesc": "以上所有功能，加上终端"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "正在重新安装扩展，第 {current} 个，共 {total} 个"
 			},
 			"partial": "部分数据无法导入：{list}。你可以稍后在“设置”中重试。",
-			"moreOptions": "选取要导入的内容",
-			"lessOptions": "隐藏选项",
 			"profiles": "{browser} 个人资料",
 			"kinds": "导入内容",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "等待 Apple 批准"
 			}
 		},
-		"appearance": {
-			"title": "你的风格",
-			"subtitle": "选择浅色、深色或跟随 Mac，并选择颜色来源。窗口会立即更新。",
+		"yourLilo": {
+			"title": "你的 Lilo",
+			"subtitle": "选择外观和标签页的位置，窗口会随你的选择变化。",
 			"theme": "主题",
 			"system": "自动",
 			"light": "浅色",
-			"dark": "深色"
-		},
-		"tabs": {
-			"title": "标签页，随你安排",
-			"subtitle": "选取一个边缘，窗口就会随之调整。你随时可以将标签页拖到其他边缘。"
+			"dark": "深色",
+			"tabs": "标签页",
+			"color": "颜色",
+			"essentials": "基本设置"
 		},
 		"essentials": {
-			"title": "基本设置",
-			"subtitle": "两个让体验不同的设置。你随时可以更改。",
 			"blocker": "拦截广告和跟踪器",
 			"blockerDesc": "推荐：网页载入更快，跟踪更少。",
 			"default": "在 Lilo 中打开链接",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "完成"
 		},
 		"agents": {
-			"title": "你的 AI 智能体",
+			"title": "你的智能体",
 			"subtitle": "Claude Code、Codex 或 Cursor 会在专属的“智能体”空间中工作，无需占用你的键盘。Lilo 本身不内置 AI。",
-			"allow": "允许 AI 智能体使用 Lilo",
+			"allow": "允许智能体使用 Lilo",
 			"copied": "已拷贝",
-			"connectNamed": "连接 {name}"
+			"connectNamed": "连接 {name}",
+			"onThisMac": "此 Mac 上"
 		},
 		"tips": {
-			"title": "3 个入门小提示",
-			"subtitle": "掌握这些就够了。",
-			"go": "出发",
 			"search": "按 ⌘T 搜索或输入地址。",
-			"tabs": "标签页位于你选的那一侧，随时可见。",
 			"split": "将标签页拖到网页边缘，即可并排查看两个网页。"
 		},
 		"devTips": {
-			"title": "3 个开发小提示",
-			"subtitle": "即使不显示“开发”菜单，快捷键也可使用。",
 			"inspector": "按 ⌥⌘I 打开当前网页的网页检查器。",
 			"localhost": "将 localhost 网页拖到网页边缘，即可与文档并排查看。",
 			"agents": "智能体会在“智能体”空间中打开标签页。"

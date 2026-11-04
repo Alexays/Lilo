@@ -65,6 +65,9 @@
   --font-size-modal: 17px;
   --font-size-2xl: 20px;
   --font-size-3xl: 22px;
+  /* Onboarding headlines and body only. */
+  --font-size-body-lg: 15px;
+  --font-size-headline: 28px;
   /* The onboarding wordmark only. */
   --font-size-display: 56px;
   --font-weight-regular: 400;

@@ -9,13 +9,15 @@
   import { PASTEL_COLOR_NAMES, PASTEL_COLORS } from "../settings/profilesModel";
   import AppearancePreview from "./AppearancePreview.svelte";
 
-  let { mode, color, material, onmode, oncolor, onmaterial }: {
+  let { mode, color, material, onmode, oncolor, onmaterial, preview = true }: {
     mode: SpaceColorMode;
     color: string;
     material: SpaceMaterial;
     onmode: (mode: SpaceColorMode) => void;
     oncolor: (color: string) => void;
     onmaterial: (material: SpaceMaterial) => void;
+    /** False when the caller draws its own preview, with the material and time of day controls. */
+    preview?: boolean;
   } = $props();
 
   const AUTO_SOURCES = ["page", "wallpaper"] as const;
@@ -53,9 +55,11 @@
 
 <div class="picker">
   <!-- The time of day changes a chosen color only: Lilo's picks bring their own. -->
-  <AppearancePreview {material} {desktop} {onmaterial} followsDay={auto ? null : mode === "time"}
-    site={mode === "page" ? { color: siteColor ?? EXAMPLE_SITE, favicon: siteColor ? favicon : undefined, example: !siteColor } : null}
-    onday={(on) => onmode(on ? "time" : "fixed")} />
+  {#if preview}
+    <AppearancePreview {material} {desktop} {onmaterial} followsDay={auto ? null : mode === "time"}
+      site={mode === "page" ? { color: siteColor ?? EXAMPLE_SITE, favicon: siteColor ? favicon : undefined, example: !siteColor } : null}
+      onday={(on) => onmode(on ? "time" : "fixed")} />
+  {/if}
 
   <div class="group">
     <div class="name-row">

@@ -20,10 +20,12 @@ surfaces) are allowlisted there by name.
 | `--font-size-xs` | 11px | Section headers, captions, secondary meta |
 | `--font-size-sm` | 12px | Row descriptions, compact rows, menus |
 | `--font-size-md` | 13px | Body text, buttons, fields (the macOS body size) |
-| `--font-size-lg` | 14px | Emphasized rows, onboarding rows |
+| `--font-size-lg` | 14px | Emphasized rows |
+| `--font-size-body-lg` | 15px | Onboarding body |
 | `--font-size-xl` | 16px | Panel and editor titles |
 | `--font-size-2xl` | 20px | Page and settings titles |
-| `--font-size-3xl` | 22px | Onboarding step titles |
+| `--font-size-3xl` | 22px | Editor and diagnostics titles |
+| `--font-size-headline` | 28px | Onboarding headlines |
 | `--font-size-display` | 56px | The onboarding wordmark only |
 
 Weights: `--font-weight-regular` (400), `-medium` (500, titles of rows and buttons),

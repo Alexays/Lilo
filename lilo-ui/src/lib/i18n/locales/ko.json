@@ -1601,13 +1601,14 @@
 		"continue": "계속",
 		"back": "뒤로",
 		"skip": "건너뛰기",
+		"letsGo": "시작하기",
 		"resume": "설정 재개",
 		"usage": {
 			"title": "Lilo를 어떻게 사용하시겠습니까?",
 			"subtitle": "선택에 맞게 설정을 준비합니다. 모든 항목은 나중에 설정에서 변경할 수 있습니다.",
 			"browse": "인터넷 사용",
 			"browseDesc": "책갈피, 나만의 스타일, 기본 기능",
-			"agents": "AI 에이전트와 함께",
+			"agents": "에이전트와 함께",
 			"agentsDesc": "Claude, Codex, Cursor가 곁에서 작업합니다",
 			"develop": "개발",
 			"developDesc": "모든 기능에 터미널까지"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "확장 프로그램 다시 설치 중: {current}/{total}"
 			},
 			"partial": "일부 데이터를 가져오지 못했습니다: {list}. 나중에 설정에서 다시 시도할 수 있습니다.",
-			"moreOptions": "가져올 항목 선택",
-			"lessOptions": "옵션 가리기",
 			"profiles": "{browser} 프로필",
 			"kinds": "가져올 항목",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "Apple 승인 대기 중"
 			}
 		},
-		"appearance": {
-			"title": "나만의 스타일",
-			"subtitle": "라이트, 다크 또는 Mac 설정을 따르는 모드와 색상 출처를 선택하세요. 윈도우에 바로 적용됩니다.",
+		"yourLilo": {
+			"title": "나의 Lilo",
+			"subtitle": "모양과 탭 위치를 고르세요. 선택에 따라 윈도우가 바로 바뀝니다.",
 			"theme": "테마",
 			"system": "자동",
 			"light": "라이트",
-			"dark": "다크"
-		},
-		"tabs": {
-			"title": "탭을 원하는 곳에",
-			"subtitle": "가장자리를 선택하면 윈도우가 바로 바뀝니다. 언제든 탭을 다른 가장자리로 드래그할 수 있습니다."
+			"dark": "다크",
+			"tabs": "탭",
+			"color": "색상",
+			"essentials": "기본 설정"
 		},
 		"essentials": {
-			"title": "기본 설정",
-			"subtitle": "사용 경험을 바꾸는 두 가지 설정입니다. 언제든 변경할 수 있습니다.",
 			"blocker": "광고 및 추적기 차단",
 			"blockerDesc": "권장: 페이지가 더 빠르게 로드되고 추적이 줄어듭니다.",
 			"default": "Lilo에서 링크 열기",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "완료"
 		},
 		"agents": {
-			"title": "나의 AI 에이전트",
+			"title": "나의 에이전트",
 			"subtitle": "Claude Code, Codex, Cursor는 키보드를 건드리지 않고 별도의 에이전트 스페이스에서 작업합니다. Lilo에는 자체 AI가 없습니다.",
-			"allow": "AI 에이전트의 Lilo 사용 허용",
+			"allow": "에이전트의 Lilo 사용 허용",
 			"copied": "복사됨",
-			"connectNamed": "{name} 연결"
+			"connectNamed": "{name} 연결",
+			"onThisMac": "이 Mac에 있음"
 		},
 		"tips": {
-			"title": "시작을 위한 팁 3가지",
-			"subtitle": "이것만 알면 준비가 끝납니다.",
-			"go": "시작하기",
 			"search": "⌘T를 눌러 검색하거나 주소를 입력하세요.",
-			"tabs": "탭은 고른 가장자리에 항상 표시됩니다.",
 			"split": "탭을 페이지 가장자리로 드래그하면 두 페이지를 나란히 볼 수 있습니다."
 		},
 		"devTips": {
-			"title": "개발을 위한 팁 3가지",
-			"subtitle": "개발자용 메뉴가 없어도 단축키를 사용할 수 있습니다.",
 			"inspector": "⌥⌘I를 누르면 페이지의 웹 속성이 열립니다.",
 			"localhost": "localhost를 페이지 가장자리로 드래그하면 문서 옆에서 볼 수 있습니다.",
 			"agents": "에이전트는 에이전트 스페이스에서 탭을 엽니다."

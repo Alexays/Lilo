@@ -115,7 +115,7 @@ test("settings name every control, in every section and subpage", async ({ page 
 for (const usage of ["browse", "develop"] as const) {
 	test(`every onboarding step names its controls (${usage})`, async ({ page }) => {
 		await bootChrome(page, initialWorld());
-		for (let step = 0; step < (usage === "develop" ? 9 : 8); step++) {
+		for (let step = 0; step < (usage === "develop" ? 5 : 4); step++) {
 			await receive(page, { event: "onboardingState", show: true, step, usage });
 			await page.waitForTimeout(50);
 			expect(await a11yProblems(page), `step ${step}`).toEqual([]);

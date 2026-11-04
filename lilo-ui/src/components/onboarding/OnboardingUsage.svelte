@@ -22,44 +22,85 @@
   }
 </script>
 
-<h3>{t("onboarding.usage.title")}</h3>
-<p class="ob-sub">{t("onboarding.usage.subtitle")}</p>
+<div class="ob-body center">
+  <div class="ob-head">
+    <h2>{t("onboarding.usage.title")}</h2>
+    <p class="ob-sub">{t("onboarding.usage.subtitle")}</p>
+  </div>
 
-<div class="usages" role="radiogroup" tabindex="-1" aria-label={t("onboarding.usage.title")} onkeydown={handleKeydown}>
-  {#each USAGES as usage (usage)}
-    <button class="us" class:on={onboarding.usage === usage} role="radio" aria-checked={onboarding.usage === usage}
-      tabindex={onboarding.usage === usage ? 0 : -1} onclick={() => setUsage(usage)}>
-      <span class="pv pv-{usage}"><i><s></s><s></s><s></s></i><u></u></span>
-      <b>{t(`onboarding.usage.${usage}`)}</b>
-      <small>{t(`onboarding.usage.${usage}Desc`)}</small>
-    </button>
-  {/each}
+  <div class="usages" role="radiogroup" tabindex="-1" aria-label={t("onboarding.usage.title")} onkeydown={handleKeydown}>
+    {#each USAGES as usage (usage)}
+      <button class="us" class:on={onboarding.usage === usage} role="radio" aria-checked={onboarding.usage === usage}
+        tabindex={onboarding.usage === usage ? 0 : -1} onclick={() => setUsage(usage)}>
+        <!-- What the answer turns on, drawn in the window's own colors. -->
+        <span class="pv" aria-hidden="true">
+          <span class="side"><i class="lights"></i><s></s><s class="sel"></s><s></s><s class="short"></s><s></s><s class="short"></s></span>
+          <span class="page" class:split={usage === "agents"}>
+            <span class="doc"><b class="title"></b><b></b><b></b><b class="short"></b><span class="block"></span></span>
+            {#if usage === "agents"}
+              <span class="agent"><b class="pill"></b><b class="spark"></b><b></b><b class="short"></b><span class="field"></span></span>
+            {:else if usage === "develop"}
+              <span class="term"><b class="ok"></b><b></b><b class="short"></b></span>
+            {/if}
+          </span>
+        </span>
+        <b class="label">{t(`onboarding.usage.${usage}`)}</b>
+        <small>{t(`onboarding.usage.${usage}Desc`)}</small>
+      </button>
+    {/each}
+  </div>
 </div>
 
 <div class="ob-foot">
+  <span></span>
   <button class="ob-btn ghost" onclick={() => choose("browse")}>{t("onboarding.skip")}</button>
   <button class="ob-btn primary" onclick={() => choose(onboarding.usage)}>{t("onboarding.continue")}</button>
 </div>
 
 <style>
-  .usages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  .us { border-radius: var(--radius-lg); padding: 8px 8px 10px; background: var(--bg-hover); border: 2px solid transparent; cursor: pointer; color: var(--text-primary);
-    transition: border-color var(--motion-duration-normal), transform .2s var(--motion-ease-spring); }
-  .us:hover { transform: translateY(-1px); } .us.on { border-color: var(--accent); }
-  .us b { display: block; margin-top: 8px; font-size: var(--font-size-lg); }
-  .us small { display: block; margin-top: 2px; font-size: var(--font-size-sm); color: var(--text-secondary); }
-  /* A sidebar and a page in the theme's own colors; the developer one gets a terminal under the page. */
-  .pv { display: flex; height: 74px; border-radius: var(--radius-md); overflow: hidden; background: var(--bg-secondary); }
-  .pv i { width: 28%; padding: 8px 4px; display: flex; flex-direction: column; gap: 4px; }
-  .pv s { height: 6px; border-radius: var(--radius-2xs); background: color-mix(in srgb, var(--bg-primary) 70%, transparent); }
-  .pv u { position: relative; flex: 1; margin: 4px; border-radius: var(--radius-sm); background: var(--bg-primary); overflow: hidden; }
-  .pv-browse u::after { content: ""; position: absolute; left: 10%; right: 10%; top: 10px; height: 10px; border-radius: var(--radius-sm); background: var(--bg-hover);
-    box-shadow: 0 16px 0 -2px var(--separator), 0 30px 0 -2px var(--separator); }
-  /* An agent's cursor at work on the page, in the agent color. */
-  .pv-agents u::after { content: ""; position: absolute; left: 10%; right: 10%; top: 10px; height: 10px; border-radius: var(--radius-sm); background: var(--bg-hover); }
-  .pv-agents u::before { content: ""; position: absolute; right: 24%; bottom: 10px; width: 11px; height: 15px; background: #e8743b;
-    clip-path: polygon(0 0, 0 82%, 27% 62%, 45% 100%, 62% 92%, 45% 56%, 82% 56%); }
-  .pv-develop u::after { content: ""; position: absolute; inset: auto 0 0; height: 44%; background: #1a1a2e; }
-  .pv-develop u::before { content: ""; position: absolute; z-index: 1; left: 7px; bottom: 9px; width: 40%; height: 4px; border-radius: var(--radius-2xs); background: #9b80f6; box-shadow: 0 -8px 0 #5dcaa5; }
-  @media (prefers-reduced-motion: reduce) { .us { transition: none; } }
+  .center { display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .center .ob-head { margin-bottom: 40px; }
+  .center .ob-sub { margin-inline: auto; }
+  .usages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+  .us { display: flex; flex-direction: column; align-items: center; padding: 0; border: 0; background: none; cursor: pointer; color: var(--text-primary); font: inherit; }
+  .us:focus-visible { outline: none; }
+  .us:focus-visible .pv { outline: var(--focus-outline); outline-offset: 4px; }
+  .label { margin-top: 16px; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+  .us small { margin-top: 4px; font-size: var(--font-size-sm); color: var(--text-secondary); }
+
+  /* A window: the sidebar in the Space's color, the page beside it. */
+  .pv { --page: #fff; --ink: rgba(0, 0, 0, .1); --ink-soft: rgba(0, 0, 0, .05);
+    display: flex; width: 100%; aspect-ratio: 3 / 2; padding: 4px; border-radius: var(--radius-box); overflow: hidden;
+    background: var(--sidebar-bg); box-shadow: 0 0 0 1px var(--text-primary-tint-12), 0 8px 24px rgba(40, 30, 90, .08);
+    transition: box-shadow var(--motion-duration-normal); }
+  .us:hover .pv { box-shadow: 0 0 0 1px var(--text-primary-tint-12), 0 10px 28px rgba(40, 30, 90, .14); }
+  .us.on .pv { box-shadow: 0 0 0 3px var(--onb-surface-strong), 0 0 0 6px var(--accent), 0 10px 28px rgba(40, 30, 90, .14); }
+  @media (prefers-color-scheme: dark) { .pv { --page: #1e1e1e; --ink: rgba(255, 255, 255, .14); --ink-soft: rgba(255, 255, 255, .06); } }
+  .pv b, .pv s, .pv i { display: block; border-radius: var(--radius-2xs); }
+  .side { width: 27%; display: flex; flex-direction: column; gap: 9px; padding: 8px 8px 0; }
+  .lights { width: 26px; height: 6px; margin-bottom: 6px; background: radial-gradient(circle at 3px 3px, #ff5f57 2.6px, transparent 3px), radial-gradient(circle at 13px 3px, #febc2e 2.6px, transparent 3px), radial-gradient(circle at 23px 3px, #28c840 2.6px, transparent 3px); }
+  .side s { height: 5px; margin-inline: 4px; background: color-mix(in srgb, var(--sidebar-contrast) 22%, transparent); }
+  .side s.short { width: 40%; }
+  .side s.sel { height: 13px; margin: -4px 0; padding: 0; background: var(--sidebar-sel); }
+  .page { flex: 1; display: flex; flex-direction: column; min-width: 0; border-radius: var(--radius-sm); overflow: hidden; background: var(--page); }
+  .page > span { min-height: 0; }
+  .doc { flex: 1; display: flex; flex-direction: column; gap: 7px; padding: 12px 14px; }
+  .doc b { height: 5px; background: var(--ink-soft); }
+  .doc b.title { width: 50%; height: 9px; margin-bottom: 3px; background: var(--ink); }
+  .doc b.short { width: 70%; }
+  .doc .block { flex: 1; max-height: 50px; margin-top: 6px; border-radius: var(--radius-xs); background: var(--ink-soft); }
+  /* An agent's conversation beside the page. */
+  .page.split { flex-direction: row; }
+  .agent { width: 50%; display: flex; flex-direction: column; gap: 7px; padding: 10px; box-shadow: inset 1px 0 0 var(--ink-soft); }
+  .agent b { height: 4px; background: var(--ink-soft); }
+  .agent b.short { width: 60%; }
+  .agent .pill { align-self: flex-end; width: 55%; height: 10px; border-radius: var(--radius-chip); background: var(--ink-soft); }
+  .agent .spark { width: 8px; height: 8px; border-radius: 50%; background: conic-gradient(#e8743b 0 25%, transparent 0 50%, #e8743b 0 75%, transparent 0); }
+  .agent .field { margin-top: auto; height: 18px; border-radius: var(--radius-xs); box-shadow: inset 0 0 0 1px var(--ink); }
+  /* The terminal under the page. */
+  .term { height: 40%; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: #1f2029; }
+  .term b { width: 80%; height: 3px; background: rgba(255, 255, 255, .28); }
+  .term b.ok { width: 50%; background: #3ccb7f; }
+  .term b.short { width: 40%; }
+  @media (prefers-reduced-motion: reduce) { .pv { transition: none; } }
 </style>

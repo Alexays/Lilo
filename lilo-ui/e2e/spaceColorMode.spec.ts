@@ -88,7 +88,7 @@ test("a saved Space following the time lights the chrome without the editor open
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 });
 
-test("the onboarding's appearance step sets the current Space's color and material", async ({ page }) => {
+test("the onboarding's Your Lilo screen sets the current Space's color and material", async ({ page }) => {
 	const world: FakeHostWorld = {
 		spaces: [{ id: "space-home", name: "Home", icon: "H", color: "#5865f2", profileId: "profile-1", isPrivate: false, sortOrder: 0 }],
 		activeSpaceId: "space-home",
@@ -97,7 +97,7 @@ test("the onboarding's appearance step sets the current Space's color and materi
 		treeItemsBySpace: { "space-home": [treeItem("tab-blank", "space-home", 0)] },
 	};
 	await bootChrome(page, world);
-	await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 4, usage: "browse" }));
+	await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 3, usage: "browse" }));
 	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
 
 	await page.getByRole("button", { name: "Change with the time of day" }).click();

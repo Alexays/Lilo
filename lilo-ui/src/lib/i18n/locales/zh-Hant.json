@@ -1601,13 +1601,14 @@
 		"continue": "繼續",
 		"back": "返回",
 		"skip": "略過",
+		"letsGo": "出發吧",
 		"resume": "繼續設定",
 		"usage": {
 			"title": "你會如何使用 Lilo？",
 			"subtitle": "設定流程會依你的回答調整。之後都能在「設定」中更改。",
 			"browse": "用來瀏覽",
 			"browseDesc": "你的書籤、你的風格，以及基本功能",
-			"agents": "搭配我的 AI 代理程式",
+			"agents": "搭配我的代理程式",
 			"agentsDesc": "Claude、Codex 或 Cursor 在你身旁工作",
 			"develop": "用來開發",
 			"developDesc": "上述所有功能，加上終端機"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "正在重新安裝延伸功能：{current}/{total}"
 			},
 			"partial": "部分資料無法匯入：{list}。稍後可從「設定」重試。",
-			"moreOptions": "選擇要匯入的內容",
-			"lessOptions": "隱藏選項",
 			"profiles": "{browser} 個人檔案",
 			"kinds": "匯入內容",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "等待 Apple 核准中"
 			}
 		},
-		"appearance": {
-			"title": "你的風格",
-			"subtitle": "淺色、深色或配合 Mac，並選擇顏色來源。視窗會立即更新。",
+		"yourLilo": {
+			"title": "你的 Lilo",
+			"subtitle": "選擇外觀和標籤頁的位置，視窗會隨你的選擇變化。",
 			"theme": "主題",
 			"system": "自動",
 			"light": "淺色",
-			"dark": "深色"
-		},
-		"tabs": {
-			"title": "分頁，隨你選邊",
-			"subtitle": "選擇一個邊緣，視窗會隨之調整。你隨時都能將分頁拖到其他邊緣。"
+			"dark": "深色",
+			"tabs": "標籤頁",
+			"color": "顏色",
+			"essentials": "基本設定"
 		},
 		"essentials": {
-			"title": "基本設定",
-			"subtitle": "兩個實用的設定，隨時都能更改。",
 			"blocker": "阻擋廣告與追蹤器",
 			"blockerDesc": "建議使用：網頁載入更快，追蹤更少。",
 			"default": "在 Lilo 中開啟連結",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "完成"
 		},
 		"agents": {
-			"title": "你的 AI 代理程式",
+			"title": "你的代理程式",
 			"subtitle": "Claude Code、Codex 或 Cursor 在專屬的「代理程式」空間工作，不會佔用你的鍵盤。Lilo 本身不含 AI。",
-			"allow": "允許 AI 代理程式使用 Lilo",
+			"allow": "允許代理程式使用 Lilo",
 			"copied": "已拷貝",
-			"connectNamed": "連接 {name}"
+			"connectNamed": "連接 {name}",
+			"onThisMac": "這台 Mac 上"
 		},
 		"tips": {
-			"title": "開始使用的 3 個技巧",
-			"subtitle": "只需要知道這些。",
-			"go": "出發吧",
 			"search": "按 ⌘T 搜尋或輸入網址。",
-			"tabs": "分頁位於你選的那一側，隨時都看得見。",
 			"split": "將分頁拖到網頁邊緣，即可並排顯示兩個網頁。"
 		},
 		"devTips": {
-			"title": "開發的 3 個技巧",
-			"subtitle": "即使沒有顯示「開發」選單，快速鍵仍可使用。",
 			"inspector": "按 ⌥⌘I 開啟目前網頁的網頁檢閱器。",
 			"localhost": "將 localhost 拖到網頁邊緣，即可與文件並排顯示。",
 			"agents": "代理程式會在「代理程式」空間中開啟分頁。"

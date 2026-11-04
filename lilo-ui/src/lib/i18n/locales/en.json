@@ -1601,13 +1601,14 @@
 		"continue": "Continue",
 		"back": "Back",
 		"skip": "Skip",
+		"letsGo": "Let's Go",
 		"resume": "Resume setup",
 		"usage": {
 			"title": "How will you use Lilo?",
 			"subtitle": "Setup adapts to your answer. Everything stays adjustable in Settings.",
 			"browse": "For browsing",
 			"browseDesc": "Your bookmarks, your style, the essentials",
-			"agents": "With my AI agents",
+			"agents": "With my agents",
 			"agentsDesc": "Claude, Codex or Cursor work beside you",
 			"develop": "For developing",
 			"developDesc": "All of that, plus the terminal"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "Reinstalling extensions {current} of {total}"
 			},
 			"partial": "Some data could not be imported: {list}. You can retry later from Settings.",
-			"moreOptions": "Choose what to import",
-			"lessOptions": "Hide options",
 			"profiles": "{browser} profiles",
 			"kinds": "What to import",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "Waiting for Apple's approval"
 			}
 		},
-		"appearance": {
-			"title": "Your style",
-			"subtitle": "Light, dark, or following your Mac, and where its color comes from. The window updates right away.",
+		"yourLilo": {
+			"title": "Your Lilo",
+			"subtitle": "A look and a place for your tabs. The window follows as you choose.",
 			"theme": "Theme",
 			"system": "Auto",
 			"light": "Light",
-			"dark": "Dark"
-		},
-		"tabs": {
-			"title": "Your tabs, your side",
-			"subtitle": "Pick an edge and watch the window follow. You can drag the tabs to another edge anytime."
+			"dark": "Dark",
+			"tabs": "Tabs",
+			"color": "Color",
+			"essentials": "Essentials"
 		},
 		"essentials": {
-			"title": "The essentials",
-			"subtitle": "Two settings that make a difference. You can change them anytime.",
 			"blocker": "Block ads and trackers",
 			"blockerDesc": "Recommended: pages load faster and follow you less.",
 			"default": "Open links in Lilo",
@@ -1714,26 +1710,21 @@
 			"defaultDone": "Done"
 		},
 		"agents": {
-			"title": "Your AI agents",
-			"subtitle": "Claude Code, Codex or Cursor work in their own Agents space, without touching your keyboard. Lilo has no AI of its own.",
-			"allow": "Let AI agents use Lilo",
+			"title": "Your agents",
+			"subtitle": "Claude Code, Codex or Cursor work in their own Agents Space, without touching your keyboard. Lilo has no AI of its own.",
+			"allow": "Let agents use Lilo",
 			"copied": "Copied",
-			"connectNamed": "Connect {name}"
+			"connectNamed": "Connect {name}",
+			"onThisMac": "On this Mac"
 		},
 		"tips": {
-			"title": "3 tips to get started",
-			"subtitle": "That is all you need.",
-			"go": "Let's go",
 			"search": "Press ⌘T to search or type an address.",
-			"tabs": "Your tabs stay in view, on the edge you picked.",
 			"split": "Drag a tab to the edge of the page to see two pages side by side."
 		},
 		"devTips": {
-			"title": "3 tips for developing",
-			"subtitle": "The shortcuts work even without the Develop menu.",
 			"inspector": "Press ⌥⌘I to open the Web Inspector on the page.",
 			"localhost": "Drag your localhost to the edge of the page to see it next to the docs.",
-			"agents": "Your agents open their tabs in the Agents space."
+			"agents": "Your agents open their tabs in the Agents Space."
 		},
 		"arrival": {
 			"title": "Welcome to Lilo.",

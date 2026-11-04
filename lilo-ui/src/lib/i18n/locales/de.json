@@ -1601,13 +1601,14 @@
 		"continue": "Weiter",
 		"back": "Zurück",
 		"skip": "Überspringen",
+		"letsGo": "Los geht's",
 		"resume": "Einrichtung fortsetzen",
 		"usage": {
 			"title": "Wie möchtest du Lilo nutzen?",
 			"subtitle": "Die Einrichtung passt sich deiner Antwort an. In den Einstellungen lässt sich später alles ändern.",
 			"browse": "Zum Surfen",
 			"browseDesc": "Deine Lesezeichen, dein Stil, das Wesentliche",
-			"agents": "Mit meinen KI-Agenten",
+			"agents": "Mit meinen Agenten",
 			"agentsDesc": "Claude, Codex oder Cursor arbeiten an deiner Seite",
 			"develop": "Zum Entwickeln",
 			"developDesc": "All das und das Terminal"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "Erweiterung {current} von {total} wird neu installiert"
 			},
 			"partial": "Einige Daten konnten nicht importiert werden: {list}. Du kannst es später in den Einstellungen erneut versuchen.",
-			"moreOptions": "Import auswählen",
-			"lessOptions": "Optionen ausblenden",
 			"profiles": "Profile aus {browser}",
 			"kinds": "Was importiert werden soll",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "Wartet auf die Freigabe durch Apple"
 			}
 		},
-		"appearance": {
-			"title": "Dein Stil",
-			"subtitle": "Hell, dunkel oder wie dein Mac – und woher die Farbe kommt. Das Fenster passt sich sofort an.",
+		"yourLilo": {
+			"title": "Dein Lilo",
+			"subtitle": "Ein Look und ein Platz für deine Tabs. Das Fenster folgt deiner Wahl.",
 			"theme": "Design",
 			"system": "Automatisch",
 			"light": "Hell",
-			"dark": "Dunkel"
-		},
-		"tabs": {
-			"title": "Deine Tabs, deine Seite",
-			"subtitle": "Wähle einen Rand und sieh zu, wie sich das Fenster anpasst. Du kannst die Tabs jederzeit an einen anderen Rand ziehen."
+			"dark": "Dunkel",
+			"tabs": "Tabs",
+			"color": "Farbe",
+			"essentials": "Das Wichtigste"
 		},
 		"essentials": {
-			"title": "Das Wesentliche",
-			"subtitle": "Zwei Einstellungen, die einen Unterschied machen. Du kannst sie jederzeit ändern.",
 			"blocker": "Werbung und Tracker blockieren",
 			"blockerDesc": "Empfohlen: Seiten laden schneller und verfolgen dich weniger.",
 			"default": "Links in Lilo öffnen",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "Fertig"
 		},
 		"agents": {
-			"title": "Deine KI-Agenten",
+			"title": "Deine Agenten",
 			"subtitle": "Claude Code, Codex oder Cursor arbeiten in ihrem eigenen Space „Agenten“, ohne deine Tastatur zu belegen. Lilo hat keine eigene KI.",
-			"allow": "KI-Agenten die Nutzung von Lilo erlauben",
+			"allow": "Agenten die Nutzung von Lilo erlauben",
 			"copied": "Kopiert",
-			"connectNamed": "{name} verbinden"
+			"connectNamed": "{name} verbinden",
+			"onThisMac": "Auf diesem Mac"
 		},
 		"tips": {
-			"title": "3 Tipps für den Einstieg",
-			"subtitle": "Mehr brauchst du nicht.",
-			"go": "Los geht’s",
 			"search": "Drücke ⌘T zum Suchen oder zur Eingabe einer Adresse.",
-			"tabs": "Deine Tabs bleiben im Blick, am Rand deiner Wahl.",
 			"split": "Ziehe einen Tab an den Seitenrand, um zwei Seiten nebeneinander anzuzeigen."
 		},
 		"devTips": {
-			"title": "3 Tipps fürs Entwickeln",
-			"subtitle": "Die Kurzbefehle funktionieren auch ohne das Menü „Entwickler“.",
 			"inspector": "Drücke ⌥⌘I, um die Webinformationen der Seite zu öffnen.",
 			"localhost": "Ziehe deinen localhost an den Seitenrand, um ihn neben der Dokumentation anzuzeigen.",
 			"agents": "Deine Agenten öffnen ihre Tabs im Space „Agenten“."

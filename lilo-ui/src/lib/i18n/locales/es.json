@@ -1601,13 +1601,14 @@
 		"continue": "Continuar",
 		"back": "Atrás",
 		"skip": "Omitir",
+		"letsGo": "Vamos",
 		"resume": "Continuar configuración",
 		"usage": {
 			"title": "¿Cómo usarás Lilo?",
 			"subtitle": "La configuración se adapta a tu respuesta. Puedes cambiarlo todo en Ajustes.",
 			"browse": "Para navegar",
 			"browseDesc": "Tus marcadores, tu estilo y lo esencial",
-			"agents": "Con mis agentes de IA",
+			"agents": "Con mis agentes",
 			"agentsDesc": "Claude, Codex o Cursor trabajan a tu lado",
 			"develop": "Para desarrollar",
 			"developDesc": "Todo eso y el terminal"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "Reinstalando extensiones: {current} de {total}"
 			},
 			"partial": "No se han podido importar algunos datos: {list}. Puedes reintentarlo más tarde desde Ajustes.",
-			"moreOptions": "Elegir qué importar",
-			"lessOptions": "Ocultar opciones",
 			"profiles": "Perfiles de {browser}",
 			"kinds": "Qué importar",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "A la espera de la aprobación de Apple"
 			}
 		},
-		"appearance": {
-			"title": "Tu estilo",
-			"subtitle": "Claro, oscuro o según tu Mac, y de dónde toma su color. La ventana cambia al instante.",
+		"yourLilo": {
+			"title": "Tu Lilo",
+			"subtitle": "Un estilo y un lugar para tus pestañas. La ventana cambia según eliges.",
 			"theme": "Tema",
 			"system": "Automático",
 			"light": "Claro",
-			"dark": "Oscuro"
-		},
-		"tabs": {
-			"title": "Tus pestañas, en tu lado",
-			"subtitle": "Elige un borde y observa cómo cambia la ventana. Puedes arrastrar las pestañas a otro borde cuando quieras."
+			"dark": "Oscuro",
+			"tabs": "Pestañas",
+			"color": "Color",
+			"essentials": "Lo esencial"
 		},
 		"essentials": {
-			"title": "Lo esencial",
-			"subtitle": "Dos ajustes que marcan la diferencia. Puedes cambiarlos cuando quieras.",
 			"blocker": "Bloquear anuncios y rastreadores",
 			"blockerDesc": "Recomendado: las páginas cargan más rápido y te rastrean menos.",
 			"default": "Abrir enlaces en Lilo",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "Listo"
 		},
 		"agents": {
-			"title": "Tus agentes de IA",
+			"title": "Tus agentes",
 			"subtitle": "Claude Code, Codex o Cursor trabajan en su propio espacio Agentes sin tocar tu teclado. Lilo no tiene IA propia.",
-			"allow": "Permitir que agentes de IA usen Lilo",
+			"allow": "Permitir que los agentes usen Lilo",
 			"copied": "Copiado",
-			"connectNamed": "Conectar {name}"
+			"connectNamed": "Conectar {name}",
+			"onThisMac": "En este Mac"
 		},
 		"tips": {
-			"title": "3 consejos para empezar",
-			"subtitle": "Eso es todo lo que necesitas.",
-			"go": "Vamos",
 			"search": "Pulsa ⌘T para buscar o escribir una dirección.",
-			"tabs": "Tus pestañas siguen a la vista, en el borde que elegiste.",
 			"split": "Arrastra una pestaña al borde de la página para ver dos páginas una al lado de la otra."
 		},
 		"devTips": {
-			"title": "3 consejos para desarrollar",
-			"subtitle": "Los atajos funcionan incluso sin el menú Desarrollo.",
 			"inspector": "Pulsa ⌥⌘I para abrir el inspector web de la página.",
 			"localhost": "Arrastra tu localhost al borde de la página para verlo junto a la documentación.",
 			"agents": "Tus agentes abren sus pestañas en el espacio Agentes."

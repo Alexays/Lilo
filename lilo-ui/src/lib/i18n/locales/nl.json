@@ -1601,13 +1601,14 @@
 		"continue": "Ga door",
 		"back": "Terug",
 		"skip": "Sla over",
+		"letsGo": "Daar gaan we",
 		"resume": "Hervat configuratie",
 		"usage": {
 			"title": "Hoe ga je Lilo gebruiken?",
 			"subtitle": "De configuratie past zich aan je antwoord aan. Je kunt alles later wijzigen in Instellingen.",
 			"browse": "Om te surfen",
 			"browseDesc": "Je bladwijzers, je stijl en de basis",
-			"agents": "Met mijn AI-agents",
+			"agents": "Met mijn agents",
 			"agentsDesc": "Claude, Codex of Cursor werken naast je",
 			"develop": "Om te ontwikkelen",
 			"developDesc": "Dit alles, plus de terminal"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "Extensies opnieuw installeren: {current} van {total}"
 			},
 			"partial": "Sommige gegevens konden niet worden geïmporteerd: {list}. Je kunt het later opnieuw proberen via Instellingen.",
-			"moreOptions": "Kies wat je wilt importeren",
-			"lessOptions": "Verberg opties",
 			"profiles": "{browser}-profielen",
 			"kinds": "Wat wil je importeren?",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "Wacht op goedkeuring van Apple"
 			}
 		},
-		"appearance": {
-			"title": "Je eigen stijl",
-			"subtitle": "Licht, donker of gelijk aan je Mac, en waar de kleur vandaan komt. Het venster wordt meteen aangepast.",
+		"yourLilo": {
+			"title": "Jouw Lilo",
+			"subtitle": "Een uiterlijk en een plek voor je tabbladen. Het venster volgt je keuze.",
 			"theme": "Thema",
 			"system": "Automatisch",
 			"light": "Licht",
-			"dark": "Donker"
-		},
-		"tabs": {
-			"title": "Je tabbladen, jouw kant",
-			"subtitle": "Kies een rand en zie het venster volgen. Je kunt de tabbladen altijd naar een andere rand slepen."
+			"dark": "Donker",
+			"tabs": "Tabbladen",
+			"color": "Kleur",
+			"essentials": "De basis"
 		},
 		"essentials": {
-			"title": "De basis",
-			"subtitle": "Twee instellingen die het verschil maken. Je kunt ze altijd wijzigen.",
 			"blocker": "Blokkeer advertenties en trackers",
 			"blockerDesc": "Aanbevolen: pagina's laden sneller en volgen je minder.",
 			"default": "Open links in Lilo",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "Klaar"
 		},
 		"agents": {
-			"title": "Je AI-agents",
+			"title": "Je agents",
 			"subtitle": "Claude Code, Codex of Cursor werken in hun eigen Agents-ruimte zonder je toetsenbord over te nemen. Lilo heeft zelf geen AI.",
-			"allow": "Laat AI-agents Lilo gebruiken",
+			"allow": "Laat agents Lilo gebruiken",
 			"copied": "Gekopieerd",
-			"connectNamed": "Verbind {name}"
+			"connectNamed": "Verbind {name}",
+			"onThisMac": "Op deze Mac"
 		},
 		"tips": {
-			"title": "3 tips om te beginnen",
-			"subtitle": "Meer heb je niet nodig.",
-			"go": "Daar gaan we",
 			"search": "Druk op ⌘T om te zoeken of een adres te typen.",
-			"tabs": "Je tabbladen blijven in beeld, aan de rand die je koos.",
 			"split": "Sleep een tabblad naar de rand van de pagina om twee pagina's naast elkaar te zien."
 		},
 		"devTips": {
-			"title": "3 tips voor ontwikkelen",
-			"subtitle": "De sneltoetsen werken ook zonder het Ontwikkel-menu.",
 			"inspector": "Druk op ⌥⌘I om het webinfovenster voor de pagina te openen.",
 			"localhost": "Sleep je localhost naar de rand van de pagina om deze naast de documentatie te zien.",
 			"agents": "Je agents openen hun tabbladen in de Agents-ruimte."

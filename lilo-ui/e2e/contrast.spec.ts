@@ -375,12 +375,10 @@ for (const colorScheme of ["light", "dark"] as const) {
 					{ id: "safari", name: "Safari", family: "safari", iconDataURL: "", needsFullDiskAccess: true, profiles: [] },
 				],
 			});
-			expect(await textContrast(page, ".src.locked .hint"), "Allow access").toBeGreaterThanOrEqual(4.5);
-			expect(await textContrast(page, "button.more[aria-expanded]"), "more options").toBeGreaterThanOrEqual(4.5);
-			await page.locator("button.more[aria-expanded]").click();
-			expect(await textContrast(page, ".chip:not(.off)"), "kind chip").toBeGreaterThanOrEqual(4.5);
+			await expect.poll(() => textContrast(page, ".src.locked .allow"), { message: "Allow access" }).toBeGreaterThanOrEqual(4.5);
+			await expect.poll(() => textContrast(page, ".chip.on"), { message: "kind chip" }).toBeGreaterThanOrEqual(4.5);
 
-			await page.locator("section.card .ob-foot .ob-btn.primary").click();
+			await page.locator(".onb .ob-foot .ob-btn.primary").click();
 			await receive({ event: "importProgress", sourceId: "chrome", profileId: "Default", kind: "history", done: 0, total: 0 });
 			// Polled: the label fades in.
 			await expect.poll(() => textContrast(page, ".progress .step span"), { message: "import step" }).toBeGreaterThanOrEqual(4.5);
@@ -388,15 +386,16 @@ for (const colorScheme of ["light", "dark"] as const) {
 			expect(await textContrast(page, ".note.done"), "import done").toBeGreaterThanOrEqual(4.5);
 
 			await receive({ event: "defaultBrowserStatusLoaded", isDefault: true, shouldInvite: false });
-			await receive({ event: "onboardingState", show: true, step: 6, usage: "browse" });
-			expect(await textContrast(page, ".ob-done"), "default browser done").toBeGreaterThanOrEqual(4.5);
+			await receive({ event: "onboardingState", show: true, step: 3, usage: "browse" });
+			// Polled: the screen fades in.
+			await expect.poll(() => textContrast(page, ".ob-done"), { message: "default browser done" }).toBeGreaterThanOrEqual(4.5);
 		});
 
 		test("a password manager not ready yet still reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
-			await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 3, usage: "browse" }));
-			for (const selector of [".manager.soon .ob-text", ".manager.soon .ob-text small", ".manager.soon .badge"]) {
-				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(4.5);
+			await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 2, usage: "browse" }));
+			for (const selector of [".ob-row.soon .ob-text", ".ob-row.soon .ob-text small", ".ob-row.soon .soon-label"]) {
+				await expect.poll(() => textContrast(page, selector), { message: selector }).toBeGreaterThanOrEqual(4.5);
 			}
 		});
 

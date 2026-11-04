@@ -1601,13 +1601,14 @@
 		"continue": "続ける",
 		"back": "戻る",
 		"skip": "スキップ",
+		"letsGo": "さあ、始めましょう",
 		"resume": "設定を再開",
 		"usage": {
 			"title": "Lilo をどのように使いますか？",
 			"subtitle": "回答に合わせて初期設定を進めます。すべてあとから「設定」で変更できます。",
 			"browse": "ブラウジングに",
 			"browseDesc": "ブックマーク、自分好みの外観、基本機能",
-			"agents": "AI エージェントと一緒に",
+			"agents": "エージェントと一緒に",
 			"agentsDesc": "Claude、Codex、Cursor が隣で作業",
 			"develop": "開発に",
 			"developDesc": "すべての機能に加えてターミナルも"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "機能拡張を再インストール中：{current}/{total}"
 			},
 			"partial": "一部のデータを読み込めませんでした：{list}。あとから「設定」で再試行できます。",
-			"moreOptions": "読み込む項目を選択",
-			"lessOptions": "オプションを非表示",
 			"profiles": "{browser}のプロファイル",
 			"kinds": "読み込む項目",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "Apple の承認を待っています"
 			}
 		},
-		"appearance": {
-			"title": "自分らしい外観に",
-			"subtitle": "ライト、ダーク、Mac に合わせる表示と、色の決め方を選びます。ウインドウにすぐ反映されます。",
+		"yourLilo": {
+			"title": "あなたの Lilo",
+			"subtitle": "見た目とタブの位置を選びましょう。ウインドウが選択に合わせて変わります。",
 			"theme": "テーマ",
 			"system": "自動",
 			"light": "ライト",
-			"dark": "ダーク"
-		},
-		"tabs": {
-			"title": "タブを好きな場所に",
-			"subtitle": "端を選ぶと、ウインドウに反映されます。タブはいつでも別の端にドラッグできます。"
+			"dark": "ダーク",
+			"tabs": "タブ",
+			"color": "カラー",
+			"essentials": "基本設定"
 		},
 		"essentials": {
-			"title": "基本の設定",
-			"subtitle": "使い心地を変える2つの設定です。いつでも変更できます。",
 			"blocker": "広告とトラッカーをブロック",
 			"blockerDesc": "おすすめ：ページの読み込みを速くし、追跡を減らします。",
 			"default": "リンクを Lilo で開く",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "完了"
 		},
 		"agents": {
-			"title": "AI エージェント",
+			"title": "エージェント",
 			"subtitle": "Claude Code、Codex、Cursor は専用のエージェントスペースで、キーボードを占有せずに作業します。Lilo 自体に AI は搭載していません。",
-			"allow": "AI エージェントに Lilo の使用を許可",
+			"allow": "エージェントに Lilo の使用を許可",
 			"copied": "コピーしました",
-			"connectNamed": "{name}を接続"
+			"connectNamed": "{name}を接続",
+			"onThisMac": "この Mac 上"
 		},
 		"tips": {
-			"title": "最初に覚える3つのヒント",
-			"subtitle": "これだけで始められます。",
-			"go": "さあ、始めましょう",
 			"search": "⌘T で検索やアドレスの入力ができます。",
-			"tabs": "タブは選んだ端に表示され、いつでも見られます。",
 			"split": "タブをページの端にドラッグすると、2つのページを並べて表示できます。"
 		},
 		"devTips": {
-			"title": "開発に役立つ3つのヒント",
-			"subtitle": "「開発」メニューがなくてもショートカットを使えます。",
 			"inspector": "⌥⌘I でページの Web インスペクタを開けます。",
 			"localhost": "localhost のタブをページの端にドラッグすると、ドキュメントと並べて表示できます。",
 			"agents": "エージェントはエージェントスペースにタブを開きます。"

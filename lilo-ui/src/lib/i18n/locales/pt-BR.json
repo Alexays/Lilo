@@ -1601,13 +1601,14 @@
 		"continue": "Continuar",
 		"back": "Voltar",
 		"skip": "Pular",
+		"letsGo": "Vamos lá",
 		"resume": "Retomar configuração",
 		"usage": {
 			"title": "Como você vai usar o Lilo?",
 			"subtitle": "A configuração se adapta à sua resposta. Tudo pode ser alterado nos Ajustes.",
 			"browse": "Para navegar",
 			"browseDesc": "Seus favoritos, seu estilo, o essencial",
-			"agents": "Com meus agentes de IA",
+			"agents": "Com meus agentes",
 			"agentsDesc": "Claude, Codex ou Cursor trabalham ao seu lado",
 			"develop": "Para desenvolver",
 			"developDesc": "Tudo isso, mais o terminal"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "Reinstalando extensões {current} de {total}"
 			},
 			"partial": "Não foi possível importar alguns dados: {list}. Você pode tentar novamente mais tarde nos Ajustes.",
-			"moreOptions": "Escolher o que importar",
-			"lessOptions": "Ocultar opções",
 			"profiles": "Perfis do {browser}",
 			"kinds": "O que importar",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "Aguardando aprovação da Apple"
 			}
 		},
-		"appearance": {
-			"title": "Seu estilo",
-			"subtitle": "Claro, escuro ou acompanhando seu Mac, e de onde vem a cor. A janela muda na hora.",
+		"yourLilo": {
+			"title": "Seu Lilo",
+			"subtitle": "Um visual e um lugar para suas abas. A janela acompanha suas escolhas.",
 			"theme": "Tema",
 			"system": "Automático",
 			"light": "Claro",
-			"dark": "Escuro"
-		},
-		"tabs": {
-			"title": "Suas abas, do seu lado",
-			"subtitle": "Escolha uma borda e veja a janela acompanhar. Você pode arrastar as abas para outra borda a qualquer momento."
+			"dark": "Escuro",
+			"tabs": "Abas",
+			"color": "Cor",
+			"essentials": "O essencial"
 		},
 		"essentials": {
-			"title": "O essencial",
-			"subtitle": "Dois ajustes que fazem a diferença. Você pode alterá-los a qualquer momento.",
 			"blocker": "Bloquear anúncios e rastreadores",
 			"blockerDesc": "Recomendado: as páginas carregam mais rápido e rastreiam você menos.",
 			"default": "Abrir links no Lilo",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "Concluído"
 		},
 		"agents": {
-			"title": "Seus agentes de IA",
+			"title": "Seus agentes",
 			"subtitle": "Claude Code, Codex ou Cursor trabalham no próprio espaço Agentes, sem tocar no seu teclado. O Lilo não tem IA própria.",
-			"allow": "Permitir que agentes de IA usem o Lilo",
+			"allow": "Permitir que agentes usem o Lilo",
 			"copied": "Copiado",
-			"connectNamed": "Conectar {name}"
+			"connectNamed": "Conectar {name}",
+			"onThisMac": "Neste Mac"
 		},
 		"tips": {
-			"title": "3 dicas para começar",
-			"subtitle": "É tudo de que você precisa.",
-			"go": "Vamos lá",
 			"search": "Pressione ⌘T para buscar ou digitar um endereço.",
-			"tabs": "Suas abas ficam à vista, na borda que você escolheu.",
 			"split": "Arraste uma aba para a borda da página para ver duas páginas lado a lado."
 		},
 		"devTips": {
-			"title": "3 dicas para desenvolver",
-			"subtitle": "Os atalhos funcionam mesmo sem o menu Desenvolvedor.",
 			"inspector": "Pressione ⌥⌘I para abrir o Inspetor Web na página.",
 			"localhost": "Arraste seu localhost para a borda da página para vê-lo ao lado da documentação.",
 			"agents": "Seus agentes abrem suas abas no espaço Agentes."

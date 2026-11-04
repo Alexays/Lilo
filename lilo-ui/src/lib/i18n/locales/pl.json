@@ -1619,13 +1619,14 @@
 		"continue": "Dalej",
 		"back": "Wstecz",
 		"skip": "Pomiń",
+		"letsGo": "Zaczynajmy",
 		"resume": "Wznów konfigurację",
 		"usage": {
 			"title": "Jak będziesz używać Lilo?",
 			"subtitle": "Konfiguracja dostosuje się do odpowiedzi. Wszystko możesz później zmienić w Ustawieniach.",
 			"browse": "Do przeglądania",
 			"browseDesc": "Twoje zakładki, Twój styl, najważniejsze funkcje",
-			"agents": "Z moimi agentami AI",
+			"agents": "Z moimi agentami",
 			"agentsDesc": "Claude, Codex lub Cursor pracują obok Ciebie",
 			"develop": "Do programowania",
 			"developDesc": "To wszystko oraz terminal"
@@ -1686,8 +1687,6 @@
 				"extensionsCount": "Ponowne instalowanie rozszerzeń: {current} z {total}"
 			},
 			"partial": "Nie udało się zaimportować niektórych danych: {list}. Możesz spróbować ponownie później w Ustawieniach.",
-			"moreOptions": "Wybierz, co zaimportować",
-			"lessOptions": "Ukryj opcje",
 			"profiles": "Profile {browser}",
 			"kinds": "Co zaimportować",
 			"kind": {
@@ -1719,21 +1718,18 @@
 				"iCloud": "Oczekiwanie na zgodę Apple"
 			}
 		},
-		"appearance": {
-			"title": "Twój styl",
-			"subtitle": "Jasny, ciemny lub dopasowany do Maca, a do tego źródło koloru. Okno zmienia się od razu.",
+		"yourLilo": {
+			"title": "Twoje Lilo",
+			"subtitle": "Wygląd i miejsce na karty. Okno zmienia się razem z wyborem.",
 			"theme": "Motyw",
 			"system": "Automatyczny",
 			"light": "Jasny",
-			"dark": "Ciemny"
-		},
-		"tabs": {
-			"title": "Karty tam, gdzie chcesz",
-			"subtitle": "Wybierz krawędź i zobacz zmianę w oknie. Karty możesz w każdej chwili przeciągnąć do innej krawędzi."
+			"dark": "Ciemny",
+			"tabs": "Karty",
+			"color": "Kolor",
+			"essentials": "Podstawy"
 		},
 		"essentials": {
-			"title": "Najważniejsze ustawienia",
-			"subtitle": "Dwa ustawienia, które robią różnicę. Możesz je zmienić w każdej chwili.",
 			"blocker": "Blokuj reklamy i śledzenie",
 			"blockerDesc": "Zalecane: strony wczytują się szybciej i mniej Cię śledzą.",
 			"default": "Otwieraj łącza w Lilo",
@@ -1742,23 +1738,18 @@
 			"defaultDone": "Gotowe"
 		},
 		"agents": {
-			"title": "Twoi agenci AI",
+			"title": "Twoi agenci",
 			"subtitle": "Claude Code, Codex i Cursor pracują we własnej przestrzeni Agenci, bez przejmowania klawiatury. Lilo nie ma własnej AI.",
-			"allow": "Pozwól agentom AI korzystać z Lilo",
+			"allow": "Pozwól agentom korzystać z Lilo",
 			"copied": "Skopiowano",
-			"connectNamed": "Połącz {name}"
+			"connectNamed": "Połącz {name}",
+			"onThisMac": "Na tym Macu"
 		},
 		"tips": {
-			"title": "3 wskazówki na początek",
-			"subtitle": "To wszystko, czego potrzebujesz.",
-			"go": "Zaczynajmy",
 			"search": "Naciśnij ⌘T, aby wyszukać lub wpisać adres.",
-			"tabs": "Karty są zawsze na widoku, przy wybranej krawędzi.",
 			"split": "Przeciągnij kartę do krawędzi strony, aby zobaczyć dwie strony obok siebie."
 		},
 		"devTips": {
-			"title": "3 wskazówki dla programistów",
-			"subtitle": "Skróty działają nawet bez menu Programowanie.",
 			"inspector": "Naciśnij ⌥⌘I, aby otworzyć Inspektora WWW na stronie.",
 			"localhost": "Przeciągnij kartę localhost do krawędzi strony, aby zobaczyć ją obok dokumentacji.",
 			"agents": "Agenci otwierają swoje karty w przestrzeni Agenci."

@@ -72,7 +72,7 @@ test("Tab stays inside the delete confirmation", async ({ page }) => {
 test("the next onboarding step takes the focus from the button that led to it", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 2, usage: "browse" }));
-	const card = page.locator(".card");
+	const card = page.locator(".onb");
 	const next = card.locator(".ob-foot .ob-btn").last();
 	await next.focus();
 

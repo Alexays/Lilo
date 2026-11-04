@@ -1601,13 +1601,14 @@
 		"continue": "Continuer",
 		"back": "Retour",
 		"skip": "Passer",
+		"letsGo": "C'est parti",
 		"resume": "Reprendre l'accueil",
 		"usage": {
 			"title": "Comment allez-vous utiliser Lilo ?",
 			"subtitle": "L'accueil s'adapte à votre réponse. Tout reste modifiable dans les Réglages.",
 			"browse": "Pour naviguer",
 			"browseDesc": "Vos favoris, votre style, l'essentiel",
-			"agents": "Avec mes agents IA",
+			"agents": "Avec mes agents",
 			"agentsDesc": "Claude, Codex ou Cursor à vos côtés",
 			"develop": "Pour développer",
 			"developDesc": "Le tout, plus le terminal"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "Réinstallation des extensions : {current} sur {total}"
 			},
 			"partial": "Certaines données n'ont pas pu être importées : {list}. Vous pourrez réessayer depuis les Réglages.",
-			"moreOptions": "Choisir quoi importer",
-			"lessOptions": "Masquer les options",
 			"profiles": "Profils {browser}",
 			"kinds": "Quoi importer",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "En attente de validation par Apple"
 			}
 		},
-		"appearance": {
-			"title": "Votre style",
-			"subtitle": "Clair, sombre, ou comme votre Mac, et d'où vient sa couleur. La fenêtre change tout de suite.",
+		"yourLilo": {
+			"title": "Votre Lilo",
+			"subtitle": "Un style et une place pour vos onglets. La fenêtre suit vos choix.",
 			"theme": "Thème",
 			"system": "Auto",
 			"light": "Clair",
-			"dark": "Sombre"
-		},
-		"tabs": {
-			"title": "Vos onglets, de votre côté",
-			"subtitle": "Choisissez un bord, la fenêtre suit. Vous pourrez glisser les onglets vers un autre bord à tout moment."
+			"dark": "Sombre",
+			"tabs": "Onglets",
+			"color": "Couleur",
+			"essentials": "L'essentiel"
 		},
 		"essentials": {
-			"title": "L'essentiel",
-			"subtitle": "Deux réglages qui changent tout. Modifiables à tout moment.",
 			"blocker": "Bloquer les pubs et les pisteurs",
 			"blockerDesc": "Recommandé : les pages chargent plus vite et vous suivent moins.",
 			"default": "Ouvrir les liens dans Lilo",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "C'est fait"
 		},
 		"agents": {
-			"title": "Vos agents IA",
+			"title": "Vos agents",
 			"subtitle": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents, sans toucher à votre clavier. Lilo n'embarque aucune IA.",
-			"allow": "Laisser les agents IA utiliser Lilo",
+			"allow": "Laisser les agents utiliser Lilo",
 			"copied": "Copié",
-			"connectNamed": "Connecter {name}"
+			"connectNamed": "Connecter {name}",
+			"onThisMac": "Sur ce Mac"
 		},
 		"tips": {
-			"title": "3 astuces pour bien démarrer",
-			"subtitle": "C'est tout ce qu'il faut savoir.",
-			"go": "C'est parti",
 			"search": "Appuyez sur ⌘T pour chercher ou taper une adresse.",
-			"tabs": "Vos onglets restent visibles, sur le bord choisi.",
 			"split": "Glissez un onglet sur le bord de la page pour voir deux pages côte à côte."
 		},
 		"devTips": {
-			"title": "3 astuces pour développer",
-			"subtitle": "Les raccourcis marchent même sans le menu Développement.",
 			"inspector": "Appuyez sur ⌥⌘I pour ouvrir le Web Inspector sur la page.",
 			"localhost": "Glissez votre localhost sur le bord de la page pour le voir à côté de la doc.",
 			"agents": "Vos agents ouvrent leurs onglets dans l'espace Agents."

@@ -1601,13 +1601,14 @@
 		"continue": "Sürdür",
 		"back": "Geri",
 		"skip": "Atla",
+		"letsGo": "Başlayalım",
 		"resume": "Kurulumu sürdür",
 		"usage": {
 			"title": "Lilo'yu nasıl kullanacaksınız?",
 			"subtitle": "Kurulum yanıtınıza göre uyarlanır. Her şeyi daha sonra Ayarlar'dan değiştirebilirsiniz.",
 			"browse": "Web'de gezinmek için",
 			"browseDesc": "Yer imleriniz, tarzınız, temel özellikler",
-			"agents": "Yapay zekâ ajanlarımla",
+			"agents": "Ajanlarımla",
 			"agentsDesc": "Claude, Codex veya Cursor yanınızda çalışır",
 			"develop": "Geliştirme için",
 			"developDesc": "Bunların hepsi ve terminal"
@@ -1658,8 +1659,6 @@
 				"extensionsCount": "Genişletmeler yeniden yükleniyor: {current}/{total}"
 			},
 			"partial": "Bazı veriler içe aktarılamadı: {list}. Daha sonra Ayarlar'dan yeniden deneyebilirsiniz.",
-			"moreOptions": "İçe aktarılacakları seç",
-			"lessOptions": "Seçenekleri gizle",
 			"profiles": "{browser} profilleri",
 			"kinds": "İçe aktarılacaklar",
 			"kind": {
@@ -1691,21 +1690,18 @@
 				"iCloud": "Apple'ın onayı bekleniyor"
 			}
 		},
-		"appearance": {
-			"title": "Sizin tarzınız",
-			"subtitle": "Açık, koyu veya Mac'inize göre. Rengin nereden geleceğini de seçin. Pencere hemen güncellenir.",
+		"yourLilo": {
+			"title": "Sizin Lilo'nuz",
+			"subtitle": "Sekmeleriniz için bir görünüm ve bir yer. Pencere seçiminizi izler.",
 			"theme": "Tema",
 			"system": "Otomatik",
 			"light": "Açık",
-			"dark": "Koyu"
-		},
-		"tabs": {
-			"title": "Sekmeleriniz, sizin tarafınızda",
-			"subtitle": "Bir kenar seçin, pencere hemen uyarlansın. Sekmeleri istediğiniz zaman başka bir kenara sürükleyebilirsiniz."
+			"dark": "Koyu",
+			"tabs": "Sekmeler",
+			"color": "Renk",
+			"essentials": "Temel ayarlar"
 		},
 		"essentials": {
-			"title": "Temel ayarlar",
-			"subtitle": "Fark yaratan iki ayar. İstediğiniz zaman değiştirebilirsiniz.",
 			"blocker": "Reklamları ve izleyicileri engelle",
 			"blockerDesc": "Önerilen: Sayfalar daha hızlı yüklenir ve sizi daha az izler.",
 			"default": "Bağlantıları Lilo'da aç",
@@ -1714,23 +1710,18 @@
 			"defaultDone": "Bitti"
 		},
 		"agents": {
-			"title": "Yapay zekâ ajanlarınız",
+			"title": "Ajanlarınız",
 			"subtitle": "Claude Code, Codex veya Cursor, klavyenize dokunmadan kendi Ajanlar alanında çalışır. Lilo'nun kendi yapay zekâsı yoktur.",
-			"allow": "Yapay zekâ ajanları Lilo'yu kullanabilsin",
+			"allow": "Ajanlar Lilo'yu kullanabilsin",
 			"copied": "Kopyalandı",
-			"connectNamed": "{name} bağla"
+			"connectNamed": "{name} bağla",
+			"onThisMac": "Bu Mac'te"
 		},
 		"tips": {
-			"title": "Başlamak için 3 ipucu",
-			"subtitle": "İhtiyacınız olan her şey bu kadar.",
-			"go": "Başlayalım",
 			"search": "Aramak veya adres yazmak için ⌘T tuşlarına basın.",
-			"tabs": "Sekmeleriniz seçtiğiniz kenarda, her zaman gözünüzün önünde.",
 			"split": "İki sayfayı yan yana görmek için sekmeyi sayfanın kenarına sürükleyin."
 		},
 		"devTips": {
-			"title": "Geliştirme için 3 ipucu",
-			"subtitle": "Kestirmeler Geliştirme menüsü olmadan da çalışır.",
 			"inspector": "Sayfanın Web Denetçisi'ni açmak için ⌥⌘I tuşlarına basın.",
 			"localhost": "localhost'u belgelerin yanında görmek için sayfanın kenarına sürükleyin.",
 			"agents": "Ajanlarınız sekmelerini Ajanlar alanında açar."
