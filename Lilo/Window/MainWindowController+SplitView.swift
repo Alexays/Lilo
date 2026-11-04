@@ -499,28 +499,27 @@ extension MainWindowController {
         registerSplitUndo(previous: previous, activeId: activeId, createdTabIds: created)
     }
 
-    /// Cuts the `targetId` pane in two for `tabId`, on the left or top half when `before`. Without
-    /// a split on screen the active tab is the target. A pane of the same split moves there.
+    /// Puts `tabId` beside the chosen tab (or the active tab when no target is given).
+    /// A pane of the same split moves there.
     func splitTab(_ tabId: UUID, at targetId: UUID?, vertical: Bool, before: Bool, createdTabIds: [UUID] = []) {
         guard let spaceId = tabManager.currentSpaceId, let activeId = tabManager.activeOpenTabId else { return }
+        let anchor = targetId ?? activeId
         var created = createdTabIds
-        let previous = tabManager.activeSplit
-        let target: UUID
-        if let previous {
-            // A stale target (the split changed under the drag) falls back to the focused pane.
-            target = targetId.flatMap { previous.layout.paneIds.contains($0) ? $0 : nil } ?? activeId
-        } else {
-            guard tabId != activeId, let pane = splitPane(for: activeId, created: &created) else { return }
-            target = pane
+        var didSplit = false
+        defer {
+            if !didSplit {
+                for id in created { closeTabStateFirst(id: id, undoable: false) }
+            }
         }
-        guard tabId != target else { return }
+        guard tabId != anchor, let spaceTab = context.browserState.space(id: spaceId)?.spaceTab,
+              spaceTab.storedTab(anchor) != nil, let target = splitPane(for: anchor, created: &created) else { return }
+        let previous = spaceTab.splitGroup(containing: anchor)
         do {
             let changes = try applyBrowserCommand(.splitTabs(spaceId: spaceId, tabId: tabId, targetTabId: target, vertical: vertical, before: before))
             // A full split refuses a new pane.
-            guard let state = changes.changedState, state.tabsById[tabId]?.groupId == state.tabsById[target]?.groupId else {
-                for id in created { closeTabStateFirst(id: id, undoable: false) }
-                return
-            }
+            guard let state = changes.changedState, let groupId = state.tabsById[tabId]?.groupId,
+                  groupId == state.tabsById[target]?.groupId else { return }
+            didSplit = true
             activateTabStateFirst(id: tabId)
             registerSplitUndo(previous: previous, activeId: activeId, createdTabIds: created)
         } catch {

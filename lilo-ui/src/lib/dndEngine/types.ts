@@ -54,12 +54,11 @@ export type DndZoneSnapshot = {
 
 export type DndResolvedTarget = {
 	zoneId: string;
-	index: number;
 	axis: DndAxis;
 	// Stamped by the store so readers interpret the target without calling getZoneSnapshot, which re-runs getItems()
 	// and re-enters whatever derived state is asking.
 	zoneRect?: DndRect;
-};
+} & ({ index: number; onItemId?: never } | { onItemId: string; index?: never });
 
 export type DndTargetContext = {
 	point: DndPoint;

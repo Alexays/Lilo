@@ -51,6 +51,7 @@
     disableTooltip = false,
     tooltipAnchor,
     actionsInert = false,
+    splitDropTarget = false,
     level = 1,
     tabStop = true,
   }: {
@@ -61,6 +62,7 @@
     /** Ancestor selector the tooltip sits beside, so it clears neighbours sharing the row. */
     tooltipAnchor?: string;
     actionsInert?: boolean;
+    splitDropTarget?: boolean;
     /** Depth in the sidebar tree, 1 at the root. */
     level?: number;
     /** The one row of its tree that Tab lands on; arrows move between the others. */
@@ -429,6 +431,7 @@
   class:travel-hold={travelHold}
   class:closed={tab.isClosed}
   class:loading={tab.isLoading}
+  class:split-drop-target={splitDropTarget}
   class:interactive
   style={`${
     tab.faviconDominantColor
@@ -631,6 +634,9 @@
     {/if}
   </div>
 
+  {#if splitDropTarget}
+    <span class="split-drop-hint" aria-hidden="true">{t("tabSection.splitView")}</span>
+  {/if}
   <div class="tab-actions" inert={actionsInert || undefined}>
     {#if interactive}
       <button
@@ -708,6 +714,20 @@
      identical to `.selection-ghost` so landing is seamless. */
   .tab-item.active:not(.travel-hold) {
     background: color-mix(in srgb, var(--tab-tint, var(--accent)) 18%, var(--bg-selected));
+  }
+
+  .tab-item.split-drop-target {
+    background: var(--accent-tint-22);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  .split-drop-hint {
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-size-xs);
+    color: var(--text-primary);
   }
 
   /* A sleeping tab keeps full-strength text: italic and a greyed icon say it sleeps, not a fade. */
