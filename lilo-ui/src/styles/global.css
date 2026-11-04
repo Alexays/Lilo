@@ -47,7 +47,7 @@
 
   --sidebar-width: 260px;
   /* Mirrors MainWindowController.sidebarRailWidth. */
-  --sidebar-rail-width: 62px;
+  --sidebar-rail-width: 76px;
   --sidebar-bg: var(--bg-secondary);
   --sidebar-contrast: #1d1d1f;
   --content-inset: 8px;

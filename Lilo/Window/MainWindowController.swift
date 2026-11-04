@@ -92,8 +92,8 @@ final class MainWindowController: NSWindowController {
 
     static let defaultSidebarWidth: CGFloat = 260
     static let sidebarWidthRange: ClosedRange<CGFloat> = 203...480
-    /// The icon rail's width: the traffic lights need about 52pt of it.
-    static let sidebarRailWidth: CGFloat = 62
+    /// The icon rail's width: with the content inset, the traffic lights sit centered on it, 15pt from either side.
+    static let sidebarRailWidth: CGFloat = 76
     static let contentInset: CGFloat = 8
     /// Matches the 320px of `--sidebar-fitted-width` in the chrome UI's global.css.
     static let minimumContentWidth: CGFloat = 320

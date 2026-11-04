@@ -15,17 +15,12 @@
   import { closePageShell } from "../../stores/panels.svelte";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInRightTabs, tooltipSide } from "../../stores/tabLayout.svelte";
-  import { areTrafficLightsVisible } from "../../stores/ui.svelte";
+  import { areTrafficLightsVisible, setSidebarRail } from "../../stores/ui.svelte";
   import { getChosenAppIcon, getReadyUpdate } from "../../stores/settings.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
 
-  // A folder unfolds the whole sidebar over the page: its tabs are listed there.
-  let { onexpand, onhover, onresize }: {
-    onexpand: (fromKeyboard: boolean) => void;
-    onhover: (expand: boolean) => void;
-    onresize: (event: MouseEvent) => void;
-  } = $props();
+  let { onresize }: { onresize: (event: MouseEvent) => void } = $props();
 
   const spaceId = $derived(getActiveSpaceId());
   const view = $derived(getSpaceSidebar(spaceId).view);
@@ -39,12 +34,26 @@
   });
   const spaces = $derived(getPagedSpaces());
   const lights = $derived(getTabPosition() === "left" && areTrafficLightsVisible());
-  // The sidebar header's height, so the lights keep their place as the sidebar unfolds over the rail.
+  // The sidebar header's height, so the lights keep their place as the sidebar unfolds from the rail.
   const lightsHeight = $derived(getAddressPlacement() === "tabs" || hasPageToolbar() ? 44 : 52);
   // Where the sidebar header holds the toggle: the page toolbar keeps it otherwise.
   const showsToggle = $derived(!(getTabPosition() === "left" && hasPageToolbar()) && !isAddressInRightTabs());
   let updateOpen = $state(false);
   let updateButton: HTMLButtonElement | undefined = $state();
+  let openFolder: { id: string; anchor: HTMLElement } | null = $state(null);
+
+  // Nested folders flatten into their tabs, as in the strip.
+  function folderTabs(folderId: string): TabState[] {
+    const tabs: TabState[] = [];
+    for (const item of view.treeIndex.childrenByFolderId.get(folderId) ?? []) {
+      if (item.kind === "folder") tabs.push(...folderTabs(item.itemId));
+      else {
+        const tab = view.tabsById.get(item.itemId);
+        if (tab && !tab.isClosed) tabs.push(tab);
+      }
+    }
+    return tabs;
+  }
 
   function tabTitle(tab: TabState): string {
     return tab.customTitle || tab.homeTitle || tabDisplayTitle(tab.title ?? "") || tab.url || t("tabItem.newTab");
@@ -131,9 +140,10 @@
         class="rail-item"
         class:active={folder.id === activeRootId}
         aria-label={folder.name}
-        aria-haspopup="true"
+        aria-haspopup="menu"
+        aria-expanded={openFolder?.id === folder.id}
         use:tooltip={{ text: folder.name, placement: tooltipSide() }}
-        onclick={(e) => onexpand(e.detail === 0)}
+        onclick={(e) => (openFolder = openFolder?.id === folder.id ? null : { id: folder.id, anchor: e.currentTarget })}
       >
         <svg width="16" height="16" viewBox="0 0 18 18" fill="none" style:--folder-color={folder.color} aria-hidden="true">
           <path class="folder" d="M2.65 6.05C2.65 5.38 3.16 4.88 3.83 4.88H6.7L7.98 6.08H14.16C14.82 6.08 15.32 6.59 15.32 7.25V12.42C15.32 13.09 14.82 13.6 14.16 13.6H3.83C3.16 13.6 2.65 13.09 2.65 12.42V6.05Z" />
@@ -146,14 +156,7 @@
   {/if}
 {/snippet}
 
-<!-- Over an icon the pointer aims at it, and its tooltip names it: only a rest elsewhere on the rail unfolds it. -->
-<!-- svelte-ignore a11y_no_static_element_interactions, a11y_mouse_events_have_key_events -->
-<div
-  class="sidebar-rail tabs-surface"
-  use:reportInteractiveZone={{ id: "sidebar-rail" }}
-  onmouseover={(e) => onhover(!(e.target as Element).closest("button"))}
-  onmouseleave={() => onhover(false)}
->
+<div class="sidebar-rail tabs-surface" use:reportInteractiveZone={{ id: "sidebar-rail" }}>
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <nav class="rail" aria-label={t("sidebar.ariaLabel")} onkeydown={handleArrows}>
   {#if lights}
@@ -193,6 +196,24 @@
       {@render rootItem(item)}
     {/each}
   </div>
+  {#if openFolder}
+    {@const folder = view.foldersById.get(openFolder.id)}
+    {#if folder}
+      <StripPopover anchor={openFolder.anchor} label={folder.name} onclose={() => (openFolder = null)}>
+        {#if folder.isLocked}
+          <!-- Unlocking takes the full sidebar: the rail unfolds to it. -->
+          <button class="popover-row" onclick={() => setSidebarRail(false)}>{t("tabFolder.unlock")}</button>
+        {:else}
+          {#each folderTabs(folder.id) as tab (tab.id)}
+            <button class="popover-row" class:active={tab.id === activeTabId} onclick={() => { openFolder = null; activate(tab); }}>
+              <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
+              <span class="row-title">{tabTitle(tab)}</span>
+            </button>
+          {/each}
+        {/if}
+      </StripPopover>
+    {/if}
+  {/if}
 
   <div class="footer">
     {#if getReadyUpdate()}
@@ -275,18 +296,12 @@
     background: var(--accent-tint-12);
   }
 
+  /* The column spans the rail to the page, so its icons center under the traffic lights. */
   .rail {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: var(--sidebar-rail-width);
     height: 100%;
-    margin-left: var(--content-inset);
-  }
-
-  /* Mirrored on the right: the 8 px toward the window edge. */
-  :global(html[data-tab-position='right']) .rail {
-    margin-left: 0;
   }
 
   .lights {
@@ -424,6 +439,35 @@
     stroke-width: 1.8;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  .popover-row {
+    width: 100%;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: calc(var(--float-radius-popover) - 6px);
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    text-align: left;
+  }
+
+  .popover-row:hover,
+  .popover-row:focus-visible,
+  .popover-row.active {
+    background: var(--bg-hover);
+  }
+
+  .row-title {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .folder {

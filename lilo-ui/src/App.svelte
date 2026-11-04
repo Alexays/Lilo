@@ -139,44 +139,8 @@
 
   // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
   const SIDEBAR_RAIL_THRESHOLD = 150;
-  const SIDEBAR_RAIL_WIDTH = 62;
-  const RAIL_EXPAND_DELAY_MS = 300;
-  const RAIL_COLLAPSE_DELAY_MS = 150;
+  const SIDEBAR_RAIL_WIDTH = 76;
   const railShown = $derived(isSidebarRail() && isSidebarVisible() && isVerticalLayout());
-  // The full sidebar floating out over the page from the rail, at the width it had before.
-  let railExpanded = $state(false);
-  let railTimer: ReturnType<typeof setTimeout> | null = null;
-  let sidebarEl: HTMLDivElement | undefined = $state();
-  const railFolded = $derived(railShown && !railExpanded);
-
-  function setRailExpanded(expanded: boolean): void {
-    if (railTimer !== null) clearTimeout(railTimer);
-    railTimer = null;
-    railExpanded = expanded;
-  }
-
-  /** Unfolds or folds after its delay; a call the other way first cancels the pending one. */
-  function scheduleRail(expand: boolean): void {
-    if (railTimer !== null) clearTimeout(railTimer);
-    railTimer = null;
-    if (!railShown || expand === railExpanded) return;
-    railTimer = setTimeout(() => {
-      railTimer = null;
-      railExpanded = expand;
-    }, expand ? RAIL_EXPAND_DELAY_MS : RAIL_COLLAPSE_DELAY_MS);
-  }
-
-  $effect(() => {
-    if (!railShown) untrack(() => setRailExpanded(false));
-  });
-
-  // A press from the keyboard takes the focus along into the panel, onto the row it would land on.
-  function expandRail(fromKeyboard: boolean): void {
-    setRailExpanded(true);
-    if (fromKeyboard) {
-      requestAnimationFrame(() => sidebarEl?.querySelector<HTMLElement>(".space-pane:not(.pane-hidden) [role='treeitem'][tabindex='0']")?.focus());
-    }
-  }
 
   function applySidebarTheme() {
     const root = document.documentElement;
@@ -287,7 +251,6 @@
       260;
     // The rail keeps --sidebar-width at the width it unfolds to.
     const startRail = railShown;
-    setRailExpanded(false);
 
     pendingSidebarWidth = startWidth;
 
@@ -400,7 +363,6 @@
       }
       sidebarResizeFrame.cancel();
       cancelSidebarOverlayHide();
-      if (railTimer !== null) clearTimeout(railTimer);
       disposeInitialStateReady();
       disposeContentInteraction();
       disposeWindowFocus();
@@ -456,33 +418,21 @@
   {#if railShown}
     <!-- Loaded on demand: only a sidebar folded to its rail carries it. -->
     {#await import("./components/sidebar/SidebarRail.svelte") then rail}
-      <rail.default onexpand={expandRail} onhover={scheduleRail} onresize={startResize} />
+      <rail.default onresize={startResize} />
     {/await}
   {/if}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    bind:this={sidebarEl}
     class="sidebar tabs-surface"
     class:sidebar-hidden={!isSidebarShown()}
     class:sidebar-overlay={isSidebarOverlay()}
-    class:rail-folded={railFolded}
-    class:rail-expanded={railShown && railExpanded}
+    class:rail-folded={railShown}
     class:swiping={swipeBackground !== null}
     style:background-color={shownMaterial === "glass" && !isSidebarOverlay() && !railShown ? null : swipeBackground}
-    inert={railFolded}
-    use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() && !railFolded }}
-    onmouseenter={() => {
-      cancelSidebarOverlayHide();
-      scheduleRail(true);
-    }}
-    onmouseleave={() => {
-      scheduleSidebarOverlayHide();
-      scheduleRail(false);
-    }}
-    onfocusout={(e) => {
-      // A keyboard leaving the unfolded sidebar folds it; the pointer still over it keeps it.
-      if (railExpanded && !sidebarEl?.contains(e.relatedTarget as Node | null) && !sidebarEl?.matches(":hover")) setRailExpanded(false);
-    }}
+    inert={railShown}
+    use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() && !railShown }}
+    onmouseenter={cancelSidebarOverlayHide}
+    onmouseleave={scheduleSidebarOverlayHide}
   >
     <Sidebar />
     {#if isSidebarVisible() && !railShown}
@@ -663,13 +613,13 @@
 
   /* Glass and grain are drawn natively under the whole chrome, so the sidebar lets them through. Floating over
      the page, it has only the page under it: it keeps its solid color there, and paints its own grain. */
-  :global(html[data-material='glass']) .sidebar:not(.sidebar-overlay, .rail-folded, .rail-expanded),
-  :global(html[data-material='grain']) .sidebar:not(.sidebar-overlay, .rail-folded, .rail-expanded) {
+  :global(html[data-material='glass']) .sidebar:not(.sidebar-overlay, .rail-folded),
+  :global(html[data-material='grain']) .sidebar:not(.sidebar-overlay, .rail-folded) {
     background-color: transparent;
   }
 
   /* One static tile the compositor repeats: no work after the first paint. */
-  :global(html[data-material='grain']) .sidebar:is(.sidebar-overlay, .rail-expanded) {
+  :global(html[data-material='grain']) .sidebar.sidebar-overlay {
     background-image: var(--grain-texture);
     background-size: 160px;
     background-blend-mode: overlay;
@@ -718,12 +668,12 @@
   }
 
   /* Over the modal veils (command bar, share picker), which cover the hidden sidebar's column. */
-  .sidebar:is(.sidebar-overlay, .rail-expanded) {
+  .sidebar.sidebar-overlay {
     box-shadow: 4px 0 24px var(--sidebar-shadow);
     z-index: 63;
   }
 
-  :global(html[data-tab-position='right']) .sidebar:is(.sidebar-overlay, .rail-expanded) {
+  :global(html[data-tab-position='right']) .sidebar.sidebar-overlay {
     box-shadow: -4px 0 24px var(--sidebar-shadow);
   }
 
@@ -746,7 +696,7 @@
     }
 
     /* Over the global rule that drops every transition to nothing. */
-    .sidebar:is(.rail-folded, .rail-expanded) {
+    .sidebar.rail-folded {
       transition: opacity 150ms ease !important;
     }
   }

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
-import { initialWorld } from "./fixtures";
+import { initialWorld, nestedFolderWorld } from "./fixtures";
 
 const sidebarWidth = (page: Page) =>
 	page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width"));
@@ -39,26 +39,23 @@ test("dragging the edge under the detent folds the sidebar to its rail, and back
 	expect((await sentCommands(page)).filter((c) => c.action === "setSidebarRail").at(-1)?.payload).toEqual({ rail: false });
 });
 
-test("resting on the rail unfolds the sidebar over the page, and leaving it folds it back", async ({ page }) => {
-	await bootChrome(page, { ...initialWorld(), sidebarRail: true });
+test("a folder on the rail lists its tabs beside it, and the sidebar stays folded", async ({ page }) => {
+	await bootChrome(page, { ...nestedFolderWorld(), sidebarRail: true });
 	const sidebar = page.locator("#chrome-root > .sidebar");
 	const rail = (await page.locator(".sidebar-rail").boundingBox())!;
 
-	// An icon only shows its tooltip: the pointer is aiming at it.
-	await page.locator(".rail-item[data-tab-id]").first().hover();
+	// Resting on the rail never unfolds the sidebar.
+	await page.mouse.move(rail.x + rail.width / 2, rail.y + rail.height - 120);
 	await page.waitForTimeout(500);
 	await expect(sidebar).toHaveClass(/rail-folded/);
 
-	await page.mouse.move(rail.x + rail.width / 2, rail.y + rail.height - 120);
-	await expect(sidebar).toHaveClass(/rail-expanded/);
-	await expect(sidebar).not.toHaveAttribute("inert");
+	await page.locator(".sidebar-rail .rail-item[aria-label='Projects']").click();
+	const popover = page.locator(".strip-popover");
+	// Nested folders flatten into their tabs.
+	await expect(popover.locator(".popover-row")).toHaveCount(2);
+	expect((await popover.boundingBox())!.x).toBeGreaterThanOrEqual(rail.x + rail.width);
 
-	// A click in the unfolded sidebar keeps it out until the pointer leaves.
-	await sidebar.locator(".tab-item").nth(1).click();
-	await page.waitForTimeout(400);
-	await expect(sidebar).toHaveClass(/rail-expanded/);
-
-	await page.mouse.move(900, 400);
+	await popover.locator(".popover-row").first().click();
+	await expect(popover).toHaveCount(0);
 	await expect(sidebar).toHaveClass(/rail-folded/);
-	await expect(sidebar).toHaveAttribute("inert");
 });

@@ -115,7 +115,7 @@ extension MainWindowController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
-    /// The page follows the rail's edge only here: the sidebar floating out of it covers the page.
+    /// Folding to the rail or out of it moves the page edge with it.
     func setSidebarRail(_ rail: Bool) {
         guard rail != sidebarRail else { return }
         sidebarRail = rail
