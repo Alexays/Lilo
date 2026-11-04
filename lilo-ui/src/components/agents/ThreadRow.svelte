@@ -23,7 +23,6 @@
   import type { ThreadItem } from "./conversationModel";
   import Icon from "./Icon.svelte";
   import Markdown from "./Markdown.svelte";
-  import PermissionButtons from "./PermissionButtons.svelte";
   import ThreadImage from "./ThreadImage.svelte";
   import { formatDuration, imageSource } from "./threadView";
 
@@ -56,12 +55,6 @@
   const askedHere = untrack(() => item.kind === "permission" && item.answer === null);
   let confirmingRestore = $state(false);
   let copied = $state(false);
-
-  function rejectPermission(): void {
-    if (view.kind !== "permission" || view.answer !== null) return;
-    const reject = view.options.find((option) => option.kind === "reject_once") ?? view.options.find((option) => option.kind === "reject_always");
-    conversationActions.answer(tabId, String(view.requestId), reject?.optionId);
-  }
 </script>
 
 {#if view.kind === "user"}
@@ -198,30 +191,14 @@
       {/each}
     </ul>
   </div>
-{:else if view.kind === "permission"}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="permission"
-    class:answered={view.answer !== null}
-    class:settled={askedHere && view.answer !== null}
-    onkeydown={(event) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      rejectPermission();
-    }}
-  >
-    <div class="permission-title">
-      {#if view.answer === null}<span class="pip" aria-hidden="true"></span>{/if}
-      {view.toolCall.title || t("agents.conversation.permissionTitle")}
-    </div>
-    {#if view.answer === null}
-      <PermissionButtons {tabId} requestId={String(view.requestId)} options={view.options} />
-    {:else}
-      {@const chosen = view.options.find((option) => option.optionId === view.answer)}
-      <div class="permission-answer">
-        {chosen ? t("agents.conversation.answered", { option: chosen.name }) : t("agents.conversation.cancelled")}
-      </div>
-    {/if}
+{:else if view.kind === "permission" && view.answer !== null}
+  <!-- A pending question docks over the composer; once answered, its answer stays in the thread. -->
+  {@const chosen = view.options.find((option) => option.optionId === view.answer)}
+  <div class="permission" class:settled={askedHere}>
+    <span class="permission-title">{view.toolCall.title || t("agents.conversation.permissionTitle")}</span>
+    <span class="permission-answer">
+      {chosen ? t("agents.conversation.answered", { option: chosen.name }) : t("agents.conversation.cancelled")}
+    </span>
   </div>
 {:else if view.kind === "notice"}
   <div class="notice">
@@ -241,7 +218,7 @@
     max-width: 85%;
     padding: var(--space-10) var(--space-12);
     border-radius: var(--radius-lg);
-    background: var(--text-primary-tint-10);
+    background: color-mix(in srgb, var(--text-primary) 6%, transparent);
     font-size: var(--font-size-md);
     line-height: 1.5;
     user-select: text;
@@ -266,9 +243,10 @@
     display: inline-block;
     line-height: 22px;
     padding: 0 var(--space-8);
-    border-radius: var(--radius-chip);
-    background: var(--accent-tint-18);
-    font-size: var(--font-size-xs);
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px var(--border);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -545,29 +523,15 @@
 
   .permission {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-10);
-    padding: var(--space-12);
-    border: 1px solid color-mix(in srgb, var(--attention) 45%, transparent);
-    border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--attention) 7%, transparent);
-    transition:
-      background-color var(--motion-duration-slow) ease,
-      border-color var(--motion-duration-slow) ease;
-  }
-
-  .permission.settled {
-    animation: permission-settle var(--motion-duration-slow) var(--motion-ease-bounce);
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-4) var(--space-8);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
   }
 
   .permission.settled .permission-answer {
     animation: answer-in var(--motion-duration-normal) var(--motion-ease-standard) both;
-  }
-
-  @keyframes permission-settle {
-    from {
-      transform: scale(0.985);
-    }
   }
 
   @keyframes answer-in {
@@ -577,31 +541,14 @@
     }
   }
 
-  .permission.answered {
-    border-color: var(--border);
-    background: none;
-  }
-
   .permission-title {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
     overflow-wrap: anywhere;
   }
 
-  .pip {
-    flex: none;
-    width: 7px;
-    height: 7px;
-    border-radius: var(--radius-chip);
-    background: var(--attention);
-  }
-
   .permission-answer {
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    color: var(--text-muted);
   }
 
   .notice {

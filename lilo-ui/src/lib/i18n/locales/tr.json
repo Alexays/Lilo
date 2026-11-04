@@ -2491,8 +2491,8 @@
 			"chooseFolder": "Klasör seç...",
 			"ownCopy": "Ayrı kopya",
 			"ownCopyHint": "Ajan projenin kendi kopyası üzerinde çalışsın (bir git worktree)",
-			"openBeside": "aç",
-			"openBackground": "arka planda",
+			"openBeside": "Aç",
+			"openBackground": "Arka planda",
 			"start": "Başlat"
 		},
 		"row": {

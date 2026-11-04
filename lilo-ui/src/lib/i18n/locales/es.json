@@ -2491,8 +2491,8 @@
 			"chooseFolder": "Elegir carpeta...",
 			"ownCopy": "Copia propia",
 			"ownCopyHint": "Deja que el agente trabaje en su propia copia del proyecto (un worktree de git)",
-			"openBeside": "abrir",
-			"openBackground": "en segundo plano",
+			"openBeside": "Abrir",
+			"openBackground": "En segundo plano",
 			"start": "Empezar"
 		},
 		"row": {

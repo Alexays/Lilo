@@ -40,6 +40,7 @@
   import Icon from "./Icon.svelte";
   import Lightbox from "./Lightbox.svelte";
   import MenuPicker from "./MenuPicker.svelte";
+  import PermissionButtons from "./PermissionButtons.svelte";
   import PromptField, { type AttachmentDraft } from "./PromptField.svelte";
   import ThreadRow, { type TurnSummary } from "./ThreadRow.svelte";
   import { formatDuration, itemSignature } from "./threadView";
@@ -311,9 +312,20 @@
     });
   });
 
-  const asking = $derived.by(() => {
+  const pending = $derived.by(() => {
     void version;
-    return pendingPermission() !== null;
+    return pendingPermission();
+  });
+  const asking = $derived(pending !== null);
+  // What the agent asks to run, as it will run: the command for a shell call, else its title.
+  const pendingCommand = $derived.by(() => {
+    const call = pending?.toolCall;
+    if (!call) return "";
+    const command = (call.rawInput !== null && typeof call.rawInput === "object" ? (call.rawInput as Record<string, unknown>).command : undefined);
+    if (typeof command === "string") return command;
+    // Codex sends argv, usually ["bash", "-lc", script].
+    if (Array.isArray(command)) return command.length === 3 && command[1] === "-lc" ? String(command[2]) : command.join(" ");
+    return call.title ?? "";
   });
 
   function pendingPermission(): PermissionItem | null {
@@ -381,21 +393,21 @@
       <AgentTile agentId={header.agentId} />
       <h1 class="title">{header.title}</h1>
       {#if header.project}
-        <span class="chip" use:tooltip={header.cwd}>
+        <span class="meta" use:tooltip={header.cwd}>
           <Icon name="folder" size={12} />
-          {header.project}
+          <span class="meta-text">{header.project}</span>
         </span>
       {/if}
       {#if header.branch}
-        <span class="chip" use:tooltip={t("agents.conversation.branch", { branch: header.branch })}>
+        <span class="meta" use:tooltip={t("agents.conversation.branch", { branch: header.branch })}>
           <Icon name="branch" size={12} />
-          <span class="chip-text">{header.branch}</span>
+          <span class="meta-text">{header.branch}</span>
         </span>
       {/if}
       {#if header.ownCopy}
-        <span class="chip own-copy" use:tooltip={t("agents.conversation.ownCopyHint")}>
+        <span class="meta" use:tooltip={t("agents.conversation.ownCopyHint")}>
           <Icon name="copy" size={12} />
-          {t("agents.conversation.ownCopy")}
+          <span class="meta-text">{t("agents.conversation.ownCopy")}</span>
         </span>
       {/if}
       <span class="spacer"></span>
@@ -552,6 +564,31 @@
           <span class="queue-hint">{t("agents.conversation.queuedHint")}</span>
         </div>
       {/if}
+      {#if pending}
+        <!-- The question docks where the eye is, over the composer; Return and Esc answer it from an empty field. -->
+        <div
+          class="question float-surface"
+          role="group"
+          aria-label={t("agents.conversation.permissionTitle")}
+          in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs + 120, easing: springEase, x: 0, y: 10 }}
+        >
+          <div class="question-head">
+            <span class="question-icon">
+              <AgentTile agentId={header.agentId} />
+              <span class="question-dot" aria-hidden="true"></span>
+            </span>
+            <span class="question-title">{t("agents.conversation.permissionTitle")}</span>
+            <span class="question-state">{t("agents.status.waiting")}</span>
+          </div>
+          {#if pendingCommand}
+            <div class="question-command">{#if pending.toolCall.kind === "execute"}<span class="prompt-sign" aria-hidden="true">$</span>{/if}{pendingCommand}</div>
+          {/if}
+          <div class="question-foot">
+            {#if header.cwd}<span class="question-path" use:tooltip={header.cwd}>{header.cwd.replace(/^\/Users\/[^/]+/, "~")}</span>{/if}
+            <PermissionButtons {tabId} requestId={String(pending.requestId)} options={pending.options} keys />
+          </div>
+        </div>
+      {/if}
       <div class="composer float-surface">
         <PromptField
           bind:this={field}
@@ -693,6 +730,13 @@
     pointer-events: auto;
   }
 
+  @media (prefers-color-scheme: dark) {
+    .conversation {
+      --bg-primary: var(--conversation-bg);
+      --float-surface: var(--conversation-surface);
+    }
+  }
+
   .header {
     flex: none;
     display: flex;
@@ -714,30 +758,108 @@
     white-space: nowrap;
   }
 
-  .chip {
+  .meta {
     flex: none;
     display: inline-flex;
     align-items: center;
     gap: var(--space-4);
     max-width: 180px;
-    height: 22px;
-    padding: 0 var(--space-8);
-    border-radius: var(--radius-chip);
-    background: var(--text-primary-tint-10);
+    margin-left: var(--space-4);
     color: var(--text-secondary);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     white-space: nowrap;
   }
 
-  .chip-text {
+  .meta-text {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .chip.own-copy {
-    background: color-mix(in srgb, var(--success) 16%, transparent);
-    color: var(--success-text);
+  .question {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: var(--space-8);
+    padding: var(--space-12) var(--space-12) var(--space-12) var(--space-16);
+    border-radius: var(--radius-lg);
+  }
+
+  .question-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
+  .question-icon {
+    position: relative;
+    flex: none;
+    display: grid;
+  }
+
+  .question-dot {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--attention);
+    box-shadow: 0 0 0 2px var(--float-surface);
+  }
+
+  .question-title {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .question-state {
+    flex: none;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .question-command {
+    max-height: 120px;
+    overflow: auto;
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+    font: var(--font-size-sm) / 1.5 ui-monospace, "SF Mono", Menlo, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    user-select: text;
+  }
+
+  .prompt-sign {
+    margin-right: var(--space-8);
+    color: var(--text-muted);
+  }
+
+  .question-foot {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-width: 0;
+  }
+
+  .question-path {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .question-foot :global(.permission-buttons) {
+    margin-left: auto;
   }
 
   .spacer {
@@ -794,6 +916,11 @@
     flex-direction: column;
     gap: var(--space-12);
     min-width: 0;
+  }
+
+  /* A pending question docks over the composer and leaves its row empty. */
+  .row:empty {
+    display: none;
   }
 
   .hero {

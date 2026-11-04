@@ -2480,8 +2480,8 @@
 			"chooseFolder": "Choose folder...",
 			"ownCopy": "Own copy",
 			"ownCopyHint": "Let the agent work on its own copy of the project (a git worktree)",
-			"openBeside": "open",
-			"openBackground": "in the background",
+			"openBeside": "Open",
+			"openBackground": "In the background",
 			"start": "Start"
 		},
 		"row": {

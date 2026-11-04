@@ -168,9 +168,10 @@
     background: var(--accent-tint-10);
   }
 
+  /* Neutral, never the Space's tint: code reads the same in every Space. */
   .code-block {
     border-radius: var(--radius-md);
-    background: var(--bg-secondary);
+    background: color-mix(in srgb, var(--text-primary) 4%, var(--bg-primary));
     border: 1px solid var(--separator);
     overflow: hidden;
   }
@@ -181,7 +182,6 @@
     justify-content: space-between;
     height: var(--control-height-sm);
     padding: 0 var(--space-4) 0 var(--space-12);
-    border-bottom: 1px solid var(--separator);
     color: var(--text-muted);
     font-size: var(--font-size-xs);
   }

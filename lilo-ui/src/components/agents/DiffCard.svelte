@@ -183,14 +183,15 @@
   }
 
   .diff-button {
-    height: 20px;
-    padding: 0 var(--space-8);
+    height: var(--control-height-sm);
+    padding: 0 var(--space-10);
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--text-primary-tint-10);
+    background: var(--bg-primary);
+    box-shadow: inset 0 0 0 1px var(--border);
     color: var(--text-primary);
     font: inherit;
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
     transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
@@ -201,11 +202,12 @@
   }
 
   .diff-button:hover {
-    background: var(--text-primary-tint-12);
+    background: var(--bg-hover);
   }
 
   .diff-button.primary {
     background: var(--accent);
+    box-shadow: none;
     color: var(--accent-text);
   }
 
@@ -247,7 +249,7 @@
     padding: var(--space-6) 0;
     max-height: 420px;
     overflow: auto;
-    font: var(--font-size-xs)/1.55 ui-monospace, "SF Mono", Menlo, monospace;
+    font: var(--font-size-sm)/1.55 ui-monospace, "SF Mono", Menlo, monospace;
     user-select: text;
   }
 

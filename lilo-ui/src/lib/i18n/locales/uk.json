@@ -2529,8 +2529,8 @@
 			"chooseFolder": "Вибрати папку...",
 			"ownCopy": "Окрема копія",
 			"ownCopyHint": "Агент працює в окремій копії проєкту (git worktree)",
-			"openBeside": "відкрити",
-			"openBackground": "у фоні",
+			"openBeside": "Відкрити",
+			"openBackground": "У фоні",
 			"start": "Почати"
 		},
 		"row": {

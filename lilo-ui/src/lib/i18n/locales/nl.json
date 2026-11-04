@@ -2491,8 +2491,8 @@
 			"chooseFolder": "Kies map...",
 			"ownCopy": "Eigen kopie",
 			"ownCopyHint": "Laat de agent aan een eigen kopie van het project werken (een git-worktree)",
-			"openBeside": "openen",
-			"openBackground": "op de achtergrond",
+			"openBeside": "Openen",
+			"openBackground": "Op de achtergrond",
 			"start": "Start"
 		},
 		"row": {

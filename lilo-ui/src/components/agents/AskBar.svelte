@@ -7,6 +7,7 @@
   import { dismissable } from "../../lib/actions/dismissable";
   import { conversationActions } from "./conversationActions";
   import { t } from "../../lib/i18n/state.svelte";
+  import { formatShortcut } from "../../lib/inputParser";
   import {
     clearChosenProject,
     closeAskBar,
@@ -185,12 +186,16 @@
           {t("agents.ask.ownCopy")}
         </button>
         <span class="spacer"></span>
+        <span class="hints" aria-hidden="true">
+          <span><kbd>{formatShortcut("Enter")}</kbd>{t("agents.ask.openBeside")}</span>
+          <span><kbd>{formatShortcut("Cmd+Enter")}</kbd>{t("agents.ask.openBackground")}</span>
+        </span>
         <button
           type="button"
           class="send"
           disabled={!canStart}
           aria-label={t("agents.ask.start")}
-          title={`⏎ ${t("agents.ask.openBeside")}, ⌘⏎ ${t("agents.ask.openBackground")}`}
+          aria-keyshortcuts="Enter Meta+Enter"
           onclick={() => start(false)}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
@@ -221,10 +226,10 @@
     left: 50%;
     bottom: var(--space-24);
     transform: translateX(-50%);
-    width: min(620px, calc(100% - var(--space-32)));
+    width: min(700px, calc(100% - var(--space-32)));
     box-sizing: border-box;
-    padding: var(--space-12) var(--space-12) var(--space-10) var(--space-16);
-    border-radius: var(--radius-xl);
+    padding: var(--space-10) var(--space-8) var(--space-8) var(--space-12);
+    border-radius: var(--radius-lg);
     pointer-events: auto;
     transform-origin: 50% 100%;
     animation: rise var(--motion-duration-slow) var(--motion-ease-bounce) both;
@@ -284,6 +289,23 @@
 
   .spacer {
     flex: 1;
+  }
+
+  /* Gives way first when the bar narrows. */
+  .hints {
+    display: inline-flex;
+    min-width: 0;
+    overflow: hidden;
+    gap: var(--space-12);
+    margin-right: var(--space-6);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  .hints kbd {
+    margin-right: var(--space-4);
+    font-family: inherit;
   }
 
   .send {

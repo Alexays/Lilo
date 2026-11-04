@@ -18,8 +18,20 @@
   import { getProjectFiles, searchProjectFiles } from "./projectFiles.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getOpenTabs, getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
+  import SiteFavicon from "../ui/SiteFavicon.svelte";
   import UiChip from "../ui/UiChip.svelte";
+  import Icon from "./Icon.svelte";
+  import type { IconName } from "./icons";
   import type { AvailableCommand } from "./conversationModel";
+
+  const CHIP_ICONS: Record<BridgeConversationAttachment["kind"], IconName> = {
+    tab: "globe",
+    selection: "queue",
+    screenshot: "image",
+    image: "image",
+    folder: "folder",
+    file: "file",
+  };
 
   interface Props {
     text: string;
@@ -299,12 +311,22 @@
   {#if attachments.length}
     <div class="chips">
       {#each attachments as draft (draft.key)}
+        {@const attachment = draft.attachment}
+        {@const page = attachment.kind === "tab" ? getTabsById().get(attachment.tabId) : undefined}
         <span class="chip" in:scale={{ start: 0.9, duration: prefersReducedMotion() ? 0 : 180 }}>
           <UiChip
             label={draft.label}
             removeLabel={t("agents.composer.removeAttachment", { label: draft.label })}
             onremove={() => (attachments = attachments.filter((other) => other.key !== draft.key))}
-          />
+          >
+            {#snippet icon()}
+              {#if page}
+                <SiteFavicon src={page.faviconDataURL} title={page.title} url={page.url} size={14} radius={3} />
+              {:else}
+                <span class="chip-icon"><Icon name={CHIP_ICONS[attachment.kind]} size={12} /></span>
+              {/if}
+            {/snippet}
+          </UiChip>
         </span>
       {/each}
     </div>
@@ -352,8 +374,15 @@
   }
 
   .chips :global(.ui-chip) {
-    background: var(--accent-tint-18);
-    border-radius: var(--radius-chip);
+    gap: var(--space-6);
+    background: none;
+    box-shadow: inset 0 0 0 1px var(--border);
+    color: var(--text-primary);
+  }
+
+  .chip-icon {
+    display: grid;
+    color: var(--text-secondary);
   }
 
   textarea {

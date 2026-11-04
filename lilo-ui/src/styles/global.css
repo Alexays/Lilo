@@ -233,6 +233,9 @@
     --shadow-control: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
     --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.24);
+    /* The page and its floating fields in a conversation: the system's neutral greys, not the chrome's night blue. */
+    --conversation-bg: #1c1c1e;
+    --conversation-surface: #2c2c2e;
   }
 }
 
