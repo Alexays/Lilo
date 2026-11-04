@@ -23,7 +23,7 @@
     resolveDisplayName,
   } from "./extensionPanelModel";
 
-  const PANEL_WIDTH = 300;
+  const PANEL_WIDTH = 320;
   const WEB_STORE_URL = "https://chromewebstore.google.com";
   const VIEWPORT_MARGIN = 8;
 
@@ -230,6 +230,11 @@
     position: fixed;
     z-index: var(--z-popover);
     transform-origin: calc(100% - 14px) 0;
+    border-radius: var(--radius-box);
+  }
+
+  .float-popover-head {
+    padding: 8px 10px 6px;
   }
 
   .rows {
@@ -271,17 +276,17 @@
   .ext-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex: 1;
     min-width: 0;
-    height: 28px;
-    padding: 0 8px;
+    height: 34px;
+    padding: 0 10px;
     border: none;
     border-radius: inherit;
     background: none;
     color: var(--text-primary);
     font-family: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     text-align: left;
     cursor: pointer;
   }
@@ -303,8 +308,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
     border-radius: var(--radius-xs);
     background: var(--bg-hover);
@@ -313,8 +318,8 @@
   }
 
   .row-icon-image {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     object-fit: contain;
   }
 
@@ -328,22 +333,22 @@
 
   .row-badge {
     flex-shrink: 0;
-    min-width: 15px;
-    padding: 0 4px;
+    min-width: 18px;
+    padding: 0 5px;
     border-radius: var(--radius-chip);
     color: var(--on-color);
-    font-size: var(--font-size-3xs);
-    font-weight: var(--font-weight-bold);
-    line-height: 15px;
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-semibold);
+    line-height: 16px;
     text-align: center;
   }
 
   .row-allow {
     flex-shrink: 0;
-    height: 22px;
-    padding: 0 8px;
+    height: var(--control-height-sm);
+    padding: 0 10px;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-chip);
     background: var(--accent);
     color: var(--accent-text);
     font-size: var(--font-size-xs);
@@ -362,8 +367,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: none;
     border-radius: var(--radius-sm);
@@ -373,7 +378,7 @@
   }
 
   .row-pin.pinned {
-    color: var(--text-primary);
+    color: var(--accent);
   }
 
   .row-pin:hover {
@@ -386,10 +391,14 @@
     outline-offset: -2px;
   }
 
+  /* A translation too long for one row puts the second button under the first. */
   .footer {
     display: flex;
-    gap: 2px;
-    padding-top: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 10px 4px 4px;
     border-top: 1px solid var(--separator);
   }
 
@@ -397,21 +406,23 @@
   .footer-action {
     flex: 1 1 auto;
     white-space: nowrap;
-    height: 26px;
-    padding: 0 8px;
+    height: var(--control-height-md);
+    padding: 0 12px;
     border: none;
-    border-radius: calc(var(--float-radius-popover) - 6px);
-    background: none;
-    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    background: var(--bg-hover);
+    color: var(--text-primary);
     font-family: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     cursor: pointer;
   }
 
-  .footer-action:hover,
+  .footer-action:hover {
+    background: var(--float-pressed);
+  }
+
   .footer-action:focus-visible {
-    outline: none;
-    background: var(--bg-hover);
-    color: var(--text-primary);
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 </style>
