@@ -1528,7 +1528,9 @@
               onclick={(event) => sidebarActions.showTabListMenu(spaceId, event.currentTarget.getBoundingClientRect())}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true">
-                <path d="M1.5 3h9M3 6h6M4.75 9h2.5" />
+                <path class="sort-line" d="M1.5 3h9" />
+                <path class="sort-line" d="M3 6h6" />
+                <path class="sort-line" d="M4.75 9h2.5" />
               </svg>
             </button>
           {/if}
@@ -1541,8 +1543,9 @@
               onclick={() => tabActions.clearUnpinned()}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="1" y="2" width="10" height="2.5" rx="0.8" />
-                <path d="M2 4.5v4.5a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.5M4.75 6.75h2.5" />
+                <rect class="archive-lid" x="1" y="2" width="10" height="2.5" rx="0.8" />
+                <path d="M2 4.5v4.5a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.5" />
+                <path class="archive-slot" d="M4.75 6.75h2.5" />
               </svg>
             </button>
           {/if}
@@ -2247,6 +2250,38 @@
     outline: var(--focus-outline);
   }
 
+  .sort-line,
+  .archive-lid,
+  .archive-slot {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .archive-lid {
+    transform-origin: left bottom;
+  }
+
+  /* Hovered, the funnel turns into an ascending sort: its lines trade lengths, a beat apart. */
+  .list-options:hover .sort-line:nth-child(1) {
+    transform: scaleX(0.28);
+  }
+
+  .list-options:hover .sort-line:nth-child(3) {
+    transform: scaleX(3.6);
+    transition-delay: 40ms;
+  }
+
+  /* Hovered, the box opens: the lid lifts and tilts, the handle drops into it. */
+  .clear-unpinned:hover .archive-lid {
+    transform: translateY(-1.5px) rotate(-10deg);
+  }
+
+  .clear-unpinned:hover .archive-slot {
+    transform: translateY(1px);
+    transition-delay: 40ms;
+  }
+
   /* The line draws back from the ends to make room for the actions coming in. */
   .with-actions .pinned-tab-divider {
     clip-path: inset(0);
@@ -2266,6 +2301,10 @@
   @media (prefers-reduced-motion: reduce) {
     .divider-action {
       transform: translateY(-50%);
+    }
+
+    .divider-action:hover :is(.sort-line, .archive-lid, .archive-slot) {
+      transform: none;
     }
   }
 
