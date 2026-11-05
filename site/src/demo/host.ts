@@ -1358,7 +1358,12 @@ export const createDemoHost = (
       emit("keepAwakeChanged", { helperStatus: "unsigned" }),
     getMediaActivity: () => emit("mediaActivity", { calls: [], tabs: [] }),
     getOnboardingState: () =>
-      emit("onboardingState", { show: false, step: 0, usage: "browse" }),
+      emit("onboardingState", {
+        highRefreshDisplay: true,
+        show: false,
+        step: 0,
+        usage: "browse",
+      }),
     getProfileStats: () =>
       emit("profileStats", {
         extensionCounts: Object.fromEntries(
@@ -2935,6 +2940,7 @@ export const createDemoHost = (
     "removeInteractiveZone",
     "setSidebarCollapseLocked",
     "sidebarOverlayChanged",
+    "pageCoverChanged",
     "startWindowDrag",
     "traceSpaceSwipe",
     "traceSpaceDnd",

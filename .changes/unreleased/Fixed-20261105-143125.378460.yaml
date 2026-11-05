@@ -1,0 +1,3 @@
+kind: Fixed
+body: Pages that animate their own scrolling, as smooth-scroll libraries do, now run at your display's full refresh rate instead of 60 fps, so they feel as smooth as in Chrome on a 120 Hz screen. Turn off Full refresh rate in Settings or during onboarding to save battery.
+time: 2026-11-05T14:31:25.37846+02:00

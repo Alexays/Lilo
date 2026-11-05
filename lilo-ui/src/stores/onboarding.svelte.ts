@@ -31,6 +31,7 @@ const state = $state({
 	collapsed: false,
 	/** Shown because it was never finished, not replayed from the menu or Settings. */
 	firstRun: false,
+	highRefreshDisplay: true,
 });
 
 const importState = $state({
@@ -50,6 +51,8 @@ function setStep(step: number): void {
 
 export function initOnboardingStore(): void {
 	on("onboardingState", (data) => {
+		// Before the check: a replay from the menu arrives as `startOnboarding`, with no state of its own.
+		state.highRefreshDisplay = data.highRefreshDisplay;
 		if (!data.show) return;
 		state.visible = true;
 		state.mode = "full";

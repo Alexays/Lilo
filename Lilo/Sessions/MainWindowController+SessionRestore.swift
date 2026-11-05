@@ -36,10 +36,7 @@ extension MainWindowController {
         settingsStore.sessionCleanShutdown = false
         // Every path below returns early; the UI's own request may have arrived before the decision.
         defer {
-            bridgeRouter.send(event: "onboardingState", data: [
-                "show": settingsStore.shouldShowOnboarding, "step": settingsStore.onboardingStep,
-                "usage": settingsStore.get("onboardingUsage") ?? "browse"
-            ])
+            bridgeRouter.send(event: "onboardingState", data: OnboardingBridgeHandler.state(of: settingsStore))
             if wasUncleanShutdown {
                 bridgeRouter.send(event: "crashRecoveryDetected")
             }

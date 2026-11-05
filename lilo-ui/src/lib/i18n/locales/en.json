@@ -297,6 +297,11 @@
 				"none": "None",
 				"points": "{size} pt"
 			},
+			"fullRefreshRate": {
+				"title": "Full refresh rate",
+				"description": "Pages animate and scroll at your display's full rate, which uses more battery. New tabs follow this setting; open tabs change when Lilo restarts.",
+				"keywords": "120 hz promotion fps frame rate smooth scrolling animation battery"
+			},
 			"defaultZoom": {
 				"title": "Default zoom",
 				"description": "Size of pages that have no zoom of their own.",
@@ -1751,6 +1756,8 @@
 		"essentials": {
 			"blocker": "Block ads and trackers",
 			"blockerDesc": "Recommended: pages load faster and follow you less.",
+			"refreshRate": "Smoother scrolling",
+			"refreshRateDesc": "Uses your display's full refresh rate, and a little more battery.",
 			"default": "Open links in Lilo",
 			"defaultDesc": "Links from your mail and apps open here.",
 			"defaultSet": "Use Lilo",

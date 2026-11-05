@@ -619,6 +619,7 @@ export interface BridgeCommandPayloadMap {
 	setPageBarColor: { color?: string };
 	setWallpaperColorWatch: { enabled: boolean };
 	sidebarOverlayChanged: { visible: boolean };
+	pageCoverChanged: { covered: boolean };
 	showTabSecurityInfo: EmptyPayload;
 	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
@@ -1016,7 +1017,7 @@ export interface BridgeEventPayloadMap {
 	importSourcesLoaded: { sources: ImportSourceInfo[] };
 	importProgress: ImportProgress;
 	importFinished: { summary: ImportSummaryItem[] };
-	onboardingState: { show: boolean; step: number; usage: string };
+	onboardingState: { show: boolean; step: number; usage: string; highRefreshDisplay: boolean };
 	appIconsLoaded: { icons: { id: string; dataURL: string; seasonalDataURL?: string }[] };
 	// A space's persisted tab state was unreadable at restore: it was quarantined and the space
 	// restored empty. The banner names the space so the user knows what degraded.

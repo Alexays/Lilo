@@ -80,6 +80,7 @@ final class SettingsBridgeHandler: BridgeHandler {
     var agentControl: (() -> AgentControl?)?
     var onHTTPSOnlyChanged: ((Bool) -> Void)?
     var onMinimumFontSizeChanged: ((CGFloat) -> Void)?
+    var onFullRefreshRateChanged: ((Bool) -> Void)?
     var onAutoplayPolicyChanged: ((String) -> Void)?
     var onLifecyclePresetChanged: ((String) -> Void)?
     var onTabLayoutChanged: (() -> Void)?
@@ -210,6 +211,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 if key == "preventCrossSiteTracking" { onTrackingPreventionChanged?(value == "true") }
                 if key == "httpsOnly" { onHTTPSOnlyChanged?(value == "true") }
                 if key == "minimumFontSize" { onMinimumFontSizeChanged?(CGFloat(Double(value) ?? 0)) }
+                if key == "fullRefreshRate" { onFullRefreshRateChanged?(value == "true") }
                 if key == "autoplayPolicy" { onAutoplayPolicyChanged?(value) }
                 if key == "lifecyclePreset" { onLifecyclePresetChanged?(value) }
                 if key == "tabPosition" || key == "addressPlacement" { onTabLayoutChanged?() }

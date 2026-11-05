@@ -209,6 +209,13 @@
             <UiToggle checked={getSetting("contentBlockerEnabled", "true") === "true"} ariaLabel={t("onboarding.essentials.blocker")}
               onchange={(checked) => setSetting("contentBlockerEnabled", checked ? "true" : "false")} />
           </div>
+          {#if onboarding.highRefreshDisplay}
+            <div class="ob-row">
+              <span class="ob-text">{t("onboarding.essentials.refreshRate")}<small>{t("onboarding.essentials.refreshRateDesc")}</small></span>
+              <UiToggle checked={getSetting("fullRefreshRate", "true") === "true"} ariaLabel={t("onboarding.essentials.refreshRate")}
+                onchange={(checked) => setSetting("fullRefreshRate", checked ? "true" : "false")} />
+            </div>
+          {/if}
           <div class="ob-row">
             <span class="ob-text">{t("onboarding.essentials.default")}<small>{t("onboarding.essentials.defaultDesc")}</small></span>
             {#if isDefault}

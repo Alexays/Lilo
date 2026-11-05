@@ -297,6 +297,11 @@
 				"none": "Keine",
 				"points": "{size} pt"
 			},
+			"fullRefreshRate": {
+				"title": "Volle Bildwiederholrate",
+				"description": "Seiten werden mit der vollen Bildrate deines Displays animiert und gescrollt, was mehr Akku verbraucht. Neue Tabs folgen dieser Einstellung; offene Tabs ändern sich beim Neustart von Lilo.",
+				"keywords": "120 hz promotion fps bildrate flüssig scrollen animation akku batterie"
+			},
 			"defaultZoom": {
 				"title": "Standardzoom",
 				"description": "Größe von Seiten ohne eigene Zoomeinstellung.",
@@ -1751,6 +1756,8 @@
 		"essentials": {
 			"blocker": "Werbung und Tracker blockieren",
 			"blockerDesc": "Empfohlen: Seiten laden schneller und verfolgen dich weniger.",
+			"refreshRate": "Flüssigeres Scrollen",
+			"refreshRateDesc": "Seiten nutzen die volle Bildwiederholrate deines Displays, was etwas mehr Akku verbraucht.",
 			"default": "Links in Lilo öffnen",
 			"defaultDesc": "Links aus deinen E-Mails und Apps öffnen sich hier.",
 			"defaultSet": "Lilo verwenden",

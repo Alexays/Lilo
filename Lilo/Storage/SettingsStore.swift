@@ -170,6 +170,9 @@ final class SettingsStore {
     /// Global Privacy Control / Do Not Track signals, injected via JS only.
     var sendGPC: Bool { (get("sendGPC") ?? "true") == "true" }
 
+    /// Pages render at the display's refresh rate rather than near 60 fps.
+    var fullRefreshRate: Bool { (get("fullRefreshRate") ?? "true") == "true" }
+
     /// WebKit's tracking prevention (ITP); on unless the user turns it off.
     var preventCrossSiteTracking: Bool { (get("preventCrossSiteTracking") ?? "true") == "true" }
 

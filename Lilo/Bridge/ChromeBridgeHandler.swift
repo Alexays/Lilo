@@ -31,6 +31,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "setPageBarColor",
         "setWallpaperColorWatch",
         "sidebarOverlayChanged",
+        "pageCoverChanged",
         "showTabContextMenu",
         "showFolderContextMenu",
         "showTabStackContextMenu",
@@ -178,6 +179,10 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "sidebarOverlayChanged":
             windowController?.handleSidebarOverlay(visible: message.bool("visible"))
+
+        case "pageCoverChanged":
+            windowController?.pageCovered = message.bool("covered")
+            windowController?.syncPageBar()
 
         case "showTabContextMenu":
             if let id = message.string("id") { windowController?.showTabContextMenu(tabId: id, anchorRect: anchorRect(from: message)) }

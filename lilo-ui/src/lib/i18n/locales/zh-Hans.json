@@ -297,6 +297,11 @@
 				"none": "无",
 				"points": "{size} 磅"
 			},
+			"fullRefreshRate": {
+				"title": "最高刷新率",
+				"description": "页面动画和滚动以显示器的最高速率运行，这会消耗更多电量。新标签页遵循此设置；已打开的标签页在 Lilo 重启后更改。",
+				"keywords": "120 hz promotion fps 帧率 刷新率 流畅 滚动 动画 电池"
+			},
 			"defaultZoom": {
 				"title": "默认缩放",
 				"description": "没有单独设置缩放比例的网页所使用的大小。",
@@ -1751,6 +1756,8 @@
 		"essentials": {
 			"blocker": "拦截广告和跟踪器",
 			"blockerDesc": "推荐：网页载入更快，跟踪更少。",
+			"refreshRate": "更流畅的滚动",
+			"refreshRateDesc": "页面使用显示器的最高刷新率，这会多消耗一点电量。",
 			"default": "在 Lilo 中打开链接",
 			"defaultDesc": "邮件和 App 中的链接会在这里打开。",
 			"defaultSet": "使用 Lilo",

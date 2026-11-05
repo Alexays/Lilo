@@ -20,3 +20,16 @@ test("only an onboarding never finished is a first run: a replay leaves the user
 	assert.equal(onboarding.getOnboarding().visible, true);
 	assert.equal(onboarding.getOnboarding().firstRun, false);
 });
+
+test("a replay from the menu knows the displays, though the state that told it showed no onboarding", async () => {
+	stubBridgeWindow({ document: true });
+	const loadStore = await freshStores();
+	const onboarding = await loadStore("/src/stores/onboarding.svelte.ts");
+	onboarding.initOnboardingStore();
+	const receive = (globalThis as { window: { __lilo?: { receive(msg: Record<string, unknown>): void } } }).window.__lilo!.receive;
+
+	receive({ event: "onboardingState", show: false, step: 0, usage: "browse", highRefreshDisplay: false });
+	receive({ event: "startOnboarding" });
+	flushSync();
+	assert.equal(onboarding.getOnboarding().highRefreshDisplay, false);
+});

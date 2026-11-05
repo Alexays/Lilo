@@ -20,6 +20,28 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
                        "WebKit's own Screen Time client would duplicate Lilo's STWebpageController")
     }
 
+    private func rendersNear60FPS(_ factory: WKEngineFactory) throws -> Bool {
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        defer { tab.teardown() }
+        let features = (WKPreferences.self as AnyObject).perform(NSSelectorFromString("_experimentalFeatures"))?.takeUnretainedValue() as? [NSObject]
+        let near60FPS = try XCTUnwrap(features?.first { $0.value(forKey: "key") as? String == WKFeatureFlags.near60FPSKey })
+        let preferences = tab.wkWebView.configuration.preferences
+        let isEnabled = NSSelectorFromString("_isEnabledForFeature:")
+        typealias IsEnabled = @convention(c) (NSObject, Selector, AnyObject) -> ObjCBool
+        return unsafeBitCast(preferences.method(for: isEnabled), to: IsEnabled.self)(preferences, isEnabled, near60FPS).boolValue
+    }
+
+    func testTabsRenderAtTheDisplaysRateUnlessTheUserTurnsItOff() throws {
+        let factory = WKEngineFactory()
+        XCTAssertFalse(try rendersNear60FPS(factory), "a page scrolling itself from requestAnimationFrame stutters at 60 fps on a 120 Hz display")
+
+        factory.setFullRefreshRate(false)
+        XCTAssertTrue(try rendersNear60FPS(factory))
+
+        factory.setFeatureFlagOverrides([WKFeatureFlags.near60FPSKey: false])
+        XCTAssertFalse(try rendersNear60FPS(factory), "an about:config override wins over the setting")
+    }
+
     func testTabsUseSafarisCacheModel() throws {
         let pool = try XCTUnwrap(WKEngineFactory.contentProcessPool)
         let symbol = try XCTUnwrap(dlsym(UnsafeMutableRawPointer(bitPattern: -2), "WKContextGetCacheModel"))

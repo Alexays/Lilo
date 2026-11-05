@@ -302,6 +302,11 @@ export const openDownloadsPanel = (): void => openShell("downloads");
 
 export const openScreenshotPanel = (): void => openPanel("screenshot");
 
+/** Settings, History and the Design System cover the whole page. */
+export function isShellOpen(): boolean {
+	return _shell.activeSurface !== null;
+}
+
 export function isSettingsShellOpen(): boolean {
 	return _shell.activeSurface === "settings";
 }

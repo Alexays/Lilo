@@ -297,6 +297,11 @@
 				"none": "Nenhum",
 				"points": "{size} pt"
 			},
+			"fullRefreshRate": {
+				"title": "Taxa de atualização máxima",
+				"description": "As páginas animam e rolam na taxa máxima da sua tela, o que consome mais bateria. As novas abas seguem este ajuste; as abertas mudam quando o Lilo reinicia.",
+				"keywords": "120 hz promotion fps quadros fluido rolagem animação bateria"
+			},
 			"defaultZoom": {
 				"title": "Zoom padrão",
 				"description": "Tamanho das páginas que não têm um zoom próprio.",
@@ -1751,6 +1756,8 @@
 		"essentials": {
 			"blocker": "Bloquear anúncios e rastreadores",
 			"blockerDesc": "Recomendado: as páginas carregam mais rápido e rastreiam você menos.",
+			"refreshRate": "Rolagem mais suave",
+			"refreshRateDesc": "As páginas usam a taxa de atualização máxima da sua tela, o que consome um pouco mais de bateria.",
 			"default": "Abrir links no Lilo",
 			"defaultDesc": "Links dos seus e-mails e apps abrem aqui.",
 			"defaultSet": "Usar Lilo",
