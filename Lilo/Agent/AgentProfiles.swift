@@ -15,6 +15,7 @@ extension AgentControl {
         if let id = profileManager.profiles.first(where: { $0.id == stored })?.id { return id }
         let created = try profileManager.createProfile(name: "Agents")
         context.settingsStore?.set(Self.agentsProfileKey, value: created.id.uuidString)
+        context.engineFactory.agentsProfileId = created.id
         return created.id
     }
 
