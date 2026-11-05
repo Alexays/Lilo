@@ -873,8 +873,8 @@
     >
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
         <path d="M1.4 3.4h9.2M1.4 8.6h9.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-        <circle cx="4.2" cy="3.4" r="1.5" fill="var(--bg-primary)" stroke="currentColor" stroke-width="1.2"/>
-        <circle cx="7.8" cy="8.6" r="1.5" fill="var(--bg-primary)" stroke="currentColor" stroke-width="1.2"/>
+        <circle class="knob a" cx="4.2" cy="3.4" r="1.5" fill="var(--bg-primary)" stroke="currentColor" stroke-width="1.2"/>
+        <circle class="knob b" cx="7.8" cy="8.6" r="1.5" fill="var(--bg-primary)" stroke="currentColor" stroke-width="1.2"/>
       </svg>
     </button>
   {/if}
@@ -1202,6 +1202,19 @@
   }
 
   /* The address bar paints its own surface underneath, so the button needs a tint above it. */
+  .knob {
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .permissions-btn:is(:hover, .active) .knob.a {
+    transform: translateX(3.6px);
+  }
+
+  .permissions-btn:is(:hover, .active) .knob.b {
+    transform: translateX(-3.6px);
+    transition-delay: 40ms;
+  }
+
   .permissions-btn:focus-visible {
     outline: var(--focus-outline);
     outline-offset: 1px;

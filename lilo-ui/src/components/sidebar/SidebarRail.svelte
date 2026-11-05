@@ -188,7 +188,7 @@
       use:tooltip={{ text: t("common.search"), shortcut: shortcutKeys("location.open"), placement: tooltipSide() }}
       onclick={() => openCommandBar(getActiveTab()?.url ?? "", false, true)}
     >
-      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+      <svg class="search-glyph" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
         <circle cx="7" cy="7" r="4.5" /><path d="m10.5 10.5 3 3" />
       </svg>
     </button>
@@ -397,6 +397,15 @@
 
   .rail-item:hover {
     background: var(--bg-hover);
+  }
+
+  .search-glyph {
+    transform-origin: 7px 7px;
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .rail-item:hover .search-glyph {
+    transform: rotate(-14deg) scale(1.08);
   }
 
   .rail-item:focus-visible {

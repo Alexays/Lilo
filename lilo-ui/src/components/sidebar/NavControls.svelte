@@ -125,7 +125,7 @@
         stroke="currentColor"
         stroke-width="1.4"
       />
-      <path d={TOGGLE_BAR[getTabPosition()]} stroke="currentColor" stroke-width="1.4" />
+      <path class="toggle-bar {getTabPosition()}" d={TOGGLE_BAR[getTabPosition()]} stroke="currentColor" stroke-width="1.4" />
     </svg>
   </button>
 
@@ -149,7 +149,7 @@
     onpointercancel={cancelHistoryMenuPress}
     onpointerleave={cancelHistoryMenuPress}
   >
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <svg class="history-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
       <path
         d="M10 3L5 8L10 13"
         stroke="currentColor"
@@ -172,7 +172,7 @@
     onpointercancel={cancelHistoryMenuPress}
     onpointerleave={cancelHistoryMenuPress}
   >
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <svg class="history-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
       <path
         d="M6 3L11 8L6 13"
         stroke="currentColor"
@@ -360,6 +360,42 @@
   .nav-btn:hover:not(:disabled) {
     background: var(--bg-hover);
     color: var(--text-primary);
+  }
+
+  /* Each glyph hints at its action on hover. */
+  .toggle-bar,
+  .history-arrow,
+  .nav-morph-icon {
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .nav-btn:hover:not(:disabled) .toggle-bar.left {
+    transform: translateX(1.5px);
+  }
+
+  .nav-btn:hover:not(:disabled) .toggle-bar.right {
+    transform: translateX(-1.5px);
+  }
+
+  .nav-btn:hover:not(:disabled) .toggle-bar.top {
+    transform: translateY(1.5px);
+  }
+
+  .nav-btn:hover:not(:disabled) .toggle-bar.bottom {
+    transform: translateY(-1.5px);
+  }
+
+  .history:hover:not(:disabled) .history-arrow {
+    transform: translateX(-2px);
+  }
+
+  .history.forward:hover:not(:disabled) .history-arrow {
+    transform: translateX(2px);
+  }
+
+  .reload:not(.loading):hover:not(:disabled) .nav-morph-icon {
+    transform: rotate(360deg);
+    transition-duration: 560ms;
   }
 
   .nav-btn:disabled {

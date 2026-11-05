@@ -538,7 +538,7 @@
             ></span>
           {/if}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M8 1.75v6.5M5.5 5.75 8 8.25l2.5-2.5" />
+            <path class="download-arrow" d="M8 1.75v6.5M5.5 5.75 8 8.25l2.5-2.5" />
             <path d="M1.75 9.5h3.1l.9 1.75h4.5l.9-1.75h3.1M1.75 9.5v2.75a2 2 0 0 0 2 2h8.5a2 2 0 0 0 2-2V9.5" />
           </svg>
         </button>
@@ -668,7 +668,7 @@
       aria-label={t("bottomBar.newSpace")}
       onclick={() => openAddEditor()}
     >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <svg class="plus-glyph" width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path
           d="M8 3v10M3 8h10"
           stroke="currentColor"
@@ -731,6 +731,19 @@
   .bottom-btn:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
+  }
+
+  .download-arrow,
+  .plus-glyph {
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .bottom-btn:hover .download-arrow {
+    transform: translateY(1.5px);
+  }
+
+  .bottom-btn:hover .plus-glyph {
+    transform: rotate(90deg);
   }
 
   .bottom-btn.active-indicator {
@@ -1209,7 +1222,6 @@
       transform: scale(1.03);
     }
   }
-
 
   /* The only dot in the bar: on the tile's top-right corner, ringed with the bar's background. */
   .space-attention-dot {

@@ -620,10 +620,10 @@
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           {#if tab.isMuted}
             <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" opacity="0.55"/>
-            <path d="M8 4.5L10.5 7M10.5 4.5L8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path class="sound-glyph" d="M8 4.5L10.5 7M10.5 4.5L8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           {:else}
             <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor"/>
-            <path d="M8.6 4C9.8 4.9 9.8 7.1 8.6 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path class="sound-glyph wave" d="M8.6 4C9.8 4.9 9.8 7.1 8.6 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           {/if}
         </svg>
       </button>
@@ -668,6 +668,7 @@
         {:else}
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path
+              class="close-glyph"
               d="M2 2L8 8M8 2L2 8"
               stroke="currentColor"
               stroke-width="1.5"
@@ -948,6 +949,26 @@
   .sound-button:hover {
     background: var(--bg-active);
     color: var(--text-primary);
+  }
+
+  .close-glyph,
+  .sound-glyph {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .sound-glyph.wave {
+    transform-origin: left center;
+  }
+
+  .close-btn:hover .close-glyph,
+  .sound-button:hover .sound-glyph {
+    transform: rotate(90deg);
+  }
+
+  .sound-button:hover .sound-glyph.wave {
+    transform: translateX(0.75px) scale(1.25);
   }
 
   .sound-button:focus-visible {

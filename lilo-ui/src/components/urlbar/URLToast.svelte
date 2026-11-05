@@ -172,7 +172,7 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           />
-          <circle cx="8" cy="8.5" r="1.75" stroke="currentColor" stroke-width="1.4" />
+          <circle class="lens" cx="8" cy="8.5" r="1.75" stroke="currentColor" stroke-width="1.4" />
         </svg>
       </span>
 
@@ -231,13 +231,11 @@
       }}
     >
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-        <path
-          d="M6.75 9.25L9.25 6.75M7.25 4.75L8.29 3.71a2.83 2.83 0 0 1 4 4L11.25 8.75M8.75 11.25l-1.04 1.04a2.83 2.83 0 0 1-4-4L4.75 7.25"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
+        <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6.75 9.25L9.25 6.75" />
+          <path class="link-half end" d="M7.25 4.75L8.29 3.71a2.83 2.83 0 0 1 4 4L11.25 8.75" />
+          <path class="link-half start" d="M8.75 11.25l-1.04 1.04a2.83 2.83 0 0 1-4-4L4.75 7.25" />
+        </g>
       </svg>
     </span>
   </span>
@@ -370,6 +368,25 @@
     background: var(--bg-hover);
     color: var(--text-primary);
     transform: translateY(-1px) scale(1.03);
+  }
+
+  .link-half,
+  .lens {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .url-copy-btn:hover .link-half.end {
+    transform: translate(-0.75px, 0.75px);
+  }
+
+  .url-copy-btn:hover .link-half.start {
+    transform: translate(0.75px, -0.75px);
+  }
+
+  .url-screenshot-btn:is(:hover, .active) .lens {
+    transform: scale(0.6);
   }
 
   .url-copy-btn {

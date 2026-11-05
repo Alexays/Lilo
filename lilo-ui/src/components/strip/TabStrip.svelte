@@ -345,7 +345,7 @@
         </button>
         <button class="strip-surface-close" tabindex="-1" aria-label={t("common.close")} onclick={surface.close}>
           <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-            <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            <path class="close-glyph" d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
           </svg>
         </button>
       </div>
@@ -356,7 +356,7 @@
       use:tooltip={{ text: t("tabItem.newTab"), shortcut: shortcutKeys("tab.new"), placement: edge === "top" ? "bottom" : "top" }}
       onclick={() => tabActions.create()}
     >
-      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+      <svg class="plus-glyph" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
         <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
       </svg>
     </button>
@@ -371,7 +371,7 @@
         onclick={() => (archiveOpen = !archiveOpen)}
       >
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <rect x="2.5" y="3" width="11" height="3" rx="1" stroke="currentColor" stroke-width="1.3" />
+          <rect class="archive-lid" x="2.5" y="3" width="11" height="3" rx="1" stroke="currentColor" stroke-width="1.3" />
           <path d="M3.5 6v6a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V6M6.5 8.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
         </svg>
         <span>{recentArchived.length}</span>
@@ -467,7 +467,7 @@
         onclick={() => openDownloadsPanel()}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M8 2v8M5 7l3 3 3-3" />
+          <path class="download-arrow" d="M8 2v8M5 7l3 3 3-3" />
           <path d="M3 12h10" />
         </svg>
       </button>
@@ -491,7 +491,6 @@
     box-sizing: border-box;
     min-width: 0;
   }
-
 
   /* The sidebar header spreads its controls; the strip keeps them together. */
   .tab-strip :global(.nav-controls) {
@@ -761,6 +760,32 @@
   .strip-btn.on {
     background: var(--bg-hover);
     color: var(--text-primary);
+  }
+
+  .close-glyph,
+  .plus-glyph,
+  .archive-lid,
+  .download-arrow {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .archive-lid {
+    transform-origin: left bottom;
+  }
+
+  .strip-surface-close:hover .close-glyph,
+  .strip-btn:hover .plus-glyph {
+    transform: rotate(90deg);
+  }
+
+  .strip-btn:hover .archive-lid {
+    transform: translateY(-1.5px) rotate(-10deg);
+  }
+
+  .strip-btn:hover .download-arrow {
+    transform: translateY(1.5px);
   }
 
   /* The call card's own off state: the others are not hearing you, even with the card closed. */
