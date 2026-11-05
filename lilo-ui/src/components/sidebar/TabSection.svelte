@@ -2395,8 +2395,9 @@
       color var(--transition-fast);
   }
 
+  /* Centered on the rows' 16px favicons, 8px into the row. */
   .list-options {
-    left: 8px;
+    left: 6px;
   }
 
   .clear-unpinned {
