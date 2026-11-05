@@ -622,6 +622,7 @@ export interface BridgeCommandPayloadMap {
 	showTabSecurityInfo: EmptyPayload;
 	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
+	showTabStackContextMenu: { ids: string[]; host: string; name: string; x: number; y: number; width: number; height: number };
 	showSidebarContextMenu: { x: number; y: number; width: number; height: number; spaceId?: string };
 	showBackHistoryMenu: { x: number; y: number; width: number; height: number };
 	showForwardHistoryMenu: {
@@ -635,6 +636,8 @@ export interface BridgeCommandPayloadMap {
 	// typed: the URL the user typed in the command bar, which native may send to the site history knows.
 	createTab: { url?: string; typed?: boolean; background?: boolean };
 	closeTab: { id: string };
+	/** Closes them behind one undo toast. */
+	closeTabs: { ids: string[] };
 	switchTab: { id: string };
 	// The tab the recent tabs switcher picked, in whichever Space of the window it lives.
 	switchToRecentTab: { id: string };
@@ -1108,6 +1111,8 @@ export interface BridgeEventPayloadMap {
 	};
 
 	settingsLoaded: { settings: Record<string, string> };
+	/** A pick in a native menu about how the open tabs are laid out. */
+	tabListMenuAction: { action: "toggleStackTabs" | "toggleGroupByType" | "neverStack" | "stackAgain" | "stackEverySite"; host: string };
 	sitePermissionsLoaded: { permissions: BridgeSitePermissionSnapshot[] };
 	extensionDiagnosticsLoaded: {
 		entries: BridgeExtensionDiagnosticSnapshot[];

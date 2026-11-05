@@ -33,6 +33,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "sidebarOverlayChanged",
         "showTabContextMenu",
         "showFolderContextMenu",
+        "showTabStackContextMenu",
         "showSidebarContextMenu",
         "showExtensionContextMenu",
         "showDownloadContextMenu",
@@ -182,6 +183,12 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "showFolderContextMenu":
             if let id = message.string("id") { windowController?.showFolderContextMenu(folderId: id, anchorRect: anchorRect(from: message)) }
+
+        case "showTabStackContextMenu":
+            let ids = (message.payload["ids"] as? [String] ?? []).compactMap(UUID.init(uuidString:))
+            if let host = message.string("host"), let name = message.string("name") {
+                windowController?.showTabStackContextMenu(tabIds: ids, host: host, name: name, anchorRect: anchorRect(from: message))
+            }
 
         case "showSidebarContextMenu":
             windowController?.showSidebarContextMenu(spaceId: message.string("spaceId"), anchorRect: anchorRect(from: message))

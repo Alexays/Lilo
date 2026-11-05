@@ -11,6 +11,7 @@
   import { untrack } from "svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import TabLoader from "./TabLoader.svelte";
+  import { strippedTitle } from "./tabSectionModel";
   import { tabActions } from "../../lib/bridge/actions";
   import { optimisticallyActivateTab } from "../../stores/sidebar.svelte";
   import { DEFAULT_TAB_TITLE } from "../../lib/bridge/defaults";
@@ -54,6 +55,7 @@
     splitDropTarget = false,
     level = 1,
     tabStop = true,
+    stackName,
   }: {
     tab: TabState;
     isActive: boolean;
@@ -67,6 +69,8 @@
     level?: number;
     /** The one row of its tree that Tab lands on; arrows move between the others. */
     tabStop?: boolean;
+    /** The site stack the row sits in: its title drops the name the stack already shows. */
+    stackName?: string;
   } = $props();
 
   let isHovered = $state(false);
@@ -211,6 +215,7 @@
   // Away from its home page, a saved tab keeps the name of its home (or its own), and the page it is on follows.
   const awayTitle = $derived(tab.homeTitle ? pageTitle : "");
   const displayTitle = $derived(tab.customTitle || tab.homeTitle || pageTitle);
+  const rowTitle = $derived(stackName && !tab.customTitle ? strippedTitle(displayTitle, stackName) : displayTitle);
   const isEmptyNewTab = $derived(
     !isTerminal && !isChanges && !tab.url && (!tab.title || tab.title === "" || tab.title === DEFAULT_TAB_TITLE),
   );
@@ -589,7 +594,7 @@
       <span
         class="tab-title"
         ondblclick={tab.isPinned && interactive ? () => setRenamingTabId(tab.id) : undefined}
-      >{terminalLabel || displayTitle}{#if awayTitle}<span class="away-title"><span class="away-slash" aria-hidden="true">/</span>{awayTitle}</span>{/if}</span>
+      >{terminalLabel || rowTitle}{#if awayTitle}<span class="away-title"><span class="away-slash" aria-hidden="true">/</span>{awayTitle}</span>{/if}</span>
     {/if}
     {#if terminalHint}
       <span class="terminal-hint">{terminalHint}</span>

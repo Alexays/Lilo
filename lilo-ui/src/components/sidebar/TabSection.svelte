@@ -25,7 +25,16 @@
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
-  import { getSetting } from "../../stores/settings.svelte";
+  import { getSetting, setSetting } from "../../stores/settings.svelte";
+  import { hostOf } from "../../lib/url";
+  import {
+    arrangeRows,
+    nextStackHosts,
+    stackName,
+    type ArrangedRow,
+    type ArrangeEntry,
+    type RowType,
+  } from "./tabSectionModel";
   import { tabActions, folderActions, sidebarActions } from "../../lib/bridge/actions";
   import { openCommandBar, closeCommandBar } from "../../stores/commandBar.svelte";
   import {
@@ -124,9 +133,174 @@
     section,
     parentFolderId: null,
   });
-  const rootBaseItems = $derived(dndItemsForSidebarItems(rootItems, section));
+  // Site stacks and the agents and terminals trays: a view of the open tabs, their order untouched.
+  const stackTabs = $derived(!isPinned && getSetting("sidebarStackTabs", "true") !== "false");
+  const groupByType = $derived(!isPinned && getSetting("sidebarGroupByType", "false") === "true");
+  const neverStack = $derived(new Set(getSetting("sidebarNeverStack", "").split(",").filter(Boolean)));
+  const arrangeEntries = $derived.by((): ArrangeEntry[] => {
+    if (isPinned || (!stackTabs && !groupByType)) return [];
+    return rootItems.map((item) => {
+      if (item.kind === "folder") return { id: item.id, type: getConversationTab(item.id, spaceId) ? "agent" : "web", host: null };
+      const tab = tabsById.get(item.id);
+      const type: RowType = tab?.kind === "terminal" ? "terminal" : tab?.kind === "agent" ? "agent" : "web";
+      return { id: item.id, type, host: stackTabs && type === "web" ? hostOf(tab?.url) : null };
+    });
+  });
+
+  // The list never reshapes under the pointer: stacks form and dissolve once it leaves, unless the
+  // user changed how tabs stack.
+  let pointerInList = $state(false);
+  let stackHosts: ReadonlySet<string> = $state(untrack(() => nextStackHosts(arrangeEntries, new Set(), neverStack)));
+  let stackSettings = untrack(() => `${stackTabs}|${[...neverStack]}`);
+  $effect(() => {
+    const current = untrack(() => stackHosts);
+    const next = nextStackHosts(arrangeEntries, current, neverStack);
+    const settings = `${stackTabs}|${[...neverStack]}`;
+    if (pointerInList && settings === stackSettings) return;
+    stackSettings = settings;
+    if (next.size !== current.size || [...next].some((host) => !current.has(host))) stackHosts = next;
+  });
+
+  let openStacks = $state<ReadonlySet<string>>(new Set());
+  const foldedTraysKey = $derived(`sidebarFoldedTrays.${spaceId}`);
+  const foldedTrays = $derived(new Set(getSetting(foldedTraysKey, "").split(",").filter(Boolean)));
+
+  function setStackOpen(host: string, open: boolean): void {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- immutable copy reassigned to $state
+    const next = new Set(openStacks);
+    if (open) next.add(host);
+    else next.delete(host);
+    openStacks = next;
+  }
+
+  function setTrayFolded(tray: string, folded: boolean): void {
+    const next = [...foldedTrays].filter((entry) => entry !== tray);
+    setSetting(foldedTraysKey, (folded ? [...next, tray] : next).join(","));
+  }
+
+  // The heads load once a list has a stack or a tray: most first frames have neither. Their slots
+  // keep the heads' heights meanwhile, so nothing moves when they land.
+  let heads = $state.raw<{
+    StackRow: typeof import("./TabStackRow.svelte").default;
+    TrayHeader: typeof import("./TabTrayHeader.svelte").default;
+  } | null>(null);
+  $effect(() => {
+    if (heads || !segments.some((segment) => segment.kind !== "row")) return;
+    void Promise.all([import("./TabStackRow.svelte"), import("./TabTrayHeader.svelte")]).then(([stack, tray]) => {
+      heads = { StackRow: stack.default, TrayHeader: tray.default };
+    });
+  });
+
+  const arranged = $derived(arrangeEntries.length > 0 ? arrangeRows(arrangeEntries, stackHosts, groupByType) : null);
+
+  // A closed stack or a folded tray hides its rows, the active one aside.
+  function rowShown(row: ArrangedRow): boolean {
+    if (row.id === activeTabId || (row.type === "agent" && folderHolds(row.id, activeTabId))) return true;
+    if (row.tray && foldedTrays.has(row.tray)) return false;
+    return !row.stack || openStacks.has(row.stack);
+  }
+
+  // Same array while the shown rows stay the same: a new one would re-run the list's animated each.
+  let lastShownRootItems: typeof rootItems = [];
+  const shownRootItems = $derived.by(() => {
+    if (!arranged) return rootItems;
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+    const byId = new Map(rootItems.map((item) => [item.id, item]));
+    const next = arranged.filter(rowShown).flatMap((row) => byId.get(row.id) ?? []);
+    const last = lastShownRootItems;
+    if (next.length === last.length && next.every((item, index) => item.id === last[index].id && item.kind === last[index].kind)) return last;
+    lastShownRootItems = next;
+    return next;
+  });
+
+  const stackInfo = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+    const info = new Map<string, { name: string; tabs: TabState[] }>();
+    for (const row of arranged ?? []) {
+      const tab = row.stack ? tabsById.get(row.id) : undefined;
+      if (!row.stack || !tab) continue;
+      const entry = info.get(row.stack) ?? { name: "", tabs: [] };
+      entry.tabs.push(tab);
+      info.set(row.stack, entry);
+    }
+    for (const [host, entry] of info) entry.name = stackName(entry.tabs.map((tab) => tab.title), host);
+    return info;
+  });
+
+  const trayTabs = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+    const tabs = new Map<string, TabState[]>();
+    for (const row of arranged ?? []) {
+      const tab = row.tray ? (getConversationTab(row.id, spaceId) ?? tabsById.get(row.id)) : undefined;
+      if (!row.tray || !tab) continue;
+      tabs.set(row.tray, [...(tabs.get(row.tray) ?? []), tab]);
+    }
+    return tabs;
+  });
+
+  const rootBaseItems = $derived(dndItemsForSidebarItems(shownRootItems, section));
   const rootZoneItems = $derived(getZoneItems(rootZone, rootBaseItems));
   const rootZoneIsEmpty = $derived(rootZoneItems.length === 0);
+
+  type Tray = Exclude<RowType, "web">;
+  type Segment =
+    | { kind: "row"; key: string; entry: SidebarDndItem; tray: Tray | null; stack: string | null; trayEnd: boolean }
+    | { kind: "stack"; key: string; host: string; tray: Tray | null; trayEnd: boolean }
+    | { kind: "tray"; key: string; tray: Tray; trayEnd: boolean };
+
+  // The rows in display order with the heads of stacks and trays among them. The drop placeholder
+  // joins the stack or tray of the row above it.
+  let lastSegments: Segment[] = [];
+  let lastSegmentsSignature = "";
+  const segments = $derived.by((): Segment[] => {
+    const zone = rootZoneItems;
+    const row = (entry: SidebarDndItem, tray: Tray | null, stack: string | null): Segment =>
+      ({ kind: "row", key: sidebarDndKey(entry), entry, tray, stack, trayEnd: false });
+    let next: Segment[];
+    if (!arranged) {
+      next = zone.map((entry) => row(entry, null, null));
+    } else {
+      const shadow = zone.find(isShadowItem);
+      const shadowAfter = shadow ? (zone[zone.indexOf(shadow) - 1]?.id ?? null) : undefined;
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+      const unplaced = new Map(zone.filter((entry) => !isShadowItem(entry)).map((entry) => [entry.id, entry]));
+      next = shadow && shadowAfter === null ? [row(shadow, null, null)] : [];
+      let tray: Tray | null = null;
+      let stack: string | null = null;
+      const place = (entry: SidebarDndItem) => {
+        next.push(row(entry, tray, stack));
+        if (shadow && entry.id === shadowAfter) next.push(row(shadow, tray, stack));
+      };
+      for (const arrangedRow of arranged) {
+        if (arrangedRow.tray !== tray) {
+          tray = arrangedRow.tray;
+          stack = null;
+          if (tray) next.push({ kind: "tray", key: `tray:${tray}`, tray, trayEnd: false });
+        }
+        if (arrangedRow.stack !== stack) {
+          stack = arrangedRow.stack;
+          if (stack) next.push({ kind: "stack", key: `stack:${stack}`, host: stack, tray, trayEnd: false });
+        }
+        const entry = unplaced.get(arrangedRow.id);
+        if (!entry) continue;
+        unplaced.delete(arrangedRow.id);
+        place(entry);
+      }
+      tray = null;
+      stack = null;
+      // Rows the arrangement has not seen yet, as a tab dragged in from another section.
+      for (const entry of unplaced.values()) place(entry);
+      for (let index = 0; index < next.length; index += 1) {
+        const segment = next[index];
+        if (segment.tray && next[index + 1]?.tray !== segment.tray) next[index] = { ...segment, trayEnd: true };
+      }
+    }
+    const signature = next.map((segment) => `${segment.key}|${segment.tray}|${segment.kind === "row" ? segment.stack : ""}|${segment.trayEnd}`).join(",");
+    if (signature === lastSegmentsSignature) return lastSegments;
+    lastSegmentsSignature = signature;
+    lastSegments = next;
+    return next;
+  });
   const rootHasShadow = $derived(rootZoneItems.some(isShadowItem));
   const recentlyDraggedId = $derived(getRecentlyDroppedId());
 
@@ -172,10 +346,10 @@
   const VIRTUAL_ROW_GAP = 0;
   const VIRTUAL_FOLDER_TOP_MARGIN = 0;
   const VIRTUAL_EMPTY_FOLDER_H = 32;
+  const VIRTUAL_TRAY_HEAD_H = 28;
+  const VIRTUAL_TRAY_GAP = 6;
 
-  type ListSegment =
-    | { spacer: true; key: string; height: number }
-    | { spacer: false; key: string; entry: SidebarDndItem };
+  type ListSegment = Segment | { kind: "spacer"; key: string; height: number };
 
   // How far the list's top sits above the shared scroller's viewport top, floored to a window step.
   let listScrollTop = $state(0);
@@ -183,7 +357,7 @@
   const listWindowFrame = createFrameScheduler();
 
   const virtualize = $derived(
-    !isPinned && !dragActive && rootZoneItems.length > VIRTUALIZE_MIN_ROWS,
+    !isPinned && !dragActive && segments.length > VIRTUALIZE_MIN_ROWS,
   );
 
   // The panes of a split in reading order, stacked one row each in the sidebar.
@@ -261,7 +435,7 @@
     if (!virtualize) return null;
     const minY = listScrollTop - VIRTUAL_BUFFER_PX;
     const maxY = listScrollTop + VIRTUAL_WINDOW_STEP_PX + scrollerHeight + VIRTUAL_BUFFER_PX;
-    const segments: ListSegment[] = [];
+    const shown: ListSegment[] = [];
     let top = 0;
     let hiddenHeight = 0;
     let hiddenCount = 0;
@@ -270,28 +444,32 @@
       if (hiddenCount === 0) return;
       // The flex gap supplies the boundary gaps around the spacer, so it only
       // carries the hidden rows' own heights plus the gaps between them.
-      segments.push({
-        spacer: true,
+      shown.push({
+        kind: "spacer",
         key: `spacer-${spacerOrdinal++}`,
         height: hiddenHeight + (hiddenCount - 1) * VIRTUAL_ROW_GAP,
       });
       hiddenHeight = 0;
       hiddenCount = 0;
     };
-    for (const entry of rootZoneItems) {
-      const height = estimatedRowHeight(entry);
+    for (const segment of segments) {
+      const entry = segment.kind === "row" ? segment.entry : null;
+      const height =
+        (entry ? estimatedRowHeight(entry) : segment.kind === "tray" && !foldedTrays.has(segment.tray) ? VIRTUAL_TRAY_HEAD_H : VIRTUAL_ROW_H) +
+        (segment.trayEnd ? VIRTUAL_TRAY_GAP : 0);
       // The active and focused rows stay mounted wherever the scroll sits, so
       // tab switching and keyboard focus never land on an unmounted row. Hidden
       // children count too: keeping one extra folder mounted is harmless.
       const keep =
         (top + height >= minY && top <= maxY) ||
-        entry.id === activeTabId ||
-        entry.id === focusedItemId ||
-        (entry.kind === "folder" &&
-          (folderHolds(entry.id, activeTabId) || folderHolds(entry.id, focusedItemId)));
+        (entry !== null &&
+          (entry.id === activeTabId ||
+            entry.id === focusedItemId ||
+            (entry.kind === "folder" &&
+              (folderHolds(entry.id, activeTabId) || folderHolds(entry.id, focusedItemId)))));
       if (keep) {
         flushSpacer();
-        segments.push({ spacer: false, key: sidebarDndKey(entry), entry });
+        shown.push(segment);
       } else {
         hiddenHeight += height;
         hiddenCount += 1;
@@ -299,7 +477,7 @@
       top += height + VIRTUAL_ROW_GAP;
     }
     flushSpacer();
-    return segments;
+    return shown;
   });
 
   function handleListFocusIn(event: FocusEvent): void {
@@ -786,7 +964,7 @@
 
 </script>
 
-{#snippet rootItemContent(entry: SidebarDndItem)}
+{#snippet rootItemContent(entry: SidebarDndItem, stack: string | null)}
   {#if isShadowItem(entry)}
     <div
       class="sidebar-dnd-placeholder"
@@ -832,6 +1010,20 @@
       {@const tab = tabsById.get(entry.id)}
       {#if tab && editingTab?.id === tab.id}
         <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
+      {:else if tab && stack}
+        <div class="indented-tab-wrapper">
+          <TabItem
+            {tab}
+            isActive={tab.id === activeTabId}
+            interactive={interactive}
+            disableTooltip={dragActive}
+            actionsInert={dragActive}
+            splitDropTarget={splitDropTabId === tab.id}
+            level={2}
+            stackName={stackInfo.get(stack)?.name}
+            tabStop={tab.id === tabStopId}
+          />
+        </div>
       {:else if tab}
         <TabItem
           {tab}
@@ -1068,10 +1260,47 @@
   {/if}
 {/snippet}
 
-{#snippet virtualRow(entry: SidebarDndItem)}
+{#snippet segmentHead(segment: Segment)}
+  {#if !heads}
+    <!-- The slot holds the head's height until it loads. -->
+  {:else if segment.kind === "tray"}
+    {@const folded = foldedTrays.has(segment.tray)}
+    <heads.TrayHeader
+      tray={segment.tray}
+      {folded}
+      tabs={trayTabs.get(segment.tray) ?? []}
+      {interactive}
+      tabStop={false}
+      onToggle={(next) => setTrayFolded(segment.tray, next)}
+    />
+  {:else if segment.kind === "stack"}
+    {@const info = stackInfo.get(segment.host)}
+    {#if info}
+      <heads.StackRow
+        name={info.name}
+        tabs={info.tabs}
+        open={openStacks.has(segment.host)}
+        {interactive}
+        tabStop={false}
+        onToggle={(open) => setStackOpen(segment.host, open)}
+        onClose={() => tabActions.closeMany(info.tabs.map((tab) => tab.id))}
+        onContextMenu={(rect) => folderActions.showStackContextMenu(info.tabs.map((tab) => tab.id), segment.host, info.name, rect)}
+      />
+    {/if}
+  {/if}
+{/snippet}
+
+<!-- Rows and the heads of stacks and trays share one slot: a head is a disabled drag item, so it
+     moves with the list but is never picked up nor hit tested (it is not in the zone's items).
+     The animated list below repeats this markup: animate: must sit on the each's own child. -->
+{#snippet slot(segment: Segment, entry: SidebarDndItem)}
   {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
   <div
-    class={slotClass}
+    class={segment.kind === "row" ? slotClass : "group-head-slot"}
+    class:in-tray={!!segment.tray}
+    class:tray-head={segment.kind === "tray"}
+    class:tray-open={segment.kind === "tray" && !foldedTrays.has(segment.tray)}
+    class:tray-end={segment.trayEnd}
     class:recent-drop={entry.id === recentlyDraggedId}
     class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
     data-is-dnd-shadow-item-hint={isShadowItem(entry)}
@@ -1079,12 +1308,16 @@
     use:dndItem={{
       item: entry,
       zoneId: rootZone.id,
-      disabled: isShadowItem(entry) || !interactive,
+      disabled: segment.kind !== "row" || isShadowItem(entry) || !interactive,
       onCancel: resetSidebarDrag,
       onDropOutsideWindow: moveTabOutOfWindow,
     }}
   >
-    {@render rootItemContent(entry)}
+    {#if segment.kind === "row"}
+      {@render rootItemContent(entry, segment.stack)}
+    {:else}
+      {@render segmentHead(segment)}
+    {/if}
   </div>
 {/snippet}
 
@@ -1093,24 +1326,29 @@
     <!-- Windowed: no animate:flip or transitions; FLIP is duration-0 at this
          list size anyway, and rows entering the window must not slide in. -->
     {#each listSegments as segment (segment.key)}
-      {#if segment.spacer}
+      {#if segment.kind === "spacer"}
         <div
           class="virtual-spacer"
           style:height={`${segment.height}px`}
           aria-hidden="true"
         ></div>
       {:else}
-        {@render virtualRow(segment.entry)}
+        {@render slot(segment, segment.kind === "row" ? segment.entry : { id: segment.key, kind: "tab", section, parentFolderId: null })}
       {/if}
     {/each}
   {:else}
-    {#each rootZoneItems as entry (sidebarDndKey(entry))}
+    {#each segments as segment (segment.key)}
+      {@const entry = segment.kind === "row" ? segment.entry : { id: segment.key, kind: "tab" as const, section, parentFolderId: null }}
       {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
       <div
         animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
         in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
         out:tabSlide={itemMotion(entry, MOTION.itemExitMs)}
-        class={slotClass}
+        class={segment.kind === "row" ? slotClass : "group-head-slot"}
+        class:in-tray={!!segment.tray}
+        class:tray-head={segment.kind === "tray"}
+        class:tray-open={segment.kind === "tray" && !foldedTrays.has(segment.tray)}
+        class:tray-end={segment.trayEnd}
         class:recent-drop={entry.id === recentlyDraggedId}
         class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
         data-is-dnd-shadow-item-hint={isShadowItem(entry)}
@@ -1118,12 +1356,16 @@
         use:dndItem={{
           item: entry,
           zoneId: rootZone.id,
-          disabled: isShadowItem(entry) || !interactive,
+          disabled: segment.kind !== "row" || isShadowItem(entry) || !interactive,
           onCancel: resetSidebarDrag,
           onDropOutsideWindow: moveTabOutOfWindow,
         }}
       >
-        {@render rootItemContent(entry)}
+        {#if segment.kind === "row"}
+          {@render rootItemContent(entry, segment.stack)}
+        {:else}
+          {@render segmentHead(segment)}
+        {/if}
       </div>
     {/each}
   {/if}
@@ -1169,7 +1411,7 @@
     </div>
   </div>
 {:else}
-  <div class="tab-list-shell">
+  <div class="tab-list-shell" role="none" onpointerenter={() => (pointerInList = true)} onpointerleave={() => (pointerInList = false)}>
     <div
       class="tab-list-body"
       class:has-pinned-divider={showPinnedDivider}
@@ -1410,6 +1652,34 @@
   .tab-drop-slot {
     position: relative;
     min-width: 0;
+  }
+
+  /* A tray is one tinted card: its head and rows paint it, rounded at its two ends. */
+  .in-tray {
+    background: var(--text-primary-tint-10);
+  }
+
+  .tray-head {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  .in-tray.tray-end {
+    margin-bottom: 6px;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+
+  .tray-head.tray-end {
+    border-radius: var(--radius-md);
+  }
+
+  .group-head-slot {
+    position: relative;
+    min-width: 0;
+    min-height: 32px;
+  }
+
+  .group-head-slot.tray-open {
+    min-height: 28px;
   }
 
   .virtual-spacer {

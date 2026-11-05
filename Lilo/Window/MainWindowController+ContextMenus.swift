@@ -111,7 +111,7 @@ extension MainWindowController {
         }
         if !tab.isClosed, spaceId == tabManager.currentSpaceId {
             let spaceMenu = NSMenu(title: "Move to Space".localized)
-            addMoveToSpaceItems(to: spaceMenu, tabId: uuid)
+            addMoveToSpaceItems(to: spaceMenu, tabIds: [uuid])
             if !spaceMenu.items.isEmpty {
                 let item = menu.addItem(withTitle: spaceMenu.title, action: nil, keyEquivalent: "")
                 item.image = MenuIcon.moveToSpace.image
@@ -417,6 +417,68 @@ extension MainWindowController {
         applyContextMenuStateCommands([.setFolderLock(spaceId: folder.spaceId, folderId: folder.id, lock: nil)])
     }
 
+    // MARK: - Tab Stack Context Menu
+
+    /// A site stack's menu: its tabs leave together, into a folder or another Space, or close behind one undo.
+    func showTabStackContextMenu(tabIds: [UUID], host: String, name: String, anchorRect: NSRect?) {
+        guard let spaceId = tabManager.currentSpaceId else { return }
+        let tabs = tabIds.compactMap { tabManager.tab(for: $0) }
+        guard !tabs.isEmpty else { return }
+        let menu = NSMenu()
+        menu.addItem("Move Stack to New Folder".localized, icon: .newFolder) { self.createFolder(named: name, holding: tabs, spaceId: spaceId) }
+        let spaceMenu = NSMenu(title: "Move Stack to Space".localized)
+        addMoveToSpaceItems(to: spaceMenu, tabIds: tabs.map(\.id))
+        if !spaceMenu.items.isEmpty {
+            let item = menu.addItem(withTitle: spaceMenu.title, action: nil, keyEquivalent: "")
+            item.image = MenuIcon.moveToSpace.image
+            item.submenu = spaceMenu
+        }
+        menu.addItem(.separator())
+        unsafe menu.addItem(String(format: "Don't Stack %@".localized, host), icon: .unstack) {
+            self.bridgeRouter.send(event: "tabListMenuAction", data: ["action": "neverStack", "host": host])
+        }
+        menu.addItem(.separator())
+        menu.addItem("Close Stack".localized, icon: .close) { self.closeTabsAsOne(tabs, spaceId: spaceId) }
+        presentContextMenu(menu, anchorRect: anchorRect)
+    }
+
+    /// The folder takes the place of the first of `tabs`, which follow one another inside it.
+    private func createFolder(named name: String, holding tabs: [Tab], spaceId: UUID) {
+        let folder = TabFolder(spaceId: spaceId, name: name, color: "#5865f2")
+        let folderIndex = tabManager.sidebarTreeItems(forSpace: spaceId)
+            .filter { $0.parentFolderId == nil && $0.section == .unpinned }
+            .firstIndex { $0.kind == .tab && $0.itemId == tabs[0].id } ?? 0
+        applyContextMenuStateCommands([
+            .createFolder(spaceId: spaceId, folder: folder, section: .unpinned),
+            .moveSidebarItem(spaceId: spaceId, kind: .folder, itemId: folder.id, parentFolderId: nil, section: .unpinned, insert: .index(folderIndex))
+        ] + tabs.enumerated().map { index, tab in
+            .moveSidebarItem(spaceId: spaceId, kind: .tab, itemId: tab.id, parentFolderId: folder.id, section: .unpinned, insert: .index(index))
+        })
+    }
+
+    /// How the open tabs are laid out: stacked by site, grouped by type, and the sites never stacked.
+    private func addTabListItems(to menu: NSMenu) {
+        let settings = context.settingsStore
+        let send = { (action: String, host: String) in
+            self.bridgeRouter.send(event: "tabListMenuAction", data: ["action": action, "host": host])
+        }
+        menu.addItem("Stack Tabs by Site".localized, icon: .stackTabs) { send("toggleStackTabs", "") }
+            .state = settings?.get("sidebarStackTabs") == "false" ? .off : .on
+        menu.addItem("Group by Type".localized, icon: .groupByType) { send("toggleGroupByType", "") }
+            .state = settings?.get("sidebarGroupByType") == "true" ? .on : .off
+        let never = (settings?.get("sidebarNeverStack") ?? "").split(separator: ",").map(String.init)
+        guard !never.isEmpty else { return }
+        let neverMenu = NSMenu(title: "Never Stack".localized)
+        for host in never {
+            neverMenu.addItem(host) { send("stackAgain", host) }.state = .on
+        }
+        neverMenu.addItem(.separator())
+        neverMenu.addItem("Stack Every Site Again".localized) { send("stackEverySite", "") }
+        let item = menu.addItem(withTitle: neverMenu.title, action: nil, keyEquivalent: "")
+        item.image = MenuIcon.unstack.image
+        item.submenu = neverMenu
+    }
+
     // MARK: - Sidebar Context Menu
 
     func showSidebarContextMenu(spaceId: String?, anchorRect: NSRect?) {
@@ -444,6 +506,7 @@ extension MainWindowController {
         let positionItem = menu.addItem(withTitle: "Tab Position".localized, action: nil, keyEquivalent: "")
         positionItem.image = MenuIcon.sidebar.image
         positionItem.submenu = positions
+        addTabListItems(to: menu)
         menu.addItem(.separator())
         menu.addItem("Edit Space".localized, icon: .edit) { self.bridgeRouter.send(event: "openSpaceEditor", data: ["id": targetSpaceId.uuidString]) }
         menu.addItem("New Space".localized, icon: .newSpace) { self.bridgeRouter.send(event: "openAddSpaceEditor") }
@@ -490,15 +553,19 @@ extension MainWindowController {
     func closeOtherTabs(keeping target: Tab) {
         let uuid = target.id
         guard let spaceId = tabManager.currentSpaceId else { return }
-        let itemById = Dictionary(
-            tabManager.sidebarTreeItems(forSpace: spaceId).map { ($0.itemId, $0) },
-            uniquingKeysWith: { first, _ in first }
-        )
         // Closing the active tab first would activate, and start loading, a tab the loop closes next.
         if !target.isClosed, let active = tabManager.activeTab, active.id != uuid, !active.isPinned, !active.isBookmarked {
             activateTabStateFirst(id: uuid)
         }
-        let closing = tabManager.currentTabs.filter { $0.id != uuid && !$0.isPinned && !$0.isBookmarked }
+        closeTabsAsOne(tabManager.currentTabs.filter { $0.id != uuid && !$0.isPinned && !$0.isBookmarked }, spaceId: spaceId)
+    }
+
+    /// Closes `closing` behind one undo toast, asking once for all of its running terminals.
+    func closeTabsAsOne(_ closing: [Tab], spaceId: UUID) {
+        let itemById = Dictionary(
+            tabManager.sidebarTreeItems(forSpace: spaceId).map { ($0.itemId, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
         let closeAll = { [weak self] in
             guard let self else { return }
             var recordedCount = 0

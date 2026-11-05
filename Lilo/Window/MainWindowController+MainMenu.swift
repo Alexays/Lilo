@@ -119,20 +119,22 @@ extension MainWindowController {
 
     func populateMoveToSpaceMenu(_ menu: NSMenu) {
         menu.removeAllItems()
-        if let id = tabManager.activeOpenTabId { addMoveToSpaceItems(to: menu, tabId: id) }
+        if let id = tabManager.activeOpenTabId { addMoveToSpaceItems(to: menu, tabIds: [id]) }
         if menu.items.isEmpty { menu.addItem(withTitle: "No Other Spaces".localized, action: nil, keyEquivalent: "") }
     }
 
     /// The other Spaces a tab of the current Space can move to: the keyboard path for a drop on a Space. Never an
     /// Agents space or an agent's private one: their tabs are the agents'. Never a private one for a bookmark: it would close with it.
-    func addMoveToSpaceItems(to menu: NSMenu, tabId id: UUID) {
+    func addMoveToSpaceItems(to menu: NSMenu, tabIds ids: [UUID]) {
         let agentSpaceIds = Set(context.settingsStore?.agentsSpaceIds ?? []).union(context.agentControl.sessions.compactMap(\.isolatedSpaceId))
-        let isBookmarked = tabManager.tab(for: id)?.isBookmarked == true
+        let isBookmarked = ids.contains { tabManager.tab(for: $0)?.isBookmarked == true }
         for space in switchableSpaces where space.id != tabManager.currentSpaceId && !agentSpaceIds.contains(space.id) && !(isBookmarked && space.isPrivate) {
             menu.addItem("\(space.icon)  \(space.name)") { [weak self] in
                 guard let self else { return }
-                do { try moveToSpace(.tab, id: id, targetSpaceId: space.id) } catch {
-                    Self.logger.error("Failed to move tab \(id.uuidString, privacy: .public) to space \(space.id.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
+                for id in ids {
+                    do { try moveToSpace(.tab, id: id, targetSpaceId: space.id) } catch {
+                        Self.logger.error("Failed to move tab \(id.uuidString, privacy: .public) to space \(space.id.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
+                    }
                 }
             }
         }

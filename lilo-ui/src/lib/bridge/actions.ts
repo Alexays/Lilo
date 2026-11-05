@@ -77,6 +77,7 @@ export const tabActions = {
 	create: (url?: string, typed?: boolean, background?: boolean): void =>
 		url ? emit("createTab", background ? { url, typed, background } : { url, typed }) : emit("createTab"),
 	close: emitId("closeTab"),
+	closeMany: (ids: string[]): void => emit("closeTabs", { ids }),
 	switchTo: emitId("switchTab"),
 	switchToRecent: emitId("switchToRecentTab"),
 	claim: emitId("claimTab"),
@@ -178,6 +179,8 @@ export const folderActions = {
 	delete: emitId("deleteTabFolder"),
 	showContextMenu: (id: string, x: number, y: number, width: number, height: number): void =>
 		emit("showFolderContextMenu", { id, x, y, width, height }),
+	showStackContextMenu: (ids: string[], host: string, name: string, rect: DOMRect): void =>
+		emit("showTabStackContextMenu", { ids, host, name, x: rect.left, y: rect.top, width: rect.width, height: rect.height }),
 	setCollapsed: (id: string, collapsed: boolean): void =>
 		emit("setTabFolderCollapsed", { id, collapsed }),
 	setLock: (id: string, password: string, allowsBiometrics: boolean): void =>

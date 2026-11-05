@@ -81,6 +81,7 @@ final class TabBridgeHandler: BridgeHandler {
     let handledActions: Set<String> = [
         "createTab",
         "closeTab",
+        "closeTabs",
         "switchTab",
         "switchToRecentTab",
         "claimTab",
@@ -186,6 +187,10 @@ final class TabBridgeHandler: BridgeHandler {
 
         case "closeTab":
             if let id = message.uuid("id") { windowController?.closeTabStateFirst(id: id) }
+
+        case "closeTabs":
+            let tabs = (message.payload["ids"] as? [String] ?? []).compactMap(UUID.init(uuidString:)).compactMap(tabManager.tab(for:))
+            if let spaceId = tabManager.currentSpaceId, !tabs.isEmpty { windowController?.closeTabsAsOne(tabs, spaceId: spaceId) }
 
         case "switchTab":
             withTabContext(message) { tab, spaceId in
