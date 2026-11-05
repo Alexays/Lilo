@@ -272,6 +272,7 @@
     const timed = []
     let samples = 0
     const cpu = []
+    const mainCPU = []
     const memory = {}
     for (const { method, params } of messages) {
       if (method === 'Timeline.eventRecorded') addRecord(params.record, true)
@@ -306,11 +307,18 @@
         })
       } else if (method === 'CPUProfiler.trackingUpdate') {
         if (inWindow(params.event.timestamp)) cpu.push(params.event.usage)
+        const main = params.event.threads?.find(thread => thread.type === 'main')
+        if (main) mainCPU.push([params.event.timestamp, main.usage])
       } else if (method === 'Memory.trackingUpdate' && inWindow(params.event.timestamp)) {
         for (const category of params.event.categories) memory[category.type] = Math.max(memory[category.type] ?? 0, category.size)
       }
     }
     const percent = value => round(value * 100 / samples)
+    // WebKit can leave a record open until the recording stops: a long task with an idle main thread is one, or a wait.
+    const mainThreadCPU = task => {
+      const inside = mainCPU.filter(([time]) => time > task.startTime && time <= task.endTime)
+      return inside.length ? round(inside.reduce((sum, [, usage]) => sum + usage, 0) / inside.length) : null
+    }
     // The functions running most between two times, by their share of the samples taken then.
     const topBetween = (from, to) => {
       const between = new Map()
@@ -335,9 +343,9 @@
       byFile: top(files, 15).map(([file, value]) => ({ file, percent: percent(value), origin: fileOrigins.get(file) })),
       longTasks: {
         count: longTasks.length,
-        totalMs: Math.round(longTasks.reduce((sum, task) => sum + duration(task), 0) * 1000),
+        totalMs: Math.round(covered(longTasks.map(task => [task.startTime, task.endTime]))),
         longest: longTasks.sort((a, b) => duration(b) - duration(a)).slice(0, 15).sort((a, b) => a.startTime - b.startTime).map(task => ({
-          atMs: at(task.startTime), durationMs: Math.round(duration(task) * 1000),
+          atMs: at(task.startTime), durationMs: Math.round(duration(task) * 1000), mainThreadCPU: mainThreadCPU(task),
           type: task.data?.type ? `${task.type} ${task.data.type}` : task.type,
           topFunctions: topBetween(task.startTime, task.endTime)
         }))
