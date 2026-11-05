@@ -490,6 +490,9 @@
 
   // How far the list's top sits above the shared scroller's viewport top, floored to a window step.
   let listScrollTop = $state(0);
+  let dividerEl: HTMLElement | undefined = $state();
+  // Rows are scrolling under the sticky divider.
+  let dividerStuck = $state(false);
   let focusedItemId = $state<string | null>(null);
   const listWindowFrame = createFrameScheduler();
 
@@ -713,7 +716,9 @@
 
   function measureListWindow(): void {
     if (!scroller || !tabListEl) return;
-    const offset = scroller.getBoundingClientRect().top - tabListEl.getBoundingClientRect().top;
+    const listTop = tabListEl.getBoundingClientRect().top;
+    const offset = scroller.getBoundingClientRect().top - listTop;
+    dividerStuck = !!dividerEl && dividerEl.getBoundingClientRect().bottom > listTop + 0.5;
     listScrollTop = Math.floor(offset / VIRTUAL_WINDOW_STEP_PX) * VIRTUAL_WINDOW_STEP_PX;
   }
 
@@ -1650,6 +1655,8 @@
       {#if showPinnedDivider}
         <div
           class="pinned-tab-divider-shell"
+          bind:this={dividerEl}
+          class:stuck={dividerStuck}
           class:pinned-transfer-gate={pinnedTransferGateActive}
           class:collapsed={pinnedDividerHidden}
           class:with-actions={!dragActive && !pinnedDividerHidden}
@@ -2389,6 +2396,26 @@
     /* Holds Clear with 4px to spare on each side, with or without it, so the line never moves
        when Clear comes or goes. */
     min-height: 24px;
+  }
+
+  /* Rows fade into the divider's band instead of being cut at its edge. `inherit` follows the
+     band, transparent on glass, grain and mid-swipe. */
+  .pinned-tab-divider-shell::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 16px;
+    background: inherit;
+    mask-image: linear-gradient(#000, transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--motion-duration-fast) ease;
+  }
+
+  .pinned-tab-divider-shell.stuck::after {
+    opacity: 1;
   }
 
   /* An opaque band would cut across glass or grain. */
