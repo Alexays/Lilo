@@ -51,6 +51,23 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertEqual(name, "Signup flow")
     }
 
+    func testEachTaskOfOneConnectionGetsItsOwnFolder() async throws {
+        // An agent app's chats share one lilo-mcp: each names its own task.
+        let signup = await client.callTool("tabs_create_mcp", ["title": "Signup flow"])
+        let export = await client.callTool("tabs_create_mcp", ["title": "CSV export bug"])
+        let signupTab = try XCTUnwrap(signup.text.split(separator: " ").last.flatMap { Int($0) }, signup.text)
+        let exportTab = try XCTUnwrap(export.text.split(separator: " ").last.flatMap { Int($0) }, export.text)
+
+        let listed = await client.callTool("tabs_context_mcp", ["title": "Signup flow"])
+        let object = try JSONSerialization.jsonObject(with: Data(listed.text.utf8)) as? [String: Any]
+        let folders = try XCTUnwrap(context.browserState.structuralProjection(forSpace: XCTUnwrap(agentsSpaceId))?.folders)
+
+        XCTAssertEqual(Set(folders.map(\.name)), ["Signup flow", "CSV export bug"])
+        XCTAssertEqual((object?["availableTabs"] as? [[String: Any]])?.map { $0["tabId"] as? Int }, [signupTab])
+        let navigated = await client.callTool("navigate", ["tabId": exportTab, "url": "about:blank"])
+        XCTAssertFalse(navigated.isError, "a tab of the other task stays reachable: \(navigated.text)")
+    }
+
     func testFolderIsNamedAfterTheProjectWithoutATitle() async throws {
         let agent = try AgentTestClient(path: socketURL)
         agent.roots = ["file:///Users/me/Projects/lilo"]

@@ -74,7 +74,7 @@ User-facing docs and the interface capitalize these names as below; code identif
 |------|---------|
 | **Space** | A set of tabs in the sidebar with its own name, emoji and color, signed in as one profile (`Space`, `SpaceManager`). Plural "Spaces". |
 | **Private Space** | A Space whose browsing is forgotten when it closes. Agents never see one. |
-| **Agents Space** | The Space where AI agents open their tabs, one folder per client. |
+| **Agents Space** | The Space where AI agents open their tabs, one folder per agent task. |
 | **profile** | A set of website data, history, bookmarks and extensions (`Profile`, `ProfileContext`). Several Spaces can share one. |
 | **pinned tab**, **favorite** | Tabs kept across launches: pinned tabs sit at the top of a Space's list, favorites in the tiles above it. |
 | **folder** | A group of tabs in the sidebar, nested up to five levels, optionally locked. Extensions see folders as tab groups. |

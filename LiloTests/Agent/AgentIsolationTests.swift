@@ -39,7 +39,7 @@ final class AgentIsolationTests: AgentToolTestCase {
         let (tab, number) = try await privateTab(showing: "private-marker")
         let privateSpaceId = try XCTUnwrap(context.browserState.owningSpaceId(forTab: tab.id))
         let agentsSpace = try XCTUnwrap(agentsSpaceId)
-        let folderId = try XCTUnwrap(control.sessions.first { $0.isAuthorized }?.folderId)
+        let folderId = try XCTUnwrap(control.sessions.first { $0.isAuthorized }?.folders.values.first)
         _ = try window.applyBrowserCommand(.moveTabToSpace(tabId: tab.id, sourceSpaceId: privateSpaceId, targetSpaceId: agentsSpace, allowsPinnedTabs: false))
         _ = try window.applyBrowserCommand(.moveSidebarItem(
             spaceId: agentsSpace, kind: .tab, itemId: tab.id, parentFolderId: folderId, section: .unpinned, insert: .index(1)

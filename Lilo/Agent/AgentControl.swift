@@ -147,7 +147,7 @@ final class AgentControl {
             let since = Date().addingTimeInterval(-Self.actingLinger)
             // The Agents space each agent works in: one with no folder yet works in none.
             let working = Dictionary(uniqueKeysWithValues: authorized.compactMap { session in
-                agentsSpaceFolder(of: session) == nil ? nil : agentsSpaceId(of: session).map { (session.id, $0) }
+                agentsSpaceFolders(of: session).isEmpty ? nil : agentsSpaceId(of: session).map { (session.id, $0) }
             })
             var actingTabIds: Set<UUID> = []
             let clients = Set(authorized.map(\.clientName)).sorted().map { name in
@@ -456,11 +456,11 @@ final class AgentControl {
         for request in closing.requests.values { request.cancel() }
         if closing.isAuthorized { markSeen(closing.clientName) }
         context?.powerKeeper.terminalEnded(closing.id)
-        dropFolder(of: closing)
+        dropFolders(of: closing)
         dropIsolatedSpace(of: closing)
         publishActivity()
         // The last agent with tabs in the agents' profile gone, nothing it did there is kept for the next one.
-        if !sessions.contains(where: { $0.profileId == nil && agentsSpaceFolder(of: $0) != nil }) { Task { await wipeAgentsProfile() } }
+        if !sessions.contains(where: { $0.profileId == nil && !agentsSpaceFolders(of: $0).isEmpty }) { Task { await wipeAgentsProfile() } }
     }
 
     /// lilo-mcp replays the handshake when it reconnects, and an agent may launch a new lilo-mcp: a new connection
@@ -482,7 +482,7 @@ final class AgentControl {
     }
 
     private func handOver(_ dropped: AgentSession, to session: AgentSession) {
-        session.folderId = dropped.folderId
+        session.folders = dropped.folders
         session.isolatedSpaceId = dropped.isolatedSpaceId
         session.title = dropped.title
         session.projectName = dropped.projectName
@@ -495,7 +495,7 @@ final class AgentControl {
     /// The agent's new lilo-mcp may connect before its old connection is gone: that one takes the tabs.
     private func handToHeir(_ closed: AgentSession) -> Bool {
         guard let heir = sessions.first(where: {
-            $0 !== closed && !$0.connection.isClosed && $0.isAuthorized && $0.folderId == nil && $0.isolatedSpaceId == nil && Self.sameClient(closed, $0)
+            $0 !== closed && !$0.connection.isClosed && $0.isAuthorized && $0.folders.isEmpty && $0.isolatedSpaceId == nil && Self.sameClient(closed, $0)
         }) else { return false }
         handOver(closed, to: heir)
         refreshControlledTabs()
@@ -511,7 +511,7 @@ final class AgentControl {
             // A cancelled request gets no reply, and stops what it was doing for a client that is gone.
             for request in session.requests.values { request.cancel() }
             session.authorization?.cancel()
-            let keeps = session.isAuthorized && (session.folderId != nil || session.isolatedSpaceId != nil)
+            let keeps = session.isAuthorized && (!session.folders.isEmpty || session.isolatedSpaceId != nil)
             if keeps, self.handToHeir(session) { return }
             // Lilo may drop a connection the bridge then makes again: its tabs, and what the agent set on them, wait.
             guard keeps, Self.reconnectGrace > .zero else {
@@ -576,11 +576,12 @@ final class AgentSession {
     var tabCalls: [UUID: (tab: Int, tool: String, startedAt: Date, mood: AgentCursorView.Mood)] = [:]
     /// The profile it works in, nil for the agents' own ephemeral one.
     var profileId: UUID?
-    /// Its own tab folder in the Agents space of its profile, created with its first tab: one per conversation.
-    var folderId: UUID?
+    /// Its tab folders in the Agents space of its profile, by the task title they serve (nil before it names one),
+    /// each created with its first tab: conversations sharing one connection (an agent app's chats, subagents) keep apart.
+    var folders: [String?: UUID] = [:]
     /// Its private space for isolated tabs, created with the first one and deleted when it leaves.
     var isolatedSpaceId: UUID?
-    /// What its folder is named after: the task it gave, else its project folder, else when it came.
+    /// The task it last named, whose folder untitled calls use: its folder's name, else its project folder, else when it came.
     var title: String?
     var projectName: String?
     let connectedAt = Date()

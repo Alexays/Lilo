@@ -234,7 +234,7 @@ enum AgentDevTools {
         case "cookies":
             let (_, engine) = try control.agentTab(arguments["tabId"], session: session)
             let (space, _) = try control.agentSpace(for: session)
-            let tabs = (session.folderId.map { control.tabs(inFolder: $0, spaceId: space.id) } ?? []) + control.isolatedTabs(of: session)
+            let tabs = session.folders.values.flatMap { control.tabs(inFolder: $0, spaceId: space.id) } + control.isolatedTabs(of: session)
             var hosts = Set(tabs.compactMap { $0.url?.host() })
             if let host = engine.currentURL?.host() { hosts.insert(host) }
             return [.text(try await cookies(arguments, store: engine.wkWebView.configuration.websiteDataStore.httpCookieStore, hosts: hosts))]

@@ -51,7 +51,7 @@ enum AgentMCP {
                let conversation = control.context?.conversations.conversation(forToken: token),
                let spaceId = conversation.spaceId, let space = control.context?.spaceManager?.space(with: spaceId) {
                 session.conversationSpaceId = spaceId
-                session.folderId = conversation.folderId
+                session.folders[nil] = conversation.folderId
                 session.profileId = space.profileId
                 session.supportsRoots = false
                 welcome(session, control: control)

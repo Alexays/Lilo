@@ -43,13 +43,15 @@ extension AgentControl {
         let deadline = Date().addingTimeInterval(min(max((wait as? NSNumber)?.doubleValue ?? 0, 0), 600))
         while true {
             let others = sessions.filter { other in
-                guard other !== session, other.profileId == nil, let folder = agentsSpaceFolder(of: other),
-                      let spaceId = agentsSpaceId(of: other) else { return false }
-                return !tabs(inFolder: folder.id, spaceId: spaceId).isEmpty
+                guard other !== session, other.profileId == nil, let spaceId = agentsSpaceId(of: other) else { return false }
+                return agentsSpaceFolders(of: other).contains { !tabs(inFolder: $0.id, spaceId: spaceId).isEmpty }
             }
             if others.isEmpty { return }
             guard Date() < deadline, !session.connection.isClosed else {
-                let holders = others.map { "\"\(agentsSpaceFolder(of: $0)?.name ?? "")\" (last active \(Int(-$0.lastActivity.timeIntervalSinceNow)) s ago)" }
+                let holders = others.map { other in
+                    let names = agentsSpaceFolders(of: other).map { "\"\($0.name)\"" }.joined(separator: ", ")
+                    return "\(names) (last active \(Int(-other.lastActivity.timeIntervalSinceNow)) s ago)"
+                }
                 throw AgentToolError("""
                     Another agent is working in the Agents profile: \(holders.joined(separator: ", ")). It holds it until it closes \
                     its tabs or disconnects: pass wait (seconds) to wait for that
@@ -70,7 +72,7 @@ extension AgentControl {
         guard await wipeAgentsProfile() else {
             throw AgentToolError("The Agents profile holds a space of the user's, so it is not reset")
         }
-        if let folderId = session.folderId {
+        for folderId in session.folders.values {
             for tab in tabs(inFolder: folderId, spaceId: space.id) {
                 (context?.windows.window(forTab: tab.id)?.tabManager.engineTab(for: tab.id)
                     ?? context?.browserState.engine(tabId: tab.id, spaceId: space.id))?.reload()
@@ -85,7 +87,7 @@ extension AgentControl {
         let home = try agentSpace(in: agentsProfileId()).space
         for session in sessions where session.profileId == space.profileId {
             session.profileId = nil
-            try moveFolder(of: session, from: space, to: home)
+            try moveFolders(of: session, from: space, to: home)
         }
         try context?.spaceManager?.deleteSpace(id: space.id)
         refreshControlledTabs()
@@ -127,7 +129,7 @@ extension AgentControl {
         // Read again: another call of the session may have switched while the user was asked.
         let source = agentsSpace(in: session.profileId ?? agents)
         let target = try agentSpace(in: profile.id).space
-        if let source { try moveFolder(of: session, from: source, to: target) }
+        if let source { try moveFolders(of: session, from: source, to: target) }
         session.profileId = profile.id == agents ? nil : profile.id
         refreshControlledTabs()
         publishActivity()

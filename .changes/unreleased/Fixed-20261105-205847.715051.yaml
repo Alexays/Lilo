@@ -1,0 +1,3 @@
+kind: Fixed
+body: Agents sharing one connection, such as Claude Desktop's chats, each get their own tab folder for the task they name, instead of all working in one
+time: 2026-11-05T20:58:47.715051+01:00

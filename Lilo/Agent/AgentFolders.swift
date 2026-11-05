@@ -2,7 +2,7 @@ import AppKit
 import WebKit
 
 /// Where agent tabs live: the Agents spaces, one per profile agents work in, kept apart from the user's
-/// own, with one folder per conversation in the space of the profile it works in.
+/// own, with one folder per task each conversation names in the space of the profile it works in.
 extension AgentControl {
     static let agentsSpaceKey = "agentsSpaceId"
 
@@ -63,14 +63,14 @@ extension AgentControl {
         return agentsSpace(in: profileId)?.id
     }
 
-    /// The conversation's own folder in the Agents space of its profile, created with its first tab.
+    /// The folder of the task the session last named in the Agents space of its profile, created with its first tab.
     func agentFolder(for session: AgentSession, create: Bool) throws -> (folderId: UUID?, space: Space, host: MainWindowController?) {
         let (space, host) = try agentSpace(for: session)
-        if let id = session.folderId, tabFolder(id, in: space.id) != nil { return (id, space, host) }
+        if let id = session.folders[session.title], tabFolder(id, in: space.id) != nil { return (id, space, host) }
         guard create, let commander = host ?? context?.windows.activeWindow else { return (nil, space, host) }
         let folder = TabFolder(spaceId: space.id, name: folderName(for: session), color: "#795ceb")
         _ = try commander.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
-        session.folderId = folder.id
+        session.folders[session.title] = folder.id
         return (folder.id, space, host)
     }
 
@@ -112,29 +112,28 @@ extension AgentControl {
     /// Follows a new title or project name.
     func renameFolder(of session: AgentSession) {
         guard session.conversationSpaceId == nil else { return }
-        guard let context, let folderId = session.folderId, let (space, host) = try? agentSpace(for: session),
+        guard let context, let folderId = session.folders[session.title], let (space, host) = try? agentSpace(for: session),
               let folder = tabFolder(folderId, in: space.id), let commander = host ?? context.windows.activeWindow else { return }
         _ = try? commander.applyBrowserCommand(.updateFolder(
             spaceId: space.id, folderId: folderId, name: folderName(for: session), color: folder.color, isCollapsed: folder.isCollapsed
         ))
     }
 
-    /// A conversation that ended takes its folder and tabs along: nobody drives them any more. While a
+    /// A conversation that ended takes its folders and tabs along: nobody drives them any more. While a
     /// window shows its Agents space they stay under the user's eyes, until the next run's cleanup.
-    func dropFolder(of session: AgentSession) {
+    func dropFolders(of session: AgentSession) {
         // A conversation's folder is the conversation's: it outlives the agent's connection.
-        guard session.conversationSpaceId == nil else { return }
-        guard let context, let folderId = session.folderId,
-              let spaceId = agentsSpaceId(of: session),
-              tabFolder(folderId, in: spaceId) != nil else { return }
-        let tabs = tabs(inFolder: folderId, spaceId: spaceId)
-        if let host = context.windows.windows(showing: spaceId).first {
-            if tabs.isEmpty { _ = try? host.applyBrowserCommand(.deleteFolder(spaceId: spaceId, folderId: folderId)) }
-            return
+        guard session.conversationSpaceId == nil, let context, let spaceId = agentsSpaceId(of: session) else { return }
+        for folderId in session.folders.values where tabFolder(folderId, in: spaceId) != nil {
+            let tabs = tabs(inFolder: folderId, spaceId: spaceId)
+            if let host = context.windows.windows(showing: spaceId).first {
+                if tabs.isEmpty { _ = try? host.applyBrowserCommand(.deleteFolder(spaceId: spaceId, folderId: folderId)) }
+                continue
+            }
+            guard let commander = context.windows.activeWindow else { return }
+            endedTabNumbers.formUnion(tabs.compactMap { tabNumbers[$0.id] })
+            _ = try? commander.applyBrowserCommand(.deleteFolderWithTabs(spaceId: spaceId, folderId: folderId))
         }
-        guard let commander = context.windows.activeWindow else { return }
-        endedTabNumbers.formUnion(tabs.compactMap { tabNumbers[$0.id] })
-        _ = try? commander.applyBrowserCommand(.deleteFolderWithTabs(spaceId: spaceId, folderId: folderId))
     }
 
     /// A new tab of the folder: through the window showing the space, else straight into the space's
@@ -232,9 +231,8 @@ extension AgentControl {
         guard let number = (number as? NSNumber)?.intValue ?? (number as? String).flatMap(Int.init) else {
             throw AgentToolError("tabId is required")
         }
-        let (folderId, agentsSpace, agentsHost) = try agentFolder(for: session, create: false)
-        var (space, host) = (agentsSpace, agentsHost)
-        var found = folderId.flatMap { id in tabs(inFolder: id, spaceId: space.id).first { tabNumbers[$0.id] == number } }
+        var (space, host) = try agentSpace(for: session)
+        var found = session.folders.values.flatMap { tabs(inFolder: $0, spaceId: space.id) }.first { tabNumbers[$0.id] == number }
         if found == nil, let isolated = try isolatedSpace(for: session, create: false),
            let tab = isolatedTabs(of: session).first(where: { tabNumbers[$0.id] == number }) {
             (found, space, host) = (tab, isolated.space, isolated.host)
@@ -336,8 +334,8 @@ extension AgentControl {
         let owner = sessions.first { session in
             guard session.isAuthorized else { return false }
             if isolatedTabs(of: session).contains(where: { $0.id == tabId }) { return true }
-            guard let folderId = session.folderId, let spaceId = agentsSpaceId(of: session) else { return false }
-            return tabs(inFolder: folderId, spaceId: spaceId).contains { $0.id == tabId }
+            guard let spaceId = agentsSpaceId(of: session) else { return false }
+            return session.folders.values.contains { tabs(inFolder: $0, spaceId: spaceId).contains { $0.id == tabId } }
         }
         return owner.map { Self.displayName($0.clientName) } ?? "Agent".localized
     }
@@ -349,8 +347,8 @@ extension AgentControl {
         var controlled: Set<UUID> = []
         for session in sessions where session.isAuthorized {
             controlled.formUnion(isolatedTabs(of: session).map(\.id))
-            guard let folderId = session.folderId, let spaceId = agentsSpaceId(of: session) else { continue }
-            controlled.formUnion(tabs(inFolder: folderId, spaceId: spaceId).map(\.id))
+            guard let spaceId = agentsSpaceId(of: session) else { continue }
+            for folderId in session.folders.values { controlled.formUnion(tabs(inFolder: folderId, spaceId: spaceId).map(\.id)) }
         }
         for id in controlled.symmetricDifference(controlledTabIds) {
             let isControlled = controlled.contains(id)
@@ -407,20 +405,22 @@ extension AgentControl {
         controlledTabIds = controlled
     }
 
-    /// The session's folder in its Agents space: an agent only connected, idle or not, has none, and one
+    /// The session's folders in its Agents space: an agent only connected, idle or not, has none, and one
     /// the user deleted no longer counts.
-    func agentsSpaceFolder(of session: AgentSession) -> TabFolder? {
-        guard session.isAuthorized, let folderId = session.folderId, let spaceId = agentsSpaceId(of: session) else { return nil }
-        return tabFolder(folderId, in: spaceId)
+    func agentsSpaceFolders(of session: AgentSession) -> [TabFolder] {
+        guard session.isAuthorized, let spaceId = agentsSpaceId(of: session) else { return [] }
+        return session.folders.values.compactMap { tabFolder($0, in: spaceId) }
     }
 
-    /// Moves the session's folder, if it has one in `source`, to `target`, another profile's Agents space:
-    /// its tabs leave their engines behind and load again there, with that profile's sign-ins.
-    func moveFolder(of session: AgentSession, from source: Space, to target: Space) throws {
-        guard let context, let folderId = session.folderId, tabFolder(folderId, in: source.id) != nil else { return }
-        if let host = context.windows.windows(showing: source.id).first {
-            try host.moveToSpace(.folder, id: folderId, targetSpaceId: target.id)
-        } else {
+    /// Moves the session's folders in `source` to `target`, another profile's Agents space: their tabs leave
+    /// their engines behind and load again there, with that profile's sign-ins.
+    func moveFolders(of session: AgentSession, from source: Space, to target: Space) throws {
+        guard let context else { return }
+        for folderId in session.folders.values where tabFolder(folderId, in: source.id) != nil {
+            if let host = context.windows.windows(showing: source.id).first {
+                try host.moveToSpace(.folder, id: folderId, targetSpaceId: target.id)
+                continue
+            }
             guard let commander = context.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
             let ids = Set(tabs(inFolder: folderId, spaceId: source.id).map(\.id))
             context.browserState.discardParkedEngines(ids, spaceId: source.id) { context.discardEngine($0) }

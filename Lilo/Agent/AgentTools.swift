@@ -11,18 +11,18 @@ enum AgentTools {
             Get context information about your tab group in Lilo's Agents space. Returns all tab IDs inside the group if it \
             exists. You must get the context at least once before using other browser tools so you know what tabs exist. \
             Each new conversation should create its own new tab (using tabs_create_mcp) rather than reusing existing tabs, \
-            unless the user explicitly asks to use an existing tab. Other agents have their own group, but subagents of one \
-            session share it: create your own tab and use only the tabs you created or were given. The user's private tabs \
-            are never listed nor reachable. An error starting with [needs_user] means only the user can unblock it: ask them.
+            unless the user explicitly asks to use an existing tab. Each title gets its own group: conversations and subagents \
+            sharing one connection stay apart by passing their own title, and come back to their group with the same title. \
+            Use only the tabs you created or were given. The user's private tabs are never listed nor reachable. An error starting with [needs_user] means only the user can unblock it: ask them.
             """, [
                 "createIfEmpty": prop("boolean", "Creates your tab group with an empty tab if none exists."),
-                "title": prop("string", "What you are working on, in 2 to 4 words (\"Signup flow\", \"CSV export bug\"): your group's name the user sees.")
+                "title": prop("string", "What you are working on, in 2 to 4 words (\"Signup flow\", \"CSV export bug\"): your group's name the user sees, and which group is listed.")
             ]),
         tool("tabs_create_mcp", """
             Creates a new empty tab in your tab group, in the background. Tabs you create are yours to clean up: \
             close each one with tabs_close_mcp as soon as you no longer need it.
             """, [
-                "title": prop("string", "What you are working on, in 2 to 4 words: your group's name the user sees."),
+                "title": prop("string", "What you are working on, in 2 to 4 words: your group's name the user sees, and which group the tab goes in."),
                 "isolated": prop("boolean", """
                     True for a tab in your own private space: it shares no cookie, storage or sign-in with your other \
                     tabs, like a fresh visitor or a second user. Your isolated tabs share one cookie jar, gone when you disconnect.
@@ -253,10 +253,14 @@ enum AgentTools {
         }
     }
 
-    /// The task an agent names, its folder's name from then on.
+    /// The task an agent names, whose folder its untitled calls use from then on: the untitled folder takes the
+    /// first name, and every other task gets a folder of its own. A conversation Lilo started keeps its one folder.
     private static func nameFolder(_ session: AgentSession, _ title: Any?, control: AgentControl) {
-        guard let title = (title as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty else { return }
+        guard session.conversationSpaceId == nil,
+              let title = (title as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty else { return }
         session.title = String(title.prefix(60))
+        guard session.folders[session.title] == nil, let untitled = session.folders.removeValue(forKey: nil) else { return }
+        session.folders[session.title] = untitled
         control.renameFolder(of: session)
     }
 
