@@ -109,7 +109,9 @@ enum AgentMCP {
                     defer {
                         session.tabCalls[callId] = nil
                         control.publishActivity()
+                        if let tab { control.sleepWhenIdle(tabNumber: tab) }
                     }
+                    if let tab { await control.wake(tabNumber: tab) }
                     return try await AgentTools.call(name, arguments: arguments, session: session, control: control)
                 }
             }

@@ -279,6 +279,7 @@ enum AgentDevTools {
             case "start":
                 let screenshots = arguments["screenshots"] as? Bool ?? false
                 _ = try await control.inspector(for: tab.id, engine: engine).script("startProfile", ["screenshots": screenshots])
+                control.profilingTabIds.insert(tab.id)
                 return [.text("Profiling: act on the page, then call performance stop")]
             case "stop", "summary":
                 var options = arguments.filter { ["fromMs", "toMs", "focus"].contains($0.key) }
@@ -289,6 +290,7 @@ enum AgentDevTools {
                 }
                 let hidden = try? await engine.wkWebView.evaluateJavaScript("document.visibilityState") as? String == "hidden"
                 var summary = try await inspector.script("stopProfile", options) as? [String: Any] ?? [:]
+                control.profilingTabIds.remove(tab.id)
                 if hidden == true { summary["warning"] = "The page was hidden: rendering and timers ran throttled, timings are off" }
                 let url = try await saveRaw(of: inspector, prefix: "profile")
                 return [.text("Saved the profile to \(url.path)\n" + AgentTools.json(summary))]

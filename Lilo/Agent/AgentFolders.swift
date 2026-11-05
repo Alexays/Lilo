@@ -281,8 +281,8 @@ extension AgentControl {
 
     /// Under the shown tab when a window shows the space; otherwise in the parking window. A view another
     /// window shows stays there. With occlusion detection off, and no hidden-page throttling while the agent
-    /// drives the tab, the page renders and runs timers at full rate though nobody sees it: what the agent
-    /// measures in it is not the throttling of a hidden page.
+    /// drives the tab, the page renders and runs timers at full rate though nobody sees it, until it sleeps: what
+    /// the agent measures in it is not the throttling of a hidden page.
     func attach(_ engine: WKWebViewTab, to host: MainWindowController?) {
         let parked = unsafe engine.view.window === parkingWindow
         engine.setWindowOcclusionDetection(false)
@@ -295,6 +295,39 @@ extension AgentControl {
             engine.fitView(in: parkingWindow.contentView?.bounds ?? .zero)
             engine.view.isHidden = false
             parkingWindow.contentView?.addSubview(engine.view)
+        }
+    }
+
+    /// A parked tab the agent left alone `sleepDelay` stops drawing: WebKit sees it hidden, so its animation frames stop,
+    /// while an agent tab's scripts, timers and network keep running, slower. Nobody sees it, and the agent mostly thinks.
+    func sleepWhenIdle(tabNumber: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepDelay) { [weak self] in
+            guard let self, let id = tabNumbers.first(where: { $0.value == tabNumber })?.key, !profilingTabIds.contains(id),
+                  !sessions.contains(where: { $0.tabCalls.values.contains { $0.tab == tabNumber } }),
+                  let lastActed = sessions.compactMap({ $0.actedOn[id] }).max(), Date().timeIntervalSince(lastActed) >= Self.sleepDelay - 0.1,
+                  let engine = context?.browserState.liveEngine(forTab: id), engine.isAgentControlled,
+                  unsafe engine.view.window === parkingWindow else { return }
+            engine.setWindowOcclusionDetection(true)
+            // WebKit reads the setting at its next visibility check only: hiding the view runs one.
+            engine.view.isHidden = true
+            engine.view.isHidden = false
+            sleepingTabIds.insert(id)
+        }
+    }
+
+    /// Back at full rate before a tool acts: WebKit hears the page is visible again before the tool reads or clicks it.
+    func wake(tabNumber: Int) async {
+        guard let id = tabNumbers.first(where: { $0.value == tabNumber })?.key, sleepingTabIds.remove(id) != nil,
+              let engine = context?.browserState.liveEngine(forTab: id) else { return }
+        engine.setWindowOcclusionDetection(false)
+        engine.view.isHidden = true
+        engine.view.isHidden = false
+        let webView = engine.wkWebView
+        let selector = NSSelectorFromString("_doAfterActivityStateUpdate:")
+        guard webView.responds(to: selector) else { return }
+        typealias After = @convention(c) (AnyObject, Selector, @escaping @convention(block) () -> Void) -> Void
+        await withCheckedContinuation { continuation in
+            unsafe unsafeBitCast(webView.method(for: selector), to: After.self)(webView, selector) { continuation.resume() }
         }
     }
 
@@ -340,6 +373,8 @@ extension AgentControl {
             guard isControlled else {
                 // Undo resize_window, and stop rendering a page nobody looks at any more.
                 engine.setWindowOcclusionDetection(true)
+                sleepingTabIds.remove(id)
+                profilingTabIds.remove(id)
                 AgentFrameView.remove(from: engine.wkWebView)
                 if unsafe engine.view.window === parkingWindow { engine.view.removeFromSuperview() }
                 engine.agentViewport = nil

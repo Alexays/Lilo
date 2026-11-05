@@ -41,6 +41,12 @@ final class AgentControl {
         window.orderFrontRegardless()
         return window
     }()
+    /// How long a parked tab the agent leaves alone keeps drawing.
+    static var sleepDelay: TimeInterval = 10
+    /// Parked tabs put to sleep, woken by the agent's next call on them.
+    var sleepingTabIds: Set<UUID> = []
+    /// Tabs a `performance` profile records, which never sleep: it spans the calls between its start and its stop.
+    var profilingTabIds: Set<UUID> = []
     /// Console and network capture of each controlled tab.
     var captures: [UUID: AgentCapture] = [:]
     /// The inspector of each tab a devtools tool ran on.
