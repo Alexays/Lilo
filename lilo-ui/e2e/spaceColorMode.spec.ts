@@ -108,15 +108,21 @@ test("the onboarding's Your Lilo screen sets the current Space's color and mater
 	};
 	await bootChrome(page, world);
 	await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 3, usage: "browse" }));
-	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
-
-	await page.getByRole("button", { name: "Change with the time of day" }).click();
+	const followDay = page.getByRole("checkbox", { name: "Change with the time of day" });
+	await expect(followDay).not.toBeChecked();
+	await page.locator(".ui-toggle", { has: followDay }).click();
 	await expect.poll(() => lastCommand(page, "updateSpace")).toEqual({ id: "space-home", colorMode: "time" });
 	await page.evaluate(() => window.__lilo!.receive({ event: "spaceUpdated", ...{ id: "space-home", name: "Home", icon: "H", color: "#5865f2", profileId: "profile-1", isPrivate: false, sortOrder: 0, colorMode: "time" } }));
-	await expect(page.getByRole("button", { name: "Change with the time of day" })).toHaveAttribute("aria-pressed", "true");
+	await expect(followDay).toBeChecked();
 
 	await page.getByRole("radiogroup", { name: "Material" }).getByRole("radio", { name: "Glass" }).click();
 	await expect.poll(() => lastCommand(page, "updateSpace")).toEqual({ id: "space-home", material: "glass" });
+
+	// The palette unfolds under the Color row, named by the color's hex.
+	const colorButton = page.getByRole("button", { name: "Color #5865F2", exact: true });
+	await expect(colorButton).toHaveAttribute("aria-expanded", "false");
+	await colorButton.click();
+	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
 
 	// The color is the user's here too, sent at once.
 	await page.locator(".swatches .swatch").nth(2).click();

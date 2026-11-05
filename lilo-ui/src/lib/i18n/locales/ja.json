@@ -1730,7 +1730,8 @@
 			"dark": "ダーク",
 			"tabs": "タブ",
 			"color": "カラー",
-			"essentials": "基本設定"
+			"essentials": "基本設定",
+			"look": "外観"
 		},
 		"essentials": {
 			"blocker": "広告とトラッカーをブロック",

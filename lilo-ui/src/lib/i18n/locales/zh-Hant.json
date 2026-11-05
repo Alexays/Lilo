@@ -1730,7 +1730,8 @@
 			"dark": "深色",
 			"tabs": "標籤頁",
 			"color": "顏色",
-			"essentials": "基本設定"
+			"essentials": "基本設定",
+			"look": "外觀"
 		},
 		"essentials": {
 			"blocker": "阻擋廣告與追蹤器",

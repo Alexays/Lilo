@@ -1760,7 +1760,8 @@
 			"dark": "Ciemny",
 			"tabs": "Karty",
 			"color": "Kolor",
-			"essentials": "Podstawy"
+			"essentials": "Podstawy",
+			"look": "Wygląd"
 		},
 		"essentials": {
 			"blocker": "Blokuj reklamy i śledzenie",

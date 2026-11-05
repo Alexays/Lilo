@@ -1730,7 +1730,8 @@
 			"dark": "Sombre",
 			"tabs": "Onglets",
 			"color": "Couleur",
-			"essentials": "L'essentiel"
+			"essentials": "L'essentiel",
+			"look": "Apparence"
 		},
 		"essentials": {
 			"blocker": "Bloquer les pubs et les pisteurs",

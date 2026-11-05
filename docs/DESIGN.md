@@ -41,7 +41,7 @@ A piece of information takes the form of its family, never another.
 - A system screen edits live: no Cancel and Save pair. Its sidebar holds only places; its commands sit behind one "..." button at the end of the page header, a destructive one last, in red, under a separator.
 - A setting that only matters under a switch is a nested row in the same box, indented 38 px, and disappears when the switch is off.
 - A switch whose two states look different (calls docked or floating) is chosen from two thumbnails.
-- A visual choice shows itself: a material, theme or layout is picked from thumbnails of the result, as macOS does for Light and Dark, never from a word in a menu.
+- A visual choice shows itself: a material, theme or layout is picked from thumbnails of the result, as macOS does for Light and Dark, never from a word in a menu. Beside a live preview that already shows the result, a segmented control with a small icon per choice is enough.
 - One object, one row, everywhere: a 32 to 40 px visual (favicon, file icon, image preview), the name, one line of detail under it, and one accessory on the right.
 - Nothing repeats what sits beside it: no initial avatar next to a name, no count next to the items it counts. A profile shows its color as a dot, the same dot everywhere it is chosen.
 - One banner at a time; the next ones collapse into "N more notices" in the same capsule.
@@ -151,4 +151,4 @@ Nothing else animates. With Reduce motion, everything becomes a 150 ms fade. A s
 
 ## First run
 
-One full-bleed container from start to finish. Welcome stays almost empty: the mark, one line and Get Started. Then one question per screen: How will you use Lilo (thumbnails of each answer's result), Import (passwords included), Your Lilo (theme and layout on a live preview), Agents when that path is chosen. Tips arrive in context, the first time the user does the thing.
+One full-bleed container from start to finish. Welcome stays almost empty: the mark, one line and Get Started. Then one question per screen: How will you use Lilo (thumbnails of each answer's result), Import (passwords included), Your Lilo (a live preview beside rows of settings for its look), Agents when that path is chosen. Tips arrive in context, the first time the user does the thing.

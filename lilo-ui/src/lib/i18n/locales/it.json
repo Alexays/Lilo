@@ -1730,7 +1730,8 @@
 			"dark": "Scuro",
 			"tabs": "Pannelli",
 			"color": "Colore",
-			"essentials": "L'essenziale"
+			"essentials": "L'essenziale",
+			"look": "Aspetto"
 		},
 		"essentials": {
 			"blocker": "Blocca pubblicità e tracker",

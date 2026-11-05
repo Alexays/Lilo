@@ -1730,7 +1730,8 @@
 			"dark": "Koyu",
 			"tabs": "Sekmeler",
 			"color": "Renk",
-			"essentials": "Temel ayarlar"
+			"essentials": "Temel ayarlar",
+			"look": "Görünüm"
 		},
 		"essentials": {
 			"blocker": "Reklamları ve izleyicileri engelle",

@@ -528,6 +528,25 @@ test("Your Lilo moves the real window and draws the chosen edge in its preview",
 	await expect(screen.locator(".win")).toHaveClass(/tabs-top/);
 });
 
+test("Your Lilo lays its look out as settings rows, the address among them moving the real window", async ({ page }) => {
+	await bootOnboarding(page, 3);
+	const screen = page.locator(".onb");
+	await expect(screen.getByRole("heading", { name: "Look" })).toBeVisible();
+	for (const name of ["Tabs", "Address", "Theme", "Material"]) {
+		await expect(screen.getByRole("radiogroup", { name })).toBeVisible();
+	}
+	await expect(screen.getByRole("radiogroup", { name: "Address" }).getByRole("radio")).toHaveText(["With the tabs", "Above the page", "Hidden"]);
+	await expect(screen.locator(".win .tabs .url")).toBeVisible();
+
+	await screen.getByRole("radio", { name: "Above the page" }).click();
+	const sets = (await sentCommands(page)).filter((c) => c.action === "setSetting");
+	expect(sets.at(-1)?.payload).toEqual({ key: "addressPlacement", value: "page" });
+	await receive(page, { event: "tabLayoutChanged", position: "left", address: "page" });
+	await expect(screen.getByRole("radio", { name: "Above the page" })).toHaveAttribute("aria-checked", "true");
+	await expect(screen.locator(".win .page .addr")).toBeVisible();
+	await expect(screen.locator(".win .tabs .url")).toHaveCount(0);
+});
+
 test("the preview paints the window in the sidebar's own derived color, with the selected row as its selected layer", async ({ page }) => {
 	await bootOnboarding(page, 3);
 	const win = page.locator(".onb .win");

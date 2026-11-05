@@ -1730,7 +1730,8 @@
 			"dark": "深色",
 			"tabs": "标签页",
 			"color": "颜色",
-			"essentials": "基本设置"
+			"essentials": "基本设置",
+			"look": "外观"
 		},
 		"essentials": {
 			"blocker": "拦截广告和跟踪器",

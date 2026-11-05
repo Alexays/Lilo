@@ -1730,7 +1730,8 @@
 			"dark": "다크",
 			"tabs": "탭",
 			"color": "색상",
-			"essentials": "기본 설정"
+			"essentials": "기본 설정",
+			"look": "모양"
 		},
 		"essentials": {
 			"blocker": "광고 및 추적기 차단",

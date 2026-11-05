@@ -1730,7 +1730,8 @@
 			"dark": "Dunkel",
 			"tabs": "Tabs",
 			"color": "Farbe",
-			"essentials": "Das Wichtigste"
+			"essentials": "Das Wichtigste",
+			"look": "Aussehen"
 		},
 		"essentials": {
 			"blocker": "Werbung und Tracker blockieren",

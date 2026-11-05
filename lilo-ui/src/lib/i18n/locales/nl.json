@@ -1730,7 +1730,8 @@
 			"dark": "Donker",
 			"tabs": "Tabbladen",
 			"color": "Kleur",
-			"essentials": "De basis"
+			"essentials": "De basis",
+			"look": "Uiterlijk"
 		},
 		"essentials": {
 			"blocker": "Blokkeer advertenties en trackers",

@@ -1730,7 +1730,8 @@
 			"dark": "Dark",
 			"tabs": "Tabs",
 			"color": "Color",
-			"essentials": "Essentials"
+			"essentials": "Essentials",
+			"look": "Look"
 		},
 		"essentials": {
 			"blocker": "Block ads and trackers",
