@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { cubicOut } from "svelte/easing";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { dismissable } from "../../lib/actions/dismissable";
   import { portal } from "../../lib/actions/portal";
+  import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
 
   let { anchor, label, onclose, children }: { anchor: HTMLElement; label: string; onclose: () => void; children: Snippet } = $props();
@@ -22,6 +24,19 @@
   const left = $derived(rail
     ? getTabPosition() === "right" ? rail.left - 8 - 240 : rail.right + 8
     : Math.max(8, Math.min(rect.left, window.innerWidth - 248)));
+  // Grows from and shrinks back into its anchor, so it reads as coming out of the button.
+  const origin = $derived(rail
+    ? `${getTabPosition() === "right" ? "right" : "left"} ${rect.height / 2}px`
+    : `${Math.max(0, Math.min(240, rect.left + rect.width / 2 - left))}px ${above ? "bottom" : "top"}`);
+
+  // Global: the menus mount it under their opener's own `{#if}`, which is what closes it.
+  function popoverOut(_node: HTMLElement) {
+    return {
+      duration: prefersReducedMotion() ? 0 : 120,
+      easing: cubicOut,
+      css: (t: number) => `opacity: ${t}; transform: scale(${0.97 + 0.03 * t}); pointer-events: none;`,
+    };
+  }
 
   $effect(() => {
     popover?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
@@ -37,7 +52,8 @@
   class="strip-popover"
   role="menu"
   aria-label={label}
-  style={`left: ${left}px; top: ${top}px;`}
+  style={`left: ${left}px; top: ${top}px; transform-origin: ${origin};`}
+  out:popoverOut|global
   use:portal
   use:reportInteractiveZone={{ id: "strip-popover" }}
   {@attach dismiss}
@@ -64,7 +80,7 @@
   @keyframes popover-in {
     from {
       opacity: 0;
-      transform: scale(0.97);
+      transform: scale(0.95);
     }
   }
 
