@@ -2351,6 +2351,16 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0160": {
+				"headline": "Lilo, redessiné.",
+				"description": "Un style plus calme partout, vos propres agents à côté de vos onglets, et une barre latérale qui se range toute seule.",
+				"agentsTitle": "Vos agents, dans Lilo.",
+				"agentsDescription": "Parlez à Claude, Codex, Gemini et d'autres agents avec vos propres abonnements. Maj-Commande-A demande depuis n'importe quelle page, et chaque conversation garde ses pages dans la barre latérale.",
+				"stacksTitle": "Une barre latérale qui se range toute seule.",
+				"stacksDescription": "Trois onglets d'un même site se regroupent en une pile, et agents et terminaux peuvent avoir leurs propres bacs. Chacun s'ouvre comme un dossier.",
+				"lookTitle": "Plus calme, partout.",
+				"lookDescription": "Les réglages, la barre de commandes, l'historique, la première configuration et chaque fenêtre de dialogue partagent désormais un même design sobre et natif."
+			},
 			"v0150": {
 				"headline": "Une barre latérale plus calme, une barre des menus éveillée.",
 				"description": "La barre latérale se consacre à vos onglets, et la barre des menus vous dit quand Lilo garde votre Mac éveillé.",

@@ -2362,6 +2362,16 @@
 			"chat": "團隊聊天"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "Lilo，煥然一新。",
+				"description": "處處更沉靜的外觀，分頁旁邊是你自己的代理程式，側邊欄也會自己整理。",
+				"agentsTitle": "你的代理程式，就在 Lilo 裡。",
+				"agentsDescription": "用你自己的訂閱與 Claude、Codex、Gemini 等代理程式對話。Shift-Command-A 可在任何頁面提問，每段對話都會把它開啟的頁面留在側邊欄。",
+				"stacksTitle": "自己整理的側邊欄。",
+				"stacksDescription": "同一網站的三個分頁會歸成一個堆疊，代理程式和終端機也可以放進各自的托盤。每一個都像檔案夾一樣展開。",
+				"lookTitle": "處處更沉靜。",
+				"lookDescription": "設定、指令列、瀏覽記錄、首次設定和每個對話框，現在都採用同一種低調的原生設計。"
+			},
 			"v0150": {
 				"headline": "更安靜的側邊欄，保持喚醒的選單列。",
 				"description": "側邊欄專注於標籤頁，Lilo 讓 Mac 保持喚醒時，選單列會告訴你。",

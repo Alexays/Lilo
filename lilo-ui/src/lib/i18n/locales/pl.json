@@ -2394,6 +2394,16 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "Lilo, narysowane na nowo.",
+				"description": "Spokojniejszy wygląd wszędzie, własni agenci obok kart i pasek boczny, który sam się porządkuje.",
+				"agentsTitle": "Twoi agenci w Lilo.",
+				"agentsDescription": "Rozmawiaj z Claude, Codex, Gemini i innymi agentami w ramach własnych subskrypcji. Shift-Command-A pyta z dowolnej strony, a każda rozmowa trzyma swoje strony na pasku bocznym.",
+				"stacksTitle": "Pasek boczny, który sam się porządkuje.",
+				"stacksDescription": "Trzy karty z jednej witryny łączą się w stos, a agenci i terminale mogą mieć własne tacki. Każde otwiera się jak folder.",
+				"lookTitle": "Spokojniej, wszędzie.",
+				"lookDescription": "Ustawienia, pasek poleceń, historia, pierwsza konfiguracja i każde okno dialogowe mają teraz jeden spokojny, natywny wygląd."
+			},
 			"v0150": {
 				"headline": "Spokojniejszy pasek boczny, czujny pasek menu.",
 				"description": "Pasek boczny służy kartom, a pasek menu mówi, kiedy Lilo nie pozwala Macowi zasnąć.",

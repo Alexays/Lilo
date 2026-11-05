@@ -2362,6 +2362,16 @@
 			"chat": "팀 채팅"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "새로 그린 Lilo.",
+				"description": "어디서나 더 차분한 모습, 탭 옆의 나만의 에이전트, 그리고 스스로 정리되는 사이드바.",
+				"agentsTitle": "나의 에이전트를 Lilo에서.",
+				"agentsDescription": "내 구독으로 Claude, Codex, Gemini 등 여러 에이전트와 대화하세요. Shift-Command-A로 어느 페이지에서나 물어볼 수 있고, 각 대화는 열어 둔 페이지와 함께 사이드바에 남습니다.",
+				"stacksTitle": "스스로 정리되는 사이드바.",
+				"stacksDescription": "같은 사이트의 탭이 셋 이상이면 스택으로 모이고, 에이전트와 터미널은 각자의 트레이에 둘 수 있습니다. 모두 폴더처럼 열립니다.",
+				"lookTitle": "어디서나 더 차분하게.",
+				"lookDescription": "설정, 명령 막대, 방문 기록, 첫 설정, 모든 대화상자가 이제 하나의 차분한 네이티브 디자인을 공유합니다."
+			},
 			"v0150": {
 				"headline": "더 차분한 사이드바, 깨어 있는 메뉴 막대.",
 				"description": "사이드바는 탭에 집중하고, Lilo가 Mac을 깨어 있게 할 때는 메뉴 막대가 알려 줍니다.",

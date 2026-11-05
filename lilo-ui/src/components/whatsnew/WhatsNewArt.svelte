@@ -145,6 +145,43 @@
     <path d="M50 64h58" stroke="var(--separator)" />
     <path d="M56 69.5a3.5 3.5 0 1 0 3 5a3 3 0 0 1-3-5z" fill="var(--text-secondary)" />
     <rect x="62" y="71" width="28" height="3" rx="1.5" fill="var(--text-primary)" />
+  {:else if kind === "agents"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="10" y="10" width="40" height="70" rx="6" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g fill="var(--separator)"><rect x="16" y="18" width="28" height="6" rx="3" /><rect x="16" y="29" width="28" height="6" rx="3" /></g>
+    <rect x="16" y="40" width="28" height="9" rx="3" fill="var(--accent)" />
+    <circle cx="21" cy="44.5" r="2.5" fill="var(--accent-text)" /><rect x="26" y="43" width="14" height="3" rx="1.5" fill="var(--accent-text)" />
+    <g fill="var(--separator)"><rect x="20" y="53" width="24" height="5" rx="2.5" /><rect x="20" y="61" width="20" height="5" rx="2.5" /></g>
+    <path d="M17.5 51v13" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round" />
+    <rect x="56" y="10" width="62" height="70" rx="6" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="62" y="17" width="40" height="11" rx="5.5" fill="var(--separator)" />
+    <rect x="72" y="33" width="40" height="11" rx="5.5" fill="var(--accent-tint-14)" />
+    <rect x="62" y="49" width="34" height="11" rx="5.5" fill="var(--separator)" />
+    <rect x="62" y="66" width="50" height="9" rx="4.5" fill="none" stroke="var(--accent)" stroke-width="1.2" />
+    <circle cx="106" cy="70.5" r="2.5" fill="var(--accent)" />
+  {:else if kind === "stacks"}
+    <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
+    <rect x="30" y="8" width="68" height="74" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="36" y="14" width="56" height="26" rx="5" fill="var(--text-primary-tint-10)" />
+    <rect x="40" y="18" width="48" height="7" rx="3" fill="var(--bg-elevated)" />
+    <g fill="var(--separator)"><rect x="44" y="28" width="40" height="4" rx="2" /><rect x="44" y="34" width="32" height="4" rx="2" /></g>
+    <rect x="42" y="45" width="46" height="8" rx="3" fill="var(--separator)" opacity=".6" />
+    <rect x="39" y="47.5" width="50" height="8" rx="3" fill="var(--separator)" opacity=".8" />
+    <rect x="36" y="50" width="56" height="9" rx="3" fill="var(--accent)" />
+    <circle cx="41" cy="54.5" r="2.5" fill="var(--accent-text)" /><rect x="46" y="53" width="24" height="3" rx="1.5" fill="var(--accent-text)" /><rect x="82" y="53" width="5" height="3" rx="1.5" fill="var(--accent-text)" />
+    <g fill="var(--separator)"><rect x="36" y="64" width="56" height="6" rx="3" /><rect x="36" y="73" width="40" height="6" rx="3" /></g>
+  {:else if kind === "calm"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="12" y="10" width="104" height="70" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g fill="var(--separator)"><rect x="18" y="18" width="22" height="5" rx="2.5" /><rect x="18" y="28" width="22" height="5" rx="2.5" /><rect x="18" y="38" width="16" height="5" rx="2.5" /></g>
+    <path d="M46 14v62" stroke="var(--separator)" />
+    <rect x="52" y="17" width="30" height="5" rx="2.5" fill="var(--text-secondary)" />
+    <rect x="52" y="28" width="58" height="42" rx="5" fill="none" stroke="var(--separator)" />
+    <path d="M52 42h58M52 56h58" stroke="var(--separator)" />
+    <g fill="var(--separator)"><rect x="57" y="33" width="26" height="4" rx="2" /><rect x="57" y="47" width="22" height="4" rx="2" /><rect x="57" y="61" width="28" height="4" rx="2" /></g>
+    <g fill="var(--accent)"><rect x="94" y="32" width="11" height="6" rx="3" /><rect x="94" y="60" width="11" height="6" rx="3" /></g>
+    <g fill="var(--bg-elevated)"><circle cx="102" cy="35" r="2" /><circle cx="102" cy="63" r="2" /></g>
+    <rect x="94" y="46" width="11" height="6" rx="3" fill="var(--separator)" /><circle cx="97" cy="49" r="2" fill="var(--bg-elevated)" />
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

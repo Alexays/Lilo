@@ -2362,6 +2362,16 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "Lilo, neu gezeichnet.",
+				"description": "Überall ein ruhigeres Design, deine eigenen Agenten neben deinen Tabs und eine Seitenleiste, die sich selbst aufräumt.",
+				"agentsTitle": "Deine Agenten, in Lilo.",
+				"agentsDescription": "Sprich mit Claude, Codex, Gemini und anderen Agenten über deine eigenen Abos. Umschalt-Befehl-A fragt von jeder Seite aus, und jede Unterhaltung behält ihre Seiten in der Seitenleiste.",
+				"stacksTitle": "Eine Seitenleiste, die sich selbst aufräumt.",
+				"stacksDescription": "Drei Tabs einer Website werden zu einem Stapel, und Agenten und Terminals können in eigenen Fächern liegen. Jedes öffnet sich wie ein Ordner.",
+				"lookTitle": "Ruhiger, überall.",
+				"lookDescription": "Einstellungen, Befehlsleiste, Verlauf, die Ersteinrichtung und jeder Dialog teilen jetzt ein ruhiges, natives Design."
+			},
 			"v0150": {
 				"headline": "Eine ruhigere Seitenleiste, eine wache Menüleiste.",
 				"description": "Die Seitenleiste gehört deinen Tabs, und die Menüleiste zeigt, wann Lilo deinen Mac wach hält.",

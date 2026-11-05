@@ -1,3 +1,0 @@
-kind: Changed
-body: 'The agent menu lists only the agents this Mac can start: one that needs Node.js or uv appears once it is installed.'
-time: 2026-11-05T09:55:25.277844+01:00

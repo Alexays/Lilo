@@ -2362,6 +2362,16 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "Lilo, redesenhado.",
+				"description": "Um visual mais calmo em toda parte, seus próprios agentes ao lado das abas e uma barra lateral que se organiza sozinha.",
+				"agentsTitle": "Seus agentes, no Lilo.",
+				"agentsDescription": "Converse com Claude, Codex, Gemini e outros agentes usando suas próprias assinaturas. Shift-Command-A pergunta de qualquer página, e cada conversa guarda suas páginas na barra lateral.",
+				"stacksTitle": "Uma barra lateral que se organiza sozinha.",
+				"stacksDescription": "Três abas de um mesmo site se reúnem em uma pilha, e agentes e terminais podem ficar em bandejas próprias. Cada uma abre como uma pasta.",
+				"lookTitle": "Mais calmo, em toda parte.",
+				"lookDescription": "Ajustes, barra de comandos, histórico, configuração inicial e cada diálogo agora compartilham um mesmo design sóbrio e nativo."
+			},
 			"v0150": {
 				"headline": "Uma barra lateral mais calma, uma barra de menus acordada.",
 				"description": "A barra lateral fica com suas abas, e a barra de menus avisa quando o Lilo mantém seu Mac acordado.",

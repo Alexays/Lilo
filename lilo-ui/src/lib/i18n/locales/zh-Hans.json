@@ -2362,6 +2362,16 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "Lilo，焕然一新。",
+				"description": "处处更沉静的外观，标签页旁边是你自己的智能体，侧边栏也会自己整理。",
+				"agentsTitle": "你的智能体，就在 Lilo 里。",
+				"agentsDescription": "用你自己的订阅与 Claude、Codex、Gemini 等智能体对话。Shift-Command-A 可在任何页面提问，每段对话都会把它打开的页面留在侧边栏。",
+				"stacksTitle": "自己整理的侧边栏。",
+				"stacksDescription": "同一网站的三个标签页会归成一个堆叠，智能体和终端也可以放进各自的托盘。每一个都像文件夹一样展开。",
+				"lookTitle": "处处更沉静。",
+				"lookDescription": "设置、命令栏、历史记录、首次设置和每个对话框，现在都采用同一种低调的原生设计。"
+			},
 			"v0150": {
 				"headline": "更安静的侧边栏，保持唤醒的菜单栏。",
 				"description": "侧边栏专注于标签页，Lilo 让 Mac 保持唤醒时，菜单栏会告诉你。",
