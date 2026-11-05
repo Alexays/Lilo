@@ -13,7 +13,7 @@
   import { onChromeInitialStateReady } from "./stores/init";
   import { getOnboarding } from "./stores/onboarding.svelte";
   import { getActiveUrlBarDrawer } from "./stores/urlBarDrawer.svelte";
-  import { editorState, isShellOpen } from "./stores/panels.svelte";
+  import { editorState } from "./stores/panels.svelte";
   import { getPagedSpaces, getSpacePagerVirtualIndex } from "./stores/pager.svelte";
   import { getFocusedSpaceId, getSpaceById } from "./stores/spaces.svelte";
   import { getActiveTab } from "./stores/tabs.svelte";
@@ -229,9 +229,6 @@
     const drawer = getActiveUrlBarDrawer();
     if (drawer && "requestId" in drawer) untrack(openSidebarOverlay);
   });
-
-  // The native bar over the page wears the page's color: a shell covering the page takes it off.
-  $effect(() => chromeActions.pageCoverChanged(isShellOpen()));
 
   function blurChromeFocus() {
     const active = document.activeElement;

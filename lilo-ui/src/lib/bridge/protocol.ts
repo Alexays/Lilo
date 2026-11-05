@@ -619,7 +619,6 @@ export interface BridgeCommandPayloadMap {
 	setPageBarColor: { color?: string };
 	setWallpaperColorWatch: { enabled: boolean };
 	sidebarOverlayChanged: { visible: boolean };
-	pageCoverChanged: { covered: boolean };
 	showTabSecurityInfo: EmptyPayload;
 	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
