@@ -144,7 +144,7 @@
       role="dialog"
       aria-label={t("agents.ask.label")}
       use:reportInteractiveZone={{ id: "agents-ask-bar" }}
-      {@attach dismissable({ onDismiss: closeAskBar, escape: true })}
+      {@attach dismissable({ onDismiss: closeAskBar, ignore: "[role='menu']", escape: true })}
     >
       <PromptField
         bind:this={field}
