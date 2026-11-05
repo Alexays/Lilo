@@ -373,7 +373,7 @@
     position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
-    gap: 8px;
+    gap: 6px;
     min-height: 0;
     /* The drop zone's border, cancelled by the margin so the tiles line up with the rows. */
     margin: -1px;
