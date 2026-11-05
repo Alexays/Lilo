@@ -298,6 +298,11 @@
 				"none": "無",
 				"points": "{size} 點"
 			},
+			"fullRefreshRate": {
+				"title": "最高更新率",
+				"description": "頁面動畫和捲動會以顯示器的最高速率執行，這會消耗更多電量。新分頁會依循此設定；已開啟的分頁在 Lilo 重新啟動後變更。",
+				"keywords": "120 hz promotion fps 影格率 更新率 流暢 捲動 動畫 電池"
+			},
 			"defaultZoom": {
 				"title": "預設縮放比例",
 				"description": "未設定個別縮放比例之網頁的大小。",
@@ -1662,9 +1667,11 @@
 		},
 		"essentials": {
 			"title": "基本設定",
-			"subtitle": "兩個實用的設定，隨時都能更改。",
+			"subtitle": "三個實用的設定，隨時都能更改。",
 			"blocker": "阻擋廣告與追蹤器",
 			"blockerDesc": "建議使用：網頁載入更快，追蹤更少。",
+			"refreshRate": "更流暢的捲動",
+			"refreshRateDesc": "頁面使用顯示器的最高更新率，這會多消耗一點電量。",
 			"default": "在 Lilo 中開啟連結",
 			"defaultDesc": "郵件和 App 中的連結會在這裡開啟。",
 			"defaultSet": "使用 Lilo",

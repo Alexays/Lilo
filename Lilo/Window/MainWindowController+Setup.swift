@@ -674,6 +674,8 @@ extension MainWindowController {
         engineFactory.setHTTPSOnly(settingsStore.httpsOnly)
         settingsHandler.onMinimumFontSizeChanged = { engineFactory.setMinimumFontSize($0) }
         engineFactory.setMinimumFontSize(settingsStore.minimumFontSize)
+        settingsHandler.onFullRefreshRateChanged = { engineFactory.setFullRefreshRate($0) }
+        engineFactory.setFullRefreshRate(settingsStore.fullRefreshRate)
         settingsHandler.onAutoplayPolicyChanged = { engineFactory.setAutoplayPolicy($0) }
         engineFactory.setAutoplayPolicy(settingsStore.get("autoplayPolicy") ?? "audio")
         settingsHandler.onTerminalSettingsChanged = { [weak self] in self?.applyTerminalSettings() }

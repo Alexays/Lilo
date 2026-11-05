@@ -278,6 +278,11 @@ test.describe("at the window's minimum size", () => {
 		expect((await row.locator(".ob-text").boundingBox())!.width).toBeGreaterThanOrEqual(120);
 	});
 
+	test("the essentials keep Continue in view while their rows scroll", async ({ page }) => {
+		await bootOnboarding(page, 6);
+		await expect(page.locator(".ob-foot .ob-btn.primary")).toBeInViewport({ ratio: 1 });
+	});
+
 	test("the intro fits the window down to its keyboard hint", async ({ page }) => {
 		await bootOnboarding(page, 0);
 		await expect(page.locator(".intro .mark")).toBeInViewport({ ratio: 1 });
@@ -475,6 +480,15 @@ test("each password manager shows its own icon, and its initial when the icon fa
 	await expect(others.locator(".glyph")).toHaveCount(0);
 	await expect.poll(() => others.locator("img.logo").evaluateAll((images) => images.map((image) => (image as HTMLImageElement).naturalWidth)))
 		.toEqual(Array(6).fill(60));
+});
+
+test("the essentials turn the full refresh rate off and on", async ({ page }) => {
+	await bootOnboarding(page, 6);
+	const row = page.locator(".ob-row").filter({ hasText: "Smoother scrolling" });
+	await expect(row.getByRole("checkbox")).toBeChecked();
+	await row.locator(".ui-toggle").click();
+	await expect(row.getByRole("checkbox")).not.toBeChecked();
+	expect((await sentCommands(page)).some((command) => command.action === "setSetting" && command.payload.key === "fullRefreshRate" && command.payload.value === "false")).toBe(true);
 });
 
 test("the essentials show one primary action: Use Lilo stays secondary to Continue", async ({ page }) => {

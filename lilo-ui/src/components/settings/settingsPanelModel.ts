@@ -68,6 +68,7 @@ export type SettingId =
   | "seasonalAppIcon"
   | "defaultZoom"
   | "minimumFontSize"
+  | "fullRefreshRate"
   | "newSpace"
   | "newProfile"
   | "lifecyclePreset"
@@ -224,6 +225,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   blockerRegional: { key: "blockerRegional", fallback: true },
   httpsOnly: { key: "httpsOnly", fallback: false },
   sendGPC: { key: "sendGPC", fallback: true },
+  fullRefreshRate: { key: "fullRefreshRate", fallback: true },
   preventCrossSiteTracking: { key: "preventCrossSiteTracking", fallback: true },
   clearOnQuit: { key: "clearSiteDataOnQuit", fallback: false },
   autoUpdateExtensions: { key: "autoUpdateExtensions", fallback: true },
@@ -266,6 +268,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "addressPlacement", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "defaultZoom", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "minimumFontSize", section: "appearance", groupKey: "settings.groups.pages" },
+  { id: "fullRefreshRate", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "newSpace", section: "tabs", groupKey: "settings.groups.spaces" },
   { id: "newProfile", section: "tabs", groupKey: "settings.groups.profiles" },
   { id: "lifecyclePreset", section: "tabs", groupKey: "settings.groups.tabsWindows" },

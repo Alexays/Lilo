@@ -13,21 +13,30 @@
 <h3>{t("onboarding.essentials.title")}</h3>
 <p class="ob-sub">{t("onboarding.essentials.subtitle")}</p>
 
-<div class="ob-row">
-  <span class="ob-icon"><SettingsIcon name="privacy" /></span>
-  <span class="ob-text">{t("onboarding.essentials.blocker")}<small>{t("onboarding.essentials.blockerDesc")}</small></span>
-  <UiToggle checked={getSetting("contentBlockerEnabled", "true") === "true"} ariaLabel={t("onboarding.essentials.blocker")}
-    onchange={(checked) => setSetting("contentBlockerEnabled", checked ? "true" : "false")} />
-</div>
+<div class="ob-scroll">
+  <div class="ob-row">
+    <span class="ob-icon"><SettingsIcon name="privacy" /></span>
+    <span class="ob-text">{t("onboarding.essentials.blocker")}<small>{t("onboarding.essentials.blockerDesc")}</small></span>
+    <UiToggle checked={getSetting("contentBlockerEnabled", "true") === "true"} ariaLabel={t("onboarding.essentials.blocker")}
+      onchange={(checked) => setSetting("contentBlockerEnabled", checked ? "true" : "false")} />
+  </div>
 
-<div class="ob-row">
-  <span class="mark"><Fleuron size={30} /><span class="ok" class:on={isDefault}><svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></span></span>
-  <span class="ob-text">{t("onboarding.essentials.default")}<small>{t("onboarding.essentials.defaultDesc")}</small></span>
-  {#if isDefault}
-    <span class="ob-done">{t("onboarding.essentials.defaultDone")}</span>
-  {:else}
-    <button class="ob-btn small" onclick={() => settingsActions.setDefaultBrowser()}>{t("onboarding.essentials.defaultSet")}</button>
-  {/if}
+  <div class="ob-row">
+    <span class="ob-icon"><SettingsIcon name="page" /></span>
+    <span class="ob-text">{t("onboarding.essentials.refreshRate")}<small>{t("onboarding.essentials.refreshRateDesc")}</small></span>
+    <UiToggle checked={getSetting("fullRefreshRate", "true") === "true"} ariaLabel={t("onboarding.essentials.refreshRate")}
+      onchange={(checked) => setSetting("fullRefreshRate", checked ? "true" : "false")} />
+  </div>
+
+  <div class="ob-row">
+    <span class="mark"><Fleuron size={30} /><span class="ok" class:on={isDefault}><svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></span></span>
+    <span class="ob-text">{t("onboarding.essentials.default")}<small>{t("onboarding.essentials.defaultDesc")}</small></span>
+    {#if isDefault}
+      <span class="ob-done">{t("onboarding.essentials.defaultDone")}</span>
+    {:else}
+      <button class="ob-btn small" onclick={() => settingsActions.setDefaultBrowser()}>{t("onboarding.essentials.defaultSet")}</button>
+    {/if}
+  </div>
 </div>
 
 <div class="ob-foot">

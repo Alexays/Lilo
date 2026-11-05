@@ -298,6 +298,11 @@
 				"none": "Aucune",
 				"points": "{size} pt"
 			},
+			"fullRefreshRate": {
+				"title": "Fréquence d'affichage maximale",
+				"description": "Les pages s'animent et défilent à la fréquence maximale de votre écran, ce qui consomme plus de batterie. Les nouveaux onglets suivent ce réglage ; les onglets ouverts changent au redémarrage de Lilo.",
+				"keywords": "120 hz promotion ips fps fréquence images fluide défilement animation batterie"
+			},
 			"defaultZoom": {
 				"title": "Zoom par défaut",
 				"description": "Taille des pages qui n'ont pas de zoom propre.",
@@ -1662,9 +1667,11 @@
 		},
 		"essentials": {
 			"title": "L'essentiel",
-			"subtitle": "Deux réglages qui changent tout. Modifiables à tout moment.",
+			"subtitle": "Trois réglages qui changent tout. Modifiables à tout moment.",
 			"blocker": "Bloquer les pubs et les pisteurs",
 			"blockerDesc": "Recommandé : les pages chargent plus vite et vous suivent moins.",
+			"refreshRate": "Défilement plus fluide",
+			"refreshRateDesc": "Les pages utilisent la fréquence maximale de votre écran, ce qui consomme un peu plus de batterie.",
 			"default": "Ouvrir les liens dans Lilo",
 			"defaultDesc": "Les liens de vos mails et de vos apps s'ouvrent ici.",
 			"defaultSet": "Utiliser Lilo",

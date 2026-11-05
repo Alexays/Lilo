@@ -298,6 +298,11 @@
 				"none": "Nessuna",
 				"points": "{size} pt"
 			},
+			"fullRefreshRate": {
+				"title": "Frequenza di aggiornamento massima",
+				"description": "Le pagine si animano e scorrono alla frequenza massima dello schermo, consumando più batteria. Le nuove schede seguono questa impostazione; quelle aperte cambiano al riavvio di Lilo.",
+				"keywords": "120 hz promotion fps fotogrammi fluido scorrimento animazione batteria"
+			},
 			"defaultZoom": {
 				"title": "Zoom predefinito",
 				"description": "Dimensione delle pagine senza uno zoom specifico.",
@@ -1662,9 +1667,11 @@
 		},
 		"essentials": {
 			"title": "L'essenziale",
-			"subtitle": "Due impostazioni che fanno la differenza. Puoi cambiarle quando vuoi.",
+			"subtitle": "Tre impostazioni che fanno la differenza. Puoi cambiarle quando vuoi.",
 			"blocker": "Blocca pubblicità e tracker",
 			"blockerDesc": "Consigliato: le pagine si caricano più velocemente e ti seguono meno.",
+			"refreshRate": "Scorrimento più fluido",
+			"refreshRateDesc": "Le pagine usano la frequenza massima dello schermo, consumando un po' più di batteria.",
 			"default": "Apri i link in Lilo",
 			"defaultDesc": "I link delle email e delle app si aprono qui.",
 			"defaultSet": "Usa Lilo",

@@ -298,6 +298,11 @@
 				"none": "Yok",
 				"points": "{size} pt"
 			},
+			"fullRefreshRate": {
+				"title": "En yüksek yenileme hızı",
+				"description": "Sayfalar ekranınızın en yüksek hızında canlanır ve kayar; bu daha fazla pil kullanır. Yeni sekmeler bu ayarı izler, açık sekmeler Lilo yeniden başlatıldığında değişir.",
+				"keywords": "120 hz promotion fps kare hızı akıcı kaydırma animasyon pil"
+			},
 			"defaultZoom": {
 				"title": "Saptanmış büyütme",
 				"description": "Kendine ait büyütme ayarı olmayan sayfaların boyutu.",
@@ -1662,9 +1667,11 @@
 		},
 		"essentials": {
 			"title": "Temel ayarlar",
-			"subtitle": "Fark yaratan iki ayar. İstediğiniz zaman değiştirebilirsiniz.",
+			"subtitle": "Fark yaratan üç ayar. İstediğiniz zaman değiştirebilirsiniz.",
 			"blocker": "Reklamları ve izleyicileri engelle",
 			"blockerDesc": "Önerilen: Sayfalar daha hızlı yüklenir ve sizi daha az izler.",
+			"refreshRate": "Daha akıcı kaydırma",
+			"refreshRateDesc": "Sayfalar ekranınızın en yüksek yenileme hızını kullanır; bu biraz daha fazla pil harcar.",
 			"default": "Bağlantıları Lilo'da aç",
 			"defaultDesc": "E-postalarınızdaki ve uygulamalarınızdaki bağlantılar burada açılır.",
 			"defaultSet": "Lilo'yu Kullan",
