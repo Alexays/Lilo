@@ -21,6 +21,8 @@ test("a load past 300 ms shows its progress above the page only while no bar is 
 	const line = page.locator(".page-load-line");
 	await expect(line).toHaveCount(0);
 
+	// Off the left edge, whose hover zone would bring the hidden sidebar back.
+	await page.mouse.move(600, 400);
 	await receive(page, { event: "sidebarVisibilityChanged", visible: false, width: 260 });
 	await load(page, tab, true, 0.5);
 	await expect(line).toHaveCSS("opacity", "0");
