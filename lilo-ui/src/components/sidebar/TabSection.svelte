@@ -1783,12 +1783,27 @@
     border-radius: var(--radius-md);
   }
 
-  /* An open stack is one block like an open folder, painted by its head and rows. */
-  .tab-drop-slot,
-  .group-head-slot {
-    transition: background var(--motion-duration-normal) ease;
+  .tab-drop-slot {
+    transition:
+      background var(--motion-duration-normal) ease,
+      box-shadow var(--motion-duration-normal) ease;
   }
 
+  /* A head squares its bottom corners as the rows grow in under it, so an opening block never shows a square
+     edge. */
+  .group-head-slot {
+    transition:
+      background var(--motion-duration-normal) ease,
+      box-shadow var(--motion-duration-normal) ease,
+      border-radius var(--motion-duration-fast) ease-out;
+  }
+
+  /* No specificity, so a block's own corners win. */
+  :where(.group-head-slot) {
+    border-radius: var(--radius-md);
+  }
+
+  /* An open stack is one block like an open folder, painted by its head and rows. */
   .stack-block {
     background: var(--folder-open-bg);
   }
@@ -2221,6 +2236,11 @@
 
   /* Sit on the divider line's ends, popping in while the pointer is over the list. Inset like the
      rows' 20px close buttons, so both share one vertical axis. */
+  /* The archive lid tilts past the 12 px box. */
+  .divider-action svg {
+    overflow: visible;
+  }
+
   .divider-action {
     position: absolute;
     top: 50%;
