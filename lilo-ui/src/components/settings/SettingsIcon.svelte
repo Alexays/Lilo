@@ -42,7 +42,10 @@
   {:else if name === "extensions"}
     <path d="M4.4 7.4h2.8a1.9 1.9 0 1 1 3.8 0h2.8v2.8a1.9 1.9 0 1 1 0 3.8v2.6H4.4V7.4Z" />
   {:else if name === "agents"}
-    <path d="m5 3.6 9.4 5.2-4 1.2 2.6 4.6-1.8 1-2.6-4.6-3 2.8Z" />
+    <!-- The mascot, outlined like its neighbors: its eyes are the only filled marks. -->
+    <circle cx="10" cy="10" r="6.6" />
+    <ellipse class="filled" cx="7.6" cy="9.4" rx="1.05" ry="1.4" stroke="none" />
+    <ellipse class="filled" cx="12.4" cy="9.4" rx="1.05" ry="1.4" stroke="none" />
   {:else if name === "advanced"}
     <path d="M8 3.4h4" />
     <path d="M8.8 3.4v4.4l-4.1 6.8c-.6 1 .1 2.1 1.2 2.1h8.2c1.1 0 1.8-1.1 1.2-2.1l-4.1-6.8V3.4" />
