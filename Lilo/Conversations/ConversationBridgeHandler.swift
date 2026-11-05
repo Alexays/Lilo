@@ -55,7 +55,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         case "loadAgentCatalog":
             if payload["refresh"] as? Bool ?? false { await host.catalog.load() }
             window.bridgeRouter.send(event: "agentCatalog", data: [
-                "agents": host.catalog.agents.map { agent in
+                "agents": await host.catalog.runnableAgents().map { agent in
                     var data: [String: Any] = ["id": agent.id, "name": agent.name, "description": agent.description]
                     if let icon = host.catalog.iconDataURL(for: agent.id) { data["icon"] = icon }
                     return data

@@ -162,6 +162,19 @@ final class ACPAgentCatalog {
         }
     }
 
+    /// The agents this Mac can start: an npx or uvx agent needs that runtime on the user's PATH.
+    func runnableAgents() async -> [Agent] {
+        let path = await userPath()
+        let hasNpx = Self.find("npx", in: path) != nil, hasUvx = Self.find("uvx", in: path) != nil
+        return agents.filter { agent in
+            switch agent.distribution {
+            case .npx: hasNpx
+            case .uvx: hasUvx
+            case .binary: true
+            }
+        }
+    }
+
     private func userPath() async -> String {
         if let shellPath { return shellPath }
         let marker = "__LILO_PATH__"
