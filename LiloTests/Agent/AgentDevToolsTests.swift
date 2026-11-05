@@ -611,12 +611,14 @@ final class AgentDevToolsTests: AgentToolTestCase {
         let tab = try await newAgentTab()
         _ = await client.callTool("navigate", ["tabId": tab, "url": "127.0.0.1:\(server.port)/"])
         _ = await client.callTool("performance", ["tabId": tab, "action": "start"])
+        _ = try await js("setTimeout(() => { hotLoop(); console.timeStamp('left') }, 0); 0", tab: tab)
+        try await Task.sleep(for: .milliseconds(600))
 
         _ = await client.callTool("navigate", ["tabId": tab, "url": "http://localhost:\(server.port)/"])
         // Run on the loaded page: samples taken before the profile follows it into its new process are lost.
         let arrived = await pollUntil { (try? await self.js("location.hostname + ' ' + document.readyState", tab: tab)) as? String == "localhost complete" }
         XCTAssertTrue(arrived)
-        _ = try await js("hotLoop()", tab: tab)
+        _ = try await js("hotLoop(); console.timeStamp('arrived'); 0", tab: tab)
         let reply = await client.callTool("performance", ["tabId": tab, "action": "stop"])
 
         XCTAssertTrue(reply.text.contains("hotLoop"), "\(reply.isError) \(reply.text)")
@@ -626,6 +628,9 @@ final class AgentDevToolsTests: AgentToolTestCase {
         for case let (type, record as [String: Any]) in summary["records"] as? [String: Any] ?? [:] {
             XCTAssertLessThanOrEqual(record["totalMs"] as? Int ?? 0, duration, "\(type) covers no more than the profile")
         }
+        let marks = try XCTUnwrap(summary["markers"] as? [[String: Any]], reply.text)
+        XCTAssertEqual(marks.compactMap { $0["label"] as? String }, ["arrived"], "the page left is on another clock: \(reply.text)")
+        XCTAssertLessThanOrEqual(marks.first?["durationMs"] as? Int ?? .max, duration, reply.text)
     }
 }
 
