@@ -456,8 +456,44 @@ extension MainWindowController {
         })
     }
 
-    /// How the open tabs are laid out: stacked by site, grouped by type, and the sites never stacked.
-    private func addTabListItems(to menu: NSMenu) {
+    func showTabListMenu(spaceId: String?, anchorRect: NSRect?) {
+        guard let targetSpaceId = spaceId.flatMap(UUID.init(uuidString:)) ?? tabManager.currentSpaceId else { return }
+        let menu = NSMenu()
+        addTabListItems(to: menu, spaceId: targetSpaceId)
+        presentContextMenu(menu, anchorRect: anchorRect)
+    }
+
+    /// Orders the loose open tabs once, by site then title or by title; folders keep their places.
+    private func sortOpenTabs(spaceId: UUID, bySite: Bool) {
+        let roots = tabManager.sidebarTreeItems(forSpace: spaceId)
+            .filter { $0.parentFolderId == nil && $0.section == .unpinned }
+            .sorted { $0.sortOrder < $1.sortOrder }
+        let tabs = roots.filter { $0.kind == .tab }.compactMap { item in tabManager.tab(for: item.itemId) }
+        let key = { (tab: Tab) -> (String, String) in
+            let title = tab.customTitle ?? tab.title
+            let host = tab.url?.host().map { $0.hasPrefix("www.") ? String($0.dropFirst(4)) : $0 } ?? ""
+            return bySite ? (host, title) : (title, "")
+        }
+        var sorted = tabs.sorted {
+            let (a, b) = (key($0), key($1))
+            let first = a.0.localizedStandardCompare(b.0)
+            return first == .orderedSame ? a.1.localizedStandardCompare(b.1) == .orderedAscending : first == .orderedAscending
+        }.makeIterator()
+        let order = roots.compactMap { item in item.kind == .tab ? sorted.next()?.id : item.itemId }
+        var current = roots.map(\.itemId)
+        var commands: [BrowserCommand] = []
+        for (index, id) in order.enumerated() where current[index] != id {
+            guard let from = current.firstIndex(of: id) else { continue }
+            current.insert(current.remove(at: from), at: index)
+            let kind = roots.first { $0.itemId == id }?.kind ?? .tab
+            commands.append(.moveSidebarItem(spaceId: spaceId, kind: kind, itemId: id, parentFolderId: nil, section: .unpinned, insert: .index(index)))
+        }
+        applyContextMenuStateCommands(commands)
+    }
+
+    /// How the open tabs are laid out: stacked by site, grouped by type, the sites never stacked,
+    /// and a one-off sort.
+    private func addTabListItems(to menu: NSMenu, spaceId: UUID) {
         let settings = context.settingsStore
         let send = { (action: String, host: String) in
             self.bridgeRouter.send(event: "tabListMenuAction", data: ["action": action, "host": host])
@@ -467,16 +503,20 @@ extension MainWindowController {
         menu.addItem("Group by Type".localized, icon: .groupByType) { send("toggleGroupByType", "") }
             .state = settings?.get("sidebarGroupByType") == "true" ? .on : .off
         let never = (settings?.get("sidebarNeverStack") ?? "").split(separator: ",").map(String.init)
-        guard !never.isEmpty else { return }
-        let neverMenu = NSMenu(title: "Never Stack".localized)
-        for host in never {
-            neverMenu.addItem(host) { send("stackAgain", host) }.state = .on
+        if !never.isEmpty {
+            let neverMenu = NSMenu(title: "Never Stack".localized)
+            for host in never {
+                neverMenu.addItem(host) { send("stackAgain", host) }.state = .on
+            }
+            neverMenu.addItem(.separator())
+            neverMenu.addItem("Stack Every Site Again".localized) { send("stackEverySite", "") }
+            let item = menu.addItem(withTitle: neverMenu.title, action: nil, keyEquivalent: "")
+            item.image = MenuIcon.unstack.image
+            item.submenu = neverMenu
         }
-        neverMenu.addItem(.separator())
-        neverMenu.addItem("Stack Every Site Again".localized) { send("stackEverySite", "") }
-        let item = menu.addItem(withTitle: neverMenu.title, action: nil, keyEquivalent: "")
-        item.image = MenuIcon.unstack.image
-        item.submenu = neverMenu
+        menu.addItem(.separator())
+        menu.addItem("Sort by Site".localized, icon: .sortBySite) { self.sortOpenTabs(spaceId: spaceId, bySite: true) }
+        menu.addItem("Sort by Title".localized, icon: .sortByTitle) { self.sortOpenTabs(spaceId: spaceId, bySite: false) }
     }
 
     // MARK: - Sidebar Context Menu
@@ -506,7 +546,7 @@ extension MainWindowController {
         let positionItem = menu.addItem(withTitle: "Tab Position".localized, action: nil, keyEquivalent: "")
         positionItem.image = MenuIcon.sidebar.image
         positionItem.submenu = positions
-        addTabListItems(to: menu)
+        addTabListItems(to: menu, spaceId: targetSpaceId)
         menu.addItem(.separator())
         menu.addItem("Edit Space".localized, icon: .edit) { self.bridgeRouter.send(event: "openSpaceEditor", data: ["id": targetSpaceId.uuidString]) }
         menu.addItem("New Space".localized, icon: .newSpace) { self.bridgeRouter.send(event: "openAddSpaceEditor") }

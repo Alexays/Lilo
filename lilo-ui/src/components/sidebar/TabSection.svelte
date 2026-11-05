@@ -1448,6 +1448,8 @@
           class="pinned-tab-divider-shell"
           class:pinned-transfer-gate={pinnedTransferGateActive}
           class:collapsed={pinnedDividerHidden}
+          class:with-actions={!dragActive && !pinnedDividerHidden}
+          class:with-clear={canClear}
         >
           <div
             class="pinned-tab-divider"
@@ -1456,9 +1458,22 @@
             class:hidden-line={pinnedDividerHidden}
             aria-hidden="true"
           ></div>
+          {#if !dragActive && !pinnedDividerHidden}
+            <button
+              class="divider-action list-options"
+              disabled={!interactive}
+              use:tooltip={{ text: t("tabSection.listOptions") }}
+              aria-label={t("tabSection.listOptions")}
+              onclick={(event) => sidebarActions.showTabListMenu(spaceId, event.currentTarget.getBoundingClientRect())}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true">
+                <path d="M1.5 3h9M3 6h6M4.75 9h2.5" />
+              </svg>
+            </button>
+          {/if}
           {#if canClear && !dragActive && !pinnedDividerHidden}
             <button
-              class="clear-unpinned"
+              class="divider-action clear-unpinned"
               disabled={!interactive}
               use:tooltip={{ text: t("tabSection.clearUnpinnedTooltip"), shortcut: shortcutKeys("tab.clearUnpinned") }}
               aria-label={t("tabSection.clearUnpinnedTooltip")}
@@ -2087,12 +2102,11 @@
     padding: 8px 0;
   }
 
-  /* Sits on the divider line, shown while the pointer is over the list. Inset like the rows'
-     20px close buttons, so both share one vertical axis. */
-  .clear-unpinned {
+  /* Sit on the divider line's ends, popping in while the pointer is over the list. Inset like the
+     rows' 20px close buttons, so both share one vertical axis. */
+  .divider-action {
     position: absolute;
     top: 50%;
-    right: 8px;
     display: grid;
     place-items: center;
     width: 20px;
@@ -2100,27 +2114,59 @@
     padding: 0;
     border: none;
     border-radius: var(--radius-sm);
-    background: var(--sidebar-bg);
+    background: transparent;
     color: var(--text-muted);
     cursor: pointer;
     opacity: 0;
-    transform: translateY(-50%);
+    transform: translateY(-50%) scale(0.6);
     transition:
       opacity var(--motion-duration-fast) ease,
+      transform 220ms var(--motion-ease-spring),
       color var(--transition-fast);
   }
 
-  .tab-list-shell:hover .clear-unpinned,
-  .clear-unpinned:focus-visible {
-    opacity: 1;
+  .list-options {
+    left: 8px;
   }
 
-  .clear-unpinned:hover {
+  .clear-unpinned {
+    right: 8px;
+  }
+
+  .tab-list-shell:hover .divider-action,
+  .divider-action:focus-visible {
+    opacity: 1;
+    transform: translateY(-50%);
+  }
+
+  .divider-action:hover {
     color: var(--text-primary);
   }
 
-  .clear-unpinned:focus-visible {
+  .divider-action:focus-visible {
     outline: var(--focus-outline);
+  }
+
+  /* The line draws back from the ends to make room for the actions coming in. */
+  .with-actions .pinned-tab-divider {
+    clip-path: inset(0);
+    transition-property: height, background, opacity, transform, box-shadow, clip-path;
+  }
+
+  .tab-list-shell:hover .with-actions .pinned-tab-divider,
+  .with-actions:focus-within .pinned-tab-divider {
+    clip-path: inset(0 0 0 24px);
+  }
+
+  .tab-list-shell:hover .with-actions.with-clear .pinned-tab-divider,
+  .with-actions.with-clear:focus-within .pinned-tab-divider {
+    clip-path: inset(0 24px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .divider-action {
+      transform: translateY(-50%);
+    }
   }
 
   /* The stacked panes share one card. */

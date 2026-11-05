@@ -200,6 +200,8 @@ export const folderActions = {
 export const sidebarActions = {
 	commitDrop: (payload: BridgeCommandPayloadMap["commitSidebarDrop"]): void =>
 		emit("commitSidebarDrop", payload),
+	showTabListMenu: (spaceId: string, rect: DOMRect): void =>
+		emit("showTabListMenu", { spaceId, x: rect.left, y: rect.top, width: rect.width, height: rect.height }),
 };
 
 export const profileActions = {

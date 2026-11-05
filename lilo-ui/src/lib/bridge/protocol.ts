@@ -624,6 +624,7 @@ export interface BridgeCommandPayloadMap {
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showTabStackContextMenu: { ids: string[]; host: string; name: string; x: number; y: number; width: number; height: number };
 	showSidebarContextMenu: { x: number; y: number; width: number; height: number; spaceId?: string };
+	showTabListMenu: { x: number; y: number; width: number; height: number; spaceId: string };
 	showBackHistoryMenu: { x: number; y: number; width: number; height: number };
 	showForwardHistoryMenu: {
 		x: number;

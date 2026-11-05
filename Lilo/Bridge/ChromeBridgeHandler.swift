@@ -35,6 +35,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "showFolderContextMenu",
         "showTabStackContextMenu",
         "showSidebarContextMenu",
+        "showTabListMenu",
         "showExtensionContextMenu",
         "showDownloadContextMenu",
         "showHistoryRowMenu",
@@ -192,6 +193,9 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "showSidebarContextMenu":
             windowController?.showSidebarContextMenu(spaceId: message.string("spaceId"), anchorRect: anchorRect(from: message))
+
+        case "showTabListMenu":
+            windowController?.showTabListMenu(spaceId: message.string("spaceId"), anchorRect: anchorRect(from: message))
 
         case "showExtensionContextMenu":
             if let id = message.string("id") {
