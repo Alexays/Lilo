@@ -404,11 +404,11 @@
   const VIRTUAL_BUFFER_PX = 320;
   // The window moves in steps of this many pixels, so a scroll frame inside a step re-renders nothing.
   const VIRTUAL_WINDOW_STEP_PX = 160;
-  // Mirror the row CSS (32px rows, no --sidebar-tab-row-gap, no folder-contents top
-  // margin, 32px empty-folder placeholder); the buffer absorbs small drift.
+  // Mirror the row CSS (32px rows, 2px --sidebar-tab-row-gap, the same gap above a folder's
+  // contents, 32px empty-folder placeholder); the buffer absorbs small drift.
   const VIRTUAL_ROW_H = 32;
-  const VIRTUAL_ROW_GAP = 0;
-  const VIRTUAL_FOLDER_TOP_MARGIN = 0;
+  const VIRTUAL_ROW_GAP = 2;
+  const VIRTUAL_FOLDER_TOP_MARGIN = 2;
   const VIRTUAL_EMPTY_FOLDER_H = 32;
 
   type ListSegment = Segment | { kind: "spacer"; key: string; height: number };
@@ -1570,7 +1570,7 @@
 
 <style>
   .pinned-section {
-    --sidebar-tab-row-gap: 0px;
+    --sidebar-tab-row-gap: 2px;
     position: relative;
     flex-shrink: 0;
     min-height: 0;
@@ -1689,7 +1689,7 @@
   }
 
   .tab-list-shell {
-    --sidebar-tab-row-gap: 0px;
+    --sidebar-tab-row-gap: 2px;
     flex: 1 0 auto;
     position: relative;
     /* Paint containment would clip the sticky divider against the shared scroller. */
@@ -1753,6 +1753,11 @@
     border-radius: var(--radius-md) var(--radius-md) 0 0;
   }
 
+  /* The rows' gap would cut a card into strips: each row but the last paints it too. */
+  .in-tray:not(.tray-end) {
+    box-shadow: 0 var(--sidebar-tab-row-gap) 0 var(--text-primary-tint-10);
+  }
+
   .in-tray.tray-end {
     border-radius: 0 0 var(--radius-md) var(--radius-md);
   }
@@ -1769,6 +1774,10 @@
 
   .stack-block {
     background: var(--folder-open-bg);
+  }
+
+  .stack-block:not(.stack-end) {
+    box-shadow: 0 var(--sidebar-tab-row-gap) 0 var(--folder-open-bg);
   }
 
   .stack-block.stack-head {
@@ -1877,6 +1886,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--sidebar-tab-row-gap);
+    padding-top: var(--sidebar-tab-row-gap);
     min-width: 0;
     overflow: hidden;
   }
