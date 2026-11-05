@@ -138,14 +138,30 @@
   const stackTabs = $derived(!isPinned && getSetting("sidebarStackTabs", "true") !== "false");
   const groupByType = $derived(!isPinned && getSetting("sidebarGroupByType", "false") === "true");
   const neverStack = $derived(new Set(getSetting("sidebarNeverStack", "").split(",").filter(Boolean)));
+  // A tab's title or icon changes far more often than the list: each URL is parsed once, and an unchanged
+  // list keeps its array, so the stacks and rows derived from it do not run again.
+  const noEntries: ArrangeEntry[] = [];
+  let lastEntries = noEntries;
+  let hostByURL = new Map<string, string | null>();
   const arrangeEntries = $derived.by((): ArrangeEntry[] => {
-    if (isPinned || (!stackTabs && !groupByType)) return [];
-    return rootItems.map((item) => {
+    if (isPinned || (!stackTabs && !groupByType)) return noEntries;
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+    const hosts = new Map<string, string | null>();
+    const entries = rootItems.map((item): ArrangeEntry => {
       if (item.kind === "folder") return { id: item.id, type: getConversationTab(item.id, spaceId) ? "agent" : "web", host: null };
       const tab = tabsById.get(item.id);
       const type: RowType = tab?.kind === "terminal" ? "terminal" : tab?.kind === "agent" ? "agent" : "web";
-      return { id: item.id, type, host: stackTabs && type === "web" ? hostOf(tab?.url) : null };
+      const url = stackTabs && type === "web" ? tab?.url : undefined;
+      if (!url) return { id: item.id, type, host: null };
+      const host = hostByURL.has(url) ? (hostByURL.get(url) ?? null) : hostOf(url);
+      hosts.set(url, host);
+      return { id: item.id, type, host };
     });
+    hostByURL = hosts;
+    const unchanged = entries.length === lastEntries.length
+      && entries.every((entry, i) => entry.id === lastEntries[i]!.id && entry.type === lastEntries[i]!.type && entry.host === lastEntries[i]!.host);
+    if (!unchanged) lastEntries = entries;
+    return lastEntries;
   });
 
   // Closing tabs never reshapes the list under the pointer: a stack dissolves once it leaves, unless
