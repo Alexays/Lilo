@@ -364,6 +364,41 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertEqual(window.tabManager.activeTabId, activeBefore)
     }
 
+    func testAParkedTabSleepsWhileTheAgentThinksAndWakesForItsNextCall() async throws {
+        let sleepDelay = AgentControl.sleepDelay
+        AgentControl.sleepDelay = 0.2
+        defer { AgentControl.sleepDelay = sleepDelay }
+        let number = try await agentTab(showing: "<title>Idle</title>")
+        let id = try XCTUnwrap(control.tabNumbers.first { $0.value == number }?.key)
+        let engine = try XCTUnwrap(context.browserState.liveEngine(forTab: id))
+
+        let slept = await pollUntil(timeout: 5) { (try? await engine.wkWebView.evaluateJavaScript("document.visibilityState")) as? String == "hidden" }
+        let visibility = await client.callTool("javascript_tool", ["tabId": number, "action": "javascript_exec", "text": "document.visibilityState"])
+        let animating = await client.callTool("javascript_tool", [
+            "tabId": number, "action": "javascript_exec", "text": "await new Promise(r => requestAnimationFrame(() => r(true)))"
+        ])
+
+        XCTAssertTrue(slept, "nobody sees a parked tab the agent left alone")
+        XCTAssertEqual(visibility.text, "\"visible\"", "awake before the tool reads the page")
+        XCTAssertEqual(animating.text, "true")
+    }
+
+    func testAProfiledTabNeverSleeps() async throws {
+        let sleepDelay = AgentControl.sleepDelay
+        AgentControl.sleepDelay = 0.2
+        defer { AgentControl.sleepDelay = sleepDelay }
+        let number = try await agentTab(showing: "<title>Profiled</title>")
+        let id = try XCTUnwrap(control.tabNumbers.first { $0.value == number }?.key)
+        let engine = try XCTUnwrap(context.browserState.liveEngine(forTab: id))
+        control.profilingTabIds.insert(id)
+
+        _ = await client.callTool("get_page_text", ["tabId": number])
+        try await Task.sleep(for: .seconds(0.6))
+
+        let visibility = try await engine.wkWebView.evaluateJavaScript("document.visibilityState") as? String
+        XCTAssertEqual(visibility, "visible", "a profile spans the calls between its start and its stop")
+    }
+
     func testAgentWorksAtFullRateWhileTheUserStaysInTheirSpace() async throws {
         let number = try await agentTab(showing: "<title>Kept</title><button onclick='clicks++'>B</button><script>window.clicks = 0</script>")
 
