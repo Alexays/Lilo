@@ -410,7 +410,6 @@
   const VIRTUAL_ROW_GAP = 0;
   const VIRTUAL_FOLDER_TOP_MARGIN = 0;
   const VIRTUAL_EMPTY_FOLDER_H = 32;
-  const VIRTUAL_TRAY_GAP = 6;
 
   type ListSegment = Segment | { kind: "spacer"; key: string; height: number };
 
@@ -517,9 +516,7 @@
     };
     for (const segment of segments) {
       const entry = segment.kind === "row" ? segment.entry : null;
-      const height =
-        (entry ? estimatedRowHeight(entry) : VIRTUAL_ROW_H) +
-        (segment.trayEnd ? VIRTUAL_TRAY_GAP : 0);
+      const height = entry ? estimatedRowHeight(entry) : VIRTUAL_ROW_H;
       // The active and focused rows stay mounted wherever the scroll sits, so
       // tab switching and keyboard focus never land on an unmounted row. Hidden
       // children count too: keeping one extra folder mounted is harmless.
@@ -1757,7 +1754,6 @@
   }
 
   .in-tray.tray-end {
-    margin-bottom: 6px;
     border-radius: 0 0 var(--radius-md) var(--radius-md);
   }
 
