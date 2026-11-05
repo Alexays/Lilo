@@ -1,11 +1,13 @@
 // The chrome UI in any browser, against the e2e fake host seeded with a sample world (make ui-preview).
-// ?world=default|empty|onboarding, &theme=light|dark (the system's otherwise), &open=settings|commandbar,
-// &tabs=left|right|top|bottom, &address=tabs|page|hidden, &update=1 (a downloaded update waiting for a relaunch), &open=whatsnew.
+// ?world=default|empty|onboarding|agents (agent conversations, one open), &theme=light|dark (the system's otherwise), &open=settings|commandbar,
+// &tabs=left|right|top|bottom, &address=tabs|page|hidden, &update=1 (a downloaded update waiting for a relaunch),
+// &open=whatsnew|history|downloads|processes|diagnostics|space|newspace.
 import type { Page } from "@playwright/test";
 import { version as appVersion } from "../package.json";
 import { installFakeHost, type FakeHostWorld } from "../e2e/fakeHost";
 import { LILO_SHORTCUT_KEYS } from "../e2e/fixtures";
 import { tab, treeItem } from "../src/stores/testFixtures";
+import { systemReplies } from "./systemData";
 
 const params = new URLSearchParams(location.search);
 const worldName = params.get("world") ?? "default";
@@ -84,6 +86,62 @@ function defaultWorld(): FakeHostWorld {
 	};
 }
 
+// Agent conversations: one open after a turn of work, one waiting on a permission.
+function agentsWorld(): FakeHostWorld {
+	const world = defaultWorld();
+	const agent = (id: string, title: string, extra: Record<string, unknown>) =>
+		tab(id, WORK, { title, url: "", kind: "agent", agentId: "claude-acp", cwd: "/Users/me/Projects/acme", ...extra });
+	world.foldersBySpace![WORK]!.push(
+		{ id: "folder-conv-login", spaceId: WORK, name: "Fix login redirect loop", color: "#795ceb", isCollapsed: true },
+		{ id: "folder-conv-tests", spaceId: WORK, name: "Add checkout tests", color: "#795ceb", isCollapsed: true },
+	);
+	world.tabsBySpace![WORK]!.push(
+		agent("tab-conv-login", "Fix login redirect loop", { gitBranch: "fix-login", diffAdded: 14, diffRemoved: 3 }),
+		site("tab-conv-page", "Sign in - Acme", "http://localhost:3000/login"),
+		agent("tab-conv-tests", "Add checkout tests", { terminalState: "busy", awaitingInputSince: Date.now() - 60_000 }),
+	);
+	world.treeItemsBySpace![WORK]!.push(
+		treeItem("folder-conv-login", WORK, 13, "unpinned", "folder"),
+		treeItem("tab-conv-login", WORK, 14, "unpinned", "tab", "folder-conv-login"),
+		treeItem("tab-conv-page", WORK, 15, "unpinned", "tab", "folder-conv-login"),
+		treeItem("folder-conv-tests", WORK, 16, "unpinned", "folder"),
+		treeItem("tab-conv-tests", WORK, 17, "unpinned", "tab", "folder-conv-tests"),
+	);
+	world.activeTabBySpace![WORK] = "tab-conv-login";
+	return world;
+	function site(id: string, title: string, url: string) {
+		return tab(id, WORK, { title, url });
+	}
+}
+
+// What an agent sends during a turn of development work, as Lilo replays it.
+function agentLog(): Record<string, unknown>[] {
+	const text = (kind: string, value: string) => ({ sessionUpdate: kind, content: { type: "text", text: value } });
+	const call = (toolCallId: string, kind: string, title: string, extra: Record<string, unknown> = {}) =>
+		({ sessionUpdate: "tool_call", toolCallId, kind, title, status: "completed", ...extra });
+	return [
+		{ sessionUpdate: "lilo_session", modes: { currentModeId: "default", availableModes: [{ id: "default", name: "Ask before edits" }, { id: "acceptEdits", name: "Accept edits" }, { id: "plan", name: "Plan" }] },
+			configOptions: [
+				{ id: "model", name: "Model", category: "model", type: "select", currentValue: "opus", options: [{ value: "opus", name: "Opus 5.5" }, { value: "sonnet", name: "Sonnet 5.5" }] },
+				{ id: "effort", name: "Effort", category: "thought_level", type: "select", currentValue: "high", options: [{ value: "low", name: "Low" }, { value: "high", name: "High" }] },
+			] },
+		{ sessionUpdate: "lilo_user", text: "The login page loops back to itself after submitting. Find why and fix it.", context: [{ label: "Sign in - Acme", uri: "http://localhost:3000/login" }] },
+		{ sessionUpdate: "lilo_checkpoint", index: 0 },
+		text("agent_thought_chunk", "The redirect probably reads the return path before the session exists."),
+		call("t1", "read", "Read src/auth/session.ts", { locations: [{ path: "/Users/me/Projects/acme/src/auth/session.ts" }] }),
+		call("t2", "search", "Search returnTo", { rawInput: { pattern: "returnTo" } }),
+		call("t3", "read", "Read src/auth/callback.ts", { locations: [{ path: "/Users/me/Projects/acme/src/auth/callback.ts" }] }),
+		text("agent_message_chunk", "The callback reads `returnTo` before `setSession` writes the cookie, so every sign-in lands back on `/login`. Moving the read after the session fixes it:"),
+		call("t4", "edit", "Edit src/auth/callback.ts", { content: [{ type: "diff", path: "/Users/me/Projects/acme/src/auth/callback.ts",
+			oldText: "const user = await exchange(code)\nconst target = req.query.returnTo ?? \"/login\"\nsetSession(res, user)\nres.redirect(target)\n",
+			newText: "const user = await exchange(code)\nsetSession(res, user)\nconst target = safePath(req.query.returnTo) ?? \"/\"\nres.redirect(target)\n" }] }),
+		call("t5", "execute", "npm test -- auth", { rawInput: { command: "npm test -- auth" }, content: [{ type: "content", content: { type: "text", text: " PASS  src/auth/callback.test.ts\n  callback\n    ok redirects to the return path\n    ok refuses an external return path\n\nTests: 2 passed, 2 total" } }] }),
+		text("agent_message_chunk", "Fixed. Signing in now lands on `/dashboard`, and `safePath` refuses an external return path:\n\n```ts\nexport function safePath(value: unknown): string | null {\n  return typeof value === \"string\" && value.startsWith(\"/\") && !value.startsWith(\"//\") ? value : null\n}\n```"),
+		{ sessionUpdate: "usage_update", used: 61_000, size: 200_000 },
+		{ sessionUpdate: "lilo_turn_end", stopReason: "end_turn" },
+	];
+}
+
 // A first launch: one Space with one blank tab.
 function emptyWorld(): FakeHostWorld {
 	return {
@@ -117,6 +175,7 @@ function extension(id: string, name: string, color: string, extra: { badgeText?:
 }
 
 const settings: Record<string, string> = {
+	...(worldName === "agents" ? { agentsEnabled: "true" } : {}),
 	searchEngine: "duckduckgo",
 	contentBlockerEnabled: "true",
 	agentControlEnabled: "true",
@@ -124,10 +183,27 @@ const settings: Record<string, string> = {
 };
 
 // The answers the Swift side gives to what the surfaces ask for when they open.
-const replies: Record<string, () => Record<string, unknown>> = {
+const replies: Record<string, (payload: Record<string, unknown>) => Record<string, unknown>> = {
+	...systemReplies(WORK),
 	getSettings: () => ({ event: "settingsLoaded", settings }),
 	getAppIcons: () => ({ event: "appIconsLoaded", icons: [{ id: "classic", dataURL: appIcon() }] }),
 	dismissUpdate: () => ({ event: "updateReady", version: null }),
+	loadAgentCatalog: () => ({ event: "agentCatalog", agents: [{ id: "claude-acp", name: "Claude Agent", description: "" }, { id: "codex-acp", name: "Codex", description: "" }], projects: ["/Users/me/Projects/acme", "/Users/me"], home: "/Users/me" }),
+	loadConversations: () => ({
+		event: "conversationsChanged",
+		conversations: [
+			{ tabId: "tab-conv-login", agentId: "claude-acp", title: "Fix login redirect loop", state: "idle", unread: false, spaceId: WORK, spaceName: "Work", running: true },
+			{ tabId: "tab-conv-tests", agentId: "claude-acp", title: "Add checkout tests", state: "busy", unread: false, spaceId: WORK, spaceName: "Work", running: true,
+				permission: { requestId: "r1", title: "Run npm test -- checkout", options: [{ optionId: "a", name: "Allow", kind: "allow_once" }, { optionId: "b", name: "Always allow", kind: "allow_always" }, { optionId: "c", name: "Deny", kind: "reject_once" }, { optionId: "d", name: "Never allow", kind: "reject_always" }] } },
+			{ tabId: "tab-conv-deps", agentId: "codex-acp", title: "Update dependencies", state: "busy", unread: false, spaceId: HOME, spaceName: "Personal", running: true },
+		],
+	}),
+	searchConversationFiles: ({ cwd, query }) => {
+		const files = ["src/auth/callback.ts", "src/auth/callback.test.ts", "src/auth/session.ts", "src/routes/login.tsx", "package.json", "README.md"];
+		const needle = String(query).toLowerCase();
+		return { event: "conversationFiles", cwd, query, files: files.filter((file) => file.toLowerCase().includes(needle)) };
+	},
+	showConversation: () => ({ event: "conversationOpened", tabId: "tab-conv-login", agentId: "claude-acp", cwd: "/Users/me/Projects/acme", state: "idle", updates: agentLog(), checkpoints: [true] }),
 	scanImportSources: () => ({
 		event: "importSourcesLoaded",
 		sources: [
@@ -164,7 +240,7 @@ if ((theme === "light" || theme === "dark") && theme !== systemTheme) {
 }
 
 const page = { addInitScript: async <T>(script: (arg: T) => void, arg: T) => script(arg) };
-const world = worldName === "default" ? defaultWorld() : emptyWorld();
+const world = worldName === "default" ? defaultWorld() : worldName === "agents" ? agentsWorld() : emptyWorld();
 const tabs = params.get("tabs");
 if (tabs === "left" || tabs === "right" || tabs === "top" || tabs === "bottom") world.tabPosition = tabs;
 const address = params.get("address");
@@ -180,7 +256,7 @@ host.postMessage = (message) => {
 		settings[key] = value;
 	}
 	const reply = replies[message.action];
-	if (reply) setTimeout(() => window.__lilo?.receive(reply()), 0);
+	if (reply) setTimeout(() => window.__lilo?.receive(reply((message.payload ?? {}) as Record<string, unknown>)), 0);
 };
 
 // The native window frame: the Space color around the page, which sits inset with rounded corners (WindowFrameView).
@@ -210,7 +286,7 @@ if (!document.querySelector(".banner-host")) {
 }
 
 const lilo = window.__lilo!;
-if (worldName === "default") {
+if (worldName === "default" || worldName === "agents") {
 	const extensions = [
 		extension("ext-blocker", "uBlock Origin", "#800000", { badgeText: "12" }),
 		extension("ext-vault", "Bitwarden", "#175ddc"),
@@ -224,4 +300,10 @@ if (worldName === "onboarding") lilo.receive({ event: "onboardingState", show: t
 const open = params.get("open");
 if (open === "settings") lilo.receive({ event: "openSettings" });
 if (open === "commandbar") lilo.receive({ event: "toggleCommandBar" });
+if (open === "history") lilo.receive({ event: "openHistory" });
+if (open === "downloads") lilo.receive({ event: "openDownloads" });
+if (open === "processes") lilo.receive({ event: "openProcessManager" });
+if (open === "diagnostics") lilo.receive({ event: "openDiagnostics" });
+if (open === "space") lilo.receive({ event: "openSpaceEditor" });
+if (open === "newspace") lilo.receive({ event: "openAddSpaceEditor" });
 if (open === "whatsnew") lilo.receive({ event: "openWhatsNew", version: appVersion, automatic: false });

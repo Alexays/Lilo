@@ -53,6 +53,7 @@ test("tab result resolves by tab id first", () => {
     type: "favicon",
     src: "data:image/png;base64,OTHER",
     fallback: "E",
+    hue: (spec as { hue: number }).hue,
   });
 });
 
@@ -61,7 +62,7 @@ test("bookmark/history/navigate fall back to an open tab's host favicon", () => 
     result({ kind: "history", url: "https://example.org/somewhere/else" }),
     lookup,
   );
-  assert.deepEqual(spec, { type: "favicon", src: FAVICON_ORG, fallback: "E" });
+  assert.deepEqual(spec, { type: "favicon", src: FAVICON_ORG, fallback: "E", hue: (spec as { hue: number }).hue });
 });
 
 test("no favicon for the host gives a letter monogram from the domain", () => {
@@ -69,17 +70,23 @@ test("no favicon for the host gives a letter monogram from the domain", () => {
     result({ kind: "history", url: "https://site.example/q/1" }),
     lookup,
   );
-  assert.deepEqual(spec, { type: "letter", letter: "S" });
+  assert.deepEqual(spec, { type: "letter", letter: "S", hue: (spec as { hue: number }).hue });
+});
+
+test("a domain's tile keeps one hue, whatever the page", () => {
+  const hue = (url: string) => (resolveResultIcon(result({ kind: "history", url }), lookup) as { hue: number }).hue;
+  assert.equal(hue("https://site.example/q/1"), hue("https://www.site.example/other"));
+  assert.notEqual(hue("https://site.example/"), hue("https://other.example/"));
 });
 
 test("unparsable or missing url gives a '?' letter", () => {
   assert.deepEqual(
     resolveResultIcon(result({ kind: "history", url: "not a url" }), lookup),
-    { type: "letter", letter: "?" },
+    { type: "letter", letter: "?", hue: 0 },
   );
   assert.deepEqual(
-    resolveResultIcon(result({ kind: "search" }), lookup),
-    { type: "letter", letter: "?" },
+    resolveResultIcon(result({ kind: "bookmark" }), lookup),
+    { type: "letter", letter: "?", hue: 0 },
   );
 });
 

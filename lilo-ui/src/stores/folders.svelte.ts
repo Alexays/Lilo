@@ -80,6 +80,14 @@ export function countVisibleFolderChildren(
 	return count;
 }
 
+/** The conversation a folder stands for: its first child, when that is an agent tab. */
+export function getConversationTab(folderId: string, spaceId?: string): TabState | undefined {
+	const { view } = getSpaceSidebar(resolveSpaceId(spaceId));
+	const first = view.treeIndex.childrenByFolderId.get(folderId)?.[0];
+	const tab = first?.kind === "tab" ? view.tabsById.get(first.itemId) : undefined;
+	return tab?.kind === "agent" ? tab : undefined;
+}
+
 /** The rows a folder shows, its subfolders and tabs in their order. */
 export function getVisibleFolderChildren(
 	folderId: string,

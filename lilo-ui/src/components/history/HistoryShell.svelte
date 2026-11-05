@@ -8,7 +8,7 @@
   import { hostOf } from "../../lib/url";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import UiShellFrame from "../ui/UiShellFrame.svelte";
-  import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
+  import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import HistoryNav from "./HistoryNav.svelte";
   import { groupHistoryDays, rowKey, timeLabel, timeRangeLabel, type HistoryCluster } from "./historyPageModel";
   import { isHistoryShellOpen } from "../../stores/panels.svelte";
@@ -207,7 +207,7 @@
 {#snippet leading(row: BridgeHistoryDayRow, keys: string[])}
   {@const checked = keys.every((key) => selection.has(key))}
   <span class="lead" class:checked>
-    <span class="lead-icon"><SiteFavicon src={favicon(row)} title={row.title} url={row.url} size={16} radius={4} /></span>
+    <span class="lead-icon"><SiteFavicon src={favicon(row)} title={row.title} url={row.url} size={32} radius={8} tile /></span>
     <button
       class="check"
       class:on={checked}
@@ -226,6 +226,9 @@
 {/snippet}
 
 {#snippet trailing(time: string, keys: string[], row: BridgeHistoryDayRow | null)}
+  {#if row && row.visits > 1}
+    <span class="visits" title={t("historyPage.visits", { count: row.visits })}>{row.visits}×</span>
+  {/if}
   <span class="time">{time}</span>
   <span class="actions">
     {#if row}
@@ -279,7 +282,6 @@
       <span class="title">{row.title || row.url}</span>
       {#if !nested}<span class="host">{row.host}</span>{/if}
     </span>
-    {#if row.visits > 1}<span class="visits" title={t("historyPage.visits", { count: row.visits })}>{row.visits}×</span>{/if}
     {@render trailing(timeLabel(row.lastVisitAt, getLocale()), [key], row)}
   </div>
 {/snippet}
@@ -289,6 +291,7 @@
   ariaLabel={t("historyPage.title")}
   interactiveZoneId="history-shell"
   {title}
+  note={rows.length > 0 ? t("historyPage.cmdClickNote") : undefined}
   nav={isVerticalLayout() ? undefined : historyNav}
 >
   <div>
@@ -307,13 +310,18 @@
         {#each days as day (day.dayStart)}
           <section class="day" aria-label={day.labelKey ? t(day.labelKey) : day.weekday}>
             <header class="day-header">
-              <span class="day-title">{day.labelKey ? t(day.labelKey) : day.weekday}</span>
+              <h3 class="day-title">{day.labelKey ? t(day.labelKey) : day.weekday}</h3>
               <span class="day-date">{day.date}</span>
               <span class="day-count">
-                {t("historyPage.dayPages", { count: day.pages })}{#if bySite && day.sites > 1} · {t("historyPage.daySites", { count: day.sites })}{/if}
+                {bySite && day.sites > 1
+                  ? new Intl.ListFormat(getLocale(), { type: "unit" }).format([
+                      t("historyPage.dayPages", { count: day.pages }),
+                      t("historyPage.daySites", { count: day.sites }),
+                    ])
+                  : t("historyPage.dayPages", { count: day.pages })}
               </span>
             </header>
-            <div class="card">
+            <div class="rows">
               {#each day.clusters as cluster (cluster.key)}
                 {#if cluster.rows.length === 1}
                   {@render pageRow(cluster.rows[0], false)}
@@ -340,7 +348,7 @@
                         <span class="host">{cluster.rows[0].title}</span>
                       </span>
                       <span class="badge">{t("historyPage.dayPages", { count: cluster.rows.length })}</span>
-                      <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 2 3 3-3 3" /></svg>
+                      <svg class="chevron" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 2 3 3-3 3" /></svg>
                       {@render trailing(timeRangeLabel(cluster.rows, getLocale()), keys, null)}
                     </div>
                     {#if open}
@@ -370,7 +378,7 @@
     {/if}
   </div>
 
-  <BottomConfirmSheet
+  <UiConfirmModal
     visible={siteToDelete !== null}
     title={t("historyPage.deleteSiteTitle", { host: siteToDelete ?? "" })}
     message={t("historyPage.deleteSiteMessage")}
@@ -382,53 +390,58 @@
 
 <style>
   .day {
-    margin-bottom: var(--space-20);
-    /* Days out of view skip layout and paint; the estimate (a header and about ten 38px rows) is replaced by
+    /* Days out of view skip layout and paint; the estimate (a header and about ten 52px rows) is replaced by
        the real height once a day has rendered, so the scrollbar settles instead of jumping. */
     content-visibility: auto;
-    contain-intrinsic-size: auto 420px;
+    contain-intrinsic-size: auto 560px;
+    /* That containment clips paint: the padding leaves room for the rows' hover past the content edge. */
+    margin-inline: -12px;
+    padding-inline: 12px;
+  }
+
+  .day + .day {
+    margin-top: 22px;
   }
 
   .day-header {
     display: flex;
     align-items: baseline;
     gap: var(--space-8);
-    margin: 0 var(--space-4) var(--space-6);
+    margin: 0 4px var(--space-8);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   .day-title {
-    font-size: var(--font-size-md);
+    margin: 0;
+    font-size: inherit;
     font-weight: var(--font-weight-semibold);
   }
 
-  .day-date,
-  .day-count {
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
+  .day-date {
+    color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+    font-weight: var(--font-weight-semibold);
   }
 
   .day-count {
     margin-left: auto;
+    font-size: var(--font-size-sm);
+    letter-spacing: 0;
+    text-transform: none;
     font-variant-numeric: tabular-nums;
   }
 
-  .card {
-    padding: var(--space-4);
-    border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--text-primary) 3%, transparent);
-    box-shadow: inset 0 0 0 1px var(--border);
-  }
-
-  .card > :global(* + *) {
-    box-shadow: 0 -1px 0 var(--separator);
-  }
-
+  /* One object, one row: a 32 px visual, the name, one detail line, the accessory on the right. The hover
+     reaches past the content edge so the visual lines up with the page title. */
   .row {
     display: flex;
     align-items: center;
-    gap: var(--space-10);
-    height: 38px;
-    padding: 0 var(--space-10);
+    gap: var(--space-8);
+    min-height: 52px;
+    margin-inline: -12px;
+    padding: 8px 12px;
     border-radius: var(--radius-md);
     cursor: default;
     outline: none;
@@ -451,8 +464,9 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: 16px;
-    height: 16px;
+    width: 32px;
+    height: 32px;
+    margin-right: 6px;
     flex-shrink: 0;
   }
 
@@ -463,10 +477,10 @@
   /* The checkbox takes the favicon's place on hover and while selecting, as in Chrome's history. */
   .check {
     position: absolute;
-    inset: 0;
+    inset: 6px;
     padding: 0;
     border: 0;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-sm);
     background: transparent;
     box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text-primary) 40%, transparent);
     opacity: 0;
@@ -490,46 +504,37 @@
   }
 
   .label {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-6);
+    display: grid;
+    gap: 2px;
     flex: 1;
     min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
   }
 
-  .title {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: var(--font-size-md);
-  }
-
-  .site-name {
-    flex-shrink: 0;
-    font-weight: var(--font-weight-semibold);
-  }
-
+  .title,
   .host {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .host {
     color: var(--text-muted);
     font-size: var(--font-size-sm);
   }
 
-  /* A page's title gives way first; its site keeps up to a third of the row. */
-  .title:not(.site-name) + .host {
-    flex-shrink: 0;
-    max-width: 34%;
-  }
-
   .visits {
     flex-shrink: 0;
+    min-width: 40px;
     color: var(--text-muted);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-variant-numeric: tabular-nums;
+    text-align: right;
   }
 
   .badge {
@@ -538,13 +543,14 @@
     border-radius: var(--radius-chip);
     background: var(--text-primary-tint-10);
     color: var(--text-secondary);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-variant-numeric: tabular-nums;
   }
 
   .chevron {
     flex-shrink: 0;
-    color: var(--text-muted);
+    margin-inline: var(--space-4);
+    color: var(--text-secondary);
     transition: transform var(--transition-fast);
   }
 
@@ -554,24 +560,24 @@
 
   .time {
     flex-shrink: 0;
-    min-width: 64px;
+    min-width: 72px;
     color: var(--text-muted);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     font-variant-numeric: tabular-nums;
     text-align: right;
     white-space: nowrap;
   }
 
-  /* Hover trades the time for the row's actions; they keep its width so nothing shifts. */
+  /* Hover trades the visits and time for the row's actions; they keep a width so nothing shifts. */
   .actions {
     display: none;
     flex-shrink: 0;
     justify-content: flex-end;
-    gap: var(--space-2);
-    min-width: 64px;
+    gap: var(--space-4);
+    min-width: 72px;
   }
 
-  .row:hover:not(.selecting) .time {
+  .row:hover:not(.selecting) :is(.time, .visits) {
     display: none;
   }
 
@@ -597,19 +603,22 @@
     color: var(--text-primary);
   }
 
+  /* A site's pages hang under its name, on a guide line where the visual's column ends. */
   .nested-rows {
-    margin: 0 0 var(--space-4) 36px;
-    padding-left: var(--space-6);
+    margin: 0 0 var(--space-4) 46px;
+    padding-left: 0;
     border-left: 1px solid var(--separator);
   }
 
   .row.nested {
-    height: 32px;
+    min-height: 32px;
+    margin-left: 0;
+    padding-block: 4px;
+    padding-left: var(--space-16);
   }
 
   .row.nested .title {
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
   }
 
   .sentinel {

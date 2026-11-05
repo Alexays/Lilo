@@ -25,7 +25,16 @@
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
-  import { getSetting } from "../../stores/settings.svelte";
+  import { getSetting, setSetting } from "../../stores/settings.svelte";
+  import { hostOf } from "../../lib/url";
+  import {
+    arrangeRows,
+    nextStackHosts,
+    stackName,
+    type ArrangedRow,
+    type ArrangeEntry,
+    type RowType,
+  } from "./tabSectionModel";
   import { tabActions, folderActions, sidebarActions } from "../../lib/bridge/actions";
   import { openCommandBar, closeCommandBar } from "../../stores/commandBar.svelte";
   import {
@@ -56,6 +65,7 @@
     getVisibleFolderChildren,
     countVisibleFolderChildren,
     canNestFolder,
+    getConversationTab,
     type FolderState,
   } from "../../stores/folders.svelte";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
@@ -63,6 +73,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
+  import { isUndoRevealing } from "../../stores/undoToast.svelte";
 
   let {
     section,
@@ -123,16 +134,302 @@
     section,
     parentFolderId: null,
   });
-  const rootBaseItems = $derived(dndItemsForSidebarItems(rootItems, section));
+  // Site stacks and the agents and terminals trays: a view of the open tabs, their order untouched.
+  const stackTabs = $derived(!isPinned && getSetting("sidebarStackTabs", "true") !== "false");
+  const groupByType = $derived(!isPinned && getSetting("sidebarGroupByType", "false") === "true");
+  const neverStack = $derived(new Set(getSetting("sidebarNeverStack", "").split(",").filter(Boolean)));
+  const arrangeEntries = $derived.by((): ArrangeEntry[] => {
+    if (isPinned || (!stackTabs && !groupByType)) return [];
+    return rootItems.map((item) => {
+      if (item.kind === "folder") return { id: item.id, type: getConversationTab(item.id, spaceId) ? "agent" : "web", host: null };
+      const tab = tabsById.get(item.id);
+      const type: RowType = tab?.kind === "terminal" ? "terminal" : tab?.kind === "agent" ? "agent" : "web";
+      return { id: item.id, type, host: stackTabs && type === "web" ? hostOf(tab?.url) : null };
+    });
+  });
+
+  // Closing tabs never reshapes the list under the pointer: a stack dissolves once it leaves, unless
+  // the user changed how tabs stack. Only an opened tab forms a stack, and it joins at once.
+  let pointerInList = $state(false);
+  // Derived in the same pass as the rows, so tabs never show unstacked for a frame first.
+  let lastStackHosts: ReadonlySet<string> = new Set();
+  let stackSettings: string | null = null;
+  const stackHosts = $derived.by(() => {
+    let next = nextStackHosts(arrangeEntries, lastStackHosts, neverStack);
+    const settings = `${stackTabs}|${[...neverStack]}`;
+    if (pointerInList && settings === stackSettings) next = new Set([...lastStackHosts, ...next]);
+    stackSettings = settings;
+    if (next.size !== lastStackHosts.size || [...next].some((host) => !lastStackHosts.has(host))) lastStackHosts = next;
+    return lastStackHosts;
+  });
+
+  // How long a folder's rows take to rise in once it opens, their stagger included.
+  const FOLDER_EXPAND_MS = 340;
+
+  let openStacks = $state<ReadonlySet<string>>(new Set());
+  const foldedTraysKey = $derived(`sidebarFoldedTrays.${spaceId}`);
+  const foldedTrays = $derived(new Set(getSetting(foldedTraysKey, "").split(",").filter(Boolean)));
+
+  // A stack or a tray opens and closes like a folder, its rows in one shell that grows or folds
+  // whole: closing keeps them mounted through the fold, opening has them rise in as a folder's do.
+  let groupMotion: { key: string; open: boolean } | null = $state(null);
+  let groupMotionTimer: ReturnType<typeof setTimeout> | undefined;
+  function startGroupMotion(key: string, open: boolean): void {
+    groupMotion = { key, open };
+    clearTimeout(groupMotionTimer);
+    groupMotionTimer = setTimeout(() => (groupMotion = null), FOLDER_EXPAND_MS);
+  }
+  onDestroy(() => clearTimeout(groupMotionTimer));
+
+  function setStackOpen(host: string, open: boolean): void {
+    startGroupMotion(`stack:${host}`, open);
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- immutable copy reassigned to $state
+    const next = new Set(openStacks);
+    if (open) next.add(host);
+    else next.delete(host);
+    openStacks = next;
+  }
+
+  function setTrayFolded(tray: string, folded: boolean): void {
+    startGroupMotion(`tray:${tray}`, !folded);
+    const next = [...foldedTrays].filter((entry) => entry !== tray);
+    setSetting(foldedTraysKey, (folded ? [...next, tray] : next).join(","));
+  }
+
+  // The heads load once a list has a stack or a tray: most first frames have neither. Their slots
+  // keep the heads' 32px height meanwhile, so nothing moves when they land.
+  let heads = $state.raw<{
+    StackRow: typeof import("./TabStackRow.svelte").default;
+    TrayHeader: typeof import("./TabTrayHeader.svelte").default;
+  } | null>(null);
+  $effect(() => {
+    if (heads || !segments.some((segment) => segment.kind !== "row")) return;
+    void Promise.all([import("./TabStackRow.svelte"), import("./TabTrayHeader.svelte")]).then(([stack, tray]) => {
+      heads = { StackRow: stack.default, TrayHeader: tray.default };
+    });
+  });
+
+  const arranged = $derived(arrangeEntries.length > 0 ? arrangeRows(arrangeEntries, stackHosts, groupByType) : null);
+
+  // A stack opens on the tabs an undo puts back in it, so they come back in sight.
+  let seenRowIds: ReadonlySet<string> = new Set();
+  $effect(() => {
+    const rows = arranged ?? [];
+    if (isUndoRevealing()) {
+      const hosts = new Set(rows.flatMap((row) => (row.stack && !seenRowIds.has(row.id) ? [row.stack] : [])));
+      untrack(() => {
+        for (const host of hosts) if (!openStacks.has(host)) setStackOpen(host, true);
+      });
+    }
+    seenRowIds = new Set(rows.map((row) => row.id));
+  });
+
+  // A closed stack or a folded tray hides its rows; the active one stays out of a folded tray, and a
+  // closed stack shows it as its own face.
+  function rowShown(row: ArrangedRow): boolean {
+    if (row.id === activeTabId) return !row.stack || openStacks.has(row.stack);
+    if (row.type === "agent" && folderHolds(row.id, activeTabId)) return true;
+    if (row.tray && foldedTrays.has(row.tray)) return false;
+    return !row.stack || openStacks.has(row.stack);
+  }
+
+  // Same array while the shown rows stay the same: a new one would re-run the list's animated each.
+  let lastShownRootItems: typeof rootItems = [];
+  const shownRootItems = $derived.by(() => {
+    if (!arranged) return rootItems;
+    const byId = new Map(rootItems.map((item) => [item.id, item]));
+    const next = arranged.filter(rowShown).flatMap((row) => byId.get(row.id) ?? []);
+    const last = lastShownRootItems;
+    if (next.length === last.length && next.every((item, index) => item.id === last[index].id && item.kind === last[index].kind)) return last;
+    lastShownRootItems = next;
+    return next;
+  });
+
+  const stackInfo = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+    const info = new Map<string, { name: string; tabs: TabState[] }>();
+    for (const row of arranged ?? []) {
+      const tab = row.stack ? tabsById.get(row.id) : undefined;
+      if (!row.stack || !tab) continue;
+      const entry = info.get(row.stack) ?? { name: "", tabs: [] };
+      entry.tabs.push(tab);
+      info.set(row.stack, entry);
+    }
+    for (const [host, entry] of info) entry.name = stackName(entry.tabs.map((tab) => tab.title), host);
+    return info;
+  });
+
+  // An open stack is tinted with its site's color, read once off the favicon, as a folder is with its own.
+  let faviconColors = $state.raw<ReadonlyMap<string, string | undefined>>(new Map());
+  $effect(() => {
+    for (const host of openStacks) {
+      const src = stackInfo.get(host)?.tabs[0]?.faviconDataURL;
+      if (!src || faviconColors.has(src)) continue;
+      void faviconColor(src).then((color) => {
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity -- immutable copy reassigned to $state
+        faviconColors = new Map(faviconColors).set(src, color);
+      });
+    }
+  });
+
+  // The open stack a segment paints, once its color is known: the block then comes in whole.
+  function stackTintOf(segment: Segment): string | null {
+    const host = segment.kind === "stack" ? segment.host : segment.kind === "row" ? segment.stack : null;
+    if (!host || !openStacks.has(host)) return null;
+    const src = stackInfo.get(host)?.tabs[0]?.faviconDataURL;
+    return !src || faviconColors.has(src) ? host : null;
+  }
+
+  // The mean of the icon's colored pixels, each weighed by its saturation: a monochrome icon has none.
+  async function faviconColor(src: string): Promise<string | undefined> {
+    const image = new Image();
+    image.src = src;
+    await image.decode().catch(() => undefined);
+    const context = image.naturalWidth ? new OffscreenCanvas(16, 16).getContext("2d") : null;
+    if (!context) return undefined;
+    context.drawImage(image, 0, 0, 16, 16);
+    const data = context.getImageData(0, 0, 16, 16).data;
+    const sum = [0, 0, 0];
+    let weight = 0;
+    for (let index = 0; index < data.length; index += 4) {
+      const [red, green, blue, alpha] = [data[index], data[index + 1], data[index + 2], data[index + 3]];
+      const pixel = ((Math.max(red, green, blue) - Math.min(red, green, blue)) / 255) * (alpha / 255);
+      sum[0] += red * pixel;
+      sum[1] += green * pixel;
+      sum[2] += blue * pixel;
+      weight += pixel;
+    }
+    if (weight < 4) return undefined;
+    return `#${sum.map((channel) => Math.round(channel / weight).toString(16).padStart(2, "0")).join("")}`;
+  }
+
+  const trayTabs = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+    const tabs = new Map<string, TabState[]>();
+    for (const row of arranged ?? []) {
+      const tab = row.tray ? (getConversationTab(row.id, spaceId) ?? tabsById.get(row.id)) : undefined;
+      if (!row.tray || !tab) continue;
+      tabs.set(row.tray, [...(tabs.get(row.tray) ?? []), tab]);
+    }
+    return tabs;
+  });
+
+  const rootBaseItems = $derived(dndItemsForSidebarItems(shownRootItems, section));
   const rootZoneItems = $derived(getZoneItems(rootZone, rootBaseItems));
-  const rootZoneIsEmpty = $derived(rootZoneItems.length === 0);
+
+  type Tray = Exclude<RowType, "web">;
+  type Segment =
+    | { kind: "row"; key: string; entry: SidebarDndItem; tray: Tray | null; stack: string | null; trayEnd: boolean; stackEnd: boolean }
+    | { kind: "stack"; key: string; host: string; tray: Tray | null; trayEnd: boolean; stackEnd: boolean }
+    | { kind: "tray"; key: string; tray: Tray; trayEnd: boolean };
+
+  // The rows in display order with the heads of stacks and trays among them. The drop placeholder
+  // joins the stack or tray of the row above it.
+  let lastSegments: Segment[] = [];
+  let lastSegmentsSignature = "";
+  const segments = $derived.by((): Segment[] => {
+    const zone = rootZoneItems;
+    const row = (entry: SidebarDndItem, tray: Tray | null, stack: string | null): Segment =>
+      ({ kind: "row", key: sidebarDndKey(entry), entry, tray, stack, trayEnd: false, stackEnd: false });
+    let next: Segment[];
+    if (!arranged) {
+      next = zone.map((entry) => row(entry, null, null));
+    } else {
+      const shadow = zone.find(isShadowItem);
+      const shadowAfter = shadow ? (zone[zone.indexOf(shadow) - 1]?.id ?? null) : undefined;
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+      const unplaced = new Map(zone.filter((entry) => !isShadowItem(entry)).map((entry) => [entry.id, entry]));
+      next = shadow && shadowAfter === null ? [row(shadow, null, null)] : [];
+      let tray: Tray | null = null;
+      let stack: string | null = null;
+      const place = (entry: SidebarDndItem) => {
+        next.push(row(entry, tray, stack));
+        if (shadow && entry.id === shadowAfter) next.push(row(shadow, tray, stack));
+      };
+      for (const arrangedRow of arranged) {
+        if (arrangedRow.tray !== tray) {
+          tray = arrangedRow.tray;
+          stack = null;
+          if (tray) next.push({ kind: "tray", key: `tray:${tray}`, tray, trayEnd: false });
+        }
+        if (arrangedRow.stack !== stack) {
+          stack = arrangedRow.stack;
+          if (stack) next.push({ kind: "stack", key: `stack:${stack}`, host: stack, tray, trayEnd: false, stackEnd: false });
+        }
+        const entry = unplaced.get(arrangedRow.id);
+        if (!entry) continue;
+        unplaced.delete(arrangedRow.id);
+        place(entry);
+      }
+      tray = null;
+      stack = null;
+      // Rows the arrangement has not seen yet, as a tab dragged in from another section.
+      for (const entry of unplaced.values()) place(entry);
+      const stackOf = (segment: Segment | undefined) =>
+        segment?.kind === "stack" ? segment.host : segment?.kind === "row" ? segment.stack : null;
+      for (let index = 0; index < next.length; index += 1) {
+        const segment = next[index];
+        const trayEnd = !!segment.tray && next[index + 1]?.tray !== segment.tray;
+        const stackEnd = !!stackOf(segment) && stackOf(next[index + 1]) !== stackOf(segment);
+        if (segment.kind !== "tray" && (trayEnd || stackEnd)) next[index] = { ...segment, trayEnd, stackEnd };
+        else if (trayEnd) next[index] = { ...segment, trayEnd };
+      }
+    }
+    const signature = next.map((segment) => `${segment.key}|${segment.tray}|${segment.kind === "row" ? segment.stack : ""}|${segment.trayEnd}|${segment.kind !== "tray" && segment.stackEnd}`).join(",");
+    if (signature === lastSegmentsSignature) return lastSegments;
+    lastSegmentsSignature = signature;
+    lastSegments = next;
+    return next;
+  });
+
+  // The segments as the animated list draws them: a stack or a tray is one block, its head over
+  // a shell holding its rows, like a folder.
+  type RowSegment = Extract<Segment, { kind: "row" }>;
+  type GroupHead = Exclude<Segment, RowSegment>;
+  type Block = { kind: "row"; key: string; segment: RowSegment } | { kind: "group"; key: string; head: GroupHead; rows: RowSegment[] };
+  const blocks = $derived.by((): Block[] => {
+    const next: Block[] = [];
+    let group: Extract<Block, { kind: "group" }> | null = null;
+    for (const segment of segments) {
+      if (segment.kind !== "row") {
+        group = { kind: "group", key: segment.key, head: segment, rows: [] };
+        next.push(group);
+      } else if (group && group.key === (segment.stack ? `stack:${segment.stack}` : `tray:${segment.tray}`)) {
+        group.rows.push(segment);
+      } else {
+        group = null;
+        next.push({ kind: "row", key: segment.key, segment });
+      }
+    }
+    return next;
+  });
+
+  function groupOpen(head: GroupHead): boolean {
+    return head.kind === "stack" ? openStacks.has(head.host) : !foldedTrays.has(head.tray);
+  }
+
+  // A folding group's rows, out of the list already, drawn on through the fold; the active one
+  // stays shown above the shell.
+  function foldingRows(block: Extract<Block, { kind: "group" }>): SidebarDndItem[] {
+    const shown = new Set(block.rows.map((row) => row.entry.id));
+    const head = block.head;
+    const ids = new Set(
+      (arranged ?? [])
+        .filter((row) => (head.kind === "stack" ? row.stack === head.host : row.tray === head.tray) && !shown.has(row.id))
+        .map((row) => row.id),
+    );
+    return dndItemsForSidebarItems(rootItems.filter((item) => ids.has(item.id)), section);
+  }
+  // A closed stack's or a folded tray's head is all a list may show: it is not empty then.
+  const listIsEmpty = $derived(segments.length === 0);
   const rootHasShadow = $derived(rootZoneItems.some(isShadowItem));
   const recentlyDraggedId = $derived(getRecentlyDroppedId());
 
   const activeTab = $derived(getActiveTab(spaceId));
   // Native keeps the archive of the window's Space only.
   const isNewTabActive = $derived(isBlankTab(activeTab));
-  const showNewTabRow = $derived(!isPinned && interactive && !isNewTabActive);
+  // Not gated on `interactive` either: the Space sliding away keeps its row through the swipe.
+  const showNewTabRow = $derived(!isPinned && !isNewTabActive);
   // Not gated on `interactive`: a neighbour pane must lay out like the active one, or its
   // divider pops in the moment its Space becomes active.
   const canClear = $derived(!isPinned && rootItems.some((item) => item.kind === "tab"));
@@ -144,6 +441,16 @@
   const pinnedDividerHidden = $derived(pinnedRootCount === 0 && !dragActive);
   const folderContentUnmountDelayMs = MOTION.folderCollapseMs;
   let renamingFolderId: string | null = $state(null);
+  // The color picked in a folder's editor, painted on its block and rail before it is applied, and kept until the
+  // applied color comes back from native so the block never flashes its old color.
+  let draftFolderColor: { id: string; color: string } | null = $state(null);
+  const shownFolderColor = (folder: FolderState | undefined): string | undefined =>
+    folder && draftFolderColor?.id === folder.id ? draftFolderColor.color : folder?.color;
+  $effect(() => {
+    if (draftFolderColor && renamingFolderId !== draftFolderColor.id && foldersById.get(draftFolderColor.id)?.color === draftFolderColor.color) {
+      draftFolderColor = null;
+    }
+  });
   const editingTab = $derived(interactive ? getEditingTab() : null);
   let tabListBodyEl: HTMLDivElement | undefined = $state();
   let tabListEl: HTMLDivElement | undefined = $state();
@@ -155,16 +462,15 @@
   const VIRTUAL_BUFFER_PX = 320;
   // The window moves in steps of this many pixels, so a scroll frame inside a step re-renders nothing.
   const VIRTUAL_WINDOW_STEP_PX = 160;
-  // Mirror the row CSS (28px rows, 2px --sidebar-tab-row-gap, 2px folder-contents
-  // top margin, 26px empty-folder placeholder); the buffer absorbs small drift.
-  const VIRTUAL_ROW_H = 28;
+  // Mirror the row CSS (32px rows, 2px --sidebar-tab-row-gap, the same gap above a folder's
+  // contents, 32px empty-folder placeholder); the buffer absorbs small drift.
+  const VIRTUAL_ROW_H = 32;
   const VIRTUAL_ROW_GAP = 2;
   const VIRTUAL_FOLDER_TOP_MARGIN = 2;
-  const VIRTUAL_EMPTY_FOLDER_H = 26;
+  const VIRTUAL_FOLDER_INSET = 4;
+  const VIRTUAL_EMPTY_FOLDER_H = 32;
 
-  type ListSegment =
-    | { spacer: true; key: string; height: number }
-    | { spacer: false; key: string; entry: SidebarDndItem };
+  type ListSegment = Segment | { kind: "spacer"; key: string; height: number };
 
   // How far the list's top sits above the shared scroller's viewport top, floored to a window step.
   let listScrollTop = $state(0);
@@ -172,7 +478,7 @@
   const listWindowFrame = createFrameScheduler();
 
   const virtualize = $derived(
-    !isPinned && !dragActive && rootZoneItems.length > VIRTUALIZE_MIN_ROWS,
+    !isPinned && !dragActive && segments.length > VIRTUALIZE_MIN_ROWS,
   );
 
   // The panes of a split in reading order, stacked one row each in the sidebar.
@@ -235,7 +541,7 @@
       if (entry.kind !== "folder") continue;
       const folder = foldersById.get(entry.id);
       if (!folder || folder.splitLayout || folder.isCollapsed || folder.isSplit) continue;
-      const height = openFolderHeight(entry.id);
+      const height = openFolderHeight(entry.id) + (getConversationTab(entry.id, spaceId) ? 0 : VIRTUAL_FOLDER_INSET);
       heights.set(entry.id, height);
       if (lastExpandedFolderHeights.get(entry.id) !== height) changed = true;
     }
@@ -250,7 +556,7 @@
     if (!virtualize) return null;
     const minY = listScrollTop - VIRTUAL_BUFFER_PX;
     const maxY = listScrollTop + VIRTUAL_WINDOW_STEP_PX + scrollerHeight + VIRTUAL_BUFFER_PX;
-    const segments: ListSegment[] = [];
+    const shown: ListSegment[] = [];
     let top = 0;
     let hiddenHeight = 0;
     let hiddenCount = 0;
@@ -259,28 +565,30 @@
       if (hiddenCount === 0) return;
       // The flex gap supplies the boundary gaps around the spacer, so it only
       // carries the hidden rows' own heights plus the gaps between them.
-      segments.push({
-        spacer: true,
+      shown.push({
+        kind: "spacer",
         key: `spacer-${spacerOrdinal++}`,
         height: hiddenHeight + (hiddenCount - 1) * VIRTUAL_ROW_GAP,
       });
       hiddenHeight = 0;
       hiddenCount = 0;
     };
-    for (const entry of rootZoneItems) {
-      const height = estimatedRowHeight(entry);
+    for (const segment of segments) {
+      const entry = segment.kind === "row" ? segment.entry : null;
+      const height = entry ? estimatedRowHeight(entry) : VIRTUAL_ROW_H;
       // The active and focused rows stay mounted wherever the scroll sits, so
       // tab switching and keyboard focus never land on an unmounted row. Hidden
       // children count too: keeping one extra folder mounted is harmless.
       const keep =
         (top + height >= minY && top <= maxY) ||
-        entry.id === activeTabId ||
-        entry.id === focusedItemId ||
-        (entry.kind === "folder" &&
-          (folderHolds(entry.id, activeTabId) || folderHolds(entry.id, focusedItemId)));
+        (entry !== null &&
+          (entry.id === activeTabId ||
+            entry.id === focusedItemId ||
+            (entry.kind === "folder" &&
+              (folderHolds(entry.id, activeTabId) || folderHolds(entry.id, focusedItemId)))));
       if (keep) {
         flushSpacer();
-        segments.push({ spacer: false, key: sidebarDndKey(entry), entry });
+        shown.push(segment);
       } else {
         hiddenHeight += height;
         hiddenCount += 1;
@@ -288,7 +596,7 @@
       top += height + VIRTUAL_ROW_GAP;
     }
     flushSpacer();
-    return segments;
+    return shown;
   });
 
   function handleListFocusIn(event: FocusEvent): void {
@@ -419,7 +727,7 @@
       const next = new Set(expandingFolderIds);
       next.delete(folderId);
       expandingFolderIds = next;
-    }, 340));
+    }, FOLDER_EXPAND_MS));
   }
 
   $effect(() => {
@@ -540,8 +848,10 @@
       zoneTop: context.zone.rect.top,
       zoneBottom: context.zone.rect.bottom,
       isCollapsed: folder.isCollapsed,
+      // A tab dropped on a conversation is not filed into it; its own pages still reorder.
       refusesDrag:
         folder.isLocked === true ||
+        (getConversationTab(folderId, spaceId) !== undefined && parentFolderIdById.get(source.id) !== folderId) ||
         (source.kind === "folder" && !canNestFolder(source.id, folderId, spaceId)),
       dragKind: source.kind,
       rows: folderTargetRows(context),
@@ -600,11 +910,15 @@
 
   function commitRename(folder: FolderState, name: string, color: string): void {
     renamingFolderId = null;
+    draftFolderColor = color === folder.color ? null : { id: folder.id, color };
     folderActions.update({ id: folder.id, name, color });
   }
 
+  // A conversation's own tab is its folder's row, not one of its children.
   function visibleChildren(folderId: string) {
-    return getVisibleFolderChildren(folderId, spaceId, isPinned, tabsById);
+    const children = getVisibleFolderChildren(folderId, spaceId, isPinned, tabsById);
+    const conversation = getConversationTab(folderId, spaceId);
+    return conversation ? children.filter((child) => child.id !== conversation.id) : children;
   }
 
   const parentFolderIdById = $derived(getSpaceSidebar(spaceId).view.treeIndex.parentFolderIdById);
@@ -670,7 +984,7 @@
       anchors = anchorsAt(others, index + 1);
     } else if (key === "ArrowRight" && items[index - 1]?.kind === "folder") {
       const target = foldersById.get(items[index - 1].id);
-      if (!target || target.isSplit || target.isLocked) return;
+      if (!target || target.isSplit || target.isLocked || getConversationTab(target.id, spaceId)) return;
       if (kind === "folder" && !canNestFolder(id, target.id, spaceId)) return;
       const children = visibleChildren(target.id);
       parentFolderId = target.id;
@@ -769,7 +1083,7 @@
 
 </script>
 
-{#snippet rootItemContent(entry: SidebarDndItem)}
+{#snippet rootItemContent(entry: SidebarDndItem, stack: string | null)}
   {#if isShadowItem(entry)}
     <div
       class="sidebar-dnd-placeholder"
@@ -815,6 +1129,20 @@
       {@const tab = tabsById.get(entry.id)}
       {#if tab && editingTab?.id === tab.id}
         <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
+      {:else if tab && stack}
+        <div class="indented-tab-wrapper">
+          <TabItem
+            {tab}
+            isActive={tab.id === activeTabId}
+            interactive={interactive}
+            disableTooltip={dragActive}
+            actionsInert={dragActive}
+            splitDropTarget={splitDropTabId === tab.id}
+            level={2}
+            stackName={stackInfo.get(stack)?.name}
+            tabStop={tab.id === tabStopId}
+          />
+        </div>
       {:else if tab}
         <TabItem
           {tab}
@@ -830,13 +1158,16 @@
 {/snippet}
 
 <!-- `shown`: every folder above this one is open. Subfolders render through this same snippet,
-     one indent and one branch of their parent's line deeper. -->
+     one indent deeper. -->
 {#snippet folderBlock(folder: FolderState, shown: boolean, level: number)}
-  {@const childZoneEntries = childZoneItems(folder.id, visibleChildren(folder.id))}
+  {@const conversation = getConversationTab(folder.id, spaceId)}
+  {@const children = visibleChildren(folder.id)}
+  {@const childZoneEntries = childZoneItems(folder.id, children)}
   {@const childrenShown = shown && !folder.isCollapsed}
 
   <div
     class="folder-drop-zone"
+    class:conversation={!!conversation}
     use:dndZone={{
       id: folderZone(folder.id).id,
       axis: "vertical",
@@ -858,6 +1189,22 @@
       class="folder-header-drop"
       class:drop-into={sidebarDrag?.intoCollapsedFolder && sidebarDrag.target?.parentFolderId === folder.id}
     >
+      {#if conversation}
+        <!-- Loaded with the first conversation, out of the chrome's first frame. -->
+        {#await import("./ConversationRow.svelte") then { default: ConversationRow }}
+        <ConversationRow
+          {folder}
+          tab={conversation}
+          pageCount={children.length}
+          isActive={conversation.id === activeTabId}
+          interactive={interactive && shown}
+          {level}
+          tabStop={folder.id === tabStopId}
+          onCollapse={(collapsed) => folderActions.setCollapsed(folder.id, collapsed)}
+          onContextMenu={(rect) => folderActions.showContextMenu(folder.id, rect.left, rect.top, rect.width, rect.height)}
+        />
+        {/await}
+      {:else}
       <TabFolderItem
         {folder}
         isRenaming={renamingFolderId === folder.id}
@@ -868,10 +1215,15 @@
           folderActions.setCollapsed(folder.id, collapsed)}
         onRename={() => (renamingFolderId = folder.id)}
         onRenameCommit={({ name, color }) => commitRename(folder, name, color)}
-        onRenameCancel={() => (renamingFolderId = null)}
+        onRenameCancel={() => {
+          renamingFolderId = null;
+          draftFolderColor = null;
+        }}
+        onDraftColor={(color) => (draftFolderColor = { id: folder.id, color })}
         onDelete={() => folderActions.delete(folder.id)}
         onContextMenu={(rect) => folderActions.showContextMenu(folder.id, rect.left, rect.top, rect.width, rect.height)}
       />
+      {/if}
     </div>
 
     <div
@@ -886,6 +1238,7 @@
         {#if shouldRenderFolderContents(folder)}
           <div
             class="folder-contents"
+            class:conversation-contents={!!conversation}
             role="group"
             class:drag-active={dragActive}
             class:is-empty={childZoneEntries.length === 0}
@@ -919,7 +1272,7 @@
                   <div
                     class="indented-tab-wrapper"
                     class:folder-open-rail={!childFolder.isCollapsed}
-                    style={folderColorStyle(childFolder.color)}
+                    style={folderColorStyle(shownFolderColor(childFolder))}
                   >
                     {@render folderBlock(childFolder, childrenShown, level + 1)}
                   </div>
@@ -944,7 +1297,7 @@
                 {/if}
               </div>
             {/each}
-            {#if childZoneEntries.length === 0}
+            {#if childZoneEntries.length === 0 && !conversation}
               <div class="folder-empty-placeholder">{t("tabSection.folderEmpty")}</div>
             {/if}
           </div>
@@ -1002,6 +1355,7 @@
       <div class="new-tab-line" bind:this={newTabLineEl}>
         <button
           class="new-tab-row"
+          disabled={!interactive}
           use:tooltip={{ text: t("tabSection.newTab"), shortcut: shortcutKeys("tab.new") }}
           onclick={toggleNewTab}
         >
@@ -1021,28 +1375,82 @@
             </svg>
           </button>
         {/if}
+        {#if getSetting("agentsEnabled", "false") === "true"}
+          <!-- Sized up front, so the row holds still while the badge's chunk loads. -->
+          <span class="new-agents-slot">
+            {#await import("../agents/AgentsBadge.svelte") then badge}
+              <badge.default row />
+            {/await}
+          </span>
+        {/if}
       </div>
     {/if}
   {/if}
 {/snippet}
 
-{#snippet virtualRow(entry: SidebarDndItem)}
+{#snippet segmentHead(segment: Segment)}
+  {#if !heads}
+    <!-- The slot holds the head's height until it loads. -->
+  {:else if segment.kind === "tray"}
+    {@const folded = foldedTrays.has(segment.tray)}
+    <heads.TrayHeader
+      tray={segment.tray}
+      {folded}
+      tabs={trayTabs.get(segment.tray) ?? []}
+      {interactive}
+      tabStop={false}
+      onToggle={(next) => setTrayFolded(segment.tray, next)}
+    />
+  {:else if segment.kind === "stack"}
+    {@const info = stackInfo.get(segment.host)}
+    {#if info}
+      {@const open = openStacks.has(segment.host)}
+      <heads.StackRow
+        name={info.name}
+        tabs={info.tabs}
+        face={open ? undefined : info.tabs.find((tab) => tab.id === activeTabId)}
+        {open}
+        {interactive}
+        tabStop={false}
+        onToggle={(next) => setStackOpen(segment.host, next)}
+        onClose={() => tabActions.closeMany(info.tabs.map((tab) => tab.id))}
+        onContextMenu={(rect) => folderActions.showStackContextMenu(info.tabs.map((tab) => tab.id), segment.host, info.name, rect)}
+      />
+    {/if}
+  {/if}
+{/snippet}
+
+<!-- Rows and the heads of stacks and trays share one slot: a head is a disabled drag item, so it
+     moves with the list but is never picked up nor hit tested (it is not in the zone's items).
+     The animated list below repeats this markup: animate: must sit on the each's own child. -->
+{#snippet slot(segment: Segment, entry: SidebarDndItem)}
   {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
+  {@const stackTint = stackTintOf(segment)}
   <div
-    class={slotClass}
+    class={segment.kind === "row" ? slotClass : "group-head-slot"}
+    class:in-tray={!!segment.tray}
+    class:tray-head={segment.kind === "tray"}
+    class:tray-end={segment.trayEnd}
+    class:stack-block={!!stackTint}
+    class:stack-head={!!stackTint && segment.kind === "stack"}
+    class:stack-end={!!stackTint && segment.kind !== "tray" && segment.stackEnd}
     class:recent-drop={entry.id === recentlyDraggedId}
     class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
     data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-    style={entry.kind === "folder" ? folderColorStyle(entryFolder?.color) : undefined}
+    style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : stackTint ? folderColorStyle(faviconColors.get(stackInfo.get(stackTint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
     use:dndItem={{
       item: entry,
       zoneId: rootZone.id,
-      disabled: isShadowItem(entry) || !interactive,
+      disabled: segment.kind !== "row" || isShadowItem(entry) || !interactive,
       onCancel: resetSidebarDrag,
       onDropOutsideWindow: moveTabOutOfWindow,
     }}
   >
-    {@render rootItemContent(entry)}
+    {#if segment.kind === "row"}
+      {@render rootItemContent(entry, segment.stack)}
+    {:else}
+      {@render segmentHead(segment)}
+    {/if}
   </div>
 {/snippet}
 
@@ -1051,37 +1459,114 @@
     <!-- Windowed: no animate:flip or transitions; FLIP is duration-0 at this
          list size anyway, and rows entering the window must not slide in. -->
     {#each listSegments as segment (segment.key)}
-      {#if segment.spacer}
+      {#if segment.kind === "spacer"}
         <div
           class="virtual-spacer"
           style:height={`${segment.height}px`}
           aria-hidden="true"
         ></div>
       {:else}
-        {@render virtualRow(segment.entry)}
+        {@render slot(segment, segment.kind === "row" ? segment.entry : { id: segment.key, kind: "tab", section, parentFolderId: null })}
       {/if}
     {/each}
   {:else}
-    {#each rootZoneItems as entry (sidebarDndKey(entry))}
+    {#each blocks as block (block.key)}
+      {@const entry = block.kind === "row" ? block.segment.entry : { id: block.key, kind: "tab" as const, section, parentFolderId: null }}
       {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
+      {@const head = block.kind === "group" ? block.head : null}
+      {@const tint = head?.kind === "stack" ? stackTintOf(head) : null}
+      <!-- A row's slot, or a group's block: animate: needs one element per entry. -->
       <div
         animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
         in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
         out:tabSlide={itemMotion(entry, MOTION.itemExitMs)}
-        class={slotClass}
+        class={head ? "group-block" : slotClass}
+        class:tray-block={head?.kind === "tray"}
+        class:stack-open={!!tint}
         class:recent-drop={entry.id === recentlyDraggedId}
         class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
         data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-        style={entry.kind === "folder" ? folderColorStyle(entryFolder?.color) : undefined}
+        style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint ? folderColorStyle(faviconColors.get(stackInfo.get(tint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
         use:dndItem={{
           item: entry,
           zoneId: rootZone.id,
-          disabled: isShadowItem(entry) || !interactive,
+          disabled: !!head || isShadowItem(entry) || !interactive,
           onCancel: resetSidebarDrag,
           onDropOutsideWindow: moveTabOutOfWindow,
         }}
       >
-        {@render rootItemContent(entry)}
+        {#if block.kind === "row"}
+          {@render rootItemContent(entry, null)}
+        {:else if head}
+          {@const open = groupOpen(head)}
+          {@const motion = groupMotion?.key === block.key ? groupMotion : null}
+          <div class="group-head-slot">
+            {@render segmentHead(head)}
+          </div>
+          {#if !open}
+            <!-- What a folded tray keeps shown: its active row. -->
+            {#each block.rows as row (row.key)}
+              <div
+                class={slotClass}
+                use:dndItem={{
+                  item: row.entry,
+                  zoneId: rootZone.id,
+                  disabled: isShadowItem(row.entry) || !interactive,
+                  onCancel: resetSidebarDrag,
+                  onDropOutsideWindow: moveTabOutOfWindow,
+                }}
+              >
+                {@render rootItemContent(row.entry, null)}
+              </div>
+            {/each}
+          {/if}
+          <div
+            class="folder-contents-shell"
+            class:open
+            class:collapsed={!open}
+            class:expanding={motion?.open}
+            aria-hidden={!open}
+            style={`--folder-collapse-duration: ${folderContentUnmountDelayMs}ms;`}
+          >
+            <div class="folder-contents-clip">
+              {#if open}
+                <div class="folder-contents" role="group">
+                  {#each block.rows as row, rowIndex (row.key)}
+                    {@const rowEntry = row.entry}
+                    {@const rowFolder = rowEntry.kind === "folder" ? foldersById.get(rowEntry.id) : undefined}
+                    <div
+                      animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(rowEntry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
+                      in:tabSlide={motion ? { disabled: true } : itemMotion(rowEntry, MOTION.itemEnterMs)}
+                      out:tabSlide={motion ? { disabled: true } : itemMotion(rowEntry, MOTION.itemExitMs)}
+                      class="{slotClass} child-tab-wrapper"
+                      class:recent-drop={rowEntry.id === recentlyDraggedId}
+                      class:folder-open-rail={rowEntry.kind === "folder" && !!rowFolder && !rowFolder.isCollapsed && !rowFolder.isSplit}
+                      data-is-dnd-shadow-item-hint={isShadowItem(rowEntry)}
+                      style={`--folder-child-index: ${Math.min(rowIndex, 6)};${rowEntry.kind === "folder" ? folderColorStyle(shownFolderColor(rowFolder)) : ""}`}
+                      use:dndItem={{
+                        item: rowEntry,
+                        zoneId: rootZone.id,
+                        disabled: isShadowItem(rowEntry) || !interactive,
+                        onCancel: resetSidebarDrag,
+                        onDropOutsideWindow: moveTabOutOfWindow,
+                      }}
+                    >
+                      {@render rootItemContent(rowEntry, row.stack)}
+                    </div>
+                  {/each}
+                </div>
+              {:else if motion}
+                <div class="folder-contents" role="group">
+                  {#each foldingRows(block) as folding (sidebarDndKey(folding))}
+                    <div class="{slotClass} child-tab-wrapper">
+                      {@render rootItemContent(folding, head.kind === "stack" ? head.host : null)}
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          </div>
+        {/if}
       </div>
     {/each}
   {/if}
@@ -1099,7 +1584,7 @@
       <div
         class="pinned-list"
         class:drag-active={dragActive && hasTabs}
-        class:is-empty={rootZoneIsEmpty}
+        class:is-empty={listIsEmpty}
         class:has-shadow={rootHasShadow}
         class:idle-empty={!hasTabs}
         class:pinned-transfer-target={pinnedTransferTargetActive}
@@ -1127,7 +1612,7 @@
     </div>
   </div>
 {:else}
-  <div class="tab-list-shell">
+  <div class="tab-list-shell" role="none" onpointerenter={() => (pointerInList = true)} onpointerleave={() => (pointerInList = false)}>
     <div
       class="tab-list-body"
       class:has-pinned-divider={showPinnedDivider}
@@ -1150,6 +1635,8 @@
           class="pinned-tab-divider-shell"
           class:pinned-transfer-gate={pinnedTransferGateActive}
           class:collapsed={pinnedDividerHidden}
+          class:with-actions={!dragActive && !pinnedDividerHidden}
+          class:with-clear={canClear}
         >
           <div
             class="pinned-tab-divider"
@@ -1158,17 +1645,33 @@
             class:hidden-line={pinnedDividerHidden}
             aria-hidden="true"
           ></div>
+          {#if !dragActive && !pinnedDividerHidden}
+            <button
+              class="divider-action list-options"
+              disabled={!interactive}
+              use:tooltip={{ text: t("tabSection.listOptions") }}
+              aria-label={t("tabSection.listOptions")}
+              onclick={(event) => sidebarActions.showTabListMenu(spaceId, event.currentTarget.getBoundingClientRect())}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true">
+                <path class="sort-line" d="M1.5 3h9" />
+                <path class="sort-line" d="M3 6h6" />
+                <path class="sort-line" d="M4.75 9h2.5" />
+              </svg>
+            </button>
+          {/if}
           {#if canClear && !dragActive && !pinnedDividerHidden}
             <button
-              class="clear-unpinned"
+              class="divider-action clear-unpinned"
               disabled={!interactive}
               use:tooltip={{ text: t("tabSection.clearUnpinnedTooltip"), shortcut: shortcutKeys("tab.clearUnpinned") }}
               aria-label={t("tabSection.clearUnpinnedTooltip")}
               onclick={() => tabActions.clearUnpinned()}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="1" y="2" width="10" height="2.5" rx="0.8" />
-                <path d="M2 4.5v4.5a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.5M4.75 6.75h2.5" />
+                <rect class="archive-lid" x="1" y="2" width="10" height="2.5" rx="0.8" />
+                <path d="M2 4.5v4.5a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.5" />
+                <path class="archive-slot" d="M4.75 6.75h2.5" />
               </svg>
             </button>
           {/if}
@@ -1179,7 +1682,7 @@
         class="tab-list"
         bind:this={tabListEl}
         class:drag-active={dragActive}
-        class:is-empty={rootZoneIsEmpty}
+        class:is-empty={listIsEmpty}
         class:pinned-transfer-source={pinnedTransferSourceActive}
         role="tree"
         tabindex="-1"
@@ -1205,7 +1708,7 @@
   .pinned-section-body {
     display: grid;
     gap: 6px;
-    padding: 4px var(--sidebar-right-pad, 10px) 4px 10px;
+    padding: 4px var(--sidebar-right-pad, 8px) 4px 8px;
     box-sizing: border-box;
     transition: padding 150ms var(--motion-ease-spring);
   }
@@ -1252,8 +1755,8 @@
   }
 
   .pinned-list.drag-active.is-empty {
-    height: 28px;
-    min-height: 28px;
+    height: 32px;
+    min-height: 32px;
     overflow: hidden;
     border-color: transparent;
     background: transparent;
@@ -1324,7 +1827,7 @@
 
   .tab-list-body {
     position: relative;
-    padding: 4px var(--sidebar-right-pad, 10px) 4px 10px;
+    padding: 4px var(--sidebar-right-pad, 8px) 4px 8px;
   }
 
   .tab-list-body.has-pinned-divider {
@@ -1353,7 +1856,7 @@
   }
 
   .tab-list.drag-active.is-empty {
-    min-height: 28px;
+    min-height: 32px;
     opacity: 1;
     transform: scaleY(1);
     overflow: hidden;
@@ -1368,6 +1871,90 @@
   .tab-drop-slot {
     position: relative;
     min-width: 0;
+  }
+
+  /* A tray is one tinted card: its head and rows paint it, rounded at its two ends. */
+  .in-tray {
+    background: var(--text-primary-tint-10);
+  }
+
+  .tray-head {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  /* The rows' gap would cut a card into strips: each row but the last paints it too. */
+  .in-tray:not(.tray-end) {
+    box-shadow: 0 var(--sidebar-tab-row-gap) 0 var(--text-primary-tint-10);
+  }
+
+  .in-tray.tray-end {
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+
+  .tray-head.tray-end {
+    border-radius: var(--radius-md);
+  }
+
+  .tab-drop-slot {
+    transition:
+      background var(--motion-duration-normal) ease,
+      box-shadow var(--motion-duration-normal) ease;
+  }
+
+  /* A head squares its bottom corners as the rows grow in under it, so an opening block never shows a square
+     edge. */
+  .group-head-slot {
+    transition:
+      background var(--motion-duration-normal) ease,
+      box-shadow var(--motion-duration-normal) ease,
+      border-radius var(--motion-duration-fast) ease-out;
+  }
+
+  /* No specificity, so a block's own corners win. */
+  :where(.group-head-slot) {
+    border-radius: var(--radius-md);
+  }
+
+  /* A stack or a tray as the animated list draws it: one block like a folder, tinted whole. */
+  .group-block {
+    min-width: 0;
+    border-radius: var(--radius-md);
+    transition: background var(--motion-duration-normal) ease;
+  }
+
+  .group-block.tray-block {
+    background: var(--text-primary-tint-10);
+  }
+
+  .group-block.stack-open {
+    background: var(--folder-open-bg);
+  }
+
+  /* An open stack is one block like an open folder, painted by its head and rows. */
+  .stack-block {
+    background: var(--folder-open-bg);
+  }
+
+  .stack-block:not(.stack-end) {
+    box-shadow: 0 var(--sidebar-tab-row-gap) 0 var(--folder-open-bg);
+  }
+
+  .stack-block.stack-head {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  .stack-block.stack-end {
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+
+  .stack-block.stack-head.stack-end {
+    border-radius: var(--radius-md);
+  }
+
+  .group-head-slot {
+    position: relative;
+    min-width: 0;
+    min-height: 32px;
   }
 
   .virtual-spacer {
@@ -1394,65 +1981,31 @@
     transition: background var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
-  /* Child combinator: an open subfolder draws its lines in its own color. */
+  /* One tinted block per open root folder, the only mark of what it holds: subfolders inside it show through. */
   .folder-open-rail > .folder-drop-zone {
-    --folder-rail-color: color-mix(in srgb, var(--folder-accent) 58%, var(--text-primary) 14%);
     background: var(--folder-open-bg);
   }
 
-  /* One tinted block per root folder: subfolders inside it show through their lines alone. */
-  .indented-tab-wrapper.folder-open-rail > .folder-drop-zone {
+  /* The tinted block holds its rows 4px in from its right and bottom edges, as the head's indent does on the left. */
+  .folder-open-rail:not(.indented-tab-wrapper) > .folder-drop-zone:not(.conversation) > .folder-contents-shell > .folder-contents-clip > .folder-contents {
+    padding-right: 4px;
+    padding-bottom: 4px;
+  }
+
+  .indented-tab-wrapper.folder-open-rail > .folder-drop-zone,
+  .folder-open-rail > .folder-drop-zone.conversation {
     background: none;
   }
 
-  /* The trunk drops from the folder glyph's left edge (centered on the favicon column) so
-     children only indent 12px. Middle children draw a straight trunk plus a tick, the last one
-     an L, so no strokes overlap. */
-  .folder-open-rail .child-tab-wrapper::before,
-  .folder-open-rail .child-tab-wrapper:not(:last-child)::after {
+  /* A conversation's pages hang on one straight violet rail under the agent's tile. */
+  .folder-open-rail .conversation-contents > .child-tab-wrapper::before {
     content: "";
     position: absolute;
-    pointer-events: none;
-  }
-
-  .folder-open-rail .child-tab-wrapper::before {
-    left: 7.5px;
-    top: calc(-1 * var(--sidebar-tab-row-gap));
+    left: 15px;
+    top: 0;
     bottom: 0;
-    border-left: 1px solid var(--folder-rail-color);
-  }
-
-  .folder-open-rail .child-tab-wrapper:first-child::before {
-    top: -9px;
-  }
-
-  .folder-open-rail .child-tab-wrapper:not(:last-child)::after {
-    left: 8.5px;
-    top: calc(50% - 0.5px);
-    width: 8px;
-    border-top: 1px solid var(--folder-rail-color);
-  }
-
-  .folder-open-rail .child-tab-wrapper:last-child::before {
-    bottom: calc(50% - 0.5px);
-    width: 9px;
-    border-bottom: 1px solid var(--folder-rail-color);
-    border-bottom-left-radius: var(--radius-sm);
-  }
-
-  /* A subfolder's branch meets its header row, not the middle of its open block. */
-  .folder-open-rail .child-tab-wrapper.child-folder:not(:last-child)::after {
-    top: 13.5px;
-  }
-
-  .folder-open-rail .child-tab-wrapper.child-folder:last-child::before {
-    bottom: calc(100% - 14.5px);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .folder-open-rail > .folder-drop-zone {
-      --folder-rail-color: color-mix(in srgb, var(--folder-accent) 62%, var(--text-primary) 12%);
-    }
+    border-left: 2px solid color-mix(in srgb, var(--agents) 70%, transparent);
+    pointer-events: none;
   }
 
   .folder-header-drop {
@@ -1498,7 +2051,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--sidebar-tab-row-gap);
-    margin-top: 2px;
+    padding-top: var(--sidebar-tab-row-gap);
     min-width: 0;
     overflow: hidden;
   }
@@ -1509,15 +2062,15 @@
   }
 
   .folder-contents.drag-active.is-empty {
-    min-height: 26px;
+    min-height: 32px;
   }
 
   .folder-empty-placeholder {
-    margin-left: 12px;
-    height: 26px;
+    margin-left: 24px;
+    height: 32px;
     display: flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 8px;
     box-sizing: border-box;
     color: var(--text-muted);
     font-size: var(--font-size-sm);
@@ -1526,6 +2079,7 @@
     background: color-mix(in srgb, var(--folder-accent, var(--text-primary)) 5%, transparent);
   }
 
+  /* Children's icons line up under their folder's title: a 16px icon and its 8px gap. */
   .indented-tab-wrapper {
     width: 100%;
     min-width: 0;
@@ -1567,7 +2121,7 @@
   }
 
   .sidebar-dnd-placeholder {
-    height: 28px;
+    height: 32px;
     width: 100%;
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--text-primary) 18%, transparent);
@@ -1592,14 +2146,13 @@
   }
 
   .sidebar-dnd-placeholder.folder {
-    margin-left: 12px;
-    width: calc(100% - 12px);
+    margin-left: 24px;
+    width: calc(100% - 24px);
   }
 
   .new-tab-line {
     display: flex;
     align-items: center;
-    gap: 2px;
   }
 
   .new-tab-row {
@@ -1608,8 +2161,8 @@
     gap: 8px;
     flex: 1;
     min-width: 0;
-    height: 28px;
-    padding: 6px;
+    height: 32px;
+    padding: 0 8px;
     border: none;
     background: none;
     color: var(--text-muted);
@@ -1623,6 +2176,11 @@
       color var(--transition-fast);
   }
 
+  /* The buttons after it keep the label off the edge, so its last 8 px go to the label in long locales. */
+  .new-tab-row:not(:last-child) {
+    padding-right: 0;
+  }
+
   .tab-list:not(:empty) + .new-tab-line {
     margin-top: var(--sidebar-tab-row-gap);
   }
@@ -1630,7 +2188,7 @@
   /* The tab rows' hover recipe (TabItem). */
   .new-tab-row:hover,
   .new-terminal-button:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--bg-selected) 20%, transparent);
+    background: var(--bg-hover);
   }
 
   .new-tab-row:focus-visible,
@@ -1639,10 +2197,11 @@
     outline-offset: -2px;
   }
 
-  /* The margin centers it on the rows' close buttons (20px, inset by the row's 6px padding). */
+  /* Centered on the rows' accessory slot: 20px, inset by the row's 8px padding. */
   .new-terminal-button {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+    margin-left: 2px;
     margin-right: 2px;
     flex-shrink: 0;
     display: flex;
@@ -1661,6 +2220,13 @@
 
   .new-terminal-button:hover:not(:disabled) {
     color: var(--text-primary);
+  }
+
+  .new-agents-slot {
+    display: flex;
+    flex: none;
+    width: 32px;
+    margin-right: 2px;
   }
 
   .new-tab-line.exiting {
@@ -1686,11 +2252,11 @@
     text-overflow: ellipsis;
   }
 
-  /* Inset by the rows' 6px padding: from the favicon column to the close buttons' edge. */
+  /* Inset by the rows' 8px padding: from the favicon column to the close buttons' edge. */
   .pinned-tab-divider {
-    height: 1px;
-    margin: 0 6px;
-    background: var(--text-primary-tint-10);
+    height: 0.5px;
+    margin: 0 8px;
+    background: var(--separator);
     border-radius: var(--radius-chip);
     opacity: 0.9;
     transform: scaleX(1);
@@ -1773,7 +2339,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: calc(var(--sidebar-tab-row-gap) + 2px) 0;
+    padding: 4px 0;
     position: sticky;
     top: 0;
     z-index: 1;
@@ -1794,19 +2360,23 @@
      only read as an empty gap. A drag grows it back, animated. */
   .pinned-tab-divider-shell.collapsed {
     min-height: 0;
-    padding: calc(var(--sidebar-tab-row-gap) / 2) 0;
+    padding: 0;
   }
 
   .pinned-tab-divider-shell.pinned-transfer-gate {
     padding: 8px 0;
   }
 
-  /* Sits on the divider line, shown while the pointer is over the list. Inset like the rows'
-     20px close buttons, so both share one vertical axis. */
-  .clear-unpinned {
+  /* Sit on the divider line's ends, popping in while the pointer is over the list. Inset like the
+     rows' 20px close buttons, so both share one vertical axis. */
+  /* The archive lid tilts past the 12 px box. */
+  .divider-action svg {
+    overflow: visible;
+  }
+
+  .divider-action {
     position: absolute;
     top: 50%;
-    right: 6px;
     display: grid;
     place-items: center;
     width: 20px;
@@ -1814,27 +2384,96 @@
     padding: 0;
     border: none;
     border-radius: var(--radius-sm);
-    background: var(--sidebar-bg);
+    background: transparent;
     color: var(--text-muted);
     cursor: pointer;
     opacity: 0;
-    transform: translateY(-50%);
+    transform: translateY(-50%) scale(0.6);
     transition:
       opacity var(--motion-duration-fast) ease,
+      transform 220ms var(--motion-ease-spring),
       color var(--transition-fast);
   }
 
-  .tab-list-shell:hover .clear-unpinned,
-  .clear-unpinned:focus-visible {
-    opacity: 1;
+  /* Centered on the rows' 16px favicons, 8px into the row. */
+  .list-options {
+    left: 6px;
   }
 
-  .clear-unpinned:hover {
+  .clear-unpinned {
+    right: 8px;
+  }
+
+  .tab-list-shell:hover .divider-action,
+  .divider-action:focus-visible {
+    opacity: 1;
+    transform: translateY(-50%);
+  }
+
+  .divider-action:hover {
     color: var(--text-primary);
   }
 
-  .clear-unpinned:focus-visible {
+  .divider-action:focus-visible {
     outline: var(--focus-outline);
+  }
+
+  .sort-line,
+  .archive-lid,
+  .archive-slot {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .archive-lid {
+    transform-origin: left bottom;
+  }
+
+  /* Hovered, the funnel turns into an ascending sort: its lines trade lengths, a beat apart. */
+  .list-options:hover .sort-line:nth-child(1) {
+    transform: scaleX(0.28);
+  }
+
+  .list-options:hover .sort-line:nth-child(3) {
+    transform: scaleX(3.6);
+    transition-delay: 40ms;
+  }
+
+  /* Hovered, the box opens: the lid lifts and tilts, the handle drops into it. */
+  .clear-unpinned:hover .archive-lid {
+    transform: translateY(-1.5px) rotate(-10deg);
+  }
+
+  .clear-unpinned:hover .archive-slot {
+    transform: translateY(1px);
+    transition-delay: 40ms;
+  }
+
+  /* The line draws back from the ends to make room for the actions coming in. */
+  .with-actions .pinned-tab-divider {
+    clip-path: inset(0);
+    transition-property: height, background, opacity, transform, box-shadow, clip-path;
+  }
+
+  .tab-list-shell:hover .with-actions .pinned-tab-divider,
+  .with-actions:focus-within .pinned-tab-divider {
+    clip-path: inset(0 0 0 24px);
+  }
+
+  .tab-list-shell:hover .with-actions.with-clear .pinned-tab-divider,
+  .with-actions.with-clear:focus-within .pinned-tab-divider {
+    clip-path: inset(0 24px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .divider-action {
+      transform: translateY(-50%);
+    }
+
+    .divider-action:hover :is(.sort-line, .archive-lid, .archive-slot) {
+      transform: none;
+    }
   }
 
   /* The stacked panes share one card. */
@@ -1842,9 +2481,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 2px;
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--bg-hover) 70%, transparent);
+    background: var(--bg-hover);
   }
 
   .split-pane {

@@ -8,6 +8,9 @@ import { t } from "../lib/i18n/state.svelte";
 // ticks land here several times a second: one write, and no re-sort, since startedAt never
 // changes on an update.
 let _downloads = $state.raw<BridgeDownloadSnapshot[]>([]);
+// The last few finished downloads, newest first, so the library menu is never a dead end.
+let _recent = $state.raw<BridgeDownloadSnapshot[]>([]);
+const RECENT_LIMIT = 3;
 // Whether anything downloaded since launch, and which of those ended unseen (id to failed).
 let _sessionHasDownloads = $state(false);
 let _unseen = $state.raw<Map<number, boolean>>(new Map());
@@ -18,6 +21,10 @@ export function initDownloadsStore(): void {
 		_downloads = data.items
 			.filter((dl) => dl.state !== "complete" || !!dl.error)
 			.sort((a, b) => b.startedAt - a.startedAt);
+		_recent = data.items
+			.filter((dl) => dl.state === "complete" && !dl.error && !dl.fileMissing)
+			.sort((a, b) => (b.endedAt ?? b.startedAt) - (a.endedAt ?? a.startedAt))
+			.slice(0, RECENT_LIMIT);
 	});
 	on("downloadUpdated", (dl) => {
 		_sessionHasDownloads = true;
@@ -33,6 +40,7 @@ export function initDownloadsStore(): void {
 		const idx = _downloads.findIndex((d) => d.id === dl.id);
 		if (dl.state === "complete" && !dl.error) {
 			if (idx >= 0) _downloads = _downloads.filter((d) => d.id !== dl.id);
+			_recent = [dl, ..._recent.filter((d) => d.id !== dl.id)].slice(0, RECENT_LIMIT);
 			return;
 		}
 		_downloads =
@@ -42,6 +50,7 @@ export function initDownloadsStore(): void {
 	});
 	on("downloadErased", (data) => {
 		_downloads = _downloads.filter((d) => d.id !== data.id);
+		_recent = _recent.filter((d) => d.id !== data.id);
 	});
 	// Paused or failed downloads from a previous launch only exist in the snapshot.
 	downloadActions.requestSnapshot();
@@ -49,6 +58,10 @@ export function initDownloadsStore(): void {
 
 export function getDownloads(): BridgeDownloadSnapshot[] {
 	return _downloads;
+}
+
+export function getRecentDownloads(): BridgeDownloadSnapshot[] {
+	return _recent;
 }
 
 export const hasSessionDownloads = (): boolean => _sessionHasDownloads;

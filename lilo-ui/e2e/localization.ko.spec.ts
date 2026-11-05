@@ -34,7 +34,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		await page.emulateMedia({ colorScheme });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
-		for (const section of ["터미널", "일반", "모양", "탭 및 스페이스", "오디오 및 비디오", "개인정보 보호", "고급", "AI 에이전트"]) {
+		for (const section of ["터미널", "일반", "모양", "탭 및 스페이스", "오디오 및 비디오", "개인정보 보호", "고급", "에이전트"]) {
 			await page.getByRole("button", { name: section, exact: true }).click();
 			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
 			await expect(rows.first()).toBeVisible();

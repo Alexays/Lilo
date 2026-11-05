@@ -27,13 +27,19 @@ export type DesignSystemSectionId =
 	| "controls"
 	| "patterns";
 
-type ShellKind = "settings" | "designSystem" | "history";
+export type ProcessManagerSectionId = "tabs" | "sleeping" | "system";
+export type DiagnosticsSectionId = "startup" | "memory" | "log";
+
+/** The system screens over the page area, and the Design System showcase. */
+type ShellKind = "settings" | "designSystem" | "history" | "downloads" | "processes" | "diagnostics";
 
 const _shell = $state<{
 	activeSurface: ShellKind | null;
 	sections: {
 		settings: SettingsSectionId;
 		designSystem: DesignSystemSectionId;
+		processes: ProcessManagerSectionId;
+		diagnostics: DiagnosticsSectionId;
 	};
 	// A drill-in page inside the settings section ("engines", "sites", "site:<key>", "extension:<id>").
 	settingsSubpage: string | null;
@@ -42,19 +48,13 @@ const _shell = $state<{
 	settingsHighlight: string | null;
 }>({
 	activeSurface: null,
-	sections: { settings: "general", designSystem: "foundations" },
+	sections: { settings: "general", designSystem: "foundations", processes: "tabs", diagnostics: "startup" },
 	settingsSubpage: null,
 	settingsQuery: "",
 	settingsHighlight: null,
 });
 
-type PanelKind =
-	| "editor"
-	| "downloads"
-	| "diagnostics"
-	| "processes"
-	| "screenshot"
-	| null;
+type PanelKind = "editor" | "screenshot" | null;
 type EditorMode = "edit" | "add";
 
 interface EditorState {
@@ -94,6 +94,21 @@ const _panels = $state<PanelsState>({
 	editor: { ...EMPTY_EDITOR_STATE },
 });
 
+// A modal over whatever the page area shows: Settings, History or the page itself.
+let _clearBrowsingDataOpen = $state(false);
+
+export function isClearBrowsingDataOpen(): boolean {
+	return _clearBrowsingDataOpen;
+}
+
+export function openClearBrowsingData(): void {
+	_clearBrowsingDataOpen = true;
+}
+
+export function closeClearBrowsingData(): void {
+	_clearBrowsingDataOpen = false;
+}
+
 function openShell(kind: ShellKind): void {
 	_panels.activePanel = null;
 	_shell.activeSurface = kind;
@@ -120,7 +135,7 @@ export function initPanelsStore(): void {
 
 	on("openClearBrowsingData", () => {
 		openSettings("privacy");
-		openSettingsSubpage("privacy", "browsingData");
+		openClearBrowsingData();
 	});
 
 	on("openDesignSystem", () => {
@@ -252,21 +267,40 @@ export function openDesignSystem(): void {
 	openShell("designSystem");
 }
 
-export const isDiagnosticsVisible = (): boolean => isPanelOpen("diagnostics");
-export const openDiagnostics = (): void => openPanel("diagnostics");
+/** The system screen over the page area, if any (the Design System showcase is not one). */
+export function getPageShell(): Exclude<ShellKind, "designSystem"> | null {
+	return _shell.activeSurface === "designSystem" ? null : _shell.activeSurface;
+}
 
-export const isProcessManagerVisible = (): boolean => isPanelOpen("processes");
-export const openProcessManager = (): void => openPanel("processes");
+/** Closes whichever system screen covers the page. */
+export function closePageShell(): void {
+	if (getPageShell()) _shell.activeSurface = null;
+}
 
-export const isDownloadsVisible = (): boolean => isPanelOpen("downloads");
-export const openDownloadsPanel = (): void => openPanel("downloads");
+export const isDiagnosticsVisible = (): boolean => _shell.activeSurface === "diagnostics";
+export function openDiagnostics(): void {
+	_shell.sections.diagnostics = "startup";
+	openShell("diagnostics");
+}
+export const getDiagnosticsSection = (): DiagnosticsSectionId => _shell.sections.diagnostics;
+export function setDiagnosticsSection(section: DiagnosticsSectionId): void {
+	_shell.sections.diagnostics = section;
+}
+
+export const isProcessManagerVisible = (): boolean => _shell.activeSurface === "processes";
+export function openProcessManager(): void {
+	_shell.sections.processes = "tabs";
+	openShell("processes");
+}
+export const getProcessManagerSection = (): ProcessManagerSectionId => _shell.sections.processes;
+export function setProcessManagerSection(section: ProcessManagerSectionId): void {
+	_shell.sections.processes = section;
+}
+
+export const isDownloadsVisible = (): boolean => _shell.activeSurface === "downloads";
+export const openDownloadsPanel = (): void => openShell("downloads");
 
 export const openScreenshotPanel = (): void => openPanel("screenshot");
-
-/** Settings, History and the Design System cover the whole page. */
-export function isShellOpen(): boolean {
-	return _shell.activeSurface !== null;
-}
 
 export function isSettingsShellOpen(): boolean {
 	return _shell.activeSurface === "settings";

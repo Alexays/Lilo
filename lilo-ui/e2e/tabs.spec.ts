@@ -75,7 +75,7 @@ test("the close button floats over the title without reflowing it", async ({
 	expect(close.x + close.width).toBeLessThanOrEqual(idle.x + idle.width + 0.5);
 });
 
-test("a tab's sound and capture show on its favicon, and the sound badge mutes it", async ({
+test("a tab's capture shows on its favicon, its sound in the accessory slot, which mutes it", async ({
 	page,
 }) => {
 	const world = initialWorld();
@@ -88,11 +88,14 @@ test("a tab's sound and capture show on its favicon, and the sound badge mutes i
 
 	const beta = page.locator('.tab-list [data-tab-id="tab-beta"]');
 	const gamma = page.locator('.tab-list [data-tab-id="tab-gamma"]');
-	// Capture wins the corner: a call's sound is muted from its card.
 	await expect(gamma.locator(".capture-pip.live")).toHaveCount(1);
-	await expect(gamma.locator(".sound-badge")).toHaveCount(0);
+	await expect(beta.locator(".capture-pip")).toHaveCount(0);
+	await expect(gamma.locator(".sound-button")).toHaveCount(1);
 
-	await beta.locator(".sound-badge").click();
+	// On hover the close button takes the slot and the sound steps aside, still there to mute.
+	await beta.hover();
+	await expect(beta.locator(".close-btn")).toHaveClass(/visible/);
+	await beta.locator(".sound-button").click();
 	const commands = await sentCommands(page);
 	expect(commands.find((c) => c.action === "muteTab")?.payload).toMatchObject({ id: "tab-beta" });
 	expect(commands.some((c) => c.action === "switchTab")).toBe(false);
@@ -131,7 +134,8 @@ async function bootOnALoneBlankTab(page: Page): Promise<void> {
 	await bootChrome(page, world);
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar", newTab: true }));
 	await page.locator(".command-bar-input").press("Escape");
-	await expect(page.locator(".command-bar-input")).toHaveCount(0);
+	// Dismissing the floating bar leaves it in place on the blank tab.
+	await expect(page.locator(".command-bar-backdrop.docked")).toBeVisible();
 }
 
 test("Command-T brings the bar back on a Space's lone blank tab", async ({ page }) => {

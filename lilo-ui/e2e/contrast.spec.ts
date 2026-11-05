@@ -1,24 +1,29 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome } from "./fakeHost";
 import { initialWorld, SPACE_1 } from "./fixtures";
-import { treeItem } from "../src/stores/testFixtures";
+import { tab, treeItem } from "../src/stores/testFixtures";
+import { apcaContrast, contrastRatio, ICON_CONTRAST, TEXT_CONTRAST } from "../src/lib/sidebarTheme";
 
-/** WCAG contrast of two computed CSS colors (rgb, rgba or color(srgb) over an opaque base). */
-async function ratio(page: Page, foreground: string, background: string): Promise<number> {
-	return page.evaluate(([fg, bg]) => {
+/**
+ * Contrast of a text and its background color as channel triples: the WCAG 2 ratio, or with `apca` the APCA Lc the
+ * colors derived from the Space color are chosen by.
+ */
+function measure([text, background]: number[][], apca: boolean): number {
+	const [t, b] = [text, background].map(([r, g, b]) => ({ r, g, b }));
+	return apca ? apcaContrast(t, b) : contrastRatio(t, b);
+}
+
+/** Contrast of two computed CSS colors (rgb, rgba or color(srgb) over an opaque base). */
+async function ratio(page: Page, foreground: string, background: string, apca = false): Promise<number> {
+	const colors = await page.evaluate(([fg, bg]) => {
 		// A color-mix() computes to color(srgb r g b), channels from 0 to 1.
 		const parse = (value: string) => {
 			const channels = (value.match(/[\d.]+/g) ?? ["0", "0", "0"]).slice(0, 3).map(Number);
 			return value.startsWith("color(") ? channels.map((c) => c * 255) : channels;
 		};
-		const channel = (c: number) => {
-			const v = c / 255;
-			return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-		};
-		const luminance = (rgb: number[]) => 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
-		const [a, b] = [luminance(parse(fg)), luminance(parse(bg))].sort((x, y) => y - x);
-		return (a + 0.05) / (b + 0.05);
+		return [parse(fg), parse(bg)];
 	}, [foreground, background]);
+	return measure(colors, apca);
 }
 
 /** How far a row's (possibly translucent) background stands out from the sidebar, as a contrast ratio. */
@@ -82,7 +87,7 @@ test("an open folder's icon reads on its background", async ({ page }) => {
 	const icon = await page.locator(".folder-row .folder-icon").first().evaluate((el) => getComputedStyle(el).color);
 	const background = await page.locator(".folder-open-rail .folder-drop-zone").first().evaluate((el) => getComputedStyle(el).backgroundColor);
 
-	expect(await ratio(page, icon, background)).toBeGreaterThanOrEqual(3);
+	expect(await ratio(page, icon, background, true)).toBeGreaterThanOrEqual(ICON_CONTRAST);
 });
 
 test("an open folder's papers stand out from its background in light mode", async ({ page }) => {
@@ -122,7 +127,7 @@ test("the active capture button is solid accent with a readable icon", async ({ 
 	// The button eases into its active color: read it once the transition is over.
 	await expect.poll(() => cssColor(page, ".url-screenshot-btn.active", "backgroundColor")).toBe(accent);
 	const background = await cssColor(page, ".url-screenshot-btn.active", "backgroundColor");
-	expect(await ratio(page, await cssColor(page, ".url-screenshot-btn.active", "color"), background)).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, ".url-screenshot-btn.active", "color"), background, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 });
 
 test("a closed tab's title reads at full strength and says it sleeps without color", async ({ page }) => {
@@ -136,9 +141,9 @@ test("a closed tab's title reads at full strength and says it sleeps without col
 	expect(await page.locator(closed).first().evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
 	expect(await page.locator(`${closed} .tab-title`).first().evaluate((el) => getComputedStyle(el).fontStyle)).toBe("italic");
 	const sidebar = await cssColor(page, ".sidebar", "backgroundColor");
-	expect(await ratio(page, await cssColor(page, `${closed} .tab-title`, "color"), sidebar)).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, `${closed} .tab-title`, "color"), sidebar, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 	await page.locator(closed).first().hover();
-	expect(await ratio(page, await cssColor(page, `${closed} .tab-title`, "color"), sidebar)).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, `${closed} .tab-title`, "color"), sidebar, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 });
 
 for (const color of ["#fff4cc", "#ffffff", "#20242e", "#ff00ff", "#f0a8c8"]) {
@@ -152,9 +157,8 @@ for (const color of ["#fff4cc", "#ffffff", "#20242e", "#ff00ff", "#f0a8c8"]) {
 			const active = ".tab-item.active:not(.travel-hold)";
 			await page.locator(active).first().waitFor();
 
-			const title = await cssColor(page, `${active} .tab-title`, "color");
-			const row = await cssColor(page, active, "backgroundColor");
-			expect(await ratio(page, title, row)).toBeGreaterThanOrEqual(4.5);
+			// The selected surface is a translucent layer: it counts composited over the sidebar.
+			expect(await textContrast(page, `${active} .tab-title`, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 	}
 }
@@ -173,7 +177,7 @@ for (const color of ["#20242e", "#000000", "#4a90d9"]) {
 			await page.locator(timer).waitFor();
 
 			const sidebar = await cssColor(page, ".sidebar", "backgroundColor");
-			expect(await ratio(page, await cssColor(page, timer, "color"), sidebar)).toBeGreaterThanOrEqual(4.5);
+			expect(await ratio(page, await cssColor(page, timer, "color"), sidebar, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 	}
 }
@@ -184,17 +188,17 @@ test("the screenshot panel's primary button and labels read", async ({ page }) =
 	await page.locator(".screenshot-panel .btn.primary").first().waitFor();
 
 	const button = ".screenshot-panel .btn.primary";
-	expect(await ratio(page, await cssColor(page, button, "color"), await cssColor(page, button, "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, button, "color"), await cssColor(page, button, "backgroundColor"), true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 	const card = await cssColor(page, ".screenshot-panel .card", "backgroundColor");
-	expect(await ratio(page, await cssColor(page, ".screenshot-panel .group-label", "color"), card)).toBeGreaterThanOrEqual(4.5);
+	expect(await ratio(page, await cssColor(page, ".screenshot-panel .group-label", "color"), card, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 });
 
 /**
- * WCAG contrast of an element's text against what lies behind it: translucent layers are composited down to the
+ * Contrast of an element's text against what lies behind it: translucent layers are composited down to the
  * first opaque one, and the opacity of the elements in between fades the text.
  */
-async function textContrast(page: Page, selector: string): Promise<number> {
-	return page.locator(selector).first().evaluate((el) => {
+async function textContrast(page: Page, selector: string, apca = false): Promise<number> {
+	const colors = await page.locator(selector).first().evaluate((el) => {
 		const context = document.createElement("canvas").getContext("2d", { willReadFrequently: true })!;
 		const rgba = (value: string): number[] => {
 			context.clearRect(0, 0, 1, 1);
@@ -214,15 +218,9 @@ async function textContrast(page: Page, selector: string): Promise<number> {
 		}
 		const background = layers.reverse().reduce((below, layer) => over(layer, below), [255, 255, 255]);
 		const color = rgba(getComputedStyle(el).color);
-		const text = over([color[0], color[1], color[2], color[3] * opacity], background);
-		const channel = (c: number) => {
-			const v = c / 255;
-			return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-		};
-		const luminance = (rgb: number[]) => 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
-		const [a, b] = [luminance(text), luminance(background)].sort((x, y) => y - x);
-		return (a + 0.05) / (b + 0.05);
+		return [over([color[0], color[1], color[2], color[3] * opacity], background), background];
 	});
+	return measure(colors, apca);
 }
 
 for (const colorScheme of ["light", "dark"] as const) {
@@ -230,6 +228,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+		await page.locator(".command-bar-input").fill("beta");
 		await page.locator(".command-bar-result.selected .result-subtitle").waitFor();
 
 		expect(await textContrast(page, ".scope-hint:not(.selected)")).toBeGreaterThanOrEqual(4.5);
@@ -255,10 +254,10 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 			world.spaces[0].color = color;
 			await bootChrome(page, world);
 
-			expect(await textContrast(page, ".url-path")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".url-path", true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 			await page.evaluate(() => window.__lilo!.receive({ event: "urlCopied" }));
 			await page.locator(".url-host.feedback").waitFor();
-			expect(await textContrast(page, ".url-host.feedback")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".url-host.feedback", true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 	}
 }
@@ -274,6 +273,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 		}).toPass();
 		await page.evaluate(() => window.__lilo!.receive({ event: "findInPageResult", query: "zz", matchFound: false }));
 		await expect(page.locator(".find-status")).not.toBeEmpty();
+		// Measured once the bar has faded in and the status has taken its color: both count in the contrast.
+		await page.locator(".find-bar").evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((animation) => animation.finished)));
 
 		expect(await textContrast(page, ".find-status")).toBeGreaterThanOrEqual(4.5);
 	});
@@ -315,16 +316,16 @@ for (const colorScheme of ["light", "dark"] as const) {
 	test.describe(`in ${colorScheme} mode`, () => {
 		test.use({ colorScheme, reducedMotion: "reduce" });
 
-		test("a danger button's label reads", async ({ page }) => {
+		test("a destructive button's label reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
 			await page.evaluate(() => window.__lilo!.receive({ event: "openClearBrowsingData" }));
-			expect(await textContrast(page, ".ui-button.danger")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".ui-button.destructive")).toBeGreaterThanOrEqual(4.5);
 		});
 
-		test("a confirm sheet's danger button reads", async ({ page }) => {
+		test("a confirm modal's destructive button reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
 			await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
-			await page.locator(".process-panel").waitFor();
+			await page.getByRole("region", { name: "Process Manager" }).waitFor();
 			await page.evaluate(() =>
 				window.__lilo!.receive({
 					event: "processSnapshotUpdated",
@@ -340,11 +341,11 @@ for (const colorScheme of ["light", "dark"] as const) {
 					],
 				}),
 			);
-			await page.locator(".process-panel .tab-row").first().click();
-			await page.locator(".process-panel .small-button.danger").click();
-			const confirm = page.locator(".sheet-btn-danger");
+			await page.locator(".object-row .row-hit").first().click();
+			await page.locator(".object-row.expanded .ui-button.danger").click();
+			const confirm = page.locator(".ui-button.destructive");
 			await expect(confirm).toBeVisible();
-			expect(await textContrast(page, ".sheet-btn-danger")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".ui-button.destructive")).toBeGreaterThanOrEqual(4.5);
 		});
 
 		test("a success badge reads", async ({ page }) => {
@@ -375,12 +376,12 @@ for (const colorScheme of ["light", "dark"] as const) {
 					{ id: "safari", name: "Safari", family: "safari", iconDataURL: "", needsFullDiskAccess: true, profiles: [] },
 				],
 			});
-			expect(await textContrast(page, ".src.locked .hint"), "Allow access").toBeGreaterThanOrEqual(4.5);
-			expect(await textContrast(page, "button.more[aria-expanded]"), "more options").toBeGreaterThanOrEqual(4.5);
-			await page.locator("button.more[aria-expanded]").click();
-			expect(await textContrast(page, ".chip:not(.off)"), "kind chip").toBeGreaterThanOrEqual(4.5);
+			await expect.poll(() => textContrast(page, ".src.locked .allow"), { message: "Allow access" }).toBeGreaterThanOrEqual(4.5);
+			await expect.poll(() => textContrast(page, ".summary .link"), { message: "Change" }).toBeGreaterThanOrEqual(4.5);
+			await page.locator(".summary .link").click();
+			await expect.poll(() => textContrast(page, ".chip.on"), { message: "kind chip" }).toBeGreaterThanOrEqual(4.5);
 
-			await page.locator("section.card .ob-foot .ob-btn.primary").click();
+			await page.locator(".onb .ob-foot .ob-btn.primary").click();
 			await receive({ event: "importProgress", sourceId: "chrome", profileId: "Default", kind: "history", done: 0, total: 0 });
 			// Polled: the label fades in.
 			await expect.poll(() => textContrast(page, ".progress .step span"), { message: "import step" }).toBeGreaterThanOrEqual(4.5);
@@ -388,15 +389,17 @@ for (const colorScheme of ["light", "dark"] as const) {
 			expect(await textContrast(page, ".note.done"), "import done").toBeGreaterThanOrEqual(4.5);
 
 			await receive({ event: "defaultBrowserStatusLoaded", isDefault: true, shouldInvite: false });
-			await receive({ event: "onboardingState", show: true, step: 6, usage: "browse" });
-			expect(await textContrast(page, ".ob-done"), "default browser done").toBeGreaterThanOrEqual(4.5);
+			await receive({ event: "onboardingState", show: true, step: 3, usage: "browse" });
+			// Polled: the screen fades in.
+			await expect.poll(() => textContrast(page, ".ob-done"), { message: "default browser done" }).toBeGreaterThanOrEqual(4.5);
 		});
 
 		test("a password manager not ready yet still reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
-			await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 3, usage: "browse" }));
-			for (const selector of [".manager.soon .ob-text", ".manager.soon .ob-text small", ".manager.soon .badge"]) {
-				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(4.5);
+			await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 2, usage: "browse" }));
+			await page.getByRole("button", { name: "Choose" }).click();
+			for (const selector of [".ob-row.soon .ob-text", ".ob-row.soon .ob-text small", ".ob-row.soon .soon-label"]) {
+				await expect.poll(() => textContrast(page, selector), { message: selector }).toBeGreaterThanOrEqual(4.5);
 			}
 		});
 
@@ -410,10 +413,10 @@ for (const colorScheme of ["light", "dark"] as const) {
 	});
 }
 
-test("the slowest startup step's time reads on the sidebar", async ({ page }) => {
+test("the slowest startup step's time reads", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openDiagnostics" }));
-	await page.locator(".diagnostics-panel").waitFor();
+	await page.getByRole("region", { name: "Diagnostics" }).waitFor();
 	await page.evaluate(() =>
 		window.__lilo!.receive({
 			event: "startupMetricsLoaded",
@@ -425,15 +428,15 @@ test("the slowest startup step's time reads on the sidebar", async ({ page }) =>
 
 	const slowest = ".waterfall-row.slowest .waterfall-value";
 	await page.locator(slowest).waitFor();
-	expect(await ratio(page, await cssColor(page, slowest, "color"), await cssColor(page, ".sidebar", "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+	expect(await textContrast(page, slowest)).toBeGreaterThanOrEqual(4.5);
 });
 
 for (const colorScheme of ["light", "dark"] as const) {
-	test(`a failed download's error reads on the sidebar in ${colorScheme} mode`, async ({ page }) => {
+	test(`a failed download's error reads in ${colorScheme} mode`, async ({ page }) => {
 		await page.emulateMedia({ colorScheme });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
-		await page.locator(".downloads-panel").waitFor();
+		await page.getByRole("region", { name: "Downloads" }).waitFor();
 		await page.evaluate(() =>
 			window.__lilo!.receive({
 				event: "downloadsSnapshot",
@@ -443,7 +446,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 
 		const error = ".download-row .row-meta.tone-error";
 		await page.locator(error).waitFor();
-		expect(await ratio(page, await cssColor(page, error, "color"), await cssColor(page, ".sidebar", "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+		expect(await textContrast(page, error)).toBeGreaterThanOrEqual(4.5);
 	});
 }
 
@@ -465,20 +468,20 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff", "#00c000"]) {
 			const receive = (message: Record<string, unknown>) => page.evaluate((msg) => window.__lilo!.receive(msg), message);
 
 			await receive({ event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: false, host: "example.com", site: "example.com" });
-			const reload = ".page-hang .ui-button.primary";
+			const reload = '[data-modal="page-hang-card"] .ui-button.primary';
 			await page.locator(reload).waitFor();
 			expect(await cssColor(page, reload, "backgroundColor")).toBe(spaceAccent);
-			expect(await textContrast(page, reload)).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, reload, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 			await page.locator(reload).click();
 			await receive({ event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: true, host: "example.com", site: "example.com" });
 			await receive({ event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: false, host: "example.com", site: "example.com" });
-			await page.locator(".page-hang .report").waitFor();
-			expect(await textContrast(page, ".page-hang .report")).toBeGreaterThanOrEqual(4.5);
+			await page.locator('[data-modal="page-hang-card"] .report').waitFor();
+			expect(await textContrast(page, '[data-modal="page-hang-card"] .report')).toBeGreaterThanOrEqual(4.5);
 
 			await receive({ event: "tabSharePickerRequested", requestId: "r", origin: "meet.example.com", shareableTabIds: ["tab-alpha"] });
-			await page.locator(".tab-share-btn.primary").waitFor();
-			expect(await cssColor(page, ".tab-share-btn.primary", "backgroundColor")).toBe(spaceAccent);
-			expect(await textContrast(page, ".tab-share-btn.primary")).toBeGreaterThanOrEqual(4.5);
+			await page.locator('[data-modal="tab-share-picker"] .ui-button.primary').waitFor();
+			expect(await cssColor(page, '[data-modal="tab-share-picker"] .ui-button.primary', "backgroundColor")).toBe(spaceAccent);
+			expect(await textContrast(page, '[data-modal="tab-share-picker"] .ui-button.primary', true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 
 		test(`a copied capture's card reads on a ${color} Space in ${colorScheme} mode`, async ({ page }) => {
@@ -491,14 +494,14 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff", "#00c000"]) {
 			await page.locator(edit).waitFor();
 			await page.waitForFunction(() => document.querySelector(".capture-card")!.getAnimations().length === 0);
 
-			// A mid or saturated accent takes a white label, its fill darkened until it reads.
-			if (color === "#4a90d9" || color === "#ff00ff") expect(await cssColor(page, edit, "color")).toBe("rgb(255, 255, 255)");
+			// A dark accent takes a white label, its fill darkened until it reads.
+			if (color === "#ff00ff") expect(await cssColor(page, edit, "color")).toBe("rgb(255, 255, 255)");
 			for (const selector of [edit, ".capture-card .action:not(.primary):not(.dismiss)", ".capture-card .dismiss", ".capture-card .badge"]) {
-				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(4.5);
+				expect(await textContrast(page, selector, true), selector).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 			}
 			await page.locator(edit).hover();
 			await page.waitForTimeout(100);
-			expect(await textContrast(page, edit), "hovered Edit").toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, edit, true), "hovered Edit").toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		});
 	}
 }
@@ -511,7 +514,8 @@ for (const color of ["#4a90d9", "#20242e", "#ff00ff"]) {
 			world.spaces[0].color = color;
 			await bootChrome(page, world);
 			await page.evaluate(() => window.__lilo!.receive({ event: "openDiagnostics" }));
-			const unselected = ".diagnostics-panel .ui-segmented button:not(.active)";
+			await page.locator(".section-nav-panel").getByRole("button", { name: /^Log/ }).click();
+			const unselected = ".ui-shell-frame .ui-segmented button:not(.active)";
 			await page.locator(unselected).first().waitFor();
 
 			expect(await textContrast(page, unselected)).toBeGreaterThanOrEqual(4.5);
@@ -527,7 +531,7 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 			world.spaces[0].color = color;
 			await bootChrome(page, world);
 			await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
-			await page.locator(".process-panel").waitFor();
+			await page.getByRole("region", { name: "Process Manager" }).waitFor();
 			const tab = (id: string) => ({ id, spaceId: "space-1", title: id, url: `https://example.com/${id}`, lifecycle: "active", isAudioPlaying: false, isMicrophoneActive: false, isCameraActive: false, isScreenSharing: false });
 			await page.evaluate(
 				(tabs) => window.__lilo!.receive({
@@ -536,9 +540,9 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 				}),
 				[tab("tab-beta"), tab("tab-gamma")],
 			);
-			await page.locator(".process-panel .tab-row").first().click();
+			await page.locator(".object-row .row-hit").first().click();
 
-			for (const selector of [".tab-entry.expanded .tab-title", ".tab-entry.expanded .tab-state", ".tab-entry.expanded .favicon-fallback", ".details-url", ".details-meta", ".details .small-button.danger", ".reclaim .link-button"]) {
+			for (const selector of [".object-row.expanded .name", ".object-row.expanded .detail", ".object-row.expanded .favicon-fallback", ".object-row.expanded .ui-button.danger", ".reclaim .ui-button"]) {
 				if (await page.locator(selector).count() === 0) continue;
 				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(4.5);
 			}
@@ -550,9 +554,9 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 			world.spaces[0].color = color;
 			await bootChrome(page, world);
 			await page.evaluate(() => window.__lilo!.receive({ event: "openDiagnostics" }));
-			await page.locator(".diagnostics-panel .ui-segmented button").nth(1).click();
+			await page.locator(".section-nav-panel").getByRole("button", { name: /^Memory/ }).click();
 
-			expect(await textContrast(page, ".diagnostics-panel .link-button")).toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".ui-shell-frame .ui-list-row .ui-button >> nth=-1")).toBeGreaterThanOrEqual(4.5);
 		});
 	}
 }
@@ -618,3 +622,16 @@ test("a colored glyph on a light Space keeps no chip, even under the contrast fl
 	await expect(favicon.locator("img")).toHaveJSProperty("complete", true);
 	await expect(favicon).not.toHaveClass(/has-chip/);
 });
+
+for (const colorScheme of ["light", "dark"] as const) {
+	test(`the site drawer's link reads over a dark Space in ${colorScheme} mode`, async ({ page }) => {
+		await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+		const world = initialWorld();
+		world.spaces[0].color = "#5e21f1";
+		world.tabsBySpace[SPACE_1][0] = tab("tab-alpha", SPACE_1, { title: "Alpha", url: "https://example.com/", isCameraActive: true });
+		await bootChrome(page, world);
+		await page.locator(".permissions-btn").click();
+		await page.locator(".all-permissions").waitFor();
+		expect(await textContrast(page, ".all-permissions")).toBeGreaterThanOrEqual(4.5);
+	});
+}

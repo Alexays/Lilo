@@ -1,0 +1,3 @@
+kind: Fixed
+body: Opening the first terminal or agent no longer makes the rows below jump over the tray as it slides in.
+time: 2026-11-05T16:46:21.806079+01:00

@@ -36,7 +36,7 @@ async function openWhatsNew(page: Page, automatic = false, version = "0.6.0") {
 	await page.evaluate(({ automatic, version }) => window.__lilo!.receive({ event: "openWhatsNew", automatic, version }), { automatic, version });
 }
 
-test("the sheet presents installed highlights, all changes and one acknowledgment", async ({ page }) => {
+test("the modal presents installed highlights, all changes and one acknowledgment", async ({ page }) => {
 	const resourceReads = await bootReleaseChrome(page);
 	await openWhatsNew(page, true);
 	const dialog = page.getByRole("dialog", { name: "A little more in the loop." });
@@ -49,7 +49,7 @@ test("the sheet presents installed highlights, all changes and one acknowledgmen
 	await dialog.locator("summary").click();
 	await expect(dialog.getByRole("listitem")).toHaveCount(3);
 	await expect(dialog.getByText("Added", { exact: true })).toBeVisible();
-	await dialog.getByRole("button", { name: "Back to browsing" }).click();
+	await dialog.getByRole("button", { name: "Back to Browsing" }).click();
 	await expect(dialog).toHaveCount(0);
 	await expect.poll(() => page.evaluate(() => window.__sentCommands!.some((item) => item.action === "dismissWhatsNew"))).toBe(true);
 	await openWhatsNew(page);
@@ -57,7 +57,7 @@ test("the sheet presents installed highlights, all changes and one acknowledgmen
 	expect(resourceReads()).toBe(1);
 });
 
-test("Escape closes the sheet and focus stays inside until it closes", async ({ page }) => {
+test("Escape closes the modal and focus stays inside until it closes", async ({ page }) => {
 	await bootReleaseChrome(page);
 	// A real chrome control is the return target; the native host separately owns page/terminal focus.
 	const focusTarget = page.locator('.tab-item[data-tab-id="tab-beta"]').first();
@@ -118,7 +118,7 @@ test("a mismatched release suppresses automatic highlights and manual opening is
 	await expect(dialog).toBeVisible();
 	await expect(dialog.getByText("Lilo 9.0.0", { exact: true })).toBeVisible();
 	await expect(dialog.getByRole("heading", { name: "Catch what you missed." })).toHaveCount(0);
-	await expect(dialog.getByText("Release notes aren’t available in this build.")).toBeVisible();
+	await expect(dialog.getByText("Release notes aren't available in this build.")).toBeVisible();
 });
 
 for (const tabPosition of ["left", "right", "top", "bottom"] as const) {
@@ -142,15 +142,15 @@ for (const tabPosition of ["left", "right", "top", "bottom"] as const) {
 	});
 }
 
-test("a hidden sidebar still centers the sheet in the available content", async ({ page }) => {
+test("a hidden sidebar still centers the modal in the available content", async ({ page }) => {
 	await bootReleaseChrome(page);
 	await page.evaluate(() => window.__lilo!.receive({ event: "sidebarVisibilityChanged", visible: false, width: 260 }));
 	await openWhatsNew(page);
 	const dialog = page.getByRole("dialog");
 	await expect(dialog).toBeVisible();
-	const sheet = await dialog.locator(".whats-new-sheet").boundingBox();
+	const sheet = await dialog.locator(".ui-modal-panel").boundingBox();
 	expect(sheet!.x + sheet!.width / 2).toBeCloseTo(page.viewportSize()!.width / 2, 0);
-	await dialog.getByRole("button", { name: "Close" }).click();
+	await page.keyboard.press("Escape");
 	await expect(dialog).toHaveCount(0);
 });
 
@@ -169,7 +169,7 @@ for (const [locale, title, continueLabel] of [
 	["ru", "Что нового в Lilo", "Вернуться к просмотру"],
 	["zh-Hans", "Lilo 更新内容", "继续浏览"],
 ]) {
-	test(`the maintenance sheet follows the ${locale} app language`, async ({ page }) => {
+	test(`the maintenance modal follows the ${locale} app language`, async ({ page }) => {
 		await bootReleaseChrome(page, initialWorld(), undefined, { ...release, editorial: null });
 		await page.evaluate((locale) => window.__lilo!.receive({ event: "settingsLoaded", settings: { locale } }), locale);
 		await openWhatsNew(page);
@@ -185,23 +185,24 @@ for (const automatic of [true, false]) {
 	test(`a screen-sharing decision keeps its priority over ${automatic ? "automatic" : "manual"} highlights`, async ({ page }) => {
 		await bootReleaseChrome(page);
 		await openWhatsNew(page);
-		await expect(page.locator("dialog[open]")).toBeVisible();
-		await page.getByRole("button", { name: "Back to browsing" }).click();
+		const whatsNew = page.locator('[data-modal="whats-new"]');
+		await expect(whatsNew).toBeVisible();
+		await page.getByRole("button", { name: "Back to Browsing" }).click();
 		await page.evaluate(() => window.__lilo!.receive({ event: "tabSharePickerRequested", requestId: "request-share", origin: "meet.example.com", shareableTabIds: ["tab-alpha"] }));
-		await expect(page.locator(".tab-share-panel")).toBeVisible();
+		await expect(page.locator('[data-modal="tab-share-picker"]')).toBeVisible();
 		await openWhatsNew(page, automatic);
 		await page.evaluate(() => new Promise(requestAnimationFrame));
-		await expect(page.locator("dialog[open]")).toHaveCount(0);
+		await expect(whatsNew).toHaveCount(0);
 		await page.keyboard.press("Escape");
-		await expect(page.locator(".tab-share-panel")).toHaveCount(0);
-		await expect(page.locator("dialog[open]")).toBeVisible();
+		await expect(page.locator('[data-modal="tab-share-picker"]')).toHaveCount(0);
+		await expect(whatsNew).toBeVisible();
 	});
 
 	test(`a pending site permission keeps its priority over ${automatic ? "automatic" : "manual"} highlights`, async ({ page }) => {
 		await bootReleaseChrome(page);
 		await openWhatsNew(page);
 		await expect(page.getByRole("dialog")).toBeVisible();
-		await page.getByRole("dialog").getByRole("button", { name: "Back to browsing" }).click();
+		await page.getByRole("dialog").getByRole("button", { name: "Back to Browsing" }).click();
 		await expect(page.getByRole("dialog")).toHaveCount(0);
 		await page.evaluate(() => window.__lilo!.receive({ event: "permissionRequest", requestId: "request-camera", tabId: "tab-alpha", type: "camera", origin: "meet.example.com" }));
 		await openWhatsNew(page, automatic);

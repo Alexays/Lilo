@@ -138,7 +138,7 @@
   {#if show !== "toggle"}
 
   <button
-    class="nav-btn"
+    class="nav-btn history"
     aria-label={t("nav.goBack")}
     disabled={!canGoBack}
     use:tooltip={{ text: t("nav.goBack"), shortcut: shortcutKeys("history.back"), placement: "bottom", disabled: !canGoBack }}
@@ -161,7 +161,7 @@
   </button>
 
   <button
-    class="nav-btn"
+    class="nav-btn history forward"
     aria-label={t("nav.goForward")}
     disabled={!canGoForward}
     use:tooltip={{ text: t("nav.goForward"), shortcut: shortcutKeys("history.forward"), placement: "bottom", disabled: !canGoForward }}
@@ -184,7 +184,7 @@
   </button>
 
   <button
-    class="nav-btn"
+    class="nav-btn history reload"
     class:loading={isLoading}
     aria-label={isLoading ? t("nav.stopLoading") : t("nav.reload")}
     disabled={!isLoading && !hasReloadTarget}

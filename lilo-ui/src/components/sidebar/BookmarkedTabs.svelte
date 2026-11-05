@@ -358,7 +358,7 @@
   }
 
   .bookmarked-tabs-body {
-    padding: 4px var(--sidebar-right-pad, 10px) 4px 10px;
+    padding: 4px var(--sidebar-right-pad, 8px) 4px 8px;
     box-sizing: border-box;
     transition: padding 150ms var(--motion-ease-spring);
   }
@@ -372,7 +372,7 @@
     --bookmark-zone-color: var(--color-bookmark);
     position: relative;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
     gap: 6px;
     min-height: 0;
     /* The drop zone's border, cancelled by the margin so the tiles line up with the rows. */
@@ -402,8 +402,8 @@
   }
 
   .bookmarked-list.drag-active.is-empty {
-    height: 34px;
-    min-height: 34px;
+    height: 40px;
+    min-height: 40px;
     overflow: hidden;
     border-color: color-mix(in srgb, var(--bookmark-zone-color) 36%, transparent);
     background: color-mix(in srgb, var(--bookmark-zone-color) 11%, transparent);
@@ -457,7 +457,7 @@
 
   .bookmark-placeholder {
     width: 100%;
-    height: 34px;
+    height: 40px;
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--bookmark-zone-color) 42%, transparent);
     border-radius: var(--radius-md);
@@ -472,13 +472,15 @@
     animation: sidebar-dz-placeholder-absorb 230ms var(--motion-ease-spring);
   }
 
+  /* The sidebar's selected surface at rest; the hover layer goes over it, the open tile takes an accent ring. */
   .bookmark-tile {
     width: 100%;
-    height: 34px;
+    height: 40px;
     padding: 0;
     border: none;
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--bg-hover) 88%, transparent);
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
     color: var(--text-primary);
     cursor: pointer;
     display: flex;
@@ -486,6 +488,9 @@
     justify-content: center;
     position: relative;
     min-width: 0;
+    transition:
+      background var(--transition-fast),
+      box-shadow var(--transition-fast);
   }
 
   .bookmark-tile:focus-visible {
@@ -494,21 +499,11 @@
   }
 
   .bookmark-tile:hover {
-    background: color-mix(in srgb, var(--tab-glow, transparent) 5%, color-mix(in srgb, var(--bg-active) 88%, transparent));
-    box-shadow:
-      inset 0 0 0 1px var(--accent-tint-22),
-      0 8px 16px color-mix(in srgb, var(--text-primary) 8%, transparent);
+    background: linear-gradient(var(--bg-hover), var(--bg-hover)), var(--sidebar-sel);
   }
 
   .bookmark-tile.active {
-    --bookmark-active-bg: color-mix(in srgb, var(--tab-glow, transparent) 9%, color-mix(in srgb, var(--bg-active) 86%, transparent));
-    background: var(--bookmark-active-bg);
-    box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent),
-      0 0 0 1px
-        color-mix(in srgb, var(--bookmark-active-bg) 54%, transparent),
-      0 0 16px 0px
-        color-mix(in srgb, var(--bookmark-active-bg) 72%, transparent);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .bookmark-icon-inner {
@@ -524,12 +519,12 @@
     top: 3px;
     right: 3px;
     background: var(--accent);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg, var(--bg-primary));
+    box-shadow: 0 0 0 2px var(--sidebar-bg, var(--bg-primary));
   }
 
   .unread-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
   }
 
@@ -549,7 +544,7 @@
   }
 
   .bookmark-editor {
-    margin-top: 6px;
+    margin-top: 8px;
   }
 
   .bookmark-tile.editing {

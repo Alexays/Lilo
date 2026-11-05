@@ -5,7 +5,6 @@
   import UiSearchField from "../ui/UiSearchField.svelte";
   import { SETTINGS_NAV_GROUPS } from "./settingsPanelModel";
   import { getSettingsSearchResults } from "./settingsSearch.svelte";
-  import { getDefaultBrowserStatus } from "../../stores/settings.svelte";
   import {
     closeSettingsShell,
     getSettingsQuery,
@@ -38,7 +37,6 @@
         icon: section.id,
         count: counts[section.id],
         dimmed: searching && !counts[section.id],
-        attention: section.id === "general" && !getDefaultBrowserStatus().isDefault,
       })),
     })),
   );

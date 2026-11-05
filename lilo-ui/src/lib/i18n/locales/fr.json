@@ -28,19 +28,15 @@
 		"terminalTheme": "Thème",
 		"terminalThemeDescription": "Lilo suit la couleur de chaque Space et garde chaque couleur lisible dessus.",
 		"terminalImport": "Importer...",
-		"terminalImportTitle": "Importer un thème",
-		"terminalImportDescription": "Un préréglage de couleurs iTerm2 (.itermcolors), un thème de couleurs VS Code (.json) ou un fichier de thème Ghostty.",
 		"terminalFont": "Police",
-		"terminalFontDescription": "Les polices à ligatures, comme JetBrains Mono ou Fira Code, les affichent.",
+		"terminalFontDescription": "Les polices à ligatures, comme JetBrains Mono ou Fira Code, les affichent. Taille en points, pour tous les onglets terminal.",
 		"terminalFontSystem": "Système (SF Mono)",
 		"terminalFontSize": "Taille",
-		"terminalFontSizeDescription": "En points, pour tous les onglets terminal.",
 		"terminalScrollback": "Historique par terminal",
 		"terminalScrollbackDescription": "10 Mo font environ 100 000 lignes.",
 		"terminalBehaviorGroup": "Comportement",
 		"terminalNotify": "Prévenir quand une longue commande se termine",
 		"terminalNotifyDescription": "Au-delà de 10 secondes, si vous êtes ailleurs.",
-		"terminalSleepGroup": "Veille",
 		"terminalPreventSleepDescription": "Pas pour une commande qui vous attend ou muette depuis 5 minutes.",
 		"terminalLidStatus": {
 			"unsigned": "Nécessite une version signée de Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Fierté",
 			"clay": "Bonbon"
 		},
-		"importBrowsersAction": "Importer",
+		"importBrowsersAction": "Importer...",
 		"passwordManagerAction": "Choisir",
 		"passwordManagerChange": "Changer",
 		"replayOnboardingAction": "Revoir",
@@ -121,7 +117,6 @@
 			"storage": "Stockage"
 		},
 		"manageHistory": "Gérer l'historique",
-		"manageHistoryDesc": "Parcourir, rechercher et supprimer page par page",
 		"historyTimeRange": "Période de l'historique",
 		"historyRangeHour": "Dernière heure",
 		"historyRangeDay": "Dernières 24 heures",
@@ -142,19 +137,19 @@
 			"terminal": "Terminal",
 			"general": "Général",
 			"appearance": "Apparence",
-			"tabs": "Onglets et espaces",
+			"tabs": "Onglets et Espaces",
 			"media": "Audio et vidéo",
 			"privacy": "Confidentialité",
 			"extensions": "Extensions",
 			"advanced": "Avancé",
-			"agents": "Agents IA"
+			"agents": "Agents"
 		},
 		"groups": {
 			"browser": "Navigateur",
 			"search": "Recherche",
 			"downloads": "Téléchargements",
 			"theme": "Thème",
-			"tabLayout": "Onglets",
+			"tabLayout": "Disposition",
 			"pages": "Pages",
 			"spaces": "Espaces",
 			"playback": "Lecture",
@@ -162,29 +157,29 @@
 			"contentBlocking": "Blocage de contenu",
 			"protection": "Protection",
 			"browsingData": "Données de navigation",
-			"tools": "Outils",
+			"tools": "Outils de développement",
 			"permissions": "Permissions",
 			"zoom": "Zoom",
 			"siteData": "Données",
 			"sites": "Sites ({count})",
 			"updates": "Mises à jour",
 			"passwords": "Mots de passe",
-			"agentAccess": "Accès",
-			"agentClients": "Agents",
+			"agentAccess": "Agents qui utilisent Lilo",
+			"agentClients": "Apps qui peuvent utiliser Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Onglets et fenêtres",
 			"sitePermissions": "Autorisations des sites",
 			"profiles": "Profils",
 			"otherAppLinks": "Liens venant d'autres apps",
-			"blockerCategories": "Ce que Lilo bloque",
-			"blockerExceptions": "Listes et exceptions"
+			"blockerExceptions": "Listes et exceptions",
+			"agentConversations": "Conversations"
 		},
 		"searchPlaceholder": "Rechercher un réglage",
 		"searchResultsTitle": "Résultats",
 		"searchEmpty": "Aucun réglage ne correspond à « {query} ».",
 		"clearData": {
 			"total": "stockés par ce profil",
-			"measuring": "Mesure de ce que stocke ce profil...",
+			"title": "Effacer les données de navigation",
 			"freed": "{size} seront libérés",
 			"rangeNote": "Seul ce qui a été stocké pendant la période choisie est effacé.",
 			"hints": {
@@ -283,8 +278,12 @@
 			"addressPlacement": {
 				"title": "Adresse",
 				"description": "Avec les onglets, au-dessus de la page ou masquée. Utilisez la barre de commandes pour saisir une adresse.",
-				"keywords": "barre adresse url barre d outils masquer masquée cacher",
-				"lockedRight": "Avec les onglets à droite, affichez l'adresse au-dessus de la page ou masquez-la."
+				"keywords": "barre adresse url barre d outils masquer masquée cacher"
+			},
+			"hideSpaceNames": {
+				"title": "Masquer le nom des espaces",
+				"description": "La barre du bas montre chaque espace par sa seule icône, même avec la place pour son nom.",
+				"keywords": "espace nom libellé barre du bas icône masquer"
 			},
 			"theme": {
 				"title": "Thème",
@@ -423,7 +422,8 @@
 			"clearData": {
 				"title": "Effacer les données de navigation",
 				"description": "Historique, cookies, cache et données des sites, sur une période.",
-				"keywords": "historique cookies cache supprimer"
+				"keywords": "historique cookies cache supprimer",
+				"action": "Effacer les données de navigation..."
 			},
 			"loadUnpacked": {
 				"title": "Charger une extension non empaquetée",
@@ -476,8 +476,8 @@
 				"keywords": "mot de passe verrou dossier confidentialité"
 			},
 			"agentControl": {
-				"title": "Laisser les agents IA utiliser Lilo",
-				"description": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents. Lilo n'embarque aucune IA.",
+				"title": "Laisser les agents utiliser Lilo",
+				"description": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents.",
 				"keywords": "agent ia mcp claude codex cursor automatisation pilotage"
 			},
 			"agentAskBeforeActions": {
@@ -549,6 +549,16 @@
 				"title": "Réglages par site",
 				"description": "Permissions, zoom et données de chaque site.",
 				"keywords": "site permissions cookies zoom données stockage"
+			},
+			"agentsEnabled": {
+				"title": "Conversations avec vos agents",
+				"description": "Parlez à Claude Code, Codex, Gemini et d'autres agents dans un onglet, avec vos propres abonnements.",
+				"keywords": "agent ia acp chat conversation demander claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Notifier quand un agent a fini",
+				"description": "Une notification quand une conversation que vous ne regardez pas est terminée.",
+				"keywords": "agent notification alerte terminé fini"
 			}
 		},
 		"devices": {
@@ -596,16 +606,16 @@
 			"copy": "Copier la configuration",
 			"clientDescription": "Ajoute Lilo à ses serveurs MCP.",
 			"clientConnected": "Lilo figure dans ses serveurs MCP.",
-			"lastSeen": "Vu {time}",
 			"revoke": "Retirer",
-			"readyDescription": "Lilo vous demande à sa première connexion.",
 			"status": {
 				"acting": "En train d'agir",
 				"connected": "Connecté",
 				"allowed": "Autorisé",
 				"notInstalled": "Non installé",
 				"ready": "Configuré"
-			}
+			},
+			"allowedSeen": "Autorisé, vu {time}",
+			"readyLine": "Configuré. Lilo vous demande à sa première connexion."
 		},
 		"navGroups": {
 			"tools": "Outils"
@@ -633,7 +643,7 @@
 			"lastProfile": "Votre dernier profil reste : chaque espace en a besoin.",
 			"extensionCount": "{count} extensions",
 			"extensionCountOne": "1 extension",
-			"newProfile": "Nouveau profil",
+			"newProfile": "Nouveau profil...",
 			"newProfileDetail": "Cookies, connexions et extensions vierges",
 			"namePlaceholder": "Nom du profil",
 			"create": "Créer",
@@ -670,7 +680,6 @@
 			"emptyPattern": "Une règle a besoin d'un hôte ou d'un texte à chercher."
 		},
 		"shortcuts": {
-			"intro": "Cliquez sur un raccourci, puis tapez les nouvelles touches. Échap annule, Supprimer laisse l'action sans raccourci.",
 			"searchPlaceholder": "Rechercher un raccourci",
 			"preset": "Préréglage",
 			"presetDescription": "Remplace tous les raccourcis que vous avez modifiés.",
@@ -687,9 +696,10 @@
 			"conflict": "{keys} est déjà utilisé par {name}.",
 			"replace": "Remplacer",
 			"cancel": "Annuler",
-			"noResults": "Aucun raccourci ne correspond."
+			"noResults": "Aucun raccourci ne correspond.",
+			"note": "Cliquez sur un raccourci, puis appuyez sur les nouvelles touches",
+			"recordingHint": "Échap annule, Suppr laisse l'action sans raccourci."
 		},
-		"terminalAppearanceGroup": "Apparence",
 		"terminalSleepMode": "Garder le Mac éveillé pendant les commandes",
 		"terminalSleepModes": {
 			"off": "Non",
@@ -704,7 +714,37 @@
 			"requiresApproval": "À autoriser",
 			"enabled": "Autorisé",
 			"notFound": "Introuvable"
-		}
+		},
+		"notes": {
+			"live": "Les changements s'appliquent aussitôt",
+			"spaces": {
+				"one": "{count} espace",
+				"other": "{count} espaces"
+			},
+			"profiles": {
+				"one": "{count} profil",
+				"other": "{count} profils"
+			},
+			"blocking": "{count} types bloqués sur {total}",
+			"blockingOff": "Le blocage est désactivé",
+			"profile": "Profil {name}",
+			"extensions": {
+				"one": "{count} extension dans {profile}",
+				"other": "{count} extensions dans {profile}"
+			},
+			"terminal": "Les changements s'appliquent à chaque onglet de terminal",
+			"agents": "Lilo n'embarque aucune IA",
+			"advanced": "Pour le développement et les tests",
+			"searchMatches": {
+				"one": "{count} réglage correspond à « {query} »",
+				"other": "{count} réglages correspondent à « {query} »"
+			}
+		},
+		"callDock": {
+			"sidebar": "Dans la barre latérale",
+			"floating": "Fenêtre flottante"
+		},
+		"terminalImportCaption": "L'import accepte un préréglage de couleurs iTerm2 (.itermcolors), un thème de couleurs VS Code (.json) ou un fichier de thème Ghostty."
 	},
 	"nav": {
 		"navigationControls": "Commandes de navigation",
@@ -844,9 +884,19 @@
 		"newTab": "Nouvel onglet",
 		"newTerminal": "Nouveau terminal",
 		"clearUnpinnedTooltip": "Archiver les onglets non épinglés",
+		"listOptions": "Trier et regrouper",
 		"pinnedTabs": "Onglets épinglés",
 		"openTabs": "Onglets ouverts",
-		"dropToPin": "Déposer pour épingler"
+		"dropToPin": "Déposer pour épingler",
+		"stackLabel": {"one": "{name}, {count} onglet", "other": "{name}, {count} onglets"},
+		"closeStack": "Fermer la pile",
+		"trayAgents": "Agents",
+		"trayTerminals": "Terminaux",
+		"trayNeedsInput": {"one": "{count} attend une réponse", "other": "{count} attendent une réponse"},
+		"trayWorking": {"one": "{count} au travail", "other": "{count} au travail"},
+		"trayRunning": {"one": "{count} en cours", "other": "{count} en cours"},
+		"trayShow": "Afficher {name}",
+		"trayHide": "Masquer {name}"
 	},
 	"bookmarks": {
 		"groupLabel": "Onglets favoris",
@@ -865,6 +915,11 @@
 		"colorFrom": {
 			"page": "Couleur de l'onglet actif",
 			"wallpaper": "Couleur de votre fond d'écran"
+		},
+		"color": "Couleur",
+		"colorSource": {
+			"page": "Page",
+			"wallpaper": "Fond d'écran"
 		},
 		"colorSourceHint": {
 			"page": "Lilo prend la couleur du site de l'onglet actif.",
@@ -908,6 +963,7 @@
 		"thisSpace": "cet espace",
 		"deleteConfirmMessage": "L'espace et tous ses onglets sont supprimés définitivement.",
 		"deleteSpace": "Supprimer l'espace",
+		"deleteSpaceEllipsis": "Supprimer l'espace...",
 		"keepSpace": "Conserver l'espace",
 		"moreEmojis": "Plus d'emojis",
 		"lastSpaceHint": "Le dernier espace ne peut pas être supprimé.",
@@ -944,8 +1000,11 @@
 	},
 	"downloadsPanel": {
 		"title": "Téléchargements",
+		"allDownloads": "Tous les téléchargements",
+		"navLabel": "Vues des téléchargements",
 		"searchPlaceholder": "Rechercher dans les téléchargements",
-		"loading": "Chargement des téléchargements...",
+		"searchResults": "Résultats de recherche",
+		"quickLookNote": "Espace pour Coup d'œil",
 		"emptyTitle": "Aucun téléchargement",
 		"emptyCopy": "Les fichiers téléchargés apparaîtront ici.",
 		"noResults": "Aucun résultat",
@@ -987,8 +1046,6 @@
 		"menuButtonLabel": "Plus d'actions pour {name}",
 		"openDetailsLabel": "Afficher les détails de {name}",
 		"detailEnabled": "Activée",
-		"detailDescription": "Description",
-		"detailCapabilities": "Capacités",
 		"detailPermissions": "Permissions",
 		"detailSiteAccess": "Accès aux sites",
 		"siteAccessAll": "S'exécute sur tous les sites qu'elle a demandés.",
@@ -1001,9 +1058,10 @@
 		"capabilityContent": "Scripts de contenu",
 		"removeConfirmTitle": "Supprimer {name} ?",
 		"removeConfirmMessage": "L'extension et ses données seront supprimées.",
+		"removeExtension": "Supprimer l'extension...",
 		"actionFailed": "Échec de l'action. Cliquez pour ignorer.",
 		"degradedTitle": "Arrière-plan arrêté : certaines fonctionnalités peuvent ne pas fonctionner.",
-		"loadUnpacked": "Charger une extension décompressée…",
+		"loadUnpacked": "Charger une extension décompressée...",
 		"addressBarMenu": "Extensions",
 		"hostAccessRequestAllow": "Autoriser",
 		"hostAccessRequestTooltip": "Autoriser cette extension à accéder à ce site",
@@ -1031,10 +1089,10 @@
 		"shortcutRecording": "Tapez un raccourci",
 		"executeAction": "Activer l'extension",
 		"shortcutNone": "Aucun",
-		"removeTitle": "Supprimer cette extension",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Avis, détails et page du développeur",
-		"webStoreOpen": "Ouvrir"
+		"webStoreOpen": "Ouvrir",
+		"installed": "Installées"
 	},
 	"commandBar": {
 		"hintPeek": "Aperçu",
@@ -1071,7 +1129,7 @@
 		"scopeTabs": "Onglets",
 		"scopeBookmarks": "Favoris",
 		"scopeHistory": "Historique",
-		"scopeArchive": "Archives",
+		"scopeArchive": "Archivés",
 		"placeholderArchive": "Rechercher dans les onglets archivés...",
 		"emptyTitleArchive": "Archives",
 		"emptySubtitleArchive": "Les onglets non épinglés inactifs, ou rangés, arrivent ici.",
@@ -1103,6 +1161,8 @@
 		"sectionOpenTabs": "Onglets ouverts",
 		"sectionBookmarks": "Favoris",
 		"sectionRecentHistory": "Historique récent",
+		"sectionFrequentSites": "Sites fréquents",
+		"sectionRecentConversations": "Conversations récentes",
 		"sectionHistory": "Historique",
 		"sectionSwitchToTab": "Basculer vers l'onglet",
 		"sectionGoTo": "Aller à",
@@ -1116,6 +1176,8 @@
 		"subtitleExactCommand": "Commande correspondante",
 		"subtitleDefaultEngine": "Moteur de recherche par défaut",
 		"hintSwitch": "Basculer",
+		"agentWaiting": "Vous attend : {request}",
+		"agentWorking": "En cours",
 		"hintOpen": "Ouvrir",
 		"hintGo": "Aller",
 		"hintSearch": "Rechercher",
@@ -1215,9 +1277,9 @@
 		"tabStartup": "Démarrage",
 		"tabMemory": "Mémoire",
 		"tabLog": "Journal",
-		"tabLogCount": "Journal ({count})",
+		"errorCount": {"one": "{count} erreur", "other": "{count} erreurs"},
 		"copyReport": "Copier le rapport",
-		"recordSession": "Enregistrer une session de performance (dans Téléchargements)",
+		"recordSession": "Enregistrer une session",
 		"stopRecording": "Arrêter l'enregistrement",
 		"refresh": "Actualiser",
 		"bootLabel": "jusqu'à l'interface prête",
@@ -1232,17 +1294,16 @@
 		"savedStates": "États de page sauvegardés",
 		"trackedSpaces": "Espaces",
 		"hiddenSpacesRetaining": "Autres espaces gardant des onglets chargés",
-		"openProcessManager": "Ouvrir le gestionnaire de processus",
 		"trimDescription": "Applique maintenant la mise en veille automatique.",
+		"trimTitle": "Libérer de la mémoire",
 		"trimMemory": "Lancer",
+		"processManagerDescription": "Mémoire et processeur utilisés par chaque onglet et processus.",
 		"searchPlaceholder": "Rechercher dans le journal",
 		"filterAriaLabel": "Filtre du journal",
 		"filterAll": "Tout",
 		"filterErrors": "Erreurs",
 		"filterExtensions": "Extensions",
 		"filterTraces": "Traces",
-		"copyLogs": "Copier les logs d'extensions",
-		"clearLog": "Effacer les logs d'extensions",
 		"emptyLog": "Rien d'enregistré pour l'instant.",
 		"noMatches": "Aucune entrée correspondante.",
 		"truncated": "Affichage des {count} dernières entrées.",
@@ -1255,6 +1316,7 @@
 	},
 	"processManager": {
 		"title": "Gestionnaire de processus",
+		"navLabel": "Vues du gestionnaire de processus",
 		"searchPlaceholder": "Rechercher des onglets",
 		"memoryAriaLabel": "Utilisation de la mémoire",
 		"tabsCount": "{count} onglets",
@@ -1283,10 +1345,12 @@
 		},
 		"pid": "PID {pid}",
 		"focus": "Afficher",
+		"details": "Afficher les détails",
 		"reload": "Recharger",
 		"terminate": "Forcer à quitter",
 		"untitledTab": "Sans titre",
 		"empty": "Aucun onglet correspondant.",
+		"emptySleeping": "Aucun onglet en veille.",
 		"confirmTerminate": "Forcer à quitter le processus {kind} {pid} ?",
 		"confirmCloseTab": "Fermer {tab} ?",
 		"kindWebContent": "Contenu web",
@@ -1297,14 +1361,15 @@
 	},
 	"featureFlags": {
 		"resetAll": "Tout réinitialiser",
-		"warning": "Les entrées de débogage interne sont des indicateurs développeur de WebKit et peuvent casser des sites. Rechargez une page pour qu'une modification prenne effet.",
-		"sectionExperimental": "Expérimental : {count}",
+		"warning": "Les entrées de débogage interne sont des indicateurs développeur de WebKit et peuvent casser des sites.",
 		"sectionDebug": "Débogage interne : {count}",
 		"modifiedBadge": "Modifié",
 		"title": "Indicateurs WebKit",
-		"resetTitle": "Indicateurs modifiés"
+		"resetTitle": "Indicateurs modifiés",
+		"reloadNote": "Rechargez une page pour qu'un changement s'applique"
 	},
 	"urlToast": {
+		"pageActions": "Actions de la page",
 		"reEnableBlocking": "Réactiver le blocage sur ce site",
 		"trackerBlockedOnPage": "{count} traqueur bloqué sur cette page",
 		"trackersBlockedOnPage": "{count} traqueurs bloqués sur cette page",
@@ -1335,6 +1400,7 @@
 	},
 	"pageHang": {
 		"title": "{host} ne répond plus",
+		"message": "Vous pouvez attendre ou la recharger. Vos autres onglets fonctionnent normalement.",
 		"stuckFor": "La page est bloquée depuis {seconds} s. Vos autres onglets fonctionnent normalement.",
 		"reload": "Recharger",
 		"wait": "Attendre",
@@ -1350,16 +1416,20 @@
 	},
 	"extensionDebugger": {
 		"message": "« {name} » a commencé à déboguer ce navigateur",
-		"cancel": "Annuler"
+		"stop": "Arrêter le débogage"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "{count} autre avis",
+			"other": "{count} autres avis"
+		},
+		"more": "{count} de plus"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Votre session précédente a été restaurée après une fermeture inattendue."
 	},
 	"sessionRestore": {
 		"degraded": "Impossible de restaurer les onglets de l'espace {name}. Une copie de sauvegarde a été conservée."
-	},
-	"confirmSheet": {
-		"dismiss": "Ignorer la confirmation"
 	},
 	"tabShare": {
 		"title": "{origin} veut partager un onglet",
@@ -1372,7 +1442,7 @@
 		"keyHint": "Flèches pour choisir, Entrée pour partager",
 		"noTabs": "Aucun onglet ouvert à partager",
 		"noMatch": "Aucun onglet ne correspond",
-		"shareSystem": "Fenêtre ou écran…",
+		"shareSystem": "Fenêtre ou écran...",
 		"shareAudio": "Partager aussi le son",
 		"systemAudio": {
 			"undetermined": "macOS demandera une fois. Les voix de l'appel ne sont jamais partagées.",
@@ -1402,7 +1472,7 @@
 		"closed": "« {title} » fermé",
 		"closedCount": "{count} onglets fermés",
 		"undo": "Annuler",
-		"undoLabel": "Annuler : {closed}",
+		"reopen": "Rouvrir",
 		"archived": "« {title} » archivé",
 		"archivedCount": {"one": "{count} onglet archivé", "other": "{count} onglets archivés"}
 	},
@@ -1480,7 +1550,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "demande l'accès à :",
 		"more": "+{count} autres",
-		"deny": "Refuser",
+		"deny": "Ne pas autoriser",
+		"moreAnswers": "Autres réponses",
 		"allow": "Autoriser",
 		"allowOnce": "Autoriser une fois",
 		"alwaysAllowOnSite": "Toujours autoriser sur ce site",
@@ -1515,9 +1586,16 @@
 			"notifications": "veut afficher des notifications",
 			"media": "veut utiliser votre caméra ou votre micro"
 		},
-		"agentControl": "veut piloter Lilo : ouvrir des onglets dans son propre dossier, lire leurs pages et y agir avec vos connexions.",
-		"agentProfile": "veut passer ses onglets sur le profil {profile}, pour agir avec ses connexions.",
-		"agentExecutable": "Programme : {path}",
+		"dontAllow": "Ne pas autoriser",
+		"agentConnect": {
+			"title": "{client} veut piloter Lilo",
+			"openTabs": "Ouvrir des onglets dans son propre dossier du Space Agents",
+			"readPages": "Lire les pages qu'il ouvre",
+			"actSignedIn": "Y agir avec vos connexions",
+			"asksFirst": "Il demande avant d'envoyer, de payer, de supprimer ou de publier.",
+			"profileTitle": "{client} veut utiliser le profil {profile}",
+			"profileMessage": "Il y déplace ses onglets, pour agir avec les connexions de ce profil."
+		},
 		"agentClick": "veut cliquer sur « {label} » dans {tab} ({site}).",
 		"agentSubmit": "veut appuyer sur Entrée pour valider « {label} » dans {tab} ({site}).",
 		"agentUpload": "veut envoyer {label} à {site}.",
@@ -1563,13 +1641,14 @@
 		"continue": "Continuer",
 		"back": "Retour",
 		"skip": "Passer",
+		"letsGo": "C'est parti",
 		"resume": "Reprendre l'accueil",
 		"usage": {
 			"title": "Comment allez-vous utiliser Lilo ?",
 			"subtitle": "L'accueil s'adapte à votre réponse. Tout reste modifiable dans les Réglages.",
 			"browse": "Pour naviguer",
 			"browseDesc": "Vos favoris, votre style, l'essentiel",
-			"agents": "Avec mes agents IA",
+			"agents": "Avec mes agents",
 			"agentsDesc": "Claude, Codex ou Cursor à vos côtés",
 			"develop": "Pour développer",
 			"developDesc": "Le tout, plus le terminal"
@@ -1620,8 +1699,6 @@
 				"extensionsCount": "Réinstallation des extensions : {current} sur {total}"
 			},
 			"partial": "Certaines données n'ont pas pu être importées : {list}. Vous pourrez réessayer depuis les Réglages.",
-			"moreOptions": "Choisir quoi importer",
-			"lessOptions": "Masquer les options",
 			"profiles": "Profils {browser}",
 			"kinds": "Quoi importer",
 			"kind": {
@@ -1633,12 +1710,23 @@
 			},
 			"extensions": "Extensions à réinstaller",
 			"run": "Importer",
+			"summary": "Importe {list}.",
+			"change": "Modifier",
+			"item": {
+				"bookmarks": "les favoris",
+				"tabs": "les onglets ouverts",
+				"history": "l'historique",
+				"cookies": "vos connexions",
+				"extensions": "les extensions"
+			},
 			"running": "Import en cours..."
 		},
 		"passwords": {
 			"title": "Vos mots de passe",
 			"subtitle": "Lilo ne garde aucun mot de passe. Ajoutez le gestionnaire que vous utilisez déjà.",
 			"add": "Ajouter",
+			"manager": "Gestionnaire de mots de passe",
+			"choose": "Choisir",
 			"addNamed": "Ajouter {name}",
 			"adding": "Ajout...",
 			"added": "Ajouté",
@@ -1653,21 +1741,19 @@
 				"iCloud": "En attente de validation par Apple"
 			}
 		},
-		"appearance": {
-			"title": "Votre style",
-			"subtitle": "Clair, sombre, ou comme votre Mac, et d'où vient sa couleur. La fenêtre change tout de suite.",
+		"yourLilo": {
+			"title": "Votre Lilo",
+			"subtitle": "Un style et une place pour vos onglets. La fenêtre suit vos choix.",
 			"theme": "Thème",
 			"system": "Auto",
 			"light": "Clair",
-			"dark": "Sombre"
-		},
-		"tabs": {
-			"title": "Vos onglets, de votre côté",
-			"subtitle": "Choisissez un bord, la fenêtre suit. Vous pourrez glisser les onglets vers un autre bord à tout moment."
+			"dark": "Sombre",
+			"tabs": "Onglets",
+			"color": "Couleur",
+			"essentials": "L'essentiel",
+			"look": "Apparence"
 		},
 		"essentials": {
-			"title": "L'essentiel",
-			"subtitle": "Des réglages qui changent tout. Modifiables à tout moment.",
 			"blocker": "Bloquer les pubs et les pisteurs",
 			"blockerDesc": "Recommandé : les pages chargent plus vite et vous suivent moins.",
 			"refreshRate": "Défilement plus fluide",
@@ -1678,23 +1764,18 @@
 			"defaultDone": "C'est fait"
 		},
 		"agents": {
-			"title": "Vos agents IA",
+			"title": "Vos agents",
 			"subtitle": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents, sans toucher à votre clavier. Lilo n'embarque aucune IA.",
-			"allow": "Laisser les agents IA utiliser Lilo",
+			"allow": "Laisser les agents utiliser Lilo",
 			"copied": "Copié",
-			"connectNamed": "Connecter {name}"
+			"connectNamed": "Connecter {name}",
+			"onThisMac": "Sur ce Mac"
 		},
 		"tips": {
-			"title": "3 astuces pour bien démarrer",
-			"subtitle": "C'est tout ce qu'il faut savoir.",
-			"go": "C'est parti",
 			"search": "Appuyez sur ⌘T pour chercher ou taper une adresse.",
-			"tabs": "Vos onglets restent visibles, sur le bord choisi.",
 			"split": "Glissez un onglet sur le bord de la page pour voir deux pages côte à côte."
 		},
 		"devTips": {
-			"title": "3 astuces pour développer",
-			"subtitle": "Les raccourcis marchent même sans le menu Développement.",
 			"inspector": "Appuyez sur ⌥⌘I pour ouvrir le Web Inspector sur la page.",
 			"localhost": "Glissez votre localhost sur le bord de la page pour le voir à côté de la doc.",
 			"agents": "Vos agents ouvrent leurs onglets dans l'espace Agents."
@@ -1709,6 +1790,7 @@
 	"historyPage": {
 		"title": "Historique",
 		"navLabel": "Vues de l'historique",
+		"cmdClickNote": "⌘-clic ouvre dans un nouvel onglet",
 		"searchPlaceholder": "Rechercher dans l'historique",
 		"periodAll": "Tout l'historique",
 		"periodToday": "Aujourd'hui",
@@ -2065,6 +2147,16 @@
 		"Mute Microphone": "Couper le microphone",
 		"Unmute Microphone": "Réactiver le microphone",
 		"Close Other Tabs": "Fermer les autres onglets",
+		"Move Stack to New Folder": "Déplacer la pile dans un nouveau dossier",
+		"Move Stack to Space": "Déplacer la pile vers un espace",
+		"Don't Stack %@": "Ne pas empiler %@",
+		"Close Stack": "Fermer la pile",
+		"Stack Tabs by Site": "Empiler les onglets par site",
+		"Group by Type": "Regrouper par type",
+		"Never Stack": "Ne jamais empiler",
+		"Stack Every Site Again": "Empiler à nouveau tous les sites",
+		"Sort by Site": "Trier par site",
+		"Sort by Title": "Trier par titre",
 		"Create Folder": "Créer un dossier",
 		"Create Folder from Tab": "Créer un dossier à partir de l'onglet",
 		"Move to Folder": "Déplacer dans un dossier",
@@ -2227,7 +2319,24 @@
 		"Parent folder": "Dossier parent",
 		"Name": "Nom",
 		"Size": "Taille",
-		"Date Modified": "Date de modification"
+		"Date Modified": "Date de modification",
+		"%@ could not be downloaded.": "%@ n'a pas pu être téléchargé.",
+		"%@ could not be installed.": "%@ n'a pas pu être installé.",
+		"%@ did not match its checksum and was not installed.": "%@ ne correspondait pas à sa somme de contrôle et n'a pas été installé.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ a besoin de Node.js : installez-le depuis nodejs.org, puis réessayez.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ a besoin de uv : installez-le depuis astral.sh/uv, puis réessayez.",
+		"Choose": "Choisir",
+		"New Conversation": "Nouvelle conversation",
+		"Screenshot of %@": "Capture d'écran de %@",
+		"The agent stopped (code %d).": "L'agent s'est arrêté (code %d).",
+		"This agent is no longer in the ACP registry.": "Cet agent n'est plus dans le registre ACP.",
+		"Always Allow": "Toujours autoriser",
+		"Ask an Agent": "Demander à un agent",
+		"Review Changes": "Voir les modifications",
+		"Show Pages": "Afficher les pages",
+		"Hide Pages": "Masquer les pages",
+		"Close Conversation": "Fermer la conversation",
+		"Pasted image": "Image collée"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2237,7 +2346,7 @@
 		"changes": { "one": "{count} changement", "other": "{count} changements" },
 		"originalNotes": "Notes de version originales, en anglais.",
 		"unavailable": "Les notes de version ne sont pas disponibles dans cette version de développement.",
-		"reopen": "À retrouver dans Aide → Nouveautés.",
+		"reopen": "À retrouver dans Aide > Nouveautés.",
 		"continue": "Reprendre la navigation",
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
@@ -2290,6 +2399,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "Toutes les permissions",
+		"inUse": "Utilisé en ce moment",
 		"zoom": "Zoom",
 		"zoomIn": "Agrandir",
 		"zoomOut": "Réduire",
@@ -2342,6 +2452,259 @@
 			"ellipse": "Ellipse",
 			"text": "Texte",
 			"pen": "Crayon"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Arrêter",
+			"mode": "Mode",
+			"context": "{percent} % du contexte utilisé",
+			"planSession": "Limite de session : {percent} % utilisés, réinitialisation {time}",
+			"planWeek": "Limite hebdomadaire : {percent} % utilisés, réinitialisation {time}",
+			"ownCopy": "Copie à part",
+			"ownCopyHint": "Travaille sur sa propre copie du projet. Fusionnez-la depuis Modifications.",
+			"starting": "Démarrage de l'agent...",
+			"errorHint": "Envoyez un message pour réessayer.",
+			"showEarlier": {
+				"one": "Afficher {count} élément précédent",
+				"other": "Afficher {count} éléments précédents"
+			},
+			"queued": {
+				"one": "{count} message en attente",
+				"other": "{count} messages en attente"
+			},
+			"queuedHint": "Envoyé quand l'agent a fini. Cmd Entrée l'envoie tout de suite.",
+			"thought": "Réflexion",
+			"restoreToHere": "Revenir à ce point",
+			"restoreConfirm": "Remettre les fichiers du projet tels qu'ils étaient à ce message ?",
+			"restore": "Restaurer",
+			"reviewChanges": "Relire dans Modifications",
+			"undo": "Annuler",
+			"keep": "Garder",
+			"undone": "Annulé",
+			"kept": "Gardé",
+			"moreLines": {
+				"one": "{count} ligne de plus",
+				"other": "{count} lignes de plus"
+			},
+			"plan": "Plan",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "À faire",
+				"in_progress": "En cours",
+				"completed": "Fait"
+			},
+			"permissionTitle": "Autoriser cette action ?",
+			"answered": "Réponse : {option}",
+			"cancelled": "Aucune réponse donnée",
+			"notice": {
+				"restored": "Fichiers restaurés à ce point",
+				"restoreFailed": "Les fichiers n'ont pas pu être restaurés",
+				"signedIn": "Connecté"
+			},
+			"moreOptions": "Plus d'options",
+			"signInHint": "Connectez-vous avec l'agent : votre message part dès que vous êtes connecté.",
+			"branch": "Branche {branch}",
+			"jumpToLatest": "Aller aux derniers messages"
+		},
+		"tool": {
+			"untitled": "Appel d'outil",
+			"status": {
+				"pending": "En attente",
+				"in_progress": "En cours",
+				"failed": "Échec"
+			},
+			"group": {
+				"read": {
+					"one": "{count} fichier lu",
+					"other": "{count} fichiers lus"
+				},
+				"search": {
+					"one": "{count} recherche",
+					"other": "{count} recherches"
+				},
+				"fetch": {
+					"one": "{count} page récupérée",
+					"other": "{count} pages récupérées"
+				},
+				"think": {
+					"one": "{count} réflexion",
+					"other": "{count} réflexions"
+				},
+				"action": {
+					"one": "{count} action",
+					"other": "{count} actions"
+				}
+			}
+		},
+		"composer": {
+			"label": "Écrire à l'agent",
+			"placeholder": "Répondre, @ pour ajouter un élément, / pour les commandes",
+			"addContext": "Ajouter du contexte",
+			"send": "Envoyer",
+			"removeAttachment": "Retirer {label}",
+			"tabs": "Onglets",
+			"folders": "Dossiers",
+			"fromPage": "Depuis la page",
+			"more": "Plus",
+			"selection": "Sélection",
+			"screenshot": "Capture d'écran",
+			"file": "Fichier {path}",
+			"fileHint": "Tapez un chemin pour joindre un fichier du projet",
+			"commands": "Commandes",
+			"files": "Fichiers",
+			"image": "Image"
+		},
+		"ask": {
+			"label": "Demander à un agent",
+			"placeholder": "Demander à un agent, @ pour ajouter un élément",
+			"thisPage": "Cette page",
+			"agent": "Agent",
+			"loadingAgents": "Chargement des agents...",
+			"project": "Projet",
+			"chooseProject": "Choisir un projet",
+			"chooseFolder": "Choisir un dossier...",
+			"noFolder": "Aucun dossier",
+			"noFolderDetail": "L'agent travaille dans son propre dossier",
+			"backgroundHint": "{shortcut} pour le garder en arrière-plan",
+			"start": "Démarrer"
+		},
+		"row": {
+			"untitled": "Nouvelle conversation",
+			"working": "En cours",
+			"failed": "Arrêté sur une erreur",
+			"changes": "{added} lignes ajoutées, {removed} supprimées",
+			"pages": {
+				"one": "{count} page",
+				"other": "{count} pages"
+			},
+			"showPages": "Afficher les pages",
+			"hidePages": "Masquer les pages"
+		},
+		"question": {
+			"allow": "Autoriser",
+			"allowAlways": "Toujours autoriser",
+			"reject": "Ne pas autoriser",
+			"rejectAlways": "Ne jamais autoriser",
+			"more": "Autres réponses"
+		},
+		"badge": {
+			"title": "Agents",
+			"waiting": {
+				"one": "Agents, {count} vous attend",
+				"other": "Agents, {count} vous attendent"
+			},
+			"new": "Nouveau",
+			"needsYou": "Vous attend",
+			"running": "En cours",
+			"done": "Terminé",
+			"finished": "Fini",
+			"empty": "Aucune conversation ne vous attend"
+		},
+		"status": {
+			"working": "En cours",
+			"waiting": "Vous attend",
+			"stopHint": "Échap pour arrêter",
+			"signingIn": "Connexion à {agent}",
+			"signingInHint": "Votre message part dès que vous êtes connecté.",
+			"signingInTerminalHint": "Connectez-vous dans l'onglet terminal ouvert par Lilo. Votre message part ensuite."
+		},
+		"work": {
+			"images": {
+				"one": "{count} image",
+				"other": "{count} images"
+			},
+			"verb": {
+				"read": "Lu",
+				"edit": "Modifié",
+				"delete": "Supprimé",
+				"move": "Déplacé",
+				"search": "Recherché",
+				"fetch": "Récupéré"
+			},
+			"summary": {
+				"read": {
+					"one": "{count} fichier lu",
+					"other": "{count} fichiers lus"
+				},
+				"edit": {
+					"one": "{count} fichier modifié",
+					"other": "{count} fichiers modifiés"
+				},
+				"execute": {
+					"one": "{count} commande exécutée",
+					"other": "{count} commandes exécutées"
+				},
+				"search": {
+					"one": "{count} recherche",
+					"other": "{count} recherches"
+				},
+				"fetch": {
+					"one": "{count} page récupérée",
+					"other": "{count} pages récupérées"
+				},
+				"think": {
+					"one": "{count} réflexion",
+					"other": "{count} réflexions"
+				},
+				"browser": {
+					"one": "navigateur utilisé {count} fois",
+					"other": "navigateur utilisé {count} fois"
+				},
+				"tool": {
+					"one": "{count} outil utilisé",
+					"other": "{count} outils utilisés"
+				}
+			},
+			"exit": "Sortie {code}",
+			"showAll": {
+				"one": "Afficher {count} ligne",
+				"other": "Afficher les {count} lignes"
+			},
+			"showLess": "Afficher les dernières lignes"
+		},
+		"turn": {
+			"workedFor": "A travaillé pendant {duration}",
+			"stopped": "Arrêté",
+			"files": {
+				"one": "{count} fichier modifié",
+				"other": "{count} fichiers modifiés"
+			},
+			"review": "Relire",
+			"copy": "Copier la réponse",
+			"copied": "Copié"
+		},
+		"image": {
+			"unavailable": "Image indisponible",
+			"open": "Ouvrir l'image",
+			"viewer": "Image",
+			"previous": "Image précédente",
+			"next": "Image suivante",
+			"counter": "{index} sur {total}"
+		},
+		"markdown": {
+			"preview": "Aperçu",
+			"openPreview": "Ouvrir l'aperçu dans un onglet",
+			"view": "Afficher en",
+			"code": "Code",
+			"copy": "Copier le code",
+			"copied": "Copié"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Expliquer ce projet",
+					"prompt": "Explique comment ce projet est organisé : ses parties principales, comment elles s'articulent et par où commencer la lecture."
+				},
+				"fixBug": {
+					"label": "Trouver et corriger un bug",
+					"prompt": "Trouve un bug dans ce projet, explique sa cause, puis corrige-le."
+				},
+				"tests": {
+					"label": "Écrire des tests pour...",
+					"prompt": "Écris des tests pour "
+				}
+			}
 		}
 	}
 }

@@ -20,7 +20,7 @@ import {
 	type OnboardingUsage,
 } from "../components/onboarding/onboardingModel";
 
-/** "full" is the onboarding; the others are that screen alone, opened from Settings. */
+/** "full" is the onboarding; the others are the Import screen alone, opened from Settings, "passwords" without the browsers. */
 type OnboardingMode = "full" | "import" | "passwords";
 
 const state = $state({
@@ -102,7 +102,7 @@ export function startOnboarding(mode: OnboardingMode = "full"): void {
 	state.collapsed = false;
 	state.firstRun = false;
 	state.mode = mode;
-	state.step = mode === "full" ? 0 : onboardingSteps(state.usage).indexOf(mode);
+	state.step = mode === "full" ? 0 : onboardingSteps(state.usage).indexOf("import");
 	// A fresh scan recomputes the default choices; a previous run's results must not linger.
 	importState.sources = null;
 	importState.progress = null;
@@ -138,6 +138,8 @@ export function finishOnboarding(): void {
 	importActions.close();
 	if (state.mode === "full") {
 		onboardingActions.complete();
+		// Its tips come later, in context, each the first time the person does what it is about.
+		setSetting("seenTips", "");
 		// Completion marks the invite as prompted: hidden here, it never shows once the card is gone.
 		hideDefaultBrowserInvite();
 		// Native holds the blank tab's command bar while the onboarding shows.

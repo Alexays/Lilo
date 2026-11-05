@@ -82,11 +82,11 @@ test("scope chip prefixes sit in one fixed-width slot, centered on their label",
 
 test("key pills share one height and font with the labels, their text centered, the pill centered on its label", async ({ page }) => {
 	await openActions(page);
-	const labelFont = await page.locator(".footer-hint > span").first().evaluate((el) => getComputedStyle(el).fontFamily);
+	const labelFont = await page.locator(".key-hint > span").first().evaluate((el) => getComputedStyle(el).fontFamily);
 
 	const pills = [
 		...(await page.locator(".command-bar-footer kbd").all()),
-		...(await page.locator(".command-bar-result .result-helper").all()),
+		...(await page.locator(".command-bar-result .result-shortcut").all()),
 	];
 	expect(pills.length).toBeGreaterThan(3);
 	const heights = new Set<number>();
@@ -101,11 +101,11 @@ test("key pills share one height and font with the labels, their text centered, 
 	expect(heights.size).toBe(1);
 
 	// Same font and size, so equal text boxes mean the key and its label share a baseline.
-	for (const hint of await page.locator(".footer-hint").all()) {
-		const labelSize = await hint.locator("kbd + span").evaluate((el) => getComputedStyle(el).fontSize);
+	for (const hint of await page.locator(".command-bar-footer .key-hint").all()) {
+		const labelSize = await hint.locator("> span").evaluate((el) => getComputedStyle(el).fontSize);
 		await expect(hint.locator("kbd")).toHaveCSS("font-size", labelSize);
 		const key = await textBox(hint.locator("kbd"));
-		const label = await textBox(hint.locator("kbd + span"));
+		const label = await textBox(hint.locator("> span"));
 		expect(Math.abs(key.y - label.y)).toBeLessThanOrEqual(0.5);
 		expect(Math.abs(key.height - label.height)).toBeLessThanOrEqual(0.5);
 	}
@@ -117,10 +117,10 @@ test("footer hints that do not fit drop whole instead of showing a cut word", as
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 	await page.locator(".command-bar-input").fill("beta");
-	await expect(page.locator(".footer-hints .footer-hint")).toHaveCount(7);
+	await expect(page.locator(".footer-hints .key-hint")).toHaveCount(7);
 
 	const row = await box(page.locator(".footer-hints"));
-	for (const hint of await page.locator(".footer-hints .footer-hint").all()) {
+	for (const hint of await page.locator(".footer-hints .key-hint").all()) {
 		const hintBox = await box(hint);
 		const shownWhole = hintBox.x + hintBox.width <= row.x + row.width && hintBox.y < row.y + row.height;
 		const hidden = hintBox.y >= row.y + row.height;
@@ -131,13 +131,16 @@ test("footer hints that do not fit drop whole instead of showing a cut word", as
 test("reduced motion stills the footer like the rest of the bar", async ({ page }) => {
 	await openActions(page);
 
-	for (const selector of [".command-bar", ".command-bar-results", ".command-bar-footer"]) {
+	// The panel only fades in, as every surface does under Reduce motion.
+	await expect(page.locator(".command-bar")).toHaveCSS("transform", "none");
+	for (const selector of [".command-bar-results", ".command-bar-footer"]) {
 		await expect(page.locator(selector), selector).toHaveCSS("animation-name", "none");
 	}
 });
 
 test("monogram tiles use the labels' font", async ({ page }) => {
 	await openActions(page);
+	await page.locator(".scope-hint", { hasText: "All" }).click();
 	await page.locator(".command-bar-input").fill("beta");
 	const labelFont = await page.locator(".result-title").first().evaluate((el) => getComputedStyle(el).fontFamily);
 

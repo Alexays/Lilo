@@ -1,5 +1,4 @@
 <script lang="ts">
-  import SettingsBrowsingData from "./SettingsBrowsingData.svelte";
   import { tick } from "svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { type SettingsSectionId, takeSettingsHighlight } from "../../stores/panels.svelte";
@@ -61,8 +60,6 @@
           <SearchEngineEditor />
         {:else if subpage === "shortcuts"}
           <SettingsShortcuts />
-        {:else if subpage === "browsingData"}
-          <SettingsBrowsingData />
         {:else if subpage === "blockerSites"}
           <SettingsBlockerSites />
         {:else if subpage === "sites" || subpage?.startsWith("site:")}
@@ -86,7 +83,6 @@
   .settings-section-page {
     display: grid;
     gap: 22px;
-    max-width: 900px;
   }
 
   /* Opacity only: a transform here would trap the confirm sheets' positioning. */

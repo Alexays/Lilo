@@ -35,38 +35,41 @@ test("the hovered bar's buttons hide the address under them", async ({ page }) =
 	expect(maxDifference).toBeLessThanOrEqual(2);
 });
 
-test("the details card gives way to the command bar opened over a resting pointer", async ({ page }) => {
+test("the site details give way to the command bar opened over a resting pointer", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.locator(".url-trigger").hover();
 	await page.mouse.move(60, 72);
-	await expect(page.locator(".url-details")).toBeVisible();
+	await expect(page.locator(".url-drawer")).toBeVisible();
 
 	// Cmd+L with the pointer still on the address.
 	await page.evaluate(() => window.__lilo!.receive({ event: "toggleCommandBar", selectAll: true }));
 	await page.mouse.move(62, 73);
 
 	await expect(page.locator(".command-bar")).toBeVisible();
-	await expect(page.locator(".url-details")).toHaveCount(0);
+	await expect(page.locator(".url-drawer")).toHaveCount(0);
 });
 
-test("the details card is wider than a narrow sidebar and shows while a request waits", async ({ page }) => {
+test("the site details are wider than a narrow sidebar and show over a waiting request", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), sidebarWidth: 220 });
 	await page.evaluate(() =>
 		window.__lilo!.receive({
 			event: "extensionPermissionRequested", requestId: "e1", extensionName: "Okta Verify", permissions: [], origins: ["https://example.okta.com"], type: "urls",
 		}),
 	);
-	await expect(page.locator(".url-drawer-clip")).toContainText("Okta Verify");
+	await expect(page.locator(".url-drawer")).toContainText("Okta Verify");
 
 	await page.locator(".url-trigger").hover();
 	await page.mouse.move(60, 72);
-	const card = page.locator(".url-details");
+	const card = page.locator(".url-drawer.open", { has: page.locator(".site-head") });
 	await expect(card).toBeVisible();
+	expect(await card.evaluate((el) => (el as HTMLElement).offsetWidth)).toBeGreaterThanOrEqual(300);
 	const box = (await card.boundingBox())!;
-	expect(box.width).toBeGreaterThanOrEqual(300);
-	const pastSidebar = await page.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest(".url-details"), [box.x + box.width - 8, box.y + 8]);
+	const pastSidebar = await page.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest(".url-drawer"), [box.x + box.width - 8, box.y + 8]);
 	expect(pastSidebar).toBe(true);
 	await expect(card.locator("dd").first()).not.toHaveText(/\n/);
+
+	await page.mouse.move(700, 400);
+	await expect(page.locator(".url-drawer")).toContainText("Okta Verify");
 });
 
 test("the bar's and find bar's buttons take the theme's focus ring", async ({ page }) => {
@@ -147,14 +150,14 @@ for (const key of ["Enter", "Space"]) {
 	});
 }
 
-test("the details card says an https page is not secure when its certificate or content is", async ({ page }) => {
+test("the site details say an https page is not secure when its certificate or content is", async ({ page }) => {
 	const world = initialWorld();
 	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.isNotSecure = true;
 	await bootChrome(page, world);
 	await page.locator(".url-trigger").hover();
 	await page.mouse.move(60, 72);
 
-	const card = page.locator(".url-details");
+	const card = page.locator(".url-drawer");
 	await expect(card).toContainText("Not secure");
 	await expect(card).not.toContainText("Encrypted");
 });

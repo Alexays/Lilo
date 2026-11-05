@@ -28,19 +28,15 @@
 		"terminalTheme": "主題",
 		"terminalThemeDescription": "Lilo 會配合各空間的顏色，確保所有顏色清晰可辨。",
 		"terminalImport": "匯入...",
-		"terminalImportTitle": "匯入主題",
-		"terminalImportDescription": "iTerm2 色彩預設組（.itermcolors）、VS Code 色彩主題（.json）或 Ghostty 主題檔案。",
 		"terminalFont": "字體",
-		"terminalFontDescription": "支援連字的字體（如 JetBrains Mono 或 Fira Code）會顯示連字。",
+		"terminalFontDescription": "支援連字的字體（如 JetBrains Mono 或 Fira Code）會顯示連字。字級以點為單位，套用至所有終端機分頁。",
 		"terminalFontSystem": "系統（SF Mono）",
 		"terminalFontSize": "大小",
-		"terminalFontSizeDescription": "以點為單位，套用至所有終端機分頁。",
 		"terminalScrollback": "每個終端機的歷史記錄",
 		"terminalScrollbackDescription": "10 MB 約可容納 100,000 行。",
 		"terminalBehaviorGroup": "行為",
 		"terminalNotify": "長時間執行的指令完成時通知",
 		"terminalNotifyDescription": "指令執行超過 10 秒，且你正在別處時通知。",
-		"terminalSleepGroup": "睡眠",
 		"terminalPreventSleepDescription": "指令正在等待你回應，或已靜默 5 分鐘時，不會防止睡眠。",
 		"terminalLidStatus": {
 			"unsigned": "需要已簽署的 Lilo 版本。",
@@ -79,7 +75,7 @@
 			"pride": "彩虹",
 			"clay": "陶土"
 		},
-		"importBrowsersAction": "匯入",
+		"importBrowsersAction": "匯入...",
 		"passwordManagerAction": "選擇",
 		"passwordManagerChange": "更改",
 		"replayOnboardingAction": "重播",
@@ -121,7 +117,6 @@
 			"storage": "儲存空間"
 		},
 		"manageHistory": "管理瀏覽記錄",
-		"manageHistoryDesc": "逐頁瀏覽、搜尋和刪除",
 		"historyTimeRange": "歷史記錄時間範圍",
 		"historyRangeHour": "過去一小時",
 		"historyRangeDay": "過去 24 小時",
@@ -147,14 +142,14 @@
 			"privacy": "隱私權",
 			"extensions": "延伸功能",
 			"advanced": "進階",
-			"agents": "AI 代理程式"
+			"agents": "代理程式"
 		},
 		"groups": {
 			"browser": "瀏覽器",
 			"search": "搜尋",
 			"downloads": "下載項目",
 			"theme": "主題",
-			"tabLayout": "分頁",
+			"tabLayout": "佈局",
 			"pages": "網頁",
 			"spaces": "空間",
 			"playback": "播放",
@@ -162,29 +157,29 @@
 			"contentBlocking": "內容阻擋",
 			"protection": "保護",
 			"browsingData": "瀏覽資料",
-			"tools": "工具",
+			"tools": "開發者工具",
 			"permissions": "權限",
 			"zoom": "縮放",
 			"siteData": "資料",
 			"sites": "網站（{count}）",
 			"updates": "更新",
 			"passwords": "密碼",
-			"agentAccess": "取用權限",
-			"agentClients": "代理程式",
+			"agentAccess": "使用 Lilo 的代理程式",
+			"agentClients": "可使用 Lilo 的 App",
 			"lilo": "Lilo",
 			"tabsWindows": "分頁與視窗",
 			"sitePermissions": "網站權限",
 			"profiles": "個人檔案",
 			"otherAppLinks": "來自其他 App 的連結",
-			"blockerCategories": "Lilo 阻擋的內容",
-			"blockerExceptions": "清單與例外"
+			"blockerExceptions": "清單與例外",
+			"agentConversations": "對話"
 		},
 		"searchPlaceholder": "搜尋設定",
 		"searchResultsTitle": "搜尋結果",
 		"searchEmpty": "沒有符合「{query}」的設定。",
 		"clearData": {
 			"total": "由此個人檔案儲存",
-			"measuring": "正在計算此個人檔案儲存的資料...",
+			"title": "清除瀏覽資料",
 			"freed": "將釋出 {size}",
 			"rangeNote": "只會清除所選期間內儲存的資料。",
 			"hints": {
@@ -283,8 +278,12 @@
 			"addressPlacement": {
 				"title": "網址",
 				"description": "與分頁放在一起、位於網頁上方或隱藏。使用指令列輸入網址。",
-				"keywords": "網址列 url 工具列 位置 隱藏",
-				"lockedRight": "分頁位於右側時，請將網址顯示於網頁上方或隱藏。"
+				"keywords": "網址列 url 工具列 位置 隱藏"
+			},
+			"hideSpaceNames": {
+				"title": "隱藏空間名稱",
+				"description": "底部列只用圖示顯示每個空間，即使有位置顯示名稱。",
+				"keywords": "空間 名稱 標籤 底部列 圖示 隱藏"
 			},
 			"theme": {
 				"title": "主題",
@@ -423,7 +422,8 @@
 			"clearData": {
 				"title": "清除瀏覽資料",
 				"description": "清除指定期間的歷史記錄、Cookie、快取與網站資料。",
-				"keywords": "歷史記錄 cookie 快取 刪除 清除"
+				"keywords": "歷史記錄 cookie 快取 刪除 清除",
+				"action": "清除瀏覽資料..."
 			},
 			"loadUnpacked": {
 				"title": "載入未封裝的延伸功能",
@@ -476,8 +476,8 @@
 				"keywords": "密碼 鎖定 資料夾 隱私權"
 			},
 			"agentControl": {
-				"title": "允許 AI 代理程式使用 Lilo",
-				"description": "Claude Code、Codex 或 Cursor 在專屬的「代理程式」空間中工作。Lilo 本身不含 AI。",
+				"title": "允許代理程式使用 Lilo",
+				"description": "Claude Code、Codex 或 Cursor 在專屬的「代理程式」空間中工作。",
 				"keywords": "代理程式 ai mcp claude codex cursor 自動化 遠端 控制"
 			},
 			"agentAskBeforeActions": {
@@ -549,6 +549,16 @@
 				"title": "依網站設定",
 				"description": "各網站的權限、縮放比例與儲存的資料。",
 				"keywords": "網站 權限 cookie 縮放 資料 儲存空間"
+			},
+			"agentsEnabled": {
+				"title": "與你的代理程式對話",
+				"description": "在分頁中與 Claude Code、Codex、Gemini 等代理程式對話，使用你自己的訂閱。",
+				"keywords": "代理程式 AI ACP 聊天 對話 詢問 Claude Codex Gemini Copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "代理程式完成時通知",
+				"description": "你未在檢視的對話完成時發出通知。",
+				"keywords": "代理程式 通知 提醒 完成 結束"
 			}
 		},
 		"devices": {
@@ -596,16 +606,16 @@
 			"copy": "拷貝設定",
 			"clientDescription": "將 Lilo 加入其 MCP 伺服器。",
 			"clientConnected": "Lilo 已在其 MCP 伺服器中。",
-			"lastSeen": "上次活動於 {time}",
 			"revoke": "移除",
-			"readyDescription": "首次連接時，Lilo 會詢問你。",
 			"status": {
 				"acting": "正在執行動作",
 				"connected": "已連接",
 				"allowed": "已允許",
 				"notInstalled": "未安裝",
 				"ready": "已設定"
-			}
+			},
+			"allowedSeen": "已允許，上次連線 {time}",
+			"readyLine": "已設定。首次連線時 Lilo 會詢問你。"
 		},
 		"navGroups": {
 			"tools": "工具"
@@ -633,7 +643,7 @@
 			"lastProfile": "最後一個個人檔案會保留：每個空間都需要一個。",
 			"extensionCount": "{count} 個延伸功能",
 			"extensionCountOne": "1 個延伸功能",
-			"newProfile": "新增個人檔案",
+			"newProfile": "新增個人檔案...",
 			"newProfileDetail": "全新的 Cookie、登入狀態與延伸功能",
 			"namePlaceholder": "個人檔案名稱",
 			"create": "建立",
@@ -670,7 +680,6 @@
 			"emptyPattern": "規則需要可比對的主機名稱或文字。"
 		},
 		"shortcuts": {
-			"intro": "點按快速鍵，再按下新的按鍵組合。Esc 會取消，Delete 會移除此動作的快速鍵。",
 			"searchPlaceholder": "搜尋快速鍵",
 			"preset": "預設組",
 			"presetDescription": "會取代所有你更改過的快速鍵。",
@@ -687,9 +696,10 @@
 			"conflict": "{keys} 已用於 {name}。",
 			"replace": "取代",
 			"cancel": "取消",
-			"noResults": "沒有符合的快速鍵。"
+			"noResults": "沒有符合的快速鍵。",
+			"note": "按一下快速鍵，然後按下新的按鍵",
+			"recordingHint": "按 Esc 取消，按 Delete 移除此動作的快速鍵。"
 		},
-		"terminalAppearanceGroup": "外觀",
 		"terminalSleepMode": "執行指令時保持 Mac 喚醒",
 		"terminalSleepModes": {
 			"off": "關閉",
@@ -704,7 +714,37 @@
 			"requiresApproval": "需要核准",
 			"enabled": "已允許",
 			"notFound": "遺失"
-		}
+		},
+		"notes": {
+			"live": "選擇後立即生效",
+			"spaces": {
+				"one": "{count} 個空間",
+				"other": "{count} 個空間"
+			},
+			"profiles": {
+				"one": "{count} 個設定檔",
+				"other": "{count} 個設定檔"
+			},
+			"blocking": "正在阻擋 {total} 類中的 {count} 類",
+			"blockingOff": "阻擋已關閉",
+			"profile": "{name} 設定檔",
+			"extensions": {
+				"one": "{profile} 中有 {count} 個延伸功能",
+				"other": "{profile} 中有 {count} 個延伸功能"
+			},
+			"terminal": "變更會套用到每個終端機分頁",
+			"agents": "Lilo 本身不含 AI",
+			"advanced": "供開發與測試使用",
+			"searchMatches": {
+				"one": "{count} 項設定符合「{query}」",
+				"other": "{count} 項設定符合「{query}」"
+			}
+		},
+		"callDock": {
+			"sidebar": "在側邊欄中",
+			"floating": "浮動視窗"
+		},
+		"terminalImportCaption": "可匯入 iTerm2 顏色預設 (.itermcolors)、VS Code 顏色主題 (.json) 或 Ghostty 主題檔案。"
 	},
 	"nav": {
 		"navigationControls": "導覽控制項",
@@ -844,9 +884,19 @@
 		"newTab": "新增分頁",
 		"newTerminal": "新增終端機",
 		"clearUnpinnedTooltip": "封存未釘選分頁",
+		"listOptions": "排序與分組",
 		"pinnedTabs": "釘選分頁",
 		"openTabs": "已開啟分頁",
-		"dropToPin": "放下以釘選"
+		"dropToPin": "放下以釘選",
+		"stackLabel": {"one": "{name}，{count} 個分頁", "other": "{name}，{count} 個分頁"},
+		"closeStack": "關閉堆疊",
+		"trayAgents": "代理程式",
+		"trayTerminals": "終端機",
+		"trayNeedsInput": {"one": "{count} 個等待輸入", "other": "{count} 個等待輸入"},
+		"trayWorking": {"one": "{count} 個工作中", "other": "{count} 個工作中"},
+		"trayRunning": {"one": "{count} 個執行中", "other": "{count} 個執行中"},
+		"trayShow": "顯示{name}",
+		"trayHide": "隱藏{name}"
 	},
 	"bookmarks": {
 		"groupLabel": "書籤分頁",
@@ -865,6 +915,11 @@
 		"colorFrom": {
 			"page": "目前分頁的顏色",
 			"wallpaper": "背景圖片的顏色"
+		},
+		"color": "顏色",
+		"colorSource": {
+			"page": "網頁",
+			"wallpaper": "背景圖片"
 		},
 		"colorSourceHint": {
 			"page": "Lilo 採用目前分頁中網站的顏色。",
@@ -908,6 +963,7 @@
 		"thisSpace": "此空間",
 		"deleteConfirmMessage": "空間及其所有分頁都會永久刪除。",
 		"deleteSpace": "刪除空間",
+		"deleteSpaceEllipsis": "刪除空間...",
 		"keepSpace": "保留空間",
 		"moreEmojis": "更多表情符號",
 		"lastSpaceHint": "無法刪除最後一個空間。",
@@ -944,8 +1000,11 @@
 	},
 	"downloadsPanel": {
 		"title": "下載項目",
+		"allDownloads": "所有下載項目",
+		"navLabel": "下載項目檢視",
 		"searchPlaceholder": "搜尋下載項目",
-		"loading": "正在載入下載項目...",
+		"searchResults": "搜尋結果",
+		"quickLookNote": "按空白鍵快速查看",
 		"emptyTitle": "沒有下載項目",
 		"emptyCopy": "下載的檔案會顯示在這裡。",
 		"noResults": "沒有結果",
@@ -987,8 +1046,6 @@
 		"menuButtonLabel": "{name} 的更多動作",
 		"openDetailsLabel": "顯示 {name} 的詳細資訊",
 		"detailEnabled": "已啟用",
-		"detailDescription": "說明",
-		"detailCapabilities": "功能",
 		"detailPermissions": "權限",
 		"detailSiteAccess": "網站取用權限",
 		"siteAccessAll": "在所有已要求取用的網站上執行。",
@@ -1001,9 +1058,10 @@
 		"capabilityContent": "內容指令碼",
 		"removeConfirmTitle": "要移除 {name} 嗎？",
 		"removeConfirmMessage": "延伸功能及其資料都會刪除。",
+		"removeExtension": "移除延伸功能...",
 		"actionFailed": "動作失敗。點按以關閉。",
 		"degradedTitle": "背景已停止：部分功能可能無法運作。",
-		"loadUnpacked": "載入未封裝的延伸功能…",
+		"loadUnpacked": "載入未封裝的延伸功能...",
 		"addressBarMenu": "延伸功能",
 		"hostAccessRequestAllow": "允許",
 		"hostAccessRequestTooltip": "允許此延伸功能取用此網站",
@@ -1031,10 +1089,10 @@
 		"shortcutRecording": "輸入快速鍵",
 		"executeAction": "啟動延伸功能",
 		"shortcutNone": "未設定",
-		"removeTitle": "移除此延伸功能",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "評論、詳細資訊與開發者網頁",
-		"webStoreOpen": "開啟"
+		"webStoreOpen": "開啟",
+		"installed": "已安裝"
 	},
 	"commandBar": {
 		"hintPeek": "預覽",
@@ -1071,7 +1129,7 @@
 		"scopeTabs": "分頁",
 		"scopeBookmarks": "書籤",
 		"scopeHistory": "歷史記錄",
-		"scopeArchive": "封存",
+		"scopeArchive": "已封存",
 		"placeholderArchive": "搜尋已封存分頁...",
 		"emptyTitleArchive": "封存",
 		"emptySubtitleArchive": "閒置或已清除的未釘選分頁會移至此處。",
@@ -1103,6 +1161,8 @@
 		"sectionOpenTabs": "已開啟分頁",
 		"sectionBookmarks": "書籤",
 		"sectionRecentHistory": "最近的歷史記錄",
+		"sectionFrequentSites": "常用網站",
+		"sectionRecentConversations": "最近的對話",
 		"sectionHistory": "歷史記錄",
 		"sectionSwitchToTab": "切換至分頁",
 		"sectionGoTo": "前往",
@@ -1116,6 +1176,8 @@
 		"subtitleExactCommand": "完全符合的指令",
 		"subtitleDefaultEngine": "預設搜尋引擎",
 		"hintSwitch": "切換",
+		"agentWaiting": "等你處理：{request}",
+		"agentWorking": "工作中",
 		"hintOpen": "開啟",
 		"hintGo": "前往",
 		"hintSearch": "搜尋",
@@ -1215,9 +1277,9 @@
 		"tabStartup": "啟動",
 		"tabMemory": "記憶體",
 		"tabLog": "記錄",
-		"tabLogCount": "記錄（{count}）",
+		"errorCount": {"one": "{count} 個錯誤", "other": "{count} 個錯誤"},
 		"copyReport": "拷貝報告",
-		"recordSession": "錄製效能工作階段（儲存至「下載項目」）",
+		"recordSession": "錄製工作階段",
 		"stopRecording": "停止錄製",
 		"refresh": "重新整理",
 		"bootLabel": "介面就緒前的時間",
@@ -1232,17 +1294,16 @@
 		"savedStates": "已儲存的網頁狀態",
 		"trackedSpaces": "空間",
 		"hiddenSpacesRetaining": "保留已載入分頁的其他空間",
-		"openProcessManager": "開啟程序管理程式",
 		"trimDescription": "立即套用自動睡眠規則。",
+		"trimTitle": "釋放記憶體",
 		"trimMemory": "釋出記憶體",
+		"processManagerDescription": "每個標籤頁和程序使用的記憶體和 CPU。",
 		"searchPlaceholder": "搜尋記錄",
 		"filterAriaLabel": "記錄過濾器",
 		"filterAll": "全部",
 		"filterErrors": "錯誤",
 		"filterExtensions": "延伸功能",
 		"filterTraces": "追蹤記錄",
-		"copyLogs": "拷貝延伸功能記錄",
-		"clearLog": "清除延伸功能記錄",
 		"emptyLog": "尚無任何記錄。",
 		"noMatches": "沒有符合的項目。",
 		"truncated": "顯示最近 {count} 筆記錄。",
@@ -1255,6 +1316,7 @@
 	},
 	"processManager": {
 		"title": "程序管理程式",
+		"navLabel": "程序管理員檢視",
 		"searchPlaceholder": "搜尋分頁",
 		"memoryAriaLabel": "記憶體用量",
 		"tabsCount": "{count} 個分頁",
@@ -1283,10 +1345,12 @@
 		},
 		"pid": "PID {pid}",
 		"focus": "顯示",
+		"details": "顯示詳細資訊",
 		"reload": "重新載入",
 		"terminate": "強制結束",
 		"untitledTab": "未命名",
 		"empty": "沒有符合的分頁。",
+		"emptySleeping": "沒有休眠的標籤頁。",
 		"confirmTerminate": "要強制結束 {kind} 程序 {pid} 嗎？",
 		"confirmCloseTab": "要關閉 {tab} 嗎？",
 		"kindWebContent": "網頁內容",
@@ -1297,14 +1361,15 @@
 	},
 	"featureFlags": {
 		"resetAll": "全部重設",
-		"warning": "內部除錯項目是 WebKit 開發者旗標，可能導致網站無法正常運作。更改後須重新載入網頁才會生效。",
-		"sectionExperimental": "實驗性：{count}",
+		"warning": "內部除錯項目是 WebKit 開發者旗標，可能導致網站無法正常運作。",
 		"sectionDebug": "內部除錯：{count}",
 		"modifiedBadge": "已修改",
 		"title": "WebKit 旗標",
-		"resetTitle": "已更改的旗標"
+		"resetTitle": "已更改的旗標",
+		"reloadNote": "重新載入頁面以套用變更"
 	},
 	"urlToast": {
+		"pageActions": "頁面操作",
 		"reEnableBlocking": "重新啟用此網站的阻擋功能",
 		"trackerBlockedOnPage": "此網頁已阻擋 {count} 個追蹤器",
 		"trackersBlockedOnPage": "此網頁已阻擋 {count} 個追蹤器",
@@ -1335,6 +1400,7 @@
 	},
 	"pageHang": {
 		"title": "{host} 沒有回應",
+		"message": "你可以等待或重新載入。其他分頁仍可正常運作。",
 		"stuckFor": "已停滯 {seconds} 秒。其他分頁仍可正常運作。",
 		"reload": "重新載入",
 		"wait": "等待",
@@ -1350,7 +1416,14 @@
 	},
 	"extensionDebugger": {
 		"message": "「{name}」已開始對此瀏覽器進行除錯",
-		"cancel": "取消"
+		"stop": "停止偵錯"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "還有 {count} 則通知",
+			"other": "還有 {count} 則通知"
+		},
+		"more": "還有 {count} 則"
 	},
 	"crashRecovery": {
 		"sessionRestored": "意外結束後，已回復先前的工作階段。"
@@ -1358,14 +1431,11 @@
 	"sessionRestore": {
 		"degraded": "無法回復空間 {name} 的分頁。已保留備份。"
 	},
-	"confirmSheet": {
-		"dismiss": "關閉確認提示"
-	},
 	"tabShare": {
 		"title": "{origin} 想要分享分頁",
 		"pickTab": "選擇要分享的分頁",
 		"noTabs": "沒有可分享的已開啟分頁",
-		"shareSystem": "視窗或螢幕…",
+		"shareSystem": "視窗或螢幕...",
 		"search": "搜尋分頁",
 		"suggested": "建議",
 		"currentSpace": "目前空間",
@@ -1402,7 +1472,7 @@
 		"closed": "已關閉「{title}」",
 		"closedCount": "已關閉 {count} 個分頁",
 		"undo": "還原",
-		"undoLabel": "還原：{closed}",
+		"reopen": "重新打開",
 		"archived": "已封存「{title}」",
 		"archivedCount": {"one": "已封存 {count} 個分頁", "other": "已封存 {count} 個分頁"}
 	},
@@ -1480,7 +1550,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "要求取用：",
 		"more": "另有 {count} 項",
-		"deny": "拒絕",
+		"deny": "不允許",
+		"moreAnswers": "更多選項",
 		"allow": "允許",
 		"allowOnce": "允許一次",
 		"alwaysAllowOnSite": "一律允許此網站",
@@ -1515,9 +1586,16 @@
 			"notifications": "想要顯示通知",
 			"media": "想要使用相機或麥克風"
 		},
-		"agentControl": "想要控制 Lilo：在自己的資料夾中開啟分頁、讀取網頁，並使用你的登入狀態執行動作。",
-		"agentProfile": "想要將其分頁移至個人檔案 {profile}，使用該檔案的登入狀態執行動作。",
-		"agentExecutable": "程式：{path}",
+		"dontAllow": "不允許",
+		"agentConnect": {
+			"title": "{client} 想要控制 Lilo",
+			"openTabs": "在「代理程式」Space 的專屬資料夾中開啟分頁",
+			"readPages": "讀取它開啟的網頁",
+			"actSignedIn": "使用你的登入狀態執行動作",
+			"asksFirst": "傳送、付款、刪除或發佈前會先詢問。",
+			"profileTitle": "{client} 想要使用個人檔案 {profile}",
+			"profileMessage": "它會將分頁移至該個人檔案，使用該檔案的登入狀態執行動作。"
+		},
 		"agentClick": "想要在 {tab}（{site}）中點按「{label}」。",
 		"agentSubmit": "想要在 {tab}（{site}）中按 Enter 送出「{label}」。",
 		"agentUpload": "想要將 {label} 上傳至 {site}。",
@@ -1563,13 +1641,14 @@
 		"continue": "繼續",
 		"back": "返回",
 		"skip": "略過",
+		"letsGo": "出發吧",
 		"resume": "繼續設定",
 		"usage": {
 			"title": "你會如何使用 Lilo？",
 			"subtitle": "設定流程會依你的回答調整。之後都能在「設定」中更改。",
 			"browse": "用來瀏覽",
 			"browseDesc": "你的書籤、你的風格，以及基本功能",
-			"agents": "搭配我的 AI 代理程式",
+			"agents": "搭配我的代理程式",
 			"agentsDesc": "Claude、Codex 或 Cursor 在你身旁工作",
 			"develop": "用來開發",
 			"developDesc": "上述所有功能，加上終端機"
@@ -1620,8 +1699,6 @@
 				"extensionsCount": "正在重新安裝延伸功能：{current}/{total}"
 			},
 			"partial": "部分資料無法匯入：{list}。稍後可從「設定」重試。",
-			"moreOptions": "選擇要匯入的內容",
-			"lessOptions": "隱藏選項",
 			"profiles": "{browser} 個人檔案",
 			"kinds": "匯入內容",
 			"kind": {
@@ -1633,12 +1710,23 @@
 			},
 			"extensions": "要重新安裝的延伸功能",
 			"run": "匯入",
+			"summary": "將匯入{list}。",
+			"change": "變更",
+			"item": {
+				"bookmarks": "書籤",
+				"tabs": "開啟的分頁",
+				"history": "瀏覽記錄",
+				"cookies": "網站登入狀態",
+				"extensions": "擴充功能"
+			},
 			"running": "正在匯入..."
 		},
 		"passwords": {
 			"title": "你的密碼",
 			"subtitle": "Lilo 本身不會儲存密碼。加入你已使用的密碼管理工具。",
 			"add": "加入",
+			"manager": "密碼管理工具",
+			"choose": "選擇",
 			"addNamed": "加入 {name}",
 			"adding": "正在加入...",
 			"added": "已加入",
@@ -1653,21 +1741,19 @@
 				"iCloud": "等待 Apple 核准中"
 			}
 		},
-		"appearance": {
-			"title": "你的風格",
-			"subtitle": "淺色、深色或配合 Mac，並選擇顏色來源。視窗會立即更新。",
+		"yourLilo": {
+			"title": "你的 Lilo",
+			"subtitle": "選擇外觀和標籤頁的位置，視窗會隨你的選擇變化。",
 			"theme": "主題",
 			"system": "自動",
 			"light": "淺色",
-			"dark": "深色"
-		},
-		"tabs": {
-			"title": "分頁，隨你選邊",
-			"subtitle": "選擇一個邊緣，視窗會隨之調整。你隨時都能將分頁拖到其他邊緣。"
+			"dark": "深色",
+			"tabs": "標籤頁",
+			"color": "顏色",
+			"essentials": "基本設定",
+			"look": "外觀"
 		},
 		"essentials": {
-			"title": "基本設定",
-			"subtitle": "實用的設定，隨時都能更改。",
 			"blocker": "阻擋廣告與追蹤器",
 			"blockerDesc": "建議使用：網頁載入更快，追蹤更少。",
 			"refreshRate": "更流暢的捲動",
@@ -1678,23 +1764,18 @@
 			"defaultDone": "完成"
 		},
 		"agents": {
-			"title": "你的 AI 代理程式",
+			"title": "你的代理程式",
 			"subtitle": "Claude Code、Codex 或 Cursor 在專屬的「代理程式」空間工作，不會佔用你的鍵盤。Lilo 本身不含 AI。",
-			"allow": "允許 AI 代理程式使用 Lilo",
+			"allow": "允許代理程式使用 Lilo",
 			"copied": "已拷貝",
-			"connectNamed": "連接 {name}"
+			"connectNamed": "連接 {name}",
+			"onThisMac": "這台 Mac 上"
 		},
 		"tips": {
-			"title": "開始使用的 3 個技巧",
-			"subtitle": "只需要知道這些。",
-			"go": "出發吧",
 			"search": "按 ⌘T 搜尋或輸入網址。",
-			"tabs": "分頁位於你選的那一側，隨時都看得見。",
 			"split": "將分頁拖到網頁邊緣，即可並排顯示兩個網頁。"
 		},
 		"devTips": {
-			"title": "開發的 3 個技巧",
-			"subtitle": "即使沒有顯示「開發」選單，快速鍵仍可使用。",
 			"inspector": "按 ⌥⌘I 開啟目前網頁的網頁檢閱器。",
 			"localhost": "將 localhost 拖到網頁邊緣，即可與文件並排顯示。",
 			"agents": "代理程式會在「代理程式」空間中開啟分頁。"
@@ -1709,6 +1790,7 @@
 	"historyPage": {
 		"title": "瀏覽記錄",
 		"navLabel": "瀏覽記錄檢視",
+		"cmdClickNote": "⌘-點按在新分頁中打開",
 		"searchPlaceholder": "搜尋瀏覽記錄",
 		"periodAll": "所有瀏覽記錄",
 		"periodToday": "今天",
@@ -2065,6 +2147,16 @@
 		"Mute Microphone": "將麥克風靜音",
 		"Unmute Microphone": "取消麥克風靜音",
 		"Close Other Tabs": "關閉其他分頁",
+		"Move Stack to New Folder": "將堆疊移至新資料夾",
+		"Move Stack to Space": "將堆疊移至空間",
+		"Don't Stack %@": "不要堆疊 %@",
+		"Close Stack": "關閉堆疊",
+		"Stack Tabs by Site": "依網站堆疊分頁",
+		"Group by Type": "依類型分組",
+		"Never Stack": "永不堆疊",
+		"Stack Every Site Again": "重新堆疊所有網站",
+		"Sort by Site": "依網站排序",
+		"Sort by Title": "依標題排序",
 		"Create Folder": "建立資料夾",
 		"Create Folder from Tab": "從分頁建立資料夾",
 		"Move to Folder": "移至資料夾",
@@ -2227,7 +2319,24 @@
 		"Parent folder": "上層檔案夾",
 		"Name": "名稱",
 		"Size": "大小",
-		"Date Modified": "修改日期"
+		"Date Modified": "修改日期",
+		"%@ could not be downloaded.": "無法下載 %@。",
+		"%@ could not be installed.": "無法安裝 %@。",
+		"%@ did not match its checksum and was not installed.": "%@ 的檢查碼不符，未安裝。",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ 需要 Node.js：請從 nodejs.org 安裝，然後再試一次。",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ 需要 uv：請從 astral.sh/uv 安裝，然後再試一次。",
+		"Choose": "選擇",
+		"New Conversation": "新對話",
+		"Screenshot of %@": "%@ 的截圖",
+		"The agent stopped (code %d).": "代理程式已停止（代碼 %d）。",
+		"This agent is no longer in the ACP registry.": "此代理程式已不在 ACP 登錄檔中。",
+		"Always Allow": "一律允許",
+		"Ask an Agent": "詢問代理程式",
+		"Review Changes": "檢視變更",
+		"Show Pages": "顯示頁面",
+		"Hide Pages": "隱藏頁面",
+		"Close Conversation": "關閉對話",
+		"Pasted image": "貼上的圖片"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2240,7 +2349,7 @@
 		},
 		"originalNotes": "原始版本說明。",
 		"unavailable": "此版本沒有可用的版本說明。",
-		"reopen": "隨時可在「輔助說明」→「最新內容」找到。",
+		"reopen": "隨時可在「輔助說明」>「最新內容」找到。",
 		"continue": "返回瀏覽",
 		"kinds": {
 			"Breaking": "不相容變更",
@@ -2301,6 +2410,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "所有權限",
+		"inUse": "正在使用",
 		"zoom": "縮放",
 		"zoomIn": "放大",
 		"zoomOut": "縮小",
@@ -2353,6 +2463,259 @@
 			"ellipse": "橢圓",
 			"text": "文字",
 			"pen": "畫筆"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "停止",
+			"mode": "模式",
+			"context": "已使用 {percent}% 的脈絡",
+			"planSession": "工作階段限額：已使用 {percent}%，{time} 重設",
+			"planWeek": "每週限額：已使用 {percent}%，{time} 重設",
+			"ownCopy": "獨立副本",
+			"ownCopyHint": "在專案的獨立副本中工作。可從「變更」合併。",
+			"starting": "正在啟動代理程式...",
+			"errorHint": "傳送訊息即可重試。",
+			"showEarlier": {
+				"one": "顯示前 {count} 個項目",
+				"other": "顯示前 {count} 個項目"
+			},
+			"queued": {
+				"one": "{count} 則訊息排隊中",
+				"other": "{count} 則訊息排隊中"
+			},
+			"queuedHint": "代理程式完成後傳送。按 Cmd Return 立即傳送。",
+			"thought": "思考",
+			"restoreToHere": "回復到此處",
+			"restoreConfirm": "要將專案檔案回復到這則訊息時的狀態嗎？",
+			"restore": "回復",
+			"reviewChanges": "在「變更」中檢閱",
+			"undo": "還原",
+			"keep": "保留",
+			"undone": "已還原",
+			"kept": "已保留",
+			"moreLines": {
+				"one": "還有 {count} 行",
+				"other": "還有 {count} 行"
+			},
+			"plan": "計畫",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "待辦",
+				"in_progress": "進行中",
+				"completed": "已完成"
+			},
+			"permissionTitle": "要允許此動作嗎？",
+			"answered": "回答：{option}",
+			"cancelled": "未作答",
+			"notice": {
+				"restored": "檔案已回復到此處",
+				"restoreFailed": "無法回復檔案",
+				"signedIn": "已登入"
+			},
+			"moreOptions": "更多選項",
+			"signInHint": "請使用代理程式登入：登入後即傳送你的訊息。",
+			"branch": "分支 {branch}",
+			"jumpToLatest": "跳到最新"
+		},
+		"tool": {
+			"untitled": "工具呼叫",
+			"status": {
+				"pending": "等待中",
+				"in_progress": "執行中",
+				"failed": "失敗"
+			},
+			"group": {
+				"read": {
+					"one": "讀取了 {count} 個檔案",
+					"other": "讀取了 {count} 個檔案"
+				},
+				"search": {
+					"one": "{count} 次搜尋",
+					"other": "{count} 次搜尋"
+				},
+				"fetch": {
+					"one": "取得了 {count} 個頁面",
+					"other": "取得了 {count} 個頁面"
+				},
+				"think": {
+					"one": "思考了 {count} 次",
+					"other": "思考了 {count} 次"
+				},
+				"action": {
+					"one": "{count} 個動作",
+					"other": "{count} 個動作"
+				}
+			}
+		},
+		"composer": {
+			"label": "傳訊息給代理程式",
+			"placeholder": "回覆，@ 加入內容，/ 使用指令",
+			"addContext": "加入脈絡",
+			"send": "傳送",
+			"removeAttachment": "移除 {label}",
+			"tabs": "分頁",
+			"folders": "資料夾",
+			"fromPage": "來自頁面",
+			"more": "更多",
+			"selection": "所選內容",
+			"screenshot": "截圖",
+			"file": "檔案 {path}",
+			"fileHint": "輸入路徑以附加專案檔案",
+			"commands": "指令",
+			"files": "檔案",
+			"image": "圖片"
+		},
+		"ask": {
+			"label": "詢問代理程式",
+			"placeholder": "詢問代理程式，@ 加入內容",
+			"thisPage": "此頁面",
+			"agent": "代理程式",
+			"loadingAgents": "正在載入代理程式...",
+			"project": "專案",
+			"chooseProject": "選擇專案",
+			"chooseFolder": "選擇資料夾...",
+			"noFolder": "無檔案夾",
+			"noFolderDetail": "代理程式在自己的檔案夾中工作",
+			"backgroundHint": "按 {shortcut} 在背景進行",
+			"start": "開始"
+		},
+		"row": {
+			"untitled": "新對話",
+			"working": "工作中",
+			"failed": "因錯誤而停止",
+			"changes": "新增 {added} 行，刪除 {removed} 行",
+			"pages": {
+				"one": "{count} 個頁面",
+				"other": "{count} 個頁面"
+			},
+			"showPages": "顯示頁面",
+			"hidePages": "隱藏頁面"
+		},
+		"question": {
+			"allow": "允許",
+			"allowAlways": "一律允許",
+			"reject": "不允許",
+			"rejectAlways": "一律不允許",
+			"more": "更多選項"
+		},
+		"badge": {
+			"title": "代理程式",
+			"waiting": {
+				"one": "代理程式，{count} 個正在等你",
+				"other": "代理程式，{count} 個正在等你"
+			},
+			"new": "新",
+			"needsYou": "等你處理",
+			"running": "執行中",
+			"done": "完成",
+			"finished": "已結束",
+			"empty": "沒有需要你處理的對話"
+		},
+		"status": {
+			"working": "工作中",
+			"waiting": "等你處理",
+			"stopHint": "按 Esc 停止",
+			"signingIn": "正在登入 {agent}",
+			"signingInHint": "登入後即傳送你的訊息。",
+			"signingInTerminalHint": "請在 Lilo 開啟的終端機標籤頁中登入。完成後即傳送你的訊息。"
+		},
+		"work": {
+			"images": {
+				"one": "{count} 張圖片",
+				"other": "{count} 張圖片"
+			},
+			"verb": {
+				"read": "讀取",
+				"edit": "編輯",
+				"delete": "刪除",
+				"move": "移動",
+				"search": "搜尋",
+				"fetch": "擷取"
+			},
+			"summary": {
+				"read": {
+					"one": "讀取了 {count} 個檔案",
+					"other": "讀取了 {count} 個檔案"
+				},
+				"edit": {
+					"one": "編輯了 {count} 個檔案",
+					"other": "編輯了 {count} 個檔案"
+				},
+				"execute": {
+					"one": "執行了 {count} 個指令",
+					"other": "執行了 {count} 個指令"
+				},
+				"search": {
+					"one": "搜尋了 {count} 次",
+					"other": "搜尋了 {count} 次"
+				},
+				"fetch": {
+					"one": "擷取了 {count} 個網頁",
+					"other": "擷取了 {count} 個網頁"
+				},
+				"think": {
+					"one": "思考了 {count} 次",
+					"other": "思考了 {count} 次"
+				},
+				"browser": {
+					"one": "使用了 {count} 次瀏覽器",
+					"other": "使用了 {count} 次瀏覽器"
+				},
+				"tool": {
+					"one": "使用了 {count} 個工具",
+					"other": "使用了 {count} 個工具"
+				}
+			},
+			"exit": "結束代碼 {code}",
+			"showAll": {
+				"one": "顯示全部 {count} 行",
+				"other": "顯示全部 {count} 行"
+			},
+			"showLess": "只顯示最後幾行"
+		},
+		"turn": {
+			"workedFor": "工作了 {duration}",
+			"stopped": "已停止",
+			"files": {
+				"one": "變更了 {count} 個檔案",
+				"other": "變更了 {count} 個檔案"
+			},
+			"review": "檢閱",
+			"copy": "拷貝回覆",
+			"copied": "已拷貝"
+		},
+		"image": {
+			"unavailable": "無法顯示圖片",
+			"open": "打開圖片",
+			"viewer": "圖片",
+			"previous": "上一張圖片",
+			"next": "下一張圖片",
+			"counter": "第 {index} 張，共 {total} 張"
+		},
+		"markdown": {
+			"preview": "預覽",
+			"openPreview": "在分頁中打開預覽",
+			"view": "顯示為",
+			"code": "程式碼",
+			"copy": "拷貝程式碼",
+			"copied": "已拷貝"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "解釋這個專案",
+					"prompt": "解釋這個專案是如何組織的：它的主要部分、這些部分如何搭配，以及應該從哪裡開始閱讀。"
+				},
+				"fixBug": {
+					"label": "找出並修正一個錯誤",
+					"prompt": "在這個專案中找出一個錯誤，解釋它的成因，然後修正它。"
+				},
+				"tests": {
+					"label": "撰寫測試...",
+					"prompt": "為以下內容撰寫測試："
+				}
+			}
 		}
 	}
 }

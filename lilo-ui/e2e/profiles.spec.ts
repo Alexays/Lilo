@@ -114,11 +114,12 @@ const cardColors = (page: Page) => page.locator(".profile-card").evaluateAll((ca
 		const background = getComputedStyle(card).backgroundColor;
 		const name = card.querySelector(".card-name")!;
 		const chip = card.querySelector(".chip")!;
-		const surface = paint(background);
-		const chipSurface = paint(background, getComputedStyle(chip).backgroundColor);
+		const surface = paint(page, background);
+		const chipSurface = paint(page, background, getComputedStyle(chip).backgroundColor);
 		return {
-			background: surface.join(","),
+			background: paint(background).join(","),
 			page: paint(page).join(","),
+			dot: getComputedStyle(card.querySelector(".profile-dot")!).backgroundColor,
 			nameContrast: ratio(paint(getComputedStyle(name).color), surface),
 			chipContrast: ratio(paint(getComputedStyle(chip).color), chipSurface),
 		};
@@ -126,7 +127,7 @@ const cardColors = (page: Page) => page.locator(".profile-card").evaluateAll((ca
 });
 
 for (const colorScheme of ["light", "dark"] as const) {
-	test(`a profile card wears a wash of its color with readable text in ${colorScheme} mode`, async ({ page }) => {
+	test(`a profile card shows its color as a dot, with readable text, in ${colorScheme} mode`, async ({ page }) => {
 		await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
 		await openProfiles(page, "Work");
 		const cards = page.locator(".profile-card");
@@ -138,7 +139,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 
 		const [personal, work] = await cardColors(page);
 		expect(personal.background).not.toBe(personal.page);
-		expect(work.background).not.toBe(personal.background);
+		expect(work.dot).not.toBe(personal.dot);
 		for (const card of [personal, work]) {
 			expect(card.nameContrast).toBeGreaterThanOrEqual(4.5);
 			expect(card.chipContrast).toBeGreaterThanOrEqual(4.5);

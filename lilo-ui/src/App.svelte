@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { setThemeContext } from "./stores/theme.svelte";
+  import { setThemeContext, shellBarColor } from "./stores/theme.svelte";
   import { onMount, untrack } from "svelte";
   import Sidebar from "./components/sidebar/Sidebar.svelte";
   import ErrorBoundary from "./components/ui/ErrorBoundary.svelte";
@@ -13,7 +13,7 @@
   import { onChromeInitialStateReady } from "./stores/init";
   import { getOnboarding } from "./stores/onboarding.svelte";
   import { getActiveUrlBarDrawer } from "./stores/urlBarDrawer.svelte";
-  import { editorState, isShellOpen } from "./stores/panels.svelte";
+  import { editorState } from "./stores/panels.svelte";
   import { getPagedSpaces, getSpacePagerVirtualIndex } from "./stores/pager.svelte";
   import { getFocusedSpaceId, getSpaceById } from "./stores/spaces.svelte";
   import { getActiveTab } from "./stores/tabs.svelte";
@@ -24,12 +24,14 @@
     hideSidebarOverlay,
     isFullscreen,
     isSidebarOverlay,
+    isSidebarRail,
     isSidebarShown,
     isSidebarVisible,
+    setSidebarRail,
     showSidebarOverlay,
   } from "./stores/ui.svelte";
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
-  import { getTabPosition, hasPageToolbar, isPageToolbarShown, isVerticalLayout } from "./stores/tabLayout.svelte";
+  import { getTabPosition, hasPageToolbar, isAddressVisible, isPageToolbarShown, isVerticalLayout } from "./stores/tabLayout.svelte";
   import { isLiftingTabs } from "./stores/tabEdgeDrag.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
@@ -118,8 +120,25 @@
   let lastThemeVars: Record<string, string> = {};
   let sidebarOverlayHideTimeout: ReturnType<typeof setTimeout> | null = null;
   const sidebarResizeFrame = createFrameScheduler();
+  // The narrowest sidebar whose top line holds every button whole; Swift's range keeps the lowest of them.
+  // With the address hidden the line also holds the page's overflow button.
+  const sidebarMinWidth = $derived(getTabPosition() === "left" && !isAddressVisible() ? 215 : 203);
+
+  // A width kept from a roomier layout widens to the new one's minimum.
+  $effect(() => {
+    const root = document.documentElement;
+    if (!(parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width")) < sidebarMinWidth)) return;
+    root.style.setProperty("--sidebar-width", `${sidebarMinWidth}px`);
+    chromeActions.sidebarResized(sidebarMinWidth);
+  });
   let pendingSidebarWidth = 260;
   let isSidebarResizing = $state(false);
+
+  // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
+  const SIDEBAR_RAIL_THRESHOLD = 150;
+  const SIDEBAR_RAIL_WIDTH = 76;
+  // Hidden, the rail is what the edge reveals over the page, as the full sidebar is outside the rail.
+  const railShown = $derived(isSidebarRail() && isSidebarShown() && isVerticalLayout());
 
   function applySidebarTheme() {
     const root = document.documentElement;
@@ -128,6 +147,8 @@
       colorSchemeQuery.matches,
       shownMaterial === "glass",
     );
+    // The system screens' background: `--bg-primary` (global.css) faintly tinted by the sidebar.
+    variables["--shell-bg"] = interpolateHexColors(colorSchemeQuery.matches ? "#0f0f1a" : "#ffffff", variables["--sidebar-bg"], 0.04);
 
     for (const [name, value] of Object.entries(variables)) {
       if (lastThemeVars[name] !== value) {
@@ -135,7 +156,7 @@
         lastThemeVars[name] = value;
       }
     }
-    setThemeContext(variables["--sidebar-bg"], colorSchemeQuery.matches);
+    setThemeContext(variables["--sidebar-bg"], colorSchemeQuery.matches, variables["--shell-bg"]);
     if (root.dataset.material !== shownMaterial) root.dataset.material = shownMaterial;
   }
 
@@ -209,9 +230,6 @@
     if (drawer && "requestId" in drawer) untrack(openSidebarOverlay);
   });
 
-  // The native bar over the page wears the page's color: a shell covering the page takes it off.
-  $effect(() => chromeActions.pageCoverChanged(isShellOpen()));
-
   function blurChromeFocus() {
     const active = document.activeElement;
     if (active instanceof HTMLElement && active.closest("#chrome-root")) {
@@ -229,6 +247,8 @@
     const startWidth =
       parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width")) ||
       260;
+    // The rail keeps --sidebar-width at the width it unfolds to.
+    const startRail = railShown;
 
     pendingSidebarWidth = startWidth;
 
@@ -245,8 +265,16 @@
     function onMove(ev: MouseEvent) {
       // On the right the handle sits on the sidebar's left edge: dragging left widens it.
       const delta = getTabPosition() === "right" ? startX - ev.clientX : ev.clientX - startX;
-      const newWidth = Math.max(200, Math.min(480, startWidth + delta));
-      scheduleSidebarWidth(newWidth);
+      const width = (startRail ? SIDEBAR_RAIL_WIDTH : startWidth) + delta;
+      if (width < SIDEBAR_RAIL_THRESHOLD) {
+        // Folding keeps the width the drag started from, for the sidebar to unfold to.
+        if (!isSidebarRail()) scheduleSidebarWidth(startWidth);
+        setSidebarRail(true);
+        return;
+      }
+      setSidebarRail(false);
+      // Out of the rail, the sidebar comes back at its width, and grows once the drag goes past it.
+      scheduleSidebarWidth(Math.max(sidebarMinWidth, Math.min(480, startRail ? Math.max(startWidth, width) : width)));
     }
 
     function onUp() {
@@ -269,6 +297,12 @@
   $effect(() => {
     applySidebarTheme();
     scheduleSidebarBackgroundReport();
+  });
+
+  let sentBarColor: string | undefined;
+  $effect(() => {
+    const color = shellBarColor();
+    if (color !== sentBarColor) chromeActions.setPageBarColor((sentBarColor = color));
   });
 
   // Mid-swipe the theme only switches at the midpoint, so the frame around the page takes the sidebar's color
@@ -359,6 +393,11 @@
     {#await import("./components/page/PageToolbar.svelte") then toolbar}
       <toolbar.default row={getTabPosition() === "top" && isSidebarVisible()} accent={themeSidebarColor} />
     {/await}
+  {:else if !isSidebarShown()}
+    <!-- With no bar left to show it, a page's load shows in the inset above it. -->
+    {#await import("./components/page/PageLoadLine.svelte") then line}
+      <line.default />
+    {/await}
   {/if}
 
   <SplitDropZone />
@@ -374,19 +413,27 @@
       />
     {/await}
   {:else}
+  {#if railShown}
+    <!-- Loaded on demand: only a sidebar folded to its rail carries it. -->
+    {#await import("./components/sidebar/SidebarRail.svelte") then rail}
+      <rail.default floating={isSidebarOverlay()} onenter={cancelSidebarOverlayHide} onleave={scheduleSidebarOverlayHide} onresize={startResize} />
+    {/await}
+  {/if}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="sidebar tabs-surface"
     class:sidebar-hidden={!isSidebarShown()}
-    class:sidebar-overlay={isSidebarOverlay()}
+    class:sidebar-overlay={isSidebarOverlay() && !railShown}
+    class:rail-folded={railShown}
     class:swiping={swipeBackground !== null}
-    style:background-color={shownMaterial === "glass" && !isSidebarOverlay() ? null : swipeBackground}
-    use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() }}
+    style:background-color={shownMaterial === "glass" && !isSidebarOverlay() && !railShown ? null : swipeBackground}
+    inert={railShown}
+    use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() && !railShown }}
     onmouseenter={cancelSidebarOverlayHide}
     onmouseleave={scheduleSidebarOverlayHide}
   >
     <Sidebar />
-    {#if isSidebarVisible()}
+    {#if isSidebarVisible() && !railShown}
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
       <div
         class="sidebar-resize-handle"
@@ -540,6 +587,15 @@
     right: var(--sidebar-column);
   }
 
+  /* Past the floating rail's edge rather than the full sidebar's. */
+  :global(html[data-sidebar-rail][data-tab-position='left']) .sidebar-overlay-tolerance {
+    left: calc(var(--sidebar-rail-width) + var(--content-inset));
+  }
+
+  :global(html[data-sidebar-rail][data-tab-position='right']) .sidebar-overlay-tolerance {
+    right: calc(var(--sidebar-rail-width) + var(--content-inset));
+  }
+
   .zone-inactive {
     display: none;
   }
@@ -564,8 +620,8 @@
 
   /* Glass and grain are drawn natively under the whole chrome, so the sidebar lets them through. Floating over
      the page, it has only the page under it: it keeps its solid color there, and paints its own grain. */
-  :global(html[data-material='glass']) .sidebar:not(.sidebar-overlay),
-  :global(html[data-material='grain']) .sidebar:not(.sidebar-overlay) {
+  :global(html[data-material='glass']) .sidebar:not(.sidebar-overlay, .rail-folded),
+  :global(html[data-material='grain']) .sidebar:not(.sidebar-overlay, .rail-folded) {
     background-color: transparent;
   }
 
@@ -584,8 +640,7 @@
   }
 
   /* Painted with --sidebar-bg, which switches only at the midpoint: see-through while the background slides. */
-  .sidebar.swiping :global(.pinned-tab-divider-shell),
-  .sidebar.swiping :global(.clear-unpinned) {
+  .sidebar.swiping :global(.pinned-tab-divider-shell) {
     background: transparent;
   }
 
@@ -605,16 +660,16 @@
 
   /* Off-screen, not removed: looping spinners and pips would keep the compositor busy.
      Same list as html.window-unfocused in global.css. */
-  .sidebar.sidebar-hidden :global(.tab-loader span),
-  .sidebar.sidebar-hidden :global(.url-progress-fill),
-  .sidebar.sidebar-hidden :global(.url-progress-fill::after),
-  .sidebar.sidebar-hidden :global(.skeleton-shimmer),
-  .sidebar.sidebar-hidden :global(.extension-spinner svg),
-  .sidebar.sidebar-hidden :global(.sidebar-dnd-placeholder),
-  .sidebar.sidebar-hidden :global(.space-dnd-placeholder),
-  .sidebar.sidebar-hidden :global(.bookmark-placeholder),
-  .sidebar.sidebar-hidden :global(.pinned-list),
-  .sidebar.sidebar-hidden :global(.bookmarked-list) {
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.tab-loader span),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.url-progress-fill),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.url-progress-fill::after),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.skeleton-shimmer),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.extension-spinner svg),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.sidebar-dnd-placeholder),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.space-dnd-placeholder),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.bookmark-placeholder),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.pinned-list),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.bookmarked-list) {
     animation-play-state: paused !important;
   }
 
@@ -626,6 +681,30 @@
 
   :global(html[data-tab-position='right']) .sidebar.sidebar-overlay {
     box-shadow: -4px 0 24px var(--sidebar-shadow);
+  }
+
+  /* Folded to the rail, the full sidebar waits past the window's edge, as a hidden one does. */
+  .sidebar.rail-folded {
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+
+  :global(html[data-tab-position='right']) .sidebar.rail-folded {
+    transform: translateX(100%);
+  }
+
+  /* With Reduce motion it fades in place instead of sliding. */
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar.rail-folded,
+    :global(html[data-tab-position='right']) .sidebar.rail-folded {
+      transform: none;
+      opacity: 0;
+    }
+
+    /* Over the global rule that drops every transition to nothing. */
+    .sidebar.rail-folded {
+      transition: opacity 150ms ease !important;
+    }
   }
 
   .sidebar-resize-handle {

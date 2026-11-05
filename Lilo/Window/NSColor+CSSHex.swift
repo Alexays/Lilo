@@ -43,19 +43,18 @@ extension NSColor {
     func sidebarBackgroundColor(prefersDark: Bool) -> NSColor {
         guard let srgbColor else { return self }
         let source = SidebarRGB(srgbColor)
-        let tinted = source.mixed(with: prefersDark ? .darkCanvas : .lightCanvas, ratio: prefersDark ? 0.58 : 0.72)
+        guard prefersDark else { return source.color }
+        let tinted = source.mixed(with: .darkCanvas, ratio: 0.58)
         var sidebar = tinted
-        if prefersDark {
-            let accent = source.mixed(with: .white, ratio: 0.18)
-            if sidebar.failsDarkRowContrast(accent: accent) {
-                let (lightness, a, b) = source.oklab
-                let (_, ta, tb) = tinted.oklab
-                let scale = min(1, max(0.06, hypot(ta, tb)) / hypot(a, b))
-                var step = 1
-                while step <= 100 && sidebar.failsDarkRowContrast(accent: accent) {
-                    sidebar = SidebarRGB(oklabLightness: lightness - Double(step) / 100, a: a * scale, b: b * scale)
-                    step += 1
-                }
+        let accent = source.mixed(with: .white, ratio: 0.18)
+        if sidebar.failsDarkRowContrast(accent: accent) {
+            let (lightness, a, b) = source.oklab
+            let (_, ta, tb) = tinted.oklab
+            let scale = min(1, max(0.06, hypot(ta, tb)) / hypot(a, b))
+            var step = 1
+            while step <= 100 && sidebar.failsDarkRowContrast(accent: accent) {
+                sidebar = SidebarRGB(oklabLightness: lightness - Double(step) / 100, a: a * scale, b: b * scale)
+                step += 1
             }
         }
         return sidebar.color
@@ -99,7 +98,6 @@ private struct SidebarRGB {
     var g: Double
     var b: Double
 
-    static let lightCanvas = SidebarRGB(r: 250, g: 247, b: 255)
     static let darkCanvas = SidebarRGB(r: 43, g: 47, b: 60)
     static let darkText = SidebarRGB(r: 0xf8, g: 0xf9, b: 0xfd)
     static let white = SidebarRGB(r: 255, g: 255, b: 255)
@@ -189,7 +187,7 @@ private struct SidebarRGB {
     }
 
     /// The pull-back test of `deriveSidebarThemeVariables` on a dark sidebar: light text under
-    /// AA on the active row, or on the active tab that blends the accent into the selected row.
+    /// AA on a lifted row, or on that row tinted by the lightened Space color.
     func failsDarkRowContrast(accent: SidebarRGB) -> Bool {
         let selected = mixed(with: .darkText, ratio: 0.2)
         let activeTab = selected.blended(with: accent.iconContrasted(on: self), ratio: 0.18)

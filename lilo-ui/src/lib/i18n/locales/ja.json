@@ -28,19 +28,15 @@
 		"terminalTheme": "テーマ",
 		"terminalThemeDescription": "各スペースの色に合わせ、すべての色を読みやすく表示します。",
 		"terminalImport": "読み込む...",
-		"terminalImportTitle": "テーマを読み込む",
-		"terminalImportDescription": "iTerm2 のカラープリセット（.itermcolors）、VS Code のカラーテーマ（.json）、または Ghostty のテーマファイル。",
 		"terminalFont": "フォント",
-		"terminalFontDescription": "JetBrains Mono や Fira Code など、合字に対応したフォントでは合字を表示します。",
+		"terminalFontDescription": "JetBrains Mono や Fira Code など、合字に対応したフォントでは合字を表示します。サイズはポイント単位で、すべてのターミナルタブに適用されます。",
 		"terminalFontSystem": "システム（SF Mono）",
 		"terminalFontSize": "サイズ",
-		"terminalFontSizeDescription": "すべてのターミナルタブに適用するポイント単位のサイズ。",
 		"terminalScrollback": "ターミナルごとの履歴",
 		"terminalScrollbackDescription": "10 MB で約100,000行です。",
 		"terminalBehaviorGroup": "動作",
 		"terminalNotify": "長いコマンドの完了を通知",
 		"terminalNotifyDescription": "実行に10秒以上かかり、別の場所で作業している場合に通知します。",
-		"terminalSleepGroup": "スリープ",
 		"terminalPreventSleepDescription": "入力待ちのコマンドや、5分間出力のないコマンドには適用しません。",
 		"terminalLidStatus": {
 			"unsigned": "署名済みの Lilo ビルドが必要です。",
@@ -79,7 +75,7 @@
 			"pride": "プライド",
 			"clay": "クレイ"
 		},
-		"importBrowsersAction": "読み込む",
+		"importBrowsersAction": "読み込む...",
 		"passwordManagerAction": "選択",
 		"passwordManagerChange": "変更",
 		"replayOnboardingAction": "もう一度見る",
@@ -121,7 +117,6 @@
 			"storage": "ストレージ"
 		},
 		"manageHistory": "履歴を管理",
-		"manageHistoryDesc": "ページごとに表示・検索・削除",
 		"historyTimeRange": "履歴の期間",
 		"historyRangeHour": "過去1時間",
 		"historyRangeDay": "過去24時間",
@@ -147,14 +142,14 @@
 			"privacy": "プライバシー",
 			"extensions": "機能拡張",
 			"advanced": "詳細",
-			"agents": "AI エージェント"
+			"agents": "エージェント"
 		},
 		"groups": {
 			"browser": "ブラウザ",
 			"search": "検索",
 			"downloads": "ダウンロード",
 			"theme": "テーマ",
-			"tabLayout": "タブ",
+			"tabLayout": "レイアウト",
 			"pages": "ページ",
 			"spaces": "スペース",
 			"playback": "再生",
@@ -162,29 +157,29 @@
 			"contentBlocking": "コンテンツブロック",
 			"protection": "保護",
 			"browsingData": "閲覧データ",
-			"tools": "ツール",
+			"tools": "開発ツール",
 			"permissions": "アクセス権",
 			"zoom": "ズーム",
 			"siteData": "データ",
 			"sites": "サイト（{count}）",
 			"updates": "アップデート",
 			"passwords": "パスワード",
-			"agentAccess": "アクセス",
-			"agentClients": "エージェント",
+			"agentAccess": "Lilo を使うエージェント",
+			"agentClients": "Lilo を使えるアプリ",
 			"lilo": "Lilo",
 			"tabsWindows": "タブとウインドウ",
 			"sitePermissions": "サイトのアクセス権",
 			"profiles": "プロファイル",
 			"otherAppLinks": "ほかのアプリからのリンク",
-			"blockerCategories": "Lilo がブロックするもの",
-			"blockerExceptions": "リストと例外"
+			"blockerExceptions": "リストと例外",
+			"agentConversations": "会話"
 		},
 		"searchPlaceholder": "設定を検索",
 		"searchResultsTitle": "検索結果",
 		"searchEmpty": "「{query}」に一致する設定がありません。",
 		"clearData": {
 			"total": "このプロファイルが保存しているデータ",
-			"measuring": "このプロファイルの保存データを計測中...",
+			"title": "閲覧データを消去",
 			"freed": "{size}が解放されます",
 			"rangeNote": "選択した期間に保存されたデータだけを消去します。",
 			"hints": {
@@ -283,8 +278,12 @@
 			"addressPlacement": {
 				"title": "アドレス",
 				"description": "タブと同じ場所、ページの上、非表示から選べます。アドレスはコマンドバーで入力できます。",
-				"keywords": "アドレスバー URL ツールバー 場所 非表示",
-				"lockedRight": "タブが右側にある場合は、アドレスをページの上に表示するか非表示にします。"
+				"keywords": "アドレスバー URL ツールバー 場所 非表示"
+			},
+			"hideSpaceNames": {
+				"title": "スペース名を隠す",
+				"description": "下部バーでは、名前を表示する余裕があっても各スペースをアイコンだけで表示します。",
+				"keywords": "スペース 名前 ラベル 下部バー アイコン 隠す"
 			},
 			"theme": {
 				"title": "テーマ",
@@ -423,7 +422,8 @@
 			"clearData": {
 				"title": "閲覧データを消去",
 				"description": "指定した期間の履歴、Cookie、キャッシュ、サイトデータ。",
-				"keywords": "履歴 Cookie キャッシュ 削除 消去"
+				"keywords": "履歴 Cookie キャッシュ 削除 消去",
+				"action": "閲覧データを消去..."
 			},
 			"loadUnpacked": {
 				"title": "パッケージ化されていない機能拡張を読み込む",
@@ -476,8 +476,8 @@
 				"keywords": "パスワード ロック フォルダ プライバシー"
 			},
 			"agentControl": {
-				"title": "AI エージェントに Lilo の使用を許可",
-				"description": "Claude Code、Codex、Cursor は専用のエージェントスペースで作業します。Lilo 自体に AI は搭載していません。",
+				"title": "エージェントに Lilo の使用を許可",
+				"description": "Claude Code、Codex、Cursor は専用のエージェントスペースで作業します。",
 				"keywords": "エージェント AI MCP Claude Codex Cursor 自動化 リモート 操作"
 			},
 			"agentAskBeforeActions": {
@@ -549,6 +549,16 @@
 				"title": "サイトごとの設定",
 				"description": "各サイトのアクセス権、ズーム、保存データ。",
 				"keywords": "サイト アクセス権 Cookie ズーム データ ストレージ"
+			},
+			"agentsEnabled": {
+				"title": "エージェントとの会話",
+				"description": "Claude Code、Codex、Gemini などのエージェントと、ご自身のサブスクリプションでタブ内で会話できます。",
+				"keywords": "エージェント AI ACP チャット 会話 質問 Claude Codex Gemini Copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "エージェントの完了時に通知",
+				"description": "表示していない会話が完了したときに通知します。",
+				"keywords": "エージェント 通知 アラート 完了 終了"
 			}
 		},
 		"devices": {
@@ -596,16 +606,16 @@
 			"copy": "構成をコピー",
 			"clientDescription": "MCP サーバーに Lilo を追加します。",
 			"clientConnected": "MCP サーバーに Lilo が追加されています。",
-			"lastSeen": "最終接続：{time}",
 			"revoke": "取り除く",
-			"readyDescription": "初回の接続時に Lilo が確認します。",
 			"status": {
 				"acting": "操作中",
 				"connected": "接続済み",
 				"allowed": "許可済み",
 				"notInstalled": "未インストール",
 				"ready": "構成済み"
-			}
+			},
+			"allowedSeen": "許可済み、最終接続 {time}",
+			"readyLine": "設定済み。初回接続時に Lilo が確認します。"
 		},
 		"navGroups": {
 			"tools": "ツール"
@@ -633,7 +643,7 @@
 			"lastProfile": "最後のプロファイルは削除できません。すべてのスペースにプロファイルが必要です。",
 			"extensionCount": "機能拡張：{count}個",
 			"extensionCountOne": "機能拡張：1個",
-			"newProfile": "新規プロファイル",
+			"newProfile": "新規プロファイル...",
 			"newProfileDetail": "新しい Cookie、サインイン、機能拡張",
 			"namePlaceholder": "プロファイル名",
 			"create": "作成",
@@ -670,7 +680,6 @@
 			"emptyPattern": "一致させるホストまたはテキストが必要です。"
 		},
 		"shortcuts": {
-			"intro": "ショートカットをクリックして、新しいキーを押してください。Esc でキャンセル、Delete でショートカットを解除します。",
 			"searchPlaceholder": "ショートカットを検索",
 			"preset": "プリセット",
 			"presetDescription": "変更したすべてのショートカットを置き換えます。",
@@ -687,9 +696,10 @@
 			"conflict": "{keys} はすでに「{name}」で使用されています。",
 			"replace": "置き換える",
 			"cancel": "キャンセル",
-			"noResults": "一致するショートカットがありません。"
+			"noResults": "一致するショートカットがありません。",
+			"note": "ショートカットをクリックして、新しいキーを押します",
+			"recordingHint": "Esc でキャンセル、Delete でショートカットなしにします。"
 		},
-		"terminalAppearanceGroup": "外観",
 		"terminalSleepMode": "コマンド実行中に Mac をスリープさせない",
 		"terminalSleepModes": {
 			"off": "オフ",
@@ -704,7 +714,37 @@
 			"requiresApproval": "承認が必要",
 			"enabled": "許可済み",
 			"notFound": "見つかりません"
-		}
+		},
+		"notes": {
+			"live": "選ぶとすぐに反映されます",
+			"spaces": {
+				"one": "{count} 個のスペース",
+				"other": "{count} 個のスペース"
+			},
+			"profiles": {
+				"one": "{count} 個のプロファイル",
+				"other": "{count} 個のプロファイル"
+			},
+			"blocking": "{total} 種類中 {count} 種類をブロック",
+			"blockingOff": "ブロックはオフです",
+			"profile": "{name} プロファイル",
+			"extensions": {
+				"one": "{profile} の拡張機能 {count} 個",
+				"other": "{profile} の拡張機能 {count} 個"
+			},
+			"terminal": "変更はすべてのターミナルタブに反映されます",
+			"agents": "Lilo 自体に AI は搭載していません",
+			"advanced": "開発とテスト用",
+			"searchMatches": {
+				"one": "「{query}」に一致する設定 {count} 件",
+				"other": "「{query}」に一致する設定 {count} 件"
+			}
+		},
+		"callDock": {
+			"sidebar": "サイドバー内",
+			"floating": "フローティングウインドウ"
+		},
+		"terminalImportCaption": "読み込めるのは iTerm2 のカラープリセット (.itermcolors)、VS Code のカラーテーマ (.json)、Ghostty のテーマファイルです。"
 	},
 	"nav": {
 		"navigationControls": "ナビゲーションコントロール",
@@ -844,9 +884,19 @@
 		"newTab": "新規タブ",
 		"newTerminal": "新規ターミナル",
 		"clearUnpinnedTooltip": "固定されていないタブをアーカイブ",
+		"listOptions": "並べ替えとグループ化",
 		"pinnedTabs": "固定タブ",
 		"openTabs": "開いているタブ",
-		"dropToPin": "ドロップして固定"
+		"dropToPin": "ドロップして固定",
+		"stackLabel": {"one": "{name}、タブ {count}個", "other": "{name}、タブ {count}個"},
+		"closeStack": "スタックを閉じる",
+		"trayAgents": "エージェント",
+		"trayTerminals": "ターミナル",
+		"trayNeedsInput": {"one": "{count}件が入力待ち", "other": "{count}件が入力待ち"},
+		"trayWorking": {"one": "{count}件が作業中", "other": "{count}件が作業中"},
+		"trayRunning": {"one": "{count}件が実行中", "other": "{count}件が実行中"},
+		"trayShow": "{name}を表示",
+		"trayHide": "{name}を隠す"
 	},
 	"bookmarks": {
 		"groupLabel": "ブックマーク済みのタブ",
@@ -865,6 +915,11 @@
 		"colorFrom": {
 			"page": "アクティブなタブの色",
 			"wallpaper": "壁紙の色"
+		},
+		"color": "カラー",
+		"colorSource": {
+			"page": "ページ",
+			"wallpaper": "壁紙"
 		},
 		"colorSourceHint": {
 			"page": "アクティブなタブのサイトの色を使います。",
@@ -908,6 +963,7 @@
 		"thisSpace": "このスペース",
 		"deleteConfirmMessage": "スペースとすべてのタブが完全に削除されます。",
 		"deleteSpace": "スペースを削除",
+		"deleteSpaceEllipsis": "スペースを削除...",
 		"keepSpace": "スペースを残す",
 		"moreEmojis": "その他の絵文字",
 		"lastSpaceHint": "最後のスペースは削除できません。",
@@ -944,8 +1000,11 @@
 	},
 	"downloadsPanel": {
 		"title": "ダウンロード",
+		"allDownloads": "すべてのダウンロード",
+		"navLabel": "ダウンロードの表示",
 		"searchPlaceholder": "ダウンロードを検索",
-		"loading": "ダウンロードを読み込み中...",
+		"searchResults": "検索結果",
+		"quickLookNote": "スペースキーでクイックルック",
 		"emptyTitle": "ダウンロードはありません",
 		"emptyCopy": "ダウンロードしたファイルがここに表示されます。",
 		"noResults": "結果なし",
@@ -987,8 +1046,6 @@
 		"menuButtonLabel": "{name}のその他の操作",
 		"openDetailsLabel": "{name}の詳細を表示",
 		"detailEnabled": "有効",
-		"detailDescription": "説明",
-		"detailCapabilities": "機能",
 		"detailPermissions": "アクセス権",
 		"detailSiteAccess": "サイトへのアクセス",
 		"siteAccessAll": "要求したすべてのサイトで実行します。",
@@ -1001,9 +1058,10 @@
 		"capabilityContent": "コンテンツスクリプト",
 		"removeConfirmTitle": "{name}を取り除きますか？",
 		"removeConfirmMessage": "機能拡張とそのデータを削除します。",
+		"removeExtension": "機能拡張を取り除く...",
 		"actionFailed": "操作に失敗しました。クリックして閉じてください。",
 		"degradedTitle": "バックグラウンドが停止しています。一部の機能が動作しない場合があります。",
-		"loadUnpacked": "パッケージ化されていない機能拡張を読み込む…",
+		"loadUnpacked": "パッケージ化されていない機能拡張を読み込む...",
 		"addressBarMenu": "機能拡張",
 		"hostAccessRequestAllow": "許可",
 		"hostAccessRequestTooltip": "この機能拡張にこのサイトへのアクセスを許可",
@@ -1031,10 +1089,10 @@
 		"shortcutRecording": "ショートカットを入力",
 		"executeAction": "機能拡張を起動",
 		"shortcutNone": "未設定",
-		"removeTitle": "この機能拡張を取り除く",
 		"webStoreTitle": "Chrome ウェブストア",
 		"webStoreHint": "レビュー、詳細、開発者のページ",
-		"webStoreOpen": "開く"
+		"webStoreOpen": "開く",
+		"installed": "インストール済み"
 	},
 	"commandBar": {
 		"hintPeek": "プレビュー",
@@ -1071,7 +1129,7 @@
 		"scopeTabs": "タブ",
 		"scopeBookmarks": "ブックマーク",
 		"scopeHistory": "履歴",
-		"scopeArchive": "アーカイブ",
+		"scopeArchive": "アーカイブ済み",
 		"placeholderArchive": "アーカイブしたタブを検索...",
 		"emptyTitleArchive": "アーカイブ",
 		"emptySubtitleArchive": "固定されていないタブを使わずに置いたり消去したりすると、ここに移動します。",
@@ -1103,6 +1161,8 @@
 		"sectionOpenTabs": "開いているタブ",
 		"sectionBookmarks": "ブックマーク",
 		"sectionRecentHistory": "最近の履歴",
+		"sectionFrequentSites": "よく見るサイト",
+		"sectionRecentConversations": "最近の会話",
 		"sectionHistory": "履歴",
 		"sectionSwitchToTab": "タブに切り替える",
 		"sectionGoTo": "移動",
@@ -1116,6 +1176,8 @@
 		"subtitleExactCommand": "コマンドが完全に一致",
 		"subtitleDefaultEngine": "デフォルトの検索エンジン",
 		"hintSwitch": "切り替える",
+		"agentWaiting": "対応待ち：{request}",
+		"agentWorking": "作業中",
 		"hintOpen": "開く",
 		"hintGo": "移動",
 		"hintSearch": "検索",
@@ -1215,9 +1277,9 @@
 		"tabStartup": "起動",
 		"tabMemory": "メモリ",
 		"tabLog": "ログ",
-		"tabLogCount": "ログ（{count}）",
+		"errorCount": {"one": "{count}件のエラー", "other": "{count}件のエラー"},
 		"copyReport": "レポートをコピー",
-		"recordSession": "パフォーマンスセッションを記録（「ダウンロード」に保存）",
+		"recordSession": "セッションを記録",
 		"stopRecording": "記録を停止",
 		"refresh": "更新",
 		"bootLabel": "インターフェイスの準備完了まで",
@@ -1232,17 +1294,16 @@
 		"savedStates": "保存されたページの状態",
 		"trackedSpaces": "スペース",
 		"hiddenSpacesRetaining": "タブの読み込み状態を維持するほかのスペース",
-		"openProcessManager": "プロセスマネージャを開く",
 		"trimDescription": "自動スリープの設定を今すぐ適用します。",
+		"trimTitle": "メモリを解放",
 		"trimMemory": "メモリを解放",
+		"processManagerDescription": "各タブとプロセスが使用するメモリとCPU。",
 		"searchPlaceholder": "ログを検索",
 		"filterAriaLabel": "ログのフィルタ",
 		"filterAll": "すべて",
 		"filterErrors": "エラー",
 		"filterExtensions": "機能拡張",
 		"filterTraces": "トレース",
-		"copyLogs": "機能拡張のログをコピー",
-		"clearLog": "機能拡張のログを消去",
 		"emptyLog": "まだ記録されていません。",
 		"noMatches": "一致する項目がありません。",
 		"truncated": "最新の{count}件を表示しています。",
@@ -1255,6 +1316,7 @@
 	},
 	"processManager": {
 		"title": "プロセスマネージャ",
+		"navLabel": "プロセスマネージャの表示",
 		"searchPlaceholder": "タブを検索",
 		"memoryAriaLabel": "メモリ使用量",
 		"tabsCount": "{count}個のタブ",
@@ -1283,10 +1345,12 @@
 		},
 		"pid": "PID {pid}",
 		"focus": "表示",
+		"details": "詳細を表示",
 		"reload": "再読み込み",
 		"terminate": "強制終了",
 		"untitledTab": "名称未設定",
 		"empty": "一致するタブがありません。",
+		"emptySleeping": "スリープ中のタブはありません。",
 		"confirmTerminate": "{kind}のプロセス {pid} を強制終了しますか？",
 		"confirmCloseTab": "{tab}を閉じますか？",
 		"kindWebContent": "Web コンテンツ",
@@ -1297,14 +1361,15 @@
 	},
 	"featureFlags": {
 		"resetAll": "すべてリセット",
-		"warning": "内部デバッグの項目は WebKit 開発者向けのフラグで、サイトが動作しなくなる場合があります。変更はページの再読み込み後に反映されます。",
-		"sectionExperimental": "実験的：{count}",
+		"warning": "内部デバッグの項目は WebKit 開発者向けのフラグで、サイトが動作しなくなる場合があります。",
 		"sectionDebug": "内部デバッグ：{count}",
 		"modifiedBadge": "変更済み",
 		"title": "WebKit のフラグ",
-		"resetTitle": "変更したフラグ"
+		"resetTitle": "変更したフラグ",
+		"reloadNote": "変更を反映するにはページを再読み込みしてください"
 	},
 	"urlToast": {
+		"pageActions": "ページのアクション",
 		"reEnableBlocking": "このサイトでブロックを再び有効にする",
 		"trackerBlockedOnPage": "このページで{count}件のトラッカーをブロック",
 		"trackersBlockedOnPage": "このページで{count}件のトラッカーをブロック",
@@ -1335,6 +1400,7 @@
 	},
 	"pageHang": {
 		"title": "{host}が応答していません",
+		"message": "待つか再読み込みできます。ほかのタブは使えます。",
 		"stuckFor": "{seconds}秒間応答がありません。ほかのタブは使えます。",
 		"reload": "再読み込み",
 		"wait": "待機",
@@ -1350,7 +1416,14 @@
 	},
 	"extensionDebugger": {
 		"message": "「{name}」がこのブラウザのデバッグを開始しました",
-		"cancel": "キャンセル"
+		"stop": "デバッグを停止"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "他{count}件のお知らせ",
+			"other": "他{count}件のお知らせ"
+		},
+		"more": "他{count}件"
 	},
 	"crashRecovery": {
 		"sessionRestored": "予期しない終了の後、前回のセッションを復元しました。"
@@ -1358,14 +1431,11 @@
 	"sessionRestore": {
 		"degraded": "スペース「{name}」のタブを復元できませんでした。バックアップは保持されています。"
 	},
-	"confirmSheet": {
-		"dismiss": "確認を閉じる"
-	},
 	"tabShare": {
 		"title": "{origin}がタブの共有を求めています",
 		"pickTab": "共有するタブを選択",
 		"noTabs": "共有できるタブが開いていません",
-		"shareSystem": "ウインドウまたは画面…",
+		"shareSystem": "ウインドウまたは画面...",
 		"search": "タブを検索",
 		"suggested": "候補",
 		"currentSpace": "現在のスペース",
@@ -1402,7 +1472,7 @@
 		"closed": "「{title}」を閉じました",
 		"closedCount": "{count}個のタブを閉じました",
 		"undo": "取り消す",
-		"undoLabel": "取り消す：{closed}",
+		"reopen": "もう一度開く",
 		"archived": "「{title}」をアーカイブしました",
 		"archivedCount": {"one": "{count}個のタブをアーカイブしました", "other": "{count}個のタブをアーカイブしました"}
 	},
@@ -1480,7 +1550,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "が次のアクセスを求めています：",
 		"more": "ほか{count}件",
-		"deny": "拒否",
+		"deny": "許可しない",
+		"moreAnswers": "その他の応答",
 		"allow": "許可",
 		"allowOnce": "1回だけ許可",
 		"alwaysAllowOnSite": "このサイトで常に許可",
@@ -1515,9 +1586,16 @@
 			"notifications": "が通知の表示を求めています",
 			"media": "がカメラまたはマイクの使用を求めています"
 		},
-		"agentControl": "が Lilo の操作を求めています。専用フォルダでタブを開き、ページを読み取り、あなたのサインイン情報を使って操作します。",
-		"agentProfile": "がタブをプロファイル「{profile}」に移動し、そのサインイン情報を使って操作することを求めています。",
-		"agentExecutable": "プログラム：{path}",
+		"dontAllow": "許可しない",
+		"agentConnect": {
+			"title": "{client} が Lilo の操作を求めています",
+			"openTabs": "エージェント Space の専用フォルダでタブを開く",
+			"readPages": "開いたページを読み取る",
+			"actSignedIn": "あなたのサインイン情報で操作する",
+			"asksFirst": "送信、支払い、削除、公開の前には確認を求めます。",
+			"profileTitle": "{client} がプロファイル「{profile}」の使用を求めています",
+			"profileMessage": "タブをそのプロファイルに移動し、そのサインイン情報で操作します。"
+		},
 		"agentClick": "が{tab}（{site}）で「{label}」をクリックしようとしています。",
 		"agentSubmit": "が{tab}（{site}）で Enter を押して「{label}」を送信しようとしています。",
 		"agentUpload": "が{label}を{site}にアップロードしようとしています。",
@@ -1563,13 +1641,14 @@
 		"continue": "続ける",
 		"back": "戻る",
 		"skip": "スキップ",
+		"letsGo": "さあ、始めましょう",
 		"resume": "設定を再開",
 		"usage": {
 			"title": "Lilo をどのように使いますか？",
 			"subtitle": "回答に合わせて初期設定を進めます。すべてあとから「設定」で変更できます。",
 			"browse": "ブラウジングに",
 			"browseDesc": "ブックマーク、自分好みの外観、基本機能",
-			"agents": "AI エージェントと一緒に",
+			"agents": "エージェントと一緒に",
 			"agentsDesc": "Claude、Codex、Cursor が隣で作業",
 			"develop": "開発に",
 			"developDesc": "すべての機能に加えてターミナルも"
@@ -1620,8 +1699,6 @@
 				"extensionsCount": "機能拡張を再インストール中：{current}/{total}"
 			},
 			"partial": "一部のデータを読み込めませんでした：{list}。あとから「設定」で再試行できます。",
-			"moreOptions": "読み込む項目を選択",
-			"lessOptions": "オプションを非表示",
 			"profiles": "{browser}のプロファイル",
 			"kinds": "読み込む項目",
 			"kind": {
@@ -1633,12 +1710,23 @@
 			},
 			"extensions": "再インストールする機能拡張",
 			"run": "読み込む",
+			"summary": "{list}を読み込みます。",
+			"change": "変更",
+			"item": {
+				"bookmarks": "ブックマーク",
+				"tabs": "開いているタブ",
+				"history": "履歴",
+				"cookies": "サイトのログイン状態",
+				"extensions": "拡張機能"
+			},
 			"running": "読み込み中..."
 		},
 		"passwords": {
 			"title": "パスワード",
 			"subtitle": "Lilo 自体はパスワードを保存しません。いつものパスワードマネージャを追加してください。",
 			"add": "追加",
+			"manager": "パスワードマネージャ",
+			"choose": "選択",
 			"addNamed": "{name}を追加",
 			"adding": "追加中...",
 			"added": "追加済み",
@@ -1653,21 +1741,19 @@
 				"iCloud": "Apple の承認を待っています"
 			}
 		},
-		"appearance": {
-			"title": "自分らしい外観に",
-			"subtitle": "ライト、ダーク、Mac に合わせる表示と、色の決め方を選びます。ウインドウにすぐ反映されます。",
+		"yourLilo": {
+			"title": "あなたの Lilo",
+			"subtitle": "見た目とタブの位置を選びましょう。ウインドウが選択に合わせて変わります。",
 			"theme": "テーマ",
 			"system": "自動",
 			"light": "ライト",
-			"dark": "ダーク"
-		},
-		"tabs": {
-			"title": "タブを好きな場所に",
-			"subtitle": "端を選ぶと、ウインドウに反映されます。タブはいつでも別の端にドラッグできます。"
+			"dark": "ダーク",
+			"tabs": "タブ",
+			"color": "カラー",
+			"essentials": "基本設定",
+			"look": "外観"
 		},
 		"essentials": {
-			"title": "基本の設定",
-			"subtitle": "使い心地を変える設定です。いつでも変更できます。",
 			"blocker": "広告とトラッカーをブロック",
 			"blockerDesc": "おすすめ：ページの読み込みを速くし、追跡を減らします。",
 			"refreshRate": "よりなめらかなスクロール",
@@ -1678,23 +1764,18 @@
 			"defaultDone": "完了"
 		},
 		"agents": {
-			"title": "AI エージェント",
+			"title": "エージェント",
 			"subtitle": "Claude Code、Codex、Cursor は専用のエージェントスペースで、キーボードを占有せずに作業します。Lilo 自体に AI は搭載していません。",
-			"allow": "AI エージェントに Lilo の使用を許可",
+			"allow": "エージェントに Lilo の使用を許可",
 			"copied": "コピーしました",
-			"connectNamed": "{name}を接続"
+			"connectNamed": "{name}を接続",
+			"onThisMac": "この Mac 上"
 		},
 		"tips": {
-			"title": "最初に覚える3つのヒント",
-			"subtitle": "これだけで始められます。",
-			"go": "さあ、始めましょう",
 			"search": "⌘T で検索やアドレスの入力ができます。",
-			"tabs": "タブは選んだ端に表示され、いつでも見られます。",
 			"split": "タブをページの端にドラッグすると、2つのページを並べて表示できます。"
 		},
 		"devTips": {
-			"title": "開発に役立つ3つのヒント",
-			"subtitle": "「開発」メニューがなくてもショートカットを使えます。",
 			"inspector": "⌥⌘I でページの Web インスペクタを開けます。",
 			"localhost": "localhost のタブをページの端にドラッグすると、ドキュメントと並べて表示できます。",
 			"agents": "エージェントはエージェントスペースにタブを開きます。"
@@ -1709,6 +1790,7 @@
 	"historyPage": {
 		"title": "履歴",
 		"navLabel": "履歴の表示",
+		"cmdClickNote": "⌘-クリックで新しいタブで開きます",
 		"searchPlaceholder": "履歴を検索",
 		"periodAll": "すべての履歴",
 		"periodToday": "今日",
@@ -2065,6 +2147,16 @@
 		"Mute Microphone": "マイクを消音",
 		"Unmute Microphone": "マイクの消音を解除",
 		"Close Other Tabs": "ほかのタブを閉じる",
+		"Move Stack to New Folder": "スタックを新規フォルダに移動",
+		"Move Stack to Space": "スタックをスペースに移動",
+		"Don't Stack %@": "%@ をスタックしない",
+		"Close Stack": "スタックを閉じる",
+		"Stack Tabs by Site": "タブをサイトごとにスタック",
+		"Group by Type": "種類でグループ化",
+		"Never Stack": "スタックしないサイト",
+		"Stack Every Site Again": "すべてのサイトを再びスタック",
+		"Sort by Site": "サイトで並べ替え",
+		"Sort by Title": "タイトルで並べ替え",
 		"Create Folder": "フォルダを作成",
 		"Create Folder from Tab": "タブからフォルダを作成",
 		"Move to Folder": "フォルダに移動",
@@ -2227,7 +2319,24 @@
 		"Parent folder": "親フォルダ",
 		"Name": "名前",
 		"Size": "サイズ",
-		"Date Modified": "変更日"
+		"Date Modified": "変更日",
+		"%@ could not be downloaded.": "%@ をダウンロードできませんでした。",
+		"%@ could not be installed.": "%@ をインストールできませんでした。",
+		"%@ did not match its checksum and was not installed.": "%@ はチェックサムが一致しなかったため、インストールされませんでした。",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ には Node.js が必要です。nodejs.org からインストールしてから、もう一度お試しください。",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ には uv が必要です。astral.sh/uv からインストールしてから、もう一度お試しください。",
+		"Choose": "選択",
+		"New Conversation": "新しい会話",
+		"Screenshot of %@": "%@ のスクリーンショット",
+		"The agent stopped (code %d).": "エージェントが停止しました（コード %d）。",
+		"This agent is no longer in the ACP registry.": "このエージェントは ACP レジストリに登録されていません。",
+		"Always Allow": "常に許可",
+		"Ask an Agent": "エージェントに質問",
+		"Review Changes": "変更を確認",
+		"Show Pages": "ページを表示",
+		"Hide Pages": "ページを隠す",
+		"Close Conversation": "会話を閉じる",
+		"Pasted image": "貼り付けた画像"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2240,7 +2349,7 @@
 		},
 		"originalNotes": "元のリリースノート。",
 		"unavailable": "このビルドではリリースノートを利用できません。",
-		"reopen": "「ヘルプ」→「新機能」からいつでも開けます。",
+		"reopen": "「ヘルプ」>「新機能」からいつでも開けます。",
 		"continue": "ブラウジングに戻る",
 		"kinds": {
 			"Breaking": "互換性のない変更",
@@ -2301,6 +2410,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "すべてのアクセス権",
+		"inUse": "現在使用中",
 		"zoom": "ズーム",
 		"zoomIn": "拡大",
 		"zoomOut": "縮小",
@@ -2353,6 +2463,259 @@
 			"ellipse": "楕円",
 			"text": "テキスト",
 			"pen": "ペン"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "停止",
+			"mode": "モード",
+			"context": "コンテキストの {percent}% を使用",
+			"planSession": "セッション上限: {percent}% 使用、{time} にリセット",
+			"planWeek": "週間上限: {percent}% 使用、{time} にリセット",
+			"ownCopy": "専用コピー",
+			"ownCopyHint": "プロジェクトの専用コピーで作業します。「変更」からマージしてください。",
+			"starting": "エージェントを起動中...",
+			"errorHint": "もう一度試すにはメッセージを送信してください。",
+			"showEarlier": {
+				"one": "前の項目を {count} 件表示",
+				"other": "前の項目を {count} 件表示"
+			},
+			"queued": {
+				"one": "{count} 件のメッセージが待機中",
+				"other": "{count} 件のメッセージが待機中"
+			},
+			"queuedHint": "エージェントの完了後に送信されます。Cmd Return ですぐに送信します。",
+			"thought": "思考",
+			"restoreToHere": "ここまで復元",
+			"restoreConfirm": "プロジェクトのファイルをこのメッセージの時点の状態に戻しますか？",
+			"restore": "復元",
+			"reviewChanges": "「変更」で確認",
+			"undo": "取り消す",
+			"keep": "保持",
+			"undone": "取り消しました",
+			"kept": "保持しました",
+			"moreLines": {
+				"one": "さらに {count} 行",
+				"other": "さらに {count} 行"
+			},
+			"plan": "プラン",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "未着手",
+				"in_progress": "進行中",
+				"completed": "完了"
+			},
+			"permissionTitle": "この操作を許可しますか？",
+			"answered": "回答: {option}",
+			"cancelled": "回答はありませんでした",
+			"notice": {
+				"restored": "ファイルをこの時点に復元しました",
+				"restoreFailed": "ファイルを復元できませんでした",
+				"signedIn": "サインインしました"
+			},
+			"moreOptions": "その他のオプション",
+			"signInHint": "エージェントでサインインしてください。サインインが済むとメッセージが送信されます。",
+			"branch": "ブランチ {branch}",
+			"jumpToLatest": "最新へ移動"
+		},
+		"tool": {
+			"untitled": "ツール呼び出し",
+			"status": {
+				"pending": "待機中",
+				"in_progress": "実行中",
+				"failed": "失敗"
+			},
+			"group": {
+				"read": {
+					"one": "{count} 個のファイルを読み込み",
+					"other": "{count} 個のファイルを読み込み"
+				},
+				"search": {
+					"one": "{count} 回検索",
+					"other": "{count} 回検索"
+				},
+				"fetch": {
+					"one": "{count} ページを取得",
+					"other": "{count} ページを取得"
+				},
+				"think": {
+					"one": "{count} 回思考",
+					"other": "{count} 回思考"
+				},
+				"action": {
+					"one": "{count} 件の操作",
+					"other": "{count} 件の操作"
+				}
+			}
+		},
+		"composer": {
+			"label": "エージェントへのメッセージ",
+			"placeholder": "返信、@ で追加、/ でコマンド",
+			"addContext": "コンテキストを追加",
+			"send": "送信",
+			"removeAttachment": "{label} を削除",
+			"tabs": "タブ",
+			"folders": "フォルダ",
+			"fromPage": "ページから",
+			"more": "その他",
+			"selection": "選択範囲",
+			"screenshot": "スクリーンショット",
+			"file": "ファイル {path}",
+			"fileHint": "パスを入力してプロジェクトのファイルを添付",
+			"commands": "コマンド",
+			"files": "ファイル",
+			"image": "画像"
+		},
+		"ask": {
+			"label": "エージェントに質問",
+			"placeholder": "エージェントに質問、@ で追加",
+			"thisPage": "このページ",
+			"agent": "エージェント",
+			"loadingAgents": "エージェントを読み込み中...",
+			"project": "プロジェクト",
+			"chooseProject": "プロジェクトを選択",
+			"chooseFolder": "フォルダを選択...",
+			"noFolder": "フォルダなし",
+			"noFolderDetail": "エージェントは専用のフォルダで作業します",
+			"backgroundHint": "{shortcut} でバックグラウンドのままにする",
+			"start": "開始"
+		},
+		"row": {
+			"untitled": "新しい会話",
+			"working": "作業中",
+			"failed": "エラーで停止",
+			"changes": "{added} 行追加、{removed} 行削除",
+			"pages": {
+				"one": "{count} ページ",
+				"other": "{count} ページ"
+			},
+			"showPages": "ページを表示",
+			"hidePages": "ページを隠す"
+		},
+		"question": {
+			"allow": "許可",
+			"allowAlways": "常に許可",
+			"reject": "許可しない",
+			"rejectAlways": "常に許可しない",
+			"more": "その他の応答"
+		},
+		"badge": {
+			"title": "エージェント",
+			"waiting": {
+				"one": "エージェント、{count} 件が対応待ち",
+				"other": "エージェント、{count} 件が対応待ち"
+			},
+			"new": "新規",
+			"needsYou": "対応待ち",
+			"running": "実行中",
+			"done": "完了",
+			"finished": "終了",
+			"empty": "対応待ちの会話はありません"
+		},
+		"status": {
+			"working": "作業中",
+			"waiting": "対応待ち",
+			"stopHint": "Esc で停止",
+			"signingIn": "{agent} にサインイン中",
+			"signingInHint": "サインインが済むとメッセージが送信されます。",
+			"signingInTerminalHint": "Lilo が開いたターミナルタブでサインインしてください。完了するとメッセージが送信されます。"
+		},
+		"work": {
+			"images": {
+				"one": "{count} 枚の画像",
+				"other": "{count} 枚の画像"
+			},
+			"verb": {
+				"read": "読み込み",
+				"edit": "編集",
+				"delete": "削除",
+				"move": "移動",
+				"search": "検索",
+				"fetch": "取得"
+			},
+			"summary": {
+				"read": {
+					"one": "{count} 個のファイルを読み込み",
+					"other": "{count} 個のファイルを読み込み"
+				},
+				"edit": {
+					"one": "{count} 個のファイルを編集",
+					"other": "{count} 個のファイルを編集"
+				},
+				"execute": {
+					"one": "{count} 個のコマンドを実行",
+					"other": "{count} 個のコマンドを実行"
+				},
+				"search": {
+					"one": "{count} 回検索",
+					"other": "{count} 回検索"
+				},
+				"fetch": {
+					"one": "{count} 個のページを取得",
+					"other": "{count} 個のページを取得"
+				},
+				"think": {
+					"one": "{count} 回思考",
+					"other": "{count} 回思考"
+				},
+				"browser": {
+					"one": "ブラウザを {count} 回使用",
+					"other": "ブラウザを {count} 回使用"
+				},
+				"tool": {
+					"one": "{count} 個のツールを使用",
+					"other": "{count} 個のツールを使用"
+				}
+			},
+			"exit": "終了コード {code}",
+			"showAll": {
+				"one": "{count} 行すべてを表示",
+				"other": "{count} 行すべてを表示"
+			},
+			"showLess": "最後の行だけを表示"
+		},
+		"turn": {
+			"workedFor": "{duration} 作業",
+			"stopped": "停止しました",
+			"files": {
+				"one": "{count} 個のファイルを変更",
+				"other": "{count} 個のファイルを変更"
+			},
+			"review": "確認",
+			"copy": "応答をコピー",
+			"copied": "コピーしました"
+		},
+		"image": {
+			"unavailable": "画像を表示できません",
+			"open": "画像を開く",
+			"viewer": "画像",
+			"previous": "前の画像",
+			"next": "次の画像",
+			"counter": "{index} / {total}"
+		},
+		"markdown": {
+			"preview": "プレビュー",
+			"openPreview": "プレビューをタブで開く",
+			"view": "表示形式",
+			"code": "コード",
+			"copy": "コードをコピー",
+			"copied": "コピーしました"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "このプロジェクトを説明",
+					"prompt": "このプロジェクトの構成を説明してください: 主な部分、それらの関係、どこから読み始めればよいか。"
+				},
+				"fixBug": {
+					"label": "バグを見つけて修正",
+					"prompt": "このプロジェクトのバグを見つけ、原因を説明してから修正してください。"
+				},
+				"tests": {
+					"label": "テストを書く...",
+					"prompt": "次のテストを書いてください: "
+				}
+			}
 		}
 	}
 }

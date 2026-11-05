@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bootChrome } from "./fakeHost";
+import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld, SPACE_1, SPACE_2 } from "./fixtures";
 
 const box = async (page: Page, selector: string) => {
@@ -106,4 +106,16 @@ test("a Space without pins leaves no empty row between its name and its tabs", a
 	const shell = await box(page, ".pinned-tab-divider-shell");
 	expect(shell.height).toBeLessThanOrEqual(8);
 	await expect(page.locator(".clear-unpinned")).toHaveCount(0);
+	await expect(page.locator(".list-options")).toHaveCount(0);
+});
+
+test("the divider's sort and group button opens the tab list menu for its Space", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.locator('.tab-list [data-tab-id="tab-alpha"]').hover();
+	const options = page.getByRole("button", { name: "Sort and Group" });
+	await expect(options).toHaveCSS("opacity", "1");
+	await options.click();
+
+	const menu = (await sentCommands(page)).find((command) => command.action === "showTabListMenu");
+	expect(menu?.payload.spaceId).toBe(SPACE_1);
 });

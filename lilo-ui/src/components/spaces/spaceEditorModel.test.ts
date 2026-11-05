@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { canSave, initialProfileChoice, spaceEditorSubmission } from "./spaceEditorModel";
+import { canSave, initialProfileChoice, spaceEditorSubmission, spaceEditorUpdate } from "./spaceEditorModel";
 
 const users = [
   { id: "perso", isDefault: true },
@@ -46,36 +46,27 @@ test("canSave needs a name, and a profile name for a new profile", () => {
 
 test("an existing profile goes in the payload as profileId", () => {
   assert.deepEqual(spaceEditorSubmission(fields, { kind: "profile", id: "work" }, { name: "", color: "" }), {
-    action: "createSpace",
-    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", profileId: "work" },
+    name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", profileId: "work",
   });
 });
 
 test("a new profile is created with the space, named and colored", () => {
   assert.deepEqual(spaceEditorSubmission(fields, { kind: "new" }, { name: " Client ", color: "#f4bb8c" }), {
-    action: "createSpace",
-    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", newProfileName: "Client", newProfileColor: "#f4bb8c" },
-  });
-  const edit = { ...fields, mode: "edit" as const, spaceId: "s1" };
-  assert.deepEqual(spaceEditorSubmission(edit, { kind: "new" }, { name: "Client", color: "#f4bb8c" }), {
-    action: "updateSpace",
-    payload: {
-      id: "s1",
-      name: "Music",
-      icon: "🎧",
-      color: "#b39df4",
-      colorMode: "time",
-      material: "grain",
-      newProfileName: "Client",
-      newProfileColor: "#f4bb8c",
-      archiveAfterHours: 24,
-    },
+    name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", newProfileName: "Client", newProfileColor: "#f4bb8c",
   });
 });
 
 test("Private creates a private space with no profile", () => {
   assert.deepEqual(spaceEditorSubmission(fields, { kind: "private" }, { name: "", color: "" }), {
-    action: "createSpace",
-    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", isPrivate: true },
+    name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", isPrivate: true,
   });
+});
+
+test("an edited space gets only what changed, and never a blank name", () => {
+  const space = { id: "s1", name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time" as const, material: "grain" as const, archiveAfterHours: 24 };
+  const edit = { ...fields, mode: "edit" as const, spaceId: "s1" };
+  assert.equal(spaceEditorUpdate(edit, space), null);
+  assert.deepEqual(spaceEditorUpdate({ ...edit, color: "#f4bb8c", material: "glass" }, space), { id: "s1", color: "#f4bb8c", material: "glass" });
+  assert.equal(spaceEditorUpdate({ ...edit, name: "  " }, space), null);
+  assert.deepEqual(spaceEditorUpdate({ ...edit, name: " Band " }, space), { id: "s1", name: "Band" });
 });

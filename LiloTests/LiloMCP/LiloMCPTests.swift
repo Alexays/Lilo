@@ -77,7 +77,7 @@ final class LiloMCPTests: XCTestCase {
         defer { process.terminate() }
         try initialize(input)
 
-        try await assertAnsweredAlone(input, output, reason: "Settings > AI agents > Let AI agents use Lilo")
+        try await assertAnsweredAlone(input, output, reason: "Settings > AI agents > Let agents use Lilo")
         XCTAssertLessThan(Date().timeIntervalSince(started), 1.5, "an agent's connect timeout never waits on Lilo")
 
         try input.close()

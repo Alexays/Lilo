@@ -51,7 +51,7 @@ extension MainWindowController {
     /// Docks `engine` in the sidebar slot; the chrome mounts the slot on the bridge event and the
     /// zone stream then positions the native container.
     func dockInCallTab(_ engine: WKWebViewTab) {
-        guard let contentView = window?.contentView, tabLayout.position.isVertical, context.settingsStore?.dockCallsInSidebar != false else {
+        guard let contentView = window?.contentView, tabLayout.position.isVertical, !sidebarRail, context.settingsStore?.dockCallsInSidebar != false else {
             floatingTabPanel.float(engine)
             return
         }

@@ -217,7 +217,7 @@ final class MenuValidationTests: XCTestCase {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
 
         let moveMenu = NSMenu()
-        window.addMoveToSpaceItems(to: moveMenu, tabId: tab.id)
+        window.addMoveToSpaceItems(to: moveMenu, tabIds: [tab.id])
         XCTAssertEqual(moveMenu.items.map(\.title), ["\(secret.icon)  \(secret.name)"])
 
         window.switchToSpace(ordinal: 2)
@@ -233,7 +233,7 @@ final class MenuValidationTests: XCTestCase {
         window.applyContextMenuStateCommands([.setBookmarked(spaceId: shownId, tabId: tab.id, isBookmarked: true)])
 
         let moveMenu = NSMenu()
-        window.addMoveToSpaceItems(to: moveMenu, tabId: tab.id)
+        window.addMoveToSpaceItems(to: moveMenu, tabIds: [tab.id])
         XCTAssertEqual(moveMenu.items, [])
 
         try window.moveToSpace(.tab, id: tab.id, targetSpaceId: secret.id)

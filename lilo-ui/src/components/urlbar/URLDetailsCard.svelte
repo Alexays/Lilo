@@ -52,7 +52,7 @@
 
 <div
   class="url-details float-surface"
-  use:reportInteractiveZone={{ id: "url-details" }}
+  use:reportInteractiveZone={{ id: "url-details", outsetY: 2 }}
   role="group"
   aria-label={title || location.before + location.strong + location.after}
   transition:fly={{ y: -4, duration: prefersReducedMotion() ? 0 : 160, easing: cubicOut }}
@@ -392,8 +392,8 @@
     left: auto;
   }
 
-  /* Over a bottom dock, it opens upward. */
-  :global(html[data-tab-position='bottom']) .url-details {
+  /* From the address in a bottom bar, it opens upward. */
+  :global(.tab-strip.bottom) .url-details {
     top: auto;
     bottom: calc(100% + 2px);
   }

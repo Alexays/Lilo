@@ -21,10 +21,13 @@ export interface FakeHostWorld {
 	profiles?: BridgeProfileSnapshot[];
 	activeProfileId?: string;
 	sidebarWidth?: number;
+	sidebarRail?: boolean;
+	sidebarVisible?: boolean;
 	tabPosition?: TabPosition;
 	addressPlacement?: AddressPlacement;
 	// The native bindings' keys by action id, as the host sends them after the initial state.
 	shortcutKeys?: Record<string, string>;
+	settings?: Record<string, string>;
 }
 
 interface SentCommand {
@@ -305,7 +308,8 @@ export async function installFakeHost(
 				folders: state.foldersBySpace?.[state.activeSpaceId] ?? [],
 				activeTabId: state.activeTabBySpace[state.activeSpaceId] ?? "",
 				sidebarWidth: state.sidebarWidth ?? 260,
-				sidebarVisible: true,
+				sidebarVisible: state.sidebarVisible ?? true,
+				sidebarRail: state.sidebarRail,
 				tabPosition: state.tabPosition,
 				addressPlacement: state.addressPlacement,
 				spaces: state.spaces,
@@ -314,6 +318,8 @@ export async function installFakeHost(
 				activeSpaceId: state.activeSpaceId,
 			},
 			{ event: "shortcutKeys", keys: state.shortcutKeys ?? {} },
+			// Every fixture tab is on example.com: site stacks would gather them in every test.
+			{ event: "settingsLoaded", settings: { sidebarStackTabs: "false", ...state.settings } },
 		];
 	}, world);
 }

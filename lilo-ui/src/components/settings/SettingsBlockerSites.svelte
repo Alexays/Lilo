@@ -3,7 +3,6 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import { parseBlockerSites } from "./settingsPanelModel";
-  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
@@ -19,7 +18,6 @@
   </div>
 {:else}
   <UiInsetList title={t("settings.blockerSites.listTitle", { count: hosts.length })}>
-    {#snippet icon()}<SettingsGroupIcon group="settings.blockerSites.listTitle" />{/snippet}
     {#each hosts as host (host)}
       <UiListRow title={host}>
         {#snippet icon()}

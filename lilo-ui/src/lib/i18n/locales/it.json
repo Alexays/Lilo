@@ -28,19 +28,15 @@
 		"terminalTheme": "Tema",
 		"terminalThemeDescription": "Lilo segue il colore di ogni spazio e mantiene leggibili tutti i colori.",
 		"terminalImport": "Importa...",
-		"terminalImportTitle": "Importa un tema",
-		"terminalImportDescription": "Un preset di colori iTerm2 (.itermcolors), un tema colori di VS Code (.json) o un file di tema Ghostty.",
 		"terminalFont": "Carattere",
-		"terminalFontDescription": "I caratteri con legature, come JetBrains Mono o Fira Code, le mostrano.",
+		"terminalFontDescription": "I caratteri con legature, come JetBrains Mono o Fira Code, le mostrano. Dimensione in punti, per tutte le schede del terminale.",
 		"terminalFontSystem": "Sistema (SF Mono)",
 		"terminalFontSize": "Dimensioni",
-		"terminalFontSizeDescription": "In punti, per tutte le schede del terminale.",
 		"terminalScrollback": "Cronologia per terminale",
 		"terminalScrollbackDescription": "10 MB equivalgono a circa 100.000 righe.",
 		"terminalBehaviorGroup": "Comportamento",
 		"terminalNotify": "Avvisa al termine di un comando lungo",
 		"terminalNotifyDescription": "Dopo 10 secondi, quando sei altrove.",
-		"terminalSleepGroup": "Stop",
 		"terminalPreventSleepDescription": "Non per un comando in attesa di una risposta o che non produce output da 5 minuti.",
 		"terminalLidStatus": {
 			"unsigned": "Richiede una versione firmata di Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Pride",
 			"clay": "Argilla"
 		},
-		"importBrowsersAction": "Importa",
+		"importBrowsersAction": "Importa...",
 		"passwordManagerAction": "Scegli",
 		"passwordManagerChange": "Cambia",
 		"replayOnboardingAction": "Rivedi",
@@ -121,7 +117,6 @@
 			"storage": "Archiviazione"
 		},
 		"manageHistory": "Gestisci cronologia",
-		"manageHistoryDesc": "Sfoglia, cerca ed elimina pagina per pagina",
 		"historyTimeRange": "Intervallo della cronologia",
 		"historyRangeHour": "Ultima ora",
 		"historyRangeDay": "Ultime 24 ore",
@@ -142,19 +137,19 @@
 			"terminal": "Terminale",
 			"general": "Generali",
 			"appearance": "Aspetto",
-			"tabs": "Schede e spazi",
+			"tabs": "Schede e Spazi",
 			"media": "Audio e video",
 			"privacy": "Privacy",
 			"extensions": "Estensioni",
 			"advanced": "Avanzate",
-			"agents": "Agenti IA"
+			"agents": "Agenti"
 		},
 		"groups": {
 			"browser": "Browser",
 			"search": "Ricerca",
 			"downloads": "Download",
 			"theme": "Tema",
-			"tabLayout": "Schede",
+			"tabLayout": "Layout",
 			"pages": "Pagine",
 			"spaces": "Spazi",
 			"playback": "Riproduzione",
@@ -162,29 +157,29 @@
 			"contentBlocking": "Blocco dei contenuti",
 			"protection": "Protezione",
 			"browsingData": "Dati di navigazione",
-			"tools": "Strumenti",
+			"tools": "Strumenti per sviluppatori",
 			"permissions": "Permessi",
 			"zoom": "Zoom",
 			"siteData": "Dati",
 			"sites": "Siti ({count})",
 			"updates": "Aggiornamenti",
 			"passwords": "Password",
-			"agentAccess": "Accesso",
-			"agentClients": "Agenti",
+			"agentAccess": "Agenti che usano Lilo",
+			"agentClients": "App che possono usare Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Schede e finestre",
 			"sitePermissions": "Permessi dei siti",
 			"profiles": "Profili",
 			"otherAppLinks": "Link da altre app",
-			"blockerCategories": "Cosa blocca Lilo",
-			"blockerExceptions": "Elenchi ed eccezioni"
+			"blockerExceptions": "Elenchi ed eccezioni",
+			"agentConversations": "Conversazioni"
 		},
 		"searchPlaceholder": "Cerca nelle impostazioni",
 		"searchResultsTitle": "Risultati di ricerca",
 		"searchEmpty": "Nessuna impostazione corrisponde a \"{query}\".",
 		"clearData": {
 			"total": "archiviati da questo profilo",
-			"measuring": "Calcolo dei dati archiviati da questo profilo...",
+			"title": "Cancella dati di navigazione",
 			"freed": "Verranno liberati {size}",
 			"rangeNote": "Vengono cancellati solo i dati archiviati nel periodo scelto.",
 			"hints": {
@@ -283,8 +278,12 @@
 			"addressPlacement": {
 				"title": "Indirizzo",
 				"description": "Con le schede, sopra la pagina o nascosto. Usa la barra dei comandi per inserire un indirizzo.",
-				"keywords": "barra indirizzi url strumenti posizione nascondi nascosto",
-				"lockedRight": "Con le schede a destra, mostra l'indirizzo sopra la pagina o nascondilo."
+				"keywords": "barra indirizzi url strumenti posizione nascondi nascosto"
+			},
+			"hideSpaceNames": {
+				"title": "Nascondi i nomi degli spazi",
+				"description": "La barra in basso mostra ogni spazio solo con la sua icona, anche se c'è posto per il nome.",
+				"keywords": "spazio nome etichetta barra inferiore icona nascondi"
 			},
 			"theme": {
 				"title": "Tema",
@@ -423,7 +422,8 @@
 			"clearData": {
 				"title": "Cancella dati di navigazione",
 				"description": "Cronologia, cookie, cache e dati dei siti in un intervallo di tempo.",
-				"keywords": "cronologia cookie cache elimina cancella"
+				"keywords": "cronologia cookie cache elimina cancella",
+				"action": "Cancella dati di navigazione..."
 			},
 			"loadUnpacked": {
 				"title": "Carica un'estensione non pacchettizzata",
@@ -476,8 +476,8 @@
 				"keywords": "password blocco cartella privacy"
 			},
 			"agentControl": {
-				"title": "Consenti agli agenti IA di usare Lilo",
-				"description": "Claude Code, Codex o Cursor lavorano nel proprio spazio Agenti. Lilo non ha una propria IA.",
+				"title": "Consenti agli agenti di usare Lilo",
+				"description": "Claude Code, Codex o Cursor lavorano nel proprio spazio Agenti.",
 				"keywords": "agente ia mcp claude codex cursor automazione controllo remoto"
 			},
 			"agentAskBeforeActions": {
@@ -549,6 +549,16 @@
 				"title": "Impostazioni per sito",
 				"description": "Permessi, zoom e dati archiviati di ciascun sito.",
 				"keywords": "sito permessi cookie zoom dati archiviazione"
+			},
+			"agentsEnabled": {
+				"title": "Conversazioni con i tuoi agenti",
+				"description": "Parla con Claude Code, Codex, Gemini e altri agenti in una scheda, con i tuoi abbonamenti.",
+				"keywords": "agente ia acp chat conversazione chiedi claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Notifica quando un agente finisce",
+				"description": "Una notifica quando termina una conversazione che non stai guardando.",
+				"keywords": "agente notifica avviso fatto terminato"
 			}
 		},
 		"devices": {
@@ -596,16 +606,16 @@
 			"copy": "Copia configurazione",
 			"clientDescription": "Aggiunge Lilo ai suoi server MCP.",
 			"clientConnected": "Lilo è tra i suoi server MCP.",
-			"lastSeen": "Ultima attività {time}",
 			"revoke": "Rimuovi",
-			"readyDescription": "Lilo ti chiede conferma alla prima connessione.",
 			"status": {
 				"acting": "In azione",
 				"connected": "Connesso",
 				"allowed": "Consentito",
 				"notInstalled": "Non installato",
 				"ready": "Configurato"
-			}
+			},
+			"allowedSeen": "Consentito, visto l'ultima volta {time}",
+			"readyLine": "Configurato. Lilo te lo chiede alla prima connessione."
 		},
 		"navGroups": {
 			"tools": "Strumenti"
@@ -633,7 +643,7 @@
 			"lastProfile": "L'ultimo profilo viene mantenuto: ogni spazio ne ha bisogno.",
 			"extensionCount": "{count} estensioni",
 			"extensionCountOne": "1 estensione",
-			"newProfile": "Nuovo profilo",
+			"newProfile": "Nuovo profilo...",
 			"newProfileDetail": "Cookie, accessi ed estensioni nuovi",
 			"namePlaceholder": "Nome del profilo",
 			"create": "Crea",
@@ -670,7 +680,6 @@
 			"emptyPattern": "Una regola richiede un host o un testo da cercare."
 		},
 		"shortcuts": {
-			"intro": "Fai clic su un'abbreviazione, poi premi i nuovi tasti. Esc annulla, Canc lascia l'azione senza abbreviazione.",
 			"searchPlaceholder": "Cerca abbreviazioni",
 			"preset": "Preimpostazione",
 			"presetDescription": "Sostituisce tutte le abbreviazioni che hai modificato.",
@@ -687,9 +696,10 @@
 			"conflict": "{keys} è già usata da {name}.",
 			"replace": "Sostituisci",
 			"cancel": "Annulla",
-			"noResults": "Nessuna abbreviazione corrispondente."
+			"noResults": "Nessuna abbreviazione corrispondente.",
+			"note": "Fai clic su una scorciatoia, poi premi i nuovi tasti",
+			"recordingHint": "Esc annulla, Elimina lascia l'azione senza scorciatoia."
 		},
-		"terminalAppearanceGroup": "Aspetto",
 		"terminalSleepMode": "Mantieni attivo il Mac durante i comandi",
 		"terminalSleepModes": {
 			"off": "No",
@@ -704,7 +714,37 @@
 			"requiresApproval": "Richiede approvazione",
 			"enabled": "Consentito",
 			"notFound": "Mancante"
-		}
+		},
+		"notes": {
+			"live": "Le modifiche si applicano subito",
+			"spaces": {
+				"one": "{count} spazio",
+				"other": "{count} spazi"
+			},
+			"profiles": {
+				"one": "{count} profilo",
+				"other": "{count} profili"
+			},
+			"blocking": "Blocco attivo per {count} tipi su {total}",
+			"blockingOff": "Il blocco è disattivato",
+			"profile": "Profilo {name}",
+			"extensions": {
+				"one": "{count} estensione in {profile}",
+				"other": "{count} estensioni in {profile}"
+			},
+			"terminal": "Le modifiche valgono per ogni scheda del terminale",
+			"agents": "Lilo non ha una propria IA",
+			"advanced": "Per sviluppo e test",
+			"searchMatches": {
+				"one": "{count} impostazione corrisponde a \"{query}\"",
+				"other": "{count} impostazioni corrispondono a \"{query}\""
+			}
+		},
+		"callDock": {
+			"sidebar": "Nella barra laterale",
+			"floating": "Finestra mobile"
+		},
+		"terminalImportCaption": "Importa accetta un preset di colori iTerm2 (.itermcolors), un tema di colori VS Code (.json) o un file di tema Ghostty."
 	},
 	"nav": {
 		"navigationControls": "Controlli di navigazione",
@@ -844,9 +884,19 @@
 		"newTab": "Nuova scheda",
 		"newTerminal": "Nuovo terminale",
 		"clearUnpinnedTooltip": "Archivia le schede non fissate",
+		"listOptions": "Ordina e raggruppa",
 		"pinnedTabs": "Schede fissate",
 		"openTabs": "Schede aperte",
-		"dropToPin": "Rilascia per fissare"
+		"dropToPin": "Rilascia per fissare",
+		"stackLabel": {"one": "{name}, {count} scheda", "other": "{name}, {count} schede"},
+		"closeStack": "Chiudi pila",
+		"trayAgents": "Agenti",
+		"trayTerminals": "Terminali",
+		"trayNeedsInput": {"one": "{count} attende input", "other": "{count} attendono input"},
+		"trayWorking": {"one": "{count} al lavoro", "other": "{count} al lavoro"},
+		"trayRunning": {"one": "{count} in esecuzione", "other": "{count} in esecuzione"},
+		"trayShow": "Mostra {name}",
+		"trayHide": "Nascondi {name}"
 	},
 	"bookmarks": {
 		"groupLabel": "Schede nei segnalibri",
@@ -865,6 +915,11 @@
 		"colorFrom": {
 			"page": "Colore della scheda attiva",
 			"wallpaper": "Colore del tuo sfondo"
+		},
+		"color": "Colore",
+		"colorSource": {
+			"page": "Pagina",
+			"wallpaper": "Sfondo"
 		},
 		"colorSourceHint": {
 			"page": "Lilo prende il colore del sito nella scheda attiva.",
@@ -908,6 +963,7 @@
 		"thisSpace": "questo spazio",
 		"deleteConfirmMessage": "Lo spazio e tutte le sue schede verranno eliminati definitivamente.",
 		"deleteSpace": "Elimina spazio",
+		"deleteSpaceEllipsis": "Elimina spazio...",
 		"keepSpace": "Mantieni spazio",
 		"moreEmojis": "Altre emoji",
 		"lastSpaceHint": "L'ultimo spazio non può essere eliminato.",
@@ -944,8 +1000,11 @@
 	},
 	"downloadsPanel": {
 		"title": "Download",
+		"allDownloads": "Tutti i download",
+		"navLabel": "Viste dei download",
 		"searchPlaceholder": "Cerca nei download",
-		"loading": "Caricamento dei download...",
+		"searchResults": "Risultati della ricerca",
+		"quickLookNote": "Spazio per Visualizzazione rapida",
 		"emptyTitle": "Nessun download",
 		"emptyCopy": "I file scaricati appariranno qui.",
 		"noResults": "Nessun risultato",
@@ -987,8 +1046,6 @@
 		"menuButtonLabel": "Altre azioni per {name}",
 		"openDetailsLabel": "Mostra dettagli di {name}",
 		"detailEnabled": "Attiva",
-		"detailDescription": "Descrizione",
-		"detailCapabilities": "Funzionalità",
 		"detailPermissions": "Permessi",
 		"detailSiteAccess": "Accesso ai siti",
 		"siteAccessAll": "Viene eseguita su tutti i siti per cui ha richiesto l'accesso.",
@@ -1001,9 +1058,10 @@
 		"capabilityContent": "Script di contenuto",
 		"removeConfirmTitle": "Rimuovere {name}?",
 		"removeConfirmMessage": "L'estensione e i suoi dati verranno eliminati.",
+		"removeExtension": "Rimuovi estensione...",
 		"actionFailed": "Azione non riuscita. Tocca per chiudere.",
 		"degradedTitle": "Esecuzione in background interrotta: alcune funzioni potrebbero non essere disponibili.",
-		"loadUnpacked": "Carica estensione non pacchettizzata…",
+		"loadUnpacked": "Carica estensione non pacchettizzata...",
 		"addressBarMenu": "Estensioni",
 		"hostAccessRequestAllow": "Consenti",
 		"hostAccessRequestTooltip": "Consenti a questa estensione di accedere al sito",
@@ -1031,10 +1089,10 @@
 		"shortcutRecording": "Digita un'abbreviazione",
 		"executeAction": "Attiva l'estensione",
 		"shortcutNone": "Non impostata",
-		"removeTitle": "Rimuovi questa estensione",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Recensioni, dettagli e pagina dello sviluppatore",
-		"webStoreOpen": "Apri"
+		"webStoreOpen": "Apri",
+		"installed": "Installate"
 	},
 	"commandBar": {
 		"hintPeek": "Anteprima",
@@ -1071,7 +1129,7 @@
 		"scopeTabs": "Schede",
 		"scopeBookmarks": "Segnalibri",
 		"scopeHistory": "Cronologia",
-		"scopeArchive": "Archivio",
+		"scopeArchive": "Archiviate",
 		"placeholderArchive": "Cerca nelle schede archiviate...",
 		"emptyTitleArchive": "Archivio",
 		"emptySubtitleArchive": "Le schede non fissate inattive o rimosse finiscono qui.",
@@ -1103,6 +1161,8 @@
 		"sectionOpenTabs": "Schede aperte",
 		"sectionBookmarks": "Segnalibri",
 		"sectionRecentHistory": "Cronologia recente",
+		"sectionFrequentSites": "Siti frequenti",
+		"sectionRecentConversations": "Conversazioni recenti",
 		"sectionHistory": "Cronologia",
 		"sectionSwitchToTab": "Passa alla scheda",
 		"sectionGoTo": "Vai a",
@@ -1116,6 +1176,8 @@
 		"subtitleExactCommand": "Corrispondenza esatta del comando",
 		"subtitleDefaultEngine": "Motore di ricerca predefinito",
 		"hintSwitch": "Passa",
+		"agentWaiting": "Ti aspetta: {request}",
+		"agentWorking": "Al lavoro",
 		"hintOpen": "Apri",
 		"hintGo": "Vai",
 		"hintSearch": "Cerca",
@@ -1215,9 +1277,9 @@
 		"tabStartup": "Avvio",
 		"tabMemory": "Memoria",
 		"tabLog": "Registro",
-		"tabLogCount": "Registro ({count})",
+		"errorCount": {"one": "{count} errore", "other": "{count} errori"},
 		"copyReport": "Copia resoconto",
-		"recordSession": "Registra una sessione delle prestazioni (salvata in Download)",
+		"recordSession": "Registra sessione",
 		"stopRecording": "Interrompi registrazione",
 		"refresh": "Aggiorna",
 		"bootLabel": "prima che l'interfaccia sia pronta",
@@ -1232,17 +1294,16 @@
 		"savedStates": "Stati delle pagine salvati",
 		"trackedSpaces": "Spazi",
 		"hiddenSpacesRetaining": "Altri spazi che mantengono le schede caricate",
-		"openProcessManager": "Apri il gestore processi",
 		"trimDescription": "Applica ora i criteri di stop automatico.",
+		"trimTitle": "Libera memoria",
 		"trimMemory": "Libera memoria",
+		"processManagerDescription": "Memoria e CPU usate da ogni pannello e processo.",
 		"searchPlaceholder": "Cerca nel registro",
 		"filterAriaLabel": "Filtro del registro",
 		"filterAll": "Tutto",
 		"filterErrors": "Errori",
 		"filterExtensions": "Estensioni",
 		"filterTraces": "Tracce",
-		"copyLogs": "Copia registri delle estensioni",
-		"clearLog": "Cancella registri delle estensioni",
 		"emptyLog": "Ancora nessuna registrazione.",
 		"noMatches": "Nessuna voce corrispondente.",
 		"truncated": "Sono mostrate le ultime {count} voci.",
@@ -1255,6 +1316,7 @@
 	},
 	"processManager": {
 		"title": "Gestore processi",
+		"navLabel": "Viste del gestore processi",
 		"searchPlaceholder": "Cerca schede",
 		"memoryAriaLabel": "Uso della memoria",
 		"tabsCount": "{count} schede",
@@ -1283,10 +1345,12 @@
 		},
 		"pid": "PID {pid}",
 		"focus": "Mostra",
+		"details": "Mostra dettagli",
 		"reload": "Ricarica",
 		"terminate": "Uscita forzata",
 		"untitledTab": "Senza titolo",
 		"empty": "Nessuna scheda corrispondente.",
+		"emptySleeping": "Nessun pannello in sospensione.",
 		"confirmTerminate": "Forzare l'uscita del processo {kind} {pid}?",
 		"confirmCloseTab": "Chiudere {tab}?",
 		"kindWebContent": "Contenuto web",
@@ -1297,14 +1361,15 @@
 	},
 	"featureFlags": {
 		"resetAll": "Ripristina tutto",
-		"warning": "Le voci di debug interno sono opzioni per sviluppatori WebKit e possono compromettere i siti. Ricarica la pagina per applicare una modifica.",
-		"sectionExperimental": "Sperimentali: {count}",
+		"warning": "Le voci di debug interno sono opzioni per sviluppatori WebKit e possono compromettere i siti.",
 		"sectionDebug": "Debug interno: {count}",
 		"modifiedBadge": "Modificata",
 		"title": "Opzioni WebKit",
-		"resetTitle": "Opzioni modificate"
+		"resetTitle": "Opzioni modificate",
+		"reloadNote": "Ricarica una pagina perché la modifica abbia effetto"
 	},
 	"urlToast": {
+		"pageActions": "Azioni della pagina",
 		"reEnableBlocking": "Riattiva il blocco su questo sito",
 		"trackerBlockedOnPage": "{count} tracker bloccato su questa pagina",
 		"trackersBlockedOnPage": "{count} tracker bloccati su questa pagina",
@@ -1335,6 +1400,7 @@
 	},
 	"pageHang": {
 		"title": "{host} non risponde",
+		"message": "Puoi attendere o ricaricarla. Le altre schede continuano a funzionare.",
 		"stuckFor": "Bloccato da {seconds} s. Le altre schede continuano a funzionare.",
 		"reload": "Ricarica",
 		"wait": "Attendi",
@@ -1350,7 +1416,14 @@
 	},
 	"extensionDebugger": {
 		"message": "\"{name}\" ha iniziato il debug di questo browser",
-		"cancel": "Annulla"
+		"stop": "Interrompi debug"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "{count} altro avviso",
+			"other": "{count} altri avvisi"
+		},
+		"more": "altri {count}"
 	},
 	"crashRecovery": {
 		"sessionRestored": "La sessione precedente è stata ripristinata dopo una chiusura imprevista."
@@ -1358,14 +1431,11 @@
 	"sessionRestore": {
 		"degraded": "Impossibile ripristinare le schede dello spazio {name}. È stata conservata una copia di backup."
 	},
-	"confirmSheet": {
-		"dismiss": "Chiudi conferma"
-	},
 	"tabShare": {
 		"title": "{origin} vuole condividere una scheda",
 		"pickTab": "Scegli una scheda da condividere",
 		"noTabs": "Nessuna scheda aperta da condividere",
-		"shareSystem": "Finestra o schermo…",
+		"shareSystem": "Finestra o schermo...",
 		"search": "Cerca schede",
 		"suggested": "Suggerite",
 		"currentSpace": "Spazio attuale",
@@ -1402,7 +1472,7 @@
 		"closed": "\"{title}\" chiusa",
 		"closedCount": "{count} schede chiuse",
 		"undo": "Annulla",
-		"undoLabel": "Annulla: {closed}",
+		"reopen": "Riapri",
 		"archived": "«{title}» archiviata",
 		"archivedCount": {"one": "{count} scheda archiviata", "other": "{count} schede archiviate"}
 	},
@@ -1480,7 +1550,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "richiede l'accesso a:",
 		"more": "+{count} altri",
-		"deny": "Nega",
+		"deny": "Non consentire",
+		"moreAnswers": "Altre risposte",
 		"allow": "Consenti",
 		"allowOnce": "Consenti una volta",
 		"alwaysAllowOnSite": "Consenti sempre su questo sito",
@@ -1515,9 +1586,16 @@
 			"notifications": "vuole mostrare notifiche",
 			"media": "vuole usare la fotocamera o il microfono"
 		},
-		"agentControl": "vuole controllare Lilo: aprire schede nella propria cartella, leggerne le pagine e agire usando i tuoi accessi.",
-		"agentProfile": "vuole spostare le proprie schede nel profilo {profile}, per agire usando i suoi accessi.",
-		"agentExecutable": "Programma: {path}",
+		"dontAllow": "Non consentire",
+		"agentConnect": {
+			"title": "{client} vuole controllare Lilo",
+			"openTabs": "Aprire schede nella propria cartella dello Space Agenti",
+			"readPages": "Leggere le pagine che apre",
+			"actSignedIn": "Agire usando i tuoi accessi",
+			"asksFirst": "Chiede prima di inviare, pagare, eliminare o pubblicare.",
+			"profileTitle": "{client} vuole usare il profilo {profile}",
+			"profileMessage": "Sposta lì le proprie schede, per agire con gli accessi di quel profilo."
+		},
 		"agentClick": "vuole fare clic su \"{label}\" in {tab} ({site}).",
 		"agentSubmit": "vuole premere Invio per inviare \"{label}\" in {tab} ({site}).",
 		"agentUpload": "vuole caricare {label} su {site}.",
@@ -1563,13 +1641,14 @@
 		"continue": "Continua",
 		"back": "Indietro",
 		"skip": "Salta",
+		"letsGo": "Cominciamo",
 		"resume": "Riprendi configurazione",
 		"usage": {
 			"title": "Come userai Lilo?",
 			"subtitle": "La configurazione si adatta alla tua risposta. Puoi modificare tutto nelle Impostazioni.",
 			"browse": "Per navigare",
 			"browseDesc": "I tuoi segnalibri, il tuo stile, l'essenziale",
-			"agents": "Con i miei agenti IA",
+			"agents": "Con i miei agenti",
 			"agentsDesc": "Claude, Codex o Cursor lavorano al tuo fianco",
 			"develop": "Per sviluppare",
 			"developDesc": "Tutto questo, più il terminale"
@@ -1620,8 +1699,6 @@
 				"extensionsCount": "Reinstallazione estensioni: {current} di {total}"
 			},
 			"partial": "Impossibile importare alcuni dati: {list}. Puoi riprovare più tardi dalle Impostazioni.",
-			"moreOptions": "Scegli cosa importare",
-			"lessOptions": "Nascondi opzioni",
 			"profiles": "Profili di {browser}",
 			"kinds": "Cosa importare",
 			"kind": {
@@ -1633,12 +1710,23 @@
 			},
 			"extensions": "Estensioni da reinstallare",
 			"run": "Importa",
+			"summary": "Importa {list}.",
+			"change": "Modifica",
+			"item": {
+				"bookmarks": "preferiti",
+				"tabs": "schede aperte",
+				"history": "cronologia",
+				"cookies": "i tuoi accessi",
+				"extensions": "estensioni"
+			},
 			"running": "Importazione..."
 		},
 		"passwords": {
 			"title": "Le tue password",
 			"subtitle": "Lilo non conserva le password. Aggiungi il gestore che usi già.",
 			"add": "Aggiungi",
+			"manager": "Gestore di password",
+			"choose": "Scegli",
 			"addNamed": "Aggiungi {name}",
 			"adding": "Aggiunta...",
 			"added": "Aggiunto",
@@ -1653,21 +1741,19 @@
 				"iCloud": "In attesa dell'approvazione di Apple"
 			}
 		},
-		"appearance": {
-			"title": "Il tuo stile",
-			"subtitle": "Chiaro, scuro o come il Mac, e da dove proviene il colore. La finestra si aggiorna subito.",
+		"yourLilo": {
+			"title": "Il tuo Lilo",
+			"subtitle": "Uno stile e un posto per i tuoi pannelli. La finestra segue le tue scelte.",
 			"theme": "Tema",
 			"system": "Automatico",
 			"light": "Chiaro",
-			"dark": "Scuro"
-		},
-		"tabs": {
-			"title": "Le tue schede, dal lato che vuoi",
-			"subtitle": "Scegli un bordo e guarda la finestra adattarsi. Puoi trascinare le schede su un altro bordo in qualsiasi momento."
+			"dark": "Scuro",
+			"tabs": "Pannelli",
+			"color": "Colore",
+			"essentials": "L'essenziale",
+			"look": "Aspetto"
 		},
 		"essentials": {
-			"title": "L'essenziale",
-			"subtitle": "Impostazioni che fanno la differenza. Puoi cambiarle quando vuoi.",
 			"blocker": "Blocca pubblicità e tracker",
 			"blockerDesc": "Consigliato: le pagine si caricano più velocemente e ti seguono meno.",
 			"refreshRate": "Scorrimento più fluido",
@@ -1678,23 +1764,18 @@
 			"defaultDone": "Fatto"
 		},
 		"agents": {
-			"title": "I tuoi agenti IA",
+			"title": "I tuoi agenti",
 			"subtitle": "Claude Code, Codex o Cursor lavorano nel proprio spazio Agenti, senza toccare la tastiera. Lilo non ha una propria IA.",
-			"allow": "Consenti agli agenti IA di usare Lilo",
+			"allow": "Consenti agli agenti di usare Lilo",
 			"copied": "Copiato",
-			"connectNamed": "Connetti {name}"
+			"connectNamed": "Connetti {name}",
+			"onThisMac": "Su questo Mac"
 		},
 		"tips": {
-			"title": "3 consigli per iniziare",
-			"subtitle": "È tutto ciò che serve.",
-			"go": "Cominciamo",
 			"search": "Premi ⌘T per cercare o inserire un indirizzo.",
-			"tabs": "Le schede restano in vista, sul bordo che hai scelto.",
 			"split": "Trascina una scheda sul bordo della pagina per vedere due pagine affiancate."
 		},
 		"devTips": {
-			"title": "3 consigli per sviluppare",
-			"subtitle": "Le abbreviazioni funzionano anche senza il menu Sviluppo.",
 			"inspector": "Premi ⌥⌘I per aprire Inspector web sulla pagina.",
 			"localhost": "Trascina il tuo localhost sul bordo della pagina per vederlo accanto alla documentazione.",
 			"agents": "Gli agenti aprono le proprie schede nello spazio Agenti."
@@ -1709,6 +1790,7 @@
 	"historyPage": {
 		"title": "Cronologia",
 		"navLabel": "Viste della cronologia",
+		"cmdClickNote": "⌘-clic apre in una nuova scheda",
 		"searchPlaceholder": "Cerca nella cronologia",
 		"periodAll": "Tutta la cronologia",
 		"periodToday": "Oggi",
@@ -2065,6 +2147,16 @@
 		"Mute Microphone": "Disattiva microfono",
 		"Unmute Microphone": "Attiva microfono",
 		"Close Other Tabs": "Chiudi altre schede",
+		"Move Stack to New Folder": "Sposta la pila in una nuova cartella",
+		"Move Stack to Space": "Sposta la pila nello spazio",
+		"Don't Stack %@": "Non impilare %@",
+		"Close Stack": "Chiudi pila",
+		"Stack Tabs by Site": "Impila le schede per sito",
+		"Group by Type": "Raggruppa per tipo",
+		"Never Stack": "Non impilare mai",
+		"Stack Every Site Again": "Impila di nuovo tutti i siti",
+		"Sort by Site": "Ordina per sito",
+		"Sort by Title": "Ordina per titolo",
 		"Create Folder": "Crea cartella",
 		"Create Folder from Tab": "Crea cartella dalla scheda",
 		"Move to Folder": "Sposta nella cartella",
@@ -2227,7 +2319,24 @@
 		"Parent folder": "Cartella superiore",
 		"Name": "Nome",
 		"Size": "Dimensione",
-		"Date Modified": "Data di modifica"
+		"Date Modified": "Data di modifica",
+		"%@ could not be downloaded.": "Impossibile scaricare %@.",
+		"%@ could not be installed.": "Impossibile installare %@.",
+		"%@ did not match its checksum and was not installed.": "%@ non corrispondeva al suo checksum e non è stato installato.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ richiede Node.js: installalo da nodejs.org, poi riprova.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ richiede uv: installalo da astral.sh/uv, poi riprova.",
+		"Choose": "Scegli",
+		"New Conversation": "Nuova conversazione",
+		"Screenshot of %@": "Istantanea di %@",
+		"The agent stopped (code %d).": "L'agente si è fermato (codice %d).",
+		"This agent is no longer in the ACP registry.": "Questo agente non è più nel registro ACP.",
+		"Always Allow": "Consenti sempre",
+		"Ask an Agent": "Chiedi a un agente",
+		"Review Changes": "Rivedi modifiche",
+		"Show Pages": "Mostra pagine",
+		"Hide Pages": "Nascondi pagine",
+		"Close Conversation": "Chiudi conversazione",
+		"Pasted image": "Immagine incollata"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2240,7 +2349,7 @@
 		},
 		"originalNotes": "Note di rilascio originali.",
 		"unavailable": "Le note di rilascio non sono disponibili in questa versione.",
-		"reopen": "Sempre qui in Aiuto → Novità.",
+		"reopen": "Sempre qui in Aiuto > Novità.",
 		"continue": "Torna a navigare",
 		"kinds": {
 			"Breaking": "Modifiche incompatibili",
@@ -2301,6 +2410,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "Tutti i permessi",
+		"inUse": "In uso ora",
 		"zoom": "Zoom",
 		"zoomIn": "Ingrandisci",
 		"zoomOut": "Riduci",
@@ -2353,6 +2463,259 @@
 			"ellipse": "Ellisse",
 			"text": "Testo",
 			"pen": "Penna"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Interrompi",
+			"mode": "Modalità",
+			"context": "{percent}% del contesto usato",
+			"planSession": "Limite di sessione: {percent}% usato, si azzera {time}",
+			"planWeek": "Limite settimanale: {percent}% usato, si azzera {time}",
+			"ownCopy": "Copia separata",
+			"ownCopyHint": "Lavora su una propria copia del progetto. Uniscila da Modifiche.",
+			"starting": "Avvio dell'agente...",
+			"errorHint": "Invia un messaggio per riprovare.",
+			"showEarlier": {
+				"one": "Mostra {count} elemento precedente",
+				"other": "Mostra {count} elementi precedenti"
+			},
+			"queued": {
+				"one": "{count} messaggio in coda",
+				"other": "{count} messaggi in coda"
+			},
+			"queuedHint": "Inviato quando l'agente finisce. Cmd Invio lo invia subito.",
+			"thought": "Ragionamento",
+			"restoreToHere": "Ripristina fino a qui",
+			"restoreConfirm": "Riportare i file del progetto com'erano a questo messaggio?",
+			"restore": "Ripristina",
+			"reviewChanges": "Esamina in Modifiche",
+			"undo": "Annulla",
+			"keep": "Mantieni",
+			"undone": "Annullato",
+			"kept": "Mantenuto",
+			"moreLines": {
+				"one": "{count} riga in più",
+				"other": "{count} righe in più"
+			},
+			"plan": "Piano",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "Da fare",
+				"in_progress": "In corso",
+				"completed": "Fatto"
+			},
+			"permissionTitle": "Consentire questa azione?",
+			"answered": "Risposta: {option}",
+			"cancelled": "Nessuna risposta data",
+			"notice": {
+				"restored": "File ripristinati a questo punto",
+				"restoreFailed": "Impossibile ripristinare i file",
+				"signedIn": "Accesso effettuato"
+			},
+			"moreOptions": "Altre opzioni",
+			"signInHint": "Accedi con l'agente: il messaggio viene inviato appena hai effettuato l'accesso.",
+			"branch": "Branch {branch}",
+			"jumpToLatest": "Vai agli ultimi"
+		},
+		"tool": {
+			"untitled": "Chiamata a strumento",
+			"status": {
+				"pending": "In attesa",
+				"in_progress": "In esecuzione",
+				"failed": "Non riuscito"
+			},
+			"group": {
+				"read": {
+					"one": "{count} file letto",
+					"other": "{count} file letti"
+				},
+				"search": {
+					"one": "{count} ricerca",
+					"other": "{count} ricerche"
+				},
+				"fetch": {
+					"one": "{count} pagina recuperata",
+					"other": "{count} pagine recuperate"
+				},
+				"think": {
+					"one": "Ha riflettuto {count} volta",
+					"other": "Ha riflettuto {count} volte"
+				},
+				"action": {
+					"one": "{count} azione",
+					"other": "{count} azioni"
+				}
+			}
+		},
+		"composer": {
+			"label": "Scrivi all'agente",
+			"placeholder": "Rispondi, @ per aggiungere qualcosa, / per i comandi",
+			"addContext": "Aggiungi contesto",
+			"send": "Invia",
+			"removeAttachment": "Rimuovi {label}",
+			"tabs": "Schede",
+			"folders": "Cartelle",
+			"fromPage": "Dalla pagina",
+			"more": "Altro",
+			"selection": "Selezione",
+			"screenshot": "Istantanea",
+			"file": "File {path}",
+			"fileHint": "Digita un percorso per allegare un file del progetto",
+			"commands": "Comandi",
+			"files": "File",
+			"image": "Immagine"
+		},
+		"ask": {
+			"label": "Chiedi a un agente",
+			"placeholder": "Chiedi a un agente, @ per aggiungere qualcosa",
+			"thisPage": "Questa pagina",
+			"agent": "Agente",
+			"loadingAgents": "Caricamento agenti...",
+			"project": "Progetto",
+			"chooseProject": "Scegli un progetto",
+			"chooseFolder": "Scegli cartella...",
+			"noFolder": "Nessuna cartella",
+			"noFolderDetail": "L'agente lavora in una cartella propria",
+			"backgroundHint": "{shortcut} per tenerlo in background",
+			"start": "Avvia"
+		},
+		"row": {
+			"untitled": "Nuova conversazione",
+			"working": "Al lavoro",
+			"failed": "Interrotto per un errore",
+			"changes": "{added} righe aggiunte, {removed} rimosse",
+			"pages": {
+				"one": "{count} pagina",
+				"other": "{count} pagine"
+			},
+			"showPages": "Mostra pagine",
+			"hidePages": "Nascondi pagine"
+		},
+		"question": {
+			"allow": "Consenti",
+			"allowAlways": "Consenti sempre",
+			"reject": "Non consentire",
+			"rejectAlways": "Non consentire mai",
+			"more": "Altre risposte"
+		},
+		"badge": {
+			"title": "Agenti",
+			"waiting": {
+				"one": "Agenti, {count} ti aspetta",
+				"other": "Agenti, {count} ti aspettano"
+			},
+			"new": "Nuovo",
+			"needsYou": "Ti aspetta",
+			"running": "In esecuzione",
+			"done": "Fatto",
+			"finished": "Terminato",
+			"empty": "Nessuna conversazione ti aspetta"
+		},
+		"status": {
+			"working": "Al lavoro",
+			"waiting": "Ti aspetta",
+			"stopHint": "Esc per interrompere",
+			"signingIn": "Accesso a {agent}",
+			"signingInHint": "Il messaggio viene inviato appena hai effettuato l'accesso.",
+			"signingInTerminalHint": "Accedi nella scheda terminale aperta da Lilo. Poi il messaggio viene inviato."
+		},
+		"work": {
+			"images": {
+				"one": "{count} immagine",
+				"other": "{count} immagini"
+			},
+			"verb": {
+				"read": "Letto",
+				"edit": "Modificato",
+				"delete": "Eliminato",
+				"move": "Spostato",
+				"search": "Cercato",
+				"fetch": "Recuperato"
+			},
+			"summary": {
+				"read": {
+					"one": "letto {count} file",
+					"other": "letti {count} file"
+				},
+				"edit": {
+					"one": "modificato {count} file",
+					"other": "modificati {count} file"
+				},
+				"execute": {
+					"one": "eseguito {count} comando",
+					"other": "eseguiti {count} comandi"
+				},
+				"search": {
+					"one": "cercato {count} volta",
+					"other": "cercato {count} volte"
+				},
+				"fetch": {
+					"one": "recuperata {count} pagina",
+					"other": "recuperate {count} pagine"
+				},
+				"think": {
+					"one": "riflettuto {count} volta",
+					"other": "riflettuto {count} volte"
+				},
+				"browser": {
+					"one": "usato il browser {count} volta",
+					"other": "usato il browser {count} volte"
+				},
+				"tool": {
+					"one": "usato {count} strumento",
+					"other": "usati {count} strumenti"
+				}
+			},
+			"exit": "Uscita {code}",
+			"showAll": {
+				"one": "Mostra {count} riga",
+				"other": "Mostra tutte le {count} righe"
+			},
+			"showLess": "Mostra le ultime righe"
+		},
+		"turn": {
+			"workedFor": "Ha lavorato per {duration}",
+			"stopped": "Interrotto",
+			"files": {
+				"one": "{count} file modificato",
+				"other": "{count} file modificati"
+			},
+			"review": "Esamina",
+			"copy": "Copia risposta",
+			"copied": "Copiato"
+		},
+		"image": {
+			"unavailable": "Immagine non disponibile",
+			"open": "Apri immagine",
+			"viewer": "Immagine",
+			"previous": "Immagine precedente",
+			"next": "Immagine successiva",
+			"counter": "{index} di {total}"
+		},
+		"markdown": {
+			"preview": "Anteprima",
+			"openPreview": "Apri l'anteprima in una scheda",
+			"view": "Visualizza come",
+			"code": "Codice",
+			"copy": "Copia codice",
+			"copied": "Copiato"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Spiega questo progetto",
+					"prompt": "Spiega come è organizzato questo progetto: le parti principali, come si collegano tra loro e da dove iniziare a leggere."
+				},
+				"fixBug": {
+					"label": "Trova e correggi un bug",
+					"prompt": "Trova un bug in questo progetto, spiega cosa lo causa, poi correggilo."
+				},
+				"tests": {
+					"label": "Scrivi test per...",
+					"prompt": "Scrivi test per "
+				}
+			}
 		}
 	}
 }

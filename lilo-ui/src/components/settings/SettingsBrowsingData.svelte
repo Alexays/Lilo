@@ -1,18 +1,18 @@
+<!-- Clear Browsing Data, a modal over whatever the page area shows. -->
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { settingsActions } from "../../lib/bridge/actions";
   import type { BridgeBrowsingDataKind } from "../../lib/bridge/protocol";
   import { formatByteSize } from "../../lib/format";
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { getBrowsingDataSizes, getWebsiteData } from "../../stores/settings.svelte";
-  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import { BROWSING_DATA_KINDS } from "./settingsPanelModel";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
-  import UiLinkRow from "../ui/UiLinkRow.svelte";
-  import { openHistoryPage } from "../../stores/panels.svelte";
+  import { closeClearBrowsingData, openHistoryPage } from "../../stores/panels.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
-  import UiSelect from "../ui/UiSelect.svelte";
+  import UiModal from "../ui/UiModal.svelte";
+  import UiSegmented from "../ui/UiSegmented.svelte";
 
   const TINTS: Record<BridgeBrowsingDataKind, string> = { history: "teal", cookies: "orange", cache: "blue", siteData: "purple" };
 
@@ -41,10 +41,10 @@
 
   onMount(() => settingsActions.loadBrowsingDataSizes());
 
-  // The sizes measured after a clear are its answer.
+  // The sizes measured after a clear are its answer: the job is done.
   $effect(() => {
     void sizes;
-    clearing = false;
+    if (untrack(() => clearing)) closeClearBrowsingData();
   });
 
   function toggle(kind: BridgeBrowsingDataKind, checked: boolean): void {
@@ -52,113 +52,112 @@
   }
 
   function clear(): void {
+    if (selected.length === 0 || clearing) return;
     clearing = true;
     settingsActions.clearBrowsingData(cleared, range);
   }
 </script>
 
-<div class="browsing-data-summary">
-  <p class="browsing-data-total">
+<UiModal zone="clear-browsing-data" width={560} title={t("settings.clearData.title")} oncancel={closeClearBrowsingData} ondefault={clear}>
+  <!-- WebKit measures in the background: the summary keeps its room meanwhile, so nothing jumps. -->
+  <div class="browsing-data-summary">
     {#if sizes}
-      <span class="browsing-data-total-value">{formatByteSize(total, getLocale())}</span>
-      {t("settings.clearData.total")}
-    {:else}
-      {t("settings.clearData.measuring")}
+      <p class="browsing-data-total">
+        <span class="browsing-data-total-value">{formatByteSize(total, getLocale())}</span>
+        {t("settings.clearData.total")}
+      </p>
+      {#if total > 0}
+        <div class="browsing-data-bar" aria-hidden="true">
+          {#each BROWSING_DATA_KINDS as kind (kind)}
+            {#if bytes[kind]}
+              <span style:flex={bytes[kind]} style:background="var(--tile-{TINTS[kind]})" class:dimmed={!cleared.includes(kind)}></span>
+            {/if}
+          {/each}
+        </div>
+      {/if}
     {/if}
-  </p>
-  {#if total > 0}
-    <div class="browsing-data-bar" aria-hidden="true">
-      {#each BROWSING_DATA_KINDS as kind (kind)}
-        {#if bytes[kind]}
-          <span style:flex={bytes[kind]} style:background="var(--tile-{TINTS[kind]})" class:dimmed={!cleared.includes(kind)}></span>
-        {/if}
-      {/each}
-    </div>
-  {/if}
-</div>
+  </div>
 
-<UiInsetList title={t("settings.groups.browsingData")}>
-  {#snippet icon()}<SettingsGroupIcon group="settings.groups.browsingData" />{/snippet}
-  {#each BROWSING_DATA_KINDS as kind (kind)}
-    {@const implied = kind !== "siteData" && kind !== "history" && selected.includes("siteData")}
-    <label class="browsing-data-kind" class:implied>
-      <UiListRow title={t(`settings.clearData.kinds.${kind}`)} description={hints[kind]}>
-        {#snippet icon()}
-          <input
-            type="checkbox"
-            checked={cleared.includes(kind)}
-            disabled={implied}
-            onchange={(event) => toggle(kind, event.currentTarget.checked)}
-          />
-        {/snippet}
-        {#snippet action()}
-          <span class="browsing-data-dot" style:background="var(--tile-{TINTS[kind]})"></span>
-          <span class="browsing-data-size">{bytes[kind] === undefined ? "" : formatByteSize(bytes[kind], getLocale())}</span>
-        {/snippet}
-      </UiListRow>
-    </label>
-  {/each}
-  <UiListRow title={t("settings.historyTimeRange")}>
-    {#snippet action()}
-      <UiSelect
-        value={range}
-        options={[
-          { value: "hour", label: t("settings.historyRangeHour") },
-          { value: "day", label: t("settings.historyRangeDay") },
-          { value: "week", label: t("settings.historyRangeWeek") },
-          { value: "all", label: t("settings.historyRangeAll") },
-        ]}
-        ariaLabel={t("settings.historyTimeRange")}
-        onchange={(value) => (range = value)}
-      />
-    {/snippet}
-  </UiListRow>
-</UiInsetList>
+  <UiInsetList>
+    {#each BROWSING_DATA_KINDS as kind (kind)}
+      {@const implied = kind !== "siteData" && kind !== "history" && selected.includes("siteData")}
+      <label class="browsing-data-kind" class:implied>
+        <UiListRow title={t(`settings.clearData.kinds.${kind}`)} description={hints[kind]}>
+          {#snippet icon()}
+            <input
+              type="checkbox"
+              checked={cleared.includes(kind)}
+              disabled={implied}
+              onchange={(event) => toggle(kind, event.currentTarget.checked)}
+            />
+          {/snippet}
+          {#snippet action()}
+            <span class="browsing-data-dot" style:background="var(--tile-{TINTS[kind]})"></span>
+            <span class="browsing-data-size">{bytes[kind] === undefined ? "" : formatByteSize(bytes[kind], getLocale())}</span>
+          {/snippet}
+        </UiListRow>
+      </label>
+    {/each}
+    <UiListRow title={t("settings.historyTimeRange")}>
+      {#snippet action()}
+        <UiSegmented
+          value={range}
+          options={[
+            { value: "hour", label: t("settings.historyRangeHour") },
+            { value: "day", label: t("settings.historyRangeDay") },
+            { value: "week", label: t("settings.historyRangeWeek") },
+            { value: "all", label: t("settings.historyRangeAll") },
+          ]}
+          ariaLabel={t("settings.historyTimeRange")}
+          onchange={(value) => (range = value)}
+        />
+      {/snippet}
+    </UiListRow>
+  </UiInsetList>
 
-<div class="browsing-data-footer">
   <!-- WebKit sizes a site's data as a whole, not by when it was written: only an all-time clear has a known size. -->
-  <span>
+  <p class="browsing-data-note">
     {#if range !== "all"}
       {t("settings.clearData.rangeNote")}
     {:else if sizes && freed > 0}
       {t("settings.clearData.freed", { size: formatByteSize(freed, getLocale()) })}
     {/if}
-  </span>
-  <UiButton variant="danger" busy={clearing} disabled={selected.length === 0} onclick={clear}>{t("common.clear")}</UiButton>
-</div>
+  </p>
 
-<UiInsetList>
-  <UiLinkRow title={t("settings.manageHistory")} description={t("settings.manageHistoryDesc")} onclick={() => openHistoryPage()} />
-</UiInsetList>
+  {#snippet leading()}
+    <UiButton onclick={() => { closeClearBrowsingData(); openHistoryPage(); }}>{t("settings.manageHistory")}</UiButton>
+  {/snippet}
+  {#snippet actions()}
+    <UiButton onclick={closeClearBrowsingData}>{t("common.cancel")}</UiButton>
+    <UiButton variant="destructive" busy={clearing} disabled={selected.length === 0} onclick={clear}>{t("common.clear")}</UiButton>
+  {/snippet}
+</UiModal>
 
 <style>
   .browsing-data-summary {
     display: grid;
-    gap: var(--space-10);
-    margin-bottom: var(--space-24);
+    align-content: start;
+    gap: var(--space-12);
+    min-height: 40px;
+    margin-bottom: var(--space-16);
   }
 
   .browsing-data-total {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-8);
     margin: 0;
     color: var(--text-secondary);
-    font-size: var(--font-size-md);
   }
 
   .browsing-data-total-value {
     color: var(--text-primary);
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-medium);
     font-variant-numeric: tabular-nums;
   }
 
   .browsing-data-bar {
     display: flex;
     gap: 2px;
-    height: 8px;
-    border-radius: var(--radius-xs);
+    height: 6px;
+    border-radius: var(--radius-chip);
     overflow: hidden;
   }
 
@@ -189,17 +188,13 @@
   .browsing-data-size {
     min-width: 64px;
     color: var(--text-secondary);
-    font-size: var(--font-size-md);
     font-variant-numeric: tabular-nums;
     text-align: right;
   }
 
-  .browsing-data-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-12);
-    margin-top: var(--space-16);
+  .browsing-data-note {
+    min-height: 1lh;
+    margin: var(--space-12) 0 0;
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
   }

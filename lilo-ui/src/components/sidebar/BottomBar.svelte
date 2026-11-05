@@ -32,6 +32,7 @@
     type SpaceState,
   } from "../../stores/spaces.svelte";
   import {
+    getPageShell,
     isDownloadsVisible,
     openAddEditor,
   } from "../../stores/panels.svelte";
@@ -41,9 +42,11 @@
     isSidebarDragActive,
   } from "../../stores/sidebarDnd.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import { getSetting } from "../../stores/settings.svelte";
   import {
     aggregateDownloadProgress,
     getDownloads,
+    getRecentDownloads,
     getUnseenDownloads,
     hasSessionDownloads,
     isActiveDownload,
@@ -91,13 +94,21 @@
   const downloadProgress = $derived(aggregateDownloadProgress(activeDownloads));
   const unseenDownloads = $derived(getUnseenDownloads());
 
-  const showDownloads = $derived(isDownloadUiEnabled() && (hasSessionDownloads() || activeDownloadCount > 0));
+  const recentDownloads = $derived(getRecentDownloads());
+  const showDownloads = $derived(
+    isDownloadUiEnabled() && (hasSessionDownloads() || getDownloads().length > 0 || recentDownloads.length > 0),
+  );
   const recentArchived = $derived(getRecentArchivedTabs());
   let slotButton: HTMLButtonElement | undefined = $state();
   let menuOpen = $state(false);
 
   $effect(() => {
     if (isDownloadsVisible() || (menuOpen && showDownloads)) markDownloadsSeen();
+  });
+
+  // A system screen opened from elsewhere (a shortcut, the menu bar) takes the page: the menu goes with it.
+  $effect(() => {
+    if (getPageShell() !== null) menuOpen = false;
   });
 
   let spaceScrollerEl: HTMLDivElement | undefined = $state();
@@ -432,9 +443,25 @@
   let iconsWrapWidth = $state(0);
   // The tiles, the name's padding and the bar's own inset come off; too little left and the tile stays an icon.
   const labelRoom = $derived.by(() => {
-    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 39 - 16);
+    if (getSetting("hideSpaceNames", "false") === "true") return 0;
+    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 34 - 16);
     return room < 32 ? 0 : room;
   });
+
+  // A long name steps down to 10px before it ellipsizes, as the address does: more of it stays readable.
+  let labelMeasurer: CanvasRenderingContext2D | null = null;
+  function labelFontSize(name: string): number | undefined {
+    if (labelRoom === 0) return undefined;
+    labelMeasurer ??= document.createElement("canvas").getContext("2d");
+    if (!labelMeasurer) return undefined;
+    const root = getComputedStyle(document.documentElement);
+    const base = Number.parseFloat(root.getPropertyValue("--font-size-sm"));
+    for (let size = base; size >= 10; size -= 1) {
+      labelMeasurer.font = `${root.getPropertyValue("--font-weight-semibold")} ${size}px ${root.fontFamily}`;
+      if (labelMeasurer.measureText(name).width <= labelRoom) return size === base ? undefined : size;
+    }
+    return 10;
+  }
 
   function getLabelStyle(index: number, spaceId: string): string {
     const proximity = Math.max(0, 1 - Math.abs(index - visualIndex));
@@ -446,6 +473,7 @@
 </script>
 
 {#snippet spaceIconButton(space: SpaceState, index: number, profile: BridgeProfileSnapshot | undefined)}
+  {@const labelSize = labelFontSize(space.name)}
   <div
     class="space-icon-btn"
     class:dragging={space.id === draggedSpaceId}
@@ -466,7 +494,7 @@
     oncontextmenu={(event) => showNativeSidebarContextMenu(event, space.id)}
     onkeydown={(event) => handleSpaceKeydown(event, space.id)}
   >
-    <span class="space-glyph" data-onboarding-anchor={space.id === getActiveSpaceId() ? "space-icon" : undefined}>
+    <span class="space-glyph">
       {#if isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)}
         <!-- Loaded on demand: the tile shows only once an agent connects, so the first frame goes without. -->
         {#await import("./AgentMascot.svelte") then { default: AgentMascot }}
@@ -478,7 +506,7 @@
     </span>
     <!-- Opens with the pager's own position, so the name follows a swipe frame by frame. -->
     <span class="space-label" style={getLabelStyle(index, space.id)} aria-hidden="true">
-      <span class="space-label-text" bind:clientWidth={labelWidths[space.id]}>{space.name}</span>
+      <span class="space-label-text" style:font-size={labelSize ? `${labelSize}px` : undefined} bind:clientWidth={labelWidths[space.id]}>{space.name}</span>
     </span>
   </div>
 {/snippet}
@@ -524,7 +552,7 @@
               anchor={slotButton}
               label={t("bottomBar.library")}
               tabs={recentArchived}
-              downloads={showDownloads ? getDownloads() : null}
+              downloads={showDownloads ? [...getDownloads(), ...recentDownloads] : null}
               onclose={() => (menuOpen = false)}
             />
           {/await}
@@ -660,7 +688,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px var(--sidebar-right-pad, 10px);
+    padding: 8px var(--sidebar-right-pad, 8px);
     flex-shrink: 0;
     contain: layout style;
   }
@@ -750,7 +778,7 @@
     height: 7px;
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
     pointer-events: none;
   }
 
@@ -760,7 +788,7 @@
 
   .space-icons {
     display: flex;
-    gap: 1px;
+    gap: 2px;
     align-items: center;
     justify-content: center;
     position: relative;
@@ -853,9 +881,9 @@
     align-items: center;
     justify-content: center;
     flex: none;
-    min-width: 36px;
+    min-width: 32px;
     /* The margin an icon tile has around it, kept by the open one so the tiles stay evenly spaced. */
-    padding-inline: 4px;
+    padding-inline: 2px;
     box-sizing: border-box;
     min-height: 36px;
   }
@@ -865,8 +893,7 @@
     align-items: center;
     justify-content: center;
     flex: none;
-    min-width: 38px;
-    padding-inline: 1px;
+    min-width: 28px;
     box-sizing: border-box;
     min-height: 36px;
     flex-shrink: 0;
@@ -874,8 +901,8 @@
   }
 
   .space-dnd-placeholder {
-    width: 38px;
-    min-width: 38px;
+    width: 28px;
+    min-width: 28px;
     height: 36px;
     border-radius: var(--radius-md);
     box-sizing: border-box;
@@ -899,7 +926,7 @@
 
   .space-slot-drop-guide {
     position: absolute;
-    inset: 4px;
+    inset: 4px 2px;
     border-radius: var(--radius-md);
     background: var(--accent-tint-8);
     box-shadow:
@@ -966,7 +993,7 @@
 
   /* The active tile keeps the plain highlight, warmed by the profile rather than painted with it. */
   .tinted .space-icon-btn::before {
-    background: color-mix(in srgb, var(--space-tint) 26%, var(--bg-active));
+    background: color-mix(in srgb, var(--space-tint) 26%, var(--sidebar-sel));
   }
 
   /* An acting agent glows behind the tile, never a line, so it never reads as the profile. Only
@@ -1063,8 +1090,10 @@
     pointer-events: none;
   }
 
+  /* The current Space sits on the sidebar's selected surface. */
   .space-icon-btn::before {
-    background: var(--bg-active);
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
     opacity: var(--space-icon-active-opacity, 0);
     transition: opacity var(--motion-duration-normal) var(--motion-ease-spring);
     z-index: -1;

@@ -18,9 +18,13 @@
   --accent-text: #ffffff;
   /* Accent-colored text on the app's surfaces; --accent itself is too light for small text. */
   --accent-ink: color-mix(in srgb, var(--accent) 70%, var(--text-primary));
+  /* Resolved here, on the app's surfaces: what floats over the sidebar takes it back from the sidebar's own. */
+  --float-accent-ink: var(--accent-ink);
 
   --border: rgba(0, 0, 0, 0.08);
   --separator: rgba(0, 0, 0, 0.06);
+  /* Grouped boxes of rows, as in System Settings. */
+  --group-box-bg: rgba(0, 0, 0, 0.035);
 
   --danger: #ef4444;
   --danger-text: var(--danger-deep);
@@ -28,6 +32,8 @@
   --danger-deep: #b42318;
   /* A program or page waiting on the user. */
   --attention: #ffb547;
+  /* A count on --attention: dark enough for 4.5:1 on the orange. */
+  --attention-text: #4a2a00;
   --success: #15803d;
   --success-text: #166534;
   --keep-awake: #c98a12;
@@ -42,6 +48,8 @@
   --focus-outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
 
   --sidebar-width: 260px;
+  /* Mirrors MainWindowController.sidebarRailWidth. */
+  --sidebar-rail-width: 76px;
   --sidebar-bg: var(--bg-secondary);
   --sidebar-contrast: #1d1d1f;
   --content-inset: 8px;
@@ -57,8 +65,13 @@
   --font-size-md: 13px;
   --font-size-lg: 14px;
   --font-size-xl: 16px;
+  /* Modal titles and large search fields. */
+  --font-size-modal: 17px;
   --font-size-2xl: 20px;
   --font-size-3xl: 22px;
+  /* Onboarding headlines and body only. */
+  --font-size-body-lg: 15px;
+  --font-size-headline: 28px;
   /* The onboarding wordmark only. */
   --font-size-display: 56px;
   --font-weight-regular: 400;
@@ -84,6 +97,7 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 16px;
+  --radius-box: 12px;
   --radius-chip: 999px;
 
   --control-height-sm: 24px;
@@ -157,7 +171,7 @@
   --chrome-overlay-boundary-radius: var(--radius-md);
   --chrome-overlay-panel-radius: var(--radius-xl);
   --chrome-overlay-backdrop-tint: rgba(12, 16, 24, 0.08);
-  --dialog-backdrop-tint: rgba(12, 16, 24, 0.24);
+  --dialog-backdrop-tint: rgba(12, 16, 24, 0.12);
   --chrome-overlay-backdrop-blur: 7px;
   --chrome-overlay-surface: color-mix(in srgb, var(--bg-elevated) 92%, rgba(255, 255, 255, 0.74));
   --chrome-overlay-surface-strong: color-mix(in srgb, var(--bg-elevated) 96%, rgba(255, 255, 255, 0.9));
@@ -209,9 +223,11 @@
     --danger-text: #f87171;
     --success-text: #4ade80;
     --accent-ink: color-mix(in srgb, var(--accent) 50%, var(--text-primary));
+    --float-accent-ink: var(--accent-ink);
 
     --border: rgba(255, 255, 255, 0.08);
     --separator: rgba(255, 255, 255, 0.06);
+    --group-box-bg: rgba(255, 255, 255, 0.05);
 
     --sidebar-contrast: #f7f8fc;
     --tile-blue: #0a84ff;
@@ -222,7 +238,7 @@
     --tile-green: #30d158;
     --tile-teal: #40c8e0;
     --chrome-overlay-backdrop-tint: rgba(2, 6, 18, 0.16);
-    --dialog-backdrop-tint: rgba(2, 6, 18, 0.44);
+    --dialog-backdrop-tint: rgba(2, 6, 18, 0.36);
     --chrome-overlay-surface: color-mix(in srgb, var(--bg-elevated) 92%, rgba(30, 30, 46, 0.9));
     --chrome-overlay-surface-strong: color-mix(in srgb, var(--bg-elevated) 96%, rgba(30, 30, 46, 0.96));
     --chrome-overlay-shadow: 0 18px 42px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -231,6 +247,9 @@
     --shadow-control: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
     --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.24);
+    /* The page and its floating fields in a conversation: the system's neutral greys, not the chrome's night blue. */
+    --conversation-bg: #1c1c1e;
+    --conversation-surface: #2c2c2e;
   }
 }
 
@@ -323,6 +342,15 @@ html[data-strip-panel-open] {
   --chrome-content-left: calc(var(--sidebar-width) + 2 * var(--content-inset));
 }
 
+/* Folded to its icon rail, the sidebar docks only the rail beside the page; unfolded, it floats over the page. */
+html[data-sidebar-rail]:not([data-tabs-hidden])[data-tab-position='left'] {
+  --tabs-left: calc(var(--sidebar-rail-width) + var(--content-inset));
+}
+
+html[data-sidebar-rail]:not([data-tabs-hidden])[data-tab-position='right'] {
+  --tabs-right: calc(var(--sidebar-rail-width) + var(--content-inset));
+}
+
 /* Hidden or floating over the page, the tabs leave it every edge. */
 html[data-tabs-hidden] {
   --tabs-left: var(--content-inset);
@@ -365,8 +393,19 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
     --accent: var(--sidebar-accent);
     --accent-hover: var(--sidebar-accent-hover);
     --accent-text: var(--sidebar-accent-text);
+    /* Mixed again here: inherited from :root, they would keep the app's default accent. */
+    --accent-ink: color-mix(in srgb, var(--sidebar-accent) 70%, var(--sidebar-contrast));
+    --accent-tint-14: color-mix(in srgb, var(--sidebar-accent) 14%, transparent);
     --danger: var(--sidebar-danger);
-    --sidebar-right-pad: 10px;
+    --sidebar-right-pad: 8px;
+}
+
+/* Increase contrast firms up the layers drawn on the Space color. */
+@media (prefers-contrast: more) {
+  .tabs-surface {
+    --separator: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
+    --sidebar-sel-ring: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
+  }
 }
 
 .chrome-floating-surface {
@@ -383,6 +422,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
   --accent: var(--sidebar-accent);
   --accent-hover: var(--sidebar-accent-hover);
   --accent-text: var(--sidebar-accent-text);
+  --accent-ink: var(--float-accent-ink);
 }
 
 /* Every tip, card and popover. Resets the palette the sidebar tints, since it floats above it. */

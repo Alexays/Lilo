@@ -10,7 +10,7 @@ final class WindowChromeLayoutTests: XCTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
-        for key in ["cachedSidebarWidth", "cachedSidebarVisible", "cachedToolbarVisible", "cachedTabPosition", "cachedAddressPlacement"] { savedDefaults[key] = UserDefaults.lilo.object(forKey: key) }
+        for key in ["cachedSidebarWidth", "cachedSidebarRail", "cachedSidebarVisible", "cachedToolbarVisible", "cachedTabPosition", "cachedAddressPlacement"] { savedDefaults[key] = UserDefaults.lilo.object(forKey: key) }
         browserContext = try await TemporaryBrowserContext()
     }
 
@@ -48,6 +48,22 @@ final class WindowChromeLayoutTests: XCTestCase {
 
         XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 300 - 16, height: 800 - 44 - 8))
         XCTAssertEqual(window.contentContainerView.frame, window.contentFrameRect())
+    }
+
+    func testTheRailHoldsThePageEdgeAndGivesBackTheSidebarWidth() throws {
+        let window = try makeSizedWindow()
+        window.updateSidebarWidth(300)
+        window.pendingSidebarWidthPersistWork?.cancel()
+
+        window.setSidebarRail(true)
+        XCTAssertEqual(window.contentFrameRect().minX, 8 + MainWindowController.sidebarRailWidth)
+        XCTAssertEqual(window.contentContainerView.frame, window.contentFrameRect())
+        layOut(window, .top)
+        XCTAssertEqual(window.contentFrameRect().minX, 8, "a strip has no rail")
+
+        layOut(window, .left)
+        window.setSidebarRail(false)
+        XCTAssertEqual(window.sidebarWidth, 300, "the width it had before")
     }
 
     func testTopAndBottomStripsReserveTheirHeight() throws {

@@ -49,9 +49,25 @@ test("settings, downloads and the process manager take the focus when they open"
 	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
-	await expect(page.locator(".downloads-filter input")).toBeFocused();
+	await expect(page.locator(".section-nav-toolbar input")).toBeFocused();
 	await page.keyboard.press("Escape");
 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
-	await expect(page.locator(".process-panel button").first()).toBeFocused();
+	await expect(page.locator(".section-nav-panel")).toBeFocused();
+});
+
+test("downloads keeps its commands in the page header's menu, not in its navigation", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
+
+	await expect(page.locator(".section-nav-button")).toHaveCount(1);
+	await page.locator(".ui-shell-frame-actions .ui-more-button").click();
+	const items = page.locator(".ui-more-menu [role='menuitem']");
+	await expect(items).toHaveCount(2);
+	await expect(items.last()).toHaveClass(/danger/);
+
+	// Escape closes the menu, not the screen.
+	await page.keyboard.press("Escape");
+	await expect(page.locator(".ui-more-menu")).toHaveCount(0);
+	await expect(page.locator(".ui-shell-frame")).toHaveCount(1);
 });

@@ -1,17 +1,17 @@
 import type { ImportKind, ImportProgress, ImportSelection, ImportSourceInfo } from "../../lib/bridge/protocol";
 
 export type OnboardingUsage = "browse" | "agents" | "develop";
-type OnboardingStep = "intro" | "usage" | "import" | "passwords" | "appearance" | "tabs" | "essentials" | "agents" | "tips" | "arrival";
+type OnboardingStep = "intro" | "usage" | "import" | "yourLilo" | "agents" | "arrival";
 
-// Both paths share their steps up to the essentials, so a saved index means the same screen in either.
-const BROWSE_STEPS: readonly OnboardingStep[] = ["intro", "usage", "import", "passwords", "appearance", "tabs", "essentials", "tips", "arrival"];
-const AGENT_STEPS: readonly OnboardingStep[] = ["intro", "usage", "import", "passwords", "appearance", "tabs", "essentials", "agents", "tips", "arrival"];
+// Both paths share their steps up to Your Lilo, so a saved index means the same screen in either.
+const BROWSE_STEPS: readonly OnboardingStep[] = ["intro", "usage", "import", "yourLilo", "arrival"];
+const AGENT_STEPS: readonly OnboardingStep[] = ["intro", "usage", "import", "yourLilo", "agents", "arrival"];
 
 export function onboardingSteps(usage: OnboardingUsage): readonly OnboardingStep[] {
 	return usage === "browse" ? BROWSE_STEPS : AGENT_STEPS;
 }
 
-/** A relaunch resumes inside the card: never the intro again, never straight to the arrival. */
+/** A relaunch resumes on a question: never the intro again, never straight to the arrival. */
 export function resumeStep(saved: number, usage: OnboardingUsage): number {
 	if (!Number.isInteger(saved) || saved < 1) return saved === 0 ? 0 : 1;
 	return Math.min(saved, onboardingSteps(usage).length - 2);

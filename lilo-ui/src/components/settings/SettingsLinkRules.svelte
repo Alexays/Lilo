@@ -159,15 +159,15 @@
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
-    padding: 6px 0;
+    padding: 0 14px 11px;
   }
 
   .rule > :global(.ui-select) {
-    flex: 1 1 140px;
+    flex: 0 1 auto;
   }
 
   .rule > :global(.ui-text-field) {
-    flex: 1.4 1 180px;
+    flex: 1 1 180px;
   }
 
   .rule-actions {

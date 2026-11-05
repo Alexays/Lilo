@@ -6,13 +6,13 @@
   import BottomBar from "./BottomBar.svelte";
   import PipDock from "./PipDock.svelte";
   import MediaCard from "./MediaCard.svelte";
+  import UndoToast from "../page/UndoToast.svelte";
   import { getCallCardTab } from "../../stores/media.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
   import {
+    getPageShell,
     hasActivePanel,
     isDesignSystemShellOpen,
-    isHistoryShellOpen,
-    isSettingsShellOpen,
   } from "../../stores/panels.svelte";
   import {
     getPagedSpaces,
@@ -20,9 +20,9 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
-  import { getReadyUpdate } from "../../stores/settings.svelte";
+  import { getReadyUpdate, getSetting } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
-  import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
+  import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressInRightTabs, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { t } from "../../lib/i18n/state.svelte";
 
@@ -30,7 +30,7 @@
   const spaces = $derived(getPagedSpaces());
   const visualIndex = $derived(getSpacePagerVirtualIndex());
   const isOverlayPanelOpen = $derived(
-    hasActivePanel() || isSettingsShellOpen() || isDesignSystemShellOpen() || isHistoryShellOpen(),
+    hasActivePanel() || getPageShell() !== null || isDesignSystemShellOpen(),
   );
 
   // At rest the pager sits on an integer index and the other panes are clipped off-screen.
@@ -80,6 +80,8 @@
     if (getReadyUpdate()) updateCardLoaded = true;
   });
 
+  const addressCorner = $derived(getTabPosition() === "left" && getAddressPlacement() === "tabs");
+
   // Latched on first open: the panels chunk loads once, then stays mounted so close animations
   // and later opens keep working.
   let panelsLoaded = $state(false);
@@ -93,17 +95,18 @@
     class="sidebar-layout"
     class:pushed={isOverlayPanelOpen}
     class:compact-header={isSidebarVisible() && hasPageToolbar()}
-    class:address-corner={getTabPosition() === "left" && getAddressPlacement() === "tabs"}
+    class:address-corner={addressCorner}
     inert={isOverlayPanelOpen}
     role="complementary"
     aria-label={t("sidebar.ariaLabel")}
   >
     <!-- Fixed header: does NOT swipe -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <!-- On the right, the traffic lights and the history buttons live in the page toolbar. -->
+    <!-- On the right, the traffic lights live in the page toolbar, and the history buttons unless the address is here. -->
     <div
       class="sidebar-header"
       class:no-traffic-lights={!areTrafficLightsVisible() || getTabPosition() === "right"}
+      class:address-hidden={!isAddressVisible()}
       ondblclick={() => chromeActions.maximizeWindow()}
       onpointerdown={pressTabsHeader}
     >
@@ -111,7 +114,7 @@
       <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. On the
            left, the page toolbar stays with the sidebar hidden and holds the toggle ahead of the history buttons. -->
       {#if !hasPageToolbar() || getTabPosition() !== "left"}
-        <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
+        <NavControls collapseLocked={isOverlayPanelOpen} show={!isSidebarVisible() || !hasPageToolbar() ? "all" : isAddressInRightTabs() ? "history" : "toggle"} />
       {/if}
       <!-- With the address hidden, the page's buttons stay on the header's line. -->
       {#if !isAddressVisible()}
@@ -163,6 +166,7 @@
         <card.default />
       {/await}
     {/if}
+    <UndoToast docked />
 
     <!-- Fixed bottom bar: does NOT swipe -->
     <BottomBar />
@@ -182,11 +186,13 @@
     overflow: clip;
     height: 100%;
     contain: content;
+    /* Its width is the sidebar's plus the 8 px inset: the 239 px query below means a 231 px sidebar. */
+    container: sidebar / inline-size;
   }
 
-  /* The address details card grows past a narrow sidebar, over the page; the clip only matters while
+  /* The address details card or drawer grows past a narrow sidebar, over the page; the clip only matters while
      a side panel slides, which the card never shows over. */
-  .sidebar-viewport:has(:global(.url-details)) {
+  .sidebar-viewport:has(:global(.url-details, .url-drawer)) {
     overflow: visible;
     contain: layout style;
   }
@@ -248,13 +254,6 @@
     gap: 4px;
   }
 
-  /* Like the address bar, the page's buttons show on hover of their line; only the extensions stay out. */
-  .sidebar-header:is(:hover, :focus-within) :global(.url-actions-reveal) {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(-50%) translateX(0) scale(1);
-  }
-
   .space-track {
     flex: 1;
     min-height: 0;
@@ -314,8 +313,27 @@
     display: flex;
     align-items: center;
     height: 52px;
-    padding: 0 var(--sidebar-right-pad, 10px) 0 0;
+    padding: 0 var(--sidebar-right-pad, 8px) 0 0;
     flex-shrink: 0;
+  }
+
+
+  /* Back and Reload always stay: short of room beside the toggle for all three with 6 px before Back, only an
+     unavailable Forward gives way, and with the address hidden the buttons take 24 px. App's per-layout minimum
+     width keeps the rest whole. */
+  .sidebar-layout:not(.compact-header) .sidebar-header :global(.nav-controls) {
+    container: nav / inline-size;
+  }
+
+  @container nav (width < 122px) {
+    .sidebar-header :global(.forward:disabled) {
+      display: none;
+    }
+
+    .address-hidden :global(.nav-btn.history) {
+      width: 24px;
+      height: 24px;
+    }
   }
 
   /* The default layout lifts the lights 4pt, the address bar following them. */
@@ -336,6 +354,6 @@
 
   /* Full screen: the toggle lines up with the URL field below it. */
   .sidebar-header.no-traffic-lights .header-spacer {
-    width: 10px;
+    width: 8px;
   }
 </style>

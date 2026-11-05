@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Asking an agent needs no folder: without one, it works in a folder of its own. In a project another agent is already working in, it gets its own copy on its own, so the Own copy switch is gone.'
+time: 2026-11-05T12:45:46.618321+01:00

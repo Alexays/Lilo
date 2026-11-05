@@ -58,9 +58,11 @@
     size?: number;
     radius?: number;
     asleep?: boolean;
+    /** A list's object visual: the icon sits on a tile of `size`, as large as the letter fallback. */
+    tile?: boolean;
   }
 
-  let { src, title = "", url = "", size = 16, radius = 4, asleep = false }: Props = $props();
+  let { src, title = "", url = "", size = 16, radius = 4, asleep = false, tile = false }: Props = $props();
 
   // Which source failed to decode, rather than a boolean reset by an effect: a new src clears
   // the fallback on its own, and every favicon in the sidebar saves an effect.
@@ -72,7 +74,8 @@
   const glyph = $derived(loadedSource === imageSource ? glyphs.get(imageSource) ?? null : null);
   const treatment = $derived.by((): "none" | "chip" | "recolor" => {
     const background = parseHexColor(themeSidebarBackground());
-    if (asleep || !glyph || !background) return "none";
+    // A tile sits on the page, not on the sidebar the treatments read.
+    if (asleep || tile || !glyph || !background) return "none";
     if (relativeLuminance(background) >= DARK_SIDEBAR_LUMINANCE || contrastRatio(glyph.color, background) >= GLYPH_CONTRAST) return "none";
     const [, glyphA, glyphB] = toOklab(glyph.color);
     const [, sidebarA, sidebarB] = toOklab(background);
@@ -114,6 +117,7 @@
   class:has-chip={treatment === "chip"}
   class:is-masked={maskColor !== ""}
   class:is-asleep={asleep && !silhouette}
+  class:tile
   style={`--favicon-size:${size}px; --favicon-radius:${radius}px; --favicon-hue:${fallbackHue};` +
     (maskColor ? ` --favicon-mask:url(${JSON.stringify(imageSource)}); --favicon-mask-color:${maskColor};` : "")}
   aria-hidden="true"
@@ -167,6 +171,15 @@
       0 1px 1px color-mix(in srgb, black 8%, transparent);
   }
 
+  /* A favicon is drawn for 16 to 20 px: on a list's tile it keeps that size, centered. */
+  .site-favicon.tile:not(.is-fallback) {
+    padding: calc(var(--favicon-size) * 0.2);
+    background: var(--bg-primary);
+    box-shadow:
+      inset 0 0 0 1px var(--separator),
+      0 1px 1px color-mix(in srgb, black 6%, transparent);
+  }
+
   .site-favicon.has-chip {
     padding: calc(var(--favicon-size) / 10);
     background: color-mix(in srgb, var(--sidebar-contrast) 14%, transparent);
@@ -198,8 +211,8 @@
 
   .site-favicon-fallback {
     color: hsl(calc(var(--favicon-hue) - 18) 42% 28%);
-    font-size: clamp(10px, calc(var(--favicon-size) * 0.56), 13px);
-    font-weight: var(--font-weight-bold);
+    font-size: clamp(11px, calc(var(--favicon-size) * 0.69), 13px);
+    font-weight: var(--font-weight-semibold);
     line-height: 1;
     text-transform: uppercase;
     letter-spacing: 0.01em;

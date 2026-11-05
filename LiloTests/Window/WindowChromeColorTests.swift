@@ -29,22 +29,22 @@ final class WindowChromeColorTests: XCTestCase {
     /// Expected values are `--sidebar-bg` from deriveSidebarThemeVariables in lilo-ui/src/lib/sidebarTheme.ts.
     func testTheFrameColorMatchesThePageSidebarForEverySpaceColor() {
         let expected: [(space: String, light: String, dark: String)] = [
-            ("#000000", "#b4b2b8", "#191b23"),
-            ("#20242e", "#bdbcc4", "#262a36"),
-            ("#ffffff", "#fbf9ff", "#2b2b2b"),
-            ("#fff4cc", "#fbf6f1", "#352c08"),
-            ("#e2daf1", "#f3effb", "#362f41"),
-            ("#44dd77", "#c7f0d9", "#08451f"),
-            ("#aaee11", "#e4f4bc", "#213c00"),
-            ("#ff0000", "#fbb2b8", "#841b23"),
-            ("#0040ff", "#b4c4ff", "#19368e"),
-            ("#4a90d9", "#c9daf4", "#204265"),
-            ("#ff00ff", "#fbb2ff", "#820e82"),
-            ("#f0a8c8", "#f7e1f0", "#552f41"),
-            ("#c3a5ea", "#ebe0f9", "#453657"),
-            ("#f4bb8c", "#f8e6df", "#4f3115"),
-            ("#9bd3b4", "#dfedea", "#133f2a"),
-            ("#8fd5cf", "#dcedf2", "#00403d"),
+            ("#000000", "#000000", "#191b23"),
+            ("#20242e", "#20242e", "#262a36"),
+            ("#ffffff", "#ffffff", "#2b2b2b"),
+            ("#fff4cc", "#fff4cc", "#352c08"),
+            ("#e2daf1", "#e2daf1", "#362f41"),
+            ("#44dd77", "#44dd77", "#08451f"),
+            ("#aaee11", "#aaee11", "#213c00"),
+            ("#ff0000", "#ff0000", "#841b23"),
+            ("#0040ff", "#0040ff", "#19368e"),
+            ("#4a90d9", "#4a90d9", "#204265"),
+            ("#ff00ff", "#ff00ff", "#820e82"),
+            ("#f0a8c8", "#f0a8c8", "#552f41"),
+            ("#c3a5ea", "#c3a5ea", "#453657"),
+            ("#f4bb8c", "#f4bb8c", "#4f3115"),
+            ("#9bd3b4", "#9bd3b4", "#133f2a"),
+            ("#8fd5cf", "#8fd5cf", "#00403d"),
         ]
         for (space, light, dark) in expected {
             let color = NSColor(cssHex: space)!

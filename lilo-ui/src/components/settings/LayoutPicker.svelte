@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
   import type { AddressPlacement, TabPosition } from "../../lib/bridge";
-  import { canPlaceAddressWithTabs, getAddressPlacement, getTabPosition, setAddressPlacement, setTabPosition } from "../../stores/tabLayout.svelte";
+  import { getAddressPlacement, getTabPosition, setAddressPlacement, setTabPosition } from "../../stores/tabLayout.svelte";
   import { getActiveSpace } from "../../stores/spaces.svelte";
 
   // Where the tabs go, or where the address goes: each choice drawn as a small window.
@@ -10,14 +10,9 @@
   const POSITIONS: TabPosition[] = ["left", "right", "top", "bottom"];
   const ADDRESSES: AddressPlacement[] = ["tabs", "page", "hidden"];
   const position = $derived(getTabPosition());
-  // With the tabs on the right, an address kept with the tabs shows above the page.
-  const address = $derived(!canPlaceAddressWithTabs() && getAddressPlacement() === "tabs" ? "page" : getAddressPlacement());
+  const address = $derived(getAddressPlacement());
   const options: string[] = $derived(kind === "position" ? POSITIONS : ADDRESSES);
   const selected: string = $derived(kind === "position" ? position : address);
-
-  function disabled(option: string): boolean {
-    return kind === "address" && option === "tabs" && !canPlaceAddressWithTabs();
-  }
 
   function select(option: string): void {
     if (kind === "position") setTabPosition(option as TabPosition);
@@ -28,8 +23,7 @@
     const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
     if (step === 0) return;
     event.preventDefault();
-    const enabled = options.filter((option) => !disabled(option));
-    const next = enabled[(enabled.indexOf(selected) + step + enabled.length) % enabled.length];
+    const next = options[(options.indexOf(selected) + step + options.length) % options.length];
     select(next);
     (event.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("button")[options.indexOf(next)]?.focus();
   }
@@ -46,13 +40,12 @@
 >
   {#each options as option (option)}
     {@const shotPosition = kind === "position" ? option : position}
-    {@const shotAddress = kind === "address" ? option : shotPosition === "right" && address === "tabs" ? "page" : address}
+    {@const shotAddress = kind === "address" ? option : address}
     <button
       class="option"
       class:on={selected === option}
       role="radio"
       aria-checked={selected === option}
-      disabled={disabled(option)}
       tabindex={selected === option ? 0 : -1}
       onclick={() => select(option)}
     >
@@ -97,13 +90,8 @@
     transition: transform 0.2s var(--motion-ease-spring);
   }
 
-  .option:hover:not(:disabled) {
+  .option:hover {
     transform: translateY(-1px);
-  }
-
-  .option:disabled {
-    opacity: 0.4;
-    cursor: default;
   }
 
   .option.on {

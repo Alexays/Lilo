@@ -8,6 +8,7 @@ final class ChromeBridgeHandler: BridgeHandler {
 
     let handledActions: Set<String> = [
         "sidebarResized",
+        "setSidebarRail",
         "toggleSidebar",
         "setSidebarCollapseLocked",
         "maximizeWindow",
@@ -27,12 +28,14 @@ final class ChromeBridgeHandler: BridgeHandler {
         "permissionResponse",
         "extensionPermissionResponse",
         "updateWindowBackground",
+        "setPageBarColor",
         "setWallpaperColorWatch",
         "sidebarOverlayChanged",
-        "pageCoverChanged",
         "showTabContextMenu",
         "showFolderContextMenu",
+        "showTabStackContextMenu",
         "showSidebarContextMenu",
+        "showTabListMenu",
         "showExtensionContextMenu",
         "showDownloadContextMenu",
         "showHistoryRowMenu",
@@ -59,6 +62,9 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "sidebarResized":
             if let width = message.cgFloat("width") { windowController?.updateSidebarWidth(width) }
+
+        case "setSidebarRail":
+            windowController?.setSidebarRail(message.bool("rail"))
 
         case "toggleSidebar":
             windowController?.toggleSidebar()
@@ -163,15 +169,15 @@ final class ChromeBridgeHandler: BridgeHandler {
             if let accent = message.string("accent") { windowController?.sidePanel.setAccentColor(accent) }
             windowController?.applyWindowMaterial(message.string("material"))
 
+        case "setPageBarColor":
+            windowController?.systemScreenBarColor = message.string("color")
+            windowController?.syncPageBar()
+
         case "setWallpaperColorWatch":
             windowController?.setWallpaperColorWatch(message.bool("enabled"))
 
         case "sidebarOverlayChanged":
             windowController?.handleSidebarOverlay(visible: message.bool("visible"))
-
-        case "pageCoverChanged":
-            windowController?.pageCovered = message.bool("covered")
-            windowController?.syncPageBar()
 
         case "showTabContextMenu":
             if let id = message.string("id") { windowController?.showTabContextMenu(tabId: id, anchorRect: anchorRect(from: message)) }
@@ -179,8 +185,17 @@ final class ChromeBridgeHandler: BridgeHandler {
         case "showFolderContextMenu":
             if let id = message.string("id") { windowController?.showFolderContextMenu(folderId: id, anchorRect: anchorRect(from: message)) }
 
+        case "showTabStackContextMenu":
+            let ids = (message.payload["ids"] as? [String] ?? []).compactMap(UUID.init(uuidString:))
+            if let host = message.string("host"), let name = message.string("name") {
+                windowController?.showTabStackContextMenu(tabIds: ids, host: host, name: name, anchorRect: anchorRect(from: message))
+            }
+
         case "showSidebarContextMenu":
             windowController?.showSidebarContextMenu(spaceId: message.string("spaceId"), anchorRect: anchorRect(from: message))
+
+        case "showTabListMenu":
+            windowController?.showTabListMenu(spaceId: message.string("spaceId"), anchorRect: anchorRect(from: message))
 
         case "showExtensionContextMenu":
             if let id = message.string("id") {

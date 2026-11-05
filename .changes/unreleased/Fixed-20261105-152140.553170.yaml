@@ -1,0 +1,3 @@
+kind: Fixed
+body: Switching Spaces keeps the New Tab row of the Space sliding away instead of dropping it mid-swipe.
+time: 2026-11-05T15:21:40.55317+01:00

@@ -115,7 +115,7 @@ test("settings name every control, in every section and subpage", async ({ page 
 for (const usage of ["browse", "develop"] as const) {
 	test(`every onboarding step names its controls (${usage})`, async ({ page }) => {
 		await bootChrome(page, initialWorld());
-		for (let step = 0; step < (usage === "develop" ? 9 : 8); step++) {
+		for (let step = 0; step < (usage === "develop" ? 5 : 4); step++) {
 			await receive(page, { event: "onboardingState", show: true, step, usage });
 			await page.waitForTimeout(50);
 			expect(await a11yProblems(page), `step ${step}`).toEqual([]);
@@ -135,7 +135,7 @@ test("the downloads, diagnostics and process manager panels name every control",
 test("a download row nests no control in another, and its main button selects and opens it", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await receive(page, { event: "openDownloads" });
-	await page.locator(".downloads-panel").waitFor();
+	await page.locator("section[aria-label=\"Downloads\"]").waitFor();
 	await receive(page, {
 		event: "downloadsSnapshot",
 		items: [{ id: 1, url: "https://example.com/a.zip", filename: "a.zip", bytesReceived: 2, totalBytes: 2, state: "complete", startedAt: Date.now() / 1000, fileMissing: false, source: "wk" }],
@@ -191,7 +191,7 @@ test("the screenshot editor names every control", async ({ page }) => {
 test("the tab share picker names every control", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await receive(page, { event: "tabSharePickerRequested", requestId: "r", origin: "meet.example.com", shareableTabIds: ["tab-alpha"] });
-	await expect(page.locator(".tab-share-panel")).toBeVisible();
+	await expect(page.locator('[data-modal="tab-share-picker"]')).toBeVisible();
 	expect(await a11yProblems(page)).toEqual([]);
 });
 
@@ -207,6 +207,6 @@ test("the page overlays name every control", async ({ page }) => {
 	expect(await a11yProblems(page), "error page").toEqual([]);
 
 	await receive(page, { event: "pageResponsivenessChanged", tabId: "tab-alpha", responsive: false, host: "example.com", site: "example.com" });
-	await expect(page.locator(".page-hang")).toBeVisible();
+	await expect(page.locator('[data-modal="page-hang-card"]')).toBeVisible();
 	expect(await a11yProblems(page), "hang card").toEqual([]);
 });

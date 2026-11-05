@@ -39,7 +39,8 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 		await button.click();
 		await menu.getByRole("menuitem", { name: "Show all archived tabs" }).click();
 		await expect(menu).toHaveCount(0);
-		await expect(page.locator(".command-bar-input")).toHaveValue("<");
+		await expect(page.locator(".scope-token")).toHaveText("Archived");
+		await expect(page.locator(".command-bar-input")).toHaveValue("");
 	});
 }
 
@@ -64,5 +65,5 @@ test("the library menu lists running downloads above the archived tabs, with the
 	expect((await sentCommands(page)).some((command) => command.action === "pauseDownload")).toBe(true);
 	await menu.getByRole("menuitem", { name: "Show all downloads" }).click();
 	await expect(menu).toHaveCount(0);
-	await expect(page.locator(".downloads-filter")).toBeVisible();
+	await expect(page.getByRole("region", { name: "Downloads" })).toBeVisible();
 });

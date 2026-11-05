@@ -25,7 +25,7 @@ async function expectSidebarFullyShown(page: Page): Promise<void> {
 
 test("full screen keeps the sidebar fully in view at the left edge, with the setup left to resume", async ({ page }) => {
 	await bootChrome(page, initialWorld());
-	await receive(page, { event: "onboardingState", show: true, step: 3, usage: "browse" });
+	await receive(page, { event: "onboardingState", show: true, step: 2, usage: "browse" });
 	await page.keyboard.press("Escape");
 	await expect(page.locator(".pill")).toBeVisible();
 

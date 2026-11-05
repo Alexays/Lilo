@@ -20,6 +20,8 @@ struct StoredTab: Codable, Sendable, Equatable, Identifiable {
     var customTitle: String?
     /// The page's color for the bars over it, so a tab shown before it loads has it at once.
     var pageColor: String?
+    var agentId: String?
+    var agentSessionId: String?
 }
 
 extension StoredTab {
@@ -27,7 +29,7 @@ extension StoredTab {
         case id, url, title, faviconDominantColor
         case isPinned, isBookmarked, isClosed
         case homeURL, homeTitle, homeFaviconDominantColor
-        case kind, cwd, resumeCommand, customTitle, pageColor
+        case kind, cwd, resumeCommand, customTitle, pageColor, agentId, agentSessionId
     }
 
     init(from decoder: Decoder) throws {
@@ -48,6 +50,8 @@ extension StoredTab {
         resumeCommand = try container.decodeIfPresent(String.self, forKey: .resumeCommand)
         customTitle = try container.decodeIfPresent(String.self, forKey: .customTitle)
         pageColor = try container.decodeIfPresent(String.self, forKey: .pageColor)
+        agentId = try container.decodeIfPresent(String.self, forKey: .agentId)
+        agentSessionId = try container.decodeIfPresent(String.self, forKey: .agentSessionId)
     }
 
     /// Favicon data URLs (~800 B of base64 each) are deliberately not encoded: they persist in
@@ -70,6 +74,8 @@ extension StoredTab {
         try container.encodeIfPresent(resumeCommand, forKey: .resumeCommand)
         try container.encodeIfPresent(customTitle, forKey: .customTitle)
         try container.encodeIfPresent(pageColor, forKey: .pageColor)
+        try container.encodeIfPresent(agentId, forKey: .agentId)
+        try container.encodeIfPresent(agentSessionId, forKey: .agentSessionId)
     }
 }
 
@@ -458,7 +464,9 @@ extension StoredTab {
             cwd: tab.cwd,
             resumeCommand: tab.resumeCommand,
             customTitle: tab.customTitle,
-            pageColor: tab.pageColor
+            pageColor: tab.pageColor,
+            agentId: tab.agentId,
+            agentSessionId: tab.agentSessionId
         )
     }
 }
@@ -498,7 +506,9 @@ extension Tab {
             kind: storedTab.kind,
             cwd: storedTab.cwd,
             resumeCommand: storedTab.resumeCommand,
-            customTitle: storedTab.customTitle
+            customTitle: storedTab.customTitle,
+            agentId: storedTab.agentId,
+            agentSessionId: storedTab.agentSessionId
         )
         pageColor = storedTab.pageColor
     }

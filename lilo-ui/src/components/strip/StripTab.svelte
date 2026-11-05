@@ -6,7 +6,7 @@
   import { tabDisplayTitle, type TabState } from "../../stores/tabs.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { openCommandBar } from "../../stores/commandBar.svelte";
-  import { closeHistoryShell, closeSettingsShell } from "../../stores/panels.svelte";
+  import { closePageShell } from "../../stores/panels.svelte";
 
   // `editsAddress`: the strip has no address bar, so a click on the active pill edits its address.
   let { tab, active = false, iconOnly = false, editsAddress = false }: { tab: TabState; active?: boolean; iconOnly?: boolean; editsAddress?: boolean } = $props();
@@ -24,8 +24,7 @@
     }
   });
   function activate() {
-    closeSettingsShell();
-    closeHistoryShell();
+    closePageShell();
     if (active && editsAddress) {
       openCommandBar(tab.url ?? "", false, true);
       return;
@@ -68,6 +67,8 @@
         <span class="terminal-tile" class:asleep={!tab.terminalState} aria-hidden="true">
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="m3.5 4.5 3.5 3.5-3.5 3.5" /><path d="M8.5 11.5h4" /></svg>
         </span>
+      {:else if tab.kind === "agent"}
+        {#await import("../agents/MascotGlyph.svelte") then { default: MascotGlyph }}<MascotGlyph />{/await}
       {:else if tab.kind === "changes"}
         <span class="changes-tile" aria-hidden="true">
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M5 2.5v6M2 5.5h6" /><path d="M8.5 12h5" /></svg>
@@ -113,7 +114,7 @@
     height: 32px;
     display: flex;
     align-items: center;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     color: var(--text-secondary);
     transition: background-color var(--motion-duration-fast) ease;
   }
@@ -129,9 +130,9 @@
 
   .strip-tab.active {
     flex: 0 0 260px;
-    background: var(--bg-selected);
+    background: var(--sidebar-sel);
     color: var(--text-primary);
-    box-shadow: var(--shadow-control);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
   }
 
   .strip-tab.icon-only {
@@ -150,7 +151,7 @@
     background: transparent;
     color: inherit;
     font: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     cursor: default;
   }
 
@@ -173,7 +174,7 @@
     height: 6px;
     border-radius: 50%;
     background: var(--text-muted);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
   }
 
   .capture-pip.live {

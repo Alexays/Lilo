@@ -13,6 +13,8 @@
 		onRename?: () => void;
 		onRenameCommit?: (payload: { name: string; color: string }) => void;
 		onRenameCancel?: () => void;
+		/** A color picked in the editor, not applied yet. */
+		onDraftColor?: (color: string) => void;
 		onContextMenu?: (rect: DOMRect) => void;
 		isRenaming?: boolean;
 		/** Depth in the sidebar tree, 1 at the root. */
@@ -29,6 +31,7 @@
 		onRename,
 		onRenameCommit,
 		onRenameCancel,
+		onDraftColor,
 		onContextMenu,
 		isRenaming = false,
 		level = 1,
@@ -351,7 +354,7 @@
 								style={`--swatch-color: ${color};`}
 								aria-label={t("tabFolder.setFolderColor", { color })}
 								onmousedown={(e) => e.preventDefault()}
-								onclick={() => { draftColor = color; }}
+								onclick={() => { draftColor = color; onDraftColor?.(color); }}
 							></button>
 						{/each}
 					</div>
@@ -455,8 +458,8 @@
 		gap: 8px;
 		width: 100%;
 		min-width: 0;
-		height: 28px;
-		padding: 6px;
+		height: 32px;
+		padding: 0 8px;
 		box-sizing: border-box;
 		border-radius: var(--radius-md);
 		cursor: pointer;
@@ -468,9 +471,9 @@
 			transform 220ms var(--motion-ease-spring);
 	}
 
-	/* The tab rows' hover recipe (TabItem), tinted with the folder's color. */
+	/* The tab rows' hover recipe (TabItem). */
 	.folder-row:hover {
-		background: color-mix(in srgb, var(--folder-accent) 4%, color-mix(in srgb, var(--bg-selected) 20%, transparent));
+		background: var(--bg-hover);
 	}
 
 	.folder-row:focus-visible {
@@ -552,7 +555,7 @@
 		opacity: 0.9;
 	}
 
-	/* Near-white papers vanish on a light sidebar's open-folder tint. */
+	/* Near-white papers vanish on a light sidebar. */
 	@media (prefers-color-scheme: light) {
 		.folder-file-fill {
 			fill: color-mix(in srgb, white 20%, var(--folder-accent) 80%);

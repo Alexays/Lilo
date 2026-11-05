@@ -86,7 +86,7 @@
     align-items: center;
     gap: 2px;
     flex-shrink: 0;
-    margin: 0 var(--sidebar-right-pad, 10px) 6px 10px;
+    margin: 0 var(--sidebar-right-pad, 8px) 6px 8px;
     padding: 4px;
     border-radius: var(--radius-sm);
     background: var(--text-primary-tint-10);

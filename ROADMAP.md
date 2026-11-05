@@ -33,6 +33,7 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 - Signed, notarized DMG built by CI from a tag, a Homebrew cask, and signed updates through Sparkle, with the release highlights shown after an update
 - AppleScript dictionary, Shortcuts actions and a Focus filter, bookmarks in Spotlight, Screen Time
 - Opt-in AI agent control over local MCP, with Claude in Chrome's tool set (no AI built in): an Agents Space, agent icons in the bottom bar, agent pages in Lilo violet with a mascot cursor, and an approval gate for consequential actions
+- Opt-in conversations with your own agents over the Agent Client Protocol (Claude Agent, Codex, Gemini CLI, Copilot...), with your subscriptions: `⇧⌘A` from any page, conversations as sidebar rows with the pages the agent opens, answers from the sidebar, checkpoints and worktrees
 - Web Serial API (`navigator.serial`) and EyeDropper API
 
 ## Next
@@ -46,7 +47,7 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 ## Non-goals
 
 - No Chromium or CEF abstraction unless the project explicitly changes engine strategy.
-- No AI built into Lilo: no models, no assistant, no data sent anywhere. No telemetry, sync protocols, or data collection either: Lilo stays a simple, fast, local browser.
+- No AI built into Lilo: no models, no API keys, nothing Lilo itself sends anywhere. Conversations run the agents you install, signed in to your own accounts. No telemetry, sync protocols, or data collection either: Lilo stays a simple, fast, local browser.
 - No generic plugin framework for single-use features.
 - No broad Chrome API claims without matching WebKit, Swift handler, JS bridge, and tests.
 - No Windows or Linux port.

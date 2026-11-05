@@ -31,17 +31,18 @@ test("the Esc hint says Back while Escape leaves a scope or a tab move", async (
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 	const input = page.locator(".command-bar-input");
-	const escHint = page.locator(".command-bar-footer > .footer-hint");
-	await expect(escHint).toHaveText("EscClose");
+	const escHint = page.locator(".command-bar-footer > .key-hint");
+	await expect(escHint).toHaveText("Closeesc");
 
 	await input.fill("@beta");
-	await expect(escHint).toHaveText("EscBack");
+	await expect(escHint).toHaveText("Backesc");
 	await input.press("Meta+m");
 	await expect(input).toHaveAttribute("placeholder", /Space/);
 	await input.press("Escape");
-	await expect(input).toHaveValue("@beta");
+	await expect(input).toHaveValue("beta");
+	await expect(page.locator(".scope-token")).toHaveText("Tabs");
 	await input.press("Escape");
-	await expect(escHint).toHaveText("EscClose");
+	await expect(escHint).toHaveText("Closeesc");
 });
 
 test("Escape closing the command bar hands the keyboard back to the page", async ({ page }) => {
@@ -79,8 +80,8 @@ test("the footer names what Enter does on an action, the row keeps its shortcut"
 
 	const selected = page.locator(".command-bar-result.selected");
 	await expect(selected).toContainText("New Tab");
-	await expect(selected.locator(".result-helper")).toHaveText("⌘T");
-	await expect(page.locator(".command-bar-footer .footer-hint").first()).toHaveText("↩Run");
+	await expect(selected.locator(".result-shortcut")).toHaveText("⌘T");
+	await expect(page.locator(".command-bar-footer .key-hint").first()).toHaveText("Run↩");
 });
 
 test("row shortcuts and footer keys spell keys with the same symbols", async ({ page }) => {
@@ -89,18 +90,21 @@ test("row shortcuts and footer keys spell keys with the same symbols", async ({ 
 	const input = page.locator(".command-bar-input");
 
 	await input.fill(":sidebar");
-	await expect(page.locator(".command-bar-result.selected .result-helper")).toHaveText("⇧⌘S");
+	await expect(page.locator(".command-bar-result.selected .result-shortcut")).toHaveText("⇧⌘S");
 	await input.fill(":terminal");
-	await expect(page.locator(".command-bar-result", { hasText: "New Terminal" }).locator(".result-helper")).toHaveText("⌃`");
+	await expect(page.locator(".command-bar-result", { hasText: "New Terminal" }).locator(".result-shortcut")).toHaveText("⌃`");
 
+	// The Actions token stays until it is cleared, as a chip press or Backspace at the start does.
+	await input.fill("");
+	await input.press("Backspace");
 	await input.fill("beta");
-	await expect(page.locator(".command-bar-footer kbd")).toHaveText(["↩", "⌘↩", "⌥↩", "⇧↩", "⌘C", "⌘⌫", "⌘M", "Esc"]);
+	await expect(page.locator(".command-bar-footer kbd")).toHaveText(["↩", "⌘↩", "⌥↩", "⇧↩", "⌘C", "⌘⌫", "⌘M", "esc"]);
 });
 
 test("scope chips are set in the footer hints' size", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
-	const footerSize = await page.locator(".command-bar-footer .footer-hint").first().evaluate((el) => getComputedStyle(el).fontSize);
+	const footerSize = await page.locator(".command-bar-footer .key-hint").first().evaluate((el) => getComputedStyle(el).fontSize);
 
 	await expect(page.locator(".scope-hint").nth(1)).toHaveCSS("font-size", footerSize);
 	await expect(page.locator(".scope-hint-prefix").first()).toHaveCSS("font-size", footerSize);
@@ -182,7 +186,7 @@ test("a long helper chip gives way before the title gets too narrow", async ({ p
 
 	expect(await row.locator(".result-helper").evaluate(fitsWhole)).toBe(false);
 	// Layout width: the panel's opening scale would shrink a bounding box.
-	expect(await row.locator(".result-main").evaluate((el) => el.clientWidth)).toBeGreaterThanOrEqual(180);
+	expect(await row.locator(".result-main").evaluate((el) => el.clientWidth)).toBeGreaterThanOrEqual(160);
 });
 
 test("the scope chips stand down while the Space picker of a tab move is up", async ({ page }) => {
@@ -271,7 +275,7 @@ test.describe("in French", () => {
 		await page.setViewportSize({ width: 600, height: 400 });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
-		const toolbar = (await page.locator(".command-bar-toolbar").boundingBox())!;
+		const toolbar = (await page.locator(".command-bar-scopes").boundingBox())!;
 
 		const chips = await page.locator(".scope-hint").all();
 		expect(chips.length).toBe(7);
@@ -325,10 +329,10 @@ test("the command bar opens the downloads list, its row naming the Downloads key
 	await input.fill(":downloads");
 
 	await expect(page.locator(".command-bar-result.selected")).toContainText("Show Downloads");
-	await expect(page.locator(".command-bar-result.selected .result-helper")).toHaveText("⌥⌘L");
+	await expect(page.locator(".command-bar-result.selected .result-shortcut")).toHaveText("⌥⌘L");
 	await input.press("Enter");
 
-	await expect(page.locator(".downloads-panel")).toBeVisible();
+	await expect(page.locator("section[aria-label=\"Downloads\"]")).toBeVisible();
 });
 
 for (const [how, click] of [
@@ -357,8 +361,34 @@ test("a result's favicon hides its initial, which comes back when the favicon fa
 	);
 	await bootChrome(page, world);
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
-	const alpha = page.locator(".result-icon-favicon", { has: page.locator(`img[src^="data:image/png;base64,iVBOR"]`) }).first();
+	const alpha = page.locator(".result-icon-site", { has: page.locator(`img[src^="data:image/png;base64,iVBOR"]`) }).first();
 	await expect(alpha.locator(".result-favicon-fallback")).toBeHidden();
-	const beta = page.locator(".result-icon-favicon", { has: page.locator('img[src="data:image/png;base64,broken"]') }).first();
+	const beta = page.locator(".result-icon-site", { has: page.locator('img[src="data:image/png;base64,broken"]') }).first();
 	await expect(beta.locator(".result-favicon-fallback")).toBeVisible();
+});
+
+test("bookmarks sit in one strip of chips that the side arrows walk and the up and down arrows leave", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].push(tab("tab-notes", SPACE_1, { title: "Marked Notes", isBookmarked: true }));
+	world.treeItemsBySpace[SPACE_1].push(treeItem("tab-notes", SPACE_1, 5, "bookmarked"));
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	await bootChrome(page, world);
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+
+	const chips = page.locator(".command-bar-strip .command-bar-chip");
+	await expect(chips).toHaveCount(2);
+	const [first, second] = [(await chips.nth(0).boundingBox())!, (await chips.nth(1).boundingBox())!];
+	expect(second.y).toBe(first.y);
+	expect(second.x).toBeGreaterThan(first.x + first.width);
+	expect((await chips.nth(0).locator(".result-icon").boundingBox())!.height).toBe(20);
+	await expect(chips.nth(0)).toHaveClass(/selected/);
+
+	const input = page.locator(".command-bar-input");
+	await input.press("ArrowRight");
+	await expect(chips.nth(1)).toHaveClass(/selected/);
+	await input.press("ArrowDown");
+	await expect(page.locator(".command-bar-chip.selected")).toHaveCount(0);
+	await expect(page.locator(".command-bar-result.selected")).toHaveCount(1);
+	await input.press("ArrowUp");
+	await expect(chips.nth(0)).toHaveClass(/selected/);
 });

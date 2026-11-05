@@ -12,11 +12,21 @@ function setSidebarMode(mode: SidebarMode): void {
 	if (mode === "visible") delete document.documentElement.dataset.tabsHidden;
 	else document.documentElement.dataset.tabsHidden = "";
 }
+let _sidebarRail = $state(false);
+
+/** global.css docks the page beside the rail while the tabs are on the left or the right. */
+function applySidebarRail(rail: boolean): void {
+	_sidebarRail = rail;
+	if (typeof document === "undefined") return;
+	if (rail) document.documentElement.dataset.sidebarRail = "";
+	else delete document.documentElement.dataset.sidebarRail;
+}
 let _trafficLightsVisible = $state<boolean>(true);
 let _isFullscreen = $state<boolean>(false);
 
 export function applyUIInitialState(data: BridgeInitialStatePayload): void {
 	setSidebarMode(data.sidebarVisible ? "visible" : "hidden");
+	applySidebarRail(data.sidebarRail ?? false);
 	_trafficLightsVisible = data.trafficLightsVisible ?? true;
 	_isFullscreen = data.isFullscreen ?? false;
 }
@@ -45,6 +55,17 @@ export function isSidebarOverlay(): boolean {
 
 export function isSidebarShown(): boolean {
 	return _sidebarMode !== "hidden";
+}
+
+/** Folded to its icon rail; it only shows with the tabs on the left or the right. */
+export function isSidebarRail(): boolean {
+	return _sidebarRail;
+}
+
+export function setSidebarRail(rail: boolean): void {
+	if (rail === _sidebarRail) return;
+	applySidebarRail(rail);
+	chromeActions.setSidebarRail(rail);
 }
 
 export function areTrafficLightsVisible(): boolean {

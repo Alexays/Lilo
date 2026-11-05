@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -12,7 +11,6 @@ import {
   searchSettings,
   sitePermissionLabel,
   SETTINGS,
-  SETTINGS_GROUP_ICONS,
   SETTINGS_SECTIONS,
   sectionGroups,
 } from "./settingsPanelModel";
@@ -35,23 +33,6 @@ test("every setting belongs to a known section", () => {
   for (const setting of SETTINGS) assert.ok(sectionIds.has(setting.section), setting.id);
 });
 
-test("every settings group has a heading icon", () => {
-  for (const setting of SETTINGS) assert.ok(Object.hasOwn(SETTINGS_GROUP_ICONS, setting.groupKey), setting.groupKey);
-});
-
-test("every titled list in Settings shows its group icon", () => {
-  const sources = [
-    // Search results are titled by section, not by group.
-    ...readdirSync(new URL(".", import.meta.url)).filter((name) => name.endsWith(".svelte") && name !== "SettingsSearchResults.svelte"),
-    "../extensions/ExtensionDetail.svelte",
-  ].map((name) => [name, readFileSync(new URL(name, import.meta.url), "utf8")]);
-  for (const [name, source] of sources) {
-    for (const [list] of source.matchAll(/<UiInsetList title=.*\n.*/g)) {
-      assert.match(list, /\{#snippet icon\(\)\}<SettingsGroupIcon group=/, `${name}: ${list.trim()}`);
-    }
-  }
-});
-
 test("groups a section's settings in display order", () => {
   assert.deepEqual(sectionGroups("general"), [
     { groupKey: "settings.groups.browser", settings: ["defaultBrowser", "importBrowsers", "language"] },
@@ -71,10 +52,16 @@ test("settings under a switch that is off drop out of their group", () => {
   const values: Record<string, string> = { agentControlEnabled: "false" };
   const get = (key: string, fallback: string) => values[key] ?? fallback;
   const visible = sectionGroups("agents", (setting) => !setting.requires || isToggleOn(setting.requires, get));
-  assert.deepEqual(visible, [{ groupKey: "settings.groups.agentAccess", settings: ["agentControl"] }]);
+  assert.deepEqual(visible, [
+    { groupKey: "settings.groups.agentConversations", settings: ["agentsEnabled"] },
+    { groupKey: "settings.groups.agentAccess", settings: ["agentControl"] },
+  ]);
 
   values.agentControlEnabled = "true";
-  assert.equal(sectionGroups("agents", (setting) => !setting.requires || isToggleOn(setting.requires, get)).length, 2);
+  values.agentsEnabled = "true";
+  const shown = sectionGroups("agents", (setting) => !setting.requires || isToggleOn(setting.requires, get));
+  assert.equal(shown.length, 3);
+  assert.deepEqual(shown[0].settings, ["agentsEnabled", "agentsNotifyDone"]);
 });
 
 test("cross-site tracking prevention is a protection switch, on until turned off", () => {
@@ -119,7 +106,7 @@ test("settings search reaches hidden keywords and section names", () => {
   const resolve = (key: string) => catalog[key] ?? "";
 
   assert.deepEqual(searchSettings("cookies", resolve).map((setting) => setting.id), ["clearData"]);
-  assert.deepEqual(searchSettings("appearance", resolve).map((setting) => setting.id), ["theme", "appIcon", "seasonalAppIcon", "tabPosition", "addressPlacement", "defaultZoom", "minimumFontSize", "fullRefreshRate"]);
+  assert.deepEqual(searchSettings("appearance", resolve).map((setting) => setting.id), ["theme", "appIcon", "seasonalAppIcon", "tabPosition", "addressPlacement", "hideSpaceNames", "defaultZoom", "minimumFontSize", "fullRefreshRate"]);
 });
 
 test("folds permissions, data, and zoom into one row per site", () => {

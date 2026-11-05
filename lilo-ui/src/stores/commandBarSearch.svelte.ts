@@ -33,6 +33,7 @@ import { getFoldersById, getLockedFolderRoots } from "./folders.svelte";
 import { getActiveSpaceId } from "./spaces.svelte";
 import { getProfileById, getProfiles } from "./profiles.svelte";
 import { isAgentsSpace, isHiddenAgentsSpace, isIsolatedAgentSpace } from "./agents.svelte";
+import { getConversationSummaries, getConversationSummary } from "./conversations.svelte";
 
 export type ResultKind =
 	| "tab"
@@ -53,6 +54,8 @@ export type ResultKind =
 	| "moveToSpace";
 
 type CommandSectionID =
+	| "frequent"
+	| "conversations"
 	| "navigate"
 	| "switch"
 	| "tabs"
@@ -90,6 +93,8 @@ export interface CommandSection {
 	id: CommandSectionID;
 	title: string;
 	subtitle?: string;
+	/** A row of icon tiles, walked with the left and right arrows. */
+	tiles?: boolean;
 	items: CommandSectionEntry[];
 }
 
@@ -97,6 +102,7 @@ interface CommandSectionDraft {
 	id: CommandSectionID;
 	title: string;
 	subtitle?: string;
+	tiles?: boolean;
 	items: CommandResult[];
 	topScore: number;
 }
@@ -251,6 +257,21 @@ function toTabResult(tab: TabState, highlights?: number[]): CommandResult {
 	const { titleHighlights, subtitleHighlights } = highlights
 		? splitHighlights(highlights, title.length)
 		: { titleHighlights: undefined, subtitleHighlights: undefined };
+	// A conversation has no address: its row says what it waits on or that it works, and in which Space.
+	if (tab.kind === "agent") {
+		const summary = getConversationSummary(tab.id);
+		const waiting = !!summary?.permission || !!tab.awaitingInputSince;
+		const subtitle = summary?.permission
+			? t("commandBar.agentWaiting", { request: summary.permission.title })
+			: tab.terminalState === "busy" || tab.terminalState === "starting" ? t("commandBar.agentWorking") : undefined;
+		return createResult(
+			`tab-${tab.id}`,
+			"tab",
+			title,
+			{ tabId: tab.id, agentId: tab.agentId ?? "", waiting },
+			{ subtitle, helper: summary?.spaceName || undefined, hint: t("commandBar.hintSwitch"), titleHighlights },
+		);
+	}
 	return createResult(
 		`tab-${tab.id}`,
 		"tab",
@@ -544,7 +565,7 @@ function makeFallbackResult(
 			{},
 			{
 				subtitle: getSearchEngineLabel(searchEngine),
-				icon: "?",
+				icon: "find",
 				hint: t("commandBar.hintSearch"),
 				url: buildSearchURL(parsed.query, searchEngine),
 			},
@@ -635,7 +656,7 @@ function searchSuggestionResults(
 			{ suggestion },
 			{
 				subtitle: getSearchEngineLabel(searchEngine),
-				icon: "?",
+				icon: "find",
 				hint: t("commandBar.hintSearch"),
 				url: buildSearchURL(suggestion, searchEngine),
 			},
@@ -720,6 +741,10 @@ function buildEmptySections(
 	}
 
 	const seenURLs = new Set<string>();
+	const bookmarks = uniqueByURL(emptyStateBookmarkResults(4), seenURLs);
+	if (bookmarks.length > 0) {
+		sections.push({ id: "bookmarks", title: t("commandBar.sectionBookmarks"), subtitle: t("commandBar.subtitleCurrentSpace"), tiles: true, items: bookmarks, topScore: -Infinity });
+	}
 	addSection(
 		sections,
 		"history",
@@ -736,19 +761,53 @@ function buildEmptySections(
 	);
 	addSection(
 		sections,
-		"bookmarks",
-		t("commandBar.sectionBookmarks"),
-		uniqueByURL(emptyStateBookmarkResults(4), seenURLs),
-		t("commandBar.subtitleCurrentSpace"),
-	);
-	addSection(
-		sections,
 		"actions",
 		t("commandBar.sectionQuickActions"),
 		emptyStateActionResults(2),
 		t("commandBar.subtitleCommonCommands"),
 	);
 
+	return sections;
+}
+
+// The sites the recent visits go back to most, one tile per host.
+function frequentSiteResults(history: CommandResult[], limit: number): CommandResult[] {
+	const sites = new Map<string, { origin: string; visits: number }>();
+	for (const row of history) {
+		const host = row.url && /^https?:\/\//i.test(row.url) ? hostOf(row.url) : null;
+		if (!host) continue;
+		const visits = Number(row.payload.visitCount) || 1;
+		const site = sites.get(host);
+		if (site) site.visits += visits;
+		else sites.set(host, { origin: `${new URL(row.url!).origin}/`, visits });
+	}
+	return [...sites]
+		.sort((a, b) => b[1].visits - a[1].visits)
+		.slice(0, limit)
+		.map(([host, site]) => createResult(`site-${host}`, "navigate", host, { typed: false }, {
+			subtitle: site.origin,
+			url: site.origin,
+			hint: t("commandBar.hintOpen"),
+		}));
+}
+
+// A blank tab's bar, open in place: where the user goes most, and the conversations to get back to.
+function buildBlankTabSections(historyResults: CommandResult[]): CommandSectionDraft[] {
+	const sections: CommandSectionDraft[] = [];
+	const sites = frequentSiteResults(historyResults, 6);
+	if (sites.length > 0) sections.push({ id: "frequent", title: t("commandBar.sectionFrequentSites"), tiles: true, items: sites, topScore: -Infinity });
+	addSection(
+		sections,
+		"conversations",
+		t("commandBar.sectionRecentConversations"),
+		getConversationSummaries().slice(0, 3).map((conversation) => createResult(
+			`tab-${conversation.tabId}`,
+			"tab",
+			conversation.title,
+			{ tabId: conversation.tabId, agentId: conversation.agentId, waiting: !!conversation.permission },
+			{ subtitle: conversation.spaceName, hint: t("commandBar.hintSwitch") },
+		)),
+	);
 	return sections;
 }
 
@@ -779,7 +838,7 @@ function terminalTabResults(query: string, terminals: BridgeTerminalSummary[]): 
 		.filter((terminal) => !needle || [terminal.title, terminal.command, terminal.gitBranch, terminal.spaceName]
 			.some((field) => field.toLowerCase().includes(needle)))
 		.sort((a, b) => terminalUrgency(a) - terminalUrgency(b) || (a.awaitingInputSince - b.awaitingInputSince))
-		.map((terminal) => createResult(`terminal-tab:${terminal.tabId}`, "terminalTab", terminal.title, { tabId: terminal.tabId }, {
+		.map((terminal) => createResult(`terminal-tab:${terminal.tabId}`, "terminalTab", terminal.title, { tabId: terminal.tabId, waiting: !!terminal.awaitingInputSince }, {
 			subtitle: terminalStatusLine(terminal, now),
 			helper: [terminal.spaceName, terminal.gitBranch].filter(Boolean).join(" · "),
 			icon: "terminal",
@@ -1033,6 +1092,8 @@ interface ComputeResultsParams {
 	spaces?: BridgeSpaceSnapshot[];
 	/** A tab being moved: the bar lists the Spaces it can go to instead. */
 	moveTabId?: string;
+	/** Open in place on a blank tab. */
+	docked?: boolean;
 	/** False right after a deletion: the bar then completes no host, so the typed text stays what Enter opens. */
 	autofill?: boolean;
 	/// When an extension omnibox keyword is active, its suggestions replace the normal sections.
@@ -1075,6 +1136,8 @@ export function computeResults(
 		);
 	} else if (parsed.scope === "archive") {
 		sectionDrafts = buildArchiveSections(parsed.query, params.archivedTabs ?? []);
+	} else if (!parsed.query && parsed.scope === "all" && params.docked) {
+		sectionDrafts = buildBlankTabSections(historyResults);
 	} else if (!parsed.query) {
 		sectionDrafts = buildEmptySections(parsed.scope, historyResults);
 	} else if (parsed.scope === "all") {
@@ -1097,6 +1160,7 @@ export function computeResults(
 			id: section.id,
 			title: section.title,
 			subtitle: section.subtitle,
+			tiles: section.tiles,
 			items,
 		});
 	}

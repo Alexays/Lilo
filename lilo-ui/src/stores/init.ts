@@ -4,7 +4,7 @@ import { initArchivedTabsStore } from "./archivedTabs.svelte";
 import { initBannersStore } from "./banners.svelte";
 import { initOnboardingStore } from "./onboarding.svelte";
 import { initPageHangStore } from "./pageHang.svelte";
-import { initCommandBarStore } from "./commandBar.svelte";
+import { applyCommandBarInitialState, initCommandBarStore } from "./commandBar.svelte";
 import { initDownloadsStore } from "./downloads.svelte";
 import {
 	applyExtensionInitialState,
@@ -19,6 +19,7 @@ import { initSidePanelStore } from "./sidePanel";
 import { initSplitPanesStore } from "./splitPanes.svelte";
 import { initKeepAwakeStore } from "./keepAwake.svelte";
 import { initAgentsStore } from "./agents.svelte";
+import { initConversationsStore } from "./conversations.svelte";
 import { initMediaStore } from "./media.svelte";
 import { applyProfileInitialState, initProfileStore } from "./profiles.svelte";
 import { initScreenshotEditor } from "./screenshotEditor.svelte";
@@ -75,6 +76,7 @@ const DEFERRED_STORES: StoreInitializer[] = [
 	initSplitPanesStore,
 	initKeepAwakeStore,
 	initAgentsStore,
+	initConversationsStore,
 	initMediaStore,
 	initScreenshotEditor,
 	initSearchEngineStore,
@@ -98,6 +100,7 @@ const CRITICAL_STATE_APPLIERS: InitialStateApplier[] = [
 	applyProfileInitialState,
 	applySidebarTabInitialState,
 	applySidebarFolderInitialState,
+	applyCommandBarInitialState,
 ];
 
 const DEFERRED_STATE_APPLIERS: InitialStateApplier[] = [

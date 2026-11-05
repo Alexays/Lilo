@@ -22,7 +22,7 @@
   const editFill = $derived.by(() => {
     if (!card) return "";
     const accent = document.documentElement.style.getPropertyValue("--sidebar-accent").trim();
-    if (!accent || ensureContrast("#ffffff", accent, 2, "") !== "#ffffff") return "";
+    if (!accent || ensureContrast("#ffffff", accent, 30, "") !== "#ffffff") return "";
     return `--edit-fill: ${ensureContrast(accent, "#ffffff", TEXT_CONTRAST, accent)}; --edit-text: #ffffff`;
   });
 

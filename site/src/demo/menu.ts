@@ -209,6 +209,7 @@ export const demoMenus: DemoMenuItem[] = [
       "terminal.newBelow",
       "⇧⌘D"
     ),
+    mac("Ask an Agent", "agents.ask", "⇧⌘A"),
     separator,
     command("Open Location…", "location", "location.open", "⌘L"),
     mac("Open File…", "file.open"),

@@ -125,6 +125,56 @@ export type BridgeSidebarDropPayload =
 			targetTabId: string;
 	  };
 
+/** What a prompt carries besides its text; Lilo turns each into ACP content blocks. */
+export type BridgeConversationAttachment =
+	| { kind: "tab" | "selection" | "screenshot"; tabId: string }
+	| { kind: "folder"; folderId: string }
+	| { kind: "file"; path: string }
+	| { kind: "image"; data: string; mimeType: string };
+
+/** An ACP `session/update`, or one of Lilo's own entries (`lilo_*`) in a conversation's log. */
+export type BridgeConversationUpdate = { sessionUpdate: string } & Record<string, unknown>;
+
+export interface BridgeConversationOpened {
+	tabId: string;
+	agentId: string;
+	cwd: string;
+	state: BridgeConversationState;
+	updates: BridgeConversationUpdate[];
+	/** Per prompt sent: whether its checkpoint exists, so "Restore to here" can be offered. */
+	checkpoints: boolean[];
+	error?: string;
+}
+
+export type BridgeConversationState = "idle" | "starting" | "busy" | "failed";
+
+export interface BridgePermissionOption {
+	optionId: string;
+	name: string;
+	kind: "allow_once" | "allow_always" | "reject_once" | "reject_always";
+}
+
+export interface BridgeConversationSummary {
+	tabId: string;
+	agentId: string;
+	title: string;
+	state: BridgeConversationState;
+	unread: boolean;
+	spaceId: string;
+	spaceName: string;
+	running: boolean;
+	permission?: { requestId: string; title: string; options: BridgePermissionOption[] };
+	error?: string;
+}
+
+export interface BridgeAgentInfo {
+	id: string;
+	name: string;
+	description: string;
+	/** An SVG data URL from the ACP registry. */
+	icon?: string;
+}
+
 export interface BridgeFolderLock {
 	allowsBiometrics: boolean;
 	biometricsAvailable: boolean;
@@ -496,6 +546,7 @@ export interface BridgeInitialStatePayload {
 	activeTabId: string;
 	sidebarWidth: number;
 	sidebarVisible: boolean;
+	sidebarRail?: boolean;
 	toolbarVisible?: boolean;
 	trafficLightsVisible?: boolean;
 	tabPosition?: TabPosition;
@@ -550,6 +601,7 @@ export interface BridgeCommandPayloadMap {
 		visualOrder: string;
 	};
 	sidebarResized: { width: number };
+	setSidebarRail: { rail: boolean };
 	toggleSidebar: EmptyPayload;
 	setSidebarCollapseLocked: { locked: boolean };
 	maximizeWindow: EmptyPayload;
@@ -563,13 +615,16 @@ export interface BridgeCommandPayloadMap {
 	extensionPermissionResponse: { requestId: string; granted: boolean };
 	/** `swiping`: one frame of a Space swipe, for the frame around the page alone. `accent`: the sidebar's, for native edges. */
 	updateWindowBackground: { color: string; material: SpaceMaterial; swiping?: boolean; accent?: string };
+	/** The bar's color while a system screen covers the page; none gives it back to the page's. */
+	setPageBarColor: { color?: string };
 	setWallpaperColorWatch: { enabled: boolean };
 	sidebarOverlayChanged: { visible: boolean };
-	pageCoverChanged: { covered: boolean };
 	showTabSecurityInfo: EmptyPayload;
 	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
+	showTabStackContextMenu: { ids: string[]; host: string; name: string; x: number; y: number; width: number; height: number };
 	showSidebarContextMenu: { x: number; y: number; width: number; height: number; spaceId?: string };
+	showTabListMenu: { x: number; y: number; width: number; height: number; spaceId: string };
 	showBackHistoryMenu: { x: number; y: number; width: number; height: number };
 	showForwardHistoryMenu: {
 		x: number;
@@ -582,6 +637,8 @@ export interface BridgeCommandPayloadMap {
 	// typed: the URL the user typed in the command bar, which native may send to the site history knows.
 	createTab: { url?: string; typed?: boolean; background?: boolean };
 	closeTab: { id: string };
+	/** Closes them behind one undo toast. */
+	closeTabs: { ids: string[] };
 	switchTab: { id: string };
 	// The tab the recent tabs switcher picked, in whichever Space of the window it lives.
 	switchToRecentTab: { id: string };
@@ -761,6 +818,32 @@ export interface BridgeCommandPayloadMap {
 	showChanges: { tabId?: string };
 	importTerminalTheme: EmptyPayload;
 	connectAgentClient: { client: string };
+	startConversation: {
+		agentId: string;
+		cwd: string;
+		text: string;
+		attachments: BridgeConversationAttachment[];
+		background: boolean;
+	};
+	sendConversationPrompt: { tabId: string; text: string; attachments: BridgeConversationAttachment[]; interrupt: boolean };
+	cancelConversation: { tabId: string };
+	/** `optionId` absent cancels the request. */
+	answerConversation: { tabId: string; requestId: string; optionId?: string };
+	setConversationMode: { tabId: string; modeId: string };
+	setConversationConfig: { tabId: string; configId: string; value: string | boolean };
+	/** The chrome shows (or stops showing) a conversation: Lilo replays it, then streams its updates. */
+	showConversation: { tabId: string; visible: boolean };
+	restoreConversation: { tabId: string; checkpoint: number };
+	undoConversationFile: { tabId: string; path: string; checkpoint: number };
+	loadAgentCatalog: { refresh: boolean };
+	loadConversations: EmptyPayload;
+	chooseConversationProject: EmptyPayload;
+	openConversationChanges: { tabId: string };
+	authenticateConversation: { tabId: string; methodId: string };
+	/** Files of a project matching `query`, for @ in the composer: answered with `conversationFiles`. */
+	searchConversationFiles: { cwd: string; query: string };
+	/** Opens an HTML or SVG block of the thread as a page beside the conversation. */
+	previewConversationArtifact: { tabId: string; code: string; language: string };
 	getAgentClients: EmptyPayload;
 	revokeAgentClient: { name: string };
 	getAppNames: { ids: string[] };
@@ -934,7 +1017,7 @@ export interface BridgeEventPayloadMap {
 	importProgress: ImportProgress;
 	importFinished: { summary: ImportSummaryItem[] };
 	onboardingState: { show: boolean; step: number; usage: string; highRefreshDisplay: boolean };
-	appIconsLoaded: { icons: { id: string; dataURL: string }[] };
+	appIconsLoaded: { icons: { id: string; dataURL: string; seasonalDataURL?: string }[] };
 	// A space's persisted tab state was unreadable at restore: it was quarantined and the space
 	// restored empty. The banner names the space so the user knows what degraded.
 	sessionRestoreDegraded: { spaceName: string };
@@ -965,6 +1048,17 @@ export interface BridgeEventPayloadMap {
 	// Reply to requestTabPreview. `image` is a JPEG data URL; absent means no preview is
 	// available (typically a discarded engine). A terminal sends its screen as text instead.
 	tabPreviewReady: { tabId: string; image?: string } & Partial<BridgeTerminalPrompt>;
+	/** A conversation the chrome asked to show: its whole log, then `conversationUpdate` as it grows. */
+	conversationOpened: BridgeConversationOpened;
+	conversationUpdate: { tabId: string; update: BridgeConversationUpdate };
+	/** Every conversation of every Space, for the Agents badge and popover. */
+	conversationsChanged: { conversations: BridgeConversationSummary[] };
+	agentCatalog: { agents: BridgeAgentInfo[]; projects: string[]; home: string };
+	conversationProjectChosen: { path: string };
+	/** Paths relative to `cwd`, best match first. */
+	conversationFiles: { cwd: string; query: string; files: string[] };
+	/** `selection`: the start of the active page's selected text, empty when nothing is selected. */
+	openAskBar: { selection: string };
 	// Every started terminal this window may name, sent whenever one changes state.
 	terminalActivity: { terminals: BridgeTerminalSummary[] };
 	mediaActivity: { tabs: BridgeMediaTab[]; calls: BridgeCallTab[] };
@@ -1018,6 +1112,8 @@ export interface BridgeEventPayloadMap {
 	};
 
 	settingsLoaded: { settings: Record<string, string> };
+	/** A pick in a native menu about how the open tabs are laid out. */
+	tabListMenuAction: { action: "toggleStackTabs" | "toggleGroupByType" | "neverStack" | "stackAgain" | "stackEverySite"; host: string };
 	sitePermissionsLoaded: { permissions: BridgeSitePermissionSnapshot[] };
 	extensionDiagnosticsLoaded: {
 		entries: BridgeExtensionDiagnosticSnapshot[];

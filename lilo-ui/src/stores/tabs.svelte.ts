@@ -7,7 +7,7 @@ import { tabActions } from "../lib/bridge/actions";
 import { DEFAULT_TAB_TITLE } from "../lib/bridge/defaults";
 import { t } from "../lib/i18n/state.svelte";
 import { getActiveSpaceId } from "./spaces.svelte";
-import { openCommandBar, closeCommandBar, isCommandBarOpen } from "./commandBar.svelte";
+import { openCommandBar, closeCommandBar, isCommandBarDocked, isCommandBarOpen, refocusCommandBar } from "./commandBar.svelte";
 import { dragExcludedTabId } from "./folders.svelte";
 import { getSpaceSidebar, initSidebarStore } from "./sidebar.svelte";
 
@@ -59,7 +59,7 @@ export function getActiveTabId(spaceId?: string): string {
 	return getActiveTab(spaceId)?.id ?? "";
 }
 
-/** A new tab still waiting for a page. A terminal has no URL either, but is never blank. */
+/** A new tab still waiting for a page. Terminal, Changes and agent tabs have no URL either, but are never blank. */
 export function isBlankTab(tab: TabState | undefined): tab is TabState {
 	return tab != null && !tab.url && (tab.kind ?? "web") === "web";
 }
@@ -89,7 +89,10 @@ export function initTabStore(): void {
 
 	on("toggleNewTab", () => {
 		const active = getActiveTab();
-		if (isBlankTab(active) && isCommandBarOpen()) {
+		// The bar in place on a blank tab already is the new tab.
+		if (isCommandBarDocked()) {
+			refocusCommandBar();
+		} else if (isBlankTab(active) && isCommandBarOpen()) {
 			tabActions.close(active.id);
 			closeCommandBar();
 		} else {

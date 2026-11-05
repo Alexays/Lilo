@@ -1,5 +1,5 @@
-// A new close replaces the current toast and restarts its auto-dismiss; a Clear names the tabs it archived, which
-// come back from the archive.
+// One toast at a time. A new close replaces a close's toast and restarts its auto-dismiss, since a reopen takes back
+// the newest close; any other toast waits its turn. A Clear names the tabs it archived, which come back from the archive.
 
 import { on } from "../lib/bridge";
 import { tabActions } from "../lib/bridge/actions";
@@ -12,16 +12,24 @@ export const UNDO_TOAST_DURATION_MS = 5000;
 type UndoToast = { title: string; count: number; seq: number; archivedIds?: string[]; label?: string; undo?: () => void };
 
 let _toast = $state<UndoToast | null>(null);
+let queue: UndoToast[] = [];
 // Bumped on every close so the view can restart the countdown ring on a replacement.
 let seq = 0;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let remainingMs = 0;
 let resumedAt = 0;
+// Until then, tabs landing in the sidebar are ones an undo brought back, which it shows even in a closed stack.
+let revealUntil = 0;
 
 export function initUndoToastStore(): void {
 	on("tabClosedUndoable", (data) => {
+		const next: UndoToast = { title: data.title, count: data.count ?? 1, seq: ++seq, ...(data.archivedIds && { archivedIds: data.archivedIds }) };
+		if (_toast?.undo) {
+			queue = [...queue.filter((toast) => toast.undo), next];
+			return;
+		}
 		const paused = _toast !== null && timer === null;
-		_toast = { title: data.title, count: data.count ?? 1, seq: ++seq, ...(data.archivedIds && { archivedIds: data.archivedIds }) };
+		_toast = next;
 		announce(undoToastSubject(_toast));
 		// Replaced under the pointer: stay paused, and resume with a full window.
 		if (paused) {
@@ -43,13 +51,21 @@ function undoOnCommandZ(e: KeyboardEvent): void {
 }
 
 function clearToast(): void {
-	_toast = null;
 	window.removeEventListener("keydown", undoOnCommandZ);
+	const next = queue.shift();
+	_toast = next ?? null;
+	if (!next) return;
+	announce(undoToastSubject(next));
+	startTimer(UNDO_TOAST_DURATION_MS);
 }
 
 export function showUndoToast(label: string, undo: () => void): void {
-	if (timer !== null) clearTimeout(timer);
-	_toast = { title: label, count: 1, seq: ++seq, label, undo };
+	const next: UndoToast = { title: label, count: 1, seq: ++seq, label, undo };
+	if (_toast) {
+		queue.push(next);
+		return;
+	}
+	_toast = next;
 	announce(label);
 	startTimer(UNDO_TOAST_DURATION_MS);
 }
@@ -95,7 +111,12 @@ function dismissUndoToast(): void {
 	clearToast();
 }
 
+export function isUndoRevealing(): boolean {
+	return Date.now() < revealUntil;
+}
+
 export function undoTabClose(): void {
+	revealUntil = Date.now() + 2000;
 	if (_toast?.undo) {
 		_toast.undo();
 	} else if (_toast?.archivedIds) {

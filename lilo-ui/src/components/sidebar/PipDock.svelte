@@ -18,6 +18,6 @@
      margins match the sidebar rows and are mirrored by TabDockController.horizontalInset. */
   .pip-dock {
     flex-shrink: 0;
-    margin: 0 var(--sidebar-right-pad, 10px) 8px 10px;
+    margin: 0 var(--sidebar-right-pad, 8px) 8px 8px;
   }
 </style>

@@ -4,20 +4,21 @@
   import URLDisplay from "../urlbar/URLDisplay.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
-  import { getTabPosition, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
+  import { getTabPosition, isAddressInPageToolbar, isAddressInRightTabs } from "../../stores/tabLayout.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
-  import { isShellOpen } from "../../stores/panels.svelte";
   import { pageBarStyle } from "../../lib/pageBarTheme";
+  import { shellBarColor } from "../../stores/theme.svelte";
 
   let { row = false, accent }: { row?: boolean; accent: string } = $props();
 
   // Read apart from the tab, whose every progress tick would otherwise derive the style again.
-  // A shell over the page hides it: the bar takes the frame's colors, as the native bar does.
-  const pageColor = $derived(isShellOpen() ? undefined : getActiveTab()?.pageColor);
+  const pageColor = $derived(shellBarColor() ?? getActiveTab()?.pageColor);
   const style = $derived(pageBarStyle(pageColor, accent));
   // With the tabs at the bottom and no address here, the bar names the page as a title bar does.
   const title = $derived(getTabPosition() === "bottom" && !isAddressInPageToolbar() ? getActiveTab()?.title ?? "" : null);
+
+  const navigationInStrip = $derived(getTabPosition() === "bottom" && !isAddressInPageToolbar());
 
   // The traffic lights sit top-left of the window: room for them when the toolbar starts there.
   const besideTrafficLights = $derived(!row && (getTabPosition() !== "left" || !isSidebarVisible()) && areTrafficLightsVisible());
@@ -76,9 +77,10 @@
     <div class="lights-spacer" class:shut={!besideTrafficLights}></div>
   {/if}
   <!-- Under a top strip, the strip already holds the navigation: this row is the address alone. Without
-       the tabs, or beside the left sidebar, it holds their toggle too. -->
-  {#if !row}
-    <NavControls show={isSidebarVisible() && getTabPosition() !== "left" ? "history" : "all"} />
+       the tabs, or beside the left sidebar, it holds their toggle too. Over a bottom strip, the history
+       stays with the address: without one here, it goes down to the strip. -->
+  {#if !row && !(navigationInStrip && isSidebarVisible())}
+    <NavControls show={!isSidebarVisible() || getTabPosition() === "left" ? "all" : isAddressInRightTabs() ? "toggle" : "history"} />
   {/if}
   {#if isAddressInPageToolbar()}
     <div class="address" bind:this={addressEl}><URLDisplay /></div>

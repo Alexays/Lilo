@@ -40,11 +40,11 @@ final class TabLayoutTests: XCTestCase {
         XCTAssertEqual(store.tabLayout.address, .tabs)
     }
 
-    func testOnTheRightTheAddressStaysAboveThePage() throws {
+    func testOnTheRightTheAddressCanGoWithTheTabs() throws {
         let store = try makeSettingsStore()
         store.set("tabPosition", value: "right")
         store.set("addressPlacement", value: "tabs")
-        XCTAssertEqual(store.tabLayout.address, .page)
+        XCTAssertEqual(store.tabLayout.address, .tabs)
     }
 
     func testAHiddenAddressStaysHiddenOnEveryEdgeAndAfterReload() throws {

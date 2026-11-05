@@ -33,7 +33,7 @@ let _deviceSetup = $state.raw<BridgeDeviceSetupSnapshot>({ label: "" });
 let _blockerStatus = $state.raw<BridgeContentBlockerStatus | null>(null);
 let _terminalOptions = $state.raw<BridgeTerminalOptions | null>(null);
 let _status = $state<BridgeSettingsActionStatusPayload | null>(null);
-let _appIcons = $state.raw<{ id: string; dataURL: string }[]>([]);
+let _appIcons = $state.raw<{ id: string; dataURL: string; seasonalDataURL?: string }[]>([]);
 let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowed: [] });
 let _updater = $state.raw<BridgeUpdaterStatus | null>(null);
 let _readyUpdate = $state<string | null>(null);
@@ -49,6 +49,14 @@ export function initSettingsStore(): void {
 		_values = data.settings ?? {};
 		const locale = _values["locale"];
 		if (locale && isSupportedLocale(locale)) void setLocale(locale);
+	});
+	on("tabListMenuAction", ({ action, host }) => {
+		const never = getSetting("sidebarNeverStack", "").split(",").filter(Boolean);
+		if (action === "toggleStackTabs") setSetting("sidebarStackTabs", String(getSetting("sidebarStackTabs", "true") === "false"));
+		else if (action === "toggleGroupByType") setSetting("sidebarGroupByType", String(getSetting("sidebarGroupByType", "false") !== "true"));
+		else if (action === "neverStack" && !never.includes(host)) setSetting("sidebarNeverStack", [...never, host].join(","));
+		else if (action === "stackAgain") setSetting("sidebarNeverStack", never.filter((entry) => entry !== host).join(","));
+		else if (action === "stackEverySite") setSetting("sidebarNeverStack", "");
 	});
 	on("defaultBrowserStatusLoaded", (data) => {
 		_defaultBrowser = data;
@@ -183,7 +191,7 @@ export function getBrowsingDataSizes(): BridgeBrowsingDataSizes | null {
 	return _browsingDataSizes;
 }
 
-export function getAppIcons(): { id: string; dataURL: string }[] {
+export function getAppIcons(): { id: string; dataURL: string; seasonalDataURL?: string }[] {
 	return _appIcons;
 }
 

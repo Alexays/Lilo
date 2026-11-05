@@ -56,15 +56,18 @@ extension MainWindowController {
         // The shell ended on its own (Control-D, `exit`): its tab goes, as in Terminal. A shell Lilo
         // ends, for a closed tab or at quit, has left the host or ends with the app.
         if status.state == .exited, !context.isTerminating, tabManager.terminalHost.view(for: id) != nil {
+            if agentsEnabled { context.conversations.terminalFinished(id) }
             closeTabStateFirst(id: id)
             return
         }
         var savesDurableState = false
         var changed = false
         var wasAwaiting = false
+        var wasRunning = false
         let updated = updateRuntimeTab(id: id) { tab in
             let before = tab
             wasAwaiting = before.awaitingInputSince != nil
+            wasRunning = before.terminalState == "busy" || before.terminalState == "waiting"
             tab.title = Self.terminalTitle(for: status)
             // A running command that prints nothing is waiting, not working: no spinner for it.
             tab.terminalState = status.state == .busy && !status.printing ? "waiting" : status.state.rawValue
@@ -90,6 +93,8 @@ extension MainWindowController {
             changed = before != tab
         }
         if changed, let updated { enqueueVisibleTabUpdate(updated) }
+        // A command that just ended may be an agent's sign-in a conversation waits on.
+        if wasRunning, status.state != .busy, agentsEnabled { context.conversations.terminalFinished(id) }
         if status.awaitingInputSince != nil, !wasAwaiting { scheduleAttentionNotification(id) }
         if status.awaitingInputSince == nil, wasAwaiting { withdrawAttentionNotification(id) }
         // The directory and the command to run again are what a restored tab reopens with.
@@ -568,6 +573,8 @@ extension UNNotificationCategory {
     static let terminalAttention = "lilo.terminal.attention"
     static let terminalChoicePrefix = "lilo.terminal.choice."
     static let terminalReply = "lilo.terminal.reply"
+    static let conversationPermission = "lilo.conversation.permission"
+    static let conversationOptionPrefix = "lilo.conversation.option."
 
     /// A terminal waiting for an answer takes a typed reply, and the options of its menu by number.
     static var terminalAttentionCategories: Set<UNNotificationCategory> {
@@ -579,7 +586,13 @@ extension UNNotificationCategory {
         return [
             UNNotificationCategory(identifier: terminalAttention, actions: [reply], intentIdentifiers: []),
             UNNotificationCategory(identifier: "\(terminalAttention).2", actions: [choice(1), choice(2), reply], intentIdentifiers: []),
-            UNNotificationCategory(identifier: "\(terminalAttention).3", actions: [choice(1), choice(2), choice(3), reply], intentIdentifiers: [])
+            UNNotificationCategory(identifier: "\(terminalAttention).3", actions: [choice(1), choice(2), choice(3), reply], intentIdentifiers: []),
+            // An agent conversation's permission request, answered with the option of that kind.
+            UNNotificationCategory(identifier: conversationPermission, actions: [
+                UNNotificationAction(identifier: "\(conversationOptionPrefix)allow_once", title: "Allow".localized, options: []),
+                UNNotificationAction(identifier: "\(conversationOptionPrefix)allow_always", title: "Always Allow".localized, options: []),
+                UNNotificationAction(identifier: "\(conversationOptionPrefix)reject_once", title: "Deny".localized, options: [.destructive])
+            ], intentIdentifiers: [])
         ]
     }
 }

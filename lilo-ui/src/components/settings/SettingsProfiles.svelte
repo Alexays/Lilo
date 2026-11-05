@@ -78,8 +78,13 @@
       </div>
     {:else}
       <button class="add-card" onclick={startCreate}>
-        <span class="add-title">+ {t("settings.profiles.newProfile")}</span>
-        <span class="add-detail">{t("settings.profiles.newProfileDetail")}</span>
+        <span class="add-plus" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+        </span>
+        <span class="add-copy">
+          <span class="add-title">{t("settings.profiles.newProfile")}</span>
+          <span class="add-detail">{t("settings.profiles.newProfileDetail")}</span>
+        </span>
       </button>
     {/if}
   </div>
@@ -98,9 +103,8 @@
 <style>
   .profile-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px;
-    padding: 6px 0;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-12);
   }
 
   .add-card,
@@ -109,18 +113,35 @@
     gap: 10px;
     padding: 14px;
     border: 1px dashed color-mix(in srgb, var(--text-primary) 18%, transparent);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-box);
     background: transparent;
     color: var(--text-secondary);
     font-family: inherit;
   }
 
   .add-card {
-    min-height: 120px;
-    place-content: center;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
     cursor: pointer;
     transition: background var(--transition-fast);
+  }
+
+  .add-plus {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px var(--border);
+    color: var(--text-secondary);
+  }
+
+  .add-copy {
+    display: grid;
+    gap: 2px;
   }
 
   .add-card:hover {
@@ -134,7 +155,7 @@
   .add-title {
     color: var(--text-primary);
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-medium);
   }
 
   .add-detail {
@@ -191,7 +212,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 4px;
+    margin-top: var(--space-12);
     padding: 10px 12px;
     border-radius: var(--radius-md);
     background: var(--bg-hover);

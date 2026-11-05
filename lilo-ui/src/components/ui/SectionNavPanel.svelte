@@ -8,11 +8,10 @@
     id: Id;
     label: string;
     icon?: ComponentProps<typeof SettingsIcon>["name"];
-    /** Search hits in this section; shown at the row's end. */
-    count?: number;
+    /** Search hits or items in this section, or a running timer; shown at the row's end. */
+    count?: number | string;
     dimmed?: boolean;
-    /** Something in the section waits on the user: a dot at the row's end. */
-    attention?: boolean;
+    disabled?: boolean;
   }
 
   interface SectionNavGroup {
@@ -60,6 +59,7 @@
             class:dimmed={section.dimmed}
             class="section-nav-button"
             type="button"
+            disabled={section.disabled}
             aria-current={section.id === activeId ? "page" : undefined}
             onclick={() => onSelect(section.id)}
             use:tooltip={{ text: section.label, placement: "right", disabled: !compact }}
@@ -72,8 +72,6 @@
             <span class="section-nav-label">{section.label}</span>
             {#if section.count}
               <span class="section-nav-count">{section.count}</span>
-            {:else if section.attention}
-              <span class="section-nav-attention" aria-hidden="true"></span>
             {/if}
           </button>
         {/each}
@@ -88,7 +86,7 @@
   }
 
   .section-nav-toolbar {
-    padding: 0 var(--sidebar-right-pad, 10px) 8px 10px;
+    padding: 0 var(--sidebar-right-pad, 8px) 8px 8px;
   }
 
   /* minmax(0, ...) so a long label ellipsizes instead of widening every row past the panel. */
@@ -98,7 +96,7 @@
     align-content: start;
     min-height: 0;
     overflow-y: auto;
-    padding: 4px var(--sidebar-right-pad, 10px) 14px 10px;
+    padding: 4px var(--sidebar-right-pad, 8px) 14px 8px;
   }
 
   .section-nav-group {
@@ -113,7 +111,7 @@
     color: var(--text-muted);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
@@ -164,6 +162,15 @@
     color: var(--text-muted);
   }
 
+  .section-nav-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .section-nav-button:disabled:hover {
+    background: transparent;
+  }
+
   .section-nav-button:focus-visible {
     outline: var(--focus-outline);
     outline-offset: -2px;
@@ -206,7 +213,7 @@
     padding: 0;
   }
 
-  .compact :is(.section-nav-count, .section-nav-attention) {
+  .compact .section-nav-count {
     display: none;
   }
 
@@ -217,13 +224,5 @@
     height: 1px;
     overflow: hidden;
     clip-path: inset(50%);
-  }
-
-  .section-nav-attention {
-    flex: none;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
   }
 </style>

@@ -2,7 +2,6 @@
   import { keepAwakeActions, settingsActions } from "../../lib/bridge/actions";
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { getSetting, getTerminalOptions, setSetting } from "../../stores/settings.svelte";
-  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiChip from "../ui/UiChip.svelte";
@@ -16,8 +15,8 @@
   const enabled = $derived(getSetting("terminalEnabled", "true") !== "false");
   const options = $derived(getTerminalOptions());
   const themeId = $derived(getSetting("terminalTheme", "auto"));
-  const themeOptions = $derived((options?.themes ?? []).map((theme) => ({ value: theme.id, label: theme.name })));
-  const theme = $derived(options?.themes.find((candidate) => candidate.id === themeId) ?? options?.themes[0]);
+  // An id no longer in the list (a removed import) falls back to the first theme, as the terminal does.
+  const selectedTheme = $derived(options?.themes.some((theme) => theme.id === themeId) ? themeId : options?.themes[0]?.id);
   const fontOptions = $derived([
     { value: "", label: t("settings.terminalFontSystem") },
     ...(options?.ghosttyFont ? [{ value: "ghostty", label: `Ghostty (${options.ghosttyFont})` }] : []),
@@ -73,43 +72,46 @@
 </UiInsetList>
 
 {#if enabled}
-  <UiInsetList title={t("settings.terminalAppearanceGroup")}>
-    {#snippet icon()}<SettingsGroupIcon group="settings.terminalAppearanceGroup" />{/snippet}
-    <UiListRow title={t("settings.terminalTheme")} description={t("settings.terminalThemeDescription")}>
-      {#snippet action()}
-        <UiSelect
-          value={themeId}
-          options={themeOptions}
-          ariaLabel={t("settings.terminalTheme")}
-          onchange={(value) => setSetting("terminalTheme", value)}
-        />
-      {/snippet}
-    </UiListRow>
-    {#if theme}
-      <div class="preview" style:background={theme.background} style:color={theme.foreground} aria-hidden="true">
-        <div class="line">
-          <span style:color={theme.palette[2]}>~/Projects</span>
-          <span style:color={theme.palette[4]}>git:(main)</span>
-          <span>npm run dev</span>
-        </div>
-        <div class="line">
-          <span style:color={theme.palette[1]}>error</span>
-          <span style:color={theme.palette[3]}>warning</span>
-          <span style:color={theme.palette[6]}>info</span>
-          <span style:color={theme.palette[8]}>dim</span>
-        </div>
-        <div class="palette">
-          {#each theme.palette as color, index (index)}
-            <span style:background={color}></span>
-          {/each}
-        </div>
-      </div>
-    {/if}
-    <UiListRow title={t("settings.terminalImportTitle")} description={t("settings.terminalImportDescription")}>
-      {#snippet action()}
-        <UiButton onclick={() => settingsActions.importTerminalTheme()}>{t("settings.terminalImport")}</UiButton>
-      {/snippet}
-    </UiListRow>
+  <UiInsetList title={t("settings.terminalTheme")} boxed={false}>
+    {#snippet accessory()}{t("settings.terminalThemeDescription")}{/snippet}
+    <div class="themes" role="radiogroup" aria-label={t("settings.terminalTheme")}>
+      {#each options?.themes ?? [] as theme (theme.id)}
+        <button
+          class="theme"
+          class:on={theme.id === selectedTheme}
+          role="radio"
+          aria-checked={theme.id === selectedTheme}
+          onclick={() => setSetting("terminalTheme", theme.id)}
+        >
+          <!-- Drawn from the theme's own colors: its foreground and palette on its background. -->
+          <span class="shot" style:background={theme.background} aria-hidden="true">
+            <span class="bars">
+              <i style:background={theme.palette[2]}></i><i style:background={theme.palette[4]}></i><i style:background={theme.foreground}></i>
+            </span>
+            <span class="bars">
+              <i style:background={theme.palette[1]}></i><i style:background={theme.foreground}></i><i style:background={theme.palette[3]}></i>
+            </span>
+            <span class="bars">
+              <i style:background={theme.palette[4]}></i><i style:background={theme.foreground}></i>
+            </span>
+            <span class="swatches">
+              {#each theme.palette.slice(1, 7) as color, index (index)}<i style:background={color}></i>{/each}
+            </span>
+          </span>
+          {theme.name}
+        </button>
+      {/each}
+      <button class="theme" onclick={() => settingsActions.importTerminalTheme()}>
+        <span class="shot import" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+        </span>
+        {t("settings.terminalImport")}
+      </button>
+    </div>
+    <p class="caption">{t("settings.terminalImportCaption")}</p>
+  </UiInsetList>
+
+  <UiInsetList>
     <UiListRow title={t("settings.terminalFont")} description={t("settings.terminalFontDescription")}>
       {#snippet action()}
         <UiSelect
@@ -118,10 +120,6 @@
           ariaLabel={t("settings.terminalFont")}
           onchange={(value) => setSetting("terminalFontFamily", value)}
         />
-      {/snippet}
-    </UiListRow>
-    <UiListRow title={t("settings.terminalFontSize")} description={t("settings.terminalFontSizeDescription")}>
-      {#snippet action()}
         <UiSelect
           value={getSetting("terminalFontSize", "13")}
           options={sizeOptions}
@@ -133,7 +131,6 @@
   </UiInsetList>
 
   <UiInsetList title={t("settings.terminalBehaviorGroup")}>
-    {#snippet icon()}<SettingsGroupIcon group="settings.terminalBehaviorGroup" />{/snippet}
     <UiListRow title={t("settings.terminalScrollback")} description={t("settings.terminalScrollbackDescription")}>
       {#snippet action()}
         <UiSelect
@@ -163,10 +160,6 @@
         />
       {/snippet}
     </UiListRow>
-  </UiInsetList>
-
-  <UiInsetList title={t("settings.terminalSleepGroup")}>
-    {#snippet icon()}<SettingsGroupIcon group="settings.terminalSleepGroup" />{/snippet}
     <UiListRow
       title={t("settings.terminalSleepMode")}
       description={keepAwake.helperStatus === "unsigned" ? t("settings.terminalLidStatus.unsigned") : t("settings.terminalPreventSleepDescription")}
@@ -184,7 +177,6 @@
 
   {#if sleepMode === "lid"}
     <UiInsetList title={t("settings.terminalLidGroup")}>
-      {#snippet icon()}<SettingsGroupIcon group="settings.terminalLidGroup" />{/snippet}
       <UiListRow
         title={t("settings.terminalLidHelper")}
         description={keepAwake.helperStatus === "enabled" ? undefined : t(`settings.terminalLidStatus.${keepAwake.helperStatus}`)}
@@ -262,32 +254,90 @@
     margin-top: var(--space-6);
   }
 
-  .preview {
-    margin: 4px 12px 12px;
-    padding: 12px 14px;
-    border-radius: var(--radius-md);
-    font-family: ui-monospace, "SF Mono", monospace;
-    font-size: var(--font-size-sm);
-    line-height: 1.6;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 12%, transparent);
-  }
-
-  .line {
-    display: flex;
-    gap: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .palette {
+  .themes {
     display: grid;
-    grid-template-columns: repeat(16, 1fr);
-    gap: 4px;
-    margin-top: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: var(--space-16) var(--space-16);
   }
 
-  .palette span {
-    height: 10px;
-    border-radius: var(--radius-xs);
+  .theme {
+    display: grid;
+    /* Packed at the top: a stretched track would grow the thumbnail through its aspect ratio when a long name wraps. */
+    align-content: start;
+    gap: var(--space-6);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+  }
+
+  .theme.on {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .theme:focus-visible {
+    outline: none;
+  }
+
+  .theme:focus-visible .shot {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+  }
+
+  .shot {
+    display: grid;
+    align-content: center;
+    gap: var(--space-6);
+    aspect-ratio: 5 / 2;
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--separator);
+  }
+
+  .theme.on .shot {
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .bars,
+  .swatches {
+    display: flex;
+    gap: var(--space-4);
+  }
+
+  .bars i {
+    width: 18%;
+    height: 3px;
+    border-radius: var(--radius-2xs);
+  }
+
+  .bars i:last-child {
+    width: 30%;
+  }
+
+  .swatches {
+    margin-top: var(--space-2);
+  }
+
+  .swatches i {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-2xs);
+  }
+
+  .shot.import {
+    place-items: center;
+    box-shadow: none;
+    border: 1px dashed color-mix(in srgb, var(--text-primary) 22%, transparent);
+    color: var(--text-secondary);
+  }
+
+  .caption {
+    margin: var(--space-4) 4px 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
   }
 </style>

@@ -12,3 +12,10 @@ test("only the active Space's tile opens on its name, a long one cut short", asy
 	const text = labels.first().locator(".space-label-text");
 	expect((await text.boundingBox())!.width).toBeLessThanOrEqual(96);
 });
+
+test("with Space names hidden, the active tile stays an icon", async ({ page }) => {
+	const world = initialWorld();
+	world.settings = { hideSpaceNames: "true" };
+	await bootChrome(page, world);
+	for (const label of await page.locator(".bottom-bar .space-label").all()) await expect(label).toHaveCSS("width", "0px");
+});

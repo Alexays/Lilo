@@ -1,16 +1,21 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+
   interface Props {
     label: string;
+    /** A 14px visual before the label: a favicon, a file icon. */
+    icon?: Snippet;
     /** Names the remove button for assistive tech. */
     removeLabel: string;
     onremove: () => void;
   }
 
-  let { label, removeLabel, onremove }: Props = $props();
+  let { label, icon, removeLabel, onremove }: Props = $props();
 </script>
 
 <!-- A removable value, like the extension page's site chips. -->
 <span class="ui-chip">
+  {@render icon?.()}
   {label}
   <button class="ui-chip-remove" type="button" aria-label={removeLabel} onclick={onremove}>
     <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">

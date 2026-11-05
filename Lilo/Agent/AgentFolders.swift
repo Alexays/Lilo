@@ -8,7 +8,11 @@ extension AgentControl {
 
     /// The Agents space of the session's profile, and the window showing it if one does.
     func agentSpace(for session: AgentSession) throws -> (space: Space, host: MainWindowController?) {
-        try agentSpace(in: session.profileId ?? agentsProfileId())
+        if let spaceId = session.conversationSpaceId {
+            guard let space = context?.spaceManager?.space(with: spaceId) else { throw AgentToolError("The conversation's Space is gone") }
+            return (space, context?.windows.windows(showing: spaceId).first)
+        }
+        return try agentSpace(in: session.profileId ?? agentsProfileId())
     }
 
     /// The Agents space of `profileId`, created the first time an agent works in that profile.
@@ -54,6 +58,7 @@ extension AgentControl {
     /// The id of the session's Agents space if there is one, never created: a refresh must not create
     /// a space, nor drop every tab while no window is open.
     func agentsSpaceId(of session: AgentSession) -> UUID? {
+        if let spaceId = session.conversationSpaceId { return spaceId }
         guard let profileId = session.profileId ?? context?.settingsStore?.get(Self.agentsProfileKey).flatMap(UUID.init(uuidString:)) else { return nil }
         return agentsSpace(in: profileId)?.id
     }
@@ -106,6 +111,7 @@ extension AgentControl {
 
     /// Follows a new title or project name.
     func renameFolder(of session: AgentSession) {
+        guard session.conversationSpaceId == nil else { return }
         guard let context, let folderId = session.folderId, let (space, host) = try? agentSpace(for: session),
               let folder = tabFolder(folderId, in: space.id), let commander = host ?? context.windows.activeWindow else { return }
         _ = try? commander.applyBrowserCommand(.updateFolder(
@@ -116,6 +122,8 @@ extension AgentControl {
     /// A conversation that ended takes its folder and tabs along: nobody drives them any more. While a
     /// window shows its Agents space they stay under the user's eyes, until the next run's cleanup.
     func dropFolder(of session: AgentSession) {
+        // A conversation's folder is the conversation's: it outlives the agent's connection.
+        guard session.conversationSpaceId == nil else { return }
         guard let context, let folderId = session.folderId,
               let spaceId = agentsSpaceId(of: session),
               tabFolder(folderId, in: spaceId) != nil else { return }

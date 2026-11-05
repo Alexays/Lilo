@@ -1,15 +1,18 @@
-<!-- A site or extension permission request, asked from the address bar. -->
+<!-- A site, extension or agent action permission request, asked from the address bar. -->
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
   import { type PermissionRequest, dismissSitePermissionRequest, respondToPermissionRequest } from "../../stores/urlBarDrawer.svelte";
   import { extensionPermissionLines, permissionRequestIcon, sitePermissionAskKey } from "./urlBarDrawerModel";
   import DrawerPrompt from "./DrawerPrompt.svelte";
+  import { getExtensions } from "../../stores/extensions.svelte";
+  import { extensionIconSrc } from "../extensions/extensionPanelModel";
 
   let { request }: { request: PermissionRequest } = $props();
 
   const MAX_LINES = 4;
   // An agent about to send, pay, delete or publish.
   const agentAction = $derived(request.kind === "agentControl" ? (request.action ?? null) : null);
+  const extension = $derived(request.kind === "extensionPermission" ? getExtensions().find((candidate) => candidate.id === request.extensionId) : undefined);
   const lines = $derived(request.kind === "extensionPermission" ? extensionPermissionLines(request, (key) => t(key)) : []);
 
   // Read once the whole dispatch is over: an Escape any other surface took (a panel, the command
@@ -27,6 +30,7 @@
 
 <DrawerPrompt
   icon={permissionRequestIcon(request)}
+  iconImage={extension && extensionIconSrc(extension)}
   dismissLabel={t("permissionPrompt.deny")}
   confirmLabel={t(agentAction ? "permissionPrompt.allowOnce" : "permissionPrompt.allow")}
   alternateLabel={agentAction?.site && agentAction.kind !== "upload" ? t("permissionPrompt.alwaysAllowOnSite") : undefined}
@@ -37,6 +41,7 @@
   {#if request.kind === "sitePermission"}
     <strong>{request.origin}</strong> {t(sitePermissionAskKey(request.type))}
   {:else if request.kind === "agentControl"}
+    <!-- Only an agent's action comes here: one asking to connect gets the modal. -->
     <strong>{request.clientName}</strong>
     {#if agentAction}
       {t({
@@ -49,11 +54,7 @@
         site: agentAction.site,
         tab: agentAction.tab,
       })}
-    {:else}
-      {request.profileName ? t("permissionPrompt.agentProfile", { profile: request.profileName }) : t("permissionPrompt.agentControl")}
-    {/if}
-    {#if request.executable}
-      <ul class="request-lines"><li>{t("permissionPrompt.agentExecutable", { path: request.executable })}</li></ul>
+      <span class="request-note">{t("settings.items.agentAskBeforeActions.description")}</span>
     {/if}
   {:else}
     <strong>{request.extensionName}</strong> {t("permissionPrompt.requestsAccess")}
@@ -76,6 +77,13 @@
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
     line-height: 1.5;
+  }
+
+  .request-note {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
   }
 
   .more {

@@ -3,26 +3,20 @@
 <script lang="ts">
   import { tick } from "svelte";
   import SpaceEditor from "../spaces/SpaceEditor.svelte";
-  import DiagnosticsPanel from "../diagnostics/DiagnosticsPanel.svelte";
+  import DiagnosticsNav from "../diagnostics/DiagnosticsNav.svelte";
   import DesignSystemPanel from "../diagnostics/DesignSystemPanel.svelte";
-  import DownloadsPanel from "../downloads/DownloadsPanel.svelte";
+  import DownloadsNav from "../downloads/DownloadsNav.svelte";
   import ScreenshotPanel from "../screenshot/ScreenshotPanel.svelte";
-  import ProcessManagerPanel from "../diagnostics/ProcessManagerPanel.svelte";
+  import ProcessManagerNav from "../diagnostics/ProcessManagerNav.svelte";
   import SettingsPanel from "../settings/SettingsPanel.svelte";
   import HistoryNav from "../history/HistoryNav.svelte";
-  import {
-    getActivePanel,
-    isDesignSystemShellOpen,
-    isHistoryShellOpen,
-    isSettingsShellOpen,
-  } from "../../stores/panels.svelte";
+  import { getActivePanel, getPageShell, isDesignSystemShellOpen } from "../../stores/panels.svelte";
   import { isVerticalLayout } from "../../stores/tabLayout.svelte";
 
   let { active = false }: { active?: boolean } = $props();
   const activePanel = $derived(getActivePanel());
-  const openPanel = $derived(
-    isSettingsShellOpen() ? "settings" : isDesignSystemShellOpen() ? "designSystem" : isHistoryShellOpen() ? "history" : activePanel,
-  );
+  const pageShell = $derived(isVerticalLayout() ? getPageShell() : null);
+  const openPanel = $derived(pageShell ?? (isDesignSystemShellOpen() ? "designSystem" : activePanel));
   let panelEl: HTMLDivElement | undefined = $state();
 
   // An opening panel takes the focus itself, not its first control: a script focus after Cmd+,
@@ -41,26 +35,24 @@
 </script>
 
 <div class="sidebar-panel" class:active bind:this={panelEl}>
-  {#if isSettingsShellOpen() && isVerticalLayout()}
+  <!-- A system screen's navigation; with a tab strip it sits inside the screen instead. -->
+  {#if pageShell === "settings"}
     <SettingsPanel />
-  {/if}
-  {#if isHistoryShellOpen() && isVerticalLayout()}
+  {:else if pageShell === "history"}
     <HistoryNav />
+  {:else if pageShell === "downloads"}
+    <DownloadsNav />
+  {:else if pageShell === "processes"}
+    <ProcessManagerNav />
+  {:else if pageShell === "diagnostics"}
+    <DiagnosticsNav />
   {/if}
   {#if isDesignSystemShellOpen()}
     <DesignSystemPanel />
   {/if}
-  {#if activePanel === "editor"}
+  <!-- With a tab strip the editor drops from the strip's Space button instead. -->
+  {#if activePanel === "editor" && isVerticalLayout()}
     <SpaceEditor />
-  {/if}
-  {#if activePanel === "diagnostics"}
-    <DiagnosticsPanel />
-  {/if}
-  {#if activePanel === "processes"}
-    <ProcessManagerPanel />
-  {/if}
-  {#if activePanel === "downloads"}
-    <DownloadsPanel />
   {/if}
   {#if activePanel === "screenshot"}
     <ScreenshotPanel />

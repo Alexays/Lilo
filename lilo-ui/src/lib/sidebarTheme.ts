@@ -10,20 +10,26 @@ const DEFAULT_LIGHT_SIDEBAR = "#e2daf1";
 const DEFAULT_DARK_SIDEBAR = "#1a1a2e";
 const LIGHT_CANVAS: RGB = { r: 250, g: 247, b: 255 };
 const DARK_CANVAS: RGB = { r: 43, g: 47, b: 60 };
-const LIGHT_CONTRAST = "#1d1d1f";
 const DARK_CONTRAST = "#f8f9fd";
 const LIGHT_CONTRAST_RGB: RGB = { r: 0x1d, g: 0x1d, b: 0x1f };
 const DARK_CONTRAST_RGB: RGB = { r: 0xf8, g: 0xf9, b: 0xfd };
-// WCAG AA: text, and icons or states.
-export const TEXT_CONTRAST = 4.5;
-export const ICON_CONTRAST = 3;
-// The dark theme's selected and active rows, lifted this far toward the text color.
+// APCA lightness contrast (Lc): fluent text, and icons or states.
+export const TEXT_CONTRAST = 60;
+export const ICON_CONTRAST = 45;
+// The dark sidebar's lifted rows, this far toward the text color, which its darkening keeps legible.
 const DARK_SELECTED_LIFT = 0.2;
+const ELEVATED_FILL = 0.08;
+// The light-text selected surface, this far toward the text color.
+const SELECTED_LIFT = 0.14;
 const DARK_ACTIVE_LIFT = 0.28;
-// The active tab row mixes this much of the accent into the selected row (TabItem's .active).
 const ACTIVE_TAB_TINT = 0.18;
+// The accent's least OKLCH chroma, unless the Space is a gray (under GRAY_CHROMA).
+const ACCENT_CHROMA = 0.1;
+const GRAY_CHROMA = 0.02;
 // The least OKLCH chroma a darkened dark sidebar keeps (the Space's own when lower), so its hue stays visible.
 const DARK_TINT_CHROMA = 0.06;
+// How much of an open folder's block shows over the sidebar.
+const FOLDER_OPEN_LAYER = 0.25;
 const WHITE: RGB = { r: 255, g: 255, b: 255 };
 const BLACK: RGB = { r: 0, g: 0, b: 0 };
 const LIGHT_DANGER = "#d96a74";
@@ -153,29 +159,29 @@ export function contrastRatio(a: RGB, b: RGB): number {
 	return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
 
-function pickContrast(color: RGB): string {
-	return contrastRatio(color, DARK_CONTRAST_RGB) >= contrastRatio(color, LIGHT_CONTRAST_RGB)
-		? DARK_CONTRAST
-		: LIGHT_CONTRAST;
-}
-
 function tone(background: RGB, foreground: RGB, amount: number): string {
 	return toHex(mix(background, foreground, amount));
 }
 
 /**
  * `foreground`, darkened on a light `background` or lightened on a dark one until it clears
- * `minimum`; `fallback` (the text color) when even black or white does not.
+ * `minimum` by `measure`; `fallback` (the text color) when even black or white does not.
  */
-export function ensureContrast(foreground: string, background: string, minimum: number, fallback: string): string {
+export function ensureContrast(
+	foreground: string,
+	background: string,
+	minimum: number,
+	fallback: string,
+	measure: (text: RGB, background: RGB) => number = apcaContrast,
+): string {
 	const fg = parseHexColor(foreground);
 	const bg = parseHexColor(background);
 	if (!fg || !bg) return fallback;
-	if (contrastRatio(fg, bg) >= minimum) return toHex(fg);
-	const target = relativeLuminance(bg) > 0.18 ? BLACK : WHITE;
+	if (measure(fg, bg) >= minimum) return toHex(fg);
+	const target = measure(BLACK, bg) >= measure(WHITE, bg) ? BLACK : WHITE;
 	for (let step = 0.05; step <= 1.0001; step += 0.05) {
 		const candidate = mix(fg, target, step);
-		if (contrastRatio(candidate, bg) >= minimum) return toHex(candidate);
+		if (measure(candidate, bg) >= minimum) return toHex(candidate);
 	}
 	return fallback;
 }
@@ -188,69 +194,110 @@ export function deriveSidebarThemeVariables(
 	const fallback = prefersDark ? DEFAULT_DARK_SIDEBAR : DEFAULT_LIGHT_SIDEBAR;
 	const fallbackColor = parseHexColor(fallback) ?? LIGHT_CANVAS;
 	const accentSource = parseHexColor(input ?? "") ?? fallbackColor;
-	const tinted = mix(
-		accentSource,
-		prefersDark ? DARK_CANVAS : LIGHT_CANVAS,
-		prefersDark ? 0.58 : 0.72,
-	);
+	if (!prefersDark) return surfaceVariables(accentSource, accentSource, false, glass);
+	const tinted = mix(accentSource, DARK_CANVAS, 0.58);
 	const darkAccent = toHex(mix(accentSource, WHITE, 0.18));
 	let sidebar = tinted;
-	// Darken a too-light dark background in OKLCH, keeping the Space's hue, until primary text clears AA
-	// on its lightest rows: the active row and the active tab (accent mixed in). NSColor+CSSHex mirrors it.
-	if (prefersDark) {
-		const textFails = (candidate: RGB): boolean => {
-			const accent = parseHexColor(ensureContrast(darkAccent, toHex(candidate), ICON_CONTRAST, DARK_CONTRAST)) ?? WHITE;
-			const selected = mix(candidate, DARK_CONTRAST_RGB, DARK_SELECTED_LIFT);
-			// Unrounded: the row blends it with color-mix(), past the 8-bit variables.
-			const activeTab = {
-				r: selected.r + (accent.r - selected.r) * ACTIVE_TAB_TINT,
-				g: selected.g + (accent.g - selected.g) * ACTIVE_TAB_TINT,
-				b: selected.b + (accent.b - selected.b) * ACTIVE_TAB_TINT,
-			};
-			return (
-				contrastRatio(activeTab, DARK_CONTRAST_RGB) < TEXT_CONTRAST ||
-				contrastRatio(mix(candidate, DARK_CONTRAST_RGB, DARK_ACTIVE_LIFT), DARK_CONTRAST_RGB) < TEXT_CONTRAST
-			);
+	// Darken a too-light dark background in OKLCH, keeping the Space's hue, until primary text clears 4.5:1 on a lifted
+	// row and on that row tinted by the lightened Space color. NSColor+CSSHex mirrors it on WCAG 2 ratios: APCA would
+	// leave dark sidebars far lighter, and the text is always light there.
+	const textFails = (candidate: RGB): boolean => {
+		const accent = parseHexColor(ensureContrast(darkAccent, toHex(candidate), 3, DARK_CONTRAST, contrastRatio)) ?? WHITE;
+		const selected = mix(candidate, DARK_CONTRAST_RGB, DARK_SELECTED_LIFT);
+		const activeTab = {
+			r: selected.r + (accent.r - selected.r) * ACTIVE_TAB_TINT,
+			g: selected.g + (accent.g - selected.g) * ACTIVE_TAB_TINT,
+			b: selected.b + (accent.b - selected.b) * ACTIVE_TAB_TINT,
 		};
-		if (textFails(sidebar)) {
-			const [lightness, a, b] = toOklab(accentSource);
-			const [, ta, tb] = toOklab(tinted);
-			const scale = Math.min(1, Math.max(DARK_TINT_CHROMA, Math.hypot(ta, tb)) / Math.hypot(a, b));
-			for (let step = 1; step <= 100 && textFails(sidebar); step += 1) {
-				sidebar = fromOklab(lightness - step / 100, a * scale, b * scale);
-			}
+		return (
+			contrastRatio(DARK_CONTRAST_RGB, activeTab) < 4.5 ||
+			contrastRatio(DARK_CONTRAST_RGB, mix(candidate, DARK_CONTRAST_RGB, DARK_ACTIVE_LIFT)) < 4.5
+		);
+	};
+	if (textFails(sidebar)) {
+		const [lightness, a, b] = toOklab(accentSource);
+		const [, ta, tb] = toOklab(tinted);
+		const scale = Math.min(1, Math.max(DARK_TINT_CHROMA, Math.hypot(ta, tb)) / Math.hypot(a, b));
+		for (let step = 1; step <= 100 && textFails(sidebar); step += 1) {
+			sidebar = fromOklab(lightness - step / 100, a * scale, b * scale);
 		}
 	}
 	return surfaceVariables(sidebar, accentSource, prefersDark, glass);
 }
 
+// APCA 0.0.98G luminance: WCAG 2's ratio favors dark text on saturated mid tones (a medium blue or red) that read
+// far better with light text, so the text's polarity is chosen perceptually.
+export function apcaLuminance(color: RGB): number {
+	const y = 0.2126729 * (color.r / 255) ** 2.4 + 0.7151522 * (color.g / 255) ** 2.4 + 0.072175 * (color.b / 255) ** 2.4;
+	return y > 0.022 ? y : y + (0.022 - y) ** 1.414;
+}
+
+/** APCA lightness contrast of `text` on `background`, as an absolute Lc (0 to about 106). */
+export function apcaContrast(text: RGB, background: RGB): number {
+	const t = apcaLuminance(text);
+	const b = apcaLuminance(background);
+	const contrast = b > t ? (b ** 0.56 - t ** 0.57) * 1.14 : (b ** 0.65 - t ** 0.62) * 1.14;
+	return Math.abs(contrast) < 0.1 ? 0 : (Math.abs(contrast) - 0.027) * 100;
+}
+
+/** `#1d1d1f` or `#f8f9fd`, whichever reads better on `color` by APCA; pure black or white of the same polarity when
+ * that one is under the text threshold on the surface that moves furthest toward the text (cards, or the selected row under light text). */
+function textColor(color: RGB): RGB {
+	const light = apcaContrast(DARK_CONTRAST_RGB, color) >= apcaContrast(LIGHT_CONTRAST_RGB, color);
+	const soft = light ? DARK_CONTRAST_RGB : LIGHT_CONTRAST_RGB;
+	if (apcaContrast(soft, mix(color, soft, light ? SELECTED_LIFT : ELEVATED_FILL)) >= TEXT_CONTRAST) return soft;
+	return light ? WHITE : BLACK;
+}
+
 /**
- * Every sidebar variable over `sidebar`, its accent drawn from `accentSource`. On `glass`, the fills keep their
+ * The Space's own hue, its chroma raised to `ACCENT_CHROMA` (a gray stays gray), darkened, or lightened toward white when
+ * no darker shade can, until it clears the icon threshold on the sidebar and on the selected surface, and its label,
+ * white or `#1d1d1f`, the text one. Lightening fades the chroma with it: a clipped sRGB channel would turn the hue.
+ */
+function spaceAccent(source: RGB, sidebar: RGB, selected: RGB, fallback: RGB): { accent: RGB; label: RGB } {
+	const [lightness, a, b] = toOklab(source);
+	const chroma = Math.hypot(a, b);
+	const scale = chroma < GRAY_CHROMA ? 1 : Math.max(chroma, ACCENT_CHROMA) / chroma;
+	for (const direction of [-1, 1]) {
+		for (let step = 0; step <= 100; step += 1) {
+			const shifted = lightness + (direction * step) / 100;
+			const fit = direction < 0 ? 1 : Math.max(0, Math.min(1, (1 - shifted) / (1 - lightness)));
+			const accent = fromOklab(shifted, a * scale * fit, b * scale * fit);
+			const label = apcaContrast(WHITE, accent) >= apcaContrast(LIGHT_CONTRAST_RGB, accent) ? WHITE : LIGHT_CONTRAST_RGB;
+			if (
+				apcaContrast(accent, sidebar) >= ICON_CONTRAST &&
+				apcaContrast(accent, selected) >= ICON_CONTRAST &&
+				apcaContrast(label, accent) >= TEXT_CONTRAST
+			) {
+				return { accent, label };
+			}
+		}
+	}
+	return { accent: fallback, label: textColor(fallback) };
+}
+
+/**
+ * Every sidebar variable over `sidebar`, its accent drawn from `accentSource`. On `glass`, the opaque fills keep their
  * color at 70%, so the glass shows through them while their text keeps about the contrast it has on the solid fill.
+ * Hover, pressed, separators and the selected surface are translucent layers, so they hold on glass as they are.
  */
 export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: boolean, glass = false): Record<string, string> {
-	const darkAccent = toHex(mix(accentSource, WHITE, 0.18));
 	const sidebarHex = toHex(sidebar);
-	const sidebarContrast = pickContrast(sidebar);
-	const contrastColor =
-		parseHexColor(sidebarContrast) ??
-		parseHexColor(prefersDark ? DARK_CONTRAST : LIGHT_CONTRAST) ??
-		LIGHT_CANVAS;
-	let accent = prefersDark ? parseHexColor(darkAccent) ?? accentSource : mix(accentSource, contrastColor, 0.08);
-	// Light accents carry white labels, as macOS buttons do: darkened just enough for white to read on them.
-	for (let step = 1; !prefersDark && step <= 20 && contrastRatio(WHITE, accent) < TEXT_CONTRAST; step += 1) {
-		accent = mix(accent, BLACK, 0.05);
-	}
-	const accentHex = ensureContrast(toHex(accent), sidebarHex, ICON_CONTRAST, sidebarContrast);
+	const contrastColor = textColor(sidebar);
+	const sidebarContrast = toHex(contrastColor);
+	const darkText = relativeLuminance(contrastColor) < 0.5;
+	// One selected surface for the selected row, the pinned tiles, the current Space and the update card: a lighter
+	// shade of the sidebar, white over it under dark text, the text color over it under light text.
+	const selectedLayer = darkText ? "#ffffff 40%" : `${sidebarContrast} ${SELECTED_LIFT * 100}%`;
+	const selectedSolid = darkText ? mix(sidebar, WHITE, 0.4) : mix(sidebar, contrastColor, SELECTED_LIFT);
+	const { accent, label } = spaceAccent(accentSource, sidebar, selectedSolid, contrastColor);
+	const accentHex = toHex(accent);
 	const accentHover = ensureContrast(
-		toHex(mix(parseHexColor(accentHex) ?? accent, contrastColor, prefersDark ? 0.1 : 0.16)),
+		toHex(mix(accent, contrastColor, prefersDark ? 0.1 : 0.16)),
 		sidebarHex,
 		ICON_CONTRAST,
 		sidebarContrast,
 	);
-	const accentText = prefersDark
-		? ensureContrast(pickContrast(parseHexColor(accentHex) ?? accent), accentHex, TEXT_CONTRAST, sidebarContrast)
-		: "#ffffff";
 	const dangerSource =
 		parseHexColor(prefersDark ? DARK_DANGER : LIGHT_DANGER) ?? contrastColor;
 	const danger = toHex(
@@ -258,29 +305,31 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 	);
 	const fill = (amount: number): string =>
 		glass ? `color-mix(in srgb, ${tone(sidebar, contrastColor, amount)} 70%, transparent)` : tone(sidebar, contrastColor, amount);
+	const layer = (percent: number): string => `color-mix(in srgb, ${sidebarContrast} ${percent}%, transparent)`;
+	// Secondary text also sits on quiet fields (the address), a hover layer darker or lighter than the sidebar.
+	const quietField = tone(sidebar, contrastColor, prefersDark ? 0.08 : 0.06);
 
 	return {
 		"--sidebar-bg": sidebarHex,
 		"--sidebar-contrast": sidebarContrast,
-		"--sidebar-secondary": ensureContrast(tone(sidebar, contrastColor, 0.76), sidebarHex, TEXT_CONTRAST, sidebarContrast),
+		"--sidebar-secondary": ensureContrast(tone(sidebar, contrastColor, 0.76), quietField, TEXT_CONTRAST, sidebarContrast),
 		"--sidebar-muted": ensureContrast(tone(sidebar, contrastColor, 0.58), sidebarHex, TEXT_CONTRAST, sidebarContrast),
 		"--sidebar-panel": fill(prefersDark ? 0.12 : 0.05),
 		"--sidebar-subtle": fill(prefersDark ? 0.08 : 0.03),
-		"--sidebar-hover": fill(prefersDark ? 0.18 : 0.1),
-		"--sidebar-active": fill(prefersDark ? DARK_ACTIVE_LIFT : 0.16),
+		"--sidebar-hover": layer(prefersDark ? 8 : 6),
+		"--sidebar-active": layer(prefersDark ? 12 : 10),
 		"--sidebar-selected": prefersDark
 			? fill(DARK_SELECTED_LIFT)
 			: glass ? "color-mix(in srgb, #ffffff 70%, transparent)" : "#ffffff",
-		"--sidebar-elevated": fill(prefersDark ? 0.16 : 0.08),
+		"--sidebar-sel": `color-mix(in srgb, ${selectedLayer}, transparent)`,
+		"--sidebar-sel-solid": toHex(selectedSolid),
+		"--sidebar-sel-ring": layer(6),
+		"--sidebar-elevated": fill(prefersDark ? 0.16 : ELEVATED_FILL),
 		"--sidebar-border": tone(sidebar, contrastColor, prefersDark ? 0.24 : 0.14),
-		"--sidebar-separator": tone(
-			sidebar,
-			contrastColor,
-			prefersDark ? 0.18 : 0.1,
-		),
+		"--sidebar-separator": layer(prefersDark ? 14 : 12),
 		"--sidebar-accent": accentHex,
 		"--sidebar-accent-hover": accentHover,
-		"--sidebar-accent-text": accentText,
+		"--sidebar-accent-text": toHex(label),
 		"--sidebar-danger": ensureContrast(danger, sidebarHex, TEXT_CONTRAST, sidebarContrast),
 		"--sidebar-shadow": prefersDark
 			? "rgba(9, 12, 18, 0.28)"
@@ -289,8 +338,8 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 }
 
 /**
- * A folder's colors over its open background: the tint an open folder draws, darkened a little in
- * dark mode, and the folder color guarded to 3:1 on it (the sidebar's text color when it cannot be).
+ * A folder's open block, a layer of its hue taken away from the sidebar's text so text keeps its contrast on it, and
+ * its color guarded to the icon threshold on the sidebar and on that block (the sidebar's text color when it cannot be).
  */
 export function deriveFolderColorVariables(
 	folderColor: string,
@@ -299,11 +348,13 @@ export function deriveFolderColorVariables(
 ): { "--folder-accent": string; "--folder-open-bg": string } {
 	const sidebar = parseHexColor(sidebarBg) ?? (prefersDark ? DARK_CANVAS : LIGHT_CANVAS);
 	const folder = parseHexColor(folderColor) ?? sidebar;
-	let open = mix(sidebar, folder, prefersDark ? 0.14 : 0.11);
-	if (prefersDark) open = mix(open, BLACK, 0.08);
-	const openHex = toHex(open);
+	const text = textColor(sidebar);
+	const [, a, b] = toOklab(folder);
+	const layer = fromOklab(relativeLuminance(text) < 0.5 ? 0.97 : 0.2, a, b);
+	const open = toHex(mix(sidebar, layer, FOLDER_OPEN_LAYER));
+	const textHex = toHex(text);
 	return {
-		"--folder-accent": ensureContrast(toHex(folder), openHex, ICON_CONTRAST, pickContrast(open)),
-		"--folder-open-bg": openHex,
+		"--folder-accent": ensureContrast(ensureContrast(toHex(folder), open, ICON_CONTRAST, textHex), sidebarBg, ICON_CONTRAST, textHex),
+		"--folder-open-bg": `color-mix(in srgb, ${toHex(layer)} ${FOLDER_OPEN_LAYER * 100}%, transparent)`,
 	};
 }

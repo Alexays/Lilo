@@ -45,15 +45,17 @@
   const metaLine = $derived(
     failed
       ? extension.error || t("extensions.failedTitle")
-      : [
-          `v${extension.version}`,
-          ...extensionCapabilities(extension).map((c) => t(META_LABEL_KEYS[c])),
-          ...(extension.declinedUpdate
-            ? [t("extensions.needsPermissions")]
-            : extension.availableUpdate
-              ? [t("extensions.updateAvailable", { version: extension.availableUpdate })]
-              : []),
-        ].join(" · "),
+      : [`v${extension.version}`, ...extensionCapabilities(extension).map((c) => t(META_LABEL_KEYS[c]))].join(" · "),
+  );
+  // What waits on the user, set apart in the accent color after the meta line.
+  const updateLine = $derived(
+    failed
+      ? ""
+      : extension.declinedUpdate
+        ? t("extensions.needsPermissions")
+        : extension.availableUpdate
+          ? t("extensions.updateAvailable", { version: extension.availableUpdate })
+          : "",
   );
 </script>
 
@@ -83,7 +85,7 @@
     </span>
     <span class="row-copy">
       <span class="row-name">{name}</span>
-      <span class="row-meta" class:failed title={metaLine}>{metaLine}</span>
+      <span class="row-meta" class:failed title={updateLine ? `${metaLine} · ${updateLine}` : metaLine}>{metaLine}{#if updateLine} · <span class="row-update">{updateLine}</span>{/if}</span>
     </span>
   </button>
 
@@ -151,11 +153,8 @@
   .extension-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    background: var(--bg-elevated);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
+    gap: var(--space-8);
+    padding: 11px 14px;
     min-width: 0;
   }
 
@@ -163,7 +162,7 @@
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     min-width: 0;
     padding: 0;
     background: none;
@@ -180,8 +179,8 @@
 
   .row-icon {
     position: relative;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: var(--radius-sm);
     background: var(--accent);
     color: var(--accent-text);
@@ -216,7 +215,7 @@
 
   .row-name {
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-medium);
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -224,11 +223,15 @@
   }
 
   .row-meta {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .row-update {
+    color: var(--accent-ink);
   }
 
   .row-meta.failed {
@@ -274,6 +277,13 @@
     border-radius: var(--radius-sm);
     color: var(--text-muted);
     cursor: pointer;
+  }
+
+  .row-main:focus-visible,
+  .row-menu:focus-visible,
+  .row-error:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   .row-menu:hover {

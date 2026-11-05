@@ -28,19 +28,15 @@
 		"terminalTheme": "主题",
 		"terminalThemeDescription": "Lilo 会随空间的颜色调整，并确保所有颜色清晰可辨。",
 		"terminalImport": "导入...",
-		"terminalImportTitle": "导入主题",
-		"terminalImportDescription": "iTerm2 颜色预置（.itermcolors）、VS Code 颜色主题（.json）或 Ghostty 主题文件。",
 		"terminalFont": "字体",
-		"terminalFontDescription": "支持连字的字体（如 JetBrains Mono 或 Fira Code）会显示连字。",
+		"terminalFontDescription": "支持连字的字体（如 JetBrains Mono 或 Fira Code）会显示连字。字号以磅为单位，应用于所有终端标签页。",
 		"terminalFontSystem": "系统（SF Mono）",
 		"terminalFontSize": "大小",
-		"terminalFontSizeDescription": "以磅为单位，应用于所有终端标签页。",
 		"terminalScrollback": "每个终端的历史记录",
 		"terminalScrollbackDescription": "10 MB 约可存储 100,000 行。",
 		"terminalBehaviorGroup": "行为",
 		"terminalNotify": "长时间运行的命令完成时通知",
 		"terminalNotifyDescription": "命令运行超过 10 秒，且你正在其他位置时通知。",
-		"terminalSleepGroup": "睡眠",
 		"terminalPreventSleepDescription": "命令正在等待输入或已静默 5 分钟时，不会阻止睡眠。",
 		"terminalLidStatus": {
 			"unsigned": "需要已签名的 Lilo 版本。",
@@ -79,7 +75,7 @@
 			"pride": "彩虹",
 			"clay": "陶土"
 		},
-		"importBrowsersAction": "导入",
+		"importBrowsersAction": "导入...",
 		"passwordManagerAction": "选取",
 		"passwordManagerChange": "更改",
 		"replayOnboardingAction": "重新播放",
@@ -121,7 +117,6 @@
 			"storage": "存储空间"
 		},
 		"manageHistory": "管理历史记录",
-		"manageHistoryDesc": "逐页浏览、搜索和删除",
 		"historyTimeRange": "历史记录时间范围",
 		"historyRangeHour": "最近一小时",
 		"historyRangeDay": "最近 24 小时",
@@ -147,14 +142,14 @@
 			"privacy": "隐私",
 			"extensions": "扩展",
 			"advanced": "高级",
-			"agents": "AI 智能体"
+			"agents": "智能体"
 		},
 		"groups": {
 			"browser": "浏览器",
 			"search": "搜索",
 			"downloads": "下载",
 			"theme": "主题",
-			"tabLayout": "标签页",
+			"tabLayout": "布局",
 			"pages": "网页",
 			"spaces": "空间",
 			"playback": "播放",
@@ -162,29 +157,29 @@
 			"contentBlocking": "内容拦截",
 			"protection": "保护",
 			"browsingData": "浏览数据",
-			"tools": "工具",
+			"tools": "开发者工具",
 			"permissions": "权限",
 			"zoom": "缩放",
 			"siteData": "数据",
 			"sites": "网站（{count}）",
 			"updates": "更新",
 			"passwords": "密码",
-			"agentAccess": "访问权限",
-			"agentClients": "智能体",
+			"agentAccess": "使用 Lilo 的智能体",
+			"agentClients": "可使用 Lilo 的应用",
 			"lilo": "Lilo",
 			"tabsWindows": "标签页与窗口",
 			"sitePermissions": "网站权限",
 			"profiles": "个人资料",
 			"otherAppLinks": "其他 App 中的链接",
-			"blockerCategories": "Lilo 拦截的内容",
-			"blockerExceptions": "列表与例外"
+			"blockerExceptions": "列表与例外",
+			"agentConversations": "对话"
 		},
 		"searchPlaceholder": "搜索设置",
 		"searchResultsTitle": "搜索结果",
 		"searchEmpty": "没有与“{query}”匹配的设置。",
 		"clearData": {
 			"total": "由此个人资料存储",
-			"measuring": "正在计算此个人资料存储的数据...",
+			"title": "清除浏览数据",
 			"freed": "将释放 {size}",
 			"rangeNote": "仅清除所选时间范围内存储的数据。",
 			"hints": {
@@ -283,8 +278,12 @@
 			"addressPlacement": {
 				"title": "地址",
 				"description": "与标签页放在一起、显示在网页上方或隐藏。可使用命令栏输入地址。",
-				"keywords": "地址栏 URL 工具栏 位置 隐藏",
-				"lockedRight": "标签页位于右侧时，可将地址显示在网页上方或隐藏。"
+				"keywords": "地址栏 URL 工具栏 位置 隐藏"
+			},
+			"hideSpaceNames": {
+				"title": "隐藏空间名称",
+				"description": "底栏只用图标显示每个空间，即使有位置显示名称。",
+				"keywords": "空间 名称 标签 底栏 图标 隐藏"
 			},
 			"theme": {
 				"title": "主题",
@@ -423,7 +422,8 @@
 			"clearData": {
 				"title": "清除浏览数据",
 				"description": "清除指定时间范围内的历史记录、Cookie、缓存和网站数据。",
-				"keywords": "历史记录 Cookie 缓存 删除 抹掉"
+				"keywords": "历史记录 Cookie 缓存 删除 抹掉",
+				"action": "清除浏览数据..."
 			},
 			"loadUnpacked": {
 				"title": "载入解压缩的扩展",
@@ -476,8 +476,8 @@
 				"keywords": "密码 锁定 文件夹 隐私"
 			},
 			"agentControl": {
-				"title": "允许 AI 智能体使用 Lilo",
-				"description": "Claude Code、Codex 或 Cursor 会在专属的“智能体”空间中工作。Lilo 本身不内置 AI。",
+				"title": "允许智能体使用 Lilo",
+				"description": "Claude Code、Codex 或 Cursor 会在专属的“智能体”空间中工作。",
 				"keywords": "智能体 AI MCP Claude Codex Cursor 自动化 远程控制"
 			},
 			"agentAskBeforeActions": {
@@ -549,6 +549,16 @@
 				"title": "按网站设置",
 				"description": "各个网站的权限、缩放和已存储的数据。",
 				"keywords": "网站 权限 Cookie 缩放 数据 存储空间"
+			},
+			"agentsEnabled": {
+				"title": "与你的智能体对话",
+				"description": "在标签页中与 Claude Code、Codex、Gemini 等智能体对话，使用你自己的订阅。",
+				"keywords": "智能体 AI ACP 聊天 对话 询问 Claude Codex Gemini Copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "智能体完成时通知",
+				"description": "你未在查看的对话完成时发送通知。",
+				"keywords": "智能体 通知 提醒 完成 结束"
 			}
 		},
 		"devices": {
@@ -596,16 +606,16 @@
 			"copy": "拷贝配置",
 			"clientDescription": "将 Lilo 添加到其 MCP 服务器。",
 			"clientConnected": "Lilo 已在其 MCP 服务器中。",
-			"lastSeen": "上次连接于 {time}",
 			"revoke": "移除",
-			"readyDescription": "首次连接时，Lilo 会征求你的同意。",
 			"status": {
 				"acting": "正在操作",
 				"connected": "已连接",
 				"allowed": "已允许",
 				"notInstalled": "未安装",
 				"ready": "已配置"
-			}
+			},
+			"allowedSeen": "已允许，上次连接 {time}",
+			"readyLine": "已配置。首次连接时 Lilo 会询问你。"
 		},
 		"navGroups": {
 			"tools": "工具"
@@ -633,7 +643,7 @@
 			"lastProfile": "最后一个个人资料必须保留：每个空间都需要一个个人资料。",
 			"extensionCount": "{count} 个扩展",
 			"extensionCountOne": "1 个扩展",
-			"newProfile": "新建个人资料",
+			"newProfile": "新建个人资料...",
 			"newProfileDetail": "独立的 Cookie、登录信息和扩展",
 			"namePlaceholder": "个人资料名称",
 			"create": "创建",
@@ -670,7 +680,6 @@
 			"emptyPattern": "规则需要一个主机名或要匹配的文字。"
 		},
 		"shortcuts": {
-			"intro": "点按快捷键，然后按下新按键。按 Esc 取消，按 Delete 清除该操作的快捷键。",
 			"searchPlaceholder": "搜索快捷键",
 			"preset": "预置",
 			"presetDescription": "替换你更改过的所有快捷键。",
@@ -687,9 +696,10 @@
 			"conflict": "{keys} 已用于“{name}”。",
 			"replace": "替换",
 			"cancel": "取消",
-			"noResults": "没有匹配的快捷键。"
+			"noResults": "没有匹配的快捷键。",
+			"note": "点按一个快捷键，然后按下新的按键",
+			"recordingHint": "按 Esc 取消，按 Delete 移除该操作的快捷键。"
 		},
-		"terminalAppearanceGroup": "外观",
 		"terminalSleepMode": "命令运行时保持 Mac 唤醒",
 		"terminalSleepModes": {
 			"off": "关闭",
@@ -704,7 +714,37 @@
 			"requiresApproval": "需要批准",
 			"enabled": "已允许",
 			"notFound": "缺失"
-		}
+		},
+		"notes": {
+			"live": "选择后立即生效",
+			"spaces": {
+				"one": "{count} 个空间",
+				"other": "{count} 个空间"
+			},
+			"profiles": {
+				"one": "{count} 个配置文件",
+				"other": "{count} 个配置文件"
+			},
+			"blocking": "正在拦截 {total} 类中的 {count} 类",
+			"blockingOff": "拦截已关闭",
+			"profile": "{name} 配置文件",
+			"extensions": {
+				"one": "{profile} 中有 {count} 个扩展",
+				"other": "{profile} 中有 {count} 个扩展"
+			},
+			"terminal": "更改适用于每个终端标签页",
+			"agents": "Lilo 本身不内置 AI",
+			"advanced": "供开发和测试使用",
+			"searchMatches": {
+				"one": "{count} 项设置与“{query}”匹配",
+				"other": "{count} 项设置与“{query}”匹配"
+			}
+		},
+		"callDock": {
+			"sidebar": "在边栏中",
+			"floating": "浮动窗口"
+		},
+		"terminalImportCaption": "可导入 iTerm2 颜色预设 (.itermcolors)、VS Code 颜色主题 (.json) 或 Ghostty 主题文件。"
 	},
 	"nav": {
 		"navigationControls": "导航控制",
@@ -844,9 +884,19 @@
 		"newTab": "新建标签页",
 		"newTerminal": "新建终端",
 		"clearUnpinnedTooltip": "归档未固定的标签页",
+		"listOptions": "排序和分组",
 		"pinnedTabs": "固定标签页",
 		"openTabs": "打开的标签页",
-		"dropToPin": "放下以固定"
+		"dropToPin": "放下以固定",
+		"stackLabel": {"one": "{name}，{count} 个标签页", "other": "{name}，{count} 个标签页"},
+		"closeStack": "关闭堆叠",
+		"trayAgents": "智能体",
+		"trayTerminals": "终端",
+		"trayNeedsInput": {"one": "{count} 个等待输入", "other": "{count} 个等待输入"},
+		"trayWorking": {"one": "{count} 个工作中", "other": "{count} 个工作中"},
+		"trayRunning": {"one": "{count} 个运行中", "other": "{count} 个运行中"},
+		"trayShow": "显示{name}",
+		"trayHide": "隐藏{name}"
 	},
 	"bookmarks": {
 		"groupLabel": "书签标签页",
@@ -865,6 +915,11 @@
 		"colorFrom": {
 			"page": "当前标签页的颜色",
 			"wallpaper": "墙纸的颜色"
+		},
+		"color": "颜色",
+		"colorSource": {
+			"page": "网页",
+			"wallpaper": "墙纸"
 		},
 		"colorSourceHint": {
 			"page": "Lilo 采用当前标签页中网站的颜色。",
@@ -908,6 +963,7 @@
 		"thisSpace": "此空间",
 		"deleteConfirmMessage": "此空间及其所有标签页将被永久删除。",
 		"deleteSpace": "删除空间",
+		"deleteSpaceEllipsis": "删除空间...",
 		"keepSpace": "保留空间",
 		"moreEmojis": "更多表情符号",
 		"lastSpaceHint": "无法删除最后一个空间。",
@@ -944,8 +1000,11 @@
 	},
 	"downloadsPanel": {
 		"title": "下载",
+		"allDownloads": "所有下载",
+		"navLabel": "下载视图",
 		"searchPlaceholder": "搜索下载",
-		"loading": "正在载入下载...",
+		"searchResults": "搜索结果",
+		"quickLookNote": "按空格键快速查看",
 		"emptyTitle": "没有下载",
 		"emptyCopy": "下载的文件会显示在这里。",
 		"noResults": "没有结果",
@@ -987,8 +1046,6 @@
 		"menuButtonLabel": "{name} 的更多操作",
 		"openDetailsLabel": "显示 {name} 的详细信息",
 		"detailEnabled": "已启用",
-		"detailDescription": "描述",
-		"detailCapabilities": "功能",
 		"detailPermissions": "权限",
 		"detailSiteAccess": "网站访问权限",
 		"siteAccessAll": "在其请求的所有网站上运行。",
@@ -1001,9 +1058,10 @@
 		"capabilityContent": "内容脚本",
 		"removeConfirmTitle": "移除“{name}”？",
 		"removeConfirmMessage": "此扩展及其数据将被删除。",
+		"removeExtension": "移除扩展...",
 		"actionFailed": "操作失败。点按以关闭。",
 		"degradedTitle": "后台已停止：部分功能可能无法使用。",
-		"loadUnpacked": "载入解压缩的扩展…",
+		"loadUnpacked": "载入解压缩的扩展...",
 		"addressBarMenu": "扩展",
 		"hostAccessRequestAllow": "允许",
 		"hostAccessRequestTooltip": "允许此扩展访问此网站",
@@ -1031,10 +1089,10 @@
 		"shortcutRecording": "输入快捷键",
 		"executeAction": "激活扩展",
 		"shortcutNone": "未设置",
-		"removeTitle": "移除此扩展",
 		"webStoreTitle": "Chrome 网上应用店",
 		"webStoreHint": "评价、详细信息和开发者页面",
-		"webStoreOpen": "打开"
+		"webStoreOpen": "打开",
+		"installed": "已安装"
 	},
 	"commandBar": {
 		"hintPeek": "预览",
@@ -1071,7 +1129,7 @@
 		"scopeTabs": "标签页",
 		"scopeBookmarks": "书签",
 		"scopeHistory": "历史记录",
-		"scopeArchive": "归档",
+		"scopeArchive": "已归档",
 		"placeholderArchive": "搜索已归档的标签页...",
 		"emptyTitleArchive": "归档",
 		"emptySubtitleArchive": "闲置或被清除的未固定标签页会保存在这里。",
@@ -1103,6 +1161,8 @@
 		"sectionOpenTabs": "打开的标签页",
 		"sectionBookmarks": "书签",
 		"sectionRecentHistory": "最近的历史记录",
+		"sectionFrequentSites": "常用网站",
+		"sectionRecentConversations": "最近的对话",
 		"sectionHistory": "历史记录",
 		"sectionSwitchToTab": "切换到标签页",
 		"sectionGoTo": "前往",
@@ -1116,6 +1176,8 @@
 		"subtitleExactCommand": "完全匹配的命令",
 		"subtitleDefaultEngine": "默认搜索引擎",
 		"hintSwitch": "切换",
+		"agentWaiting": "等你处理：{request}",
+		"agentWorking": "工作中",
 		"hintOpen": "打开",
 		"hintGo": "前往",
 		"hintSearch": "搜索",
@@ -1215,9 +1277,9 @@
 		"tabStartup": "启动",
 		"tabMemory": "内存",
 		"tabLog": "日志",
-		"tabLogCount": "日志（{count}）",
+		"errorCount": {"one": "{count} 个错误", "other": "{count} 个错误"},
 		"copyReport": "拷贝报告",
-		"recordSession": "录制性能会话（存储到“下载”）",
+		"recordSession": "录制会话",
 		"stopRecording": "停止录制",
 		"refresh": "刷新",
 		"bootLabel": "直到界面就绪",
@@ -1232,17 +1294,16 @@
 		"savedStates": "已存储的网页状态",
 		"trackedSpaces": "空间",
 		"hiddenSpacesRetaining": "保留已载入标签页的其他空间",
-		"openProcessManager": "打开进程管理器",
 		"trimDescription": "立即应用自动休眠策略。",
+		"trimTitle": "释放内存",
 		"trimMemory": "释放内存",
+		"processManagerDescription": "每个标签页和进程使用的内存和 CPU。",
 		"searchPlaceholder": "搜索日志",
 		"filterAriaLabel": "日志过滤器",
 		"filterAll": "全部",
 		"filterErrors": "错误",
 		"filterExtensions": "扩展",
 		"filterTraces": "跟踪",
-		"copyLogs": "拷贝扩展日志",
-		"clearLog": "清除扩展日志",
 		"emptyLog": "尚无记录。",
 		"noMatches": "没有匹配的条目。",
 		"truncated": "显示最近 {count} 条记录。",
@@ -1255,6 +1316,7 @@
 	},
 	"processManager": {
 		"title": "进程管理器",
+		"navLabel": "进程管理器视图",
 		"searchPlaceholder": "搜索标签页",
 		"memoryAriaLabel": "内存用量",
 		"tabsCount": "{count} 个标签页",
@@ -1283,10 +1345,12 @@
 		},
 		"pid": "PID {pid}",
 		"focus": "显示",
+		"details": "显示详细信息",
 		"reload": "重新载入",
 		"terminate": "强制退出",
 		"untitledTab": "无标题",
 		"empty": "没有匹配的标签页。",
+		"emptySleeping": "没有休眠的标签页。",
 		"confirmTerminate": "强制退出 {kind} 进程 {pid}？",
 		"confirmCloseTab": "关闭“{tab}”？",
 		"kindWebContent": "网页内容",
@@ -1297,14 +1361,15 @@
 	},
 	"featureFlags": {
 		"resetAll": "全部还原",
-		"warning": "内部调试条目是 WebKit 开发者开关，可能导致网站无法正常使用。更改后需重新载入网页才能生效。",
-		"sectionExperimental": "实验性：{count}",
+		"warning": "内部调试条目是 WebKit 开发者开关，可能导致网站无法正常使用。",
 		"sectionDebug": "内部调试：{count}",
 		"modifiedBadge": "已修改",
 		"title": "WebKit 开关",
-		"resetTitle": "已更改的开关"
+		"resetTitle": "已更改的开关",
+		"reloadNote": "重新载入页面以使更改生效"
 	},
 	"urlToast": {
+		"pageActions": "页面操作",
 		"reEnableBlocking": "重新启用此网站的拦截",
 		"trackerBlockedOnPage": "已在此网页拦截 {count} 个跟踪器",
 		"trackersBlockedOnPage": "已在此网页拦截 {count} 个跟踪器",
@@ -1335,6 +1400,7 @@
 	},
 	"pageHang": {
 		"title": "{host} 无响应",
+		"message": "你可以等待或重新载入。其他标签页仍可正常使用。",
 		"stuckFor": "已停滞 {seconds} 秒。其他标签页仍可正常使用。",
 		"reload": "重新载入",
 		"wait": "等待",
@@ -1350,16 +1416,20 @@
 	},
 	"extensionDebugger": {
 		"message": "“{name}”已开始调试此浏览器",
-		"cancel": "取消"
+		"stop": "停止调试"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "还有 {count} 条通知",
+			"other": "还有 {count} 条通知"
+		},
+		"more": "还有 {count} 条"
 	},
 	"crashRecovery": {
 		"sessionRestored": "意外退出后，已恢复上次会话。"
 	},
 	"sessionRestore": {
 		"degraded": "无法恢复空间“{name}”的标签页。已保留备份副本。"
-	},
-	"confirmSheet": {
-		"dismiss": "关闭确认"
 	},
 	"tabShare": {
 		"title": "{origin} 想要共享标签页",
@@ -1372,7 +1442,7 @@
 		"keyHint": "用方向键选择，按 Return 共享",
 		"noTabs": "没有可共享的打开标签页",
 		"noMatch": "没有匹配的标签页",
-		"shareSystem": "窗口或屏幕…",
+		"shareSystem": "窗口或屏幕...",
 		"shareAudio": "同时共享声音",
 		"systemAudio": {
 			"undetermined": "macOS 只会询问一次。通话中的声音永远不会被共享。",
@@ -1402,7 +1472,7 @@
 		"closed": "“{title}”已关闭",
 		"closedCount": "已关闭 {count} 个标签页",
 		"undo": "撤销",
-		"undoLabel": "撤销：{closed}",
+		"reopen": "重新打开",
 		"archived": "已归档“{title}”",
 		"archivedCount": {"one": "已归档 {count} 个标签页", "other": "已归档 {count} 个标签页"}
 	},
@@ -1480,7 +1550,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "请求访问：",
 		"more": "另有 {count} 项",
-		"deny": "拒绝",
+		"deny": "不允许",
+		"moreAnswers": "更多选项",
 		"allow": "允许",
 		"allowOnce": "允许一次",
 		"alwaysAllowOnSite": "在此网站上始终允许",
@@ -1515,9 +1586,16 @@
 			"notifications": "想要显示通知",
 			"media": "想要使用你的摄像头或麦克风"
 		},
-		"agentControl": "想要控制 Lilo：在自己的文件夹中打开标签页、读取其中的网页，并使用你的登录信息进行操作。",
-		"agentProfile": "想要将其标签页移至个人资料“{profile}”，以使用其中的登录信息操作。",
-		"agentExecutable": "程序：{path}",
+		"dontAllow": "不允许",
+		"agentConnect": {
+			"title": "{client} 想要控制 Lilo",
+			"openTabs": "在“智能体” Space 的专属文件夹中打开标签页",
+			"readPages": "读取它打开的网页",
+			"actSignedIn": "使用你的登录信息进行操作",
+			"asksFirst": "发送、付款、删除或发布前会先询问。",
+			"profileTitle": "{client} 想要使用个人资料“{profile}”",
+			"profileMessage": "它会将标签页移至该个人资料，以使用其中的登录信息操作。"
+		},
 		"agentClick": "想要在 {tab}（{site}）中点按“{label}”。",
 		"agentSubmit": "想要在 {tab}（{site}）中按 Enter 提交“{label}”。",
 		"agentUpload": "想要将 {label} 上传到 {site}。",
@@ -1563,13 +1641,14 @@
 		"continue": "继续",
 		"back": "返回",
 		"skip": "跳过",
+		"letsGo": "出发",
 		"resume": "继续设置",
 		"usage": {
 			"title": "你会如何使用 Lilo？",
 			"subtitle": "设置会根据你的选择调整。所有选项之后都可在“设置”中更改。",
 			"browse": "浏览网页",
 			"browseDesc": "你的书签、你的风格，以及常用功能",
-			"agents": "与 AI 智能体协作",
+			"agents": "与智能体协作",
 			"agentsDesc": "Claude、Codex 或 Cursor 在你身边工作",
 			"develop": "开发",
 			"developDesc": "以上所有功能，加上终端"
@@ -1620,8 +1699,6 @@
 				"extensionsCount": "正在重新安装扩展，第 {current} 个，共 {total} 个"
 			},
 			"partial": "部分数据无法导入：{list}。你可以稍后在“设置”中重试。",
-			"moreOptions": "选取要导入的内容",
-			"lessOptions": "隐藏选项",
 			"profiles": "{browser} 个人资料",
 			"kinds": "导入内容",
 			"kind": {
@@ -1633,12 +1710,23 @@
 			},
 			"extensions": "要重新安装的扩展",
 			"run": "导入",
+			"summary": "将导入{list}。",
+			"change": "更改",
+			"item": {
+				"bookmarks": "书签",
+				"tabs": "打开的标签页",
+				"history": "历史记录",
+				"cookies": "网站登录状态",
+				"extensions": "扩展"
+			},
 			"running": "正在导入..."
 		},
 		"passwords": {
 			"title": "你的密码",
 			"subtitle": "Lilo 本身不存储任何密码。添加你已在使用的密码管理器。",
 			"add": "添加",
+			"manager": "密码管理器",
+			"choose": "选择",
 			"addNamed": "添加 {name}",
 			"adding": "正在添加...",
 			"added": "已添加",
@@ -1653,21 +1741,19 @@
 				"iCloud": "等待 Apple 批准"
 			}
 		},
-		"appearance": {
-			"title": "你的风格",
-			"subtitle": "选择浅色、深色或跟随 Mac，并选择颜色来源。窗口会立即更新。",
+		"yourLilo": {
+			"title": "你的 Lilo",
+			"subtitle": "选择外观和标签页的位置，窗口会随你的选择变化。",
 			"theme": "主题",
 			"system": "自动",
 			"light": "浅色",
-			"dark": "深色"
-		},
-		"tabs": {
-			"title": "标签页，随你安排",
-			"subtitle": "选取一个边缘，窗口就会随之调整。你随时可以将标签页拖到其他边缘。"
+			"dark": "深色",
+			"tabs": "标签页",
+			"color": "颜色",
+			"essentials": "基本设置",
+			"look": "外观"
 		},
 		"essentials": {
-			"title": "基本设置",
-			"subtitle": "让体验不同的设置。你随时可以更改。",
 			"blocker": "拦截广告和跟踪器",
 			"blockerDesc": "推荐：网页载入更快，跟踪更少。",
 			"refreshRate": "更流畅的滚动",
@@ -1678,23 +1764,18 @@
 			"defaultDone": "完成"
 		},
 		"agents": {
-			"title": "你的 AI 智能体",
+			"title": "你的智能体",
 			"subtitle": "Claude Code、Codex 或 Cursor 会在专属的“智能体”空间中工作，无需占用你的键盘。Lilo 本身不内置 AI。",
-			"allow": "允许 AI 智能体使用 Lilo",
+			"allow": "允许智能体使用 Lilo",
 			"copied": "已拷贝",
-			"connectNamed": "连接 {name}"
+			"connectNamed": "连接 {name}",
+			"onThisMac": "此 Mac 上"
 		},
 		"tips": {
-			"title": "3 个入门小提示",
-			"subtitle": "掌握这些就够了。",
-			"go": "出发",
 			"search": "按 ⌘T 搜索或输入地址。",
-			"tabs": "标签页位于你选的那一侧，随时可见。",
 			"split": "将标签页拖到网页边缘，即可并排查看两个网页。"
 		},
 		"devTips": {
-			"title": "3 个开发小提示",
-			"subtitle": "即使不显示“开发”菜单，快捷键也可使用。",
 			"inspector": "按 ⌥⌘I 打开当前网页的网页检查器。",
 			"localhost": "将 localhost 网页拖到网页边缘，即可与文档并排查看。",
 			"agents": "智能体会在“智能体”空间中打开标签页。"
@@ -1709,6 +1790,7 @@
 	"historyPage": {
 		"title": "历史记录",
 		"navLabel": "历史记录视图",
+		"cmdClickNote": "⌘-点按在新标签页中打开",
 		"searchPlaceholder": "搜索历史记录",
 		"periodAll": "全部历史记录",
 		"periodToday": "今天",
@@ -2065,6 +2147,16 @@
 		"Mute Microphone": "静音麦克风",
 		"Unmute Microphone": "取消麦克风静音",
 		"Close Other Tabs": "关闭其他标签页",
+		"Move Stack to New Folder": "将堆叠移到新文件夹",
+		"Move Stack to Space": "将堆叠移至空间",
+		"Don't Stack %@": "不堆叠 %@",
+		"Close Stack": "关闭堆叠",
+		"Stack Tabs by Site": "按网站堆叠标签页",
+		"Group by Type": "按类型分组",
+		"Never Stack": "从不堆叠",
+		"Stack Every Site Again": "重新堆叠所有网站",
+		"Sort by Site": "按网站排序",
+		"Sort by Title": "按标题排序",
 		"Create Folder": "创建文件夹",
 		"Create Folder from Tab": "用标签页创建文件夹",
 		"Move to Folder": "移到文件夹",
@@ -2227,7 +2319,24 @@
 		"Parent folder": "上级文件夹",
 		"Name": "名称",
 		"Size": "大小",
-		"Date Modified": "修改日期"
+		"Date Modified": "修改日期",
+		"%@ could not be downloaded.": "无法下载 %@。",
+		"%@ could not be installed.": "无法安装 %@。",
+		"%@ did not match its checksum and was not installed.": "%@ 的校验和不匹配，未安装。",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ 需要 Node.js：请从 nodejs.org 安装，然后重试。",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ 需要 uv：请从 astral.sh/uv 安装，然后重试。",
+		"Choose": "选取",
+		"New Conversation": "新建对话",
+		"Screenshot of %@": "%@ 的屏幕快照",
+		"The agent stopped (code %d).": "智能体已停止（代码 %d）。",
+		"This agent is no longer in the ACP registry.": "此智能体已不在 ACP 注册表中。",
+		"Always Allow": "始终允许",
+		"Ask an Agent": "询问智能体",
+		"Review Changes": "查看更改",
+		"Show Pages": "显示页面",
+		"Hide Pages": "隐藏页面",
+		"Close Conversation": "关闭对话",
+		"Pasted image": "粘贴的图片"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2240,7 +2349,7 @@
 		},
 		"originalNotes": "原始版本说明（英文）。",
 		"unavailable": "此构建版本暂未提供版本说明。",
-		"reopen": "随时可从「帮助 → 更新内容」再次查看。",
+		"reopen": "随时可从「帮助 > 更新内容」再次查看。",
 		"continue": "继续浏览",
 		"kinds": {
 			"Breaking": "重大变更",
@@ -2301,6 +2410,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "所有权限",
+		"inUse": "正在使用",
 		"zoom": "缩放",
 		"zoomIn": "放大",
 		"zoomOut": "缩小",
@@ -2353,6 +2463,259 @@
 			"ellipse": "椭圆",
 			"text": "文本",
 			"pen": "画笔"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "停止",
+			"mode": "模式",
+			"context": "已使用 {percent}% 的上下文",
+			"planSession": "会话限额：已使用 {percent}%，{time} 重置",
+			"planWeek": "每周限额：已使用 {percent}%，{time} 重置",
+			"ownCopy": "独立副本",
+			"ownCopyHint": "在项目的独立副本中工作。可在更改中合并。",
+			"starting": "正在启动智能体...",
+			"errorHint": "发送消息即可重试。",
+			"showEarlier": {
+				"one": "显示前 {count} 项",
+				"other": "显示前 {count} 项"
+			},
+			"queued": {
+				"one": "{count} 条消息排队中",
+				"other": "{count} 条消息排队中"
+			},
+			"queuedHint": "智能体完成后发送。按 Cmd Return 立即发送。",
+			"thought": "思考",
+			"restoreToHere": "恢复到此处",
+			"restoreConfirm": "将项目文件恢复到此消息时的状态？",
+			"restore": "恢复",
+			"reviewChanges": "在更改中查看",
+			"undo": "撤销",
+			"keep": "保留",
+			"undone": "已撤销",
+			"kept": "已保留",
+			"moreLines": {
+				"one": "还有 {count} 行",
+				"other": "还有 {count} 行"
+			},
+			"plan": "计划",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "待办",
+				"in_progress": "进行中",
+				"completed": "已完成"
+			},
+			"permissionTitle": "允许此操作？",
+			"answered": "回答：{option}",
+			"cancelled": "未作回答",
+			"notice": {
+				"restored": "文件已恢复到此处",
+				"restoreFailed": "无法恢复文件",
+				"signedIn": "已登录"
+			},
+			"moreOptions": "更多选项",
+			"signInHint": "请使用智能体登录：登录后即发送你的消息。",
+			"branch": "分支 {branch}",
+			"jumpToLatest": "跳到最新"
+		},
+		"tool": {
+			"untitled": "工具调用",
+			"status": {
+				"pending": "等待中",
+				"in_progress": "运行中",
+				"failed": "失败"
+			},
+			"group": {
+				"read": {
+					"one": "读取了 {count} 个文件",
+					"other": "读取了 {count} 个文件"
+				},
+				"search": {
+					"one": "{count} 次搜索",
+					"other": "{count} 次搜索"
+				},
+				"fetch": {
+					"one": "获取了 {count} 个页面",
+					"other": "获取了 {count} 个页面"
+				},
+				"think": {
+					"one": "思考了 {count} 次",
+					"other": "思考了 {count} 次"
+				},
+				"action": {
+					"one": "{count} 个操作",
+					"other": "{count} 个操作"
+				}
+			}
+		},
+		"composer": {
+			"label": "给智能体发消息",
+			"placeholder": "回复，@ 添加内容，/ 使用命令",
+			"addContext": "添加上下文",
+			"send": "发送",
+			"removeAttachment": "移除 {label}",
+			"tabs": "标签页",
+			"folders": "文件夹",
+			"fromPage": "来自页面",
+			"more": "更多",
+			"selection": "所选内容",
+			"screenshot": "屏幕快照",
+			"file": "文件 {path}",
+			"fileHint": "输入路径以附加项目文件",
+			"commands": "命令",
+			"files": "文件",
+			"image": "图片"
+		},
+		"ask": {
+			"label": "询问智能体",
+			"placeholder": "询问智能体，@ 添加内容",
+			"thisPage": "此页面",
+			"agent": "智能体",
+			"loadingAgents": "正在载入智能体...",
+			"project": "项目",
+			"chooseProject": "选择项目",
+			"chooseFolder": "选择文件夹...",
+			"noFolder": "无文件夹",
+			"noFolderDetail": "智能体在自己的文件夹中工作",
+			"backgroundHint": "按 {shortcut} 在后台进行",
+			"start": "开始"
+		},
+		"row": {
+			"untitled": "新对话",
+			"working": "工作中",
+			"failed": "因出错而停止",
+			"changes": "新增 {added} 行，删除 {removed} 行",
+			"pages": {
+				"one": "{count} 个页面",
+				"other": "{count} 个页面"
+			},
+			"showPages": "显示页面",
+			"hidePages": "隐藏页面"
+		},
+		"question": {
+			"allow": "允许",
+			"allowAlways": "始终允许",
+			"reject": "不允许",
+			"rejectAlways": "始终不允许",
+			"more": "更多选项"
+		},
+		"badge": {
+			"title": "智能体",
+			"waiting": {
+				"one": "智能体，{count} 个在等你",
+				"other": "智能体，{count} 个在等你"
+			},
+			"new": "新",
+			"needsYou": "等你处理",
+			"running": "运行中",
+			"done": "完成",
+			"finished": "已结束",
+			"empty": "没有需要你处理的对话"
+		},
+		"status": {
+			"working": "工作中",
+			"waiting": "等你处理",
+			"stopHint": "按 Esc 停止",
+			"signingIn": "正在登录 {agent}",
+			"signingInHint": "登录后即发送你的消息。",
+			"signingInTerminalHint": "请在 Lilo 打开的终端标签页中登录。完成后即发送你的消息。"
+		},
+		"work": {
+			"images": {
+				"one": "{count} 张图片",
+				"other": "{count} 张图片"
+			},
+			"verb": {
+				"read": "读取",
+				"edit": "编辑",
+				"delete": "删除",
+				"move": "移动",
+				"search": "搜索",
+				"fetch": "获取"
+			},
+			"summary": {
+				"read": {
+					"one": "读取了 {count} 个文件",
+					"other": "读取了 {count} 个文件"
+				},
+				"edit": {
+					"one": "编辑了 {count} 个文件",
+					"other": "编辑了 {count} 个文件"
+				},
+				"execute": {
+					"one": "运行了 {count} 条命令",
+					"other": "运行了 {count} 条命令"
+				},
+				"search": {
+					"one": "搜索了 {count} 次",
+					"other": "搜索了 {count} 次"
+				},
+				"fetch": {
+					"one": "获取了 {count} 个网页",
+					"other": "获取了 {count} 个网页"
+				},
+				"think": {
+					"one": "思考了 {count} 次",
+					"other": "思考了 {count} 次"
+				},
+				"browser": {
+					"one": "使用了 {count} 次浏览器",
+					"other": "使用了 {count} 次浏览器"
+				},
+				"tool": {
+					"one": "使用了 {count} 个工具",
+					"other": "使用了 {count} 个工具"
+				}
+			},
+			"exit": "退出码 {code}",
+			"showAll": {
+				"one": "显示全部 {count} 行",
+				"other": "显示全部 {count} 行"
+			},
+			"showLess": "只显示最后几行"
+		},
+		"turn": {
+			"workedFor": "工作了 {duration}",
+			"stopped": "已停止",
+			"files": {
+				"one": "更改了 {count} 个文件",
+				"other": "更改了 {count} 个文件"
+			},
+			"review": "查看",
+			"copy": "复制回复",
+			"copied": "已复制"
+		},
+		"image": {
+			"unavailable": "图片不可用",
+			"open": "打开图片",
+			"viewer": "图片",
+			"previous": "上一张图片",
+			"next": "下一张图片",
+			"counter": "第 {index} 张，共 {total} 张"
+		},
+		"markdown": {
+			"preview": "预览",
+			"openPreview": "在标签页中打开预览",
+			"view": "显示为",
+			"code": "代码",
+			"copy": "复制代码",
+			"copied": "已复制"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "解释这个项目",
+					"prompt": "解释这个项目是如何组织的：它的主要部分、这些部分如何配合，以及应该从哪里开始阅读。"
+				},
+				"fixBug": {
+					"label": "查找并修复一个 bug",
+					"prompt": "在这个项目中找到一个 bug，解释它的原因，然后修复它。"
+				},
+				"tests": {
+					"label": "编写测试...",
+					"prompt": "为以下内容编写测试："
+				}
+			}
 		}
 	}
 }

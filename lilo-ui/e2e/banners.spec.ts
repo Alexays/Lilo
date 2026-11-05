@@ -10,14 +10,14 @@ test("a banner floats over the page, never over the sidebar of a narrow window",
 		window.__lilo!.receive({ event: "extensionDebuggers", debuggers: [{ id: "ext-a", name: "A debugging extension with a long name" }] });
 	});
 
-	const banner = page.locator(".ui-banner");
+	const banner = page.locator(".notice-capsule");
 	await expect(banner).toBeVisible();
 	const box = (await banner.boundingBox())!;
 	const sidebar = (await page.locator(".sidebar").boundingBox())!;
 	expect(box.x).toBeGreaterThanOrEqual(sidebar.x + sidebar.width);
 	expect(box.x + box.width).toBeLessThanOrEqual(600);
 
-	await banner.getByRole("button", { name: "Cancel" }).first().click();
+	await banner.getByRole("button", { name: "Stop Debugging" }).first().click();
 	expect((await sentCommands(page)).some((command) => command.action === "cancelExtensionDebugging")).toBe(true);
 });
 
@@ -27,7 +27,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "crashRecoveryDetected" }));
 
-		const banner = page.locator(".ui-banner");
+		const banner = page.locator(".notice-capsule");
 		await expect(banner).toBeVisible();
 		const [background, floatSurface] = await banner.evaluate((el) => {
 			const probe = document.createElement("div");
@@ -41,18 +41,18 @@ for (const colorScheme of ["light", "dark"] as const) {
 	});
 }
 
-test("stacked banners share one width", async ({ page }) => {
+test("one capsule shows the first notice and folds the others", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => {
 		window.__lilo!.receive({ event: "crashRecoveryDetected" });
-		window.__lilo!.receive({ event: "sessionRestoreDegraded", spaceName: "A Space With A Much Longer Name" });
+		window.__lilo!.receive({ event: "sessionRestoreDegraded", spaceName: "Example" });
 		window.__lilo!.receive({ event: "extensionDebuggers", debuggers: [{ id: "ext-a", name: "Debugger" }] });
 	});
-	const banners = page.locator(".ui-banner");
-	await expect(banners).toHaveCount(3);
+	const capsule = page.locator(".notice-capsule");
+	await expect(capsule).toHaveCount(1);
+	await expect(capsule.locator(".notice-row")).toHaveCount(1);
 
-	const widths = await banners.evaluateAll((all) => all.map((el) => Math.round(el.getBoundingClientRect().width)));
-	expect(new Set(widths).size).toBe(1);
-	const closeRights = await page.locator(".ui-banner .close").evaluateAll((all) => all.map((el) => Math.round(el.getBoundingClientRect().right)));
-	expect(new Set(closeRights).size).toBe(1);
+	await capsule.getByRole("button", { name: "2 more notices" }).click();
+	await expect(capsule.locator(".notice-row")).toHaveCount(3);
+	await expect(capsule.getByRole("button", { name: "Stop Debugging" })).toBeVisible();
 });

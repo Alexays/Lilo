@@ -13,35 +13,19 @@ import {
 } from "./onboardingModel";
 
 describe("onboarding steps", () => {
-	it("resumes inside the card, never at the arrival", () => {
+	it("resumes on a question, never at the arrival", () => {
 		assert.equal(resumeStep(0, "browse"), 0);
-		assert.equal(resumeStep(3, "browse"), 3);
-		assert.equal(onboardingSteps("browse")[resumeStep(99, "browse")], "tips");
-		assert.equal(onboardingSteps("develop")[resumeStep(99, "develop")], "tips");
+		assert.equal(resumeStep(2, "browse"), 2);
+		assert.equal(onboardingSteps("browse")[resumeStep(99, "browse")], "yourLilo");
+		assert.equal(onboardingSteps("develop")[resumeStep(99, "develop")], "agents");
 		assert.equal(resumeStep(-4, "browse"), 1);
 		assert.equal(resumeStep(Number.NaN, "browse"), 1);
 	});
 
-	it("keeps the shared steps at the same index in both paths", () => {
-		const browse = onboardingSteps("browse");
-		const develop = onboardingSteps("develop");
-		const shared = browse.indexOf("essentials") + 1;
-		assert.deepEqual(develop.slice(0, shared), browse.slice(0, shared));
-		assert.deepEqual(develop.slice(shared, -2), ["agents"]);
-	});
-
-	it("asks where the tabs go right after the style, whatever the usage", () => {
-		for (const usage of ["browse", "develop"] as const) {
-			const steps = onboardingSteps(usage);
-			assert.equal(steps[steps.indexOf("appearance") + 1], "tabs");
-		}
-	});
-
-	it("offers a password manager right after the import, whatever the usage", () => {
-		for (const usage of ["browse", "develop"] as const) {
-			const steps = onboardingSteps(usage);
-			assert.equal(steps[steps.indexOf("import") + 1], "passwords");
-		}
+	it("asks one question per screen, the agents only on their path", () => {
+		assert.deepEqual(onboardingSteps("browse"), ["intro", "usage", "import", "yourLilo", "arrival"]);
+		assert.deepEqual(onboardingSteps("agents"), ["intro", "usage", "import", "yourLilo", "agents", "arrival"]);
+		assert.deepEqual(onboardingSteps("develop"), onboardingSteps("agents"));
 	});
 });
 

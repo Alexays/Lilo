@@ -158,7 +158,8 @@
     if (!cluster || !bar) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        if (entry.target === bar) barWidth = entry.borderBoxSize[0].inlineSize;
+        if (entry.target !== bar) continue;
+        barWidth = entry.borderBoxSize[0].inlineSize;
       }
       schedulePopupAnchors();
     });

@@ -7,7 +7,7 @@
   import { progress } from "../../lib/downloadFormat";
   import { isActiveDownload } from "../../stores/downloads.svelte";
   import { openDownloadsPanel } from "../../stores/panels.svelte";
-  import { fileIconURL, inlineAction, type InlineAction } from "../downloads/downloadsPanelModel";
+  import { fileIconURL, inlineAction, metaLine, type InlineAction } from "../downloads/downloadsPanelModel";
   import { getArchivedFavicons } from "../../stores/archivedTabs.svelte";
   import { openCommandBar } from "../../stores/commandBar.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
@@ -62,6 +62,12 @@
     openDownloadsPanel();
   }
 
+  function openDownload(download: BridgeDownloadSnapshot): void {
+    if (download.state !== "complete" || download.error) return showDownloads();
+    downloadActions.open(download.id);
+    onclose();
+  }
+
   function showAll(): void {
     onclose();
     openCommandBar("<");
@@ -79,18 +85,22 @@
     {#each downloads as download (download.id)}
       {@const action = inlineAction(download)}
       <div class="download-row" class:with-action={!!action}>
-        <button class="menu-row" role="menuitem" onclick={showDownloads}>
-          <img src={fileIconURL(download)} alt="" width="16" height="16" draggable="false" />
-          <span class="row-title">
-            {download.filename}
+        <button class="menu-row download" role="menuitem" onclick={() => openDownload(download)}>
+          <span class="file-tile"><img src={fileIconURL(download)} alt="" width="20" height="20" draggable="false" /></span>
+          <span class="row-text">
+            <span class="row-title">{download.filename}</span>
             {#if isActiveDownload(download)}
-              <span class="row-progress" class:paused={download.state === "paused"} aria-hidden="true">
-                <span class="row-progress-fill" style={`transform: scaleX(${progress(download) / 100})`}></span>
+              <span class="row-status">
+                <span class="row-progress" class:paused={download.state === "paused"} aria-hidden="true">
+                  <span class="row-progress-fill" style={`transform: scaleX(${progress(download) / 100})`}></span>
+                </span>
+                <span class="row-meta">{Math.round(progress(download))}%</span>
               </span>
+            {:else if download.state === "complete" && !download.error}
+              <span class="row-meta detail">{metaLine(download, getLocale(), now).detail}</span>
+            {:else}
+              <span class="row-meta failed">{t("downloadsPanel.stateFailed")}</span>
             {/if}
-          </span>
-          <span class="row-meta" class:failed={!isActiveDownload(download)}>
-            {isActiveDownload(download) ? `${Math.round(progress(download))}%` : t("downloadsPanel.stateFailed")}
           </span>
         </button>
         {#if action}
@@ -135,22 +145,33 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    padding: 4px 8px 2px;
+    padding: 8px 8px 4px;
     color: var(--text-muted);
     font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   .header-link {
     padding: 0;
     border: 0;
+    border-radius: var(--radius-xs);
     background: none;
-    color: var(--text-secondary);
+    color: var(--accent-ink);
     font: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: normal;
+    text-transform: none;
   }
 
-  .header-link:hover,
+  .header-link:hover {
+    text-decoration: underline;
+  }
+
   .header-link:focus-visible {
-    color: var(--text-primary);
+    outline: var(--focus-outline);
   }
 
   .download-row {
@@ -160,35 +181,61 @@
   }
 
   .download-row.with-action .menu-row {
-    padding-right: 34px;
+    padding-right: 40px;
   }
 
   .row-action {
     position: absolute;
-    right: 6px;
-    width: 22px;
-    height: 22px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
     display: grid;
     place-items: center;
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
-    background: transparent;
+    background: var(--bg-hover);
     color: var(--text-secondary);
   }
 
-  .row-action:hover,
-  .row-action:focus-visible {
-    background: var(--bg-hover);
+  .row-action:hover {
+    background: var(--bg-active);
     color: var(--text-primary);
   }
 
+  .row-action:focus-visible {
+    outline: var(--focus-outline);
+  }
+
+  .file-tile {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-md);
+    background: var(--bg-hover);
+  }
+
+  .row-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .row-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .row-progress {
-    display: block;
-    height: 3px;
-    margin-top: 4px;
+    flex: 1;
+    height: 4px;
     overflow: hidden;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-chip);
     background: var(--bg-hover);
   }
 
@@ -218,17 +265,27 @@
     gap: 10px;
     padding: 0 8px;
     border: 0;
-    border-radius: calc(var(--float-radius-popover) - 6px);
+    border-radius: var(--radius-md);
     background: transparent;
     color: var(--text-primary);
     font: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     text-align: left;
+  }
+
+  .menu-row.download {
+    height: 56px;
+    gap: 12px;
   }
 
   .menu-row:hover,
   .menu-row:focus-visible {
     background: var(--bg-hover);
+  }
+
+  .menu-row.download:hover .file-tile,
+  .menu-row.download:focus-visible .file-tile {
+    background: var(--float-surface);
   }
 
   .row-title {
@@ -244,11 +301,23 @@
   .row-restore {
     flex-shrink: 0;
     color: var(--text-muted);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row-meta.detail {
+    flex-shrink: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .row-meta.failed {
-    color: var(--danger);
+    color: var(--danger-text);
+  }
+
+  .row-restore {
+    color: var(--accent-ink);
   }
 
   .row-restore,
@@ -264,7 +333,7 @@
 
   .menu-separator {
     height: 1px;
-    margin: 4px 6px;
+    margin: 6px 8px;
     background: var(--separator);
   }
 </style>

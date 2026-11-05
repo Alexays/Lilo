@@ -26,7 +26,7 @@ test("removing a pinned tab offers Undo, and Command Z outside a field takes it"
 
 	await expect(page.locator(HOME)).toHaveCount(0);
 	const toast = page.locator(".undo-toast");
-	await expect(toast).toHaveAttribute("aria-label", /Pinned Home/);
+	await expect(toast).toContainText(/Pinned Home/);
 
 	await page.locator("body").focus();
 	await page.keyboard.press("Meta+z");

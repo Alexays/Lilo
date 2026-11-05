@@ -1,13 +1,11 @@
 <script lang="ts">
   import BookmarkedTabs from "./BookmarkedTabs.svelte";
   import TabSection from "./TabSection.svelte";
-  import UndoCloseToast from "./UndoCloseToast.svelte";
   import SidebarDropDock from "./SidebarDropDock.svelte";
   import SelectionIndicator from "./SelectionIndicator.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
-  import { getActiveTabId, getTabsById, isSpaceHydrated } from "../../stores/tabs.svelte";
+  import { getActiveTabId, isSpaceHydrated } from "../../stores/tabs.svelte";
   import { getSpacePagerVirtualIndex } from "../../stores/pager.svelte";
-  import { isChromaticHex } from "../../lib/sidebarTheme";
   import { trackUserScroll } from "../../lib/motion/userScroll";
 
   let {
@@ -28,11 +26,6 @@
   // Each row owns its active highlight (TabItem `.active`); this component only flies a
   // one-shot travel ghost between rows on activation, across the pinned/unpinned boundary.
   const activeTabId = $derived(getActiveTabId(spaceId));
-  const activeTint = $derived.by((): string => {
-    if (!activeTabId) return "";
-    const color = getTabsById(spaceId).get(activeTabId)?.faviconDominantColor;
-    return color && isChromaticHex(color) ? color : "";
-  });
   let spaceStackEl: HTMLDivElement | undefined = $state();
   let spaceScrollEl: HTMLDivElement | undefined = $state();
   let spaceScrollContentEl: HTMLDivElement | undefined = $state();
@@ -107,7 +100,6 @@
       <SelectionIndicator
         activeTabId={activeTabId}
         container={spaceStackEl}
-        tint={activeTint}
         {spaceId}
       />
       <div class="space-stack-section">
@@ -154,9 +146,6 @@
         <div class="skeleton-new-tab-label skeleton-shimmer"></div>
       </div>
     </div>
-  {/if}
-  {#if interactive}
-    <UndoCloseToast />
   {/if}
 </div>
 
@@ -216,8 +205,8 @@
        position to compensate and pull the window away from where the user scrolled. */
     overflow-anchor: none;
     /* `scroll` keeps the 4px scrollbar's gutter even with nothing to scroll (WebKit ignores
-       scrollbar-gutter here); it comes out of the 10px right pad so rows never shift and stay symmetric. */
-    --sidebar-right-pad: 6px;
+       scrollbar-gutter here); it comes out of the 8px right pad so rows never shift and stay symmetric. */
+    --sidebar-right-pad: 4px;
     --fade-top: 0px;
     --fade-bottom: 0px;
     /* Fades the rows themselves, so the cue matches any space tint behind them. */
@@ -255,10 +244,10 @@
 
   .space-page-skeleton {
     flex: 1;
-    padding: 4px var(--sidebar-right-pad, 10px) 0 8px;
+    padding: 4px var(--sidebar-right-pad, 8px) 0 8px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0;
   }
 
   .skeleton-tab-row,
@@ -266,8 +255,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 28px;
-    padding: 0 10px;
+    height: 32px;
+    padding: 0 8px;
     border-radius: var(--radius-md);
   }
 

@@ -91,7 +91,9 @@ final class MainWindowController: NSWindowController {
     nonisolated static let logger = Logger(liloCategory: "MainWindowController")
 
     static let defaultSidebarWidth: CGFloat = 260
-    static let sidebarWidthRange: ClosedRange<CGFloat> = 200...480
+    static let sidebarWidthRange: ClosedRange<CGFloat> = 203...480
+    /// The icon rail's width: with the content inset, the traffic lights sit centered on it, 15pt from either side.
+    static let sidebarRailWidth: CGFloat = 76
     static let contentInset: CGFloat = 8
     /// Matches the 320px of `--sidebar-fitted-width` in the chrome UI's global.css.
     static let minimumContentWidth: CGFloat = 320
@@ -239,16 +241,18 @@ final class MainWindowController: NSWindowController {
     var recordingShortcutId: String?
     var sidebarWidth: CGFloat = MainWindowController.defaultSidebarWidth
     var sidebarExpandedWidth: CGFloat = MainWindowController.defaultSidebarWidth
+    /// Tabs left or right fold to an icon rail; `sidebarExpandedWidth` keeps the width they unfold to.
+    var sidebarRail = false
     var sidebarVisible = true
     var toolbarVisible = true
     var tabLayout = TabLayout.cached
     var sidebarOverlayVisible = false
-    /// A chrome surface (Settings, History) hides the page: the bar over it leaves the page's color.
-    var pageCovered = false
     var sidebarCollapseLocked = false
     var sidebarRevealedByLock = false
     var restoredStartupSpaceIdsByProfile: [UUID: [String: UUID]] = [:]
     var storedWindowBackgroundColor: String?
+    /// The CSS background of the system screen covering the page, which the bar takes over the page's color.
+    var systemScreenBarColor: String?
     /// Set while the chrome shows a Space that follows the wallpaper.
     var wallpaperColorObservers: [(NotificationCenter, NSObjectProtocol)] = []
     var sentWallpaperKey: String?
@@ -526,6 +530,7 @@ final class MainWindowController: NSWindowController {
         // Closing a tab, a folder or a whole space ends the shells it held.
         tabManager.terminalHost.prune { id in tabManager.tab(for: id).map { !$0.isClosed } ?? false }
         tabManager.changesHost.prune { id in tabManager.tab(for: id).map { !$0.isClosed } ?? false }
+        if !context.conversations.conversations.isEmpty { pruneConversations() }
         discardCollapsedFolderEngines(after: command)
         // Activation lays the split out through showContentView; other commands can form or break one.
         if case .activateTab = command {} else if tabManager.activeSplit != splitPanes.split { layoutSplitContent() }
@@ -713,7 +718,11 @@ extension MainWindowController: TabManager.Delegate {
             }
         }
         if let tab = manager.activeTab, tab.kind != .web {
-            if tab.kind == .terminal { showTerminalView(for: tab) } else { showChangesTabView(for: tab) }
+            switch tab.kind {
+            case .terminal: showTerminalView(for: tab)
+            case .agent: showAgentChatView(for: tab)
+            default: showChangesTabView(for: tab)
+            }
             // Nothing a page left on screen may outlive it: tracker count, Handoff.
             bridgeRouter.send(event: "trackersBlockedChanged", data: ["count": 0])
             publishActiveTab()

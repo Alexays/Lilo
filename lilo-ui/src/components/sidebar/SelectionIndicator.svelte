@@ -9,7 +9,6 @@
   let {
     activeTabId,
     container,
-    tint,
     spaceId,
   }: {
     activeTabId: string | null;
@@ -18,14 +17,12 @@
      * positioned within it so a single flight can cross the pinned/unpinned boundary.
      */
     container: HTMLElement | undefined;
-    /** Active tab's chromatic favicon color, applied as --tab-tint; empty falls back to the space accent. */
-    tint: string;
     spaceId: string;
   } = $props();
 
   // One-shot travel ghost: the persistent highlight lives on the row (TabItem `.active`), so structural shifts need
   // no follow logic here outside the 220ms flight.
-  let flight = $state<{ from: IndicatorRect; to: IndicatorRect; tint: string } | null>(null);
+  let flight = $state<{ from: IndicatorRect; to: IndicatorRect } | null>(null);
   let flightTimeout: ReturnType<typeof setTimeout> | null = null;
   let previousActiveTabId: string | null = null;
   // The travel target is global and neighbour SpacePage instances mount and unmount mid-swipe:
@@ -93,7 +90,7 @@
     const fromRow = rowFor(prev);
     const toRow = rowFor(next);
     if (!fromRow || !toRow || !isRowInView(fromRow) || !isRowInView(toRow)) return;
-    flight = { from: rectFor(fromRow), to: rectFor(toRow), tint };
+    flight = { from: rectFor(fromRow), to: rectFor(toRow) };
     setSelectionTravelTarget(next);
     ownTravelTarget = next;
     // Landing: reveal the row's own highlight just before arrival so it fades in UNDER the
@@ -109,7 +106,7 @@
   }
 
   // Only an activeTabId change (or the container binding) launches a flight; everything
-  // else (tint updates, tab patches) is read untracked so it can't cancel one mid-air.
+  // else (tab patches) is read untracked so it can't cancel one mid-air.
   $effect(() => {
     const next = activeTabId;
     void container;
@@ -120,8 +117,8 @@
 
   onDestroy(endFlight);
 
-  function styleFor(rect: IndicatorRect, flightTint: string): string {
-    return `transform: translate(${rect.left}px, ${rect.top}px); width: ${rect.width}px; height: ${rect.height}px;${flightTint ? ` --tab-tint: ${flightTint};` : ""} transition-duration: ${MOTION.selectionMs}ms;`;
+  function styleFor(rect: IndicatorRect): string {
+    return `transform: translate(${rect.left}px, ${rect.top}px); width: ${rect.width}px; height: ${rect.height}px; transition-duration: ${MOTION.selectionMs}ms;`;
   }
 
   function flyTo(node: HTMLElement, params: { to: IndicatorRect }) {
@@ -136,7 +133,7 @@
   {#key flight}
     <div
       class="selection-ghost"
-      style={styleFor(flight.from, flight.tint)}
+      style={styleFor(flight.from)}
       use:flyTo={{ to: flight.to }}
       aria-hidden="true"
     ></div>
@@ -151,7 +148,8 @@
     z-index: 0;
     pointer-events: none;
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--tab-tint, var(--accent)) 18%, var(--bg-selected));
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
     transition-property: transform, width, height;
     transition-timing-function: var(--motion-ease-spring);
     /* transition-duration is set inline from MOTION.selectionMs so the CSS flight and the

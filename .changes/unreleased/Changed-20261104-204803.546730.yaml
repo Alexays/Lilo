@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Conversations read calmer: an agent''s question docks above the reply field with its exact command, Return to allow and Esc to refuse; code sits on a neutral background, dark mode uses the system''s grey, and Ask an agent takes the reply field''s shape with Return and Cmd Return shown.'
+time: 2026-11-04T20:48:03.54673+01:00

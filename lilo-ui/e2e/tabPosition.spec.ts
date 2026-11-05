@@ -25,8 +25,8 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 		await bootChrome(page, { ...initialWorld(), tabPosition: position, addressPlacement: "hidden" }, strip ? ".tab-strip .strip-tab" : undefined);
 		await expect(page.locator(".url-display")).toHaveCount(0);
 		await expect(page.locator(".page-toolbar")).toHaveCount(position === "right" || position === "bottom" ? 1 : 0);
-		// The page's buttons move up to the sidebar header's line.
-		await expect(page.locator(".page-actions .url-screenshot-btn")).toHaveCount(strip ? 0 : 1);
+		// The page's buttons wait behind one on the sidebar header's line.
+		await expect(page.locator(".page-actions .page-actions-btn")).toHaveCount(strip ? 0 : 1);
 
 		await receive(page, { event: "toggleCommandBar", prefill: "https://example.com", selectAll: true });
 		await expect(page.getByRole("combobox", { name: "Search or enter address" })).toHaveValue("https://example.com");
@@ -38,10 +38,11 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 	});
 }
 
-test("the page's buttons show on hover of the sidebar header", async ({ page }) => {
+test("the page's buttons open in a row from the sidebar header's button", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), addressPlacement: "hidden" });
-	await page.locator(".sidebar-header").hover();
-	await expect(page.locator(".page-actions .url-actions-reveal")).toHaveCSS("opacity", "1");
+	await page.locator(".page-actions .page-actions-btn").click();
+	await expect(page.locator(".actions-only .url-screenshot-btn")).toBeVisible();
+	await expect(page.locator(".actions-only .url-copy-btn")).toBeVisible();
 });
 
 test("with tabs on the left the sidebar and the address toolbar hide one without the other", async ({ page }) => {
@@ -62,12 +63,12 @@ test("with tabs on the left the sidebar and the address toolbar hide one without
 	await expect(page.locator(".sidebar-header")).toHaveCSS("height", "52px");
 });
 
-test("the address setting offers Hidden on the right and can restore the address", async ({ page }) => {
+test("the address setting offers every placement on the right and can restore the address", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "right" });
 	await receive(page, { event: "openSettings" });
 	await page.locator(".section-nav-button").filter({ hasText: "Appearance" }).click();
 	const address = page.getByRole("radiogroup", { name: "Address", exact: true });
-	await expect(address.getByRole("radio", { name: "With the tabs", exact: true })).toBeDisabled();
+	await expect(address.getByRole("radio", { name: "With the tabs", exact: true })).toBeEnabled();
 	await address.getByRole("radio", { name: "Hidden", exact: true }).click();
 	expect((await sentCommands(page)).filter((command) => command.action === "setSetting").at(-1)?.payload).toEqual({ key: "addressPlacement", value: "hidden" });
 	await receive(page, { event: "tabLayoutChanged", position: "right", address: "hidden" });
@@ -502,4 +503,20 @@ test("a locked folder unlocks from its chip", async ({ page }) => {
 
 	const unlock = (await sentCommands(page)).filter((c) => c.action === "unlockTabFolder").at(-1);
 	expect(unlock?.payload).toEqual({ id: "folder-docs", password: "secret" });
+});
+
+test("the space editor drops from the strip's Space button, over the page, and a press outside closes it", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await receive(page, { event: "openSpaceEditor", id: "space-1" });
+
+	const editor = page.locator(".strip-editor .editor-panel");
+	await expect(editor).toBeVisible();
+	await expect(page.locator(".strip-panels.open")).toHaveCount(0);
+	const chip = (await page.locator(".tab-strip .space-chip").boundingBox())!;
+	const box = (await editor.boundingBox())!;
+	expect(box.y).toBeGreaterThan(chip.y + chip.height);
+	expect(Math.abs(box.x - chip.x)).toBeLessThan(2);
+
+	await page.mouse.click(box.x + box.width + 200, box.y + 200);
+	await expect(editor).toHaveCount(0);
 });

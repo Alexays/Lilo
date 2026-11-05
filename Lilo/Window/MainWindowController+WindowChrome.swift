@@ -60,6 +60,7 @@ extension MainWindowController {
     /// The sidebar's width as the window lets it be: it narrows before the content gets under `minimumContentWidth`.
     var fittedSidebarWidth: CGFloat {
         guard sidebarVisible, tabLayout.position.isVertical else { return 0 }
+        if sidebarRail { return Self.sidebarRailWidth }
         let room = (window?.contentView?.bounds.width ?? .greatestFiniteMagnitude) - Self.contentInset * 2 - Self.minimumContentWidth
         return min(sidebarExpandedWidth, max(Self.sidebarWidthRange.lowerBound, room))
     }
@@ -112,6 +113,15 @@ extension MainWindowController {
         }
         pendingSidebarWidthPersistWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
+    }
+
+    /// Folding to the rail or out of it moves the page edge with it.
+    func setSidebarRail(_ rail: Bool) {
+        guard rail != sidebarRail else { return }
+        sidebarRail = rail
+        context.settingsStore?.sidebarRail = rail
+        unsafe UserDefaults.lilo.set(rail, forKey: "cachedSidebarRail")
+        applySidebarLayout(animated: false)
     }
 
     func setSidebarCollapseLocked(_ locked: Bool) {

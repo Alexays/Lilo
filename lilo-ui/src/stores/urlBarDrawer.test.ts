@@ -19,14 +19,14 @@ async function loadDrawerStore() {
 	return { posted, drawer, activeTabId: tabs.getActiveTabId() as string };
 }
 
-test("a site request outranks the invite, which outranks the Site drawer", async () => {
+test("a site request outranks the Site drawer, which outranks the invite", async () => {
 	const { drawer, activeTabId } = await loadDrawerStore();
-
-	drawer.setSiteDrawerOpen(true);
-	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "site");
 
 	receive({ event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: true });
 	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "defaultBrowser");
+
+	drawer.setSiteDrawerOpen(true);
+	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "site");
 
 	receive({ event: "permissionRequest", requestId: "r1", tabId: activeTabId, type: "camera", origin: "meet.example.com" });
 	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "sitePermission");

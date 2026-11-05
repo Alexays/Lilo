@@ -20,11 +20,11 @@ test("the shortcuts' Reset all button shows its whole label beside the search fi
 	await page.locator(".ui-link-row").filter({ hasText: "Keyboard shortcuts" }).click();
 
 	const reset = page.locator(".shortcuts-toolbar .ui-button");
-	await expect(reset).toHaveText("Reset all");
+	await expect(reset).toHaveText("Reset All");
 	expect(await reset.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
 });
 
-test("the agent rows line up and style their secondary buttons alike", async ({ page }) => {
+test("the agent tiles style their secondary buttons like the other agent rows", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true" } }));
@@ -33,13 +33,10 @@ test("the agent rows line up and style their secondary buttons alike", async ({ 
 		clients: [{ id: "claudeCode", configured: true, icon: null }],
 		allowed: [{ name: "claude-code", displayName: "Claude Code", lastSeen: null, client: "claudeCode" }],
 	}));
-	await page.locator(".section-nav-button").filter({ hasText: "AI agents" }).click();
+	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
 
-	const titles = page.locator(".ui-shell-frame .agent-row .ui-list-row-title, .ui-shell-frame [data-setting-id='agentOther'] .ui-list-row-title");
-	await expect(titles).toHaveCount(2);
-	const [claude, other] = await titles.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().left));
-	expect(claude).toBe(other);
-
+	await expect(page.locator(".ui-shell-frame .agent-tile")).toHaveCount(1);
+	await expect(page.locator(".ui-shell-frame [data-setting-id='agentOther'] .ui-list-row-title")).toHaveCount(1);
 	const backgrounds = await page.locator(".ui-shell-frame .ui-button:not(.primary)").evaluateAll((els) => [...new Set(els.map((el) => getComputedStyle(el).backgroundColor))]);
 	expect(backgrounds).toHaveLength(1);
 });
@@ -112,11 +109,13 @@ test("an extension's page is built from the settings lists and names the extensi
 	// The header is the only place naming it: a narrow window wraps the name rather than cutting it.
 	await page.setViewportSize({ width: 600, height: 400 });
 	expect(await title.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
-	await expect(frame.locator(".ui-inset-list-title")).toContainText(["Description", "Capabilities", "Site access"]);
+	await expect(frame.locator(".detail-description")).toHaveText("Dark mode for every website.");
+	await expect(frame.locator(".detail-head .detail-chip")).toHaveText(["Action popup", "Background page", "Content scripts"]);
+	await expect(frame.locator(".ui-inset-list-title")).toContainText(["Site access"]);
 	await expect(frame.locator(".ui-list-row").filter({ hasText: "Enabled" }).getByRole("checkbox")).toBeChecked();
 	await expect(frame.getByRole("textbox", { name: "Site access" })).toHaveClass(/ui-text-field/);
 	await expect(frame.getByRole("button", { name: "Add" })).toHaveClass(/ui-button/);
-	await expect(frame.locator(".ui-button.danger")).toHaveCount(1);
+	await expect(frame.getByRole("button", { name: "Remove Extension..." })).toBeVisible();
 
 	await frame.getByRole("textbox", { name: "Site access" }).fill("docs.example.com");
 	await frame.getByRole("button", { name: "Add" }).click();
@@ -151,7 +150,7 @@ test.describe("in French at the window's minimum size", () => {
 			},
 		}));
 
-		for (const section of ["Général", "Onglets et espaces", "Confidentialité", "Terminal", "Agents IA", "Avancé"]) {
+		for (const section of ["Général", "Onglets et Espaces", "Confidentialité", "Terminal", "Agents", "Avancé"]) {
 			await page.locator(".section-nav-button").filter({ hasText: section }).click();
 			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
 			await expect(rows.first()).toBeVisible();
@@ -220,7 +219,7 @@ test.describe("in Spanish", () => {
 		const language = page.getByRole("combobox", { name: "Idioma", exact: true });
 		await expect(language).toHaveValue("es");
 		await expect(language.locator("option:checked")).toHaveText("Español");
-		await expect(page.getByRole("button", { name: "Pestañas y espacios", exact: true })).toBeVisible();
+		await expect(page.getByRole("button", { name: "Pestañas y Espacios", exact: true })).toBeVisible();
 
 		await language.selectOption("en");
 		await expect(page.getByRole("combobox", { name: "Language", exact: true })).toHaveValue("en");
@@ -257,7 +256,7 @@ test.describe("in Simplified Chinese", () => {
 	test("controls fit beside Chinese labels at the minimum window size", async ({ page }) => {
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
-		for (const section of ["通用", "外观", "标签页与空间", "隐私", "终端", "AI 智能体", "高级"]) {
+		for (const section of ["通用", "外观", "标签页与空间", "隐私", "终端", "智能体", "高级"]) {
 			await page.getByRole("button", { name: section, exact: true }).click();
 			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
 			await expect(rows.first()).toBeVisible();
@@ -307,7 +306,7 @@ test.describe("in Russian", () => {
 	test("controls fit beside Russian labels at the minimum window size", async ({ page }) => {
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
-		for (const section of ["Основные", "Оформление", "Вкладки и пространства", "Аудио и видео", "Конфиденциальность", "Терминал", "ИИ-агенты", "Дополнительно"]) {
+		for (const section of ["Основные", "Оформление", "Вкладки и пространства", "Аудио и видео", "Конфиденциальность", "Терминал", "Агенты", "Дополнительно"]) {
 			await page.getByRole("button", { name: section, exact: true }).click();
 			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
 			await expect(rows.first()).toBeVisible();
@@ -396,7 +395,7 @@ test("a search result's highlight clears with Reduce motion on", async ({ page }
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 	await page.locator(".section-nav-toolbar input").fill("Theme");
 
-	await page.locator(".ui-link-row").filter({ hasText: "Theme" }).first().click();
+	await page.locator(".search-hit").filter({ hasText: "Theme" }).first().click();
 
 	const row = page.locator('[data-setting-id="theme"]');
 	await expect(row).toHaveClass(/setting-flash/);
@@ -412,9 +411,9 @@ test("connecting an agent app shows it working until Lilo answers", async ({ pag
 		clients: [{ id: "claudeCode", configured: false, icon: null }],
 		allowed: [],
 	}));
-	await page.locator(".section-nav-button").filter({ hasText: "AI agents" }).click();
+	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
 
-	const connect = page.locator(".agent-row .ui-button.primary");
+	const connect = page.locator(".agent-tile .ui-button.primary");
 	await connect.click();
 	await expect(connect).toHaveAttribute("aria-busy", "true");
 	await expect(connect).toBeDisabled();
@@ -425,22 +424,21 @@ test("connecting an agent app shows it working until Lilo answers", async ({ pag
 	await expect(connect).toHaveAttribute("aria-busy", "false");
 });
 
-test("a settings group's heading shows a decorative tile and keeps its height", async ({ page }) => {
+test("a settings group's heading is its small caps title alone and keeps its height in search results", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 
 	const browser = page.locator(".ui-shell-frame").getByRole("region", { name: "Browser", exact: true });
-	const icon = browser.locator(".ui-inset-list-title > .ui-inset-list-icon");
-	await expect(icon).toHaveAttribute("aria-hidden", "true");
-	await expect(icon.locator(".settings-group-icon svg")).toBeVisible();
-	await expect(browser.getByRole("heading", { name: "Browser", exact: true })).toBeVisible();
-	const titleHeight = () => page.locator(".ui-shell-frame .ui-inset-list-title").first().evaluate((el) => getComputedStyle(el).height);
-	const withIcon = await titleHeight();
-
-	// Search results are titled by section, without a tile.
-	await page.getByRole("searchbox", { name: "Search settings" }).fill("download");
+	const heading = browser.getByRole("heading", { name: "Browser", exact: true });
+	await expect(heading).toBeVisible();
+	await expect(heading).toHaveCSS("text-transform", "uppercase");
 	await expect(page.locator(".ui-shell-frame .ui-inset-list-icon")).toHaveCount(0);
-	expect(await titleHeight()).toBe(withIcon);
+	const titleHeight = () => page.locator(".ui-shell-frame .ui-inset-list-title").first().evaluate((el) => getComputedStyle(el).height);
+	const inSection = await titleHeight();
+
+	await page.getByRole("searchbox", { name: "Search settings" }).fill("download");
+	await expect(page.locator(".ui-shell-frame .search-hit").first()).toBeVisible();
+	expect(await titleHeight()).toBe(inSection);
 });
 
 test("the sleep modes write the switches' settings keys", async ({ page }) => {
@@ -494,7 +492,7 @@ test("an always-allowed site's chip removes that site only", async ({ page }) =>
 		event: "settingsLoaded",
 		settings: { agentControlEnabled: "true", agentAlwaysAllowedSites: JSON.stringify(["github.com", "docs.google.com"]) },
 	}));
-	await page.locator(".section-nav-button").filter({ hasText: "AI agents" }).click();
+	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
 
 	const row = page.locator('[data-setting-id="agentAlwaysAllowed"]');
 	await expect(row.locator(".ui-chip")).toHaveText(["github.com", "docs.google.com"]);
@@ -505,7 +503,7 @@ test("an always-allowed site's chip removes that site only", async ({ page }) =>
 	expect(sent.at(-1)?.payload).toEqual({ key: "agentAlwaysAllowedSites", value: JSON.stringify(["docs.google.com"]) });
 });
 
-test("each agent app shows its status as a badge and at most one action", async ({ page }) => {
+test("each agent app shows its status line and at most one action", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true" } }));
@@ -523,19 +521,19 @@ test("each agent app shows its status as a badge and at most one action", async 
 	await page.evaluate(() => window.__lilo!.receive({
 		event: "agentActivity", moods: {}, clients: [{ name: "claude-code", busy: false, actingTabIds: [], spaceIds: [] }], agentsSpaceIds: [], agentsProfileId: "", hiddenAgentsSpaceIds: [],
 	}));
-	await page.locator(".section-nav-button").filter({ hasText: "AI agents" }).click();
+	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
 
-	const row = (name: string) => page.locator(".agent-row").filter({ has: page.locator(".ui-list-row-title", { hasText: name }) });
-	const expectRow = async (name: string, badge: string | null, buttons: string[]) => {
-		await expect(row(name).locator(".ui-badge")).toHaveText(badge ? [badge] : []);
+	const row = (name: string) => page.locator(".agent-tile, [data-setting-id='agentOther']").filter({ has: page.locator(".name, .ui-list-row-title", { hasText: name }) });
+	const expectRow = async (name: string, status: string | null, buttons: string[]) => {
+		if (status) await expect(row(name).locator(".status")).toHaveText(status);
 		await expect(row(name).getByRole("button")).toHaveText(buttons);
 	};
 	await expectRow("Claude Code", "Connected", ["Remove"]);
 	await expectRow("Cursor", "Not installed", []);
-	await expectRow("Codex", null, ["Connect"]);
-	await expectRow("Claude Desktop", "Configured", []);
-	await expectRow("Other agents", null, ["Copy configuration"]);
-	await expect(row("Claude Code").locator(".ui-badge")).toHaveClass(/success/);
+	await expectRow("Codex", "Adds Lilo to its MCP servers.", ["Connect"]);
+	await expectRow("Claude Desktop", "Configured. Lilo asks you the first time it connects.", []);
+	await expectRow("Other agents", null, ["Copy Configuration"]);
+	await expect(row("Claude Code")).toHaveAttribute("data-agent-status", "connected");
 
 	await page.evaluate(() => window.__lilo!.receive({
 		event: "agentActivity", moods: {}, clients: [{ name: "claude-code", busy: true, actingTabIds: [], spaceIds: [] }], agentsSpaceIds: [], agentsProfileId: "", hiddenAgentsSpaceIds: [],
@@ -549,7 +547,7 @@ test("each agent app shows its status as a badge and at most one action", async 
 	expect(revoked.map((command) => command.payload)).toEqual([{ name: "claude-code" }]);
 });
 
-test("content blocking splits into its switch, what it blocks, and its lists", async ({ page }) => {
+test("content blocking nests what it blocks under its switch, then its lists", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 	await page.evaluate(() => window.__lilo!.receive({
@@ -559,13 +557,14 @@ test("content blocking splits into its switch, what it blocks, and its lists", a
 
 	const frame = page.locator(".ui-shell-frame");
 	const titles = frame.locator(".ui-inset-list-title");
-	await expect(titles).toContainText(["Content blocking", "What Lilo blocks", "Lists and exceptions", "Site permissions"]);
+	await expect(titles).toContainText(["Content blocking", "Lists and exceptions", "Site permissions"]);
+	await expect(frame.getByRole("region", { name: "Content blocking" }).locator('[data-setting-id="blockerTrackers"]')).toBeVisible();
 	const sites = frame.locator('[data-setting-id="blockerSites"] .ui-link-row');
 	await expect(sites.locator(".ui-link-row-count")).toHaveText("2");
 	await expect(sites).not.toContainText("lemonde.fr");
 
 	await frame.locator('[data-setting-id="contentBlocker"]').locator(".ui-toggle").click();
-	await expect(frame.getByRole("region", { name: "What Lilo blocks" })).toHaveCount(0);
+	await expect(frame.locator('[data-setting-id="blockerTrackers"]')).toHaveCount(0);
 	await expect(frame.locator('[data-setting-id="blockerSites"]')).toHaveCount(0);
 });
 

@@ -91,6 +91,7 @@ extension MainWindowController {
         toolbarVisible = unsafe UserDefaults.lilo.object(forKey: "cachedToolbarVisible") as? Bool ?? true
         sidebarOverlayVisible = false
         sidebarExpandedWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: Self.sidebarWidthRange) : Self.defaultSidebarWidth
+        sidebarRail = unsafe UserDefaults.lilo.bool(forKey: "cachedSidebarRail")
         sidebarWidth = fittedSidebarWidth
         // Every layout keeps the lights where the 52pt sidebar header centers them.
         window?.toolbarStyle = .unified
@@ -104,13 +105,16 @@ extension MainWindowController {
             let dbVisible = settings.sidebarVisible
             let dbToolbarVisible = settings.toolbarVisible
             let dbWidth = CGFloat(settings.sidebarWidth).clamped(to: Self.sidebarWidthRange)
-            if sidebarVisible != dbVisible || toolbarVisible != dbToolbarVisible || sidebarExpandedWidth != dbWidth {
+            let dbRail = settings.sidebarRail
+            if sidebarVisible != dbVisible || toolbarVisible != dbToolbarVisible || sidebarExpandedWidth != dbWidth || sidebarRail != dbRail {
                 sidebarVisible = dbVisible
                 toolbarVisible = dbToolbarVisible
                 sidebarExpandedWidth = dbWidth
+                sidebarRail = dbRail
                 unsafe UserDefaults.lilo.set(dbVisible, forKey: "cachedSidebarVisible")
                 unsafe UserDefaults.lilo.set(dbToolbarVisible, forKey: "cachedToolbarVisible")
                 unsafe UserDefaults.lilo.set(Double(dbWidth), forKey: "cachedSidebarWidth")
+                unsafe UserDefaults.lilo.set(dbRail, forKey: "cachedSidebarRail")
                 applySidebarLayout(animated: false, syncTrafficLights: true)
             }
             let dbLayout = settings.tabLayout
@@ -458,6 +462,7 @@ extension MainWindowController {
             windowController: self
         ))
 
+        bridgeRouter.register(handler: ConversationBridgeHandler(window: self))
         bridgeRouter.register(handler: KeepAwakeBridgeHandler(powerKeeper: context.powerKeeper, bridgeRouter: bridgeRouter) { [weak self] in
             guard let self else { return }
             context.sentTerminalActivity[ObjectIdentifier(self)] = nil
@@ -814,6 +819,7 @@ extension MainWindowController {
             "activeTabId": tabManager.activeOpenTabId?.uuidString ?? "",
             "sidebarWidth": sidebarExpandedWidth,
             "sidebarVisible": sidebarVisible,
+            "sidebarRail": sidebarRail,
             "toolbarVisible": toolbarVisible,
             "trafficLightsVisible": areTrafficLightsVisible(),
             "tabPosition": tabLayout.position.rawValue,
@@ -993,12 +999,8 @@ extension MainWindowController {
     /// The bar over the page takes the active page's color, drawn with the frame so it slides with the page exactly.
     /// A page loading before it has one shows the surface under it, which the bar takes meanwhile.
     func syncPageBar() {
-        if pageCovered {
-            windowFrameView?.setBarColors(nil)
-            return
-        }
         let tab = tabManager.activeTab
-        let colors = tab?.pageColor?.split(separator: ",").compactMap { NSColor(cssHex: String($0))?.cgColor } ?? []
+        let colors = (systemScreenBarColor ?? tab?.pageColor)?.split(separator: ",").compactMap { NSColor(cssHex: String($0))?.cgColor } ?? []
         let loading = tab?.kind == .web && tab?.url != nil
         windowFrameView?.setBarColors(colors.isEmpty ? (loading ? [currentContentSurfaceColor.cgColor] : nil) : colors)
     }

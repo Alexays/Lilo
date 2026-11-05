@@ -14,9 +14,9 @@ test("a hung active tab shows the card and a sidebar counter, both gone once it 
 
 	await responsiveness(page, "tab-alpha", false);
 
-	const card = page.locator(".page-hang .card");
+	const card = page.locator('[data-modal="page-hang-card"]');
 	await expect(card).toBeVisible();
-	await expect(card.locator("h1")).toHaveText("example.com isn't responding");
+	await expect(card.locator("h2")).toHaveText("example.com isn't responding");
 	await expect(page.locator('[data-tab-id="tab-alpha"] .hang-timer')).toHaveText(/\d+ s/);
 
 	await responsiveness(page, "tab-alpha", true);
@@ -31,13 +31,13 @@ test("a background tab hanging shows only in the sidebar", async ({ page }) => {
 	await responsiveness(page, "tab-beta", false);
 
 	await expect(page.locator('[data-tab-id="tab-beta"] .hang-timer')).toBeVisible();
-	await expect(page.locator(".page-hang")).toHaveCount(0);
+	await expect(page.locator('[data-modal="page-hang-card"]')).toHaveCount(0);
 });
 
 test("Wait hides the card, Reload asks the host to reload", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await responsiveness(page, "tab-alpha", false);
-	const card = page.locator(".page-hang .card");
+	const card = page.locator('[data-modal="page-hang-card"]');
 
 	await card.getByRole("button", { name: "Wait" }).click();
 	await expect(card).toHaveCount(0);
@@ -55,14 +55,14 @@ test("Wait hides the card, Reload asks the host to reload", async ({ page }) => 
 test("hanging again after a reload offers reloading without the blocker", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await responsiveness(page, "tab-alpha", false);
-	await page.locator(".page-hang .card").getByRole("button", { name: "Reload" }).click();
+	await page.locator('[data-modal="page-hang-card"]').getByRole("button", { name: "Reload" }).click();
 	await responsiveness(page, "tab-alpha", true);
 
 	await responsiveness(page, "tab-alpha", false);
 
-	const card = page.locator(".page-hang .card");
-	await expect(card.locator("h1")).toHaveText("example.com froze again");
-	await card.getByRole("button", { name: "Reload without blocker" }).click();
+	const card = page.locator('[data-modal="page-hang-card"]');
+	await expect(card.locator("h2")).toHaveText("example.com froze again");
+	await card.getByRole("button", { name: "Reload Without Blocker" }).click();
 	await expect(page.locator(".undo-toast")).toBeVisible();
 	// The host reloads the tab itself once the rules without the blocker are in place.
 	const commands = (await sentCommands(page)).filter(

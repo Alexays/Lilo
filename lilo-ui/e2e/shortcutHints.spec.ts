@@ -9,7 +9,7 @@ test("command bar rows name the keys the user's bindings give each action", asyn
 	await bootChrome(page, { ...initialWorld(), shortcutKeys: ARC_SHORTCUT_KEYS });
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 	const input = page.locator(".command-bar-input");
-	const helper = page.locator(".command-bar-result.selected .result-helper");
+	const helper = page.locator(".command-bar-result.selected .result-shortcut");
 
 	await input.fill(":toggle sidebar");
 	await expect(helper).toHaveText("⌘S");
@@ -30,7 +30,7 @@ test("an action left unbound shows no keys in the command bar", async ({ page })
 	await page.locator(".command-bar-input").fill(":reopen closed");
 
 	await expect(page.locator(".command-bar-result.selected")).toContainText("Reopen");
-	await expect(page.locator(".command-bar-result.selected .result-helper")).toHaveCount(0);
+	await expect(page.locator(".command-bar-result.selected .result-shortcut")).toHaveCount(0);
 });
 
 test("the sidebar's toolbar buttons name their action and its keys", async ({ page }) => {

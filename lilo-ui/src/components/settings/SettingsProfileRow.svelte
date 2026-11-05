@@ -5,10 +5,10 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { showProfileExtensions } from "../../stores/extensions.svelte";
-  import { closeSettingsShell, openSettings, openSettingsSubpage } from "../../stores/panels.svelte";
+  import { closeSettingsShell, openClearBrowsingData, openSettings } from "../../stores/panels.svelte";
   import { getActiveProfileId } from "../../stores/profiles.svelte";
   import type { SpaceState } from "../../stores/spaces.svelte";
-  import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
+  import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import { PASTEL_COLORS, profileRemoval } from "./profilesModel";
   import UiSelect from "../ui/UiSelect.svelte";
   import UiTextField from "../ui/UiTextField.svelte";
@@ -97,6 +97,7 @@
         <UiTextField value={profile.name} ariaLabel={t("settings.profiles.rename")} oncommit={rename} />
       </span>
     {:else}
+      <span class="profile-dot" aria-hidden="true"></span>
       <span class="card-name">{profile.name}</span>
     {/if}
     <div class="menu-anchor" data-profile-menu={profile.id}>
@@ -137,7 +138,7 @@
           </button>
           <!-- The clear-data flow acts on the window's own profile only. -->
           {#if isActive}
-            <button class="float-row" role="menuitem" onclick={() => pick(() => openSettingsSubpage("privacy", "browsingData"))}>
+            <button class="float-row" role="menuitem" onclick={() => pick(openClearBrowsingData)}>
               {t("settings.profiles.clearData")}
             </button>
           {/if}
@@ -206,7 +207,7 @@
   {/if}
 </article>
 
-<BottomConfirmSheet
+<UiConfirmModal
   visible={confirmingRemove}
   title={t("settings.profiles.deleteTitle", { name: profile.name })}
   message={removal.moving.length > 0 ? t("settings.profiles.deleteMessageSpaces") : t("settings.profiles.deleteMessage")}
@@ -229,17 +230,27 @@
       />
     </div>
   {/if}
-</BottomConfirmSheet>
+</UiConfirmModal>
 
 <style>
   .profile-card {
     display: grid;
     align-content: start;
-    gap: 12px;
-    padding: 14px;
-    border: 1px solid color-mix(in srgb, var(--profile-color) 40%, var(--border));
-    border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--profile-color) 24%, var(--bg-primary));
+    gap: var(--space-12);
+    padding: var(--space-12) 14px 14px;
+    border-radius: var(--radius-box);
+    background: var(--group-box-bg);
+    box-shadow: inset 0 0 0 1px var(--separator);
+  }
+
+  /* The profile's color, the same dot everywhere it is chosen. */
+  .profile-dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--profile-color);
+    box-shadow: inset 0 0 0 1px var(--separator);
   }
 
   .card-top {
@@ -256,8 +267,8 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-primary);
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
   }
 
   .rename-field {
@@ -279,12 +290,13 @@
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--bg-hover);
+    background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
   }
 
   .more-btn:hover {
+    background: var(--bg-hover);
     color: var(--text-primary);
   }
 
@@ -350,10 +362,11 @@
     align-items: center;
     gap: 4px;
     max-width: 100%;
-    padding: 4px 8px 4px 8px;
+    padding: var(--space-4) var(--space-10) var(--space-4) var(--space-8);
     border: 0;
     border-radius: var(--radius-chip);
-    background: var(--bg-hover);
+    background: var(--bg-elevated);
+    box-shadow: inset 0 0 0 1px var(--separator);
     color: var(--text-primary);
     font-family: inherit;
     font-size: var(--font-size-sm);
@@ -382,7 +395,6 @@
     cursor: default;
   }
 
-  /* Secondary, not muted: muted text falls under AA on the card's tint. */
   .stats {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);

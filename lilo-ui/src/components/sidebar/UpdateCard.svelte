@@ -22,7 +22,7 @@
         onclick={restartForUpdate}
       >
         <span class="update-icon">
-          {#if icon}<img src={icon} alt="" width="28" height="28" />{/if}
+          {#if icon}<img src={icon} alt="" width="32" height="32" />{/if}
         </span>
         <span class="update-text">
           <span class="update-title">Lilo <span class="update-version">{version}</span></span>
@@ -55,7 +55,7 @@
 <style>
   .update-dock {
     flex-shrink: 0;
-    margin: 0 var(--sidebar-right-pad, 10px) 8px 10px;
+    margin: 0 var(--sidebar-right-pad, 8px) 8px 8px;
   }
 
   /* A tab strip opens it in a popover, whose padding keeps room for the close button. */
@@ -72,7 +72,7 @@
   .update-card {
     position: relative;
     padding: 1px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-box);
     isolation: isolate;
     container-type: inline-size;
     animation: update-rise 520ms var(--motion-ease-bounce) both;
@@ -104,17 +104,19 @@
     animation: update-sweep 1.6s var(--motion-ease-spring) 250ms both;
   }
 
+  /* The sidebar's selected surface, opaque so the sweep under the card's edge does not show through. */
   .update-main {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
-    padding: 7px 8px 7px 8px;
+    height: 56px;
+    padding: 0 12px;
     border: none;
-    border-radius: calc(var(--radius-md) - 1px);
+    border-radius: calc(var(--radius-box) - 1px);
     background:
       radial-gradient(120% 140% at 0% 0%, var(--accent-tint-14), transparent 60%),
-      var(--bg-selected);
+      var(--sidebar-sel-solid);
     color: var(--text-primary);
     font-family: inherit;
     text-align: left;
@@ -133,8 +135,8 @@
   .update-icon {
     position: relative;
     flex-shrink: 0;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     overflow: hidden;
     border-radius: var(--radius-sm);
     animation: update-pop 640ms var(--motion-ease-bounce) 120ms both;
@@ -169,9 +171,9 @@
   .update-title {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-semibold);
     white-space: nowrap;
   }
@@ -180,28 +182,32 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 1px 6px;
+    padding: 1px 8px;
     border-radius: var(--radius-chip);
     background: var(--accent-tint-14);
     color: var(--accent-ink);
-    font-size: var(--font-size-2xs);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
   }
 
   .update-sub {
     overflow: hidden;
     color: var(--text-secondary);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   .update-go {
     flex-shrink: 0;
-    padding: 4px 10px;
+    height: var(--control-height-md);
+    box-sizing: border-box;
+    padding: 0 14px;
     border-radius: var(--radius-chip);
     background: var(--accent);
     color: var(--accent-text);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-md);
+    line-height: var(--control-height-md);
     font-weight: var(--font-weight-semibold);
     box-shadow: var(--shadow-control), inset 0 1px 0 color-mix(in srgb, white 25%, transparent);
     transition:
@@ -215,6 +221,21 @@
 
   .update-main:active .update-go {
     transform: scale(0.95);
+  }
+
+  /* Narrower still, Restart goes under the text, so the version and the status stay whole. */
+  @container (max-width: 200px) {
+    .update-main {
+      flex-wrap: wrap;
+      row-gap: 8px;
+      height: auto;
+      padding: 10px 12px 12px;
+    }
+
+    .update-go {
+      flex-basis: 100%;
+      text-align: center;
+    }
   }
 
   .update-spinner {
@@ -237,8 +258,8 @@
     right: -6px;
     display: grid;
     place-items: center;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     border: 1px solid var(--border);
     border-radius: 50%;

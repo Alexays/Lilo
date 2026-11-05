@@ -1,5 +1,6 @@
 // Everything that drops out of the address bar: permission requests, the default-browser invite,
-// and the Site drawer the user opens. One drawer shows at a time, picked by priority.
+// and the Site drawer the user opens. One drawer shows at a time, picked by priority. An agent asking
+// to connect is no drawer: it waits here too, but shows as a modal.
 
 import { on } from "../lib/bridge";
 import { agentActions, chromeActions, extensionActions, settingsActions } from "../lib/bridge/actions";
@@ -20,6 +21,7 @@ interface ExtensionPermissionRequest {
 	kind: "extensionPermission";
 	requestId: string;
 	spaceId: string;
+	extensionId: string;
 	extensionName: string;
 	permissions: string[];
 	origins: string[];
@@ -51,6 +53,8 @@ const SITE_DRAWER = { kind: "site" } as const;
 let _queue = $state.raw<PermissionRequest[]>([]);
 let _defaultBrowserInvite = $state(false);
 let _siteOpen = $state(false);
+// Opened by resting on the address: shown over a waiting request, since it leaves with the pointer.
+let _sitePeek = $state(false);
 let _trackersBlocked = $state(0);
 let _blockerAllowlist = $state.raw<string[]>([]);
 // Zoom the host reported for the active tab; null until it changes during this session.
@@ -80,6 +84,7 @@ export function initUrlBarDrawerStore(): void {
 				requestId: data.requestId,
 				// An extension prompt belongs to the space it was granted in.
 				spaceId: getActiveSpaceId(),
+				extensionId: data.extensionId,
 				extensionName: data.extensionName,
 				permissions: data.permissions ?? [],
 				origins: data.origins ?? [],
@@ -123,7 +128,7 @@ export function initUrlBarDrawerStore(): void {
 }
 
 /**
- * Priority: a site prompt from the active tab, an agent asking to control Lilo whatever is shown, an extension
+ * Priority: a site prompt from the active tab, an agent's action whatever is shown, an extension
  * prompt from the active space, the default-browser invite, then the Site drawer the user opened. The agent goes
  * before extensions: its question times out as a refusal, theirs waits.
  */
@@ -131,13 +136,20 @@ export function getActiveUrlBarDrawer(): UrlBarDrawer | null {
 	const tabId = getActiveTabId();
 	const spaceId = getActiveSpaceId();
 	return (
+		(_sitePeek ? SITE_DRAWER : null) ??
 		_queue.find((request) => request.kind === "sitePermission" && request.tabId === tabId) ??
-		_queue.find((request) => request.kind === "agentControl") ??
+		_queue.find((request) => request.kind === "agentControl" && request.action) ??
 		_queue.find((request) => request.kind === "extensionPermission" && request.spaceId === spaceId) ??
+		// The Site drawer is asked for by the user; the invite can wait for it to close.
+		(_siteOpen ? SITE_DRAWER : null) ??
 		// The onboarding has its own default-browser step.
-		(_defaultBrowserInvite && !getOnboarding().visible ? DEFAULT_BROWSER_DRAWER : null) ??
-		(_siteOpen ? SITE_DRAWER : null)
+		(_defaultBrowserInvite && !getOnboarding().visible ? DEFAULT_BROWSER_DRAWER : null)
 	);
+}
+
+/** An agent asking to connect, or to move to another profile: the modal's question, first come first asked. */
+export function getAgentConnectRequest(): AgentControlRequest | null {
+	return _queue.find((request): request is AgentControlRequest => request.kind === "agentControl" && !request.action) ?? null;
 }
 
 /** `alwaysAllowSite` answers an agent's action, allowing it on that site from now on. */
@@ -158,11 +170,21 @@ export function dismissSitePermissionRequest(requestId: string): void {
 }
 
 export function isSiteDrawerOpen(): boolean {
-	return _siteOpen;
+	return _siteOpen || _sitePeek;
 }
 
 export function setSiteDrawerOpen(open: boolean): void {
 	_siteOpen = open;
+	_sitePeek = false;
+}
+
+export function setSiteDrawerPeek(peek: boolean): void {
+	_sitePeek = peek;
+}
+
+/** A press inside a peeking drawer keeps it once the pointer leaves. */
+export function pinSiteDrawer(): void {
+	if (_sitePeek) setSiteDrawerOpen(true);
 }
 
 export function dismissDefaultBrowserInvite(): void {

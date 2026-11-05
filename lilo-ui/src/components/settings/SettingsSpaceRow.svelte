@@ -33,11 +33,11 @@
   .space-badge {
     display: grid;
     place-items: center;
-    width: 20px;
-    height: 20px;
-    border-radius: var(--radius-sm);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--space-color) 45%, transparent);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xl);
     line-height: 1;
   }
 </style>

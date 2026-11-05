@@ -22,7 +22,8 @@ test("in a small window the find bar stays over the page, clear of the sidebar",
 	expect(bar.x + bar.width).toBeLessThanOrEqual(600);
 	for (const button of await page.locator(".find-bar .find-btn").all()) {
 		const box = (await button.boundingBox())!;
-		expect(box.width).toBe(24);
+		// Layout height: the bar's opening scale would shrink a bounding box.
+		expect(await button.evaluate((el) => (el as HTMLElement).offsetHeight)).toBe(24);
 		expect(box.x + box.width).toBeLessThanOrEqual(bar.x + bar.width);
 	}
 });

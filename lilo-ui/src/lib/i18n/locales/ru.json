@@ -28,19 +28,15 @@
 		"terminalTheme": "Тема",
 		"terminalThemeDescription": "Lilo подстраивается под цвет каждого пространства и сохраняет читаемость всех цветов.",
 		"terminalImport": "Импортировать...",
-		"terminalImportTitle": "Импорт темы",
-		"terminalImportDescription": "Цветовая схема iTerm2 (.itermcolors), тема VS Code (.json) или файл темы Ghostty.",
 		"terminalFont": "Шрифт",
-		"terminalFontDescription": "Шрифты с лигатурами, например JetBrains Mono или Fira Code, отображают их.",
+		"terminalFontDescription": "Шрифты с лигатурами, например JetBrains Mono или Fira Code, отображают их. Размер в пунктах, для всех вкладок терминала.",
 		"terminalFontSystem": "Системный (SF Mono)",
 		"terminalFontSize": "Размер",
-		"terminalFontSizeDescription": "В пунктах, для всех вкладок терминала.",
 		"terminalScrollback": "История терминала",
 		"terminalScrollbackDescription": "10 МБ — это около 100 000 строк.",
 		"terminalBehaviorGroup": "Поведение",
 		"terminalNotify": "Уведомлять о завершении долгих команд",
 		"terminalNotifyDescription": "Если команда шла более 10 секунд и вы переключились в другое место.",
-		"terminalSleepGroup": "Сон",
 		"terminalPreventSleepDescription": "Кроме команд, ожидающих вашего ввода или не выводящих ничего 5 минут.",
 		"terminalLidStatus": {
 			"unsigned": "Требуется подписанная сборка Lilo.",
@@ -79,7 +75,7 @@
 			"pride": "Прайд",
 			"clay": "Глина"
 		},
-		"importBrowsersAction": "Импортировать",
+		"importBrowsersAction": "Импортировать...",
 		"passwordManagerAction": "Выбрать",
 		"passwordManagerChange": "Изменить",
 		"replayOnboardingAction": "Повторить",
@@ -121,7 +117,6 @@
 			"storage": "Хранилище"
 		},
 		"manageHistory": "Управлять историей",
-		"manageHistoryDesc": "Просмотр, поиск и удаление по страницам",
 		"historyTimeRange": "Период истории",
 		"historyRangeHour": "За последний час",
 		"historyRangeDay": "За последние сутки",
@@ -147,14 +142,14 @@
 			"privacy": "Конфиденциальность",
 			"extensions": "Расширения",
 			"advanced": "Дополнительно",
-			"agents": "ИИ-агенты"
+			"agents": "Агенты"
 		},
 		"groups": {
 			"browser": "Браузер",
 			"search": "Поиск",
 			"downloads": "Загрузки",
 			"theme": "Тема",
-			"tabLayout": "Вкладки",
+			"tabLayout": "Расположение",
 			"pages": "Страницы",
 			"spaces": "Пространства",
 			"playback": "Воспроизведение",
@@ -162,29 +157,29 @@
 			"contentBlocking": "Блокировка контента",
 			"protection": "Защита",
 			"browsingData": "Данные браузера",
-			"tools": "Инструменты",
+			"tools": "Инструменты разработчика",
 			"permissions": "Разрешения",
 			"zoom": "Масштаб",
 			"siteData": "Данные",
 			"sites": "Сайты ({count})",
 			"updates": "Обновления",
 			"passwords": "Пароли",
-			"agentAccess": "Доступ",
-			"agentClients": "Агенты",
+			"agentAccess": "Агенты, использующие Lilo",
+			"agentClients": "Приложения, которые могут использовать Lilo",
 			"lilo": "Lilo",
 			"tabsWindows": "Вкладки и окна",
 			"sitePermissions": "Разрешения сайтов",
 			"profiles": "Профили",
 			"otherAppLinks": "Ссылки из других приложений",
-			"blockerCategories": "Что блокирует Lilo",
-			"blockerExceptions": "Списки и исключения"
+			"blockerExceptions": "Списки и исключения",
+			"agentConversations": "Разговоры"
 		},
 		"searchPlaceholder": "Поиск настроек",
 		"searchResultsTitle": "Результаты поиска",
 		"searchEmpty": "По запросу «{query}» настройки не найдены.",
 		"clearData": {
 			"total": "хранится в этом профиле",
-			"measuring": "Подсчёт данных профиля...",
+			"title": "Очистить данные просмотра",
 			"freed": "Освободится {size}",
 			"rangeNote": "Удаляются только данные, сохранённые за выбранный период.",
 			"hints": {
@@ -283,8 +278,12 @@
 			"addressPlacement": {
 				"title": "Адрес",
 				"description": "Рядом с вкладками, над страницей или скрыт. Вводите адрес в командной строке.",
-				"keywords": "адресная строка url панель расположение скрыть скрыт",
-				"lockedRight": "Когда вкладки справа, адрес можно показать над страницей или скрыть."
+				"keywords": "адресная строка url панель расположение скрыть скрыт"
+			},
+			"hideSpaceNames": {
+				"title": "Скрывать названия пространств",
+				"description": "Нижняя панель показывает каждое пространство только значком, даже если хватает места для названия.",
+				"keywords": "пространство название подпись нижняя панель значок скрыть"
 			},
 			"theme": {
 				"title": "Тема",
@@ -423,7 +422,8 @@
 			"clearData": {
 				"title": "Очистить данные браузера",
 				"description": "История, cookie, кэш и данные сайтов за выбранный период.",
-				"keywords": "история cookie кэш удалить очистить"
+				"keywords": "история cookie кэш удалить очистить",
+				"action": "Очистить данные браузера..."
 			},
 			"loadUnpacked": {
 				"title": "Загрузить распакованное расширение",
@@ -476,8 +476,8 @@
 				"keywords": "пароль блокировка папка конфиденциальность"
 			},
 			"agentControl": {
-				"title": "Разрешить ИИ-агентам доступ к Lilo",
-				"description": "Claude Code, Codex или Cursor работают в отдельном пространстве «Агенты». У Lilo нет собственного ИИ.",
+				"title": "Разрешить агентам доступ к Lilo",
+				"description": "Claude Code, Codex или Cursor работают в отдельном пространстве «Агенты».",
 				"keywords": "агент ии ai mcp claude codex cursor автоматизация удалённое управление"
 			},
 			"agentAskBeforeActions": {
@@ -549,6 +549,16 @@
 				"title": "Настройки сайтов",
 				"description": "Разрешения, масштаб и сохранённые данные каждого сайта.",
 				"keywords": "сайт разрешения cookie масштаб данные хранилище"
+			},
+			"agentsEnabled": {
+				"title": "Разговоры с вашими агентами",
+				"description": "Общайтесь с Claude Code, Codex, Gemini и другими агентами во вкладке, используя свои подписки.",
+				"keywords": "агент ии ai acp чат разговор спросить claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Уведомлять, когда агент закончит",
+				"description": "Уведомление, когда завершается разговор, который вы сейчас не смотрите.",
+				"keywords": "агент уведомление оповещение готово завершено"
 			}
 		},
 		"devices": {
@@ -602,16 +612,16 @@
 			"copy": "Скопировать конфигурацию",
 			"clientDescription": "Добавляет Lilo к его MCP-серверам.",
 			"clientConnected": "Lilo добавлен к его MCP-серверам.",
-			"lastSeen": "Последнее подключение {time}",
 			"revoke": "Убрать",
-			"readyDescription": "Lilo запросит разрешение при первом подключении.",
 			"status": {
 				"acting": "Выполняет действие",
 				"connected": "Подключён",
 				"allowed": "Разрешён",
 				"notInstalled": "Не установлен",
 				"ready": "Настроен"
-			}
+			},
+			"allowedSeen": "Разрешён, последний раз {time}",
+			"readyLine": "Настроено. Lilo спросит вас при первом подключении."
 		},
 		"navGroups": {
 			"tools": "Инструменты"
@@ -639,7 +649,7 @@
 			"lastProfile": "Последний профиль нельзя удалить: каждому пространству нужен профиль.",
 			"extensionCount": "Расширений: {count}",
 			"extensionCountOne": "1 расширение",
-			"newProfile": "Новый профиль",
+			"newProfile": "Новый профиль...",
 			"newProfileDetail": "Без cookie, учётных записей и расширений",
 			"namePlaceholder": "Название профиля",
 			"create": "Создать",
@@ -676,7 +686,6 @@
 			"emptyPattern": "Укажите домен или текст для сопоставления."
 		},
 		"shortcuts": {
-			"intro": "Нажмите на сочетание, затем нажмите новые клавиши. Esc отменяет, Delete убирает сочетание у действия.",
 			"searchPlaceholder": "Поиск сочетаний",
 			"preset": "Набор",
 			"presetDescription": "Заменяет все изменённые вами сочетания.",
@@ -693,9 +702,10 @@
 			"conflict": "{keys} уже используется для «{name}».",
 			"replace": "Заменить",
 			"cancel": "Отмена",
-			"noResults": "Сочетания не найдены."
+			"noResults": "Сочетания не найдены.",
+			"note": "Нажмите на сочетание, затем новые клавиши",
+			"recordingHint": "Esc отменяет, Delete оставляет действие без сочетания."
 		},
-		"terminalAppearanceGroup": "Оформление",
 		"terminalSleepMode": "Не давать Mac засыпать во время команд",
 		"terminalSleepModes": {
 			"off": "Выкл.",
@@ -710,7 +720,45 @@
 			"requiresApproval": "Нужно разрешение",
 			"enabled": "Разрешён",
 			"notFound": "Отсутствует"
-		}
+		},
+		"notes": {
+			"live": "Изменения применяются сразу",
+			"spaces": {
+				"one": "{count} пространство",
+				"few": "{count} пространства",
+				"many": "{count} пространств",
+				"other": "{count} пространства"
+			},
+			"profiles": {
+				"one": "{count} профиль",
+				"few": "{count} профиля",
+				"many": "{count} профилей",
+				"other": "{count} профиля"
+			},
+			"blocking": "Блокируется {count} из {total} типов",
+			"blockingOff": "Блокировка выключена",
+			"profile": "Профиль {name}",
+			"extensions": {
+				"one": "{count} расширение в {profile}",
+				"few": "{count} расширения в {profile}",
+				"many": "{count} расширений в {profile}",
+				"other": "{count} расширения в {profile}"
+			},
+			"terminal": "Изменения действуют во всех вкладках терминала",
+			"agents": "У Lilo нет собственного ИИ",
+			"advanced": "Для разработки и тестирования",
+			"searchMatches": {
+				"one": "{count} настройка соответствует «{query}»",
+				"few": "{count} настройки соответствуют «{query}»",
+				"many": "{count} настроек соответствуют «{query}»",
+				"other": "{count} настройки соответствуют «{query}»"
+			}
+		},
+		"callDock": {
+			"sidebar": "На боковой панели",
+			"floating": "Плавающее окно"
+		},
+		"terminalImportCaption": "Импорт принимает цветовой пресет iTerm2 (.itermcolors), цветовую тему VS Code (.json) или файл темы Ghostty."
 	},
 	"nav": {
 		"navigationControls": "Навигация",
@@ -850,9 +898,19 @@
 		"newTab": "Новая вкладка",
 		"newTerminal": "Новый терминал",
 		"clearUnpinnedTooltip": "Архивировать незакреплённые вкладки",
+		"listOptions": "Сортировка и группировка",
 		"pinnedTabs": "Закреплённые вкладки",
 		"openTabs": "Открытые вкладки",
-		"dropToPin": "Отпустите, чтобы закрепить"
+		"dropToPin": "Отпустите, чтобы закрепить",
+		"stackLabel": {"one": "{name}, {count} вкладка", "few": "{name}, {count} вкладки", "many": "{name}, {count} вкладок", "other": "{name}, {count} вкладки"},
+		"closeStack": "Закрыть стопку",
+		"trayAgents": "Агенты",
+		"trayTerminals": "Терминалы",
+		"trayNeedsInput": {"one": "{count} ждёт ответа", "few": "{count} ждут ответа", "many": "{count} ждут ответа", "other": "{count} ждут ответа"},
+		"trayWorking": {"one": "{count} работает", "few": "{count} работают", "many": "{count} работают", "other": "{count} работают"},
+		"trayRunning": {"one": "{count} выполняется", "few": "{count} выполняются", "many": "{count} выполняются", "other": "{count} выполняются"},
+		"trayShow": "Показать: {name}",
+		"trayHide": "Скрыть: {name}"
 	},
 	"bookmarks": {
 		"groupLabel": "Вкладки в закладках",
@@ -871,6 +929,11 @@
 		"colorFrom": {
 			"page": "Цвет активной вкладки",
 			"wallpaper": "Цвет ваших обоев"
+		},
+		"color": "Цвет",
+		"colorSource": {
+			"page": "Страница",
+			"wallpaper": "Обои"
 		},
 		"colorSourceHint": {
 			"page": "Lilo берёт цвет сайта в активной вкладке.",
@@ -914,6 +977,7 @@
 		"thisSpace": "это пространство",
 		"deleteConfirmMessage": "Пространство и все его вкладки будут удалены навсегда.",
 		"deleteSpace": "Удалить пространство",
+		"deleteSpaceEllipsis": "Удалить пространство...",
 		"keepSpace": "Оставить пространство",
 		"moreEmojis": "Другие эмодзи",
 		"lastSpaceHint": "Последнее пространство нельзя удалить.",
@@ -950,8 +1014,11 @@
 	},
 	"downloadsPanel": {
 		"title": "Загрузки",
+		"allDownloads": "Все загрузки",
+		"navLabel": "Разделы загрузок",
 		"searchPlaceholder": "Поиск загрузок",
-		"loading": "Загрузка списка...",
+		"searchResults": "Результаты поиска",
+		"quickLookNote": "Пробел для быстрого просмотра",
 		"emptyTitle": "Нет загрузок",
 		"emptyCopy": "Загруженные файлы появятся здесь.",
 		"noResults": "Нет результатов",
@@ -993,8 +1060,6 @@
 		"menuButtonLabel": "Другие действия для {name}",
 		"openDetailsLabel": "Показать сведения о {name}",
 		"detailEnabled": "Включено",
-		"detailDescription": "Описание",
-		"detailCapabilities": "Возможности",
 		"detailPermissions": "Разрешения",
 		"detailSiteAccess": "Доступ к сайтам",
 		"siteAccessAll": "Работает на всех запрошенных сайтах.",
@@ -1007,9 +1072,10 @@
 		"capabilityContent": "Скрипты контента",
 		"removeConfirmTitle": "Удалить {name}?",
 		"removeConfirmMessage": "Расширение и его данные будут удалены.",
+		"removeExtension": "Удалить расширение...",
 		"actionFailed": "Не удалось выполнить действие. Нажмите, чтобы скрыть.",
 		"degradedTitle": "Фоновая работа остановлена: некоторые функции могут не работать.",
-		"loadUnpacked": "Загрузить распакованное расширение…",
+		"loadUnpacked": "Загрузить распакованное расширение...",
 		"addressBarMenu": "Расширения",
 		"hostAccessRequestAllow": "Разрешить",
 		"hostAccessRequestTooltip": "Разрешить этому расширению доступ к сайту",
@@ -1037,10 +1103,10 @@
 		"shortcutRecording": "Нажмите сочетание",
 		"executeAction": "Активировать расширение",
 		"shortcutNone": "Не задано",
-		"removeTitle": "Удалить это расширение",
 		"webStoreTitle": "Интернет-магазин Chrome",
 		"webStoreHint": "Отзывы, сведения и страница разработчика",
-		"webStoreOpen": "Открыть"
+		"webStoreOpen": "Открыть",
+		"installed": "Установленные"
 	},
 	"commandBar": {
 		"hintPeek": "Быстрый просмотр",
@@ -1077,7 +1143,7 @@
 		"scopeTabs": "Вкладки",
 		"scopeBookmarks": "Закладки",
 		"scopeHistory": "История",
-		"scopeArchive": "Архив",
+		"scopeArchive": "В архиве",
 		"placeholderArchive": "Поиск в архиве вкладок...",
 		"emptyTitleArchive": "Архив",
 		"emptySubtitleArchive": "Сюда попадают неактивные незакреплённые вкладки и вкладки после очистки.",
@@ -1109,6 +1175,8 @@
 		"sectionOpenTabs": "Открытые вкладки",
 		"sectionBookmarks": "Закладки",
 		"sectionRecentHistory": "Недавняя история",
+		"sectionFrequentSites": "Часто посещаемые сайты",
+		"sectionRecentConversations": "Недавние беседы",
 		"sectionHistory": "История",
 		"sectionSwitchToTab": "Перейти к вкладке",
 		"sectionGoTo": "Перейти",
@@ -1122,6 +1190,8 @@
 		"subtitleExactCommand": "Точное совпадение команды",
 		"subtitleDefaultEngine": "Поисковик по умолчанию",
 		"hintSwitch": "Перейти",
+		"agentWaiting": "Ждёт вас: {request}",
+		"agentWorking": "Работает",
 		"hintOpen": "Открыть",
 		"hintGo": "Перейти",
 		"hintSearch": "Найти",
@@ -1221,9 +1291,9 @@
 		"tabStartup": "Запуск",
 		"tabMemory": "Память",
 		"tabLog": "Журнал",
-		"tabLogCount": "Журнал ({count})",
+		"errorCount": {"one": "{count} ошибка", "few": "{count} ошибки", "many": "{count} ошибок", "other": "{count} ошибки"},
 		"copyReport": "Скопировать отчёт",
-		"recordSession": "Записать сеанс производительности (в папку «Загрузки»)",
+		"recordSession": "Записать сеанс",
 		"stopRecording": "Остановить запись",
 		"refresh": "Обновить",
 		"bootLabel": "до готовности интерфейса",
@@ -1238,17 +1308,16 @@
 		"savedStates": "Сохранённые состояния страниц",
 		"trackedSpaces": "Пространства",
 		"hiddenSpacesRetaining": "Другие пространства с вкладками в памяти",
-		"openProcessManager": "Открыть диспетчер процессов",
 		"trimDescription": "Применяет правила автоматической выгрузки сейчас.",
+		"trimTitle": "Освободить память",
 		"trimMemory": "Освободить память",
+		"processManagerDescription": "Память и ЦП каждой вкладки и процесса.",
 		"searchPlaceholder": "Поиск по журналу",
 		"filterAriaLabel": "Фильтр журнала",
 		"filterAll": "Всё",
 		"filterErrors": "Ошибки",
 		"filterExtensions": "Расширения",
 		"filterTraces": "Трассировки",
-		"copyLogs": "Скопировать журналы расширений",
-		"clearLog": "Очистить журналы расширений",
 		"emptyLog": "Пока ничего не записано.",
 		"noMatches": "Совпадающих записей нет.",
 		"truncated": "Показаны последние записи: {count}.",
@@ -1261,6 +1330,7 @@
 	},
 	"processManager": {
 		"title": "Диспетчер процессов",
+		"navLabel": "Разделы диспетчера процессов",
 		"searchPlaceholder": "Поиск вкладок",
 		"memoryAriaLabel": "Использование памяти",
 		"tabsCount": "Вкладок: {count}",
@@ -1293,10 +1363,12 @@
 		},
 		"pid": "PID {pid}",
 		"focus": "Показать",
+		"details": "Показать подробности",
 		"reload": "Перезагрузить",
 		"terminate": "Завершить принудительно",
 		"untitledTab": "Без названия",
 		"empty": "Вкладки не найдены.",
+		"emptySleeping": "Нет спящих вкладок.",
 		"confirmTerminate": "Принудительно завершить процесс «{kind}» ({pid})?",
 		"confirmCloseTab": "Закрыть {tab}?",
 		"kindWebContent": "Веб-контент",
@@ -1307,14 +1379,15 @@
 	},
 	"featureFlags": {
 		"resetAll": "Сбросить всё",
-		"warning": "Внутренние отладочные параметры предназначены для разработчиков WebKit и могут нарушить работу сайтов. Чтобы применить изменения, перезагрузите страницу.",
-		"sectionExperimental": "Экспериментальные: {count}",
+		"warning": "Внутренние отладочные параметры предназначены для разработчиков WebKit и могут нарушить работу сайтов.",
 		"sectionDebug": "Внутренняя отладка: {count}",
 		"modifiedBadge": "Изменено",
 		"title": "Флаги WebKit",
-		"resetTitle": "Изменённые флаги"
+		"resetTitle": "Изменённые флаги",
+		"reloadNote": "Перезагрузите страницу, чтобы изменение вступило в силу"
 	},
 	"urlToast": {
+		"pageActions": "Действия со страницей",
 		"reEnableBlocking": "Включить блокировку на этом сайте",
 		"trackerBlockedOnPage": "На странице заблокирован {count} трекер",
 		"trackersBlockedOnPage": "На странице заблокировано трекеров: {count}",
@@ -1345,6 +1418,7 @@
 	},
 	"pageHang": {
 		"title": "{host} не отвечает",
+		"message": "Можно подождать или перезагрузить страницу. Остальные вкладки продолжают работать.",
 		"stuckFor": "Нет ответа {seconds} с. Остальные вкладки продолжают работать.",
 		"reload": "Перезагрузить",
 		"wait": "Подождать",
@@ -1360,16 +1434,22 @@
 	},
 	"extensionDebugger": {
 		"message": "«{name}» начал отладку браузера",
-		"cancel": "Отмена"
+		"stop": "Остановить отладку"
+	},
+	"notices": {
+		"moreNotices": {
+			"one": "ещё {count} уведомление",
+			"few": "ещё {count} уведомления",
+			"many": "ещё {count} уведомлений",
+			"other": "ещё {count} уведомления"
+		},
+		"more": "ещё {count}"
 	},
 	"crashRecovery": {
 		"sessionRestored": "Предыдущий сеанс восстановлен после неожиданного завершения работы."
 	},
 	"sessionRestore": {
 		"degraded": "Не удалось восстановить вкладки пространства {name}. Резервная копия сохранена."
-	},
-	"confirmSheet": {
-		"dismiss": "Закрыть подтверждение"
 	},
 	"tabShare": {
 		"title": "{origin} запрашивает демонстрацию вкладки",
@@ -1382,7 +1462,7 @@
 		"keyHint": "Стрелки — выбрать, Return — поделиться",
 		"noTabs": "Нет открытых вкладок для демонстрации",
 		"noMatch": "Нет подходящих вкладок",
-		"shareSystem": "Окно или экран…",
+		"shareSystem": "Окно или экран...",
 		"shareAudio": "Также передавать звук",
 		"systemAudio": {
 			"undetermined": "macOS спросит один раз. Голоса участников звонка никогда не передаются.",
@@ -1412,7 +1492,7 @@
 		"closed": "Закрыто: «{title}»",
 		"closedCount": "Закрыто вкладок: {count}",
 		"undo": "Отменить",
-		"undoLabel": "Отменить: {closed}",
+		"reopen": "Открыть снова",
 		"archived": "«{title}» в архиве",
 		"archivedCount": {"one": "В архиве {count} вкладка", "few": "В архиве {count} вкладки", "many": "В архиве {count} вкладок", "other": "В архиве {count} вкладки"}
 	},
@@ -1490,7 +1570,8 @@
 	"permissionPrompt": {
 		"requestsAccess": "запрашивает доступ к:",
 		"more": "ещё +{count}",
-		"deny": "Запретить",
+		"deny": "Не разрешать",
+		"moreAnswers": "Другие ответы",
 		"allow": "Разрешить",
 		"allowOnce": "Разрешить один раз",
 		"alwaysAllowOnSite": "Всегда разрешать на этом сайте",
@@ -1525,9 +1606,16 @@
 			"notifications": "запрашивает разрешение показывать уведомления",
 			"media": "запрашивает доступ к камере или микрофону"
 		},
-		"agentControl": "запрашивает управление Lilo: открывать вкладки в своей папке, читать их страницы и действовать в них под вашими учётными записями.",
-		"agentProfile": "запрашивает перенос своих вкладок в профиль {profile}, чтобы действовать под его учётными записями.",
-		"agentExecutable": "Программа: {path}",
+		"dontAllow": "Не разрешать",
+		"agentConnect": {
+			"title": "{client} запрашивает управление Lilo",
+			"openTabs": "Открывать вкладки в своей папке Space «Агенты»",
+			"readPages": "Читать открытые им страницы",
+			"actSignedIn": "Действовать в них под вашими учётными записями",
+			"asksFirst": "Перед отправкой, оплатой, удалением или публикацией спрашивает разрешение.",
+			"profileTitle": "{client} запрашивает профиль {profile}",
+			"profileMessage": "Переносит туда свои вкладки, чтобы действовать под учётными записями этого профиля."
+		},
 		"agentClick": "хочет нажать «{label}» во вкладке {tab} ({site}).",
 		"agentSubmit": "хочет нажать Enter для отправки «{label}» во вкладке {tab} ({site}).",
 		"agentUpload": "хочет загрузить {label} на {site}.",
@@ -1573,13 +1661,14 @@
 		"continue": "Продолжить",
 		"back": "Назад",
 		"skip": "Пропустить",
+		"letsGo": "Поехали",
 		"resume": "Продолжить настройку",
 		"usage": {
 			"title": "Как вы будете пользоваться Lilo?",
 			"subtitle": "Настройка зависит от ответа. Всё можно изменить в настройках.",
 			"browse": "Для просмотра сайтов",
 			"browseDesc": "Ваши закладки, ваш стиль и всё необходимое",
-			"agents": "С моими ИИ-агентами",
+			"agents": "С моими агентами",
 			"agentsDesc": "Claude, Codex или Cursor работают рядом с вами",
 			"develop": "Для разработки",
 			"developDesc": "Всё это и терминал"
@@ -1640,8 +1729,6 @@
 				"extensionsCount": "Переустановка расширений: {current} из {total}"
 			},
 			"partial": "Не удалось импортировать часть данных: {list}. Повторите попытку позже в настройках.",
-			"moreOptions": "Выбрать данные для импорта",
-			"lessOptions": "Скрыть параметры",
 			"profiles": "Профили {browser}",
 			"kinds": "Что импортировать",
 			"kind": {
@@ -1653,12 +1740,23 @@
 			},
 			"extensions": "Расширения для переустановки",
 			"run": "Импортировать",
+			"summary": "Импортирует: {list}.",
+			"change": "Изменить",
+			"item": {
+				"bookmarks": "закладки",
+				"tabs": "открытые вкладки",
+				"history": "историю",
+				"cookies": "ваши входы на сайты",
+				"extensions": "расширения"
+			},
 			"running": "Импорт..."
 		},
 		"passwords": {
 			"title": "Ваши пароли",
 			"subtitle": "Lilo не хранит пароли самостоятельно. Добавьте менеджер, которым уже пользуетесь.",
 			"add": "Добавить",
+			"manager": "Менеджер паролей",
+			"choose": "Выбрать",
 			"addNamed": "Добавить {name}",
 			"adding": "Добавление...",
 			"added": "Добавлено",
@@ -1673,21 +1771,19 @@
 				"iCloud": "Ожидает одобрения Apple"
 			}
 		},
-		"appearance": {
-			"title": "Ваш стиль",
-			"subtitle": "Светлая тема, тёмная или как на Mac — и источник цвета. Окно обновляется сразу.",
+		"yourLilo": {
+			"title": "Ваш Lilo",
+			"subtitle": "Внешний вид и место для вкладок. Окно меняется вместе с выбором.",
 			"theme": "Тема",
 			"system": "Авто",
 			"light": "Светлая",
-			"dark": "Тёмная"
-		},
-		"tabs": {
-			"title": "Вкладки с удобной стороны",
-			"subtitle": "Выберите край — окно сразу изменится. Вкладки можно перетащить к другому краю в любой момент."
+			"dark": "Тёмная",
+			"tabs": "Вкладки",
+			"color": "Цвет",
+			"essentials": "Главное",
+			"look": "Внешний вид"
 		},
 		"essentials": {
-			"title": "Самое нужное",
-			"subtitle": "Полезные настройки. Их можно изменить в любой момент.",
 			"blocker": "Блокировать рекламу и трекеры",
 			"blockerDesc": "Рекомендуется: страницы загружаются быстрее и меньше следят за вами.",
 			"refreshRate": "Более плавная прокрутка",
@@ -1698,23 +1794,18 @@
 			"defaultDone": "Готово"
 		},
 		"agents": {
-			"title": "Ваши ИИ-агенты",
+			"title": "Ваши агенты",
 			"subtitle": "Claude Code, Codex или Cursor работают в отдельном пространстве «Агенты», не занимая вашу клавиатуру. У Lilo нет собственного ИИ.",
-			"allow": "Разрешить ИИ-агентам доступ к Lilo",
+			"allow": "Разрешить агентам доступ к Lilo",
 			"copied": "Скопировано",
-			"connectNamed": "Подключить {name}"
+			"connectNamed": "Подключить {name}",
+			"onThisMac": "На этом Mac"
 		},
 		"tips": {
-			"title": "3 совета для начала",
-			"subtitle": "Этого достаточно, чтобы начать.",
-			"go": "Поехали",
 			"search": "Нажмите ⌘T для поиска или ввода адреса.",
-			"tabs": "Вкладки всегда на виду, у выбранного края.",
 			"split": "Перетащите вкладку к краю страницы, чтобы видеть две страницы рядом."
 		},
 		"devTips": {
-			"title": "3 совета для разработки",
-			"subtitle": "Сочетания клавиш работают и без меню «Разработка».",
 			"inspector": "Нажмите ⌥⌘I, чтобы открыть веб-инспектор страницы.",
 			"localhost": "Перетащите localhost к краю страницы, чтобы видеть его рядом с документацией.",
 			"agents": "Агенты открывают вкладки в пространстве «Агенты»."
@@ -1729,6 +1820,7 @@
 	"historyPage": {
 		"title": "История",
 		"navLabel": "Разделы истории",
+		"cmdClickNote": "⌘-клик открывает в новой вкладке",
 		"searchPlaceholder": "Поиск в истории",
 		"periodAll": "Вся история",
 		"periodToday": "Сегодня",
@@ -2085,6 +2177,16 @@
 		"Mute Microphone": "Выключить микрофон",
 		"Unmute Microphone": "Включить микрофон",
 		"Close Other Tabs": "Закрыть другие вкладки",
+		"Move Stack to New Folder": "Переместить стопку в новую папку",
+		"Move Stack to Space": "Переместить стопку в пространство",
+		"Don't Stack %@": "Не складывать %@ в стопку",
+		"Close Stack": "Закрыть стопку",
+		"Stack Tabs by Site": "Складывать вкладки в стопки по сайтам",
+		"Group by Type": "Группировать по типу",
+		"Never Stack": "Не складывать в стопку",
+		"Stack Every Site Again": "Снова складывать все сайты",
+		"Sort by Site": "Сортировать по сайту",
+		"Sort by Title": "Сортировать по названию",
 		"Create Folder": "Создать папку",
 		"Create Folder from Tab": "Создать папку из вкладки",
 		"Move to Folder": "Переместить в папку",
@@ -2247,7 +2349,24 @@
 		"Parent folder": "Родительская папка",
 		"Name": "Имя",
 		"Size": "Размер",
-		"Date Modified": "Дата изменения"
+		"Date Modified": "Дата изменения",
+		"%@ could not be downloaded.": "Не удалось загрузить %@.",
+		"%@ could not be installed.": "Не удалось установить %@.",
+		"%@ did not match its checksum and was not installed.": "%@ не совпал с контрольной суммой и не был установлен.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "Для %@ нужен Node.js: установите его с nodejs.org и повторите попытку.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "Для %@ нужен uv: установите его с astral.sh/uv и повторите попытку.",
+		"Choose": "Выбрать",
+		"New Conversation": "Новый разговор",
+		"Screenshot of %@": "Снимок экрана: %@",
+		"The agent stopped (code %d).": "Агент остановился (код %d).",
+		"This agent is no longer in the ACP registry.": "Этого агента больше нет в реестре ACP.",
+		"Always Allow": "Всегда разрешать",
+		"Ask an Agent": "Спросить агента",
+		"Review Changes": "Просмотреть изменения",
+		"Show Pages": "Показать страницы",
+		"Hide Pages": "Скрыть страницы",
+		"Close Conversation": "Закрыть разговор",
+		"Pasted image": "Вставленное изображение"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2262,7 +2381,7 @@
 		},
 		"originalNotes": "Исходные примечания к выпуску на английском языке.",
 		"unavailable": "Примечания к выпуску недоступны в этой сборке.",
-		"reopen": "Всегда в меню «Справка → Что нового».",
+		"reopen": "Всегда в меню «Справка > Что нового».",
 		"continue": "Вернуться к просмотру",
 		"kinds": {
 			"Breaking": "Важные изменения",
@@ -2323,6 +2442,7 @@
 	},
 	"siteDrawer": {
 		"allPermissions": "Все разрешения",
+		"inUse": "Используется сейчас",
 		"zoom": "Масштаб",
 		"zoomIn": "Увеличить",
 		"zoomOut": "Уменьшить",
@@ -2375,6 +2495,301 @@
 			"ellipse": "Эллипс",
 			"text": "Текст",
 			"pen": "Перо"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Остановить",
+			"mode": "Режим",
+			"context": "Использовано {percent}% контекста",
+			"planSession": "Лимит сессии: использовано {percent}%, сброс {time}",
+			"planWeek": "Недельный лимит: использовано {percent}%, сброс {time}",
+			"ownCopy": "Отдельная копия",
+			"ownCopyHint": "Работает в отдельной копии проекта. Объедините её в разделе «Изменения».",
+			"starting": "Запуск агента...",
+			"errorHint": "Отправьте сообщение, чтобы повторить попытку.",
+			"showEarlier": {
+				"one": "Показать {count} предыдущий элемент",
+				"few": "Показать {count} предыдущих элемента",
+				"many": "Показать {count} предыдущих элементов",
+				"other": "Показать {count} предыдущего элемента"
+			},
+			"queued": {
+				"one": "{count} сообщение в очереди",
+				"few": "{count} сообщения в очереди",
+				"many": "{count} сообщений в очереди",
+				"other": "{count} сообщения в очереди"
+			},
+			"queuedHint": "Отправится, когда агент закончит. Cmd Return отправляет сразу.",
+			"thought": "Размышления",
+			"restoreToHere": "Восстановить до этого места",
+			"restoreConfirm": "Вернуть файлы проекта в состояние на момент этого сообщения?",
+			"restore": "Восстановить",
+			"reviewChanges": "Просмотреть в «Изменениях»",
+			"undo": "Отменить",
+			"keep": "Оставить",
+			"undone": "Отменено",
+			"kept": "Оставлено",
+			"moreLines": {
+				"one": "Ещё {count} строка",
+				"few": "Ещё {count} строки",
+				"many": "Ещё {count} строк",
+				"other": "Ещё {count} строки"
+			},
+			"plan": "План",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "Предстоит",
+				"in_progress": "Выполняется",
+				"completed": "Готово"
+			},
+			"permissionTitle": "Разрешить это действие?",
+			"answered": "Ответ: {option}",
+			"cancelled": "Ответа не было",
+			"notice": {
+				"restored": "Файлы восстановлены до этого места",
+				"restoreFailed": "Не удалось восстановить файлы",
+				"signedIn": "Вход выполнен"
+			},
+			"moreOptions": "Другие параметры",
+			"signInHint": "Войдите через агента: сообщение отправится, как только вы войдёте.",
+			"branch": "Ветка {branch}",
+			"jumpToLatest": "К последним"
+		},
+		"tool": {
+			"untitled": "Вызов инструмента",
+			"status": {
+				"pending": "Ожидание",
+				"in_progress": "Выполняется",
+				"failed": "Ошибка"
+			},
+			"group": {
+				"read": {
+					"one": "Прочитан {count} файл",
+					"few": "Прочитано {count} файла",
+					"many": "Прочитано {count} файлов",
+					"other": "Прочитано {count} файла"
+				},
+				"search": {
+					"one": "{count} поиск",
+					"few": "{count} поиска",
+					"many": "{count} поисков",
+					"other": "{count} поиска"
+				},
+				"fetch": {
+					"one": "Загружена {count} страница",
+					"few": "Загружено {count} страницы",
+					"many": "Загружено {count} страниц",
+					"other": "Загружено {count} страницы"
+				},
+				"think": {
+					"one": "Размышлял {count} раз",
+					"few": "Размышлял {count} раза",
+					"many": "Размышлял {count} раз",
+					"other": "Размышлял {count} раза"
+				},
+				"action": {
+					"one": "{count} действие",
+					"few": "{count} действия",
+					"many": "{count} действий",
+					"other": "{count} действия"
+				}
+			}
+		},
+		"composer": {
+			"label": "Сообщение агенту",
+			"placeholder": "Ответ, @ чтобы что-то добавить, / для команд",
+			"addContext": "Добавить контекст",
+			"send": "Отправить",
+			"removeAttachment": "Убрать {label}",
+			"tabs": "Вкладки",
+			"folders": "Папки",
+			"fromPage": "Со страницы",
+			"more": "Ещё",
+			"selection": "Выделение",
+			"screenshot": "Снимок экрана",
+			"file": "Файл {path}",
+			"fileHint": "Введите путь, чтобы прикрепить файл проекта",
+			"commands": "Команды",
+			"files": "Файлы",
+			"image": "Изображение"
+		},
+		"ask": {
+			"label": "Спросить агента",
+			"placeholder": "Спросите агента, @ чтобы что-то добавить",
+			"thisPage": "Эта страница",
+			"agent": "Агент",
+			"loadingAgents": "Загрузка агентов...",
+			"project": "Проект",
+			"chooseProject": "Выберите проект",
+			"chooseFolder": "Выбрать папку...",
+			"noFolder": "Без папки",
+			"noFolderDetail": "Агент работает в собственной папке",
+			"backgroundHint": "{shortcut}, чтобы оставить в фоне",
+			"start": "Начать"
+		},
+		"row": {
+			"untitled": "Новый разговор",
+			"working": "Работает",
+			"failed": "Остановлен из-за ошибки",
+			"changes": "Добавлено строк: {added}, удалено: {removed}",
+			"pages": {
+				"one": "{count} страница",
+				"few": "{count} страницы",
+				"many": "{count} страниц",
+				"other": "{count} страницы"
+			},
+			"showPages": "Показать страницы",
+			"hidePages": "Скрыть страницы"
+		},
+		"question": {
+			"allow": "Разрешить",
+			"allowAlways": "Всегда разрешать",
+			"reject": "Не разрешать",
+			"rejectAlways": "Никогда не разрешать",
+			"more": "Другие ответы"
+		},
+		"badge": {
+			"title": "Агенты",
+			"waiting": {
+				"one": "Агенты, {count} ждёт вас",
+				"few": "Агенты, {count} ждут вас",
+				"many": "Агенты, {count} ждут вас",
+				"other": "Агенты, {count} ждут вас"
+			},
+			"new": "Новый",
+			"needsYou": "Ждёт вас",
+			"running": "Выполняется",
+			"done": "Готово",
+			"finished": "Завершено",
+			"empty": "Нет разговоров, которые ждут вас"
+		},
+		"status": {
+			"working": "Работает",
+			"waiting": "Ждёт вас",
+			"stopHint": "Esc, чтобы остановить",
+			"signingIn": "Вход в {agent}",
+			"signingInHint": "Сообщение отправится, как только вы войдёте.",
+			"signingInTerminalHint": "Войдите во вкладке терминала, которую открыл Lilo. Затем сообщение отправится."
+		},
+		"work": {
+			"images": {
+				"one": "{count} изображение",
+				"few": "{count} изображения",
+				"many": "{count} изображений",
+				"other": "{count} изображения"
+			},
+			"verb": {
+				"read": "Прочитан",
+				"edit": "Изменён",
+				"delete": "Удалён",
+				"move": "Перемещён",
+				"search": "Поиск",
+				"fetch": "Загружено"
+			},
+			"summary": {
+				"read": {
+					"one": "прочитан {count} файл",
+					"few": "прочитано {count} файла",
+					"many": "прочитано {count} файлов",
+					"other": "прочитано {count} файла"
+				},
+				"edit": {
+					"one": "изменён {count} файл",
+					"few": "изменено {count} файла",
+					"many": "изменено {count} файлов",
+					"other": "изменено {count} файла"
+				},
+				"execute": {
+					"one": "выполнена {count} команда",
+					"few": "выполнено {count} команды",
+					"many": "выполнено {count} команд",
+					"other": "выполнено {count} команды"
+				},
+				"search": {
+					"one": "{count} поиск",
+					"few": "{count} поиска",
+					"many": "{count} поисков",
+					"other": "{count} поиска"
+				},
+				"fetch": {
+					"one": "загружена {count} страница",
+					"few": "загружено {count} страницы",
+					"many": "загружено {count} страниц",
+					"other": "загружено {count} страницы"
+				},
+				"think": {
+					"one": "размышлял {count} раз",
+					"few": "размышлял {count} раза",
+					"many": "размышлял {count} раз",
+					"other": "размышлял {count} раза"
+				},
+				"browser": {
+					"one": "браузер использован {count} раз",
+					"few": "браузер использован {count} раза",
+					"many": "браузер использован {count} раз",
+					"other": "браузер использован {count} раза"
+				},
+				"tool": {
+					"one": "использован {count} инструмент",
+					"few": "использовано {count} инструмента",
+					"many": "использовано {count} инструментов",
+					"other": "использовано {count} инструмента"
+				}
+			},
+			"exit": "Код выхода {code}",
+			"showAll": {
+				"one": "Показать {count} строку",
+				"few": "Показать все {count} строки",
+				"many": "Показать все {count} строк",
+				"other": "Показать все {count} строки"
+			},
+			"showLess": "Показать последние строки"
+		},
+		"turn": {
+			"workedFor": "Работал {duration}",
+			"stopped": "Остановлено",
+			"files": {
+				"one": "Изменён {count} файл",
+				"few": "Изменено {count} файла",
+				"many": "Изменено {count} файлов",
+				"other": "Изменено {count} файла"
+			},
+			"review": "Просмотреть",
+			"copy": "Копировать ответ",
+			"copied": "Скопировано"
+		},
+		"image": {
+			"unavailable": "Изображение недоступно",
+			"open": "Открыть изображение",
+			"viewer": "Изображение",
+			"previous": "Предыдущее изображение",
+			"next": "Следующее изображение",
+			"counter": "{index} из {total}"
+		},
+		"markdown": {
+			"preview": "Предпросмотр",
+			"openPreview": "Открыть предпросмотр во вкладке",
+			"view": "Показать как",
+			"code": "Код",
+			"copy": "Копировать код",
+			"copied": "Скопировано"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Объяснить этот проект",
+					"prompt": "Объясни, как устроен этот проект: его основные части, как они связаны между собой и с чего начать чтение."
+				},
+				"fixBug": {
+					"label": "Найти и исправить ошибку",
+					"prompt": "Найди ошибку в этом проекте, объясни, чем она вызвана, а затем исправь её."
+				},
+				"tests": {
+					"label": "Написать тесты для...",
+					"prompt": "Напиши тесты для "
+				}
+			}
 		}
 	}
 }

@@ -10,7 +10,8 @@
   import MediaCard from "../sidebar/MediaCard.svelte";
   import UpdateCard from "../sidebar/UpdateCard.svelte";
   import { getCallCardTab, getMediaCardTab } from "../../stores/media.svelte";
-  import { getChosenAppIcon, getReadyUpdate } from "../../stores/settings.svelte";
+  import { getChosenAppIcon, getReadyUpdate, getSetting } from "../../stores/settings.svelte";
+  import { getConversationTab } from "../../stores/folders.svelte";
   import { chromeActions, tabActions } from "../../lib/bridge/actions";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
@@ -19,11 +20,9 @@
   import { getActiveUrlBarDrawer } from "../../stores/urlBarDrawer.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import {
-    closeHistoryShell,
-    closeSettingsShell,
+    closePageShell,
+    getPageShell,
     isDownloadsVisible,
-    isHistoryShellOpen,
-    isSettingsShellOpen,
     openDownloadsPanel,
   } from "../../stores/panels.svelte";
   import { LINE_ICONS } from "../commandbar/commandBarIcons";
@@ -51,15 +50,21 @@
   const recentArchived = $derived(getRecentArchivedTabs());
   let archiveButton: HTMLButtonElement | undefined = $state();
   let archiveOpen = $state(false);
-  // Settings is a page of its own here: its pill is the active one, the page's tab steps back.
-  // Settings and History open over the page as a surface of their own: the strip shows it as the active tab.
-  const surface = $derived(
-    isSettingsShellOpen()
-      ? { icon: LINE_ICONS.gear, label: t("settings.panelTitle"), close: closeSettingsShell }
-      : isHistoryShellOpen()
-        ? { icon: LINE_ICONS.history, label: t("historyPage.title"), close: closeHistoryShell }
-        : null,
-  );
+  // A system screen opens over the page as a surface of its own: its pill is the active tab, the page's tab steps back.
+  const SURFACES = {
+    settings: { icon: LINE_ICONS.gear, labelKey: "settings.panelTitle" },
+    history: { icon: LINE_ICONS.history, labelKey: "historyPage.title" },
+    downloads: { icon: LINE_ICONS.download, labelKey: "downloadsPanel.title" },
+    processes: {
+      icon: "M4.5 4.5h7v7h-7zM6.5 2v2.5M9.5 2v2.5M6.5 11.5V14M9.5 11.5V14M2 6.5h2.5M2 9.5h2.5M11.5 6.5H14M11.5 9.5H14",
+      labelKey: "processManager.title",
+    },
+    diagnostics: { icon: LINE_ICONS.pulse, labelKey: "diagnostics.title" },
+  } as const;
+  const surface = $derived.by(() => {
+    const shell = getPageShell();
+    return shell ? { icon: SURFACES[shell].icon, label: t(SURFACES[shell].labelKey), close: closePageShell } : null;
+  });
   const shownActiveId = $derived(surface ? "" : activeTabId);
   const editsAddress = $derived(getAddressPlacement() === "tabs");
   // The address field itself shows only when it has something to say (a permission prompt), or while
@@ -112,6 +117,11 @@
   let overflowEnd = $state(false);
   let compactSpace = $state(false);
   let spaceChipWidth = 0;
+  // Today's inactive pills fold to their icon once their titles would go under FOLD_MIN_WIDTH.
+  let folded = $state(false);
+  const FOLD_MIN_WIDTH = 96;
+  const FOLDED_WIDTH = 32;
+  const FOLDABLE = ".today-list > .strip-slot:not(.active, .icon-only):not(:has(> .strip-folder, > .strip-split, > .strip-conversation.active))";
 
   function measureEdges(): void {
     if (!scrollerEl) return;
@@ -119,25 +129,33 @@
     overflowEnd = scrollerEl.scrollLeft + scrollerEl.clientWidth < scrollerEl.scrollWidth - 1;
   }
 
-  // Scrolling leaves the chip's fit unchanged: only a resize or a new set of pills measures it again.
+  // Scrolling leaves the fit unchanged: only a resize or a new set of pills measures it again.
+  // Out of room, the Space chip drops its name, then today's pills fold to their icon, then the row scrolls.
+  // Each step comes back only once it fits beside the rest, so the row cannot flip between two states.
   function measureOverflow(): void {
     measureEdges();
     if (!scrollerEl) return;
-    // The Space chip drops its name before the tabs scroll, and takes it back only once it fits beside them:
-    // the pills grow into the room it frees, so the row cannot flip between the two.
     const chip = stripEl?.querySelector<HTMLElement>(".space-chip");
-    if (!chip) return;
-    if (!compactSpace) {
-      if (scrollerEl.scrollWidth > scrollerEl.clientWidth + 1) {
+    if (scrollerEl.scrollWidth > scrollerEl.clientWidth + 1) {
+      if (chip && !compactSpace) {
         spaceChipWidth = chip.offsetWidth;
         compactSpace = true;
+        // Still out of room once the chip is compact: the pills fold too.
+        void tick().then(measureOverflow);
+      } else {
+        folded = true;
       }
       return;
     }
     const list = scrollerEl.querySelector(".today-list");
     if (!list) return;
     const end = list.lastElementChild?.getBoundingClientRect().right ?? list.getBoundingClientRect().left;
-    if (list.getBoundingClientRect().right - end >= spaceChipWidth - chip.offsetWidth) compactSpace = false;
+    const room = list.getBoundingClientRect().right - end;
+    if (folded) {
+      if (room >= scrollerEl.querySelectorAll(FOLDABLE).length * (FOLD_MIN_WIDTH - FOLDED_WIDTH)) folded = false;
+      return;
+    }
+    if (chip && compactSpace && room >= spaceChipWidth - chip.offsetWidth) compactSpace = false;
   }
 
   $effect(() => {
@@ -235,7 +253,12 @@
         <div class="strip-placeholder" aria-hidden="true"></div>
       {:else if item.kind === "folder"}
         {@const folder = view.foldersById.get(item.id)}
-        {#if folder}
+        {@const conversation = folder ? getConversationTab(folder.id, spaceId) : undefined}
+        {#if folder && conversation}
+          {#await import("./StripConversation.svelte") then { default: StripConversation }}
+            <StripConversation {folder} tab={conversation} pages={folderTabs(folder.id).filter((tab) => tab.id !== conversation.id)} activeTabId={shownActiveId} />
+          {/await}
+        {:else if folder}
           <StripFolder {folder} tabs={folderTabs(folder.id)} activeTabId={shownActiveId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
         {/if}
       {:else}
@@ -285,7 +308,7 @@
   <!-- The window's tools share one capsule, apart from the Space and the tabs. -->
   <div class="tools">
     <NavControls show="toggle" />
-    {#if edge === "top" || !isSidebarVisible()}
+    {#if edge === "top" || !isSidebarVisible() || !isAddressInPageToolbar()}
       <span class="tools-separator" aria-hidden="true"></span>
       <NavControls show="history" />
     {/if}
@@ -299,7 +322,7 @@
   {/if}
 
   <!-- Every tab scrolls as one row, as in the sidebar. -->
-  <div class="scroller" class:overflow-start={overflowStart} class:overflow-end={overflowEnd} bind:this={scrollerEl}>
+  <div class="scroller" class:folded class:overflow-start={overflowStart} class:overflow-end={overflowEnd} bind:this={scrollerEl}>
     {#if view.bookmarked.length}
       {@render zoneOf("bookmarked")}
     {/if}
@@ -449,6 +472,12 @@
         </svg>
       </button>
     {/if}
+    <!-- Loaded only once the feature is on: no conversation code ships to the chrome otherwise. -->
+    {#if getSetting("agentsEnabled", "false") === "true"}
+      {#await import("../agents/AgentsBadge.svelte") then badge}
+        <badge.default />
+      {/await}
+    {/if}
   </div>
 </nav>
 
@@ -504,12 +533,12 @@
   .group {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
     flex: none;
   }
 
   .divider {
-    width: 1px;
+    width: 0.5px;
     height: 18px;
     margin: 0 4px;
     flex: none;
@@ -525,7 +554,7 @@
     background: var(--zone-color);
   }
 
-  /* Today's pills shrink to their icon, then the whole row scrolls sideways. */
+  /* Today's pills shrink, fold to their icon, then the whole row scrolls sideways. */
   .scroller {
     flex: 1 1 200px;
     min-width: 0;
@@ -566,6 +595,13 @@
   .strip-slot {
     display: flex;
     flex: 0 1 170px;
+    min-width: 96px;
+  }
+
+  /* FOLDABLE in the script: an inactive tab or conversation pill, folded to its icon. */
+  .folded .today-list > .strip-slot:not(.active, .icon-only):not(:has(> :global(.strip-folder), > :global(.strip-split), > :global(.strip-conversation.active))) {
+    flex: none;
+    width: 32px;
     min-width: 32px;
   }
 
@@ -579,6 +615,7 @@
   .strip-slot:has(> :global(.strip-folder)),
   .strip-slot:has(> :global(.strip-split)) {
     flex: none;
+    min-width: 32px;
   }
 
   .strip-slot:empty {
@@ -593,10 +630,10 @@
   .today-list .strip-slot + .strip-slot::before {
     content: "";
     position: absolute;
-    left: -2.5px;
+    left: -2.25px;
     top: 9px;
     bottom: 9px;
-    width: 1px;
+    width: 0.5px;
     background: var(--separator);
   }
 
@@ -626,7 +663,7 @@
   .strip-placeholder {
     width: 100%;
     height: 32px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--zone-color) 42%, transparent);
     background: color-mix(in srgb, var(--zone-color) 12%, transparent);
@@ -638,10 +675,10 @@
     height: 32px;
     display: flex;
     align-items: center;
-    border-radius: var(--radius-sm);
-    background: var(--bg-selected);
+    border-radius: var(--radius-md);
+    background: var(--sidebar-sel);
     color: var(--text-primary);
-    box-shadow: var(--shadow-control);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
   }
 
   .strip-surface-main {
@@ -654,7 +691,7 @@
     background: transparent;
     color: inherit;
     font: inherit;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-md);
     cursor: default;
   }
 
@@ -761,7 +798,7 @@
     height: 7px;
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+    box-shadow: 0 0 0 2px var(--sidebar-bg);
   }
 
   @keyframes update-btn-pop {

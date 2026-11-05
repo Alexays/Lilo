@@ -29,6 +29,7 @@ test("extension permissions translate known names and keep unknown ones raw", ()
     kind: "extensionPermission" as const,
     requestId: "r",
     spaceId: "s",
+    extensionId: "ext",
     extensionName: "1Password",
     permissions: ["tabs", "fontSettings"],
     origins: ["<all_urls>", "*://*/*", "https://example.com/*"],

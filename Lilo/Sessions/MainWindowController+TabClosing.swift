@@ -134,6 +134,7 @@ extension MainWindowController {
             return tab
         case .savedTab(let stored):
             guard let spaceId = tabManager.currentSpaceId else { return nil }
+            if stored.kind == .agent { return reopenConversation(stored, spaceId: spaceId) }
             let tab = Tab(stored, spaceId: spaceId, groupId: nil)
             let section = entry.section ?? .forTab(isBookmarked: stored.isBookmarked, isPinned: stored.isPinned)
             do {
@@ -263,6 +264,8 @@ extension MainWindowController {
                 ))
             case .changes:
                 return false
+            case .agent:
+                content = .savedTab(StoredTab(tab))
             }
         }
         let sidebarItem = sidebarItemById?[id]

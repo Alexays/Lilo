@@ -1,6 +1,5 @@
 <script lang="ts">
   import LayoutPicker from "./LayoutPicker.svelte";
-  import { canPlaceAddressWithTabs } from "../../stores/tabLayout.svelte";
   import { extensionActions, profileActions, settingsActions } from "../../lib/bridge/actions";
   import { isAgentsSpace } from "../../stores/agents.svelte";
   import { getLocale, setLocale, t } from "../../lib/i18n/state.svelte";
@@ -15,6 +14,7 @@
   import { startOnboarding } from "../../stores/onboarding.svelte";
   import {
     closeSettingsShell,
+    openClearBrowsingData,
     openAddEditor,
     openDesignSystem,
     openDiagnostics,
@@ -23,6 +23,7 @@
   } from "../../stores/panels.svelte";
   import {
     getContentBlockerStatus,
+    getAppIcons,
     getDefaultBrowserStatus,
     getDeviceSetup,
     getSetting,
@@ -43,6 +44,8 @@
     settingTitleKey,
   } from "./settingsPanelModel";
   import AppIconPicker from "./AppIconPicker.svelte";
+  import CallDockPicker from "./CallDockPicker.svelte";
+  import PageScalePicker from "./PageScalePicker.svelte";
   import SettingsLinkRules from "./SettingsLinkRules.svelte";
   import ThemePicker from "./ThemePicker.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
@@ -67,7 +70,6 @@
     shortcuts: () => openSettingsSubpage("general", "shortcuts"),
     sites: () => openSettingsSubpage("privacy", "sites"),
     blockerSites: () => openSettingsSubpage("privacy", "blockerSites"),
-    clearData: () => openSettingsSubpage("privacy", "browsingData"),
     processManager: openProcessManager,
     diagnostics: openDiagnostics,
     designSystem: openDesignSystem,
@@ -81,8 +83,6 @@
   };
 
   const LIFECYCLE_PRESETS = ["conservative", "balanced", "aggressive"];
-  const ZOOM_LEVELS = ["0.75", "0.9", "1.0", "1.1", "1.25", "1.5"];
-  const MINIMUM_FONT_SIZES = ["0", "9", "12", "14", "16", "18", "24"];
 
   // Seven clicks on the version row unlock the Develop menu's tools for Lilo itself, as Android's build number does.
   let versionClicks = $state(0);
@@ -95,10 +95,13 @@
   let profileFieldKey = $state(0);
 
   const toggle = $derived(SETTING_TOGGLES[id]);
+  // The Halloween version of the chosen icon: what the seasonal switch turns on.
+  const seasonalPreview = $derived(
+    id === "seasonalAppIcon" ? getAppIcons().find((icon) => icon.id === getSetting("appIcon", "classic"))?.seasonalDataURL : undefined,
+  );
   const link = $derived(LINKS[id]);
   const permissionKey = $derived(PERMISSION_DEFAULTS[id]);
   const blockerStatus = $derived(getContentBlockerStatus());
-  const percentFormat = $derived(new Intl.NumberFormat(getLocale(), { style: "percent" }));
   const lifecyclePreset = $derived(getSetting("lifecyclePreset", "balanced"));
   const deviceSetup = $derived(getDeviceSetup());
   const updater = $derived(getUpdaterStatus());
@@ -106,7 +109,13 @@
   const blockerSites = $derived(id === "blockerSites" ? parseBlockerSites(getSetting("contentBlockerAllowlist", "")) : []);
   const siteCount = $derived(id === "sites" ? buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()).length : 0);
   const alwaysAllowed = $derived(id === "agentAlwaysAllowed" ? parseBlockerSites(getSetting("agentAlwaysAllowedSites", "")) : []);
-  const count = $derived(id === "sites" ? siteCount : id === "blockerSites" ? blockerSites.length : 0);
+  const count = $derived(
+    id === "sites"
+      ? siteCount
+      : id === "blockerSites"
+        ? blockerSites.length
+        : id === "searchEngines" ? parseSearchEngines(getSetting("searchEngines", "")).length : 0,
+  );
 
   // The passwords row names the manager the user already has, by its own short name rather than its store title.
   const passwordManagers = $derived(
@@ -125,7 +134,6 @@
   });
   const description = $derived.by(() => {
     if (id === "lifecyclePreset") return t(`settings.lifecycle.${lifecyclePreset}Desc`);
-    if (id === "addressPlacement" && !canPlaceAddressWithTabs()) return t("settings.items.addressPlacement.lockedRight");
     if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
     if (id === "appUpdates") {
       if (versionClicks >= 7) return t("settings.items.appUpdates.developerTools");
@@ -172,8 +180,27 @@
   }
 </script>
 
+{#snippet objectIcon()}
+  {#if id === "newSpace"}
+    <span class="object-tile" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+    </span>
+  {:else if id === "deviceSetup"}
+    <span class="object-tile" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="1.8" y="2.6" width="12.4" height="8.4" rx="1.4" /><path d="M8 11v2.4M5.4 13.4h5.2" />
+      </svg>
+    </span>
+  {/if}
+{/snippet}
+
 {#if id === "externalLinkRules"}
   <SettingsLinkRules {title} {description} />
+{:else if id === "clearData"}
+  <!-- Destructive: red text, last in its box, aligned with the labels. -->
+  <button class="destructive" type="button" onclick={openClearBrowsingData}>
+    {t("settings.items.clearData.action")}
+  </button>
 {:else if link}
   <UiLinkRow {title} {description} {count} onclick={link} />
 {:else if id === "appUpdates"}
@@ -186,7 +213,7 @@
     </UiListRow>
   </div>
 {:else}
-<UiListRow {title} {description}>
+<UiListRow {title} {description} icon={id === "newSpace" || id === "deviceSetup" ? objectIcon : undefined}>
   {#if id === "appIcon"}
     <AppIconPicker />
   {:else if id === "theme"}
@@ -195,6 +222,12 @@
     <LayoutPicker />
   {:else if id === "addressPlacement"}
     <LayoutPicker kind="address" />
+  {:else if id === "defaultZoom"}
+    <PageScalePicker kind="zoom" />
+  {:else if id === "minimumFontSize"}
+    <PageScalePicker kind="font" />
+  {:else if id === "dockCallsInSidebar"}
+    <CallDockPicker />
   {:else if id === "blockerAllowedDomains"}
     <UiTextField
       value={getSetting("contentBlockerAllowedDomains", "")}
@@ -226,7 +259,14 @@
     {/key}
   {/if}
   {#snippet action()}
-    {#if toggle}
+    {#if id === "littleWindowHotKey"}
+      <kbd class="keycap" aria-hidden="true">⌥⌘N</kbd>
+    {:else if id === "seasonalAppIcon" && seasonalPreview}
+      <img class="seasonal-preview" src={seasonalPreview} alt="" width="28" height="28" />
+    {:else if id === "appIcon"}
+      <span class="current-choice">{t(`settings.appIcons.${getSetting("appIcon", "classic")}`)}</span>
+    {/if}
+    {#if toggle && id !== "dockCallsInSidebar"}
       <UiToggle
         ariaLabel={title}
         checked={getSetting(toggle.key, String(toggle.fallback)) === "true"}
@@ -288,7 +328,7 @@
         {formatDownloadsFolderLabel(getSetting("downloadsFolder", ""), t("settings.downloadsFolderFallback"))}
       </UiButton>
     {:else if id === "autoplay"}
-      <UiSelect
+      <UiSegmented
         value={getSetting("autoplayPolicy", "audio")}
         options={["audio", "all", "none"].map((policy) => ({ value: policy, label: t(`settings.autoplay.${policy}`) }))}
         ariaLabel={title}
@@ -300,23 +340,6 @@
         disabled={!updater?.available}
         checked={updater?.automatic ?? false}
         onchange={(checked) => settingsActions.setAutomaticUpdates(checked)}
-      />
-    {:else if id === "defaultZoom"}
-      <UiSelect
-        value={getSetting("defaultZoom", "1.0")}
-        options={ZOOM_LEVELS.map((level) => ({ value: level, label: percentFormat.format(Number(level)) }))}
-        ariaLabel={title}
-        onchange={(value) => setSetting("defaultZoom", value)}
-      />
-    {:else if id === "minimumFontSize"}
-      <UiSelect
-        value={getSetting("minimumFontSize", "0")}
-        options={MINIMUM_FONT_SIZES.map((size) => ({
-          value: size,
-          label: size === "0" ? t("settings.items.minimumFontSize.none") : t("settings.items.minimumFontSize.points", { size }),
-        }))}
-        ariaLabel={title}
-        onchange={(value) => setSetting("minimumFontSize", value)}
       />
     {:else if id === "folderAutoLock"}
       <UiSelect
@@ -350,6 +373,69 @@
 {/if}
 
 <style>
+  .object-tile {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    box-shadow: inset 0 0 0 1px var(--separator);
+    color: var(--text-secondary);
+  }
+
+  .keycap {
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    margin-right: var(--space-4);
+    padding: 0 var(--space-6);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    box-shadow: inset 0 0 0 1px var(--border), 0 1px 0 var(--border);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+  }
+
+  .seasonal-preview {
+    border-radius: var(--radius-sm);
+  }
+
+  /* On the title's line, above the icon grid. */
+  :global(.ui-list-row-action:has(> .current-choice)) {
+    align-self: flex-start;
+  }
+
+  .current-choice {
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+  }
+
+  .destructive {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    border: 0;
+    background: transparent;
+    color: var(--danger-text);
+    font-family: inherit;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .destructive:hover {
+    background: var(--bg-hover);
+  }
+
+  .destructive:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: -2px;
+  }
+
   .chips {
     display: flex;
     flex-wrap: wrap;

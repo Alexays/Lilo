@@ -34,7 +34,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		await page.emulateMedia({ colorScheme });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
-		for (const section of ["終端機", "一般", "外觀", "分頁與空間", "音訊與影片", "隱私權", "進階", "AI 代理程式"]) {
+		for (const section of ["終端機", "一般", "外觀", "分頁與空間", "音訊與影片", "隱私權", "進階", "代理程式"]) {
 			await page.getByRole("button", { name: section, exact: true }).click();
 			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
 			await expect(rows.first()).toBeVisible();

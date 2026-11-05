@@ -1,0 +1,3 @@
+kind: Changed
+body: The Agents button now sits in the sidebar's New Tab row, after New Terminal, drawn in outline like the buttons beside it; the top line and the address field no longer make room for it, and a sidebar with the address hidden can be narrower again. A tray of agents or terminals no longer leaves a gap below it.
+time: 2026-11-05T15:38:26.108089+01:00
