@@ -65,9 +65,9 @@ test("a folder on the rail lists its tabs beside it, and the sidebar stays folde
 });
 
 test("with the sidebar hidden, the edge reveals the rail, not the full sidebar", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), sidebarRail: true, sidebarVisible: false });
 	// Off the left edge, whose hover zone would bring the hidden sidebar back.
 	await page.mouse.move(600, 400);
-	await bootChrome(page, { ...initialWorld(), sidebarRail: true, sidebarVisible: false });
 	await expect(page.locator(".sidebar-rail")).toHaveCount(0);
 
 	await page.mouse.move(2, 400);
