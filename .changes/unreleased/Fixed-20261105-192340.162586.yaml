@@ -1,0 +1,3 @@
+kind: Fixed
+body: Sidebar and tab strip menus open out of their button and fade away when they close, instead of vanishing at once
+time: 2026-11-05T19:23:40.162586+01:00
