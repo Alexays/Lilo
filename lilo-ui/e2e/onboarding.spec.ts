@@ -144,8 +144,10 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 640
 			await bootOnboarding(page, 2);
 			await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
 			const screen = page.locator(".onb");
+			await screen.getByRole("button", { name: "Change" }).click();
 			await screen.getByRole("checkbox", { name: "Travail" }).check();
 			await expect(screen.getByRole("checkbox", { name: "Extension 18" })).toBeAttached();
+			await screen.getByRole("button", { name: "Choose" }).click();
 
 			await expect(screen.locator("h2")).toBeInViewport({ ratio: 1 });
 			await expect(screen.locator(".ob-foot .ob-btn.primary")).toBeInViewport({ ratio: 1 });
@@ -154,6 +156,8 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 640
 
 			// The keyboard reaches the last password manager, which scrolls into view above the fixed buttons.
 			const last = screen.getByRole("button", { name: "Add KeePassXC" });
+			// The list slides open first: focus scrolls to where the button ends up.
+			await expect.poll(() => screen.locator(".managers").evaluate((el) => el.getAnimations().length)).toBe(0);
 			await last.focus();
 			await expect(last).toBeInViewport({ ratio: 1 });
 			await expect(screen.locator(".ob-foot .ob-btn.primary")).toBeInViewport({ ratio: 1 });
@@ -422,6 +426,7 @@ test("the arrival sums up the import, sign-ins aside, and speaks the same words"
 
 test("the password managers read as two grouped lists: a manager per row, each description on one line", async ({ page }) => {
 	await bootOnboarding(page, 2);
+	await page.getByRole("button", { name: "Choose" }).click();
 	const groups = page.locator(".managers .ob-group");
 	await expect(groups).toHaveCount(2);
 	await expect(groups.locator(".ob-row")).toHaveCount(7);
@@ -443,6 +448,7 @@ test("the password managers read as two grouped lists: a manager per row, each d
 test("each password manager shows its own icon, and its initial when the icon fails to load", async ({ page }) => {
 	await page.route("**/password-managers/nngceckbapebfimnlniiiahkandclblb.png", (route) => route.abort());
 	await bootOnboarding(page, 2);
+	await page.getByRole("button", { name: "Choose" }).click();
 	const rows = page.locator(".managers .ob-row");
 	await expect(rows).toHaveCount(7);
 	const bitwarden = rows.filter({ hasText: "Bitwarden" });
@@ -501,6 +507,7 @@ test.describe("in French at the window's minimum size", () => {
 		await bootOnboarding(page, 2);
 		await receive(page, { event: "importSourcesLoaded", sources: [chromeSource, lockedSafari] });
 		const screen = page.locator(".onb");
+		await screen.getByRole("button", { name: "Modifier" }).click();
 		const chip = screen.getByRole("button", { name: "Historique" });
 		await chip.scrollIntoViewIfNeeded();
 		await expect(chip).toBeInViewport({ ratio: 1 });
@@ -555,4 +562,15 @@ test("after the onboarding, a tip shows once, the first time the person meets wh
 	await expect(page.locator(".tip")).toHaveText("Your agents open their tabs in the Agents Space.");
 	const seen = (await sentCommands(page)).filter((c) => c.action === "setSetting" && c.payload.key === "seenTips").map((c) => c.payload.value);
 	expect(seen.at(-1)).toBe("agents");
+});
+
+test("what the import takes reads as one sentence, its options open on Change", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	const screen = page.locator(".onb");
+	await expect(screen.locator(".summary")).toContainText("Imports bookmarks, open tabs, history, your sign-ins, and 18 extensions.");
+	await expect(screen.locator(".chip")).toHaveCount(0);
+
+	await screen.getByRole("button", { name: "Change" }).click();
+	await expect(screen.locator(".chip")).toHaveCount(5);
 });

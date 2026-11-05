@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "Extensions à réinstaller",
 			"run": "Importer",
+			"summary": "Importe {list}.",
+			"change": "Modifier",
+			"item": {
+				"bookmarks": "les favoris",
+				"tabs": "les onglets ouverts",
+				"history": "l'historique",
+				"cookies": "vos connexions",
+				"extensions": "les extensions"
+			},
 			"running": "Import en cours..."
 		},
 		"passwords": {
 			"title": "Vos mots de passe",
 			"subtitle": "Lilo ne garde aucun mot de passe. Ajoutez le gestionnaire que vous utilisez déjà.",
 			"add": "Ajouter",
+			"manager": "Gestionnaire de mots de passe",
+			"choose": "Choisir",
 			"addNamed": "Ajouter {name}",
 			"adding": "Ajout...",
 			"added": "Ajouté",

@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "要重新安装的扩展",
 			"run": "导入",
+			"summary": "将导入{list}。",
+			"change": "更改",
+			"item": {
+				"bookmarks": "书签",
+				"tabs": "打开的标签页",
+				"history": "历史记录",
+				"cookies": "网站登录状态",
+				"extensions": "扩展"
+			},
 			"running": "正在导入..."
 		},
 		"passwords": {
 			"title": "你的密码",
 			"subtitle": "Lilo 本身不存储任何密码。添加你已在使用的密码管理器。",
 			"add": "添加",
+			"manager": "密码管理器",
+			"choose": "选择",
 			"addNamed": "添加 {name}",
 			"adding": "正在添加...",
 			"added": "已添加",

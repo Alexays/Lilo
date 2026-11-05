@@ -1720,12 +1720,23 @@
 			},
 			"extensions": "Rozszerzenia do ponownej instalacji",
 			"run": "Importuj",
+			"summary": "Importuje: {list}.",
+			"change": "Zmień",
+			"item": {
+				"bookmarks": "zakładki",
+				"tabs": "otwarte karty",
+				"history": "historię",
+				"cookies": "Twoje logowania",
+				"extensions": "rozszerzenia"
+			},
 			"running": "Importowanie..."
 		},
 		"passwords": {
 			"title": "Twoje hasła",
 			"subtitle": "Lilo nie przechowuje haseł. Dodaj menedżer, którego już używasz.",
 			"add": "Dodaj",
+			"manager": "Menedżer haseł",
+			"choose": "Wybierz",
 			"addNamed": "Dodaj {name}",
 			"adding": "Dodawanie...",
 			"added": "Dodano",

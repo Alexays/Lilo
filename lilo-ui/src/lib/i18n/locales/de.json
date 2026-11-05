@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "Neu zu installierende Erweiterungen",
 			"run": "Importieren",
+			"summary": "Importiert {list}.",
+			"change": "Ändern",
+			"item": {
+				"bookmarks": "Lesezeichen",
+				"tabs": "offene Tabs",
+				"history": "Verlauf",
+				"cookies": "deine Anmeldungen",
+				"extensions": "Erweiterungen"
+			},
 			"running": "Wird importiert..."
 		},
 		"passwords": {
 			"title": "Deine Passwörter",
 			"subtitle": "Lilo speichert selbst keine Passwörter. Füge den Passwortmanager hinzu, den du bereits nutzt.",
 			"add": "Hinzufügen",
+			"manager": "Passwortmanager",
+			"choose": "Auswählen",
 			"addNamed": "{name} hinzufügen",
 			"adding": "Wird hinzugefügt...",
 			"added": "Hinzugefügt",

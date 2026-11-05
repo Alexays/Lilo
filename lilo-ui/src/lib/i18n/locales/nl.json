@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "Opnieuw te installeren extensies",
 			"run": "Importeer",
+			"summary": "Importeert {list}.",
+			"change": "Wijzigen",
+			"item": {
+				"bookmarks": "bladwijzers",
+				"tabs": "open tabbladen",
+				"history": "geschiedenis",
+				"cookies": "je aanmeldingen",
+				"extensions": "extensies"
+			},
 			"running": "Importeren..."
 		},
 		"passwords": {
 			"title": "Je wachtwoorden",
 			"subtitle": "Lilo bewaart zelf geen wachtwoorden. Voeg de wachtwoordmanager toe die je al gebruikt.",
 			"add": "Voeg toe",
+			"manager": "Wachtwoordbeheerder",
+			"choose": "Kiezen",
 			"addNamed": "Voeg {name} toe",
 			"adding": "Toevoegen...",
 			"added": "Toegevoegd",

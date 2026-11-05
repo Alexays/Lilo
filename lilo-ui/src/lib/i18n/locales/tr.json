@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "Yeniden yüklenecek genişletmeler",
 			"run": "İçe Aktar",
+			"summary": "İçe aktarılacaklar: {list}.",
+			"change": "Değiştir",
+			"item": {
+				"bookmarks": "yer imleri",
+				"tabs": "açık sekmeler",
+				"history": "geçmiş",
+				"cookies": "oturum açma bilgileriniz",
+				"extensions": "uzantılar"
+			},
 			"running": "İçe aktarılıyor..."
 		},
 		"passwords": {
 			"title": "Parolalarınız",
 			"subtitle": "Lilo kendi içinde parola saklamaz. Zaten kullandığınız yöneticiyi ekleyin.",
 			"add": "Ekle",
+			"manager": "Parola yöneticisi",
+			"choose": "Seç",
 			"addNamed": "{name} ekle",
 			"adding": "Ekleniyor...",
 			"added": "Eklendi",

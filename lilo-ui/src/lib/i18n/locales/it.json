@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "Estensioni da reinstallare",
 			"run": "Importa",
+			"summary": "Importa {list}.",
+			"change": "Modifica",
+			"item": {
+				"bookmarks": "preferiti",
+				"tabs": "schede aperte",
+				"history": "cronologia",
+				"cookies": "i tuoi accessi",
+				"extensions": "estensioni"
+			},
 			"running": "Importazione..."
 		},
 		"passwords": {
 			"title": "Le tue password",
 			"subtitle": "Lilo non conserva le password. Aggiungi il gestore che usi già.",
 			"add": "Aggiungi",
+			"manager": "Gestore di password",
+			"choose": "Scegli",
 			"addNamed": "Aggiungi {name}",
 			"adding": "Aggiunta...",
 			"added": "Aggiunto",

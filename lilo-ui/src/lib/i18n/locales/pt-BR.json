@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "Extensões para reinstalar",
 			"run": "Importar",
+			"summary": "Importa {list}.",
+			"change": "Alterar",
+			"item": {
+				"bookmarks": "favoritos",
+				"tabs": "abas abertas",
+				"history": "histórico",
+				"cookies": "seus logins",
+				"extensions": "extensões"
+			},
 			"running": "Importando..."
 		},
 		"passwords": {
 			"title": "Suas senhas",
 			"subtitle": "O Lilo não armazena senhas. Adicione o gerenciador que você já usa.",
 			"add": "Adicionar",
+			"manager": "Gerenciador de senhas",
+			"choose": "Escolher",
 			"addNamed": "Adicionar {name}",
 			"adding": "Adicionando...",
 			"added": "Adicionado",

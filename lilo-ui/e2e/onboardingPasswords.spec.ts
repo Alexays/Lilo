@@ -9,6 +9,10 @@ test("the import screen installs a manager from the store and shows it added", a
 	await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 2, usage: "browse" }));
 	const card = page.locator(".onb");
 	await expect(card.getByRole("heading", { name: "Your passwords" })).toBeVisible();
+	// The managers wait behind one row: the screen reads as the browser choice first.
+	await expect(card.getByRole("listitem")).toHaveCount(0);
+	await card.getByRole("button", { name: "Choose" }).click();
+	await expect(card.getByRole("button", { name: "Choose" })).toHaveAttribute("aria-expanded", "true");
 	await expect(card.getByRole("listitem").filter({ hasText: "iCloud Passwords" })).toContainText("Soon");
 	await expect(card.getByRole("listitem").filter({ hasText: "iCloud Passwords" }).getByRole("button")).toHaveCount(0);
 
@@ -26,4 +30,5 @@ test("the import screen installs a manager from the store and shows it added", a
 	await page.evaluate((id) => window.__lilo!.receive({ event: "extensionActionCompleted", id, action: "install", success: true }), BITWARDEN);
 
 	await expect(card.getByRole("listitem").filter({ hasText: "Bitwarden" })).toContainText("Added");
+	await expect(card.locator(".ob-group .ob-row .ob-done").first()).toHaveText("Bitwarden");
 });

@@ -377,6 +377,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 				],
 			});
 			await expect.poll(() => textContrast(page, ".src.locked .allow"), { message: "Allow access" }).toBeGreaterThanOrEqual(4.5);
+			await expect.poll(() => textContrast(page, ".summary .link"), { message: "Change" }).toBeGreaterThanOrEqual(4.5);
+			await page.locator(".summary .link").click();
 			await expect.poll(() => textContrast(page, ".chip.on"), { message: "kind chip" }).toBeGreaterThanOrEqual(4.5);
 
 			await page.locator(".onb .ob-foot .ob-btn.primary").click();
@@ -395,6 +397,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		test("a password manager not ready yet still reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
 			await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 2, usage: "browse" }));
+			await page.getByRole("button", { name: "Choose" }).click();
 			for (const selector of [".ob-row.soon .ob-text", ".ob-row.soon .ob-text small", ".ob-row.soon .soon-label"]) {
 				await expect.poll(() => textContrast(page, selector), { message: selector }).toBeGreaterThanOrEqual(4.5);
 			}

@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "再インストールする機能拡張",
 			"run": "読み込む",
+			"summary": "{list}を読み込みます。",
+			"change": "変更",
+			"item": {
+				"bookmarks": "ブックマーク",
+				"tabs": "開いているタブ",
+				"history": "履歴",
+				"cookies": "サイトのログイン状態",
+				"extensions": "拡張機能"
+			},
 			"running": "読み込み中..."
 		},
 		"passwords": {
 			"title": "パスワード",
 			"subtitle": "Lilo 自体はパスワードを保存しません。いつものパスワードマネージャを追加してください。",
 			"add": "追加",
+			"manager": "パスワードマネージャ",
+			"choose": "選択",
 			"addNamed": "{name}を追加",
 			"adding": "追加中...",
 			"added": "追加済み",

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { fade } from "svelte/transition";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { fade, slide } from "svelte/transition";
+  import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
   import { importActions } from "../../lib/bridge/actions";
   import type { ImportSourceInfo } from "../../lib/bridge/protocol";
@@ -51,6 +51,14 @@
   // Two grouped lists side by side, the first one the longer.
   const managerColumns = $derived([PASSWORD_MANAGERS.slice(0, Math.ceil(PASSWORD_MANAGERS.length / 2)), PASSWORD_MANAGERS.slice(Math.ceil(PASSWORD_MANAGERS.length / 2))]);
   const canImport = $derived(browsers && !finished && sources.length > 0);
+  const addedManagers = $derived(PASSWORD_MANAGERS.filter((manager) => !manager.soon && installed.has(manager.id)));
+  const extensionCount = $derived(chosenExtensions.filter((ext) => choices.extensionIds.includes(ext.id)).length);
+  // What the import takes, said in one sentence; its options open on request, or by themselves when nothing is left.
+  const kindsSummary = $derived(new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(choices.kinds.map((kind) =>
+    kind === "extensions" && extensionCount > 0 ? t("onboarding.import.count.extensions", { count: extensionCount }) : t(`onboarding.import.item.${kind}`))));
+  let kindsOpen = $state(false);
+  const showKinds = $derived(kindsOpen || choices.kinds.length === 0);
+  let managersOpen = $state(false);
   let failedIcons = $state<Record<string, true>>({});
   let continueButton = $state<HTMLButtonElement | null>(null);
 
@@ -136,8 +144,11 @@
           <p class="note done">{doneText}</p>
           {#if failures.length > 0}<p class="note">{t("onboarding.import.partial", { list: failures.join(", ") })}</p>{/if}
         </div>
+      {:else if !showKinds}
+        <p class="summary">{t("onboarding.import.summary", { list: kindsSummary })}
+          <button class="link" aria-expanded="false" onclick={() => (kindsOpen = true)}>{t("onboarding.import.change")}</button></p>
       {:else}
-        <div class="kinds" role="group" aria-labelledby="onboarding-kinds">
+        <div class="kinds" role="group" aria-labelledby="onboarding-kinds" transition:slide={{ duration: motion }}>
           <span class="lab" id="onboarding-kinds">{t("onboarding.import.kinds")}</span>
           {#each IMPORT_KINDS as kind (kind)}
             {@const on = choices.kinds.includes(kind)}
@@ -171,10 +182,24 @@
     {/if}
 
     <h3 class="ob-section passwords">{t("onboarding.passwords.title")}</h3>
-    <p class="lead">{t("onboarding.passwords.subtitle")}</p>
+    <div class="ob-group">
+      <div class="ob-row">
+        <span class="stack" aria-hidden="true">
+          {#each PASSWORD_MANAGERS.filter((manager) => !manager.soon) as manager (manager.id)}
+            {#if !failedIcons[manager.id]}<img src="./password-managers/{manager.id}.png" alt="" width="24" height="24" onerror={() => (failedIcons[manager.id] = true)} />{/if}
+          {/each}
+        </span>
+        <span class="ob-text">{t("onboarding.passwords.manager")}<small>{t("onboarding.passwords.subtitle")}</small></span>
+        {#if addedManagers.length > 0}<span class="ob-done">{addedManagers.map((manager) => manager.name).join(", ")}</span>{/if}
+        <button class="ob-btn" aria-expanded={managersOpen} aria-controls="onboarding-managers" onclick={() => (managersOpen = !managersOpen)}>
+          {t("onboarding.passwords.choose")}
+        </button>
+      </div>
+    </div>
   {/if}
 
-  <div class="managers">
+  {#if !browsers || managersOpen}
+  <div class="managers" id="onboarding-managers" class:nested={browsers} transition:slide={{ duration: motion }}>
     {#each managerColumns as column, i (i)}
       <div class="ob-group" role="list">
         {#each column as manager (manager.id)}
@@ -202,6 +227,7 @@
       </div>
     {/each}
   </div>
+  {/if}
 </div>
 
 <div class="ob-foot">
@@ -254,8 +280,14 @@
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 40%, transparent), transparent); animation: import-shimmer 1.6s ease-in-out infinite; }
   @keyframes import-shimmer { to { transform: translateX(100%); } }
 
-  h3.ob-section.passwords { margin-top: 32px; margin-bottom: 0; }
-  .lead { margin: 4px 0 12px 2px; font-size: var(--font-size-md); color: var(--text-secondary); }
+  .summary { margin: 12px 0 0; font-size: var(--font-size-md); color: var(--text-secondary); }
+  .link { margin-left: 4px; padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: var(--font-weight-medium); cursor: pointer; }
+  .link:focus-visible { outline: var(--focus-outline); outline-offset: 2px; border-radius: var(--radius-xs); }
+  h3.ob-section.passwords { margin-top: 32px; }
+  .stack { display: flex; flex: none; }
+  .stack img { width: 24px; height: 24px; border-radius: var(--radius-xs); box-shadow: 0 0 0 2px var(--onb-surface-strong); }
+  .stack img + img { margin-left: -4px; }
+  .managers.nested { margin-top: 12px; }
   .managers { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
   .ob-row .logo { width: 32px; height: 32px; }
   .ob-row.soon .logo, .ob-row.soon .glyph { opacity: .6; }

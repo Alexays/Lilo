@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "要重新安裝的延伸功能",
 			"run": "匯入",
+			"summary": "將匯入{list}。",
+			"change": "變更",
+			"item": {
+				"bookmarks": "書籤",
+				"tabs": "開啟的分頁",
+				"history": "瀏覽記錄",
+				"cookies": "網站登入狀態",
+				"extensions": "擴充功能"
+			},
 			"running": "正在匯入..."
 		},
 		"passwords": {
 			"title": "你的密碼",
 			"subtitle": "Lilo 本身不會儲存密碼。加入你已使用的密碼管理工具。",
 			"add": "加入",
+			"manager": "密碼管理工具",
+			"choose": "選擇",
 			"addNamed": "加入 {name}",
 			"adding": "正在加入...",
 			"added": "已加入",

@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "Extensiones para reinstalar",
 			"run": "Importar",
+			"summary": "Importa {list}.",
+			"change": "Cambiar",
+			"item": {
+				"bookmarks": "marcadores",
+				"tabs": "pestañas abiertas",
+				"history": "historial",
+				"cookies": "tus inicios de sesión",
+				"extensions": "extensiones"
+			},
 			"running": "Importando..."
 		},
 		"passwords": {
 			"title": "Tus contraseñas",
 			"subtitle": "Lilo no almacena contraseñas. Añade el gestor que ya usas.",
 			"add": "Añadir",
+			"manager": "Gestor de contraseñas",
+			"choose": "Elegir",
 			"addNamed": "Añadir {name}",
 			"adding": "Añadiendo...",
 			"added": "Añadido",

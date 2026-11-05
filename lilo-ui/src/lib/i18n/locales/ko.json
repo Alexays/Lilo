@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "다시 설치할 확장 프로그램",
 			"run": "가져오기",
+			"summary": "{list}을(를) 가져옵니다.",
+			"change": "변경",
+			"item": {
+				"bookmarks": "북마크",
+				"tabs": "열린 탭",
+				"history": "방문 기록",
+				"cookies": "사이트 로그인 상태",
+				"extensions": "확장 프로그램"
+			},
 			"running": "가져오는 중..."
 		},
 		"passwords": {
 			"title": "암호",
 			"subtitle": "Lilo는 자체적으로 암호를 저장하지 않습니다. 사용 중인 암호 관리자를 추가하세요.",
 			"add": "추가",
+			"manager": "암호 관리자",
+			"choose": "선택",
 			"addNamed": "{name} 추가",
 			"adding": "추가 중...",
 			"added": "추가됨",

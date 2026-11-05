@@ -1690,12 +1690,23 @@
 			},
 			"extensions": "Extensions to reinstall",
 			"run": "Import",
+			"summary": "Imports {list}.",
+			"change": "Change",
+			"item": {
+				"bookmarks": "bookmarks",
+				"tabs": "open tabs",
+				"history": "history",
+				"cookies": "your sign-ins",
+				"extensions": "extensions"
+			},
 			"running": "Importing..."
 		},
 		"passwords": {
 			"title": "Your passwords",
 			"subtitle": "Lilo keeps no passwords itself. Add the manager you already use.",
 			"add": "Add",
+			"manager": "Password manager",
+			"choose": "Choose",
 			"addNamed": "Add {name}",
 			"adding": "Adding...",
 			"added": "Added",
