@@ -484,6 +484,7 @@ export const createDemoSettings = ({
     getFeatureFlags: () => emit("featureFlagsLoaded", { flags: [] }),
     getOnboardingState: () =>
       emit("onboardingState", {
+        highRefreshDisplay: true,
         show: values.onboardingCompleted === "false",
         step: Number(values.onboardingStep ?? "0") || 0,
         usage: values.onboardingUsage ?? "browse",
