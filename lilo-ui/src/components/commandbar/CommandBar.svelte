@@ -358,7 +358,7 @@
           postMessage("focusPage");
         }
         break;
-      // A row of tiles counts as one row for the up and down arrows; the side arrows walk it.
+      // The strip of chips counts as one row for the up and down arrows; the side arrows walk it.
       case "ArrowDown":
         e.preventDefault();
         if (inTiles(selectedIndex)) setSelectedIndex(lastTile);
@@ -658,11 +658,11 @@
                   {#if section.subtitle}<span class="command-bar-section-subtitle">{section.subtitle}</span>{/if}
                 </div>
 
-                <div class={section.tiles ? "command-bar-tiles" : "command-bar-section-results"}>
+                <div class={section.tiles ? "command-bar-strip" : "command-bar-section-results"}>
                   {#each section.items as entry (entry.result.id)}
                     <div
                       id={`cb-result-${entry.index}`}
-                      class={section.tiles ? "command-bar-tile" : "command-bar-result"}
+                      class={section.tiles ? "command-bar-chip" : "command-bar-result"}
                       class:selected={entry.index === selectedIndex}
                       role="option"
                       tabindex="-1"
@@ -672,7 +672,7 @@
                     >
                       {@render resultIcon(entry.result)}
                       {#if section.tiles}
-                        <span class="tile-title">{entry.result.title}</span>
+                        <span class="chip-title">{entry.result.title}</span>
                       {:else}
                         {@const subtitle = detail(entry.result)}
                         <div class="result-main">
@@ -738,7 +738,7 @@
   }
 
   .command-bar {
-    width: min(680px, 100%);
+    width: min(600px, 100%);
     max-height: 100%;
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -773,7 +773,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    height: 56px;
+    height: 52px;
     padding: 0 16px;
   }
 
@@ -829,8 +829,8 @@
     display: flex;
     /* A narrow bar wraps the chips: clipped, the last scopes could not be clicked. */
     flex-wrap: wrap;
-    gap: 4px;
-    padding: 0 16px 12px;
+    gap: 2px;
+    padding: 0 12px 10px;
   }
 
   .scope-hint,
@@ -838,8 +838,8 @@
     display: inline-flex;
     flex: none;
     align-items: center;
-    gap: 8px;
-    height: 24px;
+    gap: 6px;
+    height: 22px;
     padding: 0 8px;
     border-radius: var(--radius-sm);
     font-size: var(--font-size-sm);
@@ -903,11 +903,11 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
-    padding: 22px 8px 8px;
+    padding: 14px 8px 6px;
   }
 
   .command-bar-section:first-child .command-bar-section-header {
-    padding-top: 16px;
+    padding-top: 12px;
   }
 
   .command-bar-section-title {
@@ -926,17 +926,17 @@
   .command-bar-result {
     display: grid;
     /* The helper shows whole while the title keeps its room, then gives way first. */
-    grid-template-columns: 32px minmax(min(180px, 50%), 1fr) minmax(0, max-content);
+    grid-template-columns: 24px minmax(min(160px, 50%), 1fr) minmax(0, max-content);
     align-items: center;
-    gap: 14px;
-    height: 52px;
+    gap: 12px;
+    height: 40px;
     padding: 0 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
   }
 
   .command-bar-result.selected,
-  .command-bar-tile.selected {
+  .command-bar-chip.selected {
     background: var(--bg-hover);
   }
 
@@ -944,15 +944,15 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     border-radius: var(--radius-sm);
     background: var(--bg-hover);
     color: var(--text-primary);
   }
 
   .result-icon-glyph {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
   }
 
   .result-icon-terminal {
@@ -965,7 +965,7 @@
   .result-icon-site {
     background: hsl(var(--site-hue) 62% 90%);
     color: hsl(var(--site-hue) 45% 28%);
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
   }
 
@@ -984,8 +984,8 @@
 
   .result-favicon-image {
     grid-area: 1 / 1;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     object-fit: contain;
     border-radius: var(--radius-xs);
   }
@@ -1002,15 +1002,27 @@
     box-shadow: 0 0 0 2px var(--float-surface);
   }
 
+  /* The address follows the title on its line, and gives way to it. */
   .result-main {
-    display: grid;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
     min-width: 0;
+  }
+
+  .result-title {
+    flex: none;
+    max-width: 70%;
+  }
+
+  .result-subtitle {
+    flex: 1;
   }
 
   .result-title,
   .result-subtitle,
   .result-helper,
-  .tile-title {
+  .chip-title {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1037,34 +1049,34 @@
     font-weight: var(--font-weight-semibold);
   }
 
-  .command-bar-tiles {
+  .command-bar-strip {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
   }
 
-  .command-bar-tile {
-    display: grid;
-    justify-items: center;
+  .command-bar-chip {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    width: 84px;
-    padding: 8px 4px;
+    max-width: 180px;
+    height: 32px;
+    padding: 0 10px 0 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
   }
 
-  .command-bar-tile .result-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-box);
-    font-size: var(--font-size-xl);
+  .command-bar-chip .result-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-xs);
+    font-size: var(--font-size-xs);
   }
 
-  .tile-title {
-    max-width: 100%;
+  .chip-title {
     color: var(--text-primary);
     font-size: var(--font-size-md);
-    line-height: 16px;
   }
 
   .command-bar-empty {
@@ -1092,9 +1104,9 @@
     display: flex;
     flex: none;
     align-items: center;
-    gap: 20px;
-    height: 48px;
-    padding: 0 20px;
+    gap: 16px;
+    height: 36px;
+    padding: 0 16px;
     border-top: 1px solid var(--separator);
   }
 
@@ -1103,7 +1115,7 @@
     display: flex;
     flex: 1;
     flex-wrap: wrap;
-    gap: 0 20px;
+    gap: 0 16px;
     height: 20px;
     min-width: 0;
     overflow: hidden;

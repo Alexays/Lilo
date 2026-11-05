@@ -89,7 +89,7 @@ A request tied to a tab lives in a single drawer; the row keeps only the orange 
 - Spacing sits on a 4 px grid: 4, 8, 12, 16, 20, 24, 28, 40. A page area is padded 28 px at the top and 40 px at the sides; a section header has 22 px above it and 8 px below.
 - A grouped row is padded 11 px by 14 px, a nested row is indented 38 px; an icon sits 14 px from its text in an object row, 8 px in a navigation row.
 - Heights: 24 px for buttons, selects and segmented controls, 28 px for a navigation row, 32 px for a plain list row and the sidebar search field, 52 to 58 px for a row with a detail line; a switch is 32 by 19 px.
-- Visuals: 16 px inline and navigation icons, 32 px favicons in lists, 40 px file or image visuals, 44 px app tiles. Thumbnails offered as one choice share one size.
+- Visuals: 16 px inline and navigation icons, 32 px favicons in lists (24 px in the command bar's 40 px rows, 20 px in its bookmark strip), 40 px file or image visuals, 44 px app tiles. Thumbnails offered as one choice share one size.
 - The same element has the same metrics on every screen: a section header, a grouped row or a page title never varies from one screen to the next.
 - One concept, one name:
 
