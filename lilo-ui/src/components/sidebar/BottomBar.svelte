@@ -446,6 +446,21 @@
     return room < 32 ? 0 : room;
   });
 
+  // A long name steps down to 10px before it ellipsizes, as the address does: more of it stays readable.
+  let labelMeasurer: CanvasRenderingContext2D | null = null;
+  function labelFontSize(name: string): number | undefined {
+    if (labelRoom === 0) return undefined;
+    labelMeasurer ??= document.createElement("canvas").getContext("2d");
+    if (!labelMeasurer) return undefined;
+    const root = getComputedStyle(document.documentElement);
+    const base = Number.parseFloat(root.getPropertyValue("--font-size-sm"));
+    for (let size = base; size >= 10; size -= 1) {
+      labelMeasurer.font = `${root.getPropertyValue("--font-weight-semibold")} ${size}px ${root.fontFamily}`;
+      if (labelMeasurer.measureText(name).width <= labelRoom) return size === base ? undefined : size;
+    }
+    return 10;
+  }
+
   function getLabelStyle(index: number, spaceId: string): string {
     const proximity = Math.max(0, 1 - Math.abs(index - visualIndex));
     if (proximity === 0 || labelRoom === 0) return "width: 0; opacity: 0;";
@@ -456,6 +471,7 @@
 </script>
 
 {#snippet spaceIconButton(space: SpaceState, index: number, profile: BridgeProfileSnapshot | undefined)}
+  {@const labelSize = labelFontSize(space.name)}
   <div
     class="space-icon-btn"
     class:dragging={space.id === draggedSpaceId}
@@ -488,7 +504,7 @@
     </span>
     <!-- Opens with the pager's own position, so the name follows a swipe frame by frame. -->
     <span class="space-label" style={getLabelStyle(index, space.id)} aria-hidden="true">
-      <span class="space-label-text" bind:clientWidth={labelWidths[space.id]}>{space.name}</span>
+      <span class="space-label-text" style:font-size={labelSize ? `${labelSize}px` : undefined} bind:clientWidth={labelWidths[space.id]}>{space.name}</span>
     </span>
   </div>
 {/snippet}
