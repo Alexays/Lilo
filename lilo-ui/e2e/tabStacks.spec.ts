@@ -134,3 +134,33 @@ test("a tab that makes a stack joins it at once, with the pointer over the list"
 
 	await expect(page.getByRole("treeitem", { name: "API · Acme Docs, 3 tabs" })).toBeVisible();
 });
+
+test("a row pushed down by a tray sliding in rides along and never jumps above its place", async ({ page }) => {
+	const world = stackWorld({ sidebarStackTabs: "true", sidebarGroupByType: "true" });
+	const terminals = (id: string) => id.startsWith("tab-term-");
+	const allTabs = world.tabsBySpace[SPACE_1];
+	const allItems = world.treeItemsBySpace[SPACE_1];
+	world.tabsBySpace[SPACE_1] = allTabs.filter((entry) => !terminals(entry.id));
+	world.treeItemsBySpace[SPACE_1] = allItems.filter((item) => !terminals(item.itemId));
+	await bootChrome(page, world);
+	await expect(page.getByRole("treeitem", { name: "Acme Docs, 3 tabs" })).toBeVisible();
+
+	const tops = await page.evaluate(
+		({ tabs, items, spaceId }) =>
+			new Promise<number[]>((resolve) => {
+				const stack = () => document.querySelector(".tab-list .group-block:not(.tray-block)")!.getBoundingClientRect().top;
+				const seen = [stack()];
+				const state = { spaceId, activeTabId: "tab-alpha", tabs, folders: [], treeItems: items };
+				window.__lilo!.receive({ event: "browserStateChanged", changedSpaceId: spaceId, activeTabId: "tab-alpha", states: [state] });
+				const sample = () => {
+					seen.push(stack());
+					if (seen.length < 10) requestAnimationFrame(sample);
+					else resolve(seen);
+				};
+				requestAnimationFrame(sample);
+			}),
+		{ tabs: allTabs, items: allItems, spaceId: SPACE_1 },
+	);
+
+	for (let i = 1; i < tops.length; i++) expect(tops[i]).toBeGreaterThanOrEqual(tops[i - 1] - 0.5);
+});
