@@ -48,7 +48,7 @@
 </script>
 
 <div class="site-head">
-  <SiteFavicon src={tab?.faviconDataURL} title={title} url={tab?.url ?? ""} size={32} radius={10} />
+  <SiteFavicon src={tab?.faviconDataURL} title={title} url={tab?.url ?? ""} size={32} radius={10} tile />
   <div class="site-head-text">
     <div class="site-title">{title}</div>
     <div class="site-address">{location.before}<b>{location.strong}</b>{location.after}</div>

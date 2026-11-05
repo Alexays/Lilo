@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome } from "./fakeHost";
 import { initialWorld, SPACE_1 } from "./fixtures";
-import { treeItem } from "../src/stores/testFixtures";
+import { tab, treeItem } from "../src/stores/testFixtures";
 import { apcaContrast, contrastRatio, ICON_CONTRAST, TEXT_CONTRAST } from "../src/lib/sidebarTheme";
 
 /**
@@ -622,3 +622,16 @@ test("a colored glyph on a light Space keeps no chip, even under the contrast fl
 	await expect(favicon.locator("img")).toHaveJSProperty("complete", true);
 	await expect(favicon).not.toHaveClass(/has-chip/);
 });
+
+for (const colorScheme of ["light", "dark"] as const) {
+	test(`the site drawer's link reads over a dark Space in ${colorScheme} mode`, async ({ page }) => {
+		await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+		const world = initialWorld();
+		world.spaces[0].color = "#5e21f1";
+		world.tabsBySpace[SPACE_1][0] = tab("tab-alpha", SPACE_1, { title: "Alpha", url: "https://example.com/", isCameraActive: true });
+		await bootChrome(page, world);
+		await page.locator(".permissions-btn").click();
+		await page.locator(".all-permissions").waitFor();
+		expect(await textContrast(page, ".all-permissions")).toBeGreaterThanOrEqual(4.5);
+	});
+}
