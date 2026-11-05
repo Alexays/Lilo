@@ -221,9 +221,11 @@
     seenRowIds = new Set(rows.map((row) => row.id));
   });
 
-  // A closed stack or a folded tray hides its rows, the active one aside.
+  // A closed stack or a folded tray hides its rows; the active one stays out of a folded tray, and a
+  // closed stack shows it as its own face.
   function rowShown(row: ArrangedRow): boolean {
-    if (row.id === activeTabId || (row.type === "agent" && folderHolds(row.id, activeTabId))) return true;
+    if (row.id === activeTabId) return !row.stack || openStacks.has(row.stack);
+    if (row.type === "agent" && folderHolds(row.id, activeTabId)) return true;
     if (row.tray && foldedTrays.has(row.tray)) return false;
     return !row.stack || openStacks.has(row.stack);
   }
@@ -1359,13 +1361,15 @@
   {:else if segment.kind === "stack"}
     {@const info = stackInfo.get(segment.host)}
     {#if info}
+      {@const open = openStacks.has(segment.host)}
       <heads.StackRow
         name={info.name}
         tabs={info.tabs}
-        open={openStacks.has(segment.host)}
+        face={open ? undefined : info.tabs.find((tab) => tab.id === activeTabId)}
+        {open}
         {interactive}
         tabStop={false}
-        onToggle={(open) => setStackOpen(segment.host, open)}
+        onToggle={(next) => setStackOpen(segment.host, next)}
         onClose={() => tabActions.closeMany(info.tabs.map((tab) => tab.id))}
         onContextMenu={(rect) => folderActions.showStackContextMenu(info.tabs.map((tab) => tab.id), segment.host, info.name, rect)}
       />

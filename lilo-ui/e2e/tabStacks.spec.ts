@@ -35,13 +35,19 @@ test("three pages of a site stack under one closed row named after them", async 
 	await expect(row(page, "tab-docs-setup")).toBeVisible();
 });
 
-test("a closed stack keeps its active page shown", async ({ page }) => {
+test("a closed stack wears its active page as its face, and opening it gives the page its row back", async ({ page }) => {
 	const world = stackWorld({ sidebarStackTabs: "true" });
 	world.activeTabBySpace[SPACE_1] = "tab-docs-setup";
 	await bootChrome(page, world);
 
+	const face = page.getByRole("treeitem", { name: "Setup · Acme Docs, 3 tabs" });
+	await expect(face).toHaveAttribute("aria-selected", "true");
+	await expect(face.getByRole("button", { name: "Close Stack" })).toHaveCount(0);
+	await expect(row(page, "tab-docs-setup")).toHaveCount(0);
+
+	await face.click();
+	await expect(page.getByRole("treeitem", { name: "Acme Docs, 3 tabs" })).toHaveAttribute("aria-expanded", "true");
 	await expect(row(page, "tab-docs-setup")).toBeVisible();
-	await expect(row(page, "tab-docs-intro")).toHaveCount(0);
 });
 
 test("the stack's close button closes its pages at once", async ({ page }) => {

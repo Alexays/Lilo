@@ -1,5 +1,6 @@
 <!-- A site stack's row: the site's icon fanned over the pages under it, its name and how many.
-     It opens and closes like a folder; its tabs keep their own rows. -->
+     It opens and closes like a folder; its tabs keep their own rows. Closed on the active page, it
+     wears that page as its face, a card's edge under it for the pages behind. -->
 <script lang="ts">
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import { tooltip } from "../../lib/tooltip";
@@ -9,6 +10,7 @@
   let {
     name,
     tabs,
+    face,
     open,
     interactive,
     tabStop,
@@ -18,6 +20,7 @@
   }: {
     name: string;
     tabs: TabState[];
+    face?: TabState;
     open: boolean;
     interactive: boolean;
     tabStop: boolean;
@@ -26,7 +29,8 @@
     onContextMenu: (rect: DOMRect) => void;
   } = $props();
 
-  const lead = $derived(tabs[0]);
+  const lead = $derived(face ?? tabs[0]);
+  const title = $derived(face ? face.customTitle || face.title : name);
 
   function handleKeydown(event: KeyboardEvent): void {
     if (event.key === "Enter" || event.key === " ") onToggle(!open);
@@ -41,11 +45,12 @@
 <div
   class="stack-row"
   class:open
+  class:face={!!face}
   role="treeitem"
   aria-level={1}
-  aria-selected={false}
+  aria-selected={!!face}
   aria-expanded={open}
-  aria-label={t("tabSection.stackLabel", { name, count: tabs.length })}
+  aria-label={t("tabSection.stackLabel", { name: title, count: tabs.length })}
   tabindex={tabStop ? 0 : -1}
   onclick={() => interactive && onToggle(!open)}
   onkeydown={handleKeydown}
@@ -60,14 +65,15 @@
       <SiteFavicon src={lead.faviconDataURL} title={lead.title} url={lead.url} size={16} radius={4} />
     {/if}
   </span>
-  <span class="stack-name">{name}</span>
+  <span class="stack-name">{title}</span>
   <span class="stack-count" aria-hidden="true">{tabs.length}</span>
   <span class="stack-chevron" aria-hidden="true">
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
       <path d="M3.75 2.25 6.5 5 3.75 7.75" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   </span>
-  {#if interactive}
+  <!-- No close on the face: it would read as closing that page, not the whole stack. -->
+  {#if interactive && !face}
     <button
       class="action-btn stack-close"
       aria-label={t("tabSection.closeStack")}
@@ -101,6 +107,26 @@
 
   .stack-row:hover {
     background: var(--bg-hover);
+  }
+
+  /* The active row's look, as the face is the page on screen. */
+  .stack-row.face {
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
+  }
+
+  /* The next card's edge, peeking out under the face. */
+  .stack-row.face::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -3px;
+    height: 3px;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    background: var(--sidebar-sel);
+    opacity: 0.6;
+    pointer-events: none;
   }
 
   .stack-row:focus-visible {
