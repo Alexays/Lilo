@@ -467,6 +467,7 @@
   const VIRTUAL_ROW_H = 32;
   const VIRTUAL_ROW_GAP = 2;
   const VIRTUAL_FOLDER_TOP_MARGIN = 2;
+  const VIRTUAL_FOLDER_INSET = 4;
   const VIRTUAL_EMPTY_FOLDER_H = 32;
 
   type ListSegment = Segment | { kind: "spacer"; key: string; height: number };
@@ -540,7 +541,7 @@
       if (entry.kind !== "folder") continue;
       const folder = foldersById.get(entry.id);
       if (!folder || folder.splitLayout || folder.isCollapsed || folder.isSplit) continue;
-      const height = openFolderHeight(entry.id);
+      const height = openFolderHeight(entry.id) + (getConversationTab(entry.id, spaceId) ? 0 : VIRTUAL_FOLDER_INSET);
       heights.set(entry.id, height);
       if (lastExpandedFolderHeights.get(entry.id) !== height) changed = true;
     }
@@ -1983,6 +1984,12 @@
   /* One tinted block per open root folder, the only mark of what it holds: subfolders inside it show through. */
   .folder-open-rail > .folder-drop-zone {
     background: var(--folder-open-bg);
+  }
+
+  /* The tinted block holds its rows 4px in from its right and bottom edges, as the head's indent does on the left. */
+  .folder-open-rail:not(.indented-tab-wrapper) > .folder-drop-zone:not(.conversation) > .folder-contents-shell > .folder-contents-clip > .folder-contents {
+    padding-right: 4px;
+    padding-bottom: 4px;
   }
 
   .indented-tab-wrapper.folder-open-rail > .folder-drop-zone,
