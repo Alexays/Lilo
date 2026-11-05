@@ -1,0 +1,3 @@
+kind: Fixed
+body: History and archived tabs in the command bar show their site's icon even when no tab of that site is open.
+time: 2026-11-05T19:13:21.769575+01:00

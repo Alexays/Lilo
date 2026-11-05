@@ -45,7 +45,7 @@ test("typing after < filters the archive by title or address, without the clear 
 	assert.deepEqual(archiveOutput("< nothing").results, []);
 });
 
-test("opening the archive asks native once, and picking a row reopens it", async () => {
+test("opening the archive asks native once, picking a row reopens it, and replies keep their favicons", async () => {
 	const { freshStores, stubBridgeWindow } = await import("./testHarness");
 	const sent = stubBridgeWindow({ document: true });
 	const loadStore = await freshStores();
@@ -59,11 +59,14 @@ test("opening the archive asks native once, and picking a row reopens it", async
 	commandBar.setQuery("< gui");
 	assert.equal(sent.filter((message) => message.action === "loadArchivedTabs").length, 1);
 
-	receive({ event: "archivedTabs", tabs: archived, favicons: {} });
+	receive({ event: "archivedTabs", tabs: archived, favicons: { "docs.example": "data:docs" } });
 	const results = commandBar.getResults() as Array<{ kind: string; payload: { id: string } }>;
 	assert.deepEqual(results.map((result) => result.payload.id), ["old"]);
 
 	commandBar.executeSelected();
 	assert.deepEqual(sent.at(-1), { action: "restoreArchivedTabs", payload: { ids: ["old"] } });
 	assert.equal(commandBar.isCommandBarOpen(), false);
+
+	receive({ event: "historyResults", query: "", results: [], favicons: { "www.news.example": "data:news" } });
+	assert.deepEqual(commandBar.getStoredFavicons(), { "docs.example": "data:docs", "www.news.example": "data:news" });
 });

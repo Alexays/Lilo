@@ -74,6 +74,8 @@ let _closedTerminals: BridgeClosedTerminal[] = [];
 let _pendingTerminalQuery = "";
 let _terminalListsRequested = false;
 let _archivedTabs: BridgeArchivedTab[] = [];
+// Stored favicons of history and archive results, by favicon key; kept for the window's life, as native sends each once.
+let _storedFavicons = $state.raw<Record<string, string>>({});
 let _archivedTabsRequested = false;
 // The tab a Cmd+M picks a Space for, and the query to return to when the pick is cancelled.
 let _moveTabId = $state("");
@@ -107,6 +109,7 @@ export const getAutocompleteSuggestion = (): string => {
 	return /^https?:\/\/[^/?#]+\/?$/i.test(top.url) ? getLocalHostCompletion(parsed.query, [top.url]) : "";
 };
 export const getCommandBarOpenRequestId = (): number => _openRequestId;
+export const getStoredFavicons = (): Record<string, string> => _storedFavicons;
 export const getActiveScope = (): CommandScope => _activeScope;
 export const isMovingTab = (): boolean => _moveTabId !== "";
 export const selectNext = (): void => shiftSelection(1);
@@ -436,6 +439,12 @@ function scheduleSearchSuggest(query: string): void {
 	}
 }
 
+function keepFavicons(favicons: Record<string, string>): void {
+	let next: Record<string, string> | null = null;
+	for (const host in favicons) (next ??= { ..._storedFavicons })[host] = favicons[host];
+	if (next) _storedFavicons = next;
+}
+
 function setHistoryResults(query: string, items: SearchableEntry[]): void {
 	if (query !== _pendingHistoryQuery) return;
 	_historyResults = toHistoryResults(items, query);
@@ -682,9 +691,10 @@ export function initCommandBarStore(): void {
 		_searchEngine = data.settings?.searchEngine ?? "google";
 		if (_open) computeResults();
 	});
-	on("historyResults", (data) =>
-		setHistoryResults(data.query ?? "", data.results ?? []),
-	);
+	on("historyResults", (data) => {
+		keepFavicons(data.favicons);
+		setHistoryResults(data.query ?? "", data.results ?? []);
+	});
 	on("terminalCompletionResults", (data) => {
 		// The lists ride only the empty-query reply, which stays valid after newer keystrokes.
 		if (data.terminals) _terminals = data.terminals;
@@ -704,6 +714,7 @@ export function initCommandBarStore(): void {
 		if (_docked) computeResults({ pinSelection: true });
 	}));
 	on("archivedTabs", (data) => {
+		keepFavicons(data.favicons);
 		if (!_open) return;
 		_archivedTabs = data.tabs;
 		computeResults({ pinSelection: true });

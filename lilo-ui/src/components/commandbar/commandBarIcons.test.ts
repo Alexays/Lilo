@@ -65,6 +65,19 @@ test("bookmark/history/navigate fall back to an open tab's host favicon", () => 
   assert.deepEqual(spec, { type: "favicon", src: FAVICON_ORG, fallback: "E", hue: (spec as { hue: number }).hue });
 });
 
+test("history without an open tab on its host uses the stored favicon, www. or not", () => {
+  const stored = { "site.example": "data:site", "www.other.example": "data:other" };
+  const cases = [
+    { kind: "history", url: "https://www.site.example/a", stored, src: "data:site", fallback: "S" },
+    { kind: "archivedTab", url: "https://other.example/b", stored, src: "data:other", fallback: "O" },
+    { kind: "history", url: "https://example.org/c", stored: { "example.org": "data:stale" }, src: FAVICON_ORG, fallback: "E" },
+  ];
+  for (const { kind, url, stored, src, fallback } of cases) {
+    const spec = resolveResultIcon(result({ kind, url }), lookup, stored);
+    assert.deepEqual(spec, { type: "favicon", src, fallback, hue: (spec as { hue: number }).hue });
+  }
+});
+
 test("no favicon for the host gives a letter monogram from the domain", () => {
   const spec = resolveResultIcon(
     result({ kind: "history", url: "https://site.example/q/1" }),

@@ -26,6 +26,7 @@
     getSelectedIndex,
     getSelectedResult,
     getSelectedResultKeys,
+    getStoredFavicons,
     cancelMoveTab,
     isCommandBarDocked,
     isCommandBarOpen,
@@ -521,7 +522,7 @@
 {#snippet highlightedText(text: string, highlights?: number[])}{#each segments(text, highlights) as seg, segIndex (`${seg.text}-${seg.highlighted ? '1' : '0'}-${segIndex}`)}{#if seg.highlighted}<mark class="result-hl">{seg.text}</mark>{:else}{seg.text}{/if}{/each}{/snippet}
 
 {#snippet resultIcon(result: CommandResult)}
-  {@const iconSpec = resolveResultIcon(result, tabFavicons)}
+  {@const iconSpec = resolveResultIcon(result, tabFavicons, getStoredFavicons())}
   {#if result.kind === "space" && isAgentsSpace(String(result.payload.spaceId))}
     <span class="result-icon">
       {#await import("../sidebar/AgentMascot.svelte") then { default: AgentMascot }}

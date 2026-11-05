@@ -1929,6 +1929,7 @@ export const createDemoHost = (
 
   const searchHistory = (query = "") =>
     emit("historyResults", {
+      favicons: {},
       query,
       results: visited
         .toReversed()

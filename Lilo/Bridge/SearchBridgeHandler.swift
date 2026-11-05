@@ -24,6 +24,9 @@ final class SearchBridgeHandler: BridgeHandler {
     ]
 
     private let historyStoreProvider: () -> HistoryStore?
+    private let faviconStoreProvider: () -> FaviconStore?
+    /// Hosts whose favicon this window's command bar already holds: each icon crosses the bridge once.
+    private var sentFaviconHosts: Set<String> = []
     private let suggestionsEnabledProvider: () -> Bool
     private let preconnect: (URL) -> Void
     private let preloadTopHit: (URL?) -> Void
@@ -40,12 +43,14 @@ final class SearchBridgeHandler: BridgeHandler {
 
     init(
         historyStoreProvider: @escaping () -> HistoryStore?,
+        faviconStoreProvider: @escaping () -> FaviconStore?,
         bridgeRouter: BridgeRouter,
         suggestionsEnabledProvider: @escaping () -> Bool,
         preconnect: @escaping (URL) -> Void,
         preloadTopHit: @escaping (URL?) -> Void
     ) {
         self.historyStoreProvider = historyStoreProvider
+        self.faviconStoreProvider = faviconStoreProvider
         self.bridgeRouter = bridgeRouter; self.suggestionsEnabledProvider = suggestionsEnabledProvider
         self.preconnect = preconnect
         self.preloadTopHit = preloadTopHit
@@ -59,26 +64,32 @@ final class SearchBridgeHandler: BridgeHandler {
         // for the bridge send.
         case "searchHistory":
             guard let query = message.string("query"), let store = historyStoreProvider() else { break }
+            let favicons = faviconStoreProvider()
+            let sent = sentFaviconHosts
             inFlightHistoryTask?.cancel()
             inFlightHistoryTask = Task { [weak self] in
                 // A superseded keystroke cancels its read, so a stale query never reaches SQLite.
-                let search = Task.detached(priority: .userInitiated) { () -> [HistoryEntry]? in
+                let search = Task.detached(priority: .userInitiated) { () -> HistoryReply? in
                     guard !Task.isCancelled else { return nil }
                     // Candidates: the command bar re-ranks them by match quality and frecency, then keeps 8.
-                    return loggedHistoryRead { try store.search(query: query, limit: 24) }
+                    let results = loggedHistoryRead { try store.search(query: query, limit: 24) }
+                    return (results, Self.favicons(of: results, in: favicons, skipping: sent))
                 }
-                let results = await withTaskCancellationHandler { await search.value } onCancel: { search.cancel() }
+                let reply = await withTaskCancellationHandler { await search.value } onCancel: { search.cancel() }
                 guard !Task.isCancelled else { return }
-                if let results { self?.sendHistoryResults(results, query: query) }
+                if let reply { self?.sendHistoryResults(reply, query: query) }
             }
             await inFlightHistoryTask?.value
 
         case "getRecentHistory":
             guard let store = historyStoreProvider() else { break }
-            let results = await Task.detached(priority: .userInitiated) {
-                loggedHistoryRead { try store.recentEntries(limit: 24) }
+            let favicons = faviconStoreProvider()
+            let sent = sentFaviconHosts
+            let reply = await Task.detached(priority: .userInitiated) { () -> HistoryReply in
+                let results = loggedHistoryRead { try store.recentEntries(limit: 24) }
+                return (results, Self.favicons(of: results, in: favicons, skipping: sent))
             }.value
-            sendHistoryResults(results, query: "")
+            sendHistoryResults(reply, query: "")
 
         case "searchSuggestions":
             guard let query = message.string("query") else { break }
@@ -108,15 +119,18 @@ final class SearchBridgeHandler: BridgeHandler {
             guard let url = message.string("url"), let store = historyStoreProvider() else { break }
             let query = message.string("query", default: "")
             let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-            let results = await Task.detached(priority: .userInitiated) {
+            let favicons = faviconStoreProvider()
+            let sent = sentFaviconHosts
+            let reply = await Task.detached(priority: .userInitiated) { () -> HistoryReply in
                 do { try store.deleteURL(url) } catch {
                     historyLogger.error("history delete failed: \(error.localizedDescription, privacy: .public)")
                 }
-                return loggedHistoryRead {
+                let results = loggedHistoryRead {
                     try trimmed.isEmpty ? store.recentEntries(limit: 24) : store.search(query: trimmed, limit: 24)
                 }
+                return (results, Self.favicons(of: results, in: favicons, skipping: sent))
             }.value
-            sendHistoryResults(results, query: query)
+            sendHistoryResults(reply, query: query)
 
         default:
             break
@@ -125,11 +139,27 @@ final class SearchBridgeHandler: BridgeHandler {
         return nil
     }
 
-    private func sendHistoryResults(_ results: [HistoryEntry], query: String) {
+    typealias HistoryReply = (results: [HistoryEntry], favicons: [String: String])
+
+    private func sendHistoryResults(_ reply: HistoryReply, query: String) {
+        sentFaviconHosts.formUnion(reply.favicons.keys)
         bridgeRouter?.send(event: "historyResults", data: [
             "query": query,
-            "results": results.map(\.searchBridgeData)
+            "results": reply.results.map(\.searchBridgeData),
+            "favicons": reply.favicons
         ])
+    }
+
+    /// The stored favicons of the results' hosts, by favicon key, leaving out the hosts already sent.
+    nonisolated static func favicons(of results: [HistoryEntry], in store: FaviconStore?, skipping sent: Set<String>) -> [String: String] {
+        guard let store else { return [:] }
+        let hosts = Set(results.compactMap { URL(string: $0.url)?.faviconKey }).subtracting(sent)
+        do {
+            return Dictionary(try store.entries(forHosts: hosts).map { ($0.host, $0.dataURL) }, uniquingKeysWith: { first, _ in first })
+        } catch {
+            historyLogger.error("history favicon read failed: \(error.localizedDescription, privacy: .public)")
+            return [:]
+        }
     }
 
     private func sendSearchSuggestions(query: String, engine: String) async {

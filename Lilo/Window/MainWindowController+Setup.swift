@@ -471,6 +471,7 @@ extension MainWindowController {
 
         bridgeRouter.register(handler: SearchBridgeHandler(
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
+            faviconStoreProvider: { [weak self] in self?.profileContext?.favicons },
             bridgeRouter: bridgeRouter,
             suggestionsEnabledProvider: { settingsStore.searchSuggestions },
             preconnect: { [weak self] url in self?.tabManager.activeEngineTab?.preconnect(to: url) },

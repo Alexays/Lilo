@@ -1085,7 +1085,8 @@ export interface BridgeEventPayloadMap {
 	profileUpdated: BridgeProfileSnapshot;
 	profileStats: { extensionCounts: Record<string, number> };
 
-	historyResults: { query?: string; results: BridgeHistoryResultSnapshot[] };
+	/** `favicons`: stored icons by favicon key (host, with any port), each sent once per window. */
+	historyResults: { query?: string; results: BridgeHistoryResultSnapshot[]; favicons: Record<string, string> };
 	historyPage: {
 		requestId: number;
 		rows: BridgeHistoryDayRow[];

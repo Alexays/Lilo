@@ -1,4 +1,4 @@
-// Pure icon resolution for command-bar results: favicon when the UI already has one (open tabs),
+// Pure icon resolution for command-bar results: favicon when the UI has one (open tabs, then stored icons),
 // a line icon for actions and terminals, a Space's own glyph, a letter monogram otherwise.
 
 import { hostOf } from "../../lib/url";
@@ -106,6 +106,7 @@ function hostHue(host: string | null): number {
 export function resolveResultIcon(
   result: ResultLike,
   lookup: TabFaviconLookup,
+  stored: Record<string, string> = {},
 ): ResultIconSpec {
   if (GLYPH_KINDS.has(result.kind)) {
     const path = result.icon ? LINE_ICONS[result.icon] : undefined;
@@ -122,8 +123,9 @@ export function resolveResultIcon(
     if (src) return { type: "favicon", src, fallback, hue };
   }
 
+  // `host` drops "www.", the stored favicon keys keep it.
   if (host) {
-    const src = lookup.byHost.get(host);
+    const src = lookup.byHost.get(host) ?? stored[host] ?? stored[`www.${host}`];
     if (src) return { type: "favicon", src, fallback, hue };
   }
 
