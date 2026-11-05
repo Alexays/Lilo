@@ -1130,7 +1130,7 @@
       {#if tab && editingTab?.id === tab.id}
         <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
       {:else if tab && stack}
-        <div class="indented-tab-wrapper">
+        <div class="indented-tab-wrapper first-level">
           <TabItem
             {tab}
             isActive={tab.id === activeTabId}
@@ -1271,6 +1271,7 @@
                 {:else if childFolder}
                   <div
                     class="indented-tab-wrapper"
+                    class:first-level={level === 1 && !conversation}
                     class:folder-open-rail={!childFolder.isCollapsed}
                     style={folderColorStyle(shownFolderColor(childFolder))}
                   >
@@ -1281,7 +1282,7 @@
                   {#if tab && editingTab?.id === tab.id}
                     <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
                   {:else if tab}
-                    <div class="indented-tab-wrapper">
+                    <div class="indented-tab-wrapper" class:first-level={level === 1 && !conversation}>
                       <TabItem
                         {tab}
                         isActive={tab.id === activeTabId}
@@ -1986,7 +1987,7 @@
     background: var(--folder-open-bg);
   }
 
-  /* The tinted block holds its rows 4px in from its right and bottom edges, as the head's indent does on the left. */
+  /* The tinted block holds its rows 4px in from its edges; the head and first-level rows take the left one themselves. */
   .folder-open-rail:not(.indented-tab-wrapper) > .folder-drop-zone:not(.conversation) > .folder-contents-shell > .folder-contents-clip > .folder-contents {
     padding-right: 4px;
     padding-bottom: 4px;
@@ -2085,6 +2086,11 @@
     min-width: 0;
     padding-left: 12px;
     box-sizing: border-box;
+  }
+
+  /* A tinted block already marks what it holds: its own rows sit at its 4px inset instead. */
+  .indented-tab-wrapper.first-level {
+    padding-left: 4px;
   }
 
   .child-tab-wrapper {
