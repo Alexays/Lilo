@@ -24,20 +24,19 @@
   let pathEl: HTMLElement | undefined = $state();
   let available = $state(0);
   let baseFontSize = 0;
-  let measurer: CanvasRenderingContext2D | null = null;
-  let measurerFont = "";
-
-  // `face` (weight, family) is read once per layout pass: the binary search below measures
-  // dozens of strings, and setting a canvas font parses it every time.
+  // One context per font: setting a canvas font resolves it anew each time, and a layout pass
+  // alternates between the host and path faces at several sizes.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a plain cache, intentionally non-reactive
+  const measurers = new Map<string, CanvasRenderingContext2D | null>();
   function textWidth(text: string, face: [string, string], size: number): number {
-    measurer ??= document.createElement("canvas").getContext("2d");
-    if (!measurer) return 0;
     const font = `${face[0]} ${size}px ${face[1]}`;
-    if (font !== measurerFont) {
-      measurer.font = font;
-      measurerFont = font;
+    let measurer = measurers.get(font);
+    if (measurer === undefined) {
+      measurer = document.createElement("canvas").getContext("2d");
+      if (measurer) measurer.font = font;
+      measurers.set(font, measurer);
     }
-    return measurer.measureText(text).width;
+    return measurer?.measureText(text).width ?? 0;
   }
 
   // Faces by class list: the line is rebuilt on every address change, and a computed-style read
