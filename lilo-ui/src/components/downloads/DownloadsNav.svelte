@@ -1,15 +1,12 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { t } from "../../lib/i18n/state.svelte";
-  import { downloadActions } from "../../lib/bridge/actions";
   import SectionNavPanel from "../ui/SectionNavPanel.svelte";
   import UiSearchField from "../ui/UiSearchField.svelte";
   import { closePageShell, isDownloadsVisible } from "../../stores/panels.svelte";
   import {
-    clearFinishedDownloads,
     getDownloadsQuery,
     getPageDownloads,
-    hasFinishedDownloads,
     setDownloadsQuery,
   } from "../../stores/downloadsPage.svelte";
 
@@ -26,20 +23,8 @@
       id: "views",
       sections: [{ id: "all", label: t("downloadsPanel.allDownloads"), icon: "tray" as const, count: getPageDownloads().length }],
     },
-    {
-      id: "actions",
-      sections: [
-        { id: "folder", label: t("downloadsPanel.showFolder"), icon: "folder" as const },
-        { id: "clear", label: t("downloadsPanel.clearFinished"), danger: true, disabled: !hasFinishedDownloads() },
-      ],
-    },
   ]);
 
-  function select(id: string): void {
-    if (id === "folder") downloadActions.showFolder();
-    else if (id === "clear") clearFinishedDownloads();
-    else setDownloadsQuery("");
-  }
 </script>
 
 <SectionNavPanel
@@ -47,7 +32,7 @@
   ariaLabel={t("downloadsPanel.navLabel")}
   {groups}
   activeId={getDownloadsQuery().trim() ? null : "all"}
-  onSelect={select}
+  onSelect={() => setDownloadsQuery("")}
   onclose={closePageShell}
   {compact}
 >

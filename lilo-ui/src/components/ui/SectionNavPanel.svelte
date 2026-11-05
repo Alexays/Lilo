@@ -11,8 +11,6 @@
     /** Search hits or items in this section, or a running timer; shown at the row's end. */
     count?: number | string;
     dimmed?: boolean;
-    /** An action rather than a view, in red: it sits last, aligned with the labels. */
-    danger?: boolean;
     disabled?: boolean;
   }
 
@@ -59,7 +57,6 @@
           <button
             class:active={section.id === activeId}
             class:dimmed={section.dimmed}
-            class:danger={section.danger}
             class="section-nav-button"
             type="button"
             disabled={section.disabled}
@@ -71,8 +68,6 @@
               <span class="section-nav-icon" aria-hidden="true">
                 <SettingsIcon name={section.icon} />
               </span>
-            {:else if section.danger}
-              <span class="section-nav-icon" aria-hidden="true"></span>
             {/if}
             <span class="section-nav-label">{section.label}</span>
             {#if section.count}
@@ -165,10 +160,6 @@
 
   .section-nav-button.dimmed {
     color: var(--text-muted);
-  }
-
-  .section-nav-button.danger {
-    color: var(--danger-text);
   }
 
   .section-nav-button:disabled {

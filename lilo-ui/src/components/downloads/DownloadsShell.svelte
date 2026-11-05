@@ -2,6 +2,7 @@
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { on, type BridgeDownloadSnapshot } from "../../lib/bridge";
   import { downloadActions } from "../../lib/bridge/actions";
+  import UiMoreMenu from "../ui/UiMoreMenu.svelte";
   import UiShellFrame from "../ui/UiShellFrame.svelte";
   import DownloadsList from "./DownloadsList.svelte";
   import DownloadsNav from "./DownloadsNav.svelte";
@@ -10,9 +11,11 @@
   import { isVerticalLayout } from "../../stores/tabLayout.svelte";
   import {
     arePageDownloadsLoaded,
+    clearFinishedDownloads,
     eraseDownload,
     getDownloadsQuery,
     getPageDownloads,
+    hasFinishedDownloads,
     loadPageDownloads,
     setDownloadsQuery,
   } from "../../stores/downloadsPage.svelte";
@@ -99,6 +102,15 @@
   note={downloads.length > 0 ? t("downloadsPanel.quickLookNote") : undefined}
   nav={isVerticalLayout() ? undefined : downloadsNav}
 >
+  {#snippet actions()}
+    <UiMoreMenu
+      label={t("downloadsPanel.moreActions")}
+      items={[
+        { label: t("downloadsPanel.showFolder"), onclick: () => downloadActions.showFolder() },
+        { label: t("downloadsPanel.clearFinished"), onclick: clearFinishedDownloads, danger: true, disabled: !hasFinishedDownloads() },
+      ]}
+    />
+  {/snippet}
   {#if arePageDownloadsLoaded()}
     <DownloadsList
       {groups}

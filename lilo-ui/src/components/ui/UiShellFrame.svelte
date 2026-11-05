@@ -16,6 +16,8 @@
     description?: string;
     /** A short count or note at the right of the title. */
     note?: string;
+    /** The screen's commands, at the header's end. */
+    actions?: Snippet;
     /** Shows a back control before the title (drill-in pages). */
     onback?: () => void;
     /** A navigation column on the card's left, told whether it is narrowed to icons; the content centers beside it. */
@@ -31,6 +33,7 @@
     title,
     description,
     note,
+    actions,
     onback,
     nav,
     children,
@@ -87,6 +90,7 @@
           {#if description}<p class="ui-shell-frame-description">{description}</p>{/if}
         </div>
         {#if note}<p class="ui-shell-frame-note">{note}</p>{/if}
+        {#if actions}<div class="ui-shell-frame-actions">{@render actions()}</div>{/if}
       </header>
 
       <main class="ui-shell-frame-main">
@@ -239,6 +243,16 @@
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     text-align: right;
+  }
+
+  .ui-shell-frame-actions {
+    flex: none;
+    display: flex;
+    margin-left: auto;
+  }
+
+  .ui-shell-frame-note + .ui-shell-frame-actions {
+    margin-left: 4px;
   }
 
   .ui-shell-frame-description {

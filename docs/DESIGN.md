@@ -38,7 +38,7 @@ A piece of information takes the form of its family, never another.
 - Nothing pushes the tab list or the page: a drawer or a popover covers, it never inserts itself.
 - A system screen in the sidebar is one navigation level: a close button on the right of the traffic lights line, then the title, the search field and the navigation list, in the same places for every system screen. It slides in from the side and back; nothing else in the sidebar changes shape.
 - The page area of a system screen holds its content: a 20 px semibold title top left, a short count or note top right, then the content. It is never left blank or showing an unrelated page.
-- A system screen edits live: no Cancel and Save pair. A destructive action sits last, as red text under a separator, aligned with the labels.
+- A system screen edits live: no Cancel and Save pair. Its sidebar holds only places; its commands sit behind one "..." button at the end of the page header, a destructive one last, in red, under a separator.
 - A setting that only matters under a switch is a nested row in the same box, indented 38 px, and disappears when the switch is off.
 - A switch whose two states look different (calls docked or floating) is chosen from two thumbnails.
 - A visual choice shows itself: a material, theme or layout is picked from thumbnails of the result, as macOS does for Light and Dark, never from a word in a menu.
