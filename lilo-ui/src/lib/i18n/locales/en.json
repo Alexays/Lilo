@@ -1667,7 +1667,7 @@
 		},
 		"essentials": {
 			"title": "The essentials",
-			"subtitle": "Three settings that make a difference. You can change them anytime.",
+			"subtitle": "Settings that make a difference. You can change them anytime.",
 			"blocker": "Block ads and trackers",
 			"blockerDesc": "Recommended: pages load faster and follow you less.",
 			"refreshRate": "Smoother scrolling",
