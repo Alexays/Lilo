@@ -182,24 +182,6 @@ test.describe("pinned extensions beyond the address bar's room", () => {
 		await expect(page.locator(".url-text-shell")).toHaveCSS("margin-right", "192px");
 		await expectNothingClipped(page);
 
-		// Too narrow for Agents on the top line, it ends the field and the pins give it room.
-		await page.evaluate(() => {
-			window.__lilo!.receive({
-				event: "settingsLoaded",
-				settings: { pinnedExtensions: "ext-0,ext-1,ext-2,ext-3,ext-4,ext-5,ext-6,ext-7", agentsEnabled: "true" },
-			});
-			document.documentElement.style.setProperty("--sidebar-width", "220px");
-		});
-		const agents = page.locator(".url-trigger .agents-button");
-		await expect(agents).toBeVisible();
-		await expect(page.locator(".sidebar-header .agents-button")).toBeHidden();
-		await expect(icons).toHaveCount(2);
-		await expectNothingClipped(page);
-		const bar = (await page.locator(".url-trigger").boundingBox())!;
-		const agentsBox = (await agents.boundingBox())!;
-		const lastIcon = (await page.locator(".extension-menu-btn").boundingBox())!;
-		expect(agentsBox.x).toBeGreaterThanOrEqual(lastIcon.x + lastIcon.width);
-		expect(agentsBox.x + agentsBox.width).toBeLessThanOrEqual(bar.x + bar.width);
 	});
 
 	test("an overflowed pin opens its popup from the popover", async ({ page }) => {

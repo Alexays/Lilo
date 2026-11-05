@@ -1319,6 +1319,14 @@
             </svg>
           </button>
         {/if}
+        {#if getSetting("agentsEnabled", "false") === "true"}
+          <!-- Sized up front, so the row holds still while the badge's chunk loads. -->
+          <span class="new-agents-slot">
+            {#await import("../agents/AgentsBadge.svelte") then badge}
+              <badge.default row />
+            {/await}
+          </span>
+        {/if}
       </div>
     {/if}
   {/if}
@@ -1997,6 +2005,11 @@
       color var(--transition-fast);
   }
 
+  /* The buttons after it keep the label off the edge, so its last 8 px go to the label in long locales. */
+  .new-tab-row:not(:last-child) {
+    padding-right: 0;
+  }
+
   .tab-list:not(:empty) + .new-tab-line {
     margin-top: var(--sidebar-tab-row-gap);
   }
@@ -2036,6 +2049,13 @@
 
   .new-terminal-button:hover:not(:disabled) {
     color: var(--text-primary);
+  }
+
+  .new-agents-slot {
+    display: flex;
+    flex: none;
+    width: 32px;
+    margin-right: 2px;
   }
 
   .new-tab-line.exiting {

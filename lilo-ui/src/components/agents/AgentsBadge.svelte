@@ -26,6 +26,9 @@
     summaries.some((s) => s.permission || s.state === "busy" || s.state === "starting" || s.state === "failed" || s.unread || s.title),
   );
 
+  // In the sidebar's New Tab row it takes the New Terminal button's look.
+  let { row = false }: { row?: boolean } = $props();
+
   let open = $state(false);
   let button: HTMLButtonElement | undefined = $state();
 </script>
@@ -34,15 +37,16 @@
   bind:this={button}
   class="agents-button"
   class:open
+  class:row
   aria-label={label}
   aria-expanded={open}
-  use:tooltip={{ text: label, placement: "bottom", disabled: open }}
+  use:tooltip={{ text: label, placement: row ? "top" : "bottom", disabled: open }}
   onclick={() => {
     if (!open && !listed) openAskBar();
     else open = !open;
   }}
 >
-  <MascotGlyph />
+  <MascotGlyph outlined={row} />
   {#if working}
     <svg class="ring" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="12" r="11" pathLength="100" />
@@ -95,22 +99,27 @@
     outline-offset: 1px;
   }
 
-  /* In the address field, where a narrow sidebar moves it, it takes the field's 24 px buttons. */
-  :global(.field-agents) .agents-button {
-    width: 24px;
-    height: 24px;
+  .agents-button.row {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    transition:
+      background var(--transition-fast),
+      color var(--transition-fast);
   }
 
-  /* The field paints --bg-hover itself, so a hover needs a tint above it. */
-  :global(.field-agents) .agents-button:is(:hover, .open) {
-    background: var(--text-primary-tint-12);
+  .agents-button.row:is(:hover, .open) {
+    color: var(--text-primary);
   }
 
-  /* The waiting dot's ring takes the field's translucent fill, laid over the sidebar's. */
-  :global(.field-agents) .dot {
-    box-shadow:
-      0 0 0 2px var(--bg-hover),
-      0 0 0 2px var(--sidebar-bg);
+  .agents-button.row:focus-visible {
+    outline-offset: -2px;
+  }
+
+  .row .dot {
+    top: 7px;
+    right: 7px;
   }
 
   .ring {

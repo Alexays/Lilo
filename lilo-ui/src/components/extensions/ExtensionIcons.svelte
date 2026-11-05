@@ -47,10 +47,7 @@
   // The address bar's width, set by the resize observer below. Only a change of the count reaches
   // the icons, so a sidebar drag never re-renders them between two fits.
   let barWidth = $state(0);
-  // The Agents button a narrow sidebar moves into the field takes its room from the pins: the cluster moves 26 px.
-  const FIELD_AGENTS_PX = 26;
-  let agentsWidth = $state(0);
-  const inlineCount = $derived(fitPinnedCount(barWidth - agentsWidth, pinnedIds.length));
+  const inlineCount = $derived(fitPinnedCount(barWidth, pinnedIds.length));
   const inlineIds = $derived(pinnedIds.slice(0, inlineCount));
   const pinned = $derived(
     inlineIds.map((id) => extensions.find((ext) => ext.id === id) as ExtensionState),
@@ -163,9 +160,6 @@
       for (const entry of entries) {
         if (entry.target !== bar) continue;
         barWidth = entry.borderBoxSize[0].inlineSize;
-        // The button switches in through a container query, so this is read only as the bar resizes.
-        const agents = bar.querySelector(".field-agents");
-        agentsWidth = agents && getComputedStyle(agents).display !== "none" ? FIELD_AGENTS_PX : 0;
       }
       schedulePopupAnchors();
     });

@@ -38,50 +38,45 @@ async function expectLineFits(page: Page) {
 	return boxes;
 }
 
-test("at its minimum with the address in the sidebar, the history buttons keep the top line and Agents ends the field", async ({ page }) => {
+test("at its minimum with the address in the sidebar, the history buttons keep the top line and Agents ends the New Tab row", async ({ page }) => {
 	await bootNarrow(page, "tabs", 203);
-	const header = page.locator(".sidebar-header");
-	await expect(page.locator(".url-trigger .agents-button")).toBeVisible();
-	await expect(header.locator(".agents-button")).toBeHidden();
+	await expect(page.locator(".sidebar-header .agents-button")).toHaveCount(0);
 
 	const [toggle, back, forward, reload] = await expectLineFits(page);
 	expect(back.left - toggle.right).toBeGreaterThanOrEqual(6);
 	expect(forward.width).toBe(28);
 	expect(reload.width).toBe(28);
 
-	// A little wider, Agents is back on the top line.
-	await page.evaluate(() => document.documentElement.style.setProperty("--sidebar-width", "231px"));
-	await expect(header.locator(".agents-button")).toBeVisible();
-	await expect(page.locator(".url-trigger .agents-button")).toBeHidden();
-	await expectLineFits(page);
+	const sidebar = (await page.locator(".sidebar-viewport").boundingBox())!;
+	const terminal = (await page.locator(".new-terminal-button").boundingBox())!;
+	const agents = page.locator(".new-tab-line .agents-button");
+	const agentsBox = (await agents.boundingBox())!;
+	expect(agentsBox.x).toBeGreaterThanOrEqual(terminal.x + terminal.width);
+	expect(agentsBox.x + agentsBox.width).toBeLessThanOrEqual(sidebar.x + sidebar.width);
 
-	// Its popover opens from the field, and the field's own command bar stays shut.
 	await page.evaluate(() => {
-		document.documentElement.style.setProperty("--sidebar-width", "203px");
 		const conversation = { tabId: "tab-agent", agentId: "agent", title: "Example task", state: "idle", unread: false, spaceId: "space-1", spaceName: "Work", running: false };
 		window.__lilo!.receive({ event: "conversationsChanged", conversations: [conversation] });
 	});
-	await page.locator(".url-trigger .agents-button").click();
+	await agents.click();
 	await expect(page.locator(".float-popover")).toBeVisible();
-	await expect(page.locator(".command-bar-input")).toHaveCount(0);
 });
 
 test("with the address hidden, a too narrow sidebar widens to the line's minimum and the page's buttons wait behind one", async ({ page }) => {
 	await bootNarrow(page, "hidden", 203);
-	// Agents and the page actions button need 243 px beside the history buttons.
-	await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width"))).toBe("243px");
+	// The page actions button needs 215 px beside the history buttons.
+	await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width"))).toBe("215px");
 
 	const header = page.locator(".sidebar-header");
 	await expect(header.locator(".nav-btn.history")).toHaveCount(3);
 	await expect(header.locator(".forward")).toBeVisible();
-	await expect(header.locator(".agents-button")).toBeVisible();
 	const more = header.locator(".page-actions-btn");
 	await expect(more).toBeVisible();
 	await expect(header.locator(".url-actions")).toHaveCount(0);
 	await expectLineFits(page);
 
 	// Hovering a button never brings another over its neighbors.
-	for (const button of [more, header.locator(".agents-button"), header.locator(".reload")]) {
+	for (const button of [more, header.locator(".reload")]) {
 		await button.hover();
 		await expectLineFits(page);
 	}

@@ -80,10 +80,7 @@
     if (getReadyUpdate()) updateCardLoaded = true;
   });
 
-  const agentsEnabled = $derived(getSetting("agentsEnabled", "false") === "true");
   const addressCorner = $derived(getTabPosition() === "left" && getAddressPlacement() === "tabs");
-  // Only beside the traffic lights does a narrow sidebar run out of room on the top line.
-  const agentsMove = $derived(agentsEnabled && addressCorner && isAddressVisible() && areTrafficLightsVisible());
 
   // Latched on first open: the panels chunk loads once, then stays mounted so close animations
   // and later opens keep working.
@@ -110,7 +107,6 @@
       class="sidebar-header"
       class:no-traffic-lights={!areTrafficLightsVisible() || getTabPosition() === "right"}
       class:address-hidden={!isAddressVisible()}
-      class:agents-move={agentsMove}
       ondblclick={() => chromeActions.maximizeWindow()}
       onpointerdown={pressTabsHeader}
     >
@@ -120,14 +116,6 @@
       {#if !hasPageToolbar() || getTabPosition() !== "left"}
         <NavControls collapseLocked={isOverlayPanelOpen} show={!isSidebarVisible() || !hasPageToolbar() ? "all" : isAddressInRightTabs() ? "history" : "toggle"} />
       {/if}
-      <!-- Loaded only once the feature is on: no conversation code ships to the chrome otherwise. -->
-      {#if agentsEnabled}
-        <div class="agents-slot">
-          {#await import("../agents/AgentsBadge.svelte") then badge}
-            <badge.default />
-          {/await}
-        </div>
-      {/if}
       <!-- With the address hidden, the page's buttons stay on the header's line. -->
       {#if !isAddressVisible()}
         <div class="page-actions">
@@ -136,7 +124,7 @@
       {/if}
     </div>
     {#if isAddressVisible() && !isAddressInPageToolbar()}
-      <URLDisplay agents={agentsMove} />
+      <URLDisplay />
     {/if}
 
     <!-- Space content: native horizontal scroll with snap paging -->
@@ -329,12 +317,6 @@
     flex-shrink: 0;
   }
 
-  /* Once the line can no longer keep 6 px between the toggle and Back, Agents moves into the address field. */
-  @container sidebar (width < 239px) {
-    .agents-move .agents-slot {
-      display: none;
-    }
-  }
 
   /* Back and Reload always stay: short of room beside the toggle for all three with 6 px before Back, only an
      unavailable Forward gives way, and with the address hidden the buttons take 24 px. App's per-layout minimum
@@ -364,16 +346,6 @@
   }
 
   /* Reserve space for macOS traffic light buttons, 15pt in from the window's edge. */
-  .agents-slot {
-    flex: none;
-    display: flex;
-  }
-
-  /* Without the navigation buttons to fill the line, the badge still keeps its end. */
-  .header-spacer + .agents-slot {
-    margin-left: auto;
-  }
-
   .header-spacer {
     width: 81px;
     flex-shrink: 0;

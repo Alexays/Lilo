@@ -40,9 +40,8 @@
   } from "../../lib/urlProgress";
   import type { ToastVariant, URLVisual } from "../../lib/urlVisual";
 
-  // With the address hidden, only the page's buttons stay, on the top line. With agents, the field holds
-  // the Agents button while the sidebar is too narrow for it on its top line.
-  let { actionsOnly = false, agents = false }: { actionsOnly?: boolean; agents?: boolean } = $props();
+  // With the address hidden, only the page's buttons stay, on the top line.
+  let { actionsOnly = false }: { actionsOnly?: boolean } = $props();
 
   const TOAST_DURATION_MS = 1440;
   const DETAILS_DELAY_MS = 400;
@@ -224,7 +223,7 @@
 
   function trackDetails(event: PointerEvent) {
     const target = event.target as Element;
-    if (target.closest(".url-actions, .changes-button, .permissions-btn, .field-agents")) return closeDetails();
+    if (target.closest(".url-actions, .changes-button, .permissions-btn")) return closeDetails();
     if (detailsOpen || detailsTimer !== null || !target.closest(".url-trigger")) return;
     detailsTimer = setTimeout(() => {
       detailsTimer = null;
@@ -268,7 +267,6 @@
   onMount(() => settingsActions.loadDefaultBrowserStatus());
 
   function handleClick(event: MouseEvent) {
-    if ((event.target as Element).closest(".field-agents")) return;
     closeDetails();
     openCommandBar(activeTabURL, false, true);
   }
@@ -920,7 +918,6 @@
   <div class="url-surface">
     <div
       class="url-trigger"
-      class:with-agents={agents}
       draggable={draggableURL}
       ondragstart={dragURL}
       onclick={handleClick}
@@ -988,14 +985,6 @@
         {@render actions()}
       {/if}
 
-      {#if agents}
-        <!-- Rendered at once, so the pins reserve its room before the badge's chunk arrives. -->
-        <span class="field-agents">
-          {#await import("../agents/AgentsBadge.svelte") then badge}
-            <badge.default />
-          {/await}
-        </span>
-      {/if}
 
       <URLProgress
         progress={displayedProgress}
@@ -1064,23 +1053,6 @@
     cursor: pointer;
     text-align: left;
     outline: none;
-  }
-
-  /* The 24 px Agents button ends the row and the extension cluster moves off it; Sidebar's 239 px query hides
-     the top line's. */
-  .field-agents {
-    display: none;
-  }
-
-  @container sidebar (width < 239px) {
-    .field-agents {
-      display: flex;
-      margin: -4px -4px -4px 0;
-    }
-
-    .with-agents :global(.url-actions) {
-      right: 32px;
-    }
   }
 
   .url-trigger-button {

@@ -31,7 +31,6 @@
     showSidebarOverlay,
   } from "./stores/ui.svelte";
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
-  import { getSetting } from "./stores/settings.svelte";
   import { getTabPosition, hasPageToolbar, isAddressVisible, isPageToolbarShown, isVerticalLayout } from "./stores/tabLayout.svelte";
   import { isLiftingTabs } from "./stores/tabEdgeDrag.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
@@ -122,10 +121,8 @@
   let sidebarOverlayHideTimeout: ReturnType<typeof setTimeout> | null = null;
   const sidebarResizeFrame = createFrameScheduler();
   // The narrowest sidebar whose top line holds every button whole; Swift's range keeps the lowest of them.
-  // With the address hidden the line also holds Agents and the page's overflow button.
-  const sidebarMinWidth = $derived(
-    getTabPosition() === "left" && !isAddressVisible() ? (getSetting("agentsEnabled", "false") === "true" ? 243 : 215) : 203,
-  );
+  // With the address hidden the line also holds the page's overflow button.
+  const sidebarMinWidth = $derived(getTabPosition() === "left" && !isAddressVisible() ? 215 : 203);
 
   // A width kept from a roomier layout widens to the new one's minimum.
   $effect(() => {
