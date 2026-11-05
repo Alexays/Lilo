@@ -553,6 +553,7 @@ final class AgentDevToolsTests: AgentToolTestCase {
         let longTasks = try XCTUnwrap(summary["longTasks"] as? [String: Any], reply.text)
         let longest = try XCTUnwrap((longTasks["longest"] as? [[String: Any]])?.first, reply.text)
         XCTAssertGreaterThanOrEqual(longest["durationMs"] as? Int ?? 0, 140, reply.text)
+        XCTAssertLessThanOrEqual(longTasks["totalMs"] as? Int ?? .max, summary["durationMs"] as? Int ?? 0, "overlapping tasks count once: \(reply.text)")
         XCTAssertTrue("\(longest["topFunctions"] ?? "")".contains("busy"), reply.text)
         let marks = try XCTUnwrap(summary["markers"] as? [[String: Any]], reply.text)
         XCTAssertEqual(marks.compactMap { $0["label"] as? String }, ["before", "after"])

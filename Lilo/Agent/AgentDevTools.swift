@@ -144,8 +144,8 @@ enum AgentDevTools {
             start, then act, then stop: a timeline profile (JavaScript samples, layout, style, paint, CPU, memory) \
             saved as a JSON file, with a summary: functions with their callers, inclusive time, time by file and by \
             origin (first party, third party, extension), long tasks (50 ms or more) with the functions running \
-            in them, and the sections between console.timeStamp marks. summary: the last profile again over \
-            fromMs to toMs, or with focus. A cross-site navigation moves the page to a new process: the profile \
+            in them and the main thread's CPU (low: a record WebKit left open, or a wait), and the sections \
+            between console.timeStamp marks. summary: the last profile again over fromMs to toMs, or with focus. A cross-site navigation moves the page to a new process: the profile \
             follows it, but the samples taken before are lost, so start on the loaded page or right before \
             navigating. Records' totalMs is the time covered by records of that type. heap_snapshot: collects \
             garbage, then saves the JavaScript heap as a file, with the biggest classes, the growth since the \
