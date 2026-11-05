@@ -94,9 +94,14 @@
     left: var(--chrome-content-left-hidden);
   }
 
+  /* Sits over the bottom bar's empty top padding (and above its z-index 18): stacked on it, the
+     two paddings left a hole between the card and the Space tiles. */
   .undo-dock {
+    position: relative;
+    z-index: 19;
     flex-shrink: 0;
-    padding: 0 var(--sidebar-right-pad, 8px) 6px 8px;
+    margin-bottom: -8px;
+    padding: 0 var(--sidebar-right-pad, 8px) 0 8px;
   }
 
   /* Inverted from the floating cards, as macOS draws a passing notice. */
