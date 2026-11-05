@@ -235,7 +235,7 @@ test("Down and Up walk the shown rows, pinned to unpinned and through folders", 
 		.toEqual(["tab-beta"]);
 });
 
-test("five levels fit a 200 px sidebar: each indents, titles ellipsize, nothing overflows", async ({ page }) => {
+test("five levels fit a 200 px sidebar: each nests deeper, titles ellipsize, nothing overflows", async ({ page }) => {
 	const world = deepFolderWorld();
 	world.sidebarWidth = 200;
 	await bootChrome(page, world);
@@ -246,7 +246,9 @@ test("five levels fit a 200 px sidebar: each indents, titles ellipsize, nothing 
 		await expect(row).toBeVisible();
 		lefts.push((await row.boundingBox())!.x);
 	}
-	for (let level = 1; level < 5; level++) expect(lefts[level] - lefts[level - 1]).toBeCloseTo(12, 0);
+	// The root's tinted block marks its first level, which sits at the block's 4px inset; deeper levels indent.
+	expect(lefts[1] - lefts[0]).toBeCloseTo(4, 0);
+	for (let level = 2; level < 5; level++) expect(lefts[level] - lefts[level - 1]).toBeCloseTo(12, 0);
 
 	const sidebarRight = await page.locator(".sidebar").evaluate((el) => el.getBoundingClientRect().right);
 	const overflow = await pane(page).evaluate((root, right) => {
