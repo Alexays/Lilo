@@ -322,7 +322,8 @@
   const activeTab = $derived(getActiveTab(spaceId));
   // Native keeps the archive of the window's Space only.
   const isNewTabActive = $derived(isBlankTab(activeTab));
-  const showNewTabRow = $derived(!isPinned && interactive && !isNewTabActive);
+  // Not gated on `interactive` either: the Space sliding away keeps its row through the swipe.
+  const showNewTabRow = $derived(!isPinned && !isNewTabActive);
   // Not gated on `interactive`: a neighbour pane must lay out like the active one, or its
   // divider pops in the moment its Space becomes active.
   const canClear = $derived(!isPinned && rootItems.some((item) => item.kind === "tab"));
@@ -1251,6 +1252,7 @@
       <div class="new-tab-line" bind:this={newTabLineEl}>
         <button
           class="new-tab-row"
+          disabled={!interactive}
           use:tooltip={{ text: t("tabSection.newTab"), shortcut: shortcutKeys("tab.new") }}
           onclick={toggleNewTab}
         >
