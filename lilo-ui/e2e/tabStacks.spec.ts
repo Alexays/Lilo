@@ -72,3 +72,15 @@ test("grouped by type, terminals sit in a tray above the web that folds away", a
 	await expect(row(page, "tab-term-one")).toHaveCount(0);
 	await expect(tray).toContainText("2");
 });
+
+test("a closed stack holding every open tab still shows", async ({ page }) => {
+	const world = stackWorld({ sidebarStackTabs: "true" });
+	const kept = (id: string) => !["tab-alpha", "tab-beta", "tab-gamma", "tab-term-one", "tab-term-two"].includes(id);
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].filter((entry) => kept(entry.id));
+	world.treeItemsBySpace[SPACE_1] = world.treeItemsBySpace[SPACE_1].filter((item) => kept(item.itemId));
+	world.activeTabBySpace[SPACE_1] = "tab-home";
+	await bootChrome(page, world, ".pinned-list [data-tab-id]");
+
+	await expect(page.locator(".tab-list")).not.toHaveClass(/is-empty/);
+	await expect(page.getByRole("treeitem", { name: "Acme Docs, 3 tabs" })).toBeVisible();
+});

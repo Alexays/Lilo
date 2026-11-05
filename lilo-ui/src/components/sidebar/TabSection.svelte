@@ -254,7 +254,6 @@
 
   const rootBaseItems = $derived(dndItemsForSidebarItems(shownRootItems, section));
   const rootZoneItems = $derived(getZoneItems(rootZone, rootBaseItems));
-  const rootZoneIsEmpty = $derived(rootZoneItems.length === 0);
 
   type Tray = Exclude<RowType, "web">;
   type Segment =
@@ -315,6 +314,8 @@
     lastSegments = next;
     return next;
   });
+  // A closed stack's or a folded tray's head is all a list may show: it is not empty then.
+  const listIsEmpty = $derived(segments.length === 0);
   const rootHasShadow = $derived(rootZoneItems.some(isShadowItem));
   const recentlyDraggedId = $derived(getRecentlyDroppedId());
 
@@ -1397,7 +1398,7 @@
       <div
         class="pinned-list"
         class:drag-active={dragActive && hasTabs}
-        class:is-empty={rootZoneIsEmpty}
+        class:is-empty={listIsEmpty}
         class:has-shadow={rootHasShadow}
         class:idle-empty={!hasTabs}
         class:pinned-transfer-target={pinnedTransferTargetActive}
@@ -1492,7 +1493,7 @@
         class="tab-list"
         bind:this={tabListEl}
         class:drag-active={dragActive}
-        class:is-empty={rootZoneIsEmpty}
+        class:is-empty={listIsEmpty}
         class:pinned-transfer-source={pinnedTransferSourceActive}
         role="tree"
         tabindex="-1"
