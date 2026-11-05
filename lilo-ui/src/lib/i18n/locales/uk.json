@@ -2326,7 +2326,6 @@
 		"Choose": "Вибрати",
 		"New Conversation": "Нова розмова",
 		"Screenshot of %@": "Знімок екрана: %@",
-		"Sign in in the terminal Lilo opened, then send your message again.": "Увійдіть у терміналі, який відкрив Lilo, і надішліть повідомлення знову.",
 		"The agent stopped (code %d).": "Агент зупинився (код %d).",
 		"This agent is no longer in the ACP registry.": "Цього агента більше немає в реєстрі ACP.",
 		"Always Allow": "Завжди дозволяти",
@@ -2519,7 +2518,7 @@
 				"signedIn": "Вхід виконано"
 			},
 			"moreOptions": "Інші параметри",
-			"signInHint": "Увійдіть через агента й надішліть повідомлення знову.",
+			"signInHint": "Увійдіть через агента: повідомлення надішлеться, щойно ви ввійдете.",
 			"branch": "Гілка {branch}",
 			"jumpToLatest": "До останніх"
 		},
@@ -2590,10 +2589,9 @@
 			"project": "Проєкт",
 			"chooseProject": "Виберіть проєкт",
 			"chooseFolder": "Вибрати папку...",
-			"ownCopy": "Окрема копія",
-			"ownCopyHint": "Агент працює в окремій копії проєкту (git worktree)",
-			"openBeside": "Відкрити",
-			"openBackground": "У фоні",
+			"noFolder": "Без теки",
+			"noFolderDetail": "Агент працює у власній теці",
+			"backgroundHint": "{shortcut}, щоб залишити у фоні",
 			"start": "Почати"
 		},
 		"row": {
@@ -2635,7 +2633,10 @@
 		"status": {
 			"working": "Працює",
 			"waiting": "Чекає на вас",
-			"stopHint": "Esc, щоб зупинити"
+			"stopHint": "Esc, щоб зупинити",
+			"signingIn": "Вхід у {agent}",
+			"signingInHint": "Повідомлення надішлеться, щойно ви ввійдете.",
+			"signingInTerminalHint": "Увійдіть у вкладці термінала, яку відкрив Lilo. Потім повідомлення надішлеться."
 		},
 		"work": {
 			"images": {

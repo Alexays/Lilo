@@ -2326,7 +2326,6 @@
 		"Choose": "Выбрать",
 		"New Conversation": "Новый разговор",
 		"Screenshot of %@": "Снимок экрана: %@",
-		"Sign in in the terminal Lilo opened, then send your message again.": "Войдите в терминале, который открыл Lilo, и отправьте сообщение ещё раз.",
 		"The agent stopped (code %d).": "Агент остановился (код %d).",
 		"This agent is no longer in the ACP registry.": "Этого агента больше нет в реестре ACP.",
 		"Always Allow": "Всегда разрешать",
@@ -2519,7 +2518,7 @@
 				"signedIn": "Вход выполнен"
 			},
 			"moreOptions": "Другие параметры",
-			"signInHint": "Войдите через агента и отправьте сообщение снова.",
+			"signInHint": "Войдите через агента: сообщение отправится, как только вы войдёте.",
 			"branch": "Ветка {branch}",
 			"jumpToLatest": "К последним"
 		},
@@ -2590,10 +2589,9 @@
 			"project": "Проект",
 			"chooseProject": "Выберите проект",
 			"chooseFolder": "Выбрать папку...",
-			"ownCopy": "Отдельная копия",
-			"ownCopyHint": "Агент работает в отдельной копии проекта (git worktree)",
-			"openBeside": "Открыть",
-			"openBackground": "В фоне",
+			"noFolder": "Без папки",
+			"noFolderDetail": "Агент работает в собственной папке",
+			"backgroundHint": "{shortcut}, чтобы оставить в фоне",
 			"start": "Начать"
 		},
 		"row": {
@@ -2635,7 +2633,10 @@
 		"status": {
 			"working": "Работает",
 			"waiting": "Ждёт вас",
-			"stopHint": "Esc, чтобы остановить"
+			"stopHint": "Esc, чтобы остановить",
+			"signingIn": "Вход в {agent}",
+			"signingInHint": "Сообщение отправится, как только вы войдёте.",
+			"signingInTerminalHint": "Войдите во вкладке терминала, которую открыл Lilo. Затем сообщение отправится."
 		},
 		"work": {
 			"images": {

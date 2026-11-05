@@ -20,6 +20,7 @@
   } from "../../stores/conversations.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
+  import { tooltip } from "../../lib/tooltip";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import AgentTile from "./AgentTile.svelte";
   import MenuPicker from "./MenuPicker.svelte";
@@ -32,7 +33,6 @@
   let attachments = $state.raw<AttachmentDraft[]>([]);
   let agentId = $state("");
   let project = $state("");
-  let ownCopy = $state(false);
   let pageTabId = $state<string | null>(null);
   let field: ReturnType<typeof PromptField> | undefined = $state();
   let refreshed = false;
@@ -59,7 +59,7 @@
               : []),
           ]
         : [];
-      ownCopy = false;
+      project = getSetting("agentsLastProject", "");
       refreshed = false;
       catalogAtOpen = getAgents();
       conversationActions.loadCatalog(false);
@@ -84,25 +84,22 @@
 
   $effect(() => {
     const chosen = getChosenProject();
-    if (chosen) {
-      project = chosen;
-      setSetting("agentsLastProject", chosen);
-      clearChosenProject();
-      return;
-    }
-    if (project) return;
-    project = getSetting("agentsLastProject", "") || getProjects()[0] || "";
+    if (!chosen) return;
+    project = chosen;
+    setSetting("agentsLastProject", chosen);
+    clearChosenProject();
   });
 
   const projectOptions = $derived.by(() => {
     const paths = getProjects().includes(project) || !project ? getProjects() : [project, ...getProjects()];
     return [
+      { value: "", label: t("agents.ask.noFolder"), detail: t("agents.ask.noFolderDetail"), icon: "folder" as const },
       ...paths.map((path) => ({ value: path, label: projectName(path), detail: path, icon: "folder" as const })),
       { value: CHOOSE, label: t("agents.ask.chooseFolder"), icon: "folder" as const },
     ];
   });
   const agent = $derived(getAgents().find((candidate) => candidate.id === agentId));
-  const canStart = $derived(!!agentId && !!project && text.trim().length > 0);
+  const canStart = $derived(!!agentId && text.trim().length > 0);
 
   function start(background: boolean): void {
     if (!canStart) return;
@@ -112,7 +109,6 @@
       text: text.trim(),
       attachments: attachments.map((draft) => draft.attachment),
       background,
-      ownCopy,
     });
     setSetting("agentsLastAgent", agentId);
     setSetting("agentsLastProject", project);
@@ -157,6 +153,13 @@
         onsubmit={start}
       />
       <div class="ask-controls">
+        <MenuPicker value={project} options={projectOptions} ariaLabel={t("agents.ask.project")} onchange={pickProject}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M2 4.5h4l1.5 1.5H14v6.5H2z" />
+          </svg>
+          <span class="picker-label" class:quiet={!project}>{project ? projectName(project) : t("agents.ask.noFolder")}</span>
+        </MenuPicker>
+        <span class="spacer"></span>
         <MenuPicker
           value={agentId}
           options={getAgents().map((candidate) => ({ value: candidate.id, label: candidate.name, detail: candidate.description || undefined, agentId: candidate.id }))}
@@ -166,36 +169,13 @@
           {#if agent}<AgentTile agentId={agent.id} />{/if}
           <span class="picker-label">{agent?.name ?? t("agents.ask.loadingAgents")}</span>
         </MenuPicker>
-        <MenuPicker value={project || CHOOSE} options={projectOptions} ariaLabel={t("agents.ask.project")} onchange={pickProject}>
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-            <path d="M2 4.5h4l1.5 1.5H14v6.5H2z" />
-          </svg>
-          <span class="picker-label">{project ? projectName(project) : t("agents.ask.chooseProject")}</span>
-        </MenuPicker>
-        <button
-          type="button"
-          class="own-copy"
-          aria-pressed={ownCopy}
-          title={t("agents.ask.ownCopyHint")}
-          onclick={() => (ownCopy = !ownCopy)}
-        >
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-            <circle cx="4" cy="3.5" r="1.8" /><circle cx="4" cy="12.5" r="1.8" /><circle cx="12" cy="6" r="1.8" />
-            <path d="M4 5.3v5.4M12 7.8c0 2.5-3 2.2-6.5 3.6" />
-          </svg>
-          {t("agents.ask.ownCopy")}
-        </button>
-        <span class="spacer"></span>
-        <span class="hints" aria-hidden="true">
-          <span><kbd>{formatShortcut("Enter")}</kbd>{t("agents.ask.openBeside")}</span>
-          <span><kbd>{formatShortcut("Cmd+Enter")}</kbd>{t("agents.ask.openBackground")}</span>
-        </span>
         <button
           type="button"
           class="send"
           disabled={!canStart}
           aria-label={t("agents.ask.start")}
           aria-keyshortcuts="Enter Meta+Enter"
+          use:tooltip={{ text: t("agents.ask.start"), subtitle: t("agents.ask.backgroundHint", { shortcut: formatShortcut("Cmd+Enter") }), shortcut: formatShortcut("Enter"), placement: "top" }}
           onclick={() => start(false)}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
@@ -261,52 +241,15 @@
     text-overflow: ellipsis;
   }
 
-  .own-copy {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-4);
-    height: var(--control-height-sm);
-    padding: 0 var(--space-8);
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: none;
+  .picker-label.quiet {
     color: var(--text-secondary);
-    font: inherit;
-    font-size: var(--font-size-sm);
-    white-space: nowrap;
-    cursor: pointer;
   }
 
-  .own-copy:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-  }
-
-  .own-copy[aria-pressed="true"] {
-    background: color-mix(in srgb, var(--success) 16%, transparent);
-    color: var(--success-text);
-  }
 
   .spacer {
     flex: 1;
   }
 
-  /* Gives way first when the bar narrows. */
-  .hints {
-    display: inline-flex;
-    min-width: 0;
-    overflow: hidden;
-    gap: var(--space-12);
-    margin-right: var(--space-6);
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    white-space: nowrap;
-  }
-
-  .hints kbd {
-    margin-right: var(--space-4);
-    font-family: inherit;
-  }
 
   .send {
     flex: none;

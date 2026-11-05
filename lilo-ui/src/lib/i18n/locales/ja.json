@@ -2296,7 +2296,6 @@
 		"Choose": "選択",
 		"New Conversation": "新しい会話",
 		"Screenshot of %@": "%@ のスクリーンショット",
-		"Sign in in the terminal Lilo opened, then send your message again.": "Lilo が開いたターミナルでサインインしてから、メッセージをもう一度送信してください。",
 		"The agent stopped (code %d).": "エージェントが停止しました（コード %d）。",
 		"This agent is no longer in the ACP registry.": "このエージェントは ACP レジストリに登録されていません。",
 		"Always Allow": "常に許可",
@@ -2481,7 +2480,7 @@
 				"signedIn": "サインインしました"
 			},
 			"moreOptions": "その他のオプション",
-			"signInHint": "エージェントでサインインしてから、メッセージをもう一度送信してください。",
+			"signInHint": "エージェントでサインインしてください。サインインが済むとメッセージが送信されます。",
 			"branch": "ブランチ {branch}",
 			"jumpToLatest": "最新へ移動"
 		},
@@ -2542,10 +2541,9 @@
 			"project": "プロジェクト",
 			"chooseProject": "プロジェクトを選択",
 			"chooseFolder": "フォルダを選択...",
-			"ownCopy": "専用コピー",
-			"ownCopyHint": "エージェントにプロジェクトの専用コピー（git worktree）で作業させます",
-			"openBeside": "開く",
-			"openBackground": "バックグラウンドで",
+			"noFolder": "フォルダなし",
+			"noFolderDetail": "エージェントは専用のフォルダで作業します",
+			"backgroundHint": "{shortcut} でバックグラウンドのままにする",
 			"start": "開始"
 		},
 		"row": {
@@ -2583,7 +2581,10 @@
 		"status": {
 			"working": "作業中",
 			"waiting": "対応待ち",
-			"stopHint": "Esc で停止"
+			"stopHint": "Esc で停止",
+			"signingIn": "{agent} にサインイン中",
+			"signingInHint": "サインインが済むとメッセージが送信されます。",
+			"signingInTerminalHint": "Lilo が開いたターミナルタブでサインインしてください。完了するとメッセージが送信されます。"
 		},
 		"work": {
 			"images": {

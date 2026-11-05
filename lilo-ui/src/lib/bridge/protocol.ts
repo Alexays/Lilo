@@ -820,7 +820,6 @@ export interface BridgeCommandPayloadMap {
 		text: string;
 		attachments: BridgeConversationAttachment[];
 		background: boolean;
-		ownCopy: boolean;
 	};
 	sendConversationPrompt: { tabId: string; text: string; attachments: BridgeConversationAttachment[]; interrupt: boolean };
 	cancelConversation: { tabId: string };

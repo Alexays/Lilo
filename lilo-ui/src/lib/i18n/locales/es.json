@@ -2296,7 +2296,6 @@
 		"Choose": "Elegir",
 		"New Conversation": "Nueva conversación",
 		"Screenshot of %@": "Captura de pantalla de %@",
-		"Sign in in the terminal Lilo opened, then send your message again.": "Inicia sesión en el terminal que abrió Lilo y vuelve a enviar tu mensaje.",
 		"The agent stopped (code %d).": "El agente se detuvo (código %d).",
 		"This agent is no longer in the ACP registry.": "Este agente ya no está en el registro de ACP.",
 		"Always Allow": "Permitir siempre",
@@ -2481,7 +2480,7 @@
 				"signedIn": "Sesión iniciada"
 			},
 			"moreOptions": "Más opciones",
-			"signInHint": "Inicia sesión con el agente y vuelve a enviar tu mensaje.",
+			"signInHint": "Inicia sesión con el agente: tu mensaje se envía en cuanto inicies sesión.",
 			"branch": "Rama {branch}",
 			"jumpToLatest": "Ir al final"
 		},
@@ -2542,10 +2541,9 @@
 			"project": "Proyecto",
 			"chooseProject": "Elegir un proyecto",
 			"chooseFolder": "Elegir carpeta...",
-			"ownCopy": "Copia propia",
-			"ownCopyHint": "Deja que el agente trabaje en su propia copia del proyecto (un worktree de git)",
-			"openBeside": "Abrir",
-			"openBackground": "En segundo plano",
+			"noFolder": "Sin carpeta",
+			"noFolderDetail": "El agente trabaja en una carpeta propia",
+			"backgroundHint": "{shortcut} para mantenerlo en segundo plano",
 			"start": "Empezar"
 		},
 		"row": {
@@ -2583,7 +2581,10 @@
 		"status": {
 			"working": "Trabajando",
 			"waiting": "Te espera",
-			"stopHint": "Esc para detener"
+			"stopHint": "Esc para detener",
+			"signingIn": "Iniciando sesión en {agent}",
+			"signingInHint": "Tu mensaje se envía en cuanto inicies sesión.",
+			"signingInTerminalHint": "Inicia sesión en la pestaña de terminal que abrió Lilo. Después se envía tu mensaje."
 		},
 		"work": {
 			"images": {

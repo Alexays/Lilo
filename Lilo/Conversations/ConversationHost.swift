@@ -25,6 +25,10 @@ final class ConversationHost {
         /// The agent's open `session/request_permission`, answered from the thread, the sidebar or a notification.
         var permission: (id: ACPConnection.Payload, requestId: String, params: [String: Any])?
         var queued: [[[String: Any]]] = []
+        /// The prompt a sign-in holds back, sent again once it succeeds.
+        var awaitingSignIn: [[String: Any]]?
+        /// A sign-in in a terminal was already offered for this prompt: a second refusal shows the error.
+        var signInOffered = false
         /// The project's files when each prompt was sent, by prompt index: what "Restore to here" goes back to.
         var checkpoints: [String?] = []
         var canLoadSession = false
@@ -65,6 +69,8 @@ final class ConversationHost {
     private var shown: [ObjectIdentifier: Set<UUID>] = [:]
     private var summaryScheduled = false
     private var diffRefresh: Set<UUID> = []
+    /// Terminal tabs running an agent's sign-in, with the conversation waiting on each.
+    private var signInTerminals: [UUID: UUID] = [:]
 
     /// Each conversation's log and checkpoints, so a relaunch shows the thread without starting its agent.
     private let threads: URL
@@ -273,8 +279,11 @@ final class ConversationHost {
         persistSession(conversation)
     }
 
-    /// A first `session/new` an agent refuses for want of a sign-in: Lilo signs in with the method the
-    /// agent handles itself, then tries again. A sign-in in a terminal is the user's to do.
+    /// The prompt waits on a sign-in in a terminal tab; `terminalFinished` sends it again.
+    private struct SignInPending: Error {}
+
+    /// A request an agent refuses for want of a sign-in: Lilo signs in with the method the agent handles
+    /// itself, then tries again. A sign-in in a terminal is the user's to do, and the prompt waits for it.
     private func withAuthentication(
         _ conversation: Conversation, connection: ACPConnection, _ body: () async throws -> [String: Any]
     ) async throws -> [String: Any] {
@@ -283,12 +292,15 @@ final class ConversationHost {
         } catch let error as ACPConnection.RPCError where error.code == -32000 {
             if let method = conversation.authMethods.first(where: { ($0["type"] as? String ?? "agent") == "agent" }),
                let methodId = method["id"] as? String {
+                append(conversation, ["sessionUpdate": "lilo_signing_in", "terminal": false])
                 _ = try await connection.request("authenticate", ["methodId": methodId])
                 return try await body()
             }
-            if let method = conversation.authMethods.first(where: { $0["type"] as? String == "terminal" }) {
+            if !conversation.signInOffered, let method = conversation.authMethods.first(where: { $0["type"] as? String == "terminal" }) {
+                conversation.signInOffered = true
                 signInInTerminal(conversation, method: method)
-                throw ACPAgentCatalog.LaunchError(message: "Sign in in the terminal Lilo opened, then send your message again.".localized)
+                append(conversation, ["sessionUpdate": "lilo_signing_in", "terminal": true])
+                throw SignInPending()
             }
             throw error
         }
@@ -301,8 +313,22 @@ final class ConversationHost {
             guard let launch = try? await catalog.launch(agent) else { return }
             let words = [launch.executable.path] + launch.arguments + (method["args"] as? [String] ?? [])
             let command = words.map { "'" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }.joined(separator: " ")
-            _ = window.createTerminalTab(command: "PATH='\(launch.environment["PATH"] ?? "")' " + command)
+            if let tab = window.createTerminalTab(command: "PATH='\(launch.environment["PATH"] ?? "")' " + command) {
+                signInTerminals[tab.id] = conversation.tabId
+            }
         }
+    }
+
+    /// A terminal's command ended or its tab closed: a sign-in run there is done, so the prompt it held
+    /// goes again, to a fresh agent that reads the new credentials.
+    func terminalFinished(_ terminalId: UUID) {
+        guard let tabId = signInTerminals.removeValue(forKey: terminalId), let conversation = conversations[tabId],
+              let blocks = conversation.awaitingSignIn else { return }
+        conversation.awaitingSignIn = nil
+        conversation.connection?.terminate()
+        conversation.connection = nil
+        conversation.sessionId = conversation.canLoadSession ? conversation.sessionId : nil
+        Task { await runTurn(conversation, blocks: blocks) }
     }
 
     private func applySessionState(_ conversation: Conversation, _ result: [String: Any]) {
@@ -348,6 +374,7 @@ final class ConversationHost {
     /// Sends a prompt `announce` showed, or queues it behind the running turn; `interrupt` cancels that turn first.
     func send(_ tabId: UUID, blocks: [[String: Any]], interrupt: Bool) {
         guard let conversation = conversations[tabId] else { return }
+        conversation.awaitingSignIn = nil
         conversation.checkpoints.append(nil)
         let index = conversation.checkpoints.count - 1
         let cwd = conversation.cwd
@@ -381,16 +408,25 @@ final class ConversationHost {
             setState(conversation, .busy)
             // Only once started does Lilo know whether the agent takes images.
             let prompt = conversation.acceptsImages ? blocks : blocks.filter { $0["type"] as? String != "image" }
-            let result = try await connection.request("session/prompt", ["sessionId": sessionId, "prompt": prompt])
+            let result = try await withAuthentication(conversation, connection: connection) {
+                try await connection.request("session/prompt", ["sessionId": sessionId, "prompt": prompt])
+            }
+            conversation.signInOffered = false
             append(conversation, [
                 "sessionUpdate": "lilo_turn_end", "stopReason": result["stopReason"] as? String ?? "end_turn",
                 "at": Date().timeIntervalSince1970 * 1000
             ])
             save(conversation)
+        } catch is SignInPending {
+            conversation.awaitingSignIn = blocks
+            conversation.queued.removeAll()
+            return
         } catch {
             conversation.lastError = error.localizedDescription
+            conversation.signInOffered = false
             // The agent's own sign-in, offered where it failed: a turn can need one long after the session opened.
             if (error as? ACPConnection.RPCError)?.code == -32000, !conversation.authMethods.isEmpty {
+                conversation.awaitingSignIn = blocks
                 append(conversation, ["sessionUpdate": "lilo_auth", "methods": conversation.authMethods.map { method in
                     ["id": method["id"] ?? "", "name": method["name"] ?? "", "description": method["description"] ?? NSNull()]
                 }])
@@ -425,8 +461,13 @@ final class ConversationHost {
         Task {
             do {
                 try await ensureConnected(conversation)
+                append(conversation, ["sessionUpdate": "lilo_signing_in", "terminal": false])
                 _ = try await conversation.connection?.request("authenticate", ["methodId": methodId])
                 append(conversation, ["sessionUpdate": "lilo_notice", "notice": "signedIn"])
+                if let blocks = conversation.awaitingSignIn {
+                    conversation.awaitingSignIn = nil
+                    await runTurn(conversation, blocks: blocks)
+                }
             } catch {
                 append(conversation, ["sessionUpdate": "lilo_error", "message": error.localizedDescription])
             }
@@ -440,7 +481,14 @@ final class ConversationHost {
     }
 
     func cancel(_ tabId: UUID) {
-        guard let conversation = conversations[tabId], let sessionId = conversation.sessionId else { return }
+        guard let conversation = conversations[tabId] else { return }
+        if conversation.awaitingSignIn != nil, conversation.state == .busy {
+            conversation.awaitingSignIn = nil
+            append(conversation, ["sessionUpdate": "lilo_turn_end", "stopReason": "cancelled", "at": Date().timeIntervalSince1970 * 1000])
+            setState(conversation, .idle)
+            return
+        }
+        guard let sessionId = conversation.sessionId else { return }
         if let permission = conversation.permission {
             conversation.connection?.respond(id: permission.id.value["id"] as Any, result: ["outcome": ["outcome": "cancelled"]])
             resolve(conversation, optionId: nil)

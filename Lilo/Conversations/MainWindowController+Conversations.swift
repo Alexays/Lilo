@@ -5,13 +5,24 @@ import AppKit
 extension MainWindowController {
     var agentsEnabled: Bool { context.settingsStore?.get("agentsEnabled") == "true" }
 
-    /// Starts a conversation in the current Space, which a private Space never hosts.
+    /// Starts a conversation in the current Space, which a private Space never hosts. Without a project
+    /// it gets a folder of its own; in a repository another agent is working in, its own worktree.
     @discardableResult
-    func startConversation(agentId: String, cwd: String, ownCopy: Bool, activate: Bool) -> Tab? {
+    func startConversation(agentId: String, cwd: String, activate: Bool) -> Tab? {
         guard agentsEnabled, let spaceId = tabManager.currentSpaceId,
               context.spaceManager?.space(with: spaceId)?.isPrivate == false else { return nil }
         var directory = cwd
-        if ownCopy, let worktree = Self.makeWorktree(of: cwd) { directory = worktree }
+        if cwd.isEmpty {
+            directory = URL(fileURLWithPath: BuildIdentity.appSupportDirectory)
+                .appending(path: "Agents/Folders/\(UUID().uuidString.prefix(8).lowercased())").path
+            try? FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+        } else if let root = GitDiff.repositoryRoot(containing: cwd),
+                  context.conversations.conversations.values.contains(where: {
+                      ($0.state == .busy || $0.state == .starting) && GitDiff.repositoryRoot(containing: $0.cwd) == root
+                  }),
+                  let worktree = Self.makeWorktree(of: cwd) {
+            directory = worktree
+        }
         let folder = TabFolder(spaceId: spaceId, name: "New Conversation".localized, color: "#795ceb", isCollapsed: true)
         let tab = Tab(title: "New Conversation".localized, spaceId: spaceId, kind: .agent, cwd: directory, agentId: agentId)
         do {
@@ -30,9 +41,8 @@ extension MainWindowController {
     }
 
     /// A git worktree on a branch of its own, in Lilo's support folder, so agents never edit each
-    /// other's files; nil outside a repository.
+    /// other's files; nil when git fails.
     private static func makeWorktree(of directory: String) -> String? {
-        guard GitDiff.repositoryRoot(containing: directory) != nil else { return nil }
         let id = UUID().uuidString.prefix(8).lowercased()
         let path = URL(fileURLWithPath: BuildIdentity.appSupportDirectory).appending(path: "Worktrees/\(id)").path
         return GitDiff.run(["worktree", "add", "-b", "lilo/\(id)", path], in: directory) != nil ? path : nil

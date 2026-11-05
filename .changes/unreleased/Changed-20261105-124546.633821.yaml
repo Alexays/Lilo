@@ -1,0 +1,3 @@
+kind: Changed
+body: 'An agent that needs you to sign in no longer fails your first message: the conversation shows the sign-in and sends the message once you are signed in.'
+time: 2026-11-05T12:45:46.633821+01:00

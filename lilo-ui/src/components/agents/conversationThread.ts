@@ -35,6 +35,8 @@ export interface OpenConversation {
 	error: string | null;
 	/** The agent's sign-in methods, offered after it asked for one. */
 	authMethods: { id: string; name: string; description: string | null }[];
+	/** A sign-in the sent prompt waits on: in a terminal tab Lilo opened, or through the agent. */
+	signingIn: { terminal: boolean } | null;
 	/** Prompts already drawn by `addLocalPrompt`, oldest first: Lilo's echo of each is skipped. */
 	localPrompts: string[];
 }
@@ -51,6 +53,7 @@ export function openConversation(data: BridgeConversationOpened, later: BridgeCo
 		queued: 0,
 		error: data.error ?? null,
 		authMethods: [],
+		signingIn: null,
 		localPrompts: [],
 	};
 	for (const update of data.updates) apply(conversation, update);
@@ -101,6 +104,12 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 			break;
 		case "lilo_error":
 			conversation.error = String(update.message ?? "");
+			conversation.signingIn = null;
+			break;
+		case "lilo_signing_in":
+			conversation.signingIn = { terminal: update.terminal === true };
+			conversation.error = null;
+			conversation.authMethods = [];
 			break;
 		case "lilo_checkpoint":
 			conversation.checkpoints[Number(update.index)] = true;
@@ -112,6 +121,7 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 			endTurn(thread, String(update.stopReason ?? "end_turn"), receivedAt ?? stampOf(update));
 			conversation.error = null;
 			conversation.authMethods = [];
+			conversation.signingIn = null;
 			break;
 		case "lilo_queued":
 			conversation.queued = Number(update.count ?? 0);

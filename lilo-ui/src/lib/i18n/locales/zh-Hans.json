@@ -2296,7 +2296,6 @@
 		"Choose": "选取",
 		"New Conversation": "新建对话",
 		"Screenshot of %@": "%@ 的屏幕快照",
-		"Sign in in the terminal Lilo opened, then send your message again.": "请在 Lilo 打开的终端中登录，然后重新发送消息。",
 		"The agent stopped (code %d).": "智能体已停止（代码 %d）。",
 		"This agent is no longer in the ACP registry.": "此智能体已不在 ACP 注册表中。",
 		"Always Allow": "始终允许",
@@ -2481,7 +2480,7 @@
 				"signedIn": "已登录"
 			},
 			"moreOptions": "更多选项",
-			"signInHint": "请通过智能体登录，然后重新发送消息。",
+			"signInHint": "请使用智能体登录：登录后即发送你的消息。",
 			"branch": "分支 {branch}",
 			"jumpToLatest": "跳到最新"
 		},
@@ -2542,10 +2541,9 @@
 			"project": "项目",
 			"chooseProject": "选择项目",
 			"chooseFolder": "选择文件夹...",
-			"ownCopy": "独立副本",
-			"ownCopyHint": "让智能体在项目的独立副本（git worktree）中工作",
-			"openBeside": "打开",
-			"openBackground": "在后台",
+			"noFolder": "无文件夹",
+			"noFolderDetail": "智能体在自己的文件夹中工作",
+			"backgroundHint": "按 {shortcut} 在后台进行",
 			"start": "开始"
 		},
 		"row": {
@@ -2583,7 +2581,10 @@
 		"status": {
 			"working": "工作中",
 			"waiting": "等你处理",
-			"stopHint": "按 Esc 停止"
+			"stopHint": "按 Esc 停止",
+			"signingIn": "正在登录 {agent}",
+			"signingInHint": "登录后即发送你的消息。",
+			"signingInTerminalHint": "请在 Lilo 打开的终端标签页中登录。完成后即发送你的消息。"
 		},
 		"work": {
 			"images": {

@@ -2296,7 +2296,6 @@
 		"Choose": "Kies",
 		"New Conversation": "Nieuw gesprek",
 		"Screenshot of %@": "Schermafbeelding van %@",
-		"Sign in in the terminal Lilo opened, then send your message again.": "Log in in de terminal die Lilo heeft geopend en stuur je bericht opnieuw.",
 		"The agent stopped (code %d).": "De agent is gestopt (code %d).",
 		"This agent is no longer in the ACP registry.": "Deze agent staat niet meer in het ACP-register.",
 		"Always Allow": "Altijd toestaan",
@@ -2481,7 +2480,7 @@
 				"signedIn": "Ingelogd"
 			},
 			"moreOptions": "Meer opties",
-			"signInHint": "Log in bij de agent en verstuur je bericht opnieuw.",
+			"signInHint": "Log in bij de agent: je bericht wordt verstuurd zodra je bent ingelogd.",
 			"branch": "Branch {branch}",
 			"jumpToLatest": "Naar nieuwste"
 		},
@@ -2542,10 +2541,9 @@
 			"project": "Project",
 			"chooseProject": "Kies een project",
 			"chooseFolder": "Kies map...",
-			"ownCopy": "Eigen kopie",
-			"ownCopyHint": "Laat de agent aan een eigen kopie van het project werken (een git-worktree)",
-			"openBeside": "Openen",
-			"openBackground": "Op de achtergrond",
+			"noFolder": "Geen map",
+			"noFolderDetail": "De agent werkt in een eigen map",
+			"backgroundHint": "{shortcut} om het op de achtergrond te houden",
 			"start": "Start"
 		},
 		"row": {
@@ -2583,7 +2581,10 @@
 		"status": {
 			"working": "Bezig",
 			"waiting": "Wacht op je",
-			"stopHint": "Esc om te stoppen"
+			"stopHint": "Esc om te stoppen",
+			"signingIn": "Inloggen bij {agent}",
+			"signingInHint": "Je bericht wordt verstuurd zodra je bent ingelogd.",
+			"signingInTerminalHint": "Log in in het terminaltabblad dat Lilo heeft geopend. Daarna wordt je bericht verstuurd."
 		},
 		"work": {
 			"images": {

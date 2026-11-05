@@ -2296,7 +2296,6 @@
 		"Choose": "選擇",
 		"New Conversation": "新對話",
 		"Screenshot of %@": "%@ 的截圖",
-		"Sign in in the terminal Lilo opened, then send your message again.": "請在 Lilo 開啟的終端機中登入，然後再次傳送訊息。",
 		"The agent stopped (code %d).": "代理程式已停止（代碼 %d）。",
 		"This agent is no longer in the ACP registry.": "此代理程式已不在 ACP 登錄檔中。",
 		"Always Allow": "一律允許",
@@ -2481,7 +2480,7 @@
 				"signedIn": "已登入"
 			},
 			"moreOptions": "更多選項",
-			"signInHint": "請透過代理程式登入，然後重新傳送訊息。",
+			"signInHint": "請使用代理程式登入：登入後即傳送你的訊息。",
 			"branch": "分支 {branch}",
 			"jumpToLatest": "跳到最新"
 		},
@@ -2542,10 +2541,9 @@
 			"project": "專案",
 			"chooseProject": "選擇專案",
 			"chooseFolder": "選擇資料夾...",
-			"ownCopy": "獨立副本",
-			"ownCopyHint": "讓代理程式在專案的獨立副本（git worktree）中工作",
-			"openBeside": "開啟",
-			"openBackground": "在背景",
+			"noFolder": "無檔案夾",
+			"noFolderDetail": "代理程式在自己的檔案夾中工作",
+			"backgroundHint": "按 {shortcut} 在背景進行",
 			"start": "開始"
 		},
 		"row": {
@@ -2583,7 +2581,10 @@
 		"status": {
 			"working": "工作中",
 			"waiting": "等你處理",
-			"stopHint": "按 Esc 停止"
+			"stopHint": "按 Esc 停止",
+			"signingIn": "正在登入 {agent}",
+			"signingInHint": "登入後即傳送你的訊息。",
+			"signingInTerminalHint": "請在 Lilo 開啟的終端機標籤頁中登入。完成後即傳送你的訊息。"
 		},
 		"work": {
 			"images": {

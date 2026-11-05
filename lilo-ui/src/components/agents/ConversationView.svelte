@@ -218,6 +218,7 @@
       queued: conversation?.queued ?? 0,
       error: conversation?.error ?? null,
       authMethods: conversation?.authMethods ?? [],
+      signingIn: conversation?.signingIn ?? null,
       commands: thread?.commands ?? [],
     };
   });
@@ -510,6 +511,10 @@
                 {#if asking}
                   <span class="pip" aria-hidden="true"></span>
                   <span class="status-label">{t("agents.status.waiting")}</span>
+                {:else if header.signingIn}
+                  <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                  <span class="status-label shimmer">{t("agents.status.signingIn", { agent: header.agentName })}</span>
+                  <span class="status-hint">{t(header.signingIn.terminal ? "agents.status.signingInTerminalHint" : "agents.status.signingInHint")}</span>
                 {:else}
                   <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
                   <span class="status-label shimmer">{t("agents.status.working")}</span>

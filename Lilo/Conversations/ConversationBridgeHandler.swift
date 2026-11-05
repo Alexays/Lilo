@@ -27,8 +27,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         case "startConversation":
             guard let agentId = payload["agentId"] as? String, let cwd = payload["cwd"] as? String else { return nil }
             let background = payload["background"] as? Bool ?? false
-            guard let tab = window.startConversation(agentId: agentId, cwd: cwd, ownCopy: payload["ownCopy"] as? Bool ?? false,
-                                                     activate: !background) else { return nil }
+            guard let tab = window.startConversation(agentId: agentId, cwd: cwd, activate: !background) else { return nil }
             await prompt(tab.id, payload, interrupt: false)
         case "sendConversationPrompt":
             guard let tabId else { return nil }
@@ -98,7 +97,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         let terminals = window.terminalSummaries().compactMap { ($0["tabId"] as? String).flatMap(UUID.init(uuidString:)) }
             .compactMap { window.context.browserState.durableTab(for: $0)?.tab.cwd }
         let conversations = window.context.conversations.conversations.values.map(\.cwd)
-            .filter { !$0.contains("/Worktrees/") }
+            .filter { !$0.hasPrefix(BuildIdentity.appSupportDirectory) }
         return ([active].compactMap { $0 } + terminals + conversations).filter { seen.insert($0).inserted }.prefix(7).map { $0 }
             + (seen.contains(NSHomeDirectory()) ? [] : [NSHomeDirectory()])
     }
