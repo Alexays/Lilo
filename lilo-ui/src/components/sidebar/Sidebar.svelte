@@ -6,6 +6,7 @@
   import BottomBar from "./BottomBar.svelte";
   import PipDock from "./PipDock.svelte";
   import MediaCard from "./MediaCard.svelte";
+  import UndoToast from "../page/UndoToast.svelte";
   import { getCallCardTab } from "../../stores/media.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
   import {
@@ -177,6 +178,7 @@
         <card.default />
       {/await}
     {/if}
+    <UndoToast docked />
 
     <!-- Fixed bottom bar: does NOT swipe -->
     <BottomBar />

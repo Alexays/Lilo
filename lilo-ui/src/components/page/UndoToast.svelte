@@ -1,14 +1,16 @@
-<!-- The undo toast: a capsule at the bottom center of the page with what just went and a named way
-     back, gone after its countdown. Escape stays with the other overlays: it leaves on its action,
-     its timeout, or the next toast. -->
+<!-- The undo toast: what just went and a named way back, gone after its countdown. With the full
+     sidebar shown it docks above the bottom bar, in flow, so it never covers the page; otherwise
+     it is a capsule at the bottom center of the page. Escape stays with the other overlays: it
+     leaves on its action, its timeout, or the next toast. -->
 <script lang="ts">
-  import { fade } from "svelte/transition";
+  import { fade, slide } from "svelte/transition";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import { t } from "../../lib/i18n/state.svelte";
-  import { isSidebarVisible } from "../../stores/ui.svelte";
+  import { isSidebarRail, isSidebarVisible } from "../../stores/ui.svelte";
+  import { isVerticalLayout } from "../../stores/tabLayout.svelte";
   import {
     getUndoToast,
     pauseUndoToast,
@@ -18,15 +20,20 @@
     UNDO_TOAST_DURATION_MS,
   } from "../../stores/undoToast.svelte";
 
-  const toast = $derived(getUndoToast());
+  // Mounted twice, in the sidebar and over the page: only the instance matching the layout shows.
+  let { docked = false }: { docked?: boolean } = $props();
+
+  const sidebarHasRoom = $derived(isSidebarVisible() && isVerticalLayout() && !isSidebarRail());
+  const toast = $derived(docked === sidebarHasRoom ? getUndoToast() : null);
 </script>
 
-<div class="undo-area" class:sidebar-hidden={!isSidebarVisible()}>
-  {#if toast}
-    <!-- Keyed so a replacement rises in again and its ring restarts from full. -->
-    {#key toast.seq}
+{#snippet card(seq: number)}
+  <!-- Keyed so a replacement comes in again and its ring restarts from full. -->
+  {#key seq}
+    {#if toast}
       <div
         class="undo-toast"
+        class:docked
         role="group"
         style={`--undo-duration: ${UNDO_TOAST_DURATION_MS}ms`}
         use:reportInteractiveZone={{ id: "undo-toast" }}
@@ -34,9 +41,9 @@
         onmouseleave={resumeUndoToast}
         onfocusin={pauseUndoToast}
         onfocusout={resumeUndoToast}
-        out:fade={{ duration: prefersReducedMotion() ? 150 : 120 }}
+        out:fade={{ duration: docked ? 0 : prefersReducedMotion() ? 150 : 120 }}
       >
-        <svg class="undo-ring" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <svg class="undo-ring" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
           <circle class="track" cx="8" cy="8" r="6.5" />
           <circle class="remaining" cx="8" cy="8" r="6.5" />
         </svg>
@@ -50,9 +57,24 @@
           {t(toast.undo ? "undoToast.undo" : "undoToast.reopen")}
         </button>
       </div>
-    {/key}
+    {/if}
+  {/key}
+{/snippet}
+
+{#if docked}
+  {#if toast}
+    <!-- Opens its room from the bottom bar: the list above shrinks instead of being covered. -->
+    <div class="undo-dock" transition:slide={{ duration: prefersReducedMotion() ? 0 : 200 }}>
+      {@render card(toast.seq)}
+    </div>
   {/if}
-</div>
+{:else}
+  <div class="undo-area" class:sidebar-hidden={!isSidebarVisible()}>
+    {#if toast}
+      {@render card(toast.seq)}
+    {/if}
+  </div>
+{/if}
 
 <style>
   .undo-area {
@@ -70,6 +92,11 @@
 
   .undo-area.sidebar-hidden {
     left: var(--chrome-content-left-hidden);
+  }
+
+  .undo-dock {
+    flex-shrink: 0;
+    padding: 0 var(--sidebar-right-pad, 8px) 6px 8px;
   }
 
   /* Inverted from the floating cards, as macOS draws a passing notice. */
@@ -91,6 +118,20 @@
     animation: undo-rise var(--motion-duration-normal) var(--motion-ease-spring) both;
   }
 
+  /* In the sidebar it is one of its cards, drawn like the media card next to it. */
+  .undo-toast.docked {
+    gap: 8px;
+    max-width: none;
+    height: 34px;
+    padding: 4px 4px 4px 10px;
+    box-sizing: border-box;
+    border-radius: var(--radius-sm);
+    background: var(--text-primary-tint-10);
+    color: var(--text-primary);
+    box-shadow: none;
+    font-size: var(--font-size-sm);
+  }
+
   @keyframes undo-rise {
     from {
       transform: translateY(8px);
@@ -99,6 +140,7 @@
   }
 
   .undo-subject {
+    flex: 1;
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
@@ -128,10 +170,30 @@
     outline-offset: 1px;
   }
 
+  .docked .undo-action {
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-size: var(--font-size-sm);
+  }
+
+  .docked .undo-action:hover {
+    background: var(--bg-hover);
+  }
+
+  .docked .undo-action:focus-visible {
+    outline: var(--focus-outline);
+  }
+
   /* Drains clockwise from 12 o'clock. */
   .undo-ring {
     flex: none;
     transform: rotate(-90deg);
+  }
+
+  .docked .undo-ring {
+    color: var(--text-secondary);
   }
 
   .undo-ring circle {

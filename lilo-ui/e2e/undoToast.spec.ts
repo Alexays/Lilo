@@ -58,3 +58,15 @@ test("keyboard focus pauses the countdown ring along with the timer", async ({ p
 
 	await expect(toast.locator(".undo-ring .remaining")).toHaveCSS("animation-play-state", "paused");
 });
+
+test("the toast docks in the sidebar, and over the page once the sidebar is hidden", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+
+	await page.evaluate((msg) => window.__lilo!.receive(msg), tabClosed("Alpha Docs"));
+	await expect(page.locator(".sidebar .undo-toast")).toBeVisible();
+	await expect(page.locator(".undo-toast")).toHaveCount(1);
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "sidebarVisibilityChanged", visible: false, width: 260 }));
+	await expect(page.locator(".undo-area .undo-toast")).toBeVisible();
+	await expect(page.locator(".sidebar .undo-toast")).toHaveCount(0);
+});
