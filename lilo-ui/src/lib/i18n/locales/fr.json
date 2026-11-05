@@ -280,6 +280,11 @@
 				"description": "Avec les onglets, au-dessus de la page ou masquée. Utilisez la barre de commandes pour saisir une adresse.",
 				"keywords": "barre adresse url barre d outils masquer masquée cacher"
 			},
+			"hideSpaceNames": {
+				"title": "Masquer le nom des espaces",
+				"description": "La barre du bas montre chaque espace par sa seule icône, même avec la place pour son nom.",
+				"keywords": "espace nom libellé barre du bas icône masquer"
+			},
 			"theme": {
 				"title": "Thème",
 				"description": "Clair, sombre, ou comme le système.",

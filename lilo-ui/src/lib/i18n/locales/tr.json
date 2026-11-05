@@ -280,6 +280,11 @@
 				"description": "Sekmelerin yanında, sayfanın üstünde veya gizli. Adres girmek için komut çubuğunu kullanın.",
 				"keywords": "adres çubuğu url araç çubuğu konum gizle gizli"
 			},
+			"hideSpaceNames": {
+				"title": "Alan adlarını gizle",
+				"description": "Alt çubuk, adına yer olsa bile her alanı yalnızca simgesiyle gösterir.",
+				"keywords": "alan ad etiket alt çubuk simge gizle"
+			},
 			"theme": {
 				"title": "Tema",
 				"description": "Açık, koyu veya sistem ayarına göre.",

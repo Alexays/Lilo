@@ -42,6 +42,7 @@
     isSidebarDragActive,
   } from "../../stores/sidebarDnd.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import { getSetting } from "../../stores/settings.svelte";
   import {
     aggregateDownloadProgress,
     getDownloads,
@@ -442,6 +443,7 @@
   let iconsWrapWidth = $state(0);
   // The tiles, the name's padding and the bar's own inset come off; too little left and the tile stays an icon.
   const labelRoom = $derived.by(() => {
+    if (getSetting("hideSpaceNames", "false") === "true") return 0;
     const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 34 - 16);
     return room < 32 ? 0 : room;
   });

@@ -280,6 +280,11 @@
 				"description": "Junto às abas, acima da página ou oculto. Use a barra de comandos para digitar um endereço.",
 				"keywords": "endereço barra url ferramentas local ocultar oculto esconder"
 			},
+			"hideSpaceNames": {
+				"title": "Ocultar nomes dos espaços",
+				"description": "A barra inferior mostra cada espaço só pelo ícone, mesmo com lugar para o nome.",
+				"keywords": "espaço nome rótulo barra inferior ícone ocultar"
+			},
 			"theme": {
 				"title": "Tema",
 				"description": "Claro, escuro ou acompanhar o sistema.",

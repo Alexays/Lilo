@@ -280,6 +280,11 @@
 				"description": "With the tabs, above the page, or hidden. Use the command bar to enter an address.",
 				"keywords": "address bar url toolbar location hide hidden"
 			},
+			"hideSpaceNames": {
+				"title": "Hide Space names",
+				"description": "The bottom bar shows each Space as its icon alone, even with room for its name.",
+				"keywords": "space name label bottom bar icon hide"
+			},
 			"theme": {
 				"title": "Theme",
 				"description": "Light, dark, or follow the system.",

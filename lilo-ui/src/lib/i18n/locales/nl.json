@@ -280,6 +280,11 @@
 				"description": "Bij de tabbladen, boven de pagina of verborgen. Gebruik de commandobalk om een adres in te voeren.",
 				"keywords": "adresbalk url knoppenbalk locatie verberg verborgen"
 			},
+			"hideSpaceNames": {
+				"title": "Ruimtenamen verbergen",
+				"description": "De onderste balk toont elke ruimte alleen als pictogram, ook als er plaats is voor de naam.",
+				"keywords": "ruimte naam label onderste balk pictogram verbergen"
+			},
 			"theme": {
 				"title": "Thema",
 				"description": "Licht, donker of volg het systeem.",

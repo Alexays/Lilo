@@ -280,6 +280,11 @@
 				"description": "Przy kartach, nad stroną lub ukryty. Adres możesz wpisać w pasku poleceń.",
 				"keywords": "pasek adresu URL narzędzi lokalizacja ukryj ukryty"
 			},
+			"hideSpaceNames": {
+				"title": "Ukryj nazwy przestrzeni",
+				"description": "Dolny pasek pokazuje każdą przestrzeń tylko jako ikonę, nawet gdy jest miejsce na nazwę.",
+				"keywords": "przestrzeń nazwa etykieta dolny pasek ikona ukryj"
+			},
 			"theme": {
 				"title": "Motyw",
 				"description": "Jasny, ciemny lub zgodny z systemem.",

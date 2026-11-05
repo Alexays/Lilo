@@ -280,6 +280,11 @@
 				"description": "Con las pestañas, encima de la página u oculta. Usa la barra de comandos para introducir una dirección.",
 				"keywords": "dirección barra url herramientas ubicación ocultar oculta"
 			},
+			"hideSpaceNames": {
+				"title": "Ocultar nombres de los espacios",
+				"description": "La barra inferior muestra cada espacio solo con su icono, aunque haya sitio para su nombre.",
+				"keywords": "espacio nombre etiqueta barra inferior icono ocultar"
+			},
 			"theme": {
 				"title": "Tema",
 				"description": "Claro, oscuro o según el sistema.",

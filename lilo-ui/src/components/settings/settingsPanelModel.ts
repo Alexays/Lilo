@@ -66,6 +66,7 @@ export type SettingId =
   | "addressPlacement"
   | "appIcon"
   | "seasonalAppIcon"
+  | "hideSpaceNames"
   | "defaultZoom"
   | "minimumFontSize"
   | "newSpace"
@@ -139,6 +140,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
   peekPinnedTabLinks: { key: "peekPinnedTabLinks", fallback: true },
   seasonalAppIcon: { key: "seasonalAppIcon", fallback: true },
+  hideSpaceNames: { key: "hideSpaceNames", fallback: false },
   contentBlocker: { key: "contentBlockerEnabled", fallback: true },
   blockerTrackers: { key: "blockerTrackers", fallback: true },
   blockerCookieNotices: { key: "blockerCookieNotices", fallback: true },
@@ -189,6 +191,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "seasonalAppIcon", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "tabPosition", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "addressPlacement", section: "appearance", groupKey: "settings.groups.tabLayout" },
+  { id: "hideSpaceNames", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "defaultZoom", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "minimumFontSize", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "newSpace", section: "tabs", groupKey: "settings.groups.spaces" },

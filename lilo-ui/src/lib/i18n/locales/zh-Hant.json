@@ -280,6 +280,11 @@
 				"description": "與分頁放在一起、位於網頁上方或隱藏。使用指令列輸入網址。",
 				"keywords": "網址列 url 工具列 位置 隱藏"
 			},
+			"hideSpaceNames": {
+				"title": "隱藏空間名稱",
+				"description": "底部列只用圖示顯示每個空間，即使有位置顯示名稱。",
+				"keywords": "空間 名稱 標籤 底部列 圖示 隱藏"
+			},
 			"theme": {
 				"title": "主題",
 				"description": "淺色、深色或跟隨系統。",

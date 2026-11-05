@@ -280,6 +280,11 @@
 				"description": "Bei den Tabs, über der Seite oder ausgeblendet. Eine Adresse kannst du über die Befehlsleiste eingeben.",
 				"keywords": "adressleiste url symbolleiste adresse verbergen ausgeblendet"
 			},
+			"hideSpaceNames": {
+				"title": "Space-Namen ausblenden",
+				"description": "Die untere Leiste zeigt jeden Space nur als Symbol, auch wenn Platz für den Namen ist.",
+				"keywords": "space name beschriftung untere leiste symbol ausblenden"
+			},
 			"theme": {
 				"title": "Design",
 				"description": "Hell, dunkel oder wie das System.",
