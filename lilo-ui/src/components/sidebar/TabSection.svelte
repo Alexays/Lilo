@@ -193,7 +193,7 @@
   }
 
   // The heads load once a list has a stack or a tray: most first frames have neither. Their slots
-  // keep the heads' heights meanwhile, so nothing moves when they land.
+  // keep the heads' 32px height meanwhile, so nothing moves when they land.
   let heads = $state.raw<{
     StackRow: typeof import("./TabStackRow.svelte").default;
     TrayHeader: typeof import("./TabTrayHeader.svelte").default;
@@ -218,7 +218,6 @@
   let lastShownRootItems: typeof rootItems = [];
   const shownRootItems = $derived.by(() => {
     if (!arranged) return rootItems;
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
     const byId = new Map(rootItems.map((item) => [item.id, item]));
     const next = arranged.filter(rowShown).flatMap((row) => byId.get(row.id) ?? []);
     const last = lastShownRootItems;
@@ -241,6 +240,50 @@
     return info;
   });
 
+  // An open stack is tinted with its site's color, read once off the favicon, as a folder is with its own.
+  let faviconColors = $state.raw<ReadonlyMap<string, string | undefined>>(new Map());
+  $effect(() => {
+    for (const host of openStacks) {
+      const src = stackInfo.get(host)?.tabs[0]?.faviconDataURL;
+      if (!src || faviconColors.has(src)) continue;
+      void faviconColor(src).then((color) => {
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity -- immutable copy reassigned to $state
+        faviconColors = new Map(faviconColors).set(src, color);
+      });
+    }
+  });
+
+  // The open stack a segment paints, once its color is known: the block then comes in whole.
+  function stackTintOf(segment: Segment): string | null {
+    const host = segment.kind === "stack" ? segment.host : segment.kind === "row" ? segment.stack : null;
+    if (!host || !openStacks.has(host)) return null;
+    const src = stackInfo.get(host)?.tabs[0]?.faviconDataURL;
+    return !src || faviconColors.has(src) ? host : null;
+  }
+
+  // The mean of the icon's colored pixels, each weighed by its saturation: a monochrome icon has none.
+  async function faviconColor(src: string): Promise<string | undefined> {
+    const image = new Image();
+    image.src = src;
+    await image.decode().catch(() => undefined);
+    const context = image.naturalWidth ? new OffscreenCanvas(16, 16).getContext("2d") : null;
+    if (!context) return undefined;
+    context.drawImage(image, 0, 0, 16, 16);
+    const data = context.getImageData(0, 0, 16, 16).data;
+    const sum = [0, 0, 0];
+    let weight = 0;
+    for (let index = 0; index < data.length; index += 4) {
+      const [red, green, blue, alpha] = [data[index], data[index + 1], data[index + 2], data[index + 3]];
+      const pixel = ((Math.max(red, green, blue) - Math.min(red, green, blue)) / 255) * (alpha / 255);
+      sum[0] += red * pixel;
+      sum[1] += green * pixel;
+      sum[2] += blue * pixel;
+      weight += pixel;
+    }
+    if (weight < 4) return undefined;
+    return `#${sum.map((channel) => Math.round(channel / weight).toString(16).padStart(2, "0")).join("")}`;
+  }
+
   const trayTabs = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
     const tabs = new Map<string, TabState[]>();
@@ -257,8 +300,8 @@
 
   type Tray = Exclude<RowType, "web">;
   type Segment =
-    | { kind: "row"; key: string; entry: SidebarDndItem; tray: Tray | null; stack: string | null; trayEnd: boolean }
-    | { kind: "stack"; key: string; host: string; tray: Tray | null; trayEnd: boolean }
+    | { kind: "row"; key: string; entry: SidebarDndItem; tray: Tray | null; stack: string | null; trayEnd: boolean; stackEnd: boolean }
+    | { kind: "stack"; key: string; host: string; tray: Tray | null; trayEnd: boolean; stackEnd: boolean }
     | { kind: "tray"; key: string; tray: Tray; trayEnd: boolean };
 
   // The rows in display order with the heads of stacks and trays among them. The drop placeholder
@@ -268,7 +311,7 @@
   const segments = $derived.by((): Segment[] => {
     const zone = rootZoneItems;
     const row = (entry: SidebarDndItem, tray: Tray | null, stack: string | null): Segment =>
-      ({ kind: "row", key: sidebarDndKey(entry), entry, tray, stack, trayEnd: false });
+      ({ kind: "row", key: sidebarDndKey(entry), entry, tray, stack, trayEnd: false, stackEnd: false });
     let next: Segment[];
     if (!arranged) {
       next = zone.map((entry) => row(entry, null, null));
@@ -292,7 +335,7 @@
         }
         if (arrangedRow.stack !== stack) {
           stack = arrangedRow.stack;
-          if (stack) next.push({ kind: "stack", key: `stack:${stack}`, host: stack, tray, trayEnd: false });
+          if (stack) next.push({ kind: "stack", key: `stack:${stack}`, host: stack, tray, trayEnd: false, stackEnd: false });
         }
         const entry = unplaced.get(arrangedRow.id);
         if (!entry) continue;
@@ -303,12 +346,17 @@
       stack = null;
       // Rows the arrangement has not seen yet, as a tab dragged in from another section.
       for (const entry of unplaced.values()) place(entry);
+      const stackOf = (segment: Segment | undefined) =>
+        segment?.kind === "stack" ? segment.host : segment?.kind === "row" ? segment.stack : null;
       for (let index = 0; index < next.length; index += 1) {
         const segment = next[index];
-        if (segment.tray && next[index + 1]?.tray !== segment.tray) next[index] = { ...segment, trayEnd: true };
+        const trayEnd = !!segment.tray && next[index + 1]?.tray !== segment.tray;
+        const stackEnd = !!stackOf(segment) && stackOf(next[index + 1]) !== stackOf(segment);
+        if (segment.kind !== "tray" && (trayEnd || stackEnd)) next[index] = { ...segment, trayEnd, stackEnd };
+        else if (trayEnd) next[index] = { ...segment, trayEnd };
       }
     }
-    const signature = next.map((segment) => `${segment.key}|${segment.tray}|${segment.kind === "row" ? segment.stack : ""}|${segment.trayEnd}`).join(",");
+    const signature = next.map((segment) => `${segment.key}|${segment.tray}|${segment.kind === "row" ? segment.stack : ""}|${segment.trayEnd}|${segment.kind !== "tray" && segment.stackEnd}`).join(",");
     if (signature === lastSegmentsSignature) return lastSegments;
     lastSegmentsSignature = signature;
     lastSegments = next;
@@ -362,7 +410,6 @@
   const VIRTUAL_ROW_GAP = 0;
   const VIRTUAL_FOLDER_TOP_MARGIN = 0;
   const VIRTUAL_EMPTY_FOLDER_H = 32;
-  const VIRTUAL_TRAY_HEAD_H = 28;
   const VIRTUAL_TRAY_GAP = 6;
 
   type ListSegment = Segment | { kind: "spacer"; key: string; height: number };
@@ -471,7 +518,7 @@
     for (const segment of segments) {
       const entry = segment.kind === "row" ? segment.entry : null;
       const height =
-        (entry ? estimatedRowHeight(entry) : segment.kind === "tray" && !foldedTrays.has(segment.tray) ? VIRTUAL_TRAY_HEAD_H : VIRTUAL_ROW_H) +
+        (entry ? estimatedRowHeight(entry) : VIRTUAL_ROW_H) +
         (segment.trayEnd ? VIRTUAL_TRAY_GAP : 0);
       // The active and focused rows stay mounted wherever the scroll sits, so
       // tab switching and keyboard focus never land on an unmounted row. Hidden
@@ -1312,16 +1359,19 @@
      The animated list below repeats this markup: animate: must sit on the each's own child. -->
 {#snippet slot(segment: Segment, entry: SidebarDndItem)}
   {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
+  {@const stackTint = stackTintOf(segment)}
   <div
     class={segment.kind === "row" ? slotClass : "group-head-slot"}
     class:in-tray={!!segment.tray}
     class:tray-head={segment.kind === "tray"}
-    class:tray-open={segment.kind === "tray" && !foldedTrays.has(segment.tray)}
     class:tray-end={segment.trayEnd}
+    class:stack-block={!!stackTint}
+    class:stack-head={!!stackTint && segment.kind === "stack"}
+    class:stack-end={!!stackTint && segment.kind !== "tray" && segment.stackEnd}
     class:recent-drop={entry.id === recentlyDraggedId}
     class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
     data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-    style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : undefined}
+    style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : stackTint ? folderColorStyle(faviconColors.get(stackInfo.get(stackTint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
     use:dndItem={{
       item: entry,
       zoneId: rootZone.id,
@@ -1357,6 +1407,7 @@
     {#each segments as segment (segment.key)}
       {@const entry = segment.kind === "row" ? segment.entry : { id: segment.key, kind: "tab" as const, section, parentFolderId: null }}
       {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
+      {@const stackTint = stackTintOf(segment)}
       <div
         animate:translateFlip={{ duration: prefersReducedMotion() || groupMotion === "open" ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
         in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
@@ -1364,12 +1415,14 @@
         class={segment.kind === "row" ? slotClass : "group-head-slot"}
         class:in-tray={!!segment.tray}
         class:tray-head={segment.kind === "tray"}
-        class:tray-open={segment.kind === "tray" && !foldedTrays.has(segment.tray)}
         class:tray-end={segment.trayEnd}
+        class:stack-block={!!stackTint}
+        class:stack-head={!!stackTint && segment.kind === "stack"}
+        class:stack-end={!!stackTint && segment.kind !== "tray" && segment.stackEnd}
         class:recent-drop={entry.id === recentlyDraggedId}
         class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
         data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-        style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : undefined}
+        style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : stackTint ? folderColorStyle(faviconColors.get(stackInfo.get(stackTint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
         use:dndItem={{
           item: entry,
           zoneId: rootZone.id,
@@ -1704,14 +1757,32 @@
     border-radius: var(--radius-md);
   }
 
+  /* An open stack is one block like an open folder, painted by its head and rows. */
+  .tab-drop-slot,
+  .group-head-slot {
+    transition: background var(--motion-duration-normal) ease;
+  }
+
+  .stack-block {
+    background: var(--folder-open-bg);
+  }
+
+  .stack-block.stack-head {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  .stack-block.stack-end {
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+
+  .stack-block.stack-head.stack-end {
+    border-radius: var(--radius-md);
+  }
+
   .group-head-slot {
     position: relative;
     min-width: 0;
     min-height: 32px;
-  }
-
-  .group-head-slot.tray-open {
-    min-height: 28px;
   }
 
   .virtual-spacer {
