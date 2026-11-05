@@ -2351,6 +2351,16 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0160": {
+				"headline": "Lilo, redrawn.",
+				"description": "A calmer look everywhere, your own agents beside your tabs, and a sidebar that tidies itself.",
+				"agentsTitle": "Your agents, in Lilo.",
+				"agentsDescription": "Talk to Claude, Codex, Gemini and other agents with your own subscriptions. Shift-Command-A asks from any page, and each conversation keeps its pages in the sidebar.",
+				"stacksTitle": "A sidebar that tidies itself.",
+				"stacksDescription": "Three tabs from one site gather into a stack, and agents and terminals can sit in their own trays. Each opens like a folder.",
+				"lookTitle": "Calmer, everywhere.",
+				"lookDescription": "Settings, the Command bar, History, the first-run setup and every dialog now share one quiet, native design."
+			},
 			"v0150": {
 				"headline": "A calmer sidebar, an awake menu bar.",
 				"description": "The sidebar keeps to your tabs, and the menu bar tells you when Lilo keeps your Mac awake.",

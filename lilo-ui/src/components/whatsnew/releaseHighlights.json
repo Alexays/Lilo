@@ -1,4 +1,25 @@
 {
+	"0.16.0": {
+		"headlineKey": "whatsNew.releases.v0160.headline",
+		"descriptionKey": "whatsNew.releases.v0160.description",
+		"highlights": [
+			{
+				"illustration": "agents",
+				"titleKey": "whatsNew.releases.v0160.agentsTitle",
+				"descriptionKey": "whatsNew.releases.v0160.agentsDescription"
+			},
+			{
+				"illustration": "stacks",
+				"titleKey": "whatsNew.releases.v0160.stacksTitle",
+				"descriptionKey": "whatsNew.releases.v0160.stacksDescription"
+			},
+			{
+				"illustration": "calm",
+				"titleKey": "whatsNew.releases.v0160.lookTitle",
+				"descriptionKey": "whatsNew.releases.v0160.lookDescription"
+			}
+		]
+	},
 	"0.15.0": {
 		"headlineKey": "whatsNew.releases.v0150.headline",
 		"descriptionKey": "whatsNew.releases.v0150.description",

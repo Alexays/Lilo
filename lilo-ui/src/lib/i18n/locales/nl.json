@@ -2362,6 +2362,16 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "Lilo, opnieuw getekend.",
+				"description": "Overal een rustiger uiterlijk, je eigen agents naast je tabbladen en een zijbalk die zichzelf opruimt.",
+				"agentsTitle": "Je agents, in Lilo.",
+				"agentsDescription": "Praat met Claude, Codex, Gemini en andere agents met je eigen abonnementen. Shift-Command-A vraagt vanaf elke pagina, en elk gesprek houdt zijn pagina's in de zijbalk.",
+				"stacksTitle": "Een zijbalk die zichzelf opruimt.",
+				"stacksDescription": "Drie tabbladen van een site komen samen in een stapel, en agents en terminals kunnen in hun eigen bakjes. Elk opent als een map.",
+				"lookTitle": "Rustiger, overal.",
+				"lookDescription": "Instellingen, de opdrachtbalk, de geschiedenis, de eerste installatie en elk dialoogvenster delen nu een rustig, native ontwerp."
+			},
 			"v0150": {
 				"headline": "Een rustigere zijbalk, een wakkere menubalk.",
 				"description": "De zijbalk is er voor je tabbladen, en de menubalk laat zien wanneer Lilo je Mac wakker houdt.",

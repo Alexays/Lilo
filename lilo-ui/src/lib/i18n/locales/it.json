@@ -2362,6 +2362,16 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "Lilo, ridisegnato.",
+				"description": "Un aspetto più calmo ovunque, i tuoi agenti accanto alle schede e una barra laterale che si riordina da sola.",
+				"agentsTitle": "I tuoi agenti, in Lilo.",
+				"agentsDescription": "Parla con Claude, Codex, Gemini e altri agenti con i tuoi abbonamenti. Maiusc-Comando-A chiede da qualsiasi pagina, e ogni conversazione tiene le sue pagine nella barra laterale.",
+				"stacksTitle": "Una barra laterale che si riordina da sola.",
+				"stacksDescription": "Tre schede dello stesso sito si raccolgono in una pila, e agenti e terminali possono stare nei loro vassoi. Ognuno si apre come una cartella.",
+				"lookTitle": "Più calmo, ovunque.",
+				"lookDescription": "Impostazioni, barra dei comandi, cronologia, configurazione iniziale e ogni finestra di dialogo condividono ora un unico design sobrio e nativo."
+			},
 			"v0150": {
 				"headline": "Una barra laterale più calma, una barra dei menu sveglia.",
 				"description": "La barra laterale resta ai tuoi pannelli, e la barra dei menu ti dice quando Lilo tiene sveglio il Mac.",

@@ -1,0 +1,60 @@
+{
+  "version": "0.16.0",
+  "title": {
+    "en": "Lilo, redrawn.",
+    "fr": "Lilo, redessiné."
+  },
+  "introduction": {
+    "en": "A calmer look everywhere, your own agents beside your tabs, and a sidebar that tidies itself.",
+    "fr": "Un style plus calme partout, vos propres agents à côté de vos onglets, et une barre latérale qui se range toute seule."
+  },
+  "highlights": [
+    {
+      "id": "agents",
+      "title": {
+        "en": "Your agents, in Lilo.",
+        "fr": "Vos agents, dans Lilo."
+      },
+      "body": {
+        "en": "Talk to Claude, Codex, Gemini and other agents with your own subscriptions. Shift-Command-A asks from any page, and each conversation keeps its pages in the sidebar.",
+        "fr": "Parlez à Claude, Codex, Gemini et d'autres agents avec vos propres abonnements. Maj-Commande-A demande depuis n'importe quelle page, et chaque conversation garde ses pages dans la barre latérale."
+      },
+      "notes": [
+        "Talk to your own agents in Lilo, opt in from Settings > AI agents: Claude Agent, Codex, Gemini CLI, Copilot and the rest of the ACP registry, with your subscriptions. ⇧⌘A asks from any page with what you read attached, each conversation is a sidebar row with the pages the agent opens, and you answer its questions without leaving your tab."
+      ]
+    },
+    {
+      "id": "stacks",
+      "title": {
+        "en": "A sidebar that tidies itself.",
+        "fr": "Une barre latérale qui se range toute seule."
+      },
+      "body": {
+        "en": "Three tabs from one site gather into a stack, and agents and terminals can sit in their own trays. Each opens like a folder.",
+        "fr": "Trois onglets d'un même site se regroupent en une pile, et agents et terminaux peuvent avoir leurs propres bacs. Chacun s'ouvre comme un dossier."
+      },
+      "notes": [
+        "Three or more tabs from one site gather into a stack in the sidebar, named after what their titles share; it opens like a folder and closes all its pages at once. Group by Type puts agents and terminals in their own trays above the web pages, each foldable while still showing what needs you. Both, and a one-off sort by site or title, sit behind a new button on the divider above the open tabs.",
+        "Stacks and trays open and fold like folders, their tabs rising in as one block, and a stack closed down to a single tab turns back into a plain tab."
+      ]
+    },
+    {
+      "id": "calm",
+      "title": {
+        "en": "Calmer, everywhere.",
+        "fr": "Plus calme, partout."
+      },
+      "body": {
+        "en": "Settings, the Command bar, History, the first-run setup and every dialog now share one quiet, native design.",
+        "fr": "Les réglages, la barre de commandes, l'historique, la première configuration et chaque fenêtre de dialogue partagent désormais un même design sobre et natif."
+      },
+      "notes": [
+        "Settings are redesigned: grouped boxes with a short note under each page title, visual pickers for zoom, minimum font size, calls and terminal themes, and simpler profile cards with a color dot.",
+        "The Command bar is a calmer palette over the page: a large field with the scope as a token, filters as chips, one row per result with the site's tile and its address without https://, shortcuts as keycaps, bookmarks as tiles when empty, and the terminals with their state.",
+        "History shows one row per page, with the site's icon, its title, one line of detail and the time, grouped by day under a count of pages and sites.",
+        "The first-run setup fills the window, one question per screen: how you will use Lilo, shown as pictures of each answer; your browsers and password managers together; and Your Lilo, where theme, tab edge, color and the essentials show on a live window. Tips now arrive the first time you do the thing they are about.",
+        "Clear Browsing Data, What's New, an agent asking to connect, sharing a tab and an unresponsive page now open as one kind of centered window over the page: Esc cancels, Command-Return confirms, and the default button sits last on the right."
+      ]
+    }
+  ]
+}

@@ -2362,6 +2362,16 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0160": {
+				"headline": "Lilo, yeniden çizildi.",
+				"description": "Her yerde daha sakin bir görünüm, sekmelerinizin yanında kendi ajanlarınız ve kendini toparlayan bir kenar çubuğu.",
+				"agentsTitle": "Ajanlarınız, Lilo'da.",
+				"agentsDescription": "Kendi aboneliklerinizle Claude, Codex, Gemini ve diğer ajanlarla konuşun. Shift-Command-A her sayfadan sorar, her sohbet de açtığı sayfaları kenar çubuğunda tutar.",
+				"stacksTitle": "Kendini toparlayan bir kenar çubuğu.",
+				"stacksDescription": "Aynı siteden üç sekme bir yığında toplanır; ajanlar ve terminaller kendi tepsilerinde durabilir. Her biri bir klasör gibi açılır.",
+				"lookTitle": "Her yerde daha sakin.",
+				"lookDescription": "Ayarlar, komut çubuğu, geçmiş, ilk kurulum ve her iletişim kutusu artık sade ve yerel tek bir tasarımı paylaşıyor."
+			},
 			"v0150": {
 				"headline": "Daha sakin bir kenar çubuğu, uyanık bir menü çubuğu.",
 				"description": "Kenar çubuğu sekmelerinize ayrılır, menü çubuğu ise Lilo Mac'inizi uyanık tuttuğunda bunu gösterir.",
