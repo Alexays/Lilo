@@ -20,8 +20,8 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
                        "WebKit's own Screen Time client would duplicate Lilo's STWebpageController")
     }
 
-    private func rendersNear60FPS(_ factory: WKEngineFactory) throws -> Bool {
-        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+    private func rendersNear60FPS(_ factory: WKEngineFactory, profileId: UUID? = nil) throws -> Bool {
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore(), profileId: profileId))
         defer { tab.teardown() }
         let features = (WKPreferences.self as AnyObject).perform(NSSelectorFromString("_experimentalFeatures"))?.takeUnretainedValue() as? [NSObject]
         let near60FPS = try XCTUnwrap(features?.first { $0.value(forKey: "key") as? String == WKFeatureFlags.near60FPSKey })
@@ -40,6 +40,16 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
 
         factory.setFeatureFlagOverrides([WKFeatureFlags.near60FPSKey: false])
         XCTAssertFalse(try rendersNear60FPS(factory), "an about:config override wins over the setting")
+    }
+
+    func testAgentsProfileTabsRenderNear60FPSWhateverTheSetting() throws {
+        let factory = WKEngineFactory()
+        let agents = UUID()
+        factory.agentsProfileId = agents
+
+        XCTAssertTrue(try rendersNear60FPS(factory, profileId: agents), "nobody watches an agent's page animate")
+        XCTAssertFalse(try rendersNear60FPS(factory, profileId: UUID()))
+        XCTAssertFalse(try rendersNear60FPS(factory), "a tab with no profile is not the agents'")
     }
 
     func testTabsUseSafarisCacheModel() throws {

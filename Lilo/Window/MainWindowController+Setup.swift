@@ -681,6 +681,7 @@ extension MainWindowController {
         engineFactory.setMinimumFontSize(settingsStore.minimumFontSize)
         settingsHandler.onFullRefreshRateChanged = { engineFactory.setFullRefreshRate($0) }
         engineFactory.setFullRefreshRate(settingsStore.fullRefreshRate)
+        engineFactory.agentsProfileId = settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
         settingsHandler.onAutoplayPolicyChanged = { engineFactory.setAutoplayPolicy($0) }
         engineFactory.setAutoplayPolicy(settingsStore.get("autoplayPolicy") ?? "audio")
         settingsHandler.onTerminalSettingsChanged = { [weak self] in self?.applyTerminalSettings() }

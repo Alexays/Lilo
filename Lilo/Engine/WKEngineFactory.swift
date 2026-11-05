@@ -131,6 +131,10 @@ final class WKEngineFactory {
     /// WebKit feature-flag overrides applied to every new web view (the `about:config` page).
     private var featureFlagOverrides: [String: Bool] = [:]
     private var fullRefreshRate = true
+    /// Pages of the agents' profile render near 60 fps whatever the setting: nobody watches them animate.
+    var agentsProfileId: UUID? {
+        didSet { if agentsProfileId != oldValue { dropWarmPool() } }
+    }
 
     private lazy var geolocationBridge: GeolocationBridge = {
         let bridge = GeolocationBridge()
@@ -879,7 +883,8 @@ final class WKEngineFactory {
             object.setValue(value, forKey: key)
         }
         wkConfig.suppressesIncrementalRendering = false
-        WKFeatureFlags.apply([WKFeatureFlags.near60FPSKey: !fullRefreshRate].merging(featureFlagOverrides) { $1 }, to: wkConfig.preferences)
+        let rendersNear60FPS = !fullRefreshRate || (configuration.profileId != nil && configuration.profileId == agentsProfileId)
+        WKFeatureFlags.apply([WKFeatureFlags.near60FPSKey: rendersNear60FPS].merging(featureFlagOverrides) { $1 }, to: wkConfig.preferences)
 
         // Extension pages must carry the controller binding or their `chrome.runtime` messaging to the
         // background worker is silently dropped. Only set when the native config lacks one.

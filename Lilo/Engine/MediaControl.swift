@@ -162,7 +162,8 @@ extension WKWebViewTab {
     /// some accounts only, where its menu's opening works for all.
     func enterDocumentPictureInPicture() {
         guard callControls.hasPictureInPictureAction, wake() else { return }
-        wkWebView.evaluateJavaScript(PageWorld.push("media", ["enterpictureinpicture", "useraction"]), in: nil, in: PageWorld.bridgeWorld)
+        // No gesture: a page answering after the user came back must not open its window on Lilo's activation.
+        WebViewPrivateAccessors(wkWebView).evaluateWithoutUserGesture(PageWorld.push("media", ["enterpictureinpicture", "useraction"]), in: nil, in: PageWorld.bridgeWorld)
     }
 
     /// `action` is play, pause, nexttrack, previoustrack, or one of `callActions` the page handles.
