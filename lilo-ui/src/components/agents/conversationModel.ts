@@ -74,7 +74,16 @@ export type SessionUpdate =
   | { sessionUpdate: "current_mode_update"; currentModeId: string }
   | { sessionUpdate: "config_option_update"; configOptions: ConfigOption[] }
   | { sessionUpdate: "session_info_update"; title?: string | null; updatedAt?: string | null }
-  | { sessionUpdate: "usage_update"; used: number; size: number; cost?: unknown };
+  | { sessionUpdate: "usage_update"; used: number; size: number; cost?: unknown; _meta?: Record<string, unknown> };
+
+/** One window of the subscription's usage limits, as Claude Code reports it after a reply. */
+export interface PlanLimit {
+  window: "five_hour" | "seven_day";
+  /** 0 to 100. */
+  percent: number;
+  /** Epoch milliseconds. */
+  resetsAt: number;
+}
 
 export interface PermissionOption {
   optionId: string;
@@ -195,6 +204,7 @@ export interface ConversationState {
   configOptions: ConfigOption[];
   commands: AvailableCommand[];
   usage: { used: number; size: number } | null;
+  planLimits: PlanLimit[];
   toolCalls: Map<string, ToolCallItem>;
   plan: PlanItem | null;
   // Unechoed rest of the locally shown prompt; its attached context is skipped until another kind of update arrives.
@@ -212,6 +222,7 @@ export function emptyConversation(): ConversationState {
     configOptions: [],
     commands: [],
     usage: null,
+    planLimits: [],
     toolCalls: new Map(),
     plan: null,
     pendingEcho: null,
@@ -402,9 +413,21 @@ export function applyUpdate(state: ConversationState, update: SessionUpdate, rec
     case "session_info_update":
       if (update.title !== undefined) state.title = update.title;
       break;
-    case "usage_update":
+    case "usage_update": {
       state.usage = { used: update.used, size: update.size };
+      // claude-agent-acp relays Claude Code's rate limit event here; most usage updates carry none.
+      const windows = (update._meta?.["_claude/rateLimit"] as { unifiedWindows?: Record<string, { utilization?: unknown; resetsAt?: unknown }> } | undefined)
+        ?.unifiedWindows;
+      if (windows) {
+        state.planLimits = (["five_hour", "seven_day"] as const).flatMap((window) => {
+          const { utilization, resetsAt } = windows[window] ?? {};
+          return typeof utilization === "number" && typeof resetsAt === "number"
+            ? [{ window, percent: Math.min(100, Math.round(utilization * 100)), resetsAt: resetsAt * 1000 }]
+            : [];
+        });
+      }
       break;
+    }
   }
   return state;
 }

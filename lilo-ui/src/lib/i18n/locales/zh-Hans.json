@@ -2458,6 +2458,8 @@
 			"stop": "停止",
 			"mode": "模式",
 			"context": "已使用 {percent}% 的上下文",
+			"planSession": "会话限额：已使用 {percent}%，{time} 重置",
+			"planWeek": "每周限额：已使用 {percent}%，{time} 重置",
 			"ownCopy": "独立副本",
 			"ownCopyHint": "在项目的独立副本中工作。可在更改中合并。",
 			"starting": "正在启动智能体...",

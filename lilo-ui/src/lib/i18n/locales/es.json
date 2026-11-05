@@ -2458,6 +2458,8 @@
 			"stop": "Detener",
 			"mode": "Modo",
 			"context": "{percent} % del contexto usado",
+			"planSession": "Límite de sesión: {percent} % usado, se restablece {time}",
+			"planWeek": "Límite semanal: {percent} % usado, se restablece {time}",
 			"ownCopy": "Copia propia",
 			"ownCopyHint": "Trabaja en su propia copia del proyecto. Combínala desde Cambios.",
 			"starting": "Iniciando el agente...",

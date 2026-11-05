@@ -2458,6 +2458,8 @@
 			"stop": "중지",
 			"mode": "모드",
 			"context": "컨텍스트 {percent}% 사용",
+			"planSession": "세션 한도: {percent}% 사용, {time}에 초기화",
+			"planWeek": "주간 한도: {percent}% 사용, {time}에 초기화",
 			"ownCopy": "별도 사본",
 			"ownCopyHint": "프로젝트의 별도 사본에서 작업합니다. 변경사항에서 병합하세요.",
 			"starting": "에이전트 시작 중...",

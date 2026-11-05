@@ -2458,6 +2458,8 @@
 			"stop": "Stoppen",
 			"mode": "Modus",
 			"context": "{percent} % des Kontexts belegt",
+			"planSession": "Sitzungslimit: {percent} % genutzt, Zurücksetzung {time}",
+			"planWeek": "Wochenlimit: {percent} % genutzt, Zurücksetzung {time}",
 			"ownCopy": "Eigene Kopie",
 			"ownCopyHint": "Arbeitet an einer eigenen Kopie des Projekts. Führe sie unter Änderungen zusammen.",
 			"starting": "Agent wird gestartet...",

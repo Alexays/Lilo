@@ -237,6 +237,33 @@ test("session metadata updates set title, mode, usage, commands and config", () 
   assert.equal(state.items.length, 0);
 });
 
+test("a usage update carrying a rate limit event sets the plan limits, later plain ones keep them", () => {
+  const state = applyUpdates(emptyConversation(), [
+    {
+      sessionUpdate: "usage_update",
+      used: 1,
+      size: 10,
+      _meta: {
+        "_claude/rateLimit": {
+          status: "allowed",
+          unifiedWindows: {
+            seven_day: { utilization: 0.564, resetsAt: 1_800_000_000, status: "allowed" },
+            five_hour: { utilization: 1.2, resetsAt: 1_799_990_000, status: "rejected" },
+            overage: { utilization: 0.1, resetsAt: 1_800_000_000 },
+          },
+        },
+      },
+    },
+    { sessionUpdate: "usage_update", used: 2, size: 10 },
+  ]);
+  assert.deepEqual(state.planLimits, [
+    { window: "five_hour", percent: 100, resetsAt: 1_799_990_000_000 },
+    { window: "seven_day", percent: 56, resetsAt: 1_800_000_000_000 },
+  ]);
+  applyUpdate(state, { sessionUpdate: "usage_update", used: 3, size: 10, _meta: { "_claude/rateLimit": { unifiedWindows: {} } } });
+  assert.deepEqual(state.planLimits, []);
+});
+
 test("notices are appended", () => {
   const state = addNotice(emptyConversation(), "Files restored");
   assert.deepEqual(state.items, [{ kind: "notice", id: 1, text: "Files restored" }]);

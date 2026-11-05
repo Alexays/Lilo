@@ -2447,6 +2447,8 @@
 			"stop": "Arrêter",
 			"mode": "Mode",
 			"context": "{percent} % du contexte utilisé",
+			"planSession": "Limite de session : {percent} % utilisés, réinitialisation {time}",
+			"planWeek": "Limite hebdomadaire : {percent} % utilisés, réinitialisation {time}",
 			"ownCopy": "Copie à part",
 			"ownCopyHint": "Travaille sur sa propre copie du projet. Fusionnez-la depuis Modifications.",
 			"starting": "Démarrage de l'agent...",

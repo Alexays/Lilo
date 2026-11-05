@@ -2458,6 +2458,8 @@
 			"stop": "停止",
 			"mode": "モード",
 			"context": "コンテキストの {percent}% を使用",
+			"planSession": "セッション上限: {percent}% 使用、{time} にリセット",
+			"planWeek": "週間上限: {percent}% 使用、{time} にリセット",
 			"ownCopy": "専用コピー",
 			"ownCopyHint": "プロジェクトの専用コピーで作業します。「変更」からマージしてください。",
 			"starting": "エージェントを起動中...",

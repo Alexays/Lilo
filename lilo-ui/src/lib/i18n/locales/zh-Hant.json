@@ -2458,6 +2458,8 @@
 			"stop": "停止",
 			"mode": "模式",
 			"context": "已使用 {percent}% 的脈絡",
+			"planSession": "工作階段限額：已使用 {percent}%，{time} 重設",
+			"planWeek": "每週限額：已使用 {percent}%，{time} 重設",
 			"ownCopy": "獨立副本",
 			"ownCopyHint": "在專案的獨立副本中工作。可從「變更」合併。",
 			"starting": "正在啟動代理程式...",

@@ -2458,6 +2458,8 @@
 			"stop": "Parar",
 			"mode": "Modo",
 			"context": "{percent}% do contexto usado",
+			"planSession": "Limite da sessão: {percent}% usado, redefine {time}",
+			"planWeek": "Limite semanal: {percent}% usado, redefine {time}",
 			"ownCopy": "Cópia própria",
 			"ownCopyHint": "Trabalha em uma cópia própria do projeto. Mescle-a em Alterações.",
 			"starting": "Iniciando o agente...",

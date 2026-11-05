@@ -2458,6 +2458,8 @@
 			"stop": "Durdur",
 			"mode": "Mod",
 			"context": "Bağlamın %{percent} kadarı kullanıldı",
+			"planSession": "Oturum sınırı: %{percent} kullanıldı, sıfırlanma {time}",
+			"planWeek": "Haftalık sınır: %{percent} kullanıldı, sıfırlanma {time}",
 			"ownCopy": "Ayrı kopya",
 			"ownCopyHint": "Projenin kendi kopyası üzerinde çalışır. Değişiklikler'den birleştirin.",
 			"starting": "Ajan başlatılıyor...",

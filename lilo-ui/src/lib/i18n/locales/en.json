@@ -2447,6 +2447,8 @@
 			"stop": "Stop",
 			"mode": "Mode",
 			"context": "{percent}% of the context used",
+			"planSession": "Session limit: {percent}% used, resets {time}",
+			"planWeek": "Weekly limit: {percent}% used, resets {time}",
 			"ownCopy": "Own copy",
 			"ownCopyHint": "Works on its own copy of the project. Merge it from Changes.",
 			"starting": "Starting the agent...",

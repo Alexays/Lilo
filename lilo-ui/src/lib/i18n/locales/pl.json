@@ -2490,6 +2490,8 @@
 			"stop": "Zatrzymaj",
 			"mode": "Tryb",
 			"context": "Wykorzystano {percent}% kontekstu",
+			"planSession": "Limit sesji: wykorzystano {percent}%, reset {time}",
+			"planWeek": "Limit tygodniowy: wykorzystano {percent}%, reset {time}",
 			"ownCopy": "Osobna kopia",
 			"ownCopyHint": "Pracuje na własnej kopii projektu. Scal ją w Zmianach.",
 			"starting": "Uruchamianie agenta...",

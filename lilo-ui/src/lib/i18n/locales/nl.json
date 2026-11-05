@@ -2458,6 +2458,8 @@
 			"stop": "Stop",
 			"mode": "Modus",
 			"context": "{percent}% van de context gebruikt",
+			"planSession": "Sessielimiet: {percent}% gebruikt, reset {time}",
+			"planWeek": "Weeklimiet: {percent}% gebruikt, reset {time}",
 			"ownCopy": "Eigen kopie",
 			"ownCopyHint": "Werkt aan een eigen kopie van het project. Voeg die samen vanuit Wijzigingen.",
 			"starting": "Agent starten...",

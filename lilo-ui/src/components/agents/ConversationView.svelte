@@ -17,7 +17,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { conversationActions } from "./conversationActions";
   import type { BridgeSplitPaneFrame } from "../../lib/bridge/protocol";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { springEase } from "../../lib/motion/spring";
@@ -223,6 +223,28 @@
     };
   });
   const usagePercent = $derived(header.usage ? Math.min(100, Math.round((header.usage.used / header.usage.size) * 100)) : 0);
+  // The thread replaces this array only on a rate limit event, so the formatting below runs that rarely.
+  const planLimits = $derived.by(() => {
+    void version;
+    return conversation?.thread.planLimits;
+  });
+  const plan = $derived.by(() => {
+    const now = Date.now();
+    // A window whose reset has passed no longer says anything about the plan.
+    const live = planLimits?.filter((limit) => limit.resetsAt > now) ?? [];
+    if (live.length === 0) return null;
+    const time = new Intl.DateTimeFormat(getLocale(), { hour: "numeric", minute: "2-digit" });
+    const dayAndTime = new Intl.DateTimeFormat(getLocale(), { weekday: "short", hour: "numeric", minute: "2-digit" });
+    return {
+      percent: Math.max(...live.map((limit) => limit.percent)),
+      lines: live.map((limit) =>
+        t(limit.window === "five_hour" ? "agents.conversation.planSession" : "agents.conversation.planWeek", {
+          percent: limit.percent,
+          time: (limit.resetsAt - now < 86_400_000 ? time : dayAndTime).format(limit.resetsAt),
+        }),
+      ),
+    };
+  });
   const hasDraft = $derived(text.trim().length > 0 || attachments.length > 0);
   const stopping = $derived(working && !hasDraft);
 
@@ -412,6 +434,18 @@
         </span>
       {/if}
       <span class="spacer"></span>
+      {#if plan}
+        <span
+          class="gauge"
+          in:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs }}
+          role="img"
+          aria-label={plan.lines.join(", ")}
+          use:tooltip={{ text: plan.lines[0], subtitle: plan.lines[1] }}
+        >
+          <span class="meter" class:high={plan.percent >= 90} style:--plan-used="{plan.percent}%"></span>
+          {plan.percent}%
+        </span>
+      {/if}
       {#if header.usage}
         <span
           class="gauge"
@@ -896,6 +930,25 @@
     background: conic-gradient(var(--accent) 0 var(--context-used), var(--text-primary-tint-12) var(--context-used) 100%);
     mask: radial-gradient(circle, transparent 4px, black 4.5px);
     transition: --context-used var(--motion-duration-slow) var(--motion-ease-organic);
+  }
+
+  @property --plan-used {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 0%;
+  }
+
+  /* A level, not a ring: read apart from the context gauge beside it. */
+  .meter {
+    width: 6px;
+    height: 13px;
+    border-radius: var(--radius-chip);
+    background: linear-gradient(to top, var(--accent) 0 var(--plan-used), var(--text-primary-tint-12) var(--plan-used) 100%);
+    transition: --plan-used var(--motion-duration-slow) var(--motion-ease-organic);
+  }
+
+  .meter.high {
+    background: linear-gradient(to top, var(--warning) 0 var(--plan-used), var(--text-primary-tint-12) var(--plan-used) 100%);
   }
 
   .thread {

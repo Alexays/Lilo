@@ -2458,6 +2458,8 @@
 			"stop": "Interrompi",
 			"mode": "Modalità",
 			"context": "{percent}% del contesto usato",
+			"planSession": "Limite di sessione: {percent}% usato, si azzera {time}",
+			"planWeek": "Limite settimanale: {percent}% usato, si azzera {time}",
 			"ownCopy": "Copia separata",
 			"ownCopyHint": "Lavora su una propria copia del progetto. Uniscila da Modifiche.",
 			"starting": "Avvio dell'agente...",
