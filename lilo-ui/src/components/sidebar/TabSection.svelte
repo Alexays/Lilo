@@ -151,35 +151,38 @@
   // The list never reshapes under the pointer: stacks form and dissolve once it leaves, unless the
   // user changed how tabs stack.
   let pointerInList = $state(false);
-  let stackHosts: ReadonlySet<string> = $state(untrack(() => nextStackHosts(arrangeEntries, new Set(), neverStack)));
-  let stackSettings = untrack(() => `${stackTabs}|${[...neverStack]}`);
-  $effect(() => {
-    const current = untrack(() => stackHosts);
-    const next = nextStackHosts(arrangeEntries, current, neverStack);
+  // Derived in the same pass as the rows, so tabs never show unstacked for a frame first.
+  let lastStackHosts: ReadonlySet<string> = new Set();
+  let stackSettings: string | null = null;
+  const stackHosts = $derived.by(() => {
+    const next = nextStackHosts(arrangeEntries, lastStackHosts, neverStack);
     const settings = `${stackTabs}|${[...neverStack]}`;
-    if (pointerInList && settings === stackSettings) return;
+    if (pointerInList && settings === stackSettings) return lastStackHosts;
     stackSettings = settings;
-    if (next.size !== current.size || [...next].some((host) => !current.has(host))) stackHosts = next;
+    if (next.size !== lastStackHosts.size || [...next].some((host) => !lastStackHosts.has(host))) lastStackHosts = next;
+    return lastStackHosts;
   });
+
+  // How long a folder's rows take to rise in once it opens, their stagger included.
+  const FOLDER_EXPAND_MS = 340;
 
   let openStacks = $state<ReadonlySet<string>>(new Set());
   const foldedTraysKey = $derived(`sidebarFoldedTrays.${spaceId}`);
   const foldedTrays = $derived(new Set(getSetting(foldedTraysKey, "").split(",").filter(Boolean)));
 
-  // Opening a stack or a tray grows its rows in place and the rows under them follow the growth;
-  // closing one removes them and the rows under them slide up. Mixing the rows' own height motion
-  // with the slide of the rows under them made both jump.
-  let groupMotion: "open" | "close" | null = $state(null);
+  // A stack or a tray opens and closes like a folder, its rows in one shell that grows or folds
+  // whole: closing keeps them mounted through the fold, opening has them rise in as a folder's do.
+  let groupMotion: { key: string; open: boolean } | null = $state(null);
   let groupMotionTimer: ReturnType<typeof setTimeout> | undefined;
-  function startGroupMotion(motion: "open" | "close"): void {
-    groupMotion = motion;
+  function startGroupMotion(key: string, open: boolean): void {
+    groupMotion = { key, open };
     clearTimeout(groupMotionTimer);
-    groupMotionTimer = setTimeout(() => (groupMotion = null), MOTION.itemEnterMs + 50);
+    groupMotionTimer = setTimeout(() => (groupMotion = null), FOLDER_EXPAND_MS);
   }
   onDestroy(() => clearTimeout(groupMotionTimer));
 
   function setStackOpen(host: string, open: boolean): void {
-    startGroupMotion(open ? "open" : "close");
+    startGroupMotion(`stack:${host}`, open);
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- immutable copy reassigned to $state
     const next = new Set(openStacks);
     if (open) next.add(host);
@@ -188,7 +191,7 @@
   }
 
   function setTrayFolded(tray: string, folded: boolean): void {
-    startGroupMotion(folded ? "close" : "open");
+    startGroupMotion(`tray:${tray}`, !folded);
     const next = [...foldedTrays].filter((entry) => entry !== tray);
     setSetting(foldedTraysKey, (folded ? [...next, tray] : next).join(","));
   }
@@ -378,6 +381,45 @@
     lastSegments = next;
     return next;
   });
+
+  // The segments as the animated list draws them: a stack or a tray is one block, its head over
+  // a shell holding its rows, like a folder.
+  type RowSegment = Extract<Segment, { kind: "row" }>;
+  type GroupHead = Exclude<Segment, RowSegment>;
+  type Block = { kind: "row"; key: string; segment: RowSegment } | { kind: "group"; key: string; head: GroupHead; rows: RowSegment[] };
+  const blocks = $derived.by((): Block[] => {
+    const next: Block[] = [];
+    let group: Extract<Block, { kind: "group" }> | null = null;
+    for (const segment of segments) {
+      if (segment.kind !== "row") {
+        group = { kind: "group", key: segment.key, head: segment, rows: [] };
+        next.push(group);
+      } else if (group && group.key === (segment.stack ? `stack:${segment.stack}` : `tray:${segment.tray}`)) {
+        group.rows.push(segment);
+      } else {
+        group = null;
+        next.push({ kind: "row", key: segment.key, segment });
+      }
+    }
+    return next;
+  });
+
+  function groupOpen(head: GroupHead): boolean {
+    return head.kind === "stack" ? openStacks.has(head.host) : !foldedTrays.has(head.tray);
+  }
+
+  // A folding group's rows, out of the list already, drawn on through the fold; the active one
+  // stays shown above the shell.
+  function foldingRows(block: Extract<Block, { kind: "group" }>): SidebarDndItem[] {
+    const shown = new Set(block.rows.map((row) => row.entry.id));
+    const head = block.head;
+    const ids = new Set(
+      (arranged ?? [])
+        .filter((row) => (head.kind === "stack" ? row.stack === head.host : row.tray === head.tray) && !shown.has(row.id))
+        .map((row) => row.id),
+    );
+    return dndItemsForSidebarItems(rootItems.filter((item) => ids.has(item.id)), section);
+  }
   // A closed stack's or a folded tray's head is all a list may show: it is not empty then.
   const listIsEmpty = $derived(segments.length === 0);
   const rootHasShadow = $derived(rootZoneItems.some(isShadowItem));
@@ -684,7 +726,7 @@
       const next = new Set(expandingFolderIds);
       next.delete(folderId);
       expandingFolderIds = next;
-    }, 340));
+    }, FOLDER_EXPAND_MS));
   }
 
   $effect(() => {
@@ -1427,37 +1469,102 @@
       {/if}
     {/each}
   {:else}
-    {#each segments as segment (segment.key)}
-      {@const entry = segment.kind === "row" ? segment.entry : { id: segment.key, kind: "tab" as const, section, parentFolderId: null }}
+    {#each blocks as block (block.key)}
+      {@const entry = block.kind === "row" ? block.segment.entry : { id: block.key, kind: "tab" as const, section, parentFolderId: null }}
       {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
-      {@const stackTint = stackTintOf(segment)}
+      {@const head = block.kind === "group" ? block.head : null}
+      {@const tint = head?.kind === "stack" ? stackTintOf(head) : null}
+      <!-- A row's slot, or a group's block: animate: needs one element per entry. -->
       <div
-        animate:translateFlip={{ duration: prefersReducedMotion() || groupMotion === "open" ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
+        animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
         in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
-        out:tabSlide={groupMotion ? { disabled: true } : itemMotion(entry, MOTION.itemExitMs)}
-        class={segment.kind === "row" ? slotClass : "group-head-slot"}
-        class:in-tray={!!segment.tray}
-        class:tray-head={segment.kind === "tray"}
-        class:tray-end={segment.trayEnd}
-        class:stack-block={!!stackTint}
-        class:stack-head={!!stackTint && segment.kind === "stack"}
-        class:stack-end={!!stackTint && segment.kind !== "tray" && segment.stackEnd}
+        out:tabSlide={itemMotion(entry, MOTION.itemExitMs)}
+        class={head ? "group-block" : slotClass}
+        class:tray-block={head?.kind === "tray"}
+        class:stack-open={!!tint}
         class:recent-drop={entry.id === recentlyDraggedId}
         class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
         data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-        style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : stackTint ? folderColorStyle(faviconColors.get(stackInfo.get(stackTint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
+        style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint ? folderColorStyle(faviconColors.get(stackInfo.get(tint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
         use:dndItem={{
           item: entry,
           zoneId: rootZone.id,
-          disabled: segment.kind !== "row" || isShadowItem(entry) || !interactive,
+          disabled: !!head || isShadowItem(entry) || !interactive,
           onCancel: resetSidebarDrag,
           onDropOutsideWindow: moveTabOutOfWindow,
         }}
       >
-        {#if segment.kind === "row"}
-          {@render rootItemContent(entry, segment.stack)}
-        {:else}
-          {@render segmentHead(segment)}
+        {#if block.kind === "row"}
+          {@render rootItemContent(entry, null)}
+        {:else if head}
+          {@const open = groupOpen(head)}
+          {@const motion = groupMotion?.key === block.key ? groupMotion : null}
+          <div class="group-head-slot">
+            {@render segmentHead(head)}
+          </div>
+          {#if !open}
+            <!-- What a folded tray keeps shown: its active row. -->
+            {#each block.rows as row (row.key)}
+              <div
+                class={slotClass}
+                use:dndItem={{
+                  item: row.entry,
+                  zoneId: rootZone.id,
+                  disabled: isShadowItem(row.entry) || !interactive,
+                  onCancel: resetSidebarDrag,
+                  onDropOutsideWindow: moveTabOutOfWindow,
+                }}
+              >
+                {@render rootItemContent(row.entry, null)}
+              </div>
+            {/each}
+          {/if}
+          <div
+            class="folder-contents-shell"
+            class:open
+            class:collapsed={!open}
+            class:expanding={motion?.open}
+            aria-hidden={!open}
+            style={`--folder-collapse-duration: ${folderContentUnmountDelayMs}ms;`}
+          >
+            <div class="folder-contents-clip">
+              {#if open}
+                <div class="folder-contents" role="group">
+                  {#each block.rows as row, rowIndex (row.key)}
+                    {@const rowEntry = row.entry}
+                    {@const rowFolder = rowEntry.kind === "folder" ? foldersById.get(rowEntry.id) : undefined}
+                    <div
+                      animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(rowEntry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
+                      in:tabSlide={motion ? { disabled: true } : itemMotion(rowEntry, MOTION.itemEnterMs)}
+                      out:tabSlide={motion ? { disabled: true } : itemMotion(rowEntry, MOTION.itemExitMs)}
+                      class="{slotClass} child-tab-wrapper"
+                      class:recent-drop={rowEntry.id === recentlyDraggedId}
+                      class:folder-open-rail={rowEntry.kind === "folder" && !!rowFolder && !rowFolder.isCollapsed && !rowFolder.isSplit}
+                      data-is-dnd-shadow-item-hint={isShadowItem(rowEntry)}
+                      style={`--folder-child-index: ${Math.min(rowIndex, 6)};${rowEntry.kind === "folder" ? folderColorStyle(shownFolderColor(rowFolder)) : ""}`}
+                      use:dndItem={{
+                        item: rowEntry,
+                        zoneId: rootZone.id,
+                        disabled: isShadowItem(rowEntry) || !interactive,
+                        onCancel: resetSidebarDrag,
+                        onDropOutsideWindow: moveTabOutOfWindow,
+                      }}
+                    >
+                      {@render rootItemContent(rowEntry, row.stack)}
+                    </div>
+                  {/each}
+                </div>
+              {:else if motion}
+                <div class="folder-contents" role="group">
+                  {#each foldingRows(block) as folding (sidebarDndKey(folding))}
+                    <div class="{slotClass} child-tab-wrapper">
+                      {@render rootItemContent(folding, head.kind === "stack" ? head.host : null)}
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          </div>
         {/if}
       </div>
     {/each}
@@ -1805,6 +1912,21 @@
   /* No specificity, so a block's own corners win. */
   :where(.group-head-slot) {
     border-radius: var(--radius-md);
+  }
+
+  /* A stack or a tray as the animated list draws it: one block like a folder, tinted whole. */
+  .group-block {
+    min-width: 0;
+    border-radius: var(--radius-md);
+    transition: background var(--motion-duration-normal) ease;
+  }
+
+  .group-block.tray-block {
+    background: var(--text-primary-tint-10);
+  }
+
+  .group-block.stack-open {
+    background: var(--folder-open-bg);
   }
 
   /* An open stack is one block like an open folder, painted by its head and rows. */

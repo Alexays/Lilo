@@ -68,7 +68,11 @@ export function arrangeRows(
 		}
 		// Splice each stack's members in after its first one.
 		for (const [, group] of members) {
-			if (group.length < 2) continue;
+			// A site down to one tab, while the list holds still under the pointer, is a plain row again.
+			if (group.length < 2) {
+				group[0].stack = null;
+				continue;
+			}
 			const at = rows.indexOf(group[0]);
 			rows.splice(at + 1, 0, ...group.slice(1));
 		}

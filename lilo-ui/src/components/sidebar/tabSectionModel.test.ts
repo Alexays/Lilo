@@ -51,3 +51,8 @@ test("the stack name is the part titles share, else the host", () => {
 	assert.equal(strippedTitle("acme/app: The core of Acme", "acme/app"), "The core of Acme");
 	assert.equal(strippedTitle("acme/app", "acme/app"), "acme/app");
 });
+
+test("a stack its hosts still name but down to one tab is a plain row", () => {
+	const rows = arrangeRows([web("a", "x.example"), web("b", "y.example")], new Set(["x.example"]), false);
+	assert.deepEqual(rows.map((row) => row.stack), [null, null]);
+});
