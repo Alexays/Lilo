@@ -95,7 +95,7 @@
     padding: 0 8px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    cursor: default;
+    cursor: pointer;
     transition: background var(--transition-fast);
   }
 

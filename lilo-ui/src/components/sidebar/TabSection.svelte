@@ -165,7 +165,20 @@
   const foldedTraysKey = $derived(`sidebarFoldedTrays.${spaceId}`);
   const foldedTrays = $derived(new Set(getSetting(foldedTraysKey, "").split(",").filter(Boolean)));
 
+  // Opening a stack or a tray grows its rows in place and the rows under them follow the growth;
+  // closing one removes them and the rows under them slide up. Mixing the rows' own height motion
+  // with the slide of the rows under them made both jump.
+  let groupMotion: "open" | "close" | null = $state(null);
+  let groupMotionTimer: ReturnType<typeof setTimeout> | undefined;
+  function startGroupMotion(motion: "open" | "close"): void {
+    groupMotion = motion;
+    clearTimeout(groupMotionTimer);
+    groupMotionTimer = setTimeout(() => (groupMotion = null), MOTION.itemEnterMs + 50);
+  }
+  onDestroy(() => clearTimeout(groupMotionTimer));
+
   function setStackOpen(host: string, open: boolean): void {
+    startGroupMotion(open ? "open" : "close");
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- immutable copy reassigned to $state
     const next = new Set(openStacks);
     if (open) next.add(host);
@@ -174,6 +187,7 @@
   }
 
   function setTrayFolded(tray: string, folded: boolean): void {
+    startGroupMotion(folded ? "close" : "open");
     const next = [...foldedTrays].filter((entry) => entry !== tray);
     setSetting(foldedTraysKey, (folded ? [...next, tray] : next).join(","));
   }
@@ -1341,9 +1355,9 @@
       {@const entry = segment.kind === "row" ? segment.entry : { id: segment.key, kind: "tab" as const, section, parentFolderId: null }}
       {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
       <div
-        animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
+        animate:translateFlip={{ duration: prefersReducedMotion() || groupMotion === "open" ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
         in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
-        out:tabSlide={itemMotion(entry, MOTION.itemExitMs)}
+        out:tabSlide={groupMotion ? { disabled: true } : itemMotion(entry, MOTION.itemExitMs)}
         class={segment.kind === "row" ? slotClass : "group-head-slot"}
         class:in-tray={!!segment.tray}
         class:tray-head={segment.kind === "tray"}

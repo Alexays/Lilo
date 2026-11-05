@@ -113,7 +113,7 @@
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
     color: var(--text-secondary);
-    cursor: default;
+    cursor: pointer;
   }
 
   .tray-header:focus-visible {
