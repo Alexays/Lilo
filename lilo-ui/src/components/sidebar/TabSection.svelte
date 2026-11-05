@@ -1336,7 +1336,7 @@
 
 {#snippet newTabRowBody()}
   <span class="new-tab-icon">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+    <svg class="plus-glyph" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
       <path d="M6 1.5v9M1.5 6h9" />
     </svg>
   </span>
@@ -1370,8 +1370,8 @@
             onclick={() => tabActions.newTerminal()}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M2.5 4.5 6 8l-3.5 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M8 12h5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <path class="prompt-chevron" d="M2.5 4.5 6 8l-3.5 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="prompt-cursor" d="M8 12h5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
             </svg>
           </button>
         {/if}
@@ -2220,6 +2220,25 @@
 
   .new-terminal-button:hover:not(:disabled) {
     color: var(--text-primary);
+  }
+
+  .plus-glyph,
+  .prompt-chevron,
+  .prompt-cursor {
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .new-tab-row:hover:not(:disabled) .plus-glyph {
+    transform: rotate(90deg);
+  }
+
+  .new-terminal-button:hover:not(:disabled) .prompt-chevron {
+    transform: translateX(1px);
+  }
+
+  .new-terminal-button:hover:not(:disabled) .prompt-cursor {
+    transform: translateX(1.5px);
+    transition-delay: 40ms;
   }
 
   .new-agents-slot {

@@ -94,6 +94,19 @@
     background: var(--bg-hover);
   }
 
+  /* One blink per hover, on the button only: rows showing the glyph stay still. */
+  .agents-button:hover :global(.eye) {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: agents-blink 280ms ease-in-out;
+  }
+
+  @keyframes agents-blink {
+    50% {
+      transform: scaleY(0.15);
+    }
+  }
+
   .agents-button:focus-visible {
     outline: var(--focus-outline);
     outline-offset: 1px;

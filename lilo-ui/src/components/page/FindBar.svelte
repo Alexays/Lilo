@@ -229,7 +229,7 @@
         use:tooltip={{ text: t("findBar.previousMatch"), shortcut: shortcutKeys("find.previous"), placement: "bottom", disabled: !canNavigate }}
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path d="m2.5 7.5 3.5-3.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          <path class="step-glyph up" d="m2.5 7.5 3.5-3.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
       <button
@@ -240,7 +240,7 @@
         use:tooltip={{ text: t("findBar.nextMatch"), shortcut: shortcutKeys("find.next"), placement: "bottom", disabled: !canNavigate }}
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path d="m2.5 4.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          <path class="step-glyph down" d="m2.5 4.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
     </div>
@@ -251,7 +251,7 @@
       use:tooltip={{ text: t("findBar.closeFindBar"), placement: "bottom" }}
     >
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-        <path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        <path class="close-glyph" d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
     </button>
   </div>
@@ -373,6 +373,25 @@
   .find-btn.active {
     background: var(--accent-tint-14);
     color: var(--accent-ink);
+  }
+
+  .step-glyph,
+  .close-glyph {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 320ms var(--motion-ease-spring);
+  }
+
+  .find-btn:hover:not(:disabled) .step-glyph.up {
+    transform: translateY(-1.5px);
+  }
+
+  .find-btn:hover:not(:disabled) .step-glyph.down {
+    transform: translateY(1.5px);
+  }
+
+  .find-btn:hover:not(:disabled) .close-glyph {
+    transform: rotate(90deg);
   }
 
   .find-btn:disabled {
