@@ -1667,7 +1667,7 @@
 		},
 		"essentials": {
 			"title": "基本设置",
-			"subtitle": "三个让体验不同的设置。你随时可以更改。",
+			"subtitle": "让体验不同的设置。你随时可以更改。",
 			"blocker": "拦截广告和跟踪器",
 			"blockerDesc": "推荐：网页载入更快，跟踪更少。",
 			"refreshRate": "更流畅的滚动",

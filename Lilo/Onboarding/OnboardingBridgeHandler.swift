@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 @MainActor
 final class OnboardingBridgeHandler: BridgeHandler {
@@ -12,13 +12,19 @@ final class OnboardingBridgeHandler: BridgeHandler {
         self.bridgeRouter = bridgeRouter
     }
 
+    /// `highRefreshDisplay`: the refresh rate choice means nothing on a Mac with no display above 60 Hz.
+    static func state(of store: SettingsStore) -> [String: Any] {
+        [
+            "show": store.shouldShowOnboarding, "step": store.onboardingStep, "usage": store.get("onboardingUsage") ?? "browse",
+            "highRefreshDisplay": NSScreen.screens.contains { $0.maximumFramesPerSecond > 60 }
+        ]
+    }
+
     func handle(message: BridgeMessage) async -> Any? {
         guard let store = settingsStore else { return nil }
         switch message.action {
         case "getOnboardingState":
-            bridgeRouter?.send(event: "onboardingState", data: [
-                "show": store.shouldShowOnboarding, "step": store.onboardingStep, "usage": store.get("onboardingUsage") ?? "browse"
-            ])
+            bridgeRouter?.send(event: "onboardingState", data: Self.state(of: store))
         case "setOnboardingStep":
             if let step = message.int("step") { store.onboardingStep = step }
         case "completeOnboarding":

@@ -1667,7 +1667,7 @@
 		},
 		"essentials": {
 			"title": "Temel ayarlar",
-			"subtitle": "Fark yaratan üç ayar. İstediğiniz zaman değiştirebilirsiniz.",
+			"subtitle": "Fark yaratan ayarlar. İstediğiniz zaman değiştirebilirsiniz.",
 			"blocker": "Reklamları ve izleyicileri engelle",
 			"blockerDesc": "Önerilen: Sayfalar daha hızlı yüklenir ve sizi daha az izler.",
 			"refreshRate": "Daha akıcı kaydırma",

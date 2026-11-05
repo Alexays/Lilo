@@ -351,6 +351,7 @@ test("onboarding progress and history clearing complete without an unavailable-a
   load("getOnboardingState");
   assert.deepEqual(latest("onboardingState"), {
     event: "onboardingState",
+    highRefreshDisplay: true,
     show: true,
     step: 3,
     usage: "develop",

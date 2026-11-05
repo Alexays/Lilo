@@ -17,9 +17,9 @@ async function receive(page: Page, message: Record<string, unknown>): Promise<vo
 	await page.evaluate((msg) => window.__lilo!.receive(msg), message);
 }
 
-async function bootOnboarding(page: Page, step: number, usage = "browse"): Promise<void> {
+async function bootOnboarding(page: Page, step: number, usage = "browse", highRefreshDisplay = true): Promise<void> {
 	await bootChrome(page, firstRunWorld());
-	await receive(page, { event: "onboardingState", show: true, step, usage });
+	await receive(page, { event: "onboardingState", show: true, step, usage, highRefreshDisplay });
 }
 
 test("the intro keeps the keyboard: Tab stays on its button and Return only starts the onboarding", async ({ page }) => {
@@ -489,6 +489,12 @@ test("the essentials turn the full refresh rate off and on", async ({ page }) =>
 	await row.locator(".ui-toggle").click();
 	await expect(row.getByRole("checkbox")).not.toBeChecked();
 	expect((await sentCommands(page)).some((command) => command.action === "setSetting" && command.payload.key === "fullRefreshRate" && command.payload.value === "false")).toBe(true);
+});
+
+test("the essentials leave out the refresh rate without a display above 60 Hz", async ({ page }) => {
+	await bootOnboarding(page, 6, "browse", false);
+	await expect(page.locator(".ob-row")).toHaveCount(2);
+	await expect(page.locator(".ob-row").filter({ hasText: "Smoother scrolling" })).toHaveCount(0);
 });
 
 test("the essentials show one primary action: Use Lilo stays secondary to Continue", async ({ page }) => {

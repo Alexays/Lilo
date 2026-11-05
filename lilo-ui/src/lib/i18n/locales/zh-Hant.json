@@ -1667,7 +1667,7 @@
 		},
 		"essentials": {
 			"title": "基本設定",
-			"subtitle": "三個實用的設定，隨時都能更改。",
+			"subtitle": "實用的設定，隨時都能更改。",
 			"blocker": "阻擋廣告與追蹤器",
 			"blockerDesc": "建議使用：網頁載入更快，追蹤更少。",
 			"refreshRate": "更流暢的捲動",

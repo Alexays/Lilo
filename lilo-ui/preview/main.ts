@@ -220,7 +220,7 @@ if (worldName === "default") {
 	lilo.receive({ event: "extensionsChanged", ids: extensions.map((e) => e.id), extensions });
 }
 if (params.get("update") === "1") lilo.receive({ event: "updateReady", version: "0.3.4" });
-if (worldName === "onboarding") lilo.receive({ event: "onboardingState", show: true, step: 0, usage: "browse" });
+if (worldName === "onboarding") lilo.receive({ event: "onboardingState", show: true, step: 0, usage: "browse", highRefreshDisplay: true });
 const open = params.get("open");
 if (open === "settings") lilo.receive({ event: "openSettings" });
 if (open === "commandbar") lilo.receive({ event: "toggleCommandBar" });

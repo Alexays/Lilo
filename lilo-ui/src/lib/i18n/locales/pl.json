@@ -1687,7 +1687,7 @@
 		},
 		"essentials": {
 			"title": "Najważniejsze ustawienia",
-			"subtitle": "Trzy ustawienia, które robią różnicę. Możesz je zmienić w każdej chwili.",
+			"subtitle": "Ustawienia, które robią różnicę. Możesz je zmienić w każdej chwili.",
 			"blocker": "Blokuj reklamy i śledzenie",
 			"blockerDesc": "Zalecane: strony wczytują się szybciej i mniej Cię śledzą.",
 			"refreshRate": "Płynniejsze przewijanie",
