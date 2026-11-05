@@ -298,6 +298,11 @@
 				"none": "Geen",
 				"points": "{size} pt"
 			},
+			"fullRefreshRate": {
+				"title": "Maximale verversingssnelheid",
+				"description": "Pagina's animeren en scrollen op de maximale snelheid van je scherm, wat meer batterij kost. Nieuwe tabbladen volgen deze instelling; open tabbladen veranderen wanneer Lilo herstart.",
+				"keywords": "120 hz promotion fps beeldsnelheid vloeiend scrollen animatie batterij"
+			},
 			"defaultZoom": {
 				"title": "Standaardzoom",
 				"description": "Grootte van pagina's zonder eigen zoominstelling.",
@@ -1662,9 +1667,11 @@
 		},
 		"essentials": {
 			"title": "De basis",
-			"subtitle": "Twee instellingen die het verschil maken. Je kunt ze altijd wijzigen.",
+			"subtitle": "Drie instellingen die het verschil maken. Je kunt ze altijd wijzigen.",
 			"blocker": "Blokkeer advertenties en trackers",
 			"blockerDesc": "Aanbevolen: pagina's laden sneller en volgen je minder.",
+			"refreshRate": "Vloeiender scrollen",
+			"refreshRateDesc": "Pagina's gebruiken de maximale verversingssnelheid van je scherm, wat iets meer batterij kost.",
 			"default": "Open links in Lilo",
 			"defaultDesc": "Links uit je mail en apps openen hier.",
 			"defaultSet": "Gebruik Lilo",

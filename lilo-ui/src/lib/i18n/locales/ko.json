@@ -298,6 +298,11 @@
 				"none": "없음",
 				"points": "{size} pt"
 			},
+			"fullRefreshRate": {
+				"title": "최대 주사율",
+				"description": "페이지 애니메이션과 스크롤이 디스플레이의 최대 주사율로 동작하며 배터리를 더 사용합니다. 새 탭에는 이 설정이 적용되고, 열려 있는 탭은 Lilo를 다시 시작하면 바뀝니다.",
+				"keywords": "120 hz promotion fps 프레임 주사율 부드러운 스크롤 애니메이션 배터리"
+			},
 			"defaultZoom": {
 				"title": "기본 확대/축소",
 				"description": "별도 확대/축소 설정이 없는 페이지의 크기입니다.",
@@ -1662,9 +1667,11 @@
 		},
 		"essentials": {
 			"title": "기본 설정",
-			"subtitle": "사용 경험을 바꾸는 두 가지 설정입니다. 언제든 변경할 수 있습니다.",
+			"subtitle": "사용 경험을 바꾸는 세 가지 설정입니다. 언제든 변경할 수 있습니다.",
 			"blocker": "광고 및 추적기 차단",
 			"blockerDesc": "권장: 페이지가 더 빠르게 로드되고 추적이 줄어듭니다.",
+			"refreshRate": "더 부드러운 스크롤",
+			"refreshRateDesc": "페이지가 디스플레이의 최대 주사율을 사용하며 배터리를 조금 더 사용합니다.",
 			"default": "Lilo에서 링크 열기",
 			"defaultDesc": "메일과 앱의 링크가 여기에서 열립니다.",
 			"defaultSet": "Lilo 사용",

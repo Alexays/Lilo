@@ -130,6 +130,7 @@ final class WKEngineFactory {
     private(set) static var autoplayRestriction: WKAudiovisualMediaTypes = .audio
     /// WebKit feature-flag overrides applied to every new web view (the `about:config` page).
     private var featureFlagOverrides: [String: Bool] = [:]
+    private var fullRefreshRate = true
 
     private lazy var geolocationBridge: GeolocationBridge = {
         let bridge = GeolocationBridge()
@@ -484,6 +485,13 @@ final class WKEngineFactory {
     func setFeatureFlagOverrides(_ overrides: [String: Bool]) {
         guard overrides != featureFlagOverrides else { return }
         featureFlagOverrides = overrides
+        dropWarmPool()
+    }
+
+    /// Applies to web views built afterwards: an open page keeps its rate, even through a reload.
+    func setFullRefreshRate(_ enabled: Bool) {
+        guard fullRefreshRate != enabled else { return }
+        fullRefreshRate = enabled
         dropWarmPool()
     }
 
@@ -871,7 +879,7 @@ final class WKEngineFactory {
             object.setValue(value, forKey: key)
         }
         wkConfig.suppressesIncrementalRendering = false
-        WKFeatureFlags.apply(featureFlagOverrides, to: wkConfig.preferences)
+        WKFeatureFlags.apply([WKFeatureFlags.near60FPSKey: !fullRefreshRate].merging(featureFlagOverrides) { $1 }, to: wkConfig.preferences)
 
         // Extension pages must carry the controller binding or their `chrome.runtime` messaging to the
         // background worker is silently dropped. Only set when the native config lacks one.

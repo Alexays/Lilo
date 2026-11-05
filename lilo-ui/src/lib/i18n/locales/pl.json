@@ -298,6 +298,11 @@
 				"none": "Brak",
 				"points": "{size} pkt"
 			},
+			"fullRefreshRate": {
+				"title": "Maksymalna częstotliwość odświeżania",
+				"description": "Strony animują się i przewijają z maksymalną częstotliwością ekranu, co zużywa więcej baterii. Nowe karty stosują to ustawienie, a otwarte zmienią się po ponownym uruchomieniu Lilo.",
+				"keywords": "120 hz promotion fps klatki płynne przewijanie animacja bateria"
+			},
 			"defaultZoom": {
 				"title": "Domyślne powiększenie",
 				"description": "Rozmiar stron bez własnego ustawienia powiększenia.",
@@ -1682,9 +1687,11 @@
 		},
 		"essentials": {
 			"title": "Najważniejsze ustawienia",
-			"subtitle": "Dwa ustawienia, które robią różnicę. Możesz je zmienić w każdej chwili.",
+			"subtitle": "Trzy ustawienia, które robią różnicę. Możesz je zmienić w każdej chwili.",
 			"blocker": "Blokuj reklamy i śledzenie",
 			"blockerDesc": "Zalecane: strony wczytują się szybciej i mniej Cię śledzą.",
+			"refreshRate": "Płynniejsze przewijanie",
+			"refreshRateDesc": "Strony korzystają z maksymalnej częstotliwości odświeżania ekranu, co zużywa nieco więcej baterii.",
 			"default": "Otwieraj łącza w Lilo",
 			"defaultDesc": "Łącza z poczty i aplikacji otworzą się tutaj.",
 			"defaultSet": "Używaj Lilo",
