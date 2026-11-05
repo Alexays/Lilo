@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fly } from "svelte/transition";
   import NavControls from "./NavControls.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import StripPopover from "../strip/StripPopover.svelte";
@@ -19,8 +20,15 @@
   import { getChosenAppIcon, getReadyUpdate } from "../../stores/settings.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
+  import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
 
-  let { onresize }: { onresize: (event: MouseEvent) => void } = $props();
+  // Floating: revealed from the window's edge over the page while the sidebar is hidden.
+  let { floating, onenter, onleave, onresize }: {
+    floating: boolean;
+    onenter: () => void;
+    onleave: () => void;
+    onresize: (event: MouseEvent) => void;
+  } = $props();
 
   const spaceId = $derived(getActiveSpaceId());
   const view = $derived(getSpaceSidebar(spaceId).view);
@@ -42,14 +50,14 @@
   let updateButton: HTMLButtonElement | undefined = $state();
   let openFolder: { id: string; anchor: HTMLElement } | null = $state(null);
 
-  // Nested folders flatten into their tabs, as in the strip.
+  // Nested folders flatten into their tabs; a closed one stays listed, as in the sidebar, and reopens on click.
   function folderTabs(folderId: string): TabState[] {
     const tabs: TabState[] = [];
     for (const item of view.treeIndex.childrenByFolderId.get(folderId) ?? []) {
       if (item.kind === "folder") tabs.push(...folderTabs(item.itemId));
       else {
         const tab = view.tabsById.get(item.itemId);
-        if (tab && !tab.isClosed) tabs.push(tab);
+        if (tab) tabs.push(tab);
       }
     }
     return tabs;
@@ -156,7 +164,15 @@
   {/if}
 {/snippet}
 
-<div class="sidebar-rail tabs-surface" use:reportInteractiveZone={{ id: "sidebar-rail" }}>
+<div
+  class="sidebar-rail tabs-surface"
+  class:floating
+  role="presentation"
+  use:reportInteractiveZone={{ id: "sidebar-rail" }}
+  onmouseenter={onenter}
+  onmouseleave={onleave}
+  transition:fly|global={{ x: getTabPosition() === "right" ? 84 : -84, opacity: 1, duration: floating && !prefersReducedMotion() ? 240 : 0 }}
+>
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <nav class="rail" aria-label={t("sidebar.ariaLabel")} onkeydown={handleArrows}>
   {#if lights}
@@ -205,10 +221,12 @@
           <button class="popover-row" onclick={() => setSidebarRail(false)}>{t("tabFolder.unlock")}</button>
         {:else}
           {#each folderTabs(folder.id) as tab (tab.id)}
-            <button class="popover-row" class:active={tab.id === activeTabId} onclick={() => { openFolder = null; activate(tab); }}>
-              <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
+            <button class="popover-row" class:active={tab.id === activeTabId} class:asleep={tab.isClosed} onclick={() => { openFolder = null; activate(tab); }}>
+              <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} asleep={tab.isClosed} />
               <span class="row-title">{tabTitle(tab)}</span>
             </button>
+          {:else}
+            <p class="popover-empty">{t("tabSection.folderEmpty")}</p>
           {/each}
         {/if}
       </StripPopover>
@@ -250,8 +268,10 @@
     {/if}
   </div>
 </nav>
+{#if !floating}
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="resize-handle" role="separator" aria-orientation="vertical" onmousedown={onresize}></div>
+{/if}
 </div>
 
 <style>
@@ -271,8 +291,18 @@
     right: 0;
   }
 
-  /* Glass and grain are drawn natively under the rail, as under the docked sidebar. */
-  :global(html:is([data-material='glass'], [data-material='grain'])) .sidebar-rail {
+  /* Over the page and its modal veils, as the full sidebar floats when hidden. */
+  .sidebar-rail.floating {
+    z-index: 63;
+    box-shadow: 4px 0 24px var(--sidebar-shadow);
+  }
+
+  :global(html[data-tab-position='right']) .sidebar-rail.floating {
+    box-shadow: -4px 0 24px var(--sidebar-shadow);
+  }
+
+  /* Glass and grain are drawn natively under the docked rail; floating, it has only the page under it. */
+  :global(html:is([data-material='glass'], [data-material='grain'])) .sidebar-rail:not(.floating) {
     background-color: transparent;
   }
 
@@ -461,6 +491,17 @@
   .popover-row:focus-visible,
   .popover-row.active {
     background: var(--bg-hover);
+  }
+
+  .popover-row.asleep {
+    color: var(--text-secondary);
+  }
+
+  .popover-empty {
+    margin: 0;
+    padding: 8px;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
   }
 
   .row-title {

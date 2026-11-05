@@ -58,4 +58,22 @@ test("a folder on the rail lists its tabs beside it, and the sidebar stays folde
 	await popover.locator(".popover-row").first().click();
 	await expect(popover).toHaveCount(0);
 	await expect(sidebar).toHaveClass(/rail-folded/);
+
+	// A folder with nothing in it still opens, and says so.
+	await page.locator(".sidebar-rail .rail-item[aria-label='Archive']").click();
+	await expect(popover).toContainText("empty", { ignoreCase: true });
+});
+
+test("with the sidebar hidden, the edge reveals the rail, not the full sidebar", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), sidebarRail: true, sidebarVisible: false });
+	await expect(page.locator(".sidebar-rail")).toHaveCount(0);
+
+	await page.mouse.move(2, 400);
+	const rail = page.locator(".sidebar-rail");
+	await expect(rail).toHaveClass(/floating/);
+	await expect(page.locator("#chrome-root > .sidebar")).toHaveClass(/rail-folded/);
+	await expect(page.locator("#chrome-root > .sidebar")).not.toHaveClass(/sidebar-overlay/);
+
+	await page.mouse.move(900, 400);
+	await expect(rail).toHaveCount(0);
 });

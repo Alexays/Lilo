@@ -140,7 +140,8 @@
   // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
   const SIDEBAR_RAIL_THRESHOLD = 150;
   const SIDEBAR_RAIL_WIDTH = 76;
-  const railShown = $derived(isSidebarRail() && isSidebarVisible() && isVerticalLayout());
+  // Hidden, the rail is what the edge reveals over the page, as the full sidebar is outside the rail.
+  const railShown = $derived(isSidebarRail() && isSidebarShown() && isVerticalLayout());
 
   function applySidebarTheme() {
     const root = document.documentElement;
@@ -418,14 +419,14 @@
   {#if railShown}
     <!-- Loaded on demand: only a sidebar folded to its rail carries it. -->
     {#await import("./components/sidebar/SidebarRail.svelte") then rail}
-      <rail.default onresize={startResize} />
+      <rail.default floating={isSidebarOverlay()} onenter={cancelSidebarOverlayHide} onleave={scheduleSidebarOverlayHide} onresize={startResize} />
     {/await}
   {/if}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="sidebar tabs-surface"
     class:sidebar-hidden={!isSidebarShown()}
-    class:sidebar-overlay={isSidebarOverlay()}
+    class:sidebar-overlay={isSidebarOverlay() && !railShown}
     class:rail-folded={railShown}
     class:swiping={swipeBackground !== null}
     style:background-color={shownMaterial === "glass" && !isSidebarOverlay() && !railShown ? null : swipeBackground}
@@ -587,6 +588,15 @@
   :global(html[data-tab-position='right']) .sidebar-overlay-tolerance {
     left: auto;
     right: var(--sidebar-column);
+  }
+
+  /* Past the floating rail's edge rather than the full sidebar's. */
+  :global(html[data-sidebar-rail][data-tab-position='left']) .sidebar-overlay-tolerance {
+    left: calc(var(--sidebar-rail-width) + var(--content-inset));
+  }
+
+  :global(html[data-sidebar-rail][data-tab-position='right']) .sidebar-overlay-tolerance {
+    right: calc(var(--sidebar-rail-width) + var(--content-inset));
   }
 
   .zone-inactive {
