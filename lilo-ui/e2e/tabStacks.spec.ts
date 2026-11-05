@@ -115,3 +115,22 @@ test("tabs an undo brings back open the stack they land in", async ({ page }) =>
 	await expect(page.getByRole("treeitem", { name: "Acme Docs, 3 tabs" })).toHaveAttribute("aria-expanded", "true");
 	await expect(row(page, "tab-docs-setup")).toBeVisible();
 });
+
+test("a tab that makes a stack joins it at once, with the pointer over the list", async ({ page }) => {
+	const world = stackWorld({ sidebarStackTabs: "true" });
+	const api = world.tabsBySpace[SPACE_1].find((entry) => entry.id === "tab-docs-api")!;
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].filter((entry) => entry !== api);
+	world.treeItemsBySpace[SPACE_1] = world.treeItemsBySpace[SPACE_1].filter((item) => item.itemId !== api.id);
+	await bootChrome(page, world);
+	await row(page, "tab-docs-intro").hover();
+
+	await page.evaluate(
+		({ tabs, items, spaceId }) => {
+			const state = { spaceId, activeTabId: "tab-docs-api", tabs, folders: [], treeItems: items };
+			window.__lilo!.receive({ event: "browserStateChanged", changedSpaceId: spaceId, activeTabId: "tab-docs-api", states: [state] });
+		},
+		{ tabs: [...world.tabsBySpace[SPACE_1], api], items: [...world.treeItemsBySpace[SPACE_1], treeItem(api.id, SPACE_1, world.treeItemsBySpace[SPACE_1].length)], spaceId: SPACE_1 },
+	);
+
+	await expect(page.getByRole("treeitem", { name: "API · Acme Docs, 3 tabs" })).toBeVisible();
+});

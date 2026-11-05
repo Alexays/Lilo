@@ -148,16 +148,16 @@
     });
   });
 
-  // The list never reshapes under the pointer: stacks form and dissolve once it leaves, unless the
-  // user changed how tabs stack.
+  // Closing tabs never reshapes the list under the pointer: a stack dissolves once it leaves, unless
+  // the user changed how tabs stack. Only an opened tab forms a stack, and it joins at once.
   let pointerInList = $state(false);
   // Derived in the same pass as the rows, so tabs never show unstacked for a frame first.
   let lastStackHosts: ReadonlySet<string> = new Set();
   let stackSettings: string | null = null;
   const stackHosts = $derived.by(() => {
-    const next = nextStackHosts(arrangeEntries, lastStackHosts, neverStack);
+    let next = nextStackHosts(arrangeEntries, lastStackHosts, neverStack);
     const settings = `${stackTabs}|${[...neverStack]}`;
-    if (pointerInList && settings === stackSettings) return lastStackHosts;
+    if (pointerInList && settings === stackSettings) next = new Set([...lastStackHosts, ...next]);
     stackSettings = settings;
     if (next.size !== lastStackHosts.size || [...next].some((host) => !lastStackHosts.has(host))) lastStackHosts = next;
     return lastStackHosts;
