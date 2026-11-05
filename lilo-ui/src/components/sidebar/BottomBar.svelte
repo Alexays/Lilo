@@ -442,7 +442,7 @@
   let iconsWrapWidth = $state(0);
   // The tiles, the name's padding and the bar's own inset come off; too little left and the tile stays an icon.
   const labelRoom = $derived.by(() => {
-    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 32 - 16);
+    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 34 - 16);
     return room < 32 ? 0 : room;
   });
 
@@ -770,7 +770,7 @@
 
   .space-icons {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     align-items: center;
     justify-content: center;
     position: relative;
@@ -863,9 +863,9 @@
     align-items: center;
     justify-content: center;
     flex: none;
-    min-width: 36px;
+    min-width: 32px;
     /* The margin an icon tile has around it, kept by the open one so the tiles stay evenly spaced. */
-    padding-inline: 4px;
+    padding-inline: 2px;
     box-sizing: border-box;
     min-height: 36px;
   }
@@ -908,7 +908,7 @@
 
   .space-slot-drop-guide {
     position: absolute;
-    inset: 4px;
+    inset: 4px 2px;
     border-radius: var(--radius-md);
     background: var(--accent-tint-8);
     box-shadow:
