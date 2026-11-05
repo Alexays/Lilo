@@ -1,3 +1,0 @@
-kind: Changed
-body: Agent tabs nobody is looking at stop drawing while the agent thinks, and wake for its next action.
-time: 2026-11-05T20:18:02.346997+01:00

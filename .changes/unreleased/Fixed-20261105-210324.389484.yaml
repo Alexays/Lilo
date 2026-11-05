@@ -1,3 +1,0 @@
-kind: Fixed
-body: The agent's performance profile no longer counts overlapping long tasks twice, and shows the main thread's CPU for each long task, so a record WebKit left open no longer reads as a frozen page
-time: 2026-11-05T21:03:24.389484+01:00
