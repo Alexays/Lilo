@@ -45,7 +45,9 @@
       if (profile && profileDomains.includes(method.split('.')[0])) {
         // A capped profile still keeps the starts and ends: the samples all come with ScriptProfiler's end.
         const bound = /\.(trackingStart|trackingComplete|recordingStarted|recordingStopped)$/.test(method)
-        if (profile.messages.length < maxProfileMessages || bound) profile.messages.push({ method, params: message.params })
+        if (profile.messages.length < maxProfileMessages || bound) {
+          profile.messages.push({ method, params: message.params, process: profile.processes.indexOf(this.target) })
+        }
         else if (!profile.capped) {
           profile.capped = true
           stopInstruments()
@@ -218,7 +220,9 @@
   function summarize({ messages, durationMs, pageURL }, { fromMs = 0, toMs = Infinity, focus } = {}) {
     let pageHost = ''
     try { pageHost = new URL(pageURL).hostname } catch {}
-    // A page that moved to a new process starts a new clock: times count from the last start.
+    // A page that moved to a new process starts a new clock: only the last process counts, timed from its start.
+    const lastProcess = messages.findLast(({ method }) => method === 'ScriptProfiler.trackingStart')?.process
+    if (lastProcess !== undefined) messages = messages.filter(({ process }) => process === lastProcess)
     const starts = messages.map(({ method, params }) =>
       method === 'ScriptProfiler.trackingStart' ? params.timestamp : method === 'Timeline.recordingStarted' ? params.startTime : null
     ).filter(time => time != null)
@@ -710,6 +714,7 @@
     // The profile follows the page into its new process; the samples of the one left are lost with it.
     if (profile && !profile.capped && target.ScriptProfilerAgent) {
       profile.targets.push(target)
+      profile.processes.push(target)
       startInstruments(target).catch(() => {})
     }
   })
@@ -1152,7 +1157,8 @@
     async startProfile({ screenshots = false }) {
       if (profile) throw new Error('A profile is already running: call performance stop')
       const target = WI.mainTarget
-      profile = { startedAt: Date.now(), messages: [], targets: [target], screenshots }
+      // `targets` drops the ones gone; `processes` keeps them, so each message's index stays its process.
+      profile = { startedAt: Date.now(), messages: [], targets: [target], processes: [target], screenshots }
       lastProfile = null
       try {
         await startInstruments(target)
