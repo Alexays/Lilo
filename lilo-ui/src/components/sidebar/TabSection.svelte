@@ -73,6 +73,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
+  import { isUndoRevealing } from "../../stores/undoToast.svelte";
 
   let {
     section,
@@ -206,6 +207,19 @@
   });
 
   const arranged = $derived(arrangeEntries.length > 0 ? arrangeRows(arrangeEntries, stackHosts, groupByType) : null);
+
+  // A stack opens on the tabs an undo puts back in it, so they come back in sight.
+  let seenRowIds: ReadonlySet<string> = new Set();
+  $effect(() => {
+    const rows = arranged ?? [];
+    if (isUndoRevealing()) {
+      const hosts = new Set(rows.flatMap((row) => (row.stack && !seenRowIds.has(row.id) ? [row.stack] : [])));
+      untrack(() => {
+        for (const host of hosts) if (!openStacks.has(host)) setStackOpen(host, true);
+      });
+    }
+    seenRowIds = new Set(rows.map((row) => row.id));
+  });
 
   // A closed stack or a folded tray hides its rows, the active one aside.
   function rowShown(row: ArrangedRow): boolean {

@@ -18,6 +18,8 @@ let seq = 0;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let remainingMs = 0;
 let resumedAt = 0;
+// Until then, tabs landing in the sidebar are ones an undo brought back, which it shows even in a closed stack.
+let revealUntil = 0;
 
 export function initUndoToastStore(): void {
 	on("tabClosedUndoable", (data) => {
@@ -109,7 +111,12 @@ function dismissUndoToast(): void {
 	clearToast();
 }
 
+export function isUndoRevealing(): boolean {
+	return Date.now() < revealUntil;
+}
+
 export function undoTabClose(): void {
+	revealUntil = Date.now() + 2000;
 	if (_toast?.undo) {
 		_toast.undo();
 	} else if (_toast?.archivedIds) {

@@ -84,3 +84,28 @@ test("a closed stack holding every open tab still shows", async ({ page }) => {
 	await expect(page.locator(".tab-list")).not.toHaveClass(/is-empty/);
 	await expect(page.getByRole("treeitem", { name: "Acme Docs, 3 tabs" })).toBeVisible();
 });
+
+test("tabs an undo brings back open the stack they land in", async ({ page }) => {
+	const world = stackWorld({ sidebarStackTabs: "true" });
+	await bootChrome(page, world);
+	const space = world.tabsBySpace[SPACE_1];
+	const items = world.treeItemsBySpace[SPACE_1];
+	const archived = ["tab-docs-setup", "tab-docs-api"];
+	const sendState = (ids: string[] | null) =>
+		page.evaluate(
+			({ space, items, gone, spaceId }) => {
+				const kept = (id: string) => !gone.includes(id);
+				const state = { spaceId, activeTabId: "tab-alpha", tabs: space.filter((entry) => kept(entry.id)), folders: [], treeItems: items.filter((item) => kept(item.itemId)) };
+				window.__lilo!.receive({ event: "browserStateChanged", changedSpaceId: spaceId, activeTabId: "tab-alpha", states: [state] });
+			},
+			{ space, items, gone: ids ?? [], spaceId: SPACE_1 },
+		);
+
+	await sendState(archived);
+	await page.evaluate(() => window.__lilo!.receive({ event: "tabClosedUndoable", title: "API", count: 2, archivedIds: ["entry-1", "entry-2"] }));
+	await page.locator(".undo-toast").getByRole("button", { name: "Reopen" }).click();
+	await sendState(null);
+
+	await expect(page.getByRole("treeitem", { name: "Acme Docs, 3 tabs" })).toHaveAttribute("aria-expanded", "true");
+	await expect(row(page, "tab-docs-setup")).toBeVisible();
+});
