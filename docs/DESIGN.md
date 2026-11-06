@@ -49,7 +49,7 @@ A piece of information takes the form of its family, never another.
 ## Buttons
 
 - The default button is last, on the right. Cancel sits just before it. A destructive action stands apart, on the left, in the `danger` style.
-- Labels are verbs: "Allow", "Don't Allow", "Close Tab". Never "OK" or "Deny", and never "Cancel" for stopping something ("Stop Debugging").
+- Labels are verbs: "Allow", "Don't Allow", "Close Tab". Never "Deny", and never "Cancel" for stopping something ("Stop Debugging"). "OK" only closes an alert that just informs and has no other button, as the HIG allow.
 - A variant of a choice ("always", "for this site") is a menu attached to the default button, not a third button.
 - Segmented-control labels are Title Case, like buttons.
 - ⌘↩ triggers the default button of a drawer or modal; Esc triggers Cancel.
@@ -81,7 +81,7 @@ A request tied to a tab lives in a single drawer; the row keeps only the orange 
 ## Text
 
 - Title Case for menu items, buttons and window titles, as macOS does; sentence case everywhere else (labels, descriptions, section headers, notices).
-- An ellipsis (`...` in the catalogs) only when the action asks for more input before it runs.
+- An ellipsis only when the action asks for more input before it runs: `...` in the web chrome's strings, the single ellipsis character (U+2026) in native menu items, as AppKit writes them.
 - Type scale, nothing off it: 16 px semibold for the sidebar panel title, 20 px semibold for a system screen's page title, 17 px semibold for a modal title and 13 px semibold for a popover title, 17 px regular for a large search field (command bar, empty window), 13 px (`--font-size-md`) medium for a row title and regular for body text, 12 px for details, buttons and menus, 11 px (`--font-size-xs`) semibold uppercase with 0.04em tracking for section headers and regular for counts, 10 px (`--font-size-2xs`) only inside thumbnails. Onboarding alone uses 28 px semibold headlines and 15 px body.
 
 ## Spacing and sizes

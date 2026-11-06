@@ -1977,7 +1977,7 @@ final class BrowserStateStoreTests: XCTestCase {
 
         let updatedState = try XCTUnwrap(changes.changedState)
         let folder = try XCTUnwrap(updatedState.foldersById.values.first)
-        XCTAssertEqual(folder.name, "New Folder")
+        XCTAssertEqual(folder.name, "New Folder".localized)
         XCTAssertEqual(folder.color, "#5865f2")
         XCTAssertEqual(updatedState.sidebar.node(id: folder.id)?.section, .unpinned)
         XCTAssertEqual(updatedState.tabsById[sourceTabId]?.groupId, folder.id)

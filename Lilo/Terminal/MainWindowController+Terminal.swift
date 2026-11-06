@@ -608,7 +608,7 @@ extension UNNotificationCategory {
             UNNotificationCategory(identifier: conversationPermission, actions: [
                 UNNotificationAction(identifier: "\(conversationOptionPrefix)allow_once", title: "Allow".localized, options: []),
                 UNNotificationAction(identifier: "\(conversationOptionPrefix)allow_always", title: "Always Allow".localized, options: []),
-                UNNotificationAction(identifier: "\(conversationOptionPrefix)reject_once", title: "Deny".localized, options: [.destructive])
+                UNNotificationAction(identifier: "\(conversationOptionPrefix)reject_once", title: "Don't Allow".localized, options: [.destructive])
             ], intentIdentifiers: [])
         ]
     }

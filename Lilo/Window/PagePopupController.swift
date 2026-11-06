@@ -163,7 +163,7 @@ final class PagePopupController: NSObject, NSWindowDelegate {
         let alert = NSAlert()
         alert.messageText = unsafe String(format: messages[type] ?? "%@ wants to use your camera or microphone".localized, host)
         alert.addButton(withTitle: "Allow".localized)
-        alert.addButton(withTitle: "Deny".localized)
+        alert.addButton(withTitle: "Don't Allow".localized)
         alert.beginSheetModal(for: window) { response in completion(response == .alertFirstButtonReturn) }
     }
 

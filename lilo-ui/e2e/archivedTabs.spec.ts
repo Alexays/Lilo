@@ -20,7 +20,7 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 
 		const button = page.getByRole("button", { name: strip ? "26 recently archived tabs" : "Downloads and archived tabs" });
 		await button.click();
-		const menu = page.getByRole("menu", { name: strip ? "Recently archived" : "Downloads and archived tabs", exact: true });
+		const menu = page.getByRole("menu", { name: strip ? "Archived" : "Downloads and archived tabs", exact: true });
 		await expect(menu).toBeVisible();
 		await expect.poll(() => menu.evaluate((el) => {
 			const rect = el.getBoundingClientRect();

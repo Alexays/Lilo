@@ -415,7 +415,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         do {
             // createSpace activates the new space synchronously (through switchToSpace),
             // so the tab below lands in it.
-            try createSpace(name: "Private", icon: "🕶️", color: "#5865f2", isPrivate: true, targetProfileId: nil)
+            try createSpace(name: "Private".localized, icon: "🕶️", color: "#5865f2", isPrivate: true, targetProfileId: nil)
             let created = createTabStateFirst(url: url, activate: true)
             created.flatMap { tabManager.engineTab(for: $0.id) }?.isOpenedByPage = true
         } catch {

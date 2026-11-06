@@ -306,7 +306,7 @@ struct SpaceTab {
         let section = section(for: targetTab)
         normalize(&sourceNode, for: section)
         normalize(&targetNode, for: section)
-        let folder = StoredFolder(id: UUID(), name: "New Folder", color: "#5865f2", isCollapsed: false, children: [sourceNode, targetNode])
+        let folder = StoredFolder(id: UUID(), name: "New Folder".localized, color: "#5865f2", isCollapsed: false, children: [sourceNode, targetNode])
         insert(.folder(folder), toFolder: nil, section: section, index: rootNodes(in: section).count, in: &state.tree)
         finishMutation()
     }

@@ -40,6 +40,22 @@ final class LocalizationTests: XCTestCase {
         #endif
     }
 
+    func testEveryLocaleTranslatesEveryPermissionPrompt() throws {
+        #if !SWIFT_PACKAGE
+        let keys = (Bundle.main.infoDictionary ?? [:]).keys.filter { $0.hasSuffix("UsageDescription") }
+        XCTAssertTrue(keys.contains("NSCameraUsageDescription"))
+        let locales = Bundle.main.localizations.filter { $0 != "en" && $0 != "Base" }
+        XCTAssertFalse(locales.isEmpty)
+        for locale in locales {
+            let url = try XCTUnwrap(Bundle.main.url(forResource: "InfoPlist", withExtension: "strings", subdirectory: nil, localization: locale), locale)
+            let table = try XCTUnwrap(NSDictionary(contentsOf: url) as? [String: String], locale)
+            for key in keys {
+                XCTAssertNotNil(table[key], "\(locale) lacks \(key)")
+            }
+        }
+        #endif
+    }
+
     func testLanguageOverridesAlsoSelectTheLanguageOfSystemPanels() {
         let defaults = UserDefaults.lilo
         let domain = "\(UserDefaults.testDomainPrefix)\(getpid())"
