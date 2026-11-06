@@ -72,11 +72,11 @@ function answeringListener(listener: Listener): Listener {
 }
 
 /**
- * Registers `onMessage`'s listeners through answeringListener, calling `onListen` for each, and answers the probe
- * while one is registered. The members go on the event object, which the caller keeps alive: WebKit shares the
- * prototype with every other event.
+ * Registers `onMessage`'s listeners through answeringListener, calling `onListeners` as the first one comes and the
+ * last one goes, and answers the probe while one is registered. The members go on the event object, which the caller
+ * keeps alive: WebKit shares the prototype with every other event.
  */
-export function answerAsChrome(onMessage: any, onListen?: () => void): void {
+export function answerAsChrome(onMessage: any, onListeners?: (listening: boolean) => void): void {
   // Several copies of the compat can run in one world (an uncovered entry, a scripting injection): the first answers for all.
   if (Object.hasOwn(onMessage, 'addListener')) return;
   const listeners = new Set<Listener>();
@@ -86,7 +86,6 @@ export function answerAsChrome(onMessage: any, onListen?: () => void): void {
   for (const name of ['addListener', 'removeListener', 'hasListener']) {
     Object.defineProperty(onMessage, name, {
       value(listener: Listener, ...rest: unknown[]) {
-        if (name === 'addListener') onListen?.();
         // The prototype's at call time: Lilo patches it once the namespace is handed out.
         const prototype = Object.getPrototypeOf(onMessage);
         const result = prototype[name].call(onMessage, typeof listener === 'function' ? answeringListener(listener) : listener, ...rest);
@@ -94,7 +93,10 @@ export function answerAsChrome(onMessage: any, onListen?: () => void): void {
           const listened = listeners.size > 0;
           if (name === 'addListener') listeners.add(listener);
           else listeners.delete(listener);
-          if (listened !== listeners.size > 0) prototype[listened ? 'removeListener' : 'addListener'].call(onMessage, answerProbe);
+          if (listened !== listeners.size > 0) {
+            prototype[listened ? 'removeListener' : 'addListener'].call(onMessage, answerProbe);
+            onListeners?.(!listened);
+          }
         }
         return result;
       },

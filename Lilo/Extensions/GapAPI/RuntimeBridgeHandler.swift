@@ -10,7 +10,7 @@ import WebKit
 @MainActor
 final class RuntimeBridgeHandler: GapHandler {
     let gapActions: Set<String> = [
-        "runtime.requestUpdateCheck", "runtime.workerListensToMessages",
+        "runtime.requestUpdateCheck", "runtime.othersListenToMessages",
         "runtime.sendExternal", "runtime.answerExternal", "runtime.connectExternal", "runtime.connect", "runtime.portAccept", "runtime.portDecline",
         "runtime.portPost", "runtime.portDisconnect"
     ]
@@ -103,8 +103,11 @@ final class RuntimeBridgeHandler: GapHandler {
     func handle(_ call: GapCall) async -> Any? {
         let events = call.registry.gapEvents
         switch call.action {
-        case "runtime.workerListensToMessages":
-            return events.reportedListeners(of: call.extensionId)?.contains("runtime.onMessage") ?? true
+        case "runtime.othersListenToMessages":
+            // A worker that has not reported its listeners may listen; Chrome never delivers a page's message to itself.
+            if events.reportedListeners(of: call.extensionId) == nil, call.context?.webExtension.hasBackgroundContent == true { return true }
+            let sender = call.int("pageChannel")
+            return events.contexts(of: call.extensionId, listeningTo: "runtime.onMessage").contains { $0 != sender }
 
         case "runtime.sendExternal":
             guard let target = call.string("id"), let sender = sender(of: call, reaching: target, event: "onMessageExternal") else {
