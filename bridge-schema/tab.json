@@ -55,6 +55,8 @@
       "_comment": "Agent tabs only: the agent's id in the ACP registry (claude-acp, codex-acp...)." },
     { "name": "gitBranch",                 "type": "string",  "tsOptional": true, "tsDefault": "\"\"",
       "_comment": "Terminal tabs only: the branch checked out in the working directory's repository, or a short commit when detached." },
+    { "name": "project",                   "type": "string",  "tsOptional": true, "tsDefault": "\"\"",
+      "_comment": "Terminal and agent tabs: the main folder of cwd's repository, a linked worktree's main checkout included; empty outside a repository." },
     { "name": "diffAdded",                 "type": "double",  "tsOptional": true, "tsDefault": "0",
       "_comment": "Terminal tabs only: lines added in the repository against HEAD, untracked files included." },
     { "name": "diffRemoved",               "type": "double",  "tsOptional": true, "tsDefault": "0",

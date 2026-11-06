@@ -2208,6 +2208,7 @@
 		"Close Stack": "スタックを閉じる",
 		"Stack Tabs by Site": "タブをサイトごとにスタック",
 		"Group by Type": "種類でグループ化",
+		"Group by Project": "プロジェクトでグループ化",
 		"Never Stack": "スタックしないサイト",
 		"Stack Every Site Again": "すべてのサイトを再びスタック",
 		"Sort by Site": "サイトで並べ替え",

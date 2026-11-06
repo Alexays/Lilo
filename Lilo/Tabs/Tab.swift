@@ -78,6 +78,8 @@ struct Tab: Sendable, Equatable {
     var resumeCommand: String?
     /// Terminal tabs, runtime only: the branch checked out in `cwd`, empty outside a repository.
     var gitBranch = ""
+    /// Terminal and agent tabs, runtime only: the main folder of `cwd`'s repository, the sidebar's project.
+    var project = ""
     /// Terminal tabs, runtime only: lines added and removed in that repository against HEAD.
     var diffAdded = 0
     var diffRemoved = 0
@@ -268,6 +270,8 @@ struct Tab: Sendable, Equatable {
                 put(field, agentId ?? "")
             case .gitBranch:
                 put(field, gitBranch)
+            case .project:
+                put(field, project)
             case .diffAdded:
                 put(field, Double(diffAdded))
             case .diffRemoved:
@@ -324,6 +328,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let windowId: UUID?
     let hasUnsavedFormData: Bool
     let gitBranch: String
+    let project: String
     let diffAdded: Int
     let diffRemoved: Int
     let terminalState: String
@@ -354,6 +359,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         windowId = tab.windowId
         hasUnsavedFormData = tab.hasUnsavedFormData
         gitBranch = tab.gitBranch
+        project = tab.project
         diffAdded = tab.diffAdded
         diffRemoved = tab.diffRemoved
         terminalState = tab.terminalState
@@ -386,6 +392,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         tab.windowId = windowId
         tab.hasUnsavedFormData = hasUnsavedFormData
         tab.gitBranch = gitBranch
+        tab.project = project
         tab.diffAdded = diffAdded
         tab.diffRemoved = diffRemoved
         tab.terminalState = terminalState

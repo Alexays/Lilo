@@ -494,7 +494,7 @@ extension MainWindowController {
         applyContextMenuStateCommands(commands)
     }
 
-    /// How the open tabs are laid out: stacked by site, grouped by type, the sites never stacked,
+    /// How the open tabs are laid out: stacked by site, grouped by project or type, the sites never stacked,
     /// and a one-off sort.
     private func addTabListItems(to menu: NSMenu, spaceId: UUID) {
         let settings = context.settingsStore
@@ -505,6 +505,8 @@ extension MainWindowController {
             .state = settings?.get("sidebarStackTabs") == "false" ? .off : .on
         menu.addItem("Group by Type".localized, icon: .groupByType) { send("toggleGroupByType", "") }
             .state = settings?.get("sidebarGroupByType") == "true" ? .on : .off
+        menu.addItem("Group by Project".localized, icon: .groupByProject) { send("toggleGroupByProject", "") }
+            .state = settings?.get("sidebarGroupByProject") == "true" ? .on : .off
         let never = (settings?.get("sidebarNeverStack") ?? "").split(separator: ",").map(String.init)
         if !never.isEmpty {
             let neverMenu = NSMenu(title: "Never Stack".localized)

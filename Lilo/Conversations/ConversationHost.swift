@@ -108,6 +108,10 @@ final class ConversationHost {
         conversations[tab.id] = conversation
         closed.remove(tab.id)
         ChromeUISchemeHandler.conversationRoots.insert(URL(fileURLWithPath: conversation.cwd).standardizedFileURL.resolvingSymlinksInPath().path)
+        if let project = GitDiff.projectRoot(containing: conversation.cwd), let window = context?.windows.window(forTab: tab.id),
+           let updated = window.updateRuntimeTab(id: tab.id, mutate: { $0.project = project }) {
+            window.enqueueVisibleTabUpdate(updated)
+        }
         scheduleSummary()
         return conversation
     }

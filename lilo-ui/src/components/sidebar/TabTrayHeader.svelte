@@ -1,4 +1,4 @@
-<!-- The head of the agents or the terminals tray. Open, a quiet label over its rows; folded, a row of
+<!-- The head of a project's tray, or of the agents or the terminals tray. Open, a quiet label over its rows; folded, a row of
      its own that still says what needs you, or else shows what it holds. -->
 <script lang="ts">
   import { tooltip } from "../../lib/tooltip";
@@ -13,7 +13,8 @@
     tabStop,
     onToggle,
   }: {
-    tray: "agent" | "terminal";
+    /** "agent", "terminal", or `project:<root>`. */
+    tray: string;
     folded: boolean;
     /** The tray's tabs: a terminal's own, an agent's conversation. */
     tabs: TabState[];
@@ -22,9 +23,13 @@
     onToggle: (folded: boolean) => void;
   } = $props();
 
-  const label = $derived(t(tray === "agent" ? "tabSection.trayAgents" : "tabSection.trayTerminals"));
+  const project = $derived(tray.startsWith("project:") ? tray.slice("project:".length) : null);
+  const label = $derived(
+    project ? project.slice(project.lastIndexOf("/") + 1) : t(tray === "agent" ? "tabSection.trayAgents" : "tabSection.trayTerminals"),
+  );
   const waiting = $derived(tabs.filter((tab) => !!tab.awaitingInputSince).length);
-  const busy = $derived(tabs.filter((tab) => tab.terminalState === "busy" || tab.terminalState === "starting").length);
+  const busy = $derived(tabs.filter((tab) => tab.terminalState === "busy" || tab.terminalState === "starting"));
+  const busyAgents = $derived(busy.filter((tab) => tab.kind === "agent").length);
   const toggleLabel = $derived(t(folded ? "tabSection.trayShow" : "tabSection.trayHide", { name: label }));
 
   function handleKeydown(event: KeyboardEvent): void {
@@ -39,7 +44,9 @@
 
 {#snippet glyph()}
   <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    {#if tray === "agent"}
+    {#if project}
+      <path d="M2.8 6.2c0-1 .8-1.8 1.8-1.8h3.2l1.8 1.9h5.8c1 0 1.8.8 1.8 1.8v6.3c0 1-.8 1.8-1.8 1.8H4.6c-1 0-1.8-.8-1.8-1.8z" />
+    {:else if tray === "agent"}
       <circle cx="10" cy="10" r="6.6" />
       <ellipse cx="7.6" cy="9.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
       <ellipse cx="12.4" cy="9.4" rx="1.05" ry="1.4" fill="currentColor" stroke="none" />
@@ -66,23 +73,22 @@
   onkeydown={handleKeydown}
 >
   <span class="tray-glyph">{@render glyph()}</span>
-  <span class="tray-label">{label}</span>
+  <span class="tray-label" use:tooltip={{ text: project?.replace(/^\/Users\/[^/]+/, "~") ?? "" }}>{label}</span>
   <span class="tray-count">{tabs.length}</span>
   <span class="spacer"></span>
   {#if folded}
     <span class="tray-summary">
       {#if waiting > 0}
         <span class="tray-status"><span class="dot attention"></span>{t("tabSection.trayNeedsInput", { count: waiting })}</span>
-      {:else if busy > 0}
-        <span class="tray-status">
-          <span class="dot" class:agent={tray === "agent"}></span>
-          {t(tray === "agent" ? "tabSection.trayWorking" : "tabSection.trayRunning", { count: busy })}
-        </span>
+      {:else if busyAgents > 0}
+        <span class="tray-status"><span class="dot agent"></span>{t("tabSection.trayWorking", { count: busyAgents })}</span>
+      {:else if busy.length > 0}
+        <span class="tray-status"><span class="dot"></span>{t("tabSection.trayRunning", { count: busy.length })}</span>
       {:else}
         <!-- Nothing needs you: the icons say what is folded away. -->
         <span class="tray-icons" aria-hidden="true">
           {#each tabs.slice(0, 4) as tab (tab.id)}
-            {#if tray === "agent"}
+            {#if tab.kind === "agent"}
               {#await import("../agents/AgentTile.svelte") then { default: AgentTile }}<AgentTile agentId={tab.agentId ?? ""} />{/await}
             {:else}
               <span class="terminal-mini">

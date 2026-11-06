@@ -42,6 +42,7 @@ enum TabBridgeField: String, CaseIterable {
 	case cwd = "cwd"
 	case agentId = "agentId"
 	case gitBranch = "gitBranch"
+	case project = "project"
 	case diffAdded = "diffAdded"
 	case diffRemoved = "diffRemoved"
 	case terminalState = "terminalState"

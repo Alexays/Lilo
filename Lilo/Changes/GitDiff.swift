@@ -132,6 +132,16 @@ struct GitDiff: Sendable {
         }
     }
 
+    /// The main folder of the repository `directory` is in: a linked worktree's main checkout, else its root.
+    static func projectRoot(containing directory: String) -> String? {
+        guard let root = repositoryRoot(containing: directory) else { return nil }
+        let common = URL(fileURLWithPath: gitDirectories(of: root).common)
+        // A submodule's git directory sits inside its parent's: it is a project of its own.
+        let project = common.lastPathComponent == ".git" ? common.deletingLastPathComponent() : URL(fileURLWithPath: root)
+        // git writes a worktree's link resolved: the main checkout must read the same from either side.
+        return project.resolvingSymlinksInPath().path
+    }
+
     /// Where git keeps the data of the repository at `root`, read from disk without running git:
     /// `own` holds its HEAD and index, `common` the refs. They differ only in a linked worktree.
     static func gitDirectories(of root: String) -> (own: String, common: String) {

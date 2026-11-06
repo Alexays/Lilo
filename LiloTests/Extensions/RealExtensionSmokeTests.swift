@@ -87,11 +87,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         "hdhinadidafjejdhmfkjgnolgimiaplp": "over a blank tab its popup shows WebKit's wording of the scripting.executeScript error, where Chrome's shows 'Cannot access contents of the page'", // Read Aloud
         "mmioliijnhnoblpgimnlajmefafdfilb": "the stream its tab capture gets is no MediaStream to AudioContext.createMediaStreamSource, so it cannot listen", // Shazam
         "gomekmidlodglbbmalcneegieacbdmki": "its popup logs an object as an error ([object Object]), which Chrome's does not", // Avast Online Security & Privacy
-        "jabjbhgjaidecageckilhonbggakppme": "once its worker was idle, its popup reads its configuration as undefined (result.config.map)", // Gosplagin
-        "mpnlkmlkncncpgnnkmkgoobfpnjmblnk": "on the test page its content script reads its testing state as undefined (e.isInitialized)", // Norton Safe Search
         "hkgfoiooedgoejojocmhlaklaeopbecg": "WebKit's MediaSession has no enterpictureinpicture action, which its content script sets on every page (autoPip.js)", // Picture-in-Picture Extension
         "jjkchpdmjjdmalgembblgafllbpcjlei": "its worker reads supportedFeatures.features of an answer that is undefined", // Trellix Endpoint Security Web Control
-        "lgblnfidahcdcjddiepkckcfdhpknnjh": "its cosmetic filters hide none of the test page's ads, which Chrome's hide", // Stands AdBlocker
         "mclkkofklkfljcocdinagocijmpgbhab": "over a blank tab its popup calls tabs.detectLanguage, which WebKit refuses for want of access", // Google Input Tools
         "mcbpblocgmgfnpjjppndjkmgjaogfceg": "over a blank tab its popup offers to capture it, where Chrome's recording opens the popup in a tab of its own, which it says it cannot capture", // FireShot
         "dgjbaljgolmlcmmklmmeafecikidmjpi": "its first start registers its cosmetic filters in basic mode: the optimal mode it sets meanwhile meets its own registration still running, which WebKit's slower resource loads while it compiles 50 rulesets keep longer than Chrome's; its next start registers them", // Adblock Ad Blocker Pro
@@ -307,8 +304,8 @@ final class RealExtensionSmokeTests: XCTestCase {
                 .replacingOccurrences(of: #" ?\([^()]*:\d+(:\d+)?\)$"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: #"^".*" cannot be parsed as a URL\.$"#, with: "Failed to construct 'URL': Invalid URL", options: .regularExpression)
                 .replacingOccurrences(of: "Load failed", with: "Failed to fetch")
-                // A plain object logged or thrown: JavaScriptCore converts it to a string, V8 names its class.
-                .replacingOccurrences(of: "[object Object]", with: "Object")
+                // An object logged or thrown: JavaScriptCore converts it to a string, V8 names its class.
+                .replacingOccurrences(of: #"\[object (\w+)\]"#, with: "$1", options: .regularExpression)
                 .replacingOccurrences(of: "No runtime.onConnect listeners found.", with: "Could not establish connection. Receiving end does not exist.")
                 .replacingOccurrences(of: #"Cannot find menu item with id \S+"#, with: "Menu item not found.", options: .regularExpression)
                 // A worker scripting the active tab at startup meets Chrome's about:blank, Lilo's popup tab
@@ -386,6 +383,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             let outcome: Outcome
             let package: URL
             let chrome: ChromeSmoke.Recording?
+            let knownErrors: [String]
         }
         var idleQueue: [Idle] = [], idleBatch: [Idle] = [], quietSince = Date.distantFuture
         // One at a time: a batch loaded together in the idle profile took gigabytes beside the extension the main pass runs.
@@ -467,7 +465,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 } else if !matched {
                     outcome.problems.append(mismatch("once its worker was idle, the popup", shown, expected))
                 }
-                let errors = unexpected(Array((idleRegistry.context(for: id) ?? context).errors.dropFirst(errorCount)), (chrome?.errors ?? []).map(normalized))
+                let errors = unexpected(Array((idleRegistry.context(for: id) ?? context).errors.dropFirst(errorCount)), entry.knownErrors)
                 outcome.problems += errors.map { "once its worker was idle, error: \($0)" }
                 if !outcome.problems.isEmpty && outcome.details.isEmpty { outcome.details = errorsOf(idleRegistry, id) }
                 // What a popup that went another way than Chrome's saw as its tab.
@@ -515,9 +513,11 @@ final class RealExtensionSmokeTests: XCTestCase {
             }
             outcome.version = context.webExtension.version ?? "?"
             let recorded = chromeSmoke.extensions[id]
-            // Chrome's behavior with another version says nothing about this one: all its errors count.
+            // Chrome's rendering of another version says nothing about this one, but the errors Chrome gave it still
+            // tell an extension's own failures from Lilo's.
             let chrome = recorded?.version == outcome.version ? recorded : nil
             if chrome == nil { outcome.staleChrome = recorded?.version ?? "nothing" }
+            let knownErrors = (recorded?.errors ?? []).map(normalized)
             var connected = false, workerStarted: Date?
             if context.webExtension.hasBackgroundContent {
                 let starting = Date()
@@ -616,7 +616,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             // Each error with the step it came in, to tell a page's last exchanges from its start.
             let steps = phases + [("the end", context.errors.count)]
             let step = { (index: Int) in steps.last { $0.count <= index }?.name ?? "the start" }
-            let mainErrors = unexpected(context.errors, (chrome?.errors ?? []).map(normalized))
+            let mainErrors = unexpected(context.errors, knownErrors)
             outcome.problems += mainErrors.map { message in
                 let index = context.errors.firstIndex { $0.localizedDescription == message } ?? 0
                 return "error: \(message) (in \(step(index)))"
@@ -627,7 +627,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             // scripts into the pages already open when an extension loads, which Chrome never does.
             for tab in window.tabManager.openTabs { window.closeTabStateFirst(id: tab.id, undoable: false) }
             if connected, popupURL != nil, chrome?.restartPopup?.tokens.isEmpty != true {
-                idle = Idle(outcome: outcome, package: package, chrome: chrome)
+                idle = Idle(outcome: outcome, package: package, chrome: chrome, knownErrors: knownErrors)
             }
             try await advanceIdle(false)
         }

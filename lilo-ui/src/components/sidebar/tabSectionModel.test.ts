@@ -3,9 +3,9 @@ import test from "node:test";
 
 import { arrangeRows, keepSameGroups, nextStackHosts, stackEntries, stackName, strippedTitle, windowRows, type ArrangeEntry } from "./tabSectionModel";
 
-const web = (id: string, host: string): ArrangeEntry => ({ id, type: "web", host });
-const term = (id: string): ArrangeEntry => ({ id, type: "terminal", host: null });
-const agent = (id: string): ArrangeEntry => ({ id, type: "agent", host: null });
+const web = (id: string, host: string): ArrangeEntry => ({ id, type: "web", host, project: null });
+const term = (id: string, project: string | null = null): ArrangeEntry => ({ id, type: "terminal", host: null, project });
+const agent = (id: string, project: string | null = null): ArrangeEntry => ({ id, type: "agent", host: null, project });
 
 test("a site stacks at three tabs and holds until one is left", () => {
 	const two = [web("a", "x.example"), web("b", "x.example")];
@@ -27,19 +27,20 @@ test("a stack gathers its members at its first member's place", () => {
 		[web("a", "x.example"), web("b", "y.example"), web("c", "x.example"), web("d", "y.example"), web("e", "x.example")],
 		new Set(["x.example"]),
 		false,
+		false,
 	);
 	assert.deepEqual(rows.map((row) => row.id), ["a", "c", "e", "b", "d"]);
 	assert.deepEqual(rows.map((row) => row.stack), ["x.example", "x.example", "x.example", null, null]);
 });
 
 test("grouped rows put agents then terminals in trays above the web, each in list order", () => {
-	const rows = arrangeRows([web("w1", "x.example"), term("t1"), agent("a1"), web("w2", "y.example"), term("t2")], new Set(), true);
+	const rows = arrangeRows([web("w1", "x.example"), term("t1"), agent("a1"), web("w2", "y.example"), term("t2")], new Set(), true, false);
 	assert.deepEqual(rows.map((row) => row.id), ["a1", "t1", "t2", "w1", "w2"]);
 	assert.deepEqual(rows.map((row) => row.tray), ["agent", "terminal", "terminal", null, null]);
 });
 
 test("one kind of tab alone gets no tray", () => {
-	const rows = arrangeRows([term("t1"), term("t2")], new Set(), true);
+	const rows = arrangeRows([term("t1"), term("t2")], new Set(), true, false);
 	assert.deepEqual(rows.map((row) => row.tray), [null, null]);
 });
 
@@ -69,7 +70,7 @@ test("rows laid out from a folder's offset window against the same range", () =>
 });
 
 test("a stack its hosts still name but down to one tab is a plain row", () => {
-	const rows = arrangeRows([web("a", "x.example"), web("b", "y.example")], new Set(["x.example"]), false);
+	const rows = arrangeRows([web("a", "x.example"), web("b", "y.example")], new Set(["x.example"]), false, false);
 	assert.deepEqual(rows.map((row) => row.stack), [null, null]);
 });
 
@@ -99,4 +100,18 @@ test("a tray of the very same tabs keeps its array", () => {
 	assert.equal(next.get("agent"), last.get("agent"));
 	assert.notEqual(next.get("terminal"), last.get("terminal"));
 	assert.notEqual(keepSameGroups(new Map([["agent", [one, two]]]), last).get("agent"), last.get("agent"));
+});
+
+test("a project with two rows or more gathers them in a tray above the rest, in list order", () => {
+	const entries = [web("w1", "x.example"), term("t1", "/r/acme"), agent("a1", "/r/site"), agent("a2", "/r/acme"), term("t2")];
+	const rows = arrangeRows(entries, new Set(), false, true);
+	assert.deepEqual(rows.map((row) => row.id), ["t1", "a2", "w1", "a1", "t2"]);
+	assert.deepEqual(rows.map((row) => row.tray), ["project:/r/acme", "project:/r/acme", null, null, null]);
+});
+
+test("grouped by project and type, what no project holds falls into its type's tray", () => {
+	const entries = [web("w1", "x.example"), term("t1", "/r/acme"), agent("a1", "/r/site"), agent("a2", "/r/acme"), term("t2")];
+	const rows = arrangeRows(entries, new Set(), true, true);
+	assert.deepEqual(rows.map((row) => row.id), ["t1", "a2", "a1", "t2", "w1"]);
+	assert.deepEqual(rows.map((row) => row.tray), ["project:/r/acme", "project:/r/acme", "agent", "terminal", null]);
 });

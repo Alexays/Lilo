@@ -160,6 +160,17 @@ final class GitDiffTests: XCTestCase {
         XCTAssertEqual(real(directories.own), real(repository.appendingPathComponent(".git/worktrees/\(worktree.lastPathComponent)").path))
     }
 
+    func testAProjectIsTheMainCheckoutFromASubfolderOrALinkedWorktree() throws {
+        let worktree = repository.appendingPathExtension("wt")
+        defer { try? FileManager.default.removeItem(at: worktree) }
+        try git("worktree", "add", "-q", "-b", "feature", worktree.path)
+
+        let main = repository.resolvingSymlinksInPath().path
+        XCTAssertEqual(GitDiff.projectRoot(containing: repository.appendingPathComponent("Sources").path), main)
+        XCTAssertEqual(GitDiff.projectRoot(containing: worktree.appendingPathComponent("Sources").path), main)
+        XCTAssertNil(GitDiff.projectRoot(containing: FileManager.default.temporaryDirectory.path))
+    }
+
     func testNestedWorktreeIsNotAnUntrackedFile() throws {
         try git("worktree", "add", "-q", "-b", "feature", repository.appendingPathComponent("nested/wt").path)
 

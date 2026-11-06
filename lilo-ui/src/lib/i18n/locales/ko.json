@@ -2208,6 +2208,7 @@
 		"Close Stack": "스택 닫기",
 		"Stack Tabs by Site": "사이트별로 탭 스택",
 		"Group by Type": "유형별로 그룹화",
+		"Group by Project": "프로젝트별로 그룹화",
 		"Never Stack": "스택하지 않을 사이트",
 		"Stack Every Site Again": "모든 사이트 다시 스택",
 		"Sort by Site": "사이트별로 정렬",
