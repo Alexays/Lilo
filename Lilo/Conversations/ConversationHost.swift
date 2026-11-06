@@ -533,12 +533,12 @@ final class ConversationHost {
         }
     }
 
-    /// Starting the agent or a request outside a turn failed: the thread says why, unless the conversation is
-    /// gone or a sign-in in a terminal is under way. That sign-in holds no prompt, so the next one starts a
-    /// fresh agent that reads the new credentials.
+    /// Starting the agent or a request outside a turn failed: the thread says why, unless the conversation is gone.
+    /// A running turn reports it itself, and keeps the prompt a terminal sign-in holds.
     private func failedOutsideTurn(_ conversation: Conversation, _ error: Error) {
-        if error is CancellationError { return }
+        if error is CancellationError || conversation.state == .busy { return }
         if error is SignInPending {
+            // No prompt waits on that sign-in, so the next one starts a fresh agent that reads the new credentials.
             conversation.connection?.terminate()
             conversation.connection = nil
             setState(conversation, .idle)
@@ -546,8 +546,7 @@ final class ConversationHost {
         }
         conversation.lastError = error.localizedDescription
         append(conversation, ["sessionUpdate": "lilo_error", "message": error.localizedDescription])
-        // A running turn owns the state, and its own end or failure sets it.
-        if conversation.state != .busy { setState(conversation, .failed) }
+        setState(conversation, .failed)
     }
 
     /// The agent's process up and initialized, without opening a session: what signing in needs.
