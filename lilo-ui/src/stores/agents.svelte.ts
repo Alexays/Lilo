@@ -9,16 +9,21 @@ let _agentsProfileId = $state("");
 let _hiddenAgentsSpaceIds = $state.raw<string[]>([]);
 let _isolatedSpaceIds = $state.raw<string[]>([]);
 let _moods = $state.raw<Record<string, BridgeAgentMood>>({});
+let _actingTabIds = $state.raw(new Set<string>());
 // Names whose app icon was asked for once, so a name with no known app does not reload on every event.
 const _iconRequested = new Set<string>();
 
 export function initAgentsStore(): void {
 	on("agentActivity", (data) => {
 		_clients = data.clients;
-		_agentsSpaceIds = data.agentsSpaceIds;
+		// Every row reads these: kept as they are while unchanged, a call starting or ending redraws none.
+		if (data.agentsSpaceIds.join() !== _agentsSpaceIds.join()) _agentsSpaceIds = data.agentsSpaceIds;
 		_agentsProfileId = data.agentsProfileId ?? "";
-		_hiddenAgentsSpaceIds = data.hiddenAgentsSpaceIds;
-		_isolatedSpaceIds = data.isolatedSpaceIds ?? [];
+		if (data.hiddenAgentsSpaceIds.join() !== _hiddenAgentsSpaceIds.join()) _hiddenAgentsSpaceIds = data.hiddenAgentsSpaceIds;
+		const isolated = data.isolatedSpaceIds ?? [];
+		if (isolated.join() !== _isolatedSpaceIds.join()) _isolatedSpaceIds = isolated;
+		const acting = new Set(data.clients.flatMap((client) => client.actingTabIds));
+		if (acting.size !== _actingTabIds.size || [...acting].some((id) => !_actingTabIds.has(id))) _actingTabIds = acting;
 		// Between two calls a space keeps its mood while its agents still act, like the cursor.
 		const moods = data.moods;
 		for (const [spaceId, mood] of Object.entries(_moods)) {
@@ -38,8 +43,6 @@ export function initAgentsStore(): void {
 
 /** Agents connected to Lilo, and whether each is acting now. */
 export const getAgentClients = (): BridgeAgentClient[] => _clients;
-
-const _actingTabIds = $derived(new Set(_clients.flatMap((client) => client.actingTabIds)));
 
 /** Tabs an agent acts on now, or did a moment ago. */
 export const getActingAgentTabIds = (): Set<string> => _actingTabIds;

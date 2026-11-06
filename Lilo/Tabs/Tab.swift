@@ -434,6 +434,11 @@ final class RuntimeOverlayStore {
         states[tab.id]?.applied(to: tab) ?? tab
     }
 
+    /// Read at WebKit's progress rate, where building the whole tab would cost more than the tick.
+    func estimatedProgress(of id: UUID) -> Double {
+        states[id]?.estimatedProgress ?? 0
+    }
+
     func retainRuntimeStates(validTabIds: Set<UUID>) {
         let countBefore = states.count
         states = states.filter { validTabIds.contains($0.key) }

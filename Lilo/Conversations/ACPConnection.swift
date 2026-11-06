@@ -141,10 +141,17 @@ final class ACPConnection: @unchecked Sendable {
     private func receive(_ data: Data) {
         var messages: [Incoming] = []
         lock.withLock {
+            // Only the new bytes can hold a newline, and the lines read are dropped once: rescanning or
+            // shifting a large pending message per line would be quadratic.
+            let scanned = buffer.count
             buffer.append(data)
-            while let newline = buffer.firstIndex(of: 0x0A) {
-                let line = buffer[buffer.startIndex..<newline]
-                buffer.removeSubrange(buffer.startIndex...newline)
+            var lineStart = buffer.startIndex
+            var searchFrom = lineStart + scanned
+            defer { if lineStart > buffer.startIndex { buffer.removeSubrange(buffer.startIndex..<lineStart) } }
+            while let newline = buffer[searchFrom...].firstIndex(of: 0x0A) {
+                let line = buffer[lineStart..<newline]
+                lineStart = newline + 1
+                searchFrom = lineStart
                 guard !line.isEmpty, let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
                 if let method = object["method"] as? String {
                     let params = object["params"] as? [String: Any] ?? [:]

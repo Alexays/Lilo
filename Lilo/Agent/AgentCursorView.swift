@@ -33,7 +33,7 @@ final class AgentCursorView: NSView {
     private let blob = NSView(frame: CGRect(x: 0, y: 0, width: 22, height: 22))
     private let body = CALayer()
     private let eyes = CALayer()
-    private var blinkTimer: Timer?
+    private var lastBlink: CFTimeInterval = 0
     private var mood: Mood?
     private var moodLayers: [CALayer] = []
 
@@ -109,6 +109,15 @@ final class AgentCursorView: NSView {
             cursor.place(at: point)
         }
         if pressed { cursor.ripple(at: point) }
+        // Blinks along with the agent's moves rather than on a timer: an idle or hidden cursor costs nothing.
+        let now = CACurrentMediaTime()
+        if now - cursor.lastBlink >= 3, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            cursor.lastBlink = now
+            let blink = CAKeyframeAnimation(keyPath: "transform.scale.y")
+            blink.values = [1, 0.15, 1]
+            blink.duration = 0.14
+            cursor.eyes.add(blink, forKey: "blink")
+        }
     }
 
     /// The arrow is exact; the mascot and its name tag trail it on a spring, like a companion.
@@ -155,23 +164,6 @@ final class AgentCursorView: NSView {
             squash.duration = 0.45
             body.add(squash, forKey: key)
         }
-    }
-
-    // Blinks on a timer only while shown: a repeating Core Animation blink would keep the compositor busy.
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        blinkTimer?.invalidate()
-        blinkTimer = nil
-        guard unsafe window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
-        blinkTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated {
-                let blink = CAKeyframeAnimation(keyPath: "transform.scale.y")
-                blink.values = [1, 0.15, 1]
-                blink.duration = 0.14
-                self?.eyes.add(blink, forKey: "blink")
-            }
-        }
-        blinkTimer?.tolerance = 0.5
     }
 
     /// What the mascot acts out while a call runs on its tab, so a still pointer never reads as stuck.

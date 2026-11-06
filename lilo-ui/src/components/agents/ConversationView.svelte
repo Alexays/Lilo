@@ -549,11 +549,11 @@
                   <span class="status-label">{t("agents.status.waiting")}</span>
                 {:else if header.signingIn}
                   <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
-                  <span class="status-label shimmer">{t("agents.status.signingIn", { agent: header.agentName })}</span>
+                  <span class="status-label">{t("agents.status.signingIn", { agent: header.agentName })}</span>
                   <span class="status-hint">{t(header.signingIn.terminal ? "agents.status.signingInTerminalHint" : "agents.status.signingInHint")}</span>
                 {:else}
                   <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
-                  <span class="status-label shimmer">{t("agents.status.working")}</span>
+                  <span class="status-label">{t("agents.status.working")}</span>
                   <span class="elapsed" bind:this={elapsedEl} aria-hidden="true"></span>
                   <span class="status-hint">{t("agents.status.stopHint")}</span>
                 {/if}
@@ -1138,32 +1138,6 @@
     color: var(--text-secondary);
     font-size: var(--font-size-md);
     white-space: nowrap;
-  }
-
-  /* A light passing over the word while the agent works; it runs only while a turn does. */
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      var(--text-secondary) 0%,
-      var(--text-secondary) 40%,
-      var(--text-primary) 50%,
-      var(--text-secondary) 60%,
-      var(--text-secondary) 100%
-    );
-    background-size: 300% 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: shimmer 1.8s linear infinite;
-  }
-
-  @keyframes shimmer {
-    from {
-      background-position: 100% 0;
-    }
-    to {
-      background-position: 0 0;
-    }
   }
 
   .status-label {

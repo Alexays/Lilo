@@ -343,13 +343,36 @@ function replaceSpaceFromFullState(
 	const existing = _bySpace[spaceId];
 	const folders = (state.folders || []).map(coerceTabFolderSnapshot);
 	const treeItems = state.treeItems || [];
+	const activeTabId = holdActivation(
+		spaceId,
+		tabs,
+		resolveActiveTabId(tabs, state.activeTabId || "", existing?.activeTabId),
+	);
+	// A space switch resends a state the store usually holds already: keeping the record (or its
+	// view when only the selection moved) spares every sidebar reader.
+	if (
+		existing?.hydrated &&
+		tabs.length === existing.tabs.length &&
+		tabs.every((tab, index) => tab === existing.tabs[index]) &&
+		treeItems.length === existing.treeItems.length &&
+		treeItems.every((item, index) => {
+			const held = existing.treeItems[index];
+			return (
+				item.itemId === held.itemId &&
+				item.kind === held.kind &&
+				item.section === held.section &&
+				item.sortOrder === held.sortOrder &&
+				(item.parentFolderId ?? null) === (held.parentFolderId ?? null)
+			);
+		}) &&
+		JSON.stringify(folders) === JSON.stringify(existing.folders)
+	) {
+		if (activeTabId !== existing.activeTabId) putSpaceSidebar(spaceId, { ...existing, activeTabId });
+		return;
+	}
 	putSpaceSidebar(spaceId, {
 		tabs,
-		activeTabId: holdActivation(
-			spaceId,
-			tabs,
-			resolveActiveTabId(tabs, state.activeTabId || "", existing?.activeTabId),
-		),
+		activeTabId,
 		hydrated: true,
 		folders,
 		treeItems,
@@ -384,11 +407,11 @@ function applyBrowserStatePatch(data: BridgeBrowserStatePatchPayload): void {
 	flushTabUpdates(pending);
 }
 
-function applyUpserts<T extends { id: string }>(
+function applyUpserts<T>(
 	existing: T[],
 	removedIds: Set<string>,
 	upsertsById: Map<string, T>,
-	key: (item: T) => string = (item) => item.id,
+	key: (item: T) => string,
 ): T[] {
 	if (removedIds.size === 0 && upsertsById.size === 0) return existing;
 	const existingIds = new Set(existing.map(key));
@@ -426,7 +449,7 @@ function applySidebarChanged(data: BridgeSidebarChangedPayload): void {
 			return [tab.id, tab];
 		}),
 	);
-	const nextTabs = applyUpserts(current.tabs, removedTabIds, upsertTabsById);
+	const nextTabs = applyUpserts(current.tabs, removedTabIds, upsertTabsById, (tab) => tab.id);
 
 	const removedFolderIds = new Set(data.removedFolderIds ?? []);
 	const upsertFoldersById = new Map(
@@ -435,9 +458,8 @@ function applySidebarChanged(data: BridgeSidebarChangedPayload): void {
 			coerceTabFolderSnapshot(folder),
 		]),
 	);
-	const nextFolders = applyUpserts(current.folders, removedFolderIds, upsertFoldersById);
+	const nextFolders = applyUpserts(current.folders, removedFolderIds, upsertFoldersById, (folder) => folder.id);
 
-	// Tree deltas key on itemId: the host synthesizes each item's `id` afresh.
 	const removedTreeItemIds = new Set(data.removedTreeItemIds ?? []);
 	const upsertTreeItemsById = new Map((data.upsertTreeItems ?? []).map((item) => [item.itemId, item]));
 	const nextTreeItems =
@@ -488,11 +510,10 @@ type PendingTabUpdates = Map<
 function flushTabUpdates(pending: PendingTabUpdates): void {
 	for (const [spaceId, { tabs, updated, structural }] of pending) {
 		const current = getSpaceSidebar(spaceId);
-		writeSpace(
-			spaceId,
-			{ ...current, tabs },
-			structural ? {} : { reuseView: viewWithUpdatedTabs(current.view, updated) },
-		);
+		// Without a membership or isClosed change the active tab still resolves to itself, so only a
+		// structural update pays writeSpace's normalization scan.
+		if (structural) writeSpace(spaceId, { ...current, tabs });
+		else putSpaceSidebar(spaceId, { ...current, tabs, view: viewWithUpdatedTabs(current.view, updated) });
 	}
 	pending.clear();
 }
@@ -505,20 +526,20 @@ function applyTabUpdated(data: BridgeTabUpdatedPayload, pending: PendingTabUpdat
 	// Runtime patches omit the favicon (and any unchanged field), so merge the present fields
 	// onto the existing tab instead of wholesale-replacing it.
 	const entry = pending.get(spaceId);
-	const tabs = entry?.tabs ?? getSpaceSidebar(spaceId).tabs;
-	const index = tabs.findIndex((t) => t.id === patch.id);
-	if (index < 0) return;
+	const current = getSpaceSidebar(spaceId);
+	// The view's map holds every tab of the record, so a progress tick resolves without scanning the list.
+	const previous = entry?.updated.get(patch.id) ?? current.view.tabsById.get(patch.id);
+	if (!previous) return;
 
 	// A patch that changes nothing must not rewrite the record: every sidebar reader re-runs on
 	// each write.
-	const previous = tabs[index];
 	const fields = coerceTabPatch(patch);
 	const keys = Object.keys(fields) as (keyof BridgeTabSnapshot)[];
 	if (keys.every((key) => Object.is(fields[key], previous[key]))) return;
+	const tabs = entry?.tabs ?? current.tabs;
+	const index = tabs.indexOf(previous);
+	if (index < 0) return;
 
-	// The patch's activeTabId is ignored: it is the host's as of when the patch was buffered, so it
-	// can predate a click's optimistic activation and bounce the highlight back. Activation arrives
-	// through sidebarChanged and full state only.
 	const tab = { ...previous, ...fields };
 	const structural = !sameViewFlags(previous, tab);
 	if (entry) {

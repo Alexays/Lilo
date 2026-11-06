@@ -153,11 +153,6 @@ final class PowerKeeper {
         update()
     }
 
-    /// Sends the current state even when unchanged, for a window that just asked for it.
-    func republish() {
-        onChange?(state)
-    }
-
     // MARK: Terminals
 
     func terminalStatusChanged(_ id: UUID, _ status: TerminalSession.Status) {

@@ -8,6 +8,8 @@ struct FaviconStore: Sendable {
         var host: String
         var dataURL: String
         var dominantColor: String?
+        /// When the row was last written; distantPast for an entry not read from a store.
+        var updatedAt = Date.distantPast
     }
 
     static let maxRows = 500
@@ -29,8 +31,8 @@ struct FaviconStore: Sendable {
     /// Every persisted favicon, oldest-first so LRU cache warming leaves the newest at the head.
     func all() throws -> [Entry] {
         try dbPool.read { db in
-            try Row.fetchAll(db, sql: "SELECT host, dataURL, dominantColor FROM favicons ORDER BY updatedAt").map {
-                Entry(host: $0["host"], dataURL: $0["dataURL"], dominantColor: $0["dominantColor"])
+            try Row.fetchAll(db, sql: "SELECT host, dataURL, dominantColor, updatedAt FROM favicons ORDER BY updatedAt").map {
+                Entry(host: $0["host"], dataURL: $0["dataURL"], dominantColor: $0["dominantColor"], updatedAt: $0["updatedAt"])
             }
         }
     }
@@ -41,10 +43,10 @@ struct FaviconStore: Sendable {
         return try dbPool.read { db in
             try Row.fetchAll(
                 db,
-                sql: "SELECT host, dataURL, dominantColor FROM favicons WHERE host IN (\(databaseQuestionMarks(count: hosts.count)))",
+                sql: "SELECT host, dataURL, dominantColor, updatedAt FROM favicons WHERE host IN (\(databaseQuestionMarks(count: hosts.count)))",
                 arguments: StatementArguments(Array(hosts))
             ).map {
-                Entry(host: $0["host"], dataURL: $0["dataURL"], dominantColor: $0["dominantColor"])
+                Entry(host: $0["host"], dataURL: $0["dataURL"], dominantColor: $0["dominantColor"], updatedAt: $0["updatedAt"])
             }
         }
     }

@@ -228,8 +228,13 @@ extension MainWindowController {
         // initialState re-seeds the chrome from scratch and carries favicons only for the current
         // space's tabs; every other space must ship favicons again on its first full-state emit.
         chromeFaviconSyncedSpaceIds = tabManager.currentSpaceId.map { [$0] } ?? []
+        chromeStaleFaviconTabIds = []
         sentTabPatches = [:]
         sentExtensionRows = [:]
+        sentArchiveFavicons = [:]
+        // A reloaded chrome has lost its capture cards: nothing can open their captures any more.
+        copiedCaptures.keys.forEach(ChromeUISchemeHandler.discardScreenshot)
+        copiedCaptures = [:]
         for row in data["extensions"] as? [[String: Any]] ?? [] {
             if let id = row["id"] as? String { sentExtensionRows[id] = row }
         }

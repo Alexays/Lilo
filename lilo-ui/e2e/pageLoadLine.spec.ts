@@ -10,7 +10,7 @@ function receive(page: Page, message: Record<string, unknown>): Promise<void> {
 function load(page: Page, tab: BridgeTabSnapshot, isLoading: boolean, progress: number): Promise<void> {
 	return receive(page, {
 		event: "browserStatePatch",
-		operations: [{ kind: "tabUpdated", spaceId: tab.spaceId, activeTabId: tab.id, tab: { ...tab, isLoading, progress } }],
+		operations: [{ kind: "tabUpdated", spaceId: tab.spaceId, tab: { ...tab, isLoading, progress } }],
 	});
 }
 

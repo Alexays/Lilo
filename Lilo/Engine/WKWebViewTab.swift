@@ -340,6 +340,8 @@ final class WKWebViewTab: NSObject {
     /// Bumped on every page color update: a capture of the top edge answers only for the page it was taken of.
     private var pageEdgeCapture = 0
     private var pageColorRecapture: Task<Void, Never>?
+    /// A recapture skipped while frozen, taken on resume.
+    private var pageColorStale = false
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
     private var pendingMainFrameURL: URL?
@@ -580,7 +582,7 @@ final class WKWebViewTab: NSObject {
     var isInCall: Bool { hasActiveCapture || callControls.isCall }
 
     /// Active media on the page: an ongoing capture (call) or audible playback.
-    private var hasActiveMedia: Bool {
+    var hasActiveMedia: Bool {
         hasActiveCapture || (lastNavigationEmissionState.isAudioPlaying ?? false)
     }
 
@@ -603,7 +605,13 @@ final class WKWebViewTab: NSObject {
     func resume(completion: @escaping () -> Void = {}) {
         guard isFrozen, !isPageLost else { return completion() }
         isFrozen = false
-        freezer.resume(webView, completion: completion)
+        freezer.resume(webView) { [weak self] in
+            if let self, pageColorStale {
+                pageColorStale = false
+                recapturePageColor()
+            }
+            completion()
+        }
     }
 
     /// Resumes the page ahead of a call WebKit refuses on a suspended one. False when the page is lost:
@@ -805,7 +813,7 @@ final class WKWebViewTab: NSObject {
         Task { [weak self] in
             // A feed's images and a player load after the load event, and they are what the next visit waits on.
             try? await Task.sleep(for: .seconds(2))
-            guard let self, webView.url == page else { return }
+            guard let self, !isFrozen, webView.url == page else { return }
             let found = try? await webView.evaluateJavaScript("""
                 (() => { const counts = {};
                   for (const entry of performance.getEntriesByType('resource')) {
@@ -1217,6 +1225,10 @@ final class WKWebViewTab: NSObject {
     /// WebKit samples the top edge only when a page loads: a page changed by script since is read off its pixels.
     /// Route changes come in bursts (a scroll-spy rewriting the hash as the page scrolls): one capture once they settle.
     private func recapturePageColor() {
+        if isFrozen {
+            pageColorStale = true
+            return
+        }
         guard !webView.isLoading, lastNavigationEmissionState.pageColor != nil else { return }
         pageColorRecapture?.cancel()
         let capture = pageEdgeCapture
@@ -1224,6 +1236,10 @@ final class WKWebViewTab: NSObject {
             try? await Task.sleep(for: .milliseconds(250))
             // A load or a color update since speaks for the page instead.
             guard let self, !Task.isCancelled, capture == pageEdgeCapture, !webView.isLoading else { return }
+            if isFrozen {
+                pageColorStale = true
+                return
+            }
             sampledPageTopColor = nil
             emitPageColor(loaded: true)
         }
@@ -1240,12 +1256,13 @@ final class WKWebViewTab: NSObject {
     private func captureTopEdge(again: Bool = true) {
         let capture = pageEdgeCapture
         let width = webView.bounds.width
-        guard width > 0 else { return }
+        guard !isFrozen, width > 0 else { return }
         let configuration = WKSnapshotConfiguration()
         configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, Self.edgeBand))
         Task { [weak self] in
-            let image = try? await self?.webView.takeSnapshot(configuration: configuration)
-            guard let self, capture == pageEdgeCapture else { return }
+            guard let self, !isFrozen else { return }
+            let image = try? await webView.takeSnapshot(configuration: configuration)
+            guard capture == pageEdgeCapture else { return }
             if let stops = image.flatMap(Self.edgeStops) { sendPageColor(stops) }
             guard again else { return }
             try? await Task.sleep(for: .seconds(1))

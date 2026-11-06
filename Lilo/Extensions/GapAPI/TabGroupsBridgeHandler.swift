@@ -259,6 +259,7 @@ final class TabGroupsBridgeHandler: GapHandler {
             return details
         }
         guard call.bool("state"), let caller = call.context else { return ["tabs": tabs] }
+        call.registry.tabStateAskers.insert(call.extensionId)
         return ["tabs": tabs, "state": Self.json(sendTabState(for: caller, registry: call.registry), for: caller, registry: call.registry)]
     }
 
@@ -283,7 +284,7 @@ final class TabGroupsBridgeHandler: GapHandler {
         )
         guard registry.sentTabStates[hasPrivateAccess] != state else { return state }
         registry.sentTabStates[hasPrivateAccess] = state
-        registry.sendToOpenChannels(hasPrivateAccess: hasPrivateAccess) { ["push": "tabs.state", "args": [Self.json(state, for: $0, registry: registry)]] }
+        registry.sendToOpenChannels(of: registry.tabStateAskers, hasPrivateAccess: hasPrivateAccess) { ["push": "tabs.state", "args": [Self.json(state, for: $0, registry: registry)]] }
         return state
     }
 

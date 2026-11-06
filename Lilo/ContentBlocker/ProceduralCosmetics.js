@@ -239,7 +239,17 @@
             var found = scopeRoot.querySelectorAll(css);
             for (var f = 0; f < found.length; f++) nodes.push(found[f]);
           }
-          for (var a = 0; a < scope.ancestors.length; a++) { if (scope.ancestors[a].matches(css)) nodes.push(scope.ancestors[a]); }
+          // A plain leading text condition: an ancestor's text grows only by the roots' text, so when no root's text matches,
+          // the ancestor's whole text, often the page's, is not read again. A regex can match across the old and new text, and
+          // :has(), :empty and :xpath() look at the new subtree, so those keep testing the ancestors.
+          var first = ops[0];
+          var textFirst = first && (first.name === 'has-text' || first.name === 'contains' || first.name === '-abp-contains') &&
+            !/^\/.+\/[a-z]*$/.test(first.arg);
+          if (!textFirst || parsed.path || /:has\(|:empty/.test(css) ||
+              ops.some(function (op) { return op.name === 'has' || op.name === 'xpath'; }) ||
+              scope.roots.some(function (el) { return first.re.test(textOf(el)); })) {
+            for (var a = 0; a < scope.ancestors.length; a++) { if (scope.ancestors[a].matches(css)) nodes.push(scope.ancestors[a]); }
+          }
         }
       } catch (e) { return null; }
     }

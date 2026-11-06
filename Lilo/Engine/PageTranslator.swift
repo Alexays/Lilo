@@ -105,28 +105,30 @@ final class PageTranslator {
       const parent = node.parentElement;
       return !!parent && !parent.isContentEditable && !parent.closest(skipped) && /\\p{L}/u.test(node.nodeValue);
     };
-    const state = { nodes: [], originals: [], tracked: new WeakSet(), pending: [], wake: null, timer: 0 };
+    const state = { nodes: [], originals: [], ids: new WeakMap(), pending: new Set(), wake: null, timer: 0 };
     const track = (node) => {
-      state.tracked.add(node);
-      state.pending.push(state.nodes.push(node) - 1);
+      const id = state.nodes.push(node) - 1;
+      state.ids.set(node, id);
+      state.pending.add(id);
       state.originals.push(node.nodeValue);
     };
     const collect = (root) => {
       if (root.nodeType === Node.TEXT_NODE) {
-        if (!state.tracked.has(root) && accepts(root)) track(root);
+        if (!state.ids.has(root) && accepts(root)) track(root);
         return;
       }
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-        acceptNode: (node) => !state.tracked.has(node) && accepts(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+        acceptNode: (node) => !state.ids.has(node) && accepts(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
       });
       while (walker.nextNode()) track(walker.currentNode);
     };
     // Bursts of changes (a feed page, a route) go out as one batch.
     state.flush = () => {
-      if (!state.wake || !state.pending.length || state.timer) return;
+      if (!state.wake || !state.pending.size || state.timer) return;
       state.timer = setTimeout(() => {
         state.timer = 0;
-        const ids = state.pending.splice(0), wake = state.wake;
+        const ids = [...state.pending], wake = state.wake;
+        state.pending.clear();
         state.wake = null;
         wake({ ids, texts: ids.map((id) => state.originals[id].trim()) });
       }, 300);
@@ -134,7 +136,15 @@ final class PageTranslator {
     state.observe = (records) => {
       for (const record of records) {
         if (record.type === "characterData") {
-          if (accepts(record.target)) track(record.target);
+          if (!accepts(record.target)) continue;
+          // A node rewritten many times in one batch is translated once, from its latest text.
+          const id = state.ids.get(record.target);
+          if (id === undefined) {
+            track(record.target);
+          } else {
+            state.originals[id] = record.target.nodeValue;
+            state.pending.add(id);
+          }
         } else {
           record.addedNodes.forEach(collect);
         }
@@ -143,7 +153,7 @@ final class PageTranslator {
     };
     collect(document.body ?? document.documentElement);
     const texts = state.originals.map((text) => text.trim());
-    state.pending = [];
+    state.pending.clear();
     state.observer = new MutationObserver(state.observe);
     state.observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
     window.__liloTranslation = state;

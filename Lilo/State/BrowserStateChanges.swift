@@ -90,29 +90,33 @@ enum BrowserChangePresenter {
         )
     }
 
-    /// The tab payload is built once and shared by every window; only the selection differs.
-    static func tabUpdatedEvent(tabPayload: [String: Any], spaceId: UUID, activeTabId: UUID?) -> Event {
+    /// Carries no selection: activation reaches the chrome through sidebarChanged and full state only.
+    static func tabUpdatedEvent(tabPayload: [String: Any], spaceId: UUID) -> Event {
         patchEvent(
             spaceId: spaceId,
             operation: [
                 "kind": "tabUpdated",
                 "spaceId": spaceId.uuidString,
-                "activeTabId": activeTabId?.uuidString ?? "",
                 "tab": tabPayload
             ]
         )
     }
 
     /// A mutation that captured its pre-projection ships the diff (nil when nothing observable changed); resync paths ship the full state.
-    /// `omitFaviconsForSpaces`: spaces whose favicons the chrome already holds, so their snapshots drop the heavy base64 favicons.
-    static func event(for changes: BrowserChangeSet, omitFaviconsForSpaces: Set<UUID> = []) -> Event? {
+    /// `omitFaviconsForSpaces`: spaces whose favicons the chrome already holds, so their snapshots drop the heavy base64 favicons,
+    /// except for `staleFaviconTabIds`, whose favicon changed since the chrome received it.
+    static func event(
+        for changes: BrowserChangeSet,
+        omitFaviconsForSpaces: Set<UUID> = [],
+        staleFaviconTabIds: Set<UUID> = []
+    ) -> Event? {
         if changes.states.count == 1,
            let changedState = changes.changedState,
            let previous = changedState.previousProjection {
             return sidebarChangedEvent(for: changedState, previous: previous)
         }
 
-        return fullStateEvent(for: changes, omitFaviconsForSpaces: omitFaviconsForSpaces)
+        return fullStateEvent(for: changes, omitFaviconsForSpaces: omitFaviconsForSpaces, staleFaviconTabIds: staleFaviconTabIds)
     }
 
     private static func sidebarChangedEvent(for change: BrowserSpaceChange, previous: SpaceTabProjection) -> Event? {
@@ -158,10 +162,16 @@ enum BrowserChangePresenter {
         Event(name: "browserStatePatch", data: ["changedSpaceId": spaceId.uuidString, "operations": [operation]])
     }
 
-    private static func fullStateEvent(for changes: BrowserChangeSet, omitFaviconsForSpaces: Set<UUID>) -> Event {
+    private static func fullStateEvent(
+        for changes: BrowserChangeSet,
+        omitFaviconsForSpaces: Set<UUID>,
+        staleFaviconTabIds: Set<UUID>
+    ) -> Event {
         var data: [String: Any] = [
             "changedSpaceId": changes.spaceId.uuidString,
-            "states": changes.states.map { statePayload($0, omitFavicons: omitFaviconsForSpaces.contains($0.spaceId)) }
+            "states": changes.states.map {
+                statePayload($0, omitFavicons: omitFaviconsForSpaces.contains($0.spaceId), staleFaviconTabIds: staleFaviconTabIds)
+            }
         ]
         if let transitionId = changes.transitionId {
             data["transitionId"] = transitionId
@@ -173,14 +183,16 @@ enum BrowserChangePresenter {
         return Event(name: "browserStateChanged", data: data)
     }
 
-    private static func statePayload(_ change: BrowserSpaceChange, omitFavicons: Bool) -> [String: Any] {
+    private static func statePayload(_ change: BrowserSpaceChange, omitFavicons: Bool, staleFaviconTabIds: Set<UUID>) -> [String: Any] {
         return [
             "spaceId": change.spaceId.uuidString,
             "activeTabId": change.state.activeTabId?.uuidString ?? "",
             // Omitting faviconDataURL keeps the base64 payload out of full-state sends for spaces
             // whose favicons the chrome already holds; the UI keeps its existing favicon when the
             // field is absent (see the sidebar store's full-state merge).
-            "tabs": change.projection.tabs.map { omitFavicons ? $0.snapshotData(excluding: [.faviconDataURL]) : $0.snapshotData() },
+            "tabs": change.projection.tabs.map {
+                omitFavicons && !staleFaviconTabIds.contains($0.id) ? $0.snapshotData(excluding: [.faviconDataURL]) : $0.snapshotData()
+            },
             "folders": change.projection.folders.map(\.bridgeData),
             "treeItems": change.projection.treeItems.map(\.bridgeData)
         ]

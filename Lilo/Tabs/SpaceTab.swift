@@ -21,8 +21,8 @@ struct SpaceTab {
     /// projected content changes, so projection memos key on both.
     private(set) var contentRevision: UInt64 = 0
 
-    /// Bumped on every durable mutation for session-save dedup, which `structureToken` cannot drive (it survives activation). Every mutator
-    /// goes through `finishMutation()`/`finishContentMutation()` except `activateTab`'s non-reopen path, which bumps it directly.
+    /// Bumped on every durable mutation for session-save dedup, which `structureToken` cannot drive (it survives activation). Activation alone
+    /// leaves it be: the spaces table persists the active tab, and the next durable save or the quit carries the activation history.
     private(set) var durableRevision: UInt64 = 0
 
     init(spaceId: UUID, state: SpaceTabState) {
@@ -42,18 +42,8 @@ struct SpaceTab {
                   updateTab(tabId, in: &state.tree, mutate: { $0.isClosed = false }) else { return }
             reopenedClosedTab = true
         }
-        // Capture before any mutation so the bump guard sees the full activation delta.
-        let previousActiveTabId = state.activeTabId
-        let previousHistory = state.activationHistory
         promoteActive(tabId)
-        if reopenedClosedTab {
-            finishMutation()
-        } else if state.activeTabId != previousActiveTabId || state.activationHistory != previousHistory {
-            // Activation is non-structural (no finishMutation), but activeTabId/activationHistory are
-            // durable, bump so the change persists. Guarded so re-activating the already-active tab,
-            // which mutates nothing, doesn't trigger a spurious save.
-            durableRevision &+= 1
-        }
+        if reopenedClosedTab { finishMutation() }
     }
 
     /// Leaves the Space on no tab; the one it showed heads the activation history, its view time kept for the idle sweep.
@@ -556,7 +546,7 @@ struct SpaceTab {
     private mutating func finishMutation() {
         let interval = PerfSignposts.browserState.beginInterval("repairAndIndex")
         state = SpaceTabStateRepair.repaired(state)
-        index = SidebarNodeIndex(tree: state.tree)
+        index = SidebarNodeIndex(tree: state.tree, capacity: index.nodePathById.count)
         structureToken = UUID()
         durableRevision &+= 1
         PerfSignposts.browserState.endInterval("repairAndIndex", interval)

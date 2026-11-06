@@ -200,9 +200,8 @@ extension MainWindowController {
             little.window.backgroundColor = resolvedColor
             little.engine.applyPageBackgroundColor(surfaceColor)
         }
-        // The visible frame paint: fades over ~0.34s to match the chrome sidebar's own
-        // background-color transition (the UI throttles updateWindowBackground to ~10Hz
-        // during space swipes; the native fade smooths between samples).
+        // The visible frame paint: fades over ~0.34s to match the chrome sidebar's own background-color transition.
+        // Space swipes take `applySwipeFrameColor` instead, frame by frame without a fade.
         windowFrameView?.setFrameColor(frameColor)
         syncPageBar()
         (contentContainerView as? ContentContainerView)?.stageColor = resolvedColor
@@ -229,11 +228,8 @@ extension MainWindowController {
     /// brings the full update (page surfaces, popups, the saved color).
     func applySwipeFrameColor(_ cssColor: String) {
         guard let color = NSColor(cssHex: cssColor) else { return }
-        if glassView == nil {
-            window?.backgroundColor = color
-        } else {
-            glassView?.tintColor = color.withAlphaComponent(0.2)
-        }
+        // Without glass the opaque frame bands hide the window background, so only the glass tint needs the color.
+        glassView?.tintColor = color.withAlphaComponent(0.2)
         windowFrameView?.setFrameColor(glassView == nil ? color : color.withAlphaComponent(0.06), animated: false)
         lastAppliedWindowChromeColor = nil
     }
@@ -312,7 +308,8 @@ extension MainWindowController {
                     Self.loadPreloadedSpaceRestoreState(from: dbManager, space: preloadSpace, loadsFavicons: loadsFavicons)
                 }) else { return nil }
                 for entry in loaded.favicons {
-                    self.context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                    self.context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
+                                                             persistedAt: [preloadSpace.profileId: entry.updatedAt])
                 }
                 if loadsFavicons { self.context.lastFaviconWarmProfileId = preloadSpace.profileId }
                 return loaded.state
@@ -815,7 +812,7 @@ extension MainWindowController {
         let currentSpaceId = tabManager.currentSpaceId
         let currentTreeItems = currentSpaceId.map { tabManager.sidebarTreeItems(forSpace: $0) } ?? []
         var data: [String: Any] = [
-            "tabs": currentSpaceId.map { tabManager.tabs(forSpace: $0).map(\.bridgeData) } ?? [],
+            "tabs": currentSpaceId.map { tabManager.tabs(forSpace: $0).map { $0.snapshotData() } } ?? [],
             "folders": currentSpaceId.map { tabManager.folders(forSpace: $0).map(\.bridgeData) } ?? [],
             "treeItems": currentTreeItems.map(\.bridgeData),
             "activeTabId": tabManager.activeOpenTabId?.uuidString ?? "",

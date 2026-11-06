@@ -81,7 +81,8 @@ export async function installFakeHost(
 				...(transitionId ? { transitionId } : {}),
 				states: spaceIds.map(spaceState),
 			};
-			setTimeout(() => window.__lilo?.receive(event), 0);
+			// Cloned like the real host's JSON: the store must never hold this model's mutable objects.
+			setTimeout(() => window.__lilo?.receive(structuredClone(event)), 0);
 		}
 
 		function findTabSpace(tabId: string): string | null {
@@ -217,8 +218,6 @@ export async function installFakeHost(
 			const targetItems = itemsOf(targetSpaceId);
 			targetItems.push({
 				...item,
-				id: `${targetSpaceId}-${tabId}-unpinned`,
-				spaceId: targetSpaceId,
 				section: "unpinned",
 				parentFolderId: null,
 				sortOrder: Math.max(...targetItems.map((i) => i.sortOrder), 0) + 1,
@@ -300,7 +299,7 @@ export async function installFakeHost(
 				lilo: { postMessage: handle },
 			},
 		};
-		window.__liloBootstrapEvents = [
+		window.__liloBootstrapEvents = structuredClone([
 			{
 				event: "initialState",
 				tabs: tabsOf(state.activeSpaceId),
@@ -320,7 +319,7 @@ export async function installFakeHost(
 			{ event: "shortcutKeys", keys: state.shortcutKeys ?? {} },
 			// Every fixture tab is on example.com: site stacks would gather them in every test.
 			{ event: "settingsLoaded", settings: { sidebarStackTabs: "false", ...state.settings } },
-		];
+		]);
 	}, world);
 }
 

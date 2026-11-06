@@ -219,6 +219,7 @@ final class TabManager {
         if let adapter = engineHost.removeTabAdapter(for: id), let registry = extensionRegistry {
             registry.controller.didCloseTab(adapter, windowIsClosing: false)
         }
+        extensionRegistry?.forgetTab(id)
         engineHost.teardown(engineHost.removeEngine(for: id))
         // Close/discard removes the tab from the tree; drop its overlay entry at the source so it can't
         // orphan. This is what lets the post-command projection skip the O(all-tabs) global prune.

@@ -124,6 +124,9 @@ final class TerminalFrameBuilder {
             }
             if atlas.generation == atlasGeneration { break }
         }
+        // A screen the atlas cannot hold even when refilled keeps this fill: refilling it again on
+        // every update would rasterize the whole screen each time and still not fit.
+        atlasGeneration = atlas.generation
         // An overscan row that no longer exists (top of history, or following the bottom) is empty.
         let overscan = state.overscan
         if overscan.above == 0 { clearSlot(0) }

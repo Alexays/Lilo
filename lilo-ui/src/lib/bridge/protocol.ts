@@ -197,8 +197,6 @@ export interface BridgeTabFolderSnapshot {
 export type { BridgeTabSnapshot } from "./tabProtocol.gen";
 
 export interface BridgeSidebarTreeItemSnapshot {
-	id: string;
-	spaceId: string;
 	kind: BridgeSidebarItemKind;
 	itemId: string;
 	parentFolderId?: string | null;
@@ -244,7 +242,6 @@ export interface BridgeBrowserStateChangedPayload {
 
 export interface BridgeTabUpdatedPayload {
 	spaceId: string;
-	activeTabId: string;
 	tab: BridgeTabSnapshot;
 }
 
@@ -289,7 +286,6 @@ export interface BridgeExtensionSnapshot {
 	description: string;
 	isEnabled: boolean;
 	iconDataURL?: string | null;
-	iconVersion?: number;
 	hasPopup: boolean;
 	hasBackground: boolean;
 	hasContentScripts: boolean;

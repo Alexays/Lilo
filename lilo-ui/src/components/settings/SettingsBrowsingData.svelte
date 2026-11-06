@@ -39,7 +39,10 @@
     siteData: t("settings.clearData.hints.siteData", { count: sites.length }),
   });
 
-  onMount(() => settingsActions.loadBrowsingDataSizes());
+  onMount(() => {
+    settingsActions.loadBrowsingDataSizes();
+    settingsActions.loadWebsiteData();
+  });
 
   // The sizes measured after a clear are its answer: the job is done.
   $effect(() => {

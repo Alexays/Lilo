@@ -103,8 +103,9 @@ final class CookieChangeTracker: NSObject, WKHTTPCookieStoreObserver {
     private let store: WKHTTPCookieStore
     private let report: ([Change]) -> Void
     private let snapshot = Snapshot()
-    /// Changes arriving while a read runs share the next one, so a page load's burst of Set-Cookie
-    /// headers costs a couple of reads, while changes an extension makes one after another each show.
+    /// The store's own notices wait a quarter second, so a page load's burst of Set-Cookie headers costs one
+    /// read of the whole jar, while `catchUp` reads at once and changes an extension makes one after another each show.
+    private var pending: Task<Void, Never>?
     private var reading = false
     /// The store changed after the running read began: it reads again once done.
     private var stale = false
@@ -122,20 +123,34 @@ final class CookieChangeTracker: NSObject, WKHTTPCookieStoreObserver {
     /// Returns once a read that began after this call is done: the changes made before it are reported,
     /// each apart from those that come after, as Chrome reports changes an extension makes one by one.
     func catchUp() async {
-        cookiesDidChange(in: store)
+        pending?.cancel()
+        pending = nil
+        read()
         await current?.value
     }
 
     func stop() {
         stopped = true
+        pending?.cancel()
+        pending = nil
         store.remove(self)
     }
 
     func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
-        if reading { stale = true } else { read() }
+        guard pending == nil else { return }
+        pending = Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled else { return }
+            pending = nil
+            read()
+        }
     }
 
     private func read() {
+        if reading {
+            stale = true
+            return
+        }
         reading = true
         current = Task {
             repeat {

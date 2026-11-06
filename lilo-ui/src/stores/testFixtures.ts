@@ -42,8 +42,6 @@ export function treeItem(
 	parentFolderId: string | null = null,
 ) {
 	return {
-		id: `${spaceId}-${itemId}-${section}`,
-		spaceId,
 		kind,
 		itemId,
 		parentFolderId,

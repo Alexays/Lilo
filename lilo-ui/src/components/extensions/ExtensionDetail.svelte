@@ -20,7 +20,6 @@
   import {
     displayInitial,
     extensionCapabilities,
-    extensionIconSrc,
     formatShortcut,
     isExtensionDegraded,
     normalizeSiteHost,
@@ -106,9 +105,9 @@
 <div class="extension-detail">
   <div class="detail-head">
     <span class="detail-icon">
-      {#if extensionIconSrc(extension)}
+      {#if extension.iconDataURL}
         <img
-          src={extensionIconSrc(extension)}
+          src={extension.iconDataURL}
           alt=""
           draggable="false"
           onerror={(event) => {

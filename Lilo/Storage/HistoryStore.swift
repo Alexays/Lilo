@@ -309,13 +309,17 @@ final class HistoryStore: @unchecked Sendable {
     @discardableResult
     func deleteEntries(from startDate: Date, to endDate: Date) throws -> [String] {
         guard startDate <= endDate else { return [] }
-        return try deleteVisits(where: "visitedAt >= ? AND visitedAt <= ?", arguments: [startDate, endDate])
+        let urls = try deleteVisits(where: "visitedAt >= ? AND visitedAt <= ?", arguments: [startDate, endDate])
+        if !urls.isEmpty { onChange?(.removed(allHistory: false, urls: urls)) }
+        return urls
     }
 
     /// Deletes what History page rows stand for: each page's visits on that row's local day, only `openedFrom`'s when given.
     @discardableResult
     func deleteDayRows(_ rows: [(pageId: UUID, dayStart: Date)], openedFrom: String?, calendar: Calendar = .current) throws -> [String] {
         var removed: [String] = []
+        // Chunks committed before one throws are reported all the same.
+        defer { if !removed.isEmpty { onChange?(.removed(allHistory: false, urls: removed)) } }
         // Three bound values a row: chunks stay far below SQLite's variable limit.
         for chunk in stride(from: 0, to: rows.count, by: 300).map({ rows[$0..<min($0 + 300, rows.count)] }) {
             var arguments: StatementArguments = []
@@ -345,10 +349,10 @@ final class HistoryStore: @unchecked Sendable {
     }
 
     /// Deletes the visits `predicate` (on `historyVisit`) selects, then settles their pages: a page left without visits goes, the
-    /// others fall back to their newest remaining visit. Returns the URLs of the pages removed entirely.
+    /// others fall back to their newest remaining visit. Returns the URLs of the pages removed entirely; the caller reports them.
     private func deleteVisits(where predicate: String, arguments: StatementArguments) throws -> [String] {
         flushPendingWrites()
-        let urls = try dbPool.write { db -> [String] in
+        return try dbPool.write { db -> [String] in
             let deleted = try Row.fetchAll(db, sql: "SELECT pageId, COUNT(*) AS count FROM historyVisit WHERE \(predicate) GROUP BY pageId",
                                            arguments: arguments)
             guard !deleted.isEmpty else { return [] }
@@ -369,8 +373,6 @@ final class HistoryStore: @unchecked Sendable {
             }
             return urls
         }
-        if !urls.isEmpty { onChange?(.removed(allHistory: false, urls: urls)) }
-        return urls
     }
 
     // MARK: - History page

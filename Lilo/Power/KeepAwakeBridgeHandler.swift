@@ -23,7 +23,7 @@ final class KeepAwakeBridgeHandler: BridgeHandler {
             // The window asking is loading: it needs its terminals beside the state.
             resendTerminals()
             powerKeeper.refreshHelperStatus()
-            powerKeeper.republish()
+            bridgeRouter?.send(event: "keepAwakeChanged", data: ["helperStatus": powerKeeper.state.helperStatus])
         case "openLoginItemsSettings":
             SMAppService.openSystemSettingsLoginItems()
         case "getRunningApps":

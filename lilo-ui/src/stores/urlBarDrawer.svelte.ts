@@ -57,6 +57,7 @@ let _siteOpen = $state(false);
 let _sitePeek = $state(false);
 let _trackersBlocked = $state(0);
 let _blockerAllowlist = $state.raw<string[]>([]);
+let _blockerAllowlistSetting: string | undefined;
 // Zoom the host reported for the active tab; null until it changes during this session.
 let _pageZoom = $state<{ tabId: string; level: number } | null>(null);
 
@@ -111,9 +112,13 @@ export function initUrlBarDrawerStore(): void {
 	on("trackersBlockedChanged", (data) => {
 		_trackersBlocked = data.count;
 	});
+	// Every setting change republishes all settings: an unchanged value keeps the parsed list.
 	on("settingsLoaded", (data) => {
+		const setting = data.settings?.["contentBlockerAllowlist"];
+		if (setting === _blockerAllowlistSetting) return;
+		_blockerAllowlistSetting = setting;
 		try {
-			const parsed: unknown = JSON.parse(data.settings?.["contentBlockerAllowlist"] ?? "[]");
+			const parsed: unknown = JSON.parse(setting ?? "[]");
 			_blockerAllowlist = Array.isArray(parsed) ? parsed : [];
 		} catch {
 			_blockerAllowlist = [];

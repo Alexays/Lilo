@@ -8,11 +8,12 @@ import type { BridgeArchivedTab } from "../lib/bridge/protocol";
 export const RECENT_ARCHIVE_MS = 24 * 60 * 60 * 1000;
 
 let _tabs = $state.raw<BridgeArchivedTab[]>([]);
-let _favicons: Record<string, string> = {};
+const _favicons: Record<string, string> = {};
 
 export function initArchivedTabsStore(): void {
 	on("archivedTabs", (data) => {
-		_favicons = data.favicons;
+		// Native sends only the favicons this chrome does not hold yet.
+		Object.assign(_favicons, data.favicons);
 		_tabs = data.tabs;
 	});
 	tabActions.loadArchived();

@@ -9,8 +9,9 @@ final class SessionPersistence {
 
     private static let logger = Logger(liloCategory: "storage")
 
-    /// Dedup key for `scheduleSave`: `durableRevision` bumps on every durable mutation, so an equal key means unchanged bytes. A space
-    /// reloaded into the store restarts its count under a new structure token, which keeps keys distinct.
+    /// Dedup key for `scheduleSave`: `durableRevision` bumps on every durable mutation except activation, which the spaces table and the
+    /// switch and quit saves carry, so an equal key means no structural or content change. A space reloaded into the store restarts its
+    /// count under a new structure token, which keeps keys distinct.
     struct SaveDedupKey: Equatable {
         let spaceId: UUID
         let structureToken: UUID
@@ -29,8 +30,8 @@ final class SessionPersistence {
     private let debounceInterval: TimeInterval = 2.0
     private var pendingStatesBySpaceId: [UUID: SpaceTabState] = [:]
     /// Snapshot last seen per space, used to short-circuit byte-identical no-op saves and to gate
-    /// the error-recovery re-enqueue. Repaired on the keyless path; raw on the fast path (each path
-    /// compares against what it stored, so the two never mix).
+    /// the error-recovery re-enqueue. Repaired on the keyless path, raw elsewhere: a mismatch only
+    /// costs a redundant save, whose unchanged blob the write leaves alone.
     private var lastSnapshotsBySpaceId: [UUID: SpaceTabState] = [:]
     /// Last dedup key scheduled per space; short-circuits repair+compare when unchanged.
     private var lastDedupKeysBySpaceId: [UUID: SaveDedupKey] = [:]
@@ -53,7 +54,7 @@ final class SessionPersistence {
         for spaceId in displayedSpaceIds() {
             if let key = dedupKeyProvider(spaceId) {
                 // Fast path: the revision is the change-detector. An equal key means nothing durable
-                // changed, so skip without deep-comparing the tree. Encode-time repair happens in
+                // changed but activation, so skip without deep-comparing the tree. Encode-time repair happens in
                 // writeManyOn; lastSnapshots is still recorded for saveNow's error-recovery re-enqueue check.
                 if lastDedupKeysBySpaceId[spaceId] == key { continue }
                 guard let state = stateProvider(spaceId) else { continue }
@@ -121,7 +122,7 @@ final class SessionPersistence {
     func saveSpaceTabState(_ state: SpaceTabState, spaceId: UUID) throws {
         try SpaceTabStateStore(dbPool: tabDBPool).saveMany([(spaceId: spaceId, state: state)])
         pendingStatesBySpaceId.removeValue(forKey: spaceId)
-        lastSnapshotsBySpaceId[spaceId] = SpaceTabStateRepair.repaired(state)
+        lastSnapshotsBySpaceId[spaceId] = state
     }
 
     /// Space-switch variant of saveSpaceTabState: bookkeeping and updateActiveTab run on the main
@@ -132,12 +133,10 @@ final class SessionPersistence {
         spaceId: UUID,
         updateActiveTab: ((UUID?, UUID) -> Void)? = nil
     ) {
-        let repaired = SpaceTabStateRepair.repaired(state)
         // Nothing pending and an equal last snapshot: the store already holds (or is writing) these bytes.
-        let unchanged = pendingStatesBySpaceId[spaceId] == nil
-            && lastSnapshotsBySpaceId[spaceId].map { $0 == repaired || $0 == state } == true
+        let unchanged = pendingStatesBySpaceId[spaceId] == nil && lastSnapshotsBySpaceId[spaceId] == state
         pendingStatesBySpaceId.removeValue(forKey: spaceId)
-        lastSnapshotsBySpaceId[spaceId] = repaired
+        lastSnapshotsBySpaceId[spaceId] = state
         updateActiveTab?(state.activeTabId, spaceId)
         PerfSignposts.energy.emitEvent("spaceSwitchSave", "\(unchanged ? "skipped" : "written")")
         if unchanged { return }
@@ -148,7 +147,7 @@ final class SessionPersistence {
                 Task { @MainActor [weak self] in
                     Self.logger.error("space-switch save ERROR: \(error.localizedDescription)")
                     // Forget the unwritten snapshot so the next switch away retries the write.
-                    if self?.lastSnapshotsBySpaceId[spaceId] == repaired { self?.lastSnapshotsBySpaceId.removeValue(forKey: spaceId) }
+                    if self?.lastSnapshotsBySpaceId[spaceId] == state { self?.lastSnapshotsBySpaceId.removeValue(forKey: spaceId) }
                 }
             }
         })
@@ -160,8 +159,10 @@ final class SessionPersistence {
         let savedSpaceIds = Set(states.map(\.spaceId))
 
         try SpaceTabStateStore(dbPool: tabDBPool).saveMany(states)
+        // Unrepaired: the write repairs its own copy, and the snapshot only has to tell these
+        // states apart from an older one a failed async save would re-enqueue.
         for state in states {
-            lastSnapshotsBySpaceId[state.spaceId] = SpaceTabStateRepair.repaired(state.state)
+            lastSnapshotsBySpaceId[state.spaceId] = state.state
         }
         pendingStatesBySpaceId = pendingStatesBySpaceId.filter { !savedSpaceIds.contains($0.key) }
     }

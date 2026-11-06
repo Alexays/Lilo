@@ -14,7 +14,6 @@
 <script lang="ts">
   import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
-  import ExtensionsPopover from "./ExtensionsPopover.svelte";
   import {
     getEnabledExtensions,
     type ExtensionState,
@@ -35,7 +34,6 @@
   import {
     badgeTextColor,
     displayInitial,
-    extensionIconSrc,
     fitPinnedCount,
     resolveDisplayName,
   } from "./extensionPanelModel";
@@ -217,7 +215,7 @@
         use:reportPopupAnchor={ext.id}
         use:tooltip={{
           text: ext.actionLabel || resolveDisplayName(ext),
-          iconSrc: extensionIconSrc(ext),
+          iconSrc: ext.iconDataURL || undefined,
         }}
         aria-label={ext.actionLabel || resolveDisplayName(ext)}
         aria-disabled={!ext.actionEnabled}
@@ -226,10 +224,10 @@
         onkeydown={(event) => event.stopPropagation()}
       >
         <span class="extension-icon-face">
-          {#if extensionIconSrc(ext)}
+          {#if ext.iconDataURL}
             <img
               class="ext-icon-image"
-              src={extensionIconSrc(ext)}
+              src={ext.iconDataURL}
               alt=""
               draggable="false"
               onerror={(event) => {
@@ -284,13 +282,15 @@
     </button>
 
     {#if popoverOpen && triggerEl}
-      <ExtensionsPopover
-        anchor={triggerEl}
-        overflowIds={pinnedIds.slice(inlineCount)}
-        onclose={() => {
-          popoverOpen = false;
-        }}
-      />
+      {#await import("./ExtensionsPopover.svelte") then popover}
+        <popover.default
+          anchor={triggerEl}
+          overflowIds={pinnedIds.slice(inlineCount)}
+          onclose={() => {
+            popoverOpen = false;
+          }}
+        />
+      {/await}
     {/if}
   </span>
 {/if}

@@ -19,7 +19,6 @@
   import {
     badgeTextColor,
     displayInitial,
-    extensionIconSrc,
     resolveDisplayName,
   } from "./extensionPanelModel";
 
@@ -146,10 +145,10 @@
           oncontextmenu={(event) => showExtensionMenu(event, ext.id)}
         >
           <span class="row-icon">
-            {#if extensionIconSrc(ext)}
+            {#if ext.iconDataURL}
               <img
                 class="row-icon-image"
-                src={extensionIconSrc(ext)}
+                src={ext.iconDataURL}
                 alt=""
                 draggable="false"
                 onerror={(event) => {

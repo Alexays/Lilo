@@ -528,7 +528,6 @@ final class ProfileExtensionRegistryTests: XCTestCase {
             colors.badgeTextColor = "#ffffff"
         }
         registry.actionDidChange(for: id)
-        XCTAssertEqual(extensionBridgePayload(for: id)?["iconVersion"] as? Int, 1)
 
         await registry.unload(extensionId: id)
 
@@ -859,18 +858,17 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(version(), second, "a cached row keeps its version")
     }
 
-    func testActionChangeBumpsIconVersionInExtensionSnapshot() async throws {
-        let extDir = try createActionExtension(named: "action_icon_version_extension", displayName: "Action Icon Version")
+    func testActionChangeThatLeavesTheRowAsItWasKeepsItsVersion() async throws {
+        let extDir = try createActionExtension(named: "action_unchanged_row_extension", displayName: "Action Unchanged Row")
 
         try await registry.load(from: extDir)
         let loaded = try XCTUnwrap(registry.loadedExtensions.first)
-        let initialPayload = try XCTUnwrap(registry.extensionBridgePayloads(activeTab: nil).first)
+        let version = { self.registry.extensionBridgePayloads(activeTab: nil).first?["rowVersion"] as? Int }
+        let initial = try XCTUnwrap(version())
 
         registry.actionDidChange(for: loaded.id)
-        let updatedPayload = try XCTUnwrap(registry.extensionBridgePayloads(activeTab: nil).first)
 
-        XCTAssertEqual(initialPayload["iconVersion"] as? Int, 0)
-        XCTAssertEqual(updatedPayload["iconVersion"] as? Int, 1)
+        XCTAssertEqual(version(), initial)
     }
 
     /// A wrapper manifest with no recoverable metadata (`.skipped`) must still load (refusing to

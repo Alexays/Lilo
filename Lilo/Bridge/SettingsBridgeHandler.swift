@@ -202,7 +202,8 @@ final class SettingsBridgeHandler: BridgeHandler {
             bridgeRouter?.send(event: "settingsLoaded", data: ["settings": store.allSettings()])
 
         case "setSetting":
-            if let key = message.string("key"), let value = message.string("value") {
+            // An unchanged value writes nothing and republishes nothing to the windows.
+            if let key = message.string("key"), let value = message.string("value"), store.get(key) != value {
                 if key == "pinnedExtensions" { extensionRegistryProvider()?.pinnedExtensionsChanged(from: store.get(key), to: value) }
                 store.set(key, value: value)
                 if key == "contentBlockerEnabled" { onContentBlockerToggled?(value == "true") }
@@ -321,7 +322,7 @@ final class SettingsBridgeHandler: BridgeHandler {
             publishShortcuts()
 
         case "getAgentActivity":
-            agentControl?()?.publishActivity()
+            agentControl?()?.publishActivity(resend: true)
             agentControl?()?.resendPendingConsents(to: bridgeRouter)
 
         case "agentControlResponse":

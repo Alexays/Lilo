@@ -186,7 +186,7 @@ final class TabArchiveTests: XCTestCase {
         let recent = TabArchive.Entry(spaceId: space.id, url: URL(string: "https://recent.example/")!, title: "Recent")
         try JSONEncoder().encode([old, recent]).write(to: file)
 
-        context.restoreTabArchive()
+        context.restoreTabArchive(BrowserContext.readTabArchive(appSupportDirectory: context.appSupportDirectory))
 
         XCTAssertEqual(context.tabArchive.entries.map(\.title), ["Recent"])
         let onDisk = { (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode([TabArchive.Entry].self, from: $0) } }

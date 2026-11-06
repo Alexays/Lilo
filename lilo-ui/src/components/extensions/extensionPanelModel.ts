@@ -32,15 +32,6 @@ export function resolveDisplayName(ext: ExtensionLike): string {
   return /^__MSG_.+__$/.test(ext.name) ? ext.description || ext.id : ext.name;
 }
 
-/** Icon URL with a version fragment so <img> refreshes when the icon changes. */
-export function extensionIconSrc(ext: {
-  iconDataURL?: string | null;
-  iconVersion?: number;
-}): string | undefined {
-  const url = ext.iconDataURL;
-  return url ? `${url}#v=${ext.iconVersion ?? 0}` : undefined;
-}
-
 export function displayInitial(ext: ExtensionLike): string {
   const value = resolveDisplayName(ext).trim();
   return value ? value.charAt(0).toUpperCase() : "?";

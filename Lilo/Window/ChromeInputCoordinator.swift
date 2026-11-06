@@ -17,6 +17,8 @@ enum InteractionEffect: Equatable {
 
     /// Callers must return this constant, never a fresh `[]`: the fast path allocates nothing.
     static let none: [InteractionEffect] = []
+    /// Shared result of a plain move over the chrome, the hottest hover sample.
+    static let forwardMove: [InteractionEffect] = [.hover(.forwardMoveToChrome)]
 }
 
 /// Pure decision core composing the hover and capture machines. Precedence:
@@ -45,7 +47,7 @@ final class ChromeInputCoordinator {
     // MARK: - Hover / cursor feeder
 
     /// Hover and cursor feeder, fed only by the global monitor. While capturing, the hover machine is
-    /// not invoked at all; a plain move with an unchanged target returns the shared empty list.
+    /// not invoked at all; a plain move with an unchanged target returns a shared list.
     func updatePointer(_ sample: PointerSample) -> [InteractionEffect] {
         // A plain move comes only with every button up: a release the app never got (a window drag or a menu
         // takes it) must not keep the grab, which would hold the cursor and hover on the chrome over the page.
@@ -59,10 +61,10 @@ final class ChromeInputCoordinator {
 
         let isInteractive = (sample.target == .chrome)
 
-        // An interactive no-transition move must NOT be short-circuited: the hover machine still has to
-        // emit `.forwardMoveToChrome` so WebKit keeps refreshing CSS `:hover` inside the chrome.
-        if !sample.isMouseDown, isInteractive == hover.isInteractive, !isInteractive {
-            return InteractionEffect.none
+        // A plain move without a transition leaves the hover machine as is; over the chrome it still forwards
+        // the move so WebKit keeps refreshing CSS `:hover` inside the chrome.
+        if !sample.isMouseDown, isInteractive == hover.isInteractive {
+            return isInteractive ? InteractionEffect.forwardMove : InteractionEffect.none
         }
 
         let hoverEffects = hover.update(isInteractive: isInteractive, isMouseDown: sample.isMouseDown)

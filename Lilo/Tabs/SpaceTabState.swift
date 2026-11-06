@@ -266,16 +266,17 @@ enum SpaceTabStateImporter {
             folders: folders,
             persistedItems: treeItems
         )
-        let items = restoredItems
-            .filter { $0.spaceId == spaceId }
-            .sorted(by: TabTreeItem.sidebarOrdering)
+        let itemsByParent = Dictionary(
+            grouping: restoredItems.filter { $0.spaceId == spaceId }.sorted(by: TabTreeItem.sidebarOrdering),
+            by: { ParentKey(parentFolderId: $0.parentFolderId, section: $0.section) }
+        )
 
         var seenNodeIds = Set<UUID>()
         var tree = StoredSidebarTree(
             pinned: importedNodes(
                 parentFolderId: nil,
                 section: .pinned,
-                items: items,
+                itemsByParent: itemsByParent,
                 tabsById: tabsById,
                 foldersById: foldersById,
                 seenNodeIds: &seenNodeIds
@@ -283,7 +284,7 @@ enum SpaceTabStateImporter {
             unpinned: importedNodes(
                 parentFolderId: nil,
                 section: .unpinned,
-                items: items,
+                itemsByParent: itemsByParent,
                 tabsById: tabsById,
                 foldersById: foldersById,
                 seenNodeIds: &seenNodeIds
@@ -291,7 +292,7 @@ enum SpaceTabStateImporter {
             bookmarked: importedNodes(
                 parentFolderId: nil,
                 section: .bookmarked,
-                items: items,
+                itemsByParent: itemsByParent,
                 tabsById: tabsById,
                 foldersById: foldersById,
                 seenNodeIds: &seenNodeIds
@@ -314,17 +315,22 @@ enum SpaceTabStateImporter {
         ))
     }
 
+    private struct ParentKey: Hashable {
+        let parentFolderId: UUID?
+        let section: TabTreeItem.Section
+    }
+
     private static func importedNodes(
         parentFolderId: UUID?,
         section: TabTreeItem.Section,
-        items: [TabTreeItem],
+        itemsByParent: [ParentKey: [TabTreeItem]],
         tabsById: [UUID: Tab],
         foldersById: [UUID: TabFolder],
         seenNodeIds: inout Set<UUID>
     ) -> [StoredSidebarNode] {
         var result: [StoredSidebarNode] = []
 
-        for item in items where item.parentFolderId == parentFolderId && item.section == section {
+        for item in itemsByParent[ParentKey(parentFolderId: parentFolderId, section: section)] ?? [] {
             guard seenNodeIds.insert(item.itemId).inserted else { continue }
 
             switch item.kind {
@@ -339,7 +345,7 @@ enum SpaceTabStateImporter {
                 let children = importedNodes(
                     parentFolderId: folder.id,
                     section: section,
-                    items: items,
+                    itemsByParent: itemsByParent,
                     tabsById: tabsById,
                     foldersById: foldersById,
                     seenNodeIds: &seenNodeIds
@@ -582,6 +588,7 @@ enum SpaceTabStateRepair {
         seenNodeIds: inout Set<UUID>
     ) -> [StoredSidebarNode] {
         var result: [StoredSidebarNode] = []
+        result.reserveCapacity(nodes.count)
 
         for node in nodes {
             guard seenNodeIds.insert(node.id).inserted else { continue }

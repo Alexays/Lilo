@@ -86,7 +86,7 @@ function renameCost(page: Page, seed: BridgeTabSnapshot) {
 			const start = performance.now();
 			window.__lilo!.receive({
 				event: "browserStatePatch",
-				operations: [{ kind: "tabUpdated", spaceId: seed.spaceId, activeTabId: "open-0", tab: { ...seed, title } }],
+				operations: [{ kind: "tabUpdated", spaceId: seed.spaceId, tab: { ...seed, title } }],
 			});
 			const row = document.querySelectorAll(".space-pane")[0].querySelector(`[data-tab-id="${seed.id}"]`);
 			while (!row?.textContent?.includes(title)) await new Promise((resolve) => requestAnimationFrame(resolve));

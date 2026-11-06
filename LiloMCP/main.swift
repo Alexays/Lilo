@@ -218,7 +218,16 @@ Thread.detachNewThread {
             let arguments = params?["arguments"] as? [String: Any]
             let asked = ["timeout", "wait"].compactMap { (arguments?[$0] as? NSNumber)?.doubleValue }.max() ?? 0
             let consent: TimeInterval = (params?["name"] as? String)?.hasSuffix("_profile") == true ? 120 : 0
-            bridge.pending["\(id)"] = (id, Date().addingTimeInterval(timeout + min(max(asked, 0), 600) + consent))
+            let key = "\(id)", limit = timeout + min(max(asked, 0), 600) + consent, deadline = Date().addingTimeInterval(limit)
+            bridge.pending[key] = (id, deadline)
+            // The deadline tells this request from a later one reusing its id.
+            DispatchQueue.global().asyncAfter(deadline: .now() + limit) {
+                bridge.lock.lock()
+                let expired = bridge.pending[key].flatMap { $0.deadline == deadline ? $0.id : nil }
+                if expired != nil { bridge.pending[key] = nil }
+                bridge.lock.unlock()
+                if let expired { fail(expired, "Lilo is not responding: quit and reopen Lilo.", needsUser: true) }
+            }
             if method == "initialize" { bridge.initialize = ("\(id)", line) }
         }
         _ = writeAll(bridge.lilo, line) && writeAll(bridge.lilo, newline)
@@ -235,17 +244,6 @@ Thread.detachNewThread {
         usleep(50_000)
     }
     exit(0)
-}
-
-Thread.detachNewThread {
-    while true {
-        sleep(5)
-        bridge.lock.lock()
-        let expired = bridge.pending.filter { $0.value.deadline < Date() }
-        for key in expired.keys { bridge.pending[key] = nil }
-        bridge.lock.unlock()
-        for request in expired.values { fail(request.id, "Lilo is not responding: quit and reopen Lilo.", needsUser: true) }
-    }
 }
 
 // Unreachable, the agent's thread answers alone, and exits when the agent leaves.

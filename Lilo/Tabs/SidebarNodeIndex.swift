@@ -16,8 +16,12 @@ struct SidebarNodeIndex: Sendable, Equatable {
     var parentFolderIdById: [UUID: UUID?]
     var tabIds: Set<UUID>
 
-    init(tree: StoredSidebarTree) {
+    /// `capacity` sizes the maps up front, usually the node count of the index this one replaces.
+    init(tree: StoredSidebarTree, capacity: Int = 0) {
         var builder = Builder()
+        builder.nodePathById.reserveCapacity(capacity)
+        builder.parentFolderIdById.reserveCapacity(capacity)
+        builder.tabIds.reserveCapacity(capacity)
         builder.index(nodes: tree.pinned, head: .pinned, parentFolderId: nil, indexes: [])
         builder.index(nodes: tree.unpinned, head: .unpinned, parentFolderId: nil, indexes: [])
         builder.index(nodes: tree.bookmarked, head: .bookmarked, parentFolderId: nil, indexes: [])
@@ -45,8 +49,10 @@ struct SidebarNodeIndex: Sendable, Equatable {
             for (index, node) in nodes.enumerated() {
                 guard nodePathById[node.id] == nil else { continue }
 
-                let path = NodePath(head: head, indexes: indexes + [index])
-                nodePathById[node.id] = path
+                var pathIndexes = indexes
+                pathIndexes.reserveCapacity(indexes.count + 1)
+                pathIndexes.append(index)
+                nodePathById[node.id] = NodePath(head: head, indexes: pathIndexes)
                 parentFolderIdById[node.id] = parentFolderId
 
                 switch node {
@@ -57,7 +63,7 @@ struct SidebarNodeIndex: Sendable, Equatable {
                         nodes: folder.children,
                         head: head,
                         parentFolderId: folder.id,
-                        indexes: path.indexes
+                        indexes: pathIndexes
                     )
                 }
             }

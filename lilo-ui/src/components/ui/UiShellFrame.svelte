@@ -64,7 +64,7 @@
     class:with-nav={!!nav}
     class:nav-compact={narrow.current}
     aria-label={ariaLabel}
-    transition:shellTransition
+    transition:shellTransition|global
     use:reportInteractiveZone={{ id: interactiveZoneId, active }}
   >
     {#if nav}

@@ -74,7 +74,15 @@ function run(
 	// `parsed` stands for the elements the parser has inserted so far; null means the DOM is complete.
 	const doc = {
 		readyState: parsed ? "loading" : "complete",
-		getElementsByTagName: () => parsed ?? [],
+		// A walker over `parsed`, resuming after the last element it returned.
+		createTreeWalker: () => {
+			let seen = 0;
+			const walker = {
+				currentNode: { isConnected: true },
+				nextNode: () => (parsed && seen < parsed.length ? (walker.currentNode = { isConnected: true }, parsed[seen++]) : null)
+			};
+			return walker;
+		},
 		documentElement,
 		adoptedStyleSheets: [] as FakeSheet[],
 		addEventListener: (type: string, cb: () => void) => {
@@ -108,7 +116,7 @@ function run(
 		.replace("__LILO_KEYED_INDEX__", JSON.stringify(keyed.index))
 		.replace("__LILO_KEYED_GROUPS__", JSON.stringify(keyed.groups))
 		.replace("__LILO_KEYED_TABLE__", JSON.stringify(keyed.entries));
-	const fn = new Function("self", "document", "MutationObserver", "requestAnimationFrame", "location", "CSSStyleSheet", src);
+	const fn = new Function("self", "document", "MutationObserver", "requestAnimationFrame", "location", "CSSStyleSheet", "NodeFilter", src);
 	fn(
 		{
 			CSS: { escape: (s: string) => s },
@@ -124,7 +132,8 @@ function run(
 			frameCallback = cb;
 		},
 		{ host, hostname: host.replace(/:\d+$/, "") },
-		FakeSheet
+		FakeSheet,
+		{ SHOW_ELEMENT: 1 }
 	);
 
 	return {

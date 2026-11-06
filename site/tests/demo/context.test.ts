@@ -2,10 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import type {
-  BridgeSidebarTreeItemSnapshot,
-  BridgeTabFolderSnapshot,
-} from "../../../lilo-ui/src/lib/bridge/protocol";
+import type { BridgeTabFolderSnapshot } from "../../../lilo-ui/src/lib/bridge/protocol";
 import {
   buildContextMenu,
   contextFolderTargets,
@@ -16,6 +13,7 @@ import type {
   ContextMenuItem,
 } from "../../src/demo/context-menu.ts";
 import { createDemoHost } from "../../src/demo/host.ts";
+import type { DemoTreeItem } from "../../src/demo/world.ts";
 
 const english = (key: string) => key;
 
@@ -45,9 +43,8 @@ const treeItem = (
   id: string,
   sortOrder: number,
   parentFolderId: string | null = null,
-  extra: Partial<BridgeSidebarTreeItemSnapshot> = {}
-): BridgeSidebarTreeItemSnapshot => ({
-  id: `item-${id}`,
+  extra: Partial<DemoTreeItem> = {}
+): DemoTreeItem => ({
   itemId: id,
   kind: "folder",
   parentFolderId,

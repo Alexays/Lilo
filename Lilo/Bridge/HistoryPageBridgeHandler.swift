@@ -149,13 +149,15 @@ final class HistoryPageBridgeHandler: BridgeHandler {
         bridgeRouter?.send(event: "historyPage", data: ["requestId": message.int("requestId") ?? 0, "rows": [], "favicons": [:]])
     }
 
-    /// Runs a deletion off the main actor, then has the page reload: a partial deletion removes no page, so the store reports nothing.
+    /// Runs a deletion off the main actor, then has the page reload. A deletion that removes pages reaches the page through
+    /// the store's change; a partial one removes no page, so the store reports nothing and the reload is asked here.
     private func deleting(_ delete: @escaping @Sendable () throws -> [String]) async {
-        await Task.detached(priority: .userInitiated) {
-            do { _ = try delete() } catch {
+        let removedPages = await Task.detached(priority: .userInitiated) { () -> Bool in
+            do { return try !delete().isEmpty } catch {
                 historyPageLogger.error("history delete failed: \(error.localizedDescription, privacy: .public)")
+                return false
             }
         }.value
-        bridgeRouter?.send(event: "historyChanged")
+        if !removedPages { bridgeRouter?.send(event: "historyChanged") }
     }
 }

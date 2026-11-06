@@ -550,6 +550,8 @@ extension Notification.Name {
     static let extensionGapListenersChanged = Notification.Name("fr.arouillard.lilo.extensionGapListenersChanged")
     /// Object: the registry. userInfo: "extensionId", "profileId" (UUID) and "uninstalled" (Bool).
     static let extensionDidUnload = Notification.Name("fr.arouillard.lilo.extensionDidUnload")
+    /// Object: the registry. userInfo: "tabId" (UUID), a tab closed for good.
+    static let extensionTabDidClose = Notification.Name("fr.arouillard.lilo.extensionTabDidClose")
     /// Object: the registry, whose profile's data store has new `proxyConfigurations`.
     static let extensionProxyDidChange = Notification.Name("fr.arouillard.lilo.extensionProxyDidChange")
 }
