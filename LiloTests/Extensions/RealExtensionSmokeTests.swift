@@ -87,11 +87,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         "hdhinadidafjejdhmfkjgnolgimiaplp": "over a blank tab its popup shows WebKit's wording of the scripting.executeScript error, where Chrome's shows 'Cannot access contents of the page'", // Read Aloud
         "mmioliijnhnoblpgimnlajmefafdfilb": "the stream its tab capture gets is no MediaStream to AudioContext.createMediaStreamSource, so it cannot listen", // Shazam
         "gomekmidlodglbbmalcneegieacbdmki": "its popup logs an object as an error ([object Object]), which Chrome's does not", // Avast Online Security & Privacy
-        "jabjbhgjaidecageckilhonbggakppme": "once its worker was idle, its popup reads its configuration as undefined (result.config.map)", // Gosplagin
-        "mpnlkmlkncncpgnnkmkgoobfpnjmblnk": "on the test page its content script reads its testing state as undefined (e.isInitialized)", // Norton Safe Search
         "hkgfoiooedgoejojocmhlaklaeopbecg": "WebKit's MediaSession has no enterpictureinpicture action, which its content script sets on every page (autoPip.js)", // Picture-in-Picture Extension
         "jjkchpdmjjdmalgembblgafllbpcjlei": "its worker reads supportedFeatures.features of an answer that is undefined", // Trellix Endpoint Security Web Control
-        "lgblnfidahcdcjddiepkckcfdhpknnjh": "its cosmetic filters hide none of the test page's ads, which Chrome's hide", // Stands AdBlocker
         "mclkkofklkfljcocdinagocijmpgbhab": "over a blank tab its popup calls tabs.detectLanguage, which WebKit refuses for want of access", // Google Input Tools
         "mcbpblocgmgfnpjjppndjkmgjaogfceg": "over a blank tab its popup offers to capture it, where Chrome's recording opens the popup in a tab of its own, which it says it cannot capture", // FireShot
         "dgjbaljgolmlcmmklmmeafecikidmjpi": "its first start registers its cosmetic filters in basic mode: the optimal mode it sets meanwhile meets its own registration still running, which WebKit's slower resource loads while it compiles 50 rulesets keep longer than Chrome's; its next start registers them", // Adblock Ad Blocker Pro
@@ -383,10 +380,10 @@ final class RealExtensionSmokeTests: XCTestCase {
         // the channel after 20 s, and WebKit unloads the worker after), or after a minute, each one's toolbar button
         // opens its popup on the worker it starts again, as Chrome's recording does on a stopped worker.
         struct Idle {
-            let knownErrors: [String]
             let outcome: Outcome
             let package: URL
             let chrome: ChromeSmoke.Recording?
+            let knownErrors: [String]
         }
         var idleQueue: [Idle] = [], idleBatch: [Idle] = [], quietSince = Date.distantFuture
         // One at a time: a batch loaded together in the idle profile took gigabytes beside the extension the main pass runs.
@@ -517,10 +514,10 @@ final class RealExtensionSmokeTests: XCTestCase {
             outcome.version = context.webExtension.version ?? "?"
             let recorded = chromeSmoke.extensions[id]
             // Chrome's rendering of another version says nothing about this one, but the errors Chrome gave it still
-            let knownErrors = (recorded?.errors ?? []).map(normalized)
             // tell an extension's own failures from Lilo's.
             let chrome = recorded?.version == outcome.version ? recorded : nil
             if chrome == nil { outcome.staleChrome = recorded?.version ?? "nothing" }
+            let knownErrors = (recorded?.errors ?? []).map(normalized)
             var connected = false, workerStarted: Date?
             if context.webExtension.hasBackgroundContent {
                 let starting = Date()
