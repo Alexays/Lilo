@@ -59,6 +59,8 @@ enum PageWorld {
       'use strict';
       const { apply, construct, defineProperty, getOwnPropertyDescriptor, ownKeys } = Reflect;
       const { assign, create } = Object;
+      // Called through apply: a page wrapping WeakMap.prototype would otherwise see every lookup, from any frame.
+      const { get: weakGet, set: weakSet } = WeakMap.prototype;
       const { stringify, parse } = JSON;
       const listen = EventTarget.prototype.addEventListener, dispatch = EventTarget.prototype.dispatchEvent;
       const NativeCustomEvent = CustomEvent, NativeEvent = Event, NativeError = Error, NativePromise = Promise, NativeTypeError = TypeError;
@@ -78,12 +80,12 @@ enum PageWorld {
       apply(listen, doc, ['__LILO_SHARE__', event => { event.detail.masked = masked; }]);
       // Also holds navigator.credentials for the page's life: WebKit hands out a new one once nothing references it,
       // without what the page or a password manager's passkey hook set on it.
-      masked.set(navigator, navigator.credentials);
+      apply(weakSet, masked, [navigator, navigator.credentials]);
       const toString = { toString() {
-        const name = typeof this === 'function' ? masked.get(this) : undefined;
+        const name = typeof this === 'function' ? apply(weakGet, masked, [this]) : undefined;
         return name === undefined ? apply(nativeToString, this, arguments) : 'function ' + name + '() {\n    [native code]\n}';
       } }.toString;
-      masked.set(toString, 'toString');
+      apply(weakSet, masked, [toString, 'toString']);
       defineProperty(Function.prototype, 'toString', { value: toString });
 
       const pending = create(null), handlers = create(null);
@@ -118,7 +120,7 @@ enum PageWorld {
         },
         send(handler, body) { send({ h: handler, b: body }); },
         on(event, handler) { handlers[event] = handler; },
-        native(fn, name) { masked.set(fn, name); return fn; },
+        native(fn, name) { apply(weakSet, masked, [fn, name]); return fn; },
         // Replaces or adds `target`'s methods with those of `methods`; returns the replaced ones.
         methods(target, methods) {
           const replaced = create(null);
@@ -128,7 +130,7 @@ enum PageWorld {
               replaced[key] = existing.value;
               defineProperty(fn, 'length', { value: existing.value.length });
             }
-            masked.set(fn, key);
+            apply(weakSet, masked, [fn, key]);
             member(target, key, { value: fn, writable: true });
           }
           return replaced;
@@ -139,8 +141,8 @@ enum PageWorld {
           for (const key of ownKeys(accessors)) {
             const { get, set } = getOwnPropertyDescriptor(accessors, key), existing = getOwnPropertyDescriptor(target, key);
             if (existing && existing.get) replaced[key] = existing.get;
-            if (get) masked.set(get, key);
-            if (set) masked.set(set, key);
+            if (get) apply(weakSet, masked, [get, key]);
+            if (set) apply(weakSet, masked, [set, key]);
             member(target, key, { get, set });
           }
           return replaced;
@@ -149,25 +151,25 @@ enum PageWorld {
         eventHandlers(prototype, types) {
           const attached = new WeakMap();
           for (const type of types) {
-            lilo.accessors(prototype, { get ['on' + type]() { const h = attached.get(this); return h && h[type] || null; },
-                                        set ['on' + type](value) { const h = attached.get(this); if (h) h[type] = typeof value === 'function' ? value : null; } });
+            lilo.accessors(prototype, { get ['on' + type]() { const h = apply(weakGet, attached, [this]); return h && h[type] || null; },
+                                        set ['on' + type](value) { const h = apply(weakGet, attached, [this]); if (h) h[type] = typeof value === 'function' ? value : null; } });
           }
           return instance => {
             const h = create(null);
-            attached.set(instance, h);
+            apply(weakSet, attached, [instance, h]);
             for (const type of types) apply(listen, instance, [type, event => { if (h[type]) apply(h[type], instance, [event]); }]);
           };
         },
         // A class standing in for a native interface: printed as native code, members enumerable, tagged with its name.
         nativeClass(cls) {
-          masked.set(cls, cls.name);
+          apply(weakSet, masked, [cls, cls.name]);
           // Interfaces without a constructor operation take no arguments.
           defineProperty(cls, 'length', { value: 0 });
           for (const target of [cls, cls.prototype]) {
             for (const key of ownKeys(target)) {
               if (key === 'constructor' || key === 'prototype' || key === 'length' || key === 'name') continue;
               const descriptor = getOwnPropertyDescriptor(target, key);
-              for (const fn of [descriptor.value, descriptor.get, descriptor.set]) if (typeof fn === 'function') masked.set(fn, key);
+              for (const fn of [descriptor.value, descriptor.get, descriptor.set]) if (typeof fn === 'function') apply(weakSet, masked, [fn, key]);
               if (target === cls.prototype) defineProperty(target, key, { enumerable: true });
             }
           }

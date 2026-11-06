@@ -112,6 +112,10 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 
 ## Web APIs
 
+`navigator.serial`, `window.EyeDropper` and `window.documentPictureInPicture` exist only in secure
+contexts, as in Chrome, but Safari has none of them: a page testing for them can tell a Lilo tab from
+Safari, whose user agent Lilo shows.
+
 ### Web Serial API (`navigator.serial`)
 - **Status:** Implemented (`Lilo/Engine/SerialBridge.swift`)
 - **WebKit support:** None - Chrome/Edge only; Lilo polyfills it
@@ -191,7 +195,7 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
   out into the system PiP window (no page controls) - fine for YouTube/Netflix-style single-stream PiP.
 - **Document Picture-in-Picture (`window.documentPictureInPicture`): supported via a Lilo shim.**
   WebKit ships no implementation. A page-world module (`DocumentPiPBridge`) defines the API in
-  top-level documents of regular tabs; `requestWindow` makes the tab's next `window.open` a
+  secure top-level documents of regular tabs; `requestWindow` makes the tab's next `window.open` a
   same-origin popup that `DocumentPiPController` hosts: docked at its own size in the sidebar while
   Lilo is in front and its tab is not shown, floating otherwise (always on top, every Space, out of
   screen sharing, non-activating, snapped to a corner remembered per screen, back and close buttons

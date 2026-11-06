@@ -11,12 +11,21 @@ final class PageWorldTests: XCTestCase {
     private static let addedMembers: Set<String> = ["Navigator.prototype.serial", "window.documentPictureInPicture"]
 
     /// Every own property of the window, its interfaces and their prototypes, and the objects Lilo's modules touch, by
-    /// shape; and every function among them that does not print as native code, in its own realm or in a fresh frame's.
+    /// shape; every function among them that does not print as native code, in its own realm or in a fresh frame's; and
+    /// how often Lilo's scripts, a bridge call among them, went through the page's WeakMap and Promise methods meanwhile.
     private static let probe = #"""
+    let hooked = 0;
+    const restores = [[WeakMap.prototype, 'get'], [WeakMap.prototype, 'set'], [Promise.prototype, 'then'], [Promise.prototype, 'finally']]
+      .map(([target, key]) => {
+        const original = target[key];
+        target[key] = new Proxy(original, { apply(f, self, args) { hooked++; return Reflect.apply(f, self, args); } });
+        return () => { target[key] = original; };
+      });
     const dom = document.documentElement.outerHTML, styleSheets = document.styleSheets.length;
     const adoptedStyleSheets = document.adoptedStyleSheets.length;
     const fresh = document.createElement('iframe');
     document.body.appendChild(fresh);
+    if (navigator.serial) navigator.serial.getPorts();
     const freshToString = fresh.contentWindow.Function.prototype.toString;
     const fn = f => typeof f === 'function' ? f.name + '/' + f.length : typeof f;
     const describe = d => 'value' in d ? `v:${d.writable},${d.enumerable},${d.configurable}:${fn(d.value)}`
@@ -54,13 +63,16 @@ final class PageWorldTests: XCTestCase {
     shapes['webkit in window'] = String('webkit' in window);
     shapes['webkit in frame'] = String('webkit' in frame);
     shapes['frame keys'] = Object.keys(frame).join();
-    return JSON.stringify({ shapes, nonNative, userAgent: navigator.userAgent, vendor: navigator.vendor,
+    shapes['setTimeout source'] = Function.prototype.toString.call(setTimeout);
+    for (const restore of restores) restore();
+    return JSON.stringify({ shapes, nonNative, hooked, userAgent: navigator.userAgent, vendor: navigator.vendor,
                             userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets });
     """#
 
     private struct Report: Decodable {
         let shapes: [String: String]
         let nonNative: [String]
+        let hooked: Int
         let userAgent: String
         let vendor: String
         let userAgentData: Bool
@@ -84,9 +96,11 @@ final class PageWorldTests: XCTestCase {
 
     func testATabShowsPagesNothingABareWebKitPageDoesNot() async throws {
         let factory = WKEngineFactory()
-        // A site's cosmetics apply at once: their sheet must leave the page's DOM and stylesheets as they are.
+        // A site's cosmetics apply at once: their sheet must leave the page's DOM and stylesheets as they are. Its
+        // scriptlets leave the functions they wrap printing as native code.
+        let scriptlets = #"{"example.com":[["set-constant",["history.adsBlocked","true"]],["no-setTimeout-if",["adProbe"]]]}"#
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(
-            cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: nil, procedural: nil
+            cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: scriptlets, procedural: nil
         ))
         let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
         defer { tab.teardown() }
@@ -115,6 +129,7 @@ final class PageWorldTests: XCTestCase {
         let changed = bare.shapes.compactMap { key, shape in lilo.shapes[key].flatMap { $0 == shape ? nil : "\(key): \(shape) -> \($0)" } }
         XCTAssertEqual(changed.sorted(), [], "properties shaped unlike Safari's")
         XCTAssertEqual(lilo.nonNative, [], "functions that print their source")
+        XCTAssertEqual(lilo.hooked, 0, "calls through the page's WeakMap and Promise methods")
         for global in Self.addedGlobals {
             XCTAssertEqual(lilo.shapes["window.\(global)"], "v:true,false,true:\(global)/0", "\(global) is defined as an interface object is")
         }

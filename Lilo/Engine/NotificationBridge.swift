@@ -180,7 +180,7 @@ extension NotificationBridge {
         const field = key => key in options ? options[key] : key === 'dir' ? 'auto' : key === 'silent' || key === 'data' ? null : '';
         const values = { id, title: String(title), body: String(field('body')), icon: String(field('icon')), tag: String(field('tag')),
                          dir: String(field('dir')), lang: String(field('lang')), silent: field('silent'), data: field('data'), navigate: field('navigate') };
-        fields.set(notification, values);
+        apply(weakSet, fields, [notification, values]);
         attach(notification);
         shown[id] = notification;
         // Integer keys enumerate in ascending order: the first is the oldest. macOS never reports one it expires.
@@ -208,11 +208,11 @@ extension NotificationBridge {
       for (const key of ownKeys(prototype)) {
         const descriptor = getOwnPropertyDescriptor(prototype, key);
         if (typeof key !== 'string' || key.startsWith('on') || !descriptor.get) continue;
-        lilo.accessors(prototype, { get [key]() { const values = fields.get(this); return values ? values[key] : undefined; } });
+        lilo.accessors(prototype, { get [key]() { const values = apply(weakGet, fields, [this]); return values ? values[key] : undefined; } });
       }
       lilo.methods(prototype, {
         close() {
-          const values = fields.get(this);
+          const values = apply(weakGet, fields, [this]);
           if (!values || !shown[values.id]) return;
           delete shown[values.id];
           lilo.send('liloNotification', { type: 'close', id: values.id });
