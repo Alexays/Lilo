@@ -287,7 +287,7 @@ final class ConversationHost {
         ])
         let capabilities = initialized["agentCapabilities"] as? [String: Any] ?? [:]
         conversation.canLoadSession = capabilities["loadSession"] as? Bool ?? false
-        conversation.canResumeSession = (capabilities["sessionCapabilities"] as? [String: Any])?["resume"] != nil
+        conversation.canResumeSession = (capabilities["sessionCapabilities"] as? [String: Any])?["resume"] is [String: Any]
         conversation.acceptsImages = (capabilities["promptCapabilities"] as? [String: Any])?["image"] as? Bool ?? false
         conversation.authMethods = initialized["authMethods"] as? [[String: Any]] ?? []
         try await openSession(conversation, connection: connection)
