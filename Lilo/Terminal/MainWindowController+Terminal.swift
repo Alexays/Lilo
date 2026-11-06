@@ -54,9 +54,8 @@ extension MainWindowController {
 
     func terminalStatusChanged(_ id: UUID, _ status: TerminalSession.Status) {
         // The shell ended on its own (Control-D, `exit`): its tab goes, as in Terminal. A shell Lilo
-        // ends, for a closed tab or at quit, has left the host or ends with the app. A command not
-        // found (127) keeps its tab, so its error stays readable.
-        if status.state == .exited, status.exitCode != 127, !context.isTerminating, tabManager.terminalHost.view(for: id) != nil {
+        // ends, for a closed tab or at quit, has left the host or ends with the app.
+        if status.state == .exited, !context.isTerminating, tabManager.terminalHost.view(for: id) != nil {
             if agentsEnabled { context.conversations.terminalFinished(id) }
             closeTabStateFirst(id: id)
             return
