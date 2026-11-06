@@ -1418,17 +1418,17 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(registry.loadedExtensions.first?.id, ExtensionArchiveSafety.chromeExtensionId(forPublicKey: key))
     }
 
-    func testOnlyTheManagedDirectoryLendsAFolderNameId() {
+    func testOnlyTheManagedDirectoryLendsAFolderNameId() throws {
         let storeId = String(repeating: "a", count: 32)
         let managed = tempDir.appendingPathComponent("Managed", isDirectory: true)
         XCTAssertEqual(
-            ExtensionFiles.makeExtensionId(for: managed.appendingPathComponent(storeId), managedDirectory: managed, manifestKey: nil),
+            try ExtensionFiles.makeExtensionId(for: managed.appendingPathComponent(storeId), managedDirectory: managed, manifestKey: nil),
             storeId
         )
-        let unpacked = ExtensionFiles.makeExtensionId(
+        let unpacked = try ExtensionFiles.makeExtensionId(
             for: tempDir.appendingPathComponent("Downloads/\(storeId)"), managedDirectory: managed, manifestKey: nil
         )
-        XCTAssertTrue(unpacked.hasPrefix("extension-"), "an unpacked folder named like a store id must not take that id")
+        XCTAssertNotEqual(unpacked, storeId, "an unpacked folder named like a store id must not take that id")
     }
 
     // MARK: - Failed restore

@@ -718,7 +718,7 @@ final class ProfileExtensionRegistry {
                 return (sourceURL, Self.prepareForWebKit(at: sourceURL, allowsUserScripts: allowsUserScripts))
             }.value
             let webExtension = try await WKWebExtension(resourceBaseURL: sourceURL)
-            let extensionId = knownId ?? stored?.id ?? ExtensionFiles.makeExtensionId(
+            let extensionId = try knownId ?? stored?.id ?? ExtensionFiles.makeExtensionId(
                 for: permanentURL,
                 managedDirectory: files.directory,
                 manifestKey: webExtension.manifest["key"] as? String
