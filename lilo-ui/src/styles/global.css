@@ -402,9 +402,11 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
     --sidebar-right-pad: 8px;
 }
 
-/* Increase contrast firms up the layers drawn on the Space color. */
+/* Increase contrast firms up the text and layers drawn on the Space color. */
 @media (prefers-contrast: more) {
   .tabs-surface {
+    --text-secondary: var(--sidebar-secondary-more);
+    --text-muted: var(--sidebar-muted-more);
     --separator: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
     --sidebar-sel-ring: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
     --focus-outline: 2px solid var(--sidebar-contrast);

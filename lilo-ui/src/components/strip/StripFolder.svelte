@@ -216,7 +216,7 @@
   .unlock-error {
     margin: 0;
     font-size: var(--font-size-xs);
-    color: var(--danger);
+    color: var(--danger-text);
   }
 
   .count {

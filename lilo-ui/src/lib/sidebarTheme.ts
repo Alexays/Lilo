@@ -15,6 +15,8 @@ const LIGHT_CONTRAST_RGB: RGB = { r: 0x1d, g: 0x1d, b: 0x1f };
 const DARK_CONTRAST_RGB: RGB = { r: 0xf8, g: 0xf9, b: 0xfd };
 // APCA lightness contrast (Lc): fluent text, and icons or states.
 export const TEXT_CONTRAST = 60;
+// Secondary text under the system's Increase contrast.
+export const MORE_TEXT_CONTRAST = 75;
 export const ICON_CONTRAST = 45;
 // The dark sidebar's lifted rows, this far toward the text color, which its darkening keeps legible.
 const DARK_SELECTED_LIFT = 0.2;
@@ -308,12 +310,16 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 	const layer = (percent: number): string => `color-mix(in srgb, ${sidebarContrast} ${percent}%, transparent)`;
 	// Secondary text also sits on quiet fields (the address), a hover layer darker or lighter than the sidebar.
 	const quietField = tone(sidebar, contrastColor, prefersDark ? 0.08 : 0.06);
+	const secondary = ensureContrast(tone(sidebar, contrastColor, 0.76), quietField, TEXT_CONTRAST, sidebarContrast);
+	const muted = ensureContrast(tone(sidebar, contrastColor, 0.58), sidebarHex, TEXT_CONTRAST, sidebarContrast);
 
 	return {
 		"--sidebar-bg": sidebarHex,
 		"--sidebar-contrast": sidebarContrast,
-		"--sidebar-secondary": ensureContrast(tone(sidebar, contrastColor, 0.76), quietField, TEXT_CONTRAST, sidebarContrast),
-		"--sidebar-muted": ensureContrast(tone(sidebar, contrastColor, 0.58), sidebarHex, TEXT_CONTRAST, sidebarContrast),
+		"--sidebar-secondary": secondary,
+		"--sidebar-muted": muted,
+		"--sidebar-secondary-more": ensureContrast(secondary, quietField, MORE_TEXT_CONTRAST, sidebarContrast),
+		"--sidebar-muted-more": ensureContrast(muted, sidebarHex, MORE_TEXT_CONTRAST, sidebarContrast),
 		"--sidebar-panel": fill(prefersDark ? 0.12 : 0.05),
 		"--sidebar-subtle": fill(prefersDark ? 0.08 : 0.03),
 		"--sidebar-hover": layer(prefersDark ? 8 : 6),

@@ -530,7 +530,7 @@
     padding: 0 var(--space-4);
     border-radius: var(--radius-sm);
     background: var(--bg-secondary);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-size: var(--font-size-xs);
   }
 
