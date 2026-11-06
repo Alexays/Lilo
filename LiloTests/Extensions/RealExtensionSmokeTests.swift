@@ -383,6 +383,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         // the channel after 20 s, and WebKit unloads the worker after), or after a minute, each one's toolbar button
         // opens its popup on the worker it starts again, as Chrome's recording does on a stopped worker.
         struct Idle {
+            let knownErrors: [String]
             let outcome: Outcome
             let package: URL
             let chrome: ChromeSmoke.Recording?
@@ -467,7 +468,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 } else if !matched {
                     outcome.problems.append(mismatch("once its worker was idle, the popup", shown, expected))
                 }
-                let errors = unexpected(Array((idleRegistry.context(for: id) ?? context).errors.dropFirst(errorCount)), (chrome?.errors ?? []).map(normalized))
+                let errors = unexpected(Array((idleRegistry.context(for: id) ?? context).errors.dropFirst(errorCount)), entry.knownErrors)
                 outcome.problems += errors.map { "once its worker was idle, error: \($0)" }
                 if !outcome.problems.isEmpty && outcome.details.isEmpty { outcome.details = errorsOf(idleRegistry, id) }
                 // What a popup that went another way than Chrome's saw as its tab.
@@ -515,7 +516,9 @@ final class RealExtensionSmokeTests: XCTestCase {
             }
             outcome.version = context.webExtension.version ?? "?"
             let recorded = chromeSmoke.extensions[id]
-            // Chrome's behavior with another version says nothing about this one: all its errors count.
+            // Chrome's rendering of another version says nothing about this one, but the errors Chrome gave it still
+            let knownErrors = (recorded?.errors ?? []).map(normalized)
+            // tell an extension's own failures from Lilo's.
             let chrome = recorded?.version == outcome.version ? recorded : nil
             if chrome == nil { outcome.staleChrome = recorded?.version ?? "nothing" }
             var connected = false, workerStarted: Date?
@@ -616,7 +619,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             // Each error with the step it came in, to tell a page's last exchanges from its start.
             let steps = phases + [("the end", context.errors.count)]
             let step = { (index: Int) in steps.last { $0.count <= index }?.name ?? "the start" }
-            let mainErrors = unexpected(context.errors, (chrome?.errors ?? []).map(normalized))
+            let mainErrors = unexpected(context.errors, knownErrors)
             outcome.problems += mainErrors.map { message in
                 let index = context.errors.firstIndex { $0.localizedDescription == message } ?? 0
                 return "error: \(message) (in \(step(index)))"
@@ -627,7 +630,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             // scripts into the pages already open when an extension loads, which Chrome never does.
             for tab in window.tabManager.openTabs { window.closeTabStateFirst(id: tab.id, undoable: false) }
             if connected, popupURL != nil, chrome?.restartPopup?.tokens.isEmpty != true {
-                idle = Idle(outcome: outcome, package: package, chrome: chrome)
+                idle = Idle(outcome: outcome, package: package, chrome: chrome, knownErrors: knownErrors)
             }
             try await advanceIdle(false)
         }
