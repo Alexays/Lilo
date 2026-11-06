@@ -228,7 +228,7 @@
   @media (prefers-reduced-motion: reduce) {
     .ui-modal,
     .ui-modal-panel {
-      animation: ui-modal-fade 150ms linear both;
+      animation: ui-modal-fade 150ms linear both !important;
     }
   }
 

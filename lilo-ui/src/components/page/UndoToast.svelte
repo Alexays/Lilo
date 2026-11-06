@@ -231,7 +231,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .undo-toast {
-      animation: undo-fade 150ms ease both;
+      animation: undo-fade 150ms ease both !important;
     }
   }
 

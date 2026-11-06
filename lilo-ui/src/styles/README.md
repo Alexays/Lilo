@@ -101,5 +101,7 @@ and inner highlight their surfaces need.
 Durations: `--motion-duration-fast` (120ms, hover and press; `--transition-fast` is it with
 `ease`), `-normal` (200ms, appearing content), `-overlay` (220ms), `-slow` (280ms, panels).
 Easings: `--motion-ease-standard`, `-organic`, `-spring`, `-bounce`. Reduce motion and
-Low Power Mode collapse every animation and transition globally in `global.css`, so a
-component only adds its own rule when it needs a still alternative rather than an instant one.
+Low Power Mode collapse every animation and transition globally in `global.css`. With Reduce
+motion a surface that appears (modal, drawer, toast, switcher) fades in 150 ms instead, as
+[DESIGN.md](../../../docs/DESIGN.md) asks: its fallback rule is `!important` to beat the global
+one, and its Svelte transitions take 150 ms when `prefersReducedMotion()` is true.
