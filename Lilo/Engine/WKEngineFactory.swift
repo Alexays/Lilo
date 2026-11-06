@@ -847,6 +847,15 @@ final class WKEngineFactory {
         usesNativeConfiguration: Bool
     ) -> WKWebViewConfiguration {
         let wkConfig = configuration.nativeConfiguration ?? WKWebViewConfiguration()
+        // A popup shares its opener's preferences: a copy keeps one tab's full speed while hidden (runsAtFullSpeedHidden)
+        // from reaching the other, and starts throttled when hidden, as every new tab does.
+        if configuration.nativeConfiguration != nil, let preferences = wkConfig.preferences.copy() as? WKPreferences {
+            for key in ["pageVisibilityBasedProcessSuppressionEnabled", "hiddenPageDOMTimerThrottlingEnabled"]
+            where preferences.responds(to: NSSelectorFromString("_set\(key.prefix(1).uppercased())\(key.dropFirst()):")) {
+                preferences.setValue(true, forKey: key)
+            }
+            wkConfig.preferences = preferences
+        }
         WebInspectorSupport.prepare(configuration: wkConfig)
         // No trailing app token: a "Lilo/1.0" after "Safari/605.1.15" trips strict UA sniffers into a
         // Widevine path WKWebView can't satisfy (it ships only FairPlay), breaking streaming playback.
