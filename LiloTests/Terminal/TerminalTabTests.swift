@@ -458,13 +458,13 @@ final class TerminalReopenTests: XCTestCase {
         let saved = [RecentlyClosedStack.Entry(
             content: .terminal(.init(cwd: "/tmp", closedAt: Date())), spaceId: UUID(), parentFolderId: nil, section: nil, sortOrder: nil
         )]
-        try JSONEncoder().encode(saved).write(to: file)
+        let encoded = try JSONEncoder().encode(saved)
+        try encoded.write(to: file)
 
         context.restoreClosedTerminals()
         context.isTerminating = true
         context.writeClosedTerminals()
 
-        let onDisk = try JSONDecoder().decode([RecentlyClosedStack.Entry].self, from: Data(contentsOf: file))
-        XCTAssertEqual(onDisk, saved)
+        XCTAssertEqual(try Data(contentsOf: file), encoded)
     }
 }
