@@ -10,7 +10,9 @@ SITE = "https://getlilo.app"
 DIST = Path(__file__).resolve().parent / "dist"
 
 VOID = {"meta", "link", "br", "img", "input", "hr", "source"}
-BLOCK = {"main", "section", "article", "header", "div", "p", "h1", "h2", "h3", "h4", "details", "summary", "table", "footer", "ul", "ol", "li", "time"}
+# A release page repeats its changelog entry: the Markdown mirrors keep the full changelog only.
+RELEASE_PAGE = re.compile(r"changelog/\d+\.\d+\.\d+/index\.html$")
+BLOCK = {"main", "section", "article", "header", "div", "p", "h1", "h2", "h3", "h4", "details", "summary", "table", "footer", "ul", "ol", "li", "time", "figure", "figcaption"}
 # Interactive mockups and decoration: their text is illustration, not page content.
 SKIP_TAGS = {"script", "style", "svg", "button", "head", "nav"}
 SKIP_CLASSES = {"window", "store", "termcard", "tag", "mark", "nav", "skip-link"}
@@ -191,7 +193,8 @@ def sync_json_ld(path):
 
 def main():
     pages = sorted(path.relative_to(DIST).as_posix() for path in DIST.rglob("index.html")
-                   if not path.is_relative_to(DIST / "demo"))
+                   if not path.is_relative_to(DIST / "demo")
+                   and not RELEASE_PAGE.search(path.as_posix()))
     full = []
     for path in sorted(pages, key=lambda path: (path != "index.html", path)):
         sync_json_ld(path)

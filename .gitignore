@@ -64,3 +64,5 @@ docs/superpowers/
 
 # Local MCP server config
 .mcp.json
+lilo-ui/public/release-media/*
+!lilo-ui/public/release-media/.gitkeep

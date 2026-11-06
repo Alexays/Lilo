@@ -27,6 +27,7 @@ XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
 # What the UI and bridge builds read, and the stamps they leave once built from them.
 UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
 	$(UI_DIR)/releaseNotesPlugin.ts $(wildcard .changes/v*.md) scripts/embed_chrome_ui.py scripts/generate_native_strings.py
+UI_SOURCES += release-media/catalog.ts release-media/stage-native.mjs $(wildcard release-media/assets/*/*)
 BRIDGE_SOURCES := $(shell find $(BRIDGE_DIR)/src $(BRIDGE_DIR)/scripts) $(addprefix $(BRIDGE_DIR)/,esbuild.mjs package-lock.json tsconfig.json)
 UI_STAMP := build/.ui-build.stamp
 BRIDGE_STAMP := build/.ext-bridge-build.stamp
@@ -85,7 +86,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
-	changie change release-status release-version release-discord release-test
+	changie change release-status release-version release-discord release-test release-media-stage release-media-test changelog-draft changelog-media
 
 ## List the targets
 help:
@@ -215,10 +216,33 @@ release-test: $(CHANGIE)
 	@CHANGIE='$(CHANGIE)' python3 -B -m unittest discover -s scripts -p 'release*_test.py'
 
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
-ui-build: $(UI_DEPS)
+ui-build: $(UI_DEPS) release-media-stage
 	@npm --prefix $(UI_DIR) run build
 	@python3 scripts/embed_chrome_ui.py
 	@python3 scripts/generate_native_strings.py
+
+## Stage the installed release's media for the native bundle
+release-media-stage:
+	@node release-media/stage-native.mjs
+
+release-media/node_modules/.installed: release-media/package.json release-media/package-lock.json
+	@npm --prefix release-media ci --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
+	@touch $@
+
+## Test the release media tooling
+release-media-test: release-media/node_modules/.installed
+	@node --test release-media/*.test.mjs
+
+## Capture and render a drafted entry's media (RELEASE=x.y.z; needs ffmpeg). A plan that fails leaves its highlight text-only
+changelog-media: release-media/node_modules/.installed
+	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
+	-@TEST_RUNNER_LILO_RELEASE_MEDIA_PLANS='$(CURDIR)/release-media/plans/$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_SHOTS='$(CURDIR)/build/release-media/shots/$(RELEASE)' \
+		$(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
+	@LILO_RELEASE='$(RELEASE)' node release-media/media.mjs
+
+## Draft the changelog entry and What's New copy (RELEASE=x.y.z; pending notes by default; needs Claude credentials)
+changelog-draft: release-media/node_modules/.installed $(CHANGIE)
+	@CHANGIE='$(CHANGIE)' LILO_RELEASE='$(RELEASE)' node release-media/draft.mjs
 
 # Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
 # UI source change, refreshes both.
@@ -445,7 +469,7 @@ release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(if $(WEBKIT_FORK_URL),w
 # CI's release path: the UI is built or restored beforehand and the committed bridge bundles are checked
 # against bridge-src on main, so neither needs npm here.
 ## Archive and export the release app from the UI already built (CI)
-release-archive: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(if $(WEBKIT_FORK_URL),webkit-fork)
+release-archive: release-media-stage vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(if $(WEBKIT_FORK_URL),webkit-fork)
 	@scripts/build-app.sh release
 
 # dmgbuild writes the window layout into .DS_Store itself, so no Finder or AppleScript is involved.

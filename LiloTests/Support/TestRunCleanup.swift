@@ -27,11 +27,14 @@ final class TestRunCleanup: NSObject, XCTestObservation {
                   keepsExisting: !host.hasSuffix(".tests"))
         XCTestObservationCenter.shared.addTestObserver(self)
         // The windows tests open stay out of Mission Control and the window cycle: parallel hosts open hundreds of them.
-        NotificationCenter.default.addObserver(forName: NSApplication.didUpdateNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated {
-                for window in NSApp.windows where !window.collectionBehavior.contains(.transient) {
-                    window.collectionBehavior.subtract([.managed, .stationary, .canJoinAllSpaces, .moveToActiveSpace])
-                    window.collectionBehavior.formUnion([.transient, .ignoresCycle])
+        // A release media capture is the exception: it needs its window on screen.
+        if ProcessInfo.processInfo.environment["LILO_RELEASE_MEDIA_PLANS"] == nil {
+            NotificationCenter.default.addObserver(forName: NSApplication.didUpdateNotification, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated {
+                    for window in NSApp.windows where !window.collectionBehavior.contains(.transient) {
+                        window.collectionBehavior.subtract([.managed, .stationary, .canJoinAllSpaces, .moveToActiveSpace])
+                        window.collectionBehavior.formUnion([.transient, .ignoresCycle])
+                    }
                 }
             }
         }

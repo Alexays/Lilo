@@ -1,0 +1,102 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image, getImage } from "astro:assets";
+
+import type { ReleaseMedia } from "../../../release-media/catalog";
+
+interface Props {
+  label: string;
+  media: ReleaseMedia;
+}
+
+const { label, media } = Astro.props;
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  "../../../release-media/assets/*/*.png"
+);
+
+const path = media.poster.replace(
+  "/release-media/",
+  "../../../release-media/assets/"
+);
+
+const load = images[path];
+
+if (!load) {
+  throw new Error(`Missing release media: ${media.poster}`);
+}
+
+const { default: picture } = await load();
+
+const poster = await getImage({ format: "webp", src: picture, width: 1920 });
+---
+
+<figure class="release-media">
+  {media.kind === "image" ? (
+    <Image
+      src={picture}
+      alt={label}
+      format="webp"
+      widths={[960, 1920, 3840]}
+      sizes="(max-width: 700px) 100vw, 75vw"
+    />
+  ) : (
+    <video
+      controls
+      playsinline
+      preload="none"
+      poster={poster.src}
+      width="1920"
+      height="1080"
+      aria-label={label}
+      muted={media.kind === "loop"}
+      loop={media.kind === "loop"}
+    >
+      <source src={media.video} type="video/mp4" />
+    </video>
+  )}
+</figure>
+
+<script>
+  const calm = matchMedia("(prefers-reduced-motion: reduce)");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const { isIntersecting, target } of entries) {
+        if (!(target instanceof HTMLVideoElement)) {
+          continue;
+        }
+
+        if (!isIntersecting) {
+          target.pause();
+        } else if (target.loop && !calm.matches) {
+          target.play().catch(() => null);
+        }
+      }
+    },
+    { threshold: 0.5 }
+  );
+
+  for (const video of document.querySelectorAll(".release-media video")) {
+    observer.observe(video);
+  }
+</script>
+
+<style>
+  .release-media {
+    margin: 16px 0 0;
+  }
+  video,
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    background: #15151b;
+  }
+  video:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+</style>

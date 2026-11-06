@@ -71,6 +71,14 @@ Each highlight can define an optional `action` with translated `label` and `href
 
 Existing archives stay unchanged on later builds and releases; incomplete archives require explicit replacement. For a demo story, `make site-release-capture RELEASE=x.y.z RECAPTURE=1` replaces its media using an owned server on port 8791 and Playwright's Chromium browser. For a native story, use `site-release-import` with reviewed window frames. Missing native media stops release preparation with that instruction. `make release-version` prepares missing media before the website build; normal builds and `make validate` never record or replace media.
 
+## Release pages and feeds
+
+Every release has its own page at `/changelog/<version>/`, with its first illustrated highlight as its social image. `/changelog/rss.xml` and `/fr/changelog/rss.xml`, built with `@astrojs/rss`, carry the last 30 releases with their complete notes. A story's `groups` list the notes that are not highlights by product area, in place of the complete notes.
+
+## Highlight media
+
+A highlight names its `media` kind and the changelog shows `/release-media/<version>/<highlight id>.{mp4,png}`, a link to `../release-media/assets/`. Native What's New shows the same files. See [release-media/README.md](../release-media/README.md). Films are plain static assets: `_headers` advertises byte ranges so Chromium can seek them. Images and posters go through `astro:assets`, so a reader downloads WebP at the size they need; the PNGs stay published for the app and social previews.
+
 ## Demo playground
 
 The demo uses interactive local example pages. Entered addresses stay inside the sample experience and do not load external websites. Shift-click a page link to Peek; Command-click or middle-click opens a background tab. Right-click a link for Peek, Split View, a Little window, new or background tabs, and Copy Link.
@@ -103,7 +111,7 @@ The imported history in `.changes/v0.1.5.md` contains several earlier versions. 
 
 Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/`; no Worker script or Astro server adapter is needed. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
 
-Set the build watch paths to `site/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
+Set the build watch paths to `site/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `release-media/assets/**`, `release-media/catalog.ts`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
 
 For a manual deployment, authenticate with Cloudflare first, then run:
 

@@ -51,7 +51,7 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ hashFiles('lilo-ui/package-lock.json', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+          key: ui-${{ hashFiles('lilo-ui/package-lock.json', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'release-media/catalog.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
       - name: Build the UI
         if: steps.ui-cache.outputs.cache-hit != 'true'
         run: |

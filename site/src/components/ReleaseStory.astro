@@ -1,6 +1,8 @@
 ---
+import { releaseMedia } from "../../../release-media/catalog";
 import type { Locale } from "../lib/i18n";
 import type { ReleaseStory } from "../lib/release-stories";
+import ReleaseMedia from "./ReleaseMedia.astro";
 import ReleaseRecording from "./ReleaseRecording.astro";
 
 interface Props {
@@ -49,6 +51,12 @@ const { lang, story } = Astro.props;
               <path d="M4 12h16m-6-6 6 6-6 6" />
             </svg>
           </a>
+        )}
+        {highlight.media && (
+          <ReleaseMedia
+            label={highlight.title[lang]}
+            media={releaseMedia(story.version, highlight.id, highlight.media)}
+          />
         )}
         {story.capture && highlight.id === story.capture.highlight && (
           <ReleaseRecording capture={story.capture} lang={lang} story={story} />

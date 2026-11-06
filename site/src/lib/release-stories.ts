@@ -15,6 +15,14 @@ const storySchema = z.strictObject({
       source: z.enum(["demo", "native"]).default("demo"),
     })
     .optional(),
+  groups: z
+    .array(
+      z.strictObject({
+        notes: z.array(z.string().min(1)).min(1),
+        title: translatedText,
+      })
+    )
+    .optional(),
   highlights: z
     .array(
       z.strictObject({
@@ -26,6 +34,7 @@ const storySchema = z.strictObject({
           .optional(),
         body: translatedText,
         id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
+        media: z.enum(["film", "loop", "image"]).optional(),
         notes: z.array(z.string().min(1)).min(1),
         title: translatedText,
       })
@@ -46,6 +55,17 @@ export const parseReleaseStories = (markdown: string, entries: unknown[]) => {
   for (const entry of entries) {
     const story = storySchema.parse(entry);
     const release = releases.find((item) => item.version === story.version);
+
+    // A drafted entry waits for its release, which may be cut after it merges.
+    if (
+      !release &&
+      releases.every(
+        ({ version }) =>
+          version.localeCompare(story.version, "en", { numeric: true }) < 0
+      )
+    ) {
+      continue;
+    }
 
     if (!release || stories.has(story.version)) {
       throw new Error(
@@ -75,6 +95,12 @@ export const parseReleaseStories = (markdown: string, entries: unknown[]) => {
           `Highlight ${highlight.id} is not sourced from release ${story.version}`
         );
       }
+    }
+
+    if (
+      story.groups?.some((group) => !group.notes.every((n) => notes.has(n)))
+    ) {
+      throw new Error(`Groups are not sourced from release ${story.version}`);
     }
 
     stories.set(story.version, story);

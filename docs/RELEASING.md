@@ -24,11 +24,27 @@ make validate
 writing files. `Fixed` and `Changed` notes select a patch bump, `Added` selects minor, and `Breaking`
 selects major. When notes request different bumps, the largest wins.
 
-A feature release (`x.y.0`) ships with its highlights: an entry in
-`lilo-ui/src/components/whatsnew/releaseHighlights.json` and a story in
-`site/src/content/releases/<version>.json`, both described below. `make release-version` refuses to
-cut one without them and leaves the notes in place; `make release-status` warns early. Patch
-releases need neither.
+### Changelog entries
+
+A release's changelog entry is drafted, reviewed and merged like code. `make changelog-draft` turns
+the pending notes into a website story in `site/src/content/releases/<version>.json`, What's New
+highlights in `lilo-ui/src/components/whatsnew/releaseHighlights.json`, and their copy in every
+language catalog. Merge it before `make release-version` so the app ships with its highlights: the
+website keeps the entry out of sight until its release is published. Review it for what only a
+person can judge. The tool checks that every note has a place and quotes it exactly, not that the
+story is the right one.
+
+An entry never holds a release back. Without one, `make release-version` warns and What's New shows
+the complete notes. Pushing a tag then runs the **Changelog draft** workflow, which opens a draft
+pull request with the missing entry; merging it publishes the entry on the website, through the usual
+deployment of `main`. It needs an `ANTHROPIC_API_KEY` repository secret, and skips with a notice
+without one, and **Allow GitHub Actions to create and approve pull requests** in the repository's
+Actions settings. Checks do not run on a pull request an action opens: close and reopen it to run them.
+A release of fixes alone has no entry.
+
+The same workflow films the entry's highlights on macOS and adds them to the pull request. Locally, run
+`make changelog-media RELEASE=x.y.z` after the draft. A highlight it cannot film stays text-only, and
+the [release media guide](../release-media/README.md) explains how to fix or write its plan.
 
 `make release-version` collects the pending notes into a release file, consumes the fragments, and
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
@@ -68,6 +84,8 @@ three highlights reference keys under `whatsNew.releases` in **every** shared la
 catalog. Use a benefit-led heading and one or two sentences per highlight. The static local
 illustrations live in `WhatsNewArt.svelte`; a new illustration also needs a recognized identifier
 in `releaseNotes.ts`. Keep illustrations decorative and communicate the change in the copy.
+A highlight can show a film, a loop or an image instead: give it an `id` and a `media` kind, and
+add its files under [`release-media/assets/`](../release-media/README.md).
 
 Without an entry for that version, the sheet opens the complete notes in a compact maintenance
 layout. An older version's highlights are never reused. The complete notes retain their original
