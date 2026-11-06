@@ -605,7 +605,6 @@
 			"connect": "연결",
 			"copy": "설정 복사",
 			"clientDescription": "이 클라이언트의 MCP 서버에 Lilo를 추가합니다.",
-			"clientConnected": "이 클라이언트의 MCP 서버에 Lilo가 있습니다.",
 			"revoke": "제거",
 			"status": {
 				"acting": "작업 중",
@@ -2499,7 +2498,6 @@
 			"restoreToHere": "여기까지 복원",
 			"restoreConfirm": "프로젝트 파일을 이 메시지 시점으로 되돌릴까요?",
 			"restore": "복원",
-			"reviewChanges": "변경사항에서 검토",
 			"undo": "실행 취소",
 			"keep": "유지",
 			"undone": "취소됨",
@@ -2583,7 +2581,6 @@
 			"agent": "에이전트",
 			"loadingAgents": "에이전트 불러오는 중...",
 			"project": "프로젝트",
-			"chooseProject": "프로젝트 선택",
 			"chooseFolder": "폴더 선택...",
 			"noFolder": "폴더 없음",
 			"noFolderDetail": "에이전트가 자체 폴더에서 작업합니다",

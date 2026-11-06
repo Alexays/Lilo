@@ -33,7 +33,6 @@ let _listening = false;
 export const getHistoryFilter = (): BridgeHistoryFilter => _filter;
 export const getHistoryRows = (): BridgeHistoryDayRow[] => _rows;
 export const hasMoreHistory = (): boolean => _nextBefore !== undefined;
-export const isHistoryLoading = (): boolean => _loading;
 export const isHistoryLoaded = (): boolean => _loaded;
 export const getHistorySidebar = (): Sidebar | null => _sidebar;
 export const getHistoryFavicon = (host: string): string | undefined => _favicons[host];

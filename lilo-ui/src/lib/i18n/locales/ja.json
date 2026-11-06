@@ -605,7 +605,6 @@
 			"connect": "接続",
 			"copy": "構成をコピー",
 			"clientDescription": "MCP サーバーに Lilo を追加します。",
-			"clientConnected": "MCP サーバーに Lilo が追加されています。",
 			"revoke": "取り除く",
 			"status": {
 				"acting": "操作中",
@@ -2499,7 +2498,6 @@
 			"restoreToHere": "ここまで復元",
 			"restoreConfirm": "プロジェクトのファイルをこのメッセージの時点の状態に戻しますか？",
 			"restore": "復元",
-			"reviewChanges": "「変更」で確認",
 			"undo": "取り消す",
 			"keep": "保持",
 			"undone": "取り消しました",
@@ -2583,7 +2581,6 @@
 			"agent": "エージェント",
 			"loadingAgents": "エージェントを読み込み中...",
 			"project": "プロジェクト",
-			"chooseProject": "プロジェクトを選択",
 			"chooseFolder": "フォルダを選択...",
 			"noFolder": "フォルダなし",
 			"noFolderDetail": "エージェントは専用のフォルダで作業します",

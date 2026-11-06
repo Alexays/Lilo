@@ -605,7 +605,6 @@
 			"connect": "连接",
 			"copy": "拷贝配置",
 			"clientDescription": "将 Lilo 添加到其 MCP 服务器。",
-			"clientConnected": "Lilo 已在其 MCP 服务器中。",
 			"revoke": "移除",
 			"status": {
 				"acting": "正在操作",
@@ -2499,7 +2498,6 @@
 			"restoreToHere": "恢复到此处",
 			"restoreConfirm": "将项目文件恢复到此消息时的状态？",
 			"restore": "恢复",
-			"reviewChanges": "在更改中查看",
 			"undo": "撤销",
 			"keep": "保留",
 			"undone": "已撤销",
@@ -2583,7 +2581,6 @@
 			"agent": "智能体",
 			"loadingAgents": "正在载入智能体...",
 			"project": "项目",
-			"chooseProject": "选择项目",
 			"chooseFolder": "选择文件夹...",
 			"noFolder": "无文件夹",
 			"noFolderDetail": "智能体在自己的文件夹中工作",
