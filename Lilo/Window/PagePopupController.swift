@@ -104,9 +104,11 @@ final class PagePopupController: NSObject, NSWindowDelegate {
     /// `window.resizeTo` and `moveTo` of the popup window; a peek keeps its size.
     func setWindowFrame(_ frame: NSRect) {
         guard let window else { return }
+        // `setFrame(_:display:)` does not enforce `contentMinSize`, so the page could shrink the header out of reach.
+        let minimum = window.frameRect(forContentRect: NSRect(origin: .zero, size: window.contentMinSize)).size
         var frame = frame
-        frame.size.width = max(frame.width, window.minSize.width)
-        frame.size.height = max(frame.height, window.minSize.height)
+        frame.size.width = max(frame.width, minimum.width)
+        frame.size.height = max(frame.height, minimum.height)
         window.setFrame(Self.fitted(frame, on: window.screen ?? NSScreen.main), display: true)
     }
 
