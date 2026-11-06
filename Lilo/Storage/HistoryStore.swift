@@ -411,7 +411,7 @@ final class HistoryStore: @unchecked Sendable {
     /// the list, nil once nothing older matches. Each day is one bounded range of the `visitedAt` index.
     func dayRows(
         filter: Filter, before: Date?, minimumRows: Int, now: Date = Date(), calendar: Calendar = .current
-    ) throws -> (rows: [DayRow], nextBefore: Date?) {
+    ) async throws -> (rows: [DayRow], nextBefore: Date?) {
         flushPendingWrites()
         let startOfToday = calendar.startOfDay(for: now)
         let daysAgo = { (days: Int) in calendar.date(byAdding: .day, value: -days, to: startOfToday) ?? startOfToday }
@@ -445,7 +445,8 @@ final class HistoryStore: @unchecked Sendable {
         }
         let filterSQL = conditions.map { " AND \($0)" }.joined()
 
-        return try dbPool.read { db in
+        // The async read lets a cancelled task interrupt the statement in flight.
+        return try await dbPool.read { [filterArguments, upper] db in
             var rows: [DayRow] = []
             var cursor = upper
             while rows.count < minimumRows {

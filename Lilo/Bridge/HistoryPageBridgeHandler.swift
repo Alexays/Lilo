@@ -23,12 +23,16 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     /// Rows a batch reaches before it stops at a day's end.
     private static let batchRows = 200
 
+    private typealias PageReply = ((rows: [HistoryStore.DayRow], nextBefore: Date?), [String: String])
+
     private let profileContextProvider: () -> ProfileContext?
     private weak var bridgeRouter: BridgeRouter?
     /// Changes reach the page only while it is open: nothing is read for a closed page.
     private var pageOpen = false
     /// Favicons the page already holds, so each one crosses the bridge once per window.
     private var sentFaviconHosts: Set<String> = []
+    /// The page ignores every reply but the latest request's, so a new request cancels the read still running.
+    private var pageRead: Task<PageReply?, Never>?
     nonisolated(unsafe) private var changeObserver: Any?
 
     init(profileContextProvider: @escaping () -> ProfileContext?, bridgeRouter: BridgeRouter) {
@@ -66,10 +70,10 @@ final class HistoryPageBridgeHandler: BridgeHandler {
             let favicons = context.favicons
             let sentHosts = sentFaviconHosts
             let minimumRows = Self.batchRows
-            let loaded = await Task.detached(priority: .userInitiated) {
-                () -> ((rows: [HistoryStore.DayRow], nextBefore: Date?), [String: String])? in
+            pageRead?.cancel()
+            let read = Task.detached(priority: .userInitiated) { () -> PageReply? in
                 do {
-                    let page = try store.dayRows(filter: filter, before: before, minimumRows: minimumRows)
+                    let page = try await store.dayRows(filter: filter, before: before, minimumRows: minimumRows)
                     // Favicons are keyed by the page's own host; the chrome looks them up by site.
                     var siteByHost: [String: String] = [:]
                     for row in page.rows {
@@ -80,10 +84,15 @@ final class HistoryPageBridgeHandler: BridgeHandler {
                     return (page, Dictionary(entries.compactMap { entry in siteByHost[entry.host].map { ($0, entry.dataURL) } },
                                              uniquingKeysWith: { first, _ in first }))
                 } catch {
-                    historyPageLogger.error("history page read failed: \(error.localizedDescription, privacy: .public)")
+                    if !Task.isCancelled {
+                        historyPageLogger.error("history page read failed: \(error.localizedDescription, privacy: .public)")
+                    }
                     return nil
                 }
-            }.value
+            }
+            pageRead = read
+            let loaded = await read.value
+            guard !read.isCancelled else { break }
             // A failed read still answers, or the page would wait on it and never load more.
             guard let (page, icons) = loaded else {
                 sendEmptyPage(for: message)
