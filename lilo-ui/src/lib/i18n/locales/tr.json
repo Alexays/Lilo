@@ -1887,6 +1887,8 @@
 		"Lilo could not read this repository.": "Lilo bu depoyu okuyamadı.",
 		"No main or master branch to compare with.": "Karşılaştırılacak main veya master dalı yok.",
 		"Check that git is installed and the folder is a repository.": "Git'in yüklü olduğunu ve klasörün bir depo olduğunu denetleyin.",
+		"Changes too large to show": "Değişiklikler gösterilemeyecek kadar büyük",
+		"Lilo shows diffs of up to 256 MB.": "Lilo en fazla 256 MB'lık farkları gösterir.",
 		"No uncommitted changes": "Commit edilmemiş değişiklik yok",
 		"The working tree matches the last commit.": "Çalışma ağacı son commit ile eşleşiyor.",
 		"Compare with Branch Base": "Dalın Başlangıcıyla Karşılaştır",

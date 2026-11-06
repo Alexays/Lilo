@@ -329,7 +329,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
                     let unchanged: Bool
                     if let diff, let shown = self.diff {
                         unchanged = diff.bytes == shown.bytes && diff.base == shown.base && diff.mergeBase == shown.mergeBase
-                            && diff.files.elementsEqual(shown.files) { $0.path == $1.path && $0.isBinary == $1.isBinary }
+                            && diff.isTooLarge == shown.isTooLarge && diff.files.elementsEqual(shown.files) { $0.path == $1.path && $0.isBinary == $1.isBinary }
                     } else {
                         unchanged = diff == nil && failed
                     }
@@ -504,8 +504,11 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         countsChip.isHidden = isEmpty
         emptyTitle.isHidden = !isEmpty || (diff == nil && !failed)
         emptyDetail.isHidden = emptyTitle.isHidden
-        emptyButton.isHidden = emptyTitle.isHidden || failed
-        if failed {
+        emptyButton.isHidden = emptyTitle.isHidden || failed || diff?.isTooLarge == true
+        if diff?.isTooLarge == true {
+            emptyTitle.stringValue = "Changes too large to show".localized
+            emptyDetail.stringValue = "Lilo shows diffs of up to 256 MB.".localized
+        } else if failed {
             emptyTitle.stringValue = "Lilo could not read this repository.".localized
             emptyDetail.stringValue = mode == .branch
                 ? "No main or master branch to compare with.".localized

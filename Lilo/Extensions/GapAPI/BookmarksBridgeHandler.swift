@@ -75,6 +75,10 @@ final class BookmarksBridgeHandler: GapHandler {
             let id       = call.string("id") ?? ""
             let parentId = call.string("parentId")
             let index    = call.payload["index"] as? Int
+            if let index, index < 0 {
+                return BridgeError("Error in invocation of bookmarks.move(string id, object destination, optional function callback): "
+                    + "Error at parameter 'destination': Error at property 'index': Value must be at least 0.")
+            }
             return bridged {
                 // Snapshot the old position BEFORE the move: store.move reindexes siblings and the
                 // returned record carries only the NEW parentId/index.

@@ -1887,6 +1887,8 @@
 		"Lilo could not read this repository.": "Lilo no ha podido leer este repositorio.",
 		"No main or master branch to compare with.": "No hay ninguna rama main o master con la que comparar.",
 		"Check that git is installed and the folder is a repository.": "Comprueba que git esté instalado y que la carpeta sea un repositorio.",
+		"Changes too large to show": "Cambios demasiado grandes para mostrarlos",
+		"Lilo shows diffs of up to 256 MB.": "Lilo muestra diffs de hasta 256 MB.",
 		"No uncommitted changes": "No hay cambios sin confirmar",
 		"The working tree matches the last commit.": "El árbol de trabajo coincide con el último commit.",
 		"Compare with Branch Base": "Comparar con la base de la rama",

@@ -220,6 +220,11 @@ final class DebuggerGapAPITests: XCTestCase {
         _ = await send("Input.dispatchKeyEvent", ["type": "keyUp", "key": "Tab"])
         let keys = await send("Runtime.evaluate", ["expression": "keys.join(',')", "returnByValue": true])
         XCTAssertEqual((keys.result["result"] as? [String: Any])?["value"] as? String, "a+meta,Tab", "a rawKeyDown with no char still reaches the page")
+
+        let wheel = await send("Input.dispatchMouseEvent", ["type": "mouseWheel", "x": 10, "y": 10, "deltaX": 0, "deltaY": 1e10])
+        XCTAssertNil(wheel.error, "a delta past Int32 is clamped")
+        let scale = await send("Emulation.setDeviceMetricsOverride", ["width": 0, "height": 0, "deviceScaleFactor": -1, "mobile": false])
+        XCTAssertEqual(scale.error?.contains("-32602"), true)
     }
 
     func testPuppeteerStartupAndNavigationEvents() async throws {

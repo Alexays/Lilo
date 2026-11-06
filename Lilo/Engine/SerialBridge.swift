@@ -227,7 +227,7 @@ final class SerialConnection: @unchecked Sendable {
         } else {
             settings.c_cflag &= ~tcflag_t(CRTSCTS)
         }
-        let baudRate = speed_t(options["baudRate"] as? Int ?? 9600)
+        guard let baudRate = (options["baudRate"] as? Int).flatMap({ $0 > 0 ? speed_t(exactly: $0) : nil }) else { throw Failure.configure(EINVAL) }
         unsafe cfsetspeed(&settings, baudRate)
         guard unsafe tcsetattr(fd, TCSANOW, &settings) == 0 else {
             // Drivers that refuse a non-standard rate in termios take it through IOSSIOSPEED.
@@ -361,9 +361,11 @@ extension SerialBridge {
         }
         async open(options) {
           if (this.#readable) throw new DOMException('The port is already open.', 'InvalidStateError');
-          if (!options || !options.baudRate) throw new NativeTypeError('A baudRate is required.');
+          // WebIDL's [EnforceRange] unsigned long, as Chrome converts it: '9600' opens, 0.5 does not.
+          const rate = Math.trunc(Number(options && options.baudRate));
+          if (!(rate > 0 && rate <= 0xFFFFFFFF)) throw new NativeTypeError('A baudRate is required.');
           const id = this.#info.id;
-          await call('open', { id, baudRate: options.baudRate, dataBits: options.dataBits || 8, stopBits: options.stopBits || 1,
+          await call('open', { id, baudRate: rate, dataBits: options.dataBits || 8, stopBits: options.stopBits || 1,
                                parity: options.parity || 'none', flowControl: options.flowControl || 'none' });
           this.#closing = false;
           this.#readable = new ReadableStream({ start: controller => { this.#controller = controller; }, cancel: () => { this.#controller = null; } });

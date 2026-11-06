@@ -1887,6 +1887,8 @@
 		"Lilo could not read this repository.": "Lilo 無法讀取此儲存庫。",
 		"No main or master branch to compare with.": "沒有可供比較的 main 或 master 分支。",
 		"Check that git is installed and the folder is a repository.": "請確認已安裝 git，且此資料夾為儲存庫。",
+		"Changes too large to show": "變更過大，無法顯示",
+		"Lilo shows diffs of up to 256 MB.": "Lilo 最多顯示 256 MB 的差異。",
 		"No uncommitted changes": "沒有尚未提交的變更",
 		"The working tree matches the last commit.": "工作目錄與上一個提交相同。",
 		"Compare with Branch Base": "與分支基底比較",

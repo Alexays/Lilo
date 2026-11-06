@@ -1887,6 +1887,8 @@
 		"Lilo could not read this repository.": "Lilo could not read this repository.",
 		"No main or master branch to compare with.": "No main or master branch to compare with.",
 		"Check that git is installed and the folder is a repository.": "Check that git is installed and the folder is a repository.",
+		"Changes too large to show": "Changes too large to show",
+		"Lilo shows diffs of up to 256 MB.": "Lilo shows diffs of up to 256 MB.",
 		"No uncommitted changes": "No uncommitted changes",
 		"The working tree matches the last commit.": "The working tree matches the last commit.",
 		"Compare with Branch Base": "Compare with Branch Base",
