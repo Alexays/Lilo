@@ -182,9 +182,9 @@ jobs:
             --maximum-deltas 3 \
             --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
             build/appcast
-          if [ -n "$tags" ]; then
-            grep -q '<sparkle:deltas>' build/appcast/appcast.xml \
-              || { echo "::error::appcast.xml holds no delta update."; exit 1; }
+          # A missing delta costs users the full DMG, not the update: worth a warning, not a failed release.
+          if [ -n "$tags" ] && ! grep -q '<sparkle:deltas>' build/appcast/appcast.xml; then
+            echo "::warning::appcast.xml holds no delta update: every copy downloads the full DMG."
           fi
 
       - name: Upload to GitHub Release
