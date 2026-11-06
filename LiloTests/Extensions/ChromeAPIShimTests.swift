@@ -120,7 +120,8 @@ final class ChromeAPIShimTests: XCTestCase {
         try await registry.load(from: try writeExtension([
             "manifest.json": #"{"manifest_version": 3, "name": "Offscreen", "version": "1.0", "permissions": ["offscreen"]}"#,
             // Closes after createDocument, which waits for the page to load, has returned.
-            "offscreen.html": "<!doctype html><script>setTimeout(close, 500)</script>"
+            "offscreen.html": #"<!doctype html><script src="offscreen.js"></script>"#,
+            "offscreen.js": "setTimeout(close, 500)"
         ]))
         let extensionId = try XCTUnwrap(registry.loadedExtensions.first?.id)
         let handler = OffscreenBridgeHandler()
