@@ -152,7 +152,10 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
   Apple grants per app ID. Without it, WebKit's `getCanCurrentProcessAccessPasskeysForRelyingParty`
   check fails: `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()` is false and
   `navigator.credentials.create()` / `.get()` reject at once with `NotAllowedError` (checked on
-  macOS 27). Release builds carry it once the profile is configured, see
+  macOS 27). Apple has not granted it yet, so published releases do not carry it: no WebAuthn works
+  in them, passkeys and USB/NFC security keys alike. A request fails at once with `NotAllowedError`,
+  with no prompt, and reads like a user cancel; an account whose only second factor is a hardware
+  key cannot sign in. Once granted, release builds carry it through a provisioning profile, see
   [docs/RELEASING.md](docs/RELEASING.md#browser-passkey-entitlement); ad-hoc and Debug builds never do.
 - **Not pursued:** A custom `ASAuthorizationPlatformPublicKeyCredentialProvider` integration would
   only duplicate WebKit. `com.apple.developer.associated-domains` (`webcredentials:`) governs the
