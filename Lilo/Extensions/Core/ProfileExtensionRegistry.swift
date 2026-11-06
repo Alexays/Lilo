@@ -773,12 +773,15 @@ final class ProfileExtensionRegistry {
         if context.isInspectable { context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background" }
 
         access.apply(to: context, extensionId: extensionId)
-        // As in Chrome, a suggested key something else already holds stays unset.
+        // As in Chrome, a suggested key something else already holds stays unset, and is stored so: a later load in
+        // another order would otherwise hand it back, over a key the user gave another command.
         let rebound = access.states[extensionId]?.commandShortcuts ?? [:]
+        var unset: [String] = []
         for command in context.commands where rebound[command.id] == nil {
             guard let key = command.activationKey,
                   shortcutOwner(key: key, modifiers: command.modifierFlags, besides: (extensionId, command.id)) != nil else { continue }
             command.activationKey = nil
+            unset.append(command.id)
         }
         try controller.load(context)
         let optional = Set(webExtension.manifest["optional_permissions"] as? [String] ?? [])
@@ -809,6 +812,13 @@ final class ProfileExtensionRegistry {
         )
         if record != stored {
             try? await extensionStorage.store(id: record.id, name: record.name, version: record.version, path: record.path, enabled: true)
+        }
+        if !unset.isEmpty {
+            await access.update(extensionId) { state in
+                var shortcuts = state.commandShortcuts ?? [:]
+                for commandId in unset { shortcuts[commandId] = .init(key: nil, modifiers: 0) }
+                state.commandShortcuts = shortcuts
+            }
         }
         if permissions.contains("userScripts") {
             await userScripts.loaded(extensionId)

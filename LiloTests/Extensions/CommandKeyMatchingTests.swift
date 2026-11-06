@@ -104,6 +104,11 @@ final class CommandKeyMatchingTests: XCTestCase {
 
         XCTAssertEqual(commandKey(of: first), "y")
         XCTAssertEqual(commandKey(of: second), "", "the later extension shows no shortcut, as in Chrome")
+
+        await registry.disable(extensionId: first)
+        await registry.disable(extensionId: second)
+        try await registry.enable(extensionId: second)
+        XCTAssertEqual(commandKey(of: second), "", "loading alone does not hand it the key back")
     }
 
     func testSuggestedKeyALiloShortcutHoldsStaysUnset() async throws {
