@@ -98,11 +98,20 @@ final class TabGroupsBridgeHandler: GapHandler {
             return ungroupTabs(context: context, tabs: tabAdapters(call))
 
         case "tabs.discard":
-            guard let id = tabUUIDs(call, registry: registry).first ?? nil, tabManager.engineTab(for: id) != nil else {
+            guard let adapter = tabAdapters(call).first, adapter.engineTab != nil, let store = tabManager.browserStateStore,
+                  let spaceId = store.owningSpaceId(forTab: adapter.tabId) else {
                 return BridgeError("Cannot discard a tab that is not loaded")
             }
-            tabManager.discardEngines([id])
-            return tabManager.engineTab(for: id) == nil ? nil : BridgeError("Cannot discard a tab on screen")
+            // A window showing the tab's space hosts its engine, whichever window is active; a hidden space parks it in the store.
+            if store.liveHost(for: spaceId) != nil {
+                adapter.tabManager?.discardEngines([adapter.tabId])
+            } else {
+                store.discardParkedEngines([adapter.tabId], spaceId: spaceId) { engine in
+                    defer { engine.teardown() }
+                    return engine.interactionState
+                }
+            }
+            return adapter.engineTab == nil ? nil : BridgeError("Cannot discard a tab on screen")
 
         default:
             return BridgeError("Unhandled tabGroups action \(call.action)")
@@ -333,9 +342,10 @@ final class TabGroupsBridgeHandler: GapHandler {
     // MARK: - Events
 
     /// Fires `chrome.tabGroups.onCreated`, `onUpdated` and `onRemoved` for a space's folder change, whichever made it, to the
-    /// extensions of `registry` holding `tabGroups` that listen to it.
-    func foldersChanged(from old: [TabFolder], to new: [TabFolder], registry: ProfileExtensionRegistry) {
+    /// extensions of `registry` holding `tabGroups` that listen to it and, for a private space, may access private data.
+    func foldersChanged(from old: [TabFolder], to new: [TabFolder], isPrivate: Bool, registry: ProfileExtensionRegistry) {
         let ids = registry.extensionIds(withPermission: "tabGroups")
+            .filter { !isPrivate || registry.context(for: $0)?.hasAccessToPrivateData == true }
         guard !ids.isEmpty else { return }
         let oldById = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let newIds = Set(new.map(\.id))
@@ -360,12 +370,6 @@ final class TabGroupsBridgeHandler: GapHandler {
     /// The known tabs of the `{windowPosition, index}` pairs of `message["tabs"]`.
     private func tabAdapters(_ call: GapCall) -> [TabExtensionAdapter] {
         call.registry.tabAdapters(atPositions: call.payload["tabs"] as? [[String: Any]] ?? [], extensionId: call.extensionId).compactMap { $0 }
-    }
-
-    /// The Lilo tab behind each `{windowPosition, index}` pair of `message["tabs"]`, nil when unknown.
-    private func tabUUIDs(_ call: GapCall, registry: ProfileExtensionRegistry) -> [UUID?] {
-        let positions = call.payload["tabs"] as? [[String: Any]] ?? []
-        return registry.tabIds(atPositions: positions, extensionId: call.extensionId)
     }
 
     private func groupId(forFolder folderId: UUID) -> Int {

@@ -138,6 +138,48 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(other.window.tabManager.folders(forSpace: other.spaceId).map(\.name), ["Theirs"])
     }
 
+    /// A split view id names a split of the caller's windows only, never one of another profile, whose ids count from the same 1.
+    func test_aSplitOfAnotherProfileIsNoSplitOfTheCaller() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let mine = try await groupsCaller(in: browserContext)
+        let other = try await groupsCaller(in: browserContext)
+        let left = try XCTUnwrap(other.window.createTabStateFirst(url: URL(string: "about:blank")))
+        let right = try XCTUnwrap(other.window.createTabStateFirst(url: URL(string: "about:blank")))
+        let position = { (id: UUID) throws -> [String: Int] in
+            let adapter = try XCTUnwrap(other.window.tabManager.browserStateStore?.tabAdapter(forTab: id))
+            return try XCTUnwrap(other.registry.tabPosition(of: adapter, extensionId: other.extensionId))
+        }
+        let created = await other.call("tabs", "createSplit", ["tabs": [try position(left.id), try position(right.id)], "tabIds": [1, 2]])
+        let splitViewId = try XCTUnwrap(created.result as? Int, created.error ?? "")
+
+        let unsplit = await mine.call("tabs", "unsplit", ["splitViewId": splitViewId])
+
+        XCTAssertEqual(unsplit.error, "No split view with id: \(splitViewId).")
+        XCTAssertEqual(other.window.tabManager.folders(forSpace: other.spaceId).map(\.isSplit), [true])
+    }
+
+    /// `tabs.discard` drops the engine of a tab whose space no window shows, parked out of every window's host.
+    func test_tabsDiscardDropsTheParkedEngineOfAHiddenSpace() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let caller = try await groupsCaller(in: browserContext)
+        let window = caller.window
+        let behind = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let shown = try XCTUnwrap(browserContext.context.spaceManager).createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
+        window.switchToSpace(shown.id)
+        let store = try XCTUnwrap(window.tabManager.browserStateStore)
+        let adapter = try XCTUnwrap(store.tabAdapter(forTab: behind.id))
+        let position = try XCTUnwrap(caller.registry.tabPosition(of: adapter, extensionId: caller.extensionId))
+        XCTAssertNotNil(store.engine(tabId: behind.id, spaceId: caller.spaceId), "the hidden space parks the engine")
+
+        let discarded = await caller.call("tabs", "discard", ["tabs": [position]])
+
+        XCTAssertNil(discarded.error)
+        XCTAssertNil(store.engine(tabId: behind.id, spaceId: caller.spaceId))
+        XCTAssertNil(adapter.engineTab)
+    }
+
     /// `tabs.group` and `ungroup` act in the space of the tabs, shown or not, and tabs of two spaces make no group.
     func test_tabsGroupAndUngroupActInTheSpaceOfTheTabs() async throws {
         let browserContext = try await TemporaryBrowserContext()
