@@ -49,7 +49,7 @@ extension BrowserContext {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             writeTabArchive()
-            // A chrome on no Space yet gets the list when its Space is restored.
+            // A chrome on no Space has no archived tabs to show.
             for window in windows.windows where window.tabManager.currentSpaceId != nil {
                 window.sendArchivedTabs()
             }

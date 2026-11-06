@@ -73,7 +73,7 @@ final class BrowserContext {
         didSet { saveTabArchive() }
     }
     var tabArchiveSavePending = false
-    /// The archive the disk holds, so a save that changes nothing written writes nothing.
+    /// What the archive file holds, so a save that would not change it writes nothing.
     var savedTabArchive: [TabArchive.Entry]?
     var archiveSweepTimer: DispatchSourceTimer?
     /// Pairs each suspend of `archiveSweepTimer` with one resume: an unbalanced call traps.
