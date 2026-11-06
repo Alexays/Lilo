@@ -101,11 +101,24 @@ extension TabManager {
         guard let registry = extensionRegistry, registry.hasLoadedExtensions,
               let windowAdapter, let spaceId = currentSpaceId else {
             lastExtensionTabMoveOrder = []
+            lastExtensionTabGroups = [:]
             return
         }
-        let newOrder = tabs(forSpace: spaceId).map(\.id)
+        let spaceTabs = tabs(forSpace: spaceId)
+        let newOrder = spaceTabs.map(\.id)
         let oldOrder = lastExtensionTabMoveOrder
         lastExtensionTabMoveOrder = newOrder
+        var groups: [UUID: UUID] = [:]
+        for tab in spaceTabs { if let groupId = tab.groupId { groups[tab.id] = groupId } }
+        let oldGroups = lastExtensionTabGroups
+        lastExtensionTabGroups = groups
+        if groups != oldGroups {
+            // A tab that came with this change is announced by onCreated, with its group.
+            let stayedIds = Set(oldOrder)
+            for tab in spaceTabs where tab.groupId != oldGroups[tab.id] && stayedIds.contains(tab.id) {
+                if let adapter = tabAdapter(for: tab.id) { reportExtensionTabChange(of: adapter, ["groupId"]) }
+            }
+        }
         guard newOrder != oldOrder else { return }
 
         // Indices count the tabs WebKit sees, those with an adapter, which a new tab gets after the command that placed it.

@@ -320,8 +320,8 @@ final class MainWindowController: NSWindowController {
     )
     lazy var faviconCoordinator = FaviconCoordinator(
         service: context.faviconService,
-        applyFavicon: { [weak self] tabId, dataURL, color in
-            self?.updateTabFavicon(faviconDataURL: dataURL, dominantColor: color, forTabId: tabId)
+        applyFavicon: { [weak self] tabId, dataURL, color, iconURL in
+            self?.updateTabFavicon(faviconDataURL: dataURL, dominantColor: color, iconURL: iconURL, forTabId: tabId)
         }
     )
     func enqueueVisibleTabUpdate(_ tab: Tab?, includeFavicon: Bool = false) {

@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions now see each tab's favicon address, and hear through tabs.onUpdated when a tab changes group, is discarded or reloaded, freezes or resumes, or gets a new favicon
+time: 2026-11-06T19:46:26.414031+01:00

@@ -6,6 +6,7 @@ struct TabFacts: Equatable {
     let discarded: Bool
     let frozen: Bool
     let lastAccessed: Double?
+    let favicon: URL?
 }
 
 /// The facts of the tabs a class of extension contexts sees, by window in the registry's order and by index, as last sent to them.
@@ -237,7 +238,7 @@ final class TabGroupsBridgeHandler: GapHandler {
     // MARK: - tabs.details and the tab state
 
     /// For each tab of `tabs`, named by its window's position or key and its index: its `groupId`, `discarded`, `frozen`,
-    /// `lastAccessed` and window key, null for a tab Lilo does not hold, and with `tabs`, the url and title of the tabs `reveal`
+    /// `lastAccessed`, `favIconUrl` and window key, null for a tab Lilo does not hold, and with `tabs`, the url and title of the tabs `reveal`
     /// lists, which WebKit leaves empty for hosts the extension may not access. An empty tab reads as Chrome's new tab page.
     /// With `state`, also the tab state the context keeps from then on.
     private func tabDetails(_ call: GapCall) -> [String: Any] {
@@ -259,6 +260,7 @@ final class TabGroupsBridgeHandler: GapHandler {
                 "windowKey": Self.windowKey(ObjectIdentifier(window))
             ]
             if let accessed = facts?.lastAccessed { details["lastAccessed"] = accessed }
+            if let caller = call.context, let favicon = Self.favicon(facts, of: adapter, for: caller) { details["favIconUrl"] = favicon }
             if let context, reveal.contains(index) {
                 let title = adapter.title(for: context) ?? ""
                 let url = adapter.url(for: context)
@@ -304,8 +306,16 @@ final class TabGroupsBridgeHandler: GapHandler {
             groupId: tab.groupId.map(groupId(forFolder:)) ?? Self.tabGroupIdNone,
             discarded: engine == nil,
             frozen: engine?.isFrozen ?? false,
-            lastAccessed: (tab.lastActiveAt ?? engine?.createdAt).map { $0.timeIntervalSince1970 * 1000 }
+            lastAccessed: (tab.lastActiveAt ?? engine?.createdAt).map { $0.timeIntervalSince1970 * 1000 },
+            favicon: tab.faviconURL
         )
+    }
+
+    /// The tab's favicon address, for an extension that may see the tab's url, as Chrome.
+    private static func favicon(_ facts: TabFacts?, of adapter: TabExtensionAdapter, for context: WKWebExtensionContext) -> String? {
+        guard let favicon = facts?.favicon else { return nil }
+        if context.hasPermission(.tabs, in: adapter) { return favicon.absoluteString }
+        return adapter.url(for: context).flatMap { context.hasAccess(to: $0, in: adapter) ? favicon.absoluteString : nil }
     }
 
     /// The key a window goes by in the state, which the bridge maps WebKit's window ids to.
@@ -314,16 +324,19 @@ final class TabGroupsBridgeHandler: GapHandler {
     }
 
     /// `{windows, tabs}`: each window's key, in `context`'s window order, which the bridge maps WebKit's window ids by, and its
-    /// tabs' `[groupId, discarded, frozen, lastAccessed]`.
+    /// tabs' `[groupId, discarded, frozen, lastAccessed, favIconUrl]`.
     private static func json(_ state: ExtensionTabState, for context: WKWebExtensionContext, registry: ProfileExtensionRegistry) -> [String: Any] {
-        let windows = registry.extensionWindows(for: context).map { ObjectIdentifier($0) }
+        let windows = registry.extensionWindows(for: context)
         return [
-            "windows": windows.map(windowKey),
+            "windows": windows.map { windowKey(ObjectIdentifier($0)) },
             "tabs": windows.map { window -> [Any] in
-                guard let position = state.windows.firstIndex(of: window) else { return [] }
-                return state.tabs[position].map { facts -> Any in
+                guard let position = state.windows.firstIndex(of: ObjectIdentifier(window)) else { return [] }
+                let adapters = window.tabs(for: context)
+                return state.tabs[position].enumerated().map { index, facts -> Any in
                     guard let facts else { return NSNull() }
-                    return [facts.groupId, facts.discarded, facts.frozen, facts.lastAccessed ?? NSNull()] as [Any]
+                    let adapter = adapters.indices.contains(index) ? adapters[index] as? TabExtensionAdapter : nil
+                    let shown = adapter.flatMap { favicon(facts, of: $0, for: context) }
+                    return [facts.groupId, facts.discarded, facts.frozen, facts.lastAccessed ?? NSNull(), shown ?? NSNull()] as [Any]
                 }
             }
         ]

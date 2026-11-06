@@ -5,7 +5,7 @@ import XCTest
 @MainActor
 final class FaviconCoordinatorTests: XCTestCase {
     private func makeCoordinator(service: FaviconService) -> FaviconCoordinator {
-        FaviconCoordinator(service: service, applyFavicon: { _, _, _ in })
+        FaviconCoordinator(service: service, applyFavicon: { _, _, _, _ in })
     }
 
     func testWarmSeedsCacheForTabsWithKnownFavicons() {
