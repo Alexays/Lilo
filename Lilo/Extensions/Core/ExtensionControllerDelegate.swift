@@ -330,9 +330,10 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         let shownSpaces = ([profileWindow] + (windows?.windows ?? []))
             .filter { $0.profileContext?.extensions === registry }.compactMap(\.tabManager.windowAdapter)
         guard let space = shownSpaces.first(where: admits) ?? registry.extensionWindows(for: context).first(where: admits),
-              openTab(url: optionsURL, activate: true, in: space, for: context) != nil else {
+              let (window, _) = openTab(url: optionsURL, activate: true, in: space, for: context) else {
             completionHandler(Self.extensionError("The options page could not open")); return
         }
+        if !opensTabsInBackground, window.tabManager.currentSpaceId == space.spaceId { window.window?.makeKeyAndOrderFront(nil) }
         completionHandler(nil)
     }
 
