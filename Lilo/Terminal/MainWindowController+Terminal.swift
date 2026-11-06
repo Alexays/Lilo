@@ -517,7 +517,8 @@ extension BrowserContext {
     /// Writes the closed terminals off the main thread when they changed; at quit, waits for the disk.
     func writeClosedTerminals() {
         closedTerminalsSavePending = false
-        guard let url = closedTerminalsURL else { return }
+        // Before the Spaces load, no entry passes the private-Space filter: the disk keeps what was read.
+        guard let url = closedTerminalsURL, spaceManager != nil else { return }
         let terminals = Array(recentlyClosed.recentEntries.reversed().filter { entry in
             guard case .terminal = entry.content else { return false }
             return spaceManager?.space(with: entry.spaceId)?.isPrivate == false
