@@ -104,7 +104,7 @@ final class FaviconService {
         /// The link icon it was loaded from; nil when it comes from a restored tab or the store.
         let iconURL: String?
         let expiresAt: Date
-        /// When this process last wrote the icon to each profile's store; absent when it has not.
+        /// When each profile's store last wrote the icon, as far as this process knows; absent when unknown.
         var persistedAt: [UUID: Date]
         var isExpired: Bool { expiresAt < Date() }
     }
@@ -159,16 +159,20 @@ final class FaviconService {
     }
 
     /// Cache warming from already-known favicons (e.g. restored tabs). Won't clobber a live entry.
-    func warmIfAbsent(host: String, dataURL: String, dominantColor: String?) {
+    /// `persistedAt` holds when each store the icon was read from last wrote it: a row under a day old
+    /// counts as written, so serving the icon there skips a rewrite.
+    func warmIfAbsent(host: String, dataURL: String, dominantColor: String?, persistedAt: [UUID: Date] = [:]) {
         let key = host.lowercased()
         guard !dataURL.isEmpty, cache.get(key) == nil else { return }
-        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, iconURL: nil, expiresAt: Date().addingTimeInterval(Self.ttl), persistedAt: [:]))
+        let now = Date()
+        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, iconURL: nil, expiresAt: now.addingTimeInterval(Self.ttl),
+                             persistedAt: persistedAt.filter { now.timeIntervalSince($0.value) < Self.persistInterval }))
     }
 
     /// Restore-path favicon fill. Blobs carry no favicon data URLs, so absent ones are filled from
-    /// the cache by host. Hosts the cache misses are read from `store` first, so the restore needs
-    /// no warm of the whole table.
-    func rehydrateRestoredTabs(_ tabs: inout [Tab], store: FaviconStore? = nil) {
+    /// the cache by host. Hosts the cache misses are read from `store` (`profileId`'s) first, so the
+    /// restore needs no warm of the whole table.
+    func rehydrateRestoredTabs(_ tabs: inout [Tab], store: FaviconStore? = nil, profileId: UUID? = nil) {
         if let store {
             var missingHosts = Set<String>()
             for tab in tabs {
@@ -180,7 +184,8 @@ final class FaviconService {
                 }
             }
             for entry in (try? store.entries(forHosts: missingHosts)) ?? [] {
-                warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
+                             persistedAt: profileId.map { [$0: entry.updatedAt] } ?? [:])
             }
         }
 

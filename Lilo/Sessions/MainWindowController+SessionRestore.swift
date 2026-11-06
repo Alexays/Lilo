@@ -269,7 +269,8 @@ extension MainWindowController {
             Task { [context] in
                 let entries = (try? await Task.detached(priority: .utility) { try store.all() }.value) ?? []
                 for entry in entries {
-                    context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                    context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
+                                                        persistedAt: [profileId: entry.updatedAt])
                 }
                 context.lastFaviconWarmProfileId = profileId
             }
@@ -476,7 +477,7 @@ extension MainWindowController {
         var restoredTabs = sanitizeTabs(projection.tabs, spaceId: space.id)
         // No database before setup (and in tests): rehydrate from the in-memory cache only.
         let faviconStore = (try? context.dbManager?.pool(for: space.profileId)).map { FaviconStore(dbPool: $0) }
-        context.faviconService.rehydrateRestoredTabs(&restoredTabs, store: faviconStore)
+        context.faviconService.rehydrateRestoredTabs(&restoredTabs, store: faviconStore, profileId: space.profileId)
         let activeTabId = restorableActiveTabId(
             preferred: space.activeTabId ?? state.activeTabId,
             in: restoredTabs
