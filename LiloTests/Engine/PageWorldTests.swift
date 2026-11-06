@@ -12,7 +12,7 @@ final class PageWorldTests: XCTestCase {
 
     /// Every own property of the window, its interfaces and their prototypes, and the objects Lilo's modules touch, by
     /// shape; every function among them that does not print as native code, in its own realm or in a fresh frame's; and
-    /// how often Lilo's scripts went through the page's WeakMap and Promise methods meanwhile.
+    /// how often Lilo's scripts, a bridge call among them, went through the page's WeakMap and Promise methods meanwhile.
     private static let probe = #"""
     let hooked = 0;
     const restores = [[WeakMap.prototype, 'get'], [WeakMap.prototype, 'set'], [Promise.prototype, 'then'], [Promise.prototype, 'finally']]
@@ -25,6 +25,7 @@ final class PageWorldTests: XCTestCase {
     const adoptedStyleSheets = document.adoptedStyleSheets.length;
     const fresh = document.createElement('iframe');
     document.body.appendChild(fresh);
+    if (navigator.serial) navigator.serial.getPorts();
     const freshToString = fresh.contentWindow.Function.prototype.toString;
     const fn = f => typeof f === 'function' ? f.name + '/' + f.length : typeof f;
     const describe = d => 'value' in d ? `v:${d.writable},${d.enumerable},${d.configurable}:${fn(d.value)}`
