@@ -369,7 +369,7 @@
     return `${collapsedSubdomains}.${root}${port}`;
   }
 
-  function buildURLVisual(url: string): URLVisual {
+  function buildURLVisual(url: string, notSecure: boolean): URLVisual {
     if (!url) {
       return {
         key: "__empty__",
@@ -378,6 +378,7 @@
         hostIdentity: "__empty__",
         path: "",
         isSecure: false,
+        insecure: false,
         isPlaceholder: true,
       };
     }
@@ -394,6 +395,7 @@
           hostIdentity: parsed.hostname || host,
           path: remainder,
           isSecure: parsed.protocol === "https:",
+          insecure: parsed.protocol === "http:" || (parsed.protocol === "https:" && notSecure),
           isPlaceholder: false,
         };
       }
@@ -408,6 +410,7 @@
         hostIdentity: protocol,
         path: opaquePath,
         isSecure: false,
+        insecure: false,
         isPlaceholder: false,
       };
     } catch {
@@ -418,6 +421,7 @@
         hostIdentity: url,
         path: "",
         isSecure: false,
+        insecure: false,
         isPlaceholder: false,
       };
     }
@@ -435,13 +439,15 @@
       hostIdentity: `feedback-${variant}`,
       path: "",
       isSecure: false,
+      insecure: false,
       isPlaceholder: false,
       isFeedback: true,
       feedbackVariant: variant,
     };
   }
 
-  const urlVisual = $derived.by(() => buildURLVisual(activeTabURL));
+  const activeNotSecure = $derived(getActiveTab()?.isNotSecure ?? false);
+  const urlVisual = $derived.by(() => buildURLVisual(activeTabURL, activeNotSecure));
 
   const detailsAvailable = $derived(showsLocation && !isCommandBarOpen());
   // A terminal's folder is already the bar's bold part, so its card has no title.
@@ -449,7 +455,8 @@
 
   const detailsLocation = $derived.by((): DetailLocation => {
     if (showsLocation) return { before: locationParent, strong: locationName, after: "", code: true };
-    const [, scheme = "", host = "", rest = ""] = /^([a-z][\w+.-]*:\/\/)?([^/?#]*)(.*)$/is.exec(activeTabURL) ?? [];
+    // Credentials in the authority are dropped: they would read as the host.
+    const [, scheme = "", host = "", rest = ""] = /^(?:([a-z][\w+.-]*:\/\/)(?:[^/?#@]*@)?)?([^/?#]*)(.*)$/is.exec(activeTabURL) ?? [];
     return { before: scheme === "https://" ? "" : scheme, strong: host, after: rest, code: false };
   });
 
