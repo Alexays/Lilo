@@ -59,7 +59,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
         "_webView:didFailToFindString:",
     ]
 
-    /// `_WKWebsiteDataStoreDelegate`, adopted by the notification bridge on every Lilo data store.
+    /// `_WKWebsiteDataStoreDelegate`, adopted by the notification bridge on every Lilo data store; no WebKit class adopts it either.
     private static let websiteDataStoreDelegateSelectors = [
         "notificationPermissionsForWebsiteDataStore:",
         "websiteDataStore:showNotification:",
