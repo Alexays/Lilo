@@ -180,8 +180,10 @@ export function itemSignature(item: ThreadItem, undone: Set<string>): string {
       return String(item.text.length);
     case "image":
       return `${item.src.length}:${item.alt}`;
-    case "toolCall":
-      return `${item.status}:${item.title}:${item.output.length}:${item.images.length}:${item.rawInput ? 1 : 0}:${item.diffs.map((diff) => `${diff.added}/${diff.removed}/${undone.has(diff.path)}`).join()}`;
+    case "toolCall": {
+      const own = `${item.status}:${item.title}:${item.output.length}:${item.images.length}:${item.rawInput ? 1 : 0}:${item.diffs.map((diff) => `${diff.added}/${diff.removed}/${undone.has(diff.path)}`).join()}`;
+      return item.children.length ? `${own}[${item.children.map((child) => itemSignature(child, undone)).join("|")}]` : own;
+    }
     case "turnEnd":
       return item.stopReason;
     case "plan":

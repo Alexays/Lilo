@@ -2650,7 +2650,13 @@
 				"other": "{count} strony"
 			},
 			"showPages": "Pokaż strony",
-			"hidePages": "Ukryj strony"
+			"hidePages": "Ukryj strony",
+			"morePermissions": {
+				"one": "jeszcze {count} prośba czeka",
+				"few": "jeszcze {count} prośby czekają",
+				"many": "jeszcze {count} próśb czeka",
+				"other": "jeszcze {count} prośby czeka"
+			}
 		},
 		"question": {
 			"allow": "Zezwól",
@@ -2746,6 +2752,12 @@
 					"many": "użyto {count} narzędzi",
 					"other": "użyto {count} narzędzia"
 				}
+				},
+				"agent": {
+					"one": "uruchomiono {count} agenta",
+					"few": "uruchomiono {count} agentów",
+					"many": "uruchomiono {count} agentów",
+					"other": "uruchomiono {count} agenta"
 			},
 			"exit": "Kod wyjścia {code}",
 			"showAll": {

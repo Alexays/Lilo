@@ -2589,7 +2589,11 @@
 				"other": "{count} pages"
 			},
 			"showPages": "Show pages",
-			"hidePages": "Hide pages"
+			"hidePages": "Hide pages",
+			"morePermissions": {
+				"one": "{count} more request waiting",
+				"other": "{count} more requests waiting"
+			}
 		},
 		"question": {
 			"allow": "Allow",
@@ -2665,6 +2669,10 @@
 					"one": "used {count} tool",
 					"other": "used {count} tools"
 				}
+				},
+				"agent": {
+					"one": "started {count} agent",
+					"other": "started {count} agents"
 			},
 			"exit": "Exit {code}",
 			"showAll": {

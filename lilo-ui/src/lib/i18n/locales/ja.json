@@ -2600,7 +2600,11 @@
 				"other": "{count} ページ"
 			},
 			"showPages": "ページを表示",
-			"hidePages": "ページを隠す"
+			"hidePages": "ページを隠す",
+			"morePermissions": {
+				"one": "ほかに {count} 件のリクエストが対応待ち",
+				"other": "ほかに {count} 件のリクエストが対応待ち"
+			}
 		},
 		"question": {
 			"allow": "許可",
@@ -2676,6 +2680,10 @@
 					"one": "{count} 個のツールを使用",
 					"other": "{count} 個のツールを使用"
 				}
+				},
+				"agent": {
+					"one": "{count} 個のエージェントを起動",
+					"other": "{count} 個のエージェントを起動"
 			},
 			"exit": "終了コード {code}",
 			"showAll": {

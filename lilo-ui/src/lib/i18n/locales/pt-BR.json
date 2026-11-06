@@ -2600,7 +2600,11 @@
 				"other": "{count} páginas"
 			},
 			"showPages": "Mostrar páginas",
-			"hidePages": "Ocultar páginas"
+			"hidePages": "Ocultar páginas",
+			"morePermissions": {
+				"one": "mais {count} solicitação aguardando",
+				"other": "mais {count} solicitações aguardando"
+			}
 		},
 		"question": {
 			"allow": "Permitir",
@@ -2676,6 +2680,10 @@
 					"one": "usou {count} ferramenta",
 					"other": "usou {count} ferramentas"
 				}
+				},
+				"agent": {
+					"one": "iniciou {count} agente",
+					"other": "iniciou {count} agentes"
 			},
 			"exit": "Saída {code}",
 			"showAll": {

@@ -29,6 +29,9 @@
     target: string;
     path: boolean;
     command: boolean;
+    subagent: boolean;
+    /** The sub-agent's kind, when the agent names it. */
+    role: string;
   }
 
   // Agents describe calls differently: the raw input names the file, command or query when there is one.
@@ -37,7 +40,12 @@
     const browser =
       BROWSER_TOOL.test(call.title) ||
       ["server", "tool", "name"].some((key) => typeof input[key] === "string" && BROWSER_TOOL.test(input[key] as string));
-    const view = { call: { ...call }, browser, verb: null, target: call.title, path: false, command: false };
+    const view = { call: { ...call }, browser, verb: null, target: call.title, path: false, command: false, subagent: false, role: "" };
+    // claude-agent-acp names the sub-agent's kind in `subagent_type`, before its first call arrives.
+    if (call.children.length || typeof input.subagent_type === "string") {
+      const role = typeof input.subagent_type === "string" ? input.subagent_type : "";
+      return { ...view, subagent: true, role, target: typeof input.description === "string" && input.description ? input.description : call.title };
+    }
     if (call.toolKind === "execute" && !browser) {
       const command = input.command;
       // Codex sends argv, usually ["bash", "-lc", script].
@@ -71,6 +79,7 @@
   import { MOTION } from "../../lib/motion/timings";
   import DiffCard from "./DiffCard.svelte";
   import Icon from "./Icon.svelte";
+  import Markdown from "./Markdown.svelte";
   import MascotGlyph from "./MascotGlyph.svelte";
   import ThreadImage from "./ThreadImage.svelte";
   import { formatDuration } from "./threadView";
@@ -115,6 +124,17 @@
     let images = 0;
     for (const view of views) {
       images += view.call.images.length;
+      if (view.subagent) {
+        counts.set("agent", (counts.get("agent") ?? 0) + 1);
+        for (const child of view.call.children) {
+          for (const diff of child.diffs) {
+            files.add(diff.path);
+            added += diff.added;
+            removed += diff.removed;
+          }
+        }
+        continue;
+      }
       const kind = view.call.toolKind;
       const category = view.browser ? "browser" : FILE_KINDS.has(kind) && kind !== "read" ? "edit" : SUMMARY_KINDS.has(kind) ? kind : "tool";
       if (category !== "edit") {
@@ -137,6 +157,17 @@
 
   const running = $derived(views.some((view) => view.call.status === "in_progress" || view.call.status === "pending"));
   const enter = $derived(live && !done && !prefersReducedMotion() ? MOTION.itemEnterMs : 0);
+
+  // What a folded sub-agent row says: its latest step while it works, then the first line of its report.
+  function subagentLine(call: ToolCallItem): string {
+    if (call.status !== "in_progress" && call.status !== "pending") {
+      return call.output.split("\n").find((line) => line.trim())?.replace(/[#*_`>]/g, "").trim() ?? "";
+    }
+    const last = call.children.at(-1);
+    if (!last) return "";
+    const step = describe(last, cwd);
+    return step.command ? `$ ${step.target}` : step.verb ? `${t(step.verb)} ${step.target}` : step.target;
+  }
 </script>
 
 {#snippet status(call: ToolCallItem)}
@@ -159,6 +190,126 @@
   </span>
 {/snippet}
 
+{#snippet callBlock(view: CallView)}
+  {@const call = view.call}
+  {@const duration = call.startedAt !== null && call.endedAt !== null && call.endedAt - call.startedAt >= 1000
+    ? formatDuration(call.endedAt - call.startedAt)
+    : ""}
+  <div class="call" in:restingFly={{ duration: enter, easing: cubicOut, x: 0, y: 4 }}>
+    {#if view.subagent}
+      {@const shown = toggled.has(call.toolCallId)}
+      {@const line = subagentLine(call)}
+      <button
+        type="button"
+        class="call-row expandable subagent"
+        aria-expanded={shown}
+        onclick={() => {
+          if (!toggled.delete(call.toolCallId)) toggled.add(call.toolCallId);
+        }}
+      >
+        <span class="call-icon"><Icon name="bot" size={14} /></span>
+        <span class="subagent-text">
+          <span class="call-label">
+            {#if view.role}<span class="role">{view.role}</span>{/if}
+            <span class="target">{view.target || t("agents.tool.untitled")}</span>
+          </span>
+          {#if line}<span class="subagent-line" class:error={call.status === "failed"}>{line}</span>{/if}
+        </span>
+        {#if duration}<span class="duration">{duration}</span>{/if}
+        {@render status(call)}
+      </button>
+      {#if shown}
+        <div class="subagent-body" in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 0, y: -4 }}>
+          {#if call.children.length}
+            <!-- Fresh views each time: the calls are mutated in place, so the same objects would not redraw. -->
+            <div class="calls">
+              {#each call.children.map((child) => describe(child, cwd)) as child (child.call.toolCallId)}
+                {@render callBlock(child)}
+              {/each}
+            </div>
+          {/if}
+          {#if line && call.status !== "in_progress" && call.status !== "pending"}
+            <div class="report"><Markdown text={call.output} {tabId} {cwd} /></div>
+          {/if}
+        </div>
+      {/if}
+    {:else if call.diffs.length}
+      {#each call.diffs as diff, index (index)}
+        <DiffCard {tabId} {diff} {cwd} checkpoint={Math.max(promptIndex, 0)} undone={undone.has(diff.path)} />
+      {/each}
+    {:else}
+      {@const output = call.output.length > 0}
+      {@const expandable = output || (!view.command && call.locations.length > 0)}
+      <!-- A failed command opens on its output; a click flips whichever way it starts. -->
+      {@const showOutput = expandable && toggled.has(call.toolCallId) !== (view.command && call.status === "failed")}
+      <button
+        type="button"
+        class="call-row"
+        class:expandable
+        aria-expanded={expandable ? showOutput : undefined}
+        disabled={!expandable}
+        onclick={() => {
+          if (!toggled.delete(call.toolCallId)) toggled.add(call.toolCallId);
+        }}
+      >
+        {@render icon(view)}
+        {#if view.command}
+          <span class="call-label mono"><span class="prompt" aria-hidden="true">$</span> {view.target}</span>
+        {:else if view.verb}
+          <span class="call-label">
+            <span class="verb">{t(view.verb)}</span>
+            {#if view.path}
+              {@const slash = view.target.lastIndexOf("/")}
+              <span class="target path"><span class="dir">{view.target.slice(0, slash + 1)}</span><span class="name">{view.target.slice(slash + 1)}</span></span>
+            {:else}
+              <span class="target">{view.target}</span>
+            {/if}
+          </span>
+        {:else}
+          <span class="call-label">{view.target || t("agents.tool.untitled")}</span>
+        {/if}
+        {#if view.command && call.exitCode !== null && call.exitCode !== 0}
+          <span class="exit">{t("agents.work.exit", { code: call.exitCode })}</span>
+        {/if}
+        {#if duration}<span class="duration">{duration}</span>{/if}
+        {@render status(call)}
+      </button>
+      {#if showOutput}
+        {@const lines = call.output.split("\n")}
+        {@const all = fullOutput.has(call.toolCallId)}
+        <div class="detail" in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 0, y: -4 }}>
+          {#if !view.command}
+            {#each call.locations as location, index (index)}
+              <div class="location">{location.path}{location.line ? `:${location.line}` : ""}</div>
+            {/each}
+          {/if}
+          {#if output}
+            <pre class="output" class:failed={call.status === "failed"}>{all
+                ? call.output.slice(0, MAX_OUTPUT)
+                : lines.slice(-OUTPUT_TAIL).join("\n")}</pre>
+            {#if lines.length > OUTPUT_TAIL}
+              <button
+                type="button"
+                class="show-all"
+                onclick={() => {
+                  if (!fullOutput.delete(call.toolCallId)) fullOutput.add(call.toolCallId);
+                }}
+              >{all ? t("agents.work.showLess") : t("agents.work.showAll", { count: lines.length })}</button>
+            {/if}
+          {/if}
+        </div>
+      {/if}
+    {/if}
+    {#if call.images.length}
+      <div class="call-images">
+        {#each call.images as image, index (index)}
+          <ThreadImage src={image.src} alt={image.alt} small />
+        {/each}
+      </div>
+    {/if}
+  </div>
+{/snippet}
+
 <div class="work">
   <button
     type="button"
@@ -173,7 +324,7 @@
     <!-- What kind of work, readable at a glance before the words. -->
     <span class="kinds" aria-hidden="true">
       {#each summary.categories.slice(0, 4) as category (category)}
-        {#if category === "browser"}<MascotGlyph />{:else}<Icon name={category === "tool" ? "wrench" : KIND_ICONS[category as ToolKind]} size={12} />{/if}
+        {#if category === "browser"}<MascotGlyph />{:else}<Icon name={category === "tool" ? "wrench" : category === "agent" ? "bot" : KIND_ICONS[category as ToolKind]} size={12} />{/if}
       {/each}
     </span>
     <span class="work-summary">{summary.text}</span>
@@ -198,86 +349,7 @@
       {#if opened}
         <div class="calls">
           {#each views as view (view.call.toolCallId)}
-            {@const call = view.call}
-            {@const duration = call.startedAt !== null && call.endedAt !== null && call.endedAt - call.startedAt >= 1000
-              ? formatDuration(call.endedAt - call.startedAt)
-              : ""}
-            <div class="call" in:restingFly={{ duration: enter, easing: cubicOut, x: 0, y: 4 }}>
-              {#if call.diffs.length}
-                {#each call.diffs as diff, index (index)}
-                  <DiffCard {tabId} {diff} {cwd} checkpoint={Math.max(promptIndex, 0)} undone={undone.has(diff.path)} />
-                {/each}
-              {:else}
-                {@const output = call.output.length > 0}
-                {@const expandable = output || (!view.command && call.locations.length > 0)}
-                <!-- A failed command opens on its output; a click flips whichever way it starts. -->
-                {@const showOutput = expandable && toggled.has(call.toolCallId) !== (view.command && call.status === "failed")}
-                <button
-                  type="button"
-                  class="call-row"
-                  class:expandable
-                  aria-expanded={expandable ? showOutput : undefined}
-                  disabled={!expandable}
-                  onclick={() => {
-                    if (!toggled.delete(call.toolCallId)) toggled.add(call.toolCallId);
-                  }}
-                >
-                  {@render icon(view)}
-                  {#if view.command}
-                    <span class="call-label mono"><span class="prompt" aria-hidden="true">$</span> {view.target}</span>
-                  {:else if view.verb}
-                    <span class="call-label">
-                      <span class="verb">{t(view.verb)}</span>
-                      {#if view.path}
-                        {@const slash = view.target.lastIndexOf("/")}
-                        <span class="target path"><span class="dir">{view.target.slice(0, slash + 1)}</span><span class="name">{view.target.slice(slash + 1)}</span></span>
-                      {:else}
-                        <span class="target">{view.target}</span>
-                      {/if}
-                    </span>
-                  {:else}
-                    <span class="call-label">{view.target || t("agents.tool.untitled")}</span>
-                  {/if}
-                  {#if view.command && call.exitCode !== null && call.exitCode !== 0}
-                    <span class="exit">{t("agents.work.exit", { code: call.exitCode })}</span>
-                  {/if}
-                  {#if duration}<span class="duration">{duration}</span>{/if}
-                  {@render status(call)}
-                </button>
-                {#if showOutput}
-                  {@const lines = call.output.split("\n")}
-                  {@const all = fullOutput.has(call.toolCallId)}
-                  <div class="detail" in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 0, y: -4 }}>
-                    {#if !view.command}
-                      {#each call.locations as location, index (index)}
-                        <div class="location">{location.path}{location.line ? `:${location.line}` : ""}</div>
-                      {/each}
-                    {/if}
-                    {#if output}
-                      <pre class="output" class:failed={call.status === "failed"}>{all
-                          ? call.output.slice(0, MAX_OUTPUT)
-                          : lines.slice(-OUTPUT_TAIL).join("\n")}</pre>
-                      {#if lines.length > OUTPUT_TAIL}
-                        <button
-                          type="button"
-                          class="show-all"
-                          onclick={() => {
-                            if (!fullOutput.delete(call.toolCallId)) fullOutput.add(call.toolCallId);
-                          }}
-                        >{all ? t("agents.work.showLess") : t("agents.work.showAll", { count: lines.length })}</button>
-                      {/if}
-                    {/if}
-                  </div>
-                {/if}
-              {/if}
-              {#if call.images.length}
-                <div class="call-images">
-                  {#each call.images as image, index (index)}
-                    <ThreadImage src={image.src} alt={image.alt} small />
-                  {/each}
-                </div>
-              {/if}
-            </div>
+            {@render callBlock(view)}
           {/each}
         </div>
       {/if}
@@ -438,6 +510,57 @@
 
   .call-row.expandable:hover {
     background: var(--bg-hover);
+  }
+
+  .call-row.subagent {
+    padding-block: var(--space-2);
+  }
+
+  .subagent-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .role {
+    flex: none;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .subagent-line {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .subagent-line.error {
+    color: var(--danger-text);
+  }
+
+  .subagent-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding-bottom: var(--space-4);
+  }
+
+  .report {
+    max-height: 320px;
+    overflow: auto;
+    margin-left: var(--space-20);
+    padding: var(--space-8) var(--space-10);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--separator);
+    background: var(--bg-secondary);
+    font-size: var(--font-size-sm);
+    user-select: text;
   }
 
   .call-icon {

@@ -2600,7 +2600,11 @@
 				"other": "{count} pagine"
 			},
 			"showPages": "Mostra pagine",
-			"hidePages": "Nascondi pagine"
+			"hidePages": "Nascondi pagine",
+			"morePermissions": {
+				"one": "{count} altra richiesta in attesa",
+				"other": "altre {count} richieste in attesa"
+			}
 		},
 		"question": {
 			"allow": "Consenti",
@@ -2676,6 +2680,10 @@
 					"one": "usato {count} strumento",
 					"other": "usati {count} strumenti"
 				}
+				},
+				"agent": {
+					"one": "avviato {count} agente",
+					"other": "avviati {count} agenti"
 			},
 			"exit": "Uscita {code}",
 			"showAll": {

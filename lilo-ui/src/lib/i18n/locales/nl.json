@@ -2600,7 +2600,11 @@
 				"other": "{count} pagina's"
 			},
 			"showPages": "Toon pagina's",
-			"hidePages": "Verberg pagina's"
+			"hidePages": "Verberg pagina's",
+			"morePermissions": {
+				"one": "nog {count} verzoek wacht",
+				"other": "nog {count} verzoeken wachten"
+			}
 		},
 		"question": {
 			"allow": "Sta toe",
@@ -2676,6 +2680,10 @@
 					"one": "{count} tool gebruikt",
 					"other": "{count} tools gebruikt"
 				}
+				},
+				"agent": {
+					"one": "{count} agent gestart",
+					"other": "{count} agents gestart"
 			},
 			"exit": "Exitcode {code}",
 			"showAll": {

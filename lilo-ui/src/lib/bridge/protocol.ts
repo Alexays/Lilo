@@ -163,7 +163,8 @@ export interface BridgeConversationSummary {
 	spaceId: string;
 	spaceName: string;
 	running: boolean;
-	permission?: { requestId: string; title: string; options: BridgePermissionOption[] };
+	/** The oldest open request; `count` includes it. */
+	permission?: { requestId: string; title: string; options: BridgePermissionOption[]; count: number };
 	error?: string;
 }
 

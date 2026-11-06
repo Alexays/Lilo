@@ -136,6 +136,9 @@
             </button>
             {#if summary.permission}
               <div class="answers">
+                {#if summary.permission.count > 1}
+                  <span class="more">{t("agents.row.morePermissions", { count: summary.permission.count - 1 })}</span>
+                {/if}
                 <PermissionButtons tabId={summary.tabId} requestId={summary.permission.requestId} options={summary.permission.options} />
               </div>
             {/if}
@@ -317,8 +320,20 @@
 
   .answers {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
+    gap: var(--space-8);
     padding: 0 8px 8px 34px;
+  }
+
+  .more {
+    min-width: 0;
+    margin-right: auto;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
   }
 
   /* About 30 s of turns, then a still arc: a turn left running must not keep the display link up. */

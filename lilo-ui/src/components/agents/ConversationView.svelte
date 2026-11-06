@@ -149,10 +149,12 @@
         out.push(turn);
       }
       if (item.kind === "toolCall") {
-        for (const diff of item.diffs) {
-          files.add(diff.path);
-          added += diff.added;
-          removed += diff.removed;
+        for (const call of [item, ...item.children]) {
+          for (const diff of call.diffs) {
+            files.add(diff.path);
+            added += diff.added;
+            removed += diff.removed;
+          }
         }
         const sig = itemSignature(item, undone);
         if (work) {

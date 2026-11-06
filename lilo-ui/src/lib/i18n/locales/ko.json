@@ -2600,7 +2600,11 @@
 				"other": "페이지 {count}개"
 			},
 			"showPages": "페이지 보기",
-			"hidePages": "페이지 숨기기"
+			"hidePages": "페이지 숨기기",
+			"morePermissions": {
+				"one": "확인 대기 중인 요청 {count}개 더",
+				"other": "확인 대기 중인 요청 {count}개 더"
+			}
 		},
 		"question": {
 			"allow": "허용",
@@ -2676,6 +2680,10 @@
 					"one": "도구 {count}개 사용함",
 					"other": "도구 {count}개 사용함"
 				}
+				},
+				"agent": {
+					"one": "에이전트 {count}개 시작함",
+					"other": "에이전트 {count}개 시작함"
 			},
 			"exit": "종료 코드 {code}",
 			"showAll": {

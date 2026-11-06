@@ -2600,7 +2600,11 @@
 				"other": "{count} 個頁面"
 			},
 			"showPages": "顯示頁面",
-			"hidePages": "隱藏頁面"
+			"hidePages": "隱藏頁面",
+			"morePermissions": {
+				"one": "還有 {count} 個請求在等你",
+				"other": "還有 {count} 個請求在等你"
+			}
 		},
 		"question": {
 			"allow": "允許",
@@ -2676,6 +2680,10 @@
 					"one": "使用了 {count} 個工具",
 					"other": "使用了 {count} 個工具"
 				}
+				},
+				"agent": {
+					"one": "啟動了 {count} 個代理程式",
+					"other": "啟動了 {count} 個代理程式"
 			},
 			"exit": "結束代碼 {code}",
 			"showAll": {

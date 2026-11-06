@@ -22,8 +22,9 @@ final class ConversationHost {
         var starting: Task<Void, Error>?
         var state = State.idle
         var log: [ACPConnection.Payload] = []
-        /// The agent's open `session/request_permission`, answered from the thread, the sidebar or a notification.
-        var permission: (id: ACPConnection.Payload, requestId: String, params: [String: Any])?
+        /// The agent's open `session/request_permission`s, oldest first: its sub-agents can ask at once. Each is
+        /// answered from the thread; the sidebar and the notification offer the oldest.
+        var permissions: [(id: ACPConnection.Payload, requestId: String, params: [String: Any])] = []
         var queued: [[[String: Any]]] = []
         /// The prompt a sign-in holds back, sent again once it succeeds.
         var awaitingSignIn: [[String: Any]]?
@@ -346,14 +347,14 @@ final class ConversationHost {
 
     private func agentExited(_ conversation: Conversation, status: Int32, errors: String) {
         conversation.connection = nil
-        if let permission = conversation.permission {
+        for permission in conversation.permissions {
             append(conversation, ["sessionUpdate": "lilo_permission_resolved", "requestId": permission.requestId, "optionId": NSNull()])
-            conversation.permission = nil
         }
         // An agent Lilo stopped once idle exits cleanly; any other exit is the agent failing.
         if conversation.state == .idle, status == 0 || status == SIGTERM || status == 15 { return }
         let reason = errors.split(separator: "\n").suffix(3).joined(separator: "\n")
         conversation.lastError = unsafe reason.isEmpty ? String(format: "The agent stopped (code %d).".localized, status) : reason
+        conversation.permissions = []
         append(conversation, ["sessionUpdate": "lilo_error", "message": conversation.lastError ?? ""])
         setState(conversation, .failed)
     }
@@ -489,9 +490,10 @@ final class ConversationHost {
             return
         }
         guard let sessionId = conversation.sessionId else { return }
-        if let permission = conversation.permission {
+        // Newest first, so settling them never offers the next one in a notification.
+        for permission in conversation.permissions.reversed() {
             conversation.connection?.respond(id: permission.id.value["id"] as Any, result: ["outcome": ["outcome": "cancelled"]])
-            resolve(conversation, optionId: nil)
+            resolve(conversation, requestId: permission.requestId, optionId: nil)
         }
         conversation.connection?.notify("session/cancel", ["sessionId": sessionId])
     }
@@ -502,7 +504,7 @@ final class ConversationHost {
         conversation.idleStop?.cancel()
         guard conversation.canLoadSession else { return }
         let work = DispatchWorkItem { [weak self, weak conversation] in
-            guard let self, let conversation, conversation.state == .idle, conversation.permission == nil,
+            guard let self, let conversation, conversation.state == .idle, conversation.permissions.isEmpty,
                   conversation.queued.isEmpty else { return }
             Self.logger.info("stopping idle agent \(conversation.agentId, privacy: .public)")
             let connection = conversation.connection
@@ -563,41 +565,44 @@ final class ConversationHost {
                 return
             }
             let requestId = UUID().uuidString
-            conversation.permission = (ACPConnection.Payload(value: ["id": id]), requestId, params)
+            conversation.permissions.append((ACPConnection.Payload(value: ["id": id]), requestId, params))
             append(conversation, [
                 "sessionUpdate": "lilo_permission", "requestId": requestId,
                 "toolCall": params["toolCall"] ?? [:], "options": params["options"] ?? []
             ])
             updateTab(conversation)
-            if !isShown(conversation.tabId) { postPermissionNotification(conversation) }
+            if conversation.permissions.count == 1, !isShown(conversation.tabId) { postPermissionNotification(conversation) }
         }
     }
 
     func answer(_ tabId: UUID, requestId: String, optionId: String?) {
-        guard let conversation = conversations[tabId], let permission = conversation.permission, permission.requestId == requestId else { return }
+        guard let conversation = conversations[tabId],
+              let permission = conversation.permissions.first(where: { $0.requestId == requestId }) else { return }
         let outcome: [String: Any] = optionId.map { ["outcome": "selected", "optionId": $0] } ?? ["outcome": "cancelled"]
         conversation.connection?.respond(id: permission.id.value["id"] as Any, result: ["outcome": outcome])
-        resolve(conversation, optionId: optionId)
+        resolve(conversation, requestId: requestId, optionId: optionId)
     }
 
-    /// The option of the open permission request that has this kind (`allow_once`, `reject_once`...).
+    /// The option of the oldest open permission request that has this kind (`allow_once`, `reject_once`...).
     func option(of tabId: UUID, kind: String) -> (requestId: String, optionId: String)? {
-        guard let permission = conversations[tabId]?.permission,
+        guard let permission = conversations[tabId]?.permissions.first,
               let options = permission.params["options"] as? [[String: Any]],
               let option = options.first(where: { $0["kind"] as? String == kind }),
               let optionId = option["optionId"] as? String else { return nil }
         return (permission.requestId, optionId)
     }
 
-    private func resolve(_ conversation: Conversation, optionId: String?) {
-        guard let permission = conversation.permission else { return }
-        conversation.permission = nil
-        append(conversation, ["sessionUpdate": "lilo_permission_resolved", "requestId": permission.requestId, "optionId": optionId ?? NSNull()])
+    private func resolve(_ conversation: Conversation, requestId: String, optionId: String?) {
+        guard let index = conversation.permissions.firstIndex(where: { $0.requestId == requestId }) else { return }
+        conversation.permissions.remove(at: index)
+        append(conversation, ["sessionUpdate": "lilo_permission_resolved", "requestId": requestId, "optionId": optionId ?? NSNull()])
         withdrawNotification(conversation.tabId)
         updateTab(conversation)
     }
 
     // MARK: - Checkpoints
+        // The notification answers the oldest request: once that one is settled, it offers the next.
+        if index == 0, !conversation.permissions.isEmpty, !isShown(conversation.tabId) { postPermissionNotification(conversation) }
 
     func restore(_ tabId: UUID, checkpoint index: Int) {
         guard let conversation = conversations[tabId], index < conversation.checkpoints.count,
@@ -649,7 +654,7 @@ final class ConversationHost {
         guard let window = context?.windows.window(forTab: conversation.tabId) else { return }
         let updated = window.updateRuntimeTab(id: conversation.tabId) { tab in
             tab.terminalState = conversation.state.rawValue
-            tab.awaitingInputSince = conversation.permission == nil ? nil : (tab.awaitingInputSince ?? Date())
+            tab.awaitingInputSince = conversation.permissions.isEmpty ? nil : (tab.awaitingInputSince ?? Date())
             tab.hasUnreadOutput = conversation.unread
             if !conversation.title.isEmpty { tab.title = conversation.title }
         }
@@ -712,11 +717,12 @@ final class ConversationHost {
                 "spaceName": space?.name ?? "",
                 "running": conversation.connection != nil
             ]
-            if let permission = conversation.permission {
+            if let permission = conversation.permissions.first {
                 summary["permission"] = [
                     "requestId": permission.requestId,
                     "title": (permission.params["toolCall"] as? [String: Any])?["title"] as? String ?? "",
-                    "options": permission.params["options"] ?? []
+                    "options": permission.params["options"] ?? [],
+                    "count": conversation.permissions.count
                 ]
             }
             if let error = conversation.lastError { summary["error"] = error }
@@ -727,7 +733,7 @@ final class ConversationHost {
     // MARK: - Notifications
 
     private func postPermissionNotification(_ conversation: Conversation) {
-        guard let permission = conversation.permission else { return }
+        guard let permission = conversation.permissions.first else { return }
         let content = UNMutableNotificationContent()
         content.title = conversation.title.isEmpty ? (catalog.agent(id: conversation.agentId)?.name ?? "Agent") : conversation.title
         content.body = (permission.params["toolCall"] as? [String: Any])?["title"] as? String ?? "Waiting for your answer".localized

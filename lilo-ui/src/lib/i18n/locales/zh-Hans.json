@@ -2600,7 +2600,11 @@
 				"other": "{count} 个页面"
 			},
 			"showPages": "显示页面",
-			"hidePages": "隐藏页面"
+			"hidePages": "隐藏页面",
+			"morePermissions": {
+				"one": "还有 {count} 个请求在等你",
+				"other": "还有 {count} 个请求在等你"
+			}
 		},
 		"question": {
 			"allow": "允许",
@@ -2676,6 +2680,10 @@
 					"one": "使用了 {count} 个工具",
 					"other": "使用了 {count} 个工具"
 				}
+				},
+				"agent": {
+					"one": "启动了 {count} 个智能体",
+					"other": "启动了 {count} 个智能体"
 			},
 			"exit": "退出码 {code}",
 			"showAll": {

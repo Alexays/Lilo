@@ -2600,7 +2600,11 @@
 				"other": "{count} sayfa"
 			},
 			"showPages": "Sayfaları göster",
-			"hidePages": "Sayfaları gizle"
+			"hidePages": "Sayfaları gizle",
+			"morePermissions": {
+				"one": "{count} istek daha bekliyor",
+				"other": "{count} istek daha bekliyor"
+			}
 		},
 		"question": {
 			"allow": "İzin Ver",
@@ -2676,6 +2680,10 @@
 					"one": "{count} araç kullanıldı",
 					"other": "{count} araç kullanıldı"
 				}
+				},
+				"agent": {
+					"one": "{count} ajan başlatıldı",
+					"other": "{count} ajan başlatıldı"
 			},
 			"exit": "Çıkış {code}",
 			"showAll": {

@@ -2600,7 +2600,11 @@
 				"other": "{count} Seiten"
 			},
 			"showPages": "Seiten einblenden",
-			"hidePages": "Seiten ausblenden"
+			"hidePages": "Seiten ausblenden",
+			"morePermissions": {
+				"one": "{count} weitere Anfrage wartet",
+				"other": "{count} weitere Anfragen warten"
+			}
 		},
 		"question": {
 			"allow": "Erlauben",
@@ -2676,6 +2680,10 @@
 					"one": "{count} Tool genutzt",
 					"other": "{count} Tools genutzt"
 				}
+				},
+				"agent": {
+					"one": "{count} Agent gestartet",
+					"other": "{count} Agenten gestartet"
 			},
 			"exit": "Exit-Code {code}",
 			"showAll": {

@@ -39,6 +39,7 @@ export interface ToolCallFields {
   locations?: ToolCallLocation[] | null;
   rawInput?: unknown;
   rawOutput?: unknown;
+  _meta?: Record<string, unknown> | null;
 }
 
 export interface PlanEntry {
@@ -66,6 +67,7 @@ export type SessionUpdate =
       sessionUpdate: "user_message_chunk" | "agent_message_chunk" | "agent_thought_chunk";
       content: ContentBlock;
       messageId?: string | null;
+      _meta?: Record<string, unknown> | null;
     }
   | ({ sessionUpdate: "tool_call"; title: string } & ToolCallFields)
   | ({ sessionUpdate: "tool_call_update" } & ToolCallFields)
@@ -156,6 +158,8 @@ export interface ToolCallItem {
   /** Milliseconds since 1970, known only for calls seen live (not replayed). */
   startedAt: number | null;
   endedAt: number | null;
+  /** The calls of the sub-agent this call started, in order; the call's output is the sub-agent's report. */
+  children: ToolCallItem[];
 }
 
 /** Closes a turn: its footer. `durationMs` is known only when the whole turn was seen live. */
@@ -276,6 +280,12 @@ function setContent(call: ToolCallItem, content: ToolCallContent[]): void {
   }
 }
 
+/** The call that started the sub-agent this update comes from: claude-agent-acp tags its sub-agents' updates so. */
+function parentOf(update: { _meta?: Record<string, unknown> | null }): string | null {
+  const parent = (update._meta?.claudeCode as { parentToolUseId?: unknown } | undefined)?.parentToolUseId;
+  return typeof parent === "string" ? parent : null;
+}
+
 function applyToolCall(state: ConversationState, update: ToolCallFields, receivedAt: number | null): void {
   let call = state.toolCalls.get(update.toolCallId);
   if (!call) {
@@ -294,9 +304,13 @@ function applyToolCall(state: ConversationState, update: ToolCallFields, receive
       exitCode: null,
       startedAt: receivedAt,
       endedAt: null,
+      children: [],
     };
     state.toolCalls.set(update.toolCallId, call);
-    state.items.push(call);
+    const parentId = parentOf(update);
+    const parent = parentId === null ? undefined : state.toolCalls.get(parentId);
+    if (parent) parent.children.push(call);
+    else state.items.push(call);
   }
   if (update.title != null) call.title = update.title;
   if (update.kind != null) call.toolKind = update.kind;
@@ -384,11 +398,12 @@ export function applyUpdate(state: ConversationState, update: SessionUpdate, rec
     case "user_message_chunk":
       applyChunk(state, "user", update.content, update.messageId ?? null);
       break;
+    // A sub-agent's own words are not the reply: what it hands back arrives as its call's output.
     case "agent_message_chunk":
-      applyChunk(state, "agent", update.content, update.messageId ?? null);
+      if (parentOf(update) === null) applyChunk(state, "agent", update.content, update.messageId ?? null);
       break;
     case "agent_thought_chunk":
-      applyChunk(state, "thought", update.content, update.messageId ?? null);
+      if (parentOf(update) === null) applyChunk(state, "thought", update.content, update.messageId ?? null);
       break;
     case "tool_call":
     case "tool_call_update":

@@ -108,6 +108,28 @@ test("tool calls stay in place as they complete, in any order", () => {
   assert.equal((state.items[0] as ToolCallItem).title, "renamed");
 });
 
+test("a sub-agent's calls nest under the call that started it, and its own words stay out of the reply", () => {
+  const child = { _meta: { claudeCode: { parentToolUseId: "task" } } };
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "tool_call", toolCallId: "task", title: "Explore", kind: "think", status: "in_progress" },
+    { sessionUpdate: "tool_call", toolCallId: "c1", title: "read a", kind: "read", status: "in_progress", ...child },
+    { sessionUpdate: "agent_message_chunk", content: { type: "text", text: "thinking aloud" }, ...child },
+    { sessionUpdate: "tool_call", toolCallId: "c2", title: "orphan", kind: "read", status: "completed", _meta: { claudeCode: { parentToolUseId: "gone" } } },
+    { sessionUpdate: "tool_call_update", toolCallId: "c1", status: "completed", ...child },
+    agentText("Done"),
+  ]);
+  assert.deepEqual(
+    state.items.map((item) => (item.kind === "toolCall" ? item.toolCallId : item.kind)),
+    ["task", "c2", "agent"],
+  );
+  const task = state.items[0] as ToolCallItem;
+  assert.deepEqual(
+    task.children.map((call) => `${call.toolCallId}:${call.status}`),
+    ["c1:completed"],
+  );
+  assert.equal((state.items[2] as { text: string }).text, "Done");
+});
+
 test("live updates time their calls and the turn; replayed ones do not", () => {
   const state = addUserPrompt(emptyConversation(), "go", [], 1000);
   applyUpdate(state, { sessionUpdate: "tool_call", toolCallId: "x1", title: "npm test", kind: "execute", status: "in_progress", rawInput: { command: "npm test" } }, 2000);
