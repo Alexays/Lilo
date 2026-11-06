@@ -142,7 +142,8 @@ final class BrowserContext {
                 profileId: profileId, dbManager: dbManager, gapRouter: engineFactory.gapRouter,
                 tabShare: (engineFactory.tabShareBridge, engineFactory.tabShareFrameSchemeHandler)
             )
-            weakSelf?.reportMovedAsideDatabases()
+            // Deferred: the alert's modal loop runs queued work that may ask for this profile before it is cached.
+            Task { [weak browserContext = weakSelf] in browserContext?.reportMovedAsideDatabases() }
             context.extensions.settingsStore = weakSelf?.settingsStore
             engineFactory.prepareExtensionRegistry(context.extensions)
             let blockerExtension = weakSelf?.blockerExtensionURL
@@ -255,7 +256,6 @@ final class BrowserContext {
         let dbManager = bootstrap.dbManager, startupSnapshot = bootstrap.startupSnapshot
         let settingsStore = SettingsStore(dbPool: dbManager.globalPool)
         self.dbManager = dbManager
-        reportMovedAsideDatabases()
         sessionPersistenceCoordinator = SessionPersistenceCoordinator(
             dbManager: dbManager,
             liveStore: { [weak self] in self?.profileContexts.existingContext(for: $0)?.sessionPersistence }
@@ -318,6 +318,8 @@ final class BrowserContext {
         spaceManager.loadSpaces(startupSnapshot.spaces)
         spaceManager.delegate = self
         restoreTabArchive(bootstrap.tabArchive)
+        // After the state above: the alert's modal loop runs queued work that reads it.
+        reportMovedAsideDatabases()
         // Last: an agent may connect at once, and its calls need the profiles and spaces loaded above.
         if settingsStore.get("agentControlEnabled") == "true" {
             agentControl.setEnabled(true)
