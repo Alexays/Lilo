@@ -60,7 +60,8 @@ describe('action.openPopup', () => {
     await actionColorAugmentation.openPopup({ windowId: 20 });
     await actionColorAugmentation.openPopup({ windowId: 99 });
     await actionColorAugmentation.openPopup();
+    await actionColorAugmentation.openPopup({ windowId: -2 });
 
-    assert.deepEqual(popupCalls, [{ windowId: 20, windowPosition: 1 }, { windowId: 99, windowPosition: -1 }, {}]);
+    assert.deepEqual(popupCalls, [{ windowId: 20, windowPosition: 1 }, { windowId: 99, windowPosition: -1 }, {}, {}]);
   });
 });

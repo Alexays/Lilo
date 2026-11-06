@@ -4,6 +4,8 @@ import { gapCall } from '../shared/ipc.ts';
 import { callbackify } from '../shared/callbackify.ts';
 import { tabPositions, windowIdOrder } from './tabGroups.ts';
 
+const WINDOW_ID_CURRENT = -2;
+
 let colorContext: OffscreenCanvasRenderingContext2D | undefined;
 
 /** A CSS color string as the browser serializes it (#rrggbb, or rgba() below full opacity), so it reads back. */
@@ -117,8 +119,8 @@ export const actionColorAugmentation = {
     const cb = typeof options === 'function' ? options : callback;
     const windowId = typeof options === 'object' ? options?.windowId : undefined;
     return callbackify(
-      async () => gapCall<null>('action', 'openPopup',
-        typeof windowId === 'number' ? { windowId, windowPosition: (await windowIdOrder()).indexOf(windowId) } : {}),
+      async () => gapCall<null>('action', 'openPopup', typeof windowId === 'number' && windowId !== WINDOW_ID_CURRENT
+        ? { windowId, windowPosition: (await windowIdOrder()).indexOf(windowId) } : {}),
       cb
     );
   },
