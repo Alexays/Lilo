@@ -175,7 +175,12 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
     }
 
     @objc func openLocation(_ sender: Any?) {
-        window.makeFirstResponder(header.field)
+        // Focusing the field anew would end the edit and replace what is typed with the page's address.
+        if let editor = header.field.currentEditor() {
+            editor.selectAll(nil)
+        } else {
+            window.makeFirstResponder(header.field)
+        }
     }
 
     @objc func reloadCurrentPage(_ sender: Any?) { engine.reload() }
