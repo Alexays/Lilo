@@ -95,8 +95,10 @@ final class BackgroundSupervisor {
     @discardableResult
     func load(_ extensionId: String) async -> Bool {
         guard let context = context(extensionId), context.webExtension.hasBackgroundContent else { return false }
-        loadStartedAt[extensionId] = Date()
-        defer { loadStartedAt[extensionId] = nil }
+        // A load joining one in flight (or a restart or full reload holding the guard) leaves the guard to its owner.
+        let ownsGuard = !isLoadInFlight(extensionId)
+        if ownsGuard { loadStartedAt[extensionId] = Date() }
+        defer { if ownsGuard { loadStartedAt[extensionId] = nil } }
         // Ends when the worker connects (`workerChannel`); a running worker's load starts nothing.
         let startsWorker = worker(extensionId) != .running
         if startsWorker {
