@@ -644,5 +644,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
         defer { try? FileManager.default.removeItem(atPath: path) }
         XCTAssertTrue(reply.text.hasPrefix("Saved 2 frames"), reply.text)
         XCTAssertTrue(FileManager.default.fileExists(atPath: path))
+        let again = await client.callTool("gif_creator", ["tabId": tab, "action": "export", "filename": name])
+        XCTAssertTrue(again.isError && again.text.contains("Nothing recorded"), again.text)
     }
 }

@@ -4,6 +4,7 @@ import { chromeManifest, home, installStaticChromeCompat } from './shared/static
 import { showChromeUserAgent } from './shared/chrome-version.ts';
 import { answerAsChrome, closedTabMessage, relayExternalMessaging } from './shared/message-answers.ts';
 import { relayFrameMessaging } from './shared/frame-messaging.ts';
+import { installDisposeSymbols } from './shared/dispose-symbols.ts';
 
 // ExtensionBackgroundPreparer writes the extension's frame key over it: it must stay a single string literal.
 const frameKey = '__LILO_FRAME_KEY__';
@@ -11,6 +12,7 @@ const frameKey = '__LILO_FRAME_KEY__';
 // The build's banner skips the whole script in a world where it ran already.
 Object.defineProperty(globalThis, '__liloContentCompat', { value: true });
 
+installDisposeSymbols(Symbol);
 installStaticChromeCompat(globalThis as any);
 
 // WebKit finds the world's listeners through its own `browser`, else `chrome`: Proton Pass hides both behind proxies

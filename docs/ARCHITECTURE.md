@@ -8,8 +8,9 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 |------|-------|
 | `Lilo/Agent/` | AI agent control. `AgentControl` serves MCP on a user-only Unix socket (`lilo-mcp` in `LiloMCP/` pipes an agent's stdio to it) and keeps one tab folder per client in the Agents Space; tabs of a space no window shows render in an off-screen window. Tools drive those tabs with real input, page scripts in an isolated content world, and console and network capture; devtools tools (protocol commands, network mocks, cookies, emulation, profiling) use the tab's Web Inspector without a window (`AgentInspector`). Every tool reaches a tab through `AgentControl.agentTab`, which refuses private browsing outside the agent's own isolated space; consequential clicks, Enter and cookie-carrying requests wait for the user in the consent drawer (`approveConsequentialAction`); `run` executes its program in a throwaway web view whose `tool()` calls come back to `AgentTools.call` |
 | `Lilo/App/` | AppDelegate, the main menu and its SF Symbol icons, BrowserContext (app-wide services), keyboard shortcuts and their presets, App Intents (Shortcuts actions, Focus filter), startup metrics, logging, localization, theme and app icon preferences, default-browser and device setup |
-| `Lilo/Bridge/` | JS/Swift bridge: router plus the handlers of cross-cutting UI domains (tabs, spaces, settings, profiles, omnibox, search, feature flags, state sync), and the `lilo-chrome://` scheme handler serving the chrome UI |
+| `Lilo/Bridge/` | JS/Swift bridge: router plus the handlers of cross-cutting UI domains (tabs, spaces, settings, profiles, omnibox, search, history page, feature flags, state sync), and the `lilo-chrome://` scheme handler serving the chrome UI |
 | `Lilo/Changes/` | Changes tabs: a repository's changed files and their git diff |
+| `Lilo/Conversations/` | Agent conversations over ACP: the agent registry (`ACPAgentCatalog`), the connection to an agent process, checkpoints, project files, the host and its bridge handler, and the window's conversation behavior |
 | `Lilo/ContentBlocker/` | Filter list download and conversion to WebKit content rules, the cosmetic and scriptlet runtimes, the bundled fallback block list, and the stand-ins served for `$redirect` filters |
 | `Lilo/Diagnostics/` | Process Manager snapshots and its bridge handler, lifecycle diagnostics, the hitbox debug overlay |
 | `Lilo/Downloads/` | Download manager, backends, dock progress, the downloads bridge handler |
@@ -36,8 +37,9 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 | `Lilo/Tabs/` | SpaceTab state model, TabManager, EngineHost, folders (nested up to five levels, lockable), split layouts, the archive of idle tabs, the recent tabs switcher (`Ctrl+Tab`), tab lifecycle policies |
 | `Lilo/TabShare/` | Tab sharing: screen capture stream, H.264 encoder, session controller, the `lilo-capture://` frame scheme and the bridge handler |
 | `Lilo/Terminal/` | Terminal tabs: libghostty-vt session, Metal renderer, glyph atlas, input handling |
+| `Lilo/WhatsNew/` | The What's New sheet: its seen state, its bridge handler and the window's behavior that shows it |
 | `Lilo/Window/` | MainWindowController and its extensions, WindowRegistry, chrome event routing, traffic lights, overlay web view, page popups, the extension side panel, AppleScript support |
-| `lilo-ui/src/components/` | Svelte components, grouped by area (`sidebar/`, `spaces/`, `urlbar/`, `commandbar/`, `settings/`, `extensions/`, `downloads/`, `screenshot/`, `diagnostics/`, `banners/`, `page/` for what overlays the page, `onboarding/`, and `ui/` for shared controls), each `*Model.ts` beside the component it serves; `DeferredChrome.svelte` is the lazily loaded chunk of everything the first paint does not need |
+| `lilo-ui/src/components/` | Svelte components, grouped by area (`sidebar/`, `spaces/`, `urlbar/`, `commandbar/`, `settings/`, `extensions/`, `downloads/`, `screenshot/`, `diagnostics/`, `banners/`, `page/` for what overlays the page, `onboarding/`, `agents/` for conversations, `strip/` for the top or bottom tab strip, `history/`, `whatsnew/`, and `ui/` for shared controls), each `*Model.ts` beside the component it serves; `DeferredChrome.svelte` is the lazily loaded chunk of everything the first paint does not need |
 | `lilo-ui/src/stores/` | UI state (`*.svelte.ts` stores) |
 | `lilo-ui/src/lib/` | Shared pure logic, the bridge client and its generated protocol, i18n catalogs |
 | `lilo-ui/src/styles/` | Global CSS and the design tokens |
@@ -259,6 +261,16 @@ For Chrome APIs not natively supported by WebKit, Lilo implements a **Gap API** 
 | `UserScriptsBridgeHandler` | `chrome.userScripts.*`; also answers `runtime.sendMessage` from user script worlds |
 | `OmniboxBridgeHandler` (`Lilo/Bridge/`) | `chrome.omnibox` suggestions; one instance also serves the address bar on the UI bridge |
 | `ExtensionUIBridgeHandler` | `chrome.action.openPopup`; its other actions serve the chrome UI's extension panel |
+| `BrowsingDataBridgeHandler` | `chrome.browsingData.remove` (site data on the profile's data store, history and downloads on Lilo's stores; the per-type calls are shaped in JS) |
+| `ContentSettingsBridgeHandler` | `chrome.contentSettings.*` (extension rules, then Lilo's site permissions, then Chrome's defaults) |
+| `CredentialedFetchBridgeHandler` | an extension's `fetch` with `credentials: "include"`, sent with the profile's cookies as Chrome sends them |
+| `DeclarativeNetRequestBridgeHandler` | `chrome.declarativeNetRequest` disabled static rules, and the session rules each context set this run |
+| `FontSettingsBridgeHandler` | `chrome.fontSettings.*` |
+| `InstanceIDBridgeHandler` | `chrome.instanceID` ID and creation time (no tokens) |
+| `LocalNetworkBridgeHandler` | `chrome.system.network` and `chrome.mdns.*` |
+| `PageCaptureBridgeHandler` | `chrome.pageCapture.saveAsMHTML` (the tab's web archive written as MHTML) |
+| `ProxyBridgeHandler` | `chrome.proxy.settings` (the profile's `proxyConfigurations`), and `webRequest.onAuthRequired` for a proxy's challenge |
+| `WebSocketBridgeHandler` | `WebSocket` in extension workers, over URLSession |
 
 `GapEvents` holds each worker's port and delivers the events of these APIs: it keeps which events each extension's worker listens to and, apart, which each open page listens to (a context reports an event's first listener and, once removed, its last, so a set shrinks too), keeps each event for a listening worker until the worker received it (it waits while the worker is stopped, and wakes it; only the worker's listeners do, and only they are kept across launches), and pushes it to the open pages that listen to it. Both go out once per main-actor turn, one message per worker or page for the whole burst, and the worker's delivery confirms all of it. A worker's events go out as soon as its port is connected, and the worker holds them until the extension's top-level code has run, one more WebKit call has been answered and no content script registration is in flight, so the listeners registered there hear the event that woke the worker, after the answers to the calls that code made, as in Chrome. A worker that asked for its port to be closed is idle; any other disconnect means it stopped. Each event carries a sequence number: what the worker has not confirmed goes out again on its next port, and the worker drops a number it already heard.
 
@@ -394,6 +406,8 @@ Some features have no public WebKit API: process identifiers and page suspension
 - **Selectors** looked up with `NSSelectorFromString` (classes with `NSClassFromString`) and called through `method(for:)` cast to a `@convention(c)` function type.
 - **KVC** on private keys, such as `value(forKey: "_displayCaptureState")` or private `WKPreferences` keys like `developerExtrasEnabled`.
 - **Private delegate methods** implemented under their exact Objective-C name with `@objc(_webView:...)`, so WebKit finds them.
+- **Implementation replacement** with `method_setImplementation`, calling the original through its IMP cast to the assumed signature. Always guarded on the method existing; a changed signature crashes instead of degrading, so recheck each one on every macOS release.
+- **C functions** looked up with `dlsym`, always optional: a missing symbol skips the call.
 
 Conventions:
 
@@ -409,8 +423,9 @@ Main users:
 |------|-----------------|
 | `Lilo/Engine/WKWebViewTab.swift` | private UI and navigation delegate hooks, `_close` / `_tryClose`, diagnostics through `WebViewPrivateAccessors` |
 | `Lilo/Engine/WebViewPrivateAccessors.swift` | typed wrappers: process pids and state, page suspend/resume, muting, PiP state, scripts run without a user gesture (the chrome bridge), alternate HTML for a failed load (a local folder's listing) |
-| `Lilo/Engine/WKEngineFactory.swift` | shared process pool and prewarming, tracking prevention toggle and statistics clearing, user-script removal, match-pattern `WKUserScript` initializer (Web Store shim), private preferences |
+| `Lilo/Engine/WKEngineFactory.swift` | shared process pool and prewarming, `WKContextSetCacheModel` through `dlsym`, tracking prevention toggle and statistics clearing, user-script removal, match-pattern `WKUserScript` initializer (Web Store shim), private preferences |
 | `Lilo/Engine/PageFindController.swift` | `_WKFindDelegate` and `_findString:options:maxCount:` for the find bar's match count, `_hideFindUI` |
+| `Lilo/Engine/EngineFreezer.swift` | replaces `-[WKWebView _callAsyncJavaScript:...]` so a call on a suspended page fails instead of raising |
 | `Lilo/Engine/WKFeatureFlags.swift` | experimental and internal feature flags |
 | `Lilo/Engine/WebInspectorSupport.swift` | showing the Web Inspector and its panels |
 | `Lilo/Engine/PiPController.swift`, `CaptureUsageObserver.swift`, `ContextMenuBuilder.swift` | PiP toggle, display-capture state, context-menu hit-test URLs |
@@ -418,6 +433,7 @@ Main users:
 | `Lilo/TabShare/TabShareFrameSchemeHandler.swift` | registering `lilo-capture://` as a secure scheme |
 | `Lilo/Extensions/Core/ProfileExtensionRegistry.swift` | background web view launch for extension service workers |
 | `Lilo/Extensions/Core/BackgroundSupervisor.swift` | in-place restart of an extension service worker WebKit wrongly believes loaded |
+| `Lilo/Extensions/Core/DeclarativeNetRequestMerge.swift` | replaces `+[_WKWebExtensionDeclarativeNetRequestTranslator translateRules:errorStrings:]` to merge its rules |
 | `Lilo/Extensions/GapAPI/UserScriptsBridgeHandler.swift` | a tab's frame tree (`_frames:`) and frame identifiers (`WKFrameInfo._handle`) for `userScripts.execute` and user script message senders |
 | `Lilo/Window/MainWindowController+Setup.swift` | `_setRelatedWebView:`, so every window's chrome shares one web content process |
 | `Lilo/Window/OverlayWebView.swift` | `_simulateMouseMove:` / `_simulateMouseExit:` to drive page hover under the overlay |
