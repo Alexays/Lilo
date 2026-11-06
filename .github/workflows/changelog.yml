@@ -22,6 +22,9 @@ concurrency:
 
 jobs:
   draft:
+    outputs:
+      branch: ${{ steps.open.outputs.branch }}
+      version: ${{ steps.open.outputs.version }}
     if: github.repository == 'Alexays/Lilo'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -49,6 +52,7 @@ jobs:
         if: steps.key.outputs.ready
         run: make changelog-draft RELEASE="${RELEASE#v}"
       - name: Open the pull request
+        id: open
         if: steps.key.outputs.ready
         run: |
           [ -n "$(git status --porcelain)" ] || exit 0
@@ -56,8 +60,47 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch -c "changelog/$version"
-          git add site/src/content/releases lilo-ui/src
+          git add site/src/content/releases lilo-ui/src release-media/plans
           git commit -m "docs(changelog): draft the $version entry"
           git push --force-with-lease origin "changelog/$version"
           gh pr create --draft --base main --title "docs(changelog): draft the $version entry" \
             --body "Drafted from the $version notes. Check the story, then close and reopen this pull request to run its checks."
+          echo "branch=changelog/$version" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  # The app is built here to film it. A highlight this cannot film stays text-only in the pull request.
+  media:
+    needs: draft
+    if: needs.draft.outputs.branch
+    runs-on: xcode-27
+    timeout-minutes: 60
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.draft.outputs.branch }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install the tools
+        run: |
+          xcodebuild -downloadComponent MetalToolchain
+          brew install ffmpeg
+          npm --prefix lilo-ui ci --ignore-scripts
+      - name: Film the highlights
+        env:
+          VERSION: ${{ needs.draft.outputs.version }}
+        run: |
+          [ -d "release-media/plans/$VERSION" ] || exit 0
+          make vt-build ui-build
+          make changelog-media RELEASE="$VERSION"
+      - name: Add them to the pull request
+        env:
+          VERSION: ${{ needs.draft.outputs.version }}
+        run: |
+          git add release-media/assets site/src/content/releases lilo-ui/src/components/whatsnew/releaseHighlights.json
+          git diff --cached --quiet && exit 0
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "docs(changelog): film the $VERSION highlights"
+          git push

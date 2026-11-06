@@ -4,6 +4,12 @@
   "type": "module",
   "dependencies": {
     "@anthropic-ai/sdk": "1.6.0",
+    "gsap": "3.15.0",
+    "hyperframes": "0.8.226",
+    "zod": "4.6.7"
+  },
+  "overrides": {
+    "undici": "7.30.1",
     "zod": "4.6.7"
   }
 }
