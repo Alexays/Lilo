@@ -669,7 +669,8 @@
   .sidebar:is(.sidebar-hidden, .rail-folded) :global(.space-dnd-placeholder),
   .sidebar:is(.sidebar-hidden, .rail-folded) :global(.bookmark-placeholder),
   .sidebar:is(.sidebar-hidden, .rail-folded) :global(.pinned-list),
-  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.bookmarked-list) {
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.bookmarked-list),
+  .sidebar:is(.sidebar-hidden, .rail-folded) :global(.mascot *) {
     animation-play-state: paused !important;
   }
 
