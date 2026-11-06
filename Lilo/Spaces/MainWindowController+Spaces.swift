@@ -389,7 +389,7 @@ extension MainWindowController {
             spaceManager.setActiveTab(previousActiveTabId, forSpace: oldSpaceId)
             // Private spaces leave no trace on disk. Caching the runtime leaves the store's durable
             // tree as is, so only the active tab can differ from the state it holds.
-            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true,
+            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true, !context.unreadableSpaceIds.contains(oldSpaceId),
                var state = context.browserState.spaceTabState(forSpace: oldSpaceId) {
                 state.activeTabId = restorableActiveTabId(preferred: previousActiveTabId, in: inactiveRuntime.tabs)
                 profileContext?.sessionPersistence?.saveSpaceTabStateAsync(state, spaceId: oldSpaceId) { [weak self] activeTabId, spaceId in

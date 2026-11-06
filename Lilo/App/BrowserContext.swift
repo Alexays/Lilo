@@ -123,6 +123,8 @@ final class BrowserContext {
     private(set) var filterListService: FilterListService?
     /// One degraded-database alert per subject (profile id or "settings") per launch.
     private var notifiedDegradedDatabaseSubjects: Set<String> = []
+    /// Spaces whose tab state could not be read this launch: they start empty and are never saved over it.
+    var unreadableSpaceIds: Set<UUID> = []
     private var bootstrapTask: Task<Void, Error>?
 
     init(
@@ -387,7 +389,7 @@ final class BrowserContext {
         guard let spaceManager else { return }
         var statesByProfile: [UUID: [(spaceId: UUID, state: SpaceTabState)]] = [:]
         for entry in browserState.persistableSpaceTabStates() {
-            guard let space = spaceManager.space(with: entry.spaceId), !space.isPrivate else { continue }
+            guard let space = spaceManager.space(with: entry.spaceId), !space.isPrivate, !unreadableSpaceIds.contains(space.id) else { continue }
             spaceManager.setActiveTab(entry.state.activeTabId, forSpace: space.id)
             statesByProfile[space.profileId, default: []].append(entry)
         }

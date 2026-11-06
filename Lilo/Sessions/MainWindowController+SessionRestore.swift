@@ -291,7 +291,8 @@ extension MainWindowController {
                 return context.windows.windows.compactMap { window in
                     guard let spaceId = window.tabManager.currentSpaceId,
                           let space = context.spaceManager?.space(with: spaceId),
-                          space.profileId == profileId, !space.isPrivate else { return nil }
+                          space.profileId == profileId, !space.isPrivate,
+                          !context.unreadableSpaceIds.contains(spaceId) else { return nil }
                     return spaceId
                 }
             },
@@ -607,7 +608,7 @@ extension MainWindowController {
 
     /// Restore path entry point: a readable row (or none) restores normally; an unreadable row is
     /// quarantined and the space starts empty, so the next save can never overwrite the bad blob.
-    /// A database failure (pool open, read) also degrades to empty, but is surfaced per profile.
+    /// A database failure (pool open, read) also degrades to empty, surfaced per profile, and the space is never saved this launch.
     private func loadedOrQuarantinedSpaceTabState(for space: Space) -> SpaceTabState {
         do {
             return try restoredSpaceTabState(for: space)
@@ -620,6 +621,8 @@ extension MainWindowController {
             }
             bridgeRouter.send(event: "sessionRestoreDegraded", data: ["spaceName": space.name])
         } catch {
+            // The row may be intact: saving the empty state over it would lose it.
+            context.unreadableSpaceIds.insert(space.id)
             context.notifyProfileDatabaseFailure(profileId: space.profileId, error: error)
         }
         return SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)
