@@ -34,10 +34,12 @@ extension AgentControl {
         if context.browserState.space(id: space.id) == nil {
             context.browserState.storeSpace(id: space.id, snapshot: commander.restoredSpaceSnapshot(for: space))
         }
-        // Past conversations' folders go before the first agent of this run: each starts in a clean space.
-        // So do blank tabs outside them, which no agent opens, unless a window shows one.
+        // Past agents' task folders go before the first agent of this run: each starts in a clean space.
+        // So do blank tabs outside them, which no agent opens, unless a window shows one. A folder the
+        // user made or locked stays.
         if cleanedAgentsSpaceIds.insert(space.id).inserted {
-            for folder in context.browserState.structuralProjection(forSpace: space.id)?.folders ?? [] {
+            for folder in context.browserState.structuralProjection(forSpace: space.id)?.folders ?? []
+            where folder.isAgentOwned && folder.lock == nil {
                 _ = try? commander.applyBrowserCommand(.deleteFolderWithTabs(spaceId: space.id, folderId: folder.id))
             }
             if context.windows.windows(showing: space.id).isEmpty {
@@ -68,7 +70,7 @@ extension AgentControl {
         let (space, host) = try agentSpace(for: session)
         if let id = session.folders[session.title], tabFolder(id, in: space.id) != nil { return (id, space, host) }
         guard create, let commander = host ?? context?.windows.activeWindow else { return (nil, space, host) }
-        let folder = TabFolder(spaceId: space.id, name: folderName(for: session), color: "#795ceb")
+        let folder = TabFolder(spaceId: space.id, name: folderName(for: session), color: "#795ceb", isAgentOwned: true)
         _ = try commander.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
         session.folders[session.title] = folder.id
         return (folder.id, space, host)

@@ -105,6 +105,28 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertEqual(folders.count, 1, "the last run's folder is gone")
     }
 
+    func testTheFirstAgentOfARunKeepsTheFoldersTheUserMadeOrLockedInTheAgentsSpace() async throws {
+        _ = try await newAgentTab()
+        let spaceId = try XCTUnwrap(agentsSpaceId)
+        let lockedId = try XCTUnwrap(context.browserState.structuralProjection(forSpace: spaceId)?.folders.first?.id)
+        _ = try window.applyBrowserCommand(.setFolderLock(spaceId: spaceId, folderId: lockedId, lock: FolderLock(allowsBiometrics: false)))
+        let other = try AgentTestClient(path: socketURL)
+        _ = await other.initialize(name: "Codex")
+        _ = await other.callTool("tabs_create_mcp")
+        let userFolder = TabFolder(spaceId: spaceId, name: "Mine")
+        _ = try window.applyBrowserCommand(.createFolder(spaceId: spaceId, folder: userFolder, section: .unpinned))
+        control.cleanedAgentsSpaceIds = []
+        let next = try AgentTestClient(path: socketURL)
+        _ = await next.initialize(name: "Gemini")
+
+        _ = await next.callTool("tabs_create_mcp")
+
+        let left = Set(context.browserState.structuralProjection(forSpace: spaceId)?.folders.map(\.id) ?? [])
+        XCTAssertTrue(left.contains(userFolder.id), "a folder the user made stays")
+        XCTAssertTrue(left.contains(lockedId), "a locked folder stays")
+        XCTAssertEqual(left.count, 3, "the other past agent folder goes, the new agent's comes")
+    }
+
     func testResetWipesTheAgentsProfileAndNeverTheUsers() async throws {
         let server = try await TinyHTTPServer(index: "<!doctype html><p>site</p>")
         let site = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))
