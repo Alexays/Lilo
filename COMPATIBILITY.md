@@ -235,8 +235,9 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 
 - **Spared as in Chrome's freezing policy:** tabs playing or capturing media, loading, allowed to notify, holding a
   connected `RTCPeerConnection` (data channels alone included) or a Web Lock.
-- **Caveat:** WebKit reports neither peers nor locks to the app, so Lilo tracks them in the top document's page world
-  only: a peer or a lock held by a frame or a worker does not keep its tab from freezing.
+- **Caveat:** WebKit reports neither peers nor locks to the app, so Lilo tracks peers in the top document's page world
+  and asks the top document for its locks when the tab is due to freeze: a peer or a lock held by a frame or a worker
+  does not keep its tab from freezing.
 
 ---
 

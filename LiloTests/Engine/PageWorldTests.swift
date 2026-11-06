@@ -54,8 +54,12 @@ final class PageWorldTests: XCTestCase {
     shapes['webkit in window'] = String('webkit' in window);
     shapes['webkit in frame'] = String('webkit' in frame);
     shapes['frame keys'] = Object.keys(frame).join();
+    // Stacks through natives a page calls often: a replaced one adds its user-script frame.
+    const stacks = [];
+    await navigator.locks.request('probe', () => { stacks.push(new Error().stack); });
+    try { RTCPeerConnection.prototype.close.call({}); } catch (e) { stacks.push(e.stack); }
     return JSON.stringify({ shapes, nonNative, userAgent: navigator.userAgent, vendor: navigator.vendor,
-                            userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets });
+                            userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets, stacks });
     """#
 
     private struct Report: Decodable {
@@ -67,6 +71,7 @@ final class PageWorldTests: XCTestCase {
         let dom: String
         let styleSheets: Int
         let adoptedStyleSheets: Int
+        let stacks: [String]
     }
 
     private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
@@ -119,6 +124,8 @@ final class PageWorldTests: XCTestCase {
             XCTAssertEqual(lilo.shapes["window.\(global)"], "v:true,false,true:\(global)/0", "\(global) is defined as an interface object is")
         }
         XCTAssertEqual(lilo.shapes["webkit in window"], "false")
+        XCTAssertEqual(lilo.stacks.count, 2)
+        XCTAssertEqual(lilo.stacks.filter { $0.contains("user-script:") }, [], "frames a Safari page does not have")
 
         XCTAssertEqual(lilo.userAgent, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) "
                        + WKEngineFactory.safariApplicationName)

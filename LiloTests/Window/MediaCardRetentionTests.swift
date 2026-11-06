@@ -69,7 +69,8 @@ final class MediaCardRetentionTests: XCTestCase {
         XCTAssertFalse(engine.isFrozen)
 
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(31 * 60))
-        XCTAssertTrue(engine.isFrozen)
+        let frozen = await pollUntil(timeout: 10) { engine.isFrozen }
+        XCTAssertTrue(frozen)
         engine.resume()   // the context's teardown cannot touch a suspended page
     }
 
@@ -81,6 +82,7 @@ final class MediaCardRetentionTests: XCTestCase {
 
         XCTAssertFalse(window.context.mediaTabIds.contains(engine.id), "a pause from the page takes the tab off the card")
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(10 * 60))
+        _ = await pollUntil(timeout: 10) { engine.isFrozen }
         // Passes everywhere but sometimes on CI: the message says what kept the engine awake there.
         let state = window.context.browserState
         let tab = state.updateTab(id: engine.id) { _ in }?.new

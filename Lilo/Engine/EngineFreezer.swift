@@ -39,6 +39,22 @@ final class CompositeFreezer {
     /// so code that only holds a raw web view (bridges replying to a page) checks here and skips.
     static let suspendedWebViews = NSHashTable<WKWebView>.weakObjects()
 
+    /// For `PageWorld.bridgeWorld`, top document: fails while the page holds a Web Lock. `navigator.locks.query()` lists the
+    /// whole origin's locks, so a short lock of its own tells which client is the page.
+    static let webLockCheck = #"""
+    const locks = navigator.locks;
+    if (!locks) return;
+    const name = crypto.randomUUID();
+    let held = false;
+    try {
+      await locks.request(name, { ifAvailable: true }, async () => {
+        const all = (await locks.query()).held, page = all.find(lock => lock.name === name).clientId;
+        held = all.some(lock => lock.clientId === page && lock.name !== name);
+      });
+    } catch (e) {}
+    if (held) throw 0;
+    """#
+
     /// WebKit's `scripting.executeScript` calls `_callAsyncJavaScript:` after an async frame-tree round trip, which a slow
     /// background process can stretch past any extension loan: on a page frozen meanwhile the call fails instead of raising.
     private static let failsAsyncJavaScriptWhileSuspended: Void = {

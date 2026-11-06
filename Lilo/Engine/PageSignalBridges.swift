@@ -43,8 +43,7 @@ final class CallControlsBridge: NSObject, WKScriptMessageHandler {
             hasTrackControls: body["tracks"] as? Bool == true,
             hasPictureInPictureAction: body["pip"] as? Bool == true,
             hasLiveConnection: body["rtc"] as? Bool == true,
-            hasPeerConnection: body["peer"] as? Bool == true,
-            holdsWebLock: body["lock"] as? Bool == true
+            hasPeerConnection: body["peer"] as? Bool == true
         ))
     }
 }
