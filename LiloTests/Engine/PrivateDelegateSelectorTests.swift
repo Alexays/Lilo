@@ -96,7 +96,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
             ("_WKLinkIconParameters", ["url", "size", "iconType"]),
             ("WKPreferences", ["_setDeveloperExtrasEnabled:", "_setAllowsPictureInPictureMediaPlayback:", "_setMediaDevicesEnabled:", "_setPrivateClickMeasurementEnabled:",
                               "_setHiddenPageDOMTimerThrottlingEnabled:", "_setHiddenPageDOMTimerThrottlingAutoIncreases:",
-                              "_setPageVisibilityBasedProcessSuppressionEnabled:"]),
+                              "_setPageVisibilityBasedProcessSuppressionEnabled:", "_setDOMPasteAllowed:", "_setJavaScriptCanAccessClipboard:"]),
             ("_WKContextMenuElementInfo", ["hitTestResult"]),
             ("_WKHitTestResult", ["absoluteLinkURL", "absoluteImageURL", "absoluteMediaURL"]),
             ("_WKFeature", ["key", "name", "details", "isHidden", "defaultValue"]),
