@@ -417,10 +417,10 @@ extension MainWindowController {
     func applyTerminalSettings() {
         guard let settingsStore = context.settingsStore else { return }
         context.powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
-        guard settingsStore.get("terminalTheme") == "vscode" else {
-            setTerminalAppearance(settingsStore, vscodeTheme: nil)
-            return
-        }
+        // Fonts and scrollback apply at once, so a terminal restored meanwhile starts with them; the VS Code colors shown stay.
+        let shown = tabManager.terminalHost.appearance.theme
+        setTerminalAppearance(settingsStore, vscodeTheme: shown.id == "vscode" ? shown : nil)
+        guard settingsStore.get("terminalTheme") == "vscode" else { return }
         // Finding the VS Code theme walks its extension folders, so it stays off the main thread.
         let dark = Self.prefersDarkSidebarAppearance()
         Task { [weak self] in
