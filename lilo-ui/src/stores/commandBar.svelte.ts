@@ -83,6 +83,9 @@ let _moveTabId = $state("");
 let _queryBeforeMove = "";
 // The top hit the host loads out of sight, so Enter shows it rather than starts it; "" for none.
 let _preloadURL = "";
+// The top hit to preload once typing settles: each page load costs a web process and network.
+let _nextPreloadURL = "";
+let _preloadTimer: ReturnType<typeof setTimeout> | null = null;
 // Visits (tabs and bookmarks count two) a site needs before a guess at it is worth a page load.
 const PRELOAD_MIN_VISITS = 3;
 
@@ -311,9 +314,16 @@ function computeResults(options: { pinSelection?: boolean } = {}): void {
 		/^https?:\/\//i.test(top.url ?? "") && addressOf(top.url).startsWith(query)
 			? top.url!
 			: "";
+	if (preloadURL === _nextPreloadURL) return;
+	_nextPreloadURL = preloadURL;
+	if (_preloadTimer) clearTimeout(_preloadTimer);
+	_preloadTimer = null;
 	if (preloadURL === _preloadURL) return;
-	_preloadURL = preloadURL;
-	searchActions.preloadTopHit(preloadURL);
+	_preloadTimer = setTimeout(() => {
+		_preloadTimer = null;
+		_preloadURL = preloadURL;
+		searchActions.preloadTopHit(preloadURL);
+	}, 150);
 }
 
 function clearOmniboxSession(cancel: boolean): void {
@@ -523,6 +533,9 @@ export function closeCommandBar(): void {
 	_moveTabId = "";
 	_queryBeforeMove = "";
 	clearSuggestTimer();
+	if (_preloadTimer) clearTimeout(_preloadTimer);
+	_preloadTimer = null;
+	_nextPreloadURL = "";
 	// After an Enter's navigate, which swapped the preload in if it opened it: what is left goes.
 	if (_preloadURL) {
 		_preloadURL = "";
