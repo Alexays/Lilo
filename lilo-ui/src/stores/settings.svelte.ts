@@ -151,6 +151,32 @@ export function setSetting(key: string, value: string): void {
 	settingsActions.set(key, value);
 }
 
+let _hiddenElementsSetting: string | undefined;
+let _hiddenElements: Record<string, string[]> = {};
+
+/** The elements the user hid: selectors by host, without "www.". Parsed again only when its setting changes. */
+export function getHiddenElements(): Record<string, string[]> {
+	const setting = _values["hiddenElements"];
+	if (setting !== _hiddenElementsSetting) {
+		_hiddenElementsSetting = setting;
+		try {
+			const parsed: unknown = JSON.parse(setting ?? "{}");
+			_hiddenElements = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, string[]>) : {};
+		} catch {
+			_hiddenElements = {};
+		}
+	}
+	return _hiddenElements;
+}
+
+/** Keeps `selectors` hidden on `host`; none shows every element there again. Pages follow from their next load. */
+export function setHiddenElements(host: string, selectors: string[]): void {
+	const next = { ...getHiddenElements() };
+	if (selectors.length > 0) next[host] = selectors;
+	else delete next[host];
+	setSetting("hiddenElements", JSON.stringify(next));
+}
+
 export function getDefaultBrowserStatus(): { isDefault: boolean; shouldInvite: boolean } {
 	return _defaultBrowser;
 }

@@ -160,6 +160,7 @@
 			"tools": "Ontwikkelaarstools",
 			"permissions": "Bevoegdheden",
 			"zoom": "Zoom",
+			"hiddenElements": "Verborgen elementen",
 			"siteData": "Gegevens",
 			"sites": "Websites ({count})",
 			"updates": "Updates",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Zoom {zoom}",
+			"hiddenSummary": {"one": "{count} verborgen element", "other": "{count} verborgen elementen"},
 			"dataSummary": "Opgeslagen gegevens",
 			"permissionUpdated": "{origin} · Bijgewerkt {time}",
 			"emptyTitle": "Nog geen website-instellingen",
@@ -2073,6 +2075,8 @@
 		"Split View": "Gesplitste weergave",
 		"Separate Split View": "Hef gesplitste weergave op",
 		"Open in Split View": "Open in gesplitste weergave",
+		"Hide Element…": "Element verbergen…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "Klik op een element om het op deze site te verbergen. Druk op Esc om te annuleren.",
 		"Picture in Picture": "Beeld in beeld",
 		"Develop": "Ontwikkel",
 		"Show Web Inspector": "Toon webinfovenster",
@@ -2486,6 +2490,7 @@
 		"zoom": "Zoom",
 		"zoomIn": "Zoom in",
 		"zoomOut": "Zoom uit",
+		"showHiddenElements": "Weer tonen",
 		"zoomReset": "Stel zoom opnieuw in"
 	},
 	"ink": {

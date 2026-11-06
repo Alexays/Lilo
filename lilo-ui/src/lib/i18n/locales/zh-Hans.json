@@ -160,6 +160,7 @@
 			"tools": "开发者工具",
 			"permissions": "权限",
 			"zoom": "缩放",
+			"hiddenElements": "已隐藏的元素",
 			"siteData": "数据",
 			"sites": "网站（{count}）",
 			"updates": "更新",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}：{decision}",
 			"zoomSummary": "缩放 {zoom}",
+			"hiddenSummary": {"one": "已隐藏 {count} 个元素", "other": "已隐藏 {count} 个元素"},
 			"dataSummary": "已存储的数据",
 			"permissionUpdated": "{origin} · 更新于 {time}",
 			"emptyTitle": "还没有网站设置",
@@ -2073,6 +2075,8 @@
 		"Split View": "分屏浏览",
 		"Separate Split View": "拆分分屏浏览",
 		"Open in Split View": "在分屏浏览中打开",
+		"Hide Element…": "隐藏元素…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "点按要在此网站上隐藏的元素。按 Esc 键取消。",
 		"Picture in Picture": "画中画",
 		"Develop": "开发",
 		"Show Web Inspector": "显示网页检查器",
@@ -2486,6 +2490,7 @@
 		"zoom": "缩放",
 		"zoomIn": "放大",
 		"zoomOut": "缩小",
+		"showHiddenElements": "重新显示",
 		"zoomReset": "还原缩放"
 	},
 	"ink": {

@@ -187,6 +187,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 let engineFactory = context?.engineFactory
                 if key == "contentBlockerEnabled" { context?.setContentBlockerEnabled(value == "true") }
                 if key == "contentBlockerAllowedDomains" { blockerAllowlistChanged(reloadTabId: nil) }
+                if key == SettingsStore.hiddenElementsKey { engineFactory?.setHiddenElements(store.hiddenElements) }
                 if key == "sendGPC" { engineFactory?.setGlobalPrivacyControl(value == "true") }
                 if key == "preventCrossSiteTracking" { engineFactory?.setTrackingPrevention(value == "true") }
                 if key == "httpsOnly" { engineFactory?.setHTTPSOnly(value == "true") }

@@ -82,6 +82,7 @@ enum KeyboardShortcuts {
         Action("page.reader", "Show Reader", "View"),
         Action("page.translate", "Translate Page", "View"),
         Action("page.pictureInPicture", "Picture in Picture", "View"),
+        Action("page.hideElement", "Hide Element…", "View"),
         Action("terminal.showChanges", "Show Changes", "View", ["⌃⌘g"]),
         Action("history.back", "Back", "History", ["⌘["]),
         Action("history.forward", "Forward", "History", ["⌘]"]),

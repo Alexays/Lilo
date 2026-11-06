@@ -26,6 +26,21 @@ test("the site-controls button opens the Site drawer, which sets a permission", 
 	expect(set?.payload).toEqual({ origin: "https://example.com", type: "camera", allow: false });
 });
 
+test("the Site drawer counts the site's hidden elements and shows them again", async ({ page }) => {
+	await bootChrome(page, worldWithActiveCamera());
+	await receive(page, { event: "settingsLoaded", settings: { hiddenElements: JSON.stringify({ "example.com": [".promo", "#banner"] }) } });
+	await page.locator(".permissions-btn").click();
+
+	const drawer = page.locator(".url-drawer.open");
+	await expect(drawer).toContainText("2 hidden elements");
+	await drawer.getByRole("button", { name: "Show again" }).click();
+
+	const commands = await sentCommands(page);
+	expect(commands.find((c) => c.action === "setSetting")?.payload).toEqual({ key: "hiddenElements", value: "{}" });
+	expect(commands.some((c) => c.action === "reload")).toBe(true);
+	await expect(drawer).not.toContainText("hidden elements");
+});
+
 test("the Site drawer's click zone reaches up over its arrow to the address", async ({ page }) => {
 	await bootChrome(page, worldWithActiveCamera());
 	await page.locator(".permissions-btn").click();

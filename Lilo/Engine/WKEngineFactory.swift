@@ -125,6 +125,8 @@ final class WKEngineFactory {
     private var installedFilterUserScripts: [WKUserScript] = []
     /// Hosts the blocker stands down for; spliced into the filter scripts, which stand down too.
     private var blockerAllowlist: [String] = []
+    /// The elements the user hid, as the JSON literal spliced into the generic cosmetics script.
+    private var hiddenElementsLiteral = #""{}""#
     /// Read per navigation by every live tab, so a change applies to open tabs without a reload.
     private(set) static var httpsOnlyEnabled = false
     /// Smallest font size pages render with, in points; 0 leaves page fonts alone.
@@ -688,8 +690,25 @@ final class WKEngineFactory {
         ]
         let allowlist = Self.allowlistLiteral(blockerAllowlist)
         filterUserScripts = sources.compactMap { source, mainFrameOnly, world in
-            source.map { (WKUserScript(source: Self.splicingAllowlist($0, replacing: "__LILO_ALLOWLIST__", with: allowlist),
-                                       injectionTime: .atDocumentStart, forMainFrameOnly: mainFrameOnly, in: world), world) }
+            source.map {
+                let spliced = Self.splicing("ALLOWLIST", in: $0, replacing: "__LILO_ALLOWLIST__", with: allowlist)
+                return (WKUserScript(source: Self.splicing("HIDDEN", in: spliced, replacing: "__LILO_HIDDEN__", with: hiddenElementsLiteral),
+                                     injectionTime: .atDocumentStart, forMainFrameOnly: mainFrameOnly, in: world), world)
+            }
+        }
+        reinstallFilterUserScripts()
+    }
+
+    /// Selectors by host without `www.`, applied by the generic cosmetics script from the next page on, allowlisted sites included.
+    func setHiddenElements(_ elements: [String: [String]]) {
+        let data = (try? JSONSerialization.data(withJSONObject: elements, options: .sortedKeys)) ?? Data("{}".utf8)
+        let literal = Self.jsStringLiteral(String(data: data, encoding: .utf8) ?? "{}")
+        guard literal != hiddenElementsLiteral else { return }
+        let old = hiddenElementsLiteral
+        hiddenElementsLiteral = literal
+        filterUserScripts = filterUserScripts.map { script, world in
+            (WKUserScript(source: Self.splicing("HIDDEN", in: script.source, replacing: old, with: literal), injectionTime: .atDocumentStart,
+                          forMainFrameOnly: script.isForMainFrameOnly, in: world), world)
         }
         reinstallFilterUserScripts()
     }
@@ -719,7 +738,7 @@ final class WKEngineFactory {
         blockerAllowlist = allowlist
         let new = Self.allowlistLiteral(allowlist)
         filterUserScripts = filterUserScripts.map { script, world in
-            (WKUserScript(source: Self.splicingAllowlist(script.source, replacing: old, with: new), injectionTime: .atDocumentStart,
+            (WKUserScript(source: Self.splicing("ALLOWLIST", in: script.source, replacing: old, with: new), injectionTime: .atDocumentStart,
                           forMainFrameOnly: script.isForMainFrameOnly, in: world), world)
         }
         reinstallFilterUserScripts()
@@ -729,10 +748,12 @@ final class WKEngineFactory {
         jsStringLiteral("|" + sites.joined(separator: "|") + "|")
     }
 
-    /// Every template opens with `var ALLOWLIST = __LILO_ALLOWLIST__;`: no need to scan the tables after it.
-    nonisolated private static func splicingAllowlist(_ source: String, replacing old: String, with new: String) -> String {
-        guard let range = source.range(of: "var ALLOWLIST = " + old) else { return source }
-        return source.replacingCharacters(in: range, with: "var ALLOWLIST = " + new)
+    /// Every template opens with `var ALLOWLIST = __LILO_ALLOWLIST__;`, the generic cosmetics one then with `var HIDDEN`: no need
+    /// to scan the tables after them. A multi-MB template without the variable is never searched for it.
+    nonisolated private static func splicing(_ variable: String, in source: String, replacing old: String, with new: String) -> String {
+        guard variable == "ALLOWLIST" || source.hasPrefix("/*lilo-generic-cosmetics*/"),
+              let range = source.range(of: "var \(variable) = " + old) else { return source }
+        return source.replacingCharacters(in: range, with: "var \(variable) = " + new)
     }
 
     func rebuildBlocker(allowlist: BlockerAllowlist) async {

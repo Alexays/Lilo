@@ -18,7 +18,7 @@ enum MenuIcon: CaseIterable {
     case share, qrCode, screenshot, captureArea, captureVisible, captureFullPage, print, copyMarkdown, find, findNext
     case findPrevious, useSelectionForFind, spelling, showSpelling, checkSpelling, spellWhileTyping, checkGrammar, autocorrect
     case substitutions, showSubstitutions, smartQuotes, smartDashes, textReplacement, transformations, speech, sidebar, toolbar
-    case fullScreen, reloadFromOrigin, stopLoading, zoomIn, zoomOut, actualSize, reader, translate, showChanges
+    case fullScreen, reloadFromOrigin, stopLoading, zoomIn, zoomOut, actualSize, reader, translate, hideElement, showChanges
     case recentlyClosed, archivedTabs, recentlyVisited, history, clearBrowsingData, nextSpace, previousSpace, previousTab, nextTab
     case goToTab, moveToSpace, clearUnpinned, webInspector, inspectElement, console, viewSource, sources, profiling
     case processManager, loadExtension, featureFlags, designSystem, chromeDevtools, hitboxOverlay, nextWaitingTerminal
@@ -126,6 +126,7 @@ enum MenuIcon: CaseIterable {
         case .actualSize: "1.magnifyingglass"
         case .reader: "doc.plaintext"
         case .translate: "translate"
+        case .hideElement: "eye.slash"
         case .showChanges: "plusminus"
         case .recentlyClosed: "clock.arrow.circlepath"
         case .archivedTabs: "archivebox"

@@ -160,6 +160,7 @@
 			"tools": "Geliştirici araçları",
 			"permissions": "İzinler",
 			"zoom": "Büyütme",
+			"hiddenElements": "Gizlenen öğeler",
 			"siteData": "Veriler",
 			"sites": "Siteler ({count})",
 			"updates": "Güncellemeler",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Büyütme {zoom}",
+			"hiddenSummary": {"one": "{count} gizlenen öğe", "other": "{count} gizlenen öğe"},
 			"dataSummary": "Saklanan veriler",
 			"permissionUpdated": "{origin} · Güncelleme: {time}",
 			"emptyTitle": "Henüz site ayarı yok",
@@ -2073,6 +2075,8 @@
 		"Split View": "Bölünmüş Görünüm",
 		"Separate Split View": "Bölünmüş Görünümü Ayır",
 		"Open in Split View": "Bölünmüş Görünümde Aç",
+		"Hide Element…": "Öğeyi Gizle…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "Bu sitede gizlemek için bir öğeye tıklayın. İptal etmek için Esc tuşuna basın.",
 		"Picture in Picture": "Resim İçinde Resim",
 		"Develop": "Geliştirme",
 		"Show Web Inspector": "Web Denetçisi'ni Göster",
@@ -2486,6 +2490,7 @@
 		"zoom": "Büyütme",
 		"zoomIn": "Büyüt",
 		"zoomOut": "Küçült",
+		"showHiddenElements": "Yeniden göster",
 		"zoomReset": "Büyütmeyi sıfırla"
 	},
 	"ink": {

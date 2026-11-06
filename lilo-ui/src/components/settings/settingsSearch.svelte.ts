@@ -5,6 +5,7 @@ import { type ExtensionState, getExtensions } from "../../stores/extensions.svel
 import { getSettingsQuery, type SettingsSectionId } from "../../stores/panels.svelte";
 import {
   getFeatureFlags,
+  getHiddenElements,
   getSetting,
   getSitePermissions,
   getWebsiteData,
@@ -35,7 +36,7 @@ interface SettingsSearchResults {
 // Sites with what they are found by, folded once: a keystroke only filters them.
 // A site also matches on what it holds, so "camera" or "zoom" lists the sites concerned.
 const siteIndex = $derived(
-  buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()).map((site) => ({
+  buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels(), getHiddenElements()).map((site) => ({
     site,
     haystack: normalizeSearchText(
       [
@@ -43,6 +44,7 @@ const siteIndex = $derived(
         ...site.permissions.map((permission) => sitePermissionLabel(permission.type, t)),
         site.zoomLevels.length > 0 ? t("settings.groups.zoom") : "",
         site.dataName ? t("settings.sites.dataSummary") : "",
+        site.hiddenElements.length > 0 ? t("settings.groups.hiddenElements") : "",
       ].join(" "),
     ),
   })),

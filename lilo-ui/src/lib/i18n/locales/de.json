@@ -160,6 +160,7 @@
 			"tools": "Entwicklerwerkzeuge",
 			"permissions": "Berechtigungen",
 			"zoom": "Zoom",
+			"hiddenElements": "Ausgeblendete Elemente",
 			"siteData": "Daten",
 			"sites": "Websites ({count})",
 			"updates": "Updates",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Zoom {zoom}",
+			"hiddenSummary": {"one": "{count} ausgeblendetes Element", "other": "{count} ausgeblendete Elemente"},
 			"dataSummary": "Gespeicherte Daten",
 			"permissionUpdated": "{origin} · Aktualisiert {time}",
 			"emptyTitle": "Noch keine Websiteeinstellungen",
@@ -2073,6 +2075,8 @@
 		"Split View": "Geteilte Ansicht",
 		"Separate Split View": "Geteilte Ansicht trennen",
 		"Open in Split View": "In geteilter Ansicht öffnen",
+		"Hide Element…": "Element ausblenden…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "Klicke auf ein Element, um es auf dieser Website auszublenden. Drücke Esc zum Abbrechen.",
 		"Picture in Picture": "Bild-in-Bild",
 		"Develop": "Entwickler",
 		"Show Web Inspector": "Webinformationen einblenden",
@@ -2486,6 +2490,7 @@
 		"zoom": "Zoom",
 		"zoomIn": "Vergrößern",
 		"zoomOut": "Verkleinern",
+		"showHiddenElements": "Wieder einblenden",
 		"zoomReset": "Zoom zurücksetzen"
 	},
 	"ink": {

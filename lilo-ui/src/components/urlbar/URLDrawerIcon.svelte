@@ -7,6 +7,7 @@
     | "extension"
     | "agent"
     | "zoom"
+    | "hidden"
     | "browser";
 </script>
 
@@ -34,6 +35,10 @@
   {:else if name === "zoom"}
     <circle cx="8.8" cy="8.8" r="5" />
     <path d="m12.6 12.6 4 4M8.8 6.6v4.4M6.6 8.8h4.4" />
+  {:else if name === "hidden"}
+    <path d="M3 10s2.6-4.8 7-4.8 7 4.8 7 4.8-2.6 4.8-7 4.8S3 10 3 10Z" />
+    <circle cx="10" cy="10" r="2" />
+    <path d="m4 16 12-12" />
   {:else if name === "browser"}
     <circle cx="10" cy="10" r="6.6" />
     <path d="m12.8 7.2-1.6 4-4 1.6 1.6-4 4-1.6Z" />

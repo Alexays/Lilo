@@ -380,6 +380,8 @@ export interface SiteSummary {
   dataName: string | null;
   dataKinds: BridgeWebsiteDataSnapshot["kinds"];
   zoomLevels: BridgeZoomLevelSnapshot[];
+  /** Elements the user hid on the site's hosts. */
+  hiddenElements: { host: string; selector: string }[];
 }
 
 /** A stored decision's label; an external app's type names the link scheme it covers ("external-scheme:zoommtg"). */
@@ -406,12 +408,13 @@ export function buildSites(
   permissions: BridgeSitePermissionSnapshot[],
   websiteData: BridgeWebsiteDataSnapshot[],
   zoomLevels: BridgeZoomLevelSnapshot[],
+  hiddenElements: Record<string, string[]>,
 ): SiteSummary[] {
   const sites = new Map<string, SiteSummary>();
   const siteFor = (key: string): SiteSummary => {
     let site = sites.get(key);
     if (!site) {
-      site = { key, permissions: [], dataName: null, dataKinds: [], zoomLevels: [] };
+      site = { key, permissions: [], dataName: null, dataKinds: [], zoomLevels: [], hiddenElements: [] };
       sites.set(key, site);
     }
     return site;
@@ -435,6 +438,10 @@ export function buildSites(
   }
   for (const level of zoomLevels) {
     siteFor(keyForHost(level.host.toLowerCase())).zoomLevels.push(level);
+  }
+  for (const [host, selectors] of Object.entries(hiddenElements)) {
+    const site = siteFor(keyForHost(host));
+    for (const selector of selectors) site.hiddenElements.push({ host, selector });
   }
   return [...sites.values()].sort((a, b) => a.key.localeCompare(b.key));
 }

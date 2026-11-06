@@ -3,7 +3,7 @@
   import { formatTimestamp } from "../../lib/format";
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { closeSettingsSubpage } from "../../stores/panels.svelte";
-  import { getSitePermissions, getWebsiteData, getZoomLevels } from "../../stores/settings.svelte";
+  import { getHiddenElements, getSitePermissions, getWebsiteData, getZoomLevels, setHiddenElements } from "../../stores/settings.svelte";
   import { buildSites, SITE_ROW_LIMIT, sitePermissionLabel } from "./settingsPanelModel";
   import SettingsSiteRow from "./SettingsSiteRow.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
@@ -13,11 +13,15 @@
 
   let { subpage }: { subpage: string | null } = $props();
 
-  const sites = $derived(buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()));
+  const sites = $derived(buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels(), getHiddenElements()));
   const siteKey = $derived(subpage?.startsWith("site:") ? subpage.slice("site:".length) : null);
   const site = $derived(siteKey ? sites.find((candidate) => candidate.key === siteKey) : undefined);
   const percent = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "percent" }));
   const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
+
+  function showHiddenElement(host: string, selector: string): void {
+    setHiddenElements(host, (getHiddenElements()[host] ?? []).filter((candidate) => candidate !== selector));
+  }
 
   // Everything stored for the site was removed: there is nothing left to show.
   $effect(() => {
@@ -49,6 +53,21 @@
         <UiListRow title={level.host} description={percent.format(level.zoom)}>
           {#snippet action()}
             <UiButton onclick={() => settingsActions.resetZoomLevel(level.host)}>{t("sitePermissions.reset")}</UiButton>
+          {/snippet}
+        </UiListRow>
+      {/each}
+    </UiInsetList>
+  {/if}
+  {#if site.hiddenElements.length > 0}
+    {@const hosts = [...new Set(site.hiddenElements.map((element) => element.host))]}
+    <UiInsetList title={t("settings.groups.hiddenElements")}>
+      {#snippet accessory()}
+        <UiButton onclick={() => hosts.forEach((host) => setHiddenElements(host, []))}>{t("siteDrawer.showHiddenElements")}</UiButton>
+      {/snippet}
+      {#each site.hiddenElements as element (element.host + " " + element.selector)}
+        <UiListRow title={element.selector} description={element.host}>
+          {#snippet action()}
+            <UiButton onclick={() => showHiddenElement(element.host, element.selector)}>{t("common.remove")}</UiButton>
           {/snippet}
         </UiListRow>
       {/each}
