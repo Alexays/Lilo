@@ -4,9 +4,9 @@ import os
 import UserNotifications
 
 /// Conversations with ACP agents, one per agent tab. An agent starts on a conversation's first use and
-/// stops once idle; its session comes back with `session/load`. What a conversation shows is the log of
-/// the agent's `session/update` notifications plus Lilo's own entries (`lilo_*`), which the chrome replays
-/// when the conversation comes on screen, then receives as they arrive.
+/// stops once idle; its session comes back with `session/resume` or `session/load`. What a conversation
+/// shows is the log of the agent's `session/update` notifications plus Lilo's own entries (`lilo_*`), which
+/// the chrome replays when the conversation comes on screen, then receives as they arrive.
 @MainActor
 final class ConversationHost {
     enum State: String {
@@ -35,6 +35,7 @@ final class ConversationHost {
         /// The project's files when each prompt was sent, by prompt index: what "Restore to here" goes back to.
         var checkpoints: [String?] = []
         var canLoadSession = false
+        var canResumeSession = false
         var acceptsImages = false
         var authMethods: [[String: Any]] = []
         /// Replays of `session/load` repeat what the log already holds after an idle stop.
@@ -286,6 +287,7 @@ final class ConversationHost {
         ])
         let capabilities = initialized["agentCapabilities"] as? [String: Any] ?? [:]
         conversation.canLoadSession = capabilities["loadSession"] as? Bool ?? false
+        conversation.canResumeSession = (capabilities["sessionCapabilities"] as? [String: Any])?["resume"] != nil
         conversation.acceptsImages = (capabilities["promptCapabilities"] as? [String: Any])?["image"] as? Bool ?? false
         conversation.authMethods = initialized["authMethods"] as? [[String: Any]] ?? []
         try await openSession(conversation, connection: connection)
@@ -299,18 +301,21 @@ final class ConversationHost {
             "args": [String](),
             "env": [["name": "LILO_CONVERSATION", "value": conversation.token]]
         ]]
-        if let sessionId = conversation.sessionId, conversation.canLoadSession {
+        // With the thread already in the log, `session/resume` spares the history `session/load` replays.
+        let method = conversation.canResumeSession && !conversation.log.isEmpty ? "session/resume"
+            : conversation.canLoadSession ? "session/load" : nil
+        if let sessionId = conversation.sessionId, let method {
             conversation.replaying = !conversation.log.isEmpty
             defer { conversation.replaying = false }
             do {
                 let loaded = try await withAuthentication(conversation, connection: connection) {
-                    try await connection.request("session/load", ["sessionId": sessionId, "cwd": conversation.cwd, "mcpServers": servers])
+                    try await connection.request(method, ["sessionId": sessionId, "cwd": conversation.cwd, "mcpServers": servers])
                 }
                 applySessionState(conversation, loaded)
                 return
             } catch let error as ACPConnection.RPCError where error.code != -32000 {
                 // A session the agent no longer has starts over in a new one.
-                Self.logger.info("session/load failed, starting a new session: \(error.message, privacy: .public)")
+                Self.logger.info("\(method, privacy: .public) failed, starting a new session: \(error.message, privacy: .public)")
             }
         }
         let created = try await withAuthentication(conversation, connection: connection) {
