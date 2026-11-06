@@ -59,27 +59,35 @@ final class BookmarksBridgeHandler: GapHandler {
             let url   = params["url"] as? String
             let title = params["title"] as? String
             let query = params["query"] as? String
-            return bridged { try store.search(url: url, title: title, query: query).map(\.dict) }
+            do {
+                return try await Task.detached { try store.search(url: url, title: title, query: query) }.value.map(\.dict)
+            } catch {
+                return BridgeError(error.localizedDescription)
+            }
 
         case "bookmarks.create":
             let parentId = call.string("parentId")
             let title    = call.string("title") ?? ""
             let url      = call.string("url")
-            return bridged {
-                let node = try store.create(parentId: parentId, title: title, url: url)
+            do {
+                let node = try await Task.detached { try store.create(parentId: parentId, title: title, url: url) }.value
                 emit("onCreated", args: [node.id, node.dict], registry: registry)
                 return node.dict
+            } catch {
+                return BridgeError(error.localizedDescription)
             }
 
         case "bookmarks.move":
             let id       = call.string("id") ?? ""
             let parentId = call.string("parentId")
             let index    = call.payload["index"] as? Int
-            return bridged {
+            do {
                 // Snapshot the old position BEFORE the move: store.move reindexes siblings and the
                 // returned record carries only the NEW parentId/index.
-                let before = try? store.get(id: id)
-                let moved = try store.move(id: id, parentId: parentId, index: index)
+                let (before, moved) = try await Task.detached { () throws -> (ChromeBookmarkRecord?, ChromeBookmarkRecord) in
+                    let before = try? store.get(id: id)
+                    return (before, try store.move(id: id, parentId: parentId, index: index))
+                }.value
                 emit("onMoved", args: [id, [
                     "parentId": moved.parentId ?? "",
                     "index": moved.index_ ?? 0,
@@ -87,37 +95,38 @@ final class BookmarksBridgeHandler: GapHandler {
                     "oldIndex": before?.index_ ?? 0
                 ]], registry: registry)
                 return moved.dict
+            } catch {
+                return BridgeError(error.localizedDescription)
             }
 
         case "bookmarks.update":
             let id    = call.string("id") ?? ""
             let title = call.string("title")
             let url   = call.string("url")
-            return bridged {
-                let node = try store.update(id: id, title: title, url: url)
+            do {
+                let node = try await Task.detached { try store.update(id: id, title: title, url: url) }.value
                 // ChangeInfo carries only title and (for non-folders) url.
                 var info: [String: Any] = ["title": node.title]
                 if let u = node.url { info["url"] = u }
                 emit("onChanged", args: [id, info], registry: registry)
                 return node.dict
+            } catch {
+                return BridgeError(error.localizedDescription)
             }
 
-        case "bookmarks.remove":
+        case "bookmarks.remove", "bookmarks.removeTree":
             let id = call.string("id") ?? ""
-            return bridged { () throws -> Any? in
-                let snap = try? store.get(id: id)   // capture before the destructive delete
-                try store.remove(id: id)
+            let tree = call.action == "bookmarks.removeTree"
+            do {
+                let snap = try await Task.detached { () throws -> ChromeBookmarkRecord? in
+                    let snap = try? store.get(id: id)   // capture before the destructive delete
+                    if tree { try store.removeTree(id: id) } else { try store.remove(id: id) }
+                    return snap
+                }.value
                 emitRemoved(id: id, node: snap, registry: registry)
                 return nil
-            }
-
-        case "bookmarks.removeTree":
-            let id = call.string("id") ?? ""
-            return bridged { () throws -> Any? in
-                let snap = try? store.get(id: id)
-                try store.removeTree(id: id)
-                emitRemoved(id: id, node: snap, registry: registry)
-                return nil
+            } catch {
+                return BridgeError(error.localizedDescription)
             }
 
         default:
