@@ -116,8 +116,7 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
     /// The engine's delegate calls it when the page's address changes: a navigation the page starts shows its
     /// address once it commits, when the web view's own URL no longer changes.
     func refreshAddress() {
-        guard header.field.currentEditor() == nil else { return }
-        header.field.stringValue = engine.currentURL?.absoluteString ?? ""
+        header.field.address = engine.currentURL
     }
 
     private func refreshTitle() {
@@ -212,7 +211,7 @@ private final class LittleWindowHeaderView: NSView {
     private static let trafficLightsWidth: CGFloat = 78
     private static let minimumAddressWidth: CGFloat = 120
 
-    let field = NSTextField()
+    let field = LittleAddressField()
     let progressBar = PopupProgressBar()
     var onCopy: (() -> Void)?
     var onOpenInSpace: (() -> Void)?
@@ -253,8 +252,7 @@ private final class LittleWindowHeaderView: NSView {
         field.drawsBackground = false
         field.focusRingType = .none
         field.font = .systemFont(ofSize: 12)
-        field.lineBreakMode = .byTruncatingMiddle
-        field.cell?.isScrollable = true
+        field.usesSingleLineMode = true
         field.placeholderString = "Search or enter address".localized
         pill.addSubview(field)
         addSubview(pill)
@@ -296,4 +294,61 @@ private final class LittleWindowHeaderView: NSView {
     @objc private func openAction(_ sender: Any?) { onOpenInSpace?() }
     @objc private func spacesAction(_ sender: NSButton) { onShowSpaces?(sender) }
     @objc private func copyAction(_ sender: Any?) { onCopy?() }
+}
+
+/// The address field: outside editing, the site's host in full and bold (never the credentials before it) with
+/// the rest cut at its end; the complete address only while edited.
+@MainActor
+private final class LittleAddressField: NSTextField {
+    var address: URL? {
+        didSet { if currentEditor() == nil { showIdentity() } }
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        cell?.isScrollable = true
+        attributedStringValue = NSAttributedString(
+            string: address?.absoluteString ?? "",
+            attributes: [.font: NSFont.systemFont(ofSize: 12), .foregroundColor: NSColor.labelColor]
+        )
+        return super.becomeFirstResponder()
+    }
+
+    override func textDidEndEditing(_ notification: Notification) {
+        super.textDidEndEditing(notification)
+        showIdentity()
+    }
+
+    // Whether the host alone overflows depends on the width.
+    override func setFrameSize(_ newSize: NSSize) {
+        let widthChanged = newSize.width != frame.width
+        super.setFrameSize(newSize)
+        if widthChanged, currentEditor() == nil { showIdentity() }
+    }
+
+    private func showIdentity() {
+        cell?.isScrollable = false
+        lineBreakMode = .byTruncatingTail
+        let rest: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 12), .foregroundColor: NSColor.secondaryLabelColor]
+        guard let address, let components = URLComponents(url: address, resolvingAgainstBaseURL: false),
+              let text = components.string, let hostRange = components.rangeOfHost, !hostRange.isEmpty else {
+            attributedStringValue = NSAttributedString(string: address?.absoluteString ?? "", attributes: rest)
+            return
+        }
+        let authorityEnd = components.rangeOfPort?.upperBound ?? hostRange.upperBound
+        let host = NSAttributedString(
+            string: String(text[hostRange.lowerBound..<authorityEnd]),
+            attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: NSColor.labelColor]
+        )
+        // A host wider than the field gives up its start, never the registrable domain at its end.
+        if host.size().width > bounds.width - 4 {
+            lineBreakMode = .byTruncatingHead
+            attributedStringValue = host
+            return
+        }
+        let display = NSMutableAttributedString(string: components.scheme.map { $0 == "https" ? "" : $0 + "://" } ?? "", attributes: rest)
+        display.append(host)
+        let path = text[authorityEnd...]
+        display.append(NSAttributedString(string: path == "/" ? "" : String(path), attributes: rest))
+        attributedStringValue = display
+    }
 }
