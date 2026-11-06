@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extension blocking rules apply more like in Chrome, so content blockers such as uBlock Origin Lite no longer block scripts on every site from rules meant for some tabs or responses, no longer match longer host names than the ones listed, and redirect to the full address
+time: 2026-11-06T18:46:57.788242+01:00

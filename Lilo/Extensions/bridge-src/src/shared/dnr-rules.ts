@@ -7,6 +7,8 @@ import { gapCall } from './ipc.ts';
 const STORED_RULE = 'liloChromeRule';
 export const INERT_FILTER = '^lilo-inert-rule:';
 const MAX_REPEAT = 48;
+// What urlFilter's `^` becomes in WebKit's regex.
+const SEPARATOR = '[^a-zA-Z0-9_.%-]';
 
 // Outside a character class, and their bodies inside one.
 const CLASSES: Record<string, string> = { d: '0-9', w: 'A-Za-z0-9_', s: '\\t\\n\\f\\r ' };
@@ -23,6 +25,7 @@ interface Term {
   eol?: boolean;
   alternatives?: Term[][];
   capturing?: boolean;
+  captures?: number;
   min: number;
   max: number;
 }
@@ -30,10 +33,21 @@ interface Term {
 class Unsupported extends Error {}
 const fail = (): never => { throw new Unsupported(); };
 
-/** RE2 syntax in WebKit's subset, or undefined when one regex cannot say the same. */
-export function webKitRegex(source: string): string | undefined {
+/**
+ * RE2 syntax in WebKit's subset, or undefined when one regex cannot say the same. With a `substitution`, the regex
+ * matching the whole URL and the substitution rewritten for it: WebKit replaces the whole URL with the substitution, and
+ * puts `undefined` for a group that captured nothing.
+ */
+export function webKitRegex(source: string): string | undefined;
+export function webKitRegex(source: string, substitution: string): [string, string] | undefined;
+export function webKitRegex(source: string, substitution?: string): string | [string, string] | undefined {
   if (!/^[\x20-\x7e]*$/.test(source)) return undefined;
   let i = 0;
+  let groups = 0;
+  const whole = substitution !== undefined;
+  const isCapturing = (text: string) => text.startsWith('(') && !text.startsWith('(?:');
+  // A group skipped by `?` captures an empty string, as in RE2.
+  const optional = (text: string) => (whole && isCapturing(text) ? `((?:${text.slice(1, -1)})?)` : `${text}?`);
 
   const escapeInClass = (c: string) => (/[\]\\^-]/.test(c) ? `\\${c}` : c);
 
@@ -78,10 +92,12 @@ export function webKitRegex(source: string): string | undefined {
         else fail();
         capturing = source[i - 1] !== ':';
       }
+      const before = groups;
+      if (capturing) groups++;
       const alternatives = disjunction();
       if (source[i] !== ')') fail();
       i++;
-      return term({ alternatives, capturing });
+      return term({ alternatives, capturing, captures: groups - before });
     }
     if (c === '[') {
       const { body, negated } = classBody();
@@ -153,7 +169,7 @@ export function webKitRegex(source: string): string | undefined {
     const group = (inner: string) => (capturing ? `(${inner})` : `(?:${inner})`);
     if (alternatives.length === 1) return group(emit(alternatives[0]));
     const filled = alternatives.filter((alternative) => alternative.length > 0);
-    if (filled.length === 1 && !quantified) return `${group(emit(filled[0]))}?`;
+    if (filled.length === 1 && !quantified) return optional(group(emit(filled[0])));
     if (filled.length < alternatives.length) fail();
     const singles = alternatives.map((alternative) => (alternative.length === 1 && alternative[0].min === 1 && alternative[0].max === 1 ? alternative[0].single : undefined));
     if (singles.some((single) => single === undefined)) fail();
@@ -163,17 +179,21 @@ export function webKitRegex(source: string): string | undefined {
 
   function repeat(text: string, min: number, max: number): string {
     if (min === 1 && max === 1) return text;
-    if (min === 0 && max === 1) return `${text}?`;
+    if (min === 0 && max === 1) return optional(text);
     if (min === 0 && max === Infinity) return `${text}*`;
     if (min === 1 && max === Infinity) return `${text}+`;
     // Copies of a capturing group would renumber the groups a regexSubstitution names.
-    if (min > MAX_REPEAT || (max !== Infinity && max > MAX_REPEAT) || text.startsWith('(') && !text.startsWith('(?:')) fail();
+    if (min > MAX_REPEAT || (max !== Infinity && max > MAX_REPEAT) || isCapturing(text)) fail();
     return text.repeat(min) + (max === Infinity ? `${text}*` : `${text}?`.repeat(max - min));
   }
 
   function emit(terms: Term[]): string {
     return terms.map((term) => {
       if (term.bol || term.eol) fail();
+      // A skipped group puts `undefined` in the URL unless `optional` takes it alone, and copies renumber the groups.
+      const plain = term.min === 1 && (term.max === 1 || term.max === Infinity) && !term.alternatives?.some((alternative) => !alternative.length);
+      const lone = term.capturing && term.captures === 1 && term.max === 1;
+      if (whole && term.captures && !plain && !lone) fail();
       const quantified = term.min !== 1 || term.max !== 1;
       const text = term.alternatives ? oneOf(term.alternatives, term.capturing!, quantified) : term.text;
       return repeat(text, term.min, term.max);
@@ -184,6 +204,20 @@ export function webKitRegex(source: string): string | undefined {
     const top = disjunction();
     if (i < source.length || top.length > 1) return undefined;
     const terms = top[0];
+    if (whole) {
+      const prefix = terms[0]?.bol ? '' : '(.*)';
+      if (!prefix) terms.shift();
+      const end = terms[terms.length - 1];
+      const suffix = end?.eol && end.min === 1 ? '' : '(.*)';
+      if (!suffix) terms.pop();
+      const body = emit(terms);
+      if (!prefix && !suffix) return [`^${body}$`, substitution];
+      // The text around the match stays, as in Chrome; the greedy prefix makes it the last match, not the first.
+      const shift = prefix ? 2 : 1;
+      const number = (n: number) => (n > 9 ? fail() : `\\${n}`);
+      const rewritten = substitution.replace(/\\(\d)/g, (_, n) => number(Number(n) + shift));
+      return [`^${prefix}(${body})${suffix}$`, `${prefix ? '\\1' : ''}${rewritten}${suffix ? number(groups + shift + 1) : ''}`];
+    }
     let head = '';
     let tail = '';
     if (terms[0]?.bol) {
@@ -237,8 +271,6 @@ const WEBKIT_HEADERS = new Set(('accept accept-charset accept-language accept-en
 const NON_WEBKIT_TYPES = new Set(['object', 'csp_report', 'webtransport', 'webbundle']);
 // Chrome takes them empty, excluding nothing; WebKit rejects the rule or fails to compile the whole update.
 const EXCLUSIONS = ['excludedInitiatorDomains', 'excludedDomains', 'excludedRequestMethods'];
-// Chrome files TRACE under "other", which WebKit rejects.
-const WEBKIT_METHODS = ['connect', 'delete', 'get', 'head', 'options', 'patch', 'post', 'put', 'trace'];
 
 function isRegExp(source: string): boolean {
   try {
@@ -261,12 +293,17 @@ function ownOrigins(): string[] {
  */
 export function webKitRule(rule: any): any {
   if (rule === null || typeof rule !== 'object') return rule;
+  const restricts = (value: unknown) => value !== undefined && !(Array.isArray(value) && !value.length);
+  // WebKit ignores these conditions, and would apply the rule everywhere.
+  if (['tabIds', 'excludedTabIds', 'responseHeaders', 'excludedResponseHeaders'].some((key) => restricts(rule.condition?.[key]))) return undefined;
   let result = rule;
   const regexFilter = rule.condition?.regexFilter;
   if (typeof regexFilter === 'string' && isRegExp(regexFilter)) {
-    const regex = webKitRegex(regexFilter);
+    const substitution = rule.action?.type === 'redirect' ? rule.action.redirect?.regexSubstitution : undefined;
+    const [regex, rewritten] = typeof substitution === 'string' ? webKitRegex(regexFilter, substitution) ?? [] : [webKitRegex(regexFilter)];
     if (regex === undefined) return undefined;
     if (regex !== regexFilter) result = { ...result, condition: { ...result.condition, regexFilter: regex } };
+    if (rewritten !== substitution) result = { ...result, action: { ...result.action, redirect: { ...result.action.redirect, regexSubstitution: rewritten } } };
   }
   const types = rule.condition?.resourceTypes;
   if (Array.isArray(types) && types.some((type) => NON_WEBKIT_TYPES.has(type))) {
@@ -280,20 +317,26 @@ export function webKitRule(rule: any): any {
     for (const key of empty) delete condition[key];
     result = { ...result, condition };
   }
-  // WebKit rejects the method "other", and fails every rule of the extension on one listing requestMethods beside
-  // excludedRequestDomains (WEBKIT-GAPS 94): those methods become the others excluded.
-  const { requestMethods, excludedRequestMethods, excludedRequestDomains } = result.condition ?? {};
+  // WebKit rejects the method "other" (WEBKIT-GAPS 94).
+  const { requestMethods, excludedRequestMethods } = result.condition ?? {};
   const namesOther = (methods: unknown) => Array.isArray(methods) && methods.includes('other');
-  if (namesOther(requestMethods) || namesOther(excludedRequestMethods) || (Array.isArray(requestMethods) && excludedRequestDomains?.length)) {
+  if (namesOther(requestMethods) || namesOther(excludedRequestMethods)) {
     const { requestMethods: _asked, excludedRequestMethods: _excluded, ...condition } = result.condition;
-    const named = Array.isArray(requestMethods) ? requestMethods.filter((method: string) => method !== 'other') : undefined;
+    const withoutOther = (methods: any) => (Array.isArray(methods) ? methods.filter((method) => method !== 'other') : methods);
+    const named = withoutOther(requestMethods);
+    const excluded = withoutOther(excludedRequestMethods);
     if (named?.length === 0) return undefined;
-    const excluded = !named ? excludedRequestMethods.filter((method: string) => method !== 'other')
-      : excludedRequestDomains?.length ? WEBKIT_METHODS.filter((method) => !named.includes(method)) : undefined;
-    if (named && !excluded) condition.requestMethods = named;
+    if (named) condition.requestMethods = named;
     if (excluded?.length) condition.excludedRequestMethods = excluded;
     result = { ...result, condition };
   }
+  const conditions = result.condition ?? {};
+  // WebKit fails every rule of the extension on one listing requestMethods beside excludedRequestDomains (WEBKIT-GAPS
+  // 94), and excludes only the requests both an excluded domain and an excluded method name.
+  if (restricts(conditions.excludedRequestDomains) && (conditions.requestMethods !== undefined || conditions.excludedRequestMethods !== undefined)) return undefined;
+  // WebKit applies allowAllRequests by frame URL alone, and turns each excluded request domain into one more exception.
+  if (rule.action?.type === 'allowAllRequests' && ['initiatorDomains', 'excludedInitiatorDomains', 'domains', 'excludedDomains', 'domainType',
+    'requestMethods', 'excludedRequestMethods', 'excludedRequestDomains'].some((key) => restricts(conditions[key]))) return undefined;
   const redirect = rule.action?.redirect;
   // A scheme test, not URL.canParse: static rulesets are prepared in a bare JavaScriptCore context, which has no URL.
   if (rule.action?.type === 'redirect' && typeof redirect?.url === 'string' && !/^(https?|javascript):/i.test(redirect.url) && /^[a-z][a-z\d+.-]*:/i.test(redirect.url)) {
@@ -316,17 +359,58 @@ export function webKitRule(rule: any): any {
       result = { ...result, action };
     }
   }
+  // WebKit follows each make-https with an exception of the same condition, which https requests would match too.
+  if (rule.action?.type === 'upgradeScheme' && [conditions.urlFilter, conditions.regexFilter, conditions.requestDomains].every((value) => value === undefined)) {
+    result = { ...result, condition: { ...result.condition, urlFilter: '|http:' } };
+  }
+  // WebKit's `^` needs a character, where Chrome's also matches the end of the URL: such a filter goes as WebKit's own
+  // regex for it, the last separator optional. After a host alone, a `/` or `:` always follows.
+  const filter = result.condition?.urlFilter;
+  if (typeof filter === 'string' && filter.endsWith('^') && !Array.isArray(result.condition.requestDomains) && !/^\|\|[\w.-]+\^$/.test(filter)) {
+    const anchor = filter.startsWith('||') ? 2 : filter.startsWith('|') ? 1 : 0;
+    const body = filter.slice(anchor, -1).replace(/[?+[(){}$|\\.]/g, '\\$&').replaceAll('*', '.*').replaceAll('^', SEPARATOR);
+    const { urlFilter: _filter, ...condition } = result.condition;
+    result = { ...result, condition: { ...condition, regexFilter: `${['', '^', '^[^:]+://+([^:/]+\\.)?'][anchor]}${body}(?:${SEPARATOR}.*)?$` } };
+  }
+  // WebKit makes each request domain the urlFilter `||domain`, which also matches longer hosts (t.co and t.com), and
+  // merges it with the rule's urlFilter by common substrings; an excluded one becomes an unanchored urlFilter. The merge
+  // fits a filter anchored on the host, which names the domain (`||amazon.*/dp/` and `amazon.ae`); one anchored at the
+  // start of the URL cannot follow the domain.
+  const { urlFilter, requestDomains, excludedRequestDomains } = result.condition ?? {};
+  if (Array.isArray(requestDomains) && conditions.regexFilter === undefined && !(typeof urlFilter === 'string' && urlFilter.startsWith('||'))) {
+    if (typeof urlFilter === 'string' && urlFilter.startsWith('|')) return undefined;
+    const { urlFilter: _filter, ...condition } = result.condition;
+    // A filter starting with `/` follows the host at once, where `^` would take that `/`.
+    const tail = typeof urlFilter !== 'string' ? '^' : urlFilter.startsWith('/') ? `*${urlFilter}` : `^*${urlFilter}`;
+    result = { ...result, condition: { ...condition, requestDomains: requestDomains.map((domain) => `${domain}${tail}`) } };
+  }
+  if (Array.isArray(excludedRequestDomains) && excludedRequestDomains.length) {
+    result = { ...result, condition: { ...result.condition, excludedRequestDomains: excludedRequestDomains.map((domain) => `||${domain}^`) } };
+  }
   return result;
+}
+
+/** The extension's own form of a rule WebKit holds: its stored original, or the rule with its request domains unanchored. */
+function chromeRule(rule: any): any {
+  const own = rule?.[STORED_RULE] ?? rule;
+  const anchored = (domains: unknown) => Array.isArray(domains) && typeof domains[0] === 'string' && domains[0].endsWith('^');
+  const { requestDomains, excludedRequestDomains } = own?.condition ?? {};
+  if (!anchored(requestDomains) && !anchored(excludedRequestDomains)) return own;
+  const condition = { ...own.condition };
+  if (anchored(requestDomains)) condition.requestDomains = requestDomains.map((domain: string) => domain.slice(0, -1));
+  if (anchored(excludedRequestDomains)) condition.excludedRequestDomains = excludedRequestDomains.map((domain: string) => domain.slice(2, -1));
+  return { ...own, condition };
 }
 
 function toWebKit(rule: any): any {
   const applied = webKitRule(rule);
-  if (applied === rule) return rule;
+  // Anchored request domains alone are undone by chromeRule: no original stored, which would double large rulesets.
+  if (applied === rule || (applied && sameJSON(chromeRule(applied), rule))) return applied;
   const stored = applied ?? { id: rule.id, action: { type: 'block' }, condition: { regexFilter: INERT_FILTER } };
   return { ...stored, [STORED_RULE]: rule };
 }
 
-export const fromWebKit = (rules: any) => (Array.isArray(rules) ? rules.map((rule) => rule?.[STORED_RULE] ?? rule) : rules);
+export const fromWebKit = (rules: any) => (Array.isArray(rules) ? rules.map(chromeRule) : rules);
 
 // WebKit compiles an extension's rules into at most 150000 content blocker rules, one per request
 // domain and per excluded request domain of each rule. Static rules leave room for 30000 dynamic ones.
@@ -347,7 +431,7 @@ export function webKitStaticRulesets(sources: string[], enabled: boolean[] = [])
       return undefined;
     }
   });
-  const prepared: (any[] | undefined)[] = rulesets.map((rules) => rules?.map((rule) => toWebKit(rule?.[STORED_RULE] ?? rule)));
+  const prepared: (any[] | undefined)[] = rulesets.map((rules) => rules?.map((rule) => toWebKit(chromeRule(rule))));
   const expansions = prepared.flatMap((rules, set) => (rules ?? []).map((rule, index) => {
     const condition = rule?.condition ?? {};
     const domains = typeof condition.regexFilter !== 'string' && Array.isArray(condition.requestDomains) ? condition.requestDomains.length : 1;
@@ -364,7 +448,7 @@ export function webKitStaticRulesets(sources: string[], enabled: boolean[] = [])
       const rule = prepared[set]![index];
       // An inert rule still counts as one, and keeps the extension's own for testMatch and getDisabledRuleIds.
       prepared[set]![index] = count > 1
-        ? { id: rule.id, action: { type: 'block' }, condition: { regexFilter: INERT_FILTER }, [STORED_RULE]: rule[STORED_RULE] ?? rule }
+        ? { id: rule.id, action: { type: 'block' }, condition: { regexFilter: INERT_FILTER }, [STORED_RULE]: chromeRule(rule) }
         : undefined;
       total -= count > 1 ? count - 1 : 1;
     }
@@ -497,7 +581,7 @@ async function heldSessionRules(namespace: any): Promise<{ held: any[]; session:
   const held = await webKitCall(namespace, 'getDynamicRules');
   const session = new Map<number, { webKitId: number; rule: any }>();
   for (const rule of held.filter(isSessionRule)) {
-    const { [SESSION_RULE]: _id, ...own } = rule[STORED_RULE] ?? rule;
+    const { [SESSION_RULE]: _id, ...own } = chromeRule(rule);
     session.set(rule[SESSION_RULE], { webKitId: rule.id, rule: { ...own, id: rule[SESSION_RULE] } });
   }
   return { held, session };
