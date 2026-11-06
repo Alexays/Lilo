@@ -84,12 +84,16 @@ extension WKWebViewTab {
           }
           report();
         };
+        // WebKit's own call comes first: on a wrong `this` it rejects, where the listener would throw.
         const peerOriginal = lilo.methods(RTCPeerConnection.prototype, { setRemoteDescription() {
+          const result = apply(peerOriginal.setRemoteDescription, this, arguments);
           if (!peers.has(this)) {
-            peers.add(this);
-            apply(listen, this, ['connectionstatechange', settle]);
+            try {
+              apply(listen, this, ['connectionstatechange', settle]);
+              peers.add(this);
+            } catch (e) {}
           }
-          return apply(peerOriginal.setRemoteDescription, this, arguments);
+          return result;
         },
         // Closing fires no state change event.
         close() {
