@@ -20,10 +20,10 @@ final class DocumentPiPBridge: NSObject, WKScriptMessageHandlerWithReply {
         return (true, nil)
     }
 
-    /// `window.documentPictureInPicture` for `PageWorld`, top-level documents only.
+    /// `window.documentPictureInPicture` for `PageWorld`, in secure top-level documents only.
     static let pageModule = #"""
     function () {
-      if (window.top !== window || 'documentPictureInPicture' in window) return;
+      if (!window.isSecureContext || window.top !== window || 'documentPictureInPicture' in window) return;
       const open = window.open, round = Math.round, max = Math.max;
       // Captured before the page can fake them: the native side only lets a page with a user activation open its window.
       const activation = getOwnPropertyDescriptor(Navigator.prototype, 'userActivation');
