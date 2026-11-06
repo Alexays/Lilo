@@ -339,7 +339,7 @@ preload-bench: test-build
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Report what a page's runtime.connect port to its extension's worker costs (OUT=build/port-bench.txt)
-port-bench: ext-bridge-build test-build
+port-bench: $(BRIDGE_STAMP) test-build
 	@out="$(abspath $(or $(OUT),build/port-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_PORT_BENCH="$$out" $(TEST) -only-testing:LiloTests/PortBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
@@ -357,7 +357,7 @@ ext-bridge-test: $(BRIDGE_DEPS)
 	@npm --prefix $(BRIDGE_DIR) test
 
 ## Install the most used Chrome Web Store extensions and the MV3 probe in parallel runs, and check they run and what a few do on a page (network; TOP=100 IDS=a,b SHARDS=6)
-ext-smoke: vt-build ext-bridge-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+ext-smoke: vt-build $(BRIDGE_STAMP) $(UI_STAMP) $(NATIVE_STRINGS)
 	@$(TEST_LOCK) node scripts/ext-smoke.mjs --top '$(or $(TOP),100)' --ids '$(IDS)' --shards '$(or $(SHARDS),6)'
 
 ## Unattended ext-smoke of the top 500 (TOP=1000 for every listed one); report in .derived.noindex/ext-smoke/report.txt, non-zero exit on a regression
@@ -393,15 +393,15 @@ public-suffix-list:
 	@node $(BRIDGE_DIR)/scripts/public-suffix-list.mjs
 
 ## Build the debug app bundle under build/debug
-app: vt-build ui-build ext-bridge-build
+app: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh debug
 
 ## Install the release app to /Applications/Lilo.app, replacing the DMG's copy
-install: vt-build ui-build ext-bridge-build
+install: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release install
 
 ## Install the debug app to ~/Applications/Lilo.app
-install-debug: vt-build ui-build ext-bridge-build
+install-debug: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh debug install
 
 ## Run the Debug xcodebuild directly
