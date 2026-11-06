@@ -156,9 +156,10 @@ final class PermissionRequestQueueTests: XCTestCase {
         let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         defer { window.window?.close() }
+        let shown = BridgeEventRecorder(window.bridgeRouter)
         window.enqueuePermissionRequest(tabId: UUID(), type: "camera", origin: "https://call.example") { _ in }
         let pick = Task { await window.presentTabSharePicker(origin: "call.example", requester: nil) }
-        await pollUntil { !window.pendingTabSharePickerRequests.isEmpty }
+        _ = shown.data("tabSharePickerRequested")
         let events = BridgeEventRecorder(window.bridgeRouter)
 
         window.sendInitialState()
