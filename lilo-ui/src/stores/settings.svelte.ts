@@ -57,6 +57,7 @@ export function initSettingsStore(): void {
 		const never = getSetting("sidebarNeverStack", "").split(",").filter(Boolean);
 		if (action === "toggleStackTabs") setSetting("sidebarStackTabs", String(getSetting("sidebarStackTabs", "true") === "false"));
 		else if (action === "toggleGroupByType") setSetting("sidebarGroupByType", String(getSetting("sidebarGroupByType", "false") !== "true"));
+		else if (action === "toggleGroupByProject") setSetting("sidebarGroupByProject", String(getSetting("sidebarGroupByProject", "false") !== "true"));
 		else if (action === "neverStack" && !never.includes(host)) setSetting("sidebarNeverStack", [...never, host].join(","));
 		else if (action === "stackAgain") setSetting("sidebarNeverStack", never.filter((entry) => entry !== host).join(","));
 		else if (action === "stackEverySite") setSetting("sidebarNeverStack", "");

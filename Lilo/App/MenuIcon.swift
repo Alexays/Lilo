@@ -6,7 +6,7 @@ enum MenuIcon: CaseIterable {
     case newTab, newTerminalTab, askAgent, newFolder, newSpace, newWindow, newPrivateSpace
     case openInNewTab, duplicate, openInSplit, arrangeSideBySide, arrangeTopAndBottom, separateSplit
     case moveToFolder, removeFromFolder, openFolder, closeFolder, edit, delete
-    case stackTabs, unstack, groupByType, sortBySite, sortByTitle
+    case stackTabs, unstack, groupByType, groupByProject, sortBySite, sortByTitle
     case lock, unlock, changePassword, removeLock
     case bookmark, unbookmark, pin, unpin, mute, unmute, keepAwake
     case close, closeOthers, restoreClosedTab, stopAgents
@@ -41,6 +41,7 @@ enum MenuIcon: CaseIterable {
         case .stackTabs: "square.stack.3d.up"
         case .unstack: "square.stack.3d.up.slash"
         case .groupByType: "rectangle.3.group"
+        case .groupByProject: "folder"
         case .sortBySite: "globe"
         case .sortByTitle: "textformat"
         case .removeFromFolder: "folder.badge.minus"

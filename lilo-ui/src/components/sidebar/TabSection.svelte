@@ -135,9 +135,10 @@
     section,
     parentFolderId: null,
   });
-  // Site stacks and the agents and terminals trays: a view of the open tabs, their order untouched.
+  // Site stacks, project trays and the agents and terminals trays: a view of the open tabs, their order untouched.
   const stackTabs = $derived(!isPinned && getSetting("sidebarStackTabs", "true") !== "false");
   const groupByType = $derived(!isPinned && getSetting("sidebarGroupByType", "false") === "true");
+  const groupByProject = $derived(!isPinned && getSetting("sidebarGroupByProject", "false") === "true");
   const neverStack = $derived(new Set(getSetting("sidebarNeverStack", "").split(",").filter(Boolean)));
   // A tab's title or icon changes far more often than the list: each URL is parsed once, and an unchanged
   // list keeps its array, so the stacks and rows derived from it do not run again.
@@ -145,22 +146,26 @@
   let lastEntries = noEntries;
   let hostByURL = new Map<string, string | null>();
   const arrangeEntries = $derived.by((): ArrangeEntry[] => {
-    if (isPinned || (!stackTabs && !groupByType)) return noEntries;
+    if (isPinned || (!stackTabs && !groupByType && !groupByProject)) return noEntries;
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
     const hosts = new Map<string, string | null>();
     const entries = rootItems.map((item): ArrangeEntry => {
-      if (item.kind === "folder") return { id: item.id, type: getConversationTab(item.id, spaceId) ? "agent" : "web", host: null };
+      if (item.kind === "folder") {
+        const conversation = getConversationTab(item.id, spaceId);
+        return { id: item.id, type: conversation ? "agent" : "web", host: null, project: (groupByProject && conversation?.project) || null };
+      }
       const tab = tabsById.get(item.id);
       const type: RowType = tab?.kind === "terminal" ? "terminal" : tab?.kind === "agent" ? "agent" : "web";
+      const project = (groupByProject && type !== "web" && tab?.project) || null;
       const url = stackTabs && type === "web" ? tab?.url : undefined;
-      if (!url) return { id: item.id, type, host: null };
+      if (!url) return { id: item.id, type, host: null, project };
       const host = hostByURL.has(url) ? (hostByURL.get(url) ?? null) : hostOf(url);
       hosts.set(url, host);
-      return { id: item.id, type, host };
+      return { id: item.id, type, host, project };
     });
     hostByURL = hosts;
     const unchanged = entries.length === lastEntries.length
-      && entries.every((entry, i) => entry.id === lastEntries[i]!.id && entry.type === lastEntries[i]!.type && entry.host === lastEntries[i]!.host);
+      && entries.every((entry, i) => entry.id === lastEntries[i]!.id && entry.type === lastEntries[i]!.type && entry.host === lastEntries[i]!.host && entry.project === lastEntries[i]!.project);
     if (!unchanged) lastEntries = entries;
     return lastEntries;
   });
@@ -226,7 +231,7 @@
     });
   });
 
-  const arranged = $derived(arrangeEntries.length > 0 ? arrangeRows(arrangeEntries, stackHosts, groupByType) : null);
+  const arranged = $derived(arrangeEntries.length > 0 ? arrangeRows(arrangeEntries, stackHosts, groupByType, groupByProject) : null);
 
   // A stack opens on the tabs an undo puts back in it, so they come back in sight.
   let seenRowIds: ReadonlySet<string> = new Set();
@@ -334,7 +339,7 @@
   const rootBaseItems = $derived(dndItemsForSidebarItems(shownRootItems, section));
   const rootZoneItems = $derived(getZoneItems(rootZone, rootBaseItems));
 
-  type Tray = Exclude<RowType, "web">;
+  type Tray = string;
   type Segment =
     | { kind: "row"; key: string; entry: SidebarDndItem; tray: Tray | null; stack: string | null; trayEnd: boolean; stackEnd: boolean }
     | { kind: "stack"; key: string; host: string; tray: Tray | null; trayEnd: boolean; stackEnd: boolean }

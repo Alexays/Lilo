@@ -1,4 +1,4 @@
-// How the open tab list is laid out: site stacks and the agents and terminals trays.
+// How the open tab list is laid out: site stacks, project trays, and the agents and terminals trays.
 
 /** A site's loose tabs stack from this many, and stay stacked until one is left. */
 export const STACK_MIN = 3;
@@ -10,13 +10,15 @@ export type ArrangeEntry = {
 	type: RowType;
 	/** The site a loose web tab can stack under, null for anything that never stacks. */
 	host: string | null;
+	/** The repository a terminal or a conversation works in, null for anything else. */
+	project: string | null;
 };
 
 export type ArrangedRow = ArrangeEntry & {
 	/** The stacked site this row belongs to. */
 	stack: string | null;
-	/** The tray this row sits in, when the list is grouped by type. */
-	tray: Exclude<RowType, "web"> | null;
+	/** The tray this row sits in: `project:<root>` grouped by project, else its type grouped by type. */
+	tray: string | null;
 };
 
 /** The sites stacked now: those with STACK_MIN loose tabs, and those already stacked still holding two. */
@@ -36,38 +38,56 @@ export function nextStackHosts(
 	return hosts;
 }
 
-/** The rows in display order: with `grouped`, agents then terminals then the rest; a stack's
- *  members follow one another from its topmost member's place. Each kind keeps the list's order. */
+/** The rows in display order: with `byProject`, a tray per project holding two rows or more, then
+ *  with `grouped` agents, terminals and the rest; a stack's members follow one another from its
+ *  topmost member's place. Each tray keeps the list's order. */
 export function arrangeRows(
 	entries: readonly ArrangeEntry[],
 	stacked: ReadonlySet<string>,
 	grouped: boolean,
+	byProject: boolean,
 ): ArrangedRow[] {
-	const trays = grouped && new Set(entries.map((entry) => entry.type)).size > 1;
-	const order: RowType[] = trays ? ["agent", "terminal", "web"] : ["web"];
+	const counts = new Map<string, number>();
+	if (byProject) for (const entry of entries) if (entry.project) counts.set(entry.project, (counts.get(entry.project) ?? 0) + 1);
+	const buckets = new Map<string, ArrangeEntry[]>();
+	const rest: ArrangeEntry[] = [];
+	for (const entry of entries) {
+		if (!entry.project || (counts.get(entry.project) ?? 0) < 2) {
+			rest.push(entry);
+			continue;
+		}
+		const key = `project:${entry.project}`;
+		const bucket = buckets.get(key);
+		if (bucket) bucket.push(entry);
+		else buckets.set(key, [entry]);
+	}
+	const trays = grouped && new Set(rest.map((entry) => entry.type)).size > 1;
+	for (const type of trays ? (["agent", "terminal", "web"] as const) : (["web"] as const)) {
+		buckets.set(type, trays ? rest.filter((entry) => entry.type === type) : rest);
+	}
 	const rows: ArrangedRow[] = [];
-	for (const type of order) {
-		const members = new Map<string, ArrangedRow[]>();
-		const inType = trays ? entries.filter((entry) => entry.type === type) : entries;
-		for (const entry of inType) {
+	for (const [key, members] of buckets) {
+		const tray = key === "web" ? null : key;
+		const stacks = new Map<string, ArrangedRow[]>();
+		for (const entry of members) {
 			const stack = entry.host && stacked.has(entry.host) ? entry.host : null;
-			const row = { ...entry, stack, tray: trays && type !== "web" ? type : null };
+			const row = { ...entry, stack, tray };
 			if (!stack) {
 				rows.push(row);
 				continue;
 			}
-			const group = members.get(stack);
+			const group = stacks.get(stack);
 			if (group) {
 				group.push(row);
 				continue;
 			}
 			// The stack's place is its first member's: later members join it there.
 			const fresh = [row];
-			members.set(stack, fresh);
+			stacks.set(stack, fresh);
 			rows.push(...fresh);
 		}
 		// Splice each stack's members in after its first one.
-		for (const [, group] of members) {
+		for (const [, group] of stacks) {
 			// A site down to one tab, while the list holds still under the pointer, is a plain row again.
 			if (group.length < 2) {
 				group[0].stack = null;

@@ -1118,7 +1118,7 @@ export interface BridgeEventPayloadMap {
 
 	settingsLoaded: { settings: Record<string, string> };
 	/** A pick in a native menu about how the open tabs are laid out. */
-	tabListMenuAction: { action: "toggleStackTabs" | "toggleGroupByType" | "neverStack" | "stackAgain" | "stackEverySite"; host: string };
+	tabListMenuAction: { action: "toggleStackTabs" | "toggleGroupByType" | "toggleGroupByProject" | "neverStack" | "stackAgain" | "stackEverySite"; host: string };
 	sitePermissionsLoaded: { permissions: BridgeSitePermissionSnapshot[] };
 	extensionDiagnosticsLoaded: {
 		entries: BridgeExtensionDiagnosticSnapshot[];

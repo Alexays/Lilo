@@ -73,6 +73,7 @@ extension MainWindowController {
             tab.terminalState = status.state == .busy && !status.printing ? "waiting" : status.state.rawValue
             tab.terminalCommand = status.command
             tab.gitBranch = status.gitBranch ?? ""
+            tab.project = status.project ?? ""
             tab.diffAdded = status.diffAdded
             tab.diffRemoved = status.diffRemoved
             tab.terminalStartedAt = status.commandStarted
