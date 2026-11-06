@@ -884,7 +884,12 @@ final class WKEngineFactory {
         }
         wkConfig.suppressesIncrementalRendering = false
         let rendersNear60FPS = !fullRefreshRate || (configuration.profileId != nil && configuration.profileId == agentsProfileId)
-        WKFeatureFlags.apply([WKFeatureFlags.near60FPSKey: rendersNear60FPS].merging(featureFlagOverrides) { $1 }, to: wkConfig.preferences)
+        // Power-constrained, a page fetches no page the user may never open; an about:config override still wins.
+        let prefetches = suppressWarmPool ? ["LinkPrefetchEnabled": false, "SpeculationRulesPrefetchEnabled": false] : [:]
+        WKFeatureFlags.apply(
+            [WKFeatureFlags.near60FPSKey: rendersNear60FPS].merging(prefetches) { $1 }.merging(featureFlagOverrides) { $1 },
+            to: wkConfig.preferences
+        )
 
         // Extension pages must carry the controller binding or their `chrome.runtime` messaging to the
         // background worker is silently dropped. Only set when the native config lacks one.
@@ -1132,6 +1137,7 @@ final class WKEngineFactory {
 
     /// While the system is power-constrained (Low Power Mode, thermal pressure), a speculative
     /// warm WKWebView is a live WebContent process kept around "just in case": not worth it.
+    /// Web views built meanwhile do not prefetch either.
     var suppressWarmPool = false {
         didSet {
             guard suppressWarmPool else { return }
