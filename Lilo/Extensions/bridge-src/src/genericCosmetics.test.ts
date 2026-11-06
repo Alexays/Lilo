@@ -43,8 +43,6 @@ interface Harness {
 	css: () => string;
 	flushed: () => Promise<void>;
 	pageShow: (persisted: boolean) => void;
-	visibility: (hidden: boolean) => void;
-	timers: () => void;
 }
 
 function run(
@@ -72,15 +70,12 @@ function run(
 	let observing = false;
 	let frameCallback: (() => void) | null = null;
 	let onDOMContentLoaded: (() => void) | null = null;
-	let onVisibilityChange: (() => void) | null = null;
 	let onPageShow: ((event: { persisted: boolean }) => void) | null = null;
-	let timers: (() => void)[] = [];
 
 	const documentElement = el("", [], rootChildren);
 	// `parsed` stands for the elements the parser has inserted so far; null means the DOM is complete.
 	const doc = {
 		readyState: parsed ? "loading" : "complete",
-		hidden: false,
 		// A walker over `parsed`, resuming after the last element it returned.
 		createTreeWalker: () => {
 			let seen = 0;
@@ -94,7 +89,6 @@ function run(
 		adoptedStyleSheets: [] as FakeSheet[],
 		addEventListener: (type: string, cb: () => void) => {
 			if (type === "DOMContentLoaded") onDOMContentLoaded = cb;
-			if (type === "visibilitychange") onVisibilityChange = cb;
 		}
 	};
 	class FakeMutationObserver {
@@ -103,9 +97,6 @@ function run(
 		}
 		observe() {
 			observing = true;
-		}
-		disconnect() {
-			observing = false;
 		}
 	}
 	const site = keyedTable(sites);
@@ -127,17 +118,7 @@ function run(
 		.replace("__LILO_KEYED_INDEX__", JSON.stringify(keyed.index))
 		.replace("__LILO_KEYED_GROUPS__", JSON.stringify(keyed.groups))
 		.replace("__LILO_KEYED_TABLE__", JSON.stringify(keyed.entries));
-	const fn = new Function(
-		"self",
-		"document",
-		"MutationObserver",
-		"requestAnimationFrame",
-		"location",
-		"CSSStyleSheet",
-		"NodeFilter",
-		"setTimeout",
-		src
-	);
+	const fn = new Function("self", "document", "MutationObserver", "requestAnimationFrame", "location", "CSSStyleSheet", "NodeFilter", src);
 	fn(
 		{
 			CSS: { escape: (s: string) => s },
@@ -154,8 +135,7 @@ function run(
 		},
 		{ host, hostname: host.replace(/:\d+$/, "") },
 		FakeSheet,
-		{ SHOW_ELEMENT: 1 },
-		(cb: () => void) => timers.push(cb)
+		{ SHOW_ELEMENT: 1 }
 	);
 
 	return {
@@ -173,16 +153,7 @@ function run(
 		observe: (records) => observerCallback?.(records),
 		css: () => styles.map((s) => s.cssRules.join("")).join(""),
 		flushed: () => Promise.resolve().then(() => {}),
-		pageShow: (persisted) => onPageShow?.({ persisted }),
-		visibility: (hidden) => {
-			doc.hidden = hidden;
-			onVisibilityChange?.();
-		},
-		timers: () => {
-			const due = timers;
-			timers = [];
-			for (const cb of due) cb();
-		}
+		pageShow: (persisted) => onPageShow?.({ persisted })
 	};
 }
 
@@ -297,31 +268,6 @@ describe("generic cosmetics", () => {
 		assert.equal(queries, 1, "only the chain's root is queried");
 		assert.equal(reads, 1);
 		assert.ok(h.css().includes(".late-ad{display:none!important}"));
-	});
-
-	test("a page hidden for a while stops observing and is scanned again once visible", async () => {
-		const children: FakeElement[] = [];
-		const h = run({ classes: ["late-ad"] }, children);
-		await h.flushed();
-		h.visibility(true);
-		assert.ok(h.observing(), "a brief absence keeps observing");
-		h.timers();
-		assert.equal(h.observing(), false);
-
-		children.push(el("", ["late-ad"]));
-		h.visibility(false);
-		await h.flushed();
-		assert.ok(h.observing());
-		assert.ok(h.css().includes(".late-ad{display:none!important}"));
-	});
-
-	test("a page parsed while hidden starts observing once visible", async () => {
-		const h = run({ classes: ["ad-banner"] }, [], []);
-		h.visibility(true);
-		h.domContentLoaded();
-		assert.equal(h.observing(), false);
-		h.visibility(false);
-		assert.ok(h.observing());
 	});
 
 	test("an allowlisted site installs nothing, with or without www", async () => {

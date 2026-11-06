@@ -216,27 +216,15 @@
       if (added) { for (var i = 0; i < added.length; i++) scanTree(added[i], visited); }
     }
   });
-  var observing = false, connected = false;
+  // Hidden pages keep observing: a user sheet lands a round trip after its match, so a scan deferred to the return shows ads.
   function observe() {
-    observing = true;
     scanTree(document.documentElement, null);
-    // A hidden page builds no records: the scan once it is shown finds what changed, cheap with every token already checked.
-    if (document.hidden) return;
-    connected = true;
     try {
       observer.observe(document.documentElement, {
         childList: true, subtree: true, attributes: true, attributeFilter: hasLinks ? ['class', 'id', 'href'] : ['class', 'id']
       });
     } catch (e) {}
   }
-  document.addEventListener('visibilitychange', function () {
-    if (!observing) return;
-    if (!document.hidden) { if (!connected) observe(); return; }
-    // A page hidden briefly keeps observing, so a quick tab switch costs no scan on its return.
-    setTimeout(function () {
-      if (document.hidden && connected) { connected = false; observer.disconnect(); }
-    }, 10000);
-  });
   if (document.readyState === 'loading') {
     // The parser appends, so resuming after the last element seen finds each new one once. A script that detaches that
     // element loses the position: the whole document is scanned once and the walk resumes from its last element.
