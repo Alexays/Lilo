@@ -330,7 +330,7 @@
           {/if}
         {/if}
       {/snippet}
-      {#if bookmarkZoneItems.length > FLIP_MAX_ANIMATED_ITEMS}
+      {#if bookmarkBaseItems.length > FLIP_MAX_ANIMATED_ITEMS}
         {#each bookmarkZoneItems as entry (sidebarDndKey(entry))}
           <div
             class="bookmark-slot"

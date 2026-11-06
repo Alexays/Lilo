@@ -261,7 +261,7 @@
       {/if}
     {/if}
   {/snippet}
-  {#if zoneItems.length > FLIP_MAX_ANIMATED_ITEMS}
+  {#if baseItems[section].length > FLIP_MAX_ANIMATED_ITEMS}
     {#each zoneItems as item (item.id)}
       <div
         class="strip-slot"

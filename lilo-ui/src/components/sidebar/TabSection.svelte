@@ -1302,7 +1302,7 @@
                 {/if}
               {/if}
             {/snippet}
-            {#if childZoneEntries.length > FLIP_MAX_ANIMATED_ITEMS}
+            {#if children.length > FLIP_MAX_ANIMATED_ITEMS}
               {#each childZoneEntries as childEntry, childIndex (sidebarDndKey(childEntry))}
                 {@const childFolder = childEntry.kind === "folder" && !isShadowItem(childEntry) ? foldersById.get(childEntry.id) : undefined}
                 <div
@@ -1593,7 +1593,7 @@
         </div>
       {/if}
     {/snippet}
-    {#if rootZoneItems.length > FLIP_MAX_ANIMATED_ITEMS}
+    {#if rootBaseItems.length > FLIP_MAX_ANIMATED_ITEMS}
       {#each blocks as block (block.key)}
         {@const entry = block.kind === "row" ? block.segment.entry : { id: block.key, kind: "tab" as const, section, parentFolderId: null }}
         {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
