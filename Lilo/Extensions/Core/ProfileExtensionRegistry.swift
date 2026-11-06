@@ -866,7 +866,11 @@ final class ProfileExtensionRegistry {
             id: extensionId, name: webExtension.displayName ?? extensionId, version: webExtension.version ?? "", path: installPath, isEnabled: true
         )
         if record != stored {
-            try? await extensionStorage.store(id: record.id, name: record.name, version: record.version, path: record.path, enabled: true)
+            do {
+                try await extensionStorage.store(id: record.id, name: record.name, version: record.version, path: record.path, enabled: true)
+            } catch {
+                Self.logger.error("Failed to persist extension \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
+            }
         }
         if !unset.isEmpty {
             await access.update(extensionId) { state in
@@ -987,7 +991,7 @@ final class ProfileExtensionRegistry {
         } catch {
             // A retried failed row shows the latest error, not the one from launch.
             if let index = failedRestores.firstIndex(where: { $0.stored.id == extensionId }) {
-                failedRestores[index].error = ExtensionDiagnostics.diagnosticDescription(for: error)
+                failedRestores[index].error = error.localizedDescription
                 notifyExtensionsChanged()
             }
             throw error
@@ -999,7 +1003,11 @@ final class ProfileExtensionRegistry {
             await unload(extensionId: extensionId, removePersistedRecord: false, purge: true)
         } else {
             lifecycle.unloaded(extensionId, disabled: true, purge: true)
-            try? await extensionStorage.setEnabled(id: extensionId, enabled: false)
+            do {
+                try await extensionStorage.setEnabled(id: extensionId, enabled: false)
+            } catch {
+                Self.logger.error("Failed to persist disabling extension \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
+            }
             notifyExtensionsChanged()
         }
     }
@@ -1080,13 +1088,21 @@ final class ProfileExtensionRegistry {
             try await self.load(from: URL(fileURLWithPath: installPath), extensionId: extensionId, as: load)
         } catch {
             Self.logger.error("background reload failed for \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
-            // `unload` flipped the persisted record to disabled; a failed internal restart must not leave the
-            // extension skipped on next launch, and the panel lists it as failed rather than disabled.
-            try? await extensionStorage.setEnabled(id: extensionId, enabled: true)
-            if let index = disabledStoredExtensions.firstIndex(where: { $0.id == extensionId }) {
-                failedRestores.append((disabledStoredExtensions.remove(at: index), ExtensionDiagnostics.diagnosticDescription(for: error)))
-                notifyExtensionsChanged()
-            }
+            await recordFailedReload(extensionId, error: error)
+        }
+    }
+
+    /// For a reload that failed after `unload` disabled the extension: an internal restart must not leave
+    /// it skipped on next launch, and the panel lists it as failed, with Retry, rather than disabled.
+    func recordFailedReload(_ extensionId: String, error: Error) async {
+        do {
+            try await extensionStorage.setEnabled(id: extensionId, enabled: true)
+        } catch {
+            Self.logger.error("Failed to persist re-enabling extension \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
+        }
+        if let index = disabledStoredExtensions.firstIndex(where: { $0.id == extensionId }) {
+            failedRestores.append((disabledStoredExtensions.remove(at: index), error.localizedDescription))
+            notifyExtensionsChanged()
         }
     }
 
@@ -1519,7 +1535,7 @@ final class ProfileExtensionRegistry {
 
     private func recordFailedRestore(_ stored: ExtensionStorage.InstalledExtension, error: Error) {
         Self.logger.error("Failed to restore stored extension \(stored.id, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
-        failedRestores.append((stored, ExtensionDiagnostics.diagnosticDescription(for: error)))
+        failedRestores.append((stored, error.localizedDescription))
     }
 
     /// Records the files an update installed for a disabled extension, and lists them.

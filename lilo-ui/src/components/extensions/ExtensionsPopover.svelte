@@ -7,6 +7,7 @@
   import { tooltip } from "../../lib/tooltip";
   import { t } from "../../lib/i18n/state.svelte";
   import { extensionActions, tabActions } from "../../lib/bridge/actions";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
   import { openSettings } from "../../stores/panels.svelte";
   import {
     getEnabledExtensions,
@@ -114,6 +115,7 @@
 
 <div
   class="extensions-popover float-surface float-popover"
+  out:popoverOut|global
   role="menu"
   tabindex="-1"
   aria-label={t("extensions.addressBarMenu")}
@@ -230,7 +232,6 @@
     position: fixed;
     z-index: var(--z-popover);
     transform-origin: calc(100% - 14px) 0;
-    border-radius: var(--radius-box);
   }
 
   .float-popover-head {

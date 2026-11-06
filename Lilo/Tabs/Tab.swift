@@ -15,6 +15,8 @@ struct Tab: Sendable, Equatable {
     var title: String
     var faviconDataURL: String?
     var faviconDominantColor: String?
+    /// Runtime only: the address the favicon came from, which extensions read as `favIconUrl`.
+    var faviconURL: URL?
     /// The solid color along the page's top edge, else hex stops read off that edge.
     var pageColor: String?
     var isLoading: Bool = false
@@ -309,6 +311,7 @@ struct Tab: Sendable, Equatable {
 }
 
 private struct TabRuntimeState: Equatable, Sendable {
+    let faviconURL: URL?
     let isLoading: Bool; let estimatedProgress: Double
     let canGoBack: Bool; let canGoForward: Bool
     let isAudioPlaying: Bool; let lastAudioStoppedAt: Date?; let pausedFromCardAt: Date?; let isMuted: Bool
@@ -338,6 +341,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let awaitingInputSince: Date?
 
     init(_ tab: Tab) {
+        faviconURL = tab.faviconURL
         isLoading = tab.isLoading; estimatedProgress = tab.estimatedProgress
         canGoBack = tab.canGoBack; canGoForward = tab.canGoForward
         isAudioPlaying = tab.isAudioPlaying; lastAudioStoppedAt = tab.lastAudioStoppedAt; pausedFromCardAt = tab.pausedFromCardAt; isMuted = tab.isMuted
@@ -370,6 +374,7 @@ private struct TabRuntimeState: Equatable, Sendable {
 
     func applied(to tab: Tab) -> Tab {
         var tab = tab
+        tab.faviconURL = faviconURL
         tab.isLoading = isLoading; tab.estimatedProgress = estimatedProgress
         tab.canGoBack = canGoBack; tab.canGoForward = canGoForward
         tab.isAudioPlaying = isAudioPlaying; tab.lastAudioStoppedAt = lastAudioStoppedAt; tab.pausedFromCardAt = pausedFromCardAt; tab.isMuted = isMuted
@@ -423,11 +428,12 @@ final class RuntimeOverlayStore {
         version &+= 1
     }
 
-    /// A discarded engine takes its runtime state along; what the user or an agent set on the tab
-    /// (mute, agent control, a pause from the media card) stays for the engine that replaces it.
+    /// A discarded engine takes its runtime state along; the favicon's address, still shown, and what the user or an agent
+    /// set on the tab (mute, agent control, a pause from the media card) stay for the engine that replaces it.
     func discardRuntimeState(for id: UUID) {
         guard let state = states[id] else { return }
         var kept = Tab(id: id)
+        kept.faviconURL = state.faviconURL
         kept.isMuted = state.isMuted
         kept.isAgentControlled = state.isAgentControlled
         kept.pausedFromCardAt = state.pausedFromCardAt

@@ -27,7 +27,8 @@ final class ConversationHost {
         /// The agent's open `session/request_permission`s, oldest first: its sub-agents can ask at once. Each is
         /// answered from the thread; the sidebar and the notification offer the oldest.
         var permissions: [(id: ACPConnection.Payload, requestId: String, params: [String: Any])] = []
-        var queued: [[[String: Any]]] = []
+        /// Prompts waiting for the running turn, each with the checkpoint index `send` reserved for it.
+        var queued: [(blocks: [[String: Any]], checkpoint: Int)] = []
         /// The prompt a sign-in holds back, sent again once it succeeds.
         var awaitingSignIn: [[String: Any]]?
         /// A sign-in in a terminal was already offered for this prompt: a second refusal shows the error.
@@ -76,6 +77,8 @@ final class ConversationHost {
     private var diffStale: Set<UUID> = []
     /// Terminal tabs running an agent's sign-in, with the conversation waiting on each.
     private var signInTerminals: [UUID: UUID] = [:]
+    /// Closed conversations whose thread file stays for Reopen Closed Tab, until quit.
+    private var closed: Set<UUID> = []
 
     /// Each conversation's log and checkpoints, so a relaunch shows the thread without starting its agent.
     private let threads: URL
@@ -103,6 +106,7 @@ final class ConversationHost {
         conversation.spaceId = tab.spaceId
         conversation.title = tab.title
         conversations[tab.id] = conversation
+        closed.remove(tab.id)
         ChromeUISchemeHandler.conversationRoots.insert(URL(fileURLWithPath: conversation.cwd).standardizedFileURL.resolvingSymlinksInPath().path)
         if let project = GitDiff.projectRoot(containing: conversation.cwd), let window = context?.windows.window(forTab: tab.id),
            let updated = window.updateRuntimeTab(id: tab.id, mutate: { $0.project = project }) {
@@ -120,17 +124,20 @@ final class ConversationHost {
         for key in shown.keys { shown[key]?.remove(tabId) }
         withdrawNotification(tabId)
         scheduleSummary()
-        // A conversation reopened with Reopen Closed Tab gets its thread back from the agent's session.
-        let file = threadFile(tabId)
-        saveQueue.async { try? FileManager.default.removeItem(at: file) }
+        if conversation.restored { save(conversation) }
+        closed.insert(tabId)
     }
 
-    /// Stops every agent, at quit: their sessions resume next launch.
+    /// Stops every agent, at quit: their sessions resume next launch. A closed conversation no tab holds any
+    /// more loses its thread file, as Reopen Closed Tab does not outlive the launch.
     func stopAll() {
         for conversation in conversations.values {
             conversation.connection?.terminate()
             if conversation.restored { save(conversation, synchronously: true) }
         }
+        let gone = closed.filter { context?.browserState.durableTab(for: $0) == nil }.map(threadFile)
+        guard !gone.isEmpty else { return }
+        saveQueue.sync { for file in gone { try? FileManager.default.removeItem(at: file) } }
     }
 
     private func threadFile(_ tabId: UUID) -> URL { threads.appending(path: "\(tabId.uuidString).json") }
@@ -139,11 +146,23 @@ final class ConversationHost {
     /// app waits for it, as it must not exit before the log is on disk.
     private func save(_ conversation: Conversation, synchronously: Bool = false) {
         let object = ACPConnection.Payload(value: ["log": conversation.log.map(\.value), "checkpoints": conversation.checkpoints.map { $0 ?? "" }])
-        let file = threadFile(conversation.tabId), folder = threads
-        let write: @Sendable () -> Void = {
+        let file = threadFile(conversation.tabId), folder = threads, logger = Self.logger
+        let write: @Sendable () -> Void = { [weak self] in
             guard let data = try? JSONSerialization.data(withJSONObject: object.value) else { return }
-            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            try? data.write(to: file, options: .atomic)
+            do {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                try data.write(to: file, options: .atomic)
+            } catch {
+                logger.error("conversation save failed: \(error.localizedDescription, privacy: .public)")
+                Task { @MainActor in
+                    self?.context?.showDegradedDatabaseAlert(
+                        subject: "conversations",
+                        message: "Lilo couldn't save a conversation".localized,
+                        informative: "Recent changes may be missing the next time you open Lilo. Check that your disk has free space.".localized,
+                        error: error
+                    )
+                }
+            }
         }
         if synchronously { saveQueue.sync(execute: write) } else { saveQueue.async(execute: write) }
     }
@@ -446,31 +465,39 @@ final class ConversationHost {
         conversation.awaitingSignIn = nil
         conversation.checkpoints.append(nil)
         let index = conversation.checkpoints.count - 1
-        let cwd = conversation.cwd
-        Task.detached(priority: .utility) {
-            let tree = ConversationCheckpoints.snapshot(in: cwd)
-            await MainActor.run { [weak self] in
-                guard let self, let conversation = self.conversations[tabId], index < conversation.checkpoints.count, let tree else { return }
-                conversation.checkpoints[index] = tree
-                self.append(conversation, ["sessionUpdate": "lilo_checkpoint", "index": index])
-            }
-        }
         if conversation.state == .busy {
             if interrupt {
-                conversation.queued.insert(blocks, at: 0)
+                conversation.queued.insert((blocks, index), at: 0)
                 cancel(tabId)
             } else {
-                conversation.queued.append(blocks)
+                conversation.queued.append((blocks, index))
                 append(conversation, ["sessionUpdate": "lilo_queued", "count": conversation.queued.count])
             }
             return
         }
-        Task { await runTurn(conversation, blocks: blocks) }
+        Task { await runTurn(conversation, blocks: blocks, checkpoint: index) }
     }
 
-    private func runTurn(_ conversation: Conversation, blocks: [[String: Any]]) async {
+    /// `checkpoint` is the index `send` reserved for this prompt: its snapshot is taken as the turn starts, once
+    /// the turn before has ended, without holding the prompt back. A sign-in's retry passes none.
+    private func runTurn(_ conversation: Conversation, blocks: [[String: Any]], checkpoint: Int? = nil) async {
         conversation.lastError = nil
         setState(conversation, .busy)
+        if let checkpoint {
+            let tabId = conversation.tabId, cwd = conversation.cwd
+            Task.detached(priority: .utility) {
+                let tree = ConversationCheckpoints.snapshot(in: cwd)
+                await MainActor.run { [weak self] in
+                    guard let self, let conversation = self.conversations[tabId] else { return }
+                    if let tree, checkpoint < conversation.checkpoints.count {
+                        conversation.checkpoints[checkpoint] = tree
+                        self.append(conversation, ["sessionUpdate": "lilo_checkpoint", "index": checkpoint])
+                    }
+                    // The prompt and its checkpoint reach the disk as the turn starts: a crash mid-turn keeps them.
+                    self.save(conversation)
+                }
+            }
+        }
         do {
             try await ensureStarted(conversation)
             guard let connection = conversation.connection, let sessionId = conversation.sessionId else { return }
@@ -503,13 +530,14 @@ final class ConversationHost {
             append(conversation, ["sessionUpdate": "lilo_error", "message": error.localizedDescription])
             setState(conversation, .failed)
             conversation.queued.removeAll()
+            save(conversation)
             return
         }
         refreshDiff(conversation)
         if !conversation.queued.isEmpty {
             let next = conversation.queued.removeFirst()
             append(conversation, ["sessionUpdate": "lilo_queued", "count": conversation.queued.count])
-            return await runTurn(conversation, blocks: next)
+            return await runTurn(conversation, blocks: next.blocks, checkpoint: next.checkpoint)
         }
         if !isShown(conversation.tabId) {
             conversation.unread = true

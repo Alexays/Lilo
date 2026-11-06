@@ -48,6 +48,9 @@ jobs:
           grep -qx "MARKETING_VERSION = ${GITHUB_REF_NAME#v}" Xcode/Configs/Base.xcconfig \
             || { echo "::error::Xcode/Configs/Base.xcconfig is not at ${GITHUB_REF_NAME#v}."; exit 1; }
           make release-status
+          git fetch --no-tags -q origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD \
+            || { echo "::error::$GITHUB_REF_NAME is not on main: tag a commit main already has."; exit 1; }
 
       - name: Show selected Xcode
         run: xcodebuild -version
@@ -164,8 +167,11 @@ jobs:
           spctl -a -vvv "$mount/Lilo.app"
           diskutil eject "$mount"
 
+      # The last published releases' DMGs give generate_appcast the bases of its deltas. The appcast keeps only the
+      # new version, its deltas from those releases attached.
       - name: Generate Sparkle appcast
         env:
+          GH_TOKEN: ${{ github.token }}
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
         run: |
           curl -fsSL -o "$RUNNER_TEMP/sparkle.tar.xz" \
@@ -173,13 +179,24 @@ jobs:
           echo "c2bf58aa8387266ac179357b1415d6f2635f044da8be41042af32425dae6da0c  $RUNNER_TEMP/sparkle.tar.xz" | shasum -a 256 -c -
           mkdir -p "$RUNNER_TEMP/sparkle" build/appcast
           tar -xf "$RUNNER_TEMP/sparkle.tar.xz" -C "$RUNNER_TEMP/sparkle"
+          /bin/cp -f build/Lilo.dmg build/appcast/
+          tags=$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases --limit 20 \
+            --json tagName --jq '[.[].tagName | select(startswith("v"))][:3][]')
+          for tag in $tags; do
+            gh release download "$tag" --repo "$GITHUB_REPOSITORY" -p Lilo.dmg -O "build/appcast/Lilo-$tag.dmg"
+          done
           trap 'rm -f "$RUNNER_TEMP/sparkle.key"' EXIT
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle.key"
-          /bin/cp -f build/Lilo.dmg build/appcast/
           "$RUNNER_TEMP/sparkle/bin/generate_appcast" \
             --ed-key-file "$RUNNER_TEMP/sparkle.key" \
+            --maximum-versions 1 \
+            --maximum-deltas 3 \
             --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
             build/appcast
+          # A missing delta costs users the full DMG, not the update: worth a warning, not a failed release.
+          if [ -n "$tags" ] && ! grep -q '<sparkle:deltas>' build/appcast/appcast.xml; then
+            echo "::warning::appcast.xml holds no delta update: every copy downloads the full DMG."
+          fi
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
@@ -188,6 +205,7 @@ jobs:
           files: |
             build/Lilo.dmg
             build/appcast/appcast.xml
+            build/appcast/*.delta
             build/release/dist/Lilo-dSYMs.zip
           # The version's notes, as make release-version wrote them for this tag.
           body_path: .changes/${{ github.ref_name }}.md

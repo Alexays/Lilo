@@ -29,6 +29,9 @@ struct Space: Sendable, Identifiable {
         createdAt = Date(); modifiedAt = Date()
     }
 
+    /// The id its tabs' data store goes by: its profile's, or its own for a private space.
+    var dataStoreId: UUID { isPrivate ? id : profileId }
+
     static let fixedColorMode = "fixed"
     static let colorModes: Set<String> = [fixedColorMode, "time", "page", "wallpaper"]
     static let solidMaterial = "solid"

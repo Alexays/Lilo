@@ -145,7 +145,7 @@ function sourceHost(url: string): string | null {
   }
 }
 
-export function metaLine(dl: BridgeDownloadSnapshot, locale: Locale, nowMs: number): MetaLine {
+export function metaLine(dl: BridgeDownloadSnapshot, locale: Locale, formatLocale: string, nowMs: number): MetaLine {
   if (dl.error || dl.state === "interrupted") {
     const errorKey = dl.error ? ERROR_KEYS.get(dl.error) : "downloadsPanel.stateFailed";
     return {
@@ -182,8 +182,8 @@ export function metaLine(dl: BridgeDownloadSnapshot, locale: Locale, nowMs: numb
   // Within the past week the group header names the day, so the time is enough; older groups are months.
   const when =
     nowMs - finishedMs < 7 * DAY_MS
-      ? formatters(locale).time.format(finishedMs)
-      : formatters(locale).date.format(finishedMs);
+      ? formatters(formatLocale).time.format(finishedMs)
+      : formatters(formatLocale).date.format(finishedMs);
   // Host last: it is the longest part, so truncation eats it rather than the size or time.
   const parts = [size > 0 ? formatByteSize(size, locale, true) : null, when, host].filter((part) => part !== null);
   return { detail: parts.join(" · "), stateKey: null, errorText: null, tone: "neutral" };

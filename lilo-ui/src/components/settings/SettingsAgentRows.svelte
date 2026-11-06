@@ -1,6 +1,6 @@
 <script lang="ts">
   import { settingsActions } from "../../lib/bridge/actions";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { CLAUDE, type TerminalProgramIcon } from "../../lib/terminalIcons";
   import { getAgentClients } from "../../stores/agents.svelte";
   import { connectAgentClient, getAgentClientsSnapshot, isConnectingAgentClient } from "../../stores/settings.svelte";
@@ -15,7 +15,7 @@
   // The command-line clients come with Terminal's icon from the bridge: their provider's mark says more.
   const PROVIDER_ICONS: Record<string, TerminalProgramIcon> = { claudeCode: CLAUDE, codex: OPENAI };
 
-  const relative = $derived(new Intl.RelativeTimeFormat(getLocale(), { numeric: "auto" }));
+  const relative = $derived(new Intl.RelativeTimeFormat(getFormatLocale(), { numeric: "auto" }));
   const snapshot = $derived(getAgentClientsSnapshot());
 
   // One tile per installed or configured app, with the agents it connected as; then the agents Lilo has no

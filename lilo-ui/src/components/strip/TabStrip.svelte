@@ -26,6 +26,7 @@
     openDownloadsPanel,
   } from "../../stores/panels.svelte";
   import { LINE_ICONS } from "../commandbar/commandBarIcons";
+  import Icon from "../ui/Icon.svelte";
   import { hasSessionDownloads } from "../../stores/downloads.svelte";
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
   import { sidebarActions } from "../../lib/bridge/actions";
@@ -360,21 +361,17 @@
           {surface.label}
         </button>
         <button class="strip-surface-close" tabindex="-1" aria-label={t("common.close")} onclick={surface.close}>
-          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-            <path class="close-glyph" d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          </svg>
+          <Icon name="close" size={12} />
         </button>
       </div>
     {/if}
     <button
-      class="strip-btn"
+      class="strip-btn new-tab"
       aria-label={t("tabItem.newTab")}
       use:tooltip={{ text: t("tabItem.newTab"), shortcut: shortcutKeys("tab.new"), placement: edge === "top" ? "bottom" : "top" }}
       onclick={() => tabActions.create()}
     >
-      <svg class="plus-glyph" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-      </svg>
+      <Icon name="plus" size={14} />
     </button>
     {#if recentArchived.length > 0}
       <button
@@ -559,7 +556,7 @@
     flex: none;
     border-radius: var(--radius-chip);
     background: var(--separator);
-    transition: background-color var(--motion-duration-fast) ease, width 160ms var(--motion-ease-spring);
+    transition: background-color var(--motion-duration-fast) ease, width var(--motion-duration-fast) var(--motion-ease-spring);
   }
 
   /* The sidebar's pinned gate, turned on its side. */
@@ -797,21 +794,21 @@
     outline-offset: 1px;
   }
 
-  .close-glyph,
-  .plus-glyph,
+  .strip-surface-close :global(.icon),
+  .new-tab :global(.icon),
   .archive-lid,
   .download-arrow {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .archive-lid {
     transform-origin: left bottom;
   }
 
-  .strip-surface-close:hover .close-glyph,
-  .strip-btn:hover .plus-glyph {
+  .strip-surface-close:hover :global(.icon),
+  .new-tab:hover :global(.icon) {
     transform: rotate(90deg);
   }
 

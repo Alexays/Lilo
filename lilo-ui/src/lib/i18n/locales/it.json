@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Aggiorna ora",
-			"summary": "{lists} elenchi",
+			"summary": {
+				"one": "{count} elenco",
+				"other": "{count} elenchi"
+			},
 			"updated": "aggiornati {time}"
 		},
 		"extensionUpdates": {
@@ -605,7 +608,6 @@
 			"connect": "Connetti",
 			"copy": "Copia configurazione",
 			"clientDescription": "Aggiunge Lilo ai suoi server MCP.",
-			"clientConnected": "Lilo è tra i suoi server MCP.",
 			"revoke": "Rimuovi",
 			"status": {
 				"acting": "In azione",
@@ -641,8 +643,10 @@
 			"clearData": "Cancella dati...",
 			"remove": "Rimuovi...",
 			"lastProfile": "L'ultimo profilo viene mantenuto: ogni spazio ne ha bisogno.",
-			"extensionCount": "{count} estensioni",
-			"extensionCountOne": "1 estensione",
+			"extensionCount": {
+				"one": "{count} estensione",
+				"other": "{count} estensioni"
+			},
 			"newProfile": "Nuovo profilo...",
 			"newProfileDetail": "Cookie, accessi ed estensioni nuovi",
 			"namePlaceholder": "Nome del profilo",
@@ -766,6 +770,7 @@
 		"ariaLabel": "Schede"
 	},
 	"bottomBar": {
+		"switchedTo": "Passato a {name}",
 		"library": "Download e schede archiviate",
 		"downloads": "Download",
 		"downloadsActiveCount": "Download, {count} attivi",
@@ -774,6 +779,10 @@
 		"signedInAs": "{space}, accesso come {profile}"
 	},
 	"sidebar": {
+		"resize": "Larghezza della barra laterale",
+		"movedToPosition": "Spostato in posizione {position} di {count}",
+		"movedInto": "Spostato in {name}",
+		"movedOutOf": "Spostato fuori da {name}",
 		"ariaLabel": "Barra laterale"
 	},
 	"spaceBar": {
@@ -1335,17 +1344,23 @@
 		"navLabel": "Viste del gestore processi",
 		"searchPlaceholder": "Cerca schede",
 		"memoryAriaLabel": "Uso della memoria",
-		"tabsCount": "{count} schede",
-		"tabsCountOne": "1 scheda",
+		"tabsCount": {
+			"one": "{count} scheda",
+			"other": "{count} schede"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} altro",
 			"other": "{count} altri"
 		},
-		"reclaim": "{count} schede nascoste usano {size}",
-		"reclaimOne": "1 scheda nascosta usa {size}",
-		"reclaimNoSize": "{count} schede nascoste sono ancora caricate",
-		"reclaimNoSizeOne": "1 scheda nascosta è ancora caricata",
+		"reclaim": {
+			"one": "{count} scheda nascosta usa {size}",
+			"other": "{count} schede nascoste usano {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} scheda nascosta è ancora caricata",
+			"other": "{count} schede nascoste sono ancora caricate"
+		},
 		"sleep": "Metti in stop",
 		"groupTabs": "Schede",
 		"groupSleeping": "In stop",
@@ -1387,16 +1402,21 @@
 	"urlToast": {
 		"pageActions": "Azioni della pagina",
 		"reEnableBlocking": "Riattiva il blocco su questo sito",
-		"trackerBlockedOnPage": "{count} tracker bloccato su questa pagina",
-		"trackersBlockedOnPage": "{count} tracker bloccati su questa pagina",
+		"trackersBlockedOnPage": {
+			"one": "{count} tracker bloccato su questa pagina",
+			"other": "{count} tracker bloccati su questa pagina"
+		},
 		"disableBlocking": "Disattiva il blocco su questo sito",
 		"adsAllowed": "Pubblicità consentita",
-		"trackerBlockedLabel": "{count} tracker bloccato",
-		"trackersBlockedLabel": "{count} tracker bloccati",
+		"trackersBlockedLabel": {
+			"one": "{count} tracker bloccato",
+			"other": "{count} tracker bloccati"
+		},
 		"adsBlocked": "Pubblicità bloccata",
 		"extensionAlreadyInstalled": "Estensione già installata",
 		"installChromeExtension": "Installa questa estensione Chrome",
 		"installed": "Installata",
+		"installFailed": "Installazione non riuscita",
 		"install": "Installa",
 		"screenshot": "Istantanea",
 		"fullPage": "Pagina intera",
@@ -1715,6 +1735,11 @@
 				"extensionsCount": "Reinstallazione estensioni: {current} di {total}"
 			},
 			"partial": "Impossibile importare alcuni dati: {list}. Puoi riprovare più tardi dalle Impostazioni.",
+			"cause": {
+				"keychain": "accesso al portachiavi negato",
+				"locked": "file in uso, chiudi il browser e riprova",
+				"access": "serve l'accesso completo al disco"
+			},
 			"profiles": "Profili di {browser}",
 			"kinds": "Cosa importare",
 			"kind": {
@@ -1746,6 +1771,7 @@
 			"addNamed": "Aggiungi {name}",
 			"adding": "Aggiunta...",
 			"added": "Aggiunto",
+			"failed": "Impossibile aggiungerlo. Riprova.",
 			"soon": "Presto",
 			"managers": {
 				"bitwarden": "Open source, gratuito su tutti i dispositivi",
@@ -1911,12 +1937,11 @@
 		"No changes on this branch": "Nessuna modifica in questo branch",
 		"Nothing differs from %@.": "Nessuna differenza rispetto a %@.",
 		"Show Uncommitted Changes": "Mostra modifiche non registrate",
-		"1 file": "1 file",
-		"%@ files": "%@ file",
+		"%@ files": {"one": "%@ file", "other": "%@ file"},
 		"against %@ from %@, uncommitted included": "rispetto a %@ da %@, incluse le modifiche non registrate",
 		"Binary file, not shown": "File binario, non mostrato",
-		"%d lines folded. Click to show.": "%d righe compresse. Fai clic per mostrarle.",
-		"Generated file, %d lines folded. Click to show.": "File generato, %d righe compresse. Fai clic per mostrarle.",
+		"%d lines folded. Click to show.": {"one": "%d riga compressa. Fai clic per mostrarla.", "other": "%d righe compresse. Fai clic per mostrarle."},
+		"Generated file, %d lines folded. Click to show.": {"one": "File generato, %d riga compressa. Fai clic per mostrarla.", "other": "File generato, %d righe compresse. Fai clic per mostrarle."},
 		"renamed from %@": "rinominato da %@",
 		"Open in Split": "Apri in vista divisa",
 		"worktree": "worktree",
@@ -1926,7 +1951,7 @@
 		"%@ wants to use your camera and microphone": "%@ vuole usare la fotocamera e il microfono",
 		"%@ wants to use your camera or microphone": "%@ vuole usare la fotocamera o il microfono",
 		"Open as Tab": "Apri come scheda",
-		"Not Secure": "Non sicuro",
+		"Not Secure - %@": "Non sicuro - %@",
 		"Other Bookmarks (%@)": "Altri segnalibri (%@)",
 		"Replay Onboarding": "Rivedi presentazione iniziale",
 		"New Terminal Beside": "Nuovo terminale accanto",
@@ -2064,6 +2089,13 @@
 		"Select an unpacked extension folder (must contain manifest.json)": "Seleziona una cartella di estensione non pacchettizzata (deve contenere manifest.json)",
 		"Couldn't load extension": "Impossibile caricare l'estensione",
 		"Another copy of %@ is already installed. Remove it to load this folder.": "Un'altra copia di %@ è già installata. Rimuovila per caricare questa cartella.",
+		"manifest.json not found at %@": "manifest.json non trovato in %@",
+		"Failed to parse manifest.json: %@": "Impossibile leggere manifest.json: %@",
+		"Unsupported manifest version %ld; only MV3 is supported": "Versione del manifest %ld non supportata; è supportata solo MV3",
+		"Required manifest field missing: %@": "Campo obbligatorio mancante nel manifest: %@",
+		"Failed to download extension: %@": "Impossibile scaricare l'estensione: %@",
+		"Invalid extension archive: %@": "Archivio dell'estensione non valido: %@",
+		"The extension's background did not respond.": "Il processo in background dell'estensione non ha risposto.",
 		"Open Popup": "Apri finestra a comparsa",
 		"History": "Cronologia",
 		"Reopen Last Closed Tab": "Riapri ultima scheda chiusa",
@@ -2085,6 +2117,11 @@
 		"Its tabs, history and downloads are unavailable this session.": "Le relative schede, la cronologia e i download non sono disponibili per questa sessione.",
 		"Lilo couldn't load its settings": "Lilo non è riuscito a caricare le impostazioni",
 		"Default settings are in use for this session.": "Per questa sessione sono in uso le impostazioni predefinite.",
+		"Lilo couldn't save your tabs": "Lilo non è riuscito a salvare le tue schede",
+		"Lilo couldn't save its settings": "Lilo non è riuscito a salvare le sue impostazioni",
+		"Lilo couldn't save a conversation": "Lilo non è riuscito a salvare una conversazione",
+		"Recent changes may be missing the next time you open Lilo. Check that your disk has free space.": "Le modifiche recenti potrebbero mancare alla prossima apertura di Lilo. Verifica che il disco abbia spazio libero.",
+		"%@\n\nError: %@": "%@\n\nErrore: %@",
 		"Continue": "Continua",
 		"Delete": "Elimina",
 		"Quit": "Esci",
@@ -2127,19 +2164,16 @@
 		"The Mac is too hot.": "Il Mac è troppo caldo.",
 		"Commands kept the Mac awake for the maximum duration.": "I comandi hanno mantenuto attivo il Mac per la durata massima.",
 		"While the lid was closed": "Mentre il coperchio era chiuso",
-		"%d commands finished": "%d comandi terminati",
-		"%d wait for your answer, the oldest for %@": "%d attendono una tua risposta, il più vecchio da %@",
+		"%d commands finished": {"one": "%d comando terminato", "other": "%d comandi terminati"},
+		"%d wait for your answer, the oldest for %@": {"one": "%d attende una tua risposta da %@", "other": "%d attendono una tua risposta, il più vecchio da %@"},
 		"battery from %d%% to %d%%": "batteria dal %d%% al %d%%",
 		"Show Next Waiting Terminal": "Mostra prossimo terminale in attesa",
 		"Downloads": "Download",
 		"Quit Lilo?": "Uscire da Lilo?",
-		"A terminal is still running a command": "Un terminale sta ancora eseguendo un comando",
-		"%d terminals are still running a command": "%d terminali stanno ancora eseguendo un comando",
-		" and %d more": " e altri %d",
-		"It will be stopped.": "Verrà interrotto.",
-		"They will be stopped.": "Verranno interrotti.",
-		"A download is in progress and will be paused until Lilo opens again.": "Un download è in corso e verrà messo in pausa fino alla riapertura di Lilo.",
-		"%d downloads are in progress and will be paused until Lilo opens again.": "%d download sono in corso e verranno messi in pausa fino alla riapertura di Lilo.",
+		"%d terminals are still running a command. They will be stopped.": {"one": "%d terminale sta ancora eseguendo un comando. Verrà interrotto.", "other": "%d terminali stanno ancora eseguendo un comando. Verranno interrotti."},
+		"%d terminals are still running a command (%@). They will be stopped.": {"one": "%d terminale sta ancora eseguendo un comando (%@). Verrà interrotto.", "other": "%d terminali stanno ancora eseguendo un comando (%@). Verranno interrotti."},
+		"%@ and %d more": {"one": "%@ e %d altro", "other": "%@ e altri %d"},
+		"%d downloads are in progress and will be paused until Lilo opens again.": {"one": "%d download è in corso e verrà messo in pausa fino alla riapertura di Lilo.", "other": "%d download sono in corso e verranno messi in pausa fino alla riapertura di Lilo."},
 		"Sign In": "Accedi",
 		"Install": "Installa",
 		"Install %@?": "Installare %@?",
@@ -2153,7 +2187,7 @@
 		"A command is still running in it and will be stopped.": "Un comando è ancora in esecuzione e verrà interrotto.",
 		"Close": "Chiudi",
 		"New Terminal Tab": "Nuova scheda del terminale",
-		"Close %d terminals?": "Chiudere %d terminali?",
+		"Close %d terminals?": {"one": "Chiudere %d terminale?", "other": "Chiudere %d terminali?"},
 		"Commands are still running in them and will be stopped.": "Sono ancora in esecuzione dei comandi, che verranno interrotti.",
 		"The terminal could not start.": "Impossibile avviare il terminale.",
 		"Close the tab and try again.": "Chiudi la scheda e riprova.",
@@ -2186,6 +2220,7 @@
 		"Delete Folder": "Elimina cartella",
 		"Edit Folder": "Modifica cartella",
 		"Edit...": "Modifica...",
+		"Back to Home Page": "Torna alla pagina iniziale",
 		"New Folder": "Nuova cartella",
 		"Home": "Home",
 		"Default": "Predefinito",
@@ -2277,9 +2312,7 @@
 		"Added Lilo to Codex": "Lilo aggiunto a Codex",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo non è riuscito a leggere %@: aggiungi manualmente questo server: %@",
 		"Stop Agents": "Ferma agenti",
-		"Delete %@ and %@?": "Eliminare %@ e %@?",
-		"1 tab": "1 scheda",
-		"%d tabs": "%d schede",
+		"Delete %@ and its %d tabs?": {"one": "Eliminare %@ e %d scheda?", "other": "Eliminare %@ e le sue %d schede?"},
 		"This cannot be undone.": "L'operazione non può essere annullata.",
 		"Its tabs stay in the sidebar.": "Le sue schede restano nella barra laterale.",
 		"Agent": "Agente",
@@ -2528,7 +2561,6 @@
 			"restoreToHere": "Ripristina fino a qui",
 			"restoreConfirm": "Riportare i file del progetto com'erano a questo messaggio?",
 			"restore": "Ripristina",
-			"reviewChanges": "Esamina in Modifiche",
 			"undo": "Annulla",
 			"keep": "Mantieni",
 			"undone": "Annullato",
@@ -2612,7 +2644,6 @@
 			"agent": "Agente",
 			"noAgents": "Nessun agente",
 			"project": "Progetto",
-			"chooseProject": "Scegli un progetto",
 			"chooseFolder": "Scegli cartella...",
 			"noFolder": "Nessuna cartella",
 			"noFolderDetail": "L'agente lavora in una cartella propria",
@@ -2623,7 +2654,14 @@
 			"untitled": "Nuova conversazione",
 			"working": "Al lavoro",
 			"failed": "Interrotto per un errore",
-			"changes": "{added} righe aggiunte, {removed} rimosse",
+			"linesAdded": {
+				"one": "{count} riga aggiunta",
+				"other": "{count} righe aggiunte"
+			},
+			"linesRemoved": {
+				"one": "{count} riga rimossa",
+				"other": "{count} righe rimosse"
+			},
 			"pages": {
 				"one": "{count} pagina",
 				"other": "{count} pagine"

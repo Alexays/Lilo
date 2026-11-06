@@ -85,7 +85,9 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
 
             Task { @MainActor in
                 let signpost = PerfSignposts.bridge.beginInterval("handle", id: PerfSignposts.bridge.makeSignpostID(), bridgeMessage.action)
-                _ = await handler.handle(message: bridgeMessage)
+                if let error = await handler.handle(message: bridgeMessage) as? BridgeError {
+                    Self.logger.error("\(bridgeMessage.action, privacy: .public) failed: \(error.message, privacy: .public)")
+                }
                 PerfSignposts.bridge.endInterval("handle", signpost)
             }
         }
@@ -243,7 +245,7 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
         // Without a user gesture: a state push must not hand the chrome a transient activation it can spend.
         guard let chromeWebView else { return }
         WebViewPrivateAccessors(chromeWebView).callAsyncWithoutUserGesture(script, arguments: arguments) { error in
-            if let error { Self.logger.error("chrome JS call failed: \(error)") }
+            if let error { Self.logger.error("chrome JS call failed: \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)") }
             completion()
         }
     }

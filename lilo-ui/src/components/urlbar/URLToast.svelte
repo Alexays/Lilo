@@ -8,6 +8,7 @@
   import { tooltip } from "../../lib/tooltip";
   import { t } from "../../lib/i18n/state.svelte";
   import type { ToastVariant } from "../../lib/urlVisual";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
 
   interface Props {
     toastVisible: boolean;
@@ -96,16 +97,12 @@
         use:tooltip={isAllowlisted
           ? t("urlToast.reEnableBlocking")
           : blockedCount > 0
-            ? blockedCount > 1
-              ? t("urlToast.trackersBlockedOnPage", { count: blockedCount })
-              : t("urlToast.trackerBlockedOnPage", { count: blockedCount })
+            ? t("urlToast.trackersBlockedOnPage", { count: blockedCount })
             : t("urlToast.disableBlocking")}
         aria-label={isAllowlisted
           ? t("urlToast.adsAllowed")
           : blockedCount > 0
-            ? blockedCount > 1
-              ? t("urlToast.trackersBlockedLabel", { count: blockedCount })
-              : t("urlToast.trackerBlockedLabel", { count: blockedCount })
+            ? t("urlToast.trackersBlockedLabel", { count: blockedCount })
             : t("urlToast.adsBlocked")}
       >
         <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
@@ -184,6 +181,7 @@
         <div
           id={screenshotMenuId}
           class="screenshot-menu screenshot-menu-portal float-surface float-popover"
+          out:popoverOut
           role="menu"
           tabindex="-1"
           aria-label={t("urlToast.screenshot")}
@@ -292,7 +290,7 @@
     transform: translateY(-50%) translateX(8px) scale(0.94);
     transition:
       opacity var(--motion-duration-normal) ease,
-      transform 260ms var(--motion-ease-spring);
+      transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .url-blocker-btn {
@@ -363,7 +361,7 @@
     transition:
       background var(--transition-fast),
       color var(--transition-fast),
-      transform 180ms var(--motion-ease-spring);
+      transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .url-action-btn:focus-visible {
@@ -396,7 +394,7 @@
   .lens {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .url-copy-btn:hover .link-half.end {

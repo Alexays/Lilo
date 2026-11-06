@@ -23,10 +23,6 @@ final class WKBackend: NSObject {
         set { flight.onUpdated = newValue }
     }
 
-    /// Called once a download has its DownloadItem row.
-    var onTracked: ((WKDownload, Int64) -> Void)?
-    /// Called for a download that never gets a row (save panel cancelled, insert failed): WebKit cancels it.
-    var onDropped: ((WKDownload) -> Void)?
     /// Called for a download that failed with resume data, with the failure, before it settles.
     var onResumableFailure: ((Int64, Error) -> Void)?
 
@@ -209,10 +205,7 @@ extension WKBackend: WKDownloadDelegate {
         item.mimeType = response.mimeType
         let suggested = await suggestedDestination(for: download, item: item, in: dir)
         guard let finalURL = await destination(for: suggested.url, from: await download.webView, prompts: suggested.prompts) else {
-            await MainActor.run {
-                pendingDestinations.remove(proposedURL.path)
-                onDropped?(download)
-            }
+            await MainActor.run { _ = pendingDestinations.remove(proposedURL.path) }
             return nil
         }
         item.filename = finalURL.lastPathComponent
@@ -224,7 +217,6 @@ extension WKBackend: WKDownloadDelegate {
             guard (try? store?.insert(&item)) != nil, let id = item.id else {
                 // Returning nil from decideDestination makes WebKit cancel silently, so leave a trail.
                 Self.logger.error("download dropped before tracking (store nil or insert failed), WebKit will cancel: \(finalURL.lastPathComponent, privacy: .private) from \(response.url?.absoluteString ?? "nil", privacy: .private)")
-                onDropped?(download)
                 return false
             }
             activeDownloads[download] = id
@@ -233,7 +225,6 @@ extension WKBackend: WKDownloadDelegate {
                 let page = webView.url.flatMap { ["http", "https"].contains($0.scheme) && $0.absoluteString != item.url ? $0.absoluteString : nil }
                 whereFroms[id] = [item.url] + (page.map { [$0] } ?? [])
             }
-            onTracked?(download, id)
             startObservingProgress(for: download)
             flight.begin(id, item)
             return true

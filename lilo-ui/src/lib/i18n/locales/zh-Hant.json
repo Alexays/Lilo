@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "立即更新",
-			"summary": "{lists} 份清單",
+			"summary": {
+				"one": "{count} 份清單",
+				"other": "{count} 份清單"
+			},
 			"updated": "更新於 {time}"
 		},
 		"extensionUpdates": {
@@ -605,7 +608,6 @@
 			"connect": "連接",
 			"copy": "拷貝設定",
 			"clientDescription": "將 Lilo 加入其 MCP 伺服器。",
-			"clientConnected": "Lilo 已在其 MCP 伺服器中。",
 			"revoke": "移除",
 			"status": {
 				"acting": "正在執行動作",
@@ -641,8 +643,10 @@
 			"clearData": "清除資料...",
 			"remove": "移除...",
 			"lastProfile": "最後一個個人檔案會保留：每個空間都需要一個。",
-			"extensionCount": "{count} 個延伸功能",
-			"extensionCountOne": "1 個延伸功能",
+			"extensionCount": {
+				"one": "{count} 個延伸功能",
+				"other": "{count} 個延伸功能"
+			},
 			"newProfile": "新增個人檔案...",
 			"newProfileDetail": "全新的 Cookie、登入狀態與延伸功能",
 			"namePlaceholder": "個人檔案名稱",
@@ -766,6 +770,7 @@
 		"ariaLabel": "分頁"
 	},
 	"bottomBar": {
+		"switchedTo": "已切換到 {name}",
 		"library": "下載項目與已封存的分頁",
 		"downloads": "下載項目",
 		"downloadsActiveCount": "下載項目，{count} 個進行中",
@@ -774,6 +779,10 @@
 		"signedInAs": "{space}，以 {profile} 登入"
 	},
 	"sidebar": {
+		"resize": "側邊欄寬度",
+		"movedToPosition": "已移到第 {position} 位，共 {count} 項",
+		"movedInto": "已移入 {name}",
+		"movedOutOf": "已移出 {name}",
 		"ariaLabel": "側邊欄"
 	},
 	"spaceBar": {
@@ -1335,17 +1344,23 @@
 		"navLabel": "程序管理員檢視",
 		"searchPlaceholder": "搜尋分頁",
 		"memoryAriaLabel": "記憶體用量",
-		"tabsCount": "{count} 個分頁",
-		"tabsCountOne": "1 個分頁",
+		"tabsCount": {
+			"one": "{count} 個分頁",
+			"other": "{count} 個分頁"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "其他 {count} 項",
 			"other": "其他 {count} 項"
 		},
-		"reclaim": "{count} 個隱藏分頁使用 {size}",
-		"reclaimOne": "1 個隱藏分頁使用 {size}",
-		"reclaimNoSize": "{count} 個隱藏分頁仍處於載入狀態",
-		"reclaimNoSizeOne": "1 個隱藏分頁仍處於載入狀態",
+		"reclaim": {
+			"one": "{count} 個隱藏分頁使用 {size}",
+			"other": "{count} 個隱藏分頁使用 {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} 個隱藏分頁仍處於載入狀態",
+			"other": "{count} 個隱藏分頁仍處於載入狀態"
+		},
 		"sleep": "進入睡眠",
 		"groupTabs": "分頁",
 		"groupSleeping": "睡眠中",
@@ -1387,16 +1402,21 @@
 	"urlToast": {
 		"pageActions": "頁面操作",
 		"reEnableBlocking": "重新啟用此網站的阻擋功能",
-		"trackerBlockedOnPage": "此網頁已阻擋 {count} 個追蹤器",
-		"trackersBlockedOnPage": "此網頁已阻擋 {count} 個追蹤器",
+		"trackersBlockedOnPage": {
+			"one": "此網頁已阻擋 {count} 個追蹤器",
+			"other": "此網頁已阻擋 {count} 個追蹤器"
+		},
 		"disableBlocking": "停用此網站的阻擋功能",
 		"adsAllowed": "已允許廣告",
-		"trackerBlockedLabel": "已阻擋 {count} 個追蹤器",
-		"trackersBlockedLabel": "已阻擋 {count} 個追蹤器",
+		"trackersBlockedLabel": {
+			"one": "已阻擋 {count} 個追蹤器",
+			"other": "已阻擋 {count} 個追蹤器"
+		},
 		"adsBlocked": "已阻擋廣告",
 		"extensionAlreadyInstalled": "已安裝延伸功能",
 		"installChromeExtension": "安裝此 Chrome 延伸功能",
 		"installed": "已安裝",
+		"installFailed": "無法安裝",
 		"install": "安裝",
 		"screenshot": "截圖",
 		"fullPage": "整個網頁",
@@ -1715,6 +1735,11 @@
 				"extensionsCount": "正在重新安裝延伸功能：{current}/{total}"
 			},
 			"partial": "部分資料無法匯入：{list}。稍後可從「設定」重試。",
+			"cause": {
+				"keychain": "鑰匙圈取用遭拒",
+				"locked": "檔案正在使用中，請結束瀏覽器後再試一次",
+				"access": "需要完整磁碟取用權限"
+			},
 			"profiles": "{browser} 個人檔案",
 			"kinds": "匯入內容",
 			"kind": {
@@ -1746,6 +1771,7 @@
 			"addNamed": "加入 {name}",
 			"adding": "正在加入...",
 			"added": "已加入",
+			"failed": "無法加入。請再試一次。",
 			"soon": "即將推出",
 			"managers": {
 				"bitwarden": "開放原始碼，在所有裝置上免費使用",
@@ -1911,12 +1937,11 @@
 		"No changes on this branch": "此分支沒有變更",
 		"Nothing differs from %@.": "與 %@ 沒有差異。",
 		"Show Uncommitted Changes": "顯示尚未提交的變更",
-		"1 file": "1 個檔案",
-		"%@ files": "%@ 個檔案",
+		"%@ files": {"one": "%@ 個檔案", "other": "%@ 個檔案"},
 		"against %@ from %@, uncommitted included": "與 %@（來自 %@）比較，包含尚未提交的變更",
 		"Binary file, not shown": "二進位檔案，不予顯示",
-		"%d lines folded. Click to show.": "已摺疊 %d 行。點按以顯示。",
-		"Generated file, %d lines folded. Click to show.": "產生的檔案，已摺疊 %d 行。點按以顯示。",
+		"%d lines folded. Click to show.": {"one": "已摺疊 %d 行。點按以顯示。", "other": "已摺疊 %d 行。點按以顯示。"},
+		"Generated file, %d lines folded. Click to show.": {"one": "產生的檔案，已摺疊 %d 行。點按以顯示。", "other": "產生的檔案，已摺疊 %d 行。點按以顯示。"},
 		"renamed from %@": "重新命名自 %@",
 		"Open in Split": "以分割顯示開啟",
 		"worktree": "工作樹",
@@ -1926,7 +1951,7 @@
 		"%@ wants to use your camera and microphone": "%@ 想要使用相機和麥克風",
 		"%@ wants to use your camera or microphone": "%@ 想要使用相機或麥克風",
 		"Open as Tab": "以分頁開啟",
-		"Not Secure": "不安全",
+		"Not Secure - %@": "不安全 - %@",
 		"Other Bookmarks (%@)": "其他書籤（%@）",
 		"Replay Onboarding": "重播初始設定",
 		"New Terminal Beside": "在旁邊新增終端機",
@@ -2064,6 +2089,13 @@
 		"Select an unpacked extension folder (must contain manifest.json)": "選擇未封裝的延伸功能資料夾（必須包含 manifest.json）",
 		"Couldn't load extension": "無法載入延伸功能",
 		"Another copy of %@ is already installed. Remove it to load this folder.": "已安裝 %@ 的另一個副本。請先移除它，再載入此資料夾。",
+		"manifest.json not found at %@": "在 %@ 找不到 manifest.json",
+		"Failed to parse manifest.json: %@": "無法解析 manifest.json：%@",
+		"Unsupported manifest version %ld; only MV3 is supported": "不支援資訊清單版本 %ld；僅支援 MV3",
+		"Required manifest field missing: %@": "資訊清單缺少必填欄位：%@",
+		"Failed to download extension: %@": "無法下載延伸功能：%@",
+		"Invalid extension archive: %@": "延伸功能封存檔無效：%@",
+		"The extension's background did not respond.": "延伸功能的背景沒有回應。",
 		"Open Popup": "開啟彈出式視窗",
 		"History": "歷史記錄",
 		"Reopen Last Closed Tab": "重新開啟上一個關閉的分頁",
@@ -2085,6 +2117,11 @@
 		"Its tabs, history and downloads are unavailable this session.": "此工作階段無法使用其分頁、歷史記錄與下載項目。",
 		"Lilo couldn't load its settings": "Lilo 無法載入設定",
 		"Default settings are in use for this session.": "此工作階段將使用預設設定。",
+		"Lilo couldn't save your tabs": "Lilo 無法儲存你的分頁",
+		"Lilo couldn't save its settings": "Lilo 無法儲存其設定",
+		"Lilo couldn't save a conversation": "Lilo 無法儲存一則對話",
+		"Recent changes may be missing the next time you open Lilo. Check that your disk has free space.": "下次打開 Lilo 時，最近的變更可能會遺失。請檢查磁碟是否有可用空間。",
+		"%@\n\nError: %@": "%@\n\n錯誤：%@",
 		"Continue": "繼續",
 		"Delete": "刪除",
 		"Quit": "結束",
@@ -2127,19 +2164,16 @@
 		"The Mac is too hot.": "Mac 溫度過高。",
 		"Commands kept the Mac awake for the maximum duration.": "指令已讓 Mac 保持喚醒達最長時間。",
 		"While the lid was closed": "上蓋闔上期間",
-		"%d commands finished": "%d 個指令已完成",
-		"%d wait for your answer, the oldest for %@": "%d 個正在等待你的回應，最早一個已等待 %@",
+		"%d commands finished": {"one": "%d 個指令已完成", "other": "%d 個指令已完成"},
+		"%d wait for your answer, the oldest for %@": {"one": "%d 個正在等待你的回應，最早一個已等待 %@", "other": "%d 個正在等待你的回應，最早一個已等待 %@"},
 		"battery from %d%% to %d%%": "電池電量從 %d%% 變成 %d%%",
 		"Show Next Waiting Terminal": "顯示下一個等待中的終端機",
 		"Downloads": "下載項目",
 		"Quit Lilo?": "要結束 Lilo 嗎？",
-		"A terminal is still running a command": "有一個終端機仍在執行指令",
-		"%d terminals are still running a command": "%d 個終端機仍在執行指令",
-		" and %d more": " 以及其他 %d 個",
-		"It will be stopped.": "該指令將會停止。",
-		"They will be stopped.": "這些指令將會停止。",
-		"A download is in progress and will be paused until Lilo opens again.": "有一個下載項目正在進行，將暫停直到 Lilo 再次開啟。",
-		"%d downloads are in progress and will be paused until Lilo opens again.": "%d 個下載項目正在進行，將暫停直到 Lilo 再次開啟。",
+		"%d terminals are still running a command. They will be stopped.": {"one": "%d 個終端機仍在執行指令。該指令將會停止。", "other": "%d 個終端機仍在執行指令。指令將會停止。"},
+		"%d terminals are still running a command (%@). They will be stopped.": {"one": "%d 個終端機仍在執行指令（%@）。該指令將會停止。", "other": "%d 個終端機仍在執行指令（%@）。指令將會停止。"},
+		"%@ and %d more": {"one": "%@ 以及其他 %d 個", "other": "%@ 以及其他 %d 個"},
+		"%d downloads are in progress and will be paused until Lilo opens again.": {"one": "%d 個下載項目正在進行，將暫停直到 Lilo 再次開啟。", "other": "%d 個下載項目正在進行，將暫停直到 Lilo 再次開啟。"},
 		"Sign In": "登入",
 		"Install": "安裝",
 		"Install %@?": "要安裝 %@ 嗎？",
@@ -2153,7 +2187,7 @@
 		"A command is still running in it and will be stopped.": "其中仍有指令正在執行，將會停止。",
 		"Close": "關閉",
 		"New Terminal Tab": "新增終端機分頁",
-		"Close %d terminals?": "要關閉 %d 個終端機嗎？",
+		"Close %d terminals?": {"one": "要關閉 %d 個終端機嗎？", "other": "要關閉 %d 個終端機嗎？"},
 		"Commands are still running in them and will be stopped.": "其中仍有指令正在執行，將會停止。",
 		"The terminal could not start.": "無法啟動終端機。",
 		"Close the tab and try again.": "請關閉分頁後再試一次。",
@@ -2186,6 +2220,7 @@
 		"Delete Folder": "刪除資料夾",
 		"Edit Folder": "編輯資料夾",
 		"Edit...": "編輯...",
+		"Back to Home Page": "返回首頁",
 		"New Folder": "新增資料夾",
 		"Home": "首頁",
 		"Default": "預設",
@@ -2277,9 +2312,7 @@
 		"Added Lilo to Codex": "已將 Lilo 加入 Codex",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo 無法讀取 %@：請自行加入此伺服器：%@",
 		"Stop Agents": "停止代理程式",
-		"Delete %@ and %@?": "要刪除 %@ 和 %@ 嗎？",
-		"1 tab": "1 個分頁",
-		"%d tabs": "%d 個分頁",
+		"Delete %@ and its %d tabs?": {"one": "要刪除 %@ 及其 %d 個分頁嗎？", "other": "要刪除 %@ 及其 %d 個分頁嗎？"},
 		"This cannot be undone.": "此動作無法還原。",
 		"Its tabs stay in the sidebar.": "其分頁會保留在側邊欄中。",
 		"Agent": "代理程式",
@@ -2528,7 +2561,6 @@
 			"restoreToHere": "回復到此處",
 			"restoreConfirm": "要將專案檔案回復到這則訊息時的狀態嗎？",
 			"restore": "回復",
-			"reviewChanges": "在「變更」中檢閱",
 			"undo": "還原",
 			"keep": "保留",
 			"undone": "已還原",
@@ -2612,7 +2644,6 @@
 			"agent": "代理程式",
 			"noAgents": "沒有代理程式",
 			"project": "專案",
-			"chooseProject": "選擇專案",
 			"chooseFolder": "選擇資料夾...",
 			"noFolder": "無檔案夾",
 			"noFolderDetail": "代理程式在自己的檔案夾中工作",
@@ -2623,7 +2654,14 @@
 			"untitled": "新對話",
 			"working": "工作中",
 			"failed": "因錯誤而停止",
-			"changes": "新增 {added} 行，刪除 {removed} 行",
+			"linesAdded": {
+				"one": "新增 {count} 行",
+				"other": "新增 {count} 行"
+			},
+			"linesRemoved": {
+				"one": "刪除 {count} 行",
+				"other": "刪除 {count} 行"
+			},
 			"pages": {
 				"one": "{count} 個頁面",
 				"other": "{count} 個頁面"

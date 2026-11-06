@@ -5,7 +5,7 @@
   import { MOTION } from "../../lib/motion/timings";
   import { t } from "../../lib/i18n/state.svelte";
   import type { FileDiff } from "./conversationModel";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import { lineDiff } from "./threadView";
 
   interface Props {
@@ -228,7 +228,7 @@
     grid-template-rows: 0fr;
     opacity: 0;
     transition:
-      grid-template-rows 150ms var(--motion-ease-spring),
+      grid-template-rows var(--motion-duration-fast) var(--motion-ease-spring),
       opacity var(--motion-duration-fast) ease;
   }
 

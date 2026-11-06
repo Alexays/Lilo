@@ -4,11 +4,13 @@
   import { springEase } from "../../lib/motion/spring";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import PanelHeader from "../ui/PanelHeader.svelte";
+  import UiButton from "../ui/UiButton.svelte";
+  import UiInsetList from "../ui/UiInsetList.svelte";
+  import UiSplitButton from "../ui/UiSplitButton.svelte";
   import InkStylePanel from "./InkStylePanel.svelte";
   import ToolIcon from "./ToolIcon.svelte";
   import { SHARED_TOOL_KEYS } from "../../lib/ink";
   import { tooltip } from "../../lib/tooltip";
-  import { menuKeys } from "../../lib/actions/menuKeys";
   import { dndItem, dndZone } from "../../lib/dndEngine/action";
   import type { DndActiveDrag } from "../../lib/dndEngine/store.svelte";
   import type { DndItem } from "../../lib/dndEngine/types";
@@ -58,10 +60,6 @@
     ? { color: selected.color, width: selected.strokeWidth, fill: selected.fill ?? "none", dash: selected.dash ?? "solid", heads: selected.heads ?? "end" }
     : screenshotEditor.style);
 
-  let saveMenuOpen = $state(false);
-  let saveGroupEl = $state<HTMLElement>();
-  let saveChevronEl = $state<HTMLElement>();
-
   // Live projection (same engine as tabs/spaces): during the drag the layers render in the
   // projected order so the list reorders and flips live, and the drop commits it. The *real* row
   // moves (it never unmounts) so its dndItem action stays alive through the drop.
@@ -105,29 +103,12 @@
     draggingLayerId = null;
   }
 
-  function onWindowPointerDown(e: PointerEvent): void {
-    if (saveMenuOpen && saveGroupEl && !saveGroupEl.contains(e.target as Node)) {
-      saveMenuOpen = false;
-    }
-  }
-
-  // Capture phase: the editor's own Escape (cancel the whole capture) must not see this one.
-  function onWindowKeydown(e: KeyboardEvent): void {
-    if (e.target instanceof Element && e.target.closest("dialog[open]")) return;
-    if (!saveMenuOpen || e.key !== "Escape") return;
-    e.stopPropagation();
-    saveMenuOpen = false;
-    if (saveGroupEl?.contains(document.activeElement)) saveChevronEl?.focus();
-  }
-
   // Leaving the panel (e.g. another panel opens) tears down the screenshot session
   // so the content overlay never orphans. close() is a no-op if already closed.
   onDestroy(() => {
     if (screenshotEditor.open) screenshotEditor.close();
   });
 </script>
-
-<svelte:window onpointerdown={onWindowPointerDown} onkeydowncapture={onWindowKeydown} />
 
 <div class="panel-shell screenshot-panel">
   <PanelHeader title={t("screenshot.title")} onclose={() => screenshotEditor.cancel()}>
@@ -142,9 +123,8 @@
   </PanelHeader>
 
   <div class="screenshot-panel-body">
-    <div class="card">
-      <p class="group-label">{t("screenshot.tools")}</p>
-      <div class="tool-grid" role="toolbar" aria-label={t("screenshot.tools")}>
+    <UiInsetList title={t("screenshot.tools")} boxed={false}>
+      <div class="card tool-grid" role="toolbar" aria-label={t("screenshot.tools")}>
         {#each tools as tool (tool.kind)}
           <button
             class="tool"
@@ -156,7 +136,7 @@
           ><ToolIcon kind={tool.kind} /></button>
         {/each}
       </div>
-    </div>
+    </UiInsetList>
 
     <div class="card ink-card">
       <InkStylePanel
@@ -171,12 +151,11 @@
       />
     </div>
 
-    <div class="card">
-      <p class="group-label">{t("screenshot.layers")}</p>
+    <UiInsetList title={t("screenshot.layers")} boxed={false}>
       {#if layers.length === 0}
-        <p class="layers-empty">{t("screenshot.noAnnotations")}</p>
+        <p class="card layers-empty">{t("screenshot.noAnnotations")}</p>
       {:else}
-        <div class="layer-list" use:dndZone={{ id: LAYER_ZONE, axis: "vertical", getItems: () => layerZoneItems.map((x) => x.item), canResolve: (ctx) => ctx.dragSource.kind === "layer" }}>
+        <div class="card layer-list" use:dndZone={{ id: LAYER_ZONE, axis: "vertical", getItems: () => layerZoneItems.map((x) => x.item), canResolve: (ctx) => ctx.dragSource.kind === "layer" }}>
           {#each layerZoneItems as { item, ann } (item.id)}
             <div
               class="layer"
@@ -209,30 +188,25 @@
           {/each}
         </div>
       {/if}
-    </div>
+    </UiInsetList>
   </div>
 
   <div class="screenshot-panel-actions">
-    <div class="save-group" bind:this={saveGroupEl}>
-      <button class="btn primary" disabled={!screenshotEditor.captured} use:tooltip={`${t("common.save")} (⌘S)`} onclick={() => screenshotEditor.save()}>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7l3 3v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M5 3v3h5" /><path d="M5 13v-3h6v3" /></svg>
-        <span>{t("common.save")}</span>
-      </button>
-      <button class="btn primary chevron" disabled={!screenshotEditor.captured} aria-label={t("screenshot.saveOptions")} aria-haspopup="menu" aria-expanded={saveMenuOpen} bind:this={saveChevronEl} use:tooltip={t("screenshot.saveOptions")} onclick={() => (saveMenuOpen = !saveMenuOpen)}>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4" /></svg>
-      </button>
-      {#if saveMenuOpen}
-        <div class="save-menu" role="menu" aria-label={t("screenshot.saveOptions")} {@attach menuKeys} {@attach (node) => node.querySelector("button")?.focus()}>
-          <button role="menuitem" onclick={() => { saveMenuOpen = false; screenshotEditor.saveAs(); }}>{t("screenshot.saveAs")}</button>
-        </div>
-      {/if}
+    <div class="action" use:tooltip={`${t("common.save")} (⌘S)`}>
+      <UiSplitButton
+        menuLabel={t("screenshot.saveOptions")}
+        variants={[{ label: t("screenshot.saveAs"), onclick: () => screenshotEditor.saveAs() }]}
+        disabled={!screenshotEditor.captured}
+        onclick={() => screenshotEditor.save()}
+      >{t("common.save")}</UiSplitButton>
     </div>
     <div class="secondary-row">
-      <button class="btn with-icon" disabled={!screenshotEditor.captured} use:tooltip={`${t("screenshot.copyToClipboard")} (⌘C)`} onclick={() => screenshotEditor.copy()}>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="9" rx="1.5" /><path d="M3 11V3a1 1 0 0 1 1-1h6" /></svg>
-        <span>{t("common.copy")}</span>
-      </button>
-      <button class="btn ghost" use:tooltip={t("screenshot.cancelShortcut")} onclick={() => screenshotEditor.cancel()}>{t("common.cancel")}</button>
+      <div class="action" use:tooltip={`${t("screenshot.copyToClipboard")} (⌘C)`}>
+        <UiButton disabled={!screenshotEditor.captured} onclick={() => screenshotEditor.copy()}>{t("common.copy")}</UiButton>
+      </div>
+      <div class="action" use:tooltip={t("screenshot.cancelShortcut")}>
+        <UiButton variant="ghost" onclick={() => screenshotEditor.cancel()}>{t("common.cancel")}</UiButton>
+      </div>
     </div>
   </div>
 </div>
@@ -244,14 +218,14 @@
   .hdr-ctl svg { transform: translateY(-1px); }
   .hdr-ctl:disabled { opacity: var(--disabled-opacity); }
 
-  .card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
-  .group-label { margin: 0; font-size: var(--font-size-2xs); letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-primary); }
+  .card { margin: 0; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; }
 
   .ink-card { color: var(--text-primary); }
   .tool-grid { display: flex; flex-wrap: wrap; gap: 4px; }
   .tool { width: 34px; height: 34px; border-radius: var(--radius-md); border: none; display: grid; place-items: center; color: var(--text-primary); background: var(--bg-secondary); cursor: pointer; }
   .tool:hover { background: var(--bg-tertiary); }
   .tool.active { background: var(--accent); color: var(--accent-text); }
+  .tool:focus-visible { outline: var(--focus-outline); outline-offset: 1px; }
 
 
   .layers-empty { font-size: var(--font-size-xs); color: var(--text-muted); margin: 0; }
@@ -277,20 +251,11 @@
 
   .screenshot-panel-actions { margin-top: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); }
   .secondary-row { display: flex; gap: 8px; }
-  .secondary-row .btn { flex: 1; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); padding: 10px; border-radius: var(--radius-md); border: none; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; text-align: center; }
-  .btn svg { flex: none; }
-  .btn:hover { background: var(--bg-tertiary); }
-  .btn.primary { background: var(--accent); color: var(--accent-text); }
-  .btn.primary:hover { filter: brightness(1.05); background: var(--accent); }
-  .btn.ghost { background: transparent; color: var(--text-muted); }
-  .btn.ghost:hover { background: var(--bg-hover); }
-  .btn:disabled { opacity: var(--disabled-opacity); cursor: default; pointer-events: none; }
-
-  .save-group { position: relative; display: flex; gap: 1px; }
-  .save-group .primary:first-child { flex: 1; border-radius: var(--radius-md) 0 0 var(--radius-md); }
-  .save-group .chevron { border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 0 12px; display: flex; align-items: center; justify-content: center; }
-  .save-menu { position: absolute; bottom: calc(100% + 6px); left: 0; right: 0; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 4px; box-shadow: var(--shadow-md); }
-  .save-menu button { width: 100%; white-space: nowrap; border: none; background: transparent; color: var(--text-primary); padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm); text-align: left; }
-  .save-menu button:hover { background: var(--bg-hover); }
+  .action { display: flex; flex: 1; min-width: 0; }
+  /* The panel takes the Space's tint, where the muted title falls under the text contrast bar. */
+  .screenshot-panel-body :global(.ui-inset-list-title) { color: var(--text-primary); }
+  .action :global(.ui-button) { flex: 1; }
+  .action :global(.ui-split-button) { flex: 1; height: var(--control-height-md); border-radius: var(--radius-md); }
+  .action :global(.ui-split-button .main) { flex: 1; justify-content: center; font-size: var(--font-size-md); border-radius: var(--radius-md) 0 0 var(--radius-md); }
+  .action :global(.ui-split-button .chevron) { width: 28px; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
 </style>

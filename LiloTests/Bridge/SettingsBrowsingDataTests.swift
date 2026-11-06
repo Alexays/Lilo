@@ -29,8 +29,7 @@ final class SettingsBrowsingDataTests: XCTestCase {
         let handler = SettingsBridgeHandler(
             settingsStore: settingsStore, sitePermissionStoreProvider: { sitePermissions },
             zoomStoreProvider: { nil }, historyStoreProvider: { history }, extensionRegistryProvider: { nil },
-            dataStoreProvider: { dataStore }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
-            forceLifecycleTrimHandler: {}, bridgeRouter: router
+            dataStoreProvider: { dataStore }, context: nil, bridgeRouter: router
         )
         func send(_ action: String, _ payload: [String: Any] = [:]) async throws {
             _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": payload])))

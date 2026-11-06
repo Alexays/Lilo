@@ -525,8 +525,14 @@ export function nativeMessagingAsChrome(runtime: any): Record<PropertyKey, unkno
         },
       };
       port.onMessage.addListener((message: any) => {
-        if (typeof message?.liloNativePortError === 'string') error = message.liloNativePortError;
-        else served.onMessage.dispatch(message, served);
+        if (typeof message?.liloNativePortError === 'string') {
+          error = message.liloNativePortError;
+          return;
+        }
+        // WebKit counts only the worker's own posts as port activity: answering each host message, which Lilo drops,
+        // keeps the worker, and so its host, running while the host talks.
+        if (!disconnected) port.postMessage({ liloNativePortKeepAlive: true });
+        served.onMessage.dispatch(message, served);
       });
       port.onDisconnect.addListener(() => {
         disconnected = true;

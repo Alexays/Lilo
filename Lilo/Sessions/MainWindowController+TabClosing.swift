@@ -139,7 +139,7 @@ extension MainWindowController {
             return tab
         case .savedTab(let stored):
             guard let spaceId = tabManager.currentSpaceId else { return nil }
-            if stored.kind == .agent { return reopenConversation(stored, spaceId: spaceId) }
+            if stored.kind == .agent { return reopenConversation(stored, spaceId: spaceId, folderId: entry.parentFolderId) }
             let tab = Tab(stored, spaceId: spaceId, groupId: nil)
             let section = entry.section ?? .forTab(isBookmarked: stored.isBookmarked, isPinned: stored.isPinned)
             do {

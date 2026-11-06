@@ -140,7 +140,14 @@ final class MenuIconTests: XCTestCase {
         XCTAssertEqual(spaces.count, 1)
         assertIcons(tab, plain: spaces.union([folder.name]))
 
-        assertIcons(try popUp { window.showTabContextMenu(tabId: pinned.id.uuidString, anchorRect: nil) }, plain: spaces.union([folder.name]))
+        let home = try popUp { window.showTabContextMenu(tabId: pinned.id.uuidString, anchorRect: nil) }
+        assertIcons(home, plain: spaces.union([folder.name]))
+        XCTAssertFalse(tab.items.contains { $0.title == "Back to Home Page".localized }, "an open tab has no home page")
+        XCTAssertFalse(home.items.contains { $0.title == "Back to Home Page".localized }, "a pinned tab on its home page is already there")
+        window.applyContextMenuStateCommands([.setTabHomeURL(spaceId: spaceId, tabId: pinned.id, url: URL(string: "https://home.example/"))])
+        let away = try popUp { window.showTabContextMenu(tabId: pinned.id.uuidString, anchorRect: nil) }
+        XCTAssertTrue(away.items.contains { $0.title == "Back to Home Page".localized }, "a pinned tab away from home goes back from the keyboard")
+        assertIcons(away, plain: spaces.union([folder.name]))
         assertIcons(try popUp { window.showFolderContextMenu(folderId: folder.id.uuidString, anchorRect: nil) })
     }
 

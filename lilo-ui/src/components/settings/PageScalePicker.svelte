@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
 
   // The default page zoom, drawn as a page at that scale, or the minimum font size, drawn as text at that size.
@@ -11,7 +11,7 @@
   const key = $derived(kind === "zoom" ? "defaultZoom" : "minimumFontSize");
   const options = $derived(kind === "zoom" ? ZOOM_LEVELS : MINIMUM_FONT_SIZES);
   const selected = $derived(getSetting(key, kind === "zoom" ? "1.0" : "0"));
-  const percentFormat = $derived(new Intl.NumberFormat(getLocale(), { style: "percent" }));
+  const percentFormat = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "percent" }));
 
   function label(option: string): string {
     if (kind === "zoom") return percentFormat.format(Number(option));

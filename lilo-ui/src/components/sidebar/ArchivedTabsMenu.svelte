@@ -1,7 +1,7 @@
 <!-- The tabs the idle sweep or Clear archived in the last day, one click from coming back; the command bar keeps the rest.
      Running and failed downloads sit on top when the downloads UI is on: both share the sidebar's bottom-left slot. -->
 <script lang="ts">
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, getLocale, t } from "../../lib/i18n/state.svelte";
   import { downloadActions, tabActions } from "../../lib/bridge/actions";
   import type { BridgeArchivedTab, BridgeDownloadSnapshot } from "../../lib/bridge/protocol";
   import { progress } from "../../lib/downloadFormat";
@@ -22,7 +22,7 @@
   } = $props();
 
   const now = Date.now();
-  const format = new Intl.RelativeTimeFormat(getLocale(), { numeric: "auto", style: "narrow" });
+  const format = new Intl.RelativeTimeFormat(getFormatLocale(), { numeric: "auto", style: "narrow" });
 
   function age(archivedAt: number): string {
     const minutes = Math.round((archivedAt - now) / 60_000);
@@ -97,7 +97,7 @@
                 <span class="row-meta">{Math.round(progress(download))}%</span>
               </span>
             {:else if download.state === "complete" && !download.error}
-              <span class="row-meta detail">{metaLine(download, getLocale(), now).detail}</span>
+              <span class="row-meta detail">{metaLine(download, getLocale(), getFormatLocale(), now).detail}</span>
             {:else}
               <span class="row-meta failed">{t("downloadsPanel.stateFailed")}</span>
             {/if}
@@ -244,7 +244,7 @@
     height: 100%;
     background: var(--accent);
     transform-origin: left;
-    transition: transform 0.3s ease;
+    transition: transform var(--motion-duration-slow) ease;
   }
 
   .row-progress.paused .row-progress-fill {

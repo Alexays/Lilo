@@ -1,4 +1,4 @@
-// How the open tab list is laid out: site stacks, project trays, and the agents and terminals trays.
+// How the open tab list is laid out: site stacks, project trays, the agents and terminals trays, and its scroll window.
 
 /** A site's loose tabs stack from this many, and stay stacked until one is left. */
 export const STACK_MIN = 3;
@@ -100,6 +100,41 @@ export function arrangeRows(
 	return rows;
 }
 
+/** `groups`, where a group holding the very same members as in `previous` gets its previous array
+ *  back: what renders it then sees nothing changed. */
+export function keepSameGroups<T>(groups: Map<string, T[]>, previous: ReadonlyMap<string, T[]>): Map<string, T[]> {
+	for (const [key, members] of groups) {
+		const last = previous.get(key);
+		if (last && sameMembers(members, last)) groups.set(key, last);
+	}
+	return groups;
+}
+
+function sameMembers<T>(next: readonly T[], last: readonly T[]): boolean {
+	return next.length === last.length && next.every((member, index) => member === last[index]);
+}
+
+export type StackEntry<T> = { name: string; tabs: T[] };
+
+/** Each stack's name and tabs. A stack holding the very same tabs keeps its previous entry, and
+ *  one whose tabs' titles did not change keeps its name. */
+export function stackEntries<T extends { title: string }>(
+	groups: ReadonlyMap<string, T[]>,
+	previous: ReadonlyMap<string, StackEntry<T>>,
+): Map<string, StackEntry<T>> {
+	const entries = new Map<string, StackEntry<T>>();
+	for (const [host, tabs] of groups) {
+		const last = previous.get(host);
+		if (last && sameMembers(tabs, last.tabs)) {
+			entries.set(host, last);
+			continue;
+		}
+		const sameTitles = last && tabs.length === last.tabs.length && tabs.every((tab, index) => tab.title === last.tabs[index].title);
+		entries.set(host, { name: sameTitles ? last.name : stackName(tabs.map((tab) => tab.title), host), tabs });
+	}
+	return entries;
+}
+
 // Space-padded bars, dots and dashes, or a colon: what sites put between a page's title and their name.
 const SEPARATOR = /(\s+[|·–—-]\s+|:\s+)/;
 
@@ -131,4 +166,44 @@ export function strippedTitle(title: string, name: string): string {
 	if (parts[parts.length - 1].trim() === name) return parts.slice(0, -2).join("").trim() || title;
 	if (parts[0].trim() === name) return parts.slice(2).join("").trim() || title;
 	return title;
+}
+
+/** The gap between two rows, mirroring --sidebar-tab-row-gap. */
+export const VIRTUAL_ROW_GAP = 2;
+
+export type WindowRow<T> = { kind: "item"; item: T; top: number } | { kind: "spacer"; key: string; height: number };
+
+/** Rows stacked down from `top`: those outside [minY, maxY] and not kept fold into spacers. */
+export function windowRows<T>(
+	items: readonly T[],
+	top: number,
+	minY: number,
+	maxY: number,
+	heightOf: (item: T) => number,
+	keep: (item: T) => boolean,
+): WindowRow<T>[] {
+	const rows: WindowRow<T>[] = [];
+	let hiddenHeight = 0;
+	let hiddenCount = 0;
+	let spacers = 0;
+	const flush = () => {
+		if (hiddenCount === 0) return;
+		// The list's gap supplies the gaps around a spacer: it only carries the hidden rows and the gaps between them.
+		rows.push({ kind: "spacer", key: `spacer-${spacers++}`, height: hiddenHeight + (hiddenCount - 1) * VIRTUAL_ROW_GAP });
+		hiddenHeight = 0;
+		hiddenCount = 0;
+	};
+	for (const item of items) {
+		const height = heightOf(item);
+		if ((top + height >= minY && top <= maxY) || keep(item)) {
+			flush();
+			rows.push({ kind: "item", item, top });
+		} else {
+			hiddenHeight += height;
+			hiddenCount += 1;
+		}
+		top += height + VIRTUAL_ROW_GAP;
+	}
+	flush();
+	return rows;
 }

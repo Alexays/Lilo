@@ -44,3 +44,12 @@ test("the same message twice in a row is spoken again", async ({ page }) => {
 
 	await expect.poll(() => announcer(page).textContent()).not.toBe(first);
 });
+
+test("a Space switch is announced, the first Space shown is not", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await expect(page.locator(".sidebar-layout")).toBeVisible();
+	await expect(announcer(page)).toHaveCount(0);
+
+	await page.locator('[data-space-dnd-id="space-2"] .space-icon-btn').click();
+	await expect(announcer(page)).toHaveText("Switched to Play");
+});

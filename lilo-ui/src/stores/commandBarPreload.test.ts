@@ -6,6 +6,9 @@ import { tab } from "./testFixtures";
 import { freshStores, stubBridgeWindow } from "./testHarness";
 
 async function withBar(settings: Record<string, string> = {}) {
+	// In the test, not a beforeEach: tests share one process, and a top-level hook runs around every file's tests.
+	mock.timers.reset();
+	mock.timers.enable({ apis: ["setTimeout"] });
 	const sent = stubBridgeWindow({ document: true });
 	const loadStore = await freshStores();
 	const tabs = await loadStore("/src/stores/tabs.svelte.ts");
@@ -43,7 +46,6 @@ const video = (visitCount: number) => ({
 	id: "1", title: "Videos", url: "https://www.videos.example/", visitCount, lastVisitedAt: Date.now(),
 });
 
-test.beforeEach(() => mock.timers.enable({ apis: ["setTimeout"] }));
 test.afterEach(() => mock.timers.reset());
 
 test("a site visited often preloads once typing settles, and is dropped when the bar closes", async () => {

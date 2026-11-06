@@ -28,8 +28,9 @@ extension MainWindowController {
         }
 
         // Moving a private space to another profile would turn it into a persistent one and write
-        // its tabs to the target profile's database.
-        guard !sourceSpace.isPrivate else {
+        // its tabs to the target profile's database. A space whose saved state could not be read
+        // would have that row deleted for the empty state shown in its place.
+        guard !sourceSpace.isPrivate, !context.unreadableSpaceIds.contains(spaceId) else {
             bridgeRouter.send(event: "spaceUpdated", data: sourceSpace.bridgeData)
             return
         }
@@ -278,13 +279,15 @@ extension MainWindowController {
             return
         }
 
-        // Private space states never touch disk; a move between a private and a normal space only
-        // persists the normal side.
-        if sourceSpace.isPrivate || targetSpace.isPrivate {
-            if !sourceSpace.isPrivate {
+        // Private space states never touch disk, nor do spaces whose saved state could not be read: a move
+        // involving one only persists the other side.
+        let persistsSource = !sourceSpace.isPrivate && !context.unreadableSpaceIds.contains(sourceSpaceId)
+        let persistsTarget = !targetSpace.isPrivate && !context.unreadableSpaceIds.contains(targetSpaceId)
+        if !persistsSource || !persistsTarget {
+            if persistsSource {
                 try coordinator.persistSpaceTabState(sourceState.state, spaceId: sourceSpaceId, inProfile: sourceSpace.profileId)
             }
-            if !targetSpace.isPrivate {
+            if persistsTarget {
                 try coordinator.persistSpaceTabState(targetState.state, spaceId: targetSpaceId, inProfile: targetSpace.profileId)
             }
         } else {
@@ -390,7 +393,7 @@ extension MainWindowController {
             spaceManager.setActiveTab(previousActiveTabId, forSpace: oldSpaceId)
             // Private spaces leave no trace on disk. Caching the runtime leaves the store's durable
             // tree as is, so only the active tab can differ from the state it holds.
-            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true,
+            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true, !context.unreadableSpaceIds.contains(oldSpaceId),
                var state = context.browserState.spaceTabState(forSpace: oldSpaceId) {
                 state.activeTabId = restorableActiveTabId(preferred: previousActiveTabId, in: inactiveRuntime.tabs)
                 profileContext?.sessionPersistence?.saveSpaceTabStateAsync(state, spaceId: oldSpaceId) { [weak self] activeTabId, spaceId in
@@ -425,6 +428,9 @@ extension MainWindowController {
 
         let previousSpaceId = tabManager.currentSpaceId
         let previousActiveTabId = tabManager.activeOpenTabId
+        // A private space lists its own downloads, so entering or leaving one (a deleted space may have been one) replaces the list.
+        let swapsDownloads = previousSpaceId != spaceId
+            && (targetSpace.isPrivate || previousSpaceId.map { spaceManager.space(with: $0)?.isPrivate != false } == true)
 
         // Capture the leaving space's interaction states while its runtime is still live (we can only
         // read live engine state for the current space). The relaunch / re-entry path restores them.
@@ -449,6 +455,9 @@ extension MainWindowController {
 
         spaceManager.activeSpaceId = spaceId
         tabManager.currentSpaceId = spaceId
+        if swapsDownloads {
+            bridgeRouter.send(event: "downloadsSnapshot", data: DownloadBridgeHandler.snapshot(of: downloadStore, manager: context.downloadManager))
+        }
         recentSpaceIds.removeAll { $0 == spaceId }
         recentSpaceIds.insert(spaceId, at: 0)
         // The frame takes the color the chrome reports for the space it shows: deriving it here too
@@ -477,7 +486,7 @@ extension MainWindowController {
             // Store snapshots are sanitized at ingest (restoredSpaceSnapshot); cached ones only
             // ever round-trip the in-memory store, so activation trusts them as-is.
             let restoredTabs = projection.tabs
-            faviconCoordinator.warm(from: restoredTabs)
+            faviconCoordinator.warm(from: restoredTabs, partition: targetSpace.dataStoreId)
             let restoredIds = Set(restoredTabs.map(\.id))
             let restoredEngines = snapshot.engines.filter { restoredIds.contains($0.key) }
             let restoredTabAdapters = snapshot.tabAdapters.filter { restoredIds.contains($0.key) }

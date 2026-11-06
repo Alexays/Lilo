@@ -173,3 +173,18 @@ test("with more Spaces than the bar holds, every tile stays reachable and clear 
 	}));
 	await expect(page.locator(`[data-space-dnd-id="space-10"] .space-icon-btn`)).toBeInViewport({ ratio: 1 });
 });
+
+test("a Space icon says which Space is shown, moves with Option-arrows and opens its menu with Shift-F10", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const icon = page.locator(`[data-space-dnd-id="${SPACE_1}"] .space-icon-btn`);
+	await expect(icon).toHaveAttribute("aria-current", "true");
+	await expect(page.locator(`[data-space-dnd-id="${SPACE_2}"] .space-icon-btn`)).not.toHaveAttribute("aria-current");
+
+	await icon.focus();
+	await page.keyboard.press("Alt+ArrowRight");
+	expect((await sentCommands(page)).filter((command) => command.action === "moveSpace").at(-1)?.payload).toEqual({ id: SPACE_1, toIndex: 1 });
+
+	await icon.focus();
+	await page.keyboard.press("Shift+F10");
+	expect((await sentCommands(page)).filter((command) => command.action === "showSidebarContextMenu").at(-1)?.payload).toMatchObject({ spaceId: SPACE_1 });
+});

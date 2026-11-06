@@ -31,7 +31,7 @@ final class ProfileBridgeHandler: BridgeHandler {
             do {
                 _ = try profileManager.createProfile(name: message.string("name", default: "New Profile"), color: message.string("color"))
             } catch {
-                Self.logger.error("createProfile failed: \(error.localizedDescription)")
+                Self.logger.error("createProfile failed: \(error.localizedDescription, privacy: .public)")
             }
 
         case "deleteProfile":
@@ -52,7 +52,7 @@ final class ProfileBridgeHandler: BridgeHandler {
                     }
                 }
                 try profileManager.deleteProfile(id: id, successor: successor)
-            } catch { Self.logger.error("deleteProfile failed: \(error.localizedDescription)") }
+            } catch { Self.logger.error("deleteProfile failed: \(error.localizedDescription, privacy: .public)") }
 
         case "updateProfile":
             guard let id = message.uuid("id") else { break }
@@ -62,13 +62,13 @@ final class ProfileBridgeHandler: BridgeHandler {
                     if let name { profile.name = name }
                     if let color { profile.color = color }
                 }
-            } catch { Self.logger.error("updateProfile failed: \(error.localizedDescription)") }
+            } catch { Self.logger.error("updateProfile failed: \(error.localizedDescription, privacy: .public)") }
 
         case "getProfileStats":
             do {
                 let counts = try await profileManager.extensionCounts()
                 windowController?.bridgeRouter.send(event: "profileStats", data: ["extensionCounts": counts])
-            } catch { Self.logger.error("getProfileStats failed: \(error.localizedDescription)") }
+            } catch { Self.logger.error("getProfileStats failed: \(error.localizedDescription, privacy: .public)") }
 
         default:
             break

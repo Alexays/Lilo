@@ -42,8 +42,10 @@ let _pending = $state.raw<Record<string, PendingEntry>>({});
 let _errors = $state.raw<Record<string, boolean>>({});
 // Updates download a package, far longer than the pending timeout: they settle only on the native ack.
 let _updating = $state.raw<Record<string, boolean>>({});
-// A store install waits on a download and the native review dialog: it too settles on the native ack.
-let _installing = $state.raw<Record<string, boolean>>({});
+// A store install waits on a download and the native review dialog: it too settles on the native ack,
+// whose outcome stays until the next attempt so the URL bar and onboarding can report it.
+type InstallState = "installing" | "installed" | "failed" | "cancelled";
+let _installs = $state.raw<Record<string, InstallState>>({});
 let _updateCheck = $state.raw<BridgeExtensionUpdateCheck>({});
 let _downloadUiEnabled = $state(true);
 // The profile Settings > Extensions shows instead of the window's, and its rows once they arrive.
@@ -224,8 +226,9 @@ export function initExtensionStore(): void {
 			return;
 		}
 		if (data.action === "install") {
-			const { [data.id]: _removed, ...rest } = _installing;
-			_installing = rest;
+			// A failure without an error is the user declining the review dialog.
+			const outcome = data.success === true ? "installed" : data.error ? "failed" : "cancelled";
+			_installs = { ..._installs, [data.id]: outcome };
 			return;
 		}
 		if (data.action !== "update") {
@@ -310,13 +313,19 @@ export function isExtensionUpdating(id: string): boolean {
 }
 
 export function isExtensionInstalling(id: string): boolean {
-	return _installing[id] === true;
+	return _installs[id] === "installing";
+}
+
+/** How the last store install of this id ended; undefined before any or while it runs. */
+export function getInstallOutcome(id: string): Exclude<InstallState, "installing"> | undefined {
+	const state = _installs[id];
+	return state === "installing" ? undefined : state;
 }
 
 /** Installs a Chrome Web Store extension by id into the current profile. */
 export function installStoreExtension(id: string): void {
-	if (_installing[id]) return;
-	_installing = { ..._installing, [id]: true };
+	if (_installs[id] === "installing") return;
+	_installs = { ..._installs, [id]: "installing" };
 	extensionActions.install(`https://chromewebstore.google.com/detail/${id}`);
 }
 

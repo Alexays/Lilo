@@ -22,7 +22,7 @@ final class DownloadBridgeHandler: BridgeHandler {
 
     private weak var downloadManager: DownloadManager?
     private weak var bridgeRouter: BridgeRouter?
-    /// The store of the window's profile: the window lists that profile's downloads only.
+    /// The store the window lists: its profile's, or its private space's while it shows one.
     private let storeProvider: () -> DownloadStore?
     private let observerToken: UUID
     var onQuickLookRequested: (() -> Void)?
@@ -46,7 +46,7 @@ final class DownloadBridgeHandler: BridgeHandler {
         }
     }
 
-    /// The `downloadsSnapshot` of a window showing `store`'s profile.
+    /// The `downloadsSnapshot` of a window listing `store`.
     static func snapshot(of store: DownloadStore?, manager: DownloadManager?) -> [String: Any] {
         let items = (try? store?.fetchAll()) ?? []
         return ["items": items.map { manager?.augmentedBridgeData(for: $0) ?? $0.bridgeData }]

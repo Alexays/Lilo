@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Profiles and private spaces keep their own favicons: a site can no longer link them by the icon requests one of them skips'
+time: 2026-11-06T20:02:13.65664+01:00

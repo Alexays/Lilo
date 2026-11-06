@@ -120,4 +120,4 @@ The Worker serves the apex only. To redirect `www.getlilo.app`, add a proxied DN
 ## Assets
 
 - `fonts/inter-latin-wght-*.woff2` and `fonts/geist-mono-latin-wght-*.woff2`: self-hosted Latin variable fonts, including italics, matching Ultracite's Inter and Geist Mono typography. Their SIL Open Font Licenses are in `fonts/Inter-OFL.txt` and `fonts/GeistMono-OFL.txt`. The filenames include the source font hashes for immutable caching.
-- `favicon.svg` is the app icon's flower mark. `favicon.ico`, `apple-touch-icon.png` and `og.png` were rendered from it with headless Chrome and are committed as is.
+- `favicon.svg` is the app icon's flower mark. `favicon.ico`, `apple-touch-icon.png` and `og.png` were rendered from it with headless Chrome and are committed as is (`og.png` palette-compressed with `pngquant 128`).

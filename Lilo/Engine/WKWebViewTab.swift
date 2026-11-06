@@ -171,6 +171,10 @@ final class WKWebViewTab: NSObject {
         guard let self, state != self.permissionUsageState else { return }
         self.permissionUsageState = state
         self.delegate?.tab(self, didUpdatePermissionUsage: self.effectivePermissionUsageState)
+        // Hanging up closes the call's peers, which fires no event: the page reads them again.
+        if self.callControls.hasPeerConnection, !self.isFrozen {
+            WebViewPrivateAccessors(self.webView).evaluateWithoutUserGesture(PageWorld.push("peers"), in: nil, in: PageWorld.bridgeWorld)
+        }
     }
 
     /// True while this tab is the source of a getDisplayMedia tab-share ferry. Folded into the
@@ -616,6 +620,7 @@ final class WKWebViewTab: NSObject {
         guard !isFrozen, lentToExtensionAt.map({ now.timeIntervalSince($0) >= 2 }) ?? true else { return }
         isFrozen = true
         freezer.freeze(webView)
+        if let adapter = tabManager?.tabAdapter(for: id) { tabManager?.reportExtensionTabChange(of: adapter, ["frozen"]) }
     }
 
     /// Resume a frozen engine. Idempotent; no-op if never frozen or if the page is lost.
@@ -623,6 +628,7 @@ final class WKWebViewTab: NSObject {
     func resume(completion: @escaping () -> Void = {}) {
         guard isFrozen, !isPageLost else { return completion() }
         isFrozen = false
+        if let adapter = tabManager?.tabAdapter(for: id) { tabManager?.reportExtensionTabChange(of: adapter, ["frozen"]) }
         freezer.resume(webView) { [weak self] in
             self?.capturePageColorIfStale()
             completion()

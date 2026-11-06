@@ -223,6 +223,8 @@ final class PiPControllerTests: XCTestCase {
         controller.createTabStateFirst(url: URL(string: "about:blank"))
 
         context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(60 * 60))
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await engine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
         XCTAssertFalse(engine.isFrozen, "freezing a tab closes its PiP window")
         if engine.isFrozen { engine.resume() }   // the context's teardown cannot touch a suspended page
         _ = controller.tabManager.trimActiveSpaceEngines(maxLiveEngines: 1)

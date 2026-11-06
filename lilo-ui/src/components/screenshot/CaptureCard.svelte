@@ -169,8 +169,8 @@
     user-select: none;
     -webkit-user-select: none;
     transition:
-      transform 260ms var(--motion-ease-spring),
-      opacity 260ms var(--motion-ease-spring);
+      transform var(--motion-duration-slow) var(--motion-ease-spring),
+      opacity var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .capture-card.swiping {
@@ -204,7 +204,7 @@
     overflow: hidden;
     background: var(--bg-hover);
     cursor: pointer;
-    transition: transform 160ms var(--motion-ease-standard);
+    transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
   }
 
   .thumb:active {

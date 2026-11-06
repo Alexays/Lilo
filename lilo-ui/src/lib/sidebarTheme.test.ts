@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { apcaContrast, deriveFolderColorVariables, deriveSidebarThemeVariables, ensureContrast, ICON_CONTRAST, TEXT_CONTRAST } from "./sidebarTheme";
+import { apcaContrast, deriveFolderColorVariables, deriveSidebarThemeVariables, ensureContrast, ICON_CONTRAST, MORE_TEXT_CONTRAST, TEXT_CONTRAST } from "./sidebarTheme";
 
 function rgb(hex: string): { r: number; g: number; b: number } {
 	const value = Number.parseInt(hex.slice(1), 16);
@@ -85,6 +85,19 @@ test("every derived text and icon color clears its threshold", () => {
 				apcaContrast(rgb(vars["--sidebar-accent-text"]), rgb(vars["--sidebar-accent"])) >= TEXT_CONTRAST,
 				`${label} accent text`,
 			);
+		}
+	}
+});
+
+test("Increase contrast secondary text clears its higher threshold", () => {
+	for (const input of ["#b18cff", "#5c7cf6", "#00c000", "#fff4cc", "#ff6a00", "#1a1a2e", undefined]) {
+		for (const dark of [false, true]) {
+			const vars = deriveSidebarThemeVariables(input, dark);
+			const bg = rgb(vars["--sidebar-bg"]);
+			for (const name of ["--sidebar-secondary-more", "--sidebar-muted-more"]) {
+				const ratio = apcaContrast(rgb(vars[name]), bg);
+				assert.ok(ratio >= MORE_TEXT_CONTRAST || vars[name] === vars["--sidebar-contrast"], `${input ?? "default"} ${dark} ${name}: ${ratio.toFixed(0)} Lc`);
+			}
 		}
 	}
 });

@@ -26,12 +26,14 @@ final class BrowserContextQuitSaveTests: XCTestCase {
         let spaceA = try context.spaceManager!.createSpace(name: "A", profileId: profileA)
         let spaceB = try context.spaceManager!.createSpace(name: "B", profileId: profileB)
         let privateA = try context.spaceManager!.createSpace(name: "P", profileId: profileA, isPrivate: true)
-        for space in [spaceA, spaceB, privateA] {
+        let unreadableA = try context.spaceManager!.createSpace(name: "U", profileId: profileA)
+        context.unreadableSpaceIds.insert(unreadableA.id)
+        for space in [spaceA, spaceB, privateA, unreadableA] {
             let state = SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)
             context.browserState.storeSpace(id: space.id, snapshot: .init(spaceTab: SpaceTab(spaceId: space.id, state: state), engines: [:]))
         }
 
-        context.saveSpaceStatesBeforeQuit()
+        XCTAssertTrue(context.saveSpaceStatesBeforeQuit())
 
         let storeA = SpaceTabStateStore(dbPool: try context.dbManager!.pool(for: profileA))
         let storeB = SpaceTabStateStore(dbPool: try context.dbManager!.pool(for: profileB))
@@ -39,6 +41,7 @@ final class BrowserContextQuitSaveTests: XCTestCase {
         XCTAssertNil(try storeA.load(spaceId: spaceB.id), "a space must never be written into another profile's database")
         XCTAssertNotNil(try storeB.load(spaceId: spaceB.id))
         XCTAssertNil(try storeA.load(spaceId: privateA.id), "private spaces leave nothing behind")
+        XCTAssertNil(try storeA.load(spaceId: unreadableA.id), "a space whose state could not be read is never saved over it")
     }
 
     func testQuitRunsTheBeforeUnloadHandlerOfEveryPageSuspendedOnesIncluded() async throws {

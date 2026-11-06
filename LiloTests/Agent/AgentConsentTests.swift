@@ -129,10 +129,8 @@ final class AgentConsentTests: AgentToolTestCase {
         let recorder = BridgeEventRecorder(router)
         let handler = SettingsBridgeHandler(
             settingsStore: context.settingsStore!, sitePermissionStoreProvider: { nil }, zoomStoreProvider: { nil },
-            historyStoreProvider: { nil }, extensionRegistryProvider: { nil }, dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil },
-            extensionDiagnosticsProvider: { [] }, forceLifecycleTrimHandler: {}, bridgeRouter: router
+            historyStoreProvider: { nil }, extensionRegistryProvider: { nil }, dataStoreProvider: { nil }, context: context, bridgeRouter: router
         )
-        handler.agentControl = { [control] in control }
 
         _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "getAgentActivity", "payload": [:]])))
 

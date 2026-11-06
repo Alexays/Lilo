@@ -571,7 +571,12 @@
 		},
 		"filterLists": {
 			"update": "Обновить",
-			"summary": "Списков: {lists}",
+			"summary": {
+				"one": "{count} список",
+				"few": "{count} списка",
+				"many": "{count} списков",
+				"other": "{count} списка"
+			},
 			"updated": "обновлено {time}"
 		},
 		"extensionUpdates": {
@@ -611,7 +616,6 @@
 			"connect": "Подключить",
 			"copy": "Скопировать конфигурацию",
 			"clientDescription": "Добавляет Lilo к его MCP-серверам.",
-			"clientConnected": "Lilo добавлен к его MCP-серверам.",
 			"revoke": "Убрать",
 			"status": {
 				"acting": "Выполняет действие",
@@ -647,8 +651,12 @@
 			"clearData": "Очистить данные...",
 			"remove": "Удалить...",
 			"lastProfile": "Последний профиль нельзя удалить: каждому пространству нужен профиль.",
-			"extensionCount": "Расширений: {count}",
-			"extensionCountOne": "1 расширение",
+			"extensionCount": {
+				"one": "{count} расширение",
+				"few": "{count} расширения",
+				"many": "{count} расширений",
+				"other": "{count} расширения"
+			},
 			"newProfile": "Новый профиль...",
 			"newProfileDetail": "Без cookie, учётных записей и расширений",
 			"namePlaceholder": "Название профиля",
@@ -780,6 +788,7 @@
 		"ariaLabel": "Вкладки"
 	},
 	"bottomBar": {
+		"switchedTo": "Переключено на {name}",
 		"library": "Загрузки и архивные вкладки",
 		"downloads": "Загрузки",
 		"downloadsActiveCount": "Загрузки, активных: {count}",
@@ -788,6 +797,10 @@
 		"signedInAs": "{space}, профиль: {profile}"
 	},
 	"sidebar": {
+		"resize": "Ширина боковой панели",
+		"movedToPosition": "Перемещено на позицию {position} из {count}",
+		"movedInto": "Перемещено в {name}",
+		"movedOutOf": "Извлечено из {name}",
 		"ariaLabel": "Боковая панель"
 	},
 	"spaceBar": {
@@ -1349,8 +1362,12 @@
 		"navLabel": "Разделы диспетчера процессов",
 		"searchPlaceholder": "Поиск вкладок",
 		"memoryAriaLabel": "Использование памяти",
-		"tabsCount": "Вкладок: {count}",
-		"tabsCountOne": "1 вкладка",
+		"tabsCount": {
+			"one": "{count} вкладка",
+			"few": "{count} вкладки",
+			"many": "{count} вкладок",
+			"other": "{count} вкладки"
+		},
 		"cpu": "ЦП {value}",
 		"others": {
 			"one": "Ещё {count}",
@@ -1358,10 +1375,18 @@
 			"many": "Ещё {count}",
 			"other": "Ещё {count}"
 		},
-		"reclaim": "Скрытых вкладок: {count} · Память: {size}",
-		"reclaimOne": "1 скрытая вкладка использует {size}",
-		"reclaimNoSize": "В памяти остаются скрытые вкладки: {count}",
-		"reclaimNoSizeOne": "В памяти остаётся 1 скрытая вкладка",
+		"reclaim": {
+			"one": "{count} скрытая вкладка использует {size}",
+			"few": "{count} скрытые вкладки используют {size}",
+			"many": "{count} скрытых вкладок используют {size}",
+			"other": "{count} скрытой вкладки использует {size}"
+		},
+		"reclaimNoSize": {
+			"one": "В памяти остаётся {count} скрытая вкладка",
+			"few": "В памяти остаются {count} скрытые вкладки",
+			"many": "В памяти остаются {count} скрытых вкладок",
+			"other": "В памяти остаётся {count} скрытой вкладки"
+		},
 		"sleep": "Выгрузить",
 		"groupTabs": "Вкладки",
 		"groupSleeping": "Выгруженные",
@@ -1405,16 +1430,25 @@
 	"urlToast": {
 		"pageActions": "Действия со страницей",
 		"reEnableBlocking": "Включить блокировку на этом сайте",
-		"trackerBlockedOnPage": "На странице заблокирован {count} трекер",
-		"trackersBlockedOnPage": "На странице заблокировано трекеров: {count}",
+		"trackersBlockedOnPage": {
+			"one": "На странице заблокирован {count} трекер",
+			"few": "На странице заблокировано {count} трекера",
+			"many": "На странице заблокировано {count} трекеров",
+			"other": "На странице заблокировано {count} трекера"
+		},
 		"disableBlocking": "Отключить блокировку на этом сайте",
 		"adsAllowed": "Реклама разрешена",
-		"trackerBlockedLabel": "Заблокирован {count} трекер",
-		"trackersBlockedLabel": "Заблокировано трекеров: {count}",
+		"trackersBlockedLabel": {
+			"one": "Заблокирован {count} трекер",
+			"few": "Заблокировано {count} трекера",
+			"many": "Заблокировано {count} трекеров",
+			"other": "Заблокировано {count} трекера"
+		},
 		"adsBlocked": "Реклама заблокирована",
 		"extensionAlreadyInstalled": "Расширение уже установлено",
 		"installChromeExtension": "Установить это расширение Chrome",
 		"installed": "Установлено",
+		"installFailed": "Не удалось установить",
 		"install": "Установить",
 		"screenshot": "Снимок экрана",
 		"fullPage": "Вся страница",
@@ -1745,6 +1779,11 @@
 				"extensionsCount": "Переустановка расширений: {current} из {total}"
 			},
 			"partial": "Не удалось импортировать часть данных: {list}. Повторите попытку позже в настройках.",
+			"cause": {
+				"keychain": "доступ к связке ключей запрещён",
+				"locked": "файл используется, закройте браузер и повторите попытку",
+				"access": "нужен полный доступ к диску"
+			},
 			"profiles": "Профили {browser}",
 			"kinds": "Что импортировать",
 			"kind": {
@@ -1776,6 +1815,7 @@
 			"addNamed": "Добавить {name}",
 			"adding": "Добавление...",
 			"added": "Добавлено",
+			"failed": "Не удалось добавить. Попробуйте ещё раз.",
 			"soon": "Скоро",
 			"managers": {
 				"bitwarden": "Открытый код, бесплатно на всех устройствах",
@@ -1941,12 +1981,11 @@
 		"No changes on this branch": "В этой ветке нет изменений",
 		"Nothing differs from %@.": "Нет отличий от %@.",
 		"Show Uncommitted Changes": "Показать незакоммиченные изменения",
-		"1 file": "1 файл",
-		"%@ files": "Файлов: %@",
+		"%@ files": {"one": "%@ файл", "few": "%@ файла", "many": "%@ файлов", "other": "%@ файла"},
 		"against %@ from %@, uncommitted included": "сравнение с %@ из %@, включая незакоммиченные изменения",
 		"Binary file, not shown": "Двоичный файл не показан",
-		"%d lines folded. Click to show.": "Свёрнуто строк: %d. Нажмите, чтобы показать.",
-		"Generated file, %d lines folded. Click to show.": "Сгенерированный файл, свёрнуто строк: %d. Нажмите, чтобы показать.",
+		"%d lines folded. Click to show.": {"one": "Свёрнута %d строка. Нажмите, чтобы показать.", "few": "Свёрнуты %d строки. Нажмите, чтобы показать.", "many": "Свёрнуто %d строк. Нажмите, чтобы показать.", "other": "Свёрнуто %d строки. Нажмите, чтобы показать."},
+		"Generated file, %d lines folded. Click to show.": {"one": "Сгенерированный файл, свёрнута %d строка. Нажмите, чтобы показать.", "few": "Сгенерированный файл, свёрнуты %d строки. Нажмите, чтобы показать.", "many": "Сгенерированный файл, свёрнуто %d строк. Нажмите, чтобы показать.", "other": "Сгенерированный файл, свёрнуто %d строки. Нажмите, чтобы показать."},
 		"renamed from %@": "переименован из %@",
 		"Open in Split": "Открыть в разделённом виде",
 		"worktree": "рабочее дерево",
@@ -1956,7 +1995,7 @@
 		"%@ wants to use your camera and microphone": "%@ запрашивает доступ к камере и микрофону",
 		"%@ wants to use your camera or microphone": "%@ запрашивает доступ к камере или микрофону",
 		"Open as Tab": "Открыть как вкладку",
-		"Not Secure": "Не защищено",
+		"Not Secure - %@": "Не защищено - %@",
 		"Other Bookmarks (%@)": "Другие закладки (%@)",
 		"Replay Onboarding": "Повторить знакомство",
 		"New Terminal Beside": "Новый терминал рядом",
@@ -2094,6 +2133,13 @@
 		"Select an unpacked extension folder (must contain manifest.json)": "Выберите папку распакованного расширения (с файлом manifest.json)",
 		"Couldn't load extension": "Не удалось загрузить расширение",
 		"Another copy of %@ is already installed. Remove it to load this folder.": "Другая копия %@ уже установлена. Удалите ее, чтобы загрузить эту папку.",
+		"manifest.json not found at %@": "manifest.json не найден в %@",
+		"Failed to parse manifest.json: %@": "Не удалось прочитать manifest.json: %@",
+		"Unsupported manifest version %ld; only MV3 is supported": "Версия манифеста %ld не поддерживается; поддерживается только MV3",
+		"Required manifest field missing: %@": "В манифесте нет обязательного поля: %@",
+		"Failed to download extension: %@": "Не удалось скачать расширение: %@",
+		"Invalid extension archive: %@": "Недопустимый архив расширения: %@",
+		"The extension's background did not respond.": "Фоновый процесс расширения не ответил.",
 		"Open Popup": "Открыть всплывающее окно",
 		"History": "История",
 		"Reopen Last Closed Tab": "Открыть последнюю закрытую вкладку",
@@ -2115,6 +2161,11 @@
 		"Its tabs, history and downloads are unavailable this session.": "Его вкладки, история и загрузки недоступны в этом сеансе.",
 		"Lilo couldn't load its settings": "Lilo не удалось загрузить настройки",
 		"Default settings are in use for this session.": "В этом сеансе используются настройки по умолчанию.",
+		"Lilo couldn't save your tabs": "Lilo не удалось сохранить ваши вкладки",
+		"Lilo couldn't save its settings": "Lilo не удалось сохранить свои настройки",
+		"Lilo couldn't save a conversation": "Lilo не удалось сохранить разговор",
+		"Recent changes may be missing the next time you open Lilo. Check that your disk has free space.": "При следующем открытии Lilo последних изменений может не быть. Проверьте, есть ли на диске свободное место.",
+		"%@\n\nError: %@": "%@\n\nОшибка: %@",
 		"Continue": "Продолжить",
 		"Delete": "Удалить",
 		"Quit": "Завершить",
@@ -2157,19 +2208,16 @@
 		"The Mac is too hot.": "Mac перегрелся.",
 		"Commands kept the Mac awake for the maximum duration.": "Достигнуто предельное время работы Mac без сна во время команд.",
 		"While the lid was closed": "Пока крышка была закрыта",
-		"%d commands finished": "Завершено команд: %d",
-		"%d wait for your answer, the oldest for %@": "Ожидают ответа: %d, дольше всего — %@",
+		"%d commands finished": {"one": "Завершена %d команда", "few": "Завершены %d команды", "many": "Завершено %d команд", "other": "Завершено %d команды"},
+		"%d wait for your answer, the oldest for %@": {"one": "%d команда ждёт ответа уже %@", "few": "%d команды ждут ответа, самая давняя уже %@", "many": "%d команд ждут ответа, самая давняя уже %@", "other": "%d команды ждут ответа, самая давняя уже %@"},
 		"battery from %d%% to %d%%": "заряд с %d%% до %d%%",
 		"Show Next Waiting Terminal": "Показать следующий ожидающий терминал",
 		"Downloads": "Загрузки",
 		"Quit Lilo?": "Завершить Lilo?",
-		"A terminal is still running a command": "В терминале ещё выполняется команда",
-		"%d terminals are still running a command": "Терминалов с выполняющейся командой: %d",
-		" and %d more": " и ещё %d",
-		"It will be stopped.": "Она будет остановлена.",
-		"They will be stopped.": "Они будут остановлены.",
-		"A download is in progress and will be paused until Lilo opens again.": "Выполняется загрузка. Она будет приостановлена до следующего запуска Lilo.",
-		"%d downloads are in progress and will be paused until Lilo opens again.": "Активных загрузок: %d. Они будут приостановлены до следующего запуска Lilo.",
+		"%d terminals are still running a command. They will be stopped.": {"one": "%d терминал ещё выполняет команду. Выполнение будет остановлено.", "few": "%d терминала ещё выполняют команды. Выполнение будет остановлено.", "many": "%d терминалов ещё выполняют команды. Выполнение будет остановлено.", "other": "%d терминала ещё выполняют команды. Выполнение будет остановлено."},
+		"%d terminals are still running a command (%@). They will be stopped.": {"one": "%d терминал ещё выполняет команду (%@). Выполнение будет остановлено.", "few": "%d терминала ещё выполняют команды (%@). Выполнение будет остановлено.", "many": "%d терминалов ещё выполняют команды (%@). Выполнение будет остановлено.", "other": "%d терминала ещё выполняют команды (%@). Выполнение будет остановлено."},
+		"%@ and %d more": {"one": "%@ и ещё %d", "few": "%@ и ещё %d", "many": "%@ и ещё %d", "other": "%@ и ещё %d"},
+		"%d downloads are in progress and will be paused until Lilo opens again.": {"one": "%d загрузка ещё идёт и будет приостановлена до следующего запуска Lilo.", "few": "%d загрузки ещё идут и будут приостановлены до следующего запуска Lilo.", "many": "%d загрузок ещё идут и будут приостановлены до следующего запуска Lilo.", "other": "%d загрузки ещё идут и будут приостановлены до следующего запуска Lilo."},
 		"Sign In": "Войти",
 		"Install": "Установить",
 		"Install %@?": "Установить %@?",
@@ -2183,7 +2231,7 @@
 		"A command is still running in it and will be stopped.": "В нём ещё выполняется команда, которая будет остановлена.",
 		"Close": "Закрыть",
 		"New Terminal Tab": "Новая вкладка терминала",
-		"Close %d terminals?": "Закрыть терминалы (%d)?",
+		"Close %d terminals?": {"one": "Закрыть %d терминал?", "few": "Закрыть %d терминала?", "many": "Закрыть %d терминалов?", "other": "Закрыть %d терминала?"},
 		"Commands are still running in them and will be stopped.": "В них ещё выполняются команды, которые будут остановлены.",
 		"The terminal could not start.": "Не удалось запустить терминал.",
 		"Close the tab and try again.": "Закройте вкладку и повторите попытку.",
@@ -2216,6 +2264,7 @@
 		"Delete Folder": "Удалить папку",
 		"Edit Folder": "Изменить папку",
 		"Edit...": "Изменить...",
+		"Back to Home Page": "Вернуться на домашнюю страницу",
 		"New Folder": "Новая папка",
 		"Home": "Главная",
 		"Default": "По умолчанию",
@@ -2307,9 +2356,7 @@
 		"Added Lilo to Codex": "Lilo добавлен в Codex",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo не удалось прочитать %@: добавьте этот сервер вручную: %@",
 		"Stop Agents": "Остановить агентов",
-		"Delete %@ and %@?": "Удалить %@ и %@?",
-		"1 tab": "1 вкладка",
-		"%d tabs": "Вкладок: %d",
+		"Delete %@ and its %d tabs?": {"one": "Удалить %@ и %d вкладку?", "few": "Удалить %@ и %d вкладки?", "many": "Удалить %@ и %d вкладок?", "other": "Удалить %@ и %d вкладки?"},
 		"This cannot be undone.": "Это действие нельзя отменить.",
 		"Its tabs stay in the sidebar.": "Её вкладки останутся в боковой панели.",
 		"Agent": "Агент",
@@ -2564,7 +2611,6 @@
 			"restoreToHere": "Восстановить до этого места",
 			"restoreConfirm": "Вернуть файлы проекта в состояние на момент этого сообщения?",
 			"restore": "Восстановить",
-			"reviewChanges": "Просмотреть в «Изменениях»",
 			"undo": "Отменить",
 			"keep": "Оставить",
 			"undone": "Отменено",
@@ -2660,7 +2706,6 @@
 			"agent": "Агент",
 			"noAgents": "Нет агентов",
 			"project": "Проект",
-			"chooseProject": "Выберите проект",
 			"chooseFolder": "Выбрать папку...",
 			"noFolder": "Без папки",
 			"noFolderDetail": "Агент работает в собственной папке",
@@ -2671,7 +2716,18 @@
 			"untitled": "Новый разговор",
 			"working": "Работает",
 			"failed": "Остановлен из-за ошибки",
-			"changes": "Добавлено строк: {added}, удалено: {removed}",
+			"linesAdded": {
+				"one": "{count} строка добавлена",
+				"few": "{count} строки добавлены",
+				"many": "{count} строк добавлено",
+				"other": "{count} строки добавлено"
+			},
+			"linesRemoved": {
+				"one": "{count} строка удалена",
+				"few": "{count} строки удалены",
+				"many": "{count} строк удалено",
+				"other": "{count} строки удалено"
+			},
 			"pages": {
 				"one": "{count} страница",
 				"few": "{count} страницы",

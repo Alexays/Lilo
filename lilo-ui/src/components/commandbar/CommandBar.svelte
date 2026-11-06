@@ -627,7 +627,7 @@
               />
             </div>
             {#if autocompleteSuggestion && caretAtEnd}
-              <span class="key-hint"><span>{t("commandBar.hintComplete")}</span><kbd>tab</kbd></span>
+              <span class="key-hint"><span>{t("commandBar.hintComplete")}</span><kbd class="keycap">tab</kbd></span>
             {/if}
           </div>
 
@@ -685,7 +685,7 @@
 
                         {#if entry.result.helper}
                           {#if entry.result.kind === "action"}
-                            <kbd class="result-shortcut">{entry.result.helper}</kbd>
+                            <kbd class="keycap result-shortcut">{entry.result.helper}</kbd>
                           {:else}
                             <span class="result-helper">{entry.result.helper}</span>
                           {/if}
@@ -706,15 +706,15 @@
 
         <div class="command-bar-footer" aria-hidden="true">
           <span class="footer-hints">
-            <span class="key-hint key-hint-default"><span>{selectedResult?.hint || t("common.open")}</span><kbd>{formatShortcut("Enter")}</kbd></span>
+            <span class="key-hint key-hint-default"><span>{selectedResult?.hint || t("common.open")}</span><kbd class="keycap">{formatShortcut("Enter")}</kbd></span>
             {#each selectedKeys as key (key)}
               <span class="key-hint">
-                <span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd>{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
+                <span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd class="keycap">{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
               </span>
             {/each}
           </span>
           {#if !docked || movingTab || escapeLeavesScope}
-            <span class="key-hint"><span>{t(movingTab || escapeLeavesScope ? "common.back" : "common.close")}</span><kbd>esc</kbd></span>
+            <span class="key-hint"><span>{t(movingTab || escapeLeavesScope ? "common.back" : "common.close")}</span><kbd class="keycap">esc</kbd></span>
           {/if}
         </div>
       </div>
@@ -1134,22 +1134,6 @@
 
   .key-hint-default {
     color: var(--text-primary);
-  }
-
-  kbd {
-    box-sizing: border-box;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-hover);
-    box-shadow: inset 0 0 0 1px var(--float-border);
-    color: var(--text-secondary);
-    font-family: inherit;
-    font-size: var(--font-size-sm);
-    font-variant-numeric: tabular-nums;
-    line-height: 20px;
-    text-align: center;
   }
 
   @keyframes command-bar-in {

@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Şimdi güncelle",
-			"summary": "{lists} liste",
+			"summary": {
+				"one": "{count} liste",
+				"other": "{count} liste"
+			},
 			"updated": "güncelleme: {time}"
 		},
 		"extensionUpdates": {
@@ -605,7 +608,6 @@
 			"connect": "Bağlan",
 			"copy": "Yapılandırmayı kopyala",
 			"clientDescription": "Lilo'yu istemcinin MCP sunucularına ekler.",
-			"clientConnected": "Lilo, istemcinin MCP sunucularında bulunuyor.",
 			"revoke": "Kaldır",
 			"status": {
 				"acting": "İşlem yapıyor",
@@ -641,8 +643,10 @@
 			"clearData": "Verileri Temizle...",
 			"remove": "Kaldır...",
 			"lastProfile": "Son profiliniz kalır. Her alanın bir profile ihtiyacı vardır.",
-			"extensionCount": "{count} genişletme",
-			"extensionCountOne": "1 genişletme",
+			"extensionCount": {
+				"one": "{count} genişletme",
+				"other": "{count} genişletme"
+			},
 			"newProfile": "Yeni profil...",
 			"newProfileDetail": "Yeni çerezler, oturumlar ve genişletmeler",
 			"namePlaceholder": "Profil adı",
@@ -766,6 +770,7 @@
 		"ariaLabel": "Sekmeler"
 	},
 	"bottomBar": {
+		"switchedTo": "{name} alanına geçildi",
 		"library": "İndirmeler ve arşivlenen sekmeler",
 		"downloads": "İndirilenler",
 		"downloadsActiveCount": "İndirilenler, {count} etkin",
@@ -774,6 +779,10 @@
 		"signedInAs": "{space}, {profile} olarak oturum açıldı"
 	},
 	"sidebar": {
+		"resize": "Kenar çubuğu genişliği",
+		"movedToPosition": "{count} içinde {position}. konuma taşındı",
+		"movedInto": "{name} içine taşındı",
+		"movedOutOf": "{name} dışına taşındı",
 		"ariaLabel": "Kenar çubuğu"
 	},
 	"spaceBar": {
@@ -1335,17 +1344,23 @@
 		"navLabel": "İşlem yöneticisi görünümleri",
 		"searchPlaceholder": "Sekmelerde ara",
 		"memoryAriaLabel": "Bellek kullanımı",
-		"tabsCount": "{count} sekme",
-		"tabsCountOne": "1 sekme",
+		"tabsCount": {
+			"one": "{count} sekme",
+			"other": "{count} sekme"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} diğer",
 			"other": "{count} diğer"
 		},
-		"reclaim": "{count} gizli sekme {size} kullanıyor",
-		"reclaimOne": "1 gizli sekme {size} kullanıyor",
-		"reclaimNoSize": "{count} gizli sekme hâlâ yüklü",
-		"reclaimNoSizeOne": "1 gizli sekme hâlâ yüklü",
+		"reclaim": {
+			"one": "{count} gizli sekme {size} kullanıyor",
+			"other": "{count} gizli sekme {size} kullanıyor"
+		},
+		"reclaimNoSize": {
+			"one": "{count} gizli sekme hâlâ yüklü",
+			"other": "{count} gizli sekme hâlâ yüklü"
+		},
 		"sleep": "Uyut",
 		"groupTabs": "Sekmeler",
 		"groupSleeping": "Uykuda",
@@ -1387,16 +1402,21 @@
 	"urlToast": {
 		"pageActions": "Sayfa işlemleri",
 		"reEnableBlocking": "Bu sitede engellemeyi yeniden aç",
-		"trackerBlockedOnPage": "Bu sayfada {count} izleyici engellendi",
-		"trackersBlockedOnPage": "Bu sayfada {count} izleyici engellendi",
+		"trackersBlockedOnPage": {
+			"one": "Bu sayfada {count} izleyici engellendi",
+			"other": "Bu sayfada {count} izleyici engellendi"
+		},
 		"disableBlocking": "Bu sitede engellemeyi kapat",
 		"adsAllowed": "Reklamlara izin verildi",
-		"trackerBlockedLabel": "{count} izleyici engellendi",
-		"trackersBlockedLabel": "{count} izleyici engellendi",
+		"trackersBlockedLabel": {
+			"one": "{count} izleyici engellendi",
+			"other": "{count} izleyici engellendi"
+		},
 		"adsBlocked": "Reklamlar engellendi",
 		"extensionAlreadyInstalled": "Genişletme zaten yüklü",
 		"installChromeExtension": "Bu Chrome genişletmesini yükle",
 		"installed": "Yüklendi",
+		"installFailed": "Yüklenemedi",
 		"install": "Yükle",
 		"screenshot": "Ekran Resmi",
 		"fullPage": "Tüm sayfa",
@@ -1715,6 +1735,11 @@
 				"extensionsCount": "Genişletmeler yeniden yükleniyor: {current}/{total}"
 			},
 			"partial": "Bazı veriler içe aktarılamadı: {list}. Daha sonra Ayarlar'dan yeniden deneyebilirsiniz.",
+			"cause": {
+				"keychain": "Anahtar Zinciri erişimi reddedildi",
+				"locked": "dosya kullanımda, tarayıcıdan çıkıp yeniden deneyin",
+				"access": "Tam Disk Erişimi gerekiyor"
+			},
 			"profiles": "{browser} profilleri",
 			"kinds": "İçe aktarılacaklar",
 			"kind": {
@@ -1746,6 +1771,7 @@
 			"addNamed": "{name} ekle",
 			"adding": "Ekleniyor...",
 			"added": "Eklendi",
+			"failed": "Eklenemedi. Yeniden deneyin.",
 			"soon": "Yakında",
 			"managers": {
 				"bitwarden": "Açık kaynak, her aygıtta ücretsiz",
@@ -1911,12 +1937,11 @@
 		"No changes on this branch": "Bu dalda değişiklik yok",
 		"Nothing differs from %@.": "%@ ile fark yok.",
 		"Show Uncommitted Changes": "Commit Edilmemiş Değişiklikleri Göster",
-		"1 file": "1 dosya",
-		"%@ files": "%@ dosya",
+		"%@ files": {"one": "%@ dosya", "other": "%@ dosya"},
 		"against %@ from %@, uncommitted included": "%@ ile karşılaştırma, %@ başlangıcından, commit edilmemişler dahil",
 		"Binary file, not shown": "İkili dosya, gösterilmiyor",
-		"%d lines folded. Click to show.": "%d satır daraltıldı. Göstermek için tıklayın.",
-		"Generated file, %d lines folded. Click to show.": "Oluşturulan dosya, %d satır daraltıldı. Göstermek için tıklayın.",
+		"%d lines folded. Click to show.": {"one": "%d satır daraltıldı. Göstermek için tıklayın.", "other": "%d satır daraltıldı. Göstermek için tıklayın."},
+		"Generated file, %d lines folded. Click to show.": {"one": "Oluşturulan dosya, %d satır daraltıldı. Göstermek için tıklayın.", "other": "Oluşturulan dosya, %d satır daraltıldı. Göstermek için tıklayın."},
 		"renamed from %@": "önceki adı: %@",
 		"Open in Split": "Bölünmüş Görünümde Aç",
 		"worktree": "çalışma ağacı",
@@ -1926,7 +1951,7 @@
 		"%@ wants to use your camera and microphone": "%@ kameranızı ve mikrofonunuzu kullanmak istiyor",
 		"%@ wants to use your camera or microphone": "%@ kameranızı veya mikrofonunuzu kullanmak istiyor",
 		"Open as Tab": "Sekme Olarak Aç",
-		"Not Secure": "Güvenli Değil",
+		"Not Secure - %@": "Güvenli Değil - %@",
 		"Other Bookmarks (%@)": "Diğer Yer İmleri (%@)",
 		"Replay Onboarding": "İlk Kurulum Turunu Yeniden Göster",
 		"New Terminal Beside": "Yanda Yeni Terminal",
@@ -2064,6 +2089,13 @@
 		"Select an unpacked extension folder (must contain manifest.json)": "Paketten çıkarılmış genişletme klasörünü seçin (manifest.json içermeli)",
 		"Couldn't load extension": "Genişletme yüklenemedi",
 		"Another copy of %@ is already installed. Remove it to load this folder.": "%@ uygulamasının başka bir kopyası zaten yüklü. Bu klasörü yüklemek için onu kaldırın.",
+		"manifest.json not found at %@": "%@ konumunda manifest.json bulunamadı",
+		"Failed to parse manifest.json: %@": "manifest.json okunamadı: %@",
+		"Unsupported manifest version %ld; only MV3 is supported": "Desteklenmeyen manifest sürümü %ld; yalnızca MV3 desteklenir",
+		"Required manifest field missing: %@": "Gerekli manifest alanı eksik: %@",
+		"Failed to download extension: %@": "Genişletme indirilemedi: %@",
+		"Invalid extension archive: %@": "Geçersiz genişletme arşivi: %@",
+		"The extension's background did not respond.": "Genişletmenin arka planı yanıt vermedi.",
 		"Open Popup": "Açılır Pencereyi Aç",
 		"History": "Geçmiş",
 		"Reopen Last Closed Tab": "Son Kapatılan Sekmeyi Yeniden Aç",
@@ -2085,6 +2117,11 @@
 		"Its tabs, history and downloads are unavailable this session.": "Bu oturumda sekmeleri, geçmişi ve indirmeleri kullanılamaz.",
 		"Lilo couldn't load its settings": "Lilo ayarlarını yükleyemedi",
 		"Default settings are in use for this session.": "Bu oturumda saptanmış ayarlar kullanılıyor.",
+		"Lilo couldn't save your tabs": "Lilo sekmelerinizi kaydedemedi",
+		"Lilo couldn't save its settings": "Lilo ayarlarını kaydedemedi",
+		"Lilo couldn't save a conversation": "Lilo bir sohbeti kaydedemedi",
+		"Recent changes may be missing the next time you open Lilo. Check that your disk has free space.": "Lilo'yu bir sonraki açışınızda son değişiklikler eksik olabilir. Diskinizde boş alan olduğundan emin olun.",
+		"%@\n\nError: %@": "%@\n\nHata: %@",
 		"Continue": "Sürdür",
 		"Delete": "Sil",
 		"Quit": "Çık",
@@ -2127,19 +2164,16 @@
 		"The Mac is too hot.": "Mac çok sıcak.",
 		"Commands kept the Mac awake for the maximum duration.": "Komutlar Mac'i izin verilen en uzun süre boyunca uyanık tuttu.",
 		"While the lid was closed": "Kapak kapalıyken",
-		"%d commands finished": "%d komut tamamlandı",
-		"%d wait for your answer, the oldest for %@": "%d komut yanıtınızı bekliyor, en eskisi %@ süredir",
+		"%d commands finished": {"one": "%d komut tamamlandı", "other": "%d komut tamamlandı"},
+		"%d wait for your answer, the oldest for %@": {"one": "%d komut yanıtınızı bekliyor, %@ süredir", "other": "%d komut yanıtınızı bekliyor, en eskisi %@ süredir"},
 		"battery from %d%% to %d%%": "pil %d%% düzeyinden %d%% düzeyine",
 		"Show Next Waiting Terminal": "Sonraki Bekleyen Terminali Göster",
 		"Downloads": "İndirilenler",
 		"Quit Lilo?": "Lilo'dan çıkılsın mı?",
-		"A terminal is still running a command": "Bir terminal hâlâ komut çalıştırıyor",
-		"%d terminals are still running a command": "%d terminal hâlâ komut çalıştırıyor",
-		" and %d more": " ve %d tane daha",
-		"It will be stopped.": "Komut durdurulacak.",
-		"They will be stopped.": "Komutlar durdurulacak.",
-		"A download is in progress and will be paused until Lilo opens again.": "Devam eden bir indirme var. Lilo yeniden açılana kadar duraklatılacak.",
-		"%d downloads are in progress and will be paused until Lilo opens again.": "%d indirme devam ediyor. Lilo yeniden açılana kadar duraklatılacak.",
+		"%d terminals are still running a command. They will be stopped.": {"one": "%d terminal hâlâ komut çalıştırıyor. Komut durdurulacak.", "other": "%d terminal hâlâ komut çalıştırıyor. Komutlar durdurulacak."},
+		"%d terminals are still running a command (%@). They will be stopped.": {"one": "%d terminal hâlâ komut çalıştırıyor (%@). Komut durdurulacak.", "other": "%d terminal hâlâ komut çalıştırıyor (%@). Komutlar durdurulacak."},
+		"%@ and %d more": {"one": "%@ ve %d tane daha", "other": "%@ ve %d tane daha"},
+		"%d downloads are in progress and will be paused until Lilo opens again.": {"one": "%d indirme devam ediyor. Lilo yeniden açılana kadar duraklatılacak.", "other": "%d indirme devam ediyor. Lilo yeniden açılana kadar duraklatılacak."},
 		"Sign In": "Giriş Yap",
 		"Install": "Yükle",
 		"Install %@?": "%@ yüklensin mi?",
@@ -2153,7 +2187,7 @@
 		"A command is still running in it and will be stopped.": "İçinde bir komut hâlâ çalışıyor ve durdurulacak.",
 		"Close": "Kapat",
 		"New Terminal Tab": "Yeni Terminal Sekmesi",
-		"Close %d terminals?": "%d terminal kapatılsın mı?",
+		"Close %d terminals?": {"one": "%d terminal kapatılsın mı?", "other": "%d terminal kapatılsın mı?"},
 		"Commands are still running in them and will be stopped.": "İçlerinde komutlar hâlâ çalışıyor ve durdurulacak.",
 		"The terminal could not start.": "Terminal başlatılamadı.",
 		"Close the tab and try again.": "Sekmeyi kapatıp yeniden deneyin.",
@@ -2186,6 +2220,7 @@
 		"Delete Folder": "Klasörü Sil",
 		"Edit Folder": "Klasörü Düzenle",
 		"Edit...": "Düzenle...",
+		"Back to Home Page": "Ana sayfaya dön",
 		"New Folder": "Yeni Klasör",
 		"Home": "Başlangıç",
 		"Default": "Varsayılan",
@@ -2277,9 +2312,7 @@
 		"Added Lilo to Codex": "Lilo, Codex'e eklendi",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo %@ dosyasını okuyamadı. Şu sunucuyu kendiniz ekleyin: %@",
 		"Stop Agents": "Ajanları Durdur",
-		"Delete %@ and %@?": "%@ ve %@ silinsin mi?",
-		"1 tab": "1 sekme",
-		"%d tabs": "%d sekme",
+		"Delete %@ and its %d tabs?": {"one": "%@ ve içindeki %d sekme silinsin mi?", "other": "%@ ve içindeki %d sekme silinsin mi?"},
 		"This cannot be undone.": "Bu işlem geri alınamaz.",
 		"Its tabs stay in the sidebar.": "Sekmeleri kenar çubuğunda kalır.",
 		"Agent": "Ajan",
@@ -2528,7 +2561,6 @@
 			"restoreToHere": "Buraya kadar geri yükle",
 			"restoreConfirm": "Proje dosyaları bu mesajdaki hâline geri döndürülsün mü?",
 			"restore": "Geri yükle",
-			"reviewChanges": "Değişiklikler'de incele",
 			"undo": "Geri Al",
 			"keep": "Koru",
 			"undone": "Geri alındı",
@@ -2612,7 +2644,6 @@
 			"agent": "Ajan",
 			"noAgents": "Ajan yok",
 			"project": "Proje",
-			"chooseProject": "Bir proje seçin",
 			"chooseFolder": "Klasör seç...",
 			"noFolder": "Klasör yok",
 			"noFolderDetail": "Ajan kendi klasöründe çalışır",
@@ -2623,7 +2654,14 @@
 			"untitled": "Yeni sohbet",
 			"working": "Çalışıyor",
 			"failed": "Bir hatayla durdu",
-			"changes": "{added} satır eklendi, {removed} satır silindi",
+			"linesAdded": {
+				"one": "{count} satır eklendi",
+				"other": "{count} satır eklendi"
+			},
+			"linesRemoved": {
+				"one": "{count} satır silindi",
+				"other": "{count} satır silindi"
+			},
 			"pages": {
 				"one": "{count} sayfa",
 				"other": "{count} sayfa"

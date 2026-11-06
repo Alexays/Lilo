@@ -1,8 +1,8 @@
 <script module lang="ts">
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
 
   // Shared by every row: a formatter per row is costly on a long list.
-  const percent = $derived(new Intl.NumberFormat(getLocale(), { style: "percent" }));
+  const percent = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "percent" }));
 </script>
 
 <script lang="ts">

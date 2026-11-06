@@ -54,7 +54,8 @@ enum FirefoxReader {
                     }
                 }
             } catch {
-                for kind in placesKinds { result.errors[kind] = String(describing: error) }
+                let cause = ImportError.cause(of: error, "Reading Firefox places")
+                for kind in placesKinds { result.errors[kind] = cause }
             }
         }
         if kinds.contains(.cookies) {

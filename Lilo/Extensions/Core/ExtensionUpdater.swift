@@ -373,7 +373,13 @@ final class ExtensionUpdater {
                         }
                     },
                     rollback: { previous in
-                        if wasEnabled { try? await registry.load(from: previous, extensionId: extensionId) }
+                        guard wasEnabled else { return }
+                        do {
+                            try await registry.load(from: previous, extensionId: extensionId)
+                        } catch {
+                            Self.logger.error("extension update rollback failed \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
+                            await registry.recordFailedReload(extensionId, error: error)
+                        }
                     }
                 )
                 if registry.access.states[extensionId]?.declinedUpdateVersion != nil {

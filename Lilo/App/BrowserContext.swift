@@ -123,8 +123,10 @@ final class BrowserContext {
     private(set) var startupSnapshot: StartupSnapshot?
     /// Keeps the content blocker's rules current from remote filter lists (EasyList). See FilterListService.
     private(set) var filterListService: FilterListService?
-    /// One degraded-database alert per subject (profile id or "settings") per launch.
+    /// One degraded-database alert per subject (profile id, "settings", "session" or "conversations") per launch.
     private var notifiedDegradedDatabaseSubjects: Set<String> = []
+    /// Spaces whose tab state could not be read this launch: they start empty and are never saved over it.
+    var unreadableSpaceIds: Set<UUID> = []
     private var bootstrapTask: Task<Void, Error>?
 
     init(
@@ -271,12 +273,27 @@ final class BrowserContext {
         self.settingsStore = settingsStore
         if settingsStore.sessionCleanShutdown { launchAbsence = settingsStore.lastQuitAt.map { Date().timeIntervalSince($0) } }
         engineFactory.setTrackingPrevention(settingsStore.preventCrossSiteTracking)
+        engineFactory.setGlobalPrivacyControl(settingsStore.sendGPC)
+        engineFactory.setHTTPSOnly(settingsStore.httpsOnly)
+        engineFactory.setMinimumFontSize(settingsStore.minimumFontSize)
+        engineFactory.setFullRefreshRate(settingsStore.fullRefreshRate)
+        engineFactory.setAutoplayPolicy(settingsStore.get("autoplayPolicy") ?? "audio")
+        engineFactory.setFeatureFlagOverrides(settingsStore.featureFlagOverrides)
+        engineFactory.agentsProfileId = settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
         if let loadError = settingsStore.initialLoadError {
             showDegradedDatabaseAlert(
                 subject: "settings",
                 message: "Lilo couldn't load its settings".localized,
                 informative: "Default settings are in use for this session.".localized,
                 error: loadError
+            )
+        }
+        settingsStore.writeFailed = { [weak self] error in
+            self?.showDegradedDatabaseAlert(
+                subject: "settings",
+                message: "Lilo couldn't save its settings".localized,
+                informative: "Recent changes may be missing the next time you open Lilo. Check that your disk has free space.".localized,
+                error: error
             )
         }
         KeyboardShortcuts.load(from: settingsStore)
@@ -361,6 +378,19 @@ final class BrowserContext {
         service.start()
     }
 
+    /// The blocker was switched on or off in settings.
+    func setContentBlockerEnabled(_ enabled: Bool) {
+        engineFactory.applyBlockerChange(enabled: enabled)
+        // Allowlist edits made while the blocker was off were never compiled.
+        if enabled, let settingsStore {
+            Task { await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist) }
+        }
+        reloadBlockerExtension()
+        if enabled, filterListService == nil {
+            Task { await startContentBlocker() }
+        }
+    }
+
     /// The content blocker's built-in extension, while the blocker runs and once written.
     var blockerExtensionURL: URL? {
         let url = FilterListService.blockerExtensionURL
@@ -394,21 +424,26 @@ final class BrowserContext {
     private(set) var sessionPersistenceCoordinator: SessionPersistenceCoordinator?
 
     /// Writes every persistent space's tab tree into its own profile's database; private spaces leave nothing.
-    func saveSpaceStatesBeforeQuit() {
-        guard let spaceManager else { return }
+    /// False when a profile's write failed.
+    @discardableResult
+    func saveSpaceStatesBeforeQuit() -> Bool {
+        guard let spaceManager else { return true }
         var statesByProfile: [UUID: [(spaceId: UUID, state: SpaceTabState)]] = [:]
         for entry in browserState.persistableSpaceTabStates() {
-            guard let space = spaceManager.space(with: entry.spaceId), !space.isPrivate else { continue }
+            guard let space = spaceManager.space(with: entry.spaceId), !space.isPrivate, !unreadableSpaceIds.contains(space.id) else { continue }
             spaceManager.setActiveTab(entry.state.activeTabId, forSpace: space.id)
             statesByProfile[space.profileId, default: []].append(entry)
         }
+        var saved = true
         for (profileId, states) in statesByProfile {
             do {
                 try sessionPersistenceCoordinator?.persistSpaceTabStates(states, inProfile: profileId)
             } catch {
+                saved = false
                 Self.logger.error("quit state save failed for profile \(profileId.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
         }
+        return saved
     }
 
     /// Wakes every suspended page ahead of `closePagesBeforeQuit`, which cannot wait for the wake a teardown starts.
@@ -605,7 +640,7 @@ final class BrowserContext {
         guard !ProcessInfo.isRunningUnderXCTest else { return }
         let alert = NSAlert()
         alert.messageText = message
-        alert.informativeText = "\(informative)\n\nError: \(error.localizedDescription)"
+        alert.informativeText = unsafe String(format: "%@\n\nError: %@".localized, informative, error.localizedDescription)
         alert.alertStyle = .critical
         alert.addButton(withTitle: "Continue".localized)
         alert.addButton(withTitle: "Quit".localized)
@@ -854,7 +889,7 @@ extension BrowserContext {
     private func installDownloadGapEventObservers() {
         let tracker = DownloadGapEventTracker()
         downloadManager.addObserver { [weak self] item in
-            guard let self, let id = item.id, !downloadManager.isPrivateDownload(id: id, profileId: item.profileId) else { return }
+            guard let self, let id = item.id, !downloadManager.isPrivateDownload(profileId: item.profileId) else { return }
             // Ids are per profile database.
             let key = DownloadGapEventTracker.Key(profileId: item.profileId, id: id)
             // Bookkeeping runs for every download so an extension loaded later never sees a stale
@@ -891,10 +926,10 @@ extension BrowserContext {
         downloadManager.onErased = { [weak self] id, profileId in
             tracker.lastItems[DownloadGapEventTracker.Key(profileId: profileId, id: id)] = nil
             guard let self else { return }
-            for window in windows.windows where window.profileContext?.profileId == profileId {
+            for window in windows.windows where window.downloadStore?.profileId == profileId {
                 window.bridgeRouter.send(event: "downloadErased", data: ["id": Int(id)])
             }
-            guard !downloadManager.isPrivateDownload(id: id, profileId: profileId), let profileId else { return }
+            guard !downloadManager.isPrivateDownload(profileId: profileId), let profileId else { return }
             profileContexts.existingContext(for: profileId)?.extensions.emitGapEvent("downloads", "onErased", args: [Int(id)], requiredPermission: "downloads")
         }
     }

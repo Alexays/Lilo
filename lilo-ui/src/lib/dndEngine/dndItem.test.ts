@@ -28,18 +28,19 @@ function listenersFor(type: string): Set<(event: unknown) => void> {
 class FakeElement {}
 
 const globals = globalThis as Record<string, unknown>;
-globals.requestAnimationFrame = (fn: FrameCallback) => {
+const stubGlobals: Record<string, unknown> = {};
+stubGlobals.requestAnimationFrame = (fn: FrameCallback) => {
 	const id = nextFrameId++;
 	frames.set(id, fn);
 	return id;
 };
-globals.cancelAnimationFrame = (id: number) => {
+stubGlobals.cancelAnimationFrame = (id: number) => {
 	frames.delete(id);
 };
-globals.Element = FakeElement;
+stubGlobals.Element = FakeElement;
 // Nothing in the stub DOM scrolls, so auto-scroll always finds no container.
-globals.getComputedStyle = () => ({ overflowY: "visible" });
-globals.DOMRect = class {
+stubGlobals.getComputedStyle = () => ({ overflowY: "visible" });
+stubGlobals.DOMRect = class {
 	constructor(
 		public x = 0,
 		public y = 0,
@@ -49,7 +50,7 @@ globals.DOMRect = class {
 	get left() { return this.x; }
 	get top() { return this.y; }
 };
-globals.window = {
+stubGlobals.window = {
 	__liloBootstrapEvents: [],
 	addEventListener: (type: string, fn: (event: unknown) => void) => {
 		listenersFor(type).add(fn);
@@ -81,7 +82,7 @@ function stubPreview(): Record<string, unknown> {
 
 const appendedPreviews: unknown[] = [];
 
-globals.document = {
+stubGlobals.document = {
 	body: {
 		appendChild: (el: unknown) => {
 			appendedPreviews.push(el);
@@ -143,8 +144,26 @@ function elementRect(left: number, top: number, width: number, height: number) {
 	} as unknown as HTMLElement;
 }
 
+// Test files share one process, so the stub DOM is installed per test and the previous globals put back after it.
+function stubDom(): () => void {
+	frames.clear();
+	windowListeners.clear();
+	previewRemovals.length = 0;
+	appendedPreviews.length = 0;
+	const saved = Object.keys(stubGlobals).map((key) => [key, Object.getOwnPropertyDescriptor(globals, key)] as const);
+	Object.assign(globals, stubGlobals);
+	return () => {
+		for (const [key, descriptor] of saved) {
+			if (descriptor) Object.defineProperty(globals, key, descriptor);
+			else delete globals[key];
+		}
+	};
+}
+
+const restoreImportGlobals = stubDom();
 const { dndItem } = await import("./action");
 const { dndEngineStore } = await import("./store.svelte");
+restoreImportGlobals();
 
 function pointerEvent(pointerId: number, x: number, y: number) {
 	return { pointerId, button: 0, clientX: x, clientY: y, target: undefined };
@@ -158,15 +177,8 @@ function dispatchWindow(type: string, event: unknown): void {
 	for (const fn of [...listenersFor(type)]) fn(event);
 }
 
-function resetStubs(): void {
-	frames.clear();
-	windowListeners.clear();
-	previewRemovals.length = 0;
-	appendedPreviews.length = 0;
-}
-
-test("dndItem dispatches onDragLeave to the departed zone on zone cross", () => {
-	resetStubs();
+test("dndItem dispatches onDragLeave to the departed zone on zone cross", (t) => {
+	t.after(stubDom());
 	const leaves: string[] = [];
 	const moves: string[] = [];
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 100), {
@@ -206,8 +218,8 @@ test("dndItem dispatches onDragLeave to the departed zone on zone cross", () => 
 	dndEngineStore.unregisterZone("zone-b");
 });
 
-test("dndItem destroy() mid-drag keeps window listeners so pointerup can finish and clean up", () => {
-	resetStubs();
+test("dndItem destroy() mid-drag keeps window listeners so pointerup can finish and clean up", (t) => {
+	t.after(stubDom());
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 100), {
 		id: "zone-a",
 		axis: "vertical",
@@ -241,8 +253,8 @@ test("dndItem destroy() mid-drag keeps window listeners so pointerup can finish 
 	dndEngineStore.unregisterZone("zone-a");
 });
 
-test("dndItem cancels a started drag on Escape and drops its window listeners", () => {
-	resetStubs();
+test("dndItem cancels a started drag on Escape and drops its window listeners", (t) => {
+	t.after(stubDom());
 	let cancelled = 0;
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 100), {
 		id: "zone-a",
@@ -278,8 +290,8 @@ test("dndItem cancels a started drag on Escape and drops its window listeners", 
 	dndEngineStore.unregisterZone("zone-a");
 });
 
-test("dndItem destroy() outside a drag removes its listeners and pending frames", () => {
-	resetStubs();
+test("dndItem destroy() outside a drag removes its listeners and pending frames", (t) => {
+	t.after(stubDom());
 	const node = stubNode({ left: 0, top: 0, width: 240, height: 20 });
 	const action = dndItem(node as unknown as HTMLElement, {
 		item: { id: "tab-b", kind: "tab" },
@@ -292,8 +304,8 @@ test("dndItem destroy() outside a drag removes its listeners and pending frames"
 	assert.equal(dndEngineStore.itemElements.has("tab-b"), false);
 });
 
-test("dndItem hands a drop outside the window to onDropOutsideWindow instead of cancelling", () => {
-	resetStubs();
+test("dndItem hands a drop outside the window to onDropOutsideWindow instead of cancelling", (t) => {
+	t.after(stubDom());
 	let cancelled = 0;
 	const droppedOutside: { id: string; screenX: number; screenY: number }[] = [];
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 100), {
@@ -329,8 +341,8 @@ test("dndItem hands a drop outside the window to onDropOutsideWindow instead of 
 	dndEngineStore.unregisterZone("zone-a");
 });
 
-test("dndItem cancels a drag whose pointerup was lost once a buttonless move arrives", () => {
-	resetStubs();
+test("dndItem cancels a drag whose pointerup was lost once a buttonless move arrives", (t) => {
+	t.after(stubDom());
 	let cancelled = 0;
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 100), { id: "zone-a", axis: "vertical", getItems: () => [] });
 	const node = stubNode({ left: 0, top: 0, width: 240, height: 20 });
@@ -356,8 +368,8 @@ test("dndItem cancels a drag whose pointerup was lost once a buttonless move arr
 	dndEngineStore.unregisterZone("zone-a");
 });
 
-test("dndItem ignores ctrl-click and cancels a live session before a new pointerdown", () => {
-	resetStubs();
+test("dndItem ignores ctrl-click and cancels a live session before a new pointerdown", (t) => {
+	t.after(stubDom());
 	let cancelled = 0;
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 100), { id: "zone-a", axis: "vertical", getItems: () => [] });
 	const node = stubNode({ left: 0, top: 0, width: 240, height: 20 });

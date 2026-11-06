@@ -91,6 +91,9 @@ class SiteTests(unittest.TestCase):
         self.assertFalse(any("/demo/" in location or "/404" in location for location in locations))
         alternates = sitemap.find(".//{*}url").findall("{http://www.w3.org/1999/xhtml}link")
         self.assertEqual({link.attrib["hreflang"] for link in alternates}, {"en", "fr"})
+        latest = re.search(r"^## \[[^\]]+\] - (\S+)", (DIST.parents[1] / "CHANGELOG.md").read_text(), re.M)[1]
+        lastmod = {node.find("{*}loc").text: node.findtext("{*}lastmod") for node in sitemap.findall(".//{*}url")}
+        self.assertTrue(lastmod["https://getlilo.app/changelog/"].startswith(latest))
         for page in PAGES:
             with self.subTest(page=page):
                 source = (DIST / page).read_text()
@@ -106,6 +109,7 @@ class SiteTests(unittest.TestCase):
                 self.assertNotIn("&nbsp;", "".join(title.children))
                 description = next(node for node in parsed if node.tag == "meta" and node.attrs.get("name") == "description")
                 self.assertNotIn("&nbsp;", description.attrs["content"])
+                self.assertLessEqual(len(description.attrs["content"]), 160)
                 markdown = (DIST / page).with_suffix(".md").read_text()
                 self.assertIn("Web page: " + url, markdown)
                 self.assertNotIn("Skip to content", markdown)
@@ -361,6 +365,12 @@ class SiteTests(unittest.TestCase):
         headers = (DIST / "_headers").read_text()
         self.assertIn("script-src 'self'", headers)
         self.assertIn("/_astro/*", headers)
+        self.assertIn('/:page/index.md\n  Link: <https://getlilo.app/:page/>; rel="canonical"', headers)
+        self.assertIn('/fr/:page/index.md\n  Link: <https://getlilo.app/fr/:page/>; rel="canonical"', headers)
+        for markdown in DIST.rglob("index.md"):
+            parts = markdown.relative_to(DIST).parts
+            with self.subTest(markdown=parts):
+                self.assertTrue(len(parts) <= 2 or (len(parts) == 3 and parts[0] == "fr"))
         self.assertIn('name="robots" content="noindex"', (DIST / "404.html").read_text())
         for prefix in ["/changelog", "/fr/changelog"]:
             self.assertIn(f"{prefix} {prefix}/ 301", redirects)

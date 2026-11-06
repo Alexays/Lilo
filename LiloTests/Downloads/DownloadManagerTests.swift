@@ -343,6 +343,26 @@ final class DownloadManagerTests: XCTestCase {
         XCTAssertEqual(try store.fetch(id: id)?.error, "SERVER_BAD_CONTENT")
     }
 
+    func testPrivateSaveIsDroppedWhenItsSpaceClosesDuringTheSavePanel() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        let spaceId = UUID()
+        manager.chooseDestination = { [weak manager] proposed, _, _ in
+            manager?.forgetPrivateDownloads(inSpace: spaceId)
+            return proposed
+        }
+        var notified = false
+        manager.addObserver { _ in notified = true }
+
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!, in: store, privateSpaceId: spaceId).value
+
+        XCTAssertFalse(notified)
+        XCTAssertNil(manager.privateStores[spaceId])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [])
+    }
+
     func testSavedDataTakesTheExtensionsSuggestedName() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

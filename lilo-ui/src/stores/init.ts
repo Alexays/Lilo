@@ -1,5 +1,6 @@
 import { type BridgeInitialStatePayload, on } from "../lib/bridge";
 import { chromeActions } from "../lib/bridge/actions";
+import { setRegion } from "../lib/i18n/state.svelte";
 import { initArchivedTabsStore } from "./archivedTabs.svelte";
 import { initBannersStore } from "./banners.svelte";
 import { initOnboardingStore } from "./onboarding.svelte";
@@ -128,6 +129,7 @@ function applyInitialGeometry(
 
 function applyInitialState(data: BridgeInitialStatePayload): void {
 	recordStartupMark("chromeInitialStateReceived");
+	setRegion(data.region);
 
 	for (const apply of CRITICAL_STATE_APPLIERS) {
 		apply(data);

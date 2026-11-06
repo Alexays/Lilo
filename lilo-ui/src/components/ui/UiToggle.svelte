@@ -65,7 +65,7 @@
     border-radius: var(--radius-chip);
     background: white;
     box-shadow: var(--shadow-control);
-    transition: transform 160ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-fast) var(--motion-ease-spring);
   }
 
   .ui-toggle input:checked + .ui-toggle-track {

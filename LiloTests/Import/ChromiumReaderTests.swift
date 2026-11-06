@@ -68,10 +68,10 @@ final class ChromiumReaderTests: XCTestCase {
         try makeHistory(rows: [("https://a.example/", "A", 1, 13_300_000_000_000_000)], wal: false)
         let denied = ChromiumReader.read(profile: profile, kinds: [.cookies, .history], arc: nil,
                                          password: { throw ImportError.keychain(errSecAuthFailed) })
-        XCTAssertNotNil(denied.errors[.cookies])
+        XCTAssertEqual(denied.errors[.cookies], "keychain")
         XCTAssertEqual(denied.bundle.history.count, 1)
         let wrongKey = ChromiumReader.read(profile: profile, kinds: [.cookies], arc: nil, password: { "other" })
-        XCTAssertNotNil(wrongKey.errors[.cookies], "a key that decrypts nothing is an error, not an empty import")
+        XCTAssertEqual(wrongKey.errors[.cookies], "other", "a key that decrypts nothing is an error, not an empty import")
     }
 
     func testCookiesSkipPartitionedRows() throws {

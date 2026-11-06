@@ -1,0 +1,3 @@
+kind: Changed
+body: Popovers share one shape and animation, opening on a spring and fading out when they close, and toolbar icons no longer move on hover
+time: 2026-11-06T20:01:19.785764+01:00

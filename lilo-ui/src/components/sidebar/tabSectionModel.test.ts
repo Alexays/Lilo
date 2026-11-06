@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { arrangeRows, nextStackHosts, stackName, strippedTitle, type ArrangeEntry } from "./tabSectionModel";
+import { arrangeRows, keepSameGroups, nextStackHosts, stackEntries, stackName, strippedTitle, windowRows, type ArrangeEntry } from "./tabSectionModel";
 
 const web = (id: string, host: string): ArrangeEntry => ({ id, type: "web", host, project: null });
 const term = (id: string, project: string | null = null): ArrangeEntry => ({ id, type: "terminal", host: null, project });
@@ -53,9 +53,53 @@ test("the stack name is the part titles share, else the host", () => {
 	assert.equal(strippedTitle("acme/app", "acme/app"), "acme/app");
 });
 
+test("rows out of the window fold into spacers that keep the list's height", () => {
+	const ids = Array.from({ length: 10 }, (_, index) => `r${index}`);
+	// 32px rows, 34px apart: r3 to r5 cross [120, 200].
+	const rows = windowRows(ids, 0, 120, 200, () => 32, (id) => id === "r9");
+	assert.deepEqual(
+		rows.map((row) => (row.kind === "spacer" ? row.height : `${row.item}@${row.top}`)),
+		[3 * 32 + 2 * 2, "r3@102", "r4@136", "r5@170", 3 * 32 + 2 * 2, "r9@306"],
+	);
+	assert.deepEqual(rows.flatMap((row) => (row.kind === "spacer" ? [row.key] : [])), ["spacer-0", "spacer-1"]);
+});
+
+test("rows laid out from a folder's offset window against the same range", () => {
+	const rows = windowRows(["a", "b"], 1000, 0, 500, () => 32, () => false);
+	assert.deepEqual(rows, [{ kind: "spacer", key: "spacer-0", height: 66 }]);
+});
+
 test("a stack its hosts still name but down to one tab is a plain row", () => {
 	const rows = arrangeRows([web("a", "x.example"), web("b", "y.example")], new Set(["x.example"]), false, false);
 	assert.deepEqual(rows.map((row) => row.stack), [null, null]);
+});
+
+test("a stack of the very same tabs keeps its entry, one whose titles held keeps its name", () => {
+	const one = { id: "a", title: "Commits · acme/app" };
+	const two = { id: "b", title: "Issues · acme/app" };
+	const first = stackEntries(new Map([["code.example.com", [one, two]]]), new Map());
+	assert.deepEqual(first.get("code.example.com"), { name: "acme/app", tabs: [one, two] });
+
+	const same = stackEntries(new Map([["code.example.com", [one, two]]]), first);
+	assert.equal(same.get("code.example.com"), first.get("code.example.com"));
+
+	const loading = { ...two, progress: 0.5 };
+	const patched = stackEntries(new Map([["code.example.com", [one, loading]]]), same);
+	assert.notEqual(patched.get("code.example.com"), same.get("code.example.com"));
+	assert.deepEqual(patched.get("code.example.com"), { name: "acme/app", tabs: [one, loading] });
+
+	const renamed = stackEntries(new Map([["code.example.com", [{ ...one, title: "Commits" }, { ...two, title: "Issues" }]]]), patched);
+	assert.equal(renamed.get("code.example.com")?.name, "code.example.com");
+});
+
+test("a tray of the very same tabs keeps its array", () => {
+	const one = { id: "a" };
+	const two = { id: "b" };
+	const last = new Map([["agent", [one]], ["terminal", [two]]]);
+	const next = keepSameGroups(new Map([["agent", [one]], ["terminal", [{ ...two }]]]), last);
+	assert.equal(next.get("agent"), last.get("agent"));
+	assert.notEqual(next.get("terminal"), last.get("terminal"));
+	assert.notEqual(keepSameGroups(new Map([["agent", [one, two]]]), last).get("agent"), last.get("agent"));
 });
 
 test("a project with two rows or more gathers them in a tray above the rest, in list order", () => {

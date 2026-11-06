@@ -91,7 +91,7 @@ final class WebstoreInstallHandler: NSObject, WKScriptMessageHandlerWithReply {
             try await registry.load(from: dir)
             return ("", nil)  // "" == success for webstorePrivate.beginInstallWithManifest3
         } catch {
-            Self.logger.error("webstore install failed: \(error)")
+            Self.logger.error("webstore install failed: \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
             return (nil, error.localizedDescription)
         }
     }

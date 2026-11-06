@@ -166,6 +166,8 @@ test("Russian counts use one, few, many and fractional forms with local number f
 		assert.equal(translate("ru", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected);
 	}
 	assert.equal(translate("ru", "settings.extensionUpdates.available", { count: 22 }), "Доступно 22 обновления");
+	assert.equal(translate("ru", "processManager.tabsCount", { count: 21 }), "21 вкладка");
+	assert.equal(translate("ru", "agents.row.linesAdded", { count: 5 }), "5 строк добавлено");
 });
 
 test("Ukrainian regional tags, translations and count forms use the selected catalog", () => {

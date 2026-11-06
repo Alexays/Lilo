@@ -15,7 +15,7 @@ final class URLSessionBackend: NSObject {
     /// Called for a download that failed with resume data, with the failure, before it settles.
     var onResumableFailure: ((Int64, Error) -> Void)?
 
-    /// Keeps this backend as its delegate until the app quits: a URLSession retains its delegate.
+    /// Keeps this backend as its delegate until `invalidate()` or the app quits: a URLSession retains its delegate.
     private var _session: URLSession?
     private var session: URLSession {
         if let existing = _session { return existing }
@@ -142,6 +142,12 @@ final class URLSessionBackend: NSObject {
             item.state = .interrupted; item.error = DownloadInterruptReason.userCanceled.rawValue; item.endedAt = Date()
             return true
         }
+    }
+
+    /// Cancels the session's tasks and releases this backend, for a lane that goes before the app quits.
+    func invalidate() {
+        _session?.invalidateAndCancel()
+        _session = nil
     }
 
     func isTracking(id: Int64) -> Bool {

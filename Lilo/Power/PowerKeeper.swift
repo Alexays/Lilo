@@ -450,14 +450,14 @@ final class PowerKeeper {
     }
 
     private func summarize(_ period: (battery: Int?, finished: Int)) {
-        var parts = unsafe [String(format: "%d commands finished".localized, period.finished)]
+        var parts = unsafe [String(format: "%d commands finished".localized(count: period.finished), period.finished)]
         if let oldest = awaitingSince.values.min() {
             let formatter = DateComponentsFormatter()
             formatter.unitsStyle = .abbreviated
             formatter.allowedUnits = [.hour, .minute]
             formatter.maximumUnitCount = 2
             let waited = formatter.string(from: max(60, Date().timeIntervalSince(oldest))) ?? ""
-            unsafe parts.append(String(format: "%d wait for your answer, the oldest for %@".localized, awaitingSince.count, waited))
+            unsafe parts.append(String(format: "%d wait for your answer, the oldest for %@".localized(count: awaitingSince.count), awaitingSince.count, waited))
         }
         if let before = period.battery, let after = batteryPercent {
             unsafe parts.append(String(format: "battery from %d%% to %d%%".localized, before, after))

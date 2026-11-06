@@ -1,6 +1,6 @@
 <script lang="ts" module>
   import type { TerminalProgramIcon } from "../../lib/terminalIcons";
-  import type { IconName } from "./icons";
+  import type { IconName } from "../ui/icons";
 
   export interface MenuOption {
     value: string;
@@ -23,8 +23,9 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { portal } from "../../lib/actions/portal";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
   import AgentTile from "./AgentTile.svelte";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
 
   interface Props {
     value: string;
@@ -125,6 +126,7 @@
   <div
     id={menuId}
     class="menu float-surface float-popover"
+    out:popoverOut
     class:up={position.up}
     role="menu"
     tabindex="-1"

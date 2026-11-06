@@ -248,17 +248,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !commands.isEmpty {
             let named = commands.filter { !$0.isEmpty }
             var list = named.prefix(3).joined(separator: ", ")
-            if named.count > 3 { unsafe list += String(format: " and %d more".localized, named.count - 3) }
-            let count = unsafe commands.count == 1
-                ? "A terminal is still running a command".localized
-                : String(format: "%d terminals are still running a command".localized, commands.count)
-            let stopped = commands.count == 1 ? "It will be stopped.".localized : "They will be stopped.".localized
-            lines.append((list.isEmpty ? count : "\(count) (\(list))") + ". " + stopped)
+            if named.count > 3 { unsafe list = String(format: "%@ and %d more".localized(count: named.count - 3), list, named.count - 3) }
+            unsafe lines.append(list.isEmpty
+                ? String(format: "%d terminals are still running a command. They will be stopped.".localized(count: commands.count), commands.count)
+                : String(format: "%d terminals are still running a command (%@). They will be stopped.".localized(count: commands.count), commands.count, list))
         }
         if downloads > 0 {
-            unsafe lines.append(downloads == 1
-                ? "A download is in progress and will be paused until Lilo opens again.".localized
-                : String(format: "%d downloads are in progress and will be paused until Lilo opens again.".localized, downloads))
+            unsafe lines.append(String(format: "%d downloads are in progress and will be paused until Lilo opens again.".localized(count: downloads), downloads))
         }
         alert.informativeText = lines.joined(separator: "\n")
         alert.addButton(withTitle: "Quit".localized)
@@ -334,7 +330,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         browserContext.isTerminating = true
         browserContext.windows.windows.forEach { $0.saveSessionBeforeQuit() }
-        browserContext.saveSpaceStatesBeforeQuit()
+        let savedSpaces = browserContext.saveSpaceStatesBeforeQuit()
         // After the saves, which read each page's navigation state; early, so what the pages write as they
         // close reaches the network process before it syncs storage at the app's exit.
         browserContext.closePagesBeforeQuit()
@@ -346,8 +342,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         browserContext.terminalHost.terminateAllForQuit()
         browserContext.agentControl.setEnabled(false)
         browserContext.settingsStore?.lastQuitAt = Date()
-        // Last write: a quit that dies while saving must still read as unclean on the next launch.
-        browserContext.settingsStore?.sessionCleanShutdown = true
+        // Last write: a quit that dies while saving, or whose tabs were not saved, must still read as unclean on the next launch.
+        if savedSpaces { browserContext.settingsStore?.sessionCleanShutdown = true }
         browserContext.dbManager?.closeForShutdown()
     }
 

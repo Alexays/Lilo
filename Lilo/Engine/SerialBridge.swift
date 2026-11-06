@@ -338,6 +338,11 @@ extension SerialBridge {
       };
       const then = NativePromise.prototype.then;
       const call = (action, args) => apply(then, lilo.post('liloSerial', assign({ action, document: documentToken }, args)), [undefined, error => { throw toError(error); }]);
+      // WebKit's errors for a member called on what is not an instance of its interface: getters and operations throw,
+      // operations returning a promise reject.
+      const getterError = (name, key) => new NativeTypeError(`The ${name}.${key} getter can only be used on instances of ${name}`);
+      const callError = (name, key) => new NativeTypeError(`Can only call ${name}.${key} on instances of ${name}`);
+      const rejectCall = (name, key) => NativePromise.reject(callError(name, key));
       const toBase64 = bytes => {
         let text = '';
         for (let i = 0; i < bytes.length; i += 32768) text += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
@@ -351,16 +356,34 @@ extension SerialBridge {
           this.#info = info;
           attachPort(this);
         }
-        get readable() { return this.#readable; }
-        get writable() { return this.#writable; }
-        get connected() { return true; }
+        get readable() {
+          if (!SerialPort.#owns(this)) throw getterError('SerialPort', 'readable');
+          return this.#readable;
+        }
+        get writable() {
+          if (!SerialPort.#owns(this)) throw getterError('SerialPort', 'writable');
+          return this.#writable;
+        }
+        get connected() {
+          if (!SerialPort.#owns(this)) throw getterError('SerialPort', 'connected');
+          return true;
+        }
         getInfo() {
+          if (!SerialPort.#owns(this)) throw callError('SerialPort', 'getInfo');
           const info = {};
           if (this.#info.usbVendorId != null) info.usbVendorId = this.#info.usbVendorId;
           if (this.#info.usbProductId != null) info.usbProductId = this.#info.usbProductId;
           return info;
         }
-        async open(options) {
+        // Operations are plain functions, as WebKit's are, over private async ones.
+        open(options) { return SerialPort.#owns(this) ? this.#open(options) : rejectCall('SerialPort', 'open'); }
+        close() { return SerialPort.#owns(this) ? this.#close() : rejectCall('SerialPort', 'close'); }
+        setSignals(signals) {
+          return SerialPort.#owns(this) ? call('setSignals', assign({ id: this.#info.id }, signals || {})) : rejectCall('SerialPort', 'setSignals');
+        }
+        getSignals() { return SerialPort.#owns(this) ? call('getSignals', { id: this.#info.id }) : rejectCall('SerialPort', 'getSignals'); }
+        forget() { return SerialPort.#owns(this) ? this.#forget() : rejectCall('SerialPort', 'forget'); }
+        async #open(options) {
           if (this.#readable) throw new DOMException('The port is already open.', 'InvalidStateError');
           // WebIDL's [EnforceRange] unsigned long, as Chrome converts it: '9600' opens, 0.5 does not.
           const rate = Math.trunc(Number(options && options.baudRate));
@@ -376,7 +399,7 @@ extension SerialBridge {
             return call('write', { id, data: toBase64(bytes) });
           } });
         }
-        async close() {
+        async #close() {
           if (!this.#readable) throw new DOMException('The port is already closed.', 'InvalidStateError');
           this.#closing = true;
           const readable = this.#readable, writable = this.#writable, controller = this.#controller;
@@ -386,12 +409,11 @@ extension SerialBridge {
           if (!writable.locked) { try { await writable.close(); } catch (e) {} }
           await call('close', { id: this.#info.id });
         }
-        setSignals(signals) { return call('setSignals', assign({ id: this.#info.id }, signals || {})); }
-        getSignals() { return call('getSignals', { id: this.#info.id }); }
-        async forget() {
+        async #forget() {
           await call('forget', { id: this.#info.id });
           delete ports[this.#info.id];
         }
+        static #owns(value) { return (typeof value === 'object' && value !== null || typeof value === 'function') && #info in value; }
         static receive(port, data) {
           if (port.#controller) { try { port.#controller.enqueue(Uint8Array.fromBase64(data)); } catch (e) {} }
         }
@@ -412,13 +434,22 @@ extension SerialBridge {
           super();
           attachSerial(this);
         }
-        async requestPort(options) { return portFor(await call('requestPort', { filters: (options && options.filters) || [] })); }
-        async getPorts() { return (await call('getPorts')).map(portFor); }
+        requestPort(options) {
+          if (this !== serial) return rejectCall('Serial', 'requestPort');
+          let filters;
+          // A throwing getter on the options rejects, as WebKit's dictionary conversion does.
+          try { filters = (options && options.filters) || []; } catch (e) { return NativePromise.reject(e); }
+          return apply(then, call('requestPort', { filters }), [portFor]);
+        }
+        getPorts() {
+          if (this !== serial) return rejectCall('Serial', 'getPorts');
+          return apply(then, call('getPorts'), [infos => infos.map(portFor)]);
+        }
       }
       const attachPort = lilo.eventHandlers(SerialPort.prototype, ['connect', 'disconnect']);
       const attachSerial = lilo.eventHandlers(Serial.prototype, ['connect', 'disconnect']);
       const portFor = info => ports[info.id] || (ports[info.id] = new SerialPort(illegal, info));
-      const serial = new Serial(illegal);
+      const serial = new Serial(illegal), owner = navigator;
       lilo.on('serialData', (id, data) => { if (ports[id]) receive(ports[id], data); });
       lilo.on('serialEnd', id => {
         const port = ports[id];
@@ -430,7 +461,10 @@ extension SerialBridge {
       lilo.nativeClass(Serial);
       lilo.global('SerialPort', SerialPort);
       lilo.global('Serial', Serial);
-      lilo.accessors(Navigator.prototype, { get serial() { return serial; } });
+      lilo.accessors(Navigator.prototype, { get serial() {
+        if (this !== owner) throw getterError('Navigator', 'serial');
+        return serial;
+      } });
     }
     """#
 }

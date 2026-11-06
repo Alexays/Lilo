@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "지금 업데이트",
-			"summary": "목록 {lists}개",
+			"summary": {
+				"one": "목록 {count}개",
+				"other": "목록 {count}개"
+			},
 			"updated": "업데이트: {time}"
 		},
 		"extensionUpdates": {
@@ -605,7 +608,6 @@
 			"connect": "연결",
 			"copy": "설정 복사",
 			"clientDescription": "이 클라이언트의 MCP 서버에 Lilo를 추가합니다.",
-			"clientConnected": "이 클라이언트의 MCP 서버에 Lilo가 있습니다.",
 			"revoke": "제거",
 			"status": {
 				"acting": "작업 중",
@@ -641,8 +643,10 @@
 			"clearData": "데이터 지우기...",
 			"remove": "제거...",
 			"lastProfile": "모든 스페이스에는 프로필이 필요하므로 마지막 프로필은 유지됩니다.",
-			"extensionCount": "확장 프로그램 {count}개",
-			"extensionCountOne": "확장 프로그램 1개",
+			"extensionCount": {
+				"one": "확장 프로그램 {count}개",
+				"other": "확장 프로그램 {count}개"
+			},
 			"newProfile": "새 프로필...",
 			"newProfileDetail": "새로운 쿠키, 로그인 및 확장 프로그램",
 			"namePlaceholder": "프로필 이름",
@@ -766,6 +770,7 @@
 		"ariaLabel": "탭"
 	},
 	"bottomBar": {
+		"switchedTo": "{name}(으)로 전환함",
 		"library": "다운로드 및 보관된 탭",
 		"downloads": "다운로드",
 		"downloadsActiveCount": "다운로드, {count}개 진행 중",
@@ -774,6 +779,10 @@
 		"signedInAs": "{space}, {profile} 프로필로 로그인됨"
 	},
 	"sidebar": {
+		"resize": "사이드바 너비",
+		"movedToPosition": "{count}개 중 {position}번째로 이동함",
+		"movedInto": "{name}(으)로 이동함",
+		"movedOutOf": "{name}에서 꺼냄",
 		"ariaLabel": "사이드바"
 	},
 	"spaceBar": {
@@ -1335,17 +1344,23 @@
 		"navLabel": "프로세스 관리자 보기",
 		"searchPlaceholder": "탭 검색",
 		"memoryAriaLabel": "메모리 사용량",
-		"tabsCount": "탭 {count}개",
-		"tabsCountOne": "탭 1개",
+		"tabsCount": {
+			"one": "탭 {count}개",
+			"other": "탭 {count}개"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "기타 {count}개",
 			"other": "기타 {count}개"
 		},
-		"reclaim": "숨겨진 탭 {count}개가 {size} 사용 중",
-		"reclaimOne": "숨겨진 탭 1개가 {size} 사용 중",
-		"reclaimNoSize": "숨겨진 탭 {count}개가 아직 로드되어 있음",
-		"reclaimNoSizeOne": "숨겨진 탭 1개가 아직 로드되어 있음",
+		"reclaim": {
+			"one": "숨겨진 탭 {count}개가 {size} 사용 중",
+			"other": "숨겨진 탭 {count}개가 {size} 사용 중"
+		},
+		"reclaimNoSize": {
+			"one": "숨겨진 탭 {count}개가 아직 로드되어 있음",
+			"other": "숨겨진 탭 {count}개가 아직 로드되어 있음"
+		},
 		"sleep": "잠자기로 전환",
 		"groupTabs": "탭",
 		"groupSleeping": "잠자기",
@@ -1387,16 +1402,21 @@
 	"urlToast": {
 		"pageActions": "페이지 동작",
 		"reEnableBlocking": "이 사이트에서 차단 다시 활성화",
-		"trackerBlockedOnPage": "이 페이지에서 추적기 {count}개 차단됨",
-		"trackersBlockedOnPage": "이 페이지에서 추적기 {count}개 차단됨",
+		"trackersBlockedOnPage": {
+			"one": "이 페이지에서 추적기 {count}개 차단됨",
+			"other": "이 페이지에서 추적기 {count}개 차단됨"
+		},
 		"disableBlocking": "이 사이트에서 차단 비활성화",
 		"adsAllowed": "광고 허용됨",
-		"trackerBlockedLabel": "추적기 {count}개 차단됨",
-		"trackersBlockedLabel": "추적기 {count}개 차단됨",
+		"trackersBlockedLabel": {
+			"one": "추적기 {count}개 차단됨",
+			"other": "추적기 {count}개 차단됨"
+		},
 		"adsBlocked": "광고 차단됨",
 		"extensionAlreadyInstalled": "이미 설치된 확장 프로그램",
 		"installChromeExtension": "이 Chrome 확장 프로그램 설치",
 		"installed": "설치됨",
+		"installFailed": "설치할 수 없음",
 		"install": "설치",
 		"screenshot": "스크린샷",
 		"fullPage": "전체 페이지",
@@ -1715,6 +1735,11 @@
 				"extensionsCount": "확장 프로그램 다시 설치 중: {current}/{total}"
 			},
 			"partial": "일부 데이터를 가져오지 못했습니다: {list}. 나중에 설정에서 다시 시도할 수 있습니다.",
+			"cause": {
+				"keychain": "키체인 접근이 거부됨",
+				"locked": "파일이 사용 중입니다. 브라우저를 종료한 후 다시 시도하세요",
+				"access": "전체 디스크 접근 권한이 필요합니다"
+			},
 			"profiles": "{browser} 프로필",
 			"kinds": "가져올 항목",
 			"kind": {
@@ -1746,6 +1771,7 @@
 			"addNamed": "{name} 추가",
 			"adding": "추가 중...",
 			"added": "추가됨",
+			"failed": "추가할 수 없습니다. 다시 시도하세요.",
 			"soon": "출시 예정",
 			"managers": {
 				"bitwarden": "오픈 소스, 모든 기기에서 무료",
@@ -1911,12 +1937,11 @@
 		"No changes on this branch": "이 브랜치에 변경사항 없음",
 		"Nothing differs from %@.": "%@와 다른 내용이 없습니다.",
 		"Show Uncommitted Changes": "커밋하지 않은 변경사항 보기",
-		"1 file": "파일 1개",
-		"%@ files": "파일 %@개",
+		"%@ files": {"one": "파일 %@개", "other": "파일 %@개"},
 		"against %@ from %@, uncommitted included": "%@와 비교, %@ 기준, 커밋하지 않은 변경사항 포함",
 		"Binary file, not shown": "바이너리 파일, 표시되지 않음",
-		"%d lines folded. Click to show.": "%d줄이 접혀 있습니다. 클릭하여 표시하세요.",
-		"Generated file, %d lines folded. Click to show.": "생성된 파일, %d줄이 접혀 있습니다. 클릭하여 표시하세요.",
+		"%d lines folded. Click to show.": {"one": "%d줄이 접혀 있습니다. 클릭하여 표시하세요.", "other": "%d줄이 접혀 있습니다. 클릭하여 표시하세요."},
+		"Generated file, %d lines folded. Click to show.": {"one": "생성된 파일, %d줄이 접혀 있습니다. 클릭하여 표시하세요.", "other": "생성된 파일, %d줄이 접혀 있습니다. 클릭하여 표시하세요."},
 		"renamed from %@": "이전 이름: %@",
 		"Open in Split": "분할 보기에서 열기",
 		"worktree": "작업 트리",
@@ -1926,7 +1951,7 @@
 		"%@ wants to use your camera and microphone": "%@에서 카메라와 마이크를 사용하려고 합니다",
 		"%@ wants to use your camera or microphone": "%@에서 카메라 또는 마이크를 사용하려고 합니다",
 		"Open as Tab": "탭으로 열기",
-		"Not Secure": "안전하지 않음",
+		"Not Secure - %@": "안전하지 않음 - %@",
 		"Other Bookmarks (%@)": "기타 책갈피(%@)",
 		"Replay Onboarding": "시작 안내 다시 보기",
 		"New Terminal Beside": "옆에 새 터미널",
@@ -2064,6 +2089,13 @@
 		"Select an unpacked extension folder (must contain manifest.json)": "압축 해제된 확장 프로그램 폴더 선택(manifest.json 포함 필수)",
 		"Couldn't load extension": "확장 프로그램을 로드할 수 없음",
 		"Another copy of %@ is already installed. Remove it to load this folder.": "%@의 다른 사본이 이미 설치되어 있습니다. 이 폴더를 로드하려면 해당 사본을 제거하십시오.",
+		"manifest.json not found at %@": "%@에서 manifest.json을 찾을 수 없음",
+		"Failed to parse manifest.json: %@": "manifest.json을 분석할 수 없음: %@",
+		"Unsupported manifest version %ld; only MV3 is supported": "지원되지 않는 매니페스트 버전 %ld. MV3만 지원됩니다",
+		"Required manifest field missing: %@": "매니페스트 필수 필드 누락: %@",
+		"Failed to download extension: %@": "확장 프로그램을 다운로드할 수 없음: %@",
+		"Invalid extension archive: %@": "잘못된 확장 프로그램 아카이브: %@",
+		"The extension's background did not respond.": "확장 프로그램의 백그라운드가 응답하지 않았습니다.",
 		"Open Popup": "팝업 열기",
 		"History": "방문 기록",
 		"Reopen Last Closed Tab": "마지막으로 닫은 탭 다시 열기",
@@ -2085,6 +2117,11 @@
 		"Its tabs, history and downloads are unavailable this session.": "이 세션에서는 해당 프로필의 탭, 방문 기록, 다운로드를 사용할 수 없습니다.",
 		"Lilo couldn't load its settings": "Lilo가 설정을 로드할 수 없습니다",
 		"Default settings are in use for this session.": "이 세션에서는 기본 설정을 사용합니다.",
+		"Lilo couldn't save your tabs": "Lilo가 탭을 저장하지 못했습니다",
+		"Lilo couldn't save its settings": "Lilo가 설정을 저장하지 못했습니다",
+		"Lilo couldn't save a conversation": "Lilo가 대화를 저장하지 못했습니다",
+		"Recent changes may be missing the next time you open Lilo. Check that your disk has free space.": "다음에 Lilo를 열 때 최근 변경 사항이 없을 수 있습니다. 디스크에 여유 공간이 있는지 확인하세요.",
+		"%@\n\nError: %@": "%@\n\n오류: %@",
 		"Continue": "계속",
 		"Delete": "삭제",
 		"Quit": "종료",
@@ -2127,19 +2164,16 @@
 		"The Mac is too hot.": "Mac이 너무 뜨겁습니다.",
 		"Commands kept the Mac awake for the maximum duration.": "명령이 최대 시간 동안 Mac의 잠자기를 방지했습니다.",
 		"While the lid was closed": "덮개가 닫혀 있는 동안",
-		"%d commands finished": "명령 %d개 완료",
-		"%d wait for your answer, the oldest for %@": "%d개가 응답 대기 중, 가장 오래 기다린 시간 %@",
+		"%d commands finished": {"one": "명령 %d개 완료", "other": "명령 %d개 완료"},
+		"%d wait for your answer, the oldest for %@": {"one": "%d개가 응답 대기 중, 가장 오래 기다린 시간 %@", "other": "%d개가 응답 대기 중, 가장 오래 기다린 시간 %@"},
 		"battery from %d%% to %d%%": "배터리 %d%%에서 %d%%로 변경",
 		"Show Next Waiting Terminal": "다음 대기 중인 터미널 보기",
 		"Downloads": "다운로드",
 		"Quit Lilo?": "Lilo를 종료하겠습니까?",
-		"A terminal is still running a command": "터미널 1개에서 아직 명령 실행 중",
-		"%d terminals are still running a command": "터미널 %d개에서 아직 명령 실행 중",
-		" and %d more": " 외 %d개",
-		"It will be stopped.": "명령이 중단됩니다.",
-		"They will be stopped.": "명령이 중단됩니다.",
-		"A download is in progress and will be paused until Lilo opens again.": "다운로드가 진행 중이며 Lilo를 다시 열 때까지 일시 정지됩니다.",
-		"%d downloads are in progress and will be paused until Lilo opens again.": "다운로드 %d개가 진행 중이며 Lilo를 다시 열 때까지 일시 정지됩니다.",
+		"%d terminals are still running a command. They will be stopped.": {"one": "터미널 %d개에서 아직 명령이 실행 중입니다. 명령이 중단됩니다.", "other": "터미널 %d개에서 아직 명령이 실행 중입니다. 명령이 중단됩니다."},
+		"%d terminals are still running a command (%@). They will be stopped.": {"one": "터미널 %d개에서 아직 명령이 실행 중입니다 (%@). 명령이 중단됩니다.", "other": "터미널 %d개에서 아직 명령이 실행 중입니다 (%@). 명령이 중단됩니다."},
+		"%@ and %d more": {"one": "%@ 외 %d개", "other": "%@ 외 %d개"},
+		"%d downloads are in progress and will be paused until Lilo opens again.": {"one": "다운로드 %d개가 진행 중이며 Lilo를 다시 열 때까지 일시 정지됩니다.", "other": "다운로드 %d개가 진행 중이며 Lilo를 다시 열 때까지 일시 정지됩니다."},
 		"Sign In": "로그인",
 		"Install": "설치",
 		"Install %@?": "%@ 항목을 설치하겠습니까?",
@@ -2153,7 +2187,7 @@
 		"A command is still running in it and will be stopped.": "아직 실행 중인 명령이 있으며 해당 명령이 중단됩니다.",
 		"Close": "닫기",
 		"New Terminal Tab": "새 터미널 탭",
-		"Close %d terminals?": "터미널 %d개를 닫겠습니까?",
+		"Close %d terminals?": {"one": "터미널 %d개를 닫겠습니까?", "other": "터미널 %d개를 닫겠습니까?"},
 		"Commands are still running in them and will be stopped.": "아직 실행 중인 명령이 있으며 해당 명령이 중단됩니다.",
 		"The terminal could not start.": "터미널을 시작할 수 없습니다.",
 		"Close the tab and try again.": "탭을 닫고 다시 시도하세요.",
@@ -2186,6 +2220,7 @@
 		"Delete Folder": "폴더 삭제",
 		"Edit Folder": "폴더 편집",
 		"Edit...": "편집...",
+		"Back to Home Page": "홈페이지로 돌아가기",
 		"New Folder": "새 폴더",
 		"Home": "홈",
 		"Default": "기본",
@@ -2277,9 +2312,7 @@
 		"Added Lilo to Codex": "Codex에 Lilo 추가됨",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo가 %@ 파일을 읽을 수 없습니다. 다음 서버를 직접 추가하세요: %@",
 		"Stop Agents": "에이전트 중단",
-		"Delete %@ and %@?": "‘%@’ 및 ‘%@’ 항목을 삭제하겠습니까?",
-		"1 tab": "탭 1개",
-		"%d tabs": "탭 %d개",
+		"Delete %@ and its %d tabs?": {"one": "%@ 및 탭 %d개를 삭제하겠습니까?", "other": "%@ 및 탭 %d개를 삭제하겠습니까?"},
 		"This cannot be undone.": "이 작업은 취소할 수 없습니다.",
 		"Its tabs stay in the sidebar.": "탭은 사이드바에 유지됩니다.",
 		"Agent": "에이전트",
@@ -2528,7 +2561,6 @@
 			"restoreToHere": "여기까지 복원",
 			"restoreConfirm": "프로젝트 파일을 이 메시지 시점으로 되돌릴까요?",
 			"restore": "복원",
-			"reviewChanges": "변경사항에서 검토",
 			"undo": "실행 취소",
 			"keep": "유지",
 			"undone": "취소됨",
@@ -2612,7 +2644,6 @@
 			"agent": "에이전트",
 			"noAgents": "에이전트 없음",
 			"project": "프로젝트",
-			"chooseProject": "프로젝트 선택",
 			"chooseFolder": "폴더 선택...",
 			"noFolder": "폴더 없음",
 			"noFolderDetail": "에이전트가 자체 폴더에서 작업합니다",
@@ -2623,7 +2654,14 @@
 			"untitled": "새 대화",
 			"working": "작업 중",
 			"failed": "오류로 중지됨",
-			"changes": "{added}줄 추가, {removed}줄 삭제",
+			"linesAdded": {
+				"one": "{count}줄 추가",
+				"other": "{count}줄 추가"
+			},
+			"linesRemoved": {
+				"one": "{count}줄 삭제",
+				"other": "{count}줄 삭제"
+			},
 			"pages": {
 				"one": "페이지 {count}개",
 				"other": "페이지 {count}개"

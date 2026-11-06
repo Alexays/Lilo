@@ -4,6 +4,7 @@ import { initialWorld, nestedFolderWorld } from "./fixtures";
 
 const tree = (page: Page) => page.getByRole("tree", { name: "Open tabs" });
 const row = (page: Page, name: string | RegExp) => tree(page).getByRole("treeitem", { name });
+const announcer = (page: Page) => page.locator(".live-announcer");
 
 async function drops(page: Page): Promise<Record<string, unknown>[]> {
 	return (await sentCommands(page)).filter((c) => c.action === "commitSidebarDrop").map((c) => c.payload as Record<string, unknown>);
@@ -72,9 +73,11 @@ test("Option-Down moves the focused tab below its sibling and keeps it focused",
 	});
 	await expect.poll(() => rootIds(page)).toEqual(["tab-beta", "tab-alpha", "tab-gamma"]);
 	await expect(row(page, /^Alpha Docs/)).toBeFocused();
+	await expect(announcer(page)).toHaveText("Moved to position 2 of 3");
 
 	await page.keyboard.press("Alt+ArrowUp");
 	await expect.poll(() => rootIds(page)).toEqual(["tab-alpha", "tab-beta", "tab-gamma"]);
+	await expect(announcer(page)).toHaveText("Moved to position 1 of 3");
 });
 
 test("Option-Right moves a tab into the folder above, Option-Left takes it back out", async ({ page }) => {
@@ -89,6 +92,7 @@ test("Option-Right moves a tab into the folder above, Option-Left takes it back 
 	const gammaAt = (level: number) => tree(page).locator(`[role=treeitem][data-tab-id="tab-gamma"][aria-level="${level}"]`);
 	await expect(gammaAt(2)).toBeFocused();
 	await expect(gammaAt(1)).toHaveCount(0);
+	await expect(announcer(page)).toHaveText("Moved into Projects");
 
 	await page.keyboard.press("Alt+ArrowLeft");
 	expect((await drops(page)).at(-1)).toMatchObject({
@@ -96,6 +100,7 @@ test("Option-Right moves a tab into the folder above, Option-Left takes it back 
 	});
 	await expect(gammaAt(1)).toBeFocused();
 	await expect(gammaAt(2)).toHaveCount(0);
+	await expect(announcer(page)).toHaveText("Moved out of Projects");
 });
 
 test("the row a move leaves behind is inert while it plays its exit", async ({ page }) => {

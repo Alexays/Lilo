@@ -89,6 +89,19 @@ final class AgentClientConfigTests: XCTestCase {
         XCTAssertEqual(try String(contentsOf: home.appending(path: ".cursor/mcp.json"), encoding: .utf8), original)
     }
 
+    func testCodexConfigThatIsNotTextIsLeftUntouched() async throws {
+        let original = Data([0x5B, 0xFF, 0xFE, 0x5D])
+        try FileManager.default.createDirectory(at: home.appending(path: ".codex"), withIntermediateDirectories: true)
+        try original.write(to: home.appending(path: ".codex/config.toml"))
+
+        do {
+            _ = try await AgentClientConfig.connect(.codex, home: home)
+            XCTFail("a file that cannot be read is not rewritten")
+        } catch {}
+
+        XCTAssertEqual(try Data(contentsOf: home.appending(path: ".codex/config.toml")), original)
+    }
+
     func testCursorConfigCreatedWhenMissing() async throws {
         _ = try await AgentClientConfig.connect(.cursor, home: home)
 

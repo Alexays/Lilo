@@ -185,12 +185,12 @@ for (const color of ["#20242e", "#000000", "#4a90d9"]) {
 test("the screenshot panel's primary button and labels read", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "screenshotCaptured", id: "x", url: "data:image/png;base64,iVBORw0KGgo=", filename: "x.png" }));
-	await page.locator(".screenshot-panel .btn.primary").first().waitFor();
+	const button = ".screenshot-panel .ui-split-button .main";
+	await page.locator(button).first().waitFor();
 
-	const button = ".screenshot-panel .btn.primary";
-	expect(await ratio(page, await cssColor(page, button, "color"), await cssColor(page, button, "backgroundColor"), true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+	expect(await ratio(page, await cssColor(page, button, "color"), await cssColor(page, ".screenshot-panel .ui-split-button", "backgroundColor"), true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 	const card = await cssColor(page, ".screenshot-panel .card", "backgroundColor");
-	expect(await ratio(page, await cssColor(page, ".screenshot-panel .group-label", "color"), card, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+	expect(await ratio(page, await cssColor(page, ".screenshot-panel .ui-inset-list-title", "color"), card, true)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 });
 
 /**

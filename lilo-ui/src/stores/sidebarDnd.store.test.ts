@@ -13,14 +13,13 @@ type StateRune = (<T>(value: T) => T) & { raw: <T>(value: T) => T };
 const { dndEngineStore } = await import("../lib/dndEngine/store.svelte");
 type DndActiveDrag = import("../lib/dndEngine/store.svelte").DndActiveDrag;
 const {
+	DROP_SETTLE_MS,
 	commitSidebarDrop,
 	getZoneItems,
 	resetSidebarDrag,
 } = await import("./sidebarDnd.svelte");
 type SidebarZoneRef = import("./sidebarDnd.svelte").SidebarZoneRef;
 type SidebarDndItem = import("../lib/dndEngine/adapters/sidebar").SidebarDndItem;
-
-const DROP_SETTLE_MS = 180;
 
 function elementRect(left: number, top: number, width: number, height: number): HTMLElement {
 	return {
@@ -39,6 +38,8 @@ const ZONE: SidebarZoneRef = { id: "zone-a", section: "unpinned", parentFolderId
 const OTHER_ZONE: SidebarZoneRef = { id: "zone-b", section: "pinned", parentFolderId: null };
 
 function registerZones(): void {
+	// Test files share one process: a document another file stubbed would take the drag flag the store mirrors onto it.
+	delete (globalThis as { document?: unknown }).document;
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 120), {
 		id: ZONE.id,
 		axis: "vertical",

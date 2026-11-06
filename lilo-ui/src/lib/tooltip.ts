@@ -104,8 +104,8 @@ function inject() {
   background: var(--float-surface);
   box-shadow: var(--float-shadow);
   color: var(--float-text);
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   font-family: inherit;
   line-height: 1.35;
   pointer-events: none;
@@ -141,7 +141,7 @@ function inject() {
 .lilo-tooltip-icon {
   width: 14px;
   height: 14px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -152,7 +152,7 @@ function inject() {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1;
 }
 .lilo-tooltip-title {
@@ -161,17 +161,17 @@ function inject() {
   overflow-wrap: anywhere;
 }
 .lilo-tooltip-rich .lilo-tooltip-title {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
 }
 .lilo-tooltip-shortcut {
   flex-shrink: 0;
   margin-left: 2px;
   padding: 0 5px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: var(--float-hover);
   color: var(--float-text-muted);
-  font-size: 10.5px;
+  font-size: var(--font-size-xs);
   line-height: 16px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -181,8 +181,8 @@ function inject() {
   gap: 4px;
   min-width: 0;
   color: var(--float-text-muted);
-  font-size: 11px;
-  font-weight: 400;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
   white-space: nowrap;
 }
 .lilo-tooltip-icon + .lilo-tooltip-title, .lilo-tooltip-text-icon + .lilo-tooltip-title {

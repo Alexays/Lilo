@@ -1,13 +1,13 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { fade, slide } from "svelte/transition";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
   import { importActions } from "../../lib/bridge/actions";
   import type { ImportSourceInfo } from "../../lib/bridge/protocol";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { IMPORT_KINDS, importStatus, PASSWORD_MANAGERS, profileKey, toggleSource } from "./onboardingModel";
-  import { getExtensions, installStoreExtension, isExtensionInstalling } from "../../stores/extensions.svelte";
+  import { getExtensions, getInstallOutcome, installStoreExtension, isExtensionInstalling } from "../../stores/extensions.svelte";
   import { getImportState, getOnboarding, goBack, goNext, importedSummary, runSelectedImport, setImportChoices } from "../../stores/onboarding.svelte";
 
   const onboarding = getOnboarding();
@@ -41,8 +41,10 @@
       .flatMap((profile) => profile.extensions)),
   );
   const failures = $derived(
-    (importState.summary ?? []).filter((item) => item.error)
-      .map((item) => `${sources.find((source) => source.id === item.sourceId)?.name ?? item.sourceId} (${t(`onboarding.import.kind.${item.kind}`)})`),
+    (importState.summary ?? []).filter((item) => item.error).map((item) => {
+      const cause = item.error === "other" ? "" : `: ${t(`onboarding.import.cause.${item.error}`)}`;
+      return `${sources.find((source) => source.id === item.sourceId)?.name ?? item.sourceId} (${t(`onboarding.import.kind.${item.kind}`)}${cause})`;
+    }),
   );
   // Only Chromium cookies go through the Keychain prompt worth announcing, and only while they import.
   const keychainPrompt = $derived(importState.running && status.phase?.kind === "cookies"
@@ -54,7 +56,7 @@
   const addedManagers = $derived(PASSWORD_MANAGERS.filter((manager) => !manager.soon && installed.has(manager.id)));
   const extensionCount = $derived(chosenExtensions.filter((ext) => choices.extensionIds.includes(ext.id)).length);
   // What the import takes, said in one sentence; its options open on request, or by themselves when nothing is left.
-  const kindsSummary = $derived(new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(choices.kinds.map((kind) =>
+  const kindsSummary = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }).format(choices.kinds.map((kind) =>
     kind === "extensions" && extensionCount > 0 ? t("onboarding.import.count.extensions", { count: extensionCount }) : t(`onboarding.import.item.${kind}`))));
   let kindsOpen = $state(false);
   const showKinds = $derived(kindsOpen || choices.kinds.length === 0);
@@ -211,7 +213,7 @@
             {:else}
               <span class="glyph" aria-hidden="true">{manager.name[0]}</span>
             {/if}
-            <span class="ob-text">{manager.name}<small>{t(`onboarding.passwords.managers.${manager.key}`)}</small></span>
+            <span class="ob-text">{manager.name}<small>{getInstallOutcome(manager.id) === "failed" ? t("onboarding.passwords.failed") : t(`onboarding.passwords.managers.${manager.key}`)}</small></span>
             {#if manager.soon}
               <span class="soon-label">{t("onboarding.passwords.soon")}</span>
             {:else if installed.has(manager.id)}
@@ -275,7 +277,7 @@
   .step { display: grid; margin: 0 0 8px; font-size: var(--font-size-md); color: var(--text-secondary); }
   .step span { grid-area: 1 / 1; }
   .import-track { position: relative; display: block; height: 4px; border-radius: var(--radius-2xs); background: var(--onb-edge); overflow: hidden; }
-  .import-track i { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform .6s var(--motion-ease-standard); }
+  .import-track i { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform var(--motion-duration-slow) var(--motion-ease-standard); }
   .import-track.busy::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 40%, transparent), transparent); animation: import-shimmer 1.6s ease-in-out infinite; }
   @keyframes import-shimmer { to { transform: translateX(100%); } }

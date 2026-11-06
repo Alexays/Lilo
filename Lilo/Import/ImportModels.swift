@@ -1,5 +1,7 @@
 import Foundation
 import GRDB
+import os
+import Security
 
 enum ImportKind: String, CaseIterable, Sendable, Codable {
     case bookmarks, tabs, history, cookies, extensions
@@ -77,7 +79,7 @@ struct ImportReadResult: Sendable {
 
     /// Runs one kind's read; a failure is recorded for that kind and never stops the others.
     mutating func attempt(_ kind: ImportKind, _ body: (inout ImportBundle) throws -> Void) {
-        do { try body(&bundle) } catch { errors[kind] = String(describing: error) }
+        do { try body(&bundle) } catch { errors[kind] = ImportError.cause(of: error, "Reading \(kind.rawValue)") }
     }
 }
 
@@ -108,6 +110,19 @@ enum ImportError: Error, Equatable {
     case malformed(String)
     case keychain(OSStatus)
     case decryption
+
+    private static let logger = Logger(liloCategory: "import")
+
+    /// Logs `error` and returns the cause the summary shows: `keychain`, `locked`, `access` or `other`.
+    static func cause(of error: Error, _ context: String) -> String {
+        logger.error("\(context, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+        if case let ImportError.keychain(status) = error, status == errSecAuthFailed || status == errSecUserCanceled { return "keychain" }
+        if let error = error as? DatabaseError { return [ResultCode.SQLITE_BUSY, .SQLITE_LOCKED].contains(error.resultCode) ? "locked" : "other" }
+        let nsError = error as NSError
+        if nsError.domain == NSCocoaErrorDomain, nsError.code == NSFileReadNoPermissionError { return "access" }
+        if nsError.domain == NSPOSIXErrorDomain, nsError.code == Int(EPERM) || nsError.code == Int(EACCES) { return "access" }
+        return "other"
+    }
 }
 
 enum ImportFiles {

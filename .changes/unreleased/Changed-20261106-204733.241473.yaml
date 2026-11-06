@@ -1,0 +1,3 @@
+kind: Changed
+body: Searching the History page shows results much faster on a large history, and keeping history within its size limit no longer delays address bar suggestions
+time: 2026-11-06T20:47:33.241473+01:00

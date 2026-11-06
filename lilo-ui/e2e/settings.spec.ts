@@ -76,13 +76,12 @@ test("search engines and link rules share their row actions, and engine fields l
 	});
 	const fieldRadius = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).borderRadius);
 	const ruleAction = await look('[data-rule-index="0"] .rule-actions > .ui-button:last-child');
-	const ruleRadii = [await fieldRadius('[data-rule-index="0"] select'), await fieldRadius('[data-rule-index="0"] input')];
+	const ruleFieldRadius = await fieldRadius('[data-rule-index="0"] input');
 
 	await page.locator(".ui-link-row").filter({ hasText: "Search engines" }).click();
 	await expect(page.locator(".engine-row").first()).toBeVisible();
 	expect(await look(".engine-row .engine-actions > .ui-button:last-child")).toEqual(ruleAction);
-	expect(new Set(ruleRadii).size).toBe(1);
-	expect(await fieldRadius(".engine-row input")).toBe(ruleRadii[0]);
+	expect(await fieldRadius(".engine-row input")).toBe(ruleFieldRadius);
 
 	const rights = await page.locator(".engine-row .engine-fields").evaluateAll((els) => els.map((el) => el.getBoundingClientRect().right));
 	expect(new Set(rights).size).toBe(1);

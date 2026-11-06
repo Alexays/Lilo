@@ -32,11 +32,8 @@
   --danger-deep: #b42318;
   /* A program or page waiting on the user. */
   --attention: #ffb547;
-  /* A count on --attention: dark enough for 4.5:1 on the orange. */
-  --attention-text: #4a2a00;
   --success: #15803d;
   --success-text: #166534;
-  --keep-awake: #c98a12;
   --agents: #795ceb;
 
   /* Semantic sidebar-section colors: pinned (drop zones, divider gate) and bookmarks. */
@@ -53,8 +50,6 @@
   --sidebar-bg: var(--bg-secondary);
   --sidebar-contrast: #1d1d1f;
   --content-inset: 8px;
-
-  --density-1: 4px;
 
   /* Type scale: 13px is the macOS body size. */
   /* Counters on an icon badge only. */
@@ -116,30 +111,24 @@
   --warning: #d97706;
   --diff-added: #3fb950;
   --diff-removed: #f85149;
-  --chart-2: #1d9e75;
-  --chart-3: #d4537e;
   --hue-wheel: conic-gradient(#f1a7a5, #e8d98f, #9bd3b4, #9ac7eb, #c3a5ea, #f1a7a5);
   --terminal-tile-bg: #1b1830;
   --terminal-tile-text: #f4f2ff;
   --terminal-tile-accent: #cfc4ff;
   --terminal-tile-border: rgba(255, 255, 255, 0.12);
-  /* Settings group tiles: Apple's system colors under a white glyph, plus Lilo's violet. */
+  /* Apple's system colors for the browsing data chart, plus Lilo's violet. */
   --tile-blue: #007aff;
-  --tile-indigo: #5856d6;
   --tile-purple: #af52de;
   --tile-orange: #ff9500;
-  --tile-pink: #ff2d55;
-  --tile-green: #34c759;
   --tile-teal: #30b0c7;
-  --tile-gray: #8e8e93;
   --tile-lilo: #7c5dee;
-  --tile-agents: var(--agents);
 
   --motion-duration-fast: 120ms;
   --transition-fast: var(--motion-duration-fast) ease;
   --motion-duration-normal: 200ms;
   --motion-duration-slow: 280ms;
   --motion-duration-overlay: 220ms;
+  --motion-duration-reduced: 150ms;
   --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --motion-ease-organic: cubic-bezier(0.16, 0.84, 0.32, 1);
   --motion-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
@@ -200,7 +189,7 @@
   --float-shadow: 0 0 0 1px var(--float-border), 0 10px 28px rgba(10, 15, 28, 0.14), 0 2px 6px rgba(10, 15, 28, 0.08);
   --float-radius-tip: var(--radius-sm);
   --float-radius-card: var(--radius-md);
-  --float-radius-popover: 12px;
+  --float-radius-popover: var(--radius-lg);
   --z-popover: 10000;
   --z-card: 10001;
   --z-tip: 99999;
@@ -231,11 +220,8 @@
 
     --sidebar-contrast: #f7f8fc;
     --tile-blue: #0a84ff;
-    --tile-indigo: #5e5ce6;
     --tile-purple: #bf5af2;
     --tile-orange: #ff9f0a;
-    --tile-pink: #ff375f;
-    --tile-green: #30d158;
     --tile-teal: #40c8e0;
     --chrome-overlay-backdrop-tint: rgba(2, 6, 18, 0.16);
     --dialog-backdrop-tint: rgba(2, 6, 18, 0.36);
@@ -402,25 +388,19 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
     --sidebar-right-pad: 8px;
 }
 
-/* Increase contrast firms up the layers drawn on the Space color. */
+/* Increase contrast firms up the text and layers drawn on the Space color. */
 @media (prefers-contrast: more) {
   .tabs-surface {
+    --text-secondary: var(--sidebar-secondary-more);
+    --text-muted: var(--sidebar-muted-more);
     --separator: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
     --sidebar-sel-ring: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
     --focus-outline: 2px solid var(--sidebar-contrast);
   }
 }
 
-.chrome-floating-surface {
-  background: var(--chrome-overlay-surface);
-  border: 1px solid var(--chrome-overlay-border);
-  border-radius: var(--chrome-overlay-panel-radius);
-  box-shadow: var(--chrome-overlay-shadow);
-}
-
 /* What floats over the sidebar or the page takes the Space's accent, as the sidebar does. */
 .float-surface,
-.chrome-floating-surface,
 .chrome-content-overlay-root {
   --accent: var(--sidebar-accent);
   --accent-hover: var(--sidebar-accent-hover);
@@ -449,7 +429,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
   gap: 4px;
   padding: 6px;
   border-radius: var(--float-radius-popover);
-  animation: float-popover-in 200ms var(--motion-ease-bounce) both;
+  animation: float-popover-in var(--motion-duration-overlay) var(--motion-ease-spring) both;
 }
 
 @keyframes float-popover-in {
@@ -470,11 +450,6 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
 .float-popover-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-}
-
-.float-popover-subtitle {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
 }
 
 /* Concentric with the popover: its radius less its padding. */
@@ -505,38 +480,6 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
   background: var(--bg-active);
 }
 
-.float-foot {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 6px 2px 0 8px;
-  border-top: 1px solid var(--separator);
-}
-
-.float-button {
-  height: var(--control-height-sm);
-  padding: 0 var(--space-10);
-  border: 0;
-  border-radius: calc(var(--float-radius-popover) - 6px);
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.float-button:hover {
-  background: var(--bg-active);
-}
-
-.float-button:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: 1px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .float-popover {
     animation: none;
@@ -556,7 +499,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
 }
 
 #dnd-action-dragged-el {
-  animation: dnd-preview-lift 280ms var(--motion-ease-bounce) both;
+  animation: dnd-preview-lift var(--motion-duration-slow) var(--motion-ease-bounce) both;
   outline: none !important;
   transition: none !important;
   contain: layout style paint;
@@ -683,17 +626,12 @@ html.reduced-transparency * {
     --text-secondary: #33334a;
     --text-muted: #3f3f55;
     --focus-outline: 2px solid var(--accent);
-    /* Apple's accessible variants in both themes: darker fills keep the white glyph legible. */
+    /* Apple's accessible variants in both themes. */
     --tile-blue: #0040dd;
-    --tile-indigo: #3634a3;
     --tile-purple: #8944ab;
     --tile-orange: #c93400;
-    --tile-pink: #d30f45;
-    --tile-green: #248a3d;
     --tile-teal: #008299;
-    --tile-gray: #6c6c70;
     --tile-lilo: #4a2fc8;
-    --tile-agents: #a8502f;
   }
 }
 

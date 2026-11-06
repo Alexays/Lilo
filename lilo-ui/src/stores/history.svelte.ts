@@ -21,7 +21,7 @@ let _shownFilter = $state.raw<BridgeHistoryFilter>(EMPTY_FILTER);
 let _requestedFilter = EMPTY_FILTER;
 let _rows = $state.raw<BridgeHistoryDayRow[]>([]);
 let _nextBefore = $state<number | undefined>(undefined);
-let _loading = $state(false);
+let _loading = false;
 let _loaded = $state(false);
 let _sidebar = $state.raw<Sidebar | null>(null);
 let _favicons = $state.raw<Record<string, string>>({});
@@ -37,7 +37,6 @@ export const getHistoryFilter = (): BridgeHistoryFilter => _filter;
 export const getShownHistoryFilter = (): BridgeHistoryFilter => _shownFilter;
 export const getHistoryRows = (): BridgeHistoryDayRow[] => _rows;
 export const hasMoreHistory = (): boolean => _nextBefore !== undefined;
-export const isHistoryLoading = (): boolean => _loading;
 export const isHistoryLoaded = (): boolean => _loaded;
 export const getHistorySidebar = (): Sidebar | null => _sidebar;
 export const getHistoryFavicon = (host: string): string | undefined => _favicons[host];
@@ -195,12 +194,13 @@ function initHistoryStore(): void {
 	_listening = true;
 
 	on("historyPage", (data) => {
+		// The native side sends each favicon once, so a stale reply's icons are still kept.
+		if (Object.keys(data.favicons).length) _favicons = { ..._favicons, ...data.favicons };
 		if (data.requestId !== _requestId) return;
 		_shownFilter = _requestedFilter;
 		_rows = _appending ? [..._rows, ...data.rows] : data.rows;
 		_batches = _appending ? _batches + 1 : 1;
 		_nextBefore = data.nextBefore;
-		if (Object.keys(data.favicons).length) _favicons = { ..._favicons, ...data.favicons };
 		_loading = false;
 		_loaded = true;
 		if (!_appending && _selection.size) {

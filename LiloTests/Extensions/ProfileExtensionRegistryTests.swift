@@ -292,22 +292,22 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         return installed
     }
 
-    /// Starts the worker and checks its title once nothing more arrives.
-    private func assertWorkerHeard(_ expected: String, _ id: String, _ message: String) async throws {
-        let context = try XCTUnwrap(registry.context(for: id))
-        _ = await registry.backgrounds.load(id)
-        _ = await pollUntil(timeout: 10) { context.action(for: nil)?.label == expected }
+    /// Starts the workers and checks their titles once nothing more arrives.
+    private func assertWorkersHeard(_ expected: String, _ workers: [(id: String, message: String)]) async throws {
+        let contexts = try workers.map { try XCTUnwrap(registry.context(for: $0.id)) }
+        for worker in workers { _ = await registry.backgrounds.load(worker.id) }
+        for context in contexts { _ = await pollUntil(timeout: 10) { context.action(for: nil)?.label == expected } }
         try await Task.sleep(for: .seconds(1))
-        XCTAssertEqual(context.action(for: nil)?.label, expected, message)
+        for (context, worker) in zip(contexts, workers) {
+            XCTAssertEqual(context.action(for: nil)?.label, expected, worker.message)
+        }
     }
 
     /// As in Chrome, a new install's worker hears runtime.onInstalled once and no onStartup, even right
     /// after launch, and an update hears "update" with the version it replaces.
     func testWorkersHearOnInstalledOnceForAnInstallAndAnUpdate() async throws {
         let installed = try await installLifecycleRecorders()
-        for (name, id) in installed {
-            try await assertWorkerHeard("ran installed:install", id, "\(name) worker on install")
-        }
+        try await assertWorkersHeard("ran installed:install", installed.map { ($0.id, "\($0.name) worker on install") })
 
         let (name, id) = installed[0]
         let sourcePath = try XCTUnwrap(registry.loadedExtensions.first { $0.id == id }?.sourcePath)
@@ -317,7 +317,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         manifest["version"] = "2.0"
         try JSONSerialization.data(withJSONObject: manifest).write(to: manifestURL)
         try await registry.enable(extensionId: id)
-        try await assertWorkerHeard("ran installed:update:1.0", id, "\(name) worker on update")
+        try await assertWorkersHeard("ran installed:update:1.0", [(id, "\(name) worker on update")])
     }
 
     /// As in Chrome, the event that starts a worker comes after the answers to the calls its top-level
@@ -340,7 +340,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
             """.write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
         try await registry.load(from: extDir)
         let id = try XCTUnwrap(registry.loadedExtensions.last?.id)
-        try await assertWorkerHeard("answered,installed", id, "the worker hears onInstalled once removeAll answered")
+        try await assertWorkersHeard("answered,installed", [(id, "the worker hears onInstalled once removeAll answered")])
     }
 
     /// As in Chrome, onInstalled waits for the content script registrations of the worker's startup:
@@ -367,7 +367,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
             """.write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
         try await registry.load(from: extDir)
         let id = try XCTUnwrap(registry.loadedExtensions.last?.id)
-        try await assertWorkerHeard("startup registered,installed,again registered", id, "the startup registration answers before onInstalled")
+        try await assertWorkersHeard("startup registered,installed,again registered", [(id, "the startup registration answers before onInstalled")])
     }
 
     /// A worker's WebSocket opens, exchanges text and bytes and closes, where WebKit's own freezes the
@@ -432,17 +432,19 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         let start = ContinuousClock.now
         let installed = try await installLifecycleRecorders()
         try await Task.sleep(until: start + .seconds(6), clock: .continuous)
-        for (name, id) in installed {
-            let sourcePath = try XCTUnwrap(registry.loadedExtensions.first { $0.id == id }?.sourcePath)
+        for (_, id) in installed {
             await registry.disable(extensionId: id)
             try await registry.enable(extensionId: id)
-            try await assertWorkerHeard("ran", id, "\(name) worker re-enabled")
+        }
+        try await assertWorkersHeard("ran", installed.map { ($0.id, "\($0.name) worker re-enabled") })
 
-            // What the background supervisor's full reload does.
+        // What the background supervisor's full reload does.
+        for (_, id) in installed {
+            let sourcePath = try XCTUnwrap(registry.loadedExtensions.first { $0.id == id }?.sourcePath)
             await registry.unload(extensionId: id, removePersistedRecord: false)
             try await registry.load(from: URL(fileURLWithPath: sourcePath), extensionId: id)
-            try await assertWorkerHeard("ran", id, "\(name) worker reloaded")
         }
+        try await assertWorkersHeard("ran", installed.map { ($0.id, "\($0.name) worker reloaded") })
     }
 
     /// An event sent between an unload and the next worker's connection waits for that worker instead
@@ -476,9 +478,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         try await Task.sleep(for: .seconds(6))
         await registry.restore()
 
-        for (name, id) in installed {
-            try await assertWorkerHeard("ran startup", id, "\(name) worker restored")
-        }
+        try await assertWorkersHeard("ran startup", installed.map { ($0.id, "\($0.name) worker restored") })
     }
 
     func testExtensionPagesRunTheLocationAndNotificationModulesInOnePageWorld() throws {

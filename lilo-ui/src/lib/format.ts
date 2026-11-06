@@ -22,7 +22,14 @@ export function formatByteSize(bytes: number, locale: Locale, precise = false): 
 	return `${format.format(bytes / 1024 ** exponent)} ${translate(locale, BYTE_UNIT_KEYS[exponent])}`;
 }
 
+const timestampFormats = new Map<string, Intl.DateTimeFormat>();
+
 /** Unix-seconds timestamp as a locale date+time string. */
-export function formatTimestamp(timestamp: number): string {
-	return new Date(timestamp * 1000).toLocaleString();
+export function formatTimestamp(timestamp: number, locale: string): string {
+	let format = timestampFormats.get(locale);
+	if (!format) {
+		format = new Intl.DateTimeFormat(locale, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" });
+		timestampFormats.set(locale, format);
+	}
+	return format.format(timestamp * 1000);
 }

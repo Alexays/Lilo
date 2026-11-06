@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Update Now",
-			"summary": "{lists} lists",
+			"summary": {
+				"one": "{count} list",
+				"other": "{count} lists"
+			},
 			"updated": "updated {time}"
 		},
 		"extensionUpdates": {
@@ -605,7 +608,6 @@
 			"connect": "Connect",
 			"copy": "Copy Configuration",
 			"clientDescription": "Adds Lilo to its MCP servers.",
-			"clientConnected": "Lilo is in its MCP servers.",
 			"revoke": "Remove",
 			"status": {
 				"acting": "Acting now",
@@ -641,8 +643,10 @@
 			"clearData": "Clear data...",
 			"remove": "Remove...",
 			"lastProfile": "Your last profile stays: every Space needs one.",
-			"extensionCount": "{count} extensions",
-			"extensionCountOne": "1 extension",
+			"extensionCount": {
+				"one": "{count} extension",
+				"other": "{count} extensions"
+			},
 			"newProfile": "New Profile...",
 			"newProfileDetail": "Fresh cookies, sign-ins and extensions",
 			"namePlaceholder": "Profile name",
@@ -766,6 +770,7 @@
 		"ariaLabel": "Tabs"
 	},
 	"bottomBar": {
+		"switchedTo": "Switched to {name}",
 		"library": "Downloads and archived tabs",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} active",
@@ -774,6 +779,10 @@
 		"signedInAs": "{space}, signed in as {profile}"
 	},
 	"sidebar": {
+		"resize": "Sidebar width",
+		"movedToPosition": "Moved to position {position} of {count}",
+		"movedInto": "Moved into {name}",
+		"movedOutOf": "Moved out of {name}",
 		"ariaLabel": "Sidebar"
 	},
 	"spaceBar": {
@@ -1335,17 +1344,23 @@
 		"navLabel": "Process Manager views",
 		"searchPlaceholder": "Search tabs",
 		"memoryAriaLabel": "Memory use",
-		"tabsCount": "{count} tabs",
-		"tabsCountOne": "1 tab",
+		"tabsCount": {
+			"one": "{count} tab",
+			"other": "{count} tabs"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} other",
 			"other": "{count} others"
 		},
-		"reclaim": "{count} hidden tabs use {size}",
-		"reclaimOne": "1 hidden tab uses {size}",
-		"reclaimNoSize": "{count} hidden tabs are still loaded",
-		"reclaimNoSizeOne": "1 hidden tab is still loaded",
+		"reclaim": {
+			"one": "{count} hidden tab uses {size}",
+			"other": "{count} hidden tabs use {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} hidden tab is still loaded",
+			"other": "{count} hidden tabs are still loaded"
+		},
 		"sleep": "Put to Sleep",
 		"groupTabs": "Tabs",
 		"groupSleeping": "Sleeping",
@@ -1387,16 +1402,21 @@
 	"urlToast": {
 		"pageActions": "Page actions",
 		"reEnableBlocking": "Re-enable blocking on this site",
-		"trackerBlockedOnPage": "{count} tracker blocked on this page",
-		"trackersBlockedOnPage": "{count} trackers blocked on this page",
+		"trackersBlockedOnPage": {
+			"one": "{count} tracker blocked on this page",
+			"other": "{count} trackers blocked on this page"
+		},
 		"disableBlocking": "Disable blocking on this site",
 		"adsAllowed": "Ads allowed",
-		"trackerBlockedLabel": "{count} tracker blocked",
-		"trackersBlockedLabel": "{count} trackers blocked",
+		"trackersBlockedLabel": {
+			"one": "{count} tracker blocked",
+			"other": "{count} trackers blocked"
+		},
 		"adsBlocked": "Ads blocked",
 		"extensionAlreadyInstalled": "Extension already installed",
 		"installChromeExtension": "Install this Chrome extension",
 		"installed": "Installed",
+		"installFailed": "Couldn't install",
 		"install": "Install",
 		"screenshot": "Screenshot",
 		"fullPage": "Full page",
@@ -1715,6 +1735,11 @@
 				"extensionsCount": "Reinstalling extensions {current} of {total}"
 			},
 			"partial": "Some data could not be imported: {list}. You can retry later from Settings.",
+			"cause": {
+				"keychain": "Keychain access was denied",
+				"locked": "the file is in use, quit the browser and retry",
+				"access": "Full Disk Access is needed"
+			},
 			"profiles": "{browser} profiles",
 			"kinds": "What to import",
 			"kind": {
@@ -1746,6 +1771,7 @@
 			"addNamed": "Add {name}",
 			"adding": "Adding...",
 			"added": "Added",
+			"failed": "Couldn't add it. Try again.",
 			"soon": "Soon",
 			"managers": {
 				"bitwarden": "Open source, free on every device",
@@ -1911,12 +1937,11 @@
 		"No changes on this branch": "No changes on this branch",
 		"Nothing differs from %@.": "Nothing differs from %@.",
 		"Show Uncommitted Changes": "Show Uncommitted Changes",
-		"1 file": "1 file",
-		"%@ files": "%@ files",
+		"%@ files": {"one": "%@ file", "other": "%@ files"},
 		"against %@ from %@, uncommitted included": "against %@ from %@, uncommitted included",
 		"Binary file, not shown": "Binary file, not shown",
-		"%d lines folded. Click to show.": "%d lines folded. Click to show.",
-		"Generated file, %d lines folded. Click to show.": "Generated file, %d lines folded. Click to show.",
+		"%d lines folded. Click to show.": {"one": "%d line folded. Click to show.", "other": "%d lines folded. Click to show."},
+		"Generated file, %d lines folded. Click to show.": {"one": "Generated file, %d line folded. Click to show.", "other": "Generated file, %d lines folded. Click to show."},
 		"renamed from %@": "renamed from %@",
 		"Open in Split": "Open in Split",
 		"worktree": "worktree",
@@ -1926,7 +1951,7 @@
 		"%@ wants to use your camera and microphone": "%@ wants to use your camera and microphone",
 		"%@ wants to use your camera or microphone": "%@ wants to use your camera or microphone",
 		"Open as Tab": "Open as Tab",
-		"Not Secure": "Not Secure",
+		"Not Secure - %@": "Not Secure - %@",
 		"Other Bookmarks (%@)": "Other Bookmarks (%@)",
 		"Replay Onboarding": "Replay Onboarding",
 		"New Terminal Beside": "New Terminal Beside",
@@ -2064,6 +2089,13 @@
 		"Select an unpacked extension folder (must contain manifest.json)": "Select an unpacked extension folder (must contain manifest.json)",
 		"Couldn't load extension": "Couldn't load extension",
 		"Another copy of %@ is already installed. Remove it to load this folder.": "Another copy of %@ is already installed. Remove it to load this folder.",
+		"manifest.json not found at %@": "manifest.json not found at %@",
+		"Failed to parse manifest.json: %@": "Failed to parse manifest.json: %@",
+		"Unsupported manifest version %ld; only MV3 is supported": "Unsupported manifest version %ld; only MV3 is supported",
+		"Required manifest field missing: %@": "Required manifest field missing: %@",
+		"Failed to download extension: %@": "Failed to download extension: %@",
+		"Invalid extension archive: %@": "Invalid extension archive: %@",
+		"The extension's background did not respond.": "The extension's background did not respond.",
 		"Open Popup": "Open Popup",
 		"History": "History",
 		"Reopen Last Closed Tab": "Reopen Last Closed Tab",
@@ -2085,6 +2117,11 @@
 		"Its tabs, history and downloads are unavailable this session.": "Its tabs, history and downloads are unavailable this session.",
 		"Lilo couldn't load its settings": "Lilo couldn't load its settings",
 		"Default settings are in use for this session.": "Default settings are in use for this session.",
+		"Lilo couldn't save your tabs": "Lilo couldn't save your tabs",
+		"Lilo couldn't save its settings": "Lilo couldn't save its settings",
+		"Lilo couldn't save a conversation": "Lilo couldn't save a conversation",
+		"Recent changes may be missing the next time you open Lilo. Check that your disk has free space.": "Recent changes may be missing the next time you open Lilo. Check that your disk has free space.",
+		"%@\n\nError: %@": "%@\n\nError: %@",
 		"Continue": "Continue",
 		"Delete": "Delete",
 		"Quit": "Quit",
@@ -2127,19 +2164,16 @@
 		"The Mac is too hot.": "The Mac is too hot.",
 		"Commands kept the Mac awake for the maximum duration.": "Commands kept the Mac awake for the maximum duration.",
 		"While the lid was closed": "While the lid was closed",
-		"%d commands finished": "%d commands finished",
-		"%d wait for your answer, the oldest for %@": "%d wait for your answer, the oldest for %@",
+		"%d commands finished": {"one": "%d command finished", "other": "%d commands finished"},
+		"%d wait for your answer, the oldest for %@": {"one": "%d waits for your answer, for %@", "other": "%d wait for your answer, the oldest for %@"},
 		"battery from %d%% to %d%%": "battery from %d%% to %d%%",
 		"Show Next Waiting Terminal": "Show Next Waiting Terminal",
 		"Downloads": "Downloads",
 		"Quit Lilo?": "Quit Lilo?",
-		"A terminal is still running a command": "A terminal is still running a command",
-		"%d terminals are still running a command": "%d terminals are still running a command",
-		" and %d more": " and %d more",
-		"It will be stopped.": "It will be stopped.",
-		"They will be stopped.": "They will be stopped.",
-		"A download is in progress and will be paused until Lilo opens again.": "A download is in progress and will be paused until Lilo opens again.",
-		"%d downloads are in progress and will be paused until Lilo opens again.": "%d downloads are in progress and will be paused until Lilo opens again.",
+		"%d terminals are still running a command. They will be stopped.": {"one": "%d terminal is still running a command. It will be stopped.", "other": "%d terminals are still running a command. They will be stopped."},
+		"%d terminals are still running a command (%@). They will be stopped.": {"one": "%d terminal is still running a command (%@). It will be stopped.", "other": "%d terminals are still running a command (%@). They will be stopped."},
+		"%@ and %d more": {"one": "%@ and %d more", "other": "%@ and %d more"},
+		"%d downloads are in progress and will be paused until Lilo opens again.": {"one": "%d download is in progress and will be paused until Lilo opens again.", "other": "%d downloads are in progress and will be paused until Lilo opens again."},
 		"Sign In": "Sign In",
 		"Install": "Install",
 		"Install %@?": "Install %@?",
@@ -2153,7 +2187,7 @@
 		"A command is still running in it and will be stopped.": "A command is still running in it and will be stopped.",
 		"Close": "Close",
 		"New Terminal Tab": "New Terminal Tab",
-		"Close %d terminals?": "Close %d terminals?",
+		"Close %d terminals?": {"one": "Close %d terminal?", "other": "Close %d terminals?"},
 		"Commands are still running in them and will be stopped.": "Commands are still running in them and will be stopped.",
 		"The terminal could not start.": "The terminal could not start.",
 		"Close the tab and try again.": "Close the tab and try again.",
@@ -2186,6 +2220,7 @@
 		"Delete Folder": "Delete Folder",
 		"Edit Folder": "Edit Folder",
 		"Edit...": "Edit...",
+		"Back to Home Page": "Back to Home Page",
 		"New Folder": "New Folder",
 		"Home": "Home",
 		"Default": "Default",
@@ -2277,9 +2312,7 @@
 		"Added Lilo to Codex": "Added Lilo to Codex",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo could not read %@: add this server to it yourself: %@",
 		"Stop Agents": "Stop Agents",
-		"Delete %@ and %@?": "Delete %@ and %@?",
-		"1 tab": "1 tab",
-		"%d tabs": "%d tabs",
+		"Delete %@ and its %d tabs?": {"one": "Delete %@ and its %d tab?", "other": "Delete %@ and its %d tabs?"},
 		"This cannot be undone.": "This cannot be undone.",
 		"Its tabs stay in the sidebar.": "Its tabs stay in the sidebar.",
 		"Agent": "Agent",
@@ -2517,7 +2550,6 @@
 			"restoreToHere": "Restore to here",
 			"restoreConfirm": "Put the project files back as they were at this message?",
 			"restore": "Restore",
-			"reviewChanges": "Review in Changes",
 			"undo": "Undo",
 			"keep": "Keep",
 			"undone": "Undone",
@@ -2601,7 +2633,6 @@
 			"agent": "Agent",
 			"noAgents": "No Agents",
 			"project": "Project",
-			"chooseProject": "Choose a project",
 			"chooseFolder": "Choose folder...",
 			"noFolder": "No Folder",
 			"noFolderDetail": "The agent works in a folder of its own",
@@ -2612,7 +2643,14 @@
 			"untitled": "New conversation",
 			"working": "Working",
 			"failed": "Stopped with an error",
-			"changes": "{added} lines added, {removed} removed",
+			"linesAdded": {
+				"one": "{count} line added",
+				"other": "{count} lines added"
+			},
+			"linesRemoved": {
+				"one": "{count} line removed",
+				"other": "{count} lines removed"
+			},
 			"pages": {
 				"one": "{count} page",
 				"other": "{count} pages"

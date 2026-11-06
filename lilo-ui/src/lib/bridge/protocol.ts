@@ -60,7 +60,8 @@ export interface ImportSummaryItem {
 	profileId: string;
 	kind: ImportKind;
 	imported: number;
-	error?: string;
+	/** Set on failure: the cause the import could name, else `other`. */
+	error?: "keychain" | "locked" | "access" | "other";
 }
 /** Where a tab dropped on a pane lands: one of its edges, or in its place once the split is full. */
 export type SplitDropSide = SplitSide | "replace";
@@ -560,6 +561,8 @@ export interface BridgeInitialStatePayload {
 	activeProfileId?: string;
 	extensions?: BridgeExtensionSnapshot[];
 	tracingEnabled?: boolean;
+	// The user's region code ("GB"), for dates and numbers.
+	region?: string;
 }
 
 export interface BridgeFeatureFlagSnapshot {
@@ -1214,7 +1217,7 @@ export interface BridgeEventPayloadMap {
 		id: string;
 		action: "enable" | "disable" | "uninstall" | "update" | "install" | "shortcut";
 		success: boolean;
-		/** For a refused "shortcut", what already holds the keys. */
+		/** For a refused "shortcut", what already holds the keys. Absent on a failed install the user cancelled. */
 		error?: string;
 	};
 	// Native ⋯ menu on an extension row resolved to a UI action.

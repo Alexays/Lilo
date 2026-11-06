@@ -95,6 +95,9 @@ extension MainWindowController {
         if tab.isPinned || tab.isBookmarked {
             let homeURL = (tab.homeURL ?? tab.url)?.absoluteString ?? ""
             menu.addItem("Edit...".localized, icon: .edit) { self.bridgeRouter.send(event: "beginTabEdit", data: ["id": tabId, "homeURL": homeURL]) }
+            if let home = tab.homeURL, tab.url != nil, !tab.matchesHomeURL(tab.url) {
+                menu.addItem("Back to Home Page".localized, icon: .home) { self.tabManager.load(home, inTab: uuid) }
+            }
         }
         let actions = TabContextMenuActions.forTab(tab)
         if actions.contains(.createFolderFromTab) {
@@ -228,7 +231,7 @@ extension MainWindowController {
         // Copied here: the chrome may only write the pasteboard during a user gesture, and a bridge push is none.
         func addCopyURL() {
             menu.addItem("Copy URL".localized, icon: .copyLink) {
-                guard let item = try? self.profileContext?.downloads.fetch(id: Int64(downloadId)) else { return }
+                guard let item = try? self.downloadStore?.fetch(id: Int64(downloadId)) else { return }
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(item.url, forType: .string)
             }
@@ -254,7 +257,7 @@ extension MainWindowController {
                 add("Show in Finder", .showInFinder, "showInFinder")
                 if context.settingsStore?.terminalEnabled != false {
                     menu.addItem("Open in Terminal".localized, icon: .openInTerminal) {
-                        guard let item = try? self.profileContext?.downloads.fetch(id: Int64(downloadId)) else { return }
+                        guard let item = try? self.downloadStore?.fetch(id: Int64(downloadId)) else { return }
                         self.createTerminalTab(cwd: (item.destinationPath as NSString).deletingLastPathComponent)
                     }
                 }
@@ -388,7 +391,7 @@ extension MainWindowController {
         let alert = NSAlert()
         alert.messageText = unsafe tabs == 0
             ? String(format: "Delete %@?".localized, folder.name)
-            : String(format: "Delete %@ and %@?".localized, folder.name, tabs == 1 ? "1 tab".localized : String(format: "%d tabs".localized, tabs))
+            : String(format: "Delete %@ and its %d tabs?".localized(count: tabs), folder.name, tabs)
         alert.informativeText = folder.isSplit
             ? "Its tabs stay in the sidebar.".localized
             : "This cannot be undone.".localized
@@ -610,11 +613,13 @@ extension MainWindowController {
         )
         let closeAll = { [weak self] in
             guard let self else { return }
-            var recordedCount = 0
+            let newestBefore = context.recentlyClosed.recentEntries.first?.id ?? 0
             for tab in closing {
-                if recordClosedTabForRestore(id: tab.id, sidebarItemById: itemById) { recordedCount += 1 }
+                recordClosedTabForRestore(id: tab.id, sidebarItemById: itemById)
                 closeTabStateFirst(id: tab.id, undoable: false)
             }
+            // A conversation's pages close with it, each its own entry: Undo restores every one.
+            let recordedCount = context.recentlyClosed.recentEntries.prefix { $0.id > newestBefore }.count
             if recordedCount > 0 {
                 bridgeRouter.send(event: "tabClosedUndoable", data: ["title": "", "count": recordedCount])
             }
@@ -623,7 +628,7 @@ extension MainWindowController {
         let busy = closing.filter { $0.kind == .terminal && tabManager.terminalHost.isBusy($0.id) }.map(\.id)
         guard !busy.isEmpty, let window else { return closeAll() }
         let alert = NSAlert()
-        alert.messageText = unsafe String(format: "Close %d terminals?".localized, busy.count)
+        alert.messageText = unsafe String(format: "Close %d terminals?".localized(count: busy.count), busy.count)
         let commands = busy.compactMap(tabManager.terminalHost.runningCommand)
         alert.informativeText = unsafe commands.count == busy.count
             ? String(format: "These commands will be stopped: %@.".localized, commands.joined(separator: ", "))

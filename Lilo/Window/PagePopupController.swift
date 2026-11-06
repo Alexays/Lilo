@@ -134,7 +134,7 @@ final class PagePopupController: NSObject, NSWindowDelegate {
         let url = engine.currentURL
         let host = url?.host ?? ""
         let insecure = url?.scheme == "http" || engine.isNotSecure
-        window?.title = insecure ? "Not Secure".localized + " - " + host : host
+        window?.title = unsafe insecure ? String(format: "Not Secure - %@".localized, host) : host
         header.setHost(host, insecure: insecure)
     }
 
@@ -247,7 +247,7 @@ final class PopupHeaderView: NSView {
     private var titledOpenWidth: CGFloat = 0
     private var iconOpenWidth: CGFloat = 28
     private var host = ""
-    private var hostPrefix = ""
+    private var hostFormat = "%@"
     private let pill = PillView()
     private let lockIcon = NSImageView()
     private let hostLabel = NSTextField(labelWithString: "")
@@ -331,10 +331,10 @@ final class PopupHeaderView: NSView {
 
     func setHost(_ host: String, insecure: Bool) {
         self.host = host
-        hostPrefix = insecure ? "Not Secure".localized + " - " : ""
+        hostFormat = insecure ? "Not Secure - %@".localized : "%@"
         hostLabel.textColor = insecure ? .systemRed : .labelColor
         lockIcon.image = NSImage(systemSymbolName: insecure ? "exclamationmark.triangle.fill" : "lock.fill", accessibilityDescription: insecure ? nil : "Secure Connection".localized)
-        // The host label already starts with "Not Secure".
+        // The host label already says "Not Secure".
         lockIcon.setAccessibilityElement(!insecure)
         lockIcon.contentTintColor = insecure ? .systemRed : .systemGreen
         needsLayout = true
@@ -348,16 +348,16 @@ final class PopupHeaderView: NSView {
 
     /// The host whole when it fits `width`, else its subdomains cut in the middle so the registrable domain stays whole.
     private func hostText(fitting width: CGFloat) -> String {
-        let whole = hostPrefix + host
+        let whole = unsafe String(format: hostFormat, host)
         let domain = CookiesBridgeHandler.registrableDomain(of: host)
         let subdomain = host.dropLast(domain.count)
         guard !subdomain.isEmpty, labelWidth(whole) > width else { return whole }
         for keep in stride(from: subdomain.count - 1, to: 0, by: -1) {
-            let text = hostPrefix + subdomain.prefix(keep) + "\u{2026}" + domain
+            let text = unsafe String(format: hostFormat, String(subdomain.prefix(keep)) + "\u{2026}" + domain)
             if labelWidth(text) <= width { return text }
         }
         // Too narrow for the domain too: the label cuts its head, with an ellipsis of its own.
-        return hostPrefix + domain
+        return unsafe String(format: hostFormat, domain)
     }
 
     override func layout() {
@@ -372,7 +372,7 @@ final class PopupHeaderView: NSView {
         // Buttons keep their natural size: a narrow peek first shows "Open as Tab" as its icon, then drops
         // the copy button (Edit > Copy Page URL), so the pill keeps at least the registrable domain.
         let room = trailing - 8 - leading
-        let domainPillWidth = labelWidth(hostPrefix + "\u{2026}" + CookiesBridgeHandler.registrableDomain(of: host)) + 40
+        let domainPillWidth = labelWidth(unsafe String(format: hostFormat, "\u{2026}" + CookiesBridgeHandler.registrableDomain(of: host))) + 40
         let splitWidth = inWindow ? 28 : splitButton.intrinsicContentSize.width
         let splitRoom = showsSplitButton ? splitWidth + 4 : 0
         let copyRoom = inWindow ? 0 : copyButton.intrinsicContentSize.width + 4

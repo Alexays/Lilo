@@ -33,7 +33,7 @@
   const total = $derived(BROWSING_DATA_KINDS.reduce((sum, kind) => sum + (bytes[kind] ?? 0), 0));
   const freed = $derived(cleared.reduce((sum, kind) => sum + (bytes[kind] ?? 0), 0));
   const hints = $derived<Record<BridgeBrowsingDataKind, string>>({
-    history: sizes?.historyEntries === undefined ? "" : t("settings.clearData.hints.history", { count: sizes.historyEntries.toLocaleString(getLocale()) }),
+    history: sizes?.historyEntries === undefined ? "" : t("settings.clearData.hints.history", { count: sizes.historyEntries }),
     cookies: t("settings.clearData.hints.cookies", { count: sites.filter((site) => site.kinds.includes("cookies")).length }),
     cache: t("settings.clearData.hints.cache"),
     siteData: t("settings.clearData.hints.siteData", { count: sites.length }),

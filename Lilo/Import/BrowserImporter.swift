@@ -27,6 +27,7 @@ final class BrowserImporter {
         var kind: ImportKind
         var imported: Int
         var skipped: Int
+        /// Set on failure, to the cause `ImportError.cause(of:_:)` names.
         var error: String?
     }
 
@@ -96,7 +97,8 @@ final class BrowserImporter {
                     lilo = (profileId, try sink.findSpace(profile.name, profileId) ?? sink.createSpace(profile.name, "🌐", nil, profileId))
                 }
             } catch {
-                for kind in kinds.sorted(by: { $0.rawValue < $1.rawValue }) { item(kind, imported: 0, error: String(describing: error)) }
+                let cause = ImportError.cause(of: error, "Preparing the \(source.id) import")
+                for kind in kinds.sorted(by: { $0.rawValue < $1.rawValue }) { item(kind, imported: 0, error: cause) }
                 continue
             }
             let bundle = read.bundle
@@ -137,8 +139,9 @@ final class BrowserImporter {
                     if kinds.contains(.bookmarks) { item(.bookmarks, imported: Self.count(built[0].bookmarks)) }
                     if kinds.contains(.tabs) { item(.tabs, imported: tabs) }
                 } catch {
-                    if kinds.contains(.bookmarks) { item(.bookmarks, imported: 0, error: String(describing: error)) }
-                    if kinds.contains(.tabs) { item(.tabs, imported: 0, error: String(describing: error)) }
+                    let cause = ImportError.cause(of: error, "Importing \(source.id) bookmarks and tabs")
+                    if kinds.contains(.bookmarks) { item(.bookmarks, imported: 0, error: cause) }
+                    if kinds.contains(.tabs) { item(.tabs, imported: 0, error: cause) }
                 }
                 if !bundle.favicons.isEmpty {
                     (try? sink.faviconStore(lilo.profileId))?.importMissingAsync(bundle.favicons)
@@ -154,7 +157,7 @@ final class BrowserImporter {
                     try await Task.detached(priority: .utility) { try store.importVisits(visits) }.value
                     item(.history, imported: visits.count)
                 } catch {
-                    item(.history, imported: 0, error: String(describing: error))
+                    item(.history, imported: 0, error: ImportError.cause(of: error, "Importing \(source.id) history"))
                 }
             }
 
@@ -172,7 +175,9 @@ final class BrowserImporter {
                 var lastError: String?
                 for (index, ext) in wanted.enumerated() {
                     start(.extensions, done: index, total: wanted.count)
-                    do { try await sink.installExtension(ext.id, lilo.profileId); installed.insert(ext.id) } catch { lastError = "\(ext.name): \(error)" }
+                    do { try await sink.installExtension(ext.id, lilo.profileId); installed.insert(ext.id) } catch {
+                        lastError = ImportError.cause(of: error, "Installing extension \(ext.id)")
+                    }
                 }
                 // Lilo's own pins stay first; Chrome's follow, in toolbar order.
                 let current = sink.pinnedExtensions()

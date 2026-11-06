@@ -193,7 +193,7 @@
     height: 20px;
     margin-left: -4px;
     color: var(--text-muted);
-    transition: transform 200ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .open .stack-chevron {

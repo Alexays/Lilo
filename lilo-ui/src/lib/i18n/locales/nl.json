@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Werk nu bij",
-			"summary": "{lists} lijsten",
+			"summary": {
+				"one": "{count} lijst",
+				"other": "{count} lijsten"
+			},
 			"updated": "bijgewerkt {time}"
 		},
 		"extensionUpdates": {
@@ -605,7 +608,6 @@
 			"connect": "Verbind",
 			"copy": "Kopieer configuratie",
 			"clientDescription": "Voegt Lilo toe aan de MCP-servers.",
-			"clientConnected": "Lilo staat in de MCP-servers.",
 			"revoke": "Verwijder",
 			"status": {
 				"acting": "Nu bezig",
@@ -641,8 +643,10 @@
 			"clearData": "Wis gegevens...",
 			"remove": "Verwijder...",
 			"lastProfile": "Je laatste profiel blijft bestaan: elke ruimte heeft er één nodig.",
-			"extensionCount": "{count} extensies",
-			"extensionCountOne": "1 extensie",
+			"extensionCount": {
+				"one": "{count} extensie",
+				"other": "{count} extensies"
+			},
 			"newProfile": "Nieuw profiel...",
 			"newProfileDetail": "Nieuwe cookies, aanmeldingen en extensies",
 			"namePlaceholder": "Profielnaam",
@@ -766,6 +770,7 @@
 		"ariaLabel": "Tabbladen"
 	},
 	"bottomBar": {
+		"switchedTo": "Overgeschakeld naar {name}",
 		"library": "Downloads en gearchiveerde tabbladen",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} actief",
@@ -774,6 +779,10 @@
 		"signedInAs": "{space}, aangemeld als {profile}"
 	},
 	"sidebar": {
+		"resize": "Breedte van navigatiekolom",
+		"movedToPosition": "Verplaatst naar positie {position} van {count}",
+		"movedInto": "Verplaatst naar {name}",
+		"movedOutOf": "Uit {name} gehaald",
 		"ariaLabel": "Navigatiekolom"
 	},
 	"spaceBar": {
@@ -1335,17 +1344,23 @@
 		"navLabel": "Weergaven van procesbeheer",
 		"searchPlaceholder": "Zoek tabbladen",
 		"memoryAriaLabel": "Geheugengebruik",
-		"tabsCount": "{count} tabbladen",
-		"tabsCountOne": "1 tabblad",
+		"tabsCount": {
+			"one": "{count} tabblad",
+			"other": "{count} tabbladen"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} ander",
 			"other": "{count} andere"
 		},
-		"reclaim": "{count} verborgen tabbladen gebruiken {size}",
-		"reclaimOne": "1 verborgen tabblad gebruikt {size}",
-		"reclaimNoSize": "{count} verborgen tabbladen zijn nog geladen",
-		"reclaimNoSizeOne": "1 verborgen tabblad is nog geladen",
+		"reclaim": {
+			"one": "{count} verborgen tabblad gebruikt {size}",
+			"other": "{count} verborgen tabbladen gebruiken {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} verborgen tabblad is nog geladen",
+			"other": "{count} verborgen tabbladen zijn nog geladen"
+		},
 		"sleep": "Zet in sluimerstand",
 		"groupTabs": "Tabbladen",
 		"groupSleeping": "In sluimerstand",
@@ -1387,16 +1402,21 @@
 	"urlToast": {
 		"pageActions": "Pagina-acties",
 		"reEnableBlocking": "Schakel blokkering op deze website weer in",
-		"trackerBlockedOnPage": "{count} tracker geblokkeerd op deze pagina",
-		"trackersBlockedOnPage": "{count} trackers geblokkeerd op deze pagina",
+		"trackersBlockedOnPage": {
+			"one": "{count} tracker geblokkeerd op deze pagina",
+			"other": "{count} trackers geblokkeerd op deze pagina"
+		},
 		"disableBlocking": "Schakel blokkering op deze website uit",
 		"adsAllowed": "Advertenties toegestaan",
-		"trackerBlockedLabel": "{count} tracker geblokkeerd",
-		"trackersBlockedLabel": "{count} trackers geblokkeerd",
+		"trackersBlockedLabel": {
+			"one": "{count} tracker geblokkeerd",
+			"other": "{count} trackers geblokkeerd"
+		},
 		"adsBlocked": "Advertenties geblokkeerd",
 		"extensionAlreadyInstalled": "Extensie al geïnstalleerd",
 		"installChromeExtension": "Installeer deze Chrome-extensie",
 		"installed": "Geïnstalleerd",
+		"installFailed": "Installeren mislukt",
 		"install": "Installeer",
 		"screenshot": "Schermafbeelding",
 		"fullPage": "Volledige pagina",
@@ -1715,6 +1735,11 @@
 				"extensionsCount": "Extensies opnieuw installeren: {current} van {total}"
 			},
 			"partial": "Sommige gegevens konden niet worden geïmporteerd: {list}. Je kunt het later opnieuw proberen via Instellingen.",
+			"cause": {
+				"keychain": "toegang tot sleutelhanger geweigerd",
+				"locked": "bestand in gebruik, sluit de browser af en probeer opnieuw",
+				"access": "volledige schijftoegang is nodig"
+			},
 			"profiles": "{browser}-profielen",
 			"kinds": "Wat wil je importeren?",
 			"kind": {
@@ -1746,6 +1771,7 @@
 			"addNamed": "Voeg {name} toe",
 			"adding": "Toevoegen...",
 			"added": "Toegevoegd",
+			"failed": "Toevoegen mislukt. Probeer het opnieuw.",
 			"soon": "Binnenkort",
 			"managers": {
 				"bitwarden": "Open source, gratis op elk apparaat",
@@ -1911,12 +1937,11 @@
 		"No changes on this branch": "Geen wijzigingen op deze branch",
 		"Nothing differs from %@.": "Geen verschillen met %@.",
 		"Show Uncommitted Changes": "Toon niet-vastgelegde wijzigingen",
-		"1 file": "1 bestand",
-		"%@ files": "%@ bestanden",
+		"%@ files": {"one": "%@ bestand", "other": "%@ bestanden"},
 		"against %@ from %@, uncommitted included": "tegenover %@ uit %@, inclusief niet-vastgelegde wijzigingen",
 		"Binary file, not shown": "Binair bestand, niet getoond",
-		"%d lines folded. Click to show.": "%d regels samengevouwen. Klik om te tonen.",
-		"Generated file, %d lines folded. Click to show.": "Gegenereerd bestand, %d regels samengevouwen. Klik om te tonen.",
+		"%d lines folded. Click to show.": {"one": "%d regel samengevouwen. Klik om te tonen.", "other": "%d regels samengevouwen. Klik om te tonen."},
+		"Generated file, %d lines folded. Click to show.": {"one": "Gegenereerd bestand, %d regel samengevouwen. Klik om te tonen.", "other": "Gegenereerd bestand, %d regels samengevouwen. Klik om te tonen."},
 		"renamed from %@": "naam gewijzigd van %@",
 		"Open in Split": "Open in gesplitste weergave",
 		"worktree": "worktree",
@@ -1926,7 +1951,7 @@
 		"%@ wants to use your camera and microphone": "%@ wil je camera en microfoon gebruiken",
 		"%@ wants to use your camera or microphone": "%@ wil je camera of microfoon gebruiken",
 		"Open as Tab": "Open als tabblad",
-		"Not Secure": "Niet beveiligd",
+		"Not Secure - %@": "Niet beveiligd - %@",
 		"Other Bookmarks (%@)": "Andere bladwijzers (%@)",
 		"Replay Onboarding": "Speel introductie opnieuw af",
 		"New Terminal Beside": "Nieuwe terminal ernaast",
@@ -2064,6 +2089,13 @@
 		"Select an unpacked extension folder (must contain manifest.json)": "Selecteer een uitgepakte extensiemap (moet manifest.json bevatten)",
 		"Couldn't load extension": "Extensie kon niet worden geladen",
 		"Another copy of %@ is already installed. Remove it to load this folder.": "Er is al een andere kopie van %@ geïnstalleerd. Verwijder die om deze map te laden.",
+		"manifest.json not found at %@": "manifest.json niet gevonden in %@",
+		"Failed to parse manifest.json: %@": "Kan manifest.json niet lezen: %@",
+		"Unsupported manifest version %ld; only MV3 is supported": "Manifestversie %ld wordt niet ondersteund; alleen MV3 wordt ondersteund",
+		"Required manifest field missing: %@": "Verplicht manifestveld ontbreekt: %@",
+		"Failed to download extension: %@": "Kan extensie niet downloaden: %@",
+		"Invalid extension archive: %@": "Ongeldig extensiearchief: %@",
+		"The extension's background did not respond.": "De achtergrond van de extensie reageerde niet.",
 		"Open Popup": "Open pop-up",
 		"History": "Geschiedenis",
 		"Reopen Last Closed Tab": "Open laatst gesloten tabblad opnieuw",
@@ -2085,6 +2117,11 @@
 		"Its tabs, history and downloads are unavailable this session.": "De tabbladen, geschiedenis en downloads zijn deze sessie niet beschikbaar.",
 		"Lilo couldn't load its settings": "Lilo kon de instellingen niet laden",
 		"Default settings are in use for this session.": "Deze sessie worden standaardinstellingen gebruikt.",
+		"Lilo couldn't save your tabs": "Lilo kon je tabbladen niet bewaren",
+		"Lilo couldn't save its settings": "Lilo kon zijn instellingen niet bewaren",
+		"Lilo couldn't save a conversation": "Lilo kon een gesprek niet bewaren",
+		"Recent changes may be missing the next time you open Lilo. Check that your disk has free space.": "Recente wijzigingen kunnen ontbreken wanneer je Lilo de volgende keer opent. Controleer of je schijf vrije ruimte heeft.",
+		"%@\n\nError: %@": "%@\n\nFout: %@",
 		"Continue": "Ga door",
 		"Delete": "Verwijder",
 		"Quit": "Stop",
@@ -2127,19 +2164,16 @@
 		"The Mac is too hot.": "De Mac is te warm.",
 		"Commands kept the Mac awake for the maximum duration.": "Commando's hebben de Mac gedurende de maximale tijd wakker gehouden.",
 		"While the lid was closed": "Terwijl de klep gesloten was",
-		"%d commands finished": "%d commando's voltooid",
-		"%d wait for your answer, the oldest for %@": "%d wachten op je antwoord, het oudste al %@",
+		"%d commands finished": {"one": "%d commando voltooid", "other": "%d commando's voltooid"},
+		"%d wait for your answer, the oldest for %@": {"one": "%d wacht op je antwoord, al %@", "other": "%d wachten op je antwoord, het oudste al %@"},
 		"battery from %d%% to %d%%": "batterij van %d%% naar %d%%",
 		"Show Next Waiting Terminal": "Toon volgende wachtende terminal",
 		"Downloads": "Downloads",
 		"Quit Lilo?": "Lilo stoppen?",
-		"A terminal is still running a command": "Een terminal voert nog een commando uit",
-		"%d terminals are still running a command": "%d terminals voeren nog een commando uit",
-		" and %d more": " en nog %d",
-		"It will be stopped.": "Het wordt gestopt.",
-		"They will be stopped.": "Ze worden gestopt.",
-		"A download is in progress and will be paused until Lilo opens again.": "Er is een download bezig die wordt gepauzeerd totdat Lilo weer opent.",
-		"%d downloads are in progress and will be paused until Lilo opens again.": "%d downloads zijn bezig en worden gepauzeerd totdat Lilo weer opent.",
+		"%d terminals are still running a command. They will be stopped.": {"one": "%d terminal voert nog een commando uit. Het wordt gestopt.", "other": "%d terminals voeren nog een commando uit. Ze worden gestopt."},
+		"%d terminals are still running a command (%@). They will be stopped.": {"one": "%d terminal voert nog een commando uit (%@). Het wordt gestopt.", "other": "%d terminals voeren nog een commando uit (%@). Ze worden gestopt."},
+		"%@ and %d more": {"one": "%@ en nog %d", "other": "%@ en nog %d"},
+		"%d downloads are in progress and will be paused until Lilo opens again.": {"one": "%d download is bezig en wordt gepauzeerd totdat Lilo weer opent.", "other": "%d downloads zijn bezig en worden gepauzeerd totdat Lilo weer opent."},
 		"Sign In": "Log in",
 		"Install": "Installeer",
 		"Install %@?": "%@ installeren?",
@@ -2153,7 +2187,7 @@
 		"A command is still running in it and will be stopped.": "Er is nog een commando actief dat wordt gestopt.",
 		"Close": "Sluit",
 		"New Terminal Tab": "Nieuw terminaltabblad",
-		"Close %d terminals?": "%d terminals sluiten?",
+		"Close %d terminals?": {"one": "%d terminal sluiten?", "other": "%d terminals sluiten?"},
 		"Commands are still running in them and will be stopped.": "Er zijn nog commando's actief die worden gestopt.",
 		"The terminal could not start.": "De terminal kon niet starten.",
 		"Close the tab and try again.": "Sluit het tabblad en probeer het opnieuw.",
@@ -2186,6 +2220,7 @@
 		"Delete Folder": "Verwijder map",
 		"Edit Folder": "Wijzig map",
 		"Edit...": "Wijzig...",
+		"Back to Home Page": "Terug naar startpagina",
 		"New Folder": "Nieuwe map",
 		"Home": "Start",
 		"Default": "Standaard",
@@ -2277,9 +2312,7 @@
 		"Added Lilo to Codex": "Lilo toegevoegd aan Codex",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo kon %@ niet lezen: voeg deze server zelf toe: %@",
 		"Stop Agents": "Stop agents",
-		"Delete %@ and %@?": "%@ en %@ verwijderen?",
-		"1 tab": "1 tabblad",
-		"%d tabs": "%d tabbladen",
+		"Delete %@ and its %d tabs?": {"one": "%@ en %d tabblad verwijderen?", "other": "%@ en %d tabbladen verwijderen?"},
 		"This cannot be undone.": "Dit kan niet ongedaan worden gemaakt.",
 		"Its tabs stay in the sidebar.": "De tabbladen blijven in de navigatiekolom staan.",
 		"Agent": "Agent",
@@ -2528,7 +2561,6 @@
 			"restoreToHere": "Herstel tot hier",
 			"restoreConfirm": "Projectbestanden terugzetten naar hoe ze bij dit bericht waren?",
 			"restore": "Herstel",
-			"reviewChanges": "Bekijk in Wijzigingen",
 			"undo": "Ongedaan maken",
 			"keep": "Behoud",
 			"undone": "Ongedaan gemaakt",
@@ -2612,7 +2644,6 @@
 			"agent": "Agent",
 			"noAgents": "Geen agents",
 			"project": "Project",
-			"chooseProject": "Kies een project",
 			"chooseFolder": "Kies map...",
 			"noFolder": "Geen map",
 			"noFolderDetail": "De agent werkt in een eigen map",
@@ -2623,7 +2654,14 @@
 			"untitled": "Nieuw gesprek",
 			"working": "Bezig",
 			"failed": "Gestopt met een fout",
-			"changes": "{added} regels toegevoegd, {removed} verwijderd",
+			"linesAdded": {
+				"one": "{count} regel toegevoegd",
+				"other": "{count} regels toegevoegd"
+			},
+			"linesRemoved": {
+				"one": "{count} regel verwijderd",
+				"other": "{count} regels verwijderd"
+			},
 			"pages": {
 				"one": "{count} pagina",
 				"other": "{count} pagina's"

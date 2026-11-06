@@ -20,6 +20,7 @@ final class BackgroundSupervisor {
         /// Set when every revive failed; the action and commands cannot reach the worker. Cleared by
         /// the next successful load or connection.
         var failed = false
+        /// Shown to the user, so translated; the log carries the diagnostic.
         var failureReason: String?
         var lastErrorCount = 0
         /// When each of the context's current errors was first observed. Keyed by the error, not its index:
@@ -105,18 +106,18 @@ final class BackgroundSupervisor {
             _ = PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")
         }
         var timeout: Task<Void, Never>?
-        let failure: String? = await withCheckedContinuation { continuation in
+        let failure: (diagnostic: String, reason: String)? = await withCheckedContinuation { continuation in
             let resumed = OSAllocatedUnfairLock(initialState: false)
-            let finish: @Sendable (String?) -> Void = { failure in
+            let finish: @Sendable ((diagnostic: String, reason: String)?) -> Void = { failure in
                 guard resumed.withLock({ wasResumed in defer { wasResumed = true }; return !wasResumed }) else { return }
                 continuation.resume(returning: failure)
             }
             context.loadBackgroundContent { error in
-                finish(error.map { ExtensionDiagnostics.diagnosticDescription(for: $0) })
+                finish(error.map { (ExtensionDiagnostics.diagnosticDescription(for: $0), $0.localizedDescription) })
             }
             timeout = Task {
                 guard (try? await Task.sleep(for: .seconds(Self.loadTimeout))) != nil else { return }
-                finish("no answer after \(Int(Self.loadTimeout))s")
+                finish(("no answer after \(Int(Self.loadTimeout))s", "The extension's background did not respond.".localized))
             }
         }
         timeout?.cancel()
@@ -124,8 +125,8 @@ final class BackgroundSupervisor {
             if startsWorker {
                 PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "failed")
             }
-            Self.logger.error("loadBackgroundContent failed for \(extensionId, privacy: .public): \(failure, privacy: .public)")
-            health[extensionId]?.failureReason = failure
+            Self.logger.error("loadBackgroundContent failed for \(extensionId, privacy: .public): \(failure.diagnostic, privacy: .public)")
+            health[extensionId]?.failureReason = failure.reason
             return false
         }
         setFlag(\.failed, to: false, for: extensionId)

@@ -50,9 +50,9 @@ final class PowerKeeperTests: XCTestCase {
     private let installer = FakeInstaller()
     private let lidActions = FakeLidActions()
 
-    private func makeKeeper(lidClosed: Bool = false, maxAwake: TimeInterval = 3600) -> PowerKeeper {
+    private func makeKeeper(lidClosed: Bool = false, maxAwake: TimeInterval = 3600, quietLimit: TimeInterval = 0.2) -> PowerKeeper {
         let keeper = PowerKeeper(
-            quietLimit: 0.2,
+            quietLimit: quietLimit,
             makeLink: { [unowned self] in
                 let link = FakeLink()
                 link.fake.holdResult = holdResult
@@ -121,14 +121,15 @@ final class PowerKeeperTests: XCTestCase {
     }
 
     func testABrowserAgentWorksForTheQuietLimitAfterItsLastCall() async throws {
-        let keeper = makeKeeper()
+        let keeper = makeKeeper(quietLimit: 1)
         let agent = UUID()
 
         keeper.browserAgentWorked(agent)
         XCTAssertEqual(keeper.state.working, [agent])
-        try await Task.sleep(for: .milliseconds(120))
+        // Each sleep stays well under the quiet limit and both together pass it.
+        try await Task.sleep(for: .milliseconds(650))
         keeper.browserAgentWorked(agent)
-        try await Task.sleep(for: .milliseconds(120))
+        try await Task.sleep(for: .milliseconds(650))
         XCTAssertEqual(keeper.state.working, [agent], "each call restarts the quiet limit")
 
         let expired = await pollUntil { keeper.state.working.isEmpty }
@@ -179,8 +180,8 @@ final class PowerKeeperTests: XCTestCase {
         keeper.lidChanged(closed: false)
 
         let body = notifications.last?.body ?? ""
-        XCTAssertTrue(body.hasPrefix(String(format: "%d commands finished".localized, 1)), body)
-        XCTAssertTrue(body.contains(String(format: "%d wait for your answer, the oldest for %@".localized, 1, "")), body)
+        XCTAssertTrue(body.hasPrefix(String(format: "%d commands finished".localized(count: 1), 1)), body)
+        XCTAssertTrue(body.contains(String(format: "%d wait for your answer, the oldest for %@".localized(count: 1), 1, "")), body)
     }
 
     func testLowBatteryGivesSleepBackAndTheChargerTakesItAgain() {

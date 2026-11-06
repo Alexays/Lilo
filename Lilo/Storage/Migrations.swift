@@ -101,7 +101,7 @@ enum Migrations {
 
     /// Create a per-profile database schema (history, extensions, downloads and tabs state). `legacyGlobal`, given for a
     /// profile that existed before, is the global database it takes its share of app-wide data from.
-    static func migrateProfile(_ db: DatabasePool, legacyGlobal: DatabasePool? = nil) throws {
+    static func migrateProfile(_ db: some DatabaseWriter, legacyGlobal: DatabasePool? = nil) throws {
         var migrator = DatabaseMigrator()
 
         migrator.registerMigration("v1") { db in
@@ -314,6 +314,11 @@ enum Migrations {
         // An external app decision is per link scheme: one for every scheme cannot say which it was for, so it is asked again.
         migrator.registerMigration("v4") { db in
             try db.execute(sql: "DELETE FROM sitePermissions WHERE type = 'external-scheme'")
+        }
+
+        // Terminal visits are a small share: the sidebar's terminals and the History page's terminal filter walk only theirs.
+        migrator.registerMigration("v5") { db in
+            try db.execute(sql: "CREATE INDEX idx_historyVisit_terminal_visitedAt ON historyVisit(visitedAt DESC) WHERE openedFrom IS NOT NULL")
         }
 
         try migrator.migrate(db)

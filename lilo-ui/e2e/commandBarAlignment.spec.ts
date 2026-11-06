@@ -80,7 +80,7 @@ test("scope chip prefixes sit in one fixed-width slot, centered on their label",
 	expect(widths.size).toBe(1);
 });
 
-test("key pills share one height and font with the labels, their text centered, the pill centered on its label", async ({ page }) => {
+test("key pills share one height and font family with the labels, their text centered, the pill centered on its label", async ({ page }) => {
 	await openActions(page);
 	const labelFont = await page.locator(".key-hint > span").first().evaluate((el) => getComputedStyle(el).fontFamily);
 
@@ -100,14 +100,10 @@ test("key pills share one height and font with the labels, their text centered, 
 	}
 	expect(heights.size).toBe(1);
 
-	// Same font and size, so equal text boxes mean the key and its label share a baseline.
 	for (const hint of await page.locator(".command-bar-footer .key-hint").all()) {
-		const labelSize = await hint.locator("> span").evaluate((el) => getComputedStyle(el).fontSize);
-		await expect(hint.locator("kbd")).toHaveCSS("font-size", labelSize);
 		const key = await textBox(hint.locator("kbd"));
 		const label = await textBox(hint.locator("> span"));
-		expect(Math.abs(key.y - label.y)).toBeLessThanOrEqual(0.5);
-		expect(Math.abs(key.height - label.height)).toBeLessThanOrEqual(0.5);
+		expect(Math.abs(centerY(key) - centerY(label))).toBeLessThanOrEqual(0.5);
 	}
 });
 

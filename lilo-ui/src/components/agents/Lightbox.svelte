@@ -5,7 +5,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { MOTION } from "../../lib/motion/timings";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import type { ImageRef } from "./conversationModel";
 
   interface Props {

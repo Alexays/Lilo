@@ -1,6 +1,7 @@
 <script lang="ts" module>
+  import { getFormatLocale } from "../../lib/i18n/state.svelte";
   import type { ToolCallItem, ToolKind } from "./conversationModel";
-  import type { IconName } from "./icons";
+  import type { IconName } from "../ui/icons";
 
   const KIND_ICONS: Record<ToolKind, IconName> = {
     read: "eye",
@@ -20,6 +21,8 @@
   const BROWSER_TOOL = /\blilo\b|mcp__lilo|tabs_|navigate|computer/i;
   const OUTPUT_TAIL = 12;
   const MAX_OUTPUT = 20000;
+  // Shared by every block of a conversation: a formatter is costly to build.
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
 
   interface CallView {
     call: ToolCallItem;
@@ -78,7 +81,7 @@
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { MOTION } from "../../lib/motion/timings";
   import DiffCard from "./DiffCard.svelte";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import Markdown from "./Markdown.svelte";
   import MascotGlyph from "./MascotGlyph.svelte";
   import ThreadImage from "./ThreadImage.svelte";
@@ -151,7 +154,7 @@
       }
     }
     if (files.size) counts.set("edit", files.size);
-    const text = [...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })).join(", ");
+    const text = listFormat.format([...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })));
     return { text: text.charAt(0).toUpperCase() + text.slice(1), added, removed, images, categories: [...counts.keys()] };
   });
 
@@ -459,7 +462,7 @@
     grid-template-rows: 0fr;
     opacity: 0;
     transition:
-      grid-template-rows 150ms var(--motion-ease-spring),
+      grid-template-rows var(--motion-duration-fast) var(--motion-ease-spring),
       opacity var(--motion-duration-fast) ease;
   }
 
@@ -527,7 +530,7 @@
     padding: 0 var(--space-4);
     border-radius: var(--radius-sm);
     background: var(--bg-secondary);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-size: var(--font-size-xs);
   }
 

@@ -145,12 +145,13 @@ final class DebuggerGapAPITests: XCTestCase {
         let idleEngine = try XCTUnwrap(window.tabManager.engineTab(for: idle.id))
         let later = Date().addingTimeInterval(60 * 60)
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: later)
-        XCTAssertTrue(debuggedEngine.isFrozen)
-        XCTAssertTrue(idleEngine.isFrozen)
+        try await waitUntil("both idle tabs freeze") { debuggedEngine.isFrozen && idleEngine.isFrozen }
 
         let attachError = await attach(debugged.position)
         XCTAssertNil(attachError)
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: later)
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await debuggedEngine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
         XCTAssertFalse(debuggedEngine.isFrozen)
         idleEngine.resume()   // the context's teardown cannot touch a suspended page
 

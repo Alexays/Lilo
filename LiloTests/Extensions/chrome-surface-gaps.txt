@@ -1,9 +1,23 @@
 # chrome.* paths a stable Chrome has and Lilo does not, or with another kind or value, each named in COMPATIBILITY.md.
 # A namespace covers its members, and a path its twin under WebKit's own browser; a browser.* path
 # is missing under browser only. ChromeSurfaceTests fails when one is fixed and still listed.
+# devtools.* paths exist in DevTools pages only, which it does not probe.
 accessibilityFeatures
 readingList
 ttsEngine
 webAuthenticationProxy
 runtime.getPackageDirectoryEntry
 declarativeNetRequest.MAX_NUMBER_OF_SESSION_RULES
+devtools.inspectedWindow.getResources
+devtools.inspectedWindow.onResourceAdded
+devtools.inspectedWindow.onResourceContentCommitted
+devtools.network.getHAR
+devtools.network.onRequestFinished
+devtools.panels.Theme
+devtools.panels.elements
+devtools.panels.openResource
+devtools.panels.setOpenResourceHandler
+devtools.panels.setThemeChangeHandler
+devtools.panels.sources
+devtools.performance
+devtools.recorder

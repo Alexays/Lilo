@@ -1,7 +1,7 @@
 <script lang="ts">
   import StatusBanner from "../banners/StatusBanner.svelte";
   import { settingsActions } from "../../lib/bridge/actions";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
@@ -44,8 +44,8 @@
   let logQuery = $state("");
 
   const extensions = $derived(getExtensions());
-  const timeFormat = $derived(new Intl.DateTimeFormat(getLocale(), { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-  const dateTimeFormat = $derived(new Intl.DateTimeFormat(getLocale(), { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }));
+  const timeFormat = $derived(new Intl.DateTimeFormat(getFormatLocale(), { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+  const dateTimeFormat = $derived(new Intl.DateTimeFormat(getFormatLocale(), { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }));
 
   const bootMs = $derived(
     summary?.bootDurationMilliseconds ?? summary?.chromeVisualReadyMilliseconds ?? marks.at(-1)?.totalMilliseconds ?? null,

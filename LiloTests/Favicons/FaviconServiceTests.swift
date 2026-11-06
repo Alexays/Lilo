@@ -75,14 +75,15 @@ final class FaviconServiceTests: XCTestCase {
 
     func testRehydrateFillsRestoredTabsFromCacheByHost() {
         let service = FaviconService()
-        service.seed(host: "example.com", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233", profileId: nil)
+        let partition = UUID()
+        service.seed(host: "example.com", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233", partition: partition)
         var tabs = [
             Tab(id: UUID(), url: URL(string: "https://Example.com/page"), title: "Page"),
             Tab(id: UUID(), url: nil, title: "Home", homeURL: URL(string: "https://example.com/home")),
             Tab(id: UUID(), url: URL(string: "https://unknown.example/x"), title: "Unknown")
         ]
 
-        service.rehydrateRestoredTabs(&tabs)
+        service.rehydrateRestoredTabs(&tabs, partition: partition)
 
         XCTAssertEqual(tabs[0].faviconDataURL, "data:image/png;base64,QUJD")
         XCTAssertEqual(tabs[0].faviconDominantColor, "#112233")
@@ -93,13 +94,14 @@ final class FaviconServiceTests: XCTestCase {
 
     func testRehydrateKeepsEachPortOfAHostApart() {
         let service = FaviconService()
-        service.seed(host: "localhost:8080", dataURL: "data:image/png;base64,QUJD", dominantColor: nil, profileId: nil)
+        let partition = UUID()
+        service.seed(host: "localhost:8080", dataURL: "data:image/png;base64,QUJD", dominantColor: nil, partition: partition)
         var tabs = [
             Tab(id: UUID(), url: URL(string: "http://localhost:8080/"), title: "First"),
             Tab(id: UUID(), url: URL(string: "http://localhost:15672/"), title: "Second")
         ]
 
-        service.rehydrateRestoredTabs(&tabs)
+        service.rehydrateRestoredTabs(&tabs, partition: partition)
 
         XCTAssertEqual(tabs[0].faviconDataURL, "data:image/png;base64,QUJD")
         XCTAssertNil(tabs[1].faviconDataURL)
@@ -107,7 +109,8 @@ final class FaviconServiceTests: XCTestCase {
 
     func testRehydrateKeepsBlobDominantColorOverCachedOne() {
         let service = FaviconService()
-        service.seed(host: "example.com", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233", profileId: nil)
+        let partition = UUID()
+        service.seed(host: "example.com", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233", partition: partition)
         var tabs = [Tab(
             id: UUID(),
             url: URL(string: "https://example.com/"),
@@ -115,7 +118,7 @@ final class FaviconServiceTests: XCTestCase {
             faviconDominantColor: "#FF0000"
         )]
 
-        service.rehydrateRestoredTabs(&tabs)
+        service.rehydrateRestoredTabs(&tabs, partition: partition)
 
         XCTAssertEqual(tabs[0].faviconDataURL, "data:image/png;base64,QUJD")
         XCTAssertEqual(tabs[0].faviconDominantColor, "#FF0000")
