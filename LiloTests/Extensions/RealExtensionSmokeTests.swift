@@ -307,8 +307,8 @@ final class RealExtensionSmokeTests: XCTestCase {
                 .replacingOccurrences(of: #" ?\([^()]*:\d+(:\d+)?\)$"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: #"^".*" cannot be parsed as a URL\.$"#, with: "Failed to construct 'URL': Invalid URL", options: .regularExpression)
                 .replacingOccurrences(of: "Load failed", with: "Failed to fetch")
-                // A plain object logged or thrown: JavaScriptCore converts it to a string, V8 names its class.
-                .replacingOccurrences(of: "[object Object]", with: "Object")
+                // An object logged or thrown: JavaScriptCore converts it to a string, V8 names its class.
+                .replacingOccurrences(of: #"\[object (\w+)\]"#, with: "$1", options: .regularExpression)
                 .replacingOccurrences(of: "No runtime.onConnect listeners found.", with: "Could not establish connection. Receiving end does not exist.")
                 .replacingOccurrences(of: #"Cannot find menu item with id \S+"#, with: "Menu item not found.", options: .regularExpression)
                 // A worker scripting the active tab at startup meets Chrome's about:blank, Lilo's popup tab
