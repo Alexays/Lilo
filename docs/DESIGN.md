@@ -146,7 +146,7 @@ Nothing else animates. With Reduce motion, everything becomes a 150 ms fade. A s
 ## Keyboard and focus
 
 - A surface that opens moves focus to its first useful control and returns it to its trigger on close; Tab stays inside an open drawer or modal.
-- A shortcut is shown as keycaps 20 px high, 6 px radius, 11 px text; in a palette footer the Return action comes first.
+- A shortcut is shown as keycaps 20 px high, 6 px radius, 11 px text (the shared `.keycap` class); a tooltip fits its shortcut on its line as a 16 px keycap. In a palette footer the Return action comes first.
 - A shortcut shown anywhere (command bar footer, menus, ⌘? help) comes from the same table as the one that runs.
 
 ## First run
