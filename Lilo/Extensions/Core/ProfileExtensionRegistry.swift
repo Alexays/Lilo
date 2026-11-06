@@ -1090,14 +1090,17 @@ final class ProfileExtensionRegistry {
                 "errorCount": runtime.context.errors.count,
                 "lastBackgroundErrorCount": backgrounds.health(for: runtime.id)?.lastErrorCount ?? 0
             ]
+            let firstSeen = backgrounds.health(for: runtime.id)?.errorFirstSeen ?? []
             payload["contextErrors"] = runtime.context.errors.enumerated().map { index, error in
                 let nsError = error as NSError
-                return [
+                var entry: [String: Any] = [
                     "index": index,
                     "domain": nsError.domain,
                     "code": nsError.code,
                     "description": ExtensionDiagnostics.diagnosticDescription(for: error)
-                ] as [String: Any]
+                ]
+                if index < firstSeen.count { entry["timestamp"] = firstSeen[index] }
+                return entry
             }
             payload["pageDiagnostics"] = runtime.pageDiagnostics.map(\.bridgePayload)
             return payload

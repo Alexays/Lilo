@@ -645,7 +645,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 let description = error["description"] as? String ?? "Unknown extension context error"
                 entries.append([
                     "id": "context-\(extensionId)-\(index)",
-                    "timestamp": timestamp,
+                    "timestamp": error["timestamp"] as? TimeInterval ?? timestamp,
                     "level": "error",
                     "source": "context",
                     "extensionId": extensionId,
