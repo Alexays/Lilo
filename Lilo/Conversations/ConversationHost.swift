@@ -157,8 +157,6 @@ final class ConversationHost {
         }
     }
 
-    var busyCount: Int { conversations.values.filter { $0.state == .busy }.count }
-
     // MARK: - Chrome subscriptions
 
     func show(_ tabId: UUID, in window: MainWindowController, visible: Bool) {
