@@ -100,8 +100,9 @@
     background: color-mix(in srgb, var(--danger-deep) 88%, black);
   }
 
-  .ui-button:not(:disabled, .primary, .danger, .destructive):active {
-    background: var(--bg-active);
+  /* Two :not() so it outranks the ghost hover. --bg-active is white on the light theme. */
+  .ui-button:not(.primary, .danger, .destructive):not(:disabled):active {
+    background: color-mix(in srgb, var(--text-primary) 18%, transparent);
   }
 
   .ui-button:is(.primary, .danger, .destructive):not(:disabled):active {
