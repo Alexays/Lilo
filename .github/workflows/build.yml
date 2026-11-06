@@ -26,8 +26,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      # Documentation and release notes alone skip the builds, which then count as passed. COMPATIBILITY.md
-      # is a test input; a range git cannot read (a force-push) runs everything.
+      # Documentation, release notes and the website alone skip the builds, which then count as passed:
+      # release-tooling, never skipped, checks the website. COMPATIBILITY.md is a test input; a range git cannot
+      # read (a force-push) runs everything.
       - id: diff
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -35,7 +36,7 @@ jobs:
           code=true
           if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
             files=$(git diff --name-only "$BASE" "$GITHUB_SHA")
-            printf '%s\n' "$files" | grep -qvE '^(docs/|\.changes/)|\.md$' \
+            printf '%s\n' "$files" | grep -qvE '^(docs/|\.changes/|site/)|\.md$' \
               || printf '%s\n' "$files" | grep -qx COMPATIBILITY.md || code=false
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
