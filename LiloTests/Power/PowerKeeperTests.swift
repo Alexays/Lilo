@@ -215,20 +215,21 @@ final class PowerKeeperTests: XCTestCase {
 
         await pollUntil(timeout: 5) { !keeper.state.holdsLidClosed }
         XCTAssertFalse(keeper.state.holdsLidClosed)
+        XCTAssertFalse(keeper.state.keepsAwake)
 
         keeper.terminalStatusChanged(id, status(busy: false))
         keeper.terminalStatusChanged(id, status())
         XCTAssertTrue(keeper.state.holdsLidClosed)
     }
 
-    func testChangingTheMaximumDurationWhileHeldReArmsIt() async throws {
-        let keeper = makeKeeper(lidClosed: true)
+    func testChangingTheMaximumDurationWhileAwakeReArmsItWithTheLidOpen() async throws {
+        let keeper = makeKeeper()
         keeper.terminalStatusChanged(UUID(), status())
 
-        keeper.apply(settings(lidClosed: true, maxAwake: 0.2))
-        await pollUntil(timeout: 5) { !keeper.state.holdsLidClosed }
+        keeper.apply(settings(lidClosed: false, maxAwake: 0.2))
+        await pollUntil(timeout: 5) { !keeper.state.keepsAwake }
 
-        XCTAssertFalse(keeper.state.holdsLidClosed)
+        XCTAssertFalse(keeper.state.keepsAwake, "a command that keeps printing stops at the maximum duration too")
     }
 
     func testSnoozeLastsUntilACommandStartsWorking() {

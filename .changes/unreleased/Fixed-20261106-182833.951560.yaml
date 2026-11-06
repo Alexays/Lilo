@@ -1,0 +1,3 @@
+kind: Fixed
+body: A terminal command that keeps printing, like top or tail -f, no longer keeps the Mac awake past the Stop after duration, now set for both keep-awake modes.
+time: 2026-11-06T18:28:33.95156+01:00
