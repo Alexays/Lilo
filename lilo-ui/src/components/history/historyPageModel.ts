@@ -78,8 +78,16 @@ export function groupHistoryDays(rows: BridgeHistoryDayRow[], nowMs: number, loc
   return days;
 }
 
+// Every row formats a time: keyed by locale alone, its lookup skips the options' JSON.
+const timeFormatters = new Map<string, Intl.DateTimeFormat>();
+
 export function timeLabel(ms: number, locale: string): string {
-  return formatter(locale, { hour: "numeric", minute: "2-digit" }).format(ms);
+  let format = timeFormatters.get(locale);
+  if (!format) {
+    format = new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" });
+    timeFormatters.set(locale, format);
+  }
+  return format.format(ms);
 }
 
 /** A cluster's span, oldest to newest visit; one time when they share the minute. */
