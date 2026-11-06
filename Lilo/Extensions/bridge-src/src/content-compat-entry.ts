@@ -18,35 +18,27 @@ installStaticChromeCompat(globalThis as any);
 const browser = (globalThis as any).browser;
 if (browser) Object.defineProperty(globalThis, 'browser', { get: () => browser, set() {}, configurable: true });
 
-// Chrome's events have hasListeners, which WebKit's lack: the world counts each event's listeners on its prototype.
+// Chrome's events have hasListeners, which WebKit's lack: the world counts each event's listeners on the prototype
+// WebKit shares between all its events.
 const listeners = new WeakMap<object, Set<unknown>>();
-// WebKit's namespaces and events are getters on their object's prototype, which Object.values skips.
-const members = (object: any): unknown[] => {
-  if (object === null || typeof object !== 'object') return [];
-  const names = new Set([...Object.getOwnPropertyNames(object), ...Object.getOwnPropertyNames(Object.getPrototypeOf(object) ?? {})]);
-  return [...names].map((name) => { try { return object[name]; } catch { return undefined; } });
-};
-for (const namespace of members((globalThis as any).chrome)) {
-  for (const event of members(namespace)) {
-    const prototype = event && typeof (event as any).addListener === 'function' ? Object.getPrototypeOf(event) : undefined;
-    if (!prototype || 'hasListeners' in prototype) continue;
-    const { addListener, removeListener } = prototype;
-    Object.defineProperties(prototype, {
-      addListener: { configurable: true, writable: true, value(this: object, listener: unknown, ...rest: unknown[]) {
-        const result = addListener.call(this, listener, ...rest);
-        if (typeof listener === 'function') (listeners.get(this) ?? listeners.set(this, new Set()).get(this)!).add(listener);
-        return result;
-      } },
-      removeListener: { configurable: true, writable: true, value(this: object, listener: unknown) {
-        listeners.get(this)?.delete(listener);
-        return removeListener.call(this, listener);
-      } },
-      hasListeners: { configurable: true, writable: true, value(this: object) { return (listeners.get(this)?.size ?? 0) > 0; } },
-    });
-  }
+const onMessage = (globalThis as any).chrome?.runtime?.onMessage;
+const eventPrototype = typeof onMessage?.addListener === 'function' ? Object.getPrototypeOf(onMessage) : undefined;
+if (eventPrototype && !('hasListeners' in eventPrototype)) {
+  const { addListener, removeListener } = eventPrototype;
+  Object.defineProperties(eventPrototype, {
+    addListener: { configurable: true, writable: true, value(this: object, listener: unknown, ...rest: unknown[]) {
+      const result = addListener.call(this, listener, ...rest);
+      if (typeof listener === 'function') (listeners.get(this) ?? listeners.set(this, new Set()).get(this)!).add(listener);
+      return result;
+    } },
+    removeListener: { configurable: true, writable: true, value(this: object, listener: unknown) {
+      listeners.get(this)?.delete(listener);
+      return removeListener.call(this, listener);
+    } },
+    hasListeners: { configurable: true, writable: true, value(this: object) { return (listeners.get(this)?.size ?? 0) > 0; } },
+  });
 }
 
-const onMessage = (globalThis as any).chrome?.runtime?.onMessage;
 if (onMessage) {
   answerAsChrome(onMessage);
   // WebKit recreates a collected event object without the members answerAsChrome adds.

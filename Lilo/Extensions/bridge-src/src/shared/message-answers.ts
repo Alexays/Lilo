@@ -77,7 +77,7 @@ function answeringListener(listener: Listener): Listener {
  * prototype with every other event.
  */
 export function answerAsChrome(onMessage: any, onListen?: () => void): void {
-  // Each content script entry carries its own copy of the compat: the first one answers for all.
+  // Several copies of the compat can run in one world (an uncovered entry, a scripting injection): the first answers for all.
   if (Object.hasOwn(onMessage, 'addListener')) return;
   const listeners = new Set<Listener>();
   const answerProbe = (message: unknown, _sender: unknown, sendResponse: (response: boolean) => void) => {
@@ -236,7 +236,7 @@ export const externalMark = '?liloExternal=';
 export function relayExternalMessaging(runtime: any): void {
   const target = home(runtime);
   const { sendMessage, connect } = target;
-  // Each content script entry carries its own copy of the compat: the first one relays for all.
+  // Several copies of the compat can run in one world (an uncovered entry, a scripting injection): the first relays for all.
   if (typeof sendMessage !== 'function' || typeof connect !== 'function' || sendMessage.__liloRelays) return;
   // Called on runtime, never on this: an extension may call them detached, as Chrome's.
   // A message WebKit fails as its tab closes, which Chrome never answers: the page goes.

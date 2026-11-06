@@ -296,8 +296,9 @@ extension MainWindowController {
     func installPopupCloseBridge(on userContentController: WKUserContentController) {
         guard !Self.popupCloseBridgeControllers.contains(userContentController) else { return }
         Self.popupCloseBridgeControllers.add(userContentController)
-        let nativeCloseScript = WKUserScript(
-            source: #"""
+        // WebKit skips web pages itself, so they never create the relay's world for a script that would only exit.
+        let webPages = ["http://*/*", "https://*/*"]
+        let nativeCloseSource = #"""
             (() => {
                 // The controller may be a regular tab's (an extension URL opened from a page): its
                 // pages keep WebKit's own window.close.
@@ -313,22 +314,18 @@ extension MainWindowController {
                 window.close = closePopup;
                 globalThis.close = closePopup;
             })();
-            """#,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: true
-        )
-        let relayScript = WKUserScript(
-            source: #"""
+            """#
+        let relaySource = #"""
             if (/^(webkit|chrome)-extension:$/.test(location.protocol)) {
                 document.addEventListener('\#(Self.popupCloseEvent)', () => {
                     window.webkit.messageHandlers.liloPopupHost.postMessage({ command: 'close' });
                 });
             }
-            """#,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: true,
-            in: Self.popupCloseWorld
-        )
+            """#
+        let nativeCloseScript = ExtensionUserScripts.makeMatchingUserScript?(nativeCloseSource, .atDocumentStart, true, [], webPages, .page)
+            ?? WKUserScript(source: nativeCloseSource, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        let relayScript = ExtensionUserScripts.makeMatchingUserScript?(relaySource, .atDocumentStart, true, [], webPages, Self.popupCloseWorld)
+            ?? WKUserScript(source: relaySource, injectionTime: .atDocumentStart, forMainFrameOnly: true, in: Self.popupCloseWorld)
 
         userContentController.removeScriptMessageHandler(forName: "liloPopupHost", contentWorld: Self.popupCloseWorld)
         userContentController.addUserScript(nativeCloseScript)

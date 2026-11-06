@@ -118,12 +118,12 @@ final class ExtensionPreparationTests: XCTestCase {
         let scripts = try readContentScripts(dir)
         XCTAssertEqual(scripts.map { $0["js"] as? [String] ?? [] }, [
             ["_lilo/lilo-content-compat.js", "polyfill.js", "functions.js", "loader.js"],
-            ["_lilo/lilo-content-compat.js", "rightclick.js"],
-            ["_lilo/lilo-content-compat.js", "site.js"],
+            ["rightclick.js"],
+            ["site.js"],
             ["functions.js"],
-            ["_lilo/lilo-content-compat.js", "excluding.js"],
-            ["_lilo/lilo-content-compat.js", "excluding.js", "a.js"]
-        ], "a file another entry runs first in the same world and frames goes, unless that entry excludes pages")
+            ["excluding.js"],
+            ["excluding.js", "a.js"]
+        ], "a file another entry runs first in the same world and frames goes, the compat too, unless that entry excludes pages")
         XCTAssertEqual(scripts.map { $0["lilo_js"] as? [String] }, [
             nil, ["polyfill.js", "rightclick.js"], ["polyfill.js", "functions.js", "site.js"], nil,
             ["polyfill.js", "excluding.js"], ["polyfill.js", "excluding.js", "a.js"]

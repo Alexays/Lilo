@@ -476,9 +476,21 @@ const isSessionRule = (rule: any) => Number.isInteger(rule?.[SESSION_RULE]);
 const webKitCall = (namespace: any, name: string, ...args: unknown[]): Promise<any> =>
   (namespace[name].__liloUnwrapped ?? namespace[name]).apply(namespace, args);
 
+// A run stays claimed until its context goes: native is asked again only before the claim.
+const claimedRuns = new WeakSet<object>();
+
 /** Whether this run claimed every held session rule, else the ids it set, after storing `change`. Without native, claimed. */
-const sessionState = (change: { claim?: boolean; ids?: number[] } = {}) =>
-  gapCall<{ claimed: boolean; ids: number[] }>('declarativeNetRequest', 'sessionRules', change).catch(() => ({ claimed: true, ids: [] }));
+async function sessionState(namespace: object, change: { claim?: boolean; ids?: number[] } = {}): Promise<{ claimed: boolean; ids: number[] }> {
+  if (claimedRuns.has(namespace)) return { claimed: true, ids: [] };
+  // Only an answer from native is kept: a failed call is claimed for itself alone.
+  return gapCall<{ claimed: boolean; ids: number[] }>('declarativeNetRequest', 'sessionRules', change).then(
+    (state) => {
+      if (state.claimed) claimedRuns.add(namespace);
+      return state;
+    },
+    () => ({ claimed: true, ids: [] }),
+  );
+}
 
 /** Every dynamic rule WebKit holds, and the session rules among them by the extension's id, with their WebKit id. */
 async function heldSessionRules(namespace: any): Promise<{ held: any[]; session: Map<number, { webKitId: number; rule: any }> }> {
@@ -494,7 +506,7 @@ async function heldSessionRules(namespace: any): Promise<{ held: any[]; session:
 /** Applies the calls in order onto the session rules this run has, each failing alone on a repeated id as in Chrome. */
 async function updateSessionRules(namespace: any, calls: PendingUpdate[]): Promise<void> {
   const { held, session } = await heldSessionRules(namespace);
-  const { claimed, ids } = await sessionState();
+  const { claimed, ids } = await sessionState(namespace);
   const own = new Set(ids);
   const ours = (id: number) => claimed || own.has(id);
   let wanted = new Map<number, any>([...session].filter(([id]) => ours(id)).map(([id, { rule }]) => [id, rule]));
@@ -543,19 +555,19 @@ async function updateSessionRules(namespace: any, calls: PendingUpdate[]): Promi
     applied[0].reject(new Error(String((error as Error)?.message ?? error).replace(/\d+/g, (id) => String(ownIds.get(Number(id)) ?? id))));
     return;
   }
-  if (!claimed) await sessionState({ ids: [...wanted.keys()] });
+  if (!claimed) await sessionState(namespace, { ids: [...wanted.keys()] });
   for (const call of applied) call.resolve(undefined);
 }
 
 /** Drops the session rules a previous run left that this run did not set, then claims the rest. */
 export function releaseSessionRules(namespace: any): Promise<void> {
   return queued(async () => {
-    const { claimed, ids } = await sessionState();
+    const { claimed, ids } = await sessionState(namespace);
     if (claimed) return;
     const own = new Set(ids);
     const left = [...(await heldSessionRules(namespace)).session].filter(([id]) => !own.has(id)).map(([, { webKitId }]) => webKitId);
     if (left.length) await webKitCall(namespace, 'updateDynamicRules', { removeRuleIds: left, addRules: [] });
-    await sessionState({ claim: true });
+    await sessionState(namespace, { claim: true });
   });
 }
 
@@ -587,7 +599,7 @@ export const declarativeNetRequestPatches: Record<string, Patch> = {
     if (typeof filter === 'function') [filter, callback] = [undefined, filter];
     const namespace = self(this);
     return callbackify(async () => {
-      const { claimed, ids } = await sessionState();
+      const { claimed, ids } = await sessionState(namespace);
       const own = new Set(ids);
       const rules = [...(await heldSessionRules(namespace)).session].filter(([id]) => claimed || own.has(id)).map(([, { rule }]) => rule);
       return Array.isArray(filter?.ruleIds) ? rules.filter((rule) => filter.ruleIds.includes(rule.id)) : rules;
