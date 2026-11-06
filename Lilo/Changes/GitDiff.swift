@@ -108,7 +108,8 @@ struct GitDiff: Sendable {
         var budget = untrackedReadBudget
         for path in untrackedPaths(in: root) {
             guard let content = readText(path, in: root, budget: &budget) else { continue }
-            added += content.reduce(0) { $1 == UInt8(ascii: "\n") ? $0 + 1 : $0 } + (content.isEmpty || content.last == UInt8(ascii: "\n") ? 0 : 1)
+            let newlines = unsafe content.withUnsafeBytes { buffer in unsafe buffer.reduce(0) { $1 == UInt8(ascii: "\n") ? $0 + 1 : $0 } }
+            added += newlines + (content.isEmpty || content.last == UInt8(ascii: "\n") ? 0 : 1)
         }
         return (added, removed)
     }
@@ -166,14 +167,12 @@ struct GitDiff: Sendable {
 
     private static let emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
-    private static let timeout: TimeInterval = 10
-
     private static let executable: URL? = ["/opt/homebrew/bin/git", "/usr/local/bin/git", "/usr/bin/git"]
         .first { FileManager.default.isExecutableFile(atPath: $0) }
         .map { URL(fileURLWithPath: $0) }
 
     /// Git's standard output, or nil when it exits with an error or outlives `timeout`.
-    static func run(_ arguments: [String], in directory: String, environment extra: [String: String] = [:]) -> Data? {
+    static func run(_ arguments: [String], in directory: String, environment extra: [String: String] = [:], timeout: TimeInterval = 10) -> Data? {
         guard let executable else { return nil }
         let signpost = PerfSignposts.energy.beginInterval("git", id: PerfSignposts.energy.makeSignpostID(), "\(arguments.first ?? "")")
         defer { PerfSignposts.energy.endInterval("git", signpost) }
@@ -369,15 +368,14 @@ struct GitDiff: Sendable {
 
     /// A small text file's bytes, `path` relative to `root`; nil for a binary or large one, or once
     /// `budget` is spent.
-    private static func readText(_ path: String, in root: String, budget: inout Int) -> [UInt8]? {
+    private static func readText(_ path: String, in root: String, budget: inout Int) -> Data? {
         let url = URL(fileURLWithPath: root).appendingPathComponent(path)
         guard let size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize,
               size <= untrackedFileLimit, size <= budget,
               let data = try? Data(contentsOf: url) else { return nil }
         budget -= size
-        let bytes = [UInt8](data)
         // Git's own test for binary content: a NUL in the first 8000 bytes.
-        return bytes.prefix(8000).contains(0) ? nil : bytes
+        return data.prefix(8000).contains(0) ? nil : data
     }
 
     private mutating func appendUntracked(in directory: String) {
@@ -387,13 +385,13 @@ struct GitDiff: Sendable {
         for path in Self.untrackedPaths(in: root) {
             var file = File(path: path, status: .added, lines: lines.count..<lines.count)
             if let content = Self.readText(path, in: root, budget: &budget) {
-                let offset = bytes.count
+                var start = bytes.count
                 bytes.append(contentsOf: content)
-                var start = 0, number: Int32 = 1
-                while start < content.count {
+                var number: Int32 = 1
+                while start < bytes.count {
                     var end = start
-                    while end < content.count, content[end] != UInt8(ascii: "\n") { end += 1 }
-                    lines.append(Line(kind: .added, start: Int32(offset + start), length: Int32(end - start), oldNumber: 0, newNumber: number))
+                    while end < bytes.count, bytes[end] != UInt8(ascii: "\n") { end += 1 }
+                    lines.append(Line(kind: .added, start: Int32(start), length: Int32(end - start), oldNumber: 0, newNumber: number))
                     number += 1
                     start = end + 1
                 }

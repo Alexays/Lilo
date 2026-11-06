@@ -27,7 +27,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         case "startConversation":
             guard let agentId = payload["agentId"] as? String, let cwd = payload["cwd"] as? String else { return nil }
             let background = payload["background"] as? Bool ?? false
-            guard let tab = window.startConversation(agentId: agentId, cwd: cwd, activate: !background) else { return nil }
+            guard let tab = await window.startConversation(agentId: agentId, cwd: cwd, activate: !background) else { return nil }
             await prompt(tab.id, payload, interrupt: false)
         case "sendConversationPrompt":
             guard let tabId else { return nil }
