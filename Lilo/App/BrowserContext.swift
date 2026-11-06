@@ -142,6 +142,7 @@ final class BrowserContext {
                 profileId: profileId, dbManager: dbManager, gapRouter: engineFactory.gapRouter,
                 tabShare: (engineFactory.tabShareBridge, engineFactory.tabShareFrameSchemeHandler)
             )
+            weakSelf?.reportMovedAsideDatabases()
             context.extensions.settingsStore = weakSelf?.settingsStore
             engineFactory.prepareExtensionRegistry(context.extensions)
             let blockerExtension = weakSelf?.blockerExtensionURL
@@ -254,6 +255,7 @@ final class BrowserContext {
         let dbManager = bootstrap.dbManager, startupSnapshot = bootstrap.startupSnapshot
         let settingsStore = SettingsStore(dbPool: dbManager.globalPool)
         self.dbManager = dbManager
+        reportMovedAsideDatabases()
         sessionPersistenceCoordinator = SessionPersistenceCoordinator(
             dbManager: dbManager,
             liveStore: { [weak self] in self?.profileContexts.existingContext(for: $0)?.sessionPersistence }
@@ -605,11 +607,30 @@ final class BrowserContext {
         )
     }
 
+    /// Tells the user where each database found unreadable, and replaced by an empty one, was moved.
+    private func reportMovedAsideDatabases() {
+        guard let dbManager else { return }
+        for path in dbManager.takeMovedAsideDatabases() where !ProcessInfo.isRunningUnderXCTest {
+            let alert = NSAlert()
+            alert.messageText = "Lilo replaced a damaged database".localized
+            alert.informativeText = unsafe String(
+                format: "The database couldn't be read, so Lilo started a new, empty one. The damaged file is kept at:\n\n%@".localized,
+                path
+            )
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK".localized)
+            alert.addButton(withTitle: "Show in Finder".localized)
+            if alert.runModal() == .alertSecondButtonReturn {
+                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+            }
+        }
+    }
+
     func showFatalDatabaseAlert(_ error: Error) {
         let alert = NSAlert()
         alert.messageText = "Lilo can't open its database".localized
         alert.informativeText = unsafe String(
-            format: "A database error occurred and automatic recovery failed. Please report this issue.\n\nError: %@".localized,
+            format: "A database error occurred. Check that your disk has free space, then open Lilo again. If it keeps happening, please report this issue.\n\nError: %@".localized,
             error.localizedDescription
         )
         alert.alertStyle = .critical
@@ -666,8 +687,8 @@ final class BrowserContext {
         from dbManager: DatabaseManager,
         snapshot: StartupSnapshot
     ) throws -> [UUID: [String: UUID]] {
-        guard let profileId = preferredProfileId(from: snapshot) else { return [:] }
-        let pool = try dbManager.pool(for: profileId)
+        // A profile database that fails to open is reported when the window restores it, as for any other profile.
+        guard let profileId = preferredProfileId(from: snapshot), let pool = try? dbManager.pool(for: profileId) else { return [:] }
         let ids = try loadStoredSpaceIds(from: pool)
         return [profileId: ids]
     }

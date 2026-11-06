@@ -68,4 +68,24 @@ final class BrowserContextTests: XCTestCase {
 
         XCTAssertEqual(context.startupSnapshot!.windows, stored)
     }
+
+    /// The last active profile's database opens at bootstrap: an unreadable one is replaced instead of stopping the launch.
+    func testBootstrapReplacesAnUnreadableProfileDatabase() async throws {
+        let first = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
+        try await first.bootstrap()
+        let profileId = try XCTUnwrap(first.profileManager?.defaultProfile?.id)
+        first.dbManager!.closeForShutdown()
+        let profileDirectory = tempDir.appendingPathComponent("Profiles/\(profileId.uuidString)")
+        try FileManager.default.createDirectory(at: profileDirectory, withIntermediateDirectories: true)
+        let garbage = Data((0..<8192).map { _ in UInt8.random(in: .min ... .max) })
+        try garbage.write(to: profileDirectory.appendingPathComponent("lilo.db"))
+
+        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
+        try await context.bootstrap()
+
+        XCTAssertEqual(context.startupSnapshot!.storedSpaceIdsByProfile[profileId], [:])
+        let files = try FileManager.default.contentsOfDirectory(atPath: profileDirectory.path)
+        let movedAside = try XCTUnwrap(files.first { $0.hasPrefix("lilo.db.corrupt-") && !$0.hasSuffix("-wal") && !$0.hasSuffix("-shm") })
+        XCTAssertEqual(try Data(contentsOf: profileDirectory.appendingPathComponent(movedAside)), garbage)
+    }
 }
