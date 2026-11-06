@@ -30,7 +30,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         var urlObservation: NSKeyValueObservation?
         var scaled = false
         /// A `rawKeyDown` that types, sent with the `char` that follows it so the text goes in once.
-        var pendingKey: (key: String, keyCode: UInt16?)?
+        var pendingKey: (key: String, keyCode: UInt16?, modifiers: NSEvent.ModifierFlags)?
 
         init(extensionId: String, extensionName: String, registry: ProfileExtensionRegistry, debuggee: [String: Any], engine: WKWebViewTab, inspector: AgentInspector) {
             self.extensionId = extensionId
@@ -371,7 +371,15 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         let text = params["text"] as? String ?? ""
         let keyCode = (params["nativeVirtualKeyCode"] as? NSNumber).map { UInt16(truncatingIfNeeded: $0.intValue) }
         let modifiers = Self.modifiers(params)
-        switch params["type"] as? String ?? "" {
+        let type = params["type"] as? String ?? ""
+        // No char follows a shortcut or Tab: its keydown goes out, textless, before the next event.
+        if type != "char", let pending = session.pendingKey {
+            session.pendingKey = nil
+            await Self.untilPageSees("keydown", in: webView) {
+                AgentInput.keyEvent(webView, down: true, key: pending.key, text: "", keyCode: pending.keyCode, modifiers: pending.modifiers)
+            }
+        }
+        switch type {
         case "keyDown":
             await Self.untilPageSees("keydown", in: webView) {
                 AgentInput.keyEvent(webView, down: true, key: key, text: text, keyCode: keyCode, modifiers: modifiers)
@@ -379,7 +387,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         case "rawKeyDown":
             // A key that types waits for its char; one that does not (arrows, Backspace) goes now.
             if key.count == 1 || key == "Enter" || key == "Tab" {
-                session.pendingKey = (key, keyCode)
+                session.pendingKey = (key, keyCode, modifiers)
             } else {
                 await Self.untilPageSees("keydown", in: webView) {
                     AgentInput.keyEvent(webView, down: true, key: key, text: "", keyCode: keyCode, modifiers: modifiers)
@@ -395,7 +403,6 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             }
             session.pendingKey = nil
         case "keyUp":
-            session.pendingKey = nil
             await Self.untilPageSees("keyup", in: webView) {
                 AgentInput.keyEvent(webView, down: false, key: key, text: text, keyCode: keyCode, modifiers: modifiers)
             }
