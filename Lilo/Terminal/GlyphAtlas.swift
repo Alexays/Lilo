@@ -39,14 +39,18 @@ final class GlyphAtlas {
     private var colorShelf = Shelf()
     private var scratch: [UInt8] = []
 
-    init?(device: MTLDevice) {
+    init?(device: MTLDevice, cellWidth: Int, cellHeight: Int) {
         func texture(_ format: MTLPixelFormat, _ size: Int) -> MTLTexture? {
             let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: size, height: size, mipmapped: false)
             descriptor.storageMode = .shared
             descriptor.usage = .shaderRead
             return device.makeTexture(descriptor: descriptor)
         }
-        guard let gray = texture(.r8Unorm, 1024), let color = texture(.bgra8Unorm, 512) else { return nil }
+        // Room for about 512 distinct glyphs: the floor covers cells up to about 20 pt at 2x, and only
+        // a larger font, whose glyphs a fixed atlas could not hold, gets a bigger one.
+        let side = 1 << Int(log2((Double(cellWidth * cellHeight) * 512).squareRoot()).rounded(.up))
+        let size = min(4096, max(1024, side))
+        guard let gray = texture(.r8Unorm, size), let color = texture(.bgra8Unorm, max(512, size / 4)) else { return nil }
         grayTexture = gray
         colorTexture = color
     }

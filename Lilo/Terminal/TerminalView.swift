@@ -504,7 +504,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
             return
         }
         let fresh = self.builder == nil
-        guard let builder = self.builder ?? GlyphAtlas(device: renderer.device).map({ TerminalFrameBuilder(font: font, atlas: $0) }) else {
+        guard let builder = self.builder ?? GlyphAtlas(device: renderer.device, cellWidth: font.cellWidth, cellHeight: font.cellHeight)
+            .map({ TerminalFrameBuilder(font: font, atlas: $0) }) else {
             link?.isPaused = true
             return
         }
