@@ -766,6 +766,7 @@
 		"ariaLabel": "Pestañas"
 	},
 	"bottomBar": {
+		"switchedTo": "Cambiado a {name}",
 		"library": "Descargas y pestañas archivadas",
 		"downloads": "Descargas",
 		"downloadsActiveCount": "Descargas, {count} activas",
@@ -774,6 +775,9 @@
 		"signedInAs": "{space}, sesión iniciada como {profile}"
 	},
 	"sidebar": {
+		"movedToPosition": "Movido a la posición {position} de {count}",
+		"movedInto": "Movido a {name}",
+		"movedOutOf": "Sacado de {name}",
 		"ariaLabel": "Barra lateral"
 	},
 	"spaceBar": {

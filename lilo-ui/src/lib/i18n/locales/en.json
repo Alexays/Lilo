@@ -766,6 +766,7 @@
 		"ariaLabel": "Tabs"
 	},
 	"bottomBar": {
+		"switchedTo": "Switched to {name}",
 		"library": "Downloads and archived tabs",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} active",
@@ -774,6 +775,9 @@
 		"signedInAs": "{space}, signed in as {profile}"
 	},
 	"sidebar": {
+		"movedToPosition": "Moved to position {position} of {count}",
+		"movedInto": "Moved into {name}",
+		"movedOutOf": "Moved out of {name}",
 		"ariaLabel": "Sidebar"
 	},
 	"spaceBar": {

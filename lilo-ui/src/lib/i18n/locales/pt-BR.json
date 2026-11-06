@@ -766,6 +766,7 @@
 		"ariaLabel": "Abas"
 	},
 	"bottomBar": {
+		"switchedTo": "Alternado para {name}",
 		"library": "Downloads e abas arquivadas",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} ativos",
@@ -774,6 +775,9 @@
 		"signedInAs": "{space}, conectado como {profile}"
 	},
 	"sidebar": {
+		"movedToPosition": "Movido para a posição {position} de {count}",
+		"movedInto": "Movido para {name}",
+		"movedOutOf": "Retirado de {name}",
 		"ariaLabel": "Barra lateral"
 	},
 	"spaceBar": {

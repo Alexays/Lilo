@@ -766,6 +766,7 @@
 		"ariaLabel": "タブ"
 	},
 	"bottomBar": {
+		"switchedTo": "{name} に切り替えました",
 		"library": "ダウンロードとアーカイブしたタブ",
 		"downloads": "ダウンロード",
 		"downloadsActiveCount": "ダウンロード、{count}件進行中",
@@ -774,6 +775,9 @@
 		"signedInAs": "{space}、{profile}としてサインイン"
 	},
 	"sidebar": {
+		"movedToPosition": "{count} 個中 {position} 番目に移動しました",
+		"movedInto": "{name} に移動しました",
+		"movedOutOf": "{name} から出しました",
 		"ariaLabel": "サイドバー"
 	},
 	"spaceBar": {

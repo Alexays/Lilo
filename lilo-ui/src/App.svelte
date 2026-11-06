@@ -15,7 +15,9 @@
   import { getActiveUrlBarDrawer } from "./stores/urlBarDrawer.svelte";
   import { editorState } from "./stores/panels.svelte";
   import { getPagedSpaces, getSpacePagerVirtualIndex } from "./stores/pager.svelte";
-  import { getFocusedSpaceId, getSpaceById } from "./stores/spaces.svelte";
+  import { getActiveSpaceId, getFocusedSpaceId, getSpaceById } from "./stores/spaces.svelte";
+  import { announce } from "./lib/announce";
+  import { t } from "./lib/i18n/state.svelte";
   import { getActiveTab } from "./stores/tabs.svelte";
   import { getDayPart, getWallpaperColor, watchDayPart, watchWallpaperColor } from "./stores/spaceColor.svelte";
   import { effectiveSpaceColor } from "./lib/spaceColor";
@@ -132,6 +134,15 @@
     chromeActions.sidebarResized(sidebarMinWidth);
   });
   let pendingSidebarWidth = 260;
+
+  // A Space switch replaces the whole sidebar at once, whatever started it: VoiceOver says where it landed.
+  let announcedSpaceId = "";
+  $effect(() => {
+    const id = getActiveSpaceId();
+    const name = untrack(() => getSpaceById(id)?.name);
+    if (announcedSpaceId && id !== announcedSpaceId && name) announce(t("bottomBar.switchedTo", { name }));
+    announcedSpaceId = id;
+  });
   let isSidebarResizing = $state(false);
 
   // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.

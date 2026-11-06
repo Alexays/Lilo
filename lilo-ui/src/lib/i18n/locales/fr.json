@@ -766,6 +766,7 @@
 		"ariaLabel": "Onglets"
 	},
 	"bottomBar": {
+		"switchedTo": "Passé à {name}",
 		"library": "Téléchargements et onglets archivés",
 		"downloads": "Téléchargements",
 		"downloadsActiveCount": "Téléchargements, {count} en cours",
@@ -774,6 +775,9 @@
 		"signedInAs": "{space}, connecté avec {profile}"
 	},
 	"sidebar": {
+		"movedToPosition": "Déplacé en position {position} sur {count}",
+		"movedInto": "Déplacé dans {name}",
+		"movedOutOf": "Sorti de {name}",
 		"ariaLabel": "Barre latérale"
 	},
 	"spaceBar": {

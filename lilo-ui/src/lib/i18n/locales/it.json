@@ -766,6 +766,7 @@
 		"ariaLabel": "Schede"
 	},
 	"bottomBar": {
+		"switchedTo": "Passato a {name}",
 		"library": "Download e schede archiviate",
 		"downloads": "Download",
 		"downloadsActiveCount": "Download, {count} attivi",
@@ -774,6 +775,9 @@
 		"signedInAs": "{space}, accesso come {profile}"
 	},
 	"sidebar": {
+		"movedToPosition": "Spostato in posizione {position} di {count}",
+		"movedInto": "Spostato in {name}",
+		"movedOutOf": "Spostato fuori da {name}",
 		"ariaLabel": "Barra laterale"
 	},
 	"spaceBar": {

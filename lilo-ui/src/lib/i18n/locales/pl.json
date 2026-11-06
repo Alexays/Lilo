@@ -780,6 +780,7 @@
 		"ariaLabel": "Karty"
 	},
 	"bottomBar": {
+		"switchedTo": "Przełączono na: {name}",
 		"library": "Pobrane i zarchiwizowane karty",
 		"downloads": "Pobrane",
 		"downloadsActiveCount": "Pobrane, aktywne: {count}",
@@ -788,6 +789,9 @@
 		"signedInAs": "{space}, zalogowano jako {profile}"
 	},
 	"sidebar": {
+		"movedToPosition": "Przeniesiono na pozycję {position} z {count}",
+		"movedInto": "Przeniesiono do: {name}",
+		"movedOutOf": "Wyjęto z: {name}",
 		"ariaLabel": "Pasek boczny"
 	},
 	"spaceBar": {

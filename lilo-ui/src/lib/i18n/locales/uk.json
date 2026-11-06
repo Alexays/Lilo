@@ -780,6 +780,7 @@
 		"ariaLabel": "Вкладки"
 	},
 	"bottomBar": {
+		"switchedTo": "Перемкнуто на {name}",
 		"library": "Завантаження та архівовані вкладки",
 		"downloads": "Завантаження",
 		"downloadsActiveCount": "Завантаження, активних: {count}",
@@ -788,6 +789,9 @@
 		"signedInAs": "{space}, вхід як {profile}"
 	},
 	"sidebar": {
+		"movedToPosition": "Переміщено на позицію {position} з {count}",
+		"movedInto": "Переміщено до {name}",
+		"movedOutOf": "Вийнято з {name}",
 		"ariaLabel": "Бічна панель"
 	},
 	"spaceBar": {
