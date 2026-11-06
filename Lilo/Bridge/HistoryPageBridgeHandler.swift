@@ -97,6 +97,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
             pageRead = read
             let loaded = await read.value
             guard !read.isCancelled else { break }
+            pageRead = nil
             // A failed read still answers, or the page would wait on it and never load more.
             guard let (page, icons) = loaded else {
                 sendEmptyPage(for: message)
