@@ -571,7 +571,12 @@
 		},
 		"filterLists": {
 			"update": "Оновити зараз",
-			"summary": "Списки: {lists}",
+			"summary": {
+				"one": "{count} список",
+				"few": "{count} списки",
+				"many": "{count} списків",
+				"other": "{count} списку"
+			},
 			"updated": "оновлено {time}"
 		},
 		"extensionUpdates": {
@@ -647,8 +652,12 @@
 			"clearData": "Очистити дані...",
 			"remove": "Вилучити...",
 			"lastProfile": "Останній профіль залишається: кожному простору потрібен профіль.",
-			"extensionCount": "Розширення: {count}",
-			"extensionCountOne": "1 розширення",
+			"extensionCount": {
+				"one": "{count} розширення",
+				"few": "{count} розширення",
+				"many": "{count} розширень",
+				"other": "{count} розширення"
+			},
 			"newProfile": "Новий профіль...",
 			"newProfileDetail": "Нові файли cookie, сеанси входу й розширення",
 			"namePlaceholder": "Назва профілю",
@@ -1349,8 +1358,12 @@
 		"navLabel": "Розділи диспетчера процесів",
 		"searchPlaceholder": "Пошук вкладок",
 		"memoryAriaLabel": "Використання пам’яті",
-		"tabsCount": "Вкладки: {count}",
-		"tabsCountOne": "1 вкладка",
+		"tabsCount": {
+			"one": "{count} вкладка",
+			"few": "{count} вкладки",
+			"many": "{count} вкладок",
+			"other": "{count} вкладки"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} інший",
@@ -1358,10 +1371,18 @@
 			"many": "{count} інших",
 			"other": "{count} іншого"
 		},
-		"reclaim": "Приховані вкладки: {count} · Пам’ять: {size}",
-		"reclaimOne": "1 прихована вкладка використовує {size}",
-		"reclaimNoSize": "Приховані вкладки, що залишаються в пам’яті: {count}",
-		"reclaimNoSizeOne": "1 прихована вкладка залишається в пам’яті",
+		"reclaim": {
+			"one": "{count} прихована вкладка використовує {size}",
+			"few": "{count} приховані вкладки використовують {size}",
+			"many": "{count} прихованих вкладок використовують {size}",
+			"other": "{count} прихованої вкладки використовує {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} прихована вкладка ще завантажена",
+			"few": "{count} приховані вкладки ще завантажені",
+			"many": "{count} прихованих вкладок ще завантажені",
+			"other": "{count} прихованої вкладки ще завантажено"
+		},
 		"sleep": "Перевести в сон",
 		"groupTabs": "Вкладки",
 		"groupSleeping": "У режимі сну",
@@ -1405,12 +1426,20 @@
 	"urlToast": {
 		"pageActions": "Дії зі сторінкою",
 		"reEnableBlocking": "Знову ввімкнути блокування на цьому сайті",
-		"trackerBlockedOnPage": "Заблоковано трекерів на цій сторінці: {count}",
-		"trackersBlockedOnPage": "Заблоковано трекерів на цій сторінці: {count}",
+		"trackersBlockedOnPage": {
+			"one": "На цій сторінці заблоковано {count} трекер",
+			"few": "На цій сторінці заблоковано {count} трекери",
+			"many": "На цій сторінці заблоковано {count} трекерів",
+			"other": "На цій сторінці заблоковано {count} трекера"
+		},
 		"disableBlocking": "Вимкнути блокування на цьому сайті",
 		"adsAllowed": "Рекламу дозволено",
-		"trackerBlockedLabel": "Заблоковано трекерів: {count}",
-		"trackersBlockedLabel": "Заблоковано трекерів: {count}",
+		"trackersBlockedLabel": {
+			"one": "Заблоковано {count} трекер",
+			"few": "Заблоковано {count} трекери",
+			"many": "Заблоковано {count} трекерів",
+			"other": "Заблоковано {count} трекера"
+		},
 		"adsBlocked": "Рекламу заблоковано",
 		"extensionAlreadyInstalled": "Розширення вже інстальовано",
 		"installChromeExtension": "Інсталювати це розширення Chrome",
@@ -2670,7 +2699,18 @@
 			"untitled": "Нова розмова",
 			"working": "Працює",
 			"failed": "Зупинено через помилку",
-			"changes": "Додано рядків: {added}, видалено: {removed}",
+			"linesAdded": {
+				"one": "{count} рядок додано",
+				"few": "{count} рядки додано",
+				"many": "{count} рядків додано",
+				"other": "{count} рядка додано"
+			},
+			"linesRemoved": {
+				"one": "{count} рядок видалено",
+				"few": "{count} рядки видалено",
+				"many": "{count} рядків видалено",
+				"other": "{count} рядка видалено"
+			},
 			"pages": {
 				"one": "{count} сторінка",
 				"few": "{count} сторінки",

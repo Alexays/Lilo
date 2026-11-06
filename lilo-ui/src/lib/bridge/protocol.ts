@@ -560,6 +560,8 @@ export interface BridgeInitialStatePayload {
 	activeProfileId?: string;
 	extensions?: BridgeExtensionSnapshot[];
 	tracingEnabled?: boolean;
+	// The user's region code ("GB"), for dates and numbers.
+	region?: string;
 }
 
 export interface BridgeFeatureFlagSnapshot {

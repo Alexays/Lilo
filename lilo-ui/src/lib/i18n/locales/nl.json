@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Werk nu bij",
-			"summary": "{lists} lijsten",
+			"summary": {
+				"one": "{count} lijst",
+				"other": "{count} lijsten"
+			},
 			"updated": "bijgewerkt {time}"
 		},
 		"extensionUpdates": {
@@ -641,8 +644,10 @@
 			"clearData": "Wis gegevens...",
 			"remove": "Verwijder...",
 			"lastProfile": "Je laatste profiel blijft bestaan: elke ruimte heeft er één nodig.",
-			"extensionCount": "{count} extensies",
-			"extensionCountOne": "1 extensie",
+			"extensionCount": {
+				"one": "{count} extensie",
+				"other": "{count} extensies"
+			},
 			"newProfile": "Nieuw profiel...",
 			"newProfileDetail": "Nieuwe cookies, aanmeldingen en extensies",
 			"namePlaceholder": "Profielnaam",
@@ -1335,17 +1340,23 @@
 		"navLabel": "Weergaven van procesbeheer",
 		"searchPlaceholder": "Zoek tabbladen",
 		"memoryAriaLabel": "Geheugengebruik",
-		"tabsCount": "{count} tabbladen",
-		"tabsCountOne": "1 tabblad",
+		"tabsCount": {
+			"one": "{count} tabblad",
+			"other": "{count} tabbladen"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} ander",
 			"other": "{count} andere"
 		},
-		"reclaim": "{count} verborgen tabbladen gebruiken {size}",
-		"reclaimOne": "1 verborgen tabblad gebruikt {size}",
-		"reclaimNoSize": "{count} verborgen tabbladen zijn nog geladen",
-		"reclaimNoSizeOne": "1 verborgen tabblad is nog geladen",
+		"reclaim": {
+			"one": "{count} verborgen tabblad gebruikt {size}",
+			"other": "{count} verborgen tabbladen gebruiken {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} verborgen tabblad is nog geladen",
+			"other": "{count} verborgen tabbladen zijn nog geladen"
+		},
 		"sleep": "Zet in sluimerstand",
 		"groupTabs": "Tabbladen",
 		"groupSleeping": "In sluimerstand",
@@ -1387,12 +1398,16 @@
 	"urlToast": {
 		"pageActions": "Pagina-acties",
 		"reEnableBlocking": "Schakel blokkering op deze website weer in",
-		"trackerBlockedOnPage": "{count} tracker geblokkeerd op deze pagina",
-		"trackersBlockedOnPage": "{count} trackers geblokkeerd op deze pagina",
+		"trackersBlockedOnPage": {
+			"one": "{count} tracker geblokkeerd op deze pagina",
+			"other": "{count} trackers geblokkeerd op deze pagina"
+		},
 		"disableBlocking": "Schakel blokkering op deze website uit",
 		"adsAllowed": "Advertenties toegestaan",
-		"trackerBlockedLabel": "{count} tracker geblokkeerd",
-		"trackersBlockedLabel": "{count} trackers geblokkeerd",
+		"trackersBlockedLabel": {
+			"one": "{count} tracker geblokkeerd",
+			"other": "{count} trackers geblokkeerd"
+		},
 		"adsBlocked": "Advertenties geblokkeerd",
 		"extensionAlreadyInstalled": "Extensie al geïnstalleerd",
 		"installChromeExtension": "Installeer deze Chrome-extensie",
@@ -2622,7 +2637,14 @@
 			"untitled": "Nieuw gesprek",
 			"working": "Bezig",
 			"failed": "Gestopt met een fout",
-			"changes": "{added} regels toegevoegd, {removed} verwijderd",
+			"linesAdded": {
+				"one": "{count} regel toegevoegd",
+				"other": "{count} regels toegevoegd"
+			},
+			"linesRemoved": {
+				"one": "{count} regel verwijderd",
+				"other": "{count} regels verwijderd"
+			},
 			"pages": {
 				"one": "{count} pagina",
 				"other": "{count} pagina's"

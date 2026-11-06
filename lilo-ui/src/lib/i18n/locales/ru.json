@@ -571,7 +571,12 @@
 		},
 		"filterLists": {
 			"update": "Обновить",
-			"summary": "Списков: {lists}",
+			"summary": {
+				"one": "{count} список",
+				"few": "{count} списка",
+				"many": "{count} списков",
+				"other": "{count} списка"
+			},
 			"updated": "обновлено {time}"
 		},
 		"extensionUpdates": {
@@ -647,8 +652,12 @@
 			"clearData": "Очистить данные...",
 			"remove": "Удалить...",
 			"lastProfile": "Последний профиль нельзя удалить: каждому пространству нужен профиль.",
-			"extensionCount": "Расширений: {count}",
-			"extensionCountOne": "1 расширение",
+			"extensionCount": {
+				"one": "{count} расширение",
+				"few": "{count} расширения",
+				"many": "{count} расширений",
+				"other": "{count} расширения"
+			},
 			"newProfile": "Новый профиль...",
 			"newProfileDetail": "Без cookie, учётных записей и расширений",
 			"namePlaceholder": "Название профиля",
@@ -1349,8 +1358,12 @@
 		"navLabel": "Разделы диспетчера процессов",
 		"searchPlaceholder": "Поиск вкладок",
 		"memoryAriaLabel": "Использование памяти",
-		"tabsCount": "Вкладок: {count}",
-		"tabsCountOne": "1 вкладка",
+		"tabsCount": {
+			"one": "{count} вкладка",
+			"few": "{count} вкладки",
+			"many": "{count} вкладок",
+			"other": "{count} вкладки"
+		},
 		"cpu": "ЦП {value}",
 		"others": {
 			"one": "Ещё {count}",
@@ -1358,10 +1371,18 @@
 			"many": "Ещё {count}",
 			"other": "Ещё {count}"
 		},
-		"reclaim": "Скрытых вкладок: {count} · Память: {size}",
-		"reclaimOne": "1 скрытая вкладка использует {size}",
-		"reclaimNoSize": "В памяти остаются скрытые вкладки: {count}",
-		"reclaimNoSizeOne": "В памяти остаётся 1 скрытая вкладка",
+		"reclaim": {
+			"one": "{count} скрытая вкладка использует {size}",
+			"few": "{count} скрытые вкладки используют {size}",
+			"many": "{count} скрытых вкладок используют {size}",
+			"other": "{count} скрытой вкладки использует {size}"
+		},
+		"reclaimNoSize": {
+			"one": "В памяти остаётся {count} скрытая вкладка",
+			"few": "В памяти остаются {count} скрытые вкладки",
+			"many": "В памяти остаются {count} скрытых вкладок",
+			"other": "В памяти остаётся {count} скрытой вкладки"
+		},
 		"sleep": "Выгрузить",
 		"groupTabs": "Вкладки",
 		"groupSleeping": "Выгруженные",
@@ -1405,12 +1426,20 @@
 	"urlToast": {
 		"pageActions": "Действия со страницей",
 		"reEnableBlocking": "Включить блокировку на этом сайте",
-		"trackerBlockedOnPage": "На странице заблокирован {count} трекер",
-		"trackersBlockedOnPage": "На странице заблокировано трекеров: {count}",
+		"trackersBlockedOnPage": {
+			"one": "На странице заблокирован {count} трекер",
+			"few": "На странице заблокировано {count} трекера",
+			"many": "На странице заблокировано {count} трекеров",
+			"other": "На странице заблокировано {count} трекера"
+		},
 		"disableBlocking": "Отключить блокировку на этом сайте",
 		"adsAllowed": "Реклама разрешена",
-		"trackerBlockedLabel": "Заблокирован {count} трекер",
-		"trackersBlockedLabel": "Заблокировано трекеров: {count}",
+		"trackersBlockedLabel": {
+			"one": "Заблокирован {count} трекер",
+			"few": "Заблокировано {count} трекера",
+			"many": "Заблокировано {count} трекеров",
+			"other": "Заблокировано {count} трекера"
+		},
 		"adsBlocked": "Реклама заблокирована",
 		"extensionAlreadyInstalled": "Расширение уже установлено",
 		"installChromeExtension": "Установить это расширение Chrome",
@@ -2670,7 +2699,18 @@
 			"untitled": "Новый разговор",
 			"working": "Работает",
 			"failed": "Остановлен из-за ошибки",
-			"changes": "Добавлено строк: {added}, удалено: {removed}",
+			"linesAdded": {
+				"one": "{count} строка добавлена",
+				"few": "{count} строки добавлены",
+				"many": "{count} строк добавлено",
+				"other": "{count} строки добавлено"
+			},
+			"linesRemoved": {
+				"one": "{count} строка удалена",
+				"few": "{count} строки удалены",
+				"many": "{count} строк удалено",
+				"other": "{count} строки удалено"
+			},
 			"pages": {
 				"one": "{count} страница",
 				"few": "{count} страницы",

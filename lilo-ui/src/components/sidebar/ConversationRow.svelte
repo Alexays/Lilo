@@ -46,7 +46,8 @@
       title,
       waiting ? t("tabItem.terminalAttention") : busy ? t("agents.row.working") : failed ? t("agents.row.failed") : "",
       unread ? t("tabItem.terminalUnread") : "",
-      added || removed ? t("agents.row.changes", { added, removed }) : "",
+      added ? t("agents.row.linesAdded", { count: added }) : "",
+      removed ? t("agents.row.linesRemoved", { count: removed }) : "",
       pageCount ? t("agents.row.pages", { count: pageCount }) : "",
     ].filter(Boolean).join(", "),
   );

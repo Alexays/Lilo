@@ -4,7 +4,7 @@
 import { on } from "../lib/bridge";
 import { importActions, onboardingActions, settingsActions } from "../lib/bridge/actions";
 import type { ImportKind, ImportProgress, ImportSourceInfo, ImportSummaryItem } from "../lib/bridge/protocol";
-import { getLocale, t } from "../lib/i18n/state.svelte";
+import { getFormatLocale, t } from "../lib/i18n/state.svelte";
 import { setSetting } from "./settings.svelte";
 import { isCommandBarOpen, openCommandBar } from "./commandBar.svelte";
 import { getActiveTab, isBlankTab } from "./tabs.svelte";
@@ -94,7 +94,7 @@ export function importedSummary(kinds: readonly ImportKind[]): string {
 		.map((kind) => ({ kind, count: items.filter((item) => item.kind === kind).reduce((sum, item) => sum + item.imported, 0) }))
 		.filter(({ count }) => count > 0)
 		.map(({ kind, count }) => t(`onboarding.import.count.${kind}`, { count }));
-	return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(counts);
+	return new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }).format(counts);
 }
 
 export function startOnboarding(mode: OnboardingMode = "full"): void {

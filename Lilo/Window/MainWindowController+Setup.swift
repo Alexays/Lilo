@@ -852,6 +852,7 @@ extension MainWindowController {
         }
         data["extensions"] = profileContext?.extensions.extensionBridgePayloads(activeTab: tabManager.activeOpenTabId.flatMap { tabManager.tabAdapter(for: $0) }) ?? []
         data["tracingEnabled"] = StartupMetrics.tracingEnabled
+        data["region"] = Locale.current.region?.identifier
         return data
     }
 

@@ -3,7 +3,7 @@
   import { menuKeys } from "../../lib/actions/menuKeys";
   import type { BridgeProfileSnapshot } from "../../lib/bridge/protocol";
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { showProfileExtensions } from "../../stores/extensions.svelte";
   import { closeSettingsShell, openClearBrowsingData, openSettings } from "../../stores/panels.svelte";
@@ -36,6 +36,7 @@
   const spaces = $derived(usage.get(profile.id) ?? []);
   const removal = $derived(profileRemoval(profile, users, usage));
   const isActive = $derived(getActiveProfileId() === profile.id);
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
 
   function rename(value: string): void {
     renaming = false;
@@ -203,9 +204,7 @@
 
   {#if extensionCount !== undefined}
     <div class="stats">
-      {extensionCount === 1
-        ? t("settings.profiles.extensionCountOne")
-        : t("settings.profiles.extensionCount", { count: extensionCount })}
+      {t("settings.profiles.extensionCount", { count: extensionCount })}
     </div>
   {/if}
 </article>
@@ -224,7 +223,7 @@
 >
   {#if removal.moving.length > 0}
     <div class="move-row">
-      <span>{t("settings.profiles.moveSpaces", { spaces: removal.moving.map((space) => `${space.icon} ${space.name}`).join(", ") })}</span>
+      <span>{t("settings.profiles.moveSpaces", { spaces: listFormat.format(removal.moving.map((space) => `${space.icon} ${space.name}`)) })}</span>
       <UiSelect
         value={moveTo}
         options={removal.targets.map((target) => ({ value: target.id, label: target.name }))}

@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "今すぐ更新",
-			"summary": "リスト数：{lists}",
+			"summary": {
+				"one": "リスト数：{count}",
+				"other": "リスト数：{count}"
+			},
 			"updated": "更新：{time}"
 		},
 		"extensionUpdates": {
@@ -641,8 +644,10 @@
 			"clearData": "データを消去...",
 			"remove": "取り除く...",
 			"lastProfile": "最後のプロファイルは削除できません。すべてのスペースにプロファイルが必要です。",
-			"extensionCount": "機能拡張：{count}個",
-			"extensionCountOne": "機能拡張：1個",
+			"extensionCount": {
+				"one": "機能拡張：{count}個",
+				"other": "機能拡張：{count}個"
+			},
 			"newProfile": "新規プロファイル...",
 			"newProfileDetail": "新しい Cookie、サインイン、機能拡張",
 			"namePlaceholder": "プロファイル名",
@@ -1335,17 +1340,23 @@
 		"navLabel": "プロセスマネージャの表示",
 		"searchPlaceholder": "タブを検索",
 		"memoryAriaLabel": "メモリ使用量",
-		"tabsCount": "{count}個のタブ",
-		"tabsCountOne": "1個のタブ",
+		"tabsCount": {
+			"one": "{count}個のタブ",
+			"other": "{count}個のタブ"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "その他{count}件",
 			"other": "その他{count}件"
 		},
-		"reclaim": "非表示の{count}個のタブが{size}を使用中",
-		"reclaimOne": "非表示の1個のタブが{size}を使用中",
-		"reclaimNoSize": "非表示の{count}個のタブが読み込まれたままです",
-		"reclaimNoSizeOne": "非表示の1個のタブが読み込まれたままです",
+		"reclaim": {
+			"one": "非表示の{count}個のタブが{size}を使用中",
+			"other": "非表示の{count}個のタブが{size}を使用中"
+		},
+		"reclaimNoSize": {
+			"one": "非表示の{count}個のタブが読み込まれたままです",
+			"other": "非表示の{count}個のタブが読み込まれたままです"
+		},
 		"sleep": "スリープさせる",
 		"groupTabs": "タブ",
 		"groupSleeping": "スリープ中",
@@ -1387,12 +1398,16 @@
 	"urlToast": {
 		"pageActions": "ページのアクション",
 		"reEnableBlocking": "このサイトでブロックを再び有効にする",
-		"trackerBlockedOnPage": "このページで{count}件のトラッカーをブロック",
-		"trackersBlockedOnPage": "このページで{count}件のトラッカーをブロック",
+		"trackersBlockedOnPage": {
+			"one": "このページで{count}件のトラッカーをブロック",
+			"other": "このページで{count}件のトラッカーをブロック"
+		},
 		"disableBlocking": "このサイトでブロックを無効にする",
 		"adsAllowed": "広告を許可",
-		"trackerBlockedLabel": "{count}件のトラッカーをブロック",
-		"trackersBlockedLabel": "{count}件のトラッカーをブロック",
+		"trackersBlockedLabel": {
+			"one": "{count}件のトラッカーをブロック",
+			"other": "{count}件のトラッカーをブロック"
+		},
 		"adsBlocked": "広告をブロック",
 		"extensionAlreadyInstalled": "機能拡張はインストール済みです",
 		"installChromeExtension": "この Chrome 機能拡張をインストール",
@@ -2622,7 +2637,14 @@
 			"untitled": "新しい会話",
 			"working": "作業中",
 			"failed": "エラーで停止",
-			"changes": "{added} 行追加、{removed} 行削除",
+			"linesAdded": {
+				"one": "{count} 行追加",
+				"other": "{count} 行追加"
+			},
+			"linesRemoved": {
+				"one": "{count} 行削除",
+				"other": "{count} 行削除"
+			},
 			"pages": {
 				"one": "{count} ページ",
 				"other": "{count} ページ"

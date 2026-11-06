@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatByteSize } from "./format";
+import { formatByteSize, formatTimestamp } from "./format";
 import { loadCatalog } from "./i18n/translate";
 
 test("formatByteSize rounds to integers below GB, one decimal at GB", () => {
@@ -25,4 +25,10 @@ test("formatByteSize writes French digits and units", async () => {
 	assert.equal(formatByteSize(512, "fr"), "512 o");
 	assert.equal(formatByteSize(5 * 1024 * 1024, "fr", true), "5,0 Mo");
 	assert.equal(formatByteSize(2048, "fr", true), "2,0 Ko");
+});
+
+test("formatTimestamp follows the region of the locale", () => {
+	const timestamp = new Date(2026, 5, 12, 14, 2, 5).getTime() / 1000;
+	assert.equal(formatTimestamp(timestamp, "en-GB"), "12/06/2026, 14:02:05");
+	assert.equal(formatTimestamp(timestamp, "en-US").replace(/\s/g, " "), "6/12/2026, 2:02:05 PM");
 });

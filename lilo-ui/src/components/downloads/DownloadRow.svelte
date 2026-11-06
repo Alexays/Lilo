@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t, getLocale } from "../../lib/i18n/state.svelte";
+  import { t, getFormatLocale, getLocale } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { downloadActions } from "../../lib/bridge/actions";
   import type { BridgeDownloadSnapshot } from "../../lib/bridge/protocol";
@@ -28,7 +28,7 @@
     retry: "common.retry",
   };
 
-  const meta = $derived(metaLine(download, getLocale(), Date.now()));
+  const meta = $derived(metaLine(download, getLocale(), getFormatLocale(), Date.now()));
   const action = $derived(inlineAction(download));
   const openable = $derived(canOpen(download));
   const isActive = $derived(isActiveDownload(download));

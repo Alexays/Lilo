@@ -2,7 +2,7 @@
   import { tick, untrack } from "svelte";
   import { scale } from "svelte/transition";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import { getAgentsProfileId, getAgentsSpaceIds, isAgentsSpace } from "../../stores/agents.svelte";
@@ -60,6 +60,7 @@
   const users = $derived(userProfiles(getProfiles(), getAgentsProfileId()));
   const usage = $derived(spacesByProfile(getSpaces(), getAgentsSpaceIds()));
   const extensionCounts = $derived(getProfileExtensionCounts());
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
   // What the "New profile" choice will wear: the color Swift would pick, sent along explicitly.
   const newProfileColor = $derived(nextProfileColor(getProfiles()));
   const editingSpace = $derived(getSpaces().find((space) => space.id === editorState().spaceId));
@@ -85,7 +86,7 @@
     if (choice.kind === "new") return t("spaceEditor.hintNew");
     const others = (usage.get(choice.id) ?? []).filter((space) => space.id !== editorState().spaceId);
     return others.length > 0
-      ? t("spaceEditor.hintShared", { spaces: others.map((space) => space.name).join(", ") })
+      ? t("spaceEditor.hintShared", { spaces: listFormat.format(others.map((space) => space.name)) })
       : t("spaceEditor.hintOwn");
   });
 
@@ -190,15 +191,11 @@
   }
 
   function profileMeta(id: string): string {
-    const names = (usage.get(id) ?? []).map((space) => space.name).join(", ");
+    const names = listFormat.format((usage.get(id) ?? []).map((space) => space.name));
     const count = extensionCounts?.[id] ?? (extensionCounts ? 0 : null);
     return [
       names || t("settings.profiles.noSpace"),
-      count === null
-        ? ""
-        : count === 1
-          ? t("settings.profiles.extensionCountOne")
-          : t("settings.profiles.extensionCount", { count }),
+      count === null ? "" : t("settings.profiles.extensionCount", { count }),
     ]
       .filter(Boolean)
       .join(" · ");

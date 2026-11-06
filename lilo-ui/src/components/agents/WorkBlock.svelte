@@ -1,4 +1,5 @@
 <script lang="ts" module>
+  import { getFormatLocale } from "../../lib/i18n/state.svelte";
   import type { ToolCallItem, ToolKind } from "./conversationModel";
   import type { IconName } from "./icons";
 
@@ -20,6 +21,8 @@
   const BROWSER_TOOL = /\blilo\b|mcp__lilo|tabs_|navigate|computer/i;
   const OUTPUT_TAIL = 12;
   const MAX_OUTPUT = 20000;
+  // Shared by every block of a conversation: a formatter is costly to build.
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
 
   interface CallView {
     call: ToolCallItem;
@@ -151,7 +154,7 @@
       }
     }
     if (files.size) counts.set("edit", files.size);
-    const text = [...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })).join(", ");
+    const text = listFormat.format([...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })));
     return { text: text.charAt(0).toUpperCase() + text.slice(1), added, removed, images, categories: [...counts.keys()] };
   });
 
