@@ -14,7 +14,6 @@
 <script lang="ts">
   import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
-  import ExtensionsPopover from "./ExtensionsPopover.svelte";
   import {
     getEnabledExtensions,
     type ExtensionState,
@@ -284,13 +283,15 @@
     </button>
 
     {#if popoverOpen && triggerEl}
-      <ExtensionsPopover
-        anchor={triggerEl}
-        overflowIds={pinnedIds.slice(inlineCount)}
-        onclose={() => {
-          popoverOpen = false;
-        }}
-      />
+      {#await import("./ExtensionsPopover.svelte") then popover}
+        <popover.default
+          anchor={triggerEl}
+          overflowIds={pinnedIds.slice(inlineCount)}
+          onclose={() => {
+            popoverOpen = false;
+          }}
+        />
+      {/await}
     {/if}
   </span>
 {/if}
