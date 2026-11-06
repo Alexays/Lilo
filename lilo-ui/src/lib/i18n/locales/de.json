@@ -1101,6 +1101,7 @@
 		"shortcutRecording": "Kurzbefehl eingeben",
 		"executeAction": "Erweiterung aktivieren",
 		"shortcutNone": "Nicht festgelegt",
+		"shortcutTaken": "Bereits von \"{owner}\" belegt",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Rezensionen, Details und die Seite des Entwicklers",
 		"webStoreOpen": "Öffnen",

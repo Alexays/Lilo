@@ -1115,6 +1115,7 @@
 		"shortcutRecording": "Wpisz skrót",
 		"executeAction": "Uruchom rozszerzenie",
 		"shortcutNone": "Nie ustawiono",
+		"shortcutTaken": "Już używany przez \"{owner}\"",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Opinie, szczegóły i strona twórcy",
 		"webStoreOpen": "Otwórz",

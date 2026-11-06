@@ -1101,6 +1101,7 @@
 		"shortcutRecording": "輸入快速鍵",
 		"executeAction": "啟動延伸功能",
 		"shortcutNone": "未設定",
+		"shortcutTaken": "已被「{owner}」使用",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "評論、詳細資訊與開發者網頁",
 		"webStoreOpen": "開啟",

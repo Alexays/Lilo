@@ -1101,6 +1101,7 @@
 		"shortcutRecording": "Tapez un raccourci",
 		"executeAction": "Activer l'extension",
 		"shortcutNone": "Aucun",
+		"shortcutTaken": "Déjà utilisé par \"{owner}\"",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Avis, détails et page du développeur",
 		"webStoreOpen": "Ouvrir",

@@ -1101,6 +1101,7 @@
 		"shortcutRecording": "ショートカットを入力",
 		"executeAction": "機能拡張を起動",
 		"shortcutNone": "未設定",
+		"shortcutTaken": "「{owner}」で使用中",
 		"webStoreTitle": "Chrome ウェブストア",
 		"webStoreHint": "レビュー、詳細、開発者のページ",
 		"webStoreOpen": "開く",

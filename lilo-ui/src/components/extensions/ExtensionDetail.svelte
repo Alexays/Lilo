@@ -12,10 +12,12 @@
     clearExtensionError,
     disableExtension,
     enableExtension,
+    getShortcutConflict,
     hasExtensionError,
     isExtensionPending,
     isExtensionUpdating,
     reloadExtension,
+    setCommandShortcut,
     updateExtension,
     type ExtensionState,
   } from "../../stores/extensions.svelte";
@@ -67,12 +69,12 @@
     if (event.key === "Escape") {
       recordingCommand = null;
     } else if (event.key === "Backspace" || event.key === "Delete") {
-      extensionActions.setCommandShortcut(extension.id, command, "", 0, extension.profileId);
+      setCommandShortcut(extension.id, command, "", 0, extension.profileId);
       recordingCommand = null;
     } else {
       const shortcut = shortcutFromKeyEvent(event);
       if (!shortcut) return;
-      extensionActions.setCommandShortcut(extension.id, command, shortcut.key, shortcut.modifiers, extension.profileId);
+      setCommandShortcut(extension.id, command, shortcut.key, shortcut.modifiers, extension.profileId);
       recordingCommand = null;
     }
   }
@@ -233,7 +235,11 @@
   {#if extension.commands?.length}
     <UiInsetList title={t("extensions.detailShortcuts")}>
       {#each extension.commands as command (command.id)}
-        <UiListRow title={commandTitle(command)}>
+        {@const conflict = recordingCommand === command.id ? "" : getShortcutConflict(extension.id, command.id)}
+        <UiListRow
+          title={commandTitle(command)}
+          description={conflict ? t("extensions.shortcutTaken", { owner: conflict }) : undefined}
+        >
           {#snippet action()}
             <button
               class="detail-shortcut"

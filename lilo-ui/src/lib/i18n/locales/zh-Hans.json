@@ -1101,6 +1101,7 @@
 		"shortcutRecording": "输入快捷键",
 		"executeAction": "激活扩展",
 		"shortcutNone": "未设置",
+		"shortcutTaken": "已被 \"{owner}\" 使用",
 		"webStoreTitle": "Chrome 网上应用店",
 		"webStoreHint": "评价、详细信息和开发者页面",
 		"webStoreOpen": "打开",

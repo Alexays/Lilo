@@ -49,6 +49,8 @@ let _downloadUiEnabled = $state(true);
 // The profile Settings > Extensions shows instead of the window's, and its rows once they arrive.
 let _shownProfileId = $state("");
 let _profileExtensions = $state.raw<{ profileId: string; live: boolean; extensions: ExtensionState[] } | null>(null);
+// The last shortcut the detail page asked for, and once refused, what already holds its keys.
+let _shortcutAttempt = $state.raw<{ id: string; command: string; owner: string } | null>(null);
 
 // Icons are rendered as <img src>; only data:image/ URLs from the native side
 // are trusted. Anything else (javascript:, http(s):, arbitrary schemes) is dropped.
@@ -215,6 +217,12 @@ export function initExtensionStore(): void {
 	});
 	on("extensionActionCompleted", (data) => {
 		if (typeof data?.id !== "string") return;
+		if (data.action === "shortcut") {
+			if (_shortcutAttempt?.id === data.id && data.success !== true) {
+				_shortcutAttempt = { ..._shortcutAttempt, owner: data.error ?? "" };
+			}
+			return;
+		}
 		if (data.action === "install") {
 			const { [data.id]: _removed, ...rest } = _installing;
 			_installing = rest;
@@ -310,6 +318,17 @@ export function installStoreExtension(id: string): void {
 	if (_installing[id]) return;
 	_installing = { ..._installing, [id]: true };
 	extensionActions.install(`https://chromewebstore.google.com/detail/${id}`);
+}
+
+/** Rebinds a command; an empty `key` removes its shortcut. The host refuses keys something else holds. */
+export function setCommandShortcut(id: string, command: string, key: string, modifiers: number, profileId?: string): void {
+	_shortcutAttempt = { id, command, owner: "" };
+	extensionActions.setCommandShortcut(id, command, key, modifiers, profileId);
+}
+
+/** What holds the keys last refused for the command, or "". */
+export function getShortcutConflict(id: string, command: string): string {
+	return _shortcutAttempt?.id === id && _shortcutAttempt.command === command ? _shortcutAttempt.owner : "";
 }
 
 export function getExtensionUpdateCheck(): BridgeExtensionUpdateCheck {

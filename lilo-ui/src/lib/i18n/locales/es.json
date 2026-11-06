@@ -1101,6 +1101,7 @@
 		"shortcutRecording": "Introduce un atajo",
 		"executeAction": "Activar la extensión",
 		"shortcutNone": "Sin definir",
+		"shortcutTaken": "Ya lo usa \"{owner}\"",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Reseñas, detalles y página del desarrollador",
 		"webStoreOpen": "Abrir",

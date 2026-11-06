@@ -29,3 +29,22 @@ test("a private space shows only the extensions allowed there", async () => {
 	});
 	assert.deepEqual(shown(), ["allowed"]);
 });
+
+test("a refused shortcut names what holds its keys until the next try", async () => {
+	stubBridgeWindow();
+	const loadStore = await freshStores();
+	const extensions = await loadStore("/src/stores/extensions.svelte.ts");
+	extensions.initExtensionStore();
+	const receive = (msg: Record<string, unknown>) =>
+		(globalThis as unknown as { window: { __lilo: { receive(msg: Record<string, unknown>): void } } }).window.__lilo.receive(msg);
+
+	extensions.setCommandShortcut("ext", "run", "y", 1 << 20);
+	receive({ event: "extensionActionCompleted", id: "ext", action: "shortcut", success: false, error: "Other" });
+	assert.equal(extensions.getShortcutConflict("ext", "run"), "Other");
+	assert.equal(extensions.getShortcutConflict("ext", "open"), "");
+
+	extensions.setCommandShortcut("ext", "run", "u", 1 << 20);
+	assert.equal(extensions.getShortcutConflict("ext", "run"), "");
+	receive({ event: "extensionActionCompleted", id: "ext", action: "shortcut", success: true });
+	assert.equal(extensions.getShortcutConflict("ext", "run"), "");
+});

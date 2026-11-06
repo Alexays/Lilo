@@ -1212,8 +1212,9 @@ export interface BridgeEventPayloadMap {
 	// pending state crisply (success or failure) instead of waiting on a timeout.
 	extensionActionCompleted: {
 		id: string;
-		action: "enable" | "disable" | "uninstall" | "update" | "install";
+		action: "enable" | "disable" | "uninstall" | "update" | "install" | "shortcut";
 		success: boolean;
+		/** For a refused "shortcut", what already holds the keys. */
 		error?: string;
 	};
 	// Native ⋯ menu on an extension row resolved to a UI action.

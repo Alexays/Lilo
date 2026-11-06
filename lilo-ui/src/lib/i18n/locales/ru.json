@@ -1115,6 +1115,7 @@
 		"shortcutRecording": "Нажмите сочетание",
 		"executeAction": "Активировать расширение",
 		"shortcutNone": "Не задано",
+		"shortcutTaken": "Уже используется: \"{owner}\"",
 		"webStoreTitle": "Интернет-магазин Chrome",
 		"webStoreHint": "Отзывы, сведения и страница разработчика",
 		"webStoreOpen": "Открыть",

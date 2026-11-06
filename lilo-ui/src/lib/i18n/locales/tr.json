@@ -1101,6 +1101,7 @@
 		"shortcutRecording": "Bir kestirme girin",
 		"executeAction": "Genişletmeyi etkinleştir",
 		"shortcutNone": "Ayarlanmadı",
+		"shortcutTaken": "\"{owner}\" tarafından kullanılıyor",
 		"webStoreTitle": "Chrome Web Mağazası",
 		"webStoreHint": "Yorumlar, ayrıntılar ve geliştiricinin sayfası",
 		"webStoreOpen": "Aç",
