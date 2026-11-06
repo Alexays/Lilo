@@ -230,6 +230,7 @@ extension MainWindowController {
         chromeFaviconSyncedSpaceIds = tabManager.currentSpaceId.map { [$0] } ?? []
         sentTabPatches = [:]
         sentExtensionRows = [:]
+        sentArchiveFavicons = [:]
         for row in data["extensions"] as? [[String: Any]] ?? [] {
             if let id = row["id"] as? String { sentExtensionRows[id] = row }
         }
