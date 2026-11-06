@@ -6,7 +6,7 @@ import WebKit
 /// `SameSite=Lax` and `Strict` cookies (WEBKIT-GAPS.md, gap 81): signed-in sessions (ChatGPT's) read as signed out.
 /// Answers nil for a request WebKit sends as Chrome does, which the page then sends itself.
 @MainActor
-final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTaskDelegate {
+final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTaskDelegate, WKHTTPCookieStoreObserver {
     let gapActions: Set<String> = ["fetch.credentialed", "fetch.cancel"]
 
     /// A request's answer, made and read on the main actor.
@@ -18,6 +18,15 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
     /// Each profile's session, through its proxy as the profile's pages are; rebuilt when that proxy changes.
     private var sessions: [UUID: URLSession] = [:]
     nonisolated(unsafe) private var proxyObserver: Any?
+
+    /// Each profile's jar, read over XPC on first need and dropped when its store changes. The store is held weakly so a
+    /// deleted profile's store can go; `version` tells a read that a change came in while it was under way.
+    private struct Jar {
+        weak var store: WKHTTPCookieStore?
+        var cookies: [HTTPCookie]?
+        var version = 0
+    }
+    private var jars: [UUID: Jar] = [:]
 
     override init() {
         super.init()
@@ -43,6 +52,26 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
         return session
     }
 
+    func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
+        for (profileId, jar) in jars where jar.store === cookieStore {
+            jars[profileId]?.cookies = nil
+            jars[profileId]?.version += 1
+        }
+    }
+
+    private func jar(of profileId: UUID, in store: WKHTTPCookieStore) async -> [HTTPCookie] {
+        if jars[profileId]?.store !== store {
+            jars = jars.filter { $0.value.store != nil }
+            store.add(self)
+            jars[profileId] = Jar(store: store)
+        }
+        if let cookies = jars[profileId]?.cookies { return cookies }
+        let version = jars[profileId]?.version
+        let cookies = await store.allCookies()
+        if jars[profileId]?.store === store, jars[profileId]?.version == version { jars[profileId]?.cookies = cookies }
+        return cookies
+    }
+
     func handle(_ call: GapCall) async -> Any? {
         let key = call.string("requestId").map { "\(call.extensionId)\u{1f}\($0)" }
         if call.action == "fetch.cancel" {
@@ -65,7 +94,7 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
         var body = call.string("body").flatMap { Data(base64Encoded: $0) }
         var headers = (call.payload["headers"] as? [[String]] ?? []).filter { $0.count == 2 }
         let origin = "\(context.baseURL.scheme ?? "")://\(context.baseURL.host ?? "")"
-        // The profile's jar, read once over XPC and kept current with what each hop sets.
+        // The profile's jar, this request's and the cache's kept current with what each hop sets.
         var jar: [HTTPCookie]?
         // As fetch: at most 20 redirects, each hop with the cookies of its own URL.
         for hop in 0...20 {
@@ -76,7 +105,7 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
             for header in headers where header[0].lowercased() != "cookie" { request.addValue(header[1], forHTTPHeaderField: header[0]) }
             request.setValue(origin, forHTTPHeaderField: "Origin")
             if context.hasAccess(to: url) {
-                if jar == nil { jar = await store.allCookies() }
+                if jar == nil { jar = await self.jar(of: call.registry.profileId, in: store) }
                 for (name, value) in HTTPCookie.requestHeaderFields(with: await store.cookies(for: url, in: jar)) { request.setValue(value, forHTTPHeaderField: name) }
             }
             let data: Data
@@ -93,8 +122,11 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
             }
             for cookie in HTTPCookie.cookies(withResponseHeaderFields: fields, for: url) {
                 await store.setCookie(cookie)
-                jar?.removeAll { $0.name == cookie.name && $0.domain == cookie.domain && $0.path == cookie.path }
+                let replaced = { (old: HTTPCookie) in old.name == cookie.name && old.domain == cookie.domain && old.path == cookie.path }
+                jar?.removeAll(where: replaced)
                 jar?.append(cookie)
+                jars[call.registry.profileId]?.cookies?.removeAll(where: replaced)
+                jars[call.registry.profileId]?.cookies?.append(cookie)
             }
             if (300...399).contains(response.statusCode), response.statusCode != 304,
                let location = response.value(forHTTPHeaderField: "Location"), let next = URL(string: location, relativeTo: url)?.absoluteURL {

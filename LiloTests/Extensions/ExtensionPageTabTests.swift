@@ -473,6 +473,13 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(cookies(fromPage), ["lax=1", "plain=1", "strict=1"], "an extension page's fetch")
         XCTAssertEqual(cookies(fromWorker), ["lax=1", "plain=1", "strict=1"], "the worker's fetch")
         XCTAssertEqual(cookies(fromXHR), ["lax=1", "plain=1", "strict=1"], "an extension page's XMLHttpRequest with withCredentials")
+
+        _ = try await siteTab.callAsyncJavaScript("document.cookie = 'later=1; path=/'", arguments: [:], in: nil, contentWorld: .page)
+        let followsTheStore = await pollUntil {
+            let fetched = try? await page.callAsyncJavaScript("return await fetch(url, { credentials: 'include', cache: 'no-store' }).then((r) => r.text())", arguments: ["url": echo], in: nil, contentWorld: .page)
+            return cookies(fetched).contains("later=1")
+        }
+        XCTAssertTrue(followsTheStore, "a cookie set after the first credentialed fetch")
     }
 
     /// A credentialed fetch sends a cookie to its path and the paths below it, never to a path it only starts (RFC 6265).
