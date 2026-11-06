@@ -522,7 +522,9 @@ final class PagePopupTests: XCTestCase {
 
         let closed = await pollUntil(timeout: 10) { self.controller.pagePopups.isEmpty && !self.controller.externalAppPromptTabs.isEmpty }
         XCTAssertTrue(closed, "no blank window stays behind, as in Chrome")
-        if let window = controller.window, let sheet = window.attachedSheet { window.endSheet(sheet, returnCode: .alertSecondButtonReturn) }
+        let window = try XCTUnwrap(controller.window)
+        let sheet = try XCTUnwrap(window.attachedSheet, "the prompt shows on the opener's window")
+        window.endSheet(sheet, returnCode: .alertSecondButtonReturn)
     }
 
     func testAPopupWindowNamesTheSiteItsPageWentToOnceThatSiteShows() async throws {

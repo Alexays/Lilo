@@ -40,6 +40,12 @@ final class WKWebViewTabNavigationPolicyTests: XCTestCase {
         XCTAssertTrue(third)
         XCTAssertEqual(spy.externalLaunches.last?.url.absoluteString, "zoommtg://third")
         XCTAssertEqual(spy.externalLaunches.last?.userInitiated, true)
+
+        let meeting = try await TinyHTTPServer(index: "<script>location = 'zoommtg://fourth'</script>")
+        tab.loadURL(try XCTUnwrap(URL(string: "http://127.0.0.1:\(meeting.port)/")))
+        let fourth = await pollUntil(timeout: 10) { spy.externalLaunches.count == 3 }
+        XCTAssertTrue(fourth, "a page the user opens asks once on its own again, as the next meeting link does")
+        XCTAssertEqual(spy.externalLaunches.last?.userInitiated, false)
     }
 
     /// A server whose `/slow` answers after a while, so a navigation to it stays pending meanwhile.

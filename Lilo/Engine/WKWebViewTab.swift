@@ -376,8 +376,8 @@ final class WKWebViewTab: NSObject {
     var visitTitleUpdates: (url: String, changesLeft: Int, renamableUntil: ContinuousClock.Instant?)?
     /// Set for a tab a page opened (a link or `window.open`): only such a tab closes when its first navigation is a download.
     var isOpenedByPage = false
-    /// Set once the page asked for an external app; it asks again only with a user gesture.
-    private var externalAppRequestNeedsGesture = false
+    /// When the page last asked for an external app: it asks again on its own only once the user clicked or typed in it, or loaded a page.
+    private var externalAppRequestTime: TimeInterval?
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
     /// it is set, and the exception unwinding through Swift corrupts the concurrency runtime.
     private(set) var isFrozen = false
@@ -665,6 +665,7 @@ final class WKWebViewTab: NSObject {
         if !isPrivateBrowsing { Self.logger.info("load source=app host=\(url.host ?? "nil", privacy: .private)") }
         pendingMainFrameURL = url
         pendingMainFrameSendsBody = false
+        externalAppRequestTime = nil
         didAutoRetryProvisionalLoad = false
         didReloadEmptyCommit = false
         StartupMetrics.markOnce("firstContentLoadRequested")
@@ -1818,8 +1819,8 @@ extension WKWebViewTab: WKNavigationDelegate {
             let sourceFrame = navigationAction.sourceFrame as WKFrameInfo?
             let userInitiated = sourceFrame == nil || WebViewPrivateAccessors(navigationAction).bool("_isUserInitiated") == true
             // One request per gesture, as in Chrome, so a page cannot stack prompts; the first needs none, for Zoom or Teams links.
-            if !userInitiated, externalAppRequestNeedsGesture { return .cancel }
-            externalAppRequestNeedsGesture = true
+            if !userInitiated, let last = externalAppRequestTime, Self.activatedWebView !== webView || Self.activationTime < last { return .cancel }
+            externalAppRequestTime = ProcessInfo.processInfo.systemUptime
             let initiator = sourceFrame?.securityOrigin
             delegate?.tab(
                 self, launchExternalURL: url, fromOrigin: initiator.flatMap { $0.host.isEmpty ? nil : $0.permissionOriginKey },
