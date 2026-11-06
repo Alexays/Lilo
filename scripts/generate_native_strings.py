@@ -39,7 +39,6 @@ for path in sorted(glob(os.path.join(catalog_dir, "*.json"))):
     identifier = locale.replace("-", "_")
     with open(path, encoding="utf-8") as f:
         native = json.load(f)["native"]
-    entry_count += len(native)
     # A plural entry maps CLDR categories to forms; its key is the English "other" form.
     plurals = [
         f'"{swift_escape(k)}": [' + ", ".join(f'"{c}": "{swift_escape(v)}"' for c, v in native[k].items()) + "],"
@@ -52,6 +51,7 @@ for path in sorted(glob(os.path.join(catalog_dir, "*.json"))):
     rows = [f'"{swift_escape(k)}": "{swift_escape(native[k])}",' for k in sorted(native) if isinstance(native[k], str)]
     tables.append(swift_dictionary(identifier, "String", rows))
     locales.append(locale)
+    entry_count += len(native)
 body = "\n\n".join(tables + plural_tables)
 locale_names = ", ".join(f'"{locale}"' for locale in ["en", *locales])
 cases = "\n".join(f'        case "{locale}": return {locale.replace("-", "_")}[key] ?? key' for locale in locales)
