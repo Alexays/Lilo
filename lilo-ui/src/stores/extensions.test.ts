@@ -29,3 +29,30 @@ test("a private space shows only the extensions allowed there", async () => {
 	});
 	assert.deepEqual(shown(), ["allowed"]);
 });
+
+test("a store install keeps how it ended until the next attempt", async () => {
+	stubBridgeWindow();
+	const loadStore = await freshStores();
+	const extensions = await loadStore("/src/stores/extensions.svelte.ts");
+	extensions.initExtensionStore();
+	const settle = (success: boolean, error?: string) =>
+		(globalThis as unknown as { window: { __lilo: { receive(msg: Record<string, unknown>): void } } }).window.__lilo.receive({
+			event: "extensionActionCompleted", id: "ext", action: "install", success, ...(error ? { error } : {}),
+		});
+
+	extensions.installStoreExtension("ext");
+	assert.equal(extensions.isExtensionInstalling("ext"), true);
+	assert.equal(extensions.getInstallOutcome("ext"), undefined);
+	settle(false);
+	assert.equal(extensions.isExtensionInstalling("ext"), false);
+	assert.equal(extensions.getInstallOutcome("ext"), "cancelled");
+
+	extensions.installStoreExtension("ext");
+	assert.equal(extensions.getInstallOutcome("ext"), undefined);
+	settle(false, "Failed to download extension: HTTP 404");
+	assert.equal(extensions.getInstallOutcome("ext"), "failed");
+
+	extensions.installStoreExtension("ext");
+	settle(true);
+	assert.equal(extensions.getInstallOutcome("ext"), "installed");
+});

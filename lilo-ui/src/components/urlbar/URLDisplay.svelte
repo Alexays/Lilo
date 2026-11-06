@@ -4,12 +4,12 @@
   import { on } from "../../lib/bridge";
   import { announce } from "../../lib/announce";
   import { tooltip } from "../../lib/tooltip";
-  import { chromeActions, extensionActions, settingsActions, terminalActions } from "../../lib/bridge/actions";
+  import { chromeActions, settingsActions, terminalActions } from "../../lib/bridge/actions";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { getRecoveredPage } from "../../stores/pageHang.svelte";
   import { copyText } from "../../lib/clipboard";
   import { isCommandBarOpen, openCommandBar } from "../../stores/commandBar.svelte";
-  import { getExtensions } from "../../stores/extensions.svelte";
+  import { getExtensions, getInstallOutcome, installStoreExtension } from "../../stores/extensions.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import {
     getTrackersBlocked,
@@ -79,7 +79,6 @@
   let hideProgressTimeout: ReturnType<typeof setTimeout> | null = null;
   let progressTrickleInterval: ReturnType<typeof setInterval> | null = null;
   let hideToastTimeout: ReturnType<typeof setTimeout> | null = null;
-  let installFeedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   let hideHostShiftTimeout: ReturnType<typeof setTimeout> | null = null;
   let toastVisible = $state(false);
   let toastToken = $state(0);
@@ -584,13 +583,12 @@
 
   function installChromeWebStoreExtension(e: MouseEvent) {
     e.stopPropagation();
-    if (!activeTabURL || !chromeWebStoreExtensionId) {
+    if (!chromeWebStoreExtensionId) {
       return;
     }
 
     pendingInstallExtensionId = chromeWebStoreExtensionId;
-    scheduleInstallFeedbackTimeout(chromeWebStoreExtensionId);
-    extensionActions.install(activeTabURL);
+    installStoreExtension(chromeWebStoreExtensionId);
   }
 
   function clearProgressHideTimeout() {
@@ -665,11 +663,6 @@
     hideToastTimeout = null;
   }
 
-  function clearInstallFeedbackTimeout() {
-    if (installFeedbackTimeout !== null) clearTimeout(installFeedbackTimeout);
-    installFeedbackTimeout = null;
-  }
-
   function clearHostShiftTimeout() {
     if (hideHostShiftTimeout !== null) clearTimeout(hideHostShiftTimeout);
     hideHostShiftTimeout = null;
@@ -688,25 +681,12 @@
     }, TOAST_DURATION_MS);
   }
 
-  function scheduleInstallFeedbackTimeout(extensionId: string) {
-    clearInstallFeedbackTimeout();
-    installFeedbackTimeout = setTimeout(() => {
-      if (pendingInstallExtensionId === extensionId) {
-        pendingInstallExtensionId = null;
-        showToast("failed", t("urlToast.failed"));
-      }
-
-      installFeedbackTimeout = null;
-    }, 12000);
-  }
-
   $effect(() => {
     return () => {
       clearProgressCompleteTimeout();
       clearProgressHideTimeout();
       clearProgressTrickleInterval();
       clearToastTimeout();
-      clearInstallFeedbackTimeout();
       clearHostShiftTimeout();
     };
   });
@@ -744,15 +724,14 @@
       return;
     }
 
-    if (
-      !getExtensions().some((extension) => extension.id === pendingExtensionId)
-    ) {
+    const outcome = getInstallOutcome(pendingExtensionId);
+    if (!outcome) {
       return;
     }
 
     pendingInstallExtensionId = null;
-    clearInstallFeedbackTimeout();
-    showToast("installed", t("urlToast.installed"));
+    if (outcome === "installed") showToast("installed", t("urlToast.installed"));
+    else if (outcome === "failed") showToast("failed", t("urlToast.installFailed"));
   });
 
   $effect(() => {

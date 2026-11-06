@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "已安裝延伸功能",
 		"installChromeExtension": "安裝此 Chrome 延伸功能",
 		"installed": "已安裝",
+		"installFailed": "無法安裝",
 		"install": "安裝",
 		"screenshot": "截圖",
 		"fullPage": "整個網頁",
@@ -1730,6 +1731,7 @@
 			"addNamed": "加入 {name}",
 			"adding": "正在加入...",
 			"added": "已加入",
+			"failed": "無法加入。請再試一次。",
 			"soon": "即將推出",
 			"managers": {
 				"bitwarden": "開放原始碼，在所有裝置上免費使用",

@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "Extensie al geïnstalleerd",
 		"installChromeExtension": "Installeer deze Chrome-extensie",
 		"installed": "Geïnstalleerd",
+		"installFailed": "Installeren mislukt",
 		"install": "Installeer",
 		"screenshot": "Schermafbeelding",
 		"fullPage": "Volledige pagina",
@@ -1730,6 +1731,7 @@
 			"addNamed": "Voeg {name} toe",
 			"adding": "Toevoegen...",
 			"added": "Toegevoegd",
+			"failed": "Toevoegen mislukt. Probeer het opnieuw.",
 			"soon": "Binnenkort",
 			"managers": {
 				"bitwarden": "Open source, gratis op elk apparaat",

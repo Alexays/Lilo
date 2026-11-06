@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "Erweiterung bereits installiert",
 		"installChromeExtension": "Diese Chrome-Erweiterung installieren",
 		"installed": "Installiert",
+		"installFailed": "Installation fehlgeschlagen",
 		"install": "Installieren",
 		"screenshot": "Bildschirmfoto",
 		"fullPage": "Gesamte Seite",
@@ -1730,6 +1731,7 @@
 			"addNamed": "{name} hinzufügen",
 			"adding": "Wird hinzugefügt...",
 			"added": "Hinzugefügt",
+			"failed": "Hinzufügen fehlgeschlagen. Erneut versuchen.",
 			"soon": "Bald",
 			"managers": {
 				"bitwarden": "Open Source, auf jedem Gerät kostenlos",

@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "Genişletme zaten yüklü",
 		"installChromeExtension": "Bu Chrome genişletmesini yükle",
 		"installed": "Yüklendi",
+		"installFailed": "Yüklenemedi",
 		"install": "Yükle",
 		"screenshot": "Ekran Resmi",
 		"fullPage": "Tüm sayfa",
@@ -1730,6 +1731,7 @@
 			"addNamed": "{name} ekle",
 			"adding": "Ekleniyor...",
 			"added": "Eklendi",
+			"failed": "Eklenemedi. Yeniden deneyin.",
 			"soon": "Yakında",
 			"managers": {
 				"bitwarden": "Açık kaynak, her aygıtta ücretsiz",

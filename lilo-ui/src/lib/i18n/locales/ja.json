@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "機能拡張はインストール済みです",
 		"installChromeExtension": "この Chrome 機能拡張をインストール",
 		"installed": "インストール済み",
+		"installFailed": "インストールできませんでした",
 		"install": "インストール",
 		"screenshot": "スクリーンショット",
 		"fullPage": "ページ全体",
@@ -1730,6 +1731,7 @@
 			"addNamed": "{name}を追加",
 			"adding": "追加中...",
 			"added": "追加済み",
+			"failed": "追加できませんでした。もう一度お試しください。",
 			"soon": "近日対応",
 			"managers": {
 				"bitwarden": "オープンソース、すべてのデバイスで無料",

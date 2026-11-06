@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "Extension already installed",
 		"installChromeExtension": "Install this Chrome extension",
 		"installed": "Installed",
+		"installFailed": "Couldn't install",
 		"install": "Install",
 		"screenshot": "Screenshot",
 		"fullPage": "Full page",
@@ -1730,6 +1731,7 @@
 			"addNamed": "Add {name}",
 			"adding": "Adding...",
 			"added": "Added",
+			"failed": "Couldn't add it. Try again.",
 			"soon": "Soon",
 			"managers": {
 				"bitwarden": "Open source, free on every device",

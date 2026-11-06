@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "이미 설치된 확장 프로그램",
 		"installChromeExtension": "이 Chrome 확장 프로그램 설치",
 		"installed": "설치됨",
+		"installFailed": "설치할 수 없음",
 		"install": "설치",
 		"screenshot": "스크린샷",
 		"fullPage": "전체 페이지",
@@ -1730,6 +1731,7 @@
 			"addNamed": "{name} 추가",
 			"adding": "추가 중...",
 			"added": "추가됨",
+			"failed": "추가할 수 없습니다. 다시 시도하세요.",
 			"soon": "출시 예정",
 			"managers": {
 				"bitwarden": "오픈 소스, 모든 기기에서 무료",

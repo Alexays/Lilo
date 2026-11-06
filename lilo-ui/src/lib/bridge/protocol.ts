@@ -1207,6 +1207,7 @@ export interface BridgeEventPayloadMap {
 		id: string;
 		action: "enable" | "disable" | "uninstall" | "update" | "install";
 		success: boolean;
+		// Absent on a failed install the user cancelled.
 		error?: string;
 	};
 	// Native ⋯ menu on an extension row resolved to a UI action.

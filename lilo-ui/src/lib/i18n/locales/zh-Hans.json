@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "扩展已安装",
 		"installChromeExtension": "安装此 Chrome 扩展",
 		"installed": "已安装",
+		"installFailed": "无法安装",
 		"install": "安装",
 		"screenshot": "屏幕快照",
 		"fullPage": "完整网页",
@@ -1730,6 +1731,7 @@
 			"addNamed": "添加 {name}",
 			"adding": "正在添加...",
 			"added": "已添加",
+			"failed": "无法添加。请重试。",
 			"soon": "即将推出",
 			"managers": {
 				"bitwarden": "开源，所有设备均可免费使用",

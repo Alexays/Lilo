@@ -1399,6 +1399,7 @@
 		"extensionAlreadyInstalled": "Rozszerzenie jest już zainstalowane",
 		"installChromeExtension": "Zainstaluj to rozszerzenie Chrome",
 		"installed": "Zainstalowano",
+		"installFailed": "Nie udało się zainstalować",
 		"install": "Zainstaluj",
 		"screenshot": "Zrzut ekranu",
 		"fullPage": "Cała strona",
@@ -1760,6 +1761,7 @@
 			"addNamed": "Dodaj {name}",
 			"adding": "Dodawanie...",
 			"added": "Dodano",
+			"failed": "Nie udało się dodać. Spróbuj ponownie.",
 			"soon": "Wkrótce",
 			"managers": {
 				"bitwarden": "Otwarty kod, bez opłat na każdym urządzeniu",

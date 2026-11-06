@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Installing an extension from the address bar or onboarding now reports its real outcome: no false failure while the permissions dialog is open, nothing shown when you cancel, and a translated message when it fails. Extension errors in Settings and in install dialogs are translated and no longer show technical details.'
+time: 2026-11-06T19:54:03.290619+01:00

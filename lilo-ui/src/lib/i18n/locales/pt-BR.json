@@ -1381,6 +1381,7 @@
 		"extensionAlreadyInstalled": "Extensão já instalada",
 		"installChromeExtension": "Instalar esta extensão do Chrome",
 		"installed": "Instalada",
+		"installFailed": "Não foi possível instalar",
 		"install": "Instalar",
 		"screenshot": "Captura de tela",
 		"fullPage": "Página inteira",
@@ -1730,6 +1731,7 @@
 			"addNamed": "Adicionar {name}",
 			"adding": "Adicionando...",
 			"added": "Adicionado",
+			"failed": "Não foi possível adicionar. Tente novamente.",
 			"soon": "Em breve",
 			"managers": {
 				"bitwarden": "Código aberto, gratuito em todos os dispositivos",

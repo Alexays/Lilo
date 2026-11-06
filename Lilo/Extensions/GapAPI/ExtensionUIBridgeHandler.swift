@@ -173,7 +173,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
 
     /// Emitted when a UI-initiated enable/disable/uninstall settles, so the panel can resolve its
     /// pending state crisply (success or failure) instead of waiting on a timeout. `(id, action,
-    /// success, error)`.
+    /// success, error)`; a cancelled install fails with no error.
     var onActionCompleted: ((String, String, Bool, String?) -> Void)?
 
     /// Invoked when the UI asks to load an unpacked extension; the host presents a folder picker.
@@ -184,9 +184,11 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
     /// Hands the settings the rows of a profile its window does not show; `live` once its registry is restored.
     var onProfileExtensions: ((_ profileId: UUID, _ rows: [[String: Any]], _ live: Bool) -> Void)?
 
+    private static let installCancelled = "Extension install cancelled"
+
     private func settle(id: String, action: String, _ result: Any?) -> Any? {
         let error = (result as? BridgeError)?.message
-        onActionCompleted?(id, action, error == nil, error)
+        onActionCompleted?(id, action, error == nil, error == Self.installCancelled ? nil : error)
         return result
     }
 
@@ -348,7 +350,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         do {
             let review = try ExtensionInstallReview.load(from: url)
             guard requestInstallApproval(for: review) else {
-                return BridgeError("Extension install cancelled")
+                return BridgeError(Self.installCancelled)
             }
             try await registry.load(from: url)
             return ["success": true]

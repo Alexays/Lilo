@@ -1399,6 +1399,7 @@
 		"extensionAlreadyInstalled": "Розширення вже інстальовано",
 		"installChromeExtension": "Інсталювати це розширення Chrome",
 		"installed": "Інстальовано",
+		"installFailed": "Не вдалося інсталювати",
 		"install": "Інсталювати",
 		"screenshot": "Знімок екрана",
 		"fullPage": "Уся сторінка",
@@ -1760,6 +1761,7 @@
 			"addNamed": "Додати {name}",
 			"adding": "Додавання...",
 			"added": "Додано",
+			"failed": "Не вдалося додати. Спробуйте ще раз.",
 			"soon": "Незабаром",
 			"managers": {
 				"bitwarden": "Відкритий код, безкоштовно на кожному пристрої",
