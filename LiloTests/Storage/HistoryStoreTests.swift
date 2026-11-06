@@ -420,7 +420,7 @@ final class HistoryStoreTests: XCTestCase {
         try insertHistoryEntry(url: "https://example.org/old", title: "Gamma", lastVisitedAt: hoursAgo(24 * 10))
         store.scheduleRecordVisit(url: "http://localhost:5173/", title: "Dev", openedFrom: "project · main")
         store.flushPendingWrites()
-        try dbPool.write { db in
+        try await dbPool.write { db in
             try db.execute(sql: "UPDATE historyVisit SET visitedAt = ? WHERE openedFrom IS NOT NULL", arguments: [hoursAgo(3)])
         }
 
