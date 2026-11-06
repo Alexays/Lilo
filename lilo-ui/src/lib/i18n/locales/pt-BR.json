@@ -1089,6 +1089,7 @@
 		"shortcutRecording": "Digite um atalho",
 		"executeAction": "Ativar a extensão",
 		"shortcutNone": "Não definido",
+		"shortcutTaken": "Já usado por \"{owner}\"",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Avaliações, detalhes e página do desenvolvedor",
 		"webStoreOpen": "Abrir",

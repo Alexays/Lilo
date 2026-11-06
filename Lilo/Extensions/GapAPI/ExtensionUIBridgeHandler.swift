@@ -299,8 +299,12 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             }
             let key = message.string("key").flatMap { $0.isEmpty ? nil : $0 }
             let modifiers = NSEvent.ModifierFlags(rawValue: (message.payload["modifiers"] as? NSNumber)?.uintValue ?? 0)
+            // The panel names what holds the keys from the error.
+            if let key, let owner = registry.shortcutOwner(key: key, modifiers: modifiers, besides: (id, command)) {
+                return settle(id: id, action: "shortcut", BridgeError(owner))
+            }
             await registry.access.setCommandShortcut(extensionId: id, commandId: command, key: key, modifiers: modifiers)
-            return ["success": true]
+            return settle(id: id, action: "shortcut", ["success": true])
         case "checkExtensionUpdates":
             await extensionRegistry?.updater.checkForUpdates()
             return ["success": true]

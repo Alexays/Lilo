@@ -1089,6 +1089,7 @@
 		"shortcutRecording": "Typ een sneltoets",
 		"executeAction": "Activeer de extensie",
 		"shortcutNone": "Niet ingesteld",
+		"shortcutTaken": "Al in gebruik door \"{owner}\"",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Recensies, details en de pagina van de ontwikkelaar",
 		"webStoreOpen": "Open",

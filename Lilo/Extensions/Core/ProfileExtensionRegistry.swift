@@ -773,6 +773,13 @@ final class ProfileExtensionRegistry {
         if context.isInspectable { context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background" }
 
         access.apply(to: context, extensionId: extensionId)
+        // As in Chrome, a suggested key something else already holds stays unset.
+        let rebound = access.states[extensionId]?.commandShortcuts ?? [:]
+        for command in context.commands where rebound[command.id] == nil {
+            guard let key = command.activationKey,
+                  shortcutOwner(key: key, modifiers: command.modifierFlags, besides: (extensionId, command.id)) != nil else { continue }
+            command.activationKey = nil
+        }
         try controller.load(context)
         let optional = Set(webExtension.manifest["optional_permissions"] as? [String] ?? [])
         let granted = (access.states[extensionId]?.gapPermissions ?? []).filter(optional.contains)
@@ -973,6 +980,23 @@ final class ProfileExtensionRegistry {
     }
 
     // MARK: - Keyboard Commands
+
+    /// What already answers `key` with `modifiers`, other than the `besides` command: a Lilo action's title or a
+    /// loaded extension's name.
+    func shortcutOwner(key: String, modifiers: NSEvent.ModifierFlags, besides: (extensionId: String, commandId: String)) -> String? {
+        let key = key.lowercased()
+        let modifiers = modifiers.intersection([.control, .option, .shift, .command])
+        if let action = KeyboardShortcuts.owner(of: KeyboardShortcuts.combo(key, modifiers)) { return action.title }
+        for runtime in loadedRuntimes where runtime.declaresCommands {
+            let holds = runtime.context.commands.contains { command in
+                (runtime.id != besides.extensionId || command.id != besides.commandId)
+                    && command.activationKey?.lowercased() == key
+                    && command.modifierFlags.intersection([.control, .option, .shift, .command]) == modifiers
+            }
+            if holds { return runtime.context.webExtension.displayName ?? runtime.id }
+        }
+        return nil
+    }
 
     /// Dispatches a keyDown to the first loaded extension command whose shortcut matches. Returns true
     /// when one matched, so the caller swallows the event.

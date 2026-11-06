@@ -1103,6 +1103,7 @@
 		"shortcutRecording": "Введіть скорочення",
 		"executeAction": "Запустити розширення",
 		"shortcutNone": "Не задано",
+		"shortcutTaken": "Уже використовується: \"{owner}\"",
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Відгуки, відомості та сторінка розробника",
 		"webStoreOpen": "Відкрити",
