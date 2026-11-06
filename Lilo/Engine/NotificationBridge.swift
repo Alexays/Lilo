@@ -5,7 +5,8 @@ import WebKit
 // MARK: - NotificationBridge
 
 /// Bridges `window.Notification` to `UNUserNotificationCenter` via a JS polyfill routed through the site-permission UI: WebKit's
-/// own permission hook is unimplemented SPI, so the API is denied otherwise. Foreground only, no Web Push.
+/// own permission hook is unimplemented SPI, so the API is denied otherwise. As every Lilo data store's delegate, it also gives
+/// WebKit each site's decision and shows service workers' notifications. No Web Push.
 @MainActor
 final class NotificationBridge: NSObject, WKScriptMessageHandler {
     private static let logger = Logger(liloCategory: "notifications")
@@ -20,6 +21,9 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     /// The tab a web view belongs to, carried by each notification so a click can bring it back.
     var tabIdResolver: ((WKWebView) -> UUID?)?
 
+    /// The stored notification decisions of a data store's sites, by origin key (true allowed).
+    var storeDecisionsHandler: ((WKWebsiteDataStore) -> [String: Bool])?
+
     /// Told of each notification a page posts, with the web view that posted it.
     var shownHandler: ((WKWebView) -> Void)?
 
@@ -30,6 +34,13 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         let pageId: Int
     }
     private var posted: [String: Posted] = [:]
+
+    /// Service worker notifications on screen by request identifier, with what WebKit needs to hand their worker a click.
+    private struct PersistentPosted {
+        weak var dataStore: WKWebsiteDataStore?
+        let notification: NSDictionary
+    }
+    private var persistentPosted: [String: PersistentPosted] = [:]
 
     private var didRequestSystemAuthorization = false
 
@@ -102,36 +113,76 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
 
     /// Runs the page's click handlers for a notification the user clicked; a no-op once its page is gone.
     func dispatchClick(identifier: String) {
+        if let entry = persistentPosted.removeValue(forKey: identifier) {
+            let click = NSSelectorFromString("_processPersistentNotificationClick:completionHandler:")
+            guard let dataStore = entry.dataStore, dataStore.responds(to: click) else { return }
+            typealias Click = @convention(c) (AnyObject, Selector, NSDictionary, @escaping @convention(block) (Bool) -> Void) -> Void
+            unsafe unsafeBitCast(dataStore.method(for: click), to: Click.self)(dataStore, click, entry.notification) { _ in }
+            return
+        }
         guard let entry = posted.removeValue(forKey: identifier), let webView = entry.webView else { return }
         webView.evaluateJavaScript(PageWorld.push("notifyClick", [entry.pageId]), in: entry.frame, in: PageWorld.bridgeWorld)
     }
 
     private func show(body: [String: Any], message: WKScriptMessage, origin: String) {
-        let content = UNMutableNotificationContent()
-        content.title = (body["title"] as? String) ?? ""
-        // The site: the page picks the title, so it alone could pass for another site.
-        content.subtitle = message.frameInfo.securityOrigin.host
-        if let text = body["body"] as? String, !text.isEmpty { content.body = text }
-        content.sound = .default
-        content.threadIdentifier = origin
-        // A tag replaces the same site's earlier notification, never another site's.
-        let tag = (body["tag"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? UUID().uuidString
-        let identifier = "web-\(origin)-\(tag)"
-        var userInfo: [String: Any] = ["webNotification": identifier]
+        var userInfo: [String: Any] = [:]
         if let webView = message.webView {
             if let tabId = tabIdResolver?(webView) { userInfo["webTabId"] = tabId.uuidString }
             shownHandler?(webView)
         }
-        content.userInfo = userInfo
+        let identifier = post(title: (body["title"] as? String) ?? "", body: body["body"] as? String, tag: body["tag"] as? String,
+                              origin: origin, host: message.frameInfo.securityOrigin.host, userInfo: userInfo)
         if let pageId = body["id"] as? Int {
             posted = posted.filter { $0.value.webView != nil }
             posted[identifier] = Posted(webView: message.webView, frame: message.frameInfo, pageId: pageId)
         }
+    }
+
+    /// Hands a site's notification to macOS and returns its request identifier.
+    private func post(title: String, body: String?, tag: String?, origin: String, host: String, userInfo: [String: Any]) -> String {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        // The site: the page picks the title, so it alone could pass for another site.
+        content.subtitle = host
+        if let body, !body.isEmpty { content.body = body }
+        content.sound = .default
+        content.threadIdentifier = origin
+        // A tag replaces the same site's earlier notification, never another site's.
+        let identifier = "web-\(origin)-\(tag.flatMap { $0.isEmpty ? nil : $0 } ?? UUID().uuidString)"
+        content.userInfo = userInfo.merging(["webNotification": identifier]) { $1 }
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
         let logger = Self.logger   // avoid referencing the @MainActor static from the @Sendable closure
         UNUserNotificationCenter.current().add(request) { error in
             if let error { logger.error("notification delivery failed: \(error.localizedDescription, privacy: .public)") }
         }
+        return identifier
+    }
+}
+
+// MARK: - Website data store delegate
+
+/// `_WKWebsiteDataStoreDelegate`: WebKit learns each site's decision before a page, worker or service worker runs its first
+/// script, and a service worker's `showNotification` goes through Lilo.
+extension NotificationBridge {
+    @objc(notificationPermissionsForWebsiteDataStore:)
+    func notificationPermissions(for dataStore: WKWebsiteDataStore) -> [String: Bool] {
+        storeDecisionsHandler?(dataStore) ?? [:]
+    }
+
+    @objc(websiteDataStore:showNotification:)
+    func websiteDataStore(_ dataStore: WKWebsiteDataStore, showNotification data: NSObject) {
+        guard ["title", "body", "tag", "origin", "dictionaryRepresentation"].allSatisfy({ data.responds(to: NSSelectorFromString($0)) }),
+              let originValue = data.value(forKey: "origin"),
+              let url = originValue as? URL ?? (originValue as? String).flatMap(URL.init(string:)), let scheme = url.scheme, let host = url.host,
+              let notification = data.value(forKey: "dictionaryRepresentation") as? NSDictionary
+        else { return }
+        let origin = PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0)
+        // WebKit's table can trail a decision changed since the worker's process read it.
+        guard storeDecisionsHandler?(dataStore)[origin] == true else { return }
+        let identifier = post(title: (data.value(forKey: "title") as? String) ?? "", body: data.value(forKey: "body") as? String,
+                              tag: data.value(forKey: "tag") as? String, origin: origin, host: host, userInfo: [:])
+        persistentPosted = persistentPosted.filter { $0.value.dataStore != nil }
+        persistentPosted[identifier] = PersistentPosted(dataStore: dataStore, notification: notification)
     }
 }
 
@@ -179,7 +230,8 @@ extension NotificationBridge {
         return notification;
       }, 'Notification');
       defineProperty(Notification, 'prototype', { value: prototype, writable: false });
-      setPermission('default');
+      // WebKit's own value: the site's decision when Lilo's data store delegate gave it, else "default".
+      setPermission(Native.permission);
       lilo.methods(Notification, { requestPermission(deprecatedCallback) {
         return new NativePromise(resolve => {
           const id = nextId++;
@@ -207,14 +259,15 @@ extension NotificationBridge {
         show() {},
       });
       lilo.global('Notification', Notification);
-      // Only a secure top origin can hold a stored decision; the others would pay an IPC for nothing. A same-origin
-      // subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
+      // Without the delegate, a secure top origin asks for its decision: the others cannot hold one and would pay an IPC for
+      // nothing. A same-origin subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
       if (window.top !== window) {
         try { setPermission(top.Notification.permission); } catch (e) { setPermission('denied'); }
-      } else if (window.isSecureContext) {
+      } else if (__LILO_QUERIES_PERMISSION__ && window.isSecureContext) {
         // At document start the bridge world's relay may not be listening yet.
         apply(listen, doc, ['DOMContentLoaded', () => lilo.send('liloNotification', { type: 'query' }), { once: true }]);
       }
     }
-    """#
+    """#.replacingOccurrences(of: "__LILO_QUERIES_PERMISSION__",
+                              with: String(!WKWebsiteDataStore.instancesRespond(to: NSSelectorFromString("set_delegate:"))))
 }

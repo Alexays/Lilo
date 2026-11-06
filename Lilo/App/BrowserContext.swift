@@ -304,6 +304,11 @@ final class BrowserContext {
             guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate else { return false }
             return profileContexts.existingContext(for: space.profileId)?.sitePermissions.decision(forOrigin: origin, type: "notifications") == true
         }
+        // A profile's store bears its id; private spaces' stores bear none, and their sites stay undecided as in Chrome.
+        engineFactory.notificationStoreDecisionsHandler = { [weak self] store in
+            guard let profileId = store.identifier, let profile = try? self?.profileContexts.context(for: profileId) else { return [:] }
+            return profile.sitePermissions.decisions(ofType: "notifications")
+        }
         let profileManager = ProfileManager(dbManager: dbManager, engineFactory: engineFactory, makeProfileId: makeProfileId)
         self.profileManager = profileManager
         try profileManager.loadProfiles(
