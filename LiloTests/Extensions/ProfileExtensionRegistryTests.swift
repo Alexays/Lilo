@@ -183,11 +183,15 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertFalse(context.errors.isEmpty, "a recorded error must be present to drive the handler")
 
         registry.backgrounds.contextErrorsChanged(id)
+        let firstSeen = registry.backgrounds.health(for: id)?.errorFirstSeen
         registry.backgrounds.contextErrorsChanged(id)
         for _ in 0..<50 { await Task.yield() }
 
         XCTAssertEqual(registry.backgrounds.health(for: id)?.lastErrorCount, context.errors.count,
                        "the count is the baseline the next notification logs from")
+        XCTAssertTrue(context.errors.allSatisfy { firstSeen?[$0 as NSError] != nil }, "every current error has a first-seen time")
+        XCTAssertEqual(registry.backgrounds.health(for: id)?.errorFirstSeen, firstSeen,
+                       "a repeated notification keeps each error's first-seen time")
         XCTAssertNil(registry.backgrounds.health(for: id)?.lastReviveAttempt)
         XCTAssertEqual(extensionBridgePayload(for: id)?["runtimeStatus"] as? String, "loaded")
     }
