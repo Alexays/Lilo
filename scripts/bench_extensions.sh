@@ -63,9 +63,10 @@ fi
 if $BUILD; then
     make -C "$ROOT" vt-build ui-build >/dev/null
     # Ad-hoc signed: library validation would reject the embedded Sparkle.framework under the hardened runtime.
+    # Its own bundle id: automation that resolves the app by id never reaches the installed Lilo.
     xcodebuild -project "$ROOT/Lilo.xcodeproj" -scheme Lilo -configuration Release \
         -destination 'platform=macOS' -derivedDataPath "$DERIVED" \
-        CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= ENABLE_HARDENED_RUNTIME=NO build >/dev/null
+        LILO_BUNDLE_ID_SUFFIX=.bench CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= ENABLE_HARDENED_RUNTIME=NO build >/dev/null
 fi
 
 # Downloaded once, as the store serves them to Chrome; delete build/ext-bench for newer versions.
