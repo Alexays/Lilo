@@ -125,13 +125,16 @@ enum AgentClientConfig {
 
     private static func codexConfig(home: URL) -> URL { home.appending(path: ".codex/config.toml") }
 
-    /// Sets `mcpServers.lilo`, keeping every other key of the file. A file that exists but is no plain
-    /// JSON (comments, a trailing comma) is left alone: rewriting it would drop the user's other servers.
+    /// Sets `mcpServers.lilo`, keeping every other key of the file. A file that exists but cannot be read or
+    /// is no plain JSON (comments, a trailing comma) is left alone: rewriting it would drop the user's other servers.
     private static func mergeServer(into url: URL) throws {
-        if let data = try? Data(contentsOf: url), (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] == nil {
-            throw unsafe AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, genericConfigJSON))
+        var config: [String: Any] = [:]
+        if FileManager.default.fileExists(atPath: url.path) {
+            guard let data = try? Data(contentsOf: url), let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+                throw unsafe AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, genericConfigJSON))
+            }
+            config = object
         }
-        var config = readJSON(url)
         var servers = config["mcpServers"] as? [String: Any] ?? [:]
         servers["lilo"] = ["command": helperPath]
         config["mcpServers"] = servers
@@ -154,8 +157,14 @@ enum AgentClientConfig {
     /// Replaces the `[mcp_servers.lilo]` table in place, or appends it: the rest of the file is left
     /// byte for byte, comments included, which a TOML round trip would not keep.
     private static func writeCodexTable(_ url: URL) throws {
-        var text = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
         let table = "[mcp_servers.lilo]\ncommand = \"\(helperPath)\"\n"
+        var text = ""
+        if FileManager.default.fileExists(atPath: url.path) {
+            guard let existing = try? String(contentsOf: url, encoding: .utf8) else {
+                throw unsafe AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, table))
+            }
+            text = existing
+        }
         if let range = codexTable(in: text) {
             text.replaceSubrange(range, with: table)
         } else {
