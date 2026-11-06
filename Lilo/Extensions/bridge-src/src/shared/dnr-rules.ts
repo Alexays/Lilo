@@ -368,10 +368,11 @@ export function webKitRule(rule: any): any {
     result = { ...result, condition: { ...condition, regexFilter: `${['', '^', '^[^:]+://+([^:/]+\\.)?'][anchor]}${body}(?:${SEPARATOR}.*)?$` } };
   }
   // WebKit makes each request domain the urlFilter `||domain`, which also matches longer hosts (t.co and t.com), and
-  // merges it with the rule's urlFilter by common substrings; an excluded one becomes an unanchored urlFilter. Anchored
-  // urlFilters cannot follow the domain.
+  // merges it with the rule's urlFilter by common substrings; an excluded one becomes an unanchored urlFilter. The merge
+  // fits a filter anchored on the host, which names the domain (`||amazon.*/dp/` and `amazon.ae`); one anchored at the
+  // start of the URL cannot follow the domain.
   const { urlFilter, requestDomains, excludedRequestDomains } = result.condition ?? {};
-  if (Array.isArray(requestDomains) && conditions.regexFilter === undefined) {
+  if (Array.isArray(requestDomains) && conditions.regexFilter === undefined && !(typeof urlFilter === 'string' && urlFilter.startsWith('||'))) {
     if (typeof urlFilter === 'string' && urlFilter.startsWith('|')) return undefined;
     const { urlFilter: _filter, ...condition } = result.condition;
     // A filter starting with `/` follows the host at once, where `^` would take that `/`.

@@ -101,7 +101,10 @@ describe('rules WebKit rejects', () => {
     const path = webKitRule({ ...rule, condition: { requestDomains: ['netcoresmartech.com'], urlFilter: '/client.js' } }).condition;
     assert.deepEqual(path, { requestDomains: ['netcoresmartech.com*/client.js'] });
     assert.equal(webKitURLRegex(`||${path.requestDomains[0]}`).test('https://cdn.netcoresmartech.com/client.js'), true);
-    assert.equal(webKitRule({ ...rule, condition: { requestDomains: ['example.com'], urlFilter: '||cdn.example.com/ad' } }), undefined, 'an anchored filter cannot follow the domain');
+    assert.equal(webKitRule({ ...rule, condition: { requestDomains: ['example.com'], urlFilter: '|https://cdn.example.com/ad' } }), undefined, 'a filter anchored at the start cannot follow the domain');
+    // uBlock Origin Lite's badware list: WebKit's merge gives `||steamproxy.cc`.
+    const hostAnchored = { ...rule, condition: { requestDomains: ['steamproxy.cc', 'steamproxy.net'], urlFilter: '||steamproxy.' } };
+    assert.equal(webKitRule(hostAnchored), hostAnchored);
   });
 
   it('redirects to the extension own pages through extensionPath', () => {
