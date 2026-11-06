@@ -53,6 +53,12 @@ final class DatabaseManager: @unchecked Sendable {
         )
         globalPool = try DatabasePool(path: globalPath, configuration: Self.configuration)
         try Migrations.migrateGlobal(globalPool)
+        // A deleted profile's folder whose detached removal a quit interrupted.
+        let profiles = (appSupportDirectory as NSString).appendingPathComponent("Profiles")
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: profiles)) ?? [] where name.hasPrefix(".deleted-") {
+            let doomed = (profiles as NSString).appendingPathComponent(name)
+            Task.detached(priority: .utility) { try? FileManager.default.removeItem(atPath: doomed) }
+        }
     }
 
     /// Get or create the database pool for a specific profile.
