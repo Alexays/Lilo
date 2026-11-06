@@ -28,8 +28,9 @@ extension MainWindowController {
         }
 
         // Moving a private space to another profile would turn it into a persistent one and write
-        // its tabs to the target profile's database.
-        guard !sourceSpace.isPrivate else {
+        // its tabs to the target profile's database. A space whose saved state could not be read
+        // would have that row deleted for the empty state shown in its place.
+        guard !sourceSpace.isPrivate, !context.unreadableSpaceIds.contains(spaceId) else {
             bridgeRouter.send(event: "spaceUpdated", data: sourceSpace.bridgeData)
             return
         }
@@ -280,13 +281,15 @@ extension MainWindowController {
             return
         }
 
-        // Private space states never touch disk; a move between a private and a normal space only
-        // persists the normal side.
-        if sourceSpace.isPrivate || targetSpace.isPrivate {
-            if !sourceSpace.isPrivate {
+        // Private space states never touch disk, nor do spaces whose saved state could not be read: a move
+        // involving one only persists the other side.
+        let persistsSource = !sourceSpace.isPrivate && !context.unreadableSpaceIds.contains(sourceSpaceId)
+        let persistsTarget = !targetSpace.isPrivate && !context.unreadableSpaceIds.contains(targetSpaceId)
+        if !persistsSource || !persistsTarget {
+            if persistsSource {
                 try coordinator.persistSpaceTabState(sourceState.state, spaceId: sourceSpaceId, inProfile: sourceSpace.profileId)
             }
-            if !targetSpace.isPrivate {
+            if persistsTarget {
                 try coordinator.persistSpaceTabState(targetState.state, spaceId: targetSpaceId, inProfile: targetSpace.profileId)
             }
         } else {

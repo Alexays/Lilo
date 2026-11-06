@@ -530,6 +530,7 @@ extension MainWindowController {
         if !debounced { Self.flushPendingInteractionStates(context: context, synchronous: synchronous) }
         guard tabManager.currentSpaceId == spaceId,
               let space = context.spaceManager?.space(with: spaceId), !space.isPrivate,
+              !context.unreadableSpaceIds.contains(spaceId),
               let pool = try? context.poolReportingFailure(for: space.profileId) else { return }
 
         // Every live page, whose count the engine budget bounds, then the most recently discarded ones.

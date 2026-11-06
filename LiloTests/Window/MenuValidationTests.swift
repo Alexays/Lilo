@@ -240,6 +240,22 @@ final class MenuValidationTests: XCTestCase {
         XCTAssertEqual(browserContext.context.browserState.space(id: shownId)?.spaceTab.tab(id: tab.id)?.isBookmarked, true)
     }
 
+    func testAMoveIntoASpaceThatCouldNotBeReadNeverSavesOverIt() throws {
+        let context = browserContext.context
+        let manager = try XCTUnwrap(context.spaceManager)
+        let shownId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let profileId = try XCTUnwrap(manager.space(with: shownId)).profileId
+        let unreadable = try manager.createSpace(name: "Unreadable", profileId: profileId)
+        context.unreadableSpaceIds.insert(unreadable.id)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
+
+        try window.moveToSpace(.tab, id: tab.id, targetSpaceId: unreadable.id)
+
+        let store = SpaceTabStateStore(dbPool: try context.dbManager!.pool(for: profileId))
+        XCTAssertNotNil(try store.load(spaceId: shownId), "the readable side is saved")
+        XCTAssertNil(try store.load(spaceId: unreadable.id))
+    }
+
     func testDuplicateTabOpensTheCopyRightBelowTheOriginal() throws {
         let original = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/a")))
         _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/b")))
