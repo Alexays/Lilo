@@ -183,7 +183,7 @@
 
   function openExtensionPopup(event: MouseEvent, ext: ExtensionState): void {
     event.stopPropagation();
-    if (!ext.actionEnabled) return;
+    if (!ext.actionEnabled) return showExtensionMenu(event, ext.id);
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     extensionActions.openPopup(ext.id, rect.x, rect.y, rect.width, rect.height);
   }
