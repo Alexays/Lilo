@@ -580,7 +580,7 @@ final class WKWebViewTab: NSObject {
     var isInCall: Bool { hasActiveCapture || callControls.isCall }
 
     /// Active media on the page: an ongoing capture (call) or audible playback.
-    private var hasActiveMedia: Bool {
+    var hasActiveMedia: Bool {
         hasActiveCapture || (lastNavigationEmissionState.isAudioPlaying ?? false)
     }
 
