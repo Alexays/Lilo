@@ -527,7 +527,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         modeControl.toolTip = against
         countsChip.toolTip = against
         guard let diff, !isEmpty else { return }
-        countLabel.stringValue = unsafe files.count == 1 ? "1 file".localized : String(format: "%@ files".localized, files.count.formatted())
+        countLabel.stringValue = unsafe String(format: "%@ files".localized(count: files.count), files.count.formatted())
         countsChip.set(added: diff.added, removed: diff.removed)
     }
 
@@ -1041,8 +1041,8 @@ final class ChangesDiffView: NSView {
 
     private func foldedText(_ file: GitDiff.File) -> String {
         unsafe file.isBinary ? "Binary file, not shown".localized
-            : Self.isGenerated(file.path) ? String(format: "Generated file, %d lines folded. Click to show.".localized, file.lines.count)
-            : String(format: "%d lines folded. Click to show.".localized, file.lines.count)
+            : Self.isGenerated(file.path) ? String(format: "Generated file, %d lines folded. Click to show.".localized(count: file.lines.count), file.lines.count)
+            : String(format: "%d lines folded. Click to show.".localized(count: file.lines.count), file.lines.count)
     }
 
     /// A hairline across the diff, the hunk's range dimmed and the enclosing function, when git
@@ -1795,7 +1795,7 @@ private final class ChangesListCell: NSView {
 
     override func accessibilityLabel() -> String? {
         guard case let .folder(path, count, _) = content else { return nil }
-        return unsafe path + ", " + (count == 1 ? "1 file".localized : String(format: "%@ files".localized, count.formatted()))
+        return unsafe path + ", " + String(format: "%@ files".localized(count: count), count.formatted())
     }
 
     override func accessibilityValue() -> Any? {

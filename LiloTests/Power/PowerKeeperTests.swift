@@ -179,8 +179,8 @@ final class PowerKeeperTests: XCTestCase {
         keeper.lidChanged(closed: false)
 
         let body = notifications.last?.body ?? ""
-        XCTAssertTrue(body.hasPrefix(String(format: "%d commands finished".localized, 1)), body)
-        XCTAssertTrue(body.contains(String(format: "%d wait for your answer, the oldest for %@".localized, 1, "")), body)
+        XCTAssertTrue(body.hasPrefix(String(format: "%d commands finished".localized(count: 1), 1)), body)
+        XCTAssertTrue(body.contains(String(format: "%d wait for your answer, the oldest for %@".localized(count: 1), 1, "")), body)
     }
 
     func testLowBatteryGivesSleepBackAndTheChargerTakesItAgain() {
