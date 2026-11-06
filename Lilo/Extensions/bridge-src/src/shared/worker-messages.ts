@@ -54,28 +54,30 @@ export function installPageWorkerMessages(scope: any): void {
   let ready: Promise<unknown> | undefined;
   Object.defineProperty(container, 'ready', {
     configurable: true,
-    get: () => ready ??= new Promise((resolve) => {
+    // As Chrome's, it never resolves without a worker.
+    get: () => ready ??= scope.chrome?.runtime?.getManifest?.()?.background?.service_worker ? new Promise((resolve) => {
       let settled = false;
       const settle = (registration: unknown) => { settled = true; resolve(registration); };
       nativeReady?.call(container).then(settle);
       const own = (): Promise<unknown> => container.getRegistrations().then((registrations: { active?: { scriptURL: string } }[]) =>
         registrations.find((registration) => registration.active?.scriptURL.startsWith(base)));
       // WebKit can find no registration from a process that loaded the worker, as MultiPassword's offscreen document
-      // (WEBKIT-GAPS 92): once the worker answers, a stand-in takes the messages, which go over the channel anyway.
-      channel.addEventListener('message', ({ data }: { data: { pong?: string } }) => {
-        if (data?.pong === page && !settled) own().then((found) => settle(found ?? workerStandIn(scope, base)));
+      // (WEBKIT-GAPS 92): once the worker answers or starts, a stand-in takes the messages, which go over the channel anyway.
+      channel.addEventListener('message', ({ data }: { data: { pong?: string; started?: boolean } }) => {
+        if ((data?.pong === page || data?.started) && !settled) own().then((found) => settle(found ?? workerStandIn(scope, base)));
       });
-      // As Chrome's, it never resolves without a worker: the looks space out, to 3 s.
+      // The looks space out and stop after 3 s: a worker that starts later announces itself.
       let delay = 100;
       const find = () => own().then((found) => {
         if (settled) return;
         if (found) return settle(found);
         channel.postMessage({ ping: page });
+        if (delay > 3000) return;
         scope.setTimeout(find, delay);
-        delay = Math.min(delay * 2, 3000);
+        delay *= 2;
       });
       find();
-    }),
+    }) : nativeReady?.call(container) ?? new Promise(() => {}),
   });
 }
 
@@ -118,4 +120,5 @@ export function installWorkerClientMessages(scope: any): void {
     });
     scope.dispatchEvent(event);
   });
+  channel.postMessage({ started: true });
 }

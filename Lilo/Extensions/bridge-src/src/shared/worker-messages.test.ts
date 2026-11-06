@@ -16,8 +16,9 @@ class Channel extends BroadcastChannel {
   override addEventListener(...args: Parameters<BroadcastChannel['addEventListener']>) { this.listeners++; super.addEventListener(...args); }
 }
 
-function page(href: string, registrations: unknown[] = []) {
+function page(href: string, registrations: unknown[] = [], serviceWorker: string | null = 'background/worker.js') {
   const sent: unknown[] = [];
+  let looks = 0;
   class ServiceWorker {
     scriptURL: string;
     constructor(scriptURL: string) { this.scriptURL = scriptURL; }
@@ -27,12 +28,13 @@ function page(href: string, registrations: unknown[] = []) {
   const scope = {
     ServiceWorker, BroadcastChannel: Channel, MessageEvent, MessagePort, crypto,
     location: { protocol: url.protocol, host: url.host, href },
-    navigator: { serviceWorker: Object.assign(new EventTarget(), { getRegistrations: async () => registrations }) },
-    chrome: { runtime: { getManifest: () => ({ background: { service_worker: 'background/worker.js' } }) } },
-    setTimeout,
+    navigator: { serviceWorker: Object.assign(new EventTarget(), { getRegistrations: async () => { looks++; return registrations; } }) },
+    chrome: { runtime: { getManifest: () => ({ background: { service_worker: serviceWorker } }) } },
+    // Delays shortened so the 3 s of looks pass at once.
+    setTimeout: (callback: () => void, delay: number) => setTimeout(callback, delay / 100),
   };
   installPageWorkerMessages(scope);
-  return { scope, sent, worker: (script: string) => new ServiceWorker(script) };
+  return { scope, sent, looks: () => looks, worker: (script: string) => new ServiceWorker(script) };
 }
 
 function worker() {
@@ -132,6 +134,25 @@ describe('worker messages', () => {
     active.postMessage({ event: 'connected' });
     assert.deepEqual((await received).data, { event: 'connected' });
     assert.deepEqual(offscreen.sent, []);
+  });
+
+  it('stops looking for a worker after 3 s and resolves ready once it starts', async () => {
+    const offscreen = page('chrome-extension://abc/offscreen.html');
+    const pending = (offscreen.scope.navigator.serviceWorker as any).ready;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const looks = offscreen.looks();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal(offscreen.looks(), looks);
+    worker();
+    const { active } = await pending;
+    assert.equal(active.scriptURL, 'chrome-extension://abc/background/worker.js');
+  });
+
+  it('never looks for a worker an extension does not declare', async () => {
+    const options = page('chrome-extension://abc/options.html', [], null);
+    void (options.scope.navigator.serviceWorker as any).ready;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(options.looks(), 0);
   });
 
   it('leaves another origin\'s worker to the native postMessage', () => {
