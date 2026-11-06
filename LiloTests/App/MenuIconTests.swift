@@ -220,7 +220,7 @@ final class MenuIconTests: XCTestCase {
             onTogglePiP: {}, onBookmark: {}, onDownload: { _ in }, onSearchWeb: {}
         )
         let page = NSMenu()
-        builder.build(page, linkURL: nil, extensionItems: [])
+        builder.build(page, linkURL: nil)
         XCTAssertTrue(page.items.contains { $0.title == "Copy Page URL".localized })
         assertIcons(page)
 
@@ -231,12 +231,12 @@ final class MenuIconTests: XCTestCase {
             item.identifier = NSUserInterfaceItemIdentifier("WKMenuItemIdentifier" + identifier)
             item.image = MenuIcon.copyLink.image
         }
-        builder.build(link, linkURL: URL(string: "https://example.com/a"), extensionItems: [])
+        builder.build(link, linkURL: URL(string: "https://example.com/a"))
         XCTAssertTrue(link.items.contains { $0.title == "Open Link in New Private Space".localized })
         assertIcons(link)
 
         let image = NSMenu()
-        builder.build(image, linkURL: nil, imageURL: URL(string: "https://example.com/a.png"), extensionItems: [])
+        builder.build(image, linkURL: nil, imageURL: URL(string: "https://example.com/a.png"))
         XCTAssertTrue(image.items.contains { $0.title == "Download Image".localized })
         assertIcons(image)
     }

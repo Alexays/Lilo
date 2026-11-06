@@ -185,6 +185,35 @@ final class ProfileExtensionRegistry {
         }
     }
 
+    /// Adopts the items WebKit adds to a page's context menu, one per extension: an item, or a submenu titled with the
+    /// extension's short name. In a private tab some extension may not see, it drops that extension's items and those it
+    /// cannot attribute; choosing one it can attribute counts as that extension's user gesture.
+    func adoptContextMenuItems(in menu: NSMenu, tab: TabExtensionAdapter?, isPrivate: Bool) {
+        let items = menu.items.filter { ($0.target as? NSObject)?.className == "_WKWebExtensionMenuItem" }
+        guard let first = items.first else { return }
+        let separatorIndex = menu.index(of: first) - 1
+        let hidesUnallowed = isPrivate && loadedRuntimes.contains { !$0.context.hasAccessToPrivateData }
+        var keptCount = 0
+        for item in items {
+            // A single item's title is attributed only when the tab-wide items show it as is: one shown for a
+            // selection or a link has no other trace of its extension.
+            let owner = loadedRuntimes.first { runtime in
+                item.title == runtime.context.webExtension.displayShortName
+                    || tab.map { runtime.context.menuItems(for: $0).contains { $0.title == item.title } } == true
+            }
+            if hidesUnallowed, owner?.context.hasAccessToPrivateData != true {
+                menu.removeItem(item)
+                continue
+            }
+            keptCount += 1
+            if let owner { noteUserGestures(choosing: [item], extensionId: owner.id) }
+        }
+        // WebKit puts a separator before the extensions' items.
+        if keptCount == 0, separatorIndex >= 0, menu.items[separatorIndex].isSeparatorItem {
+            menu.removeItem(at: separatorIndex)
+        }
+    }
+
     /// The new-tab page an extension overrides via `chrome_url_overrides.newtab`; the last loaded wins, as Chrome's last install
     /// does. Resolve it through `extensionNavigationTarget(for:)` to get the extension's `nativeConfiguration`.
     var activeNewTabOverrideURL: URL? {

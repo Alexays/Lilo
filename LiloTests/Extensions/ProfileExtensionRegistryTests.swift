@@ -1554,4 +1554,55 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         XCTAssertEqual(hosts, ["example.com", "example.org"])
     }
+
+    /// WebKit adds one item per extension for the clicked element: here a page-wide item next to another extension's
+    /// selection and link items, which only WebKit's own items show with the click's details.
+    func testContextMenuKeepsWebKitsExtensionItemsAndHidesThemInPrivateTabs() async throws {
+        let extensionFolder = tempDir.appendingPathComponent("menu-ext")
+        try FileManager.default.createDirectory(at: extensionFolder, withIntermediateDirectories: true)
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Menu", "version": "1.0", "permissions": ["contextMenus"],
+            "background": ["service_worker": "background.js"]
+        ]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: extensionFolder.appendingPathComponent("manifest.json"))
+        try "chrome.contextMenus.create({ id: 'item', title: 'Extension item', contexts: ['all'] });"
+            .write(to: extensionFolder.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extensionFolder)
+        let id = try XCTUnwrap(registry.loadedExtensions.last?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        let adapter = TabExtensionAdapter(engineTab: WKWebViewTab(id: UUID(), webView: WKWebView()))
+        let created = await pollUntil { !context.menuItems(for: adapter).isEmpty }
+        XCTAssertTrue(created)
+
+        func webKitMenu() throws -> (NSMenu, NSMenuItem) {
+            let menu = NSMenu()
+            menu.addItem(withTitle: "Copy", action: nil, keyEquivalent: "")
+            menu.addItem(.separator())
+            let pageWide = try XCTUnwrap(context.menuItems(for: adapter).first)
+            menu.addItem(pageWide)
+            for title in ["Translate \"hello\"", "Open link in reader"] {
+                let other = try XCTUnwrap(pageWide.copy() as? NSMenuItem)
+                other.title = title
+                menu.addItem(other)
+            }
+            return (menu, pageWide)
+        }
+
+        let (menu, pageWide) = try webKitMenu()
+        registry.adoptContextMenuItems(in: menu, tab: adapter, isPrivate: false)
+        XCTAssertEqual(menu.items.map(\.title), ["Copy", "", "Extension item", "Translate \"hello\"", "Open link in reader"])
+        NotificationCenter.default.post(name: NSMenu.didSendActionNotification, object: menu, userInfo: ["MenuItem": pageWide])
+        let gestured = await pollUntil { self.registry.hasRecentUserGesture(extensionId: id) }
+        XCTAssertTrue(gestured, "choosing the extension's item is its user gesture")
+
+        let (privateMenu, _) = try webKitMenu()
+        registry.adoptContextMenuItems(in: privateMenu, tab: adapter, isPrivate: true)
+        XCTAssertEqual(privateMenu.items.map(\.title), ["Copy"], "an extension not allowed in private shows nothing there")
+
+        context.hasAccessToPrivateData = true
+        let (allowedMenu, _) = try webKitMenu()
+        registry.adoptContextMenuItems(in: allowedMenu, tab: adapter, isPrivate: true)
+        XCTAssertEqual(allowedMenu.items.count, 5)
+    }
 }

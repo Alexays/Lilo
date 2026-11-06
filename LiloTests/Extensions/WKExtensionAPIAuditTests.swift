@@ -86,9 +86,9 @@ final class WKExtensionAPIAuditTests: XCTestCase {
         XCTAssertTrue(delegate.responds(to: sel5), "connectUsing not implemented")
     }
 
-    func test_webViewTab_extensionContextMenuItemsProvider_is_nil_by_default() {
+    func test_webViewTab_adoptExtensionContextMenuItems_is_nil_by_default() {
         let webView = WKWebView()
         let tab = WKWebViewTab(id: UUID(), webView: webView)
-        XCTAssertNil(tab.extensionContextMenuItemsProvider, "Provider should be nil by default")
+        XCTAssertNil(tab.adoptExtensionContextMenuItems, "Adopter should be nil by default")
     }
 }

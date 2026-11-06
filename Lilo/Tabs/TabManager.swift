@@ -541,15 +541,9 @@ final class TabManager {
     private func configureEngineRuntime(_ engine: WKWebViewTab) {
         engine.delegate = engineDelegate
         engine.tabManager = self
-        engine.extensionContextMenuItemsProvider = { [weak self, weak engine] in
-            guard let self, let engine,
-                  let registry = self.extensionRegistry,
-                  let adapter = self.engineHost.tabAdapter(for: engine.id) else { return [] }
-            return registry.loadedExtensions.flatMap { entry in
-                let items = entry.context.menuItems(for: adapter)
-                registry.noteUserGestures(choosing: items, extensionId: entry.id)
-                return items
-            }
+        engine.adoptExtensionContextMenuItems = { [weak self, weak engine] menu in
+            guard let self, let engine, let registry = self.extensionRegistry else { return }
+            registry.adoptContextMenuItems(in: menu, tab: self.engineHost.tabAdapter(for: engine.id), isPrivate: engine.isPrivateBrowsing)
         }
     }
 
