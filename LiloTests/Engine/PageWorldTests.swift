@@ -86,8 +86,12 @@ final class PageWorldTests: XCTestCase {
       await outcome('EyeDropper()', () => EyeDropper());
       await outcome('EyeDropper.open', () => EyeDropper.prototype.open.call({}));
     }
+    // Stacks through natives a page calls often: a replaced one adds its user-script frame.
+    const stacks = [];
+    await navigator.locks.request('probe', () => { stacks.push(new Error().stack); });
+    try { RTCPeerConnection.prototype.close.call({}); } catch (e) { stacks.push(e.stack); }
     return JSON.stringify({ shapes, nonNative, hooked, misuse, userAgent: navigator.userAgent, vendor: navigator.vendor,
-                            userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets });
+                            userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets, stacks });
     """#
 
     private struct Report: Decodable {
@@ -101,6 +105,7 @@ final class PageWorldTests: XCTestCase {
         let dom: String
         let styleSheets: Int
         let adoptedStyleSheets: Int
+        let stacks: [String]
     }
 
     private func load(_ webView: WKWebView) async {
@@ -183,6 +188,8 @@ final class PageWorldTests: XCTestCase {
             "EyeDropper()": "throws TypeError: Constructor requires 'new' operator",
             "EyeDropper.open": "rejects TypeError: Can only call EyeDropper.open on instances of EyeDropper"
         ])
+        XCTAssertEqual(lilo.stacks.count, 2)
+        XCTAssertEqual(lilo.stacks.filter { $0.contains("user-script:") }, [], "frames a Safari page does not have")
 
         XCTAssertEqual(lilo.userAgent, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) "
                        + WKEngineFactory.safariApplicationName)

@@ -171,6 +171,10 @@ final class WKWebViewTab: NSObject {
         guard let self, state != self.permissionUsageState else { return }
         self.permissionUsageState = state
         self.delegate?.tab(self, didUpdatePermissionUsage: self.effectivePermissionUsageState)
+        // Hanging up closes the call's peers, which fires no event: the page reads them again.
+        if self.callControls.hasPeerConnection, !self.isFrozen {
+            WebViewPrivateAccessors(self.webView).evaluateWithoutUserGesture(PageWorld.push("peers"), in: nil, in: PageWorld.bridgeWorld)
+        }
     }
 
     /// True while this tab is the source of a getDisplayMedia tab-share ferry. Folded into the

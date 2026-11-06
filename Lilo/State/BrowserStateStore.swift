@@ -722,7 +722,7 @@ final class BrowserStateStore {
     /// Freeze (suspend in place, not discard) idle engines in hidden spaces whose runtime `lastActiveAt`
     /// is older than `freezeThreshold` and which aren't protected (audio/capture/restoration/inspected, loading,
     /// allowed to notify, holding a WebRTC peer or a Web Lock) or already frozen. A frozen engine stays in memory (instant resume)
-    /// but stops spending CPU/energy.
+    /// but stops spending CPU/energy. The freeze lands once the page said it holds no Web Lock.
     func freezeIdleEngines(freezeThreshold: TimeInterval, now: Date = Date()) {
         guard freezeThreshold.isFinite else { return }
         let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
@@ -745,11 +745,21 @@ final class BrowserStateStore {
                 guard snapshot.engines[tab.id] != nil, let url = tab.url, let scheme = url.scheme, let host = url.host else { continue }
                 if allowsNotifications(PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0), spaceId) { protectedTabIds.insert(tab.id) }
             }
-            for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isFrozen && !engine.isLoading
-                && !engine.callControls.hasPeerConnection && !engine.callControls.holdsWebLock {
+            for (tabId, engine) in snapshot.engines where !engine.isFrozen {
+                // Closing a peer fires no event: the page reads its peers again, for the call card now and the next sweep.
+                if engine.callControls.hasPeerConnection {
+                    WebViewPrivateAccessors(engine.wkWebView).evaluateWithoutUserGesture(PageWorld.push("peers"), in: nil, in: PageWorld.bridgeWorld)
+                    continue
+                }
                 let last = lastActiveByTab[tabId] ?? engine.createdAt
-                guard now.timeIntervalSince(last) > freezeThreshold else { continue }
-                engine.freeze(now: now)
+                guard !protectedTabIds.contains(tabId), !engine.isLoading, now.timeIntervalSince(last) > freezeThreshold else { continue }
+                // A frozen lock holder would hold up every tab waiting for the lock. The page answers later: a tab shown,
+                // loading or discarded meanwhile stays as it is.
+                WebViewPrivateAccessors(engine.wkWebView).callAsyncWithoutUserGesture(CompositeFreezer.webLockCheck, arguments: [:], in: PageWorld.bridgeWorld) { [weak self] error in
+                    guard let self, error == nil, self.spaces[spaceId]?.engines[tabId] === engine, !self.displayedTabIds.contains(tabId),
+                          !engine.isLoading else { return }
+                    engine.freeze(now: now)
+                }
             }
         }
     }
