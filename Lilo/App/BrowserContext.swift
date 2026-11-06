@@ -739,9 +739,8 @@ extension BrowserContext {
         windows.activeWindow?.profileContext?.sessionPersistence?.scheduleSave()
     }
 
-    /// Drops the saved tab and interaction state of the profile's spaces that no longer exist. The
-    /// space row leaves global.db first, so a crash in between leaves only rows a later sweep drops.
-    /// The delete queues on the writer behind every save made before, ahead of every save made after.
+    /// Drops the saved tab and interaction state of the profile's gone spaces, queued on the writer behind every earlier save.
+    /// A space's row leaves global.db before this runs: a crash in between only leaves rows a later sweep drops.
     func deleteOrphanedSpaceStates(inProfile profileId: UUID) {
         guard let spaceManager, let dbManager else { return }
         let pool: DatabasePool
