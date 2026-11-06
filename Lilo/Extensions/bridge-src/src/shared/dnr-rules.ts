@@ -593,19 +593,6 @@ export const declarativeNetRequestPatches: Record<string, Patch> = {
       return Array.isArray(filter?.ruleIds) ? rules.filter((rule) => filter.ruleIds.includes(rule.id)) : rules;
     }, callback);
   },
-  getMatchedRules: (original, self) => function (this: unknown, filter?: any, callback?: (details: unknown) => void) {
-    if (typeof filter === 'function') [filter, callback] = [undefined, filter];
-    const namespace = self(this);
-    return callbackify(async () => {
-      const details = await original.call(namespace, ...(filter === undefined ? [] : [filter]));
-      if (!Array.isArray(details?.rulesMatchedInfo)) return details;
-      const ownIds = new Map([...(await heldSessionRules(namespace)).session].map(([id, { webKitId }]) => [webKitId, id]));
-      const rulesMatchedInfo = details.rulesMatchedInfo.map((info: any) => (info?.rule?.rulesetId === '_dynamic' && ownIds.has(info.rule.ruleId)
-        ? { ...info, rule: { ...info.rule, ruleId: ownIds.get(info.rule.ruleId), rulesetId: '_session' } }
-        : info));
-      return { ...details, rulesMatchedInfo };
-    }, callback);
-  },
   // WebKit counts each id against the 50 enabled rulesets, also one already as asked, and a count
   // below zero wraps around: it gets only the rulesets that change.
   updateEnabledRulesets: (original, self) => function (this: unknown, options: any, callback?: () => void) {

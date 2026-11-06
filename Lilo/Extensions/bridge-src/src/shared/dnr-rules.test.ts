@@ -354,9 +354,6 @@ describe('session rules', () => {
       async getDynamicRules() { return held.map((rule) => Object.fromEntries(Object.entries(JSON.parse(JSON.stringify(rule))).reverse())); },
       async updateSessionRules() { throw new Error('WebKit keeps session rules in memory'); },
       async getSessionRules() { return []; },
-      async getMatchedRules() {
-        return { rulesMatchedInfo: held.map((rule) => ({ rule: { ruleId: rule.id, rulesetId: '_dynamic' }, tabId: 1, timeStamp: 0 })) };
-      },
     };
     (globalThis as any).chrome = { runtime: { getManifest: () => ({}) }, declarativeNetRequest: Object.create(prototype) };
     installChromeCompat({});
@@ -431,14 +428,6 @@ describe('session rules', () => {
     assert.match((outcomes[1] as PromiseRejectedResult).reason.message, /id 1 does not have a unique ID/);
     await assert.rejects(dnr.updateSessionRules({ addRules: [block(7, 'invalid')] }), { message: 'Rule with id 7 is invalid.' });
     assert.deepEqual((await dnr.getSessionRules()).map((rule: any) => rule.id), [1, 2]);
-  });
-
-  it('reports a matched session rule under the session ruleset and its own id', async () => {
-    held = [];
-    const dnr = launch();
-    await dnr.updateSessionRules({ addRules: [block(5)] });
-    const { rulesMatchedInfo } = await dnr.getMatchedRules();
-    assert.deepEqual(rulesMatchedInfo.map((info: any) => info.rule), [{ ruleId: 5, rulesetId: '_session' }]);
   });
 });
 
