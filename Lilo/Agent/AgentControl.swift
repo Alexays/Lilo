@@ -468,6 +468,7 @@ final class AgentControl {
         dropFolders(of: closing)
         dropIsolatedSpace(of: closing)
         publishActivity()
+        if sessions.isEmpty { screenshots = [] }
         // The last agent with tabs in the agents' profile gone, nothing it did there is kept for the next one.
         if !sessions.contains(where: { $0.profileId == nil && !agentsSpaceFolders(of: $0).isEmpty }) { Task { await wipeAgentsProfile() } }
     }
