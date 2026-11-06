@@ -189,6 +189,7 @@ extension MainWindowController {
     /// The last downloads outside private Spaces; Option shows each one in the Finder instead.
     func populateDownloadsMenu(_ menu: NSMenu) {
         menu.removeAllItems()
+        let manager = context.downloadManager
         let store = profileContext?.downloads
         let items = (try? store?.fetchAll(limit: 8)) ?? []
         if items.isEmpty { menu.addItem(withTitle: "No Downloads".localized, action: nil, keyEquivalent: "") }

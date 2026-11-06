@@ -130,7 +130,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     }
 
     private func show(body: [String: Any], message: WKScriptMessage, origin: String) {
-        var userInfo: [String: Any] = [:]
+        var userInfo: [String: String] = [:]
         if let webView = message.webView {
             if let tabId = tabIdResolver?(webView) { userInfo["webTabId"] = tabId.uuidString }
             shownHandler?(webView)
@@ -147,7 +147,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     }
 
     /// Hands a site's notification to macOS and returns its request identifier.
-    private func post(title: String, body: String?, tag: String?, origin: String, host: String, userInfo: [String: Any]) -> String {
+    private func post(title: String, body: String?, tag: String?, origin: String, host: String, userInfo: [String: String]) -> String {
         let content = UNMutableNotificationContent()
         content.title = title
         // The site: the page picks the title, so it alone could pass for another site.
