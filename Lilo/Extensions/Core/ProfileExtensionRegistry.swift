@@ -813,6 +813,18 @@ final class ProfileExtensionRegistry {
         NotificationCenter.default.post(name: .extensionRuntimeLoaded, object: self)
         // No background load here: WebKit starts it for runtime.onStartup/onInstalled listeners and on
         // demand (popup, command, event), so a restore never forces every worker awake.
+        switch load {
+        case .install, .update, .enable:
+            // As in Chrome: onEnabled on load, then onInstalled once the install completes. The extension
+            // itself was not loaded to hear of it.
+            let watchers = extensionIds(withPermission: "management").filter { $0 != extensionId }
+            guard !watchers.isEmpty else { return }
+            let info = ExtensionInfoBuilder.buildFromManifest(manifest: webExtension.manifest, id: extensionId).dictionary
+            gapEvents.emit("management", "onEnabled", args: [info], to: watchers)
+            if load != .enable { gapEvents.emit("management", "onInstalled", args: [info], to: watchers) }
+        case .startup, .reload:
+            break
+        }
     }
 
     /// Uninstalls the extension, or with `removePersistedRecord` false unloads it and keeps it installed
@@ -822,7 +834,8 @@ final class ProfileExtensionRegistry {
     }
 
     /// `purge` drops the events its worker has not received yet, as an uninstall or a disable does.
-    private func unload(extensionId: String, removePersistedRecord: Bool, purge: Bool) async {
+    /// `notifies` false keeps an internal restart, which Chrome has no equivalent of, from other extensions.
+    private func unload(extensionId: String, removePersistedRecord: Bool, purge: Bool, notifies: Bool = true) async {
         guard let index = runtimeIndex(for: extensionId) else {
             guard removePersistedRecord,
                   let stored = disabledStoredExtensions.first(where: { $0.id == extensionId })
@@ -834,10 +847,19 @@ final class ProfileExtensionRegistry {
             await removeExtensionData(extensionId: extensionId)
             files.remove(stored.path)
             postDidUnload(extensionId: extensionId, uninstalled: true)
+            emitGapEvent("management", "onUninstalled", args: [extensionId], requiredPermission: "management")
             notifyExtensionsChanged()
             return
         }
         let runtime = loadedRuntimes.remove(at: index)
+        if notifies {
+            let watchers = extensionIds(withPermission: "management")
+            if !watchers.isEmpty {
+                let info = ExtensionInfoBuilder.buildFromManifest(manifest: runtime.context.webExtension.manifest, id: extensionId, enabled: false)
+                gapEvents.emit("management", "onDisabled", args: [info.dictionary], to: watchers)
+                if removePersistedRecord { gapEvents.emit("management", "onUninstalled", args: [extensionId], to: watchers) }
+            }
+        }
         if removePersistedRecord {
             lifecycle.uninstalled(extensionId)
         } else {
@@ -957,7 +979,7 @@ final class ProfileExtensionRegistry {
     /// Unloads and reloads the extension from its on-disk source, for a worker nothing else revives.
     private func reloadFromDisk(_ extensionId: String) async {
         guard let installPath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].installPath }) else { return }
-        await unload(extensionId: extensionId, removePersistedRecord: false)
+        await unload(extensionId: extensionId, removePersistedRecord: false, purge: false, notifies: false)
         do {
             try await load(from: URL(fileURLWithPath: installPath), extensionId: extensionId)
         } catch {

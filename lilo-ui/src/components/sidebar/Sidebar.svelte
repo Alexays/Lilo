@@ -20,7 +20,7 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
-  import { getReadyUpdate, getSetting } from "../../stores/settings.svelte";
+  import { getReadyUpdate } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressInRightTabs, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
