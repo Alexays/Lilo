@@ -359,6 +359,12 @@ class SiteTests(unittest.TestCase):
         headers = (DIST / "_headers").read_text()
         self.assertIn("script-src 'self'", headers)
         self.assertIn("/_astro/*", headers)
+        self.assertIn('/:page/index.md\n  Link: <https://getlilo.app/:page/>; rel="canonical"', headers)
+        self.assertIn('/fr/:page/index.md\n  Link: <https://getlilo.app/fr/:page/>; rel="canonical"', headers)
+        for markdown in DIST.rglob("index.md"):
+            parts = markdown.relative_to(DIST).parts
+            with self.subTest(markdown=parts):
+                self.assertTrue(len(parts) <= 2 or (len(parts) == 3 and parts[0] == "fr"))
         self.assertIn('name="robots" content="noindex"', (DIST / "404.html").read_text())
         for prefix in ["/changelog", "/fr/changelog"]:
             self.assertIn(f"{prefix} {prefix}/ 301", redirects)
