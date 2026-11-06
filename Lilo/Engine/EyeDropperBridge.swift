@@ -27,7 +27,8 @@ final class EyeDropperBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let pageModule = #"""
     function () {
       if (!window.isSecureContext || 'EyeDropper' in window) return;
-      const { then, finally: always } = NativePromise.prototype;
+      // Promise.prototype.finally would look up the page's then.
+      const then = NativePromise.prototype.then;
       let open = false;
       class EyeDropper {
         open(options) {
@@ -35,11 +36,11 @@ final class EyeDropperBridge: NSObject, WKScriptMessageHandlerWithReply {
           const signal = options && options.signal;
           if (signal && signal.aborted) return NativePromise.reject(signal.reason || new DOMException('Aborted', 'AbortError'));
           open = true;
-          const picked = apply(then, lilo.post('liloEyeDropper', {}), [sRGBHex => ({ sRGBHex }), error => {
+          return apply(then, lilo.post('liloEyeDropper', {}), [sRGBHex => { open = false; return { sRGBHex }; }, error => {
+            open = false;
             const text = String(error && error.message || error), match = /^(\w+): (.*)$/.exec(text);
             throw new DOMException(match ? match[2] : text, match ? match[1] : 'AbortError');
           }]);
-          return apply(always, picked, [() => { open = false; }]);
         }
       }
       lilo.global('EyeDropper', lilo.nativeClass(EyeDropper));

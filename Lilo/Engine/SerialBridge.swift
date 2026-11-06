@@ -336,7 +336,8 @@ extension SerialBridge {
         if (match && match[1] === 'TypeError') return new NativeTypeError(match[2]);
         return new DOMException(match ? match[2] : text, match ? match[1] : 'NetworkError');
       };
-      const call = (action, args) => lilo.post('liloSerial', assign({ action, document: documentToken }, args)).catch(error => { throw toError(error); });
+      const then = NativePromise.prototype.then;
+      const call = (action, args) => apply(then, lilo.post('liloSerial', assign({ action, document: documentToken }, args)), [undefined, error => { throw toError(error); }]);
       const toBase64 = bytes => {
         let text = '';
         for (let i = 0; i < bytes.length; i += 32768) text += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
