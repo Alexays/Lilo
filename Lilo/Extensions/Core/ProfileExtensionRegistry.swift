@@ -723,6 +723,10 @@ final class ProfileExtensionRegistry {
                 managedDirectory: files.directory,
                 manifestKey: webExtension.manifest["key"] as? String
             )
+            // A manifest key can name an extension installed from another folder, which this load would leave running.
+            if knownId == nil, stored == nil, (try? await extensionStorage.load(id: extensionId)) != nil {
+                throw ExtensionError.alreadyInstalled(webExtension.displayName ?? extensionId)
+            }
             try await activate(
                 webExtension, id: extensionId, sourcePath: sourceURL.path, installPath: permanentURL.path,
                 isPreparationDegraded: isPreparationDegraded, stored: stored, as: load ?? (knownId == nil ? .install : .reload)

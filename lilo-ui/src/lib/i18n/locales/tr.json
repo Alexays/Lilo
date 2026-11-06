@@ -2046,6 +2046,7 @@
 		"Load": "Yükle",
 		"Select an unpacked extension folder (must contain manifest.json)": "Paketten çıkarılmış genişletme klasörünü seçin (manifest.json içermeli)",
 		"Couldn't load extension": "Genişletme yüklenemedi",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "%@ uygulamasının başka bir kopyası zaten yüklü. Bu klasörü yüklemek için onu kaldırın.",
 		"Open Popup": "Açılır Pencereyi Aç",
 		"History": "Geçmiş",
 		"Reopen Last Closed Tab": "Son Kapatılan Sekmeyi Yeniden Aç",

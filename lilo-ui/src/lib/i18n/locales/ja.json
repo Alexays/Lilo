@@ -2046,6 +2046,7 @@
 		"Load": "読み込む",
 		"Select an unpacked extension folder (must contain manifest.json)": "パッケージ化されていない機能拡張のフォルダを選択してください（manifest.json が必要です）",
 		"Couldn't load extension": "機能拡張を読み込めませんでした",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "%@ の別のコピーがすでにインストールされています。このフォルダを読み込むには、そのコピーを削除してください。",
 		"Open Popup": "ポップアップを開く",
 		"History": "履歴",
 		"Reopen Last Closed Tab": "最後に閉じたタブを再度開く",

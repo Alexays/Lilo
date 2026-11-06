@@ -973,6 +973,26 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(registry.loadedExtensions.count, 1)
     }
 
+    func testLoadingAFolderWhoseKeyNamesAnInstalledExtensionFails() async throws {
+        var folders: [URL] = []
+        for name in ["keyed_first", "keyed_second"] {
+            let folder = tempDir.appendingPathComponent(name)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let manifest = #"{"manifest_version":3,"name":"Keyed","version":"1.0","key":"dGVzdC1rZXk="}"#
+            try manifest.write(to: folder.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+            folders.append(folder)
+        }
+        try await registry.load(from: folders[0])
+
+        do {
+            try await registry.load(from: folders[1])
+            XCTFail("a second folder with the same key loaded")
+        } catch ExtensionError.alreadyInstalled(let name) {
+            XCTAssertEqual(name, "Keyed")
+        }
+        XCTAssertEqual(registry.loadedExtensions.count, 1)
+    }
+
     func testOnExtensionsChangedFires() async throws {
         let changed = expectation(description: "onExtensionsChanged fires for a load")
         changed.assertForOverFulfill = false

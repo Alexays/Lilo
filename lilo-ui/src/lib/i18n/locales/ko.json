@@ -2046,6 +2046,7 @@
 		"Load": "로드",
 		"Select an unpacked extension folder (must contain manifest.json)": "압축 해제된 확장 프로그램 폴더 선택(manifest.json 포함 필수)",
 		"Couldn't load extension": "확장 프로그램을 로드할 수 없음",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "%@의 다른 사본이 이미 설치되어 있습니다. 이 폴더를 로드하려면 해당 사본을 제거하십시오.",
 		"Open Popup": "팝업 열기",
 		"History": "방문 기록",
 		"Reopen Last Closed Tab": "마지막으로 닫은 탭 다시 열기",

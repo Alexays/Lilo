@@ -2076,6 +2076,7 @@
 		"Load": "Завантажити",
 		"Select an unpacked extension folder (must contain manifest.json)": "Виберіть папку розпакованого розширення (має містити manifest.json)",
 		"Couldn't load extension": "Не вдалося завантажити розширення",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "Інша копія %@ уже встановлена. Видаліть її, щоб завантажити цю папку.",
 		"Open Popup": "Відкрити спливне вікно",
 		"History": "Історія",
 		"Reopen Last Closed Tab": "Знову відкрити останню закриту вкладку",

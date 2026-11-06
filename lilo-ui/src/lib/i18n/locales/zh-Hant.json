@@ -2046,6 +2046,7 @@
 		"Load": "載入",
 		"Select an unpacked extension folder (must contain manifest.json)": "選擇未封裝的延伸功能資料夾（必須包含 manifest.json）",
 		"Couldn't load extension": "無法載入延伸功能",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "已安裝 %@ 的另一個副本。請先移除它，再載入此資料夾。",
 		"Open Popup": "開啟彈出式視窗",
 		"History": "歷史記錄",
 		"Reopen Last Closed Tab": "重新開啟上一個關閉的分頁",

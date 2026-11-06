@@ -2046,6 +2046,7 @@
 		"Load": "Laden",
 		"Select an unpacked extension folder (must contain manifest.json)": "Ordner einer entpackten Erweiterung auswählen (muss manifest.json enthalten)",
 		"Couldn't load extension": "Erweiterung konnte nicht geladen werden",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "Eine andere Kopie von %@ ist bereits installiert. Entferne sie, um diesen Ordner zu laden.",
 		"Open Popup": "Pop-up öffnen",
 		"History": "Verlauf",
 		"Reopen Last Closed Tab": "Zuletzt geschlossenen Tab erneut öffnen",
