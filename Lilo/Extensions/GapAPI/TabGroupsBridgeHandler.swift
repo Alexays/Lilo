@@ -98,11 +98,19 @@ final class TabGroupsBridgeHandler: GapHandler {
             return ungroupTabs(context: context, tabs: tabAdapters(call))
 
         case "tabs.discard":
-            // The tab's own window holds its engine, whichever window is active.
-            guard let adapter = tabAdapters(call).first, adapter.engineTab != nil, let owner = adapter.tabManager else {
+            guard let adapter = tabAdapters(call).first, adapter.engineTab != nil, let store = tabManager.browserStateStore,
+                  let spaceId = store.owningSpaceId(forTab: adapter.tabId) else {
                 return BridgeError("Cannot discard a tab that is not loaded")
             }
-            owner.discardEngines([adapter.tabId])
+            // A window showing the tab's space hosts its engine, whichever window is active; a hidden space parks it in the store.
+            if store.liveHost(for: spaceId) != nil {
+                adapter.tabManager?.discardEngines([adapter.tabId])
+            } else {
+                store.discardParkedEngines([adapter.tabId], spaceId: spaceId) { engine in
+                    defer { engine.teardown() }
+                    return engine.interactionState
+                }
+            }
             return adapter.engineTab == nil ? nil : BridgeError("Cannot discard a tab on screen")
 
         default:
