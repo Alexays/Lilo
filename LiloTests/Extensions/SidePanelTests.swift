@@ -441,9 +441,16 @@ final class SidePanelTests: XCTestCase {
         window.switchToSpace(normalSpace)
         XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil), "the panel stays open for its own space")
 
-        await registry.access.setPrivateAccess(extensionId: extensionId, allowed: true)
         window.switchToSpace(privateSpace.id)
-        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil))
+        XCTAssertNil(window.sidePanel.shown)
+        let settings = ExtensionUIBridgeHandler(extensionRegistryProvider: { self.registry })
+        for allowed in [true, false] {
+            let message = try XCTUnwrap(BridgeMessage(dictionary: [
+                "action": "setExtensionPrivateAccess", "payload": ["id": extensionId as String, "allowed": allowed] as [String: Any]
+            ]))
+            _ = await settings.handle(message: message)
+            XCTAssertEqual(window.sidePanel.shown, allowed ? SidePanelController.Entry(extensionId: extensionId, tabId: nil) : nil, "access applies at once")
+        }
     }
 
     // MARK: - Events
