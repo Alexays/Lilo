@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://getlilo.app/sitemap.xml
+Sitemap: https://getlilo.app/sitemap-index.xml
