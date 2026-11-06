@@ -102,6 +102,7 @@ function parseExtension(
 		declinedUpdate: coerceString(data?.declinedUpdate),
 		webStoreURL: coerceString(data?.webStoreURL),
 		allowsPrivateAccess: data?.allowsPrivateAccess ?? false,
+		privateAccessNotAllowed: data?.privateAccessNotAllowed ?? false,
 		allowsUserScripts: data?.allowsUserScripts ?? false,
 		hostAccessRequest: data?.hostAccessRequest ?? false,
 		commands: data?.commands ?? [],

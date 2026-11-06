@@ -108,7 +108,7 @@ final class ExtensionUserScripts {
         if let connectable = loaded.flatMap({ connectableScript(extensionId, context: $0.context) }) {
             current = Install(
                 scripts: (current?.scripts ?? []) + [connectable], messagingWorlds: current?.messagingWorlds ?? [],
-                allowsPrivateAccess: access.states[extensionId]?.allowsPrivateAccess == true
+                allowsPrivateAccess: loaded?.context.hasAccessToPrivateData == true
             )
         }
         installs[extensionId] = current
@@ -203,7 +203,7 @@ final class ExtensionUserScripts {
         }
         registrations[extensionId]?.built = built
         guard !scripts.isEmpty else { return nil }
-        return Install(scripts: scripts, messagingWorlds: messagingWorlds, allowsPrivateAccess: access.states[extensionId]?.allowsPrivateAccess == true)
+        return Install(scripts: scripts, messagingWorlds: messagingWorlds, allowsPrivateAccess: context.hasAccessToPrivateData)
     }
 
     // WebKit's patterns have no `<all_urls>`.

@@ -300,6 +300,8 @@ export interface BridgeExtensionSnapshot {
 	/** The extension's store page, set only for a copy installed from the Chrome Web Store. */
 	webStoreURL?: string;
 	allowsPrivateAccess?: boolean;
+	/** The manifest's `"incognito": "not_allowed"`: the extension never runs in private spaces. */
+	privateAccessNotAllowed?: boolean;
 	/** The "Allow user scripts" switch, shown for extensions declaring `userScripts`. */
 	allowsUserScripts?: boolean;
 	/** The extension asks for the active tab's site (chrome.permissions.addHostAccessRequest). */

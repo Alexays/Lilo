@@ -90,7 +90,7 @@ final class ProfileExtensionRegistry {
     /// Insertion order of `iconDataURLCache` keys, so overflow evicts the oldest half, not everything.
     private var iconDataURLCacheKeys: [IconCacheKey] = []
     /// A disabled extension's manifest icon and store page, by `id@version`: read from disk once, as it has no WKWebExtension.
-    private var storedManifestFacts: [String: (iconDataURL: String, webStoreURL: String)] = [:]
+    private var storedManifestFacts: [String: (iconDataURL: String, webStoreURL: String, excludesPrivateSpaces: Bool)] = [:]
     /// Holds the "Update extensions automatically" setting and what the lifecycle keeps across
     /// launches; set when the profile context is built.
     weak var settingsStore: SettingsStore?
@@ -1077,7 +1077,8 @@ final class ProfileExtensionRegistry {
                 "webStoreURL": facts.webStoreURL,
                 "availableUpdate": updater.availableUpdates[stored.id]?.latest ?? "",
                 "declinedUpdate": access.states[stored.id]?.declinedUpdateVersion ?? "",
-                "allowsPrivateAccess": access.states[stored.id]?.allowsPrivateAccess == true,
+                "allowsPrivateAccess": access.states[stored.id]?.allowsPrivateAccess == true && !facts.excludesPrivateSpaces,
+                "privateAccessNotAllowed": facts.excludesPrivateSpaces,
                 "allowsUserScripts": access.states[stored.id]?.allowsUserScripts == true
             ] as [String: Any])
         }
@@ -1198,6 +1199,7 @@ final class ProfileExtensionRegistry {
                 ? "https://chromewebstore.google.com/detail/\(runtime.id)" : "",
             "declinedUpdate": accessState?.declinedUpdateVersion ?? "",
             "allowsPrivateAccess": runtime.context.hasAccessToPrivateData,
+            "privateAccessNotAllowed": ExtensionAccess.excludesPrivateSpaces(ext.manifest),
             "allowsUserScripts": accessState?.allowsUserScripts == true,
             "commands": runtime.declaresCommands ? runtime.context.commands.map { command in
                 [
@@ -1226,12 +1228,13 @@ final class ProfileExtensionRegistry {
     }
 
     /// The manifest's toolbar or extension icon nearest 32 px as a data URL, and the store page of a Web Store copy; each empty when absent.
-    private func storedManifestFacts(for stored: ExtensionStorage.InstalledExtension) -> (iconDataURL: String, webStoreURL: String) {
+    private func storedManifestFacts(for stored: ExtensionStorage.InstalledExtension) -> (iconDataURL: String, webStoreURL: String, excludesPrivateSpaces: Bool) {
         let key = "\(stored.id)@\(stored.version)"
         if let cached = storedManifestFacts[key] { return cached }
         let folder = URL(fileURLWithPath: stored.path)
         var dataURL = ""
         var webStoreURL = ""
+        var excludesPrivateSpaces = false
         if let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json")),
            let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             let action = (manifest["action"] ?? manifest["browser_action"]) as? [String: Any]
@@ -1244,9 +1247,10 @@ final class ProfileExtensionRegistry {
             if updater.isStoreCopy(id: stored.id, path: stored.path, manifest: manifest) {
                 webStoreURL = "https://chromewebstore.google.com/detail/\(stored.id)"
             }
+            excludesPrivateSpaces = ExtensionAccess.excludesPrivateSpaces(manifest)
         }
-        storedManifestFacts[key] = (dataURL, webStoreURL)
-        return (dataURL, webStoreURL)
+        storedManifestFacts[key] = (dataURL, webStoreURL, excludesPrivateSpaces)
+        return (dataURL, webStoreURL, excludesPrivateSpaces)
     }
 
     private func cachedIconDataURL(for action: WKWebExtension.Action?) -> String {
@@ -1312,7 +1316,8 @@ final class ProfileExtensionRegistry {
                 "iconDataURL": facts.iconDataURL,
                 "webStoreURL": facts.webStoreURL,
                 "declinedUpdate": states[stored.id]?.declinedUpdateVersion ?? "",
-                "allowsPrivateAccess": states[stored.id]?.allowsPrivateAccess == true,
+                "allowsPrivateAccess": states[stored.id]?.allowsPrivateAccess == true && !facts.excludesPrivateSpaces,
+                "privateAccessNotAllowed": facts.excludesPrivateSpaces,
                 "allowsUserScripts": states[stored.id]?.allowsUserScripts == true
             ] as [String: Any]
         }

@@ -1542,6 +1542,36 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(restored.context(for: id)).hasAccessToPrivateData)
     }
 
+    func testIncognitoNotAllowedKeepsAnExtensionOutOfPrivateSpaces() async throws {
+        let profileId = TestProfileIds.next()
+        let storage = try makeTestExtensionStorage(profileId: profileId, in: tempDir)
+        let first = ProfileExtensionRegistry(profileId: profileId, extensionStorage: storage, extensionsBaseDirectory: tempDir)
+        let extDir = tempDir.appendingPathComponent("incognito_not_allowed")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Test","version":"1.0","incognito":"not_allowed","externally_connectable":{"matches":["https://example.com/*"]}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try await first.load(from: extDir)
+        let id = try XCTUnwrap(first.loadedExtensions.first?.id)
+        let handler = ExtensionUIBridgeHandler(extensionRegistryProvider: { first })
+        let message = try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "setExtensionPrivateAccess",
+            "payload": ["id": id, "allowed": true]
+        ]))
+
+        let result = await handler.handle(message: message)
+
+        XCTAssertNotNil(result as? BridgeError, "the manifest keeps it out of private spaces")
+        XCTAssertFalse(try XCTUnwrap(first.context(for: id)).hasAccessToPrivateData)
+        XCTAssertEqual(first.extensionBridgePayloads(activeTab: nil).first?["privateAccessNotAllowed"] as? Bool, true)
+        // An allowance stored before the manifest said so is ignored.
+        await first.access.update(id) { $0.allowsPrivateAccess = true }
+        first.teardown()
+        let restored = ProfileExtensionRegistry(profileId: profileId, extensionStorage: storage, extensionsBaseDirectory: tempDir)
+        await restored.restore()
+        XCTAssertFalse(try XCTUnwrap(restored.context(for: id)).hasAccessToPrivateData)
+        XCTAssertEqual(restored.userScripts.installs[id]?.allowsPrivateAccess, false, "nor does it inject into private spaces")
+    }
+
     // MARK: - Site access
 
     func testSiteAccessUnrestrictedKeepsTheManifestPatterns() throws {
