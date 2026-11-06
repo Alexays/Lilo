@@ -283,6 +283,7 @@
   const rowLabel = $derived(
     [
       terminalLabel || displayTitle,
+      awayTitle,
       agentActing ? t("tabItem.agentActing") : "",
       hangSeconds !== null ? t("tabItem.notResponding") : "",
       tab.isPinned ? t("tabItem.pinned") : "",
@@ -479,7 +480,7 @@
     leaveTabPreview();
   }}
 >
-  <!-- A pointer shortcut: the keyboard reaches the home page through the row's menu. -->
+  <!-- A pointer shortcut: the keyboard reaches the home page through the row's context menu. -->
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="tab-icon" class:returns-home={!!tab.homeTitle && interactive} onclick={returnHome}>
     <!-- Transitions live on each branch root so an isLoading flip swaps content without

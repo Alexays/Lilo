@@ -54,6 +54,13 @@ test("the sidebar, bottom bar and URL bar name every control", async ({ page }) 
 	expect(await a11yProblems(page)).toEqual([]);
 });
 
+test("a pinned tab away from its home page names the page it shows", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-home")!.homeTitle = "Inbox";
+	await bootChrome(page, world);
+	await expect(page.locator('[role=treeitem][data-tab-id="tab-home"]')).toHaveAttribute("aria-label", /^Inbox, Pinned Home, /);
+});
+
 test("the site drawer names every control", async ({ page }) => {
 	const world = initialWorld();
 	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.isCameraActive = true;
