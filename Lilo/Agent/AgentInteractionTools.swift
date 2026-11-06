@@ -84,7 +84,7 @@ enum AgentInteractionTools {
         ], required: ["tabId"]),
         AgentTools.tool("gif_creator", """
             Record the actions in a tab as an animated GIF: start_recording, then act, then stop_recording and export, \
-            which saves it to the Downloads folder. clear drops the frames.
+            which saves it to the Downloads folder and ends the recording, freeing its frames. clear drops the frames.
             """, [
                 "action": ["type": "string", "enum": ["start_recording", "stop_recording", "export", "clear"]],
                 "filename": AgentTools.prop("string", "File name for export."),
@@ -233,6 +233,8 @@ enum AgentInteractionTools {
                 guard let frames = control.recordings[tab.id], !frames.isEmpty else { throw AgentToolError("Nothing recorded: start_recording first") }
                 let filename = arguments["filename"] as? String
                 let url = try await Task.detached { try exportGIF(frames, filename: filename) }.value
+                control.recordings[tab.id] = nil
+                control.recordingTabs.remove(tab.id)
                 return [.text("Saved \(frames.count) frames to \(url.path)")]
             default:
                 throw AgentToolError("action must be start_recording, stop_recording, export or clear")
