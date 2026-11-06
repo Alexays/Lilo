@@ -25,18 +25,27 @@ function svelteFiles(dir: string): string[] {
 	});
 }
 
-// Style blocks without comments, url(...) payloads (embedded SVG art) or masks (alpha only).
-function styles(path: string): string {
-	const source = readFileSync(path, "utf8");
-	return [...source.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
-		.map((match) => match[1])
-		.join("\n")
+// CSS without comments, url(...) payloads (embedded SVG art) or masks (alpha only).
+function clean(css: string): string {
+	return css
 		.replace(/\/\*[\s\S]*?\*\//g, "")
 		.replace(/url\((?:"[^"]*"|'[^']*'|[^)]*)\)/g, "url()")
 		.replace(/(?<![-\w])(?:-webkit-)?mask(?:-image)?\s*:[^;{}]*/g, "");
 }
 
-const files = svelteFiles(componentsRoot).map((path) => ({ name: relative(componentsRoot, path), css: styles(path) }));
+function styles(path: string): string {
+	const source = readFileSync(path, "utf8");
+	return clean([...source.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((match) => match[1]).join("\n"));
+}
+
+// The tooltip injects its stylesheet from a template string rather than a component.
+const tooltipCss = readFileSync(new URL("../lib/tooltip.ts", import.meta.url), "utf8").match(/textContent = `([\s\S]*?)`/)?.[1];
+assert.ok(tooltipCss, "the tooltip stylesheet is no longer found in lib/tooltip.ts");
+
+const files = [
+	...svelteFiles(componentsRoot).map((path) => ({ name: relative(componentsRoot, path), css: styles(path) })),
+	{ name: "../lib/tooltip.ts", css: clean(tooltipCss) },
+];
 
 test("component styles take colors from theme tokens, not literals", () => {
 	const literal = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(\s*[\d.]/g;

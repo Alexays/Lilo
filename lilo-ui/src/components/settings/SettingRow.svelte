@@ -385,18 +385,7 @@
   }
 
   .keycap {
-    display: grid;
-    place-items: center;
-    min-width: 20px;
-    height: 20px;
     margin-right: var(--space-4);
-    padding: 0 var(--space-6);
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
-    box-shadow: inset 0 0 0 1px var(--border), 0 1px 0 var(--border);
-    color: var(--text-secondary);
-    font-family: inherit;
-    font-size: var(--font-size-xs);
   }
 
   .seasonal-preview {
