@@ -5,6 +5,7 @@ import {
 	DEFAULT_SPACE_ICON,
 	DEFAULT_SPACE_NAME,
 } from "../lib/bridge/defaults";
+import { showProfileExtensions } from "./extensions.svelte";
 import { getActiveProfileId } from "./profiles.svelte";
 import { getActiveSpace, getSpaces } from "./spaces.svelte";
 
@@ -158,8 +159,12 @@ export function initPanelsStore(): void {
 		openHistoryPage({ query: data?.query ?? "", host: data?.host, openedFrom: data?.openedFrom });
 	});
 
-	on("openExtensions", () => {
+	// An `id` names an extension of this window's profile.
+	on("openExtensions", (data) => {
 		openSettings("extensions");
+		if (!data?.id) return;
+		showProfileExtensions("");
+		openSettingsSubpage("extensions", `extension:${data.id}`);
 	});
 
 	on("openConfig", () => {

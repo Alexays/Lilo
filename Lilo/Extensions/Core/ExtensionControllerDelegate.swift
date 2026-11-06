@@ -122,6 +122,9 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         guard !configuration.shouldBePrivate || context.hasAccessToPrivateData else {
             completionHandler(nil, Self.extensionError("Extension does not have permission for incognito mode")); return
         }
+        if let window = openExtensionSettings(for: configuration.tabURLs.first, shows: configuration.shouldBeFocused, from: context) {
+            completionHandler(window, nil); return
+        }
         // With "Prefer a single window" on, a normal window's tabs open in the current space, unless private, whose window it
         // returns; any other window is a floating panel of its own, so its id never names a window or space of the user's.
         if configuration.windowType == .normal, !configuration.shouldBePrivate,
@@ -224,6 +227,9 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         for context: WKWebExtensionContext,
         completionHandler: @escaping ((any WKWebExtensionTab)?, Error?) -> Void
     ) {
+        if let window = openExtensionSettings(for: configuration.url, shows: configuration.shouldBeActive, from: context) {
+            completionHandler(window?.activeTab(for: context), nil); return
+        }
         // The tab opens in a space's window the context sees: the one asked for, else the focused one, else the one it saw last.
         let isExtensionPage = configuration.url?.scheme?.lowercased() == "chrome-extension"
         let admits = { (window: WindowExtensionAdapter) in Self.admits(window, extensionPage: isExtensionPage, context: context) }
@@ -314,6 +320,21 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
             registry.controller.didOpenTab(adapter)
         }
         return (target, tab)
+    }
+
+    /// Lilo's extension settings stand for Chrome's `chrome://extensions` page, `/shortcuts` showing the caller's details.
+    /// Nil for any other URL, else the window they open in, nil when the context may not see it.
+    private func openExtensionSettings(for url: URL?, shows: Bool, from context: WKWebExtensionContext) -> WindowExtensionAdapter?? {
+        guard let url, url.scheme?.lowercased() == "chrome", url.host?.lowercased() == "extensions",
+              let window = windows?.window(showingProfileOf: registry) else { return nil }
+        if shows, !opensTabsInBackground {
+            let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "id" }?.value
+                ?? (url.path.hasPrefix("/shortcuts") ? context.uniqueIdentifier : nil)
+            window.focusChrome()
+            window.bridgeRouter.send(event: "openExtensions", data: id.map { ["id": $0] } ?? [:])
+            window.window?.makeKeyAndOrderFront(nil)
+        }
+        return .some(window.tabManager.windowAdapter.flatMap { !$0.isPrivateWindow || context.hasAccessToPrivateData ? $0 : nil })
     }
 
     // MARK: - Options Page
