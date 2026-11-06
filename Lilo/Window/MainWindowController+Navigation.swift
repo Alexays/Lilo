@@ -230,7 +230,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         if let updatedTab {
             // Favicon was cleared above on host change: ship it so the UI drops the stale icon.
             enqueueVisibleTabUpdate(updatedTab, includeFavicon: shouldRefreshFavicon)
-            if tab.id == tabManager.activeTab?.id { syncPageBar() }
+            if tab.id == tabManager.activeOpenTabId { syncPageBar() }
 
             if isVisibleTab(tab.id),
                shouldRefreshFavicon || (updatedTab.faviconDataURL == nil && !updatedTab.isLoading) {
@@ -322,13 +322,14 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
         // Only the address bar draws progress, and only the active tab's: a background load keeps just
         // its final value, and activation reads the live one off the engine.
-        guard let active = tabManager.activeTab, tab.id == active.id else {
+        guard tab.id == tabManager.activeOpenTabId else {
             PerfSignposts.energy.emitEvent("progress", "dropped")
             if progress >= 1 { updateRuntimeTab(id: tab.id) { t in t.estimatedProgress = progress } }
             return
         }
         // The bar cannot show steps finer than this; a load's start and end always ship.
-        let fineStep = progress > 0 && progress < 1 && abs(progress - active.estimatedProgress) < 0.05
+        let fineStep = progress > 0 && progress < 1
+            && abs(progress - tabManager.runtimeOverlay.estimatedProgress(of: tab.id)) < 0.05
         PerfSignposts.energy.emitEvent("progress", "\(fineStep ? "dropped" : "sent")")
         guard !fineStep else { return }
         updateAndEmit(tab.id) { t in t.estimatedProgress = progress }
@@ -344,7 +345,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?) {
         updateAndEmit(tab.id) { t in t.pageColor = color }
-        if tab.id == tabManager.activeTab?.id { syncPageBar() }
+        if tab.id == tabManager.activeOpenTabId { syncPageBar() }
         profileContext?.sessionPersistence?.scheduleSave()
     }
 
