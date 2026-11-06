@@ -1,5 +1,6 @@
 import { cubicInOut } from "svelte/easing";
 import type { EasingFunction, TransitionConfig } from "svelte/transition";
+import { prefersReducedMotion } from "./reducedMotion";
 
 // Svelte's blur and fly read getComputedStyle as they start, forcing a style recalc in the middle of a tab
 // switch. These assume the node rests at full opacity with no filter or transform, so they read nothing.
@@ -20,5 +21,5 @@ export function restingFly(
 
 // Every .float-popover's exit: the --motion-duration-fast fade, letting presses through as it goes.
 export function popoverOut(_node: Element): TransitionConfig {
-	return { duration: 120, css: (t) => `opacity:${t};pointer-events:none` };
+	return { duration: prefersReducedMotion() ? 0 : 120, css: (t) => `opacity:${t};pointer-events:none` };
 }
