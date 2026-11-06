@@ -503,10 +503,7 @@
   const listHeight = $derived(
     segments.reduce((height, segment) => height + (segment.kind === "row" ? estimatedRowHeight(segment.entry) : VIRTUAL_ROW_H) + VIRTUAL_ROW_GAP, 0),
   );
-  const virtualize = $derived(
-    !dragActive &&
-      (segments.length > VIRTUALIZE_MIN_ROWS || listHeight > VIRTUALIZE_MIN_ROWS * (VIRTUAL_ROW_H + VIRTUAL_ROW_GAP)),
-  );
+  const virtualize = $derived(!dragActive && listHeight > VIRTUALIZE_MIN_ROWS * (VIRTUAL_ROW_H + VIRTUAL_ROW_GAP));
 
   // The panes of a split in reading order, stacked one row each in the sidebar.
   function splitPanes(node: BridgeSplitLayout, into: string[] = []): string[] {
