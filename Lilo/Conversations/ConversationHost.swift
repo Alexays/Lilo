@@ -70,6 +70,7 @@ final class ConversationHost {
     private var shown: [ObjectIdentifier: Set<UUID>] = [:]
     private var summaryScheduled = false
     private var diffRefresh: Set<UUID> = []
+    private var diffStale: Set<UUID> = []
     /// Terminal tabs running an agent's sign-in, with the conversation waiting on each.
     private var signInTerminals: [UUID: UUID] = [:]
 
@@ -662,20 +663,33 @@ final class ConversationHost {
     }
 
     /// Lines the conversation changed in the project, since its first prompt: not what was uncommitted
-    /// before it started. Once per second at most.
+    /// before it started. A snapshot of the whole project each time: every 3 s at most, and a request
+    /// made while one runs runs once more after it, so the last count is never lost.
     private func refreshDiff(_ conversation: Conversation) {
         let tabId = conversation.tabId
-        guard diffRefresh.insert(tabId).inserted else { return }
-        let cwd = conversation.cwd
-        let start = conversation.checkpoints.lazy.compactMap { $0 }.first
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            Task.detached(priority: .utility) {
+        guard diffRefresh.insert(tabId).inserted else {
+            diffStale.insert(tabId)
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            guard let self else { return }
+            // The snapshot taken below sees every edit requested until now.
+            self.diffStale.remove(tabId)
+            guard let conversation = self.conversations[tabId] else {
+                self.diffRefresh.remove(tabId)
+                return
+            }
+            let cwd = conversation.cwd
+            let start = conversation.checkpoints.lazy.compactMap { $0 }.first
+            Task.detached(priority: .utility) { [weak self] in
                 let stat = start.flatMap { ConversationCheckpoints.stat(since: $0, in: cwd) }
-                let branch = GitDiff.run(["rev-parse", "--abbrev-ref", "HEAD"], in: cwd)
-                    .flatMap { String(data: $0, encoding: .utf8) }?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let branch = TerminalSession.gitBranch(in: cwd) ?? ""
                 await MainActor.run {
                     guard let self else { return }
                     self.diffRefresh.remove(tabId)
+                    if self.diffStale.remove(tabId) != nil, let conversation = self.conversations[tabId] {
+                        self.refreshDiff(conversation)
+                    }
                     guard let window = self.context?.windows.window(forTab: tabId),
                           let updated = window.updateRuntimeTab(id: tabId, mutate: { tab in
                               tab.diffAdded = stat?.added ?? 0
