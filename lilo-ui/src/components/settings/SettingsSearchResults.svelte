@@ -5,7 +5,7 @@
   import { openSettingsSubpage, revealSetting } from "../../stores/panels.svelte";
   import ExtensionRow from "../extensions/ExtensionRow.svelte";
   import SettingsFlagRow from "./SettingsFlagRow.svelte";
-  import { SETTINGS_SECTIONS, settingTitleKey } from "./settingsPanelModel";
+  import { highlightSearch, SETTINGS_SECTIONS, SITE_ROW_LIMIT, settingTitleKey } from "./settingsPanelModel";
   import { getSettingsSearchResults } from "./settingsSearch.svelte";
   import SettingsSiteRow from "./SettingsSiteRow.svelte";
   import SettingsSpaceRow from "./SettingsSpaceRow.svelte";
@@ -15,25 +15,6 @@
 
   const results = $derived(getSettingsSearchResults());
   const sections = $derived(SETTINGS_SECTIONS.filter((section) => results.countBySection[section.id]));
-  const terms = $derived(query.toLowerCase().split(/\s+/).filter(Boolean));
-
-  // The title cut around each query term it contains, so the hit can be marked.
-  function highlight(title: string): { text: string; hit: boolean }[] {
-    const lower = title.toLowerCase();
-    const hits = new Array<boolean>(title.length).fill(false);
-    for (const term of terms) {
-      for (let index = lower.indexOf(term); index !== -1; index = lower.indexOf(term, index + term.length)) {
-        hits.fill(true, index, index + term.length);
-      }
-    }
-    const parts: { text: string; hit: boolean }[] = [];
-    for (let index = 0; index < title.length; index++) {
-      const last = parts.at(-1);
-      if (last?.hit === hits[index]) last.text += title[index];
-      else parts.push({ text: title[index], hit: hits[index] });
-    }
-    return parts;
-  }
 </script>
 
 <!-- A setting hit leads to the setting in its section, so the next visit knows where it lives. -->
@@ -42,7 +23,7 @@
     {#each results.settings.filter((setting) => setting.section === section.id) as setting (setting.id)}
       <button class="search-hit" type="button" onclick={() => revealSetting(setting.section, setting.id)}>
         <span class="search-hit-title">
-          {#each highlight(t(settingTitleKey(setting.id))) as part, index (index)}{#if part.hit}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}
+          {#each highlightSearch(t(settingTitleKey(setting.id)), query) as part, index (index)}{#if part.hit}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}
         </span>
         <span class="search-hit-group">{t(setting.groupKey)}</span>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -53,7 +34,7 @@
     {#if section.id === "tabs"}
       {#each results.spaces as space (space.id)}<SettingsSpaceRow {space} />{/each}
     {:else if section.id === "privacy"}
-      {#each results.sites as site (site.key)}<SettingsSiteRow {site} />{/each}
+      {#each results.sites.slice(0, SITE_ROW_LIMIT) as site (site.key)}<SettingsSiteRow {site} />{/each}
     {:else if section.id === "extensions"}
       {#each results.extensions as extension (extension.id)}
         <ExtensionRow
@@ -70,6 +51,9 @@
       {#each results.flags as flag (flag.key)}<SettingsFlagRow {flag} />{/each}
     {/if}
   </UiInsetList>
+  {#if section.id === "privacy" && results.sites.length > SITE_ROW_LIMIT}
+    <p class="search-more">{t("settings.sites.more", { count: results.sites.length - SITE_ROW_LIMIT })}</p>
+  {/if}
 {:else}
   <p class="search-empty">{t("settings.searchEmpty", { query: query.trim() })}</p>
 {/each}
@@ -121,6 +105,13 @@
   .search-hit svg {
     flex: none;
     color: var(--text-muted);
+  }
+
+  .search-more {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
   }
 
   .search-empty {

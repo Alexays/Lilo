@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildSites,
   formatDownloadsFolderLabel,
+  highlightSearch,
   isToggleOn,
   matchesSearch,
   parseBlockerSites,
@@ -98,6 +99,16 @@ test("search ignores case and accents and needs every term", () => {
   assert.equal(matchesSearch("Mémoire des onglets", "   "), false);
 });
 
+test("search marks each hit on the original text, accents and folded letters included", () => {
+  const marked = (text: string, query: string) =>
+    highlightSearch(text, query).map((part) => (part.hit ? `[${part.text}]` : part.text)).join("");
+  assert.equal(marked("Écran partagé", "ecran"), "[Écran] partagé");
+  assert.equal(marked("İzinler", "zin"), "İ[zin]ler");
+  assert.equal(marked("Schriftgröße", "GROSSE"), "Schrift[größe]");
+  assert.equal(marked("Mémoire des onglets", "onglets mem"), "[Mém]oire des [onglets]");
+  assert.equal(marked("Tabs", "  "), "Tabs");
+});
+
 test("settings search reaches hidden keywords and section names", () => {
   const catalog: Record<string, string> = {
     "settings.items.clearData.keywords": "cookies cache",
@@ -114,6 +125,7 @@ test("folds permissions, data, and zoom into one row per site", () => {
     [
       { id: "1", origin: "https://meet.google.com", type: "camera", decision: "allow", updatedAt: 1 },
       { id: "2", origin: "https://www.zoom.us", type: "microphone", decision: "deny", updatedAt: 2 },
+      { id: "3", origin: "https://notgoogle.com", type: "camera", decision: "allow", updatedAt: 3 },
     ],
     [{ name: "google.com", kinds: ["cookies"] }],
     [
@@ -126,6 +138,7 @@ test("folds permissions, data, and zoom into one row per site", () => {
     sites.map((site) => [site.key, site.permissions.length, site.dataName, site.zoomLevels.length]),
     [
       ["google.com", 1, "google.com", 1],
+      ["notgoogle.com", 1, null, 0],
       ["notion.so", 0, null, 1],
       ["zoom.us", 1, null, 0],
     ],

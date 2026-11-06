@@ -1,5 +1,11 @@
-<script lang="ts">
+<script module lang="ts">
   import { getLocale, t } from "../../lib/i18n/state.svelte";
+
+  // Shared by every row: a formatter per row is costly on a long list.
+  const percent = $derived(new Intl.NumberFormat(getLocale(), { style: "percent" }));
+</script>
+
+<script lang="ts">
   import { openSettingsSubpage } from "../../stores/panels.svelte";
   import { sitePermissionLabel, type SiteSummary } from "./settingsPanelModel";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
@@ -7,9 +13,8 @@
 
   let { site }: { site: SiteSummary } = $props();
 
-  const summary = $derived.by(() => {
-    const percent = new Intl.NumberFormat(getLocale(), { style: "percent" });
-    return [
+  const summary = $derived(
+    [
       ...site.permissions.map((permission) =>
         t("settings.sites.permissionSummary", {
           type: sitePermissionLabel(permission.type, t),
@@ -18,8 +23,8 @@
       ),
       ...site.zoomLevels.map((level) => t("settings.sites.zoomSummary", { zoom: percent.format(level.zoom) })),
       ...(site.dataName ? [t("settings.sites.dataSummary")] : []),
-    ].join(" · ");
-  });
+    ].join(" · "),
+  );
 </script>
 
 <UiLinkRow title={site.key} description={summary} onclick={() => openSettingsSubpage("privacy", `site:${site.key}`)}>
