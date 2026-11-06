@@ -127,7 +127,7 @@ struct ExtensionInstallReview: Sendable, Equatable {
         let key = String(value.dropFirst("__MSG_".count).dropLast("__".count))
         let messagesURL = extensionURL.appendingPathComponent("_locales/\(locale)/messages.json")
         guard let data = try? Data(contentsOf: messagesURL),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return value }
+              let json = try? JSONSerialization.jsonObject(with: data, options: .json5Allowed) as? [String: Any] else { return value }
         let entry = (json[key] ?? json.first { $0.key.caseInsensitiveCompare(key) == .orderedSame }?.value) as? [String: Any]
         return (entry?["message"] as? String) ?? value
     }
@@ -140,7 +140,9 @@ struct ExtensionInstallReview: Sendable, Equatable {
 
         do {
             let data = try Data(contentsOf: manifestURL)
-            let manifest = try JSONDecoder().decode(ExtensionManifest.self, from: data)
+            let decoder = JSONDecoder()
+            decoder.allowsJSON5 = true
+            let manifest = try decoder.decode(ExtensionManifest.self, from: data)
             try manifest.validate()
             let resolvedName = Self.resolveLocalizedMessage(manifest.name, defaultLocale: manifest.defaultLocale, extensionURL: extensionURL)
             // The name lands in a modal title: one line, bounded like Chrome's 75-character limit.
