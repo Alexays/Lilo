@@ -84,6 +84,8 @@ final class WKWebViewTabTeardownTests: XCTestCase {
         let ended = await pollUntil(timeout: 5) { kill(pid, 0) != 0 }
 
         XCTAssertTrue(ended, "a background page spinning in a loop burns a core until its tab closes")
+        let answered = await pollUntil(timeout: 5) { !tab.isUnresponsive }
+        XCTAssertTrue(answered, "a dead process is no longer hung: the sidebar would count its seconds forever")
     }
 
     func testAShownHungPageKeepsItsProcess() async throws {
