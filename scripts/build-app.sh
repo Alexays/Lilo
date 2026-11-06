@@ -28,6 +28,9 @@ Notarization (a keychain profile, or an Apple ID and app-specific password):
   LILO_NOTARY_APPLE_ID        Apple ID, used with LILO_TEAM_ID.
   LILO_NOTARY_APP_PASSWORD    App-specific password for that Apple ID.
 
+Architecture:
+  LILO_NATIVE_ARCH=1          Build this Mac's architecture only, as install does.
+
 Artifacts:
   build/<config>/archive/Lilo.xcarchive   (Developer ID signing only)
   build/<config>/export/Lilo.app
@@ -98,7 +101,7 @@ if [ "$NOTARIZE" = true ] && [ "$SIGNING" != "distribution" ]; then
 fi
 
 # A local install runs only on this Mac: building the other architecture doubles the compile.
-if [ "$INSTALL" = true ] && [ "$NOTARIZE" != true ]; then
+if { [ "$INSTALL" = true ] && [ "$NOTARIZE" != true ]; } || [ "${LILO_NATIVE_ARCH:-}" = 1 ]; then
     SIGNING_SETTINGS+=("ARCHS=$(uname -m)")
 fi
 
