@@ -86,7 +86,7 @@ test("the full native shortcut catalog records, cancels and updates the Mac-menu
 
   await expect(keys).toHaveText("⌘T");
   await keys.click();
-  await expect(keys).toHaveText("Press keys");
+  await expect(keys).toHaveText("Press Keys");
   await keys.press("Escape");
   await expect(keys).toHaveText("⌘T");
   await expect(frame.locator(".ui-shell-frame")).toBeVisible();
@@ -152,8 +152,9 @@ test("default and per-site zoom resize the rendered page and both reset controls
 
   await openSettings(page, frame, "Appearance");
   await frame
-    .getByRole("combobox", { exact: true, name: "Default zoom" })
-    .selectOption("1.25");
+    .getByRole("radiogroup", { exact: true, name: "Default zoom" })
+    .getByRole("radio", { exact: true, name: "125%" })
+    .click();
   await closeSettings(frame);
   await expect(sample).toHaveCSS("zoom", "1.25");
   await expect
@@ -187,12 +188,14 @@ test("terminal preferences update the live terminal renderer and survive reopeni
   await expect(rows).toBeVisible();
   await expect(rows).toHaveCSS("font-size", "13px");
   await openSettings(page, frame, "Terminal");
-  await expect(
-    frame.getByRole("combobox", { exact: true, name: "Theme" })
-  ).toHaveValue("auto");
-  await frame
-    .getByRole("combobox", { exact: true, name: "Theme" })
-    .selectOption("catppuccin-latte");
+
+  const theme = (name: string) =>
+    frame
+      .getByRole("radiogroup", { exact: true, name: "Theme" })
+      .getByRole("radio", { exact: true, name });
+
+  await expect(theme("Lilo")).toHaveAttribute("aria-checked", "true");
+  await theme("Catppuccin Latte").click();
   await frame
     .getByRole("combobox", { exact: true, name: "Font" })
     .selectOption("Menlo");
@@ -205,9 +208,10 @@ test("terminal preferences update the live terminal renderer and survive reopeni
   await expect(rows).toHaveCSS("font-size", "18px");
   await expect(rows).toHaveCSS("font-family", /Menlo/u);
   await openSettings(page, frame, "Terminal");
-  await expect(
-    frame.getByRole("combobox", { exact: true, name: "Theme" })
-  ).toHaveValue("catppuccin-latte");
+  await expect(theme("Catppuccin Latte")).toHaveAttribute(
+    "aria-checked",
+    "true"
+  );
   await expect(
     frame.getByRole("combobox", { exact: true, name: "Font" })
   ).toHaveValue("Menlo");
@@ -227,7 +231,7 @@ test("replayed onboarding advances through every browsing step and finishes with
     .click();
   await frame.getByRole("button", { exact: true, name: "Get started" }).click();
 
-  const card = frame.locator("section.card");
+  const card = frame.locator(".onb");
 
   await expect(card).toHaveAttribute("aria-label", "How will you use Lilo?");
   await card.getByRole("radio", { name: /For browsing/u }).click();
@@ -235,18 +239,8 @@ test("replayed onboarding advances through every browsing step and finishes with
   await expect(card).toHaveAttribute("aria-label", "Bring your favorites");
   await card.getByRole("button", { exact: true, name: "Skip" }).click();
 
-  const nextStep = async (title: string) => {
-    await expect(card).toHaveAttribute("aria-label", title);
-    await card.getByRole("button", { exact: true, name: "Continue" }).click();
-  };
-
-  await nextStep("Your passwords");
-  await nextStep("Your style");
-  await nextStep("Your tabs, your side");
-  await nextStep("The essentials");
-
-  await expect(card).toHaveAttribute("aria-label", "3 tips to get started");
-  await card.getByRole("button", { exact: true, name: "Let's go" }).click();
+  await expect(card).toHaveAttribute("aria-label", "Your Lilo");
+  await card.getByRole("button", { exact: true, name: "Let's Go" }).click();
   await expect(frame.locator(".toast")).toContainText("Welcome to Lilo.");
   await frame
     .locator(".toast")

@@ -52,7 +52,12 @@ test("Shift-click Peeks and Command or middle click adds a background tab withou
   await expect(frame.getByRole("treeitem")).toHaveCount(count + 1);
   await expect(source).toHaveAttribute("aria-selected", "true");
   await notes.click({ button: "middle" });
-  await expect(frame.getByRole("treeitem")).toHaveCount(count + 2);
+  await expect(
+    frame.getByRole("treeitem", {
+      exact: true,
+      name: "notes.example.com, 3 tabs",
+    })
+  ).toBeVisible();
   await expect(source).toHaveAttribute("aria-selected", "true");
   await expect(peek).toHaveCount(0);
   expect(external).toEqual([]);

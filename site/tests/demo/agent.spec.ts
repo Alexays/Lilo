@@ -19,7 +19,7 @@ test("manual tools can stop an approval and cancel it when the inspector closes"
   const frame = await openAgent(page);
   await frame.locator(".agent-session .run").click();
   await frame
-    .getByRole("button", { exact: true, name: "Deny" })
+    .getByRole("button", { exact: true, name: "Don't Allow" })
     .click({ timeout: 15_000 });
   await expect(frame.locator(".agent-session")).toHaveAttribute(
     "data-agent-status",
@@ -77,9 +77,9 @@ test("the real Agents setting disables both the Codex session and manual tools",
   const menu = page.locator("#browser-demo .mac-menu").first();
   await menu.locator(":scope > summary").click();
   await menu.locator('[data-action="settings"]').click();
-  await frame.locator(".section-nav-button", { hasText: "AI agents" }).click();
+  await frame.locator(".section-nav-button", { hasText: "Agents" }).click();
   await frame
-    .getByRole("checkbox", { exact: true, name: "Let AI agents use Lilo" })
+    .getByRole("checkbox", { exact: true, name: "Let agents use Lilo" })
     .press("Space");
   await page.locator("#browser-demo .demo-modes [data-action=mcp]").click();
   await expect(frame.locator(".agent-session .run")).toBeDisabled();
@@ -92,9 +92,9 @@ test("the real Agents setting disables both the Codex session and manual tools",
   ).toBeDisabled();
   await menu.locator(":scope > summary").click();
   await menu.locator('[data-action="settings"]').click();
-  await frame.locator(".section-nav-button", { hasText: "AI agents" }).click();
+  await frame.locator(".section-nav-button", { hasText: "Agents" }).click();
   await frame
-    .getByRole("checkbox", { exact: true, name: "Let AI agents use Lilo" })
+    .getByRole("checkbox", { exact: true, name: "Let agents use Lilo" })
     .press("Space");
   await page.locator("#browser-demo .demo-modes [data-action=mcp]").click();
   await expect(frame.locator(".agent-session .run")).toBeEnabled();
@@ -164,7 +164,7 @@ test("Deny leaves the live page unpublished and the draft editable", async ({
   const frame = await openAgent(page);
   await frame.locator(".agent-session .run").click();
   await expect(
-    frame.getByRole("button", { exact: true, name: "Deny" })
+    frame.getByRole("button", { exact: true, name: "Don't Allow" })
   ).toBeVisible({ timeout: 15_000 });
   const stop = await frame.locator(".agent-session .stop").boundingBox();
   const pane = await frame.locator(".sample-pane").first().boundingBox();
@@ -175,7 +175,7 @@ test("Deny leaves the live page unpublished and the draft editable", async ({
 
   expect(stop.y + stop.height).toBeLessThanOrEqual(pane.y + pane.height + 1);
   await frame
-    .getByRole("button", { exact: true, name: "Deny" })
+    .getByRole("button", { exact: true, name: "Don't Allow" })
     .click({ timeout: 15_000 });
   await expect(frame.locator(".agent-session")).toHaveAttribute(
     "data-agent-status",

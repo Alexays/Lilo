@@ -151,7 +151,8 @@ test("native tab menus are keyboard operable and split views show two pages", as
   await expect(demo.getByRole("menu")).toHaveCount(0);
   await menuCommand(page, 6, "split");
   await expect(demo.locator(".sample-pane")).toHaveCount(2);
-  await demo.locator(".command-bar-input").press("Escape");
+  await demo.locator(".command-bar-input").fill("https://example.com/split");
+  await demo.locator(".command-bar-input").press("Enter");
   await demo
     .getByRole("button", { exact: true, name: "Close Split View" })
     .click();

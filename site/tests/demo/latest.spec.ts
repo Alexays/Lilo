@@ -143,13 +143,28 @@ test("Space page colors remain selected after saving and change with the active 
   await page.goto("/#browser-demo");
   const frame = page.frameLocator("#browser-demo iframe");
   await expect(frame.locator(".repo-top")).toBeVisible();
-  await menuCommand(page, 5, "editSpace");
-  await frame.getByRole("radio", { exact: true, name: "Page" }).click();
-  await frame
-    .locator(".editor-panel")
-    .getByRole("button", { exact: true, name: "Save" })
-    .click();
-  await expect(frame.locator(".editor-panel")).toHaveCount(0);
+
+  const pageColor = frame.getByRole("button", {
+    exact: true,
+    name: "Color of the active tab",
+  });
+
+  const closeEditor = async () => {
+    await frame
+      .locator(".editor-panel")
+      .getByRole("button", { exact: true, name: "Close" })
+      .click();
+    await expect(frame.locator(".editor-panel")).toHaveCount(0);
+  };
+
+  const openColors = async () => {
+    await menuCommand(page, 5, "editSpace");
+    await frame.locator(".editor-panel .color-button").click();
+  };
+
+  await openColors();
+  await pageColor.click();
+  await closeEditor();
 
   const background = () =>
     frame
@@ -161,9 +176,7 @@ test("Space page colors remain selected after saving and change with the active 
     .getByRole("treeitem", { exact: true, name: "A few good ideas" })
     .click();
   await expect.poll(background).not.toBe(repoColor);
-  await menuCommand(page, 5, "editSpace");
-  await expect(
-    frame.getByRole("radio", { exact: true, name: "Page" })
-  ).toHaveAttribute("aria-checked", "true");
+  await openColors();
+  await expect(pageColor).toHaveAttribute("aria-pressed", "true");
   await expect(frame.locator(".notice")).toHaveCount(0);
 });
