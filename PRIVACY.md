@@ -28,7 +28,9 @@ Features that keep their own data, all on this Mac:
   Gatekeeper checks them when you first open them.
 - **Diagnostics** (Help > Diagnostics) are built on demand: "Copy report" puts startup metrics and
   tab lifecycle counts on your clipboard, for you to paste where you choose. Lilo sends no crash
-  report; macOS keeps its own under `~/Library/Logs/DiagnosticReports`.
+  report; macOS keeps its own under `~/Library/Logs/DiagnosticReports`. When Lilo quits, it notes in
+  the macOS log on this Mac where the request came from: a key or click, or the identifier of the app
+  that asked, and the name of the last agent tool. It holds no URL, title, or key or text you typed.
 - **Performance recordings** (Help > Record Performance Session) are written to your Downloads
   folder when you stop one, for you to share or delete: timings of Lilo's own work, CPU, memory,
   energy and disk use of its processes, the names of menu commands you used, the ids of your
