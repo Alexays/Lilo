@@ -81,13 +81,17 @@ final class PageWorldTests: XCTestCase {
         let adoptedStyleSheets: Int
     }
 
-    private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
+    private func load(_ webView: WKWebView) async {
         webView.loadHTMLString("<p>probe</p>", baseURL: URL(string: "https://example.com/"))
         let loaded = await pollUntil(timeout: 10) {
             let condition = "location.href === 'https://example.com/' && document.readyState === 'complete'"
             return ((try? await webView.evaluateJavaScript(condition)) as? Bool) == true
         }
         XCTAssertTrue(loaded)
+    }
+
+    private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
+        await load(webView)
         await afterLoad()
         let result = try await webView.callAsyncJavaScript(Self.probe, contentWorld: .page)
         let json = try XCTUnwrap(result as? String)
@@ -142,5 +146,32 @@ final class PageWorldTests: XCTestCase {
         XCTAssertEqual(lilo.dom, bare.dom)
         XCTAssertEqual(lilo.styleSheets, bare.styleSheets)
         XCTAssertEqual(lilo.adoptedStyleSheets, bare.adoptedStyleSheets)
+    }
+
+    /// Geolocation calls a page makes before any permission decision: their ids and errors read as WebKit's own.
+    func testGeolocationCallsAnswerAsInABareWebKitPage() async throws {
+        let probe = """
+            const geolocation = navigator.geolocation, results = [];
+            for (const call of [() => geolocation.getCurrentPosition(), () => geolocation.getCurrentPosition(null),
+                                () => geolocation.watchPosition(), () => geolocation.watchPosition(() => {}, 1),
+                                () => geolocation.clearWatch()]) {
+              try { call(); results.push('returned'); } catch (e) { results.push(e.constructor.name + ': ' + e.message); }
+            }
+            const ids = [geolocation.watchPosition(() => {}), geolocation.watchPosition(() => {})];
+            for (const id of ids) geolocation.clearWatch(id);
+            return results.concat(ids.map(String));
+            """
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        defer { tab.teardown() }
+        let configuration = try XCTUnwrap(tab.wkWebView.configuration.copy() as? WKWebViewConfiguration)
+        configuration.userContentController = WKUserContentController()
+        let bareWebView = WKWebView(frame: .zero, configuration: configuration)
+        await load(tab.wkWebView)
+        await load(bareWebView)
+        let lilo = try await tab.wkWebView.callAsyncJavaScript(probe, contentWorld: .page) as? [String]
+        let bare = try await bareWebView.callAsyncJavaScript(probe, contentWorld: .page) as? [String]
+        XCTAssertEqual(bare?.suffix(2), ["1", "2"])
+        XCTAssertEqual(lilo, bare)
     }
 }
