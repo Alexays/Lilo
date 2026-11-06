@@ -47,6 +47,20 @@ final class ChromeAPIShimTests: XCTestCase {
         XCTAssertEqual(url, "https://www.google.com/search?q=a%20b%26c")
     }
 
+    func testSearchEngineMissingFromTheListFallsBackToItsFirstLikeTheOmnibox() throws {
+        let database = try TemporaryProfileDatabase(schema: .global)
+        defer { database.tearDown() }
+        let settings = SettingsStore(dbPool: database.pool)
+        settings.set("searchEngine", value: "bing")
+        settings.set("searchEngines", value: #"[{"id":"","name":"Broken","urlTemplate":"https://broken.example/?q=%s"},{"id":"mine","name":"Mine","urlTemplate":"https://search.example/?q=%s"}]"#)
+
+        XCTAssertEqual(SearchQueryBridgeHandler.searchURL(for: "v1.2", settings: settings), "https://search.example/?q=v1.2")
+
+        settings.set("searchEngines", value: "[{}]")
+        XCTAssertEqual(SearchQueryBridgeHandler.searchEngine(settings: settings).name, "Bing", "no valid engine: the built-ins")
+        try database.pool.write { _ in } // waits for the queued writes
+    }
+
     func testSidePanelBehaviorPersistsAcrossHandlers() async throws {
         let registry = try makeTestExtensionRegistry(in: tempDir)
         let extensionId = "side-panel-test"
@@ -99,6 +113,28 @@ final class ChromeAPIShimTests: XCTestCase {
         _ = await handler.handle(message("offscreen.closeDocument", payload), registry: registry)
         let afterClose = await handler.handle(message("offscreen.documentUrl", payload), registry: registry)
         XCTAssertNil(afterClose)
+    }
+
+    func testOffscreenDocumentClosedByWindowCloseCanBeCreatedAgain() async throws {
+        let registry = try makeTestExtensionRegistry(in: tempDir)
+        try await registry.load(from: try writeExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Offscreen", "version": "1.0", "permissions": ["offscreen"]}"#,
+            // Closes after createDocument, which waits for the page to load, has returned.
+            "offscreen.html": #"<!doctype html><script src="offscreen.js"></script>"#,
+            "offscreen.js": "setTimeout(close, 500)"
+        ]))
+        let extensionId = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let handler = OffscreenBridgeHandler()
+        let payload: [String: Any] = ["extensionId": extensionId, "url": "offscreen.html"]
+
+        let created = await handler.handle(message("offscreen.createDocument", payload), registry: registry)
+        XCTAssertNil(created as? BridgeError)
+        let closed = await pollUntil(timeout: 10) {
+            await handler.handle(message("offscreen.documentUrl", payload), registry: registry) == nil
+        }
+        XCTAssertTrue(closed, "window.close() ends the offscreen document")
+        let again = await handler.handle(message("offscreen.createDocument", payload), registry: registry)
+        XCTAssertNil(again as? BridgeError)
     }
 
     /// Loads a prelude-wrapped worker in a bare controller and reads back what the worker sees.

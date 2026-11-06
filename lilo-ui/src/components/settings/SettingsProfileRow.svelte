@@ -1,9 +1,11 @@
 <script lang="ts">
   import { dismissable } from "../../lib/actions/dismissable";
+  import { menuKeys } from "../../lib/actions/menuKeys";
   import type { BridgeProfileSnapshot } from "../../lib/bridge/protocol";
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
   import { showProfileExtensions } from "../../stores/extensions.svelte";
   import { closeSettingsShell, openClearBrowsingData, openSettings } from "../../stores/panels.svelte";
   import { getActiveProfileId } from "../../stores/profiles.svelte";
@@ -30,11 +32,12 @@
   let recoloring = $state(false);
   let confirmingRemove = $state(false);
   let moveTo = $state("");
-  let moreButton: HTMLButtonElement;
+  let moreButton: HTMLButtonElement | undefined = $state();
 
   const spaces = $derived(usage.get(profile.id) ?? []);
   const removal = $derived(profileRemoval(profile, users, usage));
   const isActive = $derived(getActiveProfileId() === profile.id);
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
 
   function rename(value: string): void {
     renaming = false;
@@ -44,7 +47,7 @@
 
   function closeColors(): void {
     recoloring = false;
-    moreButton.focus();
+    moreButton?.focus();
   }
 
   function recolor(color: string): void {
@@ -116,15 +119,18 @@
       {#if menuOpen}
         <div
           class="profile-menu float-surface float-popover"
+          out:popoverOut
           role="menu"
           tabindex="-1"
-          {@attach dismissable({ onDismiss: () => (menuOpen = false), ignore: ".more-btn" })}
+          {@attach dismissable({ onDismiss: () => (menuOpen = false), ignore: ".more-btn", returnFocus: moreButton })}
+          {@attach menuKeys}
           {@attach (node) => node.querySelector("button")?.focus()}
           onkeydown={(event) => {
             // Handled here so the settings surface, which also closes on Escape, keeps open.
             if (event.key !== "Escape") return;
             event.preventDefault();
             menuOpen = false;
+            moreButton?.focus();
           }}
         >
           <button class="float-row" role="menuitem" onclick={() => pick(() => (renaming = true))}>
@@ -200,9 +206,7 @@
 
   {#if extensionCount !== undefined}
     <div class="stats">
-      {extensionCount === 1
-        ? t("settings.profiles.extensionCountOne")
-        : t("settings.profiles.extensionCount", { count: extensionCount })}
+      {t("settings.profiles.extensionCount", { count: extensionCount })}
     </div>
   {/if}
 </article>
@@ -221,7 +225,7 @@
 >
   {#if removal.moving.length > 0}
     <div class="move-row">
-      <span>{t("settings.profiles.moveSpaces", { spaces: removal.moving.map((space) => `${space.icon} ${space.name}`).join(", ") })}</span>
+      <span>{t("settings.profiles.moveSpaces", { spaces: listFormat.format(removal.moving.map((space) => `${space.icon} ${space.name}`)) })}</span>
       <UiSelect
         value={moveTo}
         options={removal.targets.map((target) => ({ value: target.id, label: target.name }))}

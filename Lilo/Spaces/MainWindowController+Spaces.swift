@@ -28,8 +28,9 @@ extension MainWindowController {
         }
 
         // Moving a private space to another profile would turn it into a persistent one and write
-        // its tabs to the target profile's database.
-        guard !sourceSpace.isPrivate else {
+        // its tabs to the target profile's database. A space whose saved state could not be read
+        // would have that row deleted for the empty state shown in its place.
+        guard !sourceSpace.isPrivate, !context.unreadableSpaceIds.contains(spaceId) else {
             bridgeRouter.send(event: "spaceUpdated", data: sourceSpace.bridgeData)
             return
         }
@@ -131,8 +132,7 @@ extension MainWindowController {
     }
 
     func deleteSpace(id: UUID) throws {
-        guard let spaceManager = context.spaceManager, let coordinator = context.sessionPersistenceCoordinator,
-              let space = spaceManager.space(with: id) else { return }
+        guard let spaceManager = context.spaceManager, let space = spaceManager.space(with: id) else { return }
         // The window has no empty state, so the last space is never deleted.
         guard spaceManager.spaces.count > 1 else {
             Self.logger.warning("refused to delete the last space \(id.uuidString, privacy: .public)")
@@ -144,7 +144,6 @@ extension MainWindowController {
         context.profileContexts.existingContext(for: sourceProfileId)?.extensions.notifySpaceRemoved(id)
         tabManager.terminalHost.prune { tabId in tabManager.tab(for: tabId).map { !$0.isClosed } ?? false }
         tabManager.changesHost.prune { tabId in tabManager.tab(for: tabId).map { !$0.isClosed } ?? false }
-        try coordinator.deleteSpaceTabState(forSpace: id, inProfile: sourceProfileId)
         try spaceManager.deleteSpace(id: id)
         InteractionStateCodec.archives.withLockUnchecked { $0[id] = nil }
         // A write queued before the delete would archive the space again: clear once more behind it.
@@ -280,13 +279,15 @@ extension MainWindowController {
             return
         }
 
-        // Private space states never touch disk; a move between a private and a normal space only
-        // persists the normal side.
-        if sourceSpace.isPrivate || targetSpace.isPrivate {
-            if !sourceSpace.isPrivate {
+        // Private space states never touch disk, nor do spaces whose saved state could not be read: a move
+        // involving one only persists the other side.
+        let persistsSource = !sourceSpace.isPrivate && !context.unreadableSpaceIds.contains(sourceSpaceId)
+        let persistsTarget = !targetSpace.isPrivate && !context.unreadableSpaceIds.contains(targetSpaceId)
+        if !persistsSource || !persistsTarget {
+            if persistsSource {
                 try coordinator.persistSpaceTabState(sourceState.state, spaceId: sourceSpaceId, inProfile: sourceSpace.profileId)
             }
-            if !targetSpace.isPrivate {
+            if persistsTarget {
                 try coordinator.persistSpaceTabState(targetState.state, spaceId: targetSpaceId, inProfile: targetSpace.profileId)
             }
         } else {
@@ -365,7 +366,10 @@ extension MainWindowController {
             let leavingEngine = previousActiveTabId.flatMap { tabManager.engineTab(for: $0) }
             let inactiveTreeItems = tabManager.sidebarTreeItems(forSpace: oldSpaceId)
             let inactiveRuntime = tabManager.parkCurrentSpaceRuntimeForSwitch()
-            if let leavingEngine { popOutBackgroundedTab(leavingEngine) }
+            if let leavingEngine {
+                leavingEngine.dismissFind()
+                popOutBackgroundedTab(leavingEngine)
+            }
             // A closing window hands its parked engines to a live one: WebKit callbacks (permission
             // decisions) must not reach a released delegate before the space is shown again.
             if nextSpaceId == nil, let heir = context.windows.windows.first(where: { $0 !== self }) {
@@ -387,19 +391,11 @@ extension MainWindowController {
             )
             context.hiddenSpaceLifecycle.scheduleTrim(excluding: nextSpaceId)
             spaceManager.setActiveTab(previousActiveTabId, forSpace: oldSpaceId)
-            let activeTabId = restorableActiveTabId(preferred: previousActiveTabId, in: inactiveRuntime.tabs)
-            let stored = context.browserState.space(id: oldSpaceId)?.spaceTab.state
-            let state = SpaceTabStateImporter.importState(
-                activeTabId: activeTabId,
-                activationHistory: stored?.activationHistory ?? [],
-                viewedAt: stored?.viewedAt ?? [:],
-                tabs: inactiveRuntime.tabs,
-                folders: inactiveFolders,
-                treeItems: inactiveTreeItems,
-                spaceId: oldSpaceId
-            )
-            // Private spaces leave no trace on disk.
-            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true {
+            // Private spaces leave no trace on disk. Caching the runtime leaves the store's durable
+            // tree as is, so only the active tab can differ from the state it holds.
+            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true, !context.unreadableSpaceIds.contains(oldSpaceId),
+               var state = context.browserState.spaceTabState(forSpace: oldSpaceId) {
+                state.activeTabId = restorableActiveTabId(preferred: previousActiveTabId, in: inactiveRuntime.tabs)
                 profileContext?.sessionPersistence?.saveSpaceTabStateAsync(state, spaceId: oldSpaceId) { [weak self] activeTabId, spaceId in
                     self?.context.spaceManager?.setActiveTab(activeTabId, forSpace: spaceId)
                 }
@@ -432,6 +428,9 @@ extension MainWindowController {
 
         let previousSpaceId = tabManager.currentSpaceId
         let previousActiveTabId = tabManager.activeOpenTabId
+        // A private space lists its own downloads, so entering or leaving one (a deleted space may have been one) replaces the list.
+        let swapsDownloads = previousSpaceId != spaceId
+            && (targetSpace.isPrivate || previousSpaceId.map { spaceManager.space(with: $0)?.isPrivate != false } == true)
 
         // Capture the leaving space's interaction states while its runtime is still live (we can only
         // read live engine state for the current space). The relaunch / re-entry path restores them.
@@ -456,6 +455,9 @@ extension MainWindowController {
 
         spaceManager.activeSpaceId = spaceId
         tabManager.currentSpaceId = spaceId
+        if swapsDownloads {
+            bridgeRouter.send(event: "downloadsSnapshot", data: DownloadBridgeHandler.snapshot(of: downloadStore, manager: context.downloadManager))
+        }
         recentSpaceIds.removeAll { $0 == spaceId }
         recentSpaceIds.insert(spaceId, at: 0)
         // The frame takes the color the chrome reports for the space it shows: deriving it here too
@@ -484,7 +486,7 @@ extension MainWindowController {
             // Store snapshots are sanitized at ingest (restoredSpaceSnapshot); cached ones only
             // ever round-trip the in-memory store, so activation trusts them as-is.
             let restoredTabs = projection.tabs
-            faviconCoordinator.warm(from: restoredTabs)
+            faviconCoordinator.warm(from: restoredTabs, partition: targetSpace.dataStoreId)
             let restoredIds = Set(restoredTabs.map(\.id))
             let restoredEngines = snapshot.engines.filter { restoredIds.contains($0.key) }
             let restoredTabAdapters = snapshot.tabAdapters.filter { restoredIds.contains($0.key) }
@@ -493,15 +495,8 @@ extension MainWindowController {
                 preferred: activeTabBySpace[spaceId] ?? snapshot.spaceTab.state.activeTabId ?? targetSpace.activeTabId,
                 in: restoredTabs
             )
-            let restoredState = SpaceTabStateImporter.importState(
-                activeTabId: activeId,
-                activationHistory: snapshot.spaceTab.state.activationHistory,
-                viewedAt: snapshot.spaceTab.state.viewedAt,
-                tabs: restoredTabs,
-                folders: projection.folders,
-                treeItems: projection.treeItems,
-                spaceId: spaceId
-            )
+            var restoredState = snapshot.spaceTab.state
+            restoredState.activeTabId = activeId
 
             if restoredTabs.isEmpty {
                 tabManager.restoreVisibleRuntime([], engines: [:], activeTabId: nil)
@@ -516,7 +511,8 @@ extension MainWindowController {
                     activateRestoredTab: !forSessionRestore
                 )
             }
-            tabManager.applyDurableProjectionToRuntime(restoredState, spaceId: spaceId)
+            // The store's state is already repaired, and restoreVisibleRuntime pruned the overlay.
+            tabManager.applyDurableProjectionToRuntime(restoredState, spaceId: spaceId, prunesStaleOverlay: false, repairsState: false)
             if previousSpaceId != spaceId { context.browserState.retainLiveHost(tabManager.engineHost, for: spaceId) }
             // Parked engines may still point at the window that parked them, closed since.
             for engine in restoredEngines.values {

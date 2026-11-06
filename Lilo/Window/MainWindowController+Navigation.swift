@@ -14,22 +14,27 @@ extension MainWindowController {
         if isVisibleTab(id) {
             tabManager.noteTabUpdated(old: old, new: new)
         }
-        // Only windows showing the space get the favicon patch: the others' next full state of it must carry favicons again.
+        // Only windows showing the space get the favicon patch: the others' next full state of it must carry this favicon again.
         if new.faviconDataURL != old.faviconDataURL, let spaceId = context.browserState.owningSpaceId(forTab: id) {
             for window in context.windows.windows where window.tabManager.currentSpaceId != spaceId {
-                window.chromeFaviconSyncedSpaceIds.remove(spaceId)
+                window.chromeStaleFaviconTabIds.insert(id)
             }
         }
         return new
     }
 
-    func updateTabFavicon(faviconDataURL: String?, dominantColor color: String?, forTabId tabId: UUID) {
+    func updateTabFavicon(faviconDataURL: String?, dominantColor color: String?, iconURL: URL?, forTabId tabId: UUID) {
         guard let faviconDataURL else { return }
         // favicon is a durable field (not part of the runtime overlay), so the O(1) durable lookup
         // is equivalent to the full projected read here without materializing the whole sidebar.
-        guard context.browserState.durableTab(for: tabId)?.tab.faviconDataURL != faviconDataURL else { return }
+        guard context.browserState.durableTab(for: tabId)?.tab.faviconDataURL != faviconDataURL else {
+            // The same image from another address: only extensions see it.
+            if let iconURL, tabManager.tab(for: tabId)?.faviconURL != iconURL { updateRuntimeTab(id: tabId) { $0.faviconURL = iconURL } }
+            return
+        }
         guard let updatedTab = updateRuntimeTab(id: tabId, mutate: { tab in
             tab.faviconDataURL = faviconDataURL
+            tab.faviconURL = iconURL
             tab.faviconDominantColor = color
             // The home page's icon follows its site: signing in can land on another path of the same host.
             let host = tab.url?.host?.lowercased()
@@ -156,7 +161,9 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     /// Records a visit of the tab's page, as Chrome does for every main-frame navigation that commits, same-document ones included.
     /// Private-space, protected-folder and unresolvable-space visits leave no trace (no history, no onVisited).
-    private func recordVisit(of tab: WKWebViewTab, state: Tab?, renamableUntil: ContinuousClock.Instant? = nil) {
+    func recordVisit(of tab: WKWebViewTab, state: Tab?, renamableUntil: ContinuousClock.Instant? = nil) {
+        tab.visitAwaitsShowing = tabManager.warmedTab?.engine === tab
+        guard !tab.visitAwaitsShowing else { return }
         tab.visitTitleUpdates = nil
         // Check the visiting tab's own space, which may be a background one; a popup's visit counts as its opener's.
         let visitingTab = state ?? pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
@@ -220,6 +227,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             if resolvedURL == nil || previousURL?.host?.lowercased() != resolvedURL?.host?.lowercased() {
                 t.faviconDataURL = nil
                 t.faviconDominantColor = nil
+                t.faviconURL = nil
                 shouldRefreshFavicon = resolvedURL != nil
             }
             t.url = resolvedURL
@@ -230,7 +238,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         if let updatedTab {
             // Favicon was cleared above on host change: ship it so the UI drops the stale icon.
             enqueueVisibleTabUpdate(updatedTab, includeFavicon: shouldRefreshFavicon)
-            if tab.id == tabManager.activeTab?.id { syncPageBar() }
+            if tab.id == tabManager.activeOpenTabId { syncPageBar() }
 
             if isVisibleTab(tab.id),
                shouldRefreshFavicon || (updatedTab.faviconDataURL == nil && !updatedTab.isLoading) {
@@ -307,6 +315,12 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool) {
         updateAndEmit(tab.id) { t in t.isLoading = isLoading && self.tabManager.warmedTab?.engine !== tab }
+        // The hidden-window freeze skips loading engines.
+        if !isLoading { context.hiddenSpaceLifecycle.scheduleHiddenRefreeze() }
+    }
+
+    func tabDidWake(_ tab: WKWebViewTab) {
+        context.hiddenSpaceLifecycle.scheduleHiddenRefreeze()
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {
@@ -322,13 +336,14 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
         // Only the address bar draws progress, and only the active tab's: a background load keeps just
         // its final value, and activation reads the live one off the engine.
-        guard let active = tabManager.activeTab, tab.id == active.id else {
+        guard tab.id == tabManager.activeOpenTabId else {
             PerfSignposts.energy.emitEvent("progress", "dropped")
             if progress >= 1 { updateRuntimeTab(id: tab.id) { t in t.estimatedProgress = progress } }
             return
         }
         // The bar cannot show steps finer than this; a load's start and end always ship.
-        let fineStep = progress > 0 && progress < 1 && abs(progress - active.estimatedProgress) < 0.05
+        let fineStep = progress > 0 && progress < 1
+            && abs(progress - tabManager.runtimeOverlay.estimatedProgress(of: tab.id)) < 0.05
         PerfSignposts.energy.emitEvent("progress", "\(fineStep ? "dropped" : "sent")")
         guard !fineStep else { return }
         updateAndEmit(tab.id) { t in t.estimatedProgress = progress }
@@ -344,7 +359,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?) {
         updateAndEmit(tab.id) { t in t.pageColor = color }
-        if tab.id == tabManager.activeTab?.id { syncPageBar() }
+        if tab.id == tabManager.activeOpenTabId { syncPageBar() }
         profileContext?.sessionPersistence?.scheduleSave()
     }
 
@@ -406,7 +421,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         do {
             // createSpace activates the new space synchronously (through switchToSpace),
             // so the tab below lands in it.
-            try createSpace(name: "Private", icon: "🕶️", color: "#5865f2", isPrivate: true, targetProfileId: nil)
+            try createSpace(name: "Private".localized, icon: "🕶️", color: "#5865f2", isPrivate: true, targetProfileId: nil)
             let created = createTabStateFirst(url: url, activate: true)
             created.flatMap { tabManager.engineTab(for: $0.id) }?.isOpenedByPage = true
         } catch {
@@ -430,14 +445,21 @@ extension MainWindowController: WKWebViewTab.Delegate {
         } else {
             download.cancel { _ in }
         }
-        // A target=_blank download link leaves a tab that never shows a page: close it (the download outlives the web view), deferred so
-        // the web view is not torn down inside WebKit's didBecomeDownload callback. A tab the user typed the URL into stays, as in Chrome.
-        guard !tab.hasCommittedContent else { return }
+        // A target=_blank download link leaves a tab that never shows a page; the download outlives the web view.
+        closeIfOpenedForNothing(tab)
+    }
+
+    /// Closes a tab, popup or little window a page opened whose first navigation left for a download or another app, as Chrome does.
+    /// Deferred so the web view is not torn down inside the WebKit callback. A tab the user typed the URL into stays. True when it closes.
+    @discardableResult
+    func closeIfOpenedForNothing(_ tab: WKWebViewTab) -> Bool {
         let tabId = tab.id
+        guard !tab.hasCommittedContent, littleWindows[tabId] != nil || pagePopups[tabId] != nil || tab.isOpenedByPage else { return false }
         DispatchQueue.main.async { [weak self] in
             if let little = self?.littleWindows[tabId] { return little.window.close() }
             if let popup = self?.pagePopups[tabId] { popup.close() } else if tab.isOpenedByPage { self?.closeTabStateFirst(id: tabId, undoable: false) }
         }
+        return true
     }
 
     func tab(_ tab: WKWebViewTab, requestPermission type: String, forOrigin origin: String, completion: @escaping (Bool) -> Void) {
@@ -586,16 +608,28 @@ extension MainWindowController: WKWebViewTab.Delegate {
         bookmarkCurrentTab(nil)
     }
 
-    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) {
+    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?, userInitiated: Bool) {
+        // One prompt at a time per tab: AppKit would queue every other one behind it.
+        guard !externalAppPromptTabs.contains(tab.id) else { return }
+        let closesTab = closeIfOpenedForNothing(tab)
         let origin = origin ?? "unknown"
+        let scheme = url.scheme?.lowercased() ?? ""
         // Per scheme, as in Chrome: letting a site open Zoom does not let it open every other app.
-        let type = "external-scheme:\(url.scheme?.lowercased() ?? "")"
-        if let decision = profileContext?.sitePermissions.decision(forOrigin: origin, type: type) {
+        let type = "external-scheme:\(scheme)"
+        if let decision = storedPermissionDecision(type: type, origin: origin, tabId: tab.id) {
             if decision { NSWorkspace.shared.open(url) }
             return
         }
-        // The prompt is a sheet on the window showing the page; a background tab or a hidden peek has no surface to ask from.
-        let sheetWindow = if let popup = pagePopups[tab.id] {
+        // A mail link the user follows opens the mail app at once, as in Chrome and Safari.
+        if scheme == "mailto", userInitiated {
+            NSWorkspace.shared.open(url)
+            return
+        }
+        // The prompt is a sheet on the window showing the page, or the opener's when the page's tab closes; a background tab
+        // or a hidden peek has no surface to ask from.
+        let sheetWindow = if closesTab {
+            window
+        } else if let popup = pagePopups[tab.id] {
             unsafe popup.window ?? (popup.peekView?.superview != nil ? window : nil)
         } else {
             littleWindows[tab.id]?.window ?? (isVisibleTab(tab.id) ? window : nil)
@@ -611,8 +645,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
         alert.suppressionButton?.title = "Always allow for this site".localized
         alert.addButton(withTitle: "Open".localized)
         alert.addButton(withTitle: "Cancel".localized)
+        externalAppPromptTabs.insert(tab.id)
         alert.beginSheetModal(for: sheetWindow) { [weak self] response in
             guard let self else { return }
+            externalAppPromptTabs.remove(tab.id)
             let open = response == .alertFirstButtonReturn
             if alert.suppressionButton?.state == .on, origin != "unknown", !tab.isPrivateBrowsing {
                 rememberPermission(origin: origin, type: type, granted: open, tabId: tab.id)
@@ -714,6 +750,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool) {
         updateAndEmit(tab.id) { $0.isInPictureInPicture = isInPictureInPicture }
+    }
+
+    /// On exit the browser window's own occlusion change can still be queued, so the recompute waits for WindowServer
+    /// rather than reading a stale hidden state and backgrounding the page for a moment.
+    func tabDidChangeFullscreen(_ tab: WKWebViewTab) {
+        guard tab.wkWebView.fullscreenState == .notInFullscreen else { return context.windowVisibilityChanged() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.context.windowVisibilityChanged() }
     }
 
     /// Emits only on a real change: KVO re-reports values `didNavigate` already applied (loading,

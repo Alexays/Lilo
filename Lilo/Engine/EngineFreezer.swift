@@ -16,14 +16,17 @@ enum CooperativeFreezer {
           get visibilityState() { return forced ? 'hidden' : apply(visibility.visibilityState, this, []); },
           get hidden() { return forced || apply(visibility.hidden, this, []); },
         });
+        // visibilitychange fires only when the state the page reads changes: a background tab is already hidden.
+        const wasHidden = forced || apply(visibility.hidden, doc, []);
         forced = true;
-        fire();
+        if (!wasHidden) fire();
         try { paused = [...document.querySelectorAll('video, audio')].filter(media => !media.paused); } catch (e) {}
         paused.forEach(media => { try { media.pause(); } catch (e) {} });
       });
       lilo.on('resume', () => {
+        const wasForced = forced;
         forced = false;
-        fire();
+        if (wasForced && !apply(visibility.hidden, doc, [])) fire();
         paused.forEach(media => { try { media.play().catch(() => {}); } catch (e) {} });
         paused = [];
       });
@@ -38,6 +41,22 @@ final class CompositeFreezer {
     /// Pages WebKit holds suspended: most WKWebView calls on them raise NSInternalInconsistencyException,
     /// so code that only holds a raw web view (bridges replying to a page) checks here and skips.
     static let suspendedWebViews = NSHashTable<WKWebView>.weakObjects()
+
+    /// For `PageWorld.bridgeWorld`, top document: fails while the page holds a Web Lock. `navigator.locks.query()` lists the
+    /// whole origin's locks, so a short lock of its own tells which client is the page.
+    static let webLockCheck = #"""
+    const locks = navigator.locks;
+    if (!locks) return;
+    const name = crypto.randomUUID();
+    let held = false;
+    try {
+      await locks.request(name, { ifAvailable: true }, async () => {
+        const all = (await locks.query()).held, page = all.find(lock => lock.name === name).clientId;
+        held = all.some(lock => lock.clientId === page && lock.name !== name);
+      });
+    } catch (e) {}
+    if (held) throw 0;
+    """#
 
     /// WebKit's `scripting.executeScript` calls `_callAsyncJavaScript:` after an async frame-tree round trip, which a slow
     /// background process can stretch past any extension loan: on a page frozen meanwhile the call fails instead of raising.

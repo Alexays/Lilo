@@ -384,7 +384,7 @@
   }
 
   .counts .removed {
-    color: var(--danger);
+    color: var(--danger-text);
   }
 
   /* On the right, it grows over the page to the left. */

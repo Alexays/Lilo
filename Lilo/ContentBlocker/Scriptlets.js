@@ -5,6 +5,11 @@
   // Captured before any hook lands on JSON, so response rewriting stays on the native paths.
   var nativeJSONParse = JSON.parse.bind(JSON);
   var nativeJSONStringify = JSON.stringify.bind(JSON);
+  // Wrappers call these, not the page's Reflect, WeakMap and Promise methods, which a hook could replace to spot them.
+  var reflectApply = Reflect.apply, weakGet = WeakMap.prototype.get, weakSet = WeakMap.prototype.set;
+  var promiseThen = Promise.prototype.then;
+  // Random per document: what a trap throws and the Trusted Types policy it creates carry no fixed name.
+  var token = Math.random().toString(36).slice(2);
 
   // ---------- shared helpers ----------
   // `flags` applies to a plain-string pattern; a /regex/ literal keeps its own.
@@ -167,11 +172,11 @@
     try {
       Object.defineProperty(owner, key, {
         get: function () {
-          if (onRead && onRead()) throw new ReferenceError('lilo');
+          if (onRead && onRead()) throw new ReferenceError(token);
           return previous.get ? previous.get.call(this) : val;
         },
         set: function (nv) {
-          if (onWrite && onWrite()) throw new ReferenceError('lilo');
+          if (onWrite && onWrite()) throw new ReferenceError(token);
           if (previous.set) previous.set.call(this, nv); else val = nv;
         },
         configurable: true
@@ -201,16 +206,17 @@
     var wantDelay = (delay !== undefined && delay !== '') ? parseInt(delay, 10) : null;
     var _fn = self[which];
     if (typeof _fn !== 'function') return;
-    self[which] = function (cb, t) {
+    self[which] = wrapNative(_fn, function (fn, thisArg, args) {
+      var cb = args[0];
       try {
         // Stringify the callback only when the delay matches and a pattern needs it: this wraps
         // every timer the page sets.
-        if (wantDelay === null || wantDelay === (t | 0)) {
+        if (wantDelay === null || wantDelay === (args[1] | 0)) {
           if (!re || re.test((typeof cb === 'function') ? cb.toString() : String(cb))) return 0;
         }
       } catch (e) {}
-      return _fn.apply(this, arguments);
-    };
+      return reflectApply(fn, thisArg, args);
+    });
   }
   // A Proxy over a native function, which prints as that function: JSC prints any Proxy as
   // `function ProxyObject()`, so Function.prototype.toString maps a wrapper to what it wraps.
@@ -220,12 +226,12 @@
     if (!nativeOf) {
       nativeOf = new WeakMap();
       var toString = Function.prototype.toString;
-      var patched = new Proxy(toString, { apply: function (f, thisArg, args) { return Reflect.apply(f, nativeOf.get(thisArg) || thisArg, args); } });
-      nativeOf.set(patched, toString);
+      var patched = new Proxy(toString, { apply: function (f, thisArg, args) { return reflectApply(f, reflectApply(weakGet, nativeOf, [thisArg]) || thisArg, args); } });
+      reflectApply(weakSet, nativeOf, [patched, toString]);
       Function.prototype.toString = patched;
     }
     var proxy = new Proxy(fn, { apply: apply });
-    nativeOf.set(proxy, nativeOf.get(fn) || fn);
+    reflectApply(weakSet, nativeOf, [proxy, reflectApply(weakGet, nativeOf, [fn]) || fn]);
     return proxy;
   }
   // Wraps the method a dotted chain names from self (`Node.prototype.appendChild`).
@@ -237,6 +243,22 @@
     owner[key] = wrapNative(owner[key], apply);
   }
   var scriptPolicy = null;
+  // The frame's replace-node-text and remove-node-text rules share one observer. They edit each node in declaration order, each one reading the
+  // text the previous one wrote.
+  var textRules = [], textObserver = null;
+  function dropTextRule(edit) {
+    var k = textRules.indexOf(edit);
+    if (k >= 0) textRules.splice(k, 1);
+    if (!textRules.length) textObserver.disconnect();
+  }
+  function handleText(mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+      var added = mutations[i].addedNodes;
+      for (var j = 0; j < added.length; j++) {
+        for (var r = 0; r < textRules.length; r++) { if (!textRules[r](added[j])) dropTextRule(textRules[r--]); }
+      }
+    }
+  }
   // uBO's replace-node-text: rewrites matching nodes as the parser inserts them, so a script runs
   // edited. Observes until the document is interactive, unless `stay` is set.
   function replaceNodeText(nodeName, pattern, replacement, options) {
@@ -256,26 +278,18 @@
       // A page enforcing Trusted Types (YouTube) throws on a plain string written into a script.
       if (name === 'SCRIPT' && self.trustedTypes) {
         try {
-          scriptPolicy = scriptPolicy || self.trustedTypes.createPolicy('lilo-scriptlets', { createScript: function (s) { return s; } });
+          scriptPolicy = scriptPolicy || self.trustedTypes.createPolicy(token, { createScript: function (s) { return s; } });
           after = scriptPolicy.createScript(after);
         } catch (e) {}
       }
       try { node.textContent = after; } catch (e) { return true; }
       return count === 0 || --count !== 0;
     }
-    function handle(mutations) {
-      for (var i = 0; i < mutations.length; i++) {
-        var added = mutations[i].addedNodes;
-        for (var j = 0; j < added.length; j++) {
-          if (!edit(added[j])) { observer.disconnect(); return; }
-        }
-      }
-    }
-    var observer = new MutationObserver(handle);
-    observer.observe(document, { childList: true, subtree: true });
+    textObserver = textObserver || new MutationObserver(handleText);
+    if (textRules.push(edit) === 1) textObserver.observe(document, { childList: true, subtree: true });
     if (options.stay) return;
     var quitAfter = parseInt(options.quitAfter, 10) || 0;
-    function stop() { handle(observer.takeRecords()); observer.disconnect(); }
+    function stop() { handleText(textObserver.takeRecords()); dropTextRule(edit); }
     whenReady('interactive', function () { if (quitAfter) setTimeout(stop, quitAfter); else stop(); });
   }
   // ---------- JSONPath (uBO subset) ----------
@@ -450,7 +464,7 @@
     boost = isFinite(boost) ? Math.min(Math.max(boost, 0.001), 50) : 0.05;
     proxyApply(which, function (target, thisArg, args) {
       if ((delay === -1 || args[1] === delay) && re.test(String(args[0]))) args[1] *= boost;
-      return Reflect.apply(target, thisArg, args);
+      return reflectApply(target, thisArg, args);
     });
   }
   // Runs fn once the document reaches `state`: loading (now), interactive or complete.
@@ -478,8 +492,25 @@
     whenReady(/\bcomplete\b/.test(behavior) ? 'complete' : /\basap\b/.test(behavior) ? 'loading' : 'interactive', function () {
       run();
       if (!/\bstay\b/.test(behavior)) return;
-      new MutationObserver(function () { if (!timer) timer = setTimeout(run, 67); })
-        .observe(document, { attributes: true, attributeFilter: attrs, childList: true, subtree: true });
+      var observer = new MutationObserver(function () { if (!timer) timer = setTimeout(run, 67); });
+      var connected = false;
+      // A hidden page builds no records: one pass once it is shown strips what changed meanwhile.
+      var observe = function () {
+        if (document.hidden) return;
+        connected = true;
+        observer.observe(document, { attributes: true, attributeFilter: attrs, childList: true, subtree: true });
+      };
+      observe();
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) {
+          if (!connected) { observe(); run(); }
+          return;
+        }
+        // A page hidden briefly keeps observing, so a quick tab switch costs no pass on its return.
+        setTimeout(function () {
+          if (document.hidden && connected) { connected = false; observer.disconnect(); }
+        }, 10000);
+      });
     });
   }
   // uBO's set-attr: an untrusted value is a number, true, false, empty, or `[other-attr]` to copy.
@@ -612,16 +643,17 @@
     fetchRewriters.push(entry);
     if (fetchRewriters.length > 1) return;
     self.fetch = wrapNative(self.fetch, function (fn, thisArg, args) {
-      var p = Reflect.apply(fn, thisArg, args);
+      var p = reflectApply(fn, thisArg, args);
       var active = activeRewriters(fetchRewriters, fetchRequest(args));
       if (!active.length) return p;
-      return p.then(function (resp) {
-        return resp.clone().text().then(function (txt) {
+      return reflectApply(promiseThen, p, [function (resp) {
+        var rewritten = reflectApply(promiseThen, resp.clone().text(), [function (txt) {
           var out = applyRewriters(active, txt);
           if (out === null) return resp;
           return new Response(out, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
-        }).catch(function () { return resp; });
-      });
+        }]);
+        return reflectApply(promiseThen, rewritten, [undefined, function () { return resp; }]);
+      }]);
     });
   }
   function addXHRRewriter(propsToMatch, entry) {
@@ -667,7 +699,7 @@
           return doc || (doc = new DOMParser().parseFromString(out, 'text/xml'));
         });
       }
-      return Reflect.apply(fn, xhr, args);
+      return reflectApply(fn, xhr, args);
     });
   }
   var parsePrunes = [];
@@ -680,18 +712,18 @@
       }
       return r;
     }
-    JSON.parse = wrapNative(JSON.parse, function (fn, thisArg, args) { return prune(Reflect.apply(fn, thisArg, args)); });
+    JSON.parse = wrapNative(JSON.parse, function (fn, thisArg, args) { return prune(reflectApply(fn, thisArg, args)); });
     // uBO's json-prune covers Response.json() too, which never goes through JSON.parse.
     var proto = typeof Response === 'function' && Response.prototype;
     if (proto && typeof proto.json === 'function') {
-      proto.json = wrapNative(proto.json, function (fn, thisArg, args) { return Reflect.apply(fn, thisArg, args).then(prune); });
+      proto.json = wrapNative(proto.json, function (fn, thisArg, args) { return reflectApply(promiseThen, reflectApply(fn, thisArg, args), [prune]); });
     }
   }
 
   function jsonEditParse(path) {
     if (!path) return;
     proxyApply('JSON.parse', function (fn, thisArg, args) {
-      var r = Reflect.apply(fn, thisArg, args);
+      var r = reflectApply(fn, thisArg, args);
       try { if (r && typeof r === 'object' && path.matches(r)) r = path.apply(r); } catch (e) {}
       return r;
     });
@@ -702,7 +734,7 @@
     var match = compileMatch(propsToMatch);
     self.fetch = wrapNative(self.fetch, function (fn, thisArg, args) {
       if (!match || match(fetchRequest(args))) return Promise.resolve(new Response(responseBody(body, trusted), { status: 200, statusText: 'OK' }));
-      return Reflect.apply(fn, thisArg, args);
+      return reflectApply(fn, thisArg, args);
     });
   }
   // A matching XHR is never sent: it completes as a 200 with the generated body. Left to the network,
@@ -714,14 +746,14 @@
     var proto = Native.prototype;
     var prevented = new WeakMap();
     proto.open = wrapNative(proto.open, function (fn, xhr, args) {
-      prevented.delete(xhr);
+      reflectApply(weakSet, prevented, [xhr, null]);
       var request = { url: resolveURL(args[1]), method: String(args[0]).toUpperCase() };
-      if (!match || match(request)) prevented.set(xhr, { url: request.url, sync: args.length > 2 && !args[2] });
-      return Reflect.apply(fn, xhr, args);
+      if (!match || match(request)) reflectApply(weakSet, prevented, [xhr, { url: request.url, sync: args.length > 2 && !args[2] }]);
+      return reflectApply(fn, xhr, args);
     });
     proto.send = wrapNative(proto.send, function (fn, xhr, args) {
-      var details = prevented.get(xhr);
-      if (!details) return Reflect.apply(fn, xhr, args);
+      var details = reflectApply(weakGet, prevented, [xhr]);
+      if (!details) return reflectApply(fn, xhr, args);
       var type = xhr.responseType, text = responseBody(body, trusted), response = text;
       if (type === 'json') { try { response = nativeJSONParse(text || '{}'); } catch (e) { response = null; } }
       else if (type === 'arraybuffer') response = new ArrayBuffer(0);
@@ -737,7 +769,7 @@
         xhr.dispatchEvent(new Progress('load'));
         xhr.dispatchEvent(new Progress('loadend'));
       }
-      if (details.sync) complete(); else Promise.resolve().then(complete);
+      if (details.sync) complete(); else reflectApply(promiseThen, Promise.resolve(), [complete]);
     });
   }
 
@@ -835,8 +867,8 @@
       proxyApply(method, function (fn, thisArg, args) {
         var hit = parts.every(function (p, i) { return !p || (p.re ? p.re.test(String(args[i])) : args[i] === p.eq); });
         if (hit && stackRe) hit = stackMatches(stackRe, negate);
-        if (!hit) return Reflect.apply(fn, thisArg, args);
-        if (how !== 'prevent') throw new ReferenceError('lilo');
+        if (!hit) return reflectApply(fn, thisArg, args);
+        if (how !== 'prevent') throw new ReferenceError(token);
       });
     },
     'prevent-innerHTML': function (selector, pattern) {
@@ -942,12 +974,12 @@
       proxyApply('eval', function (fn, thisArg, args) {
         var code = args[0];
         if (typeof code === 'string' && code.length > 512 && marker.test(code)) { restorePage(); return; }
-        return Reflect.apply(fn, thisArg, args);
+        return reflectApply(fn, thisArg, args);
       });
       // Its later re-check is a string timer probing the bait element.
       proxyApply('setTimeout', function (fn, thisArg, args) {
         if (typeof args[0] === 'string' && args[0].indexOf('bab_elementid') >= 0) return;
-        return Reflect.apply(fn, thisArg, args);
+        return reflectApply(fn, thisArg, args);
       });
     },
     // Stops a <meta http-equiv="refresh"> once its delay (or the given one) runs out.
@@ -967,8 +999,8 @@
       proxyApply(method, function (fn, thisArg, args) {
         var matches = false;
         try { matches = thisArg instanceof self.Element && (!selector || thisArg.matches(selector)); } catch (e) {}
-        if (!matches) return Reflect.apply(fn, thisArg, args);
-        if (disposition === 'throw') throw new ReferenceError('lilo');
+        if (!matches) return reflectApply(fn, thisArg, args);
+        if (disposition === 'throw') throw new ReferenceError(token);
         return value;
       });
     },
@@ -991,7 +1023,7 @@
         return name[0] !== '_' && hasOwn.call(spoofed, name) ? spoofed[name] : undefined;
       }
       proxyApply('getComputedStyle', function (fn, thisArg, args) {
-        var style = Reflect.apply(fn, thisArg, args);
+        var style = reflectApply(fn, thisArg, args);
         if (!matches(args[0])) return style;
         return new Proxy(style, {
           get: function (target, prop) {
@@ -1008,7 +1040,7 @@
       var rect = { x: spoofed._rectx, y: spoofed._recty, width: spoofed._rectw || spoofed.width, height: spoofed._recth || spoofed.height };
       if (rect.x === undefined && rect.y === undefined && rect.width === undefined && rect.height === undefined) return;
       proxyApply('Element.prototype.getBoundingClientRect', function (fn, thisArg, args) {
-        var r = Reflect.apply(fn, thisArg, args);
+        var r = reflectApply(fn, thisArg, args);
         if (!matches(thisArg) || typeof self.DOMRect !== 'function') return r;
         function pick(k) { var v = parseFloat(rect[k]); return isNaN(v) ? r[k] : v; }
         return new self.DOMRect(pick('x'), pick('y'), pick('width'), pick('height'));
@@ -1025,9 +1057,16 @@
     'no-requestAnimationFrame-if': function (needle) {
       var negate = !!needle && needle[0] === '!';
       var re = toRegExp(negate ? needle.slice(1) : needle);
+      // An animation loop passes the same callback every frame: its source is stringified and tested once.
+      var verdicts = new WeakMap();
       proxyApply('requestAnimationFrame', function (fn, thisArg, args) {
-        if (re.test(String(args[0])) !== negate) return 0;
-        return Reflect.apply(fn, thisArg, args);
+        var callback = args[0], blocked = reflectApply(weakGet, verdicts, [callback]);
+        if (blocked === undefined) {
+          blocked = re.test(String(callback)) !== negate;
+          if (typeof callback === 'function') reflectApply(weakSet, verdicts, [callback, blocked]);
+        }
+        if (blocked) return 0;
+        return reflectApply(fn, thisArg, args);
       });
     },
     'abort-on-property-read': function (chain) { if (chain) abortOnProperty(self, chain.split('.'), always, null); },
@@ -1051,10 +1090,10 @@
         var script = document.currentScript;
         if (!(script instanceof HTMLScriptElement)) return false;
         if (!re) return !script.src;
-        var verdict = verdicts.get(script);
+        var verdict = reflectApply(weakGet, verdicts, [script]);
         if (verdict === undefined) {
           verdict = re.test(script.textContent) || (!!script.src && re.test(script.src));
-          verdicts.set(script, verdict);
+          reflectApply(weakSet, verdicts, [script, verdict]);
         }
         return verdict;
       }, null);
@@ -1071,7 +1110,7 @@
       var re = toRegExp(needle);
       proxyApply('eval', function (fn, thisArg, args) {
         if (re.test(String(args[0]))) return;
-        return Reflect.apply(fn, thisArg, args);
+        return reflectApply(fn, thisArg, args);
       });
     },
     'json-edit': function (query) { jsonEditParse(compileJSONPath(query, false)); },
@@ -1109,14 +1148,14 @@
       var offset = parseInt(argPos, 10) || 0;
       proxyApply(chain, function (fn, thisArg, args) {
         var i = argPos === 'this' ? -1 : offset >= 0 ? offset : args.length + offset;
-        if (argPos !== 'this' && (i < 0 || i >= args.length)) return Reflect.apply(fn, thisArg, args);
+        if (argPos !== 'this' && (i < 0 || i >= args.length)) return reflectApply(fn, thisArg, args);
         var before = i < 0 ? thisArg : args[i];
         if (!cond || cond.test(String(before))) {
           var after = replacer ? (typeof before === 'string' ? before.replace(replacer.re, replacer.replacement) : before)
             : !isNaN(delta) ? (typeof before === 'number' ? before + delta : before) : value;
           if (i < 0) thisArg = after; else args[i] = after;
         }
-        return Reflect.apply(fn, thisArg, args);
+        return reflectApply(fn, thisArg, args);
       });
     },
     'trusted-replace-outbound-text': function (chain, pattern, replacement) {
@@ -1127,7 +1166,7 @@
       if (rep.indexOf('json:') === 0) { try { rep = nativeJSONParse(rep.slice(5)); } catch (e) { return; } }
       var base64 = options.encoding === 'base64';
       proxyApply(chain, function (fn, thisArg, args) {
-        var encoded = Reflect.apply(fn, thisArg, args);
+        var encoded = reflectApply(fn, thisArg, args);
         if (typeof encoded !== 'string') return encoded;
         try {
           var text = base64 ? self.atob(encoded) : encoded;
@@ -1272,7 +1311,7 @@
       if (targets) { targets.push(target); return; }
       targets = domBypassTargets[method] = [target];
       proxyApply(method, function (fn, thisArg, args) {
-        var r = Reflect.apply(fn, thisArg, args);
+        var r = reflectApply(fn, thisArg, args);
         for (var i = 0; i < args.length; i++) {
           var el = args[i], win;
           try {
@@ -1305,7 +1344,7 @@
       paths = inboundEdits[key] = [path];
       proxyApply(method, function (fn, thisArg, args) {
         var i = pos >= 0 ? pos : args.length + pos;
-        if (i < 0 || i >= args.length) return Reflect.apply(fn, thisArg, args);
+        if (i < 0 || i >= args.length) return reflectApply(fn, thisArg, args);
         for (var p = 0; p < paths.length; p++) {
           var obj = args[i];
           if (!obj || typeof obj !== 'object') break;
@@ -1313,7 +1352,7 @@
             if (paths[p].matches(obj)) args[i] = paths[p].apply(nativeJSONParse(nativeJSONStringify(obj)));
           } catch (e) {}
         }
-        return Reflect.apply(fn, thisArg, args);
+        return reflectApply(fn, thisArg, args);
       });
     },
     // Clicks each comma-separated selector in turn: a single one after `delay` ms, a sequence its first

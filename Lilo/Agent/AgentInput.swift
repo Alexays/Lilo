@@ -18,6 +18,8 @@ enum AgentInput {
         _ webView: WKWebView, at point: CGPoint, button: MouseButton = .left,
         clickCount: Int = 1, modifiers: NSEvent.ModifierFlags = []
     ) async {
+        // A target that appears or wakes only on hover gets the pointer first, as under a mouse.
+        move(webView, to: point)
         AgentCursorView.show(in: webView, at: point, pressed: true)
         let (down, up): (NSEvent.EventType, NSEvent.EventType) = switch button {
         case .left: (.leftMouseDown, .leftMouseUp)
@@ -56,10 +58,12 @@ enum AgentInput {
     /// Positive `deltaY` scrolls the page down, positive `deltaX` scrolls it right.
     static func scroll(_ webView: WKWebView, at point: CGPoint, deltaX: CGFloat, deltaY: CGFloat, showsCursor: Bool = true) {
         if showsCursor { AgentCursorView.show(in: webView, at: point, animated: true) }
+        // Deltas come unchecked from extensions and the agent: clamped so Int32 never traps, NaN and infinity included.
+        let wheel = { (delta: CGFloat) in Int32(max(-1_000_000, min(1_000_000, -delta.rounded()))) }
         guard let window = unsafe webView.window,
               let cgEvent = CGEvent(
                 scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2,
-                wheel1: Int32(-deltaY.rounded()), wheel2: Int32(-deltaX.rounded()), wheel3: 0
+                wheel1: wheel(deltaY), wheel2: wheel(deltaX), wheel3: 0
               ) else { return }
         let screenPoint = window.convertPoint(toScreen: windowPoint(webView, point))
         // CGEvent locations are global, origin top left of the main display.

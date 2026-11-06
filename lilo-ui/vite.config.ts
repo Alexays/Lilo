@@ -83,16 +83,7 @@ export default defineConfig({
 		// The bundle only ever runs in the app's WKWebView on macOS 27+ (Safari 27
 		// engine), so target it exactly and skip legacy transpilation/polyfills.
 		target: "safari27",
-		minify: "terser",
 		cssMinify: "lightningcss",
-		terserOptions: {
-			compress: {
-				passes: 3,
-				drop_console: true,
-				drop_debugger: true,
-			},
-			mangle: true,
-		},
 		assetsInlineLimit: 0,
 		// public/ holds images the app bundle ships as resources (project.yml); the embed is text only.
 		copyPublicDir: false,
@@ -101,6 +92,7 @@ export default defineConfig({
 		rolldownOptions: {
 			output: {
 				entryFileNames: "index.js",
+				minify: { compress: { dropConsole: true } },
 				// The first frame in one chunk beside the entry: every boundary between chunks costs
 				// import and export plumbing on each launch. The entry stays index.js, which the app times.
 				codeSplitting: {

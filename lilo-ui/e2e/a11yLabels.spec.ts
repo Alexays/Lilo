@@ -54,6 +54,27 @@ test("the sidebar, bottom bar and URL bar name every control", async ({ page }) 
 	expect(await a11yProblems(page)).toEqual([]);
 });
 
+test("a pinned tab away from its home page names the page it shows", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-home")!.homeTitle = "Inbox";
+	await bootChrome(page, world);
+	await expect(page.locator('[role=treeitem][data-tab-id="tab-home"]')).toHaveAttribute("aria-label", /^Inbox, Pinned Home, /);
+});
+
+test("the sidebar resize handle takes focus and resizes with the arrows", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => document.documentElement.style.setProperty("--sidebar-width", "260px"));
+	const handle = page.getByRole("separator", { name: "Sidebar width" });
+
+	await handle.focus();
+	await expect(handle).toHaveAttribute("aria-valuenow", "260");
+	await page.keyboard.press("ArrowRight");
+	await expect(handle).toHaveAttribute("aria-valuenow", "268");
+	expect((await sentCommands(page)).filter((c) => c.action === "sidebarResized").at(-1)?.payload).toMatchObject({ width: 268 });
+	await page.keyboard.press("ArrowLeft");
+	await expect(handle).toHaveAttribute("aria-valuenow", "260");
+});
+
 test("the site drawer names every control", async ({ page }) => {
 	const world = initialWorld();
 	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.isCameraActive = true;

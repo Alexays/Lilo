@@ -61,6 +61,8 @@ export function dndItem(
 	let autoScrollRemainder = 0;
 	let lastEvent: PointerEvent | null = null;
 	let hasStarted = false;
+	// Measured when the drag starts, before the store announces it: most presses are plain clicks.
+	let sourceRect: DOMRect | null = null;
 	let didNotifyStart = false;
 	let didCapturePointer = false;
 	let lastNotifiedTarget: DndResolvedTarget | null = null;
@@ -89,14 +91,17 @@ export function dndItem(
 
 	function resolvePointerFrame(): void {
 		if (!lastEvent) return;
-		hasStarted = hasStarted || movementFromStart(lastEvent) >= DRAG_START_THRESHOLD_PX;
+		if (!hasStarted && movementFromStart(lastEvent) >= DRAG_START_THRESHOLD_PX) {
+			hasStarted = true;
+			sourceRect = node.getBoundingClientRect();
+		}
 		const target = dndEngineStore.updatePointer(pointerPoint(lastEvent), hasStarted);
 		const drag = dndEngineStore.activeDrag;
-		if (!drag || !hasStarted) return;
+		if (!drag || !sourceRect) return;
 		if (!previewElement) {
-			previewElement = createDragPreview(node, drag.source.sourceRect, current.item, drag.startPoint);
+			previewElement = createDragPreview(node, sourceRect, current.item, drag.startPoint);
 		}
-		updateDragPreview(previewElement, drag);
+		updateDragPreview(previewElement, drag, sourceRect);
 		setPreviewCompact(
 			previewElement,
 			!!drag.target && (drag.target.onItemId !== undefined || dndEngineStore.getZoneMeta(drag.target.zoneId)?.compactPreview === true),
@@ -267,6 +272,7 @@ export function dndItem(
 
 		activePointerId = event.pointerId;
 		hasStarted = false;
+		sourceRect = null;
 		didNotifyStart = false;
 		didCapturePointer = false;
 		autoScrollZone = null;
@@ -278,7 +284,6 @@ export function dndItem(
 			item: current.item,
 			zoneId: current.zoneId,
 			element: node,
-			sourceRect: node.getBoundingClientRect(),
 		}, pointerPoint(event));
 	}
 
@@ -329,13 +334,13 @@ export function dndItem(
 			}
 		}
 		removeWindowPointerListeners();
-		if (drag?.started && previewElement) {
+		if (drag?.started && previewElement && sourceRect) {
 			if (previewDropRect) {
 				animateDropPreview(previewElement, previewDropRect, drag.source.item.id);
 			} else if (drag.target) {
 				animateDropCompletePreview(previewElement);
 			} else {
-				animateSnapBackPreview(previewElement, drag);
+				animateSnapBackPreview(previewElement, sourceRect);
 			}
 			previewElement = null;
 		} else {
@@ -374,8 +379,8 @@ export function dndItem(
 			}
 		}
 		removeWindowPointerListeners();
-		if (drag?.started && previewElement) {
-			animateSnapBackPreview(previewElement, drag);
+		if (drag?.started && previewElement && sourceRect) {
+			animateSnapBackPreview(previewElement, sourceRect);
 			previewElement = null;
 		} else {
 			destroyDragPreview();
@@ -461,10 +466,14 @@ function createDragPreview(node: HTMLElement, rect: DOMRect, item: DndItem, grab
 	return preview;
 }
 
-function updateDragPreview(preview: HTMLElement, drag: NonNullable<typeof dndEngineStore.activeDrag>): void {
+function updateDragPreview(
+	preview: HTMLElement,
+	drag: NonNullable<typeof dndEngineStore.activeDrag>,
+	sourceRect: DOMRect,
+): void {
 	// Kept inside the window: a pane grabbed by its middle and aimed at the left edge of the
 	// split row would otherwise slide half off-screen.
-	const { left, top, width } = drag.source.sourceRect;
+	const { left, top, width } = sourceRect;
 	const minX = PREVIEW_EDGE_PX - left;
 	const maxX = window.innerWidth - PREVIEW_EDGE_PX - left - width;
 	const deltaX = Math.min(Math.max(drag.currentPoint.x - drag.startPoint.x, minX), Math.max(minX, maxX));
@@ -545,16 +554,12 @@ function bounceEasing(): string {
 	return getComputedStyle(document.documentElement).getPropertyValue("--motion-ease-bounce").trim() || SPRING_EASING;
 }
 
-function animateSnapBackPreview(
-	preview: HTMLElement,
-	drag: NonNullable<typeof dndEngineStore.activeDrag>,
-): void {
+function animateSnapBackPreview(preview: HTMLElement, sourceRect: DOMRect): void {
 	if (prefersReducedMotion()) {
 		preview.remove();
 		return;
 	}
 	const previewRect = preview.getBoundingClientRect();
-	const sourceRect = drag.source.sourceRect;
 	const deltaX = sourceRect.left - previewRect.left;
 	const deltaY = sourceRect.top - previewRect.top;
 	const scaleX = sourceRect.width > 0 ? sourceRect.width / Math.max(previewRect.width, 1) : 1;

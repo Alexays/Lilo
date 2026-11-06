@@ -7,6 +7,13 @@ import WebKit
 // MARK: - Downloads Setup
 
 extension MainWindowController {
+    /// The downloads the window lists: its private space's while it shows one, else its profile's.
+    var downloadStore: DownloadStore? {
+        guard let spaceId = tabManager.currentSpaceId else { return profileContext?.downloads }
+        if let store = context.downloadManager.privateStores[spaceId] { return store }
+        return context.spaceManager?.space(with: spaceId)?.isPrivate == true ? nil : profileContext?.downloads
+    }
+
     func setupDownloads() {
         context.downloadManager.downloadsFolderProvider = { [weak context] in context?.settingsStore?.downloadsFolder }
         context.downloadManager.chooseDestination = { [weak context] proposed, webView, prompts in

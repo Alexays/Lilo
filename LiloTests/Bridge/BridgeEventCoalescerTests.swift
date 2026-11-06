@@ -169,6 +169,24 @@ final class BridgeEventCoalescerTests: XCTestCase {
         XCTAssertNil(BridgeEventCoalescer.coalescingTabId(for: "downloadUpdated", data: ["state": "complete"]))
     }
 
+    // MARK: - conversationUpdate: keyed per conversation, updates appended in order
+
+    func test_add_conversationUpdate_appendsUpdatesInOrderPerConversation() {
+        var coalescer = BridgeEventCoalescer()
+        XCTAssertTrue(coalescer.add(event: "conversationUpdate", data: ["tabId": "a", "updates": [["n": 1]]]),
+                      "streamed chunks must wait for the flush window, not cost one call each")
+        XCTAssertTrue(coalescer.add(event: "conversationUpdate", data: ["tabId": "b", "updates": [["n": 9]]]))
+        XCTAssertTrue(coalescer.add(event: "conversationUpdate", data: ["tabId": "a", "updates": [["n": 2]]]))
+        XCTAssertTrue(coalescer.add(event: "conversationUpdate", data: ["tabId": "a", "updates": [["n": 3]]]))
+
+        let drained = coalescer.drain()
+        XCTAssertEqual(drained.count, 2, "one payload per conversation")
+        let byTab = Dictionary(uniqueKeysWithValues: drained.map { ($0.data["tabId"] as? String, $0.data) })
+        XCTAssertEqual((byTab["a"]?["updates"] as? [[String: Int]])?.map { $0["n"] }, [1, 2, 3])
+        XCTAssertEqual((byTab["b"]?["updates"] as? [[String: Int]])?.map { $0["n"] }, [9])
+        XCTAssertTrue(coalescer.drain().isEmpty)
+    }
+
     // MARK: - add / drain integration
 
     func testCoalescerConcatenatesOperationsForSameTab() {

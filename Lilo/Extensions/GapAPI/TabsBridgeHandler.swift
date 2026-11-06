@@ -49,9 +49,12 @@ final class TabsBridgeHandler: GapHandler {
         case "tabs.unsplit":
             let splitViewId = call.int("splitViewId") ?? Self.splitViewIdNone
             guard splitViewId != Self.splitViewIdNone else { return BridgeError("Invalid split view id: \(splitViewId).") }
+            // Split ids count across every profile and space: a split is the caller's only in one of its windows.
+            let windows = call.context.map { call.registry.extensionWindows(for: $0) } ?? []
             guard let context = contextProvider(call.registry),
                   let folderId = folderIdBySplitId[splitViewId],
-                  let folder = context.tabManager.folder(id: folderId), folder.isSplit,
+                  let folder = windows.lazy.compactMap(\.spaceId).compactMap({ context.tabManager.folders(forSpace: $0).first { $0.id == folderId } }).first,
+                  folder.isSplit,
                   (try? context.applyCommand(.deleteFolder(spaceId: folder.spaceId, folderId: folderId))) != nil else {
                 return BridgeError("No split view with id: \(splitViewId).")
             }

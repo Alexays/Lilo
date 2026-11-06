@@ -18,8 +18,9 @@ import type {
 } from "../lib/bridge/protocol";
 import { formatAgo } from "./tabSwitcher.svelte";
 import { formatTerminalDuration } from "../lib/terminalTitle";
-import { getLocale, t } from "../lib/i18n/state.svelte";
+import { getFormatLocale, getLocale, t } from "../lib/i18n/state.svelte";
 import { getSetting } from "./settings.svelte";
+import { getSidebarsBySpace } from "./sidebar.svelte";
 import { shortcutKeys } from "./shortcutKeys.svelte";
 import {
 	getActiveTab,
@@ -161,6 +162,17 @@ export function noteActiveTab(tabId: string, now = Date.now()): void {
 	} else {
 		tabActivations.set(tabId, { count: 1, at: now });
 	}
+}
+
+// Deferred past the rest of the patch: a tab moved to another space leaves its source before the
+// target receives it. A closed pinned or bookmarked tab stays in the sidebar and keeps its rank.
+export function forgetClosedTabActivations(closedTabIds: string[]): void {
+	queueMicrotask(() => {
+		const spaces = Object.values(getSidebarsBySpace());
+		for (const id of closedTabIds) {
+			if (!spaces.some((space) => space.view.tabsById.has(id))) tabActivations.delete(id);
+		}
+	});
 }
 
 // Set by computeResults: the history visits of the current query's candidates, by URL.
@@ -616,6 +628,10 @@ function autofillResult(query: string, history: CommandResult[], tabs: TabState[
 	const origins = new Map<string, string>();
 	const note = (url: string | undefined, count: number) => {
 		if (!url || !/^https?:\/\//i.test(url)) return;
+		// The string prefix check skips URL parsing for the many entries that cannot match; userinfo
+		// ("user@") hides the host from it.
+		const address = addressOf(url);
+		if (!address.startsWith(query) && !address.includes("@")) return;
 		const host = hostOf(url);
 		if (!host?.startsWith(query) || host.length === query.length) return;
 		if (!origins.has(host)) origins.set(host, `${new URL(url).origin}/`);
@@ -905,7 +921,7 @@ function buildArchiveSections(query: string, archived: BridgeArchivedTab[]): Com
 	const needle = query.toLowerCase();
 	const now = Date.now();
 	// One formatter for every row: an Intl formatter is costly to build.
-	const format = new Intl.RelativeTimeFormat(getLocale(), { numeric: "auto" });
+	const format = new Intl.RelativeTimeFormat(getFormatLocale(), { numeric: "auto" });
 	const results = archived
 		.filter((tab) => !needle || `${tab.title} ${tab.url}`.toLowerCase().includes(needle))
 		.map((tab) => createResult(`archived:${tab.id}`, "archivedTab", tab.title || tab.url, { id: tab.id }, {

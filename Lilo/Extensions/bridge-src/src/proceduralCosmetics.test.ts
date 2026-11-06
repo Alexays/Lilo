@@ -125,6 +125,7 @@ function run(
 			observer = cb;
 		}
 		observe() {}
+		disconnect() {}
 	}
 	let timers: (() => void)[] = [];
 	const setTimeout = (cb: () => void) => timers.push(cb);
@@ -220,6 +221,32 @@ describe("procedural cosmetics", () => {
 		assert.equal(post.style.hidden, true);
 	});
 
+	test("an ancestor's text is read again only when inserted text matches", () => {
+		const html = new FakeNode("html");
+		const box = html.append(new FakeNode("box", "Regular"));
+		const page = run([".box:has-text(Sponsored)"], (css) => html.querySelectorAll(css));
+		const reads = box.textReads;
+
+		page.mutate([{ target: box, addedNodes: [box.append(new FakeNode("item", "Regular"))] }]);
+		page.tick();
+		assert.equal(box.textReads, reads);
+
+		page.mutate([{ target: box, addedNodes: [box.append(new FakeNode("item", "Sponsored"))] }]);
+		page.tick();
+		assert.equal(box.style.hidden, true);
+	});
+
+	test("an ancestor is tested again when the rest of the chain looks at the inserted subtree", () => {
+		const html = new FakeNode("html");
+		const box = html.append(new FakeNode("box", "Sponsored"));
+		const page = run([".box:has-text(Sponsored):has(.item:has-text(Ad))"], (css) => html.querySelectorAll(css));
+		assert.equal(box.style.hidden, false);
+
+		page.mutate([{ target: box, addedNodes: [box.append(new FakeNode("item", "Ad"))] }]);
+		page.tick();
+		assert.equal(box.style.hidden, true);
+	});
+
 	test("an element's text is read once per pass", () => {
 		const html = new FakeNode("html");
 		const post = html.append(new FakeNode("post", "Sponsored"));
@@ -228,7 +255,7 @@ describe("procedural cosmetics", () => {
 		assert.equal(post.textReads, 1);
 	});
 
-	test("insertions in a hidden page wait for a full pass once visible", () => {
+	test("insertions in a hidden page wait for a scoped pass once visible", () => {
 		const html = new FakeNode("html");
 		let documentQueries = 0;
 		const page = run([".post:has-text(Sponsored)"], (css) => {
@@ -240,6 +267,24 @@ describe("procedural cosmetics", () => {
 		page.mutate([{ target: html, addedNodes: [ad] }]);
 		page.tick();
 		assert.equal(ad.style.hidden, false);
+
+		page.doc.hidden = false;
+		page.dispatch("visibilitychange");
+		assert.equal(ad.style.hidden, true);
+		assert.equal(documentQueries, 1);
+	});
+
+	test("too many insertions in a hidden page wait for a full pass once visible", () => {
+		const html = new FakeNode("html");
+		let documentQueries = 0;
+		const page = run([".post:has-text(Sponsored)"], (css) => {
+			documentQueries++;
+			return html.querySelectorAll(css);
+		});
+		page.doc.hidden = true;
+		const posts = Array.from({ length: 2001 }, () => html.append(new FakeNode("post", "Regular")));
+		const ad = html.append(new FakeNode("post", "Sponsored"));
+		page.mutate([{ target: html, addedNodes: [...posts, ad] }]);
 
 		page.doc.hidden = false;
 		page.dispatch("visibilitychange");

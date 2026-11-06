@@ -32,7 +32,20 @@ final class SessionsBridgeHandlerTests: XCTestCase {
         let firstTab = try XCTUnwrap(sessions.first?["tab"] as? [String: Any])
         XCTAssertEqual(firstTab["url"] as? String, "https://a.example/x")
         XCTAssertEqual(firstTab["sessionId"] as? String, String(entries[0].id))
-        XCTAssertEqual(firstTab["title"] as? String, "a.example")
+        XCTAssertEqual(firstTab["title"] as? String, "a.example", "a page closed without a title is named by its host")
+        XCTAssertEqual(sessions.first?["lastModified"] as? Int, Int(entries[0].closedAt.timeIntervalSince1970))
+    }
+
+    func test_getRecentlyClosed_names_a_page_by_its_title() async throws {
+        var closed = RecentlyClosedStack()
+        closed.push(.page(URL(string: "https://a.example/x")!, title: "Example page"), spaceId: UUID(), parentFolderId: nil, section: nil, sortOrder: nil)
+        let handler = SessionsBridgeHandler(contextProvider: { _ in
+            SessionsContext(recentlyClosed: closed.recentEntries, restore: { _ in })
+        })
+
+        let result = await handler.handle(try message("sessions.getRecentlyClosed"))
+
+        XCTAssertEqual(((result as? [[String: Any]])?.first?["tab"] as? [String: Any])?["title"] as? String, "Example page")
     }
 
     func test_getRecentlyClosed_honors_maxResults() async throws {

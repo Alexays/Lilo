@@ -6,6 +6,7 @@ import {
 	getActivePanel,
 	openScreenshotPanel,
 } from "./panels.svelte";
+import { showUndoToast } from "./undoToast.svelte";
 import { createHistory, type History } from "../lib/screenshot/history";
 import { createAnnotation as createAnnotationFn, resizeAnnotation as resizeAnnotationFn } from "../lib/screenshot/annotationModel";
 import type { Annotation, Box, ToolKind, Handle } from "../lib/screenshot/annotationModel";
@@ -18,7 +19,6 @@ interface CapturedImage {
 	filename: string;
 }
 
-type Toast = { kind: "saved" | "copied" | "notice" | "error"; message: string };
 type Flattener = () => Promise<string | null>;
 
 let _open = $state(false);
@@ -29,7 +29,6 @@ let _loading = $state(false);
 let dropPendingCapture = false;
 // The editor asked for a save: a capture card's save must not close it on another capture.
 let savePending = false;
-let _toast = $state<Toast | null>(null);
 
 // Persisted across captures (not reset): last tool / colour / stroke.
 let _tool = $state<ToolKind>("arrow");
@@ -53,15 +52,6 @@ export const LINE_TYPES = new Set<Annotation["type"]>(["arrow", "rect", "ellipse
 
 let history: History<Annotation[]> = createHistory<Annotation[]>([]);
 let flattener: Flattener | null = null;
-let toastTimer: ReturnType<typeof setTimeout> | undefined;
-
-// Shows a toast and auto-dismisses it after a short delay (replacing any previous one).
-function showToast(toast: Toast): void {
-	_toast = toast;
-	if (toastTimer) clearTimeout(toastTimer);
-	// A notice is a sentence to read, not a confirmation to glance at.
-	toastTimer = setTimeout(() => { _toast = null; }, toast.kind === "notice" ? 6000 : 2600);
-}
 
 function syncFlags(): void {
 	_canUndo = history.canUndo();
@@ -112,7 +102,7 @@ async function exportNow(): Promise<ScreenshotExport | null> {
 	if (_annotations.length === 0) return { id: _captured.id, crop: _crop };
 	const png = flattener ? await flattener().catch(() => null) : null;
 	if (!png) {
-		showToast({ kind: "error", message: t("screenshot.exportFailed") });
+		showUndoToast(t("screenshot.exportFailed"));
 		return null;
 	}
 	return { id: _captured.id, dataURL: png };
@@ -122,7 +112,6 @@ export const screenshotEditor = {
 	get open(): boolean { return _open; },
 	get captured(): CapturedImage | null { return _captured; },
 	get loading(): boolean { return _loading; },
-	get toast(): Toast | null { return _toast; },
 	get tool(): ToolKind { return _tool; },
 	get color(): string { return _color; },
 	get strokeWidth(): number { return _strokeWidth; },
@@ -263,7 +252,7 @@ export const screenshotEditor = {
 		if (!capture) return;
 		screenshotActions.copy(capture);
 		doClose();
-		showToast({ kind: "copied", message: t("screenshot.copied") });
+		showUndoToast(t("screenshot.copied"));
 	},
 	cancel(): void {
 		if (_captured) screenshotActions.cancel(_captured.id);
@@ -272,10 +261,6 @@ export const screenshotEditor = {
 	close(): void { doClose(); },
 	// The capture's image is decoded (or failed to load): the editor can show it.
 	imageReady(): void { _loading = false; },
-	clearToast(): void {
-		_toast = null;
-		if (toastTimer) clearTimeout(toastTimer);
-	},
 };
 
 /** Wire native screenshot events to the store. Call once at app init. */
@@ -299,16 +284,17 @@ export function initScreenshotEditor(): void {
 		_loading = true;
 		_open = true;
 		openScreenshotPanel();
-		if (data.truncated) showToast({ kind: "notice", message: t("screenshot.truncated") });
+		// A notice is a sentence to read, not a confirmation to glance at.
+		if (data.truncated) showUndoToast(t("screenshot.truncated"), undefined, 6000);
 	});
 	on("screenshotSaved", (data) => {
 		if (savePending) doClose();
-		showToast({ kind: "saved", message: data.path });
+		showUndoToast(t("screenshot.savedTo", { path: data.path }));
 	});
 	on("screenshotError", (data) => {
 		if (_loading && !_captured) doClose();
 		dropPendingCapture = false;
 		savePending = false;
-		showToast({ kind: "error", message: data.message });
+		showUndoToast(data.message);
 	});
 }

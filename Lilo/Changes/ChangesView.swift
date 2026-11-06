@@ -329,7 +329,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
                     let unchanged: Bool
                     if let diff, let shown = self.diff {
                         unchanged = diff.bytes == shown.bytes && diff.base == shown.base && diff.mergeBase == shown.mergeBase
-                            && diff.files.elementsEqual(shown.files) { $0.path == $1.path && $0.isBinary == $1.isBinary }
+                            && diff.isTooLarge == shown.isTooLarge && diff.files.elementsEqual(shown.files) { $0.path == $1.path && $0.isBinary == $1.isBinary }
                     } else {
                         unchanged = diff == nil && failed
                     }
@@ -504,8 +504,11 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         countsChip.isHidden = isEmpty
         emptyTitle.isHidden = !isEmpty || (diff == nil && !failed)
         emptyDetail.isHidden = emptyTitle.isHidden
-        emptyButton.isHidden = emptyTitle.isHidden || failed
-        if failed {
+        emptyButton.isHidden = emptyTitle.isHidden || failed || diff?.isTooLarge == true
+        if diff?.isTooLarge == true {
+            emptyTitle.stringValue = "Changes too large to show".localized
+            emptyDetail.stringValue = "Lilo shows diffs of up to 256 MB.".localized
+        } else if failed {
             emptyTitle.stringValue = "Lilo could not read this repository.".localized
             emptyDetail.stringValue = mode == .branch
                 ? "No main or master branch to compare with.".localized
@@ -527,7 +530,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         modeControl.toolTip = against
         countsChip.toolTip = against
         guard let diff, !isEmpty else { return }
-        countLabel.stringValue = unsafe files.count == 1 ? "1 file".localized : String(format: "%@ files".localized, files.count.formatted())
+        countLabel.stringValue = unsafe String(format: "%@ files".localized(count: files.count), files.count.formatted())
         countsChip.set(added: diff.added, removed: diff.removed)
     }
 
@@ -960,7 +963,7 @@ final class ChangesDiffView: NSView {
     func scrollToFile(_ index: Int, animated: Bool = false) {
         guard index < fileRows.count else { return }
         let point = NSPoint(x: visibleRect.minX, y: CGFloat(fileRows[index]) * rowHeight)
-        guard animated, let scrollView = enclosingScrollView else { return scroll(point) }
+        guard animated, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, let scrollView = enclosingScrollView else { return scroll(point) }
         let clip = scrollView.contentView
         let target = clip.constrainBoundsRect(NSRect(origin: point, size: clip.bounds.size)).origin
         NSAnimationContext.runAnimationGroup { context in
@@ -1041,8 +1044,8 @@ final class ChangesDiffView: NSView {
 
     private func foldedText(_ file: GitDiff.File) -> String {
         unsafe file.isBinary ? "Binary file, not shown".localized
-            : Self.isGenerated(file.path) ? String(format: "Generated file, %d lines folded. Click to show.".localized, file.lines.count)
-            : String(format: "%d lines folded. Click to show.".localized, file.lines.count)
+            : Self.isGenerated(file.path) ? String(format: "Generated file, %d lines folded. Click to show.".localized(count: file.lines.count), file.lines.count)
+            : String(format: "%d lines folded. Click to show.".localized(count: file.lines.count), file.lines.count)
     }
 
     /// A hairline across the diff, the hunk's range dimmed and the enclosing function, when git
@@ -1795,7 +1798,7 @@ private final class ChangesListCell: NSView {
 
     override func accessibilityLabel() -> String? {
         guard case let .folder(path, count, _) = content else { return nil }
-        return unsafe path + ", " + (count == 1 ? "1 file".localized : String(format: "%@ files".localized, count.formatted()))
+        return unsafe path + ", " + String(format: "%@ files".localized(count: count), count.formatted())
     }
 
     override func accessibilityValue() -> Any? {

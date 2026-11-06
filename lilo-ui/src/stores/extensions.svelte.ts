@@ -26,7 +26,7 @@ let _extensions = $state.raw<ExtensionState[]>([]);
 
 // Each command's intent is tracked here until `extensionsChanged` or its `extensionActionCompleted` ack confirms
 // it, keeping the toggles from showing a state the backend hasn't reached.
-type PendingAction = "enable" | "disable" | "uninstall";
+type PendingAction = "enable" | "disable" | "uninstall" | "reload";
 
 interface PendingEntry {
 	action: PendingAction;
@@ -42,13 +42,17 @@ let _pending = $state.raw<Record<string, PendingEntry>>({});
 let _errors = $state.raw<Record<string, boolean>>({});
 // Updates download a package, far longer than the pending timeout: they settle only on the native ack.
 let _updating = $state.raw<Record<string, boolean>>({});
-// A store install waits on a download and the native review dialog: it too settles on the native ack.
-let _installing = $state.raw<Record<string, boolean>>({});
+// A store install waits on a download and the native review dialog: it too settles on the native ack,
+// whose outcome stays until the next attempt so the URL bar and onboarding can report it.
+type InstallState = "installing" | "installed" | "failed" | "cancelled";
+let _installs = $state.raw<Record<string, InstallState>>({});
 let _updateCheck = $state.raw<BridgeExtensionUpdateCheck>({});
 let _downloadUiEnabled = $state(true);
 // The profile Settings > Extensions shows instead of the window's, and its rows once they arrive.
 let _shownProfileId = $state("");
 let _profileExtensions = $state.raw<{ profileId: string; live: boolean; extensions: ExtensionState[] } | null>(null);
+// The last shortcut the detail page asked for, and once refused, what already holds its keys.
+let _shortcutAttempt = $state.raw<{ id: string; command: string; owner: string } | null>(null);
 
 // Icons are rendered as <img src>; only data:image/ URLs from the native side
 // are trusted. Anything else (javascript:, http(s):, arbitrary schemes) is dropped.
@@ -84,7 +88,6 @@ function parseExtension(
 			data?.iconDataURL === undefined && data?.isEnabled
 				? (previous?.iconDataURL ?? "")
 				: sanitizeIconDataURL(data?.iconDataURL),
-		iconVersion: data?.iconVersion ?? 0,
 		hasPopup: data?.hasPopup ?? false,
 		hasBackground: data?.hasBackground ?? false,
 		hasContentScripts: data?.hasContentScripts ?? false,
@@ -96,13 +99,15 @@ function parseExtension(
 		actionLabel: coerceString(data?.actionLabel),
 		permissions: data?.permissions ?? [],
 		hostPermissions: data?.hostPermissions ?? [],
-		siteAccess: data?.siteAccess ?? [],
+		siteAccess: data?.siteAccess ?? null,
 		omniboxKeyword: data?.omniboxKeyword || undefined,
 		error: coerceString(data?.error),
 		availableUpdate: coerceString(data?.availableUpdate),
 		declinedUpdate: coerceString(data?.declinedUpdate),
 		webStoreURL: coerceString(data?.webStoreURL),
+		isUnpacked: data?.isUnpacked ?? false,
 		allowsPrivateAccess: data?.allowsPrivateAccess ?? false,
+		privateAccessNotAllowed: data?.privateAccessNotAllowed ?? false,
 		allowsUserScripts: data?.allowsUserScripts ?? false,
 		hostAccessRequest: data?.hostAccessRequest ?? false,
 		commands: data?.commands ?? [],
@@ -122,6 +127,9 @@ function isActionSatisfied(
 			return snapshot?.isEnabled === false;
 		case "uninstall":
 			return snapshot === undefined;
+		// The row reads enabled before and after: only the native ack settles it.
+		case "reload":
+			return false;
 	}
 }
 
@@ -211,9 +219,16 @@ export function initExtensionStore(): void {
 	});
 	on("extensionActionCompleted", (data) => {
 		if (typeof data?.id !== "string") return;
+		if (data.action === "shortcut") {
+			if (_shortcutAttempt?.id === data.id && data.success !== true) {
+				_shortcutAttempt = { ..._shortcutAttempt, owner: data.error ?? "" };
+			}
+			return;
+		}
 		if (data.action === "install") {
-			const { [data.id]: _removed, ...rest } = _installing;
-			_installing = rest;
+			// A failure without an error is the user declining the review dialog.
+			const outcome = data.success === true ? "installed" : data.error ? "failed" : "cancelled";
+			_installs = { ..._installs, [data.id]: outcome };
 			return;
 		}
 		if (data.action !== "update") {
@@ -298,14 +313,31 @@ export function isExtensionUpdating(id: string): boolean {
 }
 
 export function isExtensionInstalling(id: string): boolean {
-	return _installing[id] === true;
+	return _installs[id] === "installing";
+}
+
+/** How the last store install of this id ended; undefined before any or while it runs. */
+export function getInstallOutcome(id: string): Exclude<InstallState, "installing"> | undefined {
+	const state = _installs[id];
+	return state === "installing" ? undefined : state;
 }
 
 /** Installs a Chrome Web Store extension by id into the current profile. */
 export function installStoreExtension(id: string): void {
-	if (_installing[id]) return;
-	_installing = { ..._installing, [id]: true };
+	if (_installs[id] === "installing") return;
+	_installs = { ..._installs, [id]: "installing" };
 	extensionActions.install(`https://chromewebstore.google.com/detail/${id}`);
+}
+
+/** Rebinds a command; an empty `key` removes its shortcut. The host refuses keys something else holds. */
+export function setCommandShortcut(id: string, command: string, key: string, modifiers: number, profileId?: string): void {
+	_shortcutAttempt = { id, command, owner: "" };
+	extensionActions.setCommandShortcut(id, command, key, modifiers, profileId);
+}
+
+/** What holds the keys last refused for the command, or "". */
+export function getShortcutConflict(id: string, command: string): string {
+	return _shortcutAttempt?.id === id && _shortcutAttempt.command === command ? _shortcutAttempt.owner : "";
 }
 
 export function getExtensionUpdateCheck(): BridgeExtensionUpdateCheck {
@@ -343,6 +375,11 @@ export function enableExtension(id: string, profileId?: string): void {
 
 export function disableExtension(id: string, profileId?: string): void {
 	beginAction(id, "disable", profileId, () => extensionActions.disable(id, profileId));
+}
+
+/** Loads an unpacked extension again from its folder. */
+export function reloadExtension(id: string, profileId?: string): void {
+	beginAction(id, "reload", profileId, () => extensionActions.reload(id, profileId));
 }
 
 export function uninstallExtension(id: string, profileId?: string): void {

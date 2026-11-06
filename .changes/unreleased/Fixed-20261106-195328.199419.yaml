@@ -1,0 +1,3 @@
+kind: Fixed
+body: When a window's interface recovers from a crash, site permission prompts still waiting for an answer show again, a pending share picker closes so the site can ask again, and the command bar and History keep their site icons
+time: 2026-11-06T19:53:28.199419+01:00

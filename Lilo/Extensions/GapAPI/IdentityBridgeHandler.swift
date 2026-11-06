@@ -139,6 +139,9 @@ final class IdentityBridgeHandler: GapHandler {
     private static let nonInteractiveTimeout: TimeInterval = 30
     /// One flow per extension, so one extension cannot cancel another's sign-in.
     private var authFlowPanels: [String: AuthFlowPanel] = [:]
+    /// Tokens by keychain account, so a valid one is served without a keychain round trip; the keychain
+    /// only carries them across launches.
+    private var tokens: [String: (token: String, expiresAt: Date)] = [:]
 
     let gapActions: Set<String> = [
         "identity.launchWebAuthFlow",
@@ -152,9 +155,9 @@ final class IdentityBridgeHandler: GapHandler {
             switch call.action {
             // The sign-in page runs in the calling extension's profile store, so its session stays there.
             case "identity.launchWebAuthFlow":
-                return try await launchWebAuthFlow(details: call.payload, extensionId: call.extensionId, dataStore: WKWebsiteDataStore(forIdentifier: call.registry.profileId))
+                return try await launchWebAuthFlow(details: call.payload, extensionId: call.extensionId, dataStore: WKEngineFactory.persistentDataStore(for: call.registry.profileId))
             case "identity.getAuthToken":
-                return try await getAuthToken(call, dataStore: WKWebsiteDataStore(forIdentifier: call.registry.profileId))
+                return try await getAuthToken(call, dataStore: WKEngineFactory.persistentDataStore(for: call.registry.profileId))
             case "identity.removeCachedAuthToken":
                 guard let token = call.string("token"), !token.isEmpty else { throw IdentityError.missingToken }
                 try removeTokens(of: call, matching: token)
@@ -249,6 +252,7 @@ final class IdentityBridgeHandler: GapHandler {
 
     /// The token cached under `account`, nil once it expires within the minute.
     private func cachedToken(account: String) throws -> String? {
+        if let cached = tokens[account] { return cached.expiresAt > Date().addingTimeInterval(60) ? cached.token : nil }
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: Self.keychainService, kSecAttrAccount as String: account,
             kSecReturnData as String: true, kSecReturnAttributes as String: true]
@@ -260,8 +264,10 @@ final class IdentityBridgeHandler: GapHandler {
         }
         guard let item = result as? [String: Any], let data = item[kSecValueData as String] as? Data else { throw IdentityError.invalidKeychainData }
         let expiresAt = (item[kSecAttrGeneric as String] as? Data).flatMap { String(data: $0, encoding: .utf8) }.flatMap(TimeInterval.init)
-        guard let expiresAt, Date(timeIntervalSince1970: expiresAt) > Date().addingTimeInterval(60) else { return nil }
-        return String(data: data, encoding: .utf8)
+        guard let expiresAt, Date(timeIntervalSince1970: expiresAt) > Date().addingTimeInterval(60),
+              let token = String(data: data, encoding: .utf8) else { return nil }
+        tokens[account] = (token, Date(timeIntervalSince1970: expiresAt))
+        return token
     }
 
     private func storeToken(_ token: String, account: String, expiresAt: Date) throws {
@@ -274,6 +280,7 @@ final class IdentityBridgeHandler: GapHandler {
         attributes[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         let status = SecItemAdd(attributes as CFDictionary, nil)
         guard status == errSecSuccess else { throw keychainError(status, context: "Failed to store token") }
+        tokens[account] = (token, expiresAt)
     }
 
     /// Keyed by profile and extension, so neither another extension nor the same one in another profile
@@ -285,6 +292,8 @@ final class IdentityBridgeHandler: GapHandler {
     /// Removes the extension's cached tokens, or only those equal to `token`. The keychain never
     /// matches on a secret and returns secrets one item at a time, so accounts are listed first.
     private func removeTokens(of call: GapCall, matching token: String?) throws {
+        let prefix = Self.accountPrefix(of: call)
+        tokens = tokens.filter { !$0.key.hasPrefix(prefix) || (token != nil && $0.value.token != token) }
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: Self.keychainService, kSecMatchLimit as String: kSecMatchLimitAll,
             kSecReturnAttributes as String: true]
@@ -295,7 +304,6 @@ final class IdentityBridgeHandler: GapHandler {
             throw keychainError(status, context: "Failed to list tokens")
         }
         let accounts = (result as? [[String: Any]] ?? []).compactMap { $0[kSecAttrAccount as String] as? String }
-        let prefix = Self.accountPrefix(of: call)
         for account in accounts where account.hasPrefix(prefix) {
             let item: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: Self.keychainService, kSecAttrAccount as String: account]

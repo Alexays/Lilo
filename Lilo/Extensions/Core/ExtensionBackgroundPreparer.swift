@@ -87,6 +87,7 @@ enum ExtensionBackgroundPreparer {
     }
 
     private static func prepareUnstamped(extensionURL: URL, preludeSource: String, compatSource: String?) throws -> PreparationResult {
+        try rewriteAsStrictJSON(extensionURL: extensionURL)
         guard var manifest = try readManifest(at: extensionURL) else { return .notNeeded }
         let original = manifest as NSDictionary
         acceptAsChrome(&manifest, extensionURL: extensionURL)
@@ -116,6 +117,20 @@ enum ExtensionBackgroundPreparer {
             try writeIfChanged(try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys]), to: manifestURL)
         }
         return result
+    }
+
+    /// Chrome reads manifest.json and messages.json with comments, WebKit without: each file only JSON5 parses is
+    /// rewritten as strict JSON.
+    static func rewriteAsStrictJSON(extensionURL: URL) throws {
+        let locales = (try? FileManager.default.contentsOfDirectory(at: extensionURL.appendingPathComponent("_locales", isDirectory: true), includingPropertiesForKeys: nil)) ?? []
+        for url in [extensionURL.appendingPathComponent("manifest.json")] + locales.map({ $0.appendingPathComponent("messages.json") }) {
+            guard let data = try? Data(contentsOf: url), (try? JSONSerialization.jsonObject(with: data)) == nil,
+                  let object = try? JSONSerialization.jsonObject(with: data, options: .json5Allowed),
+                  // JSON5's NaN and Infinity have no JSON form: writing them raises instead of throwing.
+                  JSONSerialization.isValidJSONObject(object) else { continue }
+            try verifyWriteTargetInside(extensionURL, target: url)
+            try JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]).write(to: url, options: .atomic)
+        }
     }
 
     private static func readManifest(at extensionURL: URL) throws -> [String: Any]? {
@@ -503,7 +518,7 @@ enum ExtensionBackgroundPreparer {
     private static let frameKeyPath = "_lilo/frame-key"
     private static let frameKeyPlaceholder = "__LILO_FRAME_KEY__"
 
-    /// Prepends a compat content script to every isolated-world JS entry so APIs WebKit omits there (`chrome.storage.managed`) exist
+    /// Prepends a compat content script to the isolated-world JS entries so APIs WebKit omits there (`chrome.storage.managed`) exist
     /// before the extension's scripts; never MAIN-world, where it would leak. Written for every extension, as the bridge also prepends it
     /// to the scripts `chrome.scripting` injects, and rewritten on every call so Lilo updates apply.
     private static func prepareContentScriptCompat(extensionURL: URL, manifest: inout [String: Any], compatSource: String) throws {
@@ -511,6 +526,7 @@ enum ExtensionBackgroundPreparer {
         var changed = false
         // The extension's own lists, kept in `lilo_js` once changed: getManifest shows them (chromeManifest).
         let own = contentScripts.map { ($0[originalScriptsKey] ?? $0["js"]) as? [String] ?? [] }
+        let carriesCompat = contentScripts.indices.filter { !own[$0].isEmpty && (contentScripts[$0]["world"] as? String)?.uppercased() != "MAIN" }
         for index in contentScripts.indices {
             let js = contentScripts[index]["js"] as? [String] ?? []
             let isMain = (contentScripts[index]["world"] as? String)?.uppercased() == "MAIN"
@@ -522,7 +538,12 @@ enum ExtensionBackgroundPreparer {
                 }
             }.map(\.element)
             if kept.isEmpty && isMain { kept = files }
-            let updated = isMain || own[index].isEmpty ? kept : [contentCompatPath] + kept
+            // The compat skips a world it ran in already: an entry gets it from one running first in its frames,
+            // unless it would be left empty.
+            let compatRunsFirst = !kept.isEmpty && carriesCompat.contains { other in
+                other != index && injectsFirst(contentScripts[other], other, over: contentScripts[index], index)
+            }
+            let updated = isMain || own[index].isEmpty || compatRunsFirst ? kept : [contentCompatPath] + kept
             contentScripts[index][originalScriptsKey] = kept == files ? nil : own[index]
             guard updated != js || kept != files else { continue }
             contentScripts[index]["js"] = updated

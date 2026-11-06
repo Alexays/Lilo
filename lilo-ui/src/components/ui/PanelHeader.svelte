@@ -3,6 +3,7 @@
   import { chromeActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
+  import Icon from "./Icon.svelte";
 
   interface Props {
     title: string;
@@ -21,14 +22,7 @@
       <div class="panel-header-actions">{@render actions()}</div>
     {/if}
     <button class="panel-close" onclick={onclose} aria-label={t("common.close")}>
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path
-          d="M2 2l8 8M10 2l-8 8"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-        />
-      </svg>
+      <Icon name="close" size={16} />
     </button>
   </div>
   <h2 class="panel-title">{title}</h2>

@@ -43,6 +43,37 @@ jobs:
         with:
           path: .derived.noindex/xcode/SourcePackages
           key: spm-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      # The UI build build.yml's release-build saves.
+      - name: Restore the UI build
+        id: ui-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            Lilo/Generated/ChromeUIAssets.swift
+            Lilo/Generated/NativeStrings.swift
+          key: ui-${{ hashFiles('lilo-ui/package-lock.json', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+      - name: Build the UI
+        if: steps.ui-cache.outputs.cache-hit != 'true'
+        run: |
+          npm --prefix lilo-ui ci --ignore-scripts
+          make ui-build
+      # As in build.yml's app job: unchanged files keep the date of their content, so the cached build stays valid.
+      - name: Date files by their content
+        run: |
+          { git ls-files -s -z
+            for f in Lilo/Generated/ChromeUIAssets.swift Lilo/Generated/NativeStrings.swift; do
+              printf '100644 %s 0\t%s\0' "$(git hash-object "$f")" "$f"
+            done; } | python3 scripts/pin_mtimes.py
+          defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
+      # The Debug build products build.yml saves from main: the smoke's build compiles only what changed since.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .derived.noindex/xcode
+            !.derived.noindex/xcode/SourcePackages
+            !.derived.noindex/xcode/Logs
+          key: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
+          restore-keys: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
       - name: Extension smoke of the sentinels
         id: smoke
         run: make ext-smoke-pr

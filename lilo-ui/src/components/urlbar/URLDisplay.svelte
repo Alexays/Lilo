@@ -4,12 +4,12 @@
   import { on } from "../../lib/bridge";
   import { announce } from "../../lib/announce";
   import { tooltip } from "../../lib/tooltip";
-  import { chromeActions, extensionActions, settingsActions, terminalActions } from "../../lib/bridge/actions";
+  import { chromeActions, settingsActions, terminalActions } from "../../lib/bridge/actions";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { getRecoveredPage } from "../../stores/pageHang.svelte";
   import { copyText } from "../../lib/clipboard";
   import { isCommandBarOpen, openCommandBar } from "../../stores/commandBar.svelte";
-  import { getExtensions } from "../../stores/extensions.svelte";
+  import { getExtensions, getInstallOutcome, installStoreExtension } from "../../stores/extensions.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import {
     getTrackersBlocked,
@@ -79,7 +79,6 @@
   let hideProgressTimeout: ReturnType<typeof setTimeout> | null = null;
   let progressTrickleInterval: ReturnType<typeof setInterval> | null = null;
   let hideToastTimeout: ReturnType<typeof setTimeout> | null = null;
-  let installFeedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   let hideHostShiftTimeout: ReturnType<typeof setTimeout> | null = null;
   let toastVisible = $state(false);
   let toastToken = $state(0);
@@ -266,7 +265,7 @@
   // Asked once at startup so the invite can appear without opening Settings.
   onMount(() => settingsActions.loadDefaultBrowserStatus());
 
-  function handleClick(event: MouseEvent) {
+  function handleClick() {
     closeDetails();
     openCommandBar(activeTabURL, false, true);
   }
@@ -369,7 +368,7 @@
     return `${collapsedSubdomains}.${root}${port}`;
   }
 
-  function buildURLVisual(url: string): URLVisual {
+  function buildURLVisual(url: string, notSecure: boolean): URLVisual {
     if (!url) {
       return {
         key: "__empty__",
@@ -378,6 +377,7 @@
         hostIdentity: "__empty__",
         path: "",
         isSecure: false,
+        insecure: false,
         isPlaceholder: true,
       };
     }
@@ -394,6 +394,7 @@
           hostIdentity: parsed.hostname || host,
           path: remainder,
           isSecure: parsed.protocol === "https:",
+          insecure: parsed.protocol === "http:" || (parsed.protocol === "https:" && notSecure),
           isPlaceholder: false,
         };
       }
@@ -408,6 +409,7 @@
         hostIdentity: protocol,
         path: opaquePath,
         isSecure: false,
+        insecure: false,
         isPlaceholder: false,
       };
     } catch {
@@ -418,6 +420,7 @@
         hostIdentity: url,
         path: "",
         isSecure: false,
+        insecure: false,
         isPlaceholder: false,
       };
     }
@@ -435,13 +438,15 @@
       hostIdentity: `feedback-${variant}`,
       path: "",
       isSecure: false,
+      insecure: false,
       isPlaceholder: false,
       isFeedback: true,
       feedbackVariant: variant,
     };
   }
 
-  const urlVisual = $derived.by(() => buildURLVisual(activeTabURL));
+  const activeNotSecure = $derived(getActiveTab()?.isNotSecure ?? false);
+  const urlVisual = $derived.by(() => buildURLVisual(activeTabURL, activeNotSecure));
 
   const detailsAvailable = $derived(showsLocation && !isCommandBarOpen());
   // A terminal's folder is already the bar's bold part, so its card has no title.
@@ -449,7 +454,8 @@
 
   const detailsLocation = $derived.by((): DetailLocation => {
     if (showsLocation) return { before: locationParent, strong: locationName, after: "", code: true };
-    const [, scheme = "", host = "", rest = ""] = /^([a-z][\w+.-]*:\/\/)?([^/?#]*)(.*)$/is.exec(activeTabURL) ?? [];
+    // Credentials in the authority are dropped: they would read as the host.
+    const [, scheme = "", host = "", rest = ""] = /^(?:([a-z][\w+.-]*:\/\/)(?:[^/?#@]*@)?)?([^/?#]*)(.*)$/is.exec(activeTabURL) ?? [];
     return { before: scheme === "https://" ? "" : scheme, strong: host, after: rest, code: false };
   });
 
@@ -509,11 +515,9 @@
           label: t("urlBar.details.blocking"),
           value: allowlisted
             ? t("urlToast.adsAllowed")
-            : count > 1
+            : count > 0
               ? t("urlToast.trackersBlockedLabel", { count })
-              : count === 1
-                ? t("urlToast.trackerBlockedLabel", { count })
-                : t("urlToast.adsBlocked"),
+              : t("urlToast.adsBlocked"),
           tone: allowlisted ? "muted" : undefined,
         });
       }
@@ -584,13 +588,12 @@
 
   function installChromeWebStoreExtension(e: MouseEvent) {
     e.stopPropagation();
-    if (!activeTabURL || !chromeWebStoreExtensionId) {
+    if (!chromeWebStoreExtensionId) {
       return;
     }
 
     pendingInstallExtensionId = chromeWebStoreExtensionId;
-    scheduleInstallFeedbackTimeout(chromeWebStoreExtensionId);
-    extensionActions.install(activeTabURL);
+    installStoreExtension(chromeWebStoreExtensionId);
   }
 
   function clearProgressHideTimeout() {
@@ -665,11 +668,6 @@
     hideToastTimeout = null;
   }
 
-  function clearInstallFeedbackTimeout() {
-    if (installFeedbackTimeout !== null) clearTimeout(installFeedbackTimeout);
-    installFeedbackTimeout = null;
-  }
-
   function clearHostShiftTimeout() {
     if (hideHostShiftTimeout !== null) clearTimeout(hideHostShiftTimeout);
     hideHostShiftTimeout = null;
@@ -688,25 +686,12 @@
     }, TOAST_DURATION_MS);
   }
 
-  function scheduleInstallFeedbackTimeout(extensionId: string) {
-    clearInstallFeedbackTimeout();
-    installFeedbackTimeout = setTimeout(() => {
-      if (pendingInstallExtensionId === extensionId) {
-        pendingInstallExtensionId = null;
-        showToast("failed", t("urlToast.failed"));
-      }
-
-      installFeedbackTimeout = null;
-    }, 12000);
-  }
-
   $effect(() => {
     return () => {
       clearProgressCompleteTimeout();
       clearProgressHideTimeout();
       clearProgressTrickleInterval();
       clearToastTimeout();
-      clearInstallFeedbackTimeout();
       clearHostShiftTimeout();
     };
   });
@@ -744,15 +729,14 @@
       return;
     }
 
-    if (
-      !getExtensions().some((extension) => extension.id === pendingExtensionId)
-    ) {
+    const outcome = getInstallOutcome(pendingExtensionId);
+    if (!outcome) {
       return;
     }
 
     pendingInstallExtensionId = null;
-    clearInstallFeedbackTimeout();
-    showToast("installed", t("urlToast.installed"));
+    if (outcome === "installed") showToast("installed", t("urlToast.installed"));
+    else if (outcome === "failed") showToast("failed", t("urlToast.installFailed"));
   });
 
   $effect(() => {
@@ -1203,7 +1187,7 @@
 
   /* The address bar paints its own surface underneath, so the button needs a tint above it. */
   .knob {
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .permissions-btn:is(:hover, .active) .knob.a {

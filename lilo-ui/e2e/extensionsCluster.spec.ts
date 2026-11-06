@@ -60,6 +60,32 @@ test("the popover lists every enabled extension and opens its popup", async ({
 	expect(opened?.payload.id).toBe("ext-vault");
 });
 
+test("a click on a disabled action opens the extension's menu instead of its popup", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(
+		(extensions) => {
+			window.__lilo!.receive({ event: "extensionsChanged", ids: extensions.map((e) => e.id), extensions });
+			window.__lilo!.receive({ event: "settingsLoaded", settings: { pinnedExtensions: "ext-vault" } });
+		},
+		[
+			{ ...extension("ext-vault", "Bitwarden"), actionEnabled: false },
+			{ ...extension("ext-marks", "Raindrop"), actionEnabled: false },
+		],
+	);
+
+	// force: Playwright waits on aria-disabled, which marks the action, not the button.
+	await page.locator(".extension-cluster").getByRole("button", { name: "Bitwarden" }).click({ force: true });
+	await page.locator(".extension-menu-btn").click();
+	await page.locator(".extensions-popover").getByRole("menuitem", { name: "Raindrop" }).click({ force: true });
+
+	const commands = await sentCommands(page);
+	expect(commands.filter((c) => c.action === "showExtensionContextMenu").map((c) => c.payload.id)).toEqual([
+		"ext-vault",
+		"ext-marks",
+	]);
+	expect(commands.some((c) => c.action === "openExtensionPopup")).toBe(false);
+});
+
 test("pinning moves an extension into the address bar and persists it", async ({
 	page,
 }) => {
@@ -243,8 +269,10 @@ test.describe("in French", () => {
 	test("each footer action of the popover holds on one line", async ({ page }) => {
 		await bootWithExtensions(page);
 		await page.locator(".extension-menu-btn").click();
+		const actions = page.locator(".extensions-popover .footer-action");
+		await expect(actions).toHaveCount(2);
 
-		const lines = await page.locator(".extensions-popover .footer-action").evaluateAll((buttons) =>
+		const lines = await actions.evaluateAll((buttons) =>
 			buttons.map((button) => {
 				const range = document.createRange();
 				range.selectNodeContents(button);

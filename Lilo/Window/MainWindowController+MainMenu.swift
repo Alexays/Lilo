@@ -153,7 +153,7 @@ extension MainWindowController {
             let title: String
             let symbol: String
             switch entry.content {
-            case .page(let url):
+            case .page(let url, _):
                 let path = url.path == "/" ? "" : url.path
                 title = url.host().map { $0 + path } ?? url.absoluteString
                 symbol = "globe"
@@ -191,9 +191,7 @@ extension MainWindowController {
         menu.removeAllItems()
         let manager = context.downloadManager
         let store = profileContext?.downloads
-        let items = ((try? store?.fetchAll(limit: 16)) ?? [])
-            .filter { $0.id.map { !manager.isPrivateDownload(id: $0, profileId: store?.profileId) } ?? false }
-            .prefix(8)
+        let items = (try? store?.fetchAll(limit: 8)) ?? []
         if items.isEmpty { menu.addItem(withTitle: "No Downloads".localized, action: nil, keyEquivalent: "") }
         for download in items {
             guard let id = download.id, let store else { continue }

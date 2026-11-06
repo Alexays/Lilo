@@ -125,7 +125,7 @@
         stroke="currentColor"
         stroke-width="1.4"
       />
-      <path class="toggle-bar {getTabPosition()}" d={TOGGLE_BAR[getTabPosition()]} stroke="currentColor" stroke-width="1.4" />
+      <path d={TOGGLE_BAR[getTabPosition()]} stroke="currentColor" stroke-width="1.4" />
     </svg>
   </button>
 
@@ -149,7 +149,7 @@
     onpointercancel={cancelHistoryMenuPress}
     onpointerleave={cancelHistoryMenuPress}
   >
-    <svg class="history-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <path
         d="M10 3L5 8L10 13"
         stroke="currentColor"
@@ -172,7 +172,7 @@
     onpointercancel={cancelHistoryMenuPress}
     onpointerleave={cancelHistoryMenuPress}
   >
-    <svg class="history-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <path
         d="M6 3L11 8L6 13"
         stroke="currentColor"
@@ -297,9 +297,9 @@
 
   .nav-morph-stroke {
     transition:
-      stroke-dashoffset 220ms var(--motion-ease-spring),
+      stroke-dashoffset var(--motion-duration-overlay) var(--motion-ease-spring),
       opacity var(--motion-duration-normal) ease,
-      transform 220ms var(--motion-ease-spring);
+      transform var(--motion-duration-overlay) var(--motion-ease-spring);
     transform-origin: 50% 50%;
     vector-effect: non-scaling-stroke;
   }
@@ -362,40 +362,13 @@
     color: var(--text-primary);
   }
 
-  /* Each glyph hints at its action on hover. */
-  .toggle-bar,
-  .history-arrow,
-  .nav-morph-icon {
-    transition: transform 320ms var(--motion-ease-spring);
+  .nav-btn:active:not(:disabled) {
+    background: var(--bg-active);
   }
 
-  .nav-btn:hover:not(:disabled) .toggle-bar.left {
-    transform: translateX(1.5px);
-  }
-
-  .nav-btn:hover:not(:disabled) .toggle-bar.right {
-    transform: translateX(-1.5px);
-  }
-
-  .nav-btn:hover:not(:disabled) .toggle-bar.top {
-    transform: translateY(1.5px);
-  }
-
-  .nav-btn:hover:not(:disabled) .toggle-bar.bottom {
-    transform: translateY(-1.5px);
-  }
-
-  .history:hover:not(:disabled) .history-arrow {
-    transform: translateX(-2px);
-  }
-
-  .history.forward:hover:not(:disabled) .history-arrow {
-    transform: translateX(2px);
-  }
-
-  .reload:not(.loading):hover:not(:disabled) .nav-morph-icon {
-    transform: rotate(360deg);
-    transition-duration: 560ms;
+  .nav-btn:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   .nav-btn:disabled {

@@ -33,20 +33,20 @@
   {onclick}
 >
   {#if busy}<span class="ui-button-spinner" aria-hidden="true"></span>{/if}
-  {@render children?.()}
+  <span class="ui-button-label">{@render children?.()}</span>
 </button>
 
 <style>
   .ui-button {
-    min-height: var(--control-height-md);
+    min-height: var(--control-height-sm);
     border: 0;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background: var(--bg-hover);
     color: var(--text-primary);
     font-family: inherit;
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
-    padding: 0 var(--space-12);
+    padding: 0 var(--space-10);
     /* Clipping would let a flex row shrink it under its label: it only ever gives way to max-width. */
     flex-shrink: 0;
     max-width: 100%;
@@ -100,6 +100,15 @@
     background: color-mix(in srgb, var(--danger-deep) 88%, black);
   }
 
+  /* Two :not() so it outranks the ghost hover. --bg-active is white on the light theme. */
+  .ui-button:not(.primary, .danger, .destructive):not(:disabled):active {
+    background: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  }
+
+  .ui-button:is(.primary, .danger, .destructive):not(:disabled):active {
+    filter: brightness(0.92);
+  }
+
   .ui-button:focus-visible {
     outline: var(--focus-outline);
     outline-offset: 1px;
@@ -113,13 +122,22 @@
     cursor: default;
   }
 
+  /* The spinner stacks over the label, which keeps the button's width so nothing beside it moves. */
   .ui-button.busy {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-6);
+    display: inline-grid;
+  }
+
+  .ui-button.busy > * {
+    grid-area: 1 / 1;
+  }
+
+  /* Transparent rather than hidden: the label stays the button's accessible name. */
+  .ui-button.busy .ui-button-label {
+    opacity: 0;
   }
 
   .ui-button-spinner {
+    place-self: center;
     width: 0.8em;
     height: 0.8em;
     border: 0.15em solid currentColor;

@@ -23,6 +23,8 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
     /// The projects of open conversations: the only folders `conversation-file/` reads, and images only.
     static var conversationRoots: Set<String> = []
     private static let conversationImageTypes: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "svg", "heic", "avif"]
+    /// `conversation-file/` tasks whose read is in flight; `webView(_:stop:)` drops a task from it.
+    private var pendingFileReads: Set<ObjectIdentifier> = []
 
     /// Holds `png` until `discardScreenshot(id:)` and returns the URL the editor loads it from.
     static func publishScreenshot(_ png: Data) -> (id: String, url: URL) {
@@ -74,19 +76,30 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         if path.hasPrefix(Self.conversationFilePrefix) {
-            let file = URL(fileURLWithPath: String(path.dropFirst(Self.conversationFilePrefix.count)).removingPercentEncoding ?? "")
-                .standardizedFileURL.resolvingSymlinksInPath()
-            guard Self.conversationImageTypes.contains(file.pathExtension.lowercased()),
-                  Self.conversationRoots.contains(where: { file.path.hasPrefix($0.hasSuffix("/") ? $0 : $0 + "/") }),
-                  ((try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? .max) < 20_000_000,
-                  let data = try? Data(contentsOf: file) else {
-                urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
-                return
+            let key = ObjectIdentifier(urlSchemeTask)
+            let filePath = String(path.dropFirst(Self.conversationFilePrefix.count))
+            let roots = Self.conversationRoots
+            let imageTypes = Self.conversationImageTypes
+            pendingFileReads.insert(key)
+            Task {
+                let read = await Task.detached(priority: .userInitiated) { () -> (data: Data, mimeType: String)? in
+                    let file = URL(fileURLWithPath: filePath.removingPercentEncoding ?? "")
+                        .standardizedFileURL.resolvingSymlinksInPath()
+                    guard imageTypes.contains(file.pathExtension.lowercased()),
+                          roots.contains(where: { file.path.hasPrefix($0.hasSuffix("/") ? $0 : $0 + "/") }),
+                          ((try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? .max) < 20_000_000,
+                          let data = try? Data(contentsOf: file, options: .mappedIfSafe) else { return nil }
+                    return (data, UTType(filenameExtension: file.pathExtension)?.preferredMIMEType ?? "application/octet-stream")
+                }.value
+                guard pendingFileReads.remove(key) != nil else { return }
+                guard let read else {
+                    urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+                    return
+                }
+                urlSchemeTask.didReceive(URLResponse(url: url, mimeType: read.mimeType, expectedContentLength: read.data.count, textEncodingName: nil))
+                urlSchemeTask.didReceive(read.data)
+                urlSchemeTask.didFinish()
             }
-            let mimeType = UTType(filenameExtension: file.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
-            urlSchemeTask.didReceive(URLResponse(url: url, mimeType: mimeType, expectedContentLength: data.count, textEncodingName: nil))
-            urlSchemeTask.didReceive(data)
-            urlSchemeTask.didFinish()
             return
         }
         if path.hasPrefix(Self.passwordManagerPrefix) {
@@ -128,7 +141,10 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
         urlSchemeTask.didFinish()
     }
 
-    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+    // WKURLSchemeTask raises when a stopped task is answered, so a read finishing after stop drops its result.
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
+        pendingFileReads.remove(ObjectIdentifier(urlSchemeTask))
+    }
 
     private func serveReleaseMedia(path: String, task: WKURLSchemeTask, url: URL) {
         guard path.range(of: #"^release-media/[0-9]+\.[0-9]+\.[0-9]+/[a-z0-9-]+\.(png|mp4)$"#, options: .regularExpression) != nil else {

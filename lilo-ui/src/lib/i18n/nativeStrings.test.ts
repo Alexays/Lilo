@@ -53,8 +53,8 @@ test("every native string Lilo localizes has an entry in every catalog", () => {
 
 test("translated menu titles keep the ellipsis of their English ones", () => {
 	for (const { code } of SUPPORTED_LOCALES) {
-		const mismatched = Object.entries(catalogs[code]?.native as Record<string, string>)
-			.filter(([key, value]) => key.endsWith("\u2026") !== value.endsWith("\u2026"))
+		const mismatched = Object.entries(catalogs[code]?.native as Record<string, string | Record<string, string>>)
+			.filter(([key, value]) => typeof value === "string" && key.endsWith("\u2026") !== value.endsWith("\u2026"))
 			.map(([key, value]) => `${JSON.stringify(key)}: ${JSON.stringify(value)}`);
 		assert.deepEqual(mismatched, [], code);
 	}

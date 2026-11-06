@@ -142,7 +142,7 @@
     .onb { background: radial-gradient(70% 60% at 50% 38%, #2c2459 0, #16132b 50%, #0f0f1a 100%) #16132b; }
   }
   .dots { position: absolute; top: 24px; left: 50%; translate: -50% 0; display: flex; gap: 6px; }
-  .dots b { height: 5px; width: 5px; border-radius: var(--radius-chip); background: var(--text-primary-tint-12); transition: width .4s var(--motion-ease-spring), background-color var(--motion-duration-slow); }
+  .dots b { height: 5px; width: 5px; border-radius: var(--radius-chip); background: var(--text-primary-tint-12); transition: width var(--motion-duration-slow) var(--motion-ease-spring), background-color var(--motion-duration-slow); }
   .dots b.on { width: 24px; background: var(--accent); }
   .dots b.done { background: color-mix(in srgb, var(--accent) 45%, transparent); }
   .close { position: absolute; z-index: 1; top: 14px; right: 16px; width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm);
@@ -188,7 +188,7 @@
   :where(.onb) :global(.ob-btn:focus-visible) { outline: var(--focus-outline); outline-offset: 1px; }
 
   .onb { --onb-surface: color-mix(in srgb, var(--bg-elevated) 62%, transparent); --onb-surface-strong: var(--bg-elevated); --onb-edge: var(--text-primary-tint-12); }
-  @media (prefers-reduced-transparency: reduce) { .onb { --onb-surface: var(--bg-elevated); } }
+  :global(html.reduced-transparency) .onb { --onb-surface: var(--bg-elevated); }
   @media (prefers-contrast: more) { .onb { --onb-surface: var(--bg-elevated); --onb-edge: var(--text-secondary); } }
 
   .pill, .toast { position: fixed; z-index: 55; pointer-events: auto; bottom: 24px; right: 24px; border-radius: var(--radius-lg); padding: 10px 16px;
@@ -201,7 +201,7 @@
   .toast button { flex: none; white-space: nowrap; border: 0; border-radius: var(--radius-chip); padding: 6px 14px; background: var(--text-primary); color: var(--bg-primary); cursor: pointer; }
   @keyframes toast-in { from { opacity: 0; transform: translateY(24px); } }
   @media (prefers-reduced-motion: reduce) {
-    .screen { animation: fade .15s both; }
+    .screen { animation: fade .15s both !important; }
     .toast, .dots b { animation: none; transition: none; }
     @keyframes fade { from { opacity: 0; } }
   }

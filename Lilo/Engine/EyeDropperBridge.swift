@@ -27,19 +27,30 @@ final class EyeDropperBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let pageModule = #"""
     function () {
       if (!window.isSecureContext || 'EyeDropper' in window) return;
+      // Promise.prototype.finally would look up the page's then.
+      const then = NativePromise.prototype.then;
       let open = false;
-      class EyeDropper {
+      const instances = new WeakSet(), { add, has } = WeakSet.prototype;
+      // A function, not a class: called without `new`, it throws WebKit's message, not JSC's.
+      function EyeDropper() {
+        if (!new.target) throw new NativeTypeError("Constructor requires 'new' operator");
+        apply(add, instances, [this]);
+      }
+      defineProperty(EyeDropper, 'prototype', { writable: false });
+      lilo.methods(EyeDropper.prototype, {
         open(options) {
+          if (!apply(has, instances, [this])) return NativePromise.reject(new NativeTypeError('Can only call EyeDropper.open on instances of EyeDropper'));
           if (open) return NativePromise.reject(new DOMException('An eye dropper is already open.', 'InvalidStateError'));
           const signal = options && options.signal;
           if (signal && signal.aborted) return NativePromise.reject(signal.reason || new DOMException('Aborted', 'AbortError'));
           open = true;
-          return lilo.post('liloEyeDropper', {}).then(sRGBHex => ({ sRGBHex }), error => {
+          return apply(then, lilo.post('liloEyeDropper', {}), [sRGBHex => { open = false; return { sRGBHex }; }, error => {
+            open = false;
             const text = String(error && error.message || error), match = /^(\w+): (.*)$/.exec(text);
             throw new DOMException(match ? match[2] : text, match ? match[1] : 'AbortError');
-          }).finally(() => { open = false; });
-        }
-      }
+          }]);
+        },
+      });
       lilo.global('EyeDropper', lilo.nativeClass(EyeDropper));
     }
     """#

@@ -24,6 +24,27 @@ test("the shortcuts' Reset all button shows its whole label beside the search fi
 	expect(await reset.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
 });
 
+test("a shortcut conflict moves focus to Replace, and Cancel gives it back to the row's keys", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openShortcuts" }));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "shortcutsLoaded",
+		groups: [{ title: "Tabs", items: [{ id: "tab.new", title: "New Tab", keys: ["⌘T"], custom: false }] }],
+		controlTabOrder: "recent",
+	}));
+	const list = page.locator(".shortcuts-list");
+	const keys = list.locator(".shortcut-keys");
+	await expect(keys).toHaveAttribute("aria-label", "New Tab, ⌘T");
+
+	await keys.click();
+	await page.evaluate(() => window.__lilo!.receive({ event: "shortcutConflict", id: "tab.new", combo: "⌘w", keys: "⌘W", owner: "Close Tab" }));
+	await expect(list.getByRole("button", { name: "Replace" })).toBeFocused();
+	await expect(page.locator(".live-announcer")).toContainText("Close Tab");
+
+	await list.getByRole("button", { name: "Cancel" }).click();
+	await expect(keys).toBeFocused();
+});
+
 test("the agent tiles style their secondary buttons like the other agent rows", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
@@ -55,13 +76,12 @@ test("search engines and link rules share their row actions, and engine fields l
 	});
 	const fieldRadius = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).borderRadius);
 	const ruleAction = await look('[data-rule-index="0"] .rule-actions > .ui-button:last-child');
-	const ruleRadii = [await fieldRadius('[data-rule-index="0"] select'), await fieldRadius('[data-rule-index="0"] input')];
+	const ruleFieldRadius = await fieldRadius('[data-rule-index="0"] input');
 
 	await page.locator(".ui-link-row").filter({ hasText: "Search engines" }).click();
 	await expect(page.locator(".engine-row").first()).toBeVisible();
 	expect(await look(".engine-row .engine-actions > .ui-button:last-child")).toEqual(ruleAction);
-	expect(new Set(ruleRadii).size).toBe(1);
-	expect(await fieldRadius(".engine-row input")).toBe(ruleRadii[0]);
+	expect(await fieldRadius(".engine-row input")).toBe(ruleFieldRadius);
 
 	const rights = await page.locator(".engine-row .engine-fields").evaluateAll((els) => els.map((el) => el.getBoundingClientRect().right));
 	expect(new Set(rights).size).toBe(1);

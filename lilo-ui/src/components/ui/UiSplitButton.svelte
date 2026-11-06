@@ -3,8 +3,10 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { dismissable } from "../../lib/actions/dismissable";
+  import { menuKeys } from "../../lib/actions/menuKeys";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { portal } from "../../lib/actions/portal";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
 
   interface Props {
     /** Names the chevron to VoiceOver ("More ways to answer"). */
@@ -44,19 +46,12 @@
   });
 
   function handleKeydown(event: KeyboardEvent): void {
-    if (event.key === "Escape") {
-      // The menu, not the drawer or card around it, takes this Escape.
-      event.preventDefault();
-      event.stopPropagation();
-      open = false;
-      chevron?.focus();
-      return;
-    }
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    const items = Array.from(menu?.querySelectorAll<HTMLElement>("[role='menuitem']") ?? []);
-    const index = items.indexOf(document.activeElement as HTMLElement);
+    if (event.key !== "Escape") return;
+    // The menu, not the drawer or card around it, takes this Escape.
     event.preventDefault();
-    items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+    event.stopPropagation();
+    open = false;
+    chevron?.focus();
   }
 </script>
 
@@ -87,6 +82,7 @@
   <div
     id={menuId}
     class="ui-split-menu float-surface float-popover"
+    out:popoverOut
     class:up={position.up}
     role="menu"
     tabindex="-1"
@@ -98,6 +94,7 @@
     use:portal
     use:reportInteractiveZone={{ id: `split-${menuId}` }}
     onkeydown={handleKeydown}
+    {@attach menuKeys}
     {@attach dismissable({ onDismiss: () => (open = false), ignore: `[data-split-menu="${menuId}"]`, returnFocus: chevron })}
   >
     {#each variants as variant (variant.label)}

@@ -11,8 +11,8 @@ protocol LidActions: AnyObject {
     func lidOpened(helper: PowerHelperProtocol)
 }
 
-/// Keeps the Mac awake while a terminal command works: an idle-sleep assertion with the lid open,
-/// and, in the lid-closed mode, the root helper's sleep guard with its lid actions and floors.
+/// Keeps the Mac awake while a terminal command works, for at most `maxAwake`: an idle-sleep assertion
+/// with the lid open, and, in the lid-closed mode, the root helper's sleep guard with its lid actions and floors.
 @MainActor
 final class PowerKeeper {
     struct Settings: Equatable {
@@ -79,7 +79,7 @@ final class PowerKeeper {
     private var snoozedWorking: Set<UUID>?
     private var capReached = false
     private var capTimer: DispatchWorkItem?
-    private var holdStartedAt: Date?
+    private var awakeSince: Date?
     private var sampler: Timer?
     private var lidClosed = false
     private var onBattery = false
@@ -140,7 +140,7 @@ final class PowerKeeper {
         }
         if monitorsSystem, settings.lidClosed != (lidObserver != nil) { monitorSystem(settings.lidClosed) }
         if !settings.lidClosed, previous.lidClosed { unregisterWhenReleased() }
-        if settings.maxAwake != previous.maxAwake, link != nil { armCap() }
+        if settings.maxAwake != previous.maxAwake, activity != nil { armCap() }
         update()
     }
 
@@ -151,11 +151,6 @@ final class PowerKeeper {
         helperStatus = installer.status
         helperUnavailable = false
         update()
-    }
-
-    /// Sends the current state even when unchanged, for a window that just asked for it.
-    func republish() {
-        onChange?(state)
     }
 
     // MARK: Terminals
@@ -305,15 +300,20 @@ final class PowerKeeper {
             helperUnavailable = false
         }
         if let snoozed = snoozedWorking, !working.isSubset(of: snoozed) { snoozedWorking = nil }
-        let keepAwake = settings.preventSleep && !working.isEmpty && snoozedWorking == nil
+        let keepAwake = settings.preventSleep && !working.isEmpty && snoozedWorking == nil && !capReached
         if keepAwake, activity == nil {
             activity = ProcessInfo.processInfo.beginActivity(options: .idleSystemSleepDisabled, reason: "A terminal command is working")
+            awakeSince = Date()
+            armCap()
         } else if !keepAwake, let activity {
             ProcessInfo.processInfo.endActivity(activity)
             self.activity = nil
+            awakeSince = nil
+            capTimer?.cancel()
+            capTimer = nil
         }
         let holdLid = keepAwake && settings.lidClosed && helperStatus == "enabled" && !helperUnavailable
-            && !capReached && !batteryTooLow && thermal != .critical
+            && !batteryTooLow && thermal != .critical
         if holdLid, link == nil { startHolding() } else if !holdLid, link != nil { stopHolding() }
         if let link, holdConfirmed {
             if lidClosed != lidActionsApplied {
@@ -342,7 +342,6 @@ final class PowerKeeper {
         }
         self.link = link
         holdConfirmed = false
-        holdStartedAt = Date()
         link.onLost = { [weak self, weak link] invalidated in
             guard let self, let link, self.link === link else { return }
             drop(link)
@@ -362,7 +361,6 @@ final class PowerKeeper {
                 self.update()
             }
         }
-        armCap()
     }
 
     /// Detaches a link the helper no longer serves, putting back what Lilo itself changed.
@@ -378,9 +376,6 @@ final class PowerKeeper {
         holdConfirmed = false
         lidActionsApplied = false
         lowPowerRequested = false
-        capTimer?.cancel()
-        capTimer = nil
-        holdStartedAt = nil
     }
 
     /// Gives everything back, then closes the link once the helper confirmed it, so an unregister
@@ -428,7 +423,7 @@ final class PowerKeeper {
 
     private func armCap() {
         capTimer?.cancel()
-        guard let start = holdStartedAt else { return }
+        guard let start = awakeSince else { return }
         let cap = DispatchWorkItem { [weak self] in
             guard let self else { return }
             capReached = true
@@ -455,14 +450,14 @@ final class PowerKeeper {
     }
 
     private func summarize(_ period: (battery: Int?, finished: Int)) {
-        var parts = unsafe [String(format: "%d commands finished".localized, period.finished)]
+        var parts = unsafe [String(format: "%d commands finished".localized(count: period.finished), period.finished)]
         if let oldest = awaitingSince.values.min() {
             let formatter = DateComponentsFormatter()
             formatter.unitsStyle = .abbreviated
             formatter.allowedUnits = [.hour, .minute]
             formatter.maximumUnitCount = 2
             let waited = formatter.string(from: max(60, Date().timeIntervalSince(oldest))) ?? ""
-            unsafe parts.append(String(format: "%d wait for your answer, the oldest for %@".localized, awaitingSince.count, waited))
+            unsafe parts.append(String(format: "%d wait for your answer, the oldest for %@".localized(count: awaitingSince.count), awaitingSince.count, waited))
         }
         if let before = period.battery, let after = batteryPercent {
             unsafe parts.append(String(format: "battery from %d%% to %d%%".localized, before, after))

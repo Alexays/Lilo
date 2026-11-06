@@ -119,6 +119,8 @@
                 section="pinned"
                 {spaceId}
                 {interactive}
+                scroller={spaceScrollEl}
+                scrollerHeight={scrollViewportHeight}
               />
             </div>
             <div class="space-stack-section space-stack-section-fill">

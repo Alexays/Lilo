@@ -19,9 +19,6 @@
 /release-media/*
   Accept-Ranges: bytes
 
-/img/*
-  Cache-Control: public, max-age=2592000
-
 /favicon.*
   Cache-Control: public, max-age=2592000
 
@@ -58,17 +55,9 @@
 /index.md
   Link: <https://getlilo.app/>; rel="canonical"
 
-/fr/index.md
-  Link: <https://getlilo.app/fr/>; rel="canonical"
+# Also matches /fr/index.md
+/:page/index.md
+  Link: <https://getlilo.app/:page/>; rel="canonical"
 
-/moving/index.md
-  Link: <https://getlilo.app/moving/>; rel="canonical"
-
-/fr/moving/index.md
-  Link: <https://getlilo.app/fr/moving/>; rel="canonical"
-
-/changelog/index.md
-  Link: <https://getlilo.app/changelog/>; rel="canonical"
-
-/fr/changelog/index.md
-  Link: <https://getlilo.app/fr/changelog/>; rel="canonical"
+/fr/:page/index.md
+  Link: <https://getlilo.app/fr/:page/>; rel="canonical"

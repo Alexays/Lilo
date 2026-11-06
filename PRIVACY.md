@@ -28,7 +28,9 @@ Features that keep their own data, all on this Mac:
   Gatekeeper checks them when you first open them.
 - **Diagnostics** (Help > Diagnostics) are built on demand: "Copy report" puts startup metrics and
   tab lifecycle counts on your clipboard, for you to paste where you choose. Lilo sends no crash
-  report; macOS keeps its own under `~/Library/Logs/DiagnosticReports`.
+  report; macOS keeps its own under `~/Library/Logs/DiagnosticReports`. When Lilo quits, it notes in
+  the macOS log on this Mac where the request came from: a key or click, or the identifier of the app
+  that asked, and the name of the last agent tool. It holds no URL, title, or key or text you typed.
 - **Performance recordings** (Help > Record Performance Session) are written to your Downloads
   folder when you stop one, for you to share or delete: timings of Lilo's own work, CPU, memory,
   energy and disk use of its processes, the names of menu commands you used, the ids of your
@@ -48,7 +50,7 @@ the other browser.
 
 ## AI agents
 
-Lilo has no AI of its own. Agent control is off until you turn on Settings > AI agents > "Let AI
+Lilo has no AI of its own. Agent control is off until you turn on Settings > Agents > "Let
 agents use Lilo". Agents connect through `lilo-mcp`, a local MCP server in the app bundle, over a
 Unix socket (`agent.sock` in Lilo's support folder) that only your user account can reach; nothing
 listens on the network.
@@ -82,6 +84,7 @@ Besides the pages you open, Lilo contacts these services:
 | Preload top hit | A site from your history you visit often, loaded with your cookies as if you had opened it | While you type its address in a blank tab, before you press Return | Turn off Preload top hit in Settings |
 | Extension installs and updates | `clients2.google.com` (Chrome Web Store), with the ids and versions of your store extensions | On install, and an update check every five hours while store extensions are installed | Remove store extensions; turning off automatic extension updates only stops installing new versions |
 | Google sign-in for extensions (`chrome.identity.getAuthToken`) | `accounts.google.com`, with the extension's OAuth client id and scopes | Only when an extension asks you to sign in, in a panel you see | Remove the extension, or close the panel |
+| Agents for Conversations | `cdn.agentclientprotocol.com` (the ACP registry, kept a day) and the icon addresses it lists; then the chosen agent itself: its package from npm or PyPI, or its archive from the address the registry lists, checked against the registry's SHA-256 | When you pick an agent or start a conversation | Leave "Conversations with your agents" off in Settings > Agents (off by default) |
 | App updates (Sparkle) | `github.com` (the latest release's `appcast.xml`, then the update itself), with Lilo's version in the User-Agent; no system profile | Once an hour, from the first launch | Turn off automatic updates in Settings |
 
 The Chrome Web Store sees Lilo as Chrome, so its install button (relabeled "Add to Lilo") works (see

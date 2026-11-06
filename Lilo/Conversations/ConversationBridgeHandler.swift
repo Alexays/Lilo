@@ -27,7 +27,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         case "startConversation":
             guard let agentId = payload["agentId"] as? String, let cwd = payload["cwd"] as? String else { return nil }
             let background = payload["background"] as? Bool ?? false
-            guard let tab = window.startConversation(agentId: agentId, cwd: cwd, activate: !background) else { return nil }
+            guard let tab = await window.startConversation(agentId: agentId, cwd: cwd, activate: !background) else { return nil }
             await prompt(tab.id, payload, interrupt: false)
         case "sendConversationPrompt":
             guard let tabId else { return nil }
@@ -154,10 +154,12 @@ final class ConversationBridgeHandler: BridgeHandler {
                 ) as? String, !selection.isEmpty else { continue }
                 blocks.append(["type": "resource", "resource": ["uri": url.absoluteString, "text": selection, "mimeType": "text/plain"]])
             case "screenshot":
-                guard let engine, let image = await engine.takeSnapshot(width: 1280),
-                      let tiff = image.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:])
+                guard let engine, let pixels = await engine.takeSnapshot(width: 1280)?.snapshotPixels,
+                      let base64 = await Task.detached(priority: .userInitiated, operation: {
+                          ScreenshotImageCodec.pngData(pixels)?.base64EncodedString()
+                      }).value
                 else { continue }
-                blocks.append(["type": "image", "data": png.base64EncodedString(), "mimeType": "image/png", "uri": url.absoluteString])
+                blocks.append(["type": "image", "data": base64, "mimeType": "image/png", "uri": url.absoluteString])
             default:
                 // A page's text when its engine is alive; a link the agent can open with Lilo's tools otherwise.
                 if let engine, let pageText = try? await AgentTools.page(engine, "text", ["maxChars": 50_000]) as? String, !pageText.isEmpty {

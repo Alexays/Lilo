@@ -42,7 +42,7 @@ final class ExtensionDiagnosticsTests: XCTestCase {
 
     @MainActor
     func testSettingsDiagnosticsEntriesIncludeContextErrorsWithoutWakeReason() {
-        let entries = SettingsBridgeHandler.extensionDiagnosticsEntries(from: [[
+        var entries = SettingsBridgeHandler.extensionDiagnosticsEntries(from: [[
             "id": "example-id",
             "name": "Example Extension",
             "runtimeStatus": "loaded",
@@ -52,9 +52,17 @@ final class ExtensionDiagnosticsTests: XCTestCase {
                 "domain": "WKWebExtensionContextErrorDomain",
                 "code": 6,
                 "description": "message=\"The background content failed to load due to an error.\" domain=WKWebExtensionContextErrorDomain code=6"
+            ], [
+                "index": 1,
+                "domain": "WKWebExtensionContextErrorDomain",
+                "code": 6,
+                "timestamp": 42.0,
+                "description": "an error first seen earlier"
             ]]
         ]], now: { 123 })
 
+        XCTAssertEqual(entries.last?["timestamp"] as? TimeInterval, 42, "an error keeps the time it was first seen")
+        entries.removeLast()
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries.first?["source"] as? String, "context")
         XCTAssertEqual(entries.first?["extensionId"] as? String, "example-id")

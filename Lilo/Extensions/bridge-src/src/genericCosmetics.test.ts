@@ -11,6 +11,7 @@ interface FakeElement {
 	id: string;
 	hostname?: string;
 	classList: string[];
+	hasAttribute(name: string): boolean;
 	querySelectorAll(sel: string): FakeElement[];
 }
 
@@ -19,6 +20,7 @@ function el(id: string, classes: string[] = [], descendants: FakeElement[] = [])
 		nodeType: 1,
 		id,
 		classList: classes,
+		hasAttribute: (name: string) => name === "class" && classes.length > 0,
 		// "*" is every descendant; the attribute selectors only return what can carry a token.
 		querySelectorAll: (sel: string) =>
 			sel === "*" ? descendants : descendants.filter((d) => d.id || d.classList.length || d.hostname)
@@ -74,7 +76,15 @@ function run(
 	// `parsed` stands for the elements the parser has inserted so far; null means the DOM is complete.
 	const doc = {
 		readyState: parsed ? "loading" : "complete",
-		getElementsByTagName: () => parsed ?? [],
+		// A walker over `parsed`, resuming after the last element it returned.
+		createTreeWalker: () => {
+			let seen = 0;
+			const walker = {
+				currentNode: { isConnected: true },
+				nextNode: () => (parsed && seen < parsed.length ? (walker.currentNode = { isConnected: true }, parsed[seen++]) : null)
+			};
+			return walker;
+		},
 		documentElement,
 		adoptedStyleSheets: [] as FakeSheet[],
 		addEventListener: (type: string, cb: () => void) => {
@@ -108,7 +118,7 @@ function run(
 		.replace("__LILO_KEYED_INDEX__", JSON.stringify(keyed.index))
 		.replace("__LILO_KEYED_GROUPS__", JSON.stringify(keyed.groups))
 		.replace("__LILO_KEYED_TABLE__", JSON.stringify(keyed.entries));
-	const fn = new Function("self", "document", "MutationObserver", "requestAnimationFrame", "location", "CSSStyleSheet", src);
+	const fn = new Function("self", "document", "MutationObserver", "requestAnimationFrame", "location", "CSSStyleSheet", "NodeFilter", src);
 	fn(
 		{
 			CSS: { escape: (s: string) => s },
@@ -124,7 +134,8 @@ function run(
 			frameCallback = cb;
 		},
 		{ host, hostname: host.replace(/:\d+$/, "") },
-		FakeSheet
+		FakeSheet,
+		{ SHOW_ELEMENT: 1 }
 	);
 
 	return {
@@ -237,6 +248,7 @@ describe("generic cosmetics", () => {
 				reads += 1;
 				return ["late-ad"];
 			},
+			hasAttribute: (name: string) => name === "class",
 			querySelectorAll: () => []
 		};
 		// Classless wrappers: the attribute selectors never return them, so only walking every

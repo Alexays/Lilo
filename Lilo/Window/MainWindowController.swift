@@ -197,6 +197,8 @@ final class MainWindowController: NSWindowController {
     var pagePopups: [UUID: PagePopupController] = [:]
     /// Little windows this window opened, keyed by their engine id.
     var littleWindows: [UUID: LittleWindowController] = [:]
+    /// Tabs whose external app prompt is showing.
+    var externalAppPromptTabs: Set<UUID> = []
     /// The extension side panel docked right of the content.
     lazy var sidePanel = SidePanelController(window: self)
     /// The Changes peek over a terminal, if one is open.
@@ -318,8 +320,9 @@ final class MainWindowController: NSWindowController {
     )
     lazy var faviconCoordinator = FaviconCoordinator(
         service: context.faviconService,
-        applyFavicon: { [weak self] tabId, dataURL, color in
-            self?.updateTabFavicon(faviconDataURL: dataURL, dominantColor: color, forTabId: tabId)
+        privateSpaceId: { [weak self] in self?.context.profileManager?.privateSpaceId(of: $0) },
+        applyFavicon: { [weak self] tabId, dataURL, color, iconURL in
+            self?.updateTabFavicon(faviconDataURL: dataURL, dominantColor: color, iconURL: iconURL, forTabId: tabId)
         }
     )
     func enqueueVisibleTabUpdate(_ tab: Tab?, includeFavicon: Bool = false) {
@@ -328,7 +331,7 @@ final class MainWindowController: NSWindowController {
         emitVisibleTabUpdate(tab, spaceId: spaceId, includeFavicon: includeFavicon)
     }
 
-    /// Sent to every window showing the tab's space, each with its own selection.
+    /// Sent to every window showing the tab's space.
     func emitVisibleTabUpdate(_ tab: Tab, spaceId: UUID, includeFavicon: Bool = false) {
         // Runtime patches omit the favicon (the UI keeps the one it has); favicon changes ship it.
         let payload = includeFavicon ? tab.bridgeData : tab.runtimePatchData
@@ -354,7 +357,7 @@ final class MainWindowController: NSWindowController {
             }
         }
         sentTabPatches[id, default: [:]].merge(tabPayload) { $1 }
-        let event = BrowserChangePresenter.tabUpdatedEvent(tabPayload: patch, spaceId: spaceId, activeTabId: tabManager.activeOpenTabId)
+        let event = BrowserChangePresenter.tabUpdatedEvent(tabPayload: patch, spaceId: spaceId)
         bridgeRouter.send(event: event.name, data: event.data)
     }
 
@@ -440,19 +443,35 @@ final class MainWindowController: NSWindowController {
     /// Later full-state payloads for them omit the heavy base64 favicons and the UI keeps the ones
     /// it holds. Re-seeded by `sendInitialState`, cleared per space on an explicit resync request.
     var chromeFaviconSyncedSpaceIds: Set<UUID> = []
+    /// Tabs of synced spaces whose favicon changed while this window did not show their space:
+    /// the next full state ships their favicon again.
+    var chromeStaleFaviconTabIds: Set<UUID> = []
     /// Tab payloads by id as this window's chrome last received them through `tabUpdated`. Every other
     /// event that seeds a tab's state clears its entry, so the next patch after it is complete.
     var sentTabPatches: [String: [String: Any]] = [:]
     /// Extension rows by id as this window's chrome last received them; `extensionsChanged` ships only the diff.
     var sentExtensionRows: [String: [String: Any]] = [:]
+    /// Archived-tab favicons by host as this window's chrome last received them; `archivedTabs` ships only the new ones.
+    var sentArchiveFavicons: [String: String] = [:]
+    /// Command bar and History page handlers, whose favicon caches `sendInitialState` clears.
+    weak var searchHandler: SearchBridgeHandler?
+    weak var historyPageHandler: HistoryPageBridgeHandler?
 
     func emitBrowserChange(_ changes: BrowserChangeSet) {
         guard let event = BrowserChangePresenter.event(
             for: changes,
-            omitFaviconsForSpaces: chromeFaviconSyncedSpaceIds
+            omitFaviconsForSpaces: chromeFaviconSyncedSpaceIds,
+            staleFaviconTabIds: chromeStaleFaviconTabIds
         ) else { return }
         if event.name == "browserStateChanged" {
             chromeFaviconSyncedSpaceIds.formUnion(changes.states.map(\.spaceId))
+            if !chromeStaleFaviconTabIds.isEmpty {
+                for state in changes.states {
+                    for tab in state.projection.tabs { chromeStaleFaviconTabIds.remove(tab.id) }
+                }
+                // Tabs closed before this window showed their space would otherwise stay forever.
+                chromeStaleFaviconTabIds = chromeStaleFaviconTabIds.filter { context.browserState.owningSpaceId(forTab: $0) != nil }
+            }
             sentTabPatches.removeAll(keepingCapacity: true)
         } else if !sentTabPatches.isEmpty, let operations = event.data["operations"] as? [[String: Any]] {
             // A sidebar patch reseeds only the tabs it upserts or removes.
@@ -579,6 +598,7 @@ final class MainWindowController: NSWindowController {
         tabManager.browserStateStore = context.browserState
         tabManager.delegate = self
         tabManager.engineDelegate = self
+        tabManager.pageContainer = contentContainerView
         setupTerminalHost()
         guard !ProcessInfo.isRunningUnderXCTest else { return }
         runStartupSequence()
@@ -661,7 +681,8 @@ final class MainWindowController: NSWindowController {
             StartupMetrics.mark("restoreSession")
             await restoreSession()
             await Task.yield()
-            deleteOrphanedSpaceStates()
+            // Other profiles are swept when one of their spaces is deleted: opening each database here costs every launch.
+            if let profileId = profileContext?.profileId { context.deleteOrphanedSpaceStates(inProfile: profileId) }
         }
     }
 
@@ -739,6 +760,7 @@ extension MainWindowController: TabManager.Delegate {
         }
         guard let engine = manager.engineTab(for: id),
               var tab = manager.activeTab else { return }
+        if engine.visitAwaitsShowing { recordVisit(of: engine, state: tab, renamableUntil: engine.isLoading ? nil : .now + .seconds(5)) }
         // Background loads skip their fractional progress ticks (see didUpdateProgress).
         if tab.estimatedProgress != engine.estimatedProgress,
            let synced = updateRuntimeTab(id: id, mutate: { $0.estimatedProgress = engine.estimatedProgress }) {
@@ -906,6 +928,7 @@ extension MainWindowController: NSWindowDelegate {
             littleWindows.values.forEach { $0.window.close() }
         }
         sidePanel.closeAll()
+        context.conversations.windowClosed(self)
         setWallpaperColorWatch(false)
         // Closing the last window quits the app, after this window has left the registry.
         if context.windows.windows.count == 1 { saveSessionBeforeQuit() }
@@ -918,6 +941,7 @@ extension MainWindowController: NSWindowDelegate {
         context.scheduleWindowsSave()
         teardownTabShare()
         screenshotCaptureId.map(ChromeUISchemeHandler.discardScreenshot)
+        copiedCaptures.keys.forEach(ChromeUISchemeHandler.discardScreenshot)
         floatingTabPanel.dismiss()
         if let window {
             for profile in context.profileContexts.allContexts { profile.extensions.notifyWindowClosed(for: window) }
@@ -956,7 +980,7 @@ extension MainWindowController: NSWindowDelegate {
     /// A lagging read is harmless: the sync has no side effects and the next occlusion notification corrects it.
     override func showWindow(_ sender: Any?) {
         super.showWindow(sender)
-        context.hiddenSpaceLifecycle.syncWindowVisibility(context.windows.windows.contains { $0.window?.occlusionState.contains(.visible) == true })
+        context.hiddenSpaceLifecycle.syncWindowVisibility(context.anyWindowVisible)
     }
 }
 

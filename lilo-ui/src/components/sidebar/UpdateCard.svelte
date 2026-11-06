@@ -212,7 +212,7 @@
     box-shadow: var(--shadow-control), inset 0 1px 0 color-mix(in srgb, white 25%, transparent);
     transition:
       background var(--transition-fast),
-      transform 160ms var(--motion-ease-spring);
+      transform var(--motion-duration-fast) var(--motion-ease-spring);
   }
 
   .update-main:hover .update-go {
@@ -270,7 +270,7 @@
     cursor: pointer;
     transition:
       opacity var(--transition-fast),
-      transform 200ms var(--motion-ease-spring);
+      transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .update-card:hover .update-close,

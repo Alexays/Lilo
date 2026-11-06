@@ -103,6 +103,14 @@ final class ExtensionLifecycleTests: XCTestCase {
         ])
     }
 
+    func testAnUnpackedReloadOfTheSameVersionSendsOnInstalledUpdate() {
+        load(.update(from: "1.0"), version: "1.0", storedVersion: "1.0")
+
+        XCTAssertEqual(heard, [
+            "runtime.onInstalled previousVersion=1.0,reason=update", "runtime.onExtensionLoaded previousVersion=1.0,reason=update"
+        ])
+    }
+
     func testAReloadOfTheSameVersionSendsNothing() {
         load(.reload)
 

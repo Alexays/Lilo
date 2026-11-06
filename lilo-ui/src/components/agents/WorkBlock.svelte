@@ -1,6 +1,7 @@
 <script lang="ts" module>
+  import { getFormatLocale } from "../../lib/i18n/state.svelte";
   import type { ToolCallItem, ToolKind } from "./conversationModel";
-  import type { IconName } from "./icons";
+  import type { IconName } from "../ui/icons";
 
   const KIND_ICONS: Record<ToolKind, IconName> = {
     read: "eye",
@@ -20,6 +21,8 @@
   const BROWSER_TOOL = /\blilo\b|mcp__lilo|tabs_|navigate|computer/i;
   const OUTPUT_TAIL = 12;
   const MAX_OUTPUT = 20000;
+  // Shared by every block of a conversation: a formatter is costly to build.
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
 
   interface CallView {
     call: ToolCallItem;
@@ -78,7 +81,7 @@
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { MOTION } from "../../lib/motion/timings";
   import DiffCard from "./DiffCard.svelte";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import Markdown from "./Markdown.svelte";
   import MascotGlyph from "./MascotGlyph.svelte";
   import ThreadImage from "./ThreadImage.svelte";
@@ -101,18 +104,18 @@
   let { tabId, calls, sig, done, live, cwd, promptIndex, undone }: Props = $props();
 
   let userOpen = $state<boolean | null>(null);
-  // A block where something failed stays open when the turn ends: that is what to read first.
-  const failed = $derived(calls.some((call) => call.status === "failed"));
-  const open = $derived(userOpen ?? (!done || failed));
-  // A folded block from the replay builds its rows on first open.
-  let opened = $state(untrack(() => !done || calls.some((call) => call.status === "failed")));
-  const toggled = new SvelteSet<string>();
-  const fullOutput = new SvelteSet<string>();
-
+  // `calls` is a new array on every frame of the thread: only `sig` says the calls changed.
   const views = $derived.by(() => {
     void sig;
-    return calls.map((call) => describe(call, cwd));
+    return untrack(() => calls).map((call) => describe(call, cwd));
   });
+  // A block where something failed stays open when the turn ends: that is what to read first.
+  const failed = $derived(views.some((view) => view.call.status === "failed"));
+  const open = $derived(userOpen ?? (!done || failed));
+  // A folded block from the replay builds its rows on first open.
+  let opened = $state(untrack(() => !done || failed));
+  const toggled = new SvelteSet<string>();
+  const fullOutput = new SvelteSet<string>();
 
   const summary = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one run
@@ -151,7 +154,7 @@
       }
     }
     if (files.size) counts.set("edit", files.size);
-    const text = [...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })).join(", ");
+    const text = listFormat.format([...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })));
     return { text: text.charAt(0).toUpperCase() + text.slice(1), added, removed, images, categories: [...counts.keys()] };
   });
 
@@ -459,7 +462,7 @@
     grid-template-rows: 0fr;
     opacity: 0;
     transition:
-      grid-template-rows 150ms var(--motion-ease-spring),
+      grid-template-rows var(--motion-duration-fast) var(--motion-ease-spring),
       opacity var(--motion-duration-fast) ease;
   }
 
@@ -527,7 +530,7 @@
     padding: 0 var(--space-4);
     border-radius: var(--radius-sm);
     background: var(--bg-secondary);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-size: var(--font-size-xs);
   }
 

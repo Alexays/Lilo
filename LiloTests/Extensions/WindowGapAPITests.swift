@@ -251,6 +251,44 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertEqual(details.first?["windowKey"] as? String, keys[position])
     }
 
+    /// A change WebKit does not track goes to `tabs.onUpdated` listeners as the tab's position and the fields it changed, and the
+    /// favicon's address shows only to an extension that may see the tab's url.
+    func testGroupDiscardAndFaviconChangesFireTabUpdates() async throws {
+        let grouped = try openTab("https://other.test/grouped")
+        let unloaded = try openTab("https://other.test/unloaded")
+        _ = try openTab("https://other.test/active")
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let folder = TabFolder(spaceId: spaceId, name: "Group", color: "#1a73e8")
+        try window.applyBrowserCommand(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned))
+        try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: spaceId, kind: .tab, itemId: grouped.id, parentFolderId: folder.id, section: .unpinned,
+            insert: .anchored(fallbackIndex: 0, insertBeforeId: nil, insertAfterId: nil)
+        ))
+        window.tabManager.discardEngines([unloaded.id])
+        window.updateTabFavicon(
+            faviconDataURL: "data:image/png;base64,AA==", dominantColor: nil, iconURL: URL(string: "https://other.test/icon.png"), forTabId: grouped.id
+        )
+
+        let groupedPosition = try XCTUnwrap(registry.tabPosition(of: try XCTUnwrap(window.tabManager.tabAdapter(for: grouped.id)), extensionId: extensionId))
+        let unloadedPosition = try XCTUnwrap(registry.tabPosition(of: try XCTUnwrap(window.tabManager.tabAdapter(for: unloaded.id)), extensionId: extensionId))
+        let updates = queued("tabs.onUpdated")
+        XCTAssertEqual(updates.map { $0["changed"] as? [String] }, [["groupId"], ["discarded"], ["favIconUrl"]])
+        XCTAssertEqual(updates.compactMap { update in update.filter { $0.key != "changed" } as? [String: Int] }, [groupedPosition, unloadedPosition, groupedPosition])
+
+        let hidden = await call("tabs", "details", ["tabs": [groupedPosition]])
+        XCTAssertNil(((hidden.result as? [String: Any])?["tabs"] as? [[String: Any]])?.first?["favIconUrl"], "no access to the tab's host")
+        let folderURL = directory.appendingPathComponent("tabs", isDirectory: true)
+        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        let manifest: [String: Any] = ["manifest_version": 3, "name": "Tabs", "version": "1.0", "permissions": ["tabs"]]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: folderURL.appendingPathComponent("manifest.json"))
+        try await registry.load(from: folderURL)
+        let tabsId = try XCTUnwrap(registry.loadedExtensions.first { $0.id != extensionId }?.id)
+        let adapter = try XCTUnwrap(window.tabManager.tabAdapter(for: grouped.id))
+        let params: [String: Any] = ["tabs": [try XCTUnwrap(registry.tabPosition(of: adapter, extensionId: tabsId))]]
+        let shown = await router.route(namespace: "tabs", method: "details", params: params, extensionId: tabsId, fromWorker: true, registry: registry)
+        XCTAssertEqual(((shown.result as? [String: Any])?["tabs"] as? [[String: Any]])?.first?["favIconUrl"] as? String, "https://other.test/icon.png")
+    }
+
     // MARK: - cookies.getPartitionKey
 
     func testPartitionKeyOfAMainFrameIsItsSite() async throws {

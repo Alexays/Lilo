@@ -1,0 +1,3 @@
+kind: Fixed
+body: Printing a restored tab that never loaded no longer crashes Lilo.
+time: 2026-11-06T19:47:03.935651+01:00

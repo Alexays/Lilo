@@ -105,36 +105,49 @@ final class PageTranslator {
       const parent = node.parentElement;
       return !!parent && !parent.isContentEditable && !parent.closest(skipped) && /\\p{L}/u.test(node.nodeValue);
     };
-    const state = { nodes: [], originals: [], tracked: new WeakSet(), pending: [], wake: null, timer: 0 };
+    // Weak, so the nodes a page drops are freed: only those awaiting their translation are held.
+    const state = { originals: new WeakMap(), ids: new WeakMap(), inflight: new Map(), pending: new Set(), nextId: 0, wake: null, timer: 0 };
     const track = (node) => {
-      state.tracked.add(node);
-      state.pending.push(state.nodes.push(node) - 1);
-      state.originals.push(node.nodeValue);
+      const id = state.nextId++;
+      state.ids.set(node, id);
+      state.inflight.set(id, node);
+      state.pending.add(id);
+      state.originals.set(node, node.nodeValue);
     };
     const collect = (root) => {
       if (root.nodeType === Node.TEXT_NODE) {
-        if (!state.tracked.has(root) && accepts(root)) track(root);
+        if (!state.originals.has(root) && accepts(root)) track(root);
         return;
       }
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-        acceptNode: (node) => !state.tracked.has(node) && accepts(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+        acceptNode: (node) => !state.originals.has(node) && accepts(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
       });
       while (walker.nextNode()) track(walker.currentNode);
     };
     // Bursts of changes (a feed page, a route) go out as one batch.
     state.flush = () => {
-      if (!state.wake || !state.pending.length || state.timer) return;
+      if (!state.wake || !state.pending.size || state.timer) return;
       state.timer = setTimeout(() => {
         state.timer = 0;
-        const ids = state.pending.splice(0), wake = state.wake;
+        const ids = [...state.pending], wake = state.wake;
+        state.pending.clear();
         state.wake = null;
-        wake({ ids, texts: ids.map((id) => state.originals[id].trim()) });
+        wake({ ids, texts: ids.map((id) => state.originals.get(state.inflight.get(id)).trim()) });
       }, 300);
     };
     state.observe = (records) => {
       for (const record of records) {
         if (record.type === "characterData") {
-          if (accepts(record.target)) track(record.target);
+          if (!accepts(record.target)) continue;
+          // A node rewritten many times in one batch is translated once, from its latest text.
+          const node = record.target, id = state.ids.get(node);
+          if (id === undefined) {
+            track(node);
+          } else {
+            state.originals.set(node, node.nodeValue);
+            state.inflight.set(id, node);
+            state.pending.add(id);
+          }
         } else {
           record.addedNodes.forEach(collect);
         }
@@ -142,8 +155,8 @@ final class PageTranslator {
       state.flush();
     };
     collect(document.body ?? document.documentElement);
-    const texts = state.originals.map((text) => text.trim());
-    state.pending = [];
+    const texts = [...state.inflight.values()].map((node) => state.originals.get(node).trim());
+    state.pending.clear();
     state.observer = new MutationObserver(state.observe);
     state.observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
     window.__liloTranslation = state;
@@ -161,8 +174,12 @@ final class PageTranslator {
     if (!state) return false;
     state.observe(state.observer.takeRecords());
     ids.forEach((id, i) => {
-      const original = state.originals[id];
-      state.nodes[id].nodeValue = original.match(/^\\s*/)[0] + texts[i] + original.match(/\\s*$/)[0];
+      const node = state.inflight.get(id);
+      if (!node) return;
+      // A node rewritten since it went out keeps its place for the batch carrying its new text.
+      if (!state.pending.has(id)) state.inflight.delete(id);
+      const original = state.originals.get(node);
+      node.nodeValue = original.match(/^\\s*/)[0] + texts[i] + original.match(/\\s*$/)[0];
     });
     // Its own writes are not the page's changes.
     state.observer.takeRecords();
@@ -176,7 +193,11 @@ final class PageTranslator {
     state.observer.disconnect();
     clearTimeout(state.timer);
     state.wake?.(null);
-    state.nodes.forEach((node, i) => { node.nodeValue = state.originals[i]; });
+    const walker = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const original = state.originals.get(walker.currentNode);
+      if (original !== undefined) walker.currentNode.nodeValue = original;
+    }
     return true;
     """
 }

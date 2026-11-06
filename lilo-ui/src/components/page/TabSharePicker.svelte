@@ -489,7 +489,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-8);
-    height: var(--control-height-md);
+    height: var(--control-height-sm);
     padding: 0 var(--space-8);
     border-radius: var(--radius-sm);
     background: var(--bg-hover);

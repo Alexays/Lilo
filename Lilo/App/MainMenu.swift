@@ -305,9 +305,11 @@ extension AppDelegate {
         }
 
         let loadedExtensions = controller.profileContext?.extensions.loadedExtensions ?? []
+        let activeTab = controller.tabManager.activeOpenTabId.flatMap { controller.tabManager.tabAdapter(for: $0) }
 
         for entry in loadedExtensions {
-            let action = entry.context.action(for: nil)
+            let action = entry.context.action(for: activeTab)
+            let isEnabled = action?.isEnabled ?? true
             let title = action.flatMap { $0.label.isEmpty ? nil : $0.label } ?? entry.id
             let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
             item.image = action?.icon(for: CGSize(width: 16, height: 16))
@@ -316,7 +318,7 @@ extension AppDelegate {
             if !nativeMenuItems.isEmpty {
                 let submenu = NSMenu(title: title)
                 nativeMenuItems.forEach { submenu.addItem($0) }
-                if action?.presentsPopup == true {
+                if isEnabled, action?.presentsPopup == true {
                     submenu.addItem(.separator())
                     let openItem = NSMenuItem(title: "Open Popup".localized, action: #selector(MainWindowController.openExtensionFromMenu(_:)), keyEquivalent: "")
                     openItem.image = MenuIcon.open.image
@@ -324,7 +326,7 @@ extension AppDelegate {
                     submenu.addItem(openItem)
                 }
                 item.submenu = submenu
-            } else {
+            } else if isEnabled {
                 item.action = #selector(MainWindowController.openExtensionFromMenu(_:))
                 item.representedObject = entry.id
             }

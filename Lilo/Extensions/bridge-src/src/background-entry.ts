@@ -16,6 +16,7 @@ import { installChromeCompat } from './shared/chrome-compat.ts';
 import { actionColorAugmentation } from './augmentation/action.ts';
 import { showChromeUserAgent } from './shared/chrome-version.ts';
 import { installNetworkInformation } from './shared/network-information.ts';
+import { installDisposeSymbols } from './shared/dispose-symbols.ts';
 
 // openPopup stays WebKit's own here: the gap path opens the popup of the calling page's window.
 const { openPopup: _pageOnlyOpenPopup, ...workerActionAugmentation } = actionColorAugmentation;
@@ -32,6 +33,10 @@ if (!(globalThis as any).__liloBackgroundPreludeInstalled) {
       try { console.error(`[lilo-prelude] stage "${stage}" failed (continuing):`, err); } catch { /* logging must never throw */ }
     }
   };
+
+  preludeStage('dispose-symbols', () => {
+    installDisposeSymbols(Symbol);
+  });
 
   preludeStage('install-gap-apis', () => {
     const c: any = (globalThis as any).chrome ?? {};

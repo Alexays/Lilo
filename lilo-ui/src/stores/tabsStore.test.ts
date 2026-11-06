@@ -182,7 +182,6 @@ test("browserStatePatch tabUpdated patches one tab without replacing the whole s
 				{
 					kind: "tabUpdated",
 					spaceId: "space",
-					activeTabId: "stable-tab",
 					tab: tab("loading-tab", "space", {
 						title: "Still loading",
 						progress: 0.75,
@@ -317,7 +316,6 @@ test("browserStatePatch tabUpdated without a favicon preserves the existing favi
 			{
 				kind: "tabUpdated",
 				spaceId: "space",
-				activeTabId: "fav-tab",
 				tab: { id: "fav-tab", spaceId: "space", progress: 0.75, isLoading: false },
 			},
 		],

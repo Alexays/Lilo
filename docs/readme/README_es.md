@@ -198,7 +198,7 @@ Lilo se actualiza automáticamente mediante actualizaciones firmadas de Sparkle.
 
 ## Compilar desde el código fuente
 
-Con Xcode 27 y Node.js 22.6+ instalados ([requisitos completos](../../CONTRIBUTING.md#requirements)):
+Con Xcode 27 y Node.js 22.23.4+ instalados ([requisitos completos](../../CONTRIBUTING.md#requirements)):
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo

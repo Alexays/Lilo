@@ -11,12 +11,22 @@ final class PageWorldTests: XCTestCase {
     private static let addedMembers: Set<String> = ["Navigator.prototype.serial", "window.documentPictureInPicture"]
 
     /// Every own property of the window, its interfaces and their prototypes, and the objects Lilo's modules touch, by
-    /// shape; and every function among them that does not print as native code, in its own realm or in a fresh frame's.
+    /// shape; every function among them that does not print as native code, in its own realm or in a fresh frame's; and
+    /// how often Lilo's scripts, a bridge call among them, went through the page's WeakMap and Promise methods meanwhile; and
+    /// what members Lilo replaces or adds do when called on what is not an instance of their interface.
     private static let probe = #"""
+    let hooked = 0;
+    const restores = [[WeakMap.prototype, 'get'], [WeakMap.prototype, 'set'], [Promise.prototype, 'then'], [Promise.prototype, 'finally']]
+      .map(([target, key]) => {
+        const original = target[key];
+        target[key] = new Proxy(original, { apply(f, self, args) { hooked++; return Reflect.apply(f, self, args); } });
+        return () => { target[key] = original; };
+      });
     const dom = document.documentElement.outerHTML, styleSheets = document.styleSheets.length;
     const adoptedStyleSheets = document.adoptedStyleSheets.length;
     const fresh = document.createElement('iframe');
     document.body.appendChild(fresh);
+    if (navigator.serial) navigator.serial.getPorts();
     const freshToString = fresh.contentWindow.Function.prototype.toString;
     const fn = f => typeof f === 'function' ? f.name + '/' + f.length : typeof f;
     const describe = d => 'value' in d ? `v:${d.writable},${d.enumerable},${d.configurable}:${fn(d.value)}`
@@ -54,28 +64,61 @@ final class PageWorldTests: XCTestCase {
     shapes['webkit in window'] = String('webkit' in window);
     shapes['webkit in frame'] = String('webkit' in frame);
     shapes['frame keys'] = Object.keys(frame).join();
-    return JSON.stringify({ shapes, nonNative, userAgent: navigator.userAgent, vendor: navigator.vendor,
-                            userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets });
+    shapes['setTimeout source'] = Function.prototype.toString.call(setTimeout);
+    for (const restore of restores) restore();
+    const misuse = {};
+    const outcome = async (name, call) => {
+      let result;
+      try { result = call(); } catch (e) { return void (misuse[name] = `throws ${e.name}: ${e.message}`); }
+      if (!(result instanceof Promise)) return void (misuse[name] = 'returns ' + Object.prototype.toString.call(result));
+      try { await result; misuse[name] = 'resolves'; } catch (e) { misuse[name] = `rejects ${e.name}: ${e.message}`; }
+    };
+    const getter = (target, key) => Object.getOwnPropertyDescriptor(target, key).get;
+    await outcome('RTCPeerConnection.setRemoteDescription', () => RTCPeerConnection.prototype.setRemoteDescription.call({}));
+    if (window.Serial) {
+      await outcome('Navigator.serial', () => getter(Navigator.prototype, 'serial').call({}));
+      await outcome('Serial.getPorts', () => Serial.prototype.getPorts.call({}));
+      await outcome('Serial.requestPort', () => Serial.prototype.requestPort.call(1));
+      misuse['Serial.requestPort kind'] = Object.prototype.toString.call(Serial.prototype.requestPort);
+      await outcome('SerialPort.readable', () => getter(SerialPort.prototype, 'readable').call({}));
+      await outcome('SerialPort.getInfo', () => SerialPort.prototype.getInfo.call({}));
+      await outcome('SerialPort.open', () => SerialPort.prototype.open.call({}, { baudRate: 9600 }));
+      await outcome('EyeDropper()', () => EyeDropper());
+      await outcome('EyeDropper.open', () => EyeDropper.prototype.open.call({}));
+    }
+    // Stacks through natives a page calls often: a replaced one adds its user-script frame.
+    const stacks = [];
+    await navigator.locks.request('probe', () => { stacks.push(new Error().stack); });
+    try { RTCPeerConnection.prototype.close.call({}); } catch (e) { stacks.push(e.stack); }
+    return JSON.stringify({ shapes, nonNative, hooked, misuse, userAgent: navigator.userAgent, vendor: navigator.vendor,
+                            userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets, stacks });
     """#
 
     private struct Report: Decodable {
         let shapes: [String: String]
         let nonNative: [String]
+        let hooked: Int
+        let misuse: [String: String]
         let userAgent: String
         let vendor: String
         let userAgentData: Bool
         let dom: String
         let styleSheets: Int
         let adoptedStyleSheets: Int
+        let stacks: [String]
     }
 
-    private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
+    private func load(_ webView: WKWebView) async {
         webView.loadHTMLString("<p>probe</p>", baseURL: URL(string: "https://example.com/"))
         let loaded = await pollUntil(timeout: 10) {
             let condition = "location.href === 'https://example.com/' && document.readyState === 'complete'"
             return ((try? await webView.evaluateJavaScript(condition)) as? Bool) == true
         }
         XCTAssertTrue(loaded)
+    }
+
+    private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
+        await load(webView)
         await afterLoad()
         let result = try await webView.callAsyncJavaScript(Self.probe, contentWorld: .page)
         let json = try XCTUnwrap(result as? String)
@@ -84,9 +127,11 @@ final class PageWorldTests: XCTestCase {
 
     func testATabShowsPagesNothingABareWebKitPageDoesNot() async throws {
         let factory = WKEngineFactory()
-        // A site's cosmetics apply at once: their sheet must leave the page's DOM and stylesheets as they are.
+        // A site's cosmetics apply at once: their sheet must leave the page's DOM and stylesheets as they are. Its
+        // scriptlets leave the functions they wrap printing as native code.
+        let scriptlets = #"{"example.com":[["set-constant",["history.adsBlocked","true"]],["no-setTimeout-if",["adProbe"]]]}"#
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(
-            cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: nil, procedural: nil
+            cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: scriptlets, procedural: nil
         ))
         let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
         defer { tab.teardown() }
@@ -95,9 +140,19 @@ final class PageWorldTests: XCTestCase {
         defer { capture.stop() }
         let lilo = try await report(of: tab.wkWebView) {
             _ = await capture.consoleMessages()
-            _ = try? await tab.wkWebView.evaluateJavaScript("console.log('captured'); 1")
+            // Logging runs none of the page's code: a getter it reads is a trace the page can see.
+            let getterCalls = try? await tab.wkWebView.evaluateJavaScript("""
+                (() => {
+                  let calls = 0;
+                  const error = new Error('captured');
+                  Object.defineProperty(error, 'stack', { get() { calls++; return ''; } });
+                  console.log(error, { get value() { calls++; return 1; } });
+                  return calls;
+                })()
+                """)
+            XCTAssertEqual(getterCalls as? Int, 0)
             let messages = await capture.consoleMessages()
-            XCTAssertEqual(messages.compactMap { $0["text"] as? String }, ["captured"])
+            XCTAssertEqual(messages.compactMap { $0["text"] as? String }, [#"Error: captured {"value":"[Getter]"}"#])
         }
 
         // The same engine settings without Lilo's scripts and handlers: only WebKit's own native APIs, as in Safari.
@@ -115,10 +170,26 @@ final class PageWorldTests: XCTestCase {
         let changed = bare.shapes.compactMap { key, shape in lilo.shapes[key].flatMap { $0 == shape ? nil : "\(key): \(shape) -> \($0)" } }
         XCTAssertEqual(changed.sorted(), [], "properties shaped unlike Safari's")
         XCTAssertEqual(lilo.nonNative, [], "functions that print their source")
+        XCTAssertEqual(lilo.hooked, 0, "calls through the page's WeakMap and Promise methods")
         for global in Self.addedGlobals {
             XCTAssertEqual(lilo.shapes["window.\(global)"], "v:true,false,true:\(global)/0", "\(global) is defined as an interface object is")
         }
         XCTAssertEqual(lilo.shapes["webkit in window"], "false")
+        // Bot detectors call members on a wrong `this` to spot a replaced one: Lilo's must fail as WebKit's natives do.
+        XCTAssertEqual(lilo.misuse["RTCPeerConnection.setRemoteDescription"], bare.misuse["RTCPeerConnection.setRemoteDescription"])
+        XCTAssertEqual(lilo.misuse.filter { $0.key != "RTCPeerConnection.setRemoteDescription" }, [
+            "Navigator.serial": "throws TypeError: The Navigator.serial getter can only be used on instances of Navigator",
+            "Serial.getPorts": "rejects TypeError: Can only call Serial.getPorts on instances of Serial",
+            "Serial.requestPort": "rejects TypeError: Can only call Serial.requestPort on instances of Serial",
+            "Serial.requestPort kind": "[object Function]",
+            "SerialPort.readable": "throws TypeError: The SerialPort.readable getter can only be used on instances of SerialPort",
+            "SerialPort.getInfo": "throws TypeError: Can only call SerialPort.getInfo on instances of SerialPort",
+            "SerialPort.open": "rejects TypeError: Can only call SerialPort.open on instances of SerialPort",
+            "EyeDropper()": "throws TypeError: Constructor requires 'new' operator",
+            "EyeDropper.open": "rejects TypeError: Can only call EyeDropper.open on instances of EyeDropper"
+        ])
+        XCTAssertEqual(lilo.stacks.count, 2)
+        XCTAssertEqual(lilo.stacks.filter { $0.contains("user-script:") }, [], "frames a Safari page does not have")
 
         XCTAssertEqual(lilo.userAgent, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) "
                        + WKEngineFactory.safariApplicationName)
@@ -127,5 +198,32 @@ final class PageWorldTests: XCTestCase {
         XCTAssertEqual(lilo.dom, bare.dom)
         XCTAssertEqual(lilo.styleSheets, bare.styleSheets)
         XCTAssertEqual(lilo.adoptedStyleSheets, bare.adoptedStyleSheets)
+    }
+
+    /// Geolocation calls a page makes before any permission decision: their ids and errors read as WebKit's own.
+    func testGeolocationCallsAnswerAsInABareWebKitPage() async throws {
+        let probe = """
+            const geolocation = navigator.geolocation, results = [];
+            for (const call of [() => geolocation.getCurrentPosition(), () => geolocation.getCurrentPosition(null),
+                                () => geolocation.watchPosition(), () => geolocation.watchPosition(() => {}, 1),
+                                () => geolocation.clearWatch()]) {
+              try { call(); results.push('returned'); } catch (e) { results.push(e.constructor.name + ': ' + e.message); }
+            }
+            const ids = [geolocation.watchPosition(() => {}), geolocation.watchPosition(() => {})];
+            for (const id of ids) geolocation.clearWatch(id);
+            return results.concat(ids.map(String));
+            """
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        defer { tab.teardown() }
+        let configuration = try XCTUnwrap(tab.wkWebView.configuration.copy() as? WKWebViewConfiguration)
+        configuration.userContentController = WKUserContentController()
+        let bareWebView = WKWebView(frame: .zero, configuration: configuration)
+        await load(tab.wkWebView)
+        await load(bareWebView)
+        let lilo = try await tab.wkWebView.callAsyncJavaScript(probe, contentWorld: .page) as? [String]
+        let bare = try await bareWebView.callAsyncJavaScript(probe, contentWorld: .page) as? [String]
+        XCTAssertEqual(bare?.suffix(2), ["1", "2"])
+        XCTAssertEqual(lilo, bare)
     }
 }

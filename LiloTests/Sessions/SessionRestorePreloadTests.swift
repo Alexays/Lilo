@@ -219,12 +219,11 @@ final class SessionRestorePreloadTests: XCTestCase {
         let store = SpaceTabStateStore(dbPool: pool)
         let empty = SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)
         try store.saveMany([(spaceId: kept.id, state: empty), (spaceId: gone, state: empty)])
-        let window = makeWindow(browserContext)
 
-        window.deleteOrphanedSpaceStates()
+        context.deleteOrphanedSpaceStates(inProfile: profileId)
+        try await pool.write { _ in }
 
-        let swept = await pollUntil(timeout: 5) { (try? store.load(spaceId: gone)) == nil }
-        XCTAssertTrue(swept)
+        XCTAssertNil(try store.load(spaceId: gone))
         XCTAssertNotNil(try store.load(spaceId: kept.id))
     }
 

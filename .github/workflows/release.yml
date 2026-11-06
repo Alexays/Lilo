@@ -48,6 +48,9 @@ jobs:
           grep -qx "MARKETING_VERSION = ${GITHUB_REF_NAME#v}" Xcode/Configs/Base.xcconfig \
             || { echo "::error::Xcode/Configs/Base.xcconfig is not at ${GITHUB_REF_NAME#v}."; exit 1; }
           make release-status
+          git fetch --no-tags -q origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD \
+            || { echo "::error::$GITHUB_REF_NAME is not on main: tag a commit main already has."; exit 1; }
 
       - name: Show selected Xcode
         run: xcodebuild -version
@@ -55,11 +58,8 @@ jobs:
       - name: Install Metal Toolchain
         run: xcodebuild -downloadComponent MetalToolchain
 
-      # The generated UI sources, also saved by build.yml's release-build job. The key leaves out the lockfile's
-      # version lines, which a release bumps: a dependency change still shows in its resolved and integrity lines.
-      - name: Hash the UI lockfile
-        id: ui-lock
-        run: echo "hash=$(grep -v '"version":' lilo-ui/package-lock.json | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      # The generated UI sources, also saved by build.yml's release-build job. The key covers the version and the
+      # release notes the UI embeds, as the Makefile's UI_SOURCES does.
       - name: Restore the UI build
         id: ui-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -67,7 +67,7 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+          key: ui-${{ hashFiles('lilo-ui/package-lock.json', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -127,6 +127,17 @@ jobs:
           LILO_TEAM_ID: ${{ secrets.APPLE_NOTARY_TEAM_ID }}
         run: make release-archive
 
+      # The build reuses cached UI sources and DerivedData: a stale one would ship another version or its notes.
+      - name: Check the app is at the tag's version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          app=build/release/export/Lilo.app
+          bundled=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")
+          [ "$bundled" = "$version" ] \
+            || { echo "::error::Lilo.app is at $bundled, not $version."; exit 1; }
+          grep -aqF "{\"version\":\"$version\",\"date\":\"2" "$app/Contents/MacOS/Lilo" \
+            || { echo "::error::Lilo.app does not embed the $version release notes."; exit 1; }
+
       # Installs the pinned dmgbuild into build/ and lays out the window from scripts/dmg/.
       - name: Create DMG
         run: make dmg
@@ -155,8 +166,11 @@ jobs:
           spctl -a -vvv "$mount/Lilo.app"
           diskutil eject "$mount"
 
+      # The last published releases' DMGs give generate_appcast the bases of its deltas. The appcast keeps only the
+      # new version, its deltas from those releases attached.
       - name: Generate Sparkle appcast
         env:
+          GH_TOKEN: ${{ github.token }}
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
         run: |
           curl -fsSL -o "$RUNNER_TEMP/sparkle.tar.xz" \
@@ -164,13 +178,24 @@ jobs:
           echo "c2bf58aa8387266ac179357b1415d6f2635f044da8be41042af32425dae6da0c  $RUNNER_TEMP/sparkle.tar.xz" | shasum -a 256 -c -
           mkdir -p "$RUNNER_TEMP/sparkle" build/appcast
           tar -xf "$RUNNER_TEMP/sparkle.tar.xz" -C "$RUNNER_TEMP/sparkle"
+          /bin/cp -f build/Lilo.dmg build/appcast/
+          tags=$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases --limit 20 \
+            --json tagName --jq '[.[].tagName | select(startswith("v"))][:3][]')
+          for tag in $tags; do
+            gh release download "$tag" --repo "$GITHUB_REPOSITORY" -p Lilo.dmg -O "build/appcast/Lilo-$tag.dmg"
+          done
           trap 'rm -f "$RUNNER_TEMP/sparkle.key"' EXIT
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle.key"
-          /bin/cp -f build/Lilo.dmg build/appcast/
           "$RUNNER_TEMP/sparkle/bin/generate_appcast" \
             --ed-key-file "$RUNNER_TEMP/sparkle.key" \
+            --maximum-versions 1 \
+            --maximum-deltas 3 \
             --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
             build/appcast
+          # A missing delta costs users the full DMG, not the update: worth a warning, not a failed release.
+          if [ -n "$tags" ] && ! grep -q '<sparkle:deltas>' build/appcast/appcast.xml; then
+            echo "::warning::appcast.xml holds no delta update: every copy downloads the full DMG."
+          fi
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
@@ -179,6 +204,7 @@ jobs:
           files: |
             build/Lilo.dmg
             build/appcast/appcast.xml
+            build/appcast/*.delta
             build/release/dist/Lilo-dSYMs.zip
           # The version's notes, as make release-version wrote them for this tag.
           body_path: .changes/${{ github.ref_name }}.md

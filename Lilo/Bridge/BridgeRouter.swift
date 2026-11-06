@@ -85,7 +85,9 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
 
             Task { @MainActor in
                 let signpost = PerfSignposts.bridge.beginInterval("handle", id: PerfSignposts.bridge.makeSignpostID(), bridgeMessage.action)
-                _ = await handler.handle(message: bridgeMessage)
+                if let error = await handler.handle(message: bridgeMessage) as? BridgeError {
+                    Self.logger.error("\(bridgeMessage.action, privacy: .public) failed: \(error.message, privacy: .public)")
+                }
                 PerfSignposts.bridge.endInterval("handle", signpost)
             }
         }
@@ -243,7 +245,7 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
         // Without a user gesture: a state push must not hand the chrome a transient activation it can spend.
         guard let chromeWebView else { return }
         WebViewPrivateAccessors(chromeWebView).callAsyncWithoutUserGesture(script, arguments: arguments) { error in
-            if let error { Self.logger.error("chrome JS call failed: \(error)") }
+            if let error { Self.logger.error("chrome JS call failed: \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)") }
             completion()
         }
     }
@@ -275,11 +277,12 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
 /// or timer state: `BridgeRouter` owns the flush timer and JS dispatch and delegates the merge/key
 /// decisions here so they can be unit-tested in isolation.
 struct BridgeEventCoalescer {
-    /// Events coalesced inside the flush window: `browserStatePatch` keyed per tab, `downloadUpdated` per download, the rest singletons whose
-    /// latest value is all that matters. A burst must not pay one IPC per event, each force-flushing the pending patches.
+    /// Events coalesced inside the flush window: `browserStatePatch` keyed per tab, `downloadUpdated` per download, `conversationUpdate`
+    /// per conversation with its `updates` appended in order, the rest singletons whose latest value is all that matters. A burst must not
+    /// pay one IPC per event, each force-flushing the pending patches.
     static let coalescedEvents: Set<String> = [
         "browserStatePatch", "trackersBlockedChanged", "downloadUpdated", "extensionsChanged", "contentInteraction",
-        "hoveredLinkChanged", "commandKeyChanged", "terminalActivity", "agentActivity"
+        "hoveredLinkChanged", "commandKeyChanged", "terminalActivity", "agentActivity", "conversationUpdate"
     ]
 
     /// Coalesced events with one buffered slot each: `trackersBlockedChanged` carries only the
@@ -303,6 +306,13 @@ struct BridgeEventCoalescer {
     /// event isn't coalescable and should be sent raw immediately.
     mutating func add(event: String, data: [String: Any]) -> Bool {
         guard let tabId = Self.coalescingTabId(for: event, data: data) else { return false }
+        if event == "conversationUpdate" {
+            // Taken out of the buffer first so the append grows a uniquely referenced array in place.
+            var updates = pendingByEvent[event]?.removeValue(forKey: tabId)?["updates"] as? [Any] ?? []
+            updates += data["updates"] as? [Any] ?? []
+            pendingByEvent[event, default: [:]][tabId] = ["tabId": tabId, "updates": updates]
+            return true
+        }
         pendingByEvent[event, default: [:]][tabId] = Self.snapshotEvents.contains(event)
             ? data
             : pendingByEvent[event]?[tabId].map { Self.merge($0, data) } ?? data

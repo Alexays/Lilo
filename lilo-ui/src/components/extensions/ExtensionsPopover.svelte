@@ -7,6 +7,7 @@
   import { tooltip } from "../../lib/tooltip";
   import { t } from "../../lib/i18n/state.svelte";
   import { extensionActions, tabActions } from "../../lib/bridge/actions";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
   import { openSettings } from "../../stores/panels.svelte";
   import {
     getEnabledExtensions,
@@ -19,7 +20,6 @@
   import {
     badgeTextColor,
     displayInitial,
-    extensionIconSrc,
     resolveDisplayName,
   } from "./extensionPanelModel";
 
@@ -115,6 +115,7 @@
 
 <div
   class="extensions-popover float-surface float-popover"
+  out:popoverOut|global
   role="menu"
   tabindex="-1"
   aria-label={t("extensions.addressBarMenu")}
@@ -142,14 +143,15 @@
           role="menuitem"
           use:tooltip={{ text: ext.actionLabel ?? "", placement: "right" }}
           aria-disabled={!ext.actionEnabled}
-          onclick={() => ext.actionEnabled && openExtensionPopup(ext.id)}
+          onclick={(event) =>
+            ext.actionEnabled ? openExtensionPopup(ext.id) : showExtensionMenu(event, ext.id)}
           oncontextmenu={(event) => showExtensionMenu(event, ext.id)}
         >
           <span class="row-icon">
-            {#if extensionIconSrc(ext)}
+            {#if ext.iconDataURL}
               <img
                 class="row-icon-image"
-                src={extensionIconSrc(ext)}
+                src={ext.iconDataURL}
                 alt=""
                 draggable="false"
                 onerror={(event) => {
@@ -230,7 +232,6 @@
     position: fixed;
     z-index: var(--z-popover);
     transform-origin: calc(100% - 14px) 0;
-    border-radius: var(--radius-box);
   }
 
   .float-popover-head {

@@ -19,6 +19,10 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
         let origin: String
         let isWatch: Bool
         let highAccuracy: Bool
+        /// Milliseconds a cached fix may be old to answer at once.
+        let maximumAge: Double
+        /// The page arms its timeout once updates start, so a permission prompt does not count against it.
+        var timesOut: Bool
         @MainActor var webView: WKWebView? { frame.webView }
     }
 
@@ -36,12 +40,11 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
               let type = body["type"] as? String,
               let id = body["id"] as? Int else { return }
 
-        let highAccuracy = body["highAccuracy"] as? Bool ?? false
-
         switch type {
         case "get", "watch":
             let request = PendingRequest(id: id, frame: message.frameInfo, origin: message.frameInfo.permissionOriginKey,
-                                         isWatch: type == "watch", highAccuracy: highAccuracy)
+                                         isWatch: type == "watch", highAccuracy: body["highAccuracy"] as? Bool ?? false,
+                                         maximumAge: body["maximumAge"] as? Double ?? 0, timesOut: body["timesOut"] as? Bool ?? false)
             guard message.frameInfo.securityOrigin.isPotentiallyTrustworthy else {
                 deliver(error: .permissionDenied, to: [request])
                 return
@@ -89,8 +92,6 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
 
     private func enqueue(_ request: PendingRequest) {
         pruneStaleRequests()
-        pendingRequests.append(request)
-
         let mgr = locationManager ?? {
             let m = CLLocationManager()
             m.delegate = self.locationManagerDelegate
@@ -99,9 +100,16 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
             locationManager = m
             return m
         }()
+        let status = mgr.authorizationStatus
+        if status == .authorizedAlways, let cached = mgr.location,
+           -cached.timestamp.timeIntervalSinceNow * 1000 < request.maximumAge {
+            deliver(location: cached, to: [request])
+            if !request.isWatch { return }
+        }
+        pendingRequests.append(request)
         updateDesiredAccuracy()
 
-        switch mgr.authorizationStatus {
+        switch status {
         case .notDetermined:
             if !authorizationPending { authorizationPending = true; mgr.requestWhenInUseAuthorization() }
         case .denied, .restricted:
@@ -123,6 +131,10 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
 
     private func startUpdates(on mgr: CLLocationManager) {
         pruneStaleRequests()
+        for index in pendingRequests.indices where pendingRequests[index].timesOut {
+            pendingRequests[index].timesOut = false
+            push(pendingRequests[index], "start")
+        }
         if hasVisibleWatchRequest {
             PerfSignposts.energy.emitEvent("locationStart")
             mgr.startUpdatingLocation()
@@ -180,9 +192,20 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
     }
 
     fileprivate func didFail(error: Error) {
+        let code = (error as? CLError)?.code
         pruneStaleRequests()
-        let failed = pendingRequests; pendingRequests = []
-        deliver(error: .positionUnavailable(error.localizedDescription), to: failed)
+        if code == .denied {
+            let failed = pendingRequests; pendingRequests = []
+            deliver(error: .permissionDenied, to: failed)
+        } else {
+            // A watch outlives the error, as in WebKit: the next fix still reaches it. locationUnknown ends a requestLocation()
+            // but not continuous updates, which keep trying, so watches do not hear of it.
+            let oneShots = pendingRequests.filter { !$0.isWatch }
+            pendingRequests = pendingRequests.filter(\.isWatch)
+            let failed = code == .locationUnknown ? oneShots : oneShots + pendingRequests
+            deliver(error: .positionUnavailable(error.localizedDescription), to: failed)
+            if !oneShots.isEmpty { updateDesiredAccuracy() }
+        }
         stopLocationUpdatesIfIdle()
     }
 
@@ -190,8 +213,9 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
         pendingRequests.removeAll { $0.webView == nil }
     }
 
+    /// A pending one-shot keeps updates running: stopping them would also cancel its `requestLocation()`.
     private func stopLocationUpdatesIfIdle() {
-        guard !hasVisibleWatchRequest, let locationManager else { return }
+        guard !hasVisibleWatchRequest, !pendingRequests.contains(where: { !$0.isWatch }), let locationManager else { return }
         PerfSignposts.energy.emitEvent("locationStop")
         locationManager.stopUpdatingLocation()
     }
@@ -228,23 +252,20 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
             "timestamp": location.timestamp.timeIntervalSince1970 * 1000
         ]
         guard JSONSerialization.isValidJSONObject(payload) else { return }
-        for req in requests {
-            // A frozen page misses the fix; a watch gets the next one once the tab is live again.
-            guard let webView = req.webView, !CompositeFreezer.suspendedWebViews.contains(webView) else { continue }
-            WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("geolocation", [req.id, "position", payload]),
-                                                                        in: req.frame, in: PageWorld.bridgeWorld)
-            Self.logger.info("Delivered position to request \(req.id)")
-        }
+        for req in requests { push(req, "position", payload) }
     }
 
     private func deliver(error: GeoError, to requests: [PendingRequest]) {
         let payload: [String: Any] = ["code": error.code, "message": error.message]
-        for req in requests {
-            guard let webView = req.webView, !CompositeFreezer.suspendedWebViews.contains(webView) else { continue }
-            WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("geolocation", [req.id, "error", payload]),
-                                                                        in: req.frame, in: PageWorld.bridgeWorld)
-            Self.logger.info("Delivered error (code \(error.code)) to request \(req.id)")
-        }
+        for req in requests { push(req, "error", payload) }
+    }
+
+    private func push(_ request: PendingRequest, _ type: String, _ payload: Any = NSNull()) {
+        // A frozen page misses the fix; a watch gets the next one once the tab is live again.
+        guard let webView = request.webView, !CompositeFreezer.suspendedWebViews.contains(webView) else { return }
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("geolocation", [request.id, type, payload]),
+                                                                    in: request.frame, in: PageWorld.bridgeWorld)
+        Self.logger.info("Sent \(type, privacy: .public) to request \(request.id)")
     }
 
     // MARK: Delegate adapter
@@ -280,13 +301,25 @@ extension GeolocationBridge {
     static let pageModule = #"""
     function () {
       if (typeof Geolocation !== 'function') return;
-      let nextId = Math.floor(Math.random() * 0x7fffffff) * 0x10000 + 1;
-      const callbacks = create(null), secure = window.isSecureContext;
+      // Watch ids count from 1 as WebKit's do; one-shots take negative ids. The native side keys requests by web view and
+      // id, so a random base per document keeps a previous document's late replies away from this one's.
+      const base = Math.floor(Math.random() * 0x7fffffff) * 0x10000;
+      let watches = 0, oneShots = 0;
+      const callbacks = create(null), secure = window.isSecureContext, later = setTimeout, cancel = clearTimeout;
       const nativeGet = Geolocation.prototype.getCurrentPosition;
       const codeOf = getOwnPropertyDescriptor(GeolocationPositionError.prototype, 'code').get;
+      // PositionOptions' [Clamp] unsigned long.
+      const clamp = value => { const n = +value; return n > 0 ? (n < 0xffffffff ? n : 0xffffffff) : 0; };
       const receive = (id, type, data) => {
         const callback = callbacks[id];
         if (!callback) return;
+        if (type === 'start') {
+          if (callback.timeout !== undefined) callback.timer = apply(later, window, [timedOut, callback.timeout, id, callback]);
+          callback.timeout = undefined;
+          return;
+        }
+        apply(cancel, window, [callback.timer]);
+        callback.timeout = undefined;
         if (!callback.watch) delete callbacks[id];
         if (type === 'position') {
           const { latitude, longitude, accuracy, altitude, altitudeAccuracy, heading, speed } = data;
@@ -295,35 +328,53 @@ extension GeolocationBridge {
           callback.error({ code: data.code, message: data.message, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
         }
       };
-      lilo.on('geolocation', receive);
-      const request = (type, geolocation, success, error, options) => {
-        const id = nextId++, highAccuracy = !!(options && options.enableHighAccuracy);
+      const timedOut = (id, callback) => {
+        if (callbacks[id] !== callback) return;
+        if (!callback.watch) lilo.send('liloGeolocation', { type: 'clear', id: base + id });
+        receive(id, 'error', { code: 3, message: 'Timeout expired' });
+      };
+      lilo.on('geolocation', (id, type, data) => receive(id - base, type, data));
+      const request = (type, geolocation, count, success, error, options) => {
+        const method = type === 'watch' ? 'watchPosition' : 'getCurrentPosition';
+        if (count < 1) throw new NativeTypeError('Not enough arguments');
+        if (typeof success !== 'function') throw new NativeTypeError(`Argument 1 ('successCallback') to Geolocation.${method} must be a function`);
+        if (error != null && typeof error !== 'function') throw new NativeTypeError(`Argument 2 ('errorCallback') to Geolocation.${method} must be a function`);
+        const id = type === 'watch' ? ++watches : -++oneShots, highAccuracy = !!(options && options.enableHighAccuracy);
+        const maximumAge = options ? clamp(options.maximumAge) : 0, given = options ? options.timeout : undefined;
+        // setTimeout fires at once past 2^31 - 1 ms; a timeout that long (24 days) counts as none.
+        const timeout = given === undefined ? 0xffffffff : clamp(given), timesOut = timeout <= 0x7fffffff;
         // WebKit's own call applies Permissions-Policy, which refuses a cross-origin frame without allow="geolocation", and
         // the ancestors' secure context; with no timeout it asks no one. Its error is read through natives the page cannot wrap.
         const decide = code => {
           if (!callbacks[id]) return;
-          if (secure && code !== 1) lilo.send('liloGeolocation', { type, id, highAccuracy });
+          if (secure && code !== 1) lilo.send('liloGeolocation', { type, id: base + id, highAccuracy, maximumAge, timesOut });
           else receive(id, 'error', { code: 1, message: 'User denied Geolocation' });
         };
         apply(nativeGet, geolocation, [() => decide(0), positionError => decide(apply(codeOf, positionError, [])), { __proto__: null, timeout: 0 }]);
-        callbacks[id] = { success, error: error || (() => {}), watch: type === 'watch', highAccuracy };
+        callbacks[id] = { success, error: error || (() => {}), watch: type === 'watch', highAccuracy,
+                          timeout: timesOut ? timeout : undefined };
         return id;
       };
       lilo.methods(Geolocation.prototype, {
-        getCurrentPosition(success, error, options) { request('get', this, success, error, options); },
-        watchPosition(success, error, options) { return request('watch', this, success, error, options); },
+        getCurrentPosition(success, error, options) { request('get', this, arguments.length, success, error, options); },
+        watchPosition(success, error, options) { return request('watch', this, arguments.length, success, error, options); },
         clearWatch(id) {
+          if (arguments.length < 1) throw new NativeTypeError('Not enough arguments');
+          id |= 0;
+          const callback = callbacks[id];
+          if (!callback || !callback.watch) return;
+          apply(cancel, window, [callback.timer]);
           delete callbacks[id];
-          lilo.send('liloGeolocation', { type: 'clear', id });
+          lilo.send('liloGeolocation', { type: 'clear', id: base + id });
         },
       });
       apply(listen, window, ['pagehide', () => {
-        for (const id in callbacks) if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'clear', id: +id });
+        for (const id in callbacks) if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'clear', id: base + +id });
       }]);
       apply(listen, window, ['pageshow', event => {
         if (!event.persisted) return;
         for (const id in callbacks) {
-          if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'watch', id: +id, highAccuracy: callbacks[id].highAccuracy });
+          if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'watch', id: base + +id, highAccuracy: callbacks[id].highAccuracy });
         }
       }]);
     }

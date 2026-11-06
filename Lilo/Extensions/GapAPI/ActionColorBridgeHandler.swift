@@ -15,19 +15,30 @@ final class ActionColorBridgeHandler: GapHandler {
         "action.getUserSettings"
     ]
 
-    /// Tab-specific colors by "profileId/extensionId", then WebKit tab id.
-    private var tabColors: [String: [Int: ProfileExtensionRegistry.ActionColors]] = [:]
+    /// Tab-specific colors by "profileId/extensionId", then WebKit tab id, with the Lilo tab they go with once known.
+    private var tabColors: [String: [Int: (colors: ProfileExtensionRegistry.ActionColors, tab: UUID?)]] = [:]
     nonisolated(unsafe) private var unloadObserver: Any?
+    nonisolated(unsafe) private var tabCloseObserver: Any?
 
     init() {
         unsafe unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let profileId = note.userInfo?["profileId"] as? UUID, let extensionId = note.userInfo?["extensionId"] as? String else { return }
             MainActor.assumeIsolated { _ = self?.tabColors.removeValue(forKey: "\(profileId)/\(extensionId)") }
         }
+        unsafe tabCloseObserver = NotificationCenter.default.addObserver(forName: .extensionTabDidClose, object: nil, queue: .main) { [weak self] note in
+            guard let tabId = note.userInfo?["tabId"] as? UUID else { return }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                for index in self.tabColors.indices where self.tabColors.values[index].contains(where: { $0.value.tab == tabId }) {
+                    self.tabColors.values[index] = self.tabColors.values[index].filter { $0.value.tab != tabId }
+                }
+            }
+        }
     }
 
     deinit {
         unsafe unloadObserver.map { NotificationCenter.default.removeObserver($0) }
+        unsafe tabCloseObserver.map { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -55,10 +66,15 @@ final class ActionColorBridgeHandler: GapHandler {
             registry.updateActionColor(for: extensionId) { $0[keyPath: keyPath] = color }
             return nil
         }
-        tabColors["\(registry.profileId)/\(extensionId)", default: [:]][tabId, default: .init()][keyPath: keyPath] = color
         // The toolbar knows Lilo tabs, not WebKit's ids: the caller sends the tab's position too.
         let positions = call.payload["tabs"] as? [[String: Any]] ?? []
-        if let tab = registry.tabIds(atPositions: positions, extensionId: extensionId).first ?? nil {
+        let tab = registry.tabIds(atPositions: positions, extensionId: extensionId).first ?? nil
+        let key = "\(registry.profileId)/\(extensionId)"
+        var entry = tabColors[key]?[tabId] ?? (colors: ProfileExtensionRegistry.ActionColors(), tab: nil)
+        entry.colors[keyPath: keyPath] = color
+        entry.tab = tab ?? entry.tab
+        tabColors[key, default: [:]][tabId] = entry
+        if let tab {
             registry.updateActionColor(for: extensionId, tab: tab) { $0[keyPath: keyPath] = color }
         }
         return nil
@@ -67,7 +83,7 @@ final class ActionColorBridgeHandler: GapHandler {
     private func handleGet(_ call: GapCall, keyPath: KeyPath<ProfileExtensionRegistry.ActionColors, String>) -> String? {
         let extensionId = call.extensionId, registry = call.registry
         if let tabId = call.int("tabId"),
-           let color = tabColors["\(registry.profileId)/\(extensionId)"]?[tabId]?[keyPath: keyPath], !color.isEmpty {
+           let color = tabColors["\(registry.profileId)/\(extensionId)"]?[tabId]?.colors[keyPath: keyPath], !color.isEmpty {
             return color
         }
         return registry.actionColors(of: extensionId)?[keyPath: keyPath] ?? ""

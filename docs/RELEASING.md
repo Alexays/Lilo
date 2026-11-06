@@ -108,14 +108,14 @@ Pushing a `v*` tag triggers `.github/workflows/release.yml`.
 
 The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub-hosted `xcode-27` image (macOS 27, Xcode 27; `macos-26` has no Xcode 27):
 
-1. Checks the tag is a prepared release: its `.changes/vX.Y.Z.md` exists, `MARKETING_VERSION` matches it, and `make release-status` passes.
+1. Checks the tag is a prepared release: its `.changes/vX.Y.Z.md` exists, `MARKETING_VERSION` matches it, `make release-status` passes, and `main` already has the tagged commit.
 2. Restores the UI build CI cached for the same sources, or builds it with `npm ci --ignore-scripts`, before any secret is in reach. The extension bridge bundles are committed and checked against `bridge-src` by CI. The checkout keeps no token.
 3. Dates every file by its content and restores the Release build of the last `main` push (CI's `release-build` job builds the same thing on every push and caches it from `main`), so only what changed since compiles: a version bump alone compiles nothing.
 4. Imports the Developer ID certificate into a temporary keychain.
 5. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-archive` (build, export signed with Developer ID, hardened runtime and a secure timestamp).
 6. Runs `make dmg`: the pinned [dmgbuild](https://github.com/dmgbuild/dmgbuild) packages `build/release/export/Lilo.app` with the installer window from `scripts/dmg/` (`settings.py` and the committed background, regenerated from `background.html` by `make dmg-background`). It then signs the DMG and notarizes it, a single submission whose ticket also covers the app inside, and staples the DMG. The app itself is not stapled: a copy taken out of the DMG and first opened offline relies on Gatekeeper's online check, and Sparkle updates download the stapled DMG. The job then checks the staple and has Gatekeeper (`spctl`) assess the DMG and the app on its read-only mount, so a release users would be refused never reaches the draft.
-7. Downloads Sparkle's tools (checked against a pinned sha256) and generates `appcast.xml` with `generate_appcast`, signed with `SPARKLE_ED_PRIVATE_KEY`. The app sets `SURequireSignedFeed`, so both the feed and the update archive must carry a valid EdDSA signature.
-8. Creates a **draft** GitHub release with the DMG and the appcast attached, its notes taken from the tag's `.changes/vX.Y.Z.md`. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
+7. Downloads Sparkle's tools (checked against a pinned sha256) and the DMGs of the last three published releases, then generates `appcast.xml` with `generate_appcast`, signed with `SPARKLE_ED_PRIVATE_KEY`. The appcast lists only the new version, with a delta update (`.delta`) from each of those releases: a copy one of them installed downloads the difference instead of the full DMG, and falls back to the DMG when the delta does not apply. The job warns if previous releases exist and the appcast holds no delta (generate_appcast drops a delta not clearly smaller than the DMG). The app sets `SURequireSignedFeed`, so both the feed and the update archives must carry a valid EdDSA signature.
+8. Creates a **draft** GitHub release with the DMG, the deltas and the appcast attached, its notes taken from the tag's `.changes/vX.Y.Z.md`. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
 
 ## Secrets
 
@@ -182,3 +182,10 @@ Once Apple grants it:
    `brew install --cask alexays/tap/lilo` and `brew upgrade` pick it up.
 3. Publishing also runs `.github/workflows/discord.yml`, which announces the release and its notes
    in the Discord channel configured by `DISCORD_WEBHOOK_URL`.
+
+## Rollback
+
+A published release reaches every copy within the hour (Sparkle checks hourly) and installs on its next quit. If it is broken:
+
+1. Set the release back to draft: `gh release edit vX.Y.Z --draft`. `releases/latest/download/appcast.xml` then serves the previous release's appcast, so copies that have not updated yet stay on it. A draft's assets are not public, so the Homebrew cask, still bumped to the broken version, fails to install until the fix ships.
+2. Sparkle never downgrades: copies already updated keep the broken version until a newer one ships. Fix the problem and release a new patch version, never the same tag again. Its deltas skip the drafted release, so those copies download the full DMG.

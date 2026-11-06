@@ -1,10 +1,13 @@
-// Assertions run on the DOM after the host echoed browserStateChanged; the re-check after the 180ms drop-settle hold
+// Assertions run on the DOM after the host echoed browserStateChanged; the re-check after the drop-settle hold
 // proves the order comes from the store, not the transient hold.
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { bootChrome, centerOf, dragFromTo, glideTo, pressAndLift, sentCommands } from "./fakeHost";
+import { bootChrome, centerOf, dragFromTo, glideTo, pressAndLift, sentCommands, settleDrop } from "./fakeHost";
 import { folderWorld, initialWorld, SPACE_1, SPACE_2 } from "./fixtures";
+import { tab, treeItem } from "../src/stores/testFixtures";
 
-const DROP_HOLD_SETTLE_MS = 300;
+const ROW_MOTION_MS = 300;
+
+test.beforeEach(({ page }) => page.clock.install());
 
 function pane(page: Page, index: number): Locator {
 	return page.locator(".space-pane").nth(index);
@@ -50,7 +53,7 @@ test("reorder within the unpinned list changes the DOM order", async ({
 	const drop = commands.find((c) => c.action === "commitSidebarDrop");
 	expect(drop?.payload).toMatchObject({ type: "insert", id: "tab-alpha" });
 
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await settleDrop(page);
 	expect(await unpinnedIds(activePane)).toEqual([
 		"tab-beta",
 		"tab-alpha",
@@ -74,7 +77,7 @@ test("dragging an unpinned row into the pinned list pins it", async ({
 	await expect(activePane.locator(".pinned-list [data-tab-id]")).toHaveCount(2);
 	await expect(activePane.locator(".tab-list [data-tab-id]")).toHaveCount(2);
 
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await settleDrop(page);
 	await expect(
 		activePane.locator('.pinned-list [data-tab-id="tab-gamma"]'),
 	).toBeVisible();
@@ -96,7 +99,7 @@ test("dragging an unpinned row into the bookmarks grid bookmarks it", async ({
 	).toBeVisible();
 	await expect(activePane.locator(".tab-list [data-tab-id]")).toHaveCount(2);
 
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await settleDrop(page);
 	await expect(activePane.locator(".bookmarked-list .bookmark-tile")).toHaveCount(2);
 });
 
@@ -155,11 +158,11 @@ test("the rows stay where the drag showed them once the drop lands", async ({
 
 	await pressAndLift(page, '.tab-list [data-tab-id="tab-gamma"]');
 	await glideTo(page, '.tab-list > [data-dnd-item-id="tab-beta"]', 5);
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await page.waitForTimeout(ROW_MOTION_MS);
 	const during = await rowTops(activePane);
 	await page.mouse.up();
 	await expect.poll(() => rootIds(activePane)).toEqual(["folder-docs", "tab-gamma", "tab-beta", "folder-empty", "folder-shut"]);
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await settleDrop(page);
 
 	expect(await rowTops(activePane)).toEqual(during);
 });
@@ -175,7 +178,7 @@ test("a row dragged away and back to the middle of its starting row drops where 
 	await glideTo(page, '.tab-list > [data-dnd-item-id="tab-beta"]', 5);
 	await expect.poll(() => rootIds(activePane)).toEqual(["folder-docs", "dnd-shadow:tab-gamma", "tab-beta", "folder-empty", "folder-shut"]);
 	await page.mouse.move(home.x + home.width / 2, home.y + home.height / 2 + 2, { steps: 6 });
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await page.waitForTimeout(ROW_MOTION_MS);
 	await page.mouse.up();
 
 	await expect.poll(() => rootIds(activePane)).toEqual(["folder-docs", "tab-beta", "tab-gamma", "folder-empty", "folder-shut"]);
@@ -189,11 +192,11 @@ test("a folder's last tab dragged out leaves the folder as it will look after th
 
 	await pressAndLift(page, '[data-dnd-item-id="folder-docs"] [data-tab-id="tab-alpha"]');
 	await glideTo(page, '.tab-list > [data-dnd-item-id="folder-docs"]', 3);
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await page.waitForTimeout(ROW_MOTION_MS);
 	const during = await rowTops(activePane);
 	await page.mouse.up();
 	await expect.poll(() => rootIds(activePane)).toEqual(["tab-alpha", "folder-docs", "tab-beta", "tab-gamma", "folder-empty", "folder-shut"]);
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await settleDrop(page);
 
 	expect(await rowTops(activePane)).toEqual(during);
 });
@@ -217,7 +220,7 @@ test("a tab dropped on an empty folder's placeholder lands inside it", async ({
 		parentFolderId: "folder-empty",
 	});
 	await expect(activePane.locator(`${folder} [data-tab-id="tab-beta"]`)).toBeVisible();
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await settleDrop(page);
 	await expect(activePane.locator(`${folder} [data-tab-id="tab-beta"]`)).toBeVisible();
 });
 
@@ -236,7 +239,7 @@ test("a folder child dragged out below its folder lands between the root rows", 
 	await expect
 		.poll(() => rootIds(activePane))
 		.toEqual(["folder-docs", "tab-beta", "tab-alpha", "tab-gamma", "folder-empty", "folder-shut"]);
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await settleDrop(page);
 	expect(await rootIds(activePane)).toEqual([
 		"folder-docs",
 		"tab-beta",
@@ -298,4 +301,32 @@ test("without pins the divider line only shows while dragging", async ({
 	await expect(divider).not.toHaveClass(/hidden-line/);
 	await page.mouse.up();
 	await expect(divider).toHaveClass(/hidden-line/);
+});
+
+test("a drag in a long list mounts every row of its own space only, then drops in place", async ({ page }) => {
+	const world = initialWorld();
+	for (const [space, prefix] of [[SPACE_1, "a"], [SPACE_2, "b"]] as const) {
+		world.tabsBySpace[space] = Array.from({ length: 120 }, (_, i) => tab(`${prefix}-${i}`, space, { title: `Tab ${prefix} ${i}` }));
+		world.treeItemsBySpace[space] = Array.from({ length: 120 }, (_, i) => treeItem(`${prefix}-${i}`, space, i));
+		world.activeTabBySpace[space] = `${prefix}-0`;
+	}
+	await bootChrome(page, world);
+	await page.evaluate((state) => {
+		window.__lilo!.receive({ event: "browserStateChanged", changedSpaceId: state.spaceId, activeTabId: state.activeTabId, states: [state] });
+	}, { spaceId: SPACE_2, activeTabId: "b-0", tabs: world.tabsBySpace[SPACE_2], folders: [], treeItems: world.treeItemsBySpace[SPACE_2] });
+	const active = page.locator(".space-pane", { has: page.locator('[data-tab-id="a-0"]') });
+	const neighbour = page.locator(".space-pane", { has: page.locator('[data-tab-id="b-0"]') });
+	await expect(active.locator(".virtual-spacer")).not.toHaveCount(0);
+	await expect(neighbour.locator(".virtual-spacer")).not.toHaveCount(0);
+
+	await pressAndLift(page, '[data-dnd-item-id="a-1"]');
+	await page.waitForTimeout(250);
+	await glideTo(page, '[data-dnd-item-id="a-4"]', 21);
+	await expect(active.locator('[data-tab-id="a-119"]')).toHaveCount(1);
+	await expect(active.locator(".virtual-spacer")).toHaveCount(0);
+	await expect(neighbour.locator(".virtual-spacer")).not.toHaveCount(0);
+	await page.mouse.up();
+
+	const drop = (await sentCommands(page)).find((c) => c.action === "commitSidebarDrop");
+	expect(drop?.payload).toMatchObject({ id: "a-1", insertAfterId: "a-4", insertBeforeId: "a-5" });
 });

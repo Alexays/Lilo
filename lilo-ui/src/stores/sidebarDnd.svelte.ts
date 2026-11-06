@@ -16,7 +16,7 @@ import type {
 	BridgeSidebarItemKind,
 } from "../lib/bridge/protocol";
 
-const DROP_SETTLE_MS = 180;
+export const DROP_SETTLE_MS = 180;
 const RECENT_DROP_MS = 250;
 // A collapsed folder held under the drag this long opens, so the drop can aim inside it.
 const AUTO_EXPAND_MS = 600;
@@ -32,9 +32,9 @@ let heldPlaceholder: SidebarPlaceholder | null = null;
 dndEngineStore.subscribe(() => {
 	dragVersion += 1;
 	const drag = dndEngineStore.activeDrag;
-	const isActive = drag !== null;
+	const isActive = drag?.started === true;
 	// A fresh gesture drops whatever hold the previous drop left behind.
-	if (drag && !hadActiveDrag) {
+	if (drag?.started && !hadActiveDrag) {
 		resetSidebarDrag();
 		const zone = zoneRef(drag.source.zoneId);
 		heldPlaceholder = zone && drag.home !== undefined && drag.home >= 0 ? { zone, index: drag.home } : null;

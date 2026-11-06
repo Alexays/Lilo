@@ -8,7 +8,7 @@ extension MainWindowController {
     /// Starts a conversation in the current Space, which a private Space never hosts. Without a project
     /// it gets a folder of its own; in a repository another agent is working in, its own worktree.
     @discardableResult
-    func startConversation(agentId: String, cwd: String, activate: Bool) -> Tab? {
+    func startConversation(agentId: String, cwd: String, activate: Bool) async -> Tab? {
         guard agentsEnabled, let spaceId = tabManager.currentSpaceId,
               context.spaceManager?.space(with: spaceId)?.isPrivate == false else { return nil }
         var directory = cwd
@@ -19,10 +19,17 @@ extension MainWindowController {
         } else if let root = GitDiff.repositoryRoot(containing: cwd),
                   context.conversations.conversations.values.contains(where: {
                       ($0.state == .busy || $0.state == .starting) && GitDiff.repositoryRoot(containing: $0.cwd) == root
-                  }),
-                  let worktree = Self.makeWorktree(of: cwd) {
-            directory = worktree
+                  }) {
+            // A checkout takes seconds in a large repository: off the main thread, which then checks again
+            // that the conversation still has somewhere to go. A Space switch meanwhile keeps it in its Space.
+            let worktree = await Task.detached(priority: .userInitiated) { Self.makeWorktree(of: cwd) }.value
+            guard agentsEnabled, context.spaceManager?.space(with: spaceId)?.isPrivate == false else {
+                if let worktree { Task.detached(priority: .utility) { Self.removeWorktree(worktree, of: cwd) } }
+                return nil
+            }
+            directory = worktree ?? cwd
         }
+        let activate = activate && tabManager.currentSpaceId == spaceId
         let folder = TabFolder(spaceId: spaceId, name: "New Conversation".localized, color: "#795ceb", isCollapsed: true)
         let tab = Tab(title: "New Conversation".localized, spaceId: spaceId, kind: .agent, cwd: directory, agentId: agentId)
         do {
@@ -41,11 +48,24 @@ extension MainWindowController {
     }
 
     /// A git worktree on a branch of its own, in Lilo's support folder, so agents never edit each
-    /// other's files; nil when git fails.
-    private static func makeWorktree(of directory: String) -> String? {
+    /// other's files; nil when git fails, what it left behind removed. Blocks.
+    nonisolated private static func makeWorktree(of directory: String) -> String? {
         let id = UUID().uuidString.prefix(8).lowercased()
         let path = URL(fileURLWithPath: BuildIdentity.appSupportDirectory).appending(path: "Worktrees/\(id)").path
-        return GitDiff.run(["worktree", "add", "-b", "lilo/\(id)", path], in: directory) != nil ? path : nil
+        guard GitDiff.run(["worktree", "add", "-b", "lilo/\(id)", path], in: directory, timeout: 120) != nil else {
+            removeWorktree(path, of: directory)
+            return nil
+        }
+        return path
+    }
+
+    /// Removes a worktree `makeWorktree` made, even a partial one, and its branch. Blocks.
+    nonisolated private static func removeWorktree(_ path: String, of directory: String) {
+        // Twice: a checkout killed or failed midway leaves its worktree locked as initializing.
+        _ = GitDiff.run(["worktree", "remove", "--force", "--force", path], in: directory)
+        try? FileManager.default.removeItem(atPath: path)
+        _ = GitDiff.run(["worktree", "prune"], in: directory)
+        _ = GitDiff.run(["branch", "-D", "lilo/\(URL(fileURLWithPath: path).lastPathComponent)"], in: directory)
     }
 
     func showAgentChatView(for tab: Tab) {
@@ -112,17 +132,36 @@ extension MainWindowController {
         for (id, conversation) in context.conversations.conversations where context.browserState.durableTab(for: id).map({ $0.tab.isClosed }) ?? true {
             context.conversations.close(id)
             tabManager.agentChatHost.forget(id)
-            if let folderId = conversation.folderId, let spaceId = conversation.spaceId,
-               tabManager.sidebarTreeItems(forSpace: spaceId).contains(where: { $0.kind == .folder && $0.itemId == folderId }) {
-                _ = try? applyBrowserCommand(.deleteFolderWithTabs(spaceId: spaceId, folderId: folderId))
+            guard let folderId = conversation.folderId, let spaceId = conversation.spaceId else { continue }
+            let items = tabManager.sidebarTreeItems(forSpace: spaceId)
+            guard items.contains(where: { $0.kind == .folder && $0.itemId == folderId }) else { continue }
+            // The pages go under the conversation's own entry: Reopen Closed Tab brings the conversation back
+            // first, in a folder of the same id, then each page into it.
+            var own: RecentlyClosedStack.Entry?
+            if let top = context.recentlyClosed.recentEntries.first, case let .savedTab(stored) = top.content, stored.id == id {
+                own = context.recentlyClosed.pop()
             }
+            let itemById = Dictionary(items.map { ($0.itemId, $0) }, uniquingKeysWith: { first, _ in first })
+            for tabId in context.browserState.space(id: spaceId)?.spaceTab.tabIds(inFolder: folderId) ?? [] where tabId != id {
+                recordClosedTabForRestore(id: tabId, sidebarItemById: itemById)
+            }
+            if let own {
+                context.recentlyClosed.push(
+                    own.content, spaceId: own.spaceId, parentFolderId: own.parentFolderId, section: own.section, sortOrder: own.sortOrder
+                )
+            }
+            _ = try? applyBrowserCommand(.deleteFolderWithTabs(spaceId: spaceId, folderId: folderId))
         }
     }
 
-    /// A closed conversation reopened with ⇧⌘T: a new folder, the same agent session.
-    func reopenConversation(_ stored: StoredTab, spaceId: UUID) -> Tab? {
+    /// A closed conversation reopened with ⇧⌘T: its folder back under the same id, so the pages it held return
+    /// into it, and the same agent session.
+    func reopenConversation(_ stored: StoredTab, spaceId: UUID, folderId: UUID?) -> Tab? {
         let tab = Tab(stored, spaceId: spaceId, groupId: nil)
-        let folder = TabFolder(spaceId: spaceId, name: tab.title, color: "#795ceb", isCollapsed: true)
+        let folder = TabFolder(
+            id: folderId.flatMap { tabManager.folder(id: $0) == nil ? $0 : nil } ?? UUID(),
+            spaceId: spaceId, name: tab.title, color: "#795ceb", isCollapsed: true
+        )
         do {
             try applyBrowserCommand(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned))
             try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: true))

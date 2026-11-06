@@ -36,6 +36,26 @@ test("a long host never widens a narrow window's detail page", async ({ page }) 
 	expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
 });
 
+test("removing the last site leaves no site rather than every site", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => {
+		const extension = {
+			id: "ext-a", name: "Blocker", version: "1.0", description: "", isEnabled: true, hasPopup: true, hasBackground: false,
+			hasContentScripts: true, badgeText: "", badgeColor: "#5b5bd6", hostPermissions: ["<all_urls>"], siteAccess: ["example.com"],
+		};
+		window.__lilo!.receive({ event: "extensionsChanged", ids: [extension.id], extensions: [extension] });
+		window.__lilo!.receive({ event: "openExtensions" });
+	});
+	await page.locator(".extension-row .row-main").click();
+	const siteAccess = async () => (await sentCommands(page)).filter((c) => c.action === "setExtensionSiteAccess").map((c) => c.payload.hosts);
+
+	await page.getByRole("button", { name: "Stop running on example.com" }).click();
+	await expect.poll(siteAccess).toEqual([[]]);
+
+	await page.getByRole("combobox", { name: "Site access" }).selectOption("all");
+	await expect.poll(siteAccess).toEqual([[], null]);
+});
+
 for (const [locale, label] of [["en-US", "Activate the extension"], ["fr-FR", "Activer l'extension"]] as const) {
 	test.describe(locale, () => {
 		test.use({ locale });

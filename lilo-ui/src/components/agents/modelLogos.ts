@@ -1,5 +1,5 @@
 import { CLAUDE, GEMINI, type TerminalProgramIcon } from "../../lib/terminalIcons";
-import type { IconName } from "./icons";
+import type { IconName } from "../ui/icons";
 
 // Simple Icons (CC0), like the terminal's program logos. A logo too dark for a dark menu has no colour.
 export const OPENAI: TerminalProgramIcon = {

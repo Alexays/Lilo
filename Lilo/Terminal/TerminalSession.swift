@@ -16,6 +16,8 @@ import Synchronization
         var cwd: String?
         /// The branch checked out in `cwd`'s repository, or a short commit when detached.
         var gitBranch: String?
+        /// The main folder of that repository, a linked worktree's main checkout included.
+        var project: String?
         /// Lines added and removed in that repository against HEAD, untracked files included.
         var diffAdded = 0
         var diffRemoved = 0
@@ -139,8 +141,10 @@ import Synchronization
         } else {
             let user = unsafe account.map { unsafe String(cString: $0.pointee.pw_name) } ?? NSUserName()
             // login records the session and keeps our environment (-p) and cwd (-l); bash then
-            // replaces itself with the user's shell as a login shell.
-            self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c", "exec -l '\(shell)'"]
+            // replaces itself with the user's shell as a login shell. login hides the exit code, so a
+            // shell that no longer exists falls back to zsh below bash's error rather than ending the tab.
+            self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c",
+                            "shopt -s execfail; exec -l '\(shell)'; exec -l /bin/zsh"]
         }
         shellName = URL(fileURLWithPath: command?.first ?? shell).lastPathComponent
         var isDirectory: ObjCBool = false
@@ -524,6 +528,7 @@ import Synchronization
             }
             PerfSignposts.energy.emitEvent("gitRefresh", "withStat: \(withStat), deferred: \(statRequested && branch != nil && !withStat)")
             let counts = branch != nil && withStat ? GitDiff.stat(in: cwd) : nil
+            let project = branch != nil ? GitDiff.projectRoot(containing: cwd) : nil
             // Stamped once git returns: the interval starts at the end of a slow run, not before it.
             if branch != nil, withStat {
                 lastGitStat.store(DispatchTime.now().uptimeNanoseconds, ordering: .relaxed)
@@ -531,6 +536,7 @@ import Synchronization
             }
             updateStatus { status in
                 status.gitBranch = branch
+                status.project = project
                 if branch == nil {
                     status.diffAdded = 0
                     status.diffRemoved = 0

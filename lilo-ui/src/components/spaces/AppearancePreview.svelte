@@ -98,7 +98,7 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.2);
-    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform var(--motion-duration-slow) cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   /* A material's thumbnail: the window at a third of its size, cropped by the thumbnail's frame. */

@@ -73,6 +73,7 @@ extension MainWindowController {
             tab.terminalState = status.state == .busy && !status.printing ? "waiting" : status.state.rawValue
             tab.terminalCommand = status.command
             tab.gitBranch = status.gitBranch ?? ""
+            tab.project = status.project ?? ""
             tab.diffAdded = status.diffAdded
             tab.diffRemoved = status.diffRemoved
             tab.terminalStartedAt = status.commandStarted
@@ -416,15 +417,32 @@ extension MainWindowController {
     /// Reads the terminal settings (theme, font, size) and applies them to every terminal.
     func applyTerminalSettings() {
         guard let settingsStore = context.settingsStore else { return }
-        let ghostty = TerminalTheme.ghosttyConfig(dark: Self.prefersDarkSidebarAppearance())
-        let themeId = settingsStore.get("terminalTheme") ?? TerminalTheme.auto.id
-        let theme: TerminalTheme? = switch themeId {
-        case "ghostty": ghostty?.theme
-        case "vscode": TerminalTheme.vscodeTheme(dark: Self.prefersDarkSidebarAppearance())
-        default: (TerminalTheme.presets + customTerminalThemes).first { $0.id == themeId }
+        context.powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
+        // Fonts and scrollback apply at once, so a terminal restored meanwhile starts with them; the VS Code colors shown stay.
+        let shown = tabManager.terminalHost.appearance.theme
+        setTerminalAppearance(settingsStore, vscodeTheme: shown.id == "vscode" ? shown : nil)
+        guard settingsStore.get("terminalTheme") == "vscode" else { return }
+        // Finding the VS Code theme walks its extension folders, so it stays off the main thread.
+        let dark = Self.prefersDarkSidebarAppearance()
+        Task { [weak self] in
+            let theme = await Task.detached(priority: .userInitiated) { TerminalTheme.vscodeTheme(dark: dark) }.value
+            // A later call that left the VS Code theme or the appearance it was resolved for wins.
+            guard let self, let settingsStore = self.context.settingsStore, settingsStore.get("terminalTheme") == "vscode",
+                  Self.prefersDarkSidebarAppearance() == dark else { return }
+            self.setTerminalAppearance(settingsStore, vscodeTheme: theme)
         }
+    }
+
+    private func setTerminalAppearance(_ settingsStore: SettingsStore, vscodeTheme: TerminalTheme?) {
+        let themeId = settingsStore.get("terminalTheme") ?? TerminalTheme.auto.id
         let family = settingsStore.get("terminalFontFamily") ?? ""
         let fromGhostty = family == "ghostty"
+        let ghostty = themeId == "ghostty" || fromGhostty ? TerminalTheme.ghosttyConfig(dark: Self.prefersDarkSidebarAppearance()) : nil
+        let theme: TerminalTheme? = switch themeId {
+        case "ghostty": ghostty?.theme
+        case "vscode": vscodeTheme
+        default: (TerminalTheme.presets + customTerminalThemes).first { $0.id == themeId }
+        }
         let size = settingsStore.get("terminalFontSize").flatMap(Double.init).map { CGFloat($0) }
             ?? (fromGhostty ? ghostty?.fontSize : nil) ?? 13
         tabManager.terminalHost.setAppearance(TerminalHost.Appearance(
@@ -434,7 +452,6 @@ extension MainWindowController {
             optionAsMeta: TerminalHost.OptionAsMeta(rawValue: settingsStore.get("terminalOptionAsMeta") ?? "") ?? .off,
             scrollbackBytes: (settingsStore.get("terminalScrollbackMB").flatMap(Int.init) ?? 10) * 1_000_000
         ))
-        context.powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
     }
 
     /// Themes with their colors on the current Space, monospaced font families, and what the
@@ -517,7 +534,8 @@ extension BrowserContext {
     /// Writes the closed terminals off the main thread when they changed; at quit, waits for the disk.
     func writeClosedTerminals() {
         closedTerminalsSavePending = false
-        guard let url = closedTerminalsURL else { return }
+        // Before the Spaces load, no entry passes the private-Space filter: the disk keeps what was read.
+        guard let url = closedTerminalsURL, spaceManager != nil else { return }
         let terminals = Array(recentlyClosed.recentEntries.reversed().filter { entry in
             guard case .terminal = entry.content else { return false }
             return spaceManager?.space(with: entry.spaceId)?.isPrivate == false
@@ -530,10 +548,18 @@ extension BrowserContext {
         if isTerminating { Self.closedTerminalsQueue.sync {} }
     }
 
-    /// Their screens are purged after 30 days, and so are they.
+    /// Their screens are purged after 30 days, and so are they. A file that no longer decodes is set aside as
+    /// `.corrupt`, so the next save cannot overwrite it.
     func restoreClosedTerminals() {
-        guard let url = closedTerminalsURL, let data = try? Data(contentsOf: url),
-              let entries = try? JSONDecoder().decode([RecentlyClosedStack.Entry].self, from: data) else { return }
+        guard let url = closedTerminalsURL, let data = try? Data(contentsOf: url) else { return }
+        let entries: [RecentlyClosedStack.Entry]
+        do { entries = try JSONDecoder().decode([RecentlyClosedStack.Entry].self, from: data) } catch {
+            Self.logger.error("closed terminals unreadable: \(error.localizedDescription, privacy: .public)")
+            let corrupt = url.appendingPathExtension("corrupt")
+            try? FileManager.default.removeItem(at: corrupt)
+            try? FileManager.default.moveItem(at: url, to: corrupt)
+            return
+        }
         let expiry = Date().addingTimeInterval(-30 * 24 * 3600)
         recentlyClosed.restoreOlder(entries.filter { entry in
             guard case .terminal(let closed) = entry.content else { return false }
@@ -591,7 +617,7 @@ extension UNNotificationCategory {
             UNNotificationCategory(identifier: conversationPermission, actions: [
                 UNNotificationAction(identifier: "\(conversationOptionPrefix)allow_once", title: "Allow".localized, options: []),
                 UNNotificationAction(identifier: "\(conversationOptionPrefix)allow_always", title: "Always Allow".localized, options: []),
-                UNNotificationAction(identifier: "\(conversationOptionPrefix)reject_once", title: "Deny".localized, options: [.destructive])
+                UNNotificationAction(identifier: "\(conversationOptionPrefix)reject_once", title: "Don't Allow".localized, options: [.destructive])
             ], intentIdentifiers: [])
         ]
     }

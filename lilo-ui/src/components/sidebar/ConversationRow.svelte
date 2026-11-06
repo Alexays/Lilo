@@ -3,13 +3,9 @@
      and the Agents popover: the row keeps only the orange dot. -->
 <script lang="ts">
   import "../../lib/i18n/agentsCatalog";
-  import { backOut } from "svelte/easing";
-  import { fade, scale } from "svelte/transition";
-  import AgentTile from "../agents/AgentTile.svelte";
+  import ConversationIcon from "../agents/ConversationIcon.svelte";
   import { tabActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
-  import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
-  import { MOTION } from "../../lib/motion/timings";
   import type { FolderState } from "../../stores/folders.svelte";
   import { optimisticallyActivateTab } from "../../stores/sidebar.svelte";
   import { tabDisplayTitle, type TabState } from "../../stores/tabs.svelte";
@@ -50,7 +46,8 @@
       title,
       waiting ? t("tabItem.terminalAttention") : busy ? t("agents.row.working") : failed ? t("agents.row.failed") : "",
       unread ? t("tabItem.terminalUnread") : "",
-      added || removed ? t("agents.row.changes", { added, removed }) : "",
+      added ? t("agents.row.linesAdded", { count: added }) : "",
+      removed ? t("agents.row.linesRemoved", { count: removed }) : "",
       pageCount ? t("agents.row.pages", { count: pageCount }) : "",
     ].filter(Boolean).join(", "),
   );
@@ -93,24 +90,7 @@
   }}
   onkeydown={handleKeydown}
 >
-  <!-- The state is a badge on the icon, never in its place; the orange dot arrives with one soft pop. -->
-  <span class="icon">
-    <AgentTile agentId={tab.agentId ?? ""} />
-    {#if waiting}
-      <span
-        class="badge attention"
-        aria-hidden="true"
-        in:scale={{ start: 0.3, duration: prefersReducedMotion() ? 0 : 360, easing: backOut }}
-        out:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}
-      ></span>
-    {:else if busy}
-      <span class="badge spinner" aria-hidden="true" transition:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}></span>
-    {:else if failed}
-      <span class="badge failed" aria-hidden="true" transition:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}></span>
-    {:else if unread}
-      <span class="badge unread" aria-hidden="true" transition:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}></span>
-    {/if}
-  </span>
+  <ConversationIcon agentId={tab.agentId ?? ""} {waiting} {busy} {failed} {unread} />
   <span class="title">{title}</span>
   {#if added || removed}
     <span class="diff" aria-hidden="true">
@@ -185,63 +165,6 @@
   .conversation-row.active {
     background: var(--sidebar-sel);
     box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
-  }
-
-  .icon {
-    position: relative;
-    flex: none;
-    display: grid;
-    width: 16px;
-    height: 16px;
-  }
-
-  /* On the icon's bottom-right corner, ringed in the sidebar colour so it reads on any icon. */
-  .badge {
-    position: absolute;
-    right: -3px;
-    bottom: -3px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px var(--sidebar-bg);
-  }
-
-  .badge.attention {
-    background: var(--attention);
-  }
-
-  .badge.failed {
-    background: var(--danger);
-  }
-
-  .badge.unread {
-    background: var(--accent);
-  }
-
-  /* About 30 s of turns, then a still arc: a turn left running must not keep the display link up. */
-  .badge.spinner {
-    width: 8px;
-    height: 8px;
-    right: -4px;
-    bottom: -4px;
-    box-sizing: border-box;
-    border: 1.5px solid var(--text-primary-tint-12);
-    border-top-color: var(--agents);
-    border-right-color: var(--agents);
-    background: var(--sidebar-bg);
-    animation: conversation-spin 0.9s linear 33 forwards;
-  }
-
-  @keyframes conversation-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .badge.spinner {
-      animation: none;
-    }
   }
 
   .title {

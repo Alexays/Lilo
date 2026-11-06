@@ -2,6 +2,7 @@
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
+  import Icon from "../ui/Icon.svelte";
 
   let { status = $bindable() }: { status: { level: string; message: string } | null } = $props();
 
@@ -17,7 +18,7 @@
   <div class="status-banner" class:status-error={status.level === "error"}>
     <span>{status.message}</span>
     <button class="status-close" type="button" aria-label={t("common.close")} onclick={() => (status = null)}>
-      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+      <Icon name="close" size={14} />
     </button>
   </div>
 {/if}
@@ -50,5 +51,10 @@
     background: none;
     color: inherit;
     cursor: pointer;
+  }
+
+  .status-close:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 </style>

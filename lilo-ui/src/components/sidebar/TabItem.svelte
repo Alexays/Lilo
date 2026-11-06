@@ -283,6 +283,7 @@
   const rowLabel = $derived(
     [
       terminalLabel || displayTitle,
+      awayTitle,
       agentActing ? t("tabItem.agentActing") : "",
       hangSeconds !== null ? t("tabItem.notResponding") : "",
       tab.isPinned ? t("tabItem.pinned") : "",
@@ -479,7 +480,7 @@
     leaveTabPreview();
   }}
 >
-  <!-- A pointer shortcut: the keyboard reaches the home page through the row's menu. -->
+  <!-- A pointer shortcut: the keyboard reaches the home page through the row's context menu. -->
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="tab-icon" class:returns-home={!!tab.homeTitle && interactive} onclick={returnHome}>
     <!-- Transitions live on each branch root so an isLoading flip swaps content without
@@ -696,10 +697,10 @@
     transition:
       background var(--transition-fast),
       box-shadow var(--transition-fast),
-      transform 220ms var(--motion-ease-spring),
-      max-width 220ms var(--motion-ease-spring),
-      padding 220ms var(--motion-ease-spring),
-      gap 220ms var(--motion-ease-spring);
+      transform var(--motion-duration-overlay) var(--motion-ease-spring),
+      max-width var(--motion-duration-overlay) var(--motion-ease-spring),
+      padding var(--motion-duration-overlay) var(--motion-ease-spring),
+      gap var(--motion-duration-overlay) var(--motion-ease-spring);
     contain: layout style paint;
     overflow: hidden;
     position: relative;
@@ -896,6 +897,10 @@
     color: var(--text-primary);
   }
 
+  .close-btn:active {
+    background: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  }
+
   .close-btn:not(.visible) {
     opacity: 0;
     transform: scale(0.8);
@@ -955,7 +960,7 @@
   .sound-glyph {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .sound-glyph.wave {

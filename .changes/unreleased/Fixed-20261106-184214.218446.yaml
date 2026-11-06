@@ -1,0 +1,3 @@
+kind: Fixed
+body: An agent conversation closed while its agent starts no longer leaves the agent running, an agent started to replay a reopened conversation or to sign in stops once idle, a crashed agent or a sign-in terminal that cannot open shows an error instead of a stuck sign-in, and picking a mode or model after the agent stopped applies it or says why it could not
+time: 2026-11-06T18:42:14.218446+01:00

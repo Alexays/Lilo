@@ -62,14 +62,7 @@ extension NSColor {
 
     var relativeLuminance: CGFloat {
         guard let srgbColor else { return 0 }
-
-        func linearized(_ channel: CGFloat) -> CGFloat {
-            channel <= 0.03928 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
-        }
-
-        return 0.2126 * linearized(srgbColor.redComponent)
-            + 0.7152 * linearized(srgbColor.greenComponent)
-            + 0.0722 * linearized(srgbColor.blueComponent)
+        return SidebarRGB(srgbColor).luminance
     }
 
     var isPerceptuallyDark: Bool {
@@ -151,7 +144,7 @@ private struct SidebarRGB {
         return value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
     }
 
-    private var luminance: Double {
+    var luminance: Double {
         0.2126 * Self.linearized(r) + 0.7152 * Self.linearized(g) + 0.0722 * Self.linearized(b)
     }
 

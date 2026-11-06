@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { on, type BridgeDownloadSnapshot } from "../../lib/bridge";
   import { downloadActions } from "../../lib/bridge/actions";
   import UiMoreMenu from "../ui/UiMoreMenu.svelte";
@@ -24,7 +24,7 @@
   const downloads = $derived(getPageDownloads());
   const query = $derived(getDownloadsQuery());
   const filtered = $derived(filterDownloads(downloads, query));
-  const groups = $derived(groupDownloads(filtered, Date.now(), getLocale()));
+  const groups = $derived(groupDownloads(filtered, Date.now(), getFormatLocale()));
   let selectedId = $state<number | null>(null);
 
   $effect(() => {

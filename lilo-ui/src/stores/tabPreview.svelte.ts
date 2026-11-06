@@ -7,7 +7,7 @@ import type { BridgeTerminalPrompt } from "../lib/bridge/protocol";
 
 const TAB_PREVIEW_HOVER_DELAY_MS = 450;
 // A pointer resting this long on a tab wakes it, if it sleeps, ahead of the click; a sweep down the list crosses a row faster.
-const TAB_WARM_HOVER_DELAY_MS = 150;
+const TAB_WARM_HOVER_DELAY_MS = 300;
 const TAB_PREVIEW_CACHE_TTL_MS = 30_000;
 // A cached image older than this is shown instantly but refreshed in the background, and the
 // visible card refreshes on this cadence so live pages stay live.

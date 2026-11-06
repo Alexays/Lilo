@@ -108,7 +108,7 @@ enum ChromiumReader {
             guard let version = versions.max(by: { $0.compare($1, options: .numeric) == .orderedAscending }) else { return nil }
             let dir = root.appendingPathComponent(id).appendingPathComponent(version)
             guard let data = try? Data(contentsOf: dir.appendingPathComponent("manifest.json")),
-                  let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let manifest = try? JSONSerialization.jsonObject(with: data, options: .json5Allowed) as? [String: Any],
                   (manifest["update_url"] as? String)?.contains("clients2.google.com") == true,
                   var name = manifest["name"] as? String else { return nil }
             if name.hasPrefix("__MSG_"), name.hasSuffix("__") {
@@ -116,7 +116,7 @@ enum ChromiumReader {
                 let locale = manifest["default_locale"] as? String ?? "en"
                 let messagesURL = dir.appendingPathComponent("_locales/\(locale)/messages.json")
                 if let messagesData = try? Data(contentsOf: messagesURL),
-                   let messages = try? JSONSerialization.jsonObject(with: messagesData) as? [String: [String: Any]],
+                   let messages = try? JSONSerialization.jsonObject(with: messagesData, options: .json5Allowed) as? [String: [String: Any]],
                    let entry = messages.first(where: { $0.key.caseInsensitiveCompare(key) == .orderedSame })?.value,
                    let message = entry["message"] as? String {
                     name = message

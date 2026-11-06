@@ -13,14 +13,13 @@ type StateRune = (<T>(value: T) => T) & { raw: <T>(value: T) => T };
 const { dndEngineStore } = await import("../lib/dndEngine/store.svelte");
 type DndActiveDrag = import("../lib/dndEngine/store.svelte").DndActiveDrag;
 const {
+	DROP_SETTLE_MS,
 	commitSidebarDrop,
 	getZoneItems,
 	resetSidebarDrag,
 } = await import("./sidebarDnd.svelte");
 type SidebarZoneRef = import("./sidebarDnd.svelte").SidebarZoneRef;
 type SidebarDndItem = import("../lib/dndEngine/adapters/sidebar").SidebarDndItem;
-
-const DROP_SETTLE_MS = 180;
 
 function elementRect(left: number, top: number, width: number, height: number): HTMLElement {
 	return {
@@ -39,6 +38,8 @@ const ZONE: SidebarZoneRef = { id: "zone-a", section: "unpinned", parentFolderId
 const OTHER_ZONE: SidebarZoneRef = { id: "zone-b", section: "pinned", parentFolderId: null };
 
 function registerZones(): void {
+	// Test files share one process: a document another file stubbed would take the drag flag the store mirrors onto it.
+	delete (globalThis as { document?: unknown }).document;
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 120), {
 		id: ZONE.id,
 		axis: "vertical",
@@ -69,7 +70,6 @@ function dragOnto(zoneId: string, index = 1): DndActiveDrag {
 			item: { id: "tab-1", kind: "tab" },
 			zoneId: ZONE.id,
 			element: elementRect(0, 0, 240, 30),
-			sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect() as DOMRect,
 		},
 		startPoint: { x: 10, y: 10 },
 		currentPoint: { x: 10, y: 60 },
@@ -170,10 +170,12 @@ test("a new drag gesture releases the previous drop's hold", async () => {
 		item: { id: "tab-2", kind: "tab" },
 		zoneId: ZONE.id,
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect() as DOMRect,
 	}, { x: 10, y: 10 });
+	assert.deepEqual(getZoneItems(ZONE, baseItems()).map((item) => item.id), ["tab-2", "tab-1"], "a plain press keeps the hold");
 
-	assert.deepEqual(getZoneItems(ZONE, baseItems()).map((item) => item.id), ["tab-1", "tab-2"]);
+	// Started outside every zone: the dragged row is lifted out of the base order.
+	dndEngineStore.updatePointer({ x: 500, y: 500 }, true);
+	assert.deepEqual(getZoneItems(ZONE, baseItems()).map((item) => item.id), ["tab-1"]);
 
 	dndEngineStore.drop();
 	// endDrag defers its notification past the current task.

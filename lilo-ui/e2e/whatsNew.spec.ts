@@ -103,12 +103,12 @@ test("Escape leaves the screenshot save menu underneath the dialog open", async 
 	await page.locator('.screenshot-panel [aria-label="Save options"]').waitFor();
 	await page.evaluate(() => window.__lilo!.receive({ event: "screenshotCaptured", id: "sample", url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500'/%3E", filename: "sample.png" }));
 	await page.locator('.screenshot-panel [aria-label="Save options"]').click();
-	await expect(page.locator(".save-menu")).toBeVisible();
+	await expect(page.locator(".ui-split-menu")).toBeVisible();
 	await openWhatsNew(page);
 	await expect(page.locator("dialog[open]")).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(page.locator("dialog[open]")).toHaveCount(0);
-	await expect(page.locator(".save-menu")).toBeVisible();
+	await expect(page.locator(".ui-split-menu")).toBeVisible();
 });
 
 test("automatic highlights wait for startup recovery to be dismissed", async ({ page }) => {

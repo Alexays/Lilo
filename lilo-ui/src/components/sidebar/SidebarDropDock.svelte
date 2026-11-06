@@ -83,7 +83,7 @@
 
   /* Pills pop in one after the other on the spring; they only mount while a drag runs. */
   .dock-target {
-    animation: dock-pop 340ms var(--motion-ease-bounce) both;
+    animation: dock-pop var(--motion-duration-slow) var(--motion-ease-bounce) both;
   }
 
   .dock-target.pin {
@@ -110,7 +110,7 @@
     border: 1px dashed color-mix(in srgb, var(--dock-color) 45%, transparent);
     /* Opaque: it floats over the first tabs. */
     background: color-mix(in srgb, var(--dock-color) 10%, var(--sidebar-bg));
-    color: color-mix(in srgb, var(--dock-color) 80%, var(--text-primary));
+    color: var(--sidebar-contrast);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
     white-space: nowrap;
@@ -118,7 +118,7 @@
     transition:
       background var(--motion-duration-normal) var(--motion-ease-organic),
       border-color var(--motion-duration-normal) var(--motion-ease-organic),
-      scale 320ms var(--motion-ease-bounce);
+      scale var(--motion-duration-slow) var(--motion-ease-bounce);
   }
 
   .dock-target.pin {
@@ -133,6 +133,7 @@
   }
 
   .dock-target span {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -141,7 +142,7 @@
     flex-shrink: 0;
     width: 13px;
     height: 13px;
-    fill: currentColor;
+    fill: color-mix(in srgb, var(--dock-color) 80%, var(--sidebar-contrast));
   }
 
   @media (prefers-reduced-motion: reduce) {

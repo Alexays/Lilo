@@ -52,7 +52,7 @@
     border-radius: 0 var(--radius-chip) var(--radius-chip) 0;
     overflow: hidden;
     background: var(--accent);
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   /* The shimmer slides a strip of two gradient tiles by one tile. A transform runs on the

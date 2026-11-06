@@ -200,9 +200,8 @@ extension MainWindowController {
             little.window.backgroundColor = resolvedColor
             little.engine.applyPageBackgroundColor(surfaceColor)
         }
-        // The visible frame paint: fades over ~0.34s to match the chrome sidebar's own
-        // background-color transition (the UI throttles updateWindowBackground to ~10Hz
-        // during space swipes; the native fade smooths between samples).
+        // The visible frame paint: fades over ~0.34s to match the chrome sidebar's own background-color transition.
+        // Space swipes take `applySwipeFrameColor` instead, frame by frame without a fade.
         windowFrameView?.setFrameColor(frameColor)
         syncPageBar()
         (contentContainerView as? ContentContainerView)?.stageColor = resolvedColor
@@ -229,11 +228,8 @@ extension MainWindowController {
     /// brings the full update (page surfaces, popups, the saved color).
     func applySwipeFrameColor(_ cssColor: String) {
         guard let color = NSColor(cssHex: cssColor) else { return }
-        if glassView == nil {
-            window?.backgroundColor = color
-        } else {
-            glassView?.tintColor = color.withAlphaComponent(0.2)
-        }
+        // Without glass the opaque frame bands hide the window background, so only the glass tint needs the color.
+        glassView?.tintColor = color.withAlphaComponent(0.2)
         windowFrameView?.setFrameColor(glassView == nil ? color : color.withAlphaComponent(0.06), animated: false)
         lastAppliedWindowChromeColor = nil
     }
@@ -312,7 +308,8 @@ extension MainWindowController {
                     Self.loadPreloadedSpaceRestoreState(from: dbManager, space: preloadSpace, loadsFavicons: loadsFavicons)
                 }) else { return nil }
                 for entry in loaded.favicons {
-                    self.context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                    self.context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
+                                                             partition: preloadSpace.profileId, persistedAt: entry.updatedAt)
                 }
                 if loadsFavicons { self.context.lastFaviconWarmProfileId = preloadSpace.profileId }
                 return loaded.state
@@ -322,6 +319,9 @@ extension MainWindowController {
         applyTerminalSettings()
         Task { @MainActor [context] in await context.startContentBlocker() }
         let permissionDecisionHandler: GeolocationBridge.PermissionDecisionHandler = { [weak context] webView, type, origin, completion in
+            if context?.engineFactory.extensionDeclares(type == "location" ? "geolocation" : type, origin: origin, webView: webView) == true {
+                return completion(true)
+            }
             guard let windows = context?.windows, let window = webView.flatMap(windows.window(for:)) ?? windows.activeWindow else {
                 completion(false)
                 return
@@ -331,7 +331,9 @@ extension MainWindowController {
         context.engineFactory.geolocationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationDecisionHandler = { [weak context] webView, origin in
-            guard let context, let webView, let window = context.windows.window(for: webView) else { return nil }
+            guard let context, let webView else { return nil }
+            if context.engineFactory.extensionDeclares("notifications", origin: origin, webView: webView) { return true }
+            guard let window = context.windows.window(for: webView) else { return nil }
             return window.storedPermissionDecision(type: "notifications", origin: origin, tabId: window.tabManager.engineTab(forWebView: webView)?.id)
                 ?? (context.settingsStore?.refusesPermissionRequests("notifications") != false ? false : nil)
         }
@@ -392,10 +394,15 @@ extension MainWindowController {
     func setupBridgeEarly() {
         chromeWebView.navigationDelegate = self
         // Factory handlers are shared by every window: each resolves the window that shows the page.
-        context.engineFactory.formDirtyHandler = { [weak context] webView, dirty in
-            guard let tab = context?.windows.windowAndEngine(for: webView)?.engine else { return }
-            tab.isFormDirty = dirty
-            tab.delegate?.tab(tab, didUpdateFormDirty: dirty)
+        context.engineFactory.formDirtyHandler = { [weak context] webView, dirty, isMainFrame in
+            // A space switch parks the engines it hides before their pages report going hidden.
+            guard let context, let tab = context.windows.windowAndEngine(for: webView)?.engine
+                ?? context.browserState.parkedEngine(forWebView: webView) else { return }
+            if !isMainFrame { tab.hasDirtySubframeForm = true }
+            let isDirty = dirty || tab.hasDirtySubframeForm
+            guard isDirty != tab.isFormDirty else { return }
+            tab.isFormDirty = isDirty
+            tab.delegate?.tab(tab, didUpdateFormDirty: isDirty)
         }
         context.engineFactory.callControlsHandler = { [weak context] webView, controls in
             guard let tab = context?.windows.windowAndEngine(for: webView)?.engine, tab.callControls != controls else { return }
@@ -469,7 +476,7 @@ extension MainWindowController {
             context.terminalActivityChanged()
         })
 
-        bridgeRouter.register(handler: SearchBridgeHandler(
+        let searchHandler = SearchBridgeHandler(
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
             faviconStoreProvider: { [weak self] in self?.profileContext?.favicons },
             bridgeRouter: bridgeRouter,
@@ -480,12 +487,16 @@ extension MainWindowController {
                 guard let self else { return }
                 tabManager.preloadTopHit(context.hiddenSpaceLifecycle.isConstrainedPower ? nil : url)
             }
-        ))
+        )
+        bridgeRouter.register(handler: searchHandler)
+        self.searchHandler = searchHandler
 
-        bridgeRouter.register(handler: HistoryPageBridgeHandler(
+        let historyPageHandler = HistoryPageBridgeHandler(
             profileContextProvider: { [weak self] in self?.profileContext },
             bridgeRouter: bridgeRouter
-        ))
+        )
+        bridgeRouter.register(handler: historyPageHandler)
+        self.historyPageHandler = historyPageHandler
 
         // chrome.omnibox spans both bridges: the address bar sends omniboxInput* here, and the
         // extension's suggest()/setDefaultSuggestion replies arrive via the app-wide gap relay, which
@@ -535,9 +546,7 @@ extension MainWindowController {
                 guard let self, let profileId = profileContext?.profileId else { return nil }
                 return profileManager.dataStore(for: profileId)
             },
-            lifecycleDiagnosticsProvider: { [weak self] in self?.context.browserState.lifecycleDiagnostics() },
-            extensionDiagnosticsProvider: { [weak self] in self?.extensionDiagnosticsSnapshots() ?? [] },
-            forceLifecycleTrimHandler: { [weak self] in self?.context.hiddenSpaceLifecycle.forceTrim() },
+            context: context,
             bridgeRouter: bridgeRouter
         )
         bridgeRouter.register(handler: settingsHandler)
@@ -614,7 +623,8 @@ extension MainWindowController {
                 },
                 otherBookmarksTitle: { unsafe String(format: "Other Bookmarks (%@)".localized, $0) },
                 warmFavicons: { [weak self] entries in
-                    entries.forEach { self?.context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor) }
+                    guard let self, let profileId = profileContext?.profileId else { return }
+                    entries.forEach { self.context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor, partition: profileId) }
                 }
             ))
         }))
@@ -643,59 +653,14 @@ extension MainWindowController {
         }
         let deviceSetup = context.deviceSetupController(settingsStore: settingsStore)
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
-        settingsHandler.onFolderAutoLockChanged = { [weak self] in self?.context.folderAutoLock.limitDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
-        settingsHandler.onTogglePerfRecording = { [weak self] in self?.context.togglePerfRecording() }
         settingsHandler.onRecordShortcut = { [weak self] in self?.recordingShortcutId = $0 }
-        settingsHandler.windowRouters = { [weak self] in self?.context.windows.windows.compactMap(\.bridgeRouter) ?? [] }
-        settingsHandler.onContentBlockerToggled = { [weak self] enabled in
-            guard let self else { return }
-            engineFactory.applyBlockerChange(enabled: enabled)
-            // Allowlist edits made while the blocker was off were never compiled.
-            if enabled { Task { await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist) } }
-            context.reloadBlockerExtension()
-            if enabled, context.filterListService == nil {
-                Task { await self.context.startContentBlocker() }
-            }
-        }
-        settingsHandler.contentBlockerStatus = { [weak self] in self?.context.contentBlockerStatus ?? [:] }
-        settingsHandler.onUpdateFilterLists = { [weak self] in await self?.context.updateFilterLists() }
-        settingsHandler.agentControl = { [weak self] in self?.context.agentControl }
-        settingsHandler.onBlockerAllowlistChanged = { [weak self] reloadTabId in
-            Task {
-                await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist)
-                if let reloadTabId { self?.tabManager.engineTab(for: reloadTabId)?.reload() }
-            }
-            Task { await self?.context.filterListService?.installBlockerExtension() }
-        }
-        settingsHandler.onSendGPCChanged = { enabled in
-            engineFactory.setGlobalPrivacyControl(enabled)
-        }
-        engineFactory.setGlobalPrivacyControl(settingsStore.sendGPC)
-        settingsHandler.onTrackingPreventionChanged = { engineFactory.setTrackingPrevention($0) }
-        settingsHandler.onHTTPSOnlyChanged = { enabled in
-            engineFactory.setHTTPSOnly(enabled)
-        }
-        engineFactory.setHTTPSOnly(settingsStore.httpsOnly)
-        settingsHandler.onMinimumFontSizeChanged = { engineFactory.setMinimumFontSize($0) }
-        engineFactory.setMinimumFontSize(settingsStore.minimumFontSize)
-        settingsHandler.onFullRefreshRateChanged = { engineFactory.setFullRefreshRate($0) }
-        engineFactory.setFullRefreshRate(settingsStore.fullRefreshRate)
-        engineFactory.agentsProfileId = settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
-        settingsHandler.onAutoplayPolicyChanged = { engineFactory.setAutoplayPolicy($0) }
-        engineFactory.setAutoplayPolicy(settingsStore.get("autoplayPolicy") ?? "audio")
+        settingsHandler.onReloadTab = { [weak self] in self?.tabManager.engineTab(for: $0)?.reload() }
         settingsHandler.onTerminalSettingsChanged = { [weak self] in self?.applyTerminalSettings() }
         settingsHandler.terminalOptionsProvider = { [weak self] in self?.terminalOptions() ?? [:] }
         settingsHandler.terminalThemeImporter = { [weak self] in await self?.importTerminalTheme() ?? false }
         settingsHandler.onTabLayoutChanged = { [weak self] in self?.applyStoredTabLayoutEverywhere() }
-        settingsHandler.onLifecyclePresetChanged = { [weak self] raw in
-            guard let self else { return }
-            self.context.applyLifecyclePreset(LifecyclePreset(rawValue: raw) ?? .default)
-            // Reclaim promptly under the new (possibly tighter) policy.
-            self.context.hiddenSpaceLifecycle.scheduleActiveSpaceTrim(delay: 0)
-            self.context.hiddenSpaceLifecycle.scheduleTrim()
-        }
 
         let featureFlagsHandler = FeatureFlagsBridgeHandler(
             settingsStore: settingsStore,
@@ -705,13 +670,11 @@ extension MainWindowController {
         featureFlagsHandler.onOverridesChanged = { overrides in
             engineFactory.setFeatureFlagOverrides(overrides)
         }
-        // Apply persisted feature flags to the engine at startup.
-        engineFactory.setFeatureFlagOverrides(settingsStore.featureFlagOverrides)
 
         let downloadHandler = DownloadBridgeHandler(
             downloadManager: context.downloadManager,
             bridgeRouter: bridgeRouter,
-            storeProvider: { [weak self] in self?.profileContext?.downloads }
+            storeProvider: { [weak self] in self?.downloadStore }
         )
         downloadHandler.onQuickLookRequested = { QLPreviewPanel.shared().makeKeyAndOrderFront(nil) }
         downloadHandler.onDragRequested = { [weak self] url in self?.beginDownloadFileDrag(fileURL: url) }
@@ -815,7 +778,7 @@ extension MainWindowController {
         let currentSpaceId = tabManager.currentSpaceId
         let currentTreeItems = currentSpaceId.map { tabManager.sidebarTreeItems(forSpace: $0) } ?? []
         var data: [String: Any] = [
-            "tabs": currentSpaceId.map { tabManager.tabs(forSpace: $0).map(\.bridgeData) } ?? [],
+            "tabs": currentSpaceId.map { tabManager.tabs(forSpace: $0).map { $0.snapshotData() } } ?? [],
             "folders": currentSpaceId.map { tabManager.folders(forSpace: $0).map(\.bridgeData) } ?? [],
             "treeItems": currentTreeItems.map(\.bridgeData),
             "activeTabId": tabManager.activeOpenTabId?.uuidString ?? "",
@@ -841,6 +804,7 @@ extension MainWindowController {
         }
         data["extensions"] = profileContext?.extensions.extensionBridgePayloads(activeTab: tabManager.activeOpenTabId.flatMap { tabManager.tabAdapter(for: $0) }) ?? []
         data["tracingEnabled"] = StartupMetrics.tracingEnabled
+        data["region"] = Locale.current.region?.identifier
         return data
     }
 
@@ -875,6 +839,7 @@ extension MainWindowController {
                     }
 
                     root.dataset.booting = 'true';
+                    root.dataset.locale = '\(Localization.locale)';
                     root.dataset.tabPosition = '\(tabLayout.position.rawValue)';
                     root.dataset.address = '\(tabLayout.address.rawValue)';
 
@@ -1112,6 +1077,8 @@ extension MainWindowController {
                 continue
             }
 
+            // The find bar follows the shown tab, so the leaving page's find session ends here.
+            outgoingEngine.dismissFind()
             if popOutBackgroundedTab(outgoingEngine) { continue }
 
             // Tab-share sources, agent tabs and the page of a PiP window (open or on its way) stay in-window like
@@ -1123,9 +1090,10 @@ extension MainWindowController {
                 continue
             }
 
-            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an agent or a
+            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an awake agent or a
             // PiP window keeps it shown.
-            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !outgoingEngine.isAgentControlled && !drawsPiP
+            let agentAwake = outgoingEngine.isAgentControlled && !outgoingEngine.isAgentSleeping
+            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !agentAwake && !drawsPiP
             if !outgoingEngine.isWebInspectorVisible { outgoingEngine.fitView(in: contentContainerView.bounds) }
         }
     }

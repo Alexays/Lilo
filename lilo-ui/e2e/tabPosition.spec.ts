@@ -152,6 +152,15 @@ test("an active favorite names its site without sliding over the favorites besid
 	for (const [width, scrollWidth] of groups) expect(scrollWidth, "a group holds its pills").toBeLessThanOrEqual(Math.ceil(width) + 1);
 });
 
+test("a conversation whose agent failed shows its red badge in the strip", async ({ page }) => {
+	const world = folderWorld();
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab) =>
+		tab.id === "tab-alpha" ? { ...tab, kind: "agent", agentId: "agent", terminalState: "failed" } : tab);
+	await bootChrome(page, { ...world, tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-conversation");
+	await expect(page.locator(".strip-conversation .badge.failed")).toBeVisible();
+	await expect(page.locator(".strip-conversation .main")).toHaveAttribute("aria-label", /Stopped with an error/);
+});
+
 test("the top strip lists today's tabs and switches on click", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
 	const pills = page.locator(".tab-strip .strip-tab");
@@ -296,14 +305,26 @@ test("settings in the sidebar layout keep their navigation in the sidebar, with 
 	await expect(page.locator(".strip-surface")).toHaveCount(0);
 });
 
+// Fires the header's hold timer, if the press started one. The page needs `page.clock.install()` first.
+async function runPastHold(page: Page): Promise<void> {
+	const holdMs = await page.evaluate(async () => {
+		// A URL the dev server serves to the page: the store's runes do not load in Node.
+		const url = "/src/stores/tabEdgeDrag.svelte.ts";
+		const { HOLD_MS }: typeof import("../src/stores/tabEdgeDrag.svelte") = await import(url);
+		return HOLD_MS;
+	});
+	await page.clock.runFor(holdMs);
+}
+
 test("holding the header then dropping near the right edge moves the tabs right", async ({ page }) => {
+	await page.clock.install();
 	await bootChrome(page, initialWorld());
 	const header = (await page.locator(".sidebar-header").boundingBox())!;
 	const viewport = page.viewportSize()!;
 
 	await page.mouse.move(header.x + 40, header.y + header.height / 2);
 	await page.mouse.down();
-	await page.waitForTimeout(500);
+	await runPastHold(page);
 	await expect(page.locator(".tab-edge-drag")).toBeVisible();
 	await page.mouse.move(viewport.width - 20, viewport.height / 2, { steps: 8 });
 	await expect(page.locator(".slot.right")).toBeVisible();
@@ -350,13 +371,14 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 }
 
 test("a control-click on the header never lifts the tabs", async ({ page }) => {
+	await page.clock.install();
 	await bootChrome(page, initialWorld());
 	const header = (await page.locator(".sidebar-header").boundingBox())!;
 
 	await page.keyboard.down("Control");
 	await page.mouse.move(header.x + 40, header.y + header.height / 2);
 	await page.mouse.down();
-	await page.waitForTimeout(500);
+	await runPastHold(page);
 
 	await expect(page.locator(".tab-edge-drag")).toHaveCount(0);
 	await page.mouse.up();
@@ -371,6 +393,23 @@ test("a click in the page closes a strip popover", async ({ page }) => {
 	await receive(page, { event: "contentInteraction", isMouseDown: true });
 
 	await expect(page.locator(".strip-popover")).toHaveCount(0);
+});
+
+test("the arrow keys walk a strip popover's menu", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await page.locator(".space-chip").click();
+	const items = page.locator(".strip-popover [role^=menuitem]");
+	await expect(items).toHaveCount(3);
+	await expect(items.first()).toBeFocused();
+
+	await page.keyboard.press("ArrowDown");
+	await expect(items.nth(1)).toBeFocused();
+	await page.keyboard.press("End");
+	await expect(items.last()).toBeFocused();
+	await page.keyboard.press("ArrowDown");
+	await expect(items.first()).toBeFocused();
+	await page.keyboard.press("ArrowUp");
+	await expect(items.last()).toBeFocused();
 });
 
 test("the page toolbar centers the address on the page", async ({ page }) => {

@@ -95,6 +95,9 @@ extension MainWindowController {
         if tab.isPinned || tab.isBookmarked {
             let homeURL = (tab.homeURL ?? tab.url)?.absoluteString ?? ""
             menu.addItem("Edit...".localized, icon: .edit) { self.bridgeRouter.send(event: "beginTabEdit", data: ["id": tabId, "homeURL": homeURL]) }
+            if let home = tab.homeURL, tab.url != nil, !tab.matchesHomeURL(tab.url) {
+                menu.addItem("Back to Home Page".localized, icon: .home) { self.tabManager.load(home, inTab: uuid) }
+            }
         }
         let actions = TabContextMenuActions.forTab(tab)
         if actions.contains(.createFolderFromTab) {
@@ -169,7 +172,7 @@ extension MainWindowController {
     /// The folder takes the tab's place, inside the tab's folder when there is room for one more level.
     private func createFolder(from tab: Tab, spaceId: UUID) {
         let section: TabTreeItem.Section = tab.isPinned ? .pinned : .unpinned
-        let folder = TabFolder(spaceId: spaceId, name: "New Folder", color: "#5865f2")
+        let folder = TabFolder(spaceId: spaceId, name: "New Folder".localized, color: "#5865f2")
         var parentFolderId: UUID?
         if let groupId = tab.groupId, let spaceTab = context.browserState.space(id: spaceId)?.spaceTab,
            spaceTab.folder(id: groupId)?.isSplit == false, spaceTab.canNestFolder(height: 1, in: groupId) {
@@ -228,7 +231,7 @@ extension MainWindowController {
         // Copied here: the chrome may only write the pasteboard during a user gesture, and a bridge push is none.
         func addCopyURL() {
             menu.addItem("Copy URL".localized, icon: .copyLink) {
-                guard let item = try? self.profileContext?.downloads.fetch(id: Int64(downloadId)) else { return }
+                guard let item = try? self.downloadStore?.fetch(id: Int64(downloadId)) else { return }
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(item.url, forType: .string)
             }
@@ -239,7 +242,7 @@ extension MainWindowController {
             addCopyURL()
             add("Cancel", .cancel, "cancel")
         case "interrupted":
-            add("Retry", .retry, "retry")
+            if (try? profileContext?.downloads.fetch(id: Int64(downloadId)))?.source != "blob" { add("Retry", .retry, "retry") }
             addCopyURL()
             menu.addItem(.separator())
             add("Remove from List", .removeFromList, "removeFromList")
@@ -254,7 +257,7 @@ extension MainWindowController {
                 add("Show in Finder", .showInFinder, "showInFinder")
                 if context.settingsStore?.terminalEnabled != false {
                     menu.addItem("Open in Terminal".localized, icon: .openInTerminal) {
-                        guard let item = try? self.profileContext?.downloads.fetch(id: Int64(downloadId)) else { return }
+                        guard let item = try? self.downloadStore?.fetch(id: Int64(downloadId)) else { return }
                         self.createTerminalTab(cwd: (item.destinationPath as NSString).deletingLastPathComponent)
                     }
                 }
@@ -359,7 +362,7 @@ extension MainWindowController {
 
     /// Opens the parent so the new folder shows, then starts its rename.
     private func createSubfolder(in parent: TabFolder) {
-        let folder = TabFolder(spaceId: parent.spaceId, name: "New Folder", color: parent.color)
+        let folder = TabFolder(spaceId: parent.spaceId, name: "New Folder".localized, color: parent.color)
         var commands: [BrowserCommand] = [.createFolder(spaceId: parent.spaceId, folder: folder, section: .unpinned, parentFolderId: parent.id)]
         if parent.isCollapsed { commands.append(.setFolderCollapsed(spaceId: parent.spaceId, folderId: parent.id, isCollapsed: false)) }
         applyContextMenuStateCommands(commands)
@@ -388,7 +391,7 @@ extension MainWindowController {
         let alert = NSAlert()
         alert.messageText = unsafe tabs == 0
             ? String(format: "Delete %@?".localized, folder.name)
-            : String(format: "Delete %@ and %@?".localized, folder.name, tabs == 1 ? "1 tab".localized : String(format: "%d tabs".localized, tabs))
+            : String(format: "Delete %@ and its %d tabs?".localized(count: tabs), folder.name, tabs)
         alert.informativeText = folder.isSplit
             ? "Its tabs stay in the sidebar.".localized
             : "This cannot be undone.".localized
@@ -491,7 +494,7 @@ extension MainWindowController {
         applyContextMenuStateCommands(commands)
     }
 
-    /// How the open tabs are laid out: stacked by site, grouped by type, the sites never stacked,
+    /// How the open tabs are laid out: stacked by site, grouped by project or type, the sites never stacked,
     /// and a one-off sort.
     private func addTabListItems(to menu: NSMenu, spaceId: UUID) {
         let settings = context.settingsStore
@@ -502,6 +505,8 @@ extension MainWindowController {
             .state = settings?.get("sidebarStackTabs") == "false" ? .off : .on
         menu.addItem("Group by Type".localized, icon: .groupByType) { send("toggleGroupByType", "") }
             .state = settings?.get("sidebarGroupByType") == "true" ? .on : .off
+        menu.addItem("Group by Project".localized, icon: .groupByProject) { send("toggleGroupByProject", "") }
+            .state = settings?.get("sidebarGroupByProject") == "true" ? .on : .off
         let never = (settings?.get("sidebarNeverStack") ?? "").split(separator: ",").map(String.init)
         if !never.isEmpty {
             let neverMenu = NSMenu(title: "Never Stack".localized)
@@ -536,7 +541,7 @@ extension MainWindowController {
             }
         }
         menu.addItem("Create Folder".localized, icon: .newFolder) {
-            let folder = TabFolder(spaceId: targetSpaceId, name: "New Folder", color: "#5865f2")
+            let folder = TabFolder(spaceId: targetSpaceId, name: "New Folder".localized, color: "#5865f2")
             self.applyContextMenuStateCommands([.createFolder(spaceId: targetSpaceId, folder: folder, section: .unpinned)])
         }
         let positions = NSMenu()
@@ -608,11 +613,13 @@ extension MainWindowController {
         )
         let closeAll = { [weak self] in
             guard let self else { return }
-            var recordedCount = 0
+            let newestBefore = context.recentlyClosed.recentEntries.first?.id ?? 0
             for tab in closing {
-                if recordClosedTabForRestore(id: tab.id, sidebarItemById: itemById) { recordedCount += 1 }
+                recordClosedTabForRestore(id: tab.id, sidebarItemById: itemById)
                 closeTabStateFirst(id: tab.id, undoable: false)
             }
+            // A conversation's pages close with it, each its own entry: Undo restores every one.
+            let recordedCount = context.recentlyClosed.recentEntries.prefix { $0.id > newestBefore }.count
             if recordedCount > 0 {
                 bridgeRouter.send(event: "tabClosedUndoable", data: ["title": "", "count": recordedCount])
             }
@@ -621,7 +628,7 @@ extension MainWindowController {
         let busy = closing.filter { $0.kind == .terminal && tabManager.terminalHost.isBusy($0.id) }.map(\.id)
         guard !busy.isEmpty, let window else { return closeAll() }
         let alert = NSAlert()
-        alert.messageText = unsafe String(format: "Close %d terminals?".localized, busy.count)
+        alert.messageText = unsafe String(format: "Close %d terminals?".localized(count: busy.count), busy.count)
         let commands = busy.compactMap(tabManager.terminalHost.runningCommand)
         alert.informativeText = unsafe commands.count == busy.count
             ? String(format: "These commands will be stopped: %@.".localized, commands.joined(separator: ", "))

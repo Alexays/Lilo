@@ -3,6 +3,8 @@ import Foundation
 import ImageIO
 
 /// Favicon encoding, dominant-color analysis, and LRU cache.
+/// The cache is partitioned by data store: an icon one store loaded never spares another its requests,
+/// whose absence a site could see and use to link two profiles, or a private space to its profile.
 @MainActor
 final class FaviconService {
 
@@ -104,8 +106,8 @@ final class FaviconService {
         /// The link icon it was loaded from; nil when it comes from a restored tab or the store.
         let iconURL: String?
         let expiresAt: Date
-        /// When this process last wrote the icon to each profile's store; absent when it has not.
-        var persistedAt: [UUID: Date]
+        /// When the partition's store last wrote the icon, as far as this process knows; nil when unknown.
+        var persistedAt: Date?
         var isExpired: Bool { expiresAt < Date() }
     }
 
@@ -118,74 +120,83 @@ final class FaviconService {
         var isExpired = false
     }
 
-    private var cache = Cache<String, Entry>(capacity: cacheCapacity)
+    /// A partition is a data store: a profile's id, or a private space's own id.
+    struct Key: Hashable {
+        let partition: UUID
+        let host: String
+    }
+
+    private var cache = Cache<Key, Entry>(capacity: cacheCapacity)
 
     /// Durable backing for downloaded favicons, per profile. Writes go through the pool's writer
-    /// queue, so seeding never blocks the main actor on SQLite.
+    /// queue, so seeding never blocks the main actor on SQLite. A private space's id names no
+    /// profile, so its icons stay in memory.
     var storeForProfile: (UUID) -> FaviconStore? = { _ in nil }
 
     // MARK: - Cache
 
-    func cached(for host: String) -> Resolved? {
-        let key = host.lowercased()
-        guard let entry = cache.get(key) else { return nil }
+    func cached(for host: String, partition: UUID) -> Resolved? {
+        guard let entry = cache.get(Key(partition: partition, host: host.lowercased())) else { return nil }
         return Resolved(dataURL: entry.dataURL, dominantColor: entry.dominantColor, iconURL: entry.iconURL, isExpired: entry.isExpired)
     }
 
-    func clear(for host: String) { cache.remove(host.lowercased()) }
+    func clear(for host: String, partition: UUID) { cache.remove(Key(partition: partition, host: host.lowercased())) }
 
-    /// Persists into `profileId`'s store; nil (private browsing) keeps the icon in the in-memory cache only.
-    /// A refetch that yields the cached icon only extends its TTL, and rewrites the row at most daily.
-    func seed(host: String, dataURL: String, dominantColor: String?, iconURL: String? = nil, profileId: UUID?) {
-        let key = host.lowercased()
+    /// Persists into the partition's profile store, when it has one. A refetch that yields the cached
+    /// icon only extends its TTL, and rewrites the row at most daily.
+    func seed(host: String, dataURL: String, dominantColor: String?, iconURL: String? = nil, partition: UUID) {
+        let key = Key(partition: partition, host: host.lowercased())
         let now = Date()
         let previous = cache.get(key).flatMap { $0.dataURL == dataURL && $0.dominantColor == dominantColor ? $0 : nil }
-        var persistedAt = previous?.persistedAt ?? [:]
-        let persists = profileId.map { now.timeIntervalSince(persistedAt[$0] ?? .distantPast) >= Self.persistInterval } ?? false
-        if persists, let profileId { persistedAt[profileId] = now }
-        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, iconURL: iconURL, expiresAt: now.addingTimeInterval(Self.ttl), persistedAt: persistedAt))
-        guard persists, let profileId else { return }
-        storeForProfile(profileId)?.upsertManyAsync([FaviconStore.Entry(host: host, dataURL: dataURL, dominantColor: dominantColor)])
+        let persists = now.timeIntervalSince(previous?.persistedAt ?? .distantPast) >= Self.persistInterval
+        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, iconURL: iconURL, expiresAt: now.addingTimeInterval(Self.ttl),
+                             persistedAt: persists ? now : previous?.persistedAt))
+        guard persists else { return }
+        storeForProfile(partition)?.upsertManyAsync([FaviconStore.Entry(host: host, dataURL: dataURL, dominantColor: dominantColor)])
     }
 
-    /// Writes a cached icon into `profileId`'s store the first time this process serves it there:
-    /// the cache is shared by every profile, so another profile may have fetched it.
-    func persistCachedIfUnwritten(host: String, profileId: UUID) {
-        let key = host.lowercased()
-        guard var entry = cache.get(key), entry.persistedAt[profileId] == nil else { return }
-        entry.persistedAt[profileId] = Date()
+    /// Writes a cached icon into the partition's profile store the first time this process serves it:
+    /// one warmed from a restored tab may be missing there.
+    func persistCachedIfUnwritten(host: String, partition: UUID) {
+        let key = Key(partition: partition, host: host.lowercased())
+        guard var entry = cache.get(key), entry.persistedAt == nil else { return }
+        entry.persistedAt = Date()
         cache.set(key, entry)
-        storeForProfile(profileId)?.upsertManyAsync([FaviconStore.Entry(host: key, dataURL: entry.dataURL, dominantColor: entry.dominantColor)])
+        storeForProfile(partition)?.upsertManyAsync([FaviconStore.Entry(host: key.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)])
     }
 
     /// Cache warming from already-known favicons (e.g. restored tabs). Won't clobber a live entry.
-    func warmIfAbsent(host: String, dataURL: String, dominantColor: String?) {
-        let key = host.lowercased()
+    /// `persistedAt` is when the partition's store last wrote the icon: a row under a day old counts
+    /// as written, so serving the icon skips a rewrite.
+    func warmIfAbsent(host: String, dataURL: String, dominantColor: String?, partition: UUID, persistedAt: Date? = nil) {
+        let key = Key(partition: partition, host: host.lowercased())
         guard !dataURL.isEmpty, cache.get(key) == nil else { return }
-        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, iconURL: nil, expiresAt: Date().addingTimeInterval(Self.ttl), persistedAt: [:]))
+        let now = Date()
+        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, iconURL: nil, expiresAt: now.addingTimeInterval(Self.ttl),
+                             persistedAt: persistedAt.flatMap { now.timeIntervalSince($0) < Self.persistInterval ? $0 : nil }))
     }
 
     /// Restore-path favicon fill. Blobs carry no favicon data URLs, so absent ones are filled from
-    /// the cache by host. Hosts the cache misses are read from `store` first, so the restore needs
-    /// no warm of the whole table.
-    func rehydrateRestoredTabs(_ tabs: inout [Tab], store: FaviconStore? = nil) {
+    /// the partition's cache by host. Hosts the cache misses are read from `store` (the partition's
+    /// profile store) first, so the restore needs no warm of the whole table.
+    func rehydrateRestoredTabs(_ tabs: inout [Tab], partition: UUID, store: FaviconStore? = nil) {
         if let store {
             var missingHosts = Set<String>()
             for tab in tabs {
-                if tab.faviconDataURL?.isEmpty ?? true, let host = tab.url?.faviconKey, cache.get(host) == nil {
+                if tab.faviconDataURL?.isEmpty ?? true, let host = tab.url?.faviconKey, cache.get(Key(partition: partition, host: host)) == nil {
                     missingHosts.insert(host)
                 }
-                if tab.homeFaviconDataURL?.isEmpty ?? true, let host = tab.homeURL?.faviconKey, cache.get(host) == nil {
+                if tab.homeFaviconDataURL?.isEmpty ?? true, let host = tab.homeURL?.faviconKey, cache.get(Key(partition: partition, host: host)) == nil {
                     missingHosts.insert(host)
                 }
             }
             for entry in (try? store.entries(forHosts: missingHosts)) ?? [] {
-                warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor, partition: partition, persistedAt: entry.updatedAt)
             }
         }
 
         func rehydrate(host: String?, dataURL: inout String?, dominantColor: inout String?) {
-            guard dataURL?.isEmpty ?? true, let host, let cached = cached(for: host) else { return }
+            guard dataURL?.isEmpty ?? true, let host, let cached = cached(for: host, partition: partition) else { return }
             dataURL = cached.dataURL
             if dominantColor == nil { dominantColor = cached.dominantColor }
         }

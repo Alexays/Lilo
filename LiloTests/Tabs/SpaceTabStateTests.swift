@@ -3,8 +3,8 @@ import XCTest
 
 final class SpaceTabStateTests: XCTestCase {
 
-    /// `durableRevision` must change exactly when the encoded bytes change: a missed bump loses a save, a spurious one
-    /// wastes one.
+    /// `durableRevision` must change exactly when the encoded bytes change, activation aside: a missed bump loses a save, a
+    /// spurious one wastes one.
     @MainActor
     func testDurableRevisionTracksEncodedBytesExactly() throws {
         var session = SpaceTab(spaceId: UUID(), state: SpaceTabState(
@@ -17,24 +17,24 @@ final class SpaceTabStateTests: XCTestCase {
         let aId = a.id
         let bId = b.id
 
-        let mutations: [(String, (inout SpaceTab) -> Void)] = [
-            ("content title", { s in var t = s.tab(id: aId)!; t.title = "T1"; s.updateTab(t) }),
-            ("content url", { s in var t = s.tab(id: aId)!; t.url = URL(string: "https://example.org"); s.updateTab(t) }),
-            ("identical no-op", { s in let t = s.tab(id: aId)!; s.updateTab(t) }),
-            ("activation", { s in s.activateTab(bId) }),
-            ("re-activate same (no-op)", { s in s.activateTab(bId) }),
-            ("pin (structural)", { s in s.setPinned(aId, pinned: true) }),
-            ("create tab", { s in s.createTab(Tab(id: UUID(), title: "C", spaceId: s.spaceId), activate: false) })
+        let mutations: [(String, Bool, (inout SpaceTab) -> Void)] = [
+            ("content title", true, { s in var t = s.tab(id: aId)!; t.title = "T1"; s.updateTab(t) }),
+            ("content url", true, { s in var t = s.tab(id: aId)!; t.url = URL(string: "https://example.org"); s.updateTab(t) }),
+            ("identical no-op", true, { s in let t = s.tab(id: aId)!; s.updateTab(t) }),
+            ("activation", false, { s in s.activateTab(bId) }),
+            ("re-activate same (no-op)", true, { s in s.activateTab(bId) }),
+            ("pin (structural)", true, { s in s.setPinned(aId, pinned: true) }),
+            ("create tab", true, { s in s.createTab(Tab(id: UUID(), title: "C", spaceId: s.spaceId), activate: false) })
         ]
 
-        for (label, mutate) in mutations {
+        for (label, tracksBytes, mutate) in mutations {
             let bytesBefore = try SpaceTabStateCodec.encode(session.state)
             let revBefore = session.durableRevision
             mutate(&session)
             let bytesAfter = try SpaceTabStateCodec.encode(session.state)
             XCTAssertEqual(
                 session.durableRevision != revBefore,
-                bytesBefore != bytesAfter,
+                tracksBytes && bytesBefore != bytesAfter,
                 "[\(label)] durableRevision-changed must equal encoded-bytes-changed"
             )
         }

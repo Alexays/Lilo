@@ -9,6 +9,10 @@ const TIMEOUT_MS = 30_000;
 // Below Chrome's 30 s, so a worker WebKit started unloads on WebKit's first idle check, 30 s after it
 // started, as in Chrome.
 const IDLE_MS = 20_000;
+// A busy worker silent this long posts on its channel: WebKit unloads a worker that posted on no port for 2 minutes.
+const KEEP_ALIVE_MS = 90_000;
+// Chrome stops a worker whose request still runs after 5 minutes.
+const ANSWER_MS = 300_000;
 // Lilo broadcasts it from the worker's background page (BackgroundSupervisor.nudge).
 const RECONNECT = 'lilo-reconnect';
 const isWorker = typeof (globalThis as any).ServiceWorkerGlobalScope === 'function';
@@ -41,6 +45,9 @@ const channelKey = 'liloChannel';
 let nextId = tag * 2 ** 32 + 1;
 const pending = new Map<number, PendingCall>();
 let lastActivity = 0;
+let lastPost = 0;
+/** When each runtime.onMessage response the worker still owes began. */
+const answering = new Set<{ since: number }>();
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
 // Lilo sends an event again on the worker's next port when it never learned it arrived.
 let lastSeq = 0;
@@ -84,8 +91,14 @@ function dispatch(envelope: any): void {
 }
 
 function checkIdle(): void {
-  const wait = lastActivity + IDLE_MS - Date.now();
-  if (wait > 0 || pending.size > 0 || !ready) {
+  const now = Date.now();
+  for (const answer of answering) if (now - answer.since >= ANSWER_MS) answering.delete(answer);
+  const wait = lastActivity + IDLE_MS - now;
+  if (wait > 0 || answering.size > 0 || pending.size > 0 || !ready) {
+    if ((wait > 0 || answering.size > 0) && now - lastPost >= KEEP_ALIVE_MS) {
+      port?.postMessage({ keepAlive: true });
+      lastPost = now;
+    }
     idleTimer = setTimeout(checkIdle, wait > 0 ? wait : IDLE_MS / 4);
     return;
   }
@@ -165,7 +178,7 @@ function connect(): Port | undefined {
   port = opened;
   opened.postMessage(isWorker ? { role: 'worker', tag, instance } : { role: 'page', tag });
   if (isWorker) {
-    lastActivity = Date.now();
+    lastActivity = lastPost = Date.now();
     idleTimer ??= setTimeout(checkIdle, IDLE_MS);
   }
   channelOpened.forEach((listener) => listener());
@@ -189,6 +202,26 @@ export function workerStarting(): Promise<void> | undefined {
   return (started ??= new Promise((resolve) => { start = resolve; }));
 }
 
+/** Counts the worker's own work, as Chrome counts each API call: its channel stays open, or opens again, 20 s more. */
+export function workerActive(): void {
+  if (!isWorker) return;
+  lastActivity = Date.now();
+  if (!port && ready) connect();
+}
+
+/** Keeps the worker's channel while it owes `answered`, a runtime.onMessage response, 5 minutes at most as in Chrome. */
+export function workerAnswering(answered: PromiseLike<unknown>): void {
+  if (!isWorker) return;
+  const answer = { since: Date.now() };
+  answering.add(answer);
+  workerActive();
+  const done = () => {
+    answering.delete(answer);
+    workerActive();
+  };
+  answered.then(done, done);
+}
+
 /**
  * Resolves with the handler's result and rejects with its error; a `timeoutMs` of 0 waits
  * indefinitely (a call the user answers, like an OAuth sign-in).
@@ -208,5 +241,6 @@ export function gapCall<T>(namespace: string, method: string, params: unknown = 
     }
     pending.set(id, call);
     channel.postMessage(message);
+    lastPost = Date.now();
   });
 }

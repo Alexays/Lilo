@@ -68,10 +68,10 @@ final class ChromiumReaderTests: XCTestCase {
         try makeHistory(rows: [("https://a.example/", "A", 1, 13_300_000_000_000_000)], wal: false)
         let denied = ChromiumReader.read(profile: profile, kinds: [.cookies, .history], arc: nil,
                                          password: { throw ImportError.keychain(errSecAuthFailed) })
-        XCTAssertNotNil(denied.errors[.cookies])
+        XCTAssertEqual(denied.errors[.cookies], "keychain")
         XCTAssertEqual(denied.bundle.history.count, 1)
         let wrongKey = ChromiumReader.read(profile: profile, kinds: [.cookies], arc: nil, password: { "other" })
-        XCTAssertNotNil(wrongKey.errors[.cookies], "a key that decrypts nothing is an error, not an empty import")
+        XCTAssertEqual(wrongKey.errors[.cookies], "other", "a key that decrypts nothing is an error, not an empty import")
     }
 
     func testCookiesSkipPartitionedRows() throws {
@@ -94,9 +94,9 @@ final class ChromiumReaderTests: XCTestCase {
         let id = String(repeating: "a", count: 32)
         let ext = dir.appendingPathComponent("Extensions/\(id)/1.0_0")
         try FileManager.default.createDirectory(at: ext.appendingPathComponent("_locales/en"), withIntermediateDirectories: true)
-        try Data(#"{"name": "__MSG_appName__", "default_locale": "en", "update_url": "https://clients2.google.com/service/update2/crx"}"#.utf8)
+        try Data(#"{"name": "__MSG_appName__", /* store build */ "default_locale": "en", "update_url": "https://clients2.google.com/service/update2/crx"}"#.utf8)
             .write(to: ext.appendingPathComponent("manifest.json"))
-        try Data(#"{"appName": {"message": "Blocker"}}"#.utf8).write(to: ext.appendingPathComponent("_locales/en/messages.json"))
+        try Data(#"{"appName": {"message": "Blocker"} /* translated later */}"#.utf8).write(to: ext.appendingPathComponent("_locales/en/messages.json"))
         let unpacked = dir.appendingPathComponent("Extensions/\(String(repeating: "b", count: 32))/2.0")
         try FileManager.default.createDirectory(at: unpacked, withIntermediateDirectories: true)
         try Data(#"{"name": "Dev"}"#.utf8).write(to: unpacked.appendingPathComponent("manifest.json"))

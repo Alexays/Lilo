@@ -722,7 +722,7 @@ final class BrowserStateStore {
     /// Freeze (suspend in place, not discard) idle engines in hidden spaces whose runtime `lastActiveAt`
     /// is older than `freezeThreshold` and which aren't protected (audio/capture/restoration/inspected, loading,
     /// allowed to notify, holding a WebRTC peer or a Web Lock) or already frozen. A frozen engine stays in memory (instant resume)
-    /// but stops spending CPU/energy.
+    /// but stops spending CPU/energy. The freeze lands once the page said it holds no Web Lock.
     func freezeIdleEngines(freezeThreshold: TimeInterval, now: Date = Date()) {
         guard freezeThreshold.isFinite else { return }
         let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
@@ -745,11 +745,21 @@ final class BrowserStateStore {
                 guard snapshot.engines[tab.id] != nil, let url = tab.url, let scheme = url.scheme, let host = url.host else { continue }
                 if allowsNotifications(PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0), spaceId) { protectedTabIds.insert(tab.id) }
             }
-            for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isFrozen && !engine.isLoading
-                && !engine.callControls.hasPeerConnection && !engine.callControls.holdsWebLock {
+            for (tabId, engine) in snapshot.engines where !engine.isFrozen {
+                // Closing a peer fires no event: the page reads its peers again, for the call card now and the next sweep.
+                if engine.callControls.hasPeerConnection {
+                    WebViewPrivateAccessors(engine.wkWebView).evaluateWithoutUserGesture(PageWorld.push("peers"), in: nil, in: PageWorld.bridgeWorld)
+                    continue
+                }
                 let last = lastActiveByTab[tabId] ?? engine.createdAt
-                guard now.timeIntervalSince(last) > freezeThreshold else { continue }
-                engine.freeze(now: now)
+                guard !protectedTabIds.contains(tabId), !engine.isLoading, now.timeIntervalSince(last) > freezeThreshold else { continue }
+                // A frozen lock holder would hold up every tab waiting for the lock. The page answers later: a tab shown,
+                // loading or discarded meanwhile stays as it is.
+                WebViewPrivateAccessors(engine.wkWebView).callAsyncWithoutUserGesture(CompositeFreezer.webLockCheck, arguments: [:], in: PageWorld.bridgeWorld) { [weak self] error in
+                    guard let self, error == nil, self.spaces[spaceId]?.engines[tabId] === engine, !self.displayedTabIds.contains(tabId),
+                          !engine.isLoading else { return }
+                    engine.freeze(now: now)
+                }
             }
         }
     }
@@ -932,8 +942,8 @@ final class BrowserStateStore {
         return (total, projected)
     }
 
-    /// Discards hidden-space engines whose process exceeded `maxCPUPercent` or `maxFootprintBytes` on two sweeps in a row, so a tab busy
-    /// just before the user left it is not taken for a runaway. A process also hosting a protected engine is left alone.
+    /// Discards hidden-space engines whose process exceeded `maxCPUPercent` or `maxFootprintBytes` on two sweeps in a row, unless it hosts a protected
+    /// engine too. An off-screen engine of a visible space busy past `maxCPUPercent` is frozen instead, notifications, Web Locks and peers notwithstanding.
     func discardBusyBackgroundEngines(
         maxCPUPercent: Double,
         maxFootprintBytes: UInt64,
@@ -947,21 +957,47 @@ final class BrowserStateStore {
         let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
         var protectedTabIds: Set<UUID> = []
         var spaceByTab: [UUID: UUID] = [:]
+        // Visible spaces are left to the window's own trim, since their EngineHost still holds the engine: a runaway there is frozen in place.
+        var visibleEngines: [UUID: WKWebViewTab] = [:]
+        var freezeProtectedTabIds = displayedTabIds.union(pictureInPictureOpenerIds)
         for (spaceId, snapshot) in spaces where !snapshot.engines.isEmpty {
             let tabs = projectedSidebar(from: snapshot).tabs
             protectedTabIds.formUnion(discardProtectedEngineIds(spaceId: spaceId, snapshot: snapshot, tabs: tabs, coordinator: coordinator, now: now))
-            // Visible spaces are left to the window's own trim: their EngineHost still holds the engine.
-            guard !visibleSpaceIds.contains(spaceId) else { continue }
-            for tabId in snapshot.engines.keys { spaceByTab[tabId] = spaceId }
+            guard visibleSpaceIds.contains(spaceId) else {
+                for tabId in snapshot.engines.keys { spaceByTab[tabId] = spaceId }
+                continue
+            }
+            visibleEngines.merge(snapshot.engines) { current, _ in current }
+            freezeProtectedTabIds.formUnion(coordinator.protectedEngineIds(
+                tabs: tabs, availableEngineIds: Set(snapshot.engines.keys), restoringTabIds: snapshot.restoringTabIds, now: now
+            ))
+            freezeProtectedTabIds.formUnion(inspectedEngineIds(in: snapshot.engines))
+            if let visibleTabId = snapshot.spaceTab.state.activeTabId {
+                freezeProtectedTabIds.insert(visibleTabId)
+                if let split = snapshot.spaceTab.splitGroup(containing: visibleTabId) { freezeProtectedTabIds.formUnion(split.layout.paneIds) }
+            }
         }
         let protectedPids = Set(protectedTabIds.compactMap { cpuByTab[$0]?.pid })
+        let freezeProtectedPids = Set(freezeProtectedTabIds.compactMap { cpuByTab[$0]?.pid })
         let busy = Set(cpuByTab.compactMap { tabId, cpu in
-            spaceByTab[tabId] != nil && !protectedTabIds.contains(tabId) && !protectedPids.contains(cpu.pid)
+            if let engine = visibleEngines[tabId] {
+                return !engine.isFrozen && !engine.isLoading && !freezeProtectedTabIds.contains(tabId) && !freezeProtectedPids.contains(cpu.pid)
+                    && cpu.percent >= maxCPUPercent ? tabId : nil
+            }
+            return spaceByTab[tabId] != nil && !protectedTabIds.contains(tabId) && !protectedPids.contains(cpu.pid)
                 && (cpu.percent >= maxCPUPercent || cpu.footprint >= maxFootprintBytes) ? tabId : nil
         })
         let toDiscard = busy.intersection(previouslyBusyTabIds)
         previouslyBusyTabIds = busy.subtracting(toDiscard)
         for tabId in toDiscard {
+            if let engine = visibleEngines[tabId] {
+                Self.logger.info("""
+                    freezing busy background engine host=\(engine.currentURL?.host ?? "nil", privacy: .private) \
+                    cpu=\(Int(cpuByTab[tabId]?.percent ?? 0), privacy: .public)%
+                    """)
+                engine.freeze(now: now)
+                continue
+            }
             guard let spaceId = spaceByTab[tabId], var snapshot = spaces[spaceId], let engine = snapshot.engines[tabId] else { continue }
             Self.logger.info("""
                 discarding busy background engine host=\(engine.currentURL?.host ?? "nil", privacy: .private) \
@@ -1033,7 +1069,7 @@ final class BrowserStateStore {
 
     private func inspectedEngineIds(in engines: [UUID: WKWebViewTab]) -> Set<UUID> {
         Set(engines.compactMap { id, engine in
-            engine.shouldRetainForWebInspector ? id : nil
+            engine.shouldRetainForWebInspector || engine.isExtensionDebugged ? id : nil
         })
     }
 
@@ -1063,6 +1099,11 @@ extension BrowserStateStore {
         spaces[spaceId]?.engines[tabId] = engine
     }
 
+    /// The extension adapter of a tab created in a space no window shows; a window showing the space takes it over.
+    func storeHiddenTabAdapter(_ adapter: TabExtensionAdapter, tabId: UUID, spaceId: UUID) {
+        spaces[spaceId]?.tabAdapters[tabId] = adapter
+    }
+
     func engine(tabId: UUID, spaceId: UUID) -> WKWebViewTab? {
         spaces[spaceId]?.engines[tabId]
     }
@@ -1077,6 +1118,13 @@ extension BrowserStateStore {
     func tabAdapter(forTab id: UUID) -> TabExtensionAdapter? {
         guard let spaceId = owningSpaceId(forTab: id) else { return nil }
         return liveHost(for: spaceId)?.tabAdapter(for: id) ?? spaces[spaceId]?.tabAdapters[id]
+    }
+
+    func parkedEngine(forWebView webView: WKWebView) -> WKWebViewTab? {
+        for snapshot in spaces.values {
+            if let engine = snapshot.engines.values.first(where: { $0.ownsWebView(webView) }) { return engine }
+        }
+        return nil
     }
 
     /// Tabs whose engine is parked live in a hidden space.

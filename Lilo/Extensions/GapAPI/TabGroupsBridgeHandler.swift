@@ -6,6 +6,7 @@ struct TabFacts: Equatable {
     let discarded: Bool
     let frozen: Bool
     let lastAccessed: Double?
+    let favicon: URL?
 }
 
 /// The facts of the tabs a class of extension contexts sees, by window in the registry's order and by index, as last sent to them.
@@ -98,11 +99,20 @@ final class TabGroupsBridgeHandler: GapHandler {
             return ungroupTabs(context: context, tabs: tabAdapters(call))
 
         case "tabs.discard":
-            guard let id = tabUUIDs(call, registry: registry).first ?? nil, tabManager.engineTab(for: id) != nil else {
+            guard let adapter = tabAdapters(call).first, adapter.engineTab != nil, let store = tabManager.browserStateStore,
+                  let spaceId = store.owningSpaceId(forTab: adapter.tabId) else {
                 return BridgeError("Cannot discard a tab that is not loaded")
             }
-            tabManager.discardEngines([id])
-            return tabManager.engineTab(for: id) == nil ? nil : BridgeError("Cannot discard a tab on screen")
+            // A window showing the tab's space hosts its engine, whichever window is active; a hidden space parks it in the store.
+            if store.liveHost(for: spaceId) != nil {
+                adapter.tabManager?.discardEngines([adapter.tabId])
+            } else {
+                store.discardParkedEngines([adapter.tabId], spaceId: spaceId) { engine in
+                    defer { engine.teardown() }
+                    return engine.interactionState
+                }
+            }
+            return adapter.engineTab == nil ? nil : BridgeError("Cannot discard a tab on screen")
 
         default:
             return BridgeError("Unhandled tabGroups action \(call.action)")
@@ -228,7 +238,7 @@ final class TabGroupsBridgeHandler: GapHandler {
     // MARK: - tabs.details and the tab state
 
     /// For each tab of `tabs`, named by its window's position or key and its index: its `groupId`, `discarded`, `frozen`,
-    /// `lastAccessed` and window key, null for a tab Lilo does not hold, and with `tabs`, the url and title of the tabs `reveal`
+    /// `lastAccessed`, `favIconUrl` and window key, null for a tab Lilo does not hold, and with `tabs`, the url and title of the tabs `reveal`
     /// lists, which WebKit leaves empty for hosts the extension may not access. An empty tab reads as Chrome's new tab page.
     /// With `state`, also the tab state the context keeps from then on.
     private func tabDetails(_ call: GapCall) -> [String: Any] {
@@ -250,6 +260,7 @@ final class TabGroupsBridgeHandler: GapHandler {
                 "windowKey": Self.windowKey(ObjectIdentifier(window))
             ]
             if let accessed = facts?.lastAccessed { details["lastAccessed"] = accessed }
+            if let caller = call.context, let favicon = Self.favicon(facts, of: adapter, for: caller) { details["favIconUrl"] = favicon }
             if let context, reveal.contains(index) {
                 let title = adapter.title(for: context) ?? ""
                 let url = adapter.url(for: context)
@@ -259,6 +270,7 @@ final class TabGroupsBridgeHandler: GapHandler {
             return details
         }
         guard call.bool("state"), let caller = call.context else { return ["tabs": tabs] }
+        call.registry.tabStateAskers.insert(call.extensionId)
         return ["tabs": tabs, "state": Self.json(sendTabState(for: caller, registry: call.registry), for: caller, registry: call.registry)]
     }
 
@@ -283,7 +295,7 @@ final class TabGroupsBridgeHandler: GapHandler {
         )
         guard registry.sentTabStates[hasPrivateAccess] != state else { return state }
         registry.sentTabStates[hasPrivateAccess] = state
-        registry.sendToOpenChannels(hasPrivateAccess: hasPrivateAccess) { ["push": "tabs.state", "args": [Self.json(state, for: $0, registry: registry)]] }
+        registry.sendToOpenChannels(of: registry.tabStateAskers, hasPrivateAccess: hasPrivateAccess) { ["push": "tabs.state", "args": [Self.json(state, for: $0, registry: registry)]] }
         return state
     }
 
@@ -294,8 +306,16 @@ final class TabGroupsBridgeHandler: GapHandler {
             groupId: tab.groupId.map(groupId(forFolder:)) ?? Self.tabGroupIdNone,
             discarded: engine == nil,
             frozen: engine?.isFrozen ?? false,
-            lastAccessed: (tab.lastActiveAt ?? engine?.createdAt).map { $0.timeIntervalSince1970 * 1000 }
+            lastAccessed: (tab.lastActiveAt ?? engine?.createdAt).map { $0.timeIntervalSince1970 * 1000 },
+            favicon: tab.faviconURL
         )
+    }
+
+    /// The tab's favicon address, for an extension that may see the tab's url, as Chrome.
+    private static func favicon(_ facts: TabFacts?, of adapter: TabExtensionAdapter, for context: WKWebExtensionContext) -> String? {
+        guard let favicon = facts?.favicon else { return nil }
+        if context.hasPermission(.tabs, in: adapter) { return favicon.absoluteString }
+        return adapter.url(for: context).flatMap { context.hasAccess(to: $0, in: adapter) ? favicon.absoluteString : nil }
     }
 
     /// The key a window goes by in the state, which the bridge maps WebKit's window ids to.
@@ -304,16 +324,19 @@ final class TabGroupsBridgeHandler: GapHandler {
     }
 
     /// `{windows, tabs}`: each window's key, in `context`'s window order, which the bridge maps WebKit's window ids by, and its
-    /// tabs' `[groupId, discarded, frozen, lastAccessed]`.
+    /// tabs' `[groupId, discarded, frozen, lastAccessed, favIconUrl]`.
     private static func json(_ state: ExtensionTabState, for context: WKWebExtensionContext, registry: ProfileExtensionRegistry) -> [String: Any] {
-        let windows = registry.extensionWindows(for: context).map { ObjectIdentifier($0) }
+        let windows = registry.extensionWindows(for: context)
         return [
-            "windows": windows.map(windowKey),
+            "windows": windows.map { windowKey(ObjectIdentifier($0)) },
             "tabs": windows.map { window -> [Any] in
-                guard let position = state.windows.firstIndex(of: window) else { return [] }
-                return state.tabs[position].map { facts -> Any in
+                guard let position = state.windows.firstIndex(of: ObjectIdentifier(window)) else { return [] }
+                let adapters = window.tabs(for: context)
+                return state.tabs[position].enumerated().map { index, facts -> Any in
                     guard let facts else { return NSNull() }
-                    return [facts.groupId, facts.discarded, facts.frozen, facts.lastAccessed ?? NSNull()] as [Any]
+                    let adapter = adapters.indices.contains(index) ? adapters[index] as? TabExtensionAdapter : nil
+                    let shown = adapter.flatMap { favicon(facts, of: $0, for: context) }
+                    return [facts.groupId, facts.discarded, facts.frozen, facts.lastAccessed ?? NSNull(), shown ?? NSNull()] as [Any]
                 }
             }
         ]
@@ -332,9 +355,10 @@ final class TabGroupsBridgeHandler: GapHandler {
     // MARK: - Events
 
     /// Fires `chrome.tabGroups.onCreated`, `onUpdated` and `onRemoved` for a space's folder change, whichever made it, to the
-    /// extensions of `registry` holding `tabGroups` that listen to it.
-    func foldersChanged(from old: [TabFolder], to new: [TabFolder], registry: ProfileExtensionRegistry) {
+    /// extensions of `registry` holding `tabGroups` that listen to it and, for a private space, may access private data.
+    func foldersChanged(from old: [TabFolder], to new: [TabFolder], isPrivate: Bool, registry: ProfileExtensionRegistry) {
         let ids = registry.extensionIds(withPermission: "tabGroups")
+            .filter { !isPrivate || registry.context(for: $0)?.hasAccessToPrivateData == true }
         guard !ids.isEmpty else { return }
         let oldById = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let newIds = Set(new.map(\.id))
@@ -361,12 +385,6 @@ final class TabGroupsBridgeHandler: GapHandler {
         call.registry.tabAdapters(atPositions: call.payload["tabs"] as? [[String: Any]] ?? [], extensionId: call.extensionId).compactMap { $0 }
     }
 
-    /// The Lilo tab behind each `{windowPosition, index}` pair of `message["tabs"]`, nil when unknown.
-    private func tabUUIDs(_ call: GapCall, registry: ProfileExtensionRegistry) -> [UUID?] {
-        let positions = call.payload["tabs"] as? [[String: Any]] ?? []
-        return registry.tabIds(atPositions: positions, extensionId: call.extensionId)
-    }
-
     private func groupId(forFolder folderId: UUID) -> Int {
         if let existing = groupIdByFolderId[folderId] { return existing }
         let id = nextGroupId
@@ -390,6 +408,7 @@ final class TabGroupsBridgeHandler: GapHandler {
             "title": folder.name,
             "color": Self.chromeColor(forHex: folder.color),
             "collapsed": folder.isCollapsed,
+            "shared": false,
             "windowPosition": windows.firstIndex { $0.spaceId == folder.spaceId } ?? -1
         ]
     }

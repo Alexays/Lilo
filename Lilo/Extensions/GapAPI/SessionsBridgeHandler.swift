@@ -76,13 +76,13 @@ final class SessionsBridgeHandler: GapHandler {
 
     /// Chrome's `Session` for a closed page, nil for any other entry.
     private static func session(_ entry: RecentlyClosedStack.Entry, index: Int) -> [String: Any]? {
-        guard case .page(let url) = entry.content else { return nil }
+        guard case .page(let url, let title) = entry.content else { return nil }
         return [
-            "lastModified": Date().timeIntervalSince1970,
+            "lastModified": Int(entry.closedAt.timeIntervalSince1970),
             "tab": [
                 "sessionId": String(entry.id),
                 "url": url.absoluteString,
-                "title": url.host ?? url.absoluteString,
+                "title": title.flatMap { $0.isEmpty ? nil : $0 } ?? url.host ?? url.absoluteString,
                 "index": index,
                 "windowId": -1,
                 "pinned": false,

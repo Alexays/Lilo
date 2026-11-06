@@ -268,7 +268,7 @@ export function sectionGroups(
   return groups;
 }
 
-function normalizeSearchText(text: string): string {
+export function normalizeSearchText(text: string): string {
   return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/ß/g, "ss").replace(/ı/g, "i");
 }
 
@@ -278,6 +278,32 @@ export function matchesSearch(haystack: string, query: string): boolean {
   if (terms.length === 0) return false;
   const text = normalizeSearchText(haystack);
   return terms.every((term) => text.includes(term));
+}
+
+/** The text cut around each query term it contains, matched as `matchesSearch` does, so the hit can be marked. */
+export function highlightSearch(text: string, query: string): { text: string; hit: boolean }[] {
+  const chars = Array.from(text);
+  // Folding can change the length ("ß" to "ss", "É" to "e"): each folded unit points back to its character.
+  let folded = "";
+  const source: number[] = [];
+  chars.forEach((char, index) => {
+    const part = normalizeSearchText(char);
+    folded += part;
+    for (let unit = 0; unit < part.length; unit++) source.push(index);
+  });
+  const hits = new Array<boolean>(chars.length).fill(false);
+  for (const term of normalizeSearchText(query).split(/\s+/).filter(Boolean)) {
+    for (let index = folded.indexOf(term); index !== -1; index = folded.indexOf(term, index + term.length)) {
+      hits.fill(true, source[index], source[index + term.length - 1] + 1);
+    }
+  }
+  const parts: { text: string; hit: boolean }[] = [];
+  chars.forEach((char, index) => {
+    const last = parts.at(-1);
+    if (last?.hit === hits[index]) last.text += char;
+    else parts.push({ text: char, hit: hits[index] });
+  });
+  return parts;
 }
 
 /** Settings whose title, description, group, section, or keywords match, in display order. */
@@ -341,6 +367,9 @@ export function formatDownloadsFolderLabel(
   return parts.at(-1) ?? fallback;
 }
 
+// Rendering every row of a large store is costly: site lists show this many and count the rest.
+export const SITE_ROW_LIMIT = 100;
+
 export const BROWSING_DATA_KINDS: BridgeBrowsingDataKind[] = ["history", "cookies", "cache", "siteData"];
 
 export interface SiteSummary {
@@ -392,12 +421,14 @@ export function buildSites(
     site.dataName = record.name;
     site.dataKinds = record.kinds;
   }
+  const dataNames = new Set(sites.keys());
   const keyForHost = (host: string): string => {
-    for (const record of websiteData) {
-      const name = record.name.toLowerCase();
-      if (host === name || host.endsWith(`.${name}`)) return name;
+    for (let suffix = host; ; ) {
+      if (dataNames.has(suffix)) return suffix;
+      const dot = suffix.indexOf(".");
+      if (dot === -1) return host.replace(/^www\./, "");
+      suffix = suffix.slice(dot + 1);
     }
-    return host.replace(/^www\./, "");
   };
   for (const permission of permissions) {
     siteFor(keyForHost(hostOf(permission.origin))).permissions.push(permission);

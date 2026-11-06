@@ -263,16 +263,20 @@ final class NotificationsBridgeHandlerTests: XCTestCase {
         XCTAssertTrue(notificationCenter.addedRequests.isEmpty)
     }
 
+    /// Only a refusal is denied: before macOS asked, the extension may still notify, and its first create asks.
     func test_getPermissionLevel_reflects_authorization() async throws {
         let notificationCenter = NotificationCenterSpy()
-        notificationCenter.status = .denied
         let handler = NotificationsBridgeHandler(notificationCenter: notificationCenter)
         let msg = try XCTUnwrap(BridgeMessage(dictionary: [
             "action": "notifications.getPermissionLevel",
             "payload": [:]
         ]))
-        let result = await handler.handle(msg)
-        let dict = try XCTUnwrap(result as? [String: Any])
-        XCTAssertEqual(dict["level"] as? String, "denied")
+        var levels: [String?] = []
+        for status in [UNAuthorizationStatus.denied, .notDetermined, .authorized, .provisional] {
+            notificationCenter.status = status
+            let result = await handler.handle(msg)
+            levels.append((result as? [String: Any])?["level"] as? String)
+        }
+        XCTAssertEqual(levels, ["denied", "granted", "granted", "granted"])
     }
 }

@@ -71,6 +71,7 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
         XCTAssertEqual(factory.test_warmPoolCount, 1, "an unchanged override dict must not drop the warm pool")
 
         factory.setFeatureFlagOverrides(["FeatureX": true])
+        defer { factory.setFeatureFlagOverrides([:]) }
         XCTAssertEqual(factory.test_warmPoolCount, 0, "a real change still drops the pool (preferences bind at web-view creation)")
     }
 

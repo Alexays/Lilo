@@ -8,10 +8,15 @@ import { getExtensions } from "./extensions.svelte";
 const SETTING_KEY = "pinnedExtensions";
 
 let _pinned = $state.raw<string[]>([]);
+// Every setting change republishes all settings: an unchanged value keeps the parsed list.
+let _pinnedSetting: string | undefined;
 
 export function initExtensionPinsStore(): void {
 	on("settingsLoaded", (data) => {
-		_pinned = parsePinned(data.settings?.[SETTING_KEY]);
+		const setting = data.settings?.[SETTING_KEY];
+		if (setting === _pinnedSetting) return;
+		_pinnedSetting = setting;
+		_pinned = parsePinned(setting);
 	});
 	// The native context menu of an address-bar or menu-listed extension.
 	on("extensionMenuAction", (data) => {

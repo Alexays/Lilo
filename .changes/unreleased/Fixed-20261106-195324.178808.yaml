@@ -1,0 +1,3 @@
+kind: Fixed
+body: A terminal tab whose login shell no longer exists shows the error and opens zsh instead of closing at once
+time: 2026-11-06T19:53:24.178808+01:00

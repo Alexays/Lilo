@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { getAgentsProfileId, isAgentsSpace } from "../../stores/agents.svelte";
   import { getShownExtensions, getShownExtensionsProfileId, showProfileExtensions } from "../../stores/extensions.svelte";
   import {
@@ -12,6 +12,7 @@
     setSettingsQuery,
   } from "../../stores/panels.svelte";
   import { getActiveProfileId, getProfileById, getProfiles } from "../../stores/profiles.svelte";
+  import { settingsActions } from "../../lib/bridge/actions";
   import { getSetting, loadSettingsSurface } from "../../stores/settings.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import { resolveDisplayName } from "../extensions/extensionPanelModel";
@@ -66,7 +67,7 @@
       case "tabs": {
         const spaces = getSpaces().filter((space) => !isAgentsSpace(space.id)).length;
         const profiles = userProfiles(getProfiles(), getAgentsProfileId()).length;
-        return new Intl.ListFormat(getLocale(), { type: "unit" }).format([
+        return new Intl.ListFormat(getFormatLocale(), { type: "unit" }).format([
           t("settings.notes.spaces", { count: spaces }),
           t("settings.notes.profiles", { count: profiles }),
         ]);
@@ -95,6 +96,16 @@
   $effect(() => {
     if (shellOpen) loadSettingsSurface();
     else showProfileExtensions("");
+  });
+
+  // Listing every site's data walks the whole WebKit data store: once per opening, when a page shows sites.
+  let websiteDataRequested = false;
+  $effect(() => {
+    if (!shellOpen) websiteDataRequested = false;
+    else if (!websiteDataRequested && (section === "privacy" || query.trim())) {
+      websiteDataRequested = true;
+      settingsActions.loadWebsiteData();
+    }
   });
 
   // Escape unwinds one level: the search, then a drill-in page, then the surface itself.

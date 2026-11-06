@@ -812,7 +812,6 @@ export const createDemoHost = (
       spaceId: world.activeSpaceId,
     });
     world.treeItems.push({
-      id: `item-${id}`,
       itemId: id,
       kind: "folder",
       parentFolderId: null,
@@ -1029,7 +1028,6 @@ export const createDemoHost = (
       spaceId: space.id,
     });
     world.treeItems.push({
-      id: "item-playground-client",
       itemId: "playground-client",
       kind: "folder",
       parentFolderId: null,

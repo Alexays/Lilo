@@ -1,5 +1,7 @@
 // Pure presentation logic for the extensions panel (list + detail).
 
+import { parseHexColor, relativeLuminance } from "../../lib/sidebarTheme";
+
 export type ExtensionRuntimeStatus = "loaded" | "degraded" | "failed";
 
 interface ExtensionLike {
@@ -13,7 +15,7 @@ interface ExtensionLike {
   runtimeStatus?: ExtensionRuntimeStatus;
   permissions?: string[];
   hostPermissions?: string[];
-  siteAccess?: string[];
+  siteAccess?: string[] | null;
 }
 
 export type ExtensionCapability = "popup" | "background" | "content";
@@ -30,15 +32,6 @@ export function isExtensionDegraded(ext: ExtensionLike): boolean {
 
 export function resolveDisplayName(ext: ExtensionLike): string {
   return /^__MSG_.+__$/.test(ext.name) ? ext.description || ext.id : ext.name;
-}
-
-/** Icon URL with a version fragment so <img> refreshes when the icon changes. */
-export function extensionIconSrc(ext: {
-  iconDataURL?: string | null;
-  iconVersion?: number;
-}): string | undefined {
-  const url = ext.iconDataURL;
-  return url ? `${url}#v=${ext.iconVersion ?? 0}` : undefined;
 }
 
 export function displayInitial(ext: ExtensionLike): string {
@@ -142,18 +135,13 @@ const LUMINANCE_MIDPOINT = 0.179;
  */
 export function badgeTextColor(background = "", text = ""): string | null {
   if (text) return text;
-  const hex = /^#([0-9a-f]{3,8})$/i.exec(background.trim())?.[1];
-  const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(background.trim());
-  let channels: number[];
-  if (hex && (hex.length === 3 || hex.length === 4)) channels = [...hex.slice(0, 3)].map((digit) => parseInt(digit + digit, 16));
-  else if (hex && (hex.length === 6 || hex.length === 8)) channels = [0, 2, 4].map((at) => parseInt(hex.slice(at, at + 2), 16));
-  else if (rgb) channels = rgb.slice(1, 4).map(Number);
-  else return null;
-  const [r, g, b] = channels.map((channel) => {
-    const value = channel / 255;
-    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > LUMINANCE_MIDPOINT ? "#000" : "#fff";
+  const value = background.trim();
+  // As with rgba(), the alpha of #rgba and #rrggbbaa stays out of the luminance.
+  const hex = /^#(?:([0-9a-f]{3})[0-9a-f]?|([0-9a-f]{6})(?:[0-9a-f]{2})?)$/i.exec(value);
+  const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(value);
+  const color = hex ? parseHexColor(hex[1] ?? hex[2]) : rgb ? { r: Number(rgb[1]), g: Number(rgb[2]), b: Number(rgb[3]) } : null;
+  if (!color) return null;
+  return relativeLuminance(color) > LUMINANCE_MIDPOINT ? "#000" : "#fff";
 }
 
 // The address keeps this much of the bar's leading edge, room for the hover-revealed URL actions.

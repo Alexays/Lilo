@@ -11,6 +11,7 @@
     getDegradedSpaceName,
     getExtensionDebuggers,
   } from "../../stores/banners.svelte";
+  import Icon from "../ui/Icon.svelte";
   import UiButton from "../ui/UiButton.svelte";
 
   interface Notice {
@@ -63,9 +64,7 @@
 {#snippet close(notice: Notice)}
   {#if !notice.action}
     <button class="notice-close" type="button" aria-label={t("common.close")} onclick={() => dismiss(notice)}>
-      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-        <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-      </svg>
+      <Icon name="close" size={14} />
     </button>
   {/if}
 {/snippet}
@@ -97,9 +96,7 @@
             }}
           >
             {open ? t("notices.more", { count: rest.length }) : t("notices.moreNotices", { count: rest.length })}
-            <svg width="8" height="8" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-              <path d="m2 3.5 3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+            <Icon name="chevronDown" size={10} />
           </button>
         {/if}
         {@render close(first)}
@@ -186,7 +183,7 @@
     color: var(--text-muted);
   }
 
-  .notice-capsule.open .notice-more svg {
+  .notice-capsule.open .notice-more :global(.icon) {
     transform: rotate(180deg);
   }
 
@@ -220,7 +217,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .notice-capsule {
-      animation: notice-fade 150ms ease both;
+      animation: notice-fade 150ms ease both !important;
     }
   }
 

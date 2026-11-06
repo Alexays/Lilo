@@ -1,9 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { bootChrome, glideTo, pressAndLift, sentCommands } from "./fakeHost";
+import { bootChrome, glideTo, pressAndLift, sentCommands, settleDrop } from "./fakeHost";
 import { deepFolderWorld, nestedFolderWorld, SPACE_1 } from "./fixtures";
 import { treeItem } from "../src/stores/testFixtures";
-
-const DROP_HOLD_SETTLE_MS = 300;
 
 function pane(page: Page): Locator {
 	return page.locator(".space-pane").first();
@@ -36,6 +34,7 @@ async function drops(page: Page): Promise<Record<string, unknown>[]> {
 }
 
 test("a folder dropped on another folder's header goes in first", async ({ page }) => {
+	await page.clock.install();
 	await bootChrome(page, nestedFolderWorld());
 
 	await pressAndLift(page, folderRow("folder-archive"));
@@ -48,7 +47,7 @@ test("a folder dropped on another folder's header goes in first", async ({ page 
 		parentFolderId: "folder-projects",
 	});
 	await expect.poll(() => childIds(page, "folder-projects")).toEqual(["folder-archive", "folder-clients", "tab-beta"]);
-	await page.waitForTimeout(DROP_HOLD_SETTLE_MS);
+	await settleDrop(page);
 	expect(await rootIds(page)).toEqual(["folder-projects", "tab-gamma"]);
 });
 

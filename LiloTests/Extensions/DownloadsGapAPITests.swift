@@ -55,6 +55,10 @@ final class DownloadsGapAPITests: XCTestCase {
         XCTAssertEqual(items?.first?["filename"] as? String, "/tmp/test.zip")
         XCTAssertEqual(items?.first?["exists"] as? Bool, true)
         XCTAssertEqual(items?.first?["danger"] as? String, "safe")
+        XCTAssertEqual(items?.first?["finalUrl"] as? String, "https://example.com/test.zip")
+        XCTAssertEqual(items?.first?["referrer"] as? String, "")
+        XCTAssertEqual(items?.first?["incognito"] as? Bool, false)
+        XCTAssertEqual(items?.first?["mime"] as? String, "", "an unknown type is empty, as in Chrome")
     }
 
     func testSearchFiltersByState() async throws {
@@ -233,6 +237,22 @@ final class DownloadsGapAPITests: XCTestCase {
 
         let updated = try store.fetch(id: item.id!)
         XCTAssertEqual(updated?.state, .interrupted)
+        let found = await handler.handle(makeBridgeMessage(action: "downloads.search", payload: ["state": "interrupted"])) as? [[String: Any]]
+        XCTAssertEqual(found?.first?["error"] as? String, "USER_CANCELED", "Chrome's InterruptReason")
+    }
+
+    func testSearchReportsASystemErrorAsChromesNetworkFailure() async throws {
+        var item = DownloadItem(
+            id: nil, url: "https://example.com/n.zip", filename: "n.zip",
+            destinationPath: "/tmp/n.zip", bytesReceived: 20, totalBytes: 100,
+            state: .interrupted, startedAt: Date(), fileMissing: false
+        )
+        item.error = "The network connection was lost."
+        try store.insert(&item)
+
+        let found = await handler.handle(makeBridgeMessage(action: "downloads.search", payload: [:])) as? [[String: Any]]
+
+        XCTAssertEqual(found?.first?["error"] as? String, "NETWORK_FAILED")
     }
 
     func testPrivateSpaceDownloadsAreHiddenFromExtensions() async throws {
@@ -240,17 +260,23 @@ final class DownloadsGapAPITests: XCTestCase {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         manager.downloadsFolderProvider = { folder }
-        await manager.saveData(Data([1]), suggestedFilename: "private.bin", mimeType: "", originatingURL: URL(string: "https://example.com/p")!, in: store, privateSpaceId: UUID()).value
-        let privateId = try XCTUnwrap(store.search().first?.id)
+        let spaceId = UUID()
+        await manager.saveData(Data([1]), suggestedFilename: "private.bin", mimeType: "", originatingURL: URL(string: "https://example.com/p")!, in: store, privateSpaceId: spaceId).value
+        let privateStore = try XCTUnwrap(manager.privateStores[spaceId])
+        let privateId = try XCTUnwrap(privateStore.search().first?.id)
 
         let found = await handler.handle(makeBridgeMessage(action: "downloads.search", payload: [:]))
         let erased = await handler.handle(makeBridgeMessage(action: "downloads.erase", payload: ["id": privateId]))
         let opened = await handler.handle(makeBridgeMessage(action: "downloads.open", payload: ["downloadId": privateId]))
 
+        XCTAssertEqual(try store.search().count, 0, "a private download never reaches the profile database")
         XCTAssertEqual((found as? [[String: Any]])?.count, 0)
         XCTAssertEqual(erased as? [Int64], [])
         XCTAssertNotNil(opened as? BridgeError)
-        XCTAssertNotNil(try store.fetch(id: privateId))
+        XCTAssertNotNil(try privateStore.fetch(id: privateId))
+
+        manager.forgetPrivateDownloads(inSpace: spaceId)
+        XCTAssertNil(manager.privateStores[spaceId], "the private list goes with its space")
     }
 
     /// Each profile's rows number from 1: an extension's call acts on its own profile's download, never another's of the same id.

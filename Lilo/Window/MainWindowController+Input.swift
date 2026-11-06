@@ -10,7 +10,12 @@ extension MainWindowController {
     @objc func newTab(_ sender: Any?) {
         // A chrome_url_overrides.newtab extension replaces the blank new tab (only this user-facing
         // path, never session-restore or programmatic tab creation).
-        createTabStateFirst(url: profileContext?.extensions.activeNewTabOverrideURL)
+        createTabStateFirst(url: newTabOverrideURL)
+    }
+
+    /// As in Chrome, no extension page replaces a private space's new tab: it would run outside the space's store.
+    private var newTabOverrideURL: URL? {
+        tabManager.windowAdapter?.isPrivateWindow == true ? nil : profileContext?.extensions.activeNewTabOverrideURL
     }
 
     func openBlankTabWithCommandBar() {
@@ -32,7 +37,7 @@ extension MainWindowController {
 
         do {
             try createSpace(
-                name: "Private",
+                name: "Private".localized,
                 icon: "🔒",
                 color: "#3f4656",
                 isPrivate: true,
@@ -172,6 +177,11 @@ extension MainWindowController {
                         }
                     }
                     try data.write(to: url, options: .atomic)
+                    DownloadQuarantine.stamp(path: url.path, source: pageURL.absoluteString)
+                    // A private page leaves no trace of where it came from.
+                    if webView.configuration.websiteDataStore.isPersistent {
+                        DownloadQuarantine.recordOrigin(path: url.path, urls: [pageURL.absoluteString])
+                    }
                 } catch {
                     NSAlert(error: error).beginSheetModal(for: window, completionHandler: nil)
                 }
@@ -216,7 +226,9 @@ extension MainWindowController {
 
     @objc func reloadCurrentPageFromOrigin(_ sender: Any?) {
         if let engine = focusedEngineTab, engine !== tabManager.activeEngineTab { return engine.reloadFromOrigin() }
-        if let host = tabManager.activeTab?.url?.faviconKey { context.faviconService.clear(for: host) }
+        if let host = tabManager.activeTab?.url?.faviconKey, let space = context.spaceManager?.space(with: tabManager.currentSpaceId) {
+            context.faviconService.clear(for: host, partition: space.dataStoreId)
+        }
         tabManager.reloadActiveTab(fromOrigin: true)
     }
 
@@ -259,16 +271,21 @@ extension MainWindowController {
     }
     @objc func openHelp(_ sender: Any?) { createTabStateFirst(url: URL(string: "https://github.com/Alexays/Lilo#readme")) }
     @objc func reportIssue(_ sender: Any?) {
+        let os = ProcessInfo.processInfo.operatingSystemVersion
         var form = URLComponents(string: "https://github.com/Alexays/Lilo/issues/new")
         form?.queryItems = [
             URLQueryItem(name: "template", value: "bug_report.yml"),
-            URLQueryItem(name: "webkit-version", value: WKEngineFactory.webKitDescription)
+            URLQueryItem(name: "lilo-version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String),
+            URLQueryItem(name: "webkit-version", value: WKEngineFactory.webKitDescription),
+            URLQueryItem(name: "macos-version", value: "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)")
         ]
         createTabStateFirst(url: form?.url)
     }
     /// The bug report form, filled in about the active page freezing; the user reviews it and sends it, or not.
     func reportUnresponsivePage() {
         let page = tabManager.activeEngineTab?.currentURL
+        // Only the origin goes in the report: a path or query can hold tokens, and this URL lands in history and a public issue.
+        let origin = page.map { "\($0.scheme ?? "")://\($0.host() ?? "")" } ?? ""
         let os = ProcessInfo.processInfo.operatingSystemVersion
         let extensions = profileContext?.extensions.loadedExtensions.map { $0.context.webExtension.displayName ?? $0.id } ?? []
         var form = URLComponents(string: "https://github.com/Alexays/Lilo/issues/new")
@@ -281,7 +298,7 @@ extension MainWindowController {
             URLQueryItem(name: "actual", value: """
                 The page stopped responding twice in a row.
 
-                URL: \(page?.absoluteString ?? "")
+                URL: \(origin)
                 Enabled extensions: \(extensions.isEmpty ? "none" : extensions.joined(separator: ", "))
                 """)
         ]
@@ -444,7 +461,7 @@ extension MainWindowController {
         switch id {
         case "tab.new":
             // The chrome knows whether the command bar is open, so it toggles the blank new tab.
-            if profileContext?.extensions.activeNewTabOverrideURL != nil {
+            if newTabOverrideURL != nil {
                 newTab(nil)
             } else if let activeTab = tabManager.activeTab, activeTab.url == nil, activeTab.kind == .web {
                 bridgeRouter.send(event: "toggleNewTab")

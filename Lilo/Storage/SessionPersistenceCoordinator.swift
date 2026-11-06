@@ -48,8 +48,9 @@ final class SessionPersistenceCoordinator {
             return
         }
 
-        try persistSpaceTabState(sourceState.state, spaceId: sourceState.spaceId, inProfile: sourceProfileId)
+        // Target first: if its write fails the moved tab is still in the source row, so nothing is lost.
         try persistSpaceTabState(targetState.state, spaceId: targetState.spaceId, inProfile: targetProfileId)
+        try persistSpaceTabState(sourceState.state, spaceId: sourceState.spaceId, inProfile: sourceProfileId)
     }
 
     func deleteSpaceTabState(forSpace spaceId: UUID, inProfile profileId: UUID) throws {

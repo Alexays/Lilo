@@ -422,6 +422,60 @@ final class SidePanelTests: XCTestCase {
         UserDefaults.lilo.removeObject(forKey: "sidePanel.\(registry.profileId).\(extensionId!)")
     }
 
+    func testTheActionShortcutTogglesThePanelAsTheClickDoes() async throws {
+        let dir = tempDir.appendingPathComponent("Shortcut")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try #"""
+        {"manifest_version":3,"name":"Shortcut","version":"1.0","permissions":["sidePanel"],"side_panel":{"default_path":"panel.html"},
+         "action":{},"commands":{"_execute_action":{"suggested_key":{"mac":"Command+Shift+Y"}}}}
+        """#.write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "<title>panel</title>".write(to: dir.appendingPathComponent("panel.html"), atomically: true, encoding: .utf8)
+        try await registry.load(from: dir)
+        let id = try XCTUnwrap(registry.loadedExtensions.map(\.id).first { $0 != extensionId })
+        await call("setPanelBehavior", ["openPanelOnActionClick": true], from: id)
+        let shortcut = try XCTUnwrap(NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: [.command, .shift], timestamp: 0, windowNumber: 0, context: nil,
+            characters: "y", charactersIgnoringModifiers: "y", isARepeat: false, keyCode: 16
+        ))
+
+        XCTAssertTrue(registry.handleExtensionKeyDown(shortcut))
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: id, tabId: nil))
+        XCTAssertTrue(registry.handleExtensionKeyDown(shortcut))
+        XCTAssertNil(window.sidePanel.shown)
+        UserDefaults.lilo.removeObject(forKey: "sidePanel.\(registry.profileId).\(id)")
+    }
+
+    // MARK: - Private spaces
+
+    func testAPanelHidesInAPrivateSpaceUnlessTheExtensionIsAllowedThere() async throws {
+        let normalWindow = thisWindow
+        let normalSpace = try XCTUnwrap(window.tabManager.currentSpaceId)
+        await call("open", gesture(normalWindow))
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil))
+        let privateSpace = try browserContext.context.spaceManager!.createSpace(name: "Private", profileId: registry.profileId, isPrivate: true)
+
+        window.switchToSpace(privateSpace.id)
+        window.createTabStateFirst(url: URL(string: "about:blank"))
+        XCTAssertNil(window.sidePanel.shown, "an extension without private access shows no panel there")
+        XCTAssertNil(window.sidePanel.webView)
+        let refused = await call("open", gesture(normalWindow)).error
+        XCTAssertEqual(refused, "No browser window for windowId: 1", "its window is a background space")
+
+        window.switchToSpace(normalSpace)
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil), "the panel stays open for its own space")
+
+        window.switchToSpace(privateSpace.id)
+        XCTAssertNil(window.sidePanel.shown)
+        let settings = ExtensionUIBridgeHandler(extensionRegistryProvider: { self.registry })
+        for allowed in [true, false] {
+            let message = try XCTUnwrap(BridgeMessage(dictionary: [
+                "action": "setExtensionPrivateAccess", "payload": ["id": extensionId as String, "allowed": allowed] as [String: Any]
+            ]))
+            _ = await settings.handle(message: message)
+            XCTAssertEqual(window.sidePanel.shown, allowed ? SidePanelController.Entry(extensionId: extensionId, tabId: nil) : nil, "access applies at once")
+        }
+    }
+
     // MARK: - Events
 
     func testOpenedAndClosedReachTheExtensionWithChromesPayload() async throws {

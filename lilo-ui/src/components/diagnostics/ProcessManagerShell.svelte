@@ -1,7 +1,7 @@
 <script lang="ts">
   import StatusBanner from "../banners/StatusBanner.svelte";
   import { formatByteSize } from "../../lib/format";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, getLocale, t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { hostOf } from "../../lib/url";
   import { processManagerActions } from "../../lib/bridge/actions";
@@ -58,6 +58,9 @@
   );
   const maxTabBytes = $derived(overview.tabs.reduce((max, usage) => Math.max(max, usage.bytes), 0));
   const locale = $derived(getLocale());
+  // Whole percents from 10%, one decimal below.
+  const cpuFormats = $derived([0, 1].map((digits) =>
+    new Intl.NumberFormat(getFormatLocale(), { style: "percent", minimumFractionDigits: digits, maximumFractionDigits: digits })));
 
   let expandedId = $state<string | null>(null);
   let pendingAction = $state<PendingAction | null>(null);
@@ -78,9 +81,9 @@
 
   const note = $derived(
     snapshot
-      ? new Intl.ListFormat(locale, { type: "unit" }).format([
+      ? new Intl.ListFormat(getFormatLocale(), { type: "unit" }).format([
           formatByteSize(overview.totalBytes, locale),
-          overview.tabs.length === 1 ? t("processManager.tabsCountOne") : t("processManager.tabsCount", { count: overview.tabs.length }),
+          t("processManager.tabsCount", { count: overview.tabs.length }),
           t("processManager.cpu", { value: formatCPU(overview.cpuPercent) }),
         ])
       : "",
@@ -115,7 +118,7 @@
 
   function formatCPU(value: number | null | undefined): string {
     if (value == null || Number.isNaN(value)) return "--";
-    return `${value >= 10 ? value.toFixed(0) : value.toFixed(1)}%`;
+    return cpuFormats[value >= 10 ? 0 : 1].format(value / 100);
   }
 
   function segmentLabel(id: string, label: string | null): string {
@@ -131,10 +134,10 @@
   function reclaimCopy(): string {
     const count = overview.reclaimableTabCount;
     if (overview.reclaimableBytes <= 0) {
-      return count === 1 ? t("processManager.reclaimNoSizeOne") : t("processManager.reclaimNoSize", { count });
+      return t("processManager.reclaimNoSize", { count });
     }
     const size = formatByteSize(overview.reclaimableBytes, locale);
-    return count === 1 ? t("processManager.reclaimOne", { size }) : t("processManager.reclaim", { count, size });
+    return t("processManager.reclaim", { count, size });
   }
 </script>
 
@@ -327,7 +330,7 @@
   .segment {
     flex-basis: 0;
     min-width: 3px;
-    transition: flex-grow 300ms ease;
+    transition: flex-grow var(--motion-duration-slow) ease;
   }
 
   .seg-0 { background: var(--accent); }
@@ -517,7 +520,7 @@
     height: 100%;
     border-radius: inherit;
     background: var(--accent);
-    transition: width 300ms ease;
+    transition: width var(--motion-duration-slow) ease;
   }
 
   .bytes {

@@ -124,6 +124,48 @@ final class RecentTabsTests: XCTestCase {
         XCTAssertFalse(rowIds(window).contains(kept.uuidString), "a private Space lists only its own")
     }
 
+    func testTabsInALockedFolderAreLeftOutInEverySpace() throws {
+        let window = makeWindow()
+        let (a, b, c) = try visitAcrossSpaces(window)
+        let workFolder = TabFolder(spaceId: work.id, name: "Finances")
+        let playFolder = TabFolder(spaceId: play.id, name: "Health")
+        let lock = FolderLock(allowsBiometrics: false)
+        window.applyContextMenuStateCommands([
+            .createFolder(spaceId: work.id, folder: workFolder, section: .unpinned),
+            .moveSidebarItem(spaceId: work.id, kind: .tab, itemId: a, parentFolderId: workFolder.id, section: .unpinned, insert: .index(0)),
+            .setFolderLock(spaceId: work.id, folderId: workFolder.id, lock: lock),
+            .createFolder(spaceId: play.id, folder: playFolder, section: .unpinned),
+            .moveSidebarItem(spaceId: play.id, kind: .tab, itemId: c, parentFolderId: playFolder.id, section: .unpinned, insert: .index(0)),
+            .setFolderLock(spaceId: play.id, folderId: playFolder.id, lock: lock)
+        ])
+
+        let ids = rowIds(window)
+        XCTAssertEqual(ids.first, b.uuidString)
+        XCTAssertFalse(ids.contains(a.uuidString))
+        XCTAssertFalse(ids.contains(c.uuidString), "nor in another Space")
+
+        window.applyContextMenuStateCommands([.setFolderUnlocked(spaceId: play.id, folderId: playFolder.id, isUnlocked: true)])
+        XCTAssertTrue(rowIds(window).contains(c.uuidString), "an unlocked folder's tabs come back")
+    }
+
+    func testACurrentTabInALockedFolderKeepsTheFirstRowUnderTheFoldersName() throws {
+        let window = makeWindow()
+        let (a, b, c) = try visitAcrossSpaces(window)
+        let folder = TabFolder(spaceId: work.id, name: "Finances")
+        window.applyContextMenuStateCommands([
+            .createFolder(spaceId: work.id, folder: folder, section: .unpinned),
+            .moveSidebarItem(spaceId: work.id, kind: .tab, itemId: b, parentFolderId: folder.id, section: .unpinned, insert: .index(0)),
+            .setFolderLock(spaceId: work.id, folderId: folder.id, lock: FolderLock(allowsBiometrics: false))
+        ])
+
+        XCTAssertEqual(window.tabManager.activeOpenTabId, b)
+        let rows = window.recentTabRows()
+        XCTAssertEqual(Array(rowIds(window).prefix(3)), [b, c, a].map(\.uuidString))
+        XCTAssertEqual(rows[0]["title"] as? String, "Finances")
+        XCTAssertEqual(rows[0]["url"] as? String, "")
+        XCTAssertEqual(rows[0]["faviconDataURL"] as? String, "")
+    }
+
     func testControlTabOpensTheSwitcherKeepsItsKeysAndReleasingControlClosesIt() throws {
         let window = makeWindow()
         _ = try visitAcrossSpaces(window)

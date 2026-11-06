@@ -22,7 +22,9 @@ final class PrivateDelegateSelectorTests: XCTestCase {
         "_webView:requestStorageAccessPanelForDomain:underCurrentDomain:completionHandler:",
         "_webView:runBeforeUnloadConfirmPanelWithMessage:initiatedByFrame:completionHandler:",
         "_webView:saveDataToFile:suggestedFilename:mimeType:originatingURL:",
+        "_webView:setWindowFrame:",
         "_webView:takeFocus:",
+        "_webView:willCloseLocalInspector:",
         "_webViewDidLosePointerLock:",
         "_webViewDidRequestPointerLock:completionHandler:",
         "_webViewFooterHeight:",
@@ -58,6 +60,18 @@ final class PrivateDelegateSelectorTests: XCTestCase {
         "_webView:didFindMatches:forString:withMatchIndex:",
         "_webView:didFailToFindString:",
     ]
+
+    /// `_WKWebsiteDataStoreDelegate`, adopted by the notification bridge on every Lilo data store; no WebKit class adopts it either.
+    private static let websiteDataStoreDelegateSelectors = [
+        "notificationPermissionsForWebsiteDataStore:",
+        "websiteDataStore:showNotification:",
+    ]
+
+    func testNotificationBridgeClaimsEveryDataStoreHook() {
+        for name in Self.websiteDataStoreDelegateSelectors {
+            XCTAssertTrue(NotificationBridge.instancesRespond(to: NSSelectorFromString(name)), "NotificationBridge no longer implements \(name)")
+        }
+    }
 
     func testFindControllerClaimsEveryFindHook() {
         for name in Self.findDelegateSelectors {
@@ -96,7 +110,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
             ("_WKLinkIconParameters", ["url", "size", "iconType"]),
             ("WKPreferences", ["_setDeveloperExtrasEnabled:", "_setAllowsPictureInPictureMediaPlayback:", "_setMediaDevicesEnabled:", "_setPrivateClickMeasurementEnabled:",
                               "_setHiddenPageDOMTimerThrottlingEnabled:", "_setHiddenPageDOMTimerThrottlingAutoIncreases:",
-                              "_setPageVisibilityBasedProcessSuppressionEnabled:"]),
+                              "_setPageVisibilityBasedProcessSuppressionEnabled:", "_setDOMPasteAllowed:", "_setJavaScriptCanAccessClipboard:"]),
             ("_WKContextMenuElementInfo", ["hitTestResult"]),
             ("_WKHitTestResult", ["absoluteLinkURL", "absoluteImageURL", "absoluteMediaURL"]),
             ("_WKFeature", ["key", "name", "details", "isHidden", "defaultValue"]),
@@ -107,8 +121,11 @@ final class PrivateDelegateSelectorTests: XCTestCase {
             ("WKFrameInfo", ["_handle"]),
             ("_WKFrameHandle", ["frameID"]),
             ("_WKFrameTreeNode", ["info", "childFrames"]),
+            ("_WKWebsiteDataStoreConfiguration", ["setOriginQuotaRatio:", "setTotalQuotaRatio:", "setFastServerTrustEvaluationEnabled:"]),
             ("WKWebsiteDataStore", ["_setResourceLoadStatisticsEnabled:", "_resourceLoadStatisticsEnabled", "_clearResourceLoadStatistics:", "_logUserInteraction:completionHandler:",
-                                    "_fetchDataRecordsOfTypes:withOptions:completionHandler:"]),
+                                    "_fetchDataRecordsOfTypes:withOptions:completionHandler:", "set_delegate:",
+                                    "_processPersistentNotificationClick:completionHandler:"]),
+            ("_WKNotificationData", ["title", "body", "tag", "origin", "dictionaryRepresentation"]),
             ("WKWebsiteDataRecord", ["_dataSize"]),
             ("_WKWebsiteDataSize", ["sizeOfDataTypes:"]),
         ]

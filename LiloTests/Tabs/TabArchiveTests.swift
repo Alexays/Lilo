@@ -186,7 +186,7 @@ final class TabArchiveTests: XCTestCase {
         let recent = TabArchive.Entry(spaceId: space.id, url: URL(string: "https://recent.example/")!, title: "Recent")
         try JSONEncoder().encode([old, recent]).write(to: file)
 
-        context.restoreTabArchive()
+        context.restoreTabArchive(BrowserContext.readTabArchive(appSupportDirectory: context.appSupportDirectory))
 
         XCTAssertEqual(context.tabArchive.entries.map(\.title), ["Recent"])
         let onDisk = { (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode([TabArchive.Entry].self, from: $0) } }
@@ -196,6 +196,36 @@ final class TabArchiveTests: XCTestCase {
         window.clearArchivedTabs()
         let cleared = await pollUntil(timeout: 5) { onDisk()?.isEmpty == true }
         XCTAssertTrue(cleared)
+    }
+
+    func testRestoringAnUnchangedArchiveLeavesTheFileAlone() throws {
+        let (window, space) = try makeWindow()
+        let context = window.context
+        let file = URL(fileURLWithPath: context.appSupportDirectory).appendingPathComponent("ArchivedTabs.json")
+        let entry = TabArchive.Entry(spaceId: space.id, url: URL(string: "https://recent.example/")!, title: "Recent")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let saved = try encoder.encode([entry])
+        try saved.write(to: file)
+
+        context.restoreTabArchive(BrowserContext.readTabArchive(appSupportDirectory: context.appSupportDirectory))
+        context.isTerminating = true
+        defer { context.isTerminating = false }
+        context.writeTabArchive()
+
+        XCTAssertEqual(context.tabArchive.entries, [entry])
+        XCTAssertEqual(try Data(contentsOf: file), saved)
+    }
+
+    func testAnUnreadableArchiveIsSetAsideNotOverwritten() throws {
+        let directory = browserContext.context.appSupportDirectory
+        let file = URL(fileURLWithPath: directory).appendingPathComponent("ArchivedTabs.json")
+        try Data("not json".utf8).write(to: file)
+
+        XCTAssertEqual(BrowserContext.readTabArchive(appSupportDirectory: directory), [])
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
+        XCTAssertEqual(try Data(contentsOf: file.appendingPathExtension("corrupt")), Data("not json".utf8))
     }
 
     func testTheArchiveDelayIsSavedWithTheSpace() async throws {

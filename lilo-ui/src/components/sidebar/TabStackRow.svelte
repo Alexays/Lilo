@@ -193,7 +193,7 @@
     height: 20px;
     margin-left: -4px;
     color: var(--text-muted);
-    transition: transform 200ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .open .stack-chevron {
@@ -229,6 +229,10 @@
   .stack-close:hover {
     background: var(--text-primary-tint-12);
     color: var(--text-primary);
+  }
+
+  .stack-close:active {
+    background: color-mix(in srgb, var(--text-primary) 18%, transparent);
   }
 
   @media (prefers-reduced-motion: reduce) {

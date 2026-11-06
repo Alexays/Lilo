@@ -137,7 +137,12 @@ final class AgentControl {
     /// as one stretch of work rather than a flicker.
     static let actingLinger: TimeInterval = 2
 
-    func publishActivity() {
+    /// What the windows last got: a turn that changes nothing sends nothing.
+    private var sentActivity: NSDictionary?
+
+    /// `resend` serves a chrome that just loaded, which has none of what the others got.
+    func publishActivity(resend: Bool = false) {
+        if resend { sentActivity = nil }
         guard !activityPending else { return }
         activityPending = true
         DispatchQueue.main.async { [weak self] in
@@ -158,8 +163,8 @@ final class AgentControl {
                 }
                 actingTabIds.formUnion(acting)
                 return [
-                    "name": name, "busy": mine.contains { $0.activeCalls > 0 }, "actingTabIds": acting.map(\.uuidString),
-                    "spaceIds": Set(mine.compactMap { working[$0.id] }).map(\.uuidString)
+                    "name": name, "busy": mine.contains { $0.activeCalls > 0 }, "actingTabIds": acting.map(\.uuidString).sorted(),
+                    "spaceIds": Set(mine.compactMap { working[$0.id] }).map(\.uuidString).sorted()
                 ] as [String: Any]
             }
             // The latest call running on a tab sets its cursor's mood; one that just ended leaves it until the dot goes out.
@@ -191,13 +196,17 @@ final class AgentControl {
                     .tabs.contains { !$0.isClosed && ($0.kind != .web || $0.url != nil) } != true
             })
             let profileId = context.settingsStore?.get(Self.agentsProfileKey) ?? ""
+            let activity: [String: Any] = [
+                "clients": clients, "agentsSpaceIds": spaceIds.map(\.uuidString), "agentsProfileId": profileId,
+                "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString).sorted(),
+                "isolatedSpaceIds": sessions.compactMap(\.isolatedSpaceId).map(\.uuidString),
+                "moods": Dictionary(uniqueKeysWithValues: spaceMoods.map { ($0.key.uuidString, $0.value.mood.rawValue) })
+            ]
+            let payload = activity as NSDictionary
+            guard payload != sentActivity else { return }
+            sentActivity = payload
             for window in context.windows.windows {
-                window.bridgeRouter.send(event: "agentActivity", data: [
-                    "clients": clients, "agentsSpaceIds": spaceIds.map(\.uuidString), "agentsProfileId": profileId,
-                    "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString),
-                    "isolatedSpaceIds": sessions.compactMap(\.isolatedSpaceId).map(\.uuidString),
-                    "moods": Dictionary(uniqueKeysWithValues: spaceMoods.map { ($0.key.uuidString, $0.value.mood.rawValue) })
-                ])
+                window.bridgeRouter.send(event: "agentActivity", data: activity)
             }
         }
     }
@@ -459,6 +468,7 @@ final class AgentControl {
         dropFolders(of: closing)
         dropIsolatedSpace(of: closing)
         publishActivity()
+        if sessions.isEmpty { screenshots = [] }
         // The last agent with tabs in the agents' profile gone, nothing it did there is kept for the next one.
         if !sessions.contains(where: { $0.profileId == nil && !agentsSpaceFolders(of: $0).isEmpty }) { Task { await wipeAgentsProfile() } }
     }

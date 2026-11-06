@@ -43,6 +43,7 @@ export interface BridgeTabSnapshot {
 	cwd?: string;
 	agentId?: string;
 	gitBranch?: string;
+	project?: string;
 	diffAdded?: number;
 	diffRemoved?: number;
 	terminalState?: string;
@@ -98,6 +99,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		cwd: data.cwd ?? "",
 		agentId: data.agentId ?? "",
 		gitBranch: data.gitBranch ?? "",
+		project: data.project ?? "",
 		diffAdded: data.diffAdded ?? 0,
 		diffRemoved: data.diffRemoved ?? 0,
 		terminalState: data.terminalState ?? "",
@@ -153,6 +155,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.cwd !== undefined) out.cwd = data.cwd;
 	if (data.agentId !== undefined) out.agentId = data.agentId;
 	if (data.gitBranch !== undefined) out.gitBranch = data.gitBranch;
+	if (data.project !== undefined) out.project = data.project;
 	if (data.diffAdded !== undefined) out.diffAdded = data.diffAdded;
 	if (data.diffRemoved !== undefined) out.diffRemoved = data.diffRemoved;
 	if (data.terminalState !== undefined) out.terminalState = data.terminalState;

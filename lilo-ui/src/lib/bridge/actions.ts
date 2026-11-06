@@ -394,7 +394,7 @@ export const extensionActions = {
 	disable: (id: string, profileId?: string): void => emit("disableExtension", { id, profileId }),
 	uninstall: (id: string, profileId?: string): void => emit("uninstallExtension", { id, profileId }),
 	install: (path: string): void => emit("installExtension", { path }),
-	setSiteAccess: (id: string, hosts: string[], profileId?: string): void =>
+	setSiteAccess: (id: string, hosts: string[] | null, profileId?: string): void =>
 		emit("setExtensionSiteAccess", { id, hosts, profileId }),
 	setPrivateAccess: (id: string, allowed: boolean, profileId?: string): void =>
 		emit("setExtensionPrivateAccess", { id, allowed, profileId }),
@@ -407,6 +407,7 @@ export const extensionActions = {
 	loadDebuggers: emitEmpty("getExtensionDebuggers"),
 	cancelDebugging: emitId("cancelExtensionDebugging"),
 	update: (id: string, profileId?: string): void => emit("updateExtension", { id, profileId }),
+	reload: (id: string, profileId?: string): void => emit("reloadExtension", { id, profileId }),
 	checkUpdates: emitEmpty("checkExtensionUpdates"),
 	loadUnpacked: emitEmpty("loadUnpackedExtension"),
 	openPopup: (

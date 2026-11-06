@@ -81,3 +81,19 @@ test("a link opened from another app closes the shell covering the page", async 
 	receive({ event: "closeCommandBarAfterNavigation" });
 	assert.equal(panels.isDesignSystemShellOpen(), false);
 });
+
+test("openExtensions lands on the named extension's details page", async () => {
+	stubBridgeWindow({ document: true });
+	const loadStore = await freshStores();
+	const panels = await loadStore("/src/stores/panels.svelte.ts");
+	panels.initPanelsStore();
+	const { receive } = (globalThis as { window: { __lilo: { receive(msg: Record<string, unknown>): void } } }).window.__lilo;
+
+	receive({ event: "openExtensions", id: "abcdefghijklmnop" });
+	assert.equal(panels.getSettingsShellSection(), "extensions");
+	assert.equal(panels.getSettingsSubpage(), "extension:abcdefghijklmnop");
+
+	receive({ event: "openExtensions" });
+	assert.equal(panels.getSettingsShellSection(), "extensions");
+	assert.equal(panels.getSettingsSubpage(), null);
+});

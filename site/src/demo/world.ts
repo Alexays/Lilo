@@ -19,6 +19,10 @@ export type DemoTab = BridgeTabSnapshot & {
   spaceId: string;
 };
 
+export type DemoTreeItem = BridgeSidebarTreeItemSnapshot & {
+  spaceId: string;
+};
+
 export const pageNotes = new Map<string, string>();
 
 export const pageProjects = new Map<
@@ -44,6 +48,7 @@ export const samplePageColor = (url: string) => {
 
 interface DemoWorld extends BridgeInitialStatePayload {
   tabs: DemoTab[];
+  treeItems: DemoTreeItem[];
   spaces: BridgeSpaceSnapshot[];
   folders: BridgeTabFolderSnapshot[];
   profiles: BridgeProfileSnapshot[];
@@ -83,10 +88,7 @@ export const makeTab = (
   url,
 });
 
-export const makeTreeItem = (
-  tab: DemoTab,
-  sortOrder: number
-): BridgeSidebarTreeItemSnapshot => {
+export const makeTreeItem = (tab: DemoTab, sortOrder: number): DemoTreeItem => {
   let section: BridgeSidebarTreeItemSnapshot["section"] = "unpinned";
 
   if (tab.isPinned) {
@@ -98,7 +100,6 @@ export const makeTreeItem = (
   }
 
   return {
-    id: `item-${tab.id}`,
     itemId: tab.id,
     kind: "tab",
     parentFolderId: null,
@@ -202,7 +203,6 @@ export const sampleWorld = (
   }));
 
   treeItems.push({
-    id: "item-trips",
     itemId: "trips",
     kind: "folder",
     parentFolderId: null,

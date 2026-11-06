@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { IconName } from "./icons";
+  import type { IconName } from "../ui/icons";
 
   const SUGGESTIONS: { key: string; icon: IconName }[] = [
     { key: "explain", icon: "book" },
@@ -17,7 +17,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { conversationActions } from "./conversationActions";
   import type { BridgeSplitPaneFrame } from "../../lib/bridge/protocol";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { springEase } from "../../lib/motion/spring";
@@ -37,7 +37,7 @@
   import { getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import AgentTile from "./AgentTile.svelte";
   import type { ImageRef, PermissionItem, ThreadItem, ToolCallItem } from "./conversationModel";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import Lightbox from "./Lightbox.svelte";
   import MenuPicker from "./MenuPicker.svelte";
   import PermissionButtons from "./PermissionButtons.svelte";
@@ -235,8 +235,8 @@
     // A window whose reset has passed no longer says anything about the plan.
     const live = planLimits?.filter((limit) => limit.resetsAt > now) ?? [];
     if (live.length === 0) return null;
-    const time = new Intl.DateTimeFormat(getLocale(), { hour: "numeric", minute: "2-digit" });
-    const dayAndTime = new Intl.DateTimeFormat(getLocale(), { weekday: "short", hour: "numeric", minute: "2-digit" });
+    const time = new Intl.DateTimeFormat(getFormatLocale(), { hour: "numeric", minute: "2-digit" });
+    const dayAndTime = new Intl.DateTimeFormat(getFormatLocale(), { weekday: "short", hour: "numeric", minute: "2-digit" });
     return {
       percent: Math.max(...live.map((limit) => limit.percent)),
       lines: live.map((limit) =>
@@ -549,11 +549,11 @@
                   <span class="status-label">{t("agents.status.waiting")}</span>
                 {:else if header.signingIn}
                   <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
-                  <span class="status-label shimmer">{t("agents.status.signingIn", { agent: header.agentName })}</span>
+                  <span class="status-label">{t("agents.status.signingIn", { agent: header.agentName })}</span>
                   <span class="status-hint">{t(header.signingIn.terminal ? "agents.status.signingInTerminalHint" : "agents.status.signingInHint")}</span>
                 {:else}
                   <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
-                  <span class="status-label shimmer">{t("agents.status.working")}</span>
+                  <span class="status-label">{t("agents.status.working")}</span>
                   <span class="elapsed" bind:this={elapsedEl} aria-hidden="true"></span>
                   <span class="status-hint">{t("agents.status.stopHint")}</span>
                 {/if}
@@ -1138,32 +1138,6 @@
     color: var(--text-secondary);
     font-size: var(--font-size-md);
     white-space: nowrap;
-  }
-
-  /* A light passing over the word while the agent works; it runs only while a turn does. */
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      var(--text-secondary) 0%,
-      var(--text-secondary) 40%,
-      var(--text-primary) 50%,
-      var(--text-secondary) 60%,
-      var(--text-secondary) 100%
-    );
-    background-size: 300% 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: shimmer 1.8s linear infinite;
-  }
-
-  @keyframes shimmer {
-    from {
-      background-position: 100% 0;
-    }
-    to {
-      background-position: 0 0;
-    }
   }
 
   .status-label {

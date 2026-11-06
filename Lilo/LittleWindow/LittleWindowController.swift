@@ -116,8 +116,7 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
     /// The engine's delegate calls it when the page's address changes: a navigation the page starts shows its
     /// address once it commits, when the web view's own URL no longer changes.
     func refreshAddress() {
-        guard header.field.currentEditor() == nil else { return }
-        header.field.stringValue = engine.currentURL?.absoluteString ?? ""
+        header.field.address = engine.currentURL
     }
 
     private func refreshTitle() {
@@ -131,14 +130,24 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
         header.progressBar.progress = webView.isLoading ? max(0.08, webView.estimatedProgress) : nil
     }
 
-    /// A URL as typed (a scheme, or a dotted name without spaces), anything else a search.
+    /// A URL as typed: a scheme, a local host (over http), or a name whose last label reads as a
+    /// top-level domain ("v1.2" stays a search). Anything else is a search.
     private func navigate(to input: String) {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         let typed = URL(string: text)
+        let address = text.contains(" ") ? nil : URL(string: "http://" + text)
+        let host = address?.user == nil ? address?.host(percentEncoded: false)?.lowercased() ?? "" : ""
+        let labels = host.split(separator: ".")
+        let isLocal = host == "localhost" || host.hasSuffix(".localhost") || host.hasSuffix(".local") || host.contains(":")
+            || (labels.count == 4 && labels.allSatisfy { UInt8($0) != nil })
+        // URL encodes a non-ASCII host as punycode, so an internationalized top-level domain reads "xn--".
+        let isDomain = labels.count > 1 && labels.last.map { $0.hasPrefix("xn--") || $0.count >= 2 && $0.allSatisfy(\.isLetter) } == true
         let url: URL? = if let scheme = typed?.scheme?.lowercased(), ["http", "https", "file", "about"].contains(scheme) {
             typed
-        } else if !text.contains(" "), text.contains(".") || text.hasPrefix("localhost") {
+        } else if isLocal {
+            address
+        } else if isDomain {
             URL(string: "https://" + text)
         } else {
             URL(string: SearchQueryBridgeHandler.searchURL(for: text, settings: owner?.context.settingsStore))
@@ -176,7 +185,12 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
     }
 
     @objc func openLocation(_ sender: Any?) {
-        window.makeFirstResponder(header.field)
+        // Focusing the field anew would end the edit and replace what is typed with the page's address.
+        if let editor = header.field.currentEditor() {
+            editor.selectAll(nil)
+        } else {
+            window.makeFirstResponder(header.field)
+        }
     }
 
     @objc func reloadCurrentPage(_ sender: Any?) { engine.reload() }
@@ -197,7 +211,7 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
         isDetached = true
         if let context = owner?.context, !context.isTerminating, let url = engine.currentURL,
            ["http", "https", "file"].contains(url.scheme?.lowercased()) {
-            context.recentlyClosed.push(.page(url), spaceId: spaceId, parentFolderId: nil, section: nil, sortOrder: nil)
+            context.recentlyClosed.push(.page(url, title: engine.currentTitle), spaceId: spaceId, parentFolderId: nil, section: nil, sortOrder: nil)
         }
         // Deferred so the caller's stack unwinds before releasing the WKWebView.
         let engine = engine
@@ -212,7 +226,7 @@ private final class LittleWindowHeaderView: NSView {
     private static let trafficLightsWidth: CGFloat = 78
     private static let minimumAddressWidth: CGFloat = 120
 
-    let field = NSTextField()
+    let field = LittleAddressField()
     let progressBar = PopupProgressBar()
     var onCopy: (() -> Void)?
     var onOpenInSpace: (() -> Void)?
@@ -253,8 +267,7 @@ private final class LittleWindowHeaderView: NSView {
         field.drawsBackground = false
         field.focusRingType = .none
         field.font = .systemFont(ofSize: 12)
-        field.lineBreakMode = .byTruncatingMiddle
-        field.cell?.isScrollable = true
+        field.usesSingleLineMode = true
         field.placeholderString = "Search or enter address".localized
         pill.addSubview(field)
         addSubview(pill)
@@ -296,4 +309,61 @@ private final class LittleWindowHeaderView: NSView {
     @objc private func openAction(_ sender: Any?) { onOpenInSpace?() }
     @objc private func spacesAction(_ sender: NSButton) { onShowSpaces?(sender) }
     @objc private func copyAction(_ sender: Any?) { onCopy?() }
+}
+
+/// The address field: outside editing, the site's host in full and bold (never the credentials before it) with
+/// the rest cut at its end; the complete address only while edited.
+@MainActor
+private final class LittleAddressField: NSTextField {
+    var address: URL? {
+        didSet { if currentEditor() == nil { showIdentity() } }
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        cell?.isScrollable = true
+        attributedStringValue = NSAttributedString(
+            string: address?.absoluteString ?? "",
+            attributes: [.font: NSFont.systemFont(ofSize: 12), .foregroundColor: NSColor.labelColor]
+        )
+        return super.becomeFirstResponder()
+    }
+
+    override func textDidEndEditing(_ notification: Notification) {
+        super.textDidEndEditing(notification)
+        showIdentity()
+    }
+
+    // Whether the host alone overflows depends on the width.
+    override func setFrameSize(_ newSize: NSSize) {
+        let widthChanged = newSize.width != frame.width
+        super.setFrameSize(newSize)
+        if widthChanged, currentEditor() == nil { showIdentity() }
+    }
+
+    private func showIdentity() {
+        cell?.isScrollable = false
+        lineBreakMode = .byTruncatingTail
+        let rest: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 12), .foregroundColor: NSColor.secondaryLabelColor]
+        guard let address, let components = URLComponents(url: address, resolvingAgainstBaseURL: false),
+              let text = components.string, let hostRange = components.rangeOfHost, !hostRange.isEmpty else {
+            attributedStringValue = NSAttributedString(string: address?.absoluteString ?? "", attributes: rest)
+            return
+        }
+        let authorityEnd = components.rangeOfPort?.upperBound ?? hostRange.upperBound
+        let host = NSAttributedString(
+            string: String(text[hostRange.lowerBound..<authorityEnd]),
+            attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: NSColor.labelColor]
+        )
+        // A host wider than the field gives up its start, never the registrable domain at its end.
+        if host.size().width > bounds.width - 4 {
+            lineBreakMode = .byTruncatingHead
+            attributedStringValue = host
+            return
+        }
+        let display = NSMutableAttributedString(string: components.scheme.map { $0 == "https" ? "" : $0 + "://" } ?? "", attributes: rest)
+        display.append(host)
+        let path = text[authorityEnd...]
+        display.append(NSAttributedString(string: path == "/" ? "" : String(path), attributes: rest))
+        attributedStringValue = display
+    }
 }

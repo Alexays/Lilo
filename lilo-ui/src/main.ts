@@ -15,6 +15,11 @@ import "./styles/utilities.css";
 addEventListener("error", (event) => reportChromeError(event.error ?? event.message));
 addEventListener("unhandledrejection", (event) => reportChromeError(event.reason));
 
+// A non-English catalog loads before mounting so the first paint never flashes English. Its fetch
+// starts here so it overlaps the store setup instead of following it.
+const locale = resolveLocale(document.documentElement.dataset.locale ?? navigator.language);
+const localeLoaded = locale === "en" ? null : setLocale(locale);
+
 const initialState = takeBootstrapInitialState();
 initChromeStores(initialState);
 
@@ -24,9 +29,7 @@ if (!target) {
 	throw new Error("Missing #app mount target");
 }
 
-// A non-English catalog loads before mounting so the first paint never flashes English.
-const locale = resolveLocale(navigator.language);
-if (locale !== "en") await setLocale(locale);
+if (localeLoaded) await localeLoaded;
 
 const app = mount(App, { target });
 chromeActions.startupMark("chromeMounted");

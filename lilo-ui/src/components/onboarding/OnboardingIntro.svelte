@@ -64,7 +64,7 @@
   .hint { margin-top: 14px; font-size: var(--font-size-xs); color: var(--text-muted); animation: blurin .9s 1s var(--motion-ease-spring) both; }
   @keyframes blurin { from { opacity: 0; transform: translateY(14px); filter: blur(8px); } to { opacity: 1; transform: none; filter: blur(0); } }
   @media (prefers-reduced-motion: reduce) {
-    .mark :global(.petal), .wordmark, h1, p, .cta, .hint { animation: fade .3s both; }
+    .mark :global(.petal), .wordmark, h1, p, .cta, .hint { animation: fade .15s both !important; }
     @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
   }
 </style>

@@ -79,6 +79,7 @@ enum AgentMCP {
             guard !Task.isCancelled else { return nil }
             let name = params["name"] as? String ?? ""
             let arguments = params["arguments"] as? [String: Any] ?? [:]
+            QuitSource.noteAgentTool(name)
             session.activeCalls += 1
             let startedAt = Date()
             session.callStartedAt = startedAt

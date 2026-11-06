@@ -23,7 +23,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         let item = menu.addItem(withTitle: "Search with Google", action: nil, keyEquivalent: "")
         item.identifier = NSUserInterfaceItemIdentifier("WKMenuItemIdentifierSearchWeb")
         let builder = makeBuilder(onSearchWeb: { searched = true })
-        builder.build(menu, linkURL: nil, extensionItems: [], searchEngineName: "DuckDuckGo")
+        builder.build(menu, linkURL: nil, searchEngineName: "DuckDuckGo")
 
         XCTAssertEqual(item.title, String(format: "Search with %@".localized, "DuckDuckGo"))
         let action = try XCTUnwrap(item.action)
@@ -45,7 +45,7 @@ final class ContextMenuBuilderTests: XCTestCase {
 
     func testBuildAppendsNavigationAndPiPItems() {
         let menu = NSMenu()
-        makeBuilder().build(menu, linkURL: nil, extensionItems: [])
+        makeBuilder().build(menu, linkURL: nil)
         let titles = menu.items.map(\.title)
         XCTAssertTrue(titles.contains("Back".localized))
         XCTAssertTrue(titles.contains("Forward".localized))
@@ -59,7 +59,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         let pageTitles = ["Back", "Forward", "Reload", "Bookmark This Page", "Picture in Picture"].map(\.localized)
         func titles(linkURL: URL? = nil, imageURL: URL? = nil, element: NSObject? = nil) -> Set<String> {
             let menu = NSMenu()
-            makeBuilder().build(menu, linkURL: linkURL, imageURL: imageURL, element: element, extensionItems: [])
+            makeBuilder().build(menu, linkURL: linkURL, imageURL: imageURL, element: element)
             return Set(menu.items.map(\.title)).intersection(pageTitles)
         }
         XCTAssertEqual(titles(), Set(pageTitles).subtracting(["Bookmark This Page".localized]), "a blank web view has no page URL")
@@ -70,43 +70,9 @@ final class ContextMenuBuilderTests: XCTestCase {
         XCTAssertEqual(titles(element: FakeElementInfo(editable: false, selected: false)).count, 4)
     }
 
-    /// WebKit proposes the extensions' items itself: the menu shows them once, as Lilo's copies.
-    func testBuildShowsAnExtensionsItemsOnce() async throws {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("menu-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: folder) }
-        let registry = try makeTestExtensionRegistry(in: folder)
-        defer { registry.teardown() }
-        let extensionFolder = folder.appendingPathComponent("ext")
-        try FileManager.default.createDirectory(at: extensionFolder, withIntermediateDirectories: true)
-        let manifest: [String: Any] = [
-            "manifest_version": 3, "name": "Menu", "version": "1.0", "permissions": ["contextMenus"],
-            "background": ["service_worker": "background.js"]
-        ]
-        try JSONSerialization.data(withJSONObject: manifest).write(to: extensionFolder.appendingPathComponent("manifest.json"))
-        try "chrome.contextMenus.create({ id: 'item', title: 'Extension item', contexts: ['all'] });"
-            .write(to: extensionFolder.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
-        try await registry.load(from: extensionFolder)
-        let id = try XCTUnwrap(registry.loadedExtensions.last?.id)
-        let context = try XCTUnwrap(registry.context(for: id))
-        _ = await registry.backgrounds.load(id)
-        let adapter = TabExtensionAdapter(engineTab: WKWebViewTab(id: UUID(), webView: WKWebView()))
-        let created = await pollUntil { !context.menuItems(for: adapter).isEmpty }
-        XCTAssertTrue(created)
-
-        let menu = NSMenu()
-        context.menuItems(for: adapter).forEach(menu.addItem)
-        let ours = context.menuItems(for: adapter)
-        makeBuilder().build(menu, linkURL: nil, extensionItems: ours)
-
-        let shown = menu.items.filter { $0.title == "Extension item" }
-        XCTAssertEqual(shown.count, 1)
-        XCTAssertIdentical(shown.first, ours.first)
-    }
-
     func testBuildAddsLinkActionsWhenLinkPresent() {
         let menu = NSMenu()
-        makeBuilder().build(menu, linkURL: URL(string: "https://example.com"), extensionItems: [])
+        makeBuilder().build(menu, linkURL: URL(string: "https://example.com"))
         let linkItem = menu.items.first { $0.title == "Open Link in New Tab".localized }
         XCTAssertNotNil(linkItem)
         XCTAssertEqual(linkItem?.representedObject as? URL, URL(string: "https://example.com"))
@@ -120,7 +86,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         let menu = NSMenu()
         let imageURL = URL(string: "https://example.com/cat.png")!
 
-        builder.build(menu, linkURL: nil, imageURL: imageURL, extensionItems: [])
+        builder.build(menu, linkURL: nil, imageURL: imageURL)
 
         let item = menu.items.first { $0.title == "Download Image" }
         XCTAssertNotNil(item, "menu should offer a working Download Image item")
@@ -136,7 +102,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         let menu = NSMenu()
         let linkURL = URL(string: "https://example.com/file.zip")!
 
-        builder.build(menu, linkURL: linkURL, extensionItems: [])
+        builder.build(menu, linkURL: linkURL)
 
         let item = menu.items.first { $0.title == "Download Linked File" }
         XCTAssertNotNil(item, "an https link with no matching native item should still get a working download item")
@@ -148,7 +114,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         let builder = makeBuilder()
         let menu = NSMenu()
 
-        builder.build(menu, linkURL: URL(string: "mailto:someone@example.com"), extensionItems: [])
+        builder.build(menu, linkURL: URL(string: "mailto:someone@example.com"))
 
         XCTAssertFalse(menu.items.contains { $0.title == "Download Linked File" },
                         "mailto: links aren't downloadable: WebKit itself shows no native item for them")
@@ -158,7 +124,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         let builder = makeBuilder()
         let menu = NSMenu()
 
-        builder.build(menu, linkURL: URL(string: "javascript:void(0)"), extensionItems: [])
+        builder.build(menu, linkURL: URL(string: "javascript:void(0)"))
 
         XCTAssertFalse(menu.items.contains { $0.title == "Download Linked File" })
     }
@@ -174,7 +140,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         menu.addItem(native)
         let linkURL = URL(string: "https://example.com/page")!
 
-        builder.build(menu, linkURL: linkURL, imageURL: nil, extensionItems: [])
+        builder.build(menu, linkURL: linkURL, imageURL: nil)
 
         let downloadItems = menu.items.filter { ContextMenuBuilder.isDownloadImageItem($0) }
         XCTAssertEqual(downloadItems.count, 1, "native item is left in place, not duplicated")
@@ -196,7 +162,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         menu.addItem(native)
         let imageURL = URL(string: "https://example.com/cat.png")!
 
-        builder.build(menu, linkURL: nil, imageURL: imageURL, extensionItems: [])
+        builder.build(menu, linkURL: nil, imageURL: imageURL)
 
         let downloadItems = menu.items.filter { ContextMenuBuilder.isDownloadImageItem($0) }
         XCTAssertEqual(downloadItems.count, 1, "native item retargeted in place, not duplicated")

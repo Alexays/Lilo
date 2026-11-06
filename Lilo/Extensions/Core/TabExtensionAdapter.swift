@@ -8,7 +8,9 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     let tabId: UUID
     /// Nil while the tab is unloaded (restored, discarded): it stays open to extensions with no page
     /// behind it, and holds no reference to a torn-down engine.
-    var engineTab: WKWebViewTab?
+    var engineTab: WKWebViewTab? {
+        didSet { if (oldValue == nil) != (engineTab == nil) { tabManager?.reportExtensionTabChange(of: self, ["discarded"]) } }
+    }
     weak var extensionWindow: (any WKWebExtensionWindow)?
     /// The opener extensions see as `openerTabId`; in memory only, like Chrome's.
     weak var parent: TabExtensionAdapter?
@@ -48,12 +50,18 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
 
     /// A new tab has no url until its first navigation starts, as Chrome reports none before it.
     func url(for context: WKWebExtensionContext) -> URL? {
-        guard let engineTab else { return tabManager?.tab(for: tabId)?.url }
+        guard let engineTab else { return visibleDurableTab?.url }
         return engineTab.hasCommittedContent || engineTab.isLoading ? engineTab.currentURL : nil
     }
 
     func title(for context: WKWebExtensionContext) -> String? {
-        engineTab?.currentTitle ?? tabManager?.tab(for: tabId)?.title
+        engineTab?.currentTitle ?? visibleDurableTab?.title
+    }
+
+    /// A locked folder's tab has no engine and shows extensions as an empty tab, its url and title kept secret.
+    private var visibleDurableTab: Tab? {
+        guard let tabManager, let tab = tabManager.tab(for: tabId), tabManager.protectingFolder(of: tab)?.isLocked != true else { return nil }
+        return tab
     }
 
     func isSelected(for context: WKWebExtensionContext) -> Bool {

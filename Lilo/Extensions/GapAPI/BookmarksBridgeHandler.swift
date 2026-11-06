@@ -6,6 +6,7 @@ import WebKit
 final class BookmarksBridgeHandler: GapHandler {
     /// The calling extension's profile store, resolved from its registry.
     private let storeProvider: (ProfileExtensionRegistry) -> BookmarkStore?
+    private let storeQueue = DispatchQueue(label: "fr.arouillard.lilo.bookmarks")
 
     let gapActions: Set<String> = [
         "bookmarks.get", "bookmarks.getChildren", "bookmarks.getRecent",
@@ -21,65 +22,62 @@ final class BookmarksBridgeHandler: GapHandler {
     func handle(_ call: GapCall) async -> Any? {
         let registry = call.registry
         guard let store = storeProvider(registry) else { return BridgeError("Bookmarks store unavailable") }
-        switch call.action {
-        case "bookmarks.get":
-            // Chrome's bookmarks.get always resolves with an array, even for a single id.
-            return bridged { () throws -> Any? in
+        do {
+            switch call.action {
+            case "bookmarks.get":
+                // Chrome's bookmarks.get always resolves with an array, even for a single id.
                 if let ids = call.payload["ids"] as? [String] {
-                    return try store.get(ids: ids).map(\.dict)
+                    return try await onStore { try store.get(ids: ids) }.map(\.dict)
                 } else if let id = call.string("id") {
-                    guard let node = try store.get(id: id) else {
+                    guard let node = try await onStore({ try store.get(id: id) }) else {
                         return BridgeError("Bookmark not found: \(id)")
                     }
                     return [node.dict]
                 }
                 return []
-            }
 
-        case "bookmarks.getChildren":
-            let parentId = call.string("id") ?? ""
-            return bridged { try store.getChildren(parentId: parentId).map(\.dict) }
+            case "bookmarks.getChildren":
+                let parentId = call.string("id") ?? ""
+                return try await onStore { try store.getChildren(parentId: parentId) }.map(\.dict)
 
-        case "bookmarks.getRecent":
-            let count = call.payload["numberOfItems"] as? Int ?? 5
-            return bridged { try store.getRecent(count: count).map(\.dict) }
+            case "bookmarks.getRecent":
+                let count = call.payload["numberOfItems"] as? Int ?? 5
+                return try await onStore { try store.getRecent(count: count) }.map(\.dict)
 
-        case "bookmarks.getTree", "bookmarks.getSubTree":
-            // Every row is read, so the read runs off the main actor.
-            let rootId = call.action == "bookmarks.getSubTree" ? call.string("id") ?? "" : nil
-            do {
-                let records = try await Task.detached { try store.getTree() }.value
+            case "bookmarks.getTree", "bookmarks.getSubTree":
+                let rootId = call.action == "bookmarks.getSubTree" ? call.string("id") ?? "" : nil
+                let records = try await onStore { try store.getTree() }
                 return Self.tree(records, rootId: rootId)
-            } catch {
-                return BridgeError(error.localizedDescription)
-            }
 
-        case "bookmarks.search":
-            let params = call.payload
-            let url   = params["url"] as? String
-            let title = params["title"] as? String
-            let query = params["query"] as? String
-            return bridged { try store.search(url: url, title: title, query: query).map(\.dict) }
+            case "bookmarks.search":
+                let params = call.payload
+                let url   = params["url"] as? String
+                let title = params["title"] as? String
+                let query = params["query"] as? String
+                return try await onStore { try store.search(url: url, title: title, query: query) }.map(\.dict)
 
-        case "bookmarks.create":
-            let parentId = call.string("parentId")
-            let title    = call.string("title") ?? ""
-            let url      = call.string("url")
-            return bridged {
-                let node = try store.create(parentId: parentId, title: title, url: url)
+            case "bookmarks.create":
+                let parentId = call.string("parentId")
+                let title    = call.string("title") ?? ""
+                let url      = call.string("url")
+                let node = try await onStore { try store.create(parentId: parentId, title: title, url: url) }
                 emit("onCreated", args: [node.id, node.dict], registry: registry)
                 return node.dict
-            }
 
-        case "bookmarks.move":
-            let id       = call.string("id") ?? ""
-            let parentId = call.string("parentId")
-            let index    = call.payload["index"] as? Int
-            return bridged {
+            case "bookmarks.move":
+                let id       = call.string("id") ?? ""
+                let parentId = call.string("parentId")
+                let index    = call.payload["index"] as? Int
+                if let index, index < 0 {
+                    return BridgeError("Error in invocation of bookmarks.move(string id, object destination, optional function callback): "
+                        + "Error at parameter 'destination': Error at property 'index': Value must be at least 0.")
+                }
                 // Snapshot the old position BEFORE the move: store.move reindexes siblings and the
                 // returned record carries only the NEW parentId/index.
-                let before = try? store.get(id: id)
-                let moved = try store.move(id: id, parentId: parentId, index: index)
+                let (before, moved) = try await onStore { () throws -> (ChromeBookmarkRecord?, ChromeBookmarkRecord) in
+                    let before = try? store.get(id: id)
+                    return (before, try store.move(id: id, parentId: parentId, index: index))
+                }
                 emit("onMoved", args: [id, [
                     "parentId": moved.parentId ?? "",
                     "index": moved.index_ ?? 0,
@@ -87,41 +85,42 @@ final class BookmarksBridgeHandler: GapHandler {
                     "oldIndex": before?.index_ ?? 0
                 ]], registry: registry)
                 return moved.dict
-            }
 
-        case "bookmarks.update":
-            let id    = call.string("id") ?? ""
-            let title = call.string("title")
-            let url   = call.string("url")
-            return bridged {
-                let node = try store.update(id: id, title: title, url: url)
+            case "bookmarks.update":
+                let id    = call.string("id") ?? ""
+                let title = call.string("title")
+                let url   = call.string("url")
+                let node = try await onStore { try store.update(id: id, title: title, url: url) }
                 // ChangeInfo carries only title and (for non-folders) url.
                 var info: [String: Any] = ["title": node.title]
                 if let u = node.url { info["url"] = u }
                 emit("onChanged", args: [id, info], registry: registry)
                 return node.dict
-            }
 
-        case "bookmarks.remove":
-            let id = call.string("id") ?? ""
-            return bridged { () throws -> Any? in
-                let snap = try? store.get(id: id)   // capture before the destructive delete
-                try store.remove(id: id)
+            case "bookmarks.remove", "bookmarks.removeTree":
+                let id = call.string("id") ?? ""
+                let tree = call.action == "bookmarks.removeTree"
+                let snap = try await onStore { () throws -> ChromeBookmarkRecord? in
+                    let snap = try? store.get(id: id)   // capture before the destructive delete
+                    if tree { try store.removeTree(id: id) } else { try store.remove(id: id) }
+                    return snap
+                }
                 emitRemoved(id: id, node: snap, registry: registry)
                 return nil
-            }
 
-        case "bookmarks.removeTree":
-            let id = call.string("id") ?? ""
-            return bridged { () throws -> Any? in
-                let snap = try? store.get(id: id)
-                try store.removeTree(id: id)
-                emitRemoved(id: id, node: snap, registry: registry)
+            default:
                 return nil
             }
+        } catch {
+            return BridgeError(error.localizedDescription)
+        }
+    }
 
-        default:
-            return nil
+    /// Runs store work off the main actor on one serial queue, entered before any suspension, so calls
+    /// reach the store and fire their events in the order the extension made them, as in Chrome.
+    private func onStore<T>(_ work: @escaping @Sendable () throws -> T) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            storeQueue.async { continuation.resume(with: Result(catching: work)) }
         }
     }
 

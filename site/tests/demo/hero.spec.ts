@@ -111,4 +111,52 @@ for (const lang of ["en", "fr"] as const) {
     await expect(page.locator(".page-hero h1")).toBeVisible();
     await expect(page.locator(".page-hero .hero-stop")).toHaveCount(0);
   });
+
+  test(`hero demo starts by itself after the page loads (${lang})`, async ({
+    page,
+  }) => {
+    await page.goto(home);
+    const poster = page.locator("#browser-demo .demo-poster");
+    await expect(poster).toBeHidden();
+    await expect(
+      page.frameLocator("#browser-demo iframe").locator(".repo-top")
+    ).toBeVisible();
+
+    const timing = await page.evaluate(() => {
+      const loaded = performance
+        .getEntriesByType("navigation")
+        .find((entry) => entry instanceof PerformanceNavigationTiming);
+
+      return performance
+        .getEntriesByType("resource")
+        .filter((entry) => new URL(entry.name).pathname.startsWith("/demo/"))
+        .map((entry) => entry.startTime - (loaded?.loadEventEnd ?? Infinity));
+    });
+
+    expect(timing.length).toBeGreaterThan(0);
+    expect(timing.every((delay) => delay >= 0)).toBe(true);
+  });
+
+  test(`keyboard skips the hero demo (${lang})`, async ({ page }) => {
+    await page.goto(home);
+    const skip = page.locator("#browser-demo .skip-link");
+    await skip.focus();
+    await expect(skip).toBeVisible();
+    await page.keyboard.press("Enter");
+
+    await page.keyboard.press("Tab");
+    expect(
+      await page.evaluate(() =>
+        Boolean(document.activeElement?.closest("#native"))
+      )
+    ).toBe(true);
+  });
 }
+
+test("opening a hero demo menu reaches the live demo", async ({ page }) => {
+  await page.goto("/");
+  const menu = page.locator("#browser-demo .mac-menu").first();
+  await menu.locator(":scope > summary").click();
+  await expect(page.locator("#browser-demo .demo-poster")).toBeHidden();
+  await expect(menu.locator("[data-action='settings']")).toBeEnabled();
+});

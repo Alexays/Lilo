@@ -447,4 +447,39 @@ final class TerminalReopenTests: XCTestCase {
         let savedAll = await pollUntil(timeout: 5) { onDisk()?.count == 4 }
         XCTAssertTrue(savedAll, "terminals closed in one turn all reach the disk")
     }
+
+    func testClosedTerminalsStayOnDiskBeforeTheSpacesLoad() throws {
+        let context = BrowserContext()
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-closed-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        context.terminalHost.snapshotDirectory = directory
+        let file = directory.appendingPathComponent("closed.json")
+        let saved = [RecentlyClosedStack.Entry(
+            content: .terminal(.init(cwd: "/tmp", closedAt: Date())), spaceId: UUID(), parentFolderId: nil, section: nil, sortOrder: nil
+        )]
+        let encoded = try JSONEncoder().encode(saved)
+        try encoded.write(to: file)
+
+        context.restoreClosedTerminals()
+        context.isTerminating = true
+        context.writeClosedTerminals()
+
+        XCTAssertEqual(try Data(contentsOf: file), encoded)
+    }
+
+    func testUnreadableClosedTerminalsAreSetAsideNotOverwritten() throws {
+        let context = browserContext.context
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-closed-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        context.terminalHost.snapshotDirectory = directory
+        let file = directory.appendingPathComponent("closed.json")
+        try Data("not json".utf8).write(to: file)
+
+        context.restoreClosedTerminals()
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
+        XCTAssertEqual(try Data(contentsOf: file.appendingPathExtension("corrupt")), Data("not json".utf8))
+    }
 }

@@ -47,15 +47,22 @@ export async function flattenToPNG(
 	// 1. sharp base
 	ctx.drawImage(baseImage, 0, 0, image.w, image.h);
 
-	// 2. blur regions: redraw the base, blurred, clipped to each region's normalized box
+	// 2. blur regions: redraw the base, blurred, clipped to each region's normalized box. Only the
+	// box plus three blur radii is drawn: the blur reads no further, so its edges match a full redraw.
+	const pad = 3 * BLUR_RADIUS_PX;
 	for (const b of blurRegions) {
 		const box = normalizeBox(b.box);
+		const x1 = Math.max(0, Math.floor(box.x - pad));
+		const y1 = Math.max(0, Math.floor(box.y - pad));
+		const x2 = Math.min(image.w, Math.ceil(box.x + box.w + pad));
+		const y2 = Math.min(image.h, Math.ceil(box.y + box.h + pad));
+		if (x2 <= x1 || y2 <= y1) continue;
 		ctx.save();
 		ctx.beginPath();
 		ctx.rect(box.x, box.y, box.w, box.h);
 		ctx.clip();
 		ctx.filter = `blur(${BLUR_RADIUS_PX}px)`;
-		ctx.drawImage(baseImage, 0, 0, image.w, image.h);
+		ctx.drawImage(baseImage, x1, y1, x2 - x1, y2 - y1, x1, y1, x2 - x1, y2 - y1);
 		ctx.filter = "none";
 		ctx.restore();
 	}

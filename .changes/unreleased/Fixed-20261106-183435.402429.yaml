@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions that drive a tab through chrome.debugger now deliver keyboard shortcuts and Tab presses to the page.
+time: 2026-11-06T18:34:35.402429+01:00

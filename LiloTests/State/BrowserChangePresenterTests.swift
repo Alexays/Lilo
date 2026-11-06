@@ -265,6 +265,9 @@ final class BrowserChangePresenterTests: XCTestCase {
         let synced = try firstTabPayload(BrowserChangePresenter.event(for: changes, omitFaviconsForSpaces: [spaceId]))
         XCTAssertNil(synced["faviconDataURL"], "a synced space must not re-ship the favicon")
         XCTAssertEqual(synced["title"] as? String, "A", "the rest of the snapshot must be intact")
+
+        let stale = try firstTabPayload(BrowserChangePresenter.event(for: changes, omitFaviconsForSpaces: [spaceId], staleFaviconTabIds: [tabId]))
+        XCTAssertEqual(stale["faviconDataURL"] as? String, "data:image/png;base64,AAAA", "a favicon changed since the last ship must ship again")
     }
 
     func testUpsertLeavesOutAnUnchangedFavicon() throws {

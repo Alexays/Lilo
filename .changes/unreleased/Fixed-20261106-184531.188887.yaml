@@ -1,0 +1,3 @@
+kind: Fixed
+body: A site asking for a password over plain HTTP now warns that it will be sent unencrypted and no longer offers to remember it
+time: 2026-11-06T18:45:31.188887+01:00

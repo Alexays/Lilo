@@ -1,5 +1,5 @@
-// Shared SSR harness for store tests: one Vite dev server per test file (node:test runs
-// each file in its own process), with a fresh store module graph per test.
+// Shared SSR harness for store tests: one Vite dev server for the whole run, with a fresh store
+// module graph per test.
 import { after } from "node:test";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,8 +18,8 @@ export interface PostedMessage {
 }
 
 /**
- * Installs the minimal WKWebView bridge window and returns the messages stores post to it.
- * Call before freshStores so the re-executed bridge module binds to the fresh stub.
+ * Installs the minimal WKWebView bridge window, and a document only when asked, replacing whatever another
+ * test file left; returns the messages stores post to it. Call before freshStores so the bridge binds to it.
  */
 export function stubBridgeWindow(options: { document?: boolean } = {}): PostedMessage[] {
 	const posted: PostedMessage[] = [];
@@ -44,6 +44,8 @@ export function stubBridgeWindow(options: { document?: boolean } = {}): PostedMe
 			visibilityState: "visible",
 			hidden: false,
 		};
+	} else {
+		delete (globalThis as { document?: unknown }).document;
 	}
 	return posted;
 }

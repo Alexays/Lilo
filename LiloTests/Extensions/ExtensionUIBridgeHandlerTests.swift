@@ -2,7 +2,8 @@ import AppKit
 import XCTest
 @testable import Lilo
 
-/// Settings > Extensions acting on a profile its window does not show, through the window's real handler.
+/// The window's real extension UI handler: Settings > Extensions acting on a profile the window does not show, and
+/// `action.openPopup` from an extension page.
 @MainActor
 final class ExtensionUIBridgeHandlerTests: XCTestCase {
     private var browserContext: TemporaryBrowserContext!
@@ -68,5 +69,28 @@ final class ExtensionUIBridgeHandlerTests: XCTestCase {
         let refreshed = try XCTUnwrap(shown.last)
         XCTAssertTrue(refreshed.live, "the settings get the profile's rows again after the action")
         XCTAssertEqual(refreshed.rows.first { $0["id"] as? String == extensionId }?["isEnabled"] as? Bool, false)
+    }
+
+    func testOpenPopupRejectsWithoutAPopupOrAKnownWindow() async throws {
+        let window = try XCTUnwrap(browserContext.context.windows.windows.first)
+        let registry = try XCTUnwrap(window.profileContext?.extensions)
+        let source = try createMinimalExtension(named: "click_only", in: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+        try #"{"manifest_version":3,"name":"Click Only","version":"1.0","action":{}}"#
+            .write(to: source.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try await registry.load(from: source)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        func openPopup(_ payload: [String: Any] = [:]) async throws -> String? {
+            let message = try XCTUnwrap(BridgeMessage(dictionary: ["action": "action.openPopup", "payload": payload.merging(["extensionId": id]) { $1 }]))
+            return (await handler.handle(message, registry: registry) as? BridgeError)?.message
+        }
+
+        let noPopup = try await openPopup()
+        XCTAssertEqual(noPopup, "Extension does not have a popup on the active tab.", "onClicked fires only from a click")
+        let unknownWindow = try await openPopup(["windowId": 5, "windowPosition": -1])
+        XCTAssertEqual(unknownWindow, "No window with id: 5.")
+        let privateSpace = try browserContext.context.spaceManager!.createSpace(name: "P", profileId: registry.profileId, isPrivate: true)
+        window.switchToSpace(privateSpace.id)
+        let privateWindow = try await openPopup()
+        XCTAssertEqual(privateWindow, "Could not find an active browser window.", "an extension without private access never acts there")
     }
 }

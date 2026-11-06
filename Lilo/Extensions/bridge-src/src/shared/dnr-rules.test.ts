@@ -30,6 +30,27 @@ describe('RE2 regexFilter in the subset WebKit compiles', () => {
     assert.equal(webKitRegex('(?P<host>[a-z]+)\\.com'), '([a-z]+)\\.com');
   });
 
+  it('matches the whole URL for a regexSubstitution, keeping the text around the match', () => {
+    const [regex, substitution] = webKitRegex('^https://www\\.example\\.com/', 'https://alt.example.net/')!;
+    assert.deepEqual([regex, substitution], ['^(https:\\/\\/www\\.example\\.com\\/)(.*)$', 'https://alt.example.net/\\2']);
+    const replace = (url: string, [pattern, rewrite]: [string, string]) => {
+      // WebKit's ContentExtensionActions: \\0 to \\9 replaced by the groups of url.match, the result the whole new URL.
+      const match = url.match(new RegExp(pattern))!;
+      return match.slice(0, 10).reduce((text, group, n) => text.replaceAll(`\\${n}`, String(group)), rewrite);
+    };
+    assert.equal(replace('https://www.example.com/watch?v=1', [regex, substitution]), 'https://alt.example.net/watch?v=1');
+    const unanchored = webKitRegex('u=1(&x)?', 'v=\\1\\0')!;
+    assert.deepEqual(unanchored, ['^(.*)(u=1((?:&x)?))(.*)$', '\\1v=\\3\\2\\4']);
+    assert.equal(replace('https://x.example/?u=1', unanchored), 'https://x.example/?v=u=1', 'a group that matched nothing is empty');
+    assert.equal(webKitRegex('^https://a\\.example/(.*)$', '\\1')![1], '\\1', 'a regex matching the whole URL keeps its substitution');
+    assert.equal(webKitRegex('(a)(b)(c)(d)(e)(f)(g)(h)', '\\1'), undefined, 'the last group would be \\11');
+    assert.equal(webKitRegex('.*u=1($|&)', '\\1'), undefined, 'an end alternative cannot keep the text after it');
+    assert.equal(webKitRegex('a(b)*c', '\\1'), undefined);
+    for (const nested of ['(?:a(b))?c', '(?:a(b)|)c', '((a)b)?c', '(?:a(b)){2}c']) {
+      assert.equal(webKitRegex(nested, '\\1'), undefined, `${nested} leaves a group that may capture nothing, or copies it`);
+    }
+  });
+
   it('gives up where one WebKit regex cannot say the same', () => {
     assert.equal(webKitRegex('.*(?:meips|proxy).*#(.*\\/trace\\/mail\\/.*)'), undefined);
     assert.equal(webKitRegex('a|b'), undefined);
@@ -39,9 +60,55 @@ describe('RE2 regexFilter in the subset WebKit compiles', () => {
   });
 });
 
+/** The regex WebKit compiles a urlFilter into (`_regexURLFilterForChromeURLFilter`), a request domain getting `||`. */
+function webKitURLRegex(filter: string): RegExp {
+  const anchor = filter.startsWith('||') ? 2 : filter.startsWith('|') ? 1 : 0;
+  const end = filter.endsWith('|') ? '$' : '';
+  const body = filter.slice(anchor, end ? -1 : undefined).replace(/[?+[(){}$|\\.]/g, '\\$&').replaceAll('*', '.*').replaceAll('^', '[^a-zA-Z0-9_.%-]');
+  return new RegExp(['', '^', '^[^:]+://+([^:/]+\\.)?'][anchor] + body + end, 'i');
+}
+
 describe('rules WebKit rejects', () => {
   const chrome = { runtime: { id: 'abc', getURL: (path: string) => `chrome-extension://uuid${path}` } };
   (globalThis as any).chrome = chrome;
+
+  it('lets a urlFilter ending in a separator match the end of the URL too', () => {
+    const rule = { id: 1452, action: { type: 'block' }, condition: { urlFilter: '||dev.example/bb/sidebar_left^', isUrlFilterCaseSensitive: true } };
+    const { condition } = webKitRule(rule);
+    assert.deepEqual(condition, { isUrlFilterCaseSensitive: true, regexFilter: '^[^:]+://+([^:/]+\\.)?dev\\.example/bb/sidebar_left(?:[^a-zA-Z0-9_.%-].*)?$' });
+    const regex = new RegExp(condition.regexFilter);
+    assert.deepEqual(['https://dev.example/bb/sidebar_left', 'https://dev.example/bb/sidebar_left?x', 'https://dev.example/bb/sidebar_leftover'].map((url) => regex.test(url)), [true, true, false]);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'ad*.gif^' } }).condition.regexFilter, 'ad.*\\.gif(?:[^a-zA-Z0-9_.%-].*)?$');
+    for (const urlFilter of ['||example.com^', 'ads^|', 'ads']) {
+      const kept = { ...rule, condition: { urlFilter } };
+      assert.equal(webKitRule(kept), kept, urlFilter);
+    }
+  });
+
+  it('anchors request domains on the host', () => {
+    const rule = { id: 8, action: { type: 'block' }, condition: { requestDomains: ['t.co'], excludedRequestDomains: ['cdn.example.org'] } };
+    const { requestDomains, excludedRequestDomains } = webKitRule(rule).condition;
+    assert.deepEqual([requestDomains, excludedRequestDomains], [['t.co^'], ['||cdn.example.org^']]);
+    const domain = webKitURLRegex(`||${requestDomains[0]}`);
+    assert.deepEqual(['https://t.co/x', 'https://sub.t.co:8443/', 'https://t.com/', 'https://t.co.uk/'].map((url) => domain.test(url)), [true, true, false, false]);
+    const excluded = webKitURLRegex(excludedRequestDomains[0]);
+    assert.deepEqual(['https://cdn.example.org/a', 'https://ads.example.net/p?ref=cdn.example.org', 'https://notcdn.example.org/'].map((url) => excluded.test(url)), [true, false, false]);
+    assert.deepEqual(fromWebKit([webKitRule(rule)]), [rule]);
+  });
+
+  it('moves an unanchored urlFilter into each request domain, past the host', () => {
+    const rule = { id: 116, action: { type: 'block' }, condition: { requestDomains: ['aboutamazon.com'], urlFilter: '^asc_campaign=' } };
+    const { condition } = webKitRule(rule);
+    assert.deepEqual(condition, { requestDomains: ['aboutamazon.com^*^asc_campaign='] });
+    assert.equal(webKitURLRegex(`||${condition.requestDomains[0]}`).test('https://www.aboutamazon.com/news?asc_campaign=x'), true);
+    const path = webKitRule({ ...rule, condition: { requestDomains: ['netcoresmartech.com'], urlFilter: '/client.js' } }).condition;
+    assert.deepEqual(path, { requestDomains: ['netcoresmartech.com*/client.js'] });
+    assert.equal(webKitURLRegex(`||${path.requestDomains[0]}`).test('https://cdn.netcoresmartech.com/client.js'), true);
+    assert.equal(webKitRule({ ...rule, condition: { requestDomains: ['example.com'], urlFilter: '|https://cdn.example.com/ad' } }), undefined, 'a filter anchored at the start cannot follow the domain');
+    // uBlock Origin Lite's badware list: WebKit's merge gives `||steamproxy.cc`.
+    const hostAnchored = { ...rule, condition: { requestDomains: ['steamproxy.cc', 'steamproxy.net'], urlFilter: '||steamproxy.' } };
+    assert.equal(webKitRule(hostAnchored), hostAnchored);
+  });
 
   it('redirects to the extension own pages through extensionPath', () => {
     const rule = { id: 1, action: { type: 'redirect', redirect: { url: 'chrome-extension://abc/page.html?x=1#y' } }, condition: { urlFilter: 'a' } };
@@ -73,14 +140,41 @@ describe('rules WebKit rejects', () => {
     assert.equal(webKitRule(excluding), excluding);
   });
 
-  it('lists the other methods excluded beside excluded request domains, and leaves out "other"', () => {
-    const rule = { id: 4, action: { type: 'block' }, condition: { urlFilter: 'a', requestMethods: ['get', 'post'], excludedRequestDomains: ['com'] } };
-    assert.deepEqual(webKitRule(rule).condition, { urlFilter: 'a', excludedRequestDomains: ['com'], excludedRequestMethods: ['connect', 'delete', 'head', 'options', 'patch', 'put', 'trace'] });
+  it('leaves out "other", and cannot apply methods beside excluded request domains', () => {
+    // Adblock Ad Blocker Pro: get requests outside com and net.
+    const rule = { id: 4, action: { type: 'block' }, condition: { regexFilter: '^https?://[^/]+/ads/', requestMethods: ['get'], excludedRequestDomains: ['com', 'net'] } };
+    assert.equal(webKitRule(rule), undefined);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['post'], excludedRequestDomains: ['com'] } }), undefined);
+    assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['other'], excludedRequestDomains: ['com'] } }).condition, { urlFilter: 'a', excludedRequestDomains: ['||com^'] });
     assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', requestMethods: ['get', 'other'] } }).condition, { urlFilter: 'a', requestMethods: ['get'] });
     assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['other'] } }).condition, { urlFilter: 'a' });
     assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', requestMethods: ['other'] } }), undefined);
     const plain = { ...rule, condition: { urlFilter: 'a', requestMethods: ['get'] } };
     assert.equal(webKitRule(plain), plain);
+  });
+
+  it('cannot apply the tab and response header conditions WebKit ignores', () => {
+    const rule = { id: 5592, action: { type: 'block' }, condition: { urlFilter: '.bundle.js|', domainType: 'firstParty', responseHeaders: [{ header: 'x-example', values: ['1'] }] } };
+    assert.equal(webKitRule(rule), undefined);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', tabIds: [5] } }), undefined);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedTabIds: [5] } }), undefined);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedResponseHeaders: [{ header: 'x-example' }] } }), undefined);
+  });
+
+  it('cannot apply allowAllRequests restricted beyond the frame URL', () => {
+    const rule = { id: 6, action: { type: 'allowAllRequests' }, condition: { urlFilter: '||example.com^', resourceTypes: ['main_frame'] } };
+    assert.equal(webKitRule(rule), rule);
+    for (const condition of [{ initiatorDomains: ['example.org'] }, { excludedInitiatorDomains: ['example.org'] }, { domainType: 'thirdParty' },
+      { requestMethods: ['get'] }, { excludedRequestDomains: ['example.net'] }]) {
+      assert.equal(webKitRule({ ...rule, condition: { ...rule.condition, ...condition } }), undefined, JSON.stringify(condition));
+    }
+  });
+
+  it('upgrades only http requests with a rule matching every URL', () => {
+    const rule = { id: 7, action: { type: 'upgradeScheme' }, condition: { resourceTypes: ['main_frame'] } };
+    assert.deepEqual(webKitRule(rule).condition, { resourceTypes: ['main_frame'], urlFilter: '|http:' });
+    const filtered = { ...rule, condition: { urlFilter: '||example.com^' } };
+    assert.equal(webKitRule(filtered), filtered);
   });
 
   it('leaves what Chrome rejects too for WebKit to reject', () => {
@@ -122,6 +216,14 @@ describe('the declarativeNetRequest namespace', () => {
     assert.equal(stored[1].condition.regexFilter, '^lilo-inert-rule:', 'kept under its id, never matching');
     assert.equal(stored[2], rules[2]);
     assert.deepEqual(await dnr.getDynamicRules(), rules);
+  });
+
+  it('stores no original for a rule whose request domains alone change', async () => {
+    const rule = { id: 9, action: { type: 'block' }, condition: { requestDomains: ['example.com'], urlFilter: 'ads' } };
+    const { dnr, stored } = namespace();
+    await dnr.updateDynamicRules({ addRules: [rule, { id: 10, action: { type: 'block' }, condition: { requestDomains: ['example.com'] } }] });
+    assert.deepEqual(stored.map((each) => each.liloChromeRule), [rule, undefined]);
+    assert.deepEqual((await dnr.getDynamicRules()).map((each: any) => each.condition), [rule.condition, { requestDomains: ['example.com'] }]);
   });
 
   it('answers isRegexSupported detached, for the regex WebKit would compile', async () => {
@@ -354,9 +456,6 @@ describe('session rules', () => {
       async getDynamicRules() { return held.map((rule) => Object.fromEntries(Object.entries(JSON.parse(JSON.stringify(rule))).reverse())); },
       async updateSessionRules() { throw new Error('WebKit keeps session rules in memory'); },
       async getSessionRules() { return []; },
-      async getMatchedRules() {
-        return { rulesMatchedInfo: held.map((rule) => ({ rule: { ruleId: rule.id, rulesetId: '_dynamic' }, tabId: 1, timeStamp: 0 })) };
-      },
     };
     (globalThis as any).chrome = { runtime: { getManifest: () => ({}) }, declarativeNetRequest: Object.create(prototype) };
     installChromeCompat({});
@@ -432,14 +531,6 @@ describe('session rules', () => {
     await assert.rejects(dnr.updateSessionRules({ addRules: [block(7, 'invalid')] }), { message: 'Rule with id 7 is invalid.' });
     assert.deepEqual((await dnr.getSessionRules()).map((rule: any) => rule.id), [1, 2]);
   });
-
-  it('reports a matched session rule under the session ruleset and its own id', async () => {
-    held = [];
-    const dnr = launch();
-    await dnr.updateSessionRules({ addRules: [block(5)] });
-    const { rulesMatchedInfo } = await dnr.getMatchedRules();
-    assert.deepEqual(rulesMatchedInfo.map((info: any) => info.rule), [{ ruleId: 5, rulesetId: '_session' }]);
-  });
 });
 
 describe('static rulesets', () => {
@@ -458,6 +549,14 @@ describe('static rulesets', () => {
     assert.deepEqual(webKitStaticRulesets([prepared!]), [prepared], 'preparing again changes nothing');
   });
 
+  it('anchors request domains with no original stored, once', () => {
+    const rules = [block(1, { requestDomains: ['t.co'], excludedRequestDomains: ['example.com'] })];
+    const [prepared] = webKitStaticRulesets([JSON.stringify(rules)]);
+    assert.deepEqual(JSON.parse(prepared!), [block(1, { requestDomains: ['t.co^'], excludedRequestDomains: ['||example.com^'] })]);
+    assert.deepEqual(fromWebKit(JSON.parse(prepared!)), rules);
+    assert.deepEqual(webKitStaticRulesets([prepared!]), [prepared], 'preparing again changes nothing');
+  });
+
   it('prepares a data: redirect without URL, which the preparer bare JavaScriptCore context lacks', (t) => {
     t.mock.property(globalThis, 'URL', undefined as any);
     const rules = [{ id: 1, action: { type: 'redirect', redirect: { url: 'data:,x' } }, condition: { urlFilter: 'a' } }, block(2, { regexFilter: 'a\\d' })];
@@ -472,7 +571,7 @@ describe('static rulesets', () => {
       JSON.stringify([block(1, { requestDomains: domains(60000, 'b') }), block(2, { excludedRequestDomains: domains(30000, 'c') })]),
     ]);
     assert.deepEqual(JSON.parse(first!).map((rule: any) => rule.condition.regexFilter === INERT_FILTER), [true, false]);
-    assert.equal(second, null, 'the rest fits');
+    assert.deepEqual(JSON.parse(second!).map((rule: any) => rule.condition.regexFilter === INERT_FILTER), [false, false], 'the rest fits');
   });
 
   it("takes the rules past the cap from the sets the manifest leaves off first (AdGuard's 53 sets, one on)", () => {

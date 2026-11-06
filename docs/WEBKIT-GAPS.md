@@ -6,7 +6,7 @@ Missing namespaces and members (`tabGroups`, `offscreen`, `sidePanel` and so on)
 
 Status of each gap:
 
-- **Checked**: a test of [WebKitGapTests.swift] reproduces the gap and asserts WebKit's current behavior, mostly in a bare `WKWebExtensionController` without any of Lilo. When it fails, WebKit changed: its message names the workaround to remove. They run with `make swift-test`, except the two that wait out WebKit's clocks (gaps 7 and 33), which run with `make swift-test-slow`.
+- **Checked**: a test of [WebKitGapTests.swift] reproduces the gap and asserts WebKit's current behavior, mostly in a bare `WKWebExtensionController` without any of Lilo. When it fails, WebKit changed: its message names the workaround to remove. They run with `make swift-test`, except three slow ones (gaps 7 and 33 wait out WebKit's clocks, gap 39 compiles a ruleset over the cap), which run with `make swift-test-slow`.
 - **Contract**: `ChromeContractTests` covers it (`LiloTests/Extensions/chrome-contract-differences.txt` lists the differences Lilo keeps and fails once one matches Chrome).
 - **Manual**: no automated check (it would crash the test host, it is timing dependent, or it is not reduced to a minimal case). Its repro reproduces it by hand.
 
@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96 and 97. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108, 109 and 110. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103, 104, 105, 106 and 107. Every other gap is fully worked around.
 
 ---
 
@@ -108,7 +108,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 ### 22. `sendMessage` with no response sets no error
 
 - **Gap:** WebKit resolves `undefined` and gives callbacks no `lastError` whether no listener exists or none responds. Chrome rejects with `Could not establish connection. Receiving end does not exist.` without a listener, sets `The message port closed before a response was received.` when none responds, and delivers a valueless response as `null`.
-- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). A page sends the probe (`listensProbe`), which the other pages answer while one listens, then asks Lilo whether its worker listens (`workerListensToMessages`) to pick the error, and its promise rejects when none does ([chrome-compat.ts] `pageNoAnswer`); a worker's message always gets "Receiving end does not exist". `tabs.sendMessage` left without an answer sends a probe the tab's content scripts, and the extension's pages it shows, answer while one listens (`listensProbe`, `tabNoAnswer`), and rejects when none does. `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
+- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). Every context reports to Lilo whether it listens, and a page asks Lilo whether its worker or another page listens (`othersListenToMessages`) to pick the error, and its promise rejects when none does ([chrome-compat.ts] `pageNoAnswer`); a worker's message always gets "Receiving end does not exist". `tabs.sendMessage` left without an answer sends a probe the tab's content scripts, and the extension's pages it shows, answer while one listens (`listensProbe`, `tabNoAnswer`), and rejects when none does. `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
 - **Impact:** Video Downloader Professional reads its response when `lastError` is unset and throws; AdGuard's popup reads the answer of a message its worker does not listen for yet (its listener comes after an asynchronous setup, in Chrome too).
 - **Check:** `testSendMessageCallbackWithoutResponseSetsNoLastError`; the `runtime.sendMessage callback without listener` contract checks Lilo's answer. Repro: from an extension page with nothing listening, `await browser.runtime.sendMessage(1)`. Expected: rejects. Actual: resolves.
 
@@ -157,9 +157,9 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 
 ### 94. Request methods WebKit cannot take in a rule
 
-- **Gap:** WebKit fails to compile all of an extension's declarativeNetRequest rules, with `Unable to load declarativeNetRequest rules.`, when one rule lists `requestMethods` beside `excludedRequestDomains`: each update then fails, and the rules already applied stay. It also rejects a rule naming the method `other` in `requestMethods` or `excludedRequestMethods`, and so the whole update; it knows `trace` instead, which Chrome files under `other`. Chrome applies such rules.
-- **Lilo:** beside excluded request domains, the methods a rule lists become the other methods it excludes, `trace` among them; `other` leaves both lists, and a rule asking only for it turns inert ([dnr-rules.ts] `webKitRule`). A method none of WebKit's names covers, as `PROPFIND`, then matches a rule excluding methods, where Chrome's `other` would not.
-- **Impact:** Adblock Ad Blocker Pro's regex rules include one for `get` requests outside `com` and `net`: none of its dynamic rules applied, and its filtering mode stalled behind the failed updates.
+- **Gap:** WebKit fails to compile all of an extension's declarativeNetRequest rules, with `Unable to load declarativeNetRequest rules.`, when one rule lists `requestMethods` beside `excludedRequestDomains`: each update then fails, and the rules already applied stay. Beside excluded request domains, it applies `excludedRequestMethods` only to the requests both exclude, where Chrome excludes either. It also rejects a rule naming the method `other` in `requestMethods` or `excludedRequestMethods`, and so the whole update; it knows `trace` instead, which Chrome files under `other`. Chrome applies such rules.
+- **Lilo:** a rule listing request methods or excluded methods beside excluded request domains is kept inert under its id; `other` leaves both lists, and a rule asking only for it turns inert ([dnr-rules.ts] `webKitRule`). A method none of WebKit's names covers, as `PROPFIND`, then matches a rule that excluded `other`.
+- **Impact:** Adblock Ad Blocker Pro's regex rules include one for `get` requests outside `com` and `net`: none of its dynamic rules applied, and its filtering mode stalled behind the failed updates. That rule now never matches.
 - **Check:** `testRequestMethodsBesideExcludedRequestDomainsFailEveryRule`. Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'a', requestMethods: ['get'], excludedRequestDomains: ['example.com'] } }] })`. Expected: applies. Actual: rejects with `Unable to load declarativeNetRequest rules.`, and every later update too.
 
 ### 95. A subframe's webRequest details name it a main frame, and its main frame by WebKit's id
@@ -258,7 +258,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 ### 6. A page that called `window.close()` still runs answers for a run loop turn
 
 - **Gap:** WebKit delivers `webViewDidClose` a run loop turn after the API answers and port disconnects it already sent the page, so a closing page still runs a `storage` callback or an `onDisconnect`. Chrome runs nothing more.
-- **Lilo:** once WebKit accepts `window.close()` (or Lilo's popup close calls `__liloPageClosing`), WebKit's API callbacks and promises settle no more and every WebKit event listener is removed ([augmentation-entry.ts], [chrome-compat.ts] `closePage`, `closingGuard`).
+- **Lilo:** once WebKit accepts `window.close()` (or Lilo's popup close calls `__liloPageClosing`), WebKit's API callbacks and promises settle no more and every WebKit event listener is removed ([augmentation-entry.ts], [chrome-compat.ts] `closePage`, which sets `pageClosed` and calls `removePageListeners`).
 - **Impact:** without it, intermittent work in closing pages (Google Dictionary's storage callback, DuckDuckGo's `onDisconnect`).
 - **Check:** Manual: timing dependent. Repro: `chrome.storage.local.get(null, () => console.log('ran')); window.close();` with the app closing the web view in `webViewDidClose`. Expected: no callback. Actual: it runs first.
 
@@ -346,6 +346,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** 2FAS Auth stores its signing keys this way during its first setup: without Lilo's storage, its worker stops, its pairing page shows no QR code and its toolbar button does nothing. Keeper stores its vault keys the same way once signed in.
 - **Check:** `crypto-key-storage.test.ts`, `crypto-key-storage-page.test.ts`, and `testPreparedWorkerStoresCryptoKeysInIndexedDB`, a worker storing and using keys as Keeper and 2FAS do. The stall itself is manual: the test host's worker stores a key without stalling where the app's stalls. Repro, in the app without Lilo's storage: in an MV3 worker, `crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])`, then `put` its `privateKey` in an object store and set the action title in `oncomplete` and in a 3 s `setTimeout`. Expected: a title. Actual: neither ever runs.
 
+### 107. A busy worker unloads 30 s after its last event
+
+- **Gap:** WebKit unloads the worker 30 s after the last event it dispatched, unless one of its ports is open and the worker posted on a port in the last 2 minutes. API calls, a `runtime.onMessage` response still owed and messages arriving on a port, a native host's included, count for nothing. Chrome resets its 30 s timer at each API call, waits up to 5 minutes for a request, keeps the worker while port messages arrive, and keeps it as long as a `connectNative` port is open.
+- **Lilo:** each `chrome.*` call of the worker ([chrome-compat.ts] `chromeMethod`) and each response it owes ([message-answers.ts] `answeringListener`, 5 minutes at most) keeps its channel to Lilo open, reopening it after idle, and the worker posts on it after 90 s without a post while that lasts ([ipc.ts] `checkIdle`). A `chrome.runtime.connectNative` port posts back on each message its host sends, which Lilo drops ([chrome-leniency.ts] `nativeMessagingAsChrome`, [ExtensionNativeMessaging.swift] `NativePort`). No timer runs while the worker is idle.
+- **Impact:** without it, a `runtime.onMessage` answered after more than 30 s of work failed with a closed port and lost the worker's state, and a password manager's native host was killed 2 minutes after the worker last posted to it, so the desktop app had to connect again. Still open: a worker that only receives on a port another context opened, or holds a native port whose host stays silent, still unloads 2 minutes after it last posted; through `browser.runtime.connectNative` (gaps 2 and 3), host messages keep nothing.
+- **Check:** Manual: it waits out WebKit's clocks for minutes (`ipc.test.ts` covers the workaround). Repro: an MV3 worker listens to `runtime.onMessage`, returns `true` and answers after 60 s; a page sends it a message. Expected: the answer. Actual: the worker unloads at 30 s and the page gets "The message port closed before a response was received.".
+
 ## Manifest and permissions
 
 ### 11. Permission names WebKit does not know reject; `privacy` is dropped
@@ -375,6 +382,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** refuses without asking ([ExtensionControllerDelegate.swift] `promptForPermissionToAccess`). User-visible side: COMPATIBILITY.md, "permissions".
 - **Check:** `testURLPermissionPromptIsRefusedWithoutAsking` (Lilo's side).
 
+### 108. Sandbox pages get the extension pages' policy and APIs
+
+- **Gap:** WebKit reads only `content_security_policy.extension_pages` (by default `script-src 'self'`) and serves every extension resource with it, the pages `sandbox.pages` lists included: they keep the extension's origin and `chrome.*`, and `eval`, `new Function` and inline scripts are refused. Chrome serves them with `content_security_policy.sandbox` (or its default, which allows `eval`) in an opaque origin, without extension APIs.
+- **Lilo:** none: WebKit sets the header on each resource it serves, and a page's own `<meta>` policy can only restrict it. Widening `extension_pages` would loosen every other page of the extension. User-visible side: COMPATIBILITY.md, "Extension manifest".
+- **Impact:** code an extension moves into a sandbox page to run `eval` or `new Function` (template engines, user script runners) throws `EvalError`, with an error in the console only.
+- **Check:** `testSandboxPagesGetTheExtensionPagesPolicyAndAPIs`. Repro: an MV3 extension with `"sandbox": { "pages": ["page.html"] }` and `"content_security_policy": { "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval'" }`; in page.html, run `eval('1 + 1')`. Expected: `2`, in a `null` origin without `chrome.runtime`. Actual: `EvalError`, in the extension's origin with `chrome.runtime`.
+
 ## tabs, scripting and webNavigation
 
 ### 1. Manifest content scripts run in pages already open
@@ -394,7 +408,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 ### 9. Withheld tab `url` and `title` are empty strings
 
 - **Gap:** WebKit reports them as `""` in returned tabs and tab events, and ignores the `tabs` permission (only host access reveals them). Chrome leaves them out, and reveals them with `tabs`.
-- **Lilo:** for an extension that may not hold `tabs`, drops the empty `url` and `title` from tabs and windows methods and from `tabs.onCreated` and `onUpdated` ([tabs.ts] `tabURLPatches`, `windowURLPatches`, `tabURLStandIns`). With `tabs`, tabs and windows methods read them from Lilo, an empty tab as `chrome://newtab/` ([tabs.ts] `tabRevealedURLPatches`, `windowRevealedURLPatches`): one more call per result holding such a tab. Tab events keep WebKit's `""`.
+- **Lilo:** for an extension that may not hold `tabs`, drops the empty `url` and `title` from tabs and windows methods and from `tabs.onCreated` and `onUpdated` ([tabs.ts] `tabPatches`, `windowPatches`, `tabStandIns`, whose `withheldURLs` chooses between withholding and reading the URLs). With `tabs`, tabs and windows methods read them from Lilo, an empty tab as `chrome://newtab/` (the same patches): one more call per result holding such a tab. Tab events keep WebKit's `""`.
 - **Impact:** `new URL(tab.url)` throws where Chrome code checks for a missing url (Eye Dropper), or on Lilo's empty new tab (Easy Auto Refresh's worker).
 - **Check:** `testTabsWithoutHostAccessReportEmptyURLAndTitle`. Repro: with no host permissions, `browser.tabs.query({})`. Expected: no `url` or `title`. Actual: `""`.
 
@@ -545,7 +559,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Gap:** WebKit compiles all of an extension's rules into one content rule list of at most 150000 rules, expanding a rule into one per request domain and excluded request domain. Past the cap nothing applies and `updateEnabledRulesets` fails with "Failed to apply rules.". Chrome counts a rule once.
 - **Lilo:** at preparation, keeps all static rulesets under 120000 WebKit rules (room for 30000 dynamic ones) by turning the most expanded rules inert, largest first, those of the rulesets the manifest leaves off before any of the ones it turns on ([dnr-rules.ts] `webKitStaticRulesets`, run by [ExtensionBackgroundPreparer.swift] `prepareStaticRulesets`). User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
 - **Impact:** SBlock (313000 domains in two rules), Adblock Ad Blocker Pro (299000 expanded rules).
-- **Check:** `testRulesetOverWebKitsRuleCapDoesNotApply`.
+- **Check:** `testRulesetOverWebKitsRuleCapDoesNotApply` (slow).
 
 ### 40. Turning every ruleset off fails during the first compile
 
@@ -570,9 +584,51 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 ### 84. Session rules recompile every rule at each launch
 
 - **Gap:** WebKit compiles an extension's session, dynamic and enabled static rules into one content rule list, and reuses the stored list only when the SHA-1 of the translated rules matches its last compile (`WebExtensionContext::compileDeclarativeNetRequestRules`, `LastLoadedDeclarativeNetRequestHash` in `WebExtensionContextCocoa.mm`). Session rules are kept in memory (`declarativeNetRequestSessionRulesStore`), so the compile at load (`loadDeclarativeNetRequestRules` in `WebExtensionContext::load`) misses the session rules the last run ended with and recompiles every rule, then the worker adding them back compiles again. The hash is read when a compile starts: an update made while the load compile runs compares with the previous run's hash and can reuse the previous run's list, and whichever finishes last is applied. Chrome indexes each static ruleset once.
-- **Lilo:** gives WebKit session rules as dynamic rules, which it stores, under ids counted down from 2³¹−1 and marked with the extension's id ([dnr-rules.ts] `updateSessionRules`, `heldSessionRules`), so the load compile finds the last run's rules unchanged and reuses its list. Native remembers, in memory per context, the ids this run set ([DeclarativeNetRequestBridgeHandler.swift] `sessionRules`): `getSessionRules` answers only those, as Chrome after a launch, removing one of the others changes nothing, and adding one back as it was keeps it as it is, so a worker clearing its rules at start then adding them back compiles nothing. 30 s after the worker starts, the others are removed and the run claims every rule ([declarativeNetRequest.ts] `releaseSessionRules`). `getMatchedRules` reports them under `_session` and their own ids. It also sends no rule update that changes nothing, merges the calls made while one runs (gap 38), and keeps its preparation stamp when it rewrites a ruleset for `updateStaticRules`.
+- **Lilo:** gives WebKit session rules as dynamic rules, which it stores, under ids counted down from 2³¹−1 and marked with the extension's id ([dnr-rules.ts] `updateSessionRules`, `heldSessionRules`), so the load compile finds the last run's rules unchanged and reuses its list. Native remembers, in memory per context, the ids this run set ([DeclarativeNetRequestBridgeHandler.swift] `sessionRules`): `getSessionRules` answers only those, as Chrome after a launch, removing one of the others changes nothing, and adding one back as it was keeps it as it is, so a worker clearing its rules at start then adding them back compiles nothing. 30 s after the worker starts, the others are removed and the run claims every rule ([declarativeNetRequest.ts] `releaseSessionRules`). It also sends no rule update that changes nothing, merges the calls made while one runs (gap 38), and keeps its preparation stamp when it rewrites a ruleset for `updateStaticRules`.
 - **Impact:** at every launch, AdGuard compiled its 54 MB list three times (at load, for its 722 session rules, then for its stealth rule), uBlock Origin Lite its 28 MB list and Malwarebytes Browser Guard its 48 MB list, about 12 s of CPU together with the 20 extensions of `make ext-bench`.
 - **Check:** `dnr-rules.test.ts`, "session rules". Repro: an MV3 extension with an enabled static ruleset whose worker adds one session rule at start; quit and relaunch twice. Expected: its `DeclarativeNetRequestContentRuleList.data` stays as is on the second relaunch. Actual: rewritten on every launch.
+
+### 103. `declarativeNetRequest` conditions WebKit ignores
+
+- **Gap:** WebKit's rule translation skips the conditions it does not know, `tabIds`, `excludedTabIds`, `responseHeaders` and `excludedResponseHeaders`, and applies the rule without them. An `allowAllRequests` rule keeps only its frame URL: its initiator domains, `domainType` and request methods are dropped, and each excluded request domain becomes one more exception. Each `upgradeScheme` rule is followed by an exception of the same condition, which https requests match too: a rule upgrading every URL turns off the rules of its priority and below on every https request. Chrome applies each condition.
+- **Lilo:** a rule with one of those conditions is kept inert under its id ([dnr-rules.ts] `webKitRule`); an `upgradeScheme` rule without a URL or request domain condition gets the `urlFilter` `|http:`, which leaves `ws` requests out.
+- **Impact:** uBlock Origin Lite's default ruleset conditions a few rules on response headers, one blocking first-party `.bundle.js` scripts: WebKit blocked them on every site.
+- **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'example', tabIds: [12345] } }] })`, then load `https://example.com/` in another tab. Expected: loads. Actual: blocked.
+
+### 104. `declarativeNetRequest` request domains become loose URL filters
+
+- **Gap:** WebKit makes each request domain the `urlFilter` `||domain`, which also matches hosts that extend it (`t.co` matches `t.com` and `t.co.uk`), and each excluded request domain an unanchored `urlFilter`, which matches it anywhere in the URL (a query string naming it, `notexample.com`). It merges a request domain with the rule's `urlFilter` through common substrings, which mangles the filter: `aboutamazon.com` and `^asc_campaign=` give `||^asc_caboutamazon.compaign=`, which matches nothing. Chrome matches request domains on the host.
+- **Lilo:** sends each request domain of a rule without a filter as `domain^`, and each excluded one as `||domain^`; a `urlFilter` moves into each request domain past the host (`domain^*filter`, or `domain*filter` for a filter starting with `/`), a rule with a `urlFilter` anchored at the start (`|`) is kept inert, and one anchored on the host (`||`) keeps WebKit's merge, which fits a filter naming the domain (`||amazon.*/dp/` and `amazon.ae`) ([dnr-rules.ts] `webKitRule`). `fromWebKit` removes the anchors, so large host lists are not stored twice.
+- **Impact:** uBlock Origin Lite has about 94000 request domain rules without a filter, and about 20 rules mangled by the merge (tracking parameter removals and exceptions).
+- **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { requestDomains: ['example.co'], resourceTypes: ['main_frame'] } }] })`, then load `https://example.com/`. Expected: loads. Actual: blocked.
+
+### 105. A `urlFilter` separator does not match the end of the URL
+
+- **Gap:** WebKit turns the separator `^` of a `urlFilter` into a class that needs one character, where Chrome's also matches the end of the URL: `||example.com/ad/banner^` misses `https://example.com/ad/banner`.
+- **Lilo:** a `urlFilter` ending in `^` goes to WebKit as the `regexFilter` WebKit would build, its last separator optional (`(?:[^a-zA-Z0-9_.%-].*)?$`); `||host^` stays as it is, a `/` or `:` always following a host ([dnr-rules.ts] `webKitRule`). Beside request domains, the filter moves into each domain (gap 104) and keeps the limit.
+- **Impact:** about 280 uBlock Origin Lite filters end in `^` after a path or query, missing the URLs that end there.
+- **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: '||example.com/ad^', resourceTypes: ['main_frame'] } }] })`, then load `https://example.com/ad`. Expected: blocked. Actual: loads.
+
+### 106. `regexSubstitution` replaces the whole URL
+
+- **Gap:** WebKit's redirect replaces the whole URL with the substitution, where Chrome replaces the matched part only, and writes `undefined` for a group that captured nothing, where Chrome writes nothing: `^https://www\.example\.com/` with `https://alt.example.net/` sends `https://www.example.com/watch?v=1` to `https://alt.example.net/`.
+- **Lilo:** a redirect whose `regexFilter` does not match from start to end goes to WebKit as `^(.*)(R)(.*)$`, its substitution renumbered between the text before and after the match, and a group made optional by `?` captures an empty string (`((?:X)?)`) ([dnr-rules.ts] `webKitRegex`). The greedy prefix takes the last match where Chrome takes the first. A rule left needing a group past `\9`, ending in `(X|$)`, starting with `(^|X)`, repeating a capturing group with `*` or able to skip one nested in another part (`(?:a(b))?`) is kept inert.
+- **Impact:** redirects with a partial substitution, as link cleaners and alternative front ends write them, lost the rest of the URL or put `undefined` in it.
+- **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'redirect', redirect: { regexSubstitution: 'https://example.org/' } }, condition: { regexFilter: '^https://example\\.com/', resourceTypes: ['main_frame'] } }] })`, then load `https://example.com/a?b`. Expected: `https://example.org/a?b`. Actual: `https://example.org/`.
+
+### 109. A rule's exclusions cancel the extension's later rules
+
+- **Gap:** WebKit compiles `excludedRequestDomains`, `excludedRequestMethods`, and `excludedInitiatorDomains` beside `initiatorDomains`, into a content blocker rule of their own of type `ignore-following-rules`, which keeps the rule's resource types and initiators; an excluded request domain also replaces the rule's URL filter, as a filter matching the domain anywhere in the URL (`_WKWebExtensionDeclarativeNetRequestRule`). The content blocker stops at the first such rule, so a request one exclusion covers escapes every rule of the extension of the same or lower priority, not only the excluding one. Chrome applies an exclusion to its own rule.
+- **Lilo:** none: the translation is WebKit's, and a rule split by Lilo would still compile its exclusions this way. User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
+- **Impact:** a blocking list with a script rule excluding a CDN host lets every third-party script from that host through all its lower-priority rules, silently.
+- **Check:** Manual. Repro: two script block rules, priority 2 `{ urlFilter: 'a.js', excludedRequestDomains: ['example.com'] }` and priority 1 `{ urlFilter: 'b.js' }`, then a page loads `https://example.com/b.js` as a script. Expected: blocked by the second rule. Actual: loads.
+
+### 110. `initiatorDomains` miss a frame whose URL names a port
+
+- **Gap:** WebKit matches `initiatorDomains` and `excludedInitiatorDomains` with a pattern ending in the domain then `/`, so a frame on `http://example.com:8080/` matches neither. Chrome matches the host whatever the port.
+- **Lilo:** none: WebKit escapes the domain into its pattern, so a rule cannot add the port. User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
+- **Impact:** a site's rules do nothing on a development server or an intranet on another port.
+- **Check:** Manual. Repro: a block rule `{ urlFilter: 'b.js', initiatorDomains: ['127.0.0.1'] }`, then a page on `http://127.0.0.1:8080/` loads `b.js`. Expected: blocked. Actual: loads.
 
 ## storage
 

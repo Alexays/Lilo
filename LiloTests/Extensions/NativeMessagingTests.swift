@@ -376,7 +376,7 @@ final class NativeMessagingTests: XCTestCase {
             wait(for: [disconnected], timeout: 10)
             XCTAssertEqual(replies.count, 1, "iteration \(iteration)")
             XCTAssertEqual((replies.first as? [String: Bool])?["ok"], true, "iteration \(iteration)")
-            XCTAssertNil(disconnectError, "iteration \(iteration)")
+            XCTAssertEqual(disconnectError?.localizedDescription, "Native host has exited.", "iteration \(iteration)")
         }
     }
 
@@ -399,12 +399,14 @@ final class NativeMessagingTests: XCTestCase {
     func testHostExitingImmediatelyDisconnects() throws {
         let host = try makeHost("exit 0")
         let disconnected = expectation(description: "disconnect")
+        var disconnectError: Error?
         let connection = try XCTUnwrap(NativeMessagingConnection(
             executablePath: host, extensionOrigin: "chrome-extension://abc/",
             onMessage: { _ in XCTFail("unexpected message") },
-            onDisconnect: { _ in disconnected.fulfill() }))
+            onDisconnect: { disconnectError = $0; disconnected.fulfill() }))
         connection.send(frame: Data(repeating: 0, count: 256 * 1024))
         wait(for: [disconnected], timeout: 10)
+        XCTAssertNotNil(disconnectError)
     }
 
     /// A host that never reads fills the stdin pipe and blocks the write; disconnecting must still
@@ -412,13 +414,15 @@ final class NativeMessagingTests: XCTestCase {
     func testDisconnectCompletesWhileWriteIsBlocked() throws {
         let host = try makeHost("exec sleep 30")
         let disconnected = expectation(description: "disconnect")
+        var disconnectError: Error?
         let connection = try XCTUnwrap(NativeMessagingConnection(
             executablePath: host, extensionOrigin: "chrome-extension://abc/",
             onMessage: { _ in },
-            onDisconnect: { _ in disconnected.fulfill() }))
+            onDisconnect: { disconnectError = $0; disconnected.fulfill() }))
         connection.send(frame: Data(repeating: 0, count: 1024 * 1024))
         connection.disconnect()
         wait(for: [disconnected], timeout: 10)
+        XCTAssertNil(disconnectError, "a disconnect from Lilo is not an error")
     }
 
     func testNonJSONMessageDisconnectsWithError() throws {

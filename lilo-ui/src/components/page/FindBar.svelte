@@ -8,6 +8,7 @@
   import { isSidebarVisible } from "../../stores/ui.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
+  import Icon from "../ui/Icon.svelte";
 
   type FindStatus = "idle" | "found" | "not-found";
 
@@ -222,26 +223,22 @@
     >
     <div class="find-steps">
       <button
-        class="find-btn"
+        class="find-btn step-up"
         onclick={previous}
         disabled={!canNavigate}
         aria-label={t("findBar.previousMatch")}
         use:tooltip={{ text: t("findBar.previousMatch"), shortcut: shortcutKeys("find.previous"), placement: "bottom", disabled: !canNavigate }}
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path class="step-glyph up" d="m2.5 7.5 3.5-3.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+        <Icon name="chevronUp" size={12} />
       </button>
       <button
-        class="find-btn"
+        class="find-btn step-down"
         onclick={next}
         disabled={!canNavigate}
         aria-label={t("findBar.nextMatch")}
         use:tooltip={{ text: t("findBar.nextMatch"), shortcut: shortcutKeys("find.next"), placement: "bottom", disabled: !canNavigate }}
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path class="step-glyph down" d="m2.5 4.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+        <Icon name="chevronDown" size={12} />
       </button>
     </div>
     <button
@@ -250,9 +247,7 @@
       aria-label={t("findBar.closeFindBar")}
       use:tooltip={{ text: t("findBar.closeFindBar"), placement: "bottom" }}
     >
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-        <path class="close-glyph" d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-      </svg>
+      <Icon name="close" size={12} />
     </button>
   </div>
 {/if}
@@ -375,22 +370,20 @@
     color: var(--accent-ink);
   }
 
-  .step-glyph,
-  .close-glyph {
-    transform-box: fill-box;
-    transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+  .find-steps :global(.icon),
+  .close-btn :global(.icon) {
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
-  .find-btn:hover:not(:disabled) .step-glyph.up {
+  .step-up:hover:not(:disabled) :global(.icon) {
     transform: translateY(-1.5px);
   }
 
-  .find-btn:hover:not(:disabled) .step-glyph.down {
+  .step-down:hover:not(:disabled) :global(.icon) {
     transform: translateY(1.5px);
   }
 
-  .find-btn:hover:not(:disabled) .close-glyph {
+  .close-btn:hover :global(.icon) {
     transform: rotate(90deg);
   }
 
@@ -413,7 +406,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .find-bar {
-      animation: find-bar-fade 150ms ease;
+      animation: find-bar-fade 150ms ease !important;
     }
 
     @keyframes find-bar-fade {

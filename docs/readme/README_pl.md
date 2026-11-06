@@ -188,7 +188,7 @@ Lilo uaktualnia się przez podpisane uaktualnienia Sparkle.
 
 ## Kompilowanie ze źródeł
 
-Z zainstalowanymi Xcode 27 i Node.js 22.6+ ([pełne wymagania](../../CONTRIBUTING.md#requirements)):
+Z zainstalowanymi Xcode 27 i Node.js 22.23.4+ ([pełne wymagania](../../CONTRIBUTING.md#requirements)):
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo

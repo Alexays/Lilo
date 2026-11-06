@@ -1684,7 +1684,7 @@ final class BrowserStateStoreTests: XCTestCase {
         tab.estimatedProgress = 0.42
         tab.isLoading = true
 
-        let event = BrowserChangePresenter.tabUpdatedEvent(tabPayload: tab.runtimePatchData, spaceId: spaceId, activeTabId: tabId)
+        let event = BrowserChangePresenter.tabUpdatedEvent(tabPayload: tab.runtimePatchData, spaceId: spaceId)
 
         XCTAssertEqual(event.name, "browserStatePatch")
         XCTAssertEqual(event.data["changedSpaceId"] as? String, spaceId.uuidString)
@@ -1693,6 +1693,7 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertEqual(operations.count, 1)
         XCTAssertEqual(operations.first?["kind"] as? String, "tabUpdated")
         XCTAssertEqual(operations.first?["spaceId"] as? String, spaceId.uuidString)
+        XCTAssertNil(operations.first?["activeTabId"])
         let tabPayload = try XCTUnwrap(operations.first?["tab"] as? [String: Any])
         XCTAssertEqual(tabPayload["id"] as? String, tabId.uuidString)
         XCTAssertEqual(tabPayload["progress"] as? Double, 0.42)
@@ -1976,7 +1977,7 @@ final class BrowserStateStoreTests: XCTestCase {
 
         let updatedState = try XCTUnwrap(changes.changedState)
         let folder = try XCTUnwrap(updatedState.foldersById.values.first)
-        XCTAssertEqual(folder.name, "New Folder")
+        XCTAssertEqual(folder.name, "New Folder".localized)
         XCTAssertEqual(folder.color, "#5865f2")
         XCTAssertEqual(updatedState.sidebar.node(id: folder.id)?.section, .unpinned)
         XCTAssertEqual(updatedState.tabsById[sourceTabId]?.groupId, folder.id)
@@ -3515,7 +3516,7 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertEqual(discardCount, 1)
     }
 
-    func testFreezeIdleEnginesFreezesIdleHiddenEngine() {
+    func testFreezeIdleEnginesFreezesIdleHiddenEngine() async {
         let activeSpaceId = UUID()
         let hiddenSpaceId = UUID()
         let tabId = UUID()
@@ -3534,10 +3535,11 @@ final class BrowserStateStoreTests: XCTestCase {
         )
         XCTAssertFalse(engine.isFrozen)
         store.freezeIdleEngines(freezeThreshold: 60)
-        XCTAssertTrue(engine.isFrozen)
+        let frozen = await pollUntil(timeout: 10) { engine.isFrozen }
+        XCTAssertTrue(frozen)
     }
 
-    func testFreezeIdleEnginesFreezesActiveSpaceBackgroundTabButNotVisibleTab() {
+    func testFreezeIdleEnginesFreezesActiveSpaceBackgroundTabButNotVisibleTab() async {
         let activeSpaceId = UUID()
         let visibleTabId = UUID()
         let backgroundTabId = UUID()
@@ -3559,11 +3561,12 @@ final class BrowserStateStoreTests: XCTestCase {
             )
         )
         store.freezeIdleEngines(freezeThreshold: 60)
+        let frozen = await pollUntil(timeout: 10) { backgroundEngine.isFrozen }
+        XCTAssertTrue(frozen, "an idle background tab in the active space should freeze")
         XCTAssertFalse(visibleEngine.isFrozen, "the visible active tab must never be frozen")
-        XCTAssertTrue(backgroundEngine.isFrozen, "an idle background tab in the active space should freeze")
     }
 
-    func testFreezeIdleEnginesCountsIdleTimeFromWhenTheTabWasLeft() throws {
+    func testFreezeIdleEnginesCountsIdleTimeFromWhenTheTabWasLeft() async throws {
         let spaceId = UUID(); let readId = UUID(); let nextId = UUID()
         var read = Tab(id: readId, url: URL(string: "https://read.example"), title: "Read", spaceId: spaceId)
         read.lastActiveAt = Date(timeIntervalSince1970: 1)   // activated long ago, read until now
@@ -3578,11 +3581,13 @@ final class BrowserStateStoreTests: XCTestCase {
 
         _ = try store.mutate(.activateTab(spaceId: spaceId, tabId: nextId))
         store.freezeIdleEngines(freezeThreshold: 60)
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await readEngine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
 
         XCTAssertFalse(readEngine.isFrozen, "a tab just left is not idle, however long ago it was activated")
     }
 
-    func testIdleFreezeAndDiscardSpareALoadingTab() {
+    func testIdleFreezeAndDiscardSpareALoadingTab() async {
         let activeSpaceId = UUID(); let hiddenSpaceId = UUID(); let tabId = UUID()
         var tab = Tab(id: tabId, url: URL(string: "slow://page"), title: "Slow", spaceId: hiddenSpaceId)
         tab.lastActiveAt = Date(timeIntervalSince1970: 1)
@@ -3605,12 +3610,14 @@ final class BrowserStateStoreTests: XCTestCase {
             excluding: nil, policy: .foreground, maxRetainedEnginesPerHiddenSpace: 1, maxHiddenSpacesWithRetainedEngines: 2,
             discardEngine: { _ in nil }, discardThreshold: 60
         )
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await engine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
 
         XCTAssertFalse(engine.isFrozen)
         XCTAssertNotNil(store.space(id: hiddenSpaceId)?.engines[tabId])
     }
 
-    func testFreezeIdleEnginesSparesASiteAllowedToNotify() {
+    func testFreezeIdleEnginesSparesASiteAllowedToNotify() async {
         let activeSpaceId = UUID(); let hiddenSpaceId = UUID(); let chatId = UUID(); let newsId = UUID()
         var chat = Tab(id: chatId, url: URL(string: "https://chat.example/inbox"), title: "Chat", spaceId: hiddenSpaceId)
         var news = Tab(id: newsId, url: URL(string: "https://news.example/"), title: "News", spaceId: hiddenSpaceId)
@@ -3630,8 +3637,9 @@ final class BrowserStateStoreTests: XCTestCase {
 
         store.freezeIdleEngines(freezeThreshold: 60)
 
+        let frozen = await pollUntil(timeout: 10) { newsEngine.isFrozen }
+        XCTAssertTrue(frozen)
         XCTAssertFalse(chatEngine.isFrozen, "a site that may notify keeps receiving its messages")
-        XCTAssertTrue(newsEngine.isFrozen)
     }
 
     func testFreezeIdleEnginesSparesAPageHoldingAPeerConnectionOrAWebLock() async throws {
@@ -3660,14 +3668,18 @@ final class BrowserStateStoreTests: XCTestCase {
             b.dispatchEvent(new Event('connectionstatechange'));
             window.peers = [a, b];
             """, contentWorld: .page)
+        // With no page on screen, WebKit aligns a hidden page's timers to how long it has been hidden: the 2 s timer that
+        // reports a held lock could slip past the poll. Full speed keeps it on time.
+        locker.isAgentControlled = true
         _ = try await locker.wkWebView.callAsyncJavaScript("""
             await new Promise(granted => navigator.locks.request('sync', () => new Promise(release => {
               window.release = release;
               granted();
             })));
             """, contentWorld: .page)
-        let reported = await pollUntil(timeout: 10) { game.callControls.hasPeerConnection && locker.callControls.holdsWebLock }
+        let reported = await pollUntil(timeout: 10) { game.callControls.hasPeerConnection }
         XCTAssertTrue(reported)
+        locker.isAgentControlled = false
 
         var gameTab = Tab(id: gameId, url: URL(string: "https://example.com/"), title: "Game", spaceId: hiddenSpaceId)
         var lockTab = Tab(id: lockId, url: URL(string: "https://example.com/"), title: "Editor", spaceId: hiddenSpaceId)
@@ -3683,20 +3695,26 @@ final class BrowserStateStoreTests: XCTestCase {
         store.storeActiveSpace(id: activeSpaceId, snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:]))
 
         store.freezeIdleEngines(freezeThreshold: 60)
+        // The sweep's own check, answered after any check the sweep sent.
+        for engine in [game, locker] {
+            _ = try? await engine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
+        }
         XCTAssertFalse(game.isFrozen, "a web chat or game keeps its peer connected")
         XCTAssertFalse(locker.isFrozen, "a frozen lock holder would hold up every tab waiting for the lock")
 
+        // Closing fires no event: the sweep asks the page, and the next one freezes it.
         _ = try await game.wkWebView.evaluateJavaScript("delete window.peers[1].connectionState; window.peers.forEach(p => p.close()); true")
         _ = try await locker.wkWebView.evaluateJavaScript("window.release(); true")
-        let ended = await pollUntil(timeout: 10) { !game.callControls.hasPeerConnection && !locker.callControls.holdsWebLock }
+        store.freezeIdleEngines(freezeThreshold: 60)
+        let ended = await pollUntil(timeout: 10) { !game.callControls.hasPeerConnection }
         XCTAssertTrue(ended)
 
         store.freezeIdleEngines(freezeThreshold: 60)
-        XCTAssertTrue(game.isFrozen)
-        XCTAssertTrue(locker.isFrozen)
+        let frozen = await pollUntil(timeout: 10) { game.isFrozen && locker.isFrozen }
+        XCTAssertTrue(frozen)
     }
 
-    func testHiddenWindowFreezesEveryTabInsteadOfDiscarding() {
+    func testHiddenWindowFreezesEveryTabInsteadOfDiscarding() async {
         let activeSpaceId = UUID(); let hiddenSpaceId = UUID()
         let visibleId = UUID(); let backgroundId = UUID(); let hiddenActiveId = UUID(); let hiddenOtherId = UUID()
         let tabs = [
@@ -3726,6 +3744,7 @@ final class BrowserStateStoreTests: XCTestCase {
         )
         var config = LifecyclePolicyConfig.config(for: .balanced)
         config.backgroundTrimGracePeriod = 0
+        config.freezeThreshold = 0
         var discardCount = 0
         let trimmed = expectation(description: "occlusion trim")
         let controller = HiddenSpaceLifecycleController(
@@ -3740,15 +3759,16 @@ final class BrowserStateStoreTests: XCTestCase {
         )
 
         controller.windowOcclusionChanged(isVisible: false)
-        wait(for: [trimmed], timeout: 1.0)
+        await fulfillment(of: [trimmed], timeout: 1.0)
 
         XCTAssertEqual(discardCount, 0)
         XCTAssertEqual(store.liveEngineCount, 4)
+        let frozen = await pollUntil(timeout: 10) { [backgroundId, hiddenActiveId, hiddenOtherId].allSatisfy { engines[$0]!.isFrozen } }
+        XCTAssertTrue(frozen)
         XCTAssertFalse(engines[visibleId]!.isFrozen, "WebKit already throttles the occluded visible tab")
-        XCTAssertTrue([backgroundId, hiddenActiveId, hiddenOtherId].allSatisfy { engines[$0]!.isFrozen })
     }
 
-    func testFreezeIdleEnginesNeverFreezesATabWhosePiPWindowIsOpen() {
+    func testFreezeIdleEnginesNeverFreezesATabWhosePiPWindowIsOpen() async {
         let activeSpaceId = UUID(), hiddenSpaceId = UUID()
         var opener = Tab(id: UUID(), url: URL(string: "https://timer.example"), title: "Timer", spaceId: hiddenSpaceId)
         opener.lastActiveAt = Date(timeIntervalSince1970: 1)
@@ -3763,11 +3783,13 @@ final class BrowserStateStoreTests: XCTestCase {
         store.pictureInPictureOpenerIds = [opener.id]
 
         store.freezeIdleEngines(freezeThreshold: 60)
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await engine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
 
         XCTAssertFalse(engine.isFrozen, "its PiP window runs in the opener's page")
     }
 
-    func testFreezeIdleEnginesNeverFreezesAgentTabs() {
+    func testFreezeIdleEnginesNeverFreezesAgentTabs() async {
         let activeSpaceId = UUID(), hiddenSpaceId = UUID()
         var agent = Tab(id: UUID(), url: URL(string: "https://agent.example"), title: "Agent", spaceId: hiddenSpaceId)
         agent.lastActiveAt = Date(timeIntervalSince1970: 1)
@@ -3787,11 +3809,12 @@ final class BrowserStateStoreTests: XCTestCase {
 
         store.freezeIdleEngines(freezeThreshold: 60)
 
-        XCTAssertTrue(userEngine.isFrozen)
+        let frozen = await pollUntil(timeout: 10) { userEngine.isFrozen }
+        XCTAssertTrue(frozen)
         XCTAssertFalse(agentEngine.isFrozen)
     }
 
-    func testAgentTabFreezesAgainOnceReleased() {
+    func testAgentTabFreezesAgainOnceReleased() async {
         let activeSpaceId = UUID(), hiddenSpaceId = UUID()
         var tab = Tab(id: UUID(), url: URL(string: "https://agent.example"), title: "Agent", spaceId: hiddenSpaceId)
         tab.lastActiveAt = Date(timeIntervalSince1970: 1)
@@ -3807,7 +3830,8 @@ final class BrowserStateStoreTests: XCTestCase {
         _ = store.updateTab(id: tab.id) { $0.isAgentControlled = false }
         store.freezeIdleEngines(freezeThreshold: 60)
 
-        XCTAssertTrue(engine.isFrozen)
+        let frozen = await pollUntil(timeout: 10) { engine.isFrozen }
+        XCTAssertTrue(frozen)
     }
 
     func testFreezeAllEnginesSkipsAgentTabs() {
@@ -4031,6 +4055,47 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertNil(store.space(id: spaceId)?.engines[ids[0]], "heavy on two sweeps in a row")
         XCTAssertNotNil(store.space(id: spaceId)?.engines[ids[1]])
         XCTAssertEqual(discarded.count, 1)
+    }
+
+    func testBusyOffScreenEngineOfTheVisibleSpaceIsFrozenOnSecondBusySweep() {
+        let activeSpaceId = UUID()
+        let visibleTabId = UUID()
+        let backgroundTabId = UUID()
+        let visible = Tab(id: visibleTabId, url: URL(string: "https://visible.example"), title: "Visible", spaceId: activeSpaceId)
+        var background = Tab(id: backgroundTabId, url: URL(string: "https://worker.example"), title: "Worker", spaceId: activeSpaceId)
+        background.lastActiveAt = Date()
+        let engines = [visibleTabId: WKWebViewTab(configuration: WKWebViewConfiguration()), backgroundTabId: WKWebViewTab(configuration: WKWebViewConfiguration())]
+        let store = BrowserStateStore()
+        store.runtimeOverlay.setRuntimeState(from: visible)
+        store.runtimeOverlay.setRuntimeState(from: background)
+        store.storeActiveSpace(
+            id: activeSpaceId,
+            snapshot: makeSpaceSnapshot(
+                tabs: [visible, background], folders: [], treeItems: [],
+                engines: engines, activeTabId: visibleTabId, lastAccessedAt: Date(), spaceId: activeSpaceId
+            )
+        )
+        let cpu: [UUID: WebContentCPUSampler.EngineUsage] = [
+            visibleTabId: .init(pid: 10, percent: 5),
+            backgroundTabId: .init(pid: 11, percent: 90)
+        ]
+        var previouslyBusy: Set<UUID> = []
+        let sweep = {
+            store.discardBusyBackgroundEngines(
+                maxCPUPercent: 30,
+                maxFootprintBytes: .max,
+                previouslyBusyTabIds: &previouslyBusy,
+                cpuSampler: { _ in cpu },
+                discardEngine: { _ in XCTFail("the window holds a visible space's engines"); return nil }
+            )
+        }
+
+        sweep()
+        XCTAssertFalse(engines[backgroundTabId]!.isFrozen, "one busy sweep may be work the tab did while it was visible")
+        sweep()
+        XCTAssertTrue(engines[backgroundTabId]!.isFrozen)
+        XCTAssertFalse(engines[visibleTabId]!.isFrozen)
+        XCTAssertNotNil(store.space(id: activeSpaceId)?.engines[backgroundTabId])
     }
 
     func testBusyEngineSharingProcessWithVisibleTabIsKept() {
@@ -4348,7 +4413,7 @@ final class BrowserStateStoreTests: XCTestCase {
 
 
     /// A tab another window displays is on screen even when it is not the space's last activated tab.
-    func testFreezeNeverFreezesATabDisplayedInAnyWindow() {
+    func testFreezeNeverFreezesATabDisplayedInAnyWindow() async {
         let spaceId = UUID(), activeTabId = UUID(), displayedTabId = UUID()
         var active = Tab(id: activeTabId, url: URL(string: "https://a.example"), title: "A", spaceId: spaceId)
         active.lastActiveAt = Date(timeIntervalSince1970: 1)
@@ -4365,6 +4430,8 @@ final class BrowserStateStoreTests: XCTestCase {
         store.displayedTabIds = [displayedTabId]
 
         store.freezeIdleEngines(freezeThreshold: 60)
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await displayedEngine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
 
         XCTAssertFalse(displayedEngine.isFrozen)
     }

@@ -8,8 +8,8 @@ import { t } from "../lib/i18n/state.svelte";
 
 export const UNDO_TOAST_DURATION_MS = 5000;
 
-// `label` and `undo` make it the undo of something other than a tab close.
-type UndoToast = { title: string; count: number; seq: number; archivedIds?: string[]; label?: string; undo?: () => void };
+// `label` makes it something other than a tab close: an undo with `undo`, a plain message without.
+type UndoToast = { title: string; count: number; seq: number; archivedIds?: string[]; label?: string; undo?: () => void; durationMs?: number };
 
 let _toast = $state<UndoToast | null>(null);
 let queue: UndoToast[] = [];
@@ -24,8 +24,8 @@ let revealUntil = 0;
 export function initUndoToastStore(): void {
 	on("tabClosedUndoable", (data) => {
 		const next: UndoToast = { title: data.title, count: data.count ?? 1, seq: ++seq, ...(data.archivedIds && { archivedIds: data.archivedIds }) };
-		if (_toast?.undo) {
-			queue = [...queue.filter((toast) => toast.undo), next];
+		if (_toast?.label) {
+			queue = [...queue.filter((toast) => toast.label), next];
 			return;
 		}
 		const paused = _toast !== null && timer === null;
@@ -44,6 +44,7 @@ export function initUndoToastStore(): void {
 // Cmd+Z takes the toast's offer only from the chrome outside a text field: a field keeps its own undo, and a focused page
 // never sends its keys here. Listening only while the toast shows lets an overlay's own Cmd+Z, attached earlier, go first.
 function undoOnCommandZ(e: KeyboardEvent): void {
+	if (_toast?.label && !_toast.undo) return;
 	if (e.defaultPrevented || !e.metaKey || e.shiftKey || e.altKey || e.ctrlKey || e.key.toLowerCase() !== "z") return;
 	if (e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]:not([contenteditable=false])")) return;
 	e.preventDefault();
@@ -56,18 +57,18 @@ function clearToast(): void {
 	_toast = next ?? null;
 	if (!next) return;
 	announce(undoToastSubject(next));
-	startTimer(UNDO_TOAST_DURATION_MS);
+	startTimer(next.durationMs ?? UNDO_TOAST_DURATION_MS);
 }
 
-export function showUndoToast(label: string, undo: () => void): void {
-	const next: UndoToast = { title: label, count: 1, seq: ++seq, label, undo };
+export function showUndoToast(label: string, undo?: () => void, durationMs = UNDO_TOAST_DURATION_MS): void {
+	const next: UndoToast = { title: label, count: 1, seq: ++seq, label, undo, durationMs };
 	if (_toast) {
 		queue.push(next);
 		return;
 	}
 	_toast = next;
 	announce(label);
-	startTimer(UNDO_TOAST_DURATION_MS);
+	startTimer(durationMs);
 }
 
 function startTimer(ms: number): void {

@@ -65,7 +65,7 @@
   }
 
   .description {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
     color: var(--text-secondary);
     line-height: 1.5;
     margin: 0 0 20px;
@@ -96,5 +96,11 @@
     font-size: var(--font-size-md);
     cursor: pointer;
     text-decoration: underline;
+  }
+
+  .show-here:focus-visible,
+  .use-password:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 </style>

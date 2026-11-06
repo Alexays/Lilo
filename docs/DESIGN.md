@@ -27,8 +27,8 @@ A piece of information takes the form of its family, never another.
 
 | Family | Form | Examples | Dismissed by |
 |---|---|---|---|
-| Status | Badge on a fixed landmark | Download in progress, agent waiting | Clears itself |
-| Toast | Capsule at the bottom center of the page, one at a time, queued, 5 s | Tab closed, screenshot copied | Time, or its action |
+| Status | Badge on a fixed landmark, or for a passing confirmation a word in the address field itself for 1.4 s, a new one replacing the last | Download in progress, agent waiting; link copied, zoom level, extension installed | Clears itself |
+| Toast | Capsule at the bottom center of the page, one at a time, queued, 5 s (6 s for a notice to read) | Tab closed, screenshot copied or saved, capture cut short | Time, or its action |
 | Drawer | Floats over the content, anchored to its source by an arrow | Site permissions, agent or extension requests | Its buttons, Esc |
 | Popover | Anchored to its button | Extensions, Agents, archived tabs | Esc, click outside |
 | Modal | Centered on the page area, dimming it, blocking, no close button | Clear browsing data, agent connection, What's New; an unresponsive page | Its buttons, Esc |
@@ -49,7 +49,7 @@ A piece of information takes the form of its family, never another.
 ## Buttons
 
 - The default button is last, on the right. Cancel sits just before it. A destructive action stands apart, on the left, in the `danger` style.
-- Labels are verbs: "Allow", "Don't Allow", "Close Tab". Never "OK" or "Deny", and never "Cancel" for stopping something ("Stop Debugging").
+- Labels are verbs: "Allow", "Don't Allow", "Close Tab". Never "Deny", and never "Cancel" for stopping something ("Stop Debugging"). "OK" only closes an alert that just informs and has no other button, as the HIG allow.
 - A variant of a choice ("always", "for this site") is a menu attached to the default button, not a third button.
 - Segmented-control labels are Title Case, like buttons.
 - ⌘↩ triggers the default button of a drawer or modal; Esc triggers Cancel.
@@ -81,7 +81,7 @@ A request tied to a tab lives in a single drawer; the row keeps only the orange 
 ## Text
 
 - Title Case for menu items, buttons and window titles, as macOS does; sentence case everywhere else (labels, descriptions, section headers, notices).
-- An ellipsis (`...` in the catalogs) only when the action asks for more input before it runs.
+- An ellipsis only when the action asks for more input before it runs: `...` in the web chrome's strings, the single ellipsis character (U+2026) in native menu items, as AppKit writes them.
 - Type scale, nothing off it: 16 px semibold for the sidebar panel title, 20 px semibold for a system screen's page title, 17 px semibold for a modal title and 13 px semibold for a popover title, 17 px regular for a large search field (command bar, empty window), 13 px (`--font-size-md`) medium for a row title and regular for body text, 12 px for details, buttons and menus, 11 px (`--font-size-xs`) semibold uppercase with 0.04em tracking for section headers and regular for counts, 10 px (`--font-size-2xs`) only inside thumbnails. Onboarding alone uses 28 px semibold headlines and 15 px body.
 
 ## Spacing and sizes
@@ -146,7 +146,7 @@ Nothing else animates. With Reduce motion, everything becomes a 150 ms fade. A s
 ## Keyboard and focus
 
 - A surface that opens moves focus to its first useful control and returns it to its trigger on close; Tab stays inside an open drawer or modal.
-- A shortcut is shown as keycaps 20 px high, 6 px radius, 11 px text; in a palette footer the Return action comes first.
+- A shortcut is shown as keycaps 20 px high, 6 px radius, 11 px text (the shared `.keycap` class); a tooltip fits its shortcut on its line as a 16 px keycap. In a palette footer the Return action comes first.
 - A shortcut shown anywhere (command bar footer, menus, ⌘? help) comes from the same table as the one that runs.
 
 ## First run

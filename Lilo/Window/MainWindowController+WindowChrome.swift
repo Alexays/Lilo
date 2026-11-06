@@ -66,6 +66,7 @@ extension MainWindowController {
     }
 
     func applySidebarLayout(animated: Bool, syncTrafficLights: Bool = false) {
+        let animated = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         sidebarWidth = fittedSidebarWidth
         sidePanel.fitToWindow()
         updateContentContainerFrame(animated: animated)
@@ -90,8 +91,7 @@ extension MainWindowController {
     func applyStoredTabLayoutEverywhere() {
         guard let layout = context.settingsStore?.tabLayout else { return }
         layout.cache()
-        let animated = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        context.windows.windows.forEach { $0.applyTabLayout(layout, animated: animated) }
+        context.windows.windows.forEach { $0.applyTabLayout(layout, animated: true) }
     }
 
     func setTabPosition(_ position: TabPosition) {
@@ -228,8 +228,15 @@ extension MainWindowController {
         // initialState re-seeds the chrome from scratch and carries favicons only for the current
         // space's tabs; every other space must ship favicons again on its first full-state emit.
         chromeFaviconSyncedSpaceIds = tabManager.currentSpaceId.map { [$0] } ?? []
+        chromeStaleFaviconTabIds = []
         sentTabPatches = [:]
         sentExtensionRows = [:]
+        sentArchiveFavicons = [:]
+        searchHandler?.sentFaviconHosts = []
+        historyPageHandler?.sentFaviconHosts = []
+        // A reloaded chrome has lost its capture cards: nothing can open their captures any more.
+        copiedCaptures.keys.forEach(ChromeUISchemeHandler.discardScreenshot)
+        copiedCaptures = [:]
         for row in data["extensions"] as? [[String: Any]] ?? [] {
             if let id = row["id"] as? String { sentExtensionRows[id] = row }
         }
@@ -254,6 +261,13 @@ extension MainWindowController {
         if context.settingsStore?.shouldShowOnboarding == false, tabManager.activeTab.map({ $0.url == nil && $0.kind == .web }) ?? false {
             bridgeRouter.send(event: "openCommandBar", data: ["newTab": true])
         }
+        // A reloaded chrome lost its prompts: permissions ship again, and pickers close so their page can ask again.
+        for request in pendingPermissionRequests {
+            bridgeRouter.send(event: "permissionRequest", data: [
+                "requestId": request.id.uuidString, "tabId": request.tabId.uuidString, "type": request.type, "origin": request.origin
+            ])
+        }
+        for requestId in pendingTabSharePickerRequests.keys { dismissTabSharePicker(requestId: requestId) }
     }
 
     func handleChromeReady() {

@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'A browser import that fails now says why when it can tell: Keychain access denied, a file in use, or Full Disk Access missing'
+time: 2026-11-06T19:53:24.165331+01:00

@@ -45,6 +45,8 @@ final class HistoryStore: @unchecked Sendable {
 
     private enum Defaults {
         static let writeDebounceInterval: TimeInterval = 1.0
+        /// Caps the debounce: a page calling `replaceState` more often than the debounce interval still gets its visits written.
+        static let writeMaxWait: TimeInterval = 5.0
         /// New rows between two cap prunes; the first flush after launch always prunes.
         static let pruneEveryInserts = 500
     }
@@ -55,6 +57,8 @@ final class HistoryStore: @unchecked Sendable {
     /// Titles pages set after their visit was written, by URL.
     private var pendingTitlesByURL: [String: String] = [:]
     private var pendingFlushWorkItem: DispatchWorkItem?
+    /// When the oldest pending write must land, whatever comes after it.
+    private var pendingFlushDeadline: DispatchTime?
     /// Lets `flushPendingWrites()` (run by every read, per omnibox keystroke) skip the queue hop when nothing is pending. Set before a
     /// visit is enqueued and again when it lands; cleared only inside the flush on the queue.
     private let hasPendingVisits = OSAllocatedUnfairLock(initialState: false)
@@ -309,13 +313,17 @@ final class HistoryStore: @unchecked Sendable {
     @discardableResult
     func deleteEntries(from startDate: Date, to endDate: Date) throws -> [String] {
         guard startDate <= endDate else { return [] }
-        return try deleteVisits(where: "visitedAt >= ? AND visitedAt <= ?", arguments: [startDate, endDate])
+        let urls = try deleteVisits(where: "visitedAt >= ? AND visitedAt <= ?", arguments: [startDate, endDate])
+        if !urls.isEmpty { onChange?(.removed(allHistory: false, urls: urls)) }
+        return urls
     }
 
     /// Deletes what History page rows stand for: each page's visits on that row's local day, only `openedFrom`'s when given.
     @discardableResult
     func deleteDayRows(_ rows: [(pageId: UUID, dayStart: Date)], openedFrom: String?, calendar: Calendar = .current) throws -> [String] {
         var removed: [String] = []
+        // Chunks committed before one throws are reported all the same.
+        defer { if !removed.isEmpty { onChange?(.removed(allHistory: false, urls: removed)) } }
         // Three bound values a row: chunks stay far below SQLite's variable limit.
         for chunk in stride(from: 0, to: rows.count, by: 300).map({ rows[$0..<min($0 + 300, rows.count)] }) {
             var arguments: StatementArguments = []
@@ -345,10 +353,10 @@ final class HistoryStore: @unchecked Sendable {
     }
 
     /// Deletes the visits `predicate` (on `historyVisit`) selects, then settles their pages: a page left without visits goes, the
-    /// others fall back to their newest remaining visit. Returns the URLs of the pages removed entirely.
+    /// others fall back to their newest remaining visit. Returns the URLs of the pages removed entirely; the caller reports them.
     private func deleteVisits(where predicate: String, arguments: StatementArguments) throws -> [String] {
         flushPendingWrites()
-        let urls = try dbPool.write { db -> [String] in
+        return try dbPool.write { db -> [String] in
             let deleted = try Row.fetchAll(db, sql: "SELECT pageId, COUNT(*) AS count FROM historyVisit WHERE \(predicate) GROUP BY pageId",
                                            arguments: arguments)
             guard !deleted.isEmpty else { return [] }
@@ -369,8 +377,6 @@ final class HistoryStore: @unchecked Sendable {
             }
             return urls
         }
-        if !urls.isEmpty { onChange?(.removed(allHistory: false, urls: urls)) }
-        return urls
     }
 
     // MARK: - History page
@@ -382,7 +388,7 @@ final class HistoryStore: @unchecked Sendable {
         let title: String
         let host: String
         let lastVisitAt: Date
-        let visits: Int
+        var visits: Int
         let dayStart: Date
     }
 
@@ -409,7 +415,7 @@ final class HistoryStore: @unchecked Sendable {
     /// the list, nil once nothing older matches. Each day is one bounded range of the `visitedAt` index.
     func dayRows(
         filter: Filter, before: Date?, minimumRows: Int, now: Date = Date(), calendar: Calendar = .current
-    ) throws -> (rows: [DayRow], nextBefore: Date?) {
+    ) async throws -> (rows: [DayRow], nextBefore: Date?) {
         flushPendingWrites()
         let startOfToday = calendar.startOfDay(for: now)
         let daysAgo = { (days: Int) in calendar.date(byAdding: .day, value: -days, to: startOfToday) ?? startOfToday }
@@ -433,9 +439,10 @@ final class HistoryStore: @unchecked Sendable {
             conditions.append("v.openedFrom = ?")
             filterArguments += [openedFrom]
         }
-        if !filter.query.trimmingCharacters(in: .whitespaces).isEmpty {
+        let match = filter.query.trimmingCharacters(in: .whitespaces).isEmpty ? nil : sanitizeFTSQuery(filter.query)
+        if let match {
             conditions.append("h.rowid IN (SELECT rowid FROM historyFts WHERE historyFts MATCH ?)")
-            filterArguments += [sanitizeFTSQuery(filter.query)]
+            filterArguments += [match]
         }
         if let lower {
             conditions.append("v.visitedAt >= ?")
@@ -443,7 +450,45 @@ final class HistoryStore: @unchecked Sendable {
         }
         let filterSQL = conditions.map { " AND \($0)" }.joined()
 
-        return try dbPool.read { db in
+        // The async read lets a cancelled task interrupt the statement in flight.
+        return try await dbPool.read { [filterArguments, upper] db in
+            // A text filter reads its matching visits newest first in one pass: a per-day loop would rerun the MATCH for every day.
+            if let match {
+                let matchCount = try Int.fetchOne(db, sql: """
+                    SELECT count(*) FROM (SELECT rowid FROM historyFts WHERE historyFts MATCH ? LIMIT \(Self.ftsSortLimit + 1))
+                    """, arguments: [match]) ?? 0
+                // Many matching pages: walk the visit index and stop after the batch's last day. Few: sort only their visits.
+                let source = matchCount > Self.ftsSortLimit
+                    ? "historyVisit v INDEXED BY idx_historyVisit_visitedAt JOIN history h ON h.id = v.pageId"
+                    : "history h CROSS JOIN historyVisit v ON v.pageId = h.id"
+                var arguments = filterArguments
+                if let upper { arguments += [upper] }
+                let visits = try Row.fetchCursor(db, sql: """
+                    SELECT v.visitedAt, h.rowid, h.id, h.url, h.title, h.host FROM \(source)
+                    WHERE 1\(filterSQL)\(upper == nil ? "" : " AND v.visitedAt < ?") ORDER BY v.visitedAt DESC
+                    """, arguments: arguments)
+                var rows: [DayRow] = []
+                var dayRowIndexByPage: [Int64: Int] = [:]
+                var dayStart = Date.distantFuture
+                while let visit = try visits.next() {
+                    let visitedAt: Date = visit[0]
+                    if visitedAt < dayStart {
+                        if !rows.isEmpty, rows.count >= minimumRows { return (rows, dayStart) }
+                        dayStart = calendar.startOfDay(for: visitedAt)
+                        dayRowIndexByPage.removeAll(keepingCapacity: true)
+                    }
+                    let page: Int64 = visit[1]
+                    if let index = dayRowIndexByPage[page] {
+                        rows[index].visits += 1
+                    } else {
+                        dayRowIndexByPage[page] = rows.count
+                        rows.append(DayRow(pageId: visit[2], url: visit[3], title: visit[4], host: visit[5],
+                                           lastVisitAt: visitedAt, visits: 1, dayStart: dayStart))
+                    }
+                }
+                return (rows, nil)
+            }
+
             var rows: [DayRow] = []
             var cursor = upper
             while rows.count < minimumRows {
@@ -516,12 +561,16 @@ final class HistoryStore: @unchecked Sendable {
         pendingFlushWorkItem?.cancel()
         let workItem = DispatchWorkItem { self.flushPendingWritesLocked() }
         pendingFlushWorkItem = workItem
-        writeQueue.asyncAfter(deadline: .now() + Defaults.writeDebounceInterval, execute: workItem)
+        let now = DispatchTime.now()
+        let maxDeadline = pendingFlushDeadline ?? now + Defaults.writeMaxWait
+        pendingFlushDeadline = maxDeadline
+        writeQueue.asyncAfter(deadline: min(now + Defaults.writeDebounceInterval, maxDeadline), execute: workItem)
     }
 
     private func flushPendingWritesLocked() {
         pendingFlushWorkItem?.cancel()
         pendingFlushWorkItem = nil
+        pendingFlushDeadline = nil
 
         let visits = Array(pendingVisitsByURL.values)
         let titles = pendingTitlesByURL
@@ -614,13 +663,15 @@ final class HistoryStore: @unchecked Sendable {
 
     /// Keeps the newest `maxVisits` visits, then drops the pages left without any.
     private static func pruneVisits(_ db: Database) throws {
-        try db.execute(sql: """
+        let pageIds = try Set(UUID.fetchAll(db, sql: """
             DELETE FROM historyVisit WHERE visitedAt < (
                 SELECT visitedAt FROM historyVisit ORDER BY visitedAt DESC LIMIT 1 OFFSET ?
-            )
-            """, arguments: [maxVisits - 1])
-        guard db.changesCount > 0 else { return }
-        try db.execute(sql: "DELETE FROM history WHERE NOT EXISTS (SELECT 1 FROM historyVisit WHERE pageId = history.id)")
+            ) RETURNING pageId
+            """, arguments: [maxVisits - 1]))
+        let deletePage = try db.cachedStatement(sql: "DELETE FROM history WHERE id = ?1 AND NOT EXISTS (SELECT 1 FROM historyVisit WHERE pageId = ?1)")
+        for pageId in pageIds {
+            try deletePage.execute(arguments: [pageId])
+        }
     }
 
     /// The site a URL belongs to: its host, lowercased, port kept, without a leading `www.` (as `hostOf` in the chrome UI).

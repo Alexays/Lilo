@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { treeItem } from "../src/stores/testFixtures";
 import { bootChrome, sentCommands } from "./fakeHost";
-import { initialWorld } from "./fixtures";
+import { initialWorld, SPACE_1 } from "./fixtures";
 
 test("a favorite tile spans the rows' width, with their edges and radius and no border", async ({ page }) => {
 	await bootChrome(page, initialWorld());
@@ -38,4 +39,24 @@ test("Edit from the menu opens a bookmark's editor under the tiles, and Return s
 		["renameTab", { id: "tab-wiki", title: "Wiki" }],
 		["setTabHomeURL", { id: "tab-wiki", url: "https://wiki.example.com/start" }],
 	]);
+});
+
+test("a favorite tile moves with Option-arrows and opens its menu with Shift-F10", async ({ page }) => {
+	const world = initialWorld();
+	Object.assign(world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-home")!, { isPinned: false, isBookmarked: true });
+	world.treeItemsBySpace[SPACE_1][1] = treeItem("tab-home", SPACE_1, 1, "bookmarked");
+	await bootChrome(page, world);
+	const wiki = page.locator(".space-pane").first().getByRole("button", { name: "Marked Wiki" });
+
+	await wiki.focus();
+	await page.keyboard.press("Alt+ArrowRight");
+	const drops = (await sentCommands(page)).filter((command) => command.action === "commitSidebarDrop");
+	expect(drops.at(-1)?.payload).toMatchObject({
+		type: "insert", kind: "tab", id: "tab-wiki", section: "bookmarked", parentFolderId: null, insertAfterId: "tab-home", insertBeforeId: null,
+	});
+	await expect(page.locator(".live-announcer")).toHaveText("Moved to position 2 of 2");
+
+	await wiki.focus();
+	await page.keyboard.press("Shift+F10");
+	expect((await sentCommands(page)).filter((command) => command.action === "showTabContextMenu").at(-1)?.payload).toMatchObject({ id: "tab-wiki" });
 });

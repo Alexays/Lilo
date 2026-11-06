@@ -120,6 +120,34 @@ final class GapRouterStoreProviderTests: XCTestCase {
         XCTAssertNil(bookmarks[0]["children"])
     }
 
+    /// Calls an extension makes without awaiting each other run in call order, as in Chrome.
+    func testUnawaitedBookmarkCallsRunInCallOrder() async throws {
+        let router = factory.gapRouter
+        let extensionId = try await loadExtension(into: profileB)
+        let registry = profileB.extensions
+        let creates = (0..<20).map { index in
+            Task {
+                _ = await router.route(
+                    namespace: "bookmarks", method: "create", params: ["parentId": "1", "title": "\(index)"],
+                    extensionId: extensionId, fromWorker: false, registry: registry
+                )
+            }
+        }
+        let listed = Task {
+            let (children, _) = await router.route(
+                namespace: "bookmarks", method: "getChildren", params: ["id": "1"],
+                extensionId: extensionId, fromWorker: false, registry: registry
+            )
+            return (children as? [[String: Any]])?.compactMap { $0["title"] as? String }
+        }
+        for create in creates { await create.value }
+
+        let titles = (0..<20).map(String.init)
+        let listedTitles = await listed.value
+        XCTAssertEqual(listedTitles, titles)
+        XCTAssertEqual(try profileB.bookmarks.getChildren(parentId: "1").map(\.title), titles)
+    }
+
     func testHistorySearchDefaultsToTheLastDay() async throws {
         let router = factory.gapRouter
         let extensionId = try await loadExtension(into: profileB)
@@ -132,6 +160,19 @@ final class GapRouterStoreProviderTests: XCTestCase {
         XCTAssertEqual((recent as? [[String: Any]])?.map { $0["url"] as? String }, ["https://b.test/page"])
         XCTAssertEqual((matched as? [[String: Any]])?.count, 1)
         XCTAssertEqual((old as? [[String: Any]])?.count, 0)
+    }
+
+    func testBookmarkMoveToANegativeIndexIsRejected() async throws {
+        let extensionId = try await loadExtension(into: profileB)
+        let a = try profileB.bookmarks.create(parentId: "1", title: "a", url: "https://a.test")
+
+        let (_, error) = await factory.gapRouter.route(
+            namespace: "bookmarks", method: "move", params: ["id": a.id, "parentId": "2", "index": -1],
+            extensionId: extensionId, fromWorker: false, registry: profileB.extensions
+        )
+
+        XCTAssertEqual(error?.hasSuffix("Value must be at least 0."), true)
+        XCTAssertEqual(try profileB.bookmarks.get(id: a.id)?.parentId, "1")
     }
 
     func testCallWithoutTheManifestPermissionIsRejected() async throws {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { arrowPath, dashArray, prefersDarkText, snapAngle } from "./ink";
+import { arrowPath, dashArray, snapAngle } from "./ink";
 
 test("dash styles scale with the line", () => {
 	assert.equal(dashArray("solid", 2), undefined);
@@ -12,12 +12,6 @@ test("snapAngle turns a line to 15 degree steps", () => {
 	const end = snapAngle({ x: 0, y: 0 }, { x: 100, y: 3 });
 	assert.ok(Math.abs(end.y) < 1e-9);
 	assert.ok(Math.abs(end.x - Math.hypot(100, 3)) < 1e-9);
-});
-
-test("light fills take dark text", () => {
-	assert.equal(prefersDarkText("#ffcc00"), true);
-	assert.equal(prefersDarkText("#0a84ff"), false);
-	assert.equal(prefersDarkText("#1c1c1e"), false);
 });
 
 test("an arrow takes a head at each end it asks for", () => {

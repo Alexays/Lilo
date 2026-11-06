@@ -89,6 +89,31 @@ final class ExtensionStorageTests: XCTestCase {
         XCTAssertEqual(access["ext-sites"], ExtensionStorage.AccessState(hosts: ["example.com"]))
     }
 
+    func testAccessStateWithNoSiteRoundTrips() async throws {
+        try await storage.store(id: "ext-sites", name: "Sites", version: "1.0", path: "/tmp/sites", enabled: true)
+        try await storage.setAccessState(id: "ext-sites", ExtensionStorage.AccessState(hosts: []))
+
+        let access = try await storage.loadAccessStates()
+        XCTAssertEqual(access["ext-sites"]?.hosts, [], "no site is a restriction, not the manifest's hosts")
+    }
+
+    func testAccessStateStoredWithAnEmptyHostListMigratesToTheManifestHosts() async throws {
+        try await storage.store(id: "ext-all", name: "All", version: "1.0", path: "/tmp/all", enabled: true)
+        try await storage.store(id: "ext-sites", name: "Sites", version: "1.0", path: "/tmp/sites", enabled: true)
+        try await dbPool.write { db in
+            let update = "UPDATE installed_extensions SET site_access = ? WHERE id = ?"
+            try db.execute(sql: update, arguments: [#"{"hosts":[],"optionalPermissions":["tabs"],"optionalMatchPatterns":[]}"#, "ext-all"])
+            try db.execute(sql: update, arguments: [#"{"hosts":["example.com"],"optionalPermissions":[],"optionalMatchPatterns":[]}"#, "ext-sites"])
+            try db.execute(sql: "DELETE FROM grdb_migrations WHERE identifier = 'v4'")
+        }
+
+        try Migrations.migrateGlobal(dbPool)
+
+        let access = try await storage.loadAccessStates()
+        XCTAssertEqual(access["ext-all"], ExtensionStorage.AccessState(optionalPermissions: ["tabs"]))
+        XCTAssertEqual(access["ext-sites"]?.hosts, ["example.com"])
+    }
+
     func testAccessStateSurvivesAnExtensionUpdate() async throws {
         try await storage.store(id: "ext-sites", name: "Sites", version: "1.0", path: "/tmp/sites", enabled: true)
         try await storage.setAccessState(id: "ext-sites", ExtensionStorage.AccessState(hosts: ["example.com"]))

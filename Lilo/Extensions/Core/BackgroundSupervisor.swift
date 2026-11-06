@@ -20,8 +20,12 @@ final class BackgroundSupervisor {
         /// Set when every revive failed; the action and commands cannot reach the worker. Cleared by
         /// the next successful load or connection.
         var failed = false
+        /// Shown to the user, so translated; the log carries the diagnostic.
         var failureReason: String?
         var lastErrorCount = 0
+        /// When each of the context's current errors was first observed. Keyed by the error, not its index:
+        /// WebKit removes a cleared error from the middle of the list. Diagnostics clearing leaves it alone.
+        var errorFirstSeen: [NSError: TimeInterval] = [:]
 
         var bridgeStatus: String {
             (prepDegraded || runtimeDegraded || failed) ? "degraded" : "loaded"
@@ -92,26 +96,28 @@ final class BackgroundSupervisor {
     @discardableResult
     func load(_ extensionId: String) async -> Bool {
         guard let context = context(extensionId), context.webExtension.hasBackgroundContent else { return false }
-        loadStartedAt[extensionId] = Date()
-        defer { loadStartedAt[extensionId] = nil }
+        // A load joining one in flight (or a restart or full reload holding the guard) leaves the guard to its owner.
+        let ownsGuard = !isLoadInFlight(extensionId)
+        if ownsGuard { loadStartedAt[extensionId] = Date() }
+        defer { if ownsGuard { loadStartedAt[extensionId] = nil } }
         // Ends when the worker connects (`workerChannel`); a running worker's load starts nothing.
         let startsWorker = worker(extensionId) != .running
         if startsWorker {
             _ = PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")
         }
         var timeout: Task<Void, Never>?
-        let failure: String? = await withCheckedContinuation { continuation in
+        let failure: (diagnostic: String, reason: String)? = await withCheckedContinuation { continuation in
             let resumed = OSAllocatedUnfairLock(initialState: false)
-            let finish: @Sendable (String?) -> Void = { failure in
+            let finish: @Sendable ((diagnostic: String, reason: String)?) -> Void = { failure in
                 guard resumed.withLock({ wasResumed in defer { wasResumed = true }; return !wasResumed }) else { return }
                 continuation.resume(returning: failure)
             }
             context.loadBackgroundContent { error in
-                finish(error.map { ExtensionDiagnostics.diagnosticDescription(for: $0) })
+                finish(error.map { (ExtensionDiagnostics.diagnosticDescription(for: $0), $0.localizedDescription) })
             }
             timeout = Task {
                 guard (try? await Task.sleep(for: .seconds(Self.loadTimeout))) != nil else { return }
-                finish("no answer after \(Int(Self.loadTimeout))s")
+                finish(("no answer after \(Int(Self.loadTimeout))s", "The extension's background did not respond.".localized))
             }
         }
         timeout?.cancel()
@@ -119,8 +125,8 @@ final class BackgroundSupervisor {
             if startsWorker {
                 PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "failed")
             }
-            Self.logger.error("loadBackgroundContent failed for \(extensionId, privacy: .public): \(failure, privacy: .public)")
-            health[extensionId]?.failureReason = failure
+            Self.logger.error("loadBackgroundContent failed for \(extensionId, privacy: .public): \(failure.diagnostic, privacy: .public)")
+            health[extensionId]?.failureReason = failure.reason
             return false
         }
         setFlag(\.failed, to: false, for: extensionId)
@@ -249,6 +255,12 @@ final class BackgroundSupervisor {
         let newErrors = errors.dropFirst(previousCount <= errors.count ? previousCount : 0)
         ExtensionDiagnostics.logContextErrorsIfNeeded(newErrors, of: context, extensionId: extensionId, reason: "notification", logger: Self.logger)
         health[extensionId]?.lastErrorCount = errors.count
+        let firstSeen = health[extensionId]?.errorFirstSeen ?? [:]
+        let now = Date().timeIntervalSince1970
+        health[extensionId]?.errorFirstSeen = Dictionary(
+            errors.map { error in (error as NSError, firstSeen[error as NSError] ?? now) },
+            uniquingKeysWith: { first, _ in first }
+        )
         didChange(extensionId)
         guard context.webExtension.hasBackgroundContent,
               ExtensionDiagnostics.errorsWarrantBackgroundRevive(newErrors) else { return }

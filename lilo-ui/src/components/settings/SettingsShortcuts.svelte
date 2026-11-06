@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { announce } from "../../lib/announce";
   import { settingsActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import {
@@ -16,6 +17,8 @@
   import UiSegmented from "../ui/UiSegmented.svelte";
 
   let query = $state("");
+  // The row whose keys button takes focus back once its conflict's Replace or Cancel is gone.
+  let refocusId: string | null = null;
 
   // Read each time the page opens, so shortcuts reassigned in System Settings show; leaving stops a recording.
   $effect(() => {
@@ -97,10 +100,30 @@
         >
           {#snippet action()}
             {#if conflict}
-              <UiButton variant="primary" onclick={() => settingsActions.setShortcut(item.id, conflict.combo)}>
-                {t("settings.shortcuts.replace")}
-              </UiButton>
-              <UiButton onclick={dismissShortcutConflict}>{t("settings.shortcuts.cancel")}</UiButton>
+              <!-- The keys button these replace held focus: Replace takes it, and the conflict is spoken. -->
+              <span
+                class="conflict-actions"
+                {@attach (node) => {
+                  node.querySelector("button")?.focus();
+                  announce(t("settings.shortcuts.conflict", { keys: conflict.keys, name: conflict.owner }));
+                }}
+              >
+                <UiButton
+                  variant="primary"
+                  onclick={() => {
+                    refocusId = item.id;
+                    settingsActions.setShortcut(item.id, conflict.combo);
+                  }}
+                >
+                  {t("settings.shortcuts.replace")}
+                </UiButton>
+                <UiButton
+                  onclick={() => {
+                    refocusId = item.id;
+                    dismissShortcutConflict();
+                  }}
+                >{t("settings.shortcuts.cancel")}</UiButton>
+              </span>
             {:else}
               {#if item.custom}
                 <UiButton variant="ghost" onclick={() => settingsActions.resetShortcut(item.id)}>
@@ -112,7 +135,15 @@
                 class:recording
                 class:unbound={item.keys.length === 0}
                 type="button"
+                aria-label={`${item.title}, ${recording
+                  ? t("settings.shortcuts.pressKeys")
+                  : item.keys.length === 0 ? t("settings.shortcuts.none") : item.keys.join(", ")}`}
                 onclick={() => recordShortcut(recording ? null : item.id)}
+                {@attach (node) => {
+                  if (refocusId !== item.id) return;
+                  refocusId = null;
+                  node.focus();
+                }}
               >
                 {#if recording}
                   {t("settings.shortcuts.pressKeys")}
@@ -160,6 +191,10 @@
   .shortcuts-list :global(.ui-list-row) {
     padding-block: var(--space-2);
     min-height: 32px;
+  }
+
+  .conflict-actions {
+    display: contents;
   }
 
   .shortcut-keys {

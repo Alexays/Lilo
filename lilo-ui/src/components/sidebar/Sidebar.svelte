@@ -20,7 +20,7 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
-  import { getReadyUpdate, getSetting } from "../../stores/settings.svelte";
+  import { getReadyUpdate } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressInRightTabs, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
@@ -206,7 +206,7 @@
     height: 100%;
     padding-top: 0;
     transition:
-      transform 220ms var(--motion-ease-spring),
+      transform var(--motion-duration-overlay) var(--motion-ease-spring),
       opacity var(--motion-duration-normal) ease;
   }
 
@@ -295,14 +295,14 @@
     scroll-snap-stop: always;
     /* A stable layer: one created at the start of each swipe and dropped at its end hitches both ends. */
     will-change: opacity, filter;
-    transition: filter 220ms var(--motion-ease-spring);
+    transition: filter var(--motion-duration-overlay) var(--motion-ease-spring);
   }
 
   /* Opacity eases only at rest: a transition restarted by every swipe frame would trail the finger. */
   .resting {
     transition:
       opacity var(--motion-duration-fast) linear,
-      filter 220ms var(--motion-ease-spring);
+      filter var(--motion-duration-overlay) var(--motion-ease-spring);
   }
 
   /* A hidden neighbor pane stays mounted: its looping animations would still tick unseen. Only the
@@ -351,7 +351,7 @@
   .header-spacer {
     width: 81px;
     flex-shrink: 0;
-    transition: width 220ms var(--motion-ease-spring);
+    transition: width var(--motion-duration-overlay) var(--motion-ease-spring);
   }
 
   /* Full screen: the toggle lines up with the URL field below it. */

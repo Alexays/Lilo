@@ -1,5 +1,6 @@
 <script lang="ts">
   import { dismissable } from "../../lib/actions/dismissable";
+  import { menuKeys } from "../../lib/actions/menuKeys";
   import { tabActions } from "../../lib/bridge/actions";
   import ExtensionIcons from "../extensions/ExtensionIcons.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
@@ -7,6 +8,7 @@
   import { tooltip } from "../../lib/tooltip";
   import { t } from "../../lib/i18n/state.svelte";
   import type { ToastVariant } from "../../lib/urlVisual";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
 
   interface Props {
     toastVisible: boolean;
@@ -34,6 +36,7 @@
     onToggleBlocker,
   }: Props = $props();
 
+  const screenshotMenuId = $props.id();
   let screenshotMenuOpen = $state(false);
   let screenshotBtnEl = $state<HTMLElement | null>(null);
   let menuTop = $state(0);
@@ -94,16 +97,12 @@
         use:tooltip={isAllowlisted
           ? t("urlToast.reEnableBlocking")
           : blockedCount > 0
-            ? blockedCount > 1
-              ? t("urlToast.trackersBlockedOnPage", { count: blockedCount })
-              : t("urlToast.trackerBlockedOnPage", { count: blockedCount })
+            ? t("urlToast.trackersBlockedOnPage", { count: blockedCount })
             : t("urlToast.disableBlocking")}
         aria-label={isAllowlisted
           ? t("urlToast.adsAllowed")
           : blockedCount > 0
-            ? blockedCount > 1
-              ? t("urlToast.trackersBlockedLabel", { count: blockedCount })
-              : t("urlToast.trackerBlockedLabel", { count: blockedCount })
+            ? t("urlToast.trackersBlockedLabel", { count: blockedCount })
             : t("urlToast.adsBlocked")}
       >
         <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
@@ -154,7 +153,9 @@
         tabindex="0"
         use:tooltip={t("urlToast.screenshot")}
         aria-label={t("urlToast.screenshot")}
+        aria-haspopup="menu"
         aria-expanded={screenshotMenuOpen}
+        aria-controls={screenshotMenuOpen ? screenshotMenuId : undefined}
         bind:this={screenshotBtnEl}
         onclick={openMenu}
         onkeydown={(e) => {
@@ -178,12 +179,31 @@
 
       {#if screenshotMenuOpen}
         <div
+          id={screenshotMenuId}
           class="screenshot-menu screenshot-menu-portal float-surface float-popover"
+          out:popoverOut
           role="menu"
+          tabindex="-1"
+          aria-label={t("urlToast.screenshot")}
           style="top:{menuTop}px;right:{menuRight}px"
           use:portal
           use:reportInteractiveZone={{ id: "screenshot-menu", active: true }}
-          {@attach dismissable({ onDismiss: () => (screenshotMenuOpen = false), escape: true })}
+          onkeydown={(e) => {
+            if (e.key !== "Escape") return;
+            // The bar around it would take this Escape too.
+            e.preventDefault();
+            e.stopPropagation();
+            screenshotMenuOpen = false;
+            screenshotBtnEl?.focus();
+          }}
+          {@attach menuKeys}
+          {@attach (node) => node.querySelector<HTMLElement>("[role='menuitem']")?.focus()}
+          {@attach dismissable({
+            onDismiss: () => (screenshotMenuOpen = false),
+            ignore: `[aria-controls="${screenshotMenuId}"]`,
+            escape: true,
+            returnFocus: screenshotBtnEl ?? undefined,
+          })}
         >
           <button class="float-row screenshot-menu-item" role="menuitem" onclick={() => pickMode("full")}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -270,7 +290,7 @@
     transform: translateY(-50%) translateX(8px) scale(0.94);
     transition:
       opacity var(--motion-duration-normal) ease,
-      transform 260ms var(--motion-ease-spring);
+      transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .url-blocker-btn {
@@ -341,7 +361,7 @@
     transition:
       background var(--transition-fast),
       color var(--transition-fast),
-      transform 180ms var(--motion-ease-spring);
+      transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .url-action-btn:focus-visible {
@@ -374,7 +394,7 @@
   .lens {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .url-copy-btn:hover .link-half.end {

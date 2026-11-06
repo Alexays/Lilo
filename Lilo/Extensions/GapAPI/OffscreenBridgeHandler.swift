@@ -4,7 +4,7 @@ import WebKit
 /// extension context's own configuration, so chrome.runtime messaging reaches it natively. The view
 /// is never put in a window. One document per (profile, extension), as in Chrome.
 @MainActor
-final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
+final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate, WKUIDelegate {
     let gapActions: Set<String> = [
         "offscreen.createDocument",
         "offscreen.closeDocument",
@@ -50,11 +50,28 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
             guard let path = call.string("url"),
                   let url = URL(string: path, relativeTo: context.baseURL)?.absoluteURL,
                   url.scheme == context.baseURL.scheme, url.host == context.baseURL.host,
-                  let configuration = context.pageWebViewConfiguration else {
+                  let configuration = context.pageWebViewConfiguration,
+                  // Every extension view of the profile shares these preferences: the document gets its own copy.
+                  let preferences = configuration.preferences.copy() as? WKPreferences else {
                 return BridgeError("Invalid offscreen document url")
+            }
+            configuration.preferences = preferences
+            // The view is never in a window, so its page counts as hidden: it runs at full speed, as WebKit's own
+            // background and offscreen pages do.
+            preferences.inactiveSchedulingPolicy = .none
+            var settings = ["hiddenPageDOMTimerThrottlingEnabled": false, "pageVisibilityBasedProcessSuppressionEnabled": false]
+            // WebKit knows no clipboardRead permission; with it, Chrome lets the document paste without a gesture.
+            if (context.webExtension.manifest["permissions"] as? [String])?.contains("clipboardRead") == true {
+                settings["DOMPasteAllowed"] = true
+                settings["javaScriptCanAccessClipboard"] = true
+            }
+            for (key, value) in settings
+            where preferences.responds(to: NSSelectorFromString("_set\(key.prefix(1).uppercased())\(key.dropFirst()):")) {
+                preferences.setValue(value, forKey: key)
             }
             let documentView = WKWebView(frame: .zero, configuration: configuration)
             documentView.navigationDelegate = self
+            documentView.uiDelegate = self
             registry.frameCookies.watch(documentView)
             documents[key] = Document(context: context, webView: documentView)
             let error = await withCheckedContinuation { continuation in
@@ -81,6 +98,7 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
     private func closeDocument(_ key: String) {
         guard let document = documents.removeValue(forKey: key) else { return }
         document.webView.navigationDelegate = nil
+        document.webView.uiDelegate = nil
         document.webView.stopLoading()
         finishLoad(of: document.webView, error: CancellationError())
     }
@@ -104,6 +122,13 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        if let key = documents.first(where: { $0.value.webView === webView })?.key { closeDocument(key) }
+    }
+
+    // MARK: - WKUIDelegate
+
+    /// A document that closes itself with window.close() is gone, as in Chrome, and another may be created.
+    func webViewDidClose(_ webView: WKWebView) {
         if let key = documents.first(where: { $0.value.webView === webView })?.key { closeDocument(key) }
     }
 }

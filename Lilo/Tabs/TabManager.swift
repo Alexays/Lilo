@@ -54,6 +54,10 @@ final class TabManager {
     /// Adapter for the window containing these tabs.
     weak var windowAdapter: WindowExtensionAdapter?
 
+    /// The window's page container: a page loading out of sight is laid out at its size, not at 0x0, so
+    /// showing it later needs no relayout, breakpoint change or image refetch.
+    weak var pageContainer: NSView?
+
     /// Tabs whose engine was built for an extension page before that extension loaded (a launch restore
     /// racing the extensions' restore): the page stays blank until the engine is rebuilt.
     var tabsAwaitingTheirExtension: Set<UUID> = []
@@ -61,6 +65,8 @@ final class TabManager {
     /// Visible order of current-space tabs as last reported to extensions,
     /// used to detect reorders and fire `tabs.onMoved`. Maintained only by `emitTabMovedEventsIfNeeded`.
     var lastExtensionTabMoveOrder: [UUID] = []
+    /// The folder of each grouped tab of that order, to fire `tabs.onUpdated` with `groupId` when it changes.
+    var lastExtensionTabGroups: [UUID: UUID] = [:]
 
     /// The command bar's top hit loading out of sight for a blank tab: `load(_:inTab:)` swaps it in.
     private(set) var topHitPreload: (url: URL, tabId: UUID, engine: WKWebViewTab)?
@@ -219,6 +225,7 @@ final class TabManager {
         if let adapter = engineHost.removeTabAdapter(for: id), let registry = extensionRegistry {
             registry.controller.didCloseTab(adapter, windowIsClosing: false)
         }
+        extensionRegistry?.forgetTab(id)
         engineHost.teardown(engineHost.removeEngine(for: id))
         // Close/discard removes the tab from the tree; drop its overlay entry at the source so it can't
         // orphan. This is what lets the post-command projection skip the O(all-tabs) global prune.
@@ -322,6 +329,20 @@ final class TabManager {
         if new.isPinned != old.isPinned { changed.insert(.pinned) }
         if !changed.isEmpty {
             registry.controller.didChangeTabProperties(changed, for: adapter)
+        }
+        if new.faviconURL != old.faviconURL, new.faviconURL != nil { reportExtensionTabChange(of: adapter, ["favIconUrl"]) }
+    }
+
+    /// `tabs.onUpdated` for the `Tab` fields WebKit does not track, named as Chrome names them: the bridge reads their new
+    /// values off the tab it completes, from the tab state Lilo sends ahead of WebKit's reply.
+    func reportExtensionTabChange(of adapter: TabExtensionAdapter, _ fields: [String]) {
+        guard let registry = extensionRegistry, registry.hasLoadedExtensions else { return }
+        let ids = registry.listeningExtensionIds("tabs", "onUpdated")
+        guard !ids.isEmpty else { return }
+        registry.emitPositioned("tabs", "onUpdated", to: ids) { extensionId in
+            guard var change: [String: Any] = registry.tabPosition(of: adapter, extensionId: extensionId) else { return nil }
+            change["changed"] = fields
+            return change
         }
     }
 
@@ -447,14 +468,16 @@ final class TabManager {
         let preload = engineFactory.createTab(configuration: .init(
             dataStore: dataStore ?? engineFactory.defaultDataStore(), tabId: tab.id, profileId: profileId, refillsWarmPool: false
         ))
+        if let pageContainer { preload.fitView(in: pageContainer.bounds) }
         preload.loadURL(url)
         topHitPreload = (url, tab.id, preload)
     }
 
     /// Wakes a sleeping tab the pointer rests on, so the page is on its way when the click lands (Chrome loads a bookmark
     /// bar item on hover). One at a time: the previous one, never shown, goes back to sleep, as this one does after 20 s.
+    /// Never while the shown page loads, which it would compete with for the network and CPU.
     func warmTab(id: UUID) {
-        guard !engineFactory.suppressWarmPool, id != activeTabId, engineHost.engine(for: id) == nil,
+        guard !engineFactory.suppressWarmPool, id != activeTabId, activeEngineTab?.isLoading != true, engineHost.engine(for: id) == nil,
               let tab = tab(for: id), tab.url != nil, !tab.isClosed else { return }
         sleepWarmedTab()
         guard let engine = ensureLiveEngine(forTabId: id) else { return }
@@ -489,6 +512,7 @@ final class TabManager {
         )
         engine.extensionHost = target?.url.host?.lowercased()
         configureEngineRuntime(engine)
+        if let pageContainer { engine.fitView(in: pageContainer.bounds) }
         let scheme = url?.scheme?.lowercased()
         if target == nil, nativeConfiguration == nil, scheme == "chrome-extension" {
             tabsAwaitingTheirExtension.insert(engine.id)
@@ -540,15 +564,9 @@ final class TabManager {
     private func configureEngineRuntime(_ engine: WKWebViewTab) {
         engine.delegate = engineDelegate
         engine.tabManager = self
-        engine.extensionContextMenuItemsProvider = { [weak self, weak engine] in
-            guard let self, let engine,
-                  let registry = self.extensionRegistry,
-                  let adapter = self.engineHost.tabAdapter(for: engine.id) else { return [] }
-            return registry.loadedExtensions.flatMap { entry in
-                let items = entry.context.menuItems(for: adapter)
-                registry.noteUserGestures(choosing: items, extensionId: entry.id)
-                return items
-            }
+        engine.adoptExtensionContextMenuItems = { [weak self, weak engine] menu in
+            guard let self, let engine, let registry = self.extensionRegistry else { return }
+            registry.adoptContextMenuItems(in: menu, tab: self.engineHost.tabAdapter(for: engine.id), isPrivate: engine.isPrivateBrowsing)
         }
     }
 

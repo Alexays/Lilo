@@ -44,7 +44,7 @@ final class ProfileManager {
     func loadProfiles(_ loadedProfiles: [Profile], lastActiveProfileId: UUID?) throws {
         restoredLastActiveProfileId = lastActiveProfileId; hasLoadedLastActiveProfileId = true
         profiles = loadedProfiles
-        if profiles.isEmpty { let p = try createProfile(name: "Default", isDefault: true); activateProfile(id: p.id) }
+        if profiles.isEmpty { let p = try createProfile(name: "Default".localized, isDefault: true); activateProfile(id: p.id) }
     }
 
     var defaultProfile: Profile? {
@@ -63,6 +63,10 @@ final class ProfileManager {
         let store = engineFactory.createDataStore(persistent: false, identifier: spaceId.uuidString)
         privateDataStores[spaceId] = store
         return store
+    }
+
+    func privateSpaceId(of store: WKWebsiteDataStore) -> UUID? {
+        privateDataStores.first { $0.value.backingStore === store }?.key
     }
 
     func releaseEphemeralDataStore(for spaceId: UUID) {
@@ -123,7 +127,7 @@ final class ProfileManager {
         if let bundleId = Bundle.main.bundleIdentifier {
             let extensionData = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
                 .appendingPathComponent("WebKit/\(bundleId)/WebExtensions/\(id.uuidString)", isDirectory: true)
-            try? FileManager.default.removeItem(at: extensionData)
+            Task.detached(priority: .utility) { try? FileManager.default.removeItem(at: extensionData) }
         }
         // Cookies, caches and site storage. WebKit refuses to remove a store still in use: its last references go with this turn,
         // and the network process lets go of it a moment later.

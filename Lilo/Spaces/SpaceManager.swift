@@ -51,8 +51,12 @@ final class SpaceManager {
 
     @discardableResult
     func createHomeSpace(for profileId: UUID) throws -> Space {
-        if let existing = persistentSpaces.first(where: { $0.profileId == profileId && $0.name == "Home" }) { return existing }
-        return try createSpace(name: "Home", icon: "🏠", profileId: profileId)
+        let name = "Home".localized
+        // The English name too: the space may predate a language change.
+        if let existing = persistentSpaces.first(where: { $0.profileId == profileId && ($0.name == name || $0.name == "Home") }) {
+            return existing
+        }
+        return try createSpace(name: name, icon: "🏠", profileId: profileId)
     }
 
     @discardableResult

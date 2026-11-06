@@ -35,6 +35,8 @@ function frameSender(sender: any, url: string): unknown {
 }
 
 let workerScript: string | undefined;
+/** Told of each response a listener owes, until it is sent. */
+let owing: ((answered: PromiseLike<unknown>) => void) | undefined;
 
 /**
  * WebKit names the worker by its extension's origin alone, where Chrome gives its script's url: Aircall's offscreen
@@ -56,15 +58,25 @@ function answeringListener(listener: Listener): Listener {
       if (isProbe(message) || isExternal(message)) return undefined;
       const url = frameUrl(message, sender);
       const framed = typeof url === 'string';
+      let answered = false;
+      let settle: (() => void) | undefined;
       const result = listener.call(
         this,
         framed ? (message as { message?: unknown }).message : message,
         framed ? frameSender(sender, url) : chromeSender(sender),
-        (response?: unknown) => sendResponse(response === undefined ? null : response),
+        (response?: unknown) => {
+          answered = true;
+          settle?.();
+          sendResponse(response === undefined ? null : response);
+        },
       );
-      return typeof (result as PromiseLike<unknown>)?.then === 'function'
-        ? Promise.resolve(result).then((response) => (response === undefined ? null : response))
-        : result;
+      if (typeof (result as PromiseLike<unknown>)?.then === 'function') {
+        const answer = Promise.resolve(result).then((response) => (response === undefined ? null : response));
+        owing?.(answer);
+        return answer;
+      }
+      if (result === true && !answered) owing?.(new Promise<void>((resolve) => { settle = resolve; }));
+      return result;
     };
     answering.set(listener, wrapper);
   }
@@ -72,13 +84,18 @@ function answeringListener(listener: Listener): Listener {
 }
 
 /**
- * Registers `onMessage`'s listeners through answeringListener, calling `onListen` for each, and answers the probe
- * while one is registered. The members go on the event object, which the caller keeps alive: WebKit shares the
- * prototype with every other event.
+ * Registers `onMessage`'s listeners through answeringListener, calling `onListeners` as the first one comes and the
+ * last one goes and `onOwing` with each response a listener owes, and answers the probe while one is registered. The
+ * members go on the event object, which the caller keeps alive: WebKit shares the prototype with every other event.
  */
-export function answerAsChrome(onMessage: any, onListen?: () => void): void {
-  // Each content script entry carries its own copy of the compat: the first one answers for all.
+export function answerAsChrome(
+  onMessage: any,
+  onListeners?: (listening: boolean) => void,
+  onOwing?: (answered: PromiseLike<unknown>) => void,
+): void {
+  // Several copies of the compat can run in one world (an uncovered entry, a scripting injection): the first answers for all.
   if (Object.hasOwn(onMessage, 'addListener')) return;
+  owing = onOwing;
   const listeners = new Set<Listener>();
   const answerProbe = (message: unknown, _sender: unknown, sendResponse: (response: boolean) => void) => {
     if (isProbe(message)) sendResponse(true);
@@ -86,7 +103,6 @@ export function answerAsChrome(onMessage: any, onListen?: () => void): void {
   for (const name of ['addListener', 'removeListener', 'hasListener']) {
     Object.defineProperty(onMessage, name, {
       value(listener: Listener, ...rest: unknown[]) {
-        if (name === 'addListener') onListen?.();
         // The prototype's at call time: Lilo patches it once the namespace is handed out.
         const prototype = Object.getPrototypeOf(onMessage);
         const result = prototype[name].call(onMessage, typeof listener === 'function' ? answeringListener(listener) : listener, ...rest);
@@ -94,7 +110,10 @@ export function answerAsChrome(onMessage: any, onListen?: () => void): void {
           const listened = listeners.size > 0;
           if (name === 'addListener') listeners.add(listener);
           else listeners.delete(listener);
-          if (listened !== listeners.size > 0) prototype[listened ? 'removeListener' : 'addListener'].call(onMessage, answerProbe);
+          if (listened !== listeners.size > 0) {
+            prototype[listened ? 'removeListener' : 'addListener'].call(onMessage, answerProbe);
+            onListeners?.(!listened);
+          }
         }
         return result;
       },
@@ -236,7 +255,7 @@ export const externalMark = '?liloExternal=';
 export function relayExternalMessaging(runtime: any): void {
   const target = home(runtime);
   const { sendMessage, connect } = target;
-  // Each content script entry carries its own copy of the compat: the first one relays for all.
+  // Several copies of the compat can run in one world (an uncovered entry, a scripting injection): the first relays for all.
   if (typeof sendMessage !== 'function' || typeof connect !== 'function' || sendMessage.__liloRelays) return;
   // Called on runtime, never on this: an extension may call them detached, as Chrome's.
   // A message WebKit fails as its tab closes, which Chrome never answers: the page goes.

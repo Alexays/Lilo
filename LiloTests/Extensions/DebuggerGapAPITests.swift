@@ -137,6 +137,28 @@ final class DebuggerGapAPITests: XCTestCase {
         XCTAssertEqual(again.error, "Debugger is not attached to the tab with id: 7.")
     }
 
+    func testADebuggedBackgroundTabStaysAwake() async throws {
+        let debugged = try await openTab()
+        let idle = try await openTab()
+        _ = try await openTab()
+        let debuggedEngine = try XCTUnwrap(window.tabManager.engineTab(for: debugged.id))
+        let idleEngine = try XCTUnwrap(window.tabManager.engineTab(for: idle.id))
+        let later = Date().addingTimeInterval(60 * 60)
+        window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: later)
+        try await waitUntil("both idle tabs freeze") { debuggedEngine.isFrozen && idleEngine.isFrozen }
+
+        let attachError = await attach(debugged.position)
+        XCTAssertNil(attachError)
+        window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: later)
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await debuggedEngine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
+        XCTAssertFalse(debuggedEngine.isFrozen)
+        idleEngine.resume()   // the context's teardown cannot touch a suspended page
+
+        _ = await call("detach", ["target": ["tabId": 7]])
+        XCTAssertFalse(debuggedEngine.isExtensionDebugged)
+    }
+
     func testCancelFromTheBannerDetachesTheExtension() async throws {
         let tab = try await openTab()
         _ = await attach(tab.position)
@@ -149,6 +171,23 @@ final class DebuggerGapAPITests: XCTestCase {
         XCTAssertEqual(events("debugger.onDetach").first?[1] as? String, "canceled_by_user")
         let targets = await call("getTargets").result as? [[String: Any]] ?? []
         XCTAssertEqual(targets.first { $0["id"] as? String == tab.id.uuidString }?["attached"] as? Bool, false)
+    }
+
+    func testEmulationAndScriptsOutliveTheInspectorClosing() async throws {
+        let tab = try await openTab()
+        _ = await attach(tab.position)
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+        _ = await send("Emulation.setUserAgentOverride", ["userAgent": "Debugged/1.0"])
+        let added = await send("Page.addScriptToEvaluateOnNewDocument", ["source": "window.marker = 'set'"])
+        XCTAssertEqual(added.result["identifier"] as? String, "1", added.error ?? "")
+
+        // As the user closing the Web Inspector they had open on the tab.
+        XCTAssertTrue(WebInspectorSupport.close(for: engine.wkWebView))
+        _ = await send("Runtime.evaluate", ["expression": "document.title = 'old'"])
+        _ = await send("Page.reload")
+        try await waitUntil("the page reloads") { engine.currentTitle == "Debugged" && !engine.wkWebView.isLoading }
+        let seen = await send("Runtime.evaluate", ["expression": "navigator.userAgent + ' ' + window.marker", "returnByValue": true])
+        XCTAssertEqual((seen.result["result"] as? [String: Any])?["value"] as? String, "Debugged/1.0 set", seen.error ?? "")
     }
 
     func testDomAndScreenshotCommandsTranslate() async throws {
@@ -191,6 +230,45 @@ final class DebuggerGapAPITests: XCTestCase {
         _ = await send("Input.dispatchKeyEvent", ["type": "keyUp", "key": "b"])
         let value = await send("Runtime.evaluate", ["expression": "document.getElementById('field').value", "returnByValue": true])
         XCTAssertEqual((value.result["result"] as? [String: Any])?["value"] as? String, "ab", "an Input command answers once the page handled it")
+
+        _ = await send("Runtime.evaluate", ["expression": "window.keys = []; addEventListener('keydown', e => keys.push(e.key + (e.metaKey ? '+meta' : '')))"])
+        _ = await send("Input.dispatchKeyEvent", ["type": "rawKeyDown", "key": "a", "modifiers": 4])
+        _ = await send("Input.dispatchKeyEvent", ["type": "keyUp", "key": "a", "modifiers": 4])
+        _ = await send("Input.dispatchKeyEvent", ["type": "rawKeyDown", "key": "Tab"])
+        _ = await send("Input.dispatchKeyEvent", ["type": "keyUp", "key": "Tab"])
+        let keys = await send("Runtime.evaluate", ["expression": "keys.join(',')", "returnByValue": true])
+        XCTAssertEqual((keys.result["result"] as? [String: Any])?["value"] as? String, "a+meta,Tab", "a rawKeyDown with no char still reaches the page")
+
+        let wheel = await send("Input.dispatchMouseEvent", ["type": "mouseWheel", "x": 10, "y": 10, "deltaX": 0, "deltaY": 1e10])
+        XCTAssertNil(wheel.error, "a delta past Int32 is clamped")
+        let scale = await send("Emulation.setDeviceMetricsOverride", ["width": 0, "height": 0, "deviceScaleFactor": -1, "mobile": false])
+        XCTAssertEqual(scale.error?.contains("-32602"), true)
+    }
+
+    func testPuppeteerStartupAndNavigationEvents() async throws {
+        let tab = try await openTab()
+        _ = await attach(tab.position)
+        for method in ["Page.setLifecycleEventsEnabled", "Performance.enable", "Log.enable", "Audits.enable", "Fetch.disable"] {
+            let reply = await send(method, ["enabled": true])
+            XCTAssertNil(reply.error, method)
+        }
+        _ = await send("Runtime.enable")
+        let tree = await send("Page.getFrameTree")
+        let oldLoader = ((tree.result["frameTree"] as? [String: Any])?["frame"] as? [String: Any])?["loaderId"] as? String
+
+        let navigated = await send("Page.navigate", ["url": "http://127.0.0.1:\(server.port)/"])
+        let loader = try XCTUnwrap(navigated.result["loaderId"] as? String, navigated.error ?? "")
+        XCTAssertNotEqual(loader, oldLoader)
+        let names = { self.events("debugger.onEvent").compactMap { $0[1] as? String } }
+        try await waitUntil("a Runtime-only session hears its contexts cleared") { names().contains("Runtime.executionContextsCleared") }
+        XCTAssertFalse(names().contains("Page.frameNavigated"), "Page events reach only sessions that enabled Page")
+
+        _ = await send("Page.enable")
+        _ = await send("Page.reload")
+        try await waitUntil("the page's lifecycle events arrive") {
+            let lifecycle = self.events("debugger.onEvent").filter { $0[1] as? String == "Page.lifecycleEvent" }.compactMap { ($0[2] as? [String: Any])?["name"] as? String }
+            return lifecycle.contains("init") && lifecycle.contains("load")
+        }
     }
 
     func testRestrictedPagesFollowChrome() throws {

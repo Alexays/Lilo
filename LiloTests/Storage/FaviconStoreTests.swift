@@ -72,9 +72,10 @@ final class FaviconStoreTests: XCTestCase {
             FaviconStore.Entry(host: "b.example", dataURL: "data:b", dominantColor: "#010203")
         ])
 
-        XCTAssertEqual(try store.entries(forHosts: ["b.example", "missing.example"]), [
-            FaviconStore.Entry(host: "b.example", dataURL: "data:b", dominantColor: "#010203")
-        ])
+        let entries = try store.entries(forHosts: ["b.example", "missing.example"])
+        XCTAssertEqual(entries.map(\.host), ["b.example"])
+        XCTAssertEqual(entries.first?.dataURL, "data:b")
+        XCTAssertEqual(entries.first?.dominantColor, "#010203")
         XCTAssertTrue(try store.entries(forHosts: []).isEmpty)
     }
 
@@ -83,10 +84,28 @@ final class FaviconStoreTests: XCTestCase {
         try persist([FaviconStore.Entry(host: "example.com", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233")])
         var tabs = [Tab(id: UUID(), url: URL(string: "https://example.com/a"), title: "A")]
 
-        FaviconService().rehydrateRestoredTabs(&tabs, store: store)
+        FaviconService().rehydrateRestoredTabs(&tabs, partition: UUID(), store: store)
 
         XCTAssertEqual(tabs[0].faviconDataURL, "data:image/png;base64,QUJD")
         XCTAssertEqual(tabs[0].faviconDominantColor, "#112233")
+    }
+
+    /// An icon read from a profile's store under a day ago is served there without rewriting its row.
+    @MainActor
+    func testServingAFreshlyStoredFaviconLeavesItsRow() throws {
+        let store = self.store!
+        try persist([FaviconStore.Entry(host: "example.com", dataURL: "data:stored", dominantColor: nil)])
+        let profileId = UUID()
+        let service = FaviconService()
+        service.storeForProfile = { _ in store }
+        var tabs = [Tab(id: UUID(), url: URL(string: "https://example.com/a"), title: "A")]
+        let changesBefore = try database.pool.write { $0.totalChangesCount }
+
+        service.rehydrateRestoredTabs(&tabs, partition: profileId, store: store)
+        service.persistCachedIfUnwritten(host: "example.com", partition: profileId)
+        try database.pool.write { _ in }
+
+        XCTAssertEqual(try database.pool.write { $0.totalChangesCount }, changesBefore)
     }
 
     /// The cap evicts by updatedAt, so an icon still in use must refresh its row even when unchanged.
@@ -96,9 +115,10 @@ final class FaviconStoreTests: XCTestCase {
         store.importMissingAsync([FaviconStore.Entry(host: "used.example", dataURL: "data:used", dominantColor: nil)])
         let service = FaviconService()
         service.storeForProfile = { _ in store }
-        service.warmIfAbsent(host: "used.example", dataURL: "data:used", dominantColor: nil)
+        let profileId = UUID()
+        service.warmIfAbsent(host: "used.example", dataURL: "data:used", dominantColor: nil, partition: profileId)
 
-        service.seed(host: "used.example", dataURL: "data:used", dominantColor: nil, profileId: UUID())
+        service.seed(host: "used.example", dataURL: "data:used", dominantColor: nil, partition: profileId)
         try database.pool.write { _ in }
 
         let updatedAt = try database.pool.read { db in
@@ -107,9 +127,9 @@ final class FaviconStoreTests: XCTestCase {
         XCTAssertGreaterThan(try XCTUnwrap(updatedAt), Date(timeIntervalSince1970: 0))
     }
 
-    /// The cache is shared by every profile: serving its icon to another profile stores it there too.
+    /// Each profile has its own cache: an icon one profile loaded is neither served to nor stored in another.
     @MainActor
-    func testCachedFaviconServedToAnotherProfileLandsInThatProfilesStore() throws {
+    func testAFaviconCachedForOneProfileStaysOutOfAnother() throws {
         let other = try TemporaryProfileDatabase()
         defer { other.tearDown() }
         let otherStore = FaviconStore(dbPool: other.pool)
@@ -118,17 +138,15 @@ final class FaviconStoreTests: XCTestCase {
         let service = FaviconService()
         service.storeForProfile = { stores[$0] }
 
-        service.seed(host: "shared.example", dataURL: "data:shared", dominantColor: "#010203", profileId: firstProfile)
-        service.persistCachedIfUnwritten(host: "shared.example", profileId: firstProfile)
-        service.persistCachedIfUnwritten(host: "Shared.Example", profileId: secondProfile)
+        service.seed(host: "shared.example", dataURL: "data:shared", dominantColor: "#010203", partition: firstProfile)
+        service.persistCachedIfUnwritten(host: "Shared.Example", partition: secondProfile)
         try database.pool.write { _ in }
         try other.pool.write { _ in }
 
         XCTAssertEqual(try store.all().map(\.host), ["shared.example"])
-        let copied = try otherStore.all()
-        XCTAssertEqual(copied.map(\.host), ["shared.example"])
-        XCTAssertEqual(copied.first?.dataURL, "data:shared")
-        XCTAssertEqual(copied.first?.dominantColor, "#010203")
+        XCTAssertNotNil(service.cached(for: "shared.example", partition: firstProfile))
+        XCTAssertNil(service.cached(for: "shared.example", partition: secondProfile))
+        XCTAssertEqual(try otherStore.all().count, 0)
     }
 
     func testImportNeverReplacesOrEvictsTheUsersFavicons() throws {

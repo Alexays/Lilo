@@ -29,27 +29,30 @@ extension MainWindowController {
         bridgeRouter.send(event: "openCommandBar", data: ["prefill": "<"])
     }
 
-    /// Sends the archived tabs with their favicons keyed by host, so a site archived many times sends its icon once.
+    /// Sends the archived tabs with the favicons, keyed by host, that this window's chrome does not hold yet.
     func sendArchivedTabs() {
         var favicons: [String: String] = [:]
         var missingHosts = Set<String>()
         let spaceId = tabManager.currentSpaceId
+        let space = context.spaceManager?.space(with: spaceId)
         for entry in context.tabArchive.entries where entry.spaceId == spaceId {
             guard let host = entry.url.faviconKey, favicons[host] == nil else { continue }
-            if let cached = context.faviconService.cached(for: host) {
+            if let space, let cached = context.faviconService.cached(for: host, partition: space.dataStoreId) {
                 favicons[host] = cached.dataURL
             } else {
                 missingHosts.insert(host)
             }
         }
         // Tabs archived before a relaunch are in no live tab, so the cache misses them: the store has them.
-        if !missingHosts.isEmpty, let profileId = context.spaceManager?.space(with: spaceId)?.profileId,
-           let store = context.profileContexts.existingContext(for: profileId)?.favicons {
+        if !missingHosts.isEmpty, let space, !space.isPrivate, let store = context.profileContexts.existingContext(for: space.profileId)?.favicons {
             for entry in (try? store.entries(forHosts: missingHosts)) ?? [] {
-                context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
+                                                    partition: space.profileId, persistedAt: entry.updatedAt)
                 favicons[entry.host] = entry.dataURL
             }
         }
+        favicons = favicons.filter { sentArchiveFavicons[$0.key] != $0.value }
+        sentArchiveFavicons.merge(favicons) { $1 }
         bridgeRouter.send(event: "archivedTabs", data: ["tabs": archivedTabSummaries(), "favicons": favicons])
     }
 

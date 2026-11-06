@@ -269,7 +269,8 @@ extension MainWindowController {
             Task { [context] in
                 let entries = (try? await Task.detached(priority: .utility) { try store.all() }.value) ?? []
                 for entry in entries {
-                    context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                    context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
+                                                        partition: profileId, persistedAt: entry.updatedAt)
                 }
                 context.lastFaviconWarmProfileId = profileId
             }
@@ -290,7 +291,8 @@ extension MainWindowController {
                 return context.windows.windows.compactMap { window in
                     guard let spaceId = window.tabManager.currentSpaceId,
                           let space = context.spaceManager?.space(with: spaceId),
-                          space.profileId == profileId, !space.isPrivate else { return nil }
+                          space.profileId == profileId, !space.isPrivate,
+                          !context.unreadableSpaceIds.contains(spaceId) else { return nil }
                     return spaceId
                 }
             },
@@ -300,12 +302,21 @@ extension MainWindowController {
                 context?.browserState.space(id: spaceId)?.spaceTab.state
             },
             dedupKeyProvider: { [weak context = self.context] spaceId in
-                // Cheap key off the store's owned SpaceTab: durableRevision bumps on every durable mutation.
+                // Cheap key off the store's owned SpaceTab: durableRevision bumps on every durable mutation
+                // except activation, which the spaces table and the switch and quit saves carry.
                 guard let spaceTab = context?.browserState.space(id: spaceId)?.spaceTab else { return nil }
                 return SessionPersistence.SaveDedupKey(
                     spaceId: spaceId,
                     structureToken: spaceTab.structureToken,
                     durableRevision: spaceTab.durableRevision
+                )
+            },
+            saveFailed: { [weak context = self.context] error in
+                context?.showDegradedDatabaseAlert(
+                    subject: "session",
+                    message: "Lilo couldn't save your tabs".localized,
+                    informative: "Recent changes may be missing the next time you open Lilo. Check that your disk has free space.".localized,
+                    error: error
                 )
             }
         )
@@ -343,32 +354,6 @@ extension MainWindowController {
         if let id = storedSpaceIds["lastPersistentSpaceId"],
            let space = context.spaceManager?.space(with: id), space.profileId == profileId, !space.isPrivate { return id }
         return nil
-    }
-
-    /// Drops the saved tab and interaction state of spaces that no longer exist. Only profiles that own
-    /// a space are swept, so no database gets created. A profile's database opens off the main thread;
-    /// its spaces are read back on it once open, and the delete queues on the writer behind every save
-    /// made before, ahead of every save made after.
-    func deleteOrphanedSpaceStates() {
-        guard let spaceManager = context.spaceManager, let dbManager = context.dbManager else { return }
-        let profileIds = Set(spaceManager.spaces.filter { !$0.isPrivate }.map(\.profileId))
-        Task.detached(priority: .utility) {
-            for profileId in profileIds {
-                let pool: DatabasePool
-                do { pool = try dbManager.pool(for: profileId) } catch {
-                    Self.logger.error("orphaned space state sweep skipped a profile: \(error.localizedDescription, privacy: .public)")
-                    continue
-                }
-                await MainActor.run {
-                    let spaceIds = Set(spaceManager.spaces(for: profileId).filter { !$0.isPrivate }.map(\.id))
-                    let databasePath = pool.path
-                    pool.asyncWrite({ db in
-                        try SpaceTabStateStore.deleteAllOn(db: db, exceptSpaces: spaceIds)
-                        try InteractionStateStore.deleteAllOn(db: db, databasePath: databasePath, exceptSpaces: spaceIds)
-                    }, completion: loggingPersistenceFailure("spaceStates.orphanCleanup[\(profileId.uuidString)]"))
-                }
-            }
-        }
     }
 
     func restoreStoredSpaceIds(for profileId: UUID) async -> [String: UUID] {
@@ -473,9 +458,10 @@ extension MainWindowController {
         // Sanitize at ingest: disk state is the only entry point for malformed urls/titles, so
         // every snapshot in the store is trusted and activation never re-sanitizes.
         var restoredTabs = sanitizeTabs(projection.tabs, spaceId: space.id)
-        // No database before setup (and in tests): rehydrate from the in-memory cache only.
-        let faviconStore = (try? context.dbManager?.pool(for: space.profileId)).map { FaviconStore(dbPool: $0) }
-        context.faviconService.rehydrateRestoredTabs(&restoredTabs, store: faviconStore)
+        // No database before setup (and in tests): rehydrate from the in-memory cache only. A private
+        // space never takes its profile's icons: they would spare it requests the profile made.
+        let faviconStore = space.isPrivate ? nil : (try? context.dbManager?.pool(for: space.profileId)).map { FaviconStore(dbPool: $0) }
+        context.faviconService.rehydrateRestoredTabs(&restoredTabs, partition: space.dataStoreId, store: faviconStore)
         let activeTabId = restorableActiveTabId(
             preferred: space.activeTabId ?? state.activeTabId,
             in: restoredTabs
@@ -519,6 +505,7 @@ extension MainWindowController {
         if !debounced { Self.flushPendingInteractionStates(context: context, synchronous: synchronous) }
         guard tabManager.currentSpaceId == spaceId,
               let space = context.spaceManager?.space(with: spaceId), !space.isPrivate,
+              !context.unreadableSpaceIds.contains(spaceId),
               let pool = try? context.poolReportingFailure(for: space.profileId) else { return }
 
         // Every live page, whose count the engine budget bounds, then the most recently discarded ones.
@@ -605,7 +592,7 @@ extension MainWindowController {
 
     /// Restore path entry point: a readable row (or none) restores normally; an unreadable row is
     /// quarantined and the space starts empty, so the next save can never overwrite the bad blob.
-    /// A database failure (pool open, read) also degrades to empty, but is surfaced per profile.
+    /// A database failure (pool open, read) also degrades to empty, surfaced per profile, and the space is never saved this launch.
     private func loadedOrQuarantinedSpaceTabState(for space: Space) -> SpaceTabState {
         do {
             return try restoredSpaceTabState(for: space)
@@ -618,6 +605,8 @@ extension MainWindowController {
             }
             bridgeRouter.send(event: "sessionRestoreDegraded", data: ["spaceName": space.name])
         } catch {
+            // The row may be intact: saving the empty state over it would lose it.
+            context.unreadableSpaceIds.insert(space.id)
             context.notifyProfileDatabaseFailure(profileId: space.profileId, error: error)
         }
         return SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)

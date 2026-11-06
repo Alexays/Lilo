@@ -72,6 +72,14 @@ final class TerminalRenderer {
         for _ in 0..<Self.framesInFlight { inFlight.signal() }
     }
 
+    /// Drops the per-frame buffers of a terminal hidden for long; the next frame allocates them again.
+    func releaseBuffers() {
+        waitUntilIdle()
+        backgroundBuffers = Array(repeating: nil, count: Self.framesInFlight)
+        instanceBuffers = Array(repeating: nil, count: Self.framesInFlight)
+        currentSlots = 0
+    }
+
     /// Blocks while three frames are already on the GPU, then encodes and commits this one.
     /// `contentChanged` false reuses what the slot already holds when it is the latest content.
     func render(

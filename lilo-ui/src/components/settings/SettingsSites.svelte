@@ -1,10 +1,10 @@
 <script lang="ts">
   import { settingsActions } from "../../lib/bridge/actions";
   import { formatTimestamp } from "../../lib/format";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { closeSettingsSubpage } from "../../stores/panels.svelte";
   import { getSitePermissions, getWebsiteData, getZoomLevels } from "../../stores/settings.svelte";
-  import { buildSites, sitePermissionLabel } from "./settingsPanelModel";
+  import { buildSites, SITE_ROW_LIMIT, sitePermissionLabel } from "./settingsPanelModel";
   import SettingsSiteRow from "./SettingsSiteRow.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
@@ -13,13 +13,11 @@
 
   let { subpage }: { subpage: string | null } = $props();
 
-  // Rendering every row of a large store is costly; the settings search narrows it down instead.
-  const ROW_LIMIT = 100;
-
   const sites = $derived(buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()));
   const siteKey = $derived(subpage?.startsWith("site:") ? subpage.slice("site:".length) : null);
   const site = $derived(siteKey ? sites.find((candidate) => candidate.key === siteKey) : undefined);
-  const percent = $derived(new Intl.NumberFormat(getLocale(), { style: "percent" }));
+  const percent = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "percent" }));
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
 
   // Everything stored for the site was removed: there is nothing left to show.
   $effect(() => {
@@ -33,7 +31,7 @@
       {#each site.permissions as permission (permission.id)}
         <UiListRow
           title={sitePermissionLabel(permission.type, t)}
-          description={t("settings.sites.permissionUpdated", { origin: permission.origin, time: formatTimestamp(permission.updatedAt) })}
+          description={t("settings.sites.permissionUpdated", { origin: permission.origin, time: formatTimestamp(permission.updatedAt, getFormatLocale()) })}
         >
           {#snippet action()}
             <UiBadge tone={permission.decision === "deny" ? "danger" : "success"}>
@@ -61,7 +59,7 @@
     <UiInsetList title={t("settings.groups.siteData")}>
       <UiListRow
         title={t("settings.sites.dataSummary")}
-        description={site.dataKinds.map((kind) => t(`settings.websiteDataKinds.${kind}`)).join(", ")}
+        description={listFormat.format(site.dataKinds.map((kind) => t(`settings.websiteDataKinds.${kind}`)))}
       >
         {#snippet action()}
           <UiButton variant="danger" onclick={() => settingsActions.removeWebsiteData(dataName)}>{t("common.clear")}</UiButton>
@@ -76,12 +74,12 @@
   </div>
 {:else}
   <UiInsetList title={t("settings.groups.sites", { count: sites.length })}>
-    {#each sites.slice(0, ROW_LIMIT) as entry (entry.key)}
+    {#each sites.slice(0, SITE_ROW_LIMIT) as entry (entry.key)}
       <SettingsSiteRow site={entry} />
     {/each}
   </UiInsetList>
-  {#if sites.length > ROW_LIMIT}
-    <p class="sites-more">{t("settings.sites.more", { count: sites.length - ROW_LIMIT })}</p>
+  {#if sites.length > SITE_ROW_LIMIT}
+    <p class="sites-more">{t("settings.sites.more", { count: sites.length - SITE_ROW_LIMIT })}</p>
   {/if}
 {/if}
 

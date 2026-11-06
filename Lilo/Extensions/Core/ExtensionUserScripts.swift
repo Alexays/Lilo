@@ -1,3 +1,4 @@
+import OSLog
 import WebKit
 
 /// `chrome.userScripts` for one profile: each loaded extension's registrations and world
@@ -5,6 +6,8 @@ import WebKit
 /// `chrome.runtime` of the pages an extension's `externally_connectable` names.
 @MainActor
 final class ExtensionUserScripts {
+    private static let logger = Logger(liloCategory: "extension-user-scripts")
+
     /// What `chrome.userScripts` and `externally_connectable` inject for one extension into this profile's tabs.
     struct Install {
         let scripts: [WKUserScript]
@@ -90,8 +93,12 @@ final class ExtensionUserScripts {
         if pendingReinstalls.insert(extensionId).inserted, pendingReinstalls.count == 1 {
             Task { @MainActor [weak self] in self?.flushReinstalls() }
         }
-        if let scripts { try? await storage.setUserScripts(scripts, extensionId: extensionId) }
-        if let worlds { try? await storage.setUserScriptWorlds(worlds, extensionId: extensionId) }
+        do {
+            if let scripts { try await storage.setUserScripts(scripts, extensionId: extensionId) }
+            if let worlds { try await storage.setUserScriptWorlds(worlds, extensionId: extensionId) }
+        } catch {
+            Self.logger.error("Failed to persist user scripts of \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
+        }
         // Applied before the caller replies, even when nothing above suspended.
         flushReinstalls()
     }
@@ -108,7 +115,7 @@ final class ExtensionUserScripts {
         if let connectable = loaded.flatMap({ connectableScript(extensionId, context: $0.context) }) {
             current = Install(
                 scripts: (current?.scripts ?? []) + [connectable], messagingWorlds: current?.messagingWorlds ?? [],
-                allowsPrivateAccess: access.states[extensionId]?.allowsPrivateAccess == true
+                allowsPrivateAccess: loaded?.context.hasAccessToPrivateData == true
             )
         }
         installs[extensionId] = current
@@ -203,7 +210,7 @@ final class ExtensionUserScripts {
         }
         registrations[extensionId]?.built = built
         guard !scripts.isEmpty else { return nil }
-        return Install(scripts: scripts, messagingWorlds: messagingWorlds, allowsPrivateAccess: access.states[extensionId]?.allowsPrivateAccess == true)
+        return Install(scripts: scripts, messagingWorlds: messagingWorlds, allowsPrivateAccess: context.hasAccessToPrivateData)
     }
 
     // WebKit's patterns have no `<all_urls>`.

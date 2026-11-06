@@ -2,10 +2,10 @@ import type {
   BridgeCommandName,
   BridgeCommandPayloadMap,
   BridgeEventPayloadMap,
-  BridgeSidebarTreeItemSnapshot,
   BridgeTabFolderSnapshot,
 } from "../../../lilo-ui/src/lib/bridge/protocol";
 import type { DemoSnapshot } from "./host.ts";
+import type { DemoTreeItem } from "./world.ts";
 
 type ContextCommand = {
   [K in BridgeCommandName]: {
@@ -114,13 +114,13 @@ const lockedAncestor = (snapshot: DemoSnapshot, id: string) => {
 };
 
 export const contextFolderTargets = (
-  treeItems: BridgeSidebarTreeItemSnapshot[],
+  treeItems: DemoTreeItem[],
   folders: BridgeTabFolderSnapshot[],
   spaceId: string
 ) => {
   const result: {
     folder: BridgeTabFolderSnapshot;
-    item: BridgeSidebarTreeItemSnapshot;
+    item: DemoTreeItem;
     depth: number;
   }[] = [];
 

@@ -64,7 +64,7 @@
     class:with-nav={!!nav}
     class:nav-compact={narrow.current}
     aria-label={ariaLabel}
-    transition:shellTransition
+    transition:shellTransition|global
     use:reportInteractiveZone={{ id: interactiveZoneId, active }}
   >
     {#if nav}
@@ -220,9 +220,9 @@
   .ui-shell-frame-eyebrow {
     margin: 0;
     color: var(--text-muted);
-    font-size: var(--font-size-2xs);
+    font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
-    letter-spacing: 0;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 

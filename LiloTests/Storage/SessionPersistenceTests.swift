@@ -13,6 +13,7 @@ final class SessionPersistenceTests: XCTestCase {
     private var tabManager: TabManager!
     private var spaceManager: SpaceManager!
     private var persistence: SessionPersistence!
+    private var saveFailures = 0
 
     override func setUpWithError() throws {
         let testsDirectory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
@@ -49,7 +50,8 @@ final class SessionPersistenceTests: XCTestCase {
                 tabManager?.spaceTabState(forSpace: spaceId)
                     ?? SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)
             },
-            dedupKeyProvider: { _ in nil }
+            dedupKeyProvider: { _ in nil },
+            saveFailed: { [weak self] _ in self?.saveFailures += 1 }
         )
     }
 
@@ -230,7 +232,8 @@ final class SessionPersistenceTests: XCTestCase {
             },
             dedupKeyProvider: { _ in
                 SessionPersistence.SaveDedupKey(spaceId: spaceId, structureToken: token, durableRevision: revision)
-            }
+            },
+            saveFailed: { _ in }
         )
 
         // First schedule: the key is unseen, so it falls through, runs the provider and enqueues.
@@ -281,7 +284,8 @@ final class SessionPersistenceTests: XCTestCase {
                     spaceId: spaceId
                 )
             },
-            dedupKeyProvider: { _ in SessionPersistence.SaveDedupKey(spaceId: spaceId, structureToken: token, durableRevision: 3) }
+            dedupKeyProvider: { _ in SessionPersistence.SaveDedupKey(spaceId: spaceId, structureToken: token, durableRevision: 3) },
+            saveFailed: { _ in }
         )
         persistence.scheduleSave()
         persistence.saveNow()
@@ -799,6 +803,7 @@ final class SessionPersistenceTests: XCTestCase {
         })
         XCTAssertEqual(try persistedFolderNames(in: space.id), ["WillFail"],
                        "Failed async write should restore the state to the pending queue")
+        XCTAssertEqual(saveFailures, 1, "the failure is reported")
     }
 
     func testAsyncWriteFailureDoesNotRestoreStateSupersededByNewerSnapshot() throws {

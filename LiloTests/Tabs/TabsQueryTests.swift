@@ -379,7 +379,7 @@ final class TabsQueryTests: XCTestCase {
     }
 
     func testARestedOnSleepingTabLoadsUnseenAndSleepsAgainWhenAnotherIsRestedOn() {
-        let active = makeTab(url: URL(string: "https://example.com/active"))
+        let active = makeTab()
         let first = makeTab(url: URL(string: "https://example.com/first")), second = makeTab(url: URL(string: "https://example.com/second"))
         installRuntimeTabs([active, first, second], activeTabId: active.id)
 
@@ -393,16 +393,28 @@ final class TabsQueryTests: XCTestCase {
         XCTAssertNotNil(tabManager.engineTab(for: second.id))
     }
 
+    func testARestedOnTabStaysAsleepWhileTheShownPageLoads() {
+        let active = makeTab(url: URL(string: "https://example.com/active")), other = makeTab(url: URL(string: "https://example.com/other"))
+        installRuntimeTabs([active, other], activeTabId: active.id)
+        XCTAssertEqual(tabManager.activeEngineTab?.isLoading, true)
+
+        tabManager.warmTab(id: other.id)
+        XCTAssertNil(tabManager.engineTab(for: other.id))
+    }
+
     func testARestedOnTabThatIsOpenedStaysAwake() {
-        let active = makeTab(url: URL(string: "https://example.com/active"))
+        let active = makeTab()
         let first = makeTab(url: URL(string: "https://example.com/first")), second = makeTab(url: URL(string: "https://example.com/second"))
         installRuntimeTabs([active, first, second], activeTabId: active.id)
 
         tabManager.warmTab(id: first.id)
         let engine = tabManager.engineTab(for: first.id)
         tabManager.activateTabRuntime(id: first.id)
+        // Back on the idle blank tab, as WebKit reports a stopped load only asynchronously, so warming is not held back.
+        tabManager.activateTabRuntime(id: active.id)
         tabManager.warmTab(id: second.id)
 
+        XCTAssertNotNil(tabManager.engineTab(for: second.id), "the other tab warms")
         XCTAssertNotNil(engine)
         XCTAssertTrue(tabManager.engineTab(for: first.id) === engine, "the opened tab keeps the page it loaded")
         XCTAssertEqual(tabManager.currentTabs.first { $0.id == first.id }?.isLoading, engine?.isLoading, "opened, its row shows its loading")

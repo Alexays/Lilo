@@ -468,7 +468,7 @@
 		transition:
 			background var(--transition-fast),
 			box-shadow var(--transition-fast),
-			transform 220ms var(--motion-ease-spring);
+			transform var(--motion-duration-overlay) var(--motion-ease-spring);
 	}
 
 	/* The tab rows' hover recipe (TabItem). */
@@ -522,7 +522,7 @@
 		transform-origin: 8px 8px;
 		transition:
 			opacity var(--motion-duration-fast) ease,
-			transform 340ms var(--motion-ease-spring);
+			transform var(--motion-duration-slow) var(--motion-ease-spring);
 	}
 
 	.folder-icon .folder-lid {
@@ -627,7 +627,7 @@
 		pointer-events: none;
 		transition:
 			opacity var(--motion-duration-fast) ease,
-			max-width 140ms ease;
+			max-width var(--motion-duration-fast) ease;
 	}
 
 	.folder-row:hover .folder-actions,
@@ -654,7 +654,11 @@
 		color: var(--text-primary);
 	}
 
-	/* Same specificity as the rule above, so this has to stay after it to win. */
+	.action-btn:active {
+		background: color-mix(in srgb, var(--text-primary) 18%, transparent);
+	}
+
+	/* Same specificity as the rules above, so this has to stay after them to win. */
 	.delete-btn:hover {
 		background: var(--danger);
 		color: var(--on-color);
@@ -666,9 +670,9 @@
 		opacity: 0;
 		transform: translateY(-3px);
 		transition:
-			grid-template-rows 210ms var(--motion-ease-spring),
+			grid-template-rows var(--motion-duration-normal) var(--motion-ease-spring),
 			opacity var(--motion-duration-fast) ease,
-			transform 210ms var(--motion-ease-spring);
+			transform var(--motion-duration-normal) var(--motion-ease-spring);
 		overflow: hidden;
 	}
 
@@ -704,7 +708,7 @@
 		padding: 0;
 		box-shadow: inset 0 1px 0 color-mix(in srgb, white 34%, transparent);
 		transition:
-			transform 120ms ease,
+			transform var(--motion-duration-fast) ease,
 			box-shadow var(--motion-duration-fast) ease,
 			border-color var(--motion-duration-fast) ease;
 	}

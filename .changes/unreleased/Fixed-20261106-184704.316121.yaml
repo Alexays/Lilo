@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'A damaged database no longer stops Lilo from launching: Lilo moves the unreadable file aside, starts with a new, empty database and shows where the damaged file is kept.'
+time: 2026-11-06T18:47:04.316121+01:00

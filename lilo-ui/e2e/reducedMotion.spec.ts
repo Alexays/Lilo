@@ -21,7 +21,7 @@ test("a tab starting to load swaps its icon without motion", async ({ page }) =>
 
 	await page.evaluate((tab) => window.__lilo!.receive({
 		event: "browserStatePatch",
-		operations: [{ kind: "tabUpdated", spaceId: tab.spaceId, activeTabId: tab.id, tab: { ...tab, isLoading: true } }],
+		operations: [{ kind: "tabUpdated", spaceId: tab.spaceId, tab: { ...tab, isLoading: true } }],
 	}), alpha);
 	await expect(page.locator('[data-tab-id="tab-alpha"] .tab-loader')).toBeVisible();
 

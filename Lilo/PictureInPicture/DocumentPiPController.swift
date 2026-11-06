@@ -86,7 +86,7 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
     func endMove() {
         guard let panel, let screen = panel.screen else { return }
         let snapped = Self.snappedFrame(panel.frame, in: screen.visibleFrame)
-        panel.setFrame(snapped, display: true, animate: true)
+        panel.setFrame(snapped, display: true, animate: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
         UserDefaults.standard.set(NSStringFromRect(snapped), forKey: Self.frameKey(for: screen))
         movedToScreen = screen
     }

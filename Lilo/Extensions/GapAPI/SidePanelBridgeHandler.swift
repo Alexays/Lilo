@@ -22,9 +22,10 @@ final class SidePanelBridgeHandler: GapHandler {
 
     /// Options by "profileId.extensionId", then tab (nil for the extension-wide options), with the
     /// WebKit id of each tab for `getOptions`. Chrome keeps them for the session and drops them when
-    /// the extension unloads; only the panel behavior persists, in UserDefaults.
+    /// the extension unloads, or a tab's when it closes; only the panel behavior persists, in UserDefaults.
     private var options: [String: [UUID?: (options: Options, webKitTabId: Int?)]] = [:]
     nonisolated(unsafe) private var unloadObserver: Any?
+    nonisolated(unsafe) private var tabCloseObserver: Any?
 
     init() {
         unsafe unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
@@ -37,10 +38,20 @@ final class SidePanelBridgeHandler: GapHandler {
             }
             if uninstalled { unsafe UserDefaults.lilo.removeObject(forKey: "sidePanel.\(profileId).\(extensionId)") }
         }
+        unsafe tabCloseObserver = NotificationCenter.default.addObserver(forName: .extensionTabDidClose, object: nil, queue: .main) { [weak self] note in
+            guard let tabId = note.userInfo?["tabId"] as? UUID else { return }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                for index in self.options.indices where self.options.values[index][tabId] != nil {
+                    self.options.values[index][tabId] = nil
+                }
+            }
+        }
     }
 
     deinit {
         unsafe unloadObserver.map { NotificationCenter.default.removeObserver($0) }
+        unsafe tabCloseObserver.map { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -182,8 +193,11 @@ final class SidePanelBridgeHandler: GapHandler {
             guard let adapter = call.int("windowPosition").flatMap({ call.registry.extensionWindow(at: $0, extensionId: call.extensionId) }) else {
                 return BridgeError("No window with id: \(windowId).")
             }
-            window = adapter.nsWindow?.windowController as? MainWindowController
-            guard window != nil else { return BridgeError("No browser window for windowId: \(windowId)") }
+            // A background space's browser window shows another space, maybe a private one, where its panel does not belong.
+            guard let shown = adapter.nsWindow?.windowController as? MainWindowController, shown.tabManager.currentSpaceId == adapter.spaceId else {
+                return BridgeError("No browser window for windowId: \(windowId)")
+            }
+            window = shown
         }
         guard let tabId else { return window.flatMap { body($0, nil) } }
         guard let tab = self.tab(at: call.payload["tab"], call: call) else { return BridgeError("No tab with id: \(tabId).") }

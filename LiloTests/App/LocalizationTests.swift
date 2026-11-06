@@ -40,6 +40,22 @@ final class LocalizationTests: XCTestCase {
         #endif
     }
 
+    func testEveryLocaleTranslatesEveryPermissionPrompt() throws {
+        #if !SWIFT_PACKAGE
+        let keys = (Bundle.main.infoDictionary ?? [:]).keys.filter { $0.hasSuffix("UsageDescription") }
+        XCTAssertTrue(keys.contains("NSCameraUsageDescription"))
+        let locales = Bundle.main.localizations.filter { $0 != "en" && $0 != "Base" }
+        XCTAssertFalse(locales.isEmpty)
+        for locale in locales {
+            let url = try XCTUnwrap(Bundle.main.url(forResource: "InfoPlist", withExtension: "strings", subdirectory: nil, localization: locale), locale)
+            let table = try XCTUnwrap(NSDictionary(contentsOf: url) as? [String: String], locale)
+            for key in keys {
+                XCTAssertNotNil(table[key], "\(locale) lacks \(key)")
+            }
+        }
+        #endif
+    }
+
     func testLanguageOverridesAlsoSelectTheLanguageOfSystemPanels() {
         let defaults = UserDefaults.lilo
         let domain = "\(UserDefaults.testDomainPrefix)\(getpid())"
@@ -125,6 +141,25 @@ final class LocalizationTests: XCTestCase {
             XCTAssertEqual(url.deletingLastPathComponent().lastPathComponent, "ru.lproj", resource)
         }
         #endif
+    }
+
+    func testPluralStringsPickTheFormOfEachLanguage() {
+        let key = "Delete %@ and its %d tabs?"
+        let delete = { (locale: String, count: Int) in
+            String(format: Localization.plural(key, count: count, locale: locale), "Work", count)
+        }
+        XCTAssertEqual(delete("en", 1), "Delete Work and its 1 tab?")
+        XCTAssertEqual(delete("en", 0), "Delete Work and its 0 tabs?")
+        XCTAssertEqual(delete("fr", 0), "Supprimer Work et 0 onglet ?")
+        XCTAssertEqual(delete("fr", 2), "Supprimer Work et ses 2 onglets ?")
+        XCTAssertEqual(delete("ru", 21), "Удалить Work и 21 вкладку?")
+        XCTAssertEqual(delete("ru", 3), "Удалить Work и 3 вкладки?")
+        XCTAssertEqual(delete("ru", 12), "Удалить Work и 12 вкладок?")
+        XCTAssertEqual(delete("pl", 1), "Usunąć Work i 1 kartę?")
+        XCTAssertEqual(delete("pl", 21), "Usunąć Work i 21 kart?")
+        XCTAssertEqual(delete("pl", 24), "Usunąć Work i 24 karty?")
+        XCTAssertEqual(delete("ja", 1), "Work とその1個のタブを削除しますか？")
+        XCTAssertEqual(Localization.plural("Unknown %d test strings", count: 1, locale: "ru"), "Unknown %d test strings")
     }
 
     func testRussianOverrideAlsoSelectsTheLanguageOfSystemPanels() {

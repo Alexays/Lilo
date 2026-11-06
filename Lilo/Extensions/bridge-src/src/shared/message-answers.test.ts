@@ -61,6 +61,36 @@ describe('runtime.onMessage listeners', () => {
     assert.equal(await onMessage.send('none'), undefined);
   });
 
+  it('say which responses they owe until they send them', async () => {
+    const onMessage = new Event();
+    const owed: Array<{ answered: PromiseLike<unknown>; settled: boolean }> = [];
+    answerAsChrome(onMessage, undefined, (answered) => {
+      const entry = { answered, settled: false };
+      owed.push(entry);
+      answered.then(() => { entry.settled = true; });
+    });
+    let respond: (response?: unknown) => void = () => {};
+    onMessage.addListener((message: string, _sender: unknown, sendResponse: (response?: unknown) => void) => {
+      if (message === 'now') sendResponse(1);
+      if (message === 'answered') { sendResponse(2); return true; }
+      if (message === 'later') { respond = sendResponse; return true; }
+      if (message === 'promise') return Promise.resolve(3);
+      return undefined;
+    });
+    assert.equal(await onMessage.send('now'), 1);
+    assert.equal(await onMessage.send('answered'), 2);
+    assert.equal(await onMessage.send('promise'), 3);
+    assert.equal(owed.length, 1, 'only the promise was owed');
+    const later = onMessage.send('later');
+    await new Promise(setImmediate);
+    assert.equal(owed.length, 2);
+    assert.equal(owed[1].settled, false);
+    respond(4);
+    assert.equal(await later, 4);
+    await new Promise(setImmediate);
+    assert.equal(owed[1].settled, true);
+  });
+
   it('are removed and found as registered', () => {
     const onMessage = new Event();
     answerAsChrome(onMessage);
@@ -182,7 +212,7 @@ describe('sendMessage callbacks', () => {
 
   it("get Chrome's lastError when no listener answered", async () => {
     let workerListens = true;
-    mockGapAPI(({ method }) => (method === 'workerListensToMessages' ? workerListens : null));
+    mockGapAPI(({ method }) => (method === 'othersListenToMessages' ? workerListens : null));
     const page = install(true, undefined);
     assert.deepEqual(await outcome((callback) => page.runtime.sendMessage(1, callback), page), [undefined, 'The message port closed before a response was received.']);
     workerListens = false;
@@ -244,36 +274,50 @@ describe('tabs.sendMessage promises', () => {
 });
 
 describe('sendMessage promises of a page', () => {
-  it("reject with Chrome's error when nothing receives, and resolve when the worker listens", async () => {
-    let workerListens = false;
-    mockGapAPI(({ method }) => (method === 'workerListensToMessages' ? workerListens : null));
+  it("reject with Chrome's error when no other context listens, and resolve when one does, sending only the message", async () => {
+    let othersListen = false;
+    mockGapAPI(({ method }) => (method === 'othersListenToMessages' ? othersListen : null));
+    const sent: unknown[] = [];
     class Runtime {
       getManifest() { return {}; }
       get lastError(): unknown { return null; }
-      sendMessage() { return Promise.resolve(undefined); }
+      sendMessage(message: unknown) { sent.push(message); return Promise.resolve(undefined); }
     }
     (globalThis as any).chrome = { runtime: new Runtime() };
     installChromeCompat({}, true);
     const chrome = (globalThis as any).chrome;
     await assert.rejects(chrome.runtime.sendMessage(1), { message: 'Could not establish connection. Receiving end does not exist.' });
-    workerListens = true;
-    assert.equal(await chrome.runtime.sendMessage(1), undefined);
+    othersListen = true;
+    assert.equal(await chrome.runtime.sendMessage(2), undefined);
+    assert.deepEqual(sent, [1, 2]);
   });
 
-  it('resolve when another page, as an offscreen document, listens without answering', async () => {
-    mockGapAPI(({ method }) => (method === 'workerListensToMessages' ? false : null));
-    let pageListens = false;
+  it('tell Lilo when their first runtime.onMessage listener comes and their last one goes', async () => {
+    const reported: unknown[] = [];
+    mockGapAPI(({ namespace, method, params }) => {
+      if (namespace === 'events') reported.push([method, params.events]);
+      return null;
+    });
     class Runtime {
+      onMessage = new Event();
       getManifest() { return {}; }
       get lastError(): unknown { return null; }
-      sendMessage(message: unknown) { return Promise.resolve(pageListens && (message as typeof listensProbe)?.liloListens ? true : undefined); }
     }
     (globalThis as any).chrome = { runtime: new Runtime() };
     installChromeCompat({}, true);
-    const chrome = (globalThis as any).chrome;
-    await assert.rejects(chrome.runtime.sendMessage(1), { message: 'Could not establish connection. Receiving end does not exist.' });
-    pageListens = true;
-    assert.equal(await chrome.runtime.sendMessage(1), undefined);
+    const onMessage = (globalThis as any).chrome.runtime.onMessage;
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 10));
+    const first = () => undefined;
+    const second = () => undefined;
+    onMessage.addListener(first);
+    onMessage.addListener(second);
+    await settle();
+    onMessage.removeListener(first);
+    await settle();
+    assert.deepEqual(reported, [['listen', ['runtime.onMessage']]]);
+    onMessage.removeListener(second);
+    await settle();
+    assert.deepEqual(reported, [['listen', ['runtime.onMessage']], ['unlisten', ['runtime.onMessage']]]);
   });
 });
 

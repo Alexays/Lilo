@@ -5,9 +5,10 @@ import WebKit
 @MainActor
 final class ExtensionNativeMessaging {
     /// What chrome.runtime.connectNative (chrome-leniency.ts) appends to the host name, sends first on
-    /// the port, and reads Lilo's error under.
+    /// the port, sends to keep the worker running, and reads Lilo's error under.
     static let portMark = "?lilo"
     static let portOpenedKey = "liloNativePortOpened"
+    static let portKeepAliveKey = "liloNativePortKeepAlive"
     static let portErrorKey = "liloNativePortError"
 
     /// The ports whose host runs, retained until it disconnects (releasing would disconnect the host).
@@ -94,10 +95,12 @@ private final class NativePort {
     }
 
     func receive(_ message: Any?) {
-        let isOpening = !isOpen && (message as? [String: Any])?[ExtensionNativeMessaging.portOpenedKey] != nil
+        let marks = message as? [String: Any]
+        let isOpening = !isOpen && marks?[ExtensionNativeMessaging.portOpenedKey] != nil
+        let isKeepAlive = isMarked && marks?[ExtensionNativeMessaging.portKeepAliveKey] != nil
         isOpen = true
         if let pendingError { return fail(pendingError) }
-        if !isOpening, let message { connection?.send(message) }
+        if !isOpening, !isKeepAlive, let message { connection?.send(message) }
     }
 
     func fail(_ message: String) {

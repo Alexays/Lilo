@@ -1,0 +1,78 @@
+import assert from "node:assert/strict";
+import test, { mock } from "node:test";
+import { freshStores, stubBridgeWindow } from "./testHarness";
+
+type LiloWindow = {
+	window: { __lilo?: { receive(msg: Record<string, unknown>): void } };
+};
+
+test("the shown list keeps its filter while a search is typed, until the search's rows arrive", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/history.svelte.ts");
+	const receive = (msg: Record<string, unknown>) => (globalThis as unknown as LiloWindow).window.__lilo?.receive(msg);
+	const lastRequestId = () => posted.filter((message) => message.action === "loadHistoryPage").at(-1)?.payload.requestId;
+
+	mock.timers.enable({ apis: ["setTimeout"] });
+	try {
+		store.openHistory();
+		receive({ event: "historyPage", requestId: lastRequestId(), rows: [], favicons: {} });
+
+		store.setHistoryQuery("example");
+		assert.equal(store.getHistoryFilter().query, "example");
+		assert.equal(store.getShownHistoryFilter().query, "");
+
+		mock.timers.tick(150);
+		assert.equal(posted.at(-1)?.payload.query, "example");
+		assert.equal(store.getShownHistoryFilter().query, "");
+
+		receive({ event: "historyPage", requestId: lastRequestId(), rows: [], favicons: {} });
+		assert.equal(store.getShownHistoryFilter().query, "example");
+	} finally {
+		mock.timers.reset();
+	}
+});
+
+test("a next batch continues the shown list while a search is typed", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/history.svelte.ts");
+	const receive = (msg: Record<string, unknown>) => (globalThis as unknown as LiloWindow).window.__lilo?.receive(msg);
+	const lastRequestId = () => posted.filter((message) => message.action === "loadHistoryPage").at(-1)?.payload.requestId;
+
+	mock.timers.enable({ apis: ["setTimeout"] });
+	try {
+		store.openHistory();
+		receive({ event: "historyPage", requestId: lastRequestId(), rows: [], favicons: {}, nextBefore: 1_000 });
+
+		store.setHistoryQuery("example");
+		store.loadMoreHistory();
+		assert.equal(posted.at(-1)?.payload.before, 1_000);
+		assert.equal(posted.at(-1)?.payload.query, "");
+
+		receive({ event: "historyPage", requestId: lastRequestId(), rows: [], favicons: {} });
+		assert.equal(store.getShownHistoryFilter().query, "");
+	} finally {
+		mock.timers.reset();
+	}
+});
+
+test("a stale history page reply still keeps its favicons, which the native side sends only once", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/history.svelte.ts");
+	store.openHistory();
+	store.showHistoryPeriod("today");
+	const requestIds = posted.filter((message) => message.action === "loadHistoryPage").map((message) => message.payload.requestId);
+	assert.deepEqual(requestIds, [1, 2]);
+
+	(globalThis as unknown as LiloWindow).window.__lilo?.receive({
+		event: "historyPage",
+		requestId: requestIds[0],
+		rows: [{ id: 1, url: "https://stale.example/", title: "Stale", host: "stale.example", visitedAt: 1 }],
+		favicons: { "stale.example": "data:image/png;base64,AA==" },
+	});
+
+	assert.deepEqual(store.getHistoryRows(), []);
+	assert.equal(store.getHistoryFavicon("stale.example"), "data:image/png;base64,AA==");
+});

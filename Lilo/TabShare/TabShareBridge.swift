@@ -20,7 +20,8 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
     /// (mode/token/width/height) or nil when the tab has no live engine.
     var sessionStarter: ((_ tabId: UUID, _ requester: WKWebView) -> [String: Any]?)?
     /// Runs the system screen or window picker and ferries the pick, with the Mac's sound when asked, which WebKit's own
-    /// capture cannot share without echoing the call. Returns the shim reply payload, nil when cancelled.
+    /// capture cannot share without echoing the call. Returns the shim reply payload (mode `failed` when the capture
+    /// cannot start), nil when cancelled.
     var screenStarter: ((_ requester: WKWebView, _ audio: Bool, _ maxSize: CGSize) async -> [String: Any]?)?
     var sessionStopper: ((_ token: String) -> Void)?
     /// Redeems a `chrome.tabCapture` / `chrome.desktopCapture` stream id for the calling frame's
@@ -104,7 +105,8 @@ extension TabShareBridge {
 function () {
 if (typeof MediaDevices !== 'function' || !navigator.mediaDevices || !MediaDevices.prototype.getDisplayMedia) return;
 // Cross-origin frames keep the native call, which enforces their display-capture permissions policy.
-try { if (window.top !== window && window.top.location.origin !== location.origin) return; } catch (e) { return; }
+var ancestors = location.ancestorOrigins;
+if (window.top !== window && ancestors[ancestors.length - 1] !== window.origin) return;
 var devices = navigator.mediaDevices, originals;
 var Decoder = window.VideoDecoder, Chunk = window.EncodedVideoChunk, AudioCtx = window.AudioContext;
 var NativeWorker = window.Worker, NativeBlob = window.Blob, objectURL = URL.createObjectURL, revokeURL = URL.revokeObjectURL;
@@ -238,7 +240,7 @@ function pumpAudio(token, url){
 }
 // The worker decodes straight into a VideoTrackGenerator and hands its track over: no canvas to draw and read back at every
 // frame, and the page's main thread stays out of the loop. Same protocol and repaint rule as the canvas path below.
-var workerSource = '(' + function(refreshMs){
+var workerMain = function(refreshMs){
   var generator = new VideoTrackGenerator(), writer = generator.writable.getWriter();
   var decoder = null, desc = null, needKey = true, last = null, drawnAt = 0, seq = 0, frameURL;
   function write(frame){
@@ -278,12 +280,12 @@ var workerSource = '(' + function(refreshMs){
     pump();
     self.postMessage({ track: generator.track }, [generator.track]);
   };
-} + ')(' + refreshMs + ')';
+};
 // A page enforcing Trusted Types refuses a plain URL: the worker's then goes through a policy of Lilo's own, made only then.
 function startWorker(url){
   try { return new NativeWorker(url); } catch (e) {
     if (!createPolicy) throw e;
-    workerPolicy = workerPolicy || apply(createPolicy, trusted, ['lilo-share', { createScriptURL: function(u){ return u; } }]);
+    workerPolicy = workerPolicy || apply(createPolicy, trusted, [Math.random().toString(36).slice(2), { createScriptURL: function(u){ return u; } }]);
     return new NativeWorker(workerPolicy.createScriptURL(url));
   }
 }
@@ -293,7 +295,8 @@ function workerTrack(res){
   return new Promise(function(resolve){
     var url, worker;
     try {
-      url = apply(objectURL, URL, [new NativeBlob([workerSource], { type: 'text/javascript' })]);
+      var source = '(' + apply(nativeToString, workerMain, []) + ')(' + refreshMs + ')';
+      url = apply(objectURL, URL, [new NativeBlob([source], { type: 'text/javascript' })]);
       worker = startWorker(url);
     } catch (e) { if (url) apply(revokeURL, URL, [url]); return resolve(null); }
     apply(revokeURL, URL, [url]);
@@ -394,6 +397,10 @@ getDisplayMedia(constraints){
                                      maxWidth: video ? limit(video.width) : 0, maxHeight: video ? limit(video.height) : 0 }).then(function(res){
     var pending = nativePending[id];
     delete nativePending[id];
+    if (res && res.mode === 'failed') {
+      if (actx) actx.close();
+      throw new DOMException('Could not start video source', 'NotReadableError');
+    }
     // Without the hook's gesture, a native call would fail with InvalidAccessError, which pages
     // do not handle as a refusal.
     if (!res || res.mode === 'cancel' || (res.mode === 'system' && !pending.promise)) {
