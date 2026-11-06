@@ -918,6 +918,7 @@ extension MainWindowController: NSWindowDelegate {
         context.scheduleWindowsSave()
         teardownTabShare()
         screenshotCaptureId.map(ChromeUISchemeHandler.discardScreenshot)
+        copiedCaptures.keys.forEach(ChromeUISchemeHandler.discardScreenshot)
         floatingTabPanel.dismiss()
         if let window {
             for profile in context.profileContexts.allContexts { profile.extensions.notifyWindowClosed(for: window) }

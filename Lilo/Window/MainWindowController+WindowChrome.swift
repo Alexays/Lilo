@@ -230,6 +230,9 @@ extension MainWindowController {
         chromeFaviconSyncedSpaceIds = tabManager.currentSpaceId.map { [$0] } ?? []
         sentTabPatches = [:]
         sentExtensionRows = [:]
+        // A reloaded chrome has lost its capture cards: nothing can open their captures any more.
+        copiedCaptures.keys.forEach(ChromeUISchemeHandler.discardScreenshot)
+        copiedCaptures = [:]
         for row in data["extensions"] as? [[String: Any]] ?? [] {
             if let id = row["id"] as? String { sentExtensionRows[id] = row }
         }
