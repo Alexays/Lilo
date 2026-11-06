@@ -317,6 +317,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
                registry.toggleSidePanelOnActionClick?(id, window) == true {
                 return nil
             }
+            if extensionRegistry?.delegate.closeActionPopup(of: id) == true { return nil }
             extensionRegistry?.noteUserGesture(extensionId: id)
             return await openPopup(extensionId: id, anchorRect: Self.anchorRect(from: message), registry: extensionRegistry)
         case "updateExtensionPopupAnchor":
