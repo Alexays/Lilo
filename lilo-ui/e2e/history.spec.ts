@@ -23,9 +23,11 @@ test("the history list is one Tab stop, walked with the arrow keys", async ({ pa
 	}));
 	await page.evaluate((page) => window.__lilo!.receive({ event: "historyPage", ...page, favicons: {} }), { requestId, rows });
 
-	const items = page.getByRole("tree").getByRole("treeitem");
+	// The sidebar's tab lists are trees too.
+	const tree = page.getByRole("tree", { name: "All History" });
+	const items = tree.getByRole("treeitem");
 	await expect(items).toHaveCount(3);
-	await expect(page.locator("[role=tree] [tabindex='0']")).toHaveCount(1);
+	await expect(tree.locator("[tabindex='0']")).toHaveCount(1);
 	await expect(items.first()).toHaveAttribute("tabindex", "0");
 
 	await items.first().focus();
