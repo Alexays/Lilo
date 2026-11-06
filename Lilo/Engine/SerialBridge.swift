@@ -361,8 +361,9 @@ extension SerialBridge {
         }
         async open(options) {
           if (this.#readable) throw new DOMException('The port is already open.', 'InvalidStateError');
-          const rate = options && options.baudRate;
-          if (!Number.isInteger(rate) || rate <= 0 || rate > 0xFFFFFFFF) throw new NativeTypeError('A baudRate is required.');
+          // WebIDL's [EnforceRange] unsigned long, as Chrome converts it: '9600' opens, 0.5 does not.
+          const rate = Math.trunc(Number(options && options.baudRate));
+          if (!(rate > 0 && rate <= 0xFFFFFFFF)) throw new NativeTypeError('A baudRate is required.');
           const id = this.#info.id;
           await call('open', { id, baudRate: rate, dataBits: options.dataBits || 8, stopBits: options.stopBits || 1,
                                parity: options.parity || 'none', flowControl: options.flowControl || 'none' });

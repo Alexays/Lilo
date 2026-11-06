@@ -82,12 +82,12 @@ final class SerialBridgeTests: XCTestCase {
         let names = try await webView.callAsyncJavaScript("""
             const port = await navigator.serial.requestPort();
             const names = [];
-            for (const baudRate of [-1, 1.5, 2 ** 32]) {
+            for (const baudRate of [-1, 0.5, 2 ** 32, '9600']) {
                 try { await port.open({ baudRate }); await port.close(); names.push('opened'); } catch (e) { names.push(e.name); }
             }
             return names;
             """, contentWorld: .page) as? [String]
-        XCTAssertEqual(names, ["TypeError", "TypeError", "TypeError"])
+        XCTAssertEqual(names, ["TypeError", "TypeError", "TypeError", "opened"])
     }
 
     func testDecliningThePickerRejectsWithNotFoundError() async throws {
