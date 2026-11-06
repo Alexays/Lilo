@@ -73,7 +73,7 @@ Existing archives stay unchanged on later builds and releases; incomplete archiv
 
 ## Highlight media
 
-A highlight names its `media` kind and the changelog shows `/release-media/<version>/<highlight id>.{mp4,png}`, a link to `../release-media/assets/`. Native What's New shows the same files. See [release-media/README.md](../release-media/README.md). The files are plain static assets: `_headers` advertises byte ranges so Chromium can seek a film.
+A highlight names its `media` kind and the changelog shows `/release-media/<version>/<highlight id>.{mp4,png}`, a link to `../release-media/assets/`. Native What's New shows the same files. See [release-media/README.md](../release-media/README.md). Films are plain static assets: `_headers` advertises byte ranges so Chromium can seek them. Images and posters go through `astro:assets`, so a reader downloads WebP at the size they need; the PNGs stay published for the app and social previews.
 
 ## Demo playground
 
