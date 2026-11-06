@@ -395,12 +395,12 @@ getDisplayMedia(constraints){
                                      maxWidth: video ? limit(video.width) : 0, maxHeight: video ? limit(video.height) : 0 }).then(function(res){
     var pending = nativePending[id];
     delete nativePending[id];
-    // Without the hook's gesture, a native call would fail with InvalidAccessError, which pages
-    // do not handle as a refusal.
     if (res && res.mode === 'failed') {
       if (actx) actx.close();
       throw new DOMException('Could not start video source', 'NotReadableError');
     }
+    // Without the hook's gesture, a native call would fail with InvalidAccessError, which pages
+    // do not handle as a refusal.
     if (!res || res.mode === 'cancel' || (res.mode === 'system' && !pending.promise)) {
       if (actx) actx.close();
       throw new DOMException('Permission denied', 'NotAllowedError');
