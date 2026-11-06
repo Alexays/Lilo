@@ -142,7 +142,7 @@ final class WKWebViewTab: NSObject {
     private var lastLoggedInteraction: (host: String, at: ContinuousClock.Instant)?
     /// Per profile and site, the other origins its last page fetched from, most used first: a navigation to the site connects
     /// to them at once instead of when its parser or scripts get to them, as Chrome's loading predictor. In memory only.
-    private static var learnedOrigins: [String: [URL]] = [:]
+    private static var learnedOrigins: [String: (origins: [URL], at: ContinuousClock.Instant)] = [:]
     private let findController: PageFindController
     let pip: PiPController
     private var permissionUsageState = WebPermissionUsageState.none {
@@ -806,24 +806,27 @@ final class WKWebViewTab: NSObject {
     }
 
     /// Nil for a private tab, which neither learns nor uses them.
-    private var learnedOriginsKey: String? {
-        guard !isPrivateBrowsing, let url = webView.url, url.scheme == "https" || url.scheme == "http", let host = url.host() else { return nil }
+    private func learnedOriginsKey(for url: URL?) -> String? {
+        guard !isPrivateBrowsing, let url, url.scheme == "https" || url.scheme == "http", let host = url.host() else { return nil }
         let store = webView.configuration.websiteDataStore.identifier?.uuidString ?? "default"
         return "\(store) \(CookiesBridgeHandler.registrableDomain(of: host))"
     }
 
+    /// A navigation within the committed page's site finds its connections open already.
     private func preconnectLearnedOrigins() {
-        guard let key = learnedOriginsKey else { return }
-        Self.learnedOrigins[key]?.forEach(preconnect(to:))
+        guard let key = learnedOriginsKey(for: webView.url), key != learnedOriginsKey(for: documentURL) else { return }
+        Self.learnedOrigins[key]?.origins.forEach(preconnect(to:))
     }
 
+    /// A site's origins are learned again after 10 minutes at most, and only by a tab on screen.
     private func learnOrigins() {
-        guard let key = learnedOriginsKey else { return }
+        guard let key = learnedOriginsKey(for: webView.url),
+              Self.learnedOrigins[key].map({ ContinuousClock.now - $0.at >= .seconds(600) }) ?? true else { return }
         let page = webView.url
         Task { [weak self] in
             // A feed's images and a player load after the load event, and they are what the next visit waits on.
             try? await Task.sleep(for: .seconds(2))
-            guard let self, !isFrozen, webView.url == page else { return }
+            guard let self, !isFrozen, isOnScreen, webView.url == page else { return }
             let found = try? await webView.evaluateJavaScript("""
                 (() => { const counts = {};
                   for (const entry of performance.getEntriesByType('resource')) {
@@ -836,7 +839,7 @@ final class WKWebViewTab: NSObject {
             if Self.learnedOrigins[key] == nil, Self.learnedOrigins.count >= 256, let any = Self.learnedOrigins.keys.first {
                 Self.learnedOrigins[any] = nil
             }
-            Self.learnedOrigins[key] = origins
+            Self.learnedOrigins[key] = (origins, ContinuousClock.now)
         }
     }
 
