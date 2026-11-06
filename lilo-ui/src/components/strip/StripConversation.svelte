@@ -2,16 +2,12 @@
      its state as a badge, the title, the diff. Hovered, the diff gives way to the button for its pages. -->
 <script lang="ts">
   import "../../lib/i18n/agentsCatalog";
-  import { backOut } from "svelte/easing";
-  import { fade, scale } from "svelte/transition";
-  import AgentTile from "../agents/AgentTile.svelte";
+  import ConversationIcon from "../agents/ConversationIcon.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import StripPopover from "./StripPopover.svelte";
   import { folderActions, tabActions } from "../../lib/bridge/actions";
   import type { BridgeTabFolderSnapshot } from "../../lib/bridge/protocol";
   import { t } from "../../lib/i18n/state.svelte";
-  import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
-  import { MOTION } from "../../lib/motion/timings";
   import { closePageShell } from "../../stores/panels.svelte";
   import { optimisticallyActivateTab } from "../../stores/sidebar.svelte";
   import { tabDisplayTitle, type TabState } from "../../stores/tabs.svelte";
@@ -35,12 +31,13 @@
   const waiting = $derived(!!tab.awaitingInputSince);
   const busy = $derived(tab.terminalState === "busy" || tab.terminalState === "starting");
   const unread = $derived(!!tab.hasUnreadOutput && !active);
+  const failed = $derived(tab.terminalState === "failed");
   const added = $derived(tab.diffAdded ?? 0);
   const removed = $derived(tab.diffRemoved ?? 0);
   const label = $derived(
     [
       title,
-      waiting ? t("tabItem.terminalAttention") : busy ? t("agents.row.working") : "",
+      waiting ? t("tabItem.terminalAttention") : busy ? t("agents.row.working") : failed ? t("agents.row.failed") : "",
       unread ? t("tabItem.terminalUnread") : "",
       added || removed ? t("agents.row.changes", { added, removed }) : "",
     ]
@@ -75,21 +72,7 @@
   oncontextmenu={showMenu}
 >
   <button class="main" role="tab" aria-selected={active} aria-label={label} tabindex={active ? 0 : -1} data-roving onclick={() => activate(tab)}>
-    <span class="icon">
-      <AgentTile agentId={tab.agentId ?? ""} />
-      {#if waiting}
-        <span
-          class="badge attention"
-          aria-hidden="true"
-          in:scale={{ start: 0.3, duration: prefersReducedMotion() ? 0 : 360, easing: backOut }}
-          out:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}
-        ></span>
-      {:else if busy}
-        <span class="badge spinner" aria-hidden="true" transition:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}></span>
-      {:else if unread}
-        <span class="badge unread" aria-hidden="true" transition:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}></span>
-      {/if}
-    </span>
+    <ConversationIcon agentId={tab.agentId ?? ""} {waiting} {busy} {failed} {unread} />
     <span class="title">{title}</span>
     {#if added || removed}
       <span class="diff" aria-hidden="true">
@@ -164,57 +147,6 @@
     font: inherit;
     font-size: var(--font-size-md);
     cursor: default;
-  }
-
-  .icon {
-    position: relative;
-    flex: none;
-    display: grid;
-  }
-
-  /* On the icon's corner, ringed in the bar's colour so it reads on any icon. */
-  .badge {
-    position: absolute;
-    right: -3px;
-    bottom: -3px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px var(--sidebar-bg);
-  }
-
-  .badge.attention {
-    background: var(--attention);
-  }
-
-  .badge.unread {
-    background: var(--accent);
-  }
-
-  /* About 30 s of turns, then a still arc: a turn left running must not keep the display link up. */
-  .badge.spinner {
-    width: 8px;
-    height: 8px;
-    right: -4px;
-    bottom: -4px;
-    box-sizing: border-box;
-    border: 1.5px solid var(--text-primary-tint-12);
-    border-top-color: var(--agents);
-    border-right-color: var(--agents);
-    background: var(--sidebar-bg);
-    animation: strip-conversation-spin 0.9s linear 33 forwards;
-  }
-
-  @keyframes strip-conversation-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .badge.spinner {
-      animation: none;
-    }
   }
 
   .title {
