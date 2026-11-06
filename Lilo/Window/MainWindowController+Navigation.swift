@@ -156,7 +156,9 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     /// Records a visit of the tab's page, as Chrome does for every main-frame navigation that commits, same-document ones included.
     /// Private-space, protected-folder and unresolvable-space visits leave no trace (no history, no onVisited).
-    private func recordVisit(of tab: WKWebViewTab, state: Tab?, renamableUntil: ContinuousClock.Instant? = nil) {
+    func recordVisit(of tab: WKWebViewTab, state: Tab?, renamableUntil: ContinuousClock.Instant? = nil) {
+        tab.visitAwaitsShowing = tabManager.warmedTab?.engine === tab
+        guard !tab.visitAwaitsShowing else { return }
         tab.visitTitleUpdates = nil
         // Check the visiting tab's own space, which may be a background one; a popup's visit counts as its opener's.
         let visitingTab = state ?? pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }

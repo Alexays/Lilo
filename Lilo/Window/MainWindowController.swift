@@ -592,6 +592,7 @@ final class MainWindowController: NSWindowController {
         tabManager.browserStateStore = context.browserState
         tabManager.delegate = self
         tabManager.engineDelegate = self
+        tabManager.pageContainer = contentContainerView
         setupTerminalHost()
         guard !ProcessInfo.isRunningUnderXCTest else { return }
         runStartupSequence()
@@ -752,6 +753,7 @@ extension MainWindowController: TabManager.Delegate {
         }
         guard let engine = manager.engineTab(for: id),
               var tab = manager.activeTab else { return }
+        if engine.visitAwaitsShowing { recordVisit(of: engine, state: tab, renamableUntil: engine.isLoading ? nil : .now + .seconds(5)) }
         // Background loads skip their fractional progress ticks (see didUpdateProgress).
         if tab.estimatedProgress != engine.estimatedProgress,
            let synced = updateRuntimeTab(id: id, mutate: { $0.estimatedProgress = engine.estimatedProgress }) {
