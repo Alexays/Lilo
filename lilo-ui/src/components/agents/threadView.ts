@@ -41,10 +41,25 @@ export function parseInline(text: string): Inline[] {
 const LIST_ITEM = /^\s{0,3}([-*+]|\d{1,9}[.)])\s+(.*)$/;
 const HEADING = /^(#{1,6})\s+(.*)$/;
 
-/** Paragraphs, headings, quotes, lists and fenced code; an unclosed fence (still streaming) runs to the end. */
-export function parseMarkdown(text: string): Block[] {
-  const blocks: Block[] = [];
-  const lines = text.split("\n");
+/** A parse a longer text can resume: the first `settled` blocks end at `end`, a blank line outside any fence. */
+export interface MarkdownParse {
+  text: string;
+  blocks: Block[];
+  end: number;
+  settled: number;
+}
+
+/**
+ * Paragraphs, headings, quotes, lists and fenced code; an unclosed fence (still streaming) runs to the end.
+ * Given the parse of a prefix, only the text after its settled blocks is parsed again, and those keep their identity.
+ */
+export function parseMarkdown(text: string, prev?: MarkdownParse): MarkdownParse {
+  const resume = prev !== undefined && text.startsWith(prev.text);
+  const start = resume ? prev.end : 0;
+  const blocks: Block[] = resume ? prev.blocks.slice(0, prev.settled) : [];
+  let settled = blocks.length;
+  let settledLine = -1;
+  const lines = text.slice(start).split("\n");
   let paragraph: string[] = [];
   let quote: string[] = [];
   let list: { ordered: boolean; items: string[] } | null = null;
@@ -68,6 +83,11 @@ export function parseMarkdown(text: string): Block[] {
     }
     if (!line.trim()) {
       flush();
+      // Everything is flushed here, so what follows parses alone; the last line may still grow.
+      if (i < lines.length - 1) {
+        settled = blocks.length;
+        settledLine = i;
+      }
       continue;
     }
     const heading = HEADING.exec(line);
@@ -100,7 +120,9 @@ export function parseMarkdown(text: string): Block[] {
     paragraph.push(line);
   }
   flush();
-  return blocks;
+  let end = start;
+  for (let i = 0; i <= settledLine; i++) end += lines[i].length + 1;
+  return { text, blocks, end, settled };
 }
 
 /**

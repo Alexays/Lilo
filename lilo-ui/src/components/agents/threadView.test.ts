@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatDuration, imageSource, lineDiff, parseInline, parseMarkdown } from "./threadView";
+import { formatDuration, imageSource, lineDiff, parseInline, parseMarkdown, type MarkdownParse } from "./threadView";
 
 test("inline markdown splits code, emphasis and links", () => {
   assert.deepEqual(parseInline("Run `npm test` then **check** the *logs* at https://example.com/a."), [
@@ -24,7 +24,7 @@ test("identifiers with underscores stay text, unsafe link targets are not links"
 });
 
 test("blocks: paragraphs, headings, lists, quotes and fenced code", () => {
-  const blocks = parseMarkdown("# Fix\n\nFirst line\nsecond line\n\n- one\n- two\n  wrapped\n1. first\n> quoted\n```ts\nconst a = 1;\n```\nafter");
+  const { blocks } = parseMarkdown("# Fix\n\nFirst line\nsecond line\n\n- one\n- two\n  wrapped\n1. first\n> quoted\n```ts\nconst a = 1;\n```\nafter");
   assert.deepEqual(blocks.map((block) => block.type), ["heading", "p", "list", "list", "quote", "code", "p"]);
   assert.deepEqual(blocks[1], { type: "p", inline: [{ type: "text", text: "First line\nsecond line" }] });
   assert.deepEqual(blocks[2], {
@@ -36,10 +36,23 @@ test("blocks: paragraphs, headings, lists, quotes and fenced code", () => {
 });
 
 test("an unclosed fence runs to the end while the message streams", () => {
-  assert.deepEqual(parseMarkdown("Here:\n```\nline 1\nline 2"), [
+  assert.deepEqual(parseMarkdown("Here:\n```\nline 1\nline 2").blocks, [
     { type: "p", inline: [{ type: "text", text: "Here:" }] },
     { type: "code", lang: "", text: "line 1\nline 2" },
   ]);
+});
+
+test("a message parsed chunk by chunk gives the blocks of one parse, and keeps the settled ones", () => {
+  const text = "# Plan\n\nFirst *step*\n\n```ts\nconst a = 1;\n\nconst b = 2;\n```\n\n- one\n  wrapped\n\n> quoted\n\n \nlast";
+  let parsed: MarkdownParse | undefined;
+  for (let length = 1; length <= text.length; length += 3) {
+    const previous = parsed;
+    parsed = parseMarkdown(text.slice(0, length), previous);
+    assert.deepEqual(parsed.blocks, parseMarkdown(text.slice(0, length)).blocks);
+    for (let i = 0; i < (previous?.settled ?? 0); i++) assert.equal(parsed.blocks[i], previous?.blocks[i]);
+  }
+  assert.deepEqual(parseMarkdown(text, parsed).blocks, parseMarkdown(text).blocks);
+  assert.deepEqual(parseMarkdown("Other", parsed).blocks, [{ type: "p", inline: [{ type: "text", text: "Other" }] }]);
 });
 
 test("line diff keeps the changed span with its context", () => {

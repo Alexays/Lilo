@@ -7,7 +7,7 @@
   import { conversationActions } from "./conversationActions";
   import Icon from "./Icon.svelte";
   import ThreadImage from "./ThreadImage.svelte";
-  import { imageSource, parseMarkdown, type Block, type Inline } from "./threadView";
+  import { imageSource, parseMarkdown, type Block, type Inline, type MarkdownParse } from "./threadView";
 
   interface Props {
     text: string;
@@ -19,7 +19,12 @@
 
   let { text, tabId = "", cwd = "" }: Props = $props();
 
-  const blocks = $derived(parseMarkdown(text));
+  // A streaming message only grows: each frame parses its tail, and the blocks above it stay put.
+  let parsed: MarkdownParse | undefined;
+  const blocks = $derived.by(() => {
+    parsed = parseMarkdown(text, parsed);
+    return parsed.blocks;
+  });
   let copiedIndex = $state(-1);
   // SVG blocks show their picture unless switched to the code, by block index.
   const showCode = new SvelteMap<number, boolean>();
