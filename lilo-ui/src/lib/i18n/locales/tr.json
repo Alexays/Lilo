@@ -608,7 +608,6 @@
 			"connect": "Bağlan",
 			"copy": "Yapılandırmayı kopyala",
 			"clientDescription": "Lilo'yu istemcinin MCP sunucularına ekler.",
-			"clientConnected": "Lilo, istemcinin MCP sunucularında bulunuyor.",
 			"revoke": "Kaldır",
 			"status": {
 				"acting": "İşlem yapıyor",
@@ -2556,7 +2555,6 @@
 			"restoreToHere": "Buraya kadar geri yükle",
 			"restoreConfirm": "Proje dosyaları bu mesajdaki hâline geri döndürülsün mü?",
 			"restore": "Geri yükle",
-			"reviewChanges": "Değişiklikler'de incele",
 			"undo": "Geri Al",
 			"keep": "Koru",
 			"undone": "Geri alındı",
@@ -2640,7 +2638,6 @@
 			"agent": "Ajan",
 			"noAgents": "Ajan yok",
 			"project": "Proje",
-			"chooseProject": "Bir proje seçin",
 			"chooseFolder": "Klasör seç...",
 			"noFolder": "Klasör yok",
 			"noFolderDetail": "Ajan kendi klasöründe çalışır",

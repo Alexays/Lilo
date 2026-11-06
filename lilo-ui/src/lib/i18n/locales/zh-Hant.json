@@ -608,7 +608,6 @@
 			"connect": "連接",
 			"copy": "拷貝設定",
 			"clientDescription": "將 Lilo 加入其 MCP 伺服器。",
-			"clientConnected": "Lilo 已在其 MCP 伺服器中。",
 			"revoke": "移除",
 			"status": {
 				"acting": "正在執行動作",
@@ -2556,7 +2555,6 @@
 			"restoreToHere": "回復到此處",
 			"restoreConfirm": "要將專案檔案回復到這則訊息時的狀態嗎？",
 			"restore": "回復",
-			"reviewChanges": "在「變更」中檢閱",
 			"undo": "還原",
 			"keep": "保留",
 			"undone": "已還原",
@@ -2640,7 +2638,6 @@
 			"agent": "代理程式",
 			"noAgents": "沒有代理程式",
 			"project": "專案",
-			"chooseProject": "選擇專案",
 			"chooseFolder": "選擇資料夾...",
 			"noFolder": "無檔案夾",
 			"noFolderDetail": "代理程式在自己的檔案夾中工作",

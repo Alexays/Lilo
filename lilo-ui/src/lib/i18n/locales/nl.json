@@ -608,7 +608,6 @@
 			"connect": "Verbind",
 			"copy": "Kopieer configuratie",
 			"clientDescription": "Voegt Lilo toe aan de MCP-servers.",
-			"clientConnected": "Lilo staat in de MCP-servers.",
 			"revoke": "Verwijder",
 			"status": {
 				"acting": "Nu bezig",
@@ -2556,7 +2555,6 @@
 			"restoreToHere": "Herstel tot hier",
 			"restoreConfirm": "Projectbestanden terugzetten naar hoe ze bij dit bericht waren?",
 			"restore": "Herstel",
-			"reviewChanges": "Bekijk in Wijzigingen",
 			"undo": "Ongedaan maken",
 			"keep": "Behoud",
 			"undone": "Ongedaan gemaakt",
@@ -2640,7 +2638,6 @@
 			"agent": "Agent",
 			"noAgents": "Geen agents",
 			"project": "Project",
-			"chooseProject": "Kies een project",
 			"chooseFolder": "Kies map...",
 			"noFolder": "Geen map",
 			"noFolderDetail": "De agent werkt in een eigen map",

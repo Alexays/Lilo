@@ -608,7 +608,6 @@
 			"connect": "Conectar",
 			"copy": "Copiar configuração",
 			"clientDescription": "Adiciona o Lilo aos seus servidores MCP.",
-			"clientConnected": "O Lilo está nos seus servidores MCP.",
 			"revoke": "Remover",
 			"status": {
 				"acting": "Em ação agora",
@@ -2556,7 +2555,6 @@
 			"restoreToHere": "Restaurar até aqui",
 			"restoreConfirm": "Voltar os arquivos do projeto ao estado desta mensagem?",
 			"restore": "Restaurar",
-			"reviewChanges": "Revisar em Alterações",
 			"undo": "Desfazer",
 			"keep": "Manter",
 			"undone": "Desfeito",
@@ -2640,7 +2638,6 @@
 			"agent": "Agente",
 			"noAgents": "Nenhum agente",
 			"project": "Projeto",
-			"chooseProject": "Escolher um projeto",
 			"chooseFolder": "Escolher pasta...",
 			"noFolder": "Nenhuma pasta",
 			"noFolderDetail": "O agente trabalha em uma pasta própria",
