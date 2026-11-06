@@ -410,8 +410,8 @@ final class TabsQueryTests: XCTestCase {
         tabManager.warmTab(id: first.id)
         let engine = tabManager.engineTab(for: first.id)
         tabManager.activateTabRuntime(id: first.id)
-        // Its page done, warming another tab is no longer held back by it.
-        engine?.stopLoading()
+        // Back on the idle blank tab, as WebKit reports a stopped load only asynchronously, so warming is not held back.
+        tabManager.activateTabRuntime(id: active.id)
         tabManager.warmTab(id: second.id)
 
         XCTAssertNotNil(tabManager.engineTab(for: second.id), "the other tab warms")
