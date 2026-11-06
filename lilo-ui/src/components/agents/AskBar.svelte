@@ -37,6 +37,7 @@
   let field: ReturnType<typeof PromptField> | undefined = $state();
   let refreshed = false;
   let catalogAtOpen: unknown = null;
+  let catalogLoaded = $state(false);
 
   // Each opening starts from what is on screen: the page and its selection, the last agent and project.
   $effect(() => {
@@ -61,6 +62,7 @@
         : [];
       project = getSetting("agentsLastProject", "");
       refreshed = false;
+      catalogLoaded = false;
       catalogAtOpen = getAgents();
       conversationActions.loadCatalog(false);
     });
@@ -70,7 +72,11 @@
   // An empty catalog after the cached load means nothing was cached yet: fetch the registry.
   $effect(() => {
     const agents = getAgents();
-    if (!open || refreshed || agents === catalogAtOpen || agents.length > 0) return;
+    if (!open || agents === catalogAtOpen) return;
+    if (refreshed || agents.length > 0) {
+      catalogLoaded = true;
+      return;
+    }
     refreshed = true;
     conversationActions.loadCatalog(true);
   });
@@ -167,7 +173,13 @@
           onchange={(value) => (agentId = value)}
         >
           {#if agent}<AgentTile agentId={agent.id} />{/if}
-          <span class="picker-label">{agent?.name ?? t("agents.ask.loadingAgents")}</span>
+          {#if agent}
+            <span class="picker-label">{agent.name}</span>
+          {:else if catalogLoaded}
+            <span class="picker-label quiet">{t("agents.ask.noAgents")}</span>
+          {:else}
+            <span class="catalog-spinner" aria-hidden="true"></span>
+          {/if}
         </MenuPicker>
         <button
           type="button"
@@ -243,6 +255,37 @@
 
   .picker-label.quiet {
     color: var(--text-secondary);
+  }
+
+  /* Shows only past 300 ms, and stops after about 30 s so a stalled catalog never keeps the display link up. */
+  .catalog-spinner {
+    width: 12px;
+    height: 12px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-primary-tint-12);
+    border-top-color: var(--text-secondary);
+    animation:
+      ask-catalog-appear 1ms 300ms both,
+      ask-catalog-spin 0.9s linear 300ms 33 forwards;
+  }
+
+  @keyframes ask-catalog-appear {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes ask-catalog-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .catalog-spinner {
+      animation: ask-catalog-appear 1ms 300ms both;
+    }
   }
 
 

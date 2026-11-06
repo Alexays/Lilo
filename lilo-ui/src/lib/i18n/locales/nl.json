@@ -2584,7 +2584,7 @@
 			"placeholder": "Vraag een agent, @ om iets toe te voegen",
 			"thisPage": "Deze pagina",
 			"agent": "Agent",
-			"loadingAgents": "Agents laden...",
+			"noAgents": "Geen agents",
 			"project": "Project",
 			"chooseProject": "Kies een project",
 			"chooseFolder": "Kies map...",

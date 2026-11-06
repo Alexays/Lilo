@@ -2573,7 +2573,7 @@
 			"placeholder": "Demander à un agent, @ pour ajouter un élément",
 			"thisPage": "Cette page",
 			"agent": "Agent",
-			"loadingAgents": "Chargement des agents...",
+			"noAgents": "Aucun agent",
 			"project": "Projet",
 			"chooseProject": "Choisir un projet",
 			"chooseFolder": "Choisir un dossier...",

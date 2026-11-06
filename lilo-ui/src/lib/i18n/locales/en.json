@@ -2573,7 +2573,7 @@
 			"placeholder": "Ask an agent, @ to add something",
 			"thisPage": "This page",
 			"agent": "Agent",
-			"loadingAgents": "Loading agents...",
+			"noAgents": "No Agents",
 			"project": "Project",
 			"chooseProject": "Choose a project",
 			"chooseFolder": "Choose folder...",

@@ -2584,7 +2584,7 @@
 			"placeholder": "詢問代理程式，@ 加入內容",
 			"thisPage": "此頁面",
 			"agent": "代理程式",
-			"loadingAgents": "正在載入代理程式...",
+			"noAgents": "沒有代理程式",
 			"project": "專案",
 			"chooseProject": "選擇專案",
 			"chooseFolder": "選擇資料夾...",

@@ -2584,7 +2584,7 @@
 			"placeholder": "询问智能体，@ 添加内容",
 			"thisPage": "此页面",
 			"agent": "智能体",
-			"loadingAgents": "正在载入智能体...",
+			"noAgents": "无智能体",
 			"project": "项目",
 			"chooseProject": "选择项目",
 			"chooseFolder": "选择文件夹...",

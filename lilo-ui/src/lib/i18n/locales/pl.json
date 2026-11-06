@@ -2632,7 +2632,7 @@
 			"placeholder": "Zapytaj agenta, @ aby coś dodać",
 			"thisPage": "Ta strona",
 			"agent": "Agent",
-			"loadingAgents": "Wczytywanie agentów...",
+			"noAgents": "Brak agentów",
 			"project": "Projekt",
 			"chooseProject": "Wybierz projekt",
 			"chooseFolder": "Wybierz folder...",

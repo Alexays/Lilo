@@ -2584,7 +2584,7 @@
 			"placeholder": "에이전트에게 묻기, @로 항목 추가",
 			"thisPage": "이 페이지",
 			"agent": "에이전트",
-			"loadingAgents": "에이전트 불러오는 중...",
+			"noAgents": "에이전트 없음",
 			"project": "프로젝트",
 			"chooseProject": "프로젝트 선택",
 			"chooseFolder": "폴더 선택...",

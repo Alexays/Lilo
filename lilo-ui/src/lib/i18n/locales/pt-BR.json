@@ -2584,7 +2584,7 @@
 			"placeholder": "Pergunte a um agente, @ para adicionar algo",
 			"thisPage": "Esta página",
 			"agent": "Agente",
-			"loadingAgents": "Carregando agentes...",
+			"noAgents": "Nenhum agente",
 			"project": "Projeto",
 			"chooseProject": "Escolher um projeto",
 			"chooseFolder": "Escolher pasta...",

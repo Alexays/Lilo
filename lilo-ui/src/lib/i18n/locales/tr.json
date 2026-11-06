@@ -2584,7 +2584,7 @@
 			"placeholder": "Bir ajana sorun, bir şey eklemek için @",
 			"thisPage": "Bu sayfa",
 			"agent": "Ajan",
-			"loadingAgents": "Ajanlar yükleniyor...",
+			"noAgents": "Ajan yok",
 			"project": "Proje",
 			"chooseProject": "Bir proje seçin",
 			"chooseFolder": "Klasör seç...",
