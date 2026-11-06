@@ -137,7 +137,7 @@ final class TrackingAreaSuspender {
 private extension NSTrackingArea {
     var isTooltipTrackingArea: Bool {
         guard let owner else { return false }
-        return String(describing: type(of: owner)).localizedCaseInsensitiveContains("tooltip")
+        return String(describing: type(of: owner)).range(of: "tooltip", options: .caseInsensitive) != nil
     }
 }
 
