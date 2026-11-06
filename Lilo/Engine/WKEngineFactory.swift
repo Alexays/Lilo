@@ -211,12 +211,12 @@ final class WKEngineFactory {
 
     private let profileIdByWebView = NSMapTable<WKWebView, NSUUID>.weakToStrongObjects()
 
-    /// Whether `origin` is a page of an extension of `webView`'s profile whose manifest declares `permission`, which Chrome grants without asking.
+    /// Whether `origin` is a page of an extension of `webView`'s profile that holds `permission`, which Chrome grants without asking.
     func extensionDeclares(_ permission: String, origin: String, webView: WKWebView?) -> Bool {
         guard let url = URL(string: origin), url.scheme == "chrome-extension", let host = url.host,
-              let declared = resolveRegistry(for: webView)?.context(for: host)?.webExtension.manifest["permissions"] as? [String]
+              let registry = resolveRegistry(for: webView)
         else { return false }
-        return declared.contains(permission)
+        return registry.heldPermissions(of: host).contains(permission)
     }
 
     private func profileContext(for registry: ProfileExtensionRegistry) -> ProfileContext? {
