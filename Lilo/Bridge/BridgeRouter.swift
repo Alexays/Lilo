@@ -85,7 +85,9 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
 
             Task { @MainActor in
                 let signpost = PerfSignposts.bridge.beginInterval("handle", id: PerfSignposts.bridge.makeSignpostID(), bridgeMessage.action)
-                _ = await handler.handle(message: bridgeMessage)
+                if let error = await handler.handle(message: bridgeMessage) as? BridgeError {
+                    Self.logger.error("\(bridgeMessage.action, privacy: .public) failed: \(error.message, privacy: .public)")
+                }
                 PerfSignposts.bridge.endInterval("handle", signpost)
             }
         }
