@@ -83,17 +83,48 @@ enum FirefoxReader {
                 }
                 let json = try mozLz4(Data(contentsOf: url))
                 let session = try JSONSerialization.jsonObject(with: json) as? [String: Any]
-                bundle.openTabs = (session?["windows"] as? [[String: Any]] ?? []).flatMap { window in
-                    (window["tabs"] as? [[String: Any]] ?? []).compactMap { tab in
-                        let entries = tab["entries"] as? [[String: Any]] ?? []
-                        let index = min(max((tab["index"] as? Int ?? entries.count) - 1, 0), max(entries.count - 1, 0))
-                        guard entries.indices.contains(index), let url = entries[index]["url"] as? String, url.hasPrefix("http") else { return nil }
-                        return ImportedBookmark(title: entries[index]["title"] as? String ?? "", url: url)
+                let windows = session?["windows"] as? [[String: Any]] ?? []
+                // Zen lists its workspaces in each window's `spaces` and tags each tab with `zenWorkspace`; Firefox has neither.
+                // A repeated name gets a number, the same one each time, so two spaces never merge on a rerun.
+                var spaceIndex: [String: Int] = [:]
+                var names: [String: Int] = [:]
+                for space in windows.flatMap({ $0["spaces"] as? [[String: Any]] ?? [] }) {
+                    guard let uuid = space["uuid"] as? String, spaceIndex[uuid] == nil else { continue }
+                    let title = space["name"] as? String ?? "Zen"
+                    let count = names[title, default: 0] + 1
+                    names[title] = count
+                    // An icon is an emoji, or the path of one of Zen's own SVGs, which Lilo cannot show.
+                    let icon = (space["icon"] as? String).flatMap { $0.isEmpty || $0.hasSuffix(".svg") ? nil : $0 }
+                    // The theme's primary dot, `c` being [r, g, b] unless the color is a custom CSS string.
+                    let colors = (space["theme"] as? [String: Any])?["gradientColors"] as? [[String: Any]] ?? []
+                    let rgb = (colors.first { $0["isPrimary"] as? Bool == true } ?? colors.first)?["c"] as? [Int]
+                    let color = rgb.flatMap { $0.count == 3 ? "#" + $0.map { unsafe String(format: "%02x", min(max($0, 0), 255)) }.joined() : nil }
+                    spaceIndex[uuid] = bundle.spaces.count
+                    bundle.spaces.append(ImportedSpace(name: count == 1 ? title : "\(title) \(count)", icon: icon, color: color, pinned: [], unpinned: []))
+                }
+                for tab in windows.flatMap({ $0["tabs"] as? [[String: Any]] ?? [] }) {
+                    let pinned = tab["pinned"] as? Bool ?? false
+                    let entries = tab["entries"] as? [[String: Any]] ?? []
+                    let index = min(max((tab["index"] as? Int ?? entries.count) - 1, 0), max(entries.count - 1, 0))
+                    var entry = entries.indices.contains(index) ? entries[index] : nil
+                    // A Zen pin keeps the page it was pinned on, which it returns to, apart from where it was browsed since.
+                    if pinned, let initial = (tab["_zenPinnedInitialState"] as? [String: Any])?["entry"] as? [String: Any] { entry = initial }
+                    guard let url = entry?["url"] as? String, url.hasPrefix("http") else { continue }
+                    let item = ImportedBookmark(title: tab["zenStaticLabel"] as? String ?? entry?["title"] as? String ?? "", url: url)
+                    if tab["zenEssential"] as? Bool == true {
+                        bundle.favorites.append(item)
+                    } else if let space = (tab["zenWorkspace"] as? String).flatMap({ spaceIndex[$0] }) {
+                        if pinned { bundle.spaces[space].pinned.append(item) } else { bundle.spaces[space].unpinned.append(item) }
+                    } else if pinned {
+                        bundle.pinnedTabs.append(item)
+                    } else {
+                        bundle.openTabs.append(item)
                     }
                 }
             }
         }
-        let hosts = ImportFiles.hosts(in: result.bundle.bookmarksBar + result.bundle.otherBookmarks + result.bundle.openTabs)
+        let hosts = ImportFiles.hosts(in: result.bundle.bookmarksBar + result.bundle.otherBookmarks + result.bundle.pinnedTabs + result.bundle.openTabs
+            + result.bundle.favorites + result.bundle.spaces.flatMap { $0.pinned + $0.unpinned })
         if !hosts.isEmpty {
             result.bundle.favicons = (try? favicons(dir: dir, hosts: hosts)) ?? []
         }

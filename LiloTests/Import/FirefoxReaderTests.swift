@@ -31,15 +31,64 @@ final class FirefoxReaderTests: XCTestCase {
     }
 
     func testReadsOpenTabsFromMozLz4Session() throws {
-        let json = Data(#"{"windows": [{"tabs": [{"index": 2, "entries": [{"url": "https://old.example/"}, {"url": "https://now.example/", "title": "Now"}]}]}]}"#.utf8)
+        try writeSession(#"{"windows": [{"tabs": [{"index": 2, "entries": [{"url": "https://old.example/"}, {"url": "https://now.example/", "title": "Now"}]}]}]}"#)
+        let result = FirefoxReader.read(profile: profile, kinds: [.tabs])
+        XCTAssertEqual(result.bundle.openTabs, [ImportedBookmark(title: "Now", url: "https://now.example/")])
+    }
+
+    func testPinnedTabsStayPinned() throws {
+        try writeSession(#"""
+            {"windows": [{"tabs": [
+                {"pinned": true, "index": 1, "entries": [{"url": "https://mail.example/", "title": "Mail"}]},
+                {"index": 1, "entries": [{"url": "https://news.example/", "title": "News"}]}
+            ]}]}
+            """#)
+        let bundle = FirefoxReader.read(profile: profile, kinds: [.tabs]).bundle
+        XCTAssertEqual(bundle.pinnedTabs, [ImportedBookmark(title: "Mail", url: "https://mail.example/")])
+        XCTAssertEqual(bundle.openTabs, [ImportedBookmark(title: "News", url: "https://news.example/")])
+        XCTAssertEqual(bundle.spaces, [])
+    }
+
+    func testZenWorkspacesBecomeSpacesAndEssentialsFavorites() throws {
+        try writeSession(#"""
+            {"windows": [{
+                "spaces": [
+                    {"uuid": "{w1}", "name": "Work", "icon": "💼",
+                     "theme": {"gradientColors": [{"c": [0, 0, 0]}, {"c": [255, 128, 0], "isPrimary": true}]}},
+                    {"uuid": "{w2}", "name": "Work", "icon": "chrome://browser/skin/zen-icons/selectable/star.svg"}
+                ],
+                "tabs": [
+                    {"pinned": true, "zenEssential": true, "index": 1, "entries": [{"url": "https://chat.example/", "title": "Chat"}]},
+                    {"pinned": true, "zenWorkspace": "{w1}", "zenStaticLabel": "Board", "index": 1,
+                     "entries": [{"url": "https://board.example/item/7", "title": "Item 7"}],
+                     "_zenPinnedInitialState": {"entry": {"url": "https://board.example/", "title": "Board home"}}},
+                    {"zenWorkspace": "{w1}", "index": 1, "entries": [{"url": "https://docs.example/", "title": "Docs"}]},
+                    {"zenWorkspace": "{w2}", "index": 1, "entries": [{"url": "https://read.example/", "title": "Read"}]},
+                    {"zenWorkspace": "{gone}", "index": 1, "entries": [{"url": "https://loose.example/", "title": "Loose"}]}
+                ]
+            }]}
+            """#)
+        let bundle = FirefoxReader.read(profile: profile, kinds: [.tabs]).bundle
+        XCTAssertEqual(bundle.favorites, [ImportedBookmark(title: "Chat", url: "https://chat.example/")])
+        XCTAssertEqual(bundle.spaces, [
+            ImportedSpace(name: "Work", icon: "💼", color: "#ff8000",
+                          pinned: [ImportedBookmark(title: "Board", url: "https://board.example/")],
+                          unpinned: [ImportedBookmark(title: "Docs", url: "https://docs.example/")]),
+            ImportedSpace(name: "Work 2", icon: nil, color: nil, pinned: [],
+                          unpinned: [ImportedBookmark(title: "Read", url: "https://read.example/")])
+        ])
+        XCTAssertEqual(bundle.pinnedTabs, [])
+        XCTAssertEqual(bundle.openTabs, [ImportedBookmark(title: "Loose", url: "https://loose.example/")])
+    }
+
+    private func writeSession(_ string: String) throws {
+        let json = Data(string.utf8)
         var compressed = [UInt8](repeating: 0, count: json.count + 64)
         let size = json.withUnsafeBytes { compression_encode_buffer(&compressed, compressed.count, $0.bindMemory(to: UInt8.self).baseAddress!, json.count, nil, COMPRESSION_LZ4_RAW) }
         var file = Data("mozLz40\0".utf8)
         file += withUnsafeBytes(of: UInt32(json.count).littleEndian, Array.init)
         file += compressed.prefix(size)
         try file.write(to: dir.appendingPathComponent("sessionstore-backups/recovery.jsonlz4"))
-        let result = FirefoxReader.read(profile: profile, kinds: [.tabs])
-        XCTAssertEqual(result.bundle.openTabs, [ImportedBookmark(title: "Now", url: "https://now.example/")])
     }
 
     func testZeroSizeSessionIsAnErrorNotACrash() throws {

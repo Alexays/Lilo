@@ -57,13 +57,13 @@ struct ImportBundle: Sendable {
     var bookmarksBar: [ImportedBookmark] = []
     /// Every other bookmark root, imported as one collapsed pinned folder.
     var otherBookmarks: [ImportedBookmark] = []
-    /// Arc favorites, imported into the bookmarked section.
+    /// Arc favorites and Zen essentials, imported into the bookmarked section.
     var favorites: [ImportedBookmark] = []
-    /// Arc spaces, each imported as a new Lilo space.
+    /// Arc spaces and Zen workspaces, each imported as a new Lilo space.
     var spaces: [ImportedSpace] = []
     /// Last session's open tabs (Safari, Firefox, Chromium), imported as unpinned tabs; Chromium tab groups are folders.
     var openTabs: [ImportedBookmark] = []
-    /// Last session's pinned tabs (Chromium), imported as pinned tabs.
+    /// Last session's pinned tabs (Chromium, Firefox), imported as pinned tabs.
     var pinnedTabs: [ImportedBookmark] = []
     var history: [ImportedVisit] = []
     var cookies: [ImportedCookie] = []
