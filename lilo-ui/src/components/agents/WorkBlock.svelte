@@ -1,4 +1,5 @@
 <script lang="ts" module>
+  import { getFormatLocale } from "../../lib/i18n/state.svelte";
   import type { ToolCallItem, ToolKind } from "./conversationModel";
   import type { IconName } from "./icons";
 
@@ -20,6 +21,8 @@
   const BROWSER_TOOL = /\blilo\b|mcp__lilo|tabs_|navigate|computer/i;
   const OUTPUT_TAIL = 12;
   const MAX_OUTPUT = 20000;
+  // Shared by every block of a conversation: a formatter is costly to build.
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
 
   interface CallView {
     call: ToolCallItem;
@@ -73,7 +76,7 @@
   import { cubicOut } from "svelte/easing";
   import { SvelteSet } from "svelte/reactivity";
   import { fade } from "svelte/transition";
-  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
+  import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { MOTION } from "../../lib/motion/timings";
@@ -101,7 +104,6 @@
   let { tabId, calls, sig, done, live, cwd, promptIndex, undone }: Props = $props();
 
   let userOpen = $state<boolean | null>(null);
-  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
   // `calls` is a new array on every frame of the thread: only `sig` says the calls changed.
   const views = $derived.by(() => {
     void sig;
