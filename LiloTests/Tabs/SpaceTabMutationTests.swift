@@ -352,7 +352,7 @@ final class SpaceTabMutationTests: XCTestCase {
         XCTAssertEqual(session.state.tree.pinned.map(\.id), [tabId], "repair must re-home the pinned tab")
     }
 
-    func testDurableRevisionBumpsOnContentAndActivation() {
+    func testDurableRevisionBumpsOnContentNotActivation() {
         let firstId = UUID()
         let secondId = UUID()
         var session = SpaceTab(spaceId: UUID(), state: SpaceTabState(
@@ -373,10 +373,10 @@ final class SpaceTabMutationTests: XCTestCase {
         session.updateTab(edited)
         XCTAssertGreaterThan(session.durableRevision, before, "a durable content change must bump the revision")
 
-        // Activation (non-structural; does not call finishMutation).
+        // Activation alone schedules no save: the spaces table persists the active tab.
         before = session.durableRevision
         session.activateTab(secondId)
-        XCTAssertGreaterThan(session.durableRevision, before, "activation changes activeTabId/activationHistory, so must bump")
+        XCTAssertEqual(session.durableRevision, before, "activation alone must not bump the revision")
 
         // No-op content write (identical fields) must NOT bump.
         before = session.durableRevision
