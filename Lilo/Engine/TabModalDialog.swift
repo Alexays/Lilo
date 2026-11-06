@@ -177,7 +177,9 @@ final class TabModalDialogView: NSView {
     override func layout() {
         super.layout()
         // An explicit path spares Core Animation an offscreen pass to derive the shadow from the panel's alpha.
-        panel.layer?.shadowPath = CGPath(roundedRect: panel.bounds, cornerWidth: panel.cornerRadius, cornerHeight: panel.cornerRadius, transform: nil)
+        // Clamped: CGPath traps on a radius over half the side, as a background tab's zero-size web view gives.
+        let radius = max(0, min(panel.cornerRadius, panel.bounds.width / 2, panel.bounds.height / 2))
+        panel.layer?.shadowPath = CGPath(roundedRect: panel.bounds, cornerWidth: radius, cornerHeight: radius, transform: nil)
     }
 
     /// Covers `webView`'s page, and takes the keyboard when the page is on screen.
