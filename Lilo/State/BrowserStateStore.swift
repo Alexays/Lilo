@@ -1033,7 +1033,7 @@ final class BrowserStateStore {
 
     private func inspectedEngineIds(in engines: [UUID: WKWebViewTab]) -> Set<UUID> {
         Set(engines.compactMap { id, engine in
-            engine.shouldRetainForWebInspector ? id : nil
+            engine.shouldRetainForWebInspector || engine.isExtensionDebugged ? id : nil
         })
     }
 

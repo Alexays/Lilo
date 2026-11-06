@@ -169,6 +169,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             registry: registry, debuggee: debuggee, engine: engine, inspector: inspector
         )
         sessions.append(session)
+        engine.isExtensionDebugged = true
         Self.receiveEvents(of: inspector, handler: self)
         // Chrome detaches when the tab shows a page the extension may not debug.
         session.urlObservation = engine.wkWebView.observe(\.url, options: [.new]) { [weak self, weak session] webView, _ in
@@ -211,6 +212,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     private func end(_ session: Session, reason: String?, pageGone: Bool = false) {
         guard let index = sessions.firstIndex(where: { $0 === session }) else { return }
         sessions.remove(at: index)
+        session.engine.isExtensionDebugged = sessions.contains { $0.engine === session.engine }
         session.urlObservation = nil
         if session.scaled { session.inspector.deviceScaleFactor = 0 }
         if let reason, let registry = session.registry {
