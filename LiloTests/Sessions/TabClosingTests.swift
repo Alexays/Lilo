@@ -169,6 +169,27 @@ final class TabClosingTests: XCTestCase {
         return (conversation, folder, page)
     }
 
+    func testAClosedConversationReopensInItsFolderAndItsPagesFollow() throws {
+        let (window, space) = try makeWindow()
+        window.createTabStateFirst(url: nil)
+        let (conversation, folder, page) = try addConversation(window, space)
+
+        window.closeTabStateFirst(id: conversation.id, askingPage: false)
+
+        XCTAssertNil(window.context.conversations.conversations[conversation.id])
+        XCTAssertNil(window.tabManager.folder(id: folder.id))
+        XCTAssertNil(window.tabManager.tab(for: page.id))
+
+        let reopened = try XCTUnwrap(window.restoreClosedTabStateFirst())
+        XCTAssertEqual(reopened.id, conversation.id, "the conversation comes back first")
+        XCTAssertEqual(sidebarItem(window, space, conversation.id)?.parentFolderId, folder.id)
+        XCTAssertNotNil(window.context.conversations.conversations[conversation.id])
+
+        let reopenedPage = try XCTUnwrap(window.restoreClosedTabStateFirst())
+        XCTAssertEqual(reopenedPage.url?.absoluteString, "data:text/html,page")
+        XCTAssertEqual(sidebarItem(window, space, reopenedPage.id)?.parentFolderId, folder.id, "its page returns into its folder")
+    }
+
     func testClosingAConversationAmongOtherTabsIsUndoneWithItsPages() throws {
         let (window, space) = try makeWindow()
         let events = BridgeEventRecorder(window.bridgeRouter)
