@@ -191,27 +191,34 @@
     return out;
   }
 
+  // The selectors each :-abp-properties() operator found during the current pass: inside a :has(), it runs once per candidate.
+  var propertySelectors = null;
+
   // The elements the selectors of the page's same-origin style rules match, for the rules whose declarations
   // :-abp-properties() matches. A rule styling a ::before or ::after selects the element that carries it.
   function abpProperties(op, nodes, css, root) {
-    var selectors = [];
-    for (var s = 0; s < document.styleSheets.length; s++) {
-      var rules;
-      try { rules = document.styleSheets[s].cssRules; } catch (e) { continue; }
-      for (var r = 0; r < rules.length; r++) {
-        if (rules[r].type !== 1) continue;
-        var style = rules[r].style;
-        var text = '';
-        for (var k = 0; k < style.length; k++) {
-          var priority = style.getPropertyPriority(style[k]);
-          text += (op.compact || !k ? '' : ' ') + style[k] + (op.compact ? ':' : ': ') + style.getPropertyValue(style[k]) +
-            (priority ? ' !' + priority : '') + ';';
+    var joined = propertySelectors.get(op);
+    if (joined === undefined) {
+      var selectors = [];
+      for (var s = 0; s < document.styleSheets.length; s++) {
+        var rules;
+        try { rules = document.styleSheets[s].cssRules; } catch (e) { continue; }
+        for (var r = 0; r < rules.length; r++) {
+          if (rules[r].type !== 1) continue;
+          var style = rules[r].style;
+          var text = '';
+          for (var k = 0; k < style.length; k++) {
+            var priority = style.getPropertyPriority(style[k]);
+            text += (op.compact || !k ? '' : ' ') + style[k] + (op.compact ? ':' : ': ') + style.getPropertyValue(style[k]) +
+              (priority ? ' !' + priority : '') + ';';
+          }
+          if (op.re.test(text)) selectors.push(rules[r].selectorText.replace(/::?(?:before|after)\b/gi, ''));
         }
-        if (op.re.test(text)) selectors.push(rules[r].selectorText.replace(/::?(?:before|after)\b/gi, ''));
       }
+      joined = selectors.join(', ');
+      propertySelectors.set(op, joined);
     }
-    if (!selectors.length) return [];
-    var joined = selectors.join(', ');
+    if (!joined) return [];
     try {
       if (css) return nodes.filter(function (el) { return el.matches(joined); });
       return Array.prototype.slice.call(root.querySelectorAll(joined));
@@ -350,8 +357,9 @@
     parsed.forEach(function (p) { if (p.ops.some(function (op) { return op.name === 'others'; })) p.others = new Set(); });
     var run = function (scope) {
       texts = new Map();
+      propertySelectors = new Map();
       for (var i = 0; i < parsed.length; i++) { try { applySelector(parsed[i], scope); } catch (e) {} }
-      texts = null;
+      texts = propertySelectors = null;
     };
     // Elements inserted since the last pass. The outermost connected ones are the roots; their
     // ancestors are collected once for all.
