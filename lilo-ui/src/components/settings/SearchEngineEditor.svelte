@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import {
     BUILTIN_SEARCH_ENGINES,
@@ -33,14 +34,18 @@
     }
   });
 
+  // Typing only edits the drafts: a field persists when its edit is done, and leaving the page or the window persists the rest.
   function persist() {
-    lastSerialized = JSON.stringify(validEngines);
-    setSetting("searchEngines", lastSerialized);
+    const json = JSON.stringify(validEngines);
+    if (json === lastSerialized) return;
+    lastSerialized = json;
+    setSetting("searchEngines", json);
   }
+
+  onDestroy(persist);
 
   function edit(id: string, patch: Partial<SearchEngine>) {
     engines = engines.map((engine) => (engine.id === id ? { ...engine, ...patch } : engine));
-    persist();
   }
 
   function move(index: number, direction: -1 | 1) {
@@ -62,6 +67,9 @@
   }
 </script>
 
+<!-- WebKit keeps the field focused when the web view loses focus or the window goes, so no change event fires then. -->
+<svelte:window onblur={persist} onpagehide={persist} />
+
 <div class="engine-editor">
   {#each engines as engine, index (engine.id)}
     <div class="engine-row">
@@ -71,6 +79,7 @@
           ariaLabel={t("settings.engineName")}
           placeholder={t("settings.engineName")}
           onchange={(value) => edit(engine.id, { name: value })}
+          oncommit={persist}
         />
         <UiTextField
           value={engine.urlTemplate}
@@ -78,12 +87,14 @@
           ariaLabel={t("settings.engineUrlTemplate")}
           placeholder="https://example.com/search?q=%s"
           onchange={(value) => edit(engine.id, { urlTemplate: value })}
+          oncommit={persist}
         />
         <UiTextField
           value={engine.keyword}
           ariaLabel={t("settings.engineKeyword")}
           placeholder={t("settings.engineKeyword")}
           onchange={(value) => edit(engine.id, { keyword: value })}
+          oncommit={persist}
         />
         {#if !engine.name.trim()}
           <p class="engine-error" role="alert">{t("settings.engineNameRequired")}</p>

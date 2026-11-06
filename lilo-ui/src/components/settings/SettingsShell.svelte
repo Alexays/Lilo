@@ -12,6 +12,7 @@
     setSettingsQuery,
   } from "../../stores/panels.svelte";
   import { getActiveProfileId, getProfileById, getProfiles } from "../../stores/profiles.svelte";
+  import { settingsActions } from "../../lib/bridge/actions";
   import { getSetting, loadSettingsSurface } from "../../stores/settings.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import { resolveDisplayName } from "../extensions/extensionPanelModel";
@@ -95,6 +96,16 @@
   $effect(() => {
     if (shellOpen) loadSettingsSurface();
     else showProfileExtensions("");
+  });
+
+  // Listing every site's data walks the whole WebKit data store: once per opening, when a page shows sites.
+  let websiteDataRequested = false;
+  $effect(() => {
+    if (!shellOpen) websiteDataRequested = false;
+    else if (!websiteDataRequested && (section === "privacy" || query.trim())) {
+      websiteDataRequested = true;
+      settingsActions.loadWebsiteData();
+    }
   });
 
   // Escape unwinds one level: the search, then a drill-in page, then the surface itself.

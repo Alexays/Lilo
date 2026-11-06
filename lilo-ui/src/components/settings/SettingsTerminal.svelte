@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { keepAwakeActions, settingsActions } from "../../lib/bridge/actions";
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { getSetting, getTerminalOptions, setSetting } from "../../stores/settings.svelte";
@@ -50,6 +51,8 @@
     getRunningApps().filter((app) => !neverFreeze.includes(app.bundleId)).map((app) => ({ value: app.bundleId, label: app.name })),
   );
   const saveNeverFreeze = (list: string[]) => setSetting("terminalLidNeverFreeze", JSON.stringify(list));
+  // Reading the themes and fonts blocks the main thread: only this page asks, each time it mounts.
+  onMount(() => settingsActions.loadTerminalOptions());
   $effect(() => {
     if (sleepMode === "lid" && freezeApps) keepAwakeActions.loadRunningApps();
   });
@@ -101,7 +104,8 @@
           {theme.name}
         </button>
       {/each}
-      <button class="theme" onclick={() => settingsActions.importTerminalTheme()}>
+      <!-- Hidden until the themes arrive, it holds a row of tiles so the rows below barely move. -->
+      <button class="theme" style:visibility={options ? null : "hidden"} onclick={() => settingsActions.importTerminalTheme()}>
         <span class="shot import" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
         </span>
