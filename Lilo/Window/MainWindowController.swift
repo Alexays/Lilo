@@ -592,6 +592,7 @@ final class MainWindowController: NSWindowController {
         tabManager.browserStateStore = context.browserState
         tabManager.delegate = self
         tabManager.engineDelegate = self
+        tabManager.pageContainer = contentContainerView
         setupTerminalHost()
         guard !ProcessInfo.isRunningUnderXCTest else { return }
         runStartupSequence()

@@ -54,6 +54,10 @@ final class TabManager {
     /// Adapter for the window containing these tabs.
     weak var windowAdapter: WindowExtensionAdapter?
 
+    /// The window's page container: a page loading out of sight is laid out at its size, not at 0x0, so
+    /// showing it later needs no relayout, breakpoint change or image refetch.
+    weak var pageContainer: NSView?
+
     /// Tabs whose engine was built for an extension page before that extension loaded (a launch restore
     /// racing the extensions' restore): the page stays blank until the engine is rebuilt.
     var tabsAwaitingTheirExtension: Set<UUID> = []
@@ -448,6 +452,7 @@ final class TabManager {
         let preload = engineFactory.createTab(configuration: .init(
             dataStore: dataStore ?? engineFactory.defaultDataStore(), tabId: tab.id, profileId: profileId, refillsWarmPool: false
         ))
+        if let pageContainer { preload.fitView(in: pageContainer.bounds) }
         preload.loadURL(url)
         topHitPreload = (url, tab.id, preload)
     }
@@ -490,6 +495,7 @@ final class TabManager {
         )
         engine.extensionHost = target?.url.host?.lowercased()
         configureEngineRuntime(engine)
+        if let pageContainer { engine.fitView(in: pageContainer.bounds) }
         let scheme = url?.scheme?.lowercased()
         if target == nil, nativeConfiguration == nil, scheme == "chrome-extension" {
             tabsAwaitingTheirExtension.insert(engine.id)
