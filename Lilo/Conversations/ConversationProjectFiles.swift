@@ -3,7 +3,8 @@ import Foundation
 /// The files of a conversation's project, for `@` in the composer: listed once and kept for a short while,
 /// so typing a query never walks the disk again.
 actor ConversationProjectFiles {
-    private var listings: [String: (files: [String], at: Date)] = [:]
+    /// The last project listed, each path with its lowercased form and name, so a keystroke only compares.
+    private var cached: (directory: String, files: [(path: String, lower: String, name: Substring)], at: Date)?
     private static let maxAge: TimeInterval = 30
     private static let maxFiles = 50_000
 
@@ -12,14 +13,12 @@ actor ConversationProjectFiles {
     func search(_ query: String, in directory: String) -> [String] {
         let files = listing(of: directory)
         let needle = query.lowercased()
-        guard !needle.isEmpty else { return Array(files.prefix(20)) }
+        guard !needle.isEmpty else { return files.prefix(20).map(\.path) }
         var ranked: [(rank: Int, path: String)] = []
-        for path in files {
-            let lower = path.lowercased()
-            let name = lower.split(separator: "/").last.map(String.init) ?? lower
+        for file in files {
             let rank: Int
-            if name.hasPrefix(needle) { rank = 0 } else if name.contains(needle) { rank = 1 } else if lower.contains(needle) { rank = 2 } else if Self.inOrder(needle, in: lower) { rank = 3 } else { continue }
-            ranked.append((rank, path))
+            if file.name.hasPrefix(needle) { rank = 0 } else if file.name.contains(needle) { rank = 1 } else if file.lower.contains(needle) { rank = 2 } else if Self.inOrder(needle, in: file.lower) { rank = 3 } else { continue }
+            ranked.append((rank, file.path))
         }
         return ranked.sorted { $0.rank != $1.rank ? $0.rank < $1.rank : $0.path.count < $1.path.count }.prefix(20).map(\.path)
     }
@@ -35,22 +34,26 @@ actor ConversationProjectFiles {
 
     /// Git's view of the project when it is a repository (tracked and untracked, ignored left out), else a walk
     /// that skips hidden folders.
-    private func listing(of directory: String) -> [String] {
-        if let cached = listings[directory], Date().timeIntervalSince(cached.at) < Self.maxAge { return cached.files }
-        var files: [String] = []
+    private func listing(of directory: String) -> [(path: String, lower: String, name: Substring)] {
+        if let cached, cached.directory == directory, Date().timeIntervalSince(cached.at) < Self.maxAge { return cached.files }
+        var paths: [String] = []
         if GitDiff.repositoryRoot(containing: directory) != nil,
            let output = GitDiff.run(["ls-files", "--cached", "--others", "--exclude-standard", "-z"], in: directory) {
-            files = output.split(separator: 0).prefix(Self.maxFiles).compactMap { String(bytes: $0, encoding: .utf8) }
+            paths = output.split(separator: 0).prefix(Self.maxFiles).compactMap { String(bytes: $0, encoding: .utf8) }
         } else if let walker = FileManager.default.enumerator(
             at: URL(fileURLWithPath: directory), includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]
         ) {
             let base = URL(fileURLWithPath: directory).standardizedFileURL.path.count + 1
             for case let url as URL in walker where (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
-                files.append(String(url.standardizedFileURL.path.dropFirst(base)))
-                if files.count >= Self.maxFiles { break }
+                paths.append(String(url.standardizedFileURL.path.dropFirst(base)))
+                if paths.count >= Self.maxFiles { break }
             }
         }
-        listings[directory] = (files, Date())
+        let files = paths.map { path in
+            let lower = path.lowercased()
+            return (path: path, lower: lower, name: lower.split(separator: "/").last ?? lower[...])
+        }
+        cached = (directory, files, Date())
         return files
     }
 }
