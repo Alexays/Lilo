@@ -221,7 +221,7 @@
       </button>
       {#if saveMenuOpen}
         <div class="save-menu float-surface float-popover" role="menu" aria-label={t("screenshot.saveOptions")} out:popoverOut>
-          <button role="menuitem" onclick={() => { saveMenuOpen = false; screenshotEditor.saveAs(); }}>{t("screenshot.saveAs")}</button>
+          <button class="float-row" role="menuitem" onclick={() => { saveMenuOpen = false; screenshotEditor.saveAs(); }}>{t("screenshot.saveAs")}</button>
         </div>
       {/if}
     </div>
@@ -289,6 +289,4 @@
   .save-group .primary:first-child { flex: 1; border-radius: var(--radius-md) 0 0 var(--radius-md); }
   .save-group .chevron { border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 0 12px; display: flex; align-items: center; justify-content: center; }
   .save-menu { position: absolute; bottom: calc(100% + 6px); left: 0; right: 0; transform-origin: bottom; }
-  .save-menu button { width: 100%; white-space: nowrap; border: none; background: transparent; color: var(--text-primary); padding: 8px 10px; border-radius: calc(var(--float-radius-popover) - 6px); cursor: pointer; font-size: var(--font-size-sm); text-align: left; }
-  .save-menu button:hover { background: var(--bg-hover); }
 </style>
