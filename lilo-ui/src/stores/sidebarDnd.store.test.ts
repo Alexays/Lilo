@@ -69,7 +69,6 @@ function dragOnto(zoneId: string, index = 1): DndActiveDrag {
 			item: { id: "tab-1", kind: "tab" },
 			zoneId: ZONE.id,
 			element: elementRect(0, 0, 240, 30),
-			sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect() as DOMRect,
 		},
 		startPoint: { x: 10, y: 10 },
 		currentPoint: { x: 10, y: 60 },
@@ -170,10 +169,12 @@ test("a new drag gesture releases the previous drop's hold", async () => {
 		item: { id: "tab-2", kind: "tab" },
 		zoneId: ZONE.id,
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect() as DOMRect,
 	}, { x: 10, y: 10 });
+	assert.deepEqual(getZoneItems(ZONE, baseItems()).map((item) => item.id), ["tab-2", "tab-1"], "a plain press keeps the hold");
 
-	assert.deepEqual(getZoneItems(ZONE, baseItems()).map((item) => item.id), ["tab-1", "tab-2"]);
+	// Started outside every zone: the dragged row is lifted out of the base order.
+	dndEngineStore.updatePointer({ x: 500, y: 500 }, true);
+	assert.deepEqual(getZoneItems(ZONE, baseItems()).map((item) => item.id), ["tab-1"]);
 
 	dndEngineStore.drop();
 	// endDrag defers its notification past the current task.

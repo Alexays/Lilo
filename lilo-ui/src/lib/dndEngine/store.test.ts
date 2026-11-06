@@ -58,7 +58,6 @@ test("DndEngineStore resolves nested zones before broader parent zones", () => {
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "root",
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 10 });
 
 	assert.equal(store.updatePointer({ x: 24, y: 52 }, true)?.zoneId, "folder");
@@ -83,11 +82,26 @@ test("DndEngineStore never resolves a zone from another space", () => {
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "root-a",
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 10 });
 
 	assert.equal(store.updatePointer({ x: 10, y: 150 }, true), null);
 	assert.equal(store.updatePointer({ x: 10, y: 50 }, true)?.zoneId, "root-a");
+});
+
+test("DndEngineStore notifies nothing for a press that never starts a drag", async () => {
+	const store = new DndEngineStore();
+	let notifications = 0;
+	store.subscribe(() => notifications += 1);
+	store.registerZone(elementRect(0, 0, 240, 120), { id: "root", axis: "vertical", getItems: () => [] });
+	store.startDrag({
+		item: { id: "tab-a", kind: "tab" },
+		zoneId: "root",
+		element: elementRect(0, 0, 240, 30),
+	}, { x: 10, y: 10 });
+	store.updatePointer({ x: 11, y: 11 }, false);
+	store.drop();
+	await new Promise((resolve) => setTimeout(resolve, 0));
+	assert.equal(notifications, 0);
 });
 
 test("DndEngineStore ignores shadow placeholders when resolving item geometry", () => {
@@ -112,7 +126,6 @@ test("DndEngineStore ignores shadow placeholders when resolving item geometry", 
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "root",
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 10 });
 
 	assert.deepEqual(targetWithoutZoneRect(store.updatePointer({ x: 20, y: 40 }, true)), {
@@ -149,7 +162,6 @@ test("DndEngineStore re-measures after a reprojection and keeps the same target"
 		item: { id: "tab-dragged", kind: "tab" },
 		zoneId: "other",
 		element: elementRect(0, 200, 240, 30),
-		sourceRect: elementRect(0, 200, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 210 });
 
 	const pointer = { x: 20, y: 24 };
@@ -185,7 +197,6 @@ test("DndEngineStore measures without the dragged row before its placeholder lan
 		item: items[1],
 		zoneId: "root",
 		element: elementRect(0, 33, 240, 30),
-		sourceRect: elementRect(0, 33, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 40 });
 
 	// Below the dragged row's own midpoint is still its slot: index 1 of [tab-a, tab-b].
@@ -208,7 +219,6 @@ test("DndEngineStore resolves insertion from the pointer", () => {
 		item: { id: "folder-b", kind: "folder" },
 		zoneId: "root",
 		element: elementRect(0, 80, 240, 300),
-		sourceRect: elementRect(0, 80, 240, 300).getBoundingClientRect(),
 	}, { x: 10, y: 90 });
 
 	assert.equal(store.updatePointer({ x: 10, y: 8 }, true)?.index, 0);
@@ -226,7 +236,6 @@ test("DndEngineStore measures nothing before the drag starts", () => {
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "root",
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 10 });
 
 	assert.equal(store.updatePointer({ x: 11, y: 11 }, false), null);
@@ -255,7 +264,6 @@ test("DndEngineStore resolves from cached layout until the target changes or it 
 		item: { id: "tab-b", kind: "tab" },
 		zoneId: "root",
 		element: elementRect(0, 80, 240, 30),
-		sourceRect: elementRect(0, 80, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 90 });
 
 	assert.equal(store.updatePointer({ x: 10, y: 90 }, true)?.index, 1);
@@ -297,7 +305,6 @@ test("DndEngineStore holds the last target across a gap between zones", () => {
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "unpinned",
 		element: elementRect(0, 120, 240, 30),
-		sourceRect: elementRect(0, 120, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 130 });
 
 	assert.equal(store.updatePointer({ x: 10, y: 90 }, true)?.zoneId, "pinned");
@@ -323,7 +330,6 @@ test("DndEngineStore does not hold a target over a zone that refuses the point",
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "list",
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 10 });
 
 	assert.equal(store.updatePointer({ x: 10, y: 90 }, true)?.zoneId, "list");
@@ -341,7 +347,6 @@ test("DndEngineStore stamps the resolved zone rect onto the target", () => {
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "root",
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 10 });
 
 	assert.equal(store.updatePointer({ x: 20, y: 60 }, true)?.zoneRect?.top, 40);
@@ -370,7 +375,6 @@ test("DndEngineStore lets getItems read the active target without re-entering", 
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "root",
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 10 });
 
 	store.updatePointer({ x: 20, y: 60 }, true);
@@ -393,7 +397,6 @@ test("DndEngineStore defers the drag-end notification past the current task", as
 		item: { id: "tab-a", kind: "tab" },
 		zoneId: "root",
 		element: elementRect(0, 0, 240, 30),
-		sourceRect: elementRect(0, 0, 240, 30).getBoundingClientRect(),
 	}, { x: 10, y: 10 });
 	store.updatePointer({ x: 20, y: 60 }, true);
 	notifications.length = 0;
@@ -441,7 +444,6 @@ test("DndEngineStore moves the cached layout with a scrolled container instead o
 		item: { id: "tab-dragged", kind: "tab" },
 		zoneId: "dock",
 		element: outside,
-		sourceRect: outside.getBoundingClientRect(),
 	}, { x: 10, y: 510 });
 
 	// The first scroll of a container has no known offset to move from: it re-measures.

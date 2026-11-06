@@ -42,7 +42,6 @@ type DndDragSource = {
 	item: DndItem;
 	zoneId: string;
 	element: HTMLElement;
-	sourceRect: DOMRect;
 };
 
 export type DndActiveDrag = {
@@ -76,7 +75,6 @@ export class DndEngineStore {
 	private listeners = new Set<() => void>();
 	private lastNotifiedActive = false;
 	private lastNotifiedSourceId = "";
-	private lastNotifiedStarted = false;
 	private lastNotifiedZoneId = "";
 	private lastNotifiedIndex = -1;
 	private lastNotifiedOnItemId: string | undefined;
@@ -102,16 +100,15 @@ export class DndEngineStore {
 
 	private notifyIfChanged(): void {
 		const drag = this.drag;
-		const active = drag !== null;
-		const sourceId = drag?.source.item.id ?? "";
-		const started = drag?.started ?? false;
+		// A press that never crosses the drag threshold is a plain click: observers never hear of it.
+		const active = drag?.started === true;
+		const sourceId = active ? drag.source.item.id : "";
 		const zoneId = drag?.target?.zoneId ?? "";
 		const index = drag?.target?.index ?? -1;
 		const onItemId = drag?.target?.onItemId;
 		if (
 			active === this.lastNotifiedActive &&
 			sourceId === this.lastNotifiedSourceId &&
-			started === this.lastNotifiedStarted &&
 			zoneId === this.lastNotifiedZoneId &&
 			index === this.lastNotifiedIndex &&
 			onItemId === this.lastNotifiedOnItemId
@@ -120,7 +117,6 @@ export class DndEngineStore {
 		}
 		this.lastNotifiedActive = active;
 		this.lastNotifiedSourceId = sourceId;
-		this.lastNotifiedStarted = started;
 		this.lastNotifiedZoneId = zoneId;
 		this.lastNotifiedIndex = index;
 		this.lastNotifiedOnItemId = onItemId;
@@ -170,8 +166,8 @@ export class DndEngineStore {
 		}
 	}
 
-	// Every pointerdown on a row lands here, so nothing is measured until the drag
-	// actually starts.
+	// Every pointerdown on a row lands here, so nothing is measured or notified until the
+	// drag actually starts.
 	startDrag(source: DndDragSource, startPoint: DndPoint): void {
 		this.layoutSnapshot = null;
 		this.layoutSnapshotStale = true;
