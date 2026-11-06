@@ -32,3 +32,27 @@ test("the shown list keeps its filter while a search is typed, until the search'
 		mock.timers.reset();
 	}
 });
+
+test("a next batch continues the shown list while a search is typed", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/history.svelte.ts");
+	const receive = (msg: Record<string, unknown>) => (globalThis as unknown as LiloWindow).window.__lilo?.receive(msg);
+	const lastRequestId = () => posted.filter((message) => message.action === "loadHistoryPage").at(-1)?.payload.requestId;
+
+	mock.timers.enable({ apis: ["setTimeout"] });
+	try {
+		store.openHistory();
+		receive({ event: "historyPage", requestId: lastRequestId(), rows: [], favicons: {}, nextBefore: 1_000 });
+
+		store.setHistoryQuery("example");
+		store.loadMoreHistory();
+		assert.equal(posted.at(-1)?.payload.before, 1_000);
+		assert.equal(posted.at(-1)?.payload.query, "");
+
+		receive({ event: "historyPage", requestId: lastRequestId(), rows: [], favicons: {} });
+		assert.equal(store.getShownHistoryFilter().query, "");
+	} finally {
+		mock.timers.reset();
+	}
+});

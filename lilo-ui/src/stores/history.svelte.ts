@@ -47,8 +47,9 @@ function request(before?: number): void {
 	_requestId += 1;
 	_appending = before !== undefined;
 	_loading = true;
-	_requestedFilter = _filter;
-	historyActions.loadPage({ ..._filter, requestId: _requestId, before });
+	// A next batch continues the rows on screen, whatever search is still being typed.
+	_requestedFilter = before === undefined ? _filter : _shownFilter;
+	historyActions.loadPage({ ..._requestedFilter, requestId: _requestId, before });
 }
 
 function reload(): void {
