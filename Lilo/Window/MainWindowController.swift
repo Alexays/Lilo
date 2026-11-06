@@ -440,6 +440,9 @@ final class MainWindowController: NSWindowController {
     /// Later full-state payloads for them omit the heavy base64 favicons and the UI keeps the ones
     /// it holds. Re-seeded by `sendInitialState`, cleared per space on an explicit resync request.
     var chromeFaviconSyncedSpaceIds: Set<UUID> = []
+    /// Tabs of synced spaces whose favicon changed while this window did not show their space:
+    /// the next full state ships their favicon again.
+    var chromeStaleFaviconTabIds: Set<UUID> = []
     /// Tab payloads by id as this window's chrome last received them through `tabUpdated`. Every other
     /// event that seeds a tab's state clears its entry, so the next patch after it is complete.
     var sentTabPatches: [String: [String: Any]] = [:]
@@ -449,10 +452,18 @@ final class MainWindowController: NSWindowController {
     func emitBrowserChange(_ changes: BrowserChangeSet) {
         guard let event = BrowserChangePresenter.event(
             for: changes,
-            omitFaviconsForSpaces: chromeFaviconSyncedSpaceIds
+            omitFaviconsForSpaces: chromeFaviconSyncedSpaceIds,
+            staleFaviconTabIds: chromeStaleFaviconTabIds
         ) else { return }
         if event.name == "browserStateChanged" {
             chromeFaviconSyncedSpaceIds.formUnion(changes.states.map(\.spaceId))
+            if !chromeStaleFaviconTabIds.isEmpty {
+                for state in changes.states {
+                    for tab in state.projection.tabs { chromeStaleFaviconTabIds.remove(tab.id) }
+                }
+                // Tabs closed before this window showed their space would otherwise stay forever.
+                chromeStaleFaviconTabIds = chromeStaleFaviconTabIds.filter { context.browserState.owningSpaceId(forTab: $0) != nil }
+            }
             sentTabPatches.removeAll(keepingCapacity: true)
         } else if !sentTabPatches.isEmpty, let operations = event.data["operations"] as? [[String: Any]] {
             // A sidebar patch reseeds only the tabs it upserts or removes.

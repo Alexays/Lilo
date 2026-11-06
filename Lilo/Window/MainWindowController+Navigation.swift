@@ -14,10 +14,10 @@ extension MainWindowController {
         if isVisibleTab(id) {
             tabManager.noteTabUpdated(old: old, new: new)
         }
-        // Only windows showing the space get the favicon patch: the others' next full state of it must carry favicons again.
+        // Only windows showing the space get the favicon patch: the others' next full state of it must carry this favicon again.
         if new.faviconDataURL != old.faviconDataURL, let spaceId = context.browserState.owningSpaceId(forTab: id) {
             for window in context.windows.windows where window.tabManager.currentSpaceId != spaceId {
-                window.chromeFaviconSyncedSpaceIds.remove(spaceId)
+                window.chromeStaleFaviconTabIds.insert(id)
             }
         }
         return new
