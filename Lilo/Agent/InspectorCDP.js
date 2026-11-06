@@ -347,9 +347,9 @@
   }
 
   // The WebKit domains each CDP domain's events come from. The frontend may not have enabled them all
-  // yet; it needs them on, so disable leaves them be. Performance and Log send nothing: Puppeteer
+  // yet; it needs them on, so disable leaves them be. Performance, Log and Audits send nothing: Puppeteer
   // enables them at startup and fails when they are missing.
-  const backingDomains = { Runtime: ['Runtime', 'Console', 'Page'], Page: ['Page'], Network: ['Network'], DOM: [], Performance: [], Log: [] }
+  const backingDomains = { Runtime: ['Runtime', 'Console', 'Page'], Page: ['Page'], Network: ['Network'], DOM: [], Performance: [], Log: [], Audits: [] }
 
   const commands = {
     'Runtime.evaluate': async params => {
@@ -486,8 +486,11 @@
       try {
         const [domain, command] = method.split('.')
         if (command === 'enable' || command === 'disable') {
-          if (!Object.hasOwn(backingDomains, domain)) throw notFound(method)
-          if (command === 'enable') await Promise.all(backingDomains[domain].map(name => agent(name).enable.invoke({})))
+          // A domain Lilo lacks was never enabled, so its disable succeeds: Puppeteer sends Fetch.disable at startup.
+          if (command === 'enable') {
+            if (!Object.hasOwn(backingDomains, domain)) throw notFound(method)
+            await Promise.all(backingDomains[domain].map(name => agent(name).enable.invoke({})))
+          }
           const events = method === 'Runtime.enable'
             ? executionContexts().map(context => ({ method: 'Runtime.executionContextCreated', params: { context } }))
             : []

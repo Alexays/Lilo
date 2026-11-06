@@ -196,7 +196,7 @@ final class DebuggerGapAPITests: XCTestCase {
     func testPuppeteerStartupAndNavigationEvents() async throws {
         let tab = try await openTab()
         _ = await attach(tab.position)
-        for method in ["Page.setLifecycleEventsEnabled", "Performance.enable", "Log.enable"] {
+        for method in ["Page.setLifecycleEventsEnabled", "Performance.enable", "Log.enable", "Audits.enable", "Fetch.disable"] {
             let reply = await send(method, ["enabled": true])
             XCTAssertNil(reply.error, method)
         }
