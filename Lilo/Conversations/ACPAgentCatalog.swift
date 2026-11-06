@@ -45,6 +45,8 @@ final class ACPAgentCatalog {
     private var loadedAt: Date?
     private var loading: Task<Void, Never>?
     private var shellPath: String?
+    /// npm agent folders started or being installed since launch: a running conversation may still use them.
+    private var npmInUse: Set<String> = []
 
     init(directory: URL) {
         self.directory = directory
@@ -203,13 +205,18 @@ final class ACPAgentCatalog {
         let name = String(package.dropLast(agent.version.count + 1))
         let versions = directory.appending(path: "npm/\(agent.id)")
         let target = versions.appending(path: agent.version)
+        npmInUse.insert(target.path)
         if let executable = Self.packageCommand(name, in: target) { return executable }
         guard let npm = Self.find("npm", in: path) else {
             throw unsafe LaunchError(message: String(format: "%@ needs Node.js: install it from nodejs.org, then try again.".localized, agent.name))
         }
         // Installed aside then moved in place, so a start running alongside never sees a half-installed tree.
         let staging = versions.appending(path: ".\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: staging) }
+        npmInUse.insert(staging.path)
+        defer {
+            npmInUse.remove(staging.path)
+            try? FileManager.default.removeItem(at: staging)
+        }
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
         let status = await AgentClientConfig.run("/usr/bin/env", [
             "PATH=\(path)", npm, "install", "--prefix", staging.path, "--no-audit", "--no-fund", "--loglevel=error", package
@@ -219,8 +226,9 @@ final class ACPAgentCatalog {
         }
         // Another start of the same agent may have finished its install meanwhile.
         if let executable = Self.packageCommand(name, in: target) { return executable }
+        // Also removes what an install cut short by a quit left behind.
         for old in (try? FileManager.default.contentsOfDirectory(at: versions, includingPropertiesForKeys: nil)) ?? []
-        where !old.lastPathComponent.hasPrefix(".") {
+        where !npmInUse.contains(versions.appending(path: old.lastPathComponent).path) {
             try? FileManager.default.removeItem(at: old)
         }
         try? FileManager.default.moveItem(at: staging, to: target)
