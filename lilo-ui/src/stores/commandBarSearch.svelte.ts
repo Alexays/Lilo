@@ -616,6 +616,10 @@ function autofillResult(query: string, history: CommandResult[], tabs: TabState[
 	const origins = new Map<string, string>();
 	const note = (url: string | undefined, count: number) => {
 		if (!url || !/^https?:\/\//i.test(url)) return;
+		// The string prefix check skips URL parsing for the many entries that cannot match; userinfo
+		// ("user@") hides the host from it.
+		const address = addressOf(url);
+		if (!address.startsWith(query) && !address.includes("@")) return;
 		const host = hostOf(url);
 		if (!host?.startsWith(query) || host.length === query.length) return;
 		if (!origins.has(host)) origins.set(host, `${new URL(url).origin}/`);
