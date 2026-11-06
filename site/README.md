@@ -73,7 +73,7 @@ Existing archives stay unchanged on later builds and releases; incomplete archiv
 
 ## Release pages and feeds
 
-Every release has its own page at `/changelog/<version>/`, with its first illustrated highlight as its social image. `/changelog/rss.xml` and `/fr/changelog/rss.xml` carry the last 30 releases. A story's `groups` list the notes that are not highlights by product area, in place of the complete notes.
+Every release has its own page at `/changelog/<version>/`, with its first illustrated highlight as its social image. `/changelog/rss.xml` and `/fr/changelog/rss.xml`, built with `@astrojs/rss`, carry the last 30 releases with their complete notes. A story's `groups` list the notes that are not highlights by product area, in place of the complete notes.
 
 ## Highlight media
 

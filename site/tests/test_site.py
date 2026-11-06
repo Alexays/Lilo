@@ -202,7 +202,10 @@ class SiteTests(unittest.TestCase):
                 self.assertFalse((DIST / f"{prefix}changelog/0.16.0/index.md").exists())
                 self.assertIn(f"https://getlilo.app/{prefix}changelog/0.16.0/", (DIST / "sitemap-0.xml").read_text())
                 feed = ET.parse(DIST / f"{prefix}changelog/rss.xml").getroot()
-                self.assertIn(f"/{prefix}changelog/0.16.0/", [item.findtext("link").removeprefix("https://getlilo.app") for item in feed.iter("item")])
+                item = next(item for item in feed.iter("item") if item.findtext("link") == f"https://getlilo.app/{prefix}changelog/0.16.0/")
+                self.assertTrue(item.findtext("description"))
+                self.assertIn("<h3>Added</h3>", item.findtext("{http://purl.org/rss/1.0/modules/content/}encoded"))
+                self.assertEqual(feed.findtext("channel/language"), "fr" if prefix else "en")
 
     def test_a_release_page_shares_its_illustration(self):
         page = (DIST / "changelog/0.8.0/index.html").read_text()
