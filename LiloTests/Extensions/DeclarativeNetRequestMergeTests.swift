@@ -50,4 +50,18 @@ final class DeclarativeNetRequestMergeTests: XCTestCase {
         }
         XCTAssertEqual(lists, [["a", "b"], ["c"], ["d", "g"], ["e"], ["f"], ["h"], ["i"], ["j"]])
     }
+
+    func testMergedRulesSerializeToTheSameBytesEveryTime() throws {
+        let block = ["type": "block"]
+        let rules: [[String: Any]] = (0..<8).flatMap { index in
+            [["action": block, "trigger": ["url-filter": "\(index)", "if-top-url": ["a"]]],
+             ["action": block, "trigger": ["url-filter": "\(index)", "if-top-url": ["b"]]]]
+        }
+
+        let outputs = try Set((0..<10).map { _ in
+            try JSONSerialization.data(withJSONObject: DeclarativeNetRequestMerge.merged(rules as NSArray))
+        })
+
+        XCTAssertEqual(outputs.count, 1)
+    }
 }
