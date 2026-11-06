@@ -13,8 +13,8 @@
 
   let { site }: { site: SiteSummary } = $props();
 
-  const summary = $derived.by(() => {
-    return [
+  const summary = $derived(
+    [
       ...site.permissions.map((permission) =>
         t("settings.sites.permissionSummary", {
           type: sitePermissionLabel(permission.type, t),
@@ -23,8 +23,8 @@
       ),
       ...site.zoomLevels.map((level) => t("settings.sites.zoomSummary", { zoom: percent.format(level.zoom) })),
       ...(site.dataName ? [t("settings.sites.dataSummary")] : []),
-    ].join(" · ");
-  });
+    ].join(" · "),
+  );
 </script>
 
 <UiLinkRow title={site.key} description={summary} onclick={() => openSettingsSubpage("privacy", `site:${site.key}`)}>

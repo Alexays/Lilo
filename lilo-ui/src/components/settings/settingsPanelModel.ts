@@ -367,7 +367,7 @@ export function formatDownloadsFolderLabel(
   return parts.at(-1) ?? fallback;
 }
 
-// Rendering every row of a large store is costly; the settings search narrows it down instead.
+// Rendering every row of a large store is costly: site lists show this many and count the rest.
 export const SITE_ROW_LIMIT = 100;
 
 export const BROWSING_DATA_KINDS: BridgeBrowsingDataKind[] = ["history", "cookies", "cache", "siteData"];
