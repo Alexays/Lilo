@@ -14,6 +14,7 @@
   import { fade } from "svelte/transition";
   import { t } from "../../lib/i18n/state.svelte";
   import ExtensionSpinner from "../extensions/ExtensionSpinner.svelte";
+  import Icon from "../ui/Icon.svelte";
 
   function liftoff(node: Element, { duration = 300 } = {}) {
     if (prefersReducedMotion()) return { duration: 0 };
@@ -536,7 +537,7 @@
       use:reportInteractiveZone={{ id: "screenshot-toast" }}
     >
       {screenshotEditor.toast.kind === "saved" ? t("screenshot.savedTo", { path: screenshotEditor.toast.message }) : screenshotEditor.toast.message}
-      <button onclick={() => screenshotEditor.clearToast()} aria-label={t("common.close")}>×</button>
+      <button onclick={() => screenshotEditor.clearToast()} aria-label={t("common.close")}><Icon name="close" size={14} /></button>
     </div>
   </div>
 {/if}
@@ -597,5 +598,5 @@
     box-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
   }
   .screenshot-toast.error { border-color: rgba(255, 80, 70, 0.6); }
-  .screenshot-toast button { border: none; background: transparent; color: inherit; cursor: pointer; font-size: var(--font-size-lg); }
+  .screenshot-toast button { flex: none; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: none; background: transparent; color: inherit; cursor: pointer; }
 </style>
