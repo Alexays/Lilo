@@ -83,11 +83,16 @@ extension MainWindowController {
     func bindExtensionRegistry(_ registry: ProfileExtensionRegistry, spaceId: UUID) {
         guard let window else { return }
         let windowAdapter = registry.windowAdapter(for: window, spaceId: spaceId, isPrivate: tabManager.dataStore?.backingStore.isPersistent == false)
-        windowAdapter.tabManager = tabManager
+        let isShownHere = windowAdapter.nsWindow === window
+        if isShownHere { windowAdapter.tabManager = tabManager }
         tabManager.windowAdapter = windowAdapter
 
-        registry.delegate.tabManager = tabManager
-        registry.delegate.windowController = self
+        // A space shown in a background window leaves the key window's space the focused one.
+        let isFocused = isShownHere && registry.delegate.windowAdapter === windowAdapter
+        if isFocused {
+            registry.delegate.tabManager = tabManager
+            registry.delegate.windowController = self
+        }
         registry.delegate.windows = context.windows
         tabManager.extensionRegistry = registry
         registry.onExtensionsChanged = { [weak context, weak registry] in
@@ -101,10 +106,10 @@ extension MainWindowController {
             }
         }
 
-        registry.notifyWindowOpened()
+        registry.notifyWindowOpened(windowAdapter)
         // A space or profile switch keeps the same NSWindow key, so windowDidBecomeKey doesn't re-fire: focus
         // the space's window explicitly, which extensions hear as a window focus change.
-        registry.notifyWindowFocused(window.isKeyWindow)
+        if isFocused { registry.notifyWindowFocused(window.isKeyWindow) }
     }
 
     // MARK: - Bridge Events

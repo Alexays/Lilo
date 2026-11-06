@@ -409,8 +409,8 @@ final class ProfileExtensionRegistry {
 
     // MARK: - Window Lifecycle
 
-    /// The extension window of `spaceId`, created on first use, now shown in `nsWindow`. It becomes the
-    /// focused one: windows bind their registry when they show a space of its profile or take focus.
+    /// The extension window of `spaceId`, created on first use, now shown in `nsWindow`. It becomes the focused one
+    /// unless another browser window is key: a space shown in a background window stays a background extension window.
     @discardableResult
     func windowAdapter(for nsWindow: NSWindow, spaceId: UUID, isPrivate: Bool = false) -> WindowExtensionAdapter {
         let adapter = windowAdapters.first { $0.spaceId == spaceId } ?? {
@@ -418,8 +418,9 @@ final class ProfileExtensionRegistry {
             windowAdapters.append(adapter)
             return adapter
         }()
-        adapter.nsWindow = nsWindow
-        delegate.windowAdapter = adapter
+        if nsWindow.isKeyWindow || delegate.windowAdapter?.nsWindow?.isKeyWindow != true { delegate.windowAdapter = adapter }
+        // A space the key window also shows stays bound to it.
+        if nsWindow.isKeyWindow || adapter.nsWindow?.isKeyWindow != true || adapter.tabManager?.windowAdapter !== adapter { adapter.nsWindow = nsWindow }
         return adapter
     }
 
@@ -428,9 +429,8 @@ final class ProfileExtensionRegistry {
         controller.didFocusWindow(focused ? delegate.windowAdapter : nil)
     }
 
-    func notifyWindowOpened() {
-        guard let window = delegate.windowAdapter,
-              openedWindowAdapters.insert(ObjectIdentifier(window)).inserted else { return }
+    func notifyWindowOpened(_ window: WindowExtensionAdapter) {
+        guard openedWindowAdapters.insert(ObjectIdentifier(window)).inserted else { return }
         controller.didOpenWindow(window)
     }
 

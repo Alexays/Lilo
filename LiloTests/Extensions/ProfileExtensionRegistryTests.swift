@@ -1276,6 +1276,31 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(registry.extensionWindows.elementsEqual([adapterA, adapterB], by: ===))
     }
 
+    /// A space shown in a background browser window must not take the extension focus from the key window.
+    func testBackgroundWindowSpaceKeepsKeyWindowFocused() {
+        let keyWindow = KeyWindowStub(), backgroundWindow = NSWindow()
+        let focused = registry.windowAdapter(for: keyWindow, spaceId: UUID())
+        let background = registry.windowAdapter(for: backgroundWindow, spaceId: UUID())
+
+        XCTAssertTrue(registry.delegate.windowAdapter === focused)
+        XCTAssertTrue(registry.extensionWindows.contains { $0 === background }, "the background space is still an extension window")
+        let switched = registry.windowAdapter(for: keyWindow, spaceId: UUID())
+        XCTAssertTrue(registry.delegate.windowAdapter === switched, "a space switch in the key window moves the focus")
+    }
+
+    /// A background window showing the key window's space too leaves that space, and the focus, with the key window.
+    func testBackgroundWindowSharingTheKeySpaceLeavesItWithTheKeyWindow() {
+        let keyWindow = KeyWindowStub(), spaceId = UUID()
+        let tabManager = TabManager(engineFactory: WKEngineFactory())
+        let focused = registry.windowAdapter(for: keyWindow, spaceId: spaceId)
+        focused.tabManager = tabManager
+        tabManager.windowAdapter = focused
+
+        XCTAssertTrue(registry.windowAdapter(for: NSWindow(), spaceId: spaceId) === focused)
+        XCTAssertTrue(focused.nsWindow === keyWindow)
+        XCTAssertTrue(registry.delegate.windowAdapter === focused)
+    }
+
     // MARK: - Permission Request Tests
 
     func testResolvePermissionRequest_callsHandler() {
@@ -1791,4 +1816,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         registry.adoptContextMenuItems(in: allowedMenu, tab: adapter, isPrivate: true)
         XCTAssertEqual(allowedMenu.items.count, 5)
     }
+}
+
+private final class KeyWindowStub: NSWindow {
+    override var isKeyWindow: Bool { true }
 }
