@@ -1211,6 +1211,8 @@ const modes = [
         ?.setAttribute("aria-expanded", String(menu.open));
 
       if (menu.open) {
+        load();
+
         for (const other of menus) {
           if (other !== menu) {
             closeMenu(other);

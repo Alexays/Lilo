@@ -149,3 +149,11 @@ for (const lang of ["en", "fr"] as const) {
     ).toBeVisible();
   });
 }
+
+test("opening a hero demo menu loads the demo behind it", async ({ page }) => {
+  await page.goto("/");
+  const menu = page.locator("#browser-demo .mac-menu").first();
+  await menu.locator(":scope > summary").click();
+  await expect(page.locator("#browser-demo .demo-poster")).toHaveCount(0);
+  await expect(menu.locator("[data-action='settings']")).toBeEnabled();
+});
