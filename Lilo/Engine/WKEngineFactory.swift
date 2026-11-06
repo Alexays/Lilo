@@ -130,7 +130,7 @@ final class WKEngineFactory {
     private(set) static var autoplayRestriction: WKAudiovisualMediaTypes = .audio
     /// WebKit feature-flag overrides applied to every new web view (the `about:config` page), extension pages included.
     private(set) static var featureFlagOverrides: [String: Bool] = [:]
-    private var fullRefreshRate = true
+    private(set) static var fullRefreshRate = true
     /// Pages of the agents' profile render near 60 fps whatever the setting: nobody watches them animate.
     var agentsProfileId: UUID? {
         didSet { if agentsProfileId != oldValue { dropWarmPool() } }
@@ -494,8 +494,8 @@ final class WKEngineFactory {
 
     /// Applies to web views built afterwards: an open page keeps its rate, even through a reload.
     func setFullRefreshRate(_ enabled: Bool) {
-        guard fullRefreshRate != enabled else { return }
-        fullRefreshRate = enabled
+        guard Self.fullRefreshRate != enabled else { return }
+        Self.fullRefreshRate = enabled
         dropWarmPool()
     }
 
@@ -883,7 +883,7 @@ final class WKEngineFactory {
             object.setValue(value, forKey: key)
         }
         wkConfig.suppressesIncrementalRendering = false
-        let rendersNear60FPS = !fullRefreshRate || (configuration.profileId != nil && configuration.profileId == agentsProfileId)
+        let rendersNear60FPS = !Self.fullRefreshRate || (configuration.profileId != nil && configuration.profileId == agentsProfileId)
         // Power-constrained, a page fetches no page the user may never open; an about:config override still wins.
         let prefetches = suppressWarmPool ? ["LinkPrefetchEnabled": false, "SpeculationRulesPrefetchEnabled": false] : [:]
         WKFeatureFlags.apply(

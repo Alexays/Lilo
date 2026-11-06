@@ -1485,7 +1485,10 @@ extension WKWebExtensionContext {
         if configuration.preferences.responds(to: #selector(NSCopying.copy(with:))),
            let preferences = configuration.preferences.copy() as? WKPreferences {
             configuration.preferences = preferences
-            WKFeatureFlags.apply(WKEngineFactory.featureFlagOverrides, to: preferences)
+            WKFeatureFlags.apply(
+                [WKFeatureFlags.near60FPSKey: !WKEngineFactory.fullRefreshRate].merging(WKEngineFactory.featureFlagOverrides) { $1 },
+                to: preferences
+            )
         }
         return configuration
     }

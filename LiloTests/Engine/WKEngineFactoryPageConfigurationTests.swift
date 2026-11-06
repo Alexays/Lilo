@@ -36,6 +36,7 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         XCTAssertFalse(try rendersNear60FPS(factory), "a page scrolling itself from requestAnimationFrame stutters at 60 fps on a 120 Hz display")
 
         factory.setFullRefreshRate(false)
+        defer { factory.setFullRefreshRate(true) }
         XCTAssertTrue(try rendersNear60FPS(factory))
 
         factory.setFeatureFlagOverrides([WKFeatureFlags.near60FPSKey: false])
