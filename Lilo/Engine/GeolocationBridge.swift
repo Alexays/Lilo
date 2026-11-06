@@ -193,17 +193,17 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
 
     fileprivate func didFail(error: Error) {
         let code = (error as? CLError)?.code
-        // CoreLocation keeps trying after this one.
-        if code == .locationUnknown { return }
         pruneStaleRequests()
         if code == .denied {
             let failed = pendingRequests; pendingRequests = []
             deliver(error: .permissionDenied, to: failed)
         } else {
-            // A watch outlives the error, as in WebKit: the next fix still reaches it.
+            // A watch outlives the error, as in WebKit: the next fix still reaches it. locationUnknown ends a requestLocation()
+            // but not continuous updates, which keep trying, so watches do not hear of it.
             let oneShots = pendingRequests.filter { !$0.isWatch }
             pendingRequests = pendingRequests.filter(\.isWatch)
-            deliver(error: .positionUnavailable(error.localizedDescription), to: oneShots + pendingRequests)
+            let failed = code == .locationUnknown ? oneShots : oneShots + pendingRequests
+            deliver(error: .positionUnavailable(error.localizedDescription), to: failed)
             if !oneShots.isEmpty { updateDesiredAccuracy() }
         }
         stopLocationUpdatesIfIdle()
@@ -213,8 +213,9 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
         pendingRequests.removeAll { $0.webView == nil }
     }
 
+    /// A pending one-shot keeps updates running: stopping them would also cancel its `requestLocation()`.
     private func stopLocationUpdatesIfIdle() {
-        guard !hasVisibleWatchRequest, let locationManager else { return }
+        guard !hasVisibleWatchRequest, !pendingRequests.contains(where: { !$0.isWatch }), let locationManager else { return }
         PerfSignposts.energy.emitEvent("locationStop")
         locationManager.stopUpdatingLocation()
     }
