@@ -773,14 +773,7 @@ final class ProfileExtensionRegistry {
         // their pages' origin storage.
         if let baseURL = URL(string: "chrome-extension://\(extensionId)") { context.baseURL = baseURL }
 
-        // A release attaches Web Inspector to extension internals only once Lilo's developer tools are unlocked. WebKit never
-        // unloads an inspectable worker: the extension smoke turns it off to unload workers as a release build does.
-        #if DEBUG
-        context.isInspectable = ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil
-        #else
-        context.isInspectable = unsafe UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey)
-        #endif
-        if context.isInspectable { context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background" }
+        openToWebInspector(context, id: extensionId, installPath: installPath)
 
         access.apply(to: context, extensionId: extensionId)
         try controller.load(context)
@@ -823,6 +816,24 @@ final class ProfileExtensionRegistry {
         NotificationCenter.default.post(name: .extensionRuntimeLoaded, object: self)
         // No background load here: WebKit starts it for runtime.onStartup/onInstalled listeners and on
         // demand (popup, command, event), so a restore never forces every worker awake.
+    }
+
+    /// Attaches Web Inspector to the extension's internals: every extension's in a debug build, only an unpacked one's in a
+    /// release, once Lilo's developer tools are unlocked. WebKit never unloads an inspectable worker, so store copies keep
+    /// unloading theirs; the extension smoke turns it off to unload workers as a release build does.
+    private func openToWebInspector(_ context: WKWebExtensionContext, id extensionId: String, installPath: String) {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil else { return }
+        #else
+        guard !files.owns(installPath), unsafe UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey) else { return }
+        #endif
+        context.isInspectable = true
+        context.inspectionName = "\(context.webExtension.displayName ?? extensionId) - Background"
+    }
+
+    /// Lilo's developer tools were unlocked: the loaded extensions they open to Web Inspector become inspectable at once.
+    func developerToolsUnlocked() {
+        for runtime in loadedRuntimes { openToWebInspector(runtime.context, id: runtime.id, installPath: runtime.installPath) }
     }
 
     /// Uninstalls the extension, or with `removePersistedRecord` false unloads it and keeps it installed

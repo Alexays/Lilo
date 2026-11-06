@@ -288,6 +288,7 @@ final class SettingsBridgeHandler: BridgeHandler {
             for item in NSApp.mainMenu?.item(withTag: AppDelegate.developMenuTag)?.submenu?.items ?? [] where item.tag == AppDelegate.developerToolsTag {
                 item.isHidden = false
             }
+            (NSApp.delegate as? AppDelegate)?.browserContext.profileContexts.allContexts.forEach { $0.extensions.developerToolsUnlocked() }
 
         case "setAutomaticUpdates":
             if let updater = updaterController?.updater {
