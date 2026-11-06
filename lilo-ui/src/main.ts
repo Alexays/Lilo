@@ -17,7 +17,7 @@ addEventListener("unhandledrejection", (event) => reportChromeError(event.reason
 
 // A non-English catalog loads before mounting so the first paint never flashes English. Its fetch
 // starts here so it overlaps the store setup instead of following it.
-const locale = resolveLocale(navigator.language);
+const locale = resolveLocale(document.documentElement.dataset.locale ?? navigator.language);
 const localeLoaded = locale === "en" ? null : setLocale(locale);
 
 const initialState = takeBootstrapInitialState();

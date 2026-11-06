@@ -463,11 +463,32 @@ final class WKEngineFactory {
         let configuration = configurationClass.init()
         guard configuration.responds(to: NSSelectorFromString("setPrewarmsProcessesAutomatically:")) else { return nil }
         configuration.setValue(true, forKey: "prewarmsProcessesAutomatically")
+        // Sites get the system's languages (navigator.language, Accept-Language), not the app's AppleLanguages, which the
+        // interface language picker overrides for AppKit. WebKit ignores the configuration: every web process launched from
+        // here on gets these languages, the chrome's included, so the chrome takes its locale from its bootstrap script.
+        let rtld = unsafe UnsafeMutableRawPointer(bitPattern: -2)
+        if let languages = CFPreferencesCopyValue(
+            "AppleLanguages" as CFString, kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost
+        ) as? [String], !languages.isEmpty,
+            let createString = unsafe dlsym(rtld, "WKStringCreateWithCFString"),
+            let createArray = unsafe dlsym(rtld, "WKArrayCreateAdoptingValues"),
+            let setLanguages = unsafe dlsym(rtld, "WKContextConfigurationSetOverrideLanguages"),
+            let release = unsafe dlsym(rtld, "WKRelease") {
+            typealias CreateString = @convention(c) (CFString) -> UnsafeRawPointer?
+            typealias CreateArray = @convention(c) (UnsafeMutablePointer<UnsafeRawPointer?>, Int) -> UnsafeRawPointer?
+            typealias SetLanguages = @convention(c) (UnsafeRawPointer, UnsafeRawPointer) -> Void
+            typealias Release = @convention(c) (UnsafeRawPointer) -> Void
+            var strings = unsafe languages.map { unsafe unsafeBitCast(createString, to: CreateString.self)($0 as CFString) }
+            if let array = unsafe unsafeBitCast(createArray, to: CreateArray.self)(&strings, strings.count) {
+                unsafe unsafeBitCast(setLanguages, to: SetLanguages.self)(Unmanaged.passUnretained(configuration).toOpaque(), array)
+                unsafe unsafeBitCast(release, to: Release.self)(array)
+            }
+        }
         let pool = unsafe poolClass.perform(selector, with: configuration)?.takeUnretainedValue() as? NSObject
         // Safari's cache model (kWKCacheModelPrimaryWebBrowser), app-wide: WebKit's default for an app caps the HTTP disk cache
         // at 75 MB, so a few heavy sites evict the next one's scripts; this one allows 1 GB and a larger memory cache.
         typealias SetCacheModel = @convention(c) (UnsafeRawPointer, UInt32) -> Void
-        if let pool, let symbol = unsafe dlsym(UnsafeMutableRawPointer(bitPattern: -2), "WKContextSetCacheModel") {
+        if let pool, let symbol = unsafe dlsym(rtld, "WKContextSetCacheModel") {
             unsafe unsafeBitCast(symbol, to: SetCacheModel.self)(Unmanaged.passUnretained(pool).toOpaque(), 2)
         }
         return pool
