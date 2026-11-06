@@ -144,7 +144,7 @@ final class WKWebViewTab: NSObject {
     private var lastLoggedInteraction: (host: String, at: ContinuousClock.Instant)?
     /// Per profile and site, the other origins its last page fetched from, most used first: a navigation to the site connects
     /// to them at once instead of when its parser or scripts get to them, as Chrome's loading predictor. In memory only.
-    private static var learnedOrigins: [String: [URL]] = [:]
+    private static var learnedOrigins: [String: (origins: [URL], at: ContinuousClock.Instant)] = [:]
     private let findController: PageFindController
     let pip: PiPController
     private var permissionUsageState = WebPermissionUsageState.none {
@@ -238,8 +238,9 @@ final class WKWebViewTab: NSObject {
         }
     )
 
-    /// The clicked element of the open context menu, until one of its download items uses it.
-    private var contextMenuElement: NSObject?
+    /// The clicked frame and link of the open context menu, until one of its download items uses them. Never the element
+    /// itself, which holds a clicked image's bytes.
+    private var contextMenuTarget: (frame: WKFrameInfo?, link: URL?)?
     private enum ReferrerProbe { case pending, answered(String?), abandoned }
     /// Context-menu downloads' referrer probes by the fragment marking their request. One stays until its request comes, so
     /// a request coming after its download started is still cancelled rather than opened.
@@ -251,17 +252,17 @@ final class WKWebViewTab: NSObject {
         const probe = document.createElement('a')
         probe.href = url
         probe.target = '_blank'
-        const links = link ? [...document.querySelectorAll('a[href], area[href]')].filter(element => element.href === link) : []
-        if ((links.find(element => element.matches(':hover')) ?? links[0])?.relList.contains('noreferrer')) probe.rel = 'noreferrer'
+        const linkTo = selector => link ? [...document.querySelectorAll(selector)].find(element => element.href === link) : undefined
+        if ((linkTo('a:hover[href], area:hover[href]') ?? linkTo('a[href], area[href]'))?.relList.contains('noreferrer')) probe.rel = 'noreferrer'
         probe.click()
         """
 
     /// WebKit's native download context-menu items never fire WKDownloadDelegate, so ContextMenuBuilder
     /// routes them here to reach the same pipeline as navigation-initiated downloads.
     private func startContextMenuDownload(from url: URL) {
-        let element = contextMenuElement
-        contextMenuElement = nil
-        let frame = ContextMenuBuilder.frameInfo(from: element)
+        let target = contextMenuTarget
+        contextMenuTarget = nil
+        let frame = target?.frame
         let fallback = Self.downloadRequest(for: url, pageURL: frame?.request.url ?? webView.url)
         let token = UUID().uuidString
         guard let frame, var marked = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return startDownload(fallback) }
@@ -279,7 +280,7 @@ final class WKWebViewTab: NSObject {
             }
             startDownload(request)
         }
-        let arguments = ["url": probeURL, "link": ContextMenuBuilder.linkURL(from: element)?.absoluteString ?? ""]
+        let arguments = ["url": probeURL, "link": target?.link?.absoluteString ?? ""]
         Task { [weak self] in
             _ = try? await self?.webView.callAsyncJavaScript(Self.referrerProbeScript, arguments: arguments, in: frame, contentWorld: PageWorld.bridgeWorld)
             finish()
@@ -344,7 +345,7 @@ final class WKWebViewTab: NSObject {
     /// Bumped on every page color update: a capture of the top edge answers only for the page it was taken of.
     private var pageEdgeCapture = 0
     private var pageColorRecapture: Task<Void, Never>?
-    /// A recapture skipped while frozen, taken on resume.
+    /// A capture skipped while frozen or off screen, taken on resume or once shown.
     private var pageColorStale = false
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
@@ -612,12 +613,22 @@ final class WKWebViewTab: NSObject {
         guard isFrozen, !isPageLost else { return completion() }
         isFrozen = false
         freezer.resume(webView) { [weak self] in
-            if let self, pageColorStale {
-                pageColorStale = false
-                recapturePageColor()
-            }
+            self?.capturePageColorIfStale()
             completion()
         }
+    }
+
+    /// The tab shows in a window: the dialog and the page color it held back while hidden.
+    func didShow() {
+        runQueuedDialog(presenting: true)
+        capturePageColorIfStale()
+    }
+
+    private func capturePageColorIfStale() {
+        guard pageColorStale else { return }
+        pageColorStale = false
+        pageEdgeCapture &+= 1
+        captureTopEdge(again: false)
     }
 
     /// Resumes the page ahead of a call WebKit refuses on a suspended one. False when the page is lost:
@@ -804,24 +815,27 @@ final class WKWebViewTab: NSObject {
     }
 
     /// Nil for a private tab, which neither learns nor uses them.
-    private var learnedOriginsKey: String? {
-        guard !isPrivateBrowsing, let url = webView.url, url.scheme == "https" || url.scheme == "http", let host = url.host() else { return nil }
+    private func learnedOriginsKey(for url: URL?) -> String? {
+        guard !isPrivateBrowsing, let url, url.scheme == "https" || url.scheme == "http", let host = url.host() else { return nil }
         let store = webView.configuration.websiteDataStore.identifier?.uuidString ?? "default"
         return "\(store) \(CookiesBridgeHandler.registrableDomain(of: host))"
     }
 
+    /// A navigation within the committed page's site finds its connections open already.
     private func preconnectLearnedOrigins() {
-        guard let key = learnedOriginsKey else { return }
-        Self.learnedOrigins[key]?.forEach(preconnect(to:))
+        guard let key = learnedOriginsKey(for: webView.url), key != learnedOriginsKey(for: documentURL) else { return }
+        Self.learnedOrigins[key]?.origins.forEach(preconnect(to:))
     }
 
+    /// A site's origins are learned again after 10 minutes at most, and only by a tab on screen.
     private func learnOrigins() {
-        guard let key = learnedOriginsKey else { return }
+        guard let key = learnedOriginsKey(for: webView.url),
+              Self.learnedOrigins[key].map({ ContinuousClock.now - $0.at >= .seconds(600) }) ?? true else { return }
         let page = webView.url
         Task { [weak self] in
             // A feed's images and a player load after the load event, and they are what the next visit waits on.
             try? await Task.sleep(for: .seconds(2))
-            guard let self, !isFrozen, webView.url == page else { return }
+            guard let self, !isFrozen, isOnScreen, webView.url == page else { return }
             let found = try? await webView.evaluateJavaScript("""
                 (() => { const counts = {};
                   for (const entry of performance.getEntriesByType('resource')) {
@@ -834,7 +848,7 @@ final class WKWebViewTab: NSObject {
             if Self.learnedOrigins[key] == nil, Self.learnedOrigins.count >= 256, let any = Self.learnedOrigins.keys.first {
                 Self.learnedOrigins[any] = nil
             }
-            Self.learnedOrigins[key] = origins
+            Self.learnedOrigins[key] = (origins, ContinuousClock.now)
         }
     }
 
@@ -1218,6 +1232,7 @@ final class WKWebViewTab: NSObject {
     /// `loaded` comes from didFinish, while the web view still reports itself loading.
     private func emitPageColor(loaded: Bool = false) {
         pageEdgeCapture &+= 1
+        pageColorStale = false
         if let color = Self.opaque(sampledPageTopColor)?.cssHexString {
             sendPageColor(color)
         } else if loaded || !webView.isLoading {
@@ -1249,7 +1264,8 @@ final class WKWebViewTab: NSObject {
                 return
             }
             sampledPageTopColor = nil
-            emitPageColor(loaded: true)
+            pageEdgeCapture &+= 1
+            captureTopEdge(again: false)
         }
     }
 
@@ -1260,15 +1276,22 @@ final class WKWebViewTab: NSObject {
     }
 
     /// A capture of the thin band of the page that meets the bar. A page drawn by script after its load gets a second
-    /// look a moment later.
+    /// look a moment later. Only the shown tab's bar takes the color: a hidden tab captures once shown.
     private func captureTopEdge(again: Bool = true) {
         let capture = pageEdgeCapture
-        let width = webView.bounds.width
-        guard !isFrozen, width > 0 else { return }
-        let configuration = WKSnapshotConfiguration()
-        configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, Self.edgeBand))
+        // Checked on the next turn: the tab being shown is in its window by then.
         Task { [weak self] in
-            guard let self, !isFrozen else { return }
+            guard let self, capture == pageEdgeCapture else { return }
+            guard !isFrozen, isOnScreen else {
+                pageColorStale = true
+                return
+            }
+            let width = webView.bounds.width
+            guard width > 0 else { return }
+            let configuration = WKSnapshotConfiguration()
+            configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, Self.edgeBand))
+            // One pixel per point: the band's rows stay whole for the median, at a quarter of a Retina capture's pixels.
+            configuration.snapshotWidth = NSNumber(value: Double(width / (unsafe webView.window?.backingScaleFactor ?? 1)))
             let image = try? await webView.takeSnapshot(configuration: configuration)
             guard capture == pageEdgeCapture else { return }
             if let stops = image.flatMap(Self.edgeStops) { sendPageColor(stops) }
@@ -2192,8 +2215,8 @@ extension WKWebViewTab: WKNavigationDelegate {
         }
     }
 
-    // WebKit calls this on the main thread; the server-trust challenge of every connection is
-    // answered synchronously. Only the HTTP auth prompt (a sheet) stays off the delegate's stack.
+    // WebKit calls this on the main thread; a server-trust challenge (every connection's, or only a rejected certificate's
+    // on a profile store) is answered synchronously. Only the HTTP auth prompt (a sheet) stays off the delegate's stack.
     nonisolated func webView(
         _ webView: WKWebView,
         didReceive challenge: URLAuthenticationChallenge,
@@ -2205,7 +2228,6 @@ extension WKWebViewTab: WKNavigationDelegate {
 
             if method == NSURLAuthenticationMethodServerTrust,
                let trust = space.serverTrust {
-                StartupMetrics.markOnce("firstContentTLSChallengeReceived")
                 let challengedHost = space.host.lowercased()
                 // The page's own certificate is the one its error page explains and a new exception pins;
                 // an accepted exception holds for every request to its host, as an app's API calls need.
@@ -2217,7 +2239,6 @@ extension WKWebViewTab: WKNavigationDelegate {
                 } else {
                     completionHandler(.performDefaultHandling, nil)
                 }
-                StartupMetrics.markOnce("firstContentTLSChallengeHandled")
             } else if method == NSURLAuthenticationMethodHTTPBasic || method == NSURLAuthenticationMethodHTTPDigest {
                 if isAgentControlled {
                     // No sheet over the user's window: the agent signs in through the URL, once.
@@ -2369,8 +2390,9 @@ extension WKWebViewTab: WKUIDelegate {
         nonisolated(unsafe) let menu = menu
         nonisolated(unsafe) let element = element
         MainActor.assumeIsolated {
-            contextMenuElement = unsafe element
-            unsafe contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
+            let linkURL = unsafe ContextMenuBuilder.linkURL(from: element)
+            contextMenuTarget = unsafe (ContextMenuBuilder.frameInfo(from: element), linkURL)
+            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
             unsafe completionHandler(menu)
         }
     }

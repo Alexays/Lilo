@@ -401,6 +401,11 @@ final class WKEngineFactory {
                .perform(initWithIdentifier, with: identifier)?.takeUnretainedValue() as? NSObject {
             configuration.setValue(0.6, forKey: "originQuotaRatio")
             configuration.setValue(0.8, forKey: "totalQuotaRatio")
+            // The network process accepts a certificate the system trusts without a round trip to this main thread,
+            // as Safari does; one it rejects still reaches the navigation delegate, for exceptions and the error page.
+            if configurationClass.instancesRespond(to: NSSelectorFromString("setFastServerTrustEvaluationEnabled:")) {
+                configuration.setValue(true, forKey: "fastServerTrustEvaluationEnabled")
+            }
             store = unsafe WKWebsiteDataStore.perform(alloc).takeRetainedValue()
                 .perform(initWithConfiguration, with: configuration)?.takeUnretainedValue() as? WKWebsiteDataStore
         }
@@ -847,6 +852,15 @@ final class WKEngineFactory {
         usesNativeConfiguration: Bool
     ) -> WKWebViewConfiguration {
         let wkConfig = configuration.nativeConfiguration ?? WKWebViewConfiguration()
+        // A popup shares its opener's preferences: a copy keeps one tab's full speed while hidden (runsAtFullSpeedHidden)
+        // from reaching the other, and starts throttled when hidden, as every new tab does.
+        if configuration.nativeConfiguration != nil, let preferences = wkConfig.preferences.copy() as? WKPreferences {
+            for key in ["pageVisibilityBasedProcessSuppressionEnabled", "hiddenPageDOMTimerThrottlingEnabled"]
+            where preferences.responds(to: NSSelectorFromString("_set\(key.prefix(1).uppercased())\(key.dropFirst()):")) {
+                preferences.setValue(true, forKey: key)
+            }
+            wkConfig.preferences = preferences
+        }
         WebInspectorSupport.prepare(configuration: wkConfig)
         // No trailing app token: a "Lilo/1.0" after "Safari/605.1.15" trips strict UA sniffers into a
         // Widevine path WKWebView can't satisfy (it ships only FairPlay), breaking streaming playback.

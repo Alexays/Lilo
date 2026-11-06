@@ -170,7 +170,7 @@ extension MainWindowController {
             contentContainerView.addSubview(peek, positioned: .above, relativeTo: nil)
             if isNew {
                 peek.present()
-                popup.engine.runQueuedDialog(presenting: true)
+                popup.engine.didShow()
             }
             window?.makeFirstResponder(popup.engine.wkWebView)
         }
