@@ -1,8 +1,8 @@
 <!-- The undo toast: what just went and a named way back, gone after its countdown, or a plain
-     message with neither action nor countdown. With the full
-     sidebar shown it docks above the bottom bar, in flow, so it never covers the page; otherwise
-     it is a capsule at the bottom center of the page. Escape stays with the other overlays: it
-     leaves on its action, its timeout, or the next toast. -->
+     message with neither action nor countdown. With the full sidebar shown it docks above the
+     bottom bar, in flow, so it never covers the page; otherwise it is a capsule at the bottom
+     center of the page. Escape stays with the other overlays: it leaves on its action, its
+     timeout, or the next toast. -->
 <script lang="ts">
   import { fade, slide } from "svelte/transition";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -36,6 +36,7 @@
       <div
         class="undo-toast"
         class:docked
+        class:message
         role="group"
         style={`--undo-duration: ${UNDO_TOAST_DURATION_MS}ms`}
         use:reportInteractiveZone={{ id: "undo-toast" }}
@@ -46,7 +47,7 @@
         out:fade={{ duration: docked ? 0 : prefersReducedMotion() ? 150 : 120 }}
       >
         {#if message}
-          <span class="undo-subject message">{toast.label}</span>
+          <span class="undo-subject">{toast.label}</span>
         {:else}
           <svg class="undo-ring" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
             <circle class="track" cx="8" cy="8" r="6.5" />
@@ -158,13 +159,21 @@
     text-overflow: ellipsis;
   }
 
-  /* Without an action button, the right padding matches the left. */
-  .undo-subject.message {
-    padding-right: 8px;
+  /* A message is a sentence or a path to read whole: it wraps rather than being cut. */
+  .undo-toast.message {
+    height: auto;
+    min-height: 40px;
+    padding: 10px 14px;
   }
 
-  .docked .undo-subject.message {
-    padding-right: 6px;
+  .undo-toast.docked.message {
+    min-height: 34px;
+    padding: 8px 10px;
+  }
+
+  .message .undo-subject {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .undo-action {
