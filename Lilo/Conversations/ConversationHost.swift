@@ -740,7 +740,6 @@ final class ConversationHost {
                               tab.gitBranch = branch
                           }) else { return }
                     window.enqueueVisibleTabUpdate(updated)
-                    self.scheduleSummary()
                 }
             }
         }
