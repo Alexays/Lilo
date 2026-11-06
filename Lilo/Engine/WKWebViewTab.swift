@@ -91,8 +91,8 @@ final class WKWebViewTab: NSObject {
         /// The user asked to bookmark the current page (page context menu / Cmd+D).
         func tabRequestsBookmark(_ tab: WKWebViewTab)
         /// A non-web scheme (mailto:, tel:, slack:, ...) wants to open in an external app, pending user confirmation.
-        /// `origin` is the permission origin of the frame that asked, nil when it has none.
-        func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?)
+        /// `origin` is the permission origin of the frame that asked, nil when it has none; `userInitiated` when a gesture or Lilo started it.
+        func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?, userInitiated: Bool)
         /// The loaded document's link icons, in document order. Every icon's `decide` must be called once.
         func tab(_ tab: WKWebViewTab, offersIcons icons: [LinkIcon])
         /// A followed link the window may show in a Peek instead: true when it took the link.
@@ -393,6 +393,8 @@ final class WKWebViewTab: NSObject {
     var visitAwaitsShowing = false
     /// Set for a tab a page opened (a link or `window.open`): only such a tab closes when its first navigation is a download.
     var isOpenedByPage = false
+    /// When the page last asked for an external app: it asks again on its own only once the user clicked or typed in it, or loaded a page.
+    private var externalAppRequestTime: TimeInterval?
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
     /// it is set, and the exception unwinding through Swift corrupts the concurrency runtime.
     private(set) var isFrozen = false
@@ -691,6 +693,7 @@ final class WKWebViewTab: NSObject {
         if !isPrivateBrowsing { Self.logger.info("load source=app host=\(url.host ?? "nil", privacy: .private)") }
         pendingMainFrameURL = url
         pendingMainFrameSendsBody = false
+        externalAppRequestTime = nil
         didAutoRetryProvisionalLoad = false
         didReloadEmptyCommit = false
         StartupMetrics.markOnce("firstContentLoadRequested")
@@ -1683,7 +1686,7 @@ extension WKWebViewTab.Delegate {
     func tabDidWake(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {}
     func tabRequestsBookmark(_ tab: WKWebViewTab) {}
-    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) {}
+    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?, userInitiated: Bool) {}
     func tab(_ tab: WKWebViewTab, offersIcons icons: [WKWebViewTab.LinkIcon]) { icons.forEach { $0.decide(nil) } }
     func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool { false }
     func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool { false }
@@ -1860,8 +1863,16 @@ extension WKWebViewTab: WKNavigationDelegate {
         if let url, let scheme = url.scheme?.lowercased(), !Self.webSchemes.contains(scheme) {
             // The frame that asked, as Chrome keys these decisions: a frame does not speak for the page embedding it.
             // A load Lilo starts may come without one, whatever the header says.
-            let initiator = (navigationAction.sourceFrame as WKFrameInfo?)?.securityOrigin
-            delegate?.tab(self, launchExternalURL: url, fromOrigin: initiator.flatMap { $0.host.isEmpty ? nil : $0.permissionOriginKey })
+            let sourceFrame = navigationAction.sourceFrame as WKFrameInfo?
+            let userInitiated = sourceFrame == nil || WebViewPrivateAccessors(navigationAction).bool("_isUserInitiated") == true
+            // One request per gesture, as in Chrome, so a page cannot stack prompts; the first needs none, for Zoom or Teams links.
+            if !userInitiated, let last = externalAppRequestTime, Self.activatedWebView !== webView || Self.activationTime < last { return .cancel }
+            externalAppRequestTime = ProcessInfo.processInfo.systemUptime
+            let initiator = sourceFrame?.securityOrigin
+            delegate?.tab(
+                self, launchExternalURL: url, fromOrigin: initiator.flatMap { $0.host.isEmpty ? nil : $0.permissionOriginKey },
+                userInitiated: userInitiated
+            )
             return .cancel
         }
 

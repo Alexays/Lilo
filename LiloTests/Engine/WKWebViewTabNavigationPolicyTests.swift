@@ -21,6 +21,33 @@ final class WKWebViewTabNavigationPolicyTests: XCTestCase {
         XCTAssertEqual(spy.externalLaunches.first?.origin, "http://127.0.0.1:\(framed.port)", "the frame's origin, not the page's, as in Chrome")
     }
 
+    func testAPageAsksForAnExternalAppOnceUntilTheUserActs() async throws {
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let spy = WKWebViewTabDelegateSpy()
+        tab.delegate = spy
+
+        tab.wkWebView.loadHTMLString(
+            "<script>location = 'zoommtg://first'; setTimeout(() => { location = 'zoommtg://second' }, 300)</script>",
+            baseURL: URL(string: "http://example.com/")
+        )
+        let first = await pollUntil(timeout: 10) { !spy.externalLaunches.isEmpty }
+        XCTAssertTrue(first, "the first request needs no gesture, as a Zoom link opening its app on load")
+        try await Task.sleep(for: .milliseconds(800))
+        XCTAssertEqual(spy.externalLaunches.map(\.url.absoluteString), ["zoommtg://first"], "the page cannot ask again on its own")
+
+        _ = try await tab.wkWebView.evaluateJavaScript("location = 'zoommtg://third'; 1")
+        let third = await pollUntil(timeout: 10) { spy.externalLaunches.count == 2 }
+        XCTAssertTrue(third)
+        XCTAssertEqual(spy.externalLaunches.last?.url.absoluteString, "zoommtg://third")
+        XCTAssertEqual(spy.externalLaunches.last?.userInitiated, true)
+
+        let meeting = try await TinyHTTPServer(index: "<script>location = 'zoommtg://fourth'</script>")
+        tab.loadURL(try XCTUnwrap(URL(string: "http://127.0.0.1:\(meeting.port)/")))
+        let fourth = await pollUntil(timeout: 10) { spy.externalLaunches.count == 3 }
+        XCTAssertTrue(fourth, "a page the user opens asks once on its own again, as the next meeting link does")
+        XCTAssertEqual(spy.externalLaunches.last?.userInitiated, false)
+    }
+
     /// A server whose `/slow` answers after a while, so a navigation to it stays pending meanwhile.
     private func slowServer() async throws -> TinyHTTPServer {
         try await TinyHTTPServer { request in

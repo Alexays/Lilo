@@ -35,6 +35,15 @@ final class PagePopupTests: XCTestCase {
         _ = try await webView.evaluateJavaScript("window.popup = window.open('about:blank', '', '\(features)'); true")
     }
 
+    /// A popup with a page shown: one that never showed any closes when it leaves for a download or another app.
+    private func openPopupShowingAPage() async throws -> PagePopupController {
+        try await openFromPage("width=400,height=300")
+        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        popup.engine.wkWebView.loadHTMLString("<p>popup</p>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil { popup.engine.hasCommittedContent }
+        return popup
+    }
+
     private var openTabCount: Int { controller.tabManager.openTabs.count }
 
     func testThePopupHeaderNamesASecureLockAndLeavesNotSecureToTheHost() throws {
@@ -529,14 +538,28 @@ final class PagePopupTests: XCTestCase {
     }
 
     func testAPopupWindowAsksBeforeOpeningAnExternalApp() async throws {
-        try await openFromPage("width=400,height=300")
-        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        let popup = try await openPopupShowingAPage()
         let popupWindow = try XCTUnwrap(popup.window)
+        let url = try XCTUnwrap(URL(string: "zoommtg://join"))
 
-        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "zoommtg://join")), fromOrigin: "https://example.com")
-
+        controller.tab(popup.engine, launchExternalURL: url, fromOrigin: "https://example.com", userInitiated: false)
         let sheet = try XCTUnwrap(popupWindow.attachedSheet)
+        controller.tab(popup.engine, launchExternalURL: url, fromOrigin: "https://example.com", userInitiated: true)
+        XCTAssertTrue(popupWindow.attachedSheet === sheet, "no second prompt queues behind the first")
+
         popupWindow.endSheet(sheet, returnCode: .alertSecondButtonReturn)
+        XCTAssertTrue(controller.externalAppPromptTabs.isEmpty)
+    }
+
+    func testAPopupOpenedOnlyForAnExternalAppClosesAndAsksFromItsOpenersWindow() async throws {
+        let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
+        _ = try await webView.evaluateJavaScript("window.open('zoommtg://join', '', 'width=400,height=300'); true")
+
+        let closed = await pollUntil(timeout: 10) { self.controller.pagePopups.isEmpty && !self.controller.externalAppPromptTabs.isEmpty }
+        XCTAssertTrue(closed, "no blank window stays behind, as in Chrome")
+        let window = try XCTUnwrap(controller.window)
+        let sheet = try XCTUnwrap(window.attachedSheet, "the prompt shows on the opener's window")
+        window.endSheet(sheet, returnCode: .alertSecondButtonReturn)
     }
 
     func testAPopupWindowNamesTheSiteItsPageWentToOnceThatSiteShows() async throws {
@@ -551,15 +574,14 @@ final class PagePopupTests: XCTestCase {
     }
 
     func testAnExternalAppDecisionHoldsForItsSchemeOnly() async throws {
-        try await openFromPage("width=400,height=300")
-        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        let popup = try await openPopupShowingAPage()
         let popupWindow = try XCTUnwrap(popup.window)
         try XCTUnwrap(controller.profileContext).sitePermissions.upsert(origin: "https://example.com", type: "external-scheme:zoommtg", granted: false)
 
-        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "zoommtg://join")), fromOrigin: "https://example.com")
+        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "zoommtg://join")), fromOrigin: "https://example.com", userInitiated: false)
         XCTAssertNil(popupWindow.attachedSheet, "the site's answer for Zoom links holds")
 
-        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "slack://open")), fromOrigin: "https://example.com")
+        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "slack://open")), fromOrigin: "https://example.com", userInitiated: false)
         let sheet = try XCTUnwrap(popupWindow.attachedSheet, "another app is asked for, as in Chrome")
         popupWindow.endSheet(sheet, returnCode: .alertSecondButtonReturn)
     }

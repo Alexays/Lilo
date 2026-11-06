@@ -197,6 +197,8 @@ final class MainWindowController: NSWindowController {
     var pagePopups: [UUID: PagePopupController] = [:]
     /// Little windows this window opened, keyed by their engine id.
     var littleWindows: [UUID: LittleWindowController] = [:]
+    /// Tabs whose external app prompt is showing.
+    var externalAppPromptTabs: Set<UUID> = []
     /// The extension side panel docked right of the content.
     lazy var sidePanel = SidePanelController(window: self)
     /// The Changes peek over a terminal, if one is open.
