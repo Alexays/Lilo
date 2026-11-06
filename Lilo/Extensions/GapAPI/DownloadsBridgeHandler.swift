@@ -73,15 +73,12 @@ final class DownloadsBridgeHandler: GapHandler {
 
         if call.action == "downloads.acceptDanger" {
             // Lilo never marks a download dangerous, so there is never a danger to accept.
-            guard let id = Self.downloadId(from: call), !downloadManager.isPrivateDownload(id: id, profileId: store.profileId),
-                  let item = try? store.fetch(id: id) else { return BridgeError("Invalid downloadId") }
+            guard let id = Self.downloadId(from: call), let item = try? store.fetch(id: id) else { return BridgeError("Invalid downloadId") }
             return BridgeError(item.state == .inProgress ? "Download must be dangerous" : "Download must be in progress")
         }
         if call.action == "downloads.search" {
             do {
-                return try await Self.searchItems(in: store, matching: call)
-                    .filter { !downloadManager.isPrivateDownload(id: $0.id ?? 0, profileId: store.profileId) }
-                    .map(Self.chromeDownloadItem)
+                return try await Self.searchItems(in: store, matching: call).map(Self.chromeDownloadItem)
             } catch {
                 return BridgeError(error.localizedDescription)
             }
@@ -157,7 +154,7 @@ final class DownloadsBridgeHandler: GapHandler {
             return bridged {
                 var erased: [Int64] = []
                 for item in items {
-                    guard let id = item.id, !downloadManager.isPrivateDownload(id: id, profileId: store.profileId) else { continue }
+                    guard let id = item.id else { continue }
                     try downloadManager.erase(id: id, in: store)
                     erased.append(id)
                 }
@@ -172,9 +169,8 @@ final class DownloadsBridgeHandler: GapHandler {
             break
         }
 
-        // Every remaining action addresses one download, which must exist outside private spaces.
-        guard let id = Self.downloadId(from: call), !downloadManager.isPrivateDownload(id: id, profileId: store.profileId),
-              (try? store.fetch(id: id)) != nil else {
+        // Every remaining action addresses one download, which must exist.
+        guard let id = Self.downloadId(from: call), (try? store.fetch(id: id)) != nil else {
             return BridgeError("Download not found")
         }
         switch call.action {

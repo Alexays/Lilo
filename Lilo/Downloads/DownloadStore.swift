@@ -1,14 +1,15 @@
 import Foundation
 import GRDB
 
-/// Persists download items in the profile GRDB database.
+/// Persists download items in the profile GRDB database, or in memory for a private space.
 @MainActor
 final class DownloadStore {
-    let dbPool: DatabasePool
-    /// The profile whose database this is, stamped on the items it inserts and fetches.
+    let dbPool: any DatabaseWriter
+    /// The profile whose database this is, or the private space whose memory store this is, stamped on the items it
+    /// inserts and fetches.
     let profileId: UUID?
 
-    init(dbPool: DatabasePool, profileId: UUID? = nil) {
+    init(dbPool: any DatabaseWriter, profileId: UUID? = nil) {
         self.dbPool = dbPool
         self.profileId = profileId
     }

@@ -101,7 +101,7 @@ enum Migrations {
 
     /// Create a per-profile database schema (history, extensions, downloads and tabs state). `legacyGlobal`, given for a
     /// profile that existed before, is the global database it takes its share of app-wide data from.
-    static func migrateProfile(_ db: DatabasePool, legacyGlobal: DatabasePool? = nil) throws {
+    static func migrateProfile(_ db: some DatabaseWriter, legacyGlobal: DatabasePool? = nil) throws {
         var migrator = DatabaseMigrator()
 
         migrator.registerMigration("v1") { db in
