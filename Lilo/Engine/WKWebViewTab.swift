@@ -2622,13 +2622,13 @@ extension WKWebViewTab: WKUIDelegate {
     nonisolated func webViewFooterHeight(_ webView: WKWebView) -> CGFloat { PrintOptionsController.printsHeadersAndFooters ? Self.printEdgeHeight : 0 }
 
     @objc(_webView:drawHeaderInRect:forPageWithTitle:URL:)
-    nonisolated func webView(_ webView: WKWebView, drawHeaderInRect rect: CGRect, forPageWithTitle title: String, url: URL) {
-        Self.drawPrintEdge(in: rect, leading: title, trailing: Self.printDateString)
+    nonisolated func webView(_ webView: WKWebView, drawHeaderInRect rect: CGRect, forPageWithTitle title: String?, url: URL?) {
+        Self.drawPrintEdge(in: rect, leading: title ?? "", trailing: Self.printDateString)
     }
     @objc(_webView:drawFooterInRect:forPageWithTitle:URL:)
-    nonisolated func webView(_ webView: WKWebView, drawFooterInRect rect: CGRect, forPageWithTitle title: String, url: URL) {
+    nonisolated func webView(_ webView: WKWebView, drawFooterInRect rect: CGRect, forPageWithTitle title: String?, url: URL?) {
         let pageNumber = MainActor.assumeIsolated { NSPrintOperation.current.map { "\($0.currentPage)/\($0.pageRange.upperBound - 1)" } }
-        Self.drawPrintEdge(in: rect, leading: url.absoluteString, trailing: pageNumber)
+        Self.drawPrintEdge(in: rect, leading: url?.absoluteString ?? "", trailing: pageNumber)
     }
 
     nonisolated private static let printEdgeHeight: CGFloat = 18
