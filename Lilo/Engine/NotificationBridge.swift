@@ -110,7 +110,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         }
     }
 
-    /// Runs the page's click handlers for a notification the user clicked; a no-op once its page is gone.
+    /// Runs the click handlers of the page or service worker that showed a notification the user clicked; a no-op once it is gone.
     func dispatchClick(identifier: String) {
         if let entry = persistentPosted.removeValue(forKey: identifier) {
             let click = NSSelectorFromString("_processPersistentNotificationClick:completionHandler:")
@@ -149,6 +149,9 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         // A tag replaces the same site's earlier notification, never another site's.
         let identifier = "web-\(origin)-\(tag.flatMap { $0.isEmpty ? nil : $0 } ?? UUID().uuidString)"
         content.userInfo = userInfo.merging(["webNotification": identifier]) { $1 }
+        // The page or the service worker may have shown the one it replaces; the caller records the new one.
+        posted[identifier] = nil
+        persistentPosted[identifier] = nil
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
         let logger = Self.logger   // avoid referencing the @MainActor static from the @Sendable closure
         UNUserNotificationCenter.current().add(request) { error in
