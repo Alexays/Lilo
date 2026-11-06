@@ -98,11 +98,12 @@ final class TabGroupsBridgeHandler: GapHandler {
             return ungroupTabs(context: context, tabs: tabAdapters(call))
 
         case "tabs.discard":
-            guard let id = tabUUIDs(call, registry: registry).first ?? nil, tabManager.engineTab(for: id) != nil else {
+            // The tab's own window holds its engine, whichever window is active.
+            guard let adapter = tabAdapters(call).first, adapter.engineTab != nil, let owner = adapter.tabManager else {
                 return BridgeError("Cannot discard a tab that is not loaded")
             }
-            tabManager.discardEngines([id])
-            return tabManager.engineTab(for: id) == nil ? nil : BridgeError("Cannot discard a tab on screen")
+            owner.discardEngines([adapter.tabId])
+            return adapter.engineTab == nil ? nil : BridgeError("Cannot discard a tab on screen")
 
         default:
             return BridgeError("Unhandled tabGroups action \(call.action)")
@@ -360,12 +361,6 @@ final class TabGroupsBridgeHandler: GapHandler {
     /// The known tabs of the `{windowPosition, index}` pairs of `message["tabs"]`.
     private func tabAdapters(_ call: GapCall) -> [TabExtensionAdapter] {
         call.registry.tabAdapters(atPositions: call.payload["tabs"] as? [[String: Any]] ?? [], extensionId: call.extensionId).compactMap { $0 }
-    }
-
-    /// The Lilo tab behind each `{windowPosition, index}` pair of `message["tabs"]`, nil when unknown.
-    private func tabUUIDs(_ call: GapCall, registry: ProfileExtensionRegistry) -> [UUID?] {
-        let positions = call.payload["tabs"] as? [[String: Any]] ?? []
-        return registry.tabIds(atPositions: positions, extensionId: call.extensionId)
     }
 
     private func groupId(forFolder folderId: UUID) -> Int {
