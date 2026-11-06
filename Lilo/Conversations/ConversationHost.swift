@@ -226,7 +226,7 @@ final class ConversationHost {
         }
         guard let windows = context?.windows.windows else { return }
         for window in windows where shown[ObjectIdentifier(window)]?.contains(conversation.tabId) == true {
-            window.bridgeRouter.send(event: "conversationUpdate", data: ["tabId": conversation.tabId.uuidString, "update": update])
+            window.bridgeRouter.send(event: "conversationUpdate", data: ["tabId": conversation.tabId.uuidString, "updates": [update]])
         }
     }
 

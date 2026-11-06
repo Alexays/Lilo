@@ -1047,7 +1047,8 @@ export interface BridgeEventPayloadMap {
 	tabPreviewReady: { tabId: string; image?: string } & Partial<BridgeTerminalPrompt>;
 	/** A conversation the chrome asked to show: its whole log, then `conversationUpdate` as it grows. */
 	conversationOpened: BridgeConversationOpened;
-	conversationUpdate: { tabId: string; update: BridgeConversationUpdate };
+	/** Updates of one conversation since the last delivery, oldest first. */
+	conversationUpdate: { tabId: string; updates: BridgeConversationUpdate[] };
 	/** Every conversation of every Space, for the Agents badge and popover. */
 	conversationsChanged: { conversations: BridgeConversationSummary[] };
 	agentCatalog: { agents: BridgeAgentInfo[]; projects: string[]; home: string };
