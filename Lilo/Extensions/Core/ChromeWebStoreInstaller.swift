@@ -79,9 +79,8 @@ enum ChromeWebStoreInstaller {
         return extractDir
     }
 
-    /// `requirePublisherProof` demands the Web Store's own signature, which only Google's servers can
-    /// produce: a package signed by its developer alone was never reviewed by the store.
-    /// Returns the archive and the public key that derives the id.
+    /// Returns the archive and the key that derives the id. `requirePublisherProof` demands the Web Store's own signature, which
+    /// only Google's servers can produce: a package signed by its developer alone was never reviewed by the store.
     static func extractZIP(fromCRX data: Data, expectedExtensionId: String, requirePublisherProof: Bool) throws -> (archive: Data, publicKey: Data) {
         let crxMagic: [UInt8] = [0x43, 0x72, 0x32, 0x34] // "Cr24"
 

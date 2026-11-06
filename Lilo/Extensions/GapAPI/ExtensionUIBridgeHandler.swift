@@ -511,9 +511,8 @@ enum ExtensionArchiveSafety {
         let isRSA: Bool
     }
 
-    /// Verifies CRX3 as Chromium's `crx_file` does: a proof must verify over the signed data and derive `expectedExtensionId`, and
-    /// `SignedData.crx_id` must name it too (blocks proof transplant). `requirePublisherProof` also demands the Web Store key's proof.
-    /// Returns the public key of the proof that derives the id, nil when the package fails verification.
+    /// Verifies CRX3 as Chromium's `crx_file` does, returning the key of a proof that verifies over the signed data and derives
+    /// `expectedExtensionId`, which `SignedData.crx_id` must name too (blocks proof transplant). `requirePublisherProof` also demands the Web Store key's proof.
     static func verifyCRX3(header: Data, archive: Data, expectedExtensionId: String, requirePublisherProof: Bool) -> Data? {
         let expected = expectedExtensionId.lowercased()
         let (proofs, signedHeaderData) = parseCRXHeader(header)
