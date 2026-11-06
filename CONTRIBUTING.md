@@ -117,12 +117,14 @@ make validate
 - **`project.yml` is the source of the Xcode project.** Never edit `Lilo.xcodeproj` by hand. After
   adding or renaming a Swift file, run `make project-sync` and commit the regenerated project:
   `xcodebuild`, `make swift-test` and CI fail until it is in sync.
-- **Generated files are build outputs.** Never hand-edit the extension bundles in
-  `Lilo/Extensions/` (`ChromeAPIAugmentation.js`, `ChromeAPIBackgroundPrelude.js`,
-  `ChromeAPIGapModules.json`, `ChromeWebStoreShim.js`, `ChromeContentCompat.js`, `ChromeStaticRules.js`), `*.gen.swift`,
-  `tabProtocol.gen.ts`, or the git-ignored `Lilo/Generated/NativeStrings.swift` and
-  `Lilo/Generated/ChromeUIAssets.swift`. Regenerate them with `make ext-bridge-build`,
-  `make bridge-gen` or `make ui-build`.
+- **Generated files are build outputs.** Never hand-edit a `*.gen.*` file, the extension bundles
+  in `Lilo/Extensions/` (the `Chrome*.js` files and `ChromeAPIGapModules.json`),
+  `Lilo/Extensions/public-suffix-list.dat`, or the git-ignored `Lilo/Generated/NativeStrings.swift`
+  and `Lilo/Generated/ChromeUIAssets.swift`. Regenerate them with `make ext-bridge-build` (extension
+  bundles), `make bridge-gen` (`*.gen.swift`, `tabProtocol.gen.ts`), `make ui-build`
+  (`NativeStrings.swift`, `ChromeUIAssets.swift`), `make emoji-data` (`emojiData*.gen.ts`),
+  `make public-suffix-list` (`public-suffix-list.dat`, `topLevelDomains.gen.ts`) or
+  `make chrome-surface` (`chrome-constants.gen.ts`).
 - **`Package.swift` is for fast local checks only.** Once `make vt-build` and `make ui-build` have
   run, `swift build` and `swift test --filter <TestClass>` work, but `xcodebuild` (through `make`)
   is the official build, and `swift run` lacks the app's Info.plist: use `make run-ui-dev` to launch
@@ -131,8 +133,8 @@ make validate
 ## Tests and validation
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
-tests; SwiftLint; the Xcode build and the Swift tests; commit hook tests; website checks and tests;
-release-note and version sync checks.
+tests; SwiftLint; the Xcode build and the Swift tests; commit hook and perf summary tests; website
+checks and tests; release-note and version sync checks.
 Run it once your change is done, and confirm it passes before you open a pull request.
 
 | Command | Runs |
@@ -142,6 +144,7 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make e2e` | Playwright end-to-end tests of the interface, in Chromium |
 | `make ext-bridge-test` | extension bridge TypeScript tests |
 | `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
+| `make perf-summary-test` | tests of the performance recording summary and comparison script |
 | `make lint-commit-message` | checks a commit header or PR title read from stdin |
 | `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
 | `make release-status` | pending release notes, changelog and app version consistency |
@@ -232,7 +235,8 @@ commit. Title edits run only this lightweight workflow. Maintainers should requi
 - **One engine.** WebKit only, and direct dependencies only.
 - **Comments** say what the code cannot: a constraint, a non-obvious why, a deliberate oddity.
   Never what the next line does, or what the code used to do.
-- **Formatting** follows `.editorconfig` (4 spaces in Swift and shell, 2 elsewhere) and
+- **Formatting** follows `.editorconfig` (4 spaces in Swift and shell, 2 elsewhere, while TypeScript
+  and Svelte in `lilo-ui/` keep the tabs or spaces each file already uses) and
   `.swiftlint.yml`, which `make swiftlint` enforces in strict mode.
 
 ## Common tasks
