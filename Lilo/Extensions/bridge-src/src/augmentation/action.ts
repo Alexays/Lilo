@@ -2,7 +2,7 @@
 // WK handles setBadgeText natively; only color methods are handled here.
 import { gapCall } from '../shared/ipc.ts';
 import { callbackify } from '../shared/callbackify.ts';
-import { tabPositions } from './tabGroups.ts';
+import { tabPositions, windowIdOrder } from './tabGroups.ts';
 
 let colorContext: OffscreenCanvasRenderingContext2D | undefined;
 
@@ -112,11 +112,13 @@ export const actionColorAugmentation = {
     return callbackify(() => gapCall<{ isOnToolbar: boolean }>('action', 'getUserSettings'), callback);
   },
 
-  // Opens this extension's popup, reusing the same native path as the toolbar button.
+  // Opens this extension's popup in the active tab of `windowId`'s window, which native finds by position.
   openPopup(options?: any, callback?: () => void) {
     const cb = typeof options === 'function' ? options : callback;
+    const windowId = typeof options === 'object' ? options?.windowId : undefined;
     return callbackify(
-      () => gapCall<null>('action', 'openPopup'),
+      async () => gapCall<null>('action', 'openPopup',
+        typeof windowId === 'number' ? { windowId, windowPosition: (await windowIdOrder()).indexOf(windowId) } : {}),
       cb
     );
   },
