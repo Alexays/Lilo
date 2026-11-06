@@ -283,7 +283,7 @@ var workerSource = '(' + function(refreshMs){
 function startWorker(url){
   try { return new NativeWorker(url); } catch (e) {
     if (!createPolicy) throw e;
-    workerPolicy = workerPolicy || apply(createPolicy, trusted, ['lilo-share', { createScriptURL: function(u){ return u; } }]);
+    workerPolicy = workerPolicy || apply(createPolicy, trusted, [Math.random().toString(36).slice(2), { createScriptURL: function(u){ return u; } }]);
     return new NativeWorker(workerPolicy.createScriptURL(url));
   }
 }
