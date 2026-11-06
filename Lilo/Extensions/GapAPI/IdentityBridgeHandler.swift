@@ -155,9 +155,9 @@ final class IdentityBridgeHandler: GapHandler {
             switch call.action {
             // The sign-in page runs in the calling extension's profile store, so its session stays there.
             case "identity.launchWebAuthFlow":
-                return try await launchWebAuthFlow(details: call.payload, extensionId: call.extensionId, dataStore: WKWebsiteDataStore(forIdentifier: call.registry.profileId))
+                return try await launchWebAuthFlow(details: call.payload, extensionId: call.extensionId, dataStore: WKEngineFactory.persistentDataStore(for: call.registry.profileId))
             case "identity.getAuthToken":
-                return try await getAuthToken(call, dataStore: WKWebsiteDataStore(forIdentifier: call.registry.profileId))
+                return try await getAuthToken(call, dataStore: WKEngineFactory.persistentDataStore(for: call.registry.profileId))
             case "identity.removeCachedAuthToken":
                 guard let token = call.string("token"), !token.isEmpty else { throw IdentityError.missingToken }
                 try removeTokens(of: call, matching: token)

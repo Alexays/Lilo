@@ -8,10 +8,10 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
     static let scheme = "lilo-capture"
 
     // https pages block subresources on non-secure schemes, so every frame fetch would fail, and a page's connect-src would block
-    // (and report) them too. The registrations are global (once, on a throwaway pool); WKProcessPool is deprecated but the only
-    // entry point, hence the lookup by name.
+    // (and report) them too. The registrations are global (once, on any pool, the content one when it exists); WKProcessPool is
+    // deprecated but the only entry point, hence the lookup by name.
     private static let secureSchemeRegistration: Void = {
-        guard let pool = (NSClassFromString("WKProcessPool") as? NSObject.Type)?.init() else { return }
+        guard let pool = WKEngineFactory.contentProcessPool ?? (NSClassFromString("WKProcessPool") as? NSObject.Type)?.init() else { return }
         for name in ["_registerURLSchemeAsSecure:", "_registerURLSchemeAsBypassingContentSecurityPolicy:"] {
             let selector = NSSelectorFromString(name)
             if pool.responds(to: selector) { unsafe pool.perform(selector, with: scheme) }

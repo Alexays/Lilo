@@ -116,7 +116,7 @@ final class DownloadsBridgeHandler: GapHandler {
             }
             // The session's own jar is not the profile's: send the profile's cookies for the URL.
             if scheme != "data", request.value(forHTTPHeaderField: "Cookie") == nil {
-                let cookies = await WKWebsiteDataStore(forIdentifier: call.registry.profileId).httpCookieStore.cookies(for: url)
+                let cookies = await WKEngineFactory.persistentDataStore(for: call.registry.profileId).httpCookieStore.cookies(for: url)
                 request.httpShouldHandleCookies = false
                 for (name, value) in HTTPCookie.requestHeaderFields(with: cookies) {
                     request.setValue(value, forHTTPHeaderField: name)

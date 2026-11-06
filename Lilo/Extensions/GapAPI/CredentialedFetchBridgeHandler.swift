@@ -60,7 +60,7 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
         guard let context = call.context,
               var url = call.string("url").flatMap(URL.init(string:)), ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
               context.hasAccess(to: url) else { return nil }
-        let store = WKWebsiteDataStore(forIdentifier: call.registry.profileId).httpCookieStore
+        let store = WKEngineFactory.persistentDataStore(for: call.registry.profileId).httpCookieStore
         var method = call.string("method") ?? "GET"
         var body = call.string("body").flatMap { Data(base64Encoded: $0) }
         var headers = (call.payload["headers"] as? [[String]] ?? []).filter { $0.count == 2 }

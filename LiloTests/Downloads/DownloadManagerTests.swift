@@ -233,7 +233,8 @@ final class DownloadManagerTests: XCTestCase {
         store = DownloadStore(dbPool: db.pool, profileId: profileId)
         manager.attach(store)
         let session = try XCTUnwrap(HTTPCookie(properties: [.domain: "localhost", .path: "/", .name: "session", .value: "signed-in"]))
-        await WKWebsiteDataStore(forIdentifier: profileId).httpCookieStore.setCookie(session)
+        let profileStore = WKEngineFactory.persistentDataStore(for: profileId)
+        await profileStore.httpCookieStore.setCookie(session)
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
         let webView = WKWebView(frame: .zero, configuration: configuration)
@@ -250,7 +251,7 @@ final class DownloadManagerTests: XCTestCase {
 
         try await manager.retryDownload(id: item.id!, in: store)
         _ = await pollUntil(timeout: 60) { !requests.withLock { $0.isEmpty } }
-        withExtendedLifetime(webView) {}
+        withExtendedLifetime((webView, profileStore)) {}
 
         XCTAssertEqual(try store.fetchAll().count, 2)
         let received = requests.withLock { $0 }
