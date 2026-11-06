@@ -187,7 +187,7 @@ Lilo werkt zichzelf bij via ondertekende Sparkle-updates.
 
 ## Bouwen vanuit broncode
 
-Met Xcode 27 en Node.js 22.6+ geïnstalleerd ([alle vereisten](../../CONTRIBUTING.md#requirements)):
+Met Xcode 27 en Node.js 22.8+ geïnstalleerd ([alle vereisten](../../CONTRIBUTING.md#requirements)):
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo

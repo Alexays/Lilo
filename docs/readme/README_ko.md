@@ -184,7 +184,7 @@ Lilo는 서명된 Sparkle 업데이트를 통해 자동으로 업데이트됩니
 
 ## 소스에서 빌드
 
-Xcode 27과 Node.js 22.6+를 설치한 상태에서 시작합니다([전체 요구 사항](../../CONTRIBUTING.md#requirements)).
+Xcode 27과 Node.js 22.8+를 설치한 상태에서 시작합니다([전체 요구 사항](../../CONTRIBUTING.md#requirements)).
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo

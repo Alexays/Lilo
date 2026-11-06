@@ -188,7 +188,7 @@ Lilo, imzalı Sparkle güncellemeleriyle kendini günceller.
 
 ## Kaynaktan derleme
 
-Xcode 27 ve Node.js 22.6+ yüklüyken ([tüm ön koşullar](../../CONTRIBUTING.md#requirements)):
+Xcode 27 ve Node.js 22.8+ yüklüyken ([tüm ön koşullar](../../CONTRIBUTING.md#requirements)):
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo

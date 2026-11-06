@@ -180,7 +180,7 @@ Lilo は、署名済みの Sparkle アップデートで自動更新します。
 
 ## ソースからビルド
 
-Xcode 27 と Node.js 22.6 以降をインストールしてから実行してください（[すべての前提条件](../../CONTRIBUTING.md#requirements)）：
+Xcode 27 と Node.js 22.8 以降をインストールしてから実行してください（[すべての前提条件](../../CONTRIBUTING.md#requirements)）：
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo
