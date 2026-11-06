@@ -267,6 +267,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             return ["data": data.base64EncodedString()]
         case "Emulation.setDeviceMetricsOverride", "Emulation.clearDeviceMetricsOverride":
             let scale = method == "Emulation.clearDeviceMetricsOverride" ? 0 : number("deviceScaleFactor") ?? 0
+            guard (0...10).contains(scale) else { return Self.protocolError(-32602, "deviceScaleFactor must be between 0 and 10") }
             session.inspector.deviceScaleFactor = CGFloat(scale)
             session.scaled = scale != 0
             return [String: Any]()

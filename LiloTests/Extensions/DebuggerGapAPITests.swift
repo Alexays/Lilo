@@ -191,6 +191,11 @@ final class DebuggerGapAPITests: XCTestCase {
         _ = await send("Input.dispatchKeyEvent", ["type": "keyUp", "key": "b"])
         let value = await send("Runtime.evaluate", ["expression": "document.getElementById('field').value", "returnByValue": true])
         XCTAssertEqual((value.result["result"] as? [String: Any])?["value"] as? String, "ab", "an Input command answers once the page handled it")
+
+        let wheel = await send("Input.dispatchMouseEvent", ["type": "mouseWheel", "x": 10, "y": 10, "deltaX": 0, "deltaY": 1e10])
+        XCTAssertNil(wheel.error, "a delta past Int32 is clamped")
+        let scale = await send("Emulation.setDeviceMetricsOverride", ["width": 0, "height": 0, "deviceScaleFactor": -1, "mobile": false])
+        XCTAssertEqual(scale.error?.contains("-32602"), true)
     }
 
     func testRestrictedPagesFollowChrome() throws {

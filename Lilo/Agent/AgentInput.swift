@@ -56,10 +56,12 @@ enum AgentInput {
     /// Positive `deltaY` scrolls the page down, positive `deltaX` scrolls it right.
     static func scroll(_ webView: WKWebView, at point: CGPoint, deltaX: CGFloat, deltaY: CGFloat, showsCursor: Bool = true) {
         if showsCursor { AgentCursorView.show(in: webView, at: point, animated: true) }
+        // Deltas come from extensions unchecked: clamped so Int32 never traps, NaN and infinity included.
+        let wheel = { (delta: CGFloat) in Int32(max(-1_000_000, min(1_000_000, -delta.rounded()))) }
         guard let window = unsafe webView.window,
               let cgEvent = CGEvent(
                 scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2,
-                wheel1: Int32(-deltaY.rounded()), wheel2: Int32(-deltaX.rounded()), wheel3: 0
+                wheel1: wheel(deltaY), wheel2: wheel(deltaX), wheel3: 0
               ) else { return }
         let screenPoint = window.convertPoint(toScreen: windowPoint(webView, point))
         // CGEvent locations are global, origin top left of the main display.
