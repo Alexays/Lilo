@@ -341,7 +341,8 @@ extension GeolocationBridge {
         if (error != null && typeof error !== 'function') throw new NativeTypeError(`Argument 2 ('errorCallback') to Geolocation.${method} must be a function`);
         const id = type === 'watch' ? ++watches : -++oneShots, highAccuracy = !!(options && options.enableHighAccuracy);
         const maximumAge = options ? clamp(options.maximumAge) : 0, given = options ? options.timeout : undefined;
-        const timeout = given === undefined ? 0xffffffff : clamp(given), timesOut = timeout < 0xffffffff;
+        // setTimeout fires at once past 2^31 - 1 ms; a timeout that long (24 days) counts as none.
+        const timeout = given === undefined ? 0xffffffff : clamp(given), timesOut = timeout <= 0x7fffffff;
         // WebKit's own call applies Permissions-Policy, which refuses a cross-origin frame without allow="geolocation", and
         // the ancestors' secure context; with no timeout it asks no one. Its error is read through natives the page cannot wrap.
         const decide = code => {
