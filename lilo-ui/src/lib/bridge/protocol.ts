@@ -60,7 +60,8 @@ export interface ImportSummaryItem {
 	profileId: string;
 	kind: ImportKind;
 	imported: number;
-	error?: string;
+	/** Set on failure: the cause the import could name, else `other`. */
+	error?: "keychain" | "locked" | "access" | "other";
 }
 /** Where a tab dropped on a pane lands: one of its edges, or in its place once the split is full. */
 export type SplitDropSide = SplitSide | "replace";

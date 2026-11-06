@@ -1699,6 +1699,11 @@
 				"extensionsCount": "Reinstallazione estensioni: {current} di {total}"
 			},
 			"partial": "Impossibile importare alcuni dati: {list}. Puoi riprovare più tardi dalle Impostazioni.",
+			"cause": {
+				"keychain": "accesso al portachiavi negato",
+				"locked": "file in uso, chiudi il browser e riprova",
+				"access": "serve l'accesso completo al disco"
+			},
 			"profiles": "Profili di {browser}",
 			"kinds": "Cosa importare",
 			"kind": {

@@ -1729,6 +1729,11 @@
 				"extensionsCount": "Ponowne instalowanie rozszerzeń: {current} z {total}"
 			},
 			"partial": "Nie udało się zaimportować niektórych danych: {list}. Możesz spróbować ponownie później w Ustawieniach.",
+			"cause": {
+				"keychain": "odmówiono dostępu do pęku kluczy",
+				"locked": "plik jest używany, zamknij przeglądarkę i spróbuj ponownie",
+				"access": "wymagany jest pełny dostęp do dysku"
+			},
 			"profiles": "Profile {browser}",
 			"kinds": "Co zaimportować",
 			"kind": {

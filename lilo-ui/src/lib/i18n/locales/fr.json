@@ -1699,6 +1699,11 @@
 				"extensionsCount": "Réinstallation des extensions : {current} sur {total}"
 			},
 			"partial": "Certaines données n'ont pas pu être importées : {list}. Vous pourrez réessayer depuis les Réglages.",
+			"cause": {
+				"keychain": "accès au trousseau refusé",
+				"locked": "fichier en cours d'utilisation, quittez le navigateur et réessayez",
+				"access": "l'accès complet au disque est nécessaire"
+			},
 			"profiles": "Profils {browser}",
 			"kinds": "Quoi importer",
 			"kind": {

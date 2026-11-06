@@ -1699,6 +1699,11 @@
 				"extensionsCount": "Reinstalando extensões {current} de {total}"
 			},
 			"partial": "Não foi possível importar alguns dados: {list}. Você pode tentar novamente mais tarde nos Ajustes.",
+			"cause": {
+				"keychain": "acesso às Chaves negado",
+				"locked": "o arquivo está em uso, feche o navegador e tente de novo",
+				"access": "é necessário Acesso Total ao Disco"
+			},
 			"profiles": "Perfis do {browser}",
 			"kinds": "O que importar",
 			"kind": {

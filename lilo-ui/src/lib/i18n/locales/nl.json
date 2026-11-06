@@ -1699,6 +1699,11 @@
 				"extensionsCount": "Extensies opnieuw installeren: {current} van {total}"
 			},
 			"partial": "Sommige gegevens konden niet worden geïmporteerd: {list}. Je kunt het later opnieuw proberen via Instellingen.",
+			"cause": {
+				"keychain": "toegang tot sleutelhanger geweigerd",
+				"locked": "bestand in gebruik, sluit de browser af en probeer opnieuw",
+				"access": "volledige schijftoegang is nodig"
+			},
 			"profiles": "{browser}-profielen",
 			"kinds": "Wat wil je importeren?",
 			"kind": {

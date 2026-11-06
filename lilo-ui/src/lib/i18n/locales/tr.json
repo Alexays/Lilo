@@ -1699,6 +1699,11 @@
 				"extensionsCount": "Genişletmeler yeniden yükleniyor: {current}/{total}"
 			},
 			"partial": "Bazı veriler içe aktarılamadı: {list}. Daha sonra Ayarlar'dan yeniden deneyebilirsiniz.",
+			"cause": {
+				"keychain": "Anahtar Zinciri erişimi reddedildi",
+				"locked": "dosya kullanımda, tarayıcıdan çıkıp yeniden deneyin",
+				"access": "Tam Disk Erişimi gerekiyor"
+			},
 			"profiles": "{browser} profilleri",
 			"kinds": "İçe aktarılacaklar",
 			"kind": {
