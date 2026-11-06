@@ -2332,6 +2332,7 @@
 		"This agent is no longer in the ACP registry.": "Bu ajan artık ACP kayıt defterinde değil.",
 		"The agent stopped.": "Ajan durdu.",
 		"The agent is not running.": "Ajan çalışmıyor.",
+		"The sign-in terminal could not open.": "Oturum açma terminali açılamadı.",
 		"Always Allow": "Her Zaman İzin Ver",
 		"Ask an Agent": "Bir Ajana Sor",
 		"Review Changes": "Değişiklikleri incele",

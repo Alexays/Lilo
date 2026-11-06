@@ -2362,6 +2362,7 @@
 		"This agent is no longer in the ACP registry.": "Цього агента більше немає в реєстрі ACP.",
 		"The agent stopped.": "Агент зупинився.",
 		"The agent is not running.": "Агент не запущено.",
+		"The sign-in terminal could not open.": "Не вдалося відкрити термінал для входу.",
 		"Always Allow": "Завжди дозволяти",
 		"Ask an Agent": "Запитати агента",
 		"Review Changes": "Переглянути зміни",

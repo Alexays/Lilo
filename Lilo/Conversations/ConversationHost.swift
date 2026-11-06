@@ -153,7 +153,14 @@ final class ConversationHost {
             conversation.log = (object["log"] as? [[String: Any]] ?? []).map(ACPConnection.Payload.init(value:))
             conversation.checkpoints = (object["checkpoints"] as? [String] ?? []).map { $0.isEmpty ? nil : $0 }
         } else if conversation.sessionId != nil {
-            Task { try? await ensureStarted(conversation) }
+            Task {
+                do {
+                    try await ensureStarted(conversation)
+                    scheduleIdleStop(conversation)
+                } catch {
+                    failedOutsideTurn(conversation, error)
+                }
+            }
         }
     }
 
@@ -272,6 +279,8 @@ final class ConversationHost {
             guard let self, let conversation, conversation.connection === connection else { return }
             self.agentExited(conversation, status: status, errors: errors)
         }
+        // A conversation closed while its agent was being found must not get a process it can no longer stop.
+        try Task.checkCancellation()
         try connection.start()
         conversation.connection = connection
         let initialized = try await connection.request("initialize", [
@@ -347,15 +356,23 @@ final class ConversationHost {
     }
 
     /// Runs the agent's own sign-in, its launch command with the method's arguments, in a terminal tab.
+    /// A tab that cannot open drops the prompt the sign-in held, as nothing would ever send it.
     private func signInInTerminal(_ conversation: Conversation, method: [String: Any]) {
-        guard let agent = catalog.agent(id: conversation.agentId), let window = context?.windows.activeWindow else { return }
         Task {
-            guard let launch = try? await catalog.launch(agent) else { return }
-            let words = [launch.executable.path] + launch.arguments + (method["args"] as? [String] ?? [])
-            let command = words.map { "'" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }.joined(separator: " ")
-            if let tab = window.createTerminalTab(command: "PATH='\(launch.environment["PATH"] ?? "")' " + command) {
-                signInTerminals[tab.id] = conversation.tabId
+            if let agent = catalog.agent(id: conversation.agentId), let window = context?.windows.activeWindow,
+               let launch = try? await catalog.launch(agent) {
+                let words = [launch.executable.path] + launch.arguments + (method["args"] as? [String] ?? [])
+                let command = words.map { "'" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }.joined(separator: " ")
+                if let tab = window.createTerminalTab(command: "PATH='\(launch.environment["PATH"] ?? "")' " + command) {
+                    signInTerminals[tab.id] = conversation.tabId
+                    return
+                }
             }
+            conversation.awaitingSignIn = nil
+            conversation.queued.removeAll()
+            conversation.lastError = "The sign-in terminal could not open.".localized
+            append(conversation, ["sessionUpdate": "lilo_error", "message": conversation.lastError ?? ""])
+            setState(conversation, .failed)
         }
     }
 
@@ -507,11 +524,30 @@ final class ConversationHost {
                 if let blocks = conversation.awaitingSignIn {
                     conversation.awaitingSignIn = nil
                     await runTurn(conversation, blocks: blocks)
+                } else {
+                    scheduleIdleStop(conversation)
                 }
             } catch {
-                append(conversation, ["sessionUpdate": "lilo_error", "message": error.localizedDescription])
+                failedOutsideTurn(conversation, error)
             }
         }
+    }
+
+    /// Starting the agent or a request outside a turn failed: the thread says why, unless the conversation is
+    /// gone or a sign-in in a terminal is under way. That sign-in holds no prompt, so the next one starts a
+    /// fresh agent that reads the new credentials.
+    private func failedOutsideTurn(_ conversation: Conversation, _ error: Error) {
+        if error is CancellationError { return }
+        if error is SignInPending {
+            conversation.connection?.terminate()
+            conversation.connection = nil
+            setState(conversation, .idle)
+            return
+        }
+        conversation.lastError = error.localizedDescription
+        append(conversation, ["sessionUpdate": "lilo_error", "message": error.localizedDescription])
+        // A running turn owns the state, and its own end or failure sets it.
+        if conversation.state != .busy { setState(conversation, .failed) }
     }
 
     /// The agent's process up and initialized, without opening a session: what signing in needs.
@@ -555,22 +591,38 @@ final class ConversationHost {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.idleDelay, execute: work)
     }
 
+    /// Starts an agent stopped once idle, so a mode picked from a thread replayed after a relaunch still applies.
     func setMode(_ tabId: UUID, modeId: String) {
-        guard let conversation = conversations[tabId], let sessionId = conversation.sessionId, let connection = conversation.connection else { return }
+        guard let conversation = conversations[tabId] else { return }
         Task {
-            _ = try? await connection.request("session/set_mode", ["sessionId": sessionId, "modeId": modeId])
-            append(conversation, ["sessionUpdate": "current_mode_update", "currentModeId": modeId])
+            do {
+                try await ensureStarted(conversation)
+                guard let connection = conversation.connection, let sessionId = conversation.sessionId else { return }
+                _ = try await connection.request("session/set_mode", ["sessionId": sessionId, "modeId": modeId])
+                append(conversation, ["sessionUpdate": "current_mode_update", "currentModeId": modeId])
+                scheduleIdleStop(conversation)
+            } catch {
+                failedOutsideTurn(conversation, error)
+            }
         }
     }
 
     func setConfigOption(_ tabId: UUID, configId: String, value: Any) {
-        guard let conversation = conversations[tabId], let sessionId = conversation.sessionId, let connection = conversation.connection else { return }
+        guard let conversation = conversations[tabId] else { return }
         Task {
-            var params: [String: Any] = ["sessionId": sessionId, "configId": configId, "value": value]
-            if value is Bool { params["type"] = "boolean" }
-            guard let result = try? await connection.request("session/set_config_option", params),
-                  let options = result["configOptions"] as? [Any] else { return }
-            append(conversation, ["sessionUpdate": "config_option_update", "configOptions": options])
+            do {
+                try await ensureStarted(conversation)
+                guard let connection = conversation.connection, let sessionId = conversation.sessionId else { return }
+                var params: [String: Any] = ["sessionId": sessionId, "configId": configId, "value": value]
+                if value is Bool { params["type"] = "boolean" }
+                let result = try await connection.request("session/set_config_option", params)
+                if let options = result["configOptions"] as? [Any] {
+                    append(conversation, ["sessionUpdate": "config_option_update", "configOptions": options])
+                }
+                scheduleIdleStop(conversation)
+            } catch {
+                failedOutsideTurn(conversation, error)
+            }
         }
     }
 

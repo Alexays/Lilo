@@ -2332,6 +2332,7 @@
 		"This agent is no longer in the ACP registry.": "Cet agent n'est plus dans le registre ACP.",
 		"The agent stopped.": "L'agent s'est arrêté.",
 		"The agent is not running.": "L'agent n'est pas lancé.",
+		"The sign-in terminal could not open.": "Le terminal de connexion n'a pas pu s'ouvrir.",
 		"Always Allow": "Toujours autoriser",
 		"Ask an Agent": "Demander à un agent",
 		"Review Changes": "Voir les modifications",

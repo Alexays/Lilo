@@ -2332,6 +2332,7 @@
 		"This agent is no longer in the ACP registry.": "此代理程式已不在 ACP 登錄檔中。",
 		"The agent stopped.": "代理程式已停止。",
 		"The agent is not running.": "代理程式未在執行。",
+		"The sign-in terminal could not open.": "無法開啟登入終端機。",
 		"Always Allow": "一律允許",
 		"Ask an Agent": "詢問代理程式",
 		"Review Changes": "檢視變更",

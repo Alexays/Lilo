@@ -2332,6 +2332,7 @@
 		"This agent is no longer in the ACP registry.": "Deze agent staat niet meer in het ACP-register.",
 		"The agent stopped.": "De agent is gestopt.",
 		"The agent is not running.": "De agent draait niet.",
+		"The sign-in terminal could not open.": "De aanmeldterminal kon niet worden geopend.",
 		"Always Allow": "Altijd toestaan",
 		"Ask an Agent": "Vraag een agent",
 		"Review Changes": "Wijzigingen bekijken",
