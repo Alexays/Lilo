@@ -266,7 +266,7 @@
   // Asked once at startup so the invite can appear without opening Settings.
   onMount(() => settingsActions.loadDefaultBrowserStatus());
 
-  function handleClick(event: MouseEvent) {
+  function handleClick() {
     closeDetails();
     openCommandBar(activeTabURL, false, true);
   }
