@@ -133,14 +133,15 @@ final class ChromeWebStoreInstallerTests: XCTestCase {
 
     private let zipPayload = Data("PK\u{3}\u{4}minimal-fake-zip-payload".utf8)
 
-    /// A correctly signed RSA CRX3 verifies and yields exactly the archive bytes back.
+    /// A correctly signed RSA CRX3 verifies and yields exactly the archive bytes back, with the key that derives the id.
     func testValidRSACRXAccepts() throws {
         let key = try makeKey(rsa: true)
         let expectedId = ExtensionArchiveSafety.chromeExtensionId(forPublicKey: key.spki)
         let crx = try buildCRX(key: key, zip: zipPayload)
 
         let extracted = try ChromeWebStoreInstaller.extractZIP(fromCRX: crx, expectedExtensionId: expectedId, requirePublisherProof: false)
-        XCTAssertEqual(Data(extracted), zipPayload)
+        XCTAssertEqual(extracted.archive, zipPayload)
+        XCTAssertEqual(extracted.publicKey, key.spki)
     }
 
     /// A correctly signed ECDSA (P-256) CRX3 verifies.
@@ -150,7 +151,8 @@ final class ChromeWebStoreInstallerTests: XCTestCase {
         let crx = try buildCRX(key: key, zip: zipPayload)
 
         let extracted = try ChromeWebStoreInstaller.extractZIP(fromCRX: crx, expectedExtensionId: expectedId, requirePublisherProof: false)
-        XCTAssertEqual(Data(extracted), zipPayload)
+        XCTAssertEqual(extracted.archive, zipPayload)
+        XCTAssertEqual(extracted.publicKey, key.spki)
     }
 
     /// Flipping one byte of the signature must be rejected.
