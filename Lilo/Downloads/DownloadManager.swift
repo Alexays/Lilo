@@ -196,8 +196,8 @@ final class DownloadManager {
     // MARK: - Blob / data saves (WKUIDelegatePrivate saveDataToFile)
 
     /// Writes raw data (a blob/canvas/generated file the page handed us) where a download of it would go, after the
-    /// extensions' suggestion and the save panel, and records it as a completed download so it shows up in the downloads
-    /// panel. The write runs off the main thread; the returned task finishes once the row is recorded.
+    /// extensions' suggestion and the save panel, and records it as a completed download (an interrupted one when the
+    /// write fails) so it shows up in the downloads panel. The write runs off the main thread; the returned task finishes once the row is recorded.
     @discardableResult
     func saveData(
         _ data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL, webView: WKWebView? = nil, in store: DownloadStore, privateSpaceId: UUID? = nil
@@ -238,21 +238,31 @@ final class DownloadManager {
                 DownloadQuarantine.stamp(path: destination.path, source: source)
                 return .success(destination)
             }.value
-            let destination: URL
             switch written {
-            case .success(let url): destination = url
+            case .success(let destination):
+                item.filename = destination.lastPathComponent
+                item.destinationPath = destination.path
+                item.bytesReceived = Int64(data.count)
+                item.state = .complete
             case .failure(let error):
                 Self.logger.error("Failed to save data to file: \(error.localizedDescription)")
-                return
+                item.filename = chosen.lastPathComponent
+                item.destinationPath = chosen.path
+                item.state = .interrupted
+                item.fileMissing = true
+                let code = (error as? CocoaError)?.code
+                let reason: DownloadInterruptReason = if code == .fileWriteOutOfSpace {
+                    .fileNoSpace
+                } else if code == .fileWriteNoPermission || code == .fileWriteVolumeReadOnly {
+                    .fileAccessDenied
+                } else {
+                    .fileFailed
+                }
+                item.error = reason.rawValue
             }
-            item.filename = destination.lastPathComponent
-            item.destinationPath = destination.path
-            item.bytesReceived = Int64(data.count)
-            item.state = .complete
             item.endedAt = Date()
-            // The file is already on disk; a lost row only hides it from the list, so notifyObservers
-            // still runs and the completion notification fires either way.
-            loggingPersistenceError("download.insert[\(destination.lastPathComponent)]") {
+            // A lost row only hides the save from the list, so notifyObservers still runs either way.
+            loggingPersistenceError("download.insert[\(item.filename)]") {
                 try store.insert(&item)
             }
             if let privateSpaceId, let key = item.key { privateDownloadIds[privateSpaceId, default: []].append(key) }
@@ -421,8 +431,9 @@ final class DownloadManager {
     func retryDownload(id: Int64, in store: DownloadStore) async throws {
         let key = DownloadKey(profileId: store.profileId, id: id)
         pendingAutoResumes.remove(key)
+        // A blob's bytes came from the page itself: its URL would fetch the page, not the file.
         guard let item = try? store.fetch(id: id),
-              item.state == .interrupted else { return }
+              item.state == .interrupted, item.source != "blob" else { return }
         let lane = lane(for: store)
         if item.resumeData != nil {
             if item.source == "wk" {

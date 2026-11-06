@@ -189,7 +189,8 @@ export function metaLine(dl: BridgeDownloadSnapshot, locale: Locale, nowMs: numb
 export function inlineAction(dl: BridgeDownloadSnapshot): InlineAction | null {
   if (dl.state === "inProgress") return "pause";
   if (dl.state === "paused") return "resume";
-  if (dl.state === "interrupted") return "retry";
+  // A blob's bytes came from the page itself: its URL would fetch the page, not the file.
+  if (dl.state === "interrupted" && dl.source !== "blob") return "retry";
   return null;
 }
 

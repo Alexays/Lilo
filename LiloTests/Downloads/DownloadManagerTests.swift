@@ -307,6 +307,25 @@ final class DownloadManagerTests: XCTestCase {
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [])
     }
 
+    func testSavedDataThatCannotBeWrittenIsListedAsFailedWithoutRetry() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        manager.chooseDestination = { _, _, _ in folder.appendingPathComponent("gone/doc.pdf") }
+        var received: DownloadItem?
+        manager.addObserver { received = $0 }
+
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!, in: store).value
+        let id = try XCTUnwrap(received?.id)
+        try await manager.retryDownload(id: id, in: store)
+
+        XCTAssertEqual(received?.state, .interrupted)
+        XCTAssertEqual(received?.error, "FILE_FAILED")
+        XCTAssertEqual(received?.fileMissing, true)
+        XCTAssertEqual(try store.fetchAll().map(\.id), [id], "a retry would fetch the page, not the page's blob")
+    }
+
     func testSavedDataTakesTheExtensionsSuggestedName() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

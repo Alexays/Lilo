@@ -167,6 +167,7 @@ test("inlineAction depends on state", () => {
   assert.equal(inlineAction(dl({ state: "inProgress" })), "pause");
   assert.equal(inlineAction(dl({ state: "paused" })), "resume");
   assert.equal(inlineAction(dl({ state: "interrupted" })), "retry");
+  assert.equal(inlineAction(dl({ state: "interrupted", source: "blob" })), null);
   assert.equal(inlineAction(dl({ state: "complete" })), null);
 });
 
