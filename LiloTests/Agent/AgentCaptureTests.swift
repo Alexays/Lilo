@@ -93,15 +93,17 @@ final class AgentCaptureTests: AgentToolTestCase {
             Promise.reject(new (document.querySelector('iframe').contentWindow.Error)('from the frame'))
             Promise.reject(new (class Custom {})())
             Promise.reject(undefined)
+            Promise.reject(new DOMException('aborted', 'AbortError'))
             1
             """, tab: tab)
         var errors = (text: "", isError: false, images: [Data](), meta: [String: Any]())
         await pollUntil {
             errors = await self.client.callTool("read_console_messages", ["tabId": tab, "onlyErrors": true])
-            return errors.text.components(separatedBy: "Unhandled rejection").count > 3
+            return errors.text.components(separatedBy: "Unhandled rejection").count > 4
         }
 
         XCTAssertTrue(errors.text.contains("Error: from the frame"), errors.text)
+        XCTAssertTrue(errors.text.contains("AbortError: aborted"), errors.text)
         XCTAssertTrue(errors.text.contains("[object Custom]"), errors.text)
         XCTAssertTrue(errors.text.contains("Unhandled rejection: undefined"), errors.text)
         XCTAssertFalse(errors.text.contains("{}"), errors.text)

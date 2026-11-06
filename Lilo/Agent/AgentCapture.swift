@@ -24,12 +24,15 @@ final class AgentCapture: NSObject {
       if (window.top !== window) return;
       const unlisten = EventTarget.prototype.removeEventListener, objectToString = Object.prototype.toString;
       const { getPrototypeOf } = Reflect, { isArray } = Array;
+      const { get: domName } = getOwnPropertyDescriptor(DOMException.prototype, 'name');
+      const { get: domMessage } = getOwnPropertyDescriptor(DOMException.prototype, 'message');
       let log, stop;
       // Reads data properties only, up the prototype chain: a getter is the page's code, which logging must not run.
+      // A DOMException's native name and message getters, captured before the page runs, are the exception.
       const data = (object, key) => {
         for (let o = object; o; o = getPrototypeOf(o)) {
           const d = getOwnPropertyDescriptor(o, key);
-          if (d) return 'value' in d ? d.value : undefined;
+          if (d) return 'value' in d ? d.value : d.get === domName || d.get === domMessage ? apply(d.get, object, []) : undefined;
         }
       };
       // JSON of the own enumerable data, an accessor showing as "[Getter]", without a toJSON or a getter of the page.
