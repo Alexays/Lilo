@@ -718,6 +718,9 @@ html.window-unfocused .space-dnd-placeholder,
 html.window-unfocused .bookmark-placeholder,
 html.window-unfocused .pinned-list,
 html.window-unfocused .bookmarked-list,
+html.window-unfocused .mascot *,
+html.window-unfocused .activity .dots span,
+html.window-unfocused .work .spinner,
 html.window-unfocused .anim *,
 html.window-unfocused .anim *::after {
   animation-play-state: paused !important;

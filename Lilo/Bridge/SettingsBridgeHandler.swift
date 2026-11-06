@@ -321,7 +321,7 @@ final class SettingsBridgeHandler: BridgeHandler {
             publishShortcuts()
 
         case "getAgentActivity":
-            agentControl?()?.publishActivity()
+            agentControl?()?.publishActivity(resend: true)
             agentControl?()?.resendPendingConsents(to: bridgeRouter)
 
         case "agentControlResponse":
