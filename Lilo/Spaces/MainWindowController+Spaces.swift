@@ -28,8 +28,9 @@ extension MainWindowController {
         }
 
         // Moving a private space to another profile would turn it into a persistent one and write
-        // its tabs to the target profile's database.
-        guard !sourceSpace.isPrivate else {
+        // its tabs to the target profile's database. A space whose saved state could not be read
+        // would have that row deleted for the empty state shown in its place.
+        guard !sourceSpace.isPrivate, !context.unreadableSpaceIds.contains(spaceId) else {
             bridgeRouter.send(event: "spaceUpdated", data: sourceSpace.bridgeData)
             return
         }
@@ -278,13 +279,15 @@ extension MainWindowController {
             return
         }
 
-        // Private space states never touch disk; a move between a private and a normal space only
-        // persists the normal side.
-        if sourceSpace.isPrivate || targetSpace.isPrivate {
-            if !sourceSpace.isPrivate {
+        // Private space states never touch disk, nor do spaces whose saved state could not be read: a move
+        // involving one only persists the other side.
+        let persistsSource = !sourceSpace.isPrivate && !context.unreadableSpaceIds.contains(sourceSpaceId)
+        let persistsTarget = !targetSpace.isPrivate && !context.unreadableSpaceIds.contains(targetSpaceId)
+        if !persistsSource || !persistsTarget {
+            if persistsSource {
                 try coordinator.persistSpaceTabState(sourceState.state, spaceId: sourceSpaceId, inProfile: sourceSpace.profileId)
             }
-            if !targetSpace.isPrivate {
+            if persistsTarget {
                 try coordinator.persistSpaceTabState(targetState.state, spaceId: targetSpaceId, inProfile: targetSpace.profileId)
             }
         } else {
@@ -390,7 +393,7 @@ extension MainWindowController {
             spaceManager.setActiveTab(previousActiveTabId, forSpace: oldSpaceId)
             // Private spaces leave no trace on disk. Caching the runtime leaves the store's durable
             // tree as is, so only the active tab can differ from the state it holds.
-            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true,
+            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true, !context.unreadableSpaceIds.contains(oldSpaceId),
                var state = context.browserState.spaceTabState(forSpace: oldSpaceId) {
                 state.activeTabId = restorableActiveTabId(preferred: previousActiveTabId, in: inactiveRuntime.tabs)
                 profileContext?.sessionPersistence?.saveSpaceTabStateAsync(state, spaceId: oldSpaceId) { [weak self] activeTabId, spaceId in

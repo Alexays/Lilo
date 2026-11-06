@@ -217,6 +217,17 @@ final class TabArchiveTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: file), saved)
     }
 
+    func testAnUnreadableArchiveIsSetAsideNotOverwritten() throws {
+        let directory = browserContext.context.appSupportDirectory
+        let file = URL(fileURLWithPath: directory).appendingPathComponent("ArchivedTabs.json")
+        try Data("not json".utf8).write(to: file)
+
+        XCTAssertEqual(BrowserContext.readTabArchive(appSupportDirectory: directory), [])
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
+        XCTAssertEqual(try Data(contentsOf: file.appendingPathExtension("corrupt")), Data("not json".utf8))
+    }
+
     func testTheArchiveDelayIsSavedWithTheSpace() async throws {
         let (window, space) = try makeWindow()
         let handler = SpaceBridgeHandler(spaceManager: window.context.spaceManager!, windowController: window)

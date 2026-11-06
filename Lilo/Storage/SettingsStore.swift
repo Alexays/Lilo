@@ -11,6 +11,8 @@ final class SettingsStore {
     /// Set when the initial load failed: every accessor then serves defaults, and the caller must
     /// surface the degradation instead of letting it pass as a fresh install.
     private(set) var initialLoadError: Error?
+    /// Told of each write that failed, on the main actor: the cache then holds a value the disk does not.
+    var writeFailed: ((Error) -> Void)?
 
     init(dbPool: DatabasePool) {
         self.dbPool = dbPool
@@ -35,8 +37,9 @@ final class SettingsStore {
         cache[key] = value
         dbPool.asyncWrite({ db in
             try db.execute(sql: "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", arguments: [key, value])
-        }, completion: { _, result in
+        }, completion: { [weak self] _, result in
             loggingPersistenceError("settings.set[\(key)]") { try result.get() }
+            if case .failure(let error) = result { Task { @MainActor in self?.writeFailed?(error) } }
         })
     }
 
@@ -44,8 +47,9 @@ final class SettingsStore {
         cache.removeValue(forKey: key)
         dbPool.asyncWrite({ db in
             try db.execute(sql: "DELETE FROM settings WHERE key = ?", arguments: [key])
-        }, completion: { _, result in
+        }, completion: { [weak self] _, result in
             loggingPersistenceError("settings.remove[\(key)]") { try result.get() }
+            if case .failure(let error) = result { Task { @MainActor in self?.writeFailed?(error) } }
         })
     }
 

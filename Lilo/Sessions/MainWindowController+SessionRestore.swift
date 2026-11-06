@@ -291,7 +291,8 @@ extension MainWindowController {
                 return context.windows.windows.compactMap { window in
                     guard let spaceId = window.tabManager.currentSpaceId,
                           let space = context.spaceManager?.space(with: spaceId),
-                          space.profileId == profileId, !space.isPrivate else { return nil }
+                          space.profileId == profileId, !space.isPrivate,
+                          !context.unreadableSpaceIds.contains(spaceId) else { return nil }
                     return spaceId
                 }
             },
@@ -308,6 +309,14 @@ extension MainWindowController {
                     spaceId: spaceId,
                     structureToken: spaceTab.structureToken,
                     durableRevision: spaceTab.durableRevision
+                )
+            },
+            saveFailed: { [weak context = self.context] error in
+                context?.showDegradedDatabaseAlert(
+                    subject: "session",
+                    message: "Lilo couldn't save your tabs".localized,
+                    informative: "Recent changes may be missing the next time you open Lilo. Check that your disk has free space.".localized,
+                    error: error
                 )
             }
         )
@@ -495,6 +504,7 @@ extension MainWindowController {
         if !debounced { Self.flushPendingInteractionStates(context: context, synchronous: synchronous) }
         guard tabManager.currentSpaceId == spaceId,
               let space = context.spaceManager?.space(with: spaceId), !space.isPrivate,
+              !context.unreadableSpaceIds.contains(spaceId),
               let pool = try? context.poolReportingFailure(for: space.profileId) else { return }
 
         // Every live page, whose count the engine budget bounds, then the most recently discarded ones.
@@ -581,7 +591,7 @@ extension MainWindowController {
 
     /// Restore path entry point: a readable row (or none) restores normally; an unreadable row is
     /// quarantined and the space starts empty, so the next save can never overwrite the bad blob.
-    /// A database failure (pool open, read) also degrades to empty, but is surfaced per profile.
+    /// A database failure (pool open, read) also degrades to empty, surfaced per profile, and the space is never saved this launch.
     private func loadedOrQuarantinedSpaceTabState(for space: Space) -> SpaceTabState {
         do {
             return try restoredSpaceTabState(for: space)
@@ -594,6 +604,8 @@ extension MainWindowController {
             }
             bridgeRouter.send(event: "sessionRestoreDegraded", data: ["spaceName": space.name])
         } catch {
+            // The row may be intact: saving the empty state over it would lose it.
+            context.unreadableSpaceIds.insert(space.id)
             context.notifyProfileDatabaseFailure(profileId: space.profileId, error: error)
         }
         return SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)

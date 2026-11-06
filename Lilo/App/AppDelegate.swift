@@ -330,7 +330,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         browserContext.isTerminating = true
         browserContext.windows.windows.forEach { $0.saveSessionBeforeQuit() }
-        browserContext.saveSpaceStatesBeforeQuit()
+        let savedSpaces = browserContext.saveSpaceStatesBeforeQuit()
         // After the saves, which read each page's navigation state; early, so what the pages write as they
         // close reaches the network process before it syncs storage at the app's exit.
         browserContext.closePagesBeforeQuit()
@@ -342,8 +342,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         browserContext.terminalHost.terminateAllForQuit()
         browserContext.agentControl.setEnabled(false)
         browserContext.settingsStore?.lastQuitAt = Date()
-        // Last write: a quit that dies while saving must still read as unclean on the next launch.
-        browserContext.settingsStore?.sessionCleanShutdown = true
+        // Last write: a quit that dies while saving, or whose tabs were not saved, must still read as unclean on the next launch.
+        if savedSpaces { browserContext.settingsStore?.sessionCleanShutdown = true }
         browserContext.dbManager?.closeForShutdown()
     }
 

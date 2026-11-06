@@ -142,11 +142,23 @@ final class ConversationHost {
     /// app waits for it, as it must not exit before the log is on disk.
     private func save(_ conversation: Conversation, synchronously: Bool = false) {
         let object = ACPConnection.Payload(value: ["log": conversation.log.map(\.value), "checkpoints": conversation.checkpoints.map { $0 ?? "" }])
-        let file = threadFile(conversation.tabId), folder = threads
-        let write: @Sendable () -> Void = {
+        let file = threadFile(conversation.tabId), folder = threads, logger = Self.logger
+        let write: @Sendable () -> Void = { [weak self] in
             guard let data = try? JSONSerialization.data(withJSONObject: object.value) else { return }
-            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            try? data.write(to: file, options: .atomic)
+            do {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                try data.write(to: file, options: .atomic)
+            } catch {
+                logger.error("conversation save failed: \(error.localizedDescription, privacy: .public)")
+                Task { @MainActor in
+                    self?.context?.showDegradedDatabaseAlert(
+                        subject: "conversations",
+                        message: "Lilo couldn't save a conversation".localized,
+                        informative: "Recent changes may be missing the next time you open Lilo. Check that your disk has free space.".localized,
+                        error: error
+                    )
+                }
+            }
         }
         if synchronously { saveQueue.sync(execute: write) } else { saveQueue.async(execute: write) }
     }

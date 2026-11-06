@@ -547,10 +547,18 @@ extension BrowserContext {
         if isTerminating { Self.closedTerminalsQueue.sync {} }
     }
 
-    /// Their screens are purged after 30 days, and so are they.
+    /// Their screens are purged after 30 days, and so are they. A file that no longer decodes is set aside as
+    /// `.corrupt`, so the next save cannot overwrite it.
     func restoreClosedTerminals() {
-        guard let url = closedTerminalsURL, let data = try? Data(contentsOf: url),
-              let entries = try? JSONDecoder().decode([RecentlyClosedStack.Entry].self, from: data) else { return }
+        guard let url = closedTerminalsURL, let data = try? Data(contentsOf: url) else { return }
+        let entries: [RecentlyClosedStack.Entry]
+        do { entries = try JSONDecoder().decode([RecentlyClosedStack.Entry].self, from: data) } catch {
+            Self.logger.error("closed terminals unreadable: \(error.localizedDescription, privacy: .public)")
+            let corrupt = url.appendingPathExtension("corrupt")
+            try? FileManager.default.removeItem(at: corrupt)
+            try? FileManager.default.moveItem(at: url, to: corrupt)
+            return
+        }
         let expiry = Date().addingTimeInterval(-30 * 24 * 3600)
         recentlyClosed.restoreOlder(entries.filter { entry in
             guard case .terminal(let closed) = entry.content else { return false }
