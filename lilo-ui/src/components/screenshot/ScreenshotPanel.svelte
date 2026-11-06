@@ -14,6 +14,7 @@
   import { LINE_TYPES, screenshotEditor } from "../../stores/screenshotEditor.svelte";
   import type { ToolKind, Annotation } from "../../lib/screenshot/annotationModel";
   import { t } from "../../lib/i18n/state.svelte";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
 
   const LAYER_ZONE = "screenshot-layers";
 
@@ -219,7 +220,7 @@
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4" /></svg>
       </button>
       {#if saveMenuOpen}
-        <div class="save-menu" role="menu" aria-label={t("screenshot.saveOptions")}>
+        <div class="save-menu float-surface float-popover" role="menu" aria-label={t("screenshot.saveOptions")} out:popoverOut>
           <button role="menuitem" onclick={() => { saveMenuOpen = false; screenshotEditor.saveAs(); }}>{t("screenshot.saveAs")}</button>
         </div>
       {/if}
@@ -287,7 +288,7 @@
   .save-group { position: relative; display: flex; gap: 1px; }
   .save-group .primary:first-child { flex: 1; border-radius: var(--radius-md) 0 0 var(--radius-md); }
   .save-group .chevron { border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 0 12px; display: flex; align-items: center; justify-content: center; }
-  .save-menu { position: absolute; bottom: calc(100% + 6px); left: 0; right: 0; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 4px; box-shadow: var(--shadow-md); }
-  .save-menu button { width: 100%; white-space: nowrap; border: none; background: transparent; color: var(--text-primary); padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-sm); text-align: left; }
+  .save-menu { position: absolute; bottom: calc(100% + 6px); left: 0; right: 0; transform-origin: bottom; }
+  .save-menu button { width: 100%; white-space: nowrap; border: none; background: transparent; color: var(--text-primary); padding: 8px 10px; border-radius: calc(var(--float-radius-popover) - 6px); cursor: pointer; font-size: var(--font-size-sm); text-align: left; }
   .save-menu button:hover { background: var(--bg-hover); }
 </style>

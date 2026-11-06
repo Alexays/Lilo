@@ -52,7 +52,9 @@ hairlines.
 
 A box nested in a padded one takes its parent's radius less the padding, as
 `calc(var(--radius-md) - var(--space-2))` in `UiSegmented`. The popover family keeps its own
-`--float-radius-*` tokens (`tip` and `card` alias `sm` and `md`).
+`--float-radius-*` tokens (`tip`, `card` and `popover` alias `sm`, `md` and `lg`). Every popover
+is `.float-surface.float-popover`: it opens on `--motion-duration-overlay` with the spring and
+leaves with `popoverOut` (`lib/motion/restingTransitions.ts`), a fast fade.
 
 ## Controls
 

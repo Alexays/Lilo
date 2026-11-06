@@ -5,7 +5,6 @@
 :root,
 .sidebar,
 .float-surface,
-.chrome-floating-surface,
 .chrome-content-overlay-root {
   /* Accent tints (most repeated color-mix patterns) */
   --accent-tint-8: color-mix(in srgb, var(--accent) 8%, transparent);

@@ -4,6 +4,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { portal } from "../../lib/actions/portal";
   import { tooltip } from "../../lib/tooltip";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
 
   interface Props {
     label: string;
@@ -68,6 +69,7 @@
   <div
     id={menuId}
     class="ui-more-menu float-surface float-popover"
+    out:popoverOut
     role="menu"
     tabindex="-1"
     aria-label={label}

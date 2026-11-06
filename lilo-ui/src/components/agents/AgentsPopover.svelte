@@ -10,6 +10,7 @@
   import { terminalActions } from "../../lib/bridge/actions";
   import type { BridgeConversationSummary } from "../../lib/bridge/protocol";
   import { t } from "../../lib/i18n/state.svelte";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
   import { openAskBar } from "../../stores/conversations.svelte";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
@@ -74,6 +75,7 @@
 <div
   bind:this={popover}
   class="popover float-surface float-popover"
+  out:popoverOut|global
   class:above={!position.below}
   role="dialog"
   tabindex="-1"
@@ -156,7 +158,6 @@
     position: fixed;
     z-index: var(--z-popover);
     padding: var(--space-8);
-    border-radius: var(--radius-lg);
     transform-origin: calc(100% - 12px) 0;
   }
 

@@ -4,6 +4,7 @@
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
   import { showProfileExtensions } from "../../stores/extensions.svelte";
   import { closeSettingsShell, openClearBrowsingData, openSettings } from "../../stores/panels.svelte";
   import { getActiveProfileId } from "../../stores/profiles.svelte";
@@ -116,6 +117,7 @@
       {#if menuOpen}
         <div
           class="profile-menu float-surface float-popover"
+          out:popoverOut
           role="menu"
           tabindex="-1"
           {@attach dismissable({ onDismiss: () => (menuOpen = false), ignore: ".more-btn" })}

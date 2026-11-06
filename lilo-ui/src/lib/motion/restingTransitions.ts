@@ -17,3 +17,8 @@ export function restingFly(
 ): TransitionConfig {
 	return { duration, easing, css: (_t, u) => `transform:translate(${u * x}px,${u * y}px);opacity:${1 - u}` };
 }
+
+// Every .float-popover's exit: the --motion-duration-fast fade, letting presses through as it goes.
+export function popoverOut(_node: Element): TransitionConfig {
+	return { duration: 120, css: (t) => `opacity:${t};pointer-events:none` };
+}

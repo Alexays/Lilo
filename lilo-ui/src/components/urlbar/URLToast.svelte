@@ -7,6 +7,7 @@
   import { tooltip } from "../../lib/tooltip";
   import { t } from "../../lib/i18n/state.svelte";
   import type { ToastVariant } from "../../lib/urlVisual";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
 
   interface Props {
     toastVisible: boolean;
@@ -179,6 +180,7 @@
       {#if screenshotMenuOpen}
         <div
           class="screenshot-menu screenshot-menu-portal float-surface float-popover"
+          out:popoverOut
           role="menu"
           style="top:{menuTop}px;right:{menuRight}px"
           use:portal
