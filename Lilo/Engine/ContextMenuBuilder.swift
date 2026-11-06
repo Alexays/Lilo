@@ -24,6 +24,7 @@ final class ContextMenuBuilder: NSObject {
     private let onOpenInNewWindow: (URL) -> Void
     private let onTogglePiP: () -> Void
     private let onBookmark: () -> Void
+    private let onHideElement: () -> Void
     private let onDownload: (URL) -> Void
     private let onSearchWeb: () -> Void
 
@@ -34,6 +35,7 @@ final class ContextMenuBuilder: NSObject {
         onOpenInNewWindow: @escaping (URL) -> Void,
         onTogglePiP: @escaping () -> Void,
         onBookmark: @escaping () -> Void,
+        onHideElement: @escaping () -> Void,
         onDownload: @escaping (URL) -> Void,
         onSearchWeb: @escaping () -> Void
     ) {
@@ -43,6 +45,7 @@ final class ContextMenuBuilder: NSObject {
         self.onOpenInNewWindow = onOpenInNewWindow
         self.onTogglePiP = onTogglePiP
         self.onBookmark = onBookmark
+        self.onHideElement = onHideElement
         self.onDownload = onDownload
         self.onSearchWeb = onSearchWeb
         super.init()
@@ -71,7 +74,7 @@ final class ContextMenuBuilder: NSObject {
     /// `element` is the clicked `_WKContextMenuElementInfo`, whose hit test tells a text field or the selection.
     func build(
         _ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, element: NSObject? = nil,
-        offersNewWindow: Bool = true, searchEngineName: String? = nil
+        offersNewWindow: Bool = true, offersHideElement: Bool = false, searchEngineName: String? = nil
     ) {
         // WebKit's "Search with Google" hands the selection to the system's search service, which opens the default browser.
         if let searchEngineName, let item = menu.items.first(where: { $0.identifier?.rawValue.localizedCaseInsensitiveContains("SearchWeb") ?? false }) {
@@ -113,8 +116,18 @@ final class ContextMenuBuilder: NSObject {
             }
         }
 
+        // Last in every menu but a text field's: ads are often links and images.
+        func addHideElement() {
+            guard offersHideElement, !isTextTarget, ["http", "https"].contains(webView.url?.scheme) else { return }
+            menu.addItem(.separator())
+            menu.addItem(makeMenuItem("Hide Element…", icon: .hideElement, action: #selector(contextMenuHideElement)))
+        }
+
         // As Chrome, the page's own items stay out of a link, media, selection or text field menu: a stray Back loses typed text.
-        guard linkURL == nil, imageURL == nil, !isTextTarget else { return menu.showItemImages() }
+        guard linkURL == nil, imageURL == nil, !isTextTarget else {
+            addHideElement()
+            return menu.showItemImages()
+        }
         menu.addItem(.separator())
         menu.addItem(makeMenuItem("Back", icon: .back, action: #selector(contextMenuBack), isEnabled: webView.canGoBack))
         menu.addItem(makeMenuItem("Forward", icon: .forward, action: #selector(contextMenuForward), isEnabled: webView.canGoForward))
@@ -130,6 +143,7 @@ final class ContextMenuBuilder: NSObject {
 
         menu.addItem(.separator())
         menu.addItem(makeMenuItem("Picture in Picture", icon: .pictureInPicture, action: #selector(contextMenuTogglePiP)))
+        addHideElement()
         // Inspect Element is left to WebKit's own default item.
         menu.showItemImages()
     }
@@ -227,4 +241,5 @@ final class ContextMenuBuilder: NSObject {
 
     @objc private func contextMenuTogglePiP() { onTogglePiP() }
     @objc private func contextMenuBookmark() { onBookmark() }
+    @objc private func contextMenuHideElement() { onHideElement() }
 }

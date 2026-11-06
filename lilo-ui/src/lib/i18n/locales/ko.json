@@ -160,6 +160,7 @@
 			"tools": "개발자 도구",
 			"permissions": "권한",
 			"zoom": "확대/축소",
+			"hiddenElements": "숨긴 요소",
 			"siteData": "데이터",
 			"sites": "사이트({count})",
 			"updates": "업데이트",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "확대/축소 {zoom}",
+			"hiddenSummary": {"one": "숨긴 요소 {count}개", "other": "숨긴 요소 {count}개"},
 			"dataSummary": "저장된 데이터",
 			"permissionUpdated": "{origin} · 업데이트: {time}",
 			"emptyTitle": "아직 사이트 설정 없음",
@@ -2081,6 +2083,8 @@
 		"Split View": "분할 보기",
 		"Separate Split View": "분할 보기 분리",
 		"Open in Split View": "분할 보기에서 열기",
+		"Hide Element…": "요소 가리기…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "이 사이트에서 가릴 요소를 클릭하세요. 취소하려면 Esc 키를 누르세요.",
 		"Picture in Picture": "화면 속 화면",
 		"Develop": "개발자용",
 		"Show Web Inspector": "웹 속성 보기",
@@ -2495,6 +2499,7 @@
 		"zoom": "확대/축소",
 		"zoomIn": "확대",
 		"zoomOut": "축소",
+		"showHiddenElements": "다시 표시",
 		"zoomReset": "확대/축소 재설정"
 	},
 	"ink": {

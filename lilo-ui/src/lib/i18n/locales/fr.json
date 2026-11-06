@@ -160,6 +160,7 @@
 			"tools": "Outils de développement",
 			"permissions": "Permissions",
 			"zoom": "Zoom",
+			"hiddenElements": "Éléments masqués",
 			"siteData": "Données",
 			"sites": "Sites ({count})",
 			"updates": "Mises à jour",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type} : {decision}",
 			"zoomSummary": "Zoom {zoom}",
+			"hiddenSummary": {"one": "{count} élément masqué", "other": "{count} éléments masqués"},
 			"dataSummary": "Données stockées",
 			"permissionUpdated": "{origin} · Modifié le {time}",
 			"emptyTitle": "Aucun réglage de site pour l'instant",
@@ -2081,6 +2083,8 @@
 		"Split View": "Vue partagée",
 		"Separate Split View": "Séparer la vue partagée",
 		"Open in Split View": "Ouvrir en vue partagée",
+		"Hide Element…": "Masquer l'élément…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "Cliquez sur un élément pour le masquer sur ce site. Appuyez sur Échap pour annuler.",
 		"Picture in Picture": "Image dans l'image",
 		"Develop": "Développement",
 		"Show Web Inspector": "Afficher l'inspecteur web",
@@ -2484,6 +2488,7 @@
 		"zoom": "Zoom",
 		"zoomIn": "Agrandir",
 		"zoomOut": "Réduire",
+		"showHiddenElements": "Réafficher",
 		"zoomReset": "Réinitialiser le zoom"
 	},
 	"ink": {

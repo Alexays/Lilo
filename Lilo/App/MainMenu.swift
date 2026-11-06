@@ -125,6 +125,7 @@ extension AppDelegate {
         viewMenu.add("Show Reader".localized, #selector(MainWindowController.toggleReader(_:)), icon: .reader, shortcut: "page.reader")
         viewMenu.add("Translate Page".localized, #selector(MainWindowController.translatePage(_:)), icon: .translate, shortcut: "page.translate")
         viewMenu.add("Picture in Picture".localized, #selector(MainWindowController.togglePictureInPicture(_:)), icon: .pictureInPicture, shortcut: "page.pictureInPicture")
+        viewMenu.add("Hide Element…".localized, #selector(MainWindowController.hideElement(_:)), icon: .hideElement, shortcut: "page.hideElement")
         viewMenu.addItem(.separator())
         viewMenu.add("Show Changes".localized, #selector(MainWindowController.showChanges(_:)), icon: .showChanges, shortcut: "terminal.showChanges")
 

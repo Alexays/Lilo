@@ -9,9 +9,14 @@
   // is optional on the site, as in its rule. Main frame only, so the page is the top document.
   // A hostless document (about:blank, file:) must not match the empty list's "||".
   var ALLOWLIST = __LILO_ALLOWLIST__;
+  // The elements the user hid, as JSON selectors by host without `www.`: they apply on an allowlisted site too.
+  var HIDDEN = __LILO_HIDDEN__;
   var host = location.host;
-  if (host && (ALLOWLIST.indexOf('|' + host + '|') >= 0 ||
-      ALLOWLIST.indexOf('|' + host.replace(/^www\./, '') + '|') >= 0)) return;
+  var allowlisted = host && (ALLOWLIST.indexOf('|' + host + '|') >= 0 ||
+      ALLOWLIST.indexOf('|' + host.replace(/^www\./, '') + '|') >= 0);
+  var hiddenHost = location.hostname.replace(/^www\./, '');
+  var hidden = hiddenHost && HIDDEN.indexOf('"' + hiddenHost + '"') >= 0 ? JSON.parse(HIDDEN)[hiddenHost] : null;
+  if (allowlisted && !hidden) return;
 
   // Table entries spell `\`, `"`, line breaks and other special characters with Latin-1 marks
   // (see WKEngineFactory.hostTable), so the multi-MB literal stays on JSC's fast lexing path.
@@ -59,6 +64,8 @@
   // Leaving the page took its sheets away: back from the back/forward cache, every rule posted goes again.
   var posted = '';
   if (userSheets) self.addEventListener('pageshow', function (event) { if (event.persisted && posted) userSheets.postMessage(posted); });
+  if (hidden) pending.push.apply(pending, hidden);
+  if (allowlisted) { flush(); return; }
 
   // Same host probe as Scriptlets.js. An entry is a selector to hide, "@selector" for one excepted on
   // the site, or "@@" when generic cosmetics are off there.

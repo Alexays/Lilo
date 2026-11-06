@@ -160,6 +160,7 @@
 			"tools": "Инструменты разработчика",
 			"permissions": "Разрешения",
 			"zoom": "Масштаб",
+			"hiddenElements": "Скрытые элементы",
 			"siteData": "Данные",
 			"sites": "Сайты ({count})",
 			"updates": "Обновления",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Масштаб {zoom}",
+			"hiddenSummary": {"one": "{count} скрытый элемент", "few": "{count} скрытых элемента", "many": "{count} скрытых элементов", "other": "{count} скрытого элемента"},
 			"dataSummary": "Сохранённые данные",
 			"permissionUpdated": "{origin} · Обновлено {time}",
 			"emptyTitle": "Настроек сайтов пока нет",
@@ -2125,6 +2127,8 @@
 		"Split View": "Разделённый вид",
 		"Separate Split View": "Разделить на вкладки",
 		"Open in Split View": "Открыть в разделённом виде",
+		"Hide Element…": "Скрыть элемент…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "Нажмите на элемент, чтобы скрыть его на этом сайте. Нажмите Esc для отмены.",
 		"Picture in Picture": "Картинка в картинке",
 		"Develop": "Разработка",
 		"Show Web Inspector": "Показать веб-инспектор",
@@ -2541,6 +2545,7 @@
 		"zoom": "Масштаб",
 		"zoomIn": "Увеличить",
 		"zoomOut": "Уменьшить",
+		"showHiddenElements": "Показать снова",
 		"zoomReset": "Сбросить масштаб"
 	},
 	"ink": {

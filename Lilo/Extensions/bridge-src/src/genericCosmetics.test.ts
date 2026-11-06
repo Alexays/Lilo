@@ -52,7 +52,8 @@ function run(
 	allowlist: string[] = [],
 	host = "www.example.com",
 	sites: Record<string, string[]> = {},
-	posted: string[] | null = null
+	posted: string[] | null = null,
+	hidden: Record<string, string[]> = {}
 ): Harness {
 	// The constructed sheets the script adopts.
 	const styles: FakeSheet[] = [];
@@ -107,6 +108,7 @@ function run(
 		.replace("__LILO_COSMETIC_CLASSES__", JSON.stringify(tokenBuckets(table.classes ?? [])))
 		.replace("__LILO_COSMETIC_IDS__", JSON.stringify(tokenBuckets(table.ids ?? [])))
 		.replace("__LILO_ALLOWLIST__", JSON.stringify(`|${allowlist.join("|")}|`))
+		.replace("__LILO_HIDDEN__", JSON.stringify(JSON.stringify(hidden)))
 		.replace("__LILO_SITE_INDEX__", JSON.stringify(site.index))
 		.replace("__LILO_SITE_GROUPS__", JSON.stringify(site.groups))
 		.replace("__LILO_SITE_TABLE__", JSON.stringify(site.entries))
@@ -276,6 +278,18 @@ describe("generic cosmetics", () => {
 			await h.flushed();
 			assert.equal(h.styles.length, 0);
 		}
+	});
+
+	test("the elements the user hid apply at once on their host, www or not, allowlisted too", () => {
+		const hidden = { "example.com": ["body > .promo", "#banner"], "other.com": [".other"] };
+		for (const allowlist of [[], ["example.com"]]) {
+			const h = run({ classes: ["ad-banner"] }, [el("", ["ad-banner"])], null, allowlist, "www.example.com", {}, null, hidden);
+			assert.ok(h.css().includes("body > .promo{display:none!important}"));
+			assert.ok(h.css().includes("#banner{display:none!important}"));
+			assert.ok(!h.css().includes(".other"));
+		}
+		const elsewhere = run({}, [], null, [], "sub.example.com", {}, null, hidden);
+		assert.equal(elsewhere.styles.length, 0, "a subdomain has its own hidden elements");
 	});
 
 	test("a hostless document is not taken for an allowlisted site", async () => {

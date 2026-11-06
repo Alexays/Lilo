@@ -653,6 +653,7 @@ extension MainWindowController: NSUserInterfaceValidations {
         if action == #selector(shareCurrentPage(_:)) || action == #selector(showQRCode(_:)) { return shareableURL() != nil }
         if action == #selector(savePageAs(_:)) { return focusedEngineTab?.wkWebView.url != nil }
         if action == #selector(translatePage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
+        if action == #selector(hideElement(_:)) { return hidesElements && ["http", "https"].contains(focusedEngineTab?.currentURL?.scheme) }
         if action == #selector(newSplitView(_:)) {
             return tabManager.activeTab != nil && (tabManager.activeSplit?.layout.paneIds.count ?? 0) < SplitLayout.maxPanes
         }

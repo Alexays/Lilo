@@ -132,15 +132,17 @@ test("folds permissions, data, and zoom into one row per site", () => {
       { host: "www.google.com", zoom: 1.25 },
       { host: "notion.so", zoom: 0.9 },
     ],
+    { "news.google.com": [".promo", "#banner"], "example.org": ["aside"] },
   );
 
   assert.deepEqual(
-    sites.map((site) => [site.key, site.permissions.length, site.dataName, site.zoomLevels.length]),
+    sites.map((site) => [site.key, site.permissions.length, site.dataName, site.zoomLevels.length, site.hiddenElements.length]),
     [
-      ["google.com", 1, "google.com", 1],
-      ["notgoogle.com", 1, null, 0],
-      ["notion.so", 0, null, 1],
-      ["zoom.us", 1, null, 0],
+      ["example.org", 0, null, 0, 1],
+      ["google.com", 1, "google.com", 1, 2],
+      ["notgoogle.com", 1, null, 0, 0],
+      ["notion.so", 0, null, 1, 0],
+      ["zoom.us", 1, null, 0, 0],
     ],
   );
 });

@@ -22,6 +22,7 @@
         }),
       ),
       ...site.zoomLevels.map((level) => t("settings.sites.zoomSummary", { zoom: percent.format(level.zoom) })),
+      ...(site.hiddenElements.length > 0 ? [t("settings.sites.hiddenSummary", { count: site.hiddenElements.length })] : []),
       ...(site.dataName ? [t("settings.sites.dataSummary")] : []),
     ].join(" · "),
   );

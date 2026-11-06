@@ -160,6 +160,7 @@
 			"tools": "開發者工具",
 			"permissions": "權限",
 			"zoom": "縮放",
+			"hiddenElements": "已隱藏的元素",
 			"siteData": "資料",
 			"sites": "網站（{count}）",
 			"updates": "更新",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}：{decision}",
 			"zoomSummary": "縮放 {zoom}",
+			"hiddenSummary": {"one": "已隱藏 {count} 個元素", "other": "已隱藏 {count} 個元素"},
 			"dataSummary": "儲存的資料",
 			"permissionUpdated": "{origin} · 更新於 {time}",
 			"emptyTitle": "尚無網站設定",
@@ -2081,6 +2083,8 @@
 		"Split View": "分割顯示",
 		"Separate Split View": "分開分割顯示",
 		"Open in Split View": "以分割顯示開啟",
+		"Hide Element…": "隱藏元素…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "按一下要在此網站上隱藏的元素。按 Esc 鍵取消。",
 		"Picture in Picture": "子母畫面",
 		"Develop": "開發",
 		"Show Web Inspector": "顯示網頁檢閱器",
@@ -2495,6 +2499,7 @@
 		"zoom": "縮放",
 		"zoomIn": "放大",
 		"zoomOut": "縮小",
+		"showHiddenElements": "重新顯示",
 		"zoomReset": "重設縮放比例"
 	},
 	"ink": {

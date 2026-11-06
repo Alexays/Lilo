@@ -251,6 +251,25 @@ final class SettingsStore {
         }
     }
 
+    static let hiddenElementsKey = "hiddenElements"
+
+    /// The elements the user hid, as selectors by host without `www.`. A selector holding a brace could close its rule and add
+    /// another, so none is kept.
+    var hiddenElements: [String: [String]] {
+        get {
+            guard let data = get(Self.hiddenElementsKey)?.data(using: .utf8),
+                  let table = try? JSONDecoder().decode([String: [String]].self, from: data) else { return [:] }
+            return table.compactMapValues { selectors in
+                let kept = selectors.filter { !$0.isEmpty && !$0.contains("{") && !$0.contains("}") }
+                return kept.isEmpty ? nil : kept
+            }
+        }
+        set {
+            let data = (try? JSONSerialization.data(withJSONObject: newValue, options: .sortedKeys)) ?? Data("{}".utf8)
+            set(Self.hiddenElementsKey, value: String(data: data, encoding: .utf8) ?? "{}")
+        }
+    }
+
     /// Domains whose requests are never blocked, whatever the page: the user's comma or space
     /// separated list, with entries that are not plain hostnames dropped.
     var blockerAllowlist: BlockerAllowlist {

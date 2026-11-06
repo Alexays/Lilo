@@ -160,6 +160,7 @@
 			"tools": "開発ツール",
 			"permissions": "アクセス権",
 			"zoom": "ズーム",
+			"hiddenElements": "非表示にした要素",
 			"siteData": "データ",
 			"sites": "サイト（{count}）",
 			"updates": "アップデート",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}：{decision}",
 			"zoomSummary": "ズーム {zoom}",
+			"hiddenSummary": {"one": "{count}個の非表示要素", "other": "{count}個の非表示要素"},
 			"dataSummary": "保存データ",
 			"permissionUpdated": "{origin} · 更新：{time}",
 			"emptyTitle": "サイトの設定はまだありません",
@@ -2081,6 +2083,8 @@
 		"Split View": "分割表示",
 		"Separate Split View": "分割表示を解除",
 		"Open in Split View": "分割表示で開く",
+		"Hide Element…": "要素を非表示…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "このサイトで非表示にする要素をクリックしてください。キャンセルするにはEscキーを押します。",
 		"Picture in Picture": "ピクチャ・イン・ピクチャ",
 		"Develop": "開発",
 		"Show Web Inspector": "Web インスペクタを表示",
@@ -2495,6 +2499,7 @@
 		"zoom": "ズーム",
 		"zoomIn": "拡大",
 		"zoomOut": "縮小",
+		"showHiddenElements": "再表示",
 		"zoomReset": "ズームをリセット"
 	},
 	"ink": {

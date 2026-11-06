@@ -160,6 +160,7 @@
 			"tools": "Інструменти розробника",
 			"permissions": "Дозволи",
 			"zoom": "Масштаб",
+			"hiddenElements": "Приховані елементи",
 			"siteData": "Дані",
 			"sites": "Сайти ({count})",
 			"updates": "Оновлення",
@@ -202,6 +203,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Масштаб {zoom}",
+			"hiddenSummary": {"one": "{count} прихований елемент", "few": "{count} приховані елементи", "many": "{count} прихованих елементів", "other": "{count} прихованого елемента"},
 			"dataSummary": "Збережені дані",
 			"permissionUpdated": "{origin} · Оновлено {time}",
 			"emptyTitle": "Параметрів сайтів ще немає",
@@ -2125,6 +2127,8 @@
 		"Split View": "Розділений перегляд",
 		"Separate Split View": "Відокремити вкладки",
 		"Open in Split View": "Відкрити в розділеному перегляді",
+		"Hide Element…": "Приховати елемент…",
+		"Click an element to hide it on this site. Press Esc to cancel.": "Натисніть на елемент, щоб приховати його на цьому сайті. Натисніть Esc, щоб скасувати.",
 		"Picture in Picture": "Кадр у кадрі",
 		"Develop": "Розробка",
 		"Show Web Inspector": "Показати Вебінспектор",
@@ -2541,6 +2545,7 @@
 		"zoom": "Масштаб",
 		"zoomIn": "Збільшити",
 		"zoomOut": "Зменшити",
+		"showHiddenElements": "Показати знову",
 		"zoomReset": "Скинути масштаб"
 	},
 	"ink": {

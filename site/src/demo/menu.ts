@@ -320,6 +320,7 @@ export const demoMenus: DemoMenuItem[] = [
     mac("Show Reader", "page.reader"),
     mac("Translate Page", "page.translate"),
     mac("Picture in Picture", "page.pictureInPicture"),
+    mac("Hide Element…", "page.hideElement"),
     separator,
     mac("Show Changes", "terminal.showChanges", "⌃⌘G"),
   ]),

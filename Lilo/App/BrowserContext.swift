@@ -363,6 +363,7 @@ final class BrowserContext {
     /// was compiled and the list service never started then).
     func startContentBlocker() async {
         guard let settingsStore else { return }
+        engineFactory.setHiddenElements(settingsStore.hiddenElements)
         let enabled = settingsStore.contentBlockerEnabled
         // With a usable FilterListService cache the bundled list would be compiled only to be
         // replaced moments later by the cached external rules; the bundled compile is the
@@ -395,6 +396,18 @@ final class BrowserContext {
         if enabled, filterListService == nil {
             Task { await startContentBlocker() }
         }
+    }
+
+    /// Keeps `selector` hidden on `host`'s pages from their next load, and tells every window's settings.
+    func hideElement(_ selector: String, onHost host: String) {
+        guard let settingsStore else { return }
+        var elements = settingsStore.hiddenElements
+        guard elements[host]?.contains(selector) != true else { return }
+        elements[host, default: []].append(selector)
+        settingsStore.hiddenElements = elements
+        engineFactory.setHiddenElements(settingsStore.hiddenElements)
+        let data: [String: Any] = ["settings": settingsStore.allSettings()]
+        windows.windows.forEach { $0.bridgeRouter.send(event: "settingsLoaded", data: data) }
     }
 
     /// The content blocker's built-in extension, while the blocker runs and once written.

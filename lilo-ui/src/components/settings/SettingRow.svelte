@@ -26,6 +26,7 @@
     getAppIcons,
     getDefaultBrowserStatus,
     getDeviceSetup,
+    getHiddenElements,
     getSetting,
     getSitePermissions,
     getUpdaterStatus,
@@ -108,7 +109,7 @@
   const updater = $derived(getUpdaterStatus());
   const updateCheck = $derived(getExtensionUpdateCheck());
   const blockerSites = $derived(id === "blockerSites" ? parseBlockerSites(getSetting("contentBlockerAllowlist", "")) : []);
-  const siteCount = $derived(id === "sites" ? buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()).length : 0);
+  const siteCount = $derived(id === "sites" ? buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels(), getHiddenElements()).length : 0);
   const alwaysAllowed = $derived(id === "agentAlwaysAllowed" ? parseBlockerSites(getSetting("agentAlwaysAllowedSites", "")) : []);
   const count = $derived(
     id === "sites"

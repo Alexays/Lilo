@@ -92,6 +92,10 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL)
         /// The user asked to bookmark the current page (page context menu / Cmd+D).
         func tabRequestsBookmark(_ tab: WKWebViewTab)
+        /// The content blocker runs, so the page's context menu offers Hide Element.
+        var hidesElements: Bool { get }
+        /// The user asked to pick an element of the page to hide (page context menu).
+        func tabRequestsHideElement(_ tab: WKWebViewTab)
         /// A non-web scheme (mailto:, tel:, slack:, ...) wants to open in an external app, pending user confirmation.
         /// `origin` is the permission origin of the frame that asked, nil when it has none; `userInitiated` when a gesture or Lilo started it.
         func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?, userInitiated: Bool)
@@ -245,6 +249,7 @@ final class WKWebViewTab: NSObject {
         onOpenInNewWindow: { [weak self] url in if let self { delegate?.tab(self, openLinkInNewWindow: url) } },
         onTogglePiP: { [weak self] in self?.togglePictureInPicture() },
         onBookmark: { [weak self] in if let self { delegate?.tabRequestsBookmark(self) } },
+        onHideElement: { [weak self] in if let self { delegate?.tabRequestsHideElement(self) } },
         onDownload: { [weak self] url in self?.startContextMenuDownload(from: url) },
         onSearchWeb: { [weak self] in
             Task { @MainActor [weak self] in
@@ -1066,6 +1071,7 @@ final class WKWebViewTab: NSObject {
         let wasUnresponsive = isUnresponsive
         isUnresponsive = false
         cancelRegionSelection()
+        cancelElementPicker()
         // A suspended page is neither loading nor playing (freeze paused its media).
         if !isFrozen {
             webView.stopLoading()
@@ -1696,6 +1702,8 @@ extension WKWebViewTab.Delegate {
     func tabDidWake(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {}
     func tabRequestsBookmark(_ tab: WKWebViewTab) {}
+    var hidesElements: Bool { false }
+    func tabRequestsHideElement(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?, userInitiated: Bool) {}
     func tab(_ tab: WKWebViewTab, offersIcons icons: [WKWebViewTab.LinkIcon]) { icons.forEach { $0.decide(nil) } }
     func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool { false }
@@ -1930,8 +1938,9 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.showsFailureOverPage = false
             tab.preconnectLearnedOrigins()
             tab.delegate?.tab(tab, didNavigate: .started(tab.currentURL))
-            // A pending region selection is a selection of the outgoing page.
+            // A pending region selection or element pick is one of the outgoing page.
             tab.cancelRegionSelection()
+            tab.cancelElementPicker()
         }
     }
 
@@ -2436,7 +2445,7 @@ extension WKWebViewTab: WKUIDelegate {
             let linkURL = unsafe ContextMenuBuilder.linkURL(from: element)
             contextMenuTarget = unsafe (ContextMenuBuilder.frameInfo(from: element), linkURL)
             unsafe adoptExtensionContextMenuItems?(menu)
-            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
+            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, offersNewWindow: !(delegate?.prefersSingleWindow ?? false), offersHideElement: delegate?.hidesElements ?? false, searchEngineName: delegate?.searchEngineName)
             unsafe completionHandler(menu)
         }
     }

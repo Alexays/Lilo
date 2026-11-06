@@ -12,6 +12,7 @@ final class ContextMenuBuilderTests: XCTestCase {
             onOpenInNewWindow: { _ in },
             onTogglePiP: {},
             onBookmark: {},
+            onHideElement: {},
             onDownload: onDownload,
             onSearchWeb: onSearchWeb
         )

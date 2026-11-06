@@ -5,7 +5,7 @@
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { sitePermissionRows } from "../../lib/sitePermissions";
   import { openSettings, setSettingsQuery } from "../../stores/panels.svelte";
-  import { getSitePermissions, getZoomLevels } from "../../stores/settings.svelte";
+  import { getHiddenElements, getSitePermissions, getZoomLevels, setHiddenElements } from "../../stores/settings.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { getPageZoom, setSiteDrawerOpen } from "../../stores/urlBarDrawer.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
@@ -46,6 +46,10 @@
   const zoom = $derived(getPageZoom(storedZoom));
   const zoomed = $derived(Math.abs(zoom - 1) > 0.001);
   const percent = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "percent" }));
+
+  // Kept by host without "www.", as the generic cosmetics script reads them.
+  const hiddenHost = $derived(host.toLowerCase().replace(/^www\./, ""));
+  const hiddenCount = $derived(getHiddenElements()[hiddenHost]?.length ?? 0);
 </script>
 
 <div class="site-head">
@@ -79,7 +83,7 @@
   </dl>
 {/if}
 
-{#if permissionRows.length > 0 || zoomed}
+{#if permissionRows.length > 0 || zoomed || hiddenCount > 0}
   <div class="section-title">{t("sitePermissions.manage")}</div>
   <div class="box">
     {#each permissionRows as row (row.type)}
@@ -123,6 +127,25 @@
           </button>
           <button type="button" aria-label={t("siteDrawer.zoomIn")} onclick={() => tabActions.zoomIn()}>+</button>
         </div>
+      </div>
+    {/if}
+    {#if hiddenCount > 0}
+      <div class="box-row">
+        <span class="row-icon"><URLDrawerIcon name="hidden" /></span>
+        <div class="row-text">
+          <div class="row-label">{t("settings.groups.hiddenElements")}</div>
+          <div class="row-detail">{t("settings.sites.hiddenSummary", { count: hiddenCount })}</div>
+        </div>
+        <button
+          type="button"
+          class="box-button"
+          onclick={() => {
+            setHiddenElements(hiddenHost, []);
+            tabActions.reload();
+          }}
+        >
+          {t("siteDrawer.showHiddenElements")}
+        </button>
       </div>
     {/if}
   </div>
