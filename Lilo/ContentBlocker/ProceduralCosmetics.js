@@ -377,27 +377,30 @@
       if (roots.length) run({ roots: roots, ancestors: ancestors });
     };
     var runAll = function () { added = []; run(null); };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runAll);
-    else runAll();
+    var onMutations = function (records) {
+      // The full pass on return covers whatever changes meanwhile.
+      if (document.hidden) { missedWhileHidden = true; added = []; return; }
+      for (var r = 0; r < records.length; r++) {
+        var nodes = records[r].addedNodes;
+        for (var k = 0; k < nodes.length; k++) {
+          // Text lands in its parent, whose own text changed.
+          var el = nodes[k].nodeType === 1 ? nodes[k] : records[r].target;
+          if (el && el.nodeType === 1) added.push(el);
+        }
+      }
+      if (!added.length || scheduled) return;
+      scheduled = true;
+      setTimeout(runAdded, 200);
+    };
+    // The parser's insertions are left to the full pass once the document is parsed: observed, each costs a record.
+    var start = function () {
+      runAll();
+      try { new MutationObserver(onMutations).observe(document.documentElement || document, { childList: true, subtree: true }); } catch (e) {}
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden && missedWhileHidden) { missedWhileHidden = false; runAll(); }
     });
-    try {
-      new MutationObserver(function (records) {
-        // The full pass on return covers whatever changes meanwhile.
-        if (document.hidden) { missedWhileHidden = true; added = []; return; }
-        for (var r = 0; r < records.length; r++) {
-          var nodes = records[r].addedNodes;
-          for (var k = 0; k < nodes.length; k++) {
-            // Text lands in its parent, whose own text changed.
-            var el = nodes[k].nodeType === 1 ? nodes[k] : records[r].target;
-            if (el && el.nodeType === 1) added.push(el);
-          }
-        }
-        if (!added.length || scheduled) return;
-        scheduled = true;
-        setTimeout(runAdded, 200);
-      }).observe(document.documentElement || document, { childList: true, subtree: true });
-    } catch (e) {}
   }
 })();
