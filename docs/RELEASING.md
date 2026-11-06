@@ -90,7 +90,7 @@ Pushing a `v*` tag triggers `.github/workflows/release.yml`.
 
 The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub-hosted `xcode-27` image (macOS 27, Xcode 27; `macos-26` has no Xcode 27):
 
-1. Checks the tag is a prepared release: its `.changes/vX.Y.Z.md` exists, `MARKETING_VERSION` matches it, and `make release-status` passes.
+1. Checks the tag is a prepared release: its `.changes/vX.Y.Z.md` exists, `MARKETING_VERSION` matches it, `make release-status` passes, and `main` already has the tagged commit.
 2. Restores the UI build CI cached for the same sources, or builds it with `npm ci --ignore-scripts`, before any secret is in reach. The extension bridge bundles are committed and checked against `bridge-src` by CI. The checkout keeps no token.
 3. Dates every file by its content and restores the Release build of the last `main` push (CI's `release-build` job builds the same thing on every push and caches it from `main`), so only what changed since compiles: a version bump alone compiles nothing.
 4. Imports the Developer ID certificate into a temporary keychain.

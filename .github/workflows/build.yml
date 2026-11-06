@@ -51,7 +51,7 @@ jobs:
           node-version-file: 'site/.nvmrc'
           cache: 'npm'
           cache-dependency-path: site/package-lock.json
-      - run: make release-status release-test site-check site-test site-deploy-check
+      - run: make release-status release-test perf-summary-test site-check site-test site-deploy-check
 
   ui:
     name: UI (lint, test, build)
