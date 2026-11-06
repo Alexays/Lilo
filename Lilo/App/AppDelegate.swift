@@ -248,17 +248,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !commands.isEmpty {
             let named = commands.filter { !$0.isEmpty }
             var list = named.prefix(3).joined(separator: ", ")
-            if named.count > 3 { unsafe list += String(format: " and %d more".localized, named.count - 3) }
-            let count = unsafe commands.count == 1
-                ? "A terminal is still running a command".localized
-                : String(format: "%d terminals are still running a command".localized, commands.count)
-            let stopped = commands.count == 1 ? "It will be stopped.".localized : "They will be stopped.".localized
-            lines.append((list.isEmpty ? count : "\(count) (\(list))") + ". " + stopped)
+            if named.count > 3 { unsafe list = String(format: "%@ and %d more".localized(count: named.count - 3), list, named.count - 3) }
+            unsafe lines.append(list.isEmpty
+                ? String(format: "%d terminals are still running a command. They will be stopped.".localized(count: commands.count), commands.count)
+                : String(format: "%d terminals are still running a command (%@). They will be stopped.".localized(count: commands.count), commands.count, list))
         }
         if downloads > 0 {
-            unsafe lines.append(downloads == 1
-                ? "A download is in progress and will be paused until Lilo opens again.".localized
-                : String(format: "%d downloads are in progress and will be paused until Lilo opens again.".localized, downloads))
+            unsafe lines.append(String(format: "%d downloads are in progress and will be paused until Lilo opens again.".localized(count: downloads), downloads))
         }
         alert.informativeText = lines.joined(separator: "\n")
         alert.addButton(withTitle: "Quit".localized)

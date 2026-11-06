@@ -388,7 +388,7 @@ extension MainWindowController {
         let alert = NSAlert()
         alert.messageText = unsafe tabs == 0
             ? String(format: "Delete %@?".localized, folder.name)
-            : String(format: "Delete %@ and %@?".localized, folder.name, tabs == 1 ? "1 tab".localized : String(format: "%d tabs".localized, tabs))
+            : String(format: "Delete %@ and its %d tabs?".localized(count: tabs), folder.name, tabs)
         alert.informativeText = folder.isSplit
             ? "Its tabs stay in the sidebar.".localized
             : "This cannot be undone.".localized
@@ -623,7 +623,7 @@ extension MainWindowController {
         let busy = closing.filter { $0.kind == .terminal && tabManager.terminalHost.isBusy($0.id) }.map(\.id)
         guard !busy.isEmpty, let window else { return closeAll() }
         let alert = NSAlert()
-        alert.messageText = unsafe String(format: "Close %d terminals?".localized, busy.count)
+        alert.messageText = unsafe String(format: "Close %d terminals?".localized(count: busy.count), busy.count)
         let commands = busy.compactMap(tabManager.terminalHost.runningCommand)
         alert.informativeText = unsafe commands.count == busy.count
             ? String(format: "These commands will be stopped: %@.".localized, commands.joined(separator: ", "))
