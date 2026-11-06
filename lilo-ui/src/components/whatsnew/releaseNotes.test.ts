@@ -86,3 +86,16 @@ test("authored highlights resolve to translated copy in every shipped catalog", 
 		}
 	}
 });
+
+test("a highlight's media resolves from its id and art stays optional", () => {
+	const entry = { headlineKey: "h", descriptionKey: "d", highlights: [{ id: "tabs", media: "loop", titleKey: "t", descriptionKey: "b" }, { titleKey: "t", descriptionKey: "b" }] };
+	assert.deepEqual(releaseHighlightsForVersion({ "1.2.0": entry }, "1.2.0")?.highlights, [
+		{ media: { kind: "loop", poster: "/release-media/1.2.0/tabs.png", video: "/release-media/1.2.0/tabs.mp4" }, titleKey: "t", descriptionKey: "b" },
+		{ titleKey: "t", descriptionKey: "b" },
+	]);
+});
+
+test("a highlight whose media cannot be located is skipped", () => {
+	const entry = { headlineKey: "h", descriptionKey: "d", highlights: [{ media: "loop", titleKey: "t", descriptionKey: "b" }, { id: "tabs", media: "gif", titleKey: "t", descriptionKey: "b" }] };
+	assert.equal(releaseHighlightsForVersion({ "1.2.0": entry }, "1.2.0"), null);
+});

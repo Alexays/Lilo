@@ -195,6 +195,21 @@ class SiteTests(unittest.TestCase):
                 demo_link = next(node for node in nodes(highlights[0]) if node.tag == "a")
                 self.assertEqual(demo_link.attrs["href"], ("/fr/" if language == "fr" else "/") + "#browser-demo")
 
+    def test_highlight_media_plays_on_request_and_ships_its_files(self):
+        for language, page in [("en", "changelog/index.html"), ("fr", "fr/changelog/index.html")]:
+            with self.subTest(language=language):
+                parsed = tree(DIST / page)
+                highlight = next(node for node in parsed if node.attrs.get("id") == "v0.8.0-tab-share")
+                content = list(nodes(highlight))
+                video = next(node for node in content if node.tag == "video")
+                source = next(node for node in content if node.tag == "source")
+                self.assertEqual(video.attrs["aria-label"], inline_text(next(node for node in content if node.tag == "h4")))
+                self.assertIn("controls", video.attrs)
+                self.assertNotIn("autoplay", video.attrs)
+                self.assertEqual(video.attrs["preload"], "none")
+                for asset in [video.attrs["poster"], source.attrs["src"]]:
+                    self.assertTrue((DIST / asset.lstrip("/")).is_file())
+
     def test_release_recording_has_local_animation_controls_and_a_contextual_action(self):
         for page in ["changelog/index.html", "fr/changelog/index.html"]:
             with self.subTest(page=page):
@@ -237,7 +252,7 @@ class SiteTests(unittest.TestCase):
                 sources = {node.attrs["src"] for node in scripts}
                 self.assertTrue(shared.issubset(sources))
                 if page in ["index.html", "fr/index.html", "changelog/index.html", "fr/changelog/index.html"]:
-                    self.assertEqual(len(scripts), 4)
+                    self.assertEqual(len(scripts), 5 if page.endswith("changelog/index.html") else 4)
                 else:
                     self.assertEqual(sources, shared)
         self.assertFalse((DIST / "app.js").exists())

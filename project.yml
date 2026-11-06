@@ -122,6 +122,10 @@ targets:
       - path: lilo-ui/public/password-managers
         type: folder
         buildPhase: resources
+      # The installed release's films and stills, which ChromeUISchemeHandler serves with byte ranges.
+      - path: lilo-ui/public/release-media
+        type: folder
+        buildPhase: resources
 
   LiloPowerHelper:
     type: tool

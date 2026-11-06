@@ -15,6 +15,7 @@
   import { acknowledgeWhatsNew, type WhatsNewRequest } from "../../stores/whatsNew.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiModal from "../ui/UiModal.svelte";
+  import ReleaseMedia from "./ReleaseMedia.svelte";
   import WhatsNewArt from "./WhatsNewArt.svelte";
 
   let { request, onclose }: { request: WhatsNewRequest; onclose: () => void } = $props();
@@ -53,7 +54,11 @@
         <div class="release-highlights">
           {#each editorial.highlights as highlight, index (index)}
             <article class="release-highlight">
-              <WhatsNewArt kind={highlight.illustration} />
+              {#if highlight.media}
+                <ReleaseMedia media={highlight.media} label={highlight.title} />
+              {:else if highlight.illustration}
+                <WhatsNewArt kind={highlight.illustration} />
+              {/if}
               <h3>{highlight.title}</h3>
               <p>{highlight.description}</p>
             </article>
