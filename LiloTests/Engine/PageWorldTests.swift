@@ -12,7 +12,8 @@ final class PageWorldTests: XCTestCase {
 
     /// Every own property of the window, its interfaces and their prototypes, and the objects Lilo's modules touch, by
     /// shape; every function among them that does not print as native code, in its own realm or in a fresh frame's; and
-    /// how often Lilo's scripts, a bridge call among them, went through the page's WeakMap and Promise methods meanwhile.
+    /// how often Lilo's scripts, a bridge call among them, went through the page's WeakMap and Promise methods meanwhile; and
+    /// what members Lilo replaces or adds do when called on what is not an instance of their interface.
     private static let probe = #"""
     let hooked = 0;
     const restores = [[WeakMap.prototype, 'get'], [WeakMap.prototype, 'set'], [Promise.prototype, 'then'], [Promise.prototype, 'finally']]
@@ -65,7 +66,27 @@ final class PageWorldTests: XCTestCase {
     shapes['frame keys'] = Object.keys(frame).join();
     shapes['setTimeout source'] = Function.prototype.toString.call(setTimeout);
     for (const restore of restores) restore();
-    return JSON.stringify({ shapes, nonNative, hooked, userAgent: navigator.userAgent, vendor: navigator.vendor,
+    const misuse = {};
+    const outcome = async (name, call) => {
+      let result;
+      try { result = call(); } catch (e) { return void (misuse[name] = `throws ${e.name}: ${e.message}`); }
+      if (!(result instanceof Promise)) return void (misuse[name] = 'returns ' + Object.prototype.toString.call(result));
+      try { await result; misuse[name] = 'resolves'; } catch (e) { misuse[name] = `rejects ${e.name}: ${e.message}`; }
+    };
+    const getter = (target, key) => Object.getOwnPropertyDescriptor(target, key).get;
+    await outcome('RTCPeerConnection.setRemoteDescription', () => RTCPeerConnection.prototype.setRemoteDescription.call({}));
+    if (window.Serial) {
+      await outcome('Navigator.serial', () => getter(Navigator.prototype, 'serial').call({}));
+      await outcome('Serial.getPorts', () => Serial.prototype.getPorts.call({}));
+      await outcome('Serial.requestPort', () => Serial.prototype.requestPort.call(1));
+      misuse['Serial.requestPort kind'] = Object.prototype.toString.call(Serial.prototype.requestPort);
+      await outcome('SerialPort.readable', () => getter(SerialPort.prototype, 'readable').call({}));
+      await outcome('SerialPort.getInfo', () => SerialPort.prototype.getInfo.call({}));
+      await outcome('SerialPort.open', () => SerialPort.prototype.open.call({}, { baudRate: 9600 }));
+      await outcome('EyeDropper()', () => EyeDropper());
+      await outcome('EyeDropper.open', () => EyeDropper.prototype.open.call({}));
+    }
+    return JSON.stringify({ shapes, nonNative, hooked, misuse, userAgent: navigator.userAgent, vendor: navigator.vendor,
                             userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets });
     """#
 
@@ -73,6 +94,7 @@ final class PageWorldTests: XCTestCase {
         let shapes: [String: String]
         let nonNative: [String]
         let hooked: Int
+        let misuse: [String: String]
         let userAgent: String
         let vendor: String
         let userAgentData: Bool
@@ -148,6 +170,19 @@ final class PageWorldTests: XCTestCase {
             XCTAssertEqual(lilo.shapes["window.\(global)"], "v:true,false,true:\(global)/0", "\(global) is defined as an interface object is")
         }
         XCTAssertEqual(lilo.shapes["webkit in window"], "false")
+        // Bot detectors call members on a wrong `this` to spot a replaced one: Lilo's must fail as WebKit's natives do.
+        XCTAssertEqual(lilo.misuse["RTCPeerConnection.setRemoteDescription"], bare.misuse["RTCPeerConnection.setRemoteDescription"])
+        XCTAssertEqual(lilo.misuse.filter { $0.key != "RTCPeerConnection.setRemoteDescription" }, [
+            "Navigator.serial": "throws TypeError: The Navigator.serial getter can only be used on instances of Navigator",
+            "Serial.getPorts": "rejects TypeError: Can only call Serial.getPorts on instances of Serial",
+            "Serial.requestPort": "rejects TypeError: Can only call Serial.requestPort on instances of Serial",
+            "Serial.requestPort kind": "[object Function]",
+            "SerialPort.readable": "throws TypeError: The SerialPort.readable getter can only be used on instances of SerialPort",
+            "SerialPort.getInfo": "throws TypeError: Can only call SerialPort.getInfo on instances of SerialPort",
+            "SerialPort.open": "rejects TypeError: Can only call SerialPort.open on instances of SerialPort",
+            "EyeDropper()": "throws TypeError: Constructor requires 'new' operator",
+            "EyeDropper.open": "rejects TypeError: Can only call EyeDropper.open on instances of EyeDropper"
+        ])
 
         XCTAssertEqual(lilo.userAgent, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) "
                        + WKEngineFactory.safariApplicationName)
