@@ -886,8 +886,10 @@ final class WKEngineFactory {
             object.setValue(value, forKey: key)
         }
         wkConfig.suppressesIncrementalRendering = false
-        let rendersNear60FPS = !fullRefreshRate || (configuration.profileId != nil && configuration.profileId == agentsProfileId)
-        // Power-constrained, a page fetches no page the user may never open; an about:config override still wins.
+        // Power-constrained, a page renders near 60 FPS and fetches no page the user may never open; an about:config
+        // override still wins.
+        let rendersNear60FPS = !fullRefreshRate || suppressWarmPool
+            || (configuration.profileId != nil && configuration.profileId == agentsProfileId)
         let prefetches = suppressWarmPool ? ["LinkPrefetchEnabled": false, "SpeculationRulesPrefetchEnabled": false] : [:]
         WKFeatureFlags.apply(
             [WKFeatureFlags.near60FPSKey: rendersNear60FPS].merging(prefetches) { $1 }.merging(featureFlagOverrides) { $1 },
@@ -1140,7 +1142,7 @@ final class WKEngineFactory {
 
     /// While the system is power-constrained (Low Power Mode, thermal pressure), a speculative
     /// warm WKWebView is a live WebContent process kept around "just in case": not worth it.
-    /// Web views built meanwhile do not prefetch either.
+    /// Web views built meanwhile do not prefetch either, and render near 60 FPS.
     var suppressWarmPool = false {
         didSet {
             guard suppressWarmPool else { return }
