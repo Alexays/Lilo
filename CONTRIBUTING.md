@@ -122,9 +122,9 @@ make validate
   `Lilo/Extensions/public-suffix-list.dat`, or the git-ignored `Lilo/Generated/NativeStrings.swift`
   and `Lilo/Generated/ChromeUIAssets.swift`. Regenerate them with `make ext-bridge-build` (extension
   bundles), `make bridge-gen` (`*.gen.swift`, `tabProtocol.gen.ts`), `make ui-build`
-  (`Lilo/Generated`), `make emoji-data` (`emojiData*.gen.ts`), `make public-suffix-list`
-  (`public-suffix-list.dat`, `topLevelDomains.gen.ts`) or `make chrome-surface`
-  (`chrome-constants.gen.ts`).
+  (`NativeStrings.swift`, `ChromeUIAssets.swift`), `make emoji-data` (`emojiData*.gen.ts`),
+  `make public-suffix-list` (`public-suffix-list.dat`, `topLevelDomains.gen.ts`) or
+  `make chrome-surface` (`chrome-constants.gen.ts`).
 - **`Package.swift` is for fast local checks only.** Once `make vt-build` and `make ui-build` have
   run, `swift build` and `swift test --filter <TestClass>` work, but `xcodebuild` (through `make`)
   is the official build, and `swift run` lacks the app's Info.plist: use `make run-ui-dev` to launch
@@ -134,8 +134,7 @@ make validate
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
 tests; SwiftLint; the Xcode build and the Swift tests; commit hook and perf summary tests; website
-checks and tests;
-release-note and version sync checks.
+checks and tests; release-note and version sync checks.
 Run it once your change is done, and confirm it passes before you open a pull request.
 
 | Command | Runs |
