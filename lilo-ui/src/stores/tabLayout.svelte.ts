@@ -4,6 +4,7 @@ import { getActiveUrlBarDrawer } from "./urlBarDrawer.svelte";
 import { tick } from "svelte";
 import { prefersReducedMotion } from "../lib/motion/reducedMotion";
 import { isSidebarVisible } from "./ui.svelte";
+import { getOnboarding } from "./onboarding.svelte";
 
 let _position = $state<TabPosition>("left");
 let _address = $state<AddressPlacement>("tabs");
@@ -29,7 +30,8 @@ function apply(position: TabPosition, address: AddressPlacement): void {
 		root.dataset.address = shownAddress();
 	};
 	// A new edge morphs the tabs there (global.css names them), while the native page slides alongside.
-	const morph = applied && position !== _position && typeof document !== "undefined" && "startViewTransition" in document && !prefersReducedMotion();
+	// Not under the onboarding: the morph paints in the top layer, over any z-index.
+	const morph = applied && position !== _position && !getOnboarding().visible && typeof document !== "undefined" && "startViewTransition" in document && !prefersReducedMotion();
 	applied = true;
 	const thisApply = ++latestApply;
 	if (!morph) return update();
