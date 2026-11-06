@@ -424,6 +424,9 @@ extension MainWindowController {
 
         let previousSpaceId = tabManager.currentSpaceId
         let previousActiveTabId = tabManager.activeOpenTabId
+        // A private space lists its own downloads, so entering or leaving one (a deleted space may have been one) replaces the list.
+        let swapsDownloads = previousSpaceId != spaceId
+            && (targetSpace.isPrivate || previousSpaceId.map { spaceManager.space(with: $0)?.isPrivate != false } == true)
 
         // Capture the leaving space's interaction states while its runtime is still live (we can only
         // read live engine state for the current space). The relaunch / re-entry path restores them.
@@ -448,6 +451,9 @@ extension MainWindowController {
 
         spaceManager.activeSpaceId = spaceId
         tabManager.currentSpaceId = spaceId
+        if swapsDownloads {
+            bridgeRouter.send(event: "downloadsSnapshot", data: DownloadBridgeHandler.snapshot(of: downloadStore, manager: context.downloadManager))
+        }
         recentSpaceIds.removeAll { $0 == spaceId }
         recentSpaceIds.insert(spaceId, at: 0)
         // The frame takes the color the chrome reports for the space it shows: deriving it here too

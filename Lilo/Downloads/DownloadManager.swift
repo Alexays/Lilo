@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 import WebKit
 import AppKit
 import UserNotifications
@@ -66,12 +67,9 @@ final class DownloadManager {
     ]
     private let dockController: DownloadDockProgressController?
 
-    /// Private-space downloads awaiting their row, and the rows they got. The rows are erased when
-    /// the space closes so private downloads leave no entry in the persistent list.
-    private var pendingPrivateSpaceIds: [WKDownload: UUID] = [:]
-    private var privateDownloadIds: [UUID: [DownloadKey]] = [:]
-    /// Pending downloads of a private space that closed before they got a row: cancelled and erased once tracked.
-    private var forgottenPendingDownloads: [WKDownload: UUID] = [:]
+    /// Each private space's downloads, kept in memory and dropped with the space so nothing of them reaches the disk. A
+    /// store's `profileId` is its space's id, so its row ids never mix with a profile's.
+    private(set) var privateStores: [UUID: DownloadStore] = [:]
     /// Each private space's website data store, where its downloads resume and find their cookies.
     private var privateDataStores: [UUID: WKWebsiteDataStore] = [:]
 
@@ -112,7 +110,7 @@ final class DownloadManager {
         lane.url.onUpdated = { [weak self] item in
             guard let self else { return }
             // WKBackend records a browser download's origin itself; a private Space's is never recorded.
-            if item.state == .complete, let key = item.key, !privateDownloadIds.values.contains(where: { $0.contains(key) }) {
+            if item.state == .complete, !isPrivateDownload(profileId: item.profileId) {
                 DownloadQuarantine.recordOrigin(path: item.destinationPath, urls: [item.url])
             }
             notifyObservers(item)
@@ -127,25 +125,9 @@ final class DownloadManager {
             guard let chooseDestination = self?.chooseDestination else { return proposed }
             return await chooseDestination(proposed, webView, prompts)
         }
-        lane.wk.onTracked = { [weak self] download, id in
-            guard let self else { return }
-            let key = DownloadKey(profileId: profileId, id: id)
-            if let spaceId = pendingPrivateSpaceIds.removeValue(forKey: download) {
-                privateDownloadIds[spaceId, default: []].append(key)
-            } else if let spaceId = forgottenPendingDownloads.removeValue(forKey: download) {
-                privateDownloadIds[spaceId, default: []].append(key)
-                // Deferred: the backend finishes registering the download after this callback returns.
-                Task { @MainActor [weak self] in self?.forgetPrivateDownloads(inSpace: spaceId) }
-            }
-        }
-        lane.wk.suggestFilename = { [weak self] download, item in
-            guard let self, pendingPrivateSpaceIds[download] == nil, forgottenPendingDownloads[download] == nil else { return nil }
+        lane.wk.suggestFilename = { [weak self] _, item in
+            guard let self, !isPrivateDownload(profileId: profileId) else { return nil }
             return await suggestFilename?(item)
-        }
-        // A private download that never got a row is not tracked: nothing else would let it go.
-        lane.wk.onDropped = { [weak self] download in
-            self?.pendingPrivateSpaceIds.removeValue(forKey: download)
-            self?.forgottenPendingDownloads.removeValue(forKey: download)
         }
         if recoveredDatabasePaths.insert(store.dbPool.path).inserted {
             loggingPersistenceError("download.recoverFromCrash") { try store.recoverFromCrash() }
@@ -155,34 +137,45 @@ final class DownloadManager {
 
     // MARK: - Browser downloads (WKDownload)
 
-    /// The row goes to `store`, the downloading tab's profile store.
+    /// The row goes to `store`, the downloading tab's profile store, or to its private space's memory store.
     func startDownload(_ download: WKDownload, in store: DownloadStore, privateSpaceId: UUID? = nil) {
-        if let privateSpaceId {
-            pendingPrivateSpaceIds[download] = privateSpaceId
-            download.webView.map { privateDataStores[privateSpaceId] = $0.configuration.websiteDataStore }
-        }
+        let target: DownloadStore? = if let privateSpaceId { privateStore(forSpace: privateSpaceId) } else { store }
+        guard let store = target else { return download.cancel { _ in } }
+        if let privateSpaceId { download.webView.map { privateDataStores[privateSpaceId] = $0.configuration.websiteDataStore } }
         lane(for: store).wk.startTracking(download)
     }
 
-    /// Cancels the private space's in-flight downloads and erases its rows. Files already on disk stay.
-    /// The ids stay marked private until erased, so observers can still recognize them.
+    /// The private space's memory store, created with its first download. Nil only when SQLite cannot open one.
+    private func privateStore(forSpace spaceId: UUID) -> DownloadStore? {
+        if let store = privateStores[spaceId] { return store }
+        do {
+            let queue = try DatabaseQueue()
+            try Migrations.migrateProfile(queue)
+            let store = DownloadStore(dbPool: queue, profileId: spaceId)
+            privateStores[spaceId] = store
+            return store
+        } catch {
+            Self.logger.error("private downloads store failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
+
+    /// Cancels the private space's in-flight downloads and drops its store. Files already on disk stay. A download still
+    /// waiting for its destination finds no store and WebKit cancels it.
     func forgetPrivateDownloads(inSpace spaceId: UUID) {
-        for (download, pendingSpaceId) in pendingPrivateSpaceIds where pendingSpaceId == spaceId {
-            pendingPrivateSpaceIds.removeValue(forKey: download)
-            forgottenPendingDownloads[download] = spaceId
+        guard let store = privateStores[spaceId] else { return }
+        for item in (try? store.fetchAll(limit: .max)) ?? [] {
+            guard let id = item.id else { continue }
+            loggingPersistenceError("download.erasePrivate[\(id)]") { try erase(id: id, in: store) }
         }
-        for key in privateDownloadIds[spaceId] ?? [] {
-            guard let store = lanes.values.lazy.compactMap(\.wk.store).first(where: { $0.profileId == key.profileId }) else { continue }
-            loggingPersistenceError("download.erasePrivate[\(key.id)]") { try erase(id: key.id, in: store) }
-        }
-        privateDownloadIds[spaceId] = nil
+        lanes[ObjectIdentifier(store)] = nil
+        privateStores[spaceId] = nil
         privateDataStores[spaceId] = nil
     }
 
-    /// Private-space downloads are never exposed to extensions.
-    func isPrivateDownload(id: Int64, profileId: UUID?) -> Bool {
-        let key = DownloadKey(profileId: profileId, id: id)
-        return privateDownloadIds.values.contains { $0.contains(key) }
+    /// Whether items stamped with `profileId` are a private space's, which extensions and notifications never see.
+    func isPrivateDownload(profileId: UUID?) -> Bool {
+        profileId.map { privateStores[$0] != nil } ?? false
     }
 
     // MARK: - Extension downloads (chrome.downloads.download)
@@ -202,6 +195,8 @@ final class DownloadManager {
     func saveData(
         _ data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL, webView: WKWebView? = nil, in store: DownloadStore, privateSpaceId: UUID? = nil
     ) -> Task<Void, Never> {
+        let target: DownloadStore? = if let privateSpaceId { privateStore(forSpace: privateSpaceId) } else { store }
+        guard let store = target else { return Task {} }
         attach(store)
         let folder = resolvedDownloadsFolder(settingsFolder)
         let name = suggestedFilename.isEmpty ? "download" : suggestedFilename
@@ -255,7 +250,6 @@ final class DownloadManager {
             loggingPersistenceError("download.insert[\(destination.lastPathComponent)]") {
                 try store.insert(&item)
             }
-            if let privateSpaceId, let key = item.key { privateDownloadIds[privateSpaceId, default: []].append(key) }
             notifyObservers(item)
         }
     }
@@ -402,7 +396,7 @@ final class DownloadManager {
 
     /// The website data store a download belongs to: its private space's, else its profile's. Nil once its private space's is gone.
     private func dataStore(ofDownload key: DownloadKey) -> WKWebsiteDataStore? {
-        if let spaceId = privateDownloadIds.first(where: { $0.value.contains(key) })?.key { return privateDataStores[spaceId] }
+        if let id = key.profileId, isPrivateDownload(profileId: id) { return privateDataStores[id] }
         return key.profileId.map { WKWebsiteDataStore(forIdentifier: $0) } ?? .default()
     }
 
@@ -445,11 +439,7 @@ final class DownloadManager {
             request.allHTTPHeaderFields = HTTPCookie.requestHeaderFields(with: await cookieStore.cookies(for: url))
         }
         request.setValue(Self.pageUserAgent, forHTTPHeaderField: "User-Agent")
-        let retryId = try startExtensionDownload(request: request, suggestedFilename: item.filename, in: store)
-        // The new row of a private download is forgotten with its space too.
-        if let spaceId = privateDownloadIds.first(where: { $0.value.contains(key) })?.key {
-            privateDownloadIds[spaceId]?.append(DownloadKey(profileId: store.profileId, id: retryId))
-        }
+        try startExtensionDownload(request: request, suggestedFilename: item.filename, in: store)
     }
 
     func fileIcon(id: Int64, size: Int, in store: DownloadStore) -> String? {
@@ -514,7 +504,8 @@ final class DownloadManager {
     }
 
     private func sendDownloadNotification(for item: DownloadItem) {
-        guard item.state == .complete || item.state == .interrupted, !item.fileMissing,
+        // Notification Center keeps delivered notifications on disk.
+        guard item.state == .complete || item.state == .interrupted, !item.fileMissing, !isPrivateDownload(profileId: item.profileId),
               !(item.key.map { pendingAutoResumes.contains($0) } ?? false) else { return }
         // UNUserNotificationCenter.current() raises NSInternalInconsistencyException outside a
         // real .app bundle (swift test runs in xctest), which kills the whole test run.
