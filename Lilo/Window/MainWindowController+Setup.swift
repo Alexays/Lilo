@@ -546,9 +546,7 @@ extension MainWindowController {
                 guard let self, let profileId = profileContext?.profileId else { return nil }
                 return profileManager.dataStore(for: profileId)
             },
-            lifecycleDiagnosticsProvider: { [weak self] in self?.context.browserState.lifecycleDiagnostics() },
-            extensionDiagnosticsProvider: { [weak self] in self?.extensionDiagnosticsSnapshots() ?? [] },
-            forceLifecycleTrimHandler: { [weak self] in self?.context.hiddenSpaceLifecycle.forceTrim() },
+            context: context,
             bridgeRouter: bridgeRouter
         )
         bridgeRouter.register(handler: settingsHandler)
@@ -655,59 +653,14 @@ extension MainWindowController {
         }
         let deviceSetup = context.deviceSetupController(settingsStore: settingsStore)
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
-        settingsHandler.onFolderAutoLockChanged = { [weak self] in self?.context.folderAutoLock.limitDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
-        settingsHandler.onTogglePerfRecording = { [weak self] in self?.context.togglePerfRecording() }
         settingsHandler.onRecordShortcut = { [weak self] in self?.recordingShortcutId = $0 }
-        settingsHandler.windowRouters = { [weak self] in self?.context.windows.windows.compactMap(\.bridgeRouter) ?? [] }
-        settingsHandler.onContentBlockerToggled = { [weak self] enabled in
-            guard let self else { return }
-            engineFactory.applyBlockerChange(enabled: enabled)
-            // Allowlist edits made while the blocker was off were never compiled.
-            if enabled { Task { await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist) } }
-            context.reloadBlockerExtension()
-            if enabled, context.filterListService == nil {
-                Task { await self.context.startContentBlocker() }
-            }
-        }
-        settingsHandler.contentBlockerStatus = { [weak self] in self?.context.contentBlockerStatus ?? [:] }
-        settingsHandler.onUpdateFilterLists = { [weak self] in await self?.context.updateFilterLists() }
-        settingsHandler.agentControl = { [weak self] in self?.context.agentControl }
-        settingsHandler.onBlockerAllowlistChanged = { [weak self] reloadTabId in
-            Task {
-                await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist)
-                if let reloadTabId { self?.tabManager.engineTab(for: reloadTabId)?.reload() }
-            }
-            Task { await self?.context.filterListService?.installBlockerExtension() }
-        }
-        settingsHandler.onSendGPCChanged = { enabled in
-            engineFactory.setGlobalPrivacyControl(enabled)
-        }
-        engineFactory.setGlobalPrivacyControl(settingsStore.sendGPC)
-        settingsHandler.onTrackingPreventionChanged = { engineFactory.setTrackingPrevention($0) }
-        settingsHandler.onHTTPSOnlyChanged = { enabled in
-            engineFactory.setHTTPSOnly(enabled)
-        }
-        engineFactory.setHTTPSOnly(settingsStore.httpsOnly)
-        settingsHandler.onMinimumFontSizeChanged = { engineFactory.setMinimumFontSize($0) }
-        engineFactory.setMinimumFontSize(settingsStore.minimumFontSize)
-        settingsHandler.onFullRefreshRateChanged = { engineFactory.setFullRefreshRate($0) }
-        engineFactory.setFullRefreshRate(settingsStore.fullRefreshRate)
-        engineFactory.agentsProfileId = settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
-        settingsHandler.onAutoplayPolicyChanged = { engineFactory.setAutoplayPolicy($0) }
-        engineFactory.setAutoplayPolicy(settingsStore.get("autoplayPolicy") ?? "audio")
+        settingsHandler.onReloadTab = { [weak self] in self?.tabManager.engineTab(for: $0)?.reload() }
         settingsHandler.onTerminalSettingsChanged = { [weak self] in self?.applyTerminalSettings() }
         settingsHandler.terminalOptionsProvider = { [weak self] in self?.terminalOptions() ?? [:] }
         settingsHandler.terminalThemeImporter = { [weak self] in await self?.importTerminalTheme() ?? false }
         settingsHandler.onTabLayoutChanged = { [weak self] in self?.applyStoredTabLayoutEverywhere() }
-        settingsHandler.onLifecyclePresetChanged = { [weak self] raw in
-            guard let self else { return }
-            self.context.applyLifecyclePreset(LifecyclePreset(rawValue: raw) ?? .default)
-            // Reclaim promptly under the new (possibly tighter) policy.
-            self.context.hiddenSpaceLifecycle.scheduleActiveSpaceTrim(delay: 0)
-            self.context.hiddenSpaceLifecycle.scheduleTrim()
-        }
 
         let featureFlagsHandler = FeatureFlagsBridgeHandler(
             settingsStore: settingsStore,
@@ -717,8 +670,6 @@ extension MainWindowController {
         featureFlagsHandler.onOverridesChanged = { overrides in
             engineFactory.setFeatureFlagOverrides(overrides)
         }
-        // Apply persisted feature flags to the engine at startup.
-        engineFactory.setFeatureFlagOverrides(settingsStore.featureFlagOverrides)
 
         let downloadHandler = DownloadBridgeHandler(
             downloadManager: context.downloadManager,

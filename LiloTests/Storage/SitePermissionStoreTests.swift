@@ -234,8 +234,7 @@ final class SitePermissionStoreTests: XCTestCase {
         let handler = SettingsBridgeHandler(
             settingsStore: settingsStore, sitePermissionStoreProvider: { [store] in store },
             zoomStoreProvider: { nil }, historyStoreProvider: { nil }, extensionRegistryProvider: { nil },
-            dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
-            forceLifecycleTrimHandler: {}, bridgeRouter: BridgeRouter(chromeWebView: WKWebView())
+            dataStoreProvider: { nil }, context: nil, bridgeRouter: BridgeRouter(chromeWebView: WKWebView())
         )
         var revoked: [String] = []
         handler.onSitePermissionRevoked = { origin, type in revoked.append("\(type) \(origin)") }

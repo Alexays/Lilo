@@ -177,10 +177,6 @@ extension MainWindowController {
         presentContextMenu(menu, anchorRect: anchorRect)
     }
 
-    func extensionDiagnosticsSnapshots() -> [[String: Any]] {
-        context.profileContexts.allContexts.flatMap { $0.extensions.backgroundDiagnosticsSnapshots() }
-    }
-
     func sendExtensionPermissionRequest(
         requestId: String,
         extensionId: String,

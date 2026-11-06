@@ -64,8 +64,7 @@ final class BuildIdentityTests: XCTestCase {
         let handler = SettingsBridgeHandler(
             settingsStore: settingsStore, sitePermissionStoreProvider: { sitePermissions },
             zoomStoreProvider: { nil }, historyStoreProvider: { nil }, extensionRegistryProvider: { nil },
-            dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
-            forceLifecycleTrimHandler: {}, bridgeRouter: BridgeRouter(chromeWebView: WKWebView())
+            dataStoreProvider: { nil }, context: nil, bridgeRouter: BridgeRouter(chromeWebView: WKWebView())
         )
         func send(_ action: String) async throws {
             XCTAssertTrue(handler.handledActions.contains(action), "the router only delivers declared actions")

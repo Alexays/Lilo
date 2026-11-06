@@ -273,6 +273,13 @@ final class BrowserContext {
         self.settingsStore = settingsStore
         if settingsStore.sessionCleanShutdown { launchAbsence = settingsStore.lastQuitAt.map { Date().timeIntervalSince($0) } }
         engineFactory.setTrackingPrevention(settingsStore.preventCrossSiteTracking)
+        engineFactory.setGlobalPrivacyControl(settingsStore.sendGPC)
+        engineFactory.setHTTPSOnly(settingsStore.httpsOnly)
+        engineFactory.setMinimumFontSize(settingsStore.minimumFontSize)
+        engineFactory.setFullRefreshRate(settingsStore.fullRefreshRate)
+        engineFactory.setAutoplayPolicy(settingsStore.get("autoplayPolicy") ?? "audio")
+        engineFactory.setFeatureFlagOverrides(settingsStore.featureFlagOverrides)
+        engineFactory.agentsProfileId = settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
         if let loadError = settingsStore.initialLoadError {
             showDegradedDatabaseAlert(
                 subject: "settings",
@@ -369,6 +376,19 @@ final class BrowserContext {
         service.onBlockerExtensionChanged = { [weak self] in self?.reloadBlockerExtension() }
         filterListService = service
         service.start()
+    }
+
+    /// The blocker was switched on or off in settings.
+    func setContentBlockerEnabled(_ enabled: Bool) {
+        engineFactory.applyBlockerChange(enabled: enabled)
+        // Allowlist edits made while the blocker was off were never compiled.
+        if enabled, let settingsStore {
+            Task { await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist) }
+        }
+        reloadBlockerExtension()
+        if enabled, filterListService == nil {
+            Task { await startContentBlocker() }
+        }
     }
 
     /// The content blocker's built-in extension, while the blocker runs and once written.
