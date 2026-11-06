@@ -11,13 +11,12 @@
   viewBox="0 0 16 16"
   fill="none"
   stroke="currentColor"
-  stroke-width="1.5"
+  stroke-width={(1.5 * 16) / size}
   stroke-linecap="round"
   stroke-linejoin="round"
   aria-hidden="true"
 >
-  <!-- Non-scaling, so every size draws the same 1.5px line. -->
-  <path d={ICONS[name]} vector-effect="non-scaling-stroke" />
+  <path d={ICONS[name]} />
 </svg>
 
 <style>
