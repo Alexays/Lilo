@@ -137,6 +137,30 @@ final class TabShareBridgeTests: XCTestCase {
             """, contentWorld: .page) as? String
         XCTAssertEqual(contradiction, "TypeError")
     }
+
+    func testAScreenCaptureThatCannotStartIsNotReadableRatherThanRefused() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
+        let window = makeTestWindow(context, showing: space.id)
+        defer { window.window?.close() }
+        context.engineFactory.tabShareBridge.screenStarter = { _, _, _ in ["mode": "failed"] }
+        let events = BridgeEventRecorder(window.bridgeRouter)
+        let caller = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: caller.id)).wkWebView
+        webView.loadHTMLString("<p>call</p>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil { !webView.isLoading && webView.url != nil }
+
+        _ = try await webView.evaluateJavaScript(
+            "window.share = navigator.mediaDevices.getDisplayMedia({ video: true }).then(() => 'started', e => e.name); true"
+        )
+        let request = try XCTUnwrap(events.data("tabSharePickerRequested").first)
+        window.resolveTabSharePicker(requestId: try XCTUnwrap(request["requestId"] as? String), choice: .system(audio: false))
+
+        let name = try await webView.callAsyncJavaScript("return await window.share", contentWorld: .page) as? String
+        XCTAssertEqual(name, "NotReadableError")
+    }
 }
 
 @MainActor

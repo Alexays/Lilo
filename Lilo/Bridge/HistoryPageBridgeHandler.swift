@@ -32,7 +32,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     /// Changes reach the page only while it is open: nothing is read for a closed page.
     private var pageOpen = false
     /// Favicons the page already holds, so each one crosses the bridge once per window.
-    private var sentFaviconHosts: Set<String> = []
+    var sentFaviconHosts: Set<String> = []
     /// The page ignores every reply but the latest request's, so a new request cancels the read still running.
     private var pageRead: Task<PageReply?, Never>?
     private var changeThrottle: Task<Void, Never>?

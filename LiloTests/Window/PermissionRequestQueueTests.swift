@@ -150,4 +150,23 @@ final class PermissionRequestQueueTests: XCTestCase {
 
         XCTAssertEqual(answers, [true], "Each completion handler must run exactly once")
     }
+
+    func testAReloadedChromeGetsItsPendingPromptsBack() async throws {
+        let context = browserContext.context
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
+        let window = makeTestWindow(context, showing: space.id)
+        defer { window.window?.close() }
+        let shown = BridgeEventRecorder(window.bridgeRouter)
+        window.enqueuePermissionRequest(tabId: UUID(), type: "camera", origin: "https://call.example") { _ in }
+        let pick = Task { await window.presentTabSharePicker(origin: "call.example", requester: nil) }
+        _ = shown.data("tabSharePickerRequested")
+        let events = BridgeEventRecorder(window.bridgeRouter)
+
+        window.sendInitialState()
+
+        let choice = await pick.value
+        XCTAssertEqual(choice, .cancel, "the page may ask again")
+        XCTAssertEqual(events.data("permissionRequest").first?["origin"] as? String, "https://call.example")
+        XCTAssertEqual(window.pendingPermissionRequests.count, 1, "the prompt still waits for its answer")
+    }
 }

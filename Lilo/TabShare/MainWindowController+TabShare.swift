@@ -129,7 +129,7 @@ extension MainWindowController {
         }
     }
 
-    private func dismissTabSharePicker(requestId: String) {
+    func dismissTabSharePicker(requestId: String) {
         guard let pending = pendingTabSharePickerRequests.removeValue(forKey: requestId) else { return }
         pending.continuation.resume(returning: .cancel)
         bridgeRouter.send(event: "tabSharePickerDismissed", data: ["requestId": requestId])

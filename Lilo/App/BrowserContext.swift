@@ -187,7 +187,11 @@ final class BrowserContext {
             // The pick consents to the picture only: sound has its own grant, asked once. Refused, the share has no sound.
             let audio = wantsAudio ? await SystemAudioAccess.request() : false
             let screen = ScreenCaptureStream(filter: filter, maxSize: maxSize)
-            guard (try? await screen.start()) != nil, let window = windows.window(for: requester) else {
+            guard (try? await screen.start()) != nil else {
+                screen.stop()
+                return ["mode": "failed"]
+            }
+            guard let window = windows.window(for: requester) else {
                 screen.stop()
                 return nil
             }

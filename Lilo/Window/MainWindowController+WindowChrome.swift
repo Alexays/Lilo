@@ -232,6 +232,8 @@ extension MainWindowController {
         sentTabPatches = [:]
         sentExtensionRows = [:]
         sentArchiveFavicons = [:]
+        searchHandler?.sentFaviconHosts = []
+        historyPageHandler?.sentFaviconHosts = []
         // A reloaded chrome has lost its capture cards: nothing can open their captures any more.
         copiedCaptures.keys.forEach(ChromeUISchemeHandler.discardScreenshot)
         copiedCaptures = [:]
@@ -259,6 +261,13 @@ extension MainWindowController {
         if context.settingsStore?.shouldShowOnboarding == false, tabManager.activeTab.map({ $0.url == nil && $0.kind == .web }) ?? false {
             bridgeRouter.send(event: "openCommandBar", data: ["newTab": true])
         }
+        // A reloaded chrome lost its prompts: permissions ship again, and pickers close so their page can ask again.
+        for request in pendingPermissionRequests {
+            bridgeRouter.send(event: "permissionRequest", data: [
+                "requestId": request.id.uuidString, "tabId": request.tabId.uuidString, "type": request.type, "origin": request.origin
+            ])
+        }
+        for requestId in pendingTabSharePickerRequests.keys { dismissTabSharePicker(requestId: requestId) }
     }
 
     func handleChromeReady() {
