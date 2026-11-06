@@ -509,6 +509,7 @@ final class ProfileExtensionRegistry {
         extensionStorage: ExtensionStorage,
         gapRouter: GapBridgeRouter? = nil,
         tabShare: (bridge: TabShareBridge, frames: TabShareFrameSchemeHandler)? = nil,
+        pageBridges: (geolocation: GeolocationBridge, notification: NotificationBridge)? = nil,
         // Injectable so tests keep their installed-extension copies out of the user's real
         // Application Support; the default follows BuildIdentity, LILO_APP_SUPPORT_DIR included.
         extensionsBaseDirectory: URL? = URL(fileURLWithPath: BuildIdentity.appSupportDirectory)
@@ -562,13 +563,21 @@ final class ProfileExtensionRegistry {
             Self.logger.error("ChromeAPIAugmentation.js not found in bundle: Chrome API bridge will be absent")
         }
 
+        var pageModules: [String] = []
         // Extension pages and offscreen documents consume tabCapture and desktopCapture stream ids
         // through the tab-share shim's getUserMedia, fed over the ferry's frame scheme.
         if let tabShare {
             config.webViewConfiguration.setURLSchemeHandler(tabShare.frames, forURLScheme: TabShareFrameSchemeHandler.scheme)
             userContentController.addScriptMessageHandler(tabShare.bridge, contentWorld: PageWorld.bridgeWorld, name: TabShareBridge.messageHandlerName)
-            PageWorld.install([TabShareBridge.pageModule], on: userContentController)
+            pageModules.append(TabShareBridge.pageModule)
         }
+        // The tabs' location and notification polyfills: WebKit has no position provider and no web notification permission hook.
+        if let pageBridges {
+            userContentController.add(pageBridges.geolocation, contentWorld: PageWorld.bridgeWorld, name: GeolocationBridge.messageHandlerName)
+            userContentController.add(pageBridges.notification, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
+            pageModules += [GeolocationBridge.pageModule, NotificationBridge.pageModule]
+        }
+        if !pageModules.isEmpty { PageWorld.install(pageModules, on: userContentController) }
 
         self.pageScripts = userContentController
         self.controller = WKWebExtensionController(configuration: config)

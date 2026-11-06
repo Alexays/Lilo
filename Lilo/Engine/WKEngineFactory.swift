@@ -136,13 +136,13 @@ final class WKEngineFactory {
         didSet { if agentsProfileId != oldValue { dropWarmPool() } }
     }
 
-    private lazy var geolocationBridge: GeolocationBridge = {
+    private(set) lazy var geolocationBridge: GeolocationBridge = {
         let bridge = GeolocationBridge()
         bridge.permissionDecisionHandler = geolocationPermissionDecisionHandler
         return bridge
     }()
 
-    private lazy var notificationBridge: NotificationBridge = {
+    private(set) lazy var notificationBridge: NotificationBridge = {
         let bridge = NotificationBridge()
         bridge.permissionDecisionHandler = notificationPermissionDecisionHandler
         bridge.decisionHandler = notificationDecisionHandler
@@ -210,6 +210,14 @@ final class WKEngineFactory {
     }
 
     private let profileIdByWebView = NSMapTable<WKWebView, NSUUID>.weakToStrongObjects()
+
+    /// Whether `origin` is a page of an extension of `webView`'s profile whose manifest declares `permission`, which Chrome grants without asking.
+    func extensionDeclares(_ permission: String, origin: String, webView: WKWebView?) -> Bool {
+        guard let url = URL(string: origin), url.scheme == "chrome-extension", let host = url.host,
+              let declared = resolveRegistry(for: webView)?.context(for: host)?.webExtension.manifest["permissions"] as? [String]
+        else { return false }
+        return declared.contains(permission)
+    }
 
     private func profileContext(for registry: ProfileExtensionRegistry) -> ProfileContext? {
         profileContexts?.existingContext(for: registry.profileId)

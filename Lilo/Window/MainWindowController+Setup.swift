@@ -319,6 +319,9 @@ extension MainWindowController {
         applyTerminalSettings()
         Task { @MainActor [context] in await context.startContentBlocker() }
         let permissionDecisionHandler: GeolocationBridge.PermissionDecisionHandler = { [weak context] webView, type, origin, completion in
+            if context?.engineFactory.extensionDeclares(type == "location" ? "geolocation" : type, origin: origin, webView: webView) == true {
+                return completion(true)
+            }
             guard let windows = context?.windows, let window = webView.flatMap(windows.window(for:)) ?? windows.activeWindow else {
                 completion(false)
                 return
@@ -328,7 +331,9 @@ extension MainWindowController {
         context.engineFactory.geolocationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationDecisionHandler = { [weak context] webView, origin in
-            guard let context, let webView, let window = context.windows.window(for: webView) else { return nil }
+            guard let context, let webView else { return nil }
+            if context.engineFactory.extensionDeclares("notifications", origin: origin, webView: webView) { return true }
+            guard let window = context.windows.window(for: webView) else { return nil }
             return window.storedPermissionDecision(type: "notifications", origin: origin, tabId: window.tabManager.engineTab(forWebView: webView)?.id)
                 ?? (context.settingsStore?.refusesPermissionRequests("notifications") != false ? false : nil)
         }

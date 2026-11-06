@@ -140,7 +140,8 @@ final class BrowserContext {
             guard let dbManager = weakSelf?.dbManager else { throw BrowserContextError.notBootstrapped }
             let context = try ProfileContext(
                 profileId: profileId, dbManager: dbManager, gapRouter: engineFactory.gapRouter,
-                tabShare: (engineFactory.tabShareBridge, engineFactory.tabShareFrameSchemeHandler)
+                tabShare: (engineFactory.tabShareBridge, engineFactory.tabShareFrameSchemeHandler),
+                pageBridges: (engineFactory.geolocationBridge, engineFactory.notificationBridge)
             )
             context.extensions.settingsStore = weakSelf?.settingsStore
             engineFactory.prepareExtensionRegistry(context.extensions)
