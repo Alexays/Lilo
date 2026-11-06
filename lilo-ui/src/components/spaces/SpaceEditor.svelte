@@ -795,8 +795,8 @@
     margin: 0;
     padding: 14px 16px 10px;
     color: var(--text-primary);
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
   }
 
   .editor-panel.popover {
