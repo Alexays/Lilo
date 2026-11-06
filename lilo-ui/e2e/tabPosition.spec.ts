@@ -152,6 +152,15 @@ test("an active favorite names its site without sliding over the favorites besid
 	for (const [width, scrollWidth] of groups) expect(scrollWidth, "a group holds its pills").toBeLessThanOrEqual(Math.ceil(width) + 1);
 });
 
+test("a conversation whose agent failed shows its red badge in the strip", async ({ page }) => {
+	const world = folderWorld();
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab) =>
+		tab.id === "tab-alpha" ? { ...tab, kind: "agent", agentId: "agent", terminalState: "failed" } : tab);
+	await bootChrome(page, { ...world, tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-conversation");
+	await expect(page.locator(".strip-conversation .badge.failed")).toBeVisible();
+	await expect(page.locator(".strip-conversation .main")).toHaveAttribute("aria-label", /Stopped with an error/);
+});
+
 test("the top strip lists today's tabs and switches on click", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
 	const pills = page.locator(".tab-strip .strip-tab");
