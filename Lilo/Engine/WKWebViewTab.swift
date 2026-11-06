@@ -598,6 +598,7 @@ final class WKWebViewTab: NSObject {
         guard !isFrozen, lentToExtensionAt.map({ now.timeIntervalSince($0) >= 2 }) ?? true else { return }
         isFrozen = true
         freezer.freeze(webView)
+        if let adapter = tabManager?.tabAdapter(for: id) { tabManager?.reportExtensionTabChange(of: adapter, ["frozen"]) }
     }
 
     /// Resume a frozen engine. Idempotent; no-op if never frozen or if the page is lost.
@@ -605,6 +606,7 @@ final class WKWebViewTab: NSObject {
     func resume(completion: @escaping () -> Void = {}) {
         guard isFrozen, !isPageLost else { return completion() }
         isFrozen = false
+        if let adapter = tabManager?.tabAdapter(for: id) { tabManager?.reportExtensionTabChange(of: adapter, ["frozen"]) }
         freezer.resume(webView) { [weak self] in
             if let self, pageColorStale {
                 pageColorStale = false

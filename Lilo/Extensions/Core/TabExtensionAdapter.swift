@@ -8,7 +8,9 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     let tabId: UUID
     /// Nil while the tab is unloaded (restored, discarded): it stays open to extensions with no page
     /// behind it, and holds no reference to a torn-down engine.
-    var engineTab: WKWebViewTab?
+    var engineTab: WKWebViewTab? {
+        didSet { if (oldValue == nil) != (engineTab == nil) { tabManager?.reportExtensionTabChange(of: self, ["discarded"]) } }
+    }
     weak var extensionWindow: (any WKWebExtensionWindow)?
     /// The opener extensions see as `openerTabId`; in memory only, like Chrome's.
     weak var parent: TabExtensionAdapter?

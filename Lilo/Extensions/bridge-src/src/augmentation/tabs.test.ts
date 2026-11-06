@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { mockGapAPI, pushToChannel } from '../shared/ipc.testkit.ts';
+import { mockGapAPI, pushGapEvent, pushToChannel } from '../shared/ipc.testkit.ts';
 
 const gapCalls: Array<{ namespace: string; method: string; params: any }> = [];
 let nextResult: unknown;
@@ -314,6 +314,25 @@ describe('the tab state Lilo sends', () => {
       { groupId: 5, frozen: false, lastAccessed: 11 },
     ]);
     assert.equal(gapCalls.length, 0, 'the context already holds the state');
+  });
+
+  it("fires Lilo's tab updates with the values the state holds, the favicon only where Lilo gives it", async () => {
+    const { chrome, webKit } = install();
+    const heard: unknown[][] = [];
+    chrome.tabs.onUpdated.addListener((...args: unknown[]) => heard.push(args));
+    pushToChannel(state([[5, false, true, 11, 'https://a.test/icon.png']]));
+    pushGapEvent({ namespace: 'tabs', event: 'onUpdated', args: [{ windowPosition: 0, index: 0, changed: ['frozen', 'favIconUrl'] }] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    pushToChannel(state([[6, false, false, 11, null]]));
+    pushGapEvent({ namespace: 'tabs', event: 'onUpdated', args: [{ windowPosition: 0, index: 0, changed: ['favIconUrl'] }] });
+    pushGapEvent({ namespace: 'tabs', event: 'onUpdated', args: [{ windowPosition: 0, index: 0, changed: ['groupId'] }] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.deepEqual(heard.map(([id, change, tab]: any[]) => [id, change, tab.favIconUrl]), [
+      [71, { frozen: true, favIconUrl: 'https://a.test/icon.png' }, 'https://a.test/icon.png'],
+      [71, { groupId: 6 }, undefined],
+    ]);
+    assert.equal(webKit.onUpdated.listeners.size, 1, "WebKit's own updates still reach the listener");
   });
 
   it('reads a moved tab at its live index, from the state as from Lilo', async () => {

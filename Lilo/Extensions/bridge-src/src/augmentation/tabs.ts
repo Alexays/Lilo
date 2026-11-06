@@ -2,7 +2,7 @@
 // back to be resolved here from WebKit's chrome.windows/chrome.tabs. SW-safe: no window/document/webkit.
 import { bridgeEvents, channelClosed, gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
-import { resolvingEvent } from '../shared/gap-event.ts';
+import { GapWrappedEvent, resolvingEvent } from '../shared/gap-event.ts';
 import { WrappedEvent } from '../shared/chrome-event.ts';
 import { TAB_GROUP_ID_NONE, tabPositions, windowIdOrder } from './tabGroups.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
@@ -137,13 +137,14 @@ interface TabDetails {
   discarded: boolean;
   frozen: boolean;
   lastAccessed?: number;
+  favIconUrl?: string;
   url?: string;
   title?: string;
   windowKey?: string;
 }
 
-/** A tab's `[groupId, discarded, frozen, lastAccessed]`, null for a tab Lilo does not hold. */
-type TabFacts = [number, boolean, boolean, number | null] | null;
+/** A tab's `[groupId, discarded, frozen, lastAccessed, favIconUrl]`, null for a tab Lilo does not hold. */
+type TabFacts = [number, boolean, boolean, number | null, string | null] | null;
 
 /**
  * What Lilo tells this context of the tabs it sees: each window's key, in WebKit's window order, and its tabs' facts by index.
@@ -197,7 +198,7 @@ function stateDetails(tab: any): TabDetails | null | undefined {
   const key = windowKeys.get(tab?.windowId);
   if (!tabState || key === undefined) return undefined;
   const facts = tabState.tabs[tabState.windows.indexOf(key)]?.[tab.index];
-  return facts && { groupId: facts[0], discarded: facts[1], frozen: facts[2], lastAccessed: facts[3] ?? undefined };
+  return facts && { groupId: facts[0], discarded: facts[1], frozen: facts[2], lastAccessed: facts[3] ?? undefined, favIconUrl: facts[4] ?? undefined };
 }
 
 /** `tab` with Chrome's fields WebKit's lacks; without `details`, each takes Chrome's value for a loaded tab outside any group. */
@@ -208,6 +209,7 @@ function asChromeTab(tab: any, details?: TabDetails | null): any {
   tab.frozen = details?.frozen ?? false;
   tab.autoDiscardable = true;
   if (details?.lastAccessed !== undefined) tab.lastAccessed = details.lastAccessed;
+  if (details?.favIconUrl !== undefined) tab.favIconUrl = details.favIconUrl;
   if (tab.discarded) tab.status = 'unloaded';
   return tab;
 }
@@ -301,7 +303,7 @@ export function tabStandIns(withheldURLs: boolean): Record<string, WrappedEvent<
         return listener(shown(tab));
       };
     }),
-    onUpdated: new WrappedEvent<[number, any, any]>(() => bridgeChrome().tabs.onUpdated, (listener) => {
+    onUpdated: new GapWrappedEvent<[number, any, any]>('tabs.onUpdated', () => bridgeChrome().tabs.onUpdated, (listener) => {
       askTabState();
       return (tabId: number, changeInfo: any, tab: any) => {
         if (withheldURLs && tab?.url === '' && changeInfo) {
@@ -310,8 +312,34 @@ export function tabStandIns(withheldURLs: boolean): Record<string, WrappedEvent<
         }
         return listener(tabId, changeInfo, shown(asChromeTab(tab, eventDetails(tab))));
       };
+    }, (listeners, change: TabChange) => {
+      tabChanges = tabChanges.then(() => dispatchTabChange(listeners, change, withheldURLs)).catch(() => {});
     }),
   };
+}
+
+/** A change of the fields WebKit does not track, `changed` naming them as Chrome's `changeInfo` does. */
+interface TabChange extends TabPosition {
+  changed: string[];
+}
+
+/** Lilo's tab updates, delivered in the order they came. */
+let tabChanges: Promise<void> = Promise.resolve();
+
+/** Fires `tabs.onUpdated` with the new values the completed tab holds; a field the extension may not see is left out. */
+async function dispatchTabChange(listeners: [(...args: any[]) => unknown, unknown[]][], change: TabChange, withheldURLs: boolean): Promise<void> {
+  const tab = await tabAt(change);
+  if (typeof tab?.id !== 'number') return;
+  await completeTabs([tab], withheldURLs);
+  const changeInfo = Object.fromEntries((change.changed ?? []).flatMap((key) => (tab[key] === undefined ? [] : [[key, tab[key]]])));
+  if (Object.keys(changeInfo).length === 0) return;
+  for (const [listener] of listeners) {
+    try {
+      listener(tab.id, changeInfo, tab);
+    } catch (err) {
+      console.error(`Error in event handler: ${String(err)}`);
+    }
+  }
 }
 
 /**

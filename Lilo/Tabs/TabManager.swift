@@ -61,6 +61,8 @@ final class TabManager {
     /// Visible order of current-space tabs as last reported to extensions,
     /// used to detect reorders and fire `tabs.onMoved`. Maintained only by `emitTabMovedEventsIfNeeded`.
     var lastExtensionTabMoveOrder: [UUID] = []
+    /// The folder of each grouped tab of that order, to fire `tabs.onUpdated` with `groupId` when it changes.
+    var lastExtensionTabGroups: [UUID: UUID] = [:]
 
     /// The command bar's top hit loading out of sight for a blank tab: `load(_:inTab:)` swaps it in.
     private(set) var topHitPreload: (url: URL, tabId: UUID, engine: WKWebViewTab)?
@@ -323,6 +325,20 @@ final class TabManager {
         if new.isPinned != old.isPinned { changed.insert(.pinned) }
         if !changed.isEmpty {
             registry.controller.didChangeTabProperties(changed, for: adapter)
+        }
+        if new.faviconURL != old.faviconURL, new.faviconURL != nil { reportExtensionTabChange(of: adapter, ["favIconUrl"]) }
+    }
+
+    /// `tabs.onUpdated` for the `Tab` fields WebKit does not track, named as Chrome names them: the bridge reads their new
+    /// values off the tab it completes, from the tab state Lilo sends ahead of WebKit's reply.
+    func reportExtensionTabChange(of adapter: TabExtensionAdapter, _ fields: [String]) {
+        guard let registry = extensionRegistry, registry.hasLoadedExtensions else { return }
+        let ids = registry.listeningExtensionIds("tabs", "onUpdated")
+        guard !ids.isEmpty else { return }
+        registry.emitPositioned("tabs", "onUpdated", to: ids) { extensionId in
+            guard var change: [String: Any] = registry.tabPosition(of: adapter, extensionId: extensionId) else { return nil }
+            change["changed"] = fields
+            return change
         }
     }
 

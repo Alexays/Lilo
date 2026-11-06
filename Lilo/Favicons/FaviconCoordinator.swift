@@ -6,14 +6,14 @@ import WebKit
 @MainActor
 final class FaviconCoordinator {
     private let service: FaviconService
-    private let applyFavicon: (_ tabId: UUID, _ dataURL: String?, _ color: String?) -> Void
+    private let applyFavicon: (_ tabId: UUID, _ dataURL: String?, _ color: String?, _ iconURL: URL?) -> Void
     private var inFlight: [String: Task<FaviconService.Resolved?, Never>] = [:]
     /// Hosts where no icon resolved, and when. Without it every page load there would re-request
     /// each icon (a 404 at least).
     private var failedAt: [String: Date] = [:]
     private static let failureRetryInterval: TimeInterval = 10 * 60
 
-    init(service: FaviconService, applyFavicon: @escaping (UUID, String?, String?) -> Void) {
+    init(service: FaviconService, applyFavicon: @escaping (UUID, String?, String?, URL?) -> Void) {
         self.service = service
         self.applyFavicon = applyFavicon
     }
@@ -23,7 +23,7 @@ final class FaviconCoordinator {
     func applyCached(from tab: WKWebViewTab) -> FaviconService.Resolved? {
         guard let pageHost = tab.currentURL?.faviconKey,
               let cached = service.cached(for: pageHost) else { return nil }
-        applyFavicon(tab.id, cached.dataURL, cached.dominantColor)
+        applyFavicon(tab.id, cached.dataURL, cached.dominantColor, cached.iconURL.flatMap(URL.init(string:)))
         // Persistent data stores are keyed by profile id; ephemeral (private) ones have no identifier.
         if let profileId = tab.wkWebView.configuration.websiteDataStore.identifier {
             service.persistCachedIfUnwritten(host: pageHost, profileId: profileId)
@@ -106,15 +106,15 @@ final class FaviconCoordinator {
                 }
                 self.failedAt[pageHost] = nil
                 self.service.seed(host: pageHost, dataURL: resolved.dataURL, dominantColor: resolved.color, iconURL: resolvedURL?.absoluteString, profileId: profileId)
-                return FaviconService.Resolved(dataURL: resolved.dataURL, dominantColor: resolved.color)
+                return FaviconService.Resolved(dataURL: resolved.dataURL, dominantColor: resolved.color, iconURL: resolvedURL?.absoluteString)
             }
             inFlight[pageHost] = fetch
         }
 
         Task { @MainActor [weak self] in
             guard let resolved = await fetch.value, let self,
-                  resolved.dataURL != shown?.dataURL || resolved.dominantColor != shown?.dominantColor else { return }
-            self.applyFavicon(tabId, resolved.dataURL, resolved.dominantColor)
+                  resolved.dataURL != shown?.dataURL || resolved.dominantColor != shown?.dominantColor || resolved.iconURL != shown?.iconURL else { return }
+            self.applyFavicon(tabId, resolved.dataURL, resolved.dominantColor, resolved.iconURL.flatMap(URL.init(string:)))
         }
     }
 

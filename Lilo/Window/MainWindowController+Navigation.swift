@@ -23,13 +23,18 @@ extension MainWindowController {
         return new
     }
 
-    func updateTabFavicon(faviconDataURL: String?, dominantColor color: String?, forTabId tabId: UUID) {
+    func updateTabFavicon(faviconDataURL: String?, dominantColor color: String?, iconURL: URL?, forTabId tabId: UUID) {
         guard let faviconDataURL else { return }
         // favicon is a durable field (not part of the runtime overlay), so the O(1) durable lookup
         // is equivalent to the full projected read here without materializing the whole sidebar.
-        guard context.browserState.durableTab(for: tabId)?.tab.faviconDataURL != faviconDataURL else { return }
+        guard context.browserState.durableTab(for: tabId)?.tab.faviconDataURL != faviconDataURL else {
+            // The same image from another address: only extensions see it.
+            if let iconURL, tabManager.tab(for: tabId)?.faviconURL != iconURL { updateRuntimeTab(id: tabId) { $0.faviconURL = iconURL } }
+            return
+        }
         guard let updatedTab = updateRuntimeTab(id: tabId, mutate: { tab in
             tab.faviconDataURL = faviconDataURL
+            tab.faviconURL = iconURL
             tab.faviconDominantColor = color
             // The home page's icon follows its site: signing in can land on another path of the same host.
             let host = tab.url?.host?.lowercased()
@@ -220,6 +225,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             if resolvedURL == nil || previousURL?.host?.lowercased() != resolvedURL?.host?.lowercased() {
                 t.faviconDataURL = nil
                 t.faviconDominantColor = nil
+                t.faviconURL = nil
                 shouldRefreshFavicon = resolvedURL != nil
             }
             t.url = resolvedURL
