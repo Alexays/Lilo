@@ -236,7 +236,8 @@ commit. Title edits run only this lightweight workflow. Maintainers should requi
 - **One engine.** WebKit only, and direct dependencies only.
 - **Comments** say what the code cannot: a constraint, a non-obvious why, a deliberate oddity.
   Never what the next line does, or what the code used to do.
-- **Formatting** follows `.editorconfig` (4 spaces in Swift and shell, 2 elsewhere) and
+- **Formatting** follows `.editorconfig` (4 spaces in Swift and shell, 2 elsewhere, while TypeScript
+  and Svelte in `lilo-ui/` keep the tabs or spaces each file already uses) and
   `.swiftlint.yml`, which `make swiftlint` enforces in strict mode.
 
 ## Common tasks
