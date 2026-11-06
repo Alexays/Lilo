@@ -789,6 +789,7 @@
 		"ariaLabel": "Karty"
 	},
 	"bottomBar": {
+		"switchedTo": "Przełączono na: {name}",
 		"library": "Pobrane i zarchiwizowane karty",
 		"downloads": "Pobrane",
 		"downloadsActiveCount": "Pobrane, aktywne: {count}",
@@ -797,6 +798,10 @@
 		"signedInAs": "{space}, zalogowano jako {profile}"
 	},
 	"sidebar": {
+		"resize": "Szerokość paska bocznego",
+		"movedToPosition": "Przeniesiono na pozycję {position} z {count}",
+		"movedInto": "Przeniesiono do: {name}",
+		"movedOutOf": "Wyjęto z: {name}",
 		"ariaLabel": "Pasek boczny"
 	},
 	"spaceBar": {
@@ -2249,6 +2254,7 @@
 		"Delete Folder": "Usuń folder",
 		"Edit Folder": "Edytuj folder",
 		"Edit...": "Edytuj...",
+		"Back to Home Page": "Wróć do strony głównej",
 		"New Folder": "Nowy folder",
 		"Home": "Start",
 		"Default": "Domyślny",

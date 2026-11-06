@@ -771,6 +771,7 @@
 		"ariaLabel": "分頁"
 	},
 	"bottomBar": {
+		"switchedTo": "已切換到 {name}",
 		"library": "下載項目與已封存的分頁",
 		"downloads": "下載項目",
 		"downloadsActiveCount": "下載項目，{count} 個進行中",
@@ -779,6 +780,10 @@
 		"signedInAs": "{space}，以 {profile} 登入"
 	},
 	"sidebar": {
+		"resize": "側邊欄寬度",
+		"movedToPosition": "已移到第 {position} 位，共 {count} 項",
+		"movedInto": "已移入 {name}",
+		"movedOutOf": "已移出 {name}",
 		"ariaLabel": "側邊欄"
 	},
 	"spaceBar": {
@@ -2205,6 +2210,7 @@
 		"Delete Folder": "刪除資料夾",
 		"Edit Folder": "編輯資料夾",
 		"Edit...": "編輯...",
+		"Back to Home Page": "返回首頁",
 		"New Folder": "新增資料夾",
 		"Home": "首頁",
 		"Default": "預設",

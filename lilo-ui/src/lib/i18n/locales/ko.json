@@ -771,6 +771,7 @@
 		"ariaLabel": "탭"
 	},
 	"bottomBar": {
+		"switchedTo": "{name}(으)로 전환함",
 		"library": "다운로드 및 보관된 탭",
 		"downloads": "다운로드",
 		"downloadsActiveCount": "다운로드, {count}개 진행 중",
@@ -779,6 +780,10 @@
 		"signedInAs": "{space}, {profile} 프로필로 로그인됨"
 	},
 	"sidebar": {
+		"resize": "사이드바 너비",
+		"movedToPosition": "{count}개 중 {position}번째로 이동함",
+		"movedInto": "{name}(으)로 이동함",
+		"movedOutOf": "{name}에서 꺼냄",
 		"ariaLabel": "사이드바"
 	},
 	"spaceBar": {
@@ -2205,6 +2210,7 @@
 		"Delete Folder": "폴더 삭제",
 		"Edit Folder": "폴더 편집",
 		"Edit...": "편집...",
+		"Back to Home Page": "홈페이지로 돌아가기",
 		"New Folder": "새 폴더",
 		"Home": "홈",
 		"Default": "기본",

@@ -771,6 +771,7 @@
 		"ariaLabel": "标签页"
 	},
 	"bottomBar": {
+		"switchedTo": "已切换到 {name}",
 		"library": "下载项和已归档的标签页",
 		"downloads": "下载",
 		"downloadsActiveCount": "下载，{count} 项进行中",
@@ -779,6 +780,10 @@
 		"signedInAs": "{space}，已登录为 {profile}"
 	},
 	"sidebar": {
+		"resize": "边栏宽度",
+		"movedToPosition": "已移到第 {position} 位，共 {count} 项",
+		"movedInto": "已移入 {name}",
+		"movedOutOf": "已移出 {name}",
 		"ariaLabel": "侧边栏"
 	},
 	"spaceBar": {
@@ -2205,6 +2210,7 @@
 		"Delete Folder": "删除文件夹",
 		"Edit Folder": "编辑文件夹",
 		"Edit...": "编辑...",
+		"Back to Home Page": "返回主页",
 		"New Folder": "新建文件夹",
 		"Home": "主页",
 		"Default": "默认",

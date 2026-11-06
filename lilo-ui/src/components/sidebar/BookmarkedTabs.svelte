@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { tooltipSide } from "../../stores/tabLayout.svelte";
   import { translateFlip } from "../../lib/motion/translateFlip";
   import { springEase } from "../../lib/motion/spring";
@@ -51,6 +52,7 @@
   import { closeTabEditor, getEditingTab } from "../../stores/tabRename.svelte";
   import SavedTabEditor from "./SavedTabEditor.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import { announce } from "../../lib/announce";
   import { titleUnread, unreadBadgeText } from "../../lib/titleUnread";
 
   let {
@@ -190,11 +192,59 @@
     tabActions.switchTo(bookmark.id);
   }
 
+  function bookmarkAriaLabel(bookmark: { id: string; title?: string; customTitle?: string; url?: string; awaitingInputSince?: number }, unreadBadge: string): string {
+    return [
+      bookmarkLabel(bookmark),
+      bookmark.awaitingInputSince && bookmark.id !== activeTabId ? t("tabItem.terminalAttention") : "",
+      unreadBadge === "dot" ? t("tabItem.unread") : unreadBadge ? t("tabItem.unreadCount", { count: unreadBadge }) : "",
+    ].filter(Boolean).join(", ");
+  }
+
+  let listEl: HTMLElement | undefined = $state();
+  // A moved tile remounts in its new place once the host echoes the move: focus follows it there.
+  let pendingFocusId: string | null = null;
+  $effect(() => {
+    void bookmarkIdsKey;
+    const id = pendingFocusId;
+    if (!id) return;
+    void tick().then(() => {
+      if (pendingFocusId !== id) return;
+      pendingFocusId = null;
+      listEl?.querySelector<HTMLElement>(`[data-dnd-item-id="${CSS.escape(id)}"] .bookmark-tile`)?.focus();
+    });
+  });
+
+  // Option-Left and Option-Right move the tile as a drag would.
+  function moveBookmark(id: string, key: string): void {
+    const ids = bookmarkBaseItems.map((item) => item.id);
+    const index = ids.indexOf(id);
+    const to = key === "ArrowLeft" ? index - 1 : index + 1;
+    if (index < 0 || to < 0 || to >= ids.length) return;
+    const others = ids.filter((other) => other !== id);
+    pendingFocusId = id;
+    sidebarActions.commitDrop({
+      type: "insert", kind: "tab", id, section: "bookmarked", parentFolderId: null,
+      fallbackIndex: to, insertAfterId: others[to - 1] ?? null, insertBeforeId: others[to] ?? null,
+    });
+    announce(t("sidebar.movedToPosition", { position: to + 1, count: ids.length }));
+  }
+
   function handleBookmarkTileKeydown(
     event: KeyboardEvent,
     bookmark: { id: string },
   ): void {
     if (event.defaultPrevented) return;
+    const tile = event.currentTarget as HTMLElement;
+    if ((event.key === "F10" && event.shiftKey) || event.key === "ContextMenu") {
+      event.preventDefault();
+      tile.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+      return;
+    }
+    if (event.altKey && !event.metaKey && !event.ctrlKey && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+      event.preventDefault();
+      if (!isMovingToSpace) moveBookmark(bookmark.id, event.key);
+      return;
+    }
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     openBookmark(bookmark);
@@ -235,6 +285,7 @@
       class:idle-empty={!isVisible}
       data-drop-label={t("bookmarks.dropToBookmark")}
       role="list"
+      bind:this={listEl}
       aria-hidden={!isVisible}
       use:dndZone={{
         id: bookmarkZone.id,
@@ -258,12 +309,13 @@
           {@const bookmark = bookmarksById.get(entry.id)}
           {#if bookmark}
             {@const unreadBadge = bookmarkUnread(bookmark)}
-            <div role="presentation">
+            <div role="listitem">
               <div
                 role="button"
                 tabindex={interactive ? 0 : -1}
                 class="bookmark-tile"
                 class:active={bookmark.id === activeTabId}
+                aria-current={bookmark.id === activeTabId ? "true" : undefined}
                 class:editing={bookmark.id === editing?.bookmark.id}
                 class:closed={bookmark.isClosed}
                 style={bookmark.faviconDominantColor
@@ -277,11 +329,7 @@
                   placement: tooltipSide(),
                   disabled: dragActive || previewedTabId === bookmark.id,
                 }}
-                aria-label={unreadBadge === "dot"
-                  ? `${bookmarkLabel(bookmark)}, ${t("tabItem.unread")}`
-                  : unreadBadge
-                    ? `${bookmarkLabel(bookmark)}, ${t("tabItem.unreadCount", { count: unreadBadge })}`
-                    : bookmarkLabel(bookmark)}
+                aria-label={bookmarkAriaLabel(bookmark, unreadBadge)}
                 onclick={() => openBookmark(bookmark)}
                 onkeydown={(event) => handleBookmarkTileKeydown(event, bookmark)}
                 oncontextmenu={(e) => handleBookmarkContextMenu(bookmark, e)}

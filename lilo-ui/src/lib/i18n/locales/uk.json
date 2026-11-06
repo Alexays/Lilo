@@ -789,6 +789,7 @@
 		"ariaLabel": "Вкладки"
 	},
 	"bottomBar": {
+		"switchedTo": "Перемкнуто на {name}",
 		"library": "Завантаження та архівовані вкладки",
 		"downloads": "Завантаження",
 		"downloadsActiveCount": "Завантаження, активних: {count}",
@@ -797,6 +798,10 @@
 		"signedInAs": "{space}, вхід як {profile}"
 	},
 	"sidebar": {
+		"resize": "Ширина бічної панелі",
+		"movedToPosition": "Переміщено на позицію {position} з {count}",
+		"movedInto": "Переміщено до {name}",
+		"movedOutOf": "Вийнято з {name}",
 		"ariaLabel": "Бічна панель"
 	},
 	"spaceBar": {
@@ -2249,6 +2254,7 @@
 		"Delete Folder": "Видалити папку",
 		"Edit Folder": "Редагувати папку",
 		"Edit...": "Редагувати...",
+		"Back to Home Page": "Повернутися на домашню сторінку",
 		"New Folder": "Нова папка",
 		"Home": "Головна",
 		"Default": "Типовий",

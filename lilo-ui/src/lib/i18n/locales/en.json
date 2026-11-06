@@ -771,6 +771,7 @@
 		"ariaLabel": "Tabs"
 	},
 	"bottomBar": {
+		"switchedTo": "Switched to {name}",
 		"library": "Downloads and archived tabs",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} active",
@@ -779,6 +780,10 @@
 		"signedInAs": "{space}, signed in as {profile}"
 	},
 	"sidebar": {
+		"resize": "Sidebar width",
+		"movedToPosition": "Moved to position {position} of {count}",
+		"movedInto": "Moved into {name}",
+		"movedOutOf": "Moved out of {name}",
 		"ariaLabel": "Sidebar"
 	},
 	"spaceBar": {
@@ -2205,6 +2210,7 @@
 		"Delete Folder": "Delete Folder",
 		"Edit Folder": "Edit Folder",
 		"Edit...": "Edit...",
+		"Back to Home Page": "Back to Home Page",
 		"New Folder": "New Folder",
 		"Home": "Home",
 		"Default": "Default",

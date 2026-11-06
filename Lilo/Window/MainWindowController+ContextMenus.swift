@@ -95,6 +95,9 @@ extension MainWindowController {
         if tab.isPinned || tab.isBookmarked {
             let homeURL = (tab.homeURL ?? tab.url)?.absoluteString ?? ""
             menu.addItem("Edit...".localized, icon: .edit) { self.bridgeRouter.send(event: "beginTabEdit", data: ["id": tabId, "homeURL": homeURL]) }
+            if let home = tab.homeURL, tab.url != nil, !tab.matchesHomeURL(tab.url) {
+                menu.addItem("Back to Home Page".localized, icon: .home) { self.tabManager.load(home, inTab: uuid) }
+            }
         }
         let actions = TabContextMenuActions.forTab(tab)
         if actions.contains(.createFolderFromTab) {

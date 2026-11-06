@@ -75,6 +75,7 @@
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
   import { on } from "../../lib/bridge";
   import { t } from "../../lib/i18n/state.svelte";
+  import { announce } from "../../lib/announce";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import { isUndoRevealing } from "../../stores/undoToast.svelte";
@@ -985,10 +986,13 @@
     const others = items.filter((item) => item.id !== id);
     let parentFolderId = parentId;
     let anchors: InsertAnchors;
+    let message: string;
     if (key === "ArrowUp" && index > 0) {
       anchors = anchorsAt(others, index - 1);
+      message = t("sidebar.movedToPosition", { position: index, count: items.length });
     } else if (key === "ArrowDown" && index < items.length - 1) {
       anchors = anchorsAt(others, index + 1);
+      message = t("sidebar.movedToPosition", { position: index + 2, count: items.length });
     } else if (key === "ArrowRight" && items[index - 1]?.kind === "folder") {
       const target = foldersById.get(items[index - 1].id);
       if (!target || target.isSplit || target.isLocked || getConversationTab(target.id, spaceId)) return;
@@ -996,11 +1000,13 @@
       const children = visibleChildren(target.id);
       parentFolderId = target.id;
       anchors = anchorsAt(children, children.length);
+      message = t("sidebar.movedInto", { name: target.name });
       if (target.isCollapsed) folderActions.setCollapsed(target.id, false);
     } else if (key === "ArrowLeft" && parentId) {
       parentFolderId = parentFolderIdById.get(parentId) ?? null;
       const outer = parentFolderId ? visibleChildren(parentFolderId) : rootItems;
       anchors = anchorsAt(outer, outer.findIndex((item) => item.id === parentId) + 1);
+      message = t("sidebar.movedOutOf", { name: foldersById.get(parentId)?.name ?? "" });
     } else {
       return;
     }
@@ -1010,6 +1016,7 @@
         ? { type: "insert", kind, id, section, parentFolderId, ...anchors }
         : { type: "insert", kind, id, section, parentFolderId: null, ...anchors },
     );
+    announce(message);
   }
 
   // Arrow keys walk the visible rows, as in a Finder sidebar; Option-arrows move the row.

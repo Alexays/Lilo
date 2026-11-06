@@ -771,6 +771,7 @@
 		"ariaLabel": "Schede"
 	},
 	"bottomBar": {
+		"switchedTo": "Passato a {name}",
 		"library": "Download e schede archiviate",
 		"downloads": "Download",
 		"downloadsActiveCount": "Download, {count} attivi",
@@ -779,6 +780,10 @@
 		"signedInAs": "{space}, accesso come {profile}"
 	},
 	"sidebar": {
+		"resize": "Larghezza della barra laterale",
+		"movedToPosition": "Spostato in posizione {position} di {count}",
+		"movedInto": "Spostato in {name}",
+		"movedOutOf": "Spostato fuori da {name}",
 		"ariaLabel": "Barra laterale"
 	},
 	"spaceBar": {
@@ -2205,6 +2210,7 @@
 		"Delete Folder": "Elimina cartella",
 		"Edit Folder": "Modifica cartella",
 		"Edit...": "Modifica...",
+		"Back to Home Page": "Torna alla pagina iniziale",
 		"New Folder": "Nuova cartella",
 		"Home": "Home",
 		"Default": "Predefinito",

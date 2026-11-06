@@ -771,6 +771,7 @@
 		"ariaLabel": "Sekmeler"
 	},
 	"bottomBar": {
+		"switchedTo": "{name} alanına geçildi",
 		"library": "İndirmeler ve arşivlenen sekmeler",
 		"downloads": "İndirilenler",
 		"downloadsActiveCount": "İndirilenler, {count} etkin",
@@ -779,6 +780,10 @@
 		"signedInAs": "{space}, {profile} olarak oturum açıldı"
 	},
 	"sidebar": {
+		"resize": "Kenar çubuğu genişliği",
+		"movedToPosition": "{count} içinde {position}. konuma taşındı",
+		"movedInto": "{name} içine taşındı",
+		"movedOutOf": "{name} dışına taşındı",
 		"ariaLabel": "Kenar çubuğu"
 	},
 	"spaceBar": {
@@ -2205,6 +2210,7 @@
 		"Delete Folder": "Klasörü Sil",
 		"Edit Folder": "Klasörü Düzenle",
 		"Edit...": "Düzenle...",
+		"Back to Home Page": "Ana sayfaya dön",
 		"New Folder": "Yeni Klasör",
 		"Home": "Başlangıç",
 		"Default": "Varsayılan",

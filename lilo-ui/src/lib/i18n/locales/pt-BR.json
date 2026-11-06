@@ -771,6 +771,7 @@
 		"ariaLabel": "Abas"
 	},
 	"bottomBar": {
+		"switchedTo": "Alternado para {name}",
 		"library": "Downloads e abas arquivadas",
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} ativos",
@@ -779,6 +780,10 @@
 		"signedInAs": "{space}, conectado como {profile}"
 	},
 	"sidebar": {
+		"resize": "Largura da barra lateral",
+		"movedToPosition": "Movido para a posição {position} de {count}",
+		"movedInto": "Movido para {name}",
+		"movedOutOf": "Retirado de {name}",
 		"ariaLabel": "Barra lateral"
 	},
 	"spaceBar": {
@@ -2205,6 +2210,7 @@
 		"Delete Folder": "Apagar pasta",
 		"Edit Folder": "Editar pasta",
 		"Edit...": "Editar...",
+		"Back to Home Page": "Voltar à página inicial",
 		"New Folder": "Nova pasta",
 		"Home": "Início",
 		"Default": "Padrão",

@@ -771,6 +771,7 @@
 		"ariaLabel": "Pestañas"
 	},
 	"bottomBar": {
+		"switchedTo": "Cambiado a {name}",
 		"library": "Descargas y pestañas archivadas",
 		"downloads": "Descargas",
 		"downloadsActiveCount": "Descargas, {count} activas",
@@ -779,6 +780,10 @@
 		"signedInAs": "{space}, sesión iniciada como {profile}"
 	},
 	"sidebar": {
+		"resize": "Ancho de la barra lateral",
+		"movedToPosition": "Movido a la posición {position} de {count}",
+		"movedInto": "Movido a {name}",
+		"movedOutOf": "Sacado de {name}",
 		"ariaLabel": "Barra lateral"
 	},
 	"spaceBar": {
@@ -2205,6 +2210,7 @@
 		"Delete Folder": "Eliminar carpeta",
 		"Edit Folder": "Editar carpeta",
 		"Edit...": "Editar...",
+		"Back to Home Page": "Volver a la página de inicio",
 		"New Folder": "Nueva carpeta",
 		"Home": "Inicio",
 		"Default": "Predeterminado",
