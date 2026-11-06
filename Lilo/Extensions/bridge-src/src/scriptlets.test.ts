@@ -895,6 +895,27 @@ describe("node text scriptlets", () => {
 		readyListeners.forEach((cb) => cb());
 		assert.equal(observers[0].connected, false);
 	});
+
+	test("a frame's node text rules share one observer and edit in order", () => {
+		run(
+			{
+				[HOST]: [
+					["replace-node-text", ["script", "/a/", "b", "sedCount", "1"]],
+					["replace-node-text", ["script", "/b/", "c", "stay", "1"]]
+				]
+			},
+			HOST,
+			""
+		);
+		assert.equal(observers.length, 1);
+		const first = { nodeName: "SCRIPT", textContent: "a" };
+		const second = { nodeName: "SCRIPT", textContent: "a" };
+		observers[0].cb([{ addedNodes: [first, second] }]);
+		assert.deepEqual([first.textContent, second.textContent], ["c", "a"]);
+		(globalThis as unknown as { document: { readyState: string } }).document.readyState = "interactive";
+		readyListeners.forEach((cb) => cb());
+		assert.equal(observers[0].connected, true, "a stay rule keeps observing");
+	});
 });
 
 describe("dispatch", () => {
