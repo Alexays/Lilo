@@ -588,6 +588,7 @@ enum SpaceTabStateRepair {
         seenNodeIds: inout Set<UUID>
     ) -> [StoredSidebarNode] {
         var result: [StoredSidebarNode] = []
+        result.reserveCapacity(nodes.count)
 
         for node in nodes {
             guard seenNodeIds.insert(node.id).inserted else { continue }

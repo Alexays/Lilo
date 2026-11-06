@@ -556,7 +556,7 @@ struct SpaceTab {
     private mutating func finishMutation() {
         let interval = PerfSignposts.browserState.beginInterval("repairAndIndex")
         state = SpaceTabStateRepair.repaired(state)
-        index = SidebarNodeIndex(tree: state.tree)
+        index = SidebarNodeIndex(tree: state.tree, capacity: index.nodePathById.count)
         structureToken = UUID()
         durableRevision &+= 1
         PerfSignposts.browserState.endInterval("repairAndIndex", interval)
