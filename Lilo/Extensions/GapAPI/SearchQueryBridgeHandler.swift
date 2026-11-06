@@ -7,14 +7,13 @@ import WebKit
 final class SearchQueryBridgeHandler: GapHandler {
     let gapActions: Set<String> = ["search.url"]
 
-    private static let google = (name: "Google", urlTemplate: "https://www.google.com/search?q=%s")
-    /// Mirrors BUILTIN_SEARCH_ENGINES in lilo-ui/src/lib/searchEngineModel.ts, the fallback when
-    /// the `searchEngines` setting is unset or invalid.
+    /// Mirrors BUILTIN_SEARCH_ENGINES in lilo-ui/src/lib/searchEngineModel.ts, the list when the
+    /// `searchEngines` setting is unset or holds no valid engine.
     private static let builtinEngines = [
-        "google": google,
-        "duckduckgo": (name: "DuckDuckGo", urlTemplate: "https://duckduckgo.com/?q=%s"),
-        "bing": (name: "Bing", urlTemplate: "https://www.bing.com/search?q=%s"),
-        "brave": (name: "Brave Search", urlTemplate: "https://search.brave.com/search?q=%s")
+        (id: "google", name: "Google", urlTemplate: "https://www.google.com/search?q=%s"),
+        (id: "duckduckgo", name: "DuckDuckGo", urlTemplate: "https://duckduckgo.com/?q=%s"),
+        (id: "bing", name: "Bing", urlTemplate: "https://www.bing.com/search?q=%s"),
+        (id: "brave", name: "Brave Search", urlTemplate: "https://search.brave.com/search?q=%s")
     ]
 
     func handle(_ call: GapCall) async -> Any? {
@@ -23,17 +22,18 @@ final class SearchQueryBridgeHandler: GapHandler {
 
     /// The user's default search engine.
     static func searchEngine(settings: SettingsStore?) -> (name: String, urlTemplate: String) {
-        let engineId = settings?.searchEngine ?? "google"
+        // Parsed and chosen as the omnibox does: the engine by id, else the first of the list.
         let custom = (settings?.get("searchEngines")
-            .flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) as? [[String: Any]] } ?? [])
-            .compactMap { engine -> (id: String?, engine: (name: String, urlTemplate: String))? in
-                guard let name = engine["name"] as? String, let template = engine["urlTemplate"] as? String else { return nil }
-                return (engine["id"] as? String, (name, template))
+            .flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) as? [Any] } ?? [])
+            .compactMap { raw -> (id: String, name: String, urlTemplate: String)? in
+                let engine = raw as? [String: Any]
+                let fields = ["id", "name", "urlTemplate"].map { (engine?[$0] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
+                return fields.contains("") ? nil : (fields[0], fields[1], fields[2])
             }
-        return custom.first { $0.id == engineId }?.engine
-            ?? builtinEngines[engineId]
-            ?? custom.first?.engine
-            ?? google
+        let engines = custom.isEmpty ? builtinEngines : custom
+        let engineId = settings?.searchEngine ?? "google"
+        let engine = engines.first { $0.id == engineId } ?? engines[0]
+        return (engine.name, engine.urlTemplate)
     }
 
     /// The results page of the user's default search engine for `text`.
