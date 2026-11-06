@@ -226,7 +226,9 @@ extension MainWindowController {
 
     @objc func reloadCurrentPageFromOrigin(_ sender: Any?) {
         if let engine = focusedEngineTab, engine !== tabManager.activeEngineTab { return engine.reloadFromOrigin() }
-        if let host = tabManager.activeTab?.url?.faviconKey { context.faviconService.clear(for: host) }
+        if let host = tabManager.activeTab?.url?.faviconKey, let space = context.spaceManager?.space(with: tabManager.currentSpaceId) {
+            context.faviconService.clear(for: host, partition: space.dataStoreId)
+        }
         tabManager.reloadActiveTab(fromOrigin: true)
     }
 

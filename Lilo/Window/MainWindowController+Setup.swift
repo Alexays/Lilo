@@ -309,7 +309,7 @@ extension MainWindowController {
                 }) else { return nil }
                 for entry in loaded.favicons {
                     self.context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
-                                                             persistedAt: [preloadSpace.profileId: entry.updatedAt])
+                                                             partition: preloadSpace.profileId, persistedAt: entry.updatedAt)
                 }
                 if loadsFavicons { self.context.lastFaviconWarmProfileId = preloadSpace.profileId }
                 return loaded.state
@@ -625,7 +625,8 @@ extension MainWindowController {
                 },
                 otherBookmarksTitle: { unsafe String(format: "Other Bookmarks (%@)".localized, $0) },
                 warmFavicons: { [weak self] entries in
-                    entries.forEach { self?.context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor) }
+                    guard let self, let profileId = profileContext?.profileId else { return }
+                    entries.forEach { self.context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor, partition: profileId) }
                 }
             ))
         }))

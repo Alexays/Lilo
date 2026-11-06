@@ -1,42 +1,49 @@
 import WebKit
 
 /// Owns favicon resolution for tabs: cache hits, restored-tab cache warming, and loading the page's
-/// link icons through WebKit with in-flight coalescing per host. The actual tab write is delegated
+/// link icons through WebKit with in-flight coalescing per data store and host. The tab write is delegated
 /// back via the `applyFavicon` closure (which routes through MainWindowController's runtime/store update).
 @MainActor
 final class FaviconCoordinator {
     private let service: FaviconService
     private let applyFavicon: (_ tabId: UUID, _ dataURL: String?, _ color: String?, _ iconURL: URL?) -> Void
-    private var inFlight: [String: Task<FaviconService.Resolved?, Never>] = [:]
+    private let privateSpaceId: (WKWebsiteDataStore) -> UUID?
+    private var inFlight: [FaviconService.Key: Task<FaviconService.Resolved?, Never>] = [:]
     /// Hosts where no icon resolved, and when. Without it every page load there would re-request
     /// each icon (a 404 at least).
-    private var failedAt: [String: Date] = [:]
+    private var failedAt: [FaviconService.Key: Date] = [:]
     private static let failureRetryInterval: TimeInterval = 10 * 60
 
-    init(service: FaviconService, applyFavicon: @escaping (UUID, String?, String?, URL?) -> Void) {
+    init(service: FaviconService, privateSpaceId: @escaping (WKWebsiteDataStore) -> UUID?,
+         applyFavicon: @escaping (UUID, String?, String?, URL?) -> Void) {
         self.service = service
+        self.privateSpaceId = privateSpaceId
         self.applyFavicon = applyFavicon
+    }
+
+    /// The cache partition of the tab's data store: the profile id a persistent store goes by, else the
+    /// private space owning the ephemeral one. Nil for a store neither owns, whose tab gets no icon.
+    private func partition(of tab: WKWebViewTab) -> UUID? {
+        let store = tab.wkWebView.configuration.websiteDataStore
+        return store.identifier ?? privateSpaceId(store)
     }
 
     /// Show a cached favicon immediately if available, expired or not. Returns the icon shown.
     @discardableResult
     func applyCached(from tab: WKWebViewTab) -> FaviconService.Resolved? {
-        guard let pageHost = tab.currentURL?.faviconKey,
-              let cached = service.cached(for: pageHost) else { return nil }
+        guard let pageHost = tab.currentURL?.faviconKey, let partition = partition(of: tab),
+              let cached = service.cached(for: pageHost, partition: partition) else { return nil }
         applyFavicon(tab.id, cached.dataURL, cached.dominantColor, cached.iconURL.flatMap(URL.init(string:)))
-        // Persistent data stores are keyed by profile id; ephemeral (private) ones have no identifier.
-        if let profileId = tab.wkWebView.configuration.websiteDataStore.identifier {
-            service.persistCachedIfUnwritten(host: pageHost, profileId: profileId)
-        }
+        service.persistCachedIfUnwritten(host: pageHost, partition: partition)
         return cached
     }
 
     /// Seed the favicon cache from already-known favicons (restored tabs) so navigating to
     /// these hosts doesn't re-download. Called when a space's tabs enter the runtime.
-    func warm(from tabs: [Tab]) {
+    func warm(from tabs: [Tab], partition: UUID) {
         for tab in tabs {
             guard let dataURL = tab.faviconDataURL, let host = tab.url?.faviconKey else { continue }
-            service.warmIfAbsent(host: host, dataURL: dataURL, dominantColor: tab.faviconDominantColor)
+            service.warmIfAbsent(host: host, dataURL: dataURL, dominantColor: tab.faviconDominantColor, partition: partition)
         }
     }
 
@@ -50,18 +57,17 @@ final class FaviconCoordinator {
         // A site can switch icons on the same host (after signing in, say): an icon the page no
         // longer offers is refetched before its TTL runs out.
         let offered = shown?.iconURL.map { url in icons.contains { $0.url.absoluteString == url } } ?? false
-        guard let pageHost = tab.currentURL?.faviconKey, (shown?.isExpired ?? true) || !offered,
-              failedAt[pageHost].map({ Date().timeIntervalSince($0) >= Self.failureRetryInterval }) ?? true,
+        let key = tab.currentURL?.faviconKey.flatMap { host in partition(of: tab).map { FaviconService.Key(partition: $0, host: host) } }
+        guard let key, (shown?.isExpired ?? true) || !offered,
+              failedAt[key].map({ Date().timeIntervalSince($0) >= Self.failureRetryInterval }) ?? true,
               !icons.isEmpty else {
             icons.forEach { $0.decide(nil) }
             return
         }
 
         let tabId = tab.id
-        // Persistent data stores are keyed by profile id; ephemeral (private) ones have no identifier.
-        let profileId = tab.wkWebView.configuration.websiteDataStore.identifier
         let fetch: Task<FaviconService.Resolved?, Never>
-        if let existing = inFlight[pageHost] {
+        if let existing = inFlight[key] {
             icons.forEach { $0.decide(nil) }
             fetch = existing
         } else {
@@ -95,24 +101,25 @@ final class FaviconCoordinator {
                     }
                 }
                 guard let self else { return nil }
-                self.inFlight[pageHost] = nil
+                self.inFlight[key] = nil
                 guard let resolved else {
                     // Offline or a slow link is no verdict on the host: retry on its next page load.
                     guard NetworkPathStatus.shared.isSatisfied, !timedOut else { return nil }
                     let now = Date()
                     self.failedAt = self.failedAt.filter { now.timeIntervalSince($0.value) < Self.failureRetryInterval }
-                    self.failedAt[pageHost] = now
+                    self.failedAt[key] = now
                     return nil
                 }
-                self.failedAt[pageHost] = nil
-                self.service.seed(host: pageHost, dataURL: resolved.dataURL, dominantColor: resolved.color, iconURL: resolvedURL?.absoluteString, profileId: profileId)
+                self.failedAt[key] = nil
+                self.service.seed(host: key.host, dataURL: resolved.dataURL, dominantColor: resolved.color, iconURL: resolvedURL?.absoluteString, partition: key.partition)
                 return FaviconService.Resolved(dataURL: resolved.dataURL, dominantColor: resolved.color, iconURL: resolvedURL?.absoluteString)
             }
-            inFlight[pageHost] = fetch
+            inFlight[key] = fetch
         }
 
-        Task { @MainActor [weak self] in
-            guard let resolved = await fetch.value, let self,
+        Task { @MainActor [weak self, weak tab] in
+            // The tab may have moved to another host while the icon loaded: the cache keeps it, the tab does not.
+            guard let resolved = await fetch.value, let self, tab?.currentURL?.faviconKey == key.host,
                   resolved.dataURL != shown?.dataURL || resolved.dominantColor != shown?.dominantColor || resolved.iconURL != shown?.iconURL else { return }
             self.applyFavicon(tabId, resolved.dataURL, resolved.dominantColor, resolved.iconURL.flatMap(URL.init(string:)))
         }

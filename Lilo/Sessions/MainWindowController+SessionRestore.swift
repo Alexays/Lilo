@@ -270,7 +270,7 @@ extension MainWindowController {
                 let entries = (try? await Task.detached(priority: .utility) { try store.all() }.value) ?? []
                 for entry in entries {
                     context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
-                                                        persistedAt: [profileId: entry.updatedAt])
+                                                        partition: profileId, persistedAt: entry.updatedAt)
                 }
                 context.lastFaviconWarmProfileId = profileId
             }
@@ -458,9 +458,10 @@ extension MainWindowController {
         // Sanitize at ingest: disk state is the only entry point for malformed urls/titles, so
         // every snapshot in the store is trusted and activation never re-sanitizes.
         var restoredTabs = sanitizeTabs(projection.tabs, spaceId: space.id)
-        // No database before setup (and in tests): rehydrate from the in-memory cache only.
-        let faviconStore = (try? context.dbManager?.pool(for: space.profileId)).map { FaviconStore(dbPool: $0) }
-        context.faviconService.rehydrateRestoredTabs(&restoredTabs, store: faviconStore, profileId: space.profileId)
+        // No database before setup (and in tests): rehydrate from the in-memory cache only. A private
+        // space never takes its profile's icons: they would spare it requests the profile made.
+        let faviconStore = space.isPrivate ? nil : (try? context.dbManager?.pool(for: space.profileId)).map { FaviconStore(dbPool: $0) }
+        context.faviconService.rehydrateRestoredTabs(&restoredTabs, partition: space.dataStoreId, store: faviconStore)
         let activeTabId = restorableActiveTabId(
             preferred: space.activeTabId ?? state.activeTabId,
             in: restoredTabs

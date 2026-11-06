@@ -195,12 +195,13 @@ function initHistoryStore(): void {
 	_listening = true;
 
 	on("historyPage", (data) => {
+		// The native side sends each favicon once, so a stale reply's icons are still kept.
+		if (Object.keys(data.favicons).length) _favicons = { ..._favicons, ...data.favicons };
 		if (data.requestId !== _requestId) return;
 		_shownFilter = _requestedFilter;
 		_rows = _appending ? [..._rows, ...data.rows] : data.rows;
 		_batches = _appending ? _batches + 1 : 1;
 		_nextBefore = data.nextBefore;
-		if (Object.keys(data.favicons).length) _favicons = { ..._favicons, ...data.favicons };
 		_loading = false;
 		_loaded = true;
 		if (!_appending && _selection.size) {

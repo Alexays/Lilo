@@ -320,6 +320,7 @@ final class MainWindowController: NSWindowController {
     )
     lazy var faviconCoordinator = FaviconCoordinator(
         service: context.faviconService,
+        privateSpaceId: { [weak self] in self?.context.profileManager?.privateSpaceId(of: $0) },
         applyFavicon: { [weak self] tabId, dataURL, color, iconURL in
             self?.updateTabFavicon(faviconDataURL: dataURL, dominantColor: color, iconURL: iconURL, forTabId: tabId)
         }
