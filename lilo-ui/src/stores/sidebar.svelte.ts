@@ -343,13 +343,36 @@ function replaceSpaceFromFullState(
 	const existing = _bySpace[spaceId];
 	const folders = (state.folders || []).map(coerceTabFolderSnapshot);
 	const treeItems = state.treeItems || [];
+	const activeTabId = holdActivation(
+		spaceId,
+		tabs,
+		resolveActiveTabId(tabs, state.activeTabId || "", existing?.activeTabId),
+	);
+	// A space switch resends a state the store usually holds already: keeping the record (or its
+	// view when only the selection moved) spares every sidebar reader.
+	if (
+		existing?.hydrated &&
+		tabs.length === existing.tabs.length &&
+		tabs.every((tab, index) => tab === existing.tabs[index]) &&
+		treeItems.length === existing.treeItems.length &&
+		treeItems.every((item, index) => {
+			const held = existing.treeItems[index];
+			return (
+				item.itemId === held.itemId &&
+				item.kind === held.kind &&
+				item.section === held.section &&
+				item.sortOrder === held.sortOrder &&
+				(item.parentFolderId ?? null) === (held.parentFolderId ?? null)
+			);
+		}) &&
+		JSON.stringify(folders) === JSON.stringify(existing.folders)
+	) {
+		if (activeTabId !== existing.activeTabId) putSpaceSidebar(spaceId, { ...existing, activeTabId });
+		return;
+	}
 	putSpaceSidebar(spaceId, {
 		tabs,
-		activeTabId: holdActivation(
-			spaceId,
-			tabs,
-			resolveActiveTabId(tabs, state.activeTabId || "", existing?.activeTabId),
-		),
+		activeTabId,
 		hydrated: true,
 		folders,
 		treeItems,

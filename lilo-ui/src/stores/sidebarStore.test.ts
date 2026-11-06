@@ -622,3 +622,36 @@ test("full state keeps the snapshot object of a tab that did not change", async 
 	assert.notEqual(tabsById.get("t2"), t2Before);
 	assert.equal(tabsById.get("t2")?.title, "Renamed");
 });
+
+test("full state that changes nothing keeps the space record, and its view when only the selection moves", async () => {
+	const { applySidebarTabInitialState, getSpaceSidebar, receive } = await makeSidebarEnv();
+
+	applySidebarTabInitialState(sidebarInitialState(
+		[tab("t1", sidebarSpaceId), tab("t2", sidebarSpaceId)],
+		"t1",
+	));
+	flushSync();
+	const fullState = (activeTabId: string) => ({
+		event: "browserStateChanged",
+		changedSpaceId: sidebarSpaceId,
+		states: [{
+			spaceId: sidebarSpaceId,
+			activeTabId,
+			tabs: [tab("t1", sidebarSpaceId), tab("t2", sidebarSpaceId)],
+			folders: [],
+			treeItems: [treeItem("t1", sidebarSpaceId, 0), treeItem("t2", sidebarSpaceId, 1)],
+		}],
+	});
+	receive?.(fullState("t1"));
+	flushSync();
+
+	const before = getSpaceSidebar(sidebarSpaceId);
+	receive?.(fullState("t1"));
+	flushSync();
+	assert.equal(getSpaceSidebar(sidebarSpaceId), before);
+
+	receive?.(fullState("t2"));
+	flushSync();
+	assert.equal(getSpaceSidebar(sidebarSpaceId).activeTabId, "t2");
+	assert.equal(getSpaceSidebar(sidebarSpaceId).view, before.view);
+});
