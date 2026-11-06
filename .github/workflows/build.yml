@@ -67,6 +67,15 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: lilo-ui/package-lock.json
+      # Restored files predate the checkout's lockfile: the touch keeps make from installing them again.
+      - name: Restore lilo-ui/node_modules
+        id: ui-modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: lilo-ui/node_modules
+          key: ui-modules-${{ runner.os }}-${{ hashFiles('.nvmrc', 'lilo-ui/package-lock.json') }}
+      - if: steps.ui-modules.outputs.cache-hit == 'true'
+        run: touch lilo-ui/node_modules/.package-lock.json
       - run: make validate-ui
 
   e2e:
@@ -86,6 +95,15 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: lilo-ui/package-lock.json
+      # Restored files predate the checkout's lockfile: the touch keeps make from installing them again.
+      - name: Restore lilo-ui/node_modules
+        id: ui-modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: lilo-ui/node_modules
+          key: ui-modules-${{ runner.os }}-${{ hashFiles('.nvmrc', 'lilo-ui/package-lock.json') }}
+      - if: steps.ui-modules.outputs.cache-hit == 'true'
+        run: touch lilo-ui/node_modules/.package-lock.json
       # Before the browser install, so npx runs the locked Playwright.
       - run: make lilo-ui/node_modules/.package-lock.json
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
