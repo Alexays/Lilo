@@ -197,7 +197,7 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
         isDetached = true
         if let context = owner?.context, !context.isTerminating, let url = engine.currentURL,
            ["http", "https", "file"].contains(url.scheme?.lowercased()) {
-            context.recentlyClosed.push(.page(url), spaceId: spaceId, parentFolderId: nil, section: nil, sortOrder: nil)
+            context.recentlyClosed.push(.page(url, title: engine.currentTitle), spaceId: spaceId, parentFolderId: nil, section: nil, sortOrder: nil)
         }
         // Deferred so the caller's stack unwinds before releasing the WKWebView.
         let engine = engine

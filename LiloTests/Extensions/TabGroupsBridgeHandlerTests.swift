@@ -84,6 +84,7 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(positions(groups), ["Shown": 0, "First": 1, "Behind": 1])
         XCTAssertEqual(positions(created), ["First": 0, "Shown": 0, "Behind": 1])
         XCTAssertNil(groups.first?["windowId"], "only WebKit knows window ids")
+        XCTAssertEqual(groups.first?["shared"] as? Bool, false)
     }
 
     @MainActor

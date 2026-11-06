@@ -114,7 +114,7 @@ extension MainWindowController {
             requestSpaceSwitch(id: entry.spaceId)
         }
         switch entry.content {
-        case .page(let url):
+        case .page(let url, _):
             return createTabStateFirst(
                 url: url,
                 activate: true,
@@ -255,7 +255,7 @@ extension MainWindowController {
             switch tab.kind {
             case .web:
                 guard let url = tab.url else { return false }
-                content = .page(url)
+                content = .page(url, title: tab.title)
                 interactionState = tabManager.engineHost.interactionState(for: id) as? Data
             case .terminal:
                 content = .terminal(.init(

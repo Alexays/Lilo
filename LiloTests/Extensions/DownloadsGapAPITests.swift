@@ -55,6 +55,10 @@ final class DownloadsGapAPITests: XCTestCase {
         XCTAssertEqual(items?.first?["filename"] as? String, "/tmp/test.zip")
         XCTAssertEqual(items?.first?["exists"] as? Bool, true)
         XCTAssertEqual(items?.first?["danger"] as? String, "safe")
+        XCTAssertEqual(items?.first?["finalUrl"] as? String, "https://example.com/test.zip")
+        XCTAssertEqual(items?.first?["referrer"] as? String, "")
+        XCTAssertEqual(items?.first?["incognito"] as? Bool, false)
+        XCTAssertEqual(items?.first?["mime"] as? String, "", "an unknown type is empty, as in Chrome")
     }
 
     func testSearchFiltersByState() async throws {

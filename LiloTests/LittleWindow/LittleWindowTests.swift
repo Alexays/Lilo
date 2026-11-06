@@ -125,7 +125,8 @@ final class LittleWindowTests: XCTestCase {
 
         XCTAssertTrue(controller.littleWindows.isEmpty)
         let entry = try XCTUnwrap(browserContext.context.recentlyClosed.recentEntries.first)
-        XCTAssertEqual(entry.content, .page(url))
+        guard case .page(let closedURL, _) = entry.content else { return XCTFail("a page entry") }
+        XCTAssertEqual(closedURL, url)
         XCTAssertEqual(entry.spaceId, home.id)
     }
 

@@ -5,7 +5,7 @@ import Foundation
 struct RecentlyClosedStack {
     struct Entry: Sendable, Codable, Equatable {
         enum Content: Sendable, Codable, Equatable {
-            case page(URL)
+            case page(URL, title: String? = nil)
             case terminal(ClosedTerminal)
             /// A pinned or bookmarked tab removed from the sidebar, which comes back as it was.
             case savedTab(StoredTab)
