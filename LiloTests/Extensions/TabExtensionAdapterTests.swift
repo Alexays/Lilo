@@ -59,4 +59,39 @@ final class TabExtensionAdapterTests: XCTestCase {
         XCTAssertTrue(committed)
         XCTAssertEqual(adapter.url(for: context), url)
     }
+
+    func testALockedFolderTabShowsExtensionsNoURLOrTitle() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("tab-locked-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try JSONSerialization.data(withJSONObject: ["manifest_version": 3, "name": "Tab", "version": "1.0"])
+            .write(to: folder.appendingPathComponent("manifest.json"))
+        let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
+        let tabManager = TabManager(engineFactory: WKEngineFactory())
+        let spaceId = UUID()
+        tabManager.currentSpaceId = spaceId
+        var lockedFolder = TabFolder(spaceId: spaceId, name: "Private")
+        lockedFolder.lock = FolderLock(allowsBiometrics: false)
+        var inside = Tab(url: URL(string: "https://example.com/inside"), title: "Inside", spaceId: spaceId)
+        inside.groupId = lockedFolder.id
+        let outside = Tab(url: URL(string: "https://example.com/outside"), title: "Outside", spaceId: spaceId)
+        let state = try BrowserStateFixture(
+            spaceId: spaceId, activeTabId: outside.id, tabs: [inside, outside], folders: [lockedFolder],
+            treeItems: [
+                TabTreeItem(spaceId: spaceId, kind: .tab, itemId: outside.id, parentFolderId: nil, section: .unpinned, sortOrder: 0),
+                TabTreeItem(spaceId: spaceId, kind: .folder, itemId: lockedFolder.id, parentFolderId: nil, section: .unpinned, sortOrder: 1),
+                TabTreeItem(spaceId: spaceId, kind: .tab, itemId: inside.id, parentFolderId: lockedFolder.id, section: .unpinned, sortOrder: 0)
+            ]
+        )
+        tabManager.installSpaceTabStateForTests(SpaceTabState(state), spaceId: spaceId)
+        let insideAdapter = TabExtensionAdapter(tabId: inside.id, engineTab: nil)
+        insideAdapter.tabManager = tabManager
+        let outsideAdapter = TabExtensionAdapter(tabId: outside.id, engineTab: nil)
+        outsideAdapter.tabManager = tabManager
+
+        XCTAssertNil(insideAdapter.url(for: context))
+        XCTAssertNil(insideAdapter.title(for: context))
+        XCTAssertEqual(outsideAdapter.url(for: context), outside.url)
+        XCTAssertEqual(outsideAdapter.title(for: context), "Outside")
+    }
 }
