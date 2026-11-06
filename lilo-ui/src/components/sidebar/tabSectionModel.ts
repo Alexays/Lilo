@@ -1,4 +1,4 @@
-// How the open tab list is laid out: site stacks and the agents and terminals trays.
+// How the open tab list is laid out: site stacks, the agents and terminals trays, and its scroll window.
 
 /** A site's loose tabs stack from this many, and stay stacked until one is left. */
 export const STACK_MIN = 3;
@@ -111,4 +111,44 @@ export function strippedTitle(title: string, name: string): string {
 	if (parts[parts.length - 1].trim() === name) return parts.slice(0, -2).join("").trim() || title;
 	if (parts[0].trim() === name) return parts.slice(2).join("").trim() || title;
 	return title;
+}
+
+/** The gap between two rows, mirroring --sidebar-tab-row-gap. */
+export const VIRTUAL_ROW_GAP = 2;
+
+export type WindowRow<T> = { kind: "item"; item: T; top: number } | { kind: "spacer"; key: string; height: number };
+
+/** Rows stacked down from `top`: those outside [minY, maxY] and not kept fold into spacers. */
+export function windowRows<T>(
+	items: readonly T[],
+	top: number,
+	minY: number,
+	maxY: number,
+	heightOf: (item: T) => number,
+	keep: (item: T) => boolean,
+): WindowRow<T>[] {
+	const rows: WindowRow<T>[] = [];
+	let hiddenHeight = 0;
+	let hiddenCount = 0;
+	let spacers = 0;
+	const flush = () => {
+		if (hiddenCount === 0) return;
+		// The list's gap supplies the gaps around a spacer: it only carries the hidden rows and the gaps between them.
+		rows.push({ kind: "spacer", key: `spacer-${spacers++}`, height: hiddenHeight + (hiddenCount - 1) * VIRTUAL_ROW_GAP });
+		hiddenHeight = 0;
+		hiddenCount = 0;
+	};
+	for (const item of items) {
+		const height = heightOf(item);
+		if ((top + height >= minY && top <= maxY) || keep(item)) {
+			flush();
+			rows.push({ kind: "item", item, top });
+		} else {
+			hiddenHeight += height;
+			hiddenCount += 1;
+		}
+		top += height + VIRTUAL_ROW_GAP;
+	}
+	flush();
+	return rows;
 }
