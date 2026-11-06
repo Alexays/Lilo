@@ -219,7 +219,7 @@
       #000 calc(var(--url-reveal-width, 0px) + 12px)
     );
     transition:
-      margin-right 320ms var(--motion-ease-spring),
+      margin-right var(--motion-duration-slow) var(--motion-ease-spring),
       --url-reveal-mask var(--motion-duration-normal) ease;
   }
 

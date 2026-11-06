@@ -52,8 +52,10 @@ inside controls. Odd values are reserved for 1px hairlines.
 | `--radius-chip` | 999px | Pills and round badges |
 
 A box nested in a padded one takes its parent's radius less the padding, as
-`calc(var(--radius-sm) - var(--space-2))` in `UiSegmented`. The popover family keeps its own
-`--float-radius-*` tokens (`tip` and `card` alias `sm` and `md`).
+`calc(var(--radius-md) - var(--space-2))` in `UiSegmented`. The popover family keeps its own
+`--float-radius-*` tokens (`tip`, `card` and `popover` alias `sm`, `md` and `lg`). Every popover
+is `.float-surface.float-popover`: it opens on `--motion-duration-overlay` with the spring and
+leaves with `popoverOut` (`lib/motion/restingTransitions.ts`), a fast fade.
 
 ## Controls
 
@@ -104,8 +106,10 @@ and inner highlight their surfaces need.
 
 Durations: `--motion-duration-fast` (120ms, hover and press; `--transition-fast` is it with
 `ease`), `-normal` (200ms, appearing content), `-overlay` (220ms), `-slow` (280ms, panels).
-Easings: `--motion-ease-standard`, `-organic`, `-spring`, `-bounce`. Reduce motion and
-Low Power Mode collapse every animation and transition globally in `global.css`. With Reduce
-motion a surface that appears (modal, drawer, toast, switcher) fades in 150 ms instead, as
+A transition takes one of these durations (`tokens.test.ts` checks it); only keyframe
+animations such as spinners keep their own. Easings: `--motion-ease-standard`, `-organic`,
+`-spring`, `-bounce`. Reduce motion and Low Power Mode collapse every animation and transition
+globally in `global.css`. With Reduce motion a surface that appears (modal, drawer, toast,
+switcher) fades in on `--motion-duration-reduced` (150 ms) instead, as
 [DESIGN.md](../../../docs/DESIGN.md) asks: its fallback rule is `!important` to beat the global
 one, and its Svelte transitions take 150 ms when `prefersReducedMotion()` is true.

@@ -200,7 +200,7 @@
   --float-shadow: 0 0 0 1px var(--float-border), 0 10px 28px rgba(10, 15, 28, 0.14), 0 2px 6px rgba(10, 15, 28, 0.08);
   --float-radius-tip: var(--radius-sm);
   --float-radius-card: var(--radius-md);
-  --float-radius-popover: 12px;
+  --float-radius-popover: var(--radius-lg);
   --z-popover: 10000;
   --z-card: 10001;
   --z-tip: 99999;
@@ -413,16 +413,8 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
   }
 }
 
-.chrome-floating-surface {
-  background: var(--chrome-overlay-surface);
-  border: 1px solid var(--chrome-overlay-border);
-  border-radius: var(--chrome-overlay-panel-radius);
-  box-shadow: var(--chrome-overlay-shadow);
-}
-
 /* What floats over the sidebar or the page takes the Space's accent, as the sidebar does. */
 .float-surface,
-.chrome-floating-surface,
 .chrome-content-overlay-root {
   --accent: var(--sidebar-accent);
   --accent-hover: var(--sidebar-accent-hover);
@@ -451,7 +443,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
   gap: 4px;
   padding: 6px;
   border-radius: var(--float-radius-popover);
-  animation: float-popover-in 200ms var(--motion-ease-bounce) both;
+  animation: float-popover-in var(--motion-duration-overlay) var(--motion-ease-spring) both;
 }
 
 @keyframes float-popover-in {
@@ -558,7 +550,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
 }
 
 #dnd-action-dragged-el {
-  animation: dnd-preview-lift 280ms var(--motion-ease-bounce) both;
+  animation: dnd-preview-lift var(--motion-duration-slow) var(--motion-ease-bounce) both;
   outline: none !important;
   transition: none !important;
   contain: layout style paint;

@@ -87,11 +87,6 @@
     font: inherit;
     font-size: var(--font-size-sm);
     cursor: pointer;
-    transition: transform 0.2s var(--motion-ease-spring);
-  }
-
-  .option:hover {
-    transform: translateY(-1px);
   }
 
   .option.on {

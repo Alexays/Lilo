@@ -201,7 +201,7 @@
     position: fixed;
     z-index: var(--z-popover);
     padding: 14px 12px 10px;
-    border-radius: var(--radius-box);
+    border-radius: var(--radius-lg);
     background: var(--float-surface);
     box-shadow: var(--float-shadow);
     pointer-events: auto;
@@ -210,7 +210,7 @@
     transform-origin: var(--arrow-x) 0;
     transition:
       opacity var(--motion-duration-fast) ease,
-      transform 200ms var(--motion-ease-spring);
+      transform var(--motion-duration-overlay) var(--motion-ease-spring);
   }
 
   .extension-request.open {
@@ -237,7 +237,7 @@
     .extension-request,
     .url-drawer.open {
       transform: none;
-      transition: opacity 150ms ease !important;
+      transition: opacity var(--motion-duration-reduced) ease !important;
     }
   }
 </style>

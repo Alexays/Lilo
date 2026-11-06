@@ -777,7 +777,7 @@
 
   .download-arrow,
   .plus-glyph {
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .bottom-btn:hover .download-arrow {
@@ -806,7 +806,7 @@
     background: color-mix(in srgb, var(--accent) 32%, transparent);
     transform-origin: bottom;
     pointer-events: none;
-    transition: transform 0.3s ease;
+    transition: transform var(--motion-duration-slow) ease;
   }
 
   .download-btn-wrap .bottom-btn {
@@ -854,7 +854,7 @@
     border-radius: var(--radius-xl);
     isolation: isolate;
     transition:
-      transform 180ms var(--motion-ease-spring);
+      transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .space-icons::before {
@@ -870,7 +870,7 @@
     transform-origin: center;
     transition:
       opacity var(--motion-duration-normal) ease,
-      transform 190ms var(--motion-ease-spring);
+      transform var(--motion-duration-normal) var(--motion-ease-spring);
     pointer-events: none;
   }
 
@@ -991,7 +991,7 @@
     transform: scale(0.92);
     transition:
       opacity var(--motion-duration-fast) ease,
-      transform 180ms var(--motion-ease-spring),
+      transform var(--motion-duration-normal) var(--motion-ease-spring),
       background var(--motion-duration-fast) ease,
       box-shadow var(--motion-duration-fast) ease;
     pointer-events: none;
@@ -1098,7 +1098,7 @@
     opacity: 0.5;
     transition:
       opacity var(--motion-duration-normal) var(--motion-ease-spring),
-      transform 180ms var(--motion-ease-spring);
+      transform var(--motion-duration-normal) var(--motion-ease-spring);
     position: relative;
     overflow: hidden;
     isolation: isolate;

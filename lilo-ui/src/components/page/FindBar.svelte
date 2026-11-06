@@ -372,7 +372,7 @@
 
   .find-steps :global(.icon),
   .close-btn :global(.icon) {
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .step-up:hover:not(:disabled) :global(.icon) {

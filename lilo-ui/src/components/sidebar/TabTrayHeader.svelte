@@ -228,7 +228,7 @@
     margin-right: -2px;
     color: var(--text-muted);
     transform: rotate(90deg);
-    transition: transform 200ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .folded .tray-chevron {

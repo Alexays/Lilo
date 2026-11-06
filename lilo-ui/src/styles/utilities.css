@@ -5,7 +5,6 @@
 :root,
 .sidebar,
 .float-surface,
-.chrome-floating-surface,
 .chrome-content-overlay-root {
   /* Accent tints (most repeated color-mix patterns) */
   --accent-tint-8: color-mix(in srgb, var(--accent) 8%, transparent);
@@ -47,14 +46,12 @@
   padding: 0;
   transition:
     background var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast);
+    color var(--transition-fast);
 }
 
 .action-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
-  transform: scale(1.02);
 }
 
 .action-btn:active {

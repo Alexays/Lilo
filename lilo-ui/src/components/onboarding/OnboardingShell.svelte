@@ -142,7 +142,7 @@
     .onb { background: radial-gradient(70% 60% at 50% 38%, #2c2459 0, #16132b 50%, #0f0f1a 100%) #16132b; }
   }
   .dots { position: absolute; top: 24px; left: 50%; translate: -50% 0; display: flex; gap: 6px; }
-  .dots b { height: 5px; width: 5px; border-radius: var(--radius-chip); background: var(--text-primary-tint-12); transition: width .4s var(--motion-ease-spring), background-color var(--motion-duration-slow); }
+  .dots b { height: 5px; width: 5px; border-radius: var(--radius-chip); background: var(--text-primary-tint-12); transition: width var(--motion-duration-slow) var(--motion-ease-spring), background-color var(--motion-duration-slow); }
   .dots b.on { width: 24px; background: var(--accent); }
   .dots b.done { background: color-mix(in srgb, var(--accent) 45%, transparent); }
   .close { position: absolute; z-index: 1; top: 14px; right: 16px; width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm);

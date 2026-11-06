@@ -1,11 +1,10 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { cubicOut } from "svelte/easing";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { dismissable } from "../../lib/actions/dismissable";
   import { menuKeys } from "../../lib/actions/menuKeys";
   import { portal } from "../../lib/actions/portal";
-  import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
 
   // A menu's rows are `menuitem`s the arrows walk; a card, a palette or a form is a `dialog`.
@@ -32,19 +31,10 @@
   const left = $derived(rail
     ? getTabPosition() === "right" ? rail.left - 8 - 240 : rail.right + 8
     : Math.max(8, Math.min(rect.left, window.innerWidth - 248)));
-  // Grows from and shrinks back into its anchor, so it reads as coming out of the button.
+  // Grows from its anchor, so it reads as coming out of the button.
   const origin = $derived(rail
     ? `${getTabPosition() === "right" ? "right" : "left"} ${rect.height / 2}px`
     : `${Math.max(0, Math.min(240, rect.left + rect.width / 2 - left))}px ${above ? "bottom" : "top"}`);
-
-  // Global: the menus mount it under their opener's own `{#if}`, which is what closes it.
-  function popoverOut(_node: HTMLElement) {
-    return {
-      duration: prefersReducedMotion() ? 0 : 120,
-      easing: cubicOut,
-      css: (t: number) => `opacity: ${t}; transform: scale(${0.97 + 0.03 * t}); pointer-events: none;`,
-    };
-  }
 
   $effect(() => {
     popover?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
@@ -57,7 +47,7 @@
 <div
   bind:this={popover}
   bind:clientHeight={height}
-  class="strip-popover"
+  class="strip-popover float-surface float-popover"
   {role}
   aria-label={label}
   style={`left: ${left}px; top: ${top}px; transform-origin: ${origin};`}
@@ -71,31 +61,15 @@
 </div>
 
 <style>
+  /* Its menus stack their rows flush. */
   .strip-popover {
     position: fixed;
-    z-index: 60;
+    z-index: var(--z-popover);
+    display: block;
     width: 240px;
     max-height: 60vh;
     overflow-y: auto;
-    padding: 6px;
     box-sizing: border-box;
-    border-radius: var(--float-radius-popover);
-    background: var(--chrome-overlay-surface-strong);
-    box-shadow: var(--chrome-overlay-shadow);
     pointer-events: auto;
-    animation: popover-in 180ms var(--motion-ease-spring) both;
-  }
-
-  @keyframes popover-in {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .strip-popover {
-      animation: none;
-    }
   }
 </style>

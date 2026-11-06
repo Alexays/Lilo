@@ -23,6 +23,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { portal } from "../../lib/actions/portal";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
   import AgentTile from "./AgentTile.svelte";
   import Icon from "../ui/Icon.svelte";
 
@@ -125,6 +126,7 @@
   <div
     id={menuId}
     class="menu float-surface float-popover"
+    out:popoverOut
     class:up={position.up}
     role="menu"
     tabindex="-1"

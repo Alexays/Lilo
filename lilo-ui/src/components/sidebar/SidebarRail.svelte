@@ -401,7 +401,7 @@
 
   .search-glyph {
     transform-origin: 7px 7px;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .rail-item:hover .search-glyph {

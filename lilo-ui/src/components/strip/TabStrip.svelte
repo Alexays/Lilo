@@ -556,7 +556,7 @@
     flex: none;
     border-radius: var(--radius-chip);
     background: var(--separator);
-    transition: background-color var(--motion-duration-fast) ease, width 160ms var(--motion-ease-spring);
+    transition: background-color var(--motion-duration-fast) ease, width var(--motion-duration-fast) var(--motion-ease-spring);
   }
 
   /* The sidebar's pinned gate, turned on its side. */
@@ -800,7 +800,7 @@
   .download-arrow {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .archive-lid {

@@ -348,7 +348,7 @@
     transition:
       background-color var(--motion-duration-normal) ease,
       color var(--motion-duration-normal) ease,
-      transform 160ms ease;
+      transform var(--motion-duration-fast) ease;
   }
 
   :global(.url-trigger:hover) .extension-icon-face,

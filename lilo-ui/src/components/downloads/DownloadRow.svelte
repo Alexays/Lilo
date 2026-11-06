@@ -289,7 +289,7 @@
     border-radius: inherit;
     background: var(--accent);
     /* Sliding a full-width fill under the clipping track keeps its rounded end undistorted. */
-    transition: transform 180ms ease;
+    transition: transform var(--motion-duration-normal) ease;
   }
 
   .row-progress.paused .row-progress-fill {

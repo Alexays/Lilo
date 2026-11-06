@@ -6,6 +6,7 @@
   import { menuKeys } from "../../lib/actions/menuKeys";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { portal } from "../../lib/actions/portal";
+  import { popoverOut } from "../../lib/motion/restingTransitions";
 
   interface Props {
     /** Names the chevron to VoiceOver ("More ways to answer"). */
@@ -81,6 +82,7 @@
   <div
     id={menuId}
     class="ui-split-menu float-surface float-popover"
+    out:popoverOut
     class:up={position.up}
     role="menu"
     tabindex="-1"

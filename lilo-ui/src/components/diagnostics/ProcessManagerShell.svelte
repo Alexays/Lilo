@@ -330,7 +330,7 @@
   .segment {
     flex-basis: 0;
     min-width: 3px;
-    transition: flex-grow 300ms ease;
+    transition: flex-grow var(--motion-duration-slow) ease;
   }
 
   .seg-0 { background: var(--accent); }
@@ -520,7 +520,7 @@
     height: 100%;
     border-radius: inherit;
     background: var(--accent);
-    transition: width 300ms ease;
+    transition: width var(--motion-duration-slow) ease;
   }
 
   .bytes {

@@ -697,10 +697,10 @@
     transition:
       background var(--transition-fast),
       box-shadow var(--transition-fast),
-      transform 220ms var(--motion-ease-spring),
-      max-width 220ms var(--motion-ease-spring),
-      padding 220ms var(--motion-ease-spring),
-      gap 220ms var(--motion-ease-spring);
+      transform var(--motion-duration-overlay) var(--motion-ease-spring),
+      max-width var(--motion-duration-overlay) var(--motion-ease-spring),
+      padding var(--motion-duration-overlay) var(--motion-ease-spring),
+      gap var(--motion-duration-overlay) var(--motion-ease-spring);
     contain: layout style paint;
     overflow: hidden;
     position: relative;
@@ -960,7 +960,7 @@
   .sound-glyph {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .sound-glyph.wave {

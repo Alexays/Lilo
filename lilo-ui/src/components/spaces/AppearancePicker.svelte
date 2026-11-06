@@ -398,7 +398,7 @@
     border-radius: 50%;
     cursor: pointer;
     box-shadow: inset 0 0 0 1px var(--text-primary-tint-12), inset 0 1px 1px color-mix(in srgb, white 50%, transparent);
-    transition: transform 0.2s var(--motion-ease-spring);
+    transition: transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .swatch:hover {

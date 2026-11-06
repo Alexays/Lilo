@@ -1813,7 +1813,7 @@
     gap: 6px;
     padding: 4px var(--sidebar-right-pad, 8px) 4px 8px;
     box-sizing: border-box;
-    transition: padding 150ms var(--motion-ease-spring);
+    transition: padding var(--motion-duration-fast) var(--motion-ease-spring);
   }
 
   .pinned-section-body.idle-empty {
@@ -1840,10 +1840,10 @@
     transform: scaleY(1);
     transform-origin: top;
     transition:
-      height 150ms var(--motion-ease-spring),
-      min-height 150ms var(--motion-ease-spring),
+      height var(--motion-duration-fast) var(--motion-ease-spring),
+      min-height var(--motion-duration-fast) var(--motion-ease-spring),
       opacity var(--motion-duration-fast) ease,
-      transform 150ms var(--motion-ease-spring),
+      transform var(--motion-duration-fast) var(--motion-ease-spring),
       background var(--motion-duration-fast) ease,
       border-color var(--motion-duration-fast) ease,
       box-shadow var(--motion-duration-fast) ease;
@@ -1933,9 +1933,9 @@
     transform: scaleY(1);
     transform-origin: top;
     transition:
-      min-height 150ms var(--motion-ease-spring),
+      min-height var(--motion-duration-fast) var(--motion-ease-spring),
       opacity var(--motion-duration-fast) ease,
-      transform 150ms var(--motion-ease-spring);
+      transform var(--motion-duration-fast) var(--motion-ease-spring);
     contain: layout style;
   }
 
@@ -2128,7 +2128,7 @@
   }
 
   .folder-contents-shell.collapsed {
-    transition-duration: 150ms;
+    transition-duration: var(--motion-duration-fast);
   }
 
   .folder-contents-clip {
@@ -2319,7 +2319,7 @@
   .plus-glyph,
   .prompt-chevron,
   .prompt-cursor {
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .new-tab-row:hover:not(:disabled) .plus-glyph {
@@ -2375,10 +2375,10 @@
     transform: scaleX(1);
     transform-origin: center;
     transition:
-      height 160ms var(--motion-ease-spring),
+      height var(--motion-duration-fast) var(--motion-ease-spring),
       background var(--motion-duration-fast) ease,
       opacity var(--motion-duration-fast) ease,
-      transform 160ms var(--motion-ease-spring),
+      transform var(--motion-duration-fast) var(--motion-ease-spring),
       box-shadow var(--motion-duration-fast) ease;
   }
 
@@ -2457,7 +2457,7 @@
     top: 0;
     z-index: 1;
     background: var(--sidebar-bg);
-    transition: padding 160ms var(--motion-ease-spring);
+    transition: padding var(--motion-duration-fast) var(--motion-ease-spring);
     /* Holds Clear with 4px to spare on each side, with or without it, so the line never moves
        when Clear comes or goes. */
     min-height: 24px;
@@ -2524,7 +2524,7 @@
     transform: translateY(-50%) scale(0.6);
     transition:
       opacity var(--motion-duration-fast) ease,
-      transform 220ms var(--motion-ease-spring),
+      transform var(--motion-duration-overlay) var(--motion-ease-spring),
       color var(--transition-fast);
   }
 
@@ -2556,7 +2556,7 @@
   .archive-slot {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .archive-lid {

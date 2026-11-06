@@ -432,7 +432,7 @@
   .bookmarked-tabs-body {
     padding: 4px var(--sidebar-right-pad, 8px) 4px 8px;
     box-sizing: border-box;
-    transition: padding 150ms var(--motion-ease-spring);
+    transition: padding var(--motion-duration-fast) var(--motion-ease-spring);
   }
 
   .bookmarked-tabs-body.idle-empty {
@@ -457,10 +457,10 @@
     transform: scaleY(1);
     transform-origin: top;
     transition:
-      height 150ms var(--motion-ease-spring),
-      min-height 150ms var(--motion-ease-spring),
+      height var(--motion-duration-fast) var(--motion-ease-spring),
+      min-height var(--motion-duration-fast) var(--motion-ease-spring),
       opacity var(--motion-duration-fast) ease,
-      transform 150ms var(--motion-ease-spring),
+      transform var(--motion-duration-fast) var(--motion-ease-spring),
       background var(--motion-duration-fast) ease,
       border-color var(--motion-duration-fast) ease;
   }
