@@ -136,7 +136,7 @@ const LUMINANCE_MIDPOINT = 0.179;
 export function badgeTextColor(background = "", text = ""): string | null {
   if (text) return text;
   const value = background.trim();
-  // The alpha digits of #rgba and #rrggbbaa are dropped: the badge is drawn opaque.
+  // As with rgba(), the alpha of #rgba and #rrggbbaa stays out of the luminance.
   const hex = /^#(?:([0-9a-f]{3})[0-9a-f]?|([0-9a-f]{6})(?:[0-9a-f]{2})?)$/i.exec(value);
   const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(value);
   const color = hex ? parseHexColor(hex[1] ?? hex[2]) : rgb ? { r: Number(rgb[1]), g: Number(rgb[2]), b: Number(rgb[3]) } : null;
