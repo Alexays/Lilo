@@ -133,13 +133,15 @@ struct StoredFolder: Codable, Sendable, Equatable, Identifiable {
     var lock: FolderLock?
     /// Runtime only: never encoded, so every launch starts with protected folders locked.
     var isUnlocked = false
+    /// Created by agent control for a task: the next run's first agent deletes it from the Agents space.
+    var isAgentOwned = false
 
     var isSplit: Bool { splitLayout != nil }
 }
 
 extension StoredFolder {
     private enum CodingKeys: String, CodingKey {
-        case id, name, color, isCollapsed, children, splitLayout, lock
+        case id, name, color, isCollapsed, children, splitLayout, lock, isAgentOwned
     }
 
     init(from decoder: Decoder) throws {
@@ -151,6 +153,7 @@ extension StoredFolder {
         children = try container.decode([StoredSidebarNode].self, forKey: .children)
         splitLayout = try container.decodeIfPresent(SplitLayout.self, forKey: .splitLayout)
         lock = try container.decodeIfPresent(FolderLock.self, forKey: .lock)
+        isAgentOwned = try container.decodeIfPresent(Bool.self, forKey: .isAgentOwned) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -162,6 +165,7 @@ extension StoredFolder {
         try container.encode(children, forKey: .children)
         try container.encodeIfPresent(splitLayout, forKey: .splitLayout)
         try container.encodeIfPresent(lock, forKey: .lock)
+        if isAgentOwned { try container.encode(true, forKey: .isAgentOwned) }
     }
 }
 
@@ -487,7 +491,8 @@ extension StoredFolder {
             children: children,
             splitLayout: folder.splitLayout,
             lock: folder.lock,
-            isUnlocked: folder.isUnlocked
+            isUnlocked: folder.isUnlocked,
+            isAgentOwned: folder.isAgentOwned
         )
     }
 }
@@ -530,7 +535,8 @@ extension TabFolder {
             isCollapsed: storedFolder.isCollapsed,
             splitLayout: storedFolder.splitLayout,
             lock: storedFolder.lock,
-            isUnlocked: storedFolder.isUnlocked
+            isUnlocked: storedFolder.isUnlocked,
+            isAgentOwned: storedFolder.isAgentOwned
         )
     }
 }
