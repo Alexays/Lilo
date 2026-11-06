@@ -135,7 +135,7 @@
       <button class="hdr-ctl" disabled={!screenshotEditor.canUndo} onclick={() => screenshotEditor.undo()} use:tooltip={{ text: `${t("screenshot.undo")} (⌘Z)`, placement: "bottom" }} aria-label={t("screenshot.undo")}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4 3 7l3 3" /><path d="M3 7h6.5a3.5 3.5 0 0 1 0 7H6" /></svg>
       </button>
-      <button class="hdr-ctl" disabled={!screenshotEditor.canRedo} onclick={() => screenshotEditor.redo()} use:tooltip={{ text: `${t("screenshot.redo")} (⌘⇧Z)`, placement: "bottom" }} aria-label={t("screenshot.redo")}>
+      <button class="hdr-ctl" disabled={!screenshotEditor.canRedo} onclick={() => screenshotEditor.redo()} use:tooltip={{ text: `${t("screenshot.redo")} (⇧⌘Z)`, placement: "bottom" }} aria-label={t("screenshot.redo")}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4l3 3-3 3" /><path d="M13 7H6.5a3.5 3.5 0 0 0 0 7H10" /></svg>
       </button>
     {/snippet}

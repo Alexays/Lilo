@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Little window shortcut",
-				"description": "Command-Option-N opens a Little window from any app.",
+				"description": "The shortcut opens a Little window from any app.",
 				"keywords": "little quick window global hotkey shortcut"
 			},
 			"externalLinkDefault": {

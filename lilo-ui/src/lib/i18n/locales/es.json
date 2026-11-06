@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Atajo de ventana pequeña",
-				"description": "Comando-Opción-N abre una ventana pequeña desde cualquier app.",
+				"description": "El atajo abre una ventana pequeña desde cualquier app.",
 				"keywords": "pequeña rápida ventana global tecla atajo"
 			},
 			"externalLinkDefault": {

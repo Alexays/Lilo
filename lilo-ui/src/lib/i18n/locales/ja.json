@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "小さなウインドウのショートカット",
-				"description": "どのアプリからでも Command-Option-N で小さなウインドウを開きます。",
+				"description": "どのアプリからでもショートカットで小さなウインドウを開きます。",
 				"keywords": "小さなウインドウ クイック グローバル ホットキー ショートカット"
 			},
 			"externalLinkDefault": {

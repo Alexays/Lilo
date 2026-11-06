@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "小窗口快捷键",
-				"description": "在任意 App 中按 Command-Option-N 打开小窗口。",
+				"description": "在任意 App 中按快捷键打开小窗口。",
 				"keywords": "小窗口 快速窗口 全局 热键 快捷键"
 			},
 			"externalLinkDefault": {

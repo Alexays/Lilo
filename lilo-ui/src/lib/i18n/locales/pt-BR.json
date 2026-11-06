@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Atalho da minijanela",
-				"description": "Command-Option-N abre uma minijanela a partir de qualquer app.",
+				"description": "O atalho abre uma minijanela a partir de qualquer app.",
 				"keywords": "mini rápida janela global tecla atalho"
 			},
 			"externalLinkDefault": {

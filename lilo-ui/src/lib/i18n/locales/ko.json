@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "작은 창 단축키",
-				"description": "어떤 앱에서든 Command-Option-N을 누르면 작은 창이 열립니다.",
+				"description": "어떤 앱에서든 단축키를 누르면 작은 창이 열립니다.",
 				"keywords": "작은 빠른 창 전역 단축키"
 			},
 			"externalLinkDefault": {
