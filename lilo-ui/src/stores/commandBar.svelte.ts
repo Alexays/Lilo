@@ -441,7 +441,9 @@ function scheduleSearchSuggest(query: string): void {
 
 function keepFavicons(favicons: Record<string, string>): void {
 	let next: Record<string, string> | null = null;
-	for (const host in favicons) (next ??= { ..._storedFavicons })[host] = favicons[host];
+	for (const host in favicons) {
+		if (favicons[host] !== _storedFavicons[host]) (next ??= { ..._storedFavicons })[host] = favicons[host];
+	}
 	if (next) _storedFavicons = next;
 }
 

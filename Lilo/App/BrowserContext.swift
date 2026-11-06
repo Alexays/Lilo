@@ -35,6 +35,7 @@ final class BrowserContext {
     private struct DatabaseBootstrap: Sendable {
         let dbManager: DatabaseManager
         let startupSnapshot: StartupSnapshot
+        let tabArchive: [TabArchive.Entry]
     }
 
     let browserState: BrowserStateStore
@@ -73,6 +74,9 @@ final class BrowserContext {
     }
     var tabArchiveSavePending = false
     var archiveSweepTimer: DispatchSourceTimer?
+    /// Pairs each suspend of `archiveSweepTimer` with one resume: an unbalanced call traps.
+    var archiveSweepSuspended = false
+    var archiveSweepLastPass: Date?
     /// The closed terminals last handed to the disk, so a change that leaves them alone writes nothing.
     var savedClosedTerminals: [RecentlyClosedStack.Entry]?
     /// Profiles whose hidden spaces a window preloaded, so another window does not repeat it.
@@ -279,8 +283,12 @@ final class BrowserContext {
             }, monitorSystem: true)
         }
         powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
+        // The chrome shows only the helper's status: the other state changes stay native.
+        var sentHelperStatus: String?
         powerKeeper.onChange = { [weak self] state in
             self?.keepAwakeStatusItem?.update(state)
+            guard state.helperStatus != sentHelperStatus else { return }
+            sentHelperStatus = state.helperStatus
             for window in self?.windows.windows ?? [] {
                 window.bridgeRouter.send(event: "keepAwakeChanged", data: ["helperStatus": state.helperStatus])
             }
@@ -307,11 +315,13 @@ final class BrowserContext {
         self.spaceManager = spaceManager
         spaceManager.loadSpaces(startupSnapshot.spaces)
         spaceManager.delegate = self
-        restoreTabArchive()
+        restoreTabArchive(bootstrap.tabArchive)
         // Last: an agent may connect at once, and its calls need the profiles and spaces loaded above.
         if settingsStore.get("agentControlEnabled") == "true" {
             agentControl.setEnabled(true)
-            AgentClientConfig.repairMovedConfigs(home: FileManager.default.homeDirectoryForCurrentUser)
+            // It reads and may rewrite the agents' configuration files: off the main thread.
+            let home = FileManager.default.homeDirectoryForCurrentUser
+            Task.detached(priority: .utility) { AgentClientConfig.repairMovedConfigs(home: home) }
         }
     }
 
@@ -616,7 +626,11 @@ final class BrowserContext {
             from: dbManager,
             snapshot: startupSnapshot
         )
-        return DatabaseBootstrap(dbManager: dbManager, startupSnapshot: startupSnapshot)
+        return DatabaseBootstrap(
+            dbManager: dbManager,
+            startupSnapshot: startupSnapshot,
+            tabArchive: readTabArchive(appSupportDirectory: appSupportDirectory)
+        )
     }
 
     nonisolated static func loadStartupSnapshot(from globalPool: DatabasePool) throws -> StartupSnapshot {

@@ -448,6 +448,8 @@ final class MainWindowController: NSWindowController {
     var sentTabPatches: [String: [String: Any]] = [:]
     /// Extension rows by id as this window's chrome last received them; `extensionsChanged` ships only the diff.
     var sentExtensionRows: [String: [String: Any]] = [:]
+    /// Archived-tab favicons by host as this window's chrome last received them; `archivedTabs` ships only the new ones.
+    var sentArchiveFavicons: [String: String] = [:]
 
     func emitBrowserChange(_ changes: BrowserChangeSet) {
         guard let event = BrowserChangePresenter.event(

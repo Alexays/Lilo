@@ -231,6 +231,7 @@ extension MainWindowController {
         chromeStaleFaviconTabIds = []
         sentTabPatches = [:]
         sentExtensionRows = [:]
+        sentArchiveFavicons = [:]
         // A reloaded chrome has lost its capture cards: nothing can open their captures any more.
         copiedCaptures.keys.forEach(ChromeUISchemeHandler.discardScreenshot)
         copiedCaptures = [:]

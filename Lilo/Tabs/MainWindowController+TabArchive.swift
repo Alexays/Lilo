@@ -29,7 +29,7 @@ extension MainWindowController {
         bridgeRouter.send(event: "openCommandBar", data: ["prefill": "<"])
     }
 
-    /// Sends the archived tabs with their favicons keyed by host, so a site archived many times sends its icon once.
+    /// Sends the archived tabs with the favicons, keyed by host, that this window's chrome does not hold yet.
     func sendArchivedTabs() {
         var favicons: [String: String] = [:]
         var missingHosts = Set<String>()
@@ -50,6 +50,8 @@ extension MainWindowController {
                 favicons[entry.host] = entry.dataURL
             }
         }
+        favicons = favicons.filter { sentArchiveFavicons[$0.key] != $0.value }
+        sentArchiveFavicons.merge(favicons) { $1 }
         bridgeRouter.send(event: "archivedTabs", data: ["tabs": archivedTabSummaries(), "favicons": favicons])
     }
 

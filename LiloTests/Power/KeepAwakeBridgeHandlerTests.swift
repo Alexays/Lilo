@@ -15,8 +15,8 @@ final class KeepAwakeBridgeHandlerTests: XCTestCase {
         let sent = await pollUntil { events.events.contains { $0.name == "terminalActivity" } }
         XCTAssertTrue(sent)
 
-        context.powerKeeper.republish()
-        // Queued a turn later, a raw event drains and ships after any terminal list the republish queued.
+        context.powerKeeper.onChange?(PowerKeeper.State(helperStatus: "enabled"))
+        // Queued a turn later, a raw event drains and ships after any terminal list the change queued.
         DispatchQueue.main.async { window.bridgeRouter.send(event: "witness") }
         let flushed = await pollUntil { events.events.contains { $0.name == "witness" } }
         XCTAssertTrue(flushed)

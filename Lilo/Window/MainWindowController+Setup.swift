@@ -815,7 +815,7 @@ extension MainWindowController {
         let currentSpaceId = tabManager.currentSpaceId
         let currentTreeItems = currentSpaceId.map { tabManager.sidebarTreeItems(forSpace: $0) } ?? []
         var data: [String: Any] = [
-            "tabs": currentSpaceId.map { tabManager.tabs(forSpace: $0).map(\.bridgeData) } ?? [],
+            "tabs": currentSpaceId.map { tabManager.tabs(forSpace: $0).map { $0.snapshotData() } } ?? [],
             "folders": currentSpaceId.map { tabManager.folders(forSpace: $0).map(\.bridgeData) } ?? [],
             "treeItems": currentTreeItems.map(\.bridgeData),
             "activeTabId": tabManager.activeOpenTabId?.uuidString ?? "",

@@ -1,4 +1,5 @@
-import Foundation
+import AppKit
+import OSLog
 
 /// Tabs taken out of a Space's unpinned list by the idle sweep or Clear, oldest first, kept
 /// `maxAge` and at most `maxPerSpace` per Space.
@@ -34,7 +35,7 @@ struct TabArchive {
 }
 
 extension BrowserContext {
-    private var tabArchiveURL: URL {
+    nonisolated private static func tabArchiveURL(_ appSupportDirectory: String) -> URL {
         URL(fileURLWithPath: appSupportDirectory).appendingPathComponent("ArchivedTabs.json")
     }
 
@@ -56,7 +57,7 @@ extension BrowserContext {
         if tabArchiveSavePending {
             tabArchiveSavePending = false
             let entries = tabArchive.entries.filter { spaceManager?.space(with: $0.spaceId)?.isPrivate == false }
-            let url = tabArchiveURL
+            let url = Self.tabArchiveURL(appSupportDirectory)
             let logger = Self.logger
             Self.tabArchiveQueue.async {
                 do { try JSONEncoder().encode(entries).write(to: url, options: .atomic) } catch {
@@ -67,13 +68,17 @@ extension BrowserContext {
         if isTerminating { Self.tabArchiveQueue.sync {} }
     }
 
-    func restoreTabArchive() {
-        guard let data = try? Data(contentsOf: tabArchiveURL) else { return }
-        let saved: [TabArchive.Entry]
-        do { saved = try JSONDecoder().decode([TabArchive.Entry].self, from: data) } catch {
-            Self.logger.error("tab archive unreadable: \(error.localizedDescription, privacy: .public)")
-            return
+    /// The archive a previous run saved, read off the main thread while the databases open.
+    nonisolated static func readTabArchive(appSupportDirectory: String) -> [TabArchive.Entry] {
+        guard let data = try? Data(contentsOf: tabArchiveURL(appSupportDirectory)) else { return [] }
+        do { return try JSONDecoder().decode([TabArchive.Entry].self, from: data) } catch {
+            Logger(liloCategory: "Database").error("tab archive unreadable: \(error.localizedDescription, privacy: .public)")
+            return []
         }
+    }
+
+    func restoreTabArchive(_ saved: [TabArchive.Entry]) {
+        guard !saved.isEmpty else { return }
         let expiry = Date().addingTimeInterval(-TabArchive.maxAge)
         tabArchive.entries = saved.filter { $0.archivedAt > expiry } + tabArchive.entries
     }
@@ -92,16 +97,43 @@ extension BrowserContext {
             || tab.isAgentControlled || tab.hasUnsavedFormData || engine?.isInPictureInPicture == true
     }
 
-    /// Runs `archiveIdleTabs` every few minutes; the first pass right after launch.
+    /// Runs `archiveIdleTabs` every few minutes while Lilo is active, the first pass right after launch: in the
+    /// background the timer is suspended, and on return a pass already due runs a few seconds later.
     func startArchiveSweep() {
         guard archiveSweepTimer == nil, !ProcessInfo.isRunningUnderXCTest else { return }
         let timer = DispatchSource.makeTimerSource(queue: .main)
         timer.schedule(deadline: .now() + 5, repeating: 300, leeway: .seconds(60))
         timer.setEventHandler { [weak self] in
-            Task { @MainActor [weak self] in self?.archiveIdleTabs() }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                archiveSweepLastPass = Date()
+                archiveIdleTabs()
+            }
         }
         timer.resume()
         archiveSweepTimer = timer
+        let center = NotificationCenter.default
+        center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, !archiveSweepSuspended else { return }
+                archiveSweepSuspended = true
+                archiveSweepTimer?.suspend()
+            }
+        }
+        center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, archiveSweepSuspended else { return }
+                archiveSweepSuspended = false
+                // Rescheduled first: resumed as is, a deadline missed while suspended fires at once, mid app switch.
+                let sinceLastPass = archiveSweepLastPass.map { Date().timeIntervalSince($0) } ?? .infinity
+                archiveSweepTimer?.schedule(deadline: .now() + max(5, 300 - sinceLastPass), repeating: 300, leeway: .seconds(60))
+                archiveSweepTimer?.resume()
+            }
+        }
+        if !NSApp.isActive {
+            archiveSweepSuspended = true
+            timer.suspend()
+        }
     }
 
     /// Archives the top-level unpinned web tabs of the loaded Spaces left longer than their Space's

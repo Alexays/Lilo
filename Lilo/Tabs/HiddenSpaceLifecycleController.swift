@@ -206,7 +206,7 @@ final class HiddenSpaceLifecycleController {
         // other wakeups instead of forcing a precise timer fire.
         timer.schedule(deadline: .now() + config.idleSweepInterval, repeating: config.idleSweepInterval, leeway: .seconds(15))
         timer.setEventHandler { [weak self] in
-            Task { @MainActor [weak self] in self?.runIdleSweep() }
+            MainActor.assumeIsolated { self?.runIdleSweep() }
         }
         timer.resume()
         idleSweepTimer = timer

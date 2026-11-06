@@ -27,4 +27,12 @@ test("asks native for the list once, then keeps only the last day's tabs one cli
 
 	assert.deepEqual(store.getRecentArchivedTabs(now).map((tab: { id: string }) => tab.id), ["today"]);
 	assert.deepEqual(store.getArchivedFavicons(), { "news.example": "data:image/png;base64,AA==" });
+
+	// A later reply carries only the favicons not sent yet.
+	(globalThis as unknown as LiloWindow).window.__lilo?.receive({
+		event: "archivedTabs",
+		tabs: [{ id: "today", url: "https://news.example/", title: "News", archivedAt: now - 9 * HOUR }],
+		favicons: {},
+	});
+	assert.deepEqual(store.getArchivedFavicons(), { "news.example": "data:image/png;base64,AA==" });
 });
