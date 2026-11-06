@@ -164,3 +164,10 @@ Once Apple grants it:
    `brew install --cask alexays/tap/lilo` and `brew upgrade` pick it up.
 3. Publishing also runs `.github/workflows/discord.yml`, which announces the release and its notes
    in the Discord channel configured by `DISCORD_WEBHOOK_URL`.
+
+## Rollback
+
+A published release reaches every copy within the hour (Sparkle checks hourly) and installs on its next quit. If it is broken:
+
+1. Set the release back to draft: `gh release edit vX.Y.Z --draft`. `releases/latest/download/appcast.xml` then serves the previous release's appcast, so copies that have not updated yet stay on it. The Homebrew cask keeps the new version until the fix ships.
+2. Sparkle never downgrades: copies already updated keep the broken version until a newer one ships. Fix the problem and release a new patch version, never the same tag again.
