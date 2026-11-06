@@ -1,4 +1,5 @@
 import CoreMedia
+import os
 import ScreenCaptureKit
 
 /// A ScreenCaptureKit stream of a display or window the user picked, feeding the tab-share ferry.
@@ -6,6 +7,7 @@ import ScreenCaptureKit
 /// content changed, so a still screen costs nothing past the ferry's own tick.
 @MainActor
 final class ScreenCaptureStream: NSObject, SCStreamOutput, SCStreamDelegate {
+    private nonisolated static let logger = Logger(liloCategory: "screen-capture")
     let width: Int
     let height: Int
     /// The getDisplayMedia `displaySurface` of the pick.
@@ -43,8 +45,14 @@ final class ScreenCaptureStream: NSObject, SCStreamOutput, SCStreamDelegate {
 
     func start() async throws {
         guard let stream else { return }
-        try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
-        try await stream.startCapture()
+        do {
+            try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
+            try await stream.startCapture()
+        } catch {
+            let nsError = error as NSError
+            Self.logger.error("capture failed to start domain=\(nsError.domain, privacy: .public) code=\(nsError.code, privacy: .public)")
+            throw error
+        }
     }
 
     func stop() {
@@ -68,6 +76,8 @@ final class ScreenCaptureStream: NSObject, SCStreamOutput, SCStreamDelegate {
     }
 
     nonisolated func stream(_ stream: SCStream, didStopWithError error: any Error) {
+        let nsError = error as NSError
+        Self.logger.notice("capture stopped domain=\(nsError.domain, privacy: .public) code=\(nsError.code, privacy: .public)")
         Task { @MainActor in
             guard self.stream != nil else { return }
             self.stream = nil

@@ -20,7 +20,8 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
     /// (mode/token/width/height) or nil when the tab has no live engine.
     var sessionStarter: ((_ tabId: UUID, _ requester: WKWebView) -> [String: Any]?)?
     /// Runs the system screen or window picker and ferries the pick, with the Mac's sound when asked, which WebKit's own
-    /// capture cannot share without echoing the call. Returns the shim reply payload, nil when cancelled.
+    /// capture cannot share without echoing the call. Returns the shim reply payload (mode `failed` when the capture
+    /// cannot start), nil when cancelled.
     var screenStarter: ((_ requester: WKWebView, _ audio: Bool, _ maxSize: CGSize) async -> [String: Any]?)?
     var sessionStopper: ((_ token: String) -> Void)?
     /// Redeems a `chrome.tabCapture` / `chrome.desktopCapture` stream id for the calling frame's
@@ -396,6 +397,10 @@ getDisplayMedia(constraints){
     delete nativePending[id];
     // Without the hook's gesture, a native call would fail with InvalidAccessError, which pages
     // do not handle as a refusal.
+    if (res && res.mode === 'failed') {
+      if (actx) actx.close();
+      throw new DOMException('Could not start video source', 'NotReadableError');
+    }
     if (!res || res.mode === 'cancel' || (res.mode === 'system' && !pending.promise)) {
       if (actx) actx.close();
       throw new DOMException('Permission denied', 'NotAllowedError');
