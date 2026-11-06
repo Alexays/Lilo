@@ -237,8 +237,6 @@ const WEBKIT_HEADERS = new Set(('accept accept-charset accept-language accept-en
 const NON_WEBKIT_TYPES = new Set(['object', 'csp_report', 'webtransport', 'webbundle']);
 // Chrome takes them empty, excluding nothing; WebKit rejects the rule or fails to compile the whole update.
 const EXCLUSIONS = ['excludedInitiatorDomains', 'excludedDomains', 'excludedRequestMethods'];
-// Chrome files TRACE under "other", which WebKit rejects.
-const WEBKIT_METHODS = ['connect', 'delete', 'get', 'head', 'options', 'patch', 'post', 'put', 'trace'];
 
 function isRegExp(source: string): boolean {
   try {
@@ -261,6 +259,9 @@ function ownOrigins(): string[] {
  */
 export function webKitRule(rule: any): any {
   if (rule === null || typeof rule !== 'object') return rule;
+  const restricts = (value: unknown) => value !== undefined && !(Array.isArray(value) && !value.length);
+  // WebKit ignores these conditions, and would apply the rule everywhere.
+  if (['tabIds', 'excludedTabIds', 'responseHeaders', 'excludedResponseHeaders'].some((key) => restricts(rule.condition?.[key]))) return undefined;
   let result = rule;
   const regexFilter = rule.condition?.regexFilter;
   if (typeof regexFilter === 'string' && isRegExp(regexFilter)) {
@@ -280,20 +281,26 @@ export function webKitRule(rule: any): any {
     for (const key of empty) delete condition[key];
     result = { ...result, condition };
   }
-  // WebKit rejects the method "other", and fails every rule of the extension on one listing requestMethods beside
-  // excludedRequestDomains (WEBKIT-GAPS 94): those methods become the others excluded.
-  const { requestMethods, excludedRequestMethods, excludedRequestDomains } = result.condition ?? {};
+  // WebKit rejects the method "other" (WEBKIT-GAPS 94).
+  const { requestMethods, excludedRequestMethods } = result.condition ?? {};
   const namesOther = (methods: unknown) => Array.isArray(methods) && methods.includes('other');
-  if (namesOther(requestMethods) || namesOther(excludedRequestMethods) || (Array.isArray(requestMethods) && excludedRequestDomains?.length)) {
+  if (namesOther(requestMethods) || namesOther(excludedRequestMethods)) {
     const { requestMethods: _asked, excludedRequestMethods: _excluded, ...condition } = result.condition;
-    const named = Array.isArray(requestMethods) ? requestMethods.filter((method: string) => method !== 'other') : undefined;
+    const withoutOther = (methods: any) => (Array.isArray(methods) ? methods.filter((method) => method !== 'other') : methods);
+    const named = withoutOther(requestMethods);
+    const excluded = withoutOther(excludedRequestMethods);
     if (named?.length === 0) return undefined;
-    const excluded = !named ? excludedRequestMethods.filter((method: string) => method !== 'other')
-      : excludedRequestDomains?.length ? WEBKIT_METHODS.filter((method) => !named.includes(method)) : undefined;
-    if (named && !excluded) condition.requestMethods = named;
+    if (named) condition.requestMethods = named;
     if (excluded?.length) condition.excludedRequestMethods = excluded;
     result = { ...result, condition };
   }
+  const conditions = result.condition ?? {};
+  // WebKit fails every rule of the extension on one listing requestMethods beside excludedRequestDomains (WEBKIT-GAPS
+  // 94), and excludes only the requests both an excluded domain and an excluded method name.
+  if (restricts(conditions.excludedRequestDomains) && (conditions.requestMethods !== undefined || conditions.excludedRequestMethods !== undefined)) return undefined;
+  // WebKit applies allowAllRequests by frame URL alone, and turns each excluded request domain into one more exception.
+  if (rule.action?.type === 'allowAllRequests' && ['initiatorDomains', 'excludedInitiatorDomains', 'domains', 'excludedDomains', 'domainType',
+    'requestMethods', 'excludedRequestMethods', 'excludedRequestDomains'].some((key) => restricts(conditions[key]))) return undefined;
   const redirect = rule.action?.redirect;
   // A scheme test, not URL.canParse: static rulesets are prepared in a bare JavaScriptCore context, which has no URL.
   if (rule.action?.type === 'redirect' && typeof redirect?.url === 'string' && !/^(https?|javascript):/i.test(redirect.url) && /^[a-z][a-z\d+.-]*:/i.test(redirect.url)) {
@@ -315,6 +322,10 @@ export function webKitRule(rule: any): any {
       if (!responseHeaders?.length) delete action.responseHeaders;
       result = { ...result, action };
     }
+  }
+  // WebKit follows each make-https with an exception of the same condition, which https requests would match too.
+  if (rule.action?.type === 'upgradeScheme' && [conditions.urlFilter, conditions.regexFilter, conditions.requestDomains].every((value) => value === undefined)) {
+    result = { ...result, condition: { ...result.condition, urlFilter: '|http:' } };
   }
   return result;
 }

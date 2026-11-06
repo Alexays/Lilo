@@ -73,14 +73,41 @@ describe('rules WebKit rejects', () => {
     assert.equal(webKitRule(excluding), excluding);
   });
 
-  it('lists the other methods excluded beside excluded request domains, and leaves out "other"', () => {
-    const rule = { id: 4, action: { type: 'block' }, condition: { urlFilter: 'a', requestMethods: ['get', 'post'], excludedRequestDomains: ['com'] } };
-    assert.deepEqual(webKitRule(rule).condition, { urlFilter: 'a', excludedRequestDomains: ['com'], excludedRequestMethods: ['connect', 'delete', 'head', 'options', 'patch', 'put', 'trace'] });
+  it('leaves out "other", and cannot apply methods beside excluded request domains', () => {
+    // Adblock Ad Blocker Pro: get requests outside com and net.
+    const rule = { id: 4, action: { type: 'block' }, condition: { regexFilter: '^https?://[^/]+/ads/', requestMethods: ['get'], excludedRequestDomains: ['com', 'net'] } };
+    assert.equal(webKitRule(rule), undefined);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['post'], excludedRequestDomains: ['com'] } }), undefined);
+    assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['other'], excludedRequestDomains: ['com'] } }).condition, { urlFilter: 'a', excludedRequestDomains: ['com'] });
     assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', requestMethods: ['get', 'other'] } }).condition, { urlFilter: 'a', requestMethods: ['get'] });
     assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['other'] } }).condition, { urlFilter: 'a' });
     assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', requestMethods: ['other'] } }), undefined);
     const plain = { ...rule, condition: { urlFilter: 'a', requestMethods: ['get'] } };
     assert.equal(webKitRule(plain), plain);
+  });
+
+  it('cannot apply the tab and response header conditions WebKit ignores', () => {
+    const rule = { id: 5592, action: { type: 'block' }, condition: { urlFilter: '.bundle.js|', domainType: 'firstParty', responseHeaders: [{ header: 'x-example', values: ['1'] }] } };
+    assert.equal(webKitRule(rule), undefined);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', tabIds: [5] } }), undefined);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedTabIds: [5] } }), undefined);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedResponseHeaders: [{ header: 'x-example' }] } }), undefined);
+  });
+
+  it('cannot apply allowAllRequests restricted beyond the frame URL', () => {
+    const rule = { id: 6, action: { type: 'allowAllRequests' }, condition: { urlFilter: '||example.com^', resourceTypes: ['main_frame'] } };
+    assert.equal(webKitRule(rule), rule);
+    for (const condition of [{ initiatorDomains: ['example.org'] }, { excludedInitiatorDomains: ['example.org'] }, { domainType: 'thirdParty' },
+      { requestMethods: ['get'] }, { excludedRequestDomains: ['example.net'] }]) {
+      assert.equal(webKitRule({ ...rule, condition: { ...rule.condition, ...condition } }), undefined, JSON.stringify(condition));
+    }
+  });
+
+  it('upgrades only http requests with a rule matching every URL', () => {
+    const rule = { id: 7, action: { type: 'upgradeScheme' }, condition: { resourceTypes: ['main_frame'] } };
+    assert.deepEqual(webKitRule(rule).condition, { resourceTypes: ['main_frame'], urlFilter: '|http:' });
+    const filtered = { ...rule, condition: { urlFilter: '||example.com^' } };
+    assert.equal(webKitRule(filtered), filtered);
   });
 
   it('leaves what Chrome rejects too for WebKit to reject', () => {

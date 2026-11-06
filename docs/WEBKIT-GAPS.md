@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96 and 97. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97 and 103. Every other gap is fully worked around.
 
 ---
 
@@ -157,9 +157,9 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 
 ### 94. Request methods WebKit cannot take in a rule
 
-- **Gap:** WebKit fails to compile all of an extension's declarativeNetRequest rules, with `Unable to load declarativeNetRequest rules.`, when one rule lists `requestMethods` beside `excludedRequestDomains`: each update then fails, and the rules already applied stay. It also rejects a rule naming the method `other` in `requestMethods` or `excludedRequestMethods`, and so the whole update; it knows `trace` instead, which Chrome files under `other`. Chrome applies such rules.
-- **Lilo:** beside excluded request domains, the methods a rule lists become the other methods it excludes, `trace` among them; `other` leaves both lists, and a rule asking only for it turns inert ([dnr-rules.ts] `webKitRule`). A method none of WebKit's names covers, as `PROPFIND`, then matches a rule excluding methods, where Chrome's `other` would not.
-- **Impact:** Adblock Ad Blocker Pro's regex rules include one for `get` requests outside `com` and `net`: none of its dynamic rules applied, and its filtering mode stalled behind the failed updates.
+- **Gap:** WebKit fails to compile all of an extension's declarativeNetRequest rules, with `Unable to load declarativeNetRequest rules.`, when one rule lists `requestMethods` beside `excludedRequestDomains`: each update then fails, and the rules already applied stay. Beside excluded request domains, it applies `excludedRequestMethods` only to the requests both exclude, where Chrome excludes either. It also rejects a rule naming the method `other` in `requestMethods` or `excludedRequestMethods`, and so the whole update; it knows `trace` instead, which Chrome files under `other`. Chrome applies such rules.
+- **Lilo:** a rule listing request methods or excluded methods beside excluded request domains is kept inert under its id; `other` leaves both lists, and a rule asking only for it turns inert ([dnr-rules.ts] `webKitRule`). A method none of WebKit's names covers, as `PROPFIND`, then matches a rule that excluded `other`.
+- **Impact:** Adblock Ad Blocker Pro's regex rules include one for `get` requests outside `com` and `net`: none of its dynamic rules applied, and its filtering mode stalled behind the failed updates. That rule now never matches.
 - **Check:** `testRequestMethodsBesideExcludedRequestDomainsFailEveryRule`. Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'a', requestMethods: ['get'], excludedRequestDomains: ['example.com'] } }] })`. Expected: applies. Actual: rejects with `Unable to load declarativeNetRequest rules.`, and every later update too.
 
 ### 95. A subframe's webRequest details name it a main frame, and its main frame by WebKit's id
@@ -573,6 +573,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** gives WebKit session rules as dynamic rules, which it stores, under ids counted down from 2³¹−1 and marked with the extension's id ([dnr-rules.ts] `updateSessionRules`, `heldSessionRules`), so the load compile finds the last run's rules unchanged and reuses its list. Native remembers, in memory per context, the ids this run set ([DeclarativeNetRequestBridgeHandler.swift] `sessionRules`): `getSessionRules` answers only those, as Chrome after a launch, removing one of the others changes nothing, and adding one back as it was keeps it as it is, so a worker clearing its rules at start then adding them back compiles nothing. 30 s after the worker starts, the others are removed and the run claims every rule ([declarativeNetRequest.ts] `releaseSessionRules`). `getMatchedRules` reports them under `_session` and their own ids. It also sends no rule update that changes nothing, merges the calls made while one runs (gap 38), and keeps its preparation stamp when it rewrites a ruleset for `updateStaticRules`.
 - **Impact:** at every launch, AdGuard compiled its 54 MB list three times (at load, for its 722 session rules, then for its stealth rule), uBlock Origin Lite its 28 MB list and Malwarebytes Browser Guard its 48 MB list, about 12 s of CPU together with the 20 extensions of `make ext-bench`.
 - **Check:** `dnr-rules.test.ts`, "session rules". Repro: an MV3 extension with an enabled static ruleset whose worker adds one session rule at start; quit and relaunch twice. Expected: its `DeclarativeNetRequestContentRuleList.data` stays as is on the second relaunch. Actual: rewritten on every launch.
+
+### 103. `declarativeNetRequest` conditions WebKit ignores
+
+- **Gap:** WebKit's rule translation skips the conditions it does not know, `tabIds`, `excludedTabIds`, `responseHeaders` and `excludedResponseHeaders`, and applies the rule without them. An `allowAllRequests` rule keeps only its frame URL: its initiator domains, `domainType` and request methods are dropped, and each excluded request domain becomes one more exception. Each `upgradeScheme` rule is followed by an exception of the same condition, which https requests match too: a rule upgrading every URL turns off the rules of its priority and below on every https request. Chrome applies each condition.
+- **Lilo:** a rule with one of those conditions is kept inert under its id ([dnr-rules.ts] `webKitRule`); an `upgradeScheme` rule without a URL or request domain condition gets the `urlFilter` `|http:`, which leaves `ws` requests out.
+- **Impact:** uBlock Origin Lite's default ruleset conditions a few rules on response headers, one blocking first-party `.bundle.js` scripts: WebKit blocked them on every site.
+- **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'example', tabIds: [12345] } }] })`, then load `https://example.com/` in another tab. Expected: loads. Actual: blocked.
 
 ## storage
 
