@@ -921,6 +921,7 @@ extension MainWindowController: NSWindowDelegate {
             littleWindows.values.forEach { $0.window.close() }
         }
         sidePanel.closeAll()
+        context.conversations.windowClosed(self)
         setWallpaperColorWatch(false)
         // Closing the last window quits the app, after this window has left the registry.
         if context.windows.windows.count == 1 { saveSessionBeforeQuit() }

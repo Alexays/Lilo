@@ -1,0 +1,3 @@
+kind: Fixed
+body: After closing a window, an agent conversation it was showing notifies again when its turn ends or it asks for permission
+time: 2026-11-06T18:49:48.930805+01:00
