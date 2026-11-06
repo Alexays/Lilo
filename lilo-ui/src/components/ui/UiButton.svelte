@@ -33,7 +33,7 @@
   {onclick}
 >
   {#if busy}<span class="ui-button-spinner" aria-hidden="true"></span>{/if}
-  {@render children?.()}
+  <span class="ui-button-label">{@render children?.()}</span>
 </button>
 
 <style>
@@ -113,13 +113,22 @@
     cursor: default;
   }
 
+  /* The spinner stacks over the label, which keeps the button's width so nothing beside it moves. */
   .ui-button.busy {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-6);
+    display: inline-grid;
+  }
+
+  .ui-button.busy > * {
+    grid-area: 1 / 1;
+  }
+
+  /* Transparent rather than hidden: the label stays the button's accessible name. */
+  .ui-button.busy .ui-button-label {
+    opacity: 0;
   }
 
   .ui-button-spinner {
+    place-self: center;
     width: 0.8em;
     height: 0.8em;
     border: 0.15em solid currentColor;
