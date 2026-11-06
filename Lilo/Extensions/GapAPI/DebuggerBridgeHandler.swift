@@ -260,8 +260,13 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             }
             let tree = (try? await session.inspector.script("cdpSend", ["method": "Page.getFrameTree", "params": [:]])) as? [String: Any]
             let frame = ((tree?["result"] as? [String: Any])?["frameTree"] as? [String: Any])?["frame"] as? [String: Any]
+            // WebKit names the new document's loader only once it commits; CDP leaves it out for a fragment change.
+            let base = { (url: URL?) in url?.absoluteString.split(separator: "#", maxSplits: 1).first }
+            let sameDocument = url.fragment != nil && base(url) == base(webView.url)
             engine.loadURL(url)
-            return ["frameId": frame?["id"] ?? "", "loaderId": frame?["loaderId"] ?? ""] as [String: Any]
+            var result: [String: Any] = ["frameId": frame?["id"] ?? ""]
+            if !sameDocument { result["loaderId"] = UUID().uuidString }
+            return result
         case "Page.printToPDF":
             guard let data = try? await webView.pdf(configuration: WKPDFConfiguration()) else { return Self.protocolError(-32000, "Printing failed") }
             return ["data": data.base64EncodedString()]

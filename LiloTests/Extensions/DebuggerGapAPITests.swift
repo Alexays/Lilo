@@ -193,6 +193,26 @@ final class DebuggerGapAPITests: XCTestCase {
         XCTAssertEqual((value.result["result"] as? [String: Any])?["value"] as? String, "ab", "an Input command answers once the page handled it")
     }
 
+    func testPuppeteerStartupAndNavigationEvents() async throws {
+        let tab = try await openTab()
+        _ = await attach(tab.position)
+        for method in ["Page.setLifecycleEventsEnabled", "Performance.enable", "Log.enable"] {
+            let reply = await send(method, ["enabled": true])
+            XCTAssertNil(reply.error, method)
+        }
+        _ = await send("Page.enable")
+        let tree = await send("Page.getFrameTree")
+        let oldLoader = ((tree.result["frameTree"] as? [String: Any])?["frame"] as? [String: Any])?["loaderId"] as? String
+
+        let navigated = await send("Page.navigate", ["url": "http://127.0.0.1:\(server.port)/"])
+        let loader = try XCTUnwrap(navigated.result["loaderId"] as? String, navigated.error ?? "")
+        XCTAssertNotEqual(loader, oldLoader)
+        try await waitUntil("the page's lifecycle events arrive") {
+            let lifecycle = self.events("debugger.onEvent").filter { $0[1] as? String == "Page.lifecycleEvent" }.compactMap { ($0[2] as? [String: Any])?["name"] as? String }
+            return lifecycle.contains("init") && lifecycle.contains("load")
+        }
+    }
+
     func testRestrictedPagesFollowChrome() throws {
         let context = try XCTUnwrap(registry.context(for: extensionId))
         let restriction = { (url: String) in DebuggerBridgeHandler.restriction(of: URL(string: url), for: context) }

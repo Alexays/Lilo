@@ -129,8 +129,7 @@
   ])
   const passedEvents = new Set([
     'Network.dataReceived', 'Network.webSocketCreated', 'Network.webSocketClosed', 'Network.webSocketFrameSent',
-    'Network.webSocketFrameReceived', 'Network.webSocketFrameError', 'Network.webSocketHandshakeResponseReceived',
-    'Page.loadEventFired', 'Page.domContentEventFired'
+    'Network.webSocketFrameReceived', 'Network.webSocketFrameError', 'Network.webSocketHandshakeResponseReceived'
   ])
 
   // Each WebKit event as the CDP events it stands for; an empty list drops it.
@@ -162,9 +161,19 @@
         return [[method, { ...rest, wallTime: walltime }]]
       }
       case 'Page.frameNavigated': {
-        const events = [[method, { frame: frame(params.frame), type: 'Navigation' }]]
-        if (!params.frame?.parentId) events.push(['Runtime.executionContextsCleared', {}])
+        const events = [
+          [method, { frame: frame(params.frame), type: 'Navigation' }],
+          ['Page.lifecycleEvent', { frameId: params.frame.id, loaderId: params.frame.loaderId, name: 'init', timestamp: performance.now() / 1000 }]
+        ]
+        if (!params.frame.parentId) events.push(['Runtime.executionContextsCleared', {}])
         return events
+      }
+      // WebKit fires these for the main frame only, which already shows the new document.
+      case 'Page.domContentEventFired':
+      case 'Page.loadEventFired': {
+        const main = WI.networkManager.mainFrame
+        const name = method === 'Page.loadEventFired' ? 'load' : 'DOMContentLoaded'
+        return [[method, params], ['Page.lifecycleEvent', { frameId: main?.id ?? '', loaderId: main?.loaderIdentifier ?? '', name, timestamp: params.timestamp }]]
       }
       case 'Page.frameDetached':
         return [[method, { frameId: params.frameId, reason: 'remove' }]]
@@ -337,8 +346,9 @@
   }
 
   // The WebKit domains each CDP domain's events come from. The frontend may not have enabled them all
-  // yet; it needs them on, so disable leaves them be.
-  const backingDomains = { Runtime: ['Runtime', 'Console'], Page: ['Page'], Network: ['Network'], DOM: [] }
+  // yet; it needs them on, so disable leaves them be. Performance and Log send nothing: Puppeteer
+  // enables them at startup and fails when they are missing.
+  const backingDomains = { Runtime: ['Runtime', 'Console'], Page: ['Page'], Network: ['Network'], DOM: [], Performance: [], Log: [] }
 
   const commands = {
     'Runtime.evaluate': async params => {
@@ -401,6 +411,7 @@
     'Runtime.releaseObject': async params => runtime().releaseObject.invoke({ objectId: params.objectId }).then(() => ({})),
     'Runtime.releaseObjectGroup': async params => runtime().releaseObjectGroup.invoke({ objectGroup: params.objectGroup }).then(() => ({})),
     'Runtime.runIfWaitingForDebugger': async () => ({}),
+    'Page.setLifecycleEventsEnabled': async () => ({}),
     'Page.reload': async params => page().reload.invoke(defined({ ignoreCache: params.ignoreCache })).then(() => ({})),
     'Page.getFrameTree': async () => ({ frameTree: frameTree((await page().getResourceTree.invoke({})).frameTree, false) }),
     'Page.getResourceTree': async () => ({ frameTree: frameTree((await page().getResourceTree.invoke({})).frameTree, true) }),
