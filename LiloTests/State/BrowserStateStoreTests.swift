@@ -3727,6 +3727,7 @@ final class BrowserStateStoreTests: XCTestCase {
         )
         var config = LifecyclePolicyConfig.config(for: .balanced)
         config.backgroundTrimGracePeriod = 0
+        config.freezeThreshold = 0
         var discardCount = 0
         let trimmed = expectation(description: "occlusion trim")
         let controller = HiddenSpaceLifecycleController(

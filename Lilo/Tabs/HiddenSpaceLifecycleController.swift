@@ -32,7 +32,10 @@ final class HiddenSpaceLifecycleController {
     private(set) var isForeground = true
     /// Tracks whether the window is considered visible by the occlusion system.
     /// Defaults to true; updated via windowOcclusionChanged(isVisible:).
-    private(set) var isWindowVisible = true
+    private(set) var isWindowVisible = true {
+        didSet { if isWindowVisible { hiddenSince = nil } else if oldValue { hiddenSince = Date() } }
+    }
+    private var hiddenSince: Date?
     private var foregroundObserver: Any?
     private var backgroundObserver: Any?
     private var memoryPressureSource: DispatchSourceMemoryPressure?
@@ -146,8 +149,12 @@ final class HiddenSpaceLifecycleController {
                 let protectedSpaceId = self.pendingTrimProtectedSpaceId
                 self.pendingTrimWorkItem = nil
                 self.pendingTrimProtectedSpaceId = nil
-                // Nothing is on screen: freezing stops every page's CPU yet resumes instantly, where a discard reloads on return.
-                if !self.isWindowVisible { self.store.freezeIdleEngines(freezeThreshold: 0) }
+                // Nothing is on screen: freezing stops every page's CPU and keeps it in memory, where a discard reloads on return.
+                var freezeDelay: TimeInterval?
+                if let hiddenSince = self.hiddenSince {
+                    let remaining = self.hiddenFreezeDelay + hiddenSince.timeIntervalSinceNow
+                    if remaining <= 0 { self.store.freezeIdleEngines(freezeThreshold: 0) } else { freezeDelay = remaining }
+                }
                 let plan = self.memoryPressurePlan(policy: policy ?? .foreground, cap: activeBudgetCap)
                 self.store.trimInactiveEngines(
                     excluding: protectedSpaceId,
@@ -161,10 +168,17 @@ final class HiddenSpaceLifecycleController {
                 #if DEBUG
                 StartupMetrics.trace("lifecycle", self.store.lifecycleDiagnostics().traceMessage)
                 #endif
+                if let freezeDelay { self.scheduleTrim(delay: freezeDelay, policy: policy, activeBudgetCap: activeBudgetCap) }
             }
         }
         pendingTrimWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+    }
+
+    /// A hidden window freezes every tab at once, so it waits the freeze threshold first: the sweep that applies it is suspended
+    /// meanwhile, and a resume rebuilds the page's style and layout before it paints.
+    private var hiddenFreezeDelay: TimeInterval {
+        config.freezeThreshold.isFinite ? max(config.backgroundTrimGracePeriod, config.freezeThreshold) : config.backgroundTrimGracePeriod
     }
 
     /// No hidden space changed after a tab activation, so the full sweep would re-project every inactive
