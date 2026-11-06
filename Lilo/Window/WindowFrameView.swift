@@ -162,12 +162,16 @@ final class WindowFrameView: NSView {
     func setBarColors(_ colors: [CGColor]?) {
         guard colors != barColors else { return }
         barColors = colors
+        let barWasHidden = barLayer.isHidden
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         if let colors { barLayer.colors = colors.count == 1 ? [colors[0], colors[0]] : colors }
         applyBarColors()
+        // Only the mask's path depends on the bar: a full layout would cut a curtain sweep in flight short.
+        if grainLayer != nil, barLayer.isHidden != barWasHidden {
+            grainMask.path = grainMaskPath(WindowFrameGeometry(size: bounds.size, edges: edges, cornerRadius: Self.contentCornerRadius))
+        }
         CATransaction.commit()
-        if grainLayer != nil { applyLayout(animated: false) }
     }
 
     /// The bar shows, and squares the hole's top corners in its colors, only where the layout leaves room for one.
@@ -270,14 +274,19 @@ final class WindowFrameView: NSView {
         if let grainLayer {
             grainLayer.frame = bounds
             grainMask.frame = bounds
-            // Sweeps with the bands during a toggle: the hole is a rounded rect cut out of the whole view.
-            let path = CGMutablePath()
-            path.addRect(bounds)
-            path.addRoundedRect(in: geometry.contentHole, cornerWidth: geometry.cornerRadius, cornerHeight: geometry.cornerRadius)
-            if !barLayer.isHidden { path.addRect(barLayer.frame) }
-            grainMask.path = path
+            // Sweeps with the bands during a toggle.
+            grainMask.path = grainMaskPath(geometry)
         }
         CATransaction.commit()
+    }
+
+    /// The hole is a rounded rect cut out of the whole view, and so is the bar when it shows.
+    private func grainMaskPath(_ geometry: WindowFrameGeometry) -> CGPath {
+        let path = CGMutablePath()
+        path.addRect(bounds)
+        path.addRoundedRect(in: geometry.contentHole, cornerWidth: geometry.cornerRadius, cornerHeight: geometry.cornerRadius)
+        if !barLayer.isHidden { path.addRect(barLayer.frame) }
+        return path
     }
 
     private func updateCornerPathsIfNeeded(radius: CGFloat) {

@@ -13,6 +13,7 @@ final class TabModalDialogView: NSView {
     /// What had the keyboard when the tab went away, given it back when the tab shows again.
     private weak var lastResponder: NSView?
     private let announcement: String
+    private let panel = NSBox()
 
     private static let contentWidth: CGFloat = 260
     private static let inset: CGFloat = 20
@@ -109,7 +110,6 @@ final class TabModalDialogView: NSView {
         stack.edgeInsets = NSEdgeInsets(top: Self.inset, left: Self.inset, bottom: Self.inset, right: Self.inset)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
-        let panel = NSBox()
         panel.boxType = .custom
         panel.titlePosition = .noTitle
         panel.fillColor = .windowBackgroundColor
@@ -173,6 +173,14 @@ final class TabModalDialogView: NSView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    override func layout() {
+        super.layout()
+        // An explicit path spares Core Animation an offscreen pass to derive the shadow from the panel's alpha.
+        // Clamped: CGPath traps on a radius over half the side, as a background tab's zero-size web view gives.
+        let radius = max(0, min(panel.cornerRadius, panel.bounds.width / 2, panel.bounds.height / 2))
+        panel.layer?.shadowPath = CGPath(roundedRect: panel.bounds, cornerWidth: radius, cornerHeight: radius, transform: nil)
+    }
 
     /// Covers `webView`'s page, and takes the keyboard when the page is on screen.
     func show(in webView: WKWebView) {

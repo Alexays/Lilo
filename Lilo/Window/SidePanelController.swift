@@ -307,8 +307,11 @@ final class SidePanelController: NSObject {
         divider.setFrameColor(window.window?.backgroundColor ?? MainWindowController.defaultSidebarBackgroundColor(), animated: false)
         divider.addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .cursorUpdate, .activeInKeyWindow, .inVisibleRect], owner: self))
         divider.onSuperviewResize = { [weak self] in
-            self?.fitToWindow()
-            self?.window.updateContentContainerFrame(animated: false)
+            guard let self else { return }
+            let reserved = reservedWidth
+            fitToWindow()
+            // The window's own resize already lays out the content and its frame: only a new panel width moves them.
+            if reservedWidth != reserved { window.updateContentContainerFrame(animated: false) }
         }
         divider.onDrag = { [weak self] point in
             guard let self, let bounds = window.window?.contentView?.bounds else { return }
