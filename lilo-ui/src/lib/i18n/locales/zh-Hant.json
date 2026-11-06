@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "小視窗快速鍵",
-				"description": "Command-Option-N 可從任何 App 開啟小視窗。",
+				"description": "快速鍵可從任何 App 開啟小視窗。",
 				"keywords": "小視窗 快速 全域 快速鍵"
 			},
 			"externalLinkDefault": {

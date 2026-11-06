@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Raccourci de la petite fenêtre",
-				"description": "Commande-Option-N ouvre une petite fenêtre depuis n'importe quelle app.",
+				"description": "Le raccourci ouvre une petite fenêtre depuis n'importe quelle app.",
 				"keywords": "little petite fenêtre rapide raccourci global"
 			},
 			"externalLinkDefault": {

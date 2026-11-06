@@ -100,7 +100,7 @@
 {#if pagesOpen && element}
   <StripPopover anchor={element} onclose={() => (pagesOpen = false)} label={title}>
     {#each pages as page (page.id)}
-      <button class="popover-row" class:active={page.id === activeTabId} onclick={() => activate(page)}>
+      <button class="popover-row" role="menuitem" class:active={page.id === activeTabId} onclick={() => activate(page)}>
         <SiteFavicon src={page.faviconDataURL} title={page.title} url={page.url} size={16} radius={4} />
         <span class="row-title">{tabDisplayTitle(page.title) || page.url}</span>
       </button>

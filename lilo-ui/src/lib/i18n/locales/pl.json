@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Skrót małego okna",
-				"description": "Command-Option-N otwiera małe okno z dowolnej aplikacji.",
+				"description": "Skrót otwiera małe okno z dowolnej aplikacji.",
 				"keywords": "małe szybkie okno globalny skrót klawiszowy"
 			},
 			"externalLinkDefault": {

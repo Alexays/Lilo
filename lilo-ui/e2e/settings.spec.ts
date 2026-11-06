@@ -24,6 +24,27 @@ test("the shortcuts' Reset all button shows its whole label beside the search fi
 	expect(await reset.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
 });
 
+test("a shortcut conflict moves focus to Replace, and Cancel gives it back to the row's keys", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openShortcuts" }));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "shortcutsLoaded",
+		groups: [{ title: "Tabs", items: [{ id: "tab.new", title: "New Tab", keys: ["⌘T"], custom: false }] }],
+		controlTabOrder: "recent",
+	}));
+	const list = page.locator(".shortcuts-list");
+	const keys = list.locator(".shortcut-keys");
+	await expect(keys).toHaveAttribute("aria-label", "New Tab, ⌘T");
+
+	await keys.click();
+	await page.evaluate(() => window.__lilo!.receive({ event: "shortcutConflict", id: "tab.new", combo: "⌘w", keys: "⌘W", owner: "Close Tab" }));
+	await expect(list.getByRole("button", { name: "Replace" })).toBeFocused();
+	await expect(page.locator(".live-announcer")).toContainText("Close Tab");
+
+	await list.getByRole("button", { name: "Cancel" }).click();
+	await expect(keys).toBeFocused();
+});
+
 test("the agent tiles style their secondary buttons like the other agent rows", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));

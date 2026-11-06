@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Sneltoets voor klein venster",
-				"description": "Command-Option-N opent vanuit elke app een klein venster.",
+				"description": "De sneltoets opent vanuit elke app een klein venster.",
 				"keywords": "klein snel venster globaal sneltoets"
 			},
 			"externalLinkDefault": {

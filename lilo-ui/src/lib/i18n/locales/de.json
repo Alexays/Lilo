@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Kurzbefehl für kleines Fenster",
-				"description": "Befehl-Wahl-N öffnet aus jeder App ein kleines Fenster.",
+				"description": "Der Kurzbefehl öffnet aus jeder App ein kleines Fenster.",
 				"keywords": "klein schnell fenster global tastenkombination kurzbefehl"
 			},
 			"externalLinkDefault": {

@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Abbreviazione per la finestra piccola",
-				"description": "Comando-Opzione-N apre una finestra piccola da qualsiasi app.",
+				"description": "La scorciatoia apre una finestra piccola da qualsiasi app.",
 				"keywords": "finestra piccola rapida globale tasto abbreviazione"
 			},
 			"externalLinkDefault": {

@@ -330,7 +330,7 @@
 			},
 			"littleWindowHotKey": {
 				"title": "Küçük pencere kestirmesi",
-				"description": "Komut-Option-N, her uygulamadan Küçük pencere açar.",
+				"description": "Kısayol, her uygulamadan Küçük pencere açar.",
 				"keywords": "küçük hızlı pencere genel kısayol kestirme"
 			},
 			"externalLinkDefault": {
