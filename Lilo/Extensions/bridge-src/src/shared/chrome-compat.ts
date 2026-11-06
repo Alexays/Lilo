@@ -18,7 +18,7 @@ import { onUserScriptMessage, onUserScriptConnect } from '../augmentation/userSc
 import { gapModules } from './gap-modules.ts';
 import { ChromeEvent, eventStandIns } from './chrome-event.ts';
 import { GapChromeEvent, reportGapListener } from './gap-event.ts';
-import { gapCall } from './ipc.ts';
+import { gapCall, workerActive, workerAnswering } from './ipc.ts';
 import { callbackify, installBridgeChrome, liloLastError, liloLastErrorMessage, withLastError } from './callbackify.ts';
 import { CHROME_CONSTANTS } from './chrome-constants.gen.ts';
 import { STATIC_CONSTANTS, addMissing, home, mergeAssignedBrowser } from './static-compat.ts';
@@ -150,10 +150,11 @@ function chromeError(message: string, args: any[]): string | undefined {
 
 /**
  * `method` on `namespace`, failing in Chrome's words where WebKit's differ; in a page, its callback and promise settle
- * no more once the page closed, as in Chrome.
+ * no more once the page closed, as in Chrome. In the worker, each call keeps it running, as in Chrome.
  */
 function chromeMethod(method: Method, namespace: object): Method {
   return function (...args: any[]) {
+    workerActive();
     const last = args.length - 1;
     const callback = args[last];
     if (typeof callback === 'function') {
@@ -402,6 +403,6 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   for (const name in g.browser) void g.chrome[name];
   mergeAssignedBrowser(g);
   // The worker tells Lilo it listens, for the error of a page's message nobody answers.
-  if (g.chrome.runtime?.onMessage) answerAsChrome(g.chrome.runtime.onMessage, page ? undefined : () => reportGapListener('runtime.onMessage'));
+  if (g.chrome.runtime?.onMessage) answerAsChrome(g.chrome.runtime.onMessage, page ? undefined : () => reportGapListener('runtime.onMessage'), page ? undefined : workerAnswering);
   if (!page && chrome.runtime?.onMessage) relayForContentScripts(chrome.runtime);
 }

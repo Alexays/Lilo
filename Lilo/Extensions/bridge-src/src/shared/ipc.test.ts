@@ -53,7 +53,7 @@ globalThis.BroadcastChannel = class extends BroadcastChannel {
   }
 };
 mock.timers.enable({ apis: ['setTimeout', 'Date'] });
-const { bridgeEvents, channelClosed, gapCall, workerReady } = await import('./ipc.ts');
+const { bridgeEvents, channelClosed, gapCall, workerActive, workerAnswering, workerReady } = await import('./ipc.ts');
 const { storageAreaPatches } = await import('./storage-area.ts');
 
 describe('worker channel', () => {
@@ -186,5 +186,35 @@ describe('worker channel', () => {
     assert.deepEqual(next.sent, [{ role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance }, sent]);
     next.receive({ reply: sent.id, result: 'moved' });
     assert.equal(await call, 'moved', 'the call survives the move');
+  });
+
+  it('stays open while the worker calls APIs or owes a response, posting before WebKit counts 2 minutes without one', async () => {
+    mock.timers.tick(30_000);
+    assert.deepEqual(ports.at(-1)!.sent.at(-1), { idle: true });
+    const count = ports.length;
+    workerActive();
+    assert.equal(ports.length, count + 1, 'a call reopens the idle channel');
+    const port = ports.at(-1)!;
+    for (let call = 0; call < 18; call++) {
+      mock.timers.tick(10_000);
+      workerActive();
+    }
+    assert.deepEqual(port.sent.filter((message) => message.keepAlive), [{ keepAlive: true }, { keepAlive: true }], 'one post after each 90 s of silence');
+    assert.equal(port.sent.some((message) => message.idle), false);
+
+    let answer = () => {};
+    workerAnswering(new Promise<void>((resolve) => { answer = resolve; }));
+    mock.timers.tick(120_000);
+    assert.equal(port.sent.some((message) => message.idle), false, 'a response still owed keeps it');
+    answer();
+    await new Promise(setImmediate);
+    mock.timers.tick(25_000);
+    assert.deepEqual(port.sent.at(-1), { idle: true }, 'idle 20 s after the response');
+
+    workerAnswering(new Promise(() => {}));
+    mock.timers.tick(290_000);
+    assert.equal(ports.at(-1)!.sent.some((message) => message.idle), false);
+    mock.timers.tick(30_000);
+    assert.deepEqual(ports.at(-1)!.sent.at(-1), { idle: true }, 'a response never sent keeps it 5 minutes at most');
   });
 });

@@ -35,6 +35,8 @@ function frameSender(sender: any, url: string): unknown {
 }
 
 let workerScript: string | undefined;
+/** Told of each response a listener owes, until it is sent. */
+let owing: ((answered: PromiseLike<unknown>) => void) | undefined;
 
 /**
  * WebKit names the worker by its extension's origin alone, where Chrome gives its script's url: Aircall's offscreen
@@ -56,15 +58,25 @@ function answeringListener(listener: Listener): Listener {
       if (isProbe(message) || isExternal(message)) return undefined;
       const url = frameUrl(message, sender);
       const framed = typeof url === 'string';
+      let answered = false;
+      let settle: (() => void) | undefined;
       const result = listener.call(
         this,
         framed ? (message as { message?: unknown }).message : message,
         framed ? frameSender(sender, url) : chromeSender(sender),
-        (response?: unknown) => sendResponse(response === undefined ? null : response),
+        (response?: unknown) => {
+          answered = true;
+          settle?.();
+          sendResponse(response === undefined ? null : response);
+        },
       );
-      return typeof (result as PromiseLike<unknown>)?.then === 'function'
-        ? Promise.resolve(result).then((response) => (response === undefined ? null : response))
-        : result;
+      if (typeof (result as PromiseLike<unknown>)?.then === 'function') {
+        const answer = Promise.resolve(result).then((response) => (response === undefined ? null : response));
+        owing?.(answer);
+        return answer;
+      }
+      if (result === true && !answered) owing?.(new Promise<void>((resolve) => { settle = resolve; }));
+      return result;
     };
     answering.set(listener, wrapper);
   }
@@ -72,13 +84,14 @@ function answeringListener(listener: Listener): Listener {
 }
 
 /**
- * Registers `onMessage`'s listeners through answeringListener, calling `onListen` for each, and answers the probe
- * while one is registered. The members go on the event object, which the caller keeps alive: WebKit shares the
- * prototype with every other event.
+ * Registers `onMessage`'s listeners through answeringListener, calling `onListen` for each and `onOwing` with each
+ * response a listener owes, and answers the probe while one is registered. The members go on the event object, which
+ * the caller keeps alive: WebKit shares the prototype with every other event.
  */
-export function answerAsChrome(onMessage: any, onListen?: () => void): void {
+export function answerAsChrome(onMessage: any, onListen?: () => void, onOwing?: (answered: PromiseLike<unknown>) => void): void {
   // Each content script entry carries its own copy of the compat: the first one answers for all.
   if (Object.hasOwn(onMessage, 'addListener')) return;
+  owing = onOwing;
   const listeners = new Set<Listener>();
   const answerProbe = (message: unknown, _sender: unknown, sendResponse: (response: boolean) => void) => {
     if (isProbe(message)) sendResponse(true);

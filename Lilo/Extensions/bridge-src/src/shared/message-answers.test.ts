@@ -61,6 +61,36 @@ describe('runtime.onMessage listeners', () => {
     assert.equal(await onMessage.send('none'), undefined);
   });
 
+  it('say which responses they owe until they send them', async () => {
+    const onMessage = new Event();
+    const owed: Array<{ answered: PromiseLike<unknown>; settled: boolean }> = [];
+    answerAsChrome(onMessage, undefined, (answered) => {
+      const entry = { answered, settled: false };
+      owed.push(entry);
+      answered.then(() => { entry.settled = true; });
+    });
+    let respond: (response?: unknown) => void = () => {};
+    onMessage.addListener((message: string, _sender: unknown, sendResponse: (response?: unknown) => void) => {
+      if (message === 'now') sendResponse(1);
+      if (message === 'answered') { sendResponse(2); return true; }
+      if (message === 'later') { respond = sendResponse; return true; }
+      if (message === 'promise') return Promise.resolve(3);
+      return undefined;
+    });
+    assert.equal(await onMessage.send('now'), 1);
+    assert.equal(await onMessage.send('answered'), 2);
+    assert.equal(await onMessage.send('promise'), 3);
+    assert.equal(owed.length, 1, 'only the promise was owed');
+    const later = onMessage.send('later');
+    await new Promise(setImmediate);
+    assert.equal(owed.length, 2);
+    assert.equal(owed[1].settled, false);
+    respond(4);
+    assert.equal(await later, 4);
+    await new Promise(setImmediate);
+    assert.equal(owed[1].settled, true);
+  });
+
   it('are removed and found as registered', () => {
     const onMessage = new Event();
     answerAsChrome(onMessage);
