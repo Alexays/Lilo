@@ -26,6 +26,8 @@ final class SessionPersistence {
     /// repair + deep-compare prelude is short-circuited. Returning nil (tests) takes the
     /// repair + deep-compare path.
     private let dedupKeyProvider: (UUID) -> SaveDedupKey?
+    /// Told of each background save that failed, on the main actor.
+    private let saveFailed: (Error) -> Void
     private var saveTimer: Timer?
     private let debounceInterval: TimeInterval = 2.0
     private var pendingStatesBySpaceId: [UUID: SpaceTabState] = [:]
@@ -40,12 +42,14 @@ final class SessionPersistence {
         tabDBPool: DatabasePool,
         displayedSpaceIds: @escaping () -> [UUID],
         stateProvider: @escaping (UUID) -> SpaceTabState?,
-        dedupKeyProvider: @escaping (UUID) -> SaveDedupKey?
+        dedupKeyProvider: @escaping (UUID) -> SaveDedupKey?,
+        saveFailed: @escaping (Error) -> Void
     ) {
         self.tabDBPool = tabDBPool
         self.displayedSpaceIds = displayedSpaceIds
         self.stateProvider = stateProvider
         self.dedupKeyProvider = dedupKeyProvider
+        self.saveFailed = saveFailed
     }
 
     /// Schedule a debounced save of every displayed space whose durable state changed.
@@ -102,8 +106,9 @@ final class SessionPersistence {
         }, completion: { [weak self] _, result in
             if case .failure(let error) = result {
                 Task { @MainActor [weak self] in
-                    Self.logger.error("saveNow ERROR: \(error.localizedDescription)")
+                    Self.logger.error("saveNow ERROR: \(error.localizedDescription, privacy: .public)")
                     guard let self else { return }
+                    self.saveFailed(error)
                     var restoredCount = 0
                     for state in pendingStates
                         where self.pendingStatesBySpaceId[state.spaceId] == nil
@@ -145,7 +150,8 @@ final class SessionPersistence {
         }, completion: { [weak self] _, result in
             if case .failure(let error) = result {
                 Task { @MainActor [weak self] in
-                    Self.logger.error("space-switch save ERROR: \(error.localizedDescription)")
+                    Self.logger.error("space-switch save ERROR: \(error.localizedDescription, privacy: .public)")
+                    self?.saveFailed(error)
                     // Forget the unwritten snapshot so the next switch away retries the write.
                     if self?.lastSnapshotsBySpaceId[spaceId] == state { self?.lastSnapshotsBySpaceId.removeValue(forKey: spaceId) }
                 }

@@ -310,6 +310,14 @@ extension MainWindowController {
                     structureToken: spaceTab.structureToken,
                     durableRevision: spaceTab.durableRevision
                 )
+            },
+            saveFailed: { [weak context = self.context] error in
+                context?.showDegradedDatabaseAlert(
+                    subject: "session",
+                    message: "Lilo couldn't save your tabs".localized,
+                    informative: "Recent changes may be missing the next time you open Lilo. Check that your disk has free space.".localized,
+                    error: error
+                )
             }
         )
     }

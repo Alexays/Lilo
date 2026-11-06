@@ -33,7 +33,7 @@ final class BrowserContextQuitSaveTests: XCTestCase {
             context.browserState.storeSpace(id: space.id, snapshot: .init(spaceTab: SpaceTab(spaceId: space.id, state: state), engines: [:]))
         }
 
-        context.saveSpaceStatesBeforeQuit()
+        XCTAssertTrue(context.saveSpaceStatesBeforeQuit())
 
         let storeA = SpaceTabStateStore(dbPool: try context.dbManager!.pool(for: profileA))
         let storeB = SpaceTabStateStore(dbPool: try context.dbManager!.pool(for: profileB))

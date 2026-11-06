@@ -121,7 +121,7 @@ final class BrowserContext {
     private(set) var startupSnapshot: StartupSnapshot?
     /// Keeps the content blocker's rules current from remote filter lists (EasyList). See FilterListService.
     private(set) var filterListService: FilterListService?
-    /// One degraded-database alert per subject (profile id or "settings") per launch.
+    /// One degraded-database alert per subject (profile id, "settings", "session" or "conversations") per launch.
     private var notifiedDegradedDatabaseSubjects: Set<String> = []
     /// Spaces whose tab state could not be read this launch: they start empty and are never saved over it.
     var unreadableSpaceIds: Set<UUID> = []
@@ -272,6 +272,14 @@ final class BrowserContext {
                 error: loadError
             )
         }
+        settingsStore.writeFailed = { [weak self] error in
+            self?.showDegradedDatabaseAlert(
+                subject: "settings",
+                message: "Lilo couldn't save its settings".localized,
+                informative: "Recent changes may be missing the next time you open Lilo. Check that your disk has free space.".localized,
+                error: error
+            )
+        }
         KeyboardShortcuts.load(from: settingsStore)
         terminalHost.powerKeeper = powerKeeper
         terminalHost.changesHost = changesHost
@@ -385,21 +393,26 @@ final class BrowserContext {
     private(set) var sessionPersistenceCoordinator: SessionPersistenceCoordinator?
 
     /// Writes every persistent space's tab tree into its own profile's database; private spaces leave nothing.
-    func saveSpaceStatesBeforeQuit() {
-        guard let spaceManager else { return }
+    /// False when a profile's write failed.
+    @discardableResult
+    func saveSpaceStatesBeforeQuit() -> Bool {
+        guard let spaceManager else { return true }
         var statesByProfile: [UUID: [(spaceId: UUID, state: SpaceTabState)]] = [:]
         for entry in browserState.persistableSpaceTabStates() {
             guard let space = spaceManager.space(with: entry.spaceId), !space.isPrivate, !unreadableSpaceIds.contains(space.id) else { continue }
             spaceManager.setActiveTab(entry.state.activeTabId, forSpace: space.id)
             statesByProfile[space.profileId, default: []].append(entry)
         }
+        var saved = true
         for (profileId, states) in statesByProfile {
             do {
                 try sessionPersistenceCoordinator?.persistSpaceTabStates(states, inProfile: profileId)
             } catch {
+                saved = false
                 Self.logger.error("quit state save failed for profile \(profileId.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
         }
+        return saved
     }
 
     /// Wakes every suspended page ahead of `closePagesBeforeQuit`, which cannot wait for the wake a teardown starts.
@@ -588,7 +601,7 @@ final class BrowserContext {
         guard !ProcessInfo.isRunningUnderXCTest else { return }
         let alert = NSAlert()
         alert.messageText = message
-        alert.informativeText = "\(informative)\n\nError: \(error.localizedDescription)"
+        alert.informativeText = unsafe String(format: "%@\n\nError: %@".localized, informative, error.localizedDescription)
         alert.alertStyle = .critical
         alert.addButton(withTitle: "Continue".localized)
         alert.addButton(withTitle: "Quit".localized)
