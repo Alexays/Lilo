@@ -305,14 +305,26 @@ test("settings in the sidebar layout keep their navigation in the sidebar, with 
 	await expect(page.locator(".strip-surface")).toHaveCount(0);
 });
 
+// Fires the header's hold timer, if the press started one. The page needs `page.clock.install()` first.
+async function runPastHold(page: Page): Promise<void> {
+	const holdMs = await page.evaluate(async () => {
+		// A URL the dev server serves to the page: the store's runes do not load in Node.
+		const url = "/src/stores/tabEdgeDrag.svelte.ts";
+		const { HOLD_MS }: typeof import("../src/stores/tabEdgeDrag.svelte") = await import(url);
+		return HOLD_MS;
+	});
+	await page.clock.runFor(holdMs);
+}
+
 test("holding the header then dropping near the right edge moves the tabs right", async ({ page }) => {
+	await page.clock.install();
 	await bootChrome(page, initialWorld());
 	const header = (await page.locator(".sidebar-header").boundingBox())!;
 	const viewport = page.viewportSize()!;
 
 	await page.mouse.move(header.x + 40, header.y + header.height / 2);
 	await page.mouse.down();
-	await page.waitForTimeout(500);
+	await runPastHold(page);
 	await expect(page.locator(".tab-edge-drag")).toBeVisible();
 	await page.mouse.move(viewport.width - 20, viewport.height / 2, { steps: 8 });
 	await expect(page.locator(".slot.right")).toBeVisible();
@@ -359,13 +371,14 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 }
 
 test("a control-click on the header never lifts the tabs", async ({ page }) => {
+	await page.clock.install();
 	await bootChrome(page, initialWorld());
 	const header = (await page.locator(".sidebar-header").boundingBox())!;
 
 	await page.keyboard.down("Control");
 	await page.mouse.move(header.x + 40, header.y + header.height / 2);
 	await page.mouse.down();
-	await page.waitForTimeout(500);
+	await runPastHold(page);
 
 	await expect(page.locator(".tab-edge-drag")).toHaveCount(0);
 	await page.mouse.up();
