@@ -284,6 +284,8 @@ swift-test: test-build
 
 ## Run the Swift tests that wait out real clocks, which swift-test skips
 swift-test-slow: test-build
+	@for t in $(SLOW_TESTS); do grep -rqE "class $${t%/*}\b" LiloTests && grep -rqE "func $${t#*/}\(" LiloTests \
+		|| { echo "SLOW_TESTS names $$t, which LiloTests does not have" >&2; exit 1; }; done
 	@$(TEST) $(addprefix -only-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
