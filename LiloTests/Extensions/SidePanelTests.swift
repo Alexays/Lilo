@@ -422,6 +422,37 @@ final class SidePanelTests: XCTestCase {
         UserDefaults.lilo.removeObject(forKey: "sidePanel.\(registry.profileId).\(extensionId!)")
     }
 
+    // MARK: - Private spaces
+
+    func testAPanelHidesInAPrivateSpaceUnlessTheExtensionIsAllowedThere() async throws {
+        let normalWindow = thisWindow
+        let normalSpace = try XCTUnwrap(window.tabManager.currentSpaceId)
+        await call("open", gesture(normalWindow))
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil))
+        let privateSpace = try browserContext.context.spaceManager!.createSpace(name: "Private", profileId: registry.profileId, isPrivate: true)
+
+        window.switchToSpace(privateSpace.id)
+        window.createTabStateFirst(url: URL(string: "about:blank"))
+        XCTAssertNil(window.sidePanel.shown, "an extension without private access shows no panel there")
+        XCTAssertNil(window.sidePanel.webView)
+        let refused = await call("open", gesture(normalWindow)).error
+        XCTAssertEqual(refused, "No browser window for windowId: 1", "its window is a background space")
+
+        window.switchToSpace(normalSpace)
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil), "the panel stays open for its own space")
+
+        window.switchToSpace(privateSpace.id)
+        XCTAssertNil(window.sidePanel.shown)
+        let settings = ExtensionUIBridgeHandler(extensionRegistryProvider: { self.registry })
+        for allowed in [true, false] {
+            let message = try XCTUnwrap(BridgeMessage(dictionary: [
+                "action": "setExtensionPrivateAccess", "payload": ["id": extensionId as String, "allowed": allowed] as [String: Any]
+            ]))
+            _ = await settings.handle(message: message)
+            XCTAssertEqual(window.sidePanel.shown, allowed ? SidePanelController.Entry(extensionId: extensionId, tabId: nil) : nil, "access applies at once")
+        }
+    }
+
     // MARK: - Events
 
     func testOpenedAndClosedReachTheExtensionWithChromesPayload() async throws {

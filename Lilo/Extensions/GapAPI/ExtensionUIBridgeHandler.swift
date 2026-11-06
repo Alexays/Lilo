@@ -286,6 +286,8 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             guard await registry.access.setPrivateAccess(extensionId: id, allowed: message.bool("allowed")) else {
                 return BridgeError("This extension cannot run in private spaces")
             }
+            // A side panel on a private space shows or hides at once, as a tab switch would.
+            registry.delegate.windows?.windows.forEach { $0.sidePanel.activeTabDidChange() }
             return ["success": true]
         case "setExtensionUserScripts":
             guard let id = message.string("id"), let registry = await targetRegistry(for: message) else { return BridgeError("Missing extension id") }
