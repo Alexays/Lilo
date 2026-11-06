@@ -406,10 +406,6 @@ export function crossExtensionMessaging(
   };
 }
 
-/**
- * WebKit's own connect and sendMessage, which browser.runtime calls: another extension's id goes to Lilo's relay, and a
- * page's or the worker's port to Lilo, as chrome.runtime.connect's (webextension-polyfill uses this one).
- */
 /** An unpacked extension reloads from its folder, as Chrome's does: WebKit's reload loads the files it already read. */
 export const reloadUnpacked: Patch = (original, self) => function (this: unknown) {
   const runtime = self(this);
@@ -419,6 +415,10 @@ export const reloadUnpacked: Patch = (original, self) => function (this: unknown
   );
 };
 
+/**
+ * WebKit's own connect and sendMessage, which browser.runtime calls: another extension's id goes to Lilo's relay, and a
+ * page's or the worker's port to Lilo, as chrome.runtime.connect's (webextension-polyfill uses this one).
+ */
 export const crossExtensionPatches: Record<string, Patch> = {
   connect: (original, self) => function (this: unknown, ...args: any[]) {
     const runtime: any = self(this);

@@ -818,9 +818,8 @@ final class ProfileExtensionRegistry {
         // demand (popup, command, event), so a restore never forces every worker awake.
     }
 
-    /// Attaches Web Inspector to the extension's internals: every extension's in a debug build, only an unpacked one's in a
-    /// release, once Lilo's developer tools are unlocked. WebKit never unloads an inspectable worker, so store copies keep
-    /// unloading theirs; the extension smoke turns it off to unload workers as a release build does.
+    /// Web Inspector sees every extension in a debug build, and only an unpacked one once developer tools unlock in a release:
+    /// WebKit never unloads an inspectable worker (the extension smoke turns it off to unload workers as a release does).
     private func openToWebInspector(_ context: WKWebExtensionContext, id extensionId: String, installPath: String) {
         #if DEBUG
         guard ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil else { return }
