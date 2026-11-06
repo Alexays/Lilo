@@ -1456,10 +1456,11 @@ const modes = [
   }
   @media (scripting: none) {
     .demo-poster {
+      visibility: hidden;
       pointer-events: none;
     }
-    .demo-start {
-      display: none;
+    .demo-poster img {
+      visibility: visible;
     }
   }
   .demo-menubar {
