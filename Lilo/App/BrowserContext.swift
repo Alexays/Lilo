@@ -142,7 +142,8 @@ final class BrowserContext {
             guard let dbManager = weakSelf?.dbManager else { throw BrowserContextError.notBootstrapped }
             let context = try ProfileContext(
                 profileId: profileId, dbManager: dbManager, gapRouter: engineFactory.gapRouter,
-                tabShare: (engineFactory.tabShareBridge, engineFactory.tabShareFrameSchemeHandler)
+                tabShare: (engineFactory.tabShareBridge, engineFactory.tabShareFrameSchemeHandler),
+                pageBridges: (engineFactory.geolocationBridge, engineFactory.notificationBridge)
             )
             // Deferred: the alert's modal loop runs queued work that may ask for this profile before it is cached.
             Task { [weak browserContext = weakSelf] in browserContext?.reportMovedAsideDatabases() }

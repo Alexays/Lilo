@@ -137,11 +137,8 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
             postedCount += 1
             posted[identifier] = Posted(webView: message.webView, frame: message.frameInfo, pageId: pageId, sequence: postedCount)
         }
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
-        let logger = Self.logger   // avoid referencing the @MainActor static from the @Sendable closure
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error { logger.error("notification delivery failed: \(error.localizedDescription, privacy: .public)") }
-        }
+        // An extension page holding `notifications` shows without ever asking, so the system may not have been asked yet.
+        UNUserNotificationCenter.requestAuthorizationAndAdd(UNNotificationRequest(identifier: identifier, content: content, trigger: nil))
     }
 }
 
