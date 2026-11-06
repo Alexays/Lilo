@@ -146,7 +146,6 @@ final class TabShareBridgeTests: XCTestCase {
         let window = makeTestWindow(context, showing: space.id)
         defer { window.window?.close() }
         context.engineFactory.tabShareBridge.screenStarter = { _, _, _ in ["mode": "failed"] }
-        let events = BridgeEventRecorder(window.bridgeRouter)
         let caller = try XCTUnwrap(window.createTabStateFirst(url: nil))
         let webView = try XCTUnwrap(window.tabManager.engineTab(for: caller.id)).wkWebView
         webView.loadHTMLString("<p>call</p>", baseURL: URL(string: "https://example.com/"))
@@ -155,8 +154,9 @@ final class TabShareBridgeTests: XCTestCase {
         _ = try await webView.evaluateJavaScript(
             "window.share = navigator.mediaDevices.getDisplayMedia({ video: true }).then(() => 'started', e => e.name); true"
         )
-        let request = try XCTUnwrap(events.data("tabSharePickerRequested").first)
-        window.resolveTabSharePicker(requestId: try XCTUnwrap(request["requestId"] as? String), choice: .system(audio: false))
+        // The picker opens from a main actor task, which only runs while this test suspends.
+        await pollUntil { !window.pendingTabSharePickerRequests.isEmpty }
+        window.resolveTabSharePicker(requestId: try XCTUnwrap(window.pendingTabSharePickerRequests.keys.first), choice: .system(audio: false))
 
         let name = try await webView.callAsyncJavaScript("return await window.share", contentWorld: .page) as? String
         XCTAssertEqual(name, "NotReadableError")
