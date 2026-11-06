@@ -125,6 +125,17 @@ jobs:
           LILO_TEAM_ID: ${{ secrets.APPLE_NOTARY_TEAM_ID }}
         run: make release-archive
 
+      # The build reuses cached UI sources and DerivedData: a stale one would ship another version or its notes.
+      - name: Check the app is at the tag's version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          app=build/release/export/Lilo.app
+          bundled=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")
+          [ "$bundled" = "$version" ] \
+            || { echo "::error::Lilo.app is at $bundled, not $version."; exit 1; }
+          grep -aqF "{\"version\":\"$version\",\"date\":\"2" "$app/Contents/MacOS/Lilo" \
+            || { echo "::error::Lilo.app does not embed the $version release notes."; exit 1; }
+
       # Installs the pinned dmgbuild into build/ and lays out the window from scripts/dmg/.
       - name: Create DMG
         run: make dmg
