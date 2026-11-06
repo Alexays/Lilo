@@ -47,7 +47,7 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 ## Non-goals
 
 - No Chromium or CEF abstraction unless the project explicitly changes engine strategy.
-- No AI built into Lilo: no models, no API keys, nothing Lilo itself sends anywhere. Conversations run the agents you install, signed in to your own accounts. No telemetry, sync protocols, or data collection either: Lilo stays a simple, fast, local browser.
+- No AI built into Lilo: no models, no API keys, no prompts sent by Lilo itself. Conversations run the agents you choose, signed in to your own accounts; Lilo only fetches the agent list and the agent you pick (see [PRIVACY.md](PRIVACY.md#requests-lilo-makes-on-its-own)). No telemetry, sync protocols, or data collection either: Lilo stays a simple, fast, local browser.
 - No generic plugin framework for single-use features.
 - No broad Chrome API claims without matching WebKit, Swift handler, JS bridge, and tests.
 - No Windows or Linux port.
