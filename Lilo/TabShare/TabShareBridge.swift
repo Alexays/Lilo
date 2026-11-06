@@ -104,7 +104,8 @@ extension TabShareBridge {
 function () {
 if (typeof MediaDevices !== 'function' || !navigator.mediaDevices || !MediaDevices.prototype.getDisplayMedia) return;
 // Cross-origin frames keep the native call, which enforces their display-capture permissions policy.
-try { if (window.top !== window && window.top.location.origin !== location.origin) return; } catch (e) { return; }
+var ancestors = location.ancestorOrigins;
+if (window.top !== window && ancestors[ancestors.length - 1] !== window.origin) return;
 var devices = navigator.mediaDevices, originals;
 var Decoder = window.VideoDecoder, Chunk = window.EncodedVideoChunk, AudioCtx = window.AudioContext;
 var NativeWorker = window.Worker, NativeBlob = window.Blob, objectURL = URL.createObjectURL, revokeURL = URL.revokeObjectURL;
@@ -238,7 +239,7 @@ function pumpAudio(token, url){
 }
 // The worker decodes straight into a VideoTrackGenerator and hands its track over: no canvas to draw and read back at every
 // frame, and the page's main thread stays out of the loop. Same protocol and repaint rule as the canvas path below.
-var workerSource = '(' + function(refreshMs){
+var workerMain = function(refreshMs){
   var generator = new VideoTrackGenerator(), writer = generator.writable.getWriter();
   var decoder = null, desc = null, needKey = true, last = null, drawnAt = 0, seq = 0, frameURL;
   function write(frame){
@@ -278,7 +279,7 @@ var workerSource = '(' + function(refreshMs){
     pump();
     self.postMessage({ track: generator.track }, [generator.track]);
   };
-} + ')(' + refreshMs + ')';
+};
 // A page enforcing Trusted Types refuses a plain URL: the worker's then goes through a policy of Lilo's own, made only then.
 function startWorker(url){
   try { return new NativeWorker(url); } catch (e) {
@@ -293,7 +294,8 @@ function workerTrack(res){
   return new Promise(function(resolve){
     var url, worker;
     try {
-      url = apply(objectURL, URL, [new NativeBlob([workerSource], { type: 'text/javascript' })]);
+      var source = '(' + apply(nativeToString, workerMain, []) + ')(' + refreshMs + ')';
+      url = apply(objectURL, URL, [new NativeBlob([source], { type: 'text/javascript' })]);
       worker = startWorker(url);
     } catch (e) { if (url) apply(revokeURL, URL, [url]); return resolve(null); }
     apply(revokeURL, URL, [url]);

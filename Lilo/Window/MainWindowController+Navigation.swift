@@ -156,7 +156,9 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     /// Records a visit of the tab's page, as Chrome does for every main-frame navigation that commits, same-document ones included.
     /// Private-space, protected-folder and unresolvable-space visits leave no trace (no history, no onVisited).
-    private func recordVisit(of tab: WKWebViewTab, state: Tab?, renamableUntil: ContinuousClock.Instant? = nil) {
+    func recordVisit(of tab: WKWebViewTab, state: Tab?, renamableUntil: ContinuousClock.Instant? = nil) {
+        tab.visitAwaitsShowing = tabManager.warmedTab?.engine === tab
+        guard !tab.visitAwaitsShowing else { return }
         tab.visitTitleUpdates = nil
         // Check the visiting tab's own space, which may be a background one; a popup's visit counts as its opener's.
         let visitingTab = state ?? pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
@@ -307,6 +309,12 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool) {
         updateAndEmit(tab.id) { t in t.isLoading = isLoading && self.tabManager.warmedTab?.engine !== tab }
+        // The hidden-window freeze skips loading engines.
+        if !isLoading { context.hiddenSpaceLifecycle.scheduleHiddenRefreeze() }
+    }
+
+    func tabDidWake(_ tab: WKWebViewTab) {
+        context.hiddenSpaceLifecycle.scheduleHiddenRefreeze()
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {
@@ -715,6 +723,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool) {
         updateAndEmit(tab.id) { $0.isInPictureInPicture = isInPictureInPicture }
+    }
+
+    /// On exit the browser window's own occlusion change can still be queued, so the recompute waits for WindowServer
+    /// rather than reading a stale hidden state and backgrounding the page for a moment.
+    func tabDidChangeFullscreen(_ tab: WKWebViewTab) {
+        guard tab.wkWebView.fullscreenState == .notInFullscreen else { return context.windowVisibilityChanged() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.context.windowVisibilityChanged() }
     }
 
     /// Emits only on a real change: KVO re-reports values `didNavigate` already applied (loading,

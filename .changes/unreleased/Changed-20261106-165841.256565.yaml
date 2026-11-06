@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Background tabs use less CPU: a tab whose typed text was sent or cleared can be put to sleep again, and muted or runaway off-screen tabs are paused'
+time: 2026-11-06T16:58:41.256565+01:00

@@ -125,6 +125,7 @@ function run(
 			observer = cb;
 		}
 		observe() {}
+		disconnect() {}
 	}
 	let timers: (() => void)[] = [];
 	const setTimeout = (cb: () => void) => timers.push(cb);
@@ -254,7 +255,7 @@ describe("procedural cosmetics", () => {
 		assert.equal(post.textReads, 1);
 	});
 
-	test("insertions in a hidden page wait for a full pass once visible", () => {
+	test("insertions in a hidden page wait for a scoped pass once visible", () => {
 		const html = new FakeNode("html");
 		let documentQueries = 0;
 		const page = run([".post:has-text(Sponsored)"], (css) => {
@@ -266,6 +267,24 @@ describe("procedural cosmetics", () => {
 		page.mutate([{ target: html, addedNodes: [ad] }]);
 		page.tick();
 		assert.equal(ad.style.hidden, false);
+
+		page.doc.hidden = false;
+		page.dispatch("visibilitychange");
+		assert.equal(ad.style.hidden, true);
+		assert.equal(documentQueries, 1);
+	});
+
+	test("too many insertions in a hidden page wait for a full pass once visible", () => {
+		const html = new FakeNode("html");
+		let documentQueries = 0;
+		const page = run([".post:has-text(Sponsored)"], (css) => {
+			documentQueries++;
+			return html.querySelectorAll(css);
+		});
+		page.doc.hidden = true;
+		const posts = Array.from({ length: 2001 }, () => html.append(new FakeNode("post", "Regular")));
+		const ad = html.append(new FakeNode("post", "Sponsored"));
+		page.mutate([{ target: html, addedNodes: [...posts, ad] }]);
 
 		page.doc.hidden = false;
 		page.dispatch("visibilitychange");

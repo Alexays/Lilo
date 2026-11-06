@@ -423,8 +423,9 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             if let tabId = terminalTabId ?? conversationTabId ?? webTabId, actionId == UNNotificationDefaultActionIdentifier {
                 self.mainWindowController?.revealTab(tabId)
             }
-            if let webNotification, actionId == UNNotificationDefaultActionIdentifier {
-                self.browserContext.engineFactory.dispatchWebNotificationClick(identifier: webNotification)
+            if let webNotification, actionId == UNNotificationDefaultActionIdentifier || actionId == UNNotificationDismissActionIdentifier {
+                self.browserContext.engineFactory.dispatchWebNotification(actionId == UNNotificationDefaultActionIdentifier ? "click" : "close",
+                                                                          identifier: webNotification)
             }
             self.handleNotificationResponse(actionId: actionId, extensionId: extensionId, notificationId: notificationId)
             completionHandler()

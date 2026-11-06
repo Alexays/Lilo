@@ -32,11 +32,11 @@ extension WKWebViewTab {
     function () {
       if (window.top !== window || typeof MediaSession !== 'function') return;
       const handlers = create(null);
-      let paused = [], microphone = null, camera = null, rtc = false, peer = false, locks = 0;
+      let paused = [], microphone = null, camera = null, rtc = false, peer = false, locks = 0, lockHeld = false, lockTimer = false;
       const call = () => stringify({ microphone, camera, togglemicrophone: !!handlers.togglemicrophone,
                                      togglecamera: !!handlers.togglecamera, hangup: !!handlers.hangup,
                                      tracks: !!(handlers.nexttrack || handlers.previoustrack), pip: !!handlers.enterpictureinpicture, rtc,
-                                     peer, lock: locks > 0 });
+                                     peer, lock: lockHeld });
       // A page that never touches these controls sends nothing.
       let reported = call();
       const report = () => {
@@ -101,15 +101,20 @@ extension WKWebViewTab {
       // A lock counts from its grant until what the page's callback returns settles, which is when WebKit releases it. The page's
       // own promise is left untouched, so a rejected request still reaches unhandledrejection.
       if (typeof LockManager === 'function') {
-        const then = NativePromise.prototype.then;
+        const then = NativePromise.prototype.then, setTimer = window.setTimeout;
+        // Only a lock still held after 2 s is reported: the freeze sweep counts in minutes, and libraries wrap each short
+        // read in a lock.
+        const holdLock = () => {
+          lockTimer = false;
+          if (locks > 0 && !lockHeld) { lockHeld = true; report(); }
+        };
         const lockOriginal = lilo.methods(LockManager.prototype, { request() {
           const args = [], last = arguments.length - 1, callback = arguments[last];
           for (let i = 0; i < arguments.length; i++) args[i] = arguments[i];
           if (typeof callback === 'function') args[last] = function (lock) {
             if (!lock) return apply(callback, this, arguments);
-            locks++;
-            report();
-            const release = () => { locks--; report(); };
+            if (++locks === 1 && !lockHeld && !lockTimer) { lockTimer = true; apply(setTimer, window, [holdLock, 2000]); }
+            const release = () => { if (--locks === 0 && lockHeld) { lockHeld = false; report(); } };
             let result, settle;
             try { result = apply(callback, this, arguments); } catch (e) { release(); throw e; }
             const held = new NativePromise(resolve => { settle = resolve; });

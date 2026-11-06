@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 describe("a content script's world", () => {
   it("gives WebKit's events Chrome's hasListeners and the extension its own manifest", async () => {
     const prototype = { addListener(_listener: unknown) {}, removeListener(_listener: unknown) {}, hasListener() { return false; } };
+    // As WebKit's: every event shares one prototype, and each namespace and event is a getter on its object's prototype.
     const onMessage = Object.create(prototype);
-    const onChanged = Object.create({ addListener(_listener: unknown) {}, removeListener(_listener: unknown) {} });
-    // As WebKit's: each namespace and event is a getter on its object's prototype.
+    const onChanged = Object.create(prototype);
     const manifest = { background: { service_worker: '_lilo/sw.js', lilo_service_worker: 'sw.js' }, content_scripts: [{ matches: ['<all_urls>'], js: ['_lilo/lilo-content-compat.js', 'a.js'] }, { matches: ['https://a.com/*'], js: ['_lilo/lilo-content-compat.js', 'b.js'], lilo_js: ['a.js', 'b.js'] }] };
     const runtime = Object.create({
       sendMessage() {}, connect() {}, getManifest() { return structuredClone(manifest); },

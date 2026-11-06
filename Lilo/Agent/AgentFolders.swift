@@ -296,19 +296,27 @@ extension AgentControl {
         }
     }
 
-    /// A parked tab the agent left alone `sleepDelay` stops drawing: WebKit sees it hidden, so its animation frames stop,
-    /// while an agent tab's scripts, timers and network keep running, slower. Nobody sees it, and the agent mostly thinks.
+    /// A tab the agent left alone `sleepDelay`, parked or covered by the shown tab, stops drawing: WebKit sees it hidden, so
+    /// its animation frames stop, while its scripts, timers and network keep running, throttled. Nobody sees it, and the agent mostly thinks.
     func sleepWhenIdle(tabNumber: Int) {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepDelay) { [weak self] in
             guard let self, let id = tabNumbers.first(where: { $0.value == tabNumber })?.key, !profilingTabIds.contains(id),
                   !sessions.contains(where: { $0.tabCalls.values.contains { $0.tab == tabNumber } }),
                   let lastActed = sessions.compactMap({ $0.actedOn[id] }).max(), Date().timeIntervalSince(lastActed) >= Self.sleepDelay - 0.1,
-                  let engine = context?.browserState.liveEngine(forTab: id), engine.isAgentControlled,
-                  unsafe engine.view.window === parkingWindow else { return }
+                  let engine = context?.browserState.liveEngine(forTab: id), engine.isAgentControlled else { return }
+            let parked = unsafe engine.view.window === parkingWindow
+            // A share's frame ferry, a PiP window's page and an open inspector all need the covered view drawn.
+            let covered = !parked && !engine.isTabShareSource && !engine.isWebInspectorVisible && context?.windows.windows.contains {
+                unsafe $0.contentContainerView === engine.view.superview && !$0.displayedTabIds.contains(id)
+                    && $0.documentPiP.openerId != id && $0.awaitingDocumentPiP !== engine
+            } == true
+            guard parked || covered else { return }
             engine.setWindowOcclusionDetection(true)
-            // WebKit reads the setting at its next visibility check only: hiding the view runs one.
+            // WebKit reads the setting at its next visibility check only: hiding the view runs one. A covered view stays
+            // hidden, as the tab switch leaves an outgoing tab, until the agent wakes it.
             engine.view.isHidden = true
-            engine.view.isHidden = false
+            if parked { engine.view.isHidden = false }
+            engine.isAgentSleeping = true
             sleepingTabIds.insert(id)
         }
     }
@@ -317,6 +325,7 @@ extension AgentControl {
     func wake(tabNumber: Int) async {
         guard let id = tabNumbers.first(where: { $0.value == tabNumber })?.key, sleepingTabIds.remove(id) != nil,
               let engine = context?.browserState.liveEngine(forTab: id) else { return }
+        engine.isAgentSleeping = false
         engine.setWindowOcclusionDetection(false)
         engine.view.isHidden = true
         engine.view.isHidden = false
@@ -372,6 +381,7 @@ extension AgentControl {
                 // Undo resize_window, and stop rendering a page nobody looks at any more.
                 engine.setWindowOcclusionDetection(true)
                 sleepingTabIds.remove(id)
+                engine.isAgentSleeping = false
                 profilingTabIds.remove(id)
                 AgentFrameView.remove(from: engine.wkWebView)
                 if unsafe engine.view.window === parkingWindow { engine.view.removeFromSuperview() }

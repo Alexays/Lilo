@@ -107,6 +107,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
             ("WKFrameInfo", ["_handle"]),
             ("_WKFrameHandle", ["frameID"]),
             ("_WKFrameTreeNode", ["info", "childFrames"]),
+            ("_WKWebsiteDataStoreConfiguration", ["setOriginQuotaRatio:", "setTotalQuotaRatio:", "setFastServerTrustEvaluationEnabled:"]),
             ("WKWebsiteDataStore", ["_setResourceLoadStatisticsEnabled:", "_resourceLoadStatisticsEnabled", "_clearResourceLoadStatistics:", "_logUserInteraction:completionHandler:",
                                     "_fetchDataRecordsOfTypes:withOptions:completionHandler:"]),
             ("WKWebsiteDataRecord", ["_dataSize"]),

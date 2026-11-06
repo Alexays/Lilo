@@ -36,7 +36,7 @@ final class NotificationPolyfillTests: XCTestCase {
         let show = try XCTUnwrap(recorder.messages.first { $0["type"] as? String == "show" })
         let id = try XCTUnwrap(show["id"] as? Int)
 
-        _ = try? await webView.evaluateJavaScript(PageWorld.push("notifyClick", [id]), contentWorld: PageWorld.bridgeWorld)
+        _ = try? await webView.evaluateJavaScript(PageWorld.push("notifyEvent", [id, "click"]), contentWorld: PageWorld.bridgeWorld)
         let log = try await webView.evaluateJavaScript("log.join(',')") as? String
         XCTAssertEqual(log, "onclick,listener")
 
@@ -149,7 +149,7 @@ final class NotificationPolyfillTests: XCTestCase {
         XCTAssertEqual(ids.count, 2)
 
         for id in ids {
-            _ = try? await webView.evaluateJavaScript(PageWorld.push("notifyClick", [id]), contentWorld: PageWorld.bridgeWorld)
+            _ = try? await webView.evaluateJavaScript(PageWorld.push("notifyEvent", [id, "click"]), contentWorld: PageWorld.bridgeWorld)
         }
         let log = try await webView.evaluateJavaScript("log.join(',')") as? String
         XCTAssertEqual(log, "second")

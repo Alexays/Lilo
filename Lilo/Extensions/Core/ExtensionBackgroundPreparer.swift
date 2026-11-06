@@ -503,7 +503,7 @@ enum ExtensionBackgroundPreparer {
     private static let frameKeyPath = "_lilo/frame-key"
     private static let frameKeyPlaceholder = "__LILO_FRAME_KEY__"
 
-    /// Prepends a compat content script to every isolated-world JS entry so APIs WebKit omits there (`chrome.storage.managed`) exist
+    /// Prepends a compat content script to the isolated-world JS entries so APIs WebKit omits there (`chrome.storage.managed`) exist
     /// before the extension's scripts; never MAIN-world, where it would leak. Written for every extension, as the bridge also prepends it
     /// to the scripts `chrome.scripting` injects, and rewritten on every call so Lilo updates apply.
     private static func prepareContentScriptCompat(extensionURL: URL, manifest: inout [String: Any], compatSource: String) throws {
@@ -511,6 +511,7 @@ enum ExtensionBackgroundPreparer {
         var changed = false
         // The extension's own lists, kept in `lilo_js` once changed: getManifest shows them (chromeManifest).
         let own = contentScripts.map { ($0[originalScriptsKey] ?? $0["js"]) as? [String] ?? [] }
+        let carriesCompat = contentScripts.indices.filter { !own[$0].isEmpty && (contentScripts[$0]["world"] as? String)?.uppercased() != "MAIN" }
         for index in contentScripts.indices {
             let js = contentScripts[index]["js"] as? [String] ?? []
             let isMain = (contentScripts[index]["world"] as? String)?.uppercased() == "MAIN"
@@ -522,7 +523,12 @@ enum ExtensionBackgroundPreparer {
                 }
             }.map(\.element)
             if kept.isEmpty && isMain { kept = files }
-            let updated = isMain || own[index].isEmpty ? kept : [contentCompatPath] + kept
+            // The compat skips a world it ran in already: an entry gets it from one running first in its frames,
+            // unless it would be left empty.
+            let compatRunsFirst = !kept.isEmpty && carriesCompat.contains { other in
+                other != index && injectsFirst(contentScripts[other], other, over: contentScripts[index], index)
+            }
+            let updated = isMain || own[index].isEmpty || compatRunsFirst ? kept : [contentCompatPath] + kept
             contentScripts[index][originalScriptsKey] = kept == files ? nil : own[index]
             guard updated != js || kept != files else { continue }
             contentScripts[index]["js"] = updated

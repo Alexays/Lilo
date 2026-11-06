@@ -11,6 +11,7 @@ interface FakeElement {
 	id: string;
 	hostname?: string;
 	classList: string[];
+	hasAttribute(name: string): boolean;
 	querySelectorAll(sel: string): FakeElement[];
 }
 
@@ -19,6 +20,7 @@ function el(id: string, classes: string[] = [], descendants: FakeElement[] = [])
 		nodeType: 1,
 		id,
 		classList: classes,
+		hasAttribute: (name: string) => name === "class" && classes.length > 0,
 		// "*" is every descendant; the attribute selectors only return what can carry a token.
 		querySelectorAll: (sel: string) =>
 			sel === "*" ? descendants : descendants.filter((d) => d.id || d.classList.length || d.hostname)
@@ -246,6 +248,7 @@ describe("generic cosmetics", () => {
 				reads += 1;
 				return ["late-ad"];
 			},
+			hasAttribute: (name: string) => name === "class",
 			querySelectorAll: () => []
 		};
 		// Classless wrappers: the attribute selectors never return them, so only walking every

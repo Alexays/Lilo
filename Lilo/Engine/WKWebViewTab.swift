@@ -70,6 +70,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: CallControls)
         func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool)
+        /// The page entered or left element fullscreen, which moves its view to a window of its own.
+        func tabDidChangeFullscreen(_ tab: WKWebViewTab)
         func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool)
         /// The page waits on a dialog, or no longer does.
         func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool)
@@ -82,6 +84,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didHoverLink href: String?)
         /// A service worker asks to foreground this tab (e.g. push-notification click).
         func tabRequestsForeground(_ tab: WKWebViewTab)
+        /// A call outside activation resumed this frozen tab.
+        func tabDidWake(_ tab: WKWebViewTab)
         /// The page handed us raw bytes to save to a file (blob/canvas export).
         func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL)
         /// The user asked to bookmark the current page (page context menu / Cmd+D).
@@ -142,15 +146,15 @@ final class WKWebViewTab: NSObject {
     private var lastLoggedInteraction: (host: String, at: ContinuousClock.Instant)?
     /// Per profile and site, the other origins its last page fetched from, most used first: a navigation to the site connects
     /// to them at once instead of when its parser or scripts get to them, as Chrome's loading predictor. In memory only.
-    private static var learnedOrigins: [String: [URL]] = [:]
+    private static var learnedOrigins: [String: (origins: [URL], at: ContinuousClock.Instant)] = [:]
     private let findController: PageFindController
     let pip: PiPController
     private var permissionUsageState = WebPermissionUsageState.none {
-        didSet { runsAtFullSpeedHidden = isInCall || isAgentControlled }
+        didSet { runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping) }
     }
     /// A call keeps full speed in a hidden tab, as in Chrome: App Nap would move the process that encodes the shared
     /// screen and decodes every participant to the efficiency cores, and its timers would fire once a second or less.
-    /// An agent's tab does too, so what the agent measures is the page, not the throttling of a hidden one.
+    /// An agent's tab does too while it acts, so what the agent measures is the page, not the throttling of a hidden one.
     private var runsAtFullSpeedHidden = false {
         didSet {
             guard runsAtFullSpeedHidden != oldValue else { return }
@@ -173,7 +177,7 @@ final class WKWebViewTab: NSObject {
     var isTabShareSource = false {
         didSet {
             guard isTabShareSource != oldValue else { return }
-            runsAtFullSpeedHidden = isInCall || isAgentControlled
+            runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping)
             delegate?.tab(self, didUpdatePermissionUsage: effectivePermissionUsageState)
         }
     }
@@ -182,8 +186,12 @@ final class WKWebViewTab: NSObject {
     var isAgentControlled = false {
         didSet {
             screenTime?.suppressUsageRecording = suppressesScreenTimeUsage
-            runsAtFullSpeedHidden = isInCall || isAgentControlled
+            runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping)
         }
+    }
+    /// An agent tab nobody sees and the agent left idle: it gets a hidden page's throttling back until the next tool wakes it.
+    var isAgentSleeping = false {
+        didSet { runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping) }
     }
     /// Set while an agent drives this tab: true when it took the page dialog, answered at once
     /// instead of opening a sheet on the user's window.
@@ -236,8 +244,9 @@ final class WKWebViewTab: NSObject {
         }
     )
 
-    /// The clicked element of the open context menu, until one of its download items uses it.
-    private var contextMenuElement: NSObject?
+    /// The clicked frame and link of the open context menu, until one of its download items uses them. Never the element
+    /// itself, which holds a clicked image's bytes.
+    private var contextMenuTarget: (frame: WKFrameInfo?, link: URL?)?
     private enum ReferrerProbe { case pending, answered(String?), abandoned }
     /// Context-menu downloads' referrer probes by the fragment marking their request. One stays until its request comes, so
     /// a request coming after its download started is still cancelled rather than opened.
@@ -249,17 +258,17 @@ final class WKWebViewTab: NSObject {
         const probe = document.createElement('a')
         probe.href = url
         probe.target = '_blank'
-        const links = link ? [...document.querySelectorAll('a[href], area[href]')].filter(element => element.href === link) : []
-        if ((links.find(element => element.matches(':hover')) ?? links[0])?.relList.contains('noreferrer')) probe.rel = 'noreferrer'
+        const linkTo = selector => link ? [...document.querySelectorAll(selector)].find(element => element.href === link) : undefined
+        if ((linkTo('a:hover[href], area:hover[href]') ?? linkTo('a[href], area[href]'))?.relList.contains('noreferrer')) probe.rel = 'noreferrer'
         probe.click()
         """
 
     /// WebKit's native download context-menu items never fire WKDownloadDelegate, so ContextMenuBuilder
     /// routes them here to reach the same pipeline as navigation-initiated downloads.
     private func startContextMenuDownload(from url: URL) {
-        let element = contextMenuElement
-        contextMenuElement = nil
-        let frame = ContextMenuBuilder.frameInfo(from: element)
+        let target = contextMenuTarget
+        contextMenuTarget = nil
+        let frame = target?.frame
         let fallback = Self.downloadRequest(for: url, pageURL: frame?.request.url ?? webView.url)
         let token = UUID().uuidString
         guard let frame, var marked = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return startDownload(fallback) }
@@ -277,7 +286,7 @@ final class WKWebViewTab: NSObject {
             }
             startDownload(request)
         }
-        let arguments = ["url": probeURL, "link": ContextMenuBuilder.linkURL(from: element)?.absoluteString ?? ""]
+        let arguments = ["url": probeURL, "link": target?.link?.absoluteString ?? ""]
         Task { [weak self] in
             _ = try? await self?.webView.callAsyncJavaScript(Self.referrerProbeScript, arguments: arguments, in: frame, contentWorld: PageWorld.bridgeWorld)
             finish()
@@ -319,9 +328,11 @@ final class WKWebViewTab: NSObject {
     /// Last form-dirty state reported to the delegate; a committed navigation clears it, since the
     /// page that held the edits is gone.
     var isFormDirty = false
+    /// A subframe reported edits: they keep the tab dirty until a committed navigation, whatever the main frame reports.
+    var hasDirtySubframeForm = false
     /// Last call controls the page reported; a committed navigation clears them with the page's handlers.
     var callControls = CallControls() {
-        didSet { runsAtFullSpeedHidden = isInCall || isAgentControlled }
+        didSet { runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping) }
     }
     /// A video of this page is in the system PiP window, playing or paused. Unlike `pip.isActive`, it counts a video
     /// the fallback script sent there.
@@ -340,7 +351,7 @@ final class WKWebViewTab: NSObject {
     /// Bumped on every page color update: a capture of the top edge answers only for the page it was taken of.
     private var pageEdgeCapture = 0
     private var pageColorRecapture: Task<Void, Never>?
-    /// A recapture skipped while frozen, taken on resume.
+    /// A capture skipped while frozen or off screen, taken on resume or once shown.
     private var pageColorStale = false
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
@@ -374,6 +385,8 @@ final class WKWebViewTab: NSObject {
     /// The history visit of the current page whose title follows the page's, for a few changes while it loads and just after
     /// (`renamableUntil`, nil while loading), as Chrome does for a title set by script.
     var visitTitleUpdates: (url: String, changesLeft: Int, renamableUntil: ContinuousClock.Instant?)?
+    /// A page loaded while the pointer rested on its sleeping tab: its visit counts once the tab is shown.
+    var visitAwaitsShowing = false
     /// Set for a tab a page opened (a link or `window.open`): only such a tab closes when its first navigation is a download.
     var isOpenedByPage = false
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
@@ -606,18 +619,30 @@ final class WKWebViewTab: NSObject {
         guard isFrozen, !isPageLost else { return completion() }
         isFrozen = false
         freezer.resume(webView) { [weak self] in
-            if let self, pageColorStale {
-                pageColorStale = false
-                recapturePageColor()
-            }
+            self?.capturePageColorIfStale()
             completion()
         }
     }
 
+    /// The tab shows in a window: the dialog and the page color it held back while hidden.
+    func didShow() {
+        runQueuedDialog(presenting: true)
+        capturePageColorIfStale()
+    }
+
+    private func capturePageColorIfStale() {
+        guard pageColorStale else { return }
+        pageColorStale = false
+        pageEdgeCapture &+= 1
+        captureTopEdge(again: false)
+    }
+
     /// Resumes the page ahead of a call WebKit refuses on a suspended one. False when the page is lost:
-    /// the caller drops the call. The idle sweep refreezes a tab woken in the background.
+    /// the caller drops the call. The delegate schedules the refreeze of a tab woken in the background.
     func wake() -> Bool {
+        let wasFrozen = isFrozen
         resume()
+        if wasFrozen { delegate?.tabDidWake(self) }
         return !isPageLost
     }
     var isWebInspectorVisible: Bool { WebInspectorSupport.isVisible(for: webView) }
@@ -796,24 +821,27 @@ final class WKWebViewTab: NSObject {
     }
 
     /// Nil for a private tab, which neither learns nor uses them.
-    private var learnedOriginsKey: String? {
-        guard !isPrivateBrowsing, let url = webView.url, url.scheme == "https" || url.scheme == "http", let host = url.host() else { return nil }
+    private func learnedOriginsKey(for url: URL?) -> String? {
+        guard !isPrivateBrowsing, let url, url.scheme == "https" || url.scheme == "http", let host = url.host() else { return nil }
         let store = webView.configuration.websiteDataStore.identifier?.uuidString ?? "default"
         return "\(store) \(CookiesBridgeHandler.registrableDomain(of: host))"
     }
 
+    /// A navigation within the committed page's site finds its connections open already.
     private func preconnectLearnedOrigins() {
-        guard let key = learnedOriginsKey else { return }
-        Self.learnedOrigins[key]?.forEach(preconnect(to:))
+        guard let key = learnedOriginsKey(for: webView.url), key != learnedOriginsKey(for: documentURL) else { return }
+        Self.learnedOrigins[key]?.origins.forEach(preconnect(to:))
     }
 
+    /// A site's origins are learned again after 10 minutes at most, and only by a tab on screen.
     private func learnOrigins() {
-        guard let key = learnedOriginsKey else { return }
+        guard let key = learnedOriginsKey(for: webView.url),
+              Self.learnedOrigins[key].map({ ContinuousClock.now - $0.at >= .seconds(600) }) ?? true else { return }
         let page = webView.url
         Task { [weak self] in
             // A feed's images and a player load after the load event, and they are what the next visit waits on.
             try? await Task.sleep(for: .seconds(2))
-            guard let self, !isFrozen, webView.url == page else { return }
+            guard let self, !isFrozen, isOnScreen, webView.url == page else { return }
             let found = try? await webView.evaluateJavaScript("""
                 (() => { const counts = {};
                   for (const entry of performance.getEntriesByType('resource')) {
@@ -826,7 +854,7 @@ final class WKWebViewTab: NSObject {
             if Self.learnedOrigins[key] == nil, Self.learnedOrigins.count >= 256, let any = Self.learnedOrigins.keys.first {
                 Self.learnedOrigins[any] = nil
             }
-            Self.learnedOrigins[key] = origins
+            Self.learnedOrigins[key] = (origins, ContinuousClock.now)
         }
     }
 
@@ -1146,6 +1174,9 @@ final class WKWebViewTab: NSObject {
                     tab.isDarkAppearance = dark
                     tab.recapturePageColor()
                 }
+            },
+            webView.observe(\.fullscreenState) { [weak self] _, _ in
+                self?.onMain { $0.delegate?.tabDidChangeFullscreen($0) }
             }
         ]
         // WebKit samples the top edge once a load paints, never on scroll; it skips a fixed header, which scrolls content under it.
@@ -1210,6 +1241,7 @@ final class WKWebViewTab: NSObject {
     /// `loaded` comes from didFinish, while the web view still reports itself loading.
     private func emitPageColor(loaded: Bool = false) {
         pageEdgeCapture &+= 1
+        pageColorStale = false
         if let color = Self.opaque(sampledPageTopColor)?.cssHexString {
             sendPageColor(color)
         } else if loaded || !webView.isLoading {
@@ -1241,7 +1273,8 @@ final class WKWebViewTab: NSObject {
                 return
             }
             sampledPageTopColor = nil
-            emitPageColor(loaded: true)
+            pageEdgeCapture &+= 1
+            captureTopEdge(again: false)
         }
     }
 
@@ -1252,15 +1285,22 @@ final class WKWebViewTab: NSObject {
     }
 
     /// A capture of the thin band of the page that meets the bar. A page drawn by script after its load gets a second
-    /// look a moment later.
+    /// look a moment later. Only the shown tab's bar takes the color: a hidden tab captures once shown.
     private func captureTopEdge(again: Bool = true) {
         let capture = pageEdgeCapture
-        let width = webView.bounds.width
-        guard !isFrozen, width > 0 else { return }
-        let configuration = WKSnapshotConfiguration()
-        configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, Self.edgeBand))
+        // Checked on the next turn: the tab being shown is in its window by then.
         Task { [weak self] in
-            guard let self, !isFrozen else { return }
+            guard let self, capture == pageEdgeCapture else { return }
+            guard !isFrozen, isOnScreen else {
+                pageColorStale = true
+                return
+            }
+            let width = webView.bounds.width
+            guard width > 0 else { return }
+            let configuration = WKSnapshotConfiguration()
+            configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, Self.edgeBand))
+            // One pixel per point: the band's rows stay whole for the median, at a quarter of a Retina capture's pixels.
+            configuration.snapshotWidth = NSNumber(value: Double(width / (unsafe webView.window?.backingScaleFactor ?? 1)))
             let image = try? await webView.takeSnapshot(configuration: configuration)
             guard capture == pageEdgeCapture else { return }
             if let stops = image.flatMap(Self.edgeStops) { sendPageColor(stops) }
@@ -1628,6 +1668,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {}
     func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool) {}
+    func tabDidChangeFullscreen(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int) {}
@@ -1635,6 +1676,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, allowsJavaScriptAt url: URL) -> Bool { true }
     func tab(_ tab: WKWebViewTab, didHoverLink href: String?) {}
     func tabRequestsForeground(_ tab: WKWebViewTab) {}
+    func tabDidWake(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {}
     func tabRequestsBookmark(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) {}
@@ -1891,6 +1933,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.hasCommittedContent = true
             tab.isPageLost = false   // a navigation brought an off-screen lost page back on its own
             tab.subframes.removeAll()
+            tab.hasDirtySubframeForm = false
             if tab.isFormDirty {
                 tab.isFormDirty = false
                 tab.delegate?.tab(tab, didUpdateFormDirty: false)
@@ -2182,8 +2225,8 @@ extension WKWebViewTab: WKNavigationDelegate {
         }
     }
 
-    // WebKit calls this on the main thread; the server-trust challenge of every connection is
-    // answered synchronously. Only the HTTP auth prompt (a sheet) stays off the delegate's stack.
+    // WebKit calls this on the main thread; a server-trust challenge (every connection's, or only a rejected certificate's
+    // on a profile store) is answered synchronously. Only the HTTP auth prompt (a sheet) stays off the delegate's stack.
     nonisolated func webView(
         _ webView: WKWebView,
         didReceive challenge: URLAuthenticationChallenge,
@@ -2195,7 +2238,6 @@ extension WKWebViewTab: WKNavigationDelegate {
 
             if method == NSURLAuthenticationMethodServerTrust,
                let trust = space.serverTrust {
-                StartupMetrics.markOnce("firstContentTLSChallengeReceived")
                 let challengedHost = space.host.lowercased()
                 // The page's own certificate is the one its error page explains and a new exception pins;
                 // an accepted exception holds for every request to its host, as an app's API calls need.
@@ -2207,7 +2249,6 @@ extension WKWebViewTab: WKNavigationDelegate {
                 } else {
                     completionHandler(.performDefaultHandling, nil)
                 }
-                StartupMetrics.markOnce("firstContentTLSChallengeHandled")
             } else if method == NSURLAuthenticationMethodHTTPBasic || method == NSURLAuthenticationMethodHTTPDigest {
                 if isAgentControlled {
                     // No sheet over the user's window: the agent signs in through the URL, once.
@@ -2359,8 +2400,9 @@ extension WKWebViewTab: WKUIDelegate {
         nonisolated(unsafe) let menu = menu
         nonisolated(unsafe) let element = element
         MainActor.assumeIsolated {
-            contextMenuElement = unsafe element
-            unsafe contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
+            let linkURL = unsafe ContextMenuBuilder.linkURL(from: element)
+            contextMenuTarget = unsafe (ContextMenuBuilder.frameInfo(from: element), linkURL)
+            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
             unsafe completionHandler(menu)
         }
     }

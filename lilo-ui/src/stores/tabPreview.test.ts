@@ -254,9 +254,9 @@ test("resting on a tab asks to wake it before the preview; sweeping past does no
 	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
 	try {
 		store.hoverTabPreview(target("tab-a"), anchor);
-		mock.timers.tick(100);
+		mock.timers.tick(250);
 		store.hoverTabPreview(target("tab-b"), anchor);
-		mock.timers.tick(149);
+		mock.timers.tick(299);
 		assert.deepEqual(warms(), [], "a row crossed on the way wakes nothing");
 		mock.timers.tick(1);
 		assert.deepEqual(warms(), [{ tabId: "tab-b" }]);

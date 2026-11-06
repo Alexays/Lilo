@@ -45,7 +45,7 @@ struct LifecyclePolicyConfig: Sendable, Equatable {
 
     static let `default` = config(for: .default)
 
-    /// Freezing is reversible and resumes instantly, so on battery every preset freezes early.
+    /// Freezing is reversible, though a resumed page rebuilds its style and layout before it paints: on battery every preset freezes early.
     static let batteryFreezeThreshold: TimeInterval = 60
     /// The sweep applies the thresholds, so it bounds how late past them a tab freezes.
     static let batteryIdleSweepInterval: TimeInterval = 30

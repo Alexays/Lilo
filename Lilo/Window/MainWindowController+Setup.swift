@@ -389,10 +389,15 @@ extension MainWindowController {
     func setupBridgeEarly() {
         chromeWebView.navigationDelegate = self
         // Factory handlers are shared by every window: each resolves the window that shows the page.
-        context.engineFactory.formDirtyHandler = { [weak context] webView, dirty in
-            guard let tab = context?.windows.windowAndEngine(for: webView)?.engine else { return }
-            tab.isFormDirty = dirty
-            tab.delegate?.tab(tab, didUpdateFormDirty: dirty)
+        context.engineFactory.formDirtyHandler = { [weak context] webView, dirty, isMainFrame in
+            // A space switch parks the engines it hides before their pages report going hidden.
+            guard let context, let tab = context.windows.windowAndEngine(for: webView)?.engine
+                ?? context.browserState.parkedEngine(forWebView: webView) else { return }
+            if !isMainFrame { tab.hasDirtySubframeForm = true }
+            let isDirty = dirty || tab.hasDirtySubframeForm
+            guard isDirty != tab.isFormDirty else { return }
+            tab.isFormDirty = isDirty
+            tab.delegate?.tab(tab, didUpdateFormDirty: isDirty)
         }
         context.engineFactory.callControlsHandler = { [weak context] webView, controls in
             guard let tab = context?.windows.windowAndEngine(for: webView)?.engine, tab.callControls != controls else { return }
@@ -1109,6 +1114,8 @@ extension MainWindowController {
                 continue
             }
 
+            // The find bar follows the shown tab, so the leaving page's find session ends here.
+            outgoingEngine.dismissFind()
             if popOutBackgroundedTab(outgoingEngine) { continue }
 
             // Tab-share sources, agent tabs and the page of a PiP window (open or on its way) stay in-window like
@@ -1120,9 +1127,10 @@ extension MainWindowController {
                 continue
             }
 
-            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an agent or a
+            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an awake agent or a
             // PiP window keeps it shown.
-            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !outgoingEngine.isAgentControlled && !drawsPiP
+            let agentAwake = outgoingEngine.isAgentControlled && !outgoingEngine.isAgentSleeping
+            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !agentAwake && !drawsPiP
             if !outgoingEngine.isWebInspectorVisible { outgoingEngine.fitView(in: contentContainerView.bounds) }
         }
     }
