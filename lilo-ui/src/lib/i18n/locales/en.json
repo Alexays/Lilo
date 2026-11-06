@@ -2668,11 +2668,11 @@
 				"tool": {
 					"one": "used {count} tool",
 					"other": "used {count} tools"
-				}
 				},
 				"agent": {
 					"one": "started {count} agent",
 					"other": "started {count} agents"
+				}
 			},
 			"exit": "Exit {code}",
 			"showAll": {

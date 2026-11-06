@@ -2679,11 +2679,11 @@
 				"tool": {
 					"one": "使用了 {count} 個工具",
 					"other": "使用了 {count} 個工具"
-				}
 				},
 				"agent": {
 					"one": "啟動了 {count} 個代理程式",
 					"other": "啟動了 {count} 個代理程式"
+				}
 			},
 			"exit": "結束代碼 {code}",
 			"showAll": {

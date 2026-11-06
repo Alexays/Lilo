@@ -2679,11 +2679,11 @@
 				"tool": {
 					"one": "도구 {count}개 사용함",
 					"other": "도구 {count}개 사용함"
-				}
 				},
 				"agent": {
 					"one": "에이전트 {count}개 시작함",
 					"other": "에이전트 {count}개 시작함"
+				}
 			},
 			"exit": "종료 코드 {code}",
 			"showAll": {

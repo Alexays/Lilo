@@ -2679,11 +2679,11 @@
 				"tool": {
 					"one": "{count} Tool genutzt",
 					"other": "{count} Tools genutzt"
-				}
 				},
 				"agent": {
 					"one": "{count} Agent gestartet",
 					"other": "{count} Agenten gestartet"
+				}
 			},
 			"exit": "Exit-Code {code}",
 			"showAll": {

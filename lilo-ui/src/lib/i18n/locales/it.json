@@ -2679,11 +2679,11 @@
 				"tool": {
 					"one": "usato {count} strumento",
 					"other": "usati {count} strumenti"
-				}
 				},
 				"agent": {
 					"one": "avviato {count} agente",
 					"other": "avviati {count} agenti"
+				}
 			},
 			"exit": "Uscita {code}",
 			"showAll": {

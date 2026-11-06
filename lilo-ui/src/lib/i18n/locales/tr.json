@@ -2679,11 +2679,11 @@
 				"tool": {
 					"one": "{count} araç kullanıldı",
 					"other": "{count} araç kullanıldı"
-				}
 				},
 				"agent": {
 					"one": "{count} ajan başlatıldı",
 					"other": "{count} ajan başlatıldı"
+				}
 			},
 			"exit": "Çıkış {code}",
 			"showAll": {

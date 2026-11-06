@@ -2668,11 +2668,11 @@
 				"tool": {
 					"one": "{count} outil utilisé",
 					"other": "{count} outils utilisés"
-				}
 				},
 				"agent": {
 					"one": "{count} agent lancé",
 					"other": "{count} agents lancés"
+				}
 			},
 			"exit": "Sortie {code}",
 			"showAll": {

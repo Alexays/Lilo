@@ -350,11 +350,11 @@ final class ConversationHost {
         for permission in conversation.permissions {
             append(conversation, ["sessionUpdate": "lilo_permission_resolved", "requestId": permission.requestId, "optionId": NSNull()])
         }
+        conversation.permissions = []
         // An agent Lilo stopped once idle exits cleanly; any other exit is the agent failing.
         if conversation.state == .idle, status == 0 || status == SIGTERM || status == 15 { return }
         let reason = errors.split(separator: "\n").suffix(3).joined(separator: "\n")
         conversation.lastError = unsafe reason.isEmpty ? String(format: "The agent stopped (code %d).".localized, status) : reason
-        conversation.permissions = []
         append(conversation, ["sessionUpdate": "lilo_error", "message": conversation.lastError ?? ""])
         setState(conversation, .failed)
     }
@@ -597,12 +597,12 @@ final class ConversationHost {
         conversation.permissions.remove(at: index)
         append(conversation, ["sessionUpdate": "lilo_permission_resolved", "requestId": requestId, "optionId": optionId ?? NSNull()])
         withdrawNotification(conversation.tabId)
+        // The notification answers the oldest request: once that one is settled, it offers the next.
+        if index == 0, !conversation.permissions.isEmpty, !isShown(conversation.tabId) { postPermissionNotification(conversation) }
         updateTab(conversation)
     }
 
     // MARK: - Checkpoints
-        // The notification answers the oldest request: once that one is settled, it offers the next.
-        if index == 0, !conversation.permissions.isEmpty, !isShown(conversation.tabId) { postPermissionNotification(conversation) }
 
     func restore(_ tabId: UUID, checkpoint index: Int) {
         guard let conversation = conversations[tabId], index < conversation.checkpoints.count,

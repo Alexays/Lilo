@@ -2679,11 +2679,11 @@
 				"tool": {
 					"one": "{count} 個のツールを使用",
 					"other": "{count} 個のツールを使用"
-				}
 				},
 				"agent": {
 					"one": "{count} 個のエージェントを起動",
 					"other": "{count} 個のエージェントを起動"
+				}
 			},
 			"exit": "終了コード {code}",
 			"showAll": {

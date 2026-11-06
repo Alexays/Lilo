@@ -2751,13 +2751,13 @@
 					"few": "użyto {count} narzędzi",
 					"many": "użyto {count} narzędzi",
 					"other": "użyto {count} narzędzia"
-				}
 				},
 				"agent": {
 					"one": "uruchomiono {count} agenta",
 					"few": "uruchomiono {count} agentów",
 					"many": "uruchomiono {count} agentów",
 					"other": "uruchomiono {count} agenta"
+				}
 			},
 			"exit": "Kod wyjścia {code}",
 			"showAll": {
