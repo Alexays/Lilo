@@ -530,9 +530,8 @@ final class WKWebViewTab: NSObject {
     func cancelPendingDocumentPiP() {
         pendingDocumentPiPSize = nil
     }
-    /// Called while building the context menu to inject extension-contributed menu items.
-    /// Set by TabManager when the extension registry is active.
-    var extensionContextMenuItemsProvider: (@MainActor () -> [NSMenuItem])?
+    /// Called with the proposed context menu, which holds the extensions' items. Set by TabManager.
+    var adoptExtensionContextMenuItems: (@MainActor (NSMenu) -> Void)?
     /// Back-reference set by TabManager so extension-tab conformance can query active/tab state.
     weak var tabManager: TabManager?
     weak var delegate: Delegate? {
@@ -2405,7 +2404,8 @@ extension WKWebViewTab: WKUIDelegate {
         MainActor.assumeIsolated {
             let linkURL = unsafe ContextMenuBuilder.linkURL(from: element)
             contextMenuTarget = unsafe (ContextMenuBuilder.frameInfo(from: element), linkURL)
-            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
+            unsafe adoptExtensionContextMenuItems?(menu)
+            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
             unsafe completionHandler(menu)
         }
     }

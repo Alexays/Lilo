@@ -185,6 +185,39 @@ final class ProfileExtensionRegistry {
         }
     }
 
+    /// Adopts the items WebKit adds to a page's context menu, one per extension (a submenu bears its short name): choosing
+    /// one is its extension's user gesture, and a private tab drops those of extensions not allowed there.
+    func adoptContextMenuItems(in menu: NSMenu, tab: TabExtensionAdapter?, isPrivate: Bool) {
+        let items = menu.items.filter { ($0.target as? NSObject)?.className == "_WKWebExtensionMenuItem" }
+        guard let first = items.first else { return }
+        let separatorIndex = menu.index(of: first) - 1
+        let hidesUnallowed = isPrivate && loadedRuntimes.contains { !$0.context.hasAccessToPrivateData }
+        // A single item is attributed only by a tab-wide item of the same title: one shown for a selection or a link
+        // has no other trace of its extension, so a private tab hiding some extension drops it too.
+        lazy var tabWideOwners: [String: LoadedExtensionRuntime] = {
+            var owners: [String: LoadedExtensionRuntime] = [:]
+            guard let tab else { return owners }
+            for runtime in self.loadedRuntimes {
+                for item in runtime.context.menuItems(for: tab) where owners[item.title] == nil { owners[item.title] = runtime }
+            }
+            return owners
+        }()
+        var keptCount = 0
+        for item in items {
+            let owner = loadedRuntimes.first { $0.context.webExtension.displayShortName == item.title } ?? tabWideOwners[item.title]
+            if hidesUnallowed, owner?.context.hasAccessToPrivateData != true {
+                menu.removeItem(item)
+                continue
+            }
+            keptCount += 1
+            if let owner { noteUserGestures(choosing: [item], extensionId: owner.id) }
+        }
+        // WebKit puts a separator before the extensions' items.
+        if keptCount == 0, separatorIndex >= 0, menu.items[separatorIndex].isSeparatorItem {
+            menu.removeItem(at: separatorIndex)
+        }
+    }
+
     /// The new-tab page an extension overrides via `chrome_url_overrides.newtab`; the last loaded wins, as Chrome's last install
     /// does. Resolve it through `extensionNavigationTarget(for:)` to get the extension's `nativeConfiguration`.
     var activeNewTabOverrideURL: URL? {
