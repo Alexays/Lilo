@@ -64,7 +64,9 @@ enum PageWorld {
       // Shared with same-origin frames, as one realm's toString can be called on another's functions.
       let masked;
       try {
-        if (window.parent !== window) {
+        // A cross-origin parent's document throws; its origin is known without touching it. window.origin is the
+        // document's, which about:blank and srcdoc frames inherit, where location.origin is "null".
+        if (window.parent !== window && location.ancestorOrigins[0] === window.origin) {
           const ask = new NativeCustomEvent('__LILO_SHARE__', { __proto__: null, detail: {} });
           apply(dispatch, window.parent.document, [ask]);
           masked = ask.detail.masked;

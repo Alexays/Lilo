@@ -210,7 +210,9 @@ extension NotificationBridge {
       // Only a secure top origin can hold a stored decision; the others would pay an IPC for nothing. A same-origin
       // subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
       if (window.top !== window) {
-        try { setPermission(top.Notification.permission); } catch (e) { setPermission('denied'); }
+        const ancestors = location.ancestorOrigins;
+        if (ancestors[ancestors.length - 1] !== window.origin) setPermission('denied');
+        else try { setPermission(top.Notification.permission); } catch (e) { setPermission('denied'); }
       } else if (window.isSecureContext) {
         // At document start the bridge world's relay may not be listening yet.
         apply(listen, doc, ['DOMContentLoaded', () => lilo.send('liloNotification', { type: 'query' }), { once: true }]);
