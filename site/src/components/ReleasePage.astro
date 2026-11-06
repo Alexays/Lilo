@@ -1,0 +1,52 @@
+---
+import { releaseMedia } from "../../../release-media/catalog";
+import Layout from "../layouts/Layout.astro";
+import { copy } from "../lib/i18n";
+import type { Locale } from "../lib/i18n";
+import { releases, stories } from "../lib/release-entries";
+import PageSection from "./PageSection.astro";
+import ReleaseEntry from "./ReleaseEntry.astro";
+
+interface Props {
+  lang: Locale;
+  version: string;
+}
+
+const { lang, version } = Astro.props;
+const text = copy[lang];
+const release = releases.find((item) => item.version === version);
+
+if (!release) {
+  throw new Error(`Unknown release ${version}`);
+}
+
+const story = stories.get(version);
+const heading = story?.title[lang] ?? `Lilo ${version}`;
+const illustrated = story?.highlights.find((highlight) => highlight.media);
+
+const image =
+  illustrated?.media &&
+  releaseMedia(version, illustrated.id, illustrated.media).poster;
+---
+
+<Layout
+  lang={lang}
+  title={`${heading} – Lilo ${version}`}
+  description={story?.introduction[lang] ?? text.changelogDescription}
+  image={image}
+  hero={{
+    heading,
+    description: story?.introduction[lang] ?? text.introduction,
+    tag: text.releases,
+    note: text.languageNote,
+  }}
+>
+  <PageSection>
+    <ReleaseEntry
+      lang={lang}
+      latest={release === releases[0]}
+      release={release}
+      story={story}
+    />
+  </PageSection>
+</Layout>

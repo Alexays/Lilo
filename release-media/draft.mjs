@@ -1,0 +1,251 @@
+import { execFileSync } from "node:child_process";
+import { readFile, readdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import Anthropic from "@anthropic-ai/sdk";
+import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { z } from "zod";
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(root, "..");
+const stories = path.join(repo, "site/src/content/releases");
+const registry = path.join(repo, "lilo-ui/src/components/whatsnew/releaseHighlights.json");
+const locales = path.join(repo, "lilo-ui/src/lib/i18n/locales");
+
+const translated = z.object({ en: z.string(), fr: z.string() });
+export const Draft = z.object({
+  title: translated,
+  introduction: translated,
+  highlights: z.array(
+    z.object({ id: z.string(), title: translated, body: translated, notes: z.array(z.number()) }),
+  ),
+  groups: z.array(z.object({ title: translated, notes: z.array(z.number()) })),
+});
+const Copy = z.object({
+  headline: z.string(),
+  description: z.string(),
+  highlights: z.array(z.object({ title: z.string(), description: z.string() })),
+});
+
+export function parseNotes(markdown) {
+  const notes = [];
+  let kind = "";
+  for (const line of markdown.split("\n")) {
+    const heading = /^### (\w+)/.exec(line);
+    if (heading) kind = heading[1];
+    else if (kind && line.startsWith("- ")) notes.push({ kind, text: line.slice(2) });
+  }
+  return notes;
+}
+
+/** Fixes alone tell no story: their notes already say everything. */
+export const worthAnEntry = (notes) => notes.some((note) => note.kind !== "Fixed");
+
+/** The website story for `draft`, or an error a retry can show the model. */
+export function storyFrom(version, draft, notes) {
+  const text = (index) => {
+    if (!notes[index]) throw Error(`Note ${index} does not exist`);
+    return notes[index].text;
+  };
+  if (!draft.highlights.length || draft.highlights.length > 3)
+    throw Error("Write one to three highlights");
+  const ids = draft.highlights.map((highlight) => highlight.id);
+  if (ids.some((id) => !/^[a-z][a-z0-9-]*$/.test(id)) || new Set(ids).size !== ids.length)
+    throw Error("Highlight ids must be unique kebab-case words");
+  const told = draft.highlights.flatMap((highlight) => highlight.notes);
+  if (draft.highlights.some((highlight) => !highlight.notes.length))
+    throw Error("Every highlight must list the notes it tells");
+  const grouped = draft.groups.flatMap((group) => group.notes);
+  if (new Set(grouped).size !== grouped.length) throw Error("A note belongs to a single group");
+  const covered = new Set([...told, ...grouped]);
+  const missing = notes.map((_, index) => index).filter((index) => !covered.has(index));
+  if (missing.length) throw Error(`Notes without a place: ${missing.join(", ")}`);
+  return {
+    version,
+    title: draft.title,
+    introduction: draft.introduction,
+    highlights: draft.highlights.map(({ id, title, body, notes: indexes }) => ({
+      id,
+      title,
+      body,
+      notes: indexes.map(text),
+    })),
+    groups: draft.groups
+      .filter((group) => group.notes.length)
+      .map(({ title, notes: indexes }) => ({ title, notes: indexes.map(text) })),
+  };
+}
+
+const camel = (id) => id.replace(/-(\w)/g, (_, letter) => letter.toUpperCase());
+
+/** The What's New registry entry and the copy every locale catalog gains under `key`. */
+export function whatsNewFrom(version, story) {
+  const key = `v${version.replaceAll(".", "")}`;
+  const path = `whatsNew.releases.${key}`;
+  return {
+    key,
+    entry: {
+      headlineKey: `${path}.headline`,
+      descriptionKey: `${path}.description`,
+      highlights: story.highlights.map(({ id }) => ({
+        id,
+        titleKey: `${path}.${camel(id)}Title`,
+        descriptionKey: `${path}.${camel(id)}Description`,
+      })),
+    },
+    copy: (copy) => ({
+      headline: copy.headline,
+      description: copy.description,
+      ...Object.fromEntries(
+        story.highlights.flatMap(({ id }, index) => [
+          [`${camel(id)}Title`, copy.highlights[index].title],
+          [`${camel(id)}Description`, copy.highlights[index].description],
+        ]),
+      ),
+    }),
+  };
+}
+
+/** Catalogs carry hand-kept formatting, so the release goes in as text rather than a rewrite. */
+export function withReleaseCopy(catalog, key, copy) {
+  const anchor = /^(\t+)"releases": \{\n/m.exec(catalog);
+  if (!anchor) throw Error("The catalog has no whatsNew.releases");
+  const indent = `${anchor[1]}\t`;
+  const lines = Object.entries(copy).map(
+    ([name, value]) => `${indent}\t${JSON.stringify(name)}: ${JSON.stringify(value)}`,
+  );
+  const block = `${indent}"${key}": {\n${lines.join(",\n")}\n${indent}},\n`;
+  const at = anchor.index + anchor[0].length;
+  return catalog.slice(0, at) + block + catalog.slice(at);
+}
+
+const run = (command, ...args) =>
+  execFileSync(command, args, { cwd: repo, encoding: "utf8", maxBuffer: 1 << 28 });
+
+/** A published release's notes, or with no version, the pending ones. */
+async function release(requested) {
+  if (requested) {
+    const notes = await readFile(path.join(repo, `.changes/v${requested}.md`), "utf8");
+    return {
+      version: requested,
+      markdown: notes,
+      ref: `v${requested}`,
+      since: run("git", "describe", "--tags", "--abbrev=0", `v${requested}^`).trim(),
+    };
+  }
+  const changie = process.env.CHANGIE;
+  return {
+    version: run(changie, "next", "auto").trim().replace(/^v/, ""),
+    markdown: run(changie, "batch", "auto", "--dry-run", "--allow-no-changes=false"),
+    ref: "HEAD",
+    since: run(changie, "latest").trim(),
+  };
+}
+
+async function examples() {
+  const files = (await readdir(stories)).sort((a, b) =>
+    b.localeCompare(a, "en", { numeric: true }),
+  );
+  return Promise.all(files.slice(0, 3).map((file) => readFile(path.join(stories, file), "utf8")));
+}
+
+export async function prompts({ version, markdown, ref, since }, notes) {
+  return {
+    system: await readFile(path.join(root, "draft-prompt.md"), "utf8"),
+    user: [
+      `<examples>\n${(await examples()).join("\n")}\n</examples>`,
+      `<commits>\n${run("git", "log", "--no-merges", "--format=%s%n%b", `${since}..${ref}`)}\n</commits>`,
+      `<notes version="${version}">\n${notes.map((note, index) => `${index}. [${note.kind}] ${note.text}`).join("\n")}\n</notes>`,
+    ].join("\n\n"),
+  };
+}
+
+async function ask(client, system, content, schema) {
+  const response = await client.beta.messages.parse({
+    model: "claude-opus-5-5",
+    max_tokens: 16000,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: "high", format: betaZodOutputFormat(schema) },
+    system,
+    messages: [{ role: "user", content }],
+  });
+  if (response.stop_reason === "refusal" || !response.parsed_output)
+    throw Error(`No draft: the model stopped with ${response.stop_reason}`);
+  return response.parsed_output;
+}
+
+async function main() {
+  const source = await release(process.env.LILO_RELEASE);
+  const notes = parseNotes(source.markdown);
+  const target = path.join(stories, `${source.version}.json`);
+  if (await readFile(target).catch(() => null)) {
+    console.log(`Release ${source.version} already has an entry`);
+    return;
+  }
+  if (!worthAnEntry(notes)) {
+    console.log(`Release ${source.version} has only fixes: no entry to draft`);
+    return;
+  }
+  const client = new Anthropic();
+  const { system, user } = await prompts(source, notes);
+  let draft = await ask(client, system, user, Draft);
+  let story;
+  try {
+    story = storyFrom(source.version, draft, notes);
+  } catch (error) {
+    draft = await ask(
+      client,
+      system,
+      `${user}\n\nYour previous draft was refused: ${error.message}. Previous draft:\n${JSON.stringify(draft)}`,
+      Draft,
+    );
+    story = storyFrom(source.version, draft, notes);
+  }
+
+  const english = {
+    headline: story.title.en,
+    description: story.introduction.en,
+    highlights: story.highlights.map(({ title, body }) => ({
+      title: title.en,
+      description: body.en,
+    })),
+  };
+  const french = {
+    headline: story.title.fr,
+    description: story.introduction.fr,
+    highlights: story.highlights.map(({ title, body }) => ({
+      title: title.fr,
+      description: body.fr,
+    })),
+  };
+  const codes = (await readdir(locales))
+    .map((file) => path.basename(file, ".json"))
+    .filter((code) => code !== "en" && code !== "fr");
+  const translations = await ask(
+    client,
+    "Translate this Lilo browser release copy into each locale: natural, calm first-party product language, keeping the same meaning, order and product terms.",
+    JSON.stringify(english),
+    z.object(Object.fromEntries(codes.map((code) => [code, Copy]))),
+  );
+
+  const whatsNew = whatsNewFrom(source.version, story);
+  for (const [code, copy] of Object.entries({ ...translations, en: english, fr: french })) {
+    if (copy.highlights.length !== story.highlights.length)
+      throw Error(`The ${code} copy lost a highlight`);
+    const file = path.join(locales, `${code}.json`);
+    await writeFile(
+      file,
+      withReleaseCopy(await readFile(file, "utf8"), whatsNew.key, whatsNew.copy(copy)),
+    );
+  }
+  const highlights = JSON.parse(await readFile(registry, "utf8"));
+  await writeFile(
+    registry,
+    `${JSON.stringify({ [source.version]: whatsNew.entry, ...highlights }, null, "\t")}\n`,
+  );
+  await writeFile(target, `${JSON.stringify(story, null, 2)}\n`);
+  console.log(`Drafted the ${source.version} entry: ${story.title.en}`);
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) await main();

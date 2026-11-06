@@ -71,6 +71,10 @@ Each highlight can define an optional `action` with translated `label` and `href
 
 Existing archives stay unchanged on later builds and releases; incomplete archives require explicit replacement. For a demo story, `make site-release-capture RELEASE=x.y.z RECAPTURE=1` replaces its media using an owned server on port 8791 and Playwright's Chromium browser. For a native story, use `site-release-import` with reviewed window frames. Missing native media stops release preparation with that instruction. `make release-version` prepares missing media before the website build; normal builds and `make validate` never record or replace media.
 
+## Release pages and feeds
+
+Every release has its own page at `/changelog/<version>/`, with its first illustrated highlight as its social image. `/changelog/rss.xml` and `/fr/changelog/rss.xml` carry the last 30 releases. A story's `groups` list the notes that are not highlights by product area, in place of the complete notes.
+
 ## Highlight media
 
 A highlight names its `media` kind and the changelog shows `/release-media/<version>/<highlight id>.{mp4,png}`, a link to `../release-media/assets/`. Native What's New shows the same files. See [release-media/README.md](../release-media/README.md). The files are plain static assets: `_headers` advertises byte ranges so Chromium can seek a film.

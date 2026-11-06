@@ -6,7 +6,7 @@ import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import PageEnd from "../components/PageEnd.astro";
 import PageHero from "../components/PageHero.astro";
-import { copy } from "../lib/i18n";
+import { copy, localizedPath } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
 
 import "../styles/global.css";
@@ -27,6 +27,7 @@ interface Props {
   closing?: Omit<ComponentProps<typeof PageEnd>, "lang">;
   schema?: Schema[];
   noindex?: boolean;
+  image?: string;
 }
 
 const {
@@ -40,6 +41,7 @@ const {
   },
   schema = [],
   noindex = false,
+  image = "/og.png",
 } = Astro.props;
 
 const path = Astro.url.pathname;
@@ -85,6 +87,11 @@ const jsonLD = JSON.stringify({
         <link rel="alternate" hreflang="fr" href={french} />
         <link rel="alternate" hreflang="x-default" href={english} />
         <link rel="alternate" type="text/markdown" href={`${path}index.md`} />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          href={localizedPath(lang, "changelog/rss.xml")}
+        />
       </>
     )}
     <meta
@@ -109,7 +116,7 @@ const jsonLD = JSON.stringify({
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content="https://getlilo.app/og.png" />
+    <meta property="og:image" content={new URL(image, Astro.site).href} />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -117,7 +124,7 @@ const jsonLD = JSON.stringify({
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content="https://getlilo.app/og.png" />
+    <meta name="twitter:image" content={new URL(image, Astro.site).href} />
     <meta name="twitter:image:alt" content={copy[lang].imageAlt} />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

@@ -1,5 +1,6 @@
 import { localizedPath } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
+import { releases } from "../lib/release-entries";
 
 export const GET = () => {
   const site = "https://getlilo.app";
@@ -12,6 +13,7 @@ export const GET = () => {
     "ai-agents/",
     "webkit/",
     "changelog/",
+    ...releases.map(({ version }) => `changelog/${version}/`),
   ];
 
   const languages: Locale[] = ["en", "fr"];
