@@ -10,7 +10,7 @@ final class WKWebViewTabDelegateSpy: WKWebViewTab.Delegate {
     private(set) var findResults: [PageFindController.Result] = []
     private(set) var events: [WKWebViewTab.WebNavigationEvent] = []
     private(set) var newTabs: [URL?] = []
-    private(set) var externalLaunches: [(url: URL, origin: String?)] = []
+    private(set) var externalLaunches: [(url: URL, origin: String?, userInitiated: Bool)] = []
     var onUpdateURL: ((URL?) -> Void)?
 
     func tab(_ tab: WKWebViewTab, didNavigate event: WKWebViewTab.WebNavigationEvent) {
@@ -38,5 +38,7 @@ final class WKWebViewTabDelegateSpy: WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didUpdatePermissionUsage usage: WKWebViewTab.WebPermissionUsageState) {}
     func tabRequestsForeground(_ tab: WKWebViewTab) { foregroundRequests += 1 }
     func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result) { findResults.append(result) }
-    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) { externalLaunches.append((url, origin)) }
+    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?, userInitiated: Bool) {
+        externalLaunches.append((url, origin, userInitiated))
+    }
 }
