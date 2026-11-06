@@ -223,7 +223,8 @@
       if (enabled.size) {
         const method = message.method ?? ''
         const domain = domainOf(method)
-        if (enabled.has(cdpDomain[domain] ?? domain)) {
+        // A navigation also clears Runtime's contexts; native hands each event to the sessions of its domain.
+        if (enabled.has(cdpDomain[domain] ?? domain) || (method === 'Page.frameNavigated' && enabled.has('Runtime'))) {
           try {
             for (const [name, params] of translate(method, message.params ?? {})) {
               window.webkit?.messageHandlers?.liloDebuggerEvent?.postMessage({ method: name, params: JSON.parse(JSON.stringify(params)) })
@@ -348,7 +349,7 @@
   // The WebKit domains each CDP domain's events come from. The frontend may not have enabled them all
   // yet; it needs them on, so disable leaves them be. Performance and Log send nothing: Puppeteer
   // enables them at startup and fails when they are missing.
-  const backingDomains = { Runtime: ['Runtime', 'Console'], Page: ['Page'], Network: ['Network'], DOM: [], Performance: [], Log: [] }
+  const backingDomains = { Runtime: ['Runtime', 'Console', 'Page'], Page: ['Page'], Network: ['Network'], DOM: [], Performance: [], Log: [] }
 
   const commands = {
     'Runtime.evaluate': async params => {
