@@ -128,6 +128,7 @@ Each `MainWindowController` is one window: its overlay and bridge, its own selec
 - **One window per web view.** `WindowRegistry` records which window shows each tab. Showing a tab in another window takes its view; the window that lost it keeps its selection and shows a placeholder offering to take it back. Displayed tabs are never frozen or discarded.
 - **Relayed state.** A state mutation in one window reaches every window showing the changed space, each with its own active tab. Space and profile changes reach every window through `BrowserContext`, the single `SpaceManager` and `ProfileManager` delegate.
 - **Routing.** App-wide events (extension tab control and permissions, download gap events, factory permission handlers, terminal callbacks) are installed once and resolve the window that shows the tab or page, else the active window.
+- **App-wide settings.** The engine factory takes its stored settings (privacy, HTTPS-only, fonts, autoplay, refresh rate, feature flags) once, in `BrowserContext`'s bootstrap. Each window's `SettingsBridgeHandler` applies a change through the context directly, and keeps closures only for what belongs to its window: its profile's stores, its tabs, its layout and terminals.
 - **Persistence.** The global `windows` table keeps each window's frame and space; the first window opens before the database from its cached frame, the others reopen behind it.
 
 ## Bridge message flow

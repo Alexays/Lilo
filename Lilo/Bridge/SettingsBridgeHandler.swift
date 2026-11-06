@@ -63,26 +63,11 @@ final class SettingsBridgeHandler: BridgeHandler {
     private let historyStoreProvider: @MainActor () -> HistoryStore?
     private let extensionRegistryProvider: @MainActor () -> ProfileExtensionRegistry?
     private let dataStoreProvider: @MainActor () -> WKEngineDataStore?
-    private let lifecycleDiagnosticsProvider: @MainActor () -> TabLifecycleDiagnostics?
-    private let extensionDiagnosticsProvider: @MainActor () -> [[String: Any]]
-    private let forceLifecycleTrimHandler: @MainActor () -> Void
+    /// The app-wide services settings act on; nil under tests that drive the handler alone.
+    private weak var context: BrowserContext?
     private weak var bridgeRouter: BridgeRouter?
-    var onContentBlockerToggled: ((Bool) -> Void)?
-    /// Rebuilds the blocker, then reloads the tab given, if any.
-    var onBlockerAllowlistChanged: ((_ reloadTabId: UUID?) -> Void)?
-    /// The content blocker's lists and counts, for the settings page.
-    var contentBlockerStatus: (() -> [String: Any])?
-    /// Fetches and converts the filter lists now.
-    var onUpdateFilterLists: (() async -> Void)?
-    var onSendGPCChanged: ((Bool) -> Void)?
-    var onTrackingPreventionChanged: ((Bool) -> Void)?
-    /// Agent control: the opt-in switch, and the actions of its settings section.
-    var agentControl: (() -> AgentControl?)?
-    var onHTTPSOnlyChanged: ((Bool) -> Void)?
-    var onMinimumFontSizeChanged: ((CGFloat) -> Void)?
-    var onFullRefreshRateChanged: ((Bool) -> Void)?
-    var onAutoplayPolicyChanged: ((String) -> Void)?
-    var onLifecyclePresetChanged: ((String) -> Void)?
+    /// Reloads a tab of the window once an allowlist change is compiled.
+    var onReloadTab: ((UUID) -> Void)?
     var onTabLayoutChanged: (() -> Void)?
     /// Any `terminal*` setting changed: theme, font, size or imported themes.
     var onTerminalSettingsChanged: (() -> Void)?
@@ -97,15 +82,11 @@ final class SettingsBridgeHandler: BridgeHandler {
     /// The profile's history was cleared since this date, or entirely (nil).
     var onHistoryCleared: ((Date?) -> Void)?
     var onAutoDeviceSwitchingChanged: (() -> Void)?
-    var onFolderAutoLockChanged: (() -> Void)?
     /// What the device-setup row shows; nil when no window owns a device setup controller.
     var deviceSetupState: (() -> [String: Any])?
     var onForgetDeviceSetup: (() -> Void)?
-    var onTogglePerfRecording: (() -> Void)?
     /// Settings records a shortcut for this action id, or stops recording (nil).
     var onRecordShortcut: ((String?) -> Void)?
-    /// Every browser window's router: each chrome keeps its own copy of the settings.
-    var windowRouters: (() -> [BridgeRouter])?
 
     init(
         settingsStore: SettingsStore,
@@ -114,18 +95,15 @@ final class SettingsBridgeHandler: BridgeHandler {
         historyStoreProvider: @escaping @MainActor () -> HistoryStore?,
         extensionRegistryProvider: @escaping @MainActor () -> ProfileExtensionRegistry?,
         dataStoreProvider: @escaping @MainActor () -> WKEngineDataStore?,
-        lifecycleDiagnosticsProvider: @escaping @MainActor () -> TabLifecycleDiagnostics?,
-        extensionDiagnosticsProvider: @escaping @MainActor () -> [[String: Any]],
-        forceLifecycleTrimHandler: @escaping @MainActor () -> Void,
+        context: BrowserContext?,
         bridgeRouter: BridgeRouter
     ) {
         self.settingsStore = settingsStore; self.sitePermissionStoreProvider = sitePermissionStoreProvider
         self.zoomStoreProvider = zoomStoreProvider
         self.historyStoreProvider = historyStoreProvider
         self.extensionRegistryProvider = extensionRegistryProvider
-        self.dataStoreProvider = dataStoreProvider; self.lifecycleDiagnosticsProvider = lifecycleDiagnosticsProvider
-        self.extensionDiagnosticsProvider = extensionDiagnosticsProvider
-        self.forceLifecycleTrimHandler = forceLifecycleTrimHandler
+        self.dataStoreProvider = dataStoreProvider
+        self.context = context
         self.bridgeRouter = bridgeRouter
     }
 
@@ -206,18 +184,24 @@ final class SettingsBridgeHandler: BridgeHandler {
             if let key = message.string("key"), let value = message.string("value"), store.get(key) != value {
                 if key == "pinnedExtensions" { extensionRegistryProvider()?.pinnedExtensionsChanged(from: store.get(key), to: value) }
                 store.set(key, value: value)
-                if key == "contentBlockerEnabled" { onContentBlockerToggled?(value == "true") }
-                if key == "contentBlockerAllowedDomains" { onBlockerAllowlistChanged?(nil) }
-                if key == "sendGPC" { onSendGPCChanged?(value == "true") }
-                if key == "preventCrossSiteTracking" { onTrackingPreventionChanged?(value == "true") }
-                if key == "httpsOnly" { onHTTPSOnlyChanged?(value == "true") }
-                if key == "minimumFontSize" { onMinimumFontSizeChanged?(CGFloat(Double(value) ?? 0)) }
-                if key == "fullRefreshRate" { onFullRefreshRateChanged?(value == "true") }
-                if key == "autoplayPolicy" { onAutoplayPolicyChanged?(value) }
-                if key == "lifecyclePreset" { onLifecyclePresetChanged?(value) }
+                let engineFactory = context?.engineFactory
+                if key == "contentBlockerEnabled" { context?.setContentBlockerEnabled(value == "true") }
+                if key == "contentBlockerAllowedDomains" { blockerAllowlistChanged(reloadTabId: nil) }
+                if key == "sendGPC" { engineFactory?.setGlobalPrivacyControl(value == "true") }
+                if key == "preventCrossSiteTracking" { engineFactory?.setTrackingPrevention(value == "true") }
+                if key == "httpsOnly" { engineFactory?.setHTTPSOnly(value == "true") }
+                if key == "minimumFontSize" { engineFactory?.setMinimumFontSize(CGFloat(Double(value) ?? 0)) }
+                if key == "fullRefreshRate" { engineFactory?.setFullRefreshRate(value == "true") }
+                if key == "autoplayPolicy" { engineFactory?.setAutoplayPolicy(value) }
+                if key == "lifecyclePreset", let context {
+                    context.applyLifecyclePreset(LifecyclePreset(rawValue: value) ?? .default)
+                    // Reclaim promptly under the new (possibly tighter) policy.
+                    context.hiddenSpaceLifecycle.scheduleActiveSpaceTrim(delay: 0)
+                    context.hiddenSpaceLifecycle.scheduleTrim()
+                }
                 if key == "tabPosition" || key == "addressPlacement" { onTabLayoutChanged?() }
                 if key == DeviceSetupController.enabledKey { onAutoDeviceSwitchingChanged?() }
-                if key == "folderAutoLockMinutes" { onFolderAutoLockChanged?() }
+                if key == "folderAutoLockMinutes" { context?.folderAutoLock.limitDidChange() }
                 // Mirror the UI language choice so native menus/dialogs follow it on next launch.
                 if key == "locale" { Localization.persistOverride(value) }
                 // apply() also caches the appearance for next-launch first paint.
@@ -230,7 +214,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 }
                 if key == "littleWindowHotKey" { (NSApp.delegate as? AppDelegate)?.applyLittleWindowHotKey() }
                 if key.hasPrefix("terminal") { onTerminalSettingsChanged?() }
-                if key == "agentControlEnabled" { agentControl?()?.setEnabled(value == "true") }
+                if key == "agentControlEnabled" { context?.agentControl.setEnabled(value == "true") }
                 publishSettings(using: store)
                 if Self.filterListKeys.contains(key) { await updateFilterLists() }
             }
@@ -263,7 +247,7 @@ final class SettingsBridgeHandler: BridgeHandler {
 
         case "revokeAgentClient":
             if let name = message.string("name") {
-                agentControl?()?.revoke(name)
+                context?.agentControl.revoke(name)
                 await publishAgentClients()
             }
 
@@ -322,13 +306,13 @@ final class SettingsBridgeHandler: BridgeHandler {
             publishShortcuts()
 
         case "getAgentActivity":
-            agentControl?()?.publishActivity(resend: true)
-            agentControl?()?.resendPendingConsents(to: bridgeRouter)
+            context?.agentControl.publishActivity(resend: true)
+            context?.agentControl.resendPendingConsents(to: bridgeRouter)
 
         case "agentControlResponse":
             if let requestId = message.string("requestId") {
                 let site = message.string("alwaysAllowSite")
-                agentControl?()?.answerConsent(requestId, granted: message.bool("granted"), alwaysAllowSite: site)
+                context?.agentControl.answerConsent(requestId, granted: message.bool("granted"), alwaysAllowSite: site)
                 if site != nil { publishSettings(using: store) }
             }
 
@@ -343,7 +327,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 var list = store.contentBlockerAllowlist
                 if let idx = list.firstIndex(of: host) { list.remove(at: idx) } else { list.append(host) }
                 store.contentBlockerAllowlist = list
-                onBlockerAllowlistChanged?(message.uuid("reloadTabId"))
+                blockerAllowlistChanged(reloadTabId: message.uuid("reloadTabId"))
                 bridgeRouter?.send(event: "blockerAllowlistChanged", data: ["allowlist": list])
                 publishSettings(using: store)
             }
@@ -433,17 +417,17 @@ final class SettingsBridgeHandler: BridgeHandler {
 
         case "copyDiagnosticsReport":
             var report = StartupMetrics.exportText()
-            if let diagnostics = lifecycleDiagnosticsProvider() {
+            if let diagnostics = context?.browserState.lifecycleDiagnostics() {
                 report += "\n\n" + lifecycleDiagnosticsReportText(diagnostics)
             }
             let didCopy = copyToPasteboard(report)
             bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "copyDiagnosticsReport", message: (didCopy ? "Diagnostics report copied" : "Unable to copy diagnostics report").localized, level: didCopy ? "info" : "error")
 
         case "togglePerfRecording":
-            onTogglePerfRecording?()
+            context?.togglePerfRecording()
 
         case "forceLifecycleTrim":
-            forceLifecycleTrimHandler()
+            context?.hiddenSpaceLifecycle.forceTrim()
             publishStartupMetrics()
             bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "forceLifecycleTrim", message: "Memory trim completed".localized)
 
@@ -489,23 +473,34 @@ final class SettingsBridgeHandler: BridgeHandler {
 
     /// Reports the update as running, then its outcome.
     private func updateFilterLists() async {
-        guard let onUpdateFilterLists else { return }
-        var updating = contentBlockerStatus?() ?? [:]
+        guard let context else { return }
+        var updating = context.contentBlockerStatus
         updating["updating"] = true
         bridgeRouter?.send(event: "contentBlockerStatus", data: updating)
-        await onUpdateFilterLists()
+        await context.updateFilterLists()
         publishContentBlockerStatus()
     }
 
     private func publishContentBlockerStatus() {
-        if let status = contentBlockerStatus?() { bridgeRouter?.send(event: "contentBlockerStatus", data: status) }
+        if let status = context?.contentBlockerStatus { bridgeRouter?.send(event: "contentBlockerStatus", data: status) }
+    }
+
+    /// Rebuilds the blocker, then reloads the tab given, if any.
+    private func blockerAllowlistChanged(reloadTabId: UUID?) {
+        guard let context, let store = settingsStore else { return }
+        Task {
+            await context.engineFactory.rebuildBlocker(allowlist: store.blockerAllowlist)
+            if let reloadTabId { onReloadTab?(reloadTabId) }
+        }
+        Task { await context.filterListService?.installBlockerExtension() }
     }
 
     /// A change reaches every window, or the others keep searching with the old engine, the old language.
     private func publishSettings(using store: SettingsStore) {
         let data: [String: Any] = ["settings": store.allSettings()]
         bridgeRouter?.send(event: "settingsLoaded", data: data)
-        for router in windowRouters?() ?? [] where router !== bridgeRouter { router.send(event: "settingsLoaded", data: data) }
+        // Every window's chrome keeps its own copy of the settings.
+        for router in context?.windows.windows.map(\.bridgeRouter) ?? [] where router !== bridgeRouter { router.send(event: "settingsLoaded", data: data) }
     }
 
     /// Nil in builds without a Sparkle key (local and debug builds), which never update.
@@ -539,7 +534,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         let clients = found.map { client, configured, app in
             ["id": client.rawValue, "configured": configured, "icon": app.flatMap(Self.appIconDataURL) ?? NSNull()] as [String: Any]
         }
-        let control = agentControl?()
+        let control = context?.agentControl
         let lastSeen = control?.lastSeen ?? [:]
         let allowed = (control?.allowedClients ?? [:]).keys.sorted().map {
             ["name": $0, "displayName": AgentControl.displayName($0), "lastSeen": lastSeen[$0] ?? NSNull(),
@@ -598,7 +593,7 @@ final class SettingsBridgeHandler: BridgeHandler {
 
     private func publishStartupMetrics() {
         var snapshot = StartupMetrics.bridgeSnapshot()
-        if let diagnostics = lifecycleDiagnosticsProvider() {
+        if let diagnostics = context?.browserState.lifecycleDiagnostics() {
             snapshot["lifecycleDiagnostics"] = diagnostics.bridgeData
         }
         snapshot["perfRecordingStartedAt"] = PerfRecorder.startedAt.map { $0.timeIntervalSince1970 * 1000 } as Any
@@ -624,7 +619,7 @@ final class SettingsBridgeHandler: BridgeHandler {
     }
 
     private func extensionDiagnosticsEntries() -> [[String: Any]] {
-        Self.extensionDiagnosticsEntries(from: extensionDiagnosticsProvider())
+        Self.extensionDiagnosticsEntries(from: context?.profileContexts.allContexts.flatMap { $0.extensions.backgroundDiagnosticsSnapshots() } ?? [])
     }
 
     static func extensionDiagnosticsEntries(
