@@ -960,7 +960,7 @@ final class ChangesDiffView: NSView {
     func scrollToFile(_ index: Int, animated: Bool = false) {
         guard index < fileRows.count else { return }
         let point = NSPoint(x: visibleRect.minX, y: CGFloat(fileRows[index]) * rowHeight)
-        guard animated, let scrollView = enclosingScrollView else { return scroll(point) }
+        guard animated, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, let scrollView = enclosingScrollView else { return scroll(point) }
         let clip = scrollView.contentView
         let target = clip.constrainBoundsRect(NSRect(origin: point, size: clip.bounds.size)).origin
         NSAnimationContext.runAnimationGroup { context in
