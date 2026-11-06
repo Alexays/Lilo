@@ -216,11 +216,16 @@ final class ConversationHost {
                   var last = conversation.log.last?.value, last["sessionUpdate"] as? String == kind,
                   last["messageId"] as? String == update["messageId"] as? String,
                   Self.parentToolUse(of: last) == Self.parentToolUse(of: update),
-                  var content = last["content"] as? [String: Any], content["type"] as? String == "text", let text = content["text"] as? String,
+                  var content = last["content"] as? [String: Any], content["type"] as? String == "text", var text = content["text"] as? String,
                   let chunk = update["content"] as? [String: Any], chunk["type"] as? String == "text", let more = chunk["text"] as? String {
-            content["text"] = text + more
+            // Out of the log and out of `content`, `text` is uniquely referenced and grows in place.
+            conversation.log.removeLast()
+            last.removeValue(forKey: "content")
+            content.removeValue(forKey: "text")
+            text.append(more)
+            content["text"] = text
             last["content"] = content
-            conversation.log[conversation.log.count - 1] = ACPConnection.Payload(value: last)
+            conversation.log.append(ACPConnection.Payload(value: last))
         } else {
             conversation.log.append(ACPConnection.Payload(value: update))
         }
