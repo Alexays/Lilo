@@ -269,9 +269,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         // A suspended page answers nothing.
         if engine.isFrozen { engine.resume() }
         // The user closed the Web Inspector they had open on the tab, and the connection with it.
-        if let pending = session.reconnection {
-            guard await pending.value else { return Self.protocolError(-32000, "Target closed") }
-        } else if !session.inspector.isCurrent, !(await reconnect(session)) {
+        if session.reconnection != nil || !session.inspector.isCurrent, !(await reconnect(session)) {
             return Self.protocolError(-32000, "Target closed")
         }
         let number = { (key: String) in (params[key] as? NSNumber)?.doubleValue }
@@ -346,26 +344,30 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     ]
 
     /// Moves the sessions of a closed frontend to a new one with what they set; when the tab gives
-    /// none, they detach and it returns false.
+    /// none, they detach. Returns whether `session` is still attached.
     private func reconnect(_ session: Session) async -> Bool {
-        if let pending = session.reconnection { return await pending.value }
-        let old = session.inspector.frontend
-        let task = Task { [self] () -> Bool in
-            let inspector = try? await AgentInspector.connect(to: session.engine.wkWebView, servesFiles: false)
-            let moved = sessions.filter { $0.inspector.frontend === old }
-            guard let inspector, !moved.isEmpty else {
-                for other in moved { end(other, reason: "target_closed", pageGone: true) }
-                inspector?.disconnect()
-                return false
+        let task: Task<Bool, Never>
+        if let pending = session.reconnection {
+            task = pending
+        } else {
+            let old = session.inspector.frontend
+            task = Task { [self] in
+                let inspector = try? await AgentInspector.connect(to: session.engine.wkWebView, servesFiles: false)
+                let moved = sessions.filter { $0.inspector.frontend === old }
+                guard let inspector, !moved.isEmpty else {
+                    for other in moved { end(other, reason: "target_closed", pageGone: true) }
+                    inspector?.disconnect()
+                    return false
+                }
+                for other in moved { other.inspector = inspector }
+                Self.receiveEvents(of: inspector, handler: self)
+                await restore(inspector)
+                for other in moved { other.reconnection = nil }
+                return true
             }
-            for other in moved { other.inspector = inspector }
-            Self.receiveEvents(of: inspector, handler: self)
-            await restore(inspector)
-            for other in moved { other.reconnection = nil }
-            return sessions.contains { $0 === session }
+            for other in sessions where other.inspector.frontend === old { other.reconnection = task }
         }
-        for other in sessions where other.inspector.frontend === old { other.reconnection = task }
-        return await task.value
+        return await task.value && sessions.contains { $0 === session }
     }
 
     /// Gives a frontend the domains, emulation and new-document scripts of the sessions on it.
