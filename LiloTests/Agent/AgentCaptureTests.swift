@@ -93,18 +93,39 @@ final class AgentCaptureTests: AgentToolTestCase {
             Promise.reject(new (document.querySelector('iframe').contentWindow.Error)('from the frame'))
             Promise.reject(new (class Custom {})())
             Promise.reject(undefined)
+            Promise.reject(new DOMException('aborted', 'AbortError'))
             1
             """, tab: tab)
         var errors = (text: "", isError: false, images: [Data](), meta: [String: Any]())
         await pollUntil {
             errors = await self.client.callTool("read_console_messages", ["tabId": tab, "onlyErrors": true])
-            return errors.text.components(separatedBy: "Unhandled rejection").count > 3
+            return errors.text.components(separatedBy: "Unhandled rejection").count > 4
         }
 
         XCTAssertTrue(errors.text.contains("Error: from the frame"), errors.text)
+        XCTAssertTrue(errors.text.contains("AbortError: aborted"), errors.text)
         XCTAssertTrue(errors.text.contains("[object Custom]"), errors.text)
         XCTAssertTrue(errors.text.contains("Unhandled rejection: undefined"), errors.text)
         XCTAssertFalse(errors.text.contains("{}"), errors.text)
+    }
+
+    func testLoggingRunsNoGetterOfThePage() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = await client.callTool("read_console_messages", ["tabId": tab])
+
+        let calls = try await js("""
+            let calls = 0
+            const error = new Error('failed')
+            Object.defineProperty(error, 'stack', { get() { calls++; return '' } })
+            const object = { id: 1, get lazy() { calls++; return 2 }, toJSON() { calls++; return {} } }
+            object.self = object
+            console.log(error, object)
+            calls
+            """, tab: tab) as? Int
+        let reply = await client.callTool("read_console_messages", ["tabId": tab])
+
+        XCTAssertEqual(calls, 0)
+        XCTAssertEqual(reply.text, #"[log] Error: failed {"id":1,"lazy":"[Getter]","self":"[Circular]"}"#)
     }
 
     func testAHugeObjectLogsOnlyItsStart() async throws {
@@ -118,8 +139,8 @@ final class AgentCaptureTests: AgentToolTestCase {
         XCTAssertLessThan(reply.text.count, 6000)
     }
 
-    /// Whether the console reads its arguments, as the capture does: WebKit's own console leaves their getters alone.
-    private static let consoleIsPatched = "let read = false; console.log({ get message() { read = true; return '' } }); read"
+    /// Whether the console reads its arguments, as the capture does: WebKit's own console leaves them alone.
+    private static let consoleIsPatched = "let read = false; console.log(new Proxy({}, { getOwnPropertyDescriptor() { read = true } })); read"
 
     func testStoppingTheCaptureLeavesThePageAsItWas() async throws {
         let tab = try await agentTab(showing: Self.page)

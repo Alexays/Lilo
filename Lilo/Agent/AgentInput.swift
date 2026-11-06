@@ -18,6 +18,8 @@ enum AgentInput {
         _ webView: WKWebView, at point: CGPoint, button: MouseButton = .left,
         clickCount: Int = 1, modifiers: NSEvent.ModifierFlags = []
     ) async {
+        // A target that appears or wakes only on hover gets the pointer first, as under a mouse.
+        move(webView, to: point)
         AgentCursorView.show(in: webView, at: point, pressed: true)
         let (down, up): (NSEvent.EventType, NSEvent.EventType) = switch button {
         case .left: (.leftMouseDown, .leftMouseUp)

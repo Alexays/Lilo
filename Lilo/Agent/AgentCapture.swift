@@ -23,7 +23,43 @@ final class AgentCapture: NSObject {
     function () {
       if (window.top !== window) return;
       const unlisten = EventTarget.prototype.removeEventListener, objectToString = Object.prototype.toString;
+      const { getPrototypeOf } = Reflect, { isArray } = Array;
+      const { get: domName } = getOwnPropertyDescriptor(DOMException.prototype, 'name');
+      const { get: domMessage } = getOwnPropertyDescriptor(DOMException.prototype, 'message');
       let log, stop;
+      // Reads data properties only, up the prototype chain: a getter is the page's code, which logging must not run.
+      // A DOMException's native name and message getters, captured before the page runs, are the exception.
+      const data = (object, key) => {
+        for (let o = object; o; o = getPrototypeOf(o)) {
+          const d = getOwnPropertyDescriptor(o, key);
+          if (d) return 'value' in d ? d.value : d.get === domName || d.get === domMessage ? apply(d.get, object, []) : undefined;
+        }
+      };
+      // JSON of the own enumerable data, an accessor showing as "[Getter]", without a toJSON or a getter of the page.
+      // Stops descending once the text is long enough: a huge object costs only what is kept of it.
+      let used, parents;
+      const json = value => {
+        if (value === null || typeof value !== 'object') {
+          const text = typeof value === 'bigint' ? String(value) : stringify(value) ?? 'null';
+          used += text.length;
+          return text;
+        }
+        for (let i = 0; i < parents.length; i++) if (parents[i] === value) return '"[Circular]"';
+        parents[parents.length] = value;
+        const array = isArray(value), keys = array ? undefined : ownKeys(value);
+        let text = array ? '[' : '{', comma = '';
+        for (let i = 0, n = array ? value.length : keys.length; i < n && used < 5000; i++) {
+          const key = array ? i : keys[i], d = getOwnPropertyDescriptor(value, key);
+          if (!array && (typeof key !== 'string' || !d.enumerable)) continue;
+          const v = d && ('value' in d ? d.value : '[Getter]');
+          if (!array && (v === undefined || typeof v === 'function' || typeof v === 'symbol')) continue;
+          used += array ? 1 : key.length + 4;
+          text += comma + (array ? '' : stringify(key) + ':') + json(v);
+          comma = ',';
+        }
+        parents.length--;
+        return text + (array ? ']' : '}');
+      };
       lilo.on('console', action => {
         if (action === 'stop') return void (stop && stop());
         if (!log) {
@@ -32,22 +68,23 @@ final class AgentCapture: NSObject {
             const text = args.map(a => {
               if (typeof a === 'string') return a;
               if (a === null || typeof a !== 'object') return String(a);
-              // The page's getters may throw: the page's own console call must not.
+              // A proxy's traps or a deep nesting may throw: the page's own console call must not.
               try {
                 // An Error of another frame fails instanceof: whatever carries a message reads as one. WebKit's
                 // stack holds the frames only, never the message.
-                if (a instanceof NativeError || typeof a.message === 'string') {
-                  return `${a.name || 'Error'}: ${a.message}` + (typeof a.stack === 'string' && a.stack ? '\n' + a.stack : '');
+                const message = data(a, 'message');
+                if (a instanceof NativeError || typeof message === 'string') {
+                  const name = data(a, 'name'), stack = data(a, 'stack');
+                  return `${typeof name === 'string' && name ? name : 'Error'}: ${typeof message === 'string' ? message : ''}`
+                    + (typeof stack === 'string' && stack ? '\n' + stack : '');
                 }
-                // Stops descending once the text is long enough: a huge object costs only what is kept of it.
-                let used = 0;
-                const json = stringify(a, (key, value) => {
-                  if (used > 5000) return undefined;
-                  used += key.length + (typeof value === 'string' ? value.length : 4);
-                  return Array.isArray(value) && value.length > 5000 ? value.slice(0, 5000) : value;
-                });
-                // An object with no data of its own (a class instance) stringifies to "{}": its class says more.
-                return json && json !== '{}' ? json : `[object ${a.constructor?.name || 'Object'}]`;
+                used = 0;
+                parents = [];
+                const text = json(a);
+                // An object with no data of its own (a class instance) prints as "{}": its class says more.
+                if (text !== '{}') return text;
+                const name = data(data(a, 'constructor'), 'name');
+                return `[object ${typeof name === 'string' && name ? name : 'Object'}]`;
               } catch (e) { return apply(objectToString, a, []); }
             }).join(' ');
             log.push({ level, text: text.slice(0, 5000), time: Date.now(), url: location.href });

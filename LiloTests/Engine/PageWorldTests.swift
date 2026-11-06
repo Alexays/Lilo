@@ -113,9 +113,19 @@ final class PageWorldTests: XCTestCase {
         defer { capture.stop() }
         let lilo = try await report(of: tab.wkWebView) {
             _ = await capture.consoleMessages()
-            _ = try? await tab.wkWebView.evaluateJavaScript("console.log('captured'); 1")
+            // Logging runs none of the page's code: a getter it reads is a trace the page can see.
+            let getterCalls = try? await tab.wkWebView.evaluateJavaScript("""
+                (() => {
+                  let calls = 0;
+                  const error = new Error('captured');
+                  Object.defineProperty(error, 'stack', { get() { calls++; return ''; } });
+                  console.log(error, { get value() { calls++; return 1; } });
+                  return calls;
+                })()
+                """)
+            XCTAssertEqual(getterCalls as? Int, 0)
             let messages = await capture.consoleMessages()
-            XCTAssertEqual(messages.compactMap { $0["text"] as? String }, ["captured"])
+            XCTAssertEqual(messages.compactMap { $0["text"] as? String }, [#"Error: captured {"value":"[Getter]"}"#])
         }
 
         // The same engine settings without Lilo's scripts and handlers: only WebKit's own native APIs, as in Safari.
