@@ -459,7 +459,8 @@ final class WKEngineFactory {
         guard configuration.responds(to: NSSelectorFromString("setPrewarmsProcessesAutomatically:")) else { return nil }
         configuration.setValue(true, forKey: "prewarmsProcessesAutomatically")
         // Sites get the system's languages (navigator.language, Accept-Language), not the app's AppleLanguages, which the
-        // interface language picker overrides for AppKit.
+        // interface language picker overrides for AppKit. WebKit ignores the configuration: every web process launched from
+        // here on gets these languages, the chrome's included, so the chrome takes its locale from its bootstrap script.
         let rtld = unsafe UnsafeMutableRawPointer(bitPattern: -2)
         if let languages = CFPreferencesCopyValue(
             "AppleLanguages" as CFString, kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost

@@ -872,6 +872,7 @@ extension MainWindowController {
                     }
 
                     root.dataset.booting = 'true';
+                    root.dataset.locale = '\(Localization.locale)';
                     root.dataset.tabPosition = '\(tabLayout.position.rawValue)';
                     root.dataset.address = '\(tabLayout.address.rawValue)';
 
