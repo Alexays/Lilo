@@ -35,6 +35,7 @@ final class ACPConnection: @unchecked Sendable {
     private var buffer = Data()
     /// The last few kilobytes the agent wrote to standard error, to say why it stopped.
     private var errorTail = Data()
+    private let errorsRead = DispatchSemaphore(value: 0)
 
     init(executable: URL, arguments: [String], environment: [String: String], directory: URL) {
         process.executableURL = executable
@@ -60,7 +61,12 @@ final class ACPConnection: @unchecked Sendable {
         }
         errorPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
-            guard let self, !data.isEmpty else { handle.readabilityHandler = nil; return }
+            guard let self else { return }
+            if data.isEmpty {
+                handle.readabilityHandler = nil
+                self.errorsRead.signal()
+                return
+            }
             self.lock.withLock {
                 self.errorTail.append(data)
                 if self.errorTail.count > 8192 { self.errorTail.removeFirst(self.errorTail.count - 8192) }
@@ -68,6 +74,9 @@ final class ACPConnection: @unchecked Sendable {
         }
         process.terminationHandler = { [weak self] process in
             guard let self else { return }
+            // Exiting and the last words reaching the pipe's reader race, and those words say why it stopped.
+            // A child of the agent can hold the pipe open past its exit, so this waits only briefly.
+            _ = self.errorsRead.wait(timeout: .now() + 0.5)
             let (waiting, errorText) = self.lock.withLock { () -> ([CheckedContinuation<Payload, Error>], String) in
                 defer { self.pending.removeAll() }
                 return (Array(self.pending.values), String(bytes: self.errorTail, encoding: .utf8) ?? "")
@@ -112,6 +121,7 @@ final class ACPConnection: @unchecked Sendable {
     func terminate() {
         output.fileHandleForReading.readabilityHandler = nil
         errorPipe.fileHandleForReading.readabilityHandler = nil
+        errorsRead.signal()
         try? input.fileHandleForWriting.close()
         if process.isRunning { process.terminate() }
     }
