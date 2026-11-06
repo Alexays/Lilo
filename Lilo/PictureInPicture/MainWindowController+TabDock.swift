@@ -70,6 +70,8 @@ extension MainWindowController {
     /// App resigned active or the window occluded: the dock is invisible there, so the call moves
     /// to the always-on-top panel (the reason that panel exists).
     func moveDockedCallToPanel() {
+        // An app focused on another screen, or beside the window, leaves the call in view where it is.
+        if let window, window.occlusionState.contains(.visible), !frontmostAppOverlaps(window) { return }
         // Leaving the app from a playing video: the system PiP window keeps it in view, as leaving its tab does.
         if context.settingsStore?.autoPictureInPicture == true, context.windows.activeWindow === self, let engine = tabManager.activeEngineTab,
            !engine.isInCall, !engine.isTabShareSource, !engine.isAgentControlled {
@@ -90,6 +92,23 @@ extension MainWindowController {
         guard tabDock.isDocking, let engine = tabDock.undock() else { return }
         setPipDockActive(false)
         floatingTabPanel.float(engine)
+    }
+
+    /// Whether a window of the app taking focus overlaps `window`, whatever their order: on resign active it is not raised yet.
+    private func frontmostAppOverlaps(_ window: NSWindow) -> Bool {
+        guard let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier, pid != getpid(),
+              let primary = NSScreen.screens.first,
+              let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]
+        else { return true }
+        // Window Server bounds are top-left based, from the primary screen's top edge.
+        let frame = window.frame
+        let target = CGRect(x: frame.minX, y: primary.frame.maxY - frame.maxY, width: frame.width, height: frame.height)
+        return list.contains { info in
+            guard (info[kCGWindowOwnerPID as String] as? Int) == Int(pid), (info[kCGWindowLayer as String] as? Int) == 0,
+                  let bounds = info[kCGWindowBounds as String] as? NSDictionary,
+                  let rect = CGRect(dictionaryRepresentation: bounds) else { return false }
+            return rect.intersects(target)
+        }
     }
 
     /// App became active again: a panel-hosted call comes home to the sidebar dock, unless the user

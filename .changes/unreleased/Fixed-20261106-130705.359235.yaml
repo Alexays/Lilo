@@ -1,0 +1,3 @@
+kind: Fixed
+body: A call no longer leaves for picture in picture when you focus an app on another screen or beside the window, which keeps it in view
+time: 2026-11-06T13:07:05.359235+01:00
