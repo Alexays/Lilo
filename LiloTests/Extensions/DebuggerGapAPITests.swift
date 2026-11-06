@@ -141,14 +141,17 @@ final class DebuggerGapAPITests: XCTestCase {
         let debugged = try await openTab()
         let idle = try await openTab()
         _ = try await openTab()
-        let attachError = await attach(debugged.position)
-        XCTAssertNil(attachError)
         let debuggedEngine = try XCTUnwrap(window.tabManager.engineTab(for: debugged.id))
         let idleEngine = try XCTUnwrap(window.tabManager.engineTab(for: idle.id))
-
-        window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(60 * 60))
-        XCTAssertFalse(debuggedEngine.isFrozen)
+        let later = Date().addingTimeInterval(60 * 60)
+        window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: later)
+        XCTAssertTrue(debuggedEngine.isFrozen)
         XCTAssertTrue(idleEngine.isFrozen)
+
+        let attachError = await attach(debugged.position)
+        XCTAssertNil(attachError)
+        window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: later)
+        XCTAssertFalse(debuggedEngine.isFrozen)
         idleEngine.resume()   // the context's teardown cannot touch a suspended page
 
         _ = await call("detach", ["target": ["tabId": 7]])

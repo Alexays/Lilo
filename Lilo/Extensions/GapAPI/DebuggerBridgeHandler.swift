@@ -149,7 +149,8 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         }
         guard let adapter else { return BridgeError("No \(type) with given id \(id).") }
         if let restriction = Self.restriction(of: adapter.url(for: context), for: context) { return BridgeError(restriction) }
-        guard let engine = adapter.engineTab else { return BridgeError("Cannot attach to this target.") }
+        // A suspended page answers no inspector: a tab the idle sweep froze wakes first.
+        guard let engine = adapter.engineTab, engine.wake() else { return BridgeError("Cannot attach to this target.") }
         let attached = { [self] in sessions.contains { $0.extensionId == call.extensionId && $0.registry === registry && $0.engine === engine } }
         if attached() { return BridgeError("Another debugger is already attached to the \(type) with id: \(id).") }
         let inspector: AgentInspector
