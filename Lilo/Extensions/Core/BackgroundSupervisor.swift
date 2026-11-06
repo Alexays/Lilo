@@ -22,8 +22,9 @@ final class BackgroundSupervisor {
         var failed = false
         var failureReason: String?
         var lastErrorCount = 0
-        /// When each of the context's errors was first observed, by index; diagnostics clearing leaves it alone.
-        var errorFirstSeen: [TimeInterval] = []
+        /// When each of the context's current errors was first observed. Keyed by the error, not its index:
+        /// WebKit removes a cleared error from the middle of the list. Diagnostics clearing leaves it alone.
+        var errorFirstSeen: [NSError: TimeInterval] = [:]
 
         var bridgeStatus: String {
             (prepDegraded || runtimeDegraded || failed) ? "degraded" : "loaded"
@@ -251,10 +252,12 @@ final class BackgroundSupervisor {
         let newErrors = errors.dropFirst(previousCount <= errors.count ? previousCount : 0)
         ExtensionDiagnostics.logContextErrorsIfNeeded(newErrors, of: context, extensionId: extensionId, reason: "notification", logger: Self.logger)
         health[extensionId]?.lastErrorCount = errors.count
-        var firstSeen = health[extensionId]?.errorFirstSeen ?? []
-        if errors.count < firstSeen.count { firstSeen = [] }
-        firstSeen += repeatElement(Date().timeIntervalSince1970, count: errors.count - firstSeen.count)
-        health[extensionId]?.errorFirstSeen = firstSeen
+        let firstSeen = health[extensionId]?.errorFirstSeen ?? [:]
+        let now = Date().timeIntervalSince1970
+        health[extensionId]?.errorFirstSeen = Dictionary(
+            errors.map { error in (error as NSError, firstSeen[error as NSError] ?? now) },
+            uniquingKeysWith: { first, _ in first }
+        )
         didChange(extensionId)
         guard context.webExtension.hasBackgroundContent,
               ExtensionDiagnostics.errorsWarrantBackgroundRevive(newErrors) else { return }

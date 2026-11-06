@@ -189,7 +189,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         XCTAssertEqual(registry.backgrounds.health(for: id)?.lastErrorCount, context.errors.count,
                        "the count is the baseline the next notification logs from")
-        XCTAssertEqual(firstSeen?.count, context.errors.count)
+        XCTAssertTrue(context.errors.allSatisfy { firstSeen?[$0 as NSError] != nil }, "every current error has a first-seen time")
         XCTAssertEqual(registry.backgrounds.health(for: id)?.errorFirstSeen, firstSeen,
                        "a repeated notification keeps each error's first-seen time")
         XCTAssertNil(registry.backgrounds.health(for: id)?.lastReviveAttempt)
