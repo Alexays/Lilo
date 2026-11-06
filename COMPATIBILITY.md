@@ -276,6 +276,12 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 - **Lilo's handling:** the setting stays off: a native `ApplePaySession` would take the place of the
   SDK's stand-in and then fail.
 
+### Web Push
+
+- **Symptom:** `PushManager` and `registration.pushManager` are undefined, so a site cannot notify while none of its pages is open. Notifications a page or its service worker shows (`new Notification`, `registration.showNotification`) work.
+- **Root cause:** WebKit turns Web Push on only for an app holding Apple's web push entitlement, which Lilo does not have.
+- **Lilo's handling:** None.
+
 ### Microphone quality during calls
 - **Symptom:** A call's microphone sounds duller and more processed than in Chrome: nothing above 12 kHz reaches the page.
 - **Root cause:** With echo cancellation on (the default, and what call sites ask for), WebKit runs the microphone through Apple's voice processing, which caps it at 12 kHz; Chrome cancels echo, suppresses noise and sets the gain in software on the raw signal. WebKit exposes neither `noiseSuppression` nor `autoGainControl` apart, and its capture with `echoCancellation: false` comes out 14 to 26 dB below the device's level with dropouts, so turning it off is no remedy. A Bluetooth headset's link caps its microphone at 12 kHz in every browser.
