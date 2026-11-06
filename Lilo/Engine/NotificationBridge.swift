@@ -79,12 +79,11 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
             posted[identifier] = nil
             UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [identifier])
         case "query":
-            // Undecided stays "default", so the site can still ask.
-            guard !isCrossOrigin, let decision = decisionHandler?(message.webView, origin) else { return }
-            if let webView = message.frameInfo.webView {
-                WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifySetPermission", [decision ? "granted" : "denied"]),
-                                                                            in: message.frameInfo, in: PageWorld.bridgeWorld)
-            }
+            guard !isCrossOrigin, let webView = message.frameInfo.webView else { return }
+            let permission = decisionHandler?(message.webView, origin).map { $0 ? "granted" : "denied" } ?? "default"
+            guard permission != body["permission"] as? String else { return }
+            WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifySetPermission", [permission]),
+                                                                        in: message.frameInfo, in: PageWorld.bridgeWorld)
         default:
             break
         }
@@ -259,15 +258,14 @@ extension NotificationBridge {
         show() {},
       });
       lilo.global('Notification', Notification);
-      // Without the delegate, a secure top origin asks for its decision: the others cannot hold one and would pay an IPC for
-      // nothing. A same-origin subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
+      // WebKit reads its table when a process starts and knows no global or extension rule, so a secure top origin checks its
+      // value; the others cannot hold a decision. A same-origin subframe shares the top's, and browsers deny cross-origin ones.
       if (window.top !== window) {
         try { setPermission(top.Notification.permission); } catch (e) { setPermission('denied'); }
-      } else if (__LILO_QUERIES_PERMISSION__ && window.isSecureContext) {
+      } else if (window.isSecureContext) {
         // At document start the bridge world's relay may not be listening yet.
-        apply(listen, doc, ['DOMContentLoaded', () => lilo.send('liloNotification', { type: 'query' }), { once: true }]);
+        apply(listen, doc, ['DOMContentLoaded', () => lilo.send('liloNotification', { type: 'query', permission: Notification.permission }), { once: true }]);
       }
     }
-    """#.replacingOccurrences(of: "__LILO_QUERIES_PERMISSION__",
-                              with: String(!WKWebsiteDataStore.instancesRespond(to: NSSelectorFromString("set_delegate:"))))
+    """#
 }

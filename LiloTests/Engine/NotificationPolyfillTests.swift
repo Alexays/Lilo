@@ -45,24 +45,22 @@ final class NotificationPolyfillTests: XCTestCase {
         XCTAssertTrue(recorder.messages.contains { $0["type"] as? String == "close" })
     }
 
-    /// WebKit has each decision from the data store delegate, so no page asks the bridge for its own.
-    func testNoOriginQueriesItsDecision() async throws {
-        for base in ["http://example.com", "https://example.com"] {
-            let recorder = Recorder()
-            let webView = try await makeWebView(recorder, baseURL: base)
-            // Posted after the document-start query, so its arrival means the query had its chance to arrive too.
-            _ = try await webView.evaluateJavaScript("new Notification('Hello'); 0")
-            _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "show" } }
-            XCTAssertFalse(recorder.messages.contains { $0["type"] as? String == "query" }, base)
-        }
+    func testAnUntrustworthyOriginSendsNoQuery() async throws {
+        let recorder = Recorder()
+        let webView = try await makeWebView(recorder, baseURL: "http://example.com")
+        // Posted after the document-start query, so its arrival means the query had its chance to arrive too.
+        _ = try await webView.evaluateJavaScript("new Notification('Hello'); 0")
+        _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "show" } }
+        XCTAssertFalse(recorder.messages.contains { $0["type"] as? String == "query" })
     }
 
-    /// `Notification.permission` as the first script of a page at `baseURL` reads it, its site's `decision` stored in the profile.
-    private func permission(at baseURL: String, decision: Bool) async throws -> String? {
+    /// A page at `baseURL` whose data store delegate gives its site `stored`, while the profile now holds `current`.
+    private func makeWebView(at baseURL: String, stored: Bool, current: Bool?) throws -> WKWebView {
         let url = try XCTUnwrap(URL(string: baseURL))
         let origin = PermissionOriginKey.build(scheme: try XCTUnwrap(url.scheme), host: try XCTUnwrap(url.host), port: url.port ?? 0)
         let bridge = NotificationBridge()
-        bridge.storeDecisionsHandler = { _ in [origin: decision] }
+        bridge.storeDecisionsHandler = { _ in [origin: stored] }
+        bridge.decisionHandler = { _, _ in current }
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
         _ = unsafe configuration.websiteDataStore.perform(NSSelectorFromString("set_delegate:"), with: bridge)
@@ -70,15 +68,37 @@ final class NotificationPolyfillTests: XCTestCase {
         PageWorld.install([NotificationBridge.pageModule], on: configuration.userContentController)
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.loadHTMLString("<script>window.initial = Notification.permission</script>", baseURL: url)
-        _ = await pollUntil(timeout: 5) { webView.url != nil && !webView.isLoading }
-        return try await webView.evaluateJavaScript("initial") as? String
+        return webView
+    }
+
+    /// The value `Notification.permission` had for the first script of the page.
+    private func initialPermission(of webView: WKWebView) async -> String? {
+        var initial: String?
+        await pollUntil(timeout: 5) {
+            initial = (try? await webView.evaluateJavaScript("window.initial")) as? String
+            return initial != nil
+        }
+        return initial
     }
 
     func testSecureContextsKnowTheirSitesDecisionAtDocumentStart() async throws {
         for base in ["https://example.com/", "http://app.localhost:3000/", "http://127.0.0.2/"] {
-            let permission = try await permission(at: base, decision: true)
+            let permission = try await initialPermission(of: makeWebView(at: base, stored: true, current: true))
             XCTAssertEqual(permission, "granted", base)
         }
+    }
+
+    /// WebKit's table is read when the page's process starts, so a decision changed since then reaches the page by the query.
+    func testAPageLearnsADecisionChangedSinceItsProcessStarted() async throws {
+        let webView = try makeWebView(at: "https://example.com/", stored: true, current: nil)
+        let initial = await initialPermission(of: webView)
+        XCTAssertEqual(initial, "granted")
+        var permission: String?
+        await pollUntil(timeout: 5) {
+            permission = (try? await webView.evaluateJavaScript("Notification.permission")) as? String
+            return permission == "default"
+        }
+        XCTAssertEqual(permission, "default")
     }
 
     func testASameOriginSubframeTakesTheTopsPermissionWithoutQuerying() async throws {
@@ -132,7 +152,7 @@ final class NotificationPolyfillTests: XCTestCase {
     }
 
     func testABlockedSiteReadsDenied() async throws {
-        let permission = try await permission(at: "https://example.com/", decision: false)
+        let permission = try await initialPermission(of: makeWebView(at: "https://example.com/", stored: false, current: false))
         XCTAssertEqual(permission, "denied")
     }
 
