@@ -465,7 +465,7 @@ final class PagePeekView: NSView {
         card.frame = NSRect(x: ((bounds.width - width) / 2).rounded(), y: ((bounds.height - height) / 2).rounded(), width: width, height: height)
         clip.frame = card.bounds
         // An explicit path spares Core Animation an offscreen pass to derive the shadow from the web content's alpha.
-        card.layer?.shadowPath = CGPath(roundedRect: card.bounds, cornerWidth: Self.cornerRadius, cornerHeight: Self.cornerRadius, transform: nil)
+        card.layer?.shadowPath = NSBezierPath(roundedRect: card.bounds, xRadius: Self.cornerRadius, yRadius: Self.cornerRadius).cgPath
         headerBackground.frame = NSRect(x: 0, y: 0, width: width, height: headerHeight)
         header?.frame = headerBackground.frame
         content.frame = NSRect(x: 0, y: headerHeight, width: width, height: height - headerHeight)

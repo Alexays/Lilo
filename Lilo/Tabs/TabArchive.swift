@@ -106,8 +106,8 @@ extension BrowserContext {
         timer.setEventHandler { [weak self] in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                archiveSweepLastPass = Date()
-                archiveIdleTabs()
+                self.archiveSweepLastPass = Date()
+                self.archiveIdleTabs()
             }
         }
         timer.resume()
@@ -115,19 +115,19 @@ extension BrowserContext {
         let center = NotificationCenter.default
         center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, !archiveSweepSuspended else { return }
-                archiveSweepSuspended = true
-                archiveSweepTimer?.suspend()
+                guard let self, !self.archiveSweepSuspended else { return }
+                self.archiveSweepSuspended = true
+                self.archiveSweepTimer?.suspend()
             }
         }
         center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, archiveSweepSuspended else { return }
-                archiveSweepSuspended = false
+                guard let self, self.archiveSweepSuspended else { return }
+                self.archiveSweepSuspended = false
                 // Rescheduled first: resumed as is, a deadline missed while suspended fires at once, mid app switch.
-                let sinceLastPass = archiveSweepLastPass.map { Date().timeIntervalSince($0) } ?? .infinity
-                archiveSweepTimer?.schedule(deadline: .now() + max(5, 300 - sinceLastPass), repeating: 300, leeway: .seconds(60))
-                archiveSweepTimer?.resume()
+                let sinceLastPass = self.archiveSweepLastPass.map { Date().timeIntervalSince($0) } ?? .infinity
+                self.archiveSweepTimer?.schedule(deadline: .now() + max(5, 300 - sinceLastPass), repeating: 300, leeway: .seconds(60))
+                self.archiveSweepTimer?.resume()
             }
         }
         if !NSApp.isActive {
