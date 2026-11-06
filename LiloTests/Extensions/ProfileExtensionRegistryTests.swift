@@ -1525,7 +1525,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         let first = ProfileExtensionRegistry(profileId: profileId, extensionStorage: storage, extensionsBaseDirectory: tempDir)
         let extDir = tempDir.appendingPathComponent("incognito_not_allowed")
         try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
-        try #"{"manifest_version":3,"name":"Test","version":"1.0","incognito":"not_allowed"}"#
+        try #"{"manifest_version":3,"name":"Test","version":"1.0","incognito":"not_allowed","externally_connectable":{"matches":["https://example.com/*"]}}"#
             .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try await first.load(from: extDir)
         let id = try XCTUnwrap(first.loadedExtensions.first?.id)
@@ -1546,6 +1546,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         let restored = ProfileExtensionRegistry(profileId: profileId, extensionStorage: storage, extensionsBaseDirectory: tempDir)
         await restored.restore()
         XCTAssertFalse(try XCTUnwrap(restored.context(for: id)).hasAccessToPrivateData)
+        XCTAssertEqual(restored.userScripts.installs[id]?.allowsPrivateAccess, false, "nor does it inject into private spaces")
     }
 
     // MARK: - Site access
