@@ -61,29 +61,35 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
 
     @MainActor
     func testServesConversationImagesInsideOpenProjectsAndDropsStoppedTasks() async throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).resolvingSymlinksInPath()
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder.appendingPathComponent("project"), withIntermediateDirectories: true)
+        // Resolved once it exists, as the handler resolves the files it serves.
+        let root = folder.appendingPathComponent("project").resolvingSymlinksInPath()
         let png = Data([0x89, 0x50, 0x4E, 0x47])
         try png.write(to: root.appendingPathComponent("shot.png"))
+        try png.write(to: folder.appendingPathComponent("outside.png"))
         try Data("example".utf8).write(to: root.appendingPathComponent("notes.txt"))
         let savedRoots = ChromeUISchemeHandler.conversationRoots
         ChromeUISchemeHandler.conversationRoots = [root.path]
         defer {
             ChromeUISchemeHandler.conversationRoots = savedRoots
-            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: folder)
         }
         let handler = ChromeUISchemeHandler()
         let webView = WKWebView()
-        let base = "lilo-chrome://ui/conversation-file"
+        // The chrome encodes the whole path, slashes included.
+        let fileURL = { (name: String) in
+            "lilo-chrome://ui/conversation-file/" + root.appendingPathComponent(name).path.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!
+        }
 
-        let stopped = RecordingSchemeTask("\(base)\(root.path)/shot.png")
+        let stopped = RecordingSchemeTask(fileURL("shot.png"))
         handler.webView(webView, start: stopped)
         handler.webView(webView, stop: stopped)
-        let image = RecordingSchemeTask("\(base)\(root.path)/shot.png")
+        let image = RecordingSchemeTask(fileURL("shot.png"))
         handler.webView(webView, start: image)
-        let text = RecordingSchemeTask("\(base)\(root.path)/notes.txt")
+        let text = RecordingSchemeTask(fileURL("notes.txt"))
         handler.webView(webView, start: text)
-        let outside = RecordingSchemeTask("\(base)\(root.path)/../shot.png")
+        let outside = RecordingSchemeTask(fileURL("../outside.png"))
         handler.webView(webView, start: outside)
 
         let answered = await pollUntil(timeout: 5) { image.finished && text.error != nil && outside.error != nil }
