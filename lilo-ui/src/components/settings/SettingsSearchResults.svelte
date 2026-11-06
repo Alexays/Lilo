@@ -5,7 +5,7 @@
   import { openSettingsSubpage, revealSetting } from "../../stores/panels.svelte";
   import ExtensionRow from "../extensions/ExtensionRow.svelte";
   import SettingsFlagRow from "./SettingsFlagRow.svelte";
-  import { SETTINGS_SECTIONS, settingTitleKey } from "./settingsPanelModel";
+  import { SETTINGS_SECTIONS, SITE_ROW_LIMIT, settingTitleKey } from "./settingsPanelModel";
   import { getSettingsSearchResults } from "./settingsSearch.svelte";
   import SettingsSiteRow from "./SettingsSiteRow.svelte";
   import SettingsSpaceRow from "./SettingsSpaceRow.svelte";
@@ -53,7 +53,7 @@
     {#if section.id === "tabs"}
       {#each results.spaces as space (space.id)}<SettingsSpaceRow {space} />{/each}
     {:else if section.id === "privacy"}
-      {#each results.sites as site (site.key)}<SettingsSiteRow {site} />{/each}
+      {#each results.sites.slice(0, SITE_ROW_LIMIT) as site (site.key)}<SettingsSiteRow {site} />{/each}
     {:else if section.id === "extensions"}
       {#each results.extensions as extension (extension.id)}
         <ExtensionRow
@@ -70,6 +70,9 @@
       {#each results.flags as flag (flag.key)}<SettingsFlagRow {flag} />{/each}
     {/if}
   </UiInsetList>
+  {#if section.id === "privacy" && results.sites.length > SITE_ROW_LIMIT}
+    <p class="search-more">{t("settings.sites.more", { count: results.sites.length - SITE_ROW_LIMIT })}</p>
+  {/if}
 {:else}
   <p class="search-empty">{t("settings.searchEmpty", { query: query.trim() })}</p>
 {/each}
@@ -121,6 +124,13 @@
   .search-hit svg {
     flex: none;
     color: var(--text-muted);
+  }
+
+  .search-more {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
   }
 
   .search-empty {

@@ -114,6 +114,7 @@ test("folds permissions, data, and zoom into one row per site", () => {
     [
       { id: "1", origin: "https://meet.google.com", type: "camera", decision: "allow", updatedAt: 1 },
       { id: "2", origin: "https://www.zoom.us", type: "microphone", decision: "deny", updatedAt: 2 },
+      { id: "3", origin: "https://notgoogle.com", type: "camera", decision: "allow", updatedAt: 3 },
     ],
     [{ name: "google.com", kinds: ["cookies"] }],
     [
@@ -126,6 +127,7 @@ test("folds permissions, data, and zoom into one row per site", () => {
     sites.map((site) => [site.key, site.permissions.length, site.dataName, site.zoomLevels.length]),
     [
       ["google.com", 1, "google.com", 1],
+      ["notgoogle.com", 1, null, 0],
       ["notion.so", 0, null, 1],
       ["zoom.us", 1, null, 0],
     ],

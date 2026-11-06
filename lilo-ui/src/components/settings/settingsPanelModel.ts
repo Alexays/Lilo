@@ -268,7 +268,7 @@ export function sectionGroups(
   return groups;
 }
 
-function normalizeSearchText(text: string): string {
+export function normalizeSearchText(text: string): string {
   return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/ß/g, "ss").replace(/ı/g, "i");
 }
 
@@ -341,6 +341,9 @@ export function formatDownloadsFolderLabel(
   return parts.at(-1) ?? fallback;
 }
 
+// Rendering every row of a large store is costly; the settings search narrows it down instead.
+export const SITE_ROW_LIMIT = 100;
+
 export const BROWSING_DATA_KINDS: BridgeBrowsingDataKind[] = ["history", "cookies", "cache", "siteData"];
 
 export interface SiteSummary {
@@ -392,12 +395,14 @@ export function buildSites(
     site.dataName = record.name;
     site.dataKinds = record.kinds;
   }
+  const dataNames = new Set(sites.keys());
   const keyForHost = (host: string): string => {
-    for (const record of websiteData) {
-      const name = record.name.toLowerCase();
-      if (host === name || host.endsWith(`.${name}`)) return name;
+    for (let suffix = host; ; ) {
+      if (dataNames.has(suffix)) return suffix;
+      const dot = suffix.indexOf(".");
+      if (dot === -1) return host.replace(/^www\./, "");
+      suffix = suffix.slice(dot + 1);
     }
-    return host.replace(/^www\./, "");
   };
   for (const permission of permissions) {
     siteFor(keyForHost(hostOf(permission.origin))).permissions.push(permission);

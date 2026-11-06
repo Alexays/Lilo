@@ -4,7 +4,7 @@
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { closeSettingsSubpage } from "../../stores/panels.svelte";
   import { getSitePermissions, getWebsiteData, getZoomLevels } from "../../stores/settings.svelte";
-  import { buildSites, sitePermissionLabel } from "./settingsPanelModel";
+  import { buildSites, SITE_ROW_LIMIT, sitePermissionLabel } from "./settingsPanelModel";
   import SettingsSiteRow from "./SettingsSiteRow.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
@@ -12,9 +12,6 @@
   import UiListRow from "../ui/UiListRow.svelte";
 
   let { subpage }: { subpage: string | null } = $props();
-
-  // Rendering every row of a large store is costly; the settings search narrows it down instead.
-  const ROW_LIMIT = 100;
 
   const sites = $derived(buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()));
   const siteKey = $derived(subpage?.startsWith("site:") ? subpage.slice("site:".length) : null);
@@ -76,12 +73,12 @@
   </div>
 {:else}
   <UiInsetList title={t("settings.groups.sites", { count: sites.length })}>
-    {#each sites.slice(0, ROW_LIMIT) as entry (entry.key)}
+    {#each sites.slice(0, SITE_ROW_LIMIT) as entry (entry.key)}
       <SettingsSiteRow site={entry} />
     {/each}
   </UiInsetList>
-  {#if sites.length > ROW_LIMIT}
-    <p class="sites-more">{t("settings.sites.more", { count: sites.length - ROW_LIMIT })}</p>
+  {#if sites.length > SITE_ROW_LIMIT}
+    <p class="sites-more">{t("settings.sites.more", { count: sites.length - SITE_ROW_LIMIT })}</p>
   {/if}
 {/if}
 
