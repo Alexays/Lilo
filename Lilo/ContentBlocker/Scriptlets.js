@@ -1025,8 +1025,15 @@
     'no-requestAnimationFrame-if': function (needle) {
       var negate = !!needle && needle[0] === '!';
       var re = toRegExp(negate ? needle.slice(1) : needle);
+      // An animation loop passes the same callback every frame: its source is stringified and tested once.
+      var verdicts = new WeakMap();
       proxyApply('requestAnimationFrame', function (fn, thisArg, args) {
-        if (re.test(String(args[0])) !== negate) return 0;
+        var callback = args[0], blocked = verdicts.get(callback);
+        if (blocked === undefined) {
+          blocked = re.test(String(callback)) !== negate;
+          if (typeof callback === 'function') verdicts.set(callback, blocked);
+        }
+        if (blocked) return 0;
         return Reflect.apply(fn, thisArg, args);
       });
     },
