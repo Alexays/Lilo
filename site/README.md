@@ -30,7 +30,7 @@ The Undici override patches the HTTP clients used by Miniflare and guarded-fetch
 
 ## Sources
 
-- `src/pages/` holds the English and French home, moving and changelog routes, the 404 page and the sitemap endpoint.
+- `src/pages/` holds the English and French home, moving and changelog routes, and the 404 page. `@astrojs/sitemap` lists every route but the demo.
 - `src/layouts/Layout.astro` shares page metadata, language alternates, icons, the header and footer. It reads the app version from `Xcode/Configs/Base.xcconfig` at build time.
 - `src/components/` holds navigation, the footer and the changelog. New shared website copy lives in `src/lib/i18n.ts`.
 - `Layout.astro` owns every public page's main landmark, `PageHero.astro` and `PageEnd.astro`. Pages supply localized headings and descriptions through its `hero` and `closing` props; announcement and preview slots carry the homepage's release link and demo. `PageSection.astro` frames body content. These components own spacing, borders and typography so routes cannot drift into separate designs. The closing CTA uses a solid lavender panel, left-aligned content and the breathing pixel flower at every viewport width. `Install.astro` shares download and Homebrew controls, `Flower.astro` supplies the classic brand mark, and `PixelBloom.astro` pauses its 3.2-second breathing animation offscreen, in background tabs and with Reduce Motion.

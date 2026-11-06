@@ -1,3 +1,4 @@
+import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import { defineConfig } from "astro/config";
 
@@ -5,6 +6,10 @@ export default defineConfig({
   build: { inlineStylesheets: "never" },
   integrations: [
     svelte({ compilerOptions: { discloseVersion: false, runes: true } }),
+    sitemap({
+      filter: (page) => !new URL(page).pathname.startsWith("/demo/"),
+      i18n: { defaultLocale: "en", locales: { en: "en", fr: "fr" } },
+    }),
   ],
   output: "static",
   server: { port: 8787 },
