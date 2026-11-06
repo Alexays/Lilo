@@ -96,6 +96,14 @@ final class ExtensionFilesTests: XCTestCase {
         XCTAssertEqual(try ExtensionFiles.makeExtensionId(for: folder, managedDirectory: files.directory, manifestKey: nil), "ecdonlfgochjmongfgiiibiefemoaami")
     }
 
+    func testAPathDerivedIdHashesTheRealPathLikeChrome() throws {
+        let folder = URL(fileURLWithPath: "/tmp/example-unpacked-extension", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        // /tmp links to /private/tmp: this is the id of "/private/tmp/example-unpacked-extension".
+        XCTAssertEqual(try ExtensionFiles.makeExtensionId(for: folder, managedDirectory: files.directory, manifestKey: nil), "fjbhhcfjpdannijipkgjlanofkncdgif")
+    }
+
     func testAManifestKeyGivesTheSameIdBareOrAsPEM() throws {
         let folder = try package("keyed")
         let key = Data((0..<64).map { UInt8($0) }).base64EncodedString()

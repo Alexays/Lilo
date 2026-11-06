@@ -182,7 +182,9 @@ final class ExtensionFiles {
             return canonical.lastPathComponent
         }
         guard var key = manifestKey else {
-            return ExtensionArchiveSafety.chromeExtensionId(fromRawId: Data(SHA256.hash(data: Data(canonical.path.utf8)).prefix(16)))
+            // Chrome hashes the realpath(3), which keeps the /private prefix that resolvingSymlinksInPath drops.
+            let path = (try? url.resourceValues(forKeys: [.canonicalPathKey]).canonicalPath) ?? canonical.path
+            return ExtensionArchiveSafety.chromeExtensionId(fromRawId: Data(SHA256.hash(data: Data(path.utf8)).prefix(16)))
         }
         // As in Chrome, a PEM key keeps what lies between its "KEY-----" header end and "-----END" footer, minus line breaks.
         if key.hasPrefix("-----BEGIN") {
