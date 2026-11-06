@@ -16,7 +16,7 @@ import type {
 	BridgeSidebarItemKind,
 } from "../lib/bridge/protocol";
 
-const DROP_SETTLE_MS = 180;
+export const DROP_SETTLE_MS = 180;
 const RECENT_DROP_MS = 250;
 // A collapsed folder held under the drag this long opens, so the drop can aim inside it.
 const AUTO_EXPAND_MS = 600;

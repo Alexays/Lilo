@@ -375,6 +375,18 @@ export async function centerOf(
 	return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
+// Fires the timer that holds the rows in their dropped order, so a re-check after it reads the store.
+// The page needs `page.clock.install()` before the drop.
+export async function settleDrop(page: Page): Promise<void> {
+	const settleMs = await page.evaluate(async () => {
+		// A URL the dev server serves to the page: the store's runes do not load in Node.
+		const url = "/src/stores/sidebarDnd.svelte.ts";
+		const { DROP_SETTLE_MS }: typeof import("../src/stores/sidebarDnd.svelte") = await import(url);
+		return DROP_SETTLE_MS;
+	});
+	await page.clock.runFor(settleMs);
+}
+
 // Live-layout drags, the way a user follows the placeholder: starting a drag reveals the empty
 // drop zones and every move reprojects the list, so each step re-reads its target box.
 export async function pressAndLift(page: Page, selector: string): Promise<void> {

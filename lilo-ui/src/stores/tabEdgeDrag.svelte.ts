@@ -2,7 +2,7 @@ import type { TabPosition } from "../lib/bridge";
 import { chromeActions } from "../lib/bridge/actions";
 import { getTabPosition, setTabPosition } from "./tabLayout.svelte";
 
-const HOLD_MS = 400;
+export const HOLD_MS = 400;
 const MOVE_TOLERANCE_PX = 4;
 // An edge takes the tabs only while the pointer is in the outer share of the window toward it.
 const EDGE_REACH = 0.3;
