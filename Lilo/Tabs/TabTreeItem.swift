@@ -44,10 +44,9 @@ struct TabTreeItem: Sendable, Identifiable {
         self.sortOrder = sortOrder
     }
 
+    /// The chrome keys items on `itemId` within the space it already knows, so `id` and `spaceId` stay host-side.
     var bridgeData: [String: Any] {
         [
-            "id": id.uuidString,
-            "spaceId": spaceId.uuidString,
             "kind": kind.rawValue,
             "itemId": itemId.uuidString,
             "parentFolderId": parentFolderId?.uuidString as Any,

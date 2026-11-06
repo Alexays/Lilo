@@ -217,8 +217,6 @@ export async function installFakeHost(
 			const targetItems = itemsOf(targetSpaceId);
 			targetItems.push({
 				...item,
-				id: `${targetSpaceId}-${tabId}-unpinned`,
-				spaceId: targetSpaceId,
 				section: "unpinned",
 				parentFolderId: null,
 				sortOrder: Math.max(...targetItems.map((i) => i.sortOrder), 0) + 1,

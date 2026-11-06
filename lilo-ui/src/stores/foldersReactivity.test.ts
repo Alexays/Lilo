@@ -45,8 +45,6 @@ test("folder root projections react to folder-only pinned-state bridge updates",
 		],
 		treeItems: [
 			{
-				id: `${spaceId}-reactive-folder-root`,
-				spaceId,
 				kind: "folder" as const,
 				itemId: "reactive-folder",
 				parentFolderId: null,
@@ -97,8 +95,6 @@ test("folder root projections react to folder-only pinned-state bridge updates",
 				],
 				treeItems: [
 					{
-						id: `${spaceId}-reactive-folder-root`,
-						spaceId,
 						kind: "folder",
 						itemId: "reactive-folder",
 						parentFolderId: null,

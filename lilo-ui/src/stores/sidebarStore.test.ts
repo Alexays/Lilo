@@ -524,7 +524,7 @@ test("sidebarChanged patch with upserts recomputes the view (new object)", async
 	assert.notEqual(getSpaceSidebar(sidebarSpaceId).view, viewBefore, "structural patch must produce a new view object");
 });
 
-test("tabUpdated keeps an optimistic activation its buffered activeTabId predates", async () => {
+test("tabUpdated keeps an optimistic activation", async () => {
 	const { applySidebarTabInitialState, optimisticallyActivateTab, getSpaceSidebar, receive } = await makeSidebarEnv();
 
 	applySidebarTabInitialState(sidebarInitialState(
@@ -536,13 +536,11 @@ test("tabUpdated keeps an optimistic activation its buffered activeTabId predate
 	optimisticallyActivateTab("t2");
 	flushSync();
 
-	// Buffered on the host before the click reached it: still names t1 as active.
 	receive?.({
 		event: "browserStatePatch",
 		operations: [{
 			kind: "tabUpdated",
 			spaceId: sidebarSpaceId,
-			activeTabId: "t1",
 			tab: { id: "t1", spaceId: sidebarSpaceId, progress: 0.5 },
 		}],
 	});
@@ -564,7 +562,6 @@ test("tabUpdated that changes nothing keeps the space record", async () => {
 		operations: [{
 			kind: "tabUpdated",
 			spaceId: sidebarSpaceId,
-			activeTabId: "t1",
 			tab: { id: "t1", spaceId: sidebarSpaceId, isLoading: false, progress: 1 },
 		}],
 	});
@@ -624,4 +621,37 @@ test("full state keeps the snapshot object of a tab that did not change", async 
 	assert.equal(tabsById.get("t1"), t1Before);
 	assert.notEqual(tabsById.get("t2"), t2Before);
 	assert.equal(tabsById.get("t2")?.title, "Renamed");
+});
+
+test("full state that changes nothing keeps the space record, and its view when only the selection moves", async () => {
+	const { applySidebarTabInitialState, getSpaceSidebar, receive } = await makeSidebarEnv();
+
+	applySidebarTabInitialState(sidebarInitialState(
+		[tab("t1", sidebarSpaceId), tab("t2", sidebarSpaceId)],
+		"t1",
+	));
+	flushSync();
+	const fullState = (activeTabId: string) => ({
+		event: "browserStateChanged",
+		changedSpaceId: sidebarSpaceId,
+		states: [{
+			spaceId: sidebarSpaceId,
+			activeTabId,
+			tabs: [tab("t1", sidebarSpaceId), tab("t2", sidebarSpaceId)],
+			folders: [],
+			treeItems: [treeItem("t1", sidebarSpaceId, 0), treeItem("t2", sidebarSpaceId, 1)],
+		}],
+	});
+	receive?.(fullState("t1"));
+	flushSync();
+
+	const before = getSpaceSidebar(sidebarSpaceId);
+	receive?.(fullState("t1"));
+	flushSync();
+	assert.equal(getSpaceSidebar(sidebarSpaceId), before);
+
+	receive?.(fullState("t2"));
+	flushSync();
+	assert.equal(getSpaceSidebar(sidebarSpaceId).activeTabId, "t2");
+	assert.equal(getSpaceSidebar(sidebarSpaceId).view, before.view);
 });
