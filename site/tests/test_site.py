@@ -238,6 +238,20 @@ class SiteTests(unittest.TestCase):
                     self.assertEqual(sources, shared)
         self.assertFalse((DIST / "app.js").exists())
 
+    def test_demo_entry_loads_no_bridge_before_setting_its_bootstrap_events(self):
+        page = (DIST / "demo/index.html").read_text()
+        pending = re.findall(r'src="/(_astro/[^"]+\.js)"', page)
+        self.assertTrue(pending)
+        seen = set()
+        while pending:
+            chunk = pending.pop()
+            if chunk in seen:
+                continue
+            seen.add(chunk)
+            source = (DIST / chunk).read_text()
+            self.assertNotIn("Array.isArray(window.__liloBootstrapEvents)", source, chunk)
+            pending += [f"_astro/{name}" for name in re.findall(r'(?:from|import)\s*"\./([^"]+\.js)"', source)]
+
     def test_home_demo_embeds_the_real_interface_and_extensions_link_to_the_store(self):
         extension_ids = {"neebplgakaahbhdphmkckjjcegoiijjo", "eimadpbcbfnmbkopoojfekhnkhdbieeh",
                          "fmkadmapgofadopljbjfkapdkoienihi"}
