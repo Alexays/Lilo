@@ -231,6 +231,10 @@
     color: var(--text-primary);
   }
 
+  .stack-close:active {
+    background: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .stack-chevron {
       transition: none;

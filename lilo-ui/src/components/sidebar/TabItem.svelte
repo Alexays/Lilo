@@ -896,6 +896,10 @@
     color: var(--text-primary);
   }
 
+  .close-btn:active {
+    background: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  }
+
   .close-btn:not(.visible) {
     opacity: 0;
     transform: scale(0.8);

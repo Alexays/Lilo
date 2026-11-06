@@ -654,7 +654,11 @@
 		color: var(--text-primary);
 	}
 
-	/* Same specificity as the rule above, so this has to stay after it to win. */
+	.action-btn:active {
+		background: color-mix(in srgb, var(--text-primary) 18%, transparent);
+	}
+
+	/* Same specificity as the rules above, so this has to stay after them to win. */
 	.delete-btn:hover {
 		background: var(--danger);
 		color: var(--on-color);
