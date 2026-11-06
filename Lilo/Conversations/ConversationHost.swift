@@ -22,6 +22,8 @@ final class ConversationHost {
         var starting: Task<Void, Error>?
         var state = State.idle
         var log: [ACPConnection.Payload] = []
+        /// Where the log holds the latest usage and command list, each replaced as a newer one comes.
+        var latest: [String: Int] = [:]
         /// The agent's open `session/request_permission`s, oldest first: its sub-agents can ask at once. Each is
         /// answered from the thread; the sidebar and the notification offer the oldest.
         var permissions: [(id: ACPConnection.Payload, requestId: String, params: [String: Any])] = []
@@ -76,6 +78,7 @@ final class ConversationHost {
 
     /// Each conversation's log and checkpoints, so a relaunch shows the thread without starting its agent.
     private let threads: URL
+    private let saveQueue = DispatchQueue(label: "lilo.conversations.save", qos: .utility)
 
     init(directory: URL) {
         catalog = ACPAgentCatalog(directory: directory)
@@ -113,7 +116,8 @@ final class ConversationHost {
         withdrawNotification(tabId)
         scheduleSummary()
         // A conversation reopened with Reopen Closed Tab gets its thread back from the agent's session.
-        try? FileManager.default.removeItem(at: threadFile(tabId))
+        let file = threadFile(tabId)
+        saveQueue.async { try? FileManager.default.removeItem(at: file) }
     }
 
     /// Stops every agent, at quit: their sessions resume next launch.
@@ -126,16 +130,17 @@ final class ConversationHost {
 
     private func threadFile(_ tabId: UUID) -> URL { threads.appending(path: "\(tabId.uuidString).json") }
 
-    /// Written off the main thread, but at quit, where the app must not exit before it is on disk.
+    /// Encoded and written in order on `saveQueue`, so an older log never lands over a newer one; at quit the
+    /// app waits for it, as it must not exit before the log is on disk.
     private func save(_ conversation: Conversation, synchronously: Bool = false) {
-        let object: [String: Any] = ["log": conversation.log.map(\.value), "checkpoints": conversation.checkpoints.map { $0 ?? "" }]
-        guard let data = try? JSONSerialization.data(withJSONObject: object) else { return }
+        let object = ACPConnection.Payload(value: ["log": conversation.log.map(\.value), "checkpoints": conversation.checkpoints.map { $0 ?? "" }])
         let file = threadFile(conversation.tabId), folder = threads
-        let write = {
+        let write: @Sendable () -> Void = {
+            guard let data = try? JSONSerialization.data(withJSONObject: object.value) else { return }
             try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try? data.write(to: file, options: .atomic)
         }
-        if synchronously { write() } else { DispatchQueue.global(qos: .utility).async(execute: write) }
+        if synchronously { saveQueue.sync(execute: write) } else { saveQueue.async(execute: write) }
     }
 
     /// The thread a previous run saved; with none, the agent's session replays it once the agent starts.
@@ -194,12 +199,45 @@ final class ConversationHost {
         return data
     }
 
+    /// Logs `update` and sends it to the chrome showing the conversation. The log keeps one entry per
+    /// streamed text, as the chrome joins its chunks, and only the latest usage and command list.
     private func append(_ conversation: Conversation, _ update: [String: Any]) {
-        conversation.log.append(ACPConnection.Payload(value: update))
+        let kind = update["sessionUpdate"] as? String ?? ""
+        if kind == "usage_update" || kind == "available_commands_update" {
+            // A usage without plan limits leaves the chrome's as they were: it never replaces one that has them.
+            if let index = conversation.latest[kind], kind == "available_commands_update"
+                || Self.planLimits(of: update) != nil || Self.planLimits(of: conversation.log[index].value) == nil {
+                conversation.log[index] = ACPConnection.Payload(value: update)
+            } else {
+                conversation.latest[kind] = conversation.log.count
+                conversation.log.append(ACPConnection.Payload(value: update))
+            }
+        } else if kind == "agent_message_chunk" || kind == "agent_thought_chunk",
+                  var last = conversation.log.last?.value, last["sessionUpdate"] as? String == kind,
+                  last["messageId"] as? String == update["messageId"] as? String,
+                  Self.parentToolUse(of: last) == Self.parentToolUse(of: update),
+                  var content = last["content"] as? [String: Any], content["type"] as? String == "text", let text = content["text"] as? String,
+                  let chunk = update["content"] as? [String: Any], chunk["type"] as? String == "text", let more = chunk["text"] as? String {
+            content["text"] = text + more
+            last["content"] = content
+            conversation.log[conversation.log.count - 1] = ACPConnection.Payload(value: last)
+        } else {
+            conversation.log.append(ACPConnection.Payload(value: update))
+        }
         guard let windows = context?.windows.windows else { return }
         for window in windows where shown[ObjectIdentifier(window)]?.contains(conversation.tabId) == true {
             window.bridgeRouter.send(event: "conversationUpdate", data: ["tabId": conversation.tabId.uuidString, "update": update])
         }
+    }
+
+    /// The rate limit windows claude-agent-acp relays in a usage update, which the chrome shows as plan limits.
+    private static func planLimits(of update: [String: Any]) -> Any? {
+        ((update["_meta"] as? [String: Any])?["_claude/rateLimit"] as? [String: Any])?["unifiedWindows"]
+    }
+
+    /// The call that started the sub-agent an update comes from, which the chrome draws apart.
+    private static func parentToolUse(of update: [String: Any]) -> String? {
+        ((update["_meta"] as? [String: Any])?["claudeCode"] as? [String: Any])?["parentToolUseId"] as? String
     }
 
     // MARK: - Starting the agent
