@@ -60,7 +60,7 @@ final class DownloadManagerTests: XCTestCase {
 
         XCTAssertNotNil(received)
         XCTAssertEqual(received?.state, .interrupted)
-        XCTAssertEqual(received?.error, "Cancelled by user")
+        XCTAssertEqual(received?.error, "USER_CANCELED")
         XCTAssertNotNil(received?.endedAt)
     }
 

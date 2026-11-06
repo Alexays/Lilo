@@ -5,6 +5,17 @@ enum DownloadState: String, Codable {
     case inProgress, paused, complete, interrupted
 }
 
+/// The Chrome InterruptReason `DownloadItem.error` holds for a failure Lilo names itself; a system error keeps its
+/// localized description. The chrome translates these codes, so they never change.
+enum DownloadInterruptReason: String {
+    case userCanceled = "USER_CANCELED"
+    case serverFailed = "SERVER_FAILED"
+    case serverNoRange = "SERVER_NO_RANGE"
+    case fileFailed = "FILE_FAILED"
+    case fileNoSpace = "FILE_NO_SPACE"
+    case fileAccessDenied = "FILE_ACCESS_DENIED"
+}
+
 /// Names a download across profiles, whose databases each number their rows from 1.
 struct DownloadKey: Hashable {
     let profileId: UUID?

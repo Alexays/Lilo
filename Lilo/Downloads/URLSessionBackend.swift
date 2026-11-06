@@ -139,7 +139,7 @@ final class URLSessionBackend: NSObject {
         guard let entry = activeTasks.first(where: { $0.value.id == id }) else { return }
         entry.value.task.cancel(); activeTasks.removeValue(forKey: entry.key); removeRecord(for: entry.key)
         flight.settle(id) { item in
-            item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date()
+            item.state = .interrupted; item.error = DownloadInterruptReason.userCanceled.rawValue; item.endedAt = Date()
             return true
         }
     }
@@ -181,7 +181,7 @@ extension URLSessionBackend: URLSessionDownloadDelegate {
         var failure: String?
         if let status = (downloadTask.response as? HTTPURLResponse)?.statusCode, !(200..<300).contains(status) {
             // The body is the server's error page: leave it to URLSession's temp-file cleanup.
-            failure = "Server error (HTTP \(status))"
+            failure = DownloadInterruptReason.serverFailed.rawValue
         } else {
             do {
                 if !record.replacesExisting {

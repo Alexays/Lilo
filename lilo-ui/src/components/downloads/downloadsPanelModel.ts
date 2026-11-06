@@ -27,6 +27,16 @@ interface MetaLine {
 
 export type InlineAction = "pause" | "resume" | "retry";
 
+// The Chrome InterruptReason codes native stores in `error`; any other error is a system message, already localized.
+const ERROR_KEYS = new Map([
+  ["USER_CANCELED", "downloadsPanel.errorCanceled"],
+  ["SERVER_FAILED", "downloadsPanel.errorServer"],
+  ["SERVER_NO_RANGE", "downloadsPanel.errorNoResume"],
+  ["FILE_FAILED", "downloadsPanel.errorFile"],
+  ["FILE_NO_SPACE", "downloadsPanel.errorNoSpace"],
+  ["FILE_ACCESS_DENIED", "downloadsPanel.errorAccessDenied"],
+]);
+
 export function filterDownloads(
   downloads: BridgeDownloadSnapshot[],
   query: string,
@@ -134,10 +144,11 @@ function sourceHost(url: string): string | null {
 
 export function metaLine(dl: BridgeDownloadSnapshot, locale: Locale, nowMs: number): MetaLine {
   if (dl.error || dl.state === "interrupted") {
+    const errorKey = dl.error ? ERROR_KEYS.get(dl.error) : "downloadsPanel.stateFailed";
     return {
       detail: null,
-      stateKey: dl.error ? null : "downloadsPanel.stateFailed",
-      errorText: dl.error ?? null,
+      stateKey: errorKey ?? null,
+      errorText: errorKey ? null : (dl.error ?? null),
       tone: "error",
     };
   }

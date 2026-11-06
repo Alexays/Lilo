@@ -299,7 +299,7 @@ final class DownloadManager {
         }
         guard !resumed else { return }
         // A row left paused keeps offering a Resume that can never work.
-        item.state = .interrupted; item.error = "Could not resume download"; item.endedAt = Date()
+        item.state = .interrupted; item.error = DownloadInterruptReason.serverNoRange.rawValue; item.endedAt = Date()
         try? store.update(item); notifyObservers(item)
     }
 
@@ -313,7 +313,7 @@ final class DownloadManager {
         if lane.wk.isTracking(id: id) { lane.wk.cancel(id: id) } else if lane.url.isTracking(id: id) { lane.url.cancel(id: id) } else {
             guard var item = try? store.fetch(id: id),
                   item.state == .inProgress || item.state == .paused else { return }
-            item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date()
+            item.state = .interrupted; item.error = DownloadInterruptReason.userCanceled.rawValue; item.endedAt = Date()
             // A paused browser download keeps its partial bytes under the final name, as an in-flight one does.
             if item.source == "wk" {
                 try? FileManager.default.removeItem(atPath: item.destinationPath)
@@ -526,8 +526,10 @@ final class DownloadManager {
         if item.state == .complete {
             content.title = "Download Complete".localized; content.body = item.filename
         } else {
-            guard let error = item.error, !error.localizedCaseInsensitiveContains("cancel") else { return }
-            content.title = "Download Failed".localized; content.body = "\(item.filename): \(error)"
+            guard let error = item.error, error != DownloadInterruptReason.userCanceled.rawValue else { return }
+            // A code is for the chrome to translate; a system error's text is already localized.
+            content.title = "Download Failed".localized
+            content.body = DownloadInterruptReason(rawValue: error) == nil ? "\(item.filename): \(error)" : item.filename
         }
 
         let identifier = "download-\(item.profileId?.uuidString ?? "")-\(item.id ?? 0)-\(item.state.rawValue)"

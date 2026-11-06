@@ -233,6 +233,22 @@ final class DownloadsGapAPITests: XCTestCase {
 
         let updated = try store.fetch(id: item.id!)
         XCTAssertEqual(updated?.state, .interrupted)
+        let found = await handler.handle(makeBridgeMessage(action: "downloads.search", payload: ["state": "interrupted"])) as? [[String: Any]]
+        XCTAssertEqual(found?.first?["error"] as? String, "USER_CANCELED", "Chrome's InterruptReason")
+    }
+
+    func testSearchReportsASystemErrorAsChromesNetworkFailure() async throws {
+        var item = DownloadItem(
+            id: nil, url: "https://example.com/n.zip", filename: "n.zip",
+            destinationPath: "/tmp/n.zip", bytesReceived: 20, totalBytes: 100,
+            state: .interrupted, startedAt: Date(), fileMissing: false
+        )
+        item.error = "The network connection was lost."
+        try store.insert(&item)
+
+        let found = await handler.handle(makeBridgeMessage(action: "downloads.search", payload: [:])) as? [[String: Any]]
+
+        XCTAssertEqual(found?.first?["error"] as? String, "NETWORK_FAILED")
     }
 
     func testPrivateSpaceDownloadsAreHiddenFromExtensions() async throws {

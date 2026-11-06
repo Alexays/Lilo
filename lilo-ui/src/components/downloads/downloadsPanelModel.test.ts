@@ -137,12 +137,20 @@ test("metaLine for complete shows size, end time and host, or File missing", () 
   });
 });
 
-test("metaLine for failures carries the error text or Failed key", () => {
+test("metaLine for failures carries the error text, its translated code or Failed key", () => {
   const withMessage = metaLine(dl({ state: "interrupted", error: "Network lost" }), "fr", NOW_MS);
   assert.deepEqual(withMessage, {
     detail: null,
     stateKey: null,
     errorText: "Network lost",
+    tone: "error",
+  });
+
+  const canceled = metaLine(dl({ state: "interrupted", error: "USER_CANCELED" }), "fr", NOW_MS);
+  assert.deepEqual(canceled, {
+    detail: null,
+    stateKey: "downloadsPanel.errorCanceled",
+    errorText: null,
     tone: "error",
   });
 

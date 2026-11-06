@@ -333,7 +333,8 @@ final class DownloadsBridgeHandler: GapHandler {
             data["mime"] = mimeType
         }
         if let error = item.error {
-            data["error"] = error
+            // Chrome reports an InterruptReason; a system error's localized text maps to the generic network one.
+            data["error"] = DownloadInterruptReason(rawValue: error) == nil ? "NETWORK_FAILED" : error
         }
         return data
     }
