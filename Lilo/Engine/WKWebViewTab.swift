@@ -236,8 +236,9 @@ final class WKWebViewTab: NSObject {
         }
     )
 
-    /// The clicked element of the open context menu, until one of its download items uses it.
-    private var contextMenuElement: NSObject?
+    /// The clicked frame and link of the open context menu, until one of its download items uses them. Never the element
+    /// itself, which holds a clicked image's bytes.
+    private var contextMenuTarget: (frame: WKFrameInfo?, link: URL?)?
     private enum ReferrerProbe { case pending, answered(String?), abandoned }
     /// Context-menu downloads' referrer probes by the fragment marking their request. One stays until its request comes, so
     /// a request coming after its download started is still cancelled rather than opened.
@@ -249,17 +250,17 @@ final class WKWebViewTab: NSObject {
         const probe = document.createElement('a')
         probe.href = url
         probe.target = '_blank'
-        const links = link ? [...document.querySelectorAll('a[href], area[href]')].filter(element => element.href === link) : []
-        if ((links.find(element => element.matches(':hover')) ?? links[0])?.relList.contains('noreferrer')) probe.rel = 'noreferrer'
+        const linkTo = selector => link ? [...document.querySelectorAll(selector)].find(element => element.href === link) : undefined
+        if ((linkTo('a:hover[href], area:hover[href]') ?? linkTo('a[href], area[href]'))?.relList.contains('noreferrer')) probe.rel = 'noreferrer'
         probe.click()
         """
 
     /// WebKit's native download context-menu items never fire WKDownloadDelegate, so ContextMenuBuilder
     /// routes them here to reach the same pipeline as navigation-initiated downloads.
     private func startContextMenuDownload(from url: URL) {
-        let element = contextMenuElement
-        contextMenuElement = nil
-        let frame = ContextMenuBuilder.frameInfo(from: element)
+        let target = contextMenuTarget
+        contextMenuTarget = nil
+        let frame = target?.frame
         let fallback = Self.downloadRequest(for: url, pageURL: frame?.request.url ?? webView.url)
         let token = UUID().uuidString
         guard let frame, var marked = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return startDownload(fallback) }
@@ -277,7 +278,7 @@ final class WKWebViewTab: NSObject {
             }
             startDownload(request)
         }
-        let arguments = ["url": probeURL, "link": ContextMenuBuilder.linkURL(from: element)?.absoluteString ?? ""]
+        let arguments = ["url": probeURL, "link": target?.link?.absoluteString ?? ""]
         Task { [weak self] in
             _ = try? await self?.webView.callAsyncJavaScript(Self.referrerProbeScript, arguments: arguments, in: frame, contentWorld: PageWorld.bridgeWorld)
             finish()
@@ -2379,8 +2380,9 @@ extension WKWebViewTab: WKUIDelegate {
         nonisolated(unsafe) let menu = menu
         nonisolated(unsafe) let element = element
         MainActor.assumeIsolated {
-            contextMenuElement = unsafe element
-            unsafe contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
+            let linkURL = unsafe ContextMenuBuilder.linkURL(from: element)
+            contextMenuTarget = unsafe (ContextMenuBuilder.frameInfo(from: element), linkURL)
+            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
             unsafe completionHandler(menu)
         }
     }
