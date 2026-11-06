@@ -1,5 +1,6 @@
 <script lang="ts">
   import { dismissable } from "../../lib/actions/dismissable";
+  import { menuKeys } from "../../lib/actions/menuKeys";
   import type { BridgeProfileSnapshot } from "../../lib/bridge/protocol";
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
@@ -30,7 +31,7 @@
   let recoloring = $state(false);
   let confirmingRemove = $state(false);
   let moveTo = $state("");
-  let moreButton: HTMLButtonElement;
+  let moreButton: HTMLButtonElement | undefined = $state();
 
   const spaces = $derived(usage.get(profile.id) ?? []);
   const removal = $derived(profileRemoval(profile, users, usage));
@@ -44,7 +45,7 @@
 
   function closeColors(): void {
     recoloring = false;
-    moreButton.focus();
+    moreButton?.focus();
   }
 
   function recolor(color: string): void {
@@ -118,13 +119,15 @@
           class="profile-menu float-surface float-popover"
           role="menu"
           tabindex="-1"
-          {@attach dismissable({ onDismiss: () => (menuOpen = false), ignore: ".more-btn" })}
+          {@attach dismissable({ onDismiss: () => (menuOpen = false), ignore: ".more-btn", returnFocus: moreButton })}
+          {@attach menuKeys}
           {@attach (node) => node.querySelector("button")?.focus()}
           onkeydown={(event) => {
             // Handled here so the settings surface, which also closes on Escape, keeps open.
             if (event.key !== "Escape") return;
             event.preventDefault();
             menuOpen = false;
+            moreButton?.focus();
           }}
         >
           <button class="float-row" role="menuitem" onclick={() => pick(() => (renaming = true))}>

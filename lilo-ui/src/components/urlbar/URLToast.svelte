@@ -1,5 +1,6 @@
 <script lang="ts">
   import { dismissable } from "../../lib/actions/dismissable";
+  import { menuKeys } from "../../lib/actions/menuKeys";
   import { tabActions } from "../../lib/bridge/actions";
   import ExtensionIcons from "../extensions/ExtensionIcons.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
@@ -34,6 +35,7 @@
     onToggleBlocker,
   }: Props = $props();
 
+  const screenshotMenuId = $props.id();
   let screenshotMenuOpen = $state(false);
   let screenshotBtnEl = $state<HTMLElement | null>(null);
   let menuTop = $state(0);
@@ -154,7 +156,9 @@
         tabindex="0"
         use:tooltip={t("urlToast.screenshot")}
         aria-label={t("urlToast.screenshot")}
+        aria-haspopup="menu"
         aria-expanded={screenshotMenuOpen}
+        aria-controls={screenshotMenuOpen ? screenshotMenuId : undefined}
         bind:this={screenshotBtnEl}
         onclick={openMenu}
         onkeydown={(e) => {
@@ -178,12 +182,25 @@
 
       {#if screenshotMenuOpen}
         <div
+          id={screenshotMenuId}
           class="screenshot-menu screenshot-menu-portal float-surface float-popover"
           role="menu"
+          tabindex="-1"
+          aria-label={t("urlToast.screenshot")}
           style="top:{menuTop}px;right:{menuRight}px"
           use:portal
           use:reportInteractiveZone={{ id: "screenshot-menu", active: true }}
-          {@attach dismissable({ onDismiss: () => (screenshotMenuOpen = false), escape: true })}
+          onkeydown={(e) => {
+            if (e.key !== "Escape") return;
+            // The bar around it would take this Escape too.
+            e.preventDefault();
+            e.stopPropagation();
+            screenshotMenuOpen = false;
+            screenshotBtnEl?.focus();
+          }}
+          {@attach menuKeys}
+          {@attach (node) => node.querySelector<HTMLElement>("[role='menuitem']")?.focus()}
+          {@attach dismissable({ onDismiss: () => (screenshotMenuOpen = false), escape: true, returnFocus: screenshotBtnEl ?? undefined })}
         >
           <button class="float-row screenshot-menu-item" role="menuitem" onclick={() => pickMode("full")}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

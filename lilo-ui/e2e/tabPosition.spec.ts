@@ -373,6 +373,23 @@ test("a click in the page closes a strip popover", async ({ page }) => {
 	await expect(page.locator(".strip-popover")).toHaveCount(0);
 });
 
+test("the arrow keys walk a strip popover's menu", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await page.locator(".space-chip").click();
+	const items = page.locator(".strip-popover [role^=menuitem]");
+	await expect(items).toHaveCount(3);
+	await expect(items.first()).toBeFocused();
+
+	await page.keyboard.press("ArrowDown");
+	await expect(items.nth(1)).toBeFocused();
+	await page.keyboard.press("End");
+	await expect(items.last()).toBeFocused();
+	await page.keyboard.press("ArrowDown");
+	await expect(items.first()).toBeFocused();
+	await page.keyboard.press("ArrowUp");
+	await expect(items.last()).toBeFocused();
+});
+
 test("the page toolbar centers the address on the page", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "bottom" }, ".tab-strip");
 	const address = (await page.locator(".page-toolbar .url-display").boundingBox())!;

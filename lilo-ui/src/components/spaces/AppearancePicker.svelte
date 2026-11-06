@@ -114,7 +114,7 @@
     </div>
     <div class="row">
       <span id="{id}-label">{t("spaceEditor.color")}</span>
-      <button class="color-button" bind:this={trigger} aria-haspopup="menu" aria-expanded={open} aria-labelledby="{id}-label {id}-name"
+      <button class="color-button" bind:this={trigger} aria-haspopup="dialog" aria-expanded={open} aria-labelledby="{id}-label {id}-name"
         use:tooltip={mode === "page" && !siteColor ? t("spaceEditor.noSiteYet") : ""} onclick={() => (open = !open)}>
         <span class="dot"></span>
         <span id="{id}-name" class="short-name">{shortName}</span>
@@ -133,7 +133,7 @@
     {/if}
   </div>
   {#if open && trigger}
-    <StripPopover anchor={trigger} label={t("spaceEditor.color")} onclose={close}>
+    <StripPopover anchor={trigger} label={t("spaceEditor.color")} role="dialog" onclose={close}>
       <div class="palette" bind:this={palette}>{@render swatches()}</div>
     </StripPopover>
   {/if}

@@ -410,7 +410,7 @@
         </svg>
       </button>
       {#if callOpen && callButton}
-        <StripPopover anchor={callButton} label={call?.title ?? ""} onclose={() => (callOpen = false)}>
+        <StripPopover anchor={callButton} label={call?.title ?? ""} role="dialog" onclose={() => (callOpen = false)}>
           {#await import("../sidebar/CallCard.svelte") then card}
             <card.default />
           {/await}
@@ -434,7 +434,7 @@
         </svg>
       </button>
       {#if mediaOpen && mediaButton}
-        <StripPopover anchor={mediaButton} label={getMediaCardTab()?.title ?? ""} onclose={() => (mediaOpen = false)}>
+        <StripPopover anchor={mediaButton} label={getMediaCardTab()?.title ?? ""} role="dialog" onclose={() => (mediaOpen = false)}>
           <MediaCard />
         </StripPopover>
       {/if}
@@ -453,7 +453,7 @@
         {#if getChosenAppIcon()}<img src={getChosenAppIcon()} alt="" width="18" height="18" />{/if}
       </button>
       {#if updateOpen && updateButton}
-        <StripPopover anchor={updateButton} label={t("updateCard.ready")} onclose={() => (updateOpen = false)}>
+        <StripPopover anchor={updateButton} label={t("updateCard.ready")} role="dialog" onclose={() => (updateOpen = false)}>
           <UpdateCard />
         </StripPopover>
       {/if}

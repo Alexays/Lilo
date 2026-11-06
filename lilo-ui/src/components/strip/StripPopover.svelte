@@ -3,11 +3,19 @@
   import { cubicOut } from "svelte/easing";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { dismissable } from "../../lib/actions/dismissable";
+  import { menuKeys } from "../../lib/actions/menuKeys";
   import { portal } from "../../lib/actions/portal";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
 
-  let { anchor, label, onclose, children }: { anchor: HTMLElement; label: string; onclose: () => void; children: Snippet } = $props();
+  // A menu's rows are `menuitem`s the arrows walk; a card, a palette or a form is a `dialog`.
+  let { anchor, label, role = "menu", onclose, children }: {
+    anchor: HTMLElement;
+    label: string;
+    role?: "menu" | "dialog";
+    onclose: () => void;
+    children: Snippet;
+  } = $props();
 
   let popover: HTMLDivElement | undefined = $state();
   let height = $state(0);
@@ -50,13 +58,14 @@
   bind:this={popover}
   bind:clientHeight={height}
   class="strip-popover"
-  role="menu"
+  {role}
   aria-label={label}
   style={`left: ${left}px; top: ${top}px; transform-origin: ${origin};`}
   out:popoverOut|global
   use:portal
   use:reportInteractiveZone={{ id: "strip-popover" }}
   {@attach dismiss}
+  {@attach role === "menu" && menuKeys}
 >
   {@render children()}
 </div>
