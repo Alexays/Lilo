@@ -83,11 +83,12 @@ extension MainWindowController {
     func bindExtensionRegistry(_ registry: ProfileExtensionRegistry, spaceId: UUID) {
         guard let window else { return }
         let windowAdapter = registry.windowAdapter(for: window, spaceId: spaceId, isPrivate: tabManager.dataStore?.backingStore.isPersistent == false)
-        windowAdapter.tabManager = tabManager
+        let isShownHere = windowAdapter.nsWindow === window
+        if isShownHere { windowAdapter.tabManager = tabManager }
         tabManager.windowAdapter = windowAdapter
 
         // A space shown in a background window leaves the key window's space the focused one.
-        let isFocused = registry.delegate.windowAdapter === windowAdapter
+        let isFocused = isShownHere && registry.delegate.windowAdapter === windowAdapter
         if isFocused {
             registry.delegate.tabManager = tabManager
             registry.delegate.windowController = self

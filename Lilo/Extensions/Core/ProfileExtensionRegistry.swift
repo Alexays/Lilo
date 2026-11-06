@@ -376,7 +376,8 @@ final class ProfileExtensionRegistry {
             return adapter
         }()
         if nsWindow.isKeyWindow || delegate.windowAdapter?.nsWindow?.isKeyWindow != true { delegate.windowAdapter = adapter }
-        adapter.nsWindow = nsWindow
+        // A space the key window also shows stays bound to it.
+        if nsWindow.isKeyWindow || adapter.nsWindow?.isKeyWindow != true || adapter.tabManager?.windowAdapter !== adapter { adapter.nsWindow = nsWindow }
         return adapter
     }
 

@@ -1168,6 +1168,19 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(registry.delegate.windowAdapter === switched, "a space switch in the key window moves the focus")
     }
 
+    /// A background window showing the key window's space too leaves that space, and the focus, with the key window.
+    func testBackgroundWindowSharingTheKeySpaceLeavesItWithTheKeyWindow() {
+        let keyWindow = KeyWindowStub(), spaceId = UUID()
+        let tabManager = TabManager(engineFactory: WKEngineFactory())
+        let focused = registry.windowAdapter(for: keyWindow, spaceId: spaceId)
+        focused.tabManager = tabManager
+        tabManager.windowAdapter = focused
+
+        XCTAssertTrue(registry.windowAdapter(for: NSWindow(), spaceId: spaceId) === focused)
+        XCTAssertTrue(focused.nsWindow === keyWindow)
+        XCTAssertTrue(registry.delegate.windowAdapter === focused)
+    }
+
     // MARK: - Permission Request Tests
 
     func testResolvePermissionRequest_callsHandler() {
