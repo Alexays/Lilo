@@ -7,7 +7,7 @@
   import type { ImportSourceInfo } from "../../lib/bridge/protocol";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { IMPORT_KINDS, importStatus, PASSWORD_MANAGERS, profileKey, toggleSource } from "./onboardingModel";
-  import { getExtensions, installStoreExtension, isExtensionInstalling } from "../../stores/extensions.svelte";
+  import { getExtensions, getInstallOutcome, installStoreExtension, isExtensionInstalling } from "../../stores/extensions.svelte";
   import { getImportState, getOnboarding, goBack, goNext, importedSummary, runSelectedImport, setImportChoices } from "../../stores/onboarding.svelte";
 
   const onboarding = getOnboarding();
@@ -211,7 +211,7 @@
             {:else}
               <span class="glyph" aria-hidden="true">{manager.name[0]}</span>
             {/if}
-            <span class="ob-text">{manager.name}<small>{t(`onboarding.passwords.managers.${manager.key}`)}</small></span>
+            <span class="ob-text">{manager.name}<small>{getInstallOutcome(manager.id) === "failed" ? t("onboarding.passwords.failed") : t(`onboarding.passwords.managers.${manager.key}`)}</small></span>
             {#if manager.soon}
               <span class="soon-label">{t("onboarding.passwords.soon")}</span>
             {:else if installed.has(manager.id)}

@@ -1216,7 +1216,7 @@ export interface BridgeEventPayloadMap {
 		id: string;
 		action: "enable" | "disable" | "uninstall" | "update" | "install" | "shortcut";
 		success: boolean;
-		/** For a refused "shortcut", what already holds the keys. */
+		/** For a refused "shortcut", what already holds the keys. Absent on a failed install the user cancelled. */
 		error?: string;
 	};
 	// Native ⋯ menu on an extension row resolved to a UI action.
