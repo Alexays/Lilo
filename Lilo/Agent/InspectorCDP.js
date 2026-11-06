@@ -474,7 +474,10 @@
           // A domain Lilo lacks was never enabled, so its disable succeeds: Puppeteer sends Fetch.disable at startup.
           if (command === 'enable') {
             if (!Object.hasOwn(backingDomains, domain)) throw notFound(method)
-            await Promise.all(backingDomains[domain].map(name => agent(name).enable.invoke({})))
+            // The frontend may have enabled a backing domain already, which WebKit's Page agent refuses as an error.
+            await Promise.all(backingDomains[domain].map(name => agent(name).enable.invoke({}).catch(error => {
+              if (!/already enabled/.test(error?.message)) throw error
+            })))
           }
           const events = method === 'Runtime.enable'
             ? executionContexts().map(context => ({ method: 'Runtime.executionContextCreated', params: { context } }))
