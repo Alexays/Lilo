@@ -131,8 +131,7 @@ extension MainWindowController {
     }
 
     func deleteSpace(id: UUID) throws {
-        guard let spaceManager = context.spaceManager, let coordinator = context.sessionPersistenceCoordinator,
-              let space = spaceManager.space(with: id) else { return }
+        guard let spaceManager = context.spaceManager, let space = spaceManager.space(with: id) else { return }
         // The window has no empty state, so the last space is never deleted.
         guard spaceManager.spaces.count > 1 else {
             Self.logger.warning("refused to delete the last space \(id.uuidString, privacy: .public)")
@@ -144,7 +143,6 @@ extension MainWindowController {
         context.profileContexts.existingContext(for: sourceProfileId)?.extensions.notifySpaceRemoved(id)
         tabManager.terminalHost.prune { tabId in tabManager.tab(for: tabId).map { !$0.isClosed } ?? false }
         tabManager.changesHost.prune { tabId in tabManager.tab(for: tabId).map { !$0.isClosed } ?? false }
-        try coordinator.deleteSpaceTabState(forSpace: id, inProfile: sourceProfileId)
         try spaceManager.deleteSpace(id: id)
         InteractionStateCodec.archives.withLockUnchecked { $0[id] = nil }
         // A write queued before the delete would archive the space again: clear once more behind it.

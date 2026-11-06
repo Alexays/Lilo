@@ -674,7 +674,8 @@ final class MainWindowController: NSWindowController {
             StartupMetrics.mark("restoreSession")
             await restoreSession()
             await Task.yield()
-            deleteOrphanedSpaceStates()
+            // Other profiles are swept when one of their spaces is deleted: opening each database here costs every launch.
+            if let profileId = profileContext?.profileId { context.deleteOrphanedSpaceStates(inProfile: profileId) }
         }
     }
 

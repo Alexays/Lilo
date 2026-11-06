@@ -723,6 +723,8 @@ extension BrowserContext {
             profileManager?.releaseEphemeralDataStore(for: space.id)
             downloadManager.forgetPrivateDownloads(inSpace: space.id)
             privateSitePermissions[space.id] = nil
+        } else {
+            deleteOrphanedSpaceStates(inProfile: space.profileId)
         }
         windows.windows.forEach { $0.spaceWasDeleted(space, by: manager) }
         // Each window goes back to the user space it last showed; an Agents space only when nothing else is left.
@@ -735,6 +737,24 @@ extension BrowserContext {
             if let replacement { window.switchToSpace(replacement) }
         }
         windows.activeWindow?.profileContext?.sessionPersistence?.scheduleSave()
+    }
+
+    /// Drops the saved tab and interaction state of the profile's spaces that no longer exist. The
+    /// space row leaves global.db first, so a crash in between leaves only rows a later sweep drops.
+    /// The delete queues on the writer behind every save made before, ahead of every save made after.
+    func deleteOrphanedSpaceStates(inProfile profileId: UUID) {
+        guard let spaceManager, let dbManager else { return }
+        let pool: DatabasePool
+        do { pool = try dbManager.pool(for: profileId) } catch {
+            Self.logger.error("orphaned space state sweep skipped a profile: \(error.localizedDescription, privacy: .public)")
+            return
+        }
+        let spaceIds = Set(spaceManager.spaces(for: profileId).filter { !$0.isPrivate }.map(\.id))
+        let databasePath = pool.path
+        pool.asyncWrite({ db in
+            try SpaceTabStateStore.deleteAllOn(db: db, exceptSpaces: spaceIds)
+            try InteractionStateStore.deleteAllOn(db: db, databasePath: databasePath, exceptSpaces: spaceIds)
+        }, completion: loggingPersistenceFailure("spaceStates.orphanCleanup[\(profileId.uuidString)]"))
     }
 
     func spaceManager(_ manager: SpaceManager, didUpdateSpace space: Space) {
