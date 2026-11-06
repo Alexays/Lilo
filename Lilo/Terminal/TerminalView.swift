@@ -281,8 +281,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
     /// As in kitty, the cursor stops blinking this long after it last moved: an idle prompt then
     /// costs no frames.
     private static let blinkDuration = 15.0
-    /// How long a hidden terminal keeps its shaped runs, and one out of its window its glyph atlas
-    /// too: tab switches usually come back well within it.
+    /// How long a hidden terminal keeps its shaped runs and GPU buffers, and one out of its window
+    /// its glyph atlas too: tab switches usually come back well within it.
     private static let releaseDelay: TimeInterval = 180
 
     private let session: TerminalSession
@@ -375,6 +375,7 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
                 // Hidden in its window (occluded), the atlas stays: coming back costs no rasterizing.
                 let timer = Timer(timeInterval: Self.releaseDelay, repeats: false) { [weak self] _ in
                     if releaseResources { self?.builder = nil } else { self?.builder?.shaper.removeCache() }
+                    self?.renderer.releaseBuffers()
                 }
                 timer.tolerance = 30
                 RunLoop.current.add(timer, forMode: .default)
