@@ -409,10 +409,10 @@ final class ChromeInputController {
             // clears and mouseleave fires. A capture-end resample has no event and maps the live pointer.
             let windowPoint = unsafe event?.locationInWindow ?? chrome.window?.convertPoint(fromScreen: NSEvent.mouseLocation) ?? .zero
             chrome.liloSimulateMouseExit(atWindowPoint: windowPoint)
-        case .emitContentInteraction(let isMouseDown):
+        case .emitContentInteraction:
             // Native focus is already AppKit's, so this only blurs `document.activeElement` inside `#chrome-root`.
-            // Emitted once, on the hover feed.
-            controller.bridgeRouter.send(event: "contentInteraction", data: ["isMouseDown": isMouseDown])
+            // Emitted on the hover feed, for a press on content only.
+            controller.bridgeRouter.send(event: "contentInteraction", data: ["isMouseDown": true])
         case .forwardMoveToChrome:
             // Refreshes `:hover` for intra-chrome targets. A capture-end resample has no NSEvent, it only clears.
             guard let event else { return }

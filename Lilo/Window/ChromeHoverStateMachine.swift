@@ -10,8 +10,8 @@ enum ChromeHoverEffect: Equatable {
     /// (e.g. the sidebar resize handle) and fires mouseleave. The applier drives this via the
     /// WebKit `_impl` SPI (`_simulateMouseExit:`).
     case clearChromeHover
-    /// Notify chrome JS that interaction moved to content (clears focus/popups).
-    case emitContentInteraction(isMouseDown: Bool)
+    /// Notify chrome JS of a press on content (clears focus/popups).
+    case emitContentInteraction
     /// Refresh CSS :hover for intra-chrome targets on a no-transition interactive move, via the
     /// WebKit `_impl` SPI (`_simulateMouseMove:`). The global monitor owns hover-SET as well as
     /// the clear, a symmetric lifecycle.
@@ -23,9 +23,6 @@ enum ChromeHoverEffect: Equatable {
 @MainActor
 final class ChromeHoverStateMachine {
     private var wasInteractive = false
-    /// Set on chrome entry; cleared the first time the pointer leaves to content (or on a
-    /// content mouse-down). Gates the one-shot `contentInteraction` signal.
-    private var hasTransientPointerState = false
 
     /// The single source of truth for "is the pointer on chrome": the input coordinator reads it rather than a shadow copy that could
     /// desync across a capture and leave `:hover` stuck.
@@ -48,7 +45,6 @@ final class ChromeHoverStateMachine {
         var effects: [ChromeHoverEffect] = [.setContentTrackingSuspended(isInteractive)]
 
         if isInteractive {
-            hasTransientPointerState = true
             effects.append(.setChromeTrackingEnabled(true))
             return effects
         }
@@ -57,9 +53,9 @@ final class ChromeHoverStateMachine {
             effects.append(.clearChromeHover)
             effects.append(.setChromeTrackingEnabled(false))
         }
-        if hasTransientPointerState || isMouseDown {
-            hasTransientPointerState = false
-            effects.append(.emitContentInteraction(isMouseDown: isMouseDown))
+        // Only a press: the chrome ignores the pointer merely crossing into the page.
+        if isMouseDown {
+            effects.append(.emitContentInteraction)
         }
         return effects
     }
@@ -68,6 +64,5 @@ final class ChromeHoverStateMachine {
     /// next entry's effects.
     func reset() {
         wasInteractive = false
-        hasTransientPointerState = false
     }
 }

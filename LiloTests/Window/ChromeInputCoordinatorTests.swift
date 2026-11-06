@@ -51,7 +51,6 @@ final class ChromeInputCoordinatorTests: XCTestCase {
             .hover(.setContentTrackingSuspended(false)),
             .hover(.clearChromeHover),
             .hover(.setChromeTrackingEnabled(false)),
-            .hover(.emitContentInteraction(isMouseDown: false)),
         ])
     }
 

@@ -3,7 +3,7 @@ import XCTest
 
 @MainActor
 final class ChromeHoverStateMachineTests: XCTestCase {
-    func testEnteringChromeArmsTrackingAndTransientState() {
+    func testEnteringChromeArmsTracking() {
         let machine = ChromeHoverStateMachine()
         let effects = machine.update(isInteractive: true, isMouseDown: false)
         XCTAssertEqual(effects, [
@@ -27,7 +27,7 @@ final class ChromeHoverStateMachineTests: XCTestCase {
     }
 
     // Leaving chrome must clear :hover, or the sidebar resize handle stays stuck in its hover state.
-    func testLeavingChromeForContentClearsHoverAndSignalsContentInteraction() {
+    func testLeavingChromeForContentClearsHoverWithoutSignalingContentInteraction() {
         let machine = ChromeHoverStateMachine()
         _ = machine.update(isInteractive: true, isMouseDown: false) // enter chrome
         let effects = machine.update(isInteractive: false, isMouseDown: false) // move to content
@@ -35,7 +35,6 @@ final class ChromeHoverStateMachineTests: XCTestCase {
             .setContentTrackingSuspended(false),
             .clearChromeHover,
             .setChromeTrackingEnabled(false),
-            .emitContentInteraction(isMouseDown: false),
         ])
     }
 
@@ -44,14 +43,14 @@ final class ChromeHoverStateMachineTests: XCTestCase {
         let effects = machine.update(isInteractive: false, isMouseDown: true)
         XCTAssertEqual(effects, [
             .setContentTrackingSuspended(false),
-            .emitContentInteraction(isMouseDown: true),
+            .emitContentInteraction,
         ])
     }
 
-    func testContentInteractionFiresOnlyOncePerChromeVisit() {
+    func testStayingOnContentAfterLeavingChromeEmitsNothing() {
         let machine = ChromeHoverStateMachine()
         _ = machine.update(isInteractive: true, isMouseDown: false)  // enter
-        _ = machine.update(isInteractive: false, isMouseDown: false) // leave: emits contentInteraction, clears transient
+        _ = machine.update(isInteractive: false, isMouseDown: false) // leave
         let again = machine.update(isInteractive: false, isMouseDown: false) // still on content
         XCTAssertEqual(again, [])
     }
