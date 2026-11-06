@@ -222,10 +222,16 @@
     } catch (e) {}
   }
   if (document.readyState === 'loading') {
-    // Live and in document order: the parser appends, so a cursor finds each new element once.
-    var all = document.getElementsByTagName('*'), cursor = 0;
+    // The parser appends, so resuming after the last element seen finds each new one once. A script that detaches that
+    // element loses the position: the whole document is scanned once and the walk resumes from its last element.
+    var walker = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT);
     var survey = function () {
-      for (var n = all.length; cursor < n; cursor++) scanElement(all[cursor]);
+      if (!walker.currentNode.isConnected) {
+        scanTree(document.documentElement, null);
+        for (var last = document.documentElement; last && last.lastElementChild;) last = last.lastElementChild;
+        walker.currentNode = last || document;
+      }
+      for (var el; (el = walker.nextNode());) scanElement(el);
       if (document.readyState === 'loading') requestAnimationFrame(survey);
     };
     requestAnimationFrame(survey);

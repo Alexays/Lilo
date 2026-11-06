@@ -386,6 +386,24 @@ describe("YouTube request scriptlets", () => {
 		assert.deepEqual(delays, [17, 17000, 1000]);
 	});
 
+	test("no-requestAnimationFrame-if drops matching callbacks, testing each one's source once", () => {
+		const scheduled: unknown[] = [];
+		const sandbox = run({ [HOST]: [["no-requestAnimationFrame-if", ["adLoop"]]] }, HOST, "", [], undefined, {
+			requestAnimationFrame: (cb: unknown) => scheduled.push(cb)
+		});
+		const requestAnimationFrame = sandbox.self.requestAnimationFrame as (cb: unknown) => number;
+		let printed = 0;
+		const adLoop = () => {};
+		adLoop.toString = () => (printed++, "adLoop");
+		const render = () => {};
+		for (let frame = 0; frame < 3; frame++) {
+			assert.equal(requestAnimationFrame(adLoop), 0);
+			requestAnimationFrame(render);
+		}
+		assert.deepEqual(scheduled, [render, render, render]);
+		assert.equal(printed, 1);
+	});
+
 	test("trusted-prevent-dom-bypass hands an inserted blank frame the page's own methods, one per rule", () => {
 		const Node = { prototype: { appendChild: (el: unknown) => el } };
 		const rules = [["trusted-prevent-dom-bypass", ["Node.prototype.appendChild", "fetch"]], ["trusted-prevent-dom-bypass", ["Node.prototype.appendChild", "Request"]]];
