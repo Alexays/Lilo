@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Recensies, details en de pagina van de ontwikkelaar",
 		"webStoreOpen": "Open",
+		"reloadTitle": "Uitgepakte extensie",
+		"reloadHint": "Leest de map opnieuw in om je wijzigingen over te nemen",
+		"reload": "Opnieuw laden",
 		"installed": "Geïnstalleerd"
 	},
 	"commandBar": {
@@ -2048,6 +2051,7 @@
 		"Load": "Laad",
 		"Select an unpacked extension folder (must contain manifest.json)": "Selecteer een uitgepakte extensiemap (moet manifest.json bevatten)",
 		"Couldn't load extension": "Extensie kon niet worden geladen",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "Er is al een andere kopie van %@ geïnstalleerd. Verwijder die om deze map te laden.",
 		"Open Popup": "Open pop-up",
 		"History": "Geschiedenis",
 		"Reopen Last Closed Tab": "Open laatst gesloten tabblad opnieuw",

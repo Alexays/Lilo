@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome 网上应用店",
 		"webStoreHint": "评价、详细信息和开发者页面",
 		"webStoreOpen": "打开",
+		"reloadTitle": "解压缩的扩展",
+		"reloadHint": "重新读取其文件夹以应用你的更改",
+		"reload": "重新载入",
 		"installed": "已安装"
 	},
 	"commandBar": {
@@ -2048,6 +2051,7 @@
 		"Load": "载入",
 		"Select an unpacked extension folder (must contain manifest.json)": "选取解压缩的扩展文件夹（必须包含 manifest.json）",
 		"Couldn't load extension": "无法载入扩展",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "已安装 %@ 的另一个副本。请先移除它，再载入此文件夹。",
 		"Open Popup": "打开弹出窗口",
 		"History": "历史记录",
 		"Reopen Last Closed Tab": "重新打开上次关闭的标签页",

@@ -1014,6 +1014,73 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(registry.loadedExtensions.count, 1)
     }
 
+    /// Without a folder of installed copies, every extension loads unpacked, in place.
+    private func makeUnpackedRegistry() throws -> ProfileExtensionRegistry {
+        let profileId = TestProfileIds.next()
+        return ProfileExtensionRegistry(profileId: profileId, extensionStorage: try makeTestExtensionStorage(profileId: profileId, in: tempDir), extensionsBaseDirectory: nil)
+    }
+
+    private func setVersion(_ version: String, of folder: URL) throws {
+        let manifest = #"{"manifest_version":3,"name":"Unpacked","version":"\#(version)"}"#
+        try manifest.write(to: folder.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+    }
+
+    func testLoadingALoadedUnpackedFolderAgainReloadsItsFiles() async throws {
+        let registry = try makeUnpackedRegistry()
+        defer { registry.teardown() }
+        let folder = try createMinimalExtension(named: "unpacked_again", in: tempDir)
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+
+        try setVersion("2.0", of: folder)
+        try await registry.load(from: folder)
+
+        XCTAssertEqual(registry.loadedExtensions.map(\.id), [id])
+        XCTAssertEqual(registry.loadedExtensions.first?.context.webExtension.version, "2.0")
+        let stored = try await registry.extensionStorage.load(id: id)
+        XCTAssertEqual(stored?.isEnabled, true, "the reload leaves the extension enabled")
+    }
+
+    func testReloadUnpackedReadsTheFolderAgainButLeavesInstalledCopiesToWebKit() async throws {
+        let unpacked = try makeUnpackedRegistry()
+        defer { unpacked.teardown() }
+        let folder = try createMinimalExtension(named: "unpacked_reload", in: tempDir)
+        try await unpacked.load(from: folder)
+        let id = try XCTUnwrap(unpacked.loadedExtensions.first?.id)
+        XCTAssertEqual(unpacked.extensionBridgePayloads(activeTab: nil).first?["isUnpacked"] as? Bool, true)
+
+        try setVersion("2.0", of: folder)
+        XCTAssertTrue(unpacked.reloadUnpacked(extensionId: id))
+        let reloaded = await pollUntil(timeout: 5) { unpacked.loadedExtensions.first?.context.webExtension.version == "2.0" }
+        XCTAssertTrue(reloaded, "the reload never read the edited manifest")
+
+        let installed = try createMinimalExtension(named: "installed_copy", in: tempDir)
+        try await registry.load(from: installed)
+        let installedId = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        XCTAssertFalse(registry.reloadUnpacked(extensionId: installedId))
+        XCTAssertEqual(extensionBridgePayload(for: installedId)?["isUnpacked"] as? Bool, false)
+    }
+
+    func testLoadingAFolderWhoseKeyNamesAnInstalledExtensionFails() async throws {
+        var folders: [URL] = []
+        for name in ["keyed_first", "keyed_second"] {
+            let folder = tempDir.appendingPathComponent(name)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let manifest = #"{"manifest_version":3,"name":"Keyed","version":"1.0","key":"dGVzdC1rZXk="}"#
+            try manifest.write(to: folder.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+            folders.append(folder)
+        }
+        try await registry.load(from: folders[0])
+
+        do {
+            try await registry.load(from: folders[1])
+            XCTFail("a second folder with the same key loaded")
+        } catch ExtensionError.alreadyInstalled(let name) {
+            XCTAssertEqual(name, "Keyed")
+        }
+        XCTAssertEqual(registry.loadedExtensions.count, 1)
+    }
+
     func testOnExtensionsChangedFires() async throws {
         let changed = expectation(description: "onExtensionsChanged fires for a load")
         changed.assertForOverFulfill = false

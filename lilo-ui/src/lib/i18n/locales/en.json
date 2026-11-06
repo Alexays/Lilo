@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Reviews, details and the developer's page",
 		"webStoreOpen": "Open",
+		"reloadTitle": "Unpacked extension",
+		"reloadHint": "Reads its folder again to pick up your changes",
+		"reload": "Reload",
 		"installed": "Installed"
 	},
 	"commandBar": {
@@ -2048,6 +2051,7 @@
 		"Load": "Load",
 		"Select an unpacked extension folder (must contain manifest.json)": "Select an unpacked extension folder (must contain manifest.json)",
 		"Couldn't load extension": "Couldn't load extension",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "Another copy of %@ is already installed. Remove it to load this folder.",
 		"Open Popup": "Open Popup",
 		"History": "History",
 		"Reopen Last Closed Tab": "Reopen Last Closed Tab",

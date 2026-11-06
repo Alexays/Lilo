@@ -1106,6 +1106,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Opinie, szczegóły i strona twórcy",
 		"webStoreOpen": "Otwórz",
+		"reloadTitle": "Rozpakowane rozszerzenie",
+		"reloadHint": "Ponownie wczytuje folder, aby uwzględnić zmiany",
+		"reload": "Wczytaj ponownie",
 		"installed": "Zainstalowane"
 	},
 	"commandBar": {
@@ -2078,6 +2081,7 @@
 		"Load": "Wczytaj",
 		"Select an unpacked extension folder (must contain manifest.json)": "Wybierz folder rozpakowanego rozszerzenia (musi zawierać manifest.json)",
 		"Couldn't load extension": "Nie udało się wczytać rozszerzenia",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "Inna kopia %@ jest już zainstalowana. Usuń ją, aby wczytać ten folder.",
 		"Open Popup": "Otwórz wyskakujące okno",
 		"History": "Historia",
 		"Reopen Last Closed Tab": "Otwórz ostatnio zamkniętą kartę",

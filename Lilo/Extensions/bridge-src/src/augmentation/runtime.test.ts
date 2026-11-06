@@ -13,7 +13,7 @@ mockGapAPI((msg: any) => {
 });
 (globalThis as any).chrome = { runtime: {} };
 
-const { runtimeAdditions, crossExtensionMessaging, crossExtensionPatches, externalEvents, onConnect, relayForContentScripts, tabsConnect } = await import('./runtime.ts');
+const { runtimeAdditions, crossExtensionMessaging, crossExtensionPatches, externalEvents, onConnect, relayForContentScripts, reloadUnpacked, tabsConnect } = await import('./runtime.ts');
 const { liloLastError } = await import('../shared/callbackify.ts');
 const { frameMark } = await import('../shared/message-answers.ts');
 
@@ -31,6 +31,24 @@ describe('runtime.requestUpdateCheck', () => {
     const args = await new Promise<unknown[]>((resolve) => runtimeAdditions.requestUpdateCheck((...received) => resolve(received)));
 
     assert.deepEqual(args, ['no_update', { version: '' }]);
+  });
+});
+
+describe('runtime.reload', () => {
+  it("lets Lilo reload an unpacked extension from its folder, and WebKit any other", async () => {
+    const webKit = { reloads: 0 };
+    const reload = reloadUnpacked(function (this: any) { this.reloads++; }, () => webKit);
+
+    nextResult = true;
+    reload.call(webKit);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(webKit.reloads, 0);
+    assert.deepEqual(gapCalls.at(-1), { namespace: 'runtime', method: 'reloadUnpacked', params: {} });
+
+    nextResult = false;
+    reload.call(webKit);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(webKit.reloads, 1);
   });
 });
 

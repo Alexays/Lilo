@@ -203,6 +203,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         "acceptExtensionHostAccessRequest",
         "checkExtensionUpdates",
         "updateExtension",
+        "reloadExtension",
         "openExtensionPopup",
         "updateExtensionPopupAnchor",
         "getProfileExtensions"
@@ -315,6 +316,10 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             }
             let succeeded = await registry.updater.updateExtension(extensionId: id)
             return settle(id: id, action: "update", succeeded ? ["success": true] : BridgeError("Extension update failed"))
+        case "reloadExtension":
+            guard let id = message.string("id") else { return BridgeError("Missing extension id") }
+            let reloads = await targetRegistry(for: message)?.reloadUnpacked(extensionId: id) == true
+            return settle(id: id, action: "reload", reloads ? ["success": true] : BridgeError("Only a loaded unpacked extension reloads"))
         case "openExtensionPopup":
             guard let id = message.string("id") else { return nil }
             if let registry = extensionRegistry, let window = registry.delegate.windowController,

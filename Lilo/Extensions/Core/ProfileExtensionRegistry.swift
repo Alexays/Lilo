@@ -744,6 +744,12 @@ final class ProfileExtensionRegistry {
             let stored = if let knownId { try? await extensionStorage.load(id: knownId) } else {
                 (try? await extensionStorage.loadAll())?.first { $0.path == permanentURL.path }
             }
+            // Loading a loaded unpacked folder again reloads it: its clone is never replaced under the loaded context.
+            if knownId == nil, let stored, containsRuntime(extensionId: stored.id), !files.owns(permanentURL.path) {
+                await unload(extensionId: stored.id, removePersistedRecord: false)
+                try await self.load(from: permanentURL, extensionId: stored.id, as: .update(from: stored.version))
+                return
+            }
             let allowsUserScripts = (knownId ?? stored?.id).map { access.states[$0]?.allowsUserScripts == true } ?? false
             let files = files
             let (sourceURL, isPreparationDegraded) = try await Task.detached(priority: .userInitiated) {
@@ -756,6 +762,10 @@ final class ProfileExtensionRegistry {
                 managedDirectory: files.directory,
                 manifestKey: webExtension.manifest["key"] as? String
             )
+            // A manifest key can name an extension installed from another folder, which this load would leave running.
+            if knownId == nil, stored == nil, (try? await extensionStorage.load(id: extensionId)) != nil {
+                throw ExtensionError.alreadyInstalled(webExtension.displayName ?? extensionId)
+            }
             try await activate(
                 webExtension, id: extensionId, sourcePath: sourceURL.path, installPath: permanentURL.path,
                 isPreparationDegraded: isPreparationDegraded, stored: stored, as: load ?? (knownId == nil ? .install : .reload)
@@ -796,14 +806,7 @@ final class ProfileExtensionRegistry {
         // their pages' origin storage.
         if let baseURL = URL(string: "chrome-extension://\(extensionId)") { context.baseURL = baseURL }
 
-        // A release attaches Web Inspector to extension internals only once Lilo's developer tools are unlocked. WebKit never
-        // unloads an inspectable worker: the extension smoke turns it off to unload workers as a release build does.
-        #if DEBUG
-        context.isInspectable = ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil
-        #else
-        context.isInspectable = unsafe UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey)
-        #endif
-        if context.isInspectable { context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background" }
+        openToWebInspector(context, id: extensionId, installPath: installPath)
 
         access.apply(to: context, extensionId: extensionId)
         try controller.load(context)
@@ -858,6 +861,23 @@ final class ProfileExtensionRegistry {
         case .startup, .reload:
             break
         }
+    }
+
+    /// Web Inspector sees every extension in a debug build, and only an unpacked one once developer tools unlock in a release:
+    /// WebKit never unloads an inspectable worker (the extension smoke turns it off to unload workers as a release does).
+    private func openToWebInspector(_ context: WKWebExtensionContext, id extensionId: String, installPath: String) {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil else { return }
+        #else
+        guard !files.owns(installPath), unsafe UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey) else { return }
+        #endif
+        context.isInspectable = true
+        context.inspectionName = "\(context.webExtension.displayName ?? extensionId) - Background"
+    }
+
+    /// Lilo's developer tools were unlocked: the loaded extensions they open to Web Inspector become inspectable at once.
+    func developerToolsUnlocked() {
+        for runtime in loadedRuntimes { openToWebInspector(runtime.context, id: runtime.id, installPath: runtime.installPath) }
     }
 
     /// Uninstalls the extension, or with `removePersistedRecord` false unloads it and keeps it installed
@@ -1009,12 +1029,22 @@ final class ProfileExtensionRegistry {
         }
     }
 
+    /// Loads an unpacked extension again from its folder, as Chrome's Reload and `runtime.reload()` do. False for a copy
+    /// Lilo installed, whose files never change under it: WebKit's own reload serves it.
+    func reloadUnpacked(extensionId: String) -> Bool {
+        guard let index = runtimeIndex(for: extensionId), !files.owns(loadedRuntimes[index].installPath) else { return false }
+        let version = loadedRuntimes[index].context.webExtension.version ?? ""
+        // Not awaited: the reload unloads the context whose call asked for it.
+        Task { await reloadFromDisk(extensionId, as: .update(from: version)) }
+        return true
+    }
+
     /// Unloads and reloads the extension from its on-disk source, for a worker nothing else revives.
-    private func reloadFromDisk(_ extensionId: String) async {
+    private func reloadFromDisk(_ extensionId: String, as load: ExtensionLifecycle.Load = .reload) async {
         guard let installPath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].installPath }) else { return }
         await unload(extensionId: extensionId, removePersistedRecord: false, purge: false, notifies: false)
         do {
-            try await load(from: URL(fileURLWithPath: installPath), extensionId: extensionId)
+            try await self.load(from: URL(fileURLWithPath: installPath), extensionId: extensionId, as: load)
         } catch {
             Self.logger.error("background reload failed for \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
             // `unload` flipped the persisted record to disabled; a failed internal restart must not leave the
@@ -1238,6 +1268,7 @@ final class ProfileExtensionRegistry {
             "availableUpdate": updater.availableUpdates[runtime.id]?.latest ?? "",
             "webStoreURL": updater.isStoreCopy(id: runtime.id, path: runtime.installPath, manifest: ext.manifest)
                 ? "https://chromewebstore.google.com/detail/\(runtime.id)" : "",
+            "isUnpacked": !files.owns(runtime.installPath),
             "declinedUpdate": accessState?.declinedUpdateVersion ?? "",
             "allowsPrivateAccess": runtime.context.hasAccessToPrivateData,
             "privateAccessNotAllowed": ExtensionAccess.excludesPrivateSpaces(ext.manifest),

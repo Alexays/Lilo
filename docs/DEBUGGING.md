@@ -1,6 +1,6 @@
 # Debugging
 
-How to inspect, diagnose, and get logs out of a development build of Lilo. Everything below assumes a debug build (`make install-debug` or `make app`). Lilo's own Web Inspector works on page content in every build, and on the chrome overlay in debug builds; Safari's Develop menu sees them, and extension contexts, in debug builds only.
+How to inspect, diagnose, and get logs out of a development build of Lilo. Everything below assumes a debug build (`make install-debug` or `make app`). Lilo's own Web Inspector works on page content in every build, and on the chrome overlay in debug builds; Safari's Develop menu sees them, and extension contexts, in debug builds only (an unpacked extension's in a release too, see [section 2](#2-inspecting-page-content-and-extension-contexts)).
 
 ## 1. Inspecting the chrome overlay
 
@@ -11,6 +11,10 @@ The overlay is served over the app-private `lilo-chrome://` scheme (`lilo-chrome
 ## 2. Inspecting page content and extension contexts
 
 Any page tab can be inspected from Lilo's own **Develop** menu (**Show Web Inspector**, `Cmd+Opt+I`; **Inspect Element**; **Show Console**), which **Settings > Advanced** can hide. In debug builds, content web views also have `isInspectable` enabled for Safari's Develop menu, and extension contexts (background service workers, popups) are marked inspectable too: they show up in the Develop menu named after the extension (for example "uBlock Origin - Background").
+
+In a release build, only unpacked extensions (loaded with **Develop > Load Unpacked Extension**) can be inspected, once Lilo's developer tools are unlocked: click the version row (**Lilo x.y.z**) in **Settings > General** seven times. Their contexts become inspectable at once, and Safari's Develop menu lists them under your Mac. WebKit never unloads an inspectable worker, so extensions installed from the Chrome Web Store stay closed to the inspector and keep unloading theirs.
+
+After editing an unpacked extension's files, its **Reload** button in **Settings > Extensions**, `chrome.runtime.reload()`, or loading the same folder again picks up the changes without restarting Lilo.
 
 ## 3. Diagnostics panel
 

@@ -1106,6 +1106,9 @@
 		"webStoreTitle": "Интернет-магазин Chrome",
 		"webStoreHint": "Отзывы, сведения и страница разработчика",
 		"webStoreOpen": "Открыть",
+		"reloadTitle": "Распакованное расширение",
+		"reloadHint": "Заново читает папку, чтобы применить ваши изменения",
+		"reload": "Перезагрузить",
 		"installed": "Установленные"
 	},
 	"commandBar": {
@@ -2078,6 +2081,7 @@
 		"Load": "Загрузить",
 		"Select an unpacked extension folder (must contain manifest.json)": "Выберите папку распакованного расширения (с файлом manifest.json)",
 		"Couldn't load extension": "Не удалось загрузить расширение",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "Другая копия %@ уже установлена. Удалите ее, чтобы загрузить эту папку.",
 		"Open Popup": "Открыть всплывающее окно",
 		"History": "История",
 		"Reopen Last Closed Tab": "Открыть последнюю закрытую вкладку",

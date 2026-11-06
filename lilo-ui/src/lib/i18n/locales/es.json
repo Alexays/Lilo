@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Reseñas, detalles y página del desarrollador",
 		"webStoreOpen": "Abrir",
+		"reloadTitle": "Extensión sin empaquetar",
+		"reloadHint": "Vuelve a leer su carpeta para aplicar tus cambios",
+		"reload": "Volver a cargar",
 		"installed": "Instaladas"
 	},
 	"commandBar": {
@@ -2048,6 +2051,7 @@
 		"Load": "Cargar",
 		"Select an unpacked extension folder (must contain manifest.json)": "Selecciona una carpeta de extensión sin empaquetar (debe contener manifest.json)",
 		"Couldn't load extension": "No se ha podido cargar la extensión",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "Ya hay otra copia de %@ instalada. Elimínala para cargar esta carpeta.",
 		"Open Popup": "Abrir ventana emergente",
 		"History": "Historial",
 		"Reopen Last Closed Tab": "Volver a abrir la última pestaña cerrada",

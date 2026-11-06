@@ -14,6 +14,7 @@
     hasExtensionError,
     isExtensionPending,
     isExtensionUpdating,
+    reloadExtension,
     updateExtension,
     type ExtensionState,
   } from "../../stores/extensions.svelte";
@@ -185,6 +186,13 @@
         />
       {/snippet}
     </UiListRow>
+    {#if extension.isUnpacked && extension.isEnabled}
+      <UiListRow title={t("extensions.reloadTitle")} description={t("extensions.reloadHint")}>
+        {#snippet action()}
+          <UiButton disabled={pending} onclick={() => reloadExtension(extension.id, extension.profileId)}>{t("extensions.reload")}</UiButton>
+        {/snippet}
+      </UiListRow>
+    {/if}
     {#if extension.runtimeStatus !== "failed"}
       {#if !extension.privateAccessNotAllowed}
         <UiListRow title={t("extensions.allowPrivate")} description={t("extensions.allowPrivateHint")}>

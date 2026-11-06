@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Avaliações, detalhes e página do desenvolvedor",
 		"webStoreOpen": "Abrir",
+		"reloadTitle": "Extensão descompactada",
+		"reloadHint": "Lê a pasta novamente para aplicar suas alterações",
+		"reload": "Recarregar",
 		"installed": "Instaladas"
 	},
 	"commandBar": {
@@ -2048,6 +2051,7 @@
 		"Load": "Carregar",
 		"Select an unpacked extension folder (must contain manifest.json)": "Selecione uma pasta de extensão descompactada (deve conter manifest.json)",
 		"Couldn't load extension": "Não foi possível carregar a extensão",
+		"Another copy of %@ is already installed. Remove it to load this folder.": "Outra cópia de %@ já está instalada. Remova-a para carregar esta pasta.",
 		"Open Popup": "Abrir pop-up",
 		"History": "Histórico",
 		"Reopen Last Closed Tab": "Reabrir última aba fechada",
