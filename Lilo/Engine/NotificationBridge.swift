@@ -28,8 +28,11 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         weak var webView: WKWebView?
         let frame: WKFrameInfo
         let pageId: Int
+        let sequence: Int
     }
     private var posted: [String: Posted] = [:]
+    private var postedCount = 0
+    private static let maxPosted = 50
 
     private var didRequestSystemAuthorization = false
 
@@ -100,10 +103,12 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         }
     }
 
-    /// Runs the page's click handlers for a notification the user clicked; a no-op once its page is gone.
-    func dispatchClick(identifier: String) {
+    /// Fires `type` (click or close) on a notification the user clicked or dismissed; a no-op once its page is gone.
+    func dispatch(_ type: String, identifier: String) {
         guard let entry = posted.removeValue(forKey: identifier), let webView = entry.webView else { return }
-        webView.evaluateJavaScript(PageWorld.push("notifyClick", [entry.pageId]), in: entry.frame, in: PageWorld.bridgeWorld)
+        // A frozen tab refuses most WKWebView calls; a click reveals its tab first, a dismissal does not.
+        if type == "close" && CompositeFreezer.suspendedWebViews.contains(webView) { return }
+        webView.evaluateJavaScript(PageWorld.push("notifyEvent", [entry.pageId, type]), in: entry.frame, in: PageWorld.bridgeWorld)
     }
 
     private func show(body: [String: Any], message: WKScriptMessage, origin: String) {
@@ -114,6 +119,8 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         if let text = body["body"] as? String, !text.isEmpty { content.body = text }
         content.sound = .default
         content.threadIdentifier = origin
+        // Its dismiss action is what tells the page its notification is gone.
+        content.categoryIdentifier = NotificationsBridgeHandler.plainCategory.identifier
         // A tag replaces the same site's earlier notification, never another site's.
         let tag = (body["tag"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? UUID().uuidString
         let identifier = "web-\(origin)-\(tag)"
@@ -125,7 +132,10 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         content.userInfo = userInfo
         if let pageId = body["id"] as? Int {
             posted = posted.filter { $0.value.webView != nil }
-            posted[identifier] = Posted(webView: message.webView, frame: message.frameInfo, pageId: pageId)
+            // Notifications macOS expires never report back: past the cap, the oldest goes.
+            if posted.count >= Self.maxPosted, let oldest = posted.min(by: { $0.value.sequence < $1.value.sequence })?.key { posted[oldest] = nil }
+            postedCount += 1
+            posted[identifier] = Posted(webView: message.webView, frame: message.frameInfo, pageId: pageId, sequence: postedCount)
         }
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
         let logger = Self.logger   // avoid referencing the @MainActor static from the @Sendable closure
@@ -156,11 +166,11 @@ extension NotificationBridge {
         callback(result);
       });
       lilo.on('notifySetPermission', setPermission);
-      lilo.on('notifyClick', id => {
+      lilo.on('notifyEvent', (id, type) => {
         const notification = shown[id];
         if (!notification) return;
         delete shown[id];
-        apply(dispatch, notification, [new NativeEvent('click')]);
+        apply(dispatch, notification, [new NativeEvent(type)]);
       });
       const attach = lilo.eventHandlers(prototype, ownKeys(prototype).filter(key => typeof key === 'string' && key.startsWith('on')).map(key => key.slice(2)));
       const Notification = lilo.native(function Notification(title) {
@@ -173,6 +183,9 @@ extension NotificationBridge {
         fields.set(notification, values);
         attach(notification);
         shown[id] = notification;
+        // Integer keys enumerate in ascending order: the first is the oldest. macOS never reports one it expires.
+        const ids = ownKeys(shown);
+        if (ids.length > 50) delete shown[ids[0]];
         // Native replaces the same tag's notification, which may have been dismissed in macOS without the page hearing of it.
         if (values.tag) { delete shown[shownByTag[values.tag]]; shownByTag[values.tag] = id; }
         lilo.send('liloNotification', { type: 'show', id, title: values.title, body: values.body, icon: values.icon, tag: values.tag });
@@ -210,7 +223,9 @@ extension NotificationBridge {
       // Only a secure top origin can hold a stored decision; the others would pay an IPC for nothing. A same-origin
       // subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
       if (window.top !== window) {
-        try { setPermission(top.Notification.permission); } catch (e) { setPermission('denied'); }
+        const ancestors = location.ancestorOrigins;
+        if (ancestors[ancestors.length - 1] !== window.origin) setPermission('denied');
+        else try { setPermission(top.Notification.permission); } catch (e) { setPermission('denied'); }
       } else if (window.isSecureContext) {
         // At document start the bridge world's relay may not be listening yet.
         apply(listen, doc, ['DOMContentLoaded', () => lilo.send('liloNotification', { type: 'query' }), { once: true }]);

@@ -14,8 +14,18 @@ final class PageTranslatorTests: XCTestCase {
 
     /// Translation runs in its own world, which the test reads by name: the page cannot.
     private func originals(_ webView: WKWebView) async throws -> [String]? {
-        try await webView.evaluateJavaScript("window.__liloTranslation?.originals.map((text) => text.trim())",
-                                             in: nil, contentWorld: .world(name: "lilo-translate")) as? [String]
+        try await webView.evaluateJavaScript("""
+            (() => {
+              const state = window.__liloTranslation;
+              if (!state) return null;
+              const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), texts = [];
+              while (walker.nextNode()) {
+                const text = state.originals.get(walker.currentNode);
+                if (text !== undefined) texts.push(text.trim());
+              }
+              return texts;
+            })()
+            """, in: nil, contentWorld: .world(name: "lilo-translate")) as? [String]
     }
 
     func testTranslationSkipsCodeAndKeepsUpWithContentAddedLater() async throws {

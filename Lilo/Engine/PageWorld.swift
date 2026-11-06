@@ -31,6 +31,8 @@ enum PageWorld {
             .replacingOccurrences(of: "__LILO_SHARE__", with: channel + "s")
     }
 
+    // Form-dirty tracking rides in the relay's script, so each frame evaluates one script in this world rather than two; it
+    // stays inert where its handler is not registered.
     private static let relaySource = channelSpliced(#"""
     (function () {
       'use strict';
@@ -49,7 +51,7 @@ enum PageWorld {
       // Dispatch is synchronous: the page world's answer to a push arrives before it returns.
       window.push = message => { answer = undefined; send(message); return answer; };
     })();
-    """#)
+    """#) + "\n" + FormDirtyBridge.scriptSource
 
     /// Every native the toolkit and modules use is captured here, before any page script can wrap it.
     private static let toolkitSource = channelSpliced(#"""
@@ -64,7 +66,9 @@ enum PageWorld {
       // Shared with same-origin frames, as one realm's toString can be called on another's functions.
       let masked;
       try {
-        if (window.parent !== window) {
+        // A cross-origin parent's document throws; its origin is known without touching it. window.origin is the
+        // document's, which about:blank and srcdoc frames inherit, where location.origin is "null".
+        if (window.parent !== window && location.ancestorOrigins[0] === window.origin) {
           const ask = new NativeCustomEvent('__LILO_SHARE__', { __proto__: null, detail: {} });
           apply(dispatch, window.parent.document, [ask]);
           masked = ask.detail.masked;

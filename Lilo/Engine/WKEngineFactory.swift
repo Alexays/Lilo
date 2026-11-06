@@ -157,8 +157,8 @@ final class WKEngineFactory {
     private let eyeDropperBridge = EyeDropperBridge()
     private let documentPiPBridge = DocumentPiPBridge()
 
-    func dispatchWebNotificationClick(identifier: String) {
-        notificationBridge.dispatchClick(identifier: identifier)
+    func dispatchWebNotification(_ type: String, identifier: String) {
+        notificationBridge.dispatch(type, identifier: identifier)
     }
 
     /// Forwarded by the window controller whenever the visible engine view changes, so paused
@@ -984,8 +984,6 @@ final class WKEngineFactory {
             TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule,
             DocumentPiPBridge.pageModule, AgentCapture.consoleModule
         ] + (UserDefaults.standard.bool(forKey: "LiloMeetDocumentPiPDisabled") ? [] : [DocumentPiPBridge.meetModule]), on: contentController)
-        contentController.addUserScript(WKUserScript(source: FormDirtyBridge.scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: false,
-                                                     in: PageWorld.bridgeWorld))
         // Store shim for regular tabs (the store is a normal https tab without ChromeAPIAugmentation.js), top-level only. Injected
         // only into the store when the match-pattern SPI exists; it self-guards on the hostname otherwise.
         if let source = bundledTemplate("ChromeWebStoreShim") {

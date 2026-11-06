@@ -214,7 +214,14 @@ final class MediaControlTests: XCTestCase {
         }
         XCTAssertTrue(reached, "\(unhandled)")
         XCTAssertEqual(Set(unhandled), ["TypeError", "RangeError", "AbortError", "NotSupportedError"], "as in Safari, error reporters see them")
-        XCTAssertNotEqual(reported?.holdsWebLock, true, "a lock whose callback failed is released")
+
+        // A lock held past the report delay ends the hold only once the failed ones were released too.
+        _ = try await tab.wkWebView.evaluateJavaScript("navigator.locks.request('held', () => new Promise(r => { window.releaseHeld = r; })); true")
+        let held = await pollUntil(timeout: 10) { reported?.holdsWebLock == true }
+        XCTAssertTrue(held)
+        _ = try await tab.wkWebView.evaluateJavaScript("window.releaseHeld(); true")
+        let released = await pollUntil(timeout: 5) { reported?.holdsWebLock == false }
+        XCTAssertTrue(released, "a lock whose callback failed is released")
     }
 
     func testALiveConnectionKeepsATabInACall() {
