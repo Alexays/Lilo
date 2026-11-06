@@ -970,7 +970,7 @@ extension MainWindowController: NSWindowDelegate {
     /// A lagging read is harmless: the sync has no side effects and the next occlusion notification corrects it.
     override func showWindow(_ sender: Any?) {
         super.showWindow(sender)
-        context.hiddenSpaceLifecycle.syncWindowVisibility(context.windows.windows.contains { $0.window?.occlusionState.contains(.visible) == true })
+        context.hiddenSpaceLifecycle.syncWindowVisibility(context.anyWindowVisible)
     }
 }
 

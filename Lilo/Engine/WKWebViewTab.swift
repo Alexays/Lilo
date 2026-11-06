@@ -70,6 +70,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: CallControls)
         func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool)
+        /// The page entered or left element fullscreen, which moves its view to a window of its own.
+        func tabDidChangeFullscreen(_ tab: WKWebViewTab)
         func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool)
         /// The page waits on a dialog, or no longer does.
         func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool)
@@ -1150,6 +1152,9 @@ final class WKWebViewTab: NSObject {
                     tab.isDarkAppearance = dark
                     tab.recapturePageColor()
                 }
+            },
+            webView.observe(\.fullscreenState) { [weak self] _, _ in
+                self?.onMain { $0.delegate?.tabDidChangeFullscreen($0) }
             }
         ]
         // WebKit samples the top edge once a load paints, never on scroll; it skips a fixed header, which scrolls content under it.
@@ -1632,6 +1637,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {}
     func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool) {}
+    func tabDidChangeFullscreen(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int) {}
