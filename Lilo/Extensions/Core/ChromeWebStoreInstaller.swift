@@ -37,13 +37,17 @@ enum ChromeWebStoreInstaller {
     static let maxExtractedBytes: UInt64 = 1024 * 1024 * 1024
 
     /// Downloads + validates + unzips into `<tmp>/<uuid>/<extensionId>`: the folder name is the id the
-    /// install keeps. The caller deletes the returned directory's parent.
-    static func downloadAndExtract(extensionId: String) async throws -> URL {
+    /// install keeps. The caller deletes the returned directory's parent. A background download skips Low Data Mode networks.
+    static func downloadAndExtract(extensionId: String, inBackground: Bool = false) async throws -> URL {
         let downloadURL = try downloadURL(for: extensionId)
         logger.info("Downloading CRX from: \(downloadURL.absoluteString, privacy: .public)")
 
         var request = URLRequest(url: downloadURL)
         request.setValue(ChromeMasquerade.chromeUserAgent, forHTTPHeaderField: "User-Agent")
+        if inBackground {
+            request.networkServiceType = .background
+            request.allowsConstrainedNetworkAccess = false
+        }
 
         let (tempFile, response) = try await URLSession.shared.download(for: request)
         defer { try? FileManager.default.removeItem(at: tempFile) }

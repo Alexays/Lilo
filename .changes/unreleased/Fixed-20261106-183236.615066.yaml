@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extension updates that only add permissions Chrome grants without a warning, or ones already granted, no longer disable the extension; an update that needs new permissions is listed for review instead of interrupting with a dialog, and background update downloads respect Low Data Mode.
+time: 2026-11-06T18:32:36.615066+01:00
