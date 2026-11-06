@@ -25,6 +25,7 @@ interface Term {
   eol?: boolean;
   alternatives?: Term[][];
   capturing?: boolean;
+  captures?: number;
   min: number;
   max: number;
 }
@@ -91,11 +92,12 @@ export function webKitRegex(source: string, substitution?: string): string | [st
         else fail();
         capturing = source[i - 1] !== ':';
       }
+      const before = groups;
       if (capturing) groups++;
       const alternatives = disjunction();
       if (source[i] !== ')') fail();
       i++;
-      return term({ alternatives, capturing });
+      return term({ alternatives, capturing, captures: groups - before });
     }
     if (c === '[') {
       const { body, negated } = classBody();
@@ -178,7 +180,6 @@ export function webKitRegex(source: string, substitution?: string): string | [st
   function repeat(text: string, min: number, max: number): string {
     if (min === 1 && max === 1) return text;
     if (min === 0 && max === 1) return optional(text);
-    if (whole && min === 0 && isCapturing(text)) fail();
     if (min === 0 && max === Infinity) return `${text}*`;
     if (min === 1 && max === Infinity) return `${text}+`;
     // Copies of a capturing group would renumber the groups a regexSubstitution names.
@@ -189,6 +190,10 @@ export function webKitRegex(source: string, substitution?: string): string | [st
   function emit(terms: Term[]): string {
     return terms.map((term) => {
       if (term.bol || term.eol) fail();
+      // A skipped group puts `undefined` in the URL unless `optional` takes it alone, and copies renumber the groups.
+      const plain = term.min === 1 && (term.max === 1 || term.max === Infinity) && !term.alternatives?.some((alternative) => !alternative.length);
+      const lone = term.capturing && term.captures === 1 && term.max === 1;
+      if (whole && term.captures && !plain && !lone) fail();
       const quantified = term.min !== 1 || term.max !== 1;
       const text = term.alternatives ? oneOf(term.alternatives, term.capturing!, quantified) : term.text;
       return repeat(text, term.min, term.max);

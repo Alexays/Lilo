@@ -46,6 +46,9 @@ describe('RE2 regexFilter in the subset WebKit compiles', () => {
     assert.equal(webKitRegex('(a)(b)(c)(d)(e)(f)(g)(h)', '\\1'), undefined, 'the last group would be \\11');
     assert.equal(webKitRegex('.*u=1($|&)', '\\1'), undefined, 'an end alternative cannot keep the text after it');
     assert.equal(webKitRegex('a(b)*c', '\\1'), undefined);
+    for (const nested of ['(?:a(b))?c', '(?:a(b)|)c', '((a)b)?c', '(?:a(b)){2}c']) {
+      assert.equal(webKitRegex(nested, '\\1'), undefined, `${nested} leaves a group that may capture nothing, or copies it`);
+    }
   });
 
   it('gives up where one WebKit regex cannot say the same', () => {
