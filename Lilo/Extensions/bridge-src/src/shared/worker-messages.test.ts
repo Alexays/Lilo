@@ -124,11 +124,9 @@ describe('worker messages', () => {
   });
 
   it('resolves ready with a stand-in carrying the messages once the worker answers a page that finds no registration', async () => {
-    const offscreen = page('chrome-extension://abc/offscreen.html');
-    const pending = (offscreen.scope.navigator.serviceWorker as any).ready;
-    await new Promise((resolve) => setTimeout(resolve, 150));
     const sw = worker();
-    const { active } = await pending;
+    const offscreen = page('chrome-extension://abc/offscreen.html');
+    const { active } = await (offscreen.scope.navigator.serviceWorker as any).ready;
     assert.equal(active.scriptURL, 'chrome-extension://abc/background/worker.js');
     const received = next(sw);
     active.postMessage({ event: 'connected' });
