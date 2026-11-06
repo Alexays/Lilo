@@ -1,12 +1,10 @@
 ---
-import changelog from "../../../CHANGELOG.md?raw";
 import Layout from "../layouts/Layout.astro";
-import { parseChangelog } from "../lib/changelog.ts";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
-import { parseReleaseStories } from "../lib/release-stories";
+import { releases, stories } from "../lib/release-entries";
 import PageSection from "./PageSection.astro";
-import ReleaseStory from "./ReleaseStory.astro";
+import ReleaseEntry from "./ReleaseEntry.astro";
 
 interface Props {
   lang: Locale;
@@ -14,26 +12,6 @@ interface Props {
 
 const { lang } = Astro.props;
 const text = copy[lang];
-const releases = parseChangelog(changelog);
-
-const stories = parseReleaseStories(
-  changelog,
-  Object.values(
-    import.meta.glob("../content/releases/*.json", {
-      eager: true,
-      import: "default",
-    })
-  )
-);
-
-if (releases.length === 0) {
-  throw new Error("No published Changie releases found in CHANGELOG.md");
-}
-
-const dateFormat = new Intl.DateTimeFormat(lang, {
-  dateStyle: "long",
-  timeZone: "UTC",
-});
 ---
 
 <Layout
@@ -49,147 +27,12 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
 >
   <PageSection>
     {releases.map((release, index) => (
-      <article
-        class="release"
-        id={`v${release.version}`}
-        aria-labelledby={`title-v${release.version}`}
-      >
-        <header class="release-meta">
-          {index === 0 && <span class="beta">{text.latest}</span>}
-          <h2 id={`title-v${release.version}`}>
-            <a
-              href={`#v${release.version}`}
-              aria-label={`${text.version} ${release.version}`}
-            >
-              {release.version}
-            </a>
-          </h2>
-          <time datetime={release.date}>
-            {dateFormat.format(new Date(`${release.date}T00:00:00Z`))}
-          </time>
-          <a
-            class="release-link"
-            href={`https://github.com/Alexays/Lilo/releases/tag/v${release.version}`}
-          >
-            {text.releaseLink}
-          </a>
-        </header>
-        <div class="release-content">
-          {stories.has(release.version) ? (
-            <>
-              <ReleaseStory lang={lang} story={stories.get(release.version)!} />
-              <details class="release-details">
-                <summary>{text.releaseAllChanges}</summary>
-                <div class="release-body" lang="en" set:html={release.html} />
-              </details>
-            </>
-          ) : (
-            <div class="release-body" lang="en" set:html={release.html} />
-          )}
-        </div>
-      </article>
+      <ReleaseEntry
+        lang={lang}
+        latest={index === 0}
+        release={release}
+        story={stories.get(release.version)}
+      />
     ))}
   </PageSection>
 </Layout>
-
-<style>
-  .release {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
-    gap: 40px;
-    padding-block: 48px;
-    border-bottom: 1px solid var(--line);
-    scroll-margin-top: 24px;
-  }
-  .release:first-child {
-    padding-top: 0;
-  }
-  .release:last-child {
-    padding-bottom: 0;
-    border-bottom: 0;
-  }
-  .release-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .release-meta h2 {
-    font-size: 32px;
-    line-height: 1.2;
-  }
-  .release-meta h2 a {
-    text-decoration: none;
-  }
-  .release-meta time,
-  .release-link {
-    font-size: 14px;
-    color: var(--ink-2);
-  }
-  .release-link {
-    text-decoration: none;
-    text-underline-offset: 4px;
-  }
-  .release-link:hover {
-    color: var(--accent);
-    text-decoration: underline;
-  }
-  .release-body {
-    font-size: 16px;
-    overflow-wrap: anywhere;
-  }
-  .release-content {
-    min-width: 0;
-  }
-  .release-details {
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid var(--line);
-  }
-  .release-details summary {
-    width: fit-content;
-    padding-block: 10px;
-    color: var(--accent);
-    cursor: pointer;
-  }
-  .release-details[open] .release-body {
-    margin-top: 20px;
-  }
-  .release-body :global(h3) {
-    margin-block: 28px 12px;
-    font-size: 20px;
-  }
-  .release-body :global(h3:first-child) {
-    margin-top: 0;
-  }
-  .release-body :global(ul),
-  .release-body :global(ol) {
-    padding-left: 22px;
-    margin-block: 12px 0;
-  }
-  .release-body :global(li) {
-    padding-left: 4px;
-    margin-block: 10px;
-  }
-  .release-body :global(li::marker) {
-    color: var(--accent);
-  }
-  .release-body :global(p + p) {
-    margin-top: 12px;
-  }
-  .release-body :global(a) {
-    color: var(--accent);
-    text-underline-offset: 3px;
-  }
-  .release-body :global(code) {
-    font-family: var(--mono);
-    font-size: 0.875em;
-  }
-  @media (max-width: 700px) {
-    .release {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 24px;
-      padding-block: 32px;
-    }
-  }
-</style>

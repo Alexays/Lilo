@@ -165,7 +165,29 @@ test("a highlight action is optional and requires both translated labels and des
   );
 });
 
-test("rejects a story sourced from another release or an unpublished version", () => {
+test("a drafted story waits for its release", () => {
+  const drafted = { ...exampleStory(), version: "0.10.0" };
+  assert.equal(parseReleaseStories(storyHistory, [drafted]).size, 0);
+});
+
+test("groups quote the notes of their release", () => {
+  const group = { title: { en: "Tabs", fr: "Onglets" } };
+  const [{ notes }] = exampleStory().highlights;
+  const grouped = { ...exampleStory(), groups: [{ ...group, notes }] };
+  assert.equal(
+    parseReleaseStories(storyHistory, [grouped]).get("0.9.0")?.groups?.length,
+    1
+  );
+  assert.throws(
+    () =>
+      parseReleaseStories(storyHistory, [
+        { ...grouped, groups: [{ ...group, notes: ["Another note."] }] },
+      ]),
+    /Groups are not sourced/u
+  );
+});
+
+test("rejects a story sourced from another release or an unknown past version", () => {
   const otherRelease = exampleStory();
   otherRelease.highlights[0].notes = ["Keep the source tab selected."];
   assert.throws(
@@ -175,7 +197,7 @@ test("rejects a story sourced from another release or an unpublished version", (
   assert.throws(
     () =>
       parseReleaseStories(storyHistory, [
-        { ...exampleStory(), version: "0.10.0" },
+        { ...exampleStory(), version: "0.0.1" },
       ]),
     /Missing or duplicate release/u
   );

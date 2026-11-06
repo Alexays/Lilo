@@ -195,6 +195,22 @@ class SiteTests(unittest.TestCase):
                 demo_link = next(node for node in nodes(highlights[0]) if node.tag == "a")
                 self.assertEqual(demo_link.attrs["href"], ("/fr/" if language == "fr" else "/") + "#browser-demo")
 
+    def test_each_release_has_a_page_in_the_sitemap_and_the_feed(self):
+        for prefix in ["", "fr/"]:
+            with self.subTest(prefix=prefix):
+                self.assertTrue((DIST / f"{prefix}changelog/0.16.0/index.html").is_file())
+                self.assertFalse((DIST / f"{prefix}changelog/0.16.0/index.md").exists())
+                self.assertIn(f"https://getlilo.app/{prefix}changelog/0.16.0/", (DIST / "sitemap-0.xml").read_text())
+                feed = ET.parse(DIST / f"{prefix}changelog/rss.xml").getroot()
+                item = next(item for item in feed.iter("item") if item.findtext("link") == f"https://getlilo.app/{prefix}changelog/0.16.0/")
+                self.assertTrue(item.findtext("description"))
+                self.assertIn("<h3>Added</h3>", item.findtext("{http://purl.org/rss/1.0/modules/content/}encoded"))
+                self.assertEqual(feed.findtext("channel/language"), "fr" if prefix else "en")
+
+    def test_a_release_page_shares_its_illustration(self):
+        page = (DIST / "changelog/0.8.0/index.html").read_text()
+        self.assertIn('property="og:image" content="https://getlilo.app/release-media/0.8.0/tab-share.png"', page)
+
     def test_highlight_media_plays_on_request_and_ships_its_files(self):
         for language, page in [("en", "changelog/index.html"), ("fr", "fr/changelog/index.html")]:
             with self.subTest(language=language):
