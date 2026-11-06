@@ -1,0 +1,3 @@
+kind: Fixed
+body: An agent that stops on its own always shows the last thing it reported, which says why it stopped
+time: 2026-11-06T16:39:18.783019+02:00
