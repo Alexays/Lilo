@@ -329,19 +329,20 @@ describe('the view chrome hands out for WebKit own properties', () => {
     const runtime: any = new Runtime(['nativeMessaging']);
     const disconnects: Array<() => void> = [];
     const messages: Array<(message: unknown) => void> = [];
+    const posted: unknown[] = [];
     runtime.connectNative = (application: string) => {
       opened.push(application);
       return {
         name: application,
         onMessage: { addListener: (listener: (message: unknown) => void) => messages.push(listener) },
         onDisconnect: { addListener: (listener: () => void) => disconnects.push(listener) },
-        postMessage() {},
+        postMessage(message: unknown) { posted.push(message); },
         disconnect() {},
       };
     };
     (globalThis as any).chrome = { runtime };
     installChromeCompat({});
-    return { chrome: (globalThis as any).chrome, runtime, opened, disconnects, messages };
+    return { chrome: (globalThis as any).chrome, runtime, opened, disconnects, messages, posted };
   }
 
   it('passes Lilo channel straight through and marks the other hosts', () => {
@@ -360,6 +361,17 @@ describe('the view chrome hands out for WebKit own properties', () => {
     disconnects[0]();
     assert.deepEqual(seen, { message: 'Specified native messaging host not found.' });
     assert.equal(chrome.runtime.lastError, undefined);
+  });
+
+  it('answers each host message to keep the worker running and hands it on', () => {
+    const { chrome, messages, posted } = nativeRuntime();
+    const port = chrome.runtime.connectNative('com.example.host');
+    const heard: unknown[] = [];
+    port.onMessage.addListener((message: unknown) => heard.push(message));
+    port.postMessage('ping');
+    for (const message of ['first', 'second']) messages[0](message);
+    assert.deepEqual(heard, ['first', 'second']);
+    assert.deepEqual(posted, [{ liloNativePortOpened: true }, 'ping', { liloNativePortKeepAlive: true }, { liloNativePortKeepAlive: true }]);
   });
 
   it('throws Chrome\'s error on a post once the port is disconnected', () => {
