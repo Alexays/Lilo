@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
   import { scale } from "svelte/transition";
@@ -42,6 +43,7 @@
     isSidebarDragActive,
   } from "../../stores/sidebarDnd.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import { announce } from "../../lib/announce";
   import { getSetting } from "../../stores/settings.svelte";
   import {
     aggregateDownloadProgress,
@@ -210,10 +212,46 @@
     switchSpaceAnimated(spaceId);
   }
 
-  function handleSpaceKeydown(event: KeyboardEvent, spaceId: string): void {
+  // A moved icon remounts in its new place once the host echoes the move: focus follows it there.
+  let pendingFocusSpaceId: string | null = null;
+  $effect(() => {
+    void spaceBaseItems;
+    const id = pendingFocusSpaceId;
+    if (!id) return;
+    void tick().then(() => {
+      if (pendingFocusSpaceId !== id) return;
+      pendingFocusSpaceId = null;
+      spaceScrollerEl?.querySelector<HTMLElement>(`[data-space-dnd-id="${CSS.escape(id)}"] .space-icon-btn`)?.focus();
+    });
+  });
+
+  // Option-Left and Option-Right move the Space as a drag would, among the Spaces a drag can move.
+  function moveSpace(space: SpaceState, key: string): void {
+    const movable = reorderableSpaces.filter(canReorder);
+    const index = movable.findIndex((candidate) => candidate.id === space.id);
+    const to = key === "ArrowLeft" ? index - 1 : index + 1;
+    if (index < 0 || to < 0 || to >= movable.length) return;
+    pendingFocusSpaceId = space.id;
+    spaceActions.move(space.id, reorderableSpaces.indexOf(movable[to]));
+    announce(t("sidebar.movedToPosition", { position: to + 1, count: movable.length }));
+  }
+
+  function handleSpaceKeydown(event: KeyboardEvent, space: SpaceState): void {
+    if ((event.key === "F10" && event.shiftKey) || event.key === "ContextMenu") {
+      event.preventDefault();
+      const icon = event.currentTarget as HTMLElement;
+      const rect = icon.getBoundingClientRect();
+      icon.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: rect.left, clientY: rect.top }));
+      return;
+    }
+    if (event.altKey && !event.metaKey && !event.ctrlKey && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+      event.preventDefault();
+      moveSpace(space, event.key);
+      return;
+    }
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
-    handleSpaceClick(spaceId);
+    handleSpaceClick(space.id);
   }
 
   function showNativeSidebarContextMenu(event: MouseEvent, spaceId?: string): void {
@@ -489,11 +527,14 @@
     }}
     role="button"
     tabindex="0"
-    aria-label={space.name}
+    aria-label={spaceActivity[space.id]
+      ? `${space.name}, ${t(spaceActivity[space.id] === "attention" ? "tabItem.terminalAttention" : "tabItem.agentActing")}`
+      : space.name}
+    aria-current={space.id === getActiveSpaceId() ? "true" : undefined}
     style={getIconStyle(index)}
     onclick={() => handleSpaceClick(space.id)}
     oncontextmenu={(event) => showNativeSidebarContextMenu(event, space.id)}
-    onkeydown={(event) => handleSpaceKeydown(event, space.id)}
+    onkeydown={(event) => handleSpaceKeydown(event, space)}
   >
     <span class="space-glyph">
       {#if isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)}
