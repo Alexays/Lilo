@@ -57,6 +57,15 @@
   transform: scale(1.02);
 }
 
+.action-btn:active {
+  background: var(--bg-active);
+}
+
+.action-btn:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 1px;
+}
+
 /* Icon control in an overlay panel's header, shared by the diagnostics, process, downloads and
    screenshot panels; each sets only what differs. */
 .hdr-ctl {
@@ -76,6 +85,15 @@
 .hdr-ctl:hover:not(:disabled) {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.hdr-ctl:active:not(:disabled) {
+  background: var(--bg-active);
+}
+
+.hdr-ctl:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 1px;
 }
 
 .hdr-ctl:disabled {

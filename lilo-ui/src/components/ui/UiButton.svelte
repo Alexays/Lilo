@@ -100,6 +100,14 @@
     background: color-mix(in srgb, var(--danger-deep) 88%, black);
   }
 
+  .ui-button:not(:disabled, .primary, .danger, .destructive):active {
+    background: var(--bg-active);
+  }
+
+  .ui-button:is(.primary, .danger, .destructive):not(:disabled):active {
+    filter: brightness(0.92);
+  }
+
   .ui-button:focus-visible {
     outline: var(--focus-outline);
     outline-offset: 1px;

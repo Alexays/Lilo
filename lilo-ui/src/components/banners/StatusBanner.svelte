@@ -51,4 +51,9 @@
     color: inherit;
     cursor: pointer;
   }
+
+  .status-close:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
 </style>

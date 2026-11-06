@@ -362,6 +362,15 @@
     color: var(--text-primary);
   }
 
+  .nav-btn:active:not(:disabled) {
+    background: var(--bg-active);
+  }
+
+  .nav-btn:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
+
   /* Each glyph hints at its action on hover. */
   .toggle-bar,
   .history-arrow,
