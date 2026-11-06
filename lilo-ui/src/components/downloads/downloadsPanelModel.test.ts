@@ -154,6 +154,11 @@ test("metaLine for failures carries the error text, its translated code or Faile
     tone: "error",
   });
 
+  assert.equal(
+    metaLine(dl({ state: "interrupted", error: "SERVER_BAD_CONTENT" }), "fr", NOW_MS).stateKey,
+    "downloadsPanel.errorNotFound",
+  );
+
   const bare = metaLine(dl({ state: "interrupted" }), "fr", NOW_MS);
   assert.deepEqual(bare, {
     detail: null,

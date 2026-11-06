@@ -10,6 +10,9 @@ enum DownloadState: String, Codable {
 enum DownloadInterruptReason: String {
     case userCanceled = "USER_CANCELED"
     case serverFailed = "SERVER_FAILED"
+    case serverBadContent = "SERVER_BAD_CONTENT"
+    case serverUnauthorized = "SERVER_UNAUTHORIZED"
+    case serverForbidden = "SERVER_FORBIDDEN"
     case serverNoRange = "SERVER_NO_RANGE"
     case fileFailed = "FILE_FAILED"
     case fileNoSpace = "FILE_NO_SPACE"

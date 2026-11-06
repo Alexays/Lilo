@@ -31,6 +31,9 @@ export type InlineAction = "pause" | "resume" | "retry";
 const ERROR_KEYS = new Map([
   ["USER_CANCELED", "downloadsPanel.errorCanceled"],
   ["SERVER_FAILED", "downloadsPanel.errorServer"],
+  ["SERVER_BAD_CONTENT", "downloadsPanel.errorNotFound"],
+  ["SERVER_UNAUTHORIZED", "downloadsPanel.errorUnauthorized"],
+  ["SERVER_FORBIDDEN", "downloadsPanel.errorForbidden"],
   ["SERVER_NO_RANGE", "downloadsPanel.errorNoResume"],
   ["FILE_FAILED", "downloadsPanel.errorFile"],
   ["FILE_NO_SPACE", "downloadsPanel.errorNoSpace"],

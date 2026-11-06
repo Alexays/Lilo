@@ -181,7 +181,13 @@ extension URLSessionBackend: URLSessionDownloadDelegate {
         var failure: String?
         if let status = (downloadTask.response as? HTTPURLResponse)?.statusCode, !(200..<300).contains(status) {
             // The body is the server's error page: leave it to URLSession's temp-file cleanup.
-            failure = DownloadInterruptReason.serverFailed.rawValue
+            let reason: DownloadInterruptReason = switch status {
+            case 401, 407: .serverUnauthorized
+            case 403: .serverForbidden
+            case 404: .serverBadContent
+            default: .serverFailed
+            }
+            failure = reason.rawValue
         } else {
             do {
                 if !record.replacesExisting {

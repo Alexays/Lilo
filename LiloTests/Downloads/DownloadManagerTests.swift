@@ -326,6 +326,22 @@ final class DownloadManagerTests: XCTestCase {
         XCTAssertEqual(try store.fetchAll().map(\.id), [id], "a retry would fetch the page, not the page's blob")
     }
 
+    func testMissingFileOnTheServerStoresChromesInterruptReason() async throws {
+        let server = try await TinyHTTPServer { _ in ("404 Not Found", ["Content-Type: text/html"], Data("missing".utf8)) }
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        let id = try manager.startExtensionDownload(
+            request: URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/gone.zip"))),
+            suggestedFilename: "gone.zip", destination: folder.appendingPathComponent("gone.zip"), in: store
+        )
+        _ = await pollUntil { (try? self.store.fetch(id: id))?.state == .interrupted }
+        withExtendedLifetime(server) {}
+
+        XCTAssertEqual(try store.fetch(id: id)?.error, "SERVER_BAD_CONTENT")
+    }
+
     func testSavedDataTakesTheExtensionsSuggestedName() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
