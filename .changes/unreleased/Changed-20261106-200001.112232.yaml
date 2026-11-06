@@ -1,0 +1,3 @@
+kind: Changed
+body: Screenshot confirmations and notices now appear as the same toast as a closed tab, and the screenshot panel uses the standard buttons, Save menu and section headers.
+time: 2026-11-06T20:00:01.112232+01:00
