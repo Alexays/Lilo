@@ -51,6 +51,29 @@ final class LittleWindowTests: XCTestCase {
         XCTAssertTrue(little.window.firstResponder is NSText, "the address field is being edited")
     }
 
+    func testTheAddressFieldOpensAddressesAndSearchesTheRest() throws {
+        let settings = try XCTUnwrap(browserContext.context.settingsStore)
+        settings.set("searchEngines", value: #"[{"id":"test","name":"Test","urlTemplate":"https://search.example/?q=%s"}]"#)
+        defer { settings.remove("searchEngines") }
+        let cases = [
+            "v1.2": "https://search.example/?q=v1.2",
+            "example.test/a": "https://example.test/a",
+            "localhost:8080/a": "http://localhost:8080/a",
+            "127.0.0.1:9/a": "http://127.0.0.1:9/a",
+            "me@example.test": "https://search.example/?q=me%40example.test"
+        ]
+        for (typed, expected) in cases {
+            let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+            let editor = try XCTUnwrap(little.window.firstResponder as? NSTextView)
+            editor.insertText(typed, replacementRange: NSRange(location: NSNotFound, length: 0))
+
+            editor.doCommand(by: #selector(NSResponder.insertNewline(_:)))
+
+            XCTAssertEqual(little.engine.currentURL?.absoluteString, expected, typed)
+            little.window.close()
+        }
+    }
+
     func testOpenInSpaceMovesTheLivePageIntoThatSpace() throws {
         let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
         let engine = little.engine
