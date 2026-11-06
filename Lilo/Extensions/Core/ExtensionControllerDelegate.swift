@@ -214,28 +214,66 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         completionHandler: @escaping ((any WKWebExtensionTab)?, Error?) -> Void
     ) {
         // The tab opens in a space's window the context sees: the one asked for, else the focused one, else the one it saw last.
-        let visible = { (window: WindowExtensionAdapter?) in
-            window.flatMap { $0.spaceId != nil && (!$0.isPrivateWindow || context.hasAccessToPrivateData) ? $0 : nil }
-        }
-        let requested = visible(configuration.window as? WindowExtensionAdapter) ?? visible(windowAdapter)
-            ?? registry?.extensionWindows(for: context).first { $0.spaceId != nil }
-        // A space in the background is shown first, in the browser window that showed it last.
-        guard let spaceId = requested?.spaceId,
-              let target = windows?.windows.first(where: { $0.tabManager.currentSpaceId == spaceId })
-                ?? requested?.nsWindow?.windowController as? MainWindowController else {
+        let isExtensionPage = configuration.url?.scheme?.lowercased() == "chrome-extension"
+        let admits = { (window: WindowExtensionAdapter) in Self.admits(window, extensionPage: isExtensionPage, context: context) }
+        guard let space = [configuration.window as? WindowExtensionAdapter, windowAdapter].compactMap({ $0 }).first(where: admits)
+                ?? registry?.extensionWindows(for: context).first(where: admits),
+              let (target, tab) = openTab(
+                  url: configuration.url, activate: configuration.shouldBeActive, in: space, for: context,
+                  opener: (configuration.parentTab as? TabExtensionAdapter)?.tabId,
+                  index: configuration.shouldBePinned ? nil : configuration.index
+              ) else {
             completionHandler(nil, Self.extensionError("Window controller not available")); return
         }
-        if target.tabManager.currentSpaceId != spaceId { target.switchToSpace(spaceId) }
-        guard target.tabManager.currentSpaceId == spaceId else {
-            completionHandler(nil, Self.extensionError("Window controller not available")); return
+        if configuration.shouldBePinned, let spaceId = space.spaceId {
+            _ = try? target.applyBrowserCommand(.setPinned(spaceId: spaceId, tabId: tab.id, isPinned: true))
         }
+        if configuration.shouldBeMuted { target.tabManager.setTabMuted(id: tab.id, muted: true) }
+        guard let adapter = target.tabManager.tabAdapter(for: tab.id) else {
+            completionHandler(nil, Self.extensionError("Tab adapter not found after creation")); return
+        }
+        adapter.parent = configuration.parentTab as? TabExtensionAdapter
+        completionHandler(adapter, nil)
+    }
+
+    /// Whether a tab of `context` may open in `window`'s space. An extension page never opens in a private one: its
+    /// configuration keeps the profile's store, not the space's.
+    private static func admits(_ window: WindowExtensionAdapter, extensionPage: Bool, context: WKWebExtensionContext) -> Bool {
+        window.spaceId != nil && (!window.isPrivateWindow || context.hasAccessToPrivateData && !extensionPage)
+    }
+
+    /// The browser window for `spaceId`: one showing it, else the one that showed it last, else one of the profile. It shows
+    /// the space first when `activate`, unless it shows a private space the tab may not open in: the user stays there.
+    private func browserWindow(
+        for spaceId: UUID, lastShownIn nsWindow: NSWindow?, activate: Bool, extensionPage: Bool, context: WKWebExtensionContext
+    ) -> MainWindowController? {
+        guard let target = windows?.windows(showing: spaceId).first
+            ?? nsWindow?.windowController as? MainWindowController ?? windows?.window(showingProfileOf: registry) else { return nil }
+        let hidesShownSpace = target.tabManager.windowAdapter.map {
+            $0.isPrivateWindow && !Self.admits($0, extensionPage: extensionPage, context: context)
+        } ?? false
+        if activate, !opensTabsInBackground, !hidesShownSpace, target.tabManager.currentSpaceId != spaceId {
+            target.switchToSpace(spaceId)
+        }
+        return target
+    }
+
+    /// Opens `url` in `space`, shown first as `browserWindow` allows. In a space no window shows, the tab waits unloaded,
+    /// already open to extensions. `index` lands it just before the tab shown there, in that tab's folder.
+    private func openTab(
+        url: URL?, activate: Bool, in space: WindowExtensionAdapter, for context: WKWebExtensionContext, opener: UUID? = nil, index: Int? = nil
+    ) -> (window: MainWindowController, tab: Tab)? {
+        guard let registry, let spaceId = space.spaceId,
+              let target = browserWindow(
+                  for: spaceId, lastShownIn: space.nsWindow, activate: activate,
+                  extensionPage: url?.scheme?.lowercased() == "chrome-extension", context: context
+              ) else { return nil }
         let tabManager = target.tabManager
-        // `index` lands the tab just before the one shown there, in that tab's folder. As in Chrome, an
-        // index among the pinned or bookmarked tabs stops at the first unpinned spot instead of pinning it.
+        // As in Chrome, an index among the pinned or bookmarked tabs stops at the first unpinned spot instead of pinning it.
         var placement: (folderId: UUID?, section: TabTreeItem.Section, index: Int)?
         let windowTabs = tabManager.tabs(forSpace: spaceId)
-        if !configuration.shouldBePinned, windowTabs.indices.contains(configuration.index) {
-            let anchorId = windowTabs[configuration.index].id
+        if let index, windowTabs.indices.contains(index) {
+            let anchorId = windowTabs[index].id
             let items = tabManager.sidebarTreeItems(forSpace: spaceId)
             if let anchor = items.first(where: { $0.kind == .tab && $0.itemId == anchorId }) {
                 if anchor.section != .unpinned {
@@ -249,45 +287,50 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         }
 
         guard let tab = target.createTabStateFirst(
-            url: configuration.url,
-            activate: configuration.shouldBeActive && !opensTabsInBackground,
-            opener: (configuration.parentTab as? TabExtensionAdapter)?.tabId,
+            url: url,
+            activate: activate && !opensTabsInBackground,
+            opener: opener,
+            inSpace: spaceId,
             sidebarParentFolderId: placement?.folderId,
             sidebarSection: placement?.section,
             sidebarIndex: placement?.index
-        ) else {
-            completionHandler(nil, Self.extensionError("Window controller not available")); return
+        ) else { return nil }
+        if tabManager.currentSpaceId != spaceId {
+            let adapter = TabExtensionAdapter(tabId: tab.id, engineTab: nil, extensionWindow: space, profileId: registry.profileId)
+            adapter.tabManager = tabManager
+            space.add(tab: adapter)
+            target.context.browserState.storeHiddenTabAdapter(adapter, tabId: tab.id, spaceId: spaceId)
+            registry.controller.didOpenTab(adapter)
         }
-        if configuration.shouldBePinned {
-            _ = try? target.applyBrowserCommand(.setPinned(spaceId: spaceId, tabId: tab.id, isPinned: true))
-        }
-        if configuration.shouldBeMuted { tabManager.setTabMuted(id: tab.id, muted: true) }
-        guard let adapter = tabManager.tabAdapter(for: tab.id) else {
-            completionHandler(nil, Self.extensionError("Tab adapter not found after creation")); return
-        }
-        adapter.parent = configuration.parentTab as? TabExtensionAdapter
-        completionHandler(adapter, nil)
+        return (target, tab)
     }
 
     // MARK: - Options Page
 
     func webExtensionController(_ controller: WKWebExtensionController, openOptionsPageFor context: WKWebExtensionContext, completionHandler: @escaping (Error?) -> Void) {
-        guard let optionsURL = context.optionsPageURL else {
+        guard let registry, let optionsURL = context.optionsPageURL, let profileWindow = windows?.window(showingProfileOf: registry) else {
             completionHandler(Self.extensionError("The options page could not open")); return
         }
         // As in Chrome, an options page already open in this profile is focused, whatever its query or fragment.
-        for window in windows?.windows ?? [] where window.profileContext?.extensions === registry {
-            guard let tab = window.tabManager.openTabs.first(where: {
-                $0.url?.scheme == optionsURL.scheme && $0.url?.host == optionsURL.host && $0.url?.path == optionsURL.path
+        for space in profileWindow.context.spaceManager?.spaces ?? [] where space.profileId == registry.profileId && !space.isPrivate {
+            guard let tab = profileWindow.tabManager.tabs(forSpace: space.id).first(where: {
+                !$0.isClosed && $0.url?.scheme == optionsURL.scheme && $0.url?.host == optionsURL.host && $0.url?.path == optionsURL.path
             }) else { continue }
-            if !opensTabsInBackground {
+            if !opensTabsInBackground, let window = browserWindow(
+                for: space.id, lastShownIn: registry.windowAdapters.first { $0.spaceId == space.id }?.nsWindow,
+                activate: true, extensionPage: true, context: context
+            ), window.tabManager.currentSpaceId == space.id {
                 window.activateTabStateFirst(id: tab.id)
                 window.window?.makeKeyAndOrderFront(nil)
             }
             completionHandler(nil); return
         }
-        guard let window = windows?.window(showingProfileOf: registry),
-              window.createTabStateFirst(url: optionsURL, activate: !opensTabsInBackground) != nil else {
+        // It opens in a space a window of the profile shows, the active one first, else where `tabs.create` would open it.
+        let admits = { (window: WindowExtensionAdapter) in Self.admits(window, extensionPage: true, context: context) }
+        let shownSpaces = ([profileWindow] + (windows?.windows ?? []))
+            .filter { $0.profileContext?.extensions === registry }.compactMap(\.tabManager.windowAdapter)
+        guard let space = shownSpaces.first(where: admits) ?? registry.extensionWindows(for: context).first(where: admits),
+              openTab(url: optionsURL, activate: true, in: space, for: context) != nil else {
             completionHandler(Self.extensionError("The options page could not open")); return
         }
         completionHandler(nil)

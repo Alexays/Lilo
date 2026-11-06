@@ -629,6 +629,43 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(window.tabManager.activeTab?.id, optionsTab.id)
     }
 
+    /// The options page never opens in the private space on screen, which the user stays in, and the one open in another
+    /// space of the profile is the one shown.
+    func testOpenOptionsPageStaysOutOfPrivateSpacesAndFindsItInAnotherSpace() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("Options")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Options","version":"1.0","options_page":"options.html"}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "<title>Options</title>".write(to: extDir.appendingPathComponent("options.html"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extDir)
+        let context = try XCTUnwrap(registry.loadedExtensions.first?.context)
+        let optionsURL = try XCTUnwrap(context.optionsPageURL)
+        let homeId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        window.newPrivateSpace(nil)
+        let privateId = try XCTUnwrap(window.tabManager.currentSpaceId)
+
+        var openError: Error?
+        registry.delegate.webExtensionController(registry.controller, openOptionsPageFor: context) { openError = $0 }
+
+        XCTAssertNil(openError)
+        XCTAssertEqual(window.tabManager.currentSpaceId, privateId, "the user stays in the private space")
+        XCTAssertFalse(window.tabManager.tabs(forSpace: privateId).contains { $0.url == optionsURL })
+        let optionsTab = try XCTUnwrap(window.tabManager.tabs(forSpace: homeId).first { $0.url == optionsURL })
+
+        let other = try browserContext.context.spaceManager!.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
+        window.switchToSpace(other.id)
+        registry.delegate.webExtensionController(registry.controller, openOptionsPageFor: context) { openError = $0 }
+
+        XCTAssertNil(openError)
+        XCTAssertEqual(window.tabManager.currentSpaceId, homeId, "the window shows the options tab's space")
+        XCTAssertEqual(window.tabManager.activeTab?.id, optionsTab.id)
+        XCTAssertEqual(window.tabManager.tabs(forSpace: homeId).filter { $0.url == optionsURL }.count, 1, "no second options tab opens")
+        XCTAssertFalse(window.tabManager.tabs(forSpace: other.id).contains { $0.url == optionsURL })
+    }
+
     /// A prompt is answered through the registry that asked, and denied once its window shows another profile or closes.
     func testExtensionPermissionPromptResolvesThroughItsWindow() async throws {
         let browserContext = try await TemporaryBrowserContext()

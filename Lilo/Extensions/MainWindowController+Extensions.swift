@@ -161,8 +161,10 @@ extension MainWindowController {
             menu.addItem((pinned ? "Unpin from Address Bar" : "Pin to Address Bar").localized, icon: pinned ? .unpin : .pin) { send("togglePin") }
         }
         menu.addItem("Details".localized, icon: .details) { send("details") }
-        if let url = context?.optionsPageURL {
-            menu.addItem("Options".localized, icon: .options) { self.createTabStateFirst(url: url, activate: true) }
+        if let context, context.optionsPageURL != nil, let registry = profileContext?.extensions {
+            menu.addItem("Options".localized, icon: .options) {
+                registry.delegate.webExtensionController(registry.controller, openOptionsPageFor: context) { _ in }
+            }
         }
         menu.addItem(.separator())
         menu.addItem("Remove…".localized, icon: .delete) { send("remove") }
