@@ -42,6 +42,12 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         XCTAssertFalse(try rendersNear60FPS(factory), "an about:config override wins over the setting")
     }
 
+    func testPowerConstrainedTabsRenderNear60FPS() throws {
+        let factory = WKEngineFactory()
+        factory.suppressWarmPool = true
+        XCTAssertTrue(try rendersNear60FPS(factory), "Low Power Mode and thermal pressure halve continuous rendering work")
+    }
+
     func testAgentsProfileTabsRenderNear60FPSWhateverTheSetting() throws {
         let factory = WKEngineFactory()
         let agents = UUID()

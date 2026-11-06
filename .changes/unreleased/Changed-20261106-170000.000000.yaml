@@ -1,0 +1,3 @@
+kind: Changed
+body: Tabs opened in Low Power Mode or under thermal pressure render pages at about 60 fps, whatever the full refresh rate setting, saving battery
+time: 2026-11-06T17:00:00.000000+01:00
