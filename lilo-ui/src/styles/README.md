@@ -5,12 +5,12 @@ redeclared for dark mode, Increase contrast and Reduce transparency. `utilities.
 accent and text tints and the few classes shared across components. Components use these
 tokens instead of literal values. The yardstick is macOS: when in doubt, match what a
 first-party app does. [docs/DESIGN.md](../../../docs/DESIGN.md) sets which size, radius and
-height each element takes; this file maps those rules to tokens and wins on nothing.
+height each element takes; this file only maps those rules to tokens.
 
-`src/styles/tokens.test.ts` (run by `make ui-test`) fails when a component's `<style>` block
-or the stylesheet `lib/tooltip.ts` injects has a literal hex/`rgb()`/`hsl()` color, a px `border-radius` or a px `font-size`. Files
-that paint fixed artwork (onboarding illustrations, theme previews, the always-dark screenshot
-surfaces) are allowlisted there by name.
+`src/styles/tokens.test.ts` (run by `make ui-test`) fails when a component's `<style>` block or
+the stylesheet `lib/tooltip.ts` injects has a literal hex/`rgb()`/`hsl()` color, a px
+`border-radius` or a px `font-size`. Files that paint fixed artwork (onboarding illustrations,
+theme previews, the always-dark screenshot surfaces) are allowlisted there by name.
 
 ## Type
 
@@ -61,7 +61,7 @@ A box nested in a padded one takes its parent's radius less the padding, as
 popover buttons), `--control-height-md` (28px: header icon buttons, navigation and popover rows),
 `--control-height-lg` (32px: `UiTextField`, `UiSearchField`, plain list rows). Buttons, selects
 and segmented controls share `--radius-sm` and `--font-size-sm`. A shortcut is the global
-`.keycap` class in `utilities.css`; a tooltip keeps a 16px keycap on its own line. Icons are 12px
+`.keycap` class in `utilities.css`; a tooltip's keycap is 16px high to fit its line. Icons are 12px
 (in rows and buttons), 14px (row icons) or 16px (panel headers and toolbars), drawn with a
 stroke of about 1.5px on screen.
 
