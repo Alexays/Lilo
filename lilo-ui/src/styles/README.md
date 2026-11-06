@@ -81,7 +81,7 @@ above. Lines: `--border` around controls, `--separator` between rows. Status:
 `--warning`, `--attention`. Fixed roles: `--on-color` for text on a saturated fill (white),
 `--accent-text` on the accent, `--on-pastel` for dark ink on a light fill, the
 `--terminal-tile-*` set for terminal tab icons, the `--tile-*` system colors behind the
-settings group icons, `--diff-added`/`--diff-removed`, `--chart-2`/`--chart-3`, `--hue-wheel`.
+settings group icons, `--diff-added`/`--diff-removed`, `--hue-wheel`.
 
 Tints mix a token with `transparent` (`color-mix(in srgb, var(--accent) 12%, transparent)`);
 `utilities.css` names the common ones (`--accent-tint-*`, `--text-primary-tint-*`). A white or
