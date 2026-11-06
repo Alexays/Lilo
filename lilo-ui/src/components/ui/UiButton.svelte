@@ -38,15 +38,15 @@
 
 <style>
   .ui-button {
-    min-height: var(--control-height-md);
+    min-height: var(--control-height-sm);
     border: 0;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background: var(--bg-hover);
     color: var(--text-primary);
     font-family: inherit;
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
-    padding: 0 var(--space-12);
+    padding: 0 var(--space-10);
     /* Clipping would let a flex row shrink it under its label: it only ever gives way to max-width. */
     flex-shrink: 0;
     max-width: 100%;

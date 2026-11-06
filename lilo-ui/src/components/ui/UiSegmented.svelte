@@ -60,20 +60,20 @@
     flex: none;
     gap: var(--space-2);
     padding: var(--space-2);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background: var(--bg-hover);
   }
 
   .ui-segmented button {
-    min-height: var(--control-height-sm);
+    min-height: calc(var(--control-height-sm) - 2 * var(--space-2));
     padding: 0 var(--space-10);
     border: 0;
-    border-radius: calc(var(--radius-md) - var(--space-2));
+    border-radius: calc(var(--radius-sm) - var(--space-2));
     background: transparent;
     /* Primary, not secondary: the track's tint takes secondary text under AA. The pill marks the choice. */
     color: var(--text-primary);
     font-family: inherit;
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     white-space: nowrap;
     cursor: pointer;
     transition:

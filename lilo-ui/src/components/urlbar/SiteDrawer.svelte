@@ -242,7 +242,6 @@
   /* Controls sit on the box's tint as the bordered buttons beside them. */
   .box-row :global(.ui-select select) {
     border: 1px solid var(--float-border);
-    border-radius: var(--radius-sm);
     background-color: var(--float-surface);
   }
 
