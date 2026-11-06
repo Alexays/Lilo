@@ -1797,48 +1797,34 @@
     justify-content: stretch;
   }
 
-  .pinned-list.drag-active.is-empty::before,
-  .pinned-list.drag-active.is-empty::after {
-    position: absolute;
-    top: 50%;
-    z-index: 1;
-    opacity: 1;
-    pointer-events: none;
+  .pinned-list.drag-active.is-empty:not(.has-shadow) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 8px;
   }
 
-  .pinned-list.drag-active.is-empty.has-shadow::before,
-  .pinned-list.drag-active.is-empty.has-shadow::after {
-    opacity: 0;
-  }
-
-  .pinned-list.drag-active.is-empty.has-shadow::before {
-    transform: translate(-58px, calc(-50% - 2px)) scale(0.96);
-  }
-
-  .pinned-list.drag-active.is-empty.has-shadow::after {
-    transform: translate(-34px, calc(-50% - 2px)) scale(0.98);
-  }
-
-  .pinned-list.drag-active.is-empty::before {
+  .pinned-list.drag-active.is-empty:not(.has-shadow)::before {
     content: "";
-    left: 50%;
+    flex: none;
     width: 14px;
     height: 14px;
     background: color-mix(in srgb, var(--sidebar-zone-color) 82%, var(--text-primary));
     -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='black' d='M14 2l8 8-3 3-2-2-3.7 3.7V20l-1 1-4-4-5 5-1-1 5-5-4-4 1-1h5.3L14 7.3l-2-2 2-3.3zm5 1v2h2v2h-2v2h-2V7h-2V5h2V3h2z'/%3E%3C/svg%3E") center / contain no-repeat;
     mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='black' d='M14 2l8 8-3 3-2-2-3.7 3.7V20l-1 1-4-4-5 5-1-1 5-5-4-4 1-1h5.3L14 7.3l-2-2 2-3.3zm5 1v2h2v2h-2v2h-2V7h-2V5h2V3h2z'/%3E%3C/svg%3E") center / contain no-repeat;
-    transform: translate(-58px, -50%);
   }
 
-  .pinned-list.drag-active.is-empty::after {
+  .pinned-list.drag-active.is-empty:not(.has-shadow)::after {
     content: attr(data-drop-label);
-    left: 50%;
-    color: color-mix(in srgb, var(--sidebar-zone-color) 78%, var(--text-primary));
+    min-width: 0;
+    overflow: hidden;
+    color: var(--sidebar-contrast);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
     letter-spacing: 0;
     white-space: nowrap;
-    transform: translate(-34px, -50%);
+    text-overflow: ellipsis;
   }
 
   .tab-list-shell {
