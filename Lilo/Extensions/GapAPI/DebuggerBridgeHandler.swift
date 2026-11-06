@@ -242,7 +242,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         let engine = session.engine
         let webView = engine.wkWebView
         // A suspended page answers nothing.
-        if engine.isFrozen { engine.resume() }
+        if engine.isFrozen { _ = engine.wake() }
         if !session.inspector.isCurrent {
             // The user closed the Web Inspector they had open on the tab, and the connection with it.
             guard let inspector = try? await AgentInspector.connect(to: webView, servesFiles: false), sessions.contains(where: { $0 === session }) else {

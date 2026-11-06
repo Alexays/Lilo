@@ -307,6 +307,12 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool) {
         updateAndEmit(tab.id) { t in t.isLoading = isLoading && self.tabManager.warmedTab?.engine !== tab }
+        // The hidden-window freeze skips loading engines.
+        if !isLoading { context.hiddenSpaceLifecycle.scheduleHiddenRefreeze() }
+    }
+
+    func tabDidWake(_ tab: WKWebViewTab) {
+        context.hiddenSpaceLifecycle.scheduleHiddenRefreeze()
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {

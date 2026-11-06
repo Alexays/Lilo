@@ -392,6 +392,17 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         )
     }
 
+    func testAMutedPlayingTabCanBeFrozenButNotDiscarded() {
+        let muted = UUID()
+        var mutedTab = makeTab(id: muted)
+        mutedTab.isAudioPlaying = true
+        mutedTab.isMuted = true
+        let coordinator = TabLifecycleCoordinator()
+
+        XCTAssertFalse(coordinator.protectedEngineIds(tabs: [mutedTab], availableEngineIds: [muted]).contains(muted))
+        XCTAssertTrue(coordinator.discardProtectedEngineIds(tabs: [mutedTab], availableEngineIds: [muted]).contains(muted))
+    }
+
     func testPinnedAndBookmarkedTabsDoNotBypassNormalHiddenRetentionLimit() {
         let pinned = UUID()
         let bookmarked = UUID()

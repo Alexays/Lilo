@@ -3727,6 +3727,7 @@ final class BrowserStateStoreTests: XCTestCase {
         )
         var config = LifecyclePolicyConfig.config(for: .balanced)
         config.backgroundTrimGracePeriod = 0
+        config.freezeThreshold = 0
         var discardCount = 0
         let trimmed = expectation(description: "occlusion trim")
         let controller = HiddenSpaceLifecycleController(
@@ -4032,6 +4033,47 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertNil(store.space(id: spaceId)?.engines[ids[0]], "heavy on two sweeps in a row")
         XCTAssertNotNil(store.space(id: spaceId)?.engines[ids[1]])
         XCTAssertEqual(discarded.count, 1)
+    }
+
+    func testBusyOffScreenEngineOfTheVisibleSpaceIsFrozenOnSecondBusySweep() {
+        let activeSpaceId = UUID()
+        let visibleTabId = UUID()
+        let backgroundTabId = UUID()
+        let visible = Tab(id: visibleTabId, url: URL(string: "https://visible.example"), title: "Visible", spaceId: activeSpaceId)
+        var background = Tab(id: backgroundTabId, url: URL(string: "https://worker.example"), title: "Worker", spaceId: activeSpaceId)
+        background.lastActiveAt = Date()
+        let engines = [visibleTabId: WKWebViewTab(configuration: WKWebViewConfiguration()), backgroundTabId: WKWebViewTab(configuration: WKWebViewConfiguration())]
+        let store = BrowserStateStore()
+        store.runtimeOverlay.setRuntimeState(from: visible)
+        store.runtimeOverlay.setRuntimeState(from: background)
+        store.storeActiveSpace(
+            id: activeSpaceId,
+            snapshot: makeSpaceSnapshot(
+                tabs: [visible, background], folders: [], treeItems: [],
+                engines: engines, activeTabId: visibleTabId, lastAccessedAt: Date(), spaceId: activeSpaceId
+            )
+        )
+        let cpu: [UUID: WebContentCPUSampler.EngineUsage] = [
+            visibleTabId: .init(pid: 10, percent: 5),
+            backgroundTabId: .init(pid: 11, percent: 90)
+        ]
+        var previouslyBusy: Set<UUID> = []
+        let sweep = {
+            store.discardBusyBackgroundEngines(
+                maxCPUPercent: 30,
+                maxFootprintBytes: .max,
+                previouslyBusyTabIds: &previouslyBusy,
+                cpuSampler: { _ in cpu },
+                discardEngine: { _ in XCTFail("the window holds a visible space's engines"); return nil }
+            )
+        }
+
+        sweep()
+        XCTAssertFalse(engines[backgroundTabId]!.isFrozen, "one busy sweep may be work the tab did while it was visible")
+        sweep()
+        XCTAssertTrue(engines[backgroundTabId]!.isFrozen)
+        XCTAssertFalse(engines[visibleTabId]!.isFrozen)
+        XCTAssertNotNil(store.space(id: activeSpaceId)?.engines[backgroundTabId])
     }
 
     func testBusyEngineSharingProcessWithVisibleTabIsKept() {

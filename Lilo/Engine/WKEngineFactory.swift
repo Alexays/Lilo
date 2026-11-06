@@ -86,8 +86,8 @@ final class WKEngineFactory {
     var notificationShownHandler: ((WKWebView) -> Void)? {
         didSet { notificationBridge.shownHandler = notificationShownHandler }
     }
-    /// Reports form-dirty state changes (webView, isDirty) to the window controller. Set by MainWindowController.
-    var formDirtyHandler: ((WKWebView, Bool) -> Void)? {
+    /// Reports form-dirty state changes (webView, isDirty, isMainFrame) to the window controller. Set by MainWindowController.
+    var formDirtyHandler: ((WKWebView, Bool, Bool) -> Void)? {
         didSet { formDirtyBridge.onChange = formDirtyHandler }
     }
     /// Reports a page's Media Session call controls to the window controller. Set by MainWindowController.
