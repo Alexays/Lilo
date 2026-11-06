@@ -459,8 +459,9 @@ final class TabManager {
 
     /// Wakes a sleeping tab the pointer rests on, so the page is on its way when the click lands (Chrome loads a bookmark
     /// bar item on hover). One at a time: the previous one, never shown, goes back to sleep, as this one does after 20 s.
+    /// Never while the shown page loads, which it would compete with for the network and CPU.
     func warmTab(id: UUID) {
-        guard !engineFactory.suppressWarmPool, id != activeTabId, engineHost.engine(for: id) == nil,
+        guard !engineFactory.suppressWarmPool, id != activeTabId, activeEngineTab?.isLoading != true, engineHost.engine(for: id) == nil,
               let tab = tab(for: id), tab.url != nil, !tab.isClosed else { return }
         sleepWarmedTab()
         guard let engine = ensureLiveEngine(forTabId: id) else { return }

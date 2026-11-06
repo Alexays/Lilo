@@ -374,6 +374,8 @@ final class WKWebViewTab: NSObject {
     /// The history visit of the current page whose title follows the page's, for a few changes while it loads and just after
     /// (`renamableUntil`, nil while loading), as Chrome does for a title set by script.
     var visitTitleUpdates: (url: String, changesLeft: Int, renamableUntil: ContinuousClock.Instant?)?
+    /// A page loaded while the pointer rested on its sleeping tab: its visit counts once the tab is shown.
+    var visitAwaitsShowing = false
     /// Set for a tab a page opened (a link or `window.open`): only such a tab closes when its first navigation is a download.
     var isOpenedByPage = false
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
