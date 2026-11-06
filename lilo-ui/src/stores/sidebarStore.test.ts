@@ -524,7 +524,7 @@ test("sidebarChanged patch with upserts recomputes the view (new object)", async
 	assert.notEqual(getSpaceSidebar(sidebarSpaceId).view, viewBefore, "structural patch must produce a new view object");
 });
 
-test("tabUpdated keeps an optimistic activation its buffered activeTabId predates", async () => {
+test("tabUpdated keeps an optimistic activation", async () => {
 	const { applySidebarTabInitialState, optimisticallyActivateTab, getSpaceSidebar, receive } = await makeSidebarEnv();
 
 	applySidebarTabInitialState(sidebarInitialState(
@@ -536,13 +536,11 @@ test("tabUpdated keeps an optimistic activation its buffered activeTabId predate
 	optimisticallyActivateTab("t2");
 	flushSync();
 
-	// Buffered on the host before the click reached it: still names t1 as active.
 	receive?.({
 		event: "browserStatePatch",
 		operations: [{
 			kind: "tabUpdated",
 			spaceId: sidebarSpaceId,
-			activeTabId: "t1",
 			tab: { id: "t1", spaceId: sidebarSpaceId, progress: 0.5 },
 		}],
 	});
@@ -564,7 +562,6 @@ test("tabUpdated that changes nothing keeps the space record", async () => {
 		operations: [{
 			kind: "tabUpdated",
 			spaceId: sidebarSpaceId,
-			activeTabId: "t1",
 			tab: { id: "t1", spaceId: sidebarSpaceId, isLoading: false, progress: 1 },
 		}],
 	});

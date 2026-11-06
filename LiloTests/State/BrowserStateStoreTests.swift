@@ -1684,7 +1684,7 @@ final class BrowserStateStoreTests: XCTestCase {
         tab.estimatedProgress = 0.42
         tab.isLoading = true
 
-        let event = BrowserChangePresenter.tabUpdatedEvent(tabPayload: tab.runtimePatchData, spaceId: spaceId, activeTabId: tabId)
+        let event = BrowserChangePresenter.tabUpdatedEvent(tabPayload: tab.runtimePatchData, spaceId: spaceId)
 
         XCTAssertEqual(event.name, "browserStatePatch")
         XCTAssertEqual(event.data["changedSpaceId"] as? String, spaceId.uuidString)
@@ -1693,6 +1693,7 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertEqual(operations.count, 1)
         XCTAssertEqual(operations.first?["kind"] as? String, "tabUpdated")
         XCTAssertEqual(operations.first?["spaceId"] as? String, spaceId.uuidString)
+        XCTAssertNil(operations.first?["activeTabId"])
         let tabPayload = try XCTUnwrap(operations.first?["tab"] as? [String: Any])
         XCTAssertEqual(tabPayload["id"] as? String, tabId.uuidString)
         XCTAssertEqual(tabPayload["progress"] as? Double, 0.42)

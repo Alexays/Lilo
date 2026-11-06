@@ -328,7 +328,7 @@ final class MainWindowController: NSWindowController {
         emitVisibleTabUpdate(tab, spaceId: spaceId, includeFavicon: includeFavicon)
     }
 
-    /// Sent to every window showing the tab's space, each with its own selection.
+    /// Sent to every window showing the tab's space.
     func emitVisibleTabUpdate(_ tab: Tab, spaceId: UUID, includeFavicon: Bool = false) {
         // Runtime patches omit the favicon (the UI keeps the one it has); favicon changes ship it.
         let payload = includeFavicon ? tab.bridgeData : tab.runtimePatchData
@@ -354,7 +354,7 @@ final class MainWindowController: NSWindowController {
             }
         }
         sentTabPatches[id, default: [:]].merge(tabPayload) { $1 }
-        let event = BrowserChangePresenter.tabUpdatedEvent(tabPayload: patch, spaceId: spaceId, activeTabId: tabManager.activeOpenTabId)
+        let event = BrowserChangePresenter.tabUpdatedEvent(tabPayload: patch, spaceId: spaceId)
         bridgeRouter.send(event: event.name, data: event.data)
     }
 

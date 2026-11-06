@@ -384,11 +384,11 @@ function applyBrowserStatePatch(data: BridgeBrowserStatePatchPayload): void {
 	flushTabUpdates(pending);
 }
 
-function applyUpserts<T extends { id: string }>(
+function applyUpserts<T>(
 	existing: T[],
 	removedIds: Set<string>,
 	upsertsById: Map<string, T>,
-	key: (item: T) => string = (item) => item.id,
+	key: (item: T) => string,
 ): T[] {
 	if (removedIds.size === 0 && upsertsById.size === 0) return existing;
 	const existingIds = new Set(existing.map(key));
@@ -426,7 +426,7 @@ function applySidebarChanged(data: BridgeSidebarChangedPayload): void {
 			return [tab.id, tab];
 		}),
 	);
-	const nextTabs = applyUpserts(current.tabs, removedTabIds, upsertTabsById);
+	const nextTabs = applyUpserts(current.tabs, removedTabIds, upsertTabsById, (tab) => tab.id);
 
 	const removedFolderIds = new Set(data.removedFolderIds ?? []);
 	const upsertFoldersById = new Map(
@@ -435,9 +435,8 @@ function applySidebarChanged(data: BridgeSidebarChangedPayload): void {
 			coerceTabFolderSnapshot(folder),
 		]),
 	);
-	const nextFolders = applyUpserts(current.folders, removedFolderIds, upsertFoldersById);
+	const nextFolders = applyUpserts(current.folders, removedFolderIds, upsertFoldersById, (folder) => folder.id);
 
-	// Tree deltas key on itemId: the host synthesizes each item's `id` afresh.
 	const removedTreeItemIds = new Set(data.removedTreeItemIds ?? []);
 	const upsertTreeItemsById = new Map((data.upsertTreeItems ?? []).map((item) => [item.itemId, item]));
 	const nextTreeItems =
@@ -516,9 +515,6 @@ function applyTabUpdated(data: BridgeTabUpdatedPayload, pending: PendingTabUpdat
 	const keys = Object.keys(fields) as (keyof BridgeTabSnapshot)[];
 	if (keys.every((key) => Object.is(fields[key], previous[key]))) return;
 
-	// The patch's activeTabId is ignored: it is the host's as of when the patch was buffered, so it
-	// can predate a click's optimistic activation and bounce the highlight back. Activation arrives
-	// through sidebarChanged and full state only.
 	const tab = { ...previous, ...fields };
 	const structural = !sameViewFlags(previous, tab);
 	if (entry) {

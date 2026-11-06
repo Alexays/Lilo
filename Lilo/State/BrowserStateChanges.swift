@@ -90,14 +90,13 @@ enum BrowserChangePresenter {
         )
     }
 
-    /// The tab payload is built once and shared by every window; only the selection differs.
-    static func tabUpdatedEvent(tabPayload: [String: Any], spaceId: UUID, activeTabId: UUID?) -> Event {
+    /// Carries no selection: activation reaches the chrome through sidebarChanged and full state only.
+    static func tabUpdatedEvent(tabPayload: [String: Any], spaceId: UUID) -> Event {
         patchEvent(
             spaceId: spaceId,
             operation: [
                 "kind": "tabUpdated",
                 "spaceId": spaceId.uuidString,
-                "activeTabId": activeTabId?.uuidString ?? "",
                 "tab": tabPayload
             ]
         )

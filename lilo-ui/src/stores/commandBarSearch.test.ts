@@ -179,9 +179,9 @@ test("all-scope search: a tab in a subfolder of a locked folder stays hidden too
 			{ id: "taxes", spaceId: "space", name: "Taxes", color: "#5b7cff", isCollapsed: false },
 		],
 		treeItems: [
-			{ id: "vault", spaceId: "space", kind: "folder", itemId: "vault", parentFolderId: null, section: "unpinned", sortOrder: 0 },
-			{ id: "taxes", spaceId: "space", kind: "folder", itemId: "taxes", parentFolderId: "vault", section: "unpinned", sortOrder: 0 },
-			{ id: "tax-tab", spaceId: "space", kind: "tab", itemId: "tax-tab", parentFolderId: "taxes", section: "unpinned", sortOrder: 0 },
+			{ kind: "folder", itemId: "vault", parentFolderId: null, section: "unpinned", sortOrder: 0 },
+			{ kind: "folder", itemId: "taxes", parentFolderId: "vault", section: "unpinned", sortOrder: 0 },
+			{ kind: "tab", itemId: "tax-tab", parentFolderId: "taxes", section: "unpinned", sortOrder: 0 },
 		],
 	};
 	applySidebarTabInitialState(initialState);
