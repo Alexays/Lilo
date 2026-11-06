@@ -85,6 +85,17 @@ final class GeolocationBridgeTests: XCTestCase {
         XCTAssertEqual(asked, [])
     }
 
+    func testATimeoutDoesNotRunWhileNoUpdatesStarted() async throws {
+        let webView = await makeWebView(html: """
+            <script>window.codes = [];
+            navigator.geolocation.getCurrentPosition(() => codes.push(0), e => codes.push(e.code), { timeout: 1 });</script>
+            """, baseURL: "http://127.0.0.1/")
+        let denied = await codes(webView, count: 1)
+        XCTAssertEqual(denied, [1])
+        let later = try await webView.callAsyncJavaScript("await new Promise(r => setTimeout(r, 50)); return codes", contentWorld: .page)
+        XCTAssertEqual(later as? [Int], [1])
+    }
+
     func testAnInsecureOriginIsDeniedWithoutAsking() async {
         let webView = await makeWebView(html: Self.request, baseURL: "http://example.com/")
         let codes = await codes(webView, count: 1)
