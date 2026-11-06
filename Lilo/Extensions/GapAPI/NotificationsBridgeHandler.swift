@@ -113,7 +113,7 @@ final class NotificationsBridgeHandler: GapHandler {
         // The extension's answer never waits for the person to answer macOS's permission prompt, as in Chrome.
         Task {
             do { _ = try await notificationCenter.requestAuthorization(options: [.alert, .sound]) } catch {
-                Self.logger.error("Notification permission request failed: \(error.localizedDescription)")
+                Self.logger.error("Notification permission request failed: \(error.localizedDescription, privacy: .public)")
             }
             await postNotification(prefixedId: prefixedId, extensionId: extensionId, notificationId: notificationId, options: params, extensionDirectory: extensionDirectory)
         }
@@ -177,7 +177,7 @@ final class NotificationsBridgeHandler: GapHandler {
 
         let request = UNNotificationRequest(identifier: prefixedId, content: content, trigger: nil)
         do { try await notificationCenter.add(request) } catch {
-            Self.logger.error("Failed to post notification: \(error.localizedDescription)")
+            Self.logger.error("Failed to post notification: \(error.localizedDescription, privacy: .public)")
         }
     }
 

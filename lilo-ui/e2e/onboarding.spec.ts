@@ -412,6 +412,20 @@ test("a finished import hands the keyboard to Continue", async ({ page }) => {
 	await expect(card.getByRole("button", { name: "Continue" })).toBeFocused();
 });
 
+test("a failed import names its cause when it is known", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	const card = page.locator(".onb");
+	await card.getByRole("button", { name: "Import", exact: true }).click();
+	await receive(page, { event: "importFinished", summary: [
+		{ sourceId: "chrome", profileId: "Profile 1", kind: "cookies", imported: 0, error: "keychain" },
+		{ sourceId: "chrome", profileId: "Profile 1", kind: "history", imported: 0, error: "other" },
+	] });
+	const note = card.getByText(/^Some data could not be imported/);
+	await expect(note).toContainText("(Stay signed in: Keychain access was denied), ");
+	await expect(note).toContainText("(History).");
+});
+
 test("the arrival sums up the import, sign-ins aside, and speaks the same words", async ({ page }) => {
 	await bootOnboarding(page, 2);
 	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
@@ -419,7 +433,7 @@ test("the arrival sums up the import, sign-ins aside, and speaks the same words"
 	await receive(page, { event: "importFinished", summary: [
 		...importedEverything,
 		{ sourceId: "chrome", profileId: "Profile 2", kind: "bookmarks", imported: 1233 },
-		{ sourceId: "chrome", profileId: "Profile 2", kind: "extensions", imported: 0, error: "store" },
+		{ sourceId: "chrome", profileId: "Profile 2", kind: "extensions", imported: 0, error: "other" },
 	] });
 	await receive(page, { event: "onboardingState", show: true, step: 3, usage: "browse" });
 	await page.locator(".onb .ob-foot .ob-btn.primary").click();

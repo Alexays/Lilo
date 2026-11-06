@@ -1735,6 +1735,11 @@
 				"extensionsCount": "Reinstalling extensions {current} of {total}"
 			},
 			"partial": "Some data could not be imported: {list}. You can retry later from Settings.",
+			"cause": {
+				"keychain": "Keychain access was denied",
+				"locked": "the file is in use, quit the browser and retry",
+				"access": "Full Disk Access is needed"
+			},
 			"profiles": "{browser} profiles",
 			"kinds": "What to import",
 			"kind": {

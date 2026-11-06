@@ -1735,6 +1735,11 @@
 				"extensionsCount": "正在重新安装扩展，第 {current} 个，共 {total} 个"
 			},
 			"partial": "部分数据无法导入：{list}。你可以稍后在“设置”中重试。",
+			"cause": {
+				"keychain": "钥匙串访问被拒绝",
+				"locked": "文件正在使用中，请退出浏览器后重试",
+				"access": "需要完全磁盘访问权限"
+			},
 			"profiles": "{browser} 个人资料",
 			"kinds": "导入内容",
 			"kind": {

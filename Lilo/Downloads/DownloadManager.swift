@@ -242,7 +242,7 @@ final class DownloadManager {
                 item.bytesReceived = Int64(data.count)
                 item.state = .complete
             case .failure(let error):
-                Self.logger.error("Failed to save data to file: \(error.localizedDescription)")
+                Self.logger.error("Failed to save data to file: \(error.localizedDescription, privacy: .public)")
                 item.filename = chosen.lastPathComponent
                 item.destinationPath = chosen.path
                 item.state = .interrupted

@@ -1735,6 +1735,11 @@
 				"extensionsCount": "Erweiterung {current} von {total} wird neu installiert"
 			},
 			"partial": "Einige Daten konnten nicht importiert werden: {list}. Du kannst es später in den Einstellungen erneut versuchen.",
+			"cause": {
+				"keychain": "Schlüsselbundzugriff verweigert",
+				"locked": "Datei wird verwendet, Browser beenden und erneut versuchen",
+				"access": "Festplattenvollzugriff erforderlich"
+			},
 			"profiles": "Profile aus {browser}",
 			"kinds": "Was importiert werden soll",
 			"kind": {

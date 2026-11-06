@@ -1735,6 +1735,11 @@
 				"extensionsCount": "正在重新安裝延伸功能：{current}/{total}"
 			},
 			"partial": "部分資料無法匯入：{list}。稍後可從「設定」重試。",
+			"cause": {
+				"keychain": "鑰匙圈取用遭拒",
+				"locked": "檔案正在使用中，請結束瀏覽器後再試一次",
+				"access": "需要完整磁碟取用權限"
+			},
 			"profiles": "{browser} 個人檔案",
 			"kinds": "匯入內容",
 			"kind": {

@@ -1735,6 +1735,11 @@
 				"extensionsCount": "Reinstalando extensiones: {current} de {total}"
 			},
 			"partial": "No se han podido importar algunos datos: {list}. Puedes reintentarlo más tarde desde Ajustes.",
+			"cause": {
+				"keychain": "acceso al llavero denegado",
+				"locked": "el archivo está en uso, cierra el navegador y vuelve a intentarlo",
+				"access": "se necesita acceso total al disco"
+			},
 			"profiles": "Perfiles de {browser}",
 			"kinds": "Qué importar",
 			"kind": {

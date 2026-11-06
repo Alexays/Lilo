@@ -41,8 +41,10 @@
       .flatMap((profile) => profile.extensions)),
   );
   const failures = $derived(
-    (importState.summary ?? []).filter((item) => item.error)
-      .map((item) => `${sources.find((source) => source.id === item.sourceId)?.name ?? item.sourceId} (${t(`onboarding.import.kind.${item.kind}`)})`),
+    (importState.summary ?? []).filter((item) => item.error).map((item) => {
+      const cause = item.error === "other" ? "" : `: ${t(`onboarding.import.cause.${item.error}`)}`;
+      return `${sources.find((source) => source.id === item.sourceId)?.name ?? item.sourceId} (${t(`onboarding.import.kind.${item.kind}`)}${cause})`;
+    }),
   );
   // Only Chromium cookies go through the Keychain prompt worth announcing, and only while they import.
   const keychainPrompt = $derived(importState.running && status.phase?.kind === "cookies"
