@@ -51,6 +51,29 @@ final class LittleWindowTests: XCTestCase {
         XCTAssertTrue(little.window.firstResponder is NSText, "the address field is being edited")
     }
 
+    func testTheAddressShowsTheHostInBoldAndTheFullURLOnlyWhileEdited() async throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let url = try XCTUnwrap(URL(string: "https://example.com/read?page=2"))
+        try await load(little, url)
+        little.window.makeFirstResponder(little.engine.wkWebView)
+        let titlebar = try XCTUnwrap(little.window.standardWindowButton(.closeButton)?.superview)
+        titlebar.layoutSubtreeIfNeeded()
+        let pill = try XCTUnwrap(titlebar.subviews.lazy.flatMap(\.subviews).first { $0 is PillView })
+        let field = try XCTUnwrap(pill.subviews.first { $0 is NSTextField } as? NSTextField)
+
+        XCTAssertEqual(field.stringValue, "example.com/read?page=2")
+        let shown = field.attributedStringValue
+        let hostFont = shown.attribute(.font, at: 0, effectiveRange: nil) as? NSFont
+        let pathFont = shown.attribute(.font, at: shown.length - 1, effectiveRange: nil) as? NSFont
+        XCTAssertNotEqual(hostFont, pathFont, "the host stands out from the path")
+
+        little.openLocation(nil)
+        XCTAssertEqual(field.currentEditor()?.string, url.absoluteString)
+
+        little.window.makeFirstResponder(little.engine.wkWebView)
+        XCTAssertEqual(field.stringValue, "example.com/read?page=2")
+    }
+
     func testOpenInSpaceMovesTheLivePageIntoThatSpace() throws {
         let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
         let engine = little.engine
