@@ -97,4 +97,10 @@
     cursor: pointer;
     text-decoration: underline;
   }
+
+  .show-here:focus-visible,
+  .use-password:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
 </style>

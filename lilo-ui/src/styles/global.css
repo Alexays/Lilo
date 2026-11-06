@@ -396,6 +396,8 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
     /* Mixed again here: inherited from :root, they would keep the app's default accent. */
     --accent-ink: color-mix(in srgb, var(--sidebar-accent) 70%, var(--sidebar-contrast));
     --accent-tint-14: color-mix(in srgb, var(--sidebar-accent) 14%, transparent);
+    /* Opaque: the translucent :root ring all but vanishes on the Space color. */
+    --focus-outline: 2px solid var(--accent);
     --danger: var(--sidebar-danger);
     --sidebar-right-pad: 8px;
 }
@@ -405,6 +407,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
   .tabs-surface {
     --separator: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
     --sidebar-sel-ring: color-mix(in srgb, var(--sidebar-contrast) 30%, transparent);
+    --focus-outline: 2px solid var(--sidebar-contrast);
   }
 }
 
@@ -423,6 +426,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
   --accent-hover: var(--sidebar-accent-hover);
   --accent-text: var(--sidebar-accent-text);
   --accent-ink: var(--float-accent-ink);
+  --focus-outline: 2px solid var(--accent);
 }
 
 /* Every tip, card and popover. Resets the palette the sidebar tints, since it floats above it. */

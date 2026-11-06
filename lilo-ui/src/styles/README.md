@@ -65,7 +65,8 @@ stroke of about 1.5px on screen.
 States share one recipe:
 
 - hover `--bg-hover`, pressed `--bg-active`; a filled neutral button hovers to
-  `--text-primary-tint-12`, a primary one to `--accent-hover`
+  `--text-primary-tint-12` and presses to an 18% `--text-primary` mix, a primary one
+  hovers to `--accent-hover`
 - disabled `opacity: var(--disabled-opacity)` and `cursor: default`
 - focus `outline: var(--focus-outline)` with `outline-offset: 1px`, or `-2px` on a box that
   clips its painting; text fields show the ring too, not an accent border

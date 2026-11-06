@@ -723,8 +723,18 @@
     color: var(--text-secondary);
   }
 
+  .strip-surface-main:focus-visible {
+    border-radius: var(--radius-md);
+    outline: var(--focus-outline);
+    outline-offset: -2px;
+  }
+
   .strip-surface-close:hover {
     background: var(--bg-hover);
+  }
+
+  .strip-surface-close:active {
+    background: var(--bg-active);
   }
 
   .strip-address {
@@ -776,6 +786,15 @@
   .strip-btn.on {
     background: var(--bg-hover);
     color: var(--text-primary);
+  }
+
+  .strip-btn:active {
+    background: var(--bg-active);
+  }
+
+  .strip-btn:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   .close-glyph,
