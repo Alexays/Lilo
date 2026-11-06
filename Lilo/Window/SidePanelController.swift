@@ -96,7 +96,7 @@ final class SidePanelController: NSObject {
     // MARK: - Window events
 
     /// Picks the panel for the newly active tab, in Chrome's order: the tab's own open panel, then
-    /// (while one shows) the shown extension's panel, then the window's extension-wide one.
+    /// the shown extension's panel, then the window's extension-wide one.
     func activeTabDidChange() {
         guard registry != nil else { return }
         guard registry === window.profileContext?.extensions else { return closeAll() }
@@ -107,8 +107,8 @@ final class SidePanelController: NSObject {
         if let extensionId = tabEntries[active] {
             return show(Entry(extensionId: extensionId, tabId: active), replacing: false)
         }
-        guard let shown else { return }
-        let next = [shown.extensionId, globalEntry].lazy.compactMap { $0 }.first { self.url(of: Entry(extensionId: $0, tabId: nil)) != nil }
+        guard shown != nil || globalEntry != nil else { return }
+        let next = [shown?.extensionId, globalEntry].lazy.compactMap { $0 }.first { self.url(of: Entry(extensionId: $0, tabId: nil)) != nil }
         guard let next else {
             setGlobalEntry(nil)
             return show(nil, replacing: false)
@@ -204,6 +204,9 @@ final class SidePanelController: NSObject {
             if let active = activeTabId { setTabEntry(active, next.tabId == nil ? nil : next.extensionId) }
             if next.tabId == nil { setGlobalEntry(next.extensionId) }
         }
+        // A private space is a window the extension cannot see without private access: its panel stays open, hidden there.
+        let next = next.flatMap { window.tabManager.windowAdapter?.isPrivateWindow != true
+            || registry?.context(for: $0.extensionId)?.hasAccessToPrivateData == true ? $0 : nil }
         guard next != shown else { return }
         if replacing, let shown { retire(shown) }
         shown = next

@@ -422,6 +422,30 @@ final class SidePanelTests: XCTestCase {
         UserDefaults.lilo.removeObject(forKey: "sidePanel.\(registry.profileId).\(extensionId!)")
     }
 
+    // MARK: - Private spaces
+
+    func testAPanelHidesInAPrivateSpaceUnlessTheExtensionIsAllowedThere() async throws {
+        let normalWindow = thisWindow
+        let normalSpace = try XCTUnwrap(window.tabManager.currentSpaceId)
+        await call("open", gesture(normalWindow))
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil))
+        let privateSpace = try browserContext.context.spaceManager!.createSpace(name: "Private", profileId: registry.profileId, isPrivate: true)
+
+        window.switchToSpace(privateSpace.id)
+        window.createTabStateFirst(url: URL(string: "about:blank"))
+        XCTAssertNil(window.sidePanel.shown, "an extension without private access shows no panel there")
+        XCTAssertNil(window.sidePanel.webView)
+        let refused = await call("open", gesture(normalWindow)).error
+        XCTAssertEqual(refused, "No browser window for windowId: 1", "its window is a background space")
+
+        window.switchToSpace(normalSpace)
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil), "the panel stays open for its own space")
+
+        await registry.access.setPrivateAccess(extensionId: extensionId, allowed: true)
+        window.switchToSpace(privateSpace.id)
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: extensionId, tabId: nil))
+    }
+
     // MARK: - Events
 
     func testOpenedAndClosedReachTheExtensionWithChromesPayload() async throws {
