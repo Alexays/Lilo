@@ -1,3 +1,3 @@
 kind: Changed
-body: 'Lilo starts faster: the built-in content blocker list is no longer recompiled at every launch.'
+body: Ad-blocking extensions such as AdBlock no longer recompile their rules at every launch
 time: 2026-11-06T19:45:37.600635+01:00
