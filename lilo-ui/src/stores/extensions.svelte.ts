@@ -95,7 +95,7 @@ function parseExtension(
 		actionLabel: coerceString(data?.actionLabel),
 		permissions: data?.permissions ?? [],
 		hostPermissions: data?.hostPermissions ?? [],
-		siteAccess: data?.siteAccess ?? [],
+		siteAccess: data?.siteAccess ?? null,
 		omniboxKeyword: data?.omniboxKeyword || undefined,
 		error: coerceString(data?.error),
 		availableUpdate: coerceString(data?.availableUpdate),

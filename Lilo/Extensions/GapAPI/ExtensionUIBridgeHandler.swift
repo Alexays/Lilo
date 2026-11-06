@@ -394,13 +394,13 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         }
     }
 
-    /// An empty `hosts` restores the extension's manifest hosts; anything else restricts it.
+    /// A missing or null `hosts` restores the extension's manifest hosts; a list, even empty, restricts it.
     private func handleSetExtensionSiteAccess(message: BridgeMessage) async -> Any? {
         guard let id = message.string("id") else { return BridgeError("Missing extension id") }
         guard let registry = await targetRegistry(for: message) else {
             return settle(id: id, action: "siteAccess", BridgeError("Extension registry not available"))
         }
-        await registry.access.setSiteAccess(extensionId: id, hosts: message.payload["hosts"] as? [String] ?? [])
+        await registry.access.setSiteAccess(extensionId: id, hosts: message.payload["hosts"] as? [String])
         return settle(id: id, action: "siteAccess", ["success": true])
     }
 

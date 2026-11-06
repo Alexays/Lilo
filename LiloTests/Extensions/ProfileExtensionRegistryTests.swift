@@ -1524,9 +1524,17 @@ final class ProfileExtensionRegistryTests: XCTestCase {
     func testSiteAccessUnrestrictedKeepsTheManifestPatterns() throws {
         let requested: Set<WKWebExtension.MatchPattern> = [try XCTUnwrap(WKWebExtension.MatchPattern(string: "*://*/*"))]
 
-        let granted = ExtensionAccess.grantedMatchPatterns(requested: requested, allowedHosts: [])
+        let granted = ExtensionAccess.grantedMatchPatterns(requested: requested, allowedHosts: nil)
 
         XCTAssertEqual(granted, requested)
+    }
+
+    func testSiteAccessWithNoSiteGrantsNothing() throws {
+        let requested: Set<WKWebExtension.MatchPattern> = [try XCTUnwrap(WKWebExtension.MatchPattern(string: "*://*/*"))]
+
+        let granted = ExtensionAccess.grantedMatchPatterns(requested: requested, allowedHosts: [])
+
+        XCTAssertTrue(granted.isEmpty, "removing the last allowed site must not restore every host")
     }
 
     func testSiteAccessNarrowsToTheAllowedHosts() throws {
