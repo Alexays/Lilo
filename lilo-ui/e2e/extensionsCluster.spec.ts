@@ -243,8 +243,10 @@ test.describe("in French", () => {
 	test("each footer action of the popover holds on one line", async ({ page }) => {
 		await bootWithExtensions(page);
 		await page.locator(".extension-menu-btn").click();
+		const actions = page.locator(".extensions-popover .footer-action");
+		await expect(actions).toHaveCount(2);
 
-		const lines = await page.locator(".extensions-popover .footer-action").evaluateAll((buttons) =>
+		const lines = await actions.evaluateAll((buttons) =>
 			buttons.map((button) => {
 				const range = document.createRange();
 				range.selectNodeContents(button);
