@@ -386,6 +386,7 @@
     const spaceId = hitSpaceId === getActiveSpaceId() ? null : hitSpaceId;
     hoveredSidebarDropSpaceId = spaceId;
     if (spaceId) {
+      if (sidebarSpaceDropTarget?.spaceId === spaceId && sidebarSpaceDropTarget.itemId === drag.itemId) return;
       const space = spacesById.get(spaceId);
       const morphTarget = space
         ? {

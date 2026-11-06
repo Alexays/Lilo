@@ -79,6 +79,8 @@ export function setPreviewTabMoveToSpace(
 	tabId: string,
 	targetSpaceId: string,
 ): void {
+	// A new object for the same target would rerun every tab getter that reads the preview.
+	if (tabMoveSpacePreview?.tabId === tabId && tabMoveSpacePreview.targetSpaceId === targetSpaceId) return;
 	tabMoveSpacePreview = { tabId, targetSpaceId };
 }
 
