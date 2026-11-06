@@ -195,6 +195,8 @@
   .sidebar-viewport:has(:global(.url-details, .url-drawer)) {
     overflow: visible;
     contain: layout style;
+    /* The containment makes this a stacking context: over the sibling resize handle, so the card covers it. */
+    z-index: 11;
   }
 
   .sidebar-layout {
