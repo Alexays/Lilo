@@ -5,8 +5,9 @@
   // Captured before any hook lands on JSON, so response rewriting stays on the native paths.
   var nativeJSONParse = JSON.parse.bind(JSON);
   var nativeJSONStringify = JSON.stringify.bind(JSON);
-  // Wrappers call these, not the page's Reflect and WeakMap.prototype, which a hook could replace to spot them.
+  // Wrappers call these, not the page's Reflect, WeakMap and Promise methods, which a hook could replace to spot them.
   var reflectApply = Reflect.apply, weakGet = WeakMap.prototype.get, weakSet = WeakMap.prototype.set;
+  var promiseThen = Promise.prototype.then;
   // Random per document: what a trap throws and the Trusted Types policy it creates carry no fixed name.
   var token = Math.random().toString(36).slice(2);
 
@@ -620,13 +621,14 @@
       var p = reflectApply(fn, thisArg, args);
       var active = activeRewriters(fetchRewriters, fetchRequest(args));
       if (!active.length) return p;
-      return p.then(function (resp) {
-        return resp.clone().text().then(function (txt) {
+      return reflectApply(promiseThen, p, [function (resp) {
+        var rewritten = reflectApply(promiseThen, resp.clone().text(), [function (txt) {
           var out = applyRewriters(active, txt);
           if (out === null) return resp;
           return new Response(out, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
-        }).catch(function () { return resp; });
-      });
+        }]);
+        return reflectApply(promiseThen, rewritten, [undefined, function () { return resp; }]);
+      }]);
     });
   }
   function addXHRRewriter(propsToMatch, entry) {
@@ -689,7 +691,7 @@
     // uBO's json-prune covers Response.json() too, which never goes through JSON.parse.
     var proto = typeof Response === 'function' && Response.prototype;
     if (proto && typeof proto.json === 'function') {
-      proto.json = wrapNative(proto.json, function (fn, thisArg, args) { return reflectApply(fn, thisArg, args).then(prune); });
+      proto.json = wrapNative(proto.json, function (fn, thisArg, args) { return reflectApply(promiseThen, reflectApply(fn, thisArg, args), [prune]); });
     }
   }
 
@@ -719,13 +721,13 @@
     var proto = Native.prototype;
     var prevented = new WeakMap();
     proto.open = wrapNative(proto.open, function (fn, xhr, args) {
-      prevented.delete(xhr);
+      reflectApply(weakSet, prevented, [xhr, null]);
       var request = { url: resolveURL(args[1]), method: String(args[0]).toUpperCase() };
-      if (!match || match(request)) prevented.set(xhr, { url: request.url, sync: args.length > 2 && !args[2] });
+      if (!match || match(request)) reflectApply(weakSet, prevented, [xhr, { url: request.url, sync: args.length > 2 && !args[2] }]);
       return reflectApply(fn, xhr, args);
     });
     proto.send = wrapNative(proto.send, function (fn, xhr, args) {
-      var details = prevented.get(xhr);
+      var details = reflectApply(weakGet, prevented, [xhr]);
       if (!details) return reflectApply(fn, xhr, args);
       var type = xhr.responseType, text = responseBody(body, trusted), response = text;
       if (type === 'json') { try { response = nativeJSONParse(text || '{}'); } catch (e) { response = null; } }
@@ -742,7 +744,7 @@
         xhr.dispatchEvent(new Progress('load'));
         xhr.dispatchEvent(new Progress('loadend'));
       }
-      if (details.sync) complete(); else Promise.resolve().then(complete);
+      if (details.sync) complete(); else reflectApply(promiseThen, Promise.resolve(), [complete]);
     });
   }
 
@@ -1033,10 +1035,10 @@
       // An animation loop passes the same callback every frame: its source is stringified and tested once.
       var verdicts = new WeakMap();
       proxyApply('requestAnimationFrame', function (fn, thisArg, args) {
-        var callback = args[0], blocked = verdicts.get(callback);
+        var callback = args[0], blocked = reflectApply(weakGet, verdicts, [callback]);
         if (blocked === undefined) {
           blocked = re.test(String(callback)) !== negate;
-          if (typeof callback === 'function') verdicts.set(callback, blocked);
+          if (typeof callback === 'function') reflectApply(weakSet, verdicts, [callback, blocked]);
         }
         if (blocked) return 0;
         return reflectApply(fn, thisArg, args);
@@ -1063,10 +1065,10 @@
         var script = document.currentScript;
         if (!(script instanceof HTMLScriptElement)) return false;
         if (!re) return !script.src;
-        var verdict = verdicts.get(script);
+        var verdict = reflectApply(weakGet, verdicts, [script]);
         if (verdict === undefined) {
           verdict = re.test(script.textContent) || (!!script.src && re.test(script.src));
-          verdicts.set(script, verdict);
+          reflectApply(weakSet, verdicts, [script, verdict]);
         }
         return verdict;
       }, null);
