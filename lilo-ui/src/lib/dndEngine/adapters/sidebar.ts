@@ -59,8 +59,10 @@ export function sidebarDndKey(item: SidebarDndItem): string {
 }
 
 // A FLIP pass measures and animates every row in the list (O(n) getBoundingClientRect +
-// transforms), so past this count the list snaps instead of animating.
-const FLIP_MAX_ANIMATED_ITEMS = 60;
+// transforms), so past this count the list snaps instead of animating. Svelte's animate:
+// measures every row on each update even at duration 0, so a longer list renders without it.
+// Lists compare their unprojected count: a drag's placeholder must not remount the whole list.
+export const FLIP_MAX_ANIMATED_ITEMS = 60;
 
 export function flipDurationForSidebarDndItem(
 	item: Pick<SidebarDndItem, "id">,

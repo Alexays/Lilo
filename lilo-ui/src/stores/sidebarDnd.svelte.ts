@@ -32,9 +32,9 @@ let heldPlaceholder: SidebarPlaceholder | null = null;
 dndEngineStore.subscribe(() => {
 	dragVersion += 1;
 	const drag = dndEngineStore.activeDrag;
-	const isActive = drag !== null;
+	const isActive = drag?.started === true;
 	// A fresh gesture drops whatever hold the previous drop left behind.
-	if (drag && !hadActiveDrag) {
+	if (drag?.started && !hadActiveDrag) {
 		resetSidebarDrag();
 		const zone = zoneRef(drag.source.zoneId);
 		heldPlaceholder = zone && drag.home !== undefined && drag.home >= 0 ? { zone, index: drag.home } : null;

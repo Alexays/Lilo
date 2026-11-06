@@ -30,7 +30,7 @@
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
   import { sidebarActions } from "../../lib/bridge/actions";
   import { dndItem, dndZone } from "../../lib/dndEngine/action";
-  import { dndItemsForFolderTabs, dndItemsForSidebarItems, flipDurationForSidebarDndItem, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
+  import { dndItemsForFolderTabs, dndItemsForSidebarItems, FLIP_MAX_ANIMATED_ITEMS, flipDurationForSidebarDndItem, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { isUserScrolling, trackUserScroll } from "../../lib/motion/userScroll";
   import { translateFlip } from "../../lib/motion/translateFlip";
@@ -241,34 +241,50 @@
   {@const zone = zoneRef(section)}
   {@const iconOnly = section !== "unpinned"}
   {@const zoneItems = getZoneItems(zone, baseItems[section])}
-  {#each zoneItems as item (item.id)}
-    <div
-      class="strip-slot"
-      class:icon-only={iconOnly}
-      class:active={item.id === shownActiveId && item.kind !== "folder" && !isShadowItem(item) && view.tabsById.has(item.id) && !(addressInActiveTab && !iconOnly)}
-      animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(item, { recentlyDraggedId: getRecentlyDroppedId(), itemCount: zoneItems.length }), easing: springEase }}
-      use:dndItem={{ item, zoneId: zone.id, disabled: isShadowItem(item), onCancel: resetSidebarDrag }}
-    >
-      {#if isShadowItem(item)}
-        <div class="strip-placeholder" aria-hidden="true"></div>
-      {:else if item.kind === "folder"}
-        {@const folder = view.foldersById.get(item.id)}
-        {@const conversation = folder ? getConversationTab(folder.id, spaceId) : undefined}
-        {#if folder && conversation}
-          {#await import("./StripConversation.svelte") then { default: StripConversation }}
-            <StripConversation {folder} tab={conversation} pages={folderTabs(folder.id).filter((tab) => tab.id !== conversation.id)} activeTabId={shownActiveId} />
-          {/await}
-        {:else if folder}
-          <StripFolder {folder} tabs={folderTabs(folder.id)} activeTabId={shownActiveId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
-        {/if}
-      {:else}
-        {@const tab = view.tabsById.get(item.id)}
-        {#if tab && !(tab.id === activeTabId && addressInActiveTab && !iconOnly)}
-          <StripTab {tab} active={tab.id === shownActiveId} {iconOnly} {editsAddress} />
-        {/if}
+  {#snippet slotContent(item: SidebarDndItem)}
+    {#if isShadowItem(item)}
+      <div class="strip-placeholder" aria-hidden="true"></div>
+    {:else if item.kind === "folder"}
+      {@const folder = view.foldersById.get(item.id)}
+      {@const conversation = folder ? getConversationTab(folder.id, spaceId) : undefined}
+      {#if folder && conversation}
+        {#await import("./StripConversation.svelte") then { default: StripConversation }}
+          <StripConversation {folder} tab={conversation} pages={folderTabs(folder.id).filter((tab) => tab.id !== conversation.id)} activeTabId={shownActiveId} />
+        {/await}
+      {:else if folder}
+        <StripFolder {folder} tabs={folderTabs(folder.id)} activeTabId={shownActiveId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
       {/if}
-    </div>
-  {/each}
+    {:else}
+      {@const tab = view.tabsById.get(item.id)}
+      {#if tab && !(tab.id === activeTabId && addressInActiveTab && !iconOnly)}
+        <StripTab {tab} active={tab.id === shownActiveId} {iconOnly} {editsAddress} />
+      {/if}
+    {/if}
+  {/snippet}
+  {#if baseItems[section].length > FLIP_MAX_ANIMATED_ITEMS}
+    {#each zoneItems as item (item.id)}
+      <div
+        class="strip-slot"
+        class:icon-only={iconOnly}
+        class:active={item.id === shownActiveId && item.kind !== "folder" && !isShadowItem(item) && view.tabsById.has(item.id) && !(addressInActiveTab && !iconOnly)}
+        use:dndItem={{ item, zoneId: zone.id, disabled: isShadowItem(item), onCancel: resetSidebarDrag }}
+      >
+        {@render slotContent(item)}
+      </div>
+    {/each}
+  {:else}
+    {#each zoneItems as item (item.id)}
+      <div
+        class="strip-slot"
+        class:icon-only={iconOnly}
+        class:active={item.id === shownActiveId && item.kind !== "folder" && !isShadowItem(item) && view.tabsById.has(item.id) && !(addressInActiveTab && !iconOnly)}
+        animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(item, { recentlyDraggedId: getRecentlyDroppedId(), itemCount: zoneItems.length }), easing: springEase }}
+        use:dndItem={{ item, zoneId: zone.id, disabled: isShadowItem(item), onCancel: resetSidebarDrag }}
+      >
+        {@render slotContent(item)}
+      </div>
+    {/each}
+  {/if}
 {/snippet}
 
 {#snippet zoneOf(section: StripSection)}
