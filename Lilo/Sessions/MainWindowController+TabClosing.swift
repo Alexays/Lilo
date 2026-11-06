@@ -31,8 +31,7 @@ extension MainWindowController {
     }
 
     /// `opener` is the tab extensions see as the new tab's `openerTabId`; `interactionState` gives it `url` with its history.
-    /// A `spaceId` other than the shown one names a space no window shows: it gets the tab unloaded and inactive, and the
-    /// window that shows it later loads it.
+    /// A `spaceId` no window shows gets the tab unloaded and inactive, for the window that shows it later to load.
     @discardableResult
     func createTabStateFirst(
         url: URL?,
