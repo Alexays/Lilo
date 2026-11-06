@@ -128,8 +128,8 @@ final class WKEngineFactory {
     private(set) static var globalPrivacyControlEnabled = true
     /// Media that waits for a click before it plays; a web view keeps what it was built with.
     private(set) static var autoplayRestriction: WKAudiovisualMediaTypes = .audio
-    /// WebKit feature-flag overrides applied to every new web view (the `about:config` page).
-    private var featureFlagOverrides: [String: Bool] = [:]
+    /// WebKit feature-flag overrides applied to every new web view (the `about:config` page), extension pages included.
+    private(set) static var featureFlagOverrides: [String: Bool] = [:]
     private var fullRefreshRate = true
     /// Pages of the agents' profile render near 60 fps whatever the setting: nobody watches them animate.
     var agentsProfileId: UUID? {
@@ -487,8 +487,8 @@ final class WKEngineFactory {
     /// Applies to web views built afterwards; the warm view is discarded. WebKit binds preferences at
     /// web-view creation, so existing tabs keep theirs until reloaded.
     func setFeatureFlagOverrides(_ overrides: [String: Bool]) {
-        guard overrides != featureFlagOverrides else { return }
-        featureFlagOverrides = overrides
+        guard overrides != Self.featureFlagOverrides else { return }
+        Self.featureFlagOverrides = overrides
         dropWarmPool()
     }
 
@@ -887,7 +887,7 @@ final class WKEngineFactory {
         // Power-constrained, a page fetches no page the user may never open; an about:config override still wins.
         let prefetches = suppressWarmPool ? ["LinkPrefetchEnabled": false, "SpeculationRulesPrefetchEnabled": false] : [:]
         WKFeatureFlags.apply(
-            [WKFeatureFlags.near60FPSKey: rendersNear60FPS].merging(prefetches) { $1 }.merging(featureFlagOverrides) { $1 },
+            [WKFeatureFlags.near60FPSKey: rendersNear60FPS].merging(prefetches) { $1 }.merging(Self.featureFlagOverrides) { $1 },
             to: wkConfig.preferences
         )
 

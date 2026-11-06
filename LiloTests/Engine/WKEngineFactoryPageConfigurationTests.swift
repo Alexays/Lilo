@@ -39,6 +39,7 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         XCTAssertTrue(try rendersNear60FPS(factory))
 
         factory.setFeatureFlagOverrides([WKFeatureFlags.near60FPSKey: false])
+        defer { factory.setFeatureFlagOverrides([:]) }
         XCTAssertFalse(try rendersNear60FPS(factory), "an about:config override wins over the setting")
     }
 

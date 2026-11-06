@@ -51,6 +51,17 @@ final class ExtensionPageTabTests: XCTestCase {
         return (window, registry, extensionId, pageURL, tabId, other.id)
     }
 
+    func testExtensionPageGetsTheFeatureFlagsTabsGet() async throws {
+        browserContext.context.engineFactory.setFeatureFlagOverrides(["SelectShowPickerEnabled": false])
+        defer { browserContext.context.engineFactory.setFeatureFlagOverrides([:]) }
+        let (window, _, _, _, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let idle = try await page.evaluateJavaScript("typeof requestIdleCallback") as? String
+        XCTAssertEqual(idle, "function", "Lilo's defaults reach extension pages")
+        let picker = try await page.evaluateJavaScript("typeof HTMLSelectElement.prototype.showPicker") as? String
+        XCTAssertEqual(picker, "undefined", "an about:config override reaches extension pages")
+    }
+
     func testDiscardedExtensionPageReloadsWhenReactivated() async throws {
         let (window, _, _, pageURL, tabId, _) = try await openExtensionPage()
         window.tabManager.discardEngines([tabId])
