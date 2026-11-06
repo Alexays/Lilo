@@ -106,8 +106,8 @@ final class BrowserImporter {
             if kinds.contains(.bookmarks) || kinds.contains(.tabs) {
                 do {
                     let others = ImportedBookmark(title: sink.otherBookmarksTitle(source.name), url: nil, children: bundle.otherBookmarks)
-                    // The bookmarked section holds tabs only: favorite folders are flattened. Arc shows a profile's
-                    // favorites in each of its spaces, so each space gets them.
+                    // The bookmarked section holds tabs only: favorite folders are flattened. Arc and Zen show a profile's
+                    // favorites (essentials) in each of its spaces, so each space gets them.
                     let favorites = Self.flattened(bundle.favorites)
                     let icons = Dictionary(bundle.favicons.map { ($0.host, $0.dataURL) }, uniquingKeysWith: { first, _ in first })
                     var targets = [Target(spaceId: lilo.spaceId, bookmarks: bundle.bookmarksBar + [others], pinned: bundle.pinnedTabs,
