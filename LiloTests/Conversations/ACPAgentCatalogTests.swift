@@ -41,6 +41,26 @@ final class ACPAgentCatalogTests: XCTestCase {
         XCTAssertNil(ACPAgentCatalog.parse(Data("{\"agents\": 3}".utf8)))
     }
 
+    @MainActor
+    func testAPinnedNpmAgentStartsItsInstalledCommand() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let modules = directory.appending(path: "npm/claude-acp/1.0.0/node_modules")
+        let package = modules.appending(path: "@example/agent-acp")
+        try FileManager.default.createDirectory(at: package, withIntermediateDirectories: true)
+        try Data(#"{"name": "@example/agent-acp", "bin": {"agent-acp": "dist/index.js"}}"#.utf8).write(to: package.appending(path: "package.json"))
+        let command = modules.appending(path: ".bin/agent-acp")
+        try FileManager.default.createDirectory(at: command.deletingLastPathComponent(), withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: command.path, contents: Data("#!/bin/sh\n".utf8), attributes: [.posixPermissions: 0o755])
+        let agent = ACPAgentCatalog.Agent(id: "claude-acp", name: "Claude Agent", description: "", version: "1.0.0",
+                                          distribution: .npx(package: "@example/agent-acp@1.0.0", args: ["--acp"]))
+
+        let launch = try await ACPAgentCatalog(directory: directory).launch(agent)
+
+        XCTAssertEqual(launch.executable.standardizedFileURL, command.standardizedFileURL)
+        XCTAssertEqual(launch.arguments, ["--acp"])
+    }
+
     func testAgentFieldsSurviveTheSessionStore() throws {
         var tab = Tab(title: "Fix login", kind: .agent, cwd: "/tmp/acme", agentId: "claude-acp", agentSessionId: "s1")
         tab.spaceId = UUID()

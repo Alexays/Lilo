@@ -147,10 +147,16 @@ final class ACPAgentCatalog {
         environment["PATH"] = path
         switch agent.distribution {
         case .npx(let package, let args):
+            if !agent.version.isEmpty, package.hasSuffix("@" + agent.version) {
+                return (try await install(agent, package: package, path: path), args, environment)
+            }
             guard let npx = Self.find("npx", in: path) else {
                 throw unsafe LaunchError(message: String(format: "%@ needs Node.js: install it from nodejs.org, then try again.".localized, agent.name))
             }
-            return (URL(fileURLWithPath: npx), ["--yes", package] + args, environment)
+            // An empty prefix keeps npx from loading the tree of the JavaScript project the agent works in.
+            let prefix = directory.appending(path: "npx")
+            try? FileManager.default.createDirectory(at: prefix, withIntermediateDirectories: true)
+            return (URL(fileURLWithPath: npx), ["--yes", "--prefix", prefix.path, package] + args, environment)
         case .uvx(let package, let args):
             guard let uvx = Self.find("uvx", in: path) else {
                 throw unsafe LaunchError(message: String(format: "%@ needs uv: install it from astral.sh/uv, then try again.".localized, agent.name))
@@ -189,6 +195,57 @@ final class ACPAgentCatalog {
 
     private static func find(_ name: String, in path: String) -> String? {
         path.split(separator: ":").lazy.map { "\($0)/\(name)" }.first(where: FileManager.default.isExecutableFile(atPath:))
+    }
+
+    /// Installs a pinned npm agent once per version and returns its command, which then starts directly:
+    /// npx would ask the registry, load the project's tree and keep its own node alive on every start.
+    private func install(_ agent: Agent, package: String, path: String) async throws -> URL {
+        let name = String(package.dropLast(agent.version.count + 1))
+        let versions = directory.appending(path: "npm/\(agent.id)")
+        let target = versions.appending(path: agent.version)
+        if let executable = Self.packageCommand(name, in: target) { return executable }
+        guard let npm = Self.find("npm", in: path) else {
+            throw unsafe LaunchError(message: String(format: "%@ needs Node.js: install it from nodejs.org, then try again.".localized, agent.name))
+        }
+        // Installed aside then moved in place, so a start running alongside never sees a half-installed tree.
+        let staging = versions.appending(path: ".\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: staging) }
+        try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+        let status = await AgentClientConfig.run("/usr/bin/env", [
+            "PATH=\(path)", npm, "install", "--prefix", staging.path, "--no-audit", "--no-fund", "--loglevel=error", package
+        ], timeout: 600).status
+        guard status == 0, Self.packageCommand(name, in: staging) != nil else {
+            throw unsafe LaunchError(message: String(format: "%@ could not be installed.".localized, agent.name))
+        }
+        // Another start of the same agent may have finished its install meanwhile.
+        if let executable = Self.packageCommand(name, in: target) { return executable }
+        for old in (try? FileManager.default.contentsOfDirectory(at: versions, includingPropertiesForKeys: nil)) ?? []
+        where !old.lastPathComponent.hasPrefix(".") {
+            try? FileManager.default.removeItem(at: old)
+        }
+        try? FileManager.default.moveItem(at: staging, to: target)
+        guard let executable = Self.packageCommand(name, in: target) else {
+            throw unsafe LaunchError(message: String(format: "%@ could not be installed.".localized, agent.name))
+        }
+        Self.logger.info("installed \(agent.id, privacy: .public) \(agent.version, privacy: .public)")
+        return executable
+    }
+
+    /// The command npx would run for the package `name` installed under `prefix`.
+    private static func packageCommand(_ name: String, in prefix: URL) -> URL? {
+        let modules = prefix.appending(path: "node_modules")
+        guard let data = try? Data(contentsOf: modules.appending(path: "\(name)/package.json")),
+              let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        let unscoped = String(name.split(separator: "/").last ?? "")
+        let command: String?
+        switch manifest["bin"] {
+        case is String: command = unscoped
+        case let bins as [String: Any]: command = bins.count == 1 ? bins.keys.first : bins[unscoped].map { _ in unscoped }
+        default: command = nil
+        }
+        guard let command, !command.isEmpty, !command.contains("/") else { return nil }
+        let executable = modules.appending(path: ".bin/\(command)")
+        return FileManager.default.isExecutableFile(atPath: executable.path) ? executable : nil
     }
 
     /// Downloads the agent's archive once per version, checks it against the registry's SHA-256 before
