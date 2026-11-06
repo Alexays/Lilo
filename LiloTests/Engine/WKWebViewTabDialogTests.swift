@@ -323,7 +323,8 @@ final class WKWebViewTabDialogTests: XCTestCase {
         let password = try XCTUnwrap(fields.last as? NSSecureTextField, "the password is typed in secure entry")
         let typing = await pollUntil { ((window.firstResponder as? NSText)?.delegate as? NSView) === fields.first }
         XCTAssertTrue(typing, "the username field takes the keyboard once the tab shows")
-        XCTAssertTrue(buttons(in: dialog).contains { $0.title == "Remember this password" }, "a profile can keep the password")
+        XCTAssertFalse(buttons(in: dialog).contains { $0.title == "Remember this password" }, "a cleartext password is never kept")
+        XCTAssertTrue(texts(in: dialog).contains { $0.contains("Realm: \"test\"") && $0.contains("sent unencrypted") }, "\(texts(in: dialog))")
         fields.first?.stringValue = "user"
         password.stringValue = "secret"
         try XCTUnwrap(defaultButton(of: dialog)).performClick(nil)

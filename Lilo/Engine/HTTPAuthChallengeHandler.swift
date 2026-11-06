@@ -3,7 +3,8 @@ import Foundation
 
 /// Resolves HTTP basic/digest authentication challenges: keychain lookup, a tab-modal username/password prompt on a
 /// miss, and retry accounting via `previousFailureCount`. A password reaches the keychain only when the user ticks
-/// "Remember this password". TLS server-trust is handled by the tab directly (it needs the navigation context), not here.
+/// "Remember this password", which a cleartext connection never offers. TLS server-trust is handled by the tab
+/// directly (it needs the navigation context), not here.
 @MainActor
 struct HTTPAuthChallengeHandler {
     /// `completion` runs exactly once, on the main actor. The prompt goes to `present`, which covers the page's tab
@@ -27,9 +28,12 @@ struct HTTPAuthChallengeHandler {
         }
 
         let realm = space.realm ?? "Restricted Area".localized
-        let message = unsafe challenge.previousFailureCount > 0
-            ? String(format: "Saved credentials were rejected by %@.\nRealm: %@".localized, space.host, realm)
-            : String(format: "%@ requires a username and password.\nRealm: %@".localized, space.host, realm)
+        var message = unsafe challenge.previousFailureCount > 0
+            ? String(format: "Saved credentials were rejected by %@.\nRealm: \"%@\"".localized, space.host, realm)
+            : String(format: "%@ requires a username and password.\nRealm: \"%@\"".localized, space.host, realm)
+        if !space.receivesCredentialSecurely {
+            message += "\n\n" + "This connection is not secure: the password will be sent unencrypted.".localized
+        }
 
         let usernameField = NSTextField(string: challenge.proposedCredential?.user ?? storedCredential?.user ?? "")
         usernameField.placeholderString = "Username".localized
@@ -39,11 +43,13 @@ struct HTTPAuthChallengeHandler {
         passwordField.placeholderString = "Password".localized
         passwordField.setAccessibilityLabel("Password".localized)
         passwordField.contentType = .password
+        let rememberBox = keychainProfile != nil && space.receivesCredentialSecurely
+            ? NSButton(checkboxWithTitle: "Remember this password".localized, target: nil, action: nil)
+            : nil
         // Ticked when the credentials being replaced were remembered.
-        let rememberBox = NSButton(checkboxWithTitle: "Remember this password".localized, target: nil, action: nil)
-        rememberBox.state = storedCredential == nil ? .off : .on
+        rememberBox?.state = storedCredential == nil ? .off : .on
 
-        let accessories: [NSView] = [usernameField, passwordField] + (keychainProfile == nil ? [] : [rememberBox])
+        let accessories: [NSView] = [usernameField, passwordField] + (rememberBox.map { [$0] } ?? [])
         present(TabModalDialogView(
             title: "Authentication Required".localized,
             message: message,
@@ -53,7 +59,7 @@ struct HTTPAuthChallengeHandler {
         ) { accepted in
             guard accepted else { return completion(.cancelAuthenticationChallenge, nil) }
             let credential = URLCredential(user: usernameField.stringValue, password: passwordField.stringValue, persistence: .forSession)
-            if rememberBox.state == .on, let keychainProfile { HTTPAuthKeychain.store(credential, for: space, profileId: keychainProfile) }
+            if rememberBox?.state == .on, let keychainProfile { HTTPAuthKeychain.store(credential, for: space, profileId: keychainProfile) }
             completion(.useCredential, credential)
         })
     }
