@@ -22,6 +22,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
         "_webView:requestStorageAccessPanelForDomain:underCurrentDomain:completionHandler:",
         "_webView:runBeforeUnloadConfirmPanelWithMessage:initiatedByFrame:completionHandler:",
         "_webView:saveDataToFile:suggestedFilename:mimeType:originatingURL:",
+        "_webView:setWindowFrame:",
         "_webView:takeFocus:",
         "_webViewDidLosePointerLock:",
         "_webViewDidRequestPointerLock:completionHandler:",

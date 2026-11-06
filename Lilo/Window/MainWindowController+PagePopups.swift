@@ -123,6 +123,11 @@ extension MainWindowController {
         return true
     }
 
+    /// Only a popup's own window follows `window.resizeTo` and `moveTo`: never a tab's window or a peek.
+    func tab(_ tab: WKWebViewTab, setsWindowFrame frame: CGRect) {
+        pagePopups[tab.id]?.setWindowFrame(frame)
+    }
+
     /// The opener is a tab of this space that is not already a pane: a split never grows a third one.
     func canSplit(beside tabId: UUID) -> Bool {
         guard let opener = tabManager.context(for: tabId) else { return false }
