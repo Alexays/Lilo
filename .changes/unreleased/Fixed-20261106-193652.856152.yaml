@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extension links to Chrome's extensions or shortcuts page open Lilo's extension settings on that extension, instead of an empty tab asking to open another app
+time: 2026-11-06T19:36:52.856152+01:00

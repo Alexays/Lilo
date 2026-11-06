@@ -984,7 +984,8 @@ export interface BridgeEventPayloadMap {
 	openDiagnostics: EmptyPayload;
 	openProcessManager: EmptyPayload;
 	openDownloads: EmptyPayload;
-	openExtensions: EmptyPayload;
+	/** `id`: the extension whose details page opens. */
+	openExtensions: { id?: string };
 	openConfig: EmptyPayload;
 	featureFlagsLoaded: { flags: BridgeFeatureFlagSnapshot[] };
 	/** `host`: the content blocker allowlist entry for the page; `site`: its registrable domain. */
