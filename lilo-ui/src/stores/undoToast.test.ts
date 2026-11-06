@@ -176,3 +176,38 @@ test("a toast of another kind waits for the current one, then gets its full 5s",
 		mock.timers.reset();
 	}
 });
+
+test("a message has no undo: it lasts its own time and leaves Cmd+Z alone", async () => {
+	const posted = stubBridgeWindow();
+	let keydown: ((e: Partial<KeyboardEvent>) => void) | undefined;
+	(globalThis as unknown as { window: { addEventListener: unknown } }).window.addEventListener = (type: string, listener: typeof keydown) => {
+		if (type === "keydown") keydown = listener;
+	};
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/undoToast.svelte.ts");
+	store.initUndoToastStore();
+
+	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+	try {
+		store.showUndoToast("Copied");
+		closeTab("Alpha Docs");
+		assert.equal(store.getUndoToast()?.label, "Copied", "a close waits for the message");
+		const before = posted.length;
+		let prevented = false;
+		assert.ok(keydown);
+		keydown({ key: "z", metaKey: true, defaultPrevented: false, preventDefault: () => (prevented = true) });
+		assert.equal(posted.length, before);
+		assert.equal(prevented, false);
+		mock.timers.tick(5000);
+		assert.equal(store.getUndoToast()?.title, "Alpha Docs");
+		store.undoTabClose();
+
+		store.showUndoToast("Too long", undefined, 6000);
+		mock.timers.tick(5999);
+		assert.equal(store.getUndoToast()?.label, "Too long");
+		mock.timers.tick(1);
+		assert.equal(store.getUndoToast(), null);
+	} finally {
+		mock.timers.reset();
+	}
+});

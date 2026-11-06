@@ -1,4 +1,5 @@
-<!-- The undo toast: what just went and a named way back, gone after its countdown. With the full
+<!-- The undo toast: what just went and a named way back, gone after its countdown, or a plain
+     message with neither action nor countdown. With the full
      sidebar shown it docks above the bottom bar, in flow, so it never covers the page; otherwise
      it is a capsule at the bottom center of the page. Escape stays with the other overlays: it
      leaves on its action, its timeout, or the next toast. -->
@@ -25,6 +26,7 @@
 
   const sidebarHasRoom = $derived(isSidebarVisible() && isVerticalLayout() && !isSidebarRail());
   const toast = $derived(docked === sidebarHasRoom ? getUndoToast() : null);
+  const message = $derived(toast?.label !== undefined && !toast.undo);
 </script>
 
 {#snippet card(seq: number)}
@@ -43,19 +45,23 @@
         onfocusout={resumeUndoToast}
         out:fade={{ duration: docked ? 0 : prefersReducedMotion() ? 150 : 120 }}
       >
-        <svg class="undo-ring" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-          <circle class="track" cx="8" cy="8" r="6.5" />
-          <circle class="remaining" cx="8" cy="8" r="6.5" />
-        </svg>
-        <span class="undo-subject">{undoToastSubject(toast)}</span>
-        <button
-          class="undo-action"
-          type="button"
-          use:tooltip={{ text: undoToastSubject(toast), shortcut: toast.archivedIds || toast.undo ? undefined : shortcutKeys("tab.reopenClosed") }}
-          onclick={undoTabClose}
-        >
-          {t(toast.undo ? "undoToast.undo" : "undoToast.reopen")}
-        </button>
+        {#if message}
+          <span class="undo-subject message">{toast.label}</span>
+        {:else}
+          <svg class="undo-ring" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <circle class="track" cx="8" cy="8" r="6.5" />
+            <circle class="remaining" cx="8" cy="8" r="6.5" />
+          </svg>
+          <span class="undo-subject">{undoToastSubject(toast)}</span>
+          <button
+            class="undo-action"
+            type="button"
+            use:tooltip={{ text: undoToastSubject(toast), shortcut: toast.archivedIds || toast.undo ? undefined : shortcutKeys("tab.reopenClosed") }}
+            onclick={undoTabClose}
+          >
+            {t(toast.undo ? "undoToast.undo" : "undoToast.reopen")}
+          </button>
+        {/if}
       </div>
     {/if}
   {/key}
@@ -150,6 +156,15 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  /* Without an action button, the right padding matches the left. */
+  .undo-subject.message {
+    padding-right: 8px;
+  }
+
+  .docked .undo-subject.message {
+    padding-right: 6px;
   }
 
   .undo-action {
