@@ -149,7 +149,8 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         }
         guard let adapter else { return BridgeError("No \(type) with given id \(id).") }
         if let restriction = Self.restriction(of: adapter.url(for: context), for: context) { return BridgeError(restriction) }
-        guard let engine = adapter.engineTab else { return BridgeError("Cannot attach to this target.") }
+        // A suspended page answers no inspector: a tab the idle sweep froze wakes first.
+        guard let engine = adapter.engineTab, engine.wake() else { return BridgeError("Cannot attach to this target.") }
         let attached = { [self] in sessions.contains { $0.extensionId == call.extensionId && $0.registry === registry && $0.engine === engine } }
         if attached() { return BridgeError("Another debugger is already attached to the \(type) with id: \(id).") }
         let inspector: AgentInspector
@@ -169,6 +170,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             registry: registry, debuggee: debuggee, engine: engine, inspector: inspector
         )
         sessions.append(session)
+        engine.isExtensionDebugged = true
         Self.receiveEvents(of: inspector, handler: self)
         // Chrome detaches when the tab shows a page the extension may not debug.
         session.urlObservation = engine.wkWebView.observe(\.url, options: [.new]) { [weak self, weak session] webView, _ in
@@ -211,6 +213,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     private func end(_ session: Session, reason: String?, pageGone: Bool = false) {
         guard let index = sessions.firstIndex(where: { $0 === session }) else { return }
         sessions.remove(at: index)
+        session.engine.isExtensionDebugged = sessions.contains { $0.engine === session.engine }
         session.urlObservation = nil
         if session.scaled { session.inspector.deviceScaleFactor = 0 }
         if let reason, let registry = session.registry {

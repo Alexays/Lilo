@@ -193,6 +193,8 @@ final class WKWebViewTab: NSObject {
     var isAgentSleeping = false {
         didSet { runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping) }
     }
+    /// True while an extension's chrome.debugger session targets this tab: the idle freeze and discards leave it alone.
+    var isExtensionDebugged = false
     /// Set while an agent drives this tab: true when it took the page dialog, answered at once
     /// instead of opening a sheet on the user's window.
     var agentDialogHandler: ((String) -> Bool)?

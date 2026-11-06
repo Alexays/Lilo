@@ -137,6 +137,27 @@ final class DebuggerGapAPITests: XCTestCase {
         XCTAssertEqual(again.error, "Debugger is not attached to the tab with id: 7.")
     }
 
+    func testADebuggedBackgroundTabStaysAwake() async throws {
+        let debugged = try await openTab()
+        let idle = try await openTab()
+        _ = try await openTab()
+        let debuggedEngine = try XCTUnwrap(window.tabManager.engineTab(for: debugged.id))
+        let idleEngine = try XCTUnwrap(window.tabManager.engineTab(for: idle.id))
+        let later = Date().addingTimeInterval(60 * 60)
+        window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: later)
+        XCTAssertTrue(debuggedEngine.isFrozen)
+        XCTAssertTrue(idleEngine.isFrozen)
+
+        let attachError = await attach(debugged.position)
+        XCTAssertNil(attachError)
+        window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: later)
+        XCTAssertFalse(debuggedEngine.isFrozen)
+        idleEngine.resume()   // the context's teardown cannot touch a suspended page
+
+        _ = await call("detach", ["target": ["tabId": 7]])
+        XCTAssertFalse(debuggedEngine.isExtensionDebugged)
+    }
+
     func testCancelFromTheBannerDetachesTheExtension() async throws {
         let tab = try await openTab()
         _ = await attach(tab.position)
