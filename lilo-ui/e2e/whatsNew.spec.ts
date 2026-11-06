@@ -36,6 +36,18 @@ async function openWhatsNew(page: Page, automatic = false, version = "0.6.0") {
 	await page.evaluate(({ automatic, version }) => window.__lilo!.receive({ event: "openWhatsNew", automatic, version }), { automatic, version });
 }
 
+test("a highlight plays its media in place of the illustration", async ({ page }) => {
+	const media = { kind: "film" as const, poster: "/release-media/0.6.0/unread.png", video: "/release-media/0.6.0/unread.mp4" };
+	const en = { ...release.editorial!.en!, highlights: [{ media, title: "Catch what you missed.", description: "Unread counts." }] };
+	await bootReleaseChrome(page, initialWorld(), undefined, { ...release, editorial: { en } });
+	await openWhatsNew(page);
+	const video = page.getByRole("dialog").locator("video");
+	await expect(video).toHaveAccessibleName("Catch what you missed.");
+	await expect(video).toHaveAttribute("controls", "");
+	await expect(video).toHaveAttribute("preload", "none");
+	await expect(video).toHaveJSProperty("paused", true);
+});
+
 test("the modal presents installed highlights, all changes and one acknowledgment", async ({ page }) => {
 	const resourceReads = await bootReleaseChrome(page);
 	await openWhatsNew(page, true);

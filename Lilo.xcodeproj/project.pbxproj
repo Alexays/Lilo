@@ -298,6 +298,7 @@
 		720EEDBF9BC1B4E69E487858 /* TraditionalChineseLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6E4C686494304EB3C12561 /* TraditionalChineseLocalizationTests.swift */; };
 		733FF31D58F45F81D359C723 /* NativeMessaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F387BD7442412B893689E36 /* NativeMessaging.swift */; };
 		7347B5EE09265AB1363C7C3C /* QRCodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1957E0C36D17C64137430863 /* QRCodeTests.swift */; };
+		7363D33C1CF6FD94E68AE402 /* release-media in Resources */ = {isa = PBXBuildFile; fileRef = 2D0A9E30F6B3FBDFADF75B3C /* release-media */; };
 		7379D653347D408D4DA830D2 /* AppleScriptSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E2D3017282732FA173A586B /* AppleScriptSupport.swift */; };
 		743016EA91C1FE0D03CC9B20 /* WKFeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A559C549D5921A92A75791 /* WKFeatureFlags.swift */; };
 		743729CA39F3F4BF097F570B /* TabBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20DD2266C3DA5546A856F717 /* TabBridgeHandlerTests.swift */; };
@@ -889,6 +890,7 @@
 		2C5EAC944C4FA42F1A74E759 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
 		2C5F024425A45722773238EE /* AgentFolders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFolders.swift; sourceTree = "<group>"; };
 		2C7F940372202EA7DFB8229B /* AgentInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentInput.swift; sourceTree = "<group>"; };
+		2D0A9E30F6B3FBDFADF75B3C /* release-media */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "release-media"; path = "lilo-ui/public/release-media"; sourceTree = SOURCE_ROOT; };
 		2D24BF900BE3A4131D4378A9 /* ProceduralCosmetics.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ProceduralCosmetics.js; sourceTree = "<group>"; };
 		2D8452792228C102FF9E9860 /* ExtensionLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLifecycleTests.swift; sourceTree = "<group>"; };
 		2DFCC36C22B7A6970C465AF4 /* TerminalFrameBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalFrameBuilderTests.swift; sourceTree = "<group>"; };
@@ -2689,6 +2691,7 @@
 			isa = PBXGroup;
 			children = (
 				2142A3F2FD9FF647C3069FF7 /* password-managers */,
+				2D0A9E30F6B3FBDFADF75B3C /* release-media */,
 			);
 			path = public;
 			sourceTree = "<group>";
@@ -2976,6 +2979,7 @@
 				EAE2D8439E5F00188A79A185 /* content-blocker-rules.json in Resources */,
 				3014BDAE6885561DD0059830 /* password-managers in Resources */,
 				80E69F9C86FA46A7EBB45114 /* public-suffix-list.dat in Resources */,
+				7363D33C1CF6FD94E68AE402 /* release-media in Resources */,
 				ECECE200138640A7DAAB9707 /* shell-integration in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

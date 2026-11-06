@@ -68,6 +68,8 @@ three highlights reference keys under `whatsNew.releases` in **every** shared la
 catalog. Use a benefit-led heading and one or two sentences per highlight. The static local
 illustrations live in `WhatsNewArt.svelte`; a new illustration also needs a recognized identifier
 in `releaseNotes.ts`. Keep illustrations decorative and communicate the change in the copy.
+A highlight can show a film, a loop or an image instead: give it an `id` and a `media` kind, and
+add its files under [`release-media/assets/`](../release-media/README.md).
 
 Without an entry for that version, the sheet opens the complete notes in a compact maintenance
 layout. An older version's highlights are never reused. The complete notes retain their original

@@ -26,6 +26,7 @@ const storySchema = z.strictObject({
           .optional(),
         body: translatedText,
         id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
+        media: z.enum(["film", "loop", "image"]).optional(),
         notes: z.array(z.string().min(1)).min(1),
         title: translatedText,
       })

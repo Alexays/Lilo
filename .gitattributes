@@ -1,0 +1,2 @@
+# Preserve the creator's original license bytes and checksum.
+release-media/public/audio/music.LICENSE.txt -text whitespace=cr-at-eol

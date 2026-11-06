@@ -1,0 +1,81 @@
+---
+import type { ReleaseMedia } from "../../../release-media/catalog";
+
+interface Props {
+  label: string;
+  media: ReleaseMedia;
+}
+
+const { label, media } = Astro.props;
+---
+
+<figure class="release-media">
+  {media.kind === "image" ? (
+    <img
+      src={media.poster}
+      width="1920"
+      height="1080"
+      alt={label}
+      loading="lazy"
+      decoding="async"
+    />
+  ) : (
+    <video
+      controls
+      playsinline
+      preload="none"
+      poster={media.poster}
+      width="1920"
+      height="1080"
+      aria-label={label}
+      muted={media.kind === "loop"}
+      loop={media.kind === "loop"}
+    >
+      <source src={media.video} type="video/mp4" />
+    </video>
+  )}
+</figure>
+
+<script>
+  const calm = matchMedia("(prefers-reduced-motion: reduce)");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const { isIntersecting, target } of entries) {
+        if (!(target instanceof HTMLVideoElement)) {
+          continue;
+        }
+
+        if (!isIntersecting) {
+          target.pause();
+        } else if (target.loop && !calm.matches) {
+          target.play().catch(() => null);
+        }
+      }
+    },
+    { threshold: 0.5 }
+  );
+
+  for (const video of document.querySelectorAll(".release-media video")) {
+    observer.observe(video);
+  }
+</script>
+
+<style>
+  .release-media {
+    margin: 16px 0 0;
+  }
+  video,
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    background: #15151b;
+  }
+  video:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+</style>
