@@ -1203,7 +1203,7 @@
 
   /* The address bar paints its own surface underneath, so the button needs a tint above it. */
   .knob {
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .permissions-btn:is(:hover, .active) .knob.a {

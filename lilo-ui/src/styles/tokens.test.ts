@@ -56,3 +56,15 @@ test("component radii and font sizes come from the token scales", () => {
 	);
 	assert.deepEqual(offenders, [], "use --radius-* or --font-size-* (see styles/README.md)");
 });
+
+// Keyframe animations (spinners, loops, celebrations) keep their own timing; a state change takes a token.
+test("component transitions take their durations from the motion tokens", () => {
+	const declaration = /(?<![-\w])(transition(?:-duration)?)\s*:\s*([^;{}]+)/g;
+	const time = /(?<![\w.-])\d*\.?\d+m?s\b/;
+	const offenders = files.flatMap((file) =>
+		[...file.css.matchAll(declaration)]
+			.filter(([, , value]) => time.test(value.replace(/var\([^()]*\)/g, "var()")))
+			.map(([, property, value]) => `${file.name}: ${property}: ${value.replace(/\s+/g, " ").trim()}`),
+	);
+	assert.deepEqual(offenders, [], "use --motion-duration-* (see styles/README.md)");
+});

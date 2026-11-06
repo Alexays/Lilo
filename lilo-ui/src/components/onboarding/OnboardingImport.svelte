@@ -275,7 +275,7 @@
   .step { display: grid; margin: 0 0 8px; font-size: var(--font-size-md); color: var(--text-secondary); }
   .step span { grid-area: 1 / 1; }
   .import-track { position: relative; display: block; height: 4px; border-radius: var(--radius-2xs); background: var(--onb-edge); overflow: hidden; }
-  .import-track i { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform .6s var(--motion-ease-standard); }
+  .import-track i { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform var(--motion-duration-slow) var(--motion-ease-standard); }
   .import-track.busy::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 40%, transparent), transparent); animation: import-shimmer 1.6s ease-in-out infinite; }
   @keyframes import-shimmer { to { transform: translateX(100%); } }

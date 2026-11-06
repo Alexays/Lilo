@@ -459,7 +459,7 @@
     grid-template-rows: 0fr;
     opacity: 0;
     transition:
-      grid-template-rows 150ms var(--motion-ease-spring),
+      grid-template-rows var(--motion-duration-fast) var(--motion-ease-spring),
       opacity var(--motion-duration-fast) ease;
   }
 

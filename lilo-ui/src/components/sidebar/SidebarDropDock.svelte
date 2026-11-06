@@ -83,7 +83,7 @@
 
   /* Pills pop in one after the other on the spring; they only mount while a drag runs. */
   .dock-target {
-    animation: dock-pop 340ms var(--motion-ease-bounce) both;
+    animation: dock-pop var(--motion-duration-slow) var(--motion-ease-bounce) both;
   }
 
   .dock-target.pin {
@@ -118,7 +118,7 @@
     transition:
       background var(--motion-duration-normal) var(--motion-ease-organic),
       border-color var(--motion-duration-normal) var(--motion-ease-organic),
-      scale 320ms var(--motion-ease-bounce);
+      scale var(--motion-duration-slow) var(--motion-ease-bounce);
   }
 
   .dock-target.pin {

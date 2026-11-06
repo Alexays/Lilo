@@ -248,7 +248,7 @@
     transition:
       background var(--motion-duration-normal) var(--motion-ease-organic),
       border-color var(--motion-duration-normal) var(--motion-ease-organic),
-      scale 360ms var(--motion-ease-bounce);
+      scale var(--motion-duration-slow) var(--motion-ease-bounce);
   }
 
   .split-drop-target + .split-drop-target {

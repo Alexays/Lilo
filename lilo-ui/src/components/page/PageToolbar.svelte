@@ -198,8 +198,8 @@
   .address :global(.url-text-shell) {
     padding-left: calc(var(--address-balance, 0px) + var(--url-cluster-width, 0px) + 4px);
     transition:
-      margin-right 320ms var(--motion-ease-spring),
-      padding-left 320ms var(--motion-ease-spring),
+      margin-right var(--motion-duration-slow) var(--motion-ease-spring),
+      padding-left var(--motion-duration-slow) var(--motion-ease-spring),
       --url-reveal-mask var(--motion-duration-normal) ease;
   }
 

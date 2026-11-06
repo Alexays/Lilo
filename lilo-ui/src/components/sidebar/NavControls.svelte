@@ -297,9 +297,9 @@
 
   .nav-morph-stroke {
     transition:
-      stroke-dashoffset 220ms var(--motion-ease-spring),
+      stroke-dashoffset var(--motion-duration-overlay) var(--motion-ease-spring),
       opacity var(--motion-duration-normal) ease,
-      transform 220ms var(--motion-ease-spring);
+      transform var(--motion-duration-overlay) var(--motion-ease-spring);
     transform-origin: 50% 50%;
     vector-effect: non-scaling-stroke;
   }

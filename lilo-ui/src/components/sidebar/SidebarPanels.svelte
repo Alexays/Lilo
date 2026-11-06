@@ -64,7 +64,7 @@
     position: absolute;
     inset: 0;
     transform: translateX(100%);
-    transition: transform 220ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-overlay) var(--motion-ease-spring);
     pointer-events: none;
   }
 

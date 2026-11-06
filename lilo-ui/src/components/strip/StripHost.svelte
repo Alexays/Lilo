@@ -115,7 +115,7 @@
     box-shadow: var(--chrome-overlay-shadow);
     pointer-events: auto;
     transform-origin: left bottom;
-    animation: editor-in 200ms var(--motion-ease-spring) both;
+    animation: editor-in var(--motion-duration-overlay) var(--motion-ease-spring) both;
   }
 
   .strip-editor.below {
@@ -131,7 +131,7 @@
   @keyframes editor-in {
     from {
       opacity: 0;
-      transform: scale(0.97);
+      transform: scale(0.96);
     }
   }
 
@@ -155,7 +155,7 @@
     pointer-events: auto;
     z-index: 45;
     transform: translateX(calc(-100% - 2 * var(--content-inset)));
-    transition: transform 220ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-overlay) var(--motion-ease-spring);
   }
 
   .strip-panels.open {

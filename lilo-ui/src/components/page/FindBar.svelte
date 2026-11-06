@@ -379,7 +379,7 @@
   .close-glyph {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .find-btn:hover:not(:disabled) .step-glyph.up {

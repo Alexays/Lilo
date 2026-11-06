@@ -272,7 +272,7 @@
     transform: translateY(-50%) translateX(8px) scale(0.94);
     transition:
       opacity var(--motion-duration-normal) ease,
-      transform 260ms var(--motion-ease-spring);
+      transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .url-blocker-btn {
@@ -343,7 +343,7 @@
     transition:
       background var(--transition-fast),
       color var(--transition-fast),
-      transform 180ms var(--motion-ease-spring);
+      transform var(--motion-duration-normal) var(--motion-ease-spring);
   }
 
   .url-action-btn:focus-visible {
@@ -376,7 +376,7 @@
   .lens {
     transform-box: fill-box;
     transform-origin: center;
-    transition: transform 320ms var(--motion-ease-spring);
+    transition: transform var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   .url-copy-btn:hover .link-half.end {

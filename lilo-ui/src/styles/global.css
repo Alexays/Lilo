@@ -544,7 +544,7 @@ html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data
 }
 
 #dnd-action-dragged-el {
-  animation: dnd-preview-lift 280ms var(--motion-ease-bounce) both;
+  animation: dnd-preview-lift var(--motion-duration-slow) var(--motion-ease-bounce) both;
   outline: none !important;
   transition: none !important;
   contain: layout style paint;

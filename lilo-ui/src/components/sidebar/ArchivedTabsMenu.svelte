@@ -244,7 +244,7 @@
     height: 100%;
     background: var(--accent);
     transform-origin: left;
-    transition: transform 0.3s ease;
+    transition: transform var(--motion-duration-slow) ease;
   }
 
   .row-progress.paused .row-progress-fill {
