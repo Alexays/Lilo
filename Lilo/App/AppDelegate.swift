@@ -52,6 +52,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             limit.rlim_cur = min(rlim_t(OPEN_MAX), limit.rlim_max)
             unsafe setrlimit(RLIMIT_NOFILE, &limit)
         }
+        // Two processes on one data folder would each rewrite it on quit: a second one hands over to the first.
+        // The lock is held until exit; O_CLOEXEC keeps terminals and helpers from inheriting it.
+        if !ProcessInfo.isRunningUnderXCTest {
+            let folder = BuildIdentity.appSupportDirectory
+            try? FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
+            let lock = unsafe open(folder + "/Lilo.lock", O_RDWR | O_CREAT | O_CLOEXEC, 0o600)
+            if lock >= 0, flock(lock, LOCK_EX | LOCK_NB) != 0, errno == EWOULDBLOCK {
+                NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+                    .first { $0.processIdentifier != getpid() }?.activate(options: [])
+                exit(0)
+            }
+        }
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.delegate = delegate
