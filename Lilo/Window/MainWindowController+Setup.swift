@@ -312,7 +312,8 @@ extension MainWindowController {
                     Self.loadPreloadedSpaceRestoreState(from: dbManager, space: preloadSpace, loadsFavicons: loadsFavicons)
                 }) else { return nil }
                 for entry in loaded.favicons {
-                    self.context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                    self.context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
+                                                             persistedAt: [preloadSpace.profileId: entry.updatedAt])
                 }
                 if loadsFavicons { self.context.lastFaviconWarmProfileId = preloadSpace.profileId }
                 return loaded.state

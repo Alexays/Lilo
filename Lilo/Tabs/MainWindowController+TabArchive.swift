@@ -46,7 +46,8 @@ extension MainWindowController {
         if !missingHosts.isEmpty, let profileId = context.spaceManager?.space(with: spaceId)?.profileId,
            let store = context.profileContexts.existingContext(for: profileId)?.favicons {
             for entry in (try? store.entries(forHosts: missingHosts)) ?? [] {
-                context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
+                                                    persistedAt: [profileId: entry.updatedAt])
                 favicons[entry.host] = entry.dataURL
             }
         }

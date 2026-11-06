@@ -72,9 +72,10 @@ final class FaviconStoreTests: XCTestCase {
             FaviconStore.Entry(host: "b.example", dataURL: "data:b", dominantColor: "#010203")
         ])
 
-        XCTAssertEqual(try store.entries(forHosts: ["b.example", "missing.example"]), [
-            FaviconStore.Entry(host: "b.example", dataURL: "data:b", dominantColor: "#010203")
-        ])
+        let entries = try store.entries(forHosts: ["b.example", "missing.example"])
+        XCTAssertEqual(entries.map(\.host), ["b.example"])
+        XCTAssertEqual(entries.first?.dataURL, "data:b")
+        XCTAssertEqual(entries.first?.dominantColor, "#010203")
         XCTAssertTrue(try store.entries(forHosts: []).isEmpty)
     }
 
@@ -87,6 +88,24 @@ final class FaviconStoreTests: XCTestCase {
 
         XCTAssertEqual(tabs[0].faviconDataURL, "data:image/png;base64,QUJD")
         XCTAssertEqual(tabs[0].faviconDominantColor, "#112233")
+    }
+
+    /// An icon read from a profile's store under a day ago is served there without rewriting its row.
+    @MainActor
+    func testServingAFreshlyStoredFaviconLeavesItsRow() throws {
+        let store = self.store!
+        try persist([FaviconStore.Entry(host: "example.com", dataURL: "data:stored", dominantColor: nil)])
+        let profileId = UUID()
+        let service = FaviconService()
+        service.storeForProfile = { _ in store }
+        var tabs = [Tab(id: UUID(), url: URL(string: "https://example.com/a"), title: "A")]
+        let changesBefore = try database.pool.write { $0.totalChangesCount }
+
+        service.rehydrateRestoredTabs(&tabs, store: store, profileId: profileId)
+        service.persistCachedIfUnwritten(host: "example.com", profileId: profileId)
+        try database.pool.write { _ in }
+
+        XCTAssertEqual(try database.pool.write { $0.totalChangesCount }, changesBefore)
     }
 
     /// The cap evicts by updatedAt, so an icon still in use must refresh its row even when unchanged.
