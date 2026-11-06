@@ -93,7 +93,7 @@ final class ManagementBridgeHandler: GapHandler {
     private func disabledInfo(_ stored: ExtensionStorage.InstalledExtension) -> ExtensionInfo {
         let manifestURL = URL(fileURLWithPath: stored.path).appendingPathComponent("manifest.json")
         let manifest = (try? Data(contentsOf: manifestURL))
-            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            .flatMap { try? JSONSerialization.jsonObject(with: $0, options: .json5Allowed) as? [String: Any] }
             ?? ["name": stored.name, "version": stored.version]
         return ExtensionInfoBuilder.buildFromManifest(manifest: manifest, id: stored.id, enabled: false)
     }

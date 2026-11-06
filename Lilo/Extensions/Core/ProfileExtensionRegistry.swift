@@ -1211,7 +1211,7 @@ final class ProfileExtensionRegistry {
         var dataURL = ""
         var webStoreURL = ""
         if let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json")),
-           let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+           let manifest = try? JSONSerialization.jsonObject(with: data, options: .json5Allowed) as? [String: Any] {
             let action = (manifest["action"] ?? manifest["browser_action"]) as? [String: Any]
             let icons = (action?["default_icon"] as? [String: String]) ?? (manifest["icons"] as? [String: String]) ?? [:]
             let sized = icons.compactMap { size, file in Int(size).map { ($0, file) } }

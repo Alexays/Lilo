@@ -163,7 +163,7 @@ final class ExtensionUpdater {
         }
         for stored in registry.disabledStoredExtensions {
             let manifestURL = URL(fileURLWithPath: stored.path).appendingPathComponent("manifest.json")
-            let manifest = (try? Data(contentsOf: manifestURL)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            let manifest = (try? Data(contentsOf: manifestURL)).flatMap { try? JSONSerialization.jsonObject(with: $0, options: .json5Allowed) as? [String: Any] }
             guard let manifest, isStoreCopy(id: stored.id, path: stored.path, manifest: manifest) else { continue }
             candidates.append((stored.id, manifest["version"] as? String ?? stored.version))
         }
@@ -311,6 +311,7 @@ final class ExtensionUpdater {
                 let review = try ExtensionInstallReview.load(from: extracted)  // validate manifest before touching files
                 guard ExtensionUpdateChecker.isNewer(review.version, than: currentVersion) else { return false }
 
+                try ExtensionBackgroundPreparer.rewriteAsStrictJSON(extensionURL: extracted)
                 let updated = try await WKWebExtension(resourceBaseURL: extracted)
                 let installed: WKWebExtension
                 if let loaded = registry.context(for: extensionId)?.webExtension {

@@ -87,6 +87,7 @@ enum ExtensionBackgroundPreparer {
     }
 
     private static func prepareUnstamped(extensionURL: URL, preludeSource: String, compatSource: String?) throws -> PreparationResult {
+        try rewriteAsStrictJSON(extensionURL: extensionURL)
         guard var manifest = try readManifest(at: extensionURL) else { return .notNeeded }
         let original = manifest as NSDictionary
         acceptAsChrome(&manifest, extensionURL: extensionURL)
@@ -116,6 +117,18 @@ enum ExtensionBackgroundPreparer {
             try writeIfChanged(try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys]), to: manifestURL)
         }
         return result
+    }
+
+    /// Chrome reads manifest.json and messages.json with comments, WebKit without: each file only JSON5 parses is
+    /// rewritten as strict JSON.
+    static func rewriteAsStrictJSON(extensionURL: URL) throws {
+        let locales = (try? FileManager.default.contentsOfDirectory(at: extensionURL.appendingPathComponent("_locales", isDirectory: true), includingPropertiesForKeys: nil)) ?? []
+        for url in [extensionURL.appendingPathComponent("manifest.json")] + locales.map({ $0.appendingPathComponent("messages.json") }) {
+            guard let data = try? Data(contentsOf: url), (try? JSONSerialization.jsonObject(with: data)) == nil,
+                  let object = try? JSONSerialization.jsonObject(with: data, options: .json5Allowed) else { continue }
+            try verifyWriteTargetInside(extensionURL, target: url)
+            try JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]).write(to: url, options: .atomic)
+        }
     }
 
     private static func readManifest(at extensionURL: URL) throws -> [String: Any]? {

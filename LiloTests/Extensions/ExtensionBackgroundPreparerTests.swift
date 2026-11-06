@@ -390,6 +390,27 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
     }
 
     @MainActor
+    func testCommentedManifestAndMessagesLoadAsInChrome() async throws {
+        let extDir = tempDir.appendingPathComponent("commented")
+        try FileManager.default.createDirectory(at: extDir.appendingPathComponent("_locales/en"), withIntermediateDirectories: true)
+        try """
+        {
+          // Shown in the toolbar
+          "manifest_version": 3, "name": "__MSG_appName__", "version": "1", /* store build */ "default_locale": "en"
+        }
+        """.write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try #"{"appName": {"message": "Commented"} /* translated later */}"#
+            .write(to: extDir.appendingPathComponent("_locales/en/messages.json"), atomically: true, encoding: .utf8)
+
+        XCTAssertEqual(try ExtensionInstallReview.load(from: extDir).name, "Commented")
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "")
+
+        let webExtension = try await WKWebExtension(resourceBaseURL: extDir)
+        XCTAssertEqual(webExtension.errors.map(\.localizedDescription), [])
+        XCTAssertEqual(webExtension.displayName, "Commented")
+    }
+
+    @MainActor
     func testAnEmptyContentScriptListIsDropped() async throws {
         let prepared = try await prepareAsChrome(#"{"content_scripts": []}"#)
 
