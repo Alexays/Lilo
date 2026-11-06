@@ -73,6 +73,9 @@ final class BrowserContext {
     }
     var tabArchiveSavePending = false
     var archiveSweepTimer: DispatchSourceTimer?
+    /// Pairs each suspend of `archiveSweepTimer` with one resume: an unbalanced call traps.
+    var archiveSweepSuspended = false
+    var archiveSweepLastPass: Date?
     /// The closed terminals last handed to the disk, so a change that leaves them alone writes nothing.
     var savedClosedTerminals: [RecentlyClosedStack.Entry]?
     /// Profiles whose hidden spaces a window preloaded, so another window does not repeat it.
