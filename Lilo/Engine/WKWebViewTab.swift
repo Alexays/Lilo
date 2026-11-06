@@ -1607,6 +1607,7 @@ final class WKWebViewTab: NSObject {
         // off-screen pages the system killed under memory pressure would keep that pressure up.
         if unsafe isFrozen || webView.window == nil {
             isPageLost = true
+            isUnresponsive = false
             return
         }
         if let last = lastContentTerminationAt, now.timeIntervalSince(last) < Self.contentTerminationRestrikeWindow {
