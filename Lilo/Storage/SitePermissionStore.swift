@@ -81,6 +81,12 @@ final class SitePermissionStore {
         return normalizedTypes.allSatisfy { byType[$0] == "allow" } ? true : nil
     }
 
+    /// Every decided origin for one permission type, true allowed.
+    func decisions(ofType type: String) -> [String: Bool] {
+        loadMirrorIfNeeded()
+        return decisionsByOrigin.compactMapValues { byType in byType[type].map { $0 == "allow" } }
+    }
+
     func upsert(origin: String, type: String, granted: Bool) {
         let normalizedOrigin = normalizeOrigin(origin)
         let normalizedTypes = normalizeTypes(type)
