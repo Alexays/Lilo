@@ -1,7 +1,7 @@
 import XCTest
 @testable import Lilo
 
-/// Removing a pinned tab or a bookmark, and bringing it back through Undo and Reopen Closed Tab.
+/// Closing tabs and conversations, removing pinned tabs and bookmarks, and bringing them back through Undo and Reopen Closed Tab.
 @MainActor
 final class TabClosingTests: XCTestCase {
     private var browserContext: TemporaryBrowserContext!
@@ -149,6 +149,37 @@ final class TabClosingTests: XCTestCase {
         XCTAssertEqual(item.section, .bookmarked)
         XCTAssertEqual(item.sortOrder, 0)
         XCTAssertEqual(window.tabManager.tab(for: bookmarks[0].id)?.isBookmarked, true)
+    }
+
+    /// A conversation as an agent opens it: its tab heading its own folder, with a page the agent opened below.
+    private func addConversation(_ window: MainWindowController, _ space: Space) throws -> (conversation: Tab, folder: TabFolder, page: Tab) {
+        let folder = TabFolder(spaceId: space.id, name: "Fix login", isCollapsed: true)
+        try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
+        let conversation = Tab(title: "Fix login", kind: .agent, cwd: NSTemporaryDirectory(), agentId: "claude-acp")
+        try window.applyBrowserCommand(.createTab(spaceId: space.id, tab: conversation, activate: false))
+        try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: space.id, kind: .tab, itemId: conversation.id, parentFolderId: folder.id, section: .unpinned, insert: .index(0)
+        ))
+        let page = Tab(url: URL(string: "data:text/html,page"))
+        try window.applyBrowserCommand(.createTab(spaceId: space.id, tab: page, activate: false))
+        try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: space.id, kind: .tab, itemId: page.id, parentFolderId: folder.id, section: .unpinned, insert: .index(1)
+        ))
+        window.context.conversations.register(conversation, folderId: folder.id)
+        return (conversation, folder, page)
+    }
+
+    func testClosingAConversationAmongOtherTabsIsUndoneWithItsPages() throws {
+        let (window, space) = try makeWindow()
+        let events = BridgeEventRecorder(window.bridgeRouter)
+        let other = Tab(url: URL(string: "data:text/html,other"))
+        try window.applyBrowserCommand(.createTab(spaceId: space.id, tab: other, activate: false))
+        let (conversation, _, _) = try addConversation(window, space)
+        window.createTabStateFirst(url: nil)
+
+        window.closeTabsAsOne([other, conversation], spaceId: space.id)
+
+        XCTAssertEqual(events.data("tabClosedUndoable").last?["count"] as? Int, 3, "the other tab, the conversation and its page")
     }
 
     func testUnpinningAnOpenPinnedTabIsNoRemoval() throws {

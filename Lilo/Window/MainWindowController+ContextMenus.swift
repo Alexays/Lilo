@@ -608,11 +608,13 @@ extension MainWindowController {
         )
         let closeAll = { [weak self] in
             guard let self else { return }
-            var recordedCount = 0
+            let newestBefore = context.recentlyClosed.recentEntries.first?.id ?? 0
             for tab in closing {
-                if recordClosedTabForRestore(id: tab.id, sidebarItemById: itemById) { recordedCount += 1 }
+                recordClosedTabForRestore(id: tab.id, sidebarItemById: itemById)
                 closeTabStateFirst(id: tab.id, undoable: false)
             }
+            // A conversation's pages close with it, each its own entry: Undo restores every one.
+            let recordedCount = context.recentlyClosed.recentEntries.prefix { $0.id > newestBefore }.count
             if recordedCount > 0 {
                 bridgeRouter.send(event: "tabClosedUndoable", data: ["title": "", "count": recordedCount])
             }
