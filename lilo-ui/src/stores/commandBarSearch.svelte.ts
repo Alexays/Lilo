@@ -20,6 +20,7 @@ import { formatAgo } from "./tabSwitcher.svelte";
 import { formatTerminalDuration } from "../lib/terminalTitle";
 import { getLocale, t } from "../lib/i18n/state.svelte";
 import { getSetting } from "./settings.svelte";
+import { getSidebarsBySpace } from "./sidebar.svelte";
 import { shortcutKeys } from "./shortcutKeys.svelte";
 import {
 	getActiveTab,
@@ -161,6 +162,17 @@ export function noteActiveTab(tabId: string, now = Date.now()): void {
 	} else {
 		tabActivations.set(tabId, { count: 1, at: now });
 	}
+}
+
+// Deferred past the rest of the patch: a tab moved to another space leaves its source before the
+// target receives it. A closed pinned or bookmarked tab stays in the sidebar and keeps its rank.
+export function forgetClosedTabActivations(closedTabIds: string[]): void {
+	queueMicrotask(() => {
+		const spaces = Object.values(getSidebarsBySpace());
+		for (const id of closedTabIds) {
+			if (!spaces.some((space) => space.view.tabsById.has(id))) tabActivations.delete(id);
+		}
+	});
 }
 
 // Set by computeResults: the history visits of the current query's candidates, by URL.
