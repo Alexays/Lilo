@@ -1,0 +1,3 @@
+kind: Fixed
+body: The History page no longer reshuffles its list on the first keystroke of a search, and stays responsive while you type or browse with it open
+time: 2026-11-06T18:35:15.335545+01:00

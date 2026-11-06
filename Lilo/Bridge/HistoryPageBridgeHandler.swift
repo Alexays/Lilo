@@ -22,6 +22,8 @@ final class HistoryPageBridgeHandler: BridgeHandler {
 
     /// Rows a batch reaches before it stops at a day's end.
     private static let batchRows = 200
+    /// Visits flush about once a second while browsing: the open page reloads at most this often.
+    private static let changeInterval: Duration = .seconds(3)
 
     private typealias PageReply = ((rows: [HistoryStore.DayRow], nextBefore: Date?), [String: String])
 
@@ -33,6 +35,8 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     private var sentFaviconHosts: Set<String> = []
     /// The page ignores every reply but the latest request's, so a new request cancels the read still running.
     private var pageRead: Task<PageReply?, Never>?
+    private var changeThrottle: Task<Void, Never>?
+    private var changeMissed = false
     nonisolated(unsafe) private var changeObserver: Any?
 
     init(profileContextProvider: @escaping () -> ProfileContext?, bridgeRouter: BridgeRouter) {
@@ -42,7 +46,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
             let profileId = note.object as? UUID
             MainActor.assumeIsolated {
                 guard let self, self.pageOpen, profileId == self.profileContextProvider()?.profileId else { return }
-                self.bridgeRouter?.send(event: "historyChanged")
+                self.reportChange()
             }
         }
     }
@@ -152,6 +156,23 @@ final class HistoryPageBridgeHandler: BridgeHandler {
             break
         }
         return nil
+    }
+
+    /// Reports a change at once, then at most one more per interval for the changes that arrive meanwhile.
+    private func reportChange() {
+        guard changeThrottle == nil else {
+            changeMissed = true
+            return
+        }
+        bridgeRouter?.send(event: "historyChanged")
+        changeThrottle = Task { [weak self] in
+            try? await Task.sleep(for: Self.changeInterval)
+            guard let self else { return }
+            self.changeThrottle = nil
+            guard self.changeMissed else { return }
+            self.changeMissed = false
+            if self.pageOpen { self.reportChange() }
+        }
     }
 
     private func sendEmptyPage(for message: BridgeMessage) {
