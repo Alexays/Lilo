@@ -300,7 +300,8 @@ extension MainWindowController {
                 context?.browserState.space(id: spaceId)?.spaceTab.state
             },
             dedupKeyProvider: { [weak context = self.context] spaceId in
-                // Cheap key off the store's owned SpaceTab: durableRevision bumps on every durable mutation.
+                // Cheap key off the store's owned SpaceTab: durableRevision bumps on every durable mutation
+                // except activation, which the spaces table and the switch and quit saves carry.
                 guard let spaceTab = context?.browserState.space(id: spaceId)?.spaceTab else { return nil }
                 return SessionPersistence.SaveDedupKey(
                     spaceId: spaceId,

@@ -9,8 +9,9 @@ final class SessionPersistence {
 
     private static let logger = Logger(liloCategory: "storage")
 
-    /// Dedup key for `scheduleSave`: `durableRevision` bumps on every durable mutation, so an equal key means unchanged bytes. A space
-    /// reloaded into the store restarts its count under a new structure token, which keeps keys distinct.
+    /// Dedup key for `scheduleSave`: `durableRevision` bumps on every durable mutation except activation, which the spaces table and the
+    /// switch and quit saves carry, so an equal key means no structural or content change. A space reloaded into the store restarts its
+    /// count under a new structure token, which keeps keys distinct.
     struct SaveDedupKey: Equatable {
         let spaceId: UUID
         let structureToken: UUID
@@ -53,7 +54,7 @@ final class SessionPersistence {
         for spaceId in displayedSpaceIds() {
             if let key = dedupKeyProvider(spaceId) {
                 // Fast path: the revision is the change-detector. An equal key means nothing durable
-                // changed, so skip without deep-comparing the tree. Encode-time repair happens in
+                // changed but activation, so skip without deep-comparing the tree. Encode-time repair happens in
                 // writeManyOn; lastSnapshots is still recorded for saveNow's error-recovery re-enqueue check.
                 if lastDedupKeysBySpaceId[spaceId] == key { continue }
                 guard let state = stateProvider(spaceId) else { continue }
