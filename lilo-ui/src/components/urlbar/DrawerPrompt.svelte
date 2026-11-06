@@ -133,15 +133,4 @@
     white-space: normal;
     overflow-wrap: anywhere;
   }
-
-  /* The split confirm matches the drawer's other buttons. */
-  .prompt-actions :global(.ui-split-button) {
-    height: auto;
-    min-height: var(--control-height-md);
-    border-radius: var(--radius-md);
-  }
-
-  .prompt-actions :global(.ui-split-button .main) {
-    font-size: var(--font-size-md);
-  }
 </style>

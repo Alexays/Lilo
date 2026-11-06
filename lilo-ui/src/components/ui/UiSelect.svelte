@@ -47,14 +47,14 @@
 
   .ui-select select {
     width: 100%;
-    height: var(--control-height-md);
+    height: var(--control-height-sm);
     appearance: none;
     border: 0;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background: var(--bg-hover);
     color: var(--text-primary);
     font-family: inherit;
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     padding: 0 var(--space-24) 0 var(--space-10);
     cursor: pointer;
     transition: background var(--transition-fast);

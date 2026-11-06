@@ -4,26 +4,27 @@
 redeclared for dark mode, Increase contrast and Reduce transparency. `utilities.css` holds the
 accent and text tints and the few classes shared across components. Components use these
 tokens instead of literal values. The yardstick is macOS: when in doubt, match what a
-first-party app does.
+first-party app does. [docs/DESIGN.md](../../../docs/DESIGN.md) sets which size, radius and
+height each element takes; this file only maps those rules to tokens.
 
-`src/styles/tokens.test.ts` (run by `make ui-test`) fails when a component's `<style>` block
-has a literal hex/`rgb()`/`hsl()` color, a px `border-radius` or a px `font-size`. Files
-that paint fixed artwork (onboarding illustrations, theme previews, the always-dark screenshot
-surfaces) are allowlisted there by name.
+`src/styles/tokens.test.ts` (run by `make ui-test`) fails when a component's `<style>` block or
+the stylesheet `lib/tooltip.ts` injects has a literal hex/`rgb()`/`hsl()` color, a px
+`border-radius` or a px `font-size`. Files that paint fixed artwork (onboarding illustrations,
+theme previews, the always-dark screenshot surfaces) are allowlisted there by name.
 
 ## Type
 
 | Token | Size | Use |
 | --- | --- | --- |
 | `--font-size-3xs` | 9px | Counters on an icon badge |
-| `--font-size-2xs` | 10px | Keycaps, tiny meta labels |
-| `--font-size-xs` | 11px | Section headers, captions, secondary meta |
-| `--font-size-sm` | 12px | Row descriptions, compact rows, menus |
-| `--font-size-md` | 13px | Body text, buttons, fields (the macOS body size) |
+| `--font-size-2xs` | 10px | Text inside thumbnails only |
+| `--font-size-xs` | 11px | Section headers, counts, keycaps, tooltips |
+| `--font-size-sm` | 12px | Details, buttons, selects, segmented controls, menus |
+| `--font-size-md` | 13px | Body text, row titles, fields, popover titles (the macOS body size) |
 | `--font-size-lg` | 14px | Emphasized rows |
 | `--font-size-body-lg` | 15px | Onboarding body |
-| `--font-size-xl` | 16px | Panel and editor titles |
-| `--font-size-2xl` | 20px | Page and settings titles |
+| `--font-size-xl` | 16px | The sidebar panel title |
+| `--font-size-2xl` | 20px | A system screen's page title |
 | `--font-size-3xl` | 22px | Editor and diagnostics titles |
 | `--font-size-headline` | 28px | Onboarding headlines |
 | `--font-size-display` | 56px | The onboarding wordmark only |
@@ -34,31 +35,33 @@ Weights: `--font-weight-regular` (400), `-medium` (500, titles of rows and butto
 ## Spacing
 
 `--space-2`, `-4`, `-6`, `-8`, `-10`, `-12`, `-16`, `-20`, `-24`, `-32`: the name is the
-value. Paddings, margins and gaps stay on this 2px grid; odd values are reserved for 1px
-hairlines.
+value. Layout spacing follows the 4px grid of DESIGN.md; `-2`, `-6` and `-10` are insets
+inside controls. Odd values are reserved for 1px hairlines.
 
 ## Radii
 
 | Token | Value | Use |
 | --- | --- | --- |
 | `--radius-2xs` | 2px | Progress bars, thin indicators |
-| `--radius-xs` | 4px | Keycaps, small favicons, chips inside a row |
-| `--radius-sm` | 6px | Icon buttons and icon tiles up to 30px, tooltips |
-| `--radius-md` | 10px | Controls, rows, fields, banners, cards inside a panel |
+| `--radius-xs` | 4px | Small favicons, chips inside a row, a tooltip's keycap |
+| `--radius-sm` | 6px | Controls (buttons, selects, segmented controls), icon buttons, square chips, keycaps, tooltips |
+| `--radius-md` | 10px | Page, cards, highlighted rows, fields, thumbnails, banners |
 | `--radius-box` | 12px | Grouped boxes of rows (Settings, drawers), app tiles and icon tiles of 32px and up |
-| `--radius-lg` | 14px | Cards and floating bars, containers of `md` rows |
-| `--radius-xl` | 16px | Overlay panels and sheets |
+| `--radius-lg` | 14px | Popovers, drawers, modals, containers of `md` rows |
+| `--radius-xl` | 16px | Floating bars outside the popover family (the sidebar's bottom bar) |
 | `--radius-chip` | 999px | Pills and round badges |
 
 A box nested in a padded one takes its parent's radius less the padding, as
-`calc(var(--radius-md) - var(--space-2))` in `UiSegmented`. The popover family keeps its own
+`calc(var(--radius-sm) - var(--space-2))` in `UiSegmented`. The popover family keeps its own
 `--float-radius-*` tokens (`tip` and `card` alias `sm` and `md`).
 
 ## Controls
 
-`--control-height-sm` (24px: compact buttons, segmented options, popover buttons),
-`--control-height-md` (28px: `UiButton`, `UiSelect`, the segmented track, header icon buttons,
-popover rows), `--control-height-lg` (32px: `UiTextField`, `UiSearchField`). Icons are 12px
+`--control-height-sm` (24px: `UiButton`, `UiSplitButton`, `UiSelect`, the `UiSegmented` track,
+popover buttons), `--control-height-md` (28px: header icon buttons, navigation and popover rows),
+`--control-height-lg` (32px: `UiTextField`, `UiSearchField`, plain list rows). Buttons, selects
+and segmented controls share `--radius-sm` and `--font-size-sm`. A shortcut is the global
+`.keycap` class in `utilities.css`; a tooltip's keycap is 16px high to fit its line. Icons are 12px
 (in rows and buttons), 14px (row icons) or 16px (panel headers and toolbars), drawn with a
 stroke of about 1.5px on screen.
 
