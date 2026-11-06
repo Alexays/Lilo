@@ -44,7 +44,7 @@ final class ProfileManager {
     func loadProfiles(_ loadedProfiles: [Profile], lastActiveProfileId: UUID?) throws {
         restoredLastActiveProfileId = lastActiveProfileId; hasLoadedLastActiveProfileId = true
         profiles = loadedProfiles
-        if profiles.isEmpty { let p = try createProfile(name: "Default", isDefault: true); activateProfile(id: p.id) }
+        if profiles.isEmpty { let p = try createProfile(name: "Default".localized, isDefault: true); activateProfile(id: p.id) }
     }
 
     var defaultProfile: Profile? {

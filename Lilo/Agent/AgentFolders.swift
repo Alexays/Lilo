@@ -24,7 +24,7 @@ extension AgentControl {
         guard let commander = context.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
         var space = agentsSpace(in: profileId)
         if space == nil {
-            let created = try spaces.createSpace(name: "Agents", icon: "🤖", color: "#795ceb", profileId: profileId)
+            let created = try spaces.createSpace(name: "Agents".localized, icon: "🤖", color: "#795ceb", profileId: profileId)
             let ids = settings.agentsSpaceIds.filter { spaces.space(with: $0) != nil } + [created.id]
             settings.set(Self.agentsSpaceKey, value: ids.map(\.uuidString).joined(separator: ","))
             space = created

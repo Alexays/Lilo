@@ -32,7 +32,7 @@ extension MainWindowController {
 
         do {
             try createSpace(
-                name: "Private",
+                name: "Private".localized,
                 icon: "🔒",
                 color: "#3f4656",
                 isPrivate: true,
