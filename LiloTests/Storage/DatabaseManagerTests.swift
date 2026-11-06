@@ -22,6 +22,27 @@ final class DatabaseManagerTests: XCTestCase {
         manager.closeForShutdown()
     }
 
+    func testADeletedProfileFolderGoesAtOnceAndALeftoverOneAtTheNextLaunch() async throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("db-manager-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let profileId = UUID()
+        let manager = try DatabaseManager(appSupportDirectory: dir.path)
+        _ = try manager.pool(for: profileId)
+
+        try manager.deleteProfileData(profileId: profileId)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.appendingPathComponent("Profiles/\(profileId.uuidString)").path))
+
+        let leftover = dir.appendingPathComponent("Profiles/.deleted-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: leftover, withIntermediateDirectories: true)
+        manager.closeForShutdown()
+        let relaunched = try DatabaseManager(appSupportDirectory: dir.path)
+        for _ in 0..<200 where FileManager.default.fileExists(atPath: leftover.path) {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: leftover.path))
+        relaunched.closeForShutdown()
+    }
+
     @MainActor
     func testAnExistingProfileKeepsTheAppWideSitePermissionsAndANewOneStartsWithout() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("db-manager-\(UUID().uuidString)")

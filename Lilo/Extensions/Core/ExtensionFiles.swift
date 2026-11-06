@@ -80,7 +80,7 @@ final class ExtensionFiles {
 
     /// Copies a temporary package into the folder (or returns `url` if already permanent), never loading from the temp copy the
     /// caller deletes. Staged then swapped so a failure keeps the previous copy; a folder `isInUse` names is never overwritten.
-    func permanentCopy(of url: URL, isInUse: (String) -> Bool) throws -> URL {
+    func permanentCopy(of url: URL, isInUse: (String) -> Bool) async throws -> URL {
         let fm = FileManager.default
         guard let directory else { return url }
         let isTempURL = url.path.hasPrefix(fm.temporaryDirectory.path) || url.path.hasPrefix(NSTemporaryDirectory())
@@ -91,7 +91,7 @@ final class ExtensionFiles {
         if isInUse(destination.path) { return destination }
         try fm.createDirectory(at: directory, withIntermediateDirectories: true)
         let staged = directory.appendingPathComponent(".staging-\(UUID().uuidString)", isDirectory: true)
-        try Self.clone(url, to: staged)
+        try await Task.detached(priority: .userInitiated) { try ExtensionFiles.clone(url, to: staged) }.value
         do {
             if fm.fileExists(atPath: destination.path) {
                 _ = try fm.replaceItemAt(destination, withItemAt: staged)
@@ -119,30 +119,37 @@ final class ExtensionFiles {
         let installed = directory.appendingPathComponent(extensionId, isDirectory: true)
         let backup = directory.appendingPathComponent(".\(extensionId).update-bak", isDirectory: true)
         let staged = directory.appendingPathComponent(".staging-\(UUID().uuidString)", isDirectory: true)
-        try Self.clone(extracted, to: staged)
+        try await Task.detached(priority: .utility) { try ExtensionFiles.clone(extracted, to: staged) }.value
         defer { try? fm.removeItem(at: staged) }
         await beforeSwap()
-        try? fm.removeItem(at: backup)
+        Self.discard(backup)
         try fm.moveItem(at: installed, to: backup)
         do {
             try fm.moveItem(at: staged, to: installed)
             try await install(installed)
         } catch {
-            try? fm.removeItem(at: installed)
+            Self.discard(installed)
             try? fm.moveItem(at: backup, to: installed)
             await rollback(installed)
             throw error
         }
-        try? fm.removeItem(at: backup)
+        Self.discard(backup)
     }
 
     /// Deletes a copy Lilo installed, or the clone of an unpacked folder, which itself is left alone.
     func remove(_ path: String) {
         if owns(path) {
-            try? FileManager.default.removeItem(atPath: path)
+            Self.discard(URL(fileURLWithPath: path, isDirectory: true))
         } else if let unpackedDirectory {
-            try? FileManager.default.removeItem(at: Self.unpackedClone(of: URL(fileURLWithPath: path, isDirectory: true), in: unpackedDirectory))
+            Self.discard(Self.unpackedClone(of: URL(fileURLWithPath: path, isDirectory: true), in: unpackedDirectory))
         }
+    }
+
+    /// Frees the path at once with a rename; the recursive removal runs detached, and a folder a quit leaves is swept.
+    private nonisolated static func discard(_ url: URL) {
+        let doomed = url.deletingLastPathComponent().appendingPathComponent(".sweep-\(UUID().uuidString)", isDirectory: true)
+        guard (try? FileManager.default.moveItem(at: url, to: doomed)) != nil else { return }
+        Task.detached(priority: .utility) { try? FileManager.default.removeItem(at: doomed) }
     }
 
     /// Removes folders an interrupted uninstall, install or update left, and clones of unpacked extensions not loaded (any

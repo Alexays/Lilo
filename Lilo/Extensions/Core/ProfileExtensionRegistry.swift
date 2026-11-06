@@ -739,7 +739,7 @@ final class ProfileExtensionRegistry {
     /// `load`, a new id is an install and a known one a reload.
     func load(from url: URL, extensionId knownId: String? = nil, as load: ExtensionLifecycle.Load? = nil) async throws {
         try await files.whileWriting {
-            let permanentURL = try files.permanentCopy(of: url, isInUse: containsRuntimeInstallPath)
+            let permanentURL = try await files.permanentCopy(of: url, isInUse: containsRuntimeInstallPath)
             // Reinstalling a folder keeps the id it already had, so its storage follows it.
             let stored = if let knownId { try? await extensionStorage.load(id: knownId) } else {
                 (try? await extensionStorage.loadAll())?.first { $0.path == permanentURL.path }

@@ -57,6 +57,12 @@ final class DatabaseManager: @unchecked Sendable {
         let (pool, movedAside) = try Self.openPool(path: globalPath) { try Migrations.migrateGlobal($0) }
         globalPool = pool
         if let movedAside { movedAsideDatabases.withLock { $0.append(movedAside) } }
+        // A deleted profile's folder whose detached removal a quit interrupted.
+        let profiles = (appSupportDirectory as NSString).appendingPathComponent("Profiles")
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: profiles)) ?? [] where name.hasPrefix(".deleted-") {
+            let doomed = (profiles as NSString).appendingPathComponent(name)
+            Task.detached(priority: .utility) { try? FileManager.default.removeItem(atPath: doomed) }
+        }
     }
 
     /// The databases moved aside since the last call.
@@ -139,10 +145,12 @@ final class DatabaseManager: @unchecked Sendable {
         if let pool = profilePools.withLock({ $0.removeValue(forKey: profileId) }) {
             loggingPersistenceError("deleteProfile.close[\(profileId.uuidString)]") { try pool.close() }
         }
+        // Renamed away at once so a pool reopened for this id never meets half-deleted files; the slow removal runs detached.
         let dir = profileDirectory(profileId: profileId)
-        if FileManager.default.fileExists(atPath: dir) {
-            try FileManager.default.removeItem(atPath: dir)
-        }
+        guard FileManager.default.fileExists(atPath: dir) else { return }
+        let doomed = ((dir as NSString).deletingLastPathComponent as NSString).appendingPathComponent(".deleted-\(UUID().uuidString)")
+        try FileManager.default.moveItem(atPath: dir, toPath: doomed)
+        Task.detached(priority: .utility) { try? FileManager.default.removeItem(atPath: doomed) }
     }
 
     // MARK: - Paths

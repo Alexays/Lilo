@@ -123,7 +123,7 @@ final class ProfileManager {
         if let bundleId = Bundle.main.bundleIdentifier {
             let extensionData = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
                 .appendingPathComponent("WebKit/\(bundleId)/WebExtensions/\(id.uuidString)", isDirectory: true)
-            try? FileManager.default.removeItem(at: extensionData)
+            Task.detached(priority: .utility) { try? FileManager.default.removeItem(at: extensionData) }
         }
         // Cookies, caches and site storage. WebKit refuses to remove a store still in use: its last references go with this turn,
         // and the network process lets go of it a moment later.

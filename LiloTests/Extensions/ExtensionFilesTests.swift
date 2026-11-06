@@ -39,7 +39,7 @@ final class ExtensionFilesTests: XCTestCase {
 
         XCTAssertEqual(try installedVersion(), "new")
         XCTAssertEqual(installed?.lastPathComponent, extensionId)
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: files.directory!.path), [extensionId])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: files.directory!.path).filter { !$0.hasPrefix(".sweep-") }, [extensionId])
     }
 
     func testAFailedInstallPutsThePreviousCopyBack() async throws {
@@ -53,7 +53,7 @@ final class ExtensionFilesTests: XCTestCase {
 
         XCTAssertEqual(try installedVersion(), "old")
         XCTAssertTrue(rolledBack)
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: files.directory!.path), [extensionId])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: files.directory!.path).filter { !$0.hasPrefix(".sweep-") }, [extensionId])
     }
 
     func testSweepPutsBackAnUpdateBackupWhoseCopyIsMissing() throws {
