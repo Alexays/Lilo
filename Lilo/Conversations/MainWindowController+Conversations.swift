@@ -132,17 +132,36 @@ extension MainWindowController {
         for (id, conversation) in context.conversations.conversations where context.browserState.durableTab(for: id).map({ $0.tab.isClosed }) ?? true {
             context.conversations.close(id)
             tabManager.agentChatHost.forget(id)
-            if let folderId = conversation.folderId, let spaceId = conversation.spaceId,
-               tabManager.sidebarTreeItems(forSpace: spaceId).contains(where: { $0.kind == .folder && $0.itemId == folderId }) {
-                _ = try? applyBrowserCommand(.deleteFolderWithTabs(spaceId: spaceId, folderId: folderId))
+            guard let folderId = conversation.folderId, let spaceId = conversation.spaceId else { continue }
+            let items = tabManager.sidebarTreeItems(forSpace: spaceId)
+            guard items.contains(where: { $0.kind == .folder && $0.itemId == folderId }) else { continue }
+            // The pages go under the conversation's own entry: Reopen Closed Tab brings the conversation back
+            // first, in a folder of the same id, then each page into it.
+            var own: RecentlyClosedStack.Entry?
+            if let top = context.recentlyClosed.recentEntries.first, case let .savedTab(stored) = top.content, stored.id == id {
+                own = context.recentlyClosed.pop()
             }
+            let itemById = Dictionary(items.map { ($0.itemId, $0) }, uniquingKeysWith: { first, _ in first })
+            for tabId in context.browserState.space(id: spaceId)?.spaceTab.tabIds(inFolder: folderId) ?? [] where tabId != id {
+                recordClosedTabForRestore(id: tabId, sidebarItemById: itemById)
+            }
+            if let own {
+                context.recentlyClosed.push(
+                    own.content, spaceId: own.spaceId, parentFolderId: own.parentFolderId, section: own.section, sortOrder: own.sortOrder
+                )
+            }
+            _ = try? applyBrowserCommand(.deleteFolderWithTabs(spaceId: spaceId, folderId: folderId))
         }
     }
 
-    /// A closed conversation reopened with ⇧⌘T: a new folder, the same agent session.
-    func reopenConversation(_ stored: StoredTab, spaceId: UUID) -> Tab? {
+    /// A closed conversation reopened with ⇧⌘T: its folder back under the same id, so the pages it held return
+    /// into it, and the same agent session.
+    func reopenConversation(_ stored: StoredTab, spaceId: UUID, folderId: UUID?) -> Tab? {
         let tab = Tab(stored, spaceId: spaceId, groupId: nil)
-        let folder = TabFolder(spaceId: spaceId, name: tab.title, color: "#795ceb", isCollapsed: true)
+        let folder = TabFolder(
+            id: folderId.flatMap { tabManager.folder(id: $0) == nil ? $0 : nil } ?? UUID(),
+            spaceId: spaceId, name: tab.title, color: "#795ceb", isCollapsed: true
+        )
         do {
             try applyBrowserCommand(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned))
             try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: true))
