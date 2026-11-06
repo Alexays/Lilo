@@ -146,6 +146,12 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
   app macOS assigns to the scheme, after Lilo asks. Pages see Lilo as Safari, which lacks the API
   too: adding it would tell Lilo apart from Safari, and a page-visible trace flags Lilo as a bot.
 
+### Service worker notification clicks
+
+- **Status:** Partial - a click runs the worker's `notificationclick`, and `client.focus()` brings back a page it has open
+- **Impact:** `clients.openWindow()` opens no tab, and a notification clicked after Lilo relaunches reaches no worker: the
+  click only brings Lilo forward. A page's own notifications (`new Notification`) bring their tab back as in Chrome.
+
 ### Passkeys / WebAuthn
 
 - **Status:** needs the `com.apple.developer.web-browser.public-key-credential` entitlement, which
