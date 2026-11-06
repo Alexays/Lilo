@@ -267,7 +267,7 @@ class SiteTests(unittest.TestCase):
                 self.assertEqual(len(frames), 1)
                 self.assertNotIn("src", frames[0].attrs)
                 self.assertEqual(frames[0].attrs["data-src"], "/demo/?lang=" + ("fr" if page.startswith("fr/") else "en"))
-                self.assertTrue(any(node.tag == "button" and "demo-poster" in node.classes for node in nodes(demo)))
+                self.assertTrue(any("demo-poster" in node.classes for node in nodes(demo)))
                 self.assertEqual(frames[0].attrs.get("loading"), "lazy")
                 self.assertTrue(frames[0].attrs.get("title"))
                 actions = {node.attrs.get("data-action") for node in nodes(demo)}

@@ -112,48 +112,51 @@ for (const lang of ["en", "fr"] as const) {
     await expect(page.locator(".page-hero .hero-stop")).toHaveCount(0);
   });
 
-  test(`hero demo loads only once the visitor asks for it (${lang})`, async ({
+  test(`hero demo starts by itself after the page loads (${lang})`, async ({
     page,
   }) => {
-    const demoRequests: string[] = [];
-    page.on("request", (request) => {
-      if (new URL(request.url()).pathname.startsWith("/demo/")) {
-        demoRequests.push(request.url());
-      }
-    });
     await page.goto(home);
-    const frame = page.locator("#browser-demo iframe");
-    const start = page.locator("#browser-demo .demo-poster");
-    await expect(start).toHaveAccessibleName(
-      lang === "fr" ? "Essayer la démo" : "Try the demo"
-    );
-    await page.waitForLoadState("networkidle");
-    await expect(frame).not.toHaveAttribute("src", /./u);
-    await expect(frame).toBeHidden();
-    expect(demoRequests).toEqual([]);
-
-    await start.focus();
-    await page.keyboard.press("Tab");
-    expect(
-      await page.evaluate(
-        () => document.activeElement?.closest("#browser-demo") ?? null
-      )
-    ).toBeNull();
-
-    await start.focus();
-    await page.keyboard.press("Enter");
-    await expect(start).toHaveCount(0);
-    await expect(frame).toBeFocused();
+    const poster = page.locator("#browser-demo .demo-poster");
+    await expect(poster).toBeHidden();
     await expect(
       page.frameLocator("#browser-demo iframe").locator(".repo-top")
     ).toBeVisible();
+
+    const timing = await page.evaluate(() => {
+      const loaded = performance
+        .getEntriesByType("navigation")
+        .find((entry) => entry instanceof PerformanceNavigationTiming);
+
+      return performance
+        .getEntriesByType("resource")
+        .filter((entry) => new URL(entry.name).pathname.startsWith("/demo/"))
+        .map((entry) => entry.startTime - (loaded?.loadEventEnd ?? Infinity));
+    });
+
+    expect(timing.length).toBeGreaterThan(0);
+    expect(timing.every((delay) => delay >= 0)).toBe(true);
+  });
+
+  test(`keyboard skips the hero demo (${lang})`, async ({ page }) => {
+    await page.goto(home);
+    const skip = page.locator("#browser-demo .skip-link");
+    await skip.focus();
+    await expect(skip).toBeVisible();
+    await page.keyboard.press("Enter");
+
+    await page.keyboard.press("Tab");
+    expect(
+      await page.evaluate(() =>
+        Boolean(document.activeElement?.closest("#native"))
+      )
+    ).toBe(true);
   });
 }
 
-test("opening a hero demo menu loads the demo behind it", async ({ page }) => {
+test("opening a hero demo menu reaches the live demo", async ({ page }) => {
   await page.goto("/");
   const menu = page.locator("#browser-demo .mac-menu").first();
   await menu.locator(":scope > summary").click();
-  await expect(page.locator("#browser-demo .demo-poster")).toHaveCount(0);
+  await expect(page.locator("#browser-demo .demo-poster")).toBeHidden();
   await expect(menu.locator("[data-action='settings']")).toBeEnabled();
 });

@@ -92,6 +92,9 @@ const modes = [
   data-exit-english={copy.en.demoExitFullscreen}
   data-exit-french={copy.fr.demoExitFullscreen}
 >
+  <a class="skip-link" href={`#${id}-end`}>
+    {text.demoSkip}
+  </a>
   <div class="demo-menubar">
     {minimal ? (
       <div class="demo-brand">
@@ -315,11 +318,10 @@ const modes = [
         title={title}
         loading="lazy"
         allow="fullscreen"
-        hidden={poster}
       ></iframe>
     </div>
     {poster && (
-      <button class="demo-poster" type="button">
+      <div class="demo-poster">
         {(["light", "dark"] as const).map((appearance) => (
           <Image
             class={`poster-${appearance}`}
@@ -331,13 +333,13 @@ const modes = [
             decoding="async"
           />
         ))}
-        <span class="demo-start">{text.demoOpen}</span>
-      </button>
+      </div>
     )}
   </div>
   <noscript>
     <p>{text.demoNoScript}</p>
   </noscript>
+  <span id={`${id}-end`} tabindex="-1"></span>
 </div>
 
 <script>
@@ -641,7 +643,7 @@ const modes = [
 
   for (const demo of document.querySelectorAll<HTMLElement>(".demo-shell")) {
     const frame = demo.querySelector<HTMLIFrameElement>("iframe");
-    const poster = demo.querySelector<HTMLButtonElement>(".demo-poster");
+    const poster = demo.querySelector<HTMLElement>(".demo-poster");
     const viewport = demo.querySelector<HTMLElement>(".demo-viewport");
     const desktop = demo.querySelector<HTMLElement>(".demo-desktop");
 
@@ -666,8 +668,6 @@ const modes = [
     const load = () => {
       if (frame.dataset.src && !frame.hasAttribute("src")) {
         frame.src = frame.dataset.src;
-        frame.hidden = false;
-        poster?.remove();
       }
     };
 
@@ -1378,14 +1378,29 @@ const modes = [
       frame.contentDocument?.addEventListener("keydown", exitOnEscape);
     };
 
-    poster?.addEventListener("click", () => {
-      load();
-      frame.focus();
-    });
+    if (poster) {
+      // The demo starts once the page has loaded so it never delays its first paint.
+      const start = () => {
+        if ("requestIdleCallback" in window) {
+          requestIdleCallback(load, { timeout: 2000 });
+        } else {
+          setTimeout(load, 200);
+        }
+      };
 
-    // A link to the demo, such as a release note's, asks for it running.
-    if (location.hash === `#${demo.id}`) {
-      load();
+      if (location.hash === `#${demo.id}`) {
+        load();
+      } else if (document.readyState === "complete") {
+        start();
+      } else {
+        addEventListener("load", start, { once: true });
+      }
+
+      frame.addEventListener("load", () => {
+        if (frame.hasAttribute("src")) {
+          poster.classList.add("loaded");
+        }
+      });
     }
 
     frame.addEventListener("load", bindFrameKeyboard);
@@ -1407,12 +1422,20 @@ const modes = [
   .demo-poster {
     position: absolute;
     inset: 0;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: 0;
     background: var(--sidebar);
-    cursor: pointer;
+    pointer-events: none;
+    transition:
+      opacity 0.2s,
+      visibility 0.2s;
+  }
+  .demo-poster.loaded {
+    opacity: 0;
+    visibility: hidden;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .demo-poster {
+      transition: none;
+    }
   }
   .demo-poster img {
     position: absolute;
@@ -1438,30 +1461,6 @@ const modes = [
   }
   :global(html[data-theme="dark"]) .poster-dark {
     display: block;
-  }
-  .demo-start {
-    position: relative;
-    padding: 10px 18px;
-    border-radius: 999px;
-    background: var(--brand);
-    color: var(--on-brand);
-    font: 600 15px/1.2 var(--sys);
-    box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
-  }
-  .demo-poster:hover .demo-start {
-    filter: brightness(1.08);
-  }
-  .demo-poster:focus-visible {
-    outline-offset: -3px;
-  }
-  @media (scripting: none) {
-    .demo-poster {
-      visibility: hidden;
-      pointer-events: none;
-    }
-    .demo-poster img {
-      visibility: visible;
-    }
   }
   .demo-menubar {
     position: relative;
@@ -1744,9 +1743,6 @@ const modes = [
     height: 640px;
     color-scheme: normal;
     background: #e2daf1;
-  }
-  iframe[hidden] {
-    display: none;
   }
   .demo-shell:is(:fullscreen, [data-expanded]) {
     display: flex;
