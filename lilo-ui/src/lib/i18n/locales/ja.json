@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome ウェブストア",
 		"webStoreHint": "レビュー、詳細、開発者のページ",
 		"webStoreOpen": "開く",
+		"reloadTitle": "パッケージ化されていない機能拡張",
+		"reloadHint": "フォルダを読み込み直して変更を反映します",
+		"reload": "再読み込み",
 		"installed": "インストール済み"
 	},
 	"commandBar": {

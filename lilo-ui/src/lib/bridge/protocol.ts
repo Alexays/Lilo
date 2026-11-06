@@ -299,6 +299,8 @@ export interface BridgeExtensionSnapshot {
 	declinedUpdate?: string;
 	/** The extension's store page, set only for a copy installed from the Chrome Web Store. */
 	webStoreURL?: string;
+	/** Loaded from a folder on disk, which Reload reads again. */
+	isUnpacked?: boolean;
 	allowsPrivateAccess?: boolean;
 	/** The "Allow user scripts" switch, shown for extensions declaring `userScripts`. */
 	allowsUserScripts?: boolean;
@@ -903,6 +905,7 @@ export interface BridgeCommandPayloadMap {
 	enableExtension: { id: string; profileId?: string };
 	disableExtension: { id: string; profileId?: string };
 	updateExtension: { id: string; profileId?: string };
+	reloadExtension: { id: string; profileId?: string };
 	checkExtensionUpdates: EmptyPayload;
 	setExtensionSiteAccess: { id: string; hosts: string[]; profileId?: string };
 	setExtensionPrivateAccess: { id: string; allowed: boolean; profileId?: string };

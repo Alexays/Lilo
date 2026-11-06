@@ -1,7 +1,8 @@
 import Foundation
 import WebKit
 
-/// The `chrome.runtime` calls WebKit lacks: `requestUpdateCheck`, against Lilo's update checker; whether the
+/// The `chrome.runtime` calls WebKit lacks: `requestUpdateCheck`, against Lilo's update checker; `reload` of an
+/// unpacked extension, which WebKit serves from the files it already read; whether the
 /// worker listens to `runtime.onMessage`, which picks Chrome's error for a page's message nobody answers (a
 /// worker that has not reported its listeners yet counts as listening); and messages and ports to another
 /// extension of the profile, relayed to its `onMessageExternal` and `onConnectExternal`, from its pages, its worker
@@ -10,7 +11,7 @@ import WebKit
 @MainActor
 final class RuntimeBridgeHandler: GapHandler {
     let gapActions: Set<String> = [
-        "runtime.requestUpdateCheck", "runtime.workerListensToMessages",
+        "runtime.requestUpdateCheck", "runtime.workerListensToMessages", "runtime.reloadUnpacked",
         "runtime.sendExternal", "runtime.answerExternal", "runtime.connectExternal", "runtime.connect", "runtime.portAccept", "runtime.portDecline",
         "runtime.portPost", "runtime.portDisconnect"
     ]
@@ -105,6 +106,9 @@ final class RuntimeBridgeHandler: GapHandler {
         switch call.action {
         case "runtime.workerListensToMessages":
             return events.reportedListeners(of: call.extensionId)?.contains("runtime.onMessage") ?? true
+
+        case "runtime.reloadUnpacked":
+            return call.registry.reloadUnpacked(extensionId: call.extensionId)
 
         case "runtime.sendExternal":
             guard let target = call.string("id"), let sender = sender(of: call, reaching: target, event: "onMessageExternal") else {

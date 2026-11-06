@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Avis, détails et page du développeur",
 		"webStoreOpen": "Ouvrir",
+		"reloadTitle": "Extension décompressée",
+		"reloadHint": "Relit son dossier pour prendre en compte vos modifications",
+		"reload": "Recharger",
 		"installed": "Installées"
 	},
 	"commandBar": {

@@ -711,6 +711,12 @@ final class ProfileExtensionRegistry {
             let stored = if let knownId { try? await extensionStorage.load(id: knownId) } else {
                 (try? await extensionStorage.loadAll())?.first { $0.path == permanentURL.path }
             }
+            // Loading a loaded unpacked folder again reloads it: its clone is never replaced under the loaded context.
+            if knownId == nil, let stored, containsRuntime(extensionId: stored.id), !files.owns(permanentURL.path) {
+                await unload(extensionId: stored.id, removePersistedRecord: false)
+                try await self.load(from: permanentURL, extensionId: stored.id)
+                return
+            }
             let allowsUserScripts = (knownId ?? stored?.id).map { access.states[$0]?.allowsUserScripts == true } ?? false
             let files = files
             let (sourceURL, isPreparationDegraded) = try await Task.detached(priority: .userInitiated) {
@@ -958,6 +964,15 @@ final class ProfileExtensionRegistry {
         }
     }
 
+    /// Loads an unpacked extension again from its folder, as Chrome's Reload and `runtime.reload()` do. False for a copy
+    /// Lilo installed, whose files never change under it: WebKit's own reload serves it.
+    func reloadUnpacked(extensionId: String) -> Bool {
+        guard let index = runtimeIndex(for: extensionId), !files.owns(loadedRuntimes[index].installPath) else { return false }
+        // Not awaited: the reload unloads the context whose call asked for it.
+        Task { await reloadFromDisk(extensionId) }
+        return true
+    }
+
     /// Unloads and reloads the extension from its on-disk source, for a worker nothing else revives.
     private func reloadFromDisk(_ extensionId: String) async {
         guard let installPath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].installPath }) else { return }
@@ -1178,6 +1193,7 @@ final class ProfileExtensionRegistry {
             "availableUpdate": updater.availableUpdates[runtime.id]?.latest ?? "",
             "webStoreURL": updater.isStoreCopy(id: runtime.id, path: runtime.installPath, manifest: ext.manifest)
                 ? "https://chromewebstore.google.com/detail/\(runtime.id)" : "",
+            "isUnpacked": !files.owns(runtime.installPath),
             "declinedUpdate": accessState?.declinedUpdateVersion ?? "",
             "allowsPrivateAccess": runtime.context.hasAccessToPrivateData,
             "allowsUserScripts": accessState?.allowsUserScripts == true,

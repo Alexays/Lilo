@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Mağazası",
 		"webStoreHint": "Yorumlar, ayrıntılar ve geliştiricinin sayfası",
 		"webStoreOpen": "Aç",
+		"reloadTitle": "Paketten çıkarılmış genişletme",
+		"reloadHint": "Değişikliklerinizi almak için klasörünü yeniden okur",
+		"reload": "Yeniden yükle",
 		"installed": "Yüklü"
 	},
 	"commandBar": {

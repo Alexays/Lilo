@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome 网上应用店",
 		"webStoreHint": "评价、详细信息和开发者页面",
 		"webStoreOpen": "打开",
+		"reloadTitle": "解压缩的扩展",
+		"reloadHint": "重新读取其文件夹以应用你的更改",
+		"reload": "重新载入",
 		"installed": "已安装"
 	},
 	"commandBar": {

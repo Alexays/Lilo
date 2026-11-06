@@ -7,7 +7,7 @@ import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, closedTabMessage, lastErrorWithoutAnswer, listensProbe, noReceiver } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
 import {
-  runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, tabsConnect,
+  runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, reloadUnpacked, tabsConnect,
 } from '../augmentation/runtime.ts';
 import { onAuthRequired, webRequestFrames } from '../augmentation/webRequest.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
@@ -339,7 +339,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {
-      patch: { ...runtimePatches, ...crossExtensionPatches },
+      patch: { ...runtimePatches, ...crossExtensionPatches, reload: reloadUnpacked },
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
       standIns: { ...runtimeLifecycle, onConnect: runtimeOnConnect, ...externalEvents(() => chrome.runtime) },
       add: {

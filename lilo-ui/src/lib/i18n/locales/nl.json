@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Recensies, details en de pagina van de ontwikkelaar",
 		"webStoreOpen": "Open",
+		"reloadTitle": "Uitgepakte extensie",
+		"reloadHint": "Leest de map opnieuw in om je wijzigingen over te nemen",
+		"reload": "Opnieuw laden",
 		"installed": "Geïnstalleerd"
 	},
 	"commandBar": {

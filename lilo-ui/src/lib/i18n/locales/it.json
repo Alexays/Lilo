@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Recensioni, dettagli e pagina dello sviluppatore",
 		"webStoreOpen": "Apri",
+		"reloadTitle": "Estensione non pacchettizzata",
+		"reloadHint": "Rilegge la cartella per applicare le tue modifiche",
+		"reload": "Ricarica",
 		"installed": "Installate"
 	},
 	"commandBar": {

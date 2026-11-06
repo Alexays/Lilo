@@ -1106,6 +1106,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Відгуки, відомості та сторінка розробника",
 		"webStoreOpen": "Відкрити",
+		"reloadTitle": "Розпаковане розширення",
+		"reloadHint": "Знову читає папку, щоб застосувати ваші зміни",
+		"reload": "Перезавантажити",
 		"installed": "Встановлені"
 	},
 	"commandBar": {

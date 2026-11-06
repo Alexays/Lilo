@@ -407,6 +407,7 @@ export const extensionActions = {
 	loadDebuggers: emitEmpty("getExtensionDebuggers"),
 	cancelDebugging: emitId("cancelExtensionDebugging"),
 	update: (id: string, profileId?: string): void => emit("updateExtension", { id, profileId }),
+	reload: (id: string, profileId?: string): void => emit("reloadExtension", { id, profileId }),
 	checkUpdates: emitEmpty("checkExtensionUpdates"),
 	loadUnpacked: emitEmpty("loadUnpackedExtension"),
 	openPopup: (

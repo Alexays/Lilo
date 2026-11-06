@@ -26,7 +26,7 @@ let _extensions = $state.raw<ExtensionState[]>([]);
 
 // Each command's intent is tracked here until `extensionsChanged` or its `extensionActionCompleted` ack confirms
 // it, keeping the toggles from showing a state the backend hasn't reached.
-type PendingAction = "enable" | "disable" | "uninstall";
+type PendingAction = "enable" | "disable" | "uninstall" | "reload";
 
 interface PendingEntry {
 	action: PendingAction;
@@ -101,6 +101,7 @@ function parseExtension(
 		availableUpdate: coerceString(data?.availableUpdate),
 		declinedUpdate: coerceString(data?.declinedUpdate),
 		webStoreURL: coerceString(data?.webStoreURL),
+		isUnpacked: data?.isUnpacked ?? false,
 		allowsPrivateAccess: data?.allowsPrivateAccess ?? false,
 		allowsUserScripts: data?.allowsUserScripts ?? false,
 		hostAccessRequest: data?.hostAccessRequest ?? false,
@@ -121,6 +122,9 @@ function isActionSatisfied(
 			return snapshot?.isEnabled === false;
 		case "uninstall":
 			return snapshot === undefined;
+		// The row reads enabled before and after: only the native ack settles it.
+		case "reload":
+			return false;
 	}
 }
 
@@ -342,6 +346,11 @@ export function enableExtension(id: string, profileId?: string): void {
 
 export function disableExtension(id: string, profileId?: string): void {
 	beginAction(id, "disable", profileId, () => extensionActions.disable(id, profileId));
+}
+
+/** Loads an unpacked extension again from its folder. */
+export function reloadExtension(id: string, profileId?: string): void {
+	beginAction(id, "reload", profileId, () => extensionActions.reload(id, profileId));
 }
 
 export function uninstallExtension(id: string, profileId?: string): void {

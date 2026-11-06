@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "Rezensionen, Details und die Seite des Entwicklers",
 		"webStoreOpen": "Öffnen",
+		"reloadTitle": "Entpackte Erweiterung",
+		"reloadHint": "Liest den Ordner erneut ein, um deine Änderungen zu übernehmen",
+		"reload": "Neu laden",
 		"installed": "Installiert"
 	},
 	"commandBar": {

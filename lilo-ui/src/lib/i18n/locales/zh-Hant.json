@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome Web Store",
 		"webStoreHint": "評論、詳細資訊與開發者網頁",
 		"webStoreOpen": "開啟",
+		"reloadTitle": "未封裝的延伸功能",
+		"reloadHint": "重新讀取其資料夾以套用你的變更",
+		"reload": "重新載入",
 		"installed": "已安裝"
 	},
 	"commandBar": {

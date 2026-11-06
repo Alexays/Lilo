@@ -1092,6 +1092,9 @@
 		"webStoreTitle": "Chrome 웹 스토어",
 		"webStoreHint": "리뷰, 세부사항 및 개발자 페이지",
 		"webStoreOpen": "열기",
+		"reloadTitle": "압축 해제된 확장 프로그램",
+		"reloadHint": "폴더를 다시 읽어 변경 사항을 반영합니다",
+		"reload": "새로고침",
 		"installed": "설치됨"
 	},
 	"commandBar": {
