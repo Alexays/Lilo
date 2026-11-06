@@ -96,3 +96,56 @@ test("a 200-tab space windows the unpinned list and still reorders", async ({
 	// After the drop settles the list re-windows: still far fewer than 200 rows.
 	await expect.poll(() => rows.count()).toBeLessThan(100);
 });
+
+// 100 pinned tabs, then one open folder of 150 tabs as the only unpinned row.
+function worldWithLongPinsAndFolder(): FakeHostWorld {
+	const world = initialWorld();
+	const pins = Array.from({ length: 100 }, (_, i) => `tab-p${i}`);
+	const children = Array.from({ length: 150 }, (_, i) => `tab-f${i}`);
+	world.tabsBySpace[SPACE_1] = [
+		...pins.map((id) => tab(id, SPACE_1, { isPinned: true })),
+		...children.map((id) => tab(id, SPACE_1)),
+	];
+	world.foldersBySpace = {
+		[SPACE_1]: [{ id: "folder-big", spaceId: SPACE_1, name: "Big", color: "#4a90d9", isCollapsed: false }],
+	};
+	world.treeItemsBySpace[SPACE_1] = [
+		...pins.map((id, i) => treeItem(id, SPACE_1, i, "pinned")),
+		treeItem("folder-big", SPACE_1, 100, "unpinned", "folder"),
+		...children.map((id, i) => treeItem(id, SPACE_1, i, "unpinned", "tab", "folder-big")),
+	];
+	world.activeTabBySpace[SPACE_1] = "tab-p0";
+	return world;
+}
+
+test("the pinned list and an open folder window their rows too", async ({ page }) => {
+	await bootChrome(page, worldWithLongPinsAndFolder(), ".pinned-list [data-tab-id]");
+	const pane = page.locator(".space-pane").nth(0);
+	const container = pane.locator(".space-scroll");
+
+	await expect(pane.locator('[data-tab-id="tab-p0"]')).toBeVisible();
+	expect(await pane.locator(".pinned-list [data-tab-id]").count()).toBeLessThan(60);
+	await expect(pane.locator('[data-tab-id="tab-f0"]')).toHaveCount(0);
+
+	// Deep in the folder, the row under the viewport's middle is mounted where the spacers put it.
+	await container.evaluate((el) => {
+		el.scrollTop = el.scrollHeight * 0.7;
+	});
+	await expect
+		.poll(() =>
+			container.evaluate((el) => {
+				const rect = el.getBoundingClientRect();
+				const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+				return !!hit?.closest("[data-tab-id^='tab-f']");
+			}),
+		)
+		.toBe(true);
+	expect(await pane.locator(".folder-contents [data-tab-id]").count()).toBeLessThan(60);
+
+	await container.evaluate((el) => {
+		el.scrollTop = el.scrollHeight;
+	});
+	await expect(pane.locator('[data-tab-id="tab-f149"]')).toBeInViewport();
+	// The active tab stays mounted far above the window.
+	await expect(pane.locator('[data-tab-id="tab-p0"]')).toHaveCount(1);
+});

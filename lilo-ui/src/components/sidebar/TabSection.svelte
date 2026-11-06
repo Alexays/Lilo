@@ -31,9 +31,12 @@
     arrangeRows,
     nextStackHosts,
     stackName,
+    windowRows,
+    VIRTUAL_ROW_GAP,
     type ArrangedRow,
     type ArrangeEntry,
     type RowType,
+    type WindowRow,
   } from "./tabSectionModel";
   import { tabActions, folderActions, sidebarActions } from "../../lib/bridge/actions";
   import { openCommandBar, closeCommandBar } from "../../stores/commandBar.svelte";
@@ -86,7 +89,7 @@
     section: "pinned" | "unpinned";
     spaceId: string;
     interactive: boolean;
-    /** Shared space scroller, supplied to the unpinned section for windowed rendering. */
+    /** Shared space scroller, for windowed rendering. */
     scroller?: HTMLElement;
     scrollerHeight?: number;
   } = $props();
@@ -482,24 +485,26 @@
   // Mirror the row CSS (32px rows, 2px --sidebar-tab-row-gap, the same gap above a folder's
   // contents, 32px empty-folder placeholder); the buffer absorbs small drift.
   const VIRTUAL_ROW_H = 32;
-  const VIRTUAL_ROW_GAP = 2;
   const VIRTUAL_FOLDER_TOP_MARGIN = 2;
   const VIRTUAL_FOLDER_INSET = 4;
   const VIRTUAL_EMPTY_FOLDER_H = 32;
 
-  type ListSegment = Segment | { kind: "spacer"; key: string; height: number };
-
   // How far the list's top sits above the shared scroller's viewport top, floored to a window step.
   let listScrollTop = $state(0);
+  // The scroll window in list coordinates, for the root rows and the rows inside open folders alike.
+  const windowMinY = $derived(listScrollTop - VIRTUAL_BUFFER_PX);
+  const windowMaxY = $derived(listScrollTop + VIRTUAL_WINDOW_STEP_PX + scrollerHeight + VIRTUAL_BUFFER_PX);
   let dividerEl: HTMLElement | undefined = $state();
   // Rows are scrolling under the sticky divider.
   let dividerStuck = $state(false);
   let focusedItemId = $state<string | null>(null);
   const listWindowFrame = createFrameScheduler();
 
-  const virtualize = $derived(
-    !isPinned && !(dragActive && interactive) && segments.length > VIRTUALIZE_MIN_ROWS,
+  // The rows inside open folders count: a few large open folders make a list as long as many root rows.
+  const listHeight = $derived(
+    segments.reduce((height, segment) => height + (segment.kind === "row" ? estimatedRowHeight(segment.entry) : VIRTUAL_ROW_H) + VIRTUAL_ROW_GAP, 0),
   );
+  const virtualize = $derived(!(dragActive && interactive) && listHeight > VIRTUALIZE_MIN_ROWS * (VIRTUAL_ROW_H + VIRTUAL_ROW_GAP));
 
   // The panes of a split in reading order, stacked one row each in the sidebar.
   function splitPanes(node: BridgeSplitLayout, into: string[] = []): string[] {
@@ -572,52 +577,30 @@
     return heights;
   });
 
-  const listSegments: ListSegment[] | null = $derived.by(() => {
-    if (!virtualize) return null;
-    const minY = listScrollTop - VIRTUAL_BUFFER_PX;
-    const maxY = listScrollTop + VIRTUAL_WINDOW_STEP_PX + scrollerHeight + VIRTUAL_BUFFER_PX;
-    const shown: ListSegment[] = [];
-    let top = 0;
-    let hiddenHeight = 0;
-    let hiddenCount = 0;
-    let spacerOrdinal = 0;
-    const flushSpacer = () => {
-      if (hiddenCount === 0) return;
-      // The flex gap supplies the boundary gaps around the spacer, so it only
-      // carries the hidden rows' own heights plus the gaps between them.
-      shown.push({
-        kind: "spacer",
-        key: `spacer-${spacerOrdinal++}`,
-        height: hiddenHeight + (hiddenCount - 1) * VIRTUAL_ROW_GAP,
-      });
-      hiddenHeight = 0;
-      hiddenCount = 0;
-    };
-    for (const segment of segments) {
-      const entry = segment.kind === "row" ? segment.entry : null;
-      const height = entry ? estimatedRowHeight(entry) : VIRTUAL_ROW_H;
-      // The active and focused rows stay mounted wherever the scroll sits, so
-      // tab switching and keyboard focus never land on an unmounted row. Hidden
-      // children count too: keeping one extra folder mounted is harmless.
-      const keep =
-        (top + height >= minY && top <= maxY) ||
-        (entry !== null &&
-          (entry.id === activeTabId ||
-            entry.id === focusedItemId ||
-            (entry.kind === "folder" &&
-              (folderHolds(entry.id, activeTabId) || folderHolds(entry.id, focusedItemId)))));
-      if (keep) {
-        flushSpacer();
-        shown.push(segment);
-      } else {
-        hiddenHeight += height;
-        hiddenCount += 1;
-      }
-      top += height + VIRTUAL_ROW_GAP;
-    }
-    flushSpacer();
-    return shown;
-  });
+  // The active and focused rows stay mounted wherever the scroll sits, so tab switching and keyboard
+  // focus never land on an unmounted row. Hidden children count too: one extra folder mounted is harmless.
+  function keepMounted(entry: SidebarDndItem): boolean {
+    return entry.id === activeTabId ||
+      entry.id === focusedItemId ||
+      (entry.kind === "folder" && (folderHolds(entry.id, activeTabId) || folderHolds(entry.id, focusedItemId)));
+  }
+
+  function childRowHeight(entry: SidebarDndItem): number {
+    return entry.kind === "folder" && foldersById.get(entry.id)?.isCollapsed === false ? openFolderHeight(entry.id) : VIRTUAL_ROW_H;
+  }
+
+  const listSegments: WindowRow<Segment>[] | null = $derived(
+    virtualize
+      ? windowRows(
+        segments,
+        0,
+        windowMinY,
+        windowMaxY,
+        (segment) => (segment.kind === "row" ? estimatedRowHeight(segment.entry) : VIRTUAL_ROW_H),
+        (segment) => segment.kind === "row" && keepMounted(segment.entry),
+      )
+      : null,
+  );
 
   function handleListFocusIn(event: FocusEvent): void {
     const target = event.target instanceof Element ? event.target : null;
@@ -687,9 +670,10 @@
   });
 
   // Rows above the list (pinned section, divider) shift it under the viewport, so the
-  // window is re-measured whenever the list moves, not only when the scroller moves.
+  // window is re-measured whenever the list moves, not only when the scroller moves. The pinned
+  // list is only measured while windowed; the unpinned one also tracks its sticky divider.
   $effect(() => {
-    if (isPinned) return;
+    if (isPinned && !virtualize) return;
     void rowCount;
     void showNewTabRow;
     void scrollerHeight;
@@ -697,7 +681,7 @@
   });
 
   $effect(() => {
-    if (isPinned) return;
+    if (isPinned && !virtualize) return;
     const el = scroller;
     if (!el) return;
     el.addEventListener("scroll", handleListScroll, { passive: true });
@@ -716,8 +700,9 @@
   }
 
   function measureListWindow(): void {
-    if (!scroller || !tabListEl) return;
-    const listTop = tabListEl.getBoundingClientRect().top;
+    const listEl = isPinned ? pinnedListEl : tabListEl;
+    if (!scroller || !listEl) return;
+    const listTop = listEl.getBoundingClientRect().top;
     const offset = scroller.getBoundingClientRect().top - listTop;
     dividerStuck = !!dividerEl && dividerEl.getBoundingClientRect().bottom > listTop + 0.5;
     listScrollTop = Math.floor(offset / VIRTUAL_WINDOW_STEP_PX) * VIRTUAL_WINDOW_STEP_PX;
@@ -1105,7 +1090,8 @@
 
 </script>
 
-{#snippet rootItemContent(entry: SidebarDndItem, stack: string | null)}
+<!-- `top`: the row's place in the windowed list, undefined when every row is drawn. -->
+{#snippet rootItemContent(entry: SidebarDndItem, stack: string | null, top?: number)}
   {#if isShadowItem(entry)}
     <div
       class="sidebar-dnd-placeholder"
@@ -1145,7 +1131,7 @@
   {:else if entry.kind === "folder"}
       {@const folder = foldersById.get(entry.id)}
       {#if folder}
-        {@render folderBlock(folder, true, 1)}
+        {@render folderBlock(folder, true, 1, top)}
       {/if}
     {:else}
       {@const tab = tabsById.get(entry.id)}
@@ -1179,13 +1165,14 @@
   {/if}
 {/snippet}
 
-<!-- `shown`: every folder above this one is open. Subfolders render through this same snippet,
-     one indent deeper. -->
-{#snippet folderBlock(folder: FolderState, shown: boolean, level: number)}
+<!-- `shown`: every folder above this one is open. `top`: the folder's place in the windowed list,
+     its children then windowed too. Subfolders render through this same snippet, one indent deeper. -->
+{#snippet folderBlock(folder: FolderState, shown: boolean, level: number, top?: number)}
   {@const conversation = getConversationTab(folder.id, spaceId)}
   {@const children = visibleChildren(folder.id)}
   {@const childZoneEntries = childZoneItems(folder.id, children)}
   {@const childrenShown = shown && !folder.isCollapsed}
+  {@const childRows = top === undefined ? null : windowRows(childZoneEntries, top + VIRTUAL_ROW_H + VIRTUAL_FOLDER_TOP_MARGIN, windowMinY, windowMaxY, childRowHeight, keepMounted)}
 
   <div
     class="folder-drop-zone"
@@ -1265,49 +1252,35 @@
             class:drag-active={dragActive}
             class:is-empty={childZoneEntries.length === 0}
           >
-            {#snippet childContent(childEntry: SidebarDndItem, childFolder: FolderState | undefined)}
-              {#if isShadowItem(childEntry)}
-                <div
-                  class="sidebar-dnd-placeholder folder"
-                  class:held={hidePlaceholder}
-                  data-variant="folder"
-                  aria-hidden="true"
-                ></div>
-              {:else if childFolder}
-                <div
-                  class="indented-tab-wrapper"
-                  class:first-level={level === 1 && !conversation}
-                  class:folder-open-rail={!childFolder.isCollapsed}
-                  style={folderColorStyle(shownFolderColor(childFolder))}
-                >
-                  {@render folderBlock(childFolder, childrenShown, level + 1)}
-                </div>
-              {:else}
-                {@const tab = tabsById.get(childEntry.id)}
-                {#if tab && editingTab?.id === tab.id}
-                  <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
-                {:else if tab}
-                  <div class="indented-tab-wrapper" class:first-level={level === 1 && !conversation}>
-                    <TabItem
-                      {tab}
-                      isActive={tab.id === activeTabId}
-                      interactive={interactive && childrenShown}
-                      disableTooltip={dragActive || !childrenShown}
-                      actionsInert={dragActive}
-                      splitDropTarget={splitDropTabId === tab.id}
-                      level={level + 1}
-                      tabStop={tab.id === tabStopId}
-                    />
+            {#if childRows}
+              <!-- Windowed like the root list: no FLIP, rows entering the window must not slide in. -->
+              {#each childRows as row, rowIndex (row.kind === "spacer" ? row.key : sidebarDndKey(row.item))}
+                {#if row.kind === "spacer"}
+                  <div class="virtual-spacer" style:height={`${row.height}px`} aria-hidden="true"></div>
+                {:else}
+                  <div
+                    class="child-tab-wrapper"
+                    class:child-folder={row.item.kind === "folder" && foldersById.has(row.item.id)}
+                    class:recent-drop={row.item.id === recentlyDraggedId}
+                    role="presentation"
+                    style={`--folder-child-index: ${Math.min(rowIndex, 6)};`}
+                    use:dndItem={{
+                      item: row.item,
+                      zoneId: folderZone(folder.id).id,
+                      disabled: !interactive || !childrenShown,
+                      onCancel: resetSidebarDrag,
+                      onDropOutsideWindow: moveTabOutOfWindow,
+                    }}
+                  >
+                    {@render folderChild(row.item, level, level === 1 && !conversation, childrenShown, row.top)}
                   </div>
                 {/if}
-              {/if}
-            {/snippet}
-            {#if children.length > FLIP_MAX_ANIMATED_ITEMS}
+              {/each}
+            {:else if children.length > FLIP_MAX_ANIMATED_ITEMS}
               {#each childZoneEntries as childEntry, childIndex (sidebarDndKey(childEntry))}
-                {@const childFolder = childEntry.kind === "folder" && !isShadowItem(childEntry) ? foldersById.get(childEntry.id) : undefined}
                 <div
                   class="child-tab-wrapper"
-                  class:child-folder={childFolder !== undefined}
+                  class:child-folder={childEntry.kind === "folder" && foldersById.has(childEntry.id)}
                   class:recent-drop={childEntry.id === recentlyDraggedId}
                   data-is-dnd-shadow-item-hint={isShadowItem(childEntry)}
                   role="presentation"
@@ -1320,16 +1293,15 @@
                     onDropOutsideWindow: moveTabOutOfWindow,
                   }}
                 >
-                  {@render childContent(childEntry, childFolder)}
+                  {@render folderChild(childEntry, level, level === 1 && !conversation, childrenShown)}
                 </div>
               {/each}
             {:else}
               {#each childZoneEntries as childEntry, childIndex (sidebarDndKey(childEntry))}
-                {@const childFolder = childEntry.kind === "folder" && !isShadowItem(childEntry) ? foldersById.get(childEntry.id) : undefined}
                 <div
                   animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(childEntry, { recentlyDraggedId, itemCount: childZoneEntries.length }), easing: springEase }}
                   class="child-tab-wrapper"
-                  class:child-folder={childFolder !== undefined}
+                  class:child-folder={childEntry.kind === "folder" && foldersById.has(childEntry.id)}
                   class:recent-drop={childEntry.id === recentlyDraggedId}
                   data-is-dnd-shadow-item-hint={isShadowItem(childEntry)}
                   role="presentation"
@@ -1342,7 +1314,7 @@
                     onDropOutsideWindow: moveTabOutOfWindow,
                   }}
                 >
-                  {@render childContent(childEntry, childFolder)}
+                  {@render folderChild(childEntry, level, level === 1 && !conversation, childrenShown)}
                 </div>
               {/each}
             {/if}
@@ -1354,6 +1326,46 @@
       </div>
     </div>
   </div>
+{/snippet}
+
+<!-- A folder's child row, inside the wrapper the windowed or the animated list gives it. -->
+{#snippet folderChild(childEntry: SidebarDndItem, level: number, firstLevel: boolean, childrenShown: boolean, top?: number)}
+  {@const childFolder = childEntry.kind === "folder" && !isShadowItem(childEntry) ? foldersById.get(childEntry.id) : undefined}
+  {#if isShadowItem(childEntry)}
+    <div
+      class="sidebar-dnd-placeholder folder"
+      class:held={hidePlaceholder}
+      data-variant="folder"
+      aria-hidden="true"
+    ></div>
+  {:else if childFolder}
+    <div
+      class="indented-tab-wrapper"
+      class:first-level={firstLevel}
+      class:folder-open-rail={!childFolder.isCollapsed}
+      style={folderColorStyle(shownFolderColor(childFolder))}
+    >
+      {@render folderBlock(childFolder, childrenShown, level + 1, top)}
+    </div>
+  {:else}
+    {@const tab = tabsById.get(childEntry.id)}
+    {#if tab && editingTab?.id === tab.id}
+      <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
+    {:else if tab}
+      <div class="indented-tab-wrapper" class:first-level={firstLevel}>
+        <TabItem
+          {tab}
+          isActive={tab.id === activeTabId}
+          interactive={interactive && childrenShown}
+          disableTooltip={dragActive || !childrenShown}
+          actionsInert={dragActive}
+          splitDropTarget={splitDropTabId === tab.id}
+          level={level + 1}
+          tabStop={tab.id === tabStopId}
+        />
+      </div>
+    {/if}
+  {/if}
 {/snippet}
 
 {#snippet splitPane(folderId: string, tab: TabState)}
@@ -1472,7 +1484,7 @@
 <!-- Rows and the heads of stacks and trays share one slot: a head is a disabled drag item, so it
      moves with the list but is never picked up nor hit tested (it is not in the zone's items).
      The animated list below repeats this markup: animate: must sit on the each's own child. -->
-{#snippet slot(segment: Segment, entry: SidebarDndItem)}
+{#snippet slot(segment: Segment, entry: SidebarDndItem, top: number)}
   {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
   {@const stackTint = stackTintOf(segment)}
   <div
@@ -1496,7 +1508,7 @@
     }}
   >
     {#if segment.kind === "row"}
-      {@render rootItemContent(entry, segment.stack)}
+      {@render rootItemContent(entry, segment.stack, top)}
     {:else}
       {@render segmentHead(segment)}
     {/if}
@@ -1507,15 +1519,16 @@
   {#if listSegments}
     <!-- Windowed: no animate:flip or transitions; FLIP is duration-0 at this
          list size anyway, and rows entering the window must not slide in. -->
-    {#each listSegments as segment (segment.key)}
-      {#if segment.kind === "spacer"}
+    {#each listSegments as row (row.kind === "spacer" ? row.key : row.item.key)}
+      {#if row.kind === "spacer"}
         <div
           class="virtual-spacer"
-          style:height={`${segment.height}px`}
+          style:height={`${row.height}px`}
           aria-hidden="true"
         ></div>
       {:else}
-        {@render slot(segment, segment.kind === "row" ? segment.entry : { id: segment.key, kind: "tab", section, parentFolderId: null })}
+        {@const segment = row.item}
+        {@render slot(segment, segment.kind === "row" ? segment.entry : { id: segment.key, kind: "tab", section, parentFolderId: null }, row.top)}
       {/if}
     {/each}
   {:else}

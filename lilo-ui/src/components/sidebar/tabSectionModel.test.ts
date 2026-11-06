@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { arrangeRows, nextStackHosts, stackName, strippedTitle, type ArrangeEntry } from "./tabSectionModel";
+import { arrangeRows, nextStackHosts, stackName, strippedTitle, windowRows, type ArrangeEntry } from "./tabSectionModel";
 
 const web = (id: string, host: string): ArrangeEntry => ({ id, type: "web", host });
 const term = (id: string): ArrangeEntry => ({ id, type: "terminal", host: null });
@@ -50,6 +50,22 @@ test("the stack name is the part titles share, else the host", () => {
 	assert.equal(strippedTitle("Commits · acme/app", "acme/app"), "Commits");
 	assert.equal(strippedTitle("acme/app: The core of Acme", "acme/app"), "The core of Acme");
 	assert.equal(strippedTitle("acme/app", "acme/app"), "acme/app");
+});
+
+test("rows out of the window fold into spacers that keep the list's height", () => {
+	const ids = Array.from({ length: 10 }, (_, index) => `r${index}`);
+	// 32px rows, 34px apart: r3 to r5 cross [120, 200].
+	const rows = windowRows(ids, 0, 120, 200, () => 32, (id) => id === "r9");
+	assert.deepEqual(
+		rows.map((row) => (row.kind === "spacer" ? row.height : `${row.item}@${row.top}`)),
+		[3 * 32 + 2 * 2, "r3@102", "r4@136", "r5@170", 3 * 32 + 2 * 2, "r9@306"],
+	);
+	assert.deepEqual(rows.flatMap((row) => (row.kind === "spacer" ? [row.key] : [])), ["spacer-0", "spacer-1"]);
+});
+
+test("rows laid out from a folder's offset window against the same range", () => {
+	const rows = windowRows(["a", "b"], 1000, 0, 500, () => 32, () => false);
+	assert.deepEqual(rows, [{ kind: "spacer", key: "spacer-0", height: 66 }]);
 });
 
 test("a stack its hosts still name but down to one tab is a plain row", () => {
