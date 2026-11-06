@@ -23,6 +23,8 @@ actor TerminalCompletions {
     }()
 
     private static let historyLimit = 5_000
+    /// Bytes read from the end of each history file: well over `historyLimit` commands.
+    private static let historyTailBytes: UInt64 = 1 << 20
     private static let fallbackPath = ["/opt/homebrew/bin", "/opt/homebrew/sbin", "/usr/local/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"]
 
     private let historyFiles: [URL]
@@ -72,7 +74,24 @@ actor TerminalCompletions {
         var seen: Set<String> = []
         history = []
         for file in historyFiles {
-            guard let data = try? Data(contentsOf: file) else { continue }
+            guard let handle = try? FileHandle(forReadingFrom: file) else { continue }
+            defer { try? handle.close() }
+            let size = (try? handle.seekToEnd()) ?? 0
+            let start = size > Self.historyTailBytes ? size - Self.historyTailBytes : 0
+            guard (try? handle.seek(toOffset: start)) != nil, var data = try? handle.readToEnd() else { continue }
+            if start > 0 {
+                // The tail starts mid-line, maybe inside a multi-line command: skip to the line after a complete one.
+                var from = data.startIndex
+                var lineStart = data.endIndex
+                while let newline = data[from...].firstIndex(of: 0x0A) {
+                    from = newline + 1
+                    if newline == data.startIndex || data[newline - 1] != 0x5C {
+                        lineStart = from
+                        break
+                    }
+                }
+                data = data[lineStart...]
+            }
             for command in Self.parseHistory(data, zsh: file.lastPathComponent.contains("zsh")).reversed()
             where history.count < Self.historyLimit && seen.insert(command).inserted {
                 history.append(command)
