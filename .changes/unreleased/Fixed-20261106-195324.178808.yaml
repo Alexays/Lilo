@@ -1,0 +1,3 @@
+kind: Fixed
+body: A terminal tab whose command is not found, or whose login shell no longer exists, stays open so its error can be read
+time: 2026-11-06T19:53:24.178808+01:00

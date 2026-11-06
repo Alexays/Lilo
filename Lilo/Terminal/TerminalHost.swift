@@ -76,6 +76,7 @@ final class TerminalHost {
     /// When a hidden terminal whose output never holds still is saved anyway.
     private var saveDue: [UUID: ContinuousClock.Instant] = [:]
     private static let forcedSaveInterval = Duration.seconds(300)
+    private static let logger = Logger(liloCategory: "terminal")
     private static let compressionQueue = DispatchQueue(label: "fr.arouillard.lilo.terminal.compress", qos: .utility)
     /// Screen saves only, apart from history compression: a reopen or quit waits for these, never for a long compression.
     private static let screenQueue = DispatchQueue(label: "fr.arouillard.lilo.terminal.screen", qos: .utility)
@@ -166,6 +167,7 @@ final class TerminalHost {
         do {
             try session.start()
         } catch {
+            Self.logger.error("Terminal failed to start: \(error.localizedDescription, privacy: .public) (errno \((error as NSError).code, privacy: .public))")
             session.onOutput = nil
             view.shutdown()
             return nil

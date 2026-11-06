@@ -139,8 +139,10 @@ import Synchronization
         } else {
             let user = unsafe account.map { unsafe String(cString: $0.pointee.pw_name) } ?? NSUserName()
             // login records the session and keeps our environment (-p) and cwd (-l); bash then
-            // replaces itself with the user's shell as a login shell.
-            self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c", "exec -l '\(shell)'"]
+            // replaces itself with the user's shell as a login shell. login hides the exit code, so a
+            // shell that no longer exists falls back to zsh below bash's error rather than ending the tab.
+            self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c",
+                            "shopt -s execfail; exec -l '\(shell)'; exec -l /bin/zsh"]
         }
         shellName = URL(fileURLWithPath: command?.first ?? shell).lastPathComponent
         var isDirectory: ObjCBool = false
