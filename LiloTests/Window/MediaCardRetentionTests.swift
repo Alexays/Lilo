@@ -66,6 +66,8 @@ final class MediaCardRetentionTests: XCTestCase {
         XCTAssertTrue(window.context.mediaTabIds.contains(engine.id), "the card keeps a tab paused from it")
 
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(10 * 60))
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await engine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
         XCTAssertFalse(engine.isFrozen)
 
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(31 * 60))
