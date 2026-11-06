@@ -17,7 +17,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { conversationActions } from "./conversationActions";
   import type { BridgeSplitPaneFrame } from "../../lib/bridge/protocol";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { springEase } from "../../lib/motion/spring";
@@ -235,8 +235,8 @@
     // A window whose reset has passed no longer says anything about the plan.
     const live = planLimits?.filter((limit) => limit.resetsAt > now) ?? [];
     if (live.length === 0) return null;
-    const time = new Intl.DateTimeFormat(getLocale(), { hour: "numeric", minute: "2-digit" });
-    const dayAndTime = new Intl.DateTimeFormat(getLocale(), { weekday: "short", hour: "numeric", minute: "2-digit" });
+    const time = new Intl.DateTimeFormat(getFormatLocale(), { hour: "numeric", minute: "2-digit" });
+    const dayAndTime = new Intl.DateTimeFormat(getFormatLocale(), { weekday: "short", hour: "numeric", minute: "2-digit" });
     return {
       percent: Math.max(...live.map((limit) => limit.percent)),
       lines: live.map((limit) =>

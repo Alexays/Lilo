@@ -18,7 +18,7 @@ import type {
 } from "../lib/bridge/protocol";
 import { formatAgo } from "./tabSwitcher.svelte";
 import { formatTerminalDuration } from "../lib/terminalTitle";
-import { getLocale, t } from "../lib/i18n/state.svelte";
+import { getFormatLocale, getLocale, t } from "../lib/i18n/state.svelte";
 import { getSetting } from "./settings.svelte";
 import { getSidebarsBySpace } from "./sidebar.svelte";
 import { shortcutKeys } from "./shortcutKeys.svelte";
@@ -921,7 +921,7 @@ function buildArchiveSections(query: string, archived: BridgeArchivedTab[]): Com
 	const needle = query.toLowerCase();
 	const now = Date.now();
 	// One formatter for every row: an Intl formatter is costly to build.
-	const format = new Intl.RelativeTimeFormat(getLocale(), { numeric: "auto" });
+	const format = new Intl.RelativeTimeFormat(getFormatLocale(), { numeric: "auto" });
 	const results = archived
 		.filter((tab) => !needle || `${tab.title} ${tab.url}`.toLowerCase().includes(needle))
 		.map((tab) => createResult(`archived:${tab.id}`, "archivedTab", tab.title || tab.url, { id: tab.id }, {

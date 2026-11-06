@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { fade, slide } from "svelte/transition";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
   import { importActions } from "../../lib/bridge/actions";
   import type { ImportSourceInfo } from "../../lib/bridge/protocol";
@@ -54,7 +54,7 @@
   const addedManagers = $derived(PASSWORD_MANAGERS.filter((manager) => !manager.soon && installed.has(manager.id)));
   const extensionCount = $derived(chosenExtensions.filter((ext) => choices.extensionIds.includes(ext.id)).length);
   // What the import takes, said in one sentence; its options open on request, or by themselves when nothing is left.
-  const kindsSummary = $derived(new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(choices.kinds.map((kind) =>
+  const kindsSummary = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }).format(choices.kinds.map((kind) =>
     kind === "extensions" && extensionCount > 0 ? t("onboarding.import.count.extensions", { count: extensionCount }) : t(`onboarding.import.item.${kind}`))));
   let kindsOpen = $state(false);
   const showKinds = $derived(kindsOpen || choices.kinds.length === 0);

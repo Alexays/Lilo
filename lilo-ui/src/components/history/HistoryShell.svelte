@@ -4,7 +4,7 @@
   import { on } from "../../lib/bridge";
   import { historyActions } from "../../lib/bridge/actions";
   import type { BridgeHistoryDayRow } from "../../lib/bridge/protocol";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { hostOf } from "../../lib/url";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import UiShellFrame from "../ui/UiShellFrame.svelte";
@@ -42,7 +42,7 @@
   const selecting = $derived(selection.size > 0);
   // A search or a site already narrows the list: folding by site would only hide what was asked for.
   const bySite = $derived(!filter.query.trim() && filter.host === undefined);
-  const days = $derived(groupHistoryDays(rows, Date.now(), getLocale(), bySite));
+  const days = $derived(groupHistoryDays(rows, Date.now(), getFormatLocale(), bySite));
   // The persisted favicons miss many sites: an open tab of the same site fills in. Built once per open: tracking
   // the tabs would rebuild it on every tab's title or progress update.
   const tabFavicons = $derived.by(() => {
@@ -282,7 +282,7 @@
       <span class="title">{row.title || row.url}</span>
       {#if !nested}<span class="host">{row.host}</span>{/if}
     </span>
-    {@render trailing(timeLabel(row.lastVisitAt, getLocale()), [key], row)}
+    {@render trailing(timeLabel(row.lastVisitAt, getFormatLocale()), [key], row)}
   </div>
 {/snippet}
 
@@ -314,7 +314,7 @@
               <span class="day-date">{day.date}</span>
               <span class="day-count">
                 {bySite && day.sites > 1
-                  ? new Intl.ListFormat(getLocale(), { type: "unit" }).format([
+                  ? new Intl.ListFormat(getFormatLocale(), { type: "unit" }).format([
                       t("historyPage.dayPages", { count: day.pages }),
                       t("historyPage.daySites", { count: day.sites }),
                     ])
@@ -349,7 +349,7 @@
                       </span>
                       <span class="badge">{t("historyPage.dayPages", { count: cluster.rows.length })}</span>
                       <svg class="chevron" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 2 3 3-3 3" /></svg>
-                      {@render trailing(timeRangeLabel(cluster.rows, getLocale()), keys, null)}
+                      {@render trailing(timeRangeLabel(cluster.rows, getFormatLocale()), keys, null)}
                     </div>
                     {#if open}
                       <div class="nested-rows">

@@ -2,7 +2,7 @@
      usage), then the site's permissions in use or decided and its zoom when it is not 100%. -->
 <script lang="ts">
   import { settingsActions, tabActions } from "../../lib/bridge/actions";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { sitePermissionRows } from "../../lib/sitePermissions";
   import { openSettings, setSettingsQuery } from "../../stores/panels.svelte";
   import { getSitePermissions, getZoomLevels } from "../../stores/settings.svelte";
@@ -44,7 +44,7 @@
   const storedZoom = $derived(getZoomLevels().find((level) => level.host === host.toLowerCase())?.zoom ?? 1);
   const zoom = $derived(getPageZoom(storedZoom));
   const zoomed = $derived(Math.abs(zoom - 1) > 0.001);
-  const percent = $derived(new Intl.NumberFormat(getLocale(), { style: "percent" }));
+  const percent = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "percent" }));
 </script>
 
 <div class="site-head">

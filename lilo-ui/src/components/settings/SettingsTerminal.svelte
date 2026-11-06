@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { keepAwakeActions, settingsActions } from "../../lib/bridge/actions";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { getSetting, getTerminalOptions, setSetting } from "../../stores/settings.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
@@ -29,8 +29,8 @@
     { value: "right", label: t("settings.terminalOptionRight") },
     { value: "both", label: t("settings.terminalOptionBoth") },
   ]);
-  const megabytesFormat = $derived(new Intl.NumberFormat(getLocale(), { style: "unit", unit: "megabyte" }));
-  const percentFormat = $derived(new Intl.NumberFormat(getLocale(), { style: "percent" }));
+  const megabytesFormat = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "unit", unit: "megabyte" }));
+  const percentFormat = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "percent" }));
   const scrollbackOptions = $derived([2, 10, 50, 200].map((megabytes) => ({ value: String(megabytes), label: megabytesFormat.format(megabytes) })));
   const sizeOptions = [10, 11, 12, 13, 14, 15, 16, 18, 20, 22].map((size) => ({ value: String(size), label: `${size} pt` }));
   const preventSleep = $derived(getSetting("terminalPreventSleep", "true") !== "false");

@@ -11,7 +11,7 @@
 </script>
 
 <script lang="ts">
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, getLocale, t } from "../../lib/i18n/state.svelte";
   import { acknowledgeWhatsNew, type WhatsNewRequest } from "../../stores/whatsNew.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiModal from "../ui/UiModal.svelte";
@@ -23,7 +23,7 @@
   const count = $derived(groups.reduce((sum, group) => sum + group.entries.length, 0));
   const editorial = $derived(count ? release?.editorial?.[getLocale()] ?? release?.editorial?.en : null);
   const date = $derived(request.version === release?.version && release.date
-    ? new Intl.DateTimeFormat(getLocale(), { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${release.date}T00:00:00Z`)) : "");
+    ? new Intl.DateTimeFormat(getFormatLocale(), { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${release.date}T00:00:00Z`)) : "");
   const shown = $derived(release !== undefined && !(request.automatic && count === 0));
 
   $effect(() => {

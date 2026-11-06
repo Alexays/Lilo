@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { getAgentsProfileId, isAgentsSpace } from "../../stores/agents.svelte";
   import { getShownExtensions, getShownExtensionsProfileId, showProfileExtensions } from "../../stores/extensions.svelte";
   import {
@@ -67,7 +67,7 @@
       case "tabs": {
         const spaces = getSpaces().filter((space) => !isAgentsSpace(space.id)).length;
         const profiles = userProfiles(getProfiles(), getAgentsProfileId()).length;
-        return new Intl.ListFormat(getLocale(), { type: "unit" }).format([
+        return new Intl.ListFormat(getFormatLocale(), { type: "unit" }).format([
           t("settings.notes.spaces", { count: spaces }),
           t("settings.notes.profiles", { count: profiles }),
         ]);

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { openSettingsSubpage } from "../../stores/panels.svelte";
   import { sitePermissionLabel, type SiteSummary } from "./settingsPanelModel";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
@@ -8,7 +8,7 @@
   let { site }: { site: SiteSummary } = $props();
 
   const summary = $derived.by(() => {
-    const percent = new Intl.NumberFormat(getLocale(), { style: "percent" });
+    const percent = new Intl.NumberFormat(getFormatLocale(), { style: "percent" });
     return [
       ...site.permissions.map((permission) =>
         t("settings.sites.permissionSummary", {

@@ -82,6 +82,7 @@ test("metaLine for an in-progress download joins bytes, speed and eta", () => {
       eta: 18,
     }),
     "fr",
+    "fr",
     NOW_MS,
   );
   assert.deepEqual(line, {
@@ -93,13 +94,14 @@ test("metaLine for an in-progress download joins bytes, speed and eta", () => {
 });
 
 test("metaLine omits unknown totals, speed and eta", () => {
-  const line = metaLine(dl({ state: "inProgress", bytesReceived: 5 * 1024 ** 2 }), "fr", NOW_MS);
+  const line = metaLine(dl({ state: "inProgress", bytesReceived: 5 * 1024 ** 2 }), "fr", "fr", NOW_MS);
   assert.deepEqual(line, { detail: "5,0 Mo", stateKey: null, errorText: null, tone: "neutral" });
 });
 
 test("metaLine for paused shows percent and received bytes", () => {
   const line = metaLine(
     dl({ state: "paused", bytesReceived: 512 * 1024 ** 2, totalBytes: 1024 ** 3 }),
+    "fr",
     "fr",
     NOW_MS,
   );
@@ -116,6 +118,7 @@ test("metaLine for complete shows size, end time and host, or File missing", () 
   const saved = metaLine(
     dl({ url: "https://www.example.com/a.zip", totalBytes: 6041430000, endedAt }),
     "fr",
+    "fr",
     NOW_MS,
   );
   assert.deepEqual(saved, {
@@ -124,11 +127,14 @@ test("metaLine for complete shows size, end time and host, or File missing", () 
     errorText: null,
     tone: "neutral",
   });
+  // The time follows the region, not only the language.
+  const british = metaLine(dl({ url: "https://www.example.com/a.zip", totalBytes: 6041430000, endedAt }), "en", "en-GB", NOW_MS);
+  assert.equal(british.detail, "5.6 GB · 14:02 · example.com");
 
-  const old = metaLine(dl({ totalBytes: 1024, endedAt: nowSec - 40 * 86400 }), "fr", NOW_MS);
+  const old = metaLine(dl({ totalBytes: 1024, endedAt: nowSec - 40 * 86400 }), "fr", "fr", NOW_MS);
   assert.equal(old.detail, "1,0 Ko · 3 mai · example.com");
 
-  const missing = metaLine(dl({ totalBytes: 1024, fileMissing: true }), "fr", NOW_MS);
+  const missing = metaLine(dl({ totalBytes: 1024, fileMissing: true }), "fr", "fr", NOW_MS);
   assert.deepEqual(missing, {
     detail: "example.com",
     stateKey: "downloadsPanel.stateFileMissing",
@@ -138,7 +144,7 @@ test("metaLine for complete shows size, end time and host, or File missing", () 
 });
 
 test("metaLine for failures carries the error text or Failed key", () => {
-  const withMessage = metaLine(dl({ state: "interrupted", error: "Network lost" }), "fr", NOW_MS);
+  const withMessage = metaLine(dl({ state: "interrupted", error: "Network lost" }), "fr", "fr", NOW_MS);
   assert.deepEqual(withMessage, {
     detail: null,
     stateKey: null,
@@ -146,7 +152,7 @@ test("metaLine for failures carries the error text or Failed key", () => {
     tone: "error",
   });
 
-  const bare = metaLine(dl({ state: "interrupted" }), "fr", NOW_MS);
+  const bare = metaLine(dl({ state: "interrupted" }), "fr", "fr", NOW_MS);
   assert.deepEqual(bare, {
     detail: null,
     stateKey: "downloadsPanel.stateFailed",
