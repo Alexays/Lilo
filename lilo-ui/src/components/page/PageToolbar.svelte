@@ -9,6 +9,7 @@
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { pageBarStyle } from "../../lib/pageBarTheme";
   import { shellBarColor } from "../../stores/theme.svelte";
+  import { createFrameScheduler } from "../../lib/motion/frameScheduler";
 
   let { row = false, accent }: { row?: boolean; accent: string } = $props();
 
@@ -46,11 +47,14 @@
     // The field renders after this container, and its address and buttons change: watch both.
     const resize = new ResizeObserver(measure);
     resize.observe(el);
-    const mutation = new MutationObserver(measure);
+    // Mutations land in several batches a frame (counters, transitions): one layout read per frame.
+    const frame = createFrameScheduler();
+    const mutation = new MutationObserver(() => frame.schedule(measure));
     mutation.observe(el, { childList: true, subtree: true, characterData: true });
     return () => {
       resize.disconnect();
       mutation.disconnect();
+      frame.cancel();
     };
   });
 

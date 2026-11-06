@@ -22,6 +22,7 @@ import {
 	getLocalHostCompletion,
 	normalizeSearchSuggestions,
 	HISTORY_SEARCH_DEBOUNCE_MS,
+	forgetClosedTabActivations,
 	noteActiveTab,
 	toHistoryResults,
 } from "./commandBarSearch.svelte";
@@ -184,6 +185,7 @@ function handleSidebarApplied(event: SidebarAppliedEvent): void {
 function applyBlankTabRules(event: SidebarAppliedEvent): boolean {
 	const activeTab = event.activeTab;
 	noteActiveTab(event.activeTabId);
+	if (event.closedTabIds.length) forgetClosedTabActivations(event.closedTabIds);
 
 	// A blank tab we deferred closing on dismiss: close it once another real tab is active
 	// (safe once it is no longer the last tab). Drop the deferral if it's gone or navigated.
