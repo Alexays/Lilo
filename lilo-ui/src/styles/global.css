@@ -116,7 +116,7 @@
   --terminal-tile-text: #f4f2ff;
   --terminal-tile-accent: #cfc4ff;
   --terminal-tile-border: rgba(255, 255, 255, 0.12);
-  /* Settings group tiles: Apple's system colors under a white glyph, plus Lilo's violet. */
+  /* Apple's system colors for the browsing data chart, plus Lilo's violet. */
   --tile-blue: #007aff;
   --tile-purple: #af52de;
   --tile-orange: #ff9500;
@@ -627,7 +627,7 @@ html.reduced-transparency * {
     --text-secondary: #33334a;
     --text-muted: #3f3f55;
     --focus-outline: 2px solid var(--accent);
-    /* Apple's accessible variants in both themes: darker fills keep the white glyph legible. */
+    /* Apple's accessible variants in both themes. */
     --tile-blue: #0040dd;
     --tile-purple: #8944ab;
     --tile-orange: #c93400;
