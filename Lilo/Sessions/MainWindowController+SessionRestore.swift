@@ -347,32 +347,6 @@ extension MainWindowController {
         return nil
     }
 
-    /// Drops the saved tab and interaction state of spaces that no longer exist. Only profiles that own
-    /// a space are swept, so no database gets created. A profile's database opens off the main thread;
-    /// its spaces are read back on it once open, and the delete queues on the writer behind every save
-    /// made before, ahead of every save made after.
-    func deleteOrphanedSpaceStates() {
-        guard let spaceManager = context.spaceManager, let dbManager = context.dbManager else { return }
-        let profileIds = Set(spaceManager.spaces.filter { !$0.isPrivate }.map(\.profileId))
-        Task.detached(priority: .utility) {
-            for profileId in profileIds {
-                let pool: DatabasePool
-                do { pool = try dbManager.pool(for: profileId) } catch {
-                    Self.logger.error("orphaned space state sweep skipped a profile: \(error.localizedDescription, privacy: .public)")
-                    continue
-                }
-                await MainActor.run {
-                    let spaceIds = Set(spaceManager.spaces(for: profileId).filter { !$0.isPrivate }.map(\.id))
-                    let databasePath = pool.path
-                    pool.asyncWrite({ db in
-                        try SpaceTabStateStore.deleteAllOn(db: db, exceptSpaces: spaceIds)
-                        try InteractionStateStore.deleteAllOn(db: db, databasePath: databasePath, exceptSpaces: spaceIds)
-                    }, completion: loggingPersistenceFailure("spaceStates.orphanCleanup[\(profileId.uuidString)]"))
-                }
-            }
-        }
-    }
-
     func restoreStoredSpaceIds(for profileId: UUID) async -> [String: UUID] {
         guard let pool = try? context.poolReportingFailure(for: profileId) else { return [:] }
         return (try? await BrowserContext.StartupBackgroundWork.runBlocking {
