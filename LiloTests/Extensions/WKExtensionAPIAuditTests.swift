@@ -65,8 +65,8 @@ final class WKExtensionAPIAuditTests: XCTestCase {
         registry.delegate.windowAdapter = adapter
         // Exercise the whole window-notification surface, including the
         // windowOpenedWasNotified idempotence guard (the second open is a no-op).
-        registry.notifyWindowOpened()
-        registry.notifyWindowOpened()
+        registry.notifyWindowOpened(adapter)
+        registry.notifyWindowOpened(adapter)
         registry.notifyWindowFocused(true)
         registry.notifyWindowFocused(false)
         registry.notifyWindowClosed()

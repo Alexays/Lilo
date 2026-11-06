@@ -1156,6 +1156,18 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(registry.extensionWindows.elementsEqual([adapterA, adapterB], by: ===))
     }
 
+    /// A space shown in a background browser window must not take the extension focus from the key window.
+    func testBackgroundWindowSpaceKeepsKeyWindowFocused() {
+        let keyWindow = KeyWindowStub(), backgroundWindow = NSWindow()
+        let focused = registry.windowAdapter(for: keyWindow, spaceId: UUID())
+        let background = registry.windowAdapter(for: backgroundWindow, spaceId: UUID())
+
+        XCTAssertTrue(registry.delegate.windowAdapter === focused)
+        XCTAssertTrue(registry.extensionWindows.contains { $0 === background }, "the background space is still an extension window")
+        let switched = registry.windowAdapter(for: keyWindow, spaceId: UUID())
+        XCTAssertTrue(registry.delegate.windowAdapter === switched, "a space switch in the key window moves the focus")
+    }
+
     // MARK: - Permission Request Tests
 
     func testResolvePermissionRequest_callsHandler() {
@@ -1554,4 +1566,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         XCTAssertEqual(hosts, ["example.com", "example.org"])
     }
+}
+
+private final class KeyWindowStub: NSWindow {
+    override var isKeyWindow: Bool { true }
 }
