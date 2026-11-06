@@ -33,6 +33,8 @@ final class TerminalView: NSView {
     var probedLinkCell: (x: Int, y: Int)?
     /// Rows of the command bar under the pointer, which a click selects the output of.
     var hoveredMarkRows: ClosedRange<Int>?
+    /// The left padding row last looked up for a command bar, nil outside the padding.
+    var probedMarkRow: Int?
     /// Where a Command-hovered link goes, shown at the bottom left like a browser's status bar.
     lazy var linkLabel: NSTextField = {
         let label = NSTextField(labelWithString: "")
