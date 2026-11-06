@@ -883,7 +883,7 @@ final class ProfileExtensionRegistry {
         } catch {
             // A retried failed row shows the latest error, not the one from launch.
             if let index = failedRestores.firstIndex(where: { $0.stored.id == extensionId }) {
-                failedRestores[index].error = ExtensionDiagnostics.diagnosticDescription(for: error)
+                failedRestores[index].error = error.localizedDescription
                 notifyExtensionsChanged()
             }
             throw error
@@ -983,7 +983,7 @@ final class ProfileExtensionRegistry {
             Self.logger.error("Failed to persist re-enabling extension \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
         }
         if let index = disabledStoredExtensions.firstIndex(where: { $0.id == extensionId }) {
-            failedRestores.append((disabledStoredExtensions.remove(at: index), ExtensionDiagnostics.diagnosticDescription(for: error)))
+            failedRestores.append((disabledStoredExtensions.remove(at: index), error.localizedDescription))
             notifyExtensionsChanged()
         }
     }
@@ -1386,7 +1386,7 @@ final class ProfileExtensionRegistry {
 
     private func recordFailedRestore(_ stored: ExtensionStorage.InstalledExtension, error: Error) {
         Self.logger.error("Failed to restore stored extension \(stored.id, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
-        failedRestores.append((stored, ExtensionDiagnostics.diagnosticDescription(for: error)))
+        failedRestores.append((stored, error.localizedDescription))
     }
 
     /// Records the files an update installed for a disabled extension, and lists them.

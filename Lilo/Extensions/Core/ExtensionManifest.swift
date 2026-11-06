@@ -89,12 +89,12 @@ enum ExtensionError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .manifestNotFound(let p):           return "manifest.json not found at \(p)"
-        case .manifestParseError(let d):         return "Failed to parse manifest.json: \(d)"
-        case .unsupportedManifestVersion(let v): return "Unsupported manifest version \(v); only MV3 is supported"
-        case .missingRequiredField(let f):       return "Required manifest field missing: \(f)"
-        case .downloadFailed(let d):             return "Failed to download extension: \(d)"
-        case .invalidExtensionArchive(let d):    return "Invalid extension archive: \(d)"
+        case .manifestNotFound(let p):           return unsafe String(format: "manifest.json not found at %@".localized, p)
+        case .manifestParseError(let d):         return unsafe String(format: "Failed to parse manifest.json: %@".localized, d)
+        case .unsupportedManifestVersion(let v): return unsafe String(format: "Unsupported manifest version %ld; only MV3 is supported".localized, v)
+        case .missingRequiredField(let f):       return unsafe String(format: "Required manifest field missing: %@".localized, f)
+        case .downloadFailed(let d):             return unsafe String(format: "Failed to download extension: %@".localized, d)
+        case .invalidExtensionArchive(let d):    return unsafe String(format: "Invalid extension archive: %@".localized, d)
         }
     }
 }
