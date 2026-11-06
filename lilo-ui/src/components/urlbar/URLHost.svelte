@@ -4,6 +4,7 @@
   import { springEase } from "../../lib/motion/spring";
   import { restingBlur, restingFly } from "../../lib/motion/restingTransitions";
   import type { URLVisual } from "../../lib/urlVisual";
+  import { t } from "../../lib/i18n/state.svelte";
 
   interface Props {
     visual: URLVisual;
@@ -18,6 +19,8 @@
   const MIN_LINE_FONT_PX = 11;
   // Mirrors the gap in `.url-text-shell`'s margin-right.
   const CLUSTER_GAP_PX = 4;
+  // Mirrors `.insecure`'s width plus its margin-right.
+  const INSECURE_MARK_PX = 15;
 
   let shellEl: HTMLElement | undefined = $state();
   let hostEl: HTMLElement | undefined = $state();
@@ -66,8 +69,9 @@
       (size, index, all) => size >= MIN_LINE_FONT_PX && all.indexOf(size) === index,
     );
     const hostFace = fontFace(hostEl);
+    const hostRoom = visual.insecure ? available - INSECURE_MARK_PX : available;
     const rooms = new Map(
-      sizes.map((size) => [size, available - textWidth(visual.displayHost, hostFace, size) - MEASURE_SLACK_PX]),
+      sizes.map((size) => [size, hostRoom - textWidth(visual.displayHost, hostFace, size) - MEASURE_SLACK_PX]),
     );
     const roomAt = (size: number) => rooms.get(size)!;
 
@@ -160,6 +164,15 @@
           }}
           out:restingBlur={{ amount: 4, duration: prefersReducedMotion() ? 0 : 200, opacity: 0.08 }}
         >
+          {#if visual.insecure}
+            <svg class="insecure" role="img" aria-label={t("urlBar.details.notSecure")} width="11" height="10" viewBox="0 0 11 10">
+              <path
+                fill="currentColor"
+                fill-rule="evenodd"
+                d="M4.63.5a1 1 0 0 1 1.74 0l4.5 8a1 1 0 0 1-.87 1.5h-9a1 1 0 0 1-.87-1.5zM4.9 3.2h1.2v3.1H4.9zM4.9 7.2h1.2v1.2H4.9z"
+              />
+            </svg>
+          {/if}
           <span
             bind:this={hostEl}
             class="url-host"
@@ -170,7 +183,7 @@
             class:feedback={visual.isFeedback}
             class:feedback-zoom={visual.feedbackVariant === "zoom"}
           >
-            {visual.displayHost}
+            <span>{visual.displayHost}</span>
           </span>
           {#if visual.path}
             <span class="url-path" bind:this={pathEl}>{layout.text}</span>
@@ -260,6 +273,28 @@
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.01em;
     transition: color var(--motion-duration-slow) ease;
+  }
+
+  /* A long host loses its start, never the registrable domain at its end. */
+  .url-host:not(.placeholder, .feedback) {
+    direction: rtl;
+    text-align: left;
+  }
+
+  .url-host > span {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  .insecure {
+    flex: none;
+    align-self: center;
+    margin-right: 4px;
+    color: var(--danger-text);
+  }
+
+  .insecure + .url-host {
+    max-width: calc(100% - 15px);
   }
 
   .url-host.placeholder {

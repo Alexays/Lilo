@@ -183,6 +183,12 @@ final class FilterListConverterTests: XCTestCase {
         XCTAssertEqual(trigger(#"/\/x(\/y)?\.js$/$domain=a.example"#)?["url-filter"] as? String, #"\/x(\/y)?\.js$"#)
     }
 
+    func testRegexRuleWithAnOutOfRangeQuantifierOrDeepNestingIsDropped() {
+        let deep = String(repeating: "(", count: 9) + "a" + String(repeating: ")", count: 9)
+        let out = FilterListConverter.convert("/ads{-1}/\n/a{5,9223372036854775807}/\n/a{2,-1}/\n/\(deep)/")
+        XCTAssertTrue(out.blocks.isEmpty)
+    }
+
     func testMatchAllRulesNeedASite() {
         XCTAssertEqual(trigger("*$script,domain=site.example")?["url-filter"] as? String, ".*")
         XCTAssertEqual(trigger("$image,domain=site.example")?["if-domain"] as? [String], ["*site.example"])

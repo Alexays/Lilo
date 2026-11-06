@@ -37,8 +37,8 @@ final class ProfileManagerTests: XCTestCase {
         // The row must be gone from the DB, not just from memory: a silent
         // id-encoding mismatch here resurrects the profile on next launch.
         let remaining = try dbManager.globalPool.read { try Profile.fetchAll($0) }
-        XCTAssertEqual(remaining.map(\.name), ["Default"])
-        XCTAssertEqual(manager.profiles.map(\.name), ["Default"])
+        XCTAssertEqual(remaining.map(\.name), ["Default".localized])
+        XCTAssertEqual(manager.profiles.map(\.name), ["Default".localized])
     }
 
     func testDeleteProfileRefusesDefaultAndInUseProfiles() throws {
@@ -51,7 +51,7 @@ final class ProfileManagerTests: XCTestCase {
         XCTAssertThrowsError(try manager.deleteProfile(id: used.id))
 
         let stillThere = try dbManager.globalPool.read { try Profile.fetchAll($0) }
-        XCTAssertEqual(Set(stillThere.map(\.name)), ["Default", "Used"])
+        XCTAssertEqual(Set(stillThere.map(\.name)), ["Default".localized, "Used"])
     }
 
     func testProfilesTakeAnUnusedPaletteColorThatPersists() async throws {

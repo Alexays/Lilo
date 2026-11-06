@@ -152,6 +152,15 @@ test("an active favorite names its site without sliding over the favorites besid
 	for (const [width, scrollWidth] of groups) expect(scrollWidth, "a group holds its pills").toBeLessThanOrEqual(Math.ceil(width) + 1);
 });
 
+test("a conversation whose agent failed shows its red badge in the strip", async ({ page }) => {
+	const world = folderWorld();
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab) =>
+		tab.id === "tab-alpha" ? { ...tab, kind: "agent", agentId: "agent", terminalState: "failed" } : tab);
+	await bootChrome(page, { ...world, tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-conversation");
+	await expect(page.locator(".strip-conversation .badge.failed")).toBeVisible();
+	await expect(page.locator(".strip-conversation .main")).toHaveAttribute("aria-label", /Stopped with an error/);
+});
+
 test("the top strip lists today's tabs and switches on click", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
 	const pills = page.locator(".tab-strip .strip-tab");
@@ -371,6 +380,23 @@ test("a click in the page closes a strip popover", async ({ page }) => {
 	await receive(page, { event: "contentInteraction", isMouseDown: true });
 
 	await expect(page.locator(".strip-popover")).toHaveCount(0);
+});
+
+test("the arrow keys walk a strip popover's menu", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await page.locator(".space-chip").click();
+	const items = page.locator(".strip-popover [role^=menuitem]");
+	await expect(items).toHaveCount(3);
+	await expect(items.first()).toBeFocused();
+
+	await page.keyboard.press("ArrowDown");
+	await expect(items.nth(1)).toBeFocused();
+	await page.keyboard.press("End");
+	await expect(items.last()).toBeFocused();
+	await page.keyboard.press("ArrowDown");
+	await expect(items.first()).toBeFocused();
+	await page.keyboard.press("ArrowUp");
+	await expect(items.last()).toBeFocused();
 });
 
 test("the page toolbar centers the address on the page", async ({ page }) => {

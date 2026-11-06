@@ -3,6 +3,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { bootChrome, centerOf, dragFromTo, glideTo, pressAndLift, sentCommands } from "./fakeHost";
 import { folderWorld, initialWorld, SPACE_1, SPACE_2 } from "./fixtures";
+import { tab, treeItem } from "../src/stores/testFixtures";
 
 const DROP_HOLD_SETTLE_MS = 300;
 
@@ -298,4 +299,32 @@ test("without pins the divider line only shows while dragging", async ({
 	await expect(divider).not.toHaveClass(/hidden-line/);
 	await page.mouse.up();
 	await expect(divider).toHaveClass(/hidden-line/);
+});
+
+test("a drag in a long list mounts every row of its own space only, then drops in place", async ({ page }) => {
+	const world = initialWorld();
+	for (const [space, prefix] of [[SPACE_1, "a"], [SPACE_2, "b"]] as const) {
+		world.tabsBySpace[space] = Array.from({ length: 120 }, (_, i) => tab(`${prefix}-${i}`, space, { title: `Tab ${prefix} ${i}` }));
+		world.treeItemsBySpace[space] = Array.from({ length: 120 }, (_, i) => treeItem(`${prefix}-${i}`, space, i));
+		world.activeTabBySpace[space] = `${prefix}-0`;
+	}
+	await bootChrome(page, world);
+	await page.evaluate((state) => {
+		window.__lilo!.receive({ event: "browserStateChanged", changedSpaceId: state.spaceId, activeTabId: state.activeTabId, states: [state] });
+	}, { spaceId: SPACE_2, activeTabId: "b-0", tabs: world.tabsBySpace[SPACE_2], folders: [], treeItems: world.treeItemsBySpace[SPACE_2] });
+	const active = page.locator(".space-pane", { has: page.locator('[data-tab-id="a-0"]') });
+	const neighbour = page.locator(".space-pane", { has: page.locator('[data-tab-id="b-0"]') });
+	await expect(active.locator(".virtual-spacer")).not.toHaveCount(0);
+	await expect(neighbour.locator(".virtual-spacer")).not.toHaveCount(0);
+
+	await pressAndLift(page, '[data-dnd-item-id="a-1"]');
+	await page.waitForTimeout(250);
+	await glideTo(page, '[data-dnd-item-id="a-4"]', 21);
+	await expect(active.locator('[data-tab-id="a-119"]')).toHaveCount(1);
+	await expect(active.locator(".virtual-spacer")).toHaveCount(0);
+	await expect(neighbour.locator(".virtual-spacer")).not.toHaveCount(0);
+	await page.mouse.up();
+
+	const drop = (await sentCommands(page)).find((c) => c.action === "commitSidebarDrop");
+	expect(drop?.payload).toMatchObject({ id: "a-1", insertAfterId: "a-4", insertBeforeId: "a-5" });
 });

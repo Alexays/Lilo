@@ -413,7 +413,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .find-bar {
-      animation: find-bar-fade 150ms ease;
+      animation: find-bar-fade 150ms ease !important;
     }
 
     @keyframes find-bar-fade {

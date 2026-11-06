@@ -1,0 +1,3 @@
+kind: Fixed
+body: The Extensions menu in the menu bar shows each extension's action as set for the current tab and greys out a disabled action, and clicking a disabled extension icon opens its menu.
+time: 2026-11-06T18:37:14.247288+01:00

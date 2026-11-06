@@ -22,6 +22,27 @@ final class DatabaseManagerTests: XCTestCase {
         manager.closeForShutdown()
     }
 
+    func testADeletedProfileFolderGoesAtOnceAndALeftoverOneAtTheNextLaunch() async throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("db-manager-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let profileId = UUID()
+        let manager = try DatabaseManager(appSupportDirectory: dir.path)
+        _ = try manager.pool(for: profileId)
+
+        try manager.deleteProfileData(profileId: profileId)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.appendingPathComponent("Profiles/\(profileId.uuidString)").path))
+
+        let leftover = dir.appendingPathComponent("Profiles/.deleted-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: leftover, withIntermediateDirectories: true)
+        manager.closeForShutdown()
+        let relaunched = try DatabaseManager(appSupportDirectory: dir.path)
+        for _ in 0..<200 where FileManager.default.fileExists(atPath: leftover.path) {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: leftover.path))
+        relaunched.closeForShutdown()
+    }
+
     @MainActor
     func testAnExistingProfileKeepsTheAppWideSitePermissionsAndANewOneStartsWithout() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("db-manager-\(UUID().uuidString)")
@@ -42,6 +63,26 @@ final class DatabaseManagerTests: XCTestCase {
 
         XCTAssertEqual(existingPermissions.decision(forOrigin: "https://maps.example", type: "location"), true)
         XCTAssertNil(createdPermissions.decision(forOrigin: "https://maps.example", type: "location"))
+        manager.closeForShutdown()
+    }
+
+    func testAnUnreadableDatabaseIsMovedAsideWithItsWalAndReplaced() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("db-manager-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let garbage = Data((0..<8192).map { _ in UInt8.random(in: .min ... .max) })
+        try garbage.write(to: dir.appendingPathComponent("global.db"))
+        try garbage.write(to: dir.appendingPathComponent("global.db-wal"))
+
+        let manager = try DatabaseManager(appSupportDirectory: dir.path)
+
+        let movedAside = manager.takeMovedAsideDatabases()
+        XCTAssertEqual(movedAside.count, 1)
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: movedAside[0])), garbage)
+        // SQLite empties a WAL whose header is invalid when the failed connection closes: only the file moves.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: movedAside[0] + "-wal"))
+        XCTAssertTrue(try manager.globalPool.read { try $0.tableExists("profiles") })
+        XCTAssertEqual(manager.takeMovedAsideDatabases(), [])
         manager.closeForShutdown()
     }
 }

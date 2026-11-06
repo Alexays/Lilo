@@ -116,7 +116,7 @@ final class DownloadsBridgeHandler: GapHandler {
             }
             // The session's own jar is not the profile's: send the profile's cookies for the URL.
             if scheme != "data", request.value(forHTTPHeaderField: "Cookie") == nil {
-                let cookies = await WKWebsiteDataStore(forIdentifier: call.registry.profileId).httpCookieStore.cookies(for: url)
+                let cookies = await WKEngineFactory.persistentDataStore(for: call.registry.profileId).httpCookieStore.cookies(for: url)
                 request.httpShouldHandleCookies = false
                 for (name, value) in HTTPCookie.requestHeaderFields(with: cookies) {
                     request.setValue(value, forHTTPHeaderField: name)
@@ -315,6 +315,10 @@ final class DownloadsBridgeHandler: GapHandler {
         var data: [String: Any] = [
             "id": item.id ?? 0,
             "url": item.url,
+            "finalUrl": item.url,
+            "referrer": "",
+            "incognito": false,
+            "mime": item.mimeType ?? "",
             "filename": item.destinationPath,
             "state": chromeState(for: item),
             "paused": item.state == .paused,
@@ -329,11 +333,9 @@ final class DownloadsBridgeHandler: GapHandler {
         if let endedAt = item.endedAt {
             data["endTime"] = isoFormatter.string(from: endedAt)
         }
-        if let mimeType = item.mimeType {
-            data["mime"] = mimeType
-        }
         if let error = item.error {
-            data["error"] = error
+            // Chrome reports an InterruptReason; a system error's localized text maps to the generic network one.
+            data["error"] = DownloadInterruptReason(rawValue: error) == nil ? "NETWORK_FAILED" : error
         }
         return data
     }

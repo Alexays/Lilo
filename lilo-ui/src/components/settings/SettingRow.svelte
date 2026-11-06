@@ -34,6 +34,7 @@
     setSetting,
   } from "../../stores/settings.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
+  import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import {
     buildSites,
     formatDownloadsFolderLabel,
@@ -259,8 +260,8 @@
     {/key}
   {/if}
   {#snippet action()}
-    {#if id === "littleWindowHotKey"}
-      <kbd class="keycap" aria-hidden="true">⌥⌘N</kbd>
+    {#if id === "littleWindowHotKey" && shortcutKeys("littleWindow.new")}
+      <kbd class="keycap" aria-hidden="true">{shortcutKeys("littleWindow.new")}</kbd>
     {:else if id === "seasonalAppIcon" && seasonalPreview}
       <img class="seasonal-preview" src={seasonalPreview} alt="" width="28" height="28" />
     {:else if id === "appIcon"}

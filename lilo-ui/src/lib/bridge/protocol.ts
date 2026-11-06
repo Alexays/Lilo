@@ -299,7 +299,11 @@ export interface BridgeExtensionSnapshot {
 	declinedUpdate?: string;
 	/** The extension's store page, set only for a copy installed from the Chrome Web Store. */
 	webStoreURL?: string;
+	/** Loaded from a folder on disk, which Reload reads again. */
+	isUnpacked?: boolean;
 	allowsPrivateAccess?: boolean;
+	/** The manifest's `"incognito": "not_allowed"`: the extension never runs in private spaces. */
+	privateAccessNotAllowed?: boolean;
 	/** The "Allow user scripts" switch, shown for extensions declaring `userScripts`. */
 	allowsUserScripts?: boolean;
 	/** The extension asks for the active tab's site (chrome.permissions.addHostAccessRequest). */
@@ -313,8 +317,8 @@ export interface BridgeExtensionSnapshot {
 	actionLabel?: string;
 	permissions?: string[];
 	hostPermissions?: string[];
-	/** Hosts the extension is restricted to; empty means every host its manifest asked for. */
-	siteAccess?: string[];
+	/** Hosts the extension is restricted to, empty for none; null means every host its manifest asked for. */
+	siteAccess?: string[] | null;
 	omniboxKeyword?: string;
 }
 
@@ -373,7 +377,7 @@ export interface BridgeDownloadSnapshot {
 	endedAt?: number;
 	error?: string;
 	fileMissing: boolean;
-	source: "wk" | "url";
+	source: "wk" | "url" | "blob";
 	speedBytesPerSec?: number;
 	eta?: number;
 }
@@ -903,8 +907,9 @@ export interface BridgeCommandPayloadMap {
 	enableExtension: { id: string; profileId?: string };
 	disableExtension: { id: string; profileId?: string };
 	updateExtension: { id: string; profileId?: string };
+	reloadExtension: { id: string; profileId?: string };
 	checkExtensionUpdates: EmptyPayload;
-	setExtensionSiteAccess: { id: string; hosts: string[]; profileId?: string };
+	setExtensionSiteAccess: { id: string; hosts: string[] | null; profileId?: string };
 	setExtensionPrivateAccess: { id: string; allowed: boolean; profileId?: string };
 	setExtensionUserScripts: { id: string; allowed: boolean; profileId?: string };
 	setExtensionCommandShortcut: { id: string; command: string; key: string; modifiers: number; profileId?: string };
@@ -984,7 +989,8 @@ export interface BridgeEventPayloadMap {
 	openDiagnostics: EmptyPayload;
 	openProcessManager: EmptyPayload;
 	openDownloads: EmptyPayload;
-	openExtensions: EmptyPayload;
+	/** `id`: the extension whose details page opens. */
+	openExtensions: { id?: string };
 	openConfig: EmptyPayload;
 	featureFlagsLoaded: { flags: BridgeFeatureFlagSnapshot[] };
 	/** `host`: the content blocker allowlist entry for the page; `site`: its registrable domain. */
@@ -1047,7 +1053,8 @@ export interface BridgeEventPayloadMap {
 	tabPreviewReady: { tabId: string; image?: string } & Partial<BridgeTerminalPrompt>;
 	/** A conversation the chrome asked to show: its whole log, then `conversationUpdate` as it grows. */
 	conversationOpened: BridgeConversationOpened;
-	conversationUpdate: { tabId: string; update: BridgeConversationUpdate };
+	/** Updates of one conversation since the last delivery, oldest first. */
+	conversationUpdate: { tabId: string; updates: BridgeConversationUpdate[] };
 	/** Every conversation of every Space, for the Agents badge and popover. */
 	conversationsChanged: { conversations: BridgeConversationSummary[] };
 	agentCatalog: { agents: BridgeAgentInfo[]; projects: string[]; home: string };
@@ -1205,8 +1212,9 @@ export interface BridgeEventPayloadMap {
 	// pending state crisply (success or failure) instead of waiting on a timeout.
 	extensionActionCompleted: {
 		id: string;
-		action: "enable" | "disable" | "uninstall" | "update" | "install";
+		action: "enable" | "disable" | "uninstall" | "update" | "install" | "shortcut";
 		success: boolean;
+		/** For a refused "shortcut", what already holds the keys. */
 		error?: string;
 	};
 	// Native ⋯ menu on an extension row resolved to a UI action.

@@ -8,6 +8,7 @@
   import ToolIcon from "./ToolIcon.svelte";
   import { SHARED_TOOL_KEYS } from "../../lib/ink";
   import { tooltip } from "../../lib/tooltip";
+  import { menuKeys } from "../../lib/actions/menuKeys";
   import { dndItem, dndZone } from "../../lib/dndEngine/action";
   import type { DndActiveDrag } from "../../lib/dndEngine/store.svelte";
   import type { DndItem } from "../../lib/dndEngine/types";
@@ -59,6 +60,7 @@
 
   let saveMenuOpen = $state(false);
   let saveGroupEl = $state<HTMLElement>();
+  let saveChevronEl = $state<HTMLElement>();
 
   // Live projection (same engine as tabs/spaces): during the drag the layers render in the
   // projected order so the list reorders and flips live, and the drop commits it. The *real* row
@@ -115,6 +117,7 @@
     if (!saveMenuOpen || e.key !== "Escape") return;
     e.stopPropagation();
     saveMenuOpen = false;
+    if (saveGroupEl?.contains(document.activeElement)) saveChevronEl?.focus();
   }
 
   // Leaving the panel (e.g. another panel opens) tears down the screenshot session
@@ -132,7 +135,7 @@
       <button class="hdr-ctl" disabled={!screenshotEditor.canUndo} onclick={() => screenshotEditor.undo()} use:tooltip={{ text: `${t("screenshot.undo")} (⌘Z)`, placement: "bottom" }} aria-label={t("screenshot.undo")}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4 3 7l3 3" /><path d="M3 7h6.5a3.5 3.5 0 0 1 0 7H6" /></svg>
       </button>
-      <button class="hdr-ctl" disabled={!screenshotEditor.canRedo} onclick={() => screenshotEditor.redo()} use:tooltip={{ text: `${t("screenshot.redo")} (⌘⇧Z)`, placement: "bottom" }} aria-label={t("screenshot.redo")}>
+      <button class="hdr-ctl" disabled={!screenshotEditor.canRedo} onclick={() => screenshotEditor.redo()} use:tooltip={{ text: `${t("screenshot.redo")} (⇧⌘Z)`, placement: "bottom" }} aria-label={t("screenshot.redo")}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4l3 3-3 3" /><path d="M13 7H6.5a3.5 3.5 0 0 0 0 7H10" /></svg>
       </button>
     {/snippet}
@@ -215,11 +218,11 @@
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7l3 3v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M5 3v3h5" /><path d="M5 13v-3h6v3" /></svg>
         <span>{t("common.save")}</span>
       </button>
-      <button class="btn primary chevron" disabled={!screenshotEditor.captured} aria-label={t("screenshot.saveOptions")} aria-haspopup="menu" aria-expanded={saveMenuOpen} use:tooltip={t("screenshot.saveOptions")} onclick={() => (saveMenuOpen = !saveMenuOpen)}>
+      <button class="btn primary chevron" disabled={!screenshotEditor.captured} aria-label={t("screenshot.saveOptions")} aria-haspopup="menu" aria-expanded={saveMenuOpen} bind:this={saveChevronEl} use:tooltip={t("screenshot.saveOptions")} onclick={() => (saveMenuOpen = !saveMenuOpen)}>
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4" /></svg>
       </button>
       {#if saveMenuOpen}
-        <div class="save-menu" role="menu" aria-label={t("screenshot.saveOptions")}>
+        <div class="save-menu" role="menu" aria-label={t("screenshot.saveOptions")} {@attach menuKeys} {@attach (node) => node.querySelector("button")?.focus()}>
           <button role="menuitem" onclick={() => { saveMenuOpen = false; screenshotEditor.saveAs(); }}>{t("screenshot.saveAs")}</button>
         </div>
       {/if}

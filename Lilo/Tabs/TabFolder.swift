@@ -11,6 +11,8 @@ struct TabFolder: Sendable, Identifiable, Equatable {
     var lock: FolderLock?
     /// Runtime only, like `StoredFolder.isUnlocked`.
     var isUnlocked: Bool
+    /// Like `StoredFolder.isAgentOwned`.
+    var isAgentOwned: Bool
 
     var isSplit: Bool { splitLayout != nil }
     var isLocked: Bool { lock != nil && !isUnlocked }
@@ -23,7 +25,8 @@ struct TabFolder: Sendable, Identifiable, Equatable {
         isCollapsed: Bool = false,
         splitLayout: SplitLayout? = nil,
         lock: FolderLock? = nil,
-        isUnlocked: Bool = false
+        isUnlocked: Bool = false,
+        isAgentOwned: Bool = false
     ) {
         self.id = id
         self.spaceId = spaceId
@@ -33,6 +36,7 @@ struct TabFolder: Sendable, Identifiable, Equatable {
         self.splitLayout = splitLayout
         self.lock = lock
         self.isUnlocked = isUnlocked
+        self.isAgentOwned = isAgentOwned
     }
 
     var bridgeData: [String: Any] {

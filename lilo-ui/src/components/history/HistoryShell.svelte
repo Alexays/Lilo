@@ -20,9 +20,9 @@
     deleteHistorySite,
     extendHistorySelection,
     getHistoryFavicon,
-    getHistoryFilter,
     getHistoryRows,
     getHistorySelection,
+    getShownHistoryFilter,
     hasMoreHistory,
     isHistoryLoaded,
     loadMoreHistory,
@@ -36,7 +36,7 @@
   } from "../../stores/history.svelte";
 
   const shellOpen = $derived(isHistoryShellOpen());
-  const filter = $derived(getHistoryFilter());
+  const filter = $derived(getShownHistoryFilter());
   const rows = $derived(getHistoryRows());
   const selection = $derived(getHistorySelection());
   const selecting = $derived(selection.size > 0);
@@ -60,6 +60,21 @@
   const expanded = new SvelteSet<string>();
 
   let siteToDelete = $state<string | null>(null);
+  // The list is one Tab stop: the item last focused while it is still shown, else the first.
+  let focusedNav = $state<string | null>(null);
+  const tabStop = $derived.by(() => {
+    let first: string | undefined;
+    for (const day of days) {
+      for (const cluster of day.clusters) {
+        const single = cluster.rows.length === 1;
+        const key = single ? cluster.key : `site:${cluster.key}`;
+        first ??= key;
+        if (key === focusedNav) return key;
+        if (!single && expanded.has(cluster.key) && cluster.rows.some((row) => rowKey(row) === focusedNav)) return focusedNav;
+      }
+    }
+    return first;
+  });
   let listEl: HTMLDivElement | undefined = $state();
   let sentinelEl: HTMLDivElement | undefined = $state();
 
@@ -154,11 +169,23 @@
     next?.focus();
   }
 
+  const ITEM_KEYS = "Enter Meta+Enter Space Backspace Delete Meta+A";
+
   function itemKeydown(event: KeyboardEvent, keys: string[], open: (background: boolean) => void): void {
     const target = event.currentTarget as HTMLElement;
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       void moveFocus(target, event.key === "ArrowDown" ? 1 : -1);
+    } else if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      void moveFocus(target, event.key === "End" ? Infinity : -Infinity);
+    } else if (event.key === "ArrowLeft") {
+      // A page inside a site goes back up to the site.
+      const site = target.closest(".cluster")?.querySelector<HTMLElement>(".row.site");
+      if (site && site !== target) {
+        event.preventDefault();
+        site.focus();
+      }
     } else if (event.key === "Enter") {
       event.preventDefault();
       open(event.metaKey);
@@ -269,10 +296,12 @@
     class:nested
     class:checked={selection.has(key)}
     class:selecting
-    role="option"
+    role="treeitem"
+    aria-level={nested ? 2 : 1}
     aria-selected={selection.has(key)}
-    tabindex="0"
-    data-nav
+    aria-keyshortcuts={ITEM_KEYS}
+    tabindex={key === tabStop ? 0 : -1}
+    data-nav={key}
     onclick={(event) => rowClick(event, row)}
     oncontextmenu={(event) => showMenu(event, row)}
     onkeydown={(event) => itemKeydown(event, [key], (background) => openHistoryRow(row, background))}
@@ -306,10 +335,19 @@
         {/if}
       </div>
     {:else}
-      <div class="days" role="listbox" aria-label={title} aria-multiselectable="true" tabindex="-1" bind:this={listEl}>
+      <div
+        class="days"
+        role="tree"
+        aria-label={title}
+        aria-multiselectable="true"
+        tabindex="-1"
+        bind:this={listEl}
+        onfocusin={(event) => (focusedNav = (event.target as HTMLElement).dataset.nav ?? focusedNav)}
+      >
         {#each days as day (day.dayStart)}
-          <section class="day" aria-label={day.labelKey ? t(day.labelKey) : day.weekday}>
-            <header class="day-header">
+          <!-- The header names the day's group, so it is read once, as that name. -->
+          <section class="day" role="group" aria-labelledby="history-day-{day.dayStart}">
+            <header class="day-header" id="history-day-{day.dayStart}" aria-hidden="true">
               <h3 class="day-title">{day.labelKey ? t(day.labelKey) : day.weekday}</h3>
               <span class="day-date">{day.date}</span>
               <span class="day-count">
@@ -334,11 +372,13 @@
                       class="row site"
                       class:checked
                       class:selecting
-                      role="option"
+                      role="treeitem"
+                      aria-level={1}
                       aria-selected={checked}
                       aria-expanded={open}
-                      tabindex="0"
-                      data-nav
+                      aria-keyshortcuts={ITEM_KEYS}
+                      tabindex={`site:${cluster.key}` === tabStop ? 0 : -1}
+                      data-nav="site:{cluster.key}"
                       onclick={(event) => clusterClick(event, cluster)}
                       onkeydown={(event) => clusterKeydown(event, cluster, open)}
                     >
@@ -352,7 +392,7 @@
                       {@render trailing(timeRangeLabel(cluster.rows, getLocale()), keys, null)}
                     </div>
                     {#if open}
-                      <div class="nested-rows">
+                      <div class="nested-rows" role="group">
                         {#each cluster.rows as row (rowKey(row))}{@render pageRow(row, true)}{/each}
                       </div>
                     {/if}

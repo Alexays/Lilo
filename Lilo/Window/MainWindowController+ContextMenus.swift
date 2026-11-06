@@ -169,7 +169,7 @@ extension MainWindowController {
     /// The folder takes the tab's place, inside the tab's folder when there is room for one more level.
     private func createFolder(from tab: Tab, spaceId: UUID) {
         let section: TabTreeItem.Section = tab.isPinned ? .pinned : .unpinned
-        let folder = TabFolder(spaceId: spaceId, name: "New Folder", color: "#5865f2")
+        let folder = TabFolder(spaceId: spaceId, name: "New Folder".localized, color: "#5865f2")
         var parentFolderId: UUID?
         if let groupId = tab.groupId, let spaceTab = context.browserState.space(id: spaceId)?.spaceTab,
            spaceTab.folder(id: groupId)?.isSplit == false, spaceTab.canNestFolder(height: 1, in: groupId) {
@@ -239,7 +239,7 @@ extension MainWindowController {
             addCopyURL()
             add("Cancel", .cancel, "cancel")
         case "interrupted":
-            add("Retry", .retry, "retry")
+            if (try? profileContext?.downloads.fetch(id: Int64(downloadId)))?.source != "blob" { add("Retry", .retry, "retry") }
             addCopyURL()
             menu.addItem(.separator())
             add("Remove from List", .removeFromList, "removeFromList")
@@ -359,7 +359,7 @@ extension MainWindowController {
 
     /// Opens the parent so the new folder shows, then starts its rename.
     private func createSubfolder(in parent: TabFolder) {
-        let folder = TabFolder(spaceId: parent.spaceId, name: "New Folder", color: parent.color)
+        let folder = TabFolder(spaceId: parent.spaceId, name: "New Folder".localized, color: parent.color)
         var commands: [BrowserCommand] = [.createFolder(spaceId: parent.spaceId, folder: folder, section: .unpinned, parentFolderId: parent.id)]
         if parent.isCollapsed { commands.append(.setFolderCollapsed(spaceId: parent.spaceId, folderId: parent.id, isCollapsed: false)) }
         applyContextMenuStateCommands(commands)
@@ -536,7 +536,7 @@ extension MainWindowController {
             }
         }
         menu.addItem("Create Folder".localized, icon: .newFolder) {
-            let folder = TabFolder(spaceId: targetSpaceId, name: "New Folder", color: "#5865f2")
+            let folder = TabFolder(spaceId: targetSpaceId, name: "New Folder".localized, color: "#5865f2")
             self.applyContextMenuStateCommands([.createFolder(spaceId: targetSpaceId, folder: folder, section: .unpinned)])
         }
         let positions = NSMenu()

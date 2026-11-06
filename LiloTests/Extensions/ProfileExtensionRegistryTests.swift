@@ -183,11 +183,15 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertFalse(context.errors.isEmpty, "a recorded error must be present to drive the handler")
 
         registry.backgrounds.contextErrorsChanged(id)
+        let firstSeen = registry.backgrounds.health(for: id)?.errorFirstSeen
         registry.backgrounds.contextErrorsChanged(id)
         for _ in 0..<50 { await Task.yield() }
 
         XCTAssertEqual(registry.backgrounds.health(for: id)?.lastErrorCount, context.errors.count,
                        "the count is the baseline the next notification logs from")
+        XCTAssertTrue(context.errors.allSatisfy { firstSeen?[$0 as NSError] != nil }, "every current error has a first-seen time")
+        XCTAssertEqual(registry.backgrounds.health(for: id)?.errorFirstSeen, firstSeen,
+                       "a repeated notification keeps each error's first-seen time")
         XCTAssertNil(registry.backgrounds.health(for: id)?.lastReviveAttempt)
         XCTAssertEqual(extensionBridgePayload(for: id)?["runtimeStatus"] as? String, "loaded")
     }
@@ -477,6 +481,18 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         }
     }
 
+    func testExtensionPagesRunTheLocationAndNotificationModulesInOnePageWorld() throws {
+        let profileId = TestProfileIds.next()
+        registry.teardown()
+        registry = ProfileExtensionRegistry(
+            profileId: profileId, extensionStorage: try makeTestExtensionStorage(profileId: profileId, in: tempDir),
+            pageBridges: (GeolocationBridge(), NotificationBridge()), extensionsBaseDirectory: tempDir
+        )
+        let pageWorld = registry.pageScripts.userScripts.filter { $0.source.contains(GeolocationBridge.pageModule) }
+        XCTAssertEqual(pageWorld.count, 1)
+        XCTAssertTrue(pageWorld.first?.source.contains(NotificationBridge.pageModule) == true)
+    }
+
     /// A deferred launch strands WebKit's keep-awake activity on a placeholder process, and the worker is
     /// then terminated seconds after load.
     func testBackgroundWebViewLaunchesItsProcessUpFront() async throws {
@@ -627,6 +643,43 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertNil(openError)
         XCTAssertEqual(window.tabManager.openTabs.count, tabCount, "no second options tab opens")
         XCTAssertEqual(window.tabManager.activeTab?.id, optionsTab.id)
+    }
+
+    /// The options page never opens in the private space on screen, which the user stays in, and the one open in another
+    /// space of the profile is the one shown.
+    func testOpenOptionsPageStaysOutOfPrivateSpacesAndFindsItInAnotherSpace() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("Options")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Options","version":"1.0","options_page":"options.html"}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "<title>Options</title>".write(to: extDir.appendingPathComponent("options.html"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extDir)
+        let context = try XCTUnwrap(registry.loadedExtensions.first?.context)
+        let optionsURL = try XCTUnwrap(context.optionsPageURL)
+        let homeId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        window.newPrivateSpace(nil)
+        let privateId = try XCTUnwrap(window.tabManager.currentSpaceId)
+
+        var openError: Error?
+        registry.delegate.webExtensionController(registry.controller, openOptionsPageFor: context) { openError = $0 }
+
+        XCTAssertNil(openError)
+        XCTAssertEqual(window.tabManager.currentSpaceId, privateId, "the user stays in the private space")
+        XCTAssertFalse(window.tabManager.tabs(forSpace: privateId).contains { $0.url == optionsURL })
+        let optionsTab = try XCTUnwrap(window.tabManager.tabs(forSpace: homeId).first { $0.url == optionsURL })
+
+        let other = try browserContext.context.spaceManager!.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
+        window.switchToSpace(other.id)
+        registry.delegate.webExtensionController(registry.controller, openOptionsPageFor: context) { openError = $0 }
+
+        XCTAssertNil(openError)
+        XCTAssertEqual(window.tabManager.currentSpaceId, homeId, "the window shows the options tab's space")
+        XCTAssertEqual(window.tabManager.activeTab?.id, optionsTab.id)
+        XCTAssertEqual(window.tabManager.tabs(forSpace: homeId).filter { $0.url == optionsURL }.count, 1, "no second options tab opens")
+        XCTAssertFalse(window.tabManager.tabs(forSpace: other.id).contains { $0.url == optionsURL })
     }
 
     /// A prompt is answered through the registry that asked, and denied once its window shows another profile or closes.
@@ -973,6 +1026,73 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(registry.loadedExtensions.count, 1)
     }
 
+    /// Without a folder of installed copies, every extension loads unpacked, in place.
+    private func makeUnpackedRegistry() throws -> ProfileExtensionRegistry {
+        let profileId = TestProfileIds.next()
+        return ProfileExtensionRegistry(profileId: profileId, extensionStorage: try makeTestExtensionStorage(profileId: profileId, in: tempDir), extensionsBaseDirectory: nil)
+    }
+
+    private func setVersion(_ version: String, of folder: URL) throws {
+        let manifest = #"{"manifest_version":3,"name":"Unpacked","version":"\#(version)"}"#
+        try manifest.write(to: folder.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+    }
+
+    func testLoadingALoadedUnpackedFolderAgainReloadsItsFiles() async throws {
+        let registry = try makeUnpackedRegistry()
+        defer { registry.teardown() }
+        let folder = try createMinimalExtension(named: "unpacked_again", in: tempDir)
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+
+        try setVersion("2.0", of: folder)
+        try await registry.load(from: folder)
+
+        XCTAssertEqual(registry.loadedExtensions.map(\.id), [id])
+        XCTAssertEqual(registry.loadedExtensions.first?.context.webExtension.version, "2.0")
+        let stored = try await registry.extensionStorage.load(id: id)
+        XCTAssertEqual(stored?.isEnabled, true, "the reload leaves the extension enabled")
+    }
+
+    func testReloadUnpackedReadsTheFolderAgainButLeavesInstalledCopiesToWebKit() async throws {
+        let unpacked = try makeUnpackedRegistry()
+        defer { unpacked.teardown() }
+        let folder = try createMinimalExtension(named: "unpacked_reload", in: tempDir)
+        try await unpacked.load(from: folder)
+        let id = try XCTUnwrap(unpacked.loadedExtensions.first?.id)
+        XCTAssertEqual(unpacked.extensionBridgePayloads(activeTab: nil).first?["isUnpacked"] as? Bool, true)
+
+        try setVersion("2.0", of: folder)
+        XCTAssertTrue(unpacked.reloadUnpacked(extensionId: id))
+        let reloaded = await pollUntil(timeout: 5) { unpacked.loadedExtensions.first?.context.webExtension.version == "2.0" }
+        XCTAssertTrue(reloaded, "the reload never read the edited manifest")
+
+        let installed = try createMinimalExtension(named: "installed_copy", in: tempDir)
+        try await registry.load(from: installed)
+        let installedId = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        XCTAssertFalse(registry.reloadUnpacked(extensionId: installedId))
+        XCTAssertEqual(extensionBridgePayload(for: installedId)?["isUnpacked"] as? Bool, false)
+    }
+
+    func testLoadingAFolderWhoseKeyNamesAnInstalledExtensionFails() async throws {
+        var folders: [URL] = []
+        for name in ["keyed_first", "keyed_second"] {
+            let folder = tempDir.appendingPathComponent(name)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let manifest = #"{"manifest_version":3,"name":"Keyed","version":"1.0","key":"dGVzdC1rZXk="}"#
+            try manifest.write(to: folder.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+            folders.append(folder)
+        }
+        try await registry.load(from: folders[0])
+
+        do {
+            try await registry.load(from: folders[1])
+            XCTFail("a second folder with the same key loaded")
+        } catch ExtensionError.alreadyInstalled(let name) {
+            XCTAssertEqual(name, "Keyed")
+        }
+        XCTAssertEqual(registry.loadedExtensions.count, 1)
+    }
+
     func testOnExtensionsChangedFires() async throws {
         let changed = expectation(description: "onExtensionsChanged fires for a load")
         changed.assertForOverFulfill = false
@@ -1156,6 +1276,31 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(registry.extensionWindows.elementsEqual([adapterA, adapterB], by: ===))
     }
 
+    /// A space shown in a background browser window must not take the extension focus from the key window.
+    func testBackgroundWindowSpaceKeepsKeyWindowFocused() {
+        let keyWindow = KeyWindowStub(), backgroundWindow = NSWindow()
+        let focused = registry.windowAdapter(for: keyWindow, spaceId: UUID())
+        let background = registry.windowAdapter(for: backgroundWindow, spaceId: UUID())
+
+        XCTAssertTrue(registry.delegate.windowAdapter === focused)
+        XCTAssertTrue(registry.extensionWindows.contains { $0 === background }, "the background space is still an extension window")
+        let switched = registry.windowAdapter(for: keyWindow, spaceId: UUID())
+        XCTAssertTrue(registry.delegate.windowAdapter === switched, "a space switch in the key window moves the focus")
+    }
+
+    /// A background window showing the key window's space too leaves that space, and the focus, with the key window.
+    func testBackgroundWindowSharingTheKeySpaceLeavesItWithTheKeyWindow() {
+        let keyWindow = KeyWindowStub(), spaceId = UUID()
+        let tabManager = TabManager(engineFactory: WKEngineFactory())
+        let focused = registry.windowAdapter(for: keyWindow, spaceId: spaceId)
+        focused.tabManager = tabManager
+        tabManager.windowAdapter = focused
+
+        XCTAssertTrue(registry.windowAdapter(for: NSWindow(), spaceId: spaceId) === focused)
+        XCTAssertTrue(focused.nsWindow === keyWindow)
+        XCTAssertTrue(registry.delegate.windowAdapter === focused)
+    }
+
     // MARK: - Permission Request Tests
 
     func testResolvePermissionRequest_callsHandler() {
@@ -1284,6 +1429,9 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         let none = ExtensionInstallReview.humanReadableWarnings(permissions: [], hostPermissions: [])
         XCTAssertTrue(none.isEmpty)
+
+        let silent = ExtensionInstallReview.humanReadableWarnings(permissions: ["storage", "alarms", "offscreen"], hostPermissions: [])
+        XCTAssertTrue(silent.isEmpty, "an update adding only these is applied without asking")
     }
 
     func testInstallExtensionCanBeDeniedByReview() async throws {
@@ -1342,25 +1490,35 @@ final class ProfileExtensionRegistryTests: XCTestCase {
          "content_scripts":[{"matches":["https://example.org/*"],"js":["c.js"]}],"optional_host_permissions":["https://example.net/*"]}
         """, named: "access_wide")
 
-        let none = ExtensionAccess.addedAccess(from: old, to: same)
+        let none = ExtensionAccess.addedAccess(from: old, to: same, granted: nil)
         XCTAssertTrue(none.permissions.isEmpty)
         XCTAssertTrue(none.matchPatterns.isEmpty)
 
-        let added = ExtensionAccess.addedAccess(from: old, to: widened)
+        let added = ExtensionAccess.addedAccess(from: old, to: widened, granted: nil)
         XCTAssertEqual(added.permissions, ["cookies"], "a removed permission is not an addition")
         XCTAssertEqual(added.matchPatterns.count, 1, "a content-script host is granted, an optional host is not")
         XCTAssertTrue(added.matchPatterns.first?.contains("example.org") ?? false)
 
+        var granted = ExtensionStorage.AccessState()
+        granted.optionalPermissions = ["cookies"]
+        granted.optionalMatchPatterns = ["*://*.example.org/*"]
+        let alreadyGranted = ExtensionAccess.addedAccess(from: old, to: widened, granted: granted)
+        XCTAssertTrue(alreadyGranted.permissions.isEmpty, "an optional permission already granted is not an addition")
+        XCTAssertTrue(alreadyGranted.matchPatterns.isEmpty, "a host an optional grant already covers is not an addition")
+
         let liloOnly = try await webExtension(manifest: """
         {"manifest_version":3,"name":"Gap","version":"2","permissions":["storage","tabs","debugger","proxy"],"host_permissions":["https://example.com/*"]}
         """, named: "access_gap")
-        XCTAssertEqual(ExtensionAccess.addedAccess(from: old, to: liloOnly).permissions, ["debugger", "proxy"],
+        XCTAssertEqual(ExtensionAccess.addedAccess(from: old, to: liloOnly, granted: nil).permissions, ["debugger", "proxy"],
                        "a permission only a Gap API implements is an addition too")
+        granted.gapPermissions = ["debugger"]
+        XCTAssertEqual(ExtensionAccess.addedAccess(from: old, to: liloOnly, granted: granted).permissions, ["proxy"],
+                       "a Gap API permission granted at Lilo's prompt is not an addition")
 
         let broad = try await webExtension(manifest: """
         {"manifest_version":3,"name":"Broad","version":"1","host_permissions":["<all_urls>"]}
         """, named: "access_broad")
-        XCTAssertTrue(ExtensionAccess.addedAccess(from: broad, to: widened).matchPatterns.isEmpty,
+        XCTAssertTrue(ExtensionAccess.addedAccess(from: broad, to: widened, granted: nil).matchPatterns.isEmpty,
                       "a host an old pattern already covers adds nothing")
     }
 
@@ -1418,17 +1576,17 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(registry.loadedExtensions.first?.id, ExtensionArchiveSafety.chromeExtensionId(forPublicKey: key))
     }
 
-    func testOnlyTheManagedDirectoryLendsAFolderNameId() {
+    func testOnlyTheManagedDirectoryLendsAFolderNameId() throws {
         let storeId = String(repeating: "a", count: 32)
         let managed = tempDir.appendingPathComponent("Managed", isDirectory: true)
         XCTAssertEqual(
-            ExtensionFiles.makeExtensionId(for: managed.appendingPathComponent(storeId), managedDirectory: managed, manifestKey: nil),
+            try ExtensionFiles.makeExtensionId(for: managed.appendingPathComponent(storeId), managedDirectory: managed, manifestKey: nil),
             storeId
         )
-        let unpacked = ExtensionFiles.makeExtensionId(
+        let unpacked = try ExtensionFiles.makeExtensionId(
             for: tempDir.appendingPathComponent("Downloads/\(storeId)"), managedDirectory: managed, manifestKey: nil
         )
-        XCTAssertTrue(unpacked.hasPrefix("extension-"), "an unpacked folder named like a store id must not take that id")
+        XCTAssertNotEqual(unpacked, storeId, "an unpacked folder named like a store id must not take that id")
     }
 
     // MARK: - Failed restore
@@ -1499,6 +1657,29 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(registry.loadedExtensions.contains { $0.id == id })
     }
 
+    /// Extensions holding `management` hear every install, enable, disable and removal of another one, whatever path made it.
+    func testManagementEventsFollowEveryLoadAndUnloadOfAnotherExtension() async throws {
+        let watcherDir = tempDir.appendingPathComponent("management_watcher")
+        try FileManager.default.createDirectory(at: watcherDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Watcher","version":"1.0","permissions":["management"]}"#
+            .write(to: watcherDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try await registry.load(from: watcherDir)
+        let watcher = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        try await registry.load(from: createMinimalExtension(named: "managed_target", in: tempDir))
+        let target = try XCTUnwrap(registry.loadedExtensions.first { $0.id != watcher }?.id)
+
+        await registry.disable(extensionId: target)
+        try await registry.enable(extensionId: target)
+        await registry.unload(extensionId: target)
+
+        let events = registry.gapEvents.undelivered(to: watcher).filter { $0.namespace == "management" }
+        XCTAssertEqual(events.map(\.event), ["onEnabled", "onInstalled", "onDisabled", "onEnabled", "onDisabled", "onUninstalled"])
+        let infos = events.dropLast().compactMap { $0.args.first as? [String: Any] }
+        XCTAssertEqual(infos.map { $0["id"] as? String }, Array(repeating: target as String?, count: 5))
+        XCTAssertEqual(infos.map { $0["enabled"] as? Bool }, [true, true, false, true, false])
+        XCTAssertEqual(events.last?.args.first as? String, target)
+    }
+
     // MARK: - Private spaces
 
     func testPrivateAccessAppliesLiveAndSurvivesARestore() async throws {
@@ -1519,14 +1700,52 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(restored.context(for: id)).hasAccessToPrivateData)
     }
 
+    func testIncognitoNotAllowedKeepsAnExtensionOutOfPrivateSpaces() async throws {
+        let profileId = TestProfileIds.next()
+        let storage = try makeTestExtensionStorage(profileId: profileId, in: tempDir)
+        let first = ProfileExtensionRegistry(profileId: profileId, extensionStorage: storage, extensionsBaseDirectory: tempDir)
+        let extDir = tempDir.appendingPathComponent("incognito_not_allowed")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Test","version":"1.0","incognito":"not_allowed","externally_connectable":{"matches":["https://example.com/*"]}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try await first.load(from: extDir)
+        let id = try XCTUnwrap(first.loadedExtensions.first?.id)
+        let handler = ExtensionUIBridgeHandler(extensionRegistryProvider: { first })
+        let message = try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "setExtensionPrivateAccess",
+            "payload": ["id": id, "allowed": true]
+        ]))
+
+        let result = await handler.handle(message: message)
+
+        XCTAssertNotNil(result as? BridgeError, "the manifest keeps it out of private spaces")
+        XCTAssertFalse(try XCTUnwrap(first.context(for: id)).hasAccessToPrivateData)
+        XCTAssertEqual(first.extensionBridgePayloads(activeTab: nil).first?["privateAccessNotAllowed"] as? Bool, true)
+        // An allowance stored before the manifest said so is ignored.
+        await first.access.update(id) { $0.allowsPrivateAccess = true }
+        first.teardown()
+        let restored = ProfileExtensionRegistry(profileId: profileId, extensionStorage: storage, extensionsBaseDirectory: tempDir)
+        await restored.restore()
+        XCTAssertFalse(try XCTUnwrap(restored.context(for: id)).hasAccessToPrivateData)
+        XCTAssertEqual(restored.userScripts.installs[id]?.allowsPrivateAccess, false, "nor does it inject into private spaces")
+    }
+
     // MARK: - Site access
 
     func testSiteAccessUnrestrictedKeepsTheManifestPatterns() throws {
         let requested: Set<WKWebExtension.MatchPattern> = [try XCTUnwrap(WKWebExtension.MatchPattern(string: "*://*/*"))]
 
-        let granted = ExtensionAccess.grantedMatchPatterns(requested: requested, allowedHosts: [])
+        let granted = ExtensionAccess.grantedMatchPatterns(requested: requested, allowedHosts: nil)
 
         XCTAssertEqual(granted, requested)
+    }
+
+    func testSiteAccessWithNoSiteGrantsNothing() throws {
+        let requested: Set<WKWebExtension.MatchPattern> = [try XCTUnwrap(WKWebExtension.MatchPattern(string: "*://*/*"))]
+
+        let granted = ExtensionAccess.grantedMatchPatterns(requested: requested, allowedHosts: [])
+
+        XCTAssertTrue(granted.isEmpty, "removing the last allowed site must not restore every host")
     }
 
     func testSiteAccessNarrowsToTheAllowedHosts() throws {
@@ -1554,4 +1773,59 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         XCTAssertEqual(hosts, ["example.com", "example.org"])
     }
+
+    /// WebKit adds one item per extension for the clicked element: here a page-wide item next to another extension's
+    /// selection and link items, which only WebKit's own items show with the click's details.
+    func testContextMenuKeepsWebKitsExtensionItemsAndHidesThemInPrivateTabs() async throws {
+        let extensionFolder = tempDir.appendingPathComponent("menu-ext")
+        try FileManager.default.createDirectory(at: extensionFolder, withIntermediateDirectories: true)
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Menu", "version": "1.0", "permissions": ["contextMenus"],
+            "background": ["service_worker": "background.js"]
+        ]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: extensionFolder.appendingPathComponent("manifest.json"))
+        try "chrome.contextMenus.create({ id: 'item', title: 'Extension item', contexts: ['all'] });"
+            .write(to: extensionFolder.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extensionFolder)
+        let id = try XCTUnwrap(registry.loadedExtensions.last?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        let adapter = TabExtensionAdapter(engineTab: WKWebViewTab(id: UUID(), webView: WKWebView()))
+        let created = await pollUntil { !context.menuItems(for: adapter).isEmpty }
+        XCTAssertTrue(created)
+
+        func webKitMenu() throws -> (NSMenu, NSMenuItem) {
+            let menu = NSMenu()
+            menu.addItem(withTitle: "Copy", action: nil, keyEquivalent: "")
+            menu.addItem(.separator())
+            let pageWide = try XCTUnwrap(context.menuItems(for: adapter).first)
+            menu.addItem(pageWide)
+            for title in ["Translate \"hello\"", "Open link in reader"] {
+                let other = try XCTUnwrap(pageWide.copy() as? NSMenuItem)
+                other.title = title
+                menu.addItem(other)
+            }
+            return (menu, pageWide)
+        }
+
+        let (menu, pageWide) = try webKitMenu()
+        registry.adoptContextMenuItems(in: menu, tab: adapter, isPrivate: false)
+        XCTAssertEqual(menu.items.map(\.title), ["Copy", "", "Extension item", "Translate \"hello\"", "Open link in reader"])
+        NotificationCenter.default.post(name: NSMenu.didSendActionNotification, object: menu, userInfo: ["MenuItem": pageWide])
+        let gestured = await pollUntil { self.registry.hasRecentUserGesture(extensionId: id) }
+        XCTAssertTrue(gestured, "choosing the extension's item is its user gesture")
+
+        let (privateMenu, _) = try webKitMenu()
+        registry.adoptContextMenuItems(in: privateMenu, tab: adapter, isPrivate: true)
+        XCTAssertEqual(privateMenu.items.map(\.title), ["Copy"], "an extension not allowed in private shows nothing there")
+
+        context.hasAccessToPrivateData = true
+        let (allowedMenu, _) = try webKitMenu()
+        registry.adoptContextMenuItems(in: allowedMenu, tab: adapter, isPrivate: true)
+        XCTAssertEqual(allowedMenu.items.count, 5)
+    }
+}
+
+private final class KeyWindowStub: NSWindow {
+    override var isKeyWindow: Bool { true }
 }

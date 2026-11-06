@@ -25,13 +25,14 @@ extension MainWindowController {
     }
 
     /// The switcher's rows, current tab first: the window's recent tabs, then the current Space's others by last use and in
-    /// sidebar order. Closed tabs are left out, and so are other Spaces' tabs from a private Space, and private and Agents
-    /// Space tabs from elsewhere.
+    /// sidebar order. Closed tabs and tabs in a locked folder are left out, and so are other Spaces' tabs from a private
+    /// Space, and private and Agents Space tabs from elsewhere. A current tab in a locked folder shows only the folder's name.
     func recentTabRows() -> [[String: Any]] {
         guard let currentSpaceId = tabManager.currentSpaceId, let spaceManager = context.spaceManager else { return [] }
         let spaces = Dictionary(spaceManager.spaces.map { ($0.id, $0) }) { first, _ in first }
         let agentsSpaceIds = context.settingsStore?.agentsSpaceIds ?? []
         let inPrivateSpace = spaces[currentSpaceId]?.isPrivate == true
+        let activeId = tabManager.activeOpenTabId
         var rows: [[String: Any]] = []
         var seen = Set<UUID>()
 
@@ -40,7 +41,10 @@ extension MainWindowController {
                   let stored = context.browserState.durableTab(for: id), !stored.tab.isClosed,
                   let space = spaces[stored.spaceId],
                   space.id == currentSpaceId || (!inPrivateSpace && !space.isPrivate && !agentsSpaceIds.contains(space.id)) else { return }
-            let tab = context.browserState.runtimeOverlay.applied(to: stored.tab)
+            let lockedFolder = context.browserState.space(id: space.id)?.spaceTab.protectingFolder(of: id).flatMap { $0.isLocked ? $0 : nil }
+            // The current tab keeps the first row: the chrome labels it current and the switcher starts on the next one.
+            guard lockedFolder == nil || id == activeId else { return }
+            let tab = lockedFolder.map { Tab(id: id, title: $0.name) } ?? context.browserState.runtimeOverlay.applied(to: stored.tab)
             rows.append([
                 "id": id.uuidString, "title": tab.customTitle ?? tab.title, "url": tab.url?.absoluteString ?? "",
                 "faviconDataURL": tab.faviconDataURL ?? "", "kind": tab.kind.rawValue,
@@ -49,7 +53,7 @@ extension MainWindowController {
             ])
         }
 
-        if let activeId = tabManager.activeOpenTabId { add(activeId, leftAt: nil) }
+        if let activeId { add(activeId, leftAt: nil) }
         for entry in recentTabs { add(entry.id, leftAt: entry.leftAt) }
         for id in context.browserState.spaceTabState(forSpace: currentSpaceId)?.activationHistory ?? [] { add(id, leftAt: nil) }
         for tab in tabManager.currentTabs { add(tab.id, leftAt: nil) }

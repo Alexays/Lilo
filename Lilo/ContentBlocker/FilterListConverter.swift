@@ -776,6 +776,8 @@ enum FilterListConverter {
             return (min, max)
         }
         func alternatives(depth: Int) -> [String]? {
+            // Bounds the recursion on hostile input: real filter regexes nest far less.
+            guard depth < 8 else { return nil }
             var result: [String] = []
             var current = [""]
             while i < chars.count, chars[i] != ")" {
@@ -839,7 +841,7 @@ enum FilterListConverter {
                     // A lazy quantifier matches the same URLs.
                     if i < chars.count, chars[i] == "?" { i += 1 }
                     let (min, max) = range
-                    guard min + (max ?? min) <= maxRepeat * 2, min <= maxRepeat else { return nil }
+                    guard (0...maxRepeat).contains(min), (max ?? min) <= maxRepeat * 2 - min else { return nil }
                     if atom.count > 1 {
                         // Alternatives repeat only as optional: (a|b)? is a, b or nothing.
                         guard min == 0, max == 1 else { return nil }

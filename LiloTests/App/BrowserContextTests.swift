@@ -68,4 +68,49 @@ final class BrowserContextTests: XCTestCase {
 
         XCTAssertEqual(context.startupSnapshot!.windows, stored)
     }
+
+    /// The last active profile's database opens at bootstrap: an unreadable one is replaced instead of stopping the launch.
+    func testBootstrapReplacesAnUnreadableProfileDatabase() async throws {
+        let first = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
+        try await first.bootstrap()
+        let profileId = try XCTUnwrap(first.profileManager?.defaultProfile?.id)
+        first.dbManager!.closeForShutdown()
+        let profileDirectory = tempDir.appendingPathComponent("Profiles/\(profileId.uuidString)")
+        try FileManager.default.createDirectory(at: profileDirectory, withIntermediateDirectories: true)
+        let garbage = Data((0..<8192).map { _ in UInt8.random(in: .min ... .max) })
+        try garbage.write(to: profileDirectory.appendingPathComponent("lilo.db"))
+
+        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
+        try await context.bootstrap()
+
+        XCTAssertEqual(context.startupSnapshot!.storedSpaceIdsByProfile[profileId], [:])
+        let files = try FileManager.default.contentsOfDirectory(atPath: profileDirectory.path)
+        let movedAside = try XCTUnwrap(files.first { $0.hasPrefix("lilo.db.corrupt-") && !$0.hasSuffix("-wal") && !$0.hasSuffix("-shm") })
+        XCTAssertEqual(try Data(contentsOf: profileDirectory.appendingPathComponent(movedAside)), garbage)
+    }
+
+    /// Deleting a space by any path, agents included, drops its saved tab tree and interaction states.
+    func testDeletingASpaceDropsItsSavedState() async throws {
+        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
+        try await context.bootstrap()
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let kept = try context.spaceManager!.createSpace(name: "Kept", profileId: profileId)
+        let gone = try context.spaceManager!.createSpace(name: "Gone", profileId: profileId)
+        let pool = try context.dbManager!.pool(for: profileId)
+        let tabStates = SpaceTabStateStore(dbPool: pool)
+        let interactionStates = InteractionStateStore(dbPool: pool)
+        let empty = SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)
+        try tabStates.saveMany([(spaceId: kept.id, state: empty), (spaceId: gone.id, state: empty)])
+        try interactionStates.replace(spaceId: kept.id, entries: [UUID(): Data([1])])
+        try interactionStates.replace(spaceId: gone.id, entries: [UUID(): Data([2])])
+
+        try context.spaceManager!.deleteSpace(id: gone.id)
+        // The writer queue is serial, so this empty write lands after the delete's.
+        try await pool.write { _ in }
+
+        XCTAssertNil(try tabStates.load(spaceId: gone.id))
+        XCTAssertTrue(try interactionStates.load(spaceId: gone.id).isEmpty)
+        XCTAssertNotNil(try tabStates.load(spaceId: kept.id))
+        XCTAssertEqual(try interactionStates.load(spaceId: kept.id).count, 1)
+    }
 }

@@ -1,0 +1,3 @@
+kind: Fixed
+body: An extension debugging a tab with chrome.debugger keeps its user agent, emulation and page scripts, and keeps receiving events, when the tab's Web Inspector closes, and one that detaches no longer leaves its overrides on a tab another extension still debugs
+time: 2026-11-06T19:52:08.508947+01:00

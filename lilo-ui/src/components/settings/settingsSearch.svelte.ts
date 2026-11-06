@@ -16,6 +16,7 @@ import {
   buildSites,
   isToggleOn,
   matchesSearch,
+  normalizeSearchText,
   type SettingModel,
   searchSettings,
   sitePermissionLabel,
@@ -31,6 +32,22 @@ interface SettingsSearchResults {
   countBySection: Partial<Record<SettingsSectionId, number>>;
 }
 
+// Sites with what they are found by, folded once: a keystroke only filters them.
+// A site also matches on what it holds, so "camera" or "zoom" lists the sites concerned.
+const siteIndex = $derived(
+  buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()).map((site) => ({
+    site,
+    haystack: normalizeSearchText(
+      [
+        site.key,
+        ...site.permissions.map((permission) => sitePermissionLabel(permission.type, t)),
+        site.zoomLevels.length > 0 ? t("settings.groups.zoom") : "",
+        site.dataName ? t("settings.sites.dataSummary") : "",
+      ].join(" "),
+    ),
+  })),
+);
+
 // Settings plus the entities the sections list (spaces, sites, extensions, flags), for the shell's
 // query. Shared so the section counts and the results list run one search per keystroke.
 const results = $derived.by((): SettingsSearchResults => {
@@ -40,18 +57,11 @@ const results = $derived.by((): SettingsSearchResults => {
     (setting) => !setting.requires || isToggleOn(setting.requires, getSetting),
   );
   const spaces = getSpaces().filter((space) => !isAgentsSpace(space.id) && matchesSearch(space.name, query));
-  // A site also matches on what it holds, so "camera" or "zoom" lists the sites concerned.
-  const sites = buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()).filter((site) =>
-    matchesSearch(
-      [
-        site.key,
-        ...site.permissions.map((permission) => sitePermissionLabel(permission.type, t)),
-        site.zoomLevels.length > 0 ? t("settings.groups.zoom") : "",
-        site.dataName ? t("settings.sites.dataSummary") : "",
-      ].join(" "),
-      query,
-    ),
-  );
+  const terms = normalizeSearchText(query).split(/\s+/).filter(Boolean);
+  const sites =
+    terms.length === 0
+      ? []
+      : siteIndex.filter(({ haystack }) => terms.every((term) => haystack.includes(term))).map(({ site }) => site);
   const extensions = getExtensions().filter((extension) =>
     matchesSearch(`${resolveDisplayName(extension)} ${extension.description ?? ""}`, query),
   );

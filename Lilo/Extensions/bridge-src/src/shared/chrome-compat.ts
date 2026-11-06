@@ -7,7 +7,7 @@ import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, closedTabMessage, lastErrorWithoutAnswer, listensProbe, noReceiver } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
 import {
-  runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, tabsConnect,
+  runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, reloadUnpacked, tabsConnect,
 } from '../augmentation/runtime.ts';
 import { onAuthRequired, webRequestFrames } from '../augmentation/webRequest.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
@@ -17,7 +17,7 @@ import { detectLanguage } from '../augmentation/detectLanguage.ts';
 import { onUserScriptMessage, onUserScriptConnect } from '../augmentation/userScripts.ts';
 import { gapModules } from './gap-modules.ts';
 import { ChromeEvent, eventStandIns } from './chrome-event.ts';
-import { GapChromeEvent, reportGapListener } from './gap-event.ts';
+import { GapChromeEvent, reportGapListener, reportGapListenerRemoved } from './gap-event.ts';
 import { gapCall } from './ipc.ts';
 import { callbackify, installBridgeChrome, liloLastError, liloLastErrorMessage, withLastError } from './callbackify.ts';
 import { CHROME_CONSTANTS } from './chrome-constants.gen.ts';
@@ -249,10 +249,9 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   // How long each look for a loading tab's content scripts waits: about half a second in all.
   const TAB_LISTENER_WAITS = [20, 60, 150, 300];
   // A page's message goes to the worker and the other pages (an offscreen document): Chrome's error then depends on
-  // whether one listens, which their answer to the probe tells, or Lilo for a worker that may not run yet. Its promise
-  // rejects when nothing does. A worker's goes to pages, mostly not open: its promise resolves.
-  const pageNoAnswer = () => Promise.resolve(chrome.runtime.sendMessage(listensProbe)).catch(() => undefined)
-    .then((listens) => listens === true || gapCall<boolean>('runtime', 'workerListensToMessages'))
+  // whether one listens, which Lilo knows from their reports. Its promise rejects when none does. A worker's goes to
+  // pages, mostly not open: its promise resolves.
+  const pageNoAnswer = () => gapCall<boolean>('runtime', 'othersListenToMessages')
     .then((listens) => (listens ? 'The message port closed before a response was received.' : noReceiver), unreceived);
   // Asked when nobody answered a tab's message: its content scripts, and the extension's own pages it shows, which
   // WebKit delivers it to as Chrome, answer the probe once one listens. A tab still loading one of those pages counts
@@ -339,7 +338,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {
-      patch: { ...runtimePatches, ...crossExtensionPatches },
+      patch: { ...runtimePatches, ...crossExtensionPatches, reload: reloadUnpacked },
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
       standIns: { ...runtimeLifecycle, onConnect: runtimeOnConnect, ...externalEvents(() => chrome.runtime) },
       add: {
@@ -401,7 +400,9 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   for (const name of Object.keys(chrome)) void g.chrome[name];
   for (const name in g.browser) void g.chrome[name];
   mergeAssignedBrowser(g);
-  // The worker tells Lilo it listens, for the error of a page's message nobody answers.
-  if (g.chrome.runtime?.onMessage) answerAsChrome(g.chrome.runtime.onMessage, page ? undefined : () => reportGapListener('runtime.onMessage'));
+  // Each context tells Lilo whether it listens, for the error of a page's message nobody answers.
+  if (g.chrome.runtime?.onMessage) {
+    answerAsChrome(g.chrome.runtime.onMessage, (listening) => (listening ? reportGapListener : reportGapListenerRemoved)('runtime.onMessage'));
+  }
   if (!page && chrome.runtime?.onMessage) relayForContentScripts(chrome.runtime);
 }

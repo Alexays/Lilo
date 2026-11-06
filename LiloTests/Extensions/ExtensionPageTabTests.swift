@@ -51,6 +51,30 @@ final class ExtensionPageTabTests: XCTestCase {
         return (window, registry, extensionId, pageURL, tabId, other.id)
     }
 
+    func testExtensionPageGetsTheFeatureFlagsTabsGet() async throws {
+        let engineFactory = browserContext.context.engineFactory
+        engineFactory.setFeatureFlagOverrides(["SelectShowPickerEnabled": false])
+        engineFactory.setFullRefreshRate(false)
+        defer {
+            engineFactory.setFeatureFlagOverrides([:])
+            engineFactory.setFullRefreshRate(true)
+        }
+        let (window, _, _, _, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let idle = try await page.evaluateJavaScript("typeof requestIdleCallback") as? String
+        XCTAssertEqual(idle, "function", "Lilo's defaults reach extension pages")
+        let picker = try await page.evaluateJavaScript("typeof HTMLSelectElement.prototype.showPicker") as? String
+        XCTAssertEqual(picker, "undefined", "an about:config override reaches extension pages")
+
+        let features = (WKPreferences.self as AnyObject).perform(NSSelectorFromString("_experimentalFeatures"))?.takeUnretainedValue() as? [NSObject]
+        let near60FPS = try XCTUnwrap(features?.first { $0.value(forKey: "key") as? String == WKFeatureFlags.near60FPSKey })
+        let preferences = page.configuration.preferences
+        let isEnabled = NSSelectorFromString("_isEnabledForFeature:")
+        typealias IsEnabled = @convention(c) (NSObject, Selector, AnyObject) -> ObjCBool
+        XCTAssertTrue(unsafeBitCast(preferences.method(for: isEnabled), to: IsEnabled.self)(preferences, isEnabled, near60FPS).boolValue,
+                      "the refresh rate setting reaches extension pages")
+    }
+
     func testDiscardedExtensionPageReloadsWhenReactivated() async throws {
         let (window, _, _, pageURL, tabId, _) = try await openExtensionPage()
         window.tabManager.discardEngines([tabId])
@@ -274,6 +298,7 @@ final class ExtensionPageTabTests: XCTestCase {
         let created = URL(string: pageURL.absoluteString + "#behind")
         XCTAssertTrue(window.tabManager.tabs(forSpace: behind.id).contains { $0.url == created }, "the tab opens in the window asked for")
         XCTAssertFalse(window.tabManager.tabs(forSpace: shownId).contains { $0.url == created })
+        XCTAssertEqual(window.tabManager.currentSpaceId, shownId, "a tab opened in the background leaves the shown space on screen")
     }
 
     /// A space's browser window may since show a private space: an extension not allowed there never opens a tab in it.
@@ -289,6 +314,29 @@ final class ExtensionPageTabTests: XCTestCase {
         let created = URL(string: pageURL.absoluteString + "#opened")
         XCTAssertFalse(window.tabManager.tabs(forSpace: privateId).contains { $0.url == created }, "no tab in the private space")
         XCTAssertTrue(window.tabManager.tabs(forSpace: spaceId).contains { $0.url == created }, "the tab opens in the page's space")
+        XCTAssertEqual(window.tabManager.currentSpaceId, privateId, "the user stays in the private space")
+    }
+
+    /// As in Chrome, a new tab shows a newtab override's page, but stays blank in a private space.
+    func testANewTabOverrideStaysOutOfPrivateSpaces() async throws {
+        let context = browserContext.context
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
+        let registry = try context.profileContexts.context(for: profileId).extensions
+        let extDir = try createMinimalExtension(named: "newtab", in: tempDir)
+        let manifest: [String: Any] = ["manifest_version": 3, "name": "Test", "version": "1.0", "chrome_url_overrides": ["newtab": "page.html"]]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: extDir.appendingPathComponent("manifest.json"))
+        try "<title>New</title>".write(to: extDir.appendingPathComponent("page.html"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extDir)
+        let window = makeTestWindow(context, showing: space.id)
+
+        window.newTab(nil)
+        XCTAssertEqual(window.tabManager.activeTab?.url?.scheme, "chrome-extension")
+
+        window.newPrivateSpace(nil)
+        window.newTab(nil)
+        let tab = try XCTUnwrap(window.tabManager.activeTab)
+        XCTAssertNil(tab.url, "a private space's new tab stays blank")
     }
 
     /// `windows.create` loads a web page in the profile's store, whatever space is shown, unless it asks for `incognito`, which

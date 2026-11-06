@@ -24,7 +24,7 @@ extension AgentControl {
         guard let commander = context.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
         var space = agentsSpace(in: profileId)
         if space == nil {
-            let created = try spaces.createSpace(name: "Agents", icon: "🤖", color: "#795ceb", profileId: profileId)
+            let created = try spaces.createSpace(name: "Agents".localized, icon: "🤖", color: "#795ceb", profileId: profileId)
             let ids = settings.agentsSpaceIds.filter { spaces.space(with: $0) != nil } + [created.id]
             settings.set(Self.agentsSpaceKey, value: ids.map(\.uuidString).joined(separator: ","))
             space = created
@@ -34,10 +34,12 @@ extension AgentControl {
         if context.browserState.space(id: space.id) == nil {
             context.browserState.storeSpace(id: space.id, snapshot: commander.restoredSpaceSnapshot(for: space))
         }
-        // Past conversations' folders go before the first agent of this run: each starts in a clean space.
-        // So do blank tabs outside them, which no agent opens, unless a window shows one.
+        // Past agents' task folders go before the first agent of this run: each starts in a clean space.
+        // So do blank tabs outside them, which no agent opens, unless a window shows one. A folder the
+        // user made or locked stays.
         if cleanedAgentsSpaceIds.insert(space.id).inserted {
-            for folder in context.browserState.structuralProjection(forSpace: space.id)?.folders ?? [] {
+            for folder in context.browserState.structuralProjection(forSpace: space.id)?.folders ?? []
+            where folder.isAgentOwned && folder.lock == nil {
                 _ = try? commander.applyBrowserCommand(.deleteFolderWithTabs(spaceId: space.id, folderId: folder.id))
             }
             if context.windows.windows(showing: space.id).isEmpty {
@@ -68,7 +70,7 @@ extension AgentControl {
         let (space, host) = try agentSpace(for: session)
         if let id = session.folders[session.title], tabFolder(id, in: space.id) != nil { return (id, space, host) }
         guard create, let commander = host ?? context?.windows.activeWindow else { return (nil, space, host) }
-        let folder = TabFolder(spaceId: space.id, name: folderName(for: session), color: "#795ceb")
+        let folder = TabFolder(spaceId: space.id, name: folderName(for: session), color: "#795ceb", isAgentOwned: true)
         _ = try commander.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
         session.folders[session.title] = folder.id
         return (folder.id, space, host)
@@ -296,19 +298,27 @@ extension AgentControl {
         }
     }
 
-    /// A parked tab the agent left alone `sleepDelay` stops drawing: WebKit sees it hidden, so its animation frames stop,
-    /// while an agent tab's scripts, timers and network keep running, slower. Nobody sees it, and the agent mostly thinks.
+    /// A tab the agent left alone `sleepDelay`, parked or covered by the shown tab, stops drawing: WebKit sees it hidden, so
+    /// its animation frames stop, while its scripts, timers and network keep running, throttled. Nobody sees it, and the agent mostly thinks.
     func sleepWhenIdle(tabNumber: Int) {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.sleepDelay) { [weak self] in
             guard let self, let id = tabNumbers.first(where: { $0.value == tabNumber })?.key, !profilingTabIds.contains(id),
                   !sessions.contains(where: { $0.tabCalls.values.contains { $0.tab == tabNumber } }),
                   let lastActed = sessions.compactMap({ $0.actedOn[id] }).max(), Date().timeIntervalSince(lastActed) >= Self.sleepDelay - 0.1,
-                  let engine = context?.browserState.liveEngine(forTab: id), engine.isAgentControlled,
-                  unsafe engine.view.window === parkingWindow else { return }
+                  let engine = context?.browserState.liveEngine(forTab: id), engine.isAgentControlled else { return }
+            let parked = unsafe engine.view.window === parkingWindow
+            // A share's frame ferry, a PiP window's page and an open inspector all need the covered view drawn.
+            let covered = !parked && !engine.isTabShareSource && !engine.isWebInspectorVisible && context?.windows.windows.contains {
+                unsafe $0.contentContainerView === engine.view.superview && !$0.displayedTabIds.contains(id)
+                    && $0.documentPiP.openerId != id && $0.awaitingDocumentPiP !== engine
+            } == true
+            guard parked || covered else { return }
             engine.setWindowOcclusionDetection(true)
-            // WebKit reads the setting at its next visibility check only: hiding the view runs one.
+            // WebKit reads the setting at its next visibility check only: hiding the view runs one. A covered view stays
+            // hidden, as the tab switch leaves an outgoing tab, until the agent wakes it.
             engine.view.isHidden = true
-            engine.view.isHidden = false
+            if parked { engine.view.isHidden = false }
+            engine.isAgentSleeping = true
             sleepingTabIds.insert(id)
         }
     }
@@ -317,6 +327,7 @@ extension AgentControl {
     func wake(tabNumber: Int) async {
         guard let id = tabNumbers.first(where: { $0.value == tabNumber })?.key, sleepingTabIds.remove(id) != nil,
               let engine = context?.browserState.liveEngine(forTab: id) else { return }
+        engine.isAgentSleeping = false
         engine.setWindowOcclusionDetection(false)
         engine.view.isHidden = true
         engine.view.isHidden = false
@@ -372,6 +383,7 @@ extension AgentControl {
                 // Undo resize_window, and stop rendering a page nobody looks at any more.
                 engine.setWindowOcclusionDetection(true)
                 sleepingTabIds.remove(id)
+                engine.isAgentSleeping = false
                 profilingTabIds.remove(id)
                 AgentFrameView.remove(from: engine.wkWebView)
                 if unsafe engine.view.window === parkingWindow { engine.view.removeFromSuperview() }

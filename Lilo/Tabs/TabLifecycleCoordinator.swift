@@ -148,7 +148,7 @@ struct TabLifecycleCoordinator {
         now: Date = Date()
     ) -> Set<UUID> {
         engineIds(tabs: tabs, availableEngineIds: availableEngineIds) {
-            shouldRetainProtected($0, restoringTabIds: restoringTabIds, now: now)
+            shouldRetainProtected($0, restoringTabIds: restoringTabIds, now: now, freezing: true)
         }
     }
 
@@ -279,15 +279,16 @@ struct TabLifecycleCoordinator {
         }
     }
 
-    private func shouldRetainProtected(_ tab: Tab, restoringTabIds: [UUID: Date], now: Date) -> Bool {
+    private func shouldRetainProtected(_ tab: Tab, restoringTabIds: [UUID: Date], now: Date, freezing: Bool = false) -> Bool {
         tab.isAgentControlled || tab.isInPictureInPicture ||
-            shouldRetainForAudio(tab, now: now) ||
+            shouldRetainForAudio(tab, now: now, freezing: freezing) ||
             shouldRetainForCapture(tab, now: now) ||
             shouldRetainForRestoration(tab, restoringTabIds: restoringTabIds, now: now)
     }
 
-    private func shouldRetainForAudio(_ tab: Tab, now: Date) -> Bool {
-        if tab.isAudioPlaying { return true }
+    private func shouldRetainForAudio(_ tab: Tab, now: Date, freezing: Bool) -> Bool {
+        // A muted tab plays nothing anyone hears: freezing it silences nothing, while a discard would still lose its place.
+        if tab.isAudioPlaying && !(freezing && tab.isMuted) { return true }
         if let pausedFromCardAt = tab.pausedFromCardAt, now.timeIntervalSince(pausedFromCardAt) <= cardPauseGracePeriod { return true }
         guard let lastAudioStoppedAt = tab.lastAudioStoppedAt else { return false }
         return now.timeIntervalSince(lastAudioStoppedAt) <= audioGracePeriod

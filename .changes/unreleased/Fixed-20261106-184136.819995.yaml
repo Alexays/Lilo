@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extension pages, such as a new tab override or an options page, no longer open in a private space, and an extension opening a tab no longer takes you out of a private space or switches spaces for a background tab; an options page already open in another space is shown instead of opened again
+time: 2026-11-06T18:41:36.819995+01:00

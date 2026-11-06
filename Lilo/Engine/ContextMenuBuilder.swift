@@ -13,7 +13,7 @@ private func isDownloadable(_ url: URL) -> Bool {
 }
 
 /// Builds a tab's context menu from WebKit's: Lilo's tab, window and space actions replace "Open Link in New Window", plus
-/// extension and nav/copy/PiP items. It is the items' `@objc` target, hence `NSObject`; the tab injects the behavior.
+/// nav/copy/PiP items. It is the items' `@objc` target, hence `NSObject`; the tab injects the behavior.
 @MainActor
 final class ContextMenuBuilder: NSObject {
     private static let logger = Logger(liloCategory: "context-menu")
@@ -70,7 +70,7 @@ final class ContextMenuBuilder: NSObject {
 
     /// `element` is the clicked `_WKContextMenuElementInfo`, whose hit test tells a text field or the selection.
     func build(
-        _ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, element: NSObject? = nil, extensionItems: [NSMenuItem],
+        _ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, element: NSObject? = nil,
         offersNewWindow: Bool = true, searchEngineName: String? = nil
     ) {
         // WebKit's "Search with Google" hands the selection to the system's search service, which opens the default browser.
@@ -111,17 +111,6 @@ final class ContextMenuBuilder: NSObject {
                 Self.logger.debug("ctx-menu link items: no New Window match: identifiers=\(menu.items.map { $0.identifier?.rawValue ?? "·" }.joined(separator: ","), privacy: .public)")
                 #endif
             }
-        }
-
-        // Extension context menu items (chrome.contextMenus)
-        if !extensionItems.isEmpty {
-            // WebKit already proposes its own copies; Lilo's replace them, as choosing one counts as the
-            // extension's user gesture.
-            for item in menu.items where (item.target as? NSObject)?.className == "_WKWebExtensionMenuItem" {
-                menu.removeItem(item)
-            }
-            menu.addItem(.separator())
-            extensionItems.forEach { menu.addItem($0) }
         }
 
         // As Chrome, the page's own items stay out of a link, media, selection or text field menu: a stray Back loses typed text.

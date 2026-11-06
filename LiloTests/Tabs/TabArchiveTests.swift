@@ -198,6 +198,25 @@ final class TabArchiveTests: XCTestCase {
         XCTAssertTrue(cleared)
     }
 
+    func testRestoringAnUnchangedArchiveLeavesTheFileAlone() throws {
+        let (window, space) = try makeWindow()
+        let context = window.context
+        let file = URL(fileURLWithPath: context.appSupportDirectory).appendingPathComponent("ArchivedTabs.json")
+        let entry = TabArchive.Entry(spaceId: space.id, url: URL(string: "https://recent.example/")!, title: "Recent")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let saved = try encoder.encode([entry])
+        try saved.write(to: file)
+
+        context.restoreTabArchive(BrowserContext.readTabArchive(appSupportDirectory: context.appSupportDirectory))
+        context.isTerminating = true
+        defer { context.isTerminating = false }
+        context.writeTabArchive()
+
+        XCTAssertEqual(context.tabArchive.entries, [entry])
+        XCTAssertEqual(try Data(contentsOf: file), saved)
+    }
+
     func testTheArchiveDelayIsSavedWithTheSpace() async throws {
         let (window, space) = try makeWindow()
         let handler = SpaceBridgeHandler(spaceManager: window.context.spaceManager!, windowController: window)

@@ -153,7 +153,7 @@ extension MainWindowController {
             let title: String
             let symbol: String
             switch entry.content {
-            case .page(let url):
+            case .page(let url, _):
                 let path = url.path == "/" ? "" : url.path
                 title = url.host().map { $0 + path } ?? url.absoluteString
                 symbol = "globe"

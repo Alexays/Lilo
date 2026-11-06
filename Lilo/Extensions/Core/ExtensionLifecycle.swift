@@ -27,6 +27,7 @@ final class ExtensionLifecycle {
     enum Load: Equatable {
         case install
         case enable
+        /// A newer version, or an unpacked extension read from its folder again: Chrome calls both an update.
         case update(from: String)
         /// The launch restore.
         case startup
@@ -87,6 +88,7 @@ final class ExtensionLifecycle {
         restoreReportedListeners(extensionId, version: version)
         backgrounds.started(extensionId, preparationDegraded: preparationDegraded)
         var updatedFrom = storedVersion.flatMap { $0 != version ? $0 : nil }
+        if case .update(let from) = load { updatedFrom = from }
         if case .disabled(let from) = previous {
             updatedFrom = updatedFrom ?? from
             if from != nil { settings()?.remove(updatedFromKey(extensionId)) }

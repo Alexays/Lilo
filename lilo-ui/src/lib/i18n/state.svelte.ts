@@ -3,7 +3,7 @@
 
 import { type Locale, loadCatalog, translate } from "./translate";
 
-// English until main.ts applies the WKWebView's system language; a persisted setting can override it later.
+// English until main.ts applies the interface language from the bootstrap script; a persisted setting can override it later.
 let current = $state<Locale>("en");
 let requested: Locale = "en";
 

@@ -542,7 +542,7 @@ final class WebKitGapTests: XCTestCase {
 
         XCTAssertEqual(
             context.action(for: nil)?.label, "empty strings",
-            "WebKit now leaves out a withheld tab url and title: drop tabURLPatches and windowURLPatches (augmentation/tabs.ts)"
+            "WebKit now leaves out a withheld tab url and title: drop the withholding from tabPatches, windowPatches and tabStandIns (augmentation/tabs.ts)"
         )
     }
 

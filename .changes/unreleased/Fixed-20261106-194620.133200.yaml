@@ -1,0 +1,3 @@
+kind: Fixed
+body: With several windows open, extensions keep seeing the window you are working in as the current one when a space changes in another window.
+time: 2026-11-06T19:46:20.1332+01:00

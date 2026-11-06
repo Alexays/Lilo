@@ -146,6 +146,7 @@ extension TabManager {
         )
         var toDiscard = availableEngineIds.subtracting(keep)
         if let split = activeSplit { toDiscard.subtract(split.layout.paneIds) }
+        toDiscard = toDiscard.filter { engineHost.engine(for: $0)?.isExtensionDebugged != true }
         guard !toDiscard.isEmpty else { return false }
 
         Self.logger.info("""

@@ -193,8 +193,11 @@ final class SidePanelBridgeHandler: GapHandler {
             guard let adapter = call.int("windowPosition").flatMap({ call.registry.extensionWindow(at: $0, extensionId: call.extensionId) }) else {
                 return BridgeError("No window with id: \(windowId).")
             }
-            window = adapter.nsWindow?.windowController as? MainWindowController
-            guard window != nil else { return BridgeError("No browser window for windowId: \(windowId)") }
+            // A background space's browser window shows another space, maybe a private one, where its panel does not belong.
+            guard let shown = adapter.nsWindow?.windowController as? MainWindowController, shown.tabManager.currentSpaceId == adapter.spaceId else {
+                return BridgeError("No browser window for windowId: \(windowId)")
+            }
+            window = shown
         }
         guard let tabId else { return window.flatMap { body($0, nil) } }
         guard let tab = self.tab(at: call.payload["tab"], call: call) else { return BridgeError("No tab with id: \(tabId).") }

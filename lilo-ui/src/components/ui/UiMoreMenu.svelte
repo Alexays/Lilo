@@ -1,6 +1,7 @@
 <!-- A screen's commands behind one "..." button: a destructive one comes last, under a separator, in red. -->
 <script lang="ts">
   import { dismissable } from "../../lib/actions/dismissable";
+  import { menuKeys } from "../../lib/actions/menuKeys";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { portal } from "../../lib/actions/portal";
   import { tooltip } from "../../lib/tooltip";
@@ -31,19 +32,12 @@
   });
 
   function handleKeydown(event: KeyboardEvent): void {
-    if (event.key === "Escape") {
-      // The menu, not the screen around it, takes this Escape.
-      event.preventDefault();
-      event.stopPropagation();
-      open = false;
-      button?.focus();
-      return;
-    }
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    const enabled = Array.from(menu?.querySelectorAll<HTMLElement>("[role='menuitem']:not(:disabled)") ?? []);
-    const index = enabled.indexOf(document.activeElement as HTMLElement);
+    if (event.key !== "Escape") return;
+    // The menu, not the screen around it, takes this Escape.
     event.preventDefault();
-    enabled[(index + (event.key === "ArrowDown" ? 1 : -1) + enabled.length) % enabled.length]?.focus();
+    event.stopPropagation();
+    open = false;
+    button?.focus();
   }
 </script>
 
@@ -77,6 +71,7 @@
     use:portal
     use:reportInteractiveZone={{ id: `more-${menuId}` }}
     onkeydown={handleKeydown}
+    {@attach menuKeys}
     {@attach dismissable({ onDismiss: () => (open = false), ignore: `[data-more-menu="${menuId}"]`, returnFocus: button })}
   >
     {#each items as item (item.label)}

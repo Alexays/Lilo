@@ -1,0 +1,3 @@
+kind: Fixed
+body: An extension's toolbar shortcut opens its side panel as a click on its button does, pressing it or clicking the button again closes its popup, and an extension page asking for the popup no longer runs the button's click action instead
+time: 2026-11-06T18:40:37.116788+01:00

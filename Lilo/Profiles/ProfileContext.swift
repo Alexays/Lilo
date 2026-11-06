@@ -21,7 +21,8 @@ final class ProfileContext {
 
     init(
         profileId: UUID, dbManager: DatabaseManager, gapRouter: GapBridgeRouter?,
-        tabShare: (bridge: TabShareBridge, frames: TabShareFrameSchemeHandler)? = nil
+        tabShare: (bridge: TabShareBridge, frames: TabShareFrameSchemeHandler)? = nil,
+        pageBridges: (geolocation: GeolocationBridge, notification: NotificationBridge)? = nil
     ) throws {
         self.profileId = profileId
         pool = try dbManager.pool(for: profileId)
@@ -38,6 +39,7 @@ final class ProfileContext {
             extensionStorage: ExtensionStorage(profileId: profileId, dbPool: dbManager.globalPool, profilePool: pool),
             gapRouter: gapRouter,
             tabShare: tabShare,
+            pageBridges: pageBridges,
             extensionsBaseDirectory: URL(fileURLWithPath: dbManager.appSupportDirectory)
         )
         history.onChange = { [weak registry = extensions, profileId] change in

@@ -46,9 +46,11 @@ function sendBatch(evenEmpty: boolean): void {
   answerBatch(events.length > 0 || evenEmpty ? listen(events, batchAnswered) : Promise.resolve());
 }
 
-// A port opened before native knows a page's listener fails as unreceived: these go at once, as its first listener. The
-// worker's top-level listeners stay one report, as native takes an unreported worker for one listening to all.
-const reportedAtOnce = new Set(typeof (globalThis as any).ServiceWorkerGlobalScope === 'function' ? [] : ['runtime.onConnect', 'runtime.onConnectExternal']);
+// A port opened or a message sent before native knows a page's listener fails as unreceived: these go at once, as its
+// first listener. The worker's top-level listeners stay one report, as native takes an unreported worker for one
+// listening to all.
+const reportedAtOnce = new Set(typeof (globalThis as any).ServiceWorkerGlobalScope === 'function'
+  ? [] : ['runtime.onConnect', 'runtime.onConnectExternal', 'runtime.onMessage']);
 
 /**
  * Native only queues, and wakes the worker for, events a context listens to. A page's first listener is sent at

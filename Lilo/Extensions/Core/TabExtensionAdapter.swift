@@ -48,12 +48,18 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
 
     /// A new tab has no url until its first navigation starts, as Chrome reports none before it.
     func url(for context: WKWebExtensionContext) -> URL? {
-        guard let engineTab else { return tabManager?.tab(for: tabId)?.url }
+        guard let engineTab else { return visibleDurableTab?.url }
         return engineTab.hasCommittedContent || engineTab.isLoading ? engineTab.currentURL : nil
     }
 
     func title(for context: WKWebExtensionContext) -> String? {
-        engineTab?.currentTitle ?? tabManager?.tab(for: tabId)?.title
+        engineTab?.currentTitle ?? visibleDurableTab?.title
+    }
+
+    /// A locked folder's tab has no engine and shows extensions as an empty tab, its url and title kept secret.
+    private var visibleDurableTab: Tab? {
+        guard let tabManager, let tab = tabManager.tab(for: tabId), tabManager.protectingFolder(of: tab)?.isLocked != true else { return nil }
+        return tab
     }
 
     func isSelected(for context: WKWebExtensionContext) -> Bool {

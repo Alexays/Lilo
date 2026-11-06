@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions whose manifest.json or translations contain comments install, update and load, as they do in Chrome
+time: 2026-11-06T19:35:19.432791+01:00

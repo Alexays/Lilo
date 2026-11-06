@@ -98,7 +98,7 @@ final class WKBackend: NSObject {
         // WebKit leaves the bytes it wrote under the final name. Chrome deletes them; the row says the file is gone, so nothing
         // later deletes another download that takes the name.
         let path = flight.settle(id) { item in
-            item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date(); item.fileMissing = true
+            item.state = .interrupted; item.error = DownloadInterruptReason.userCanceled.rawValue; item.endedAt = Date(); item.fileMissing = true
             return true
         }?.destinationPath
         download.cancel { _ in

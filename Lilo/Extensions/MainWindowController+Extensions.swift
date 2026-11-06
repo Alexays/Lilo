@@ -83,11 +83,16 @@ extension MainWindowController {
     func bindExtensionRegistry(_ registry: ProfileExtensionRegistry, spaceId: UUID) {
         guard let window else { return }
         let windowAdapter = registry.windowAdapter(for: window, spaceId: spaceId, isPrivate: tabManager.dataStore?.backingStore.isPersistent == false)
-        windowAdapter.tabManager = tabManager
+        let isShownHere = windowAdapter.nsWindow === window
+        if isShownHere { windowAdapter.tabManager = tabManager }
         tabManager.windowAdapter = windowAdapter
 
-        registry.delegate.tabManager = tabManager
-        registry.delegate.windowController = self
+        // A space shown in a background window leaves the key window's space the focused one.
+        let isFocused = isShownHere && registry.delegate.windowAdapter === windowAdapter
+        if isFocused {
+            registry.delegate.tabManager = tabManager
+            registry.delegate.windowController = self
+        }
         registry.delegate.windows = context.windows
         tabManager.extensionRegistry = registry
         registry.onExtensionsChanged = { [weak context, weak registry] in
@@ -101,10 +106,10 @@ extension MainWindowController {
             }
         }
 
-        registry.notifyWindowOpened()
+        registry.notifyWindowOpened(windowAdapter)
         // A space or profile switch keeps the same NSWindow key, so windowDidBecomeKey doesn't re-fire: focus
         // the space's window explicitly, which extensions hear as a window focus change.
-        registry.notifyWindowFocused(window.isKeyWindow)
+        if isFocused { registry.notifyWindowFocused(window.isKeyWindow) }
     }
 
     // MARK: - Bridge Events
@@ -161,8 +166,10 @@ extension MainWindowController {
             menu.addItem((pinned ? "Unpin from Address Bar" : "Pin to Address Bar").localized, icon: pinned ? .unpin : .pin) { send("togglePin") }
         }
         menu.addItem("Details".localized, icon: .details) { send("details") }
-        if let url = context?.optionsPageURL {
-            menu.addItem("Options".localized, icon: .options) { self.createTabStateFirst(url: url, activate: true) }
+        if let context, context.optionsPageURL != nil, let registry = profileContext?.extensions {
+            menu.addItem("Options".localized, icon: .options) {
+                registry.delegate.webExtensionController(registry.controller, openOptionsPageFor: context) { _ in }
+            }
         }
         menu.addItem(.separator())
         menu.addItem("Remove…".localized, icon: .delete) { send("remove") }
@@ -296,8 +303,9 @@ extension MainWindowController {
     func installPopupCloseBridge(on userContentController: WKUserContentController) {
         guard !Self.popupCloseBridgeControllers.contains(userContentController) else { return }
         Self.popupCloseBridgeControllers.add(userContentController)
-        let nativeCloseScript = WKUserScript(
-            source: #"""
+        // WebKit skips web pages itself, so they never create the relay's world for a script that would only exit.
+        let webPages = ["http://*/*", "https://*/*"]
+        let nativeCloseSource = #"""
             (() => {
                 // The controller may be a regular tab's (an extension URL opened from a page): its
                 // pages keep WebKit's own window.close.
@@ -313,22 +321,18 @@ extension MainWindowController {
                 window.close = closePopup;
                 globalThis.close = closePopup;
             })();
-            """#,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: true
-        )
-        let relayScript = WKUserScript(
-            source: #"""
+            """#
+        let relaySource = #"""
             if (/^(webkit|chrome)-extension:$/.test(location.protocol)) {
                 document.addEventListener('\#(Self.popupCloseEvent)', () => {
                     window.webkit.messageHandlers.liloPopupHost.postMessage({ command: 'close' });
                 });
             }
-            """#,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: true,
-            in: Self.popupCloseWorld
-        )
+            """#
+        let nativeCloseScript = ExtensionUserScripts.makeMatchingUserScript?(nativeCloseSource, .atDocumentStart, true, [], webPages, .page)
+            ?? WKUserScript(source: nativeCloseSource, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        let relayScript = ExtensionUserScripts.makeMatchingUserScript?(relaySource, .atDocumentStart, true, [], webPages, Self.popupCloseWorld)
+            ?? WKUserScript(source: relaySource, injectionTime: .atDocumentStart, forMainFrameOnly: true, in: Self.popupCloseWorld)
 
         userContentController.removeScriptMessageHandler(forName: "liloPopupHost", contentWorld: Self.popupCloseWorld)
         userContentController.addUserScript(nativeCloseScript)

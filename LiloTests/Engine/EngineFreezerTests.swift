@@ -19,13 +19,15 @@ final class EngineFreezerTests: XCTestCase {
         let state = "[document.visibilityState, document.hidden, changes].join()"
         // A web view outside a window is hidden to WebKit already: a resume returns the page to that.
         let native = try await webView.evaluateJavaScript("[document.visibilityState, document.hidden].join()") as? String
+        // visibilitychange fires only when the state the page reads changes.
+        let changes = native == "hidden,true" ? 0 : 1
 
         _ = try? await webView.evaluateJavaScript(PageWorld.push("freeze"), contentWorld: PageWorld.bridgeWorld)
         let frozen = try await webView.evaluateJavaScript(state) as? String
-        XCTAssertEqual(frozen, "hidden,true,1")
+        XCTAssertEqual(frozen, "hidden,true,\(changes)")
         _ = try? await webView.evaluateJavaScript(PageWorld.push("resume"), contentWorld: PageWorld.bridgeWorld)
         let resumed = try await webView.evaluateJavaScript(state) as? String
-        XCTAssertEqual(resumed, "\(native ?? ""),2")
+        XCTAssertEqual(resumed, "\(native ?? ""),\(2 * changes)")
     }
 
     func testCooperativeFreezePlaysAgainOnResumeTheMediaItPaused() async throws {

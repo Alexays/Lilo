@@ -39,6 +39,7 @@
   import { openCommandBar, closeCommandBar } from "../../stores/commandBar.svelte";
   import {
     dndItemsForSidebarItems,
+    FLIP_MAX_ANIMATED_ITEMS,
     flipDurationForSidebarDndItem,
     sidebarDndKey,
     type SidebarDndItem,
@@ -472,8 +473,8 @@
   let tabListEl: HTMLDivElement | undefined = $state();
   let pinnedListEl: HTMLDivElement | undefined = $state();
 
-  // Rows outside the scroll window collapse into spacers; disabled during a sidebar drag so the dnd engine's layout
-  // snapshot measures every row.
+  // Rows outside the scroll window collapse into spacers; disabled in the pane a sidebar drag runs in so the dnd
+  // engine's layout snapshot measures every row. Other spaces' panes never take the drop.
   const VIRTUALIZE_MIN_ROWS = 80;
   const VIRTUAL_BUFFER_PX = 320;
   // The window moves in steps of this many pixels, so a scroll frame inside a step re-renders nothing.
@@ -497,7 +498,7 @@
   const listWindowFrame = createFrameScheduler();
 
   const virtualize = $derived(
-    !isPinned && !dragActive && segments.length > VIRTUALIZE_MIN_ROWS,
+    !isPinned && !(dragActive && interactive) && segments.length > VIRTUALIZE_MIN_ROWS,
   );
 
   // The panes of a split in reading order, stacked one row each in the sidebar.
@@ -1264,61 +1265,87 @@
             class:drag-active={dragActive}
             class:is-empty={childZoneEntries.length === 0}
           >
-            {#each childZoneEntries as childEntry, childIndex (sidebarDndKey(childEntry))}
-              {@const childFolder = childEntry.kind === "folder" && !isShadowItem(childEntry) ? foldersById.get(childEntry.id) : undefined}
-              <div
-                animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(childEntry, { recentlyDraggedId, itemCount: childZoneEntries.length }), easing: springEase }}
-                class="child-tab-wrapper"
-                class:child-folder={childFolder !== undefined}
-                class:recent-drop={childEntry.id === recentlyDraggedId}
-                data-is-dnd-shadow-item-hint={isShadowItem(childEntry)}
-                role="presentation"
-                style={`--folder-child-index: ${Math.min(childIndex, 6)};`}
-                use:dndItem={{
-                  item: childEntry,
-                  zoneId: folderZone(folder.id).id,
-                  disabled: isShadowItem(childEntry) || !interactive || !childrenShown,
-                  onCancel: resetSidebarDrag,
-                  onDropOutsideWindow: moveTabOutOfWindow,
-                }}
-              >
-                {#if isShadowItem(childEntry)}
-                  <div
-                    class="sidebar-dnd-placeholder folder"
-                    class:held={hidePlaceholder}
-                    data-variant="folder"
-                    aria-hidden="true"
-                  ></div>
-                {:else if childFolder}
-                  <div
-                    class="indented-tab-wrapper"
-                    class:first-level={level === 1 && !conversation}
-                    class:folder-open-rail={!childFolder.isCollapsed}
-                    style={folderColorStyle(shownFolderColor(childFolder))}
-                  >
-                    {@render folderBlock(childFolder, childrenShown, level + 1)}
+            {#snippet childContent(childEntry: SidebarDndItem, childFolder: FolderState | undefined)}
+              {#if isShadowItem(childEntry)}
+                <div
+                  class="sidebar-dnd-placeholder folder"
+                  class:held={hidePlaceholder}
+                  data-variant="folder"
+                  aria-hidden="true"
+                ></div>
+              {:else if childFolder}
+                <div
+                  class="indented-tab-wrapper"
+                  class:first-level={level === 1 && !conversation}
+                  class:folder-open-rail={!childFolder.isCollapsed}
+                  style={folderColorStyle(shownFolderColor(childFolder))}
+                >
+                  {@render folderBlock(childFolder, childrenShown, level + 1)}
+                </div>
+              {:else}
+                {@const tab = tabsById.get(childEntry.id)}
+                {#if tab && editingTab?.id === tab.id}
+                  <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
+                {:else if tab}
+                  <div class="indented-tab-wrapper" class:first-level={level === 1 && !conversation}>
+                    <TabItem
+                      {tab}
+                      isActive={tab.id === activeTabId}
+                      interactive={interactive && childrenShown}
+                      disableTooltip={dragActive || !childrenShown}
+                      actionsInert={dragActive}
+                      splitDropTarget={splitDropTabId === tab.id}
+                      level={level + 1}
+                      tabStop={tab.id === tabStopId}
+                    />
                   </div>
-                {:else}
-                  {@const tab = tabsById.get(childEntry.id)}
-                  {#if tab && editingTab?.id === tab.id}
-                    <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
-                  {:else if tab}
-                    <div class="indented-tab-wrapper" class:first-level={level === 1 && !conversation}>
-                      <TabItem
-                        {tab}
-                        isActive={tab.id === activeTabId}
-                        interactive={interactive && childrenShown}
-                        disableTooltip={dragActive || !childrenShown}
-                        actionsInert={dragActive}
-                        splitDropTarget={splitDropTabId === tab.id}
-                        level={level + 1}
-                        tabStop={tab.id === tabStopId}
-                      />
-                    </div>
-                  {/if}
                 {/if}
-              </div>
-            {/each}
+              {/if}
+            {/snippet}
+            {#if children.length > FLIP_MAX_ANIMATED_ITEMS}
+              {#each childZoneEntries as childEntry, childIndex (sidebarDndKey(childEntry))}
+                {@const childFolder = childEntry.kind === "folder" && !isShadowItem(childEntry) ? foldersById.get(childEntry.id) : undefined}
+                <div
+                  class="child-tab-wrapper"
+                  class:child-folder={childFolder !== undefined}
+                  class:recent-drop={childEntry.id === recentlyDraggedId}
+                  data-is-dnd-shadow-item-hint={isShadowItem(childEntry)}
+                  role="presentation"
+                  style={`--folder-child-index: ${Math.min(childIndex, 6)};`}
+                  use:dndItem={{
+                    item: childEntry,
+                    zoneId: folderZone(folder.id).id,
+                    disabled: isShadowItem(childEntry) || !interactive || !childrenShown,
+                    onCancel: resetSidebarDrag,
+                    onDropOutsideWindow: moveTabOutOfWindow,
+                  }}
+                >
+                  {@render childContent(childEntry, childFolder)}
+                </div>
+              {/each}
+            {:else}
+              {#each childZoneEntries as childEntry, childIndex (sidebarDndKey(childEntry))}
+                {@const childFolder = childEntry.kind === "folder" && !isShadowItem(childEntry) ? foldersById.get(childEntry.id) : undefined}
+                <div
+                  animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(childEntry, { recentlyDraggedId, itemCount: childZoneEntries.length }), easing: springEase }}
+                  class="child-tab-wrapper"
+                  class:child-folder={childFolder !== undefined}
+                  class:recent-drop={childEntry.id === recentlyDraggedId}
+                  data-is-dnd-shadow-item-hint={isShadowItem(childEntry)}
+                  role="presentation"
+                  style={`--folder-child-index: ${Math.min(childIndex, 6)};`}
+                  use:dndItem={{
+                    item: childEntry,
+                    zoneId: folderZone(folder.id).id,
+                    disabled: isShadowItem(childEntry) || !interactive || !childrenShown,
+                    onCancel: resetSidebarDrag,
+                    onDropOutsideWindow: moveTabOutOfWindow,
+                  }}
+                >
+                  {@render childContent(childEntry, childFolder)}
+                </div>
+              {/each}
+            {/if}
             {#if childZoneEntries.length === 0 && !conversation}
               <div class="folder-empty-placeholder">{t("tabSection.folderEmpty")}</div>
             {/if}
@@ -1492,105 +1519,137 @@
       {/if}
     {/each}
   {:else}
-    {#each blocks as block (block.key)}
-      {@const entry = block.kind === "row" ? block.segment.entry : { id: block.key, kind: "tab" as const, section, parentFolderId: null }}
-      {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
-      {@const head = block.kind === "group" ? block.head : null}
-      {@const tint = head?.kind === "stack" ? stackTintOf(head) : null}
-      <!-- A row's slot, or a group's block: animate: needs one element per entry. -->
-      <div
-        animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
-        in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
-        out:tabSlide={itemMotion(entry, MOTION.itemExitMs)}
-        class={head ? "group-block" : slotClass}
-        class:tray-block={head?.kind === "tray"}
-        class:stack-open={!!tint}
-        class:recent-drop={entry.id === recentlyDraggedId}
-        class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
-        data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-        style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint ? folderColorStyle(faviconColors.get(stackInfo.get(tint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
-        use:dndItem={{
-          item: entry,
-          zoneId: rootZone.id,
-          disabled: !!head || isShadowItem(entry) || !interactive,
-          onCancel: resetSidebarDrag,
-          onDropOutsideWindow: moveTabOutOfWindow,
-        }}
-      >
-        {#if block.kind === "row"}
-          {@render rootItemContent(entry, null)}
-        {:else if head}
-          {@const open = groupOpen(head)}
-          {@const motion = groupMotion?.key === block.key ? groupMotion : null}
-          <div class="group-head-slot">
-            {@render segmentHead(head)}
-          </div>
-          {#if !open}
-            <!-- What a folded tray keeps shown: its active row. -->
-            {#each block.rows as row (row.key)}
-              <div
-                class={slotClass}
-                use:dndItem={{
-                  item: row.entry,
-                  zoneId: rootZone.id,
-                  disabled: isShadowItem(row.entry) || !interactive,
-                  onCancel: resetSidebarDrag,
-                  onDropOutsideWindow: moveTabOutOfWindow,
-                }}
-              >
-                {@render rootItemContent(row.entry, null)}
-              </div>
-            {/each}
-          {/if}
-          <div
-            class="folder-contents-shell"
-            class:open
-            class:collapsed={!open}
-            class:expanding={motion?.open}
-            aria-hidden={!open}
-            style={`--folder-collapse-duration: ${folderContentUnmountDelayMs}ms;`}
-          >
-            <div class="folder-contents-clip">
-              {#if open}
-                <div class="folder-contents" role="group">
-                  {#each block.rows as row, rowIndex (row.key)}
-                    {@const rowEntry = row.entry}
-                    {@const rowFolder = rowEntry.kind === "folder" ? foldersById.get(rowEntry.id) : undefined}
-                    <div
-                      animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(rowEntry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
-                      in:tabSlide={motion ? { disabled: true } : itemMotion(rowEntry, MOTION.itemEnterMs)}
-                      out:tabSlide={motion ? { disabled: true } : itemMotion(rowEntry, MOTION.itemExitMs)}
-                      class="{slotClass} child-tab-wrapper"
-                      class:recent-drop={rowEntry.id === recentlyDraggedId}
-                      class:folder-open-rail={rowEntry.kind === "folder" && !!rowFolder && !rowFolder.isCollapsed && !rowFolder.isSplit}
-                      data-is-dnd-shadow-item-hint={isShadowItem(rowEntry)}
-                      style={`--folder-child-index: ${Math.min(rowIndex, 6)};${rowEntry.kind === "folder" ? folderColorStyle(shownFolderColor(rowFolder)) : ""}`}
-                      use:dndItem={{
-                        item: rowEntry,
-                        zoneId: rootZone.id,
-                        disabled: isShadowItem(rowEntry) || !interactive,
-                        onCancel: resetSidebarDrag,
-                        onDropOutsideWindow: moveTabOutOfWindow,
-                      }}
-                    >
-                      {@render rootItemContent(rowEntry, row.stack)}
-                    </div>
-                  {/each}
-                </div>
-              {:else if motion}
-                <div class="folder-contents" role="group">
-                  {#each foldingRows(block) as folding (sidebarDndKey(folding))}
-                    <div class="{slotClass} child-tab-wrapper">
-                      {@render rootItemContent(folding, head.kind === "stack" ? head.host : null)}
-                    </div>
-                  {/each}
-                </div>
-              {/if}
+    {#snippet blockContent(block: Block, entry: SidebarDndItem, head: GroupHead | null)}
+      {#if block.kind === "row"}
+        {@render rootItemContent(entry, null)}
+      {:else if head}
+        {@const open = groupOpen(head)}
+        {@const motion = groupMotion?.key === block.key ? groupMotion : null}
+        <div class="group-head-slot">
+          {@render segmentHead(head)}
+        </div>
+        {#if !open}
+          <!-- What a folded tray keeps shown: its active row. -->
+          {#each block.rows as row (row.key)}
+            <div
+              class={slotClass}
+              use:dndItem={{
+                item: row.entry,
+                zoneId: rootZone.id,
+                disabled: isShadowItem(row.entry) || !interactive,
+                onCancel: resetSidebarDrag,
+                onDropOutsideWindow: moveTabOutOfWindow,
+              }}
+            >
+              {@render rootItemContent(row.entry, null)}
             </div>
-          </div>
+          {/each}
         {/if}
-      </div>
-    {/each}
+        <div
+          class="folder-contents-shell"
+          class:open
+          class:collapsed={!open}
+          class:expanding={motion?.open}
+          aria-hidden={!open}
+          style={`--folder-collapse-duration: ${folderContentUnmountDelayMs}ms;`}
+        >
+          <div class="folder-contents-clip">
+            {#if open}
+              <div class="folder-contents" role="group">
+                {#each block.rows as row, rowIndex (row.key)}
+                  {@const rowEntry = row.entry}
+                  {@const rowFolder = rowEntry.kind === "folder" ? foldersById.get(rowEntry.id) : undefined}
+                  <div
+                    animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(rowEntry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
+                    in:tabSlide={motion ? { disabled: true } : itemMotion(rowEntry, MOTION.itemEnterMs)}
+                    out:tabSlide={motion ? { disabled: true } : itemMotion(rowEntry, MOTION.itemExitMs)}
+                    class="{slotClass} child-tab-wrapper"
+                    class:recent-drop={rowEntry.id === recentlyDraggedId}
+                    class:folder-open-rail={rowEntry.kind === "folder" && !!rowFolder && !rowFolder.isCollapsed && !rowFolder.isSplit}
+                    data-is-dnd-shadow-item-hint={isShadowItem(rowEntry)}
+                    style={`--folder-child-index: ${Math.min(rowIndex, 6)};${rowEntry.kind === "folder" ? folderColorStyle(shownFolderColor(rowFolder)) : ""}`}
+                    use:dndItem={{
+                      item: rowEntry,
+                      zoneId: rootZone.id,
+                      disabled: isShadowItem(rowEntry) || !interactive,
+                      onCancel: resetSidebarDrag,
+                      onDropOutsideWindow: moveTabOutOfWindow,
+                    }}
+                  >
+                    {@render rootItemContent(rowEntry, row.stack)}
+                  </div>
+                {/each}
+              </div>
+            {:else if motion}
+              <div class="folder-contents" role="group">
+                {#each foldingRows(block) as folding (sidebarDndKey(folding))}
+                  <div class="{slotClass} child-tab-wrapper">
+                    {@render rootItemContent(folding, head.kind === "stack" ? head.host : null)}
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        </div>
+      {/if}
+    {/snippet}
+    {#if rootBaseItems.length > FLIP_MAX_ANIMATED_ITEMS}
+      {#each blocks as block (block.key)}
+        {@const entry = block.kind === "row" ? block.segment.entry : { id: block.key, kind: "tab" as const, section, parentFolderId: null }}
+        {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
+        {@const head = block.kind === "group" ? block.head : null}
+        {@const tint = head?.kind === "stack" ? stackTintOf(head) : null}
+        <div
+          in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
+          out:tabSlide={itemMotion(entry, MOTION.itemExitMs)}
+          class={head ? "group-block" : slotClass}
+          class:tray-block={head?.kind === "tray"}
+          class:stack-open={!!tint}
+          class:recent-drop={entry.id === recentlyDraggedId}
+          class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
+          data-is-dnd-shadow-item-hint={isShadowItem(entry)}
+          style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint ? folderColorStyle(faviconColors.get(stackInfo.get(tint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
+          use:dndItem={{
+            item: entry,
+            zoneId: rootZone.id,
+            disabled: !!head || isShadowItem(entry) || !interactive,
+            onCancel: resetSidebarDrag,
+            onDropOutsideWindow: moveTabOutOfWindow,
+          }}
+        >
+          {@render blockContent(block, entry, head)}
+        </div>
+      {/each}
+    {:else}
+      {#each blocks as block (block.key)}
+        {@const entry = block.kind === "row" ? block.segment.entry : { id: block.key, kind: "tab" as const, section, parentFolderId: null }}
+        {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
+        {@const head = block.kind === "group" ? block.head : null}
+        {@const tint = head?.kind === "stack" ? stackTintOf(head) : null}
+        <!-- A row's slot, or a group's block: animate: needs one element per entry. -->
+        <div
+          animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
+          in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
+          out:tabSlide={itemMotion(entry, MOTION.itemExitMs)}
+          class={head ? "group-block" : slotClass}
+          class:tray-block={head?.kind === "tray"}
+          class:stack-open={!!tint}
+          class:recent-drop={entry.id === recentlyDraggedId}
+          class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
+          data-is-dnd-shadow-item-hint={isShadowItem(entry)}
+          style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint ? folderColorStyle(faviconColors.get(stackInfo.get(tint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
+          use:dndItem={{
+            item: entry,
+            zoneId: rootZone.id,
+            disabled: !!head || isShadowItem(entry) || !interactive,
+            onCancel: resetSidebarDrag,
+            onDropOutsideWindow: moveTabOutOfWindow,
+          }}
+        >
+          {@render blockContent(block, entry, head)}
+        </div>
+      {/each}
+    {/if}
   {/if}
 {/snippet}
 

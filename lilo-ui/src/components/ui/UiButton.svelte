@@ -100,6 +100,15 @@
     background: color-mix(in srgb, var(--danger-deep) 88%, black);
   }
 
+  /* Two :not() so it outranks the ghost hover. --bg-active is white on the light theme. */
+  .ui-button:not(.primary, .danger, .destructive):not(:disabled):active {
+    background: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  }
+
+  .ui-button:is(.primary, .danger, .destructive):not(:disabled):active {
+    filter: brightness(0.92);
+  }
+
   .ui-button:focus-visible {
     outline: var(--focus-outline);
     outline-offset: 1px;

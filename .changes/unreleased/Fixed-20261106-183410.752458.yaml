@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions no longer see the address or title of tabs in a locked folder.
+time: 2026-11-06T18:34:10.752458+01:00

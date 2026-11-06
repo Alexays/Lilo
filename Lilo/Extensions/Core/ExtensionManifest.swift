@@ -86,9 +86,12 @@ enum ExtensionError: Error, LocalizedError {
     case missingRequiredField(String)
     case downloadFailed(String)
     case invalidExtensionArchive(String)
+    /// The extension's id belongs to a copy installed from another folder.
+    case alreadyInstalled(String)
 
     var errorDescription: String? {
         switch self {
+        case .alreadyInstalled(let name):        return unsafe String(format: "Another copy of %@ is already installed. Remove it to load this folder.".localized, name)
         case .manifestNotFound(let p):           return "manifest.json not found at \(p)"
         case .manifestParseError(let d):         return "Failed to parse manifest.json: \(d)"
         case .unsupportedManifestVersion(let v): return "Unsupported manifest version \(v); only MV3 is supported"

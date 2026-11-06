@@ -113,7 +113,7 @@
     {/if}
   </button>
   {#if open && chip && folder.isLocked}
-    <StripPopover anchor={chip} onclose={() => (open = false)} label={folder.name}>
+    <StripPopover anchor={chip} onclose={() => (open = false)} label={folder.name} role="dialog">
       <!-- The sidebar's unlock, from the chip: Touch ID when allowed, else the password. -->
       <form class="unlock" onsubmit={unlock}>
         {#if folder.lock?.allowsBiometrics}
@@ -128,7 +128,7 @@
   {:else if open && chip}
     <StripPopover anchor={chip} onclose={() => (open = false)} label={folder.name}>
       {#each tabs as tab (tab.id)}
-        <button class="popover-row" class:active={tab.id === activeTabId} onclick={() => activate(tab)}>
+        <button class="popover-row" role="menuitem" class:active={tab.id === activeTabId} onclick={() => activate(tab)}>
           <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
           <span class="row-title">{tabDisplayTitle(tab.title) || tab.url}</span>
         </button>

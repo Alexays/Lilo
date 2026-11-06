@@ -30,7 +30,7 @@
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
   import { sidebarActions } from "../../lib/bridge/actions";
   import { dndItem, dndZone } from "../../lib/dndEngine/action";
-  import { dndItemsForFolderTabs, dndItemsForSidebarItems, flipDurationForSidebarDndItem, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
+  import { dndItemsForFolderTabs, dndItemsForSidebarItems, FLIP_MAX_ANIMATED_ITEMS, flipDurationForSidebarDndItem, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { isUserScrolling, trackUserScroll } from "../../lib/motion/userScroll";
   import { translateFlip } from "../../lib/motion/translateFlip";
@@ -241,34 +241,50 @@
   {@const zone = zoneRef(section)}
   {@const iconOnly = section !== "unpinned"}
   {@const zoneItems = getZoneItems(zone, baseItems[section])}
-  {#each zoneItems as item (item.id)}
-    <div
-      class="strip-slot"
-      class:icon-only={iconOnly}
-      class:active={item.id === shownActiveId && item.kind !== "folder" && !isShadowItem(item) && view.tabsById.has(item.id) && !(addressInActiveTab && !iconOnly)}
-      animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(item, { recentlyDraggedId: getRecentlyDroppedId(), itemCount: zoneItems.length }), easing: springEase }}
-      use:dndItem={{ item, zoneId: zone.id, disabled: isShadowItem(item), onCancel: resetSidebarDrag }}
-    >
-      {#if isShadowItem(item)}
-        <div class="strip-placeholder" aria-hidden="true"></div>
-      {:else if item.kind === "folder"}
-        {@const folder = view.foldersById.get(item.id)}
-        {@const conversation = folder ? getConversationTab(folder.id, spaceId) : undefined}
-        {#if folder && conversation}
-          {#await import("./StripConversation.svelte") then { default: StripConversation }}
-            <StripConversation {folder} tab={conversation} pages={folderTabs(folder.id).filter((tab) => tab.id !== conversation.id)} activeTabId={shownActiveId} />
-          {/await}
-        {:else if folder}
-          <StripFolder {folder} tabs={folderTabs(folder.id)} activeTabId={shownActiveId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
-        {/if}
-      {:else}
-        {@const tab = view.tabsById.get(item.id)}
-        {#if tab && !(tab.id === activeTabId && addressInActiveTab && !iconOnly)}
-          <StripTab {tab} active={tab.id === shownActiveId} {iconOnly} {editsAddress} />
-        {/if}
+  {#snippet slotContent(item: SidebarDndItem)}
+    {#if isShadowItem(item)}
+      <div class="strip-placeholder" aria-hidden="true"></div>
+    {:else if item.kind === "folder"}
+      {@const folder = view.foldersById.get(item.id)}
+      {@const conversation = folder ? getConversationTab(folder.id, spaceId) : undefined}
+      {#if folder && conversation}
+        {#await import("./StripConversation.svelte") then { default: StripConversation }}
+          <StripConversation {folder} tab={conversation} pages={folderTabs(folder.id).filter((tab) => tab.id !== conversation.id)} activeTabId={shownActiveId} />
+        {/await}
+      {:else if folder}
+        <StripFolder {folder} tabs={folderTabs(folder.id)} activeTabId={shownActiveId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
       {/if}
-    </div>
-  {/each}
+    {:else}
+      {@const tab = view.tabsById.get(item.id)}
+      {#if tab && !(tab.id === activeTabId && addressInActiveTab && !iconOnly)}
+        <StripTab {tab} active={tab.id === shownActiveId} {iconOnly} {editsAddress} />
+      {/if}
+    {/if}
+  {/snippet}
+  {#if baseItems[section].length > FLIP_MAX_ANIMATED_ITEMS}
+    {#each zoneItems as item (item.id)}
+      <div
+        class="strip-slot"
+        class:icon-only={iconOnly}
+        class:active={item.id === shownActiveId && item.kind !== "folder" && !isShadowItem(item) && view.tabsById.has(item.id) && !(addressInActiveTab && !iconOnly)}
+        use:dndItem={{ item, zoneId: zone.id, disabled: isShadowItem(item), onCancel: resetSidebarDrag }}
+      >
+        {@render slotContent(item)}
+      </div>
+    {/each}
+  {:else}
+    {#each zoneItems as item (item.id)}
+      <div
+        class="strip-slot"
+        class:icon-only={iconOnly}
+        class:active={item.id === shownActiveId && item.kind !== "folder" && !isShadowItem(item) && view.tabsById.has(item.id) && !(addressInActiveTab && !iconOnly)}
+        animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(item, { recentlyDraggedId: getRecentlyDroppedId(), itemCount: zoneItems.length }), easing: springEase }}
+        use:dndItem={{ item, zoneId: zone.id, disabled: isShadowItem(item), onCancel: resetSidebarDrag }}
+      >
+        {@render slotContent(item)}
+      </div>
+    {/each}
+  {/if}
 {/snippet}
 
 {#snippet zoneOf(section: StripSection)}
@@ -410,7 +426,7 @@
         </svg>
       </button>
       {#if callOpen && callButton}
-        <StripPopover anchor={callButton} label={call?.title ?? ""} onclose={() => (callOpen = false)}>
+        <StripPopover anchor={callButton} label={call?.title ?? ""} role="dialog" onclose={() => (callOpen = false)}>
           {#await import("../sidebar/CallCard.svelte") then card}
             <card.default />
           {/await}
@@ -434,7 +450,7 @@
         </svg>
       </button>
       {#if mediaOpen && mediaButton}
-        <StripPopover anchor={mediaButton} label={getMediaCardTab()?.title ?? ""} onclose={() => (mediaOpen = false)}>
+        <StripPopover anchor={mediaButton} label={getMediaCardTab()?.title ?? ""} role="dialog" onclose={() => (mediaOpen = false)}>
           <MediaCard />
         </StripPopover>
       {/if}
@@ -453,7 +469,7 @@
         {#if getChosenAppIcon()}<img src={getChosenAppIcon()} alt="" width="18" height="18" />{/if}
       </button>
       {#if updateOpen && updateButton}
-        <StripPopover anchor={updateButton} label={t("updateCard.ready")} onclose={() => (updateOpen = false)}>
+        <StripPopover anchor={updateButton} label={t("updateCard.ready")} role="dialog" onclose={() => (updateOpen = false)}>
           <UpdateCard />
         </StripPopover>
       {/if}
@@ -707,8 +723,18 @@
     color: var(--text-secondary);
   }
 
+  .strip-surface-main:focus-visible {
+    border-radius: var(--radius-md);
+    outline: var(--focus-outline);
+    outline-offset: -2px;
+  }
+
   .strip-surface-close:hover {
     background: var(--bg-hover);
+  }
+
+  .strip-surface-close:active {
+    background: var(--bg-active);
   }
 
   .strip-address {
@@ -760,6 +786,15 @@
   .strip-btn.on {
     background: var(--bg-hover);
     color: var(--text-primary);
+  }
+
+  .strip-btn:active {
+    background: var(--bg-active);
+  }
+
+  .strip-btn:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   .close-glyph,

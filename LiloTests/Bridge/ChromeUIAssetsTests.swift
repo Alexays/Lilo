@@ -39,6 +39,11 @@ final class ChromeUIAssetsTests: XCTestCase {
         XCTAssertTrue(script.source.contains("#aabbcc"), "source should contain background color")
     }
 
+    func testBuildBootstrapScript_embedsInterfaceLocale() {
+        let script = MainWindowController.buildBootstrapScript(sidebarWidth: 260, windowBackgroundColor: "", tabLayout: .default)
+        XCTAssertTrue(script.source.contains("root.dataset.locale = '\(Localization.locale)'"))
+    }
+
     func testBuildBootstrapScript_injectionTime() {
         let script = MainWindowController.buildBootstrapScript(sidebarWidth: 260, windowBackgroundColor: "", tabLayout: .default)
         XCTAssertEqual(script.injectionTime, .atDocumentStart)

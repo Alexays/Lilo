@@ -5,6 +5,8 @@ import os
 extension Notification.Name {
     /// Object: the `WKWebViewTab` whose page goes away (its tab closed or was discarded).
     static let webViewTabWillTearDown = Notification.Name("fr.arouillard.lilo.webViewTabWillTearDown")
+    /// Object: the `WKWebViewTab` whose Web Inspector frontend closes, the user's or a hidden one.
+    static let webInspectorWillClose = Notification.Name("fr.arouillard.lilo.webInspectorWillClose")
 }
 
 /// chrome.debugger over the tab's Web Inspector, with InspectorCDP.js translating CDP to WebKit's protocol; screenshots stay in
@@ -30,7 +32,14 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         var urlObservation: NSKeyValueObservation?
         var scaled = false
         /// A `rawKeyDown` that types, sent with the `char` that follows it so the text goes in once.
-        var pendingKey: (key: String, keyCode: UInt16?)?
+        var pendingKey: (key: String, keyCode: UInt16?, modifiers: NSEvent.ModifierFlags)?
+        /// The emulation commands sent, the last one per setting, and the new-document scripts: a new
+        /// frontend starts without them.
+        var overrides: [(key: String, method: String, params: [String: Any])] = []
+        var scripts: [(identifier: String, source: String)] = []
+        var nextScript = 1
+        /// The move to a new frontend under way, which the sessions sharing the old one wait for.
+        var reconnection: Task<Bool, Never>?
 
         init(extensionId: String, extensionName: String, registry: ProfileExtensionRegistry, debuggee: [String: Any], engine: WKWebViewTab, inspector: AgentInspector) {
             self.extensionId = extensionId
@@ -61,6 +70,15 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
                     for session in self.sessions where ObjectIdentifier(session.engine) == engine {
                         self.end(session, reason: "target_closed", pageGone: true)
                     }
+                }
+            },
+            center.addObserver(forName: .webInspectorWillClose, object: nil, queue: .main) { [weak self] note in
+                guard let object = note.object else { return }
+                let engine = ObjectIdentifier(object as AnyObject)
+                MainActor.assumeIsolated {
+                    guard let self, let session = self.sessions.first(where: { ObjectIdentifier($0.engine) == engine }) else { return }
+                    // Runs once the frontend is gone, so events keep coming without waiting for a command.
+                    Task { @MainActor in if !session.inspector.isCurrent { _ = await self.reconnect(session) } }
                 }
             },
             center.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
@@ -149,7 +167,8 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         }
         guard let adapter else { return BridgeError("No \(type) with given id \(id).") }
         if let restriction = Self.restriction(of: adapter.url(for: context), for: context) { return BridgeError(restriction) }
-        guard let engine = adapter.engineTab else { return BridgeError("Cannot attach to this target.") }
+        // A suspended page answers no inspector: a tab the idle sweep froze wakes first.
+        guard let engine = adapter.engineTab, engine.wake() else { return BridgeError("Cannot attach to this target.") }
         let attached = { [self] in sessions.contains { $0.extensionId == call.extensionId && $0.registry === registry && $0.engine === engine } }
         if attached() { return BridgeError("Another debugger is already attached to the \(type) with id: \(id).") }
         let inspector: AgentInspector
@@ -169,6 +188,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             registry: registry, debuggee: debuggee, engine: engine, inspector: inspector
         )
         sessions.append(session)
+        engine.isExtensionDebugged = true
         Self.receiveEvents(of: inspector, handler: self)
         // Chrome detaches when the tab shows a page the extension may not debug.
         session.urlObservation = engine.wkWebView.observe(\.url, options: [.new]) { [weak self, weak session] webView, _ in
@@ -207,10 +227,11 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     }
 
     /// Ends a session; `reason` fires `onDetach`, which an extension's own detach does not. A gone page
-    /// never answers, so nothing is undone on it.
+    /// or frontend never answers, so nothing is undone on it.
     private func end(_ session: Session, reason: String?, pageGone: Bool = false) {
         guard let index = sessions.firstIndex(where: { $0 === session }) else { return }
         sessions.remove(at: index)
+        session.engine.isExtensionDebugged = sessions.contains { $0.engine === session.engine }
         session.urlObservation = nil
         if session.scaled { session.inspector.deviceScaleFactor = 0 }
         if let reason, let registry = session.registry {
@@ -223,9 +244,16 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
                 inspector.frontend.configuration.userContentController.removeScriptMessageHandler(forName: "liloDebuggerEvent", contentWorld: .page)
                 if !pageGone { _ = try? await inspector.script("cdpReset") }
             } else if !pageGone {
-                await syncDomains(of: inspector)
+                if session.overrides.isEmpty && session.scripts.isEmpty {
+                    await syncDomains(of: inspector)
+                } else {
+                    // The sessions left keep only what they set themselves.
+                    _ = try? await inspector.script("cdpReset")
+                    await restore(inspector)
+                }
             }
-            inspector.disconnect()
+            // Sessions moved to a new frontend together share one inspector.
+            if !sessions.contains(where: { $0.inspector === inspector }) { inspector.disconnect() }
         }
         publish()
     }
@@ -242,15 +270,10 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         let engine = session.engine
         let webView = engine.wkWebView
         // A suspended page answers nothing.
-        if engine.isFrozen { engine.resume() }
-        if !session.inspector.isCurrent {
-            // The user closed the Web Inspector they had open on the tab, and the connection with it.
-            guard let inspector = try? await AgentInspector.connect(to: webView, servesFiles: false), sessions.contains(where: { $0 === session }) else {
-                return Self.protocolError(-32000, "Target closed")
-            }
-            for other in sessions where other.inspector.frontend === session.inspector.frontend { other.inspector = inspector }
-            Self.receiveEvents(of: inspector, handler: self)
-            await syncDomains(of: inspector)
+        if engine.isFrozen { _ = engine.wake() }
+        // The user closed the Web Inspector they had open on the tab, and the connection with it.
+        if session.reconnection != nil || !session.inspector.isCurrent, !(await reconnect(session)) {
+            return Self.protocolError(-32000, "Target closed")
         }
         let number = { (key: String) in (params[key] as? NSNumber)?.doubleValue }
         switch method {
@@ -260,13 +283,19 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             }
             let tree = (try? await session.inspector.script("cdpSend", ["method": "Page.getFrameTree", "params": [:]])) as? [String: Any]
             let frame = ((tree?["result"] as? [String: Any])?["frameTree"] as? [String: Any])?["frame"] as? [String: Any]
+            // WebKit names the new document's loader only once it commits; CDP leaves it out for a fragment change.
+            let base = { (url: URL?) in url?.absoluteString.split(separator: "#", maxSplits: 1).first }
+            let sameDocument = url.fragment != nil && base(url) == base(webView.url)
             engine.loadURL(url)
-            return ["frameId": frame?["id"] ?? "", "loaderId": frame?["loaderId"] ?? ""] as [String: Any]
+            var result: [String: Any] = ["frameId": frame?["id"] ?? ""]
+            if !sameDocument { result["loaderId"] = UUID().uuidString }
+            return result
         case "Page.printToPDF":
             guard let data = try? await webView.pdf(configuration: WKPDFConfiguration()) else { return Self.protocolError(-32000, "Printing failed") }
             return ["data": data.base64EncodedString()]
         case "Emulation.setDeviceMetricsOverride", "Emulation.clearDeviceMetricsOverride":
             let scale = method == "Emulation.clearDeviceMetricsOverride" ? 0 : number("deviceScaleFactor") ?? 0
+            guard (0...10).contains(scale) else { return Self.protocolError(-32602, "deviceScaleFactor must be between 0 and 10") }
             session.inspector.deviceScaleFactor = CGFloat(scale)
             session.scaled = scale != 0
             return [String: Any]()
@@ -274,6 +303,17 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             return await dispatchMouse(params, to: webView)
         case "Input.dispatchKeyEvent":
             return await dispatchKey(params, to: webView, in: session)
+        case "Page.addScriptToEvaluateOnNewDocument":
+            let identifier = String(session.nextScript)
+            session.nextScript += 1
+            session.scripts.append((identifier, params["source"] as? String ?? ""))
+            await setScripts(of: session.inspector)
+            return ["identifier": identifier]
+        case "Page.removeScriptToEvaluateOnNewDocument":
+            let count = session.scripts.count
+            session.scripts.removeAll { $0.identifier == params["identifier"] as? String }
+            if session.scripts.count != count { await setScripts(of: session.inspector) }
+            return [String: Any]()
         default:
             break
         }
@@ -288,6 +328,10 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         if let error = reply["error"] as? [String: Any] {
             return Self.protocolError((error["code"] as? NSNumber)?.intValue ?? -32000, error["message"] as? String ?? "")
         }
+        if let key = Self.overrideKeys[method] {
+            session.overrides.removeAll { $0.key == key }
+            session.overrides.append((key, method, params))
+        }
         let parts = method.split(separator: ".")
         if parts.count == 2, parts[1] == "enable" || parts[1] == "disable" {
             if parts[1] == "enable" { session.domains.insert(String(parts[0])) } else { session.domains.remove(String(parts[0])) }
@@ -301,9 +345,58 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         return reply["result"] ?? [String: Any]()
     }
 
+    /// The emulation commands InspectorCDP.js runs, by the setting each overrides.
+    private static let overrideKeys = [
+        "Network.setExtraHTTPHeaders": "headers", "Network.setCacheDisabled": "cache",
+        "Network.setUserAgentOverride": "userAgent", "Emulation.setUserAgentOverride": "userAgent",
+        "Emulation.setScriptExecutionDisabled": "javascript", "Emulation.setEmulatedMedia": "media"
+    ]
+
+    /// Moves the sessions of a closed frontend to a new one with what they set; when the tab gives
+    /// none, they detach. Returns whether `session` is still attached.
+    private func reconnect(_ session: Session) async -> Bool {
+        let task: Task<Bool, Never>
+        if let pending = session.reconnection {
+            task = pending
+        } else {
+            let old = session.inspector.frontend
+            task = Task { [self] in
+                let inspector = try? await AgentInspector.connect(to: session.engine.wkWebView, servesFiles: false)
+                let moved = sessions.filter { $0.inspector.frontend === old }
+                guard let inspector, !moved.isEmpty else {
+                    for other in moved { end(other, reason: "target_closed", pageGone: true) }
+                    inspector?.disconnect()
+                    return false
+                }
+                for other in moved { other.inspector = inspector }
+                Self.receiveEvents(of: inspector, handler: self)
+                await restore(inspector)
+                for other in moved { other.reconnection = nil }
+                return true
+            }
+            for other in sessions where other.inspector.frontend === old { other.reconnection = task }
+        }
+        return await task.value && sessions.contains { $0 === session }
+    }
+
+    /// Gives a frontend the domains, emulation and new-document scripts of the sessions on it.
+    private func restore(_ inspector: AgentInspector) async {
+        await syncDomains(of: inspector)
+        let shared = sessions.filter { $0.inspector.frontend === inspector.frontend }
+        for command in shared.flatMap(\.overrides) {
+            _ = try? await inspector.script("cdpSend", ["method": command.method, "params": command.params])
+        }
+        if shared.contains(where: { !$0.scripts.isEmpty }) { await setScripts(of: inspector) }
+    }
+
     private func syncDomains(of inspector: AgentInspector) async {
         let domains = Set(sessions.filter { $0.inspector.frontend === inspector.frontend }.flatMap(\.domains))
         _ = try? await inspector.script("cdpDomains", ["domains": Array(domains)])
+    }
+
+    private func setScripts(of inspector: AgentInspector) async {
+        let sources = sessions.filter { $0.inspector.frontend === inspector.frontend }.flatMap { $0.scripts.map(\.source) }
+        _ = try? await inspector.script("cdpScripts", ["sources": sources])
     }
 
     /// CDP's modifiers bit field: Alt 1, Ctrl 2, Meta 4, Shift 8.
@@ -371,7 +464,15 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         let text = params["text"] as? String ?? ""
         let keyCode = (params["nativeVirtualKeyCode"] as? NSNumber).map { UInt16(truncatingIfNeeded: $0.intValue) }
         let modifiers = Self.modifiers(params)
-        switch params["type"] as? String ?? "" {
+        let type = params["type"] as? String ?? ""
+        // No char follows a shortcut or Tab: its keydown goes out, textless, before the next event.
+        if type != "char", let pending = session.pendingKey {
+            session.pendingKey = nil
+            await Self.untilPageSees("keydown", in: webView) {
+                AgentInput.keyEvent(webView, down: true, key: pending.key, text: "", keyCode: pending.keyCode, modifiers: pending.modifiers)
+            }
+        }
+        switch type {
         case "keyDown":
             await Self.untilPageSees("keydown", in: webView) {
                 AgentInput.keyEvent(webView, down: true, key: key, text: text, keyCode: keyCode, modifiers: modifiers)
@@ -379,7 +480,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         case "rawKeyDown":
             // A key that types waits for its char; one that does not (arrows, Backspace) goes now.
             if key.count == 1 || key == "Enter" || key == "Tab" {
-                session.pendingKey = (key, keyCode)
+                session.pendingKey = (key, keyCode, modifiers)
             } else {
                 await Self.untilPageSees("keydown", in: webView) {
                     AgentInput.keyEvent(webView, down: true, key: key, text: "", keyCode: keyCode, modifiers: modifiers)
@@ -395,7 +496,6 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             }
             session.pendingKey = nil
         case "keyUp":
-            session.pendingKey = nil
             await Self.untilPageSees("keyup", in: webView) {
                 AgentInput.keyEvent(webView, down: false, key: key, text: text, keyCode: keyCode, modifiers: modifiers)
             }

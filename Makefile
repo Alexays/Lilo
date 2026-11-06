@@ -24,7 +24,7 @@ SWIFTLINT := $(CURDIR)/build/swiftlint-$(SWIFTLINT_VERSION)/swiftlint
 XCODEGEN_VERSION := 2.46.0
 XCODEGEN_SHA256 := 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
 XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
-# What validate's UI and bridge builds read, and the stamps they leave once built from them.
+# What the UI and bridge builds read, and the stamps they leave once built from them.
 UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
 	$(UI_DIR)/releaseNotesPlugin.ts $(wildcard .changes/v*.md) scripts/embed_chrome_ui.py scripts/generate_native_strings.py
 BRIDGE_SOURCES := $(shell find $(BRIDGE_DIR)/src $(BRIDGE_DIR)/scripts) $(addprefix $(BRIDGE_DIR)/,esbuild.mjs package-lock.json tsconfig.json)
@@ -44,8 +44,7 @@ VT_STAMP := Vendor/.ghostty-sha
 WEBKIT_FORK_URL :=
 WEBKIT_FORK_SHA256 :=
 WEBKIT_FORK_STAMP := Vendor/.webkit-fork-sha256
-DMGBUILD_VERSION := 1.6.5
-DMGBUILD_DIR := build/dmgbuild-$(DMGBUILD_VERSION)
+DMGBUILD_DIR := build/dmgbuild
 # Inside the checkout, so a worktree's build goes with the worktree instead of staying in ~/Library.
 XCODEBUILD := xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath $(CURDIR)/.derived.noindex/xcode
 # They wait out real clocks (a worker's 30 s unload, a controller's first 5 s, a terminal's 5 s between
@@ -273,12 +272,16 @@ test-build: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 # RESULT_BUNDLE=path writes an .xcresult bundle (used by CI to upload results on failure).
 # Test classes run in parallel app instances, one per performance core: more only adds load and timing flakes.
 # SWIFT_TEST_SHARD=i/n deals the test classes, sorted by name, round-robin: neighbors like the Agent*Tests split up.
+# The last shard runs LiloTests minus the other shards' classes, so a class the grep misses still runs there.
+SWIFT_TEST_SHARD_I = $(word 1,$(subst /, ,$(SWIFT_TEST_SHARD)))
+SWIFT_TEST_SHARD_N = $(word 2,$(subst /, ,$(SWIFT_TEST_SHARD)))
 SWIFT_TEST_SHARD_CLASSES = $(shell grep -rhE '^final class [A-Za-z0-9_]+: *(XCTestCase|AgentToolTestCase)' LiloTests \
 	| sed -E 's/^final class ([A-Za-z0-9_]+).*/LiloTests\/\1/' | sort \
-	| awk -v i=$(word 1,$(subst /, ,$(SWIFT_TEST_SHARD))) -v n=$(word 2,$(subst /, ,$(SWIFT_TEST_SHARD))) 'NR % n == i % n')
+	| awk -v i=$(SWIFT_TEST_SHARD_I) -v n=$(SWIFT_TEST_SHARD_N) 'i == n ? NR % n != 0 : NR % n == i % n')
+SWIFT_TEST_SHARD_ARGS = $(if $(filter $(SWIFT_TEST_SHARD_N),$(SWIFT_TEST_SHARD_I)),-only-testing:LiloTests $(addprefix -skip-testing:,$(SWIFT_TEST_SHARD_CLASSES)),$(addprefix -only-testing:,$(SWIFT_TEST_SHARD_CLASSES)))
 ## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER="LiloTests/Class LiloTests/Other/testCase" narrows the run, SWIFT_TEST_SHARD=1/3 runs a third)
 swift-test: test-build
-	@$(TEST) $(addprefix -only-testing:,$(or $(SWIFT_TEST_FILTER),$(if $(SWIFT_TEST_SHARD),$(SWIFT_TEST_SHARD_CLASSES)),LiloTests)) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
+	@$(TEST) $(or $(addprefix -only-testing:,$(SWIFT_TEST_FILTER)),$(if $(SWIFT_TEST_SHARD),$(SWIFT_TEST_SHARD_ARGS)),-only-testing:LiloTests) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
@@ -339,7 +342,7 @@ preload-bench: test-build
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Report what a page's runtime.connect port to its extension's worker costs (OUT=build/port-bench.txt)
-port-bench: ext-bridge-build test-build
+port-bench: $(BRIDGE_STAMP) test-build
 	@out="$(abspath $(or $(OUT),build/port-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_PORT_BENCH="$$out" $(TEST) -only-testing:LiloTests/PortBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
@@ -357,7 +360,7 @@ ext-bridge-test: $(BRIDGE_DEPS)
 	@npm --prefix $(BRIDGE_DIR) test
 
 ## Install the most used Chrome Web Store extensions and the MV3 probe in parallel runs, and check they run and what a few do on a page (network; TOP=100 IDS=a,b SHARDS=6)
-ext-smoke: vt-build ext-bridge-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+ext-smoke: vt-build $(BRIDGE_STAMP) $(UI_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@$(TEST_LOCK) node scripts/ext-smoke.mjs --top '$(or $(TOP),100)' --ids '$(IDS)' --shards '$(or $(SHARDS),6)'
 
 ## Unattended ext-smoke of the top 500 (TOP=1000 for every listed one); report in .derived.noindex/ext-smoke/report.txt, non-zero exit on a regression
@@ -393,15 +396,15 @@ public-suffix-list:
 	@node $(BRIDGE_DIR)/scripts/public-suffix-list.mjs
 
 ## Build the debug app bundle under build/debug
-app: vt-build ui-build ext-bridge-build
+app: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@scripts/build-app.sh debug
 
 ## Install the release app to /Applications/Lilo.app, replacing the DMG's copy
-install: vt-build ui-build ext-bridge-build
+install: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@scripts/build-app.sh release install
 
 ## Install the debug app to ~/Applications/Lilo.app
-install-debug: vt-build ui-build ext-bridge-build
+install-debug: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@scripts/build-app.sh debug install
 
 ## Run the Debug xcodebuild directly
@@ -449,7 +452,10 @@ dmg:
 	@app="$(or $(APP),build/release/export/Lilo.app)"; \
 	if [ ! -d "$$app" ]; then echo "make dmg: $$app not found; run make release first or pass APP=/path/to/Lilo.app" >&2; exit 1; fi; \
 	set -e; \
-	[ -x $(DMGBUILD_DIR)/bin/dmgbuild ] || { python3 -m venv $(DMGBUILD_DIR) && $(DMGBUILD_DIR)/bin/pip install -q --disable-pip-version-check dmgbuild==$(DMGBUILD_VERSION); }; \
+	cmp -s scripts/dmg/requirements.txt $(DMGBUILD_DIR)/requirements.txt || { \
+		rm -rf $(DMGBUILD_DIR) && python3 -m venv $(DMGBUILD_DIR) && \
+		$(DMGBUILD_DIR)/bin/pip install -q --disable-pip-version-check --require-hashes --no-deps -r scripts/dmg/requirements.txt && \
+		cp scripts/dmg/requirements.txt $(DMGBUILD_DIR)/requirements.txt; }; \
 	$(DMGBUILD_DIR)/bin/dmgbuild -s scripts/dmg/settings.py -D app="$$app" Lilo build/Lilo.dmg
 
 ## Render scripts/dmg/background.html to the DMG background PNGs

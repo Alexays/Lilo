@@ -22,6 +22,9 @@ final class BackgroundSupervisor {
         var failed = false
         var failureReason: String?
         var lastErrorCount = 0
+        /// When each of the context's current errors was first observed. Keyed by the error, not its index:
+        /// WebKit removes a cleared error from the middle of the list. Diagnostics clearing leaves it alone.
+        var errorFirstSeen: [NSError: TimeInterval] = [:]
 
         var bridgeStatus: String {
             (prepDegraded || runtimeDegraded || failed) ? "degraded" : "loaded"
@@ -92,8 +95,10 @@ final class BackgroundSupervisor {
     @discardableResult
     func load(_ extensionId: String) async -> Bool {
         guard let context = context(extensionId), context.webExtension.hasBackgroundContent else { return false }
-        loadStartedAt[extensionId] = Date()
-        defer { loadStartedAt[extensionId] = nil }
+        // A load joining one in flight (or a restart or full reload holding the guard) leaves the guard to its owner.
+        let ownsGuard = !isLoadInFlight(extensionId)
+        if ownsGuard { loadStartedAt[extensionId] = Date() }
+        defer { if ownsGuard { loadStartedAt[extensionId] = nil } }
         // Ends when the worker connects (`workerChannel`); a running worker's load starts nothing.
         let startsWorker = worker(extensionId) != .running
         if startsWorker {
@@ -249,6 +254,12 @@ final class BackgroundSupervisor {
         let newErrors = errors.dropFirst(previousCount <= errors.count ? previousCount : 0)
         ExtensionDiagnostics.logContextErrorsIfNeeded(newErrors, of: context, extensionId: extensionId, reason: "notification", logger: Self.logger)
         health[extensionId]?.lastErrorCount = errors.count
+        let firstSeen = health[extensionId]?.errorFirstSeen ?? [:]
+        let now = Date().timeIntervalSince1970
+        health[extensionId]?.errorFirstSeen = Dictionary(
+            errors.map { error in (error as NSError, firstSeen[error as NSError] ?? now) },
+            uniquingKeysWith: { first, _ in first }
+        )
         didChange(extensionId)
         guard context.webExtension.hasBackgroundContent,
               ExtensionDiagnostics.errorsWarrantBackgroundRevive(newErrors) else { return }

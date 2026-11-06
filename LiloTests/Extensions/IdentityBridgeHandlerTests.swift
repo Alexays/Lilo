@@ -9,6 +9,7 @@ final class IdentityBridgeHandlerTests: XCTestCase {
     private let caller = "test-\(UUID().uuidString)"
     private let neighbor = "test-\(UUID().uuidString)"
     private let otherProfile = UUID()
+    private lazy var handler = IdentityBridgeHandler()
 
     override func tearDown() {
         for profile in [gapTestRegistry.profileId, otherProfile] {
@@ -36,7 +37,7 @@ final class IdentityBridgeHandlerTests: XCTestCase {
     private func send(_ action: String, _ payload: [String: Any], as extensionId: String) async throws -> Any? {
         var payload = payload
         payload["extensionId"] = extensionId
-        return await IdentityBridgeHandler().handle(try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": payload])))
+        return await handler.handle(try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": payload])))
     }
 
     func testAnUncachedTokenNeedsAnInteractiveSignInAndAClientId() async throws {
@@ -59,6 +60,17 @@ final class IdentityBridgeHandlerTests: XCTestCase {
         XCTAssertNotNil(stale as? BridgeError, "a token expiring within the minute is not handed out")
     }
 
+    func testATokenOnceReadIsServedFromMemory() async throws {
+        cache("fresh", for: caller, scope: "email", expiresIn: 3600)
+        _ = try await send("identity.getAuthToken", ["scopes": ["email"]], as: caller)
+        SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+                       kSecAttrAccount as String: "\(gapTestRegistry.profileId.uuidString)\u{1f}\(caller)\u{1f}email"] as CFDictionary)
+
+        let again = try await send("identity.getAuthToken", ["scopes": ["email"]], as: caller) as? [String: Any]
+
+        XCTAssertEqual(again?["token"] as? String, "fresh", "no keychain read once the token is known")
+    }
+
     func testATokenCachedInAnotherProfileIsNotHandedOut() async throws {
         cache("elsewhere", for: caller, scope: "email", expiresIn: 3600, profile: otherProfile)
 
@@ -71,6 +83,9 @@ final class IdentityBridgeHandlerTests: XCTestCase {
         cache("mine", for: caller, scope: "email", expiresIn: 3600)
         cache("mine", for: neighbor, scope: "email", expiresIn: 3600)
         cache("other", for: caller, scope: "profile", expiresIn: 3600)
+        for (id, scope) in [(caller, "email"), (neighbor, "email"), (caller, "profile")] {
+            _ = try await send("identity.getAuthToken", ["scopes": [scope]], as: id)
+        }
 
         _ = try await send("identity.removeCachedAuthToken", ["token": "mine"], as: caller)
         let removed = try await send("identity.getAuthToken", ["scopes": ["email"]], as: caller)

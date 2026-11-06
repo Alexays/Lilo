@@ -179,7 +179,7 @@ Lilo 透過已簽署的 Sparkle 更新自行更新。
 
 ## 從原始碼編譯
 
-先安裝 Xcode 27 與 Node.js 22.6+（[完整先決條件](../../CONTRIBUTING.md#requirements)）：
+先安裝 Xcode 27 與 Node.js 22.23.4+（[完整先決條件](../../CONTRIBUTING.md#requirements)）：
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo

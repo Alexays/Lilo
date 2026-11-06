@@ -218,10 +218,10 @@
       <StripPopover anchor={openFolder.anchor} label={folder.name} onclose={() => (openFolder = null)}>
         {#if folder.isLocked}
           <!-- Unlocking takes the full sidebar: the rail unfolds to it. -->
-          <button class="popover-row" onclick={() => setSidebarRail(false)}>{t("tabFolder.unlock")}</button>
+          <button class="popover-row" role="menuitem" onclick={() => setSidebarRail(false)}>{t("tabFolder.unlock")}</button>
         {:else}
           {#each folderTabs(folder.id) as tab (tab.id)}
-            <button class="popover-row" class:active={tab.id === activeTabId} class:asleep={tab.isClosed} onclick={() => { openFolder = null; activate(tab); }}>
+            <button class="popover-row" role="menuitem" class:active={tab.id === activeTabId} class:asleep={tab.isClosed} onclick={() => { openFolder = null; activate(tab); }}>
               <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} asleep={tab.isClosed} />
               <span class="row-title">{tabTitle(tab)}</span>
             </button>
@@ -247,7 +247,7 @@
         <span class="update-dot" aria-hidden="true"></span>
       </button>
       {#if updateOpen && updateButton}
-        <StripPopover anchor={updateButton} label={t("updateCard.ready")} onclose={() => (updateOpen = false)}>
+        <StripPopover anchor={updateButton} label={t("updateCard.ready")} role="dialog" onclose={() => (updateOpen = false)}>
           {#await import("./UpdateCard.svelte") then card}<card.default />{/await}
         </StripPopover>
       {/if}

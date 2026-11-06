@@ -191,27 +191,34 @@
     return out;
   }
 
+  // The selectors each :-abp-properties() operator found during the current pass: inside a :has(), it runs once per candidate.
+  var propertySelectors = null;
+
   // The elements the selectors of the page's same-origin style rules match, for the rules whose declarations
   // :-abp-properties() matches. A rule styling a ::before or ::after selects the element that carries it.
   function abpProperties(op, nodes, css, root) {
-    var selectors = [];
-    for (var s = 0; s < document.styleSheets.length; s++) {
-      var rules;
-      try { rules = document.styleSheets[s].cssRules; } catch (e) { continue; }
-      for (var r = 0; r < rules.length; r++) {
-        if (rules[r].type !== 1) continue;
-        var style = rules[r].style;
-        var text = '';
-        for (var k = 0; k < style.length; k++) {
-          var priority = style.getPropertyPriority(style[k]);
-          text += (op.compact || !k ? '' : ' ') + style[k] + (op.compact ? ':' : ': ') + style.getPropertyValue(style[k]) +
-            (priority ? ' !' + priority : '') + ';';
+    var joined = propertySelectors.get(op);
+    if (joined === undefined) {
+      var selectors = [];
+      for (var s = 0; s < document.styleSheets.length; s++) {
+        var rules;
+        try { rules = document.styleSheets[s].cssRules; } catch (e) { continue; }
+        for (var r = 0; r < rules.length; r++) {
+          if (rules[r].type !== 1) continue;
+          var style = rules[r].style;
+          var text = '';
+          for (var k = 0; k < style.length; k++) {
+            var priority = style.getPropertyPriority(style[k]);
+            text += (op.compact || !k ? '' : ' ') + style[k] + (op.compact ? ':' : ': ') + style.getPropertyValue(style[k]) +
+              (priority ? ' !' + priority : '') + ';';
+          }
+          if (op.re.test(text)) selectors.push(rules[r].selectorText.replace(/::?(?:before|after)\b/gi, ''));
         }
-        if (op.re.test(text)) selectors.push(rules[r].selectorText.replace(/::?(?:before|after)\b/gi, ''));
       }
+      joined = selectors.join(', ');
+      propertySelectors.set(op, joined);
     }
-    if (!selectors.length) return [];
-    var joined = selectors.join(', ');
+    if (!joined) return [];
     try {
       if (css) return nodes.filter(function (el) { return el.matches(joined); });
       return Array.prototype.slice.call(root.querySelectorAll(joined));
@@ -350,14 +357,17 @@
     parsed.forEach(function (p) { if (p.ops.some(function (op) { return op.name === 'others'; })) p.others = new Set(); });
     var run = function (scope) {
       texts = new Map();
+      propertySelectors = new Map();
       for (var i = 0; i < parsed.length; i++) { try { applySelector(parsed[i], scope); } catch (e) {} }
-      texts = null;
+      texts = propertySelectors = null;
     };
     // Elements inserted since the last pass. The outermost connected ones are the roots; their
     // ancestors are collected once for all.
     var added = [], scheduled = false, missedWhileHidden = false;
     var runAdded = function () {
       scheduled = false;
+      // A hidden page's insertions wait for its return.
+      if (document.hidden) return;
       var pending = new Set(added), roots = [], ancestors = [], seen = new Set();
       added = [];
       pending.forEach(function (el) {
@@ -369,27 +379,34 @@
       if (roots.length) run({ roots: roots, ancestors: ancestors });
     };
     var runAll = function () { added = []; run(null); };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runAll);
-    else runAll();
-    document.addEventListener('visibilitychange', function () {
-      if (!document.hidden && missedWhileHidden) { missedWhileHidden = false; runAll(); }
-    });
-    try {
-      new MutationObserver(function (records) {
-        // The full pass on return covers whatever changes meanwhile.
-        if (document.hidden) { missedWhileHidden = true; added = []; return; }
-        for (var r = 0; r < records.length; r++) {
-          var nodes = records[r].addedNodes;
-          for (var k = 0; k < nodes.length; k++) {
-            // Text lands in its parent, whose own text changed.
-            var el = nodes[k].nodeType === 1 ? nodes[k] : records[r].target;
-            if (el && el.nodeType === 1) added.push(el);
-          }
+    var onMutations = function (records) {
+      for (var r = 0; r < records.length; r++) {
+        var nodes = records[r].addedNodes;
+        for (var k = 0; k < nodes.length; k++) {
+          // Text lands in its parent, whose own text changed.
+          var el = nodes[k].nodeType === 1 ? nodes[k] : records[r].target;
+          if (el && el.nodeType === 1) added.push(el);
         }
-        if (!added.length || scheduled) return;
-        scheduled = true;
-        setTimeout(runAdded, 200);
-      }).observe(document.documentElement || document, { childList: true, subtree: true });
-    } catch (e) {}
+      }
+      // Past this many insertions in a hidden page, one full pass on return is cheaper than a scoped one, and observing
+      // until then builds records for nothing.
+      if (document.hidden && added.length > 2000) { missedWhileHidden = true; added = []; observer.disconnect(); }
+      if (!added.length || scheduled || document.hidden) return;
+      scheduled = true;
+      setTimeout(runAdded, 200);
+    };
+    var observer = new MutationObserver(onMutations);
+    // The parser's insertions are left to the full pass once the document is parsed: observed, each costs a record.
+    var start = function () {
+      runAll();
+      try { observer.observe(document.documentElement || document, { childList: true, subtree: true }); } catch (e) {}
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      if (missedWhileHidden) { missedWhileHidden = false; start(); }
+      else if (!scheduled) runAdded();
+    });
   }
 })();

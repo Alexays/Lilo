@@ -11,12 +11,21 @@ final class PageWorldTests: XCTestCase {
     private static let addedMembers: Set<String> = ["Navigator.prototype.serial", "window.documentPictureInPicture"]
 
     /// Every own property of the window, its interfaces and their prototypes, and the objects Lilo's modules touch, by
-    /// shape; and every function among them that does not print as native code, in its own realm or in a fresh frame's.
+    /// shape; every function among them that does not print as native code, in its own realm or in a fresh frame's; and
+    /// how often Lilo's scripts, a bridge call among them, went through the page's WeakMap and Promise methods meanwhile.
     private static let probe = #"""
+    let hooked = 0;
+    const restores = [[WeakMap.prototype, 'get'], [WeakMap.prototype, 'set'], [Promise.prototype, 'then'], [Promise.prototype, 'finally']]
+      .map(([target, key]) => {
+        const original = target[key];
+        target[key] = new Proxy(original, { apply(f, self, args) { hooked++; return Reflect.apply(f, self, args); } });
+        return () => { target[key] = original; };
+      });
     const dom = document.documentElement.outerHTML, styleSheets = document.styleSheets.length;
     const adoptedStyleSheets = document.adoptedStyleSheets.length;
     const fresh = document.createElement('iframe');
     document.body.appendChild(fresh);
+    if (navigator.serial) navigator.serial.getPorts();
     const freshToString = fresh.contentWindow.Function.prototype.toString;
     const fn = f => typeof f === 'function' ? f.name + '/' + f.length : typeof f;
     const describe = d => 'value' in d ? `v:${d.writable},${d.enumerable},${d.configurable}:${fn(d.value)}`
@@ -54,13 +63,16 @@ final class PageWorldTests: XCTestCase {
     shapes['webkit in window'] = String('webkit' in window);
     shapes['webkit in frame'] = String('webkit' in frame);
     shapes['frame keys'] = Object.keys(frame).join();
-    return JSON.stringify({ shapes, nonNative, userAgent: navigator.userAgent, vendor: navigator.vendor,
+    shapes['setTimeout source'] = Function.prototype.toString.call(setTimeout);
+    for (const restore of restores) restore();
+    return JSON.stringify({ shapes, nonNative, hooked, userAgent: navigator.userAgent, vendor: navigator.vendor,
                             userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets });
     """#
 
     private struct Report: Decodable {
         let shapes: [String: String]
         let nonNative: [String]
+        let hooked: Int
         let userAgent: String
         let vendor: String
         let userAgentData: Bool
@@ -69,13 +81,17 @@ final class PageWorldTests: XCTestCase {
         let adoptedStyleSheets: Int
     }
 
-    private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
+    private func load(_ webView: WKWebView) async {
         webView.loadHTMLString("<p>probe</p>", baseURL: URL(string: "https://example.com/"))
         let loaded = await pollUntil(timeout: 10) {
             let condition = "location.href === 'https://example.com/' && document.readyState === 'complete'"
             return ((try? await webView.evaluateJavaScript(condition)) as? Bool) == true
         }
         XCTAssertTrue(loaded)
+    }
+
+    private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
+        await load(webView)
         await afterLoad()
         let result = try await webView.callAsyncJavaScript(Self.probe, contentWorld: .page)
         let json = try XCTUnwrap(result as? String)
@@ -84,9 +100,11 @@ final class PageWorldTests: XCTestCase {
 
     func testATabShowsPagesNothingABareWebKitPageDoesNot() async throws {
         let factory = WKEngineFactory()
-        // A site's cosmetics apply at once: their sheet must leave the page's DOM and stylesheets as they are.
+        // A site's cosmetics apply at once: their sheet must leave the page's DOM and stylesheets as they are. Its
+        // scriptlets leave the functions they wrap printing as native code.
+        let scriptlets = #"{"example.com":[["set-constant",["history.adsBlocked","true"]],["no-setTimeout-if",["adProbe"]]]}"#
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(
-            cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: nil, procedural: nil
+            cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: scriptlets, procedural: nil
         ))
         let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
         defer { tab.teardown() }
@@ -115,6 +133,7 @@ final class PageWorldTests: XCTestCase {
         let changed = bare.shapes.compactMap { key, shape in lilo.shapes[key].flatMap { $0 == shape ? nil : "\(key): \(shape) -> \($0)" } }
         XCTAssertEqual(changed.sorted(), [], "properties shaped unlike Safari's")
         XCTAssertEqual(lilo.nonNative, [], "functions that print their source")
+        XCTAssertEqual(lilo.hooked, 0, "calls through the page's WeakMap and Promise methods")
         for global in Self.addedGlobals {
             XCTAssertEqual(lilo.shapes["window.\(global)"], "v:true,false,true:\(global)/0", "\(global) is defined as an interface object is")
         }
@@ -127,5 +146,32 @@ final class PageWorldTests: XCTestCase {
         XCTAssertEqual(lilo.dom, bare.dom)
         XCTAssertEqual(lilo.styleSheets, bare.styleSheets)
         XCTAssertEqual(lilo.adoptedStyleSheets, bare.adoptedStyleSheets)
+    }
+
+    /// Geolocation calls a page makes before any permission decision: their ids and errors read as WebKit's own.
+    func testGeolocationCallsAnswerAsInABareWebKitPage() async throws {
+        let probe = """
+            const geolocation = navigator.geolocation, results = [];
+            for (const call of [() => geolocation.getCurrentPosition(), () => geolocation.getCurrentPosition(null),
+                                () => geolocation.watchPosition(), () => geolocation.watchPosition(() => {}, 1),
+                                () => geolocation.clearWatch()]) {
+              try { call(); results.push('returned'); } catch (e) { results.push(e.constructor.name + ': ' + e.message); }
+            }
+            const ids = [geolocation.watchPosition(() => {}), geolocation.watchPosition(() => {})];
+            for (const id of ids) geolocation.clearWatch(id);
+            return results.concat(ids.map(String));
+            """
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        defer { tab.teardown() }
+        let configuration = try XCTUnwrap(tab.wkWebView.configuration.copy() as? WKWebViewConfiguration)
+        configuration.userContentController = WKUserContentController()
+        let bareWebView = WKWebView(frame: .zero, configuration: configuration)
+        await load(tab.wkWebView)
+        await load(bareWebView)
+        let lilo = try await tab.wkWebView.callAsyncJavaScript(probe, contentWorld: .page) as? [String]
+        let bare = try await bareWebView.callAsyncJavaScript(probe, contentWorld: .page) as? [String]
+        XCTAssertEqual(bare?.suffix(2), ["1", "2"])
+        XCTAssertEqual(lilo, bare)
     }
 }

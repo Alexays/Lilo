@@ -52,7 +52,8 @@ final class HistoryBridgeHandler: GapHandler {
                         "id": entry.id.uuidString,
                         "visitTime": visit.visitedAt.timeIntervalSince1970 * 1000,
                         "referringVisitId": "0",
-                        "transition": "link"
+                        "transition": "link",
+                        "isLocal": true
                     ]
                 }
             }

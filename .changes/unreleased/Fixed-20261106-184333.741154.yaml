@@ -1,0 +1,3 @@
+kind: Fixed
+body: Lilo no longer quits on a filter list regex with an out-of-range repeat count, on an extension's out-of-range scroll delta, scale factor or bookmark index, on a page opening a serial port at a negative baud rate, or on a diff of several gigabytes, which the Changes view now reports as too large to show
+time: 2026-11-06T18:43:33.741154+01:00

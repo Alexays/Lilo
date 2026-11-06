@@ -3,15 +3,18 @@ import os
 
 /// A JSON-RPC 2.0 connection to an ACP agent over its standard input and output, one message per line.
 /// Lines are read and decoded off the main thread; what the agent sends reaches the main actor in batches,
-/// in the order it was written.
+/// in the order it was written. Messages to the agent are encoded and written on a serial queue, in call order.
 final class ACPConnection: @unchecked Sendable {
     struct RPCError: LocalizedError {
         let code: Int
         let message: String
         var errorDescription: String? { message }
+
+        /// Lilo's own failures to reach the agent, outside JSON-RPC's codes so none reads as the agent's `auth_required`.
+        static let transport = -1
     }
 
-    /// JSON from the agent, handed from the reading queue to the main actor that alone uses it.
+    /// JSON handed between the connection's queues and the main actor; only one side uses it at a time.
     struct Payload: @unchecked Sendable { let value: [String: Any] }
 
     enum Incoming {
@@ -30,6 +33,7 @@ final class ACPConnection: @unchecked Sendable {
     private let output = Pipe()
     private let errorPipe = Pipe()
     private let lock = NSLock()
+    private let writes = DispatchQueue(label: "lilo.acp.write", qos: .userInitiated)
     private var nextId = 1
     private var pending: [Int: CheckedContinuation<Payload, Error>] = [:]
     private var buffer = Data()
@@ -81,7 +85,7 @@ final class ACPConnection: @unchecked Sendable {
                 defer { self.pending.removeAll() }
                 return (Array(self.pending.values), String(bytes: self.errorTail, encoding: .utf8) ?? "")
             }
-            let error = RPCError(code: -32000, message: "The agent stopped")
+            let error = RPCError(code: RPCError.transport, message: "The agent stopped.".localized)
             waiting.forEach { $0.resume(throwing: error) }
             let status = process.terminationStatus
             DispatchQueue.main.async { MainActor.assumeIsolated { self.onExit?(status, errorText) } }
@@ -96,25 +100,26 @@ final class ACPConnection: @unchecked Sendable {
                 pending[nextId] = continuation
                 return nextId
             }
-            guard process.isRunning, write(["jsonrpc": "2.0", "id": id, "method": method, "params": params]) else {
+            let message = Payload(value: ["jsonrpc": "2.0", "id": id, "method": method, "params": params])
+            writes.async { [self] in
+                if process.isRunning, write(message.value) { return }
                 if let waiting = lock.withLock({ pending.removeValue(forKey: id) }) {
-                    waiting.resume(throwing: RPCError(code: -32000, message: "The agent is not running"))
+                    waiting.resume(throwing: RPCError(code: RPCError.transport, message: "The agent is not running.".localized))
                 }
-                return
             }
         }.value
     }
 
     func notify(_ method: String, _ params: [String: Any]) {
-        _ = write(["jsonrpc": "2.0", "method": method, "params": params])
+        send(Payload(value: ["jsonrpc": "2.0", "method": method, "params": params]))
     }
 
     func respond(id: Any, result: [String: Any]) {
-        _ = write(["jsonrpc": "2.0", "id": id, "result": result])
+        send(Payload(value: ["jsonrpc": "2.0", "id": id, "result": result]))
     }
 
     func respond(id: Any, errorCode: Int, message: String) {
-        _ = write(["jsonrpc": "2.0", "id": id, "error": ["code": errorCode, "message": message]])
+        send(Payload(value: ["jsonrpc": "2.0", "id": id, "error": ["code": errorCode, "message": message]]))
     }
 
     /// Ends the agent: its pipes close, so an agent that ignores SIGTERM still stops at its next write.
@@ -122,8 +127,13 @@ final class ACPConnection: @unchecked Sendable {
         output.fileHandleForReading.readabilityHandler = nil
         errorPipe.fileHandleForReading.readabilityHandler = nil
         errorsRead.signal()
-        try? input.fileHandleForWriting.close()
+        // Behind the queued writes, so what was sent before still reaches the agent and no write races the close.
+        writes.async { [self] in try? input.fileHandleForWriting.close() }
         if process.isRunning { process.terminate() }
+    }
+
+    private func send(_ message: Payload) {
+        writes.async { [self] in _ = write(message.value) }
     }
 
     private func write(_ message: [String: Any]) -> Bool {

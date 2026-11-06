@@ -4,9 +4,9 @@ import os
 import UserNotifications
 
 /// Conversations with ACP agents, one per agent tab. An agent starts on a conversation's first use and
-/// stops once idle; its session comes back with `session/load`. What a conversation shows is the log of
-/// the agent's `session/update` notifications plus Lilo's own entries (`lilo_*`), which the chrome replays
-/// when the conversation comes on screen, then receives as they arrive.
+/// stops once idle; its session comes back with `session/resume` or `session/load`. What a conversation
+/// shows is the log of the agent's `session/update` notifications plus Lilo's own entries (`lilo_*`), which
+/// the chrome replays when the conversation comes on screen, then receives as they arrive.
 @MainActor
 final class ConversationHost {
     enum State: String {
@@ -35,6 +35,7 @@ final class ConversationHost {
         /// The project's files when each prompt was sent, by prompt index: what "Restore to here" goes back to.
         var checkpoints: [String?] = []
         var canLoadSession = false
+        var canResumeSession = false
         var acceptsImages = false
         var authMethods: [[String: Any]] = []
         /// Replays of `session/load` repeat what the log already holds after an idle stop.
@@ -153,11 +154,16 @@ final class ConversationHost {
             conversation.log = (object["log"] as? [[String: Any]] ?? []).map(ACPConnection.Payload.init(value:))
             conversation.checkpoints = (object["checkpoints"] as? [String] ?? []).map { $0.isEmpty ? nil : $0 }
         } else if conversation.sessionId != nil {
-            Task { try? await ensureStarted(conversation) }
+            Task {
+                do {
+                    try await ensureStarted(conversation)
+                    scheduleIdleStop(conversation)
+                } catch {
+                    failedOutsideTurn(conversation, error)
+                }
+            }
         }
     }
-
-    var busyCount: Int { conversations.values.filter { $0.state == .busy }.count }
 
     // MARK: - Chrome subscriptions
 
@@ -216,17 +222,22 @@ final class ConversationHost {
                   var last = conversation.log.last?.value, last["sessionUpdate"] as? String == kind,
                   last["messageId"] as? String == update["messageId"] as? String,
                   Self.parentToolUse(of: last) == Self.parentToolUse(of: update),
-                  var content = last["content"] as? [String: Any], content["type"] as? String == "text", let text = content["text"] as? String,
+                  var content = last["content"] as? [String: Any], content["type"] as? String == "text", var text = content["text"] as? String,
                   let chunk = update["content"] as? [String: Any], chunk["type"] as? String == "text", let more = chunk["text"] as? String {
-            content["text"] = text + more
+            // Out of the log and out of `content`, `text` is uniquely referenced and grows in place.
+            conversation.log.removeLast()
+            last.removeValue(forKey: "content")
+            content.removeValue(forKey: "text")
+            text.append(more)
+            content["text"] = text
             last["content"] = content
-            conversation.log[conversation.log.count - 1] = ACPConnection.Payload(value: last)
+            conversation.log.append(ACPConnection.Payload(value: last))
         } else {
             conversation.log.append(ACPConnection.Payload(value: update))
         }
         guard let windows = context?.windows.windows else { return }
         for window in windows where shown[ObjectIdentifier(window)]?.contains(conversation.tabId) == true {
-            window.bridgeRouter.send(event: "conversationUpdate", data: ["tabId": conversation.tabId.uuidString, "update": update])
+            window.bridgeRouter.send(event: "conversationUpdate", data: ["tabId": conversation.tabId.uuidString, "updates": [update]])
         }
     }
 
@@ -272,6 +283,8 @@ final class ConversationHost {
             guard let self, let conversation, conversation.connection === connection else { return }
             self.agentExited(conversation, status: status, errors: errors)
         }
+        // A conversation closed while its agent was being found must not get a process it can no longer stop.
+        try Task.checkCancellation()
         try connection.start()
         conversation.connection = connection
         let initialized = try await connection.request("initialize", [
@@ -281,6 +294,7 @@ final class ConversationHost {
         ])
         let capabilities = initialized["agentCapabilities"] as? [String: Any] ?? [:]
         conversation.canLoadSession = capabilities["loadSession"] as? Bool ?? false
+        conversation.canResumeSession = (capabilities["sessionCapabilities"] as? [String: Any])?["resume"] is [String: Any]
         conversation.acceptsImages = (capabilities["promptCapabilities"] as? [String: Any])?["image"] as? Bool ?? false
         conversation.authMethods = initialized["authMethods"] as? [[String: Any]] ?? []
         try await openSession(conversation, connection: connection)
@@ -294,18 +308,21 @@ final class ConversationHost {
             "args": [String](),
             "env": [["name": "LILO_CONVERSATION", "value": conversation.token]]
         ]]
-        if let sessionId = conversation.sessionId, conversation.canLoadSession {
+        // With the thread already in the log, `session/resume` spares the history `session/load` replays.
+        let method = conversation.canResumeSession && !conversation.log.isEmpty ? "session/resume"
+            : conversation.canLoadSession ? "session/load" : nil
+        if let sessionId = conversation.sessionId, let method {
             conversation.replaying = !conversation.log.isEmpty
             defer { conversation.replaying = false }
             do {
                 let loaded = try await withAuthentication(conversation, connection: connection) {
-                    try await connection.request("session/load", ["sessionId": sessionId, "cwd": conversation.cwd, "mcpServers": servers])
+                    try await connection.request(method, ["sessionId": sessionId, "cwd": conversation.cwd, "mcpServers": servers])
                 }
                 applySessionState(conversation, loaded)
                 return
-            } catch let error as ACPConnection.RPCError where error.code != -32000 {
+            } catch let error as ACPConnection.RPCError where error.code != -32000 && error.code != ACPConnection.RPCError.transport {
                 // A session the agent no longer has starts over in a new one.
-                Self.logger.info("session/load failed, starting a new session: \(error.message, privacy: .public)")
+                Self.logger.info("\(method, privacy: .public) failed, starting a new session: \(error.message, privacy: .public)")
             }
         }
         let created = try await withAuthentication(conversation, connection: connection) {
@@ -347,15 +364,23 @@ final class ConversationHost {
     }
 
     /// Runs the agent's own sign-in, its launch command with the method's arguments, in a terminal tab.
+    /// A tab that cannot open drops the prompt the sign-in held, as nothing would ever send it.
     private func signInInTerminal(_ conversation: Conversation, method: [String: Any]) {
-        guard let agent = catalog.agent(id: conversation.agentId), let window = context?.windows.activeWindow else { return }
         Task {
-            guard let launch = try? await catalog.launch(agent) else { return }
-            let words = [launch.executable.path] + launch.arguments + (method["args"] as? [String] ?? [])
-            let command = words.map { "'" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }.joined(separator: " ")
-            if let tab = window.createTerminalTab(command: "PATH='\(launch.environment["PATH"] ?? "")' " + command) {
-                signInTerminals[tab.id] = conversation.tabId
+            if let agent = catalog.agent(id: conversation.agentId), let window = context?.windows.activeWindow,
+               let launch = try? await catalog.launch(agent) {
+                let words = [launch.executable.path] + launch.arguments + (method["args"] as? [String] ?? [])
+                let command = words.map { "'" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }.joined(separator: " ")
+                if let tab = window.createTerminalTab(command: "PATH='\(launch.environment["PATH"] ?? "")' " + command) {
+                    signInTerminals[tab.id] = conversation.tabId
+                    return
+                }
             }
+            conversation.awaitingSignIn = nil
+            conversation.queued.removeAll()
+            conversation.lastError = "The sign-in terminal could not open.".localized
+            append(conversation, ["sessionUpdate": "lilo_error", "message": conversation.lastError ?? ""])
+            setState(conversation, .failed)
         }
     }
 
@@ -507,11 +532,29 @@ final class ConversationHost {
                 if let blocks = conversation.awaitingSignIn {
                     conversation.awaitingSignIn = nil
                     await runTurn(conversation, blocks: blocks)
+                } else {
+                    scheduleIdleStop(conversation)
                 }
             } catch {
-                append(conversation, ["sessionUpdate": "lilo_error", "message": error.localizedDescription])
+                failedOutsideTurn(conversation, error)
             }
         }
+    }
+
+    /// Starting the agent or a request outside a turn failed: the thread says why, unless the conversation is gone.
+    /// A running turn reports it itself, and keeps the prompt a terminal sign-in holds.
+    private func failedOutsideTurn(_ conversation: Conversation, _ error: Error) {
+        if error is CancellationError || conversation.state == .busy { return }
+        if error is SignInPending {
+            // No prompt waits on that sign-in, so the next one starts a fresh agent that reads the new credentials.
+            conversation.connection?.terminate()
+            conversation.connection = nil
+            setState(conversation, .idle)
+            return
+        }
+        conversation.lastError = error.localizedDescription
+        append(conversation, ["sessionUpdate": "lilo_error", "message": error.localizedDescription])
+        setState(conversation, .failed)
     }
 
     /// The agent's process up and initialized, without opening a session: what signing in needs.
@@ -555,22 +598,38 @@ final class ConversationHost {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.idleDelay, execute: work)
     }
 
+    /// Starts an agent stopped once idle, so a mode picked from a thread replayed after a relaunch still applies.
     func setMode(_ tabId: UUID, modeId: String) {
-        guard let conversation = conversations[tabId], let sessionId = conversation.sessionId, let connection = conversation.connection else { return }
+        guard let conversation = conversations[tabId] else { return }
         Task {
-            _ = try? await connection.request("session/set_mode", ["sessionId": sessionId, "modeId": modeId])
-            append(conversation, ["sessionUpdate": "current_mode_update", "currentModeId": modeId])
+            do {
+                try await ensureStarted(conversation)
+                guard let connection = conversation.connection, let sessionId = conversation.sessionId else { return }
+                _ = try await connection.request("session/set_mode", ["sessionId": sessionId, "modeId": modeId])
+                append(conversation, ["sessionUpdate": "current_mode_update", "currentModeId": modeId])
+                scheduleIdleStop(conversation)
+            } catch {
+                failedOutsideTurn(conversation, error)
+            }
         }
     }
 
     func setConfigOption(_ tabId: UUID, configId: String, value: Any) {
-        guard let conversation = conversations[tabId], let sessionId = conversation.sessionId, let connection = conversation.connection else { return }
+        guard let conversation = conversations[tabId] else { return }
         Task {
-            var params: [String: Any] = ["sessionId": sessionId, "configId": configId, "value": value]
-            if value is Bool { params["type"] = "boolean" }
-            guard let result = try? await connection.request("session/set_config_option", params),
-                  let options = result["configOptions"] as? [Any] else { return }
-            append(conversation, ["sessionUpdate": "config_option_update", "configOptions": options])
+            do {
+                try await ensureStarted(conversation)
+                guard let connection = conversation.connection, let sessionId = conversation.sessionId else { return }
+                var params: [String: Any] = ["sessionId": sessionId, "configId": configId, "value": value]
+                if value is Bool { params["type"] = "boolean" }
+                let result = try await connection.request("session/set_config_option", params)
+                if let options = result["configOptions"] as? [Any] {
+                    append(conversation, ["sessionUpdate": "config_option_update", "configOptions": options])
+                }
+                scheduleIdleStop(conversation)
+            } catch {
+                failedOutsideTurn(conversation, error)
+            }
         }
     }
 
@@ -735,7 +794,6 @@ final class ConversationHost {
                               tab.gitBranch = branch
                           }) else { return }
                     window.enqueueVisibleTabUpdate(updated)
-                    self.scheduleSummary()
                 }
             }
         }

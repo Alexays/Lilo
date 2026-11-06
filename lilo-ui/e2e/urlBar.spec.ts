@@ -161,3 +161,52 @@ test("the site details say an https page is not secure when its certificate or c
 	await expect(card).toContainText("Not secure");
 	await expect(card).not.toContainText("Encrypted");
 });
+
+test("a host too long for the bar keeps its registrable domain in view", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.url = "https://login.bank.com-signin-verify-session-renewal-check.example/";
+	await bootChrome(page, { ...world, sidebarWidth: 220 });
+
+	const host = page.locator(".url-host");
+	await expect(host).toContainText("renewal-check.example");
+	const [hostBox, textBox] = await host.evaluate((el) =>
+		[el, el.firstElementChild!].map((node) => {
+			const rect = node.getBoundingClientRect();
+			return { left: rect.left, right: rect.right };
+		}),
+	);
+	expect(textBox.left).toBeLessThan(hostBox.left);
+	expect(textBox.right).toBeLessThanOrEqual(hostBox.right + 0.5);
+});
+
+for (const [name, url, isNotSecure] of [
+	["an http page", "http://example.com/form", false],
+	["an https page that is not secure", "https://example.com/form", true],
+] as const) {
+	test(`${name} is marked as not secure before its host`, async ({ page }) => {
+		const world = initialWorld();
+		Object.assign(world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!, { url, isNotSecure });
+		await bootChrome(page, world);
+		await expect(page.getByRole("img", { name: "Not secure" })).toBeVisible();
+	});
+}
+
+test("a secure page carries no not-secure mark", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.url = "https://example.com/form";
+	await bootChrome(page, world);
+	await expect(page.locator(".url-host")).toContainText("example.com");
+	await expect(page.getByRole("img", { name: "Not secure" })).toHaveCount(0);
+});
+
+test("the site details never show credentials as part of the host", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.url = "https://example.com@phish.example.net/login";
+	await bootChrome(page, world);
+	await page.locator(".url-trigger").hover();
+	await page.mouse.move(60, 72);
+
+	const address = page.locator(".url-drawer .site-address");
+	await expect(address.locator("b")).toHaveText("phish.example.net");
+	await expect(address).not.toContainText("example.com@");
+});

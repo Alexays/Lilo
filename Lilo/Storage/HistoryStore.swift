@@ -45,6 +45,8 @@ final class HistoryStore: @unchecked Sendable {
 
     private enum Defaults {
         static let writeDebounceInterval: TimeInterval = 1.0
+        /// Caps the debounce: a page calling `replaceState` more often than the debounce interval still gets its visits written.
+        static let writeMaxWait: TimeInterval = 5.0
         /// New rows between two cap prunes; the first flush after launch always prunes.
         static let pruneEveryInserts = 500
     }
@@ -55,6 +57,8 @@ final class HistoryStore: @unchecked Sendable {
     /// Titles pages set after their visit was written, by URL.
     private var pendingTitlesByURL: [String: String] = [:]
     private var pendingFlushWorkItem: DispatchWorkItem?
+    /// When the oldest pending write must land, whatever comes after it.
+    private var pendingFlushDeadline: DispatchTime?
     /// Lets `flushPendingWrites()` (run by every read, per omnibox keystroke) skip the queue hop when nothing is pending. Set before a
     /// visit is enqueued and again when it lands; cleared only inside the flush on the queue.
     private let hasPendingVisits = OSAllocatedUnfairLock(initialState: false)
@@ -411,7 +415,7 @@ final class HistoryStore: @unchecked Sendable {
     /// the list, nil once nothing older matches. Each day is one bounded range of the `visitedAt` index.
     func dayRows(
         filter: Filter, before: Date?, minimumRows: Int, now: Date = Date(), calendar: Calendar = .current
-    ) throws -> (rows: [DayRow], nextBefore: Date?) {
+    ) async throws -> (rows: [DayRow], nextBefore: Date?) {
         flushPendingWrites()
         let startOfToday = calendar.startOfDay(for: now)
         let daysAgo = { (days: Int) in calendar.date(byAdding: .day, value: -days, to: startOfToday) ?? startOfToday }
@@ -445,7 +449,8 @@ final class HistoryStore: @unchecked Sendable {
         }
         let filterSQL = conditions.map { " AND \($0)" }.joined()
 
-        return try dbPool.read { db in
+        // The async read lets a cancelled task interrupt the statement in flight.
+        return try await dbPool.read { [filterArguments, upper] db in
             var rows: [DayRow] = []
             var cursor = upper
             while rows.count < minimumRows {
@@ -518,12 +523,16 @@ final class HistoryStore: @unchecked Sendable {
         pendingFlushWorkItem?.cancel()
         let workItem = DispatchWorkItem { self.flushPendingWritesLocked() }
         pendingFlushWorkItem = workItem
-        writeQueue.asyncAfter(deadline: .now() + Defaults.writeDebounceInterval, execute: workItem)
+        let now = DispatchTime.now()
+        let maxDeadline = pendingFlushDeadline ?? now + Defaults.writeMaxWait
+        pendingFlushDeadline = maxDeadline
+        writeQueue.asyncAfter(deadline: min(now + Defaults.writeDebounceInterval, maxDeadline), execute: workItem)
     }
 
     private func flushPendingWritesLocked() {
         pendingFlushWorkItem?.cancel()
         pendingFlushWorkItem = nil
+        pendingFlushDeadline = nil
 
         let visits = Array(pendingVisitsByURL.values)
         let titles = pendingTitlesByURL

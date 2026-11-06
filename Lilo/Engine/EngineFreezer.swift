@@ -16,14 +16,17 @@ enum CooperativeFreezer {
           get visibilityState() { return forced ? 'hidden' : apply(visibility.visibilityState, this, []); },
           get hidden() { return forced || apply(visibility.hidden, this, []); },
         });
+        // visibilitychange fires only when the state the page reads changes: a background tab is already hidden.
+        const wasHidden = forced || apply(visibility.hidden, doc, []);
         forced = true;
-        fire();
+        if (!wasHidden) fire();
         try { paused = [...document.querySelectorAll('video, audio')].filter(media => !media.paused); } catch (e) {}
         paused.forEach(media => { try { media.pause(); } catch (e) {} });
       });
       lilo.on('resume', () => {
+        const wasForced = forced;
         forced = false;
-        fire();
+        if (wasForced && !apply(visibility.hidden, doc, [])) fire();
         paused.forEach(media => { try { media.play().catch(() => {}); } catch (e) {} });
         paused = [];
       });

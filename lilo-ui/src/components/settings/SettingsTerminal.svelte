@@ -177,6 +177,18 @@
         />
       {/snippet}
     </UiListRow>
+    {#if sleepMode !== "off"}
+      <UiListRow title={t("settings.terminalLidMaxHours")}>
+        {#snippet action()}
+          <UiSelect
+            value={getSetting("terminalLidMaxHours", "8")}
+            options={durationOptions}
+            ariaLabel={t("settings.terminalLidMaxHours")}
+            onchange={(value) => setSetting("terminalLidMaxHours", value)}
+          />
+        {/snippet}
+      </UiListRow>
+    {/if}
   </UiInsetList>
 
   {#if sleepMode === "lid"}
@@ -201,16 +213,6 @@
             options={batteryOptions}
             ariaLabel={t("settings.terminalLidBatteryFloor")}
             onchange={(value) => setSetting("terminalLidBatteryFloor", value)}
-          />
-        {/snippet}
-      </UiListRow>
-      <UiListRow title={t("settings.terminalLidMaxHours")}>
-        {#snippet action()}
-          <UiSelect
-            value={getSetting("terminalLidMaxHours", "8")}
-            options={durationOptions}
-            ariaLabel={t("settings.terminalLidMaxHours")}
-            onchange={(value) => setSetting("terminalLidMaxHours", value)}
           />
         {/snippet}
       </UiListRow>

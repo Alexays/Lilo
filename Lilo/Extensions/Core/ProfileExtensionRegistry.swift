@@ -90,7 +90,7 @@ final class ProfileExtensionRegistry {
     /// Insertion order of `iconDataURLCache` keys, so overflow evicts the oldest half, not everything.
     private var iconDataURLCacheKeys: [IconCacheKey] = []
     /// A disabled extension's manifest icon and store page, by `id@version`: read from disk once, as it has no WKWebExtension.
-    private var storedManifestFacts: [String: (iconDataURL: String, webStoreURL: String)] = [:]
+    private var storedManifestFacts: [String: (iconDataURL: String, webStoreURL: String, excludesPrivateSpaces: Bool)] = [:]
     /// Holds the "Update extensions automatically" setting and what the lifecycle keeps across
     /// launches; set when the profile context is built.
     weak var settingsStore: SettingsStore?
@@ -185,6 +185,39 @@ final class ProfileExtensionRegistry {
         }
     }
 
+    /// Adopts the items WebKit adds to a page's context menu, one per extension (a submenu bears its short name): choosing
+    /// one is its extension's user gesture, and a private tab drops those of extensions not allowed there.
+    func adoptContextMenuItems(in menu: NSMenu, tab: TabExtensionAdapter?, isPrivate: Bool) {
+        let items = menu.items.filter { ($0.target as? NSObject)?.className == "_WKWebExtensionMenuItem" }
+        guard let first = items.first else { return }
+        let separatorIndex = menu.index(of: first) - 1
+        let hidesUnallowed = isPrivate && loadedRuntimes.contains { !$0.context.hasAccessToPrivateData }
+        // A single item is attributed only by a tab-wide item of the same title: one shown for a selection or a link
+        // has no other trace of its extension, so a private tab hiding some extension drops it too.
+        lazy var tabWideOwners: [String: LoadedExtensionRuntime] = {
+            var owners: [String: LoadedExtensionRuntime] = [:]
+            guard let tab else { return owners }
+            for runtime in self.loadedRuntimes {
+                for item in runtime.context.menuItems(for: tab) where owners[item.title] == nil { owners[item.title] = runtime }
+            }
+            return owners
+        }()
+        var keptCount = 0
+        for item in items {
+            let owner = loadedRuntimes.first { $0.context.webExtension.displayShortName == item.title } ?? tabWideOwners[item.title]
+            if hidesUnallowed, owner?.context.hasAccessToPrivateData != true {
+                menu.removeItem(item)
+                continue
+            }
+            keptCount += 1
+            if let owner { noteUserGestures(choosing: [item], extensionId: owner.id) }
+        }
+        // WebKit puts a separator before the extensions' items.
+        if keptCount == 0, separatorIndex >= 0, menu.items[separatorIndex].isSeparatorItem {
+            menu.removeItem(at: separatorIndex)
+        }
+    }
+
     /// The new-tab page an extension overrides via `chrome_url_overrides.newtab`; the last loaded wins, as Chrome's last install
     /// does. Resolve it through `extensionNavigationTarget(for:)` to get the extension's `nativeConfiguration`.
     var activeNewTabOverrideURL: URL? {
@@ -205,6 +238,16 @@ final class ProfileExtensionRegistry {
     /// The extension-wide badge colors from chrome.action, which WebKit does not expose.
     func actionColors(of extensionId: String) -> ActionColors? {
         runtimeIndex(for: extensionId).map { loadedRuntimes[$0].actionColors }
+    }
+
+    /// Chrome's ExtensionInfo for a loaded extension: one loaded from a folder Lilo did not install is a development one.
+    func extensionInfo(for extensionId: String, enabled: Bool = true) -> ExtensionInfo? {
+        guard let index = runtimeIndex(for: extensionId) else { return nil }
+        let runtime = loadedRuntimes[index]
+        return ExtensionInfoBuilder.buildFromManifest(
+            manifest: runtime.context.webExtension.manifest, id: extensionId, folder: URL(fileURLWithPath: runtime.sourcePath),
+            enabled: enabled, installType: files.owns(runtime.installPath) ? "normal" : "development"
+        )
     }
 
     private func runtimeIndex(for extensionId: String) -> Int? {
@@ -366,8 +409,8 @@ final class ProfileExtensionRegistry {
 
     // MARK: - Window Lifecycle
 
-    /// The extension window of `spaceId`, created on first use, now shown in `nsWindow`. It becomes the
-    /// focused one: windows bind their registry when they show a space of its profile or take focus.
+    /// The extension window of `spaceId`, created on first use, now shown in `nsWindow`. It becomes the focused one
+    /// unless another browser window is key: a space shown in a background window stays a background extension window.
     @discardableResult
     func windowAdapter(for nsWindow: NSWindow, spaceId: UUID, isPrivate: Bool = false) -> WindowExtensionAdapter {
         let adapter = windowAdapters.first { $0.spaceId == spaceId } ?? {
@@ -375,8 +418,9 @@ final class ProfileExtensionRegistry {
             windowAdapters.append(adapter)
             return adapter
         }()
-        adapter.nsWindow = nsWindow
-        delegate.windowAdapter = adapter
+        if nsWindow.isKeyWindow || delegate.windowAdapter?.nsWindow?.isKeyWindow != true { delegate.windowAdapter = adapter }
+        // A space the key window also shows stays bound to it.
+        if nsWindow.isKeyWindow || adapter.nsWindow?.isKeyWindow != true || adapter.tabManager?.windowAdapter !== adapter { adapter.nsWindow = nsWindow }
         return adapter
     }
 
@@ -385,9 +429,8 @@ final class ProfileExtensionRegistry {
         controller.didFocusWindow(focused ? delegate.windowAdapter : nil)
     }
 
-    func notifyWindowOpened() {
-        guard let window = delegate.windowAdapter,
-              openedWindowAdapters.insert(ObjectIdentifier(window)).inserted else { return }
+    func notifyWindowOpened(_ window: WindowExtensionAdapter) {
+        guard openedWindowAdapters.insert(ObjectIdentifier(window)).inserted else { return }
         controller.didOpenWindow(window)
     }
 
@@ -509,6 +552,7 @@ final class ProfileExtensionRegistry {
         extensionStorage: ExtensionStorage,
         gapRouter: GapBridgeRouter? = nil,
         tabShare: (bridge: TabShareBridge, frames: TabShareFrameSchemeHandler)? = nil,
+        pageBridges: (geolocation: GeolocationBridge, notification: NotificationBridge)? = nil,
         // Injectable so tests keep their installed-extension copies out of the user's real
         // Application Support; the default follows BuildIdentity, LILO_APP_SUPPORT_DIR included.
         extensionsBaseDirectory: URL? = URL(fileURLWithPath: BuildIdentity.appSupportDirectory)
@@ -562,13 +606,21 @@ final class ProfileExtensionRegistry {
             Self.logger.error("ChromeAPIAugmentation.js not found in bundle: Chrome API bridge will be absent")
         }
 
+        var pageModules: [String] = []
         // Extension pages and offscreen documents consume tabCapture and desktopCapture stream ids
         // through the tab-share shim's getUserMedia, fed over the ferry's frame scheme.
         if let tabShare {
             config.webViewConfiguration.setURLSchemeHandler(tabShare.frames, forURLScheme: TabShareFrameSchemeHandler.scheme)
             userContentController.addScriptMessageHandler(tabShare.bridge, contentWorld: PageWorld.bridgeWorld, name: TabShareBridge.messageHandlerName)
-            PageWorld.install([TabShareBridge.pageModule], on: userContentController)
+            pageModules.append(TabShareBridge.pageModule)
         }
+        // The tabs' location and notification polyfills: WebKit has no position provider and no web notification permission hook.
+        if let pageBridges {
+            userContentController.add(pageBridges.geolocation, contentWorld: PageWorld.bridgeWorld, name: GeolocationBridge.messageHandlerName)
+            userContentController.add(pageBridges.notification, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
+            pageModules += [GeolocationBridge.pageModule, NotificationBridge.pageModule]
+        }
+        if !pageModules.isEmpty { PageWorld.install(pageModules, on: userContentController) }
 
         self.pageScripts = userContentController
         self.controller = WKWebExtensionController(configuration: config)
@@ -706,10 +758,16 @@ final class ProfileExtensionRegistry {
     /// `load`, a new id is an install and a known one a reload.
     func load(from url: URL, extensionId knownId: String? = nil, as load: ExtensionLifecycle.Load? = nil) async throws {
         try await files.whileWriting {
-            let permanentURL = try files.permanentCopy(of: url, isInUse: containsRuntimeInstallPath)
+            let permanentURL = try await files.permanentCopy(of: url, isInUse: containsRuntimeInstallPath)
             // Reinstalling a folder keeps the id it already had, so its storage follows it.
             let stored = if let knownId { try? await extensionStorage.load(id: knownId) } else {
                 (try? await extensionStorage.loadAll())?.first { $0.path == permanentURL.path }
+            }
+            // Loading a loaded unpacked folder again reloads it: its clone is never replaced under the loaded context.
+            if knownId == nil, let stored, containsRuntime(extensionId: stored.id), !files.owns(permanentURL.path) {
+                await unload(extensionId: stored.id, removePersistedRecord: false)
+                try await self.load(from: permanentURL, extensionId: stored.id, as: .update(from: stored.version))
+                return
             }
             let allowsUserScripts = (knownId ?? stored?.id).map { access.states[$0]?.allowsUserScripts == true } ?? false
             let files = files
@@ -718,11 +776,15 @@ final class ProfileExtensionRegistry {
                 return (sourceURL, Self.prepareForWebKit(at: sourceURL, allowsUserScripts: allowsUserScripts))
             }.value
             let webExtension = try await WKWebExtension(resourceBaseURL: sourceURL)
-            let extensionId = knownId ?? stored?.id ?? ExtensionFiles.makeExtensionId(
+            let extensionId = try knownId ?? stored?.id ?? ExtensionFiles.makeExtensionId(
                 for: permanentURL,
                 managedDirectory: files.directory,
                 manifestKey: webExtension.manifest["key"] as? String
             )
+            // A manifest key can name an extension installed from another folder, which this load would leave running.
+            if knownId == nil, stored == nil, (try? await extensionStorage.load(id: extensionId)) != nil {
+                throw ExtensionError.alreadyInstalled(webExtension.displayName ?? extensionId)
+            }
             try await activate(
                 webExtension, id: extensionId, sourcePath: sourceURL.path, installPath: permanentURL.path,
                 isPreparationDegraded: isPreparationDegraded, stored: stored, as: load ?? (knownId == nil ? .install : .reload)
@@ -763,16 +825,19 @@ final class ProfileExtensionRegistry {
         // their pages' origin storage.
         if let baseURL = URL(string: "chrome-extension://\(extensionId)") { context.baseURL = baseURL }
 
-        // A release attaches Web Inspector to extension internals only once Lilo's developer tools are unlocked. WebKit never
-        // unloads an inspectable worker: the extension smoke turns it off to unload workers as a release build does.
-        #if DEBUG
-        context.isInspectable = ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil
-        #else
-        context.isInspectable = unsafe UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey)
-        #endif
-        if context.isInspectable { context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background" }
+        openToWebInspector(context, id: extensionId, installPath: installPath)
 
         access.apply(to: context, extensionId: extensionId)
+        // As in Chrome, a suggested key something else already holds stays unset, and is stored so: a later load in
+        // another order would otherwise hand it back, over a key the user gave another command.
+        let rebound = access.states[extensionId]?.commandShortcuts ?? [:]
+        var unset: [String] = []
+        for command in context.commands where rebound[command.id] == nil {
+            guard let key = command.activationKey,
+                  shortcutOwner(key: key, modifiers: command.modifierFlags, besides: (extensionId, command.id)) != nil else { continue }
+            command.activationKey = nil
+            unset.append(command.id)
+        }
         try controller.load(context)
         let optional = Set(webExtension.manifest["optional_permissions"] as? [String] ?? [])
         let granted = (access.states[extensionId]?.gapPermissions ?? []).filter(optional.contains)
@@ -803,6 +868,13 @@ final class ProfileExtensionRegistry {
         if record != stored {
             try? await extensionStorage.store(id: record.id, name: record.name, version: record.version, path: record.path, enabled: true)
         }
+        if !unset.isEmpty {
+            await access.update(extensionId) { state in
+                var shortcuts = state.commandShortcuts ?? [:]
+                for commandId in unset { shortcuts[commandId] = .init(key: nil, modifiers: 0) }
+                state.commandShortcuts = shortcuts
+            }
+        }
         if permissions.contains("userScripts") {
             await userScripts.loaded(extensionId)
         } else if webExtension.manifest["externally_connectable"] != nil {
@@ -813,6 +885,34 @@ final class ProfileExtensionRegistry {
         NotificationCenter.default.post(name: .extensionRuntimeLoaded, object: self)
         // No background load here: WebKit starts it for runtime.onStartup/onInstalled listeners and on
         // demand (popup, command, event), so a restore never forces every worker awake.
+        switch load {
+        case .install, .update, .enable:
+            // As in Chrome: onEnabled on load, then onInstalled once the install completes. The extension
+            // itself was not loaded to hear of it.
+            let watchers = extensionIds(withPermission: "management").filter { $0 != extensionId }
+            guard !watchers.isEmpty, let info = extensionInfo(for: extensionId)?.dictionary else { return }
+            gapEvents.emit("management", "onEnabled", args: [info], to: watchers)
+            if load != .enable { gapEvents.emit("management", "onInstalled", args: [info], to: watchers) }
+        case .startup, .reload:
+            break
+        }
+    }
+
+    /// Web Inspector sees every extension in a debug build, and only an unpacked one once developer tools unlock in a release:
+    /// WebKit never unloads an inspectable worker (the extension smoke turns it off to unload workers as a release does).
+    private func openToWebInspector(_ context: WKWebExtensionContext, id extensionId: String, installPath: String) {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil else { return }
+        #else
+        guard !files.owns(installPath), unsafe UserDefaults.lilo.bool(forKey: AppDelegate.developerToolsKey) else { return }
+        #endif
+        context.isInspectable = true
+        context.inspectionName = "\(context.webExtension.displayName ?? extensionId) - Background"
+    }
+
+    /// Lilo's developer tools were unlocked: the loaded extensions they open to Web Inspector become inspectable at once.
+    func developerToolsUnlocked() {
+        for runtime in loadedRuntimes { openToWebInspector(runtime.context, id: runtime.id, installPath: runtime.installPath) }
     }
 
     /// Uninstalls the extension, or with `removePersistedRecord` false unloads it and keeps it installed
@@ -822,7 +922,8 @@ final class ProfileExtensionRegistry {
     }
 
     /// `purge` drops the events its worker has not received yet, as an uninstall or a disable does.
-    private func unload(extensionId: String, removePersistedRecord: Bool, purge: Bool) async {
+    /// `notifies` false keeps an internal restart, which Chrome has no equivalent of, from other extensions.
+    private func unload(extensionId: String, removePersistedRecord: Bool, purge: Bool, notifies: Bool = true) async {
         guard let index = runtimeIndex(for: extensionId) else {
             guard removePersistedRecord,
                   let stored = disabledStoredExtensions.first(where: { $0.id == extensionId })
@@ -834,10 +935,17 @@ final class ProfileExtensionRegistry {
             await removeExtensionData(extensionId: extensionId)
             files.remove(stored.path)
             postDidUnload(extensionId: extensionId, uninstalled: true)
+            emitGapEvent("management", "onUninstalled", args: [extensionId], requiredPermission: "management")
             notifyExtensionsChanged()
             return
         }
+        let watchers = notifies ? extensionIds(withPermission: "management").filter { $0 != extensionId } : []
+        let info = watchers.isEmpty ? nil : extensionInfo(for: extensionId, enabled: false)
         let runtime = loadedRuntimes.remove(at: index)
+        if let info {
+            gapEvents.emit("management", "onDisabled", args: [info.dictionary], to: watchers)
+            if removePersistedRecord { gapEvents.emit("management", "onUninstalled", args: [extensionId], to: watchers) }
+        }
         if removePersistedRecord {
             lifecycle.uninstalled(extensionId)
         } else {
@@ -954,12 +1062,22 @@ final class ProfileExtensionRegistry {
         }
     }
 
+    /// Loads an unpacked extension again from its folder, as Chrome's Reload and `runtime.reload()` do. False for a copy
+    /// Lilo installed, whose files never change under it: WebKit's own reload serves it.
+    func reloadUnpacked(extensionId: String) -> Bool {
+        guard let index = runtimeIndex(for: extensionId), !files.owns(loadedRuntimes[index].installPath) else { return false }
+        let version = loadedRuntimes[index].context.webExtension.version ?? ""
+        // Not awaited: the reload unloads the context whose call asked for it.
+        Task { await reloadFromDisk(extensionId, as: .update(from: version)) }
+        return true
+    }
+
     /// Unloads and reloads the extension from its on-disk source, for a worker nothing else revives.
-    private func reloadFromDisk(_ extensionId: String) async {
+    private func reloadFromDisk(_ extensionId: String, as load: ExtensionLifecycle.Load = .reload) async {
         guard let installPath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].installPath }) else { return }
-        await unload(extensionId: extensionId, removePersistedRecord: false)
+        await unload(extensionId: extensionId, removePersistedRecord: false, purge: false, notifies: false)
         do {
-            try await load(from: URL(fileURLWithPath: installPath), extensionId: extensionId)
+            try await self.load(from: URL(fileURLWithPath: installPath), extensionId: extensionId, as: load)
         } catch {
             Self.logger.error("background reload failed for \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
             // `unload` flipped the persisted record to disabled; a failed internal restart must not leave the
@@ -974,6 +1092,23 @@ final class ProfileExtensionRegistry {
 
     // MARK: - Keyboard Commands
 
+    /// What already answers `key` with `modifiers`, other than the `besides` command: a Lilo action's title or a
+    /// loaded extension's name.
+    func shortcutOwner(key: String, modifiers: NSEvent.ModifierFlags, besides: (extensionId: String, commandId: String)) -> String? {
+        let key = key.lowercased()
+        let modifiers = modifiers.intersection([.control, .option, .shift, .command])
+        if let action = KeyboardShortcuts.owner(of: KeyboardShortcuts.combo(key, modifiers)) { return action.title }
+        for runtime in loadedRuntimes where runtime.declaresCommands {
+            let holds = runtime.context.commands.contains { command in
+                (runtime.id != besides.extensionId || command.id != besides.commandId)
+                    && command.activationKey?.lowercased() == key
+                    && command.modifierFlags.intersection([.control, .option, .shift, .command]) == modifiers
+            }
+            if holds { return runtime.context.webExtension.displayName ?? runtime.id }
+        }
+        return nil
+    }
+
     /// Dispatches a keyDown to the first loaded extension command whose shortcut matches. Returns true
     /// when one matched, so the caller swallows the event.
     func handleExtensionKeyDown(_ event: NSEvent) -> Bool {
@@ -985,6 +1120,11 @@ final class ProfileExtensionRegistry {
                   let command = runtime.context.command(for: event) else { continue }
             let extensionId = runtime.id
             let commandId = command.id
+            // The action shortcut does what a click on the button does: toggle the side panel, or the popup.
+            if ["_execute_action", "_execute_browser_action", "_execute_page_action"].contains(commandId) {
+                if let window = delegate.windowController, toggleSidePanelOnActionClick?(extensionId, window) == true { return true }
+                if delegate.closeActionPopup(of: extensionId) { return true }
+            }
             noteUserGesture(extensionId: extensionId)
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -1055,7 +1195,8 @@ final class ProfileExtensionRegistry {
                 "webStoreURL": facts.webStoreURL,
                 "availableUpdate": updater.availableUpdates[stored.id]?.latest ?? "",
                 "declinedUpdate": access.states[stored.id]?.declinedUpdateVersion ?? "",
-                "allowsPrivateAccess": access.states[stored.id]?.allowsPrivateAccess == true,
+                "allowsPrivateAccess": access.states[stored.id]?.allowsPrivateAccess == true && !facts.excludesPrivateSpaces,
+                "privateAccessNotAllowed": facts.excludesPrivateSpaces,
                 "allowsUserScripts": access.states[stored.id]?.allowsUserScripts == true
             ] as [String: Any])
         }
@@ -1090,14 +1231,17 @@ final class ProfileExtensionRegistry {
                 "errorCount": runtime.context.errors.count,
                 "lastBackgroundErrorCount": backgrounds.health(for: runtime.id)?.lastErrorCount ?? 0
             ]
+            let firstSeen = backgrounds.health(for: runtime.id)?.errorFirstSeen ?? [:]
             payload["contextErrors"] = runtime.context.errors.enumerated().map { index, error in
                 let nsError = error as NSError
-                return [
+                var entry: [String: Any] = [
                     "index": index,
                     "domain": nsError.domain,
                     "code": nsError.code,
                     "description": ExtensionDiagnostics.diagnosticDescription(for: error)
-                ] as [String: Any]
+                ]
+                if let timestamp = firstSeen[nsError] { entry["timestamp"] = timestamp }
+                return entry
             }
             payload["pageDiagnostics"] = runtime.pageDiagnostics.map(\.bridgePayload)
             return payload
@@ -1168,14 +1312,16 @@ final class ProfileExtensionRegistry {
             "hasContentScripts": runtime.hasContentScripts,
             "permissions": ext.manifest["permissions"] as? [String] ?? [],
             "hostPermissions": ext.manifest["host_permissions"] as? [String] ?? [],
-            "siteAccess": accessState?.hosts ?? [],
+            "siteAccess": accessState?.hosts as Any? ?? NSNull(),
             "error": health.flatMap { $0.failed ? $0.failureReason ?? "" : nil } ?? "",
             "omniboxKeyword": runtime.omniboxKeyword ?? "",
             "availableUpdate": updater.availableUpdates[runtime.id]?.latest ?? "",
             "webStoreURL": updater.isStoreCopy(id: runtime.id, path: runtime.installPath, manifest: ext.manifest)
                 ? "https://chromewebstore.google.com/detail/\(runtime.id)" : "",
+            "isUnpacked": !files.owns(runtime.installPath),
             "declinedUpdate": accessState?.declinedUpdateVersion ?? "",
             "allowsPrivateAccess": runtime.context.hasAccessToPrivateData,
+            "privateAccessNotAllowed": ExtensionAccess.excludesPrivateSpaces(ext.manifest),
             "allowsUserScripts": accessState?.allowsUserScripts == true,
             "commands": runtime.declaresCommands ? runtime.context.commands.map { command in
                 [
@@ -1204,14 +1350,15 @@ final class ProfileExtensionRegistry {
     }
 
     /// The manifest's toolbar or extension icon nearest 32 px as a data URL, and the store page of a Web Store copy; each empty when absent.
-    private func storedManifestFacts(for stored: ExtensionStorage.InstalledExtension) -> (iconDataURL: String, webStoreURL: String) {
+    private func storedManifestFacts(for stored: ExtensionStorage.InstalledExtension) -> (iconDataURL: String, webStoreURL: String, excludesPrivateSpaces: Bool) {
         let key = "\(stored.id)@\(stored.version)"
         if let cached = storedManifestFacts[key] { return cached }
         let folder = URL(fileURLWithPath: stored.path)
         var dataURL = ""
         var webStoreURL = ""
+        var excludesPrivateSpaces = false
         if let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json")),
-           let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+           let manifest = try? JSONSerialization.jsonObject(with: data, options: .json5Allowed) as? [String: Any] {
             let action = (manifest["action"] ?? manifest["browser_action"]) as? [String: Any]
             let icons = (action?["default_icon"] as? [String: String]) ?? (manifest["icons"] as? [String: String]) ?? [:]
             let sized = icons.compactMap { size, file in Int(size).map { ($0, file) } }
@@ -1222,9 +1369,10 @@ final class ProfileExtensionRegistry {
             if updater.isStoreCopy(id: stored.id, path: stored.path, manifest: manifest) {
                 webStoreURL = "https://chromewebstore.google.com/detail/\(stored.id)"
             }
+            excludesPrivateSpaces = ExtensionAccess.excludesPrivateSpaces(manifest)
         }
-        storedManifestFacts[key] = (dataURL, webStoreURL)
-        return (dataURL, webStoreURL)
+        storedManifestFacts[key] = (dataURL, webStoreURL, excludesPrivateSpaces)
+        return (dataURL, webStoreURL, excludesPrivateSpaces)
     }
 
     private func cachedIconDataURL(for action: WKWebExtension.Action?) -> String {
@@ -1290,7 +1438,8 @@ final class ProfileExtensionRegistry {
                 "iconDataURL": facts.iconDataURL,
                 "webStoreURL": facts.webStoreURL,
                 "declinedUpdate": states[stored.id]?.declinedUpdateVersion ?? "",
-                "allowsPrivateAccess": states[stored.id]?.allowsPrivateAccess == true,
+                "allowsPrivateAccess": states[stored.id]?.allowsPrivateAccess == true && !facts.excludesPrivateSpaces,
+                "privateAccessNotAllowed": facts.excludesPrivateSpaces,
                 "allowsUserScripts": states[stored.id]?.allowsUserScripts == true
             ] as [String: Any]
         }
@@ -1471,14 +1620,24 @@ final class ProfileExtensionRegistry {
 }
 
 extension WKWebExtensionContext {
-    /// `webViewConfiguration` for a view Lilo creates. WebKit's manifest CSP mode filters the policy of every frame in the
-    /// view, so a framed site loses `blob:` and `'self'`; Chrome already refuses the extension policies it would filter.
+    /// `webViewConfiguration` for a view Lilo creates, with the feature flags tabs get. WebKit's manifest CSP mode filters the
+    /// policy of every frame in the view, so a framed site loses `blob:` and `'self'`; Chrome already refuses the extension
+    /// policies it would filter.
     var pageWebViewConfiguration: WKWebViewConfiguration? {
         guard let configuration = webViewConfiguration else { return nil }
         let setMode = NSSelectorFromString("_setContentSecurityPolicyModeForExtension:")
         if configuration.responds(to: setMode) {
             typealias SetMode = @convention(c) (AnyObject, Selector, Int) -> Void
             unsafe unsafeBitCast(configuration.method(for: setMode), to: SetMode.self)(configuration, setMode, 0)
+        }
+        // A copy can share the controller's preferences object: writes to it would reach every extension view of the profile.
+        if configuration.preferences.responds(to: #selector(NSCopying.copy(with:))),
+           let preferences = configuration.preferences.copy() as? WKPreferences {
+            configuration.preferences = preferences
+            WKFeatureFlags.apply(
+                [WKFeatureFlags.near60FPSKey: !WKEngineFactory.fullRefreshRate].merging(WKEngineFactory.featureFlagOverrides) { $1 },
+                to: preferences
+            )
         }
         return configuration
     }

@@ -32,8 +32,10 @@
   import { tooltipTabURL } from "../../lib/bridge/coerceHelpers";
   import {
     dndItemsForFolderTabs,
+    FLIP_MAX_ANIMATED_ITEMS,
     flipDurationForSidebarDndItem,
     sidebarDndKey,
+    type SidebarDndItem,
   } from "../../lib/dndEngine/adapters/sidebar";
   import { isShadowItem } from "../../lib/dndEngine/projection";
   import {
@@ -245,103 +247,125 @@
         onCancel: resetSidebarDrag,
       }}
     >
-      {#each bookmarkZoneItems as entry (sidebarDndKey(entry))}
-        <div
-          animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: bookmarkZoneItems.length }), easing: springEase }}
-          class="bookmark-slot"
-          class:recent-drop={entry.id === recentlyDraggedId}
-          data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-          role="presentation"
-          use:dndItem={{
-            item: entry,
-            zoneId: bookmarkZone.id,
-            disabled: isShadowItem(entry) || !interactive || isMovingToSpace,
-            onCancel: resetSidebarDrag,
-          }}
-        >
-          {#if isShadowItem(entry)}
-            <div
-              class="bookmark-placeholder"
-              class:held={getSidebarDrag()?.intoCollapsedFolder}
-              aria-hidden="true"
-            ></div>
-          {:else}
-            {@const bookmark = bookmarksById.get(entry.id)}
-            {#if bookmark}
-              {@const unreadBadge = bookmarkUnread(bookmark)}
-              <div role="presentation">
-                <div
-                  role="button"
-                  tabindex={interactive ? 0 : -1}
-                  class="bookmark-tile"
-                  class:active={bookmark.id === activeTabId}
-                  class:editing={bookmark.id === editing?.bookmark.id}
-                  class:closed={bookmark.isClosed}
-                  style={bookmark.faviconDominantColor
-                    ? `--tab-glow: ${bookmark.faviconDominantColor}`
-                    : undefined}
-                  use:tooltip={{
-                    text: bookmarkLabel(bookmark),
-                    subtitle: bookmarkSubtitle(bookmark.url),
-                    memory: bookmarkMemory(bookmark),
-                    iconSrc: bookmark.faviconDataURL,
-                    placement: tooltipSide(),
-                    disabled: dragActive || previewedTabId === bookmark.id,
-                  }}
-                  aria-label={unreadBadge === "dot"
-                    ? `${bookmarkLabel(bookmark)}, ${t("tabItem.unread")}`
-                    : unreadBadge
-                      ? `${bookmarkLabel(bookmark)}, ${t("tabItem.unreadCount", { count: unreadBadge })}`
-                      : bookmarkLabel(bookmark)}
-                  onclick={() => openBookmark(bookmark)}
-                  onkeydown={(event) => handleBookmarkTileKeydown(event, bookmark)}
-                  oncontextmenu={(e) => handleBookmarkContextMenu(bookmark, e)}
-                  onmouseenter={(e) => {
-                    if (dragActive) return;
-                    hoveredBookmarkId = bookmark.id;
-                    if (interactive) {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      hoverTabPreview(
-                        {
-                          id: bookmark.id,
-                          title: bookmarkLabel(bookmark),
-                          url: bookmark.url ?? "",
-                          favicon: bookmark.faviconDataURL,
-                        },
-                        rect,
-                      );
-                    }
-                  }}
-                  onmouseleave={() => {
-                    if (hoveredBookmarkId === bookmark.id) hoveredBookmarkId = null;
-                    clearTabPreview();
-                  }}
-                >
-                  <div class="bookmark-icon-inner">
-                    {#if bookmark.isLoading}
-                      <TabLoader />
-                    {:else}
-                      <SiteFavicon
-                        src={bookmark.faviconDataURL}
-                        title={bookmark.title}
-                        url={bookmark.url}
-                        size={18}
-                        radius={5}
-                        asleep={bookmark.isClosed}
-                      />
-                    {/if}
-                  </div>
-                  {#if unreadBadge === "dot"}
-                    <span class="unread-dot" aria-hidden="true"></span>
-                  {:else if unreadBadge}
-                    <span class="unread-count" aria-hidden="true">{unreadBadge}</span>
+      {#snippet slotContent(entry: SidebarDndItem)}
+        {#if isShadowItem(entry)}
+          <div
+            class="bookmark-placeholder"
+            class:held={getSidebarDrag()?.intoCollapsedFolder}
+            aria-hidden="true"
+          ></div>
+        {:else}
+          {@const bookmark = bookmarksById.get(entry.id)}
+          {#if bookmark}
+            {@const unreadBadge = bookmarkUnread(bookmark)}
+            <div role="presentation">
+              <div
+                role="button"
+                tabindex={interactive ? 0 : -1}
+                class="bookmark-tile"
+                class:active={bookmark.id === activeTabId}
+                class:editing={bookmark.id === editing?.bookmark.id}
+                class:closed={bookmark.isClosed}
+                style={bookmark.faviconDominantColor
+                  ? `--tab-glow: ${bookmark.faviconDominantColor}`
+                  : undefined}
+                use:tooltip={{
+                  text: bookmarkLabel(bookmark),
+                  subtitle: bookmarkSubtitle(bookmark.url),
+                  memory: bookmarkMemory(bookmark),
+                  iconSrc: bookmark.faviconDataURL,
+                  placement: tooltipSide(),
+                  disabled: dragActive || previewedTabId === bookmark.id,
+                }}
+                aria-label={unreadBadge === "dot"
+                  ? `${bookmarkLabel(bookmark)}, ${t("tabItem.unread")}`
+                  : unreadBadge
+                    ? `${bookmarkLabel(bookmark)}, ${t("tabItem.unreadCount", { count: unreadBadge })}`
+                    : bookmarkLabel(bookmark)}
+                onclick={() => openBookmark(bookmark)}
+                onkeydown={(event) => handleBookmarkTileKeydown(event, bookmark)}
+                oncontextmenu={(e) => handleBookmarkContextMenu(bookmark, e)}
+                onmouseenter={(e) => {
+                  if (dragActive) return;
+                  hoveredBookmarkId = bookmark.id;
+                  if (interactive) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    hoverTabPreview(
+                      {
+                        id: bookmark.id,
+                        title: bookmarkLabel(bookmark),
+                        url: bookmark.url ?? "",
+                        favicon: bookmark.faviconDataURL,
+                      },
+                      rect,
+                    );
+                  }
+                }}
+                onmouseleave={() => {
+                  if (hoveredBookmarkId === bookmark.id) hoveredBookmarkId = null;
+                  clearTabPreview();
+                }}
+              >
+                <div class="bookmark-icon-inner">
+                  {#if bookmark.isLoading}
+                    <TabLoader />
+                  {:else}
+                    <SiteFavicon
+                      src={bookmark.faviconDataURL}
+                      title={bookmark.title}
+                      url={bookmark.url}
+                      size={18}
+                      radius={5}
+                      asleep={bookmark.isClosed}
+                    />
                   {/if}
                 </div>
+                {#if unreadBadge === "dot"}
+                  <span class="unread-dot" aria-hidden="true"></span>
+                {:else if unreadBadge}
+                  <span class="unread-count" aria-hidden="true">{unreadBadge}</span>
+                {/if}
               </div>
-            {/if}
+            </div>
           {/if}
-        </div>
-      {/each}
+        {/if}
+      {/snippet}
+      {#if bookmarkBaseItems.length > FLIP_MAX_ANIMATED_ITEMS}
+        {#each bookmarkZoneItems as entry (sidebarDndKey(entry))}
+          <div
+            class="bookmark-slot"
+            class:recent-drop={entry.id === recentlyDraggedId}
+            data-is-dnd-shadow-item-hint={isShadowItem(entry)}
+            role="presentation"
+            use:dndItem={{
+              item: entry,
+              zoneId: bookmarkZone.id,
+              disabled: isShadowItem(entry) || !interactive || isMovingToSpace,
+              onCancel: resetSidebarDrag,
+            }}
+          >
+            {@render slotContent(entry)}
+          </div>
+        {/each}
+      {:else}
+        {#each bookmarkZoneItems as entry (sidebarDndKey(entry))}
+          <div
+            animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: bookmarkZoneItems.length }), easing: springEase }}
+            class="bookmark-slot"
+            class:recent-drop={entry.id === recentlyDraggedId}
+            data-is-dnd-shadow-item-hint={isShadowItem(entry)}
+            role="presentation"
+            use:dndItem={{
+              item: entry,
+              zoneId: bookmarkZone.id,
+              disabled: isShadowItem(entry) || !interactive || isMovingToSpace,
+              onCancel: resetSidebarDrag,
+            }}
+          >
+            {@render slotContent(entry)}
+          </div>
+        {/each}
+      {/if}
     </div>
     {#if editing}
       <div class="bookmark-editor">

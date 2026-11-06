@@ -10,7 +10,7 @@ extension MainWindowController {
         for id in displayedTabIds.subtracting(ids) { registry.release(id, by: self) }
         for id in ids.subtracting(displayedTabIds) {
             registry.claim(id, by: self)?.contentWasClaimed(id)
-            tabManager.engineTab(for: id)?.runQueuedDialog(presenting: true)
+            tabManager.engineTab(for: id)?.didShow()
         }
         displayedTabIds = ids
         tabManager.terminalHost.visibleTabIds = context.browserState.displayedTabIds

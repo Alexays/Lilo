@@ -288,6 +288,7 @@ final class SettingsBridgeHandler: BridgeHandler {
             for item in NSApp.mainMenu?.item(withTag: AppDelegate.developMenuTag)?.submenu?.items ?? [] where item.tag == AppDelegate.developerToolsTag {
                 item.isHidden = false
             }
+            (NSApp.delegate as? AppDelegate)?.browserContext.profileContexts.allContexts.forEach { $0.extensions.developerToolsUnlocked() }
 
         case "setAutomaticUpdates":
             if let updater = updaterController?.updater {
@@ -645,7 +646,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 let description = error["description"] as? String ?? "Unknown extension context error"
                 entries.append([
                     "id": "context-\(extensionId)-\(index)",
-                    "timestamp": timestamp,
+                    "timestamp": error["timestamp"] as? TimeInterval ?? timestamp,
                     "level": "error",
                     "source": "context",
                     "extensionId": extensionId,

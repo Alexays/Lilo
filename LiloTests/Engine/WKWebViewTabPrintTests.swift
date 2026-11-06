@@ -58,6 +58,22 @@ final class WKWebViewTabPrintTests: XCTestCase {
         XCTAssertFalse(bare.joined().contains("tickets.example"))
         XCTAssertTrue(bare.first?.contains("Seat 12A") == true)
     }
+
+    func testHeaderAndFooterDrawForAPageWithoutTitleOrURL() throws {
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        addTeardownBlock { @MainActor in tab.teardown() }
+        let bitmap = try XCTUnwrap(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 300, pixelsHigh: 18, bitsPerSample: 8, samplesPerPixel: 4,
+                                                    hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
+        defer { NSGraphicsContext.current = nil }
+        // WebKit passes nil for a tab that never loaded; call through the Objective-C entry point as it does.
+        typealias DrawEdge = @convention(c) (AnyObject, Selector, WKWebView, CGRect, NSString?, NSURL?) -> Void
+        for name in ["_webView:drawHeaderInRect:forPageWithTitle:URL:", "_webView:drawFooterInRect:forPageWithTitle:URL:"] {
+            let selector = NSSelectorFromString(name)
+            let draw = unsafeBitCast(tab.method(for: selector), to: DrawEdge.self)
+            draw(tab, selector, tab.wkWebView, CGRect(x: 0, y: 0, width: 300, height: 18), nil, nil)
+        }
+    }
 }
 
 private final class PrintEnd: NSObject, @unchecked Sendable {

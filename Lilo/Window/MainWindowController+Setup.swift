@@ -319,6 +319,9 @@ extension MainWindowController {
         applyTerminalSettings()
         Task { @MainActor [context] in await context.startContentBlocker() }
         let permissionDecisionHandler: GeolocationBridge.PermissionDecisionHandler = { [weak context] webView, type, origin, completion in
+            if context?.engineFactory.extensionDeclares(type == "location" ? "geolocation" : type, origin: origin, webView: webView) == true {
+                return completion(true)
+            }
             guard let windows = context?.windows, let window = webView.flatMap(windows.window(for:)) ?? windows.activeWindow else {
                 completion(false)
                 return
@@ -328,7 +331,9 @@ extension MainWindowController {
         context.engineFactory.geolocationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationDecisionHandler = { [weak context] webView, origin in
-            guard let context, let webView, let window = context.windows.window(for: webView) else { return nil }
+            guard let context, let webView else { return nil }
+            if context.engineFactory.extensionDeclares("notifications", origin: origin, webView: webView) { return true }
+            guard let window = context.windows.window(for: webView) else { return nil }
             return window.storedPermissionDecision(type: "notifications", origin: origin, tabId: window.tabManager.engineTab(forWebView: webView)?.id)
                 ?? (context.settingsStore?.refusesPermissionRequests("notifications") != false ? false : nil)
         }
@@ -389,10 +394,15 @@ extension MainWindowController {
     func setupBridgeEarly() {
         chromeWebView.navigationDelegate = self
         // Factory handlers are shared by every window: each resolves the window that shows the page.
-        context.engineFactory.formDirtyHandler = { [weak context] webView, dirty in
-            guard let tab = context?.windows.windowAndEngine(for: webView)?.engine else { return }
-            tab.isFormDirty = dirty
-            tab.delegate?.tab(tab, didUpdateFormDirty: dirty)
+        context.engineFactory.formDirtyHandler = { [weak context] webView, dirty, isMainFrame in
+            // A space switch parks the engines it hides before their pages report going hidden.
+            guard let context, let tab = context.windows.windowAndEngine(for: webView)?.engine
+                ?? context.browserState.parkedEngine(forWebView: webView) else { return }
+            if !isMainFrame { tab.hasDirtySubframeForm = true }
+            let isDirty = dirty || tab.hasDirtySubframeForm
+            guard isDirty != tab.isFormDirty else { return }
+            tab.isFormDirty = isDirty
+            tab.delegate?.tab(tab, didUpdateFormDirty: isDirty)
         }
         context.engineFactory.callControlsHandler = { [weak context] webView, controls in
             guard let tab = context?.windows.windowAndEngine(for: webView)?.engine, tab.callControls != controls else { return }
@@ -466,7 +476,7 @@ extension MainWindowController {
             context.terminalActivityChanged()
         })
 
-        bridgeRouter.register(handler: SearchBridgeHandler(
+        let searchHandler = SearchBridgeHandler(
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
             faviconStoreProvider: { [weak self] in self?.profileContext?.favicons },
             bridgeRouter: bridgeRouter,
@@ -477,12 +487,16 @@ extension MainWindowController {
                 guard let self else { return }
                 tabManager.preloadTopHit(context.hiddenSpaceLifecycle.isConstrainedPower ? nil : url)
             }
-        ))
+        )
+        bridgeRouter.register(handler: searchHandler)
+        self.searchHandler = searchHandler
 
-        bridgeRouter.register(handler: HistoryPageBridgeHandler(
+        let historyPageHandler = HistoryPageBridgeHandler(
             profileContextProvider: { [weak self] in self?.profileContext },
             bridgeRouter: bridgeRouter
-        ))
+        )
+        bridgeRouter.register(handler: historyPageHandler)
+        self.historyPageHandler = historyPageHandler
 
         // chrome.omnibox spans both bridges: the address bar sends omniboxInput* here, and the
         // extension's suggest()/setDefaultSuggestion replies arrive via the app-wide gap relay, which
@@ -872,6 +886,7 @@ extension MainWindowController {
                     }
 
                     root.dataset.booting = 'true';
+                    root.dataset.locale = '\(Localization.locale)';
                     root.dataset.tabPosition = '\(tabLayout.position.rawValue)';
                     root.dataset.address = '\(tabLayout.address.rawValue)';
 
@@ -1109,6 +1124,8 @@ extension MainWindowController {
                 continue
             }
 
+            // The find bar follows the shown tab, so the leaving page's find session ends here.
+            outgoingEngine.dismissFind()
             if popOutBackgroundedTab(outgoingEngine) { continue }
 
             // Tab-share sources, agent tabs and the page of a PiP window (open or on its way) stay in-window like
@@ -1120,9 +1137,10 @@ extension MainWindowController {
                 continue
             }
 
-            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an agent or a
+            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an awake agent or a
             // PiP window keeps it shown.
-            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !outgoingEngine.isAgentControlled && !drawsPiP
+            let agentAwake = outgoingEngine.isAgentControlled && !outgoingEngine.isAgentSleeping
+            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !agentAwake && !drawsPiP
             if !outgoingEngine.isWebInspectorVisible { outgoingEngine.fitView(in: contentContainerView.bounds) }
         }
     }

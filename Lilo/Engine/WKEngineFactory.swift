@@ -86,8 +86,8 @@ final class WKEngineFactory {
     var notificationShownHandler: ((WKWebView) -> Void)? {
         didSet { notificationBridge.shownHandler = notificationShownHandler }
     }
-    /// Reports form-dirty state changes (webView, isDirty) to the window controller. Set by MainWindowController.
-    var formDirtyHandler: ((WKWebView, Bool) -> Void)? {
+    /// Reports form-dirty state changes (webView, isDirty, isMainFrame) to the window controller. Set by MainWindowController.
+    var formDirtyHandler: ((WKWebView, Bool, Bool) -> Void)? {
         didSet { formDirtyBridge.onChange = formDirtyHandler }
     }
     /// Reports a page's Media Session call controls to the window controller. Set by MainWindowController.
@@ -128,21 +128,21 @@ final class WKEngineFactory {
     private(set) static var globalPrivacyControlEnabled = true
     /// Media that waits for a click before it plays; a web view keeps what it was built with.
     private(set) static var autoplayRestriction: WKAudiovisualMediaTypes = .audio
-    /// WebKit feature-flag overrides applied to every new web view (the `about:config` page).
-    private var featureFlagOverrides: [String: Bool] = [:]
-    private var fullRefreshRate = true
+    /// WebKit feature-flag overrides applied to every new web view (the `about:config` page), extension pages included.
+    private(set) static var featureFlagOverrides: [String: Bool] = [:]
+    private(set) static var fullRefreshRate = true
     /// Pages of the agents' profile render near 60 fps whatever the setting: nobody watches them animate.
     var agentsProfileId: UUID? {
         didSet { if agentsProfileId != oldValue { dropWarmPool() } }
     }
 
-    private lazy var geolocationBridge: GeolocationBridge = {
+    private(set) lazy var geolocationBridge: GeolocationBridge = {
         let bridge = GeolocationBridge()
         bridge.permissionDecisionHandler = geolocationPermissionDecisionHandler
         return bridge
     }()
 
-    private lazy var notificationBridge: NotificationBridge = {
+    private(set) lazy var notificationBridge: NotificationBridge = {
         let bridge = NotificationBridge()
         bridge.permissionDecisionHandler = notificationPermissionDecisionHandler
         bridge.decisionHandler = notificationDecisionHandler
@@ -157,8 +157,8 @@ final class WKEngineFactory {
     private let eyeDropperBridge = EyeDropperBridge()
     private let documentPiPBridge = DocumentPiPBridge()
 
-    func dispatchWebNotificationClick(identifier: String) {
-        notificationBridge.dispatchClick(identifier: identifier)
+    func dispatchWebNotification(_ type: String, identifier: String) {
+        notificationBridge.dispatch(type, identifier: identifier)
     }
 
     /// Forwarded by the window controller whenever the visible engine view changes, so paused
@@ -210,6 +210,14 @@ final class WKEngineFactory {
     }
 
     private let profileIdByWebView = NSMapTable<WKWebView, NSUUID>.weakToStrongObjects()
+
+    /// Whether `origin` is a page of an extension of `webView`'s profile that holds `permission`, which Chrome grants without asking.
+    func extensionDeclares(_ permission: String, origin: String, webView: WKWebView?) -> Bool {
+        guard let url = URL(string: origin), url.scheme == "chrome-extension", let host = url.host,
+              let registry = resolveRegistry(for: webView)
+        else { return false }
+        return registry.heldPermissions(of: host).contains(permission)
+    }
 
     private func profileContext(for registry: ProfileExtensionRegistry) -> ProfileContext? {
         profileContexts?.existingContext(for: registry.profileId)
@@ -401,6 +409,11 @@ final class WKEngineFactory {
                .perform(initWithIdentifier, with: identifier)?.takeUnretainedValue() as? NSObject {
             configuration.setValue(0.6, forKey: "originQuotaRatio")
             configuration.setValue(0.8, forKey: "totalQuotaRatio")
+            // The network process accepts a certificate the system trusts without a round trip to this main thread,
+            // as Safari does; one it rejects still reaches the navigation delegate, for exceptions and the error page.
+            if configurationClass.instancesRespond(to: NSSelectorFromString("setFastServerTrustEvaluationEnabled:")) {
+                configuration.setValue(true, forKey: "fastServerTrustEvaluationEnabled")
+            }
             store = unsafe WKWebsiteDataStore.perform(alloc).takeRetainedValue()
                 .perform(initWithConfiguration, with: configuration)?.takeUnretainedValue() as? WKWebsiteDataStore
         }
@@ -458,11 +471,32 @@ final class WKEngineFactory {
         let configuration = configurationClass.init()
         guard configuration.responds(to: NSSelectorFromString("setPrewarmsProcessesAutomatically:")) else { return nil }
         configuration.setValue(true, forKey: "prewarmsProcessesAutomatically")
+        // Sites get the system's languages (navigator.language, Accept-Language), not the app's AppleLanguages, which the
+        // interface language picker overrides for AppKit. WebKit ignores the configuration: every web process launched from
+        // here on gets these languages, the chrome's included, so the chrome takes its locale from its bootstrap script.
+        let rtld = unsafe UnsafeMutableRawPointer(bitPattern: -2)
+        if let languages = CFPreferencesCopyValue(
+            "AppleLanguages" as CFString, kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost
+        ) as? [String], !languages.isEmpty,
+            let createString = unsafe dlsym(rtld, "WKStringCreateWithCFString"),
+            let createArray = unsafe dlsym(rtld, "WKArrayCreateAdoptingValues"),
+            let setLanguages = unsafe dlsym(rtld, "WKContextConfigurationSetOverrideLanguages"),
+            let release = unsafe dlsym(rtld, "WKRelease") {
+            typealias CreateString = @convention(c) (CFString) -> UnsafeRawPointer?
+            typealias CreateArray = @convention(c) (UnsafeMutablePointer<UnsafeRawPointer?>, Int) -> UnsafeRawPointer?
+            typealias SetLanguages = @convention(c) (UnsafeRawPointer, UnsafeRawPointer) -> Void
+            typealias Release = @convention(c) (UnsafeRawPointer) -> Void
+            var strings = unsafe languages.map { unsafe unsafeBitCast(createString, to: CreateString.self)($0 as CFString) }
+            if let array = unsafe unsafeBitCast(createArray, to: CreateArray.self)(&strings, strings.count) {
+                unsafe unsafeBitCast(setLanguages, to: SetLanguages.self)(Unmanaged.passUnretained(configuration).toOpaque(), array)
+                unsafe unsafeBitCast(release, to: Release.self)(array)
+            }
+        }
         let pool = unsafe poolClass.perform(selector, with: configuration)?.takeUnretainedValue() as? NSObject
         // Safari's cache model (kWKCacheModelPrimaryWebBrowser), app-wide: WebKit's default for an app caps the HTTP disk cache
         // at 75 MB, so a few heavy sites evict the next one's scripts; this one allows 1 GB and a larger memory cache.
         typealias SetCacheModel = @convention(c) (UnsafeRawPointer, UInt32) -> Void
-        if let pool, let symbol = unsafe dlsym(UnsafeMutableRawPointer(bitPattern: -2), "WKContextSetCacheModel") {
+        if let pool, let symbol = unsafe dlsym(rtld, "WKContextSetCacheModel") {
             unsafe unsafeBitCast(symbol, to: SetCacheModel.self)(Unmanaged.passUnretained(pool).toOpaque(), 2)
         }
         return pool
@@ -487,15 +521,15 @@ final class WKEngineFactory {
     /// Applies to web views built afterwards; the warm view is discarded. WebKit binds preferences at
     /// web-view creation, so existing tabs keep theirs until reloaded.
     func setFeatureFlagOverrides(_ overrides: [String: Bool]) {
-        guard overrides != featureFlagOverrides else { return }
-        featureFlagOverrides = overrides
+        guard overrides != Self.featureFlagOverrides else { return }
+        Self.featureFlagOverrides = overrides
         dropWarmPool()
     }
 
     /// Applies to web views built afterwards: an open page keeps its rate, even through a reload.
     func setFullRefreshRate(_ enabled: Bool) {
-        guard fullRefreshRate != enabled else { return }
-        fullRefreshRate = enabled
+        guard Self.fullRefreshRate != enabled else { return }
+        Self.fullRefreshRate = enabled
         dropWarmPool()
     }
 
@@ -847,6 +881,15 @@ final class WKEngineFactory {
         usesNativeConfiguration: Bool
     ) -> WKWebViewConfiguration {
         let wkConfig = configuration.nativeConfiguration ?? WKWebViewConfiguration()
+        // A popup shares its opener's preferences: a copy keeps one tab's full speed while hidden (runsAtFullSpeedHidden)
+        // from reaching the other, and starts throttled when hidden, as every new tab does.
+        if configuration.nativeConfiguration != nil, let preferences = wkConfig.preferences.copy() as? WKPreferences {
+            for key in ["pageVisibilityBasedProcessSuppressionEnabled", "hiddenPageDOMTimerThrottlingEnabled"]
+            where preferences.responds(to: NSSelectorFromString("_set\(key.prefix(1).uppercased())\(key.dropFirst()):")) {
+                preferences.setValue(true, forKey: key)
+            }
+            wkConfig.preferences = preferences
+        }
         WebInspectorSupport.prepare(configuration: wkConfig)
         // No trailing app token: a "Lilo/1.0" after "Safari/605.1.15" trips strict UA sniffers into a
         // Widevine path WKWebView can't satisfy (it ships only FairPlay), breaking streaming playback.
@@ -873,8 +916,11 @@ final class WKEngineFactory {
         // Click Measurement is ad-click attribution, on by default in WebKit. No autoplay
         // out of view, and hidden pages' timers throttled harder the longer they stay hidden. The top
         // edge's color is sampled for the bars over the page, a solid band of 10pt at least, so a hairline does not count.
+        // DNS prefetching is set explicitly, and stays off in a private space.
+        let dataStore = configuration.nativeConfiguration?.websiteDataStore ?? (configuration.dataStore ?? sharedDefaultDataStore).backingStore
         let privateSettings: [(NSObject, String, Any)] = [
             (wkConfig.preferences, "allowsPictureInPictureMediaPlayback", true), (wkConfig.preferences, "mediaDevicesEnabled", true),
+            (wkConfig.preferences, "DNSPrefetchingEnabled", dataStore.isPersistent),
             (wkConfig.preferences, "privateClickMeasurementEnabled", false), (wkConfig, "invisibleAutoplayNotPermitted", true),
             (wkConfig.preferences, "hiddenPageDOMTimerThrottlingAutoIncreases", true),
             (wkConfig, "sampledPageTopColorMaxDifference", 5.0), (wkConfig, "sampledPageTopColorMinHeight", 10.0)
@@ -883,11 +929,13 @@ final class WKEngineFactory {
             object.setValue(value, forKey: key)
         }
         wkConfig.suppressesIncrementalRendering = false
-        let rendersNear60FPS = !fullRefreshRate || (configuration.profileId != nil && configuration.profileId == agentsProfileId)
-        // Power-constrained, a page fetches no page the user may never open; an about:config override still wins.
+        // Power-constrained, a page renders near 60 FPS and fetches no page the user may never open; an about:config
+        // override still wins.
+        let rendersNear60FPS = !Self.fullRefreshRate || suppressWarmPool
+            || (configuration.profileId != nil && configuration.profileId == agentsProfileId)
         let prefetches = suppressWarmPool ? ["LinkPrefetchEnabled": false, "SpeculationRulesPrefetchEnabled": false] : [:]
         WKFeatureFlags.apply(
-            [WKFeatureFlags.near60FPSKey: rendersNear60FPS].merging(prefetches) { $1 }.merging(featureFlagOverrides) { $1 },
+            [WKFeatureFlags.near60FPSKey: rendersNear60FPS].merging(prefetches) { $1 }.merging(Self.featureFlagOverrides) { $1 },
             to: wkConfig.preferences
         )
 
@@ -965,8 +1013,6 @@ final class WKEngineFactory {
             TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule,
             DocumentPiPBridge.pageModule, AgentCapture.consoleModule
         ] + (UserDefaults.standard.bool(forKey: "LiloMeetDocumentPiPDisabled") ? [] : [DocumentPiPBridge.meetModule]), on: contentController)
-        contentController.addUserScript(WKUserScript(source: FormDirtyBridge.scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: false,
-                                                     in: PageWorld.bridgeWorld))
         // Store shim for regular tabs (the store is a normal https tab without ChromeAPIAugmentation.js), top-level only. Injected
         // only into the store when the match-pattern SPI exists; it self-guards on the hostname otherwise.
         if let source = bundledTemplate("ChromeWebStoreShim") {
@@ -1137,7 +1183,7 @@ final class WKEngineFactory {
 
     /// While the system is power-constrained (Low Power Mode, thermal pressure), a speculative
     /// warm WKWebView is a live WebContent process kept around "just in case": not worth it.
-    /// Web views built meanwhile do not prefetch either.
+    /// Web views built meanwhile do not prefetch either, and render near 60 FPS.
     var suppressWarmPool = false {
         didSet {
             guard suppressWarmPool else { return }

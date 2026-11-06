@@ -26,7 +26,7 @@ final class SearchBridgeHandler: BridgeHandler {
     private let historyStoreProvider: () -> HistoryStore?
     private let faviconStoreProvider: () -> FaviconStore?
     /// Hosts whose favicon this window's command bar already holds: each icon crosses the bridge once.
-    private var sentFaviconHosts: Set<String> = []
+    var sentFaviconHosts: Set<String> = []
     private let suggestionsEnabledProvider: () -> Bool
     private let preconnect: (URL) -> Void
     private let preloadTopHit: (URL?) -> Void

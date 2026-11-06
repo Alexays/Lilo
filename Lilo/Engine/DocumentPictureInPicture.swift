@@ -20,11 +20,11 @@ final class DocumentPiPBridge: NSObject, WKScriptMessageHandlerWithReply {
         return (true, nil)
     }
 
-    /// `window.documentPictureInPicture` for `PageWorld`, top-level documents only.
+    /// `window.documentPictureInPicture` for `PageWorld`, in secure top-level documents only.
     static let pageModule = #"""
     function () {
-      if (window.top !== window || 'documentPictureInPicture' in window) return;
-      const open = window.open, round = Math.round, max = Math.max;
+      if (!window.isSecureContext || window.top !== window || 'documentPictureInPicture' in window) return;
+      const open = window.open, round = Math.round, max = Math.max, then = NativePromise.prototype.then;
       // Captured before the page can fake them: the native side only lets a page with a user activation open its window.
       const activation = getOwnPropertyDescriptor(Navigator.prototype, 'userActivation');
       const isActive = typeof UserActivation === 'function' ? getOwnPropertyDescriptor(UserActivation.prototype, 'isActive') : undefined;
@@ -39,7 +39,7 @@ final class DocumentPiPBridge: NSObject, WKScriptMessageHandlerWithReply {
           const width = max(0, round(Number(options && options.width) || 0)), height = max(0, round(Number(options && options.height) || 0));
           const request = ++generation;
           const activated = !!(activation && activation.get && isActive && isActive.get && apply(isActive.get, apply(activation.get, navigator, []), []));
-          return lilo.post('liloDocumentPiP', { width, height, activated }).then(() => {
+          return apply(then, lilo.post('liloDocumentPiP', { width, height, activated }), [() => {
             if (request !== generation) throw new DOMException('A newer request replaced this one.', 'AbortError');
             // Only an accepted request replaces the open window.
             if (current) { const previous = current; current = null; try { previous.close(); } catch (e) {} }
@@ -51,7 +51,7 @@ final class DocumentPiPBridge: NSObject, WKScriptMessageHandlerWithReply {
             defineProperty(event, 'window', { value: win, enumerable: true });
             apply(dispatch, instance, [event]);
             return win;
-          }, error => { throw domError(error); });
+          }, error => { throw domError(error); }]);
         }
       }
       const wire = lilo.eventHandlers(DocumentPictureInPicture.prototype, ['enter']);

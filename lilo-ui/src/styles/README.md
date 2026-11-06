@@ -65,7 +65,8 @@ stroke of about 1.5px on screen.
 States share one recipe:
 
 - hover `--bg-hover`, pressed `--bg-active`; a filled neutral button hovers to
-  `--text-primary-tint-12`, a primary one to `--accent-hover`
+  `--text-primary-tint-12` and presses to an 18% `--text-primary` mix, a primary one
+  hovers to `--accent-hover`
 - disabled `opacity: var(--disabled-opacity)` and `cursor: default`
 - focus `outline: var(--focus-outline)` with `outline-offset: 1px`, or `-2px` on a box that
   clips its painting; text fields show the ring too, not an accent border
@@ -101,5 +102,7 @@ and inner highlight their surfaces need.
 Durations: `--motion-duration-fast` (120ms, hover and press; `--transition-fast` is it with
 `ease`), `-normal` (200ms, appearing content), `-overlay` (220ms), `-slow` (280ms, panels).
 Easings: `--motion-ease-standard`, `-organic`, `-spring`, `-bounce`. Reduce motion and
-Low Power Mode collapse every animation and transition globally in `global.css`, so a
-component only adds its own rule when it needs a still alternative rather than an instant one.
+Low Power Mode collapse every animation and transition globally in `global.css`. With Reduce
+motion a surface that appears (modal, drawer, toast, switcher) fades in 150 ms instead, as
+[DESIGN.md](../../../docs/DESIGN.md) asks: its fallback rule is `!important` to beat the global
+one, and its Svelte transitions take 150 ms when `prefersReducedMotion()` is true.

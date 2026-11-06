@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions see the title and closing time of recently closed tabs, no longer find notifications blocked before macOS has asked to allow them, and get the download, tab group and history fields Chrome always provides
+time: 2026-11-06T18:32:22.542873+01:00

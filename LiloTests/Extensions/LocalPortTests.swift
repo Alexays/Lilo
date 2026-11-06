@@ -158,6 +158,37 @@ final class LocalPortTests: XCTestCase {
         XCTAssertEqual(otherHeard, ["open", "disconnected "], "a stopped worker's port disconnects without an error, as in Chrome")
     }
 
+    func testAPagesUnansweredMessageResolvesOnlyWhileAnotherPageListens() async throws {
+        let id = try await load(worker: "log.push('no listener');", page: """
+        chrome.runtime.onMessage.addListener(() => {});
+        window.send = () => chrome.runtime.sendMessage('hi').then(() => log.push('resolved'), (error) => log.push(error.message));
+        """, other: """
+        const listener = () => {};
+        chrome.runtime.onMessage.addListener(listener);
+        window.quiet = () => chrome.runtime.onMessage.removeListener(listener);
+        """)
+        let listening = { self.registry.gapEvents.contexts(of: id, listeningTo: "runtime.onMessage").count }
+        let (_, page) = try open("page.html", of: id)
+        _ = await pollUntil(timeout: 10) { listening() == 1 }
+        _ = try await page.evaluateJavaScript("window.send(); true")
+        _ = await pollUntil(timeout: 10) { await self.log(of: page).count == 1 }
+
+        let (_, other) = try open("other.html", of: id)
+        _ = await pollUntil(timeout: 10) { listening() == 2 }
+        _ = try await page.evaluateJavaScript("window.send(); true")
+        _ = await pollUntil(timeout: 10) { await self.log(of: page).count == 2 }
+
+        _ = try await other.evaluateJavaScript("window.quiet()")
+        _ = await pollUntil(timeout: 10) { listening() == 1 }
+        _ = try await page.evaluateJavaScript("window.send(); true")
+        _ = await pollUntil(timeout: 10) { await self.log(of: page).count == 3 }
+        let heard = await log(of: page)
+        XCTAssertEqual(heard, [
+            "Could not establish connection. Receiving end does not exist.", "resolved",
+            "Could not establish connection. Receiving end does not exist."
+        ], "the sending page's own listener never counts")
+    }
+
     func testAPortStartsTheWorker() async throws {
         let id = try await load(worker: echo, page: """
         const port = chrome.runtime.connect({ name: 'wake' });

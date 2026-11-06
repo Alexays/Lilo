@@ -44,6 +44,9 @@ final class DatabaseManager: @unchecked Sendable {
     /// Per-profile database pools, keyed by profile ID. Locked: the launch preload opens pools off the main thread.
     private let profilePools = OSAllocatedUnfairLock<[UUID: DatabasePool]>(initialState: [:])
 
+    /// Where each database found unreadable at open was moved, until `takeMovedAsideDatabases` reports it.
+    private let movedAsideDatabases = OSAllocatedUnfairLock<[String]>(initialState: [])
+
     init(appSupportDirectory: String = BuildIdentity.appSupportDirectory) throws {
         self.appSupportDirectory = appSupportDirectory
         let globalPath = (appSupportDirectory as NSString).appendingPathComponent("global.db")
@@ -51,8 +54,52 @@ final class DatabaseManager: @unchecked Sendable {
             atPath: (globalPath as NSString).deletingLastPathComponent,
             withIntermediateDirectories: true
         )
-        globalPool = try DatabasePool(path: globalPath, configuration: Self.configuration)
-        try Migrations.migrateGlobal(globalPool)
+        let (pool, movedAside) = try Self.openPool(path: globalPath) { try Migrations.migrateGlobal($0) }
+        globalPool = pool
+        if let movedAside { movedAsideDatabases.withLock { $0.append(movedAside) } }
+        // A deleted profile's folder whose detached removal a quit interrupted.
+        let profiles = (appSupportDirectory as NSString).appendingPathComponent("Profiles")
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: profiles)) ?? [] where name.hasPrefix(".deleted-") {
+            let doomed = (profiles as NSString).appendingPathComponent(name)
+            Task.detached(priority: .utility) { try? FileManager.default.removeItem(atPath: doomed) }
+        }
+    }
+
+    /// The databases moved aside since the last call.
+    func takeMovedAsideDatabases() -> [String] {
+        movedAsideDatabases.withLock { paths in
+            defer { paths.removeAll() }
+            return paths
+        }
+    }
+
+    /// Opens and migrates the database at `path`. A file SQLite reports as corrupt or not a database is
+    /// moved aside with its WAL and shared memory files, and a new database takes its place: the app
+    /// keeps launching, and the damaged file stays on disk for the user.
+    private static func openPool(
+        path: String,
+        migrate: (DatabasePool) throws -> Void
+    ) throws -> (pool: DatabasePool, movedAside: String?) {
+        func open() throws -> DatabasePool {
+            let pool = try DatabasePool(path: path, configuration: configuration)
+            do { try migrate(pool) } catch {
+                try? pool.close()
+                throw error
+            }
+            return pool
+        }
+        do {
+            return (try open(), nil)
+        } catch let error as DatabaseError where error.resultCode == .SQLITE_CORRUPT || error.resultCode == .SQLITE_NOTADB {
+            let stamp = Date().formatted(.iso8601.year().month().day().dateSeparator(.omitted)
+                .time(includingFractionalSeconds: false).timeSeparator(.omitted))
+            let movedAside = "\(path).corrupt-\(stamp)"
+            for suffix in ["", "-wal", "-shm"] where FileManager.default.fileExists(atPath: path + suffix) {
+                try FileManager.default.moveItem(atPath: path + suffix, toPath: movedAside + suffix)
+            }
+            storageLogger.error("moved an unreadable database aside to \(movedAside, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return (try open(), movedAside)
+        }
     }
 
     /// Get or create the database pool for a specific profile.
@@ -66,8 +113,10 @@ final class DatabaseManager: @unchecked Sendable {
                 withIntermediateDirectories: true
             )
             let existed = FileManager.default.fileExists(atPath: path)
-            let pool = try DatabasePool(path: path, configuration: Self.configuration)
-            try Migrations.migrateProfile(pool, legacyGlobal: existed ? globalPool : nil)
+            let (pool, movedAside) = try Self.openPool(path: path) {
+                try Migrations.migrateProfile($0, legacyGlobal: existed ? self.globalPool : nil)
+            }
+            if let movedAside { movedAsideDatabases.withLock { $0.append(movedAside) } }
             pools[profileId] = pool
             return pool
         }
@@ -96,10 +145,12 @@ final class DatabaseManager: @unchecked Sendable {
         if let pool = profilePools.withLock({ $0.removeValue(forKey: profileId) }) {
             loggingPersistenceError("deleteProfile.close[\(profileId.uuidString)]") { try pool.close() }
         }
+        // Renamed away at once so a pool reopened for this id never meets half-deleted files; the slow removal runs detached.
         let dir = profileDirectory(profileId: profileId)
-        if FileManager.default.fileExists(atPath: dir) {
-            try FileManager.default.removeItem(atPath: dir)
-        }
+        guard FileManager.default.fileExists(atPath: dir) else { return }
+        let doomed = ((dir as NSString).deletingLastPathComponent as NSString).appendingPathComponent(".deleted-\(UUID().uuidString)")
+        try FileManager.default.moveItem(atPath: dir, toPath: doomed)
+        Task.detached(priority: .utility) { try? FileManager.default.removeItem(atPath: doomed) }
     }
 
     // MARK: - Paths

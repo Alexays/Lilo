@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Pages use less CPU and memory: tabs loading out of sight render at full width when shown, ad blocking does less work on large pages and in hidden ones, secure sites connect without waiting on the app, and idle agent tabs, dismissed notifications and translated pages hold less'
+time: 2026-11-06T17:01:33.416649+01:00

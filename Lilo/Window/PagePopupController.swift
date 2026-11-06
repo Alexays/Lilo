@@ -92,19 +92,35 @@ final class PagePopupController: NSObject, NSWindowDelegate {
         } else if let parent {
             frame.origin = NSPoint(x: parent.frame.midX - frame.width / 2, y: parent.frame.midY - frame.height / 2)
         }
-        if let visible = screen?.visibleFrame {
-            frame.size.width = min(frame.width, visible.width)
-            frame.size.height = min(frame.height, visible.height)
-            frame.origin.x = min(max(frame.minX, visible.minX), visible.maxX - frame.width)
-            frame.origin.y = min(max(frame.minY, visible.minY), visible.maxY - frame.height)
-        }
-        window.setFrame(frame, display: false)
+        window.setFrame(Self.fitted(frame, on: screen), display: false)
         if parent == nil { window.center() }
         self.window = window
         // A child window stays above the browser window and follows it, in full screen too.
         parent?.addChildWindow(window, ordered: .above)
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(engine.wkWebView)
+    }
+
+    /// `window.resizeTo` and `moveTo` of the popup window; a peek keeps its size.
+    func setWindowFrame(_ frame: NSRect) {
+        guard let window else { return }
+        // `setFrame(_:display:)` does not enforce `contentMinSize`, so the page could shrink the header out of reach.
+        let minimum = window.frameRect(forContentRect: NSRect(origin: .zero, size: window.contentMinSize)).size
+        var frame = frame
+        frame.size.width = max(frame.width, minimum.width)
+        frame.size.height = max(frame.height, minimum.height)
+        window.setFrame(Self.fitted(frame, on: window.screen ?? NSScreen.main), display: true)
+    }
+
+    /// `frame` shrunk and moved to fit the screen's visible frame, so the title bar stays reachable.
+    private static func fitted(_ frame: NSRect, on screen: NSScreen?) -> NSRect {
+        guard let visible = screen?.visibleFrame else { return frame }
+        var frame = frame
+        frame.size.width = min(frame.width, visible.width)
+        frame.size.height = min(frame.height, visible.height)
+        frame.origin.x = min(max(frame.minX, visible.minX), visible.maxX - frame.width)
+        frame.origin.y = min(max(frame.minY, visible.minY), visible.maxY - frame.height)
+        return frame
     }
 
     /// Web screen coordinates start at the primary screen's top left; AppKit's at its bottom left.
@@ -147,7 +163,7 @@ final class PagePopupController: NSObject, NSWindowDelegate {
         let alert = NSAlert()
         alert.messageText = unsafe String(format: messages[type] ?? "%@ wants to use your camera or microphone".localized, host)
         alert.addButton(withTitle: "Allow".localized)
-        alert.addButton(withTitle: "Deny".localized)
+        alert.addButton(withTitle: "Don't Allow".localized)
         alert.beginSheetModal(for: window) { response in completion(response == .alertFirstButtonReturn) }
     }
 

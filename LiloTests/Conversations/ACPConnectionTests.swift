@@ -99,6 +99,8 @@ final class ACPConnectionTests: XCTestCase {
         do {
             _ = try await connection.request("initialize", [:])
             XCTFail("expected an error")
-        } catch {}
+        } catch let error as ACPConnection.RPCError {
+            XCTAssertEqual(error.code, ACPConnection.RPCError.transport)
+        }
     }
 }

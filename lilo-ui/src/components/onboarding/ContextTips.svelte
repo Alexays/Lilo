@@ -84,5 +84,5 @@
     box-shadow: var(--chrome-overlay-shadow); color: var(--text-primary); font-size: var(--font-size-md); text-align: center;
     animation: tip-in var(--motion-duration-normal) var(--motion-ease-standard) both; }
   @keyframes tip-in { from { opacity: 0; transform: translateY(8px); } }
-  @media (prefers-reduced-motion: reduce) { .tip { animation: tip-fade .15s both; } @keyframes tip-fade { from { opacity: 0; } } }
+  @media (prefers-reduced-motion: reduce) { .tip { animation: tip-fade .15s both !important; } @keyframes tip-fade { from { opacity: 0; } } }
 </style>

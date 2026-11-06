@@ -932,8 +932,8 @@ final class BrowserStateStore {
         return (total, projected)
     }
 
-    /// Discards hidden-space engines whose process exceeded `maxCPUPercent` or `maxFootprintBytes` on two sweeps in a row, so a tab busy
-    /// just before the user left it is not taken for a runaway. A process also hosting a protected engine is left alone.
+    /// Discards hidden-space engines whose process exceeded `maxCPUPercent` or `maxFootprintBytes` on two sweeps in a row, unless it hosts a protected
+    /// engine too. An off-screen engine of a visible space busy past `maxCPUPercent` is frozen instead, notifications, Web Locks and peers notwithstanding.
     func discardBusyBackgroundEngines(
         maxCPUPercent: Double,
         maxFootprintBytes: UInt64,
@@ -947,21 +947,47 @@ final class BrowserStateStore {
         let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
         var protectedTabIds: Set<UUID> = []
         var spaceByTab: [UUID: UUID] = [:]
+        // Visible spaces are left to the window's own trim, since their EngineHost still holds the engine: a runaway there is frozen in place.
+        var visibleEngines: [UUID: WKWebViewTab] = [:]
+        var freezeProtectedTabIds = displayedTabIds.union(pictureInPictureOpenerIds)
         for (spaceId, snapshot) in spaces where !snapshot.engines.isEmpty {
             let tabs = projectedSidebar(from: snapshot).tabs
             protectedTabIds.formUnion(discardProtectedEngineIds(spaceId: spaceId, snapshot: snapshot, tabs: tabs, coordinator: coordinator, now: now))
-            // Visible spaces are left to the window's own trim: their EngineHost still holds the engine.
-            guard !visibleSpaceIds.contains(spaceId) else { continue }
-            for tabId in snapshot.engines.keys { spaceByTab[tabId] = spaceId }
+            guard visibleSpaceIds.contains(spaceId) else {
+                for tabId in snapshot.engines.keys { spaceByTab[tabId] = spaceId }
+                continue
+            }
+            visibleEngines.merge(snapshot.engines) { current, _ in current }
+            freezeProtectedTabIds.formUnion(coordinator.protectedEngineIds(
+                tabs: tabs, availableEngineIds: Set(snapshot.engines.keys), restoringTabIds: snapshot.restoringTabIds, now: now
+            ))
+            freezeProtectedTabIds.formUnion(inspectedEngineIds(in: snapshot.engines))
+            if let visibleTabId = snapshot.spaceTab.state.activeTabId {
+                freezeProtectedTabIds.insert(visibleTabId)
+                if let split = snapshot.spaceTab.splitGroup(containing: visibleTabId) { freezeProtectedTabIds.formUnion(split.layout.paneIds) }
+            }
         }
         let protectedPids = Set(protectedTabIds.compactMap { cpuByTab[$0]?.pid })
+        let freezeProtectedPids = Set(freezeProtectedTabIds.compactMap { cpuByTab[$0]?.pid })
         let busy = Set(cpuByTab.compactMap { tabId, cpu in
-            spaceByTab[tabId] != nil && !protectedTabIds.contains(tabId) && !protectedPids.contains(cpu.pid)
+            if let engine = visibleEngines[tabId] {
+                return !engine.isFrozen && !engine.isLoading && !freezeProtectedTabIds.contains(tabId) && !freezeProtectedPids.contains(cpu.pid)
+                    && cpu.percent >= maxCPUPercent ? tabId : nil
+            }
+            return spaceByTab[tabId] != nil && !protectedTabIds.contains(tabId) && !protectedPids.contains(cpu.pid)
                 && (cpu.percent >= maxCPUPercent || cpu.footprint >= maxFootprintBytes) ? tabId : nil
         })
         let toDiscard = busy.intersection(previouslyBusyTabIds)
         previouslyBusyTabIds = busy.subtracting(toDiscard)
         for tabId in toDiscard {
+            if let engine = visibleEngines[tabId] {
+                Self.logger.info("""
+                    freezing busy background engine host=\(engine.currentURL?.host ?? "nil", privacy: .private) \
+                    cpu=\(Int(cpuByTab[tabId]?.percent ?? 0), privacy: .public)%
+                    """)
+                engine.freeze(now: now)
+                continue
+            }
             guard let spaceId = spaceByTab[tabId], var snapshot = spaces[spaceId], let engine = snapshot.engines[tabId] else { continue }
             Self.logger.info("""
                 discarding busy background engine host=\(engine.currentURL?.host ?? "nil", privacy: .private) \
@@ -1033,7 +1059,7 @@ final class BrowserStateStore {
 
     private func inspectedEngineIds(in engines: [UUID: WKWebViewTab]) -> Set<UUID> {
         Set(engines.compactMap { id, engine in
-            engine.shouldRetainForWebInspector ? id : nil
+            engine.shouldRetainForWebInspector || engine.isExtensionDebugged ? id : nil
         })
     }
 
@@ -1063,6 +1089,11 @@ extension BrowserStateStore {
         spaces[spaceId]?.engines[tabId] = engine
     }
 
+    /// The extension adapter of a tab created in a space no window shows; a window showing the space takes it over.
+    func storeHiddenTabAdapter(_ adapter: TabExtensionAdapter, tabId: UUID, spaceId: UUID) {
+        spaces[spaceId]?.tabAdapters[tabId] = adapter
+    }
+
     func engine(tabId: UUID, spaceId: UUID) -> WKWebViewTab? {
         spaces[spaceId]?.engines[tabId]
     }
@@ -1077,6 +1108,13 @@ extension BrowserStateStore {
     func tabAdapter(forTab id: UUID) -> TabExtensionAdapter? {
         guard let spaceId = owningSpaceId(forTab: id) else { return nil }
         return liveHost(for: spaceId)?.tabAdapter(for: id) ?? spaces[spaceId]?.tabAdapters[id]
+    }
+
+    func parkedEngine(forWebView webView: WKWebView) -> WKWebViewTab? {
+        for snapshot in spaces.values {
+            if let engine = snapshot.engines.values.first(where: { $0.ownsWebView(webView) }) { return engine }
+        }
+        return nil
     }
 
     /// Tabs whose engine is parked live in a hidden space.

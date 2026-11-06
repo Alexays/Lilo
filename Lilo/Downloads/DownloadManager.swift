@@ -196,8 +196,8 @@ final class DownloadManager {
     // MARK: - Blob / data saves (WKUIDelegatePrivate saveDataToFile)
 
     /// Writes raw data (a blob/canvas/generated file the page handed us) where a download of it would go, after the
-    /// extensions' suggestion and the save panel, and records it as a completed download so it shows up in the downloads
-    /// panel. The write runs off the main thread; the returned task finishes once the row is recorded.
+    /// extensions' suggestion and the save panel, and records it as a completed download (an interrupted one when the
+    /// write fails) so it shows up in the downloads panel. The write runs off the main thread; the returned task finishes once the row is recorded.
     @discardableResult
     func saveData(
         _ data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL, webView: WKWebView? = nil, in store: DownloadStore, privateSpaceId: UUID? = nil
@@ -238,21 +238,31 @@ final class DownloadManager {
                 DownloadQuarantine.stamp(path: destination.path, source: source)
                 return .success(destination)
             }.value
-            let destination: URL
             switch written {
-            case .success(let url): destination = url
+            case .success(let destination):
+                item.filename = destination.lastPathComponent
+                item.destinationPath = destination.path
+                item.bytesReceived = Int64(data.count)
+                item.state = .complete
             case .failure(let error):
                 Self.logger.error("Failed to save data to file: \(error.localizedDescription)")
-                return
+                item.filename = chosen.lastPathComponent
+                item.destinationPath = chosen.path
+                item.state = .interrupted
+                item.fileMissing = true
+                let code = (error as? CocoaError)?.code
+                let reason: DownloadInterruptReason = if code == .fileWriteOutOfSpace {
+                    .fileNoSpace
+                } else if code == .fileWriteNoPermission || code == .fileWriteVolumeReadOnly {
+                    .fileAccessDenied
+                } else {
+                    .fileFailed
+                }
+                item.error = reason.rawValue
             }
-            item.filename = destination.lastPathComponent
-            item.destinationPath = destination.path
-            item.bytesReceived = Int64(data.count)
-            item.state = .complete
             item.endedAt = Date()
-            // The file is already on disk; a lost row only hides it from the list, so notifyObservers
-            // still runs and the completion notification fires either way.
-            loggingPersistenceError("download.insert[\(destination.lastPathComponent)]") {
+            // A lost row only hides the save from the list, so notifyObservers still runs either way.
+            loggingPersistenceError("download.insert[\(item.filename)]") {
                 try store.insert(&item)
             }
             if let privateSpaceId, let key = item.key { privateDownloadIds[privateSpaceId, default: []].append(key) }
@@ -299,7 +309,7 @@ final class DownloadManager {
         }
         guard !resumed else { return }
         // A row left paused keeps offering a Resume that can never work.
-        item.state = .interrupted; item.error = "Could not resume download"; item.endedAt = Date()
+        item.state = .interrupted; item.error = DownloadInterruptReason.serverNoRange.rawValue; item.endedAt = Date()
         try? store.update(item); notifyObservers(item)
     }
 
@@ -313,7 +323,7 @@ final class DownloadManager {
         if lane.wk.isTracking(id: id) { lane.wk.cancel(id: id) } else if lane.url.isTracking(id: id) { lane.url.cancel(id: id) } else {
             guard var item = try? store.fetch(id: id),
                   item.state == .inProgress || item.state == .paused else { return }
-            item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date()
+            item.state = .interrupted; item.error = DownloadInterruptReason.userCanceled.rawValue; item.endedAt = Date()
             // A paused browser download keeps its partial bytes under the final name, as an in-flight one does.
             if item.source == "wk" {
                 try? FileManager.default.removeItem(atPath: item.destinationPath)
@@ -403,7 +413,7 @@ final class DownloadManager {
     /// The website data store a download belongs to: its private space's, else its profile's. Nil once its private space's is gone.
     private func dataStore(ofDownload key: DownloadKey) -> WKWebsiteDataStore? {
         if let spaceId = privateDownloadIds.first(where: { $0.value.contains(key) })?.key { return privateDataStores[spaceId] }
-        return key.profileId.map { WKWebsiteDataStore(forIdentifier: $0) } ?? .default()
+        return key.profileId.map { WKEngineFactory.persistentDataStore(for: $0) } ?? .default()
     }
 
     /// `webView` when it browses with the download's data store: resumed in another, a download would carry another
@@ -421,8 +431,9 @@ final class DownloadManager {
     func retryDownload(id: Int64, in store: DownloadStore) async throws {
         let key = DownloadKey(profileId: store.profileId, id: id)
         pendingAutoResumes.remove(key)
+        // A blob's bytes came from the page itself: its URL would fetch the page, not the file.
         guard let item = try? store.fetch(id: id),
-              item.state == .interrupted else { return }
+              item.state == .interrupted, item.source != "blob" else { return }
         let lane = lane(for: store)
         if item.resumeData != nil {
             if item.source == "wk" {
@@ -526,8 +537,10 @@ final class DownloadManager {
         if item.state == .complete {
             content.title = "Download Complete".localized; content.body = item.filename
         } else {
-            guard let error = item.error, !error.localizedCaseInsensitiveContains("cancel") else { return }
-            content.title = "Download Failed".localized; content.body = "\(item.filename): \(error)"
+            guard let error = item.error, error != DownloadInterruptReason.userCanceled.rawValue else { return }
+            // A code is for the chrome to translate; a system error's text is already localized.
+            content.title = "Download Failed".localized
+            content.body = DownloadInterruptReason(rawValue: error) == nil ? "\(item.filename): \(error)" : item.filename
         }
 
         let identifier = "download-\(item.profileId?.uuidString ?? "")-\(item.id ?? 0)-\(item.state.rawValue)"

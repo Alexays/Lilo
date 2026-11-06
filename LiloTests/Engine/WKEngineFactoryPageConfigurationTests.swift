@@ -36,10 +36,18 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         XCTAssertFalse(try rendersNear60FPS(factory), "a page scrolling itself from requestAnimationFrame stutters at 60 fps on a 120 Hz display")
 
         factory.setFullRefreshRate(false)
+        defer { factory.setFullRefreshRate(true) }
         XCTAssertTrue(try rendersNear60FPS(factory))
 
         factory.setFeatureFlagOverrides([WKFeatureFlags.near60FPSKey: false])
+        defer { factory.setFeatureFlagOverrides([:]) }
         XCTAssertFalse(try rendersNear60FPS(factory), "an about:config override wins over the setting")
+    }
+
+    func testPowerConstrainedTabsRenderNear60FPS() throws {
+        let factory = WKEngineFactory()
+        factory.suppressWarmPool = true
+        XCTAssertTrue(try rendersNear60FPS(factory), "Low Power Mode and thermal pressure halve continuous rendering work")
     }
 
     func testAgentsProfileTabsRenderNear60FPSWhateverTheSetting() throws {
@@ -151,17 +159,27 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         }
         let factory = WKEngineFactory()
         let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString)))
-        defer { tab.teardown() }
+        // Only a tab on screen learns a site's origins.
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = tab.wkWebView
+        defer {
+            window.close()
+            tab.teardown()
+        }
 
         tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(site.port)/"))))
         _ = await pollUntil(timeout: 10) { images.connections > 0 }
         // The tab learns the image's origin once the page has settled.
         try await Task.sleep(for: .seconds(3))
+        // A navigation within the committed page's site preconnects nothing, so the site is entered from another page.
+        tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "about:blank"))))
+        _ = await pollUntil(timeout: 10) { tab.wkWebView.url?.absoluteString == "about:blank" && !tab.wkWebView.isLoading }
         let before = images.connections
         tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(site.port)/again"))))
 
         let preconnected = await pollUntil(timeout: 10) { images.connections > before }
-        XCTAssertTrue(preconnected, "a page of the site that fetches no image still connects to the image's origin")
+        XCTAssertTrue(preconnected, "a page of the site, entered from another page, that fetches no image still connects to the image's origin")
     }
 
     /// A page that asked Lilo something (here notification permission) and then navigates itself must

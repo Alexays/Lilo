@@ -197,6 +197,8 @@ final class MainWindowController: NSWindowController {
     var pagePopups: [UUID: PagePopupController] = [:]
     /// Little windows this window opened, keyed by their engine id.
     var littleWindows: [UUID: LittleWindowController] = [:]
+    /// Tabs whose external app prompt is showing.
+    var externalAppPromptTabs: Set<UUID> = []
     /// The extension side panel docked right of the content.
     lazy var sidePanel = SidePanelController(window: self)
     /// The Changes peek over a terminal, if one is open.
@@ -450,6 +452,9 @@ final class MainWindowController: NSWindowController {
     var sentExtensionRows: [String: [String: Any]] = [:]
     /// Archived-tab favicons by host as this window's chrome last received them; `archivedTabs` ships only the new ones.
     var sentArchiveFavicons: [String: String] = [:]
+    /// Command bar and History page handlers, whose favicon caches `sendInitialState` clears.
+    weak var searchHandler: SearchBridgeHandler?
+    weak var historyPageHandler: HistoryPageBridgeHandler?
 
     func emitBrowserChange(_ changes: BrowserChangeSet) {
         guard let event = BrowserChangePresenter.event(
@@ -592,6 +597,7 @@ final class MainWindowController: NSWindowController {
         tabManager.browserStateStore = context.browserState
         tabManager.delegate = self
         tabManager.engineDelegate = self
+        tabManager.pageContainer = contentContainerView
         setupTerminalHost()
         guard !ProcessInfo.isRunningUnderXCTest else { return }
         runStartupSequence()
@@ -674,7 +680,8 @@ final class MainWindowController: NSWindowController {
             StartupMetrics.mark("restoreSession")
             await restoreSession()
             await Task.yield()
-            deleteOrphanedSpaceStates()
+            // Other profiles are swept when one of their spaces is deleted: opening each database here costs every launch.
+            if let profileId = profileContext?.profileId { context.deleteOrphanedSpaceStates(inProfile: profileId) }
         }
     }
 
@@ -752,6 +759,7 @@ extension MainWindowController: TabManager.Delegate {
         }
         guard let engine = manager.engineTab(for: id),
               var tab = manager.activeTab else { return }
+        if engine.visitAwaitsShowing { recordVisit(of: engine, state: tab, renamableUntil: engine.isLoading ? nil : .now + .seconds(5)) }
         // Background loads skip their fractional progress ticks (see didUpdateProgress).
         if tab.estimatedProgress != engine.estimatedProgress,
            let synced = updateRuntimeTab(id: id, mutate: { $0.estimatedProgress = engine.estimatedProgress }) {
@@ -919,6 +927,7 @@ extension MainWindowController: NSWindowDelegate {
             littleWindows.values.forEach { $0.window.close() }
         }
         sidePanel.closeAll()
+        context.conversations.windowClosed(self)
         setWallpaperColorWatch(false)
         // Closing the last window quits the app, after this window has left the registry.
         if context.windows.windows.count == 1 { saveSessionBeforeQuit() }
@@ -970,7 +979,7 @@ extension MainWindowController: NSWindowDelegate {
     /// A lagging read is harmless: the sync has no side effects and the next occlusion notification corrects it.
     override func showWindow(_ sender: Any?) {
         super.showWindow(sender)
-        context.hiddenSpaceLifecycle.syncWindowVisibility(context.windows.windows.contains { $0.window?.occlusionState.contains(.visible) == true })
+        context.hiddenSpaceLifecycle.syncWindowVisibility(context.anyWindowVisible)
     }
 }
 

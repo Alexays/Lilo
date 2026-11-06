@@ -81,7 +81,7 @@ final class ExtensionAccess {
             .compactMap { try? WKWebExtension.MatchPattern(string: $0) }
         context.deniedPermissionMatchPatterns = Dictionary(uniqueKeysWithValues: webStore.map { ($0, distantFuture) })
         // Content scripts and network rules reach private spaces' pages only with this, as in Chrome's incognito.
-        context.hasAccessToPrivateData = state.allowsPrivateAccess == true
+        context.hasAccessToPrivateData = state.allowsPrivateAccess == true && !Self.excludesPrivateSpaces(webExtension.manifest)
         if let shortcuts = state.commandShortcuts {
             for command in context.commands {
                 guard let shortcut = shortcuts[command.id] else { continue }
@@ -110,14 +110,14 @@ final class ExtensionAccess {
         Task { try? await storage.setAccessState(id: extensionId, state) }
     }
 
-    /// What a context is granted. With no restriction the manifest's own patterns stand; otherwise
+    /// What a context is granted. With no restriction (nil) the manifest's own patterns stand; otherwise
     /// each allowed host becomes `*://*.host/*`, kept to the hosts the manifest actually asked for so
     /// the user can narrow access but never widen it past the install-time review.
     static func grantedMatchPatterns(
         requested: Set<WKWebExtension.MatchPattern>,
-        allowedHosts: [String]
+        allowedHosts: [String]?
     ) -> Set<WKWebExtension.MatchPattern> {
-        guard !allowedHosts.isEmpty else { return requested }
+        guard let allowedHosts else { return requested }
         return Set(allowedHosts.compactMap { host in
             guard let probe = URL(string: "https://\(host)/"),
                   requested.contains(where: { $0.matches(probe) })
@@ -148,13 +148,18 @@ final class ExtensionAccess {
             .union(webExtension.requestedPermissionMatchPatterns)
     }
 
-    /// What `new` would be granted at load beyond what `old` is: its added manifest permissions, and
-    /// the granted match patterns no old one already covers. Chrome's permission-increase check.
-    static func addedAccess(from old: WKWebExtension, to new: WKWebExtension) -> (permissions: [String], matchPatterns: [String]) {
+    /// What `new` would be granted at load beyond what `old` is with the optional grants in `granted`: its added
+    /// manifest permissions, and the granted match patterns nothing already covers. Chrome's permission-increase check.
+    static func addedAccess(
+        from old: WKWebExtension, to new: WKWebExtension, granted: ExtensionStorage.AccessState?
+    ) -> (permissions: [String], matchPatterns: [String]) {
         // The manifest's own list: `requestedPermissions` drops the ones only Lilo's Gap APIs implement.
         let permissions = Set(new.manifest["permissions"] as? [String] ?? [])
-            .subtracting(old.manifest["permissions"] as? [String] ?? []).sorted()
+            .subtracting(old.manifest["permissions"] as? [String] ?? [])
+            .subtracting(granted?.optionalPermissions ?? [])
+            .subtracting(granted?.gapPermissions ?? []).sorted()
         let oldPatterns = baseMatchPatterns(for: old)
+            .union((granted?.optionalMatchPatterns ?? []).compactMap { try? WKWebExtension.MatchPattern(string: $0) })
         let patterns = baseMatchPatterns(for: new)
             .filter { pattern in !oldPatterns.contains { $0.matches(pattern) } }
             .map(\.description)
@@ -164,20 +169,29 @@ final class ExtensionAccess {
 
     // MARK: - User decisions
 
-    /// Restricts an extension to `hosts` (empty restores the manifest's own). Applied to the live
-    /// context, so pages loaded after the change see it without a reload of the extension.
-    func setSiteAccess(extensionId: String, hosts: [String]) async {
-        await update(extensionId) { $0.hosts = Self.normalizedHosts(hosts) }
+    /// Restricts an extension to `hosts` (nil restores the manifest's own, empty allows no site). Applied
+    /// to the live context, so pages loaded after the change see it without a reload of the extension.
+    func setSiteAccess(extensionId: String, hosts: [String]?) async {
+        await update(extensionId) { $0.hosts = hosts.map(Self.normalizedHosts) }
         guard let context = context(extensionId) else { return }
         apply(to: context, extensionId: extensionId)
         didChange(extensionId)
     }
 
-    /// Lets the extension run in private spaces. Applied to the live context like site access.
-    func setPrivateAccess(extensionId: String, allowed: Bool) async {
+    /// Lets the extension run in private spaces. Applied to the live context like site access. False,
+    /// with nothing changed, for a loaded extension whose manifest keeps it out of them.
+    @discardableResult
+    func setPrivateAccess(extensionId: String, allowed: Bool) async -> Bool {
+        if allowed, let manifest = context(extensionId)?.webExtension.manifest, Self.excludesPrivateSpaces(manifest) { return false }
         await update(extensionId) { $0.allowsPrivateAccess = allowed ? true : nil }
         context(extensionId)?.hasAccessToPrivateData = allowed
         didChange(extensionId)
+        return true
+    }
+
+    /// `"incognito": "not_allowed"`: Chrome never lets the extension into incognito, whatever the user chose.
+    nonisolated static func excludesPrivateSpaces(_ manifest: [String: Any]) -> Bool {
+        manifest["incognito"] as? String == "not_allowed"
     }
 
     /// Rebinds a command; a nil `key` removes its shortcut. Applied live and again at every load.
@@ -270,8 +284,7 @@ final class ExtensionAccess {
         guard let tab, let context = context(extensionId),
               let url = tab.url(for: context), let scheme = url.scheme, let host = url.host else { return }
         hostAccessRequests[tab.tabId]?[extensionId] = nil
-        let hosts = states[extensionId]?.hosts ?? []
-        if !hosts.isEmpty, Self.baseMatchPatterns(for: context.webExtension).contains(where: { $0.matches(url) }) {
+        if let hosts = states[extensionId]?.hosts, Self.baseMatchPatterns(for: context.webExtension).contains(where: { $0.matches(url) }) {
             // A host the user's site access left out: it joins the allowed ones.
             await setSiteAccess(extensionId: extensionId, hosts: hosts + [host])
         } else if let pattern = try? WKWebExtension.MatchPattern(string: "\(scheme)://\(host)/*") {

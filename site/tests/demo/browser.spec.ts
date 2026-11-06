@@ -315,6 +315,7 @@ test.describe("without JavaScript", () => {
       await page.goto(`${path}#browser-demo`);
       await expect(page.locator("h1")).toBeVisible();
       await expect(page.locator("#browser-demo noscript")).toBeVisible();
+      await expect(page.locator("#browser-demo .demo-poster")).toBeVisible();
       await expect(page.locator("header a[href*='moving']")).toBeVisible();
     });
   }

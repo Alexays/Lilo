@@ -62,7 +62,8 @@ enum DeclarativeNetRequestMerge {
             let entries = NSMutableArray(array: list)
             rest[listKey] = entries
             slots[key] = entries
-            out.add(["action": action, "trigger": rest])
+            // A Swift dictionary's key order changes with its hash seed, which would change WebKit's hash of the output.
+            out.add(NSDictionary(objects: [action, rest], forKeys: ["action", "trigger"] as [NSString]))
         }
         return out
     }

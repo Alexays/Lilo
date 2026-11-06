@@ -12,6 +12,8 @@ export interface URLVisual {
 	hostIdentity: string;
 	path: string;
 	isSecure: boolean;
+	/** Plain http, or https the engine reports as not secure (certificate exception, mixed content). */
+	insecure: boolean;
 	isPlaceholder: boolean;
 	isFeedback?: boolean;
 	feedbackVariant?: ToastVariant;

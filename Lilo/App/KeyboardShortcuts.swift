@@ -309,7 +309,7 @@ enum KeyboardShortcuts {
         }
     }
 
-    private static func combo(_ key: String, _ modifiers: NSEvent.ModifierFlags) -> String {
+    static func combo(_ key: String, _ modifiers: NSEvent.ModifierFlags) -> String {
         var combo = ""
         for (flag, glyph) in modifierGlyphs where modifiers.contains(flag) { combo.append(glyph) }
         return combo + key

@@ -2,6 +2,8 @@
 "NSCameraUsageDescription" = "Este site solicita acesso à sua câmera.";
 /* Shown by macOS when a page asks for the microphone. */
 "NSMicrophoneUsageDescription" = "Este site solicita acesso ao seu microfone.";
+/* Shown by macOS the first time a call shares the Mac's sound with the screen. */
+"NSAudioCaptureUsageDescription" = "O Lilo compartilha o som do seu Mac quando uma chamada pede isso junto com a sua tela.";
 /* Shown by macOS when a page asks for the location. */
 "NSLocationWhenInUseUsageDescription" = "Este site solicita acesso à sua localização.";
 /* Shown by macOS the first time a page on the local network is opened. */

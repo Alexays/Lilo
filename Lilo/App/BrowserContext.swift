@@ -73,6 +73,8 @@ final class BrowserContext {
         didSet { saveTabArchive() }
     }
     var tabArchiveSavePending = false
+    /// What the archive file holds, so a save that would not change it writes nothing.
+    var savedTabArchive: [TabArchive.Entry]?
     var archiveSweepTimer: DispatchSourceTimer?
     /// Pairs each suspend of `archiveSweepTimer` with one resume: an unbalanced call traps.
     var archiveSweepSuspended = false
@@ -140,8 +142,11 @@ final class BrowserContext {
             guard let dbManager = weakSelf?.dbManager else { throw BrowserContextError.notBootstrapped }
             let context = try ProfileContext(
                 profileId: profileId, dbManager: dbManager, gapRouter: engineFactory.gapRouter,
-                tabShare: (engineFactory.tabShareBridge, engineFactory.tabShareFrameSchemeHandler)
+                tabShare: (engineFactory.tabShareBridge, engineFactory.tabShareFrameSchemeHandler),
+                pageBridges: (engineFactory.geolocationBridge, engineFactory.notificationBridge)
             )
+            // Deferred: the alert's modal loop runs queued work that may ask for this profile before it is cached.
+            Task { [weak browserContext = weakSelf] in browserContext?.reportMovedAsideDatabases() }
             context.extensions.settingsStore = weakSelf?.settingsStore
             engineFactory.prepareExtensionRegistry(context.extensions)
             let blockerExtension = weakSelf?.blockerExtensionURL
@@ -182,7 +187,11 @@ final class BrowserContext {
             // The pick consents to the picture only: sound has its own grant, asked once. Refused, the share has no sound.
             let audio = wantsAudio ? await SystemAudioAccess.request() : false
             let screen = ScreenCaptureStream(filter: filter, maxSize: maxSize)
-            guard (try? await screen.start()) != nil, let window = windows.window(for: requester) else {
+            guard (try? await screen.start()) != nil else {
+                screen.stop()
+                return ["mode": "failed"]
+            }
+            guard let window = windows.window(for: requester) else {
                 screen.stop()
                 return nil
             }
@@ -316,6 +325,8 @@ final class BrowserContext {
         spaceManager.loadSpaces(startupSnapshot.spaces)
         spaceManager.delegate = self
         restoreTabArchive(bootstrap.tabArchive)
+        // After the state above: the alert's modal loop runs queued work that reads it.
+        reportMovedAsideDatabases()
         // Last: an agent may connect at once, and its calls need the profiles and spaces loaded above.
         if settingsStore.get("agentControlEnabled") == "true" {
             agentControl.setEnabled(true)
@@ -512,9 +523,17 @@ final class BrowserContext {
         hiddenSpaceLifecycle.applyConfig(lifecycleConfig)
     }
 
-    /// Engines follow the foreground policy while any window is on screen.
+    /// Engines follow the foreground policy while any window is on screen. Element fullscreen moves the active page to
+    /// a window and Space of its own: the window it left still counts, or the video would be put in PiP and backgrounded.
+    var anyWindowVisible: Bool {
+        windows.windows.contains {
+            $0.window?.occlusionState.contains(.visible) == true
+                || $0.tabManager.activeEngineTab.map { $0.wkWebView.fullscreenState != .notInFullscreen } == true
+        }
+    }
+
     func windowVisibilityChanged() {
-        let anyVisible = windows.windows.contains { $0.window?.occlusionState.contains(.visible) == true }
+        let anyVisible = anyWindowVisible
         guard anyVisible != hiddenSpaceLifecycle.isWindowVisible else { return }
         hiddenSpaceLifecycle.windowOcclusionChanged(isVisible: anyVisible)
     }
@@ -605,11 +624,30 @@ final class BrowserContext {
         )
     }
 
+    /// Tells the user where each database found unreadable, and replaced by an empty one, was moved.
+    private func reportMovedAsideDatabases() {
+        guard let dbManager else { return }
+        for path in dbManager.takeMovedAsideDatabases() where !ProcessInfo.isRunningUnderXCTest {
+            let alert = NSAlert()
+            alert.messageText = "Lilo replaced a damaged database".localized
+            alert.informativeText = unsafe String(
+                format: "The database couldn't be read, so Lilo started a new, empty one. The damaged file is kept at:\n\n%@".localized,
+                path
+            )
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK".localized)
+            alert.addButton(withTitle: "Show in Finder".localized)
+            if alert.runModal() == .alertSecondButtonReturn {
+                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+            }
+        }
+    }
+
     func showFatalDatabaseAlert(_ error: Error) {
         let alert = NSAlert()
         alert.messageText = "Lilo can't open its database".localized
         alert.informativeText = unsafe String(
-            format: "A database error occurred and automatic recovery failed. Please report this issue.\n\nError: %@".localized,
+            format: "A database error occurred. Check that your disk has free space, then open Lilo again. If it keeps happening, please report this issue.\n\nError: %@".localized,
             error.localizedDescription
         )
         alert.alertStyle = .critical
@@ -666,8 +704,8 @@ final class BrowserContext {
         from dbManager: DatabaseManager,
         snapshot: StartupSnapshot
     ) throws -> [UUID: [String: UUID]] {
-        guard let profileId = preferredProfileId(from: snapshot) else { return [:] }
-        let pool = try dbManager.pool(for: profileId)
+        // A profile database that fails to open is reported when the window restores it, as for any other profile.
+        guard let profileId = preferredProfileId(from: snapshot), let pool = try? dbManager.pool(for: profileId) else { return [:] }
         let ids = try loadStoredSpaceIds(from: pool)
         return [profileId: ids]
     }
@@ -723,6 +761,8 @@ extension BrowserContext {
             profileManager?.releaseEphemeralDataStore(for: space.id)
             downloadManager.forgetPrivateDownloads(inSpace: space.id)
             privateSitePermissions[space.id] = nil
+        } else {
+            deleteOrphanedSpaceStates(inProfile: space.profileId)
         }
         windows.windows.forEach { $0.spaceWasDeleted(space, by: manager) }
         // Each window goes back to the user space it last showed; an Agents space only when nothing else is left.
@@ -735,6 +775,23 @@ extension BrowserContext {
             if let replacement { window.switchToSpace(replacement) }
         }
         windows.activeWindow?.profileContext?.sessionPersistence?.scheduleSave()
+    }
+
+    /// Drops the saved tab and interaction state of the profile's gone spaces, queued on the writer behind every earlier save.
+    /// A space's row leaves global.db before this runs: a crash in between only leaves rows a later sweep drops.
+    func deleteOrphanedSpaceStates(inProfile profileId: UUID) {
+        guard let spaceManager, let dbManager else { return }
+        let pool: DatabasePool
+        do { pool = try dbManager.pool(for: profileId) } catch {
+            Self.logger.error("orphaned space state sweep skipped a profile: \(error.localizedDescription, privacy: .public)")
+            return
+        }
+        let spaceIds = Set(spaceManager.spaces(for: profileId).filter { !$0.isPrivate }.map(\.id))
+        let databasePath = pool.path
+        pool.asyncWrite({ db in
+            try SpaceTabStateStore.deleteAllOn(db: db, exceptSpaces: spaceIds)
+            try InteractionStateStore.deleteAllOn(db: db, databasePath: databasePath, exceptSpaces: spaceIds)
+        }, completion: loggingPersistenceFailure("spaceStates.orphanCleanup[\(profileId.uuidString)]"))
     }
 
     func spaceManager(_ manager: SpaceManager, didUpdateSpace space: Space) {
@@ -845,12 +902,12 @@ extension BrowserContext {
 
 extension BrowserContext {
     /// Bridges every folder change, from the sidebar or an extension, to chrome.tabGroups events for the extensions of the
-    /// space's profile; a private space's stay unseen.
+    /// space's profile.
     private func installTabGroupEventObserver() {
         browserState.onFoldersChanged = { [weak self] spaceId, old, new in
-            guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate,
+            guard let self, let space = spaceManager?.space(with: spaceId),
                   let registry = profileContexts.existingContext(for: space.profileId)?.extensions else { return }
-            engineFactory.tabGroupsHandler.foldersChanged(from: old, to: new, registry: registry)
+            engineFactory.tabGroupsHandler.foldersChanged(from: old, to: new, isPrivate: space.isPrivate, registry: registry)
         }
     }
 }

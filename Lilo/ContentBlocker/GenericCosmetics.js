@@ -176,8 +176,11 @@
   }
   function scanElement(el) {
     if (el.id) checkId(el.id);
-    var cl = el.classList;
-    if (cl) { for (var i = 0; i < cl.length; i++) checkClass(cl[i]); }
+    // Reading `classList` gives the element a token list it keeps for life, so only elements with a class read it.
+    if (el.hasAttribute('class')) {
+      var cl = el.classList;
+      for (var i = 0; i < cl.length; i++) checkClass(cl[i]);
+    }
     // Only <a> and <area> carry `hostname`.
     if (hasLinks && el.hostname) checkHost(el.hostname);
   }
@@ -213,6 +216,7 @@
       if (added) { for (var i = 0; i < added.length; i++) scanTree(added[i], visited); }
     }
   });
+  // Hidden pages keep observing: a user sheet lands a round trip after its match, so a scan deferred to the return shows ads.
   function observe() {
     scanTree(document.documentElement, null);
     try {

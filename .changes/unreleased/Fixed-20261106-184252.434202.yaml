@@ -1,0 +1,3 @@
+kind: Fixed
+body: With Reduce motion on, showing or hiding the sidebar or toolbar no longer slides the page, and modals, drawers, toasts, notices, the command bar, the find bar, the tab switcher and the page load line fade in instead of popping up; onboarding also turns opaque with Reduce transparency
+time: 2026-11-06T18:42:52.434202+01:00

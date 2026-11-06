@@ -74,7 +74,7 @@
         {#if index < 9 && shortcutKeys(`space.select${index + 1}`)}<kbd>{shortcutKeys(`space.select${index + 1}`)}</kbd>{/if}
       </button>
     {/each}
-    <div class="separator"></div>
+    <div class="separator" role="separator"></div>
     <button class="space-row" role="menuitem" onclick={() => { open = false; openAddEditor(); }}>
       <span class="plus" aria-hidden="true">+</span>
       <span class="space-name">{t("bottomBar.newSpace")}</span>

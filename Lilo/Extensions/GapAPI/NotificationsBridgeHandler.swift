@@ -315,7 +315,7 @@ final class NotificationsBridgeHandler: GapHandler {
 
     private func handleGetPermissionLevel() async -> [String: Any] {
         let status = await notificationCenter.authorizationStatus()
-        let granted = status == .authorized || status == .provisional
-        return ["level": granted ? "granted" : "denied"]
+        // Not asked yet is granted, as in Chrome: the first create asks macOS.
+        return ["level": status == .denied ? "denied" : "granted"]
     }
 }
