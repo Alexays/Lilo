@@ -101,6 +101,27 @@ final class ChromeAPIShimTests: XCTestCase {
         XCTAssertNil(afterClose)
     }
 
+    func testOffscreenDocumentClosedByWindowCloseCanBeCreatedAgain() async throws {
+        let registry = try makeTestExtensionRegistry(in: tempDir)
+        try await registry.load(from: try writeExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Offscreen", "version": "1.0", "permissions": ["offscreen"]}"#,
+            // Closes after createDocument, which waits for the page to load, has returned.
+            "offscreen.html": "<!doctype html><script>setTimeout(close, 500)</script>"
+        ]))
+        let extensionId = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let handler = OffscreenBridgeHandler()
+        let payload: [String: Any] = ["extensionId": extensionId, "url": "offscreen.html"]
+
+        let created = await handler.handle(message("offscreen.createDocument", payload), registry: registry)
+        XCTAssertNil(created as? BridgeError)
+        let closed = await pollUntil(timeout: 10) {
+            await handler.handle(message("offscreen.documentUrl", payload), registry: registry) == nil
+        }
+        XCTAssertTrue(closed, "window.close() ends the offscreen document")
+        let again = await handler.handle(message("offscreen.createDocument", payload), registry: registry)
+        XCTAssertNil(again as? BridgeError)
+    }
+
     /// Loads a prelude-wrapped worker in a bare controller and reads back what the worker sees.
     func testServiceWorkerExposesLiloAddedNamespaces() async throws {
         let url = try writeExtension([

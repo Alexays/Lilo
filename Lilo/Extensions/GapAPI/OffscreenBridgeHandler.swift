@@ -4,7 +4,7 @@ import WebKit
 /// extension context's own configuration, so chrome.runtime messaging reaches it natively. The view
 /// is never put in a window. One document per (profile, extension), as in Chrome.
 @MainActor
-final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
+final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate, WKUIDelegate {
     let gapActions: Set<String> = [
         "offscreen.createDocument",
         "offscreen.closeDocument",
@@ -55,6 +55,7 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
             }
             let documentView = WKWebView(frame: .zero, configuration: configuration)
             documentView.navigationDelegate = self
+            documentView.uiDelegate = self
             registry.frameCookies.watch(documentView)
             documents[key] = Document(context: context, webView: documentView)
             let error = await withCheckedContinuation { continuation in
@@ -81,6 +82,7 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
     private func closeDocument(_ key: String) {
         guard let document = documents.removeValue(forKey: key) else { return }
         document.webView.navigationDelegate = nil
+        document.webView.uiDelegate = nil
         document.webView.stopLoading()
         finishLoad(of: document.webView, error: CancellationError())
     }
@@ -104,6 +106,13 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        if let key = documents.first(where: { $0.value.webView === webView })?.key { closeDocument(key) }
+    }
+
+    // MARK: - WKUIDelegate
+
+    /// A document that closes itself with window.close() is gone, as in Chrome, and another may be created.
+    func webViewDidClose(_ webView: WKWebView) {
         if let key = documents.first(where: { $0.value.webView === webView })?.key { closeDocument(key) }
     }
 }
