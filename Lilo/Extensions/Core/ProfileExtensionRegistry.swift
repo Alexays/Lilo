@@ -247,6 +247,16 @@ final class ProfileExtensionRegistry {
         notifyExtensionsChanged()
     }
 
+    /// Drops what the extensions set for `tabId`, which closed for good; a discarded tab keeps it.
+    func forgetTab(_ tabId: UUID) {
+        guard !loadedRuntimes.isEmpty else { return }
+        for index in loadedRuntimes.indices {
+            loadedRuntimes[index].tabActionColors[tabId] = nil
+            loadedRuntimes[index].bridgePayloads[tabId] = nil
+        }
+        NotificationCenter.default.post(name: .extensionTabDidClose, object: self, userInfo: ["tabId": tabId])
+    }
+
     /// The action fields are re-rendered for the new active tab: what it shows (its host access request)
     /// may have changed while it was not.
     func refreshActionsForActiveTabChange() {
