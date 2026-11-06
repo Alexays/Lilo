@@ -2182,8 +2182,8 @@ extension WKWebViewTab: WKNavigationDelegate {
         }
     }
 
-    // WebKit calls this on the main thread; the server-trust challenge of every connection is
-    // answered synchronously. Only the HTTP auth prompt (a sheet) stays off the delegate's stack.
+    // WebKit calls this on the main thread; a server-trust challenge (every connection's, or only a rejected certificate's
+    // on a profile store) is answered synchronously. Only the HTTP auth prompt (a sheet) stays off the delegate's stack.
     nonisolated func webView(
         _ webView: WKWebView,
         didReceive challenge: URLAuthenticationChallenge,
@@ -2195,7 +2195,6 @@ extension WKWebViewTab: WKNavigationDelegate {
 
             if method == NSURLAuthenticationMethodServerTrust,
                let trust = space.serverTrust {
-                StartupMetrics.markOnce("firstContentTLSChallengeReceived")
                 let challengedHost = space.host.lowercased()
                 // The page's own certificate is the one its error page explains and a new exception pins;
                 // an accepted exception holds for every request to its host, as an app's API calls need.
@@ -2207,7 +2206,6 @@ extension WKWebViewTab: WKNavigationDelegate {
                 } else {
                     completionHandler(.performDefaultHandling, nil)
                 }
-                StartupMetrics.markOnce("firstContentTLSChallengeHandled")
             } else if method == NSURLAuthenticationMethodHTTPBasic || method == NSURLAuthenticationMethodHTTPDigest {
                 if isAgentControlled {
                     // No sheet over the user's window: the agent signs in through the URL, once.

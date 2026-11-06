@@ -401,6 +401,11 @@ final class WKEngineFactory {
                .perform(initWithIdentifier, with: identifier)?.takeUnretainedValue() as? NSObject {
             configuration.setValue(0.6, forKey: "originQuotaRatio")
             configuration.setValue(0.8, forKey: "totalQuotaRatio")
+            // The network process accepts a certificate the system trusts without a round trip to this main thread,
+            // as Safari does; one it rejects still reaches the navigation delegate, for exceptions and the error page.
+            if configurationClass.instancesRespond(to: NSSelectorFromString("setFastServerTrustEvaluationEnabled:")) {
+                configuration.setValue(true, forKey: "fastServerTrustEvaluationEnabled")
+            }
             store = unsafe WKWebsiteDataStore.perform(alloc).takeRetainedValue()
                 .perform(initWithConfiguration, with: configuration)?.takeUnretainedValue() as? WKWebsiteDataStore
         }
