@@ -270,9 +270,6 @@ export class DndEngineStore {
 		const drag = this.drag;
 		if (!drag) return null;
 		const zones = this.ensureLayoutSnapshot();
-		// Neighbour space panes stay mounted (hidden) over the page area, so a zone
-		// only resolves for a drag that started in the same space.
-		const sourceSpaceId = this.zones.get(drag.source.zoneId)?.meta?.spaceId;
 		let resolvedTarget: DndResolvedTarget | null = null;
 		let resolvedZone: DndZoneSnapshot | null = null;
 		let insideAnyZone = false;
@@ -280,14 +277,6 @@ export class DndEngineStore {
 		for (const snapshot of zones) {
 			const zone = this.zones.get(snapshot.id);
 			if (!zone) continue;
-			const zoneSpaceId = zone.meta?.spaceId;
-			if (
-				sourceSpaceId !== undefined &&
-				zoneSpaceId !== undefined &&
-				zoneSpaceId !== sourceSpaceId
-			) {
-				continue;
-			}
 			if (!isPointInsideRect(point, snapshot.rect)) continue;
 			insideAnyZone = true;
 			const context = { point, zone: snapshot, dragSource: drag.source.item };
@@ -331,7 +320,16 @@ export class DndEngineStore {
 	private captureLayoutSnapshot(): DndZoneSnapshot[] {
 		this.layoutMeasureCount += 1;
 		const offsets = rowAnimationOffsets();
-		this.layoutSnapshot = Array.from(this.zones.values()).map((zone) => this.snapshotForZone(zone, offsets));
+		// Neighbour space panes stay mounted (hidden) over the page area, so only the zones of the
+		// drag's own space are measured and resolved.
+		const sourceSpaceId = this.drag ? this.zones.get(this.drag.source.zoneId)?.meta?.spaceId : undefined;
+		const snapshot: DndZoneSnapshot[] = [];
+		for (const zone of this.zones.values()) {
+			const zoneSpaceId = zone.meta?.spaceId;
+			if (sourceSpaceId !== undefined && zoneSpaceId !== undefined && zoneSpaceId !== sourceSpaceId) continue;
+			snapshot.push(this.snapshotForZone(zone, offsets));
+		}
+		this.layoutSnapshot = snapshot;
 		this.layoutSnapshotStale = false;
 		// The new rects hold the current scroll offsets: a scroll event still on its way must not shift them again.
 		for (const container of this.scrollOffsets.keys()) {

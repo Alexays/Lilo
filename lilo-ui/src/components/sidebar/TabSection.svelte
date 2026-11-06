@@ -472,8 +472,8 @@
   let tabListEl: HTMLDivElement | undefined = $state();
   let pinnedListEl: HTMLDivElement | undefined = $state();
 
-  // Rows outside the scroll window collapse into spacers; disabled during a sidebar drag so the dnd engine's layout
-  // snapshot measures every row.
+  // Rows outside the scroll window collapse into spacers; disabled in the pane a sidebar drag runs in so the dnd
+  // engine's layout snapshot measures every row. Other spaces' panes never take the drop.
   const VIRTUALIZE_MIN_ROWS = 80;
   const VIRTUAL_BUFFER_PX = 320;
   // The window moves in steps of this many pixels, so a scroll frame inside a step re-renders nothing.
@@ -497,7 +497,7 @@
   const listWindowFrame = createFrameScheduler();
 
   const virtualize = $derived(
-    !isPinned && !dragActive && segments.length > VIRTUALIZE_MIN_ROWS,
+    !isPinned && !(dragActive && interactive) && segments.length > VIRTUALIZE_MIN_ROWS,
   );
 
   // The panes of a split in reading order, stacked one row each in the sidebar.

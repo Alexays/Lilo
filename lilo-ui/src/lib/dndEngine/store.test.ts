@@ -88,6 +88,33 @@ test("DndEngineStore never resolves a zone from another space", () => {
 	assert.equal(store.updatePointer({ x: 10, y: 50 }, true)?.zoneId, "root-a");
 });
 
+test("DndEngineStore measures only the zones of the drag's own space", () => {
+	const store = new DndEngineStore();
+	const reads = { count: 0 };
+	store.registerZone(elementRect(0, 0, 240, 100), {
+		id: "root-a",
+		axis: "vertical",
+		meta: { section: "unpinned", spaceId: "space-a", parentFolderId: null },
+		getItems: () => [],
+	});
+	store.registerZone(mutableElementRect({ left: 0, top: 100, width: 240, height: 100 }, reads), {
+		id: "root-b",
+		axis: "vertical",
+		meta: { section: "unpinned", spaceId: "space-b", parentFolderId: null },
+		getItems: () => [],
+	});
+	// No space: the space bar and the bookmark strip take drops from any space.
+	store.registerZone(elementRect(0, 200, 240, 40), { id: "space-bar", axis: "horizontal", getItems: () => [] });
+	store.startDrag({
+		item: { id: "tab-a", kind: "tab" },
+		zoneId: "root-a",
+		element: elementRect(0, 0, 240, 30),
+	}, { x: 10, y: 10 });
+
+	assert.equal(store.updatePointer({ x: 10, y: 220 }, true)?.zoneId, "space-bar");
+	assert.equal(reads.count, 0);
+});
+
 test("DndEngineStore notifies nothing for a press that never starts a drag", async () => {
 	const store = new DndEngineStore();
 	let notifications = 0;
