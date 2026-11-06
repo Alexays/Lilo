@@ -73,7 +73,7 @@
   import { cubicOut } from "svelte/easing";
   import { SvelteSet } from "svelte/reactivity";
   import { fade } from "svelte/transition";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { MOTION } from "../../lib/motion/timings";
@@ -101,6 +101,7 @@
   let { tabId, calls, sig, done, live, cwd, promptIndex, undone }: Props = $props();
 
   let userOpen = $state<boolean | null>(null);
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
   // `calls` is a new array on every frame of the thread: only `sig` says the calls changed.
   const views = $derived.by(() => {
     void sig;
@@ -151,7 +152,7 @@
       }
     }
     if (files.size) counts.set("edit", files.size);
-    const text = [...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })).join(", ");
+    const text = listFormat.format([...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })));
     return { text: text.charAt(0).toUpperCase() + text.slice(1), added, removed, images, categories: [...counts.keys()] };
   });
 

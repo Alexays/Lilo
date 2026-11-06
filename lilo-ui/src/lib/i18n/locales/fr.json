@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Mettre à jour",
-			"summary": "{lists} listes",
+			"summary": {
+				"one": "{count} liste",
+				"other": "{count} listes"
+			},
 			"updated": "mises à jour le {time}"
 		},
 		"extensionUpdates": {
@@ -641,8 +644,10 @@
 			"clearData": "Effacer les données...",
 			"remove": "Supprimer...",
 			"lastProfile": "Votre dernier profil reste : chaque espace en a besoin.",
-			"extensionCount": "{count} extensions",
-			"extensionCountOne": "1 extension",
+			"extensionCount": {
+				"one": "{count} extension",
+				"other": "{count} extensions"
+			},
 			"newProfile": "Nouveau profil...",
 			"newProfileDetail": "Cookies, connexions et extensions vierges",
 			"namePlaceholder": "Nom du profil",
@@ -1319,17 +1324,23 @@
 		"navLabel": "Vues du gestionnaire de processus",
 		"searchPlaceholder": "Rechercher des onglets",
 		"memoryAriaLabel": "Utilisation de la mémoire",
-		"tabsCount": "{count} onglets",
-		"tabsCountOne": "1 onglet",
+		"tabsCount": {
+			"one": "{count} onglet",
+			"other": "{count} onglets"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} autre",
 			"other": "{count} autres"
 		},
-		"reclaim": "{count} onglets cachés occupent {size}",
-		"reclaimOne": "1 onglet caché occupe {size}",
-		"reclaimNoSize": "{count} onglets cachés sont encore chargés",
-		"reclaimNoSizeOne": "1 onglet caché est encore chargé",
+		"reclaim": {
+			"one": "{count} onglet caché occupe {size}",
+			"other": "{count} onglets cachés occupent {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} onglet caché est encore chargé",
+			"other": "{count} onglets cachés sont encore chargés"
+		},
 		"sleep": "Mettre en veille",
 		"groupTabs": "Onglets",
 		"groupSleeping": "En veille",
@@ -1371,12 +1382,16 @@
 	"urlToast": {
 		"pageActions": "Actions de la page",
 		"reEnableBlocking": "Réactiver le blocage sur ce site",
-		"trackerBlockedOnPage": "{count} traqueur bloqué sur cette page",
-		"trackersBlockedOnPage": "{count} traqueurs bloqués sur cette page",
+		"trackersBlockedOnPage": {
+			"one": "{count} traqueur bloqué sur cette page",
+			"other": "{count} traqueurs bloqués sur cette page"
+		},
 		"disableBlocking": "Désactiver le blocage sur ce site",
 		"adsAllowed": "Publicités autorisées",
-		"trackerBlockedLabel": "{count} traqueur bloqué",
-		"trackersBlockedLabel": "{count} traqueurs bloqués",
+		"trackersBlockedLabel": {
+			"one": "{count} traqueur bloqué",
+			"other": "{count} traqueurs bloqués"
+		},
 		"adsBlocked": "Publicités bloquées",
 		"extensionAlreadyInstalled": "Extension déjà installée",
 		"installChromeExtension": "Installer cette extension Chrome",
@@ -2583,7 +2598,14 @@
 			"untitled": "Nouvelle conversation",
 			"working": "En cours",
 			"failed": "Arrêté sur une erreur",
-			"changes": "{added} lignes ajoutées, {removed} supprimées",
+			"linesAdded": {
+				"one": "{count} ligne ajoutée",
+				"other": "{count} lignes ajoutées"
+			},
+			"linesRemoved": {
+				"one": "{count} ligne supprimée",
+				"other": "{count} lignes supprimées"
+			},
 			"pages": {
 				"one": "{count} page",
 				"other": "{count} pages"

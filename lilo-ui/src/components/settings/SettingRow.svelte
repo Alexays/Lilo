@@ -2,7 +2,7 @@
   import LayoutPicker from "./LayoutPicker.svelte";
   import { extensionActions, profileActions, settingsActions } from "../../lib/bridge/actions";
   import { isAgentsSpace } from "../../stores/agents.svelte";
-  import { getLocale, setLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, getLocale, setLocale, t } from "../../lib/i18n/state.svelte";
   import { isSupportedLocale, SUPPORTED_LOCALES } from "../../lib/i18n/translate";
   import { parseSearchEngines } from "../../lib/searchEngineModel";
   import {
@@ -134,7 +134,7 @@
   });
   const description = $derived.by(() => {
     if (id === "lifecyclePreset") return t(`settings.lifecycle.${lifecyclePreset}Desc`);
-    if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
+    if (passwordManagers.length > 0) return new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }).format(passwordManagers);
     if (id === "appUpdates") {
       if (versionClicks >= 7) return t("settings.items.appUpdates.developerTools");
       // The engine follows the update status, so a report can say which WebKit ran, the system's or Lilo's fork.
@@ -142,7 +142,7 @@
       const engine = version ? ` · ${updater.webKitFork ? t("settings.items.appUpdates.webKitFork", { version }) : `WebKit ${version}`}` : "";
       if (updater && !updater.available) return t("settings.items.appUpdates.unavailable") + engine;
       if (!updater?.lastCheck) return t(settingDescriptionKey(id)) + engine;
-      const time = new Intl.DateTimeFormat(getLocale(), { dateStyle: "medium", timeStyle: "short" }).format(updater.lastCheck * 1000);
+      const time = new Intl.DateTimeFormat(getFormatLocale(), { dateStyle: "medium", timeStyle: "short" }).format(updater.lastCheck * 1000);
       return t("settings.items.appUpdates.lastChecked", { time }) + engine;
     }
     if (id === "checkExtensionUpdates") {
@@ -156,15 +156,15 @@
             : t("settings.extensionUpdates.upToDate"),
       ];
       if (updateCheck.failed) parts.push(t("settings.extensionUpdates.failed", { count: updateCheck.failed }));
-      const time = new Intl.DateTimeFormat(getLocale(), { timeStyle: "short" }).format(updateCheck.lastCheck * 1000);
+      const time = new Intl.DateTimeFormat(getFormatLocale(), { timeStyle: "short" }).format(updateCheck.lastCheck * 1000);
       parts.push(t("settings.extensionUpdates.lastChecked", { time }));
       return parts.join(" · ");
     }
     if (id === "filterLists" && blockerStatus) {
       if (!blockerStatus.updated) return t(settingDescriptionKey(id));
-      const updated = new Intl.DateTimeFormat(getLocale(), { dateStyle: "medium", timeStyle: "short" })
+      const updated = new Intl.DateTimeFormat(getFormatLocale(), { dateStyle: "medium", timeStyle: "short" })
         .format(blockerStatus.updated * 1000);
-      return [t("settings.filterLists.summary", { lists: blockerStatus.lists }), t("settings.filterLists.updated", { time: updated })].join(" · ");
+      return [t("settings.filterLists.summary", { count: blockerStatus.lists }), t("settings.filterLists.updated", { time: updated })].join(" · ");
     }
     if (id !== "deviceSetup") return t(settingDescriptionKey(id));
     const remembered = (["camera", "input", "output"] as const)

@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Jetzt aktualisieren",
-			"summary": "{lists} Listen",
+			"summary": {
+				"one": "{count} Liste",
+				"other": "{count} Listen"
+			},
 			"updated": "aktualisiert {time}"
 		},
 		"extensionUpdates": {
@@ -641,8 +644,10 @@
 			"clearData": "Daten löschen...",
 			"remove": "Entfernen...",
 			"lastProfile": "Dein letztes Profil bleibt erhalten. Jeder Space benötigt eines.",
-			"extensionCount": "{count} Erweiterungen",
-			"extensionCountOne": "1 Erweiterung",
+			"extensionCount": {
+				"one": "{count} Erweiterung",
+				"other": "{count} Erweiterungen"
+			},
 			"newProfile": "Neues Profil...",
 			"newProfileDetail": "Neue Cookies, Anmeldungen und Erweiterungen",
 			"namePlaceholder": "Profilname",
@@ -1319,17 +1324,23 @@
 		"navLabel": "Ansichten der Prozessverwaltung",
 		"searchPlaceholder": "Tabs durchsuchen",
 		"memoryAriaLabel": "Speichernutzung",
-		"tabsCount": "{count} Tabs",
-		"tabsCountOne": "1 Tab",
+		"tabsCount": {
+			"one": "{count} Tab",
+			"other": "{count} Tabs"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} weiterer",
 			"other": "{count} weitere"
 		},
-		"reclaim": "{count} ausgeblendete Tabs belegen {size}",
-		"reclaimOne": "1 ausgeblendeter Tab belegt {size}",
-		"reclaimNoSize": "{count} ausgeblendete Tabs sind noch geladen",
-		"reclaimNoSizeOne": "1 ausgeblendeter Tab ist noch geladen",
+		"reclaim": {
+			"one": "{count} ausgeblendeter Tab belegt {size}",
+			"other": "{count} ausgeblendete Tabs belegen {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} ausgeblendeter Tab ist noch geladen",
+			"other": "{count} ausgeblendete Tabs sind noch geladen"
+		},
 		"sleep": "In Ruhezustand versetzen",
 		"groupTabs": "Tabs",
 		"groupSleeping": "Im Ruhezustand",
@@ -1371,12 +1382,16 @@
 	"urlToast": {
 		"pageActions": "Seitenaktionen",
 		"reEnableBlocking": "Blockierung auf dieser Website wieder aktivieren",
-		"trackerBlockedOnPage": "{count} Tracker auf dieser Seite blockiert",
-		"trackersBlockedOnPage": "{count} Tracker auf dieser Seite blockiert",
+		"trackersBlockedOnPage": {
+			"one": "{count} Tracker auf dieser Seite blockiert",
+			"other": "{count} Tracker auf dieser Seite blockiert"
+		},
 		"disableBlocking": "Blockierung auf dieser Website deaktivieren",
 		"adsAllowed": "Werbung erlaubt",
-		"trackerBlockedLabel": "{count} Tracker blockiert",
-		"trackersBlockedLabel": "{count} Tracker blockiert",
+		"trackersBlockedLabel": {
+			"one": "{count} Tracker blockiert",
+			"other": "{count} Tracker blockiert"
+		},
 		"adsBlocked": "Werbung blockiert",
 		"extensionAlreadyInstalled": "Erweiterung bereits installiert",
 		"installChromeExtension": "Diese Chrome-Erweiterung installieren",
@@ -2594,7 +2609,14 @@
 			"untitled": "Neue Unterhaltung",
 			"working": "Arbeitet",
 			"failed": "Mit einem Fehler gestoppt",
-			"changes": "{added} Zeilen hinzugefügt, {removed} entfernt",
+			"linesAdded": {
+				"one": "{count} Zeile hinzugefügt",
+				"other": "{count} Zeilen hinzugefügt"
+			},
+			"linesRemoved": {
+				"one": "{count} Zeile entfernt",
+				"other": "{count} Zeilen entfernt"
+			},
 			"pages": {
 				"one": "{count} Seite",
 				"other": "{count} Seiten"

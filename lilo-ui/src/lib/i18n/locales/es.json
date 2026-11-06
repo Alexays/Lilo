@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Actualizar ahora",
-			"summary": "{lists} listas",
+			"summary": {
+				"one": "{count} lista",
+				"other": "{count} listas"
+			},
 			"updated": "actualizado {time}"
 		},
 		"extensionUpdates": {
@@ -641,8 +644,10 @@
 			"clearData": "Borrar datos...",
 			"remove": "Quitar...",
 			"lastProfile": "El último perfil se conserva: cada espacio necesita uno.",
-			"extensionCount": "{count} extensiones",
-			"extensionCountOne": "1 extensión",
+			"extensionCount": {
+				"one": "{count} extensión",
+				"other": "{count} extensiones"
+			},
 			"newProfile": "Nuevo perfil...",
 			"newProfileDetail": "Cookies, sesiones y extensiones nuevas",
 			"namePlaceholder": "Nombre del perfil",
@@ -1319,17 +1324,23 @@
 		"navLabel": "Vistas del gestor de procesos",
 		"searchPlaceholder": "Buscar pestañas",
 		"memoryAriaLabel": "Uso de memoria",
-		"tabsCount": "{count} pestañas",
-		"tabsCountOne": "1 pestaña",
+		"tabsCount": {
+			"one": "{count} pestaña",
+			"other": "{count} pestañas"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} otro",
 			"other": "{count} otros"
 		},
-		"reclaim": "{count} pestañas ocultas usan {size}",
-		"reclaimOne": "1 pestaña oculta usa {size}",
-		"reclaimNoSize": "{count} pestañas ocultas siguen cargadas",
-		"reclaimNoSizeOne": "1 pestaña oculta sigue cargada",
+		"reclaim": {
+			"one": "{count} pestaña oculta usa {size}",
+			"other": "{count} pestañas ocultas usan {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} pestaña oculta sigue cargada",
+			"other": "{count} pestañas ocultas siguen cargadas"
+		},
 		"sleep": "Poner en reposo",
 		"groupTabs": "Pestañas",
 		"groupSleeping": "En reposo",
@@ -1371,12 +1382,16 @@
 	"urlToast": {
 		"pageActions": "Acciones de la página",
 		"reEnableBlocking": "Reactivar el bloqueo en este sitio",
-		"trackerBlockedOnPage": "{count} rastreador bloqueado en esta página",
-		"trackersBlockedOnPage": "{count} rastreadores bloqueados en esta página",
+		"trackersBlockedOnPage": {
+			"one": "{count} rastreador bloqueado en esta página",
+			"other": "{count} rastreadores bloqueados en esta página"
+		},
 		"disableBlocking": "Desactivar el bloqueo en este sitio",
 		"adsAllowed": "Anuncios permitidos",
-		"trackerBlockedLabel": "{count} rastreador bloqueado",
-		"trackersBlockedLabel": "{count} rastreadores bloqueados",
+		"trackersBlockedLabel": {
+			"one": "{count} rastreador bloqueado",
+			"other": "{count} rastreadores bloqueados"
+		},
 		"adsBlocked": "Anuncios bloqueados",
 		"extensionAlreadyInstalled": "Extensión ya instalada",
 		"installChromeExtension": "Instalar esta extensión de Chrome",
@@ -2594,7 +2609,14 @@
 			"untitled": "Nueva conversación",
 			"working": "Trabajando",
 			"failed": "Detenido por un error",
-			"changes": "{added} líneas añadidas, {removed} eliminadas",
+			"linesAdded": {
+				"one": "{count} línea añadida",
+				"other": "{count} líneas añadidas"
+			},
+			"linesRemoved": {
+				"one": "{count} línea eliminada",
+				"other": "{count} líneas eliminadas"
+			},
 			"pages": {
 				"one": "{count} página",
 				"other": "{count} páginas"

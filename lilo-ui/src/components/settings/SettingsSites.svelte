@@ -1,7 +1,7 @@
 <script lang="ts">
   import { settingsActions } from "../../lib/bridge/actions";
   import { formatTimestamp } from "../../lib/format";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { closeSettingsSubpage } from "../../stores/panels.svelte";
   import { getSitePermissions, getWebsiteData, getZoomLevels } from "../../stores/settings.svelte";
   import { buildSites, sitePermissionLabel } from "./settingsPanelModel";
@@ -19,7 +19,8 @@
   const sites = $derived(buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()));
   const siteKey = $derived(subpage?.startsWith("site:") ? subpage.slice("site:".length) : null);
   const site = $derived(siteKey ? sites.find((candidate) => candidate.key === siteKey) : undefined);
-  const percent = $derived(new Intl.NumberFormat(getLocale(), { style: "percent" }));
+  const percent = $derived(new Intl.NumberFormat(getFormatLocale(), { style: "percent" }));
+  const listFormat = $derived(new Intl.ListFormat(getFormatLocale(), { type: "conjunction" }));
 
   // Everything stored for the site was removed: there is nothing left to show.
   $effect(() => {
@@ -33,7 +34,7 @@
       {#each site.permissions as permission (permission.id)}
         <UiListRow
           title={sitePermissionLabel(permission.type, t)}
-          description={t("settings.sites.permissionUpdated", { origin: permission.origin, time: formatTimestamp(permission.updatedAt) })}
+          description={t("settings.sites.permissionUpdated", { origin: permission.origin, time: formatTimestamp(permission.updatedAt, getFormatLocale()) })}
         >
           {#snippet action()}
             <UiBadge tone={permission.decision === "deny" ? "danger" : "success"}>
@@ -61,7 +62,7 @@
     <UiInsetList title={t("settings.groups.siteData")}>
       <UiListRow
         title={t("settings.sites.dataSummary")}
-        description={site.dataKinds.map((kind) => t(`settings.websiteDataKinds.${kind}`)).join(", ")}
+        description={listFormat.format(site.dataKinds.map((kind) => t(`settings.websiteDataKinds.${kind}`)))}
       >
         {#snippet action()}
           <UiButton variant="danger" onclick={() => settingsActions.removeWebsiteData(dataName)}>{t("common.clear")}</UiButton>

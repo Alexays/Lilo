@@ -571,7 +571,12 @@
 		},
 		"filterLists": {
 			"update": "Uaktualnij teraz",
-			"summary": "Listy: {lists}",
+			"summary": {
+				"one": "{count} lista",
+				"few": "{count} listy",
+				"many": "{count} list",
+				"other": "{count} listy"
+			},
 			"updated": "uaktualniono {time}"
 		},
 		"extensionUpdates": {
@@ -647,8 +652,12 @@
 			"clearData": "Wyczyść dane...",
 			"remove": "Usuń...",
 			"lastProfile": "Ostatni profil pozostaje: każda przestrzeń go potrzebuje.",
-			"extensionCount": "Rozszerzenia: {count}",
-			"extensionCountOne": "1 rozszerzenie",
+			"extensionCount": {
+				"one": "{count} rozszerzenie",
+				"few": "{count} rozszerzenia",
+				"many": "{count} rozszerzeń",
+				"other": "{count} rozszerzenia"
+			},
 			"newProfile": "Nowy profil...",
 			"newProfileDetail": "Nowe pliki cookie, logowania i rozszerzenia",
 			"namePlaceholder": "Nazwa profilu",
@@ -1333,8 +1342,12 @@
 		"navLabel": "Widoki menedżera procesów",
 		"searchPlaceholder": "Szukaj kart",
 		"memoryAriaLabel": "Użycie pamięci",
-		"tabsCount": "Karty: {count}",
-		"tabsCountOne": "1 karta",
+		"tabsCount": {
+			"one": "{count} karta",
+			"few": "{count} karty",
+			"many": "{count} kart",
+			"other": "{count} karty"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} inny",
@@ -1342,10 +1355,18 @@
 			"many": "{count} innych",
 			"other": "{count} innego"
 		},
-		"reclaim": "Ukryte karty: {count} · Używana pamięć: {size}",
-		"reclaimOne": "1 ukryta karta używa {size}",
-		"reclaimNoSize": "Ukryte karty nadal w pamięci: {count}",
-		"reclaimNoSizeOne": "1 ukryta karta nadal jest w pamięci",
+		"reclaim": {
+			"one": "{count} ukryta karta używa {size}",
+			"few": "{count} ukryte karty używają {size}",
+			"many": "{count} ukrytych kart używa {size}",
+			"other": "{count} ukrytej karty używa {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} ukryta karta nadal jest w pamięci",
+			"few": "{count} ukryte karty nadal są w pamięci",
+			"many": "{count} ukrytych kart nadal jest w pamięci",
+			"other": "{count} ukrytej karty nadal jest w pamięci"
+		},
 		"sleep": "Uśpij",
 		"groupTabs": "Karty",
 		"groupSleeping": "Uśpione",
@@ -1389,12 +1410,20 @@
 	"urlToast": {
 		"pageActions": "Akcje strony",
 		"reEnableBlocking": "Włącz ponownie blokowanie na tej witrynie",
-		"trackerBlockedOnPage": "Zablokowane elementy śledzące na tej stronie: {count}",
-		"trackersBlockedOnPage": "Zablokowane elementy śledzące na tej stronie: {count}",
+		"trackersBlockedOnPage": {
+			"one": "Zablokowano {count} element śledzący na tej stronie",
+			"few": "Zablokowano {count} elementy śledzące na tej stronie",
+			"many": "Zablokowano {count} elementów śledzących na tej stronie",
+			"other": "Zablokowano {count} elementu śledzącego na tej stronie"
+		},
 		"disableBlocking": "Wyłącz blokowanie na tej witrynie",
 		"adsAllowed": "Reklamy dozwolone",
-		"trackerBlockedLabel": "Zablokowane elementy śledzące: {count}",
-		"trackersBlockedLabel": "Zablokowane elementy śledzące: {count}",
+		"trackersBlockedLabel": {
+			"one": "Zablokowano {count} element śledzący",
+			"few": "Zablokowano {count} elementy śledzące",
+			"many": "Zablokowano {count} elementów śledzących",
+			"other": "Zablokowano {count} elementu śledzącego"
+		},
 		"adsBlocked": "Reklamy zablokowane",
 		"extensionAlreadyInstalled": "Rozszerzenie jest już zainstalowane",
 		"installChromeExtension": "Zainstaluj to rozszerzenie Chrome",
@@ -2642,7 +2671,18 @@
 			"untitled": "Nowa rozmowa",
 			"working": "Pracuje",
 			"failed": "Zatrzymano z błędem",
-			"changes": "Dodane wiersze: {added}, usunięte: {removed}",
+			"linesAdded": {
+				"one": "dodano {count} wiersz",
+				"few": "dodano {count} wiersze",
+				"many": "dodano {count} wierszy",
+				"other": "dodano {count} wiersza"
+			},
+			"linesRemoved": {
+				"one": "usunięto {count} wiersz",
+				"few": "usunięto {count} wiersze",
+				"many": "usunięto {count} wierszy",
+				"other": "usunięto {count} wiersza"
+			},
 			"pages": {
 				"one": "{count} strona",
 				"few": "{count} strony",

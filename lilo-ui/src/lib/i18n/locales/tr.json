@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Şimdi güncelle",
-			"summary": "{lists} liste",
+			"summary": {
+				"one": "{count} liste",
+				"other": "{count} liste"
+			},
 			"updated": "güncelleme: {time}"
 		},
 		"extensionUpdates": {
@@ -641,8 +644,10 @@
 			"clearData": "Verileri Temizle...",
 			"remove": "Kaldır...",
 			"lastProfile": "Son profiliniz kalır. Her alanın bir profile ihtiyacı vardır.",
-			"extensionCount": "{count} genişletme",
-			"extensionCountOne": "1 genişletme",
+			"extensionCount": {
+				"one": "{count} genişletme",
+				"other": "{count} genişletme"
+			},
 			"newProfile": "Yeni profil...",
 			"newProfileDetail": "Yeni çerezler, oturumlar ve genişletmeler",
 			"namePlaceholder": "Profil adı",
@@ -1319,17 +1324,23 @@
 		"navLabel": "İşlem yöneticisi görünümleri",
 		"searchPlaceholder": "Sekmelerde ara",
 		"memoryAriaLabel": "Bellek kullanımı",
-		"tabsCount": "{count} sekme",
-		"tabsCountOne": "1 sekme",
+		"tabsCount": {
+			"one": "{count} sekme",
+			"other": "{count} sekme"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} diğer",
 			"other": "{count} diğer"
 		},
-		"reclaim": "{count} gizli sekme {size} kullanıyor",
-		"reclaimOne": "1 gizli sekme {size} kullanıyor",
-		"reclaimNoSize": "{count} gizli sekme hâlâ yüklü",
-		"reclaimNoSizeOne": "1 gizli sekme hâlâ yüklü",
+		"reclaim": {
+			"one": "{count} gizli sekme {size} kullanıyor",
+			"other": "{count} gizli sekme {size} kullanıyor"
+		},
+		"reclaimNoSize": {
+			"one": "{count} gizli sekme hâlâ yüklü",
+			"other": "{count} gizli sekme hâlâ yüklü"
+		},
 		"sleep": "Uyut",
 		"groupTabs": "Sekmeler",
 		"groupSleeping": "Uykuda",
@@ -1371,12 +1382,16 @@
 	"urlToast": {
 		"pageActions": "Sayfa işlemleri",
 		"reEnableBlocking": "Bu sitede engellemeyi yeniden aç",
-		"trackerBlockedOnPage": "Bu sayfada {count} izleyici engellendi",
-		"trackersBlockedOnPage": "Bu sayfada {count} izleyici engellendi",
+		"trackersBlockedOnPage": {
+			"one": "Bu sayfada {count} izleyici engellendi",
+			"other": "Bu sayfada {count} izleyici engellendi"
+		},
 		"disableBlocking": "Bu sitede engellemeyi kapat",
 		"adsAllowed": "Reklamlara izin verildi",
-		"trackerBlockedLabel": "{count} izleyici engellendi",
-		"trackersBlockedLabel": "{count} izleyici engellendi",
+		"trackersBlockedLabel": {
+			"one": "{count} izleyici engellendi",
+			"other": "{count} izleyici engellendi"
+		},
 		"adsBlocked": "Reklamlar engellendi",
 		"extensionAlreadyInstalled": "Genişletme zaten yüklü",
 		"installChromeExtension": "Bu Chrome genişletmesini yükle",
@@ -2594,7 +2609,14 @@
 			"untitled": "Yeni sohbet",
 			"working": "Çalışıyor",
 			"failed": "Bir hatayla durdu",
-			"changes": "{added} satır eklendi, {removed} satır silindi",
+			"linesAdded": {
+				"one": "{count} satır eklendi",
+				"other": "{count} satır eklendi"
+			},
+			"linesRemoved": {
+				"one": "{count} satır silindi",
+				"other": "{count} satır silindi"
+			},
 			"pages": {
 				"one": "{count} sayfa",
 				"other": "{count} sayfa"

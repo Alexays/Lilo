@@ -509,11 +509,9 @@
           label: t("urlBar.details.blocking"),
           value: allowlisted
             ? t("urlToast.adsAllowed")
-            : count > 1
+            : count > 0
               ? t("urlToast.trackersBlockedLabel", { count })
-              : count === 1
-                ? t("urlToast.trackerBlockedLabel", { count })
-                : t("urlToast.adsBlocked"),
+              : t("urlToast.adsBlocked"),
           tone: allowlisted ? "muted" : undefined,
         });
       }

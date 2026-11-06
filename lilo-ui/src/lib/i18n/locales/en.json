@@ -571,7 +571,10 @@
 		},
 		"filterLists": {
 			"update": "Update Now",
-			"summary": "{lists} lists",
+			"summary": {
+				"one": "{count} list",
+				"other": "{count} lists"
+			},
 			"updated": "updated {time}"
 		},
 		"extensionUpdates": {
@@ -641,8 +644,10 @@
 			"clearData": "Clear data...",
 			"remove": "Remove...",
 			"lastProfile": "Your last profile stays: every space needs one.",
-			"extensionCount": "{count} extensions",
-			"extensionCountOne": "1 extension",
+			"extensionCount": {
+				"one": "{count} extension",
+				"other": "{count} extensions"
+			},
 			"newProfile": "New Profile...",
 			"newProfileDetail": "Fresh cookies, sign-ins and extensions",
 			"namePlaceholder": "Profile name",
@@ -1319,17 +1324,23 @@
 		"navLabel": "Process Manager views",
 		"searchPlaceholder": "Search tabs",
 		"memoryAriaLabel": "Memory use",
-		"tabsCount": "{count} tabs",
-		"tabsCountOne": "1 tab",
+		"tabsCount": {
+			"one": "{count} tab",
+			"other": "{count} tabs"
+		},
 		"cpu": "CPU {value}",
 		"others": {
 			"one": "{count} other",
 			"other": "{count} others"
 		},
-		"reclaim": "{count} hidden tabs use {size}",
-		"reclaimOne": "1 hidden tab uses {size}",
-		"reclaimNoSize": "{count} hidden tabs are still loaded",
-		"reclaimNoSizeOne": "1 hidden tab is still loaded",
+		"reclaim": {
+			"one": "{count} hidden tab uses {size}",
+			"other": "{count} hidden tabs use {size}"
+		},
+		"reclaimNoSize": {
+			"one": "{count} hidden tab is still loaded",
+			"other": "{count} hidden tabs are still loaded"
+		},
 		"sleep": "Put to Sleep",
 		"groupTabs": "Tabs",
 		"groupSleeping": "Sleeping",
@@ -1371,12 +1382,16 @@
 	"urlToast": {
 		"pageActions": "Page actions",
 		"reEnableBlocking": "Re-enable blocking on this site",
-		"trackerBlockedOnPage": "{count} tracker blocked on this page",
-		"trackersBlockedOnPage": "{count} trackers blocked on this page",
+		"trackersBlockedOnPage": {
+			"one": "{count} tracker blocked on this page",
+			"other": "{count} trackers blocked on this page"
+		},
 		"disableBlocking": "Disable blocking on this site",
 		"adsAllowed": "Ads allowed",
-		"trackerBlockedLabel": "{count} tracker blocked",
-		"trackersBlockedLabel": "{count} trackers blocked",
+		"trackersBlockedLabel": {
+			"one": "{count} tracker blocked",
+			"other": "{count} trackers blocked"
+		},
 		"adsBlocked": "Ads blocked",
 		"extensionAlreadyInstalled": "Extension already installed",
 		"installChromeExtension": "Install this Chrome extension",
@@ -2583,7 +2598,14 @@
 			"untitled": "New conversation",
 			"working": "Working",
 			"failed": "Stopped with an error",
-			"changes": "{added} lines added, {removed} removed",
+			"linesAdded": {
+				"one": "{count} line added",
+				"other": "{count} lines added"
+			},
+			"linesRemoved": {
+				"one": "{count} line removed",
+				"other": "{count} lines removed"
+			},
 			"pages": {
 				"one": "{count} page",
 				"other": "{count} pages"

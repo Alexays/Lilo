@@ -94,16 +94,12 @@
         use:tooltip={isAllowlisted
           ? t("urlToast.reEnableBlocking")
           : blockedCount > 0
-            ? blockedCount > 1
-              ? t("urlToast.trackersBlockedOnPage", { count: blockedCount })
-              : t("urlToast.trackerBlockedOnPage", { count: blockedCount })
+            ? t("urlToast.trackersBlockedOnPage", { count: blockedCount })
             : t("urlToast.disableBlocking")}
         aria-label={isAllowlisted
           ? t("urlToast.adsAllowed")
           : blockedCount > 0
-            ? blockedCount > 1
-              ? t("urlToast.trackersBlockedLabel", { count: blockedCount })
-              : t("urlToast.trackerBlockedLabel", { count: blockedCount })
+            ? t("urlToast.trackersBlockedLabel", { count: blockedCount })
             : t("urlToast.adsBlocked")}
       >
         <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
