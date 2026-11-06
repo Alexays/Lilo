@@ -1025,7 +1025,7 @@
 		"announceFailed": "Échec du téléchargement de {filename}"
 	},
 	"findBar": {
-		"placeholder": "Rechercher dans la page…",
+		"placeholder": "Rechercher dans la page...",
 		"inputLabel": "Rechercher dans la page",
 		"noResults": "Aucun résultat",
 		"matchCount": "{current} sur {total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "Afficher tous les résultats dans l'historique",
 		"clearArchive": "Vider les archives",
 		"placeholderAction": "Rechercher une action",
-		"placeholderTab": "Rechercher dans les onglets ouverts…",
-		"placeholderBookmark": "Rechercher des favoris dans cet espace…",
-		"placeholderHistory": "Rechercher dans l'historique…",
-		"placeholderAll": "Rechercher onglets, historique, favoris, actions, ou saisir une URL…",
+		"placeholderTab": "Rechercher dans les onglets ouverts...",
+		"placeholderBookmark": "Rechercher des favoris dans cet espace...",
+		"placeholderHistory": "Rechercher dans l'historique...",
+		"placeholderAll": "Rechercher onglets, historique, favoris, actions, ou saisir une URL...",
 		"emptyTitleNoMatches": "Aucun résultat",
 		"emptyTitleAction": "Actions rapides",
 		"emptyTitleTab": "Onglets ouverts",
@@ -1385,7 +1385,7 @@
 		"screenshot": "Capture d'écran",
 		"fullPage": "Page entière",
 		"visibleArea": "Zone visible",
-		"selection": "Sélection…",
+		"selection": "Sélection...",
 		"copyLink": "Copier le lien",
 		"copied": "Copié",
 		"failed": "Échec"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Archivés récemment",
+		"title": "Archivés",
 		"buttonLabel": {"one": "{count} onglet archivé récemment", "other": "{count} onglets archivés récemment"},
 		"restore": "Restaurer",
 		"showAll": "Voir tous les onglets archivés",
@@ -1496,7 +1496,7 @@
 		"reset": "Réinitialiser"
 	},
 	"urlBar": {
-		"placeholder": "Rechercher ou saisir une URL…",
+		"placeholder": "Rechercher ou saisir une URL...",
 		"addressBar": "Barre d'adresse : {url}",
 		"details": {
 			"branch": "Branche",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "Aucune annotation",
 		"deleteLayer": "Supprimer le calque",
 		"saveOptions": "Options d'enregistrement",
-		"saveAs": "Enregistrer sous…",
+		"saveAs": "Enregistrer sous...",
 		"copyToClipboard": "Copier dans le presse-papiers",
 		"copied": "Copié dans le presse-papiers",
 		"cancelShortcut": "Annuler (Échap)",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "Ouvrir dans de nouveaux onglets",
 		"delete": "Supprimer",
 		"clearSelection": "Tout désélectionner",
-		"clearBrowsingData": "Effacer les données de navigation…",
+		"clearBrowsingData": "Effacer les données de navigation...",
 		"deleteSiteTitle": "Supprimer tout l'historique de {host} ?",
 		"deleteSiteMessage": "Toutes les visites de ce site sont supprimées, quelle que soit la période ou la recherche affichée.",
 		"emptyTitle": "Aucun historique",

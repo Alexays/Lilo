@@ -1025,7 +1025,7 @@
 		"announceFailed": "{filename} konnte nicht heruntergeladen werden"
 	},
 	"findBar": {
-		"placeholder": "Auf Seite suchen…",
+		"placeholder": "Auf Seite suchen...",
 		"inputLabel": "Auf Seite suchen",
 		"noResults": "Keine Ergebnisse",
 		"matchCount": "{current} von {total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "Alle Ergebnisse im Verlauf anzeigen",
 		"clearArchive": "Archiv leeren",
 		"placeholderAction": "Aktionen suchen",
-		"placeholderTab": "Offene Tabs durchsuchen…",
-		"placeholderBookmark": "Lesezeichen in diesem Space durchsuchen…",
-		"placeholderHistory": "Verlauf durchsuchen…",
-		"placeholderAll": "Tabs, Verlauf, Lesezeichen, Aktionen suchen oder URL eingeben…",
+		"placeholderTab": "Offene Tabs durchsuchen...",
+		"placeholderBookmark": "Lesezeichen in diesem Space durchsuchen...",
+		"placeholderHistory": "Verlauf durchsuchen...",
+		"placeholderAll": "Tabs, Verlauf, Lesezeichen, Aktionen suchen oder URL eingeben...",
 		"emptyTitleNoMatches": "Keine Treffer",
 		"emptyTitleAction": "Schnellaktionen",
 		"emptyTitleTab": "Offene Tabs",
@@ -1385,7 +1385,7 @@
 		"screenshot": "Bildschirmfoto",
 		"fullPage": "Gesamte Seite",
 		"visibleArea": "Sichtbarer Bereich",
-		"selection": "Auswahl…",
+		"selection": "Auswahl...",
 		"copyLink": "Link kopieren",
 		"copied": "Kopiert",
 		"failed": "Fehlgeschlagen"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Kürzlich archiviert",
+		"title": "Archiviert",
 		"buttonLabel": {"one": "{count} kürzlich archivierter Tab", "other": "{count} kürzlich archivierte Tabs"},
 		"restore": "Wiederherstellen",
 		"showAll": "Alle archivierten Tabs anzeigen",
@@ -1496,7 +1496,7 @@
 		"reset": "Zurücksetzen"
 	},
 	"urlBar": {
-		"placeholder": "Suchen oder URL eingeben…",
+		"placeholder": "Suchen oder URL eingeben...",
 		"addressBar": "Adressleiste: {url}",
 		"details": {
 			"branch": "Branch",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "Keine Anmerkungen",
 		"deleteLayer": "Ebene löschen",
 		"saveOptions": "Sicherungsoptionen",
-		"saveAs": "Sichern unter…",
+		"saveAs": "Sichern unter...",
 		"copyToClipboard": "In Zwischenablage kopieren",
 		"copied": "In Zwischenablage kopiert",
 		"cancelShortcut": "Abbrechen (Esc)",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "In neuen Tabs öffnen",
 		"delete": "Löschen",
 		"clearSelection": "Auswahl aufheben",
-		"clearBrowsingData": "Browserdaten löschen…",
+		"clearBrowsingData": "Browserdaten löschen...",
 		"deleteSiteTitle": "Gesamten Verlauf von {host} löschen?",
 		"deleteSiteMessage": "Alle Besuche dieser Website werden gelöscht, unabhängig vom angezeigten Zeitraum oder der Suche.",
 		"emptyTitle": "Kein Verlauf",

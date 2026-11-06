@@ -1025,7 +1025,7 @@
 		"announceFailed": "Falha ao baixar {filename}"
 	},
 	"findBar": {
-		"placeholder": "Buscar na página…",
+		"placeholder": "Buscar na página...",
 		"inputLabel": "Buscar na página",
 		"noResults": "Nenhum resultado",
 		"matchCount": "{current} de {total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "Ver todos os resultados no histórico",
 		"clearArchive": "Limpar arquivo",
 		"placeholderAction": "Buscar ações",
-		"placeholderTab": "Buscar abas abertas…",
-		"placeholderBookmark": "Buscar favoritos neste espaço…",
-		"placeholderHistory": "Buscar no histórico…",
-		"placeholderAll": "Buscar abas, histórico, favoritos, ações ou digitar URL…",
+		"placeholderTab": "Buscar abas abertas...",
+		"placeholderBookmark": "Buscar favoritos neste espaço...",
+		"placeholderHistory": "Buscar no histórico...",
+		"placeholderAll": "Buscar abas, histórico, favoritos, ações ou digitar URL...",
 		"emptyTitleNoMatches": "Nenhuma correspondência",
 		"emptyTitleAction": "Ações rápidas",
 		"emptyTitleTab": "Abas abertas",
@@ -1385,7 +1385,7 @@
 		"screenshot": "Captura de tela",
 		"fullPage": "Página inteira",
 		"visibleArea": "Área visível",
-		"selection": "Seleção…",
+		"selection": "Seleção...",
 		"copyLink": "Copiar link",
 		"copied": "Copiado",
 		"failed": "Falhou"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Arquivadas recentemente",
+		"title": "Arquivadas",
 		"buttonLabel": {"one": "{count} aba arquivada recentemente", "other": "{count} abas arquivadas recentemente"},
 		"restore": "Restaurar",
 		"showAll": "Mostrar todas as abas arquivadas",
@@ -1496,7 +1496,7 @@
 		"reset": "Redefinir"
 	},
 	"urlBar": {
-		"placeholder": "Buscar ou digitar URL…",
+		"placeholder": "Buscar ou digitar URL...",
 		"addressBar": "Barra de endereço: {url}",
 		"details": {
 			"branch": "Branch",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "Nenhuma anotação",
 		"deleteLayer": "Apagar camada",
 		"saveOptions": "Opções de salvamento",
-		"saveAs": "Salvar como…",
+		"saveAs": "Salvar como...",
 		"copyToClipboard": "Copiar para a área de transferência",
 		"copied": "Copiado para a área de transferência",
 		"cancelShortcut": "Cancelar (Esc)",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "Abrir em novas abas",
 		"delete": "Apagar",
 		"clearSelection": "Desmarcar tudo",
-		"clearBrowsingData": "Limpar dados de navegação…",
+		"clearBrowsingData": "Limpar dados de navegação...",
 		"deleteSiteTitle": "Apagar todo o histórico de {host}?",
 		"deleteSiteMessage": "Todas as visitas a este site serão apagadas, qualquer que seja o período ou a busca exibidos.",
 		"emptyTitle": "Nenhum histórico",

@@ -1025,7 +1025,7 @@
 		"announceFailed": "Impossibile scaricare {filename}"
 	},
 	"findBar": {
-		"placeholder": "Cerca nella pagina…",
+		"placeholder": "Cerca nella pagina...",
 		"inputLabel": "Cerca nella pagina",
 		"noResults": "Nessun risultato",
 		"matchCount": "{current} di {total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "Mostra tutti i risultati nella cronologia",
 		"clearArchive": "Svuota archivio",
 		"placeholderAction": "Cerca azioni",
-		"placeholderTab": "Cerca nelle schede aperte…",
-		"placeholderBookmark": "Cerca nei segnalibri di questo spazio…",
-		"placeholderHistory": "Cerca nella cronologia…",
-		"placeholderAll": "Cerca schede, cronologia, segnalibri, azioni o inserisci un URL…",
+		"placeholderTab": "Cerca nelle schede aperte...",
+		"placeholderBookmark": "Cerca nei segnalibri di questo spazio...",
+		"placeholderHistory": "Cerca nella cronologia...",
+		"placeholderAll": "Cerca schede, cronologia, segnalibri, azioni o inserisci un URL...",
 		"emptyTitleNoMatches": "Nessuna corrispondenza",
 		"emptyTitleAction": "Azioni rapide",
 		"emptyTitleTab": "Schede aperte",
@@ -1385,7 +1385,7 @@
 		"screenshot": "Istantanea",
 		"fullPage": "Pagina intera",
 		"visibleArea": "Area visibile",
-		"selection": "Selezione…",
+		"selection": "Selezione...",
 		"copyLink": "Copia link",
 		"copied": "Copiato",
 		"failed": "Non riuscito"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Archiviate di recente",
+		"title": "Archiviate",
 		"buttonLabel": {"one": "{count} scheda archiviata di recente", "other": "{count} schede archiviate di recente"},
 		"restore": "Ripristina",
 		"showAll": "Mostra tutte le schede archiviate",
@@ -1496,7 +1496,7 @@
 		"reset": "Ripristina"
 	},
 	"urlBar": {
-		"placeholder": "Cerca o inserisci un URL…",
+		"placeholder": "Cerca o inserisci un URL...",
 		"addressBar": "Barra degli indirizzi: {url}",
 		"details": {
 			"branch": "Branch",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "Nessuna annotazione",
 		"deleteLayer": "Elimina livello",
 		"saveOptions": "Opzioni di salvataggio",
-		"saveAs": "Salva con nome…",
+		"saveAs": "Salva con nome...",
 		"copyToClipboard": "Copia negli appunti",
 		"copied": "Copiata negli appunti",
 		"cancelShortcut": "Annulla (Esc)",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "Apri in nuovi pannelli",
 		"delete": "Elimina",
 		"clearSelection": "Deseleziona tutto",
-		"clearBrowsingData": "Cancella dati di navigazione…",
+		"clearBrowsingData": "Cancella dati di navigazione...",
 		"deleteSiteTitle": "Eliminare tutta la cronologia di {host}?",
 		"deleteSiteMessage": "Vengono eliminate tutte le visite a questo sito, qualunque sia il periodo o la ricerca mostrati.",
 		"emptyTitle": "Nessuna cronologia",

@@ -1025,7 +1025,7 @@
 		"announceFailed": "{filename} 下载失败"
 	},
 	"findBar": {
-		"placeholder": "在网页中查找…",
+		"placeholder": "在网页中查找...",
 		"inputLabel": "在网页中查找",
 		"noResults": "没有结果",
 		"matchCount": "{current}/{total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "在历史记录中显示全部结果",
 		"clearArchive": "清空归档",
 		"placeholderAction": "搜索操作",
-		"placeholderTab": "搜索打开的标签页…",
-		"placeholderBookmark": "搜索此空间中的书签…",
-		"placeholderHistory": "搜索历史记录…",
-		"placeholderAll": "搜索标签页、历史记录、书签、操作，或输入 URL…",
+		"placeholderTab": "搜索打开的标签页...",
+		"placeholderBookmark": "搜索此空间中的书签...",
+		"placeholderHistory": "搜索历史记录...",
+		"placeholderAll": "搜索标签页、历史记录、书签、操作，或输入 URL...",
 		"emptyTitleNoMatches": "没有匹配项",
 		"emptyTitleAction": "快捷操作",
 		"emptyTitleTab": "打开的标签页",
@@ -1385,7 +1385,7 @@
 		"screenshot": "屏幕快照",
 		"fullPage": "完整网页",
 		"visibleArea": "可见区域",
-		"selection": "选定区域…",
+		"selection": "选定区域...",
 		"copyLink": "拷贝链接",
 		"copied": "已拷贝",
 		"failed": "失败"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}，{detail}"
 	},
 	"archivedTabs": {
-		"title": "最近归档",
+		"title": "已归档",
 		"buttonLabel": {"one": "最近归档的 {count} 个标签页", "other": "最近归档的 {count} 个标签页"},
 		"restore": "恢复",
 		"showAll": "显示所有已归档的标签页",
@@ -1496,7 +1496,7 @@
 		"reset": "还原"
 	},
 	"urlBar": {
-		"placeholder": "搜索或输入 URL…",
+		"placeholder": "搜索或输入 URL...",
 		"addressBar": "地址栏：{url}",
 		"details": {
 			"branch": "分支",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "没有批注",
 		"deleteLayer": "删除图层",
 		"saveOptions": "存储选项",
-		"saveAs": "存储为…",
+		"saveAs": "存储为...",
 		"copyToClipboard": "拷贝到剪贴板",
 		"copied": "已拷贝到剪贴板",
 		"cancelShortcut": "取消（Esc）",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "在新标签页中打开",
 		"delete": "删除",
 		"clearSelection": "取消全选",
-		"clearBrowsingData": "清除浏览数据…",
+		"clearBrowsingData": "清除浏览数据...",
 		"deleteSiteTitle": "要删除 {host} 的全部历史记录吗？",
 		"deleteSiteMessage": "将删除对此网站的所有访问记录，不论当前显示的时间段或搜索。",
 		"emptyTitle": "没有历史记录",

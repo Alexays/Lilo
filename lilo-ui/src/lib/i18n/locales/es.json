@@ -1025,7 +1025,7 @@
 		"announceFailed": "No se ha podido descargar {filename}"
 	},
 	"findBar": {
-		"placeholder": "Buscar en la página…",
+		"placeholder": "Buscar en la página...",
 		"inputLabel": "Buscar en la página",
 		"noResults": "Sin resultados",
 		"matchCount": "{current} de {total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "Ver todos los resultados en el historial",
 		"clearArchive": "Vaciar archivo",
 		"placeholderAction": "Buscar acciones",
-		"placeholderTab": "Buscar pestañas abiertas…",
-		"placeholderBookmark": "Buscar marcadores en este espacio…",
-		"placeholderHistory": "Buscar en el historial…",
-		"placeholderAll": "Buscar pestañas, historial, marcadores, acciones o introducir URL…",
+		"placeholderTab": "Buscar pestañas abiertas...",
+		"placeholderBookmark": "Buscar marcadores en este espacio...",
+		"placeholderHistory": "Buscar en el historial...",
+		"placeholderAll": "Buscar pestañas, historial, marcadores, acciones o introducir URL...",
 		"emptyTitleNoMatches": "Sin coincidencias",
 		"emptyTitleAction": "Acciones rápidas",
 		"emptyTitleTab": "Pestañas abiertas",
@@ -1385,7 +1385,7 @@
 		"screenshot": "Captura de pantalla",
 		"fullPage": "Página completa",
 		"visibleArea": "Área visible",
-		"selection": "Selección…",
+		"selection": "Selección...",
 		"copyLink": "Copiar enlace",
 		"copied": "Copiado",
 		"failed": "Error"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Archivadas recientemente",
+		"title": "Archivadas",
 		"buttonLabel": {"one": "{count} pestaña archivada recientemente", "other": "{count} pestañas archivadas recientemente"},
 		"restore": "Restaurar",
 		"showAll": "Ver todas las pestañas archivadas",
@@ -1496,7 +1496,7 @@
 		"reset": "Restablecer"
 	},
 	"urlBar": {
-		"placeholder": "Buscar o introducir URL…",
+		"placeholder": "Buscar o introducir URL...",
 		"addressBar": "Barra de direcciones: {url}",
 		"details": {
 			"branch": "Rama",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "Sin anotaciones",
 		"deleteLayer": "Eliminar capa",
 		"saveOptions": "Opciones de guardado",
-		"saveAs": "Guardar como…",
+		"saveAs": "Guardar como...",
 		"copyToClipboard": "Copiar al portapapeles",
 		"copied": "Copiado al portapapeles",
 		"cancelShortcut": "Cancelar (Esc)",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "Abrir en pestañas nuevas",
 		"delete": "Eliminar",
 		"clearSelection": "Deseleccionar todo",
-		"clearBrowsingData": "Borrar datos de navegación…",
+		"clearBrowsingData": "Borrar datos de navegación...",
 		"deleteSiteTitle": "¿Eliminar todo el historial de {host}?",
 		"deleteSiteMessage": "Se eliminan todas las visitas a este sitio, sea cual sea el periodo o la búsqueda mostrados.",
 		"emptyTitle": "Sin historial",

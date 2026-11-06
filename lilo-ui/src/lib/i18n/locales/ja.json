@@ -1025,7 +1025,7 @@
 		"announceFailed": "{filename}をダウンロードできませんでした"
 	},
 	"findBar": {
-		"placeholder": "ページ内を検索…",
+		"placeholder": "ページ内を検索...",
 		"inputLabel": "ページ内を検索",
 		"noResults": "結果なし",
 		"matchCount": "{current}/{total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "すべての結果を履歴で表示",
 		"clearArchive": "アーカイブを消去",
 		"placeholderAction": "アクションを検索",
-		"placeholderTab": "開いているタブを検索…",
-		"placeholderBookmark": "このスペースのブックマークを検索…",
-		"placeholderHistory": "履歴を検索…",
-		"placeholderAll": "タブ、履歴、ブックマーク、アクションを検索、または URL を入力…",
+		"placeholderTab": "開いているタブを検索...",
+		"placeholderBookmark": "このスペースのブックマークを検索...",
+		"placeholderHistory": "履歴を検索...",
+		"placeholderAll": "タブ、履歴、ブックマーク、アクションを検索、または URL を入力...",
 		"emptyTitleNoMatches": "一致なし",
 		"emptyTitleAction": "クイックアクション",
 		"emptyTitleTab": "開いているタブ",
@@ -1385,7 +1385,7 @@
 		"screenshot": "スクリーンショット",
 		"fullPage": "ページ全体",
 		"visibleArea": "表示範囲",
-		"selection": "選択範囲…",
+		"selection": "選択範囲...",
 		"copyLink": "リンクをコピー",
 		"copied": "コピーしました",
 		"failed": "失敗"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}、{detail}"
 	},
 	"archivedTabs": {
-		"title": "最近アーカイブしたタブ",
+		"title": "アーカイブ済み",
 		"buttonLabel": {"one": "最近アーカイブしたタブ {count}個", "other": "最近アーカイブしたタブ {count}個"},
 		"restore": "復元",
 		"showAll": "アーカイブしたすべてのタブを表示",
@@ -1496,7 +1496,7 @@
 		"reset": "リセット"
 	},
 	"urlBar": {
-		"placeholder": "検索または URL を入力…",
+		"placeholder": "検索または URL を入力...",
 		"addressBar": "アドレスバー：{url}",
 		"details": {
 			"branch": "ブランチ",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "注釈なし",
 		"deleteLayer": "レイヤーを削除",
 		"saveOptions": "保存オプション",
-		"saveAs": "別名で保存…",
+		"saveAs": "別名で保存...",
 		"copyToClipboard": "クリップボードにコピー",
 		"copied": "クリップボードにコピーしました",
 		"cancelShortcut": "キャンセル（Esc）",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "新しいタブで開く",
 		"delete": "削除",
 		"clearSelection": "すべての選択を解除",
-		"clearBrowsingData": "閲覧データを消去…",
+		"clearBrowsingData": "閲覧データを消去...",
 		"deleteSiteTitle": "{host} の履歴をすべて削除しますか？",
 		"deleteSiteMessage": "表示中の期間や検索に関係なく、このサイトへのすべてのアクセスが削除されます。",
 		"emptyTitle": "履歴はありません",

@@ -1025,7 +1025,7 @@
 		"announceFailed": "Downloaden van {filename} mislukt"
 	},
 	"findBar": {
-		"placeholder": "Zoek op pagina…",
+		"placeholder": "Zoek op pagina...",
 		"inputLabel": "Zoek op pagina",
 		"noResults": "Geen resultaten",
 		"matchCount": "{current} van {total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "Alle resultaten in geschiedenis tonen",
 		"clearArchive": "Wis archief",
 		"placeholderAction": "Zoek acties",
-		"placeholderTab": "Zoek geopende tabbladen…",
-		"placeholderBookmark": "Zoek bladwijzers in deze ruimte…",
-		"placeholderHistory": "Zoek geschiedenis…",
-		"placeholderAll": "Zoek tabbladen, geschiedenis, bladwijzers, acties of voer een URL in…",
+		"placeholderTab": "Zoek geopende tabbladen...",
+		"placeholderBookmark": "Zoek bladwijzers in deze ruimte...",
+		"placeholderHistory": "Zoek geschiedenis...",
+		"placeholderAll": "Zoek tabbladen, geschiedenis, bladwijzers, acties of voer een URL in...",
 		"emptyTitleNoMatches": "Geen overeenkomsten",
 		"emptyTitleAction": "Snelle acties",
 		"emptyTitleTab": "Geopende tabbladen",
@@ -1385,7 +1385,7 @@
 		"screenshot": "Schermafbeelding",
 		"fullPage": "Volledige pagina",
 		"visibleArea": "Zichtbaar gebied",
-		"selection": "Selectie…",
+		"selection": "Selectie...",
 		"copyLink": "Kopieer link",
 		"copied": "Gekopieerd",
 		"failed": "Mislukt"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Onlangs gearchiveerd",
+		"title": "Gearchiveerd",
 		"buttonLabel": {"one": "{count} onlangs gearchiveerd tabblad", "other": "{count} onlangs gearchiveerde tabbladen"},
 		"restore": "Herstellen",
 		"showAll": "Alle gearchiveerde tabbladen tonen",
@@ -1496,7 +1496,7 @@
 		"reset": "Stel opnieuw in"
 	},
 	"urlBar": {
-		"placeholder": "Zoek of voer URL in…",
+		"placeholder": "Zoek of voer URL in...",
 		"addressBar": "Adresbalk: {url}",
 		"details": {
 			"branch": "Branch",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "Geen annotaties",
 		"deleteLayer": "Verwijder laag",
 		"saveOptions": "Bewaaropties",
-		"saveAs": "Bewaar als…",
+		"saveAs": "Bewaar als...",
 		"copyToClipboard": "Kopieer naar klembord",
 		"copied": "Gekopieerd naar klembord",
 		"cancelShortcut": "Annuleer (Esc)",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "Openen in nieuwe tabbladen",
 		"delete": "Verwijderen",
 		"clearSelection": "Alles deselecteren",
-		"clearBrowsingData": "Browsegegevens wissen…",
+		"clearBrowsingData": "Browsegegevens wissen...",
 		"deleteSiteTitle": "Alle geschiedenis van {host} verwijderen?",
 		"deleteSiteMessage": "Alle bezoeken aan deze site worden verwijderd, ongeacht de getoonde periode of zoekopdracht.",
 		"emptyTitle": "Geen geschiedenis",

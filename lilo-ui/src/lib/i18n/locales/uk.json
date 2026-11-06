@@ -1039,7 +1039,7 @@
 		"announceFailed": "Не вдалося завантажити {filename}"
 	},
 	"findBar": {
-		"placeholder": "Знайти на сторінці…",
+		"placeholder": "Знайти на сторінці...",
 		"inputLabel": "Знайти на сторінці",
 		"noResults": "Немає результатів",
 		"matchCount": "{current} з {total}",
@@ -1152,10 +1152,10 @@
 		"showAllHistory": "Усі результати в історії",
 		"clearArchive": "Очистити архів",
 		"placeholderAction": "Пошук дій",
-		"placeholderTab": "Пошук у відкритих вкладках…",
-		"placeholderBookmark": "Пошук закладок у цьому просторі…",
-		"placeholderHistory": "Пошук в історії…",
-		"placeholderAll": "Шукати вкладки, історію, закладки, дії або ввести URL…",
+		"placeholderTab": "Пошук у відкритих вкладках...",
+		"placeholderBookmark": "Пошук закладок у цьому просторі...",
+		"placeholderHistory": "Пошук в історії...",
+		"placeholderAll": "Шукати вкладки, історію, закладки, дії або ввести URL...",
 		"emptyTitleNoMatches": "Немає збігів",
 		"emptyTitleAction": "Швидкі дії",
 		"emptyTitleTab": "Відкриті вкладки",
@@ -1403,7 +1403,7 @@
 		"screenshot": "Знімок екрана",
 		"fullPage": "Уся сторінка",
 		"visibleArea": "Видима область",
-		"selection": "Вибрана область…",
+		"selection": "Вибрана область...",
 		"copyLink": "Копіювати посилання",
 		"copied": "Скопійовано",
 		"failed": "Помилка"
@@ -1482,7 +1482,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Нещодавно в архіві",
+		"title": "В архіві",
 		"buttonLabel": {"one": "{count} нещодавно архівована вкладка", "few": "{count} нещодавно архівовані вкладки", "many": "{count} нещодавно архівованих вкладок", "other": "{count} нещодавно архівованої вкладки"},
 		"restore": "Відновити",
 		"showAll": "Показати всі вкладки в архіві",
@@ -1516,7 +1516,7 @@
 		"reset": "Скинути"
 	},
 	"urlBar": {
-		"placeholder": "Пошук або введення URL…",
+		"placeholder": "Пошук або введення URL...",
 		"addressBar": "Адресний рядок: {url}",
 		"details": {
 			"branch": "Гілка",
@@ -1635,7 +1635,7 @@
 		"noAnnotations": "Немає позначок",
 		"deleteLayer": "Видалити шар",
 		"saveOptions": "Параметри збереження",
-		"saveAs": "Зберегти як…",
+		"saveAs": "Зберегти як...",
 		"copyToClipboard": "Копіювати в буфер обміну",
 		"copied": "Скопійовано в буфер обміну",
 		"cancelShortcut": "Скасувати (Esc)",
@@ -1838,7 +1838,7 @@
 		"openInNewTabs": "Відкрити в нових вкладках",
 		"delete": "Видалити",
 		"clearSelection": "Зняти виділення",
-		"clearBrowsingData": "Очистити дані браузера…",
+		"clearBrowsingData": "Очистити дані браузера...",
 		"deleteSiteTitle": "Видалити всю історію {host}?",
 		"deleteSiteMessage": "Буде видалено всі відвідування цього сайту, незалежно від вибраного періоду чи пошуку.",
 		"emptyTitle": "Історії немає",

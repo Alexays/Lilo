@@ -1039,7 +1039,7 @@
 		"announceFailed": "Nie udało się pobrać {filename}"
 	},
 	"findBar": {
-		"placeholder": "Znajdź na stronie…",
+		"placeholder": "Znajdź na stronie...",
 		"inputLabel": "Znajdź na stronie",
 		"noResults": "Brak wyników",
 		"matchCount": "{current} z {total}",
@@ -1152,10 +1152,10 @@
 		"showAllHistory": "Pokaż wszystkie wyniki w historii",
 		"clearArchive": "Wyczyść archiwum",
 		"placeholderAction": "Szukaj czynności",
-		"placeholderTab": "Szukaj w otwartych kartach…",
-		"placeholderBookmark": "Szukaj zakładek w tej przestrzeni…",
-		"placeholderHistory": "Szukaj w historii…",
-		"placeholderAll": "Szukaj kart, historii, zakładek, czynności lub wpisz URL…",
+		"placeholderTab": "Szukaj w otwartych kartach...",
+		"placeholderBookmark": "Szukaj zakładek w tej przestrzeni...",
+		"placeholderHistory": "Szukaj w historii...",
+		"placeholderAll": "Szukaj kart, historii, zakładek, czynności lub wpisz URL...",
 		"emptyTitleNoMatches": "Brak dopasowań",
 		"emptyTitleAction": "Szybkie czynności",
 		"emptyTitleTab": "Otwarte karty",
@@ -1403,7 +1403,7 @@
 		"screenshot": "Zrzut ekranu",
 		"fullPage": "Cała strona",
 		"visibleArea": "Widoczny obszar",
-		"selection": "Zaznaczenie…",
+		"selection": "Zaznaczenie...",
 		"copyLink": "Kopiuj łącze",
 		"copied": "Skopiowano",
 		"failed": "Niepowodzenie"
@@ -1482,7 +1482,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Ostatnio zarchiwizowane",
+		"title": "Zarchiwizowane",
 		"buttonLabel": {"one": "{count} ostatnio zarchiwizowana karta", "few": "{count} ostatnio zarchiwizowane karty", "many": "{count} ostatnio zarchiwizowanych kart", "other": "{count} ostatnio zarchiwizowanej karty"},
 		"restore": "Przywróć",
 		"showAll": "Pokaż wszystkie zarchiwizowane karty",
@@ -1516,7 +1516,7 @@
 		"reset": "Wyzeruj"
 	},
 	"urlBar": {
-		"placeholder": "Szukaj lub wpisz URL…",
+		"placeholder": "Szukaj lub wpisz URL...",
 		"addressBar": "Pasek adresu: {url}",
 		"details": {
 			"branch": "Gałąź",
@@ -1635,7 +1635,7 @@
 		"noAnnotations": "Brak adnotacji",
 		"deleteLayer": "Usuń warstwę",
 		"saveOptions": "Opcje zachowywania",
-		"saveAs": "Zachowaj jako…",
+		"saveAs": "Zachowaj jako...",
 		"copyToClipboard": "Kopiuj do schowka",
 		"copied": "Skopiowano do schowka",
 		"cancelShortcut": "Anuluj (Esc)",
@@ -1838,7 +1838,7 @@
 		"openInNewTabs": "Otwórz w nowych kartach",
 		"delete": "Usuń",
 		"clearSelection": "Odznacz wszystko",
-		"clearBrowsingData": "Wyczyść dane przeglądania…",
+		"clearBrowsingData": "Wyczyść dane przeglądania...",
 		"deleteSiteTitle": "Usunąć całą historię z {host}?",
 		"deleteSiteMessage": "Zostaną usunięte wszystkie wizyty na tej stronie, niezależnie od wyświetlanego okresu czy wyszukiwania.",
 		"emptyTitle": "Brak historii",

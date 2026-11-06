@@ -1025,7 +1025,7 @@
 		"announceFailed": "{filename} indirilemedi"
 	},
 	"findBar": {
-		"placeholder": "Sayfada bul…",
+		"placeholder": "Sayfada bul...",
 		"inputLabel": "Sayfada bul",
 		"noResults": "Sonuç yok",
 		"matchCount": "{current}/{total}",
@@ -1138,10 +1138,10 @@
 		"showAllHistory": "Tüm sonuçları geçmişte göster",
 		"clearArchive": "Arşivi Temizle",
 		"placeholderAction": "İşlemlerde ara",
-		"placeholderTab": "Açık sekmelerde ara…",
-		"placeholderBookmark": "Bu alandaki yer imlerinde ara…",
-		"placeholderHistory": "Geçmişte ara…",
-		"placeholderAll": "Sekmelerde, geçmişte, yer imlerinde, işlemlerde arayın veya URL girin…",
+		"placeholderTab": "Açık sekmelerde ara...",
+		"placeholderBookmark": "Bu alandaki yer imlerinde ara...",
+		"placeholderHistory": "Geçmişte ara...",
+		"placeholderAll": "Sekmelerde, geçmişte, yer imlerinde, işlemlerde arayın veya URL girin...",
 		"emptyTitleNoMatches": "Eşleşme yok",
 		"emptyTitleAction": "Hızlı işlemler",
 		"emptyTitleTab": "Açık sekmeler",
@@ -1385,7 +1385,7 @@
 		"screenshot": "Ekran Resmi",
 		"fullPage": "Tüm sayfa",
 		"visibleArea": "Görünür bölge",
-		"selection": "Seçim…",
+		"selection": "Seçim...",
 		"copyLink": "Bağlantıyı kopyala",
 		"copied": "Kopyalandı",
 		"failed": "Başarısız"
@@ -1462,7 +1462,7 @@
 		"selected": "{title}, {detail}"
 	},
 	"archivedTabs": {
-		"title": "Son arşivlenenler",
+		"title": "Arşivlenenler",
 		"buttonLabel": {"one": "Son arşivlenen {count} sekme", "other": "Son arşivlenen {count} sekme"},
 		"restore": "Geri yükle",
 		"showAll": "Tüm arşivlenmiş sekmeleri göster",
@@ -1496,7 +1496,7 @@
 		"reset": "Sıfırla"
 	},
 	"urlBar": {
-		"placeholder": "Arayın veya URL girin…",
+		"placeholder": "Arayın veya URL girin...",
 		"addressBar": "Adres çubuğu: {url}",
 		"details": {
 			"branch": "Dal",
@@ -1615,7 +1615,7 @@
 		"noAnnotations": "İşaretleme yok",
 		"deleteLayer": "Katmanı sil",
 		"saveOptions": "Kaydetme seçenekleri",
-		"saveAs": "Farklı Kaydet…",
+		"saveAs": "Farklı Kaydet...",
 		"copyToClipboard": "Panoya kopyala",
 		"copied": "Panoya kopyalandı",
 		"cancelShortcut": "Vazgeç (Esc)",
@@ -1808,7 +1808,7 @@
 		"openInNewTabs": "Yeni sekmelerde aç",
 		"delete": "Sil",
 		"clearSelection": "Tüm seçimi kaldır",
-		"clearBrowsingData": "Tarama verilerini temizle…",
+		"clearBrowsingData": "Tarama verilerini temizle...",
 		"deleteSiteTitle": "{host} sitesinin tüm geçmişi silinsin mi?",
 		"deleteSiteMessage": "Gösterilen dönem veya aramadan bağımsız olarak bu siteye yapılan tüm ziyaretler silinir.",
 		"emptyTitle": "Geçmiş yok",
