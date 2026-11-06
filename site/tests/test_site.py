@@ -85,8 +85,12 @@ class SiteTests(unittest.TestCase):
                                          home + "changelog/"])
 
     def test_routes_language_alternates_and_markdown_copies(self):
-        sitemap = ET.parse(DIST / "sitemap.xml")
+        index = ET.parse(DIST / "sitemap-index.xml").find(".//{*}loc").text
+        sitemap = ET.parse(DIST / urlparse(index).path.lstrip("/"))
         locations = {node.text for node in sitemap.findall(".//{*}loc")}
+        self.assertFalse(any("/demo/" in location or "/404" in location for location in locations))
+        alternates = sitemap.find(".//{*}url").findall("{http://www.w3.org/1999/xhtml}link")
+        self.assertEqual({link.attrib["hreflang"] for link in alternates}, {"en", "fr"})
         for page in PAGES:
             with self.subTest(page=page):
                 source = (DIST / page).read_text()
@@ -351,6 +355,7 @@ class SiteTests(unittest.TestCase):
 
     def test_cloudflare_assets_and_redirects_ship_in_the_build(self):
         redirects = (DIST / "_redirects").read_text()
+        self.assertIn("/sitemap.xml /sitemap-index.xml 301", redirects)
         headers = (DIST / "_headers").read_text()
         self.assertIn("script-src 'self'", headers)
         self.assertIn("/_astro/*", headers)

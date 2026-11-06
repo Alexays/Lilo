@@ -265,6 +265,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var terminationReplyPending = false
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        QuitSource.log()
         // Windows AppKit closes on the way out must reopen next launch.
         browserContext.saveWindowsNow()
         browserContext.isQuitting = true

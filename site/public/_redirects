@@ -1,4 +1,5 @@
 # Permanent redirects to the canonical trailing-slash URLs (the assets' own redirects are 307)
+/sitemap.xml /sitemap-index.xml 301
 /index.html / 301
 /fr /fr/ 301
 /fr/index.html /fr/ 301
