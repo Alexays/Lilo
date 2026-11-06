@@ -51,6 +51,30 @@ final class ExtensionPageTabTests: XCTestCase {
         return (window, registry, extensionId, pageURL, tabId, other.id)
     }
 
+    func testExtensionPageGetsTheFeatureFlagsTabsGet() async throws {
+        let engineFactory = browserContext.context.engineFactory
+        engineFactory.setFeatureFlagOverrides(["SelectShowPickerEnabled": false])
+        engineFactory.setFullRefreshRate(false)
+        defer {
+            engineFactory.setFeatureFlagOverrides([:])
+            engineFactory.setFullRefreshRate(true)
+        }
+        let (window, _, _, _, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let idle = try await page.evaluateJavaScript("typeof requestIdleCallback") as? String
+        XCTAssertEqual(idle, "function", "Lilo's defaults reach extension pages")
+        let picker = try await page.evaluateJavaScript("typeof HTMLSelectElement.prototype.showPicker") as? String
+        XCTAssertEqual(picker, "undefined", "an about:config override reaches extension pages")
+
+        let features = (WKPreferences.self as AnyObject).perform(NSSelectorFromString("_experimentalFeatures"))?.takeUnretainedValue() as? [NSObject]
+        let near60FPS = try XCTUnwrap(features?.first { $0.value(forKey: "key") as? String == WKFeatureFlags.near60FPSKey })
+        let preferences = page.configuration.preferences
+        let isEnabled = NSSelectorFromString("_isEnabledForFeature:")
+        typealias IsEnabled = @convention(c) (NSObject, Selector, AnyObject) -> ObjCBool
+        XCTAssertTrue(unsafeBitCast(preferences.method(for: isEnabled), to: IsEnabled.self)(preferences, isEnabled, near60FPS).boolValue,
+                      "the refresh rate setting reaches extension pages")
+    }
+
     func testDiscardedExtensionPageReloadsWhenReactivated() async throws {
         let (window, _, _, pageURL, tabId, _) = try await openExtensionPage()
         window.tabManager.discardEngines([tabId])

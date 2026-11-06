@@ -1471,14 +1471,24 @@ final class ProfileExtensionRegistry {
 }
 
 extension WKWebExtensionContext {
-    /// `webViewConfiguration` for a view Lilo creates. WebKit's manifest CSP mode filters the policy of every frame in the
-    /// view, so a framed site loses `blob:` and `'self'`; Chrome already refuses the extension policies it would filter.
+    /// `webViewConfiguration` for a view Lilo creates, with the feature flags tabs get. WebKit's manifest CSP mode filters the
+    /// policy of every frame in the view, so a framed site loses `blob:` and `'self'`; Chrome already refuses the extension
+    /// policies it would filter.
     var pageWebViewConfiguration: WKWebViewConfiguration? {
         guard let configuration = webViewConfiguration else { return nil }
         let setMode = NSSelectorFromString("_setContentSecurityPolicyModeForExtension:")
         if configuration.responds(to: setMode) {
             typealias SetMode = @convention(c) (AnyObject, Selector, Int) -> Void
             unsafe unsafeBitCast(configuration.method(for: setMode), to: SetMode.self)(configuration, setMode, 0)
+        }
+        // A copy can share the controller's preferences object: writes to it would reach every extension view of the profile.
+        if configuration.preferences.responds(to: #selector(NSCopying.copy(with:))),
+           let preferences = configuration.preferences.copy() as? WKPreferences {
+            configuration.preferences = preferences
+            WKFeatureFlags.apply(
+                [WKFeatureFlags.near60FPSKey: !WKEngineFactory.fullRefreshRate].merging(WKEngineFactory.featureFlagOverrides) { $1 },
+                to: preferences
+            )
         }
         return configuration
     }
