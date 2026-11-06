@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97 and 103. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103 and 104. Every other gap is fully worked around.
 
 ---
 
@@ -580,6 +580,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** a rule with one of those conditions is kept inert under its id ([dnr-rules.ts] `webKitRule`); an `upgradeScheme` rule without a URL or request domain condition gets the `urlFilter` `|http:`, which leaves `ws` requests out.
 - **Impact:** uBlock Origin Lite's default ruleset conditions a few rules on response headers, one blocking first-party `.bundle.js` scripts: WebKit blocked them on every site.
 - **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'example', tabIds: [12345] } }] })`, then load `https://example.com/` in another tab. Expected: loads. Actual: blocked.
+
+### 104. `declarativeNetRequest` request domains become loose URL filters
+
+- **Gap:** WebKit makes each request domain the `urlFilter` `||domain`, which also matches hosts that extend it (`t.co` matches `t.com` and `t.co.uk`), and each excluded request domain an unanchored `urlFilter`, which matches it anywhere in the URL (a query string naming it, `notexample.com`). It merges a request domain with the rule's `urlFilter` through common substrings, which mangles the filter: `aboutamazon.com` and `^asc_campaign=` give `||^asc_caboutamazon.compaign=`, which matches nothing. Chrome matches request domains on the host.
+- **Lilo:** sends each request domain of a rule without a filter as `domain^`, and each excluded one as `||domain^`; a `urlFilter` moves into each request domain past the host (`domain^*filter`, or `domain*filter` for a filter starting with `/`), and a rule with an anchored `urlFilter` is kept inert ([dnr-rules.ts] `webKitRule`). `fromWebKit` removes the anchors, so large host lists are not stored twice.
+- **Impact:** uBlock Origin Lite has about 94000 request domain rules without a filter, and about 20 rules mangled by the merge (tracking parameter removals and exceptions).
+- **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { requestDomains: ['example.co'], resourceTypes: ['main_frame'] } }] })`, then load `https://example.com/`. Expected: loads. Actual: blocked.
 
 ## storage
 

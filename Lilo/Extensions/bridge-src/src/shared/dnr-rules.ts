@@ -327,17 +327,44 @@ export function webKitRule(rule: any): any {
   if (rule.action?.type === 'upgradeScheme' && [conditions.urlFilter, conditions.regexFilter, conditions.requestDomains].every((value) => value === undefined)) {
     result = { ...result, condition: { ...result.condition, urlFilter: '|http:' } };
   }
+  // WebKit makes each request domain the urlFilter `||domain`, which also matches longer hosts (t.co and t.com), and
+  // merges it with the rule's urlFilter by common substrings; an excluded one becomes an unanchored urlFilter. Anchored
+  // urlFilters cannot follow the domain.
+  const { urlFilter, requestDomains, excludedRequestDomains } = result.condition ?? {};
+  if (Array.isArray(requestDomains) && conditions.regexFilter === undefined) {
+    if (typeof urlFilter === 'string' && urlFilter.startsWith('|')) return undefined;
+    const { urlFilter: _filter, ...condition } = result.condition;
+    // A filter starting with `/` follows the host at once, where `^` would take that `/`.
+    const tail = typeof urlFilter !== 'string' ? '^' : urlFilter.startsWith('/') ? `*${urlFilter}` : `^*${urlFilter}`;
+    result = { ...result, condition: { ...condition, requestDomains: requestDomains.map((domain) => `${domain}${tail}`) } };
+  }
+  if (Array.isArray(excludedRequestDomains) && excludedRequestDomains.length) {
+    result = { ...result, condition: { ...result.condition, excludedRequestDomains: excludedRequestDomains.map((domain) => `||${domain}^`) } };
+  }
   return result;
+}
+
+/** The extension's own form of a rule WebKit holds: its stored original, or the rule with its request domains unanchored. */
+function chromeRule(rule: any): any {
+  const own = rule?.[STORED_RULE] ?? rule;
+  const anchored = (domains: unknown) => Array.isArray(domains) && typeof domains[0] === 'string' && domains[0].endsWith('^');
+  const { requestDomains, excludedRequestDomains } = own?.condition ?? {};
+  if (!anchored(requestDomains) && !anchored(excludedRequestDomains)) return own;
+  const condition = { ...own.condition };
+  if (anchored(requestDomains)) condition.requestDomains = requestDomains.map((domain: string) => domain.slice(0, -1));
+  if (anchored(excludedRequestDomains)) condition.excludedRequestDomains = excludedRequestDomains.map((domain: string) => domain.slice(2, -1));
+  return { ...own, condition };
 }
 
 function toWebKit(rule: any): any {
   const applied = webKitRule(rule);
-  if (applied === rule) return rule;
+  // Anchored request domains alone are undone by chromeRule: no original stored, which would double large rulesets.
+  if (applied === rule || (applied && sameJSON(chromeRule(applied), rule))) return applied;
   const stored = applied ?? { id: rule.id, action: { type: 'block' }, condition: { regexFilter: INERT_FILTER } };
   return { ...stored, [STORED_RULE]: rule };
 }
 
-export const fromWebKit = (rules: any) => (Array.isArray(rules) ? rules.map((rule) => rule?.[STORED_RULE] ?? rule) : rules);
+export const fromWebKit = (rules: any) => (Array.isArray(rules) ? rules.map(chromeRule) : rules);
 
 // WebKit compiles an extension's rules into at most 150000 content blocker rules, one per request
 // domain and per excluded request domain of each rule. Static rules leave room for 30000 dynamic ones.
@@ -358,7 +385,7 @@ export function webKitStaticRulesets(sources: string[], enabled: boolean[] = [])
       return undefined;
     }
   });
-  const prepared: (any[] | undefined)[] = rulesets.map((rules) => rules?.map((rule) => toWebKit(rule?.[STORED_RULE] ?? rule)));
+  const prepared: (any[] | undefined)[] = rulesets.map((rules) => rules?.map((rule) => toWebKit(chromeRule(rule))));
   const expansions = prepared.flatMap((rules, set) => (rules ?? []).map((rule, index) => {
     const condition = rule?.condition ?? {};
     const domains = typeof condition.regexFilter !== 'string' && Array.isArray(condition.requestDomains) ? condition.requestDomains.length : 1;
@@ -375,7 +402,7 @@ export function webKitStaticRulesets(sources: string[], enabled: boolean[] = [])
       const rule = prepared[set]![index];
       // An inert rule still counts as one, and keeps the extension's own for testMatch and getDisabledRuleIds.
       prepared[set]![index] = count > 1
-        ? { id: rule.id, action: { type: 'block' }, condition: { regexFilter: INERT_FILTER }, [STORED_RULE]: rule[STORED_RULE] ?? rule }
+        ? { id: rule.id, action: { type: 'block' }, condition: { regexFilter: INERT_FILTER }, [STORED_RULE]: chromeRule(rule) }
         : undefined;
       total -= count > 1 ? count - 1 : 1;
     }
@@ -496,7 +523,7 @@ async function heldSessionRules(namespace: any): Promise<{ held: any[]; session:
   const held = await webKitCall(namespace, 'getDynamicRules');
   const session = new Map<number, { webKitId: number; rule: any }>();
   for (const rule of held.filter(isSessionRule)) {
-    const { [SESSION_RULE]: _id, ...own } = rule[STORED_RULE] ?? rule;
+    const { [SESSION_RULE]: _id, ...own } = chromeRule(rule);
     session.set(rule[SESSION_RULE], { webKitId: rule.id, rule: { ...own, id: rule[SESSION_RULE] } });
   }
   return { held, session };

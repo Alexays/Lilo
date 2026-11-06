@@ -39,9 +39,39 @@ describe('RE2 regexFilter in the subset WebKit compiles', () => {
   });
 });
 
+/** The regex WebKit compiles a urlFilter into (`_regexURLFilterForChromeURLFilter`), a request domain getting `||`. */
+function webKitURLRegex(filter: string): RegExp {
+  const anchor = filter.startsWith('||') ? 2 : filter.startsWith('|') ? 1 : 0;
+  const end = filter.endsWith('|') ? '$' : '';
+  const body = filter.slice(anchor, end ? -1 : undefined).replace(/[?+[(){}$|\\.]/g, '\\$&').replaceAll('*', '.*').replaceAll('^', '[^a-zA-Z0-9_.%-]');
+  return new RegExp(['', '^', '^[^:]+://+([^:/]+\\.)?'][anchor] + body + end, 'i');
+}
+
 describe('rules WebKit rejects', () => {
   const chrome = { runtime: { id: 'abc', getURL: (path: string) => `chrome-extension://uuid${path}` } };
   (globalThis as any).chrome = chrome;
+
+  it('anchors request domains on the host', () => {
+    const rule = { id: 8, action: { type: 'block' }, condition: { requestDomains: ['t.co'], excludedRequestDomains: ['cdn.example.org'] } };
+    const { requestDomains, excludedRequestDomains } = webKitRule(rule).condition;
+    assert.deepEqual([requestDomains, excludedRequestDomains], [['t.co^'], ['||cdn.example.org^']]);
+    const domain = webKitURLRegex(`||${requestDomains[0]}`);
+    assert.deepEqual(['https://t.co/x', 'https://sub.t.co:8443/', 'https://t.com/', 'https://t.co.uk/'].map((url) => domain.test(url)), [true, true, false, false]);
+    const excluded = webKitURLRegex(excludedRequestDomains[0]);
+    assert.deepEqual(['https://cdn.example.org/a', 'https://ads.example.net/p?ref=cdn.example.org', 'https://notcdn.example.org/'].map((url) => excluded.test(url)), [true, false, false]);
+    assert.deepEqual(fromWebKit([webKitRule(rule)]), [rule]);
+  });
+
+  it('moves an unanchored urlFilter into each request domain, past the host', () => {
+    const rule = { id: 116, action: { type: 'block' }, condition: { requestDomains: ['aboutamazon.com'], urlFilter: '^asc_campaign=' } };
+    const { condition } = webKitRule(rule);
+    assert.deepEqual(condition, { requestDomains: ['aboutamazon.com^*^asc_campaign='] });
+    assert.equal(webKitURLRegex(`||${condition.requestDomains[0]}`).test('https://www.aboutamazon.com/news?asc_campaign=x'), true);
+    const path = webKitRule({ ...rule, condition: { requestDomains: ['netcoresmartech.com'], urlFilter: '/client.js' } }).condition;
+    assert.deepEqual(path, { requestDomains: ['netcoresmartech.com*/client.js'] });
+    assert.equal(webKitURLRegex(`||${path.requestDomains[0]}`).test('https://cdn.netcoresmartech.com/client.js'), true);
+    assert.equal(webKitRule({ ...rule, condition: { requestDomains: ['example.com'], urlFilter: '||cdn.example.com/ad' } }), undefined, 'an anchored filter cannot follow the domain');
+  });
 
   it('redirects to the extension own pages through extensionPath', () => {
     const rule = { id: 1, action: { type: 'redirect', redirect: { url: 'chrome-extension://abc/page.html?x=1#y' } }, condition: { urlFilter: 'a' } };
@@ -78,7 +108,7 @@ describe('rules WebKit rejects', () => {
     const rule = { id: 4, action: { type: 'block' }, condition: { regexFilter: '^https?://[^/]+/ads/', requestMethods: ['get'], excludedRequestDomains: ['com', 'net'] } };
     assert.equal(webKitRule(rule), undefined);
     assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['post'], excludedRequestDomains: ['com'] } }), undefined);
-    assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['other'], excludedRequestDomains: ['com'] } }).condition, { urlFilter: 'a', excludedRequestDomains: ['com'] });
+    assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['other'], excludedRequestDomains: ['com'] } }).condition, { urlFilter: 'a', excludedRequestDomains: ['||com^'] });
     assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', requestMethods: ['get', 'other'] } }).condition, { urlFilter: 'a', requestMethods: ['get'] });
     assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['other'] } }).condition, { urlFilter: 'a' });
     assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', requestMethods: ['other'] } }), undefined);
@@ -149,6 +179,14 @@ describe('the declarativeNetRequest namespace', () => {
     assert.equal(stored[1].condition.regexFilter, '^lilo-inert-rule:', 'kept under its id, never matching');
     assert.equal(stored[2], rules[2]);
     assert.deepEqual(await dnr.getDynamicRules(), rules);
+  });
+
+  it('stores no original for a rule whose request domains alone change', async () => {
+    const rule = { id: 9, action: { type: 'block' }, condition: { requestDomains: ['example.com'], urlFilter: 'ads' } };
+    const { dnr, stored } = namespace();
+    await dnr.updateDynamicRules({ addRules: [rule, { id: 10, action: { type: 'block' }, condition: { requestDomains: ['example.com'] } }] });
+    assert.deepEqual(stored.map((each) => each.liloChromeRule), [rule, undefined]);
+    assert.deepEqual((await dnr.getDynamicRules()).map((each: any) => each.condition), [rule.condition, { requestDomains: ['example.com'] }]);
   });
 
   it('answers isRegexSupported detached, for the regex WebKit would compile', async () => {
@@ -485,6 +523,14 @@ describe('static rulesets', () => {
     assert.deepEqual(webKitStaticRulesets([prepared!]), [prepared], 'preparing again changes nothing');
   });
 
+  it('anchors request domains with no original stored, once', () => {
+    const rules = [block(1, { requestDomains: ['t.co'], excludedRequestDomains: ['example.com'] })];
+    const [prepared] = webKitStaticRulesets([JSON.stringify(rules)]);
+    assert.deepEqual(JSON.parse(prepared!), [block(1, { requestDomains: ['t.co^'], excludedRequestDomains: ['||example.com^'] })]);
+    assert.deepEqual(fromWebKit(JSON.parse(prepared!)), rules);
+    assert.deepEqual(webKitStaticRulesets([prepared!]), [prepared], 'preparing again changes nothing');
+  });
+
   it('prepares a data: redirect without URL, which the preparer bare JavaScriptCore context lacks', (t) => {
     t.mock.property(globalThis, 'URL', undefined as any);
     const rules = [{ id: 1, action: { type: 'redirect', redirect: { url: 'data:,x' } }, condition: { urlFilter: 'a' } }, block(2, { regexFilter: 'a\\d' })];
@@ -499,7 +545,7 @@ describe('static rulesets', () => {
       JSON.stringify([block(1, { requestDomains: domains(60000, 'b') }), block(2, { excludedRequestDomains: domains(30000, 'c') })]),
     ]);
     assert.deepEqual(JSON.parse(first!).map((rule: any) => rule.condition.regexFilter === INERT_FILTER), [true, false]);
-    assert.equal(second, null, 'the rest fits');
+    assert.deepEqual(JSON.parse(second!).map((rule: any) => rule.condition.regexFilter === INERT_FILTER), [false, false], 'the rest fits');
   });
 
   it("takes the rules past the cap from the sets the manifest leaves off first (AdGuard's 53 sets, one on)", () => {
