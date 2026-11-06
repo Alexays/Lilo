@@ -91,7 +91,7 @@ export default defineConfig({
 		rolldownOptions: {
 			output: {
 				entryFileNames: "index.js",
-				minify: { compress: { dropConsole: true, dropDebugger: true }, mangle: true },
+				minify: { compress: { dropConsole: true } },
 				// The first frame in one chunk beside the entry: every boundary between chunks costs
 				// import and export plumbing on each launch. The entry stays index.js, which the app times.
 				codeSplitting: {
