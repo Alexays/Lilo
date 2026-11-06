@@ -239,7 +239,7 @@ extension MainWindowController {
             addCopyURL()
             add("Cancel", .cancel, "cancel")
         case "interrupted":
-            add("Retry", .retry, "retry")
+            if (try? profileContext?.downloads.fetch(id: Int64(downloadId)))?.source != "blob" { add("Retry", .retry, "retry") }
             addCopyURL()
             menu.addItem(.separator())
             add("Remove from List", .removeFromList, "removeFromList")

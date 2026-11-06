@@ -377,7 +377,7 @@ export interface BridgeDownloadSnapshot {
 	endedAt?: number;
 	error?: string;
 	fileMissing: boolean;
-	source: "wk" | "url";
+	source: "wk" | "url" | "blob";
 	speedBytesPerSec?: number;
 	eta?: number;
 }

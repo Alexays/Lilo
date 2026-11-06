@@ -177,6 +177,11 @@ extension MainWindowController {
                         }
                     }
                     try data.write(to: url, options: .atomic)
+                    DownloadQuarantine.stamp(path: url.path, source: pageURL.absoluteString)
+                    // A private page leaves no trace of where it came from.
+                    if webView.configuration.websiteDataStore.isPersistent {
+                        DownloadQuarantine.recordOrigin(path: url.path, urls: [pageURL.absoluteString])
+                    }
                 } catch {
                     NSAlert(error: error).beginSheetModal(for: window, completionHandler: nil)
                 }

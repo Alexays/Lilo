@@ -27,6 +27,19 @@ interface MetaLine {
 
 export type InlineAction = "pause" | "resume" | "retry";
 
+// The Chrome InterruptReason codes native stores in `error`; any other error is a system message, already localized.
+const ERROR_KEYS = new Map([
+  ["USER_CANCELED", "downloadsPanel.errorCanceled"],
+  ["SERVER_FAILED", "downloadsPanel.errorServer"],
+  ["SERVER_BAD_CONTENT", "downloadsPanel.errorNotFound"],
+  ["SERVER_UNAUTHORIZED", "downloadsPanel.errorUnauthorized"],
+  ["SERVER_FORBIDDEN", "downloadsPanel.errorForbidden"],
+  ["SERVER_NO_RANGE", "downloadsPanel.errorNoResume"],
+  ["FILE_FAILED", "downloadsPanel.errorFile"],
+  ["FILE_NO_SPACE", "downloadsPanel.errorNoSpace"],
+  ["FILE_ACCESS_DENIED", "downloadsPanel.errorAccessDenied"],
+]);
+
 export function filterDownloads(
   downloads: BridgeDownloadSnapshot[],
   query: string,
@@ -134,10 +147,11 @@ function sourceHost(url: string): string | null {
 
 export function metaLine(dl: BridgeDownloadSnapshot, locale: Locale, nowMs: number): MetaLine {
   if (dl.error || dl.state === "interrupted") {
+    const errorKey = dl.error ? ERROR_KEYS.get(dl.error) : "downloadsPanel.stateFailed";
     return {
       detail: null,
-      stateKey: dl.error ? null : "downloadsPanel.stateFailed",
-      errorText: dl.error ?? null,
+      stateKey: errorKey ?? null,
+      errorText: errorKey ? null : (dl.error ?? null),
       tone: "error",
     };
   }
@@ -178,7 +192,8 @@ export function metaLine(dl: BridgeDownloadSnapshot, locale: Locale, nowMs: numb
 export function inlineAction(dl: BridgeDownloadSnapshot): InlineAction | null {
   if (dl.state === "inProgress") return "pause";
   if (dl.state === "paused") return "resume";
-  if (dl.state === "interrupted") return "retry";
+  // A blob's bytes came from the page itself: its URL would fetch the page, not the file.
+  if (dl.state === "interrupted" && dl.source !== "blob") return "retry";
   return null;
 }
 

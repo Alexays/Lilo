@@ -334,7 +334,8 @@ final class DownloadsBridgeHandler: GapHandler {
             data["endTime"] = isoFormatter.string(from: endedAt)
         }
         if let error = item.error {
-            data["error"] = error
+            // Chrome reports an InterruptReason; a system error's localized text maps to the generic network one.
+            data["error"] = DownloadInterruptReason(rawValue: error) == nil ? "NETWORK_FAILED" : error
         }
         return data
     }
