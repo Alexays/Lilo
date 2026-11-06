@@ -63,4 +63,18 @@ final class TerminalCompletionsTests: XCTestCase {
         let recent = await completions.complete("")
         XCTAssertEqual(recent.map(\.command), ["echo new"])
     }
+
+    func testLargeHistoryTailStartingAtANewlineSkipsTheContinuedLine() async throws {
+        let history = directory.appendingPathComponent(".zsh_history")
+        // The last megabyte starts at the newline after "do \": the line it opens ends that command.
+        let cut = Data("\necho $f; done\n".utf8)
+        let end = Data("\necho new\n".utf8)
+        var data = Data("echo first\nfor f in *; do \\".utf8) + cut
+        data += Data(repeating: 0x61, count: (1 << 20) - cut.count - end.count) + end
+        try data.write(to: history)
+        let completions = TerminalCompletions(historyFiles: [history], pathDirectories: [])
+
+        let recent = await completions.complete("echo")
+        XCTAssertEqual(recent.map(\.command), ["echo new"])
+    }
 }

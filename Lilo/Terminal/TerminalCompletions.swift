@@ -81,11 +81,12 @@ actor TerminalCompletions {
             guard (try? handle.seek(toOffset: start)) != nil, var data = try? handle.readToEnd() else { continue }
             if start > 0 {
                 // The tail starts mid-line, maybe inside a multi-line command: skip to the line after a complete one.
+                // A newline as its first byte may follow a cut backslash, so it never ends a complete line.
                 var from = data.startIndex
                 var lineStart = data.endIndex
                 while let newline = data[from...].firstIndex(of: 0x0A) {
                     from = newline + 1
-                    if newline == data.startIndex || data[newline - 1] != 0x5C {
+                    if newline > data.startIndex, data[newline - 1] != 0x5C {
                         lineStart = from
                         break
                     }
