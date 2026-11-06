@@ -536,8 +536,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
     /// The active page's site opens windows without a click from now on; the page has to try again, since WebKit never
     /// offers back a window it was refused.
     func allowPopupsForActiveTab() {
-        guard let tab = tabManager.activeEngineTab, let url = tab.currentURL, let scheme = url.scheme, let host = url.host, !host.isEmpty else { return }
-        rememberPermission(origin: PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0), type: "popups", granted: true, tabId: tab.id)
+        guard let tab = tabManager.activeEngineTab, let origin = PermissionOriginKey.of(tab.currentURL) else { return }
+        rememberPermission(origin: origin, type: "popups", granted: true, tabId: tab.id)
         updateAndEmit(tab.id) { $0.hasBlockedPopup = false }
     }
 

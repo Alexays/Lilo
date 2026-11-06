@@ -2375,12 +2375,13 @@ extension WKWebViewTab: WKUIDelegate {
             }
             // Any frame within the click's own task, or later while this page has the activation, which the open uses
             // up as in Chrome: one window per click, so a frame the user never touched cannot open a stream of them.
-            // A site the user allowed pop-ups for skips the activation; any other open is refused and shown.
+            // A site the user allowed pop-ups for skips the activation, keyed on the page's address as in Chrome, so its
+            // frames (a payment widget, an embedded sign-in) share the decision; any other open is refused and shown.
             if WebViewPrivateAccessors(navigationAction).bool("_isUserInitiated") != true {
                 if Self.activatedWebView === webView,
                    ProcessInfo.processInfo.systemUptime - Self.activationTime < Self.popupActivationWindow {
                     Self.activationTime = 0
-                } else if delegate?.tab(self, storedPermissionDecisionFor: "popups", origin: navigationAction.sourceFrame.permissionOriginKey) != true {
+                } else if PermissionOriginKey.of(currentURL).flatMap({ delegate?.tab(self, storedPermissionDecisionFor: "popups", origin: $0) }) != true {
                     delegate?.tabDidBlockPopup(self)
                     return nil
                 }

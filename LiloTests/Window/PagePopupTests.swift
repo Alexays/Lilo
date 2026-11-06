@@ -105,6 +105,18 @@ final class PagePopupTests: XCTestCase {
         XCTAssertTrue(opened, "the page's next try goes through")
     }
 
+    func testAFrameOfAnAllowedSiteOpensWindowsWithoutAUserActivation() async throws {
+        let frame = try await openerSubframe()
+        let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
+        let tabs = openTabCount
+        controller.allowPopupsForActiveTab()
+
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')", in: frame)
+        let opened = await pollUntil(timeout: 5) { self.openTabCount == tabs + 1 }
+        XCTAssertTrue(opened, "a widget from another site shares its page's decision, as in Chrome")
+        XCTAssertEqual(controller.tabManager.tab(for: opener.id)?.hasBlockedPopup, false)
+    }
+
     /// A key press in the opener's page: the page has a user activation for a few seconds.
     private func pressKeyInOpener() async throws -> NSWindow {
         let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
