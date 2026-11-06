@@ -107,7 +107,7 @@
   }
 
   .prompt-message.error {
-    color: color-mix(in srgb, var(--danger) 86%, var(--text-primary));
+    color: var(--danger-text);
   }
 
   .prompt-actions {
