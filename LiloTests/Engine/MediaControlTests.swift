@@ -215,7 +215,9 @@ final class MediaControlTests: XCTestCase {
         XCTAssertTrue(reached, "\(unhandled)")
         XCTAssertEqual(Set(unhandled), ["TypeError", "RangeError", "AbortError", "NotSupportedError"], "as in Safari, error reporters see them")
 
-        // A lock held past the report delay ends the hold only once the failed ones were released too.
+        // A lock held past the report delay ends the hold only once the failed ones were released too. Full speed keeps
+        // the report's timer on time in a hidden page.
+        tab.isAgentControlled = true
         _ = try await tab.wkWebView.evaluateJavaScript("navigator.locks.request('held', () => new Promise(r => { window.releaseHeld = r; })); true")
         let held = await pollUntil(timeout: 10) { reported?.holdsWebLock == true }
         XCTAssertTrue(held)

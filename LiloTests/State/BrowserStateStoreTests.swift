@@ -3661,6 +3661,9 @@ final class BrowserStateStoreTests: XCTestCase {
             b.dispatchEvent(new Event('connectionstatechange'));
             window.peers = [a, b];
             """, contentWorld: .page)
+        // With no page on screen, WebKit aligns a hidden page's timers to how long it has been hidden: the 2 s timer that
+        // reports a held lock could slip past the poll. Full speed keeps it on time.
+        locker.isAgentControlled = true
         _ = try await locker.wkWebView.callAsyncJavaScript("""
             await new Promise(granted => navigator.locks.request('sync', () => new Promise(release => {
               window.release = release;
@@ -3669,6 +3672,7 @@ final class BrowserStateStoreTests: XCTestCase {
             """, contentWorld: .page)
         let reported = await pollUntil(timeout: 10) { game.callControls.hasPeerConnection && locker.callControls.holdsWebLock }
         XCTAssertTrue(reported)
+        locker.isAgentControlled = false
 
         var gameTab = Tab(id: gameId, url: URL(string: "https://example.com/"), title: "Game", spaceId: hiddenSpaceId)
         var lockTab = Tab(id: lockId, url: URL(string: "https://example.com/"), title: "Editor", spaceId: hiddenSpaceId)
