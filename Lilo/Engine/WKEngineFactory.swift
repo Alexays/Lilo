@@ -873,8 +873,11 @@ final class WKEngineFactory {
         // Click Measurement is ad-click attribution, on by default in WebKit. No autoplay
         // out of view, and hidden pages' timers throttled harder the longer they stay hidden. The top
         // edge's color is sampled for the bars over the page, a solid band of 10pt at least, so a hairline does not count.
+        // DNS prefetching is set explicitly, and stays off in a private space.
+        let dataStore = configuration.nativeConfiguration?.websiteDataStore ?? (configuration.dataStore ?? sharedDefaultDataStore).backingStore
         let privateSettings: [(NSObject, String, Any)] = [
             (wkConfig.preferences, "allowsPictureInPictureMediaPlayback", true), (wkConfig.preferences, "mediaDevicesEnabled", true),
+            (wkConfig.preferences, "DNSPrefetchingEnabled", dataStore.isPersistent),
             (wkConfig.preferences, "privateClickMeasurementEnabled", false), (wkConfig, "invisibleAutoplayNotPermitted", true),
             (wkConfig.preferences, "hiddenPageDOMTimerThrottlingAutoIncreases", true),
             (wkConfig, "sampledPageTopColorMaxDifference", 5.0), (wkConfig, "sampledPageTopColorMinHeight", 10.0)
