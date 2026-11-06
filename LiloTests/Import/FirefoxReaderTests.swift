@@ -49,6 +49,12 @@ final class FirefoxReaderTests: XCTestCase {
         XCTAssertNotNil(FirefoxReader.read(profile: profile, kinds: [.tabs]).errors[.tabs])
     }
 
+    func testMissingPlacesFailsBookmarksAndHistoryWithACause() {
+        let errors = FirefoxReader.read(profile: profile, kinds: [.bookmarks, .history]).errors
+        XCTAssertEqual(errors[.bookmarks], "other")
+        XCTAssertEqual(errors[.history], "other")
+    }
+
     func testNullCookieColumnsAreSkippedNotFatal() throws {
         let queue = try DatabaseQueue(path: dir.appendingPathComponent("cookies.sqlite").path)
         try queue.write { db in
