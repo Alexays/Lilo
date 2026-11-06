@@ -463,8 +463,7 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
             // Nothing drawn for a whole refresh interval: draw now rather than on the next vsync,
             // which is what keeps typing latency low. Output nobody types into waits for 30 Hz.
             let interval = focused ? link?.duration ?? 1.0 / 60 : 1.0 / 30
-            if CACurrentMediaTime() - lastFrameTime > interval { renderFrame() }
-            link?.isPaused = false
+            if CACurrentMediaTime() - lastFrameTime > interval { renderFrame() } else { link?.isPaused = false }
         }
     }
 
@@ -576,6 +575,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
         if !animating, !needsFrame {
             link?.isPaused = true
             scheduleBlink(builder: builder, now: now)
+        } else {
+            link?.isPaused = false
         }
     }
 
