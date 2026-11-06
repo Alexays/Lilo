@@ -374,7 +374,7 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
             if !visible {
                 // Hidden in its window (occluded), the atlas stays: coming back costs no rasterizing.
                 let timer = Timer(timeInterval: Self.releaseDelay, repeats: false) { [weak self] _ in
-                    if releaseResources { self?.builder = nil } else { self?.builder?.shaper.cache = [:] }
+                    if releaseResources { self?.builder = nil } else { self?.builder?.shaper.removeCache() }
                 }
                 timer.tolerance = 30
                 RunLoop.current.add(timer, forMode: .default)
