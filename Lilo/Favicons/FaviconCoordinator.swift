@@ -111,8 +111,9 @@ final class FaviconCoordinator {
             inFlight[pageHost] = fetch
         }
 
-        Task { @MainActor [weak self] in
-            guard let resolved = await fetch.value, let self,
+        Task { @MainActor [weak self, weak tab] in
+            // The tab may have moved to another host while the icon loaded: the cache keeps it, the tab does not.
+            guard let resolved = await fetch.value, let self, tab?.currentURL?.faviconKey == pageHost,
                   resolved.dataURL != shown?.dataURL || resolved.dominantColor != shown?.dominantColor else { return }
             self.applyFavicon(tabId, resolved.dataURL, resolved.dominantColor)
         }
