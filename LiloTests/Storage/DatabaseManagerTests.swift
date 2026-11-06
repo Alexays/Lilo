@@ -79,7 +79,8 @@ final class DatabaseManagerTests: XCTestCase {
         let movedAside = manager.takeMovedAsideDatabases()
         XCTAssertEqual(movedAside.count, 1)
         XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: movedAside[0])), garbage)
-        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: movedAside[0] + "-wal")), garbage)
+        // SQLite empties a WAL whose header is invalid when the failed connection closes: only the file moves.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: movedAside[0] + "-wal"))
         XCTAssertTrue(try manager.globalPool.read { try $0.tableExists("profiles") })
         XCTAssertEqual(manager.takeMovedAsideDatabases(), [])
         manager.closeForShutdown()
