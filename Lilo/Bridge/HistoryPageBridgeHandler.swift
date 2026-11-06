@@ -167,7 +167,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
         }
         bridgeRouter?.send(event: "historyChanged")
         changeThrottle = Task { [weak self] in
-            try? await Task.sleep(for: Self.changeInterval)
+            do { try await Task.sleep(for: Self.changeInterval) } catch { return }
             guard let self else { return }
             self.changeThrottle = nil
             guard self.changeMissed else { return }
@@ -183,6 +183,10 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     /// Runs a deletion off the main actor, then has the page reload. A deletion that removes pages reaches the page through
     /// the store's change; a partial one removes no page, so the store reports nothing and the reload is asked here.
     private func deleting(_ delete: @escaping @Sendable () throws -> [String]) async {
+        // A deletion shows at once: its reload skips the change interval and covers the changes held back.
+        changeThrottle?.cancel()
+        changeThrottle = nil
+        changeMissed = false
         let removedPages = await Task.detached(priority: .userInitiated) { () -> Bool in
             do { return try !delete().isEmpty } catch {
                 historyPageLogger.error("history delete failed: \(error.localizedDescription, privacy: .public)")
