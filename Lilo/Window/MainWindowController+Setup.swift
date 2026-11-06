@@ -1109,6 +1109,8 @@ extension MainWindowController {
                 continue
             }
 
+            // The find bar follows the shown tab, so the leaving page's find session ends here.
+            outgoingEngine.dismissFind()
             if popOutBackgroundedTab(outgoingEngine) { continue }
 
             // Tab-share sources, agent tabs and the page of a PiP window (open or on its way) stay in-window like
