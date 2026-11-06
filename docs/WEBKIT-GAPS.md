@@ -6,7 +6,7 @@ Missing namespaces and members (`tabGroups`, `offscreen`, `sidePanel` and so on)
 
 Status of each gap:
 
-- **Checked**: a test of [WebKitGapTests.swift] reproduces the gap and asserts WebKit's current behavior, mostly in a bare `WKWebExtensionController` without any of Lilo. When it fails, WebKit changed: its message names the workaround to remove. They run with `make swift-test`, except the two that wait out WebKit's clocks (gaps 7 and 33), which run with `make swift-test-slow`.
+- **Checked**: a test of [WebKitGapTests.swift] reproduces the gap and asserts WebKit's current behavior, mostly in a bare `WKWebExtensionController` without any of Lilo. When it fails, WebKit changed: its message names the workaround to remove. They run with `make swift-test`, except three slow ones (gaps 7 and 33 wait out WebKit's clocks, gap 39 compiles a ruleset over the cap), which run with `make swift-test-slow`.
 - **Contract**: `ChromeContractTests` covers it (`LiloTests/Extensions/chrome-contract-differences.txt` lists the differences Lilo keeps and fails once one matches Chrome).
 - **Manual**: no automated check (it would crash the test host, it is timing dependent, or it is not reduced to a minimal case). Its repro reproduces it by hand.
 
@@ -258,7 +258,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 ### 6. A page that called `window.close()` still runs answers for a run loop turn
 
 - **Gap:** WebKit delivers `webViewDidClose` a run loop turn after the API answers and port disconnects it already sent the page, so a closing page still runs a `storage` callback or an `onDisconnect`. Chrome runs nothing more.
-- **Lilo:** once WebKit accepts `window.close()` (or Lilo's popup close calls `__liloPageClosing`), WebKit's API callbacks and promises settle no more and every WebKit event listener is removed ([augmentation-entry.ts], [chrome-compat.ts] `closePage`, `closingGuard`).
+- **Lilo:** once WebKit accepts `window.close()` (or Lilo's popup close calls `__liloPageClosing`), WebKit's API callbacks and promises settle no more and every WebKit event listener is removed ([augmentation-entry.ts], [chrome-compat.ts] `closePage`, which sets `pageClosed` and calls `removePageListeners`).
 - **Impact:** without it, intermittent work in closing pages (Google Dictionary's storage callback, DuckDuckGo's `onDisconnect`).
 - **Check:** Manual: timing dependent. Repro: `chrome.storage.local.get(null, () => console.log('ran')); window.close();` with the app closing the web view in `webViewDidClose`. Expected: no callback. Actual: it runs first.
 
@@ -394,7 +394,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 ### 9. Withheld tab `url` and `title` are empty strings
 
 - **Gap:** WebKit reports them as `""` in returned tabs and tab events, and ignores the `tabs` permission (only host access reveals them). Chrome leaves them out, and reveals them with `tabs`.
-- **Lilo:** for an extension that may not hold `tabs`, drops the empty `url` and `title` from tabs and windows methods and from `tabs.onCreated` and `onUpdated` ([tabs.ts] `tabURLPatches`, `windowURLPatches`, `tabURLStandIns`). With `tabs`, tabs and windows methods read them from Lilo, an empty tab as `chrome://newtab/` ([tabs.ts] `tabRevealedURLPatches`, `windowRevealedURLPatches`): one more call per result holding such a tab. Tab events keep WebKit's `""`.
+- **Lilo:** for an extension that may not hold `tabs`, drops the empty `url` and `title` from tabs and windows methods and from `tabs.onCreated` and `onUpdated` ([tabs.ts] `tabPatches`, `windowPatches`, `tabStandIns`, whose `withheldURLs` chooses between withholding and reading the URLs). With `tabs`, tabs and windows methods read them from Lilo, an empty tab as `chrome://newtab/` (the same patches): one more call per result holding such a tab. Tab events keep WebKit's `""`.
 - **Impact:** `new URL(tab.url)` throws where Chrome code checks for a missing url (Eye Dropper), or on Lilo's empty new tab (Easy Auto Refresh's worker).
 - **Check:** `testTabsWithoutHostAccessReportEmptyURLAndTitle`. Repro: with no host permissions, `browser.tabs.query({})`. Expected: no `url` or `title`. Actual: `""`.
 
@@ -545,7 +545,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Gap:** WebKit compiles all of an extension's rules into one content rule list of at most 150000 rules, expanding a rule into one per request domain and excluded request domain. Past the cap nothing applies and `updateEnabledRulesets` fails with "Failed to apply rules.". Chrome counts a rule once.
 - **Lilo:** at preparation, keeps all static rulesets under 120000 WebKit rules (room for 30000 dynamic ones) by turning the most expanded rules inert, largest first, those of the rulesets the manifest leaves off before any of the ones it turns on ([dnr-rules.ts] `webKitStaticRulesets`, run by [ExtensionBackgroundPreparer.swift] `prepareStaticRulesets`). User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
 - **Impact:** SBlock (313000 domains in two rules), Adblock Ad Blocker Pro (299000 expanded rules).
-- **Check:** `testRulesetOverWebKitsRuleCapDoesNotApply`.
+- **Check:** `testRulesetOverWebKitsRuleCapDoesNotApply` (slow).
 
 ### 40. Turning every ruleset off fails during the first compile
 
