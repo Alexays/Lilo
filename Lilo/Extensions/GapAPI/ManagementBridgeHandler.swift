@@ -73,30 +73,36 @@ final class ManagementBridgeHandler: GapHandler {
     /// Disabled extensions are listed too, as in Chrome, so a manager can find and re-enable them.
     private func handleGetAll(registry: ProfileExtensionRegistry?) -> [[String: Any]] {
         guard let registry else { return [] }
-        let loaded = registry.loadedExtensions
-            .map { ExtensionInfoBuilder.buildFromManifest(manifest: $0.context.webExtension.manifest, id: $0.id) }
-        let disabled = registry.disabledStoredExtensions.map(disabledInfo)
+        let loaded = registry.loadedExtensions.compactMap { registry.extensionInfo(for: $0.id) }
+        let disabled = registry.disabledStoredExtensions.map { disabledInfo($0, registry: registry) }
         return (loaded + disabled).sorted { $0.id < $1.id }.map(\.dictionary)
     }
 
     private func handleGet(id: String, registry: ProfileExtensionRegistry?) -> Any? {
         guard let registry else { return BridgeError("Extension not found") }
-        if let context = registry.context(for: id) {
-            return ExtensionInfoBuilder.buildFromManifest(manifest: context.webExtension.manifest, id: id).dictionary
-        }
+        if let info = registry.extensionInfo(for: id) { return info.dictionary }
         guard let stored = registry.disabledStoredExtensions.first(where: { $0.id == id }) else {
             return BridgeError("Extension not found")
         }
-        return disabledInfo(stored).dictionary
+        return disabledInfo(stored, registry: registry).dictionary
     }
 
-    /// A disabled extension has no loaded manifest: the installed copy is read from disk.
-    private func disabledInfo(_ stored: ExtensionStorage.InstalledExtension) -> ExtensionInfo {
-        let manifestURL = URL(fileURLWithPath: stored.path).appendingPathComponent("manifest.json")
-        let manifest = (try? Data(contentsOf: manifestURL))
-            .flatMap { try? JSONSerialization.jsonObject(with: $0, options: .json5Allowed) as? [String: Any] }
-            ?? ["name": stored.name, "version": stored.version]
-        return ExtensionInfoBuilder.buildFromManifest(manifest: manifest, id: stored.id, enabled: false)
+    /// A disabled extension has no loaded manifest: the installed copy is read from disk, its name
+    /// recorded localized at its last load and its other `__MSG_` strings resolved here.
+    private func disabledInfo(_ stored: ExtensionStorage.InstalledExtension, registry: ProfileExtensionRegistry) -> ExtensionInfo {
+        let folder = URL(fileURLWithPath: stored.path)
+        var manifest = (try? Data(contentsOf: folder.appendingPathComponent("manifest.json")))
+            .flatMap { try? JSONSerialization.jsonObject(with: $0, options: .json5Allowed) as? [String: Any] } ?? ["version": stored.version]
+        let locale = manifest["default_locale"] as? String
+        manifest["name"] = stored.name
+        for key in ["short_name", "description"] {
+            guard let value = manifest[key] as? String else { continue }
+            manifest[key] = ExtensionInstallReview.resolveLocalizedMessage(value, defaultLocale: locale, extensionURL: folder)
+        }
+        return ExtensionInfoBuilder.buildFromManifest(
+            manifest: manifest, id: stored.id, folder: folder, enabled: false,
+            installType: registry.files.owns(stored.path) ? "normal" : "development"
+        )
     }
 
     private func handleUninstall(id: String, confirm: Bool, caller: String, registry: ProfileExtensionRegistry?) async -> Any? {
@@ -125,14 +131,10 @@ final class ManagementBridgeHandler: GapHandler {
     }
 
     private func handleGetSelf(extensionId: String, registry: ProfileExtensionRegistry?) -> Any? {
-        guard let registry,
-              let entry = registry.loadedExtensions.first(where: { $0.id == extensionId }) else {
+        guard let info = registry?.extensionInfo(for: extensionId) else {
             return BridgeError("Extension not found: \(extensionId)")
         }
-        return ExtensionInfoBuilder.buildFromManifest(
-            manifest: entry.context.webExtension.manifest,
-            id: entry.id
-        ).dictionary
+        return info.dictionary
     }
 
     private func handleSetEnabled(id: String, enabled: Bool, registry: ProfileExtensionRegistry?) async -> Any? {

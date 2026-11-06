@@ -64,8 +64,8 @@ final class WebstoreInstallHandler: NSObject, WKScriptMessageHandlerWithReply {
     private func installedExtensions(_ registry: ProfileExtensionRegistry?) -> [[String: Any]] {
         guard let registry else { return [] }
         let enabled = registry.loadedExtensions.map { entry -> [String: Any] in
-            let info = ExtensionInfoBuilder.buildFromManifest(manifest: entry.context.webExtension.manifest, id: entry.id)
-            return ["id": info.id, "name": info.name, "version": info.version, "enabled": true]
+            let manifest = entry.context.webExtension.manifest
+            return ["id": entry.id, "name": manifest["name"] as? String ?? "Unknown", "version": manifest["version"] as? String ?? "0.0.1", "enabled": true]
         }
         let disabled = registry.disabledStoredExtensions.map { ["id": $0.id, "name": $0.name, "version": $0.version, "enabled": false] as [String: Any] }
         return enabled + disabled

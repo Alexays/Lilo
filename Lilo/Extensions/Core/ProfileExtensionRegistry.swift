@@ -240,6 +240,16 @@ final class ProfileExtensionRegistry {
         runtimeIndex(for: extensionId).map { loadedRuntimes[$0].actionColors }
     }
 
+    /// Chrome's ExtensionInfo for a loaded extension: one loaded from a folder Lilo did not install is a development one.
+    func extensionInfo(for extensionId: String, enabled: Bool = true) -> ExtensionInfo? {
+        guard let index = runtimeIndex(for: extensionId) else { return nil }
+        let runtime = loadedRuntimes[index]
+        return ExtensionInfoBuilder.buildFromManifest(
+            manifest: runtime.context.webExtension.manifest, id: extensionId, folder: URL(fileURLWithPath: runtime.sourcePath),
+            enabled: enabled, installType: files.owns(runtime.installPath) ? "normal" : "development"
+        )
+    }
+
     private func runtimeIndex(for extensionId: String) -> Int? {
         loadedRuntimes.firstIndex { $0.id == extensionId }
     }
@@ -863,8 +873,7 @@ final class ProfileExtensionRegistry {
             // As in Chrome: onEnabled on load, then onInstalled once the install completes. The extension
             // itself was not loaded to hear of it.
             let watchers = extensionIds(withPermission: "management").filter { $0 != extensionId }
-            guard !watchers.isEmpty else { return }
-            let info = ExtensionInfoBuilder.buildFromManifest(manifest: webExtension.manifest, id: extensionId).dictionary
+            guard !watchers.isEmpty, let info = extensionInfo(for: extensionId)?.dictionary else { return }
             gapEvents.emit("management", "onEnabled", args: [info], to: watchers)
             if load != .enable { gapEvents.emit("management", "onInstalled", args: [info], to: watchers) }
         case .startup, .reload:
@@ -913,14 +922,12 @@ final class ProfileExtensionRegistry {
             notifyExtensionsChanged()
             return
         }
+        let watchers = notifies ? extensionIds(withPermission: "management").filter { $0 != extensionId } : []
+        let info = watchers.isEmpty ? nil : extensionInfo(for: extensionId, enabled: false)
         let runtime = loadedRuntimes.remove(at: index)
-        if notifies {
-            let watchers = extensionIds(withPermission: "management")
-            if !watchers.isEmpty {
-                let info = ExtensionInfoBuilder.buildFromManifest(manifest: runtime.context.webExtension.manifest, id: extensionId, enabled: false)
-                gapEvents.emit("management", "onDisabled", args: [info.dictionary], to: watchers)
-                if removePersistedRecord { gapEvents.emit("management", "onUninstalled", args: [extensionId], to: watchers) }
-            }
+        if let info {
+            gapEvents.emit("management", "onDisabled", args: [info.dictionary], to: watchers)
+            if removePersistedRecord { gapEvents.emit("management", "onUninstalled", args: [extensionId], to: watchers) }
         }
         if removePersistedRecord {
             lifecycle.uninstalled(extensionId)

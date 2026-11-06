@@ -4,42 +4,75 @@ import WebKit
 
 @MainActor
 final class ExtensionInfoBuilderTests: XCTestCase {
+    private let folder = FileManager.default.temporaryDirectory.appendingPathComponent("info-builder-\(UUID().uuidString)")
+
+    override func setUpWithError() throws {
+        try FileManager.default.createDirectory(at: folder.appendingPathComponent("images"), withIntermediateDirectories: true)
+        for size in [16, 48, 128] {
+            try Data("png\(size)".utf8).write(to: folder.appendingPathComponent("images/icon\(size).png"))
+        }
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: folder)
+    }
+
+    private func dataURL(_ text: String) -> String {
+        "data:image/png;base64,\(Data(text.utf8).base64EncodedString())"
+    }
 
     // MARK: - Tests
 
-    func testBuildMapsManifestIcons() {
+    func testBuildMapsManifestIconsToDataURLs() {
         let manifest: [String: Any] = [
             "name": "Test",
             "version": "1.0.0",
             "icons": [
                 "16": "images/icon16.png",
-                "128": "images/icon128.png",
+                "128": "/images/icon128.png",
                 "48": "images/icon48.png"
             ]
         ]
 
-        let icons = ExtensionInfoBuilder.buildFromManifest(manifest: manifest, id: "ext-id").icons
+        let icons = ExtensionInfoBuilder.buildFromManifest(manifest: manifest, id: "ext-id", folder: folder).icons
 
-        XCTAssertEqual(icons.count, 3)
-        XCTAssert(icons.contains { $0.size == 16 && $0.url == "images/icon16.png" })
-        XCTAssert(icons.contains { $0.size == 128 && $0.url == "images/icon128.png" })
-        XCTAssert(icons.contains { $0.size == 48 && $0.url == "images/icon48.png" })
+        XCTAssertEqual(icons.map(\.size), [16, 48, 128])
+        XCTAssertEqual(icons.map(\.url), [dataURL("png16"), dataURL("png48"), dataURL("png128")])
     }
 
-    func testBuildSkipsManifestIconsWithInvalidSize() {
+    func testBuildSkipsIconsWithInvalidSizeMissingFileOrOutsideTheFolder() throws {
+        let outside = "\(folder.lastPathComponent)-outside.png"
+        let outsideURL = folder.deletingLastPathComponent().appendingPathComponent(outside)
+        try Data("secret".utf8).write(to: outsideURL)
+        defer { try? FileManager.default.removeItem(at: outsideURL) }
         let manifest: [String: Any] = [
             "name": "Test",
             "version": "1.0.0",
             "icons": [
                 "128": "images/icon128.png",
-                "invalid": "images/invalid.png"
+                "invalid": "images/icon16.png",
+                "32": "images/missing.png",
+                "64": "../\(outside)"
             ]
         ]
 
-        let icons = ExtensionInfoBuilder.buildFromManifest(manifest: manifest, id: "ext-id").icons
+        let icons = ExtensionInfoBuilder.buildFromManifest(manifest: manifest, id: "ext-id", folder: folder).icons
 
-        XCTAssertEqual(icons.count, 1)
-        XCTAssertEqual(icons.first?.size, 128)
+        XCTAssertEqual(icons.map(\.size), [128])
+    }
+
+    func testBuildMakesTheOptionsPageAbsolute() {
+        let optionsUI: [String: Any] = ["name": "Test", "options_ui": ["page": "/options.html"]]
+        let optionsPage: [String: Any] = ["name": "Test", "options_page": "settings/index.html"]
+
+        XCTAssertEqual(
+            ExtensionInfoBuilder.buildFromManifest(manifest: optionsUI, id: "ext-id", folder: folder).optionsUrl,
+            "chrome-extension://ext-id/options.html"
+        )
+        XCTAssertEqual(
+            ExtensionInfoBuilder.buildFromManifest(manifest: optionsPage, id: "ext-id", folder: folder).optionsUrl,
+            "chrome-extension://ext-id/settings/index.html"
+        )
     }
 
     func testBuildWithManifestData() {
@@ -57,6 +90,7 @@ final class ExtensionInfoBuilderTests: XCTestCase {
         let info = ExtensionInfoBuilder.buildFromManifest(
             manifest: manifest,
             id: "ext-123",
+            folder: folder,
             enabled: true,
             installType: "development"
         )
@@ -80,7 +114,8 @@ final class ExtensionInfoBuilderTests: XCTestCase {
 
         let info = ExtensionInfoBuilder.buildFromManifest(
             manifest: manifest,
-            id: "minimal-123"
+            id: "minimal-123",
+            folder: folder
         )
 
         XCTAssertEqual(info.id, "minimal-123")
@@ -90,26 +125,8 @@ final class ExtensionInfoBuilderTests: XCTestCase {
         XCTAssertEqual(info.permissions.count, 0)
         XCTAssertEqual(info.hostPermissions.count, 0)
         XCTAssertEqual(info.icons.count, 0)
+        XCTAssertNil(info.optionsUrl)
         XCTAssertEqual(info.offlineEnabled, false) // default
         XCTAssertEqual(info.disableReasons.count, 0) // default
-    }
-
-    func testBuildSortsManifestIconsBySize() {
-        let manifest: [String: Any] = [
-            "name": "Test",
-            "version": "1.0.0",
-            "icons": [
-                "128": "images/icon128.png",
-                "16": "images/icon16.png",
-                "48": "images/icon48.png"
-            ]
-        ]
-
-        let icons = ExtensionInfoBuilder.buildFromManifest(manifest: manifest, id: "ext-id").icons
-
-        XCTAssertEqual(icons.count, 3)
-        XCTAssertEqual(icons[0].size, 16)
-        XCTAssertEqual(icons[1].size, 48)
-        XCTAssertEqual(icons[2].size, 128)
     }
 }
