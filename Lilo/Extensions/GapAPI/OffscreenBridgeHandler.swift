@@ -50,12 +50,14 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate, 
             guard let path = call.string("url"),
                   let url = URL(string: path, relativeTo: context.baseURL)?.absoluteURL,
                   url.scheme == context.baseURL.scheme, url.host == context.baseURL.host,
-                  let configuration = context.pageWebViewConfiguration else {
+                  let configuration = context.pageWebViewConfiguration,
+                  // Every extension view of the profile shares these preferences: the document gets its own copy.
+                  let preferences = configuration.preferences.copy() as? WKPreferences else {
                 return BridgeError("Invalid offscreen document url")
             }
+            configuration.preferences = preferences
             // The view is never in a window, so its page counts as hidden: it runs at full speed, as WebKit's own
-            // background and offscreen pages do. These preferences are this configuration's own.
-            let preferences = configuration.preferences
+            // background and offscreen pages do.
             preferences.inactiveSchedulingPolicy = .none
             var settings = ["hiddenPageDOMTimerThrottlingEnabled": false, "pageVisibilityBasedProcessSuppressionEnabled": false]
             // WebKit knows no clipboardRead permission; with it, Chrome lets the document paste without a gesture.
