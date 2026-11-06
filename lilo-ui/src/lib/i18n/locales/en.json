@@ -2330,6 +2330,8 @@
 		"Screenshot of %@": "Screenshot of %@",
 		"The agent stopped (code %d).": "The agent stopped (code %d).",
 		"This agent is no longer in the ACP registry.": "This agent is no longer in the ACP registry.",
+		"The agent stopped.": "The agent stopped.",
+		"The agent is not running.": "The agent is not running.",
 		"Always Allow": "Always Allow",
 		"Ask an Agent": "Ask an Agent",
 		"Review Changes": "Review Changes",

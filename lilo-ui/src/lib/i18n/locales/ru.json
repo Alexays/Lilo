@@ -2360,6 +2360,8 @@
 		"Screenshot of %@": "Снимок экрана: %@",
 		"The agent stopped (code %d).": "Агент остановился (код %d).",
 		"This agent is no longer in the ACP registry.": "Этого агента больше нет в реестре ACP.",
+		"The agent stopped.": "Агент остановился.",
+		"The agent is not running.": "Агент не запущен.",
 		"Always Allow": "Всегда разрешать",
 		"Ask an Agent": "Спросить агента",
 		"Review Changes": "Просмотреть изменения",

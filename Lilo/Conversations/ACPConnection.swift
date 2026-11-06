@@ -9,6 +9,9 @@ final class ACPConnection: @unchecked Sendable {
         let code: Int
         let message: String
         var errorDescription: String? { message }
+
+        /// Lilo's own failures to reach the agent, outside JSON-RPC's codes so none reads as the agent's `auth_required`.
+        static let transport = -1
     }
 
     /// JSON from the agent, handed from the reading queue to the main actor that alone uses it.
@@ -81,7 +84,7 @@ final class ACPConnection: @unchecked Sendable {
                 defer { self.pending.removeAll() }
                 return (Array(self.pending.values), String(bytes: self.errorTail, encoding: .utf8) ?? "")
             }
-            let error = RPCError(code: -32000, message: "The agent stopped")
+            let error = RPCError(code: RPCError.transport, message: "The agent stopped.".localized)
             waiting.forEach { $0.resume(throwing: error) }
             let status = process.terminationStatus
             DispatchQueue.main.async { MainActor.assumeIsolated { self.onExit?(status, errorText) } }
@@ -98,7 +101,7 @@ final class ACPConnection: @unchecked Sendable {
             }
             guard process.isRunning, write(["jsonrpc": "2.0", "id": id, "method": method, "params": params]) else {
                 if let waiting = lock.withLock({ pending.removeValue(forKey: id) }) {
-                    waiting.resume(throwing: RPCError(code: -32000, message: "The agent is not running"))
+                    waiting.resume(throwing: RPCError(code: RPCError.transport, message: "The agent is not running.".localized))
                 }
                 return
             }

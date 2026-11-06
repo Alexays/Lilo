@@ -2330,6 +2330,8 @@
 		"Screenshot of %@": "%@ のスクリーンショット",
 		"The agent stopped (code %d).": "エージェントが停止しました（コード %d）。",
 		"This agent is no longer in the ACP registry.": "このエージェントは ACP レジストリに登録されていません。",
+		"The agent stopped.": "エージェントが停止しました。",
+		"The agent is not running.": "エージェントが実行されていません。",
 		"Always Allow": "常に許可",
 		"Ask an Agent": "エージェントに質問",
 		"Review Changes": "変更を確認",

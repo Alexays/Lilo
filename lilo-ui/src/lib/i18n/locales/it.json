@@ -2330,6 +2330,8 @@
 		"Screenshot of %@": "Istantanea di %@",
 		"The agent stopped (code %d).": "L'agente si è fermato (codice %d).",
 		"This agent is no longer in the ACP registry.": "Questo agente non è più nel registro ACP.",
+		"The agent stopped.": "L'agente si è fermato.",
+		"The agent is not running.": "L'agente non è in esecuzione.",
 		"Always Allow": "Consenti sempre",
 		"Ask an Agent": "Chiedi a un agente",
 		"Review Changes": "Rivedi modifiche",
