@@ -191,6 +191,14 @@ final class DebuggerGapAPITests: XCTestCase {
         _ = await send("Input.dispatchKeyEvent", ["type": "keyUp", "key": "b"])
         let value = await send("Runtime.evaluate", ["expression": "document.getElementById('field').value", "returnByValue": true])
         XCTAssertEqual((value.result["result"] as? [String: Any])?["value"] as? String, "ab", "an Input command answers once the page handled it")
+
+        _ = await send("Runtime.evaluate", ["expression": "window.keys = []; addEventListener('keydown', e => keys.push(e.key + (e.metaKey ? '+meta' : '')))"])
+        _ = await send("Input.dispatchKeyEvent", ["type": "rawKeyDown", "key": "a", "modifiers": 4])
+        _ = await send("Input.dispatchKeyEvent", ["type": "keyUp", "key": "a", "modifiers": 4])
+        _ = await send("Input.dispatchKeyEvent", ["type": "rawKeyDown", "key": "Tab"])
+        _ = await send("Input.dispatchKeyEvent", ["type": "keyUp", "key": "Tab"])
+        let keys = await send("Runtime.evaluate", ["expression": "keys.join(',')", "returnByValue": true])
+        XCTAssertEqual((keys.result["result"] as? [String: Any])?["value"] as? String, "a+meta,Tab", "a rawKeyDown with no char still reaches the page")
     }
 
     func testRestrictedPagesFollowChrome() throws {
