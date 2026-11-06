@@ -220,7 +220,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .notice-capsule {
-      animation: notice-fade 150ms ease both;
+      animation: notice-fade 150ms ease both !important;
     }
   }
 

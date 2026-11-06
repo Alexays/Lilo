@@ -237,7 +237,7 @@
     .extension-request,
     .url-drawer.open {
       transform: none;
-      transition: opacity 150ms ease;
+      transition: opacity 150ms ease !important;
     }
   }
 </style>

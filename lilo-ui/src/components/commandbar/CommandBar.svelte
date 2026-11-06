@@ -1179,7 +1179,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .command-bar {
-      animation: command-bar-fade 150ms ease;
+      animation: command-bar-fade 150ms ease !important;
       transition: none;
     }
 

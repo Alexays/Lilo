@@ -66,6 +66,7 @@ extension MainWindowController {
     }
 
     func applySidebarLayout(animated: Bool, syncTrafficLights: Bool = false) {
+        let animated = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         sidebarWidth = fittedSidebarWidth
         sidePanel.fitToWindow()
         updateContentContainerFrame(animated: animated)
@@ -90,8 +91,7 @@ extension MainWindowController {
     func applyStoredTabLayoutEverywhere() {
         guard let layout = context.settingsStore?.tabLayout else { return }
         layout.cache()
-        let animated = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        context.windows.windows.forEach { $0.applyTabLayout(layout, animated: animated) }
+        context.windows.windows.forEach { $0.applyTabLayout(layout, animated: true) }
     }
 
     func setTabPosition(_ position: TabPosition) {

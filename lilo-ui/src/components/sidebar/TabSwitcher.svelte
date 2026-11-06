@@ -235,7 +235,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .tab-switcher {
-      animation: tab-switcher-fade 150ms ease both;
+      animation: tab-switcher-fade 150ms ease both !important;
     }
   }
 
