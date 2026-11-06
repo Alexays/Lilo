@@ -150,7 +150,9 @@ final class ExtensionUpdater {
             latest.merge(ExtensionUpdateChecker.latestVersions(from: data)) { $1 }
         }
         for (updater, candidates) in checking {
-            await updater.finishCheck(candidates: candidates, latest: latest, unanswered: unanswered, reachedService: reachedService)
+            await updater.finishCheck(
+                candidates: candidates, latest: latest, unanswered: unanswered, reachedService: reachedService, inBackground: inBackground
+            )
         }
         return reachedService
     }
@@ -171,7 +173,8 @@ final class ExtensionUpdater {
     }
 
     private func finishCheck(
-        candidates: [(id: String, version: String)], latest: [String: String], unanswered: Set<String>, reachedService: Bool
+        candidates: [(id: String, version: String)], latest: [String: String], unanswered: Set<String>, reachedService: Bool,
+        inBackground: Bool
     ) async {
         guard let registry else { return }
         let previousCheck = status["lastCheck"] ?? 0
@@ -194,7 +197,7 @@ final class ExtensionUpdater {
                 continue
             }
             availableUpdates[candidate.id] = nil
-            if await applyUpdate(extensionId: candidate.id, currentVersion: candidate.version, latest: version) {
+            if await applyUpdate(extensionId: candidate.id, currentVersion: candidate.version, latest: version, inBackground: inBackground) {
                 updated += 1
             } else if availableUpdates[candidate.id] == nil, registry.access.states[candidate.id]?.declinedUpdateVersion != version {
                 failed += 1
@@ -240,7 +243,11 @@ final class ExtensionUpdater {
             availableUpdates[extensionId] = (current, version)
             registry.extensionDidChange(extensionId)
         } else if registry.lifecycle.state(of: extensionId) != .updating(from: current, to: version) {
-            Task { await applyUpdate(extensionId: extensionId, currentVersion: current, latest: version) }
+            Task {
+                // An update that adds warned access is only listed.
+                let applied = await applyUpdate(extensionId: extensionId, currentVersion: current, latest: version)
+                if !applied { registry.extensionDidChange(extensionId) }
+            }
         }
         return ["status": "update_available", "version": version]
     }
@@ -281,11 +288,14 @@ final class ExtensionUpdater {
     }
 
     /// Downloads (once per `latest`, the version the update service named), verifies and swaps in the new package under the same
-    /// id, keeping its storage. An update adding access disables the extension and asks first (a decline is remembered per
-    /// version); a package that fails to load rolls back. An update of the extension already under way is waited for: one to
-    /// the same version takes its result, one to another version runs after it, as Chrome queues them.
+    /// id, keeping its storage. An update adding access the user is warned about is only listed, unless the user asked for
+    /// it: then it disables the extension and asks first (a decline is remembered per version). A package that fails to load
+    /// rolls back. An update of the extension already under way is waited for: one to the same version takes its result, one
+    /// to another version runs after it, as Chrome queues them. A background update skips Low Data Mode networks.
     @discardableResult
-    private func applyUpdate(extensionId: String, currentVersion: String, latest: String?, userInitiated: Bool = false) async -> Bool {
+    private func applyUpdate(
+        extensionId: String, currentVersion: String, latest: String?, userInitiated: Bool = false, inBackground: Bool = false
+    ) async -> Bool {
         if let running = updatesInFlight[extensionId] {
             let applied = await running.task.value
             guard latest != nil, latest != running.latest else { return applied }
@@ -296,8 +306,12 @@ final class ExtensionUpdater {
             let key = "\(extensionId)@\(latest ?? UUID().uuidString)"
             let extracted: URL
             do {
-                extracted = try await Self.package(extensionId, key: key)
+                extracted = try await Self.package(extensionId, key: key, inBackground: inBackground)
             } catch {
+                if let latest, (error as? URLError)?.networkUnavailableReason == .constrained {
+                    availableUpdates[extensionId] = (currentVersion, latest)
+                    return false
+                }
                 Self.logger.error("extension update download failed \(extensionId, privacy: .public): \(error.localizedDescription, privacy: .public)")
                 return false
             }
@@ -318,10 +332,11 @@ final class ExtensionUpdater {
                 } else {
                     installed = try await WKWebExtension(resourceBaseURL: permanent)
                 }
-                let added = ExtensionAccess.addedAccess(from: installed, to: updated)
-                if !added.permissions.isEmpty || !added.matchPatterns.isEmpty {
-                    // A disabled extension is asked when the user requests the update, not from the background.
-                    guard wasEnabled || userInitiated else {
+                let added = ExtensionAccess.addedAccess(from: installed, to: updated, granted: registry.access.states[extensionId])
+                // As in Chrome, only access that comes with a warning needs consent.
+                if !ExtensionInstallReview.humanReadableWarnings(permissions: added.permissions, hostPermissions: added.matchPatterns).isEmpty {
+                    // Only the user's request asks: an update a check finds is listed, and the extension keeps running.
+                    guard userInitiated else {
                         availableUpdates[extensionId] = (currentVersion, review.version)
                         return false
                     }
@@ -377,8 +392,9 @@ final class ExtensionUpdater {
     }
 
     /// The extracted package `key` names, downloaded unless an update already did. Its caller releases its use.
-    private static func package(_ extensionId: String, key: String) async throws -> URL {
-        let download = packages[key]?.download ?? Task { try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: extensionId) }
+    private static func package(_ extensionId: String, key: String, inBackground: Bool) async throws -> URL {
+        let download = packages[key]?.download
+            ?? Task { try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: extensionId, inBackground: inBackground) }
         packages[key] = (download, (packages[key]?.users ?? 0) + 1)
         do {
             return try await download.value

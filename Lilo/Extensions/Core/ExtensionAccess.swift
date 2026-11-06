@@ -148,13 +148,18 @@ final class ExtensionAccess {
             .union(webExtension.requestedPermissionMatchPatterns)
     }
 
-    /// What `new` would be granted at load beyond what `old` is: its added manifest permissions, and
-    /// the granted match patterns no old one already covers. Chrome's permission-increase check.
-    static func addedAccess(from old: WKWebExtension, to new: WKWebExtension) -> (permissions: [String], matchPatterns: [String]) {
+    /// What `new` would be granted at load beyond what `old` is with the optional grants in `granted`: its added
+    /// manifest permissions, and the granted match patterns nothing already covers. Chrome's permission-increase check.
+    static func addedAccess(
+        from old: WKWebExtension, to new: WKWebExtension, granted: ExtensionStorage.AccessState?
+    ) -> (permissions: [String], matchPatterns: [String]) {
         // The manifest's own list: `requestedPermissions` drops the ones only Lilo's Gap APIs implement.
         let permissions = Set(new.manifest["permissions"] as? [String] ?? [])
-            .subtracting(old.manifest["permissions"] as? [String] ?? []).sorted()
+            .subtracting(old.manifest["permissions"] as? [String] ?? [])
+            .subtracting(granted?.optionalPermissions ?? [])
+            .subtracting(granted?.gapPermissions ?? []).sorted()
         let oldPatterns = baseMatchPatterns(for: old)
+            .union((granted?.optionalMatchPatterns ?? []).compactMap { try? WKWebExtension.MatchPattern(string: $0) })
         let patterns = baseMatchPatterns(for: new)
             .filter { pattern in !oldPatterns.contains { $0.matches(pattern) } }
             .map(\.description)

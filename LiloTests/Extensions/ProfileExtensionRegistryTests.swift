@@ -1284,6 +1284,9 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         let none = ExtensionInstallReview.humanReadableWarnings(permissions: [], hostPermissions: [])
         XCTAssertTrue(none.isEmpty)
+
+        let silent = ExtensionInstallReview.humanReadableWarnings(permissions: ["storage", "alarms", "offscreen"], hostPermissions: [])
+        XCTAssertTrue(silent.isEmpty, "an update adding only these is applied without asking")
     }
 
     func testInstallExtensionCanBeDeniedByReview() async throws {
@@ -1342,25 +1345,35 @@ final class ProfileExtensionRegistryTests: XCTestCase {
          "content_scripts":[{"matches":["https://example.org/*"],"js":["c.js"]}],"optional_host_permissions":["https://example.net/*"]}
         """, named: "access_wide")
 
-        let none = ExtensionAccess.addedAccess(from: old, to: same)
+        let none = ExtensionAccess.addedAccess(from: old, to: same, granted: nil)
         XCTAssertTrue(none.permissions.isEmpty)
         XCTAssertTrue(none.matchPatterns.isEmpty)
 
-        let added = ExtensionAccess.addedAccess(from: old, to: widened)
+        let added = ExtensionAccess.addedAccess(from: old, to: widened, granted: nil)
         XCTAssertEqual(added.permissions, ["cookies"], "a removed permission is not an addition")
         XCTAssertEqual(added.matchPatterns.count, 1, "a content-script host is granted, an optional host is not")
         XCTAssertTrue(added.matchPatterns.first?.contains("example.org") ?? false)
 
+        var granted = ExtensionStorage.AccessState()
+        granted.optionalPermissions = ["cookies"]
+        granted.optionalMatchPatterns = ["*://*.example.org/*"]
+        let alreadyGranted = ExtensionAccess.addedAccess(from: old, to: widened, granted: granted)
+        XCTAssertTrue(alreadyGranted.permissions.isEmpty, "an optional permission already granted is not an addition")
+        XCTAssertTrue(alreadyGranted.matchPatterns.isEmpty, "a host an optional grant already covers is not an addition")
+
         let liloOnly = try await webExtension(manifest: """
         {"manifest_version":3,"name":"Gap","version":"2","permissions":["storage","tabs","debugger","proxy"],"host_permissions":["https://example.com/*"]}
         """, named: "access_gap")
-        XCTAssertEqual(ExtensionAccess.addedAccess(from: old, to: liloOnly).permissions, ["debugger", "proxy"],
+        XCTAssertEqual(ExtensionAccess.addedAccess(from: old, to: liloOnly, granted: nil).permissions, ["debugger", "proxy"],
                        "a permission only a Gap API implements is an addition too")
+        granted.gapPermissions = ["debugger"]
+        XCTAssertEqual(ExtensionAccess.addedAccess(from: old, to: liloOnly, granted: granted).permissions, ["proxy"],
+                       "a Gap API permission granted at Lilo's prompt is not an addition")
 
         let broad = try await webExtension(manifest: """
         {"manifest_version":3,"name":"Broad","version":"1","host_permissions":["<all_urls>"]}
         """, named: "access_broad")
-        XCTAssertTrue(ExtensionAccess.addedAccess(from: broad, to: widened).matchPatterns.isEmpty,
+        XCTAssertTrue(ExtensionAccess.addedAccess(from: broad, to: widened, granted: nil).matchPatterns.isEmpty,
                       "a host an old pattern already covers adds nothing")
     }
 
