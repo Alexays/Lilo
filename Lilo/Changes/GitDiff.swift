@@ -167,14 +167,12 @@ struct GitDiff: Sendable {
 
     private static let emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
-    private static let timeout: TimeInterval = 10
-
     private static let executable: URL? = ["/opt/homebrew/bin/git", "/usr/local/bin/git", "/usr/bin/git"]
         .first { FileManager.default.isExecutableFile(atPath: $0) }
         .map { URL(fileURLWithPath: $0) }
 
     /// Git's standard output, or nil when it exits with an error or outlives `timeout`.
-    static func run(_ arguments: [String], in directory: String, environment extra: [String: String] = [:]) -> Data? {
+    static func run(_ arguments: [String], in directory: String, environment extra: [String: String] = [:], timeout: TimeInterval = 10) -> Data? {
         guard let executable else { return nil }
         let signpost = PerfSignposts.energy.beginInterval("git", id: PerfSignposts.energy.makeSignpostID(), "\(arguments.first ?? "")")
         defer { PerfSignposts.energy.endInterval("git", signpost) }
