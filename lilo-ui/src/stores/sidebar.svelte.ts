@@ -488,11 +488,10 @@ type PendingTabUpdates = Map<
 function flushTabUpdates(pending: PendingTabUpdates): void {
 	for (const [spaceId, { tabs, updated, structural }] of pending) {
 		const current = getSpaceSidebar(spaceId);
-		writeSpace(
-			spaceId,
-			{ ...current, tabs },
-			structural ? {} : { reuseView: viewWithUpdatedTabs(current.view, updated) },
-		);
+		// Without a membership or isClosed change the active tab still resolves to itself, so only a
+		// structural update pays writeSpace's normalization scan.
+		if (structural) writeSpace(spaceId, { ...current, tabs });
+		else putSpaceSidebar(spaceId, { ...current, tabs, view: viewWithUpdatedTabs(current.view, updated) });
 	}
 	pending.clear();
 }
@@ -505,16 +504,19 @@ function applyTabUpdated(data: BridgeTabUpdatedPayload, pending: PendingTabUpdat
 	// Runtime patches omit the favicon (and any unchanged field), so merge the present fields
 	// onto the existing tab instead of wholesale-replacing it.
 	const entry = pending.get(spaceId);
-	const tabs = entry?.tabs ?? getSpaceSidebar(spaceId).tabs;
-	const index = tabs.findIndex((t) => t.id === patch.id);
-	if (index < 0) return;
+	const current = getSpaceSidebar(spaceId);
+	// The view's map holds every tab of the record, so a progress tick resolves without scanning the list.
+	const previous = entry?.updated.get(patch.id) ?? current.view.tabsById.get(patch.id);
+	if (!previous) return;
 
 	// A patch that changes nothing must not rewrite the record: every sidebar reader re-runs on
 	// each write.
-	const previous = tabs[index];
 	const fields = coerceTabPatch(patch);
 	const keys = Object.keys(fields) as (keyof BridgeTabSnapshot)[];
 	if (keys.every((key) => Object.is(fields[key], previous[key]))) return;
+	const tabs = entry?.tabs ?? current.tabs;
+	const index = tabs.indexOf(previous);
+	if (index < 0) return;
 
 	// The patch's activeTabId is ignored: it is the host's as of when the patch was buffered, so it
 	// can predate a click's optimistic activation and bounce the highlight back. Activation arrives
