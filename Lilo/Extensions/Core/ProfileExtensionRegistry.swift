@@ -103,6 +103,8 @@ final class ProfileExtensionRegistry {
 
     /// The tab state last sent to the contexts with private access (true) and without, once one asked for it.
     var sentTabStates: [Bool: ExtensionTabState] = [:]
+    /// The extensions that asked for the tab state: only they hold it, so only they get it pushed.
+    var tabStateAskers: Set<String> = []
     /// Keeps `sentTabStates` true to the tabs WebKit reports.
     weak var tabStateKeeper: TabGroupsBridgeHandler?
 
@@ -601,9 +603,10 @@ final class ProfileExtensionRegistry {
         return loadedRuntimes.first { $0.omniboxKeyword?.lowercased() == needle }?.id
     }
 
-    /// Sends each loaded extension with private access or without, as `hasPrivateAccess`, its `message` at once over its open channels.
-    func sendToOpenChannels(hasPrivateAccess: Bool, _ message: (WKWebExtensionContext) -> [String: Any]) {
-        for runtime in loadedRuntimes where runtime.context.hasAccessToPrivateData == hasPrivateAccess {
+    /// Sends each loaded extension of `extensionIds` with private access or without, as `hasPrivateAccess`, its `message` at once
+    /// over its open channels.
+    func sendToOpenChannels(of extensionIds: Set<String>, hasPrivateAccess: Bool, _ message: (WKWebExtensionContext) -> [String: Any]) {
+        for runtime in loadedRuntimes where runtime.context.hasAccessToPrivateData == hasPrivateAccess && extensionIds.contains(runtime.id) {
             gapEvents.send(message(runtime.context), toOpenChannelsOf: runtime.id)
         }
     }
