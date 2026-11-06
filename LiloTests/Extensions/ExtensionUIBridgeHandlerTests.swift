@@ -72,7 +72,8 @@ final class ExtensionUIBridgeHandlerTests: XCTestCase {
     }
 
     func testOpenPopupRejectsWithoutAPopupOrAKnownWindow() async throws {
-        let registry = try XCTUnwrap(browserContext.context.windows.windows.first?.profileContext?.extensions)
+        let window = try XCTUnwrap(browserContext.context.windows.windows.first)
+        let registry = try XCTUnwrap(window.profileContext?.extensions)
         let source = try createMinimalExtension(named: "click_only", in: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
         try #"{"manifest_version":3,"name":"Click Only","version":"1.0","action":{}}"#
             .write(to: source.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
@@ -87,5 +88,9 @@ final class ExtensionUIBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(noPopup, "Extension does not have a popup on the active tab.", "onClicked fires only from a click")
         let unknownWindow = try await openPopup(["windowId": 5, "windowPosition": -1])
         XCTAssertEqual(unknownWindow, "No window with id: 5.")
+        let privateSpace = try browserContext.context.spaceManager!.createSpace(name: "P", profileId: registry.profileId, isPrivate: true)
+        window.switchToSpace(privateSpace.id)
+        let privateWindow = try await openPopup()
+        XCTAssertEqual(privateWindow, "Could not find an active browser window.", "an extension without private access never acts there")
     }
 }

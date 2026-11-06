@@ -463,7 +463,8 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             window = call.int("windowPosition").flatMap { registry.extensionWindow(at: $0, extensionId: call.extensionId) }
             if window == nil { return BridgeError("No window with id: \(windowId).") }
         }
-        guard let window, let context = registry.context(for: call.extensionId) else {
+        guard let window, let context = registry.context(for: call.extensionId),
+              !window.isPrivateWindow || context.hasAccessToPrivateData else {
             return BridgeError("Could not find an active browser window.")
         }
         guard !registry.delegate.hasOpenActionPopover else { return BridgeError("Another popup is already open.") }
