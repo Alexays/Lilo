@@ -157,8 +157,8 @@ final class WKEngineFactory {
     private let eyeDropperBridge = EyeDropperBridge()
     private let documentPiPBridge = DocumentPiPBridge()
 
-    func dispatchWebNotificationClick(identifier: String) {
-        notificationBridge.dispatchClick(identifier: identifier)
+    func dispatchWebNotification(_ type: String, identifier: String) {
+        notificationBridge.dispatch(type, identifier: identifier)
     }
 
     /// Forwarded by the window controller whenever the visible engine view changes, so paused
