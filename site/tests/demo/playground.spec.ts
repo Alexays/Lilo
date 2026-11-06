@@ -195,7 +195,7 @@ test("an MCP click navigates its sample tab and keeps the inspector open", async
   await tool.selectOption("navigate");
   await args.fill('{"tabId":1,"url":"https://example.com"}');
   await run.click();
-  await expect(frame.locator(".start")).toBeVisible();
+  await expect(frame.locator("article.start")).toBeVisible();
   await tool.selectOption("find");
   await args.fill('{"tabId":1,"query":"Lilo"}');
   await run.click();

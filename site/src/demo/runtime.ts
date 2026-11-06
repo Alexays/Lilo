@@ -10,7 +10,7 @@ import type { DemoFeatureId } from "../lib/i18n.ts";
 import type { NativeDemoData } from "../lib/native-demo-data";
 import { installDemoAppearance } from "./appearance";
 import type { DemoAssets } from "./assets";
-import DemoSurface from "./DemoSurface.svelte";
+import type DemoSurface from "./DemoSurface.svelte";
 import { createDemoHost } from "./host.ts";
 import { demoMenus, menuActionEnabled, menuLabelKeys } from "./menu.ts";
 import type { DemoMenuEntry, DemoMenuState } from "./menu.ts";
@@ -398,7 +398,10 @@ export const startDemo = async (
     }
   };
 
-  surface = mount(DemoSurface, {
+  // Imported only now: its lilo-ui components reach the bridge, which reads the bootstrap events once, on load.
+  const { default: Surface } = await import("./DemoSurface.svelte");
+
+  surface = mount(Surface, {
     props: {
       expand,
       host,

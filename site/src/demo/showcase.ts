@@ -140,7 +140,7 @@ export const createShowcase = (
 
     try {
       const allow = await waitForElement<HTMLButtonElement>(
-        ".prompt-actions .primary",
+        ".prompt-actions .main",
         signal
       );
 
