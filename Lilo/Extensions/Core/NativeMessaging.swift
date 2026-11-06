@@ -281,7 +281,8 @@ final class NativeMessagingConnection: @unchecked Sendable {
 
     private func ingest(_ data: Data) {
         guard !didDisconnect else { return }
-        if data.isEmpty { finish(error: nil); return }   // EOF
+        // EOF: the host exited. A disconnect from Lilo sets didDisconnect first, so it never reports this error.
+        if data.isEmpty { finish(error: NativeMessaging.NativeMessagingError.disconnected); return }
         buffer.append(data)
         let (payloads, remainder, oversizeError) = NativeMessaging.extractFrames(from: buffer)
         buffer = remainder
