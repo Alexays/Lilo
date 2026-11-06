@@ -340,7 +340,7 @@ final class WKWebViewTab: NSObject {
     /// Bumped on every page color update: a capture of the top edge answers only for the page it was taken of.
     private var pageEdgeCapture = 0
     private var pageColorRecapture: Task<Void, Never>?
-    /// A recapture skipped while frozen, taken on resume.
+    /// A capture skipped while frozen or off screen, taken on resume or once shown.
     private var pageColorStale = false
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
@@ -606,12 +606,22 @@ final class WKWebViewTab: NSObject {
         guard isFrozen, !isPageLost else { return completion() }
         isFrozen = false
         freezer.resume(webView) { [weak self] in
-            if let self, pageColorStale {
-                pageColorStale = false
-                recapturePageColor()
-            }
+            self?.capturePageColorIfStale()
             completion()
         }
+    }
+
+    /// The tab shows in a window: the dialog and the page color it held back while hidden.
+    func didShow() {
+        runQueuedDialog(presenting: true)
+        capturePageColorIfStale()
+    }
+
+    private func capturePageColorIfStale() {
+        guard pageColorStale else { return }
+        pageColorStale = false
+        pageEdgeCapture &+= 1
+        captureTopEdge(again: false)
     }
 
     /// Resumes the page ahead of a call WebKit refuses on a suspended one. False when the page is lost:
@@ -1210,6 +1220,7 @@ final class WKWebViewTab: NSObject {
     /// `loaded` comes from didFinish, while the web view still reports itself loading.
     private func emitPageColor(loaded: Bool = false) {
         pageEdgeCapture &+= 1
+        pageColorStale = false
         if let color = Self.opaque(sampledPageTopColor)?.cssHexString {
             sendPageColor(color)
         } else if loaded || !webView.isLoading {
@@ -1241,7 +1252,8 @@ final class WKWebViewTab: NSObject {
                 return
             }
             sampledPageTopColor = nil
-            emitPageColor(loaded: true)
+            pageEdgeCapture &+= 1
+            captureTopEdge(again: false)
         }
     }
 
@@ -1252,15 +1264,22 @@ final class WKWebViewTab: NSObject {
     }
 
     /// A capture of the thin band of the page that meets the bar. A page drawn by script after its load gets a second
-    /// look a moment later.
+    /// look a moment later. Only the shown tab's bar takes the color: a hidden tab captures once shown.
     private func captureTopEdge(again: Bool = true) {
         let capture = pageEdgeCapture
-        let width = webView.bounds.width
-        guard !isFrozen, width > 0 else { return }
-        let configuration = WKSnapshotConfiguration()
-        configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, Self.edgeBand))
+        // Checked on the next turn: the tab being shown is in its window by then.
         Task { [weak self] in
-            guard let self, !isFrozen else { return }
+            guard let self, capture == pageEdgeCapture else { return }
+            guard !isFrozen, isOnScreen else {
+                pageColorStale = true
+                return
+            }
+            let width = webView.bounds.width
+            guard width > 0 else { return }
+            let configuration = WKSnapshotConfiguration()
+            configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, Self.edgeBand))
+            // One pixel per point: the band's rows stay whole for the median, at a quarter of a Retina capture's pixels.
+            configuration.snapshotWidth = NSNumber(value: Double(width / (unsafe webView.window?.backingScaleFactor ?? 1)))
             let image = try? await webView.takeSnapshot(configuration: configuration)
             guard capture == pageEdgeCapture else { return }
             if let stops = image.flatMap(Self.edgeStops) { sendPageColor(stops) }
