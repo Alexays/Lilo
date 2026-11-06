@@ -1,10 +1,11 @@
 import { execFileSync } from "node:child_process";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
+import { templates } from "./templates.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(root, "..");
@@ -13,11 +14,25 @@ const registry = path.join(repo, "lilo-ui/src/components/whatsnew/releaseHighlig
 const locales = path.join(repo, "lilo-ui/src/lib/i18n/locales");
 
 const translated = z.object({ en: z.string(), fr: z.string() });
+const Step = z.object({
+  do: z.enum(["page", "call", "action", "click", "input", "wait", "shot"]),
+  selector: z.string().nullable(),
+  text: z.string().nullable(),
+  value: z.string().nullable(),
+  name: z.string().nullable(),
+});
+const Plan = z.object({ template: z.enum(templates), steps: z.array(Step) });
 export const Draft = z.object({
   title: translated,
   introduction: translated,
   highlights: z.array(
-    z.object({ id: z.string(), title: translated, body: translated, notes: z.array(z.number()) }),
+    z.object({
+      id: z.string(),
+      title: translated,
+      body: translated,
+      notes: z.array(z.number()),
+      plan: Plan.nullable(),
+    }),
   ),
   groups: z.array(z.object({ title: translated, notes: z.array(z.number()) })),
 });
@@ -74,6 +89,24 @@ export function storyFrom(version, draft, notes) {
       .filter((group) => group.notes.length)
       .map(({ title, notes: indexes }) => ({ title, notes: indexes.map(text) })),
   };
+}
+
+const SHOTS = { hero: 1, compare: 2, image: 1 };
+
+/** The capture plans of a draft by highlight id, refusing one that cannot run. */
+export function plansFrom(draft, known) {
+  const plans = {};
+  for (const { id, plan } of draft.highlights) {
+    if (!plan) continue;
+    const shots = plan.steps.filter((step) => step.do === "shot").length;
+    if (SHOTS[plan.template] ? shots !== SHOTS[plan.template] : shots < 2)
+      throw Error(`The ${id} plan takes ${shots} shot(s), which ${plan.template} cannot show`);
+    for (const { selector } of plan.steps)
+      for (const [name] of selector?.matchAll(/[.#][a-zA-Z][\w-]*/g) ?? [])
+        if (!known(name.slice(1))) throw Error(`The ${id} plan names ${name}, which no source has`);
+    plans[id] = plan;
+  }
+  return plans;
 }
 
 const camel = (id) => id.replace(/-(\w)/g, (_, letter) => letter.toUpperCase());
@@ -155,6 +188,7 @@ export async function prompts({ version, markdown, ref, since }, notes) {
     user: [
       `<examples>\n${(await examples()).join("\n")}\n</examples>`,
       `<commits>\n${run("git", "log", "--no-merges", "--format=%s%n%b", `${since}..${ref}`)}\n</commits>`,
+      `<interface-changes>\n${run("git", "diff", `${since}..${ref}`, "--", "lilo-ui/src/**/*.svelte")}\n</interface-changes>`,
       `<notes version="${version}">\n${notes.map((note, index) => `${index}. [${note.kind}] ${note.text}`).join("\n")}\n</notes>`,
     ].join("\n\n"),
   };
@@ -189,10 +223,20 @@ async function main() {
   }
   const client = new Anthropic();
   const { system, user } = await prompts(source, notes);
+  const known = (name) => {
+    try {
+      run("git", "grep", "-qF", "--", name, "lilo-ui/src");
+      return true;
+    } catch {
+      return false;
+    }
+  };
   let draft = await ask(client, system, user, Draft);
   let story;
+  let plans;
   try {
     story = storyFrom(source.version, draft, notes);
+    plans = plansFrom(draft, known);
   } catch (error) {
     draft = await ask(
       client,
@@ -201,6 +245,7 @@ async function main() {
       Draft,
     );
     story = storyFrom(source.version, draft, notes);
+    plans = plansFrom(draft, known);
   }
 
   const english = {
@@ -245,6 +290,10 @@ async function main() {
     `${JSON.stringify({ [source.version]: whatsNew.entry, ...highlights }, null, "\t")}\n`,
   );
   await writeFile(target, `${JSON.stringify(story, null, 2)}\n`);
+  const folder = path.join(root, "plans", source.version);
+  await mkdir(folder, { recursive: true });
+  for (const [id, plan] of Object.entries(plans))
+    await writeFile(path.join(folder, `${id}.json`), `${JSON.stringify(plan, null, 2)}\n`);
   console.log(`Drafted the ${source.version} entry: ${story.title.en}`);
 }
 

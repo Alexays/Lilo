@@ -1,0 +1,61 @@
+{
+  "template": "flow",
+  "steps": [
+    {
+      "do": "page",
+      "selector": null,
+      "text": "Getting started",
+      "value": null,
+      "name": null
+    },
+    {
+      "do": "page",
+      "selector": null,
+      "text": "Pricing",
+      "value": null,
+      "name": null
+    },
+    {
+      "do": "page",
+      "selector": null,
+      "text": "Documentation",
+      "value": null,
+      "name": null
+    },
+    {
+      "do": "wait",
+      "selector": ".stack-row",
+      "text": null,
+      "value": null,
+      "name": null
+    },
+    {
+      "do": "shot",
+      "selector": ".tab-list",
+      "text": null,
+      "value": null,
+      "name": null
+    },
+    {
+      "do": "click",
+      "selector": ".stack-row",
+      "text": null,
+      "value": null,
+      "name": null
+    },
+    {
+      "do": "wait",
+      "selector": ".stack-row.open",
+      "text": null,
+      "value": null,
+      "name": null
+    },
+    {
+      "do": "shot",
+      "selector": ".tab-list",
+      "text": null,
+      "value": null,
+      "name": null
+    }
+  ]
+}

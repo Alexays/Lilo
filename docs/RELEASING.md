@@ -42,6 +42,10 @@ without one, and **Allow GitHub Actions to create and approve pull requests** in
 Actions settings. Checks do not run on a pull request an action opens: close and reopen it to run them.
 A release of fixes alone has no entry.
 
+The same workflow films the entry's highlights on macOS and adds them to the pull request. Locally, run
+`make changelog-media RELEASE=x.y.z` after the draft. A highlight it cannot film stays text-only, and
+the [release media guide](../release-media/README.md) explains how to fix or write its plan.
+
 `make release-version` collects the pending notes into a release file, consumes the fragments, and
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
 extension bridge package versions and their lockfiles. `make site-generate` then builds the Astro website,
