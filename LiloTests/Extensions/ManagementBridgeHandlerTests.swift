@@ -70,6 +70,27 @@ final class ManagementBridgeHandlerTests: XCTestCase {
         XCTAssertTrue(registry.disabledStoredExtensions.isEmpty)
     }
 
+    /// The registry fires the events of a change made through the API, each once.
+    func test_setEnabledAndUninstallSelf_fireEachEventOnce() async throws {
+        let (registry, id, directory) = try await makeRegistryWithExtension()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let watcherDir = directory.appendingPathComponent("watcher")
+        try FileManager.default.createDirectory(at: watcherDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Watcher","version":"1.0","permissions":["management"]}"#
+            .write(to: watcherDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try await registry.load(from: watcherDir)
+        let watcher = try XCTUnwrap(registry.loadedExtensions.first { $0.id != id }?.id)
+
+        _ = try await send("management.setEnabled", ["extensionId": watcher, "id": id, "enabled": false], to: registry)
+        _ = try await send("management.setEnabled", ["extensionId": watcher, "id": id, "enabled": true], to: registry)
+        _ = try await send("management.uninstallSelf", ["extensionId": id], to: registry)
+        let removed = await pollUntil { registry.context(for: id) == nil }
+        XCTAssertTrue(removed)
+
+        let events = registry.gapEvents.undelivered(to: watcher).filter { $0.namespace == "management" }.map(\.event)
+        XCTAssertEqual(events, ["onDisabled", "onEnabled", "onDisabled", "onUninstalled"])
+    }
+
     func test_uninstall_ofAnUnknownExtension_fails() async throws {
         let (registry, id, directory) = try await makeRegistryWithExtension()
         defer { try? FileManager.default.removeItem(at: directory) }

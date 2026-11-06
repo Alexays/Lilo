@@ -23,6 +23,30 @@ struct ExtensionInfo: Codable, Equatable {
     let hostPermissions: [String]
     let offlineEnabled: Bool
     let disableReasons: [String]
+
+    /// Chrome's ExtensionInfo, the same shape for every management call and event. Nil optionals are omitted.
+    var dictionary: [String: Any] {
+        var dict: [String: Any] = [
+            "id": id,
+            "name": name,
+            "shortName": shortName,
+            "description": description,
+            "version": version,
+            "enabled": enabled,
+            "type": type,
+            "installType": installType,
+            "icons": icons.map { ["size": $0.size, "url": $0.url] },
+            "permissions": permissions,
+            "hostPermissions": hostPermissions,
+            "offlineEnabled": offlineEnabled,
+            "disableReasons": disableReasons
+        ]
+        if let versionName { dict["versionName"] = versionName }
+        if let homepageUrl { dict["homepageUrl"] = homepageUrl }
+        if let updateUrl { dict["updateUrl"] = updateUrl }
+        if let optionsUrl { dict["optionsUrl"] = optionsUrl }
+        return dict
+    }
 }
 
 struct ExtensionInfoBuilder {

@@ -3,7 +3,8 @@ import WebKit
 
 /// Implements the chrome.management API as a BridgeHandler.
 /// Provides methods: getAll, get, getSelf, setEnabled, uninstall, uninstallSelf, getPermissionWarningsById,
-/// getPermissionWarningsByManifest. Events: onEnabled, onDisabled, onUninstalled
+/// getPermissionWarningsByManifest. Its events come from `ProfileExtensionRegistry`, which every install,
+/// enable, disable and removal goes through.
 @MainActor
 final class ManagementBridgeHandler: GapHandler {
     let gapActions: Set<String> = [
@@ -75,18 +76,18 @@ final class ManagementBridgeHandler: GapHandler {
         let loaded = registry.loadedExtensions
             .map { ExtensionInfoBuilder.buildFromManifest(manifest: $0.context.webExtension.manifest, id: $0.id) }
         let disabled = registry.disabledStoredExtensions.map(disabledInfo)
-        return (loaded + disabled).sorted { $0.id < $1.id }.map(infoDict)
+        return (loaded + disabled).sorted { $0.id < $1.id }.map(\.dictionary)
     }
 
     private func handleGet(id: String, registry: ProfileExtensionRegistry?) -> Any? {
         guard let registry else { return BridgeError("Extension not found") }
         if let context = registry.context(for: id) {
-            return infoDict(ExtensionInfoBuilder.buildFromManifest(manifest: context.webExtension.manifest, id: id))
+            return ExtensionInfoBuilder.buildFromManifest(manifest: context.webExtension.manifest, id: id).dictionary
         }
         guard let stored = registry.disabledStoredExtensions.first(where: { $0.id == id }) else {
             return BridgeError("Extension not found")
         }
-        return infoDict(disabledInfo(stored))
+        return disabledInfo(stored).dictionary
     }
 
     /// A disabled extension has no loaded manifest: the installed copy is read from disk.
@@ -116,16 +117,11 @@ final class ManagementBridgeHandler: GapHandler {
         }
         // A self-uninstall answers first: its own context goes away with the unload.
         if id == caller {
-            Task { @MainActor in await Self.uninstall(id, from: registry) }
+            Task { @MainActor in await registry.unload(extensionId: id) }
         } else {
-            await Self.uninstall(id, from: registry)
+            await registry.unload(extensionId: id)
         }
         return nil
-    }
-
-    private static func uninstall(_ id: String, from registry: ProfileExtensionRegistry) async {
-        await registry.unload(extensionId: id)
-        registry.emitGapEvent("management", "onUninstalled", args: [id], requiredPermission: "management")
     }
 
     private func handleGetSelf(extensionId: String, registry: ProfileExtensionRegistry?) -> Any? {
@@ -133,62 +129,26 @@ final class ManagementBridgeHandler: GapHandler {
               let entry = registry.loadedExtensions.first(where: { $0.id == extensionId }) else {
             return BridgeError("Extension not found: \(extensionId)")
         }
-        return infoDict(ExtensionInfoBuilder.buildFromManifest(
+        return ExtensionInfoBuilder.buildFromManifest(
             manifest: entry.context.webExtension.manifest,
             id: entry.id
-        ))
+        ).dictionary
     }
 
-    /// Enables (load) or disables (unload) an extension through the registry, then fires the matching
-    /// management event. The onDisabled payload is built before unloading, while the manifest is still
-    /// reachable, and its `enabled` flag is forced to the new state.
     private func handleSetEnabled(id: String, enabled: Bool, registry: ProfileExtensionRegistry?) async -> Any? {
         guard let registry else { return BridgeError("No active profile") }
         guard !id.isEmpty else { return BridgeError("Missing id") }
         do {
             if enabled {
                 try await registry.enable(extensionId: id)
-                guard let context = registry.context(for: id) else { return BridgeError("Extension not found: \(id)") }
-                var info = infoDict(ExtensionInfoBuilder.buildFromManifest(manifest: context.webExtension.manifest, id: id))
-                info["enabled"] = true
-                registry.emitGapEvent("management", "onEnabled", args: [info], requiredPermission: "management")
+                guard registry.context(for: id) != nil else { return BridgeError("Extension not found: \(id)") }
             } else {
-                let context = registry.context(for: id)
                 await registry.disable(extensionId: id)
-                if let context {
-                    var info = infoDict(ExtensionInfoBuilder.buildFromManifest(manifest: context.webExtension.manifest, id: id))
-                    info["enabled"] = false
-                    registry.emitGapEvent("management", "onDisabled", args: [info], requiredPermission: "management")
-                }
             }
             return nil
         } catch {
             return BridgeError(error.localizedDescription)
         }
-    }
-
-    /// Chrome's ExtensionInfo, the same shape for getAll, get and getSelf. Nil optionals are omitted.
-    private func infoDict(_ ext: ExtensionInfo) -> [String: Any] {
-        var dict: [String: Any] = [
-            "id": ext.id,
-            "name": ext.name,
-            "shortName": ext.shortName,
-            "description": ext.description,
-            "version": ext.version,
-            "enabled": ext.enabled,
-            "type": ext.type,
-            "installType": ext.installType,
-            "icons": ext.icons.map { ["size": $0.size, "url": $0.url] },
-            "permissions": ext.permissions,
-            "hostPermissions": ext.hostPermissions,
-            "offlineEnabled": ext.offlineEnabled,
-            "disableReasons": ext.disableReasons
-        ]
-        if let versionName = ext.versionName { dict["versionName"] = versionName }
-        if let homepageUrl = ext.homepageUrl { dict["homepageUrl"] = homepageUrl }
-        if let updateUrl = ext.updateUrl { dict["updateUrl"] = updateUrl }
-        if let optionsUrl = ext.optionsUrl { dict["optionsUrl"] = optionsUrl }
-        return dict
     }
 
     private func handleGetPermissionWarningsById(id: String, registry: ProfileExtensionRegistry?) -> [String: Any] {

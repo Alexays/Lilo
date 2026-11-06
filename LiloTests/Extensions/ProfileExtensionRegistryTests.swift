@@ -1499,6 +1499,29 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(registry.loadedExtensions.contains { $0.id == id })
     }
 
+    /// Extensions holding `management` hear every install, enable, disable and removal of another one, whatever path made it.
+    func testManagementEventsFollowEveryLoadAndUnloadOfAnotherExtension() async throws {
+        let watcherDir = tempDir.appendingPathComponent("management_watcher")
+        try FileManager.default.createDirectory(at: watcherDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Watcher","version":"1.0","permissions":["management"]}"#
+            .write(to: watcherDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try await registry.load(from: watcherDir)
+        let watcher = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        try await registry.load(from: createMinimalExtension(named: "managed_target", in: tempDir))
+        let target = try XCTUnwrap(registry.loadedExtensions.first { $0.id != watcher }?.id)
+
+        await registry.disable(extensionId: target)
+        try await registry.enable(extensionId: target)
+        await registry.unload(extensionId: target)
+
+        let events = registry.gapEvents.undelivered(to: watcher).filter { $0.namespace == "management" }
+        XCTAssertEqual(events.map(\.event), ["onEnabled", "onInstalled", "onDisabled", "onEnabled", "onDisabled", "onUninstalled"])
+        let infos = events.dropLast().compactMap { $0.args.first as? [String: Any] }
+        XCTAssertEqual(infos.map { $0["id"] as? String }, Array(repeating: target as String?, count: 5))
+        XCTAssertEqual(infos.map { $0["enabled"] as? Bool }, [true, true, false, true, false])
+        XCTAssertEqual(events.last?.args.first as? String, target)
+    }
+
     // MARK: - Private spaces
 
     func testPrivateAccessAppliesLiveAndSurvivesARestore() async throws {
