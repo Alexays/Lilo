@@ -126,11 +126,15 @@
   // With the address hidden the line also holds the page's overflow button.
   const sidebarMinWidth = $derived(getTabPosition() === "left" && !isAddressVisible() ? 215 : 203);
 
+  // What the resize handle reports to VoiceOver, read from the stylesheet when it takes focus.
+  let handleWidth = $state(0);
+
   // A width kept from a roomier layout widens to the new one's minimum.
   $effect(() => {
     const root = document.documentElement;
     if (!(parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width")) < sidebarMinWidth)) return;
     root.style.setProperty("--sidebar-width", `${sidebarMinWidth}px`);
+    handleWidth = sidebarMinWidth;
     chromeActions.sidebarResized(sidebarMinWidth);
   });
   let pendingSidebarWidth = 260;
@@ -148,6 +152,20 @@
   // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
   const SIDEBAR_RAIL_THRESHOLD = 150;
   const SIDEBAR_RAIL_WIDTH = 76;
+  const SIDEBAR_MAX_WIDTH = 480;
+
+  // The arrows move the edge they point to, 8 px a step, inside the range a drag keeps.
+  function resizeWithKeys(e: KeyboardEvent) {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const grow = (e.key === "ArrowRight") !== (getTabPosition() === "right");
+    const width = Math.max(sidebarMinWidth, Math.min(SIDEBAR_MAX_WIDTH, handleWidth + (grow ? 8 : -8)));
+    if (width === handleWidth) return;
+    handleWidth = width;
+    document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+    chromeActions.sidebarResized(width);
+  }
+
   // Hidden, the rail is what the edge reveals over the page, as the full sidebar is outside the rail.
   const railShown = $derived(isSidebarRail() && isSidebarShown() && isVerticalLayout());
 
@@ -264,6 +282,7 @@
     pendingSidebarWidth = startWidth;
 
     function applyPendingSidebarWidth() {
+      handleWidth = pendingSidebarWidth;
       root.style.setProperty("--sidebar-width", `${pendingSidebarWidth}px`);
       chromeActions.sidebarResized(pendingSidebarWidth);
     }
@@ -285,7 +304,7 @@
       }
       setSidebarRail(false);
       // Out of the rail, the sidebar comes back at its width, and grows once the drag goes past it.
-      scheduleSidebarWidth(Math.max(sidebarMinWidth, Math.min(480, startRail ? Math.max(startWidth, width) : width)));
+      scheduleSidebarWidth(Math.max(sidebarMinWidth, Math.min(SIDEBAR_MAX_WIDTH, startRail ? Math.max(startWidth, width) : width)));
     }
 
     function onUp() {
@@ -445,12 +464,19 @@
   >
     <Sidebar />
     {#if isSidebarVisible() && !railShown}
-      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
       <div
         class="sidebar-resize-handle"
         role="separator"
         aria-orientation="vertical"
+        aria-label={t("sidebar.resize")}
+        aria-valuemin={sidebarMinWidth}
+        aria-valuemax={SIDEBAR_MAX_WIDTH}
+        aria-valuenow={handleWidth || undefined}
+        tabindex="0"
+        onfocus={() => (handleWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width")) || 260)}
         onmousedown={startResize}
+        onkeydown={resizeWithKeys}
       ></div>
     {/if}
   </div>
@@ -737,5 +763,10 @@
   .sidebar-resize-handle:hover,
   .sidebar-resize-handle:active {
     background: var(--accent-tint-12);
+  }
+
+  .sidebar-resize-handle:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: -2px;
   }
 </style>

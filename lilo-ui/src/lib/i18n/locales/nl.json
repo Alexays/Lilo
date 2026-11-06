@@ -775,6 +775,7 @@
 		"signedInAs": "{space}, aangemeld als {profile}"
 	},
 	"sidebar": {
+		"resize": "Breedte van navigatiekolom",
 		"movedToPosition": "Verplaatst naar positie {position} van {count}",
 		"movedInto": "Verplaatst naar {name}",
 		"movedOutOf": "Uit {name} gehaald",

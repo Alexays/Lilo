@@ -775,6 +775,7 @@
 		"signedInAs": "{space}, {profile} olarak oturum açıldı"
 	},
 	"sidebar": {
+		"resize": "Kenar çubuğu genişliği",
 		"movedToPosition": "{count} içinde {position}. konuma taşındı",
 		"movedInto": "{name} içine taşındı",
 		"movedOutOf": "{name} dışına taşındı",

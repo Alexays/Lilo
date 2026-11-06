@@ -789,6 +789,7 @@
 		"signedInAs": "{space}, профиль: {profile}"
 	},
 	"sidebar": {
+		"resize": "Ширина боковой панели",
 		"movedToPosition": "Перемещено на позицию {position} из {count}",
 		"movedInto": "Перемещено в {name}",
 		"movedOutOf": "Извлечено из {name}",

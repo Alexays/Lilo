@@ -775,6 +775,7 @@
 		"signedInAs": "{space}，已登录为 {profile}"
 	},
 	"sidebar": {
+		"resize": "边栏宽度",
 		"movedToPosition": "已移到第 {position} 位，共 {count} 项",
 		"movedInto": "已移入 {name}",
 		"movedOutOf": "已移出 {name}",

@@ -789,6 +789,7 @@
 		"signedInAs": "{space}, zalogowano jako {profile}"
 	},
 	"sidebar": {
+		"resize": "Szerokość paska bocznego",
 		"movedToPosition": "Przeniesiono na pozycję {position} z {count}",
 		"movedInto": "Przeniesiono do: {name}",
 		"movedOutOf": "Wyjęto z: {name}",

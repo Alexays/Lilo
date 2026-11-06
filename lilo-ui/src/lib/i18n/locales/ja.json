@@ -775,6 +775,7 @@
 		"signedInAs": "{space}、{profile}としてサインイン"
 	},
 	"sidebar": {
+		"resize": "サイドバーの幅",
 		"movedToPosition": "{count} 個中 {position} 番目に移動しました",
 		"movedInto": "{name} に移動しました",
 		"movedOutOf": "{name} から出しました",

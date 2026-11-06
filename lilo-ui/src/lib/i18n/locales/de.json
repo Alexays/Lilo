@@ -775,6 +775,7 @@
 		"signedInAs": "{space}, angemeldet als {profile}"
 	},
 	"sidebar": {
+		"resize": "Breite der Seitenleiste",
 		"movedToPosition": "An Position {position} von {count} verschoben",
 		"movedInto": "In {name} verschoben",
 		"movedOutOf": "Aus {name} verschoben",

@@ -775,6 +775,7 @@
 		"signedInAs": "{space}, conectado como {profile}"
 	},
 	"sidebar": {
+		"resize": "Largura da barra lateral",
 		"movedToPosition": "Movido para a posição {position} de {count}",
 		"movedInto": "Movido para {name}",
 		"movedOutOf": "Retirado de {name}",
