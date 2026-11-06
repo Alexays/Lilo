@@ -86,10 +86,6 @@ final class WKEngineFactory {
     var notificationShownHandler: ((WKWebView) -> Void)? {
         didSet { notificationBridge.shownHandler = notificationShownHandler }
     }
-    /// The stored notification decisions of a data store's sites, which WebKit reads for pages and workers alike.
-    var notificationStoreDecisionsHandler: ((WKWebsiteDataStore) -> [String: Bool])? {
-        didSet { notificationBridge.storeDecisionsHandler = notificationStoreDecisionsHandler }
-    }
     /// Reports form-dirty state changes (webView, isDirty, isMainFrame) to the window controller. Set by MainWindowController.
     var formDirtyHandler: ((WKWebView, Bool, Bool) -> Void)? {
         didSet { formDirtyBridge.onChange = formDirtyHandler }
@@ -151,7 +147,6 @@ final class WKEngineFactory {
         bridge.permissionDecisionHandler = notificationPermissionDecisionHandler
         bridge.decisionHandler = notificationDecisionHandler
         bridge.shownHandler = notificationShownHandler
-        bridge.storeDecisionsHandler = notificationStoreDecisionsHandler
         bridge.tabIdResolver = { [weak self] in self?.tabIdByWebView.object(forKey: $0) as UUID? }
         return bridge
     }()
@@ -430,8 +425,6 @@ final class WKEngineFactory {
     @discardableResult
     private func applyingTrackingPrevention(to store: WKWebsiteDataStore) -> WKWebsiteDataStore {
         websiteDataStores.add(store)
-        let setDelegate = NSSelectorFromString("set_delegate:")
-        if store.responds(to: setDelegate) { _ = unsafe store.perform(setDelegate, with: notificationBridge) }
         if store.responds(to: NSSelectorFromString("_setResourceLoadStatisticsEnabled:")) {
             store.setValue(trackingPreventionEnabled, forKey: "resourceLoadStatisticsEnabled")
         }

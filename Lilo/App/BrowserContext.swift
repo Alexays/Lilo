@@ -330,12 +330,6 @@ final class BrowserContext {
             guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate else { return false }
             return profileContexts.existingContext(for: space.profileId)?.sitePermissions.decision(forOrigin: origin, type: "notifications") == true
         }
-        // A profile's store bears its id; a private space's store bears none and gets no table. WebKit asks as a process starts,
-        // which must not load or evict a profile.
-        engineFactory.notificationStoreDecisionsHandler = { [weak self] store in
-            guard let profileId = store.identifier, let profile = self?.profileContexts.existingContext(for: profileId) else { return [:] }
-            return profile.sitePermissions.decisions(ofType: "notifications")
-        }
         let profileManager = ProfileManager(dbManager: dbManager, engineFactory: engineFactory, makeProfileId: makeProfileId)
         self.profileManager = profileManager
         try profileManager.loadProfiles(

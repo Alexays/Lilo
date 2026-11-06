@@ -156,12 +156,6 @@ Safari, whose user agent Lilo shows.
   Lilo as Safari, which lacks the API too: adding it would tell Lilo apart from Safari, and a
   page-visible trace flags Lilo as a bot.
 
-### Service worker notification clicks
-
-- **Status:** Partial - a click runs the worker's `notificationclick`, and `client.focus()` brings back a page it has open
-- **Impact:** `clients.openWindow()` opens no tab, and a notification clicked after Lilo relaunches reaches no worker: the
-  click only brings Lilo forward. A page's own notifications (`new Notification`) bring their tab back as in Chrome.
-
 ### Passkeys / WebAuthn
 
 - **Status:** needs the `com.apple.developer.web-browser.public-key-credential` entitlement, which
@@ -292,12 +286,6 @@ Safari, whose user agent Lilo shows.
   not a website's.
 - **Lilo's handling:** the setting stays off: a native `ApplePaySession` would take the place of the
   SDK's stand-in and then fail.
-
-### Web Push
-
-- **Symptom:** `PushManager` and `registration.pushManager` are undefined, so a site cannot notify while none of its pages is open. Notifications a page or its service worker shows (`new Notification`, `registration.showNotification`) work.
-- **Root cause:** WebKit turns Web Push on only for an app holding Apple's web push entitlement, which Lilo does not have.
-- **Lilo's handling:** None.
 
 ### Microphone quality during calls
 - **Symptom:** A call's microphone sounds duller and more processed than in Chrome: nothing above 12 kHz reaches the page.

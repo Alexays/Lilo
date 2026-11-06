@@ -61,18 +61,6 @@ final class PrivateDelegateSelectorTests: XCTestCase {
         "_webView:didFailToFindString:",
     ]
 
-    /// `_WKWebsiteDataStoreDelegate`, adopted by the notification bridge on every Lilo data store; no WebKit class adopts it either.
-    private static let websiteDataStoreDelegateSelectors = [
-        "notificationPermissionsForWebsiteDataStore:",
-        "websiteDataStore:showNotification:",
-    ]
-
-    func testNotificationBridgeClaimsEveryDataStoreHook() {
-        for name in Self.websiteDataStoreDelegateSelectors {
-            XCTAssertTrue(NotificationBridge.instancesRespond(to: NSSelectorFromString(name)), "NotificationBridge no longer implements \(name)")
-        }
-    }
-
     func testFindControllerClaimsEveryFindHook() {
         for name in Self.findDelegateSelectors {
             XCTAssertTrue(PageFindController.instancesRespond(to: NSSelectorFromString(name)), "PageFindController no longer implements \(name)")
@@ -123,9 +111,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
             ("_WKFrameTreeNode", ["info", "childFrames"]),
             ("_WKWebsiteDataStoreConfiguration", ["setOriginQuotaRatio:", "setTotalQuotaRatio:", "setFastServerTrustEvaluationEnabled:"]),
             ("WKWebsiteDataStore", ["_setResourceLoadStatisticsEnabled:", "_resourceLoadStatisticsEnabled", "_clearResourceLoadStatistics:", "_logUserInteraction:completionHandler:",
-                                    "_fetchDataRecordsOfTypes:withOptions:completionHandler:", "set_delegate:",
-                                    "_processPersistentNotificationClick:completionHandler:"]),
-            ("_WKNotificationData", ["title", "body", "tag", "origin", "dictionaryRepresentation"]),
+                                    "_fetchDataRecordsOfTypes:withOptions:completionHandler:"]),
             ("WKWebsiteDataRecord", ["_dataSize"]),
             ("_WKWebsiteDataSize", ["sizeOfDataTypes:"]),
         ]
