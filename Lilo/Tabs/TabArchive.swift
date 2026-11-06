@@ -1,4 +1,5 @@
 import AppKit
+import OSLog
 
 /// Tabs taken out of a Space's unpinned list by the idle sweep or Clear, oldest first, kept
 /// `maxAge` and at most `maxPerSpace` per Space.
@@ -34,7 +35,7 @@ struct TabArchive {
 }
 
 extension BrowserContext {
-    private var tabArchiveURL: URL {
+    nonisolated private static func tabArchiveURL(_ appSupportDirectory: String) -> URL {
         URL(fileURLWithPath: appSupportDirectory).appendingPathComponent("ArchivedTabs.json")
     }
 
@@ -56,7 +57,7 @@ extension BrowserContext {
         if tabArchiveSavePending {
             tabArchiveSavePending = false
             let entries = tabArchive.entries.filter { spaceManager?.space(with: $0.spaceId)?.isPrivate == false }
-            let url = tabArchiveURL
+            let url = Self.tabArchiveURL(appSupportDirectory)
             let logger = Self.logger
             Self.tabArchiveQueue.async {
                 do { try JSONEncoder().encode(entries).write(to: url, options: .atomic) } catch {
@@ -67,13 +68,17 @@ extension BrowserContext {
         if isTerminating { Self.tabArchiveQueue.sync {} }
     }
 
-    func restoreTabArchive() {
-        guard let data = try? Data(contentsOf: tabArchiveURL) else { return }
-        let saved: [TabArchive.Entry]
-        do { saved = try JSONDecoder().decode([TabArchive.Entry].self, from: data) } catch {
-            Self.logger.error("tab archive unreadable: \(error.localizedDescription, privacy: .public)")
-            return
+    /// The archive a previous run saved, read off the main thread while the databases open.
+    nonisolated static func readTabArchive(appSupportDirectory: String) -> [TabArchive.Entry] {
+        guard let data = try? Data(contentsOf: tabArchiveURL(appSupportDirectory)) else { return [] }
+        do { return try JSONDecoder().decode([TabArchive.Entry].self, from: data) } catch {
+            Logger(liloCategory: "Database").error("tab archive unreadable: \(error.localizedDescription, privacy: .public)")
+            return []
         }
+    }
+
+    func restoreTabArchive(_ saved: [TabArchive.Entry]) {
+        guard !saved.isEmpty else { return }
         let expiry = Date().addingTimeInterval(-TabArchive.maxAge)
         tabArchive.entries = saved.filter { $0.archivedAt > expiry } + tabArchive.entries
     }
