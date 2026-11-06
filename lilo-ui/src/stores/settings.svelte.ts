@@ -20,7 +20,7 @@ import { setLocale } from "../lib/i18n/state.svelte";
 import { isSupportedLocale } from "../lib/i18n/translate";
 
 // Settings values arrive as one string map; each surface reads the keys it owns.
-let _values = $state<Record<string, string>>({});
+const _values = $state<Record<string, string>>({});
 let _defaultBrowser = $state({ isDefault: false, shouldInvite: false });
 let _sitePermissions = $state.raw<BridgeSitePermissionSnapshot[]>([]);
 let _websiteData = $state.raw<BridgeWebsiteDataSnapshot[]>([]);
@@ -45,8 +45,11 @@ let _shortcutConflict = $state.raw<BridgeShortcutConflict | null>(null);
 let statusTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function initSettingsStore(): void {
+	// Every setting change republishes the whole map: merged key by key, only the readers of a changed key re-run.
 	on("settingsLoaded", (data) => {
-		_values = data.settings ?? {};
+		const next = data.settings ?? {};
+		for (const key in _values) if (!(key in next)) delete _values[key];
+		for (const key in next) if (_values[key] !== next[key]) _values[key] = next[key];
 		const locale = _values["locale"];
 		if (locale && isSupportedLocale(locale)) void setLocale(locale);
 	});
