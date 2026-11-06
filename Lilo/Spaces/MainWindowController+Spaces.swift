@@ -387,19 +387,11 @@ extension MainWindowController {
             )
             context.hiddenSpaceLifecycle.scheduleTrim(excluding: nextSpaceId)
             spaceManager.setActiveTab(previousActiveTabId, forSpace: oldSpaceId)
-            let activeTabId = restorableActiveTabId(preferred: previousActiveTabId, in: inactiveRuntime.tabs)
-            let stored = context.browserState.space(id: oldSpaceId)?.spaceTab.state
-            let state = SpaceTabStateImporter.importState(
-                activeTabId: activeTabId,
-                activationHistory: stored?.activationHistory ?? [],
-                viewedAt: stored?.viewedAt ?? [:],
-                tabs: inactiveRuntime.tabs,
-                folders: inactiveFolders,
-                treeItems: inactiveTreeItems,
-                spaceId: oldSpaceId
-            )
-            // Private spaces leave no trace on disk.
-            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true {
+            // Private spaces leave no trace on disk. Caching the runtime leaves the store's durable
+            // tree as is, so only the active tab can differ from the state it holds.
+            if context.spaceManager?.space(with: oldSpaceId)?.isPrivate != true,
+               var state = context.browserState.spaceTabState(forSpace: oldSpaceId) {
+                state.activeTabId = restorableActiveTabId(preferred: previousActiveTabId, in: inactiveRuntime.tabs)
                 profileContext?.sessionPersistence?.saveSpaceTabStateAsync(state, spaceId: oldSpaceId) { [weak self] activeTabId, spaceId in
                     self?.context.spaceManager?.setActiveTab(activeTabId, forSpace: spaceId)
                 }
@@ -493,15 +485,8 @@ extension MainWindowController {
                 preferred: activeTabBySpace[spaceId] ?? snapshot.spaceTab.state.activeTabId ?? targetSpace.activeTabId,
                 in: restoredTabs
             )
-            let restoredState = SpaceTabStateImporter.importState(
-                activeTabId: activeId,
-                activationHistory: snapshot.spaceTab.state.activationHistory,
-                viewedAt: snapshot.spaceTab.state.viewedAt,
-                tabs: restoredTabs,
-                folders: projection.folders,
-                treeItems: projection.treeItems,
-                spaceId: spaceId
-            )
+            var restoredState = snapshot.spaceTab.state
+            restoredState.activeTabId = activeId
 
             if restoredTabs.isEmpty {
                 tabManager.restoreVisibleRuntime([], engines: [:], activeTabId: nil)
@@ -516,7 +501,8 @@ extension MainWindowController {
                     activateRestoredTab: !forSessionRestore
                 )
             }
-            tabManager.applyDurableProjectionToRuntime(restoredState, spaceId: spaceId)
+            // The store's state is already repaired, and restoreVisibleRuntime pruned the overlay.
+            tabManager.applyDurableProjectionToRuntime(restoredState, spaceId: spaceId, prunesStaleOverlay: false, repairsState: false)
             if previousSpaceId != spaceId { context.browserState.retainLiveHost(tabManager.engineHost, for: spaceId) }
             // Parked engines may still point at the window that parked them, closed since.
             for engine in restoredEngines.values {

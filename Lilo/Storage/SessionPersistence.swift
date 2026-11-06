@@ -132,12 +132,10 @@ final class SessionPersistence {
         spaceId: UUID,
         updateActiveTab: ((UUID?, UUID) -> Void)? = nil
     ) {
-        let repaired = SpaceTabStateRepair.repaired(state)
         // Nothing pending and an equal last snapshot: the store already holds (or is writing) these bytes.
-        let unchanged = pendingStatesBySpaceId[spaceId] == nil
-            && lastSnapshotsBySpaceId[spaceId].map { $0 == repaired || $0 == state } == true
+        let unchanged = pendingStatesBySpaceId[spaceId] == nil && lastSnapshotsBySpaceId[spaceId] == state
         pendingStatesBySpaceId.removeValue(forKey: spaceId)
-        lastSnapshotsBySpaceId[spaceId] = repaired
+        lastSnapshotsBySpaceId[spaceId] = state
         updateActiveTab?(state.activeTabId, spaceId)
         PerfSignposts.energy.emitEvent("spaceSwitchSave", "\(unchanged ? "skipped" : "written")")
         if unchanged { return }
@@ -148,7 +146,7 @@ final class SessionPersistence {
                 Task { @MainActor [weak self] in
                     Self.logger.error("space-switch save ERROR: \(error.localizedDescription)")
                     // Forget the unwritten snapshot so the next switch away retries the write.
-                    if self?.lastSnapshotsBySpaceId[spaceId] == repaired { self?.lastSnapshotsBySpaceId.removeValue(forKey: spaceId) }
+                    if self?.lastSnapshotsBySpaceId[spaceId] == state { self?.lastSnapshotsBySpaceId.removeValue(forKey: spaceId) }
                 }
             }
         })
