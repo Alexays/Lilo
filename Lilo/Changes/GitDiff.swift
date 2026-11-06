@@ -58,6 +58,10 @@ struct GitDiff: Sendable {
     /// versions of a file are read from.
     var target: String?
     var root: String?
+    /// Git printed more than `maxBytes`: nothing is parsed or shown.
+    var isTooLarge = false
+    /// Lines address `bytes` with Int32 offsets, and a diff this large is past reading anyway.
+    private static let maxBytes = 256 << 20
 
     var added: Int { files.reduce(0) { $0 + $1.added } }
     var removed: Int { files.reduce(0) { $0 + $1.removed } }
@@ -86,6 +90,10 @@ struct GitDiff: Sendable {
         guard let output = run(["diff", "--no-color", "--no-ext-diff", "--no-textconv", "-M", "--unified=3", target], in: directory) else { return nil }
         diff.target = target
         diff.root = repositoryRoot(containing: directory)
+        guard output.count <= maxBytes else {
+            diff.isTooLarge = true
+            return diff
+        }
         diff.bytes = [UInt8](output)
         diff.parse()
         diff.appendUntracked(in: directory)

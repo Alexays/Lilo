@@ -1887,6 +1887,8 @@
 		"Lilo could not read this repository.": "このリポジトリを読み取れませんでした。",
 		"No main or master branch to compare with.": "比較対象の main または master ブランチがありません。",
 		"Check that git is installed and the folder is a repository.": "git がインストールされていることと、フォルダがリポジトリであることを確認してください。",
+		"Changes too large to show": "変更が大きすぎて表示できません",
+		"Lilo shows diffs of up to 256 MB.": "Lilo が表示できる差分は 256 MB までです。",
 		"No uncommitted changes": "未コミットの変更はありません",
 		"The working tree matches the last commit.": "ワークツリーは最後のコミットと一致しています。",
 		"Compare with Branch Base": "ブランチの分岐元と比較",

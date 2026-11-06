@@ -1887,6 +1887,8 @@
 		"Lilo could not read this repository.": "Lilo가 이 저장소를 읽을 수 없습니다.",
 		"No main or master branch to compare with.": "비교할 main 또는 master 브랜치가 없습니다.",
 		"Check that git is installed and the folder is a repository.": "Git이 설치되어 있고 해당 폴더가 저장소인지 확인하세요.",
+		"Changes too large to show": "변경 사항이 너무 커서 표시할 수 없음",
+		"Lilo shows diffs of up to 256 MB.": "Lilo는 최대 256MB의 diff를 표시합니다.",
 		"No uncommitted changes": "커밋하지 않은 변경사항 없음",
 		"The working tree matches the last commit.": "작업 트리가 마지막 커밋과 일치합니다.",
 		"Compare with Branch Base": "브랜치 기준점과 비교",

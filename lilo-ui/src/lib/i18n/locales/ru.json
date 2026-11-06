@@ -1917,6 +1917,8 @@
 		"Lilo could not read this repository.": "Lilo не удалось прочитать этот репозиторий.",
 		"No main or master branch to compare with.": "Нет ветки main или master для сравнения.",
 		"Check that git is installed and the folder is a repository.": "Проверьте, что git установлен, а папка является репозиторием.",
+		"Changes too large to show": "Изменения слишком велики для показа",
+		"Lilo shows diffs of up to 256 MB.": "Lilo показывает diff размером до 256 МБ.",
 		"No uncommitted changes": "Нет незакоммиченных изменений",
 		"The working tree matches the last commit.": "Рабочее дерево совпадает с последним коммитом.",
 		"Compare with Branch Base": "Сравнить с основанием ветки",

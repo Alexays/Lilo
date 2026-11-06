@@ -1887,6 +1887,8 @@
 		"Lilo could not read this repository.": "Lilo kon deze repository niet lezen.",
 		"No main or master branch to compare with.": "Geen main- of masterbranch om mee te vergelijken.",
 		"Check that git is installed and the folder is a repository.": "Controleer of git is geïnstalleerd en of de map een repository is.",
+		"Changes too large to show": "Wijzigingen te groot om te tonen",
+		"Lilo shows diffs of up to 256 MB.": "Lilo toont diffs tot 256 MB.",
 		"No uncommitted changes": "Geen niet-vastgelegde wijzigingen",
 		"The working tree matches the last commit.": "De werkmap komt overeen met de laatste commit.",
 		"Compare with Branch Base": "Vergelijk met basis van branch",
