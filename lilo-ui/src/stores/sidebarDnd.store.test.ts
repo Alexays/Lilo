@@ -38,6 +38,8 @@ const ZONE: SidebarZoneRef = { id: "zone-a", section: "unpinned", parentFolderId
 const OTHER_ZONE: SidebarZoneRef = { id: "zone-b", section: "pinned", parentFolderId: null };
 
 function registerZones(): void {
+	// Test files share one process: a document another file stubbed would take the drag flag the store mirrors onto it.
+	delete (globalThis as { document?: unknown }).document;
 	dndEngineStore.registerZone(elementRect(0, 0, 240, 120), {
 		id: ZONE.id,
 		axis: "vertical",
