@@ -68,11 +68,16 @@ extension BrowserContext {
         if isTerminating { Self.tabArchiveQueue.sync {} }
     }
 
-    /// The archive a previous run saved, read off the main thread while the databases open.
+    /// The archive a previous run saved, read off the main thread while the databases open. One that no longer
+    /// decodes is set aside as `.corrupt`, so the next save cannot overwrite it.
     nonisolated static func readTabArchive(appSupportDirectory: String) -> [TabArchive.Entry] {
-        guard let data = try? Data(contentsOf: tabArchiveURL(appSupportDirectory)) else { return [] }
+        let url = tabArchiveURL(appSupportDirectory)
+        guard let data = try? Data(contentsOf: url) else { return [] }
         do { return try JSONDecoder().decode([TabArchive.Entry].self, from: data) } catch {
             Logger(liloCategory: "Database").error("tab archive unreadable: \(error.localizedDescription, privacy: .public)")
+            let corrupt = url.appendingPathExtension("corrupt")
+            try? FileManager.default.removeItem(at: corrupt)
+            try? FileManager.default.moveItem(at: url, to: corrupt)
             return []
         }
     }
