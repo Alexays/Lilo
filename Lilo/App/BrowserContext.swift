@@ -279,8 +279,12 @@ final class BrowserContext {
             }, monitorSystem: true)
         }
         powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
+        // The chrome shows only the helper's status: the other state changes stay native.
+        var sentHelperStatus: String?
         powerKeeper.onChange = { [weak self] state in
             self?.keepAwakeStatusItem?.update(state)
+            guard state.helperStatus != sentHelperStatus else { return }
+            sentHelperStatus = state.helperStatus
             for window in self?.windows.windows ?? [] {
                 window.bridgeRouter.send(event: "keepAwakeChanged", data: ["helperStatus": state.helperStatus])
             }
