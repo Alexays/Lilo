@@ -11,6 +11,7 @@ test("save still reaches the native bridge on the second capture of a session", 
 		"/src/stores/screenshotEditor.svelte.ts",
 	);
 	initScreenshotEditor();
+	const undoToast = await loadStore("/src/stores/undoToast.svelte.ts");
 
 	const receive = (msg: Record<string, unknown>): void => {
 		(window as { __lilo?: { receive(msg: unknown): void } }).__lilo?.receive(msg);
@@ -41,7 +42,7 @@ test("save still reaches the native bridge on the second capture of a session", 
 	await screenshotEditor.save();
 	assert.equal(posted.filter((m) => m.action === "screenshot.saveDefault").length, 2);
 
-	screenshotEditor.clearToast();
+	undoToast.pauseUndoToast();
 });
 
 test("save leaves an unannotated capture to native and flattens an annotated one", async () => {
@@ -52,6 +53,7 @@ test("save leaves an unannotated capture to native and flattens an annotated one
 		"/src/stores/screenshotEditor.svelte.ts",
 	);
 	initScreenshotEditor();
+	const undoToast = await loadStore("/src/stores/undoToast.svelte.ts");
 	(window as { __lilo?: { receive(msg: unknown): void } }).__lilo?.receive({
 		event: "screenshotCaptured",
 		id: "capture-1",
@@ -76,16 +78,15 @@ test("save leaves an unannotated capture to native and flattens an annotated one
 	assert.deepEqual(saves()[1], { id: "capture-1", dataURL: "data:image/png;base64,FLAT=", filename: "shot.png" });
 	assert.equal(flattened, 1);
 
-	screenshotEditor.clearToast();
+	undoToast.pauseUndoToast();
 });
 
 test("a capture cut at the height limit says so", async () => {
 	stubBridgeWindow();
 	const loadStore = await freshStores();
-	const { screenshotEditor, initScreenshotEditor } = await loadStore(
-		"/src/stores/screenshotEditor.svelte.ts",
-	);
+	const { initScreenshotEditor } = await loadStore("/src/stores/screenshotEditor.svelte.ts");
 	initScreenshotEditor();
+	const undoToast = await loadStore("/src/stores/undoToast.svelte.ts");
 	const receive = (truncated: boolean): void => {
 		(window as { __lilo?: { receive(msg: unknown): void } }).__lilo?.receive({
 			event: "screenshotCaptured",
@@ -98,12 +99,12 @@ test("a capture cut at the height limit says so", async () => {
 	};
 
 	receive(false);
-	assert.equal(screenshotEditor.toast, null);
+	assert.equal(undoToast.getUndoToast(), null);
 
 	receive(true);
-	assert.equal(screenshotEditor.toast?.kind, "notice");
+	assert.notEqual(undoToast.getUndoToast(), null);
 
-	screenshotEditor.clearToast();
+	undoToast.pauseUndoToast();
 });
 
 test("a full-page capture shows a loader, and closing it drops the late result", async () => {
@@ -148,6 +149,7 @@ test("a save the editor did not ask for, from a capture's card, leaves it open",
 	const loadStore = await freshStores();
 	const { screenshotEditor, initScreenshotEditor } = await loadStore("/src/stores/screenshotEditor.svelte.ts");
 	initScreenshotEditor();
+	const undoToast = await loadStore("/src/stores/undoToast.svelte.ts");
 	const receive = (msg: Record<string, unknown>): void => {
 		(window as { __lilo?: { receive(msg: unknown): void } }).__lilo?.receive(msg);
 	};
@@ -156,6 +158,6 @@ test("a save the editor did not ask for, from a capture's card, leaves it open",
 	receive({ event: "screenshotSaved", path: "/Users/me/Downloads/b.png" });
 
 	assert.equal(screenshotEditor.open, true);
-	assert.equal(screenshotEditor.toast?.kind, "saved");
-	screenshotEditor.clearToast();
+	assert.match(undoToast.getUndoToast()?.label ?? "", /b\.png/);
+	undoToast.pauseUndoToast();
 });

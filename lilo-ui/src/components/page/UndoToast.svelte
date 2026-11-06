@@ -1,7 +1,8 @@
-<!-- The undo toast: what just went and a named way back, gone after its countdown. With the full
-     sidebar shown it docks above the bottom bar, in flow, so it never covers the page; otherwise
-     it is a capsule at the bottom center of the page. Escape stays with the other overlays: it
-     leaves on its action, its timeout, or the next toast. -->
+<!-- The undo toast: what just went and a named way back, gone after its countdown, or a plain
+     message with neither action nor countdown. With the full sidebar shown it docks above the
+     bottom bar, in flow, so it never covers the page; otherwise it is a capsule at the bottom
+     center of the page. Escape stays with the other overlays: it leaves on its action, its
+     timeout, or the next toast. -->
 <script lang="ts">
   import { fade, slide } from "svelte/transition";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -25,6 +26,7 @@
 
   const sidebarHasRoom = $derived(isSidebarVisible() && isVerticalLayout() && !isSidebarRail());
   const toast = $derived(docked === sidebarHasRoom ? getUndoToast() : null);
+  const message = $derived(toast?.label !== undefined && !toast.undo);
 </script>
 
 {#snippet card(seq: number)}
@@ -34,6 +36,7 @@
       <div
         class="undo-toast"
         class:docked
+        class:message
         role="group"
         style={`--undo-duration: ${UNDO_TOAST_DURATION_MS}ms`}
         use:reportInteractiveZone={{ id: "undo-toast" }}
@@ -43,19 +46,23 @@
         onfocusout={resumeUndoToast}
         out:fade={{ duration: docked ? 0 : prefersReducedMotion() ? 150 : 120 }}
       >
-        <svg class="undo-ring" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-          <circle class="track" cx="8" cy="8" r="6.5" />
-          <circle class="remaining" cx="8" cy="8" r="6.5" />
-        </svg>
-        <span class="undo-subject">{undoToastSubject(toast)}</span>
-        <button
-          class="undo-action"
-          type="button"
-          use:tooltip={{ text: undoToastSubject(toast), shortcut: toast.archivedIds || toast.undo ? undefined : shortcutKeys("tab.reopenClosed") }}
-          onclick={undoTabClose}
-        >
-          {t(toast.undo ? "undoToast.undo" : "undoToast.reopen")}
-        </button>
+        {#if message}
+          <span class="undo-subject">{toast.label}</span>
+        {:else}
+          <svg class="undo-ring" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <circle class="track" cx="8" cy="8" r="6.5" />
+            <circle class="remaining" cx="8" cy="8" r="6.5" />
+          </svg>
+          <span class="undo-subject">{undoToastSubject(toast)}</span>
+          <button
+            class="undo-action"
+            type="button"
+            use:tooltip={{ text: undoToastSubject(toast), shortcut: toast.archivedIds || toast.undo ? undefined : shortcutKeys("tab.reopenClosed") }}
+            onclick={undoTabClose}
+          >
+            {t(toast.undo ? "undoToast.undo" : "undoToast.reopen")}
+          </button>
+        {/if}
       </div>
     {/if}
   {/key}
@@ -150,6 +157,23 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  /* A message is a sentence or a path to read whole: it wraps rather than being cut. */
+  .undo-toast.message {
+    height: auto;
+    min-height: 40px;
+    padding: 10px 14px;
+  }
+
+  .undo-toast.docked.message {
+    min-height: 34px;
+    padding: 8px 10px;
+  }
+
+  .message .undo-subject {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .undo-action {

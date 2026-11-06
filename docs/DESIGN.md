@@ -27,8 +27,8 @@ A piece of information takes the form of its family, never another.
 
 | Family | Form | Examples | Dismissed by |
 |---|---|---|---|
-| Status | Badge on a fixed landmark | Download in progress, agent waiting | Clears itself |
-| Toast | Capsule at the bottom center of the page, one at a time, queued, 5 s | Tab closed, screenshot copied | Time, or its action |
+| Status | Badge on a fixed landmark, or for a passing confirmation a word in the address field itself for 1.4 s, a new one replacing the last | Download in progress, agent waiting; link copied, zoom level, extension installed | Clears itself |
+| Toast | Capsule at the bottom center of the page, one at a time, queued, 5 s (6 s for a notice to read) | Tab closed, screenshot copied or saved, capture cut short | Time, or its action |
 | Drawer | Floats over the content, anchored to its source by an arrow | Site permissions, agent or extension requests | Its buttons, Esc |
 | Popover | Anchored to its button | Extensions, Agents, archived tabs | Esc, click outside |
 | Modal | Centered on the page area, dimming it, blocking, no close button | Clear browsing data, agent connection, What's New; an unresponsive page | Its buttons, Esc |

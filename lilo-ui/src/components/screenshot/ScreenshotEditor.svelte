@@ -527,20 +527,6 @@
   </div>
 {/if}
 
-{#if screenshotEditor.toast}
-  <!-- Centered on the page, not the window: a narrow window's sidebar stays uncovered. -->
-  <div class="screenshot-toast-host chrome-content-overlay-root" class:sidebar-hidden={!isSidebarVisible()}>
-    <div
-      class="screenshot-toast"
-      class:error={screenshotEditor.toast.kind === "error"}
-      use:reportInteractiveZone={{ id: "screenshot-toast" }}
-    >
-      {screenshotEditor.toast.kind === "saved" ? t("screenshot.savedTo", { path: screenshotEditor.toast.message }) : screenshotEditor.toast.message}
-      <button onclick={() => screenshotEditor.clearToast()} aria-label={t("common.close")}>×</button>
-    </div>
-  </div>
-{/if}
-
 <style>
   /* Positioning comes from .chrome-content-overlay-root (fixed to the content region). */
   .screenshot-editor { z-index: 1000; overflow: hidden; pointer-events: auto; }
@@ -587,15 +573,4 @@
     font-family: -apple-system, sans-serif; line-height: 1.1;
     outline: none; min-width: 40px; border-radius: var(--radius-2xs);
   }
-
-  .screenshot-toast-host { z-index: 1001; display: flex; align-items: flex-end; justify-content: center; padding: 0 16px 16px; pointer-events: none; }
-  .screenshot-toast {
-    pointer-events: auto; max-width: 100%;
-    display: flex; gap: 12px; align-items: center;
-    padding: 10px 14px; border-radius: var(--radius-md); font-size: var(--font-size-sm); color: #e8eaee;
-    background: rgba(38, 40, 46, 0.98); border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
-  }
-  .screenshot-toast.error { border-color: rgba(255, 80, 70, 0.6); }
-  .screenshot-toast button { border: none; background: transparent; color: inherit; cursor: pointer; font-size: var(--font-size-lg); }
 </style>
