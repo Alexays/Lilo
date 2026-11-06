@@ -272,12 +272,16 @@ test-build: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 # RESULT_BUNDLE=path writes an .xcresult bundle (used by CI to upload results on failure).
 # Test classes run in parallel app instances, one per performance core: more only adds load and timing flakes.
 # SWIFT_TEST_SHARD=i/n deals the test classes, sorted by name, round-robin: neighbors like the Agent*Tests split up.
+# The last shard runs LiloTests minus the other shards' classes, so a class the grep misses still runs there.
+SWIFT_TEST_SHARD_I = $(word 1,$(subst /, ,$(SWIFT_TEST_SHARD)))
+SWIFT_TEST_SHARD_N = $(word 2,$(subst /, ,$(SWIFT_TEST_SHARD)))
 SWIFT_TEST_SHARD_CLASSES = $(shell grep -rhE '^final class [A-Za-z0-9_]+: *(XCTestCase|AgentToolTestCase)' LiloTests \
 	| sed -E 's/^final class ([A-Za-z0-9_]+).*/LiloTests\/\1/' | sort \
-	| awk -v i=$(word 1,$(subst /, ,$(SWIFT_TEST_SHARD))) -v n=$(word 2,$(subst /, ,$(SWIFT_TEST_SHARD))) 'NR % n == i % n')
+	| awk -v i=$(SWIFT_TEST_SHARD_I) -v n=$(SWIFT_TEST_SHARD_N) 'i == n ? NR % n != 0 : NR % n == i % n')
+SWIFT_TEST_SHARD_ARGS = $(if $(filter $(SWIFT_TEST_SHARD_N),$(SWIFT_TEST_SHARD_I)),-only-testing:LiloTests $(addprefix -skip-testing:,$(SWIFT_TEST_SHARD_CLASSES)),$(addprefix -only-testing:,$(SWIFT_TEST_SHARD_CLASSES)))
 ## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER="LiloTests/Class LiloTests/Other/testCase" narrows the run, SWIFT_TEST_SHARD=1/3 runs a third)
 swift-test: test-build
-	@$(TEST) $(addprefix -only-testing:,$(or $(SWIFT_TEST_FILTER),$(if $(SWIFT_TEST_SHARD),$(SWIFT_TEST_SHARD_CLASSES)),LiloTests)) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
+	@$(TEST) $(or $(addprefix -only-testing:,$(SWIFT_TEST_FILTER)),$(if $(SWIFT_TEST_SHARD),$(SWIFT_TEST_SHARD_ARGS)),-only-testing:LiloTests) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
