@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions that drive a tab with Puppeteer through chrome.debugger no longer fail at startup, and wait for pages to load as in Chrome
+time: 2026-11-06T18:39:18.327389+01:00

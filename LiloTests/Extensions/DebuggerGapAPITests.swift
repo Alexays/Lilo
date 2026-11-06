@@ -222,6 +222,32 @@ final class DebuggerGapAPITests: XCTestCase {
         XCTAssertEqual((keys.result["result"] as? [String: Any])?["value"] as? String, "a+meta,Tab", "a rawKeyDown with no char still reaches the page")
     }
 
+    func testPuppeteerStartupAndNavigationEvents() async throws {
+        let tab = try await openTab()
+        _ = await attach(tab.position)
+        for method in ["Page.setLifecycleEventsEnabled", "Performance.enable", "Log.enable", "Audits.enable", "Fetch.disable"] {
+            let reply = await send(method, ["enabled": true])
+            XCTAssertNil(reply.error, method)
+        }
+        _ = await send("Runtime.enable")
+        let tree = await send("Page.getFrameTree")
+        let oldLoader = ((tree.result["frameTree"] as? [String: Any])?["frame"] as? [String: Any])?["loaderId"] as? String
+
+        let navigated = await send("Page.navigate", ["url": "http://127.0.0.1:\(server.port)/"])
+        let loader = try XCTUnwrap(navigated.result["loaderId"] as? String, navigated.error ?? "")
+        XCTAssertNotEqual(loader, oldLoader)
+        let names = { self.events("debugger.onEvent").compactMap { $0[1] as? String } }
+        try await waitUntil("a Runtime-only session hears its contexts cleared") { names().contains("Runtime.executionContextsCleared") }
+        XCTAssertFalse(names().contains("Page.frameNavigated"), "Page events reach only sessions that enabled Page")
+
+        _ = await send("Page.enable")
+        _ = await send("Page.reload")
+        try await waitUntil("the page's lifecycle events arrive") {
+            let lifecycle = self.events("debugger.onEvent").filter { $0[1] as? String == "Page.lifecycleEvent" }.compactMap { ($0[2] as? [String: Any])?["name"] as? String }
+            return lifecycle.contains("init") && lifecycle.contains("load")
+        }
+    }
+
     func testRestrictedPagesFollowChrome() throws {
         let context = try XCTUnwrap(registry.context(for: extensionId))
         let restriction = { (url: String) in DebuggerBridgeHandler.restriction(of: URL(string: url), for: context) }
