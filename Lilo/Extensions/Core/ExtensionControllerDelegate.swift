@@ -76,6 +76,17 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         }
     }
 
+    /// Closes the extension's popup when one is on screen, as a second click on its button does. True when one was.
+    func closeActionPopup(of extensionId: String) -> Bool {
+        guard let shown = popupPresentationsByPopoverId.first(where: {
+            $0.value.action.webExtensionContext?.uniqueIdentifier == extensionId
+        }) else { return false }
+        popupPresentationsByPopoverId[shown.key] = nil
+        shown.value.popover?.performClose(nil as Any?)
+        shown.value.action.closePopup()
+        return true
+    }
+
     /// Closes the context's popups at once, before it unloads: WebKit's popover crashes when it finishes
     /// closing after its context left (WEBKIT-GAPS.md, gap 75).
     func closeActionPopups(of context: WKWebExtensionContext) {

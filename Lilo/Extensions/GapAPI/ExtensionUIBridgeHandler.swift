@@ -249,7 +249,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
     /// lists its pages on screen outside tabs.
     func handle(_ call: GapCall) async -> Any? {
         guard call.action == "runtime.extensionViews" else {
-            return await openPopup(extensionId: call.extensionId, anchorRect: nil, registry: call.registry)
+            return await openPopup(call)
         }
         guard let context = call.context else { return [] }
         return call.registry.delegate.extensionViews(of: context).map { ["contextType": $0.contextType, "url": $0.url.absoluteString] }
@@ -321,6 +321,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
                registry.toggleSidePanelOnActionClick?(id, window) == true {
                 return nil
             }
+            if extensionRegistry?.delegate.closeActionPopup(of: id) == true { return nil }
             extensionRegistry?.noteUserGesture(extensionId: id)
             return await openPopup(extensionId: id, anchorRect: Self.anchorRect(from: message), registry: extensionRegistry)
         case "updateExtensionPopupAnchor":
@@ -449,21 +450,48 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         return nil
     }
 
-    /// A nil `anchorRect` (chrome.action.openPopup) anchors the popup on the stored icon rect.
+    /// A click on the toolbar button: it replaces any popup shown and performs the action whatever it is.
     private func openPopup(extensionId id: String, anchorRect: NSRect?, registry: ProfileExtensionRegistry?) async -> [String: Any]? {
         guard let registry, registry.context(for: id) != nil else { return nil }
-
         registry.delegate.closeOpenActionPopups(reason: "toolbar open", extensionId: id)
-        let actionTabAdapter: TabExtensionAdapter?
-        if let tabManager = registry.delegate.tabManager,
-           let activeOpenTabId = tabManager.activeOpenTabId {
-            actionTabAdapter = tabManager.tabAdapter(for: activeOpenTabId)
-        } else {
-            actionTabAdapter = nil
+        await performAction(extensionId: id, on: actionTab(in: registry.delegate.windowAdapter), anchorRect: anchorRect, registry: registry)
+        return nil
+    }
+
+    /// `action.openPopup` from an extension page, as WebKit serves it to the worker: in the active tab of the given
+    /// window or the focused one, only for an action with a popup, and never over a popup already shown.
+    private func openPopup(_ call: GapCall) async -> Any? {
+        let registry = call.registry
+        var window = registry.delegate.windowAdapter
+        if let windowId = call.int("windowId") {
+            window = call.int("windowPosition").flatMap { registry.extensionWindow(at: $0, extensionId: call.extensionId) }
+            if window == nil { return BridgeError("No window with id: \(windowId).") }
         }
-        if let actionTabAdapter {
-            registry.delegate.windowAdapter?.activeAdapter = actionTabAdapter
+        guard let window, let context = registry.context(for: call.extensionId),
+              !window.isPrivateWindow || context.hasAccessToPrivateData else {
+            return BridgeError("Could not find an active browser window.")
         }
+        guard !registry.delegate.hasOpenActionPopover else { return BridgeError("Another popup is already open.") }
+        let tab = actionTab(in: window)
+        guard context.action(for: tab)?.presentsPopup == true else {
+            return BridgeError("Extension does not have a popup on the active tab.")
+        }
+        await performAction(extensionId: call.extensionId, on: tab, anchorRect: nil, registry: registry)
+        return nil
+    }
+
+    /// The tab an action acts on in `window`: its active one, made the window's active tab for WebKit.
+    private func actionTab(in window: WindowExtensionAdapter?) -> TabExtensionAdapter? {
+        guard let manager = window?.tabManager, let tab = manager.activeOpenTabId.flatMap({ manager.tabAdapter(for: $0) }) else {
+            // A window showing no web page hands the popup its stand-in tab, so the popup's current window is this one.
+            return window?.activeTab
+        }
+        window?.activeAdapter = tab
+        return tab
+    }
+
+    /// Presents the popup on `tab` or fires `onClicked`. A nil `anchorRect` anchors the popup on the stored icon rect.
+    private func performAction(extensionId id: String, on tab: TabExtensionAdapter?, anchorRect: NSRect?, registry: ProfileExtensionRegistry) async {
         if let anchorRect {
             registry.delegate.setPopupAnchorRect(anchorRect, for: id)
         }
@@ -471,13 +499,10 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         await registry.backgrounds.ensureResponsive(id)
         // Re-fetch after the await: a stale worker is reloaded into a BRAND-NEW context, and performing
         // the action on the torn-down one would present the popup against the dead worker (a hang).
-        guard let context = registry.context(for: id) else { return nil }
-        // A window showing no web page hands the popup its stand-in tab, so the popup's current window is this one.
-        let tab = actionTabAdapter ?? registry.delegate.windowAdapter?.activeTab
+        guard let context = registry.context(for: id) else { return }
         // Reading the popup creates it: watched before its first frame loads.
         if let popup = context.action(for: tab)?.popupWebView { registry.frameCookies.watch(popup) }
         context.performAction(for: tab)
-        return nil
     }
 }
 

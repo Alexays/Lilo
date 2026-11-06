@@ -422,6 +422,29 @@ final class SidePanelTests: XCTestCase {
         UserDefaults.lilo.removeObject(forKey: "sidePanel.\(registry.profileId).\(extensionId!)")
     }
 
+    func testTheActionShortcutTogglesThePanelAsTheClickDoes() async throws {
+        let dir = tempDir.appendingPathComponent("Shortcut")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try #"""
+        {"manifest_version":3,"name":"Shortcut","version":"1.0","permissions":["sidePanel"],"side_panel":{"default_path":"panel.html"},
+         "action":{},"commands":{"_execute_action":{"suggested_key":{"mac":"Command+Shift+Y"}}}}
+        """#.write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "<title>panel</title>".write(to: dir.appendingPathComponent("panel.html"), atomically: true, encoding: .utf8)
+        try await registry.load(from: dir)
+        let id = try XCTUnwrap(registry.loadedExtensions.map(\.id).first { $0 != extensionId })
+        await call("setPanelBehavior", ["openPanelOnActionClick": true], from: id)
+        let shortcut = try XCTUnwrap(NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: [.command, .shift], timestamp: 0, windowNumber: 0, context: nil,
+            characters: "y", charactersIgnoringModifiers: "y", isARepeat: false, keyCode: 16
+        ))
+
+        XCTAssertTrue(registry.handleExtensionKeyDown(shortcut))
+        XCTAssertEqual(window.sidePanel.shown, .init(extensionId: id, tabId: nil))
+        XCTAssertTrue(registry.handleExtensionKeyDown(shortcut))
+        XCTAssertNil(window.sidePanel.shown)
+        UserDefaults.lilo.removeObject(forKey: "sidePanel.\(registry.profileId).\(id)")
+    }
+
     // MARK: - Private spaces
 
     func testAPanelHidesInAPrivateSpaceUnlessTheExtensionIsAllowedThere() async throws {

@@ -1040,6 +1040,11 @@ final class ProfileExtensionRegistry {
                   let command = runtime.context.command(for: event) else { continue }
             let extensionId = runtime.id
             let commandId = command.id
+            // The action shortcut does what a click on the button does: toggle the side panel, or the popup.
+            if ["_execute_action", "_execute_browser_action", "_execute_page_action"].contains(commandId) {
+                if let window = delegate.windowController, toggleSidePanelOnActionClick?(extensionId, window) == true { return true }
+                if delegate.closeActionPopup(of: extensionId) { return true }
+            }
             noteUserGesture(extensionId: extensionId)
             Task { @MainActor [weak self] in
                 guard let self else { return }

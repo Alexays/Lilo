@@ -3,13 +3,18 @@ import assert from 'node:assert/strict';
 import { mockGapAPI } from '../shared/ipc.testkit.ts';
 
 const stored: Record<string, unknown> = {};
+const popupCalls: unknown[] = [];
 
 mockGapAPI((msg: any) => {
+  if (msg.method === 'openPopup') {
+    popupCalls.push(msg.params);
+    return null;
+  }
   if (msg.method.startsWith('set')) stored[msg.method.slice(3)] = msg.params.color;
   return msg.method.startsWith('get') ? stored[msg.method.slice(3)] ?? '' : null;
 });
 
-(globalThis as any).chrome = { runtime: {} };
+(globalThis as any).chrome = { runtime: {}, windows: { getAll: async () => [{ id: 10 }, { id: 20 }] } };
 
 // Node has no canvas: this one serializes the colors below as WebKit does, and ignores any other value.
 const serialized: Record<string, string> = {
@@ -47,5 +52,16 @@ describe('action badge colors', () => {
       { message: 'The color specification could not be parsed.' },
     );
     assert.deepEqual(await actionColorAugmentation.getBadgeBackgroundColor({}), [255, 0, 0, 255]);
+  });
+});
+
+describe('action.openPopup', () => {
+  it("sends the window's position beside its id, and nothing for the current window", async () => {
+    await actionColorAugmentation.openPopup({ windowId: 20 });
+    await actionColorAugmentation.openPopup({ windowId: 99 });
+    await actionColorAugmentation.openPopup();
+    await actionColorAugmentation.openPopup({ windowId: -2 });
+
+    assert.deepEqual(popupCalls, [{ windowId: 20, windowPosition: 1 }, { windowId: 99, windowPosition: -1 }, {}, {}]);
   });
 });
