@@ -142,7 +142,8 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
         let labels = host.split(separator: ".")
         let isLocal = host == "localhost" || host.hasSuffix(".localhost") || host.hasSuffix(".local") || host.contains(":")
             || (labels.count == 4 && labels.allSatisfy { UInt8($0) != nil })
-        let isDomain = labels.count > 1 && labels.last.map { $0.count >= 2 && $0.allSatisfy(\.isLetter) } == true
+        // URL encodes a non-ASCII host as punycode, so an internationalized top-level domain reads "xn--".
+        let isDomain = labels.count > 1 && labels.last.map { $0.hasPrefix("xn--") || $0.count >= 2 && $0.allSatisfy(\.isLetter) } == true
         let url: URL? = if let scheme = typed?.scheme?.lowercased(), ["http", "https", "file", "about"].contains(scheme) {
             typed
         } else if isLocal {

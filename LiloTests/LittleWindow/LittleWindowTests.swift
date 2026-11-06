@@ -58,6 +58,7 @@ final class LittleWindowTests: XCTestCase {
         let cases = [
             "v1.2": "https://search.example/?q=v1.2",
             "example.test/a": "https://example.test/a",
+            "пример.испытание/a": "https://xn--e1afmkfd.xn--80akhbyknj4f/a",
             "localhost:8080/a": "http://localhost:8080/a",
             "127.0.0.1:9/a": "http://127.0.0.1:9/a",
             "me@example.test": "https://search.example/?q=me%40example.test"
