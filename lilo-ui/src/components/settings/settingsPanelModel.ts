@@ -280,6 +280,32 @@ export function matchesSearch(haystack: string, query: string): boolean {
   return terms.every((term) => text.includes(term));
 }
 
+/** The text cut around each query term it contains, matched as `matchesSearch` does, so the hit can be marked. */
+export function highlightSearch(text: string, query: string): { text: string; hit: boolean }[] {
+  const chars = Array.from(text);
+  // Folding can change the length ("ß" to "ss", "É" to "e"): each folded unit points back to its character.
+  let folded = "";
+  const source: number[] = [];
+  chars.forEach((char, index) => {
+    const part = normalizeSearchText(char);
+    folded += part;
+    for (let unit = 0; unit < part.length; unit++) source.push(index);
+  });
+  const hits = new Array<boolean>(chars.length).fill(false);
+  for (const term of normalizeSearchText(query).split(/\s+/).filter(Boolean)) {
+    for (let index = folded.indexOf(term); index !== -1; index = folded.indexOf(term, index + term.length)) {
+      hits.fill(true, source[index], source[index + term.length - 1] + 1);
+    }
+  }
+  const parts: { text: string; hit: boolean }[] = [];
+  chars.forEach((char, index) => {
+    const last = parts.at(-1);
+    if (last?.hit === hits[index]) last.text += char;
+    else parts.push({ text: char, hit: hits[index] });
+  });
+  return parts;
+}
+
 /** Settings whose title, description, group, section, or keywords match, in display order. */
 export function searchSettings(query: string, resolve: (key: string) => string): SettingModel[] {
   return SETTINGS.filter((setting) => {

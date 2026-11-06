@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildSites,
   formatDownloadsFolderLabel,
+  highlightSearch,
   isToggleOn,
   matchesSearch,
   parseBlockerSites,
@@ -96,6 +97,16 @@ test("search ignores case and accents and needs every term", () => {
   assert.equal(matchesSearch("Mémoire des onglets", "ONGLETS mem"), true);
   assert.equal(matchesSearch("Mémoire des onglets", "onglets zoom"), false);
   assert.equal(matchesSearch("Mémoire des onglets", "   "), false);
+});
+
+test("search marks each hit on the original text, accents and folded letters included", () => {
+  const marked = (text: string, query: string) =>
+    highlightSearch(text, query).map((part) => (part.hit ? `[${part.text}]` : part.text)).join("");
+  assert.equal(marked("Écran partagé", "ecran"), "[Écran] partagé");
+  assert.equal(marked("İzinler", "zin"), "İ[zin]ler");
+  assert.equal(marked("Schriftgröße", "GROSSE"), "Schrift[größe]");
+  assert.equal(marked("Mémoire des onglets", "onglets mem"), "[Mém]oire des [onglets]");
+  assert.equal(marked("Tabs", "  "), "Tabs");
 });
 
 test("settings search reaches hidden keywords and section names", () => {
