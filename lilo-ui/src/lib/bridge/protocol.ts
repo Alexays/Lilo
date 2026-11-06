@@ -289,7 +289,6 @@ export interface BridgeExtensionSnapshot {
 	description: string;
 	isEnabled: boolean;
 	iconDataURL?: string | null;
-	iconVersion?: number;
 	hasPopup: boolean;
 	hasBackground: boolean;
 	hasContentScripts: boolean;

@@ -35,7 +35,6 @@
   import {
     badgeTextColor,
     displayInitial,
-    extensionIconSrc,
     fitPinnedCount,
     resolveDisplayName,
   } from "./extensionPanelModel";
@@ -217,7 +216,7 @@
         use:reportPopupAnchor={ext.id}
         use:tooltip={{
           text: ext.actionLabel || resolveDisplayName(ext),
-          iconSrc: extensionIconSrc(ext),
+          iconSrc: ext.iconDataURL || undefined,
         }}
         aria-label={ext.actionLabel || resolveDisplayName(ext)}
         aria-disabled={!ext.actionEnabled}
@@ -226,10 +225,10 @@
         onkeydown={(event) => event.stopPropagation()}
       >
         <span class="extension-icon-face">
-          {#if extensionIconSrc(ext)}
+          {#if ext.iconDataURL}
             <img
               class="ext-icon-image"
-              src={extensionIconSrc(ext)}
+              src={ext.iconDataURL}
               alt=""
               draggable="false"
               onerror={(event) => {

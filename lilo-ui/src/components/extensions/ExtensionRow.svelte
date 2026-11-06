@@ -15,7 +15,6 @@
   import {
     displayInitial,
     extensionCapabilities,
-    extensionIconSrc,
     isExtensionDegraded,
     resolveDisplayName,
     type ExtensionCapability,
@@ -67,10 +66,10 @@
     aria-label={t("extensions.openDetailsLabel", { name })}
   >
     <span class="row-icon" aria-hidden="true">
-      {#if extensionIconSrc(extension)}
+      {#if extension.iconDataURL}
         <img
           class="row-icon-image"
-          src={extensionIconSrc(extension)}
+          src={extension.iconDataURL}
           alt=""
           draggable="false"
           onerror={(event) => {

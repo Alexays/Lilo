@@ -39,7 +39,6 @@ final class ProfileExtensionRegistry {
         var actionColors = ActionColors()
         /// Colors set for one tab, by Lilo tab id; they win over `actionColors` while that tab is active.
         var tabActionColors: [UUID: ActionColors] = [:]
-        var iconVersion = 0
         /// Error and permission-change notifications of this context.
         var contextObserver: NSObjectProtocol?
         var pageDiagnostics: [ExtensionPageDiagnostic] = []
@@ -241,7 +240,6 @@ final class ProfileExtensionRegistry {
 
     func actionDidChange(for extensionId: String) {
         guard updateRuntime(extensionId: extensionId, {
-            $0.iconVersion += 1
             $0.bridgePayloads = [:]
         }) else { return }
         notifyExtensionsChanged()
@@ -1186,7 +1184,6 @@ final class ProfileExtensionRegistry {
         payload["actionEnabled"] = action?.isEnabled ?? true
         payload["actionLabel"] = action?.label ?? ""
         payload["iconDataURL"] = cachedIconDataURL(for: action)
-        payload["iconVersion"] = runtime.iconVersion
         payload["badgeText"] = action?.badgeText ?? ""
         payload["badgeColor"] = tabColors.map(\.badgeColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeColor
         payload["badgeTextColor"] = tabColors.map(\.badgeTextColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeTextColor
