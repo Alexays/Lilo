@@ -353,7 +353,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             try await registry.load(from: url)
             return ["success": true]
         } catch {
-            Self.logger.error("Extension load failed: \(error)")
+            Self.logger.error("Extension load failed: \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
             return BridgeError(error.localizedDescription)
         }
     }
@@ -374,7 +374,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             defer { try? FileManager.default.removeItem(at: extractedDir.deletingLastPathComponent()) }
             return settle(id: extensionId, action: "install", await installLocalExtension(from: extractedDir))
         } catch {
-            Self.logger.error("CWS install failed: \(error)")
+            Self.logger.error("CWS install failed: \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
             return settle(id: extensionId, action: "install", BridgeError(error.localizedDescription))
         }
     }

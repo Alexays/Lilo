@@ -242,7 +242,7 @@ final class DownloadManager {
             switch written {
             case .success(let url): destination = url
             case .failure(let error):
-                Self.logger.error("Failed to save data to file: \(error.localizedDescription)")
+                Self.logger.error("Failed to save data to file: \(error.localizedDescription, privacy: .public)")
                 return
             }
             item.filename = destination.lastPathComponent
