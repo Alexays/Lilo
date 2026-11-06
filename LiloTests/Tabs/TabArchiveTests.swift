@@ -199,8 +199,7 @@ final class TabArchiveTests: XCTestCase {
     }
 
     func testAnUnreadableArchiveIsSetAsideNotOverwritten() throws {
-        let (window, _) = try makeWindow()
-        let directory = window.context.appSupportDirectory
+        let directory = browserContext.context.appSupportDirectory
         let file = URL(fileURLWithPath: directory).appendingPathComponent("ArchivedTabs.json")
         try Data("not json".utf8).write(to: file)
 
