@@ -49,7 +49,7 @@ A piece of information takes the form of its family, never another.
 ## Buttons
 
 - The default button is last, on the right. Cancel sits just before it. A destructive action stands apart, on the left, in the `danger` style.
-- Labels are verbs: "Allow", "Don't Allow", "Close Tab". Never "OK" or "Deny", and never "Cancel" for stopping something ("Stop Debugging").
+- Labels are verbs: "Allow", "Don't Allow", "Close Tab". Never "Deny", and never "Cancel" for stopping something ("Stop Debugging"). "OK" only closes an alert that just informs and has no other button, as the HIG allow.
 - A variant of a choice ("always", "for this site") is a menu attached to the default button, not a third button.
 - Segmented-control labels are Title Case, like buttons.
 - ⌘↩ triggers the default button of a drawer or modal; Esc triggers Cancel.
