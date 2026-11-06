@@ -148,6 +148,24 @@ final class RecentTabsTests: XCTestCase {
         XCTAssertTrue(rowIds(window).contains(c.uuidString), "an unlocked folder's tabs come back")
     }
 
+    func testACurrentTabInALockedFolderKeepsTheFirstRowUnderTheFoldersName() throws {
+        let window = makeWindow()
+        let (a, b, c) = try visitAcrossSpaces(window)
+        let folder = TabFolder(spaceId: work.id, name: "Finances")
+        window.applyContextMenuStateCommands([
+            .createFolder(spaceId: work.id, folder: folder, section: .unpinned),
+            .moveSidebarItem(spaceId: work.id, kind: .tab, itemId: b, parentFolderId: folder.id, section: .unpinned, insert: .index(0)),
+            .setFolderLock(spaceId: work.id, folderId: folder.id, lock: FolderLock(allowsBiometrics: false))
+        ])
+
+        XCTAssertEqual(window.tabManager.activeOpenTabId, b)
+        let rows = window.recentTabRows()
+        XCTAssertEqual(Array(rowIds(window).prefix(3)), [b, c, a].map(\.uuidString))
+        XCTAssertEqual(rows[0]["title"] as? String, "Finances")
+        XCTAssertEqual(rows[0]["url"] as? String, "")
+        XCTAssertEqual(rows[0]["faviconDataURL"] as? String, "")
+    }
+
     func testControlTabOpensTheSwitcherKeepsItsKeysAndReleasingControlClosesIt() throws {
         let window = makeWindow()
         _ = try visitAcrossSpaces(window)
