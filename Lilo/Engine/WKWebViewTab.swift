@@ -82,6 +82,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didHoverLink href: String?)
         /// A service worker asks to foreground this tab (e.g. push-notification click).
         func tabRequestsForeground(_ tab: WKWebViewTab)
+        /// A call outside activation resumed this frozen tab.
+        func tabDidWake(_ tab: WKWebViewTab)
         /// The page handed us raw bytes to save to a file (blob/canvas export).
         func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL)
         /// The user asked to bookmark the current page (page context menu / Cmd+D).
@@ -617,9 +619,11 @@ final class WKWebViewTab: NSObject {
     }
 
     /// Resumes the page ahead of a call WebKit refuses on a suspended one. False when the page is lost:
-    /// the caller drops the call. The idle sweep refreezes a tab woken in the background.
+    /// the caller drops the call. The delegate schedules the refreeze of a tab woken in the background.
     func wake() -> Bool {
+        let wasFrozen = isFrozen
         resume()
+        if wasFrozen { delegate?.tabDidWake(self) }
         return !isPageLost
     }
     var isWebInspectorVisible: Bool { WebInspectorSupport.isVisible(for: webView) }
@@ -1637,6 +1641,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, allowsJavaScriptAt url: URL) -> Bool { true }
     func tab(_ tab: WKWebViewTab, didHoverLink href: String?) {}
     func tabRequestsForeground(_ tab: WKWebViewTab) {}
+    func tabDidWake(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {}
     func tabRequestsBookmark(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) {}

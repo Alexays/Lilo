@@ -181,6 +181,13 @@ final class HiddenSpaceLifecycleController {
         config.freezeThreshold.isFinite ? max(config.backgroundTrimGracePeriod, config.freezeThreshold) : config.backgroundTrimGracePeriod
     }
 
+    /// The hidden-window freeze passes once and the idle sweep is suspended: an engine it skipped while loading, or one woken since,
+    /// waits for another pass. A pending trim already is one.
+    func scheduleHiddenRefreeze() {
+        guard !isWindowVisible, pendingTrimWorkItem == nil else { return }
+        scheduleTrim(delay: config.backgroundTrimGracePeriod)
+    }
+
     /// No hidden space changed after a tab activation, so the full sweep would re-project every inactive
     /// space for nothing. A burst of activations coalesces into one trim.
     func scheduleActiveSpaceTrim(delay: TimeInterval = 2.0) {
