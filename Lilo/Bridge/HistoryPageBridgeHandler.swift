@@ -28,7 +28,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     /// Changes reach the page only while it is open: nothing is read for a closed page.
     private var pageOpen = false
     /// Favicons the page already holds, so each one crosses the bridge once per window.
-    private var sentFaviconHosts: Set<String> = []
+    var sentFaviconHosts: Set<String> = []
     nonisolated(unsafe) private var changeObserver: Any?
 
     init(profileContextProvider: @escaping () -> ProfileContext?, bridgeRouter: BridgeRouter) {

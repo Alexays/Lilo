@@ -466,7 +466,7 @@ extension MainWindowController {
             context.terminalActivityChanged()
         })
 
-        bridgeRouter.register(handler: SearchBridgeHandler(
+        let searchHandler = SearchBridgeHandler(
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
             faviconStoreProvider: { [weak self] in self?.profileContext?.favicons },
             bridgeRouter: bridgeRouter,
@@ -477,12 +477,16 @@ extension MainWindowController {
                 guard let self else { return }
                 tabManager.preloadTopHit(context.hiddenSpaceLifecycle.isConstrainedPower ? nil : url)
             }
-        ))
+        )
+        bridgeRouter.register(handler: searchHandler)
+        self.searchHandler = searchHandler
 
-        bridgeRouter.register(handler: HistoryPageBridgeHandler(
+        let historyPageHandler = HistoryPageBridgeHandler(
             profileContextProvider: { [weak self] in self?.profileContext },
             bridgeRouter: bridgeRouter
-        ))
+        )
+        bridgeRouter.register(handler: historyPageHandler)
+        self.historyPageHandler = historyPageHandler
 
         // chrome.omnibox spans both bridges: the address bar sends omniboxInput* here, and the
         // extension's suggest()/setDefaultSuggestion replies arrive via the app-wide gap relay, which

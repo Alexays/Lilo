@@ -450,6 +450,9 @@ final class MainWindowController: NSWindowController {
     var sentExtensionRows: [String: [String: Any]] = [:]
     /// Archived-tab favicons by host as this window's chrome last received them; `archivedTabs` ships only the new ones.
     var sentArchiveFavicons: [String: String] = [:]
+    /// Command bar and History page handlers, whose favicon caches `sendInitialState` clears.
+    weak var searchHandler: SearchBridgeHandler?
+    weak var historyPageHandler: HistoryPageBridgeHandler?
 
     func emitBrowserChange(_ changes: BrowserChangeSet) {
         guard let event = BrowserChangePresenter.event(
