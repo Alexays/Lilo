@@ -165,7 +165,7 @@ final class TabClosingTests: XCTestCase {
         try window.applyBrowserCommand(.moveSidebarItem(
             spaceId: space.id, kind: .tab, itemId: page.id, parentFolderId: folder.id, section: .unpinned, insert: .index(1)
         ))
-        window.context.conversations.register(conversation, folderId: folder.id)
+        window.context.conversations.register(try XCTUnwrap(window.tabManager.tab(for: conversation.id)), folderId: folder.id)
         return (conversation, folder, page)
     }
 
