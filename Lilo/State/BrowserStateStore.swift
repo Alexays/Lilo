@@ -1079,6 +1079,13 @@ extension BrowserStateStore {
         return liveHost(for: spaceId)?.tabAdapter(for: id) ?? spaces[spaceId]?.tabAdapters[id]
     }
 
+    func parkedEngine(forWebView webView: WKWebView) -> WKWebViewTab? {
+        for snapshot in spaces.values {
+            if let engine = snapshot.engines.values.first(where: { $0.ownsWebView(webView) }) { return engine }
+        }
+        return nil
+    }
+
     /// Tabs whose engine is parked live in a hidden space.
     var parkedEngineTabIds: Set<UUID> { Set(spaces.values.flatMap(\.engines.keys)) }
 

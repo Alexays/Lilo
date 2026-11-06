@@ -389,10 +389,15 @@ extension MainWindowController {
     func setupBridgeEarly() {
         chromeWebView.navigationDelegate = self
         // Factory handlers are shared by every window: each resolves the window that shows the page.
-        context.engineFactory.formDirtyHandler = { [weak context] webView, dirty in
-            guard let tab = context?.windows.windowAndEngine(for: webView)?.engine else { return }
-            tab.isFormDirty = dirty
-            tab.delegate?.tab(tab, didUpdateFormDirty: dirty)
+        context.engineFactory.formDirtyHandler = { [weak context] webView, dirty, isMainFrame in
+            // A space switch parks the engines it hides before their pages report going hidden.
+            guard let context, let tab = context.windows.windowAndEngine(for: webView)?.engine
+                ?? context.browserState.parkedEngine(forWebView: webView) else { return }
+            if !isMainFrame { tab.hasDirtySubframeForm = true }
+            let isDirty = dirty || tab.hasDirtySubframeForm
+            guard isDirty != tab.isFormDirty else { return }
+            tab.isFormDirty = isDirty
+            tab.delegate?.tab(tab, didUpdateFormDirty: isDirty)
         }
         context.engineFactory.callControlsHandler = { [weak context] webView, controls in
             guard let tab = context?.windows.windowAndEngine(for: webView)?.engine, tab.callControls != controls else { return }

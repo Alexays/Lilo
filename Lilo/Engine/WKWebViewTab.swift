@@ -319,6 +319,8 @@ final class WKWebViewTab: NSObject {
     /// Last form-dirty state reported to the delegate; a committed navigation clears it, since the
     /// page that held the edits is gone.
     var isFormDirty = false
+    /// A subframe reported edits: they keep the tab dirty until a committed navigation, whatever the main frame reports.
+    var hasDirtySubframeForm = false
     /// Last call controls the page reported; a committed navigation clears them with the page's handlers.
     var callControls = CallControls() {
         didSet { runsAtFullSpeedHidden = isInCall || isAgentControlled }
@@ -1891,6 +1893,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.hasCommittedContent = true
             tab.isPageLost = false   // a navigation brought an off-screen lost page back on its own
             tab.subframes.removeAll()
+            tab.hasDirtySubframeForm = false
             if tab.isFormDirty {
                 tab.isFormDirty = false
                 tab.delegate?.tab(tab, didUpdateFormDirty: false)

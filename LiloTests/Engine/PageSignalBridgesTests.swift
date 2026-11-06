@@ -7,7 +7,7 @@ final class PageSignalBridgesTests: XCTestCase {
     func testASubframeSubmitLeavesTheMainFrameFormDirty() async throws {
         let bridge = FormDirtyBridge()
         var reports: [Bool] = []
-        bridge.onChange = { _, dirty in reports.append(dirty) }
+        bridge.onChange = { _, dirty, _ in reports.append(dirty) }
         let configuration = WKWebViewConfiguration()
         let controller = configuration.userContentController
         controller.add(bridge, contentWorld: PageWorld.bridgeWorld, name: FormDirtyBridge.messageHandlerName)
