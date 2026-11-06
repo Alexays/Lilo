@@ -94,7 +94,7 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
         var body = call.string("body").flatMap { Data(base64Encoded: $0) }
         var headers = (call.payload["headers"] as? [[String]] ?? []).filter { $0.count == 2 }
         let origin = "\(context.baseURL.scheme ?? "")://\(context.baseURL.host ?? "")"
-        // The profile's jar, this request's and the cache's kept current with what each hop sets.
+        // The profile's jar for this request, kept current with what each hop sets, as the cached one is.
         var jar: [HTTPCookie]?
         // As fetch: at most 20 redirects, each hop with the cookies of its own URL.
         for hop in 0...20 {
