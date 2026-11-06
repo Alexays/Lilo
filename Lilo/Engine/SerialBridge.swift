@@ -434,7 +434,10 @@ extension SerialBridge {
         }
         requestPort(options) {
           if (this !== serial) return rejectCall('Serial', 'requestPort');
-          return apply(then, call('requestPort', { filters: (options && options.filters) || [] }), [portFor]);
+          let filters;
+          // A throwing getter on the options rejects, as WebKit's dictionary conversion does.
+          try { filters = (options && options.filters) || []; } catch (e) { return NativePromise.reject(e); }
+          return apply(then, call('requestPort', { filters }), [portFor]);
         }
         getPorts() {
           if (this !== serial) return rejectCall('Serial', 'getPorts');
