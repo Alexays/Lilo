@@ -53,6 +53,15 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate, 
                   let configuration = context.pageWebViewConfiguration else {
                 return BridgeError("Invalid offscreen document url")
             }
+            // The view is never in a window, so its page counts as hidden: it runs at full speed, as WebKit's own
+            // background and offscreen pages do. These preferences are this configuration's own.
+            let preferences = configuration.preferences
+            preferences.inactiveSchedulingPolicy = .none
+            let settings = ["hiddenPageDOMTimerThrottlingEnabled": false, "pageVisibilityBasedProcessSuppressionEnabled": false]
+            for (key, value) in settings
+            where preferences.responds(to: NSSelectorFromString("_set\(key.prefix(1).uppercased())\(key.dropFirst()):")) {
+                preferences.setValue(value, forKey: key)
+            }
             let documentView = WKWebView(frame: .zero, configuration: configuration)
             documentView.navigationDelegate = self
             documentView.uiDelegate = self
