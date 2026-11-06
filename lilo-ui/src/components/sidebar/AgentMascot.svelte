@@ -8,22 +8,31 @@
   function blink(eyes: HTMLElement) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let timer: ReturnType<typeof setInterval> | undefined;
+    let onScreen = false;
     // Only in the key window (a hidden one never is): App sets window-unfocused from the native focus, as the DOM
     // blur also fires on every tab activation.
     const root = document.documentElement;
     const run = () => {
-      // Other classes change on the root too: only a focus change restarts the timer.
-      if (root.classList.contains("window-unfocused") === (timer === undefined)) return;
+      const blinking = onScreen && !root.classList.contains("window-unfocused");
+      // Other classes change on the root too: only a focus or visibility change restarts the timer.
+      if (blinking === (timer !== undefined)) return;
       clearInterval(timer);
-      timer = root.classList.contains("window-unfocused")
-        ? undefined
-        : setInterval(() => eyes.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(0.15)" }, { transform: "scaleY(1)" }], { duration: 140 }), 3000);
+      timer = blinking
+        ? setInterval(() => eyes.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(0.15)" }, { transform: "scaleY(1)" }], { duration: 140 }), 3000)
+        : undefined;
     };
-    run();
+    // A hidden or folded sidebar stays mounted past the window's edge, and element.animate() ignores the CSS pauses:
+    // the timer runs only while the eyes are on screen.
+    const view = new IntersectionObserver((entries) => {
+      onScreen = entries[entries.length - 1].isIntersecting;
+      run();
+    });
+    view.observe(eyes);
     const focus = new MutationObserver(run);
     focus.observe(root, { attributeFilter: ["class"] });
     return () => {
       clearInterval(timer);
+      view.disconnect();
       focus.disconnect();
     };
   }
