@@ -55,11 +55,8 @@ jobs:
       - name: Install Metal Toolchain
         run: xcodebuild -downloadComponent MetalToolchain
 
-      # The generated UI sources, also saved by build.yml's release-build job. The key leaves out the lockfile's
-      # version lines, which a release bumps: a dependency change still shows in its resolved and integrity lines.
-      - name: Hash the UI lockfile
-        id: ui-lock
-        run: echo "hash=$(grep -v '"version":' lilo-ui/package-lock.json | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      # The generated UI sources, also saved by build.yml's release-build job. The key covers the version and the
+      # release notes the UI embeds, as the Makefile's UI_SOURCES does.
       - name: Restore the UI build
         id: ui-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -67,7 +64,7 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+          key: ui-${{ hashFiles('lilo-ui/package-lock.json', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
       - name: Setup Node
         if: steps.ui-cache.outputs.cache-hit != 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -127,6 +124,17 @@ jobs:
         env:
           LILO_TEAM_ID: ${{ secrets.APPLE_NOTARY_TEAM_ID }}
         run: make release-archive
+
+      # The build reuses cached UI sources and DerivedData: a stale one would ship another version or its notes.
+      - name: Check the app is at the tag's version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          app=build/release/export/Lilo.app
+          bundled=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")
+          [ "$bundled" = "$version" ] \
+            || { echo "::error::Lilo.app is at $bundled, not $version."; exit 1; }
+          grep -aqF "{\"version\":\"$version\",\"date\":\"2" "$app/Contents/MacOS/Lilo" \
+            || { echo "::error::Lilo.app does not embed the $version release notes."; exit 1; }
 
       # Installs the pinned dmgbuild into build/ and lays out the window from scripts/dmg/.
       - name: Create DMG
