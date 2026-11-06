@@ -403,7 +403,7 @@ final class DownloadManager {
     /// The website data store a download belongs to: its private space's, else its profile's. Nil once its private space's is gone.
     private func dataStore(ofDownload key: DownloadKey) -> WKWebsiteDataStore? {
         if let spaceId = privateDownloadIds.first(where: { $0.value.contains(key) })?.key { return privateDataStores[spaceId] }
-        return key.profileId.map { WKWebsiteDataStore(forIdentifier: $0) } ?? .default()
+        return key.profileId.map { WKEngineFactory.persistentDataStore(for: $0) } ?? .default()
     }
 
     /// `webView` when it browses with the download's data store: resumed in another, a download would carry another
