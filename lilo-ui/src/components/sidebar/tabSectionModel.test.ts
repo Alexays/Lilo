@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { arrangeRows, nextStackHosts, stackName, strippedTitle, type ArrangeEntry } from "./tabSectionModel";
+import { arrangeRows, keepSameGroups, nextStackHosts, stackEntries, stackName, strippedTitle, type ArrangeEntry } from "./tabSectionModel";
 
 const web = (id: string, host: string): ArrangeEntry => ({ id, type: "web", host });
 const term = (id: string): ArrangeEntry => ({ id, type: "terminal", host: null });
@@ -55,4 +55,32 @@ test("the stack name is the part titles share, else the host", () => {
 test("a stack its hosts still name but down to one tab is a plain row", () => {
 	const rows = arrangeRows([web("a", "x.example"), web("b", "y.example")], new Set(["x.example"]), false);
 	assert.deepEqual(rows.map((row) => row.stack), [null, null]);
+});
+
+test("a stack of the very same tabs keeps its entry, one whose titles held keeps its name", () => {
+	const one = { id: "a", title: "Commits · acme/app" };
+	const two = { id: "b", title: "Issues · acme/app" };
+	const first = stackEntries(new Map([["code.example.com", [one, two]]]), new Map());
+	assert.deepEqual(first.get("code.example.com"), { name: "acme/app", tabs: [one, two] });
+
+	const same = stackEntries(new Map([["code.example.com", [one, two]]]), first);
+	assert.equal(same.get("code.example.com"), first.get("code.example.com"));
+
+	const loading = { ...two, progress: 0.5 };
+	const patched = stackEntries(new Map([["code.example.com", [one, loading]]]), same);
+	assert.notEqual(patched.get("code.example.com"), same.get("code.example.com"));
+	assert.deepEqual(patched.get("code.example.com"), { name: "acme/app", tabs: [one, loading] });
+
+	const renamed = stackEntries(new Map([["code.example.com", [{ ...one, title: "Commits" }, { ...two, title: "Issues" }]]]), patched);
+	assert.equal(renamed.get("code.example.com")?.name, "code.example.com");
+});
+
+test("a tray of the very same tabs keeps its array", () => {
+	const one = { id: "a" };
+	const two = { id: "b" };
+	const last = new Map([["agent", [one]], ["terminal", [two]]]);
+	const next = keepSameGroups(new Map([["agent", [one]], ["terminal", [{ ...two }]]]), last);
+	assert.equal(next.get("agent"), last.get("agent"));
+	assert.notEqual(next.get("terminal"), last.get("terminal"));
+	assert.notEqual(keepSameGroups(new Map([["agent", [one, two]]]), last).get("agent"), last.get("agent"));
 });
