@@ -30,7 +30,8 @@ final class ExtensionUpdater {
     private weak var registry: ProfileExtensionRegistry?
     /// Weak-self loop: it ends once the updater is released.
     private var checkTask: Task<Void, Never>?
-    /// Newer versions a check found while automatic updates are off, or waiting for a running worker to stop.
+    /// Newer versions a check found while automatic updates are off, adding access that waits for the user's review,
+    /// deferred by Low Data Mode, or waiting for a running worker to stop.
     private(set) var availableUpdates: [String: (current: String, latest: String)] = [:]
     /// Outcome of the last check, sent to the settings page alongside the extension payloads.
     private(set) var status: [String: Any] = [:]
@@ -268,8 +269,8 @@ final class ExtensionUpdater {
         registry?.extensionDidChange(nil)
     }
 
-    /// Applies the newer version the user asked for: one listed while automatic updates are off, or one
-    /// whose new permissions were declined, which asks again. True unless the update failed.
+    /// Applies the newer version the user asked for: one a check listed, or one whose new permissions were
+    /// declined, which asks again. True unless the update failed.
     func updateExtension(extensionId: String) async -> Bool {
         guard let registry else { return false }
         let current: String
