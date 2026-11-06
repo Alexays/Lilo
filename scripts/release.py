@@ -47,7 +47,7 @@ def check_highlights(version):
     if not story_path.exists():
         missing.append(str(story_path))
     if missing:
-        print(f"Warning: release {version} adds features without {' or '.join(missing)}: make changelog-draft writes them (docs/RELEASING.md)")
+        print(f"Warning: release {version} adds features without {' or '.join(missing)}: the changelog-draft skill writes them (docs/RELEASING.md)")
 
 
 def main():

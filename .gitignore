@@ -56,7 +56,10 @@ lilo-log.txt
 
 # Tools / AI
 .venv/
-.claude/
+**/.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/changelog-draft/
 .copilot/
 .serena/
 .superpowers/

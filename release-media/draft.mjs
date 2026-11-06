@@ -2,8 +2,6 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { templates } from "./templates.mjs";
 
@@ -35,11 +33,14 @@ export const Draft = z.object({
     }),
   ),
   groups: z.array(z.object({ title: translated, notes: z.array(z.number()) })),
-});
-const Copy = z.object({
-  headline: z.string(),
-  description: z.string(),
-  highlights: z.array(z.object({ title: z.string(), description: z.string() })),
+  translations: z.record(
+    z.string(),
+    z.object({
+      headline: z.string(),
+      description: z.string(),
+      highlights: z.array(z.object({ title: z.string(), description: z.string() })),
+    }),
+  ),
 });
 
 export function parseNotes(markdown) {
@@ -56,7 +57,7 @@ export function parseNotes(markdown) {
 /** Fixes alone tell no story: their notes already say everything. */
 export const worthAnEntry = (notes) => notes.some((note) => note.kind !== "Fixed");
 
-/** The website story for `draft`, or an error a retry can show the model. */
+/** The website story for `draft`, or the error that refuses it. */
 export function storyFrom(version, draft, notes) {
   const text = (index) => {
     if (!notes[index]) throw Error(`Note ${index} does not exist`);
@@ -182,31 +183,20 @@ async function examples() {
   return Promise.all(files.slice(0, 3).map((file) => readFile(path.join(stories, file), "utf8")));
 }
 
-export async function prompts({ version, markdown, ref, since }, notes) {
-  return {
-    system: await readFile(path.join(root, "draft-prompt.md"), "utf8"),
-    user: [
-      `<examples>\n${(await examples()).join("\n")}\n</examples>`,
-      `<commits>\n${run("git", "log", "--no-merges", "--format=%s%n%b", `${since}..${ref}`)}\n</commits>`,
-      `<interface-changes>\n${run("git", "diff", `${since}..${ref}`, "--", "lilo-ui/src/**/*.svelte")}\n</interface-changes>`,
-      `<notes version="${version}">\n${notes.map((note, index) => `${index}. [${note.kind}] ${note.text}`).join("\n")}\n</notes>`,
-    ].join("\n\n"),
-  };
-}
+const localeCodes = async () =>
+  (await readdir(locales))
+    .map((file) => path.basename(file, ".json"))
+    .filter((code) => code !== "en" && code !== "fr");
 
-async function ask(client, system, content, schema) {
-  const response = await client.beta.messages.parse({
-    model: "claude-opus-5-5",
-    max_tokens: 16000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "high", format: betaZodOutputFormat(schema) },
-    system,
-    messages: [{ role: "user", content }],
-  });
-  if (response.stop_reason === "refusal" || !response.parsed_output)
-    throw Error(`No draft: the model stopped with ${response.stop_reason}`);
-  return response.parsed_output;
+/** What the changelog-draft skill drafts from. */
+async function context({ version, markdown, ref, since }, notes) {
+  return [
+    `<examples>\n${(await examples()).join("\n")}\n</examples>`,
+    `<commits>\n${run("git", "log", "--no-merges", "--format=%s%n%b", `${since}..${ref}`)}\n</commits>`,
+    `<interface-changes>\n${run("git", "diff", `${since}..${ref}`, "--", "lilo-ui/src/**/*.svelte")}\n</interface-changes>`,
+    `<locales>${(await localeCodes()).join(", ")}</locales>`,
+    `<notes version="${version}">\n${notes.map((note, index) => `${index}. [${note.kind}] ${note.text}`).join("\n")}\n</notes>`,
+  ].join("\n\n");
 }
 
 async function main() {
@@ -221,8 +211,10 @@ async function main() {
     console.log(`Release ${source.version} has only fixes: no entry to draft`);
     return;
   }
-  const client = new Anthropic();
-  const { system, user } = await prompts(source, notes);
+  if (!process.env.LILO_DRAFT) {
+    console.log(await context(source, notes));
+    return;
+  }
   const known = (name) => {
     try {
       run("git", "grep", "-qF", "--", name, "lilo-ui/src");
@@ -231,53 +223,27 @@ async function main() {
       return false;
     }
   };
-  let draft = await ask(client, system, user, Draft);
-  let story;
-  let plans;
-  try {
-    story = storyFrom(source.version, draft, notes);
-    plans = plansFrom(draft, known);
-  } catch (error) {
-    draft = await ask(
-      client,
-      system,
-      `${user}\n\nYour previous draft was refused: ${error.message}. Previous draft:\n${JSON.stringify(draft)}`,
-      Draft,
-    );
-    story = storyFrom(source.version, draft, notes);
-    plans = plansFrom(draft, known);
+  const draft = Draft.parse(JSON.parse(await readFile(process.env.LILO_DRAFT, "utf8")));
+  const story = storyFrom(source.version, draft, notes);
+  const plans = plansFrom(draft, known);
+  const copyIn = (lang) => ({
+    headline: story.title[lang],
+    description: story.introduction[lang],
+    highlights: story.highlights.map(({ title, body }) => ({
+      title: title[lang],
+      description: body[lang],
+    })),
+  });
+  const copies = { en: copyIn("en"), fr: copyIn("fr") };
+  for (const code of await localeCodes()) {
+    copies[code] = draft.translations[code];
+    if (!copies[code]) throw Error(`The draft has no ${code} translation`);
+    if (copies[code].highlights.length !== story.highlights.length)
+      throw Error(`The ${code} translation lost a highlight`);
   }
 
-  const english = {
-    headline: story.title.en,
-    description: story.introduction.en,
-    highlights: story.highlights.map(({ title, body }) => ({
-      title: title.en,
-      description: body.en,
-    })),
-  };
-  const french = {
-    headline: story.title.fr,
-    description: story.introduction.fr,
-    highlights: story.highlights.map(({ title, body }) => ({
-      title: title.fr,
-      description: body.fr,
-    })),
-  };
-  const codes = (await readdir(locales))
-    .map((file) => path.basename(file, ".json"))
-    .filter((code) => code !== "en" && code !== "fr");
-  const translations = await ask(
-    client,
-    "Translate this Lilo browser release copy into each locale: natural, calm first-party product language, keeping the same meaning, order and product terms.",
-    JSON.stringify(english),
-    z.object(Object.fromEntries(codes.map((code) => [code, Copy]))),
-  );
-
   const whatsNew = whatsNewFrom(source.version, story);
-  for (const [code, copy] of Object.entries({ ...translations, en: english, fr: french })) {
-    if (copy.highlights.length !== story.highlights.length)
-      throw Error(`The ${code} copy lost a highlight`);
+  for (const [code, copy] of Object.entries(copies)) {
     const file = path.join(locales, `${code}.json`);
     await writeFile(
       file,

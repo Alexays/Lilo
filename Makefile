@@ -86,7 +86,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
-	changie change release-status release-version release-discord release-test release-media-stage release-media-test changelog-draft changelog-media
+	changie change release-status release-version release-discord release-test release-media-stage release-media-test changelog-context changelog-draft changelog-media
 
 ## List the targets
 help:
@@ -240,9 +240,14 @@ changelog-media: release-media/node_modules/.installed
 		$(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
 	@LILO_RELEASE='$(RELEASE)' node release-media/media.mjs
 
-## Draft the changelog entry and What's New copy (RELEASE=x.y.z; pending notes by default; needs Claude credentials)
-changelog-draft: release-media/node_modules/.installed $(CHANGIE)
+## Print what the changelog-draft skill drafts an entry from (RELEASE=x.y.z; pending notes by default)
+changelog-context: release-media/node_modules/.installed $(CHANGIE)
 	@CHANGIE='$(CHANGIE)' LILO_RELEASE='$(RELEASE)' node release-media/draft.mjs
+
+## Check a drafted entry and write its story, What's New copy and plans (DRAFT=file; RELEASE as above)
+changelog-draft: release-media/node_modules/.installed $(CHANGIE)
+	@test -n '$(DRAFT)' || { echo 'DRAFT=file is required: the changelog-draft skill writes it' >&2; exit 2; }
+	@CHANGIE='$(CHANGIE)' LILO_RELEASE='$(RELEASE)' LILO_DRAFT='$(DRAFT)' node release-media/draft.mjs
 
 # Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
 # UI source change, refreshes both.

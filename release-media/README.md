@@ -10,7 +10,7 @@ The website and native What's New show the same media for a release highlight. A
 
 ## Making media
 
-`make changelog-draft` writes a plan per highlight under `plans/<version>/`: a template and the steps that show the change in the real app. `make changelog-media RELEASE=x.y.z` runs them, renders the result with HyperFrames and GSAP, and names the media in the story and What's New.
+The `changelog-draft` skill writes a plan per highlight under `plans/<version>/`: a template and the steps that show the change in the real app. `make changelog-media RELEASE=x.y.z` runs them, renders the result with HyperFrames and GSAP, and names the media in the story and What's New.
 
 - The capture is one test, `ReleaseMediaCaptureTests`, which drives the compiled app with a disposable profile and example.com pages. A close-up needs no screen recording permission; a whole window does.
 - `templates.mjs` has four templates: `image`, `hero`, `compare` and `flow`. A film has no sound and no words, so it needs no translation and loops without a cut.

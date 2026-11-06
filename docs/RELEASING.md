@@ -26,8 +26,9 @@ selects major. When notes request different bumps, the largest wins.
 
 ### Changelog entries
 
-A release's changelog entry is drafted, reviewed and merged like code. `make changelog-draft` turns
-the pending notes into a website story in `site/src/content/releases/<version>.json`, What's New
+A release's changelog entry is drafted, reviewed and merged like code. It is drafted locally with
+Claude Code: the `changelog-draft` skill in `.claude/skills/` reads `make changelog-context`, writes a
+draft, and `make changelog-draft DRAFT=<file>` checks it and turns the pending notes into a website story in `site/src/content/releases/<version>.json`, What's New
 highlights in `lilo-ui/src/components/whatsnew/releaseHighlights.json`, and their copy in every
 language catalog. Merge it before `make release-version` so the app ships with its highlights: the
 website keeps the entry out of sight until its release is published. Review it for what only a
@@ -35,16 +36,14 @@ person can judge. The tool checks that every note has a place and quotes it exac
 story is the right one.
 
 An entry never holds a release back. Without one, `make release-version` warns and What's New shows
-the complete notes. Pushing a tag then runs the **Changelog draft** workflow, which opens a draft
-pull request with the missing entry; merging it publishes the entry on the website, through the usual
-deployment of `main`. It needs an `ANTHROPIC_API_KEY` repository secret, and skips with a notice
-without one, and **Allow GitHub Actions to create and approve pull requests** in the repository's
-Actions settings. Checks do not run on a pull request an action opens: close and reopen it to run them.
-A release of fixes alone has no entry.
+the complete notes. A missing entry can be drafted after the release with `RELEASE=x.y.z`; merging it
+publishes the entry on the website, through the usual deployment of `main`. A release of fixes alone
+has no entry.
 
-The same workflow films the entry's highlights on macOS and adds them to the pull request. Locally, run
-`make changelog-media RELEASE=x.y.z` after the draft. A highlight it cannot film stays text-only, and
-the [release media guide](../release-media/README.md) explains how to fix or write its plan.
+Pushing the entry on a `changelog/<version>` branch runs the **Changelog media** workflow, which films
+its highlights on macOS and commits them to the branch. Locally, run `make changelog-media RELEASE=x.y.z`
+after the draft. A highlight it cannot film stays text-only, and the
+[release media guide](../release-media/README.md) explains how to fix or write its plan.
 
 `make release-version` collects the pending notes into a release file, consumes the fragments, and
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
