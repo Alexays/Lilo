@@ -366,6 +366,8 @@
     var added = [], scheduled = false, missedWhileHidden = false;
     var runAdded = function () {
       scheduled = false;
+      // A hidden page's insertions wait for its return.
+      if (document.hidden) return;
       var pending = new Set(added), roots = [], ancestors = [], seen = new Set();
       added = [];
       pending.forEach(function (el) {
@@ -378,8 +380,6 @@
     };
     var runAll = function () { added = []; run(null); };
     var onMutations = function (records) {
-      // The full pass on return covers whatever changes meanwhile.
-      if (document.hidden) { missedWhileHidden = true; added = []; return; }
       for (var r = 0; r < records.length; r++) {
         var nodes = records[r].addedNodes;
         for (var k = 0; k < nodes.length; k++) {
@@ -388,19 +388,25 @@
           if (el && el.nodeType === 1) added.push(el);
         }
       }
-      if (!added.length || scheduled) return;
+      // Past this many insertions in a hidden page, one full pass on return is cheaper than a scoped one, and observing
+      // until then builds records for nothing.
+      if (document.hidden && added.length > 2000) { missedWhileHidden = true; added = []; observer.disconnect(); }
+      if (!added.length || scheduled || document.hidden) return;
       scheduled = true;
       setTimeout(runAdded, 200);
     };
+    var observer = new MutationObserver(onMutations);
     // The parser's insertions are left to the full pass once the document is parsed: observed, each costs a record.
     var start = function () {
       runAll();
-      try { new MutationObserver(onMutations).observe(document.documentElement || document, { childList: true, subtree: true }); } catch (e) {}
+      try { observer.observe(document.documentElement || document, { childList: true, subtree: true }); } catch (e) {}
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
     document.addEventListener('visibilitychange', function () {
-      if (!document.hidden && missedWhileHidden) { missedWhileHidden = false; runAll(); }
+      if (document.hidden) return;
+      if (missedWhileHidden) { missedWhileHidden = false; start(); }
+      else if (!scheduled) runAdded();
     });
   }
 })();

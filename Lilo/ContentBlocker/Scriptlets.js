@@ -478,8 +478,25 @@
     whenReady(/\bcomplete\b/.test(behavior) ? 'complete' : /\basap\b/.test(behavior) ? 'loading' : 'interactive', function () {
       run();
       if (!/\bstay\b/.test(behavior)) return;
-      new MutationObserver(function () { if (!timer) timer = setTimeout(run, 67); })
-        .observe(document, { attributes: true, attributeFilter: attrs, childList: true, subtree: true });
+      var observer = new MutationObserver(function () { if (!timer) timer = setTimeout(run, 67); });
+      var connected = false;
+      // A hidden page builds no records: one pass once it is shown strips what changed meanwhile.
+      var observe = function () {
+        if (document.hidden) return;
+        connected = true;
+        observer.observe(document, { attributes: true, attributeFilter: attrs, childList: true, subtree: true });
+      };
+      observe();
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) {
+          if (!connected) { observe(); run(); }
+          return;
+        }
+        // A page hidden briefly keeps observing, so a quick tab switch costs no pass on its return.
+        setTimeout(function () {
+          if (document.hidden && connected) { connected = false; observer.disconnect(); }
+        }, 10000);
+      });
     });
   }
   // uBO's set-attr: an untrusted value is a number, true, false, empty, or `[other-attr]` to copy.
