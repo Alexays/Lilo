@@ -71,8 +71,8 @@ test("a sign-in shows as the reply under the prompt, which waits for it instead 
 	await expect(activity).toContainText("terminal tab Lilo opened");
 	await expect(page.getByRole("alert")).toHaveCount(0);
 
-	await receive(page, [{ event: "conversationUpdate", tabId: "tab-agent", update: { sessionUpdate: "agent_message_chunk", content: { type: "text", text: "Here is the summary." } } }]);
-	await receive(page, [{ event: "conversationUpdate", tabId: "tab-agent", update: { sessionUpdate: "lilo_turn_end", stopReason: "end_turn" } }]);
+	await receive(page, [{ event: "conversationUpdate", tabId: "tab-agent", updates: [{ sessionUpdate: "agent_message_chunk", content: { type: "text", text: "Here is the summary." } }] }]);
+	await receive(page, [{ event: "conversationUpdate", tabId: "tab-agent", updates: [{ sessionUpdate: "lilo_turn_end", stopReason: "end_turn" }] }]);
 	await expect(page.getByText("Here is the summary.")).toBeVisible();
 	await expect(activity).not.toContainText("Signing in");
 });

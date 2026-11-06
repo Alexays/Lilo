@@ -57,10 +57,14 @@ export function initConversationsStore(): void {
 	});
 	on("conversationUpdate", (data) => {
 		const waiting = pending.get(data.tabId);
-		if (waiting) return void waiting.push(data.update);
+		if (waiting) {
+			for (const update of data.updates) waiting.push(update);
+			return;
+		}
 		const conversation = open.get(data.tabId);
 		if (!conversation || !thread) return;
-		thread.apply(conversation, data.update, Date.now());
+		const now = Date.now();
+		for (const update of data.updates) thread.apply(conversation, update, now);
 		bump();
 	});
 }
