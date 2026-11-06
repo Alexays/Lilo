@@ -179,6 +179,41 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(openTabCount, tabs)
     }
 
+    func testThePopupWindowTakesTheFrameItsPageAsksFor() async throws {
+        try await openFromPage("width=400,height=300")
+        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        let popupWindow = try XCTUnwrap(popup.window)
+        let visible = try XCTUnwrap((popupWindow.screen ?? NSScreen.main)?.visibleFrame)
+        let frame = NSRect(x: visible.minX + 20, y: visible.minY + 30, width: 500, height: 400)
+
+        popup.engine.webView(popup.engine.wkWebView, setWindowFrame: frame)
+
+        XCTAssertEqual(popupWindow.frame, frame)
+    }
+
+    func testThePopupWindowStaysOnScreenAndKeepsItsMinimumSize() async throws {
+        try await openFromPage("width=400,height=300")
+        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        let popupWindow = try XCTUnwrap(popup.window)
+        let visible = try XCTUnwrap((popupWindow.screen ?? NSScreen.main)?.visibleFrame)
+
+        popup.engine.webView(popup.engine.wkWebView, setWindowFrame: NSRect(x: visible.maxX - 20, y: visible.minY - 500, width: 100, height: 100))
+
+        XCTAssertTrue(visible.contains(popupWindow.frame))
+        XCTAssertGreaterThanOrEqual(popupWindow.contentRect(forFrameRect: popupWindow.frame).width, popupWindow.contentMinSize.width)
+    }
+
+    func testTheOpenerTabsPageNeverMovesThePopupWindow() async throws {
+        try await openFromPage("width=400,height=300")
+        let popupWindow = try XCTUnwrap(controller.pagePopups.values.first?.window)
+        let popupFrame = popupWindow.frame
+        let tab = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id))
+
+        tab.webView(tab.wkWebView, setWindowFrame: NSRect(x: 10, y: 10, width: 300, height: 200))
+
+        XCTAssertEqual(popupWindow.frame, popupFrame)
+    }
+
     func testPopupFeatureWithoutSizeOpensAPopup() async throws {
         try await openFromPage("popup")
 

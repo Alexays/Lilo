@@ -103,6 +103,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result)
         /// A peek's page going back to its opener tab's site: true when the tab took the navigation.
         func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool
+        /// The page's `window.resizeTo` or `moveTo` asks for `frame`, in AppKit screen coordinates.
+        func tab(_ tab: WKWebViewTab, setsWindowFrame frame: CGRect)
     }
 
     /// A link icon (`/favicon.ico` when the page declares none) WebKit loads on request through the
@@ -1685,6 +1687,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, offersIcons icons: [WKWebViewTab.LinkIcon]) { icons.forEach { $0.decide(nil) } }
     func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool { false }
     func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool { false }
+    func tab(_ tab: WKWebViewTab, setsWindowFrame frame: CGRect) {}
 }
 
 // MARK: - WKNavigationDelegate
@@ -2590,6 +2593,12 @@ extension WKWebViewTab: WKUIDelegate {
             frame.size.width = webView.bounds.width
         }
         completionHandler(frame)
+    }
+
+    /// `window.resizeTo` and `moveTo` (WKUIDelegatePrivate): WebKit hands the new window frame in AppKit screen coordinates.
+    @objc(_webView:setWindowFrame:)
+    func webView(_ webView: WKWebView, setWindowFrame frame: CGRect) {
+        delegate?.tab(self, setsWindowFrame: frame)
     }
 
     // Printed-page header/footer (WKUIDelegatePrivate): the page title and date, then the source URL and page number, unless the
