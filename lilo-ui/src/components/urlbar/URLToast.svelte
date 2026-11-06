@@ -200,7 +200,12 @@
           }}
           {@attach menuKeys}
           {@attach (node) => node.querySelector<HTMLElement>("[role='menuitem']")?.focus()}
-          {@attach dismissable({ onDismiss: () => (screenshotMenuOpen = false), escape: true, returnFocus: screenshotBtnEl ?? undefined })}
+          {@attach dismissable({
+            onDismiss: () => (screenshotMenuOpen = false),
+            ignore: `[aria-controls="${screenshotMenuId}"]`,
+            escape: true,
+            returnFocus: screenshotBtnEl ?? undefined,
+          })}
         >
           <button class="float-row screenshot-menu-item" role="menuitem" onclick={() => pickMode("full")}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
