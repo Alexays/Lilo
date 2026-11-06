@@ -16,6 +16,9 @@ const EMPTY_FILTER: BridgeHistoryFilter = { query: "", period: "all" };
 const QUERY_DELAY_MS = 150;
 
 let _filter = $state.raw<BridgeHistoryFilter>(EMPTY_FILTER);
+// The filter of the rows on screen: the list keeps its grouping and title until the results of a new filter arrive.
+let _shownFilter = $state.raw<BridgeHistoryFilter>(EMPTY_FILTER);
+let _requestedFilter = EMPTY_FILTER;
 let _rows = $state.raw<BridgeHistoryDayRow[]>([]);
 let _nextBefore = $state<number | undefined>(undefined);
 let _loading = $state(false);
@@ -31,6 +34,7 @@ let _queryTimer: ReturnType<typeof setTimeout> | null = null;
 let _listening = false;
 
 export const getHistoryFilter = (): BridgeHistoryFilter => _filter;
+export const getShownHistoryFilter = (): BridgeHistoryFilter => _shownFilter;
 export const getHistoryRows = (): BridgeHistoryDayRow[] => _rows;
 export const hasMoreHistory = (): boolean => _nextBefore !== undefined;
 export const isHistoryLoading = (): boolean => _loading;
@@ -43,6 +47,7 @@ function request(before?: number): void {
 	_requestId += 1;
 	_appending = before !== undefined;
 	_loading = true;
+	_requestedFilter = _filter;
 	historyActions.loadPage({ ..._filter, requestId: _requestId, before });
 }
 
@@ -171,7 +176,7 @@ export function deleteHistoryRows(keys: ReadonlySet<string>): void {
 	if (!rows.length) return;
 	historyActions.deleteRows({
 		rows: rows.map((row) => ({ pageId: row.pageId, dayStart: row.dayStart })),
-		openedFrom: _filter.openedFrom,
+		openedFrom: _shownFilter.openedFrom,
 	});
 	_rows = _rows.filter((row) => !keys.has(rowKey(row)));
 	setSelection(new Set([..._selection].filter((key) => !keys.has(key))));
@@ -190,6 +195,7 @@ function initHistoryStore(): void {
 
 	on("historyPage", (data) => {
 		if (data.requestId !== _requestId) return;
+		_shownFilter = _requestedFilter;
 		_rows = _appending ? [..._rows, ...data.rows] : data.rows;
 		_batches = _appending ? _batches + 1 : 1;
 		_nextBefore = data.nextBefore;

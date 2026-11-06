@@ -20,9 +20,9 @@
     deleteHistorySite,
     extendHistorySelection,
     getHistoryFavicon,
-    getHistoryFilter,
     getHistoryRows,
     getHistorySelection,
+    getShownHistoryFilter,
     hasMoreHistory,
     isHistoryLoaded,
     loadMoreHistory,
@@ -36,7 +36,7 @@
   } from "../../stores/history.svelte";
 
   const shellOpen = $derived(isHistoryShellOpen());
-  const filter = $derived(getHistoryFilter());
+  const filter = $derived(getShownHistoryFilter());
   const rows = $derived(getHistoryRows());
   const selection = $derived(getHistorySelection());
   const selecting = $derived(selection.size > 0);
