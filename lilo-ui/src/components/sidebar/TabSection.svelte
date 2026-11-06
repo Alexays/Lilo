@@ -27,15 +27,18 @@
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { hostOf } from "../../lib/url";
+  import { isChromaticHex } from "../../lib/sidebarTheme";
   import {
     arrangeRows,
+    keepSameGroups,
     nextStackHosts,
-    stackName,
+    stackEntries,
     windowRows,
     VIRTUAL_ROW_GAP,
     type ArrangedRow,
     type ArrangeEntry,
     type RowType,
+    type StackEntry,
     type WindowRow,
   } from "./tabSectionModel";
   import { tabActions, folderActions, sidebarActions } from "../../lib/bridge/actions";
@@ -266,73 +269,42 @@
     return next;
   });
 
+  let lastStackInfo = new Map<string, StackEntry<TabState>>();
   const stackInfo = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
-    const info = new Map<string, { name: string; tabs: TabState[] }>();
+    const groups = new Map<string, TabState[]>();
     for (const row of arranged ?? []) {
       const tab = row.stack ? tabsById.get(row.id) : undefined;
       if (!row.stack || !tab) continue;
-      const entry = info.get(row.stack) ?? { name: "", tabs: [] };
-      entry.tabs.push(tab);
-      info.set(row.stack, entry);
+      const members = groups.get(row.stack);
+      if (members) members.push(tab);
+      else groups.set(row.stack, [tab]);
     }
-    for (const [host, entry] of info) entry.name = stackName(entry.tabs.map((tab) => tab.title), host);
-    return info;
+    lastStackInfo = stackEntries(groups, lastStackInfo);
+    return lastStackInfo;
   });
 
-  // An open stack is tinted with its site's color, read once off the favicon, as a folder is with its own.
-  let faviconColors = $state.raw<ReadonlyMap<string, string | undefined>>(new Map());
-  $effect(() => {
-    for (const host of openStacks) {
-      const src = stackInfo.get(host)?.tabs[0]?.faviconDataURL;
-      if (!src || faviconColors.has(src)) continue;
-      void faviconColor(src).then((color) => {
-        // eslint-disable-next-line svelte/prefer-svelte-reactivity -- immutable copy reassigned to $state
-        faviconColors = new Map(faviconColors).set(src, color);
-      });
-    }
-  });
-
-  // The open stack a segment paints, once its color is known: the block then comes in whole.
-  function stackTintOf(segment: Segment): string | null {
+  // An open stack is tinted with its site's favicon color, as a folder is with its own; a monochrome icon gives none.
+  function stackTintOf(segment: Segment): string | undefined {
     const host = segment.kind === "stack" ? segment.host : segment.kind === "row" ? segment.stack : null;
-    if (!host || !openStacks.has(host)) return null;
-    const src = stackInfo.get(host)?.tabs[0]?.faviconDataURL;
-    return !src || faviconColors.has(src) ? host : null;
+    if (!host || !openStacks.has(host)) return undefined;
+    const color = stackInfo.get(host)?.tabs[0]?.faviconDominantColor;
+    return folderColorStyle(isChromaticHex(color) ? color : undefined);
   }
 
-  // The mean of the icon's colored pixels, each weighed by its saturation: a monochrome icon has none.
-  async function faviconColor(src: string): Promise<string | undefined> {
-    const image = new Image();
-    image.src = src;
-    await image.decode().catch(() => undefined);
-    const context = image.naturalWidth ? new OffscreenCanvas(16, 16).getContext("2d") : null;
-    if (!context) return undefined;
-    context.drawImage(image, 0, 0, 16, 16);
-    const data = context.getImageData(0, 0, 16, 16).data;
-    const sum = [0, 0, 0];
-    let weight = 0;
-    for (let index = 0; index < data.length; index += 4) {
-      const [red, green, blue, alpha] = [data[index], data[index + 1], data[index + 2], data[index + 3]];
-      const pixel = ((Math.max(red, green, blue) - Math.min(red, green, blue)) / 255) * (alpha / 255);
-      sum[0] += red * pixel;
-      sum[1] += green * pixel;
-      sum[2] += blue * pixel;
-      weight += pixel;
-    }
-    if (weight < 4) return undefined;
-    return `#${sum.map((channel) => Math.round(channel / weight).toString(16).padStart(2, "0")).join("")}`;
-  }
-
+  let lastTrayTabs = new Map<string, TabState[]>();
   const trayTabs = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
     const tabs = new Map<string, TabState[]>();
     for (const row of arranged ?? []) {
       const tab = row.tray ? (getConversationTab(row.id, spaceId) ?? tabsById.get(row.id)) : undefined;
       if (!row.tray || !tab) continue;
-      tabs.set(row.tray, [...(tabs.get(row.tray) ?? []), tab]);
+      const members = tabs.get(row.tray);
+      if (members) members.push(tab);
+      else tabs.set(row.tray, [tab]);
     }
-    return tabs;
+    lastTrayTabs = keepSameGroups(tabs, lastTrayTabs);
+    return lastTrayTabs;
   });
 
   const rootBaseItems = $derived(dndItemsForSidebarItems(shownRootItems, section));
@@ -1505,7 +1477,7 @@
     class:recent-drop={entry.id === recentlyDraggedId}
     class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
     data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-    style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : stackTint ? folderColorStyle(faviconColors.get(stackInfo.get(stackTint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
+    style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : stackTint}
     use:dndItem={{
       item: entry,
       zoneId: rootZone.id,
@@ -1618,7 +1590,7 @@
         {@const entry = block.kind === "row" ? block.segment.entry : { id: block.key, kind: "tab" as const, section, parentFolderId: null }}
         {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
         {@const head = block.kind === "group" ? block.head : null}
-        {@const tint = head?.kind === "stack" ? stackTintOf(head) : null}
+        {@const tint = head?.kind === "stack" ? stackTintOf(head) : undefined}
         <div
           in:tabSlide={itemMotion(entry, MOTION.itemEnterMs)}
           out:tabSlide={itemMotion(entry, MOTION.itemExitMs)}
@@ -1628,7 +1600,7 @@
           class:recent-drop={entry.id === recentlyDraggedId}
           class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
           data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-          style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint ? folderColorStyle(faviconColors.get(stackInfo.get(tint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
+          style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint}
           use:dndItem={{
             item: entry,
             zoneId: rootZone.id,
@@ -1645,7 +1617,7 @@
         {@const entry = block.kind === "row" ? block.segment.entry : { id: block.key, kind: "tab" as const, section, parentFolderId: null }}
         {@const entryFolder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined}
         {@const head = block.kind === "group" ? block.head : null}
-        {@const tint = head?.kind === "stack" ? stackTintOf(head) : null}
+        {@const tint = head?.kind === "stack" ? stackTintOf(head) : undefined}
         <!-- A row's slot, or a group's block: animate: needs one element per entry. -->
         <div
           animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(entry, { recentlyDraggedId, itemCount: rootZoneItems.length }), easing: springEase }}
@@ -1657,7 +1629,7 @@
           class:recent-drop={entry.id === recentlyDraggedId}
           class:folder-open-rail={entry.kind === "folder" && !!entryFolder && !entryFolder.isCollapsed && !entryFolder.isSplit}
           data-is-dnd-shadow-item-hint={isShadowItem(entry)}
-          style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint ? folderColorStyle(faviconColors.get(stackInfo.get(tint)?.tabs[0]?.faviconDataURL ?? "")) : undefined}
+          style={entry.kind === "folder" ? folderColorStyle(shownFolderColor(entryFolder)) : tint}
           use:dndItem={{
             item: entry,
             zoneId: rootZone.id,

@@ -80,6 +80,41 @@ export function arrangeRows(
 	return rows;
 }
 
+/** `groups`, where a group holding the very same members as in `previous` gets its previous array
+ *  back: what renders it then sees nothing changed. */
+export function keepSameGroups<T>(groups: Map<string, T[]>, previous: ReadonlyMap<string, T[]>): Map<string, T[]> {
+	for (const [key, members] of groups) {
+		const last = previous.get(key);
+		if (last && sameMembers(members, last)) groups.set(key, last);
+	}
+	return groups;
+}
+
+function sameMembers<T>(next: readonly T[], last: readonly T[]): boolean {
+	return next.length === last.length && next.every((member, index) => member === last[index]);
+}
+
+export type StackEntry<T> = { name: string; tabs: T[] };
+
+/** Each stack's name and tabs. A stack holding the very same tabs keeps its previous entry, and
+ *  one whose tabs' titles did not change keeps its name. */
+export function stackEntries<T extends { title: string }>(
+	groups: ReadonlyMap<string, T[]>,
+	previous: ReadonlyMap<string, StackEntry<T>>,
+): Map<string, StackEntry<T>> {
+	const entries = new Map<string, StackEntry<T>>();
+	for (const [host, tabs] of groups) {
+		const last = previous.get(host);
+		if (last && sameMembers(tabs, last.tabs)) {
+			entries.set(host, last);
+			continue;
+		}
+		const sameTitles = last && tabs.length === last.tabs.length && tabs.every((tab, index) => tab.title === last.tabs[index].title);
+		entries.set(host, { name: sameTitles ? last.name : stackName(tabs.map((tab) => tab.title), host), tabs });
+	}
+	return entries;
+}
+
 // Space-padded bars, dots and dashes, or a colon: what sites put between a page's title and their name.
 const SEPARATOR = /(\s+[|·–—-]\s+|:\s+)/;
 
