@@ -81,7 +81,7 @@ final class ExtensionAccess {
             .compactMap { try? WKWebExtension.MatchPattern(string: $0) }
         context.deniedPermissionMatchPatterns = Dictionary(uniqueKeysWithValues: webStore.map { ($0, distantFuture) })
         // Content scripts and network rules reach private spaces' pages only with this, as in Chrome's incognito.
-        context.hasAccessToPrivateData = state.allowsPrivateAccess == true
+        context.hasAccessToPrivateData = state.allowsPrivateAccess == true && !Self.excludesPrivateSpaces(webExtension.manifest)
         if let shortcuts = state.commandShortcuts {
             for command in context.commands {
                 guard let shortcut = shortcuts[command.id] else { continue }
@@ -173,11 +173,20 @@ final class ExtensionAccess {
         didChange(extensionId)
     }
 
-    /// Lets the extension run in private spaces. Applied to the live context like site access.
-    func setPrivateAccess(extensionId: String, allowed: Bool) async {
+    /// Lets the extension run in private spaces. Applied to the live context like site access. False,
+    /// with nothing changed, for a loaded extension whose manifest keeps it out of them.
+    @discardableResult
+    func setPrivateAccess(extensionId: String, allowed: Bool) async -> Bool {
+        if allowed, let manifest = context(extensionId)?.webExtension.manifest, Self.excludesPrivateSpaces(manifest) { return false }
         await update(extensionId) { $0.allowsPrivateAccess = allowed ? true : nil }
         context(extensionId)?.hasAccessToPrivateData = allowed
         didChange(extensionId)
+        return true
+    }
+
+    /// `"incognito": "not_allowed"`: Chrome never lets the extension into incognito, whatever the user chose.
+    nonisolated static func excludesPrivateSpaces(_ manifest: [String: Any]) -> Bool {
+        manifest["incognito"] as? String == "not_allowed"
     }
 
     /// Rebinds a command; a nil `key` removes its shortcut. Applied live and again at every load.

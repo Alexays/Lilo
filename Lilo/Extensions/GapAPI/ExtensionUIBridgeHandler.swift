@@ -283,7 +283,9 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             return await handleSetExtensionSiteAccess(message: message)
         case "setExtensionPrivateAccess":
             guard let id = message.string("id"), let registry = await targetRegistry(for: message) else { return BridgeError("Missing extension id") }
-            await registry.access.setPrivateAccess(extensionId: id, allowed: message.bool("allowed"))
+            guard await registry.access.setPrivateAccess(extensionId: id, allowed: message.bool("allowed")) else {
+                return BridgeError("This extension cannot run in private spaces")
+            }
             return ["success": true]
         case "setExtensionUserScripts":
             guard let id = message.string("id"), let registry = await targetRegistry(for: message) else { return BridgeError("Missing extension id") }

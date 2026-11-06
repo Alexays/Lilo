@@ -186,15 +186,17 @@
       {/snippet}
     </UiListRow>
     {#if extension.runtimeStatus !== "failed"}
-      <UiListRow title={t("extensions.allowPrivate")} description={t("extensions.allowPrivateHint")}>
-        {#snippet action()}
-          <UiToggle
-            checked={extension.allowsPrivateAccess ?? false}
-            ariaLabel={t("extensions.allowPrivate")}
-            onchange={(checked) => extensionActions.setPrivateAccess(extension.id, checked, extension.profileId)}
-          />
-        {/snippet}
-      </UiListRow>
+      {#if !extension.privateAccessNotAllowed}
+        <UiListRow title={t("extensions.allowPrivate")} description={t("extensions.allowPrivateHint")}>
+          {#snippet action()}
+            <UiToggle
+              checked={extension.allowsPrivateAccess ?? false}
+              ariaLabel={t("extensions.allowPrivate")}
+              onchange={(checked) => extensionActions.setPrivateAccess(extension.id, checked, extension.profileId)}
+            />
+          {/snippet}
+        </UiListRow>
+      {/if}
       {#if extension.permissions?.includes("userScripts")}
         <UiListRow title={t("extensions.allowUserScripts")} description={t("extensions.allowUserScriptsHint")}>
           {#snippet action()}
