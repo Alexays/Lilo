@@ -30,6 +30,24 @@ describe('RE2 regexFilter in the subset WebKit compiles', () => {
     assert.equal(webKitRegex('(?P<host>[a-z]+)\\.com'), '([a-z]+)\\.com');
   });
 
+  it('matches the whole URL for a regexSubstitution, keeping the text around the match', () => {
+    const [regex, substitution] = webKitRegex('^https://www\\.example\\.com/', 'https://alt.example.net/')!;
+    assert.deepEqual([regex, substitution], ['^(https:\\/\\/www\\.example\\.com\\/)(.*)$', 'https://alt.example.net/\\2']);
+    const replace = (url: string, [pattern, rewrite]: [string, string]) => {
+      // WebKit's ContentExtensionActions: \\0 to \\9 replaced by the groups of url.match, the result the whole new URL.
+      const match = url.match(new RegExp(pattern))!;
+      return match.slice(0, 10).reduce((text, group, n) => text.replaceAll(`\\${n}`, String(group)), rewrite);
+    };
+    assert.equal(replace('https://www.example.com/watch?v=1', [regex, substitution]), 'https://alt.example.net/watch?v=1');
+    const unanchored = webKitRegex('u=1(&x)?', 'v=\\1\\0')!;
+    assert.deepEqual(unanchored, ['^(.*)(u=1((?:&x)?))(.*)$', '\\1v=\\3\\2\\4']);
+    assert.equal(replace('https://x.example/?u=1', unanchored), 'https://x.example/?v=u=1', 'a group that matched nothing is empty');
+    assert.equal(webKitRegex('^https://a\\.example/(.*)$', '\\1')![1], '\\1', 'a regex matching the whole URL keeps its substitution');
+    assert.equal(webKitRegex('(a)(b)(c)(d)(e)(f)(g)(h)', '\\1'), undefined, 'the last group would be \\11');
+    assert.equal(webKitRegex('.*u=1($|&)', '\\1'), undefined, 'an end alternative cannot keep the text after it');
+    assert.equal(webKitRegex('a(b)*c', '\\1'), undefined);
+  });
+
   it('gives up where one WebKit regex cannot say the same', () => {
     assert.equal(webKitRegex('.*(?:meips|proxy).*#(.*\\/trace\\/mail\\/.*)'), undefined);
     assert.equal(webKitRegex('a|b'), undefined);
@@ -50,6 +68,19 @@ function webKitURLRegex(filter: string): RegExp {
 describe('rules WebKit rejects', () => {
   const chrome = { runtime: { id: 'abc', getURL: (path: string) => `chrome-extension://uuid${path}` } };
   (globalThis as any).chrome = chrome;
+
+  it('lets a urlFilter ending in a separator match the end of the URL too', () => {
+    const rule = { id: 1452, action: { type: 'block' }, condition: { urlFilter: '||dev.example/bb/sidebar_left^', isUrlFilterCaseSensitive: true } };
+    const { condition } = webKitRule(rule);
+    assert.deepEqual(condition, { isUrlFilterCaseSensitive: true, regexFilter: '^[^:]+://+([^:/]+\\.)?dev\\.example/bb/sidebar_left(?:[^a-zA-Z0-9_.%-].*)?$' });
+    const regex = new RegExp(condition.regexFilter);
+    assert.deepEqual(['https://dev.example/bb/sidebar_left', 'https://dev.example/bb/sidebar_left?x', 'https://dev.example/bb/sidebar_leftover'].map((url) => regex.test(url)), [true, true, false]);
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'ad*.gif^' } }).condition.regexFilter, 'ad.*\\.gif(?:[^a-zA-Z0-9_.%-].*)?$');
+    for (const urlFilter of ['||example.com^', 'ads^|', 'ads']) {
+      const kept = { ...rule, condition: { urlFilter } };
+      assert.equal(webKitRule(kept), kept, urlFilter);
+    }
+  });
 
   it('anchors request domains on the host', () => {
     const rule = { id: 8, action: { type: 'block' }, condition: { requestDomains: ['t.co'], excludedRequestDomains: ['cdn.example.org'] } };

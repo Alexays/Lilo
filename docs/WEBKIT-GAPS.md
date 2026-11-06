@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103 and 104. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103, 104, 105 and 106. Every other gap is fully worked around.
 
 ---
 
@@ -587,6 +587,20 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** sends each request domain of a rule without a filter as `domain^`, and each excluded one as `||domain^`; a `urlFilter` moves into each request domain past the host (`domain^*filter`, or `domain*filter` for a filter starting with `/`), and a rule with an anchored `urlFilter` is kept inert ([dnr-rules.ts] `webKitRule`). `fromWebKit` removes the anchors, so large host lists are not stored twice.
 - **Impact:** uBlock Origin Lite has about 94000 request domain rules without a filter, and about 20 rules mangled by the merge (tracking parameter removals and exceptions).
 - **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { requestDomains: ['example.co'], resourceTypes: ['main_frame'] } }] })`, then load `https://example.com/`. Expected: loads. Actual: blocked.
+
+### 105. A `urlFilter` separator does not match the end of the URL
+
+- **Gap:** WebKit turns the separator `^` of a `urlFilter` into a class that needs one character, where Chrome's also matches the end of the URL: `||example.com/ad/banner^` misses `https://example.com/ad/banner`.
+- **Lilo:** a `urlFilter` ending in `^` goes to WebKit as the `regexFilter` WebKit would build, its last separator optional (`(?:[^a-zA-Z0-9_.%-].*)?$`); `||host^` stays as it is, a `/` or `:` always following a host ([dnr-rules.ts] `webKitRule`). Beside request domains, the filter moves into each domain (gap 104) and keeps the limit.
+- **Impact:** about 280 uBlock Origin Lite filters end in `^` after a path or query, missing the URLs that end there.
+- **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: '||example.com/ad^', resourceTypes: ['main_frame'] } }] })`, then load `https://example.com/ad`. Expected: blocked. Actual: loads.
+
+### 106. `regexSubstitution` replaces the whole URL
+
+- **Gap:** WebKit's redirect replaces the whole URL with the substitution, where Chrome replaces the matched part only, and writes `undefined` for a group that captured nothing, where Chrome writes nothing: `^https://www\.example\.com/` with `https://alt.example.net/` sends `https://www.example.com/watch?v=1` to `https://alt.example.net/`.
+- **Lilo:** a redirect whose `regexFilter` does not match from start to end goes to WebKit as `^(.*)(R)(.*)$`, its substitution renumbered between the text before and after the match, and a group made optional by `?` captures an empty string (`((?:X)?)`) ([dnr-rules.ts] `webKitRegex`). The greedy prefix takes the last match where Chrome takes the first. A rule left needing a group past `\9`, ending in `(X|$)`, starting with `(^|X)` or repeating a capturing group with `*` is kept inert.
+- **Impact:** redirects with a partial substitution, as link cleaners and alternative front ends write them, lost the rest of the URL or put `undefined` in it.
+- **Check:** Manual (`dnr-rules.test.ts` checks Lilo's side). Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'redirect', redirect: { regexSubstitution: 'https://example.org/' } }, condition: { regexFilter: '^https://example\\.com/', resourceTypes: ['main_frame'] } }] })`, then load `https://example.com/a?b`. Expected: `https://example.org/a?b`. Actual: `https://example.org/`.
 
 ## storage
 

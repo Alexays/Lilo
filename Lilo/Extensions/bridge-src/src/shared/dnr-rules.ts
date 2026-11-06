@@ -7,6 +7,8 @@ import { gapCall } from './ipc.ts';
 const STORED_RULE = 'liloChromeRule';
 export const INERT_FILTER = '^lilo-inert-rule:';
 const MAX_REPEAT = 48;
+// What urlFilter's `^` becomes in WebKit's regex.
+const SEPARATOR = '[^a-zA-Z0-9_.%-]';
 
 // Outside a character class, and their bodies inside one.
 const CLASSES: Record<string, string> = { d: '0-9', w: 'A-Za-z0-9_', s: '\\t\\n\\f\\r ' };
@@ -30,10 +32,21 @@ interface Term {
 class Unsupported extends Error {}
 const fail = (): never => { throw new Unsupported(); };
 
-/** RE2 syntax in WebKit's subset, or undefined when one regex cannot say the same. */
-export function webKitRegex(source: string): string | undefined {
+/**
+ * RE2 syntax in WebKit's subset, or undefined when one regex cannot say the same. With a `substitution`, the regex
+ * matching the whole URL and the substitution rewritten for it: WebKit replaces the whole URL with the substitution, and
+ * puts `undefined` for a group that captured nothing.
+ */
+export function webKitRegex(source: string): string | undefined;
+export function webKitRegex(source: string, substitution: string): [string, string] | undefined;
+export function webKitRegex(source: string, substitution?: string): string | [string, string] | undefined {
   if (!/^[\x20-\x7e]*$/.test(source)) return undefined;
   let i = 0;
+  let groups = 0;
+  const whole = substitution !== undefined;
+  const isCapturing = (text: string) => text.startsWith('(') && !text.startsWith('(?:');
+  // A group skipped by `?` captures an empty string, as in RE2.
+  const optional = (text: string) => (whole && isCapturing(text) ? `((?:${text.slice(1, -1)})?)` : `${text}?`);
 
   const escapeInClass = (c: string) => (/[\]\\^-]/.test(c) ? `\\${c}` : c);
 
@@ -78,6 +91,7 @@ export function webKitRegex(source: string): string | undefined {
         else fail();
         capturing = source[i - 1] !== ':';
       }
+      if (capturing) groups++;
       const alternatives = disjunction();
       if (source[i] !== ')') fail();
       i++;
@@ -153,7 +167,7 @@ export function webKitRegex(source: string): string | undefined {
     const group = (inner: string) => (capturing ? `(${inner})` : `(?:${inner})`);
     if (alternatives.length === 1) return group(emit(alternatives[0]));
     const filled = alternatives.filter((alternative) => alternative.length > 0);
-    if (filled.length === 1 && !quantified) return `${group(emit(filled[0]))}?`;
+    if (filled.length === 1 && !quantified) return optional(group(emit(filled[0])));
     if (filled.length < alternatives.length) fail();
     const singles = alternatives.map((alternative) => (alternative.length === 1 && alternative[0].min === 1 && alternative[0].max === 1 ? alternative[0].single : undefined));
     if (singles.some((single) => single === undefined)) fail();
@@ -163,11 +177,12 @@ export function webKitRegex(source: string): string | undefined {
 
   function repeat(text: string, min: number, max: number): string {
     if (min === 1 && max === 1) return text;
-    if (min === 0 && max === 1) return `${text}?`;
+    if (min === 0 && max === 1) return optional(text);
+    if (whole && min === 0 && isCapturing(text)) fail();
     if (min === 0 && max === Infinity) return `${text}*`;
     if (min === 1 && max === Infinity) return `${text}+`;
     // Copies of a capturing group would renumber the groups a regexSubstitution names.
-    if (min > MAX_REPEAT || (max !== Infinity && max > MAX_REPEAT) || text.startsWith('(') && !text.startsWith('(?:')) fail();
+    if (min > MAX_REPEAT || (max !== Infinity && max > MAX_REPEAT) || isCapturing(text)) fail();
     return text.repeat(min) + (max === Infinity ? `${text}*` : `${text}?`.repeat(max - min));
   }
 
@@ -184,6 +199,20 @@ export function webKitRegex(source: string): string | undefined {
     const top = disjunction();
     if (i < source.length || top.length > 1) return undefined;
     const terms = top[0];
+    if (whole) {
+      const prefix = terms[0]?.bol ? '' : '(.*)';
+      if (!prefix) terms.shift();
+      const end = terms[terms.length - 1];
+      const suffix = end?.eol && end.min === 1 ? '' : '(.*)';
+      if (!suffix) terms.pop();
+      const body = emit(terms);
+      if (!prefix && !suffix) return [`^${body}$`, substitution];
+      // The text around the match stays, as in Chrome; the greedy prefix makes it the last match, not the first.
+      const shift = prefix ? 2 : 1;
+      const number = (n: number) => (n > 9 ? fail() : `\\${n}`);
+      const rewritten = substitution.replace(/\\(\d)/g, (_, n) => number(Number(n) + shift));
+      return [`^${prefix}(${body})${suffix}$`, `${prefix ? '\\1' : ''}${rewritten}${suffix ? number(groups + shift + 1) : ''}`];
+    }
     let head = '';
     let tail = '';
     if (terms[0]?.bol) {
@@ -265,9 +294,11 @@ export function webKitRule(rule: any): any {
   let result = rule;
   const regexFilter = rule.condition?.regexFilter;
   if (typeof regexFilter === 'string' && isRegExp(regexFilter)) {
-    const regex = webKitRegex(regexFilter);
+    const substitution = rule.action?.type === 'redirect' ? rule.action.redirect?.regexSubstitution : undefined;
+    const [regex, rewritten] = typeof substitution === 'string' ? webKitRegex(regexFilter, substitution) ?? [] : [webKitRegex(regexFilter)];
     if (regex === undefined) return undefined;
     if (regex !== regexFilter) result = { ...result, condition: { ...result.condition, regexFilter: regex } };
+    if (rewritten !== substitution) result = { ...result, action: { ...result.action, redirect: { ...result.action.redirect, regexSubstitution: rewritten } } };
   }
   const types = rule.condition?.resourceTypes;
   if (Array.isArray(types) && types.some((type) => NON_WEBKIT_TYPES.has(type))) {
@@ -326,6 +357,15 @@ export function webKitRule(rule: any): any {
   // WebKit follows each make-https with an exception of the same condition, which https requests would match too.
   if (rule.action?.type === 'upgradeScheme' && [conditions.urlFilter, conditions.regexFilter, conditions.requestDomains].every((value) => value === undefined)) {
     result = { ...result, condition: { ...result.condition, urlFilter: '|http:' } };
+  }
+  // WebKit's `^` needs a character, where Chrome's also matches the end of the URL: such a filter goes as WebKit's own
+  // regex for it, the last separator optional. After a host alone, a `/` or `:` always follows.
+  const filter = result.condition?.urlFilter;
+  if (typeof filter === 'string' && filter.endsWith('^') && !Array.isArray(result.condition.requestDomains) && !/^\|\|[\w.-]+\^$/.test(filter)) {
+    const anchor = filter.startsWith('||') ? 2 : filter.startsWith('|') ? 1 : 0;
+    const body = filter.slice(anchor, -1).replace(/[?+[(){}$|\\.]/g, '\\$&').replaceAll('*', '.*').replaceAll('^', SEPARATOR);
+    const { urlFilter: _filter, ...condition } = result.condition;
+    result = { ...result, condition: { ...condition, regexFilter: `${['', '^', '^[^:]+://+([^:/]+\\.)?'][anchor]}${body}(?:${SEPARATOR}.*)?$` } };
   }
   // WebKit makes each request domain the urlFilter `||domain`, which also matches longer hosts (t.co and t.com), and
   // merges it with the rule's urlFilter by common substrings; an excluded one becomes an unanchored urlFilter. Anchored
