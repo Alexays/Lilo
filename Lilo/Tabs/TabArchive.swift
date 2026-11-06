@@ -47,21 +47,29 @@ extension BrowserContext {
         guard !tabArchiveSavePending else { return }
         tabArchiveSavePending = true
         DispatchQueue.main.async { [weak self] in
-            self?.writeTabArchive()
-            self?.windows.windows.forEach { $0.sendArchivedTabs() }
+            guard let self else { return }
+            writeTabArchive()
+            // A chrome on no Space yet gets the list when its Space is restored.
+            for window in windows.windows where window.tabManager.currentSpaceId != nil {
+                window.sendArchivedTabs()
+            }
         }
     }
 
-    /// Writes the archive off the main thread, private Spaces left out; at quit, waits for the disk.
+    /// Writes the archive off the main thread, private Spaces left out, unless the disk already holds it; at quit,
+    /// waits for the disk.
     func writeTabArchive() {
         if tabArchiveSavePending {
             tabArchiveSavePending = false
             let entries = tabArchive.entries.filter { spaceManager?.space(with: $0.spaceId)?.isPrivate == false }
-            let url = Self.tabArchiveURL(appSupportDirectory)
-            let logger = Self.logger
-            Self.tabArchiveQueue.async {
-                do { try JSONEncoder().encode(entries).write(to: url, options: .atomic) } catch {
-                    logger.error("tab archive save failed: \(error.localizedDescription, privacy: .public)")
+            if entries != savedTabArchive {
+                savedTabArchive = entries
+                let url = Self.tabArchiveURL(appSupportDirectory)
+                let logger = Self.logger
+                Self.tabArchiveQueue.async {
+                    do { try JSONEncoder().encode(entries).write(to: url, options: .atomic) } catch {
+                        logger.error("tab archive save failed: \(error.localizedDescription, privacy: .public)")
+                    }
                 }
             }
         }
@@ -79,6 +87,7 @@ extension BrowserContext {
 
     func restoreTabArchive(_ saved: [TabArchive.Entry]) {
         guard !saved.isEmpty else { return }
+        savedTabArchive = saved
         let expiry = Date().addingTimeInterval(-TabArchive.maxAge)
         tabArchive.entries = saved.filter { $0.archivedAt > expiry } + tabArchive.entries
     }
