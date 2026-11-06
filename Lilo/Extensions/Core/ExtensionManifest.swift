@@ -91,7 +91,7 @@ enum ExtensionError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .alreadyInstalled(let name):        return String(format: "Another copy of %@ is already installed. Remove it to load this folder.".localized, name)
+        case .alreadyInstalled(let name):        return unsafe String(format: "Another copy of %@ is already installed. Remove it to load this folder.".localized, name)
         case .manifestNotFound(let p):           return "manifest.json not found at \(p)"
         case .manifestParseError(let d):         return "Failed to parse manifest.json: \(d)"
         case .unsupportedManifestVersion(let v): return "Unsupported manifest version \(v); only MV3 is supported"
