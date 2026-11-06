@@ -30,8 +30,8 @@ final class SessionPersistence {
     private let debounceInterval: TimeInterval = 2.0
     private var pendingStatesBySpaceId: [UUID: SpaceTabState] = [:]
     /// Snapshot last seen per space, used to short-circuit byte-identical no-op saves and to gate
-    /// the error-recovery re-enqueue. Repaired on the keyless path; raw on the fast path (each path
-    /// compares against what it stored, so the two never mix).
+    /// the error-recovery re-enqueue. Repaired on the keyless path, raw elsewhere: a mismatch only
+    /// costs a redundant save, whose unchanged blob the write leaves alone.
     private var lastSnapshotsBySpaceId: [UUID: SpaceTabState] = [:]
     /// Last dedup key scheduled per space; short-circuits repair+compare when unchanged.
     private var lastDedupKeysBySpaceId: [UUID: SaveDedupKey] = [:]
@@ -122,7 +122,7 @@ final class SessionPersistence {
     func saveSpaceTabState(_ state: SpaceTabState, spaceId: UUID) throws {
         try SpaceTabStateStore(dbPool: tabDBPool).saveMany([(spaceId: spaceId, state: state)])
         pendingStatesBySpaceId.removeValue(forKey: spaceId)
-        lastSnapshotsBySpaceId[spaceId] = SpaceTabStateRepair.repaired(state)
+        lastSnapshotsBySpaceId[spaceId] = state
     }
 
     /// Space-switch variant of saveSpaceTabState: bookkeeping and updateActiveTab run on the main
@@ -159,8 +159,10 @@ final class SessionPersistence {
         let savedSpaceIds = Set(states.map(\.spaceId))
 
         try SpaceTabStateStore(dbPool: tabDBPool).saveMany(states)
+        // Unrepaired: the write repairs its own copy, and the snapshot only has to tell these
+        // states apart from an older one a failed async save would re-enqueue.
         for state in states {
-            lastSnapshotsBySpaceId[state.spaceId] = SpaceTabStateRepair.repaired(state.state)
+            lastSnapshotsBySpaceId[state.spaceId] = state.state
         }
         pendingStatesBySpaceId = pendingStatesBySpaceId.filter { !savedSpaceIds.contains($0.key) }
     }
