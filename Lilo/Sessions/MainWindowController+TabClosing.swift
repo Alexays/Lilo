@@ -31,11 +31,13 @@ extension MainWindowController {
     }
 
     /// `opener` is the tab extensions see as the new tab's `openerTabId`; `interactionState` gives it `url` with its history.
+    /// A `spaceId` no window shows gets the tab unloaded and inactive, for the window that shows it later to load.
     @discardableResult
     func createTabStateFirst(
         url: URL?,
         activate: Bool = true,
         opener: UUID? = nil,
+        inSpace spaceId: UUID? = nil,
         nativeConfiguration: WKWebViewConfiguration? = nil,
         adopting adoptedEngine: WKWebViewTab? = nil,
         interactionState: Any? = nil,
@@ -43,12 +45,14 @@ extension MainWindowController {
         sidebarSection: TabTreeItem.Section? = nil,
         sidebarIndex: Int? = nil
     ) -> Tab? {
-        guard let spaceId = tabManager.currentSpaceId else { return nil }
-        let tab = adoptedEngine.map(tabManager.prepareTabRuntime(adopting:))
+        guard let spaceId = spaceId ?? tabManager.currentSpaceId else { return nil }
+        let isShown = spaceId == tabManager.currentSpaceId
+        let tab = !isShown ? Tab(url: url, title: Tab.fallbackTitle(for: url), spaceId: spaceId)
+            : adoptedEngine.map(tabManager.prepareTabRuntime(adopting:))
             ?? tabManager.prepareTabRuntime(url: url, nativeConfiguration: nativeConfiguration)
 
         do {
-            try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: activate))
+            try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: activate && isShown))
             if let sidebarSection, let sidebarIndex {
                 try applyBrowserCommand(.moveSidebarItem(
                     spaceId: spaceId,
@@ -59,6 +63,7 @@ extension MainWindowController {
                     insert: .index(sidebarIndex)
                 ))
             }
+            guard isShown else { return tab }
             tabManager.attachPreparedTabRuntime(for: tab, opener: opener)
             if let engine = tabManager.engineTab(for: tab.id) {
                 engine.delegate = self
@@ -73,7 +78,7 @@ extension MainWindowController {
             }
             return tab
         } catch {
-            tabManager.discardPreparedTabRuntime(for: tab.id)
+            if isShown { tabManager.discardPreparedTabRuntime(for: tab.id) }
             Self.logger.error("create tab state command failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }

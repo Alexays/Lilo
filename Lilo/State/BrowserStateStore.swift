@@ -1089,6 +1089,11 @@ extension BrowserStateStore {
         spaces[spaceId]?.engines[tabId] = engine
     }
 
+    /// The extension adapter of a tab created in a space no window shows; a window showing the space takes it over.
+    func storeHiddenTabAdapter(_ adapter: TabExtensionAdapter, tabId: UUID, spaceId: UUID) {
+        spaces[spaceId]?.tabAdapters[tabId] = adapter
+    }
+
     func engine(tabId: UUID, spaceId: UUID) -> WKWebViewTab? {
         spaces[spaceId]?.engines[tabId]
     }

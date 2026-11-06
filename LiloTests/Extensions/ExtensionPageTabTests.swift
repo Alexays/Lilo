@@ -298,6 +298,7 @@ final class ExtensionPageTabTests: XCTestCase {
         let created = URL(string: pageURL.absoluteString + "#behind")
         XCTAssertTrue(window.tabManager.tabs(forSpace: behind.id).contains { $0.url == created }, "the tab opens in the window asked for")
         XCTAssertFalse(window.tabManager.tabs(forSpace: shownId).contains { $0.url == created })
+        XCTAssertEqual(window.tabManager.currentSpaceId, shownId, "a tab opened in the background leaves the shown space on screen")
     }
 
     /// A space's browser window may since show a private space: an extension not allowed there never opens a tab in it.
@@ -313,6 +314,29 @@ final class ExtensionPageTabTests: XCTestCase {
         let created = URL(string: pageURL.absoluteString + "#opened")
         XCTAssertFalse(window.tabManager.tabs(forSpace: privateId).contains { $0.url == created }, "no tab in the private space")
         XCTAssertTrue(window.tabManager.tabs(forSpace: spaceId).contains { $0.url == created }, "the tab opens in the page's space")
+        XCTAssertEqual(window.tabManager.currentSpaceId, privateId, "the user stays in the private space")
+    }
+
+    /// As in Chrome, a new tab shows a newtab override's page, but stays blank in a private space.
+    func testANewTabOverrideStaysOutOfPrivateSpaces() async throws {
+        let context = browserContext.context
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
+        let registry = try context.profileContexts.context(for: profileId).extensions
+        let extDir = try createMinimalExtension(named: "newtab", in: tempDir)
+        let manifest: [String: Any] = ["manifest_version": 3, "name": "Test", "version": "1.0", "chrome_url_overrides": ["newtab": "page.html"]]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: extDir.appendingPathComponent("manifest.json"))
+        try "<title>New</title>".write(to: extDir.appendingPathComponent("page.html"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extDir)
+        let window = makeTestWindow(context, showing: space.id)
+
+        window.newTab(nil)
+        XCTAssertEqual(window.tabManager.activeTab?.url?.scheme, "chrome-extension")
+
+        window.newPrivateSpace(nil)
+        window.newTab(nil)
+        let tab = try XCTUnwrap(window.tabManager.activeTab)
+        XCTAssertNil(tab.url, "a private space's new tab stays blank")
     }
 
     /// `windows.create` loads a web page in the profile's store, whatever space is shown, unless it asks for `incognito`, which
