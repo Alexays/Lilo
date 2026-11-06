@@ -195,7 +195,7 @@ Lilo обновляется автоматически через подписа
 
 ## Сборка из исходного кода
 
-С установленными Xcode 27 и Node.js 22.6+ ([все требования](../../CONTRIBUTING.md#requirements)):
+С установленными Xcode 27 и Node.js 22.23.4+ ([все требования](../../CONTRIBUTING.md#requirements)):
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo

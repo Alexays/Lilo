@@ -187,7 +187,7 @@ Lilo оновлюється через підписані оновлення Spa
 
 ## Збирання з вихідного коду
 
-З інстальованими Xcode 27 та Node.js 22.6+ ([повні вимоги](../../CONTRIBUTING.md#requirements)):
+З інстальованими Xcode 27 та Node.js 22.23.4+ ([повні вимоги](../../CONTRIBUTING.md#requirements)):
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo

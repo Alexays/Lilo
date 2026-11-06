@@ -25,8 +25,8 @@ else
     missing+=("Xcode 27 selected (found: ${xcode:-none at $(xcode-select -p 2>/dev/null || echo '?')}): install it from https://developer.apple.com/xcode/, open it once, then: sudo xcode-select -s /Applications/Xcode.app")
 fi
 
-# The packages' engines field, not .nvmrc's major: the bridge tests need --experimental-strip-types.
-wanted_node=$(sed -n 's/.*"node": *">=\([0-9.]*\)".*/\1/p' lilo-ui/package.json)
+# The highest engines field of the packages, not .nvmrc's major: make validate checks the site too.
+wanted_node=$(sed -n 's/.*"node": *">=\([0-9.]*\)".*/\1/p' lilo-ui/package.json site/package.json | sort -V | tail -1)
 node_version=$(node -v 2>/dev/null)
 if [ -n "$node_version" ] && [ "$(printf '%s\n' "$wanted_node" "${node_version#v}" | sort -V | head -1)" = "$wanted_node" ]; then
     echo "  ok  Node.js $node_version"
