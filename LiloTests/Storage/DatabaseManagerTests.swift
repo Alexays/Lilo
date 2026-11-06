@@ -44,4 +44,23 @@ final class DatabaseManagerTests: XCTestCase {
         XCTAssertNil(createdPermissions.decision(forOrigin: "https://maps.example", type: "location"))
         manager.closeForShutdown()
     }
+
+    func testAnUnreadableDatabaseIsMovedAsideWithItsWalAndReplaced() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("db-manager-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let garbage = Data((0..<8192).map { _ in UInt8.random(in: .min ... .max) })
+        try garbage.write(to: dir.appendingPathComponent("global.db"))
+        try garbage.write(to: dir.appendingPathComponent("global.db-wal"))
+
+        let manager = try DatabaseManager(appSupportDirectory: dir.path)
+
+        let movedAside = manager.takeMovedAsideDatabases()
+        XCTAssertEqual(movedAside.count, 1)
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: movedAside[0])), garbage)
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: movedAside[0] + "-wal")), garbage)
+        XCTAssertTrue(try manager.globalPool.read { try $0.tableExists("profiles") })
+        XCTAssertEqual(manager.takeMovedAsideDatabases(), [])
+        manager.closeForShutdown()
+    }
 }
