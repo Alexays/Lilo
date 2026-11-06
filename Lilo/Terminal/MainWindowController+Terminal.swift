@@ -416,15 +416,32 @@ extension MainWindowController {
     /// Reads the terminal settings (theme, font, size) and applies them to every terminal.
     func applyTerminalSettings() {
         guard let settingsStore = context.settingsStore else { return }
-        let ghostty = TerminalTheme.ghosttyConfig(dark: Self.prefersDarkSidebarAppearance())
-        let themeId = settingsStore.get("terminalTheme") ?? TerminalTheme.auto.id
-        let theme: TerminalTheme? = switch themeId {
-        case "ghostty": ghostty?.theme
-        case "vscode": TerminalTheme.vscodeTheme(dark: Self.prefersDarkSidebarAppearance())
-        default: (TerminalTheme.presets + customTerminalThemes).first { $0.id == themeId }
+        context.powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
+        // Fonts and scrollback apply at once, so a terminal restored meanwhile starts with them; the VS Code colors shown stay.
+        let shown = tabManager.terminalHost.appearance.theme
+        setTerminalAppearance(settingsStore, vscodeTheme: shown.id == "vscode" ? shown : nil)
+        guard settingsStore.get("terminalTheme") == "vscode" else { return }
+        // Finding the VS Code theme walks its extension folders, so it stays off the main thread.
+        let dark = Self.prefersDarkSidebarAppearance()
+        Task { [weak self] in
+            let theme = await Task.detached(priority: .userInitiated) { TerminalTheme.vscodeTheme(dark: dark) }.value
+            // A later call that left the VS Code theme or the appearance it was resolved for wins.
+            guard let self, let settingsStore = self.context.settingsStore, settingsStore.get("terminalTheme") == "vscode",
+                  Self.prefersDarkSidebarAppearance() == dark else { return }
+            self.setTerminalAppearance(settingsStore, vscodeTheme: theme)
         }
+    }
+
+    private func setTerminalAppearance(_ settingsStore: SettingsStore, vscodeTheme: TerminalTheme?) {
+        let themeId = settingsStore.get("terminalTheme") ?? TerminalTheme.auto.id
         let family = settingsStore.get("terminalFontFamily") ?? ""
         let fromGhostty = family == "ghostty"
+        let ghostty = themeId == "ghostty" || fromGhostty ? TerminalTheme.ghosttyConfig(dark: Self.prefersDarkSidebarAppearance()) : nil
+        let theme: TerminalTheme? = switch themeId {
+        case "ghostty": ghostty?.theme
+        case "vscode": vscodeTheme
+        default: (TerminalTheme.presets + customTerminalThemes).first { $0.id == themeId }
+        }
         let size = settingsStore.get("terminalFontSize").flatMap(Double.init).map { CGFloat($0) }
             ?? (fromGhostty ? ghostty?.fontSize : nil) ?? 13
         tabManager.terminalHost.setAppearance(TerminalHost.Appearance(
@@ -434,7 +451,6 @@ extension MainWindowController {
             optionAsMeta: TerminalHost.OptionAsMeta(rawValue: settingsStore.get("terminalOptionAsMeta") ?? "") ?? .off,
             scrollbackBytes: (settingsStore.get("terminalScrollbackMB").flatMap(Int.init) ?? 10) * 1_000_000
         ))
-        context.powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
     }
 
     /// Themes with their colors on the current Space, monospaced font families, and what the
@@ -517,7 +533,8 @@ extension BrowserContext {
     /// Writes the closed terminals off the main thread when they changed; at quit, waits for the disk.
     func writeClosedTerminals() {
         closedTerminalsSavePending = false
-        guard let url = closedTerminalsURL else { return }
+        // Before the Spaces load, no entry passes the private-Space filter: the disk keeps what was read.
+        guard let url = closedTerminalsURL, spaceManager != nil else { return }
         let terminals = Array(recentlyClosed.recentEntries.reversed().filter { entry in
             guard case .terminal = entry.content else { return false }
             return spaceManager?.space(with: entry.spaceId)?.isPrivate == false
