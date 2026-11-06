@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96 and 97. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 103, 104 and 105. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96 and 97. Every other gap is fully worked around.
 
 ---
 
@@ -375,6 +375,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** refuses without asking ([ExtensionControllerDelegate.swift] `promptForPermissionToAccess`). User-visible side: COMPATIBILITY.md, "permissions".
 - **Check:** `testURLPermissionPromptIsRefusedWithoutAsking` (Lilo's side).
 
+### 103. Sandbox pages get the extension pages' policy and APIs
+
+- **Gap:** WebKit reads only `content_security_policy.extension_pages` (by default `script-src 'self'`) and serves every extension resource with it, the pages `sandbox.pages` lists included: they keep the extension's origin and `chrome.*`, and `eval`, `new Function` and inline scripts are refused. Chrome serves them with `content_security_policy.sandbox` (or its default, which allows `eval`) in an opaque origin, without extension APIs.
+- **Lilo:** none: WebKit sets the header on each resource it serves, and a page's own `<meta>` policy can only restrict it. Widening `extension_pages` would loosen every other page of the extension. User-visible side: COMPATIBILITY.md, "Extension manifest".
+- **Impact:** code an extension moves into a sandbox page to run `eval` or `new Function` (template engines, user script runners) throws `EvalError`, with an error in the console only.
+- **Check:** `testSandboxPagesGetTheExtensionPagesPolicyAndAPIs`. Repro: an MV3 extension with `"sandbox": { "pages": ["page.html"] }` and `"content_security_policy": { "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval'" }`; in page.html, run `eval('1 + 1')`. Expected: `2`, in a `null` origin without `chrome.runtime`. Actual: `EvalError`, in the extension's origin with `chrome.runtime`.
+
 ## tabs, scripting and webNavigation
 
 ### 1. Manifest content scripts run in pages already open
@@ -573,6 +580,20 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** gives WebKit session rules as dynamic rules, which it stores, under ids counted down from 2³¹−1 and marked with the extension's id ([dnr-rules.ts] `updateSessionRules`, `heldSessionRules`), so the load compile finds the last run's rules unchanged and reuses its list. Native remembers, in memory per context, the ids this run set ([DeclarativeNetRequestBridgeHandler.swift] `sessionRules`): `getSessionRules` answers only those, as Chrome after a launch, removing one of the others changes nothing, and adding one back as it was keeps it as it is, so a worker clearing its rules at start then adding them back compiles nothing. 30 s after the worker starts, the others are removed and the run claims every rule ([declarativeNetRequest.ts] `releaseSessionRules`). `getMatchedRules` reports them under `_session` and their own ids. It also sends no rule update that changes nothing, merges the calls made while one runs (gap 38), and keeps its preparation stamp when it rewrites a ruleset for `updateStaticRules`.
 - **Impact:** at every launch, AdGuard compiled its 54 MB list three times (at load, for its 722 session rules, then for its stealth rule), uBlock Origin Lite its 28 MB list and Malwarebytes Browser Guard its 48 MB list, about 12 s of CPU together with the 20 extensions of `make ext-bench`.
 - **Check:** `dnr-rules.test.ts`, "session rules". Repro: an MV3 extension with an enabled static ruleset whose worker adds one session rule at start; quit and relaunch twice. Expected: its `DeclarativeNetRequestContentRuleList.data` stays as is on the second relaunch. Actual: rewritten on every launch.
+
+### 104. A rule's exclusions cancel the extension's later rules
+
+- **Gap:** WebKit compiles `excludedRequestDomains`, `excludedRequestMethods`, and `excludedInitiatorDomains` beside `initiatorDomains`, into a content blocker rule of their own of type `ignore-following-rules`, which keeps the rule's resource types and initiators; an excluded request domain also replaces the rule's URL filter, as a filter matching the domain anywhere in the URL (`_WKWebExtensionDeclarativeNetRequestRule`). The content blocker stops at the first such rule, so a request one exclusion covers escapes every rule of the extension of the same or lower priority, not only the excluding one. Chrome applies an exclusion to its own rule.
+- **Lilo:** none: the translation is WebKit's, and a rule split by Lilo would still compile its exclusions this way. User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
+- **Impact:** a blocking list with a script rule excluding a CDN host lets every third-party script from that host through all its lower-priority rules, silently.
+- **Check:** Manual. Repro: two script block rules, priority 2 `{ urlFilter: 'a.js', excludedRequestDomains: ['example.com'] }` and priority 1 `{ urlFilter: 'b.js' }`, then a page loads `https://example.com/b.js` as a script. Expected: blocked by the second rule. Actual: loads.
+
+### 105. `initiatorDomains` miss a frame whose URL names a port
+
+- **Gap:** WebKit matches `initiatorDomains` and `excludedInitiatorDomains` with a pattern ending in the domain then `/`, so a frame on `http://example.com:8080/` matches neither. Chrome matches the host whatever the port.
+- **Lilo:** none: WebKit escapes the domain into its pattern, so a rule cannot add the port. User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
+- **Impact:** a site's rules do nothing on a development server or an intranet on another port.
+- **Check:** Manual. Repro: a block rule `{ urlFilter: 'b.js', initiatorDomains: ['127.0.0.1'] }`, then a page on `http://127.0.0.1:8080/` loads `b.js`. Expected: blocked. Actual: loads.
 
 ## storage
 

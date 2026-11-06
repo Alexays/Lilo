@@ -57,10 +57,12 @@ final class WebKitGapTests: XCTestCase {
 
     /// Loads an extension with `worker` as its service worker and an empty page.html, opens the page in a
     /// web view of the bare controller, and returns what `pageScript` returns there.
-    private func barePageResult(worker: String, workerPath: String = "background.js", permissions: [String] = [], pageScript: String) async throws -> String? {
+    private func barePageResult(
+        worker: String, workerPath: String = "background.js", permissions: [String] = [], manifest extra: [String: Any] = [:], pageScript: String
+    ) async throws -> String? {
         let folder = try writeExtension([
             "manifest_version": 3, "name": "Gap", "version": "1.0", "permissions": permissions, "background": ["service_worker": workerPath]
-        ], files: ["page.html": "<p>page</p>"])
+        ].merging(extra) { $1 }, files: ["page.html": "<p>page</p>"])
         try FileManager.default.createDirectory(at: folder.appendingPathComponent(workerPath).deletingLastPathComponent(), withIntermediateDirectories: true)
         try worker.write(to: folder.appendingPathComponent(workerPath), atomically: true, encoding: .utf8)
         let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
@@ -685,6 +687,19 @@ final class WebKitGapTests: XCTestCase {
             "cross_origin_embedder_policy": ["value": "require-corp"], "cross_origin_opener_policy": ["value": "same-origin"]
         ])
         XCTAssertEqual(title, "undefined false", "WebKit now gives extensions SharedArrayBuffer, as Chrome does: update COMPATIBILITY.md (Distill and Paperpile can leave knownFailures)")
+    }
+
+    func testSandboxPagesGetTheExtensionPagesPolicyAndAPIs() async throws {
+        // Chrome serves sandbox.pages with content_security_policy.sandbox: an opaque origin, no chrome.*, and eval here.
+        let result = try await barePageResult(worker: "", manifest: [
+            "sandbox": ["pages": ["page.html"]],
+            "content_security_policy": ["sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval'"]
+        ], pageScript: """
+        let evaluated;
+        try { evaluated = eval('1 + 1'); } catch (error) { evaluated = error.name; }
+        return `${evaluated} ${location.origin === 'null'} ${typeof chrome?.runtime?.id}`;
+        """)
+        XCTAssertEqual(result, "EvalError false string", "WebKit now serves sandbox.pages with their own policy, as Chrome: update COMPATIBILITY.md")
     }
 
     func testCookiesSetChecksAccessOverHTTPForACookieNotSecure() async throws {
