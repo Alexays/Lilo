@@ -5,13 +5,13 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22.6"
+    "node": ">=22.8"
   },
   "scripts": {
     "dev": "vite dev --host localhost --port 5173 --strictPort",
     "watch": "vite build --watch",
     "build": "vite build",
-    "test": "tsx --test $(find src -name '*.test.ts')",
+    "test": "tsx --test --experimental-test-isolation=none $(find src -name '*.test.ts')",
     "test:e2e": "playwright test",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint --cache --cache-location node_modules/.cache/eslint/ . & eslint=$!; npm run check; check=$?; wait $eslint && [ $check -eq 0 ]"

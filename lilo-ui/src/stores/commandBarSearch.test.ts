@@ -424,7 +424,7 @@ test("url query with no matching open tab keeps Go To first", () => {
 	resetTabs();
 	const output = computeResults(
 		{
-			parsed: parseInput("nowhere.example"),
+			parsed: parseInput("nowhere.example.com"),
 			historyResults: [],
 			searchSuggestions: [],
 			searchEngine: "google",

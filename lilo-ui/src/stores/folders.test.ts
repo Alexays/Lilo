@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { FolderState, TabState } from "./folders.svelte";
 import { treeItem } from "./testFixtures";
+import { freshStores, stubBridgeWindow } from "./testHarness";
 
 (
 	globalThis as unknown as {
@@ -25,12 +26,11 @@ type DerivedRune = (<T>(value: T) => T) & { by: <T>(fn: () => T) => T };
 
 const {
 	getRootItems,
-	getFolders,
 	getVisibleFolderChildren,
 	countVisibleFolderChildren,
 	canNestFolder,
 } = await import("./folders.svelte");
-const { applySidebarFolderInitialState, applySidebarTabInitialState, initSidebarStore } = await import("./sidebar.svelte");
+const { applySidebarFolderInitialState, applySidebarTabInitialState } = await import("./sidebar.svelte");
 const { computeSidebarView } = await import("./sidebarView");
 const { getTabs: getSpaceTabs } = await import("./tabs.svelte");
 const { applySpaceInitialState } = await import("./spaces.svelte");
@@ -668,10 +668,15 @@ test("canNestFolder: refuses a folder into itself, its subtree or past five leve
 	assert.equal(canNestFolder("solo", "d5", spaceId), false);
 });
 
-test("folder bridge hydration: initialState and browserStateChanged keep store in sync", () => {
+test("folder bridge hydration: initialState and browserStateChanged keep store in sync", async () => {
+	stubBridgeWindow();
+	const loadStore = await freshStores();
+	const { applySpaceInitialState } = await loadStore("/src/stores/spaces.svelte.ts");
+	const { applySidebarFolderInitialState, applySidebarTabInitialState, initSidebarStore } = await loadStore("/src/stores/sidebar.svelte.ts");
+	const { getRootItems } = await loadStore("/src/stores/folders.svelte.ts");
 	const spaceId = "folder-bridge-space";
 	const baseState = {
-		tabs: [] as Parameters<typeof applySidebarTabInitialState>[0]["tabs"],
+		tabs: [],
 		activeTabId: "",
 		sidebarWidth: 0,
 		sidebarVisible: true,
@@ -693,7 +698,7 @@ test("folder bridge hydration: initialState and browserStateChanged keep store i
 
 	applySpaceInitialState(baseState);
 	applySidebarTabInitialState(baseState);
-	applySidebarFolderInitialState(baseState as Parameters<typeof applySidebarFolderInitialState>[0]);
+	applySidebarFolderInitialState(baseState);
 	assert.deepEqual(getRootItems(spaceId, true), [{ kind: "folder", id: "initial-folder" }]);
 
 	initSidebarStore();
@@ -780,10 +785,15 @@ test("folder bridge hydration: initialState and browserStateChanged keep store i
 	assert.deepEqual(getRootItems(spaceId, false), []);
 });
 
-test("browserStatePatch folderUpdated patches one folder without replacing treeItems", () => {
+test("browserStatePatch folderUpdated patches one folder without replacing treeItems", async () => {
+	stubBridgeWindow();
+	const loadStore = await freshStores();
+	const { applySpaceInitialState } = await loadStore("/src/stores/spaces.svelte.ts");
+	const { applySidebarFolderInitialState, applySidebarTabInitialState, initSidebarStore } = await loadStore("/src/stores/sidebar.svelte.ts");
+	const { getFolders, getRootItems } = await loadStore("/src/stores/folders.svelte.ts");
 	const spaceId = "folder-updated-space";
 	const initialState = {
-		tabs: [] as Parameters<typeof applySidebarTabInitialState>[0]["tabs"],
+		tabs: [],
 		activeTabId: "",
 		sidebarWidth: 0,
 		sidebarVisible: true,
@@ -805,7 +815,7 @@ test("browserStatePatch folderUpdated patches one folder without replacing treeI
 
 	applySpaceInitialState(initialState);
 	applySidebarTabInitialState(initialState);
-	applySidebarFolderInitialState(initialState as Parameters<typeof applySidebarFolderInitialState>[0]);
+	applySidebarFolderInitialState(initialState);
 	initSidebarStore();
 
 	(globalThis as { window: { __lilo?: { receive(msg: Record<string, unknown>): void } } }).window.__lilo?.receive({
@@ -832,7 +842,7 @@ test("browserStatePatch folderUpdated patches one folder without replacing treeI
 		],
 	});
 
-	assert.deepEqual(getFolders(spaceId).map((folder) => [folder.id, folder.name, folder.isCollapsed]), [
+	assert.deepEqual(getFolders(spaceId).map((folder: FolderState) => [folder.id, folder.name, folder.isCollapsed]), [
 		["folder-1", "Renamed", true],
 	]);
 	assert.deepEqual(getRootItems(spaceId, false), [{ kind: "folder", id: "folder-1" }]);
