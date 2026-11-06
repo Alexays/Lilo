@@ -39,7 +39,6 @@ final class ProfileExtensionRegistry {
         var actionColors = ActionColors()
         /// Colors set for one tab, by Lilo tab id; they win over `actionColors` while that tab is active.
         var tabActionColors: [UUID: ActionColors] = [:]
-        var iconVersion = 0
         /// Error and permission-change notifications of this context.
         var contextObserver: NSObjectProtocol?
         var pageDiagnostics: [ExtensionPageDiagnostic] = []
@@ -104,6 +103,8 @@ final class ProfileExtensionRegistry {
 
     /// The tab state last sent to the contexts with private access (true) and without, once one asked for it.
     var sentTabStates: [Bool: ExtensionTabState] = [:]
+    /// The extensions that asked for the tab state: only they hold it, so only they get it pushed.
+    var tabStateAskers: Set<String> = []
     /// Keeps `sentTabStates` true to the tabs WebKit reports.
     weak var tabStateKeeper: TabGroupsBridgeHandler?
 
@@ -241,10 +242,19 @@ final class ProfileExtensionRegistry {
 
     func actionDidChange(for extensionId: String) {
         guard updateRuntime(extensionId: extensionId, {
-            $0.iconVersion += 1
             $0.bridgePayloads = [:]
         }) else { return }
         notifyExtensionsChanged()
+    }
+
+    /// Drops what the extensions set for `tabId`, which closed for good; a discarded tab keeps it.
+    func forgetTab(_ tabId: UUID) {
+        guard !loadedRuntimes.isEmpty else { return }
+        for index in loadedRuntimes.indices {
+            loadedRuntimes[index].tabActionColors[tabId] = nil
+            loadedRuntimes[index].bridgePayloads[tabId] = nil
+        }
+        NotificationCenter.default.post(name: .extensionTabDidClose, object: self, userInfo: ["tabId": tabId])
     }
 
     /// The action fields are re-rendered for the new active tab: what it shows (its host access request)
@@ -603,9 +613,10 @@ final class ProfileExtensionRegistry {
         return loadedRuntimes.first { $0.omniboxKeyword?.lowercased() == needle }?.id
     }
 
-    /// Sends each loaded extension with private access or without, as `hasPrivateAccess`, its `message` at once over its open channels.
-    func sendToOpenChannels(hasPrivateAccess: Bool, _ message: (WKWebExtensionContext) -> [String: Any]) {
-        for runtime in loadedRuntimes where runtime.context.hasAccessToPrivateData == hasPrivateAccess {
+    /// Sends each loaded extension of `extensionIds` with private access or without, as `hasPrivateAccess`, its `message` at once
+    /// over its open channels.
+    func sendToOpenChannels(of extensionIds: Set<String>, hasPrivateAccess: Bool, _ message: (WKWebExtensionContext) -> [String: Any]) {
+        for runtime in loadedRuntimes where runtime.context.hasAccessToPrivateData == hasPrivateAccess && extensionIds.contains(runtime.id) {
             gapEvents.send(message(runtime.context), toOpenChannelsOf: runtime.id)
         }
     }
@@ -1186,7 +1197,6 @@ final class ProfileExtensionRegistry {
         payload["actionEnabled"] = action?.isEnabled ?? true
         payload["actionLabel"] = action?.label ?? ""
         payload["iconDataURL"] = cachedIconDataURL(for: action)
-        payload["iconVersion"] = runtime.iconVersion
         payload["badgeText"] = action?.badgeText ?? ""
         payload["badgeColor"] = tabColors.map(\.badgeColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeColor
         payload["badgeTextColor"] = tabColors.map(\.badgeTextColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeTextColor

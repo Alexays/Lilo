@@ -84,7 +84,6 @@ function parseExtension(
 			data?.iconDataURL === undefined && data?.isEnabled
 				? (previous?.iconDataURL ?? "")
 				: sanitizeIconDataURL(data?.iconDataURL),
-		iconVersion: data?.iconVersion ?? 0,
 		hasPopup: data?.hasPopup ?? false,
 		hasBackground: data?.hasBackground ?? false,
 		hasContentScripts: data?.hasContentScripts ?? false,

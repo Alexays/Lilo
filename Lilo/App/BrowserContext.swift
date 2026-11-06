@@ -445,6 +445,7 @@ final class BrowserContext {
         (adapter.extensionWindow as? WindowExtensionAdapter)?.remove(tab: adapter)
         let registry = adapter.profileId.flatMap { profileContexts.existingContext(for: $0)?.extensions }
         registry?.controller.didCloseTab(adapter, windowIsClosing: false)
+        registry?.forgetTab(adapter.tabId)
     }
 
     /// Opens a browser window on `spaceId`, cascaded from the active window unless a frame is given.

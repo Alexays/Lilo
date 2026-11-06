@@ -152,17 +152,21 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
     /// A `Cookie` header set this way replaces WebKit's own, so every cookie of a framed site has its rules, not only the
     /// `SameSite` ones.
     private static func rules(for cookies: [HTTPCookie], framedBy sites: [String: Set<String>]) -> String {
-        func created(_ cookie: HTTPCookie) -> Double { (cookie.properties?[HTTPCookiePropertyKey("Created")] as? NSNumber)?.doubleValue ?? 0 }
         // A partitioned cookie belongs to the top-level site it was set under, never to an extension page. The rest go in a
-        // browser's order, longest path first then oldest, which WebKit keeps only through priorities.
-        let sent = cookies
-            .filter { ($0.properties?[HTTPCookiePropertyKey("StoragePartition")] as? String)?.isEmpty ?? true }
-            .sorted { ($0.path.count, -created($0)) > ($1.path.count, -created($1)) }
-        var rules: [[String: Any]] = []
-        for (index, cookie) in sent.enumerated() {
+        // browser's order, longest path first then oldest, which WebKit keeps only through priorities. Only the framed sites'
+        // cookies count toward them, so a change elsewhere in the jar leaves the source as it is.
+        var sent: [(cookie: HTTPCookie, isDomain: Bool, host: String, extensionIds: Set<String>, created: Double)] = []
+        for cookie in cookies {
             let isDomain = cookie.domain.hasPrefix(".")
             let host = isDomain ? String(cookie.domain.dropFirst()) : cookie.domain
             guard let extensionIds = sites.first(where: { host == $0.key || host.hasSuffix("." + $0.key) })?.value else { continue }
+            let properties = cookie.properties
+            guard (properties?[partition] as? String)?.isEmpty ?? true else { continue }
+            sent.append((cookie, isDomain, host, extensionIds, (properties?[HTTPCookiePropertyKey("Created")] as? NSNumber)?.doubleValue ?? 0))
+        }
+        sent.sort { ($0.cookie.path.count, -$0.created) > ($1.cookie.path.count, -$1.created) }
+        var rules: [[String: Any]] = []
+        for (index, (cookie, isDomain, host, extensionIds, _)) in sent.enumerated() {
             let origin = "^\(cookie.isSecure ? "https" : "https?")://\(isDomain ? "([^/:]+\\.)?" : "")\(escaped(host))(:[0-9]+)?"
             let path = cookie.path.isEmpty ? "/" : cookie.path
             // A path matches itself and what lies under it, never a sibling that only starts like it.
@@ -202,8 +206,19 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
         }
         var wanted: [String: HTTPCookie] = [:]
         var twins: Set<String> = []
-        for cookie in cookies where (cookie.properties?[Self.partition] as? String ?? "").isEmpty {
+        var partitioned: [(cookie: HTTPCookie, key: String)] = []
+        var copies: [HTTPCookie] = []
+        for cookie in cookies {
+            if cookie.comment == Self.copyComment {
+                copies.append(cookie)
+                continue
+            }
             guard let extensionIds = site(of: cookie), var properties = cookie.properties else { continue }
+            let partition = properties[Self.partition] as? String ?? ""
+            guard partition.isEmpty else {
+                partitioned.append((cookie, "\(cookie.name)\t\(cookie.domain)\t\(cookie.path)\t\(partition)"))
+                continue
+            }
             guard cookie.sameSitePolicy == .sameSiteLax || cookie.sameSitePolicy == .sameSiteStrict else {
                 extensionIds.forEach { twins.insert("\(cookie.name)\t\(cookie.domain)\t\(cookie.path)\tchrome-extension://\($0)") }
                 continue
@@ -215,10 +230,10 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
                 if let copy = HTTPCookie(properties: properties) { wanted[key(copy)] = copy }
             }
         }
-        for cookie in cookies where cookie.comment != Self.copyComment && twins.contains(key(cookie)) {
+        for (cookie, key) in partitioned where twins.contains(key) {
             await cookieStore.deleteCookie(cookie)
         }
-        for cookie in cookies where cookie.comment == Self.copyComment {
+        for cookie in copies {
             let copy = wanted[key(cookie)]
             if let copy, copy.value == cookie.value, copy.expiresDate == cookie.expiresDate, copy.isSecure == cookie.isSecure,
                copy.isHTTPOnly == cookie.isHTTPOnly {

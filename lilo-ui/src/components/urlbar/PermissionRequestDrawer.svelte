@@ -5,7 +5,6 @@
   import { extensionPermissionLines, permissionRequestIcon, sitePermissionAskKey } from "./urlBarDrawerModel";
   import DrawerPrompt from "./DrawerPrompt.svelte";
   import { getExtensions } from "../../stores/extensions.svelte";
-  import { extensionIconSrc } from "../extensions/extensionPanelModel";
 
   let { request }: { request: PermissionRequest } = $props();
 
@@ -30,7 +29,7 @@
 
 <DrawerPrompt
   icon={permissionRequestIcon(request)}
-  iconImage={extension && extensionIconSrc(extension)}
+  iconImage={extension?.iconDataURL || undefined}
   dismissLabel={t("permissionPrompt.deny")}
   confirmLabel={t(agentAction ? "permissionPrompt.allowOnce" : "permissionPrompt.allow")}
   alternateLabel={agentAction?.site && agentAction.kind !== "upload" ? t("permissionPrompt.alwaysAllowOnSite") : undefined}

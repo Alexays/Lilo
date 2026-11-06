@@ -20,6 +20,10 @@ final class IdleBridgeHandler: GapHandler {
     nonisolated(unsafe) private var observers: [Any] = []
     /// Screen lock and unlock observers, registered only while an extension listens.
     nonisolated(unsafe) private var lockObservers: [Any] = []
+    /// Display sleep and wake observers, registered with the lock ones: input wakes the displays, so no poll
+    /// for the end of idle runs while they sleep.
+    nonisolated(unsafe) private var displayObservers: [Any] = []
+    private var displaysAsleep = false
     /// Chrome reports a running screen saver as locked: Dashlane's team auto-logout runs only while idle.
     nonisolated(unsafe) private var screenSaverObservers: [Any] = []
     private var screenSaverRunning = !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.ScreenSaver.Engine").isEmpty
@@ -57,6 +61,7 @@ final class IdleBridgeHandler: GapHandler {
         unsafe pollTimer?.invalidate()
         unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
         unsafe (lockObservers + screenSaverObservers).forEach { DistributedNotificationCenter.default().removeObserver($0) }
+        unsafe displayObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
     }
 
     var isPolling: Bool { unsafe pollTimer != nil || !lockObservers.isEmpty }
@@ -97,6 +102,9 @@ final class IdleBridgeHandler: GapHandler {
         guard !audience.isEmpty else {
             unsafe lockObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
             unsafe lockObservers = []
+            unsafe displayObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+            unsafe displayObservers = []
+            displaysAsleep = false
             lastStates = [:]
             return
         }
@@ -104,6 +112,14 @@ final class IdleBridgeHandler: GapHandler {
             unsafe lockObservers = [("com.apple.screenIsLocked", true), ("com.apple.screenIsUnlocked", false)].map { name, isLock in
                 DistributedNotificationCenter.default().addObserver(forName: .init(name), object: nil, queue: .main) { [weak self] _ in
                     MainActor.assumeIsolated { self?.update(locked: isLock) }
+                }
+            }
+            unsafe displayObservers = [(NSWorkspace.screensDidSleepNotification, true), (NSWorkspace.screensDidWakeNotification, false)].map { name, asleep in
+                NSWorkspace.shared.notificationCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                    MainActor.assumeIsolated {
+                        self?.displaysAsleep = asleep
+                        self?.update()
+                    }
                 }
             }
         }
@@ -115,8 +131,10 @@ final class IdleBridgeHandler: GapHandler {
             let threshold = detectionIntervals[listener] ?? Self.defaultInterval
             let state = locked ? "locked" : idle >= threshold ? "idle" : "active"
             if !locked {
-                // Only a poll sees the input that ends idle; active lasts at least until the threshold.
-                nextCheck = min(nextCheck, state == "idle" ? 1 : threshold - idle)
+                // Only a poll sees the input that ends idle, every second at first, then less often the longer idle lasts;
+                // active lasts at least until the threshold.
+                let poll = displaysAsleep ? Double.infinity : min(max(idle - threshold, 1), 10)
+                nextCheck = min(nextCheck, state == "idle" ? poll : threshold - idle)
             }
             states[listener] = state
             // The first sample only sets the baseline.
@@ -130,7 +148,7 @@ final class IdleBridgeHandler: GapHandler {
         let timer = Timer(timeInterval: min(nextCheck, 86_400), repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.update() }
         }
-        timer.tolerance = 1
+        timer.tolerance = max(min(nextCheck, 10) / 2, 1)
         RunLoop.main.add(timer, forMode: .common)
         unsafe pollTimer = timer
     }
