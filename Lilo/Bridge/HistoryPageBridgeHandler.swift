@@ -22,6 +22,10 @@ final class HistoryPageBridgeHandler: BridgeHandler {
 
     /// Rows a batch reaches before it stops at a day's end.
     private static let batchRows = 200
+    /// Visits flush about once a second while browsing: the open page reloads at most this often.
+    private static let changeInterval: Duration = .seconds(3)
+
+    private typealias PageReply = ((rows: [HistoryStore.DayRow], nextBefore: Date?), [String: String])
 
     private let profileContextProvider: () -> ProfileContext?
     private weak var bridgeRouter: BridgeRouter?
@@ -29,6 +33,10 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     private var pageOpen = false
     /// Favicons the page already holds, so each one crosses the bridge once per window.
     private var sentFaviconHosts: Set<String> = []
+    /// The page ignores every reply but the latest request's, so a new request cancels the read still running.
+    private var pageRead: Task<PageReply?, Never>?
+    private var changeThrottle: Task<Void, Never>?
+    private var changeMissed = false
     nonisolated(unsafe) private var changeObserver: Any?
 
     init(profileContextProvider: @escaping () -> ProfileContext?, bridgeRouter: BridgeRouter) {
@@ -38,7 +46,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
             let profileId = note.object as? UUID
             MainActor.assumeIsolated {
                 guard let self, self.pageOpen, profileId == self.profileContextProvider()?.profileId else { return }
-                self.bridgeRouter?.send(event: "historyChanged")
+                self.reportChange()
             }
         }
     }
@@ -66,10 +74,10 @@ final class HistoryPageBridgeHandler: BridgeHandler {
             let favicons = context.favicons
             let sentHosts = sentFaviconHosts
             let minimumRows = Self.batchRows
-            let loaded = await Task.detached(priority: .userInitiated) {
-                () -> ((rows: [HistoryStore.DayRow], nextBefore: Date?), [String: String])? in
+            pageRead?.cancel()
+            let read = Task.detached(priority: .userInitiated) { () -> PageReply? in
                 do {
-                    let page = try store.dayRows(filter: filter, before: before, minimumRows: minimumRows)
+                    let page = try await store.dayRows(filter: filter, before: before, minimumRows: minimumRows)
                     // Favicons are keyed by the page's own host; the chrome looks them up by site.
                     var siteByHost: [String: String] = [:]
                     for row in page.rows {
@@ -80,10 +88,16 @@ final class HistoryPageBridgeHandler: BridgeHandler {
                     return (page, Dictionary(entries.compactMap { entry in siteByHost[entry.host].map { ($0, entry.dataURL) } },
                                              uniquingKeysWith: { first, _ in first }))
                 } catch {
-                    historyPageLogger.error("history page read failed: \(error.localizedDescription, privacy: .public)")
+                    if !Task.isCancelled {
+                        historyPageLogger.error("history page read failed: \(error.localizedDescription, privacy: .public)")
+                    }
                     return nil
                 }
-            }.value
+            }
+            pageRead = read
+            let loaded = await read.value
+            guard !read.isCancelled else { break }
+            pageRead = nil
             // A failed read still answers, or the page would wait on it and never load more.
             guard let (page, icons) = loaded else {
                 sendEmptyPage(for: message)
@@ -145,6 +159,23 @@ final class HistoryPageBridgeHandler: BridgeHandler {
         return nil
     }
 
+    /// Reports a change at once, then at most one more per interval for the changes that arrive meanwhile.
+    private func reportChange() {
+        guard changeThrottle == nil else {
+            changeMissed = true
+            return
+        }
+        bridgeRouter?.send(event: "historyChanged")
+        changeThrottle = Task { [weak self] in
+            do { try await Task.sleep(for: Self.changeInterval) } catch { return }
+            guard let self else { return }
+            self.changeThrottle = nil
+            guard self.changeMissed else { return }
+            self.changeMissed = false
+            if self.pageOpen { self.reportChange() }
+        }
+    }
+
     private func sendEmptyPage(for message: BridgeMessage) {
         bridgeRouter?.send(event: "historyPage", data: ["requestId": message.int("requestId") ?? 0, "rows": [], "favicons": [:]])
     }
@@ -152,6 +183,10 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     /// Runs a deletion off the main actor, then has the page reload. A deletion that removes pages reaches the page through
     /// the store's change; a partial one removes no page, so the store reports nothing and the reload is asked here.
     private func deleting(_ delete: @escaping @Sendable () throws -> [String]) async {
+        // A deletion shows at once: its reload skips the change interval and covers the changes held back.
+        changeThrottle?.cancel()
+        changeThrottle = nil
+        changeMissed = false
         let removedPages = await Task.detached(priority: .userInitiated) { () -> Bool in
             do { return try !delete().isEmpty } catch {
                 historyPageLogger.error("history delete failed: \(error.localizedDescription, privacy: .public)")

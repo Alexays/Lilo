@@ -369,17 +369,17 @@ final class HistoryStoreTests: XCTestCase {
 
     private func hoursAgo(_ hours: Double) -> Date { now.addingTimeInterval(-hours * 3_600) }
 
-    private func rows(_ filter: HistoryStore.Filter = .init(), before: Date? = nil, minimumRows: Int = 200) throws -> [HistoryStore.DayRow] {
-        try store.dayRows(filter: filter, before: before, minimumRows: minimumRows, now: now, calendar: utc).rows
+    private func rows(_ filter: HistoryStore.Filter = .init(), before: Date? = nil, minimumRows: Int = 200) async throws -> [HistoryStore.DayRow] {
+        try await store.dayRows(filter: filter, before: before, minimumRows: minimumRows, now: now, calendar: utc).rows
     }
 
-    func testAPageVisitedOnTwoDaysShowsOnBothWithThatDaysCount() throws {
+    func testAPageVisitedOnTwoDaysShowsOnBothWithThatDaysCount() async throws {
         let url = "https://example.com/a"
         try insertHistoryEntry(url: url, title: "A", lastVisitedAt: hoursAgo(1))
         try insertHistoryEntry(url: url, lastVisitedAt: hoursAgo(2))
         try insertHistoryEntry(url: url, lastVisitedAt: hoursAgo(30))
 
-        let rows = try rows()
+        let rows = try await rows()
 
         XCTAssertEqual(rows.map(\.url), [url, url])
         XCTAssertEqual(rows.map(\.visits), [2, 1])
@@ -387,33 +387,34 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertEqual(rows[0].lastVisitAt, hoursAgo(1))
     }
 
-    func testRecordedVisitsEachGetARowAndASite() throws {
+    func testRecordedVisitsEachGetARowAndASite() async throws {
         let url = "https://www.Example.com:8443/page"
         store.scheduleRecordVisit(url: url, title: "Page")
         store.scheduleRecordVisit(url: url, title: "Page")
         store.flushPendingWrites()
 
         XCTAssertEqual(try store.visits(forURL: url).count, 2)
-        XCTAssertEqual(try rows().first?.host, "example.com:8443")
+        let row = try await rows().first
+        XCTAssertEqual(row?.host, "example.com:8443")
     }
 
-    func testDayRowsLoadWholeDaysAndContinueFromTheOldestOne() throws {
+    func testDayRowsLoadWholeDaysAndContinueFromTheOldestOne() async throws {
         try insertHistoryEntry(url: "https://example.com/today-1", lastVisitedAt: hoursAgo(1))
         try insertHistoryEntry(url: "https://example.com/today-2", lastVisitedAt: hoursAgo(2))
         try insertHistoryEntry(url: "https://example.com/older", lastVisitedAt: hoursAgo(80))
 
-        let first = try store.dayRows(filter: .init(), before: nil, minimumRows: 1, now: now, calendar: utc)
+        let first = try await store.dayRows(filter: .init(), before: nil, minimumRows: 1, now: now, calendar: utc)
         XCTAssertEqual(first.rows.count, 2, "a batch never splits a day")
         XCTAssertEqual(first.nextBefore, utc.startOfDay(for: now))
 
-        let second = try store.dayRows(filter: .init(), before: first.nextBefore, minimumRows: 1, now: now, calendar: utc)
+        let second = try await store.dayRows(filter: .init(), before: first.nextBefore, minimumRows: 1, now: now, calendar: utc)
         XCTAssertEqual(second.rows.map(\.url), ["https://example.com/older"])
-        let third = try store.dayRows(filter: .init(), before: second.nextBefore, minimumRows: 1, now: now, calendar: utc)
+        let third = try await store.dayRows(filter: .init(), before: second.nextBefore, minimumRows: 1, now: now, calendar: utc)
         XCTAssertTrue(third.rows.isEmpty)
         XCTAssertNil(third.nextBefore)
     }
 
-    func testDayRowsFilterByPeriodSiteTerminalAndText() throws {
+    func testDayRowsFilterByPeriodSiteTerminalAndText() async throws {
         try insertHistoryEntry(url: "https://example.com/today", title: "Alpha", lastVisitedAt: hoursAgo(1))
         try insertHistoryEntry(url: "https://example.org/yesterday", title: "Beta", lastVisitedAt: hoursAgo(30))
         try insertHistoryEntry(url: "https://example.org/old", title: "Gamma", lastVisitedAt: hoursAgo(24 * 10))
@@ -423,19 +424,26 @@ final class HistoryStoreTests: XCTestCase {
             try db.execute(sql: "UPDATE historyVisit SET visitedAt = ? WHERE openedFrom IS NOT NULL", arguments: [hoursAgo(3)])
         }
 
-        XCTAssertEqual(try rows(.init(period: .yesterday)).map(\.title), ["Beta"])
-        XCTAssertEqual(try rows(.init(period: .older)).map(\.title), ["Gamma"])
-        XCTAssertEqual(try rows(.init(period: .last7Days)).map(\.title), ["Alpha", "Dev", "Beta"])
-        XCTAssertEqual(try rows(.init(host: "example.org")).map(\.title), ["Beta", "Gamma"])
-        XCTAssertEqual(try rows(.init(openedFrom: "project · main")).map(\.title), ["Dev"])
-        XCTAssertEqual(try rows(.init(query: "gam")).map(\.title), ["Gamma"])
+        let yesterday = try await rows(.init(period: .yesterday))
+        let older = try await rows(.init(period: .older))
+        let last7Days = try await rows(.init(period: .last7Days))
+        let site = try await rows(.init(host: "example.org"))
+        let terminal = try await rows(.init(openedFrom: "project · main"))
+        let search = try await rows(.init(query: "gam"))
+        XCTAssertEqual(yesterday.map(\.title), ["Beta"])
+        XCTAssertEqual(older.map(\.title), ["Gamma"])
+        XCTAssertEqual(last7Days.map(\.title), ["Alpha", "Dev", "Beta"])
+        XCTAssertEqual(site.map(\.title), ["Beta", "Gamma"])
+        XCTAssertEqual(terminal.map(\.title), ["Dev"])
+        XCTAssertEqual(search.map(\.title), ["Gamma"])
     }
 
-    func testDeletingADayRowKeepsThePageOnItsOtherDays() throws {
+    func testDeletingADayRowKeepsThePageOnItsOtherDays() async throws {
         let url = "https://example.com/a"
         try insertHistoryEntry(url: url, visitCount: 5, lastVisitedAt: hoursAgo(1))
         try insertHistoryEntry(url: url, lastVisitedAt: hoursAgo(30))
-        let today = try XCTUnwrap(try rows().first)
+        let firstRows = try await rows()
+        let today = try XCTUnwrap(firstRows.first)
 
         let removed = try store.deleteDayRows([(today.pageId, today.dayStart)], openedFrom: nil, calendar: utc)
 
@@ -443,25 +451,28 @@ final class HistoryStoreTests: XCTestCase {
         let entry = try XCTUnwrap(try store.entry(forURL: url))
         XCTAssertEqual(entry.lastVisitedAt, hoursAgo(30))
         XCTAssertEqual(entry.visitCount, 4)
-        XCTAssertEqual(try rows().map(\.dayStart), [utc.startOfDay(for: hoursAgo(30))])
+        let remaining = try await rows()
+        XCTAssertEqual(remaining.map(\.dayStart), [utc.startOfDay(for: hoursAgo(30))])
     }
 
-    func testDeletingTheLastDayRowRemovesThePage() throws {
+    func testDeletingTheLastDayRowRemovesThePage() async throws {
         let url = "https://example.com/once"
         try insertHistoryEntry(url: url, lastVisitedAt: hoursAgo(1))
-        let row = try XCTUnwrap(try rows().first)
+        let shown = try await rows()
+        let row = try XCTUnwrap(shown.first)
 
         XCTAssertEqual(try store.deleteDayRows([(row.pageId, row.dayStart)], openedFrom: nil, calendar: utc), [url])
         XCTAssertNil(try store.entry(forURL: url))
     }
 
-    func testDeletingUnderATerminalFilterKeepsTheOtherVisits() throws {
+    func testDeletingUnderATerminalFilterKeepsTheOtherVisits() async throws {
         let url = "http://localhost:5173/"
         store.scheduleRecordVisit(url: url, title: "Dev", openedFrom: "project · main")
         store.flushPendingWrites()
         store.scheduleRecordVisit(url: url, title: "Dev")
         store.flushPendingWrites()
-        let row = try XCTUnwrap(try store.dayRows(filter: .init(openedFrom: "project · main"), before: nil, minimumRows: 200).rows.first)
+        let page = try await store.dayRows(filter: .init(openedFrom: "project · main"), before: nil, minimumRows: 200)
+        let row = try XCTUnwrap(page.rows.first)
         XCTAssertEqual(row.visits, 1)
 
         try store.deleteDayRows([(row.pageId, row.dayStart)], openedFrom: "project · main")
@@ -470,13 +481,14 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertNil(try XCTUnwrap(try store.entry(forURL: url)).openedFrom, "no remaining visit came from the terminal")
     }
 
-    func testDeleteSiteRemovesEveryPageOfTheSiteOnly() throws {
+    func testDeleteSiteRemovesEveryPageOfTheSiteOnly() async throws {
         try insertHistoryEntry(url: "https://www.example.com/a", lastVisitedAt: hoursAgo(1))
         try insertHistoryEntry(url: "http://example.com/b", lastVisitedAt: hoursAgo(50))
         try insertHistoryEntry(url: "https://sub.example.com/", lastVisitedAt: hoursAgo(2))
 
         XCTAssertEqual(Set(try store.deleteSite("example.com")), ["https://www.example.com/a", "http://example.com/b"])
-        XCTAssertEqual(try rows().map(\.url), ["https://sub.example.com/"])
+        let remaining = try await rows()
+        XCTAssertEqual(remaining.map(\.url), ["https://sub.example.com/"])
     }
 
     func testDeleteRangeKeepsAPageVisitedBeforeItWithItsOlderDate() throws {
