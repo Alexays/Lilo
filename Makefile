@@ -44,8 +44,7 @@ VT_STAMP := Vendor/.ghostty-sha
 WEBKIT_FORK_URL :=
 WEBKIT_FORK_SHA256 :=
 WEBKIT_FORK_STAMP := Vendor/.webkit-fork-sha256
-DMGBUILD_VERSION := 1.6.5
-DMGBUILD_DIR := build/dmgbuild-$(DMGBUILD_VERSION)
+DMGBUILD_DIR := build/dmgbuild
 # Inside the checkout, so a worktree's build goes with the worktree instead of staying in ~/Library.
 XCODEBUILD := xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath $(CURDIR)/.derived.noindex/xcode
 # They wait out real clocks (a worker's 30 s unload, a controller's first 5 s, a terminal's 5 s between
@@ -449,7 +448,10 @@ dmg:
 	@app="$(or $(APP),build/release/export/Lilo.app)"; \
 	if [ ! -d "$$app" ]; then echo "make dmg: $$app not found; run make release first or pass APP=/path/to/Lilo.app" >&2; exit 1; fi; \
 	set -e; \
-	[ -x $(DMGBUILD_DIR)/bin/dmgbuild ] || { python3 -m venv $(DMGBUILD_DIR) && $(DMGBUILD_DIR)/bin/pip install -q --disable-pip-version-check dmgbuild==$(DMGBUILD_VERSION); }; \
+	cmp -s scripts/dmg/requirements.txt $(DMGBUILD_DIR)/requirements.txt || { \
+		rm -rf $(DMGBUILD_DIR) && python3 -m venv $(DMGBUILD_DIR) && \
+		$(DMGBUILD_DIR)/bin/pip install -q --disable-pip-version-check --require-hashes --no-deps -r scripts/dmg/requirements.txt && \
+		cp scripts/dmg/requirements.txt $(DMGBUILD_DIR)/requirements.txt; }; \
 	$(DMGBUILD_DIR)/bin/dmgbuild -s scripts/dmg/settings.py -D app="$$app" Lilo build/Lilo.dmg
 
 ## Render scripts/dmg/background.html to the DMG background PNGs
