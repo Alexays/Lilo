@@ -1,0 +1,3 @@
+kind: Fixed
+body: Typing a version number such as v1.2 in a Little window's address field searches the web instead of opening it as a site, and a search engine removed from the list falls back to the first one everywhere.
+time: 2026-11-06T18:53:10.858101+01:00

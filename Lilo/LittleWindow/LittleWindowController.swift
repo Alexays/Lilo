@@ -130,14 +130,24 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
         header.progressBar.progress = webView.isLoading ? max(0.08, webView.estimatedProgress) : nil
     }
 
-    /// A URL as typed (a scheme, or a dotted name without spaces), anything else a search.
+    /// A URL as typed: a scheme, a local host (over http), or a name whose last label reads as a
+    /// top-level domain ("v1.2" stays a search). Anything else is a search.
     private func navigate(to input: String) {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         let typed = URL(string: text)
+        let address = text.contains(" ") ? nil : URL(string: "http://" + text)
+        let host = address?.user == nil ? address?.host(percentEncoded: false)?.lowercased() ?? "" : ""
+        let labels = host.split(separator: ".")
+        let isLocal = host == "localhost" || host.hasSuffix(".localhost") || host.hasSuffix(".local") || host.contains(":")
+            || (labels.count == 4 && labels.allSatisfy { UInt8($0) != nil })
+        // URL encodes a non-ASCII host as punycode, so an internationalized top-level domain reads "xn--".
+        let isDomain = labels.count > 1 && labels.last.map { $0.hasPrefix("xn--") || $0.count >= 2 && $0.allSatisfy(\.isLetter) } == true
         let url: URL? = if let scheme = typed?.scheme?.lowercased(), ["http", "https", "file", "about"].contains(scheme) {
             typed
-        } else if !text.contains(" "), text.contains(".") || text.hasPrefix("localhost") {
+        } else if isLocal {
+            address
+        } else if isDomain {
             URL(string: "https://" + text)
         } else {
             URL(string: SearchQueryBridgeHandler.searchURL(for: text, settings: owner?.context.settingsStore))
