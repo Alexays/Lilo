@@ -158,6 +158,8 @@ test("records a shortcut only with a modifier besides Shift", () => {
 test("a badge without a text color gets black or white, whichever contrasts more", () => {
   assert.equal(badgeTextColor("#FFFFFF", ""), "#000");
   assert.equal(badgeTextColor("#555", ""), "#fff");
+  assert.equal(badgeTextColor("#ffffff80", ""), "#000");
+  assert.equal(badgeTextColor("#ffffff8", ""), null);
   assert.equal(badgeTextColor("#eb0a00", ""), "#fff");
   assert.equal(badgeTextColor("rgba(255, 214, 0, 255)", ""), "#000");
   assert.equal(badgeTextColor("#eb0a00", "#ffff00"), "#ffff00");

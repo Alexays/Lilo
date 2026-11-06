@@ -55,15 +55,3 @@ export function snapAngle(start: Point, end: Point): Point {
 	const angle = Math.round(Math.atan2(end.y - start.y, end.x - start.x) / step) * step;
 	return { x: start.x + length * Math.cos(angle), y: start.y + length * Math.sin(angle) };
 }
-
-/** Whether dark text reads better than white on a solid fill of `hex`. */
-export function prefersDarkText(hex: string): boolean {
-	const value = Number.parseInt(hex.replace("#", ""), 16);
-	if (!Number.isFinite(value) || hex.length !== 7) return false;
-	const channel = (shift: number) => {
-		const c = ((value >> shift) & 0xff) / 255;
-		return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-	};
-	const luminance = 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0);
-	return luminance > 0.4;
-}
