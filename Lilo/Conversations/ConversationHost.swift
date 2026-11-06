@@ -312,7 +312,7 @@ final class ConversationHost {
                 }
                 applySessionState(conversation, loaded)
                 return
-            } catch let error as ACPConnection.RPCError where error.code != -32000 {
+            } catch let error as ACPConnection.RPCError where error.code != -32000 && error.code != ACPConnection.RPCError.transport {
                 // A session the agent no longer has starts over in a new one.
                 Self.logger.info("session/load failed, starting a new session: \(error.message, privacy: .public)")
             }
