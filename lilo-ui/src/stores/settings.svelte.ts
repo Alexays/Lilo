@@ -125,16 +125,14 @@ export function initSettingsStore(): void {
 	});
 }
 
-/** Refreshes everything the settings surface shows; runs each time it opens. */
+/** Refreshes what every settings page shows; runs each time it opens. Costly lists load with the pages that show them. */
 export function loadSettingsSurface(): void {
 	settingsActions.load();
 	settingsActions.loadDefaultBrowserStatus();
 	settingsActions.loadSitePermissions();
-	settingsActions.loadWebsiteData();
 	settingsActions.loadZoomLevels();
 	featureFlagsActions.load();
 	settingsActions.loadDeviceSetup();
-	settingsActions.loadTerminalOptions();
 	settingsActions.loadContentBlockerStatus();
 	settingsActions.loadAgentClients();
 	settingsActions.loadUpdaterStatus();
