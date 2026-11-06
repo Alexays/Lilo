@@ -2,6 +2,7 @@
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
+  import UiSelect from "../ui/UiSelect.svelte";
   import UiTextField from "../ui/UiTextField.svelte";
   import UiToggle from "../ui/UiToggle.svelte";
   import ExtensionSpinner from "./ExtensionSpinner.svelte";
@@ -80,6 +81,8 @@
   const wantsHosts = $derived(
     (extension.hostPermissions?.length ?? 0) > 0 || extension.hasContentScripts,
   );
+  // null runs on every host the manifest asked for; a list, even empty, restricts to it.
+  const restricted = $derived(extension.siteAccess != null);
   const sites = $derived(extension.siteAccess ?? []);
   let siteDraft = $state("");
   // Remounts the site field once a host is added, which empties it.
@@ -260,38 +263,59 @@
 
   {#if wantsHosts}
     <UiInsetList title={t("extensions.detailSiteAccess")}>
-      <UiListRow title={sites.length === 0 ? t("extensions.siteAccessAll") : t("extensions.siteAccessRestricted")}>
-        {#if sites.length > 0}
-          <span class="detail-chips">
-            {#each sites as host (host)}
-              <span class="detail-chip">
-                {host}
-                <button
-                  class="detail-chip-remove"
-                  type="button"
-                  aria-label={t("extensions.siteAccessRemove", { host })}
-                  onclick={() => removeSite(host)}
-                >
-                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-                    <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-                  </svg>
-                </button>
-              </span>
-            {/each}
-          </span>
-        {/if}
-        <span class="detail-site-add">
-          {#key siteFieldKey}
-            <UiTextField
-              placeholder={t("extensions.siteAccessPlaceholder")}
-              ariaLabel={t("extensions.detailSiteAccess")}
-              onchange={(value) => (siteDraft = value)}
-              oncommit={addSite}
-            />
-          {/key}
-          <UiButton disabled={!draftHost} onclick={addSite}>{t("extensions.siteAccessAdd")}</UiButton>
-        </span>
+      <UiListRow
+        title={!restricted
+          ? t("extensions.siteAccessAll")
+          : sites.length > 0
+            ? t("extensions.siteAccessRestricted")
+            : t("extensions.siteAccessNone")}
+      >
+        {#snippet action()}
+          <UiSelect
+            value={restricted ? "selected" : "all"}
+            options={[
+              { value: "all", label: t("extensions.siteAccessAllSites") },
+              { value: "selected", label: t("extensions.siteAccessSelectedSites") },
+            ]}
+            ariaLabel={t("extensions.detailSiteAccess")}
+            onchange={(value) => extensionActions.setSiteAccess(extension.id, value === "all" ? null : [], extension.profileId)}
+          />
+        {/snippet}
       </UiListRow>
+      {#if restricted}
+        <div class="detail-text detail-sites">
+          {#if sites.length > 0}
+            <span class="detail-chips">
+              {#each sites as host (host)}
+                <span class="detail-chip">
+                  {host}
+                  <button
+                    class="detail-chip-remove"
+                    type="button"
+                    aria-label={t("extensions.siteAccessRemove", { host })}
+                    onclick={() => removeSite(host)}
+                  >
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                      <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </span>
+              {/each}
+            </span>
+          {/if}
+          <span class="detail-site-add">
+            {#key siteFieldKey}
+              <UiTextField
+                placeholder={t("extensions.siteAccessPlaceholder")}
+                ariaLabel={t("extensions.detailSiteAccess")}
+                onchange={(value) => (siteDraft = value)}
+                oncommit={addSite}
+              />
+            {/key}
+            <UiButton disabled={!draftHost} onclick={addSite}>{t("extensions.siteAccessAdd")}</UiButton>
+          </span>
+        </div>
+      {/if}
     </UiInsetList>
   {/if}
 
@@ -448,10 +472,14 @@
     color: var(--text-primary);
   }
 
+  .detail-sites {
+    display: grid;
+    gap: 8px;
+  }
+
   .detail-site-add {
     display: flex;
     gap: 8px;
-    margin-top: 6px;
   }
 
   /* Same look as the keyboard shortcuts page's keys. */

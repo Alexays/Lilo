@@ -317,8 +317,8 @@ export interface BridgeExtensionSnapshot {
 	actionLabel?: string;
 	permissions?: string[];
 	hostPermissions?: string[];
-	/** Hosts the extension is restricted to; empty means every host its manifest asked for. */
-	siteAccess?: string[];
+	/** Hosts the extension is restricted to, empty for none; null means every host its manifest asked for. */
+	siteAccess?: string[] | null;
 	omniboxKeyword?: string;
 }
 
@@ -909,7 +909,7 @@ export interface BridgeCommandPayloadMap {
 	updateExtension: { id: string; profileId?: string };
 	reloadExtension: { id: string; profileId?: string };
 	checkExtensionUpdates: EmptyPayload;
-	setExtensionSiteAccess: { id: string; hosts: string[]; profileId?: string };
+	setExtensionSiteAccess: { id: string; hosts: string[] | null; profileId?: string };
 	setExtensionPrivateAccess: { id: string; allowed: boolean; profileId?: string };
 	setExtensionUserScripts: { id: string; allowed: boolean; profileId?: string };
 	setExtensionCommandShortcut: { id: string; command: string; key: string; modifiers: number; profileId?: string };

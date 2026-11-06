@@ -142,8 +142,8 @@ final class ExtensionStorage: @unchecked Sendable {
     /// What the user decided about one extension (access, shortcuts), kept in the `site_access` column
     /// next to the row rather than in the Codable record, so an install or update never rewrites it.
     struct AccessState: Codable, Equatable, Sendable {
-        /// Hosts the extension is restricted to; empty keeps every host its manifest asks for.
-        var hosts: [String] = []
+        /// Hosts the extension is restricted to, empty for none; nil keeps every host its manifest asks for.
+        var hosts: [String]?
         /// Optional permissions and match patterns granted at runtime through `permissions.request`.
         var optionalPermissions: [String] = []
         var optionalMatchPatterns: [String] = []

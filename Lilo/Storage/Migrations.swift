@@ -88,6 +88,14 @@ enum Migrations {
             }
         }
 
+        // Up to v3 an empty host list stands for every host the manifest asks for: it becomes a missing list, as empty is no site.
+        migrator.registerMigration("v4") { db in
+            try db.execute(sql: """
+                UPDATE installed_extensions SET site_access = json_remove(site_access, '$.hosts')
+                WHERE CASE WHEN json_valid(site_access) THEN json_array_length(site_access, '$.hosts') = 0 ELSE 0 END
+                """)
+        }
+
         try migrator.migrate(db)
     }
 

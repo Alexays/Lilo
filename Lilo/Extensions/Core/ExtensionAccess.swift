@@ -110,14 +110,14 @@ final class ExtensionAccess {
         Task { try? await storage.setAccessState(id: extensionId, state) }
     }
 
-    /// What a context is granted. With no restriction the manifest's own patterns stand; otherwise
+    /// What a context is granted. With no restriction (nil) the manifest's own patterns stand; otherwise
     /// each allowed host becomes `*://*.host/*`, kept to the hosts the manifest actually asked for so
     /// the user can narrow access but never widen it past the install-time review.
     static func grantedMatchPatterns(
         requested: Set<WKWebExtension.MatchPattern>,
-        allowedHosts: [String]
+        allowedHosts: [String]?
     ) -> Set<WKWebExtension.MatchPattern> {
-        guard !allowedHosts.isEmpty else { return requested }
+        guard let allowedHosts else { return requested }
         return Set(allowedHosts.compactMap { host in
             guard let probe = URL(string: "https://\(host)/"),
                   requested.contains(where: { $0.matches(probe) })
@@ -169,10 +169,10 @@ final class ExtensionAccess {
 
     // MARK: - User decisions
 
-    /// Restricts an extension to `hosts` (empty restores the manifest's own). Applied to the live
-    /// context, so pages loaded after the change see it without a reload of the extension.
-    func setSiteAccess(extensionId: String, hosts: [String]) async {
-        await update(extensionId) { $0.hosts = Self.normalizedHosts(hosts) }
+    /// Restricts an extension to `hosts` (nil restores the manifest's own, empty allows no site). Applied
+    /// to the live context, so pages loaded after the change see it without a reload of the extension.
+    func setSiteAccess(extensionId: String, hosts: [String]?) async {
+        await update(extensionId) { $0.hosts = hosts.map(Self.normalizedHosts) }
         guard let context = context(extensionId) else { return }
         apply(to: context, extensionId: extensionId)
         didChange(extensionId)
@@ -284,8 +284,7 @@ final class ExtensionAccess {
         guard let tab, let context = context(extensionId),
               let url = tab.url(for: context), let scheme = url.scheme, let host = url.host else { return }
         hostAccessRequests[tab.tabId]?[extensionId] = nil
-        let hosts = states[extensionId]?.hosts ?? []
-        if !hosts.isEmpty, Self.baseMatchPatterns(for: context.webExtension).contains(where: { $0.matches(url) }) {
+        if let hosts = states[extensionId]?.hosts, Self.baseMatchPatterns(for: context.webExtension).contains(where: { $0.matches(url) }) {
             // A host the user's site access left out: it joins the allowed ones.
             await setSiteAccess(extensionId: extensionId, hosts: hosts + [host])
         } else if let pattern = try? WKWebExtension.MatchPattern(string: "\(scheme)://\(host)/*") {

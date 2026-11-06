@@ -15,7 +15,7 @@ interface ExtensionLike {
   runtimeStatus?: ExtensionRuntimeStatus;
   permissions?: string[];
   hostPermissions?: string[];
-  siteAccess?: string[];
+  siteAccess?: string[] | null;
 }
 
 export type ExtensionCapability = "popup" | "background" | "content";

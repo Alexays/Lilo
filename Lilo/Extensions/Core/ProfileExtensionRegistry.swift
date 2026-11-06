@@ -1278,7 +1278,7 @@ final class ProfileExtensionRegistry {
             "hasContentScripts": runtime.hasContentScripts,
             "permissions": ext.manifest["permissions"] as? [String] ?? [],
             "hostPermissions": ext.manifest["host_permissions"] as? [String] ?? [],
-            "siteAccess": accessState?.hosts ?? [],
+            "siteAccess": accessState?.hosts as Any? ?? NSNull(),
             "error": health.flatMap { $0.failed ? $0.failureReason ?? "" : nil } ?? "",
             "omniboxKeyword": runtime.omniboxKeyword ?? "",
             "availableUpdate": updater.availableUpdates[runtime.id]?.latest ?? "",
