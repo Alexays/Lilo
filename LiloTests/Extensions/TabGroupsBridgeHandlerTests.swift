@@ -137,6 +137,27 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(other.window.tabManager.folders(forSpace: other.spaceId).map(\.name), ["Theirs"])
     }
 
+    /// A split view id names a split of the caller's windows only, never one of another profile, whose ids count from the same 1.
+    func test_aSplitOfAnotherProfileIsNoSplitOfTheCaller() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let mine = try await groupsCaller(in: browserContext)
+        let other = try await groupsCaller(in: browserContext)
+        let left = try XCTUnwrap(other.window.createTabStateFirst(url: URL(string: "about:blank")))
+        let right = try XCTUnwrap(other.window.createTabStateFirst(url: URL(string: "about:blank")))
+        let position = { (id: UUID) throws -> [String: Int] in
+            let adapter = try XCTUnwrap(other.window.tabManager.browserStateStore?.tabAdapter(forTab: id))
+            return try XCTUnwrap(other.registry.tabPosition(of: adapter, extensionId: other.extensionId))
+        }
+        let created = await other.call("tabs", "createSplit", ["tabs": [try position(left.id), try position(right.id)], "tabIds": [1, 2]])
+        let splitViewId = try XCTUnwrap(created.result as? Int, created.error ?? "")
+
+        let unsplit = await mine.call("tabs", "unsplit", ["splitViewId": splitViewId])
+
+        XCTAssertEqual(unsplit.error, "No split view with id: \(splitViewId).")
+        XCTAssertEqual(other.window.tabManager.folders(forSpace: other.spaceId).map(\.isSplit), [true])
+    }
+
     /// `tabs.group` and `ungroup` act in the space of the tabs, shown or not, and tabs of two spaces make no group.
     func test_tabsGroupAndUngroupActInTheSpaceOfTheTabs() async throws {
         let browserContext = try await TemporaryBrowserContext()
