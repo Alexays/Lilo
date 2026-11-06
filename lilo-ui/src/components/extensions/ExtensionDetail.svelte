@@ -271,26 +271,28 @@
             onchange={(value) => extensionActions.setSiteAccess(extension.id, value === "all" ? null : [], extension.profileId)}
           />
         {/snippet}
-        {#if sites.length > 0}
-          <span class="detail-chips">
-            {#each sites as host (host)}
-              <span class="detail-chip">
-                {host}
-                <button
-                  class="detail-chip-remove"
-                  type="button"
-                  aria-label={t("extensions.siteAccessRemove", { host })}
-                  onclick={() => removeSite(host)}
-                >
-                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-                    <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-                  </svg>
-                </button>
-              </span>
-            {/each}
-          </span>
-        {/if}
-        {#if restricted}
+      </UiListRow>
+      {#if restricted}
+        <div class="detail-text detail-sites">
+          {#if sites.length > 0}
+            <span class="detail-chips">
+              {#each sites as host (host)}
+                <span class="detail-chip">
+                  {host}
+                  <button
+                    class="detail-chip-remove"
+                    type="button"
+                    aria-label={t("extensions.siteAccessRemove", { host })}
+                    onclick={() => removeSite(host)}
+                  >
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                      <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </span>
+              {/each}
+            </span>
+          {/if}
           <span class="detail-site-add">
             {#key siteFieldKey}
               <UiTextField
@@ -302,8 +304,8 @@
             {/key}
             <UiButton disabled={!draftHost} onclick={addSite}>{t("extensions.siteAccessAdd")}</UiButton>
           </span>
-        {/if}
-      </UiListRow>
+        </div>
+      {/if}
     </UiInsetList>
   {/if}
 
@@ -460,10 +462,14 @@
     color: var(--text-primary);
   }
 
+  .detail-sites {
+    display: grid;
+    gap: 8px;
+  }
+
   .detail-site-add {
     display: flex;
     gap: 8px;
-    margin-top: 6px;
   }
 
   /* Same look as the keyboard shortcuts page's keys. */
