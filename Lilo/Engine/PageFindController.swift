@@ -45,7 +45,8 @@ final class PageFindController: NSObject {
             }
         }
         let trimmed = selected?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return trimmed.isEmpty ? nil : trimmed
+        // A select-all of a large document would otherwise be copied through the bridge and searched whole.
+        return trimmed.isEmpty ? nil : String(trimmed.prefix(1000))
     }
 
     func find(_ query: String, caseSensitive: Bool) {

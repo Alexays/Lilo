@@ -365,7 +365,10 @@ extension MainWindowController {
             let leavingEngine = previousActiveTabId.flatMap { tabManager.engineTab(for: $0) }
             let inactiveTreeItems = tabManager.sidebarTreeItems(forSpace: oldSpaceId)
             let inactiveRuntime = tabManager.parkCurrentSpaceRuntimeForSwitch()
-            if let leavingEngine { popOutBackgroundedTab(leavingEngine) }
+            if let leavingEngine {
+                leavingEngine.dismissFind()
+                popOutBackgroundedTab(leavingEngine)
+            }
             // A closing window hands its parked engines to a live one: WebKit callbacks (permission
             // decisions) must not reach a released delegate before the space is shown again.
             if nextSpaceId == nil, let heir = context.windows.windows.first(where: { $0 !== self }) {
