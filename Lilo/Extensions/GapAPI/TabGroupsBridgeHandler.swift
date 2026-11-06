@@ -334,9 +334,10 @@ final class TabGroupsBridgeHandler: GapHandler {
     // MARK: - Events
 
     /// Fires `chrome.tabGroups.onCreated`, `onUpdated` and `onRemoved` for a space's folder change, whichever made it, to the
-    /// extensions of `registry` holding `tabGroups` that listen to it.
-    func foldersChanged(from old: [TabFolder], to new: [TabFolder], registry: ProfileExtensionRegistry) {
+    /// extensions of `registry` holding `tabGroups` that listen to it and, for a private space, may access private data.
+    func foldersChanged(from old: [TabFolder], to new: [TabFolder], isPrivate: Bool, registry: ProfileExtensionRegistry) {
         let ids = registry.extensionIds(withPermission: "tabGroups")
+            .filter { !isPrivate || registry.context(for: $0)?.hasAccessToPrivateData == true }
         guard !ids.isEmpty else { return }
         let oldById = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let newIds = Set(new.map(\.id))

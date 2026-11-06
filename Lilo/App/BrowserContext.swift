@@ -845,12 +845,12 @@ extension BrowserContext {
 
 extension BrowserContext {
     /// Bridges every folder change, from the sidebar or an extension, to chrome.tabGroups events for the extensions of the
-    /// space's profile; a private space's stay unseen.
+    /// space's profile.
     private func installTabGroupEventObserver() {
         browserState.onFoldersChanged = { [weak self] spaceId, old, new in
-            guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate,
+            guard let self, let space = spaceManager?.space(with: spaceId),
                   let registry = profileContexts.existingContext(for: space.profileId)?.extensions else { return }
-            engineFactory.tabGroupsHandler.foldersChanged(from: old, to: new, registry: registry)
+            engineFactory.tabGroupsHandler.foldersChanged(from: old, to: new, isPrivate: space.isPrivate, registry: registry)
         }
     }
 }
