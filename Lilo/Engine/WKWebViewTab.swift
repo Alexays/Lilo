@@ -985,7 +985,7 @@ final class WKWebViewTab: NSObject {
         )
     }
 
-    /// Screen Time's web usage and its parental limits; created with the first web page.
+    /// Screen Time's web usage and its parental limits; created with the first web page the tab shows.
     /// Its view sits over the page to show the block screen and lets every event through otherwise.
     private var screenTime: STWebpageController?
 
@@ -1930,7 +1930,8 @@ extension WKWebViewTab: WKNavigationDelegate {
             } ?? false
             tab.updateNotSecure()
             tab.delegate?.tab(tab, didNavigate: .committed(tab.currentURL))
-            tab.reportToScreenTime(webView.url)
+            // A tab never shown has no usage to record nor limit to show: `wasDisplayed` reports its page later.
+            if tab.screenTime != nil || tab.isOnScreen { tab.reportToScreenTime(webView.url) }
             // A new page resets the blocked-tracker count; the send is skipped when it was already 0.
             if tab.trackersBlocked != 0 {
                 tab.trackersBlocked = 0
@@ -2688,8 +2689,14 @@ extension WKWebViewTab: WKUIDelegate {
         delegate?.tab(self, didUpdateAwaitingDialog: true)
     }
 
+    /// The tab's view enters a window's content area.
+    func wasDisplayed() {
+        if screenTime == nil { reportToScreenTime(webView.url) }
+        runQueuedDialog(presenting: true)
+    }
+
     /// Presents the dialog the page raised while the tab was off screen, once it shows, or dismisses it.
-    func runQueuedDialog(presenting: Bool) {
+    private func runQueuedDialog(presenting: Bool) {
         guard let dialog = queuedDialog else { return }
         queuedDialog = nil
         delegate?.tab(self, didUpdateAwaitingDialog: !modalDialogs.isEmpty)
