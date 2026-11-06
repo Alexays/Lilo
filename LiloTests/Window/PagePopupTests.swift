@@ -546,7 +546,8 @@ final class PagePopupTests: XCTestCase {
         try pinOpener()
         try await clickLink("https://other.test/article")
         let popup = try XCTUnwrap(controller.pagePopups.values.first)
-        controller.context.faviconService.seed(host: "other.test", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233", profileId: nil)
+        controller.context.faviconService.seed(host: "other.test", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233",
+                                               partition: try XCTUnwrap(controller.tabManager.profileId))
 
         popup.openAsTab()
 

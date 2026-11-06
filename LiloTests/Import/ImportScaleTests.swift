@@ -273,8 +273,8 @@ final class ImportScaleTests: XCTestCase {
             pinnedExtensions: { [] },
             pinExtensions: { _ in },
             otherBookmarksTitle: { "Other Bookmarks (\($0))" },
-            warmFavicons: { entries in
-                entries.forEach { context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor) }
+            warmFavicons: { [unowned self] entries in
+                entries.forEach { context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor, partition: profileId) }
             }
         ), home: home)
     }

@@ -34,20 +34,20 @@ extension MainWindowController {
         var favicons: [String: String] = [:]
         var missingHosts = Set<String>()
         let spaceId = tabManager.currentSpaceId
+        let space = context.spaceManager?.space(with: spaceId)
         for entry in context.tabArchive.entries where entry.spaceId == spaceId {
             guard let host = entry.url.faviconKey, favicons[host] == nil else { continue }
-            if let cached = context.faviconService.cached(for: host) {
+            if let space, let cached = context.faviconService.cached(for: host, partition: space.dataStoreId) {
                 favicons[host] = cached.dataURL
             } else {
                 missingHosts.insert(host)
             }
         }
         // Tabs archived before a relaunch are in no live tab, so the cache misses them: the store has them.
-        if !missingHosts.isEmpty, let profileId = context.spaceManager?.space(with: spaceId)?.profileId,
-           let store = context.profileContexts.existingContext(for: profileId)?.favicons {
+        if !missingHosts.isEmpty, let space, !space.isPrivate, let store = context.profileContexts.existingContext(for: space.profileId)?.favicons {
             for entry in (try? store.entries(forHosts: missingHosts)) ?? [] {
                 context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor,
-                                                    persistedAt: [profileId: entry.updatedAt])
+                                                    partition: space.profileId, persistedAt: entry.updatedAt)
                 favicons[entry.host] = entry.dataURL
             }
         }

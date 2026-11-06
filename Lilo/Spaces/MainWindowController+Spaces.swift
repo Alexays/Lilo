@@ -476,7 +476,7 @@ extension MainWindowController {
             // Store snapshots are sanitized at ingest (restoredSpaceSnapshot); cached ones only
             // ever round-trip the in-memory store, so activation trusts them as-is.
             let restoredTabs = projection.tabs
-            faviconCoordinator.warm(from: restoredTabs)
+            faviconCoordinator.warm(from: restoredTabs, partition: targetSpace.dataStoreId)
             let restoredIds = Set(restoredTabs.map(\.id))
             let restoredEngines = snapshot.engines.filter { restoredIds.contains($0.key) }
             let restoredTabAdapters = snapshot.tabAdapters.filter { restoredIds.contains($0.key) }

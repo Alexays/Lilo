@@ -65,6 +65,10 @@ final class ProfileManager {
         return store
     }
 
+    func privateSpaceId(of store: WKWebsiteDataStore) -> UUID? {
+        privateDataStores.first { $0.value.backingStore === store }?.key
+    }
+
     func releaseEphemeralDataStore(for spaceId: UUID) {
         guard let store = privateDataStores.removeValue(forKey: spaceId) else { return }
         engineFactory.releaseContentController(for: store)

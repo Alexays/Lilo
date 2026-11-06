@@ -5,7 +5,7 @@ import XCTest
 @MainActor
 final class FaviconCoordinatorTests: XCTestCase {
     private func makeCoordinator(service: FaviconService) -> FaviconCoordinator {
-        FaviconCoordinator(service: service, applyFavicon: { _, _, _ in })
+        FaviconCoordinator(service: service, privateSpaceId: { _ in nil }, applyFavicon: { _, _, _ in })
     }
 
     func testWarmSeedsCacheForTabsWithKnownFavicons() {
@@ -15,9 +15,11 @@ final class FaviconCoordinatorTests: XCTestCase {
         var tab = Tab(url: URL(string: "https://example.com/page"), title: "Example", spaceId: UUID())
         tab.faviconDataURL = "data:image/png;base64,AAAA"
 
-        XCTAssertNil(service.cached(for: "example.com"))
-        coordinator.warm(from: [tab])
-        XCTAssertNotNil(service.cached(for: "example.com"))
+        let partition = UUID()
+        XCTAssertNil(service.cached(for: "example.com", partition: partition))
+        coordinator.warm(from: [tab], partition: partition)
+        XCTAssertNotNil(service.cached(for: "example.com", partition: partition))
+        XCTAssertNil(service.cached(for: "example.com", partition: UUID()), "another data store loads its own")
     }
 
     func testWarmIgnoresTabsMissingURLorFavicon() {
@@ -28,8 +30,9 @@ final class FaviconCoordinatorTests: XCTestCase {
         noFavicon.faviconDataURL = nil
         let noURL = Tab(title: "No URL", spaceId: UUID())
 
-        coordinator.warm(from: [noFavicon, noURL])
-        XCTAssertNil(service.cached(for: "nofavicon.example"))
+        let partition = UUID()
+        coordinator.warm(from: [noFavicon, noURL], partition: partition)
+        XCTAssertNil(service.cached(for: "nofavicon.example", partition: partition))
     }
 
     func testASiteSwitchingIconsOnTheSameHostUpdatesTheTabAndItsHomeIcon() async throws {
