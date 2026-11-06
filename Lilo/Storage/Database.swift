@@ -96,10 +96,12 @@ final class DatabaseManager: @unchecked Sendable {
         if let pool = profilePools.withLock({ $0.removeValue(forKey: profileId) }) {
             loggingPersistenceError("deleteProfile.close[\(profileId.uuidString)]") { try pool.close() }
         }
+        // Renamed away at once so a pool reopened for this id never meets half-deleted files; the slow removal runs detached.
         let dir = profileDirectory(profileId: profileId)
-        if FileManager.default.fileExists(atPath: dir) {
-            try FileManager.default.removeItem(atPath: dir)
-        }
+        guard FileManager.default.fileExists(atPath: dir) else { return }
+        let doomed = ((dir as NSString).deletingLastPathComponent as NSString).appendingPathComponent(".deleted-\(UUID().uuidString)")
+        try FileManager.default.moveItem(atPath: dir, toPath: doomed)
+        Task.detached(priority: .utility) { try? FileManager.default.removeItem(atPath: doomed) }
     }
 
     // MARK: - Paths
