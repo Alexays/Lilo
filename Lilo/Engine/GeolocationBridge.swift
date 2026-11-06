@@ -300,7 +300,10 @@ extension GeolocationBridge {
     static let pageModule = #"""
     function () {
       if (typeof Geolocation !== 'function') return;
-      let nextId = Math.floor(Math.random() * 0x7fffffff) * 0x10000 + 1;
+      // Watch ids count from 1 as WebKit's do; one-shots take negative ids. The native side keys requests by web view and
+      // id, so a random base per document keeps a previous document's late replies away from this one's.
+      const base = Math.floor(Math.random() * 0x7fffffff) * 0x10000;
+      let watches = 0, oneShots = 0;
       const callbacks = create(null), secure = window.isSecureContext, later = setTimeout, cancel = clearTimeout;
       const nativeGet = Geolocation.prototype.getCurrentPosition;
       const codeOf = getOwnPropertyDescriptor(GeolocationPositionError.prototype, 'code').get;
@@ -326,19 +329,23 @@ extension GeolocationBridge {
       };
       const timedOut = (id, callback) => {
         if (callbacks[id] !== callback) return;
-        if (!callback.watch) lilo.send('liloGeolocation', { type: 'clear', id });
+        if (!callback.watch) lilo.send('liloGeolocation', { type: 'clear', id: base + id });
         receive(id, 'error', { code: 3, message: 'Timeout expired' });
       };
-      lilo.on('geolocation', receive);
-      const request = (type, geolocation, success, error, options) => {
-        const id = nextId++, highAccuracy = !!(options && options.enableHighAccuracy);
+      lilo.on('geolocation', (id, type, data) => receive(id - base, type, data));
+      const request = (type, geolocation, count, success, error, options) => {
+        const method = type === 'watch' ? 'watchPosition' : 'getCurrentPosition';
+        if (count < 1) throw new NativeTypeError('Not enough arguments');
+        if (typeof success !== 'function') throw new NativeTypeError(`Argument 1 ('successCallback') to Geolocation.${method} must be a function`);
+        if (error != null && typeof error !== 'function') throw new NativeTypeError(`Argument 2 ('errorCallback') to Geolocation.${method} must be a function`);
+        const id = type === 'watch' ? ++watches : -++oneShots, highAccuracy = !!(options && options.enableHighAccuracy);
         const maximumAge = options ? clamp(options.maximumAge) : 0, given = options ? options.timeout : undefined;
         const timeout = given === undefined ? 0xffffffff : clamp(given), timesOut = timeout < 0xffffffff;
         // WebKit's own call applies Permissions-Policy, which refuses a cross-origin frame without allow="geolocation", and
         // the ancestors' secure context; with no timeout it asks no one. Its error is read through natives the page cannot wrap.
         const decide = code => {
           if (!callbacks[id]) return;
-          if (secure && code !== 1) lilo.send('liloGeolocation', { type, id, highAccuracy, maximumAge, timesOut });
+          if (secure && code !== 1) lilo.send('liloGeolocation', { type, id: base + id, highAccuracy, maximumAge, timesOut });
           else receive(id, 'error', { code: 1, message: 'User denied Geolocation' });
         };
         apply(nativeGet, geolocation, [() => decide(0), positionError => decide(apply(codeOf, positionError, [])), { __proto__: null, timeout: 0 }]);
@@ -347,21 +354,25 @@ extension GeolocationBridge {
         return id;
       };
       lilo.methods(Geolocation.prototype, {
-        getCurrentPosition(success, error, options) { request('get', this, success, error, options); },
-        watchPosition(success, error, options) { return request('watch', this, success, error, options); },
+        getCurrentPosition(success, error, options) { request('get', this, arguments.length, success, error, options); },
+        watchPosition(success, error, options) { return request('watch', this, arguments.length, success, error, options); },
         clearWatch(id) {
-          if (callbacks[id]) apply(cancel, window, [callbacks[id].timer]);
+          if (arguments.length < 1) throw new NativeTypeError('Not enough arguments');
+          id |= 0;
+          const callback = callbacks[id];
+          if (!callback || !callback.watch) return;
+          apply(cancel, window, [callback.timer]);
           delete callbacks[id];
-          lilo.send('liloGeolocation', { type: 'clear', id });
+          lilo.send('liloGeolocation', { type: 'clear', id: base + id });
         },
       });
       apply(listen, window, ['pagehide', () => {
-        for (const id in callbacks) if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'clear', id: +id });
+        for (const id in callbacks) if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'clear', id: base + +id });
       }]);
       apply(listen, window, ['pageshow', event => {
         if (!event.persisted) return;
         for (const id in callbacks) {
-          if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'watch', id: +id, highAccuracy: callbacks[id].highAccuracy });
+          if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'watch', id: base + +id, highAccuracy: callbacks[id].highAccuracy });
         }
       }]);
     }
