@@ -252,6 +252,8 @@
   .screenshot-panel-actions { margin-top: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); }
   .secondary-row { display: flex; gap: 8px; }
   .action { display: flex; flex: 1; min-width: 0; }
+  /* The panel takes the Space's tint, where the muted title falls under the text contrast bar. */
+  .screenshot-panel-body :global(.ui-inset-list-title) { color: var(--text-primary); }
   .action :global(.ui-button) { flex: 1; }
   .action :global(.ui-split-button) { flex: 1; height: var(--control-height-md); border-radius: var(--radius-md); }
   .action :global(.ui-split-button .main) { flex: 1; justify-content: center; font-size: var(--font-size-md); border-radius: var(--radius-md) 0 0 var(--radius-md); }

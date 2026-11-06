@@ -12,6 +12,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { isSidebarRail, isSidebarVisible } from "../../stores/ui.svelte";
   import { isVerticalLayout } from "../../stores/tabLayout.svelte";
+  import { hasActivePanel } from "../../stores/panels.svelte";
   import {
     getUndoToast,
     pauseUndoToast,
@@ -24,7 +25,8 @@
   // Mounted twice, in the sidebar and over the page: only the instance matching the layout shows.
   let { docked = false }: { docked?: boolean } = $props();
 
-  const sidebarHasRoom = $derived(isSidebarVisible() && isVerticalLayout() && !isSidebarRail());
+  // A side panel covers the sidebar's list, and the docked card with it.
+  const sidebarHasRoom = $derived(isSidebarVisible() && isVerticalLayout() && !isSidebarRail() && !hasActivePanel());
   const toast = $derived(docked === sidebarHasRoom ? getUndoToast() : null);
   const message = $derived(toast?.label !== undefined && !toast.undo);
 </script>
