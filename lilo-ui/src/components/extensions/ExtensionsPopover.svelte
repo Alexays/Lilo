@@ -141,7 +141,8 @@
           role="menuitem"
           use:tooltip={{ text: ext.actionLabel ?? "", placement: "right" }}
           aria-disabled={!ext.actionEnabled}
-          onclick={() => ext.actionEnabled && openExtensionPopup(ext.id)}
+          onclick={(event) =>
+            ext.actionEnabled ? openExtensionPopup(ext.id) : showExtensionMenu(event, ext.id)}
           oncontextmenu={(event) => showExtensionMenu(event, ext.id)}
         >
           <span class="row-icon">
