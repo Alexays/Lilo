@@ -776,9 +776,10 @@ final class RealExtensionSmokeTests: XCTestCase {
             let context = try XCTUnwrap(registry.context(for: feature.id))
             _ = await registry.backgrounds.load(feature.id)
             _ = await pollUntil(timeout: 10) { registry.gapEvents.reportedListeners(of: feature.id) != nil }
-            // A welcome page the extension opens on install would take the toolbar button's click: once no tab has
-            // opened for 1.5 s, they close.
-            if feature.click {
+            // A welcome page the extension opens on install would take the toolbar button's click, or load after the
+            // test page and have the extension rebuild its menu for that page instead: once no tab has opened for 1.5 s,
+            // they close.
+            if feature.click || feature.menu {
                 var quiet = 0, count = window.tabManager.openTabs.count
                 for _ in 0..<12 where quiet < 3 {
                     try await Task.sleep(for: .milliseconds(500))
