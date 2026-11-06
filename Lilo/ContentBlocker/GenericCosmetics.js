@@ -176,8 +176,11 @@
   }
   function scanElement(el) {
     if (el.id) checkId(el.id);
-    var cl = el.classList;
-    if (cl) { for (var i = 0; i < cl.length; i++) checkClass(cl[i]); }
+    // Reading `classList` gives the element a token list it keeps for life, so only elements with a class read it.
+    if (el.hasAttribute('class')) {
+      var cl = el.classList;
+      for (var i = 0; i < cl.length; i++) checkClass(cl[i]);
+    }
     // Only <a> and <area> carry `hostname`.
     if (hasLinks && el.hostname) checkHost(el.hostname);
   }
