@@ -81,6 +81,15 @@ final class BookmarkStoreTests: XCTestCase {
         XCTAssertEqual(children.map(\.1), [0, 1])
     }
 
+    func testMoveClampsNegativeIndexToStart() throws {
+        let a = try store.create(parentId: "1", title: "a", url: "https://a.test")
+
+        let moved = try store.move(id: a.id, parentId: "2", index: -1)
+
+        XCTAssertEqual(moved.index_, 0)
+        XCTAssertEqual(try childTitlesAndIndexes(of: "2").map(\.1), [0])
+    }
+
     func testMoveAfterRemoveCompactsSparseIndexes() throws {
         let a = try store.create(parentId: "1", title: "a", url: "https://a.test")
         let b = try store.create(parentId: "1", title: "b", url: "https://b.test")

@@ -171,7 +171,7 @@ final class BookmarkStore: @unchecked Sendable {
                 .filter(Column("id") != id)
                 .order(Column("index_").asc)
                 .fetchAll(db)
-            let insertAt = targetIndex.map { min($0, newSiblings.count) } ?? newSiblings.count
+            let insertAt = targetIndex.map { max(0, min($0, newSiblings.count)) } ?? newSiblings.count
             for i in insertAt..<newSiblings.count where newSiblings[i].index_ != i + 1 {
                 newSiblings[i].index_ = i + 1
                 try newSiblings[i].update(db)

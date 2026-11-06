@@ -134,6 +134,19 @@ final class GapRouterStoreProviderTests: XCTestCase {
         XCTAssertEqual((old as? [[String: Any]])?.count, 0)
     }
 
+    func testBookmarkMoveToANegativeIndexIsRejected() async throws {
+        let extensionId = try await loadExtension(into: profileB)
+        let a = try profileB.bookmarks.create(parentId: "1", title: "a", url: "https://a.test")
+
+        let (_, error) = await factory.gapRouter.route(
+            namespace: "bookmarks", method: "move", params: ["id": a.id, "parentId": "2", "index": -1],
+            extensionId: extensionId, fromWorker: false, registry: profileB.extensions
+        )
+
+        XCTAssertEqual(error?.hasSuffix("Value must be at least 0."), true)
+        XCTAssertEqual(try profileB.bookmarks.get(id: a.id)?.parentId, "1")
+    }
+
     func testCallWithoutTheManifestPermissionIsRejected() async throws {
         let router = factory.gapRouter
         let extensionId = try await loadExtension(into: profileB, permissions: ["bookmarks"])
