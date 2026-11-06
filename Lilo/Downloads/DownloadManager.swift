@@ -67,7 +67,7 @@ final class DownloadManager {
     ]
     private let dockController: DownloadDockProgressController?
 
-    /// Each private space's downloads, kept in memory and dropped with the space so nothing of them reaches the disk. A
+    /// Each private space's downloads, kept in memory and dropped with the space so no record of them reaches the disk. A
     /// store's `profileId` is its space's id, so its row ids never mix with a profile's.
     private(set) var privateStores: [UUID: DownloadStore] = [:]
     /// Each private space's website data store, where its downloads resume and find their cookies.
