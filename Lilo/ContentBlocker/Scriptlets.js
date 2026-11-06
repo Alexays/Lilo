@@ -237,6 +237,22 @@
     owner[key] = wrapNative(owner[key], apply);
   }
   var scriptPolicy = null;
+  // The frame's replace-node-text and remove-node-text rules share one observer. They edit each node in declaration order, each one reading the
+  // text the previous one wrote.
+  var textRules = [], textObserver = null;
+  function dropTextRule(edit) {
+    var k = textRules.indexOf(edit);
+    if (k >= 0) textRules.splice(k, 1);
+    if (!textRules.length) textObserver.disconnect();
+  }
+  function handleText(mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+      var added = mutations[i].addedNodes;
+      for (var j = 0; j < added.length; j++) {
+        for (var r = 0; r < textRules.length; r++) { if (!textRules[r](added[j])) dropTextRule(textRules[r--]); }
+      }
+    }
+  }
   // uBO's replace-node-text: rewrites matching nodes as the parser inserts them, so a script runs
   // edited. Observes until the document is interactive, unless `stay` is set.
   function replaceNodeText(nodeName, pattern, replacement, options) {
@@ -263,19 +279,11 @@
       try { node.textContent = after; } catch (e) { return true; }
       return count === 0 || --count !== 0;
     }
-    function handle(mutations) {
-      for (var i = 0; i < mutations.length; i++) {
-        var added = mutations[i].addedNodes;
-        for (var j = 0; j < added.length; j++) {
-          if (!edit(added[j])) { observer.disconnect(); return; }
-        }
-      }
-    }
-    var observer = new MutationObserver(handle);
-    observer.observe(document, { childList: true, subtree: true });
+    textObserver = textObserver || new MutationObserver(handleText);
+    if (textRules.push(edit) === 1) textObserver.observe(document, { childList: true, subtree: true });
     if (options.stay) return;
     var quitAfter = parseInt(options.quitAfter, 10) || 0;
-    function stop() { handle(observer.takeRecords()); observer.disconnect(); }
+    function stop() { handleText(textObserver.takeRecords()); dropTextRule(edit); }
     whenReady('interactive', function () { if (quitAfter) setTimeout(stop, quitAfter); else stop(); });
   }
   // ---------- JSONPath (uBO subset) ----------
@@ -478,8 +486,25 @@
     whenReady(/\bcomplete\b/.test(behavior) ? 'complete' : /\basap\b/.test(behavior) ? 'loading' : 'interactive', function () {
       run();
       if (!/\bstay\b/.test(behavior)) return;
-      new MutationObserver(function () { if (!timer) timer = setTimeout(run, 67); })
-        .observe(document, { attributes: true, attributeFilter: attrs, childList: true, subtree: true });
+      var observer = new MutationObserver(function () { if (!timer) timer = setTimeout(run, 67); });
+      var connected = false;
+      // A hidden page builds no records: one pass once it is shown strips what changed meanwhile.
+      var observe = function () {
+        if (document.hidden) return;
+        connected = true;
+        observer.observe(document, { attributes: true, attributeFilter: attrs, childList: true, subtree: true });
+      };
+      observe();
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) {
+          if (!connected) { observe(); run(); }
+          return;
+        }
+        // A page hidden briefly keeps observing, so a quick tab switch costs no pass on its return.
+        setTimeout(function () {
+          if (document.hidden && connected) { connected = false; observer.disconnect(); }
+        }, 10000);
+      });
     });
   }
   // uBO's set-attr: an untrusted value is a number, true, false, empty, or `[other-attr]` to copy.
