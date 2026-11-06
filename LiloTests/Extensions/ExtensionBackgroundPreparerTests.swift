@@ -410,6 +410,16 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertEqual(webExtension.displayName, "Commented")
     }
 
+    func testAManifestOnlyJSON5CanHoldIsLeftAsItIs() throws {
+        let extDir = tempDir.appendingPathComponent("nan")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        let manifest = #"{"manifest_version": 3, "name": "NaN", "version": "1", "ratio": NaN}"#
+        try manifest.write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+
+        XCTAssertThrowsError(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: ""))
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("manifest.json"), encoding: .utf8), manifest)
+    }
+
     @MainActor
     func testAnEmptyContentScriptListIsDropped() async throws {
         let prepared = try await prepareAsChrome(#"{"content_scripts": []}"#)
