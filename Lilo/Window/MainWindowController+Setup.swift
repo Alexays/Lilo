@@ -1125,9 +1125,10 @@ extension MainWindowController {
                 continue
             }
 
-            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an agent or a
+            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an awake agent or a
             // PiP window keeps it shown.
-            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !outgoingEngine.isAgentControlled && !drawsPiP
+            let agentAwake = outgoingEngine.isAgentControlled && !outgoingEngine.isAgentSleeping
+            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !agentAwake && !drawsPiP
             if !outgoingEngine.isWebInspectorVisible { outgoingEngine.fitView(in: contentContainerView.bounds) }
         }
     }

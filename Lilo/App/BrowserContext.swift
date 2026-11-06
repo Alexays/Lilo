@@ -512,9 +512,17 @@ final class BrowserContext {
         hiddenSpaceLifecycle.applyConfig(lifecycleConfig)
     }
 
-    /// Engines follow the foreground policy while any window is on screen.
+    /// Engines follow the foreground policy while any window is on screen. Element fullscreen moves the active page to
+    /// a window and Space of its own: the window it left still counts, or the video would be put in PiP and backgrounded.
+    var anyWindowVisible: Bool {
+        windows.windows.contains {
+            $0.window?.occlusionState.contains(.visible) == true
+                || $0.tabManager.activeEngineTab.map { $0.wkWebView.fullscreenState != .notInFullscreen } == true
+        }
+    }
+
     func windowVisibilityChanged() {
-        let anyVisible = windows.windows.contains { $0.window?.occlusionState.contains(.visible) == true }
+        let anyVisible = anyWindowVisible
         guard anyVisible != hiddenSpaceLifecycle.isWindowVisible else { return }
         hiddenSpaceLifecycle.windowOcclusionChanged(isVisible: anyVisible)
     }

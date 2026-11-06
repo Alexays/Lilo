@@ -725,6 +725,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
         updateAndEmit(tab.id) { $0.isInPictureInPicture = isInPictureInPicture }
     }
 
+    /// On exit the browser window's own occlusion change can still be queued, so the recompute waits for WindowServer
+    /// rather than reading a stale hidden state and backgrounding the page for a moment.
+    func tabDidChangeFullscreen(_ tab: WKWebViewTab) {
+        guard tab.wkWebView.fullscreenState == .notInFullscreen else { return context.windowVisibilityChanged() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.context.windowVisibilityChanged() }
+    }
+
     /// Emits only on a real change: KVO re-reports values `didNavigate` already applied (loading,
     /// back/forward), and each patch rewrites the chrome's sidebar state.
     func updateAndEmit(_ id: UUID, _ mutate: (inout Tab) -> Void) {

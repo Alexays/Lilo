@@ -70,6 +70,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: CallControls)
         func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool)
+        /// The page entered or left element fullscreen, which moves its view to a window of its own.
+        func tabDidChangeFullscreen(_ tab: WKWebViewTab)
         func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool)
         /// The page waits on a dialog, or no longer does.
         func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool)
@@ -148,11 +150,11 @@ final class WKWebViewTab: NSObject {
     private let findController: PageFindController
     let pip: PiPController
     private var permissionUsageState = WebPermissionUsageState.none {
-        didSet { runsAtFullSpeedHidden = isInCall || isAgentControlled }
+        didSet { runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping) }
     }
     /// A call keeps full speed in a hidden tab, as in Chrome: App Nap would move the process that encodes the shared
     /// screen and decodes every participant to the efficiency cores, and its timers would fire once a second or less.
-    /// An agent's tab does too, so what the agent measures is the page, not the throttling of a hidden one.
+    /// An agent's tab does too while it acts, so what the agent measures is the page, not the throttling of a hidden one.
     private var runsAtFullSpeedHidden = false {
         didSet {
             guard runsAtFullSpeedHidden != oldValue else { return }
@@ -175,7 +177,7 @@ final class WKWebViewTab: NSObject {
     var isTabShareSource = false {
         didSet {
             guard isTabShareSource != oldValue else { return }
-            runsAtFullSpeedHidden = isInCall || isAgentControlled
+            runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping)
             delegate?.tab(self, didUpdatePermissionUsage: effectivePermissionUsageState)
         }
     }
@@ -184,8 +186,12 @@ final class WKWebViewTab: NSObject {
     var isAgentControlled = false {
         didSet {
             screenTime?.suppressUsageRecording = suppressesScreenTimeUsage
-            runsAtFullSpeedHidden = isInCall || isAgentControlled
+            runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping)
         }
+    }
+    /// An agent tab nobody sees and the agent left idle: it gets a hidden page's throttling back until the next tool wakes it.
+    var isAgentSleeping = false {
+        didSet { runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping) }
     }
     /// Set while an agent drives this tab: true when it took the page dialog, answered at once
     /// instead of opening a sheet on the user's window.
@@ -326,7 +332,7 @@ final class WKWebViewTab: NSObject {
     var hasDirtySubframeForm = false
     /// Last call controls the page reported; a committed navigation clears them with the page's handlers.
     var callControls = CallControls() {
-        didSet { runsAtFullSpeedHidden = isInCall || isAgentControlled }
+        didSet { runsAtFullSpeedHidden = isInCall || (isAgentControlled && !isAgentSleeping) }
     }
     /// A video of this page is in the system PiP window, playing or paused. Unlike `pip.isActive`, it counts a video
     /// the fallback script sent there.
@@ -1168,6 +1174,9 @@ final class WKWebViewTab: NSObject {
                     tab.isDarkAppearance = dark
                     tab.recapturePageColor()
                 }
+            },
+            webView.observe(\.fullscreenState) { [weak self] _, _ in
+                self?.onMain { $0.delegate?.tabDidChangeFullscreen($0) }
             }
         ]
         // WebKit samples the top edge once a load paints, never on scroll; it skips a fixed header, which scrolls content under it.
@@ -1659,6 +1668,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {}
     func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool) {}
+    func tabDidChangeFullscreen(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int) {}
