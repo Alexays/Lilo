@@ -21,8 +21,8 @@
   import { getOpenTabs, getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import UiChip from "../ui/UiChip.svelte";
-  import Icon from "./Icon.svelte";
-  import type { IconName } from "./icons";
+  import Icon from "../ui/Icon.svelte";
+  import type { IconName } from "../ui/icons";
   import type { AvailableCommand } from "./conversationModel";
 
   const CHIP_ICONS: Record<BridgeConversationAttachment["kind"], IconName> = {

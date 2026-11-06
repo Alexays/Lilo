@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { IconName } from "./icons";
+  import type { IconName } from "../ui/icons";
 
   const SUGGESTIONS: { key: string; icon: IconName }[] = [
     { key: "explain", icon: "book" },
@@ -37,7 +37,7 @@
   import { getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import AgentTile from "./AgentTile.svelte";
   import type { ImageRef, PermissionItem, ThreadItem, ToolCallItem } from "./conversationModel";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import Lightbox from "./Lightbox.svelte";
   import MenuPicker from "./MenuPicker.svelte";
   import PermissionButtons from "./PermissionButtons.svelte";

@@ -1,5 +1,5 @@
-// Line icons for the agent surfaces: path data on a 16x16 grid, stroked at 1.5 with round caps by
-// Icon.svelte, like the command bar's. Several shapes follow Lucide (ISC license).
+// The chrome's shared line icons: path data on a 16x16 grid, stroked 1.5px on screen with round caps
+// by Icon.svelte. Several shapes follow Lucide (ISC license).
 
 export const ICONS = {
   eye: "M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8zM8 6a2 2 0 1 0 0 4a2 2 0 1 0 0-4z",
@@ -20,7 +20,10 @@ export const ICONS = {
   copy: "M6 5.5h6.5a1 1 0 0 1 1 1V13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1zM2.5 10.5V3.5a1 1 0 0 1 1-1h6.5",
   chevronRight: "M6 3.5L10.5 8 6 12.5",
   chevronLeft: "M10 3.5L5.5 8 10 12.5",
+  chevronUp: "M3.5 10L8 5.5 12.5 10",
+  chevronDown: "M3.5 6L8 10.5 12.5 6",
   close: "M4 4l8 8M12 4l-8 8",
+  plus: "M8 3v10M3 8h10",
   image: "M3 2.25h10a.75.75 0 0 1 .75.75v10a.75.75 0 0 1-.75.75H3a.75.75 0 0 1-.75-.75V3A.75.75 0 0 1 3 2.25zM6 4.75a1.25 1.25 0 1 0 0 2.5a1.25 1.25 0 1 0 0-2.5zM13.75 10.5L10.5 7.25 3 13.75",
   external: "M9.5 2.25h4.25V6.5M13.75 2.25L7.75 8.25M12 9.5v3.25a1 1 0 0 1-1 1H3.25a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1H6.5",
   arrowUp: "M8 13V3M3.5 7.5L8 3l4.5 4.5",

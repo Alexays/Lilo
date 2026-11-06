@@ -16,7 +16,8 @@
   stroke-linejoin="round"
   aria-hidden="true"
 >
-  <path d={ICONS[name]} />
+  <!-- Non-scaling, so every size draws the same 1.5px line. -->
+  <path d={ICONS[name]} vector-effect="non-scaling-stroke" />
 </svg>
 
 <style>

@@ -1,6 +1,6 @@
 <script lang="ts" module>
   import type { ToolCallItem, ToolKind } from "./conversationModel";
-  import type { IconName } from "./icons";
+  import type { IconName } from "../ui/icons";
 
   const KIND_ICONS: Record<ToolKind, IconName> = {
     read: "eye",
@@ -78,7 +78,7 @@
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { MOTION } from "../../lib/motion/timings";
   import DiffCard from "./DiffCard.svelte";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import Markdown from "./Markdown.svelte";
   import MascotGlyph from "./MascotGlyph.svelte";
   import ThreadImage from "./ThreadImage.svelte";
