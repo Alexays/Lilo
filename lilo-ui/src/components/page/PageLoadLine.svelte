@@ -82,7 +82,7 @@
   @media (prefers-reduced-motion: reduce) {
     .page-load-line.shown,
     .page-load-line.finishing {
-      transition: opacity 150ms ease !important;
+      transition: opacity var(--motion-duration-reduced) ease !important;
     }
   }
 </style>

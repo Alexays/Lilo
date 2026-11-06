@@ -140,6 +140,7 @@
   --motion-duration-normal: 200ms;
   --motion-duration-slow: 280ms;
   --motion-duration-overlay: 220ms;
+  --motion-duration-reduced: 150ms;
   --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --motion-ease-organic: cubic-bezier(0.16, 0.84, 0.32, 1);
   --motion-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);

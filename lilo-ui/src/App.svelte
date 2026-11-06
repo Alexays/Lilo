@@ -741,7 +741,7 @@
 
     /* Over the global rule that drops every transition to nothing. */
     .sidebar.rail-folded {
-      transition: opacity 150ms ease !important;
+      transition: opacity var(--motion-duration-reduced) ease !important;
     }
   }
 
