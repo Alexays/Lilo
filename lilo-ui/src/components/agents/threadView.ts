@@ -181,7 +181,7 @@ export function itemSignature(item: ThreadItem, undone: Set<string>): string {
     case "image":
       return `${item.src.length}:${item.alt}`;
     case "toolCall": {
-      const own = `${item.status}:${item.title}:${item.output.length}:${item.images.length}:${item.rawInput ? 1 : 0}:${item.diffs.map((diff) => `${diff.added}/${diff.removed}/${undone.has(diff.path)}`).join()}`;
+      const own = `${item.revision}:${item.diffs.map((diff) => undone.has(diff.path)).join()}`;
       return item.children.length ? `${own}[${item.children.map((child) => itemSignature(child, undone)).join("|")}]` : own;
     }
     case "turnEnd":

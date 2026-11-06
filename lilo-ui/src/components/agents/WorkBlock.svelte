@@ -101,18 +101,18 @@
   let { tabId, calls, sig, done, live, cwd, promptIndex, undone }: Props = $props();
 
   let userOpen = $state<boolean | null>(null);
-  // A block where something failed stays open when the turn ends: that is what to read first.
-  const failed = $derived(calls.some((call) => call.status === "failed"));
-  const open = $derived(userOpen ?? (!done || failed));
-  // A folded block from the replay builds its rows on first open.
-  let opened = $state(untrack(() => !done || calls.some((call) => call.status === "failed")));
-  const toggled = new SvelteSet<string>();
-  const fullOutput = new SvelteSet<string>();
-
+  // `calls` is a new array on every frame of the thread: only `sig` says the calls changed.
   const views = $derived.by(() => {
     void sig;
-    return calls.map((call) => describe(call, cwd));
+    return untrack(() => calls).map((call) => describe(call, cwd));
   });
+  // A block where something failed stays open when the turn ends: that is what to read first.
+  const failed = $derived(views.some((view) => view.call.status === "failed"));
+  const open = $derived(userOpen ?? (!done || failed));
+  // A folded block from the replay builds its rows on first open.
+  let opened = $state(untrack(() => !done || failed));
+  const toggled = new SvelteSet<string>();
+  const fullOutput = new SvelteSet<string>();
 
   const summary = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one run

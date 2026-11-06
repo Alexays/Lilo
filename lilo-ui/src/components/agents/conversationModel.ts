@@ -160,6 +160,8 @@ export interface ToolCallItem {
   endedAt: number | null;
   /** The calls of the sub-agent this call started, in order; the call's output is the sub-agent's report. */
   children: ToolCallItem[];
+  /** Bumped by every update the call gets: the view redraws it on this alone. */
+  revision: number;
 }
 
 /** Closes a turn: its footer. `durationMs` is known only when the whole turn was seen live. */
@@ -305,6 +307,7 @@ function applyToolCall(state: ConversationState, update: ToolCallFields, receive
       startedAt: receivedAt,
       endedAt: null,
       children: [],
+      revision: 0,
     };
     state.toolCalls.set(update.toolCallId, call);
     const parentId = parentOf(update);
@@ -326,6 +329,7 @@ function applyToolCall(state: ConversationState, update: ToolCallFields, receive
   if (receivedAt !== null && call.endedAt === null && (call.status === "completed" || call.status === "failed")) {
     call.endedAt = receivedAt;
   }
+  call.revision++;
 }
 
 function applyChunk(
