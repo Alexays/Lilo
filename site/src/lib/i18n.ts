@@ -56,7 +56,7 @@ export const copy = {
     demoNewTab: "New Tab",
     demoNewTerminal: "New Terminal",
     demoNoScript: "Enable JavaScript to explore Lilo’s interactive demo.",
-    demoOpen: "Open demo",
+    demoOpen: "Try the demo",
     demoPin: "Pin / Unpin Tab",
     demoRedo: "Redo",
     demoReload: "Reload Page",
@@ -205,7 +205,7 @@ export const copy = {
     demoNewTerminal: "Nouveau terminal",
     demoNoScript:
       "Activez JavaScript pour explorer la démo interactive de Lilo.",
-    demoOpen: "Ouvrir la démo",
+    demoOpen: "Essayer la démo",
     demoPin: "Épingler / Désépingler",
     demoRedo: "Rétablir",
     demoReload: "Actualiser la page",

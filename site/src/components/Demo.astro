@@ -1,6 +1,12 @@
 ---
+import { Image } from "astro:assets";
+
 import nativeEnglish from "../../../lilo-ui/src/lib/i18n/locales/en.json?raw";
 import nativeFrench from "../../../lilo-ui/src/lib/i18n/locales/fr.json?raw";
+import posterEnglishDark from "../assets/demo-poster/demo-en-dark.png";
+import posterEnglishLight from "../assets/demo-poster/demo-en-light.png";
+import posterFrenchDark from "../assets/demo-poster/demo-fr-dark.png";
+import posterFrenchLight from "../assets/demo-poster/demo-fr-light.png";
 import { demoMenus } from "../demo/menu";
 import { copy, demoMessages } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
@@ -13,6 +19,7 @@ interface Props {
   autoplay?: boolean;
   deferred?: boolean;
   minimal?: boolean;
+  poster?: boolean;
 }
 
 const {
@@ -22,6 +29,7 @@ const {
   autoplay = false,
   deferred = false,
   minimal = false,
+  poster = false,
 } = Astro.props;
 
 const text = copy[lang];
@@ -32,6 +40,11 @@ const title = {
   mcp: text.demoAgentWindow,
   terminal: text.demoTerminalWindow,
 }[initialMode];
+
+const posters =
+  lang === "fr"
+    ? { dark: posterFrenchDark, light: posterFrenchLight }
+    : { dark: posterEnglishDark, light: posterEnglishLight };
 
 const viewportId = id === "browser-demo" ? "demo-viewport" : `${id}-viewport`;
 const url = `/demo/?lang=${lang}${initialMode === "browser" ? "" : `&mode=${initialMode}`}${autoplay ? "&autoplay=1" : ""}`;
@@ -297,13 +310,30 @@ const modes = [
   <div class="demo-viewport" id={viewportId}>
     <div class="demo-desktop">
       <iframe
-        src={deferred ? undefined : url}
-        data-src={deferred ? url : undefined}
+        src={deferred || poster ? undefined : url}
+        data-src={deferred || poster ? url : undefined}
         title={title}
         loading="lazy"
         allow="fullscreen"
+        hidden={poster}
       ></iframe>
     </div>
+    {poster && (
+      <button class="demo-poster" type="button">
+        {(["light", "dark"] as const).map((appearance) => (
+          <Image
+            class={`poster-${appearance}`}
+            src={posters[appearance]}
+            alt=""
+            widths={[720, 1198, 2396]}
+            sizes="(max-width: 1250px) calc(100vw - 32px), 1198px"
+            loading="lazy"
+            decoding="async"
+          />
+        ))}
+        <span class="demo-start">{text.demoOpen}</span>
+      </button>
+    )}
   </div>
   <noscript>
     <p>{text.demoNoScript}</p>
@@ -611,6 +641,7 @@ const modes = [
 
   for (const demo of document.querySelectorAll<HTMLElement>(".demo-shell")) {
     const frame = demo.querySelector<HTMLIFrameElement>("iframe");
+    const poster = demo.querySelector<HTMLButtonElement>(".demo-poster");
     const viewport = demo.querySelector<HTMLElement>(".demo-viewport");
     const desktop = demo.querySelector<HTMLElement>(".demo-desktop");
 
@@ -631,6 +662,14 @@ const modes = [
     let pendingMessage: DemoMessage | null = null;
     let previousFocus: HTMLElement | null = null;
     const inertSiblings: HTMLElement[] = [];
+
+    const load = () => {
+      if (frame.dataset.src && !frame.hasAttribute("src")) {
+        frame.src = frame.dataset.src;
+        frame.hidden = false;
+        poster?.remove();
+      }
+    };
 
     const send = (message: DemoMessage) => {
       frame.contentWindow?.postMessage(message, location.origin);
@@ -848,6 +887,7 @@ const modes = [
       }
 
       closeMenus();
+      load();
 
       if (action === "fullscreen") {
         void fullscreen();
@@ -1312,8 +1352,8 @@ const modes = [
       ([entry]) => {
         visible = entry.isIntersecting;
 
-        if (visible && !frame.hasAttribute("src") && frame.dataset.src) {
-          frame.src = frame.dataset.src;
+        if (visible && !poster) {
+          load();
         }
 
         syncVisibility();
@@ -1336,6 +1376,16 @@ const modes = [
       frame.contentDocument?.addEventListener("keydown", exitOnEscape);
     };
 
+    poster?.addEventListener("click", () => {
+      load();
+      frame.focus();
+    });
+
+    // A link to the demo, such as a release note's, asks for it running.
+    if (location.hash === `#${demo.id}`) {
+      load();
+    }
+
     frame.addEventListener("load", bindFrameKeyboard);
     bindFrameKeyboard();
   }
@@ -1351,6 +1401,64 @@ const modes = [
       0 40px 90px -30px #29203955,
       0 0 0 1px #00000020;
     text-align: left;
+  }
+  .demo-poster {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: var(--sidebar);
+    cursor: pointer;
+  }
+  .demo-poster img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: left top;
+  }
+  .poster-dark {
+    display: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(html:not([data-theme="light"])) .poster-light {
+      display: none;
+    }
+    :global(html:not([data-theme="light"])) .poster-dark {
+      display: block;
+    }
+  }
+  :global(html[data-theme="dark"]) .poster-light {
+    display: none;
+  }
+  :global(html[data-theme="dark"]) .poster-dark {
+    display: block;
+  }
+  .demo-start {
+    position: relative;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--brand);
+    color: var(--on-brand);
+    font: 600 15px/1.2 var(--sys);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+  }
+  .demo-poster:hover .demo-start {
+    filter: brightness(1.08);
+  }
+  .demo-poster:focus-visible {
+    outline-offset: -3px;
+  }
+  @media (scripting: none) {
+    .demo-poster {
+      pointer-events: none;
+    }
+    .demo-start {
+      display: none;
+    }
   }
   .demo-menubar {
     position: relative;
@@ -1633,6 +1741,9 @@ const modes = [
     height: 640px;
     color-scheme: normal;
     background: #e2daf1;
+  }
+  iframe[hidden] {
+    display: none;
   }
   .demo-shell:is(:fullscreen, [data-expanded]) {
     display: flex;
