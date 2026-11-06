@@ -87,7 +87,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
-	changie change release-status release-version release-discord release-test release-media-stage release-media-test
+	changie change release-status release-version release-discord release-test release-media-stage release-media-test changelog-draft
 
 ## List the targets
 help:
@@ -226,9 +226,17 @@ ui-build: $(UI_DEPS) release-media-stage
 release-media-stage:
 	@node release-media/stage-native.mjs
 
+release-media/node_modules/.installed: release-media/package.json release-media/package-lock.json
+	@npm --prefix release-media ci --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
+	@touch $@
+
 ## Test the release media tooling
-release-media-test:
+release-media-test: release-media/node_modules/.installed
 	@node --test release-media/*.test.mjs
+
+## Draft the changelog entry and What's New copy (RELEASE=x.y.z; pending notes by default; needs Claude credentials)
+changelog-draft: release-media/node_modules/.installed $(CHANGIE)
+	@CHANGIE='$(CHANGIE)' LILO_RELEASE='$(RELEASE)' node release-media/draft.mjs
 
 # Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
 # UI source change, refreshes both.

@@ -1,0 +1,11 @@
+---
+import ReleasePage from "../../components/ReleasePage.astro";
+import { releases } from "../../lib/release-entries";
+
+export const getStaticPaths = () =>
+  releases.map(({ version }) => ({ params: { version } }));
+
+const { version } = Astro.params;
+---
+
+<ReleasePage lang="en" version={version} />

@@ -123,19 +123,12 @@ class ReleaseTests(unittest.TestCase):
         self.run_release("status")
         self.assertEqual(self.snapshot(), released)
 
-    def test_a_feature_release_waits_for_its_highlights_and_story(self):
+    def test_a_feature_release_without_highlights_warns_and_ships(self):
         self.note("Added")
         status = self.run_release("status")
         self.assertIn("lilo-ui/src/components/whatsnew/releaseHighlights.json", status.stdout)
-        before = self.snapshot()
-        refused = self.run_release("version", success=False)
-        self.assertIn("site/src/content/releases/0.2.0.json", refused.stderr)
-        self.assertEqual(self.snapshot(), before)
-        self.write(HIGHLIGHTS, json.dumps({"0.2.0": {}}) + "\n")
-        self.run_release("version", success=False)
-        self.assertEqual(len(list((self.root / ".changes/unreleased").glob("*.yaml"))), 1, "a missing story keeps the notes")
-        self.highlight("0.2.0")
-        self.run_release("version")
+        released = self.run_release("version")
+        self.assertIn("site/src/content/releases/0.2.0.json", released.stdout)
         self.assert_versions("0.2.0")
 
     def test_a_patch_release_needs_no_highlights(self):

@@ -26,3 +26,5 @@ export const parseChangelog = (markdown: string) => {
       b.version.localeCompare(a.version, "en", { numeric: true })
     );
 };
+
+export type Release = ReturnType<typeof parseChangelog>[number];

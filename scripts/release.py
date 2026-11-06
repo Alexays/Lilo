@@ -35,7 +35,8 @@ def version_updates(version, released):
 
 
 def check_highlights(version):
-    """A feature release ships with its What's New highlights and its website story; a patch release needs neither."""
+    """Warns when a feature release has no What's New highlights or website story. Neither holds the app back:
+    What's New falls back to the complete notes, and the Changelog draft workflow writes the website story after the tag."""
     if not version.endswith(".0"):
         return
     highlights_path = Path("lilo-ui/src/components/whatsnew/releaseHighlights.json")
@@ -46,7 +47,7 @@ def check_highlights(version):
     if not story_path.exists():
         missing.append(str(story_path))
     if missing:
-        raise ValueError(f"Release {version} adds features: write {' and '.join(missing)} first (docs/RELEASING.md)")
+        print(f"Warning: release {version} adds features without {' or '.join(missing)}: make changelog-draft writes them (docs/RELEASING.md)")
 
 
 def main():
@@ -79,11 +80,7 @@ def main():
             raise ValueError("CHANGELOG.md is out of sync with Changie; run make release-version")
         if pending:
             print(changie("batch", "auto", "--dry-run", "--allow-no-changes=false"), end="")
-            # A warning only: CI runs status on every push, long before the release is cut.
-            try:
-                check_highlights(changie("next", "auto").strip().removeprefix("v"))
-            except ValueError as error:
-                print(f"\nWarning: {error}")
+            check_highlights(changie("next", "auto").strip().removeprefix("v"))
         else:
             print("No pending release notes.")
 

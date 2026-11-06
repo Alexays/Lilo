@@ -1,0 +1,63 @@
+# Opens a draft pull request with a release's changelog entry. Nothing here gates the release:
+# the app ships without it, and merging the pull request publishes the entry.
+
+name: Changelog draft
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Published version, such as 0.17.0
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: changelog-${{ github.ref }}-${{ inputs.release }}
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    if: github.repository == 'Alexays/Lilo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RELEASE: ${{ inputs.release || github.ref_name }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Skip without Claude credentials
+        id: key
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::Add the ANTHROPIC_API_KEY secret to draft changelog entries."; fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.key.outputs.ready
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.key.outputs.ready
+        with:
+          node-version-file: '.nvmrc'
+      - name: Draft the entry
+        if: steps.key.outputs.ready
+        run: make changelog-draft RELEASE="${RELEASE#v}"
+      - name: Open the pull request
+        if: steps.key.outputs.ready
+        run: |
+          [ -n "$(git status --porcelain)" ] || exit 0
+          version="${RELEASE#v}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "changelog/$version"
+          git add site/src/content/releases lilo-ui/src
+          git commit -m "docs(changelog): draft the $version entry"
+          git push --force-with-lease origin "changelog/$version"
+          gh pr create --draft --base main --title "docs(changelog): draft the $version entry" \
+            --body "Drafted from the $version notes. Check the story, then close and reopen this pull request to run its checks."
