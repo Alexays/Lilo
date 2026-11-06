@@ -58,6 +58,33 @@ final class ManagementBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(single["enabled"] as? Bool, false)
     }
 
+    func test_getSelfAndGet_reportChromeShapedInfo_forALoadedAndADisabledLocalizedExtension() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("management-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let extDir = directory.appendingPathComponent("localized")
+        try FileManager.default.createDirectory(at: extDir.appendingPathComponent("_locales/en"), withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"__MSG_appName__","description":"__MSG_appDesc__","version":"1.0","default_locale":"en","options_page":"options.html","icons":{"16":"icon.png"}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try #"{"appName":{"message":"Localized"},"appDesc":{"message":"A localized extension"}}"#
+            .write(to: extDir.appendingPathComponent("_locales/en/messages.json"), atomically: true, encoding: .utf8)
+        try Data("png".utf8).write(to: extDir.appendingPathComponent("icon.png"))
+        let registry = try makeTestExtensionRegistry(in: directory)
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+
+        let loadedResult = try await send("management.getSelf", ["extensionId": id], to: registry)
+        await registry.disable(extensionId: id)
+        let disabledResult = try await send("management.get", ["id": id], to: registry)
+
+        for info in [try XCTUnwrap(loadedResult as? [String: Any]), try XCTUnwrap(disabledResult as? [String: Any])] {
+            XCTAssertEqual(info["name"] as? String, "Localized")
+            XCTAssertEqual(info["description"] as? String, "A localized extension")
+            XCTAssertEqual(info["installType"] as? String, "normal", "a copy Lilo installed")
+            XCTAssertEqual(info["optionsUrl"] as? String, "chrome-extension://\(id)/options.html")
+            XCTAssertEqual((info["icons"] as? [[String: Any]])?.first?["url"] as? String, "data:image/png;base64,\(Data("png".utf8).base64EncodedString())")
+        }
+    }
+
     func test_uninstallSelf_withoutDialog_removesTheCaller() async throws {
         let (registry, id, directory) = try await makeRegistryWithExtension()
         defer { try? FileManager.default.removeItem(at: directory) }
