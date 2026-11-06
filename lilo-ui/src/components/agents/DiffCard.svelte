@@ -5,7 +5,7 @@
   import { MOTION } from "../../lib/motion/timings";
   import { t } from "../../lib/i18n/state.svelte";
   import type { FileDiff } from "./conversationModel";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import { lineDiff } from "./threadView";
 
   interface Props {

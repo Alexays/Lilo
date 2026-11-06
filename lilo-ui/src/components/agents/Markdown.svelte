@@ -5,7 +5,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { conversationActions } from "./conversationActions";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import ThreadImage from "./ThreadImage.svelte";
   import { imageSource, parseMarkdown, type Block, type Inline, type MarkdownParse } from "./threadView";
 

@@ -21,7 +21,7 @@
   import { MOTION } from "../../lib/motion/timings";
   import { tooltip } from "../../lib/tooltip";
   import type { ThreadItem } from "./conversationModel";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
   import Markdown from "./Markdown.svelte";
   import ThreadImage from "./ThreadImage.svelte";
   import { formatDuration, imageSource } from "./threadView";

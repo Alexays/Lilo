@@ -1,6 +1,6 @@
 <script lang="ts" module>
   import type { TerminalProgramIcon } from "../../lib/terminalIcons";
-  import type { IconName } from "./icons";
+  import type { IconName } from "../ui/icons";
 
   export interface MenuOption {
     value: string;
@@ -24,7 +24,7 @@
   import { portal } from "../../lib/actions/portal";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import AgentTile from "./AgentTile.svelte";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
 
   interface Props {
     value: string;

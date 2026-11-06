@@ -6,7 +6,7 @@
 
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
-  import Icon from "./Icon.svelte";
+  import Icon from "../ui/Icon.svelte";
 
   interface Props {
     /** A data: URL or a `conversation-file/` URL; ConversationView's lightbox opens it on click. */
