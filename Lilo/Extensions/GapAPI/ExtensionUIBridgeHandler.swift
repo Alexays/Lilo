@@ -547,30 +547,27 @@ enum ExtensionArchiveSafety {
         let isRSA: Bool
     }
 
-    /// Verifies CRX3 as Chromium's `crx_file` does: a proof must verify over the signed data and derive `expectedExtensionId`, and
-    /// `SignedData.crx_id` must name it too (blocks proof transplant). `requirePublisherProof` also demands the Web Store key's proof.
-    static func verifyCRX3(header: Data, archive: Data, expectedExtensionId: String, requirePublisherProof: Bool) -> Bool {
+    /// Verifies CRX3 as Chromium's `crx_file` does, returning the key of a proof that verifies over the signed data and derives
+    /// `expectedExtensionId`, which `SignedData.crx_id` must name too (blocks proof transplant). `requirePublisherProof` also demands the Web Store key's proof.
+    static func verifyCRX3(header: Data, archive: Data, expectedExtensionId: String, requirePublisherProof: Bool) -> Data? {
         let expected = expectedExtensionId.lowercased()
         let (proofs, signedHeaderData) = parseCRXHeader(header)
-        guard let signedHeaderData else { return false }
+        guard let signedHeaderData else { return nil }
 
         var crxId: Data?
         parseLengthDelimitedFields(in: signedHeaderData) { field, value in
             if field == 1 { crxId = Data(value) }
         }
         guard let crxId, crxId.count == 16,
-              chromeExtensionId(fromRawId: crxId) == expected else { return false }
+              chromeExtensionId(fromRawId: crxId) == expected else { return nil }
 
         let message = signedPayload(signedHeaderData: signedHeaderData, archive: archive)
         if requirePublisherProof {
             guard proofs.contains(where: {
                 Data(SHA256.hash(data: $0.publicKey)) == webStorePublisherKeyHash && verify(proof: $0, over: message)
-            }) else { return false }
+            }) else { return nil }
         }
-        for proof in proofs where chromeExtensionId(forPublicKey: proof.publicKey) == expected {
-            if verify(proof: proof, over: message) { return true }
-        }
-        return false
+        return proofs.first { chromeExtensionId(forPublicKey: $0.publicKey) == expected && verify(proof: $0, over: message) }?.publicKey
     }
 
     /// SHA-256 of the Web Store's "ecdsa_2017_public" publisher SPKI (Chromium `kPublisherKeyHash`).

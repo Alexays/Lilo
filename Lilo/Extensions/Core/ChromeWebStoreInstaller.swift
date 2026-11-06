@@ -59,7 +59,7 @@ enum ChromeWebStoreInstaller {
         guard size <= maxDownloadBytes else { throw ExtensionError.downloadFailed("package larger than \(maxDownloadBytes) bytes") }
 
         let crxData = try Data(contentsOf: tempFile)
-        let zipData = try extractZIP(fromCRX: crxData, expectedExtensionId: extensionId, requirePublisherProof: true)
+        let (zipData, publicKey) = try extractZIP(fromCRX: crxData, expectedExtensionId: extensionId, requirePublisherProof: true)
 
         let workDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let extractDir = workDir.appendingPathComponent(extensionId, isDirectory: true)
@@ -69,6 +69,13 @@ enum ChromeWebStoreInstaller {
             try zipData.write(to: zipURL)
             defer { try? FileManager.default.removeItem(at: zipURL) }
             try await unzip(at: zipURL, to: extractDir)
+            // Chrome writes the signing key into the installed manifest: `runtime.getManifest().key` reads it, and a copy
+            // of the folder loaded unpacked keeps the store id.
+            let manifestURL = extractDir.appendingPathComponent("manifest.json")
+            if var manifest = try? JSONSerialization.jsonObject(with: Data(contentsOf: manifestURL)) as? [String: Any] {
+                manifest["key"] = publicKey.base64EncodedString()
+                try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys]).write(to: manifestURL)
+            }
         } catch {
             try? FileManager.default.removeItem(at: workDir)
             throw error
@@ -76,9 +83,9 @@ enum ChromeWebStoreInstaller {
         return extractDir
     }
 
-    /// `requirePublisherProof` demands the Web Store's own signature, which only Google's servers can
-    /// produce: a package signed by its developer alone was never reviewed by the store.
-    static func extractZIP(fromCRX data: Data, expectedExtensionId: String, requirePublisherProof: Bool) throws -> Data {
+    /// Returns the archive and the key that derives the id. `requirePublisherProof` demands the Web Store's own signature, which
+    /// only Google's servers can produce: a package signed by its developer alone was never reviewed by the store.
+    static func extractZIP(fromCRX data: Data, expectedExtensionId: String, requirePublisherProof: Bool) throws -> (archive: Data, publicKey: Data) {
         let crxMagic: [UInt8] = [0x43, 0x72, 0x32, 0x34] // "Cr24"
 
         guard data.count >= 12 else {
@@ -100,10 +107,10 @@ enum ChromeWebStoreInstaller {
         // Real CRX3 verification: at least one proof must cryptographically sign the archive, its key
         // must derive the requested id, and the embedded crx_id must match too. This proves the archive
         // content was signed by the publisher, not merely that a matching public key is present.
-        guard ExtensionArchiveSafety.verifyCRX3(header: header, archive: archive, expectedExtensionId: expectedExtensionId, requirePublisherProof: requirePublisherProof) else {
+        guard let publicKey = ExtensionArchiveSafety.verifyCRX3(header: header, archive: archive, expectedExtensionId: expectedExtensionId, requirePublisherProof: requirePublisherProof) else {
             throw ExtensionError.invalidExtensionArchive("CRX3 signature verification failed")
         }
-        return archive
+        return (archive, publicKey)
     }
 
     static func unzip(at zipURL: URL, to destURL: URL) async throws {

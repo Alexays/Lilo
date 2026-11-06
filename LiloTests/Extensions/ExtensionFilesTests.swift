@@ -88,4 +88,35 @@ final class ExtensionFilesTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("version.txt").path))
         XCTAssertEqual(try files.workingCopy(of: files.directory!.appendingPathComponent(extensionId)), files.directory!.appendingPathComponent(extensionId))
     }
+
+    // MARK: - Extension ids
+
+    func testAnUnpackedFolderWithoutAKeyTakesTheIdChromeDerivesFromItsPath() throws {
+        let folder = URL(fileURLWithPath: "/Users/example/my-extension", isDirectory: true)
+        XCTAssertEqual(try ExtensionFiles.makeExtensionId(for: folder, managedDirectory: files.directory, manifestKey: nil), "ecdonlfgochjmongfgiiibiefemoaami")
+    }
+
+    func testAPathDerivedIdHashesTheRealPathLikeChrome() throws {
+        let folder = URL(fileURLWithPath: "/tmp/example-unpacked-extension", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        // /tmp links to /private/tmp: this is the id of "/private/tmp/example-unpacked-extension".
+        XCTAssertEqual(try ExtensionFiles.makeExtensionId(for: folder, managedDirectory: files.directory, manifestKey: nil), "fjbhhcfjpdannijipkgjlanofkncdgif")
+    }
+
+    func testAManifestKeyGivesTheSameIdBareOrAsPEM() throws {
+        let folder = try package("keyed")
+        let key = Data((0..<64).map { UInt8($0) }).base64EncodedString()
+        let pem = "-----BEGIN PUBLIC KEY-----\r\n\(key.prefix(40))\n  \(key.dropFirst(40))\n-----END PUBLIC KEY-----\n"
+        for manifestKey in [key, pem] {
+            XCTAssertEqual(try ExtensionFiles.makeExtensionId(for: folder, managedDirectory: files.directory, manifestKey: manifestKey), "pnokljkmpdhbadgclncgfimnmjkcjoip")
+        }
+    }
+
+    func testAnInvalidManifestKeyIsRefused() throws {
+        let folder = try package("bad-key")
+        for manifestKey in ["not a key", "", "-----BEGIN PUBLIC KEY-----\nAAEC", "AAEC AwQF"] {
+            XCTAssertThrowsError(try ExtensionFiles.makeExtensionId(for: folder, managedDirectory: files.directory, manifestKey: manifestKey), manifestKey)
+        }
+    }
 }

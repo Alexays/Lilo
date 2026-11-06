@@ -179,22 +179,32 @@ final class ExtensionFiles {
         }
     }
 
-    /// A store copy lives in the folder, named by its id. An unpacked extension with a manifest `key`
-    /// takes the id Chrome derives from it, so native hosts' `allowed_origins` match; any other gets an
-    /// id hashed from its path.
-    nonisolated static func makeExtensionId(for url: URL, managedDirectory: URL?, manifestKey: String?) -> String {
+    /// A store copy lives in the folder, named by its id. Any other takes the id Chrome gives it, so native hosts'
+    /// `allowed_origins` match: derived from its manifest `key`, else from its canonical path. An invalid key throws.
+    nonisolated static func makeExtensionId(for url: URL, managedDirectory: URL?, manifestKey: String?) throws -> String {
         let canonical = url.standardizedFileURL.resolvingSymlinksInPath()
         if let managedDirectory,
            canonical.deletingLastPathComponent().path == managedDirectory.standardizedFileURL.resolvingSymlinksInPath().path,
            isChromeExtensionId(canonical.lastPathComponent) {
             return canonical.lastPathComponent
         }
-        if let manifestKey, let publicKey = Data(base64Encoded: manifestKey, options: .ignoreUnknownCharacters), !publicKey.isEmpty {
-            return ExtensionArchiveSafety.chromeExtensionId(forPublicKey: publicKey)
+        guard var key = manifestKey else {
+            // Chrome hashes the realpath(3), which keeps the /private prefix that resolvingSymlinksInPath drops.
+            let path = (try? url.resourceValues(forKeys: [.canonicalPathKey]).canonicalPath) ?? canonical.path
+            return ExtensionArchiveSafety.chromeExtensionId(fromRawId: Data(SHA256.hash(data: Data(path.utf8)).prefix(16)))
         }
-        let digest = SHA256.hash(data: Data(canonical.path.utf8))
-        let hex = digest.map { unsafe String(format: "%02x", $0) }.joined()
-        return "extension-\(hex.prefix(16))"
+        // As in Chrome, a PEM key keeps what lies between its "KEY-----" header end and "-----END" footer, minus line breaks.
+        if key.hasPrefix("-----BEGIN") {
+            guard let header = key.range(of: "KEY-----", range: key.index(key.startIndex, offsetBy: 10)..<key.endIndex),
+                  let footer = key.range(of: "-----END", options: .backwards),
+                  header.upperBound <= footer.lowerBound else { throw ExtensionError.manifestParseError("Invalid value for 'key'") }
+            key = key[header.upperBound..<footer.lowerBound].split(whereSeparator: \.isNewline)
+                .map { $0.trimmingCharacters(in: .whitespaces) }.joined()
+        }
+        guard let publicKey = Data(base64Encoded: key), !publicKey.isEmpty else {
+            throw ExtensionError.manifestParseError("Invalid value for 'key'")
+        }
+        return ExtensionArchiveSafety.chromeExtensionId(forPublicKey: publicKey)
     }
 
     /// 32 letters from a to p: the shape of a Chrome Web Store id.
