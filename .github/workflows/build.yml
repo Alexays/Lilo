@@ -9,11 +9,11 @@ on:
 permissions:
   contents: read
 
-# A push to main keeps its own run, so every merged commit gets a result; a pull request's newer push
-# cancels its older run.
+# A newer push cancels the older run on the same ref, on main as on a pull request: merges that land
+# together get one full run, on the last commit.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   changes:
