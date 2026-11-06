@@ -24,6 +24,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
         "_webView:saveDataToFile:suggestedFilename:mimeType:originatingURL:",
         "_webView:setWindowFrame:",
         "_webView:takeFocus:",
+        "_webView:willCloseLocalInspector:",
         "_webViewDidLosePointerLock:",
         "_webViewDidRequestPointerLock:completionHandler:",
         "_webViewFooterHeight:",
