@@ -57,7 +57,12 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate, 
             // background and offscreen pages do. These preferences are this configuration's own.
             let preferences = configuration.preferences
             preferences.inactiveSchedulingPolicy = .none
-            let settings = ["hiddenPageDOMTimerThrottlingEnabled": false, "pageVisibilityBasedProcessSuppressionEnabled": false]
+            var settings = ["hiddenPageDOMTimerThrottlingEnabled": false, "pageVisibilityBasedProcessSuppressionEnabled": false]
+            // WebKit knows no clipboardRead permission; with it, Chrome lets the document paste without a gesture.
+            if (context.webExtension.manifest["permissions"] as? [String])?.contains("clipboardRead") == true {
+                settings["DOMPasteAllowed"] = true
+                settings["javaScriptCanAccessClipboard"] = true
+            }
             for (key, value) in settings
             where preferences.responds(to: NSSelectorFromString("_set\(key.prefix(1).uppercased())\(key.dropFirst()):")) {
                 preferences.setValue(value, forKey: key)
