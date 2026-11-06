@@ -137,8 +137,7 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
         urlSchemeTask.didFinish()
     }
 
-    // Stop arrives on the main thread before a read completes, so a stopped task is never answered
-    // (WKURLSchemeTask raises on that).
+    // WKURLSchemeTask raises when a stopped task is answered, so a read finishing after stop drops its result.
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
         pendingFileReads.remove(ObjectIdentifier(urlSchemeTask))
     }
