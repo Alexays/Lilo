@@ -219,6 +219,8 @@ final class DownloadManager {
             } else {
                 chosen = suggested.url
             }
+            // A save outliving its private space is dropped: no list would show it, and its notification would leak it.
+            if let privateSpaceId, privateStores[privateSpaceId] !== store { return }
             let source = item.url
             let written = await Task.detached(priority: .utility) { () -> Result<URL, Error> in
                 // Resolved again at write time, as another save may have taken the proposed name meanwhile. A file
