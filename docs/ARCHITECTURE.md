@@ -10,8 +10,8 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 | `Lilo/App/` | AppDelegate, the main menu and its SF Symbol icons, BrowserContext (app-wide services), keyboard shortcuts and their presets, App Intents (Shortcuts actions, Focus filter), startup metrics, logging, localization, theme and app icon preferences, default-browser and device setup |
 | `Lilo/Bridge/` | JS/Swift bridge: router plus the handlers of cross-cutting UI domains (tabs, spaces, settings, profiles, omnibox, search, history page, feature flags, state sync), and the `lilo-chrome://` scheme handler serving the chrome UI |
 | `Lilo/Changes/` | Changes tabs: a repository's changed files and their git diff |
-| `Lilo/Conversations/` | Agent conversations over ACP: the agent registry (`ACPAgentCatalog`), the connection to an agent process, checkpoints, project files, the host and its bridge handler, and the window's conversation behavior |
 | `Lilo/ContentBlocker/` | Filter list download and conversion to WebKit content rules, the cosmetic and scriptlet runtimes, the bundled fallback block list, and the stand-ins served for `$redirect` filters |
+| `Lilo/Conversations/` | Agent conversations over ACP: the agent registry (`ACPAgentCatalog`), the connection to an agent process, checkpoints, project files, the host and its bridge handler, and the window's conversation behavior |
 | `Lilo/Diagnostics/` | Process Manager snapshots and its bridge handler, lifecycle diagnostics, the hitbox debug overlay |
 | `Lilo/Downloads/` | Download manager, backends, dock progress, the downloads bridge handler |
 | `Lilo/Engine/` | WKWebView tab implementation, engine factory, data stores, the web API bridges (notifications, geolocation, Web Serial, EyeDropper), find in page, PiP, page translation, the Chrome Web Store masquerade, private WebKit accessors |
