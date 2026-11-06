@@ -101,7 +101,7 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
             return m
         }()
         let status = mgr.authorizationStatus
-        if status == .authorizedWhenInUse || status == .authorizedAlways, let cached = mgr.location,
+        if status == .authorizedAlways, let cached = mgr.location,
            -cached.timestamp.timeIntervalSinceNow * 1000 < request.maximumAge {
             deliver(location: cached, to: [request])
             if !request.isWatch { return }
