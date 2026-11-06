@@ -33,6 +33,12 @@ final class ChromeInputCoordinatorTests: XCTestCase {
         XCTAssertEqual(effects, InteractionEffect.none) // zero-allocation identity
     }
 
+    func testPlainMoveOverChromeForwardsTheMove() {
+        let coordinator = ChromeInputCoordinator()
+        _ = coordinator.updatePointer(sample(.chrome))
+        XCTAssertEqual(coordinator.updatePointer(sample(.chrome)), [.hover(.forwardMoveToChrome)])
+    }
+
     func testEnteringChromeEmitsWrappedHoverEffects() {
         let coordinator = ChromeInputCoordinator()
         _ = coordinator.updatePointer(sample(.content))     // baseline
@@ -51,7 +57,6 @@ final class ChromeInputCoordinatorTests: XCTestCase {
             .hover(.setContentTrackingSuspended(false)),
             .hover(.clearChromeHover),
             .hover(.setChromeTrackingEnabled(false)),
-            .hover(.emitContentInteraction(isMouseDown: false)),
         ])
     }
 

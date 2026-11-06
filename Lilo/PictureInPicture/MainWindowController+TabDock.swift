@@ -70,6 +70,10 @@ extension MainWindowController {
     /// App resigned active or the window occluded: the dock is invisible there, so the call moves
     /// to the always-on-top panel (the reason that panel exists).
     func moveDockedCallToPanel() {
+        // Runs for every window on each app switch: with nothing to move or put in PiP, skip the Window Server query below.
+        let autoPiPEngine = context.settingsStore?.autoPictureInPicture == true ? tabManager.activeEngineTab : nil
+        guard tabDock.isDocking || tabDock.pictureInPictureOpenerId != nil || autoPiPEngine?.isInCall == true || autoPiPEngine?.hasActiveMedia == true
+        else { return }
         // An app focused on another screen, or beside the window, leaves the call in view where it is.
         if let window, window.occlusionState.contains(.visible), !frontmostAppOverlaps(window) { return }
         // Leaving the app from a playing video: the system PiP window keeps it in view, as leaving its tab does.
