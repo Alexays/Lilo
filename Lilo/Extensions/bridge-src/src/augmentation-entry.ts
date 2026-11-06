@@ -10,12 +10,14 @@ import { installPageWorkerMessages } from './shared/worker-messages.ts';
 import { installNetworkInformation } from './shared/network-information.ts';
 import { acceptFrameMessaging } from './shared/frame-messaging.ts';
 import { installCryptoKeyStorage } from './shared/crypto-key-storage.ts';
+import { installDisposeSymbols } from './shared/dispose-symbols.ts';
 
 // Injected into every frame of an extension page; a web page framed there must not see the shims.
 const isExtensionOrigin = /^(webkit|chrome)-extension:/.test(String((globalThis as any).origin ?? ''));
 
 if (isExtensionOrigin && !(globalThis as any).__liloAugmentationInstalled) {
   (globalThis as any).__liloAugmentationInstalled = true;
+  installDisposeSymbols(Symbol);
 
   const c: any = (globalThis as any).chrome ?? {};
   (globalThis as any).chrome = c;
