@@ -308,6 +308,11 @@ enum Migrations {
             try db.execute(sql: "DELETE FROM sitePermissions WHERE type = 'external-scheme'")
         }
 
+        // Terminal visits are a small share: the sidebar's terminals and the History page's terminal filter walk only theirs.
+        migrator.registerMigration("v5") { db in
+            try db.execute(sql: "CREATE INDEX idx_historyVisit_terminal_visitedAt ON historyVisit(visitedAt DESC) WHERE openedFrom IS NOT NULL")
+        }
+
         try migrator.migrate(db)
     }
 }

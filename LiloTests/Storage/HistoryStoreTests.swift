@@ -431,6 +431,24 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertEqual(try rows(.init(query: "gam")).map(\.title), ["Gamma"])
     }
 
+    func testTextSearchLoadsWholeDaysOfMatchesAndContinuesFromTheOldestOne() throws {
+        try insertHistoryEntry(url: "https://example.com/a", title: "Alpha", lastVisitedAt: hoursAgo(1))
+        try insertHistoryEntry(url: "https://example.com/c", title: "Beta", lastVisitedAt: hoursAgo(2))
+        try insertHistoryEntry(url: "https://example.com/b", title: "Alphabet", lastVisitedAt: hoursAgo(3))
+        try insertHistoryEntry(url: "https://example.com/a", lastVisitedAt: hoursAgo(4))
+        try insertHistoryEntry(url: "https://example.com/a", lastVisitedAt: hoursAgo(80))
+
+        let first = try store.dayRows(filter: .init(query: "alpha"), before: nil, minimumRows: 1, now: now, calendar: utc)
+        XCTAssertEqual(first.rows.map(\.url), ["https://example.com/a", "https://example.com/b"], "a batch never splits a day")
+        XCTAssertEqual(first.rows.map(\.visits), [2, 1])
+        XCTAssertEqual(first.rows.first?.lastVisitAt, hoursAgo(1))
+        XCTAssertEqual(first.nextBefore, utc.startOfDay(for: now))
+
+        let second = try store.dayRows(filter: .init(query: "alpha"), before: first.nextBefore, minimumRows: 1, now: now, calendar: utc)
+        XCTAssertEqual(second.rows.map(\.dayStart), [utc.startOfDay(for: hoursAgo(80))])
+        XCTAssertNil(second.nextBefore, "nothing older matches")
+    }
+
     func testDeletingADayRowKeepsThePageOnItsOtherDays() throws {
         let url = "https://example.com/a"
         try insertHistoryEntry(url: url, visitCount: 5, lastVisitedAt: hoursAgo(1))

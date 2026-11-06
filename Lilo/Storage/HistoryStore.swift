@@ -384,7 +384,7 @@ final class HistoryStore: @unchecked Sendable {
         let title: String
         let host: String
         let lastVisitAt: Date
-        let visits: Int
+        var visits: Int
         let dayStart: Date
     }
 
@@ -435,9 +435,10 @@ final class HistoryStore: @unchecked Sendable {
             conditions.append("v.openedFrom = ?")
             filterArguments += [openedFrom]
         }
-        if !filter.query.trimmingCharacters(in: .whitespaces).isEmpty {
+        let match = filter.query.trimmingCharacters(in: .whitespaces).isEmpty ? nil : sanitizeFTSQuery(filter.query)
+        if let match {
             conditions.append("h.rowid IN (SELECT rowid FROM historyFts WHERE historyFts MATCH ?)")
-            filterArguments += [sanitizeFTSQuery(filter.query)]
+            filterArguments += [match]
         }
         if let lower {
             conditions.append("v.visitedAt >= ?")
@@ -446,6 +447,43 @@ final class HistoryStore: @unchecked Sendable {
         let filterSQL = conditions.map { " AND \($0)" }.joined()
 
         return try dbPool.read { db in
+            // A text filter reads its matching visits newest first in one pass: a per-day loop would rerun the MATCH for every day.
+            if let match {
+                let matchCount = try Int.fetchOne(db, sql: """
+                    SELECT count(*) FROM (SELECT rowid FROM historyFts WHERE historyFts MATCH ? LIMIT \(Self.ftsSortLimit + 1))
+                    """, arguments: [match]) ?? 0
+                // Many matching pages: walk the visit index and stop after the batch's last day. Few: sort only their visits.
+                let source = matchCount > Self.ftsSortLimit
+                    ? "historyVisit v INDEXED BY idx_historyVisit_visitedAt JOIN history h ON h.id = v.pageId"
+                    : "history h CROSS JOIN historyVisit v ON v.pageId = h.id"
+                var arguments = filterArguments
+                if let upper { arguments += [upper] }
+                let visits = try Row.fetchCursor(db, sql: """
+                    SELECT v.visitedAt, h.rowid, h.id, h.url, h.title, h.host FROM \(source)
+                    WHERE 1\(filterSQL)\(upper == nil ? "" : " AND v.visitedAt < ?") ORDER BY v.visitedAt DESC
+                    """, arguments: arguments)
+                var rows: [DayRow] = []
+                var dayRowIndexByPage: [Int64: Int] = [:]
+                var dayStart = Date.distantFuture
+                while let visit = try visits.next() {
+                    let visitedAt: Date = visit[0]
+                    if visitedAt < dayStart {
+                        if !rows.isEmpty, rows.count >= minimumRows { return (rows, dayStart) }
+                        dayStart = calendar.startOfDay(for: visitedAt)
+                        dayRowIndexByPage.removeAll(keepingCapacity: true)
+                    }
+                    let page: Int64 = visit[1]
+                    if let index = dayRowIndexByPage[page] {
+                        rows[index].visits += 1
+                    } else {
+                        dayRowIndexByPage[page] = rows.count
+                        rows.append(DayRow(pageId: visit[2], url: visit[3], title: visit[4], host: visit[5],
+                                           lastVisitAt: visitedAt, visits: 1, dayStart: dayStart))
+                    }
+                }
+                return (rows, nil)
+            }
+
             var rows: [DayRow] = []
             var cursor = upper
             while rows.count < minimumRows {
@@ -616,13 +654,15 @@ final class HistoryStore: @unchecked Sendable {
 
     /// Keeps the newest `maxVisits` visits, then drops the pages left without any.
     private static func pruneVisits(_ db: Database) throws {
-        try db.execute(sql: """
+        let pageIds = try Set(UUID.fetchAll(db, sql: """
             DELETE FROM historyVisit WHERE visitedAt < (
                 SELECT visitedAt FROM historyVisit ORDER BY visitedAt DESC LIMIT 1 OFFSET ?
-            )
-            """, arguments: [maxVisits - 1])
-        guard db.changesCount > 0 else { return }
-        try db.execute(sql: "DELETE FROM history WHERE NOT EXISTS (SELECT 1 FROM historyVisit WHERE pageId = history.id)")
+            ) RETURNING pageId
+            """, arguments: [maxVisits - 1]))
+        let deletePage = try db.cachedStatement(sql: "DELETE FROM history WHERE id = ?1 AND NOT EXISTS (SELECT 1 FROM historyVisit WHERE pageId = ?1)")
+        for pageId in pageIds {
+            try deletePage.execute(arguments: [pageId])
+        }
     }
 
     /// The site a URL belongs to: its host, lowercased, port kept, without a leading `www.` (as `hostOf` in the chrome UI).
