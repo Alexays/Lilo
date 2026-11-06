@@ -24,7 +24,7 @@ SWIFTLINT := $(CURDIR)/build/swiftlint-$(SWIFTLINT_VERSION)/swiftlint
 XCODEGEN_VERSION := 2.46.0
 XCODEGEN_SHA256 := 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
 XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
-# What validate's UI and bridge builds read, and the stamps they leave once built from them.
+# What the UI and bridge builds read, and the stamps they leave once built from them.
 UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
 	$(UI_DIR)/releaseNotesPlugin.ts $(wildcard .changes/v*.md) scripts/embed_chrome_ui.py scripts/generate_native_strings.py
 BRIDGE_SOURCES := $(shell find $(BRIDGE_DIR)/src $(BRIDGE_DIR)/scripts) $(addprefix $(BRIDGE_DIR)/,esbuild.mjs package-lock.json tsconfig.json)
@@ -357,7 +357,7 @@ ext-bridge-test: $(BRIDGE_DEPS)
 	@npm --prefix $(BRIDGE_DIR) test
 
 ## Install the most used Chrome Web Store extensions and the MV3 probe in parallel runs, and check they run and what a few do on a page (network; TOP=100 IDS=a,b SHARDS=6)
-ext-smoke: vt-build $(BRIDGE_STAMP) $(UI_STAMP) $(NATIVE_STRINGS)
+ext-smoke: vt-build $(BRIDGE_STAMP) $(UI_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@$(TEST_LOCK) node scripts/ext-smoke.mjs --top '$(or $(TOP),100)' --ids '$(IDS)' --shards '$(or $(SHARDS),6)'
 
 ## Unattended ext-smoke of the top 500 (TOP=1000 for every listed one); report in .derived.noindex/ext-smoke/report.txt, non-zero exit on a regression
@@ -393,15 +393,15 @@ public-suffix-list:
 	@node $(BRIDGE_DIR)/scripts/public-suffix-list.mjs
 
 ## Build the debug app bundle under build/debug
-app: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+app: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@scripts/build-app.sh debug
 
 ## Install the release app to /Applications/Lilo.app, replacing the DMG's copy
-install: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+install: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@scripts/build-app.sh release install
 
 ## Install the debug app to ~/Applications/Lilo.app
-install-debug: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+install-debug: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@scripts/build-app.sh debug install
 
 ## Run the Debug xcodebuild directly
