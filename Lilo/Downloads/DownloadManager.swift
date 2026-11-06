@@ -168,7 +168,7 @@ final class DownloadManager {
             guard let id = item.id else { continue }
             loggingPersistenceError("download.erasePrivate[\(id)]") { try erase(id: id, in: store) }
         }
-        lanes[ObjectIdentifier(store)] = nil
+        lanes.removeValue(forKey: ObjectIdentifier(store))?.url.invalidate()
         privateStores[spaceId] = nil
         privateDataStores[spaceId] = nil
     }
