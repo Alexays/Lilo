@@ -714,7 +714,7 @@ final class ProfileExtensionRegistry {
             // Loading a loaded unpacked folder again reloads it: its clone is never replaced under the loaded context.
             if knownId == nil, let stored, containsRuntime(extensionId: stored.id), !files.owns(permanentURL.path) {
                 await unload(extensionId: stored.id, removePersistedRecord: false)
-                try await self.load(from: permanentURL, extensionId: stored.id)
+                try await self.load(from: permanentURL, extensionId: stored.id, as: .update(from: stored.version))
                 return
             }
             let allowsUserScripts = (knownId ?? stored?.id).map { access.states[$0]?.allowsUserScripts == true } ?? false
@@ -979,17 +979,18 @@ final class ProfileExtensionRegistry {
     /// Lilo installed, whose files never change under it: WebKit's own reload serves it.
     func reloadUnpacked(extensionId: String) -> Bool {
         guard let index = runtimeIndex(for: extensionId), !files.owns(loadedRuntimes[index].installPath) else { return false }
+        let version = loadedRuntimes[index].context.webExtension.version ?? ""
         // Not awaited: the reload unloads the context whose call asked for it.
-        Task { await reloadFromDisk(extensionId) }
+        Task { await reloadFromDisk(extensionId, as: .update(from: version)) }
         return true
     }
 
     /// Unloads and reloads the extension from its on-disk source, for a worker nothing else revives.
-    private func reloadFromDisk(_ extensionId: String) async {
+    private func reloadFromDisk(_ extensionId: String, as load: ExtensionLifecycle.Load = .reload) async {
         guard let installPath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].installPath }) else { return }
         await unload(extensionId: extensionId, removePersistedRecord: false)
         do {
-            try await load(from: URL(fileURLWithPath: installPath), extensionId: extensionId)
+            try await self.load(from: URL(fileURLWithPath: installPath), extensionId: extensionId, as: load)
         } catch {
             Self.logger.error("background reload failed for \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
             // `unload` flipped the persisted record to disabled; a failed internal restart must not leave the
