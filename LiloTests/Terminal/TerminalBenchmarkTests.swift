@@ -58,7 +58,7 @@ final class TerminalBenchmarkTests: XCTestCase {
         let device = try XCTUnwrap(MTLCreateSystemDefaultDevice())
         let renderer = try XCTUnwrap(TerminalRenderer())
         let font = TerminalFont(family: nil, pointSize: 13, scale: 2)
-        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device)!)
+        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device, cellWidth: font.cellWidth, cellHeight: font.cellHeight)!)
         let state = VTRenderState()
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: TerminalRenderer.pixelFormat, width: 100 * font.cellWidth, height: 30 * font.cellHeight, mipmapped: false

@@ -263,6 +263,8 @@ extension TerminalView {
             renderLoop.scrolled(movedRows: lines != 0)
             return []
         }
+        // The rows under a resting pointer now show other content, which may have a command bar.
+        probedMarkRow = nil
         if !bytes.isEmpty { session.write(bytes) }
     }
 
@@ -385,7 +387,9 @@ extension TerminalView {
     /// The command bar beside `row` in the left padding widens and takes a pointing hand, telling
     /// that a click selects its output.
     func updateHoveredMark(atRow row: Int?) {
-        if let row, hoveredMarkRows?.contains(row) == true { return }
+        if let row, hoveredMarkRows?.contains(row) == true || probedMarkRow == row { return }
+        // Looking up a bar takes the terminal lock: once per row, not per pixel moved.
+        probedMarkRow = row
         let rows = row.flatMap { row in
             session.withLockedTerminal { $0.visibleCommandMarks() }.first { $0.rows.contains(row) }?.rows
         }

@@ -33,6 +33,8 @@ final class TerminalView: NSView {
     var probedLinkCell: (x: Int, y: Int)?
     /// Rows of the command bar under the pointer, which a click selects the output of.
     var hoveredMarkRows: ClosedRange<Int>?
+    /// The left padding row last looked up for a command bar, nil outside the padding.
+    var probedMarkRow: Int?
     /// Where a Command-hovered link goes, shown at the bottom left like a browser's status bar.
     lazy var linkLabel: NSTextField = {
         let label = NSTextField(labelWithString: "")
@@ -281,8 +283,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
     /// As in kitty, the cursor stops blinking this long after it last moved: an idle prompt then
     /// costs no frames.
     private static let blinkDuration = 15.0
-    /// How long a hidden terminal keeps its shaped runs, and one out of its window its glyph atlas
-    /// too: tab switches usually come back well within it.
+    /// How long a hidden terminal keeps its shaped runs and GPU buffers, and one out of its window
+    /// its glyph atlas too: tab switches usually come back well within it.
     private static let releaseDelay: TimeInterval = 180
 
     private let session: TerminalSession
@@ -374,7 +376,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
             if !visible {
                 // Hidden in its window (occluded), the atlas stays: coming back costs no rasterizing.
                 let timer = Timer(timeInterval: Self.releaseDelay, repeats: false) { [weak self] _ in
-                    if releaseResources { self?.builder = nil } else { self?.builder?.shaper.cache = [:] }
+                    if releaseResources { self?.builder = nil } else { self?.builder?.shaper.removeCache() }
+                    self?.renderer.releaseBuffers()
                 }
                 timer.tolerance = 30
                 RunLoop.current.add(timer, forMode: .default)
@@ -463,8 +466,7 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
             // Nothing drawn for a whole refresh interval: draw now rather than on the next vsync,
             // which is what keeps typing latency low. Output nobody types into waits for 30 Hz.
             let interval = focused ? link?.duration ?? 1.0 / 60 : 1.0 / 30
-            if CACurrentMediaTime() - lastFrameTime > interval { renderFrame() }
-            link?.isPaused = false
+            if CACurrentMediaTime() - lastFrameTime > interval { renderFrame() } else { link?.isPaused = false }
         }
     }
 
@@ -505,7 +507,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
             return
         }
         let fresh = self.builder == nil
-        guard let builder = self.builder ?? GlyphAtlas(device: renderer.device).map({ TerminalFrameBuilder(font: font, atlas: $0) }) else {
+        guard let builder = self.builder ?? GlyphAtlas(device: renderer.device, cellWidth: font.cellWidth, cellHeight: font.cellHeight)
+            .map({ TerminalFrameBuilder(font: font, atlas: $0) }) else {
             link?.isPaused = true
             return
         }
@@ -576,6 +579,8 @@ final class TerminalRenderLoop: NSObject, @unchecked Sendable {
         if !animating, !needsFrame {
             link?.isPaused = true
             scheduleBlink(builder: builder, now: now)
+        } else {
+            link?.isPaused = false
         }
     }
 

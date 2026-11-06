@@ -19,8 +19,10 @@ final class RunShaper {
     private static let cacheLimit = 8192
 
     private(set) var fonts: [CTFont] = []
-    /// Rebuilt on demand: a terminal hidden for a while drops it.
-    var cache: [[UInt32]: [ShapedGlyph]] = [:]
+    /// Two generations: a full cache becomes `previous`, whose runs still in use move back on their
+    /// next lookup, so rotating never reshapes the whole screen at once.
+    private var cache: [[UInt32]: [ShapedGlyph]] = [:]
+    private var previous: [[UInt32]: [ShapedGlyph]] = [:]
     private let faces: [CTFont]
 
     init(font: TerminalFont) {
@@ -30,6 +32,14 @@ final class RunShaper {
     /// `key` is the face index followed by each cell's codepoints and a cell terminator.
     func shape(_ key: [UInt32]) -> [ShapedGlyph] {
         if let cached = cache[key] { return cached }
+        if cache.count >= Self.cacheLimit {
+            swap(&cache, &previous)
+            cache.removeAll(keepingCapacity: true)
+        }
+        if let kept = previous[key] {
+            cache[key] = kept
+            return kept
+        }
         var text = String.UnicodeScalarView()
         var cellForUTF16: [Int] = []
         var cell = 0
@@ -77,9 +87,14 @@ final class RunShaper {
                 ))
             }
         }
-        if cache.count >= Self.cacheLimit { cache.removeAll(keepingCapacity: true) }
         cache[key] = shaped
         return shaped
+    }
+
+    /// Rebuilt on demand: a terminal hidden for a while drops it.
+    func removeCache() {
+        cache = [:]
+        previous = [:]
     }
 
     /// A linear scan: a terminal uses a handful of fonts, its face and a few fallbacks.

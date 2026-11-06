@@ -41,7 +41,7 @@ final class TerminalFrameBuilderTests: XCTestCase {
     func testSwitchingToABlockCursorMarksTheGlyphUnderIt() {
         let terminal = VTTerminal(cols: 20, rows: 3, scrollbackBytes: 100_000)
         let state = VTRenderState()
-        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device)!)
+        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device, cellWidth: font.cellWidth, cellHeight: font.cellHeight)!)
         func render(_ text: String) {
             Array(text.utf8).withUnsafeBytes { terminal.write($0) }
             state.beginUpdate(from: terminal)
@@ -67,7 +67,7 @@ final class TerminalFrameBuilderTests: XCTestCase {
         let state = VTRenderState()
         state.beginUpdate(from: terminal)
         state.endUpdate()
-        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device)!)
+        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device, cellWidth: font.cellWidth, cellHeight: font.cellHeight)!)
         builder.selectionBackground = VTColor(r: 0x10, g: 0x20, b: 0x30)
 
         XCTAssertTrue(builder.update(from: state))
@@ -93,7 +93,7 @@ final class TerminalFrameBuilderTests: XCTestCase {
         let terminal = VTTerminal(cols: 20, rows: 3, scrollbackBytes: 100_000)
         Array((1...8).map { "line\($0)" }.joined(separator: "\r\n").utf8).withUnsafeBytes { terminal.write($0) }
         let state = VTRenderState()
-        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device)!)
+        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device, cellWidth: font.cellWidth, cellHeight: font.cellHeight)!)
         func slots() -> Set<UInt16> {
             state.beginUpdate(from: terminal)
             state.endUpdate()
@@ -170,7 +170,7 @@ final class TerminalFrameBuilderTests: XCTestCase {
         let state = VTRenderState()
         state.beginUpdate(from: terminal)
         state.endUpdate()
-        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device)!)
+        let builder = TerminalFrameBuilder(font: font, atlas: GlyphAtlas(device: device, cellWidth: font.cellWidth, cellHeight: font.cellHeight)!)
         XCTAssertTrue(builder.update(from: state))
         return (builder, state)
     }
