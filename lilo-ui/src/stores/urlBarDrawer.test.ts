@@ -66,3 +66,19 @@ test("a stored allowlist that is not a list allows no site", async () => {
 
 	assert.equal(drawer.isBlockerAllowlisted("example.com"), false);
 });
+
+test("the blocked pop-up drawer gives way to a site request and to the Site drawer", async () => {
+	const { drawer, activeTabId } = await loadDrawerStore();
+
+	drawer.setPopupBlockedDrawerOpen(true);
+	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "popupBlocked");
+
+	receive({ event: "permissionRequest", requestId: "r1", tabId: activeTabId, type: "camera", origin: "a.example" });
+	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "sitePermission");
+	receive({ event: "permissionRequestClosed", requestId: "r1" });
+	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "popupBlocked");
+
+	drawer.setSiteDrawerOpen(true);
+	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "site");
+	assert.equal(drawer.isPopupBlockedDrawerOpen(), false);
+});

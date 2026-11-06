@@ -103,3 +103,22 @@ test("the site-controls button showing up keeps the address bar's height", async
 
 	expect((await page.locator(".url-trigger").first().boundingBox())!.height).toBe(without);
 });
+
+test("a refused pop-up shows in the address and its site can be allowed", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.hasBlockedPopup = true;
+	await bootChrome(page, world);
+
+	await page.locator(".popup-blocked-btn").click();
+	const drawer = page.locator(".url-drawer.open");
+	await expect(drawer).toContainText("https://example.com tried to open a pop-up window");
+	await drawer.getByRole("button", { name: "Always Allow" }).click();
+
+	await expect(drawer).toContainText("Try again on the page.");
+	expect((await sentCommands(page)).some((c) => c.action === "allowPopups")).toBe(true);
+});
+
+test("no refused pop-up means no pop-up button", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await expect(page.locator(".popup-blocked-btn")).toHaveCount(0);
+});

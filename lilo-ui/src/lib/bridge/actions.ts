@@ -53,6 +53,7 @@ export const chromeActions = {
 	dismissPermissionRequest: (requestId: string): void =>
 		emit("permissionResponse", { requestId, granted: false, remember: false }),
 	showTabSecurityInfo: emitEmpty("showTabSecurityInfo"),
+	allowPopups: emitEmpty("allowPopups"),
 	showBackHistoryMenu: (
 		payload: BridgeCommandPayloadMap["showBackHistoryMenu"],
 	): void => emit("showBackHistoryMenu", payload),

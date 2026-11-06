@@ -1559,6 +1559,7 @@
 		"microphone": "Mikrofon",
 		"location": "Położenie",
 		"notifications": "Powiadomienia",
+		"popups": "Wyskakujące okna",
 		"ask": "Pytaj",
 		"externalScheme": "Otwieranie linków {scheme}",
 		"allow": "Zezwól",
@@ -1625,6 +1626,13 @@
 		"allow": "Zezwól",
 		"allowOnce": "Zezwól raz",
 		"alwaysAllowOnSite": "Zawsze zezwalaj na tej witrynie",
+		"popup": {
+			"blocked": "Zablokowano wyskakujące okno",
+			"tried": "chce otworzyć wyskakujące okno",
+			"keepBlocking": "Blokuj nadal",
+			"alwaysAllow": "Zawsze zezwalaj",
+			"allowed": "Wyskakujące okna są dozwolone na tej witrynie. Spróbuj ponownie na stronie."
+		},
 		"permissions": {
 			"tabs": "Wyświetlanie otwartych kart",
 			"history": "Odczytywanie historii przeglądania",
@@ -2529,6 +2537,7 @@
 	"siteDrawer": {
 		"allPermissions": "Wszystkie uprawnienia",
 		"inUse": "Teraz w użyciu",
+		"popupsBlocked": "Zablokowane na tej stronie",
 		"zoom": "Powiększenie",
 		"zoomIn": "Powiększ",
 		"zoomOut": "Pomniejsz",

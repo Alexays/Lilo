@@ -9,6 +9,7 @@
   import {
     getActiveUrlBarDrawer,
     pinSiteDrawer,
+    setPopupBlockedDrawerOpen,
     setSiteDrawerOpen,
     type UrlBarDrawer,
   } from "../../stores/urlBarDrawer.svelte";
@@ -71,8 +72,8 @@
 
 </script>
 
-<!-- The Site drawer is the user's own: Escape, a press outside the address bar, or a click in the
-     page closes it. Requests stay until answered. -->
+<!-- The Site and blocked pop-up drawers are the user's own: Escape, a press outside the address bar, or a click in
+     the page closes them. Requests stay until answered. -->
 {#if shown && !extensionAnchor}
   <div
     class="url-drawer float-surface"
@@ -83,9 +84,16 @@
     onpointerdown={pinSiteDrawer}
     {@attach shown.kind === "site" &&
       dismissable({ onDismiss: () => setSiteDrawerOpen(false), ignore: ".url-display", escape: true })}
+    {@attach shown.kind === "popupBlocked" &&
+      dismissable({ onDismiss: () => setPopupBlockedDrawerOpen(false), ignore: ".url-display", escape: true })}
   >
     {#if shown.kind === "site"}
       <SiteDrawer {...site} />
+    {:else if shown.kind === "popupBlocked"}
+      <!-- Loaded on demand: the chrome's first frame has a byte budget. -->
+      {#await import("./PopupBlockedDrawer.svelte") then drawer}
+        <drawer.default origin={site.origin} />
+      {/await}
     {:else if shown.kind === "defaultBrowser"}
       <DefaultBrowserDrawer />
     {:else}

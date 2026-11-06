@@ -1525,6 +1525,7 @@
 		"microphone": "マイク",
 		"location": "位置情報",
 		"notifications": "通知",
+		"popups": "ポップアップウインドウ",
 		"ask": "確認する",
 		"externalScheme": "{scheme} リンクを開く",
 		"allow": "許可",
@@ -1591,6 +1592,13 @@
 		"allow": "許可",
 		"allowOnce": "1回だけ許可",
 		"alwaysAllowOnSite": "このサイトで常に許可",
+		"popup": {
+			"blocked": "ポップアップをブロックしました",
+			"tried": "がポップアップウインドウを開こうとしました",
+			"keepBlocking": "ブロックを続ける",
+			"alwaysAllow": "常に許可",
+			"allowed": "このサイトでポップアップを許可しました。ページでもう一度お試しください。"
+		},
 		"permissions": {
 			"tabs": "開いているタブの表示",
 			"history": "閲覧履歴の読み取り",
@@ -2483,6 +2491,7 @@
 	"siteDrawer": {
 		"allPermissions": "すべてのアクセス権",
 		"inUse": "現在使用中",
+		"popupsBlocked": "このページでブロックされました",
 		"zoom": "ズーム",
 		"zoomIn": "拡大",
 		"zoomOut": "縮小",

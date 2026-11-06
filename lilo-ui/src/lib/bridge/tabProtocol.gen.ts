@@ -38,6 +38,7 @@ export interface BridgeTabSnapshot {
 	navigationErrorUsesHSTS?: boolean;
 	navigationErrorNoCertificate?: boolean;
 	navigationErrorRedirectedFrom?: string;
+	hasBlockedPopup?: boolean;
 	isNotSecure?: boolean;
 	kind?: string;
 	cwd?: string;
@@ -94,6 +95,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		navigationErrorUsesHSTS: data.navigationErrorUsesHSTS ?? false,
 		navigationErrorNoCertificate: data.navigationErrorNoCertificate ?? false,
 		navigationErrorRedirectedFrom: data.navigationErrorRedirectedFrom ?? "",
+		hasBlockedPopup: data.hasBlockedPopup ?? false,
 		isNotSecure: data.isNotSecure ?? false,
 		kind: data.kind ?? "web",
 		cwd: data.cwd ?? "",
@@ -150,6 +152,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.navigationErrorUsesHSTS !== undefined) out.navigationErrorUsesHSTS = data.navigationErrorUsesHSTS;
 	if (data.navigationErrorNoCertificate !== undefined) out.navigationErrorNoCertificate = data.navigationErrorNoCertificate;
 	if (data.navigationErrorRedirectedFrom !== undefined) out.navigationErrorRedirectedFrom = data.navigationErrorRedirectedFrom;
+	if (data.hasBlockedPopup !== undefined) out.hasBlockedPopup = data.hasBlockedPopup;
 	if (data.isNotSecure !== undefined) out.isNotSecure = data.isNotSecure;
 	if (data.kind !== undefined) out.kind = data.kind;
 	if (data.cwd !== undefined) out.cwd = data.cwd;

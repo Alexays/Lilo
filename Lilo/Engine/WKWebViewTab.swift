@@ -78,6 +78,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int)
         /// Stored per-site permission decision (granted/denied), or nil if undecided. Must NOT prompt.
         func tab(_ tab: WKWebViewTab, storedPermissionDecisionFor type: String, origin: String) -> Bool?
+        /// A window the page asked for without a user activation was refused.
+        func tabDidBlockPopup(_ tab: WKWebViewTab)
         /// Whether a page loaded at `url` runs JavaScript (chrome.contentSettings.javascript).
         func tab(_ tab: WKWebViewTab, allowsJavaScriptAt url: URL) -> Bool
         /// URL under the pointer, nil when it leaves a link. Drives the status-bar readout.
@@ -1687,6 +1689,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int) {}
     func tab(_ tab: WKWebViewTab, storedPermissionDecisionFor type: String, origin: String) -> Bool? { nil }
+    func tabDidBlockPopup(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, allowsJavaScriptAt url: URL) -> Bool { true }
     func tab(_ tab: WKWebViewTab, didHoverLink href: String?) {}
     func tabRequestsForeground(_ tab: WKWebViewTab) {}
@@ -2372,10 +2375,15 @@ extension WKWebViewTab: WKUIDelegate {
             }
             // Any frame within the click's own task, or later while this page has the activation, which the open uses
             // up as in Chrome: one window per click, so a frame the user never touched cannot open a stream of them.
+            // A site the user allowed pop-ups for skips the activation; any other open is refused and shown.
             if WebViewPrivateAccessors(navigationAction).bool("_isUserInitiated") != true {
-                guard Self.activatedWebView === webView,
-                      ProcessInfo.processInfo.systemUptime - Self.activationTime < Self.popupActivationWindow else { return nil }
-                Self.activationTime = 0
+                if Self.activatedWebView === webView,
+                   ProcessInfo.processInfo.systemUptime - Self.activationTime < Self.popupActivationWindow {
+                    Self.activationTime = 0
+                } else if delegate?.tab(self, storedPermissionDecisionFor: "popups", origin: navigationAction.sourceFrame.permissionOriginKey) != true {
+                    delegate?.tabDidBlockPopup(self)
+                    return nil
+                }
             }
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.
             if isAgentControlled { return delegate?.tab(self, openAgentPopupWith: configuration, url: navigationAction.request.url) }

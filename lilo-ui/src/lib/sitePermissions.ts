@@ -8,6 +8,7 @@ const SITE_PERMISSION_TYPES = [
 	"microphone",
 	"location",
 	"notifications",
+	"popups",
 ] as const;
 
 type SitePermissionType = (typeof SITE_PERMISSION_TYPES)[number];

@@ -1525,6 +1525,7 @@
 		"microphone": "마이크",
 		"location": "위치",
 		"notifications": "알림",
+		"popups": "팝업 윈도우",
 		"ask": "묻기",
 		"externalScheme": "{scheme} 링크 열기",
 		"allow": "허용",
@@ -1591,6 +1592,13 @@
 		"allow": "허용",
 		"allowOnce": "한 번 허용",
 		"alwaysAllowOnSite": "이 사이트에서 항상 허용",
+		"popup": {
+			"blocked": "팝업 차단됨",
+			"tried": "팝업 윈도우를 열려고 했습니다",
+			"keepBlocking": "계속 차단",
+			"alwaysAllow": "항상 허용",
+			"allowed": "이 사이트에서 팝업이 허용되었습니다. 페이지에서 다시 시도하십시오."
+		},
 		"permissions": {
 			"tabs": "열린 탭 보기",
 			"history": "방문 기록 읽기",
@@ -2483,6 +2491,7 @@
 	"siteDrawer": {
 		"allPermissions": "모든 권한",
 		"inUse": "지금 사용 중",
+		"popupsBlocked": "이 페이지에서 차단됨",
 		"zoom": "확대/축소",
 		"zoomIn": "확대",
 		"zoomOut": "축소",

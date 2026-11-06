@@ -78,6 +78,33 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(openTabCount, tabs)
     }
 
+    func testABlockedWindowOpenShowsUntilThePageLeaves() async throws {
+        let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
+
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')")
+        let shown = await pollUntil(timeout: 5) { self.controller.tabManager.tab(for: self.opener.id)?.hasBlockedPopup == true }
+        XCTAssertTrue(shown, "the address bar shows the refused window")
+
+        webView.loadHTMLString("<p>next</p>", baseURL: URL(string: "https://example.org/"))
+        let cleared = await pollUntil(timeout: 5) { self.controller.tabManager.tab(for: self.opener.id)?.hasBlockedPopup == false }
+        XCTAssertTrue(cleared, "a new page starts with nothing refused")
+    }
+
+    func testASiteAllowedPopupsOpensWindowsWithoutAUserActivation() async throws {
+        let tabs = openTabCount
+        let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')")
+        await pollUntil(timeout: 5) { self.controller.tabManager.tab(for: self.opener.id)?.hasBlockedPopup == true }
+
+        controller.allowPopupsForActiveTab()
+        XCTAssertEqual(controller.tabManager.tab(for: opener.id)?.hasBlockedPopup, false)
+        XCTAssertEqual(controller.storedPermissionDecision(type: "popups", origin: "https://example.com", tabId: opener.id), true)
+
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')")
+        let opened = await pollUntil(timeout: 5) { self.openTabCount == tabs + 1 }
+        XCTAssertTrue(opened, "the page's next try goes through")
+    }
+
     /// A key press in the opener's page: the page has a user activation for a few seconds.
     private func pressKeyInOpener() async throws -> NSWindow {
         let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView

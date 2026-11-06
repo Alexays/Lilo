@@ -1525,6 +1525,7 @@
 		"microphone": "Microfoon",
 		"location": "Locatie",
 		"notifications": "Meldingen",
+		"popups": "Pop-upvensters",
 		"ask": "Vraag",
 		"externalScheme": "{scheme}-links openen",
 		"allow": "Sta toe",
@@ -1591,6 +1592,13 @@
 		"allow": "Sta toe",
 		"allowOnce": "Sta één keer toe",
 		"alwaysAllowOnSite": "Sta altijd toe op deze website",
+		"popup": {
+			"blocked": "Pop-up geblokkeerd",
+			"tried": "probeerde een pop-upvenster te openen",
+			"keepBlocking": "Blijf blokkeren",
+			"alwaysAllow": "Sta altijd toe",
+			"allowed": "Pop-ups zijn toegestaan op deze website. Probeer het opnieuw op de pagina."
+		},
 		"permissions": {
 			"tabs": "Je geopende tabbladen bekijken",
 			"history": "Je browsegeschiedenis lezen",
@@ -2483,6 +2491,7 @@
 	"siteDrawer": {
 		"allPermissions": "Alle bevoegdheden",
 		"inUse": "Nu in gebruik",
+		"popupsBlocked": "Geblokkeerd op deze pagina",
 		"zoom": "Zoom",
 		"zoomIn": "Zoom in",
 		"zoomOut": "Zoom uit",

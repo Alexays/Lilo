@@ -22,7 +22,7 @@ extension MainWindowController {
         }
         // chrome.contentSettings reads the user's own choice for the types Lilo asks about.
         context.engineFactory.contentSettingsHandler.userSetting = { [weak context] registry, type, origin in
-            guard let context, ["camera", "microphone", "location", "notifications"].contains(type) else { return nil }
+            guard let context, ["camera", "microphone", "location", "notifications", "popups"].contains(type) else { return nil }
             if let decision = context.profileContexts.existingContext(for: registry.profileId)?.sitePermissions.decision(forOrigin: origin, type: type) {
                 return decision ? "allow" : "block"
             }

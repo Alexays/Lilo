@@ -1,5 +1,5 @@
 // Everything that drops out of the address bar: permission requests, the default-browser invite,
-// and the Site drawer the user opens. One drawer shows at a time, picked by priority. An agent asking
+// and the Site and blocked pop-up drawers the user opens. One drawer shows at a time, picked by priority. An agent asking
 // to connect is no drawer: it waits here too, but shows as a modal.
 
 import { on } from "../lib/bridge";
@@ -45,16 +45,20 @@ export type PermissionRequest = SitePermissionRequest | ExtensionPermissionReque
 export type UrlBarDrawer =
 	| PermissionRequest
 	| { kind: "defaultBrowser" }
-	| { kind: "site" };
+	| { kind: "site" }
+	| { kind: "popupBlocked" };
 
 const DEFAULT_BROWSER_DRAWER = { kind: "defaultBrowser" } as const;
 const SITE_DRAWER = { kind: "site" } as const;
+const POPUP_BLOCKED_DRAWER = { kind: "popupBlocked" } as const;
 
 let _queue = $state.raw<PermissionRequest[]>([]);
 let _defaultBrowserInvite = $state(false);
 let _siteOpen = $state(false);
 // Opened by resting on the address: shown over a waiting request, since it leaves with the pointer.
 let _sitePeek = $state(false);
+// The tab whose blocked pop-up the user opened the drawer for: it closes on another tab.
+let _popupBlockedTabId = $state<string | null>(null);
 let _trackersBlocked = $state(0);
 let _blockerAllowlist = $state.raw<string[]>([]);
 let _blockerAllowlistSetting: string | undefined;
@@ -145,8 +149,9 @@ export function getActiveUrlBarDrawer(): UrlBarDrawer | null {
 		_queue.find((request) => request.kind === "sitePermission" && request.tabId === tabId) ??
 		_queue.find((request) => request.kind === "agentControl" && request.action) ??
 		_queue.find((request) => request.kind === "extensionPermission" && request.spaceId === spaceId) ??
-		// The Site drawer is asked for by the user; the invite can wait for it to close.
+		// The Site and blocked pop-up drawers are asked for by the user; the invite can wait for them to close.
 		(_siteOpen ? SITE_DRAWER : null) ??
+		(_popupBlockedTabId === tabId ? POPUP_BLOCKED_DRAWER : null) ??
 		// The onboarding has its own default-browser step.
 		(_defaultBrowserInvite && !getOnboarding().visible ? DEFAULT_BROWSER_DRAWER : null)
 	);
@@ -181,6 +186,16 @@ export function isSiteDrawerOpen(): boolean {
 export function setSiteDrawerOpen(open: boolean): void {
 	_siteOpen = open;
 	_sitePeek = false;
+	if (open) _popupBlockedTabId = null;
+}
+
+export function isPopupBlockedDrawerOpen(): boolean {
+	return _popupBlockedTabId !== null && _popupBlockedTabId === getActiveTabId();
+}
+
+export function setPopupBlockedDrawerOpen(open: boolean): void {
+	_popupBlockedTabId = open ? getActiveTabId() : null;
+	if (open) setSiteDrawerOpen(false);
 }
 
 export function setSiteDrawerPeek(peek: boolean): void {

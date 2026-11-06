@@ -1,7 +1,7 @@
 import Foundation
 
 /// chrome.contentSettings: a type resolves to the winning extension's first matching rule, then Lilo's site permission
-/// (camera, microphone, location, notifications), then Chrome's default. Lilo enforces those four types and javascript.
+/// (camera, microphone, location, notifications, popups), then Chrome's default. Lilo enforces those types and javascript.
 @MainActor
 final class ContentSettingsBridgeHandler: GapHandler {
     private struct ContentType {

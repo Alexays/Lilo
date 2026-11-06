@@ -37,6 +37,7 @@ enum TabBridgeField: String, CaseIterable {
 	case navigationErrorUsesHSTS = "navigationErrorUsesHSTS"
 	case navigationErrorNoCertificate = "navigationErrorNoCertificate"
 	case navigationErrorRedirectedFrom = "navigationErrorRedirectedFrom"
+	case hasBlockedPopup = "hasBlockedPopup"
 	case isNotSecure = "isNotSecure"
 	case kind = "kind"
 	case cwd = "cwd"
