@@ -289,7 +289,10 @@ jobs:
             !.derived.noindex/build-app/Logs
           key: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
           restore-keys: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
+      # A pull request builds the runner's architecture only; main keeps the universal build its cache saves.
       - run: make release-archive
+        env:
+          LILO_NATIVE_ARCH: ${{ github.event_name == 'pull_request' && '1' || '' }}
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
