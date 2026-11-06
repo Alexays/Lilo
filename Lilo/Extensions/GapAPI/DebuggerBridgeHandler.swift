@@ -5,6 +5,8 @@ import os
 extension Notification.Name {
     /// Object: the `WKWebViewTab` whose page goes away (its tab closed or was discarded).
     static let webViewTabWillTearDown = Notification.Name("fr.arouillard.lilo.webViewTabWillTearDown")
+    /// Object: the `WKWebViewTab` whose Web Inspector frontend closes, the user's or a hidden one.
+    static let webInspectorWillClose = Notification.Name("fr.arouillard.lilo.webInspectorWillClose")
 }
 
 /// chrome.debugger over the tab's Web Inspector, with InspectorCDP.js translating CDP to WebKit's protocol; screenshots stay in
@@ -31,6 +33,13 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         var scaled = false
         /// A `rawKeyDown` that types, sent with the `char` that follows it so the text goes in once.
         var pendingKey: (key: String, keyCode: UInt16?)?
+        /// The emulation commands sent, the last one per setting, and the new-document scripts: a new
+        /// frontend starts without them.
+        var overrides: [(key: String, method: String, params: [String: Any])] = []
+        var scripts: [(identifier: String, source: String)] = []
+        var nextScript = 1
+        /// The move to a new frontend under way, which the sessions sharing the old one wait for.
+        var reconnection: Task<Bool, Never>?
 
         init(extensionId: String, extensionName: String, registry: ProfileExtensionRegistry, debuggee: [String: Any], engine: WKWebViewTab, inspector: AgentInspector) {
             self.extensionId = extensionId
@@ -61,6 +70,15 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
                     for session in self.sessions where ObjectIdentifier(session.engine) == engine {
                         self.end(session, reason: "target_closed", pageGone: true)
                     }
+                }
+            },
+            center.addObserver(forName: .webInspectorWillClose, object: nil, queue: .main) { [weak self] note in
+                guard let object = note.object else { return }
+                let engine = ObjectIdentifier(object as AnyObject)
+                MainActor.assumeIsolated {
+                    guard let self, let session = self.sessions.first(where: { ObjectIdentifier($0.engine) == engine }) else { return }
+                    // Runs once the frontend is gone, so events keep coming without waiting for a command.
+                    Task { @MainActor in if !session.inspector.isCurrent { _ = await self.reconnect(session) } }
                 }
             },
             center.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
@@ -207,7 +225,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     }
 
     /// Ends a session; `reason` fires `onDetach`, which an extension's own detach does not. A gone page
-    /// never answers, so nothing is undone on it.
+    /// or frontend never answers, so nothing is undone on it.
     private func end(_ session: Session, reason: String?, pageGone: Bool = false) {
         guard let index = sessions.firstIndex(where: { $0 === session }) else { return }
         sessions.remove(at: index)
@@ -223,9 +241,16 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
                 inspector.frontend.configuration.userContentController.removeScriptMessageHandler(forName: "liloDebuggerEvent", contentWorld: .page)
                 if !pageGone { _ = try? await inspector.script("cdpReset") }
             } else if !pageGone {
-                await syncDomains(of: inspector)
+                if session.overrides.isEmpty && session.scripts.isEmpty {
+                    await syncDomains(of: inspector)
+                } else {
+                    // The sessions left keep only what they set themselves.
+                    _ = try? await inspector.script("cdpReset")
+                    await restore(inspector)
+                }
             }
-            inspector.disconnect()
+            // Sessions moved to a new frontend together share one inspector.
+            if !sessions.contains(where: { $0.inspector === inspector }) { inspector.disconnect() }
         }
         publish()
     }
@@ -243,14 +268,11 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         let webView = engine.wkWebView
         // A suspended page answers nothing.
         if engine.isFrozen { engine.resume() }
-        if !session.inspector.isCurrent {
-            // The user closed the Web Inspector they had open on the tab, and the connection with it.
-            guard let inspector = try? await AgentInspector.connect(to: webView, servesFiles: false), sessions.contains(where: { $0 === session }) else {
-                return Self.protocolError(-32000, "Target closed")
-            }
-            for other in sessions where other.inspector.frontend === session.inspector.frontend { other.inspector = inspector }
-            Self.receiveEvents(of: inspector, handler: self)
-            await syncDomains(of: inspector)
+        // The user closed the Web Inspector they had open on the tab, and the connection with it.
+        if let pending = session.reconnection {
+            guard await pending.value else { return Self.protocolError(-32000, "Target closed") }
+        } else if !session.inspector.isCurrent, !(await reconnect(session)) {
+            return Self.protocolError(-32000, "Target closed")
         }
         let number = { (key: String) in (params[key] as? NSNumber)?.doubleValue }
         switch method {
@@ -274,6 +296,17 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
             return await dispatchMouse(params, to: webView)
         case "Input.dispatchKeyEvent":
             return await dispatchKey(params, to: webView, in: session)
+        case "Page.addScriptToEvaluateOnNewDocument":
+            let identifier = String(session.nextScript)
+            session.nextScript += 1
+            session.scripts.append((identifier, params["source"] as? String ?? ""))
+            await setScripts(of: session.inspector)
+            return ["identifier": identifier]
+        case "Page.removeScriptToEvaluateOnNewDocument":
+            let count = session.scripts.count
+            session.scripts.removeAll { $0.identifier == params["identifier"] as? String }
+            if session.scripts.count != count { await setScripts(of: session.inspector) }
+            return [String: Any]()
         default:
             break
         }
@@ -288,6 +321,10 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         if let error = reply["error"] as? [String: Any] {
             return Self.protocolError((error["code"] as? NSNumber)?.intValue ?? -32000, error["message"] as? String ?? "")
         }
+        if let key = Self.overrideKeys[method] {
+            session.overrides.removeAll { $0.key == key }
+            session.overrides.append((key, method, params))
+        }
         let parts = method.split(separator: ".")
         if parts.count == 2, parts[1] == "enable" || parts[1] == "disable" {
             if parts[1] == "enable" { session.domains.insert(String(parts[0])) } else { session.domains.remove(String(parts[0])) }
@@ -301,9 +338,54 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         return reply["result"] ?? [String: Any]()
     }
 
+    /// The emulation commands InspectorCDP.js runs, by the setting each overrides.
+    private static let overrideKeys = [
+        "Network.setExtraHTTPHeaders": "headers", "Network.setCacheDisabled": "cache",
+        "Network.setUserAgentOverride": "userAgent", "Emulation.setUserAgentOverride": "userAgent",
+        "Emulation.setScriptExecutionDisabled": "javascript", "Emulation.setEmulatedMedia": "media"
+    ]
+
+    /// Moves the sessions of a closed frontend to a new one with what they set; when the tab gives
+    /// none, they detach and it returns false.
+    private func reconnect(_ session: Session) async -> Bool {
+        if let pending = session.reconnection { return await pending.value }
+        let old = session.inspector.frontend
+        let task = Task { [self] () -> Bool in
+            let inspector = try? await AgentInspector.connect(to: session.engine.wkWebView, servesFiles: false)
+            let moved = sessions.filter { $0.inspector.frontend === old }
+            guard let inspector, !moved.isEmpty else {
+                for other in moved { end(other, reason: "target_closed", pageGone: true) }
+                inspector?.disconnect()
+                return false
+            }
+            for other in moved { other.inspector = inspector }
+            Self.receiveEvents(of: inspector, handler: self)
+            await restore(inspector)
+            for other in moved { other.reconnection = nil }
+            return sessions.contains { $0 === session }
+        }
+        for other in sessions where other.inspector.frontend === old { other.reconnection = task }
+        return await task.value
+    }
+
+    /// Gives a frontend the domains, emulation and new-document scripts of the sessions on it.
+    private func restore(_ inspector: AgentInspector) async {
+        await syncDomains(of: inspector)
+        let shared = sessions.filter { $0.inspector.frontend === inspector.frontend }
+        for command in shared.flatMap(\.overrides) {
+            _ = try? await inspector.script("cdpSend", ["method": command.method, "params": command.params])
+        }
+        if shared.contains(where: { !$0.scripts.isEmpty }) { await setScripts(of: inspector) }
+    }
+
     private func syncDomains(of inspector: AgentInspector) async {
         let domains = Set(sessions.filter { $0.inspector.frontend === inspector.frontend }.flatMap(\.domains))
         _ = try? await inspector.script("cdpDomains", ["domains": Array(domains)])
+    }
+
+    private func setScripts(of inspector: AgentInspector) async {
+        let sources = sessions.filter { $0.inspector.frontend === inspector.frontend }.flatMap { $0.scripts.map(\.source) }
+        _ = try? await inspector.script("cdpScripts", ["sources": sources])
     }
 
     /// CDP's modifiers bit field: Alt 1, Ctrl 2, Meta 4, Shift 8.

@@ -7,10 +7,10 @@
   // CDP domains an attached extension enabled; nothing is translated while empty.
   let enabled = new Set()
   let exceptionCount = 0
-  // Emulation and new-document scripts the extensions set, undone when the last one detaches.
+  // Emulation and new-document scripts the extensions set, undone by cdpReset. Native keeps each
+  // session's own to give them to a new frontend.
   const overrides = new Map()
-  const newDocumentScripts = new Map()
-  let nextScriptId = 1
+  let hasNewDocumentScripts = false
 
   class ProtocolError extends Error {
     constructor (code, message) {
@@ -331,11 +331,6 @@
     'prefers-contrast': ['PrefersContrast', { more: 'More', 'no-preference': 'NoPreference' }]
   }
 
-  function setNewDocumentScripts () {
-    const source = [...newDocumentScripts.values()].join(';\n')
-    return page().setBootstrapScript.invoke(source ? { source } : {})
-  }
-
   // The WebKit domains each CDP domain's events come from. The frontend may not have enabled them all
   // yet; it needs them on, so disable leaves them be.
   const backingDomains = { Runtime: ['Runtime', 'Console'], Page: ['Page'], Network: ['Network'], DOM: [] }
@@ -407,16 +402,6 @@
     'Page.getResourceContent': async params => page().getResourceContent.invoke({ frameId: params.frameId, url: params.url }),
     'Page.captureScreenshot': screenshot,
     'Page.getLayoutMetrics': layoutMetrics,
-    'Page.addScriptToEvaluateOnNewDocument': async params => {
-      const identifier = String(nextScriptId++)
-      newDocumentScripts.set(identifier, String(params.source ?? ''))
-      await setNewDocumentScripts()
-      return { identifier }
-    },
-    'Page.removeScriptToEvaluateOnNewDocument': async params => {
-      if (newDocumentScripts.delete(params.identifier)) await setNewDocumentScripts()
-      return {}
-    },
     'Network.setExtraHTTPHeaders': async params => override('extraHeaders', value => network().setExtraHTTPHeaders.invoke({ headers: value ?? {} }), params.headers),
     'Network.getResponseBody': async params => network().getResponseBody.invoke({ requestId: params.requestId }),
     'Network.setCacheDisabled': async params => override('cache', value => network().setResourceCachingDisabled.invoke({ disabled: !!value }), params.cacheDisabled || null),
@@ -493,16 +478,19 @@
     cdpDomains ({ domains }) {
       enabled = new Set(domains)
     },
-    /** The last extension detached: what they changed goes back. */
+    /** Every attached extension's new-document scripts, run in order before the page's own. */
+    async cdpScripts ({ sources }) {
+      const source = sources.join(';\n')
+      await page().setBootstrapScript.invoke(source ? { source } : {})
+      hasNewDocumentScripts = !!source
+    },
+    /** What the extensions changed goes back. */
     async cdpReset () {
       enabled = new Set()
       const changed = [...overrides.values()]
       overrides.clear()
       for (const apply of changed) await apply(null).catch(() => {})
-      if (newDocumentScripts.size) {
-        newDocumentScripts.clear()
-        await setNewDocumentScripts().catch(() => {})
-      }
+      if (hasNewDocumentScripts) await inspector.cdpScripts({ sources: [] }).catch(() => {})
     }
   })
 })()

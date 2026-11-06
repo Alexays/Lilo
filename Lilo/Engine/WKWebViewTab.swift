@@ -2445,6 +2445,11 @@ extension WKWebViewTab: WKUIDelegate {
         }
     }
 
+    @objc(_webView:willCloseLocalInspector:)
+    nonisolated func webView(_ webView: WKWebView, willCloseLocalInspector inspector: NSObject) {
+        onMain { NotificationCenter.default.post(name: .webInspectorWillClose, object: $0) }
+    }
+
     // Storage Access API: a cross-site embed asks to use its own cookies under the current site.
     @objc(_webView:requestStorageAccessPanelForDomain:underCurrentDomain:completionHandler:)
     nonisolated func webView(

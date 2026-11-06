@@ -151,6 +151,23 @@ final class DebuggerGapAPITests: XCTestCase {
         XCTAssertEqual(targets.first { $0["id"] as? String == tab.id.uuidString }?["attached"] as? Bool, false)
     }
 
+    func testEmulationAndScriptsOutliveTheInspectorClosing() async throws {
+        let tab = try await openTab()
+        _ = await attach(tab.position)
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+        _ = await send("Emulation.setUserAgentOverride", ["userAgent": "Debugged/1.0"])
+        let added = await send("Page.addScriptToEvaluateOnNewDocument", ["source": "window.marker = 'set'"])
+        XCTAssertEqual(added.result["identifier"] as? String, "1", added.error ?? "")
+
+        // As the user closing the Web Inspector they had open on the tab.
+        XCTAssertTrue(WebInspectorSupport.close(for: engine.wkWebView))
+        _ = await send("Runtime.evaluate", ["expression": "document.title = 'old'"])
+        _ = await send("Page.reload")
+        try await waitUntil("the page reloads") { engine.currentTitle == "Debugged" && !engine.wkWebView.isLoading }
+        let seen = await send("Runtime.evaluate", ["expression": "navigator.userAgent + ' ' + window.marker", "returnByValue": true])
+        XCTAssertEqual((seen.result["result"] as? [String: Any])?["value"] as? String, "Debugged/1.0 set", seen.error ?? "")
+    }
+
     func testDomAndScreenshotCommandsTranslate() async throws {
         let tab = try await openTab()
         _ = await attach(tab.position)
