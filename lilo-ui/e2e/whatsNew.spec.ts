@@ -43,9 +43,10 @@ test("a highlight plays its media in place of the illustration", async ({ page }
 	await openWhatsNew(page);
 	const video = page.getByRole("dialog").locator("video");
 	await expect(video).toHaveAccessibleName("Catch what you missed.");
-	await expect(video).toHaveAttribute("controls", "");
+	await expect(video).not.toHaveAttribute("controls");
 	await expect(video).toHaveAttribute("preload", "none");
 	await expect(video).toHaveJSProperty("paused", true);
+	await expect(page.getByRole("dialog").getByRole("button", { name: "Play" })).toBeVisible();
 });
 
 test("the modal presents installed highlights, all changes and one acknowledgment", async ({ page }) => {

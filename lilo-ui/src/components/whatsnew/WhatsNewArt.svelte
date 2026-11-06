@@ -4,7 +4,7 @@
   let { kind }: { kind: ReleaseIllustration } = $props();
 </script>
 
-<svg class="release-art" viewBox="0 0 128 90" aria-hidden="true">
+<svg class="release-art" viewBox="0 0 128 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   {#if kind === "unread"}
     <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
     <rect x="12" y="19" width="104" height="24" rx="5" fill="var(--bg-elevated)" />
@@ -194,5 +194,7 @@
 </svg>
 
 <style>
-  .release-art { display: block; width: 100%; border: 1px solid var(--separator); border-radius: var(--radius-md); }
+  .release-art { display: block; width: 100%; height: 100%; }
+  /* The frame rounds the corners: the backdrop's own would show once sliced to 16:9. */
+  .release-art > rect:first-child { rx: 0; }
 </style>
