@@ -477,6 +477,18 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         }
     }
 
+    func testExtensionPagesRunTheLocationAndNotificationModulesInOnePageWorld() throws {
+        let profileId = TestProfileIds.next()
+        registry.teardown()
+        registry = ProfileExtensionRegistry(
+            profileId: profileId, extensionStorage: try makeTestExtensionStorage(profileId: profileId, in: tempDir),
+            pageBridges: (GeolocationBridge(), NotificationBridge()), extensionsBaseDirectory: tempDir
+        )
+        let pageWorld = registry.pageScripts.userScripts.filter { $0.source.contains(GeolocationBridge.pageModule) }
+        XCTAssertEqual(pageWorld.count, 1)
+        XCTAssertTrue(pageWorld.first?.source.contains(NotificationBridge.pageModule) == true)
+    }
+
     /// A deferred launch strands WebKit's keep-awake activity on a placeholder process, and the worker is
     /// then terminated seconds after load.
     func testBackgroundWebViewLaunchesItsProcessUpFront() async throws {
