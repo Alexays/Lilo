@@ -33,6 +33,7 @@ test("sitePermissionRows maps stored decisions and defaults absent types to ask"
 		record("id-1", "https://example.com", "camera", "allow"),
 		record("id-2", "https://example.com", "microphone", "deny"),
 		record("id-3", "https://example.org", "location", "allow"),
+		record("id-4", "https://example.com", "popups", "allow"),
 	];
 
 	assert.deepEqual(sitePermissionRows(permissions, "https://example.com"), [
@@ -40,11 +41,12 @@ test("sitePermissionRows maps stored decisions and defaults absent types to ask"
 		{ type: "microphone", state: "blocked", id: "id-2" },
 		{ type: "location", state: "ask" },
 		{ type: "notifications", state: "ask" },
+		{ type: "popups", state: "allowed", id: "id-4" },
 	]);
 
 	// Another origin's records never leak in.
 	assert.deepEqual(
 		sitePermissionRows(permissions, "https://example.net").map((row) => row.state),
-		["ask", "ask", "ask", "ask"],
+		["ask", "ask", "ask", "ask", "ask"],
 	);
 });

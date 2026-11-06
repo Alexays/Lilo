@@ -40,7 +40,8 @@ final class ChromeBridgeHandler: BridgeHandler {
         "showDownloadContextMenu",
         "showHistoryRowMenu",
         "allowCertificateException",
-        "loadBypassingContentBlocker"
+        "loadBypassingContentBlocker",
+        "allowPopups"
     ]
 
     private static let logger = Logger(liloCategory: "chrome-ui")
@@ -83,6 +84,9 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "allowCertificateException":
             if let host = message.string("host") { windowController?.allowInsecureTrust(forHost: host) }
+
+        case "allowPopups":
+            windowController?.allowPopupsForActiveTab()
 
         case "loadBypassingContentBlocker":
             if let tabManager = windowController?.tabManager {

@@ -1525,6 +1525,7 @@
 		"microphone": "Microfono",
 		"location": "Posizione",
 		"notifications": "Notifiche",
+		"popups": "Finestre pop-up",
 		"ask": "Chiedi",
 		"externalScheme": "Apertura dei link {scheme}",
 		"allow": "Consenti",
@@ -1591,6 +1592,13 @@
 		"allow": "Consenti",
 		"allowOnce": "Consenti una volta",
 		"alwaysAllowOnSite": "Consenti sempre su questo sito",
+		"popup": {
+			"blocked": "Pop-up bloccato",
+			"tried": "ha tentato di aprire una finestra pop-up",
+			"keepBlocking": "Continua a bloccare",
+			"alwaysAllow": "Consenti sempre",
+			"allowed": "I pop-up sono consentiti su questo sito. Riprova nella pagina."
+		},
 		"permissions": {
 			"tabs": "Vedere le schede aperte",
 			"history": "Leggere la cronologia di navigazione",
@@ -2483,6 +2491,7 @@
 	"siteDrawer": {
 		"allPermissions": "Tutti i permessi",
 		"inUse": "In uso ora",
+		"popupsBlocked": "Bloccate in questa pagina",
 		"zoom": "Zoom",
 		"zoomIn": "Ingrandisci",
 		"zoomOut": "Riduci",

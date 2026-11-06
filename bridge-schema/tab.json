@@ -45,6 +45,8 @@
       "_comment": "A TLS failure before the server presented a certificate: no exception can get past it." },
     { "name": "navigationErrorRedirectedFrom", "type": "string", "tsOptional": true, "tsDefault": "\"\"",
       "_comment": "The address the failed navigation was requested at, when a redirect took it to another host." },
+    { "name": "hasBlockedPopup",           "type": "bool",    "tsOptional": true,  "tsDefault": "false",
+      "_comment": "Web tabs: the page tried to open a window without a click since it committed, and Lilo refused it." },
     { "name": "isNotSecure",               "type": "bool",    "tsOptional": true,  "tsDefault": "false",
       "_comment": "Web tabs: an https page whose certificate the user let through, or that loaded part of its content over http." },
     { "name": "kind",                      "type": "string",  "tsOptional": true, "tsDefault": "\"web\"",

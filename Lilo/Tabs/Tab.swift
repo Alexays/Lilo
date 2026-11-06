@@ -65,6 +65,8 @@ struct Tab: Sendable, Equatable {
     var navigationErrorNoCertificate = false
     var navigationErrorRedirectedFrom = ""
     var isNotSecure = false
+    /// Web tabs, runtime only: a window the page asked for without a click was refused since it committed.
+    var hasBlockedPopup = false
     var groupId: UUID?
     var spaceId: UUID?
     var windowId: UUID?
@@ -250,6 +252,8 @@ struct Tab: Sendable, Equatable {
                 put(field, navigationErrorRedirectedFrom)
             case .isNotSecure:
                 put(field, isNotSecure)
+            case .hasBlockedPopup:
+                put(field, hasBlockedPopup)
             case .faviconDataURL:
                 data[field.rawValue] = faviconDataURL ?? ""
             case .faviconDominantColor:
@@ -325,6 +329,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let navigationErrorDomain: String; let navigationErrorDescription: String; let navigationErrorURL: String
     let navigationErrorUsesHSTS: Bool; let navigationErrorNoCertificate: Bool; let navigationErrorRedirectedFrom: String
     let isNotSecure: Bool
+    let hasBlockedPopup: Bool
     let windowId: UUID?
     let hasUnsavedFormData: Bool
     let gitBranch: String
@@ -356,6 +361,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         navigationErrorUsesHSTS = tab.navigationErrorUsesHSTS
         navigationErrorNoCertificate = tab.navigationErrorNoCertificate; navigationErrorRedirectedFrom = tab.navigationErrorRedirectedFrom
         isNotSecure = tab.isNotSecure
+        hasBlockedPopup = tab.hasBlockedPopup
         windowId = tab.windowId
         hasUnsavedFormData = tab.hasUnsavedFormData
         gitBranch = tab.gitBranch
@@ -389,6 +395,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         tab.navigationErrorUsesHSTS = navigationErrorUsesHSTS
         tab.navigationErrorNoCertificate = navigationErrorNoCertificate; tab.navigationErrorRedirectedFrom = navigationErrorRedirectedFrom
         tab.isNotSecure = isNotSecure
+        tab.hasBlockedPopup = hasBlockedPopup
         tab.windowId = windowId
         tab.hasUnsavedFormData = hasUnsavedFormData
         tab.gitBranch = gitBranch

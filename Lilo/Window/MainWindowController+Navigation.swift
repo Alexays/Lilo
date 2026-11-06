@@ -105,6 +105,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             t.isLoading = tab.isLoading && tabManager.warmedTab?.engine !== tab
             t.canGoBack = tab.canGoBack
             t.canGoForward = tab.canGoForward
+            if case .committed = event { t.hasBlockedPopup = false }
 
             switch event {
             case .started, .committed, .finished:
@@ -526,6 +527,18 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, storedPermissionDecisionFor type: String, origin: String) -> Bool? {
         storedPermissionDecision(type: type, origin: origin, tabId: tab.id)
+    }
+
+    func tabDidBlockPopup(_ tab: WKWebViewTab) {
+        updateAndEmit(tab.id) { $0.hasBlockedPopup = true }
+    }
+
+    /// The active page's site opens windows without a click from now on; the page has to try again, since WebKit never
+    /// offers back a window it was refused.
+    func allowPopupsForActiveTab() {
+        guard let tab = tabManager.activeEngineTab, let origin = PermissionOriginKey.of(tab.currentURL) else { return }
+        rememberPermission(origin: origin, type: "popups", granted: true, tabId: tab.id)
+        updateAndEmit(tab.id) { $0.hasBlockedPopup = false }
     }
 
     func tab(_ tab: WKWebViewTab, allowsJavaScriptAt url: URL) -> Bool {

@@ -724,6 +724,7 @@ export interface BridgeCommandPayloadMap {
 	};
 	allowCertificateException: { host: string };
 	loadBypassingContentBlocker: EmptyPayload;
+	allowPopups: EmptyPayload;
 
 	createSpace: {
 		name?: string;

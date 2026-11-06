@@ -1525,6 +1525,7 @@
 		"microphone": "Mikrofon",
 		"location": "Konum",
 		"notifications": "Bildirimler",
+		"popups": "Açılır pencereler",
 		"ask": "Sor",
 		"externalScheme": "{scheme} bağlantılarını açma",
 		"allow": "İzin Ver",
@@ -1591,6 +1592,13 @@
 		"allow": "İzin Ver",
 		"allowOnce": "Bir Kez İzin Ver",
 		"alwaysAllowOnSite": "Bu Sitede Her Zaman İzin Ver",
+		"popup": {
+			"blocked": "Açılır pencere engellendi",
+			"tried": "bir açılır pencere açmaya çalıştı",
+			"keepBlocking": "Engellemeye Devam Et",
+			"alwaysAllow": "Her Zaman İzin Ver",
+			"allowed": "Bu sitede açılır pencerelere izin verildi. Sayfada yeniden deneyin."
+		},
 		"permissions": {
 			"tabs": "Açık sekmelerinizi görme",
 			"history": "Tarama geçmişinizi okuma",
@@ -2483,6 +2491,7 @@
 	"siteDrawer": {
 		"allPermissions": "Tüm izinler",
 		"inUse": "Şu anda kullanımda",
+		"popupsBlocked": "Bu sayfada engellendi",
 		"zoom": "Büyütme",
 		"zoomIn": "Büyüt",
 		"zoomOut": "Küçült",

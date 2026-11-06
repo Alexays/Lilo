@@ -1525,6 +1525,7 @@
 		"microphone": "麦克风",
 		"location": "位置",
 		"notifications": "通知",
+		"popups": "弹出式窗口",
 		"ask": "询问",
 		"externalScheme": "打开 {scheme} 链接",
 		"allow": "允许",
@@ -1591,6 +1592,13 @@
 		"allow": "允许",
 		"allowOnce": "允许一次",
 		"alwaysAllowOnSite": "在此网站上始终允许",
+		"popup": {
+			"blocked": "已阻止弹出式窗口",
+			"tried": "试图打开弹出式窗口",
+			"keepBlocking": "继续阻止",
+			"alwaysAllow": "始终允许",
+			"allowed": "已允许此网站的弹出式窗口。请在页面上重试。"
+		},
 		"permissions": {
 			"tabs": "查看你打开的标签页",
 			"history": "读取你的浏览历史记录",
@@ -2483,6 +2491,7 @@
 	"siteDrawer": {
 		"allPermissions": "所有权限",
 		"inUse": "正在使用",
+		"popupsBlocked": "已在此页面上阻止",
 		"zoom": "缩放",
 		"zoomIn": "放大",
 		"zoomOut": "缩小",

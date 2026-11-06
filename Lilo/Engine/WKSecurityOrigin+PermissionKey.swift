@@ -14,6 +14,12 @@ enum PermissionOriginKey {
         return "\(scheme)://\(host):\(port)"
     }
 
+    /// The key of a page's address, nil for one without a host (about:, data:...).
+    static func of(_ url: URL?) -> String? {
+        guard let url, let scheme = url.scheme, let host = url.host, !host.isEmpty else { return nil }
+        return build(scheme: scheme, host: host, port: url.port ?? 0)
+    }
+
     private static func defaultPort(forScheme scheme: String) -> Int? {
         switch scheme.lowercased() {
         case "http": return 80

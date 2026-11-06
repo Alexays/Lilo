@@ -1525,6 +1525,7 @@
 		"microphone": "麥克風",
 		"location": "位置",
 		"notifications": "通知",
+		"popups": "彈出式視窗",
 		"ask": "詢問",
 		"externalScheme": "開啟 {scheme} 連結",
 		"allow": "允許",
@@ -1591,6 +1592,13 @@
 		"allow": "允許",
 		"allowOnce": "允許一次",
 		"alwaysAllowOnSite": "一律允許此網站",
+		"popup": {
+			"blocked": "已阻擋彈出式視窗",
+			"tried": "嘗試打開彈出式視窗",
+			"keepBlocking": "繼續阻擋",
+			"alwaysAllow": "永遠允許",
+			"allowed": "已允許此網站的彈出式視窗。請在頁面上再試一次。"
+		},
 		"permissions": {
 			"tabs": "查看你開啟的分頁",
 			"history": "讀取瀏覽歷史記錄",
@@ -2483,6 +2491,7 @@
 	"siteDrawer": {
 		"allPermissions": "所有權限",
 		"inUse": "正在使用",
+		"popupsBlocked": "已在此頁面上阻擋",
 		"zoom": "縮放",
 		"zoomIn": "放大",
 		"zoomOut": "縮小",

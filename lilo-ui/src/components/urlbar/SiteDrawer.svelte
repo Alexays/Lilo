@@ -30,11 +30,12 @@
 
   const tab = $derived(getActiveTab());
 
-  // Decided permissions, plus the devices the page is using right now even if never decided.
+  // Decided permissions, plus the devices the page is using right now and its refused pop-ups, even if never decided.
   const permissionRows = $derived.by(() => {
     const inUse = new Set([
       ...(tab?.isCameraActive ? ["camera"] : []),
       ...(tab?.isMicrophoneActive ? ["microphone"] : []),
+      ...(tab?.hasBlockedPopup ? ["popups"] : []),
     ]);
     return sitePermissionRows(getSitePermissions(), origin)
       .map((row) => ({ ...row, inUse: inUse.has(row.type) }))
@@ -86,15 +87,23 @@
         <span class="row-icon"><URLDrawerIcon name={row.type} /></span>
         <div class="row-text">
           <div class="row-label">{t(`sitePermissions.${row.type}`)}</div>
-          {#if row.inUse}<div class="row-detail">{t("siteDrawer.inUse")}</div>{/if}
+          {#if row.inUse}
+            <div class="row-detail">{t(row.type === "popups" ? "siteDrawer.popupsBlocked" : "siteDrawer.inUse")}</div>
+          {/if}
         </div>
+        <!-- Pop-ups never ask: undecided, they open after a click only, as with Chrome's Block. -->
         <UiSelect
           value={row.state}
-          options={[
-            { value: "ask", label: t("sitePermissions.ask") },
-            { value: "allowed", label: t("sitePermissions.allow") },
-            { value: "blocked", label: t("sitePermissions.block") },
-          ]}
+          options={row.type === "popups"
+            ? [
+                { value: "ask", label: t("sitePermissions.block") },
+                { value: "allowed", label: t("sitePermissions.allow") },
+              ]
+            : [
+                { value: "ask", label: t("sitePermissions.ask") },
+                { value: "allowed", label: t("sitePermissions.allow") },
+                { value: "blocked", label: t("sitePermissions.block") },
+              ]}
           ariaLabel={t(`sitePermissions.${row.type}`)}
           onchange={(value) => {
             if (value !== "ask") settingsActions.setSitePermission(origin, row.type, value === "allowed");

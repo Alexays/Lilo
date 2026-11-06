@@ -4,6 +4,7 @@
     | "microphone"
     | "location"
     | "notifications"
+    | "popups"
     | "extension"
     | "agent"
     | "zoom"
@@ -27,6 +28,9 @@
   {:else if name === "notifications"}
     <path d="M5.4 13.6V9a4.6 4.6 0 0 1 9.2 0v4.6l1.2 1.6H4.2l1.2-1.6Z" />
     <path d="M8.4 17.2a1.8 1.8 0 0 0 3.2 0" />
+  {:else if name === "popups"}
+    <rect x="2.8" y="3.6" width="10.4" height="9" rx="2" />
+    <path d="M7.4 15.6h7.8a2 2 0 0 0 2-2V8.2" />
   {:else if name === "extension"}
     <path d="M4.4 7.4h2.8a1.9 1.9 0 1 1 3.8 0h2.8v2.8a1.9 1.9 0 1 1 0 3.8v2.6H4.4V7.4Z" />
   {:else if name === "agent"}

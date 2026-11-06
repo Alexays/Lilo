@@ -10,11 +10,13 @@
   import { copyText } from "../../lib/clipboard";
   import { isCommandBarOpen, openCommandBar } from "../../stores/commandBar.svelte";
   import { getExtensions, getInstallOutcome, installStoreExtension } from "../../stores/extensions.svelte";
-  import { getSetting } from "../../stores/settings.svelte";
+  import { getSetting, getSitePermissions } from "../../stores/settings.svelte";
   import {
     getTrackersBlocked,
     isBlockerAllowlisted,
+    isPopupBlockedDrawerOpen,
     isSiteDrawerOpen,
+    setPopupBlockedDrawerOpen,
     setSiteDrawerOpen,
     setSiteDrawerPeek,
   } from "../../stores/urlBarDrawer.svelte";
@@ -222,7 +224,7 @@
 
   function trackDetails(event: PointerEvent) {
     const target = event.target as Element;
-    if (target.closest(".url-actions, .changes-button, .permissions-btn")) return closeDetails();
+    if (target.closest(".url-actions, .changes-button, .permissions-btn, .popup-blocked-btn")) return closeDetails();
     if (detailsOpen || detailsTimer !== null || !target.closest(".url-trigger")) return;
     detailsTimer = setTimeout(() => {
       detailsTimer = null;
@@ -253,12 +255,21 @@
   const activeTabLoading = $derived(getActiveTab()?.isLoading ?? false);
   const activeTabProgress = $derived(getActiveTab()?.progress ?? 0);
   const permissionOrigin = $derived(permissionOriginFromURL(activeTabURL));
+  // Gone once the site is allowed from the Site drawer, which leaves the page's flag alone.
+  const popupBlocked = $derived(
+    (getActiveTab()?.hasBlockedPopup ?? false) &&
+      !getSitePermissions().some((p) => p.origin === permissionOrigin && p.type === "popups" && p.decision === "allow"),
+  );
+  $effect(() => {
+    if (popupBlocked) untrack(() => announce(t("permissionPrompt.popup.blocked")));
+  });
 
   // Navigating to another origin invalidates the Site drawer.
   $effect(() => {
     if (permissionOrigin !== lastPermissionOrigin) {
       lastPermissionOrigin = permissionOrigin;
       setSiteDrawerOpen(false);
+      setPopupBlockedDrawerOpen(false);
     }
   });
 
@@ -273,6 +284,11 @@
   function toggleSiteDrawer(e: MouseEvent) {
     e.stopPropagation();
     setSiteDrawerOpen(!isSiteDrawerOpen());
+  }
+
+  function togglePopupBlockedDrawer(e: MouseEvent) {
+    e.stopPropagation();
+    setPopupBlockedDrawerOpen(!isPopupBlockedDrawerOpen());
   }
 
   function showSecurityInfo(e: Event) {
@@ -920,6 +936,22 @@
         aria-label={t("urlBar.addressBar", { url: showsLocation ? activeCwd : `${urlVisual.host}${urlVisual.path}` })}
       ></button>
       {@render permissionsButton()}
+      {#if popupBlocked}
+        <button
+          type="button"
+          class="popup-blocked-btn"
+          class:active={isPopupBlockedDrawerOpen()}
+          aria-label={t("permissionPrompt.popup.blocked")}
+          use:tooltip={{ text: t("permissionPrompt.popup.blocked"), placement: "bottom" }}
+          aria-expanded={isPopupBlockedDrawerOpen()}
+          onclick={togglePopupBlockedDrawer}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="1" y="1.4" width="7" height="6" rx="1.4"/>
+            <path d="M4.2 10.6h5.2a1.4 1.4 0 0 0 1.4-1.4V4.6"/>
+          </svg>
+        </button>
+      {/if}
 
       {#if showsLocation && !toastVisible}
         <span class="location-shell">
@@ -1054,7 +1086,8 @@
     outline-offset: -2px;
   }
 
-  .permissions-btn {
+  .permissions-btn,
+  .popup-blocked-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1199,13 +1232,21 @@
     transition-delay: 40ms;
   }
 
-  .permissions-btn:focus-visible {
+  .permissions-btn:focus-visible,
+  .popup-blocked-btn:focus-visible {
     outline: var(--focus-outline);
     outline-offset: 1px;
   }
 
+  /* A refused window is news: it reads a step stronger than the site controls at rest. */
+  .popup-blocked-btn {
+    color: var(--text-secondary);
+  }
+
   .permissions-btn:hover,
-  .permissions-btn.active {
+  .permissions-btn.active,
+  .popup-blocked-btn:hover,
+  .popup-blocked-btn.active {
     background: var(--text-primary-tint-12);
     color: var(--text-primary);
   }

@@ -1525,6 +1525,7 @@
 		"microphone": "Micrófono",
 		"location": "Ubicación",
 		"notifications": "Notificaciones",
+		"popups": "Ventanas emergentes",
 		"ask": "Preguntar",
 		"externalScheme": "Abrir enlaces {scheme}",
 		"allow": "Permitir",
@@ -1591,6 +1592,13 @@
 		"allow": "Permitir",
 		"allowOnce": "Permitir una vez",
 		"alwaysAllowOnSite": "Permitir siempre en este sitio",
+		"popup": {
+			"blocked": "Ventana emergente bloqueada",
+			"tried": "ha intentado abrir una ventana emergente",
+			"keepBlocking": "Seguir bloqueando",
+			"alwaysAllow": "Permitir siempre",
+			"allowed": "Las ventanas emergentes están permitidas en este sitio. Vuelve a intentarlo en la página."
+		},
 		"permissions": {
 			"tabs": "Ver tus pestañas abiertas",
 			"history": "Leer tu historial de navegación",
@@ -2483,6 +2491,7 @@
 	"siteDrawer": {
 		"allPermissions": "Todos los permisos",
 		"inUse": "En uso ahora",
+		"popupsBlocked": "Bloqueadas en esta página",
 		"zoom": "Zoom",
 		"zoomIn": "Ampliar",
 		"zoomOut": "Reducir",
