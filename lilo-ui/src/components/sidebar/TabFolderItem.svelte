@@ -40,6 +40,11 @@
 	}: Props = $props();
 
 	const panel = $derived(getLockPanel()?.folderId === folder.id ? getLockPanel() : null);
+	// The last open panel stays rendered, inert, so the extension has content to collapse.
+	let shownPanel = $state<ReturnType<typeof getLockPanel>>(null);
+	$effect(() => {
+		if (panel) shownPanel = panel;
+	});
 	let password = $state("");
 	let confirmation = $state("");
 	let allowsBiometrics = $state(true);
@@ -388,11 +393,11 @@
 		</div>
 	</div>
 
-	<div class="folder-edit-extension" class:open={panel != null}>
+	<div class="folder-edit-extension" class:open={panel != null} inert={!panel} ontransitionend={(e) => { if (!panel && e.propertyName === "grid-template-rows") shownPanel = null; }}>
 		<div class="folder-edit-extension-clip">
-			{#if panel}
+			{#if shownPanel}
 				<form class="folder-lock-form" onsubmit={(e) => { e.preventDefault(); submitPanel(); }}>
-					{#if panel.kind === "unlock"}
+					{#if shownPanel.kind === "unlock"}
 						{#if folder.lock?.allowsBiometrics}
 							<button type="button" class="lock-primary" onclick={() => folderActions.unlockWith(folder.id, "biometrics")}>{t("tabFolder.unlockTouchId")}</button>
 						{/if}
@@ -402,7 +407,7 @@
 								<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" /></svg>
 							</button>
 						</div>
-						{#if panel.failed}<p class="lock-error" role="alert">{t("tabFolder.wrongPassword")}</p>{/if}
+						{#if shownPanel.failed}<p class="lock-error" role="alert">{t("tabFolder.wrongPassword")}</p>{/if}
 						{#if folder.lock?.allowsBiometrics}
 							<button type="button" class="lock-link" onclick={() => folderActions.unlockWith(folder.id, "deviceOwner")}>{t("tabFolder.forgotPassword")}</button>
 						{:else}
@@ -413,10 +418,10 @@
 						<input id={`lock-pass-${folder.id}`} bind:this={passwordInput} bind:value={password} type="password" class="lock-input" onkeydown={handlePanelKeydown} />
 						<label class="lock-label" for={`lock-confirm-${folder.id}`}>{t("tabFolder.confirmPassword")}</label>
 						<input id={`lock-confirm-${folder.id}`} bind:value={confirmation} type="password" class="lock-input" onkeydown={handlePanelKeydown} />
-						{#if panel.biometricsAvailable}
+						{#if shownPanel.biometricsAvailable}
 							<label class="lock-check"><input type="checkbox" bind:checked={allowsBiometrics} /> {t("tabFolder.allowTouchId")}</label>
 						{/if}
-						<p class="lock-hint">{t(allowsBiometrics && panel.biometricsAvailable ? "tabFolder.forgotHint" : "tabFolder.noRecoveryHint")}</p>
+						<p class="lock-hint">{t(allowsBiometrics && shownPanel.biometricsAvailable ? "tabFolder.forgotHint" : "tabFolder.noRecoveryHint")}</p>
 						<div class="lock-buttons">
 							<button type="button" class="lock-secondary" onclick={closeLockPanel}>{t("common.cancel")}</button>
 							<button type="submit" class="lock-primary" disabled={!setupValid}>{t("tabFolder.lock")}</button>

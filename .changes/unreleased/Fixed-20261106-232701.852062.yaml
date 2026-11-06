@@ -1,0 +1,3 @@
+kind: Fixed
+body: Closing the password panel of a locked folder now animates like opening it
+time: 2026-11-06T23:27:01.852062+01:00
