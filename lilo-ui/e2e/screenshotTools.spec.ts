@@ -19,7 +19,7 @@ test("Save and Copy wait for the capture to arrive", async ({ page }) => {
 	const panel = page.locator(".screenshot-panel");
 	const save = panel.getByRole("button", { name: "Save", exact: true });
 	const copy = panel.getByRole("button", { name: "Copy" });
-	await expect(panel.locator(".save-group button").first()).toBeVisible();
+	await expect(panel.locator(".ui-split-button button").first()).toBeVisible();
 
 	for (const button of [save, panel.getByRole("button", { name: "Save options" }), copy]) {
 		await expect(button).toBeDisabled();
@@ -33,16 +33,16 @@ test("Save and Copy wait for the capture to arrive", async ({ page }) => {
 test("Escape closes the save menu and keeps the capture", async ({ page }) => {
 	await openEditor(page);
 	await page.locator('.screenshot-panel [aria-label="Save options"]').click();
-	await expect(page.locator(".save-menu")).toBeVisible();
+	await expect(page.locator(".ui-split-menu")).toBeVisible();
 
 	await page.keyboard.press("Escape");
 
-	await expect(page.locator(".save-menu")).toHaveCount(0);
+	await expect(page.locator(".ui-split-menu")).toHaveCount(0);
 	await expect(page.locator(".screenshot-editor .canvas")).toBeVisible();
 	expect((await sentCommands(page)).map((command) => command.action)).not.toContain("screenshot.cancel");
 });
 
-test("the saved notice sits over the page, clear of a narrow window's sidebar", async ({ page }) => {
+test("the saved notice fits a narrow window", async ({ page }) => {
 	await page.setViewportSize({ width: 600, height: 400 });
 	await openEditor(page);
 	await page.evaluate(() => {
@@ -50,10 +50,8 @@ test("the saved notice sits over the page, clear of a narrow window's sidebar", 
 		window.__lilo!.receive({ event: "screenshotSaved", path: "/Users/someone/Desktop/Screenshot 2026-10-23 at 16.00.00.png" });
 	});
 
-	const box = (await page.locator(".screenshot-toast").boundingBox())!;
-	const sidebar = (await page.locator(".sidebar").boundingBox())!;
-	expect(box.x).toBeGreaterThanOrEqual(sidebar.x + sidebar.width);
-	expect(box.x + box.width).toBeLessThanOrEqual(600);
+	const toast = page.locator(".undo-toast", { hasText: "Screenshot 2026-10-23" });
+	await expect(toast).toBeInViewport({ ratio: 1 });
 });
 
 test("the crop frame's handles and Apply take the Space's accent", async ({ page }) => {

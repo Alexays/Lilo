@@ -685,7 +685,7 @@
 
                         {#if entry.result.helper}
                           {#if entry.result.kind === "action"}
-                            <kbd class="keycap">{entry.result.helper}</kbd>
+                            <kbd class="keycap result-shortcut">{entry.result.helper}</kbd>
                           {:else}
                             <span class="result-helper">{entry.result.helper}</span>
                           {/if}
