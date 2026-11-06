@@ -315,6 +315,10 @@ final class DownloadsBridgeHandler: GapHandler {
         var data: [String: Any] = [
             "id": item.id ?? 0,
             "url": item.url,
+            "finalUrl": item.url,
+            "referrer": "",
+            "incognito": false,
+            "mime": item.mimeType ?? "",
             "filename": item.destinationPath,
             "state": chromeState(for: item),
             "paused": item.state == .paused,
@@ -328,9 +332,6 @@ final class DownloadsBridgeHandler: GapHandler {
         ]
         if let endedAt = item.endedAt {
             data["endTime"] = isoFormatter.string(from: endedAt)
-        }
-        if let mimeType = item.mimeType {
-            data["mime"] = mimeType
         }
         if let error = item.error {
             data["error"] = error

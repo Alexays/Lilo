@@ -391,6 +391,7 @@ final class TabGroupsBridgeHandler: GapHandler {
             "title": folder.name,
             "color": Self.chromeColor(forHex: folder.color),
             "collapsed": folder.isCollapsed,
+            "shared": false,
             "windowPosition": windows.firstIndex { $0.spaceId == folder.spaceId } ?? -1
         ]
     }
