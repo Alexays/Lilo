@@ -2489,6 +2489,12 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0180": {
+				"headline": "Uporządkowane menu pobranych.",
+				"description": "Czyść ukończone pobrania prosto z paska bocznego, a rozszerzenia takie jak Bitwarden i Web Highlights działają tak, jak powinny.",
+				"clearTitle": "Czyść ukończone pobrania.",
+				"clearDescription": "Uporządkuj pobrane pliki bez otwierania ekranu Pobrane. Menu pobranych na pasku bocznym ma link Wyczyść, który usuwa wyświetlane w nim ukończone pobrania."
+			},
 			"v0170": {
 				"headline": "Spokojniejsze strony, lżejsze karty.",
 				"description": "Ukryj to, co przeszkadza, zachowaj odmowę zgody na pliki cookie i wydobądź więcej baterii z każdej karty.",

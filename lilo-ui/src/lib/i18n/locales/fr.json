@@ -2432,6 +2432,12 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0180": {
+				"headline": "Un menu des téléchargements plus net.",
+				"description": "Effacez les téléchargements terminés directement depuis la barre latérale, et les extensions comme Bitwarden et Web Highlights fonctionnent comme prévu.",
+				"clearTitle": "Effacez les téléchargements terminés.",
+				"clearDescription": "Faites le tri dans vos téléchargements sans ouvrir l'écran Téléchargements. Le menu des téléchargements de la barre latérale propose un lien Effacer qui retire les téléchargements terminés qu'il affiche."
+			},
 			"v0170": {
 				"headline": "Des pages plus calmes, des onglets plus légers.",
 				"description": "Masquez ce qui vous gêne, gardez le consentement aux cookies refusé et tirez plus de batterie de chaque onglet.",

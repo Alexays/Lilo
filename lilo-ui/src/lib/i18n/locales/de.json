@@ -2443,6 +2443,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0180": {
+				"headline": "Ein aufgeräumteres Download-Menü.",
+				"description": "Leeren Sie abgeschlossene Downloads direkt in der Seitenleiste, und Erweiterungen wie Bitwarden und Web Highlights funktionieren wie vorgesehen.",
+				"clearTitle": "Abgeschlossene Downloads leeren.",
+				"clearDescription": "Räumen Sie Ihre Downloads auf, ohne den Downloads-Bildschirm zu öffnen. Das Download-Menü in der Seitenleiste hat einen Link „Leeren“, der die dort aufgeführten abgeschlossenen Downloads entfernt."
+			},
 			"v0170": {
 				"headline": "Ruhigere Seiten, leichtere Tabs.",
 				"description": "Blende aus, was dich stört, lass die Cookie-Einwilligung abgelehnt und hol aus jedem Tab mehr Akkulaufzeit.",

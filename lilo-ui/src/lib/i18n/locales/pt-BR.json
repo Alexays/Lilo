@@ -2443,6 +2443,12 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0180": {
+				"headline": "Um menu de downloads mais organizado.",
+				"description": "Limpe os downloads concluídos direto da barra lateral, e extensões como Bitwarden e Web Highlights funcionam como deveriam.",
+				"clearTitle": "Limpe os downloads concluídos.",
+				"clearDescription": "Organize seus downloads sem abrir a tela Downloads. O menu de downloads da barra lateral tem um link Limpar que remove os downloads concluídos listados nele."
+			},
 			"v0170": {
 				"headline": "Páginas mais calmas, abas mais leves.",
 				"description": "Oculte o que atrapalha, mantenha o consentimento de cookies recusado e tire mais bateria de cada aba.",

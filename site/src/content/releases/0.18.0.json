@@ -1,0 +1,49 @@
+{
+  "version": "0.18.0",
+  "title": {
+    "en": "A tidier downloads menu.",
+    "fr": "Un menu des téléchargements plus net."
+  },
+  "introduction": {
+    "en": "Clear finished downloads right from the sidebar, and extensions such as Bitwarden and Web Highlights work as they should.",
+    "fr": "Effacez les téléchargements terminés directement depuis la barre latérale, et les extensions comme Bitwarden et Web Highlights fonctionnent comme prévu."
+  },
+  "highlights": [
+    {
+      "id": "clear",
+      "title": {
+        "en": "Clear finished downloads.",
+        "fr": "Effacez les téléchargements terminés."
+      },
+      "body": {
+        "en": "You can tidy your downloads without opening the Downloads screen. The downloads menu in the sidebar has a Clear link that removes the finished downloads it lists.",
+        "fr": "Faites le tri dans vos téléchargements sans ouvrir l'écran Téléchargements. Le menu des téléchargements de la barre latérale propose un lien Effacer qui retire les téléchargements terminés qu'il affiche."
+      },
+      "notes": [
+        "The downloads menu in the sidebar has a Clear link that removes the finished downloads it lists"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "title": {
+        "en": "Downloads",
+        "fr": "Téléchargements"
+      },
+      "notes": [
+        "The Downloads screen no longer shows a Space for Quick Look hint next to its title",
+        "File icons on the Downloads screen no longer show over the page title as the list scrolls"
+      ]
+    },
+    {
+      "title": {
+        "en": "Extensions",
+        "fr": "Extensions"
+      },
+      "notes": [
+        "Extensions whose content scripts detect a page's language, or close a port once it answers, such as Web Highlights, now work as in Chrome",
+        "Extensions run their updated background code after Lilo or the extension updates, instead of the copy WebKit cached at install, which left Bitwarden's popup loading forever"
+      ]
+    }
+  ]
+}

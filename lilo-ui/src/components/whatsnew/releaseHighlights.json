@@ -1,4 +1,16 @@
 {
+	"0.18.0": {
+		"headlineKey": "whatsNew.releases.v0180.headline",
+		"descriptionKey": "whatsNew.releases.v0180.description",
+		"highlights": [
+			{
+				"id": "clear",
+				"illustration": "downloads",
+				"titleKey": "whatsNew.releases.v0180.clearTitle",
+				"descriptionKey": "whatsNew.releases.v0180.clearDescription"
+			}
+		]
+	},
 	"0.17.0": {
 		"headlineKey": "whatsNew.releases.v0170.headline",
 		"descriptionKey": "whatsNew.releases.v0170.description",
