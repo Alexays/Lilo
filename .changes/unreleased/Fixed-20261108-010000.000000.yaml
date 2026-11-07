@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions run their updated background code after Lilo or the extension updates, instead of the copy WebKit cached at install, which left Bitwarden's popup loading forever
+time: 2026-11-08T01:00:00.000000+09:00
