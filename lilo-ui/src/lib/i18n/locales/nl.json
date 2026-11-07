@@ -2444,6 +2444,16 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "Rustiger pagina's, lichtere tabbladen.",
+				"description": "Verberg wat in de weg zit, houd cookietoestemming geweigerd en haal meer batterij uit elk tabblad.",
+				"hideTitle": "Verberg wat je niet nodig hebt.",
+				"hideDescription": "Verberg element, in het menu Weergave of het contextmenu van de pagina, verbergt het element waarop je klikt voortaan op die site. Het sitepaneel en Instellingen > Sites tonen wat je hebt verborgen en geven het weer weer.",
+				"cookiesTitle": "Cookietoestemming, voor je geweigerd.",
+				"cookiesDescription": "De contentblokkering accepteert nooit cookies namens jou. Op sites die Didomi, OneTrust, Cookiebot of Usercentrics gebruiken, weigert hij de toestemming via het platform zelf en verbergt hij de cookiemelding.",
+				"batteryTitle": "Zuiniger met je batterij.",
+				"batteryDescription": "Tabbladen op de achtergrond, antwoordende agents en ladende pagina's gebruiken minder CPU en energie. Tabbladen die in de energiebesparingsmodus of bij thermische belasting worden geopend, tekenen op ongeveer 60 fps, ongeacht de instelling voor de verversingssnelheid."
+			},
 			"v0160": {
 				"headline": "Lilo, opnieuw getekend.",
 				"description": "Overal een rustiger uiterlijk, je eigen agents naast je tabbladen en een zijbalk die zichzelf opruimt.",

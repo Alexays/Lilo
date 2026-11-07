@@ -2444,6 +2444,16 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "Pagine più quiete, schede più leggere.",
+				"description": "Nascondi ciò che ti intralcia, mantieni rifiutato il consenso ai cookie e ottieni più batteria da ogni scheda.",
+				"hideTitle": "Nascondi ciò che non ti serve.",
+				"hideDescription": "Nascondi elemento, nel menu Vista o nel menu contestuale della pagina, nasconde l'elemento su cui fai clic in quel sito da quel momento in poi. Il pannello del sito e Impostazioni > Siti elencano ciò che hai nascosto e lo mostrano di nuovo.",
+				"cookiesTitle": "Consenso ai cookie, rifiutato per te.",
+				"cookiesDescription": "Il blocco contenuti non accetta mai i cookie al posto tuo. Sui siti che usano Didomi, OneTrust, Cookiebot o Usercentrics, rifiuta il consenso tramite la piattaforma stessa e nasconde l'avviso sui cookie.",
+				"batteryTitle": "Più leggero sulla batteria.",
+				"batteryDescription": "Le schede in background, gli agenti che rispondono e le pagine in caricamento usano meno CPU ed energia. Le schede aperte in modalità Risparmio energetico o sotto stress termico vengono disegnate a circa 60 fps, qualunque sia l'impostazione della frequenza di aggiornamento."
+			},
 			"v0160": {
 				"headline": "Lilo, ridisegnato.",
 				"description": "Un aspetto più calmo ovunque, i tuoi agenti accanto alle schede e una barra laterale che si riordina da sola.",

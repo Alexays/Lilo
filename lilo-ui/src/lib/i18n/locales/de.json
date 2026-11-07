@@ -2444,6 +2444,16 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "Ruhigere Seiten, leichtere Tabs.",
+				"description": "Blende aus, was dich stört, lass die Cookie-Einwilligung abgelehnt und hol aus jedem Tab mehr Akkulaufzeit.",
+				"hideTitle": "Blende aus, was du nicht brauchst.",
+				"hideDescription": "„Element ausblenden“ im Menü „Darstellung“ oder im Kontextmenü der Seite blendet das angeklickte Element auf dieser Website ab sofort aus. Die Website-Leiste und Einstellungen > Websites listen, was du ausgeblendet hast, und zeigen es wieder an.",
+				"cookiesTitle": "Cookie-Einwilligung, für dich abgelehnt.",
+				"cookiesDescription": "Der Inhaltsblocker akzeptiert Cookies nie in deinem Namen. Auf Websites mit Didomi, OneTrust, Cookiebot oder Usercentrics lehnt er die Einwilligung über die Plattform selbst ab und blendet den Cookie-Hinweis aus.",
+				"batteryTitle": "Schonender für deinen Akku.",
+				"batteryDescription": "Hintergrund-Tabs, antwortende Agenten und ladende Seiten brauchen weniger CPU und Energie. Im Stromsparmodus oder bei thermischer Last geöffnete Tabs zeichnen mit etwa 60 fps, unabhängig von der Einstellung zur Bildwiederholrate."
+			},
 			"v0160": {
 				"headline": "Lilo, neu gezeichnet.",
 				"description": "Überall ein ruhigeres Design, deine eigenen Agenten neben deinen Tabs und eine Seitenleiste, die sich selbst aufräumt.",

@@ -2444,6 +2444,16 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "Daha sakin sayfalar, daha hafif sekmeler.",
+				"description": "Sizi rahatsız edeni gizleyin, çerez onayını reddedilmiş tutun ve her sekmeden daha fazla pil ömrü alın.",
+				"hideTitle": "İhtiyacınız olmayanı gizleyin.",
+				"hideDescription": "Görüntü menüsündeki veya sayfanın bağlam menüsündeki Öğeyi Gizle, tıkladığınız öğeyi o sitede bundan sonra gizler. Site çekmecesi ve Ayarlar > Siteler gizlediklerinizi listeler ve yeniden gösterir.",
+				"cookiesTitle": "Çerez onayı, sizin yerinize reddedildi.",
+				"cookiesDescription": "İçerik engelleyici çerezleri asla sizin yerinize kabul etmez. Didomi, OneTrust, Cookiebot veya Usercentrics kullanan sitelerde onayı platformun kendisi üzerinden reddeder ve çerez bildirimini gizler.",
+				"batteryTitle": "Pilinize daha nazik.",
+				"batteryDescription": "Arka plandaki sekmeler, yanıt veren ajanlar ve yüklenen sayfalar daha az CPU ve enerji kullanır. Düşük Güç Modu'nda veya ısıl baskı altında açılan sekmeler, yenileme hızı ayarından bağımsız olarak yaklaşık 60 fps ile çizilir."
+			},
 			"v0160": {
 				"headline": "Lilo, yeniden çizildi.",
 				"description": "Her yerde daha sakin bir görünüm, sekmelerinizin yanında kendi ajanlarınız ve kendini toparlayan bir kenar çubuğu.",

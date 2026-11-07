@@ -2444,6 +2444,16 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "Páginas mais calmas, abas mais leves.",
+				"description": "Oculte o que atrapalha, mantenha o consentimento de cookies recusado e tire mais bateria de cada aba.",
+				"hideTitle": "Oculte o que você não precisa.",
+				"hideDescription": "Ocultar Elemento, no menu Visualizar ou no menu de contexto da página, oculta o elemento em que você clica naquele site daí em diante. O painel do site e Ajustes > Sites listam o que você ocultou e o mostram de novo.",
+				"cookiesTitle": "Consentimento de cookies, recusado por você.",
+				"cookiesDescription": "O bloqueador de conteúdo nunca aceita cookies por você. Em sites que usam Didomi, OneTrust, Cookiebot ou Usercentrics, ele recusa o consentimento pela própria plataforma e oculta o aviso de cookies.",
+				"batteryTitle": "Mais leve para a bateria.",
+				"batteryDescription": "Abas em segundo plano, agentes respondendo e páginas carregando usam menos CPU e energia. Abas abertas no Modo de Pouca Energia ou sob pressão térmica são desenhadas a cerca de 60 fps, seja qual for o ajuste de taxa de atualização."
+			},
 			"v0160": {
 				"headline": "Lilo, redesenhado.",
 				"description": "Um visual mais calmo em toda parte, seus próprios agentes ao lado das abas e uma barra lateral que se organiza sozinha.",

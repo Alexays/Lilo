@@ -2490,6 +2490,16 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "Spokojniejsze strony, lżejsze karty.",
+				"description": "Ukryj to, co przeszkadza, zachowaj odmowę zgody na pliki cookie i wydobądź więcej baterii z każdej karty.",
+				"hideTitle": "Ukryj to, czego nie potrzebujesz.",
+				"hideDescription": "Ukryj element w menu Widok lub w menu kontekstowym strony ukrywa kliknięty element na tej witrynie od tej pory. Panel witryny oraz Ustawienia > Witryny pokazują, co zostało ukryte, i pozwalają to przywrócić.",
+				"cookiesTitle": "Zgoda na cookie, odrzucona za Ciebie.",
+				"cookiesDescription": "Bloker treści nigdy nie akceptuje plików cookie w Twoim imieniu. Na witrynach korzystających z Didomi, OneTrust, Cookiebot lub Usercentrics odmawia zgody przez samą platformę i ukrywa komunikat o plikach cookie.",
+				"batteryTitle": "Łagodniej dla baterii.",
+				"batteryDescription": "Karty w tle, odpowiadające agenty i wczytywane strony zużywają mniej procesora i energii. Karty otwarte w trybie niskiego zużycia energii lub przy obciążeniu termicznym renderują się w około 60 kl./s, niezależnie od ustawienia częstotliwości odświeżania."
+			},
 			"v0160": {
 				"headline": "Lilo, narysowane na nowo.",
 				"description": "Spokojniejszy wygląd wszędzie, własni agenci obok kart i pasek boczny, który sam się porządkuje.",

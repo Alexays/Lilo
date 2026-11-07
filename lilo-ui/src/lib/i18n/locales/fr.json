@@ -2433,6 +2433,16 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0170": {
+				"headline": "Des pages plus calmes, des onglets plus légers.",
+				"description": "Masquez ce qui vous gêne, gardez le consentement aux cookies refusé et tirez plus de batterie de chaque onglet.",
+				"hideTitle": "Masquez ce qui vous gêne.",
+				"hideDescription": "Masquer l'élément, dans le menu Présentation ou le menu contextuel de la page, masque l'élément sur lequel vous cliquez, sur ce site et pour la suite. Le tiroir du site et Réglages > Sites listent ce que vous avez masqué et le réaffichent.",
+				"cookiesTitle": "Le consentement aux cookies, refusé pour vous.",
+				"cookiesDescription": "Le bloqueur de contenu n'accepte jamais les cookies à votre place. Sur les sites qui utilisent Didomi, OneTrust, Cookiebot ou Usercentrics, il refuse le consentement par la plateforme elle-même et masque la bannière de cookies.",
+				"batteryTitle": "Plus doux pour votre batterie.",
+				"batteryDescription": "Les onglets en arrière-plan, les agents qui répondent et les pages qui se chargent consomment moins de processeur et d'énergie. Les onglets ouverts en mode Économie d'énergie ou sous contrainte thermique s'affichent à environ 60 i/s, quel que soit le réglage de fréquence."
+			},
 			"v0160": {
 				"headline": "Lilo, redessiné.",
 				"description": "Un style plus calme partout, vos propres agents à côté de vos onglets, et une barre latérale qui se range toute seule.",

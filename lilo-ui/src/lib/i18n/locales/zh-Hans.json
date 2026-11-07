@@ -2444,6 +2444,16 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "更安静的页面，更轻盈的标签页。",
+				"description": "隐藏碍事的内容，让 Cookie 同意保持拒绝，让每个标签页都更省电。",
+				"hideTitle": "隐藏你不需要的内容。",
+				"hideDescription": "“显示”菜单或页面上下文菜单中的“隐藏元素”会在该网站上从此隐藏你点按的元素。网站抽屉和“设置”>“网站”会列出你隐藏的内容，并可重新显示。",
+				"cookiesTitle": "Cookie 同意，替你拒绝。",
+				"cookiesDescription": "内容拦截器从不替你接受 Cookie。在使用 Didomi、OneTrust、Cookiebot 或 Usercentrics 的网站上，它会通过平台本身拒绝同意，并隐藏 Cookie 提示。",
+				"batteryTitle": "更省电。",
+				"batteryDescription": "后台标签页、正在回复的智能体和正在加载的页面占用更少的 CPU 和电量。在低电量模式或过热时打开的标签页以约 60 fps 渲染，与刷新率设置无关。"
+			},
 			"v0160": {
 				"headline": "Lilo，焕然一新。",
 				"description": "处处更沉静的外观，标签页旁边是你自己的智能体，侧边栏也会自己整理。",

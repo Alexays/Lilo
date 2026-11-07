@@ -2444,6 +2444,16 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "Páginas más tranquilas, pestañas más ligeras.",
+				"description": "Oculta lo que te estorba, mantén rechazado el consentimiento de cookies y saca más batería de cada pestaña.",
+				"hideTitle": "Oculta lo que no necesitas.",
+				"hideDescription": "Ocultar elemento, en el menú Visualización o en el menú contextual de la página, oculta el elemento en el que haces clic en ese sitio a partir de entonces. El panel del sitio y Ajustes > Sitios muestran lo que ocultaste y lo vuelven a mostrar.",
+				"cookiesTitle": "Consentimiento de cookies, rechazado por ti.",
+				"cookiesDescription": "El bloqueador de contenido nunca acepta cookies por ti. En los sitios que usan Didomi, OneTrust, Cookiebot o Usercentrics, rechaza el consentimiento a través de la propia plataforma y oculta el aviso de cookies.",
+				"batteryTitle": "Más suave con tu batería.",
+				"batteryDescription": "Las pestañas en segundo plano, los agentes que responden y las páginas que cargan usan menos CPU y energía. Las pestañas abiertas en modo de bajo consumo o con presión térmica se muestran a unos 60 fps, sea cual sea el ajuste de frecuencia de actualización."
+			},
 			"v0160": {
 				"headline": "Lilo, redibujado.",
 				"description": "Un aspecto más sereno en todas partes, tus propios agentes junto a tus pestañas y una barra lateral que se ordena sola.",

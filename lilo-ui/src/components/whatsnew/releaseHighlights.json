@@ -1,4 +1,25 @@
 {
+	"0.17.0": {
+		"headlineKey": "whatsNew.releases.v0170.headline",
+		"descriptionKey": "whatsNew.releases.v0170.description",
+		"highlights": [
+			{
+				"id": "hide",
+				"titleKey": "whatsNew.releases.v0170.hideTitle",
+				"descriptionKey": "whatsNew.releases.v0170.hideDescription"
+			},
+			{
+				"id": "cookies",
+				"titleKey": "whatsNew.releases.v0170.cookiesTitle",
+				"descriptionKey": "whatsNew.releases.v0170.cookiesDescription"
+			},
+			{
+				"id": "battery",
+				"titleKey": "whatsNew.releases.v0170.batteryTitle",
+				"descriptionKey": "whatsNew.releases.v0170.batteryDescription"
+			}
+		]
+	},
 	"0.16.0": {
 		"headlineKey": "whatsNew.releases.v0160.headline",
 		"descriptionKey": "whatsNew.releases.v0160.description",

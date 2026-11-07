@@ -2444,6 +2444,16 @@
 			"chat": "團隊聊天"
 		},
 		"releases": {
+			"v0170": {
+				"headline": "更安靜的頁面，更輕盈的標籤頁。",
+				"description": "隱藏礙事的內容，讓 Cookie 同意維持拒絕，讓每個標籤頁都更省電。",
+				"hideTitle": "隱藏你不需要的內容。",
+				"hideDescription": "「顯示方式」選單或頁面快顯選單中的「隱藏元素」會在該網站上從此隱藏你點按的元素。網站抽屜和「設定」>「網站」會列出你隱藏的內容，並可重新顯示。",
+				"cookiesTitle": "Cookie 同意，替你拒絕。",
+				"cookiesDescription": "內容阻擋器從不替你接受 Cookie。在使用 Didomi、OneTrust、Cookiebot 或 Usercentrics 的網站上，它會透過平台本身拒絕同意，並隱藏 Cookie 提示。",
+				"batteryTitle": "更省電。",
+				"batteryDescription": "背景標籤頁、正在回覆的代理程式和正在載入的頁面使用更少的 CPU 和電力。在低耗電模式或過熱時開啟的標籤頁以約 60 fps 繪製，與重新整理頻率設定無關。"
+			},
 			"v0160": {
 				"headline": "Lilo，煥然一新。",
 				"description": "處處更沉靜的外觀，分頁旁邊是你自己的代理程式，側邊欄也會自己整理。",

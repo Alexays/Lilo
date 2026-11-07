@@ -2433,6 +2433,16 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0170": {
+				"headline": "Quieter pages, lighter tabs.",
+				"description": "Hide what gets in your way, keep cookie consent refused, and get more battery out of every tab.",
+				"hideTitle": "Hide what you don't need.",
+				"hideDescription": "Hide Element, in the View menu or the page's context menu, hides the element you click on that site from then on. The Site drawer and Settings > Sites list what you hid and show it again.",
+				"cookiesTitle": "Cookie consent, refused for you.",
+				"cookiesDescription": "The content blocker never accepts cookie consent for you. On sites using Didomi, OneTrust, Cookiebot or Usercentrics, it refuses consent through the platform itself and hides the cookie notice.",
+				"batteryTitle": "Easier on your battery.",
+				"batteryDescription": "Background tabs, streaming agents and loading pages use less CPU and energy. Tabs opened in Low Power Mode or under thermal pressure render at about 60 fps, whatever the full refresh rate setting."
+			},
 			"v0160": {
 				"headline": "Lilo, redrawn.",
 				"description": "A calmer look everywhere, your own agents beside your tabs, and a sidebar that tidies itself.",
