@@ -42,6 +42,7 @@
   import MenuPicker from "./MenuPicker.svelte";
   import PermissionButtons from "./PermissionButtons.svelte";
   import PromptField, { type AttachmentDraft } from "./PromptField.svelte";
+  import SignInCard from "./SignInCard.svelte";
   import ThreadRow, { type TurnSummary } from "./ThreadRow.svelte";
   import { formatDuration, itemSignature } from "./threadView";
   import WorkBlock from "./WorkBlock.svelte";
@@ -542,7 +543,9 @@
               </div>
             {/each}
             <!-- Where the reply appears, right under the prompt: what the agent is doing reads where the eye is. -->
-            {#if working && turnIndex === turns.length - 1}
+            {#if working && turnIndex === turns.length - 1 && header.signingIn?.screen}
+              <SignInCard {tabId} agentId={header.agentId} agentName={header.agentName} screen={header.signingIn.screen} />
+            {:else if working && turnIndex === turns.length - 1}
               <div class="activity" role="status" in:fade={{ duration: prefersReducedMotion() ? 0 : 120 }}>
                 {#if asking}
                   <span class="pip" aria-hidden="true"></span>

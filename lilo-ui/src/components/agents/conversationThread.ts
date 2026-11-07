@@ -14,6 +14,13 @@ import {
 	type ToolCallFields,
 } from "./conversationModel";
 
+/** What an agent's terminal sign-in asks, read from the screen of the terminal Lilo runs it on. */
+export interface SignInScreen {
+	lines: string[];
+	question: string;
+	choices: { key: string; label: string }[];
+}
+
 export interface SessionMode {
 	id: string;
 	name: string;
@@ -35,8 +42,8 @@ export interface OpenConversation {
 	error: string | null;
 	/** The agent's sign-in methods, offered after it asked for one. */
 	authMethods: { id: string; name: string; description: string | null }[];
-	/** A sign-in the sent prompt waits on: in a terminal tab Lilo opened, or through the agent. */
-	signingIn: { terminal: boolean } | null;
+	/** A sign-in the sent prompt waits on: in a terminal, or through the agent. `screen` is set while the thread draws the terminal's. */
+	signingIn: { terminal: boolean; screen: SignInScreen | null } | null;
 	/** Prompts already drawn by `addLocalPrompt`, oldest first: Lilo's echo of each is skipped. */
 	localPrompts: string[];
 }
@@ -108,9 +115,18 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 			conversation.signingIn = null;
 			break;
 		case "lilo_signing_in":
-			conversation.signingIn = { terminal: update.terminal === true };
+			conversation.signingIn = { terminal: update.terminal === true, screen: null };
 			conversation.error = null;
 			conversation.authMethods = [];
+			break;
+		case "lilo_sign_in_screen":
+			if (conversation.signingIn) {
+				conversation.signingIn.screen = {
+					lines: (update.lines as string[] | undefined) ?? [],
+					question: String(update.question ?? ""),
+					choices: (update.choices as SignInScreen["choices"] | undefined) ?? [],
+				};
+			}
 			break;
 		case "lilo_checkpoint":
 			conversation.checkpoints[Number(update.index)] = true;

@@ -2721,7 +2721,11 @@
 			"stopHint": "Esc para parar",
 			"signingIn": "Entrando em {agent}",
 			"signingInHint": "Sua mensagem é enviada assim que você entrar.",
-			"signingInTerminalHint": "Entre na aba de terminal que o Lilo abriu. Depois sua mensagem é enviada."
+			"signingInTerminalHint": "Entre na aba de terminal que o Lilo abriu. Depois sua mensagem é enviada.",
+			"signInAnswer": "Resposta para o login",
+			"signInPlaceholder": "Cole o código ou digite uma resposta",
+			"signInSend": "Enviar",
+			"signInOpenTerminal": "Abrir no terminal"
 		},
 		"work": {
 			"images": {

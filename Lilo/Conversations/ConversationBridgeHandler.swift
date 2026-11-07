@@ -8,7 +8,8 @@ final class ConversationBridgeHandler: BridgeHandler {
         "startConversation", "sendConversationPrompt", "cancelConversation", "answerConversation",
         "setConversationMode", "setConversationConfig", "showConversation", "restoreConversation",
         "undoConversationFile", "loadAgentCatalog", "loadConversations", "chooseConversationProject",
-        "openConversationChanges", "authenticateConversation", "searchConversationFiles", "previewConversationArtifact"
+        "openConversationChanges", "authenticateConversation", "answerConversationSignIn", "openConversationSignInTerminal",
+        "searchConversationFiles", "previewConversationArtifact"
     ]
 
     private weak var window: MainWindowController?
@@ -80,6 +81,10 @@ final class ConversationBridgeHandler: BridgeHandler {
             window.previewArtifact(code, language: payload["language"] as? String ?? "html", forConversation: tabId)
         case "authenticateConversation":
             if let tabId, let methodId = payload["methodId"] as? String { host.authenticate(tabId, methodId: methodId) }
+        case "answerConversationSignIn":
+            if let tabId, let text = payload["text"] as? String { host.answerSignIn(tabId, text: text) }
+        case "openConversationSignInTerminal":
+            if let tabId { host.openSignInTerminal(tabId) }
         case "openConversationChanges":
             if let tabId { window.openChanges(forConversation: tabId) }
         default:

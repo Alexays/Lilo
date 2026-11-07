@@ -18,4 +18,6 @@ export const conversationActions = {
 	openChanges: (tabId: string): void => emit("openConversationChanges", { tabId }),
 	previewArtifact: (tabId: string, code: string, language: string): void => emit("previewConversationArtifact", { tabId, code, language }),
 	authenticate: (tabId: string, methodId: string): void => emit("authenticateConversation", { tabId, methodId }),
+	answerSignIn: (tabId: string, text: string): void => emit("answerConversationSignIn", { tabId, text }),
+	openSignInTerminal: (tabId: string): void => emit("openConversationSignInTerminal", { tabId }),
 };

@@ -2721,7 +2721,11 @@
 			"stopHint": "Esc zum Stoppen",
 			"signingIn": "Anmeldung bei {agent}",
 			"signingInHint": "Deine Nachricht wird gesendet, sobald du angemeldet bist.",
-			"signingInTerminalHint": "Melde dich im Terminal-Tab an, den Lilo geöffnet hat. Danach wird deine Nachricht gesendet."
+			"signingInTerminalHint": "Melde dich im Terminal-Tab an, den Lilo geöffnet hat. Danach wird deine Nachricht gesendet.",
+			"signInAnswer": "Antwort für die Anmeldung",
+			"signInPlaceholder": "Code einfügen oder Antwort eingeben",
+			"signInSend": "Senden",
+			"signInOpenTerminal": "Im Terminal öffnen"
 		},
 		"work": {
 			"images": {

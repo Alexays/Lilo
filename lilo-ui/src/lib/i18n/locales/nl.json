@@ -2721,7 +2721,11 @@
 			"stopHint": "Esc om te stoppen",
 			"signingIn": "Inloggen bij {agent}",
 			"signingInHint": "Je bericht wordt verstuurd zodra je bent ingelogd.",
-			"signingInTerminalHint": "Log in in het terminaltabblad dat Lilo heeft geopend. Daarna wordt je bericht verstuurd."
+			"signingInTerminalHint": "Log in in het terminaltabblad dat Lilo heeft geopend. Daarna wordt je bericht verstuurd.",
+			"signInAnswer": "Antwoord voor het inloggen",
+			"signInPlaceholder": "Plak de code of typ een antwoord",
+			"signInSend": "Verstuur",
+			"signInOpenTerminal": "Open in terminal"
 		},
 		"work": {
 			"images": {

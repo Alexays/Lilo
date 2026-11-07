@@ -2710,7 +2710,11 @@
 			"stopHint": "Échap pour arrêter",
 			"signingIn": "Connexion à {agent}",
 			"signingInHint": "Votre message part dès que vous êtes connecté.",
-			"signingInTerminalHint": "Connectez-vous dans l'onglet terminal ouvert par Lilo. Votre message part ensuite."
+			"signingInTerminalHint": "Connectez-vous dans l'onglet terminal ouvert par Lilo. Votre message part ensuite.",
+			"signInAnswer": "Réponse à la connexion",
+			"signInPlaceholder": "Collez le code ou tapez une réponse",
+			"signInSend": "Envoyer",
+			"signInOpenTerminal": "Ouvrir dans un terminal"
 		},
 		"work": {
 			"images": {

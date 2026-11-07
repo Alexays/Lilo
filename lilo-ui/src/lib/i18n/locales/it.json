@@ -2721,7 +2721,11 @@
 			"stopHint": "Esc per interrompere",
 			"signingIn": "Accesso a {agent}",
 			"signingInHint": "Il messaggio viene inviato appena hai effettuato l'accesso.",
-			"signingInTerminalHint": "Accedi nella scheda terminale aperta da Lilo. Poi il messaggio viene inviato."
+			"signingInTerminalHint": "Accedi nella scheda terminale aperta da Lilo. Poi il messaggio viene inviato.",
+			"signInAnswer": "Risposta per l'accesso",
+			"signInPlaceholder": "Incolla il codice o scrivi una risposta",
+			"signInSend": "Invia",
+			"signInOpenTerminal": "Apri nel terminale"
 		},
 		"work": {
 			"images": {

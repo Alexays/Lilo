@@ -76,3 +76,45 @@ test("a sign-in shows as the reply under the prompt, which waits for it instead 
 	await expect(activity).not.toContainText("Signing in");
 	await expect(activity).toContainText("Working");
 });
+
+test("a terminal sign-in shows its screen as a card in the thread, which answers it", async ({ page }) => {
+	const world = initialWorld();
+	const space = world.activeSpaceId;
+	world.tabsBySpace[space].push(tab("tab-agent", space, { title: "Summarize", kind: "agent" } as never));
+	world.activeTabBySpace[space] = "tab-agent";
+	await bootChrome(page, world);
+	await receive(page, [
+		{ event: "settingsLoaded", settings: { agentsEnabled: "true" } },
+		{ event: "agentCatalog", agents, projects: [], home: "/Users/example" },
+		{
+			event: "conversationsChanged",
+			conversations: [{ tabId: "tab-agent", agentId: "codex-acp", title: "Summarize", state: "busy", unread: false, spaceId: space, spaceName: "Work", running: true }],
+		},
+		{
+			event: "conversationOpened", tabId: "tab-agent", agentId: "codex-acp", cwd: "/Users/example/Code/acme", state: "busy", checkpoints: [],
+			updates: [
+				{ sessionUpdate: "lilo_user", text: "Summarize this page", context: [] },
+				{ sessionUpdate: "lilo_signing_in", terminal: true },
+				{ sessionUpdate: "lilo_sign_in_screen", lines: [], question: "Select a login method:", choices: [{ key: "1", label: "Subscription" }, { key: "2", label: "API key" }] },
+			],
+		},
+	]);
+	const card = page.getByRole("group", { name: "Signing in to Codex" });
+	await expect(card).toContainText("Select a login method:");
+	await card.getByRole("button", { name: "API key" }).click();
+
+	await receive(page, [{
+		event: "conversationUpdate", tabId: "tab-agent",
+		updates: [{ sessionUpdate: "lilo_sign_in_screen", lines: ["Paste code here if prompted >"], question: "", choices: [] }],
+	}]);
+	await card.getByRole("textbox", { name: "Answer to the sign-in" }).fill("code-123");
+	await card.getByRole("button", { name: "Send" }).click();
+	await card.getByRole("button", { name: "Open in Terminal" }).click();
+
+	const answers = (await sentCommands(page)).filter((command) => command.action === "answerConversationSignIn").map((command) => command.payload);
+	expect(answers).toEqual([{ tabId: "tab-agent", text: "2" }, { tabId: "tab-agent", text: "code-123\r" }]);
+	expect((await sentCommands(page)).some((command) => command.action === "openConversationSignInTerminal")).toBe(true);
+
+	await receive(page, [{ event: "conversationUpdate", tabId: "tab-agent", updates: [{ sessionUpdate: "agent_message_chunk", content: { type: "text", text: "Here is the summary." } }] }]);
+	await expect(card).toHaveCount(0);
+});

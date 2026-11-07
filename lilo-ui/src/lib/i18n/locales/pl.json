@@ -2793,7 +2793,11 @@
 			"stopHint": "Esc, aby zatrzymać",
 			"signingIn": "Logowanie do {agent}",
 			"signingInHint": "Wiadomość zostanie wysłana, gdy się zalogujesz.",
-			"signingInTerminalHint": "Zaloguj się w karcie terminala otwartej przez Lilo. Potem wiadomość zostanie wysłana."
+			"signingInTerminalHint": "Zaloguj się w karcie terminala otwartej przez Lilo. Potem wiadomość zostanie wysłana.",
+			"signInAnswer": "Odpowiedź do logowania",
+			"signInPlaceholder": "Wklej kod lub wpisz odpowiedź",
+			"signInSend": "Wyślij",
+			"signInOpenTerminal": "Otwórz w terminalu"
 		},
 		"work": {
 			"images": {

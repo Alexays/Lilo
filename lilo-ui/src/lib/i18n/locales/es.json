@@ -2721,7 +2721,11 @@
 			"stopHint": "Esc para detener",
 			"signingIn": "Iniciando sesión en {agent}",
 			"signingInHint": "Tu mensaje se envía en cuanto inicies sesión.",
-			"signingInTerminalHint": "Inicia sesión en la pestaña de terminal que abrió Lilo. Después se envía tu mensaje."
+			"signingInTerminalHint": "Inicia sesión en la pestaña de terminal que abrió Lilo. Después se envía tu mensaje.",
+			"signInAnswer": "Respuesta para el inicio de sesión",
+			"signInPlaceholder": "Pega el código o escribe una respuesta",
+			"signInSend": "Enviar",
+			"signInOpenTerminal": "Abrir en el terminal"
 		},
 		"work": {
 			"images": {

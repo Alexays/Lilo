@@ -33,6 +33,9 @@ final class ConversationHost {
         var awaitingSignIn: [[String: Any]]?
         /// A sign-in in a terminal was already offered for this prompt: a second refusal shows the error.
         var signInOffered = false
+        /// The agent's terminal sign-in, run on a terminal no tab shows, and what its screen last asked.
+        var signIn: TerminalSession?
+        var signInPrompt: TerminalSession.Prompt?
         /// The project's files when each prompt was sent, by prompt index: what "Restore to here" goes back to.
         var checkpoints: [String?] = []
         var canLoadSession = false
@@ -121,6 +124,7 @@ final class ConversationHost {
         conversation.idleStop?.cancel()
         conversation.starting?.cancel()
         conversation.connection?.terminate()
+        stopSignIn(conversation)
         for key in shown.keys { shown[key]?.remove(tabId) }
         withdrawNotification(tabId)
         scheduleSummary()
@@ -133,6 +137,7 @@ final class ConversationHost {
     func stopAll() {
         for conversation in conversations.values {
             conversation.connection?.terminate()
+            stopSignIn(conversation)
             if conversation.restored { save(conversation, synchronously: true) }
         }
         let gone = closed.filter { context?.browserState.durableTab(for: $0) == nil }.map(threadFile)
@@ -225,6 +230,8 @@ final class ConversationHost {
             "checkpoints": conversation.checkpoints.map { $0 != nil }
         ]
         if let error = conversation.lastError { data["error"] = error }
+        // The sign-in screen stays out of the log: it is live, and may show a code.
+        if let prompt = conversation.signInPrompt { data["updates"] = conversation.log.map(\.value) + [Self.signInScreen(prompt)] }
         return data
     }
 
@@ -258,6 +265,11 @@ final class ConversationHost {
         } else {
             conversation.log.append(ACPConnection.Payload(value: update))
         }
+        broadcast(conversation, update)
+    }
+
+    /// Sends an update to the windows showing the conversation.
+    private func broadcast(_ conversation: Conversation, _ update: [String: Any]) {
         guard let windows = context?.windows.windows else { return }
         for window in windows where shown[ObjectIdentifier(window)]?.contains(conversation.tabId) == true {
             window.bridgeRouter.send(event: "conversationUpdate", data: ["tabId": conversation.tabId.uuidString, "updates": [update]])
@@ -359,7 +371,7 @@ final class ConversationHost {
         persistSession(conversation)
     }
 
-    /// The prompt waits on a sign-in in a terminal tab; `terminalFinished` sends it again.
+    /// The prompt waits on a sign-in in a terminal; `signInFinished` sends it again.
     private struct SignInPending: Error {}
 
     /// A request an agent refuses for want of a sign-in: Lilo signs in with the method the agent handles
@@ -378,16 +390,15 @@ final class ConversationHost {
             }
             if !conversation.signInOffered, let method = conversation.authMethods.first(where: { $0["type"] as? String == "terminal" }) {
                 conversation.signInOffered = true
-                signInInTerminal(conversation, method: method)
-                append(conversation, ["sessionUpdate": "lilo_signing_in", "terminal": true])
+                signInInline(conversation, method: method)
                 throw SignInPending()
             }
             throw error
         }
     }
 
-    /// Runs the agent's own sign-in, its launch command with the method's arguments, in a terminal tab.
-    /// A tab that cannot open drops the prompt the sign-in held, as nothing would ever send it.
+    /// Runs the agent's own sign-in, its launch command with the method's arguments, in a terminal tab:
+    /// where a sign-in the thread cannot follow goes.
     private func signInInTerminal(_ conversation: Conversation, method: [String: Any]) {
         Task {
             if let agent = catalog.agent(id: conversation.agentId), let window = context?.windows.activeWindow,
@@ -399,19 +410,110 @@ final class ConversationHost {
                     return
                 }
             }
-            conversation.awaitingSignIn = nil
-            conversation.queued.removeAll()
-            conversation.lastError = "The sign-in terminal could not open.".localized
-            append(conversation, ["sessionUpdate": "lilo_error", "message": conversation.lastError ?? ""])
-            setState(conversation, .failed)
+            signInFailed(conversation)
         }
     }
 
-    /// A terminal's command ended or its tab closed: a sign-in run there is done, so the prompt it held
-    /// goes again, to a fresh agent that reads the new credentials.
+    /// Runs the agent's own sign-in, its launch command with the method's arguments, on a terminal no tab
+    /// shows: the thread draws what its screen asks and types the answers given there.
+    private func signInInline(_ conversation: Conversation, method: [String: Any]) {
+        stopSignIn(conversation)
+        setState(conversation, .busy)
+        append(conversation, ["sessionUpdate": "lilo_signing_in", "terminal": true])
+        let tabId = conversation.tabId
+        Task { [weak self] in
+            guard let self else { return }
+            guard let agent = catalog.agent(id: conversation.agentId), let launch = try? await catalog.launch(agent),
+                  conversations[tabId] === conversation else { return signInFailed(conversation) }
+            // Wide enough that a sign-in link stays on one line.
+            let session = TerminalSession(
+                cwd: conversation.cwd, cols: 400, rows: 50,
+                command: ["/usr/bin/env", "PATH=" + (launch.environment["PATH"] ?? "")] + [launch.executable.path] + launch.arguments
+                    + (method["args"] as? [String] ?? [])
+            )
+            session.onStatusChange = { [weak self, weak session] status in
+                guard status.state == .exited, let self, let conversation = conversations[tabId], let session,
+                      conversation.signIn === session else { return }
+                conversation.signIn = nil
+                conversation.signInPrompt = nil
+                signInFinished(conversation)
+            }
+            // One read of the screen per burst of output, not per batch.
+            let pending = OSAllocatedUnfairLock(initialState: false)
+            session.onOutput = { [weak self] in
+                guard !pending.withLock({ defer { $0 = true }; return $0 }) else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    pending.withLock { $0 = false }
+                    MainActor.assumeIsolated { self?.signInScreenChanged(tabId) }
+                }
+            }
+            conversation.signIn = session
+            do {
+                try session.start()
+            } catch {
+                conversation.signIn = nil
+                signInFailed(conversation)
+            }
+        }
+    }
+
+    private func signInScreenChanged(_ tabId: UUID) {
+        guard let conversation = conversations[tabId], let prompt = conversation.signIn?.prompt(),
+              prompt != conversation.signInPrompt else { return }
+        conversation.signInPrompt = prompt
+        broadcast(conversation, Self.signInScreen(prompt))
+    }
+
+    private static func signInScreen(_ prompt: TerminalSession.Prompt) -> [String: Any] {
+        ["sessionUpdate": "lilo_sign_in_screen", "lines": prompt.lines, "question": prompt.question,
+         "choices": prompt.choices.map { ["key": $0.key, "label": $0.label] }]
+    }
+
+    /// Types an answer from the thread into the sign-in: a menu's key, or a line ending with Return.
+    func answerSignIn(_ tabId: UUID, text: String) {
+        guard !text.isEmpty else { return }
+        conversations[tabId]?.signIn?.write(Array(text.utf8))
+    }
+
+    /// Moves a sign-in the thread cannot follow to a terminal tab, started over there.
+    func openSignInTerminal(_ tabId: UUID) {
+        guard let conversation = conversations[tabId], conversation.signIn != nil,
+              let method = conversation.authMethods.first(where: { $0["type"] as? String == "terminal" }) else { return }
+        stopSignIn(conversation)
+        broadcast(conversation, ["sessionUpdate": "lilo_signing_in", "terminal": true])
+        signInInTerminal(conversation, method: method)
+    }
+
+    private func stopSignIn(_ conversation: Conversation) {
+        guard let session = conversation.signIn else { return }
+        conversation.signIn = nil
+        conversation.signInPrompt = nil
+        session.terminate()
+    }
+
+    /// No sign-in could start: the prompt it held is dropped, as nothing would ever send it.
+    private func signInFailed(_ conversation: Conversation) {
+        conversation.awaitingSignIn = nil
+        conversation.queued.removeAll()
+        conversation.lastError = "The sign-in terminal could not open.".localized
+        append(conversation, ["sessionUpdate": "lilo_error", "message": conversation.lastError ?? ""])
+        setState(conversation, .failed)
+    }
+
+    /// A terminal's command ended or its tab closed: a sign-in run there is done.
     func terminalFinished(_ terminalId: UUID) {
-        guard let tabId = signInTerminals.removeValue(forKey: terminalId), let conversation = conversations[tabId],
-              let blocks = conversation.awaitingSignIn else { return }
+        guard let tabId = signInTerminals.removeValue(forKey: terminalId), let conversation = conversations[tabId] else { return }
+        signInFinished(conversation)
+    }
+
+    /// The prompt a sign-in held goes again, to a fresh agent that reads the new credentials.
+    private func signInFinished(_ conversation: Conversation) {
+        guard let blocks = conversation.awaitingSignIn else {
+            conversation.connection?.terminate()
+            conversation.connection = nil
+            if conversation.state == .busy { setState(conversation, .idle) }
+            return
+        }
         conversation.awaitingSignIn = nil
         conversation.connection?.terminate()
         conversation.connection = nil
@@ -466,6 +568,10 @@ final class ConversationHost {
         let heldForSignIn = conversation.awaitingSignIn != nil
         conversation.awaitingSignIn = nil
         conversation.checkpoints.append(nil)
+        if conversation.signIn != nil {
+            conversation.awaitingSignIn = blocks
+            return
+        }
         let index = conversation.checkpoints.count - 1
         if conversation.state == .busy, !heldForSignIn {
             if interrupt {
@@ -549,12 +655,12 @@ final class ConversationHost {
         scheduleIdleStop(conversation)
     }
 
-    /// Signs in with one of the agent's methods: in a terminal tab for a `terminal` one, else through the agent.
+    /// Signs in with one of the agent's methods: on a hidden terminal for a `terminal` one, else through the agent.
     func authenticate(_ tabId: UUID, methodId: String) {
         guard let conversation = conversations[tabId],
               let method = conversation.authMethods.first(where: { $0["id"] as? String == methodId }) else { return }
         if method["type"] as? String == "terminal" {
-            signInInTerminal(conversation, method: method)
+            signInInline(conversation, method: method)
             return
         }
         Task {
@@ -576,16 +682,9 @@ final class ConversationHost {
     }
 
     /// Starting the agent or a request outside a turn failed: the thread says why, unless the conversation is gone.
-    /// A running turn reports it itself, and keeps the prompt a terminal sign-in holds.
+    /// A running turn reports it itself, and a sign-in ends in `signInFinished`.
     private func failedOutsideTurn(_ conversation: Conversation, _ error: Error) {
-        if error is CancellationError || conversation.state == .busy { return }
-        if error is SignInPending {
-            // No prompt waits on that sign-in, so the next one starts a fresh agent that reads the new credentials.
-            conversation.connection?.terminate()
-            conversation.connection = nil
-            setState(conversation, .idle)
-            return
-        }
+        if error is CancellationError || error is SignInPending || conversation.state == .busy { return }
         conversation.lastError = error.localizedDescription
         append(conversation, ["sessionUpdate": "lilo_error", "message": error.localizedDescription])
         setState(conversation, .failed)
@@ -601,6 +700,7 @@ final class ConversationHost {
         guard let conversation = conversations[tabId] else { return }
         if conversation.awaitingSignIn != nil, conversation.state == .busy {
             conversation.awaitingSignIn = nil
+            stopSignIn(conversation)
             append(conversation, ["sessionUpdate": "lilo_turn_end", "stopReason": "cancelled", "at": Date().timeIntervalSince1970 * 1000])
             setState(conversation, .idle)
             return

@@ -2721,7 +2721,11 @@
 			"stopHint": "Durdurmak için Esc",
 			"signingIn": "{agent} oturumu açılıyor",
 			"signingInHint": "Oturum açtığınızda mesajınız gönderilir.",
-			"signingInTerminalHint": "Lilo'nun açtığı terminal sekmesinde oturum açın. Ardından mesajınız gönderilir."
+			"signingInTerminalHint": "Lilo'nun açtığı terminal sekmesinde oturum açın. Ardından mesajınız gönderilir.",
+			"signInAnswer": "Oturum açma yanıtı",
+			"signInPlaceholder": "Kodu yapıştırın veya bir yanıt yazın",
+			"signInSend": "Gönder",
+			"signInOpenTerminal": "Terminalde aç"
 		},
 		"work": {
 			"images": {

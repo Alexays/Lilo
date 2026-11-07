@@ -2793,7 +2793,11 @@
 			"stopHint": "Esc, щоб зупинити",
 			"signingIn": "Вхід у {agent}",
 			"signingInHint": "Повідомлення надішлеться, щойно ви ввійдете.",
-			"signingInTerminalHint": "Увійдіть у вкладці термінала, яку відкрив Lilo. Потім повідомлення надішлеться."
+			"signingInTerminalHint": "Увійдіть у вкладці термінала, яку відкрив Lilo. Потім повідомлення надішлеться.",
+			"signInAnswer": "Відповідь для входу",
+			"signInPlaceholder": "Вставте код або введіть відповідь",
+			"signInSend": "Надіслати",
+			"signInOpenTerminal": "Відкрити в терміналі"
 		},
 		"work": {
 			"images": {

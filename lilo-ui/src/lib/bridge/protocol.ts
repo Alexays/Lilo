@@ -847,6 +847,10 @@ export interface BridgeCommandPayloadMap {
 	chooseConversationProject: EmptyPayload;
 	openConversationChanges: { tabId: string };
 	authenticateConversation: { tabId: string; methodId: string };
+	/** Types into the agent's sign-in Lilo runs on a hidden terminal: a menu's key, or a line ending with Return. */
+	answerConversationSignIn: { tabId: string; text: string };
+	/** Starts that sign-in over in a terminal tab, for a screen the thread cannot follow. */
+	openConversationSignInTerminal: { tabId: string };
 	/** Files of a project matching `query`, for @ in the composer: answered with `conversationFiles`. */
 	searchConversationFiles: { cwd: string; query: string };
 	/** Opens an HTML or SVG block of the thread as a page beside the conversation. */

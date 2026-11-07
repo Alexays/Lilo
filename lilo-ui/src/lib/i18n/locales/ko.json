@@ -2721,7 +2721,11 @@
 			"stopHint": "Esc로 중지",
 			"signingIn": "{agent}에 로그인하는 중",
 			"signingInHint": "로그인하면 메시지가 전송됩니다.",
-			"signingInTerminalHint": "Lilo가 연 터미널 탭에서 로그인하세요. 완료되면 메시지가 전송됩니다."
+			"signingInTerminalHint": "Lilo가 연 터미널 탭에서 로그인하세요. 완료되면 메시지가 전송됩니다.",
+			"signInAnswer": "로그인 응답",
+			"signInPlaceholder": "코드를 붙여넣거나 답을 입력하세요",
+			"signInSend": "보내기",
+			"signInOpenTerminal": "터미널에서 열기"
 		},
 		"work": {
 			"images": {

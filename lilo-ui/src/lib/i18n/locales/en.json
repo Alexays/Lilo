@@ -2710,7 +2710,11 @@
 			"stopHint": "Esc to stop",
 			"signingIn": "Signing in to {agent}",
 			"signingInHint": "Your message is sent once you are signed in.",
-			"signingInTerminalHint": "Sign in in the terminal tab Lilo opened. Your message is sent once you are done."
+			"signingInTerminalHint": "Sign in in the terminal tab Lilo opened. Your message is sent once you are done.",
+			"signInAnswer": "Answer to the sign-in",
+			"signInPlaceholder": "Paste the code or type an answer",
+			"signInSend": "Send",
+			"signInOpenTerminal": "Open in Terminal"
 		},
 		"work": {
 			"images": {

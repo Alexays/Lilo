@@ -2721,7 +2721,11 @@
 			"stopHint": "Esc で停止",
 			"signingIn": "{agent} にサインイン中",
 			"signingInHint": "サインインが済むとメッセージが送信されます。",
-			"signingInTerminalHint": "Lilo が開いたターミナルタブでサインインしてください。完了するとメッセージが送信されます。"
+			"signingInTerminalHint": "Lilo が開いたターミナルタブでサインインしてください。完了するとメッセージが送信されます。",
+			"signInAnswer": "サインインへの回答",
+			"signInPlaceholder": "コードを貼り付けるか回答を入力",
+			"signInSend": "送信",
+			"signInOpenTerminal": "ターミナルで開く"
 		},
 		"work": {
 			"images": {

@@ -2721,7 +2721,11 @@
 			"stopHint": "按 Esc 停止",
 			"signingIn": "正在登录 {agent}",
 			"signingInHint": "登录后即发送你的消息。",
-			"signingInTerminalHint": "请在 Lilo 打开的终端标签页中登录。完成后即发送你的消息。"
+			"signingInTerminalHint": "请在 Lilo 打开的终端标签页中登录。完成后即发送你的消息。",
+			"signInAnswer": "登录回答",
+			"signInPlaceholder": "粘贴代码或输入回答",
+			"signInSend": "发送",
+			"signInOpenTerminal": "在终端中打开"
 		},
 		"work": {
 			"images": {
