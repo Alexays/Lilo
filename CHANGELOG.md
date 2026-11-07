@@ -4,6 +4,23 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.18.0] - 2026-11-07
+
+### Added
+
+- The downloads menu in the sidebar has a Clear link that removes the finished downloads it lists
+
+### Changed
+
+- The Downloads screen no longer shows a Space for Quick Look hint next to its title
+
+### Fixed
+
+- File icons on the Downloads screen no longer show over the page title as the list scrolls
+- Extensions whose content scripts detect a page's language, or close a port once it answers, such as Web Highlights, now work as in Chrome
+- Extensions run their updated background code after Lilo or the extension updates, instead of the copy WebKit cached at install, which left Bitwarden's popup loading forever
+
+[0.18.0]: https://github.com/Alexays/Lilo/compare/v0.17.0...v0.18.0
 ## [0.17.0] - 2026-11-07
 
 ### Added
