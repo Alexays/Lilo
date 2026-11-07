@@ -204,6 +204,11 @@ final class BackgroundSupervisor {
             if worker(extensionId) == .running { return }
             try? await Task.sleep(for: .milliseconds(100))
         }
+        // A load that started during the wait owns the worker: restarting would kill it mid-evaluation.
+        guard !isLoadInFlight(extensionId) else {
+            await load(extensionId)
+            return
+        }
         if await !restart(extensionId) { await fullReload(extensionId) }
     }
 
