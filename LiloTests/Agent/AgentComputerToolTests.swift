@@ -143,6 +143,24 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertEqual(clicks, 0, "the click after Stop never happens")
     }
 
+    func testStoppingAConversationAnswersItsAgentsRunningCall() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        let session = try XCTUnwrap(control.sessions.first)
+        let conversation = UUID()
+        session.conversationTabId = conversation
+        let started = Date()
+        let call = Task { [client] in
+            await client!.callTool("computer", ["tabId": tab, "action": "wait", "duration": 10])
+        }
+        await pollUntil(timeout: 5) { session.activeCalls == 1 }
+
+        control.stopCalls(ofConversation: conversation)
+        let reply = await call.value
+
+        XCTAssertTrue(reply.isError, "the agent hears its call ended")
+        XCTAssertLessThan(Date().timeIntervalSince(started), 8, "the call ends at once, not when its wait is over")
+    }
+
     func testScrollMovesPage() async throws {
         let tab = try await agentTab(showing: Self.page)
 

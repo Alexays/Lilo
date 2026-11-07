@@ -721,6 +721,7 @@ final class ConversationHost {
         }
         conversation.cancelling = true
         conversation.connection?.notify("session/cancel", ["sessionId": sessionId])
+        context?.agentControl.stopCalls(ofConversation: tabId)
     }
 
     /// An agent with nothing to do stops after a while; one that cannot resume a session never does,

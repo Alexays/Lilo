@@ -120,6 +120,19 @@ final class AgentControl {
         return words.map { ["ai": "AI", "cli": "CLI", "ide": "IDE", "vscode": "VS Code"][$0] ?? $0.capitalized }.joined(separator: " ")
     }
 
+    /// The user stopped a conversation's turn: its agent's Lilo tools stop too, and each answers with an
+    /// error, as the agent's turn waits on them to end.
+    func stopCalls(ofConversation tabId: UUID) {
+        for session in sessions where session.conversationTabId == tabId {
+            for (id, request) in session.requests {
+                request.cancel()
+                let reply: [String: Any] = ["jsonrpc": "2.0", "id": id.base, "error": ["code": -32800, "message": "The user stopped the agent"]]
+                if let line = AgentConnection.line(reply) { session.connection.send(line) }
+            }
+            session.requests.removeAll()
+        }
+    }
+
     /// Stopped for good: no reconnection takes the sessions back.
     func stopAll() {
         for session in sessions {
