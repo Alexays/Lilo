@@ -285,9 +285,7 @@ extension TerminalView {
                 guard let line = terminal.line(row: row) else { return [] }
                 var column = 0
                 return line.text.map { character in
-                    // Wide characters (CJK, emoji) take two columns.
-                    let scalar = character.unicodeScalars.first ?? " "
-                    let columns = scalar.properties.isEmojiPresentation ? 2 : max(1, Int(wcwidth(wchar_t(scalar.value))))
+                    let columns = max(1, terminal.columns(of: character))
                     defer { column += columns }
                     return (character, line.top + column / width, column % width, columns, home)
                 }
@@ -300,7 +298,9 @@ extension TerminalView {
             var line = glyphs(of: cell.y, home: true)
             while reachesEdge(line), let last = line.last?.row, last + 1 < terminal.rows {
                 let next = glyphs(of: last + 1).drop { $0.character.isWhitespace }
-                guard !next.isEmpty else { break }
+                // Widths counted short of the terminal's put the line's end a row early: the next row
+                // is then this same line, which would join itself forever.
+                guard let first = next.first?.row, first > last else { break }
                 line += next
             }
             while let top = line.first?.row, top > 0 {

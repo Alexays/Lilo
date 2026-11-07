@@ -646,6 +646,16 @@ extension VTTerminal {
         }
     }
 
+    /// The columns `character` takes on the grid, by the terminal's own width table: per codepoint,
+    /// or per grapheme cluster once a program turns on mode 2027.
+    func columns(of character: Character) -> Int {
+        let codepoints = character.unicodeScalars.map(\.value)
+        guard mode(2027) else { return codepoints.reduce(0) { $0 + Int(ghostty_unicode_codepoint_width($1)) } }
+        var width: UInt8 = 0
+        _ = unsafe ghostty_unicode_grapheme_width(codepoints, codepoints.count, &width)
+        return Int(width)
+    }
+
     /// The OSC 8 hyperlink of a viewport cell, and the columns carrying it on each row of the run of
     /// consecutive rows that do.
     func hyperlink(row: Int, column: Int) -> (uri: String, rows: [Int: ClosedRange<Int>])? {
