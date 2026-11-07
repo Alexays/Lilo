@@ -35,8 +35,9 @@ website keeps the entry out of sight until its release is published. Review it f
 person can judge. The tool checks that every note has a place and quotes it exactly, not that the
 story is the right one.
 
-An entry never holds a release back. Without one, `make release-version` warns and What's New shows
-the complete notes. A missing entry can be drafted after the release with `RELEASE=x.y.z`; merging it
+`make release-status` warns when a feature release has no entry, and `make release-version` refuses to
+cut it: draft the entry first. To ship without one, run `make release-version NO_ENTRY=1`; What's New
+then shows the complete notes. A missing entry can be drafted after the release with `RELEASE=x.y.z`; merging it
 publishes the entry on the website, through the usual deployment of `main`. A release of fixes alone
 has no entry.
 

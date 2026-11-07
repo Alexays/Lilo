@@ -54,9 +54,9 @@ class ReleaseTests(unittest.TestCase):
     def snapshot(self):
         return {str(p.relative_to(self.root)): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
 
-    def run_release(self, command, success=True):
+    def run_release(self, command, success=True, *flags):
         result = subprocess.run(
-            [sys.executable, str(ROOT / "scripts/release.py"), command, "--changie", CHANGIE],
+            [sys.executable, str(ROOT / "scripts/release.py"), command, "--changie", CHANGIE, *flags],
             cwd=self.root, capture_output=True, text=True, check=False,
         )
         if success:
@@ -123,11 +123,15 @@ class ReleaseTests(unittest.TestCase):
         self.run_release("status")
         self.assertEqual(self.snapshot(), released)
 
-    def test_a_feature_release_without_highlights_warns_and_ships(self):
+    def test_a_feature_release_without_highlights_is_refused_unless_asked(self):
         self.note("Added")
         status = self.run_release("status")
         self.assertIn("lilo-ui/src/components/whatsnew/releaseHighlights.json", status.stdout)
-        released = self.run_release("version")
+        before = self.snapshot()
+        refused = self.run_release("version", False)
+        self.assertIn("NO_ENTRY=1", refused.stderr)
+        self.assertEqual(self.snapshot(), before)
+        released = self.run_release("version", True, "--without-entry")
         self.assertIn("site/src/content/releases/0.2.0.json", released.stdout)
         self.assert_versions("0.2.0")
 

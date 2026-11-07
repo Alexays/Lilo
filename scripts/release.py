@@ -34,11 +34,11 @@ def version_updates(version, released):
     return updates
 
 
-def check_highlights(version):
-    """Warns when a feature release has no What's New highlights or website story. Neither holds the app back:
-    What's New falls back to the complete notes, and the Changelog draft workflow writes the website story after the tag."""
+def missing_entry(version):
+    """What a feature release lacks of its What's New highlights and website story, or None. The app bundles the
+    highlights at build time, so they must exist before the release is cut."""
     if not version.endswith(".0"):
-        return
+        return None
     highlights_path = Path("lilo-ui/src/components/whatsnew/releaseHighlights.json")
     story_path = Path(f"site/src/content/releases/{version}.json")
     missing = []
@@ -46,14 +46,16 @@ def check_highlights(version):
         missing.append(f"an entry for {version} in {highlights_path}")
     if not story_path.exists():
         missing.append(str(story_path))
-    if missing:
-        print(f"Warning: release {version} adds features without {' or '.join(missing)}: the changelog-draft skill writes them (docs/RELEASING.md)")
+    if not missing:
+        return None
+    return f"release {version} adds features without {' or '.join(missing)}: the changelog-draft skill writes them (docs/RELEASING.md)"
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["status", "version"])
     parser.add_argument("--changie", required=True)
+    parser.add_argument("--without-entry", action="store_true")
     args = parser.parse_args()
 
     def changie(*arguments):
@@ -65,7 +67,11 @@ def main():
         if pending:
             version = changie("next", "auto").strip().removeprefix("v")
             updates = version_updates(version, released=True)
-            check_highlights(version)
+            missing = missing_entry(version)
+            if missing and not args.without_entry:
+                raise ValueError(f"Refusing to cut {missing}; run make release-version NO_ENTRY=1 to ship without them")
+            if missing:
+                print(f"Warning: {missing}")
             changie("batch", "auto", "--allow-no-changes=false")
         else:
             updates = version_updates(changie("latest", "--remove-prefix").strip(), released=False)
@@ -80,7 +86,9 @@ def main():
             raise ValueError("CHANGELOG.md is out of sync with Changie; run make release-version")
         if pending:
             print(changie("batch", "auto", "--dry-run", "--allow-no-changes=false"), end="")
-            check_highlights(changie("next", "auto").strip().removeprefix("v"))
+            missing = missing_entry(changie("next", "auto").strip().removeprefix("v"))
+            if missing:
+                print(f"Warning: {missing}")
         else:
             print("No pending release notes.")
 

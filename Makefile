@@ -198,9 +198,9 @@ change: $(CHANGIE)
 release-status: $(CHANGIE)
 	@python3 scripts/release.py status --changie '$(CHANGIE)'
 
-## Collect release notes, bump the app and build versions, and refresh the website
+## Collect release notes, bump the app and build versions, and refresh the website (NO_ENTRY=1 cuts a feature release without its changelog entry)
 release-version: $(CHANGIE)
-	@python3 scripts/release.py version --changie '$(CHANGIE)'
+	@python3 scripts/release.py version --changie '$(CHANGIE)' $(if $(NO_ENTRY),--without-entry)
 	@release=$$('$(CHANGIE)' latest --remove-prefix); \
 	if [ -f "site/src/content/releases/$$release.json" ]; then \
 		$(MAKE) --no-print-directory site-release-capture RELEASE="$$release"; \
