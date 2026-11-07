@@ -2443,6 +2443,12 @@
 			"chat": "團隊聊天"
 		},
 		"releases": {
+			"v0180": {
+				"headline": "更整潔的下載項目選單。",
+				"description": "直接在側邊欄清除已完成的下載項目，Bitwarden 和 Web Highlights 等延伸功能也能正常運作。",
+				"clearTitle": "清除已完成的下載項目。",
+				"clearDescription": "不必打開下載項目畫面就能整理下載內容。側邊欄的下載項目選單提供「清除」連結，可移除其中列出的已完成下載項目。"
+			},
 			"v0170": {
 				"headline": "更安靜的頁面，更輕盈的標籤頁。",
 				"description": "隱藏礙事的內容，讓 Cookie 同意維持拒絕，讓每個標籤頁都更省電。",

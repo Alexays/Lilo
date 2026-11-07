@@ -70,7 +70,7 @@
 
       {#if editorial}
         {@const [hero, ...rest] = editorial.highlights}
-        <article class="release-highlight release-hero reveal" style:--i={3}>
+        <article class="release-highlight release-hero reveal" class:drawn={!hero.media && hero.illustration} style:--i={3}>
           {@render visual(hero)}
           <h3>{hero.title}</h3>
           <p>{hero.description}</p>
@@ -131,6 +131,11 @@
   .release-hero .release-visual { border-radius: var(--radius-lg); }
   .release-hero h3 { margin: var(--space-16) 0 var(--space-4); font-size: var(--font-size-modal); letter-spacing: -0.01em; }
   .release-hero p { max-width: 36em; font-size: var(--font-size-md); }
+  /* A drawing is a small sketch: beside the text at the size the other highlights give it, films keep the full width. */
+  .release-hero.drawn { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 1fr auto auto 1fr; column-gap: var(--space-24); }
+  .release-hero.drawn .release-visual { grid-row: 1 / -1; }
+  .release-hero.drawn h3 { grid-row: 2; margin-top: 0; }
+  .release-hero.drawn p { grid-row: 3; }
   .release-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-24); margin-top: var(--space-24); }
   .release-highlight h3 { margin: var(--space-12) 0 var(--space-2); }
   .release-highlight p { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.5; }

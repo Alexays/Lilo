@@ -2432,6 +2432,12 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0180": {
+				"headline": "A tidier downloads menu.",
+				"description": "Clear finished downloads right from the sidebar, and extensions such as Bitwarden and Web Highlights work as they should.",
+				"clearTitle": "Clear finished downloads.",
+				"clearDescription": "You can tidy your downloads without opening the Downloads screen. The downloads menu in the sidebar has a Clear link that removes the finished downloads it lists."
+			},
 			"v0170": {
 				"headline": "Quieter pages, lighter tabs.",
 				"description": "Hide what gets in your way, keep cookie consent refused, and get more battery out of every tab.",

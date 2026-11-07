@@ -182,6 +182,18 @@
     <g fill="var(--accent)"><rect x="94" y="32" width="11" height="6" rx="3" /><rect x="94" y="60" width="11" height="6" rx="3" /></g>
     <g fill="var(--bg-elevated)"><circle cx="102" cy="35" r="2" /><circle cx="102" cy="63" r="2" /></g>
     <rect x="94" y="46" width="11" height="6" rx="3" fill="var(--separator)" /><circle cx="97" cy="49" r="2" fill="var(--bg-elevated)" />
+  {:else if kind === "downloads"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="22" y="10" width="84" height="70" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="29" y="18" width="26" height="4" rx="2" fill="var(--text-secondary)" />
+    <rect x="67" y="16" width="14" height="8" rx="4" fill="var(--accent)" /><rect x="85" y="18" width="14" height="4" rx="2" fill="var(--separator)" />
+    <g fill="var(--accent-tint-14)" stroke="var(--accent)" stroke-width="1"><rect x="29" y="31" width="9" height="11" rx="2" /></g>
+    <rect x="43" y="33" width="36" height="3" rx="1.5" fill="var(--text-primary)" />
+    <rect x="43" y="38" width="54" height="2.5" rx="1.25" fill="var(--separator)" /><rect x="43" y="38" width="30" height="2.5" rx="1.25" fill="var(--accent)" />
+    <g opacity="0.45">
+      <g fill="none" stroke="var(--text-secondary)" stroke-width="1"><rect x="29" y="49" width="9" height="11" rx="2" /><rect x="29" y="65" width="9" height="11" rx="2" /></g>
+      <g fill="var(--text-secondary)"><rect x="43" y="51" width="40" height="3" rx="1.5" /><rect x="43" y="56" width="20" height="2.5" rx="1.25" /><rect x="43" y="67" width="32" height="3" rx="1.5" /><rect x="43" y="72" width="22" height="2.5" rx="1.25" /></g>
+    </g>
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

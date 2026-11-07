@@ -2443,6 +2443,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0180": {
+				"headline": "Een opgeruimder downloadmenu.",
+				"description": "Wis voltooide downloads direct vanuit de zijbalk, en extensies zoals Bitwarden en Web Highlights werken zoals bedoeld.",
+				"clearTitle": "Wis voltooide downloads.",
+				"clearDescription": "Ruim je downloads op zonder het Downloads-scherm te openen. Het downloadmenu in de zijbalk heeft een Wis-link die de voltooide downloads verwijdert die het toont."
+			},
 			"v0170": {
 				"headline": "Rustiger pagina's, lichtere tabbladen.",
 				"description": "Verberg wat in de weg zit, houd cookietoestemming geweigerd en haal meer batterij uit elk tabblad.",

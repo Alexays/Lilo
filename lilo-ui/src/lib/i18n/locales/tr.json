@@ -2443,6 +2443,12 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0180": {
+				"headline": "Daha düzenli bir indirilenler menüsü.",
+				"description": "Tamamlanan indirmeleri doğrudan kenar çubuğundan temizleyin; Bitwarden ve Web Highlights gibi uzantılar da olması gerektiği gibi çalışır.",
+				"clearTitle": "Tamamlanan indirmeleri temizleyin.",
+				"clearDescription": "İndirilenler ekranını açmadan indirmelerinizi düzenleyin. Kenar çubuğundaki indirilenler menüsünde, listelediği tamamlanmış indirmeleri kaldıran bir Temizle bağlantısı bulunur."
+			},
 			"v0170": {
 				"headline": "Daha sakin sayfalar, daha hafif sekmeler.",
 				"description": "Sizi rahatsız edeni gizleyin, çerez onayını reddedilmiş tutun ve her sekmeden daha fazla pil ömrü alın.",

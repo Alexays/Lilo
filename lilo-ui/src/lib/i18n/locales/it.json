@@ -2443,6 +2443,12 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0180": {
+				"headline": "Un menu dei download più ordinato.",
+				"description": "Cancella i download completati direttamente dalla barra laterale, e le estensioni come Bitwarden e Web Highlights funzionano come previsto.",
+				"clearTitle": "Cancella i download completati.",
+				"clearDescription": "Riordina i tuoi download senza aprire la schermata Download. Il menu dei download nella barra laterale ha un link Cancella che rimuove i download completati che elenca."
+			},
 			"v0170": {
 				"headline": "Pagine più quiete, schede più leggere.",
 				"description": "Nascondi ciò che ti intralcia, mantieni rifiutato il consenso ai cookie e ottieni più batteria da ogni scheda.",

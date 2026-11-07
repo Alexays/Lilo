@@ -2443,6 +2443,12 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0180": {
+				"headline": "Un menú de descargas más ordenado.",
+				"description": "Borra las descargas terminadas desde la barra lateral, y extensiones como Bitwarden y Web Highlights funcionan como deben.",
+				"clearTitle": "Borra las descargas terminadas.",
+				"clearDescription": "Ordena tus descargas sin abrir la pantalla Descargas. El menú de descargas de la barra lateral tiene un enlace Borrar que quita las descargas terminadas que muestra."
+			},
 			"v0170": {
 				"headline": "Páginas más tranquilas, pestañas más ligeras.",
 				"description": "Oculta lo que te estorba, mantén rechazado el consentimiento de cookies y saca más batería de cada pestaña.",
