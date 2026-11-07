@@ -1,17 +1,21 @@
 <script lang="ts" module>
   import type { IconName } from "../ui/icons";
+  import type { AttachmentDraft } from "./PromptField.svelte";
 
   const SUGGESTIONS: { key: string; icon: IconName }[] = [
     { key: "explain", icon: "book" },
     { key: "fixBug", icon: "bug" },
     { key: "tests", icon: "flask" },
   ];
+
+  /** What was typed and not sent, by conversation: the view goes when its tab is not shown. */
+  const drafts: Record<string, { text: string; attachments: AttachmentDraft[] }> = {};
 </script>
 
 <script lang="ts">
   import { modeIcon, modelLogo } from "./modelLogos";
   import "../../lib/i18n/agentsCatalog";
-  import { untrack } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import { cubicOut } from "svelte/easing";
   import { fade } from "svelte/transition";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
@@ -41,7 +45,7 @@
   import Lightbox from "./Lightbox.svelte";
   import MenuPicker from "./MenuPicker.svelte";
   import PermissionButtons from "./PermissionButtons.svelte";
-  import PromptField, { type AttachmentDraft } from "./PromptField.svelte";
+  import PromptField from "./PromptField.svelte";
   import SignInCard from "./SignInCard.svelte";
   import ThreadRow, { type TurnSummary } from "./ThreadRow.svelte";
   import { formatDuration, itemSignature } from "./threadView";
@@ -90,8 +94,12 @@
   const tab = $derived(getTabsById().get(tabId));
 
   let limit = $state(PAGE);
-  let text = $state("");
-  let attachments = $state.raw<AttachmentDraft[]>([]);
+  let text = $state(untrack(() => drafts[tabId]?.text ?? ""));
+  let attachments = $state.raw<AttachmentDraft[]>(untrack(() => drafts[tabId]?.attachments ?? []));
+  onDestroy(() => {
+    if (text.trim() || attachments.length) drafts[tabId] = { text, attachments };
+    else delete drafts[tabId];
+  });
   let threadEl: HTMLDivElement | undefined = $state();
   let columnEl: HTMLDivElement | undefined = $state();
   let elapsedEl: HTMLSpanElement | undefined = $state();

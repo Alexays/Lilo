@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld } from "./fixtures";
-import { tab } from "../src/stores/testFixtures";
+import { tab, treeItem } from "../src/stores/testFixtures";
 
 const agents = [
 	{ id: "claude-acp", name: "Claude Agent", description: "" },
@@ -117,4 +117,33 @@ test("a terminal sign-in shows its screen as a card in the thread, which answers
 
 	await receive(page, [{ event: "conversationUpdate", tabId: "tab-agent", updates: [{ sessionUpdate: "agent_message_chunk", content: { type: "text", text: "Here is the summary." } }] }]);
 	await expect(card).toHaveCount(0);
+});
+
+test("a message typed and not sent is still there after switching tabs and back", async ({ page }) => {
+	const world = initialWorld();
+	const space = world.activeSpaceId;
+	world.tabsBySpace[space].push(
+		tab("tab-agent", space, { title: "Summarize", url: "", kind: "agent", agentId: "codex-acp" } as never),
+		tab("tab-notes", space, { title: "Release notes", url: "https://notes.example.org/" }),
+	);
+	world.treeItemsBySpace[space].push(treeItem("tab-agent", space, 5), treeItem("tab-notes", space, 6));
+	world.activeTabBySpace[space] = "tab-agent";
+	await bootChrome(page, world);
+	await receive(page, [
+		{ event: "settingsLoaded", settings: { agentsEnabled: "true" } },
+		{ event: "agentCatalog", agents, projects: [], home: "/Users/example" },
+		{
+			event: "conversationsChanged",
+			conversations: [{ tabId: "tab-agent", agentId: "codex-acp", title: "Summarize", state: "idle", unread: false, spaceId: space, spaceName: "Work", running: false }],
+		},
+		{ event: "conversationOpened", tabId: "tab-agent", agentId: "codex-acp", cwd: "/Users/example/Code/acme", state: "idle", checkpoints: [], updates: [] },
+	]);
+	const composer = page.getByRole("combobox", { name: "Message the agent" });
+	await composer.fill("Half a thought");
+
+	await page.getByText("Release notes").first().click();
+	await expect(composer).toHaveCount(0);
+	await page.getByText("Summarize").first().click();
+
+	await expect(composer).toHaveValue("Half a thought");
 });
