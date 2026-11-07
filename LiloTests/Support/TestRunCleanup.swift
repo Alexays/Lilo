@@ -146,6 +146,8 @@ final class TestRunCleanup: NSObject, XCTestObservation {
     }
 
     private func remove(_ entries: Set<String>) {
+        // `make ext-e2e-passwords` relaunches on the stores a first run left: the next run alone removes them.
+        guard ProcessInfo.processInfo.environment["LILO_KEEP_TEST_STORES"] == nil else { return }
         let dataStores = entries.compactMap { $0.hasPrefix("WebsiteDataStore/") ? UUID(uuidString: String($0.dropFirst(17))) : nil }
         // XCTest calls observers on the main thread.
         MainActor.assumeIsolated {

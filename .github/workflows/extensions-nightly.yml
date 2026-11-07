@@ -1,5 +1,6 @@
 # Nightly extension regression checks: the idle CPU budget of a Release build with 20 store extensions
-# (make ext-bench) and every listed Web Store extension against Chrome's recorded behavior (make ext-nightly).
+# (make ext-bench), every listed Web Store extension against Chrome's recorded behavior (make ext-nightly), and
+# Bitwarden signed into a local Vaultwarden, then relaunched (make ext-e2e-passwords).
 # Store extensions are untrusted code: the job holds no secret, and its token only reads the repository.
 
 name: Extensions nightly
@@ -22,8 +23,9 @@ jobs:
     if: github.repository == 'Alexays/Lilo'
     # The macOS 27 image whose default Xcode is 27 (the SDK Lilo builds against); macos-26 only has Xcode 26.
     runs-on: xcode-27
-    # Two builds (Release for the bench, Debug for the smoke), about 5 minutes of bench and up to 30 of smoke.
-    timeout-minutes: 120
+    # Two builds (Release for the bench, Debug for the smoke), about 5 minutes of bench, up to 30 of smoke, and the
+    # password manager run (a few minutes, plus about 10 to build Vaultwarden when its cache misses).
+    timeout-minutes: 140
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -81,6 +83,21 @@ jobs:
         id: smoke
         if: ${{ !cancelled() }}
         run: make ext-nightly TOP=1000
+      # Vaultwarden publishes no macOS binary: built once per pinned version, then cached.
+      - name: Read the Vaultwarden version
+        id: vaultwarden
+        if: ${{ !cancelled() }}
+        run: echo "version=$(sed -n 's/^VAULTWARDEN_VERSION := //p' Makefile)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: ${{ !cancelled() }}
+        with:
+          path: build/vaultwarden-${{ steps.vaultwarden.outputs.version }}
+          key: vaultwarden-${{ steps.vaultwarden.outputs.version }}
+      - name: Password manager end to end
+        id: passwords
+        if: ${{ !cancelled() }}
+        # CI is set: the trust step adds the run's fresh certificate to the runner's system keychain with sudo.
+        run: make ext-e2e-passwords-trust ext-e2e-passwords
       - name: Write the summary
         if: ${{ !cancelled() }}
         shell: bash
@@ -94,6 +111,7 @@ jobs:
             echo '```'
             head -n 60 .derived.noindex/ext-smoke/report.txt 2>/dev/null || echo 'no report'
             echo '```'
+            echo "### Password manager end to end: ${{ steps.passwords.outcome }}"
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
@@ -104,5 +122,6 @@ jobs:
             .derived.noindex/ext-smoke/report.txt
             .derived.noindex/ext-smoke/*.log
             .derived.noindex/ext-smoke/*.jsonl
+            .derived.noindex/ext-e2e-passwords/*.log
           include-hidden-files: true
           if-no-files-found: ignore

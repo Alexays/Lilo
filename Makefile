@@ -46,6 +46,15 @@ WEBKIT_FORK_URL :=
 WEBKIT_FORK_SHA256 :=
 WEBKIT_FORK_STAMP := Vendor/.webkit-fork-sha256
 DMGBUILD_DIR := build/dmgbuild
+# The Bitwarden-compatible server ext-e2e-passwords signs into. It publishes no macOS binary: built from this source
+# tarball (Rust from rustup, the toolchain its rust-toolchain.toml pins), self-contained with SQLite and OpenSSL inside.
+VAULTWARDEN_VERSION := 1.37.5
+VAULTWARDEN_SHA256 := 6be37dcc95b91a058ecbe614f1a7acff68ca8d23dc2c016cec18517c7173e4cc
+VAULTWARDEN := build/vaultwarden-$(VAULTWARDEN_VERSION)/vaultwarden
+VAULTWARDEN_SRC := build/vaultwarden-$(VAULTWARDEN_VERSION)-src
+# Bitwarden talks to its server over HTTPS only: a self-signed certificate valid for 127.0.0.1 alone, which
+# ext-e2e-passwords-trust has the keychain trust once.
+VAULTWARDEN_CERT := build/vaultwarden-tls/cert.pem
 # Inside the checkout, so a worktree's build goes with the worktree instead of staying in ~/Library.
 XCODEBUILD := xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath $(CURDIR)/.derived.noindex/xcode
 # They wait out real clocks (a worker's 30 s unload, a controller's first 5 s, a terminal's 5 s between
@@ -81,7 +90,7 @@ TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
-	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
+	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly ext-e2e-passwords ext-e2e-passwords-trust top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
@@ -310,7 +319,7 @@ SWIFT_TEST_SHARD_CLASSES = $(shell grep -rhE '^final class [A-Za-z0-9_]+: *(XCTe
 SWIFT_TEST_SHARD_ARGS = $(if $(filter $(SWIFT_TEST_SHARD_N),$(SWIFT_TEST_SHARD_I)),-only-testing:LiloTests $(addprefix -skip-testing:,$(SWIFT_TEST_SHARD_CLASSES)),$(addprefix -only-testing:,$(SWIFT_TEST_SHARD_CLASSES)))
 ## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER="LiloTests/Class LiloTests/Other/testCase" narrows the run, SWIFT_TEST_SHARD=1/3 runs a third)
 swift-test: test-build
-	@$(TEST) $(or $(addprefix -only-testing:,$(SWIFT_TEST_FILTER)),$(if $(SWIFT_TEST_SHARD),$(SWIFT_TEST_SHARD_ARGS)),-only-testing:LiloTests) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
+	@$(TEST) $(or $(addprefix -only-testing:,$(SWIFT_TEST_FILTER)),$(if $(SWIFT_TEST_SHARD),$(SWIFT_TEST_SHARD_ARGS)),-only-testing:LiloTests) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests -skip-testing:LiloTests/PasswordManagerE2ETests \
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
@@ -398,6 +407,33 @@ ext-nightly:
 ## ext-smoke of the sentinel extensions in LiloTests/Extensions/smoke-sentinels.txt, as a pull request touching extension support runs it
 ext-smoke-pr:
 	@$(MAKE) --no-print-directory ext-smoke SHARDS=2 IDS="$$(grep -v '^#' LiloTests/Extensions/smoke-sentinels.txt | cut -d' ' -f1 | paste -sd, -)"
+
+## Sign Bitwarden from the store into a local Vaultwarden, fill and save a login, then relaunch on a changed prelude (store download)
+ext-e2e-passwords: vt-build $(BRIDGE_STAMP) $(UI_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(VAULTWARDEN)
+	@security verify-cert -q -c $(VAULTWARDEN_CERT) -p ssl -s 127.0.0.1 >/dev/null 2>&1 \
+		|| { echo "make ext-e2e-passwords: no trusted, unexpired $(VAULTWARDEN_CERT): run make ext-e2e-passwords-trust once." >&2; exit 1; }
+	@NODE_EXTRA_CA_CERTS='$(abspath $(VAULTWARDEN_CERT))' $(TEST_LOCK) node scripts/ext-e2e-passwords.mjs '$(abspath $(VAULTWARDEN))' '$(abspath $(VAULTWARDEN_CERT))'
+
+# Valid 397 days, the most macOS accepts for a TLS server certificate: one about to expire is made again, and trusted again.
+## Make ext-e2e-passwords' 127.0.0.1 certificate and trust it for SSL in the login keychain, once (macOS asks for your password; CI: the system keychain)
+ext-e2e-passwords-trust:
+	@openssl x509 -checkend 86400 -noout -in $(VAULTWARDEN_CERT) >/dev/null 2>&1 || { mkdir -p $(dir $(VAULTWARDEN_CERT)) \
+		&& openssl req -x509 -newkey rsa:2048 -nodes -days 397 -subj "/CN=Lilo ext-e2e-passwords 127.0.0.1" \
+			-addext "subjectAltName=IP:127.0.0.1" -addext "extendedKeyUsage=serverAuth" -addext "basicConstraints=critical,CA:FALSE" \
+			-keyout $(dir $(VAULTWARDEN_CERT))key.pem -out $(VAULTWARDEN_CERT) 2>/dev/null && chmod 600 $(dir $(VAULTWARDEN_CERT))key.pem; }
+	@if [ -n "$(CI)" ]; then sudo security add-trusted-cert -d -r trustRoot -p ssl -k /Library/Keychains/System.keychain $(VAULTWARDEN_CERT); \
+	else security add-trusted-cert -r trustRoot -p ssl -k "$$HOME/Library/Keychains/login.keychain-db" $(VAULTWARDEN_CERT); fi
+
+$(VAULTWARDEN):
+	@command -v cargo >/dev/null || { echo "make ext-e2e-passwords builds Vaultwarden with Rust: install rustup (https://rustup.rs)." >&2; exit 1; }; \
+	mkdir -p build; curl -fsSL --retry 2 -o $(VAULTWARDEN_SRC).tar.gz https://github.com/dani-garcia/vaultwarden/archive/refs/tags/$(VAULTWARDEN_VERSION).tar.gz; \
+	if ! echo "$(VAULTWARDEN_SHA256)  $(VAULTWARDEN_SRC).tar.gz" | shasum -a 256 -c --status; then \
+		echo "make ext-e2e-passwords: the Vaultwarden $(VAULTWARDEN_VERSION) source has sha256 $$(shasum -a 256 $(VAULTWARDEN_SRC).tar.gz | cut -d' ' -f1), not VAULTWARDEN_SHA256." >&2; \
+		/bin/rm -f $(VAULTWARDEN_SRC).tar.gz; exit 1; \
+	fi; \
+	/bin/rm -rf $(VAULTWARDEN_SRC) && mkdir -p $(VAULTWARDEN_SRC) && tar -xzf $(VAULTWARDEN_SRC).tar.gz -C $(VAULTWARDEN_SRC) --strip-components 1 \
+		&& /bin/rm -f $(VAULTWARDEN_SRC).tar.gz && (cd $(VAULTWARDEN_SRC) && cargo build --release --locked --features sqlite,vendored_openssl) \
+		&& mkdir -p $(dir $(VAULTWARDEN)) && /bin/cp -f $(VAULTWARDEN_SRC)/target/release/vaultwarden $(VAULTWARDEN) && /bin/rm -rf $(VAULTWARDEN_SRC)
 
 ## Rebuild top-extensions.json from the Chrome Web Store user counts (TOP=500)
 top-extensions:

@@ -162,6 +162,7 @@ Heavier checks, run when your change touches their area:
 |---------|------|
 | `make ext-smoke` | the 100 most used Web Store extensions against Chrome's recorded behavior (their errors, what their popup and options page show, their popup again once the worker went idle, what their content scripts change on a local page, their context menu items, with the slow steps reported), and what a few do on a local page past their popup (network; `TOP=500`, `IDS=a,b`) |
 | `make ext-nightly` | unattended `ext-smoke` of the top 500 (`TOP=1000` for all), with a report in `.derived.noindex/ext-smoke/report.txt` and a non-zero exit on a regression |
+| `make ext-e2e-passwords` | Bitwarden from the store against a local [Vaultwarden](https://github.com/dani-garcia/vaultwarden) (pinned source, built once with Rust from rustup, about 5 minutes) over HTTPS, as Bitwarden requires, with a self-signed certificate for 127.0.0.1 that `make ext-e2e-passwords-trust` has your login keychain trust once: a generated account signs in through the popup, fills a local login page, is offered to save a new login, then a second process relaunches on the same data with a changed prelude and checks the worker runs it and the popup reaches the vault ([gap 113](docs/WEBKIT-GAPS.md)). Logs and results in `.derived.noindex/ext-e2e-passwords/` |
 | `make terminal-bench` | terminal throughput and lock-fairness benchmarks |
 | `make startup-bench` | launch times of a Release build against a throwaway profile |
 | `make ext-bench` | a Release build with 20 store extensions: restore, worker starts, API latency and idle CPU, failing when idle CPU % goes over `MAX_IDLE_CPU=35,25` (Lilo, its WebKit processes; `MAX_IDLE_CPU=` only measures) |
@@ -200,8 +201,8 @@ rather than carving out a helper just to reach it.
   app the Release build just exported, uploaded as the `startup-bench-<sha>` artifact. It never fails the run.
 
 `.github/workflows/extensions-nightly.yml` runs every night (and by hand) in `Alexays/Lilo` only, on the
-`xcode-27` image: `make ext-bench` against its idle CPU budget, then `make ext-nightly TOP=1000`. The
-reports are the `extensions-nightly-<sha>` artifact, and the run's summary quotes them.
+`xcode-27` image: `make ext-bench` against its idle CPU budget, then `make ext-nightly TOP=1000` and
+`make ext-e2e-passwords`. The reports are the `extensions-nightly-<sha>` artifact, and the run's summary quotes them.
 
 `build.yml` needs no secrets and only reads the repository, so pull requests from forks run it as is. CI runs
 a failed Swift or Playwright test once more and lists the tests that passed only on that retry in
