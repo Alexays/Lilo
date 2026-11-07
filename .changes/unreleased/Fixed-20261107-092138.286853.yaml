@@ -1,0 +1,3 @@
+kind: Fixed
+body: Clear Browsing Data closes once the clear is done, never earlier, and no longer stays busy when the clear fails
+time: 2026-11-07T09:21:38.286853+01:00

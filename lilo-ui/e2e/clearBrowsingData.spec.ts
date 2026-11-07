@@ -4,7 +4,7 @@ import { initialWorld } from "./fixtures";
 
 const sizes = { event: "browsingDataSizesLoaded", history: 24_000_000, cookies: 2_000_000, cache: 400_000_000, storage: 180_000_000, historyEntries: 3214 };
 
-test("Clear Browsing Data is a modal over Settings that clears, then closes once measured again", async ({ page }) => {
+test("Clear Browsing Data is a modal over Settings that clears, then closes once the host answers", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openClearBrowsingData" }));
 	const modal = page.getByRole("dialog", { name: "Clear Browsing Data" });
@@ -18,7 +18,12 @@ test("Clear Browsing Data is a modal over Settings that clears, then closes once
 	const clear = (await sentCommands(page)).find((command) => command.action === "clearBrowsingData");
 	expect(clear?.payload).toEqual({ kinds: ["history", "cache"], range: "hour" });
 
+	// Sizes measured for another request are not the clear's answer.
 	await page.evaluate((message) => window.__lilo!.receive(message), sizes);
+	await expect(modal).toBeVisible();
+	await page.evaluate(() =>
+		window.__lilo!.receive({ event: "settingsActionCompleted", action: "clearBrowsingData", message: "Browsing data cleared", level: "info" }),
+	);
 	await expect(modal).toHaveCount(0);
 	await expect(page.locator(".ui-shell-frame")).toBeVisible();
 });

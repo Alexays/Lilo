@@ -1,6 +1,7 @@
 <!-- Clear Browsing Data, a modal over whatever the page area shows. -->
 <script lang="ts">
-  import { onMount, untrack } from "svelte";
+  import { onMount } from "svelte";
+  import { on } from "../../lib/bridge";
   import { settingsActions } from "../../lib/bridge/actions";
   import type { BridgeBrowsingDataKind } from "../../lib/bridge/protocol";
   import { formatByteSize } from "../../lib/format";
@@ -44,11 +45,14 @@
     settingsActions.loadWebsiteData();
   });
 
-  // The sizes measured after a clear are its answer: the job is done.
-  $effect(() => {
-    void sizes;
-    if (untrack(() => clearing)) closeClearBrowsingData();
-  });
+  // The host answers every clear, failed or not, once it has measured the sizes again; the status reports the outcome.
+  $effect(() =>
+    on("settingsActionCompleted", (data) => {
+      if (data.action !== "clearBrowsingData" || !clearing) return;
+      clearing = false;
+      closeClearBrowsingData();
+    }),
+  );
 
   function toggle(kind: BridgeBrowsingDataKind, checked: boolean): void {
     selected = checked ? [...selected, kind] : selected.filter((candidate) => candidate !== kind);
