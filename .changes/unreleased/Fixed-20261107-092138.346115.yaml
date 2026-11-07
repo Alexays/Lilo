@@ -1,0 +1,3 @@
+kind: Fixed
+body: An extension stopping speech another extension paused no longer leaves text-to-speech paused for good
+time: 2026-11-07T09:21:38.346115+01:00

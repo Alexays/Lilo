@@ -162,7 +162,6 @@ final class TtsBridgeHandler: NSObject, GapHandler, AVSpeechSynthesizerDelegate 
 
     /// Chrome stops the current utterance only for its own extension, but then empties the whole queue.
     private func stop(extensionId: String) {
-        paused = false
         if let current, current.extensionId != extensionId { return }
         stopAll()
     }
