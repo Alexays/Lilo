@@ -1,3 +1,0 @@
-kind: Fixed
-body: A conversation closed by mistake comes back with Reopen Closed Tab with its whole thread, its restore points and the pages it had open, and a crash mid-turn no longer loses the prompt that was running
-time: 2026-11-06T19:51:23.322288+01:00

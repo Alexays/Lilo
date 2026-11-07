@@ -1,3 +1,0 @@
-kind: Changed
-body: An agent that signs in through a terminal now asks for its sign-in in the conversation, without opening a terminal tab
-time: 2026-11-07T09:36:48.806981+01:00

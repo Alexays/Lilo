@@ -1,3 +1,0 @@
-kind: Fixed
-body: Opening another app from a page, such as Mail, Zoom or Teams, closes the blank tab or window the page opened for it, opens Mail at once from a clicked email link, and no longer lets a page stack one prompt after another
-time: 2026-11-06T18:50:55.387846+01:00

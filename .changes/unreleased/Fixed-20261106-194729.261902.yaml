@@ -1,3 +1,0 @@
-kind: Fixed
-body: The first agent of a launch no longer deletes folders you made or locked in the Agents space, only the task folders agents created there
-time: 2026-11-06T19:47:29.261902+01:00

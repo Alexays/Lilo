@@ -1,3 +1,0 @@
-kind: Fixed
-body: Tab extensions can discard tabs of any window, get tab group events for private windows they are allowed in, and can no longer undo another profile's split views
-time: 2026-11-06T19:47:27.998452+01:00

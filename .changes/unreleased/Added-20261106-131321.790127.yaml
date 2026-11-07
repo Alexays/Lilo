@@ -1,3 +1,0 @@
-kind: Added
-body: A conversation folds each sub-agent into one row under the call that started it, with its latest step, its report and its own tool calls, and several permission requests can wait at once
-time: 2026-11-06T13:13:21.790127+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: A message sent to interrupt an agent is no longer lost when the agent ends the stopped turn with an error
-time: 2026-11-07T09:52:08.958934+01:00

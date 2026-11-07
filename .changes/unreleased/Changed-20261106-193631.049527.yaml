@@ -1,3 +1,0 @@
-kind: Changed
-body: Agent conversations pick up faster after an idle agent restarts, as agents that can resume a session no longer resend its whole history
-time: 2026-11-06T19:36:31.049527+01:00

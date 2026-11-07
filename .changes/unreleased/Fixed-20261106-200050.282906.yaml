@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Every sidebar action works from the keyboard and VoiceOver: a pinned tab goes back to its home page from its context menu, favorite tiles and Space icons open their menu with Shift-F10 and move with Option-arrows, moves and Space switches are announced, and the sidebar width handle resizes with the arrow keys'
-time: 2026-11-06T20:00:50.282906+01:00

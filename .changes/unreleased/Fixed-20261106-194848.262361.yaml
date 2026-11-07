@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Removing the last site from an extension''s site access no longer gives it back every site: pick All sites or Selected sites, and Selected sites can stay empty.'
-time: 2026-11-06T19:48:48.262361+01:00

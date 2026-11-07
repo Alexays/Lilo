@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Conversations start npm agents faster: each version of an agent is installed once and then starts directly, without asking the npm registry or loading your project''s files on every start.'
-time: 2026-11-06T19:45:49.907255+01:00

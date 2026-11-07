@@ -1,3 +1,0 @@
-kind: Fixed
-body: Turning a content blocker list on or off while the lists refresh now applies right after that refresh, not at the next one hours later
-time: 2026-11-07T09:21:38.267836+01:00

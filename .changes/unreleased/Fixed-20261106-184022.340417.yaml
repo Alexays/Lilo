@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Unpacked extensions pick up their edited files without restarting Lilo: a new Reload button in Settings > Extensions, `chrome.runtime.reload()` and loading the same folder again all read the folder again. Once the developer tools are unlocked, a release build makes unpacked extensions inspectable at once. Loading a folder whose manifest key matches an installed extension now says so instead of doing nothing.'
-time: 2026-11-06T18:40:22.340417+01:00

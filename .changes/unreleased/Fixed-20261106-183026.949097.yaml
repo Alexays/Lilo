@@ -1,3 +1,0 @@
-kind: Fixed
-body: Extensions can create their offscreen document again after it closes itself, its timers run at full speed, and with the clipboard read permission it can paste as in Chrome
-time: 2026-11-06T18:30:26.949097+01:00

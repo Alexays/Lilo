@@ -1,3 +1,0 @@
-kind: Fixed
-body: The interface now follows your region for dates and times (for example 24-hour times with English in the UK), uses the right plural forms for counts, joins lists the way your language does, and declares its language to VoiceOver.
-time: 2026-11-06T19:53:21.259559+01:00

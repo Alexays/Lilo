@@ -1,3 +1,0 @@
-kind: Fixed
-body: Escape and Command-Return now stop an agent that is using Lilo's browser tools, instead of waiting for the tool to finish
-time: 2026-11-07T09:59:23.13788+01:00
