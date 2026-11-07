@@ -863,7 +863,6 @@
 		"editFolder": "Edit folder",
 		"deleteFolder": "Delete folder",
 		"folderColor": "Folder color",
-		"setFolderColor": "Set folder color {color}",
 		"locked": "Locked",
 		"lockNow": "Lock now",
 		"unlock": "Unlock",
@@ -913,6 +912,13 @@
 		"groupLabel": "Bookmarked tabs",
 		"dropToBookmark": "Drop to bookmark"
 	},
+	"colorPicker": {
+		"pick": "Pick",
+		"eyedropper": "Pick a color from the screen",
+		"pickHint": "Click any color on screen",
+		"hue": "Hue",
+		"intensity": "Intensity"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Edit Space",
 		"newSpace": "New Space",
@@ -923,13 +929,9 @@
 		"quickPicks": "Quick picks for this Space",
 		"spaceNamePlaceholder": "Space name",
 		"appearanceLabel": "Appearance",
-		"colorFrom": {
-			"page": "Color of the active tab",
-			"wallpaper": "Color of your wallpaper"
-		},
 		"color": "Color",
 		"colorSource": {
-			"page": "Page",
+			"page": "Site",
 			"wallpaper": "Wallpaper"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "Slate",
 			"sand": "Sand"
 		},
-		"hexColor": "Hex color",
 		"exampleSite": "Example site",
 		"noSiteYet": "No site open yet",
 		"followDay": "Change with the time of day",
 		"followDayHint": "Warmer in the evening, deeper at night.",
+		"dayPart": {
+			"day": "Day",
+			"evening": "Evening",
+			"night": "Night"
+		},
 		"materialLabel": "Material",
 		"material": {
 			"solid": "Solid",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "The last Space cannot be deleted.",
 		"signedInAs": "Signed in as",
 		"manageProfiles": "Manage",
+		"newProfile": "New Profile",
 		"newProfileDetail": "Fresh cookies and extensions",
 		"private": "Private",
 		"privateDetail": "Forgets everything on close",

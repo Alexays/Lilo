@@ -863,7 +863,6 @@
 		"editFolder": "Editar pasta",
 		"deleteFolder": "Apagar pasta",
 		"folderColor": "Cor da pasta",
-		"setFolderColor": "Definir cor da pasta como {color}",
 		"locked": "Bloqueada",
 		"lockNow": "Bloquear agora",
 		"unlock": "Desbloquear",
@@ -913,6 +912,13 @@
 		"groupLabel": "Abas nos favoritos",
 		"dropToBookmark": "Solte para adicionar aos favoritos"
 	},
+	"colorPicker": {
+		"pick": "Escolher",
+		"eyedropper": "Capturar uma cor da tela",
+		"pickHint": "Clique em qualquer cor na tela",
+		"hue": "Matiz",
+		"intensity": "Intensidade"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Editar espaço",
 		"newSpace": "Novo Espaço",
@@ -923,13 +929,9 @@
 		"quickPicks": "Sugestões para este espaço",
 		"spaceNamePlaceholder": "Nome do espaço",
 		"appearanceLabel": "Aparência",
-		"colorFrom": {
-			"page": "Cor da aba ativa",
-			"wallpaper": "Cor do seu papel de parede"
-		},
 		"color": "Cor",
 		"colorSource": {
-			"page": "Página",
+			"page": "Site",
 			"wallpaper": "Papel de parede"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "Ardósia",
 			"sand": "Areia"
 		},
-		"hexColor": "Cor hexadecimal",
 		"exampleSite": "Site de exemplo",
 		"noSiteYet": "Nenhum site aberto",
 		"followDay": "Mudar com a hora do dia",
 		"followDayHint": "Mais quente à noitinha, mais profunda à noite.",
+		"dayPart": {
+			"day": "Dia",
+			"evening": "Entardecer",
+			"night": "Noite"
+		},
 		"materialLabel": "Material",
 		"material": {
 			"solid": "Sólido",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "O último espaço não pode ser apagado.",
 		"signedInAs": "Conectado como",
 		"manageProfiles": "Gerenciar",
+		"newProfile": "Novo perfil",
 		"newProfileDetail": "Cookies e extensões independentes",
 		"private": "Privado",
 		"privateDetail": "Esquece tudo ao fechar",

@@ -2,7 +2,8 @@
   import type { Snippet } from "svelte";
   import { MediaQuery } from "svelte/reactivity";
   import { slide } from "svelte/transition";
-  import AppearancePicker from "../spaces/AppearancePicker.svelte";
+  import ColorSliders from "../ui/ColorSliders.svelte";
+  import DayStrip from "../spaces/DayStrip.svelte";
   import UiToggle from "../ui/UiToggle.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { settingsActions, spaceActions } from "../../lib/bridge/actions";
@@ -10,11 +11,12 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { PASTEL_COLOR_NAMES, PASTEL_COLORS } from "../settings/profilesModel";
   import { deriveSidebarThemeVariables } from "../../lib/sidebarTheme";
+  import { SPACE_TONE } from "../../lib/colorSliders";
   import { effectiveSpaceColor } from "../../lib/spaceColor";
   import { getDefaultBrowserStatus, getSetting, setSetting } from "../../stores/settings.svelte";
   import { getOnboarding, goBack, goNext } from "../../stores/onboarding.svelte";
   import { getActiveSpace } from "../../stores/spaces.svelte";
-  import { getDayPart, getWallpaperColor, getWallpaperThumbnail } from "../../stores/spaceColor.svelte";
+  import { getDayPart, getWallpaperColor, getWallpaperThumbnail, watchWallpaperColor } from "../../stores/spaceColor.svelte";
   import { getAddressPlacement, getTabPosition, setAddressPlacement, setTabPosition } from "../../stores/tabLayout.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { onboardingSteps } from "./onboardingModel";
@@ -46,7 +48,10 @@
     return picture ? `center / cover no-repeat url("${picture}")` : DESKTOP;
   });
 
-  // The color panel streams values while its wheel is dragged: the first goes out at once, then one every 100 ms.
+  // The Wallpaper source needs its color.
+  $effect(() => watchWallpaperColor());
+
+  // The sliders stream values while dragged: the first goes out at once, then one every 100 ms.
   let colorTimer: ReturnType<typeof setTimeout> | undefined;
   let queuedColor = "";
   function setColor(color: string): void {
@@ -67,12 +72,14 @@
   const ADDRESSES: AddressPlacement[] = ["tabs", "page", "hidden"];
   const theme = $derived(getSetting("theme", "system"));
 
-  // The palette unfolds under its row: a popover would open under the onboarding, which covers the window.
-  let paletteOpen = $state(false);
-  const colorName = $derived.by(() => {
-    if (mode === "page" || mode === "wallpaper") return t(`spaceEditor.colorSource.${mode}`);
+  const SOURCES = ["pick", "page", "wallpaper"] as const;
+  const auto = $derived(mode === "page" || mode === "wallpaper");
+  let picking = $state(false);
+  const colorNote = $derived.by(() => {
+    if (auto) return t(`spaceEditor.colorSourceHint.${mode}`);
+    if (picking) return t("colorPicker.pickHint");
     const index = PASTEL_COLORS.indexOf(space?.color ?? "");
-    return index >= 0 ? t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[index]}`) : (space?.color ?? "").toUpperCase();
+    return index >= 0 ? t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[index]}`) : t("spaceEditor.customColor");
   });
 
   /** Arrow keys move the choice of a radio group of `count`, as macOS does. */
@@ -113,6 +120,8 @@
     {#if value === "system"}<path d="M7 1.1a5.9 5.9 0 0 1 0 11.8Z" fill="currentColor" />{/if}
   </svg>
 {/snippet}
+
+{#snippet noIcon(_: string)}{/snippet}
 
 {#snippet materialIcon(value: string)}
   <span class="mini {value}" style={windowStyle} style:--desktop={desktop}></span>
@@ -167,21 +176,15 @@
               (value) => setSetting("theme", value), themeIcon)}
           </div>
           {#if space}
-            <div class="ob-row">
-              <span class="ob-text" id="onboarding-color-label">{t("onboarding.yourLilo.color")}</span>
-              <button class="color-button" aria-expanded={paletteOpen} aria-controls="onboarding-palette"
-                aria-labelledby="onboarding-color-label onboarding-color-name" onclick={() => (paletteOpen = !paletteOpen)}>
-                <span id="onboarding-color-name" class="color-name">{colorName}</span>
-                <span class="dot" style:background={effectiveColor}></span>
-                <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-              </button>
+            <div class="ob-row choice" class:open={!auto}>
+              <span class="ob-text" id="onboarding-color-label">{t("onboarding.yourLilo.color")}<small aria-live="polite">{colorNote}</small></span>
+              {@render segmented("onboarding-color-label", SOURCES, auto ? mode : "pick",
+                (value) => t(value === "pick" ? "colorPicker.pick" : `spaceEditor.colorSource.${value}`),
+                (value) => spaceActions.update({ id: space.id, colorMode: value === "pick" ? "fixed" : value as "page" | "wallpaper" }), noIcon)}
             </div>
-            {#if paletteOpen}
-              <div class="palette" id="onboarding-palette" transition:slide={{ duration: prefersReducedMotion() ? 0 : 200 }}>
-                <AppearancePicker preview={false} {mode} color={space.color} {material}
-                  onmode={(colorMode) => spaceActions.update({ id: space.id, colorMode })}
-                  oncolor={setColor}
-                  onmaterial={(value) => spaceActions.update({ id: space.id, material: value })} />
+            {#if !auto}
+              <div class="palette" transition:slide={{ duration: prefersReducedMotion() ? 0 : 200 }}>
+                <ColorSliders color={space.color} tone={SPACE_TONE} presets={PASTEL_COLORS} oncolor={setColor} bind:picking />
               </div>
             {/if}
             <div class="ob-row choice">
@@ -191,11 +194,12 @@
             </div>
             <!-- The time of day changes a chosen color only: Lilo's picks bring their own. -->
             {#if mode === "fixed" || mode === "time"}
-              <div class="ob-row">
+              <div class="ob-row open">
                 <span class="ob-text">{t("spaceEditor.followDay")}<small>{t("spaceEditor.followDayHint")}</small></span>
                 <UiToggle checked={mode === "time"} ariaLabel={t("spaceEditor.followDay")}
                   onchange={(on) => spaceActions.update({ id: space.id, colorMode: on ? "time" : "fixed" })} />
               </div>
+              <div class="palette"><DayStrip color={space.color} on={mode === "time"} /></div>
             {/if}
           {/if}
         </div>
@@ -302,16 +306,9 @@
   .mini.glass { background: linear-gradient(color-mix(in srgb, var(--sidebar-bg) 40%, transparent), color-mix(in srgb, var(--sidebar-bg) 40%, transparent)), var(--desktop); }
   .mini.grain { background-image: var(--grain-texture); background-size: 40px; background-blend-mode: overlay; }
 
-  .color-button { display: flex; align-items: center; gap: 8px; min-width: 0; height: 26px; padding: 0 8px 0 10px; border: 0;
-    border-radius: var(--radius-sm); background: color-mix(in srgb, var(--text-primary) 6%, transparent); color: var(--text-secondary);
-    font: inherit; font-size: var(--font-size-sm); cursor: pointer; transition: background var(--transition-fast); }
-  .color-button:hover, .color-button[aria-expanded="true"] { background: color-mix(in srgb, var(--text-primary) 10%, transparent); color: var(--text-primary); }
-  .color-button:focus-visible { outline: var(--focus-outline); outline-offset: 1px; }
-  .color-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
-  .dot { flex: none; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14); }
-  .color-button svg { flex: none; transition: transform var(--transition-fast); }
-  .color-button[aria-expanded="true"] svg { transform: rotate(180deg); }
+  /* A row's own controls sit under it, in the same group cell. */
+  .ob-row.open { padding-bottom: 6px; }
   .palette { padding: 4px 14px 14px; }
   .palette + .ob-row { box-shadow: inset 0 1px 0 var(--separator); }
-  @media (prefers-reduced-motion: reduce) { .win, .seg button, .color-button, .color-button svg { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .win, .seg button { transition: none; } }
 </style>

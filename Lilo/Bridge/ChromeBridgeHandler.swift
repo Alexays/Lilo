@@ -30,6 +30,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "updateWindowBackground",
         "setPageBarColor",
         "setWallpaperColorWatch",
+        "sampleScreenColor",
         "sidebarOverlayChanged",
         "showTabContextMenu",
         "showFolderContextMenu",
@@ -179,6 +180,10 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "setWallpaperColorWatch":
             windowController?.setWallpaperColorWatch(message.bool("enabled"))
+
+        case "sampleScreenColor":
+            let color = EyeDropperBridge.sRGBHex(await EyeDropperBridge.showSampler())
+            windowController?.bridgeRouter.send(event: "screenColorSampled", data: color.map { ["color": $0] } ?? [:])
 
         case "sidebarOverlayChanged":
             windowController?.handleSidebarOverlay(visible: message.bool("visible"))

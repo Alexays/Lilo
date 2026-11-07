@@ -863,7 +863,6 @@
 		"editFolder": "Klasörü düzenle",
 		"deleteFolder": "Klasörü sil",
 		"folderColor": "Klasör rengi",
-		"setFolderColor": "Klasör rengini ayarla: {color}",
 		"locked": "Kilitli",
 		"lockNow": "Şimdi kilitle",
 		"unlock": "Kilidi aç",
@@ -913,6 +912,13 @@
 		"groupLabel": "Yer imli sekmeler",
 		"dropToBookmark": "Yer imi eklemek için bırakın"
 	},
+	"colorPicker": {
+		"pick": "Seç",
+		"eyedropper": "Ekrandan renk al",
+		"pickHint": "Ekranda herhangi bir renge tıklayın",
+		"hue": "Ton",
+		"intensity": "Yoğunluk"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Alanı düzenle",
 		"newSpace": "Yeni Alan",
@@ -923,13 +929,9 @@
 		"quickPicks": "Bu alan için hızlı seçimler",
 		"spaceNamePlaceholder": "Alan adı",
 		"appearanceLabel": "Görünüm",
-		"colorFrom": {
-			"page": "Etkin sekmenin rengi",
-			"wallpaper": "Duvar kâğıdınızın rengi"
-		},
 		"color": "Renk",
 		"colorSource": {
-			"page": "Sayfa",
+			"page": "Site",
 			"wallpaper": "Duvar kâğıdı"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "Arduvaz",
 			"sand": "Kum"
 		},
-		"hexColor": "Onaltılık renk",
 		"exampleSite": "Örnek site",
 		"noSiteYet": "Henüz açık site yok",
 		"followDay": "Günün saatine göre değiş",
 		"followDayHint": "Akşam daha sıcak, gece daha koyu.",
+		"dayPart": {
+			"day": "Gündüz",
+			"evening": "Akşam",
+			"night": "Gece"
+		},
 		"materialLabel": "Malzeme",
 		"material": {
 			"solid": "Düz",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "Son alan silinemez.",
 		"signedInAs": "Oturum açılan profil",
 		"manageProfiles": "Yönet",
+		"newProfile": "Yeni profil",
 		"newProfileDetail": "Yeni çerezler ve genişletmeler",
 		"private": "Özel",
 		"privateDetail": "Kapatıldığında her şeyi unutur",

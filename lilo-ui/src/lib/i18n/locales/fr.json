@@ -863,7 +863,6 @@
 		"editFolder": "Modifier le dossier",
 		"deleteFolder": "Supprimer le dossier",
 		"folderColor": "Couleur du dossier",
-		"setFolderColor": "Définir la couleur du dossier {color}",
 		"locked": "Verrouillé",
 		"lockNow": "Verrouiller maintenant",
 		"unlock": "Déverrouiller",
@@ -913,6 +912,13 @@
 		"groupLabel": "Onglets favoris",
 		"dropToBookmark": "Déposer en favori"
 	},
+	"colorPicker": {
+		"pick": "Choisir",
+		"eyedropper": "Prendre une couleur à l'écran",
+		"pickHint": "Cliquez sur une couleur à l'écran",
+		"hue": "Teinte",
+		"intensity": "Intensité"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Modifier l'espace",
 		"newSpace": "Nouvel espace",
@@ -923,13 +929,9 @@
 		"quickPicks": "Sélection rapide pour cet espace",
 		"spaceNamePlaceholder": "Nom de l'espace",
 		"appearanceLabel": "Apparence",
-		"colorFrom": {
-			"page": "Couleur de l'onglet actif",
-			"wallpaper": "Couleur de votre fond d'écran"
-		},
 		"color": "Couleur",
 		"colorSource": {
-			"page": "Page",
+			"page": "Site",
 			"wallpaper": "Fond d'écran"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "Ardoise",
 			"sand": "Sable"
 		},
-		"hexColor": "Couleur hexadécimale",
 		"exampleSite": "Site d'exemple",
 		"noSiteYet": "Aucun site ouvert",
 		"followDay": "Varier selon l'heure",
 		"followDayHint": "Plus chaude le soir, plus profonde la nuit.",
+		"dayPart": {
+			"day": "Jour",
+			"evening": "Soir",
+			"night": "Nuit"
+		},
 		"materialLabel": "Matière",
 		"material": {
 			"solid": "Uni",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "Le dernier espace ne peut pas être supprimé.",
 		"signedInAs": "Connecté avec",
 		"manageProfiles": "Gérer",
+		"newProfile": "Nouveau profil",
 		"newProfileDetail": "Cookies et extensions vierges",
 		"private": "Privé",
 		"privateDetail": "Oublie tout à la fermeture",

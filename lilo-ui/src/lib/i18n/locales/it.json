@@ -863,7 +863,6 @@
 		"editFolder": "Modifica cartella",
 		"deleteFolder": "Elimina cartella",
 		"folderColor": "Colore della cartella",
-		"setFolderColor": "Imposta colore della cartella: {color}",
 		"locked": "Bloccata",
 		"lockNow": "Blocca ora",
 		"unlock": "Sblocca",
@@ -913,6 +912,13 @@
 		"groupLabel": "Schede nei segnalibri",
 		"dropToBookmark": "Rilascia per aggiungere ai segnalibri"
 	},
+	"colorPicker": {
+		"pick": "Scegli",
+		"eyedropper": "Preleva un colore dallo schermo",
+		"pickHint": "Fai clic su un colore sullo schermo",
+		"hue": "Tonalità",
+		"intensity": "Intensità"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Modifica spazio",
 		"newSpace": "Nuovo spazio",
@@ -923,13 +929,9 @@
 		"quickPicks": "Scelte rapide per questo spazio",
 		"spaceNamePlaceholder": "Nome dello spazio",
 		"appearanceLabel": "Aspetto",
-		"colorFrom": {
-			"page": "Colore della scheda attiva",
-			"wallpaper": "Colore del tuo sfondo"
-		},
 		"color": "Colore",
 		"colorSource": {
-			"page": "Pagina",
+			"page": "Sito",
 			"wallpaper": "Sfondo"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "Ardesia",
 			"sand": "Sabbia"
 		},
-		"hexColor": "Colore esadecimale",
 		"exampleSite": "Sito di esempio",
 		"noSiteYet": "Nessun sito aperto",
 		"followDay": "Cambia con l'ora del giorno",
 		"followDayHint": "Più calda la sera, più profonda di notte.",
+		"dayPart": {
+			"day": "Giorno",
+			"evening": "Sera",
+			"night": "Notte"
+		},
 		"materialLabel": "Materiale",
 		"material": {
 			"solid": "Pieno",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "L'ultimo spazio non può essere eliminato.",
 		"signedInAs": "Accesso come",
 		"manageProfiles": "Gestisci",
+		"newProfile": "Nuovo profilo",
 		"newProfileDetail": "Cookie ed estensioni nuovi",
 		"private": "Privato",
 		"privateDetail": "Dimentica tutto alla chiusura",

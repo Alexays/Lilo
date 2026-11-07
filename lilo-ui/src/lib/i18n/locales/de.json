@@ -863,7 +863,6 @@
 		"editFolder": "Ordner bearbeiten",
 		"deleteFolder": "Ordner löschen",
 		"folderColor": "Ordnerfarbe",
-		"setFolderColor": "Ordnerfarbe auf {color} setzen",
 		"locked": "Gesperrt",
 		"lockNow": "Jetzt sperren",
 		"unlock": "Entsperren",
@@ -913,6 +912,13 @@
 		"groupLabel": "Tabs mit Lesezeichen",
 		"dropToBookmark": "Zum Hinzufügen als Lesezeichen ablegen"
 	},
+	"colorPicker": {
+		"pick": "Wählen",
+		"eyedropper": "Farbe vom Bildschirm aufnehmen",
+		"pickHint": "Klicke auf eine Farbe auf dem Bildschirm",
+		"hue": "Farbton",
+		"intensity": "Intensität"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Space bearbeiten",
 		"newSpace": "Neuer Space",
@@ -923,13 +929,9 @@
 		"quickPicks": "Schnellauswahl für diesen Space",
 		"spaceNamePlaceholder": "Space-Name",
 		"appearanceLabel": "Erscheinungsbild",
-		"colorFrom": {
-			"page": "Farbe des aktiven Tabs",
-			"wallpaper": "Farbe deines Hintergrundbilds"
-		},
 		"color": "Farbe",
 		"colorSource": {
-			"page": "Seite",
+			"page": "Website",
 			"wallpaper": "Hintergrundbild"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "Schiefer",
 			"sand": "Sand"
 		},
-		"hexColor": "Hex-Farbe",
 		"exampleSite": "Beispielseite",
 		"noSiteYet": "Noch keine Website offen",
 		"followDay": "Mit der Tageszeit ändern",
 		"followDayHint": "Wärmer am Abend, tiefer in der Nacht.",
+		"dayPart": {
+			"day": "Tag",
+			"evening": "Abend",
+			"night": "Nacht"
+		},
 		"materialLabel": "Material",
 		"material": {
 			"solid": "Einfarbig",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "Der letzte Space kann nicht gelöscht werden.",
 		"signedInAs": "Angemeldet als",
 		"manageProfiles": "Verwalten",
+		"newProfile": "Neues Profil",
 		"newProfileDetail": "Neue Cookies und Erweiterungen",
 		"private": "Privat",
 		"privateDetail": "Vergisst beim Schließen alles",

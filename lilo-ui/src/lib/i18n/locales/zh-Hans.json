@@ -863,7 +863,6 @@
 		"editFolder": "编辑文件夹",
 		"deleteFolder": "删除文件夹",
 		"folderColor": "文件夹颜色",
-		"setFolderColor": "设置文件夹颜色 {color}",
 		"locked": "已锁定",
 		"lockNow": "立即锁定",
 		"unlock": "解锁",
@@ -913,6 +912,13 @@
 		"groupLabel": "书签标签页",
 		"dropToBookmark": "放下以添加书签"
 	},
+	"colorPicker": {
+		"pick": "选取",
+		"eyedropper": "从屏幕取色",
+		"pickHint": "点按屏幕上的任意颜色",
+		"hue": "色相",
+		"intensity": "浓度"
+	},
 	"spaceEditor": {
 		"dialogLabel": "编辑空间",
 		"newSpace": "新建空间",
@@ -923,13 +929,9 @@
 		"quickPicks": "适合此空间的快捷选择",
 		"spaceNamePlaceholder": "空间名称",
 		"appearanceLabel": "外观",
-		"colorFrom": {
-			"page": "当前标签页的颜色",
-			"wallpaper": "墙纸的颜色"
-		},
 		"color": "颜色",
 		"colorSource": {
-			"page": "网页",
+			"page": "网站",
 			"wallpaper": "墙纸"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "石板",
 			"sand": "沙"
 		},
-		"hexColor": "十六进制颜色",
 		"exampleSite": "示例网站",
 		"noSiteYet": "尚未打开网站",
 		"followDay": "随时间变化",
 		"followDayHint": "傍晚更暖，夜晚更深。",
+		"dayPart": {
+			"day": "白天",
+			"evening": "傍晚",
+			"night": "夜晚"
+		},
 		"materialLabel": "材质",
 		"material": {
 			"solid": "纯色",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "无法删除最后一个空间。",
 		"signedInAs": "登录身份",
 		"manageProfiles": "管理",
+		"newProfile": "新建个人资料",
 		"newProfileDetail": "独立的 Cookie 和扩展",
 		"private": "隐私",
 		"privateDetail": "关闭时清除所有内容",

@@ -622,6 +622,8 @@ export interface BridgeCommandPayloadMap {
 	/** The bar's color while a system screen covers the page; none gives it back to the page's. */
 	setPageBarColor: { color?: string };
 	setWallpaperColorWatch: { enabled: boolean };
+	/** The system color sampler, answered by `screenColorSampled`. */
+	sampleScreenColor: EmptyPayload;
 	sidebarOverlayChanged: { visible: boolean };
 	showTabSecurityInfo: EmptyPayload;
 	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
@@ -975,6 +977,8 @@ export interface BridgeEventPayloadMap {
 	windowChromeStateChanged: { trafficLightsVisible: boolean };
 	/** The dominant color of this window's wallpaper and a small JPEG data URL of it; empty when it can't be read. */
 	wallpaperColorChanged: { color: string; thumbnail?: string };
+	/** No color when the sampler is canceled. */
+	screenColorSampled: { color?: string };
 	tabLayoutChanged: { position: TabPosition; address: AddressPlacement };
 	windowFullscreenChanged: { isFullscreen: boolean };
 	windowFocusChanged: { focused: boolean };

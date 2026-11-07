@@ -863,7 +863,6 @@
 		"editFolder": "フォルダを編集",
 		"deleteFolder": "フォルダを削除",
 		"folderColor": "フォルダの色",
-		"setFolderColor": "フォルダの色を{color}に設定",
 		"locked": "ロック中",
 		"lockNow": "今すぐロック",
 		"unlock": "ロックを解除",
@@ -913,6 +912,13 @@
 		"groupLabel": "ブックマーク済みのタブ",
 		"dropToBookmark": "ドロップしてブックマーク"
 	},
+	"colorPicker": {
+		"pick": "選択",
+		"eyedropper": "画面から色を取得",
+		"pickHint": "画面上の色をクリック",
+		"hue": "色相",
+		"intensity": "鮮やかさ"
+	},
 	"spaceEditor": {
 		"dialogLabel": "スペースを編集",
 		"newSpace": "新規スペース",
@@ -923,13 +929,9 @@
 		"quickPicks": "このスペースの候補",
 		"spaceNamePlaceholder": "スペース名",
 		"appearanceLabel": "外観",
-		"colorFrom": {
-			"page": "アクティブなタブの色",
-			"wallpaper": "壁紙の色"
-		},
 		"color": "カラー",
 		"colorSource": {
-			"page": "ページ",
+			"page": "サイト",
 			"wallpaper": "壁紙"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "スレート",
 			"sand": "サンド"
 		},
-		"hexColor": "16進カラー",
 		"exampleSite": "サンプルサイト",
 		"noSiteYet": "まだサイトがありません",
 		"followDay": "時間帯で変化",
 		"followDayHint": "夕方は暖かく、夜は深く。",
+		"dayPart": {
+			"day": "昼",
+			"evening": "夕方",
+			"night": "夜"
+		},
 		"materialLabel": "素材",
 		"material": {
 			"solid": "ソリッド",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "最後のスペースは削除できません。",
 		"signedInAs": "サインイン中のプロファイル",
 		"manageProfiles": "管理",
+		"newProfile": "新規プロファイル",
 		"newProfileDetail": "新しい Cookie と機能拡張",
 		"private": "プライベート",
 		"privateDetail": "閉じるとすべて消去",

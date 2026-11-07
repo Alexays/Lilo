@@ -9,16 +9,13 @@ const sidebarBackground = (page: Page) =>
 const lastCommand = async (page: Page, action: string) =>
 	(await sentCommands(page)).filter((command) => command.action === action).at(-1)?.payload;
 
-const fromTab = (page: Page) => page.getByRole("button", { name: "Color of the active tab", exact: true });
-const fromWallpaper = (page: Page) => page.getByRole("button", { name: "Color of your wallpaper", exact: true });
+const source = (page: Page, name: string) => page.getByRole("radiogroup", { name: /^Color/ }).getByRole("radio", { name, exact: true });
+const hue = (page: Page) => page.getByRole("slider", { name: "Hue" });
 
 async function openAppearance(page: Page): Promise<void> {
 	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), SPACE_1);
 	await expect(page.locator(".editor-panel")).toBeVisible();
 }
-
-// The sources and swatches sit in the popover the Color row opens.
-const colorButton = (page: Page) => page.locator(".color-button");
 
 const dayToggle = (page: Page) => page.locator(".ui-toggle", { has: page.getByRole("checkbox", { name: "Change with the time of day" }) });
 
@@ -39,45 +36,34 @@ test("each color source and material previews on the whole chrome, and is sent a
 	const fixed = await sidebarBackground(page);
 	await openAppearance(page);
 
-	await colorButton(page).click();
-	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
-	await page.keyboard.press("Escape");
-	await expect(colorButton(page)).toBeFocused();
-	await expect(page.locator(".editor-panel")).toBeVisible();
+	await expect(source(page, "Pick")).toHaveAttribute("aria-checked", "true");
 
 	await dayToggle(page).click();
 	await expect.poll(() => sidebarBackground(page)).not.toBe(fixed);
 	// The base color is still the user's to pick while it follows the day.
 	const evening = await sidebarBackground(page);
-	// Past the tab and the wallpaper, the first color: picking it closes the popover.
-	await colorButton(page).click();
-	await page.locator(".swatches .swatch").nth(2).click();
-	await expect(page.locator(".swatches")).toHaveCount(0);
+	await hue(page).fill("120");
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 
-	// The active tab's site brings the color: the Color row says so, and the day has nothing to change.
-	await colorButton(page).click();
-	await fromTab(page).click();
-	await expect(colorButton(page)).toHaveText("Page");
-	await colorButton(page).click();
-	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "true");
+	// The active tab's site brings the color: the sliders give way to what it does, and the day has nothing to change.
+	await source(page, "Site").click();
+	await expect(page.locator(".editor-panel .box .note")).toHaveText("Lilo takes the color of the site in the active tab.");
+	await expect(hue(page)).toHaveCount(0);
 	await expect(dayToggle(page)).toHaveCount(0);
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 	const tinted = await sidebarBackground(page);
 
-	await fromWallpaper(page).click();
+	await source(page, "Wallpaper").click();
 	await expect.poll(() => lastCommand(page, "setWallpaperColorWatch")).toEqual({ enabled: true });
 	await page.evaluate(() => window.__lilo!.receive({ event: "wallpaperColorChanged", color: "#2f9e8f", thumbnail: "data:image/jpeg;base64,AAAA" }));
 	await expect.poll(() => sidebarBackground(page)).not.toBe(tinted);
 	// The Glass swatch shows the wallpaper itself through the Space color.
 	expect(await page.locator(".swatch-material.glass").evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("data:image/jpeg");
 
-	// A color takes back from Lilo's pick.
-	await colorButton(page).click();
-	await page.locator(".swatches .swatch").nth(4).click();
-	await colorButton(page).click();
-	await expect(fromWallpaper(page)).toHaveAttribute("aria-pressed", "false");
-	await fromWallpaper(page).click();
+	// Pick takes back from Lilo's pick.
+	await source(page, "Pick").click();
+	await expect(hue(page)).toBeVisible();
+	await source(page, "Wallpaper").click();
 	await page.getByRole("radiogroup", { name: "Material" }).getByRole("radio", { name: "Grain" }).click();
 	await expect.poll(() => page.evaluate(() => document.documentElement.dataset.material)).toBe("grain");
 
@@ -118,14 +104,12 @@ test("the onboarding's Your Lilo screen sets the current Space's color and mater
 	await page.getByRole("radiogroup", { name: "Material" }).getByRole("radio", { name: "Glass" }).click();
 	await expect.poll(() => lastCommand(page, "updateSpace")).toEqual({ id: "space-home", material: "glass" });
 
-	// The palette unfolds under the Color row, named by the color's hex.
-	const colorButton = page.getByRole("button", { name: "Color #5865F2", exact: true });
-	await expect(colorButton).toHaveAttribute("aria-expanded", "false");
-	await colorButton.click();
-	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
+	// The sliders sit under the Color row, the color named under its label.
+	await expect(source(page, "Pick")).toHaveAttribute("aria-checked", "true");
+	await expect(page.locator(".ob-text small").first()).toHaveText("Custom color");
 
 	// The color is the user's here too, sent at once.
-	await page.locator(".swatches .swatch").nth(2).click();
+	await hue(page).fill("30");
 	await expect.poll(() => lastCommand(page, "updateSpace")).toMatchObject({ id: "space-home", color: expect.any(String) });
 	expect((await lastCommand(page, "updateSpace"))?.color).not.toBe("#5865f2");
 });

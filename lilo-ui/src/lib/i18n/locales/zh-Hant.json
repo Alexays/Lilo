@@ -863,7 +863,6 @@
 		"editFolder": "編輯資料夾",
 		"deleteFolder": "刪除資料夾",
 		"folderColor": "資料夾顏色",
-		"setFolderColor": "將資料夾顏色設為 {color}",
 		"locked": "已鎖定",
 		"lockNow": "立即鎖定",
 		"unlock": "解鎖",
@@ -913,6 +912,13 @@
 		"groupLabel": "書籤分頁",
 		"dropToBookmark": "放下以加入書籤"
 	},
+	"colorPicker": {
+		"pick": "選取",
+		"eyedropper": "從螢幕取色",
+		"pickHint": "點按螢幕上的任何顏色",
+		"hue": "色相",
+		"intensity": "濃度"
+	},
 	"spaceEditor": {
 		"dialogLabel": "編輯空間",
 		"newSpace": "新增空間",
@@ -923,13 +929,9 @@
 		"quickPicks": "此空間的精選項目",
 		"spaceNamePlaceholder": "空間名稱",
 		"appearanceLabel": "外觀",
-		"colorFrom": {
-			"page": "目前分頁的顏色",
-			"wallpaper": "背景圖片的顏色"
-		},
 		"color": "顏色",
 		"colorSource": {
-			"page": "網頁",
+			"page": "網站",
 			"wallpaper": "背景圖片"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "石板",
 			"sand": "沙"
 		},
-		"hexColor": "十六進位顏色",
 		"exampleSite": "範例網站",
 		"noSiteYet": "尚未開啟網站",
 		"followDay": "隨時間變化",
 		"followDayHint": "傍晚更暖，夜晚更深。",
+		"dayPart": {
+			"day": "白天",
+			"evening": "傍晚",
+			"night": "夜晚"
+		},
 		"materialLabel": "材質",
 		"material": {
 			"solid": "純色",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "無法刪除最後一個空間。",
 		"signedInAs": "登入身分",
 		"manageProfiles": "管理",
+		"newProfile": "新增個人檔案",
 		"newProfileDetail": "全新的 Cookie 與延伸功能",
 		"private": "私密",
 		"privateDetail": "關閉後忘記所有內容",

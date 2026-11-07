@@ -8,19 +8,27 @@ final class EyeDropperBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let messageHandlerName = "liloEyeDropper"
 
     /// Shows the sampler and hands back the picked color, or nil when the user cancels.
-    var sample: () async -> NSColor? = {
+    var sample: () async -> NSColor? = EyeDropperBridge.showSampler
+
+    static func showSampler() async -> NSColor? {
         await withCheckedContinuation { continuation in
             NSColorSampler().show { continuation.resume(returning: $0) }
         }
+    }
+
+    /// `#rrggbb` in sRGB, the form both the EyeDropper API and the chrome take.
+    static func sRGBHex(_ color: NSColor?) -> String? {
+        guard let color = color?.usingColorSpace(.sRGB) else { return nil }
+        let channel = { (value: CGFloat) in Int((min(max(value, 0), 1) * 255).rounded()) }
+        return unsafe String(format: "#%02x%02x%02x", channel(color.redComponent), channel(color.greenComponent), channel(color.blueComponent))
     }
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) async -> (Any?, String?) {
         guard message.frameInfo.securityOrigin.isPotentiallyTrustworthy else {
             return (nil, "NotAllowedError: EyeDropper needs a secure context")
         }
-        guard let color = await sample()?.usingColorSpace(.sRGB) else { return (nil, "AbortError: The user canceled the selection") }
-        let channel = { (value: CGFloat) in Int((min(max(value, 0), 1) * 255).rounded()) }
-        return unsafe (String(format: "#%02x%02x%02x", channel(color.redComponent), channel(color.greenComponent), channel(color.blueComponent)), nil)
+        guard let hex = Self.sRGBHex(await sample()) else { return (nil, "AbortError: The user canceled the selection") }
+        return (hex, nil)
     }
 
     /// `window.EyeDropper` for `PageWorld`, in secure contexts.

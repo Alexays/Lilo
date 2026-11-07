@@ -71,7 +71,7 @@ export function isChromaticHex(input: string | undefined): boolean {
 	return Math.max(color.r, color.g, color.b) - Math.min(color.r, color.g, color.b) > 40;
 }
 
-function toHex({ r, g, b }: RGB): string {
+export function toHex({ r, g, b }: RGB): string {
 	return `#${[r, g, b]
 		.map((channel) => clamp(channel, 0, 255).toString(16).padStart(2, "0"))
 		.join("")}`;
@@ -131,7 +131,7 @@ export function toOklab(color: RGB): [number, number, number] {
 	];
 }
 
-function fromOklab(lightness: number, a: number, b: number): RGB {
+export function fromOklab(lightness: number, a: number, b: number): RGB {
 	const l = lightness + 0.3963377774 * a + 0.2158037573 * b;
 	const m = lightness - 0.1055613458 * a - 0.0638541728 * b;
 	const s = lightness - 0.0894841775 * a - 1.291485548 * b;

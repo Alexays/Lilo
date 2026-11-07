@@ -5,6 +5,7 @@
 	import { on } from "../../lib/bridge";
 	import { closeLockPanel, getLockPanel, openLockPanel } from "../../stores/folderLock.svelte";
 	import { FOLDER_COLORS, folderColorStyle } from "../../stores/theme.svelte";
+	import { FOLDER_TONE } from "../../lib/colorSliders";
 
 	interface Props {
 		folder: FolderState;
@@ -135,8 +136,11 @@
 		}
 	}
 
+	// The screen color sampler takes the focus away while it is up: the edit stays open under it.
+	let picking = $state(false);
+
 	function handleEditShellFocusOut(e: FocusEvent): void {
-		if (!isRenaming) return;
+		if (!isRenaming || picking) return;
 		if (e.currentTarget instanceof HTMLElement && e.relatedTarget instanceof Node) {
 			if (e.currentTarget.contains(e.relatedTarget)) return;
 		}
@@ -351,17 +355,13 @@
 					aria-label={t("tabFolder.editFolder")}
 					tabindex="-1"
 				>
-					<div class="folder-color-grid" role="group" aria-label={t("tabFolder.folderColor")}>
-						{#each FOLDER_COLORS as color (color)}
-							<button
-								class="folder-color-swatch"
-								class:selected={draftColor === color}
-								style={`--swatch-color: ${color};`}
-								aria-label={t("tabFolder.setFolderColor", { color })}
-								onmousedown={(e) => e.preventDefault()}
-								onclick={() => { draftColor = color; onDraftColor?.(color); }}
-							></button>
-						{/each}
+					<div class="folder-color" role="group" aria-label={t("tabFolder.folderColor")}>
+						<!-- Loaded on the first edit, out of the first frame; the group keeps its height meanwhile. -->
+						{#await import("../ui/ColorSliders.svelte") then { default: ColorSliders }}
+							<ColorSliders compact color={draftColor || folder.color} tone={FOLDER_TONE} presets={FOLDER_COLORS} bind:picking
+								oncolor={(color) => { draftColor = color; onDraftColor?.(color); }} />
+						{/await}
+						{#if picking}<p class="folder-color-hint" aria-live="polite">{t("colorPicker.pickHint")}</p>{/if}
 					</div>
 					{#if folder.lock?.biometricsAvailable}
 						<label class="lock-check edit-lock-check">
@@ -696,37 +696,15 @@
 		padding: 4px 6px 6px;
 	}
 
-	.folder-color-grid {
-		display: grid;
-		grid-template-columns: repeat(8, 1fr);
-		gap: 4px;
+	.folder-color {
+		min-height: 38px;
 		margin-top: 6px;
 	}
 
-	.folder-color-swatch {
-		width: 20px;
-		height: 20px;
-		border: 1px solid color-mix(in srgb, black 18%, transparent);
-		border-radius: var(--radius-chip);
-		background: var(--swatch-color);
-		cursor: pointer;
-		padding: 0;
-		box-shadow: inset 0 1px 0 color-mix(in srgb, white 34%, transparent);
-		transition:
-			transform var(--motion-duration-fast) ease,
-			box-shadow var(--motion-duration-fast) ease,
-			border-color var(--motion-duration-fast) ease;
-	}
-
-	.folder-color-swatch:hover {
-		transform: scale(1.08);
-	}
-
-	.folder-color-swatch.selected {
-		border-color: color-mix(in srgb, white 70%, var(--swatch-color));
-		box-shadow:
-			inset 0 1px 0 color-mix(in srgb, white 34%, transparent),
-			0 0 0 2px color-mix(in srgb, var(--swatch-color) 36%, transparent);
+	.folder-color-hint {
+		margin: 6px 0 0;
+		color: var(--text-secondary);
+		font-size: var(--font-size-xs);
 	}
 
 	.lock-icon {

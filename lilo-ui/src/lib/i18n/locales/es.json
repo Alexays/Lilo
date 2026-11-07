@@ -863,7 +863,6 @@
 		"editFolder": "Editar carpeta",
 		"deleteFolder": "Eliminar carpeta",
 		"folderColor": "Color de la carpeta",
-		"setFolderColor": "Establecer color de carpeta {color}",
 		"locked": "Bloqueada",
 		"lockNow": "Bloquear ahora",
 		"unlock": "Desbloquear",
@@ -913,6 +912,13 @@
 		"groupLabel": "Pestañas guardadas en marcadores",
 		"dropToBookmark": "Suelta para guardar en marcadores"
 	},
+	"colorPicker": {
+		"pick": "Elegir",
+		"eyedropper": "Tomar un color de la pantalla",
+		"pickHint": "Haz clic en cualquier color de la pantalla",
+		"hue": "Tono",
+		"intensity": "Intensidad"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Editar espacio",
 		"newSpace": "Nuevo Espacio",
@@ -923,13 +929,9 @@
 		"quickPicks": "Selección rápida para este espacio",
 		"spaceNamePlaceholder": "Nombre del espacio",
 		"appearanceLabel": "Apariencia",
-		"colorFrom": {
-			"page": "Color de la pestaña activa",
-			"wallpaper": "Color de tu fondo de pantalla"
-		},
 		"color": "Color",
 		"colorSource": {
-			"page": "Página",
+			"page": "Sitio",
 			"wallpaper": "Fondo de pantalla"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "Pizarra",
 			"sand": "Arena"
 		},
-		"hexColor": "Color hexadecimal",
 		"exampleSite": "Sitio de ejemplo",
 		"noSiteYet": "Aún no hay sitios abiertos",
 		"followDay": "Cambiar según la hora",
 		"followDayHint": "Más cálido al atardecer, más profundo de noche.",
+		"dayPart": {
+			"day": "Día",
+			"evening": "Atardecer",
+			"night": "Noche"
+		},
 		"materialLabel": "Material",
 		"material": {
 			"solid": "Sólido",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "No se puede eliminar el último espacio.",
 		"signedInAs": "Sesión iniciada como",
 		"manageProfiles": "Gestionar",
+		"newProfile": "Nuevo perfil",
 		"newProfileDetail": "Cookies y extensiones nuevas",
 		"private": "Privado",
 		"privateDetail": "Olvida todo al cerrar",

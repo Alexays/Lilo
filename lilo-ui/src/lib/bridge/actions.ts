@@ -44,6 +44,7 @@ export const chromeActions = {
 	setPageBarColor: (color?: string): void => emit("setPageBarColor", { color }),
 	setWallpaperColorWatch: (enabled: boolean): void =>
 		emit("setWallpaperColorWatch", { enabled }),
+	sampleScreenColor: emitEmpty("sampleScreenColor"),
 	sidebarResized: (width: number): void => emit("sidebarResized", { width }),
 	setSidebarRail: (rail: boolean): void => emit("setSidebarRail", { rail }),
 	sidebarOverlayChanged: (visible: boolean): void =>

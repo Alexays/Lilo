@@ -881,7 +881,6 @@
 		"editFolder": "Редагувати папку",
 		"deleteFolder": "Видалити папку",
 		"folderColor": "Колір папки",
-		"setFolderColor": "Задати колір папки: {color}",
 		"locked": "Заблоковано",
 		"lockNow": "Заблокувати зараз",
 		"unlock": "Розблокувати",
@@ -931,6 +930,13 @@
 		"groupLabel": "Вкладки в закладках",
 		"dropToBookmark": "Перетягніть сюди, щоб додати закладку"
 	},
+	"colorPicker": {
+		"pick": "Вибрати",
+		"eyedropper": "Взяти колір з екрана",
+		"pickHint": "Натисніть на будь-який колір на екрані",
+		"hue": "Відтінок",
+		"intensity": "Насиченість"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Редагувати простір",
 		"newSpace": "Новий простір",
@@ -941,13 +947,9 @@
 		"quickPicks": "Пропозиції для цього простору",
 		"spaceNamePlaceholder": "Назва простору",
 		"appearanceLabel": "Вигляд",
-		"colorFrom": {
-			"page": "Колір активної вкладки",
-			"wallpaper": "Колір ваших шпалер"
-		},
 		"color": "Колір",
 		"colorSource": {
-			"page": "Сторінка",
+			"page": "Сайт",
 			"wallpaper": "Шпалери"
 		},
 		"colorSourceHint": {
@@ -968,11 +970,15 @@
 			"slate": "Сланець",
 			"sand": "Пісок"
 		},
-		"hexColor": "Шістнадцятковий колір",
 		"exampleSite": "Приклад сайту",
 		"noSiteYet": "Сайт ще не відкрито",
 		"followDay": "Змінюватися протягом дня",
 		"followDayHint": "Тепліший увечері, глибший уночі.",
+		"dayPart": {
+			"day": "День",
+			"evening": "Вечір",
+			"night": "Ніч"
+		},
 		"materialLabel": "Матеріал",
 		"material": {
 			"solid": "Суцільний",
@@ -998,6 +1004,7 @@
 		"lastSpaceHint": "Останній простір видалити не можна.",
 		"signedInAs": "Виконано вхід як",
 		"manageProfiles": "Керувати",
+		"newProfile": "Новий профіль",
 		"newProfileDetail": "Нові файли cookie й розширення",
 		"private": "Приватний",
 		"privateDetail": "Усе зникає після закриття",

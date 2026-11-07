@@ -881,7 +881,6 @@
 		"editFolder": "Изменить папку",
 		"deleteFolder": "Удалить папку",
 		"folderColor": "Цвет папки",
-		"setFolderColor": "Задать цвет папки: {color}",
 		"locked": "Заблокирована",
 		"lockNow": "Заблокировать сейчас",
 		"unlock": "Разблокировать",
@@ -931,6 +930,13 @@
 		"groupLabel": "Вкладки в закладках",
 		"dropToBookmark": "Отпустите, чтобы добавить в закладки"
 	},
+	"colorPicker": {
+		"pick": "Выбрать",
+		"eyedropper": "Взять цвет с экрана",
+		"pickHint": "Нажмите на любой цвет на экране",
+		"hue": "Оттенок",
+		"intensity": "Насыщенность"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Изменить пространство",
 		"newSpace": "Новое пространство",
@@ -941,13 +947,9 @@
 		"quickPicks": "Быстрый выбор для этого пространства",
 		"spaceNamePlaceholder": "Название пространства",
 		"appearanceLabel": "Оформление",
-		"colorFrom": {
-			"page": "Цвет активной вкладки",
-			"wallpaper": "Цвет ваших обоев"
-		},
 		"color": "Цвет",
 		"colorSource": {
-			"page": "Страница",
+			"page": "Сайт",
 			"wallpaper": "Обои"
 		},
 		"colorSourceHint": {
@@ -968,11 +970,15 @@
 			"slate": "Сланец",
 			"sand": "Песок"
 		},
-		"hexColor": "Шестнадцатеричный цвет",
 		"exampleSite": "Пример сайта",
 		"noSiteYet": "Сайт ещё не открыт",
 		"followDay": "Меняться в течение дня",
 		"followDayHint": "Теплее вечером, глубже ночью.",
+		"dayPart": {
+			"day": "День",
+			"evening": "Вечер",
+			"night": "Ночь"
+		},
 		"materialLabel": "Материал",
 		"material": {
 			"solid": "Сплошной",
@@ -998,6 +1004,7 @@
 		"lastSpaceHint": "Последнее пространство нельзя удалить.",
 		"signedInAs": "Профиль",
 		"manageProfiles": "Управление",
+		"newProfile": "Новый профиль",
 		"newProfileDetail": "Без cookie и расширений",
 		"private": "Приватное",
 		"privateDetail": "Забывает всё при закрытии",

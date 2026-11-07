@@ -881,7 +881,6 @@
 		"editFolder": "Edytuj folder",
 		"deleteFolder": "Usuń folder",
 		"folderColor": "Kolor folderu",
-		"setFolderColor": "Ustaw kolor folderu: {color}",
 		"locked": "Zablokowany",
 		"lockNow": "Zablokuj teraz",
 		"unlock": "Odblokuj",
@@ -931,6 +930,13 @@
 		"groupLabel": "Karty zapisane w zakładkach",
 		"dropToBookmark": "Upuść, aby dodać zakładkę"
 	},
+	"colorPicker": {
+		"pick": "Wybierz",
+		"eyedropper": "Pobierz kolor z ekranu",
+		"pickHint": "Kliknij dowolny kolor na ekranie",
+		"hue": "Odcień",
+		"intensity": "Intensywność"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Edytuj przestrzeń",
 		"newSpace": "Nowa przestrzeń",
@@ -941,13 +947,9 @@
 		"quickPicks": "Propozycje dla tej przestrzeni",
 		"spaceNamePlaceholder": "Nazwa przestrzeni",
 		"appearanceLabel": "Wygląd",
-		"colorFrom": {
-			"page": "Kolor aktywnej karty",
-			"wallpaper": "Kolor Twojej tapety"
-		},
 		"color": "Kolor",
 		"colorSource": {
-			"page": "Strona",
+			"page": "Witryna",
 			"wallpaper": "Tapeta"
 		},
 		"colorSourceHint": {
@@ -968,11 +970,15 @@
 			"slate": "Łupek",
 			"sand": "Piasek"
 		},
-		"hexColor": "Kolor szesnastkowy",
 		"exampleSite": "Przykładowa strona",
 		"noSiteYet": "Brak otwartej strony",
 		"followDay": "Zmieniaj z porą dnia",
 		"followDayHint": "Cieplejszy wieczorem, głębszy nocą.",
+		"dayPart": {
+			"day": "Dzień",
+			"evening": "Wieczór",
+			"night": "Noc"
+		},
 		"materialLabel": "Materiał",
 		"material": {
 			"solid": "Jednolity",
@@ -998,6 +1004,7 @@
 		"lastSpaceHint": "Nie można usunąć ostatniej przestrzeni.",
 		"signedInAs": "Zalogowano jako",
 		"manageProfiles": "Zarządzaj",
+		"newProfile": "Nowy profil",
 		"newProfileDetail": "Nowe pliki cookie i rozszerzenia",
 		"private": "Prywatna",
 		"privateDetail": "Po zamknięciu nic nie pozostaje",

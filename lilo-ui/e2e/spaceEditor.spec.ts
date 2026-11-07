@@ -199,8 +199,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		const spaceBackground = await sidebarBackground(page);
 
 		await page.evaluate(() => window.__lilo!.receive({ event: "openAddSpaceEditor" }));
-		await page.locator(".color-button").click();
-		await page.locator(".swatches .swatch").nth(5).click();
+		await page.getByRole("slider", { name: "Hue" }).fill("200");
 
 		await expect.poll(() => sidebarBackground(page)).not.toBe(spaceBackground);
 		await expect.poll(() => reportedBackground(page)).toBe(await sidebarBackground(page));
@@ -289,46 +288,31 @@ test("an edited space takes each change as it is made, with Delete Space as its 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
 	await expect(page.locator(".editor-footer button")).toHaveText(["Delete Space..."]);
 
-	await page.locator(".color-button").click();
-	await page.locator(".swatches .swatch").nth(5).click();
+	await page.getByRole("slider", { name: "Hue" }).fill("200");
 	await expect.poll(async () => Object.keys((await sentCommands(page)).find((command) => command.action === "updateSpace")?.payload ?? {}))
 		.toEqual(["id", "color"]);
 });
 
-// WebKit ends a color input's picker, the color panel's eyedropper included, as soon as the input blurs.
-test("the pointer leaving for the page keeps the custom color picker connected", async ({ page }) => {
+test("the eyedropper takes a color from the screen, snapping to a preset close to it", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
-	await page.locator(".color-button").click();
-	const picker = page.locator(".swatch.custom input");
-	await picker.focus();
-	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: false }));
-	await expect(picker).toBeFocused();
-	await picker.fill("#123456");
-	await expect(page.locator(".swatches .swatch.custom")).toHaveClass(/selected/);
-	await expect(page.locator(".swatches .swatch.custom")).toHaveCSS("background-image", /rgb\(18, 52, 86\)/);
-	// A press in the page closes the popover, the picker with it.
-	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: true }));
-	await expect(picker).toHaveCount(0);
-});
+	const note = page.locator(".editor-panel .box .note").first();
+	await page.getByRole("button", { name: "Pick a color from the screen" }).click();
+	await expect.poll(async () => (await sentCommands(page)).some((command) => command.action === "sampleScreenColor")).toBe(true);
+	await expect(note).toHaveText("Click any color on screen");
 
-test("a custom color keeps the hue wheel around it, and the swatch still opens the color picker", async ({ page }) => {
-	const world = initialWorld();
-	world.spaces[0].color = "#4a90d9";
-	await bootChrome(page, world);
-	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), world.spaces[0].id);
-	await expect(page.locator(".color-button")).toHaveText("#4A90D9");
-	await page.locator(".color-button").click();
-	const custom = page.locator(".swatches .swatch.custom");
-	await expect(custom).toHaveClass(/selected/);
-	expect(await custom.evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("conic-gradient");
+	await page.evaluate(() => window.__lilo!.receive({ event: "screenColorSampled", color: "#808000" }));
+	await expect(note).toHaveText("Custom color");
+	// Toned to the Space lightness, away from every preset.
+	await expect.poll(async () => (await sentCommands(page)).filter((command) => command.action === "updateSpace").at(-1)?.payload.color).toBe("#c3c55e");
 
-	const opened = page.evaluate(() => new Promise<boolean>((resolve) => {
-		document.querySelector(".swatches .swatch.custom input")!.addEventListener("click", (event) => {
-			event.preventDefault();
-			resolve(true);
-		}, { once: true });
-	}));
-	await custom.click();
-	expect(await opened).toBe(true);
+	// Canceled: the color stays.
+	await page.getByRole("button", { name: "Pick a color from the screen" }).click();
+	await page.evaluate(() => window.__lilo!.receive({ event: "screenColorSampled" }));
+	await expect(note).toHaveText("Custom color");
+
+	await page.getByRole("button", { name: "Pick a color from the screen" }).click();
+	await page.evaluate(() => window.__lilo!.receive({ event: "screenColorSampled", color: "#92a8ff" }));
+	await expect(note).toHaveText("Periwinkle");
+	await expect.poll(async () => (await sentCommands(page)).filter((command) => command.action === "updateSpace").at(-1)?.payload.color).toBe("#92a8ff");
 });

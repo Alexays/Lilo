@@ -863,7 +863,6 @@
 		"editFolder": "폴더 편집",
 		"deleteFolder": "폴더 삭제",
 		"folderColor": "폴더 색상",
-		"setFolderColor": "폴더 색상을 {color}(으)로 설정",
 		"locked": "잠김",
 		"lockNow": "지금 잠그기",
 		"unlock": "잠금 해제",
@@ -913,6 +912,13 @@
 		"groupLabel": "책갈피로 저장된 탭",
 		"dropToBookmark": "놓아서 책갈피 추가"
 	},
+	"colorPicker": {
+		"pick": "선택",
+		"eyedropper": "화면에서 색상 가져오기",
+		"pickHint": "화면에서 원하는 색상을 클릭하세요",
+		"hue": "색조",
+		"intensity": "채도"
+	},
 	"spaceEditor": {
 		"dialogLabel": "스페이스 편집",
 		"newSpace": "새 스페이스",
@@ -923,13 +929,9 @@
 		"quickPicks": "이 스페이스의 빠른 선택",
 		"spaceNamePlaceholder": "스페이스 이름",
 		"appearanceLabel": "모양",
-		"colorFrom": {
-			"page": "활성 탭의 색상",
-			"wallpaper": "배경화면의 색상"
-		},
 		"color": "색상",
 		"colorSource": {
-			"page": "페이지",
+			"page": "사이트",
 			"wallpaper": "배경화면"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "슬레이트",
 			"sand": "샌드"
 		},
-		"hexColor": "16진수 색상",
 		"exampleSite": "예시 사이트",
 		"noSiteYet": "아직 연 사이트 없음",
 		"followDay": "시간대에 따라 변화",
 		"followDayHint": "저녁엔 더 따뜻하게, 밤엔 더 깊게.",
+		"dayPart": {
+			"day": "낮",
+			"evening": "저녁",
+			"night": "밤"
+		},
 		"materialLabel": "재질",
 		"material": {
 			"solid": "단색",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "마지막 스페이스는 삭제할 수 없습니다.",
 		"signedInAs": "로그인 프로필",
 		"manageProfiles": "관리",
+		"newProfile": "새 프로필",
 		"newProfileDetail": "새로운 쿠키 및 확장 프로그램",
 		"private": "개인정보 보호",
 		"privateDetail": "닫으면 모든 데이터 삭제",

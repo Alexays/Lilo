@@ -14,7 +14,6 @@ const colorAllowlist = new Set([
 	"onboarding/OnboardingYourLilo.svelte", // the window drawn over the wallpaper
 	"screenshot/ScreenshotEditor.svelte", // always-dark editing canvas
 	"settings/ThemePicker.svelte", // previews of each theme's own palette
-	"spaces/AppearancePreview.svelte", // the window drawn over the wallpaper
 ]);
 
 function svelteFiles(dir: string): string[] {

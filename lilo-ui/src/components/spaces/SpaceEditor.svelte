@@ -293,7 +293,7 @@
     onclick={p.select}
   >
     {#if p.kind === "new"}
-      <span class="choice-avatar new" aria-hidden="true">+</span>
+      <span class="choice-avatar new" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg></span>
     {:else if p.kind === "private"}
       <span class="choice-avatar private" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -409,7 +409,6 @@
       <div class="field">
         <span class="field-label">{t("spaceEditor.appearanceLabel")}</span>
         <AppearancePicker
-          inline
           mode={s.colorMode}
           color={s.color}
           material={s.material}
@@ -441,7 +440,7 @@
                 kind: "new",
                 checked: choice.kind === "new",
                 select: () => (choice = { kind: "new" }),
-                label: t("settings.profiles.newProfile"),
+                label: t("spaceEditor.newProfile"),
                 detail: t("spaceEditor.newProfileDetail"),
               })}
               {#if choice.kind === "new"}

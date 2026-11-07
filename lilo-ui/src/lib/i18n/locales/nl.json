@@ -863,7 +863,6 @@
 		"editFolder": "Wijzig map",
 		"deleteFolder": "Verwijder map",
 		"folderColor": "Mapkleur",
-		"setFolderColor": "Stel mapkleur in op {color}",
 		"locked": "Vergrendeld",
 		"lockNow": "Vergrendel nu",
 		"unlock": "Ontgrendel",
@@ -913,6 +912,13 @@
 		"groupLabel": "Bladwijzertabbladen",
 		"dropToBookmark": "Laat los om bladwijzer te maken"
 	},
+	"colorPicker": {
+		"pick": "Kiezen",
+		"eyedropper": "Kleur van het scherm kiezen",
+		"pickHint": "Klik op een kleur op het scherm",
+		"hue": "Tint",
+		"intensity": "Intensiteit"
+	},
 	"spaceEditor": {
 		"dialogLabel": "Wijzig ruimte",
 		"newSpace": "Nieuwe ruimte",
@@ -923,13 +929,9 @@
 		"quickPicks": "Snelle keuzes voor deze ruimte",
 		"spaceNamePlaceholder": "Naam van ruimte",
 		"appearanceLabel": "Weergave",
-		"colorFrom": {
-			"page": "Kleur van het actieve tabblad",
-			"wallpaper": "Kleur van je achtergrond"
-		},
 		"color": "Kleur",
 		"colorSource": {
-			"page": "Pagina",
+			"page": "Site",
 			"wallpaper": "Achtergrond"
 		},
 		"colorSourceHint": {
@@ -950,11 +952,15 @@
 			"slate": "Leisteen",
 			"sand": "Zand"
 		},
-		"hexColor": "Hexkleur",
 		"exampleSite": "Voorbeeldsite",
 		"noSiteYet": "Nog geen site open",
 		"followDay": "Meeveranderen met het tijdstip",
 		"followDayHint": "Warmer in de avond, dieper in de nacht.",
+		"dayPart": {
+			"day": "Dag",
+			"evening": "Avond",
+			"night": "Nacht"
+		},
 		"materialLabel": "Materiaal",
 		"material": {
 			"solid": "Effen",
@@ -980,6 +986,7 @@
 		"lastSpaceHint": "De laatste ruimte kan niet worden verwijderd.",
 		"signedInAs": "Aangemeld als",
 		"manageProfiles": "Beheer",
+		"newProfile": "Nieuw profiel",
 		"newProfileDetail": "Nieuwe cookies en extensies",
 		"private": "Privé",
 		"privateDetail": "Vergeet alles bij sluiten",
