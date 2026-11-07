@@ -17,6 +17,8 @@ export const listensProbe = { liloListens: true } as const;
 const isProbe = (message: unknown) => (message as typeof listensProbe | undefined)?.liloListens === true;
 /** A content script's message to another extension, which only the worker's relay hears (runtime.ts). */
 const isExternal = (message: unknown) => typeof (message as { liloExternal?: unknown } | undefined)?.liloExternal === 'string';
+/** A content script's i18n.detectLanguage, which only the worker's relay answers (runtime.ts). */
+const isDetection = (message: unknown) => typeof (message as { liloDetectLanguage?: unknown } | undefined)?.liloDetectLanguage === 'string';
 /** Whether `sender` is one of the extension's own pages: the relay at the top of a frame, never a content script. */
 const fromOwnPage = (sender: any) => typeof sender?.url === 'string' && sender.url.startsWith(`chrome-extension://${sender.id}/`);
 
@@ -55,7 +57,7 @@ function answeringListener(listener: Listener): Listener {
   let wrapper = answering.get(listener);
   if (!wrapper) {
     wrapper = function (this: unknown, message, sender, sendResponse) {
-      if (isProbe(message) || isExternal(message)) return undefined;
+      if (isProbe(message) || isExternal(message) || isDetection(message)) return undefined;
       const url = frameUrl(message, sender);
       const framed = typeof url === 'string';
       let answered = false;
@@ -176,23 +178,49 @@ const served = new WeakMap<object, object>();
 /** Chrome's error for a message posted on a disconnected port, which extensions test before reconnecting. */
 export const disconnectedPort = 'Attempting to use a disconnected port object';
 const chromePortPrototypes = new WeakSet<object>();
+const disconnectListeners = new WeakMap<object, Set<unknown>>();
 
-/** `port`, whose postMessage, as every WebKit port's of its prototype, fails in Chrome's words once disconnected. */
+/**
+ * `port`, whose postMessage, as every WebKit port's of its prototype, fails in Chrome's words once disconnected, and
+ * whose disconnect leaves its own onDisconnect listeners unheard, as Chrome's: WebKit runs them (WEBKIT-GAPS 112).
+ */
 export function portErrorsAsChrome<T>(port: T): T {
   const prototype = port !== null && typeof port === 'object' ? Object.getPrototypeOf(port) : null;
-  if (!prototype || chromePortPrototypes.has(prototype) || typeof prototype.postMessage !== 'function') return port;
+  if (!prototype || typeof prototype.postMessage !== 'function') return port;
+  const onDisconnect = (port as any).onDisconnect;
+  if (onDisconnect && !disconnectListeners.has(port as object)) {
+    const heard = new Set<unknown>();
+    disconnectListeners.set(port as object, heard);
+    const { addListener, removeListener } = onDisconnect;
+    Object.defineProperties(onDisconnect, {
+      addListener: { configurable: true, writable: true, value(this: object, listener: unknown, ...rest: unknown[]) {
+        heard.add(listener);
+        return addListener.call(this, listener, ...rest);
+      } },
+      removeListener: { configurable: true, writable: true, value(this: object, listener: unknown) {
+        heard.delete(listener);
+        return removeListener?.call(this, listener);
+      } },
+    });
+    // WebKit recreates a collected event object without them.
+    Object.defineProperty(port, 'onDisconnect', { value: onDisconnect, configurable: true });
+  }
+  if (chromePortPrototypes.has(prototype)) return port;
   chromePortPrototypes.add(prototype);
-  const { postMessage } = prototype;
-  Object.defineProperty(prototype, 'postMessage', {
-    configurable: true, writable: true,
-    value(this: unknown, ...args: unknown[]) {
+  const { postMessage, disconnect } = prototype;
+  Object.defineProperties(prototype, {
+    postMessage: { configurable: true, writable: true, value(this: unknown, ...args: unknown[]) {
       try {
         return postMessage.apply(this, args);
       } catch (error) {
         if (error instanceof Error && error.message.endsWith('The port is disconnected.')) throw new Error(disconnectedPort);
         throw error;
       }
-    },
+    } },
+    disconnect: { configurable: true, writable: true, value(this: any) {
+      for (const listener of disconnectListeners.get(this) ?? []) this.onDisconnect.removeListener(listener);
+      return disconnect.call(this);
+    } },
   });
   return port;
 }

@@ -1,22 +1,32 @@
 {
- "chrome": "156.0.8078.73",
+ "chrome": "157.0.8103.38",
  "extensions": {
   "efaidnbmnnnibpcajpcglclefindmkaj": {
    "name": "Adobe Acrobat: PDF edit, convert, sign tools",
-   "version": "26.10.1.0",
-   "menus": [
-    "image",
-    "image",
-    "image",
-    "image",
-    "page"
+   "version": "26.10.2.2",
+   "page": [
+    "hidden:ad-banner",
+    "hidden:ad-container",
+    "hidden:adsbygoogle",
+    "hidden:banner",
+    "hidden:body",
+    "hidden:copy",
+    "hidden:div-gpt-ad-1234567890-0",
+    "hidden:doubleclick",
+    "hidden:heading",
+    "hidden:login",
+    "hidden:password",
+    "hidden:submit",
+    "hidden:text",
+    "hidden:username"
    ],
    "options": {
-    "tokens": "adobe acrobat general connected apps generative ai privacy preferences open pdfs in from your browser set as default viewer to online links gmail google drive and more display theme select dark mode or light use system setting language preferred english us location for saving files save cloud storage computer be asked where every time ask me enable auto update allow automatically webpage when new updates are available input#1 input#2 input#3 input#4 select#1 select#2 select#3 button#1 button#2 button#3",
-    "ms": 252
+    "tokens": "adobe acrobat save preferences general connected apps privacy open pdfs in from your browser set as default viewer to online links gmail google drive and more display theme select dark mode or light use system setting language preferred english us button#1 button#2 button#3 input#1 input#2 input#3 select#1 select#2",
+    "ms": 534
    },
    "errors": [
-    "Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received"
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "Error: No tab with id: 1981474383."
    ]
   },
   "fheoggkfdfchfphceeifdbepaooicaho": {
@@ -328,9 +338,9 @@
   },
   "bmnlcjabgnpnenekpadlanbbkooimhnj": {
    "name": "Honey: Automated Coupons & Rewards",
-   "version": "19.7.0",
+   "version": "19.8.0",
    "popupText": false,
-   "workerRestartMs": 42,
+   "workerRestartMs": 14,
    "restartPopup": {
     "tokens": ""
    },
@@ -692,7 +702,7 @@
   },
   "liecbddmkiiihnedobmlmillhodjkdmb": {
    "name": "Loom – Screen Recorder & Screen Capture",
-   "version": "5.5.214",
+   "version": "5.5.215",
    "popupText": false,
    "page": [
     "added:script"
@@ -700,7 +710,7 @@
    "menus": [
     "action"
    ],
-   "workerRestartMs": 78,
+   "workerRestartMs": 14,
    "restartPopup": {
     "tokens": ""
    },
@@ -2202,9 +2212,9 @@
   },
   "ajphlblkfpppdpkgokiejbjfohfohhmk": {
    "name": "Mote for Google Chrome™",
-   "version": "3.3.10",
+   "version": "3.4.0",
    "errors": [
-    "Unchecked runtime.lastError: No tab with id: 389627416."
+    "Unchecked runtime.lastError: No tab with id: 159323896."
    ]
   },
   "akcocjjpkmlniicdeemdceeajlmoabhg": {
@@ -2656,14 +2666,15 @@
   },
   "mlomiejdfkolichcflejclcbmpeaniij": {
    "name": "Ghostery AdBlocker for Privacy",
-   "version": "10.6.9",
+   "version": "10.6.11",
    "popup": {
     "tokens": "ghostery has nothing to do on this page navigate website see in action love your calm ad free web help friends family enjoy it too share zap link#1 link#2",
-    "ms": 4197
+    "ms": 2270
    },
    "popupText": true,
    "page": [
-    "added:ghostery-notification-wrapper"
+    "added:ghostery-notification-wrapper",
+    "added:style"
    ],
    "menus": [
     "all",
@@ -2675,13 +2686,13 @@
     "all"
    ],
    "options": {
-    "tokens": "ghostery settings privacy protection websites trackers whotracks me my protects your by detecting and neutralizing different types of data collection including ads cookie pop ups on ad blocking eliminates for safe fast browsing anti tracking prevents various techniques using ai driven technology never consent automatically rejects notices extended redirect enabled search engine browser distractions rules additional filters no options are currently off pause suspends globally day web lately the cleaner calmer you ve built numbers last months see recap update oct pm now become contributor help fight where is basic human right link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 button#1 button#2 button#3 button#4 button#5 button#6",
-    "ms": 525
+    "tokens": "ghostery settings privacy protection websites trackers whotracks me my protects your by detecting and neutralizing different types of data collection including ads cookie pop ups on ad blocking eliminates for safe fast browsing anti tracking prevents various techniques using ai driven technology never consent automatically rejects notices extended redirect enabled search engine browser distractions rules additional filters no options are currently off pause suspends globally day web lately the cleaner calmer you ve built numbers last months see recap update nov pm now become contributor help fight where is basic human right link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 button#1 button#2 button#3 button#4 button#5 button#6",
+    "ms": 252
    },
-   "workerRestartMs": 1526,
+   "workerRestartMs": 242,
    "restartPopup": {
-    "tokens": "ghostery has nothing to do on this page navigate website see in action love your calm ad free web help friends family enjoy it too share zap link#1 link#2",
-    "ms": 325
+    "tokens": "ghostery has nothing to do on this page navigate website see in action which parts of panel you actually use it takes about three minutes and decides what we simplify next tell us link#1 link#2",
+    "ms": 254
    },
    "errors": [
     "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
@@ -2809,14 +2820,14 @@
   },
   "okfkdaglfjjjfefdcppliegebpoegaii": {
    "name": "Scribe: AI Documentation, SOPs & Process Intelligence",
-   "version": "104.34.0",
+   "version": "104.37.1",
    "page": [
     "added:scribe-shadow",
     "attribute:html@data-scribe-recorder-ready"
    ],
    "options": {
     "tokens": "settings extension options document count show the number of recommended documents for current site capture controls in sidekick scribe preview during includes embedded on screen classic only no do not magic edit automatically polish scribes after finishing recording button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9",
-    "ms": 257
+    "ms": 260
    },
    "errors": [
     "Error: Could not establish connection. Receiving end does not exist.",
@@ -3164,10 +3175,10 @@
   },
   "cimpffimgeipdhnhjohpbehjkcdpjolg": {
    "name": "Watch2Gether",
-   "version": "11.0",
+   "version": "11.1",
    "popup": {
     "tokens": "sign in my rooms new room to see your and share pages them button#1 button#2 button#3 button#4 button#5 button#6 button#7 input#1",
-    "ms": 504
+    "ms": 251
    },
    "popupText": true,
    "menus": [
@@ -3176,9 +3187,9 @@
    ],
    "options": {
     "tokens": "site access syncs videos on the sites you open from room so extension needs to all granted re set",
-    "ms": 252
+    "ms": 319
    },
-   "workerRestartMs": 115,
+   "workerRestartMs": 16,
    "restartPopup": {
     "tokens": ""
    },
@@ -3351,15 +3362,15 @@
   },
   "dpacanjfikmhoddligfbehkpomnbgblf": {
    "name": "AHA Music - Song Finder for Browser",
-   "version": "2.3.8",
+   "version": "2.6.1",
    "popup": {
-    "tokens": "aha music sign in tap to identify finds the song playing this tab recent songs you will show up here chrome doesn allow listening on page try normal website button#1 button#2 button#3",
-    "ms": 254
+    "tokens": "aha music sign in tap to identify finds the song playing this tab recent songs you will show up here free get bonus credits and scans day instead of your browser doesn allow listening on page try normal website button#1 button#2 button#3 button#4",
+    "ms": 253
    },
    "popupText": true,
    "restartPopup": {
-    "tokens": "aha music sign in tap to identify finds the song playing this tab recent songs you will show up here no sound play then button#1 button#2 button#3",
-    "ms": 251
+    "tokens": "aha music sign in tap to identify finds the song playing this tab recent songs you will show up here free get bonus credits and scans day instead of no sound play then button#1 button#2 button#3 button#4",
+    "ms": 252
    },
    "errors": []
   },
@@ -3393,28 +3404,29 @@
   },
   "eiimnmioipafcokbfikbljfdeojpcgbh": {
    "name": "BlockSite Block Websites & Stay Focused",
-   "version": "7.1.1",
+   "version": "8.0.1",
    "popup": {
-    "tokens": "not available on this page get the most from blocksite opting in enhances your browsing with advanced features through our affiliates technologies helps us improve and personalize experience though it involves sharing some data you re always control can adjust settings anytime opt for full benefits may out at any time privacy choices within menu if that rely these will no longer work accept maybe later please see policy information how we process personal",
-    "ms": 251
+    "tokens": "blocksite isn available on this page unlock all categories and custom keywords upgrade get the most from opting in enhances your browsing with advanced features through our affiliates technologies helps us improve personalize experience though it involves sharing some data you re always control can adjust settings anytime opt for full benefits may out at any time privacy choices within menu if that rely these will no longer work accept maybe later please see policy information how we process personal",
+    "ms": 252
    },
    "popupText": true,
    "menus": [
     "link",
     "link",
+    "link",
+    "page",
     "page",
     "page"
    ],
-   "workerRestartMs": 65,
+   "workerRestartMs": 44,
    "restartPopup": {
-    "tokens": "not available on this page get the most from blocksite opting in enhances your browsing with advanced features through our affiliates technologies helps us improve and personalize experience though it involves sharing some data you re always control can adjust settings anytime opt for full benefits may out at any time privacy choices within menu if that rely these will no longer work accept maybe later please see policy information how we process personal",
-    "ms": 254
+    "tokens": "blocksite isn available on this page unlock all categories and custom keywords upgrade get the most from opting in enhances your browsing with advanced features through our affiliates technologies helps us improve personalize experience though it involves sharing some data you re always control can adjust settings anytime opt for full benefits may out at any time privacy choices within menu if that rely these will no longer work accept maybe later please see policy information how we process personal",
+    "ms": 252
    },
    "errors": [
-    "Failed to load resource: the server responded with a status of 404 (Not Found)",
     "Failed to load resource: net::ERR_CONNECTION_REFUSED",
-    "TypeError: Failed to fetch",
     "Failed to load resource: the server responded with a status of 404 ()",
+    "TypeError: Failed to fetch",
     "Error: Could not establish connection. Receiving end does not exist."
    ]
   },
@@ -3511,16 +3523,15 @@
   },
   "fgddmllnllkalaagkghckoinaemmogpe": {
    "name": "ExpressVPN: VPN & proxy browser extension",
-   "version": "8.0.12.2014",
+   "version": "8.2.0.2105",
    "popup": {
     "tokens": "help improve expressvpn share crash reports speed tests usability diagnostics and whether vpn connection attempts succeed these never contain personally identifiable information ok no thanks button#1 button#2",
     "ms": 252
    },
    "popupText": true,
-   "workerRestartMs": 62,
+   "workerRestartMs": 38,
    "restartPopup": {
-    "tokens": "help improve expressvpn share crash reports speed tests usability diagnostics and whether vpn connection attempts succeed these never contain personally identifiable information ok no thanks button#1 button#2",
-    "ms": 252
+    "tokens": ""
    },
    "errors": []
   },
@@ -3765,23 +3776,24 @@
   },
   "ijejnggjjphlenbhmjhhgcdpehhacaal": {
    "name": "Screen Recorder & Screenshot App for Chrome | Scrnli",
-   "version": "4.3.9",
+   "version": "4.3.10",
    "popup": {
     "tokens": "visible page entire selected area browser window add image download record video converter button#1 button#2 button#3 button#4 button#5 button#6 button#7 link#1 link#2",
-    "ms": 253
+    "ms": 251
    },
    "popupText": true,
    "page": [
     "added:div",
     "added:iframe",
     "added:input",
-    "added:style"
+    "added:style",
+    "attribute:body@location"
    ],
    "options": {
     "tokens": "toolbar display position bottom left opacity webcam round hotkeys visible page customize selected area browser window add image download entire",
-    "ms": 252
+    "ms": 251
    },
-   "workerRestartMs": 28,
+   "workerRestartMs": 24,
    "restartPopup": {
     "tokens": "visible page entire selected area browser window add image download record video converter button#1 button#2 button#3 button#4 button#5 button#6 button#7 link#1 link#2",
     "ms": 252
@@ -4083,13 +4095,14 @@
   },
   "ljflmlehinmoeknoonhibbjpldiijjmm": {
    "name": "Speechify — Text to Speech",
-   "version": "14.12.0",
+   "version": "14.14.0",
    "menus": [
     "selection"
    ],
    "errors": [
     "Object",
-    "Error: Could not establish connection. Receiving end does not exist."
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "TypeError: Cannot read properties of null (reading 'isConnected')"
    ]
   },
   "lkhjgdkpibcepflmlgahofcmeagjmecc": {
@@ -5035,24 +5048,22 @@
   },
   "kjacjjdnoddnpbbcjilcajfhhbdhkpgk": {
    "name": "Forest: stay focused, be present",
-   "version": "6.5.0",
+   "version": "6.6.1",
    "popup": {
     "tokens": "blocklist mode click the tree to start planting button#1",
-    "ms": 253
+    "ms": 252
    },
    "popupText": true,
    "options": {
-    "tokens": "forest stay focused be present log in don have an account yet please sign up our ios or android app purchase required out planting record ｍy blocklist allowlist about faq to sync october th mon my sun button#1 button#2 link#1 link#2",
-    "ms": 253
+    "tokens": "forest stay focused be present log in don have an account yet please sign up our ios or android app purchase required out planting record ｍy blocklist allowlist about faq to sync november th sat my fri button#1 button#2 link#1 link#2",
+    "ms": 251
    },
-   "workerRestartMs": 123,
+   "workerRestartMs": 113,
    "restartPopup": {
     "tokens": "blocklist mode click the tree to start planting button#1",
     "ms": 252
    },
-   "errors": [
-    "Error: [webext-bridge] No handler registered in 'background' to accept messages with id 'GET_POPUP_PROPS'"
-   ]
+   "errors": []
   },
   "kpoecbkildamnnchnlgoboipnblgikpn": {
    "name": "IBM Aspera Connect",
@@ -5066,9 +5077,9 @@
   },
   "mdanidgdpmkimeiiojknlnekblgmpdll": {
    "name": "Boomerang for Gmail",
-   "version": "1.9.7",
+   "version": "1.9.9",
    "popupText": false,
-   "workerRestartMs": 40,
+   "workerRestartMs": 33,
    "restartPopup": {
     "tokens": ""
    },
@@ -6139,7 +6150,7 @@
   },
   "mhnlakgilnojmhinhkckjpncpbhabphi": {
    "name": "MaxAI: Ask AI anything as you browse (GPT, Gemini, Claude, Grok, etc.)",
-   "version": "8.37.3",
+   "version": "8.37.4",
    "popupText": false,
    "page": [
     "added:div",
@@ -6157,12 +6168,12 @@
    ],
    "options": {
     "tokens": "maxai sign in to use ai for free continue with google or email by signing you agree the terms of service and privacy policy button#1 button#2 button#3 link#1 link#2 link#3",
-    "ms": 273
+    "ms": 258
    },
-   "workerRestartMs": 746,
+   "workerRestartMs": 111,
    "restartPopup": {
     "tokens": "please refresh this page to continue using your maxai browser extension link#1 button#1",
-    "ms": 671
+    "ms": 253
    },
    "errors": [
     "Error: Minified React error #321; visit https://reactjs.org/docs/error-decoder.html?invariant=321 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
@@ -6170,7 +6181,7 @@
   },
   "mpiodijhokgodhhofbcjdecpffjipkle": {
    "name": "SingleFile",
-   "version": "1.31.4",
+   "version": "1.36.0",
    "menus": [
     "action",
     "action",
@@ -6214,12 +6225,10 @@
     "tab"
    ],
    "options": {
-    "tokens": "options user interface add entry in the context menu of webpage overlay shadow on page during processing open saved pages new tab auto close after is keyboard shortcut command file name template max length replacement character characters replaced names with test result restore default replace emojis text save filename data into as dialog to confirm conflict resolution format password embed image screenshot custom create root directory disable compression do not append zip make searchable html content compress remove hidden elements specific set security policy canonical link frames original urls embedded resources include date raw infobar display an when viewing prompt edit keep animate stylesheets unused styles for alternative devices screens group duplicate together move head element found outside it apply stylesheet before saving images reduction factor quality resized screen resolutions fonts destination filesystem share copy clipboard upload github access token repository branch webdav server url identifier mcp authentication google drive link#1 link#2 link#3 link#4 select#1 select#2 select#3 select#4 select#5 select#6 select#7 button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 button#18 button#19 button#20 input#1 input#2 input#3 input#4 input#5 input#6 input#7 input#8 input#9 input#10 input#11 input#12 input#13 input#14 input#15 input#16 input#17 input#18 input#19 input#20 textarea#1 textarea#2 textarea#3 textarea#4 textarea#5 textarea#6",
-    "ms": 253
+    "tokens": "options user interface add entry in the context menu of webpage overlay shadow on page during processing open saved pages new tab auto close after is keyboard shortcut command file name template max length replacement character characters replaced names with test result restore default replace emojis text save filename data into as dialog to confirm conflict resolution format password embed image screenshot custom create root directory disable compression do not append zip make searchable html content compress remove hidden elements specific set security policy canonical link frames original urls embedded resources include date raw infobar display an when viewing prompt edit keep animate stylesheets unused styles for alternative devices screens group duplicate together move head element found outside it apply stylesheet before saving images reduction factor quality resized screen resolutions fonts glyphs destination filesystem share copy clipboard upload github access token repository branch webdav server url identifier mcp authentication google link#1 link#2 link#3 link#4 select#1 select#2 select#3 select#4 select#5 select#6 select#7 button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 button#18 button#19 button#20 input#1 input#2 input#3 input#4 input#5 input#6 input#7 input#8 input#9 input#10 input#11 input#12 input#13 input#14 input#15 input#16 input#17 input#18 input#19 input#20 textarea#1 textarea#2 textarea#3 textarea#4 textarea#5 textarea#6",
+    "ms": 254
    },
-   "errors": [
-    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
-   ]
+   "errors": []
   },
   "nbcojefnccbanplpoffopkoepjmhgdgh": {
    "name": "Hoxx VPN Proxy",
@@ -6268,14 +6277,14 @@
   },
   "pjnefijmagpdjfhhkpljicbbpicelgko": {
    "name": "Voice In - Voice Typing & Speech-to-Text Dictation",
-   "version": "4.55",
+   "version": "4.58",
    "menus": [
     "action",
     "action",
     "editable"
    ],
    "options": {
-    "tokens": "voice in options getting started notepad support activate plus microphone access needed permissions are required to use please grant them continue open the settings for this extension find and select allow from dropdown come back click ve changed setting alternatively icon your browser address bar still stuck see detailed instructions subscription free upgrade now you not on unlock all features of read more about general start dictating dictation language speak while sound effects play when starts or stops stop after silence many seconds set never automatically sec keep switching tabs by default change enable even switch incognito mode private browsing windows too ui hide preview text page pop up audioscribe button where opens its keyboard shortcut commands command maps phrase block an action example with insert name john snow inserts built disable has punctuation actions view full list disabling is recommended custom create own fix errors type common phrases information link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 link#12 link#13 link#14 link#15 link#16 link#17 link#18 link#19 link#20 button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 button#18 button#19 button#20 select#1 select#2 select#3 select#4 select#5 select#6 select#7 input#1",
+    "tokens": "voice in options getting started notepad support activate plus microphone access needed permissions are required to use please grant them continue open the settings for this extension find and select allow from dropdown come back click ve changed setting alternatively icon your browser address bar still stuck see detailed instructions subscription free upgrade now you not on unlock all features of read more about general start dictating dictation language speak while sound effects play when starts or stops stop after silence many seconds set never automatically sec keep switching tabs by default change enable even switch incognito mode private browsing windows too ui hide preview text page pop up audioscribe button where opens its keyboard shortcut commands command maps phrase block an action example with insert name john snow inserts built disable has punctuation actions view full list disabling is recommended custom create own fix errors type common phrases information link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 link#12 link#13 link#14 link#15 link#16 link#17 link#18 link#19 link#20 button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 button#18 button#19 button#20 select#1 select#2 select#3 select#4 select#5 select#6 select#7 select#8 input#1",
     "ms": 253
    },
    "errors": [
@@ -6316,9 +6325,9 @@
   },
   "aejoelaoggembcahagimdiliamlcdmfm": {
    "name": "Talend API Tester - Free Edition",
-   "version": "25.19.0",
+   "version": "25.20.0",
    "popupText": false,
-   "workerRestartMs": 111,
+   "workerRestartMs": 50,
    "restartPopup": {
     "tokens": ""
    },
@@ -6370,9 +6379,9 @@
   },
   "bcocdbombenodlegijagbhdjbifpiijp": {
    "name": "INSSIST | Web Client for Instagram",
-   "version": "39.9.2",
+   "version": "40.1.1",
    "errors": [
-    "Error: Unit name is not found for GS"
+    "Error: Unit name is not found for yw"
    ]
   },
   "bhloflhklmhfpedakmangadcdofhnnoh": {
@@ -7565,7 +7574,7 @@
   },
   "kobncfkmjelbefaoohoblamnbackjggk": {
    "name": "YouTube to NotebookLM - YouTube to Gemini Notebook",
-   "version": "1.0.47",
+   "version": "1.0.48",
    "popup": {
     "tokens": "add current tab to gemini notebook",
     "ms": 253
@@ -7578,7 +7587,7 @@
    "menus": [
     "action"
    ],
-   "workerRestartMs": 43,
+   "workerRestartMs": 39,
    "restartPopup": {
     "tokens": ""
    },
@@ -8266,10 +8275,10 @@
   },
   "dacdinoicboceafielngnmjjplncljhj": {
    "name": "buykers | coupons and discount codes",
-   "version": "0.47.0",
+   "version": "0.48.0",
    "popup": {
     "tokens": "welcome to buykers one click and you buy cheaper see how easy it is shop as usual if our icon appears in the browser bar together with number this means that offers discount codes when add product your cart pop up will appear information on many are available just test plugin find best coupon for order done code has been added literally pay less not bad right standard price have saved after found we don share community alerabat com publishes affiliate links partner stores from which earns commission sales use fund cashback rewards users of amount activated only explicit user consent account input#1 button#1 button#2 button#3 link#1",
-    "ms": 252
+    "ms": 253
    },
    "popupText": true,
    "page": [
@@ -8277,18 +8286,17 @@
    ],
    "options": {
     "tokens": "general settings enable the icon informing about possibility of monitoring price given product pop up cashback when you first visit store website privacy can we collect following data that may personally identify your email address if provided this helps us improve our plugin functionality and create services tailored to needs provide an link account choose not allow collection will gather or analyze information choice won affect basic service anonymous use extension usage features device browser name version related voucher testing codes used in result basket value shop where purchase was made enhance coupon offers full details what do with it are available policy input#1 input#2 input#3 input#4",
-    "ms": 285
+    "ms": 251
    },
-   "workerRestartMs": 40,
+   "workerRestartMs": 35,
    "restartPopup": {
     "tokens": "welcome to buykers one click and you buy cheaper see how easy it is shop as usual if our icon appears in the browser bar together with number this means that offers discount codes when add product your cart pop up will appear information on many are available just test plugin find best coupon for order done code has been added literally pay less not bad right standard price have saved after found we don share community alerabat com publishes affiliate links partner stores from which earns commission sales use fund cashback rewards users of amount activated only explicit user consent account input#1 button#1 button#2 button#3 link#1",
-    "ms": 302
+    "ms": 293
    },
    "errors": [
     "r",
     "The above error occurred in task g",
-    "The above error occurred in task p",
-    "Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received"
+    "The above error occurred in task p"
    ]
   },
   "dbfmnekepjoapopniengjbcpnbljalfg": {
@@ -8959,7 +8967,7 @@
   },
   "lggdbpblkekjjbobadliahffoaobaknh": {
    "name": "Tango – Document and Automate Your Processes",
-   "version": "8.9.22",
+   "version": "8.9.23",
    "errors": [
     "Error: Could not establish connection. Receiving end does not exist."
    ]
@@ -9854,7 +9862,7 @@
   },
   "bmhcbmnbenmcecpmpepghooflbehcack": {
    "name": "Liner: AI Copilot - Summarize YouTube, PDF & Web with ChatGPT, Claude",
-   "version": "7.18.51",
+   "version": "7.18.55",
    "page": [
     "added:a",
     "added:button",
@@ -9869,7 +9877,7 @@
    ],
    "options": {
     "tokens": "liner search api sign in up looking for facts you re low on credits add academic research writing investment ending soon button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 link#1 link#2 link#3",
-    "ms": 2865
+    "ms": 2397
    },
    "errors": [
     "An unknown error occurred when fetching the script.",
@@ -10794,19 +10802,23 @@
   },
   "hldjnlbobkdkghfidgoecgmklcemanhm": {
    "name": "Web Highlights: PDF & Web Highlighter + Notes & AI Summary",
-   "version": "13.0.53",
+   "version": "13.0.57",
    "page": [
     "added:div",
-    "added:webhighlights-element-registry"
+    "added:style",
+    "added:webhighlights-dialog",
+    "added:webhighlights-element-registry",
+    "added:webhighlights-marker",
+    "added:webhighlights-popup-toolbox",
+    "added:webhighlights-sidebar",
+    "attribute:html@style"
    ],
    "menus": [
     "image",
     "page",
     "selection"
    ],
-   "errors": [
-    "Unchecked runtime.lastError: No tab with id: 1618416983."
-   ]
+   "errors": []
   },
   "hmaahgcbijnfogbgmnnjmlbfjoncneff": {
    "name": "Twitch Adblock",
@@ -10997,10 +11009,7 @@
   },
   "iifmmpcbkkjplbamhfohikljoogdbadp": {
    "name": "ID.me Shop: Discover Community Discounts",
-   "version": "3.20.1",
-   "page": [
-    "attribute:html@data-brext-fragno"
-   ],
+   "version": "3.21.0",
    "errors": []
   },
   "iihkglbebihpaflfihhkfmpabjgdpnol": {
@@ -11535,18 +11544,17 @@
   },
   "mhloojimgilafopcmlcikiidgbbnelip": {
    "name": "iTab New Tab",
-   "version": "2.3.31",
+   "version": "2.4.12",
    "popup": {
     "tokens": "select 新标签 input#1 input#2 input#3 input#4 button#1 button#2",
-    "ms": 2290
+    "ms": 253
    },
    "popupText": true,
    "restartPopup": {
     "tokens": "主页 input#1 input#2 input#3 input#4 button#1 button#2",
-    "ms": 1988
+    "ms": 251
    },
    "errors": [
-    "M",
     "Failed to load resource: the server responded with a status of 404 ()"
    ]
   },
@@ -11848,10 +11856,10 @@
   },
   "pmjeegjhjdlccodhacdgbgfagbpmccpe": {
    "name": "Clockify Time Tracker",
-   "version": "2.12.12",
+   "version": "2.13.0",
    "popup": {
     "tokens": "log in new here create an account to custom domain sub link#1 button#1",
-    "ms": 5750
+    "ms": 251
    },
    "popupText": true,
    "menus": [
@@ -11860,12 +11868,12 @@
    ],
    "options": {
     "tokens": "clockify integrations enable the tools you want to use with extension can everything by clicking all button disable custom domains if tool hosted on domain it here enter name in format mydomain com and select integration from dropdown ports are not supported add button#1 button#2 button#3 button#4 input#1 input#2 select#1",
-    "ms": 1562
+    "ms": 251
    },
-   "workerRestartMs": 2261,
+   "workerRestartMs": 28,
    "restartPopup": {
     "tokens": "log in new here create an account to custom domain sub link#1 button#1",
-    "ms": 1226
+    "ms": 253
    },
    "errors": [
     "Error: Could not establish connection. Receiving end does not exist.",
@@ -11904,7 +11912,7 @@
   },
   "adnielbhikcbmegcfampbclagcacboff": {
    "name": "Picture in Picture - Floating player",
-   "version": "1.0.6",
+   "version": "1.0.7",
    "errors": []
   },
   "adpjimagbfpknkodpofjphpbdlfkeiho": {
@@ -12063,26 +12071,24 @@
   },
   "behjakjklighlhiefaoogbalmenhbjid": {
    "name": "YuJa Verity Chrome Extension",
-   "version": "2.8.9",
+   "version": "2.9.0",
    "popup": {
     "tokens": "yuja verity test proctoring platform authentication status you are not authenticated please launch the app to authenticate version number button#1",
-    "ms": 3255
+    "ms": 252
    },
    "popupText": true,
    "page": [
     "added:iframe"
    ],
-   "workerRestartMs": 1656,
+   "workerRestartMs": 200,
    "restartPopup": {
     "tokens": "yuja verity test proctoring platform authentication status you are not authenticated please launch the app to authenticate version number button#1",
-    "ms": 947
+    "ms": 252
    },
    "errors": [
     "Error: Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host.",
-    "Error: Cannot access contents of url \"chrome-extension://behjakjklighlhiefaoogbalmenhbjid/src/popup/popup.html\". Extension manifest must request permission to access this host.",
     "ApiClientError: SyntaxError: API Client Error: Unexpected token 'F', \"Forbidden\" is not valid JSON",
-    "Error fetching user info: f: SendMessageFunctionError: {\"name\":\"ApiClientError: SyntaxError\",\"message\":\"API Client Error: Unexpected token 'F', \\\"Forbidden\\\" is not valid JSON\",\"stack\":\"ApiClientError: SyntaxError: API Client Error: Unexpected token 'F', \\\"Forbidden\\\" is not valid JSON\\n    at getUserInfo (chrome-extension://behjakjklighlhiefaoogbalmenhbjid/assets/dist.js:109:137660)\",\"cause\":{},\"errorClass\":\"Z\"}",
-    "Error: Could not establish connection. Receiving end does not exist."
+    "Error fetching user info: f: SendMessageFunctionError: {\"name\":\"ApiClientError: SyntaxError\",\"message\":\"API Client Error: Unexpected token 'F', \\\"Forbidden\\\" is not valid JSON\",\"stack\":\"ApiClientError: SyntaxError: API Client Error: Unexpected token 'F', \\\"Forbidden\\\" is not valid JSON\\n    at getUserInfo (chrome-extension://behjakjklighlhiefaoogbalmenhbjid/assets/dist.js:109:140604)\",\"cause\":{},\"errorClass\":\"Z\"}"
    ]
   },
   "bfegaehidkkcfaikpaijcdahnpikhobf": {
@@ -12924,13 +12930,13 @@
   },
   "fddhonoimfhgiopglkiokmofecgdiedb": {
    "name": "RingCentral for Google",
-   "version": "26.3.20",
+   "version": "26.3.21",
    "page": [
     "added:style"
    ],
    "options": {
     "tokens": "options quick access click to dial sms choose where ringcentral appears only show in google apps microsoft on all websites unless blocked below the specify blocklist list of urls that will prohibit by extension this is managed provider save update saved input#1 input#2 input#3 input#4 input#5 input#6 input#7 input#8 input#9 input#10 input#11 input#12 input#13 input#14 input#15 input#16 input#17 input#18 input#19 button#1 button#2",
-    "ms": 5485
+    "ms": 253
    },
    "errors": [
     "Error: Could not establish connection. Receiving end does not exist."
@@ -14366,10 +14372,10 @@
   },
   "kphldkppgfpjadpabfkghmjbhpcmgpdg": {
    "name": "1688 Purchasing Assistant Plugin",
-   "version": "1.2.1",
+   "version": "1.2.2",
    "popup": {
     "tokens": "purchasing assistant use help plug ins can shortcut screenshots you also customize screenshot to search upload image enter keyword order information pending payment ready for delivery pick up approval my favorites shopping cart please log in view the latest transaction login selected recommend more link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 link#12",
-    "ms": 1921
+    "ms": 251
    },
    "popupText": true,
    "page": [
@@ -14389,12 +14395,12 @@
    ],
    "options": {
     "tokens": "home question feedback setting general settings image search for similar products button new supplier product alerts 站外平台页面设置 other version language english note this option enbales to switch default floating action controls whether display searching on the webpage 已禁用此功能的网站列表 添加网站 link#1 link#2 input#1 button#1",
-    "ms": 1081
+    "ms": 253
    },
-   "workerRestartMs": 2674,
+   "workerRestartMs": 33,
    "restartPopup": {
     "tokens": "purchasing assistant use help plug ins can shortcut screenshots you also customize screenshot to search upload image enter keyword order information pending payment ready for delivery pick up approval my favorites shopping cart please log in view the latest transaction login selected recommend more link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 link#12",
-    "ms": 647
+    "ms": 251
    },
    "errors": [
     "TypeError: Failed to fetch"
@@ -14431,10 +14437,10 @@
   },
   "lenipkahddombkldhfmcnnjakmcepdlk": {
    "name": "AiPrice(AliPrice) Sourcing Tool",
-   "version": "4.1.9",
+   "version": "4.2.2",
    "popup": {
     "tokens": "log in search by image screenshot upload or aiprice aliprice sourcing tool button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 textarea#1",
-    "ms": 932
+    "ms": 252
    },
    "popupText": true,
    "page": [
@@ -14446,13 +14452,13 @@
     "all"
    ],
    "options": {
-    "tokens": "aiprice aliprice sourcing tool privacy sign up log in general search by image download others language currency display exchange rate conversion on the page convert cny to foreign currencies supported for include amazon aliexpress temu shein ebay ozon etc selected prices supports price updating from bank of china usd custom hover zoom over history list product details detail change alert web push notifications desktop can monitor any you and send notification once changes plug position left corner right minimize translate screenshot set shortcut keys aliwangwang chat translator research query more detailed information extra info show may increase load cause lag recommend turning off if affected historical trend bottom link#1 link#2 select#1 select#2 input#1",
-    "ms": 1596
+    "tokens": "aiprice aliprice sourcing tool privacy sign up log in general search by image download aipix others language currency display exchange rate conversion on the page convert cny to foreign currencies supported for include amazon aliexpress temu shein ebay ozon etc selected prices supports price updating from bank of china usd custom hover zoom over history list product details detail change alert web push notifications desktop can monitor any you and send notification once changes plug position left corner right minimize translate screenshot set shortcut keys aliwangwang chat translator research query more detailed information extra info show may increase load cause lag recommend turning off if affected historical trend bottom link#1 link#2 select#1 select#2 input#1",
+    "ms": 253
    },
-   "workerRestartMs": 981,
+   "workerRestartMs": 62,
    "restartPopup": {
     "tokens": "log in search by image screenshot upload or aiprice aliprice sourcing tool button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 textarea#1",
-    "ms": 2810
+    "ms": 1008
    },
    "errors": [
     "Unchecked runtime.lastError: Cannot create item with duplicate id aliprice_image_search",
@@ -15576,10 +15582,10 @@
   },
   "aadbahhifnekkkcbapdfandpimaoacmj": {
    "name": "AiPrice(AliPrice) Search by Image for China Import",
-   "version": "4.1.9",
+   "version": "4.2.2",
    "popup": {
     "tokens": "log in search by image screenshot upload or aiprice aliprice for china import button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 textarea#1",
-    "ms": 1476
+    "ms": 252
    },
    "popupText": true,
    "page": [
@@ -15591,13 +15597,13 @@
     "all"
    ],
    "options": {
-    "tokens": "aiprice aliprice search by image for china import privacy sign up log in general download others country region language currency display exchange rate conversion on the page convert cny to foreign currencies supported include amazon aliexpress temu shein ebay ozon etc selected prices supports price updating from bank of usd custom hover zoom over history list product details detail change alert web push notifications desktop can monitor any you and send notification once changes plug position left corner right minimize translate screenshot set shortcut keys aliwangwang chat translator research query more detailed information extra info show may increase load cause lag recommend turning off if affected historical trend bottom link#1 link#2 select#1 select#2 select#3 input#1",
-    "ms": 1260
+    "tokens": "aiprice aliprice search by image for china import privacy sign up log in general download aipix others country region language currency display exchange rate conversion on the page convert cny to foreign currencies supported include amazon aliexpress temu shein ebay ozon etc selected prices supports price updating from bank of usd custom hover zoom over history list product details detail change alert web push notifications desktop can monitor any you and send notification once changes plug position left corner right minimize translate screenshot set shortcut keys aliwangwang chat translator research query more detailed information extra info show may increase load cause lag recommend turning off if affected historical trend bottom link#1 link#2 select#1 select#2 select#3 input#1",
+    "ms": 252
    },
-   "workerRestartMs": 1260,
+   "workerRestartMs": 24,
    "restartPopup": {
     "tokens": "log in search by image screenshot upload or aiprice aliprice for china import button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 textarea#1",
-    "ms": 1402
+    "ms": 1009
    },
    "errors": [
     "Unchecked runtime.lastError: Cannot create item with duplicate id aliprice_image_search",
