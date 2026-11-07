@@ -462,10 +462,12 @@ final class ConversationHost {
     /// Sends a prompt `announce` showed, or queues it behind the running turn; `interrupt` cancels that turn first.
     func send(_ tabId: UUID, blocks: [[String: Any]], interrupt: Bool) {
         guard let conversation = conversations[tabId] else { return }
+        // A prompt held for a sign-in is busy with no turn running: the new prompt replaces it, as nothing would run a queue.
+        let heldForSignIn = conversation.awaitingSignIn != nil
         conversation.awaitingSignIn = nil
         conversation.checkpoints.append(nil)
         let index = conversation.checkpoints.count - 1
-        if conversation.state == .busy {
+        if conversation.state == .busy, !heldForSignIn {
             if interrupt {
                 conversation.queued.insert((blocks, index), at: 0)
                 cancel(tabId)
