@@ -62,6 +62,11 @@
     openDownloadsPanel();
   }
 
+  // Only what the menu lists: running downloads stay, as on the Downloads screen.
+  function clearDownloads(): void {
+    for (const download of downloads ?? []) if (!isActiveDownload(download)) downloadActions.erase(download.id);
+  }
+
   function openDownload(download: BridgeDownloadSnapshot): void {
     if (download.state !== "complete" || download.error) return showDownloads();
     downloadActions.open(download.id);
@@ -78,9 +83,16 @@
   {#if downloads}
     <div class="menu-header">
       <span>{t("downloadsPanel.title")}</span>
-      <button class="header-link" role="menuitem" aria-label={t("archivedTabs.showAllDownloads")} onclick={showDownloads}>
-        {t("common.showAll")}
-      </button>
+      <span class="header-links">
+        {#if downloads.some((download) => !isActiveDownload(download))}
+          <button class="header-link" role="menuitem" aria-label={t("downloadsPanel.clearFinished")} onclick={clearDownloads}>
+            {t("common.clear")}
+          </button>
+        {/if}
+        <button class="header-link" role="menuitem" aria-label={t("archivedTabs.showAllDownloads")} onclick={showDownloads}>
+          {t("common.showAll")}
+        </button>
+      </span>
     </div>
     {#each downloads as download (download.id)}
       {@const action = inlineAction(download)}
@@ -151,6 +163,11 @@
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+
+  .header-links {
+    display: flex;
+    gap: 12px;
   }
 
   .header-link {
