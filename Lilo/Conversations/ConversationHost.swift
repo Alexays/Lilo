@@ -36,6 +36,8 @@ final class ConversationHost {
         /// The agent's terminal sign-in, run on a terminal no tab shows, and what its screen last asked.
         var signIn: TerminalSession?
         var signInPrompt: TerminalSession.Prompt?
+        /// The running turn was asked to stop: an error it then ends with is that stop.
+        var cancelling = false
         /// The project's files when each prompt was sent, by prompt index: what "Restore to here" goes back to.
         var checkpoints: [String?] = []
         var canLoadSession = false
@@ -590,6 +592,7 @@ final class ConversationHost {
     /// the turn before has ended, without holding the prompt back. A sign-in's retry passes none.
     private func runTurn(_ conversation: Conversation, blocks: [[String: Any]], checkpoint: Int? = nil) async {
         conversation.lastError = nil
+        conversation.cancelling = false
         setState(conversation, .busy)
         if let checkpoint {
             let tabId = conversation.tabId, cwd = conversation.cwd
@@ -625,6 +628,11 @@ final class ConversationHost {
             conversation.awaitingSignIn = blocks
             conversation.queued.removeAll()
             return
+        } catch where conversation.cancelling {
+            // Some agents answer a cancelled prompt with an error, not a `cancelled` stop: the turn ended as asked,
+            // and a prompt sent to interrupt it goes next.
+            append(conversation, ["sessionUpdate": "lilo_turn_end", "stopReason": "cancelled", "at": Date().timeIntervalSince1970 * 1000])
+            save(conversation)
         } catch {
             conversation.lastError = error.localizedDescription
             conversation.signInOffered = false
@@ -711,6 +719,7 @@ final class ConversationHost {
             conversation.connection?.respond(id: permission.id.value["id"] as Any, result: ["outcome": ["outcome": "cancelled"]])
             resolve(conversation, requestId: permission.requestId, optionId: nil)
         }
+        conversation.cancelling = true
         conversation.connection?.notify("session/cancel", ["sessionId": sessionId])
     }
 
