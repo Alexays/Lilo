@@ -385,10 +385,34 @@ final class SpaceTabMutationTests: XCTestCase {
         XCTAssertEqual(session.durableRevision, before, "a byte-identical update must not bump the revision")
     }
 
+    func testPinningAClosedBookmarkKeepsItsPlaceholder() {
+        let bookmarkId = UUID()
+        var session = SpaceTab(spaceId: UUID(), state: SpaceTabState(
+            activeTabId: nil,
+            activationHistory: [],
+            tree: StoredSidebarTree(
+                pinned: [],
+                unpinned: [],
+                bookmarked: [.tab(Self.tab(id: bookmarkId, isBookmarked: true, isClosed: true))]
+            )
+        ))
+
+        session.setPinned(bookmarkId, pinned: true)
+
+        let pinned = session.state.tree.pinned.compactMap { node -> StoredTab? in
+            if case let .tab(tab) = node { return tab }
+            return nil
+        }
+        XCTAssertEqual(pinned.map(\.id), [bookmarkId])
+        XCTAssertEqual(pinned.first?.isClosed, true)
+        XCTAssertTrue(session.state.tree.bookmarked.isEmpty)
+    }
+
     private static func tab(
         id: UUID,
         title: String = "Tab",
         isPinned: Bool = false,
+        isBookmarked: Bool = false,
         isClosed: Bool = false
     ) -> StoredTab {
         StoredTab(
@@ -398,7 +422,7 @@ final class SpaceTabMutationTests: XCTestCase {
             faviconDataURL: nil,
             faviconDominantColor: nil,
             isPinned: isPinned,
-            isBookmarked: false,
+            isBookmarked: isBookmarked,
             isClosed: isClosed,
             homeURL: nil,
             homeTitle: nil,

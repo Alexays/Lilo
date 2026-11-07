@@ -127,7 +127,7 @@ struct SpaceTab {
         apply(&tab)
         tab.syncHomeSnapshot()
         let section = section(for: tab)
-        if tab.isBookmarked || !tab.isClosed {
+        if tab.isPinned || tab.isBookmarked || !tab.isClosed {
             insert(.tab(tab), toFolder: nil, section: section, index: rootNodes(in: section).count, in: &state.tree)
         }
         finishMutation()
