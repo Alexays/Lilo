@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108, 109 and 110. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103, 104, 105, 106 and 107. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108, 109, 110 and 111. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103, 104, 105, 106 and 107. Every other gap is fully worked around.
 
 ---
 
@@ -397,6 +397,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108,
 - **Lilo:** none (COMPATIBILITY.md, "scripting and tabs").
 - **Impact:** a content script asking its worker about its page can find no record of it (Avira Browser Safety).
 - **Check:** `testContentScriptsRunInPagesAlreadyOpen`. Repro: open `https://example.com/`, then load an extension whose content script matches it and sets a `data-` attribute. Expected: an option to wait for the next load. Actual: the script runs at once.
+
+### 111. Registered content scripts run in pages already open
+
+- **Gap:** WebKit runs a script `scripting.registerContentScripts` registers at once in every matching page already open, and again each time `updateContentScripts` changes it. Chrome waits for the page's next load.
+- **Lilo:** none: holding a `MAIN` world script back would take a guard the page can see (COMPATIBILITY.md, "scripting and tabs").
+- **Impact:** a script written to run once per document runs twice in a page open while its worker registers then updates it: ID.me Shop's bridge found its own component already defined and threw.
+- **Check:** `testRegisteredContentScriptsRunInPagesAlreadyOpen`. Repro: open `https://example.com/`, then a worker registers a `MAIN` world `a.js` matching it and updates the registration to `b.js`. Expected: neither runs before a reload. Actual: both run in the open page.
 
 ### 8. `webNavigation.getAllFrames` and `getFrame` reject where Chrome resolves
 
