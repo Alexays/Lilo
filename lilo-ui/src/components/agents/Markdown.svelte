@@ -105,6 +105,19 @@
           <pre><code>{block.text}</code></pre>
         {/if}
       </div>
+    {:else if block.type === "table"}
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>{#each block.head as cell, column (column)}<th style:text-align={block.align[column] ?? undefined}>{@render inline(cell)}</th>{/each}</tr>
+          </thead>
+          <tbody>
+            {#each block.rows as row, rowIndex (rowIndex)}
+              <tr>{#each block.head as _, column (column)}<td style:text-align={block.align[column] ?? undefined}>{@render inline(row[column] ?? [])}</td>{/each}</tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
     {:else if block.type === "list" && block.ordered}
       <ol>
         {#each block.items as item, itemIndex (itemIndex)}<li>{@render inline(item)}</li>{/each}
@@ -118,6 +131,32 @@
 </div>
 
 <style>
+  .table-scroll {
+    overflow-x: auto;
+  }
+
+  table {
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+    overflow-wrap: normal;
+  }
+
+  th,
+  td {
+    padding: var(--space-4) var(--space-12) var(--space-4) 0;
+    border-bottom: 1px solid var(--separator);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    font-weight: var(--font-weight-semibold);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
   .markdown {
     display: flex;
     flex-direction: column;

@@ -35,6 +35,21 @@ test("blocks: paragraphs, headings, lists, quotes and fenced code", () => {
   assert.deepEqual(blocks[5], { type: "code", lang: "ts", text: "const a = 1;" });
 });
 
+test("a table is a header and a delimiter row, its body running to a line with no pipe", () => {
+  const { blocks } = parseMarkdown("| Name | Size |\n|:--|--:|\n| `a\\|b` | 2 |\n| c |\nafter");
+  assert.deepEqual(blocks, [
+    {
+      type: "table",
+      align: ["left", "right"],
+      head: [[{ type: "text", text: "Name" }], [{ type: "text", text: "Size" }]],
+      rows: [[[{ type: "code", text: "a|b" }], [{ type: "text", text: "2" }]], [[{ type: "text", text: "c" }]]],
+    },
+    { type: "p", inline: [{ type: "text", text: "after" }] },
+  ]);
+  // Before its delimiter row arrives, a streaming header is a paragraph.
+  assert.equal(parseMarkdown("| Name | Size |").blocks[0].type, "p");
+});
+
 test("an unclosed fence runs to the end while the message streams", () => {
   assert.deepEqual(parseMarkdown("Here:\n```\nline 1\nline 2").blocks, [
     { type: "p", inline: [{ type: "text", text: "Here:" }] },

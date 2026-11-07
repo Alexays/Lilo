@@ -11,7 +11,8 @@ export type Block =
   | { type: "p" | "quote"; inline: Inline[] }
   | { type: "heading"; level: number; inline: Inline[] }
   | { type: "code"; lang: string; text: string }
-  | { type: "list"; ordered: boolean; items: Inline[][] };
+  | { type: "list"; ordered: boolean; items: Inline[][] }
+  | { type: "table"; align: ("left" | "center" | "right" | null)[]; head: Inline[][]; rows: Inline[][][] };
 
 const INLINE =
   /`([^`\n]+)`|\*\*([^*\n]+)\*\*|__([^_\n]+)__|(?<![\w*])\*([^*\s][^*\n]*)\*(?![\w*])|(?<![\w_])_([^_\s][^_\n]*)_(?![\w_])|!\[([^\]\n]*)\]\(([^)\s]+)\)|\[([^\]\n]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s<>()]*[^\s<>().,;:!?'"])|(?<![\w/.:@-])((?:\.{1,2}\/|\/)?(?:[\w.@-]+\/)+[\w.-]*\.[A-Za-z][\w]*(?::\d+(?::\d+)?)?)(?![\w/])/g;
@@ -40,6 +41,17 @@ export function parseInline(text: string): Inline[] {
 
 const LIST_ITEM = /^\s{0,3}([-*+]|\d{1,9}[.)])\s+(.*)$/;
 const HEADING = /^(#{1,6})\s+(.*)$/;
+const TABLE_DELIMITER = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
+
+/** A table row's cells, its outer pipes dropped; `\|` is a pipe inside a cell. */
+function tableCells(row: string): string[] {
+  return row
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/(?<!\\)\|$/, "")
+    .split(/(?<!\\)\|/)
+    .map((cell) => cell.trim().replaceAll("\\|", "|"));
+}
 
 /** A parse a longer text can resume: the first `settled` blocks end at `end`, a blank line outside any fence. */
 export interface MarkdownParse {
@@ -50,7 +62,7 @@ export interface MarkdownParse {
 }
 
 /**
- * Paragraphs, headings, quotes, lists and fenced code; an unclosed fence (still streaming) runs to the end.
+ * Paragraphs, headings, quotes, lists, tables and fenced code; an unclosed fence (still streaming) runs to the end.
  * Given the parse of a prefix, only the text after its settled blocks is parsed again, and those keep their identity.
  */
 export function parseMarkdown(text: string, prev?: MarkdownParse): MarkdownParse {
@@ -88,6 +100,19 @@ export function parseMarkdown(text: string, prev?: MarkdownParse): MarkdownParse
         settled = blocks.length;
         settledLine = i;
       }
+      continue;
+    }
+    // A table is a header row over a delimiter row; its body runs to a line with no pipe.
+    if (line.includes("|") && i + 1 < lines.length && lines[i + 1].includes("|") && TABLE_DELIMITER.test(lines[i + 1])) {
+      flush();
+      const align = tableCells(lines[i + 1]).map((cell) =>
+        cell.endsWith(":") ? (cell.startsWith(":") ? "center" : "right") : cell.startsWith(":") ? "left" : null,
+      );
+      const head = tableCells(line).map(parseInline);
+      const rows: Inline[][][] = [];
+      for (i += 2; i < lines.length && lines[i].includes("|") && lines[i].trim(); i++) rows.push(tableCells(lines[i]).map(parseInline));
+      i--;
+      blocks.push({ type: "table", align, head, rows });
       continue;
     }
     const heading = HEADING.exec(line);
