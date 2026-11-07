@@ -57,9 +57,16 @@ final class PasswordManagerE2ETests: XCTestCase {
     """
 
     private func startSite() async throws -> TinyHTTPServer {
-        let login = Data(Self.pages.utf8), welcome = Data("<!doctype html><title>Welcome</title><p>Signed in</p>".utf8)
+        // The welcome page loads for a while, as a real one does with its subresources: Bitwarden checks the tab is still
+        // loading, then listens to webNavigation.onCompleted, and misses a page that completes in between.
+        let login = Data(Self.pages.utf8)
+        let welcome = Data(#"<!doctype html><title>Welcome</title><link rel="stylesheet" href="/welcome.css"><p>Signed in</p>"#.utf8)
         return try await TinyHTTPServer { request in
-            request.hasPrefix("POST /welcome") ? ("200 OK", ["Content-Type: text/html"], welcome) : ("200 OK", ["Content-Type: text/html"], login)
+            if request.hasPrefix("GET /welcome.css") {
+                Thread.sleep(forTimeInterval: 0.3)
+                return ("200 OK", ["Content-Type: text/css"], Data())
+            }
+            return request.hasPrefix("POST /welcome") ? ("200 OK", ["Content-Type: text/html"], welcome) : ("200 OK", ["Content-Type: text/html"], login)
         }
     }
 
@@ -222,15 +229,7 @@ final class PasswordManagerE2ETests: XCTestCase {
         let offered = await holds("return location.pathname === '/welcome' && !!document.querySelector('bit-notification-bar-root');", in: page)
         // Lets Bitwarden's storage writes land before the process ends: the relaunch reads them.
         try await Task.sleep(for: .seconds(2))
-        // Not strict: Bitwarden's 1.5 s fallback sometimes shows the bar before the page has loaded.
-        let gap = XCTExpectedFailure.Options()
-        gap.isStrict = false
-        XCTExpectFailure("""
-        Bitwarden waits for the next page's webNavigation.onCompleted with a listener it adds on submission, and WebKit \
-        fires that event to no listener of a worker that did not listen to it at startup.
-        """, options: gap) {
-            XCTAssertTrue(offered, "Bitwarden offers to save the new login on the page the form leads to")
-        }
+        XCTAssertTrue(offered, "Bitwarden offers to save the new login on the page the form leads to")
     }
 
     /// WEBKIT-GAPS gap 113: a new process on the persisted worker registration, with a prelude changed as a Lilo update changes it.
