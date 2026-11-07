@@ -1417,8 +1417,11 @@
       var didomiAnswer = reflectApply(functionBind, function (didomi) {
         attempt(function () { if (didomi.shouldUserStatusBeCollected()) didomi.setUserDisagreeToAll(); });
       }, [null]);
+      // Joined once even where the listener outlives its removal (a page hooking removeEventListener).
+      var joined = false;
       document.addEventListener('load', function onLoad() {
-        if (!self.Didomi) return;
+        if (joined || !self.Didomi) return;
+        joined = true;
         document.removeEventListener('load', onLoad, true);
         attempt(function () { (self.didomiOnReady = self.didomiOnReady || []).push(didomiAnswer); });
       }, true);
