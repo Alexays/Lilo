@@ -12,6 +12,7 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
+  import { untrack } from "svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { hostOf } from "../../lib/url";
@@ -43,6 +44,8 @@
     /** The project whose files @ offers. */
     cwd?: string;
     commands?: AvailableCommand[];
+    /** A `/` typed while the agent has listed no commands yet. */
+    oncommandsneeded?: () => void;
     /** `alternate` is Cmd+Return. */
     onsubmit: (alternate: boolean) => void;
     /** Escape with no menu open; return true when it was used. */
@@ -61,6 +64,7 @@
     pageTabId = null,
     cwd = "",
     commands = [],
+    oncommandsneeded,
     onsubmit,
     onescape,
     onemptyreturn,
@@ -102,6 +106,7 @@
     const match = /(^|\s)([@/])([^\s@/]*)$/.exec(text.slice(0, caret));
     const char = match?.[2] as "@" | "/" | undefined;
     const start = match ? match.index + match[1].length : -1;
+    if (char === "/" && start === 0 && commands.length === 0) oncommandsneeded?.();
     // Commands only open the prompt.
     const next = match && char && (char === "@" || (start === 0 && commands.length > 0))
       ? { char, query: match[3], start }
@@ -121,6 +126,12 @@
   $effect(() => {
     void text;
     resize();
+  });
+
+  // Commands that arrive while a `/` waits for them open the menu.
+  $effect(() => {
+    void commands;
+    untrack(updateTrigger);
   });
 
   function replaceTrigger(insert: string): void {

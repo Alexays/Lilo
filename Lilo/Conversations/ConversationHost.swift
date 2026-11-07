@@ -471,6 +471,19 @@ final class ConversationHost {
          "choices": prompt.choices.map { ["key": $0.key, "label": $0.label] }]
     }
 
+    /// The composer wants `/` commands the agent has not listed yet: they come once its session opens.
+    func loadCommands(_ tabId: UUID) {
+        guard let conversation = conversations[tabId], conversation.connection == nil, conversation.state != .busy else { return }
+        Task {
+            do {
+                try await ensureStarted(conversation)
+                scheduleIdleStop(conversation)
+            } catch {
+                failedOutsideTurn(conversation, error)
+            }
+        }
+    }
+
     /// Types an answer from the thread into the sign-in: a menu's key, or a line ending with Return.
     func answerSignIn(_ tabId: UUID, text: String) {
         guard !text.isEmpty else { return }

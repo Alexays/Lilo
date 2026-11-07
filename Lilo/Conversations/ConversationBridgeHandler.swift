@@ -9,6 +9,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         "setConversationMode", "setConversationConfig", "showConversation", "restoreConversation",
         "undoConversationFile", "loadAgentCatalog", "loadConversations", "chooseConversationProject",
         "openConversationChanges", "authenticateConversation", "answerConversationSignIn", "openConversationSignInTerminal",
+        "loadConversationCommands",
         "searchConversationFiles", "previewConversationArtifact"
     ]
 
@@ -85,6 +86,8 @@ final class ConversationBridgeHandler: BridgeHandler {
             if let tabId, let text = payload["text"] as? String { host.answerSignIn(tabId, text: text) }
         case "openConversationSignInTerminal":
             if let tabId { host.openSignInTerminal(tabId) }
+        case "loadConversationCommands":
+            if let tabId { host.loadCommands(tabId) }
         case "openConversationChanges":
             if let tabId { window.openChanges(forConversation: tabId) }
         default:

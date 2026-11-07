@@ -94,6 +94,8 @@
   const tab = $derived(getTabsById().get(tabId));
 
   let limit = $state(PAGE);
+  // The agent lists its `/` commands once its session opens: asked once per view.
+  let commandsRequested = false;
   let text = $state(untrack(() => drafts[tabId]?.text ?? ""));
   let attachments = $state.raw<AttachmentDraft[]>(untrack(() => drafts[tabId]?.attachments ?? []));
   onDestroy(() => {
@@ -651,6 +653,11 @@
           {pageTabId}
           cwd={header.cwd}
           commands={header.commands}
+          oncommandsneeded={() => {
+            if (commandsRequested) return;
+            commandsRequested = true;
+            conversationActions.loadCommands(tabId);
+          }}
           onsubmit={send}
           onemptyreturn={() => attachments.length === 0 && answerPending(true)}
           onescape={() => answerPending(false) || stop()}

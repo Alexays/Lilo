@@ -147,3 +147,31 @@ test("a message typed and not sent is still there after switching tabs and back"
 
 	await expect(composer).toHaveValue("Half a thought");
 });
+
+test("a slash typed before the agent listed its commands starts it, and the commands open as they come", async ({ page }) => {
+	const world = initialWorld();
+	const space = world.activeSpaceId;
+	world.tabsBySpace[space].push(tab("tab-agent", space, { title: "Summarize", url: "", kind: "agent", agentId: "codex-acp" } as never));
+	world.treeItemsBySpace[space].push(treeItem("tab-agent", space, 5));
+	world.activeTabBySpace[space] = "tab-agent";
+	await bootChrome(page, world);
+	await receive(page, [
+		{ event: "settingsLoaded", settings: { agentsEnabled: "true" } },
+		{ event: "agentCatalog", agents, projects: [], home: "/Users/example" },
+		{
+			event: "conversationsChanged",
+			conversations: [{ tabId: "tab-agent", agentId: "codex-acp", title: "Summarize", state: "idle", unread: false, spaceId: space, spaceName: "Work", running: false }],
+		},
+		{ event: "conversationOpened", tabId: "tab-agent", agentId: "codex-acp", cwd: "/Users/example/Code/acme", state: "idle", checkpoints: [], updates: [] },
+	]);
+	await page.getByRole("combobox", { name: "Message the agent" }).pressSequentially("/re");
+
+	const asked = (await sentCommands(page)).filter((command) => command.action === "loadConversationCommands");
+	expect(asked).toEqual([expect.objectContaining({ payload: { tabId: "tab-agent" } })]);
+
+	await receive(page, [{
+		event: "conversationUpdate", tabId: "tab-agent",
+		updates: [{ sessionUpdate: "available_commands_update", availableCommands: [{ name: "review", description: "Review the changes" }] }],
+	}]);
+	await expect(page.getByRole("option", { name: /review/ })).toBeVisible();
+});
