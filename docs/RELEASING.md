@@ -78,6 +78,9 @@ The app bundles the prepared notes matching its marketing version during `make u
 shows them once after an update. **Help > What’s New** reopens them. New installations finish
 onboarding without an additional update introduction.
 
+Every highlight shows a visual: the drawing its `illustration` names in `WhatsNewArt.svelte`, which a
+captured film replaces. `make changelog-draft` refuses a highlight without a drawn illustration.
+
 To add visual highlights, add the exact version to
 `lilo-ui/src/components/whatsnew/releaseHighlights.json`. Its headline, introduction and up to
 three highlights reference keys under `whatsNew.releases` in **every** shared language

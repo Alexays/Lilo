@@ -17,7 +17,7 @@ const copy = { en: "Copy.", fr: "Texte." };
 const draft = {
   title: copy,
   introduction: copy,
-  highlights: [{ id: "tab-stacks", title: copy, body: copy, notes: [0] }],
+  highlights: [{ id: "tab-stacks", title: copy, body: copy, notes: [0], illustration: "stacks" }],
   groups: [{ title: copy, notes: [1, 2] }],
 };
 
@@ -52,9 +52,10 @@ for (const [name, change, message] of [
 }
 
 test("What's New keys follow the highlight ids", () => {
-  const whatsNew = whatsNewFrom("1.2.0", storyFrom("1.2.0", draft, notes));
+  const whatsNew = whatsNewFrom("1.2.0", draft, storyFrom("1.2.0", draft, notes), ["stacks"]);
   assert.equal(whatsNew.key, "v120");
   assert.equal(whatsNew.entry.highlights[0].titleKey, "whatsNew.releases.v120.tabStacksTitle");
+  assert.equal(whatsNew.entry.highlights[0].illustration, "stacks");
   assert.deepEqual(
     whatsNew.copy({
       headline: "H",
@@ -63,6 +64,11 @@ test("What's New keys follow the highlight ids", () => {
     }),
     { headline: "H", description: "D", tabStacksTitle: "T", tabStacksDescription: "B" },
   );
+});
+
+test("a highlight whose illustration WhatsNewArt does not draw is refused", () => {
+  const story = storyFrom("1.2.0", draft, notes);
+  assert.throws(() => whatsNewFrom("1.2.0", draft, story, ["calm"]), /does not draw/);
 });
 
 test("release copy goes in as text and leaves the rest of the catalog untouched", () => {

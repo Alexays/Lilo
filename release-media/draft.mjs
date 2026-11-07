@@ -29,6 +29,7 @@ export const Draft = z.object({
       title: translated,
       body: translated,
       notes: z.array(z.number()),
+      illustration: z.string(),
       plan: Plan.nullable(),
     }),
   ),
@@ -112,8 +113,9 @@ export function plansFrom(draft, known) {
 
 const camel = (id) => id.replace(/-(\w)/g, (_, letter) => letter.toUpperCase());
 
-/** The What's New registry entry and the copy every locale catalog gains under `key`. */
-export function whatsNewFrom(version, story) {
+/** The What's New registry entry and the copy every locale catalog gains under `key`. `drawn` lists the
+ * illustrations WhatsNewArt draws: every highlight shows one, and a film replaces it once captured. */
+export function whatsNewFrom(version, draft, story, drawn) {
   const key = `v${version.replaceAll(".", "")}`;
   const path = `whatsNew.releases.${key}`;
   return {
@@ -121,11 +123,17 @@ export function whatsNewFrom(version, story) {
     entry: {
       headlineKey: `${path}.headline`,
       descriptionKey: `${path}.description`,
-      highlights: story.highlights.map(({ id }) => ({
-        id,
-        titleKey: `${path}.${camel(id)}Title`,
-        descriptionKey: `${path}.${camel(id)}Description`,
-      })),
+      highlights: story.highlights.map(({ id }, index) => {
+        const { illustration } = draft.highlights[index];
+        if (!drawn.includes(illustration))
+          throw Error(`The ${id} highlight shows "${illustration}", which WhatsNewArt does not draw`);
+        return {
+          id,
+          illustration,
+          titleKey: `${path}.${camel(id)}Title`,
+          descriptionKey: `${path}.${camel(id)}Description`,
+        };
+      }),
     },
     copy: (copy) => ({
       headline: copy.headline,
@@ -242,7 +250,14 @@ async function main() {
       throw Error(`The ${code} translation lost a highlight`);
   }
 
-  const whatsNew = whatsNewFrom(source.version, story);
+  const listed = /const illustrations = \[([^\]]*)\]/.exec(
+    await readFile(path.join(repo, "lilo-ui/src/components/whatsnew/releaseNotes.ts"), "utf8"),
+  );
+  const art = await readFile(path.join(repo, "lilo-ui/src/components/whatsnew/WhatsNewArt.svelte"), "utf8");
+  const drawn = [...(listed?.[1] ?? "").matchAll(/"(\w+)"/g)]
+    .map((match) => match[1])
+    .filter((name) => art.includes(`kind === "${name}"`));
+  const whatsNew = whatsNewFrom(source.version, draft, story, drawn);
   for (const [code, copy] of Object.entries(copies)) {
     const file = path.join(locales, `${code}.json`);
     await writeFile(

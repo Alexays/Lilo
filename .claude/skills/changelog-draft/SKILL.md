@@ -23,7 +23,7 @@ Write the entry from the release notes, using the commits only to understand wha
   "title": { "en": "...", "fr": "..." },
   "introduction": { "en": "...", "fr": "..." },
   "highlights": [
-    { "id": "...", "title": { "en": "...", "fr": "..." }, "body": { "en": "...", "fr": "..." }, "notes": [0], "plan": null }
+    { "id": "...", "title": { "en": "...", "fr": "..." }, "body": { "en": "...", "fr": "..." }, "notes": [0], "illustration": "...", "plan": null }
   ],
   "groups": [{ "title": { "en": "...", "fr": "..." }, "notes": [1, 2] }],
   "translations": {
@@ -42,7 +42,11 @@ Refer to notes by their number in `notes`. A highlight lists the notes it tells;
 
 ## Media
 
-A highlight gets a `plan` when a picture says more than its words: it drives the real app and films the change. Leave `plan` null for anything the interface does not show.
+Every highlight shows a visual in What's New: its `illustration` always, replaced by a film when its `plan` is captured. Weigh the visual when picking highlights: between two features of equal interest, take the one the interface shows.
+
+`illustration` names a drawing in `lilo-ui/src/components/whatsnew/WhatsNewArt.svelte`. Reuse one when it fits the feature; otherwise draw a new one before running `make changelog-draft`: add its identifier to `illustrations` in `releaseNotes.ts` and a `{:else if kind === "..."}` branch in `WhatsNewArt.svelte`, in the style of the existing ones (a 128 by 90 calm, decorative sketch built from the interface's color tokens, no text). The tool refuses a highlight whose illustration is not drawn.
+
+A highlight also gets a `plan` when a picture says more than its words: it drives the real app and films the change. Leave `plan` null for anything the interface does not show.
 
 A plan is `{ "template": "...", "steps": [...] }`. Pick the `template` that fits:
 
