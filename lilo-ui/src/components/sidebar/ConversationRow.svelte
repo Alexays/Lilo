@@ -102,6 +102,7 @@
     <button
       type="button"
       class="hover-button disclosure"
+      class:folded={!expanded}
       tabindex="-1"
       aria-label={t(expanded ? "agents.row.hidePages" : "agents.row.showPages")}
       aria-expanded={expanded}
@@ -224,6 +225,12 @@
   .conversation-row:focus-visible .hover-button {
     display: grid;
     animation: conversation-button-in var(--motion-duration-fast) var(--motion-ease-standard);
+  }
+
+  /* Folded pages stay in sight: their disclosure shows at rest too. */
+  .conversation-row .disclosure.folded {
+    display: grid;
+    animation: none;
   }
 
   .conversation-row:hover .diff,

@@ -8,11 +8,21 @@ extension AgentControl {
 
     /// The Agents space of the session's profile, and the window showing it if one does.
     func agentSpace(for session: AgentSession) throws -> (space: Space, host: MainWindowController?) {
+        followConversation(session)
         if let spaceId = session.conversationSpaceId {
             guard let space = context?.spaceManager?.space(with: spaceId) else { throw AgentToolError("The conversation's Space is gone") }
             return (space, context?.windows.windows(showing: spaceId).first)
         }
         return try agentSpace(in: session.profileId ?? agentsProfileId())
+    }
+
+    /// A conversation moved to another Space or folder takes its agent's next tabs along.
+    func followConversation(_ session: AgentSession) {
+        guard let tabId = session.conversationTabId, let (spaceId, tab) = context?.browserState.durableTab(for: tabId),
+              let space = context?.spaceManager?.space(with: spaceId) else { return }
+        session.conversationSpaceId = spaceId
+        session.folders[nil] = tab.groupId
+        session.profileId = space.profileId
     }
 
     /// The Agents space of `profileId`, created the first time an agent works in that profile.
@@ -60,6 +70,7 @@ extension AgentControl {
     /// The id of the session's Agents space if there is one, never created: a refresh must not create
     /// a space, nor drop every tab while no window is open.
     func agentsSpaceId(of session: AgentSession) -> UUID? {
+        followConversation(session)
         if let spaceId = session.conversationSpaceId { return spaceId }
         guard let profileId = session.profileId ?? context?.settingsStore?.get(Self.agentsProfileKey).flatMap(UUID.init(uuidString:)) else { return nil }
         return agentsSpace(in: profileId)?.id
@@ -144,7 +155,15 @@ extension AgentControl {
     func createTab(
         inFolder folderId: UUID?, space: Space, host: MainWindowController?, url: URL? = nil, nativeConfiguration: WKWebViewConfiguration? = nil
     ) throws -> Tab {
-        let index = tabs(inFolder: folderId, spaceId: space.id).count
+        let existing = tabs(inFolder: folderId, spaceId: space.id)
+        let index = existing.count
+        // A folder unfolds for its first page, which then shows under the agent that opened it; folded
+        // again by the user, it stays folded.
+        if let folderId, !existing.contains(where: { $0.kind != .agent }), tabFolder(folderId, in: space.id)?.isCollapsed == true {
+            _ = try? (host ?? context?.windows.activeWindow)?.applyBrowserCommand(
+                .setFolderCollapsed(spaceId: space.id, folderId: folderId, isCollapsed: false)
+            )
+        }
         if let host {
             guard let tab = host.createTabStateFirst(
                 url: url, activate: false, nativeConfiguration: nativeConfiguration, sidebarParentFolderId: folderId, sidebarSection: .unpinned,

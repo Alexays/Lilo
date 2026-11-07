@@ -360,6 +360,40 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertTrue(engine.view.window === other)
     }
 
+    func testAConversationsAgentOpensItsTabsWhereTheConversationMoved() async throws {
+        let first = TabFolder(spaceId: space.id, name: "Before", color: "#795ceb")
+        let moved = TabFolder(spaceId: space.id, name: "After", color: "#795ceb")
+        let agentTab = Tab(title: "Conversation", spaceId: space.id, kind: .agent, cwd: NSTemporaryDirectory(), agentId: "test-agent")
+        _ = try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: first, section: .unpinned))
+        _ = try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: moved, section: .unpinned))
+        _ = try window.applyBrowserCommand(.createTab(spaceId: space.id, tab: agentTab, activate: false))
+        _ = try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: space.id, kind: .tab, itemId: agentTab.id, parentFolderId: moved.id, section: .unpinned, insert: .index(0)
+        ))
+        let session = try XCTUnwrap(control.sessions.first)
+        session.conversationSpaceId = space.id
+        session.conversationTabId = agentTab.id
+        session.folders[nil] = first.id
+
+        let number = try await newAgentTab()
+
+        let tabId = try tabId(of: number)
+        XCTAssertEqual(context.browserState.durableTab(for: tabId)?.tab.groupId, moved.id, "the page goes where the conversation is now")
+    }
+
+    func testAFoldedFolderUnfoldsForItsFirstPageOnly() throws {
+        let folder = TabFolder(spaceId: space.id, name: "Conversation", color: "#795ceb", isCollapsed: true)
+        _ = try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
+        let isCollapsed = { self.context.browserState.structuralProjection(forSpace: self.space.id)?.folders.first { $0.id == folder.id }?.isCollapsed }
+
+        _ = try control.createTab(inFolder: folder.id, space: space, host: window)
+        XCTAssertEqual(isCollapsed(), false, "the first page shows under the folder")
+
+        _ = try window.applyBrowserCommand(.setFolderCollapsed(spaceId: space.id, folderId: folder.id, isCollapsed: true))
+        _ = try control.createTab(inFolder: folder.id, space: space, host: window)
+        XCTAssertEqual(isCollapsed(), true, "a folder the user folded again stays folded")
+    }
+
     func testNewTabsAndPopupsFromAnAgentTabStayInItsFolderInTheBackground() async throws {
         let number = try await agentTab(showing: """
             <!doctype html><body style="margin:0">
