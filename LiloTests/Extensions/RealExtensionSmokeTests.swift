@@ -409,6 +409,9 @@ final class RealExtensionSmokeTests: XCTestCase {
                 idleWindow.activateTabStateFirst(id: blank.id)
                 // Chrome's recording opens the popup once before its worker stops, and a popup's first opening may show
                 // something else than the next ones (1VPN's upgrade offer): the idle check's popup is a second one too.
+                // A popup over a window the main pass covers stays hidden, without animation frames: the click raises it.
+                idleWindow.window?.orderFrontRegardless()
+                defer { window.window?.orderFrontRegardless() }
                 for entry in idleBatch {
                     let button = NSMenuItem()
                     button.representedObject = entry.outcome.id
@@ -424,6 +427,8 @@ final class RealExtensionSmokeTests: XCTestCase {
             let quiet = { idleBatch.allSatisfy { idleRegistry.lifecycle.worker(of: $0.outcome.id) != .running } || Date().timeIntervalSince(quietSince) > 60 }
             if draining { _ = await pollUntil(timeout: 70) { quiet() } }
             guard quiet() else { return }
+            idleWindow.window?.orderFrontRegardless()
+            defer { window.window?.orderFrontRegardless() }
             for entry in idleBatch {
                 let (outcome, id, chrome) = (entry.outcome, entry.outcome.id, entry.chrome)
                 defer { finish(outcome) }

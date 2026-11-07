@@ -48,6 +48,23 @@ if (onMessage) {
 }
 
 const runtime = (globalThis as any).chrome?.runtime;
+// Chrome gives content scripts i18n.detectLanguage, which WebKit omits: their worker answers it (runtime.ts
+// relayForContentScripts). WebKit's own sendMessage, before the relays below wrap it.
+const i18n = (globalThis as any).chrome?.i18n;
+if (i18n && runtime && typeof i18n.detectLanguage !== 'function' && !Object.hasOwn(globalThis, '__liloI18n')) {
+  const send = home(runtime).sendMessage;
+  Object.defineProperty(home(i18n), 'detectLanguage', { configurable: true, writable: true, value(text: unknown, callback?: (result: unknown) => void) {
+    const detected = Promise.resolve(send.call(runtime, { liloDetectLanguage: String(text ?? '') })).then((answer: any) => {
+      if (answer?.result === undefined) throw new Error(answer?.error ?? 'detectLanguage failed');
+      return answer.result;
+    });
+    if (typeof callback !== 'function') return detected;
+    detected.then(callback, () => callback(undefined));
+    return undefined;
+  } });
+  // WebKit recreates a collected namespace object, and its prototype, without it.
+  Object.defineProperty(globalThis, '__liloI18n', { value: i18n });
+}
 if (runtime && !Object.hasOwn(globalThis, '__liloRuntime')) {
   relayExternalMessaging(runtime);
   // The relay reads the lastError of each message's callback it runs: WebKit still logs it unchecked for a callback it

@@ -432,6 +432,40 @@ final class WebKitGapTests: XCTestCase {
         XCTAssertTrue(injected, "WebKit no longer injects into open pages, as Chrome: drop the note in COMPATIBILITY.md (scripting and tabs)")
     }
 
+    func testRegisteredContentScriptsRunInPagesAlreadyOpen() async throws {
+        let configuration = WKWebViewConfiguration()
+        configuration.webExtensionController = controller
+        let page = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: configuration)
+        page.loadHTMLString("<p>open before the registration</p>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil { (try? await page.evaluateJavaScript("document.readyState")) as? String == "complete" }
+
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Gap", "version": "1.0", "permissions": ["scripting"],
+            "host_permissions": ["https://example.com/*"], "background": ["service_worker": "sw.js"]
+        ]
+        let run = "document.documentElement.dataset.runs = (document.documentElement.dataset.runs ?? '') + '%@';"
+        let folder = try writeExtension(manifest, files: [
+            "a.js": String(format: run, "a"), "b.js": String(format: run, "b"),
+            "sw.js": """
+            (async () => {
+              await browser.scripting.registerContentScripts([{ id: 's', js: ['a.js'], matches: ['https://example.com/*'], world: 'MAIN' }]);
+              await new Promise((resolve) => setTimeout(resolve, 500));
+              await browser.scripting.updateContentScripts([{ id: 's', js: ['b.js'] }]);
+            })();
+            """
+        ])
+        let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
+        context.webExtension.requestedPermissions.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
+        context.webExtension.allRequestedMatchPatterns.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
+        try controller.load(context)
+        context.loadBackgroundContent { _ in }
+
+        let runs = { (try? await page.evaluateJavaScript("document.documentElement.dataset.runs ?? ''")) as? String }
+        let ranBoth = await pollUntil { await runs() == "ab" }
+        let ran = await runs() ?? "nothing"
+        XCTAssertTrue(ranBoth, "WebKit no longer injects registered scripts into open pages, as Chrome: drop gap 111 and its note in COMPATIBILITY.md (scripting and tabs); ran \(ran)")
+    }
+
     func testContentScriptRunsOncePerCoveringGrantedPattern() async throws {
         let manifest: [String: Any] = [
             "manifest_version": 3, "name": "Gap", "version": "1.0",
@@ -845,6 +879,20 @@ final class WebKitGapTests: XCTestCase {
         return await chrome.runtime.sendMessage('count');
         """)
         XCTAssertEqual(result, "2", "WebKit now delivers a message sent before its port connects once, as Chrome: drop messagesOnce and the onConnect stand-in (runtime.ts)")
+    }
+
+    func testDisconnectFiresThePortsOwnOnDisconnect() async throws {
+        let result = try await barePageResult(worker: """
+        chrome.runtime.onConnect.addListener((port) => port.postMessage('answer'));
+        """, pageScript: """
+        const events = [];
+        const port = chrome.runtime.connect();
+        port.onDisconnect.addListener(() => events.push('disconnect'));
+        await new Promise((resolve) => port.onMessage.addListener((message) => { events.push(message); port.disconnect(); events.push('after'); resolve(); }));
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        return events.join(',');
+        """)
+        XCTAssertEqual(result, "answer,disconnect,after", "WebKit no longer runs a port's own onDisconnect listeners when it disconnects, as Chrome: drop gap 112 and the disconnect of portErrorsAsChrome (message-answers.ts)")
     }
 
     func testExtensionPagesAreNotClientsOfTheWorker() async throws {

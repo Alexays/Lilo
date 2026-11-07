@@ -437,12 +437,17 @@ export const crossExtensionPatches: Record<string, Patch> = {
 const contentScript = (sender: any) => ({ url: sender.url, origin: sender.origin, tab: sender.tab, frameId: sender.frameId ?? 0 });
 
 /**
- * The worker relays its content scripts' messages to another extension (message-answers.ts relayExternalMessaging),
- * through its own listener on WebKit's event, as the extension may not listen.
+ * The worker relays its content scripts' messages to another extension (message-answers.ts relayExternalMessaging), and
+ * answers their i18n.detectLanguage, through its own listener on WebKit's event, as the extension may not listen.
  */
 export function relayForContentScripts(runtime: any): void {
   const add = Object.getPrototypeOf(runtime.onMessage).addListener;
   (add.__liloUnwrapped ?? add).call(runtime.onMessage, (message: any, sender: any, sendResponse: (answer: unknown) => void) => {
+    if (typeof message?.liloDetectLanguage === 'string') {
+      gapCall('i18n', 'detectLanguage', { text: message.liloDetectLanguage })
+        .then((result) => sendResponse({ result }), (error) => sendResponse({ error: error?.message ?? 'detectLanguage failed' }));
+      return true;
+    }
     const id = message?.liloExternal;
     if (typeof id !== 'string' || !sender?.tab) return undefined;
     gapCall('runtime', 'sendExternal', { id, message: message.message, ...contentScript(sender) }, 0)

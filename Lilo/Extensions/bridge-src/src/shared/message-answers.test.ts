@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { answerAsChrome, closedTabMessage, frameMark, lastErrorWithoutAnswer, listensProbe, messagesOnce, relayExternalMessaging } from './message-answers.ts';
+import { answerAsChrome, closedTabMessage, frameMark, lastErrorWithoutAnswer, listensProbe, messagesOnce, portErrorsAsChrome, relayExternalMessaging } from './message-answers.ts';
 import { installChromeCompat } from './chrome-compat.ts';
 import { mockGapAPI } from './ipc.testkit.ts';
 import { bridgeChrome, installBridgeChrome } from './callbackify.ts';
@@ -121,6 +121,7 @@ describe('runtime.onMessage listeners', () => {
     const heard: unknown[] = [];
     onMessage.addListener((message: unknown) => { heard.push(message); });
     assert.equal(await onMessage.send({ liloExternal: 'abcdefghijklmnopabcdefghijklmnop', message: 1 }), undefined);
+    assert.equal(await onMessage.send({ liloDetectLanguage: 'bonjour' }), undefined, 'nor its i18n.detectLanguage');
     assert.deepEqual(heard, []);
   });
 
@@ -411,6 +412,29 @@ describe("WebKit's ports", () => {
     const wrapped: any = messagesOnce(port, 'state');
     assert.throws(() => wrapped.postMessage('late'), { message: 'Attempting to use a disconnected port object' });
     assert.throws(() => new Port().postMessage(), { message: 'Attempting to use a disconnected port object' }, 'every port of its prototype');
+  });
+
+  it("leave their own onDisconnect listeners unheard when they disconnect, as Chrome's", () => {
+    class Event {
+      listeners = new Set<() => void>();
+      addListener(listener: () => void) { this.listeners.add(listener); }
+      removeListener(listener: () => void) { this.listeners.delete(listener); }
+    }
+    // As WebKit's: disconnect runs the port's own onDisconnect listeners at once.
+    class Port {
+      onMessage = new Event();
+      onDisconnect = new Event();
+      postMessage() {}
+      disconnect() { for (const listener of this.onDisconnect.listeners) listener(); }
+    }
+    const heard: string[] = [];
+    const port: any = portErrorsAsChrome(new Port());
+    port.onDisconnect.addListener(() => heard.push('own'));
+    port.disconnect();
+    const wrapped: any = messagesOnce(new Port(), 'state');
+    wrapped.onDisconnect.addListener(() => heard.push('wrapped'));
+    wrapped.disconnect();
+    assert.deepEqual(heard, []);
   });
 });
 
