@@ -283,13 +283,19 @@
   function onPointerUp(): void {
     moveFrame.cancel();
     flushMove(); // apply the final pointer position before committing
+    // Every gesture ends here, even one whose crop or tool Escape or a shortcut changed mid-drag.
+    cropping = false;
     if (activeHandle) { screenshotEditor.pushHistory(); activeHandle = null; dragOrigin = null; return; }
-    if (activeCropHandle && screenshotEditor.crop) { screenshotEditor.setCrop(normalizeBox(screenshotEditor.crop)); activeCropHandle = null; dragOrigin = null; return; }
+    if (activeCropHandle) {
+      if (screenshotEditor.crop) screenshotEditor.setCrop(normalizeBox(screenshotEditor.crop));
+      activeCropHandle = null;
+      dragOrigin = null;
+      return;
+    }
     const tool = screenshotEditor.tool;
     if (tool === "select" && movingId) {
       screenshotEditor.pushHistory();
     } else if (tool === "crop" && screenshotEditor.crop) {
-      cropping = false;
       // A click, not a drag: no crop rather than an invisible one with its actions floating.
       const c = normalizeBox(screenshotEditor.crop);
       screenshotEditor.setCrop(c.w >= 3 && c.h >= 3 ? c : null);
