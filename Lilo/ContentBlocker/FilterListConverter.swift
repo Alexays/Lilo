@@ -369,7 +369,124 @@ enum FilterListConverter {
         let canonical = scriptletAliases[name] ?? name
         guard supportedScriptlets.contains(canonical),
               trusted || !(name.hasPrefix("trusted-") || canonical.hasPrefix("trusted-") || canonical == "replace-node-text") else { return nil }
-        return (canonical, Array(parts.dropFirst()))
+        let args = Array(parts.dropFirst())
+        guard !acceptsConsent(canonical, args) else { return nil }
+        return (canonical, args)
+    }
+
+    /// Stems of the words naming an accept, agree or allow answer, in the languages of the cookie lists; matched inside a word.
+    private static let acceptStems = [
+        "accept", "agree", "allow", "approv", "grant", "optin", "akzept", "zustimm", "einverstanden", "einwillig", "accett", "acept",
+        "aceit", "concord", "akcept", "zgadzam", "godkänn", "godta", "hyväksy", "elfogad", "souhlas", "súhlas", "prija", "přij",
+        "prihvat", "sutinku", "piekrīt", "nõustu", "kabul", "принять", "соглас"
+    ]
+    /// Stems of the words naming a refusal, a necessary-only or partial answer, or a choice left to the user; matched as a word
+    /// prefix, as "not" would match "notice" anywhere in a word. They win over an accept stem: "accept only necessary" refuses.
+    private static let refuseStems = [
+        "reject", "refus", "declin", "deny", "denied", "disagree", "disallow", "necessar", "nécessaire", "essential", "required",
+        "mandatory", "functional", "technical", "minimal", "without", "optout", "revoke", "withdraw", "select", "false", "ablehn",
+        "rifiut", "rechaz", "odrzu", "weiger", "avvis", "afvis", "hylkää", "notwendig", "nötig", "nødvendig", "nödvänd", "noodzak",
+        "nevyhnut", "niezbęd", "välttämät", "szükséges", "nezbytn", "valit", "seulement", "apenas", "somente", "alleen", "endast",
+        "tylko", "pouze", "senza", "zonder", "utan", "uden", "uten"
+    ]
+    private static let refuseWords: Set<String> = ["only", "none", "not", "dont", "sans", "ohne", "nur", "kun", "vain", "solo", "sin", "sem", "bez"]
+
+    /// Whether a scriptlet answers a consent prompt with accept on the user's behalf, which loads what the site holds back for
+    /// consent (ads, trackers): a click whose target names an accept answer, or a stored answer that does or cannot be read. Refusing, necessary-only,
+    /// continue-without and close clicks, and stored refusals, are kept.
+    static func acceptsConsent(_ name: String, _ args: [String]) -> Bool {
+        switch name {
+        case "trusted-click-element":
+            // A sequence accepts when any of its clicks does.
+            return args.first.map { splitTopLevel($0, at: ",").contains(where: clickAccepts) } ?? false
+        case "set-cookie", "trusted-set-cookie", "set-cookie-reload", "trusted-set-cookie-reload", "set-local-storage-item",
+             "trusted-set-local-storage-item", "set-session-storage-item", "trusted-set-session-storage-item":
+            guard args.count > 1 else { return false }
+            let key = consentWords(args[0]), value = args[1].lowercased(), valueWords = consentWords(args[1])
+            if refuses(key + valueWords) || ["0", "no", "n", "off"].contains(value) || value.contains("[]") { return false }
+            // A saved consent record (an id or an encoded TCF string) may hold an acceptance nothing here can read.
+            let isSavedConsent = key.contains { $0.contains("consent") } && value.count >= 16 && value.contains(where: \.isNumber)
+                && value.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || "-_.".contains($0)) }
+            return isSavedConsent || accepts(valueWords) || (["true", "1", "yes", "y", "ok", "on", "all"].contains(value) && accepts(key))
+        default:
+            return false
+        }
+    }
+
+    /// Lowercased words, split at every non-letter and camelCase boundary. A long one (an opaque token) names nothing.
+    private static func consentWords(_ text: String) -> [String] {
+        var words: [String] = [], word = "", previousLower = false
+        for c in text + " " {
+            guard c.isLetter else {
+                if !word.isEmpty, word.count <= 40 { words.append(word) }
+                word = ""
+                previousLower = false
+                continue
+            }
+            if c.isUppercase, previousLower {
+                words.append(word)
+                word = ""
+            }
+            word += c.lowercased()
+            previousLower = c.isLowercase
+        }
+        return words
+    }
+
+    private static func accepts(_ words: [String]) -> Bool { words.contains { word in acceptStems.contains { word.contains($0) } } }
+
+    private static func refuses(_ words: [String]) -> Bool {
+        words.contains { word in refuseWords.contains(word) || refuseStems.contains { word.hasPrefix($0) } }
+    }
+
+    /// Whether a click selector targets an accept control: the element it selects (its last compound) names no refusal, and the
+    /// selector names an accept answer, or excludes the refusing control with `:not()`.
+    private static func clickAccepts(_ selector: String) -> Bool {
+        var kept = "", negated = "", depth = 0, index = selector.startIndex
+        while index < selector.endIndex {
+            if depth == 0, selector[index...].hasPrefix(":not(") {
+                depth = 1
+                index = selector.index(index, offsetBy: 5)
+                continue
+            }
+            let c = selector[index]
+            if depth > 0 {
+                depth += c == "(" ? 1 : c == ")" ? -1 : 0
+                if depth > 0 { negated.append(c) } else { negated.append(" ") }
+            } else {
+                kept.append(c)
+            }
+            index = selector.index(after: index)
+        }
+        let target = splitTopLevel(kept, at: " >+~").last { !$0.isEmpty } ?? ""
+        if refuses(consentWords(target)) { return false }
+        let words = consentWords(kept)
+        // Sourcepoint's accept-all choice, and Quantcast's primary (agree) button.
+        return accepts(words) || words.contains { $0.contains("yes") } || refuses(consentWords(negated))
+            || kept.contains("sp_choice_type_11") || kept.contains("mode=\"primary\"")
+    }
+
+    /// `text` split at `separators` outside brackets, parentheses and quotes.
+    private static func splitTopLevel(_ text: String, at separators: String) -> [String] {
+        var parts: [String] = [], part = "", depth = 0, quote: Character?
+        for c in text {
+            if let open = quote {
+                if c == open { quote = nil }
+            } else if c == "\"" || c == "'" {
+                quote = c
+            } else if c == "[" || c == "(" {
+                depth += 1
+            } else if c == "]" || c == ")" {
+                depth -= 1
+            } else if depth == 0, separators.contains(c) {
+                parts.append(part)
+                part = ""
+                continue
+            }
+            part.append(c)
+        }
+        parts.append(part)
+        return parts
     }
 
     /// Splits generic cosmetic selectors: those keyed by a class, id or link host go to GenericCosmetics.js tables (native rules delay

@@ -83,6 +83,45 @@ final class BlockerLayersTests: XCTestCase {
         XCTAssertTrue(paused.imageRequested)
     }
 
+    /// A page whose consent platform the lists answer: their accept click is dropped, their reject click kept, and the platform is
+    /// told to refuse, unless the user shows cookie notices.
+    func testConsentIsRefusedNeverAccepted() async throws {
+        let factory = WKEngineFactory()
+        let service = FilterListService(engineFactory: factory, allowlistProvider: { BlockerAllowlist() })
+        let clicks = "example.com##+js(trusted-click-element, #accept-all)\nexample.com##+js(trusted-click-element, #reject-all)"
+        service.fetchList = { url in url.absoluteString.hasSuffix("/quick-fixes.txt") ? clicks : "" }
+        service.writeExtension = { _, _ in false }
+        // A made-up platform under OneTrust's documented API: what it was told lands in the title.
+        let page = """
+            <button id="accept-all" onclick="document.title += 'accepted,'"></button><button id="reject-all" onclick="document.title += 'rejected,'"></button>
+            <script>
+              window.OneTrust = { IsAlertBoxClosed: () => false, RejectAll() { document.title += 'refused,'; } };
+              dispatchEvent(new Event('OneTrustGroupsUpdated'));
+            </script>
+            """
+        func load() async -> String {
+            let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: false, identifier: nil)))
+            defer { tab.teardown() }
+            tab.wkWebView.loadHTMLString(page, baseURL: URL(string: "https://example.com/"))
+            var title = ""
+            // The reject click lands a delay after the page; the accept one would have landed with it.
+            _ = await pollUntil(timeout: 5) {
+                title = (try? await tab.wkWebView.evaluateJavaScript("document.title") as? String) ?? ""
+                return title.contains("rejected")
+            }
+            try? await Task.sleep(for: .milliseconds(300))
+            return (try? await tab.wkWebView.evaluateJavaScript("document.title") as? String) ?? title
+        }
+
+        await service.refreshNow()
+        let refused = await load()
+        XCTAssertEqual(refused, "refused,rejected,")
+        service.listSelection = { FilterListService.ListSelection(cookieNotices: false) }
+        await service.refreshNow()
+        let shown = await load()
+        XCTAssertEqual(shown, "rejected,")
+    }
+
     /// The built-in extension's declarativeNetRequest rules, written and loaded as the app does, apply in a private space and stand
     /// down for a paused site.
     func testTheBuiltInExtensionStandsDownForAPausedSite() async throws {

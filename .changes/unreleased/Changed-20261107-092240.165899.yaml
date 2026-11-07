@@ -1,0 +1,3 @@
+kind: Changed
+body: 'The content blocker never accepts cookie consent for you: filter-list rules that would click an accept button or store an accepted answer are dropped, and on sites using Didomi, OneTrust, Cookiebot or Usercentrics, consent is refused through the platform itself while cookie notices are hidden'
+time: 2026-11-07T09:22:40.165899+01:00

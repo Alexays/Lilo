@@ -7,7 +7,7 @@
   var nativeJSONStringify = JSON.stringify.bind(JSON);
   // Wrappers call these, not the page's Reflect, WeakMap and Promise methods, which a hook could replace to spot them.
   var reflectApply = Reflect.apply, weakGet = WeakMap.prototype.get, weakSet = WeakMap.prototype.set;
-  var promiseThen = Promise.prototype.then;
+  var promiseThen = Promise.prototype.then, functionBind = Function.prototype.bind;
   // Random per document: what a trap throws and the Trusted Types policy it creates carry no fixed name.
   var token = Math.random().toString(36).slice(2);
 
@@ -1381,6 +1381,47 @@
         }
         setTimeout(poll, Math.max(next - now, 100));
       })();
+    },
+    // Refuses consent through the documented API of the consent platform the page loads, once it is ready and only while the
+    // visitor has not answered. Each platform is waited for on its own signal, so a page without one runs nothing more.
+    'refuse-consent': function () {
+      // The platforms keep their API in the top document.
+      if (ancestors && ancestors.length) return;
+      function attempt(fn) { try { fn(); } catch (e) {} }
+      // A promise the platform returns goes through the native then, a plain value straight to fn.
+      function settle(value, fn) {
+        if (value && typeof value.then === 'function') reflectApply(promiseThen, value, [fn]); else fn(value);
+      }
+      // OneTrust dispatches it each time its script loads, and after each consent change.
+      self.addEventListener('OneTrustGroupsUpdated', function () {
+        attempt(function () { var ot = self.OneTrust; if (!ot.IsAlertBoxClosed()) ot.RejectAll(); });
+      });
+      self.addEventListener('CookiebotOnDialogDisplay', function () {
+        attempt(function () {
+          var cb = self.Cookiebot;
+          if (cb.hasResponse) return;
+          cb.submitCustomConsent(false, false, false);
+          cb.hide();
+        });
+      });
+      // Usercentrics v3 registers __ucCmp, v2 UC_UI; both dispatch it once ready.
+      self.addEventListener('UC_UI_INITIALIZED', function () {
+        attempt(function () {
+          var v3 = self.__ucCmp, uc = v3 || self.UC_UI;
+          settle(uc.isConsentRequired(), function (required) {
+            if (required) settle(uc.denyAllConsents(), function () { attempt(function () { if (v3) uc.closeCmp(); else uc.closeCMP(); }); });
+          });
+        });
+      });
+      // Didomi has no event: its ready queue is joined once its script has loaded. Bound, the callback prints as native code.
+      var didomiAnswer = reflectApply(functionBind, function (didomi) {
+        attempt(function () { if (didomi.shouldUserStatusBeCollected()) didomi.setUserDisagreeToAll(); });
+      }, [null]);
+      document.addEventListener('load', function onLoad() {
+        if (!self.Didomi) return;
+        document.removeEventListener('load', onLoad, true);
+        attempt(function () { (self.didomiOnReady = self.didomiOnReady || []).push(didomiAnswer); });
+      }, true);
     }
   };
 
@@ -1454,6 +1495,8 @@
     hosts.push(parts.slice(h).join('.'), parts.slice(h, n - 1).join('.') + '.*');
     if (twoLabelSuffix && h < n - 2) hosts.push(parts.slice(h, n - 2).join('.') + '.*');
   }
+  // `*` lists what runs on every site.
+  hosts.push('*');
   // An entry starting with `@` excepts the same entry on this host and its subdomains, `@` alone every scriptlet. A rule
   // naming both the host and its entity runs once.
   var entries = new Set(), excepted = new Set();
