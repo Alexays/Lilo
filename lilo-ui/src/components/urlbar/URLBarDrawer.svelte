@@ -15,7 +15,7 @@
   } from "../../stores/urlBarDrawer.svelte";
   import DefaultBrowserDrawer from "./DefaultBrowserDrawer.svelte";
   import PermissionRequestDrawer from "./PermissionRequestDrawer.svelte";
-  import SiteDrawer from "./SiteDrawer.svelte";
+  import type SiteDrawer from "./SiteDrawer.svelte";
 
   let site: ComponentProps<typeof SiteDrawer> = $props();
 
@@ -87,10 +87,12 @@
     {@attach shown.kind === "popupBlocked" &&
       dismissable({ onDismiss: () => setPopupBlockedDrawerOpen(false), ignore: ".url-display", escape: true })}
   >
+    <!-- The Site and blocked pop-up drawers load on demand: the chrome's first frame has a byte budget. -->
     {#if shown.kind === "site"}
-      <SiteDrawer {...site} />
+      {#await import("./SiteDrawer.svelte") then drawer}
+        <drawer.default {...site} />
+      {/await}
     {:else if shown.kind === "popupBlocked"}
-      <!-- Loaded on demand: the chrome's first frame has a byte budget. -->
       {#await import("./PopupBlockedDrawer.svelte") then drawer}
         <drawer.default origin={site.origin} />
       {/await}
