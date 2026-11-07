@@ -129,7 +129,8 @@ final class PageWorldTests: XCTestCase {
         let factory = WKEngineFactory()
         // A site's cosmetics apply at once: their sheet must leave the page's DOM and stylesheets as they are. Its
         // scriptlets leave the functions they wrap printing as native code.
-        let scriptlets = #"{"example.com":[["set-constant",["history.adsBlocked","true"]],["no-setTimeout-if",["adProbe"]]]}"#
+        // The consent refusal every site runs leaves nothing either on a page without a consent platform.
+        let scriptlets = #"{"example.com":[["set-constant",["history.adsBlocked","true"]],["no-setTimeout-if",["adProbe"]]],"*":[["refuse-consent",[]]]}"#
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(
             cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: scriptlets, procedural: nil
         ))

@@ -1104,6 +1104,80 @@ describe("consent scriptlets", () => {
 	});
 });
 
+describe("refuse-consent", () => {
+	const HOST = "www.example.com";
+	const g = globalThis as Record<string, unknown>;
+	const table = { "*": [["refuse-consent", []]] };
+	let win: EventTarget;
+
+	function page(cmp: Record<string, unknown>, ancestorOrigins?: Record<string | number, unknown>, allowlist: string[] = []) {
+		win = new EventTarget();
+		g.document = new EventTarget();
+		return run(table, HOST, "", allowlist, ancestorOrigins, { addEventListener: win.addEventListener.bind(win), ...cmp }).self;
+	}
+
+	afterEach(() => {
+		delete g.document;
+	});
+
+	test("OneTrust rejects all once its script reports, unless the visitor has answered", () => {
+		const calls: string[] = [];
+		let closed = false;
+		page({ OneTrust: { IsAlertBoxClosed: () => closed, RejectAll: () => { calls.push("reject"); closed = true; } } });
+		win.dispatchEvent(new Event("OneTrustGroupsUpdated"));
+		win.dispatchEvent(new Event("OneTrustGroupsUpdated"));
+		assert.deepEqual(calls, ["reject"]);
+	});
+
+	test("Cookiebot submits a refusal of every category and hides its dialog", () => {
+		const calls: unknown[] = [];
+		const self = page({ Cookiebot: { hasResponse: false, submitCustomConsent: (...a: boolean[]) => calls.push(a), hide: () => calls.push("hide") } });
+		win.dispatchEvent(new Event("CookiebotOnDialogDisplay"));
+		(self.Cookiebot as { hasResponse: boolean }).hasResponse = true;
+		win.dispatchEvent(new Event("CookiebotOnDialogDisplay"));
+		assert.deepEqual(calls, [[false, false, false], "hide"]);
+	});
+
+	test("Usercentrics v3 and v2 deny all consents and close, only while consent is required", async () => {
+		const calls: string[] = [];
+		page({ __ucCmp: { isConsentRequired: async () => true, denyAllConsents: async () => calls.push("v3 deny"), closeCmp: async () => calls.push("v3 close") } });
+		win.dispatchEvent(new Event("UC_UI_INITIALIZED"));
+		page({ UC_UI: { isConsentRequired: () => true, denyAllConsents: async () => calls.push("v2 deny"), closeCMP: () => calls.push("v2 close") } });
+		win.dispatchEvent(new Event("UC_UI_INITIALIZED"));
+		page({ UC_UI: { isConsentRequired: () => false, denyAllConsents: async () => calls.push("answered deny") } });
+		win.dispatchEvent(new Event("UC_UI_INITIALIZED"));
+		await new Promise((resolve) => setImmediate(resolve));
+		assert.deepEqual(calls.sort(), ["v2 close", "v2 deny", "v3 close", "v3 deny"]);
+	});
+
+	test("Didomi gets a callback in its ready queue once its script has loaded, printing as native code", () => {
+		const self = page({});
+		const load = () => (g.document as EventTarget).dispatchEvent(new Event("load"));
+		load();
+		assert.equal(self.didomiOnReady, undefined);
+		self.Didomi = {};
+		load();
+		load();
+		const queue = self.didomiOnReady as unknown as ((d: unknown) => void)[];
+		assert.equal(queue.length, 1);
+		assert.match(Function.prototype.toString.call(queue[0]), /\[native code\]/);
+		const calls: string[] = [];
+		queue[0]({ shouldUserStatusBeCollected: () => true, setUserDisagreeToAll: () => calls.push("disagree") });
+		queue[0]({ shouldUserStatusBeCollected: () => false, setUserDisagreeToAll: () => calls.push("answered") });
+		assert.deepEqual(calls, ["disagree"]);
+	});
+
+	test("nothing listens in a subframe or on an allowlisted site", () => {
+		const calls: string[] = [];
+		const OneTrust = { IsAlertBoxClosed: () => false, RejectAll: () => calls.push("reject") };
+		page({ OneTrust }, { 0: "https://example.org", length: 1 });
+		win.dispatchEvent(new Event("OneTrustGroupsUpdated"));
+		page({ OneTrust }, undefined, [HOST]);
+		win.dispatchEvent(new Event("OneTrustGroupsUpdated"));
+		assert.deepEqual(calls, []);
+	});
+});
+
 describe("anti-detection scriptlets", () => {
 	test("bab-defuser skips BlockAdBlock's eval and its bait timer, nothing else", () => {
 		const evaluated: string[] = [];

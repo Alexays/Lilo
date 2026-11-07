@@ -119,7 +119,7 @@ final class FilterListService {
     private static let partialRefreshAcceptAge: TimeInterval = 3 * refreshInterval
     /// Bumped whenever the conversion changes: a cache in another format is reconverted at launch
     /// instead of serving the old conversion until the next scheduled refresh.
-    private nonisolated static let cacheFormat = "10"
+    private nonisolated static let cacheFormat = "11"
 
     /// Names the conversion format and the lists it was made from: a cache stamped otherwise is redone.
     nonisolated static func cacheStamp(for sources: [URL]) -> String {
@@ -362,6 +362,7 @@ final class FilterListService {
         let siteCap = Self.maxSiteCosmetics
         let scriptletCap = Self.maxScriptletEntries
         let proceduralCap = Self.maxProceduralSelectors
+        let refusesConsent = listSelection().cookieNotices
         let result = await Task.detached(priority: .utility) { [texts] () -> Conversion? in
             // One text, in source order: a `$badfilter` in one list must reach the rule it disables in another.
             let text = texts.joined(separator: "\n")
@@ -397,6 +398,8 @@ final class FilterListService {
             )
             let sitesJSON = (try? JSONSerialization.data(withJSONObject: siteTable, options: .sortedKeys))
                 .flatMap { String(data: $0, encoding: .utf8) } ?? ""
+            // With cookie notices hidden, the consent platform a page uses is answered with a refusal. First, so no cap drops it.
+            if refusesConsent { out.scriptlets.insert(.init(domains: ["*"], name: "refuse-consent", args: []), at: 0) }
             let table = FilterListConverter.scriptletTable(from: out.scriptlets, exceptions: out.scriptletExceptions, cap: scriptletCap)
             let scriptletsJSON = (try? JSONSerialization.data(withJSONObject: table, options: .sortedKeys))
                 .flatMap { String(data: $0, encoding: .utf8) } ?? ""

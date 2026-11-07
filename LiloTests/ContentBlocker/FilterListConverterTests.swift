@@ -648,6 +648,37 @@ final class FilterListConverterTests: XCTestCase {
         XCTAssertTrue(isDropped("a.example##+js(this-scriptlet-does-not-exist, 1)"))
     }
 
+    func testConsentIsNeverAcceptedOnTheUsersBehalf() {
+        let accepting = [
+            "#didomi-notice-agree-button", "button#onetrust-accept-btn-handler, , 1000", "button[onclick=\"Didomi.setUserAgreeToAll();\"]",
+            "button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll", "button[title=\"Alle akzeptieren\" i]",
+            "#usercentrics-root >>> button[data-testid=\"uc-accept-all-button\"]", "button.sp_choice_type_11",
+            ".qc-cmp2-summary-buttons > button[mode=\"primary\"]", "div[data-project=\"cmp\"] button[class*=\"consent\"]:not([class*=\"reject\"])",
+            "'button.settings, button.save-all, a.cmptxt_btn_yes'", ".js-cookie-accept-all-button > button"
+        ].map { "a.example##+js(trusted-click-element, \($0))" } + [
+            "set-cookie, cookiesAccepted, true", "set-local-storage-item, cookieConsent, granted", "trusted-set-cookie, consent, accept_all",
+            "set-cookie, cmplz_marketing, allow", "trusted-set-cookie, site_save_consent, iTTPgpSWqAGGcd3vV88zNDbHsABxE1hB",
+            "trusted-set-cookie, consentUUID, 4828f4be-a6c6-46d4-b46a-5a812a8c0f81_35"
+        ].map { "a.example##+js(\($0))" }
+        let kept = [
+            "#didomi-notice-disagree-button", "button#onetrust-reject-all-handler", "button[aria-label=\"Continuer sans accepter\"]",
+            "button[aria-label=\"Accepter kun de nødvendige cookies\"]", "button#cm-acceptNone", "button.accept-necessary",
+            "#notice button.close", "[data-ga-action=\"disallow_all_cookies\"]", "input#accept_selected_cookies", "button.sp_choice_type_13",
+            "a.cookie__close_text", "#didomi-notice-agree-button:not(.x) ~ .didomi-continue-without-agreeing"
+        ].map { "a.example##+js(trusted-click-element, \($0))" } + [
+            "set-cookie, cookiesAccepted, false", "set-cookie, cookie-consent, declined", "trusted-set-cookie, prefs, '{\"necessary\":true,\"ads\":false}'",
+            "trusted-set-cookie, cookie_preferences, '{\"allow\":[]}'", "set-cookie, cookieconsent_dismissed, yes", "set-cookie, notice_seen, 1",
+            "trusted-set-cookie, session_token, eyJhY2NlcHQiOnRydWV9OiJhY2NlcHRBbGwiLCJ2ZXJzaW9uIjoxfQ",
+            "trusted-set-cookie, cookie_consent, cookie-consent_rejected-2024"
+        ].map { "a.example##+js(\($0))" }
+        for rule in accepting {
+            XCTAssertTrue(FilterListConverter.convert("!#trusted on\n" + rule).scriptlets.isEmpty, rule)
+        }
+        for rule in kept {
+            XCTAssertEqual(FilterListConverter.convert("!#trusted on\n" + rule).scriptlets.count, 1, rule)
+        }
+    }
+
     func testConvertPopulatesScriptlets() {
         let out = FilterListConverter.convert("""
         youtube.com##+js(json-prune, playerResponse.adPlacements adPlacements)
