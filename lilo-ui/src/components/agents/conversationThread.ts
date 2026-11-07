@@ -98,6 +98,7 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 			break;
 		case "lilo_notice":
 			addNotice(thread, String(update.notice ?? ""));
+			if (update.notice === "signedIn") conversation.signingIn = null;
 			break;
 		case "lilo_undo":
 			if (update.ok) conversation.undone.add(String(update.path));
@@ -136,6 +137,8 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 			break;
 		}
 		default:
+			// The agent answers again: any sign-in it waited on is over.
+			conversation.signingIn = null;
 			applyUpdate(thread, update as unknown as SessionUpdate, receivedAt);
 	}
 }
