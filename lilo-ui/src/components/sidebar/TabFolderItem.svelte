@@ -644,6 +644,21 @@
 		pointer-events: auto;
 	}
 
+	/* Scale in like the tab close button. */
+	.folder-actions .action-btn {
+		transform: scale(0.8);
+		transition:
+			background var(--transition-fast),
+			color var(--transition-fast),
+			transform var(--transition-fast);
+	}
+
+	.folder-row:hover .folder-actions .action-btn,
+	.folder-row:focus-visible .folder-actions .action-btn,
+	.folder-actions:focus-within .action-btn {
+		transform: none;
+	}
+
 	/* Base .action-btn recipe is global (styles/utilities.css), and it carries a surface at rest.
 	   The row already paints its own, so drop it and only answer the pointer. */
 	.action-btn {
