@@ -33,7 +33,9 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertTrue(wrapper.contains("importScripts('lilo-background-prelude.js');"))
         XCTAssertTrue(wrapper.contains("importScripts(\"background.js\");"))
         let background = try loadBackground(from: extDir)
-        XCTAssertEqual(background["service_worker"] as? String, "lilo-background-wrapper.js")
+        let parts = try serviceWorkerParts(background)
+        XCTAssertEqual(parts.path, "lilo-background-wrapper.js")
+        XCTAssertNotNil(parts.token, "the wrapper URL carries a token of the scripts it runs")
         XCTAssertEqual(background["lilo_service_worker"] as? String, "background.js", "what runtime.getManifest() reports")
     }
 
@@ -118,7 +120,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertFalse(wrapper.contains("js/"), "wrapper imports must be co-located basenames, got: \(wrapper)")
         XCTAssertFalse(FileManager.default.fileExists(atPath: extDir.appendingPathComponent("lilo-background-wrapper.js").path), "no stray root wrapper")
         let background = try loadBackground(from: extDir)
-        XCTAssertEqual(background["service_worker"] as? String, "js/lilo-background-wrapper.js")
+        XCTAssertEqual(try serviceWorkerParts(background).path, "js/lilo-background-wrapper.js")
         let metadata = try loadMetadata(from: extDir)
         XCTAssertEqual(metadata["originalServiceWorker"] as? String, "js/background.js", "metadata keeps the full root-relative path")
     }
@@ -162,7 +164,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertTrue(wrapper.contains("import \"./worker.js\";"), "must import the vendor worker by basename, got: \(wrapper)")
         XCTAssertFalse(wrapper.contains("src/"), "wrapper imports must be co-located basenames, got: \(wrapper)")
         let background = try loadBackground(from: extDir)
-        XCTAssertEqual(background["service_worker"] as? String, "src/lilo-background-wrapper.js")
+        XCTAssertEqual(try serviceWorkerParts(background).path, "src/lilo-background-wrapper.js")
         XCTAssertEqual(background["type"] as? String, "module")
         let metadata = try loadMetadata(from: extDir)
         XCTAssertEqual(metadata["originalServiceWorker"] as? String, "src/worker.js")
@@ -179,7 +181,9 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         let result = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
 
         XCTAssertEqual(result, .prepared)
-        XCTAssertEqual(try loadBackground(from: extDir)["service_worker"] as? String, "js/lilo-background-wrapper.js")
+        let parts = try serviceWorkerParts(loadBackground(from: extDir))
+        XCTAssertEqual(parts.path, "js/lilo-background-wrapper.js")
+        XCTAssertNotNil(parts.token)
         XCTAssertEqual(try loadMetadata(from: extDir)["originalServiceWorker"] as? String, "js/background.js")
     }
 
@@ -253,6 +257,60 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
 
         let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"), encoding: .utf8)
         XCTAssertTrue(wrapper.contains("importScripts(\"real-bg.js\");"))
+    }
+
+    /// The token on the wrapper URL is not the vendor worker: metadata still names it.
+    func testPrepareUsesMetadataWhenManifestNamesTheWrapperWithAToken() throws {
+        let extDir = tempDir.appendingPathComponent("tokened")
+        try FileManager.default.createDirectory(at: extDir.appendingPathComponent("_lilo"), withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Tokened","version":"1","background":{"service_worker":"lilo-background-wrapper.js?lilo=abc"}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "console.log('vendor');".write(to: extDir.appendingPathComponent("real-bg.js"), atomically: true, encoding: .utf8)
+        try #"{"schema":1,"preparedBy":"Lilo","originalServiceWorker":"real-bg.js","originalType":"classic"}"#
+            .write(to: extDir.appendingPathComponent("_lilo/metadata.json"), atomically: true, encoding: .utf8)
+
+        XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
+
+        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"), encoding: .utf8)
+        XCTAssertTrue(wrapper.contains("importScripts(\"real-bg.js\");"), "the wrapper imports the real worker, got: \(wrapper)")
+        let background = try loadBackground(from: extDir)
+        XCTAssertEqual(background["lilo_service_worker"] as? String, "real-bg.js")
+        XCTAssertEqual(try serviceWorkerParts(background).path, "lilo-background-wrapper.js")
+    }
+
+    /// WebKit reuses a registration whose script URL is unchanged, so the URL must change with what the worker runs.
+    func testWrapperURLChangesWithTheScriptsTheWorkerRuns() throws {
+        let extDir = tempDir.appendingPathComponent("token")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Token","version":"1","background":{"service_worker":"background.js"}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "console.log('vendor');".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        let stampURL = extDir.appendingPathComponent("_lilo/prepared.txt")
+
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "A")
+        let first = try loadBackground(from: extDir)["service_worker"] as? String
+        try FileManager.default.removeItem(at: stampURL)
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "A")
+        XCTAssertEqual(try loadBackground(from: extDir)["service_worker"] as? String, first, "same scripts keep the URL")
+
+        try FileManager.default.removeItem(at: stampURL)
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "B")
+        let afterPrelude = try loadBackground(from: extDir)["service_worker"] as? String
+        XCTAssertNotEqual(afterPrelude, first, "a new prelude changes the URL")
+
+        try "console.log('vendor 2');".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        try FileManager.default.removeItem(at: stampURL)
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "B")
+        let afterWorker = try loadBackground(from: extDir)["service_worker"] as? String
+        XCTAssertNotEqual(afterWorker, afterPrelude, "a new vendor worker changes the URL")
+
+        let manifestURL = extDir.appendingPathComponent("manifest.json")
+        var manifest = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: manifestURL)) as? [String: Any])
+        manifest["version"] = "2"
+        try JSONSerialization.data(withJSONObject: manifest).write(to: manifestURL)
+        try FileManager.default.removeItem(at: stampURL)
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "B")
+        XCTAssertNotEqual(try loadBackground(from: extDir)["service_worker"] as? String, afterWorker, "a new manifest version changes the URL")
     }
 
     func testPrepareSkipsUnsafeOriginalServiceWorkerPath() throws {
@@ -577,6 +635,13 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
 
         let webExtension = try await WKWebExtension(resourceBaseURL: extDir)
         return (webExtension, webExtension.errors.map(\.localizedDescription))
+    }
+
+    /// `service_worker` as the manifest writes it: the wrapper path, then the `lilo=` token WebKit sees in the script URL.
+    private func serviceWorkerParts(_ background: [String: Any]) throws -> (path: String, token: String?) {
+        let value = try XCTUnwrap(background["service_worker"] as? String)
+        let parts = value.components(separatedBy: "?lilo=")
+        return (parts[0], parts.count > 1 ? parts[1] : nil)
     }
 
     private func loadBackground(from extDir: URL) throws -> [String: Any] {

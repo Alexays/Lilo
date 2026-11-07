@@ -198,8 +198,10 @@ enum ExtensionBackgroundPreparer {
                 workerLine += "globalThis.__liloEmptyScripts = [\(empty.map(javaScriptStringLiteral).joined(separator: ", "))];\n"
             }
         }
-        try writeIfChanged(Data((workerLine + preludeSource).utf8), to: preludeURL)
-        try writeIfChanged(Data(backgroundWrapperSource(workerBasename: workerBasename, type: originalType).utf8), to: wrapperURL)
+        let preludeData = Data((workerLine + preludeSource).utf8)
+        let wrapperData = Data(backgroundWrapperSource(workerBasename: workerBasename, type: originalType).utf8)
+        try writeIfChanged(preludeData, to: preludeURL)
+        try writeIfChanged(wrapperData, to: wrapperURL)
         let metadata: [String: Any] = [
             "schema": 1,
             "preparedBy": "Lilo",
@@ -209,7 +211,15 @@ enum ExtensionBackgroundPreparer {
         let metadataData = try JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted, .sortedKeys])
         try writeIfChanged(metadataData, to: metadataDir.appendingPathComponent("metadata.json"))
 
-        background["service_worker"] = wrapperRelativePath
+        // WebKit reuses a persisted registration whose script URL is unchanged and never refetches its imported scripts, so the
+        // URL carries a token of what the worker runs: a new one makes WebKit install the worker again.
+        var tokenHasher = SHA256()
+        tokenHasher.update(data: preludeData)
+        tokenHasher.update(data: wrapperData)
+        tokenHasher.update(data: (try? Data(contentsOf: extensionURL.appendingPathComponent(originalServiceWorker))) ?? Data())
+        tokenHasher.update(data: Data((manifest["version"] as? String ?? "").utf8))
+        let token = tokenHasher.finalize().prefix(8).map { unsafe String(format: "%02x", $0) }.joined()
+        background["service_worker"] = wrapperRelativePath + "?lilo=" + token
         // What runtime.getManifest() reports, as extensions compare it with their worker's location.
         background["lilo_service_worker"] = originalServiceWorker
         // WebKit runs `scripts` or `page`, kept for Firefox, over the service worker; Chrome runs the worker.
@@ -675,6 +685,7 @@ enum ExtensionBackgroundPreparer {
     /// are matched by basename in any directory: they sit next to the vendor worker, so
     /// `js/lilo-background-wrapper.js` is ours too.
     private static func isLiloManagedPath(_ path: String) -> Bool {
+        let path = String(path.prefix { $0 != "?" })
         let basename = (path as NSString).lastPathComponent
         return basename == wrapperPath || basename == preludePath || path.hasPrefix("_lilo/")
     }

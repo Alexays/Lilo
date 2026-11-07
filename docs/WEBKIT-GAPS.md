@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108, 109, 110 and 111. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103, 104, 105, 106, 107 and 112. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108, 109, 110 and 111. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103, 104, 105, 106, 107, 112 and 113. Every other gap is fully worked around.
 
 ---
 
@@ -359,6 +359,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108,
 - **Lilo:** each `chrome.*` call of the worker ([chrome-compat.ts] `chromeMethod`) and each response it owes ([message-answers.ts] `answeringListener`, 5 minutes at most) keeps its channel to Lilo open, reopening it after idle, and the worker posts on it after 90 s without a post while that lasts ([ipc.ts] `checkIdle`). A `chrome.runtime.connectNative` port posts back on each message its host sends, which Lilo drops ([chrome-leniency.ts] `nativeMessagingAsChrome`, [ExtensionNativeMessaging.swift] `NativePort`). No timer runs while the worker is idle.
 - **Impact:** without it, a `runtime.onMessage` answered after more than 30 s of work failed with a closed port and lost the worker's state, and a password manager's native host was killed 2 minutes after the worker last posted to it, so the desktop app had to connect again. Still open: a worker that only receives on a port another context opened, or holds a native port whose host stays silent, still unloads 2 minutes after it last posted; through `browser.runtime.connectNative` (gaps 2 and 3), host messages keep nothing.
 - **Check:** Manual: it waits out WebKit's clocks for minutes (`ipc.test.ts` covers the workaround). Repro: an MV3 worker listens to `runtime.onMessage`, returns `true` and answers after 60 s; a page sends it a message. Expected: the answer. Actual: the worker unloads at 30 s and the page gets "The message port closed before a response was received.".
+
+### 113. A persisted worker registration keeps the scripts it cached
+
+- **Gap:** WebKit registers an MV3 worker with `navigator.serviceWorker.register`, and on a later launch reuses the persisted registration for the same script URL without an update check: the worker keeps running the script and the `importScripts` files it cached at first registration, though they changed on disk. Chrome registers an updated extension's worker again.
+- **Lilo:** the manifest names the wrapper with a `?lilo=` token over the prelude, the wrapper, the vendor worker and the manifest version ([ExtensionBackgroundPreparer.swift] `prepareBackground`); a new URL makes WebKit install the worker again. Still open for a file the vendor worker imports that changes while the manifest version, the prelude and the worker itself do not (an unpacked extension edited in place).
+- **Impact:** Bitwarden's popup spun forever after Lilo 0.17.0: its worker ran the previous prelude, without the `dispose-symbols` module its SDK needs, and never finished its state migrations.
+- **Check:** Manual: it needs a new process on the persisted registration (in one process WebKit runs the new scripts). Repro: an MV3 worker `w.js` doing `importScripts('p.js')`; load it, quit, change `p.js`, relaunch with the same data store and wake the worker. Expected: the new `p.js`. Actual: the `p.js` cached at registration.
 
 ## Manifest and permissions
 
