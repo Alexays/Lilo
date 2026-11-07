@@ -35,7 +35,6 @@ tabs.Tab.lastAccessed (windows.create normal then remove) | WebKit builds the cr
 isolated chrome.csi | Chrome's legacy page timing function, which Lilo gives no world.
 isolated chrome.loadTimes | Chrome's legacy page timing function, which Lilo gives no world.
 isolated chrome.extension.ViewType | WebKit's content-script extension namespace lacks the enum, and the content compat does not add it.
-isolated chrome.i18n.detectLanguage | WebKit gives content scripts no detectLanguage.
 isolated chrome.i18n.getPreferredSystemLanguages | WebKit's own addition.
 isolated chrome.i18n.getSystemUILanguage | WebKit's own addition.
 isolated chrome.runtime.dynamicId | WebKit has no dynamic extension URLs.

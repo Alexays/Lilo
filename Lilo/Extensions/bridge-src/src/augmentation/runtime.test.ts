@@ -278,6 +278,16 @@ describe("the worker's relay of its content scripts' messages to another extensi
     assert.deepEqual(gapCalls.at(-1)?.params, { id: other, message: 'ping', ...sender });
     assert.equal(relay('own', sender, () => {}), undefined, "the extension's own messages stay its listeners'");
   });
+
+  it("answers a content script's i18n.detectLanguage with native's", async () => {
+    const languages = { isReliable: true, languages: [{ language: 'fr', percentage: 100 }] };
+    answer = (msg) => (msg.method === 'detectLanguage' ? languages : null);
+    const detected = await new Promise((resolve) => { relay({ liloDetectLanguage: 'bonjour' }, sender, resolve); });
+    answer = undefined;
+
+    assert.deepEqual(detected, { result: languages });
+    assert.deepEqual([gapCalls.at(-1)?.namespace, gapCalls.at(-1)?.params], ['i18n', { text: 'bonjour' }]);
+  });
 });
 
 describe("ports between the extension's pages and worker, which Lilo relays", () => {

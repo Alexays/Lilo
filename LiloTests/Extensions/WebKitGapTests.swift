@@ -881,6 +881,20 @@ final class WebKitGapTests: XCTestCase {
         XCTAssertEqual(result, "2", "WebKit now delivers a message sent before its port connects once, as Chrome: drop messagesOnce and the onConnect stand-in (runtime.ts)")
     }
 
+    func testDisconnectFiresThePortsOwnOnDisconnect() async throws {
+        let result = try await barePageResult(worker: """
+        chrome.runtime.onConnect.addListener((port) => port.postMessage('answer'));
+        """, pageScript: """
+        const events = [];
+        const port = chrome.runtime.connect();
+        port.onDisconnect.addListener(() => events.push('disconnect'));
+        await new Promise((resolve) => port.onMessage.addListener((message) => { events.push(message); port.disconnect(); events.push('after'); resolve(); }));
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        return events.join(',');
+        """)
+        XCTAssertEqual(result, "answer,disconnect,after", "WebKit no longer runs a port's own onDisconnect listeners when it disconnects, as Chrome: drop gap 112 and the disconnect of portErrorsAsChrome (message-answers.ts)")
+    }
+
     func testExtensionPagesAreNotClientsOfTheWorker() async throws {
         let result = try await barePageResult(worker: """
         let messages = 0;

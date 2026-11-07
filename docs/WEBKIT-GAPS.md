@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108, 109, 110 and 111. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103, 104, 105, 106 and 107. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108, 109, 110 and 111. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96, 97, 103, 104, 105, 106, 107 and 112. Every other gap is fully worked around.
 
 ---
 
@@ -132,6 +132,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108,
 - **Lilo:** a `chrome.runtime.connect` port is Lilo's at both ends: its name carries a mark the `onConnect` stand-in removes, each message its sender and number, and a repeat is dropped ([runtime.ts] `messagesOnce`, `onConnect`). A `browser.runtime.connect` port stays WebKit's.
 - **Impact:** popups that post at once got two answers (Web PKI, Web Signer and Certisign WebSigner threw) or their state twice (uVPN's popup stayed empty).
 - **Check:** `testPortMessagesSentBeforeTheConnectionArriveTwice`. Repro: the worker counts the messages of each `onConnect` port; a page runs `runtime.connect().postMessage('once')`. Expected: 1. Actual: 2.
+
+### 112. A port's own `disconnect()` runs its `onDisconnect` listeners
+
+- **Gap:** WebKit runs a port's `onDisconnect` listeners at once when that port's own `disconnect()` is called. Chrome runs them only when the other end disconnects.
+- **Lilo:** each WebKit port the extension opens or receives keeps track of its `onDisconnect` listeners, and its `disconnect()` removes them before WebKit's runs ([message-answers.ts] `portErrorsAsChrome`). A `browser.runtime` port Lilo does not see still hears its own disconnect.
+- **Impact:** a content script that reads one answer per port, then disconnects and resolves, rejected first from its own `onDisconnect` (Web Highlights logged "Port disconnected unexpectedly." and failed its database migration).
+- **Check:** `testDisconnectFiresThePortsOwnOnDisconnect`. Repro: a page connects to the worker, which posts at once; the page's `onMessage` listener calls `port.disconnect()`. Expected: no `onDisconnect`. Actual: its `onDisconnect` listener runs inside `disconnect()`.
 
 ### 44. Extension pages are not clients of the extension's worker
 

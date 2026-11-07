@@ -8,12 +8,14 @@ describe("a content script's world", () => {
     const onMessage = Object.create(prototype);
     const onChanged = Object.create(prototype);
     const manifest = { background: { service_worker: '_lilo/sw.js', lilo_service_worker: 'sw.js' }, content_scripts: [{ matches: ['<all_urls>'], js: ['_lilo/lilo-content-compat.js', 'a.js'] }, { matches: ['https://a.com/*'], js: ['_lilo/lilo-content-compat.js', 'b.js'], lilo_js: ['a.js', 'b.js'] }] };
+    const sent: unknown[] = [];
     const runtime = Object.create({
-      sendMessage() {}, connect() {}, getManifest() { return structuredClone(manifest); },
+      sendMessage(message: unknown) { sent.push(message); return Promise.resolve({ result: { isReliable: true, languages: [] } }); }, connect() {}, getManifest() { return structuredClone(manifest); },
       get id() { return 'abc'; }, get onMessage() { return onMessage; },
     });
     const storage = Object.create({ get onChanged() { return onChanged; } });
-    (globalThis as any).chrome = Object.create({ get runtime() { return runtime; }, get storage() { return storage; } });
+    const i18n = Object.create({ getMessage() { return ''; } });
+    (globalThis as any).chrome = Object.create({ get runtime() { return runtime; }, get storage() { return storage; }, get i18n() { return i18n; } });
     await import('./content-compat-entry.ts');
     const listener = () => {};
     assert.equal(onMessage.hasListeners(), false);
@@ -27,5 +29,9 @@ describe("a content script's world", () => {
     assert.deepEqual(getManifest().content_scripts.map((script: any) => script.js), [['a.js'], ['a.js', 'b.js']], "the manifest shows the extension's own content scripts");
     assert.equal('lilo_js' in getManifest().content_scripts[1], false);
     assert.equal(getManifest().background.service_worker, 'sw.js');
+    const { detectLanguage } = (globalThis as any).chrome.i18n;
+    assert.deepEqual(await detectLanguage('bonjour'), { isReliable: true, languages: [] }, 'its worker detects the language');
+    assert.deepEqual(await new Promise((resolve) => detectLanguage('hello', resolve)), { isReliable: true, languages: [] });
+    assert.deepEqual(sent.slice(0, 2), [{ liloDetectLanguage: 'bonjour' }, { liloDetectLanguage: 'hello' }]);
   });
 });
