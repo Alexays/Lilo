@@ -31,3 +31,25 @@ test("a short path keeps the bar's own size", async ({ page }) => {
 	await expect(page.locator(".location-parent")).toHaveText("~/");
 	expect(await page.locator(".location-path").getAttribute("style")).toBeFalsy();
 });
+
+test("an agent tab names its project, or no project for a folder Lilo made for it", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1] = [
+		...world.tabsBySpace[SPACE_1],
+		tab("tab-agent", SPACE_1, { title: "Fix login", url: "", kind: "agent", cwd: "/Users/me/Library/Application Support/Lilo/Worktrees/acme-1a2b", project: "/Users/me/Projects/acme", gitBranch: "fix-login" }),
+		tab("tab-scratch", SPACE_1, { title: "Summarize", url: "", kind: "agent", cwd: "/Users/me/Library/Application Support/Lilo/Agents/Folders/1a2b3c4d" }),
+	];
+	world.treeItemsBySpace[SPACE_1] = [...world.treeItemsBySpace[SPACE_1], treeItem("tab-agent", SPACE_1, 5), treeItem("tab-scratch", SPACE_1, 6)];
+	world.activeTabBySpace[SPACE_1] = "tab-agent";
+	await bootChrome(page, world);
+
+	await expect(page.locator(".location-name")).toHaveText("acme");
+	await expect(page.locator(".location-parent")).toHaveText("");
+	await expect(page.locator(".location-branch")).toContainText("fix-login");
+
+	await page.getByText("Summarize").first().click();
+	// The last tab's location leaves with a transition: wait for it to go.
+	await expect(page.locator(".location-name")).toHaveCount(1);
+	await expect(page.locator(".location-name")).toHaveText("No project");
+	await expect(page.locator(".location-parent")).toHaveText("");
+});

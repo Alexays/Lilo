@@ -1544,6 +1544,7 @@
 	"urlBar": {
 		"placeholder": "搜索或输入 URL...",
 		"addressBar": "地址栏：{url}",
+		"noProject": "无项目",
 		"details": {
 			"branch": "分支",
 			"command": "命令",

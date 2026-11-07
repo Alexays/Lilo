@@ -1544,6 +1544,7 @@
 	"urlBar": {
 		"placeholder": "Arayın veya URL girin...",
 		"addressBar": "Adres çubuğu: {url}",
+		"noProject": "Proje yok",
 		"details": {
 			"branch": "Dal",
 			"command": "Komut",

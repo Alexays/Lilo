@@ -1544,6 +1544,7 @@
 	"urlBar": {
 		"placeholder": "검색 또는 URL 입력...",
 		"addressBar": "주소 막대: {url}",
+		"noProject": "프로젝트 없음",
 		"details": {
 			"branch": "브랜치",
 			"command": "명령",

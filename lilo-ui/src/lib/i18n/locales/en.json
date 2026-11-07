@@ -1544,6 +1544,7 @@
 	"urlBar": {
 		"placeholder": "Search or enter URL...",
 		"addressBar": "Address bar: {url}",
+		"noProject": "No project",
 		"details": {
 			"branch": "Branch",
 			"command": "Command",

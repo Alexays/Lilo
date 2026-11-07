@@ -1578,6 +1578,7 @@
 	"urlBar": {
 		"placeholder": "Пошук або введення URL...",
 		"addressBar": "Адресний рядок: {url}",
+		"noProject": "Без проєкту",
 		"details": {
 			"branch": "Гілка",
 			"command": "Команда",

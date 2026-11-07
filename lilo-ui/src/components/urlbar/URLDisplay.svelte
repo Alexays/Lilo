@@ -123,6 +123,16 @@
   // The last folder reads like a URL's host, its parents like the path.
   const locationParent = $derived(locationPath.slice(0, locationPath.lastIndexOf("/") + 1));
   const locationName = $derived(locationPath.slice(locationParent.length));
+  const activeProject = $derived(getActiveTab()?.project ?? "");
+  // An agent works in a project, a worktree of one, or a folder Lilo made for it: the bar names the
+  // project, not a path inside Lilo's own folders. The details card keeps the real path.
+  const agentLabel = $derived.by(() => {
+    if (activeKind !== "agent") return null;
+    if (activeProject) return activeProject.slice(activeProject.lastIndexOf("/") + 1);
+    return activeCwd.includes("/Agents/Folders/") ? t("urlBar.noProject") : null;
+  });
+  const barParent = $derived(agentLabel === null ? locationParent : "");
+  const barName = $derived(agentLabel ?? locationName);
 
   let locationLineEl: HTMLElement | undefined = $state();
   let locationLineWidth = $state(0);
@@ -142,11 +152,11 @@
   // the terminal is; the branch gets what the fitted path leaves (`branchRoom`, or its CSS share before a fit).
   const locationFit = $derived.by((): { parent: string; fontSize: number; branchRoom?: number } => {
     const line = locationLineEl;
-    if (!line || locationLineWidth <= 0) return { parent: locationParent, fontSize: 0 };
+    if (!line || locationLineWidth <= 0) return { parent: barParent, fontSize: 0 };
     const parentEl = line.querySelector<HTMLElement>(".location-parent");
     const nameEl = line.querySelector<HTMLElement>(".location-name");
     const branchEl = line.querySelector<HTMLElement>(".location-branch");
-    if (!parentEl || !nameEl) return { parent: locationParent, fontSize: 0 };
+    if (!parentEl || !nameEl) return { parent: barParent, fontSize: 0 };
     const parentStyle = getComputedStyle(parentEl), nameStyle = getComputedStyle(nameEl);
     const base = Number.parseFloat(getComputedStyle(line).fontSize);
     // The branch at its natural width, measured from its text: on screen it may be squeezed by
@@ -164,15 +174,15 @@
     }
     const room = locationLineWidth - branch - LOCATION_SLACK_PX;
     const sizes = [base, base - 1, LOCATION_MIN_FONT_PX].filter((size, index, all) => size >= LOCATION_MIN_FONT_PX && all.indexOf(size) === index);
-    const folders = locationParent.split("/").filter(Boolean);
-    const root = locationParent.startsWith("/") ? "/" : `${folders.shift() ?? ""}/`;
-    const candidates = [locationParent, ...folders.map((_, dropped) => `${root}…/${folders.slice(dropped + 1).map((folder) => `${folder}/`).join("")}`)];
+    const folders = barParent.split("/").filter(Boolean);
+    const root = barParent.startsWith("/") ? "/" : `${folders.shift() ?? ""}/`;
+    const candidates = [barParent, ...folders.map((_, dropped) => `${root}…/${folders.slice(dropped + 1).map((folder) => `${folder}/`).join("")}`)];
     // The changes button's right padding sits in the bar's padding (its -6px margin): it is room too.
     const pulled = branchEl?.classList.contains("changes-button") ? 6 : 0;
     const leftFor = (width: number) => Math.max(0, locationLineWidth - width - LOCATION_GAP_PX - LOCATION_SLACK_PX + pulled);
     for (const parent of candidates) {
       for (const size of sizes) {
-        const width = locationTextWidth(parent, parentStyle, size) + locationTextWidth(locationName, nameStyle, size);
+        const width = locationTextWidth(parent, parentStyle, size) + locationTextWidth(barName, nameStyle, size);
         if (width <= room) return { parent, fontSize: size === base ? 0 : size, branchRoom: leftFor(width) };
       }
     }
@@ -970,7 +980,7 @@
             out:restingBlur={{ amount: 4, duration: prefersReducedMotion() ? 0 : 200, opacity: 0.08 }}
           >
           <!-- Clipped from the left: the folder name at the end is the part that matters. -->
-          <span class="location-path" style={locationFit.fontSize ? `font-size: ${locationFit.fontSize}px` : ""}><span><span class="location-parent">{locationFit.parent}</span><span class="location-name">{locationName}</span></span></span>
+          <span class="location-path" style={locationFit.fontSize ? `font-size: ${locationFit.fontSize}px` : ""}><span><span class="location-parent">{locationFit.parent}</span><span class="location-name">{barName}</span></span></span>
           {#if activeKind === "terminal" && (activeDiffAdded > 0 || activeDiffRemoved > 0)}
             <button
               type="button"

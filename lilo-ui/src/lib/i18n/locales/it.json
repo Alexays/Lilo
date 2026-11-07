@@ -1544,6 +1544,7 @@
 	"urlBar": {
 		"placeholder": "Cerca o inserisci un URL...",
 		"addressBar": "Barra degli indirizzi: {url}",
+		"noProject": "Nessun progetto",
 		"details": {
 			"branch": "Branch",
 			"command": "Comando",

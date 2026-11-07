@@ -1544,6 +1544,7 @@
 	"urlBar": {
 		"placeholder": "Zoek of voer URL in...",
 		"addressBar": "Adresbalk: {url}",
+		"noProject": "Geen project",
 		"details": {
 			"branch": "Branch",
 			"command": "Commando",

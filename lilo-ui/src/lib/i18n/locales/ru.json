@@ -1578,6 +1578,7 @@
 	"urlBar": {
 		"placeholder": "Поиск или ввод URL...",
 		"addressBar": "Адресная строка: {url}",
+		"noProject": "Без проекта",
 		"details": {
 			"branch": "Ветка",
 			"command": "Команда",

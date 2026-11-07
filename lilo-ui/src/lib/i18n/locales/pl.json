@@ -1578,6 +1578,7 @@
 	"urlBar": {
 		"placeholder": "Szukaj lub wpisz URL...",
 		"addressBar": "Pasek adresu: {url}",
+		"noProject": "Bez projektu",
 		"details": {
 			"branch": "Gałąź",
 			"command": "Polecenie",
