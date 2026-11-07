@@ -34,6 +34,19 @@ private final class FetchCounter: @unchecked Sendable {
     }
 }
 
+private actor FetchLog {
+    private(set) var urls: [URL] = []
+    private(set) var isHeld = true
+
+    func record(_ url: URL) {
+        urls.append(url)
+    }
+
+    func release() {
+        isHeld = false
+    }
+}
+
 @MainActor
 final class FilterListServiceTests: XCTestCase {
     private var factory: FilterFactorySpy!
@@ -63,6 +76,28 @@ final class FilterListServiceTests: XCTestCase {
         XCTAssertEqual(retries.count, 1, "A second failed refresh must not stack another retry")
         XCTAssertNil(factory.externalRules, "A failed refresh must not touch the applied rules")
         XCTAssertEqual(factory.rebuildCount, 0)
+    }
+
+    func testListsChangedDuringARefreshAreFetchedRightAfter() async {
+        service.listSelection = { FilterListService.ListSelection() }
+        let fetches = FetchLog()
+        service.fetchList = { url in
+            await fetches.record(url)
+            while await fetches.isHeld { try? await Task.sleep(for: .milliseconds(5)) }
+            return "||ads.example.com^"
+        }
+        let first = Task { await service.refreshNow() }
+        await pollUntil { service.isRefreshing }
+        let selection = FilterListService.ListSelection(annoyances: true)
+        service.listSelection = { selection }
+        await service.refreshNow()
+        await fetches.release()
+        await first.value
+
+        let annoyances = FilterListService.sources(for: selection).first { $0.lastPathComponent == "annoyances-others.txt" }
+        XCTAssertNotNil(annoyances)
+        let refetched = await pollUntil { await fetches.urls.contains { $0 == annoyances } }
+        XCTAssertTrue(refetched, "A list turned on mid-refresh must not wait for the next interval")
     }
 
     func testCurrentCacheDoesNotForceRefresh() async {

@@ -133,6 +133,9 @@ final class FilterListService {
     /// The built-in extension was rewritten; the profiles reload it.
     var onBlockerExtensionChanged: (() -> Void)?
     private(set) var isRefreshing = false
+    /// The lists the running refresh fetches, and whether the selection changed under it.
+    private var refreshingSources: [URL] = []
+    private var refreshAgain = false
     /// What the last conversion produced, for the settings page.
     private(set) var status = Status()
     private var refreshTimer: DispatchSourceTimer?
@@ -297,11 +300,21 @@ final class FilterListService {
     // MARK: - Refresh
 
     private func refresh(acceptPartial: Bool) async {
-        guard !isRefreshing else { return }
-        isRefreshing = true
-        defer { isRefreshing = false }
-
         let sources = Self.sources(for: listSelection())
+        guard !isRefreshing else {
+            if sources != refreshingSources { refreshAgain = true }
+            return
+        }
+        isRefreshing = true
+        refreshingSources = sources
+        defer {
+            isRefreshing = false
+            if refreshAgain {
+                refreshAgain = false
+                Task { [weak self] in await self?.refresh(acceptPartial: acceptPartial) }
+            }
+        }
+
         let stamp = Self.cacheStamp(for: sources)
         let logger = Self.logger
         let fetch = fetchList
