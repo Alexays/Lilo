@@ -99,7 +99,6 @@
   ariaLabel={t("downloadsPanel.title")}
   interactiveZoneId="downloads-shell"
   title={query.trim() ? t("downloadsPanel.searchResults") : t("downloadsPanel.allDownloads")}
-  note={downloads.length > 0 ? t("downloadsPanel.quickLookNote") : undefined}
   nav={isVerticalLayout() ? undefined : downloadsNav}
 >
   {#snippet actions()}
