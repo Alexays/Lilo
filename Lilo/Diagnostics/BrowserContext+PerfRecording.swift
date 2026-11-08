@@ -78,7 +78,7 @@ extension BrowserContext {
             "liloBuild": info["CFBundleVersion"] as? String ?? "",
             "webKit": WKEngineFactory.webKitDescription,
             "macOS": ProcessInfo.processInfo.operatingSystemVersionString,
-            "macModel": String(cString: model),
+            "macModel": model.withUnsafeBufferPointer { unsafe $0.baseAddress.map { unsafe String(cString: $0) } } ?? "",
             "cores": ProcessInfo.processInfo.activeProcessorCount,
             "memoryGB": Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824,
             "thermalStateAtStart": ProcessInfo.processInfo.thermalState.rawValue,

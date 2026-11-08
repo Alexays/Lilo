@@ -784,7 +784,7 @@ final class WKWebViewTab: NSObject {
         webView.setMicrophoneCaptureState(muted ? .muted : .active, completionHandler: nil)
     }
 
-    func setCameraMuted(_ muted: Bool, completion: @escaping () -> Void) {
+    func setCameraMuted(_ muted: Bool, completion: @escaping @MainActor () -> Void) {
         webView.setCameraCaptureState(muted ? .muted : .active, completionHandler: completion)
     }
 
@@ -1193,9 +1193,9 @@ final class WKWebViewTab: NSObject {
                 self?.onMain { $0.updateNotSecure() }
             },
             // A page following prefers-color-scheme repaints in the other appearance; moving between windows does not count.
-            webView.observe(\.effectiveAppearance) { [weak self] view, _ in
-                let dark = view.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            webView.observe(\.effectiveAppearance) { [weak self] _, _ in
                 self?.onMain { tab in
+                    let dark = tab.webView.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
                     guard tab.isDarkAppearance != dark else { return }
                     tab.isDarkAppearance = dark
                     tab.recapturePageColor()
@@ -1452,7 +1452,7 @@ final class WKWebViewTab: NSObject {
         // An error page stays a page even when it names an attachment.
         if let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
            let disposition = http.value(forHTTPHeaderField: "Content-Disposition"),
-           disposition.prefix { $0 != ";" }.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("attachment") == .orderedSame {
+           disposition.prefix(while: { $0 != ";" }).trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("attachment") == .orderedSame {
             return .download
         }
         if canShowMIMEType { return .allow }

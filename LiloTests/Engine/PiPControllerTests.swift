@@ -20,7 +20,7 @@ final class PiPControllerTests: XCTestCase {
     </script>
     """
 
-    static let stillVideo = """
+    nonisolated static let stillVideo = """
     <video id="v" playsinline style="width: 320px; height: 180px"></video>
     <script>
     const canvas = document.createElement('canvas');

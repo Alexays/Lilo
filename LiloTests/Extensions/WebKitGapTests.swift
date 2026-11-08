@@ -458,7 +458,7 @@ final class WebKitGapTests: XCTestCase {
         context.webExtension.requestedPermissions.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
         context.webExtension.allRequestedMatchPatterns.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
         try controller.load(context)
-        context.loadBackgroundContent { _ in }
+        Task.immediate { try? await context.loadBackgroundContent() }
 
         let runs = { (try? await page.evaluateJavaScript("document.documentElement.dataset.runs ?? ''")) as? String }
         let ranBoth = await pollUntil { await runs() == "ab" }

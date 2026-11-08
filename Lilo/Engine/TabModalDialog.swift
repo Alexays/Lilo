@@ -308,13 +308,13 @@ final class PageWebView: WKWebView {
     }
 
     override func accessibilityHitTest(_ point: NSPoint) -> Any? {
-        modalDialog?.accessibilityHitTest(point) ?? super.accessibilityHitTest(point)
+        MainActor.assumeIsolated { modalDialog }?.accessibilityHitTest(point) ?? super.accessibilityHitTest(point)
     }
 
     // WebKit answers VoiceOver through this older entry point, so the dialog must be listed here too.
     @available(macOS, deprecated: 10.10)
     override func accessibilityAttributeValue(_ attribute: NSAccessibility.Attribute) -> Any? {
-        if attribute == .children, let modalDialog { return [modalDialog] }
+        if attribute == .children, let modalDialog = MainActor.assumeIsolated({ modalDialog }) { return [modalDialog] }
         return super.accessibilityAttributeValue(attribute)
     }
 }

@@ -253,11 +253,13 @@ extension MainWindowController {
             // The solid color goes under the glass at once; the glass then fades off it.
             glassView = nil
             NSAnimationContext.runAnimationGroup({ $0.duration = fade; view.animator().alphaValue = 0 }, completionHandler: { [weak self] in
-                view.removeFromSuperview()
-                guard let self, glassView == nil else { return }
-                self.window?.isOpaque = true
-                contentContainerView.layer?.cornerRadius = 0
-                contentContainerView.layer?.masksToBounds = false
+                MainActor.assumeIsolated {
+                    view.removeFromSuperview()
+                    guard let self, self.glassView == nil else { return }
+                    self.window?.isOpaque = true
+                    self.contentContainerView.layer?.cornerRadius = 0
+                    self.contentContainerView.layer?.masksToBounds = false
+                }
             })
         }
         // The frame's corner bites go translucent over glass, so the page rounds its own corners until they are opaque again.
