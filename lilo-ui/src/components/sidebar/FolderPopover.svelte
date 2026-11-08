@@ -40,16 +40,34 @@
     return needle ? rows.filter((row) => `${row.title} ${row.host}`.toLocaleLowerCase().includes(needle)) : rows;
   });
 
-  // Level with the row, past the sidebar's edge toward the page, measured again as the sidebar resizes.
+  // Level with the row, past the sidebar's edge toward the page.
   const measure = () => ({
     rect: anchor.getBoundingClientRect(),
     sidebar: (anchor.closest(".sidebar-layout") ?? anchor).getBoundingClientRect(),
   });
   let box = $state.raw(measure());
+
+  // The row moves only when a box between it and the sidebar resizes: rows added or closed above
+  // it, the sidebar or the window resized. The list animates the move, so the row is measured
+  // once it settles.
   $effect(() => {
-    const observer = new ResizeObserver(() => (box = measure()));
-    observer.observe(anchor.closest(".sidebar-layout") ?? anchor);
-    return () => observer.disconnect();
+    const layout = anchor.closest(".sidebar-layout") ?? anchor;
+    let settle = 0;
+    const observer = new ResizeObserver(() => {
+      const id = ++settle;
+      const moves = document.getAnimations().filter((animation) => {
+        const target = (animation.effect as KeyframeEffect | null)?.target;
+        return !!target?.contains(anchor) && animation.effect!.getComputedTiming().endTime !== Infinity;
+      });
+      void Promise.allSettled(moves.map((animation) => animation.finished)).then(() => {
+        if (id === settle) box = measure();
+      });
+    });
+    for (let node = anchor.parentElement; node; node = node === layout ? null : node.parentElement) observer.observe(node);
+    return () => {
+      settle++;
+      observer.disconnect();
+    };
   });
   const onRight = $derived(getTabPosition() === "right");
   const left = $derived(onRight ? box.sidebar.left - MARGIN - WIDTH : box.sidebar.right + MARGIN);

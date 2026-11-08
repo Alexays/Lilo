@@ -67,6 +67,18 @@ test("the popover stays up on the way over from the row and closes once the poin
 	await expect(popover(page)).toHaveCount(0);
 });
 
+test("the popover follows its row when a tab above it closes", async ({ page }) => {
+	await bootChrome(page, popoverWorld(), ".folder-row");
+	const row = folderRow(page, "Shut");
+	await row.hover();
+	await expect(popover(page)).toBeVisible();
+	const before = (await row.boundingBox())!.y;
+
+	await page.evaluate(() => window.webkit!.messageHandlers!.lilo!.postMessage({ action: "closeTab", payload: { id: "tab-home" } }));
+	await expect.poll(async () => (await row.boundingBox())!.y).toBeLessThan(before - 10);
+	await expect.poll(async () => Math.abs((await popover(page).boundingBox())!.y - (await row.boundingBox())!.y)).toBeLessThan(1);
+});
+
 test("an open or a locked folder shows no popover", async ({ page }) => {
 	await page.clock.install();
 	await bootChrome(page, popoverWorld(), ".folder-row");
