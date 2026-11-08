@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions without the tabs permission learn a new tab's address when it starts loading, instead of sometimes missing it
+time: 2026-11-08T10:15:01.834678+01:00
