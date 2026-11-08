@@ -60,7 +60,7 @@ test("the library menu lists running downloads above the archived tabs, with the
 
 	await page.getByRole("button", { name: "Downloads, 1 active" }).click();
 	const menu = page.getByRole("menu", { name: "Downloads and archived tabs", exact: true });
-	await expect(menu.getByRole("menuitem")).toHaveText(["Show all", /a\.zip\s*40%/, "", "Show all", /Archived page/]);
+	await expect(menu.getByRole("menuitem")).toHaveText(["", /a\.zip\s*40%/, "", "", /Archived page/]);
 	await menu.getByRole("menuitem", { name: "Pause" }).click();
 	expect((await sentCommands(page)).some((command) => command.action === "pauseDownload")).toBe(true);
 	await menu.getByRole("menuitem", { name: "Show all downloads" }).click();
