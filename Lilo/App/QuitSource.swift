@@ -20,7 +20,8 @@ enum QuitSource {
             isAppleEvent: appleEvent != nil,
             sender: senderPID.flatMap { NSRunningApplication(processIdentifier: $0)?.bundleIdentifier },
             eventType: NSApp.currentEvent?.type,
-            isQuitKey: NSApp.currentEvent.map { $0.type == .keyDown && $0.keyCode == 12 } ?? false
+            // By character, not key code: the Q key sits elsewhere on AZERTY.
+            isQuitKey: NSApp.currentEvent.map { $0.type == .keyDown && $0.charactersIgnoringModifiers?.lowercased() == "q" } ?? false
         )
         let tool = describe(tool: lastAgentTool?.name, secondsAgo: lastAgentTool.map { Date().timeIntervalSince($0.at) },
                             known: Set(AgentTools.definitions.compactMap { $0["name"] as? String }))

@@ -121,7 +121,7 @@
     <key>OSAScriptingDefinition</key>
     <string>Lilo.sdef</string>
     <key>NSPrincipalClass</key>
-    <string>NSApplication</string>
+    <string>Lilo.LiloApplication</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>NSHumanReadableCopyright</key>

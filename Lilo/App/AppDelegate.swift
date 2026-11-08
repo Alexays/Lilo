@@ -64,7 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        let app = NSApplication.shared
+        let app = LiloApplication.shared
         // Before run: the test host never takes focus, neither at launch nor from an activate the tested code calls.
         if ProcessInfo.isRunningUnderXCTest { app.setActivationPolicy(.prohibited) }
         let delegate = AppDelegate()

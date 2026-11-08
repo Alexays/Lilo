@@ -169,6 +169,10 @@ enum AgentInput {
         }
     }
 
+    /// The key downs sent to a web view, which `LiloApplication` keeps from the menu bar. Weak: WebKit holds
+    /// each one only until the page has handled it.
+    static let sentKeyDowns = NSHashTable<NSEvent>(options: [.weakMemory, .objectPointerPersonality])
+
     /// Shortcuts AppKit runs from the menu bar, which never sees a key sent straight to an agent tab.
     private static let menuCommands: [String: Selector] = [
         "a": #selector(NSText.selectAll(_:)), "c": #selector(NSText.copy(_:)), "x": #selector(NSText.cut(_:)),
@@ -310,7 +314,12 @@ enum AgentInput {
                 windowNumber: webView.window?.windowNumber ?? 0, context: nil, characters: characters,
                 charactersIgnoringModifiers: ignoringModifiers, isARepeat: false, keyCode: keyCode
             ) else { continue }
-            if type == .keyDown { webView.keyDown(with: event) } else { webView.keyUp(with: event) }
+            if type == .keyDown {
+                sentKeyDowns.add(event)
+                webView.keyDown(with: event)
+            } else {
+                webView.keyUp(with: event)
+            }
         }
     }
 
