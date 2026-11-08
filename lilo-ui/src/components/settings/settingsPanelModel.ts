@@ -67,6 +67,7 @@ export type SettingId =
   | "appIcon"
   | "seasonalAppIcon"
   | "hideSpaceNames"
+  | "favoritesPerRow"
   | "defaultZoom"
   | "minimumFontSize"
   | "fullRefreshRate"
@@ -194,6 +195,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "tabPosition", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "addressPlacement", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "hideSpaceNames", section: "appearance", groupKey: "settings.groups.tabLayout" },
+  { id: "favoritesPerRow", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "defaultZoom", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "minimumFontSize", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "fullRefreshRate", section: "appearance", groupKey: "settings.groups.pages" },

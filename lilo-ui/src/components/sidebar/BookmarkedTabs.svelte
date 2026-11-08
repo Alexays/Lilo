@@ -54,6 +54,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
   import { titleUnread, unreadBadgeText } from "../../lib/titleUnread";
+  import { getFavoritesPerRow } from "../../stores/settings.svelte";
 
   let {
     spaceId,
@@ -284,6 +285,7 @@
       class:is-empty={bookmarkZoneIsEmpty}
       class:idle-empty={!isVisible}
       data-drop-label={t("bookmarks.dropToBookmark")}
+      style:--bookmark-columns={getFavoritesPerRow()}
       role="list"
       bind:this={listEl}
       aria-hidden={!isVisible}
@@ -362,7 +364,7 @@
                       src={bookmark.faviconDataURL}
                       title={bookmark.title}
                       url={bookmark.url}
-                      size={18}
+                      size={20}
                       radius={5}
                       asleep={bookmark.isClosed}
                     />
@@ -442,11 +444,18 @@
 
   .bookmarked-list {
     --bookmark-zone-color: var(--color-bookmark);
+    --bookmark-gap: 6px;
+    --bookmark-tile-height: 52px;
     position: relative;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
-    gap: 6px;
+    /* At most the chosen count a row, like an app grid; fewer tiles share the width. */
+    grid-template-columns: repeat(auto-fit, minmax(max(40px, calc((100% - (var(--bookmark-columns, 2) - 1) * var(--bookmark-gap)) / var(--bookmark-columns, 2))), 1fr));
+    gap: var(--bookmark-gap);
     min-height: 0;
+    /* The tab list scrolls below: many favorites scroll on their own instead of pushing it away. */
+    max-height: 40vh;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
     /* The drop zone's border, cancelled by the margin so the tiles line up with the rows. */
     margin: -1px;
     border: 1px solid transparent;
@@ -525,7 +534,7 @@
 
   .bookmark-placeholder {
     width: 100%;
-    height: 40px;
+    height: var(--bookmark-tile-height);
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--bookmark-zone-color) 42%, transparent);
     border-radius: var(--radius-md);
@@ -543,7 +552,7 @@
   /* The sidebar's selected surface at rest; the hover layer goes over it, the open tile takes an accent ring. */
   .bookmark-tile {
     width: 100%;
-    height: 40px;
+    height: var(--bookmark-tile-height);
     padding: 0;
     border: none;
     border-radius: var(--radius-md);
@@ -590,10 +599,15 @@
     box-shadow: 0 0 0 2px var(--sidebar-bg, var(--bg-primary));
   }
 
+  /* Off the icon's lower corner, as a badge on an app icon, so it reads as the site's. */
   .unread-dot {
+    top: calc(50% + 6px);
+    right: auto;
+    left: calc(50% + 10px);
     width: 6px;
     height: 6px;
     border-radius: 50%;
+    box-shadow: none;
   }
 
   .unread-count {

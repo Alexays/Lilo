@@ -287,6 +287,11 @@
 				"description": "底栏只用图标显示每个空间，即使有位置显示名称。",
 				"keywords": "空间 名称 标签 底栏 图标 隐藏"
 			},
+			"favoritesPerRow": {
+				"title": "每行个人收藏数",
+				"description": "侧边栏换行前并排显示的个人收藏数量。",
+				"keywords": "收藏 个人收藏 书签 网格 磁贴 列 行"
+			},
 			"theme": {
 				"title": "主题",
 				"description": "浅色、深色或跟随系统。",

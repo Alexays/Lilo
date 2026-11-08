@@ -287,6 +287,11 @@
 				"description": "The bottom bar shows each Space as its icon alone, even with room for its name.",
 				"keywords": "space name label bottom bar icon hide"
 			},
+			"favoritesPerRow": {
+				"title": "Favorites per row",
+				"description": "How many favorites the sidebar lines up before starting a new row.",
+				"keywords": "favorites bookmarks grid tiles columns row"
+			},
 			"theme": {
 				"title": "Theme",
 				"description": "Light, dark, or follow the system.",

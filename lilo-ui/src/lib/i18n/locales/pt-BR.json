@@ -287,6 +287,11 @@
 				"description": "A barra inferior mostra cada espaço só pelo ícone, mesmo com lugar para o nome.",
 				"keywords": "espaço nome rótulo barra inferior ícone ocultar"
 			},
+			"favoritesPerRow": {
+				"title": "Favoritos por linha",
+				"description": "Quantos favoritos a barra lateral alinha antes de começar uma nova linha.",
+				"keywords": "favoritos marcadores grade blocos colunas linha"
+			},
 			"theme": {
 				"title": "Tema",
 				"description": "Claro, escuro ou acompanhar o sistema.",

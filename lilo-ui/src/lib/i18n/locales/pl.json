@@ -287,6 +287,11 @@
 				"description": "Dolny pasek pokazuje każdą przestrzeń tylko jako ikonę, nawet gdy jest miejsce na nazwę.",
 				"keywords": "przestrzeń nazwa etykieta dolny pasek ikona ukryj"
 			},
+			"favoritesPerRow": {
+				"title": "Ulubione w wierszu",
+				"description": "Ile ulubionych pasek boczny ustawia obok siebie, zanim zacznie nowy wiersz.",
+				"keywords": "ulubione zakładki siatka kafelki kolumny wiersz"
+			},
 			"theme": {
 				"title": "Motyw",
 				"description": "Jasny, ciemny lub zgodny z systemem.",

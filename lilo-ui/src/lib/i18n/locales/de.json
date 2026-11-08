@@ -287,6 +287,11 @@
 				"description": "Die untere Leiste zeigt jeden Space nur als Symbol, auch wenn Platz für den Namen ist.",
 				"keywords": "space name beschriftung untere leiste symbol ausblenden"
 			},
+			"favoritesPerRow": {
+				"title": "Favoriten pro Zeile",
+				"description": "Wie viele Favoriten die Seitenleiste nebeneinander zeigt, bevor eine neue Zeile beginnt.",
+				"keywords": "favoriten lesezeichen raster kacheln spalten zeile"
+			},
 			"theme": {
 				"title": "Design",
 				"description": "Hell, dunkel oder wie das System.",
