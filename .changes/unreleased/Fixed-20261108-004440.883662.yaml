@@ -1,0 +1,3 @@
+kind: Fixed
+body: Holding ⌘ over a terminal line of wide characters, such as Chinese text or emoji, no longer freezes Lilo
+time: 2026-11-08T00:44:40.883662+01:00

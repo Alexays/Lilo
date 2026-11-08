@@ -183,9 +183,72 @@ final class TerminalInputTests: XCTestCase {
         try session.start()
         await pollUntil(timeout: 5) { session.withLockedTerminal({ $0.line(row: 0)?.text })?.contains("example.org/b") == true }
 
-        // Column 12 of row 1 is the "h" of the second URL: the wide characters take two columns each.
-        XCTAssertEqual(view.link(at: (12, 1))?.url, URL(string: "https://example.org/b"))
+        // Column 13 of row 1 is the "h" of the second URL: the wide characters take two columns each.
+        XCTAssertEqual(view.link(at: (13, 1))?.url, URL(string: "https://example.org/b"))
         XCTAssertEqual(view.link(at: (5, 0))?.url, URL(string: "https://example.com/x"))
+    }
+
+    @MainActor
+    func testCommandClickUnderlinesAURLAfterWideCharactersWhereItIsDrawn() async throws {
+        let session = TerminalSession(cwd: NSTemporaryDirectory(), cols: 40, rows: 5, command: ["/bin/sh", "-c", "printf '中文 https://example.com'; sleep 2"])
+        let view = try XCTUnwrap(TerminalView(session: session))
+        defer {
+            view.shutdown()
+            session.terminate()
+        }
+        try session.start()
+        await pollUntil(timeout: 5) { session.withLockedTerminal({ $0.line(row: 0)?.text })?.contains(".com") == true }
+
+        XCTAssertEqual(view.link(at: (8, 0))?.rows, [0: 5...23])
+    }
+
+    @MainActor
+    func testCommandClickUnderlinesAURLAfterAWideCharacterThatWrappedPastABlankLastColumn() async throws {
+        // On 21 columns the eleventh wide character does not fit the last column: it starts row 1.
+        let session = TerminalSession(cwd: NSTemporaryDirectory(), cols: 21, rows: 5, command: ["/bin/sh", "-c", "printf '中%.0s' $(seq 1 11); printf ' https://example.com'; sleep 2"])
+        let view = try XCTUnwrap(TerminalView(session: session))
+        defer {
+            view.shutdown()
+            session.terminate()
+        }
+        try session.start()
+        await pollUntil(timeout: 5) { session.withLockedTerminal({ $0.line(row: 0)?.text })?.contains(".com") == true }
+
+        let link = view.link(at: (3, 1))
+        XCTAssertEqual(link?.url, URL(string: "https://example.com"))
+        XCTAssertEqual(link?.rows, [1: 3...20, 2: 0...0])
+    }
+
+    @MainActor
+    func testCommandClickUnderlinesAURLAfterAGraphemeClusterWhereItIsDrawn() async throws {
+        // With mode 2027 on, a heart and its emoji variation selector form one cluster two columns wide.
+        let session = TerminalSession(cwd: NSTemporaryDirectory(), cols: 40, rows: 5, command: ["/bin/sh", "-c", "printf '\\033[?2027h\\342\\235\\244\\357\\270\\217 https://example.com'; sleep 2"])
+        let view = try XCTUnwrap(TerminalView(session: session))
+        defer {
+            view.shutdown()
+            session.terminate()
+        }
+        try session.start()
+        await pollUntil(timeout: 5) { session.withLockedTerminal({ $0.line(row: 0)?.text })?.contains(".com") == true }
+
+        XCTAssertEqual(view.link(at: (3, 0))?.rows, [0: 3...21])
+    }
+
+    @MainActor
+    func testCommandOverAWrappedLineTakingMoreRowsThanItsWidthsAddUpToReturns() async throws {
+        // On 21 columns each row holds ten wide characters and a blank last column, so 21 of them
+        // add up to two full rows while the terminal draws them over three.
+        let session = TerminalSession(cwd: NSTemporaryDirectory(), cols: 21, rows: 5, command: ["/bin/sh", "-c", "printf '中%.0s' $(seq 1 21); sleep 2"])
+        let view = try XCTUnwrap(TerminalView(session: session))
+        defer {
+            view.shutdown()
+            session.terminate()
+        }
+        try session.start()
+        await pollUntil(timeout: 5) { session.withLockedTerminal({ $0.line(row: 0)?.text })?.count == 21 }
+        XCTAssertEqual(session.withLockedTerminal { $0.line(row: 2)?.top }, 0, "the line wraps over three rows")
+
+        XCTAssertNil(view.link(at: (0, 0)))
     }
 
     @MainActor
