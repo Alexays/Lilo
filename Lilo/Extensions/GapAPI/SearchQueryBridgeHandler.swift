@@ -36,9 +36,19 @@ final class SearchQueryBridgeHandler: GapHandler {
         return (engine.name, engine.urlTemplate)
     }
 
+    /// The engine searching by image URL: Bing's own when it is the default engine, else Google Lens, as most engines have none.
+    static func imageSearchEngine(settings: SettingsStore?) -> (name: String, urlTemplate: String) {
+        searchEngine(settings: settings).urlTemplate.hasPrefix("https://www.bing.com/")
+            ? ("Bing", "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:%s")
+            : ("Google Lens", "https://lens.google.com/uploadbyurl?url=%s")
+    }
+
     /// The results page of the user's default search engine for `text`.
     static func searchURL(for text: String, settings: SettingsStore?) -> String {
-        let template = searchEngine(settings: settings).urlTemplate
+        searchURL(for: text, template: searchEngine(settings: settings).urlTemplate)
+    }
+
+    static func searchURL(for text: String, template: String) -> String {
         // encodeURIComponent's unreserved set, as the omnibox encodes queries.
         var allowed = CharacterSet.alphanumerics
         allowed.insert(charactersIn: "-_.!~*'()")

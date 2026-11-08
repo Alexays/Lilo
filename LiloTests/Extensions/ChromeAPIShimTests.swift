@@ -58,6 +58,9 @@ final class ChromeAPIShimTests: XCTestCase {
 
         settings.set("searchEngines", value: "[{}]")
         XCTAssertEqual(SearchQueryBridgeHandler.searchEngine(settings: settings).name, "Bing", "no valid engine: the built-ins")
+        XCTAssertEqual(SearchQueryBridgeHandler.imageSearchEngine(settings: settings).name, "Bing")
+        settings.set("searchEngine", value: "duckduckgo")
+        XCTAssertEqual(SearchQueryBridgeHandler.imageSearchEngine(settings: settings).name, "Google Lens", "an engine without image search")
         try database.pool.write { _ in } // waits for the queued writes
     }
 

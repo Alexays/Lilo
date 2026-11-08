@@ -60,6 +60,10 @@ final class WKWebViewTab: NSObject {
         var searchEngineName: String { get }
         /// Opens the default search engine's results for `text` in a new tab.
         func tab(_ tab: WKWebViewTab, searchWebFor text: String)
+        /// Names the engine of the image menu's search item.
+        var imageSearchEngineName: String { get }
+        /// Opens the image search engine's results for the image at `url` in a new tab.
+        func tab(_ tab: WKWebViewTab, searchImage url: URL)
         /// Hides "Open Link in New Window" from the page's context menu.
         var prefersSingleWindow: Bool { get }
         func tabDidRequestClose(_ tab: WKWebViewTab)
@@ -256,7 +260,8 @@ final class WKWebViewTab: NSObject {
                 guard let self, let text = await selectedTextForFind() else { return }
                 delegate?.tab(self, searchWebFor: text)
             }
-        }
+        },
+        onSearchImage: { [weak self] url in if let self { delegate?.tab(self, searchImage: url) } }
     )
 
     /// The clicked frame and link of the open context menu, until one of its download items uses them. Never the element
@@ -1678,6 +1683,8 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}
     var searchEngineName: String { "Google" }
     func tab(_ tab: WKWebViewTab, searchWebFor text: String) {}
+    var imageSearchEngineName: String { "Google Lens" }
+    func tab(_ tab: WKWebViewTab, searchImage url: URL) {}
     var prefersSingleWindow: Bool { false }
     func tab(_ tab: WKWebViewTab, shouldAllowInsecureServerTrust trust: SecTrust, forHost host: String, port: Int) -> Bool { false }
     func tab(
@@ -2445,7 +2452,7 @@ extension WKWebViewTab: WKUIDelegate {
             let linkURL = unsafe ContextMenuBuilder.linkURL(from: element)
             contextMenuTarget = unsafe (ContextMenuBuilder.frameInfo(from: element), linkURL)
             unsafe adoptExtensionContextMenuItems?(menu)
-            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, offersNewWindow: !(delegate?.prefersSingleWindow ?? false), offersHideElement: delegate?.hidesElements ?? false, searchEngineName: delegate?.searchEngineName)
+            unsafe contextMenuBuilder.build(menu, linkURL: linkURL, imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, offersNewWindow: !(delegate?.prefersSingleWindow ?? false), offersHideElement: delegate?.hidesElements ?? false, searchEngineName: delegate?.searchEngineName, imageSearchEngineName: delegate?.imageSearchEngineName)
             unsafe completionHandler(menu)
         }
     }

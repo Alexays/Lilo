@@ -10,7 +10,7 @@ enum MenuIcon: CaseIterable {
     case lock, unlock, changePassword, removeLock
     case bookmark, unbookmark, pin, unpin, mute, unmute, keepAwake
     case close, closeOthers, restoreClosedTab, stopAgents
-    case back, forward, reload, copyLink, pictureInPicture, download
+    case back, forward, reload, copyLink, pictureInPicture, download, searchImage
     case open, quickLook, showInFinder, openInTerminal, retry, cancel, removeFromList
     case details, options, copy, paste, selectAll, clearScreen
     // Main menu actions.
@@ -71,6 +71,7 @@ enum MenuIcon: CaseIterable {
         case .copyLink: "link"
         case .pictureInPicture: "pip.enter"
         case .download: "square.and.arrow.down"
+        case .searchImage: "photo.badge.magnifyingglass"
         case .open: "arrow.up.forward.app"
         case .quickLook: "eye"
         case .showInFinder: "folder"
