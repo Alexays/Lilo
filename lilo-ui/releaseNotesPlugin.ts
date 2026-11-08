@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
-import { SUPPORTED_LOCALES } from "./src/lib/i18n/translate";
-import { localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./src/components/whatsnew/releaseNotes";
+import { SUPPORTED_LOCALES } from "./src/lib/i18n/translate.ts";
+import { localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./src/components/whatsnew/releaseNotes.ts";
 
 function bundledRelease(): string {
 	const version = (JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string }).version;

@@ -1,5 +1,5 @@
-import { releaseMedia, releaseMediaKinds, type ReleaseMedia, type ReleaseMediaKind } from "../../../../release-media/catalog";
-import type { Locale } from "../../lib/i18n/translate";
+import { releaseMedia, releaseMediaKinds, type ReleaseMedia, type ReleaseMediaKind } from "../../../../release-media/catalog.ts";
+import type { Locale } from "../../lib/i18n/translate.ts";
 
 export type ReleaseKind = "Breaking" | "Added" | "Changed" | "Fixed";
 const illustrations = ["unread", "calls", "share", "address", "history", "pip", "languages", "fresh", "archive", "material", "colors", "seasons", "drop", "dialogs", "spaceName", "awake", "agents", "stacks", "calm", "downloads"] as const;

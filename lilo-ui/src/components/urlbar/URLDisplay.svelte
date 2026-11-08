@@ -926,6 +926,7 @@
   onfocusout={leaveDetailsFocus}
 >
   <div class="url-surface">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="url-trigger"
       draggable={draggableURL}
