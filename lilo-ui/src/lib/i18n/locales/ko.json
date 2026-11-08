@@ -879,7 +879,9 @@
 		"lockFolder": "암호로 잠그기",
 		"changePassword": "암호 변경",
 		"removeLock": "잠금 제거",
-		"lock": "잠그기"
+		"lock": "잠그기",
+		"searchFolder": "{name}에서 검색...",
+		"noMatches": "일치하는 탭 없음"
 	},
 	"splitDrop": {
 		"left": "왼쪽에 열기",

@@ -879,7 +879,9 @@
 		"lockFolder": "Mit Passwort sperren",
 		"changePassword": "Passwort ändern",
 		"removeLock": "Sperre entfernen",
-		"lock": "Sperren"
+		"lock": "Sperren",
+		"searchFolder": "{name} durchsuchen...",
+		"noMatches": "Keine passenden Tabs"
 	},
 	"splitDrop": {
 		"left": "Links öffnen",

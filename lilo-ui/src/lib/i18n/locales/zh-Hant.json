@@ -879,7 +879,9 @@
 		"lockFolder": "以密碼鎖定",
 		"changePassword": "更改密碼",
 		"removeLock": "移除鎖定",
-		"lock": "鎖定"
+		"lock": "鎖定",
+		"searchFolder": "在「{name}」中搜尋...",
+		"noMatches": "沒有符合的分頁"
 	},
 	"splitDrop": {
 		"left": "在左側開啟",

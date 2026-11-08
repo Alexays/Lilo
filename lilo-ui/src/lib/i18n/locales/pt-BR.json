@@ -879,7 +879,9 @@
 		"lockFolder": "Bloquear com senha",
 		"changePassword": "Alterar senha",
 		"removeLock": "Remover bloqueio",
-		"lock": "Bloquear"
+		"lock": "Bloquear",
+		"searchFolder": "Buscar em {name}...",
+		"noMatches": "Nenhuma aba correspondente"
 	},
 	"splitDrop": {
 		"left": "Abrir à esquerda",

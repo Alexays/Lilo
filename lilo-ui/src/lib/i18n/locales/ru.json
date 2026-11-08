@@ -897,7 +897,9 @@
 		"lockFolder": "Защитить паролем",
 		"changePassword": "Изменить пароль",
 		"removeLock": "Убрать защиту",
-		"lock": "Заблокировать"
+		"lock": "Заблокировать",
+		"searchFolder": "Поиск в «{name}»...",
+		"noMatches": "Нет подходящих вкладок"
 	},
 	"splitDrop": {
 		"left": "Открыть слева",

@@ -879,7 +879,9 @@
 		"lockFolder": "Vergrendel met een wachtwoord",
 		"changePassword": "Wijzig wachtwoord",
 		"removeLock": "Verwijder vergrendeling",
-		"lock": "Vergrendel"
+		"lock": "Vergrendel",
+		"searchFolder": "Zoek in {name}...",
+		"noMatches": "Geen overeenkomende tabbladen"
 	},
 	"splitDrop": {
 		"left": "Open links",
