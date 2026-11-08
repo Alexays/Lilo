@@ -282,13 +282,7 @@ extension TerminalView {
         guard let glyphs = session.withLockedTerminal({ terminal -> [Glyph]? in
             let width = terminal.columns
             func glyphs(of row: Int, home: Bool = false) -> [Glyph] {
-                guard let line = terminal.line(row: row) else { return [] }
-                var column = 0
-                return line.text.map { character in
-                    let columns = max(1, terminal.columns(of: character))
-                    defer { column += columns }
-                    return (character, line.top + column / width, column % width, columns, home)
-                }
+                terminal.cells(ofLineThrough: row).map { ($0.character, $0.row, $0.column, $0.columns, home) }
             }
             // A program wrapping its own output ends a full row with a newline and indents the next
             // one: a line filled to the last column carries on after the next row's indent.
@@ -298,8 +292,7 @@ extension TerminalView {
             var line = glyphs(of: cell.y, home: true)
             while reachesEdge(line), let last = line.last?.row, last + 1 < terminal.rows {
                 let next = glyphs(of: last + 1).drop { $0.character.isWhitespace }
-                // Widths counted short of the terminal's put the line's end a row early: the next row
-                // is then this same line, which would join itself forever.
+                // Only rows below the line so far join it, so the loop always ends.
                 guard let first = next.first?.row, first > last else { break }
                 line += next
             }

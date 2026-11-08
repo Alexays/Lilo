@@ -646,14 +646,49 @@ extension VTTerminal {
         }
     }
 
-    /// The columns `character` takes on the grid, by the terminal's own width table: per codepoint,
-    /// or per grapheme cluster once a program turns on mode 2027.
-    func columns(of character: Character) -> Int {
-        let codepoints = character.unicodeScalars.map(\.value)
-        guard mode(2027) else { return codepoints.reduce(0) { $0 + Int(ghostty_unicode_codepoint_width($1)) } }
-        var width: UInt8 = 0
-        _ = unsafe ghostty_unicode_grapheme_width(codepoints, codepoints.count, &width)
-        return Int(width)
+    /// The characters of the soft-wrapped line through a viewport row as the grid holds them, each with
+    /// the viewport row and column it is drawn at and the columns it covers. A line can run thousands of
+    /// rows, so only the viewport and one screen of history above it are read.
+    func cells(ofLineThrough row: Int) -> [(character: Character, row: Int, column: Int, columns: Int)] {
+        let offset = Int(scrollbar.offset)
+        let rows = self.rows, columns = self.columns
+        func wraps(_ y: Int) -> Bool {
+            var gridRow: GhosttyRow = 0
+            var wrapped = false
+            guard y >= -rows, offset + y >= 0, var ref = unsafe gridRef(GHOSTTY_POINT_TAG_SCREEN, y: offset + y),
+                  unsafe ghostty_grid_ref_row(&ref, &gridRow) == GHOSTTY_SUCCESS else { return false }
+            unsafe ghostty_row_get(gridRow, GHOSTTY_ROW_DATA_WRAP, &wrapped)
+            return wrapped
+        }
+        var top = row
+        var bottom = row
+        while wraps(top - 1) { top -= 1 }
+        while bottom + 1 < rows, wraps(bottom) { bottom += 1 }
+        var cells: [(character: Character, row: Int, column: Int, columns: Int)] = []
+        var codepoints = [UInt32](repeating: 0, count: 8)
+        for y in top...bottom where offset + y >= 0 {
+            for x in 0..<columns {
+                guard var ref = unsafe gridRef(GHOSTTY_POINT_TAG_SCREEN, x: x, y: offset + y) else { break }
+                var cell: GhosttyCell = 0
+                var wide = GHOSTTY_CELL_WIDE_NARROW
+                unsafe ghostty_grid_ref_cell(&ref, &cell)
+                unsafe ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide)
+                // A spacer is the tail of a wide character, or the blank a wide character left at the end of a row.
+                guard wide == GHOSTTY_CELL_WIDE_NARROW || wide == GHOSTTY_CELL_WIDE_WIDE else { continue }
+                var length = 0
+                if unsafe ghostty_grid_ref_graphemes(&ref, &codepoints, codepoints.count, &length) == GHOSTTY_OUT_OF_SPACE {
+                    codepoints = [UInt32](repeating: 0, count: length)
+                    unsafe ghostty_grid_ref_graphemes(&ref, &codepoints, codepoints.count, &length)
+                }
+                var text = ""
+                for value in codepoints[..<min(length, codepoints.count)] {
+                    if let scalar = Unicode.Scalar(value) { text.unicodeScalars.append(scalar) }
+                }
+                // The terminal can cluster an invisible codepoint that Swift counts as a Character of its own.
+                cells.append((text.first ?? " ", y, x, wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1))
+            }
+        }
+        return cells
     }
 
     /// The OSC 8 hyperlink of a viewport cell, and the columns carrying it on each row of the run of
