@@ -114,6 +114,7 @@ test("Space on a closed folder opens the popover with its field focused, the arr
 	await expect(row).toBeFocused();
 
 	await page.keyboard.press("Space");
+	await expect(popover(page).locator("input")).toBeFocused();
 	await page.keyboard.press("ArrowDown");
 	await page.keyboard.press("ArrowDown");
 	await expect(popover(page).locator(".float-row").nth(1)).toBeFocused();

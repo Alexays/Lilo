@@ -9,7 +9,6 @@
 	import { closeFolderPeek, getFolderPeek, hoverFolderPeek, leaveFolderPeek, openFolderPeek } from "../../stores/folderPeek.svelte";
 	import { isSidebarDragActive } from "../../stores/sidebarDnd.svelte";
 	import type { TabState } from "../../stores/tabs.svelte";
-	import FolderPopover from "./FolderPopover.svelte";
 
 	interface Props {
 		folder: FolderState;
@@ -377,7 +376,10 @@
 	</div>
 
 	{#if peek && row && peekTabs}
-		<FolderPopover anchor={row} name={folder.name} tabs={peekTabs()} focusSearch={peek.focusSearch} onclose={closeFolderPeek} onenter={() => hoverFolderPeek(folder.id)} onleave={leaveFolderPeek} />
+		<!-- Loaded with the first peek, out of the chrome's first frame. -->
+		{#await import("./FolderPopover.svelte") then { default: FolderPopover }}
+			<FolderPopover anchor={row} name={folder.name} tabs={peekTabs()} focusSearch={peek.focusSearch} onclose={closeFolderPeek} onenter={() => hoverFolderPeek(folder.id)} onleave={leaveFolderPeek} />
+		{/await}
 	{/if}
 
 	<div class="folder-edit-extension" class:open={isRenaming}>
