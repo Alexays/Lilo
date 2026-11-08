@@ -2444,6 +2444,12 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Gördüğünüzü arayın.",
+				"description": "Bir sayfadaki herhangi bir görseli sağ tıklamayla arayın; renkler daha okunaklı, terminal daha kararlı.",
+				"imageSearchTitle": "Bir görseli arayın.",
+				"imageSearchDescription": "Bir görselin nereden geldiğini veya ne gösterdiğini öğrenin. Görsele sağ tıklayıp Görseli Google Lens ile ara'yı seçin; arama motorunuz Bing ise Bing ile aranır."
+			},
 			"v0180": {
 				"headline": "Daha düzenli bir indirilenler menüsü.",
 				"description": "Tamamlanan indirmeleri doğrudan kenar çubuğundan temizleyin; Bitwarden ve Web Highlights gibi uzantılar da olması gerektiği gibi çalışır.",

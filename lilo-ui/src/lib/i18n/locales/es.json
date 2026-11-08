@@ -2444,6 +2444,12 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Busca lo que ves.",
+				"description": "Busca cualquier imagen de una página con un clic derecho, con colores más legibles y un terminal más estable.",
+				"imageSearchTitle": "Busca una imagen.",
+				"imageSearchDescription": "Descubre de dónde viene una imagen o qué muestra. Haz clic derecho en ella y elige Buscar imagen con Google Lens, o con Bing si Bing es tu buscador."
+			},
 			"v0180": {
 				"headline": "Un menú de descargas más ordenado.",
 				"description": "Borra las descargas terminadas desde la barra lateral, y extensiones como Bitwarden y Web Highlights funcionan como deben.",

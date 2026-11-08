@@ -2433,6 +2433,12 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0190": {
+				"headline": "Cherchez ce que vous voyez.",
+				"description": "Retrouvez n'importe quelle image d'une page d'un clic droit, avec des couleurs plus lisibles et un terminal plus stable.",
+				"imageSearchTitle": "Recherchez une image.",
+				"imageSearchDescription": "Découvrez d'où vient une image ou ce qu'elle montre. Faites un clic droit dessus et choisissez Rechercher l'image avec Google Lens, ou avec Bing si Bing est votre moteur de recherche."
+			},
 			"v0180": {
 				"headline": "Un menu des téléchargements plus net.",
 				"description": "Effacez les téléchargements terminés directement depuis la barre latérale, et les extensions comme Bitwarden et Web Highlights fonctionnent comme prévu.",

@@ -2433,6 +2433,12 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0190": {
+				"headline": "Search what you see.",
+				"description": "Look up any image on a page in a right-click, with colors that read more clearly and a steadier terminal.",
+				"imageSearchTitle": "Search an image.",
+				"imageSearchDescription": "Find where an image comes from or what it shows. Right-click it and choose Search Image with Google Lens, or with Bing when Bing is your search engine."
+			},
 			"v0180": {
 				"headline": "A tidier downloads menu.",
 				"description": "Clear finished downloads right from the sidebar, and extensions such as Bitwarden and Web Highlights work as they should.",

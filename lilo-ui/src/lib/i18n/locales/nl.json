@@ -2444,6 +2444,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Zoek wat je ziet.",
+				"description": "Zoek elke afbeelding op een pagina op met een rechterklik, met beter leesbare kleuren en een stabielere terminal.",
+				"imageSearchTitle": "Zoek een afbeelding.",
+				"imageSearchDescription": "Ontdek waar een afbeelding vandaan komt of wat erop staat. Klik er met de rechtermuisknop op en kies Zoek afbeelding met Google Lens, of met Bing als Bing je zoekmachine is."
+			},
 			"v0180": {
 				"headline": "Een opgeruimder downloadmenu.",
 				"description": "Wis voltooide downloads direct vanuit de zijbalk, en extensies zoals Bitwarden en Web Highlights werken zoals bedoeld.",

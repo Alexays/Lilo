@@ -2444,6 +2444,12 @@
 			"chat": "チームチャット"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "見たものを検索。",
+				"description": "ページ上のどの画像も右クリックで検索できます。色はより読みやすく、ターミナルはより安定しました。",
+				"imageSearchTitle": "画像を検索。",
+				"imageSearchDescription": "画像の出どころや写っているものを調べられます。画像を右クリックして「Google Lensで画像を検索」を選びます。検索エンジンがBingの場合はBingで検索します。"
+			},
 			"v0180": {
 				"headline": "すっきりしたダウンロードメニュー。",
 				"description": "完了したダウンロードをサイドバーから直接消去できます。Bitwarden や Web Highlights などの拡張機能も正しく動作します。",

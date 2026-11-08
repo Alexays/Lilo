@@ -2444,6 +2444,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Suchen Sie, was Sie sehen.",
+				"description": "Schlagen Sie jedes Bild einer Seite mit einem Rechtsklick nach, mit besser lesbaren Farben und einem stabileren Terminal.",
+				"imageSearchTitle": "Ein Bild suchen.",
+				"imageSearchDescription": "Finden Sie heraus, woher ein Bild stammt oder was es zeigt. Klicken Sie mit der rechten Maustaste darauf und wählen Sie „Bild mit Google Lens suchen“, oder mit Bing, wenn Bing Ihre Suchmaschine ist."
+			},
 			"v0180": {
 				"headline": "Ein aufgeräumteres Download-Menü.",
 				"description": "Leeren Sie abgeschlossene Downloads direkt in der Seitenleiste, und Erweiterungen wie Bitwarden und Web Highlights funktionieren wie vorgesehen.",

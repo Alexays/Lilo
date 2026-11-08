@@ -2444,6 +2444,12 @@
 			"chat": "팀 채팅"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "보이는 것을 검색하세요.",
+				"description": "페이지의 모든 이미지를 오른쪽 클릭으로 찾아보세요. 색상은 더 읽기 쉬워지고 터미널은 더 안정적입니다.",
+				"imageSearchTitle": "이미지를 검색하세요.",
+				"imageSearchDescription": "이미지의 출처나 내용을 알아볼 수 있습니다. 이미지를 오른쪽 클릭하고 'Google Lens(으)로 이미지 검색'을 선택하세요. 검색 엔진이 Bing이면 Bing으로 검색합니다."
+			},
 			"v0180": {
 				"headline": "더 깔끔해진 다운로드 메뉴.",
 				"description": "완료된 다운로드를 사이드바에서 바로 지우고, Bitwarden과 Web Highlights 같은 확장 프로그램이 제대로 동작합니다.",

@@ -194,6 +194,18 @@
       <g fill="none" stroke="var(--text-secondary)" stroke-width="1"><rect x="29" y="49" width="9" height="11" rx="2" /><rect x="29" y="65" width="9" height="11" rx="2" /></g>
       <g fill="var(--text-secondary)"><rect x="43" y="51" width="40" height="3" rx="1.5" /><rect x="43" y="56" width="20" height="2.5" rx="1.25" /><rect x="43" y="67" width="32" height="3" rx="1.5" /><rect x="43" y="72" width="22" height="2.5" rx="1.25" /></g>
     </g>
+  {:else if kind === "imageSearch"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="10" y="10" width="76" height="70" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="17" y="17" width="62" height="38" rx="4" fill="color-mix(in srgb, var(--success) 18%, var(--bg-elevated))" />
+    <circle cx="66" cy="27" r="4" fill="var(--warning)" />
+    <path d="m17 51 16-16 11 11 7-7 16 16v0a4 4 0 0 1-4 4H21a4 4 0 0 1-4-4z" fill="var(--success)" opacity="0.7" />
+    <g stroke="var(--separator)" stroke-width="1.3" stroke-linecap="round"><path d="M17 63h44m-44 8h30" /></g>
+    <rect x="56" y="30" width="62" height="48" rx="6" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g fill="var(--separator)"><rect x="63" y="37" width="34" height="4" rx="2" /><rect x="63" y="47" width="26" height="4" rx="2" /></g>
+    <rect x="60" y="56" width="54" height="14" rx="4" fill="var(--accent)" />
+    <g fill="none" stroke="var(--accent-text)" stroke-width="1.3" stroke-linecap="round"><circle cx="68" cy="62.5" r="3" /><path d="m70.2 64.7 2.3 2.3" /></g>
+    <rect x="77" y="61" width="30" height="3" rx="1.5" fill="var(--accent-text)" />
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

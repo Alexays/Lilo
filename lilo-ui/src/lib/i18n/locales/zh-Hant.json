@@ -2444,6 +2444,12 @@
 			"chat": "團隊聊天"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "看到什麼，就搜什麼。",
+				"description": "按右鍵即可搜尋頁面上的任何圖片，顏色更易讀，終端機也更穩定。",
+				"imageSearchTitle": "搜尋圖片。",
+				"imageSearchDescription": "了解圖片的來源或內容。在圖片上按右鍵，選擇「使用 Google Lens 搜尋圖片」；如果你的搜尋引擎是 Bing，則使用 Bing 搜尋。"
+			},
 			"v0180": {
 				"headline": "更整潔的下載項目選單。",
 				"description": "直接在側邊欄清除已完成的下載項目，Bitwarden 和 Web Highlights 等延伸功能也能正常運作。",

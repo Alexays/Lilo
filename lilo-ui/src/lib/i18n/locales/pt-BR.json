@@ -2444,6 +2444,12 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Pesquise o que você vê.",
+				"description": "Pesquise qualquer imagem de uma página com um clique direito, com cores mais legíveis e um terminal mais estável.",
+				"imageSearchTitle": "Pesquise uma imagem.",
+				"imageSearchDescription": "Descubra de onde vem uma imagem ou o que ela mostra. Clique nela com o botão direito e escolha Pesquisar imagem com Google Lens, ou com Bing quando o Bing é o seu buscador."
+			},
 			"v0180": {
 				"headline": "Um menu de downloads mais organizado.",
 				"description": "Limpe os downloads concluídos direto da barra lateral, e extensões como Bitwarden e Web Highlights funcionam como deveriam.",

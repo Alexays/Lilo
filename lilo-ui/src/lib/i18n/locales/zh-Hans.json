@@ -2444,6 +2444,12 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "看到什么，就搜什么。",
+				"description": "右键点按即可搜索页面上的任意图片，颜色更易读，终端也更稳定。",
+				"imageSearchTitle": "搜索图片。",
+				"imageSearchDescription": "了解图片的来源或内容。右键点按图片，选择“使用 Google Lens 搜索图片”；如果你的搜索引擎是 Bing，则使用 Bing 搜索。"
+			},
 			"v0180": {
 				"headline": "更整洁的下载菜单。",
 				"description": "直接在边栏清除已完成的下载，Bitwarden 和 Web Highlights 等扩展也能正常运行。",

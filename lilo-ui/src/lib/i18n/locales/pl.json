@@ -2490,6 +2490,12 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Szukaj tego, co widzisz.",
+				"description": "Wyszukaj dowolny obraz na stronie prawym kliknięciem, z czytelniejszymi kolorami i stabilniejszym terminalem.",
+				"imageSearchTitle": "Wyszukaj obraz.",
+				"imageSearchDescription": "Sprawdź, skąd pochodzi obraz lub co przedstawia. Kliknij go prawym przyciskiem i wybierz Szukaj obrazu w Google Lens, albo w Bing, gdy Bing jest Twoją wyszukiwarką."
+			},
 			"v0180": {
 				"headline": "Uporządkowane menu pobranych.",
 				"description": "Czyść ukończone pobrania prosto z paska bocznego, a rozszerzenia takie jak Bitwarden i Web Highlights działają tak, jak powinny.",

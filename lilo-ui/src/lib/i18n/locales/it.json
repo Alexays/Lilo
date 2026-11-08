@@ -2444,6 +2444,12 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Cerca ciò che vedi.",
+				"description": "Cerca qualsiasi immagine di una pagina con un clic destro, con colori più leggibili e un terminale più stabile.",
+				"imageSearchTitle": "Cerca un'immagine.",
+				"imageSearchDescription": "Scopri da dove viene un'immagine o cosa mostra. Fai clic destro su di essa e scegli Cerca immagine con Google Lens, o con Bing se Bing è il tuo motore di ricerca."
+			},
 			"v0180": {
 				"headline": "Un menu dei download più ordinato.",
 				"description": "Cancella i download completati direttamente dalla barra laterale, e le estensioni come Bitwarden e Web Highlights funzionano come previsto.",
