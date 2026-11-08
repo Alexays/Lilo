@@ -313,6 +313,21 @@
     else if (!bottom && scrollMode !== "free") scrollMode = "free";
   }
 
+  // A row that folds, or a taller pane, can bring the end into view without any scroll event.
+  $effect(() => {
+    const thread = threadEl;
+    const column = columnEl;
+    if (!thread || !column) return;
+    const observer = new ResizeObserver(() => {
+      if (scrollMode !== "free" || thread.scrollHeight - thread.scrollTop - thread.clientHeight >= PIN_SLACK) return;
+      atBottom = true;
+      scrollMode = "following";
+    });
+    observer.observe(thread);
+    observer.observe(column);
+    return () => observer.disconnect();
+  });
+
   function jumpToLatest(): void {
     if (!threadEl) return;
     scrollMode = "following";
