@@ -225,7 +225,7 @@ export class DndEngineStore {
 	}
 
 	// Everything inside a scrolled container moves by the scroll delta, so the cached rects follow it
-	// unmeasured. Zones and items are never sticky inside their scroller, or they would not move with it.
+	// unmeasured. A zone under `[data-dnd-sticky]` is held in place by `position: sticky`, with its items.
 	followScroll(container: Element): void {
 		const previous = this.scrollOffsets.get(container);
 		const offset = { x: container.scrollLeft, y: container.scrollTop };
@@ -239,6 +239,7 @@ export class DndEngineStore {
 		if (dx === 0 && dy === 0) return;
 		for (const zone of this.layoutSnapshot) {
 			const element = this.zones.get(zone.id)?.element;
+			if (element?.closest("[data-dnd-sticky]")) continue;
 			if (element && element !== container && container.contains(element)) zone.rect = shiftRect(zone.rect, dx, dy);
 			for (const item of zone.items) {
 				const itemElement = this.itemElements.get(item.id);

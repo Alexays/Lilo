@@ -133,6 +133,7 @@ function stubNode(rect: { left: number; top: number; width: number; height: numb
 
 function elementRect(left: number, top: number, width: number, height: number) {
 	return {
+		closest: () => null,
 		getBoundingClientRect: () => ({
 			left,
 			top,
