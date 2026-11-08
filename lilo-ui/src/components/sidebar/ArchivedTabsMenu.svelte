@@ -10,6 +10,8 @@
   import { fileIconURL, inlineAction, metaLine, type InlineAction } from "../downloads/downloadsPanelModel";
   import { getArchivedFavicons } from "../../stores/archivedTabs.svelte";
   import { openCommandBar } from "../../stores/commandBar.svelte";
+  import { tooltip } from "../../lib/tooltip";
+  import Icon from "../ui/Icon.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import StripPopover from "../strip/StripPopover.svelte";
 
@@ -83,14 +85,14 @@
   {#if downloads}
     <div class="menu-header">
       <span>{t("downloadsPanel.title")}</span>
-      <span class="header-links">
+      <span class="header-actions">
         {#if downloads.some((download) => !isActiveDownload(download))}
-          <button class="header-link" role="menuitem" aria-label={t("downloadsPanel.clearFinished")} onclick={clearDownloads}>
-            {t("common.clear")}
+          <button class="header-action" role="menuitem" aria-label={t("downloadsPanel.clearFinished")} use:tooltip={t("downloadsPanel.clearFinished")} onclick={clearDownloads}>
+            <Icon name="trash" size={13} />
           </button>
         {/if}
-        <button class="header-link" role="menuitem" aria-label={t("archivedTabs.showAllDownloads")} onclick={showDownloads}>
-          {t("common.showAll")}
+        <button class="header-action" role="menuitem" aria-label={t("archivedTabs.showAllDownloads")} use:tooltip={t("archivedTabs.showAllDownloads")} onclick={showDownloads}>
+          <Icon name="arrowUpRight" size={13} />
         </button>
       </span>
     </div>
@@ -137,8 +139,8 @@
   {#if tabs.length > 0}
     <div class="menu-header">
       <span>{t("archivedTabs.title")}</span>
-      <button class="header-link" role="menuitem" aria-label={t("archivedTabs.showAll")} onclick={showAll}>
-        {t("common.showAll")}
+      <button class="header-action" role="menuitem" aria-label={t("archivedTabs.showAll")} use:tooltip={t("archivedTabs.showAll")} onclick={showAll}>
+        <Icon name="arrowUpRight" size={13} />
       </button>
     </div>
     {#each tabs as tab (tab.id)}
@@ -155,9 +157,10 @@
 <style>
   .menu-header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    padding: 8px 8px 4px;
+    gap: 8px;
+    padding: 4px 4px 2px 8px;
     color: var(--text-muted);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
@@ -165,29 +168,29 @@
     text-transform: uppercase;
   }
 
-  .header-links {
+  .header-actions {
     display: flex;
-    gap: 12px;
+    gap: 2px;
   }
 
-  .header-link {
+  .header-action {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
     padding: 0;
     border: 0;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-sm);
     background: none;
-    color: var(--accent-ink);
-    font: inherit;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-regular);
-    letter-spacing: normal;
-    text-transform: none;
+    color: var(--text-secondary);
   }
 
-  .header-link:hover {
-    text-decoration: underline;
+  .header-action:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
   }
 
-  .header-link:focus-visible {
+  .header-action:focus-visible {
     outline: var(--focus-outline);
   }
 
