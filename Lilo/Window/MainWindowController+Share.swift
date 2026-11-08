@@ -5,11 +5,11 @@ import CoreImage.CIFilterBuiltins
 // AppKit only calls it on the main thread, so the MainActor-isolated implementation is safe.
 extension MainWindowController: @preconcurrency NSSharingServicePickerDelegate {
 
-    /// The active tab's URL if it is a shareable web page (http/https), else nil.
+    /// The shown page's URL (a peek's, else the active tab's) if it is a shareable web page (http/https), else nil.
     /// Internal pages (`about:`), `file:`, `data:`, and custom schemes are excluded:
     /// Share works on web pages only.
     func shareableURL() -> URL? {
-        guard let url = tabManager.visibleActiveTab?.url,
+        guard let url = focusedPageURL,
               let scheme = url.scheme?.lowercased(),
               scheme == "http" || scheme == "https" else { return nil }
         return url

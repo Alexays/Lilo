@@ -47,7 +47,7 @@ extension MainWindowController {
     }
 
     @objc func takeFullPageScreenshot(_ sender: Any? = nil) {
-        guard let engine = tabManager.activeEngineTab else { return }
+        guard let engine = focusedEngineTab else { return }
         let url = engine.currentURL
         Task { @MainActor in
             let snapshot = await engine.takeFullPageSnapshot()
@@ -56,13 +56,13 @@ extension MainWindowController {
     }
 
     @objc func takeViewportScreenshot(_ sender: Any? = nil) {
-        guard let engine = tabManager.activeEngineTab else { return }
+        guard let engine = focusedEngineTab else { return }
         let url = engine.currentURL
         Task { @MainActor in await finishCapture(image: await engine.takeSnapshot(), url: url) }
     }
 
     @objc func startRegionSelection(_ sender: Any? = nil) {
-        guard let engine = tabManager.activeEngineTab else { return }
+        guard let engine = focusedEngineTab else { return }
         engine.startRegionSelection { [weak self] rect in
             guard let self, let rect else { return }
             let url = engine.currentURL

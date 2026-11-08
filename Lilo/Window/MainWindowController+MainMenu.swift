@@ -70,11 +70,13 @@ extension MainWindowController {
 
     /// The page as a Markdown link, its title as the text.
     @objc func copyCurrentURLAsMarkdown(_ sender: Any?) {
-        guard let tab = tabManager.visibleActiveTab, let url = tab.url?.absoluteString, !url.isEmpty else {
+        guard let url = focusedPageURL?.absoluteString, !url.isEmpty else {
             bridgeRouter.send(event: "urlCopyFailed")
             return
         }
-        let title = (tab.title.isEmpty ? url : tab.title).replacingOccurrences(of: "[", with: "\\[").replacingOccurrences(of: "]", with: "\\]")
+        let engine = focusedEngineTab
+        let pageTitle = (engine !== tabManager.activeEngineTab ? engine?.wkWebView.title : tabManager.visibleActiveTab?.title) ?? ""
+        let title = (pageTitle.isEmpty ? url : pageTitle).replacingOccurrences(of: "[", with: "\\[").replacingOccurrences(of: "]", with: "\\]")
         NSPasteboard.general.clearContents()
         let didCopy = NSPasteboard.general.setString("[\(title)](\(url))", forType: .string)
         bridgeRouter.send(event: didCopy ? "urlCopied" : "urlCopyFailed")

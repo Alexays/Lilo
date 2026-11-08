@@ -134,10 +134,8 @@ extension MainWindowController {
         }
     }
 
-    /// Copies the shown peek's page when there is one, else the active tab's.
     @objc func copyCurrentURL(_ sender: Any?) {
-        let peekURL = pagePopups.values.first { unsafe $0.peekView?.superview != nil }?.engine.currentURL
-        guard let url = (peekURL ?? tabManager.visibleActiveTab?.url)?.absoluteString,
+        guard let url = focusedPageURL?.absoluteString,
               !url.isEmpty else {
             bridgeRouter.send(event: "urlCopyFailed")
             return
@@ -190,16 +188,16 @@ extension MainWindowController {
     }
 
     @objc func translatePage(_ sender: Any?) {
-        guard let webView = tabManager.activeEngineTab?.wkWebView else { return }
+        guard let webView = focusedEngineTab?.wkWebView else { return }
         if unsafe pageTranslator.hostView.superview == nil { window?.contentView?.addSubview(pageTranslator.hostView) }
         Task { await pageTranslator.toggle(in: webView) }
     }
 
     @objc func viewPageSource(_ sender: Any?) {
-        guard let url = tabManager.visibleActiveTab?.url, url.scheme == "http" || url.scheme == "https",
+        guard let url = focusedPageURL, url.scheme == "http" || url.scheme == "https",
               let source = URL(string: "\(ViewSourceSchemeHandler.scheme):\(url.absoluteString)") else { return }
         // The markup the tab already loaded: a re-fetch costs a slow link the whole page, and may get another one.
-        let handedOver = tabManager.activeEngineTab.map { engine in
+        let handedOver = focusedEngineTab.map { engine in
             WebViewPrivateAccessors(engine.wkWebView).mainResourceData { [weak self] data in
                 guard let self else { return }
                 if let data, engine.currentURL == url { context.engineFactory.viewSourceSchemeHandler.handOver(data, of: url) }
@@ -217,12 +215,12 @@ extension MainWindowController {
         if let id = tabManager.activeOpenTabId, let tab = tabManager.activeTab { tabManager.setTabMuted(id: id, muted: !tab.isMuted) }
     }
 
-    @objc func showWebInspector(_ sender: Any?) { tabManager.activeEngineTab?.showWebInspector() }
+    @objc func showWebInspector(_ sender: Any?) { focusedEngineTab?.showWebInspector() }
     @objc func showChromeWebInspector(_ sender: Any?) { _ = WebInspectorSupport.show(for: chromeWebView) }
-    @objc func inspectElement(_ sender: Any?) { tabManager.activeEngineTab?.toggleWebInspectorElementSelection() }
-    @objc func showWebInspectorConsole(_ sender: Any?) { tabManager.activeEngineTab?.showWebInspectorConsole() }
-    @objc func showWebInspectorResources(_ sender: Any?) { tabManager.activeEngineTab?.showWebInspectorResources() }
-    @objc func toggleWebInspectorPageProfiling(_ sender: Any?) { tabManager.activeEngineTab?.toggleWebInspectorPageProfiling() }
+    @objc func inspectElement(_ sender: Any?) { focusedEngineTab?.toggleWebInspectorElementSelection() }
+    @objc func showWebInspectorConsole(_ sender: Any?) { focusedEngineTab?.showWebInspectorConsole() }
+    @objc func showWebInspectorResources(_ sender: Any?) { focusedEngineTab?.showWebInspectorResources() }
+    @objc func toggleWebInspectorPageProfiling(_ sender: Any?) { focusedEngineTab?.toggleWebInspectorPageProfiling() }
 
     @objc func reloadCurrentPageFromOrigin(_ sender: Any?) {
         if let engine = focusedEngineTab, engine !== tabManager.activeEngineTab { return engine.reloadFromOrigin() }
@@ -457,7 +455,7 @@ extension MainWindowController {
             return false
         }
         // Without a page, as on a terminal tab, these keys go on to the focused view and the menus.
-        if tabManager.activeEngineTab == nil, ["history.back", "history.forward", "page.print", "page.save"].contains(id) { return false }
+        if focusedEngineTab == nil, ["history.back", "history.forward", "page.print", "page.save"].contains(id) { return false }
         switch id {
         case "tab.new":
             // The chrome knows whether the command bar is open, so it toggles the blank new tab.
@@ -620,9 +618,8 @@ extension MainWindowController: NSUserInterfaceValidations {
             (item as? NSMenuItem)?.image = (muted ? MenuIcon.unmute : .mute).image
             return tabManager.activeTab != nil
         }
-        if action == #selector(copyCurrentURL(_:)) || action == #selector(copyCurrentURLAsMarkdown(_:)) || action == #selector(duplicateCurrentTab(_:)) {
-            return tabManager.visibleActiveTab?.url != nil
-        }
+        if action == #selector(copyCurrentURL(_:)) || action == #selector(copyCurrentURLAsMarkdown(_:)) { return focusedPageURL != nil }
+        if action == #selector(duplicateCurrentTab(_:)) { return tabManager.visibleActiveTab?.url != nil }
         if action == #selector(closeOtherTabs(_:)) { return tabManager.currentTabs.count > 1 }
         if action == #selector(restoreClosedTab(_:)) { return !context.recentlyClosed.recentEntries.isEmpty }
         if action == #selector(showNextSpace(_:)) || action == #selector(showPreviousSpace(_:)) { return switchableSpaces.count > 1 }
@@ -643,14 +640,15 @@ extension MainWindowController: NSUserInterfaceValidations {
         }
         if action == #selector(takeViewportScreenshot(_:)) || action == #selector(takeFullPageScreenshot(_:))
             || action == #selector(startRegionSelection(_:)) {
-            return tabManager.activeEngineTab != nil
+            return focusedEngineTab != nil
         }
-        if action == #selector(reloadCurrentPageFromOrigin(_:)) { return tabManager.activeTab?.url != nil }
+        if action == #selector(reloadCurrentPageFromOrigin(_:)) { return focusedEngineTab !== tabManager.activeEngineTab || tabManager.activeTab?.url != nil }
         if action == #selector(findNextMatch(_:)) || action == #selector(findPreviousMatch(_:)) {
             return activeTerminalView != nil || focusedEngineTab?.canFindAgain == true
         }
         // A terminal or Changes tab has no page for these.
-        if action == #selector(reloadCurrentPage(_:)) || action == #selector(togglePictureInPicture(_:)) { return tabManager.activeEngineTab != nil }
+        if action == #selector(reloadCurrentPage(_:)) { return focusedEngineTab != nil }
+        if action == #selector(togglePictureInPicture(_:)) { return tabManager.activeEngineTab != nil }
         if action == #selector(printCurrentPage(_:)) { return focusedEngineTab?.wkWebView.url != nil }
         if action == #selector(toggleReader(_:)) {
             let reading = tabManager.activeOpenTabId.map(readerModeTabs.contains) == true
@@ -659,7 +657,7 @@ extension MainWindowController: NSUserInterfaceValidations {
         }
         if action == #selector(shareCurrentPage(_:)) || action == #selector(showQRCode(_:)) { return shareableURL() != nil }
         if action == #selector(savePageAs(_:)) { return focusedEngineTab?.wkWebView.url != nil }
-        if action == #selector(translatePage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
+        if action == #selector(translatePage(_:)) { return focusedEngineTab?.wkWebView.url != nil }
         if action == #selector(hideElement(_:)) { return hidesElements && ["http", "https"].contains(focusedEngineTab?.currentURL?.scheme) }
         if action == #selector(newSplitView(_:)) {
             return tabManager.activeTab != nil && (tabManager.activeSplit?.layout.paneIds.count ?? 0) < SplitLayout.maxPanes
@@ -673,14 +671,14 @@ extension MainWindowController: NSUserInterfaceValidations {
         if action == #selector(askAgent(_:)) {
             return agentsEnabled && context.spaceManager?.space(with: tabManager.currentSpaceId)?.isPrivate == false
         }
-        if action == #selector(viewPageSource(_:)) { return ["http", "https"].contains(tabManager.visibleActiveTab?.url?.scheme) }
+        if action == #selector(viewPageSource(_:)) { return ["http", "https"].contains(focusedPageURL?.scheme) }
 
         if action == #selector(showWebInspector(_:))
             || action == #selector(inspectElement(_:))
             || action == #selector(showWebInspectorConsole(_:))
             || action == #selector(showWebInspectorResources(_:))
             || action == #selector(toggleWebInspectorPageProfiling(_:)) {
-            guard let engine = tabManager.activeEngineTab,
+            guard let engine = focusedEngineTab,
                   engine.supportsWebInspector else {
                 if let menuItem = item as? NSMenuItem {
                     menuItem.state = .off

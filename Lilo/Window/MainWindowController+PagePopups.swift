@@ -186,6 +186,12 @@ extension MainWindowController {
         pagePopups.values.first { unsafe $0.peekView?.superview != nil }?.engine ?? tabManager.activeEngineTab
     }
 
+    /// The URL copy, share and view source expose: the shown peek's page, else the active tab's unless locked away.
+    var focusedPageURL: URL? {
+        if let peek = pagePopups.values.first(where: { unsafe $0.peekView?.superview != nil }) { return peek.engine.currentURL }
+        return tabManager.visibleActiveTab?.url
+    }
+
     /// File > Open as Tab in the browser window: the shown peek's page, when there is one.
     @objc func openPageAsTab(_ sender: Any?) {
         pagePopups.values.first { unsafe $0.peekView?.superview != nil }?.openAsTab()
