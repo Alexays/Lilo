@@ -99,6 +99,23 @@ final class TabExtensionEventsTests: XCTestCase {
         XCTAssertEqual(heard?.urls, 1, "one url change for one navigation")
     }
 
+    func testAURLKnownBeforeTheTabLoadsIsReportedOnceItLoads() async throws {
+        let server = try await TinyHTTPServer(respond: { _ in ("200 OK", ["Content-Type: text/html"], Data("<title>T</title>".utf8)) })
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        let target = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/target"))
+        XCTAssertNotNil(window.tabManager.engineTab(for: tab.id), "the tab has an engine that loads nothing yet")
+
+        window.tabManager.updateTab(id: tab.id) { $0.url = target }
+        // Past WebKit's coalescing delay, so the load's changes go out in their own event.
+        try await settle()
+        window.tabManager.load(target, inTab: tab.id)
+
+        let loaded = await pollUntil(timeout: 10) { self.heard?.loaded == true }
+        XCTAssertTrue(loaded, "the page loads")
+        try await settle()
+        XCTAssertEqual(heard?.urls, 1, "the url goes out once the tab loads, not empty before")
+    }
+
     func testPinningAPinnedTabReportsNothing() async throws {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
         let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
