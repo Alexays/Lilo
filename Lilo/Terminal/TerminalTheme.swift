@@ -26,7 +26,7 @@ struct TerminalTheme: Codable, Equatable, Sendable {
 
     func resolved(surface: VTColor, accent: VTColor) -> Resolved {
         let background = background ?? surface
-        let dark = background.luminance < 0.4
+        let dark = prefersLightText(background.channels)
         let foreground = foreground ?? (dark ? VTColor(hex: 0xE6E6E6) : VTColor(hex: 0x1D1D1F))
         let palette = palette.count == 16 ? palette : Self.readablePalette(on: background, dark: dark)
         return Resolved(
@@ -53,8 +53,8 @@ struct TerminalTheme: Codable, Equatable, Sendable {
             // bright white is often a background and keeps its color.
             switch index {
             case 15: return color
-            case 0, 7, 8: return color.ensuringContrast(dark ? 3 : 4.5, on: background)
-            default: return color.ensuringContrast(4.5, on: background)
+            case 0, 7, 8: return color.ensuringContrast(dark ? 45 : 60, on: background)
+            default: return color.ensuringContrast(60, on: background)
             }
         }
     }
@@ -248,18 +248,13 @@ extension VTColor: Codable {
         unsafe String(format: "#%02X%02X%02X", r, g, b)
     }
 
-    /// WCAG relative luminance, 0 (black) to 1 (white).
-    var luminance: Double {
-        func channel(_ value: UInt8) -> Double {
-            let c = Double(value) / 255
-            return c <= 0.040_45 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
-        }
-        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+    var channels: (r: Double, g: Double, b: Double) {
+        (Double(r), Double(g), Double(b))
     }
 
-    func contrast(with other: VTColor) -> Double {
-        let (light, dark) = luminance > other.luminance ? (luminance, other.luminance) : (other.luminance, luminance)
-        return (light + 0.05) / (dark + 0.05)
+    /// APCA Lc of this color as text on `background`.
+    func contrast(on background: VTColor) -> Double {
+        apcaContrast(text: channels, background: background.channels)
     }
 
     func mixed(with other: VTColor, amount: Double) -> VTColor {
@@ -267,13 +262,14 @@ extension VTColor: Codable {
         return VTColor(r: mix(r, other.r), g: mix(g, other.g), b: mix(b, other.b))
     }
 
-    /// Steps toward black or white, whichever the background is farther from, until the contrast
+    /// Steps toward black or white, whichever reads better on the background, until the APCA Lc
     /// target is met; the hue stays recognizable.
     func ensuringContrast(_ target: Double, on background: VTColor) -> VTColor {
-        let towards = background.luminance > 0.4 ? VTColor(r: 0, g: 0, b: 0) : VTColor(r: 255, g: 255, b: 255)
+        let (black, white) = (VTColor(r: 0, g: 0, b: 0), VTColor(r: 255, g: 255, b: 255))
+        let towards = black.contrast(on: background) >= white.contrast(on: background) ? black : white
         var color = self
         var step = 0.0
-        while color.contrast(with: background) < target, step < 1 {
+        while color.contrast(on: background) < target, step < 1 {
             step += 0.05
             color = mixed(with: towards, amount: step)
         }

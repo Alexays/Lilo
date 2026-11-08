@@ -1,6 +1,6 @@
 // Pure presentation logic for the extensions panel (list + detail).
 
-import { parseHexColor, relativeLuminance } from "../../lib/sidebarTheme";
+import { parseHexColor, prefersLightText } from "../../lib/sidebarTheme";
 
 export type ExtensionRuntimeStatus = "loaded" | "degraded" | "failed";
 
@@ -126,12 +126,9 @@ export function shortcutFromKeyEvent(event: {
   return { key, modifiers };
 }
 
-/** The relative luminance where black and white contrast equally with a color. */
-const LUMINANCE_MIDPOINT = 0.179;
-
 /**
- * The badge text color: the extension's, else black or white, whichever contrasts more with the badge, as Chrome
- * picks it. Null for a background that is not a hex or rgb() color, which keeps the default.
+ * The badge text color: the extension's, else black or white, whichever reads better on the badge by APCA. Null for
+ * a background that is not a hex or rgb() color, which keeps the default.
  */
 export function badgeTextColor(background = "", text = ""): string | null {
   if (text) return text;
@@ -141,7 +138,7 @@ export function badgeTextColor(background = "", text = ""): string | null {
   const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(value);
   const color = hex ? parseHexColor(hex[1] ?? hex[2]) : rgb ? { r: Number(rgb[1]), g: Number(rgb[2]), b: Number(rgb[3]) } : null;
   if (!color) return null;
-  return relativeLuminance(color) > LUMINANCE_MIDPOINT ? "#000" : "#fff";
+  return prefersLightText(color) ? "#fff" : "#000";
 }
 
 // The address keeps this much of the bar's leading edge, room for the hover-revealed URL actions.

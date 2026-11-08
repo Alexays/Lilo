@@ -488,9 +488,9 @@
     font-size: var(--font-size-sm);
   }
 
-  /* Orange toward the text color: plain --warning falls under 4.5:1 on the page. */
+  /* Orange toward the text color: plain --warning falls under Lc 60 on the page. */
   .detail.attention {
-    color: color-mix(in srgb, var(--warning) 60%, var(--text-primary));
+    color: color-mix(in srgb, var(--warning) 45%, var(--text-primary));
   }
 
   .accessory {

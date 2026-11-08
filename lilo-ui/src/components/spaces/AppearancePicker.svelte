@@ -80,7 +80,7 @@
 </div>
 
 <style>
-  /* A Settings grouped box laid on the Space color: the hover layer, the quiet field secondary text keeps 4.5:1 on. */
+  /* A Settings grouped box laid on the Space color: the hover layer, the quiet field secondary text keeps Lc 60 on. */
   .box {
     display: flex;
     flex-direction: column;

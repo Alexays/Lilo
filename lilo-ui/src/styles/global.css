@@ -27,7 +27,7 @@
   --group-box-bg: rgba(0, 0, 0, 0.035);
 
   --danger: #ef4444;
-  --danger-text: var(--danger-deep);
+  --danger-text: #a11f15;
   /* The light theme's danger text in both themes: the base the error surfaces tint from. */
   --danger-deep: #b42318;
   /* A program or page waiting on the user. */
@@ -206,12 +206,12 @@
     --bg-elevated: #1e1e2e;
 
     --text-primary: #e8e8ee;
-    --text-secondary: #a0a0b0;
-    --text-muted: #8a8aa3;
+    --text-secondary: #c1c1cc;
+    --text-muted: #b9b9c8;
 
-    --danger-text: #f87171;
+    --danger-text: #fbaaaa;
     --success-text: #4ade80;
-    --accent-ink: color-mix(in srgb, var(--accent) 50%, var(--text-primary));
+    --accent-ink: color-mix(in srgb, var(--accent) 35%, var(--text-primary));
     --float-accent-ink: var(--accent-ink);
 
     --border: rgba(255, 255, 255, 0.08);
