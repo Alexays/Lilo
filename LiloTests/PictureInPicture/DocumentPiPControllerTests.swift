@@ -317,6 +317,21 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertNil(engine.view.superview, "without its PiP window, a background tab leaves the window again")
     }
 
+    func testLeftCallTabKeepsRenderingUntilTheCallEnds() async throws {
+        let (_, window, engine) = try await makeWindowTab("")
+        window.context.settingsStore?.set("autoPictureInPicture", value: "false")
+        window.context.callTabIds.insert(engine.id)
+        _ = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        XCTAssertNotEqual(window.tabManager.activeOpenTabId, engine.id)
+
+        XCTAssertTrue(engine.view.superview === window.contentContainerView, "a page out of the window loses the timers and frames its camera runs on")
+        XCTAssertFalse(engine.view.isHidden)
+
+        window.callUsageChanged(engine)
+
+        XCTAssertNil(engine.view.superview, "once the call ends, a background tab leaves the window again")
+    }
+
     func testLeavingTheAppFromACallTabOpensItsPiPAndComingBackClosesIt() async throws {
         let (_, window, engine) = try await makeWindowTab("""
         <script>

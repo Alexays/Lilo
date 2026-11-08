@@ -150,5 +150,13 @@ extension MainWindowController {
         guard inCall != context.callTabIds.contains(engine.id) else { return }
         if inCall { context.callTabIds.insert(engine.id) } else { context.callTabIds.remove(engine.id) }
         context.mediaActivityChanged()
+        // A background call keeps rendering under the active view: WebKit stops the timers and frames a page's camera
+        // pipeline runs on once it leaves the window. The call ended, the tab goes back to the background rules.
+        guard tabManager.activeOpenTabId != engine.id, tabManager.engineTab(for: engine.id) === engine else { return }
+        if inCall, unsafe engine.view.window == nil {
+            attachBelowContent(engine)
+        } else if !inCall, unsafe engine.view.superview === contentContainerView {
+            processOutgoingContentViews([engine.view])
+        }
     }
 }

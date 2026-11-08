@@ -1081,19 +1081,20 @@ extension MainWindowController {
             outgoingEngine.dismissFind()
             if popOutBackgroundedTab(outgoingEngine) { continue }
 
-            // Tab-share sources, agent tabs and the page of a PiP window (open or on its way) stay in-window like
-            // inspector-retained views: WebKit keeps rendering a covered view, which the frame ferry snapshots and
-            // the PiP window's page needs to draw it.
+            // Tab-share sources, agent tabs, calls and the page of a PiP window (open or on its way) stay in-window like
+            // inspector-retained views: WebKit keeps rendering a covered view, which the frame ferry snapshots, the PiP
+            // window's page needs to draw it, and a call needs for the camera pipeline it runs on timers and frames.
             let drawsPiP = documentPiP.openerId == outgoingEngine.id || awaitingDocumentPiP === outgoingEngine
-            guard outgoingEngine.shouldRetainForWebInspector || outgoingEngine.isTabShareSource || outgoingEngine.isAgentControlled || drawsPiP else {
+            let inCall = context.callTabIds.contains(outgoingEngine.id)
+            guard outgoingEngine.shouldRetainForWebInspector || outgoingEngine.isTabShareSource || outgoingEngine.isAgentControlled || drawsPiP || inCall else {
                 view.removeFromSuperview()
                 continue
             }
 
-            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an awake agent or a
-            // PiP window keeps it shown.
+            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an awake agent, a
+            // PiP window or a call keeps it shown.
             let agentAwake = outgoingEngine.isAgentControlled && !outgoingEngine.isAgentSleeping
-            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !agentAwake && !drawsPiP
+            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !agentAwake && !drawsPiP && !inCall
             if !outgoingEngine.isWebInspectorVisible { outgoingEngine.fitView(in: contentContainerView.bounds) }
         }
     }
