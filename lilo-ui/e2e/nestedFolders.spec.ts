@@ -67,9 +67,14 @@ test("a subfolder reorders among its siblings", async ({ page }) => {
 	await bootChrome(page, nestedFolderWorld());
 
 	await pressAndLift(page, folderRow("folder-clients"));
-	// The first glide lifts Clients out, which moves tab-beta up: the second follows it.
+	// The first glide lifts Clients out, which moves tab-beta up: follow it until it holds still under the pointer.
+	const beta = page.locator(`${item("folder-projects")} [data-tab-id="tab-beta"]`).first();
 	await glideTo(page, `${item("folder-projects")} [data-tab-id="tab-beta"]`, 18);
-	await glideTo(page, `${item("folder-projects")} [data-tab-id="tab-beta"]`, 18);
+	await expect(async () => {
+		const aimed = (await beta.boundingBox())!.y;
+		await glideTo(page, `${item("folder-projects")} [data-tab-id="tab-beta"]`, 18);
+		expect((await beta.boundingBox())!.y).toBeCloseTo(aimed, 0);
+	}).toPass();
 	await page.mouse.up();
 
 	expect((await drops(page)).at(-1)).toMatchObject({
