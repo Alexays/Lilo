@@ -146,14 +146,6 @@ export function getSetting(key: string, fallback: string): string {
 	return _values[key] ?? fallback;
 }
 
-export const FAVORITES_PER_ROW = ["2", "3", "4"];
-
-/** How many favorite tiles the sidebar lines up a row; an unknown value reads as the default. */
-export function getFavoritesPerRow(): string {
-	const value = getSetting("favoritesPerRow", "2");
-	return FAVORITES_PER_ROW.includes(value) ? value : "2";
-}
-
 export function setSetting(key: string, value: string): void {
 	_values[key] = value;
 	settingsActions.set(key, value);

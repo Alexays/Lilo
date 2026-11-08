@@ -287,11 +287,6 @@
 				"description": "La barra inferior muestra cada espacio solo con su icono, aunque haya sitio para su nombre.",
 				"keywords": "espacio nombre etiqueta barra inferior icono ocultar"
 			},
-			"favoritesPerRow": {
-				"title": "Favoritos por fila",
-				"description": "Cuántos favoritos alinea la barra lateral antes de empezar una fila nueva.",
-				"keywords": "favoritos marcadores cuadrícula mosaicos columnas fila"
-			},
 			"theme": {
 				"title": "Tema",
 				"description": "Claro, oscuro o según el sistema.",

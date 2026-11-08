@@ -33,8 +33,6 @@
     getWebsiteData,
     getZoomLevels,
     setSetting,
-    FAVORITES_PER_ROW,
-    getFavoritesPerRow,
   } from "../../stores/settings.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
@@ -337,13 +335,6 @@
         options={["audio", "all", "none"].map((policy) => ({ value: policy, label: t(`settings.autoplay.${policy}`) }))}
         ariaLabel={title}
         onchange={(value) => setSetting("autoplayPolicy", value)}
-      />
-    {:else if id === "favoritesPerRow"}
-      <UiSegmented
-        value={getFavoritesPerRow()}
-        options={FAVORITES_PER_ROW.map((count) => ({ value: count, label: count }))}
-        ariaLabel={title}
-        onchange={(value) => setSetting("favoritesPerRow", value)}
       />
     {:else if id === "autoUpdate"}
       <UiToggle

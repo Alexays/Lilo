@@ -287,11 +287,6 @@
 				"description": "De onderste balk toont elke ruimte alleen als pictogram, ook als er plaats is voor de naam.",
 				"keywords": "ruimte naam label onderste balk pictogram verbergen"
 			},
-			"favoritesPerRow": {
-				"title": "Favorieten per rij",
-				"description": "Hoeveel favorieten de navigatiekolom naast elkaar zet voordat een nieuwe rij begint.",
-				"keywords": "favorieten bladwijzers raster tegels kolommen rij"
-			},
 			"theme": {
 				"title": "Thema",
 				"description": "Licht, donker of volg het systeem.",

@@ -10,8 +10,9 @@ function targetWithoutZoneRect(
 	return rest;
 }
 
-function elementRect(left: number, top: number, width: number, height: number): HTMLElement {
+function elementRect(left: number, top: number, width: number, height: number, sticky = false): HTMLElement {
 	return {
+		closest: (selector: string) => (sticky && selector === "[data-dnd-sticky]" ? {} : null),
 		getBoundingClientRect: () => ({
 			left,
 			top,
@@ -493,4 +494,28 @@ test("DndEngineStore moves the cached layout with a scrolled container instead o
 	assert.deepEqual(store.getZoneSnapshot("list")?.items.map((item) => item.rect.top), [0, 34]);
 	store.followScroll(scroller);
 	assert.deepEqual(store.getZoneSnapshot("list")?.items.map((item) => item.rect.top), [0, 34]);
+});
+
+test("DndEngineStore leaves a sticky zone where it is when its scroller moves", () => {
+	const store = new DndEngineStore();
+	const grid = elementRect(0, 0, 240, 48, true);
+	const tile = elementRect(0, 0, 80, 48);
+	const list = elementRect(0, 60, 240, 400);
+	const outside = elementRect(0, 500, 240, 100);
+	const inside = new Set<unknown>([grid, tile, list]);
+	const scroller = { scrollLeft: 0, scrollTop: 0, contains: (node: unknown) => inside.has(node) } as unknown as Element;
+	store.registerZone(grid, { id: "favorites", axis: "grid", getItems: () => [{ id: "tab-fav", kind: "tab" }] });
+	store.registerZone(list, { id: "list", axis: "vertical", getItems: () => [] });
+	store.registerZone(outside, { id: "dock", axis: "vertical", getItems: () => [] });
+	store.registerItem(tile, { item: { id: "tab-fav", kind: "tab" }, zoneId: "favorites" });
+	store.startDrag({ item: { id: "tab-dragged", kind: "tab" }, zoneId: "dock", element: outside }, { x: 10, y: 510 });
+	store.followScroll(scroller);
+	store.updatePointer({ x: 10, y: 100 }, true);
+	store.updatePointer({ x: 10, y: 100 }, true);
+
+	(scroller as { scrollTop: number }).scrollTop = 30;
+	store.followScroll(scroller);
+	assert.equal(store.getZoneSnapshot("favorites")?.rect.top, 0);
+	assert.deepEqual(store.getZoneSnapshot("favorites")?.items.map((item) => item.rect.top), [0]);
+	assert.equal(store.getZoneSnapshot("list")?.rect.top, 30, "the rest of the scroller still follows it");
 });

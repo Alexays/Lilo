@@ -287,11 +287,6 @@
 				"description": "La barra in basso mostra ogni spazio solo con la sua icona, anche se c'è posto per il nome.",
 				"keywords": "spazio nome etichetta barra inferiore icona nascondi"
 			},
-			"favoritesPerRow": {
-				"title": "Preferiti per riga",
-				"description": "Quanti preferiti la barra laterale affianca prima di andare a capo.",
-				"keywords": "preferiti segnalibri griglia riquadri colonne riga"
-			},
 			"theme": {
 				"title": "Tema",
 				"description": "Chiaro, scuro o come il sistema.",

@@ -117,7 +117,7 @@ test("settings search reaches hidden keywords and section names", () => {
   const resolve = (key: string) => catalog[key] ?? "";
 
   assert.deepEqual(searchSettings("cookies", resolve).map((setting) => setting.id), ["clearData"]);
-  assert.deepEqual(searchSettings("appearance", resolve).map((setting) => setting.id), ["theme", "appIcon", "seasonalAppIcon", "tabPosition", "addressPlacement", "hideSpaceNames", "favoritesPerRow", "defaultZoom", "minimumFontSize", "fullRefreshRate"]);
+  assert.deepEqual(searchSettings("appearance", resolve).map((setting) => setting.id), ["theme", "appIcon", "seasonalAppIcon", "tabPosition", "addressPlacement", "hideSpaceNames", "defaultZoom", "minimumFontSize", "fullRefreshRate"]);
 });
 
 test("folds permissions, data, and zoom into one row per site", () => {

@@ -103,6 +103,30 @@ test("dragging an unpinned row into the bookmarks grid bookmarks it", async ({
 	await expect(activePane.locator(".bookmarked-list .bookmark-tile")).toHaveCount(2);
 });
 
+test("a row dragged into the pinned favorites while the list is scrolled bookmarks it", async ({ page }) => {
+	const world = initialWorld();
+	const tabs = Array.from({ length: 40 }, (_, index) => `tab-extra-${index}`);
+	world.tabsBySpace[SPACE_1].push(...tabs.map((id) => tab(id, SPACE_1)));
+	world.treeItemsBySpace[SPACE_1].push(...tabs.map((id, index) => treeItem(id, SPACE_1, 100 + index)));
+	await bootChrome(page, world);
+	const activePane = pane(page, 0);
+	await expect(activePane.locator(".favorites-section")).toHaveClass(/pinned/);
+	await activePane.locator(".space-scroll").evaluate((el) => el.scrollTo({ top: 600 }));
+
+	const row = '.tab-list [data-tab-id="tab-extra-20"]';
+	await expect(activePane.locator(row)).toBeInViewport();
+	await pressAndLift(page, row);
+	await glideTo(page, ".bookmarked-list");
+	// The list scrolls under the held tile; the pinned grid stays under the pointer.
+	await activePane.locator(".space-scroll").evaluate((el) => el.scrollBy({ top: 200 }));
+	await glideTo(page, ".bookmarked-list");
+	await page.mouse.up();
+
+	await expect(activePane.locator('.bookmarked-list [aria-label="tab-extra-20"]')).toHaveCount(1);
+	await settleDrop(page);
+	await expect(activePane.locator(".bookmarked-list .bookmark-tile")).toHaveCount(2);
+});
+
 test("dropping a tab onto a space in the bottom bar moves it there", async ({
 	page,
 }) => {

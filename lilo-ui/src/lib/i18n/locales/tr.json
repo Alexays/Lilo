@@ -287,11 +287,6 @@
 				"description": "Alt çubuk, adına yer olsa bile her alanı yalnızca simgesiyle gösterir.",
 				"keywords": "alan ad etiket alt çubuk simge gizle"
 			},
-			"favoritesPerRow": {
-				"title": "Satır başına favori",
-				"description": "Kenar çubuğunun yeni bir satıra geçmeden önce yan yana dizdiği favori sayısı.",
-				"keywords": "favoriler yer imleri ızgara kutucuklar sütunlar satır"
-			},
 			"theme": {
 				"title": "Tema",
 				"description": "Açık, koyu veya sistem ayarına göre.",

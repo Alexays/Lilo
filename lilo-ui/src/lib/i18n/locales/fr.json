@@ -287,11 +287,6 @@
 				"description": "La barre du bas montre chaque espace par sa seule icône, même avec la place pour son nom.",
 				"keywords": "espace nom libellé barre du bas icône masquer"
 			},
-			"favoritesPerRow": {
-				"title": "Favoris par ligne",
-				"description": "Nombre de favoris alignés dans la barre latérale avant de passer à la ligne.",
-				"keywords": "favoris marque-pages grille tuiles colonnes ligne"
-			},
 			"theme": {
 				"title": "Thème",
 				"description": "Clair, sombre, ou comme le système.",

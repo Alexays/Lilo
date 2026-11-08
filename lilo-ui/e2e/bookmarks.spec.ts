@@ -61,46 +61,62 @@ test("a favorite tile moves with Option-arrows and opens its menu with Shift-F10
 	expect((await sentCommands(page)).filter((command) => command.action === "showTabContextMenu").at(-1)?.payload).toMatchObject({ id: "tab-wiki" });
 });
 
-function favoritesWorld(settings?: Record<string, string>) {
+// The fixture has one favorite already; `count` is the total.
+function favoritesWorld(count: number, extraTabs = 0) {
 	const world = initialWorld();
-	const extra = ["one", "two", "three", "four", "five"].map((name) => `tab-${name}`);
-	world.tabsBySpace[SPACE_1].push(...extra.map((id) => tab(id, SPACE_1, { isBookmarked: true })));
-	world.treeItemsBySpace[SPACE_1].push(...extra.map((id, index) => treeItem(id, SPACE_1, 10 + index, "bookmarked")));
-	world.settings = settings;
+	const favorites = Array.from({ length: count - 1 }, (_, index) => `tab-favorite-${index}`);
+	world.tabsBySpace[SPACE_1].push(...favorites.map((id) => tab(id, SPACE_1, { isBookmarked: true })));
+	world.treeItemsBySpace[SPACE_1].push(...favorites.map((id, index) => treeItem(id, SPACE_1, 10 + index, "bookmarked")));
+	const tabs = Array.from({ length: extraTabs }, (_, index) => `tab-extra-${index}`);
+	world.tabsBySpace[SPACE_1].push(...tabs.map((id) => tab(id, SPACE_1)));
+	world.treeItemsBySpace[SPACE_1].push(...tabs.map((id, index) => treeItem(id, SPACE_1, 100 + index)));
 	return world;
 }
 
-async function favoriteRowTops(page: Page): Promise<number[]> {
+async function tilesPerRow(page: Page, count: number): Promise<number[]> {
 	const tiles = page.locator(".space-pane").first().locator(".bookmark-tile");
-	await expect(tiles).toHaveCount(6);
-	return tiles.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+	await expect(tiles).toHaveCount(count);
+	const tops = await tiles.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+	return [...new Set(tops)].map((top) => tops.filter((other) => other === top).length);
 }
 
-test("favorites line up two a row by default, and wrap the rest", async ({ page }) => {
-	await bootChrome(page, favoritesWorld());
-	const tops = await favoriteRowTops(page);
-	expect(new Set(tops).size).toBe(3);
-	expect(tops[1]).toBe(tops[0]);
-	expect(tops[2]).toBeGreaterThan(tops[0]);
+test("four favorites line up two by two, as large tiles", async ({ page }) => {
+	await bootChrome(page, favoritesWorld(4));
+	expect(await tilesPerRow(page, 4)).toEqual([2, 2]);
+	await expect(page.locator(".space-pane").first().locator(".bookmark-tile").first()).toHaveCSS("height", "48px");
 });
 
-test("the Favorites per row setting lines up four a row", async ({ page }) => {
-	await bootChrome(page, favoritesWorld({ favoritesPerRow: "4" }));
-	const tops = await favoriteRowTops(page);
-	expect(tops.slice(0, 4).every((top) => top === tops[0])).toBe(true);
-	expect(tops[4]).toBeGreaterThan(tops[0]);
-	expect(tops[5]).toBe(tops[4]);
+test("five favorites take the three columns that fit, then two", async ({ page }) => {
+	await bootChrome(page, favoritesWorld(5));
+	expect(await tilesPerRow(page, 5)).toEqual([3, 2]);
 });
 
-test("many favorites scroll on their own and leave the tab list its room", async ({ page }) => {
-	const world = initialWorld();
-	const extra = Array.from({ length: 24 }, (_, index) => `tab-favorite-${index}`);
-	world.tabsBySpace[SPACE_1].push(...extra.map((id) => tab(id, SPACE_1, { isBookmarked: true })));
-	world.treeItemsBySpace[SPACE_1].push(...extra.map((id, index) => treeItem(id, SPACE_1, 10 + index, "bookmarked")));
-	await bootChrome(page, world);
+test("past three rows the favorites go back to compact tiles", async ({ page }) => {
+	await bootChrome(page, favoritesWorld(12));
+	expect(await tilesPerRow(page, 12)).toEqual([4, 4, 4]);
+	await expect(page.locator(".space-pane").first().locator(".bookmark-tile").first()).toHaveCSS("height", "40px");
+});
+
+test("favorites stay pinned above the scrolled tabs while they fit", async ({ page }) => {
+	await bootChrome(page, favoritesWorld(5, 40));
 	const pane = page.locator(".space-pane").first();
+	const favorites = pane.locator(".favorites-section");
+	await expect(favorites).toHaveClass(/pinned/);
+	const before = (await favorites.boundingBox())!;
 
-	const list = (await pane.locator(".bookmarked-list").boundingBox())!;
-	expect(list.height).toBeLessThanOrEqual(page.viewportSize()!.height * 0.4 + 1);
+	await pane.locator(".space-scroll").evaluate((el) => el.scrollTo({ top: 400 }));
+	await expect(favorites).toHaveClass(/scrolled/);
+	expect((await favorites.boundingBox())!.y).toBe(before.y);
+	await expect(pane.locator(".bookmark-tile").first()).toBeInViewport();
+});
+
+test("a grid too tall to pin scrolls away with the tabs, and the tab list keeps its room", async ({ page }) => {
+	await bootChrome(page, favoritesWorld(60));
+	const pane = page.locator(".space-pane").first();
+	await expect(pane.locator(".favorites-section")).not.toHaveClass(/pinned/);
+	await expect(pane.locator(".space-scroll")).toHaveCount(1);
+
+	await pane.locator(".space-scroll").evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
 	await expect(pane.locator('.tab-list [data-tab-id="tab-gamma"]')).toBeInViewport();
+	await expect(pane.locator(".bookmark-tile").first()).not.toBeInViewport();
 });

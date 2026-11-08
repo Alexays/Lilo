@@ -54,7 +54,6 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
   import { titleUnread, unreadBadgeText } from "../../lib/titleUnread";
-  import { getFavoritesPerRow } from "../../stores/settings.svelte";
 
   let {
     spaceId,
@@ -85,6 +84,19 @@
   });
   const bookmarkZoneItems = $derived(getZoneItems(bookmarkZone, bookmarkBaseItems));
   const bookmarkZoneIsEmpty = $derived(bookmarkZoneItems.length === 0);
+
+  // As many columns of tiles at least 64px wide as fit, then balanced rows: 4 tiles make 2 × 2,
+  // 5 make 3 + 2. Past three rows they go back to the compact size, so many favorites leave the tabs their room.
+  const GRID_GAP_PX = 6;
+  let listWidth = $state(0);
+  function columnsThatFit(minTileWidth: number): number {
+    return Math.max(1, Math.floor((listWidth + GRID_GAP_PX) / (minTileWidth + GRID_GAP_PX)));
+  }
+  const gridCompact = $derived(Math.ceil(bookmarkZoneItems.length / columnsThatFit(64)) > 3);
+  const gridColumns = $derived.by(() => {
+    const count = Math.max(1, bookmarkZoneItems.length);
+    return Math.ceil(count / Math.ceil(count / columnsThatFit(gridCompact ? 40 : 64)));
+  });
   const activeTabId = $derived(getActiveTabId(spaceId));
   const recentlyDraggedId = $derived(getRecentlyDroppedId());
   const previewedTabId = $derived(getTabPreviewTabId());
@@ -284,10 +296,12 @@
       class:drag-active={dragActive && isVisible}
       class:is-empty={bookmarkZoneIsEmpty}
       class:idle-empty={!isVisible}
+      class:compact={gridCompact}
       data-drop-label={t("bookmarks.dropToBookmark")}
-      style:--bookmark-columns={getFavoritesPerRow()}
+      style:grid-template-columns="repeat({gridColumns}, minmax(0, 1fr))"
       role="list"
       bind:this={listEl}
+      bind:clientWidth={listWidth}
       aria-hidden={!isVisible}
       use:dndZone={{
         id: bookmarkZone.id,
@@ -364,7 +378,7 @@
                       src={bookmark.faviconDataURL}
                       title={bookmark.title}
                       url={bookmark.url}
-                      size={20}
+                      size={gridCompact ? 18 : 20}
                       radius={5}
                       asleep={bookmark.isClosed}
                     />
@@ -444,18 +458,11 @@
 
   .bookmarked-list {
     --bookmark-zone-color: var(--color-bookmark);
-    --bookmark-gap: 6px;
-    --bookmark-tile-height: 52px;
+    --bookmark-tile-height: 48px;
     position: relative;
     display: grid;
-    /* At most the chosen count a row, like an app grid; fewer tiles share the width. */
-    grid-template-columns: repeat(auto-fit, minmax(max(40px, calc((100% - (var(--bookmark-columns, 2) - 1) * var(--bookmark-gap)) / var(--bookmark-columns, 2))), 1fr));
-    gap: var(--bookmark-gap);
+    gap: 6px; /* GRID_GAP_PX, which sizes the columns. */
     min-height: 0;
-    /* The tab list scrolls below: many favorites scroll on their own instead of pushing it away. */
-    max-height: 40vh;
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
     /* The drop zone's border, cancelled by the margin so the tiles line up with the rows. */
     margin: -1px;
     border: 1px solid transparent;
@@ -472,6 +479,10 @@
       transform var(--motion-duration-fast) var(--motion-ease-spring),
       background var(--motion-duration-fast) ease,
       border-color var(--motion-duration-fast) ease;
+  }
+
+  .bookmarked-list.compact {
+    --bookmark-tile-height: 40px;
   }
 
   .bookmarked-list.idle-empty {
@@ -599,7 +610,8 @@
     box-shadow: 0 0 0 2px var(--sidebar-bg, var(--bg-primary));
   }
 
-  /* Off the icon's lower corner, as a badge on an app icon, so it reads as the site's. */
+  /* Off the icon's lower corner, as a badge on an app icon, so it reads as the site's; ringed in the
+     tile's color so it holds on a favicon close to the accent. */
   .unread-dot {
     top: calc(50% + 6px);
     right: auto;
@@ -607,7 +619,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    box-shadow: none;
+    box-shadow: 0 0 0 2px var(--sidebar-sel);
   }
 
   .unread-count {

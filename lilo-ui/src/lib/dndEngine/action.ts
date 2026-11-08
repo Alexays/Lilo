@@ -170,7 +170,8 @@ export function dndItem(
 		const horizontal = zone?.axis === "horizontal";
 		if (zoneElement !== autoScrollZone) {
 			autoScrollZone = zoneElement;
-			autoScrollContainer = zoneElement ? scrollContainerOf(zoneElement, horizontal) : null;
+			// A sticky zone stays put as its scroller moves: hovering it is no reason to scroll.
+			autoScrollContainer = zoneElement && !zoneElement.closest("[data-dnd-sticky]") ? scrollContainerOf(zoneElement, horizontal) : null;
 		}
 		const container = autoScrollContainer;
 		if (!container) return;

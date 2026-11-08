@@ -287,11 +287,6 @@
 				"description": "底部列只用圖示顯示每個空間，即使有位置顯示名稱。",
 				"keywords": "空間 名稱 標籤 底部列 圖示 隱藏"
 			},
-			"favoritesPerRow": {
-				"title": "每列喜好項目數",
-				"description": "側邊欄換列前並排顯示的喜好項目數量。",
-				"keywords": "喜好項目 最愛 書籤 網格 方塊 欄 列"
-			},
 			"theme": {
 				"title": "主題",
 				"description": "淺色、深色或跟隨系統。",
