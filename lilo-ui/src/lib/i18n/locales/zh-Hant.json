@@ -561,6 +561,33 @@
 				"title": "代理程式完成時通知",
 				"description": "你未在檢視的對話完成時發出通知。",
 				"keywords": "代理程式 通知 提醒 完成 結束"
+			},
+			"agentSystemPrompt": {
+				"title": "系統提示詞",
+				"description": "每次對話開始時告訴代理的內容。",
+				"keywords": "系統提示詞 指示 claude code 限制",
+				"lilo": "Lilo",
+				"agent": "代理自帶",
+				"liloPoints": {
+					"browse": "用 Lilo 瀏覽網頁",
+					"act": "無需每一步都詢問",
+					"design": "以資深設計師的眼光設計"
+				},
+				"agentPoints": {
+					"same": "與其 App 中的行為一致",
+					"asks": "更多操作前會先詢問",
+					"updates": "跟隨代理的更新"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo 提示詞",
+				"description": "編輯取代代理自帶提示詞告訴它們的內容。",
+				"keywords": "系統提示詞 指示 編輯",
+				"heading": "指示",
+				"note": "Lilo 會在結尾加上工作目錄和今天的日期。變更適用於新的和重新開啟的對話。",
+				"reset": "回復預設值",
+				"resetTitle": "要回復 Lilo 提示詞嗎？",
+				"resetMessage": "你的變更將被預設提示詞取代。"
 			}
 		},
 		"devices": {

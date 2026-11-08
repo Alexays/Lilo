@@ -104,6 +104,8 @@ export type SettingId =
   | "passwordManager"
   | "agentsEnabled"
   | "agentsNotifyDone"
+  | "agentSystemPrompt"
+  | "agentSystemPromptText"
   | "agentControl"
   | "agentAskBeforeActions"
   | "agentAlwaysAllowed"
@@ -228,6 +230,8 @@ export const SETTINGS: SettingModel[] = [
   { id: "passwordManager", section: "extensions", groupKey: "settings.groups.passwords" },
   { id: "agentsEnabled", section: "agents", groupKey: "settings.groups.agentConversations" },
   { id: "agentsNotifyDone", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },
+  { id: "agentSystemPrompt", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },
+  { id: "agentSystemPromptText", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },
   { id: "agentControl", section: "agents", groupKey: "settings.groups.agentAccess" },
   { id: "agentAskBeforeActions", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
   { id: "agentAlwaysAllowed", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },

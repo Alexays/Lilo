@@ -561,6 +561,33 @@
 				"title": "Bir ajan bitirdiğinde bildir",
 				"description": "Bakmadığınız bir sohbet bittiğinde bildirim.",
 				"keywords": "ajan bildirim uyarı bitti tamamlandı"
+			},
+			"agentSystemPrompt": {
+				"title": "Sistem istemi",
+				"description": "Her sohbetin başında ajanlara söylenenler.",
+				"keywords": "sistem istemi talimatlar claude code kısıtlamalar",
+				"lilo": "Lilo",
+				"agent": "Ajanın kendi",
+				"liloPoints": {
+					"browse": "Web'de Lilo ile gezinir",
+					"act": "Her adımda sormadan çalışır",
+					"design": "Kıdemli bir tasarımcı gözüyle tasarlar"
+				},
+				"agentPoints": {
+					"same": "Kendi uygulamasındaki gibi davranır",
+					"asks": "Daha fazla işlemden önce sorar",
+					"updates": "Ajanın güncellemelerini izler"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo istemi",
+				"description": "Ajanların kendi istemi yerine söylenenleri düzenleyin.",
+				"keywords": "sistem istemi talimatlar düzenle",
+				"heading": "Talimatlar",
+				"note": "Lilo sona çalışma klasörünü ve bugünün tarihini ekler. Değişiklikler yeni ve yeniden açılan sohbetlere uygulanır.",
+				"reset": "Varsayılana dön",
+				"resetTitle": "Lilo istemi geri yüklensin mi?",
+				"resetMessage": "Değişiklikleriniz varsayılan istemle değiştirilecek."
 			}
 		},
 		"devices": {

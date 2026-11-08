@@ -62,7 +62,7 @@ test("settings under a switch that is off drop out of their group", () => {
   values.agentsEnabled = "true";
   const shown = sectionGroups("agents", (setting) => !setting.requires || isToggleOn(setting.requires, get));
   assert.equal(shown.length, 3);
-  assert.deepEqual(shown[0].settings, ["agentsEnabled", "agentsNotifyDone"]);
+  assert.deepEqual(shown[0].settings, ["agentsEnabled", "agentsNotifyDone", "agentSystemPrompt", "agentSystemPromptText"]);
 });
 
 test("cross-site tracking prevention is a protection switch, on until turned off", () => {

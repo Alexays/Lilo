@@ -561,6 +561,33 @@
 				"title": "Notify when an agent finishes",
 				"description": "A notification when a conversation you are not looking at is done.",
 				"keywords": "agent notification alert done finished"
+			},
+			"agentSystemPrompt": {
+				"title": "System prompt",
+				"description": "What agents are told at the start of each conversation.",
+				"keywords": "system prompt instructions claude code restrictions",
+				"lilo": "Lilo",
+				"agent": "Agent's own",
+				"liloPoints": {
+					"browse": "Browses the web with Lilo",
+					"act": "Acts without asking at every step",
+					"design": "Designs with a senior designer's eye"
+				},
+				"agentPoints": {
+					"same": "Behaves as in its own app",
+					"asks": "Asks before more of its actions",
+					"updates": "Follows the agent's updates"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo's prompt",
+				"description": "Edit what agents are told in place of their own prompt.",
+				"keywords": "system prompt instructions edit",
+				"heading": "Instructions",
+				"note": "Lilo adds the working directory and today's date at the end. Changes apply to new and reopened conversations.",
+				"reset": "Restore Default",
+				"resetTitle": "Restore Lilo's prompt?",
+				"resetMessage": "Your changes are replaced by the default prompt."
 			}
 		},
 		"devices": {

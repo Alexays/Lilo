@@ -45,6 +45,7 @@
     settingDescriptionKey,
     settingTitleKey,
   } from "./settingsPanelModel";
+  import AgentPromptPicker from "./AgentPromptPicker.svelte";
   import AppIconPicker from "./AppIconPicker.svelte";
   import CallDockPicker from "./CallDockPicker.svelte";
   import PageScalePicker from "./PageScalePicker.svelte";
@@ -71,6 +72,7 @@
     searchEngines: () => openSettingsSubpage("general", "engines"),
     shortcuts: () => openSettingsSubpage("general", "shortcuts"),
     sites: () => openSettingsSubpage("privacy", "sites"),
+    agentSystemPromptText: () => openSettingsSubpage("agents", "agentPrompt"),
     blockerSites: () => openSettingsSubpage("privacy", "blockerSites"),
     processManager: openProcessManager,
     diagnostics: openDiagnostics,
@@ -237,6 +239,8 @@
       ariaLabel={title}
       oncommit={(value) => setSetting("contentBlockerAllowedDomains", value.trim())}
     />
+  {:else if id === "agentSystemPrompt"}
+    <AgentPromptPicker />
   {:else if id === "agentAlwaysAllowed"}
     <span class="chips">
       {#each alwaysAllowed as host (host)}

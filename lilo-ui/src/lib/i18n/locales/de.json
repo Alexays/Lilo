@@ -561,6 +561,33 @@
 				"title": "Benachrichtigen, wenn ein Agent fertig ist",
 				"description": "Eine Mitteilung, wenn eine Unterhaltung fertig ist, die du gerade nicht ansiehst.",
 				"keywords": "agent mitteilung benachrichtigung fertig abgeschlossen"
+			},
+			"agentSystemPrompt": {
+				"title": "Systemprompt",
+				"description": "Was Agenten zu Beginn jeder Unterhaltung gesagt wird.",
+				"keywords": "systemprompt anweisungen claude code einschränkungen",
+				"lilo": "Lilo",
+				"agent": "Eigener des Agenten",
+				"liloPoints": {
+					"browse": "Surft im Web mit Lilo",
+					"act": "Handelt ohne bei jedem Schritt zu fragen",
+					"design": "Gestaltet mit dem Blick eines Senior-Designers"
+				},
+				"agentPoints": {
+					"same": "Verhält sich wie in seiner App",
+					"asks": "Fragt vor mehr Aktionen nach",
+					"updates": "Folgt den Updates des Agenten"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Prompt von Lilo",
+				"description": "Bearbeiten, was Agenten anstelle ihres eigenen Prompts gesagt wird.",
+				"keywords": "systemprompt anweisungen bearbeiten",
+				"heading": "Anweisungen",
+				"note": "Lilo fügt am Ende das Arbeitsverzeichnis und das heutige Datum hinzu. Änderungen gelten für neue und wieder geöffnete Unterhaltungen.",
+				"reset": "Standard wiederherstellen",
+				"resetTitle": "Prompt von Lilo wiederherstellen?",
+				"resetMessage": "Deine Änderungen werden durch den Standardprompt ersetzt."
 			}
 		},
 		"devices": {

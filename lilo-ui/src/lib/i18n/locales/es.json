@@ -561,6 +561,33 @@
 				"title": "Avisar cuando un agente termine",
 				"description": "Una notificación cuando termina una conversación que no estás mirando.",
 				"keywords": "agente notificación alerta hecho terminado"
+			},
+			"agentSystemPrompt": {
+				"title": "Prompt del sistema",
+				"description": "Lo que se dice a los agentes al empezar cada conversación.",
+				"keywords": "prompt sistema instrucciones claude code restricciones",
+				"lilo": "Lilo",
+				"agent": "El del agente",
+				"liloPoints": {
+					"browse": "Navega por la web con Lilo",
+					"act": "Actúa sin preguntar a cada paso",
+					"design": "Diseña con ojo de diseñador sénior"
+				},
+				"agentPoints": {
+					"same": "Se comporta como en su app",
+					"asks": "Pregunta antes de más acciones",
+					"updates": "Sigue las actualizaciones del agente"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Prompt de Lilo",
+				"description": "Edita lo que se dice a los agentes en lugar de su propio prompt.",
+				"keywords": "prompt sistema instrucciones editar",
+				"heading": "Instrucciones",
+				"note": "Lilo añade al final la carpeta de trabajo y la fecha de hoy. Los cambios se aplican a conversaciones nuevas y reabiertas.",
+				"reset": "Restaurar",
+				"resetTitle": "¿Restaurar el prompt de Lilo?",
+				"resetMessage": "Tus cambios se sustituirán por el prompt predeterminado."
 			}
 		},
 		"devices": {

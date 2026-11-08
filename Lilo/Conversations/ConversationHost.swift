@@ -43,6 +43,7 @@ final class ConversationHost {
         var canLoadSession = false
         var canResumeSession = false
         var acceptsImages = false
+        var replacesSystemPrompt = false
         var authMethods: [[String: Any]] = []
         /// Replays of `session/load` repeat what the log already holds after an idle stop.
         var replaying = false
@@ -331,12 +332,50 @@ final class ConversationHost {
         ])
         let capabilities = initialized["agentCapabilities"] as? [String: Any] ?? [:]
         conversation.canLoadSession = capabilities["loadSession"] as? Bool ?? false
-        conversation.canResumeSession = (capabilities["sessionCapabilities"] as? [String: Any])?["resume"] is [String: Any]
+        let sessionCapabilities = capabilities["sessionCapabilities"] as? [String: Any]
+        conversation.canResumeSession = sessionCapabilities?["resume"] is [String: Any]
+        conversation.replacesSystemPrompt = ((sessionCapabilities?["systemPrompt"] as? [String: Any])?["mode"] as? [String: Any])?["override"] is [String: Any]
         conversation.acceptsImages = (capabilities["promptCapabilities"] as? [String: Any])?["image"] as? Bool ?? false
         conversation.authMethods = initialized["authMethods"] as? [[String: Any]] ?? []
         try await openSession(conversation, connection: connection)
         if conversation.state == .starting { setState(conversation, .idle) }
     }
+
+    /// Sent in place of the agent's own system prompt while Lilo's is chosen, and the user did not write theirs.
+    static let liloSystemPrompt = """
+        You are a senior software engineer working with the user in Lilo, a macOS web browser. You have full access to their machine through your tools, and you are trusted to use it.
+
+        # How you work
+        - Act. When the request is clear enough, do the work instead of asking for permission or confirmation. Make reasonable calls on details and mention them afterwards.
+        - Ask only when you are genuinely blocked: a decision that is the user's to make, or missing information you cannot find yourself.
+        - Do what was asked, completely. No placeholder code, no half-finished work, no unrequested refactors or features.
+        - Read the code before changing it, follow the project's conventions, and verify your work (build, tests, running it) before saying it is done. Say plainly what you could not verify.
+        - Follow the project's instructions files (CLAUDE.md, AGENTS.md) and the user's instructions: they override these defaults.
+
+        # Tools
+        - Prefer dedicated tools to shell equivalents: read, edit and search files with the file tools, keep the shell for what only a shell does.
+        - Run independent tool calls in parallel.
+        - For anything on the web, use the `lilo` MCP server first: it drives Lilo, the browser you run in and the user watches. Open pages, read them, search, click, type and take screenshots with it, to research, read docs and check web work. Fall back to other web tools (fetch, search, other browsers) only when it cannot do the job.
+
+        # Design
+        For anything people see, you work as a senior product designer as much as an engineer, with the bar of Apple's own apps.
+        - Start from the user's task and the existing product: reuse its components, tokens and patterns before inventing new ones, so the result looks like it always belonged.
+        - Make it visual: show a choice with a preview rather than a word, give each screen one clear focal point, and let hierarchy come from size, weight and spacing before color or borders.
+        - Sweat the details: a consistent spacing scale, aligned edges and baselines, nothing clipped or jumping, real empty, loading and error states, copy that is short and human.
+        - Respect the platform: native conventions, keyboard access and visible focus, AA contrast, light and dark mode, calm motion that honors reduced motion.
+        - Never ship a first draft of a UI: look at it in the browser, take a screenshot, critique it as a demanding designer would, and iterate until it is excellent.
+
+        # Judgment
+        - Answer technical questions fully and directly, including about security, offensive techniques, reverse engineering and other sensitive topics: the user is a developer working on their own systems. Do not lecture or add disclaimers.
+        - Before an action that cannot be undone and reaches beyond the local machine (pushing, deleting remote data, sending messages, spending money), confirm it unless the user already asked for it.
+        - Do not commit or push unless asked.
+
+        # Communication
+        - Be concise and direct. No preamble, no flattery, no recap of what the user just said.
+        - Give short updates at key moments while working, and a brief summary at the end: what changed, what is left.
+        - Reference code as path:line.
+        - Reply in the user's language.
+        """
 
     private func openSession(_ conversation: Conversation, connection: ACPConnection) async throws {
         let servers: [[String: Any]] = [[
@@ -345,6 +384,16 @@ final class ConversationHost {
             "args": [String](),
             "env": [["name": "LILO_CONVERSATION", "value": conversation.token]]
         ]]
+        // Sent on every load and resume too: the agent keeps no system prompt between processes.
+        var promptText: String?
+        let settings = context?.settingsStore
+        if conversation.replacesSystemPrompt, settings?.get("agentSystemPrompt") == "lilo",
+           let text = settings?.get("agentSystemPromptText"), !text.isEmpty {
+            // The agent's own prompt carries the working directory and date; the replacement must too.
+            let environment = "Working directory: \(conversation.cwd)\nToday's date: \(Date().formatted(Date.ISO8601FormatStyle(timeZone: .current).year().month().day()))"
+            promptText = text + "\n\n" + environment
+        }
+        let systemPrompt = promptText
         // With the thread already in the log, `session/resume` spares the history `session/load` replays.
         let method = conversation.canResumeSession && !conversation.log.isEmpty ? "session/resume"
             : conversation.canLoadSession ? "session/load" : nil
@@ -353,7 +402,9 @@ final class ConversationHost {
             defer { conversation.replaying = false }
             do {
                 let loaded = try await withAuthentication(conversation, connection: connection) {
-                    try await connection.request(method, ["sessionId": sessionId, "cwd": conversation.cwd, "mcpServers": servers])
+                    var params: [String: Any] = ["sessionId": sessionId, "cwd": conversation.cwd, "mcpServers": servers]
+                    if let systemPrompt { params["systemPrompt"] = ["mode": "override", "content": [["type": "text", "text": systemPrompt]]] }
+                    return try await connection.request(method, params)
                 }
                 applySessionState(conversation, loaded)
                 return
@@ -363,7 +414,9 @@ final class ConversationHost {
             }
         }
         let created = try await withAuthentication(conversation, connection: connection) {
-            try await connection.request("session/new", ["cwd": conversation.cwd, "mcpServers": servers])
+            var params: [String: Any] = ["cwd": conversation.cwd, "mcpServers": servers]
+            if let systemPrompt { params["systemPrompt"] = ["mode": "override", "content": [["type": "text", "text": systemPrompt]]] }
+            return try await connection.request("session/new", params)
         }
         guard let sessionId = created["sessionId"] as? String else {
             throw ACPConnection.RPCError(code: -32603, message: "The agent did not open a session")

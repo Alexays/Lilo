@@ -561,6 +561,33 @@
 				"title": "エージェントの完了時に通知",
 				"description": "表示していない会話が完了したときに通知します。",
 				"keywords": "エージェント 通知 アラート 完了 終了"
+			},
+			"agentSystemPrompt": {
+				"title": "システムプロンプト",
+				"description": "各会話の最初にエージェントへ伝える内容です。",
+				"keywords": "システムプロンプト 指示 claude code 制限",
+				"lilo": "Lilo",
+				"agent": "エージェント独自",
+				"liloPoints": {
+					"browse": "Lilo で Web をブラウズ",
+					"act": "毎回確認せずに実行",
+					"design": "シニアデザイナーの目でデザイン"
+				},
+				"agentPoints": {
+					"same": "そのアプリと同じ動作",
+					"asks": "より多くの操作の前に確認",
+					"updates": "エージェントの更新に追従"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo のプロンプト",
+				"description": "エージェント独自のプロンプトの代わりに伝える内容を編集します。",
+				"keywords": "システムプロンプト 指示 編集",
+				"heading": "指示",
+				"note": "Lilo は末尾に作業ディレクトリと今日の日付を追加します。変更は新規および再開した会話に適用されます。",
+				"reset": "デフォルトに戻す",
+				"resetTitle": "Lilo のプロンプトを戻しますか？",
+				"resetMessage": "変更内容はデフォルトのプロンプトに置き換えられます。"
 			}
 		},
 		"devices": {

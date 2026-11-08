@@ -561,6 +561,33 @@
 				"title": "Melden als een agent klaar is",
 				"description": "Een melding als een gesprek waar je niet naar kijkt klaar is.",
 				"keywords": "agent melding notificatie klaar afgerond"
+			},
+			"agentSystemPrompt": {
+				"title": "Systeemprompt",
+				"description": "Wat agenten aan het begin van elk gesprek te horen krijgen.",
+				"keywords": "systeemprompt instructies claude code beperkingen",
+				"lilo": "Lilo",
+				"agent": "Van de agent",
+				"liloPoints": {
+					"browse": "Surft op het web met Lilo",
+					"act": "Handelt zonder bij elke stap te vragen",
+					"design": "Ontwerpt met het oog van een senior designer"
+				},
+				"agentPoints": {
+					"same": "Gedraagt zich als in zijn app",
+					"asks": "Vraagt vóór meer acties",
+					"updates": "Volgt de updates van de agent"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Prompt van Lilo",
+				"description": "Bewerk wat agenten te horen krijgen in plaats van hun eigen prompt.",
+				"keywords": "systeemprompt instructies bewerken",
+				"heading": "Instructies",
+				"note": "Lilo voegt aan het eind de werkmap en de datum van vandaag toe. Wijzigingen gelden voor nieuwe en heropende gesprekken.",
+				"reset": "Herstel standaard",
+				"resetTitle": "Prompt van Lilo herstellen?",
+				"resetMessage": "Je wijzigingen worden vervangen door de standaardprompt."
 			}
 		},
 		"devices": {

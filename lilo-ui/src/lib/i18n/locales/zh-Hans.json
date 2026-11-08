@@ -561,6 +561,33 @@
 				"title": "智能体完成时通知",
 				"description": "你未在查看的对话完成时发送通知。",
 				"keywords": "智能体 通知 提醒 完成 结束"
+			},
+			"agentSystemPrompt": {
+				"title": "系统提示词",
+				"description": "每次对话开始时告诉代理的内容。",
+				"keywords": "系统提示词 指令 claude code 限制",
+				"lilo": "Lilo",
+				"agent": "代理自带",
+				"liloPoints": {
+					"browse": "用 Lilo 浏览网页",
+					"act": "无需每一步都询问",
+					"design": "以资深设计师的眼光设计"
+				},
+				"agentPoints": {
+					"same": "与其应用中的行为一致",
+					"asks": "更多操作前会先询问",
+					"updates": "跟随代理的更新"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo 提示词",
+				"description": "编辑替代代理自带提示词告诉它们的内容。",
+				"keywords": "系统提示词 指令 编辑",
+				"heading": "指令",
+				"note": "Lilo 会在末尾加上工作目录和今天的日期。更改适用于新建和重新打开的对话。",
+				"reset": "恢复默认",
+				"resetTitle": "要恢复 Lilo 提示词吗？",
+				"resetMessage": "你的更改将被默认提示词替换。"
 			}
 		},
 		"devices": {

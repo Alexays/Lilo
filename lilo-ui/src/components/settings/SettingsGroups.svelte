@@ -20,13 +20,15 @@
     defaultZoom: "minimumFontSize",
   };
 
-  // A setting under a switch shows only while that switch is on; the always-allowed sites while there are some.
+  // A setting under a switch shows only while that switch is on; the always-allowed sites while there are some,
+  // Lilo's system prompt while it is the one chosen.
   const groups = $derived(
     sectionGroups(
       section,
       (setting) =>
         (!setting.requires || isToggleOn(setting.requires, getSetting)) &&
-        (setting.id !== "agentAlwaysAllowed" || parseBlockerSites(getSetting("agentAlwaysAllowedSites", "")).length > 0),
+        (setting.id !== "agentAlwaysAllowed" || parseBlockerSites(getSetting("agentAlwaysAllowedSites", "")).length > 0) &&
+        (setting.id !== "agentSystemPromptText" || getSetting("agentSystemPrompt", "lilo") === "lilo"),
     ),
   );
 

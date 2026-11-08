@@ -27,13 +27,21 @@ final class SettingsStore {
         }
     }
 
+    /// Served while nothing is stored, and never stored themselves, so a newer default reaches everyone who
+    /// kept the old one.
+    static let defaults = [
+        "agentSystemPrompt": "lilo",
+        "agentSystemPromptText": ConversationHost.liloSystemPrompt
+    ]
+
     func get(_ key: String) -> String? {
-        cache[key]
+        cache[key] ?? Self.defaults[key]
     }
 
     /// The cache answers at once; the row lands on the writer queue, ahead of any later write
-    /// (the shutdown checkpoint included).
+    /// (the shutdown checkpoint included). An empty value for a key with a default restores that default.
     func set(_ key: String, value: String) {
+        if let fallback = Self.defaults[key], value.isEmpty || value == fallback { return remove(key) }
         cache[key] = value
         dbPool.asyncWrite({ db in
             try db.execute(sql: "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", arguments: [key, value])
@@ -54,7 +62,7 @@ final class SettingsStore {
     }
 
     func allSettings() -> [String: String] {
-        cache
+        cache.merging(Self.defaults) { stored, _ in stored }
     }
 
     // MARK: - Typed Helpers
