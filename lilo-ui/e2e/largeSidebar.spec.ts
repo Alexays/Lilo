@@ -146,6 +146,7 @@ test("a 2,000-tab imported space renders windowed, in order, and keeps a tab pat
 	expect(await windowRows()).toBe(settled);
 
 	const bigPatch = await renameCost(page, big.tabs.find((t) => t.id === "open-3")!);
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { sidebarStackTabs: "false", interfaceSize: "spacious" } }));
 
 	await pane.locator(".space-scroll").evaluate((scroller) => { scroller.scrollTop = scroller.scrollHeight; });
 	await expect(pane.locator(`[data-tab-id="open-${UNPINNED - 1}"]`)).toHaveCount(1);

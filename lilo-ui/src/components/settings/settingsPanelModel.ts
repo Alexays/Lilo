@@ -61,6 +61,7 @@ export type SettingId =
   | "appUpdates"
   | "autoUpdate"
   | "shortcuts"
+  | "interfaceSize"
   | "theme"
   | "tabPosition"
   | "addressPlacement"
@@ -191,6 +192,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "theme", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "appIcon", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "seasonalAppIcon", section: "appearance", groupKey: "settings.groups.theme" },
+  { id: "interfaceSize", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "tabPosition", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "addressPlacement", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "hideSpaceNames", section: "appearance", groupKey: "settings.groups.tabLayout" },

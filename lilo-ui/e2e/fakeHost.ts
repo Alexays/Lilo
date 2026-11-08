@@ -307,6 +307,7 @@ export async function installFakeHost(
 				folders: state.foldersBySpace?.[state.activeSpaceId] ?? [],
 				activeTabId: state.activeTabBySpace[state.activeSpaceId] ?? "",
 				sidebarWidth: state.sidebarWidth ?? 260,
+				interfaceSize: state.settings?.interfaceSize,
 				sidebarVisible: state.sidebarVisible ?? true,
 				sidebarRail: state.sidebarRail,
 				tabPosition: state.tabPosition,

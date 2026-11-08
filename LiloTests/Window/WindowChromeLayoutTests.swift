@@ -211,6 +211,14 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(settings?["searchEngine"] as? String, "duckduckgo", "the other window searches with it too")
     }
 
+    func testSavedInterfaceSizeReachesTheInitialChromeState() throws {
+        let window = try makeSizedWindow()
+        XCTAssertEqual(window.makeChromeInitialState()["interfaceSize"] as? String, "comfortable")
+        let settings = try XCTUnwrap(browserContext.context.settingsStore)
+        settings.set("interfaceSize", value: "spacious")
+        XCTAssertEqual(window.makeChromeInitialState()["interfaceSize"] as? String, "spacious")
+    }
+
     func testBootstrapScriptCarriesTheCachedLayout() {
         let script = MainWindowController.buildBootstrapScript(
             sidebarWidth: 260,

@@ -25,7 +25,7 @@ import { initMediaStore } from "./media.svelte";
 import { applyProfileInitialState, initProfileStore } from "./profiles.svelte";
 import { initScreenshotEditor } from "./screenshotEditor.svelte";
 import { initSearchEngineStore } from "./searchEngines";
-import { initSettingsStore } from "./settings.svelte";
+import { applyInterfaceSizeInitialState, initSettingsStore } from "./settings.svelte";
 import { initShortcutKeysStore } from "./shortcutKeys.svelte";
 import { applySpaceInitialState, initSpaceStore } from "./spaces.svelte";
 import { initSpaceColorStore } from "./spaceColor.svelte";
@@ -94,6 +94,7 @@ const DEFERRED_STORES: StoreInitializer[] = [
 ];
 
 const CRITICAL_STATE_APPLIERS: InitialStateApplier[] = [
+	applyInterfaceSizeInitialState,
 	applyInitialGeometry,
 	applyUIInitialState,
 	applyTabLayoutInitialState,

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
+  import { contrastRatio, ensureContrast, parseHexColor, toHex } from "../../lib/sidebarTheme";
+  import { themeSidebarBackground } from "../../stores/theme.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { createFrameScheduler } from "../../lib/motion/frameScheduler";
@@ -48,6 +50,25 @@
   import { getTabs } from "../../stores/tabs.svelte";
   import type { CommandResult } from "../../stores/commandBarSearch.svelte";
   import { buildTabFaviconLookup, LINE_ICONS, resolveResultIcon } from "./commandBarIcons";
+
+  const paletteStyle = $derived.by(() => {
+    const background = themeSidebarBackground();
+    const bg = parseHexColor(background);
+    if (!bg) return "";
+    const black = { r: 0, g: 0, b: 0 };
+    const white = { r: 255, g: 255, b: 255 };
+    const ink = contrastRatio(black, bg) >= contrastRatio(white, bg) ? black : white;
+    const mix = (color: typeof bg, amount: number) => toHex({
+      r: Math.round(bg.r * (1 - amount) + color.r * amount),
+      g: Math.round(bg.g * (1 - amount) + color.g * amount),
+      b: Math.round(bg.b * (1 - amount) + color.b * amount),
+    });
+    const primary = toHex(ink);
+    const secondary = ensureContrast(mix(ink, 0.8), background, 4.6, primary, contrastRatio);
+    // Moving the selection away from the ink preserves its contrast on mid-tone Spaces too.
+    const selection = mix(ink === black ? white : black, 0.14);
+    return `--cb-background:${background}; --cb-text:${primary}; --cb-secondary:${secondary}; --cb-selection:${selection};`;
+  });
 
   setTopLevelDomains(TOP_LEVEL_DOMAINS);
 
@@ -579,6 +600,7 @@
     <div
       bind:this={commandBarEl}
       class="command-bar float-surface"
+      style={paletteStyle}
     >
       <div bind:this={commandBarContentEl} class="command-bar-content">
         <div class="command-bar-header">
@@ -739,7 +761,24 @@
   }
 
   .command-bar {
-    width: min(600px, 100%);
+    --font-size-md: var(--interface-text-size);
+    --font-size-sm: calc(var(--interface-text-size) - 1px);
+    --font-size-xs: calc(var(--interface-text-size) - 2px);
+    /* Keep the Space surface while guarding text and selection contrast for the palette. */
+    --text-primary: var(--cb-text, var(--sidebar-contrast));
+    --text-secondary: var(--cb-secondary, var(--sidebar-secondary));
+    --text-muted: var(--cb-secondary, var(--sidebar-muted));
+    --accent-ink: var(--text-primary);
+    --bg-hover: var(--cb-selection);
+    --bg-active: var(--cb-selection);
+    --border: var(--sidebar-border);
+    --separator: var(--sidebar-separator);
+    --cb-selection: var(--sidebar-sel);
+    background: var(--cb-background, var(--sidebar-bg));
+    --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 14%, transparent);
+    outline: 1px solid color-mix(in srgb, var(--accent) 22%, var(--sidebar-border));
+    outline-offset: -1px;
+    width: min(var(--interface-palette-width), 100%);
     max-height: 100%;
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -754,7 +793,7 @@
   /* Part of the page rather than over it: a quiet edge, no shadow to lift it. */
   .docked .command-bar {
     max-height: calc(100% - 40px);
-    box-shadow: 0 0 0 1px var(--float-border);
+    box-shadow: 0 0 0 1px var(--border);
     animation: none;
   }
 
@@ -774,7 +813,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    height: 52px;
+    height: var(--interface-palette-search-height);
     padding: 0 16px;
   }
 
@@ -786,7 +825,7 @@
   .command-bar-input,
   .command-bar-autocomplete {
     font: inherit;
-    font-size: var(--font-size-modal);
+    font-size: var(--interface-palette-input-size);
     letter-spacing: 0;
     line-height: 24px;
   }
@@ -840,7 +879,7 @@
     flex: none;
     align-items: center;
     gap: 6px;
-    height: 22px;
+    height: calc(22px + var(--interface-step) * 2px);
     padding: 0 8px;
     border-radius: var(--radius-sm);
     font-size: var(--font-size-sm);
@@ -870,8 +909,8 @@
 
   .scope-hint.selected,
   .scope-token {
-    background: var(--accent-tint-14);
-    color: var(--accent-ink);
+    background: var(--cb-selection);
+    color: var(--text-primary);
   }
 
   .scope-hint:focus-visible {
@@ -897,7 +936,39 @@
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--cb-scroll-thumb) transparent;
     padding: 0 8px 8px;
+  }
+
+  .command-bar-results:hover,
+  .command-bar-results:focus-within {
+    --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 28%, transparent);
+  }
+
+  .command-bar-results::-webkit-scrollbar { width: 6px; }
+  .command-bar-results::-webkit-scrollbar-track { background: transparent; }
+  .command-bar-results::-webkit-scrollbar-thumb {
+    background: var(--cb-scroll-thumb);
+    border-radius: var(--radius-chip);
+  }
+  .command-bar-results::-webkit-scrollbar-thumb:active {
+    background: color-mix(in srgb, var(--text-primary) 40%, transparent);
+  }
+
+  @media (prefers-contrast: more) {
+    .command-bar {
+      --text-secondary: var(--text-primary);
+      --text-muted: var(--text-primary);
+      --separator: color-mix(in srgb, var(--text-primary) 30%, transparent);
+    }
+    .command-bar-results { --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 45%, transparent); }
+    .command-bar-results:hover,
+    .command-bar-results:focus-within { --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 60%, transparent); }
+  }
+
+  @media (forced-colors: active) {
+    .command-bar-results { scrollbar-color: auto; }
   }
 
   .command-bar-section-header {
@@ -927,10 +998,10 @@
   .command-bar-result {
     display: grid;
     /* The helper shows whole while the title keeps its room, then gives way first. */
-    grid-template-columns: 24px minmax(min(160px, 50%), 1fr) minmax(0, max-content);
+    grid-template-columns: var(--interface-palette-icon-size) minmax(min(160px, 50%), 1fr) minmax(0, max-content);
     align-items: center;
     gap: 12px;
-    height: 40px;
+    height: var(--interface-palette-row-height);
     padding: 0 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -938,15 +1009,15 @@
 
   .command-bar-result.selected,
   .command-bar-chip.selected {
-    background: var(--bg-hover);
+    background: var(--cb-selection);
   }
 
   .result-icon {
     position: relative;
     display: grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
+    width: var(--interface-palette-icon-size);
+    height: var(--interface-palette-icon-size);
     border-radius: var(--radius-sm);
     background: var(--bg-hover);
     color: var(--text-primary);
@@ -985,8 +1056,8 @@
 
   .result-favicon-image {
     grid-area: 1 / 1;
-    width: 16px;
-    height: 16px;
+    width: var(--interface-icon-size);
+    height: var(--interface-icon-size);
     object-fit: contain;
     border-radius: var(--radius-xs);
   }
@@ -1061,7 +1132,7 @@
     align-items: center;
     gap: 8px;
     max-width: 180px;
-    height: 32px;
+    height: var(--interface-row-height);
     padding: 0 10px 0 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -1069,8 +1140,8 @@
 
   .command-bar-chip .result-icon {
     flex: none;
-    width: 20px;
-    height: 20px;
+    width: calc(var(--interface-palette-icon-size) - 4px);
+    height: calc(var(--interface-palette-icon-size) - 4px);
     border-radius: var(--radius-xs);
     font-size: var(--font-size-xs);
   }
@@ -1106,7 +1177,7 @@
     flex: none;
     align-items: center;
     gap: 16px;
-    height: 36px;
+    height: calc(36px + var(--interface-step) * 4px);
     padding: 0 16px;
     border-top: 1px solid var(--separator);
   }
@@ -1117,9 +1188,15 @@
     flex: 1;
     flex-wrap: wrap;
     gap: 0 16px;
-    height: 20px;
+    height: calc(20px + var(--interface-step) * 2px);
     min-width: 0;
     overflow: hidden;
+  }
+
+  .keycap {
+    min-width: calc(20px + var(--interface-step) * 2px);
+    height: calc(20px + var(--interface-step) * 2px);
+    line-height: calc(20px + var(--interface-step) * 2px);
   }
 
   .key-hint {

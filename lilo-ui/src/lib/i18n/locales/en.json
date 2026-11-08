@@ -272,6 +272,16 @@
 				"description": "Where downloaded files are saved.",
 				"keywords": "download save location directory"
 			},
+			"interfaceSize": {
+				"title": "Interface size",
+				"description": "Adjust text, spacing and icons in the sidebar and command palette.",
+				"keywords": "interface size sidebar density font text spacing icons command palette compact comfortable roomy spacious",
+				"compact": "Compact",
+				"comfortable": "Comfortable",
+				"roomy": "Roomy",
+				"spacious": "Spacious",
+				"default": "Default"
+			},
 			"tabPosition": {
 				"title": "Tabs",
 				"description": "Where your tabs, Spaces and favorites live. You can also drag the sidebar to another edge.",

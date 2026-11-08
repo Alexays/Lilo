@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getInterfaceSizeStep } from "../../stores/settings.svelte";
   import { tick } from "svelte";
   import { tooltipSide } from "../../stores/tabLayout.svelte";
   import { translateFlip } from "../../lib/motion/translateFlip";
@@ -362,7 +363,7 @@
                       src={bookmark.faviconDataURL}
                       title={bookmark.title}
                       url={bookmark.url}
-                      size={18}
+                      size={18 + getInterfaceSizeStep() * 2}
                       radius={5}
                       asleep={bookmark.isClosed}
                     />
@@ -444,7 +445,7 @@
     --bookmark-zone-color: var(--color-bookmark);
     position: relative;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(var(--interface-favorite-height), 1fr));
     gap: 6px;
     min-height: 0;
     /* The drop zone's border, cancelled by the margin so the tiles line up with the rows. */
@@ -478,8 +479,8 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 40px;
-    min-height: 40px;
+    height: var(--interface-favorite-height);
+    min-height: var(--interface-favorite-height);
     padding: 0 8px;
     overflow: hidden;
     border-color: color-mix(in srgb, var(--bookmark-zone-color) 36%, transparent);
@@ -525,7 +526,7 @@
 
   .bookmark-placeholder {
     width: 100%;
-    height: 40px;
+    height: var(--interface-favorite-height);
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--bookmark-zone-color) 42%, transparent);
     border-radius: var(--radius-md);
@@ -543,7 +544,7 @@
   /* The sidebar's selected surface at rest; the hover layer goes over it, the open tile takes an accent ring. */
   .bookmark-tile {
     width: 100%;
-    height: 40px;
+    height: var(--interface-favorite-height);
     padding: 0;
     border: none;
     border-radius: var(--radius-md);
@@ -603,7 +604,7 @@
     box-sizing: border-box;
     border-radius: var(--radius-chip);
     color: var(--accent-text);
-    font-size: var(--font-size-2xs);
+    font-size: var(--interface-favorite-badge-size);
     font-weight: var(--font-weight-semibold);
     font-variant-numeric: tabular-nums;
     font-feature-settings: "case";

@@ -44,6 +44,21 @@
      (overflow: hidden / contain: paint) so the ring stays inside the box. */
   --focus-outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
 
+  /* Comfortable preserves the default geometry; one step coordinates the expanded chrome. */
+  --interface-step: 0;
+  --interface-row-height: calc(32px + var(--interface-step) * 4px);
+  --interface-text-size: calc(13px + var(--interface-step) * 1px);
+  --interface-icon-size: calc(16px + var(--interface-step) * 2px);
+  --interface-favorite-height: calc(40px + var(--interface-step) * 4px);
+  --interface-favorite-badge-size: calc(10px + var(--interface-step) * 1px);
+  --interface-address-height: calc(32px + var(--interface-step) * 4px);
+  --interface-space-height: calc(28px + var(--interface-step) * 4px);
+  --interface-palette-width: calc(600px + var(--interface-step) * 40px);
+  --interface-palette-search-height: calc(52px + var(--interface-step) * 4px);
+  --interface-palette-input-size: calc(17px + var(--interface-step) * 1px);
+  --interface-palette-row-height: calc(40px + var(--interface-step) * 4px);
+  --interface-palette-icon-size: calc(24px + var(--interface-step) * 2px);
+
   --sidebar-width: 260px;
   /* Mirrors MainWindowController.sidebarRailWidth. */
   --sidebar-rail-width: 76px;
@@ -678,3 +693,7 @@ html.window-unfocused .anim *::after {
     scroll-behavior: auto !important;
   }
 }
+
+:root[data-interface-size="compact"] { --interface-step: -1; }
+:root[data-interface-size="roomy"] { --interface-step: 1; }
+:root[data-interface-size="spacious"] { --interface-step: 2; }

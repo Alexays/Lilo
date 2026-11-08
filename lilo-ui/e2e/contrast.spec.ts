@@ -635,3 +635,21 @@ for (const colorScheme of ["light", "dark"] as const) {
 		expect(await textContrast(page, ".all-permissions")).toBeGreaterThanOrEqual(4.5);
 	});
 }
+
+
+for (const colorScheme of ["light", "dark"] as const) {
+	for (const spaceColor of ["#247a53", "#be4162", "#d4ae36", "#20242e"]) {
+		test(`the accented palette stays readable on ${spaceColor} in ${colorScheme} mode`, async ({ page }) => {
+			await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+			const world = initialWorld();
+			world.spaces[0].color = spaceColor;
+			await bootChrome(page, world);
+			await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+			await page.locator(".command-bar-input").fill("beta");
+			for (const selector of [".command-bar-input", ".scope-hint.selected", ".command-bar-result.selected .result-title",
+				".command-bar-result.selected .result-subtitle", ".command-bar-result.selected .result-hl", ".command-bar-footer .key-hint"]) {
+				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(4.5);
+			}
+		});
+	}
+}

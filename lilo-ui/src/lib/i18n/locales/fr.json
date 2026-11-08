@@ -272,6 +272,16 @@
 				"description": "Emplacement des fichiers téléchargés.",
 				"keywords": "téléchargements enregistrer emplacement"
 			},
+			"interfaceSize": {
+				"title": "Taille de l’interface",
+				"description": "Ajustez le texte, l’espacement et les icônes de la barre latérale et de la palette de commandes.",
+				"keywords": "interface taille barre latérale densité police texte espacement icônes palette commandes",
+				"compact": "Compacte",
+				"comfortable": "Confortable",
+				"roomy": "Aérée",
+				"spacious": "Spacieuse",
+				"default": "Par défaut"
+			},
 			"tabPosition": {
 				"title": "Onglets",
 				"description": "Où vivent vos onglets, Spaces et favoris. Vous pouvez aussi glisser la barre latérale vers un autre bord.",

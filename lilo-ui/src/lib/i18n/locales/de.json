@@ -272,6 +272,16 @@
 				"description": "Hier werden heruntergeladene Dateien gesichert.",
 				"keywords": "download sichern speicherort verzeichnis"
 			},
+			"interfaceSize": {
+				"title": "Größe der Benutzeroberfläche",
+				"description": "Text, Abstände und Symbole in der Seitenleiste und Befehlspalette anpassen.",
+				"keywords": "oberfläche größe seitenleiste dichte schrift text abstände symbole befehlspalette",
+				"compact": "Kompakt",
+				"comfortable": "Komfortabel",
+				"roomy": "Locker",
+				"spacious": "Großzügig",
+				"default": "Standard"
+			},
 			"tabPosition": {
 				"title": "Tabs",
 				"description": "Hier befinden sich deine Tabs, Spaces und Favoriten. Du kannst die Seitenleiste auch an einen anderen Rand ziehen.",

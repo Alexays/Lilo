@@ -272,6 +272,16 @@
 				"description": "Dónde se guardan los archivos descargados.",
 				"keywords": "descarga guardar ubicación directorio"
 			},
+			"interfaceSize": {
+				"title": "Tamaño de la interfaz",
+				"description": "Ajusta el texto, el espaciado y los iconos de la barra lateral y la paleta de comandos.",
+				"keywords": "interfaz tamaño barra lateral densidad fuente texto espaciado iconos paleta comandos",
+				"compact": "Compacto",
+				"comfortable": "Cómodo",
+				"roomy": "Holgado",
+				"spacious": "Espacioso",
+				"default": "Predeterminado"
+			},
 			"tabPosition": {
 				"title": "Pestañas",
 				"description": "Dónde están tus pestañas, Espacios y favoritos. También puedes arrastrar la barra lateral a otro borde.",
