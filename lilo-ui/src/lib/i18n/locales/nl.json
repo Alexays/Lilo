@@ -2628,6 +2628,7 @@
 				"other": "{count} berichten in de wachtrij"
 			},
 			"queuedHint": "Wordt verstuurd als de agent klaar is. Cmd Return verstuurt nu.",
+			"queuedTag": "In wachtrij",
 			"thought": "Gedachte",
 			"restoreToHere": "Herstel tot hier",
 			"restoreConfirm": "Projectbestanden terugzetten naar hoe ze bij dit bericht waren?",

@@ -2628,6 +2628,7 @@
 				"other": "{count} Nachrichten in der Warteschlange"
 			},
 			"queuedHint": "Wird gesendet, wenn der Agent fertig ist. Cmd Return sendet sofort.",
+			"queuedTag": "In Warteschlange",
 			"thought": "Gedanken",
 			"restoreToHere": "Bis hierher wiederherstellen",
 			"restoreConfirm": "Projektdateien auf den Stand dieser Nachricht zurücksetzen?",

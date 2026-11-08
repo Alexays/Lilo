@@ -2628,6 +2628,7 @@
 				"other": "대기 중인 메시지 {count}개"
 			},
 			"queuedHint": "에이전트가 끝나면 전송됩니다. Cmd Return을 누르면 바로 보냅니다.",
+			"queuedTag": "대기 중",
 			"thought": "생각",
 			"restoreToHere": "여기까지 복원",
 			"restoreConfirm": "프로젝트 파일을 이 메시지 시점으로 되돌릴까요?",

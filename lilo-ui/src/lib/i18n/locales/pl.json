@@ -2678,6 +2678,7 @@
 				"other": "{count} wiadomości w kolejce"
 			},
 			"queuedHint": "Zostanie wysłana, gdy agent skończy. Cmd Return wysyła od razu.",
+			"queuedTag": "W kolejce",
 			"thought": "Rozumowanie",
 			"restoreToHere": "Przywróć do tego miejsca",
 			"restoreConfirm": "Przywrócić pliki projektu do stanu z tej wiadomości?",

@@ -2628,6 +2628,7 @@
 				"other": "Sırada {count} mesaj"
 			},
 			"queuedHint": "Ajan bitirince gönderilir. Cmd Return hemen gönderir.",
+			"queuedTag": "Sırada",
 			"thought": "Düşünce",
 			"restoreToHere": "Buraya kadar geri yükle",
 			"restoreConfirm": "Proje dosyaları bu mesajdaki hâline geri döndürülsün mü?",

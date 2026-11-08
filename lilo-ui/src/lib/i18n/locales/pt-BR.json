@@ -2628,6 +2628,7 @@
 				"other": "{count} mensagens na fila"
 			},
 			"queuedHint": "Enviada quando o agente terminar. Cmd Return envia agora.",
+			"queuedTag": "Na fila",
 			"thought": "Raciocínio",
 			"restoreToHere": "Restaurar até aqui",
 			"restoreConfirm": "Voltar os arquivos do projeto ao estado desta mensagem?",

@@ -2628,6 +2628,7 @@
 				"other": "{count} messaggi in coda"
 			},
 			"queuedHint": "Inviato quando l'agente finisce. Cmd Invio lo invia subito.",
+			"queuedTag": "In coda",
 			"thought": "Ragionamento",
 			"restoreToHere": "Ripristina fino a qui",
 			"restoreConfirm": "Riportare i file del progetto com'erano a questo messaggio?",

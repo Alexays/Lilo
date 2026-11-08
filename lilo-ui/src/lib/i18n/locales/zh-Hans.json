@@ -2628,6 +2628,7 @@
 				"other": "{count} 条消息排队中"
 			},
 			"queuedHint": "智能体完成后发送。按 Cmd Return 立即发送。",
+			"queuedTag": "排队中",
 			"thought": "思考",
 			"restoreToHere": "恢复到此处",
 			"restoreConfirm": "将项目文件恢复到此消息时的状态？",

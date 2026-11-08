@@ -2628,6 +2628,7 @@
 				"other": "{count} mensajes en cola"
 			},
 			"queuedHint": "Se envía cuando el agente termina. Cmd Retorno lo envía ya.",
+			"queuedTag": "En cola",
 			"thought": "Razonamiento",
 			"restoreToHere": "Restaurar hasta aquí",
 			"restoreConfirm": "¿Devolver los archivos del proyecto al estado que tenían en este mensaje?",

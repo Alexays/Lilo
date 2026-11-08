@@ -2617,6 +2617,7 @@
 				"other": "{count} messages queued"
 			},
 			"queuedHint": "Sent when the agent finishes. Cmd Return sends now.",
+			"queuedTag": "Queued",
 			"thought": "Thought",
 			"restoreToHere": "Restore to here",
 			"restoreConfirm": "Put the project files back as they were at this message?",

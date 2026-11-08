@@ -2617,6 +2617,7 @@
 				"other": "{count} messages en attente"
 			},
 			"queuedHint": "Envoyé quand l'agent a fini. Cmd Entrée l'envoie tout de suite.",
+			"queuedTag": "En file",
 			"thought": "Réflexion",
 			"restoreToHere": "Revenir à ce point",
 			"restoreConfirm": "Remettre les fichiers du projet tels qu'ils étaient à ce message ?",

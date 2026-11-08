@@ -2628,6 +2628,7 @@
 				"other": "{count} 件のメッセージが待機中"
 			},
 			"queuedHint": "エージェントの完了後に送信されます。Cmd Return ですぐに送信します。",
+			"queuedTag": "待機中",
 			"thought": "思考",
 			"restoreToHere": "ここまで復元",
 			"restoreConfirm": "プロジェクトのファイルをこのメッセージの時点の状態に戻しますか？",

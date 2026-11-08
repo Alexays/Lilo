@@ -2628,6 +2628,7 @@
 				"other": "{count} 則訊息排隊中"
 			},
 			"queuedHint": "代理程式完成後傳送。按 Cmd Return 立即傳送。",
+			"queuedTag": "排隊中",
 			"thought": "思考",
 			"restoreToHere": "回復到此處",
 			"restoreConfirm": "要將專案檔案回復到這則訊息時的狀態嗎？",
