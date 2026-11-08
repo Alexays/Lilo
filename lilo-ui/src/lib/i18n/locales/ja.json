@@ -2838,6 +2838,8 @@
 		"turn": {
 			"workedFor": "{duration} 作業",
 			"stopped": "停止しました",
+			"refusalTitle": "モデルが続行を拒否しました",
+			"refusalHint": "安全機能がこのターンを停止しました。正当な作業でも起こることがあります。依頼を言い換えるか、下で別のモデルを選んでください。",
 			"files": {
 				"one": "{count} 個のファイルを変更",
 				"other": "{count} 個のファイルを変更"

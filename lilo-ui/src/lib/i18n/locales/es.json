@@ -2838,6 +2838,8 @@
 		"turn": {
 			"workedFor": "Trabajó durante {duration}",
 			"stopped": "Detenido",
+			"refusalTitle": "El modelo se negó a continuar",
+			"refusalHint": "Sus salvaguardas detuvieron este turno, a veces en trabajo legítimo. Reformula la petición o elige otro modelo abajo.",
 			"files": {
 				"one": "{count} archivo cambiado",
 				"other": "{count} archivos cambiados"

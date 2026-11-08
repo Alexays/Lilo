@@ -2838,6 +2838,8 @@
 		"turn": {
 			"workedFor": "{duration} gewerkt",
 			"stopped": "Gestopt",
+			"refusalTitle": "Het model weigerde door te gaan",
+			"refusalHint": "Zijn beveiligingen stopten deze beurt, soms ook bij legitiem werk. Herformuleer het verzoek of kies hieronder een ander model.",
 			"files": {
 				"one": "{count} bestand gewijzigd",
 				"other": "{count} bestanden gewijzigd"

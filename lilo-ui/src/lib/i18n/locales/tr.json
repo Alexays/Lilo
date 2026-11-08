@@ -2838,6 +2838,8 @@
 		"turn": {
 			"workedFor": "{duration} çalıştı",
 			"stopped": "Durduruldu",
+			"refusalTitle": "Model devam etmeyi reddetti",
+			"refusalHint": "Güvenlik önlemleri bu turu durdurdu, bazen meşru işlerde de olur. İsteği yeniden ifade edin veya aşağıdan başka bir model seçin.",
 			"files": {
 				"one": "{count} dosya değişti",
 				"other": "{count} dosya değişti"

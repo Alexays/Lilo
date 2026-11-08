@@ -2838,6 +2838,8 @@
 		"turn": {
 			"workedFor": "Trabalhou por {duration}",
 			"stopped": "Parado",
+			"refusalTitle": "O modelo se recusou a continuar",
+			"refusalHint": "As proteções dele pararam este turno, às vezes em trabalho legítimo. Reformule o pedido ou escolha outro modelo abaixo.",
 			"files": {
 				"one": "{count} arquivo alterado",
 				"other": "{count} arquivos alterados"

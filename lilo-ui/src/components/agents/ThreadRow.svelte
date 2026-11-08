@@ -134,6 +134,16 @@
     </div>
   </div>
 {:else if view.kind === "turnEnd"}
+  {#if view.stopReason === "refusal"}
+    <!-- Any agent's model can refuse; what it wrote about why stays above, this says what to do next. -->
+    <div class="refusal" role="note">
+      <span class="refusal-icon" aria-hidden="true"><Icon name="shield" size={14} /></span>
+      <span class="refusal-copy">
+        <span class="refusal-title">{t("agents.turn.refusalTitle")}</span>
+        <span class="refusal-hint">{t("agents.turn.refusalHint")}</span>
+      </span>
+    </div>
+  {/if}
   <div class="turn-footer">
     {#if view.stopReason === "cancelled"}
       <span class="turn-meta">{t("agents.turn.stopped")}</span>
@@ -399,6 +409,44 @@
 
   .chevron.open {
     transform: rotate(90deg);
+  }
+
+  .refusal {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-10);
+    padding: var(--space-10) var(--space-12);
+    border: 1px solid var(--separator);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--text-primary) 3%, var(--bg-primary));
+  }
+
+  .refusal-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+    background: var(--text-primary-tint-10);
+    color: var(--text-secondary);
+  }
+
+  .refusal-copy {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .refusal-title {
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .refusal-hint {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
   }
 
   .turn-footer {

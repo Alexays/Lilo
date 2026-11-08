@@ -2932,6 +2932,8 @@
 		"turn": {
 			"workedFor": "Praca trwała {duration}",
 			"stopped": "Zatrzymano",
+			"refusalTitle": "Model odmówił kontynuacji",
+			"refusalHint": "Jego zabezpieczenia zatrzymały tę turę, czasem przy uzasadnionej pracy. Przeformułuj prośbę lub wybierz poniżej inny model.",
 			"files": {
 				"one": "Zmieniono {count} plik",
 				"few": "Zmieniono {count} pliki",

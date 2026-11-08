@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { onDestroy, untrack } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
   import { tabActions } from "../../lib/bridge/actions";
   import { copyText } from "../../lib/clipboard";
   import { t } from "../../lib/i18n/state.svelte";
+  import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { tooltip } from "../../lib/tooltip";
   import { conversationActions } from "./conversationActions";
   import Icon from "../ui/Icon.svelte";
@@ -25,6 +27,78 @@
     parsed = parseMarkdown(text, parsed);
     return parsed.blocks;
   });
+
+  // Streamed text shows as soon as it arrives and only fades in, letter by letter; letters are spans just
+  // while they animate, so the DOM never grows with the message and nothing runs once the stream is quiet.
+  const LETTER_STEP_MS = 6;
+  const LETTER_STAGGER = 24;
+  const LETTER_SETTLE_MS = 120 + LETTER_STEP_MS * LETTER_STAGGER + 40;
+
+  // Where each inline part starts in the drawn text, which only grows while streaming.
+  const layout = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole per run, never mutated after
+    const starts = new Map<Inline, number>();
+    let total = 0;
+    const add = (parts: Inline[]) => {
+      for (const part of parts) {
+        starts.set(part, total);
+        if (part.type !== "image") total += part.text.length;
+      }
+    };
+    for (const block of blocks) {
+      if (block.type === "code") total += block.text.length;
+      else if (block.type === "table") {
+        block.head.forEach(add);
+        for (const row of block.rows) row.forEach(add);
+      } else if (block.type === "list") block.items.forEach(add);
+      else add(block.inline);
+    }
+    return { starts, total };
+  });
+
+  /** Drawn text before this offset is plain; Infinity once every letter has settled. */
+  let settled = $state(Infinity);
+  // Where each chunk still animating starts, and when it came, oldest first.
+  let arrivals: { at: number; time: number }[] = [];
+  let lastTotal = untrack(() => layout.total);
+  let settleTimer: ReturnType<typeof setTimeout> | undefined;
+
+  $effect(() => {
+    const total = layout.total;
+    untrack(() => {
+      if (total < lastTotal) {
+        arrivals = [];
+        settled = Infinity;
+      } else if (total > lastTotal && !prefersReducedMotion()) {
+        if (settled === Infinity) settled = lastTotal;
+        arrivals.push({ at: lastTotal, time: performance.now() });
+        settleTimer ??= setTimeout(settle, LETTER_SETTLE_MS);
+      }
+      lastTotal = total;
+    });
+  });
+
+  function settle(): void {
+    settleTimer = undefined;
+    arrivals.shift();
+    settled = arrivals[0]?.at ?? Infinity;
+    if (arrivals[0]) settleTimer = setTimeout(settle, Math.max(0, arrivals[0].time + LETTER_SETTLE_MS - performance.now()));
+  }
+
+  onDestroy(() => clearTimeout(settleTimer));
+
+  /** The letters of `text` (drawn from `start`) still animating, each delayed by its place in its chunk. */
+  function freshLetters(text: string, start: number): { at: number; ch: string; delay: number }[] {
+    const letters = [];
+    for (let i = Math.max(0, settled - start); i < text.length; i++) {
+      const at = start + i;
+      let chunk = settled;
+      for (const arrival of arrivals) if (arrival.at <= at) chunk = arrival.at;
+      letters.push({ at, ch: text[i], delay: Math.min(at - chunk, LETTER_STAGGER) * LETTER_STEP_MS });
+    }
+    return letters;
+  }
+
   let copiedIndex = $state(-1);
   // SVG blocks show their picture unless switched to the code, by block index.
   const showCode = new SvelteMap<number, boolean>();
@@ -49,7 +123,9 @@
   }
 </script>
 
-{#snippet inline(parts: Inline[])}{#each parts as part, index (index)}{#if part.type === "code"}<code>{part.text}</code>{:else if part.type === "path"}<code class="path">{part.text}</code>{:else if part.type === "strong"}<strong>{part.text}</strong>{:else if part.type === "em"}<em>{part.text}</em>{:else if part.type === "link"}<a href={part.href} onclick={(event) => openLink(event, part.href)}>{part.text}</a>{:else if part.type === "image"}{@const source = imageSource(part.src, cwd)}{#if source?.type === "image"}<ThreadImage src={source.src} alt={part.alt} />{:else if source?.type === "remote"}<a class="image-link" href={source.href} title={part.alt || source.href} onclick={(event) => openLink(event, source.href)}><Icon name="image" size={12} />{source.host}</a>{:else}{part.alt}{/if}{:else}{part.text}{/if}{/each}{/snippet}
+{#snippet letters(text: string, start: number)}{#if start + text.length <= settled}{text}{:else}{text.slice(0, Math.max(0, settled - start))}{#each freshLetters(text, start) as letter (letter.at)}<span class="letter" style:animation-delay="{letter.delay}ms">{letter.ch}</span>{/each}{/if}{/snippet}
+
+{#snippet inline(parts: Inline[])}{#each parts as part, index (index)}{#if part.type === "code"}<code>{@render letters(part.text, layout.starts.get(part) ?? 0)}</code>{:else if part.type === "path"}<code class="path">{@render letters(part.text, layout.starts.get(part) ?? 0)}</code>{:else if part.type === "strong"}<strong>{@render letters(part.text, layout.starts.get(part) ?? 0)}</strong>{:else if part.type === "em"}<em>{@render letters(part.text, layout.starts.get(part) ?? 0)}</em>{:else if part.type === "link"}<a href={part.href} onclick={(event) => openLink(event, part.href)}>{@render letters(part.text, layout.starts.get(part) ?? 0)}</a>{:else if part.type === "image"}{@const source = imageSource(part.src, cwd)}{#if source?.type === "image"}<ThreadImage src={source.src} alt={part.alt} />{:else if source?.type === "remote"}<a class="image-link" href={source.href} title={part.alt || source.href} onclick={(event) => openLink(event, source.href)}><Icon name="image" size={12} />{source.host}</a>{:else}{part.alt}{/if}{:else}{@render letters(part.text, layout.starts.get(part) ?? 0)}{/if}{/each}{/snippet}
 
 <div class="markdown">
   {#each blocks as block, index (index)}
@@ -131,6 +207,23 @@
 </div>
 
 <style>
+  /* Opacity only: no layout, and the spans fold back into text once it ends. */
+  .letter {
+    animation: letter-in var(--motion-duration-fast) ease-out both;
+  }
+
+  @keyframes letter-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .letter {
+      animation: none;
+    }
+  }
+
   .table-scroll {
     overflow-x: auto;
   }

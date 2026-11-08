@@ -2838,6 +2838,8 @@
 		"turn": {
 			"workedFor": "Hat {duration} gearbeitet",
 			"stopped": "Gestoppt",
+			"refusalTitle": "Das Modell hat abgelehnt, fortzufahren",
+			"refusalHint": "Seine Schutzmechanismen haben diesen Schritt gestoppt, manchmal auch bei legitimer Arbeit. Formuliere die Anfrage um oder wähle unten ein anderes Modell.",
 			"files": {
 				"one": "{count} Datei geändert",
 				"other": "{count} Dateien geändert"

@@ -2838,6 +2838,8 @@
 		"turn": {
 			"workedFor": "工作了 {duration}",
 			"stopped": "已停止",
+			"refusalTitle": "模型拒絕繼續",
+			"refusalHint": "它的安全機制停止了這一輪，有時也會誤擋正當工作。請換個說法，或在下方選擇其他模型。",
 			"files": {
 				"one": "變更了 {count} 個檔案",
 				"other": "變更了 {count} 個檔案"

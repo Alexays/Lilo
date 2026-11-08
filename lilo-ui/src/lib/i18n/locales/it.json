@@ -2838,6 +2838,8 @@
 		"turn": {
 			"workedFor": "Ha lavorato per {duration}",
 			"stopped": "Interrotto",
+			"refusalTitle": "Il modello ha rifiutato di continuare",
+			"refusalHint": "Le sue protezioni hanno fermato questo turno, a volte su lavoro legittimo. Riformula la richiesta o scegli un altro modello qui sotto.",
 			"files": {
 				"one": "{count} file modificato",
 				"other": "{count} file modificati"

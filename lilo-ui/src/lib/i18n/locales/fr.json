@@ -2827,6 +2827,8 @@
 		"turn": {
 			"workedFor": "A travaillé pendant {duration}",
 			"stopped": "Arrêté",
+			"refusalTitle": "Le modèle a refusé de continuer",
+			"refusalHint": "Ses protections ont arrêté ce tour, parfois sur un travail légitime. Reformulez la demande, ou choisissez un autre modèle ci-dessous.",
 			"files": {
 				"one": "{count} fichier modifié",
 				"other": "{count} fichiers modifiés"

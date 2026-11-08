@@ -2827,6 +2827,8 @@
 		"turn": {
 			"workedFor": "Worked for {duration}",
 			"stopped": "Stopped",
+			"refusalTitle": "The model declined to continue",
+			"refusalHint": "Its safety checks stopped this turn, sometimes on legitimate work. Rephrase the request, or pick another model below.",
 			"files": {
 				"one": "{count} file changed",
 				"other": "{count} files changed"
