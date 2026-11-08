@@ -2625,9 +2625,7 @@
 			"restoreConfirm": "Put the project files back as they were at this message?",
 			"restore": "Restore",
 			"undo": "Undo",
-			"keep": "Keep",
 			"undone": "Undone",
-			"kept": "Kept",
 			"moreLines": {
 				"one": "{count} more line",
 				"other": "{count} more lines"

@@ -1,0 +1,3 @@
+kind: Changed
+body: A file an agent edits several times in a row shows once in its conversation, with its changes added up and an Undo that appears on hover; the Keep button is gone, since edits are already saved
+time: 2026-11-08T18:32:55.017038+01:00

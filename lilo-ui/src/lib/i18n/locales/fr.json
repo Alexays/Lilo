@@ -2625,9 +2625,7 @@
 			"restoreConfirm": "Remettre les fichiers du projet tels qu'ils étaient à ce message ?",
 			"restore": "Restaurer",
 			"undo": "Annuler",
-			"keep": "Garder",
 			"undone": "Annulé",
-			"kept": "Gardé",
 			"moreLines": {
 				"one": "{count} ligne de plus",
 				"other": "{count} lignes de plus"

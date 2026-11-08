@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "将项目文件恢复到此消息时的状态？",
 			"restore": "恢复",
 			"undo": "撤销",
-			"keep": "保留",
 			"undone": "已撤销",
-			"kept": "已保留",
 			"moreLines": {
 				"one": "还有 {count} 行",
 				"other": "还有 {count} 行"

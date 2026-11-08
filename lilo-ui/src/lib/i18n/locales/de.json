@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "Projektdateien auf den Stand dieser Nachricht zurücksetzen?",
 			"restore": "Wiederherstellen",
 			"undo": "Widerrufen",
-			"keep": "Behalten",
 			"undone": "Rückgängig gemacht",
-			"kept": "Behalten",
 			"moreLines": {
 				"one": "{count} weitere Zeile",
 				"other": "{count} weitere Zeilen"

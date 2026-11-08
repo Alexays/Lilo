@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "Projectbestanden terugzetten naar hoe ze bij dit bericht waren?",
 			"restore": "Herstel",
 			"undo": "Ongedaan maken",
-			"keep": "Behoud",
 			"undone": "Ongedaan gemaakt",
-			"kept": "Behouden",
 			"moreLines": {
 				"one": "Nog {count} regel",
 				"other": "Nog {count} regels"

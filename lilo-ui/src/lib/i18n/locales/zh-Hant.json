@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "要將專案檔案回復到這則訊息時的狀態嗎？",
 			"restore": "回復",
 			"undo": "還原",
-			"keep": "保留",
 			"undone": "已還原",
-			"kept": "已保留",
 			"moreLines": {
 				"one": "還有 {count} 行",
 				"other": "還有 {count} 行"

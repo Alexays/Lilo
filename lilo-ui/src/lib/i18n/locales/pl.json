@@ -2686,9 +2686,7 @@
 			"restoreConfirm": "Przywrócić pliki projektu do stanu z tej wiadomości?",
 			"restore": "Przywróć",
 			"undo": "Cofnij",
-			"keep": "Zachowaj",
 			"undone": "Cofnięto",
-			"kept": "Zachowano",
 			"moreLines": {
 				"one": "{count} linia więcej",
 				"few": "{count} linie więcej",

@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "Proje dosyaları bu mesajdaki hâline geri döndürülsün mü?",
 			"restore": "Geri yükle",
 			"undo": "Geri Al",
-			"keep": "Koru",
 			"undone": "Geri alındı",
-			"kept": "Korundu",
 			"moreLines": {
 				"one": "{count} satır daha",
 				"other": "{count} satır daha"

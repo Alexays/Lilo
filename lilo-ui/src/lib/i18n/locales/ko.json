@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "프로젝트 파일을 이 메시지 시점으로 되돌릴까요?",
 			"restore": "복원",
 			"undo": "실행 취소",
-			"keep": "유지",
 			"undone": "취소됨",
-			"kept": "유지됨",
 			"moreLines": {
 				"one": "{count}줄 더",
 				"other": "{count}줄 더"

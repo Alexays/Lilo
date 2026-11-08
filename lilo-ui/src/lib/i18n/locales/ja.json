@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "プロジェクトのファイルをこのメッセージの時点の状態に戻しますか？",
 			"restore": "復元",
 			"undo": "取り消す",
-			"keep": "保持",
 			"undone": "取り消しました",
-			"kept": "保持しました",
 			"moreLines": {
 				"one": "さらに {count} 行",
 				"other": "さらに {count} 行"

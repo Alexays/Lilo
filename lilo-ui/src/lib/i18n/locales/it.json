@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "Riportare i file del progetto com'erano a questo messaggio?",
 			"restore": "Ripristina",
 			"undo": "Annulla",
-			"keep": "Mantieni",
 			"undone": "Annullato",
-			"kept": "Mantenuto",
 			"moreLines": {
 				"one": "{count} riga in più",
 				"other": "{count} righe in più"

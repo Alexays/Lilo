@@ -2636,9 +2636,7 @@
 			"restoreConfirm": "Voltar os arquivos do projeto ao estado desta mensagem?",
 			"restore": "Restaurar",
 			"undo": "Desfazer",
-			"keep": "Manter",
 			"undone": "Desfeito",
-			"kept": "Mantido",
 			"moreLines": {
 				"one": "Mais {count} linha",
 				"other": "Mais {count} linhas"
