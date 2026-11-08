@@ -241,7 +241,9 @@
         <DiffCard {tabId} {diff} {cwd} checkpoint={Math.max(promptIndex, 0)} undone={undone.has(diff.path)} />
       {/each}
     {:else}
-      {@const output = call.output.length > 0}
+      <!-- Claude's adapter wraps a command's output in a Markdown fence; the block below is already code. -->
+      {@const text = call.output.startsWith("```") ? call.output.replace(/^```[^\n]*\n?/, "").replace(/\n?```\s*$/, "") : call.output}
+      {@const output = text.length > 0}
       {@const expandable = output || (!view.command && call.locations.length > 0)}
       <!-- A failed command opens on its output; a click flips whichever way it starts. -->
       {@const showOutput = expandable && toggled.has(call.toolCallId) !== (view.command && call.status === "failed")}
@@ -278,7 +280,7 @@
         {@render status(call)}
       </button>
       {#if showOutput}
-        {@const lines = call.output.split("\n")}
+        {@const lines = text.split("\n")}
         {@const all = fullOutput.has(call.toolCallId)}
         <div class="detail" in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 0, y: -4 }}>
           {#if !view.command}
@@ -288,7 +290,7 @@
           {/if}
           {#if output}
             <pre class="output" class:failed={call.status === "failed"}>{all
-                ? call.output.slice(0, MAX_OUTPUT)
+                ? text.slice(0, MAX_OUTPUT)
                 : lines.slice(-OUTPUT_TAIL).join("\n")}</pre>
             {#if lines.length > OUTPUT_TAIL}
               <button
