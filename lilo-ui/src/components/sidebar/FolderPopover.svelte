@@ -32,6 +32,7 @@
   let popover: HTMLDivElement | undefined = $state();
   let height = $state(0);
   let query = $state("");
+  let hovered = false;
 
   const rows = $derived(tabs.map((tab) => ({ tab, title: tabDisplayTitle(tab.title) || tab.url || "", host: hostOf(tab.url) ?? "" })));
   const shown = $derived.by(() => {
@@ -39,22 +40,30 @@
     return needle ? rows.filter((row) => `${row.title} ${row.host}`.toLocaleLowerCase().includes(needle)) : rows;
   });
 
-  // Level with the row, past the sidebar's edge toward the page.
-  const rect = $derived(anchor.getBoundingClientRect());
-  const sidebar = $derived((anchor.closest(".sidebar-layout") ?? anchor).getBoundingClientRect());
+  // Level with the row, past the sidebar's edge toward the page, measured again as the sidebar resizes.
+  const measure = () => ({
+    rect: anchor.getBoundingClientRect(),
+    sidebar: (anchor.closest(".sidebar-layout") ?? anchor).getBoundingClientRect(),
+  });
+  let box = $state.raw(measure());
+  $effect(() => {
+    const observer = new ResizeObserver(() => (box = measure()));
+    observer.observe(anchor.closest(".sidebar-layout") ?? anchor);
+    return () => observer.disconnect();
+  });
   const onRight = $derived(getTabPosition() === "right");
-  const left = $derived(onRight ? sidebar.left - MARGIN - WIDTH : sidebar.right + MARGIN);
-  const top = $derived(Math.max(MARGIN, Math.min(rect.top, window.innerHeight - height - MARGIN)));
-  const origin = $derived(`${onRight ? "right" : "left"} ${rect.top + rect.height / 2 - top}px`);
+  const left = $derived(onRight ? box.sidebar.left - MARGIN - WIDTH : box.sidebar.right + MARGIN);
+  const top = $derived(Math.max(MARGIN, Math.min(box.rect.top, window.innerHeight - height - MARGIN)));
+  const origin = $derived(`${onRight ? "right" : "left"} ${box.rect.top + box.rect.height / 2 - top}px`);
 
   $effect(() => {
     if (focusSearch) popover?.querySelector("input")?.focus({ preventScroll: true });
   });
 
-  // The row moves with the sidebar's scroll: the popover would float beside the wrong one.
+  // A scroll that carries the row away would leave the popover beside the wrong one.
   $effect(() => {
     const hide = (event: Event) => {
-      if (!popover?.contains(event.target as Node)) close();
+      if (event.target instanceof Node && event.target.contains(anchor)) close();
     };
     window.addEventListener("scroll", hide, true);
     return () => window.removeEventListener("scroll", hide, true);
@@ -73,8 +82,18 @@
     tabActions.switchTo(tab.id);
   }
 
+  // Focus tabbing out with the pointer elsewhere lets the popover go, as the pointer leaving does.
+  function handleFocusOut(event: FocusEvent): void {
+    if (!hovered && !popover?.contains(event.relatedTarget as Node | null)) onleave();
+  }
+
   // Up and Down walk the field and the rows; Return in the field opens the first match.
   function handleKeydown(event: KeyboardEvent): void {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+      return;
+    }
     if (event.key === "Enter" && event.target instanceof HTMLInputElement) {
       event.preventDefault();
       if (shown[0]) activate(shown[0].tab);
@@ -99,10 +118,17 @@
   out:popoverOut|global
   use:portal
   use:reportInteractiveZone={{ id: "folder-popover" }}
-  onmouseenter={onenter}
-  onmouseleave={onleave}
+  onmouseenter={() => {
+    hovered = true;
+    onenter();
+  }}
+  onmouseleave={() => {
+    hovered = false;
+    onleave();
+  }}
+  onfocusout={handleFocusOut}
   onkeydown={handleKeydown}
-  {@attach dismissable({ onDismiss: close, escape: true, returnFocus: anchor })}
+  {@attach dismissable({ onDismiss: onclose, returnFocus: anchor })}
 >
   <UiSearchField value={query} onchange={(value) => (query = value)} placeholder={t("tabFolder.searchFolder", { name })} ariaLabel={t("tabFolder.searchFolder", { name })} />
   <div class="list" role="group" aria-label={name}>

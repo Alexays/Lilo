@@ -6,6 +6,7 @@
 	import { closeLockPanel, getLockPanel, openLockPanel } from "../../stores/folderLock.svelte";
 	import { FOLDER_COLORS, folderColorStyle } from "../../stores/theme.svelte";
 	import { FOLDER_TONE } from "../../lib/colorSliders";
+	import { closeFolderPeek, getFolderPeek, hoverFolderPeek, leaveFolderPeek, openFolderPeek } from "../../stores/folderPeek.svelte";
 	import { isSidebarDragActive } from "../../stores/sidebarDnd.svelte";
 	import type { TabState } from "../../stores/tabs.svelte";
 	import FolderPopover from "./FolderPopover.svelte";
@@ -46,43 +47,18 @@
 		peekTabs,
 	}: Props = $props();
 
-	// A closed folder shows its tabs beside the sidebar after a short rest of the pointer, and keeps
-	// them up while the pointer crosses over; an open one already shows them in the list.
-	const PEEK_DELAY_MS = 450;
-	const PEEK_LEAVE_GRACE_MS = 250;
+	// A closed folder shows its tabs beside the sidebar; an open one already shows them in the list.
 	const peekable = $derived(!!peekTabs && folder.isCollapsed && !folder.isLocked && !folder.isSplit && !isRenaming && !isSidebarDragActive());
-	let peek = $state<{ focusSearch: boolean } | null>(null);
-	let peekTimer: ReturnType<typeof setTimeout> | undefined;
+	const peek = $derived(getFolderPeek()?.folderId === folder.id ? getFolderPeek() : null);
 	let row: HTMLElement | undefined = $state();
 
-	function openPeek(focusSearch: boolean): void {
-		clearTimeout(peekTimer);
-		if (peekable && peekTabs!().length > 0) peek = { focusSearch };
-	}
-
-	function closePeek(): void {
-		clearTimeout(peekTimer);
-		peek = null;
-	}
-
-	function armPeek(): void {
-		clearTimeout(peekTimer);
-		if (!peek) peekTimer = setTimeout(() => openPeek(false), PEEK_DELAY_MS);
-	}
-
-	// A popover holding the focus (its field clicked) stays until Escape or a press elsewhere.
-	function leavePeek(): void {
-		clearTimeout(peekTimer);
-		if (!peek) return;
-		peekTimer = setTimeout(() => {
-			if (!document.activeElement?.closest(".folder-popover")) peek = null;
-		}, PEEK_LEAVE_GRACE_MS);
+	function hasPeek(): boolean {
+		return peekable && peekTabs!().length > 0;
 	}
 
 	$effect(() => {
-		if (!peekable) closePeek();
+		if (peek && !peekable) closeFolderPeek();
 	});
-	$effect(() => () => clearTimeout(peekTimer));
 
 	const panel = $derived(getLockPanel()?.folderId === folder.id ? getLockPanel() : null);
 	// The last open panel stays rendered, inert, so the extension has content to collapse.
@@ -283,17 +259,19 @@
 		tabindex={tabStop ? 0 : -1}
 		onclick={handleRowActivate}
 		oncontextmenu={handleContextMenu}
-		onmouseenter={armPeek}
-		onmouseleave={leavePeek}
+		onmouseenter={() => {
+			if (hasPeek()) hoverFolderPeek(folder.id);
+		}}
+		onmouseleave={leaveFolderPeek}
 		onkeydown={(e) => {
 			// Only keys aimed at the row itself activate it: the rename input and the action
 			// buttons live inside, and their keystrokes bubble through here.
 			if (e.target !== e.currentTarget) return;
-			if (e.key === " " && peekable) {
+			if (e.key === " " && (peek || hasPeek())) {
 				// Space peeks into a closed folder, as it previews a file in the Finder.
 				e.preventDefault();
-				if (peek) closePeek();
-				else openPeek(true);
+				if (peek) closeFolderPeek();
+				else openFolderPeek(folder.id, true);
 			} else if (e.key === "Enter" || e.key === " ") {
 				e.preventDefault();
 				handleRowActivate();
@@ -399,7 +377,7 @@
 	</div>
 
 	{#if peek && row && peekTabs}
-		<FolderPopover anchor={row} name={folder.name} tabs={peekTabs()} focusSearch={peek.focusSearch} onclose={closePeek} onenter={armPeek} onleave={leavePeek} />
+		<FolderPopover anchor={row} name={folder.name} tabs={peekTabs()} focusSearch={peek.focusSearch} onclose={closeFolderPeek} onenter={() => hoverFolderPeek(folder.id)} onleave={leaveFolderPeek} />
 	{/if}
 
 	<div class="folder-edit-extension" class:open={isRenaming}>

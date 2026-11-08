@@ -3,8 +3,8 @@ import { bootChrome, sentCommands, type FakeHostWorld } from "./fakeHost";
 import { folderWorld, SPACE_1 } from "./fixtures";
 import { treeItem } from "../src/stores/testFixtures";
 
-// folderWorld with tab-beta and tab-gamma moved into the collapsed "Shut", and a locked "Vault"
-// holding a tab of its own.
+// folderWorld with tab-beta and tab-gamma moved into the collapsed "Shut", a locked "Vault"
+// holding a tab of its own, and a collapsed "Bare" holding nothing.
 function popoverWorld(): FakeHostWorld {
 	const world = folderWorld();
 	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab) =>
@@ -14,7 +14,9 @@ function popoverWorld(): FakeHostWorld {
 	world.foldersBySpace![SPACE_1].push({ id: "folder-vault", spaceId: SPACE_1, name: "Vault", color: "#4a90d9", isCollapsed: true, isLocked: true });
 	world.treeItemsBySpace[SPACE_1] = world.treeItemsBySpace[SPACE_1].map((item) =>
 		item.itemId === "tab-beta" || item.itemId === "tab-gamma" ? { ...item, parentFolderId: "folder-shut" } : item);
+	world.foldersBySpace![SPACE_1].push({ id: "folder-bare", spaceId: SPACE_1, name: "Bare", color: "#4a90d9", isCollapsed: true });
 	world.treeItemsBySpace[SPACE_1].push(treeItem("folder-vault", SPACE_1, 8, "unpinned", "folder"));
+	world.treeItemsBySpace[SPACE_1].push(treeItem("folder-bare", SPACE_1, 9, "unpinned", "folder"));
 	return world;
 }
 
@@ -49,28 +51,42 @@ test("a closed folder shows its tabs beside the sidebar on hover, filters them a
 });
 
 test("the popover stays up on the way over from the row and closes once the pointer leaves both", async ({ page }) => {
+	await page.clock.install();
 	await bootChrome(page, popoverWorld(), ".folder-row");
 	await folderRow(page, "Shut").hover();
+	await page.clock.runFor(450);
 	await expect(popover(page)).toBeVisible();
 
 	const box = (await popover(page).boundingBox())!;
 	await page.mouse.move(box.x + box.width / 2, box.y + 60, { steps: 6 });
-	await page.waitForTimeout(400);
+	await page.clock.runFor(400);
 	await expect(popover(page)).toBeVisible();
 
 	await page.mouse.move(box.x + box.width + 100, box.y + box.height + 100);
+	await page.clock.runFor(250);
 	await expect(popover(page)).toHaveCount(0);
 });
 
 test("an open or a locked folder shows no popover", async ({ page }) => {
+	await page.clock.install();
 	await bootChrome(page, popoverWorld(), ".folder-row");
 	await folderRow(page, "Docs").hover();
-	await page.waitForTimeout(700);
+	await page.clock.runFor(450);
 	await expect(popover(page)).toHaveCount(0);
 
 	await folderRow(page, "Vault").hover();
-	await page.waitForTimeout(700);
+	await page.clock.runFor(450);
 	await expect(popover(page)).toHaveCount(0);
+});
+
+test("Space on a closed folder with no tabs of its own opens the folder", async ({ page }) => {
+	await bootChrome(page, popoverWorld(), ".folder-row");
+	await folderRow(page, "Bare").focus();
+	await page.keyboard.press("Space");
+
+	await expect(popover(page)).toHaveCount(0);
+	const collapses = (await sentCommands(page)).filter((c) => c.action === "setTabFolderCollapsed");
+	expect(collapses.at(-1)?.payload).toEqual({ id: "folder-bare", collapsed: false });
 });
 
 test("Space on a closed folder opens the popover with its field focused, the arrows pick a tab", async ({ page }) => {
