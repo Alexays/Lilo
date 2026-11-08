@@ -1,7 +1,7 @@
 // Tiny dependency-free i18n core. Pure functions only (unit-tested in translate.test.ts);
 // the reactive current-locale state lives in ./state.svelte.ts.
 
-import en from "./locales/en.json" with { type: "json" };
+import en from "./locales/en.json";
 
 export type Locale = "en" | "fr" | "es" | "zh-Hans" | "pt-BR" | "ru" | "uk" | "de" | "ja" | "it" | "ko" | "zh-Hant" | "pl" | "tr" | "nl";
 
@@ -31,19 +31,19 @@ export const catalogs: { en: Messages } & Partial<Record<Locale, Messages>> = { 
 
 export async function loadCatalog(locale: Locale): Promise<void> {
 	if (catalogs[locale]) return;
-	catalogs[locale] = (await (locale === "fr" ? import("./locales/fr.json", { with: { type: "json" } })
-		: locale === "es" ? import("./locales/es.json", { with: { type: "json" } })
-		: locale === "zh-Hans" ? import("./locales/zh-Hans.json", { with: { type: "json" } })
-		: locale === "uk" ? import("./locales/uk.json", { with: { type: "json" } })
-		: locale === "de" ? import("./locales/de.json", { with: { type: "json" } })
-		: locale === "ja" ? import("./locales/ja.json", { with: { type: "json" } })
-		: locale === "it" ? import("./locales/it.json", { with: { type: "json" } })
-		: locale === "ko" ? import("./locales/ko.json", { with: { type: "json" } })
-		: locale === "zh-Hant" ? import("./locales/zh-Hant.json", { with: { type: "json" } })
-		: locale === "pl" ? import("./locales/pl.json", { with: { type: "json" } })
-		: locale === "tr" ? import("./locales/tr.json", { with: { type: "json" } })
-		: locale === "nl" ? import("./locales/nl.json", { with: { type: "json" } })
-		: locale === "ru" ? import("./locales/ru.json", { with: { type: "json" } }) : import("./locales/pt-BR.json", { with: { type: "json" } }))).default;
+	catalogs[locale] = (await (locale === "fr" ? import("./locales/fr.json")
+		: locale === "es" ? import("./locales/es.json")
+		: locale === "zh-Hans" ? import("./locales/zh-Hans.json")
+		: locale === "uk" ? import("./locales/uk.json")
+		: locale === "de" ? import("./locales/de.json")
+		: locale === "ja" ? import("./locales/ja.json")
+		: locale === "it" ? import("./locales/it.json")
+		: locale === "ko" ? import("./locales/ko.json")
+		: locale === "zh-Hant" ? import("./locales/zh-Hant.json")
+		: locale === "pl" ? import("./locales/pl.json")
+		: locale === "tr" ? import("./locales/tr.json")
+		: locale === "nl" ? import("./locales/nl.json")
+		: locale === "ru" ? import("./locales/ru.json") : import("./locales/pt-BR.json"))).default;
 }
 
 export function isSupportedLocale(value: string): value is Locale {

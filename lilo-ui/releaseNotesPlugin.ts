@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import type { Plugin } from "vite";
-import { SUPPORTED_LOCALES } from "./src/lib/i18n/translate.ts";
 import { localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./src/components/whatsnew/releaseNotes.ts";
 
 function bundledRelease(): string {
@@ -11,9 +10,10 @@ function bundledRelease(): string {
 	const registry = JSON.parse(readFileSync(new URL("./src/components/whatsnew/releaseHighlights.json", import.meta.url), "utf8"));
 	const editorial = releaseHighlightsForVersion(registry, version);
 	release.editorial = {};
-	for (const { code: locale } of SUPPORTED_LOCALES) {
-		const catalog = JSON.parse(readFileSync(new URL(`./src/lib/i18n/locales/${locale}.json`, import.meta.url), "utf8"));
-		release.editorial[locale] = localizeReleaseEditorial(editorial, catalog);
+	const locales = new URL("./src/lib/i18n/locales/", import.meta.url);
+	for (const file of readdirSync(locales)) {
+		if (!file.endsWith(".json")) continue;
+		release.editorial[file.slice(0, -5)] = localizeReleaseEditorial(editorial, JSON.parse(readFileSync(new URL(file, locales), "utf8")));
 	}
 	return JSON.stringify(release);
 }
