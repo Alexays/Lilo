@@ -1,15 +1,13 @@
 <script lang="ts" module>
-  import { contrastRatio, parseHexColor, relativeLuminance, toOklab, type RGB } from "../../lib/sidebarTheme";
+  import { apcaContrast, parseHexColor, prefersLightText, toOklab, type RGB } from "../../lib/sidebarTheme";
 
   const SAMPLE_SIZE = 16;
-  // A glyph on transparency under this contrast with a dark sidebar, and close to its hue, gets help.
-  const GLYPH_CONTRAST = 2;
+  // A glyph on transparency under this APCA Lc on a light-text sidebar, and close to its hue, gets help.
+  const GLYPH_CONTRAST = 15;
   // OKLab (a, b) distance from which a glyph's hue alone sets it apart from the sidebar.
   const HUE_SEPARATION = 0.15;
   // OKLab chroma under which a glyph is monochrome: it takes the text color, a colored one keeps its brand on a chip.
   const MONOCHROME_CHROMA = 0.04;
-  // The luminance under which a sidebar counts as dark, as in ensureContrast.
-  const DARK_SIDEBAR_LUMINANCE = 0.18;
   // RGB standard deviation from which a glyph has inner marks (Reddit's alien on its disc) a silhouette would erase.
   const DETAIL_SPREAD = 48;
   // Per source: the average color of a glyph on transparency and whether it has inner marks, null for an icon with its own background.
@@ -76,7 +74,7 @@
     const background = parseHexColor(themeSidebarBackground());
     // A tile sits on the page, not on the sidebar the treatments read.
     if (asleep || tile || !glyph || !background) return "none";
-    if (relativeLuminance(background) >= DARK_SIDEBAR_LUMINANCE || contrastRatio(glyph.color, background) >= GLYPH_CONTRAST) return "none";
+    if (!prefersLightText(background) || apcaContrast(glyph.color, background) >= GLYPH_CONTRAST) return "none";
     const [, glyphA, glyphB] = toOklab(glyph.color);
     const [, sidebarA, sidebarB] = toOklab(background);
     if (Math.hypot(glyphA - sidebarA, glyphB - sidebarB) >= HUE_SEPARATION) return "none";

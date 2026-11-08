@@ -1,5 +1,21 @@
 import AppKit
 
+/// APCA 0.0.98G lightness contrast (absolute Lc) of 8-bit sRGB `text` on `background`: lilo-ui's `apcaContrast`.
+func apcaContrast(text: (r: Double, g: Double, b: Double), background: (r: Double, g: Double, b: Double)) -> Double {
+    func luminance(_ c: (r: Double, g: Double, b: Double)) -> Double {
+        let y = 0.2126729 * pow(c.r / 255, 2.4) + 0.7151522 * pow(c.g / 255, 2.4) + 0.072175 * pow(c.b / 255, 2.4)
+        return y > 0.022 ? y : y + pow(0.022 - y, 1.414)
+    }
+    let (t, b) = (luminance(text), luminance(background))
+    let contrast = b > t ? (pow(b, 0.56) - pow(t, 0.57)) * 1.14 : (pow(b, 0.65) - pow(t, 0.62)) * 1.14
+    return abs(contrast) < 0.1 ? 0 : (abs(contrast) - 0.027) * 100
+}
+
+/// Whether light text reads better than dark text on `color` by APCA: lilo-ui's `prefersLightText`.
+func prefersLightText(_ color: (r: Double, g: Double, b: Double)) -> Bool {
+    apcaContrast(text: (0xf8, 0xf9, 0xfd), background: color) >= apcaContrast(text: (0x1d, 0x1d, 0x1f), background: color)
+}
+
 extension NSColor {
     /// Parse a CSS hex color like "#e2daf1" or "#1a1a2e" into an NSColor.
     convenience init?(cssHex hex: String) {
@@ -60,13 +76,10 @@ extension NSColor {
         return sidebar.color
     }
 
-    var relativeLuminance: CGFloat {
-        guard let srgbColor else { return 0 }
-        return SidebarRGB(srgbColor).luminance
-    }
-
+    /// Light text reads better on it, as the sidebar's text on the same color.
     var isPerceptuallyDark: Bool {
-        relativeLuminance < 0.42
+        guard let srgbColor else { return true }
+        return prefersLightText(SidebarRGB(srgbColor).channels)
     }
 
     var contrastingForegroundColor: NSColor {
@@ -127,6 +140,10 @@ private struct SidebarRGB {
         NSColor(srgbRed: r / 255, green: g / 255, blue: b / 255, alpha: 1)
     }
 
+    var channels: (r: Double, g: Double, b: Double) {
+        (r, g, b)
+    }
+
     func mixed(with target: SidebarRGB, ratio: Double) -> SidebarRGB {
         blended(with: target, ratio: ratio).rounded
     }
@@ -144,10 +161,6 @@ private struct SidebarRGB {
         return value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
     }
 
-    var luminance: Double {
-        0.2126 * Self.linearized(r) + 0.7152 * Self.linearized(g) + 0.0722 * Self.linearized(b)
-    }
-
     /// `toOklab`: OKLab with Bjorn Ottosson's matrices.
     var oklab: (lightness: Double, a: Double, b: Double) {
         let (lr, lg, lb) = (Self.linearized(r), Self.linearized(g), Self.linearized(b))
@@ -161,30 +174,30 @@ private struct SidebarRGB {
         )
     }
 
-    private func contrast(with other: SidebarRGB) -> Double {
-        let (a, b) = (luminance, other.luminance)
-        return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+    /// APCA Lc of this color as text on `background`.
+    private func contrast(on background: SidebarRGB) -> Double {
+        apcaContrast(text: channels, background: background.channels)
     }
 
-    /// `ensureContrast` at 3:1, as the page guards the accent on the sidebar.
+    /// `ensureContrast` at the icon threshold (Lc 45), as the page guards the accent on the sidebar.
     private func iconContrasted(on background: SidebarRGB) -> SidebarRGB {
-        if contrast(with: background) >= 3 { return self }
-        let target: SidebarRGB = background.luminance > 0.18 ? .black : .white
+        if contrast(on: background) >= 45 { return self }
+        let target: SidebarRGB = Self.black.contrast(on: background) >= Self.white.contrast(on: background) ? .black : .white
         var step = 0.05
         while step <= 1.0001 {
             let candidate = mixed(with: target, ratio: step)
-            if candidate.contrast(with: background) >= 3 { return candidate }
+            if candidate.contrast(on: background) >= 45 { return candidate }
             step += 0.05
         }
         return .darkText
     }
 
-    /// The pull-back test of `deriveSidebarThemeVariables` on a dark sidebar: light text under
-    /// AA on a lifted row, or on that row tinted by the lightened Space color.
+    /// The pull-back test of `deriveSidebarThemeVariables` on a dark sidebar: light text under its `DARK_ROW_CONTRAST`
+    /// (Lc 75) on a lifted row, or on that row tinted by the lightened Space color.
     func failsDarkRowContrast(accent: SidebarRGB) -> Bool {
         let selected = mixed(with: .darkText, ratio: 0.2)
         let activeTab = selected.blended(with: accent.iconContrasted(on: self), ratio: 0.18)
-        return activeTab.contrast(with: .darkText) < 4.5
-            || mixed(with: .darkText, ratio: 0.28).contrast(with: .darkText) < 4.5
+        return Self.darkText.contrast(on: activeTab) < 75
+            || Self.darkText.contrast(on: mixed(with: .darkText, ratio: 0.28)) < 75
     }
 }
