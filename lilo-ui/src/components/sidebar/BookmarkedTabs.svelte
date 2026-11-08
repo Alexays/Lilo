@@ -85,16 +85,17 @@
   const bookmarkZoneItems = $derived(getZoneItems(bookmarkZone, bookmarkBaseItems));
   const bookmarkZoneIsEmpty = $derived(bookmarkZoneItems.length === 0);
 
-  // As many columns of tiles at least 64px wide as fit, then balanced rows: 4 tiles make 2 × 2,
+  // As many columns of tiles at least 64px wide as fit, then balanced rows: 4 tiles make 2 x 2,
   // 5 make 3 + 2. Past three rows they go back to the compact size, so many favorites leave the tabs their room.
+  // Sized on the favorites, not the drag preview: a tile dragged in or out never reflows the grid under the pointer.
   const GRID_GAP_PX = 6;
   let listWidth = $state(0);
   function columnsThatFit(minTileWidth: number): number {
     return Math.max(1, Math.floor((listWidth + GRID_GAP_PX) / (minTileWidth + GRID_GAP_PX)));
   }
-  const gridCompact = $derived(Math.ceil(bookmarkZoneItems.length / columnsThatFit(64)) > 3);
+  const gridCompact = $derived(Math.ceil(bookmarks.length / columnsThatFit(64)) > 3);
   const gridColumns = $derived.by(() => {
-    const count = Math.max(1, bookmarkZoneItems.length);
+    const count = Math.max(1, bookmarks.length);
     return Math.ceil(count / Math.ceil(count / columnsThatFit(gridCompact ? 40 : 64)));
   });
   const activeTabId = $derived(getActiveTabId(spaceId));

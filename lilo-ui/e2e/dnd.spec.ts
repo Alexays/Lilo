@@ -103,6 +103,27 @@ test("dragging an unpinned row into the bookmarks grid bookmarks it", async ({
 	await expect(activePane.locator(".bookmarked-list .bookmark-tile")).toHaveCount(2);
 });
 
+test("a row held over the favorites grid leaves its columns alone until the drop", async ({ page }) => {
+	const world = initialWorld();
+	const favorites = ["tab-fav-1", "tab-fav-2", "tab-fav-3"];
+	world.tabsBySpace[SPACE_1].push(...favorites.map((id) => tab(id, SPACE_1, { isBookmarked: true })));
+	world.treeItemsBySpace[SPACE_1].push(...favorites.map((id, index) => treeItem(id, SPACE_1, 10 + index, "bookmarked")));
+	await bootChrome(page, world);
+	const grid = pane(page, 0).locator(".bookmarked-list");
+	const columns = () => grid.evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length);
+	expect(await columns()).toBe(2);
+
+	await pressAndLift(page, '.tab-list [data-tab-id="tab-gamma"]');
+	await glideTo(page, ".bookmarked-list");
+	await expect(grid.locator(".bookmark-placeholder")).toHaveCount(1);
+	expect(await columns()).toBe(2);
+	await page.mouse.up();
+
+	await settleDrop(page);
+	await expect(grid.locator(".bookmark-tile")).toHaveCount(5);
+	expect(await columns()).toBe(3);
+});
+
 test("a row dragged into the pinned favorites while the list is scrolled bookmarks it", async ({ page }) => {
 	const world = initialWorld();
 	const tabs = Array.from({ length: 40 }, (_, index) => `tab-extra-${index}`);
