@@ -924,7 +924,9 @@
 		"lockFolder": "Zablokuj hasłem",
 		"changePassword": "Zmień hasło",
 		"removeLock": "Usuń blokadę",
-		"lock": "Zablokuj"
+		"lock": "Zablokuj",
+		"searchFolder": "Szukaj w {name}...",
+		"noMatches": "Brak pasujących kart"
 	},
 	"splitDrop": {
 		"left": "Otwórz po lewej",

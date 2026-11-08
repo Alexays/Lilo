@@ -906,7 +906,9 @@
 		"lockFolder": "Blocca con una password",
 		"changePassword": "Cambia password",
 		"removeLock": "Rimuovi blocco",
-		"lock": "Blocca"
+		"lock": "Blocca",
+		"searchFolder": "Cerca in {name}...",
+		"noMatches": "Nessuna scheda corrispondente"
 	},
 	"splitDrop": {
 		"left": "Apri a sinistra",

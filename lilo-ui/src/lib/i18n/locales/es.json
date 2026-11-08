@@ -906,7 +906,9 @@
 		"lockFolder": "Bloquear con contraseña",
 		"changePassword": "Cambiar contraseña",
 		"removeLock": "Quitar bloqueo",
-		"lock": "Bloquear"
+		"lock": "Bloquear",
+		"searchFolder": "Buscar en {name}...",
+		"noMatches": "No hay pestañas que coincidan"
 	},
 	"splitDrop": {
 		"left": "Abrir a la izquierda",

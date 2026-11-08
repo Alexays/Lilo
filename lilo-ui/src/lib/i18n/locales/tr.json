@@ -906,7 +906,9 @@
 		"lockFolder": "Parolayla kilitle",
 		"changePassword": "Parolayı değiştir",
 		"removeLock": "Kilidi kaldır",
-		"lock": "Kilitle"
+		"lock": "Kilitle",
+		"searchFolder": "{name} içinde ara...",
+		"noMatches": "Eşleşen sekme yok"
 	},
 	"splitDrop": {
 		"left": "Solda aç",

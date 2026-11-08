@@ -906,7 +906,9 @@
 		"lockFolder": "用密码锁定",
 		"changePassword": "更改密码",
 		"removeLock": "移除锁定",
-		"lock": "锁定"
+		"lock": "锁定",
+		"searchFolder": "在“{name}”中搜索...",
+		"noMatches": "没有匹配的标签页"
 	},
 	"splitDrop": {
 		"left": "在左侧打开",

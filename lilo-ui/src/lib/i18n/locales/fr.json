@@ -906,7 +906,9 @@
 		"lockFolder": "Verrouiller par mot de passe",
 		"changePassword": "Modifier le mot de passe",
 		"removeLock": "Retirer le verrou",
-		"lock": "Verrouiller"
+		"lock": "Verrouiller",
+		"searchFolder": "Rechercher dans {name}...",
+		"noMatches": "Aucun onglet correspondant"
 	},
 	"splitDrop": {
 		"left": "Ouvrir à gauche",

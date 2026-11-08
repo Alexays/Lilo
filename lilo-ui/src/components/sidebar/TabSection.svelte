@@ -1204,6 +1204,7 @@
         {level}
         tabStop={folder.id === tabStopId}
         containsActiveTab={folderHolds(folder.id, activeTabId)}
+        peekTabs={interactive ? () => children.flatMap((child) => (child.kind === "tab" && tabsById.get(child.id)) || []) : undefined}
         onCollapse={(collapsed) =>
           folderActions.setCollapsed(folder.id, collapsed)}
         onRename={() => (renamingFolderId = folder.id)}

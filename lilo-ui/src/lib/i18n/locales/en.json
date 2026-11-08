@@ -906,7 +906,9 @@
 		"lockFolder": "Lock with a password",
 		"changePassword": "Change password",
 		"removeLock": "Remove lock",
-		"lock": "Lock"
+		"lock": "Lock",
+		"searchFolder": "Search {name}...",
+		"noMatches": "No matching tabs"
 	},
 	"splitDrop": {
 		"left": "Open on the left",

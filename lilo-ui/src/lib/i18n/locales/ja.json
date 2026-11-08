@@ -906,7 +906,9 @@
 		"lockFolder": "パスワードでロック",
 		"changePassword": "パスワードを変更",
 		"removeLock": "ロックを取り除く",
-		"lock": "ロック"
+		"lock": "ロック",
+		"searchFolder": "{name}内を検索...",
+		"noMatches": "一致するタブはありません"
 	},
 	"splitDrop": {
 		"left": "左に開く",
