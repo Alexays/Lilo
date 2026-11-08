@@ -559,6 +559,13 @@ extension MainWindowController {
         return chromeInput.router.routeUnhandledGlobalEvent(event)
     }
 
+    /// A key a web view sends back unhandled ends here, past the window. AppKit beeps for it, which no browser does:
+    /// a page that blurs its field on Enter leaves WebKit no editor for the newline, and every search would beep.
+    override func noResponder(for eventSelector: Selector) {
+        if eventSelector == #selector(NSResponder.keyDown(with:)), window?.firstResponder is WKWebView { return }
+        super.noResponder(for: eventSelector)
+    }
+
     func switchToAdjacentTab(forward: Bool) {
         let tabs = tabManager.currentTabs
         guard tabs.count > 1, let activeId = tabManager.activeOpenTabId,
