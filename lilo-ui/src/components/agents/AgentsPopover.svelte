@@ -9,7 +9,7 @@
   import { portal } from "../../lib/actions/portal";
   import { terminalActions } from "../../lib/bridge/actions";
   import type { BridgeConversationSummary } from "../../lib/bridge/protocol";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { popoverOut } from "../../lib/motion/restingTransitions";
   import { openAskBar } from "../../stores/conversations.svelte";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
@@ -62,6 +62,16 @@
     return summary.unread ? t("agents.badge.finished") : "";
   }
 
+  const now = Date.now();
+  const format = new Intl.RelativeTimeFormat(getFormatLocale(), { numeric: "auto", style: "narrow" });
+
+  function age(at: number): string {
+    const minutes = Math.round((at - now) / 60_000);
+    if (Math.abs(minutes) < 60) return format.format(minutes, "minute");
+    const hours = Math.round(minutes / 60);
+    return Math.abs(hours) < 24 ? format.format(hours, "hour") : format.format(Math.round(hours / 24), "day");
+  }
+
   function handleKeydown(event: KeyboardEvent): void {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     const rows = Array.from(popover?.querySelectorAll<HTMLElement>(".float-row, .new") ?? []);
@@ -110,7 +120,7 @@
           <div class="item" class:waiting={!!summary.permission} style:--stagger={Math.min(section.start + index, 8)}>
             <button
               class="float-row"
-              aria-label={[summary.title || t("agents.row.untitled"), detail, otherSpace ? summary.spaceName : ""].filter(Boolean).join(", ")}
+              aria-label={[summary.title || t("agents.row.untitled"), detail, otherSpace ? summary.spaceName : "", section.key === "done" && summary.lastActivity ? age(summary.lastActivity) : ""].filter(Boolean).join(", ")}
               onclick={() => {
                 terminalActions.reveal(summary.tabId);
                 onclose();
@@ -125,18 +135,19 @@
                 {#if detail}
                   <span
                     class="detail"
-                    class:command={!!summary.permission}
+                    class:command={!!summary.permission && !summary.permission.question}
                     class:finished={!summary.permission && section.key === "done" && summary.unread}
                     class:error={summary.state === "failed"}
                   >{detail}</span>
                 {/if}
               </span>
               {#if otherSpace}<span class="space" aria-hidden="true">{summary.spaceName}</span>{/if}
+              {#if section.key === "done" && summary.lastActivity}<span class="age" aria-hidden="true">{age(summary.lastActivity)}</span>{/if}
               {#if section.key === "running"}
                 <span class="spinner" aria-hidden="true"></span>
               {/if}
             </button>
-            {#if summary.permission}
+            {#if summary.permission && !summary.permission.question}
               <div class="answers">
                 {#if summary.permission.count > 1}
                   <span class="more">{t("agents.row.morePermissions", { count: summary.permission.count - 1 })}</span>
@@ -308,7 +319,8 @@
     color: var(--danger-text);
   }
 
-  .space {
+  .space,
+  .age {
     flex: none;
     max-width: 30%;
     margin-top: 1px;
@@ -317,6 +329,10 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  .age {
+    font-variant-numeric: tabular-nums;
   }
 
   .answers {

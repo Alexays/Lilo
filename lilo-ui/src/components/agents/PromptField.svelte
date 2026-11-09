@@ -50,10 +50,12 @@
     onsubmit: (alternate: boolean) => void;
     /** Escape with no menu open; return true when it was used. */
     onescape?: () => boolean;
-    /** Return on an empty field; return true when it was used. */
-    onemptyreturn?: () => boolean;
+    /** Return on an empty field, `alt` when Option is held; return true when it was used. */
+    onemptyreturn?: (alt: boolean) => boolean;
     /** Up arrow on an empty field; return true when it was used. */
     onemptyup?: () => boolean;
+    /** A character typed into an empty field, before it lands; return true when it was used. */
+    onemptykey?: (key: string) => boolean;
     ariaLabel: string;
   }
 
@@ -69,11 +71,21 @@
     onescape,
     onemptyreturn,
     onemptyup,
+    onemptykey,
     ariaLabel,
   }: Props = $props();
 
-  type PickerItem = { key: string; group: string; label: string; detail?: string; favicon?: string; pick: () => void };
+  type PickerItem = {
+    key: string;
+    group: string;
+    label: string;
+    detail?: string;
+    kind?: BridgeConversationAttachment["kind"];
+    tab?: { favicon?: string; title: string; url: string };
+    pick: () => void;
+  };
 
+  /** The most rows tabs, and folders, each get: neither group buries the project's files. */
   const MAX_TABS = 8;
   const MAX_HEIGHT = 200;
   const listId = $props.id();
@@ -180,7 +192,8 @@
           key: `command:${command.name}`,
           group: t("agents.composer.commands"),
           label: `/${command.name}`,
-          detail: command.description,
+          // A plugin's command already names its plugin, which its description repeats as "(plugin) ".
+          detail: command.description.replace(/^\(([^)]+)\)\s*/, (prefix, plugin) => (command.name.startsWith(`${plugin}:`) ? "" : prefix)),
           pick: () => replaceTrigger(`/${command.name} `),
         }));
     }
@@ -196,16 +209,36 @@
         group: t("agents.composer.tabs"),
         label: title,
         detail: host,
-        favicon: tab.faviconDataURL,
+        kind: "tab",
+        tab: { favicon: tab.faviconDataURL, title: tab.title, url: tab.url },
         pick: () => attach({ key: `tab:${tab.id}`, label: title, attachment: { kind: "tab", tabId: tab.id } }),
       });
     }
+    const found = getProjectFiles();
+    if (cwd && found.cwd === cwd && found.query === trigger.query) {
+      for (const file of found.files.slice(0, 8)) {
+        const slash = file.lastIndexOf("/");
+        const path = `${cwd}/${file}`;
+        out.push({
+          key: `file:${path}`,
+          group: t("agents.composer.files"),
+          label: file.slice(slash + 1),
+          detail: slash > 0 ? file.slice(0, slash) : undefined,
+          kind: "file",
+          pick: () => attach({ key: `file:${path}`, label: file.slice(slash + 1), attachment: { kind: "file", path } }),
+        });
+      }
+    }
+    let folders = 0;
     for (const folder of getFolders(getActiveSpaceId())) {
+      if (folders >= MAX_TABS) break;
       if (!matches(folder.name)) continue;
+      folders++;
       out.push({
         key: `folder:${folder.id}`,
         group: t("agents.composer.folders"),
         label: folder.name,
+        kind: "folder",
         pick: () => attach({ key: `folder:${folder.id}`, label: folder.name, attachment: { kind: "folder", folderId: folder.id } }),
       });
     }
@@ -220,21 +253,8 @@
           group: t("agents.composer.fromPage"),
           label,
           detail: pageTitle,
+          kind,
           pick: () => attach({ key: `${kind}:${page.id}`, label, attachment: { kind, tabId: page.id } }),
-        });
-      }
-    }
-    const found = getProjectFiles();
-    if (cwd && found.cwd === cwd && found.query === trigger.query) {
-      for (const file of found.files.slice(0, 8)) {
-        const slash = file.lastIndexOf("/");
-        const path = `${cwd}/${file}`;
-        out.push({
-          key: `file:${path}`,
-          group: t("agents.composer.files"),
-          label: file.slice(slash + 1),
-          detail: slash > 0 ? file.slice(0, slash) : undefined,
-          pick: () => attach({ key: `file:${path}`, label: file.slice(slash + 1), attachment: { kind: "file", path } }),
         });
       }
     }
@@ -244,6 +264,7 @@
         key: `file:${path}`,
         group: t("agents.composer.more"),
         label: t("agents.composer.file", { path }),
+        kind: "file",
         pick: () => attach({ key: `file:${path}`, label: path.split("/").filter(Boolean).pop() ?? path, attachment: { kind: "file", path } }),
       });
     }
@@ -273,11 +294,15 @@
     }
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      if (!text.trim() && !event.metaKey && onemptyreturn?.()) return;
+      if (!text.trim() && !event.metaKey && onemptyreturn?.(event.altKey)) return;
       onsubmit(event.metaKey);
       return;
     }
     if (event.key === "Escape" && onescape?.()) {
+      event.preventDefault();
+      return;
+    }
+    if (!text && event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey && onemptykey?.(event.key)) {
       event.preventDefault();
       return;
     }
@@ -295,6 +320,7 @@
   {#if open}
     <div
       class="picker float-surface"
+      class:wide={trigger?.char === "/"}
       id={listId}
       role="listbox"
       aria-label={ariaLabel}
@@ -316,7 +342,11 @@
           onclick={item.pick}
           onkeydown={() => {}}
         >
-          {#if item.favicon}<img class="picker-favicon" src={item.favicon} alt="" />{/if}
+          {#if item.tab}
+            <SiteFavicon src={item.tab.favicon} title={item.tab.title} url={item.tab.url} size={14} radius={3} />
+          {:else if item.kind}
+            <span class="picker-icon"><Icon name={CHIP_ICONS[item.kind]} size={12} /></span>
+          {/if}
           <span class="picker-label">{item.label}</span>
           {#if item.detail}<span class="picker-detail">{item.detail}</span>{/if}
         </div>
@@ -437,6 +467,11 @@
     animation: picker-in var(--motion-duration-fast) var(--motion-ease-spring);
   }
 
+  /* Commands are told apart by their descriptions, which need the room. */
+  .picker.wide {
+    width: min(560px, 100%);
+  }
+
   @keyframes picker-in {
     from {
       opacity: 0;
@@ -465,24 +500,28 @@
     background: var(--bg-hover);
   }
 
-  .picker-favicon {
+  .picker-icon {
     flex: none;
     width: 14px;
-    height: 14px;
-    border-radius: var(--radius-2xs);
+    display: grid;
+    place-items: center;
+    color: var(--text-secondary);
   }
 
+  /* The name is what gets picked: it keeps its width, and the detail shortens first. */
   .picker-label {
-    min-width: 0;
+    flex: none;
+    max-width: 75%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .picker-detail {
-    flex: none;
-    max-width: 45%;
+    flex: 1;
+    min-width: 0;
     margin-left: auto;
+    text-align: right;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

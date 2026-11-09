@@ -7,6 +7,7 @@ export const conversationActions = {
 	cancel: (tabId: string): void => emit("cancelConversation", { tabId }),
 	answer: (tabId: string, requestId: string, optionId?: string): void =>
 		emit("answerConversation", optionId ? { tabId, requestId, optionId } : { tabId, requestId }),
+	answerQuestion: (payload: BridgeCommandPayloadMap["answerConversationQuestion"]): void => emit("answerConversationQuestion", payload),
 	setMode: (tabId: string, modeId: string): void => emit("setConversationMode", { tabId, modeId }),
 	setConfig: (tabId: string, configId: string, value: string | boolean): void => emit("setConversationConfig", { tabId, configId, value }),
 	show: (tabId: string, visible: boolean): void => emit("showConversation", { tabId, visible }),
@@ -16,6 +17,7 @@ export const conversationActions = {
 	loadSummaries: (): void => emit("loadConversations"),
 	chooseProject: (): void => emit("chooseConversationProject"),
 	openChanges: (tabId: string): void => emit("openConversationChanges", { tabId }),
+	openFile: (tabId: string, path: string, reveal: boolean): void => emit("openConversationFile", { tabId, path, reveal }),
 	previewArtifact: (tabId: string, code: string, language: string): void => emit("previewConversationArtifact", { tabId, code, language }),
 	authenticate: (tabId: string, methodId: string): void => emit("authenticateConversation", { tabId, methodId }),
 	loadCommands: (tabId: string): void => emit("loadConversationCommands", { tabId }),

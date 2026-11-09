@@ -9,10 +9,37 @@ export const OPENAI: TerminalProgramIcon = {
 /** The logo of the model family a model's id or name belongs to, if Lilo knows it. */
 export function modelLogo(model: string): TerminalProgramIcon | undefined {
   const name = model.toLowerCase();
-  if (/claude|opus|sonnet|haiku/.test(name)) return CLAUDE;
+  if (/claude|opus|sonnet|haiku|fable|mythos/.test(name)) return CLAUDE;
   if (/gemini/.test(name)) return GEMINI;
   if (/gpt|codex|openai|\bo[1-9]\b/.test(name)) return OPENAI;
   return undefined;
+}
+
+/** Model names a newer version of the same name supersedes ("Opus 4.8" beside "Opus 5.5"). */
+export function supersededModels(names: string[]): Set<string> {
+  const newest = new Map<string, number[]>();
+  const parsed = names.map((name) => {
+    const match = /^(.+?)\s+v?(\d+(?:\.\d+)*)$/i.exec(name.trim());
+    if (!match) return null;
+    const family = match[1].toLowerCase();
+    const version = match[2].split(".").map(Number);
+    const best = newest.get(family);
+    if (!best || compareVersions(version, best) > 0) newest.set(family, version);
+    return { name, family, version };
+  });
+  const superseded = new Set<string>();
+  for (const model of parsed) {
+    if (model && compareVersions(model.version, newest.get(model.family) ?? []) < 0) superseded.add(model.name);
+  }
+  return superseded;
+}
+
+function compareVersions(a: number[], b: number[]): number {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const diff = (a[i] ?? 0) - (b[i] ?? 0);
+    if (diff) return diff;
+  }
+  return 0;
 }
 
 /** A session mode's pictogram, from what agents name their modes. */

@@ -1,0 +1,3 @@
+kind: Fixed
+body: A conversation whose turn was cut short by quitting or a crash now shows that turn as stopped, instead of a prompt left without an answer.
+time: 2026-11-08T21:30:29.646389+01:00

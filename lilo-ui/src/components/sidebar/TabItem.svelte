@@ -525,10 +525,14 @@
         </span>
       </div>
     {:else if tab.kind === "agent"}
-      <!-- An agent tab outside its conversation row, as in a split: the mascot, with the state on it. -->
+      <!-- An agent tab outside its conversation row, as in a split: its agent's icon, as on that row, with the state on it. -->
       <div class="tab-icon-inner" in:iconMorph out:iconMorph>
         <span class="agent-tile" aria-hidden="true">
-          {#await import("../agents/MascotGlyph.svelte") then { default: MascotGlyph }}<MascotGlyph />{/await}
+          {#if tab.agentId}
+            {#await import("../agents/AgentTile.svelte") then { default: AgentTile }}<AgentTile agentId={tab.agentId} />{/await}
+          {:else}
+            {#await import("../agents/MascotGlyph.svelte") then { default: MascotGlyph }}<MascotGlyph />{/await}
+          {/if}
           {#if terminalPip}
             <span class="terminal-pip" data-state={terminalPip} in:pipPop out:pipPop={{ leaving: true }}></span>
           {/if}

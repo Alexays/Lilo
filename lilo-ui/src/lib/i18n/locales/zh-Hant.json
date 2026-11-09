@@ -1983,6 +1983,9 @@
 		"No changes on this branch": "此分支沒有變更",
 		"Nothing differs from %@.": "與 %@ 沒有差異。",
 		"Show Uncommitted Changes": "顯示尚未提交的變更",
+		"Conversation": "對話",
+		"No changes in this conversation": "此對話中沒有變更",
+		"The project is as it was at the conversation's first prompt.": "專案與對話第一則提示時相同。",
 		"%@ files": {"one": "%@ 個檔案", "other": "%@ 個檔案"},
 		"against %@ from %@, uncommitted included": "與 %@（來自 %@）比較，包含尚未提交的變更",
 		"Binary file, not shown": "二進位檔案，不予顯示",
@@ -2436,6 +2439,7 @@
 		"Choose": "選擇",
 		"New Conversation": "新對話",
 		"Screenshot of %@": "%@ 的截圖",
+		"Selection from %@": "%@ 中的所選內容",
 		"The agent stopped (code %d).": "代理程式已停止（代碼 %d）。",
 		"This agent is no longer in the ACP registry.": "此代理程式已不在 ACP 登錄檔中。",
 		"The agent stopped.": "代理程式已停止。",
@@ -2614,6 +2618,8 @@
 		"conversation": {
 			"stop": "停止",
 			"mode": "模式",
+			"compact": "壓縮此對話",
+			"compactHint": "點按以壓縮：代理會總結對話以釋放上下文。",
 			"context": "已使用 {percent}% 的脈絡",
 			"planSession": "工作階段限額：已使用 {percent}%，{time} 重設",
 			"planWeek": "每週限額：已使用 {percent}%，{time} 重設",
@@ -2625,13 +2631,10 @@
 				"one": "顯示前 {count} 個項目",
 				"other": "顯示前 {count} 個項目"
 			},
-			"queued": {
-				"one": "{count} 則訊息排隊中",
-				"other": "{count} 則訊息排隊中"
-			},
-			"queuedHint": "代理程式完成後傳送。按 Cmd Return 立即傳送。",
 			"queuedTag": "排隊中",
+			"sendNow": "立即傳送",
 			"thought": "思考",
+			"editPrompt": "編輯",
 			"restoreToHere": "回復到此處",
 			"restoreConfirm": "要將專案檔案回復到這則訊息時的狀態嗎？",
 			"restore": "回復",
@@ -2643,6 +2646,10 @@
 			},
 			"plan": "計畫",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "已完成 {count} 個步驟",
+				"other": "已完成 {count} 個步驟"
+			},
 			"planStatus": {
 				"pending": "待辦",
 				"in_progress": "進行中",
@@ -2659,7 +2666,8 @@
 			"moreOptions": "更多選項",
 			"signInHint": "請使用代理程式登入：登入後即傳送你的訊息。",
 			"branch": "分支 {branch}",
-			"jumpToLatest": "跳到最新"
+			"jumpToLatest": "跳到最新",
+			"olderModels": "舊版模型"
 		},
 		"tool": {
 			"untitled": "工具呼叫",
@@ -2750,7 +2758,10 @@
 			"allowAlways": "一律允許",
 			"reject": "不允許",
 			"rejectAlways": "一律不允許",
-			"more": "更多選項"
+			"more": "更多選項",
+			"submit": "回答",
+			"skip": "略過",
+			"skipped": "已略過"
 		},
 		"badge": {
 			"title": "代理程式",
@@ -2790,6 +2801,14 @@
 				"search": "搜尋",
 				"fetch": "擷取"
 			},
+			"verbActive": {
+				"read": "正在讀取",
+				"edit": "正在編輯",
+				"delete": "正在刪除",
+				"move": "正在移動",
+				"search": "正在搜尋",
+				"fetch": "正在擷取"
+			},
 			"summary": {
 				"read": {
 					"one": "讀取了 {count} 個檔案",
@@ -2819,6 +2838,10 @@
 					"one": "使用了 {count} 次瀏覽器",
 					"other": "使用了 {count} 次瀏覽器"
 				},
+				"browserOn": {
+					"one": "在 {site} 使用了 {count} 次瀏覽器",
+					"other": "在 {site} 使用了 {count} 次瀏覽器"
+				},
 				"tool": {
 					"one": "使用了 {count} 個工具",
 					"other": "使用了 {count} 個工具"
@@ -2827,6 +2850,54 @@
 					"one": "啟動了 {count} 個代理程式",
 					"other": "啟動了 {count} 個代理程式"
 				}
+			},
+			"browser": {
+				"closeTab": "關閉了一個標籤頁",
+				"open": "打開了 {url}",
+				"openPage": "開啟了一個頁面",
+				"search": "在頁面中搜尋",
+				"requestAny": "傳送了一個請求",
+				"back": "上一頁",
+				"forward": "下一頁",
+				"reload": "重新載入了頁面",
+				"screenshot": "擷取了螢幕快照",
+				"click": "點按了頁面",
+				"clickOn": "點按了\"{name}\"",
+				"type": "輸入了\"{text}\"",
+				"key": "按下了 {keys}",
+				"scroll": "捲動了頁面",
+				"interact": "使用了頁面",
+				"read": "閱讀了頁面",
+				"find": "搜尋了\"{query}\"",
+				"form": "填寫了一個欄位",
+				"script": "在頁面中執行了腳本",
+				"batch": "在瀏覽器中執行了多項操作",
+				"waitFor": "等待了頁面",
+				"request": "向 {url} 傳送了請求"
+			},
+			"browserActive": {
+				"closeTab": "正在關閉分頁",
+				"open": "正在打開 {url}",
+				"openPage": "正在打開頁面",
+				"search": "正在搜尋頁面",
+				"requestAny": "正在傳送請求",
+				"back": "正在上一頁",
+				"forward": "正在下一頁",
+				"reload": "正在重新載入頁面",
+				"screenshot": "正在截圖",
+				"click": "正在點按頁面",
+				"clickOn": "正在點按\"{name}\"",
+				"type": "正在輸入\"{text}\"",
+				"key": "正在按 {keys}",
+				"scroll": "正在捲動頁面",
+				"interact": "正在使用頁面",
+				"read": "正在讀取頁面",
+				"find": "正在尋找\"{query}\"",
+				"form": "正在填寫欄位",
+				"script": "正在頁面中執行指令碼",
+				"batch": "正在執行多個瀏覽器動作",
+				"waitFor": "正在等待頁面",
+				"request": "正在向 {url} 傳送請求"
 			},
 			"exit": "結束代碼 {code}",
 			"showAll": {
@@ -2859,6 +2930,7 @@
 		"markdown": {
 			"preview": "預覽",
 			"openPreview": "在分頁中打開預覽",
+			"openFile": "點按以打開，⌘-點按以在 Finder 中顯示",
 			"view": "顯示為",
 			"code": "程式碼",
 			"copy": "拷貝程式碼",

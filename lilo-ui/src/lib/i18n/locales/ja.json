@@ -1983,6 +1983,9 @@
 		"No changes on this branch": "このブランチに変更はありません",
 		"Nothing differs from %@.": "%@ との差分はありません。",
 		"Show Uncommitted Changes": "未コミットの変更を表示",
+		"Conversation": "会話",
+		"No changes in this conversation": "この会話での変更はありません",
+		"The project is as it was at the conversation's first prompt.": "プロジェクトは会話の最初のプロンプト時点のままです。",
 		"%@ files": {"one": "%@個のファイル", "other": "%@個のファイル"},
 		"against %@ from %@, uncommitted included": "比較先 %@、起点 %@、未コミットを含む",
 		"Binary file, not shown": "バイナリファイルは表示できません",
@@ -2436,6 +2439,7 @@
 		"Choose": "選択",
 		"New Conversation": "新しい会話",
 		"Screenshot of %@": "%@ のスクリーンショット",
+		"Selection from %@": "%@ からの選択範囲",
 		"The agent stopped (code %d).": "エージェントが停止しました（コード %d）。",
 		"This agent is no longer in the ACP registry.": "このエージェントは ACP レジストリに登録されていません。",
 		"The agent stopped.": "エージェントが停止しました。",
@@ -2614,6 +2618,8 @@
 		"conversation": {
 			"stop": "停止",
 			"mode": "モード",
+			"compact": "この会話を圧縮",
+			"compactHint": "クリックして圧縮：エージェントが会話を要約してコンテキストを空けます。",
 			"context": "コンテキストの {percent}% を使用",
 			"planSession": "セッション上限: {percent}% 使用、{time} にリセット",
 			"planWeek": "週間上限: {percent}% 使用、{time} にリセット",
@@ -2625,13 +2631,10 @@
 				"one": "前の項目を {count} 件表示",
 				"other": "前の項目を {count} 件表示"
 			},
-			"queued": {
-				"one": "{count} 件のメッセージが待機中",
-				"other": "{count} 件のメッセージが待機中"
-			},
-			"queuedHint": "エージェントの完了後に送信されます。Cmd Return ですぐに送信します。",
 			"queuedTag": "待機中",
+			"sendNow": "今すぐ送信",
 			"thought": "思考",
+			"editPrompt": "編集",
 			"restoreToHere": "ここまで復元",
 			"restoreConfirm": "プロジェクトのファイルをこのメッセージの時点の状態に戻しますか？",
 			"restore": "復元",
@@ -2643,6 +2646,10 @@
 			},
 			"plan": "プラン",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "{count} 件のステップが完了",
+				"other": "{count} 件のステップが完了"
+			},
 			"planStatus": {
 				"pending": "未着手",
 				"in_progress": "進行中",
@@ -2659,7 +2666,8 @@
 			"moreOptions": "その他のオプション",
 			"signInHint": "エージェントでサインインしてください。サインインが済むとメッセージが送信されます。",
 			"branch": "ブランチ {branch}",
-			"jumpToLatest": "最新へ移動"
+			"jumpToLatest": "最新へ移動",
+			"olderModels": "以前のモデル"
 		},
 		"tool": {
 			"untitled": "ツール呼び出し",
@@ -2750,7 +2758,10 @@
 			"allowAlways": "常に許可",
 			"reject": "許可しない",
 			"rejectAlways": "常に許可しない",
-			"more": "その他の応答"
+			"more": "その他の応答",
+			"submit": "回答",
+			"skip": "スキップ",
+			"skipped": "スキップしました"
 		},
 		"badge": {
 			"title": "エージェント",
@@ -2790,6 +2801,14 @@
 				"search": "検索",
 				"fetch": "取得"
 			},
+			"verbActive": {
+				"read": "読み込み中",
+				"edit": "編集中",
+				"delete": "削除中",
+				"move": "移動中",
+				"search": "検索中",
+				"fetch": "取得中"
+			},
 			"summary": {
 				"read": {
 					"one": "{count} 個のファイルを読み込み",
@@ -2819,6 +2838,10 @@
 					"one": "ブラウザを {count} 回使用",
 					"other": "ブラウザを {count} 回使用"
 				},
+				"browserOn": {
+					"one": "{site} でブラウザを {count} 回使用",
+					"other": "{site} でブラウザを {count} 回使用"
+				},
 				"tool": {
 					"one": "{count} 個のツールを使用",
 					"other": "{count} 個のツールを使用"
@@ -2827,6 +2850,54 @@
 					"one": "{count} 個のエージェントを起動",
 					"other": "{count} 個のエージェントを起動"
 				}
+			},
+			"browser": {
+				"closeTab": "タブを閉じました",
+				"open": "{url} を開きました",
+				"openPage": "ページを開きました",
+				"search": "ページ内を検索しました",
+				"requestAny": "リクエストを送信しました",
+				"back": "戻りました",
+				"forward": "進みました",
+				"reload": "ページを再読み込みしました",
+				"screenshot": "スクリーンショットを撮りました",
+				"click": "ページをクリックしました",
+				"clickOn": "\"{name}\" をクリックしました",
+				"type": "\"{text}\" と入力しました",
+				"key": "{keys} を押しました",
+				"scroll": "ページをスクロールしました",
+				"interact": "ページを操作しました",
+				"read": "ページを読みました",
+				"find": "\"{query}\" を探しました",
+				"form": "フィールドに入力しました",
+				"script": "ページでスクリプトを実行しました",
+				"batch": "ブラウザで複数の操作を実行しました",
+				"waitFor": "ページを待ちました",
+				"request": "{url} にリクエストを送信しました"
+			},
+			"browserActive": {
+				"closeTab": "タブを閉じています",
+				"open": "{url} を開いています",
+				"openPage": "ページを開いています",
+				"search": "ページを検索しています",
+				"requestAny": "リクエストを送信しています",
+				"back": "戻っています",
+				"forward": "進んでいます",
+				"reload": "ページを再読み込みしています",
+				"screenshot": "スクリーンショットを撮っています",
+				"click": "ページをクリックしています",
+				"clickOn": "\"{name}\" をクリックしています",
+				"type": "\"{text}\" と入力しています",
+				"key": "{keys} を押しています",
+				"scroll": "ページをスクロールしています",
+				"interact": "ページを操作しています",
+				"read": "ページを読んでいます",
+				"find": "\"{query}\" を探しています",
+				"form": "フィールドに入力しています",
+				"script": "ページでスクリプトを実行しています",
+				"batch": "複数のブラウザ操作を実行しています",
+				"waitFor": "ページを待っています",
+				"request": "{url} にリクエストを送信しています"
 			},
 			"exit": "終了コード {code}",
 			"showAll": {
@@ -2859,6 +2930,7 @@
 		"markdown": {
 			"preview": "プレビュー",
 			"openPreview": "プレビューをタブで開く",
+			"openFile": "クリックで開く、⌘-クリックで Finder に表示",
 			"view": "表示形式",
 			"code": "コード",
 			"copy": "コードをコピー",

@@ -1983,6 +1983,9 @@
 		"No changes on this branch": "No hay cambios en esta rama",
 		"Nothing differs from %@.": "No hay diferencias respecto a %@.",
 		"Show Uncommitted Changes": "Mostrar cambios sin confirmar",
+		"Conversation": "Conversación",
+		"No changes in this conversation": "No hay cambios en esta conversación",
+		"The project is as it was at the conversation's first prompt.": "El proyecto está como en el primer prompt de la conversación.",
 		"%@ files": {"one": "%@ archivo", "other": "%@ archivos"},
 		"against %@ from %@, uncommitted included": "respecto a %@ desde %@, incluidos los cambios sin confirmar",
 		"Binary file, not shown": "Archivo binario, no se muestra",
@@ -2436,6 +2439,7 @@
 		"Choose": "Elegir",
 		"New Conversation": "Nueva conversación",
 		"Screenshot of %@": "Captura de pantalla de %@",
+		"Selection from %@": "Selección de %@",
 		"The agent stopped (code %d).": "El agente se detuvo (código %d).",
 		"This agent is no longer in the ACP registry.": "Este agente ya no está en el registro de ACP.",
 		"The agent stopped.": "El agente se detuvo.",
@@ -2614,6 +2618,8 @@
 		"conversation": {
 			"stop": "Detener",
 			"mode": "Modo",
+			"compact": "compactar esta conversación",
+			"compactHint": "Haz clic para compactar: el agente resume la conversación para liberar su contexto.",
 			"context": "{percent} % del contexto usado",
 			"planSession": "Límite de sesión: {percent} % usado, se restablece {time}",
 			"planWeek": "Límite semanal: {percent} % usado, se restablece {time}",
@@ -2625,13 +2631,10 @@
 				"one": "Mostrar {count} elemento anterior",
 				"other": "Mostrar {count} elementos anteriores"
 			},
-			"queued": {
-				"one": "{count} mensaje en cola",
-				"other": "{count} mensajes en cola"
-			},
-			"queuedHint": "Se envía cuando el agente termina. Cmd Retorno lo envía ya.",
 			"queuedTag": "En cola",
+			"sendNow": "Enviar ahora",
 			"thought": "Razonamiento",
+			"editPrompt": "Editar",
 			"restoreToHere": "Restaurar hasta aquí",
 			"restoreConfirm": "¿Devolver los archivos del proyecto al estado que tenían en este mensaje?",
 			"restore": "Restaurar",
@@ -2643,6 +2646,10 @@
 			},
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "{count} paso hecho",
+				"other": "{count} pasos hechos"
+			},
 			"planStatus": {
 				"pending": "Pendiente",
 				"in_progress": "En curso",
@@ -2659,7 +2666,8 @@
 			"moreOptions": "Más opciones",
 			"signInHint": "Inicia sesión con el agente: tu mensaje se envía en cuanto inicies sesión.",
 			"branch": "Rama {branch}",
-			"jumpToLatest": "Ir al final"
+			"jumpToLatest": "Ir al final",
+			"olderModels": "Modelos anteriores"
 		},
 		"tool": {
 			"untitled": "Llamada a herramienta",
@@ -2750,7 +2758,10 @@
 			"allowAlways": "Permitir siempre",
 			"reject": "No permitir",
 			"rejectAlways": "No permitir nunca",
-			"more": "Más respuestas"
+			"more": "Más respuestas",
+			"submit": "Responder",
+			"skip": "Omitir",
+			"skipped": "Omitida"
 		},
 		"badge": {
 			"title": "Agentes",
@@ -2790,6 +2801,14 @@
 				"search": "Buscado",
 				"fetch": "Obtenido"
 			},
+			"verbActive": {
+				"read": "Leyendo",
+				"edit": "Editando",
+				"delete": "Eliminando",
+				"move": "Moviendo",
+				"search": "Buscando",
+				"fetch": "Obteniendo"
+			},
 			"summary": {
 				"read": {
 					"one": "leyó {count} archivo",
@@ -2819,6 +2838,10 @@
 					"one": "usó el navegador {count} vez",
 					"other": "usó el navegador {count} veces"
 				},
+				"browserOn": {
+					"one": "usó el navegador {count} vez en {site}",
+					"other": "usó el navegador {count} veces en {site}"
+				},
 				"tool": {
 					"one": "usó {count} herramienta",
 					"other": "usó {count} herramientas"
@@ -2827,6 +2850,54 @@
 					"one": "inició {count} agente",
 					"other": "inició {count} agentes"
 				}
+			},
+			"browser": {
+				"closeTab": "Cerró una pestaña",
+				"open": "Abrió {url}",
+				"openPage": "Abrió una página",
+				"search": "Buscó en la página",
+				"requestAny": "Envió una solicitud",
+				"back": "Volvió atrás",
+				"forward": "Fue hacia delante",
+				"reload": "Recargó la página",
+				"screenshot": "Hizo una captura de pantalla",
+				"click": "Hizo clic en la página",
+				"clickOn": "Hizo clic en \"{name}\"",
+				"type": "Escribió \"{text}\"",
+				"key": "Pulsó {keys}",
+				"scroll": "Desplazó la página",
+				"interact": "Usó la página",
+				"read": "Leyó la página",
+				"find": "Buscó \"{query}\"",
+				"form": "Rellenó un campo",
+				"script": "Ejecutó un script en la página",
+				"batch": "Encadenó varias acciones en el navegador",
+				"waitFor": "Esperó a la página",
+				"request": "Envió una solicitud a {url}"
+			},
+			"browserActive": {
+				"closeTab": "Cerrando una pestaña",
+				"open": "Abriendo {url}",
+				"openPage": "Abriendo una página",
+				"search": "Buscando en la página",
+				"requestAny": "Enviando una solicitud",
+				"back": "Volviendo atrás",
+				"forward": "Yendo hacia delante",
+				"reload": "Recargando la página",
+				"screenshot": "Haciendo una captura",
+				"click": "Haciendo clic en la página",
+				"clickOn": "Haciendo clic en \"{name}\"",
+				"type": "Escribiendo \"{text}\"",
+				"key": "Pulsando {keys}",
+				"scroll": "Desplazando la página",
+				"interact": "Usando la página",
+				"read": "Leyendo la página",
+				"find": "Buscando \"{query}\"",
+				"form": "Rellenando un campo",
+				"script": "Ejecutando un script en la página",
+				"batch": "Ejecutando varias acciones del navegador",
+				"waitFor": "Esperando a la página",
+				"request": "Enviando una solicitud a {url}"
 			},
 			"exit": "Salida {code}",
 			"showAll": {
@@ -2859,6 +2930,7 @@
 		"markdown": {
 			"preview": "Vista previa",
 			"openPreview": "Abrir vista previa en una pestaña",
+			"openFile": "Haz clic para abrir, ⌘-clic para mostrar en el Finder",
 			"view": "Ver como",
 			"code": "Código",
 			"copy": "Copiar código",

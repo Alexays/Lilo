@@ -1,0 +1,3 @@
+kind: Changed
+body: The composer shows the agent's effort beside the model only when it is set (High, Max), instead of an unexplained Default.
+time: 2026-11-09T02:02:31.941653+01:00

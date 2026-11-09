@@ -1,0 +1,3 @@
+kind: Fixed
+body: An agent conversation's context gauge no longer reads several times too full during its first turn.
+time: 2026-11-08T21:00:44.778847+01:00

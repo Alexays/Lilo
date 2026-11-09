@@ -11,7 +11,8 @@
   interface Props {
     /** Names the chevron to VoiceOver ("More ways to answer"). */
     menuLabel: string;
-    variants: { label: string; onclick: () => void }[];
+    /** A variant's shortcut shows at the row's end, as a menu item's does. */
+    variants: { label: string; shortcut?: string; onclick: () => void }[];
     disabled?: boolean;
     onclick: () => void;
     children: Snippet;
@@ -107,12 +108,18 @@
           open = false;
           variant.onclick();
         }}
-      >{variant.label}</button>
+      >{variant.label}{#if variant.shortcut}<span class="shortcut" aria-hidden="true">{variant.shortcut}</span>{/if}</button>
     {/each}
   </div>
 {/if}
 
 <style>
+  .shortcut {
+    margin-left: auto;
+    padding-left: var(--space-16);
+    color: var(--text-muted);
+  }
+
   .ui-split-button {
     display: inline-flex;
     flex: none;

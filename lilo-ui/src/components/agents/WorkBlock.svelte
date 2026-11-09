@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import { getFormatLocale } from "../../lib/i18n/state.svelte";
+  import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import type { FileDiff, ToolCallItem, ToolKind } from "./conversationModel";
   import type { IconName } from "../ui/icons";
 
@@ -35,21 +35,31 @@
     subagent: boolean;
     /** The sub-agent's kind, when the agent names it. */
     role: string;
+    /** The JavaScript a browser call ran, shown above its result. */
+    script: string;
+    /** The host a browser call opened, which names the site in the block's summary. */
+    site: string;
   }
 
   // Agents describe calls differently: the raw input names the file, command or query when there is one.
-  function describe(call: ToolCallItem, cwd: string): CallView {
+  export function describe(call: ToolCallItem, cwd: string): CallView {
     const input = (call.rawInput !== null && typeof call.rawInput === "object" ? call.rawInput : {}) as Record<string, unknown>;
+    // A step still running reads in the present: "Editing", "Opening".
+    const active = call.status === "in_progress" || call.status === "pending";
+    // A file, command or search step is never one: its title holds a path or command that can say "lilo" too.
     const browser =
-      BROWSER_TOOL.test(call.title) ||
-      ["server", "tool", "name"].some((key) => typeof input[key] === "string" && BROWSER_TOOL.test(input[key] as string));
-    const view = { call: { ...call }, browser, verb: null, target: call.title, path: false, command: false, subagent: false, role: "" };
+      !FILE_KINDS.has(call.toolKind) &&
+      call.toolKind !== "execute" &&
+      call.toolKind !== "search" &&
+      (BROWSER_TOOL.test(call.title) ||
+        ["server", "tool", "name"].some((key) => typeof input[key] === "string" && BROWSER_TOOL.test(input[key] as string)));
+    const view = { call: { ...call }, browser, verb: null, target: call.title, path: false, command: false, subagent: false, role: "", script: "", site: "" };
     // claude-agent-acp names the sub-agent's kind in `subagent_type`, before its first call arrives.
     if (call.children.length || typeof input.subagent_type === "string") {
       const role = typeof input.subagent_type === "string" ? input.subagent_type : "";
       return { ...view, subagent: true, role, target: typeof input.description === "string" && input.description ? input.description : call.title };
     }
-    if (call.toolKind === "execute" && !browser) {
+    if (call.toolKind === "execute") {
       const command = input.command;
       // Codex sends argv, usually ["bash", "-lc", script].
       const line = Array.isArray(command)
@@ -63,11 +73,56 @@
       : call.toolKind === "search" ? input.pattern ?? input.query
       : call.toolKind === "fetch" ? input.url ?? input.query
       : null;
-    if (browser || typeof target !== "string" || !target) {
-      return { ...view, target: call.title.replace(/^mcp__lilo__/, "") };
+    if (browser) {
+      // Codex wraps an MCP call as { server, tool, arguments }; Claude names it mcp__lilo__<tool>.
+      const name = typeof input.tool === "string" ? input.tool : call.title.replace(/^(mcp__lilo__|.*?\blilo\b\W*)/i, "");
+      const args = (typeof input.tool === "string" && input.arguments !== null && typeof input.arguments === "object" ? input.arguments : input) as Record<string, unknown>;
+      const code = name === "javascript_tool" ? args.text : name === "run" ? args.code : "";
+      const script = typeof code === "string" ? code : "";
+      const url = name === "navigate" && typeof args.url === "string" ? args.url : "";
+      const site = /^(back|forward|reload|file:.*)$/.test(url) ? "" : url.replace(/^https?:\/\//, "").split(/[/?#]/)[0];
+      return { ...view, target: browserStep(name, args, call.output, active), script, site };
     }
+    if (typeof target !== "string" || !target) return { ...view, target: call.title };
     const shown = path && cwd && target.startsWith(`${cwd}/`) ? target.slice(cwd.length + 1) : target;
-    return { ...view, verb: `agents.work.verb.${call.toolKind}`, target: shown, path };
+    return { ...view, verb: `agents.work.${active ? "verbActive" : "verb"}.${call.toolKind}`, target: shown, path };
+  }
+
+  // What a Lilo browser call did, in words: its arguments stream in, so a partial call says it in general terms.
+  function browserStep(name: string, args: Record<string, unknown>, output: string, active: boolean): string {
+    const text = (key: string) => (typeof args[key] === "string" ? (args[key] as string) : "");
+    const step = (key: string, values?: Record<string, string>) => t(`agents.work.${active ? "browserActive" : "browser"}.${key}`, values);
+    // A local file reads by its name: its absolute path is mostly folders the user knows already.
+    const url = text("url").replace(/^https?:\/\//, "").replace(/^file:\/\/.*\//, "").replace(/\/$/, "");
+    switch (name) {
+      case "tabs_close_mcp": return step("closeTab");
+      case "navigate":
+        if (url === "back" || url === "forward" || url === "reload") return step(url);
+        return url ? step("open", { url }) : step("openPage");
+      case "read_page": case "get_page_text": return step("read");
+      case "find": return text("query") ? step("find", { query: text("query") }) : step("search");
+      case "form_input": return step("form");
+      case "javascript_tool": return step("script");
+      case "browser_batch": case "run": return step("batch");
+      case "wait_for": return step("waitFor");
+      case "fetch": return url ? step("request", { url }) : step("requestAny");
+      case "computer":
+        switch (text("action")) {
+          case "": return step("interact");
+          case "screenshot": return step("screenshot");
+          case "left_click": case "right_click": case "double_click": case "triple_click": {
+            // Lilo's reply names the element hit, as `Clicked button "Add" at (x, y)`.
+            const hit = /^(?:Right-)?[Cc]licked [^"\n]*"([^"\n]+)"/.exec(output);
+            return hit ? step("clickOn", { name: hit[1] }) : step("click");
+          }
+          case "type": case "insert_text": return step("type", { text: text("text") });
+          case "key": return step("key", { keys: text("text") });
+          case "scroll": case "scroll_to": return step("scroll");
+          case "wait": return step("waitFor");
+          default: return step("interact");
+        }
+      default: return name;
+    }
   }
 </script>
 
@@ -76,7 +131,6 @@
   import { cubicOut } from "svelte/easing";
   import { SvelteSet } from "svelte/reactivity";
   import { fade } from "svelte/transition";
-  import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { restingFly } from "../../lib/motion/restingTransitions";
   import { MOTION } from "../../lib/motion/timings";
@@ -110,7 +164,7 @@
     return untrack(() => calls).map((call) => describe(call, cwd));
   });
   // A block where something failed stays open when the turn ends: that is what to read first.
-  const failed = $derived(views.some((view) => view.call.status === "failed"));
+  const failed = $derived(views.some((view) => view.call.status === "failed" && !view.call.stopped));
   const open = $derived(userOpen ?? (!done || failed));
   // A folded block from the replay builds its rows on first open.
   let opened = $state(untrack(() => !done || failed));
@@ -125,8 +179,11 @@
     let added = 0;
     let removed = 0;
     let images = 0;
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one run
+    const sites = new Set<string>();
     for (const view of views) {
       images += view.call.images.length;
+      if (view.site) sites.add(view.site);
       if (view.subagent) {
         counts.set("agent", (counts.get("agent") ?? 0) + 1);
         for (const child of view.call.children) {
@@ -154,7 +211,13 @@
       }
     }
     if (files.size) counts.set("edit", files.size);
-    const text = listFormat.format([...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })));
+    // Browser actions on a single site name it, as the steps on files name the file.
+    const site = sites.size === 1 ? [...sites][0] : "";
+    const text = listFormat.format(
+      [...counts].map(([category, count]) =>
+        category === "browser" && site ? t("agents.work.summary.browserOn", { count, site }) : t(`agents.work.summary.${category}`, { count }),
+      ),
+    );
     return { text: text.charAt(0).toUpperCase() + text.slice(1), added, removed, images, categories: [...counts.keys()] };
   });
 
@@ -202,11 +265,13 @@
 </script>
 
 {#snippet status(call: ToolCallItem)}
-  <span class="status">
+  <span class="status" class:worded={call.stopped}>
     {#if call.status === "in_progress"}
       <span class="spinner" role="img" aria-label={t("agents.tool.status.in_progress")} out:fade={{ duration: enter && MOTION.itemExitMs }}></span>
     {:else if call.status === "pending"}
       <span class="spinner pending" role="img" aria-label={t("agents.tool.status.pending")} out:fade={{ duration: enter && MOTION.itemExitMs }}></span>
+    {:else if call.stopped}
+      <span class="stopped">{t("agents.turn.stopped")}</span>
     {:else if call.status === "failed"}
       <span class="failed" role="img" aria-label={t("agents.tool.status.failed")} in:fade={{ duration: enter }}><Icon name="alert" size={13} /></span>
     {:else}
@@ -271,16 +336,20 @@
         <DiffCard {tabId} {diffs} {cwd} checkpoint={Math.max(promptIndex, 0)} undone={undone.has(diffs[0].path)} />
       {/each}
     {:else}
-      <!-- Claude's adapter wraps a command's output in a Markdown fence; the block below is already code. -->
-      {@const text = call.output.startsWith("```") ? call.output.replace(/^```[^\n]*\n?/, "").replace(/\n?```\s*$/, "") : call.output}
+      <!-- Claude's adapter wraps a command's output in a Markdown fence, and a refused call in a tool_use_error tag; the block below is already code. -->
+      {@const fenced = call.output.startsWith("```") ? call.output.replace(/^```[^\n]*\n?/, "").replace(/\n?```\s*$/, "") : call.output}
+      {@const text = fenced.replace(/^<tool_use_error>([\s\S]*?)<\/tool_use_error>\s*$/, "$1")}
       {@const output = text.length > 0}
-      {@const expandable = output || (!view.command && call.locations.length > 0)}
+      <!-- A command too long or tall for its row opens to show it whole, output or not. -->
+      {@const longCommand = view.command && (view.target.length > 48 || view.target.includes("\n"))}
+      {@const expandable = output || longCommand || view.script !== "" || (!view.command && call.locations.length > 0)}
       <!-- A failed command opens on its output; a click flips whichever way it starts. -->
-      {@const showOutput = expandable && toggled.has(call.toolCallId) !== (view.command && call.status === "failed")}
+      {@const showOutput = expandable && toggled.has(call.toolCallId) !== (view.command && call.status === "failed" && !call.stopped)}
       <button
         type="button"
         class="call-row"
         class:expandable
+        class:whole={view.command && showOutput}
         aria-expanded={expandable ? showOutput : undefined}
         disabled={!expandable}
         onclick={() => {
@@ -309,7 +378,7 @@
         {#if duration}<span class="duration">{duration}</span>{/if}
         {@render status(call)}
       </button>
-      {#if showOutput}
+      {#if showOutput && (output || !view.command)}
         {@const lines = text.split("\n")}
         {@const all = fullOutput.has(call.toolCallId)}
         <div class="detail" in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 0, y: -4 }}>
@@ -318,10 +387,13 @@
               <div class="location">{location.path}{location.line ? `:${location.line}` : ""}</div>
             {/each}
           {/if}
+          {#if view.script}<pre class="output script">{view.script}</pre>{/if}
           {#if output}
-            <pre class="output" class:failed={call.status === "failed"}>{all
+            <!-- Blank lines at the top of what shows say nothing: the box starts on the first line of text. -->
+            <pre class="output" class:failed={call.status === "failed" && !call.stopped}>{(all
                 ? text.slice(0, MAX_OUTPUT)
-                : lines.slice(-OUTPUT_TAIL).join("\n")}</pre>
+                : lines.slice(-OUTPUT_TAIL).join("\n")
+              ).replace(/^\s*\n/, "")}</pre>
             {#if lines.length > OUTPUT_TAIL}
               <button
                 type="button"
@@ -466,7 +538,7 @@
   }
 
   .count-added {
-    color: var(--success-text);
+    color: color-mix(in srgb, var(--diff-added) 70%, var(--text-primary));
   }
 
   .image-count {
@@ -487,7 +559,7 @@
   }
 
   .count-removed {
-    color: var(--danger-text);
+    color: color-mix(in srgb, var(--diff-removed) 70%, var(--text-primary));
   }
 
   .expand {
@@ -546,6 +618,19 @@
 
   .call-row.expandable:hover {
     background: var(--bg-hover);
+  }
+
+  .call-row.whole {
+    align-items: flex-start;
+    padding-block: var(--space-4);
+  }
+
+  /* Wrapped lines hang under the command, clear of its "$ ". */
+  .call-row.whole .mono {
+    padding-left: 2ch;
+    text-indent: -2ch;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   .call-row.subagent {
@@ -683,6 +768,10 @@
     margin-left: auto;
   }
 
+  .status.worded {
+    width: auto;
+  }
+
   .duration + .status {
     margin-left: 0;
   }
@@ -695,6 +784,11 @@
   .failed {
     display: inline-flex;
     color: var(--danger-text);
+  }
+
+  .stopped {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
   }
 
   .done-check {
@@ -762,11 +856,16 @@
     padding: var(--space-8) var(--space-10);
     border-radius: var(--radius-md);
     border: 1px solid var(--separator);
-    background: var(--bg-secondary);
+    /* The code blocks' neutral, never the Space's tint: output reads the same in every Space. */
+    background: color-mix(in srgb, var(--text-primary) 4%, var(--bg-primary));
     color: var(--text-secondary);
     font: var(--font-size-xs)/1.5 ui-monospace, "SF Mono", Menlo, monospace;
     white-space: pre;
     user-select: text;
+  }
+
+  .output.script {
+    color: var(--text-primary);
   }
 
   .output.failed {

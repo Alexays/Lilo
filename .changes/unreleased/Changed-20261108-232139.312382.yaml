@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Agents: a file the agent read or edited opens in its app when you click its name in a reply, and ⌘-click shows it in Finder; apps and scripts are only shown, never run.'
+time: 2026-11-08T23:21:39.312382+01:00

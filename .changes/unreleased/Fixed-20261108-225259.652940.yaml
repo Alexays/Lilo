@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Agents: a table in a reply keeps a minimum width per column and keeps inline code on one line, so a wide table scrolls sideways instead of breaking labels and code over several lines.'
+time: 2026-11-08T22:52:59.65294+01:00

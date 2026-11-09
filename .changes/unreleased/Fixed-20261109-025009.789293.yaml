@@ -1,0 +1,3 @@
+kind: Fixed
+body: A command cut off when you stop the agent reads Stopped in grey instead of failing with a red error box and the agent's internal rejection text.
+time: 2026-11-09T02:50:09.789293+01:00

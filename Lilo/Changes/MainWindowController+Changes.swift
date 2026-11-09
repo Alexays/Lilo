@@ -5,19 +5,20 @@ extension MainWindowController {
     /// closes it.
     @objc func showChanges(_ sender: Any?) {
         guard let tab = tabManager.activeTab, tab.kind == .terminal else { return NSSound.beep() }
-        showChanges(forTerminal: tab.id)
+        showChanges(for: tab.id)
     }
 
-    func showChanges(forTerminal id: UUID) {
-        if changesPeek?.terminalId == id { return dismissChangesPeek() }
+    /// A terminal's or a conversation's changes; `tree` scopes them to a conversation's own.
+    func showChanges(for id: UUID, since tree: String? = nil) {
+        if changesPeek?.tabId == id { return dismissChangesPeek() }
         // The click on a chip toggling the peek closed it already, before the chrome reports it.
-        if let closed = changesPeekClosedByClick, closed.terminalId == id,
+        if let closed = changesPeekClosedByClick, closed.tabId == id,
            ProcessInfo.processInfo.systemUptime - closed.time < 0.5 { return }
-        guard let tab = tabManager.tab(for: id), tab.kind == .terminal, let cwd = tab.cwd,
+        guard let tab = tabManager.tab(for: id), tab.kind == .terminal || tab.kind == .agent, let cwd = tab.cwd,
               GitDiff.repositoryRoot(containing: cwd) != nil else { return NSSound.beep() }
         dismissChangesPeek()
         if tabManager.activeOpenTabId != id { activateTabStateFirst(id: id) }
-        let view = ChangesView(directory: cwd)
+        let view = ChangesView(directory: cwd, since: tree)
         view.showsPeekControls = true
         view.onClose = { [weak self] in self?.dismissChangesPeek() }
         view.onOpenInSplit = { [weak self] in self?.openChangesInSplit() }
@@ -30,27 +31,36 @@ extension MainWindowController {
             self?.dismissChangesPeek()
         }
         changesPeek = (id, peek, view)
-        peek.frame = contentContainerView.bounds
         peek.autoresizingMask = [.width, .height]
-        contentContainerView.addSubview(peek, positioned: .above, relativeTo: nil)
+        // The chrome draws a conversation over its empty content view: its peek goes above the chrome.
+        if tab.kind == .agent, let root = window?.contentView {
+            peek.frame = contentContainerView.frame
+            root.addSubview(peek, positioned: .above, relativeTo: chromeWebView)
+        } else {
+            peek.frame = contentContainerView.bounds
+            contentContainerView.addSubview(peek, positioned: .above, relativeTo: nil)
+        }
         peek.present()
         window?.makeFirstResponder(view.diffView)
     }
 
     /// Closes the peek and hands the keyboard back to the terminal under it.
     func dismissChangesPeek() {
-        guard let (terminalId, peek, _) = changesPeek else { return }
+        guard let (tabId, peek, _) = changesPeek else { return }
         changesPeek = nil
         peek.dismiss {}
-        if terminalId == tabManager.activeOpenTabId, let view = tabManager.loadedContentView(forTabId: terminalId) {
+        guard tabId == tabManager.activeOpenTabId else { return }
+        if tabManager.tab(for: tabId)?.kind == .agent {
+            focusChrome()
+        } else if let view = tabManager.loadedContentView(forTabId: tabId) {
             focusContent(view)
         }
     }
 
-    /// Keeps the peek's diff as a Changes tab: a pane beside its terminal, or a tab of its own when
-    /// the terminal is already in a split.
+    /// Keeps the peek's diff as a Changes tab: a pane beside its tab, or a tab of its own when that
+    /// tab is in a folder.
     private func openChangesInSplit() {
-        guard let (terminalId, peek, view) = changesPeek, let spaceId = tabManager.currentSpaceId else { return }
+        guard let (openerId, peek, view) = changesPeek, let spaceId = tabManager.currentSpaceId else { return }
         changesPeek = nil
         // The view leaves the peek first, so the peek's fade-out never takes it along.
         view.removeFromSuperview()
@@ -58,11 +68,11 @@ extension MainWindowController {
         peek.dismiss {}
         let tab = Tab(title: "Changes".localized, kind: .changes, cwd: view.repository)
         tabManager.changesHost.adopt(view, for: tab.id)
-        let split = canSplit(beside: terminalId)
+        let split = canSplit(beside: openerId)
         do {
             try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: !split))
             if split {
-                try applyBrowserCommand(.splitTabs(spaceId: spaceId, tabId: tab.id, targetTabId: terminalId, vertical: false, before: false))
+                try applyBrowserCommand(.splitTabs(spaceId: spaceId, tabId: tab.id, targetTabId: openerId, vertical: false, before: false))
             }
             tabManager.activateTabRuntime(id: tab.id)
         } catch {

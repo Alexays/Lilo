@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Agents: a file location the agent writes in plain text, like faq.html:6, is a link too when the thread knows that file.'
+time: 2026-11-08T23:24:44.258913+01:00

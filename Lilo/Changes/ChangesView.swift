@@ -45,7 +45,9 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         case file(Int)
     }
 
-    private var mode = GitDiff.Mode.uncommitted
+    /// The comparisons the mode control offers, a conversation's own first when the view was opened from one.
+    private let modes: [GitDiff.Mode]
+    private var mode: GitDiff.Mode
     private var diff: GitDiff?
     private var failed = false
     private var shownBranch: String?
@@ -66,7 +68,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
     private let repositoryLabel = NSTextField(labelWithString: "")
     private let countLabel = NSTextField(labelWithString: "")
     private let countsChip = ChangesCountsChip()
-    private let modeControl = ChangesSegmentedControl(labels: ["Uncommitted".localized, "Branch".localized])
+    private let modeControl: ChangesSegmentedControl
     private let layoutControl = ChangesSegmentedControl(labels: ["Unified".localized, "Split".localized])
     private lazy var splitButton = iconButton("rectangle.split.2x1", label: "Open in Split".localized, action: #selector(openInSplitAction(_:)))
     private lazy var closeButton = iconButton("xmark", label: "Close".localized, action: #selector(closeAction(_:)))
@@ -92,7 +94,10 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         listCard.layer?.backgroundColor = frame.contentSurfaceColor.cgColor
     }
 
-    init(directory: String) {
+    init(directory: String, since tree: String? = nil) {
+        modes = (tree.map { [.since($0)] } ?? []) + [.uncommitted, .branch]
+        mode = modes[0]
+        modeControl = ChangesSegmentedControl(labels: (tree == nil ? [] : ["Conversation".localized]) + ["Uncommitted".localized, "Branch".localized])
         repository = GitDiff.repositoryRoot(containing: directory) ?? directory
         let directories = GitDiff.gitDirectories(of: repository)
         isLinkedWorktree = directories.own != directories.common
@@ -513,6 +518,10 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
             emptyDetail.stringValue = mode == .branch
                 ? "No main or master branch to compare with.".localized
                 : "Check that git is installed and the folder is a repository.".localized
+        } else if case .since = mode {
+            emptyTitle.stringValue = "No changes in this conversation".localized
+            emptyDetail.stringValue = "The project is as it was at the conversation's first prompt.".localized
+            emptyButton.title = "Show Uncommitted Changes".localized
         } else if mode == .uncommitted {
             emptyTitle.stringValue = "No uncommitted changes".localized
             emptyDetail.stringValue = "The working tree matches the last commit.".localized
@@ -647,7 +656,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
     // MARK: - Actions
 
     private func modeChanged() {
-        mode = modeControl.selectedSegment == 1 ? .branch : .uncommitted
+        mode = modes[modeControl.selectedSegment]
         restart()
     }
 
@@ -672,7 +681,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
     }
 
     @objc private func emptyButtonAction(_ sender: Any?) {
-        modeControl.selectedSegment = mode == .uncommitted ? 1 : 0
+        modeControl.selectedSegment = modes.firstIndex(of: mode == .uncommitted ? .branch : .uncommitted) ?? 0
         modeChanged()
     }
 

@@ -10,16 +10,19 @@
 
   /** What was typed and not sent, by conversation: the view goes when its tab is not shown. */
   const drafts: Record<string, { text: string; attachments: AttachmentDraft[] }> = {};
+  /** When each conversation was first seen working: the timer's start while its thread is not loaded yet, kept across views. */
+  const workingSince: Record<string, number> = {};
 </script>
 
 <script lang="ts">
-  import { modeIcon, modelLogo } from "./modelLogos";
+  import { modeIcon, modelLogo, supersededModels } from "./modelLogos";
   import "../../lib/i18n/agentsCatalog";
   import { onDestroy, untrack } from "svelte";
   import { cubicOut } from "svelte/easing";
   import { fade } from "svelte/transition";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { conversationActions } from "./conversationActions";
+  import { announce } from "../../lib/announce";
   import type { BridgeSplitPaneFrame } from "../../lib/bridge/protocol";
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -40,16 +43,19 @@
   import { getSplitPanes } from "../../stores/splitPanes.svelte";
   import { getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import AgentTile from "./AgentTile.svelte";
-  import type { ImageRef, PermissionItem, ThreadItem, ToolCallItem } from "./conversationModel";
+  import type { ImageRef, PermissionItem, QuestionItem, ThreadItem, ToolCallItem, UserMessageItem } from "./conversationModel";
   import Icon from "../ui/Icon.svelte";
   import Lightbox from "./Lightbox.svelte";
   import MenuPicker from "./MenuPicker.svelte";
   import PermissionButtons from "./PermissionButtons.svelte";
+  import PlanTray from "./PlanTray.svelte";
   import PromptField from "./PromptField.svelte";
+  import QuestionForm from "./QuestionForm.svelte";
   import SignInCard from "./SignInCard.svelte";
   import ThreadRow, { type TurnSummary } from "./ThreadRow.svelte";
   import { formatDuration, itemSignature } from "./threadView";
-  import WorkBlock from "./WorkBlock.svelte";
+  import WorkBlock, { describe } from "./WorkBlock.svelte";
+  import { threadRoots } from "./threadFind";
 
   interface Props {
     tabId: string;
@@ -83,6 +89,25 @@
     return getOpenConversation(tabId);
   });
   const agentState = $derived(getConversationState(tabId));
+
+  // A file the agent read or changed in this thread, by the name a message gives it: `faq.html` opens, `console.log` does not.
+  /** An option the agent names by id (`plugin:code-simplifier`, `xhigh`) as words a menu can show. */
+  function optionLabel(name: string): string {
+    if (/\s/.test(name)) return name;
+    const words = (name.split(":").pop() ?? name).replace(/[-_]+/g, " ").replace(/^x(?=high|low)/i, "extra ");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+
+  function knownFile(name: string): string | null {
+    const bare = name.replace(/:\d+(?::\d+)?$/, "");
+    if (!conversation || !/^[\w.@/~-]+\.[A-Za-z]\w*$/.test(bare)) return null;
+    for (const call of conversation.thread.toolCalls.values()) {
+      for (const path of [...call.diffs.map((diff) => diff.path), ...call.locations.map((location) => location.path)]) {
+        if (path === bare || path.endsWith(`/${bare}`)) return path;
+      }
+    }
+    return null;
+  }
   const busy = $derived(agentState === "busy" || agentState === "starting");
   // Set on send, so the status line shows on that frame rather than when Lilo reports the turn.
   let sentPending = $state(false);
@@ -103,6 +128,14 @@
     else delete drafts[tabId];
   });
   let threadEl: HTMLDivElement | undefined = $state();
+  $effect(() => {
+    if (!threadEl) return;
+    const id = tabId;
+    threadRoots.set(id, threadEl);
+    return () => {
+      if (threadRoots.get(id) === threadEl) threadRoots.delete(id);
+    };
+  });
   let columnEl: HTMLDivElement | undefined = $state();
   let elapsedEl: HTMLSpanElement | undefined = $state();
   let threadHeight = $state(0);
@@ -135,6 +168,8 @@
     let prompt = -1;
     for (let i = 0; i < start; i++) if (items[i].kind === "user") prompt++;
     const out: Turn[] = [];
+    // Prompts waiting for the running turn close the thread, whatever that turn adds after them.
+    const waiting: UserMessageItem[] = [];
     let turn: Turn | null = null;
     let work: WorkRow | null = null;
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one run, only its size is kept
@@ -144,6 +179,10 @@
     let finalText = "";
     for (let i = start; i < items.length; i++) {
       const item = items[i];
+      if (item.kind === "user" && item.queued) {
+        waiting.push(item);
+        continue;
+      }
       if (item.kind === "user") {
         prompt++;
         turn = null;
@@ -189,7 +228,29 @@
     }
     // A turn that stopped without its end (an error, an agent that quit) folds its work too.
     if (!working) for (const row of out.at(-1)?.rows ?? []) if (row.kind === "work") row.done = true;
+    for (const item of waiting) {
+      prompt++;
+      out.push({
+        key: `t${item.id}`,
+        rows: [{ kind: "item", key: `i${item.id}`, item, sig: itemSignature(item, undone), promptIndex: prompt, canRestore: false, turn: null }],
+      });
+    }
     return out;
+  });
+  // The call running now, in the words its row uses: the working line says what the agent is on.
+  const step = $derived.by(() => {
+    void version;
+    if (!working || !conversation) return null;
+    const { items } = conversation.thread;
+    for (let i = items.length - 1; i >= 0 && items[i].kind === "toolCall"; i--) {
+      const call = items[i];
+      if (call.kind !== "toolCall" || (call.status !== "pending" && call.status !== "in_progress")) continue;
+      const view = describe(call, header.cwd);
+      if (view.command) return `$ ${view.target}`;
+      if (view.verb) return `${t(view.verb)} ${view.path ? view.target.slice(view.target.lastIndexOf("/") + 1) : view.target}`;
+      return view.target || null;
+    }
+    return null;
   });
   const empty = $derived(conversation !== undefined && turns.length === 0);
   const hiddenCount = $derived.by(() => {
@@ -212,7 +273,7 @@
     const extraConfigs = options.filter((config) => !configs.includes(config));
     const agentId = conversation?.agentId ?? tab?.agentId ?? "";
     return {
-      title: thread?.title || getConversationSummary(tabId)?.title || tabDisplayTitle(tab?.title ?? ""),
+      title: tabDisplayTitle(tab?.title ?? "") || thread?.title || getConversationSummary(tabId)?.title,
       agentId,
       agentName: getAgent(agentId)?.name || agentId,
       project: cwd.split("/").filter(Boolean).pop() ?? "",
@@ -221,6 +282,13 @@
       branch: tab?.gitBranch ?? "",
       modes,
       extraConfigs,
+      // Read beside the model, as Claude Code shows it: the effort the next turn runs at, unless it is the agent's default.
+      effort: (() => {
+        const config = extraConfigs.find((option) => option.category === "thought_level");
+        if (!config || /^default$/i.test(config.currentValue)) return null;
+        const name = config.options.find((option) => option.value === config.currentValue)?.name;
+        return name ? optionLabel(name) : null;
+      })(),
       modeId: thread?.modeId ?? "",
       configs,
       usage: thread?.usage && thread.usage.size > 0 ? thread.usage : null,
@@ -232,6 +300,8 @@
     };
   });
   const usagePercent = $derived(header.usage ? Math.min(100, Math.round((header.usage.used / header.usage.size) * 100)) : 0);
+  // Below half the context, compacting saves little and Claude refuses a short thread.
+  const canCompact = $derived(!working && usagePercent >= 50 && header.commands.some((command) => command.name === "compact"));
   // The thread replaces this array only on a rate limit event, so the formatting below runs that rarely.
   const planLimits = $derived.by(() => {
     void version;
@@ -254,6 +324,13 @@
       ),
     };
   });
+  // The agent's task list docks over the composer while it matters, and goes back to the thread once all is done.
+  const todo = $derived.by(() => {
+    void version;
+    const entries = conversation?.thread.plan?.entries;
+    return entries?.length ? [...entries] : null;
+  });
+  const todoPinned = $derived(todo !== null && (working || todo.some((entry) => entry.status !== "completed")));
   const hasDraft = $derived(text.trim().length > 0 || attachments.length > 0);
   const stopping = $derived(working && !hasDraft);
 
@@ -337,10 +414,11 @@
   // One timer, only while a turn runs: it writes the text in place instead of re-rendering.
   $effect(() => {
     const el = elapsedEl;
+    if (!working) delete workingSince[tabId];
     if (!working || !el) return;
-    const fallback = Date.now();
+    const since = (workingSince[tabId] ??= Date.now());
     const tick = () => {
-      el.textContent = formatDuration(Date.now() - (getOpenConversation(tabId)?.thread.turnStartedAt ?? fallback));
+      el.textContent = formatDuration(Date.now() - (getOpenConversation(tabId)?.thread.turnStartedAt ?? since));
     };
     tick();
     const timer = setInterval(tick, 1000);
@@ -362,7 +440,30 @@
     void version;
     return pendingPermission();
   });
-  const asking = $derived(pending !== null);
+  // A form the agent asks to fill: Claude's multiple-choice questions come this way.
+  const pendingQuestion = $derived.by((): QuestionItem | null => {
+    void version;
+    const items = conversation?.thread.items ?? [];
+    for (let i = items.length - 1; i >= 0; i--) {
+      const item = items[i];
+      if (item.kind === "question" && item.answer === null) return item;
+    }
+    return null;
+  });
+  const asking = $derived(pending !== null || pendingQuestion !== null);
+  // VoiceOver hears what the eye sees change: a turn ending, a question waiting. An error is its own alert.
+  let wasBusy = false;
+  $effect(() => {
+    if (wasBusy && !busy && !asking && !header.error) announce(t("agents.badge.done"));
+    wasBusy = busy;
+  });
+  let announcedRequest: string | number | null = null;
+  $effect(() => {
+    const request = pending?.requestId ?? pendingQuestion?.requestId ?? null;
+    if (request !== null && request !== announcedRequest && live)
+      announce(pending ? `${t("agents.conversation.permissionTitle")} ${pendingCommand}` : pendingQuestion?.message ?? "");
+    announcedRequest = request;
+  });
   // What the agent asks to run, as it will run: the command for a shell call, else its title.
   const pendingCommand = $derived.by(() => {
     const call = pending?.toolCall;
@@ -405,16 +506,27 @@
     scrollMode = "following";
   }
 
+  function compact(): void {
+    conversationActions.send({ tabId, text: "/compact", attachments: [], interrupt: false });
+    sentPending = true;
+    addLocalPrompt(tabId, "/compact", []);
+    scrollMode = "following";
+  }
+
   function stop(): boolean {
     if (!working) return false;
     conversationActions.cancel(tabId);
     return true;
   }
 
-  function answerPending(allow: boolean): boolean {
+  let questionForm = $state<QuestionForm>();
+
+  function answerPending(allow: boolean, always = false): boolean {
     const permission = pendingPermission();
     if (!permission) return false;
-    const option = allow
+    const option = always
+      ? permission.options.find((candidate) => candidate.kind === "allow_always")
+      : allow
       ? permission.options.find((candidate) => candidate.kind === "allow_once") ?? permission.options.find((candidate) => candidate.kind === "allow_always")
       : permission.options.find((candidate) => candidate.kind === "reject_once") ?? permission.options.find((candidate) => candidate.kind === "reject_always");
     if (allow && !option) return false;
@@ -452,6 +564,20 @@
           <span class="meta-text">{header.branch}</span>
         </span>
       {/if}
+      {#if tab?.diffAdded || tab?.diffRemoved}
+        <!-- Git's view of the project, so edits made through the shell count too. -->
+        <button
+          type="button"
+          class="meta changes"
+          aria-label={t("tabItem.showChanges", { added: tab.diffAdded ?? 0, removed: tab.diffRemoved ?? 0 })}
+          use:tooltip={t("agents.turn.review")}
+          onclick={() => conversationActions.openChanges(tabId)}
+        >
+          <Icon name="fileDiff" size={12} />
+          {#if tab.diffAdded}<span class="count-added">+{tab.diffAdded}</span>{/if}
+          {#if tab.diffRemoved}<span class="count-removed">-{tab.diffRemoved}</span>{/if}
+        </button>
+      {/if}
       {#if header.ownCopy}
         <span class="meta" use:tooltip={t("agents.conversation.ownCopyHint")}>
           <Icon name="copy" size={12} />
@@ -471,7 +597,20 @@
           {plan.percent}%
         </span>
       {/if}
-      {#if header.usage}
+      {#if header.usage && canCompact}
+        <!-- The agent summarizes the thread to free its context, as Claude Code's /compact. -->
+        <button
+          type="button"
+          class="gauge compact"
+          in:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs }}
+          aria-label={`${t("agents.conversation.context", { percent: usagePercent })}, ${t("agents.conversation.compact")}`}
+          use:tooltip={{ text: t("agents.conversation.context", { percent: usagePercent }), subtitle: t("agents.conversation.compactHint") }}
+          onclick={compact}
+        >
+          <span class="ring" class:high={usagePercent >= 80} style:--context-used="{usagePercent}%"></span>
+          {usagePercent}%
+        </button>
+      {:else if header.usage}
         <span
           class="gauge"
           in:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs }}
@@ -479,7 +618,7 @@
           aria-label={t("agents.conversation.context", { percent: usagePercent })}
           use:tooltip={t("agents.conversation.context", { percent: usagePercent })}
         >
-          <span class="ring" style:--context-used="{usagePercent}%"></span>
+          <span class="ring" class:high={usagePercent >= 80} style:--context-used="{usagePercent}%"></span>
           {usagePercent}%
         </span>
       {/if}
@@ -532,7 +671,8 @@
           {@const queued = turnIndex >= turns.length - header.queued}
           <div class="turn" class:queued>
             {#each turn.rows as row (row.key)}
-              {@const permission = row.kind === "item" && row.item.kind === "permission"}
+              {@const permission = row.kind === "item" && (row.item.kind === "permission" || row.item.kind === "question")}
+              {#if !(todoPinned && row.kind === "item" && row.item.kind === "plan")}
               <div
                 class="row"
                 in:restingFly={{
@@ -562,14 +702,24 @@
                     canRestore={row.canRestore}
                     turn={row.turn}
                     cwd={header.cwd}
+                    {knownFile}
+                    onedit={(value) => {
+                      text = value;
+                      field?.focus();
+                    }}
                   />
                 {/if}
               </div>
+              {/if}
             {/each}
             {#if queued}
               <div class="queued-tag" in:fade={{ duration: prefersReducedMotion() ? 0 : 120 }}>
                 <Icon name="queue" size={11} />
                 {t("agents.conversation.queuedTag")}
+                <!-- The next one in line goes now: the running turn stops, as Cmd Return does from an empty field. -->
+                {#if turnIndex === turns.length - header.queued}
+                  <button type="button" class="send-now" use:tooltip={"\u2318 Return"} onclick={stop}>{t("agents.conversation.sendNow")}</button>
+                {/if}
               </div>
             {/if}
             <!-- Where the reply appears, right under the prompt: what the agent is doing reads where the eye is. -->
@@ -586,7 +736,14 @@
                   <span class="status-hint">{t(header.signingIn.terminal ? "agents.status.signingInTerminalHint" : "agents.status.signingInHint")}</span>
                 {:else}
                   <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
-                  <span class="status-label">{t("agents.status.working")}</span>
+                  {#if step}
+                    {#key step}
+                      <span class="status-label step" aria-hidden="true" in:fade={{ duration: prefersReducedMotion() ? 0 : 120 }}>{step}</span>
+                    {/key}
+                    <span class="visually-hidden">{t("agents.status.working")}</span>
+                  {:else}
+                    <span class="status-label">{t("agents.status.working")}</span>
+                  {/if}
                   <span class="elapsed" bind:this={elapsedEl} aria-hidden="true"></span>
                   <span class="status-hint">{t("agents.status.stopHint")}</span>
                 {/if}
@@ -631,12 +788,8 @@
           {t("agents.conversation.jumpToLatest")}
         </button>
       {/if}
-      {#if header.queued > 0}
-        <div class="queue" in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 0, y: 8 }}>
-          <Icon name="queue" size={12} />
-          {t("agents.conversation.queued", { count: header.queued })}
-          <span class="queue-hint">{t("agents.conversation.queuedHint")}</span>
-        </div>
+      {#if todoPinned && todo}
+        <PlanTray entries={todo} />
       {/if}
       {#if pending}
         <!-- The question docks where the eye is, over the composer; Return and Esc answer it from an empty field. -->
@@ -662,6 +815,10 @@
             <PermissionButtons {tabId} requestId={String(pending.requestId)} options={pending.options} keys />
           </div>
         </div>
+      {:else if pendingQuestion}
+        {#key pendingQuestion.requestId}
+          <QuestionForm bind:this={questionForm} {tabId} item={pendingQuestion} agentId={header.agentId} />
+        {/key}
       {/if}
       <div class="composer float-surface">
         <PromptField
@@ -679,8 +836,9 @@
             conversationActions.loadCommands(tabId);
           }}
           onsubmit={send}
-          onemptyreturn={() => attachments.length === 0 && answerPending(true)}
-          onescape={() => answerPending(false) || stop()}
+          onemptyreturn={(always) => attachments.length === 0 && (answerPending(true, always) || (questionForm?.answer("accept") ?? false))}
+          onescape={() => answerPending(false) || (questionForm?.answer("decline") ?? false) || stop()}
+          onemptykey={(key) => questionForm?.pick(key) ?? false}
           onemptyup={() => {
             const items = conversation?.thread.items ?? [];
             for (let i = items.length - 1; i >= 0; i--) {
@@ -712,15 +870,23 @@
             </MenuPicker>
           {/if}
           {#each header.configs as config (config.id)}
+            {@const older = config.category === "model" ? supersededModels(config.options.map((option) => option.name)) : null}
             <MenuPicker
               value={config.currentValue}
-              options={config.options.map((option) => ({
-                value: option.value,
-                label: option.name,
-                detail: option.description ?? undefined,
-                icon: config.category === "mode" ? modeIcon(`${option.value} ${option.name}`) : "sparkle",
-                logo: config.category === "model" ? modelLogo(`${option.value} ${option.name}`) : undefined,
-              }))}
+              options={config.options
+                .map((option) => {
+                  const superseded = older?.has(option.name);
+                  // An older model's blurb repeats its newer sibling's, so its row is the name alone.
+                  return {
+                    value: option.value,
+                    label: option.name,
+                    detail: superseded ? undefined : (option.description ?? undefined),
+                    icon: config.category === "mode" ? modeIcon(`${option.value} ${option.name}`) : ("sparkle" as const),
+                    logo: config.category === "model" ? modelLogo(`${option.value} ${option.name}`) : undefined,
+                    group: superseded ? t("agents.conversation.olderModels") : undefined,
+                  };
+                })
+                .sort((a, b) => Number(!!a.group) - Number(!!b.group))}
               ariaLabel={config.name}
               onchange={(value) => conversationActions.setConfig(tabId, config.id, value)}
             >
@@ -739,10 +905,9 @@
               value=""
               options={header.extraConfigs.flatMap((config) => config.options.map((option) => ({
                 value: `${config.id}\n${option.value}`,
-                label: option.name,
+                label: optionLabel(option.name),
                 group: config.name,
                 checked: option.value === config.currentValue,
-                icon: config.category === "thought_level" ? ("brain" as const) : ("sliders" as const),
               })))}
               ariaLabel={t("agents.conversation.moreOptions")}
               onchange={(value) => {
@@ -750,7 +915,8 @@
                 conversationActions.setConfig(tabId, configId, optionValue);
               }}
             >
-              <Icon name="sliders" size={14} />
+              <Icon name={header.effort ? "brain" : "sliders"} size={14} />
+              {#if header.effort}<span class="picker-label effort">{header.effort}</span>{/if}
             </MenuPicker>
           {/if}
           <span class="spacer"></span>
@@ -847,6 +1013,36 @@
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
     white-space: nowrap;
+  }
+
+  .changes {
+    height: 22px;
+    /* The padding is the hover background's: the content lines up with the other metadata. */
+    margin-left: calc(var(--space-4) - var(--space-6));
+    padding: 0 var(--space-6);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+
+  .changes:hover {
+    background: var(--bg-hover);
+  }
+
+  .changes:focus-visible {
+    outline: var(--focus-outline);
+  }
+
+  /* The sidebar's diff colours, pulled toward the text so both read on any Space tint. */
+  .count-added {
+    color: color-mix(in srgb, var(--diff-added) 70%, var(--text-primary));
+  }
+
+  .count-removed {
+    color: color-mix(in srgb, var(--diff-removed) 70%, var(--text-primary));
   }
 
   .meta-text {
@@ -972,6 +1168,29 @@
     transition: --context-used var(--motion-duration-slow) var(--motion-ease-organic);
   }
 
+  .ring.high {
+    background: conic-gradient(var(--warning) 0 var(--context-used), var(--text-primary-tint-12) var(--context-used) 100%);
+  }
+
+  .gauge.compact {
+    height: 22px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+  }
+
+  .gauge.compact:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .gauge.compact:focus-visible {
+    outline: var(--focus-outline);
+  }
+
   @property --plan-used {
     syntax: "<percentage>";
     inherits: false;
@@ -1029,6 +1248,26 @@
     margin-top: calc(-1 * var(--space-6));
     color: var(--text-muted);
     font-size: var(--font-size-xs);
+  }
+
+  .send-now {
+    margin-left: var(--space-4);
+    padding: 0 var(--space-4);
+    border: none;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--accent-ink);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .send-now:hover {
+    background: var(--bg-hover);
+  }
+
+  .send-now:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   /* A pending question docks over the composer and leaves its row empty. */
@@ -1182,6 +1421,16 @@
     align-items: center;
   }
 
+  /* The thread fades out above the composer and stays hidden in the gap below it. */
+  .dock::before {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--space-32)) calc(-1 * var(--space-32)) calc(-1 * var(--space-16));
+    z-index: -1;
+    background: linear-gradient(transparent, var(--bg-primary) var(--space-32));
+    pointer-events: none;
+  }
+
   .activity {
     display: flex;
     align-items: center;
@@ -1196,6 +1445,40 @@
   .status-label {
     color: var(--text-primary);
     font-weight: var(--font-weight-medium);
+  }
+
+  /* A band of the page colour sweeps over the words: moved by transform alone, so it costs no repaint. */
+  .step {
+    position: relative;
+    min-width: 0;
+    max-width: 48ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .step::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--bg-primary) 65%, transparent), transparent);
+    transform: translateX(-100%);
+    animation: step-sweep 2.2s var(--motion-ease-standard) infinite;
+  }
+
+  @keyframes step-sweep {
+    70%,
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .elapsed {
@@ -1278,26 +1561,6 @@
     color: var(--text-primary);
   }
 
-  .queue {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    width: calc(100% - 2 * var(--space-20));
-    box-sizing: border-box;
-    padding: var(--space-6) var(--space-10);
-    border: 1px solid var(--border);
-    border-bottom: 0;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-  }
-
-  .queue-hint {
-    margin-left: auto;
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-  }
 
   .composer {
     width: 100%;
@@ -1318,6 +1581,10 @@
     max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .effort {
+    color: var(--text-secondary);
   }
 
   .bar-button {

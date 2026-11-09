@@ -1,16 +1,17 @@
 import AppKit
+import UniformTypeIdentifiers
 
 /// The chrome's side of agent conversations: starting one, prompting, answering, and what the Ask bar
 /// and the Agents popover show.
 @MainActor
 final class ConversationBridgeHandler: BridgeHandler {
     let handledActions: Set<String> = [
-        "startConversation", "sendConversationPrompt", "cancelConversation", "answerConversation",
+        "startConversation", "sendConversationPrompt", "cancelConversation", "answerConversation", "answerConversationQuestion",
         "setConversationMode", "setConversationConfig", "showConversation", "restoreConversation",
         "undoConversationFile", "loadAgentCatalog", "loadConversations", "chooseConversationProject",
         "openConversationChanges", "authenticateConversation", "answerConversationSignIn", "openConversationSignInTerminal",
         "loadConversationCommands",
-        "searchConversationFiles", "previewConversationArtifact"
+        "searchConversationFiles", "previewConversationArtifact", "openConversationFile"
     ]
 
     private weak var window: MainWindowController?
@@ -39,6 +40,9 @@ final class ConversationBridgeHandler: BridgeHandler {
         case "answerConversation":
             guard let tabId, let requestId = payload["requestId"] as? String else { return nil }
             host.answer(tabId, requestId: requestId, optionId: payload["optionId"] as? String)
+        case "answerConversationQuestion":
+            guard let tabId, let requestId = payload["requestId"] as? String, let action = payload["action"] as? String else { return nil }
+            host.answerQuestion(tabId, requestId: requestId, action: action, content: payload["content"] as? [String: Any])
         case "setConversationMode":
             if let tabId, let modeId = payload["modeId"] as? String { host.setMode(tabId, modeId: modeId) }
         case "setConversationConfig":
@@ -90,6 +94,21 @@ final class ConversationBridgeHandler: BridgeHandler {
             if let tabId { host.loadCommands(tabId) }
         case "openConversationChanges":
             if let tabId { window.openChanges(forConversation: tabId) }
+        case "openConversationFile":
+            guard let tabId, let path = payload["path"] as? String, let cwd = host.conversations[tabId]?.cwd else { return nil }
+            let bare = path.replacingOccurrences(of: #":\d+(:\d+)?$"#, with: "", options: .regularExpression)
+            let url = URL(fileURLWithPath: (bare as NSString).expandingTildeInPath, relativeTo: URL(fileURLWithPath: cwd, isDirectory: true))
+                .standardizedFileURL
+            guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+            // The agent names the path: only a document opens, an app or a script is shown in Finder, never run.
+            let values = try? url.resourceValues(forKeys: [.contentTypeKey, .isExecutableKey, .isDirectoryKey])
+            let document = values?.isDirectory == false && values?.isExecutable == false
+                && [UTType.text, .image, .pdf].contains { values?.contentType?.conforms(to: $0) == true }
+            if document, payload["reveal"] as? Bool != true {
+                NSWorkspace.shared.open(url)
+            } else {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            }
         default:
             break
         }
@@ -111,7 +130,7 @@ final class ConversationBridgeHandler: BridgeHandler {
     }
 
     /// The text and what the chrome attached, as ACP content blocks: a tab's text, a selection, a screenshot
-    /// when the agent takes images, files as links the agent reads itself. The message shows in the thread
+    /// when the agent takes images, a small text file whole and any other as a link. The message shows in the thread
     /// at once, with its chips; reading the pages comes after, so sending never waits on a page.
     private func prompt(_ tabId: UUID, _ payload: [String: Any], interrupt: Bool) async {
         guard let window, let host else { return }
@@ -141,7 +160,8 @@ final class ConversationBridgeHandler: BridgeHandler {
             }
             for id in ids {
                 guard let tab = window.context.browserState.durableTab(for: id)?.tab, tab.kind == .web, let url = tab.url else { continue }
-                let label = unsafe kind == "screenshot" ? String(format: "Screenshot of %@".localized, tab.title) : tab.title
+                let label = unsafe kind == "screenshot" ? String(format: "Screenshot of %@".localized, tab.title)
+                    : kind == "selection" ? String(format: "Selection from %@".localized, tab.title) : tab.title
                 chips.append(["label": label, "uri": url.absoluteString])
                 attachments.append((kind, nil, tab))
             }
@@ -150,7 +170,18 @@ final class ConversationBridgeHandler: BridgeHandler {
         var blocks: [[String: Any]] = [["type": "text", "text": text]] + images
         for (kind, path, tab) in attachments {
             if let path {
-                blocks.append(["type": "resource_link", "uri": URL(fileURLWithPath: path).absoluteString, "name": URL(fileURLWithPath: path).lastPathComponent])
+                let file = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+                // A small text file goes along whole, as an @-mention does in Claude Code; a folder, a binary or a large file as a link.
+                let contents = await Task.detached(priority: .userInitiated) { () -> String? in
+                    guard let size = (try? file.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])).flatMap({ $0.isRegularFile == true ? $0.fileSize : nil }),
+                          size <= 100_000, let data = try? Data(contentsOf: file) else { return nil }
+                    return String(data: data, encoding: .utf8)
+                }.value
+                if let contents {
+                    blocks.append(["type": "resource", "resource": ["uri": file.absoluteString, "text": contents, "mimeType": "text/plain"]])
+                } else {
+                    blocks.append(["type": "resource_link", "uri": file.absoluteString, "name": file.lastPathComponent])
+                }
                 continue
             }
             guard let url = tab.url else { continue }

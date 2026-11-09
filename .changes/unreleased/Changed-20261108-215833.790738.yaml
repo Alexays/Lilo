@@ -1,0 +1,3 @@
+kind: Changed
+body: An agent's script step in a page opens on the JavaScript it ran, above its result.
+time: 2026-11-08T21:58:33.790738+01:00

@@ -1,4 +1,5 @@
 import AppKit
+import CryptoKit
 
 /// Agent tabs: a conversation is a folder of the Space it was started in, the agent tab first, then the
 /// pages the agent opens. The chrome draws the conversation over the tab's empty native view.
@@ -177,28 +178,22 @@ extension MainWindowController {
         }
     }
 
-    /// The conversation's project in Changes, beside it.
+    /// The conversation's changes in a peek over it, on what it changed: the counts its turns show.
     func openChanges(forConversation tabId: UUID) {
-        guard let cwd = context.conversations.conversations[tabId]?.cwd, let spaceId = tabManager.currentSpaceId else { return }
-        let tab = Tab(title: "Changes".localized, kind: .changes, cwd: cwd)
-        do {
-            let split = canSplit(beside: tabId)
-            try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: !split))
-            if split {
-                try applyBrowserCommand(.splitTabs(spaceId: spaceId, tabId: tab.id, targetTabId: tabId, vertical: false, before: false))
-            }
-            tabManager.activateTabRuntime(id: tab.id)
-        } catch {
-            Self.logger.error("open conversation changes failed: \(error.localizedDescription, privacy: .public)")
-        }
+        guard let conversation = context.conversations.conversations[tabId] else { return }
+        showChanges(for: tabId, since: conversation.checkpoints.lazy.compactMap { $0 }.first)
     }
 
-    /// Opens the Ask bar with the active page's selection, so it offers one only when there is one.
     /// An HTML or SVG block of the thread, rendered as what it is: a page, opened among the conversation's
     /// pages. Written to Lilo's support folder, so it loads as a file like any local page.
     func previewArtifact(_ code: String, language: String, forConversation tabId: UUID) {
         let folder = URL(fileURLWithPath: BuildIdentity.appSupportDirectory).appending(path: "Agents/Artifacts")
-        let file = folder.appending(path: "\(UUID().uuidString).\(language == "svg" ? "svg" : "html")")
+        // Named after its content: previewing the same block again comes back to its page.
+        let digest = Data(SHA256.hash(data: Data(code.utf8))).prefix(8).map { String(Int($0) + 0x100, radix: 16).dropFirst() }.joined()
+        let file = folder.appending(path: "\(digest).\(language == "svg" ? "svg" : "html")")
+        if let open = tabManager.currentTabs.first(where: { !$0.isClosed && $0.url == file }) {
+            return activateTabStateFirst(id: open.id)
+        }
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try code.write(to: file, atomically: true, encoding: .utf8)
@@ -214,6 +209,7 @@ extension MainWindowController {
         tabManager.activateTabRuntime(id: tab.id)
     }
 
+    /// Opens the Ask bar with the active page's selection, so it offers one only when there is one.
     @objc func askAgent(_ sender: Any?) {
         guard agentsEnabled else { return NSSound.beep() }
         guard let tab = tabManager.activeTab, tab.kind == .web, let engine = tabManager.engineTab(for: tab.id) else {
