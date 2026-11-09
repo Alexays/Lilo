@@ -291,7 +291,7 @@ enum KeyboardShortcuts {
     static func keyStroke(_ combo: String) -> (keyCode: UInt16, modifiers: NSEvent.ModifierFlags)? {
         let (key, modifiers) = parse(combo)
         if let code = namedKeys.first(where: { $0.value.name == key })?.key { return (code, modifiers) }
-        guard let source = unsafe TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+        guard !key.isEmpty, let source = unsafe TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
               let property = unsafe TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else { return nil }
         let layoutData = unsafe Unmanaged<CFData>.fromOpaque(property).takeUnretainedValue() as Data
         return unsafe layoutData.withUnsafeBytes { bytes -> (UInt16, NSEvent.ModifierFlags)? in
