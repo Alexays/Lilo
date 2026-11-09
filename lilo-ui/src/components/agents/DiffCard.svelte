@@ -48,10 +48,12 @@
         opened = true;
       }}
     >
-      <span class="file-icon"><Icon name="file" size={13} /></span>
-      <span class="diff-path"><span class="dir">{relative.slice(0, slash + 1)}</span><span class="name">{relative.slice(slash + 1)}</span></span>
-      <span class="count-added">+{added}</span>
-      <span class="count-removed">-{removed}</span>
+      <span class="file-icon"><Icon name="pen" size={14} /></span>
+      <span class="label">
+        <span class="verb">{t("agents.work.verb.edit")}</span>
+        <span class="diff-path"><span class="dir">{relative.slice(0, slash + 1)}</span><span class="name">{relative.slice(slash + 1)}</span></span>
+      </span>
+      <span class="counts"><span class="count-added">+{added}</span><span class="count-removed">-{removed}</span></span>
       <span class="chevron" class:open={expanded}><Icon name="chevronRight" size={10} /></span>
     </button>
     {#if undone}
@@ -88,13 +90,14 @@
     margin-left: calc(-1 * var(--space-6));
   }
 
+  /* Sized as the tool rows around it, so their icons and labels line up. */
   .diff-toggle {
     display: flex;
     align-items: center;
-    gap: var(--space-6);
+    gap: var(--space-8);
     min-width: 0;
     flex: 1;
-    height: var(--control-height-sm);
+    height: 26px;
     padding: 0 var(--space-6);
     border: 0;
     border-radius: var(--radius-sm);
@@ -142,6 +145,23 @@
     color: var(--text-muted);
   }
 
+  .label {
+    display: flex;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+
+  .verb {
+    flex: none;
+    color: var(--text-secondary);
+  }
+
+  .counts {
+    display: flex;
+    flex: none;
+    gap: var(--space-6);
+  }
+
   .diff-path {
     display: flex;
     min-width: 0;
@@ -167,12 +187,12 @@
   }
 
   .count-added {
-    color: var(--success-text);
+    color: color-mix(in srgb, var(--diff-added) 70%, var(--text-primary));
     font-variant-numeric: tabular-nums;
   }
 
   .count-removed {
-    color: var(--danger-text);
+    color: color-mix(in srgb, var(--diff-removed) 70%, var(--text-primary));
     font-variant-numeric: tabular-nums;
   }
 
@@ -209,10 +229,10 @@
     font-size: var(--font-size-xs);
   }
 
+  /* Closed, it takes no room: the row below sits as close as between two tool rows. */
   .diff-body {
     display: grid;
-    margin-top: var(--space-2);
-    border: 1px solid transparent;
+    border: 0 solid transparent;
     border-radius: var(--radius-md);
     grid-template-rows: 0fr;
     opacity: 0;
@@ -222,6 +242,8 @@
   }
 
   .diff-body.open {
+    margin-top: var(--space-2);
+    border-width: 1px;
     border-color: var(--border);
     grid-template-rows: 1fr;
     opacity: 1;

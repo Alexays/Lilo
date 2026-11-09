@@ -1993,6 +1993,9 @@
 		"No changes on this branch": "Geen wijzigingen op deze branch",
 		"Nothing differs from %@.": "Geen verschillen met %@.",
 		"Show Uncommitted Changes": "Toon niet-vastgelegde wijzigingen",
+		"Conversation": "Gesprek",
+		"No changes in this conversation": "Geen wijzigingen in dit gesprek",
+		"The project is as it was at the conversation's first prompt.": "Het project is zoals bij de eerste prompt van het gesprek.",
 		"%@ files": {"one": "%@ bestand", "other": "%@ bestanden"},
 		"against %@ from %@, uncommitted included": "tegenover %@ uit %@, inclusief niet-vastgelegde wijzigingen",
 		"Binary file, not shown": "Binair bestand, niet getoond",
@@ -2446,6 +2449,7 @@
 		"Choose": "Kies",
 		"New Conversation": "Nieuw gesprek",
 		"Screenshot of %@": "Schermafbeelding van %@",
+		"Selection from %@": "Selectie uit %@",
 		"The agent stopped (code %d).": "De agent is gestopt (code %d).",
 		"This agent is no longer in the ACP registry.": "Deze agent staat niet meer in het ACP-register.",
 		"The agent stopped.": "De agent is gestopt.",
@@ -2624,6 +2628,8 @@
 		"conversation": {
 			"stop": "Stop",
 			"mode": "Modus",
+			"compact": "dit gesprek comprimeren",
+			"compactHint": "Klik om te comprimeren: de agent vat het gesprek samen om context vrij te maken.",
 			"context": "{percent}% van de context gebruikt",
 			"planSession": "Sessielimiet: {percent}% gebruikt, reset {time}",
 			"planWeek": "Weeklimiet: {percent}% gebruikt, reset {time}",
@@ -2635,13 +2641,10 @@
 				"one": "Toon {count} eerder item",
 				"other": "Toon {count} eerdere items"
 			},
-			"queued": {
-				"one": "{count} bericht in de wachtrij",
-				"other": "{count} berichten in de wachtrij"
-			},
-			"queuedHint": "Wordt verstuurd als de agent klaar is. Cmd Return verstuurt nu.",
 			"queuedTag": "In wachtrij",
+			"sendNow": "Nu verzenden",
 			"thought": "Gedachte",
+			"editPrompt": "Bewerken",
 			"restoreToHere": "Herstel tot hier",
 			"restoreConfirm": "Projectbestanden terugzetten naar hoe ze bij dit bericht waren?",
 			"restore": "Herstel",
@@ -2653,6 +2656,10 @@
 			},
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "{count} stap klaar",
+				"other": "{count} stappen klaar"
+			},
 			"planStatus": {
 				"pending": "Te doen",
 				"in_progress": "Bezig",
@@ -2669,7 +2676,8 @@
 			"moreOptions": "Meer opties",
 			"signInHint": "Log in bij de agent: je bericht wordt verstuurd zodra je bent ingelogd.",
 			"branch": "Branch {branch}",
-			"jumpToLatest": "Naar nieuwste"
+			"jumpToLatest": "Naar nieuwste",
+			"olderModels": "Oudere modellen"
 		},
 		"tool": {
 			"untitled": "Toolaanroep",
@@ -2760,7 +2768,10 @@
 			"allowAlways": "Sta altijd toe",
 			"reject": "Sta niet toe",
 			"rejectAlways": "Sta nooit toe",
-			"more": "Meer antwoorden"
+			"more": "Meer antwoorden",
+			"submit": "Beantwoorden",
+			"skip": "Overslaan",
+			"skipped": "Overgeslagen"
 		},
 		"badge": {
 			"title": "Agents",
@@ -2800,6 +2811,14 @@
 				"search": "Gezocht",
 				"fetch": "Opgehaald"
 			},
+			"verbActive": {
+				"read": "Leest",
+				"edit": "Bewerkt nu",
+				"delete": "Verwijdert",
+				"move": "Verplaatst nu",
+				"search": "Zoekt",
+				"fetch": "Haalt op"
+			},
 			"summary": {
 				"read": {
 					"one": "{count} bestand gelezen",
@@ -2829,6 +2848,10 @@
 					"one": "{count} keer de browser gebruikt",
 					"other": "{count} keer de browser gebruikt"
 				},
+				"browserOn": {
+					"one": "{count} keer de browser gebruikt op {site}",
+					"other": "{count} keer de browser gebruikt op {site}"
+				},
 				"tool": {
 					"one": "{count} tool gebruikt",
 					"other": "{count} tools gebruikt"
@@ -2837,6 +2860,54 @@
 					"one": "{count} agent gestart",
 					"other": "{count} agents gestart"
 				}
+			},
+			"browser": {
+				"closeTab": "Tabblad gesloten",
+				"open": "{url} geopend",
+				"openPage": "Heeft een pagina geopend",
+				"search": "Heeft de pagina doorzocht",
+				"requestAny": "Heeft een verzoek verstuurd",
+				"back": "Teruggegaan",
+				"forward": "Vooruitgegaan",
+				"reload": "Pagina opnieuw geladen",
+				"screenshot": "Schermafbeelding gemaakt",
+				"click": "Op de pagina geklikt",
+				"clickOn": "Op \"{name}\" geklikt",
+				"type": "\"{text}\" getypt",
+				"key": "{keys} ingedrukt",
+				"scroll": "Pagina gescrold",
+				"interact": "Pagina gebruikt",
+				"read": "Pagina gelezen",
+				"find": "Gezocht naar \"{query}\"",
+				"form": "Veld ingevuld",
+				"script": "Script op de pagina uitgevoerd",
+				"batch": "Meerdere browseracties uitgevoerd",
+				"waitFor": "Op de pagina gewacht",
+				"request": "Verzoek naar {url} gestuurd"
+			},
+			"browserActive": {
+				"closeTab": "Sluit een tabblad",
+				"open": "Opent {url}",
+				"openPage": "Opent een pagina",
+				"search": "Doorzoekt de pagina",
+				"requestAny": "Verstuurt een verzoek",
+				"back": "Gaat terug",
+				"forward": "Gaat vooruit",
+				"reload": "Herlaadt de pagina",
+				"screenshot": "Maakt een schermafbeelding",
+				"click": "Klikt op de pagina",
+				"clickOn": "Klikt op \"{name}\"",
+				"type": "Typt \"{text}\"",
+				"key": "Drukt op {keys}",
+				"scroll": "Scrolt de pagina",
+				"interact": "Gebruikt de pagina",
+				"read": "Leest de pagina",
+				"find": "Zoekt naar \"{query}\"",
+				"form": "Vult een veld in",
+				"script": "Voert een script uit op de pagina",
+				"batch": "Voert meerdere browseracties uit",
+				"waitFor": "Wacht op de pagina",
+				"request": "Verstuurt een verzoek naar {url}"
 			},
 			"exit": "Exitcode {code}",
 			"showAll": {
@@ -2869,6 +2940,7 @@
 		"markdown": {
 			"preview": "Voorvertoning",
 			"openPreview": "Voorvertoning openen in een tabblad",
+			"openFile": "Klik om te openen, ⌘-klik om in de Finder te tonen",
 			"view": "Weergeven als",
 			"code": "Code",
 			"copy": "Code kopiëren",

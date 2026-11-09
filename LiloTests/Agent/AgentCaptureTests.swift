@@ -350,4 +350,14 @@ final class AgentCaptureTests: AgentToolTestCase {
             "devtools_command", "devtools_events", "network_mock", "network_response", "cookies", "emulate", "performance"
         ])
     }
+
+    func testAConversationsAgentIsNotOfferedTheBrowserPickers() async throws {
+        try XCTUnwrap(control.sessions.first).conversationTabId = UUID()
+
+        let tools = (await client.request("tools/list"))?["tools"] as? [[String: Any]] ?? []
+
+        XCTAssertTrue(Set(tools.compactMap { $0["name"] as? String }).isDisjoint(with: AgentInteractionTools.browserPickers))
+        let reply = await client.callTool("select_browser")
+        XCTAssertEqual(reply.text, "Connected to Lilo", "an agent calling one anyway still succeeds")
+    }
 }

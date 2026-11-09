@@ -1,0 +1,3 @@
+kind: Changed
+body: The notification for a conversation that finished out of view shows the start of the agent's reply instead of just "Done".
+time: 2026-11-08T19:54:29.925521+01:00

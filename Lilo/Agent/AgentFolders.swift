@@ -253,7 +253,7 @@ extension AgentControl {
             throw AgentToolError("tabId is required")
         }
         var (space, host) = try agentSpace(for: session)
-        var found = session.folders.values.flatMap { tabs(inFolder: $0, spaceId: space.id) }.first { tabNumbers[$0.id] == number }
+        var found = session.folders.values.flatMap { tabs(inFolder: $0, spaceId: space.id) }.first { $0.kind != .agent && tabNumbers[$0.id] == number }
         if found == nil, let isolated = try isolatedSpace(for: session, create: false),
            let tab = isolatedTabs(of: session).first(where: { tabNumbers[$0.id] == number }) {
             (found, space, host) = (tab, isolated.space, isolated.host)

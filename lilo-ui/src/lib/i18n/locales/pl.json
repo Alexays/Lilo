@@ -2037,6 +2037,9 @@
 		"No changes on this branch": "Brak zmian w tej gałęzi",
 		"Nothing differs from %@.": "Brak różnic względem %@.",
 		"Show Uncommitted Changes": "Pokaż niezatwierdzone zmiany",
+		"Conversation": "Rozmowa",
+		"No changes in this conversation": "Brak zmian w tej rozmowie",
+		"The project is as it was at the conversation's first prompt.": "Projekt jest taki jak przy pierwszym prompcie rozmowy.",
 		"%@ files": {"one": "%@ plik", "few": "%@ pliki", "many": "%@ plików", "other": "%@ pliku"},
 		"against %@ from %@, uncommitted included": "względem %@ od %@, z niezatwierdzonymi zmianami",
 		"Binary file, not shown": "Plik binarny, brak podglądu",
@@ -2490,6 +2493,7 @@
 		"Choose": "Wybierz",
 		"New Conversation": "Nowa rozmowa",
 		"Screenshot of %@": "Zrzut ekranu: %@",
+		"Selection from %@": "Zaznaczenie: %@",
 		"The agent stopped (code %d).": "Agent zatrzymał się (kod %d).",
 		"This agent is no longer in the ACP registry.": "Tego agenta nie ma już w rejestrze ACP.",
 		"The agent stopped.": "Agent się zatrzymał.",
@@ -2670,6 +2674,8 @@
 		"conversation": {
 			"stop": "Zatrzymaj",
 			"mode": "Tryb",
+			"compact": "kompaktuj tę rozmowę",
+			"compactHint": "Kliknij, aby skompaktować: agent streszcza rozmowę, by zwolnić kontekst.",
 			"context": "Wykorzystano {percent}% kontekstu",
 			"planSession": "Limit sesji: wykorzystano {percent}%, reset {time}",
 			"planWeek": "Limit tygodniowy: wykorzystano {percent}%, reset {time}",
@@ -2683,15 +2689,10 @@
 				"many": "Pokaż {count} wcześniejszych elementów",
 				"other": "Pokaż {count} wcześniejszego elementu"
 			},
-			"queued": {
-				"one": "{count} wiadomość w kolejce",
-				"few": "{count} wiadomości w kolejce",
-				"many": "{count} wiadomości w kolejce",
-				"other": "{count} wiadomości w kolejce"
-			},
-			"queuedHint": "Zostanie wysłana, gdy agent skończy. Cmd Return wysyła od razu.",
 			"queuedTag": "W kolejce",
+			"sendNow": "Wyślij teraz",
 			"thought": "Rozumowanie",
+			"editPrompt": "Edytuj",
 			"restoreToHere": "Przywróć do tego miejsca",
 			"restoreConfirm": "Przywrócić pliki projektu do stanu z tej wiadomości?",
 			"restore": "Przywróć",
@@ -2705,6 +2706,12 @@
 			},
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "{count} krok ukończony",
+				"few": "{count} kroki ukończone",
+				"many": "{count} kroków ukończonych",
+				"other": "{count} kroków ukończonych"
+			},
 			"planStatus": {
 				"pending": "Do zrobienia",
 				"in_progress": "W toku",
@@ -2721,7 +2728,8 @@
 			"moreOptions": "Więcej opcji",
 			"signInHint": "Zaloguj się w agencie: wiadomość zostanie wysłana, gdy się zalogujesz.",
 			"branch": "Gałąź {branch}",
-			"jumpToLatest": "Przejdź do najnowszych"
+			"jumpToLatest": "Przejdź do najnowszych",
+			"olderModels": "Starsze modele"
 		},
 		"tool": {
 			"untitled": "Wywołanie narzędzia",
@@ -2830,7 +2838,10 @@
 			"allowAlways": "Zawsze zezwalaj",
 			"reject": "Nie zezwalaj",
 			"rejectAlways": "Nigdy nie zezwalaj",
-			"more": "Więcej odpowiedzi"
+			"more": "Więcej odpowiedzi",
+			"submit": "Odpowiedz",
+			"skip": "Pomiń",
+			"skipped": "Pominięto"
 		},
 		"badge": {
 			"title": "Agenci",
@@ -2873,6 +2884,14 @@
 				"move": "Przeniesiono",
 				"search": "Wyszukano",
 				"fetch": "Pobrano"
+			},
+			"verbActive": {
+				"read": "Odczytywanie",
+				"edit": "Edytowanie",
+				"delete": "Usuwanie",
+				"move": "Przenoszenie",
+				"search": "Wyszukiwanie",
+				"fetch": "Pobieranie"
 			},
 			"summary": {
 				"read": {
@@ -2917,6 +2936,12 @@
 					"many": "użycia przeglądarki: {count}",
 					"other": "użycia przeglądarki: {count}"
 				},
+				"browserOn": {
+					"one": "użycia przeglądarki na {site}: {count}",
+					"few": "użycia przeglądarki na {site}: {count}",
+					"many": "użycia przeglądarki na {site}: {count}",
+					"other": "użycia przeglądarki na {site}: {count}"
+				},
 				"tool": {
 					"one": "użyto {count} narzędzia",
 					"few": "użyto {count} narzędzi",
@@ -2929,6 +2954,54 @@
 					"many": "uruchomiono {count} agentów",
 					"other": "uruchomiono {count} agenta"
 				}
+			},
+			"browser": {
+				"closeTab": "Zamknął kartę",
+				"open": "Otworzył {url}",
+				"openPage": "Otworzył stronę",
+				"search": "Przeszukał stronę",
+				"requestAny": "Wysłał żądanie",
+				"back": "Cofnął się",
+				"forward": "Przeszedł dalej",
+				"reload": "Odświeżył stronę",
+				"screenshot": "Zrobił zrzut ekranu",
+				"click": "Kliknął na stronie",
+				"clickOn": "Kliknął \"{name}\"",
+				"type": "Wpisał \"{text}\"",
+				"key": "Nacisnął {keys}",
+				"scroll": "Przewinął stronę",
+				"interact": "Użył strony",
+				"read": "Przeczytał stronę",
+				"find": "Szukał \"{query}\"",
+				"form": "Wypełnił pole",
+				"script": "Uruchomił skrypt na stronie",
+				"batch": "Wykonał kilka działań w przeglądarce",
+				"waitFor": "Poczekał na stronę",
+				"request": "Wysłał żądanie do {url}"
+			},
+			"browserActive": {
+				"closeTab": "Zamykanie karty",
+				"open": "Otwieranie {url}",
+				"openPage": "Otwieranie strony",
+				"search": "Przeszukiwanie strony",
+				"requestAny": "Wysyłanie żądania",
+				"back": "Cofanie",
+				"forward": "Przechodzenie dalej",
+				"reload": "Odświeżanie strony",
+				"screenshot": "Robienie zrzutu ekranu",
+				"click": "Klikanie na stronie",
+				"clickOn": "Klikanie \"{name}\"",
+				"type": "Wpisywanie \"{text}\"",
+				"key": "Naciskanie {keys}",
+				"scroll": "Przewijanie strony",
+				"interact": "Używanie strony",
+				"read": "Czytanie strony",
+				"find": "Szukanie \"{query}\"",
+				"form": "Wypełnianie pola",
+				"script": "Uruchamianie skryptu na stronie",
+				"batch": "Wykonywanie kilku akcji przeglądarki",
+				"waitFor": "Czekanie na stronę",
+				"request": "Wysyłanie żądania do {url}"
 			},
 			"exit": "Kod wyjścia {code}",
 			"showAll": {
@@ -2965,6 +3038,7 @@
 		"markdown": {
 			"preview": "Podgląd",
 			"openPreview": "Otwórz podgląd w karcie",
+			"openFile": "Kliknij, aby otworzyć, ⌘-kliknij, aby pokazać w Finderze",
 			"view": "Wyświetl jako",
 			"code": "Kod",
 			"copy": "Kopiuj kod",

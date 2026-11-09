@@ -1,0 +1,3 @@
+kind: Fixed
+body: A restored agent conversation shows its branch and changed lines as it opens, without its header shifting a few seconds later.
+time: 2026-11-08T22:06:38.791773+01:00

@@ -303,11 +303,24 @@ extension MainWindowController {
         createTabStateFirst(url: form?.url)
     }
     @objc func findNextMatch(_ sender: Any?) {
-        if let terminal = activeTerminalView { terminal.findAgain(older: true) } else { focusedEngineTab?.findNext() }
+        if let terminal = activeTerminalView {
+            terminal.findAgain(older: true)
+        } else if tabManager.activeTab?.agentId != nil {
+            // The chrome draws a conversation: its find bar searches the thread itself.
+            bridgeRouter.send(event: "findStep", data: ["forward": true])
+        } else {
+            focusedEngineTab?.findNext()
+        }
     }
 
     @objc func findPreviousMatch(_ sender: Any?) {
-        if let terminal = activeTerminalView { terminal.findAgain(older: false) } else { focusedEngineTab?.findPrevious() }
+        if let terminal = activeTerminalView {
+            terminal.findAgain(older: false)
+        } else if tabManager.activeTab?.agentId != nil {
+            bridgeRouter.send(event: "findStep", data: ["forward": false])
+        } else {
+            focusedEngineTab?.findPrevious()
+        }
     }
 
     /// Searches for the page's selection without opening the find bar, so Find Next goes on from there.
@@ -644,7 +657,7 @@ extension MainWindowController: NSUserInterfaceValidations {
         }
         if action == #selector(reloadCurrentPageFromOrigin(_:)) { return focusedEngineTab !== tabManager.activeEngineTab || tabManager.activeTab?.url != nil }
         if action == #selector(findNextMatch(_:)) || action == #selector(findPreviousMatch(_:)) {
-            return activeTerminalView != nil || focusedEngineTab?.canFindAgain == true
+            return activeTerminalView != nil || tabManager.activeTab?.agentId != nil || focusedEngineTab?.canFindAgain == true
         }
         // A terminal or Changes tab has no page for these.
         if action == #selector(reloadCurrentPage(_:)) { return focusedEngineTab != nil }

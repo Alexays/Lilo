@@ -1,0 +1,3 @@
+kind: Fixed
+body: A conversation keeps its title after /compact instead of being renamed to the command.
+time: 2026-11-08T20:15:15.527442+01:00

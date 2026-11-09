@@ -15,6 +15,7 @@
     tab,
     pageCount,
     isActive,
+    containsActive = false,
     interactive = true,
     level = 1,
     tabStop = true,
@@ -26,6 +27,8 @@
     tab: TabState;
     pageCount: number;
     isActive: boolean;
+    /** One of its pages is the active tab. */
+    containsActive?: boolean;
     interactive?: boolean;
     level?: number;
     tabStop?: boolean;
@@ -75,6 +78,7 @@
 <div
   class="folder-row conversation-row"
   class:active={isActive}
+  class:contains-active={containsActive && !expanded}
   class:interactive
   role="treeitem"
   aria-level={level}
@@ -161,6 +165,11 @@
   .conversation-row:focus-visible {
     outline: var(--focus-outline);
     outline-offset: -2px;
+  }
+
+  /* A closed row still shows that the page you are on is one of its own. */
+  .conversation-row.contains-active {
+    background: color-mix(in srgb, var(--sidebar-sel) 50%, transparent);
   }
 
   .conversation-row.active {

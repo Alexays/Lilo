@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Agents: Lilo speaks ACP v2 with agents that support it, such as Claude Agent: a follow-up the agent starts on its own after a background command shows its activity and how long it worked, and a command running in the background stays shown as running until it ends. Agents that only speak ACP v1 work as before.'
+time: 2026-11-08T23:55:25.101107+01:00

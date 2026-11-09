@@ -129,6 +129,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Task {
             guard (try? await browserContext.bootstrap()) != nil else { return }
             applyLittleWindowHotKey()
+            // The cache only paints the first frame: the stored setting wins, so a stale cache heals.
+            ThemePreference(stored: browserContext.settingsStore?.get("theme")).apply()
         }
 
         NSApp.activate(ignoringOtherApps: true)

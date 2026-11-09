@@ -2,14 +2,17 @@ import type { BridgeConversationOpened, BridgeConversationUpdate, BridgePermissi
 import {
 	addNotice,
 	addPermissionRequest,
+	addQuestion,
 	addUserPrompt,
 	applyUpdate,
-	type ConfigOption,
+	configOptions,
 	type ContextChip,
 	type ConversationState,
 	emptyConversation,
 	endTurn,
 	resolvePermission,
+	resolveQuestion,
+	type QuestionAnswer,
 	type SessionUpdate,
 	type ToolCallFields,
 } from "./conversationModel";
@@ -100,8 +103,14 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 				options: update.options as BridgePermissionOption[],
 			});
 			break;
+		case "lilo_question":
+			addQuestion(thread, String(update.requestId), String(update.message ?? ""), update.requestedSchema, typeof update.toolCallId === "string" ? update.toolCallId : undefined);
+			break;
 		case "lilo_permission_resolved":
-			resolvePermission(thread, String(update.requestId), typeof update.optionId === "string" ? update.optionId : "");
+			// A question settles with the form's answer; one the agent dropped settles as cancelled.
+			if (update.answer || thread.items.some((item) => item.kind === "question" && item.requestId === String(update.requestId)))
+				resolveQuestion(thread, String(update.requestId), (update.answer as QuestionAnswer | undefined) ?? { action: "cancel" });
+			else resolvePermission(thread, String(update.requestId), typeof update.optionId === "string" ? update.optionId : "");
 			break;
 		case "lilo_notice":
 			addNotice(thread, String(update.notice ?? ""));
@@ -111,6 +120,9 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 			if (update.ok) conversation.undone.add(String(update.path));
 			break;
 		case "lilo_error":
+			// A failed turn drops the prompts queued behind it: they no longer wait for anything.
+			for (const item of thread.items) if (item.kind === "user") delete item.queued;
+			thread.turnStartedAt = null;
 			conversation.error = String(update.message ?? "");
 			conversation.signingIn = null;
 			break;
@@ -149,12 +161,12 @@ export function apply(conversation: OpenConversation, update: BridgeConversation
 				conversation.modes = modes.availableModes ?? [];
 				thread.modeId = modes.currentModeId ?? thread.modeId;
 			}
-			if (Array.isArray(update.configOptions)) thread.configOptions = update.configOptions as ConfigOption[];
+			if (Array.isArray(update.configOptions)) thread.configOptions = configOptions(update.configOptions);
 			break;
 		}
 		default:
 			// The agent answers again: any sign-in it waited on is over.
 			conversation.signingIn = null;
-			applyUpdate(thread, update as unknown as SessionUpdate, receivedAt);
+			applyUpdate(thread, update as unknown as SessionUpdate, receivedAt ?? stampOf(update));
 	}
 }

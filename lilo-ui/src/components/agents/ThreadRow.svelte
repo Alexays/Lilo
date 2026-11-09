@@ -14,6 +14,7 @@
   import { cubicOut } from "svelte/easing";
   import { fade } from "svelte/transition";
   import { conversationActions } from "./conversationActions";
+  import { tabActions } from "../../lib/bridge/actions";
   import { copyText } from "../../lib/clipboard";
   import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -22,7 +23,10 @@
   import { tooltip } from "../../lib/tooltip";
   import type { ThreadItem } from "./conversationModel";
   import Icon from "../ui/Icon.svelte";
+  import SiteFavicon from "../ui/SiteFavicon.svelte";
+  import { getOpenTabs } from "../../stores/tabs.svelte";
   import Markdown from "./Markdown.svelte";
+  import PlanTray from "./PlanTray.svelte";
   import ThreadImage from "./ThreadImage.svelte";
   import { formatDuration, imageSource } from "./threadView";
 
@@ -39,9 +43,13 @@
     turn?: TurnSummary | null;
     /** The project folder, which local image paths resolve against. */
     cwd: string;
+    /** The thread's file a name in a message stands for, which a click opens. */
+    knownFile?: (name: string) => string | null;
+    /** A user item: puts its text back in the composer. */
+    onedit?: (text: string) => void;
   }
 
-  let { tabId, item, sig, promptIndex, canRestore, turn = null, cwd }: Props = $props();
+  let { tabId, item, sig, promptIndex, canRestore, turn = null, cwd, knownFile, onedit }: Props = $props();
 
   const view = $derived.by((): ThreadItem => {
     void sig;
@@ -52,62 +60,106 @@
   // Mounted on first open, then kept so closing can animate.
   let opened = $state(false);
   // Only a question answered while on screen settles; one answered before the replay draws still.
-  const askedHere = untrack(() => item.kind === "permission" && item.answer === null);
+  const askedHere = untrack(() => (item.kind === "permission" || item.kind === "question") && item.answer === null);
   let confirmingRestore = $state(false);
   let copied = $state(false);
 </script>
 
 {#if view.kind === "user"}
   <div class="user-turn" class:confirming={confirmingRestore}>
-    <div class="user-message">
-      <div class="user-text">{view.text}</div>
-      {#if view.context.length}
-        <div class="context-chips">
-          {#each view.context as chip, index (index)}
-            <span class="context-chip" title={chip.uri}>{chip.label}</span>
-          {/each}
-        </div>
-      {/if}
-    </div>
-    {#if canRestore}
-      <!-- Laid over the gap below the message, shown on hover or focus: it never moves the thread. -->
-      <div class="checkpoint">
-        {#if confirmingRestore}
-          <span
-            class="checkpoint-confirm"
-            role="group"
-            aria-label={t("agents.conversation.restoreConfirm")}
-            in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 8, y: 0 }}
-          >
-            {t("agents.conversation.restoreConfirm")}
-            <button
-              type="button"
-              class="checkpoint-button primary"
-              onclick={() => {
-                confirmingRestore = false;
-                conversationActions.restore(tabId, promptIndex);
-              }}
-            >{t("agents.conversation.restore")}</button>
-            <button type="button" class="checkpoint-button" onclick={() => (confirmingRestore = false)}>{t("common.cancel")}</button>
-          </span>
-        {:else}
+    <div class="user-row">
+      <!-- Beside the message, shown on hover or focus: it never moves the thread. -->
+      <div class="prompt-actions">
+        {#if onedit}
           <button
             type="button"
-            class="checkpoint-button"
-            in:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}
-            onclick={() => (confirmingRestore = true)}
+            class="prompt-action"
+            aria-label={t("agents.conversation.editPrompt")}
+            use:tooltip={t("agents.conversation.editPrompt")}
+            onclick={() => onedit(view.text)}
           >
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-              <path d="M3 8a5 5 0 105-5H5M5 1L3 3l2 2" />
-            </svg>
-            {t("agents.conversation.restoreToHere")}
+            <Icon name="pen" size={13} />
           </button>
         {/if}
+        <button
+          type="button"
+          class="prompt-action"
+          aria-label={copied ? t("agents.turn.copied") : t("agents.turn.copy")}
+          use:tooltip={copied ? t("agents.turn.copied") : t("agents.turn.copy")}
+          onclick={async () => {
+            if (!(await copyText(view.text))) return;
+            copied = true;
+            setTimeout(() => (copied = false), 1500);
+          }}
+        >
+          <Icon name={copied ? "check" : "copy"} size={13} />
+        </button>
+        {#if canRestore}
+          <button
+            type="button"
+            class="prompt-action"
+            aria-label={t("agents.conversation.restoreToHere")}
+            use:tooltip={t("agents.conversation.restoreToHere")}
+            onclick={() => (confirmingRestore = true)}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M3 8a5 5 0 105-5H5M5 1L3 3l2 2" />
+            </svg>
+          </button>
+        {/if}
+      </div>
+      <div class="user-message">
+        <div class="user-text">{view.text}</div>
+        {#if view.context.length}
+          <div class="context-chips">
+            {#each view.context as chip, index (index)}
+              {@const web = /^https?:/i.test(chip.uri)}
+              {@const open = web ? getOpenTabs().find((tab) => tab.url === chip.uri) : undefined}
+              <!-- A page goes back to its tab while it is open; a file opens as a link in a reply does. -->
+              <button
+                type="button"
+                class="context-chip"
+                use:tooltip={!web && cwd && chip.uri.startsWith(`${cwd}/`) ? chip.uri.slice(cwd.length + 1) : chip.uri}
+                onclick={(event) =>
+                  open ? tabActions.switchTo(open.id) : web ? tabActions.create(chip.uri) : conversationActions.openFile(tabId, chip.uri, event.metaKey)}
+              >
+                {#if web}
+                  <SiteFavicon src={open?.faviconDataURL} title={chip.label} url={chip.uri} size={14} radius={3} />
+                {:else}
+                  <Icon name={chip.uri.endsWith("/") ? "folder" : "file"} size={12} />
+                {/if}
+                <span class="context-label">{chip.label}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    </div>
+    {#if confirmingRestore}
+      <!-- Laid over the gap below the message: it never moves the thread. -->
+      <div class="checkpoint">
+        <span
+          class="checkpoint-confirm"
+          role="group"
+          aria-label={t("agents.conversation.restoreConfirm")}
+          in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 8, y: 0 }}
+        >
+          {t("agents.conversation.restoreConfirm")}
+          <button
+            type="button"
+            class="checkpoint-button primary"
+            onclick={() => {
+              confirmingRestore = false;
+              conversationActions.restore(tabId, promptIndex);
+            }}
+          >{t("agents.conversation.restore")}</button>
+          <button type="button" class="checkpoint-button" onclick={() => (confirmingRestore = false)}>{t("common.cancel")}</button>
+        </span>
       </div>
     {/if}
   </div>
 {:else if view.kind === "agent"}
-  <Markdown text={view.text} {tabId} {cwd} />
+  <Markdown text={view.text} {tabId} {cwd} {knownFile} />
 {:else if view.kind === "image"}
   {@const source = imageSource(view.src, cwd)}
   {#if source?.type === "image"}<ThreadImage src={source.src} alt={view.alt} />{/if}
@@ -185,22 +237,7 @@
     {/if}
   </div>
 {:else if view.kind === "plan"}
-  {@const done = view.entries.filter((entry) => entry.status === "completed").length}
-  <div class="plan">
-    <div class="plan-head">
-      <span>{t("agents.conversation.plan")}</span>
-      <span>{t("agents.conversation.planProgress", { done, total: view.entries.length })}</span>
-    </div>
-    <ul class="plan-entries">
-      {#each view.entries as entry, index (index)}
-        <li class="plan-entry {entry.status}">
-          <span class="plan-box" aria-hidden="true"></span>
-          <span>{entry.content}</span>
-          <span class="visually-hidden">{t(`agents.conversation.planStatus.${entry.status}`)}</span>
-        </li>
-      {/each}
-    </ul>
-  </div>
+  <PlanTray entries={view.entries} docked={false} />
 {:else if view.kind === "permission" && view.answer !== null}
   <!-- A pending question docks over the composer; once answered, its answer stays in the thread. -->
   {@const chosen = view.options.find((option) => option.optionId === view.answer)}
@@ -208,6 +245,22 @@
     <span class="permission-title">{view.toolCall.title || t("agents.conversation.permissionTitle")}</span>
     <span class="permission-answer">
       {chosen ? t("agents.conversation.answered", { option: chosen.name }) : t("agents.conversation.cancelled")}
+    </span>
+  </div>
+{:else if view.kind === "question" && view.answer !== null}
+  <!-- What was picked, by the options' titles; text typed in reads as typed. -->
+  {@const given = view.answer.content ?? {}}
+  {@const picks = view.fields.flatMap((field) => {
+    const value = given[field.key];
+    const list = Array.isArray(value) ? value : value === undefined || value === false ? [] : [value === true ? field.title : value];
+    return list.map((pick) => field.options.find((option) => option.value === pick)?.title ?? String(pick));
+  })}
+  <div class="permission" class:settled={askedHere}>
+    <span class="permission-title">{view.message}</span>
+    <span class="permission-answer">
+      {view.answer.action === "accept" && picks.length
+        ? t("agents.conversation.answered", { option: picks.join(", ") })
+        : view.answer.action === "decline" ? t("agents.question.skipped") : t("agents.conversation.cancelled")}
     </span>
   </div>
 {:else if view.kind === "notice"}
@@ -223,8 +276,49 @@
 {/if}
 
 <style>
+  .user-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: var(--space-4);
+  }
+
+  .prompt-actions {
+    display: flex;
+    flex: none;
+    opacity: 0;
+    transition: opacity var(--motion-duration-normal) var(--motion-ease-standard);
+  }
+
+  .user-turn:hover .prompt-actions,
+  .prompt-actions:focus-within {
+    opacity: 1;
+  }
+
+  .prompt-action {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .prompt-action:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .prompt-action:focus-visible {
+    outline: var(--focus-outline);
+  }
+
   .user-message {
-    align-self: flex-end;
+    min-width: 0;
     max-width: 85%;
     padding: var(--space-10) var(--space-12);
     border-radius: var(--radius-lg);
@@ -246,17 +340,40 @@
     margin-top: var(--space-8);
   }
 
-  /* A block, not a flex box: text-overflow only cuts text it holds directly. */
   .context-chip {
     max-width: 240px;
     height: 22px;
-    display: inline-block;
-    line-height: 22px;
-    padding: 0 var(--space-8);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: 0 var(--space-8) 0 var(--space-6);
     border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
     box-shadow: inset 0 0 0 1px var(--border);
     color: var(--text-secondary);
+    font: inherit;
     font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+  }
+
+  .context-chip:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .context-chip:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
+
+  .context-chip > :global(:first-child) {
+    flex: none;
+  }
+
+  .context-label {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -279,17 +396,7 @@
     gap: var(--space-8);
     color: var(--text-muted);
     font-size: var(--font-size-xs);
-    opacity: 0;
-    pointer-events: none;
     transform: translateY(-50%);
-    transition: opacity var(--motion-duration-normal) var(--motion-ease-standard);
-  }
-
-  .user-turn:hover .checkpoint,
-  .user-turn:focus-within .checkpoint,
-  .user-turn.confirming .checkpoint {
-    opacity: 1;
-    pointer-events: auto;
   }
 
   .checkpoint::before,
@@ -467,11 +574,11 @@
   }
 
   .count-added {
-    color: var(--success-text);
+    color: color-mix(in srgb, var(--diff-added) 70%, var(--text-primary));
   }
 
   .count-removed {
-    color: var(--danger-text);
+    color: color-mix(in srgb, var(--diff-removed) 70%, var(--text-primary));
   }
 
   .turn-button {
@@ -499,74 +606,6 @@
 
   .copy-glyph {
     display: inline-flex;
-  }
-
-  .plan {
-    padding: var(--space-8) var(--space-10);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-  }
-
-  .plan-head {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: var(--space-4);
-    color: var(--text-secondary);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-  }
-
-  .plan-entries {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .plan-entry {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    min-height: 24px;
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-  }
-
-  .plan-entry.in_progress {
-    color: var(--text-primary);
-  }
-
-  .plan-entry.completed {
-    color: var(--text-muted);
-    text-decoration: line-through;
-  }
-
-  .plan-box {
-    flex: none;
-    width: 13px;
-    height: 13px;
-    box-sizing: border-box;
-    border-radius: var(--radius-xs);
-    border: 1.5px solid var(--text-muted);
-  }
-
-  .plan-entry.in_progress .plan-box {
-    border-color: var(--agents);
-    background: var(--agents);
-    box-shadow: inset 0 0 0 2px var(--bg-primary);
-  }
-
-  .plan-entry.completed .plan-box {
-    border-color: var(--accent);
-    background: var(--accent);
-  }
-
-  .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 
   .permission {

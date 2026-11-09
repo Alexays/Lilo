@@ -16,7 +16,7 @@
     tabId: string;
     requestId: string;
     options: BridgePermissionOption[];
-    /** Shows Esc and Return on the two answers, where those keys answer. */
+    /** Shows Esc, Return and Option-Return on the answers, where those keys answer. */
     keys?: boolean;
   } = $props();
 
@@ -64,7 +64,11 @@
     {#if answers.variants.length > 0}
       <UiSplitButton
         menuLabel={t("agents.question.more")}
-        variants={answers.variants.map((variant) => ({ label: t(LABEL_KEYS[variant.kind]), onclick: () => answer(variant) }))}
+        variants={answers.variants.map((variant) => ({
+          label: t(LABEL_KEYS[variant.kind]),
+          shortcut: keys && variant.kind === "allow_always" ? formatShortcut("Opt+Enter") : undefined,
+          onclick: () => answer(variant),
+        }))}
         onclick={() => answer(option)}
       >{label}{#if keys}<kbd aria-hidden="true">{formatShortcut("Enter")}</kbd>{/if}</UiSplitButton>
     {:else}

@@ -1993,6 +1993,9 @@
 		"No changes on this branch": "Aucune modification sur cette branche",
 		"Nothing differs from %@.": "Rien ne diffère de %@.",
 		"Show Uncommitted Changes": "Afficher les modifications non commitées",
+		"Conversation": "Conversation",
+		"No changes in this conversation": "Aucune modification dans cette conversation",
+		"The project is as it was at the conversation's first prompt.": "Le projet est tel qu'au premier prompt de la conversation.",
 		"%@ files": {"one": "%@ fichier", "other": "%@ fichiers"},
 		"against %@ from %@, uncommitted included": "par rapport à %@ depuis %@, non commité inclus",
 		"Binary file, not shown": "Fichier binaire, non affiché",
@@ -2446,6 +2449,7 @@
 		"Choose": "Choisir",
 		"New Conversation": "Nouvelle conversation",
 		"Screenshot of %@": "Capture d'écran de %@",
+		"Selection from %@": "Sélection de %@",
 		"The agent stopped (code %d).": "L'agent s'est arrêté (code %d).",
 		"This agent is no longer in the ACP registry.": "Cet agent n'est plus dans le registre ACP.",
 		"The agent stopped.": "L'agent s'est arrêté.",
@@ -2613,6 +2617,8 @@
 		"conversation": {
 			"stop": "Arrêter",
 			"mode": "Mode",
+			"compact": "compacter cette conversation",
+			"compactHint": "Cliquez pour compacter : l'agent résume la conversation pour libérer son contexte.",
 			"context": "{percent} % du contexte utilisé",
 			"planSession": "Limite de session : {percent} % utilisés, réinitialisation {time}",
 			"planWeek": "Limite hebdomadaire : {percent} % utilisés, réinitialisation {time}",
@@ -2624,13 +2630,10 @@
 				"one": "Afficher {count} élément précédent",
 				"other": "Afficher {count} éléments précédents"
 			},
-			"queued": {
-				"one": "{count} message en attente",
-				"other": "{count} messages en attente"
-			},
-			"queuedHint": "Envoyé quand l'agent a fini. Cmd Entrée l'envoie tout de suite.",
 			"queuedTag": "En file",
+			"sendNow": "Envoyer maintenant",
 			"thought": "Réflexion",
+			"editPrompt": "Modifier",
 			"restoreToHere": "Revenir à ce point",
 			"restoreConfirm": "Remettre les fichiers du projet tels qu'ils étaient à ce message ?",
 			"restore": "Restaurer",
@@ -2642,6 +2645,10 @@
 			},
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "{count} étape terminée",
+				"other": "{count} étapes terminées"
+			},
 			"planStatus": {
 				"pending": "À faire",
 				"in_progress": "En cours",
@@ -2658,7 +2665,8 @@
 			"moreOptions": "Plus d'options",
 			"signInHint": "Connectez-vous avec l'agent : votre message part dès que vous êtes connecté.",
 			"branch": "Branche {branch}",
-			"jumpToLatest": "Aller aux derniers messages"
+			"jumpToLatest": "Aller aux derniers messages",
+			"olderModels": "Modèles plus anciens"
 		},
 		"tool": {
 			"untitled": "Appel d'outil",
@@ -2749,7 +2757,10 @@
 			"allowAlways": "Toujours autoriser",
 			"reject": "Ne pas autoriser",
 			"rejectAlways": "Ne jamais autoriser",
-			"more": "Autres réponses"
+			"more": "Autres réponses",
+			"submit": "Répondre",
+			"skip": "Passer",
+			"skipped": "Passée"
 		},
 		"badge": {
 			"title": "Agents",
@@ -2789,6 +2800,14 @@
 				"search": "Recherché",
 				"fetch": "Récupéré"
 			},
+			"verbActive": {
+				"read": "Lecture de",
+				"edit": "Modification de",
+				"delete": "Suppression de",
+				"move": "Déplacement de",
+				"search": "Recherche de",
+				"fetch": "Récupération de"
+			},
 			"summary": {
 				"read": {
 					"one": "{count} fichier lu",
@@ -2818,6 +2837,10 @@
 					"one": "navigateur utilisé {count} fois",
 					"other": "navigateur utilisé {count} fois"
 				},
+				"browserOn": {
+					"one": "navigateur utilisé {count} fois sur {site}",
+					"other": "navigateur utilisé {count} fois sur {site}"
+				},
 				"tool": {
 					"one": "{count} outil utilisé",
 					"other": "{count} outils utilisés"
@@ -2826,6 +2849,54 @@
 					"one": "{count} agent lancé",
 					"other": "{count} agents lancés"
 				}
+			},
+			"browser": {
+				"closeTab": "A fermé un onglet",
+				"open": "A ouvert {url}",
+				"openPage": "A ouvert une page",
+				"search": "A cherché dans la page",
+				"requestAny": "A envoyé une requête",
+				"back": "Est revenu en arrière",
+				"forward": "Est allé en avant",
+				"reload": "A rechargé la page",
+				"screenshot": "A pris une capture d'écran",
+				"click": "A cliqué dans la page",
+				"clickOn": "A cliqué sur \"{name}\"",
+				"type": "A saisi \"{text}\"",
+				"key": "A appuyé sur {keys}",
+				"scroll": "A fait défiler la page",
+				"interact": "A utilisé la page",
+				"read": "A lu la page",
+				"find": "A cherché \"{query}\"",
+				"form": "A rempli un champ",
+				"script": "A exécuté un script dans la page",
+				"batch": "A enchaîné plusieurs actions dans le navigateur",
+				"waitFor": "A attendu la page",
+				"request": "A envoyé une requête à {url}"
+			},
+			"browserActive": {
+				"closeTab": "Fermeture d'un onglet",
+				"open": "Ouverture de {url}",
+				"openPage": "Ouverture d'une page",
+				"search": "Recherche dans la page",
+				"requestAny": "Envoi d'une requête",
+				"back": "Retour à la page précédente",
+				"forward": "Passage à la page suivante",
+				"reload": "Rechargement de la page",
+				"screenshot": "Capture d'écran",
+				"click": "Clic dans la page",
+				"clickOn": "Clic sur \"{name}\"",
+				"type": "Saisie de \"{text}\"",
+				"key": "Appui sur {keys}",
+				"scroll": "Défilement de la page",
+				"interact": "Utilisation de la page",
+				"read": "Lecture de la page",
+				"find": "Recherche de \"{query}\"",
+				"form": "Remplissage d'un champ",
+				"script": "Exécution d'un script dans la page",
+				"batch": "Exécution de plusieurs actions",
+				"waitFor": "Attente de la page",
+				"request": "Envoi d'une requête à {url}"
 			},
 			"exit": "Sortie {code}",
 			"showAll": {
@@ -2858,6 +2929,7 @@
 		"markdown": {
 			"preview": "Aperçu",
 			"openPreview": "Ouvrir l'aperçu dans un onglet",
+			"openFile": "Cliquer pour ouvrir, ⌘-clic pour afficher dans le Finder",
 			"view": "Afficher en",
 			"code": "Code",
 			"copy": "Copier le code",

@@ -1,0 +1,3 @@
+kind: Changed
+body: A conversation keeps the name it gets from its first prompt instead of being renamed by the agent on every turn, so its row in the sidebar stays where you expect it.
+time: 2026-11-09T00:53:57.013962+01:00

@@ -120,6 +120,11 @@
   --warning: #d97706;
   --diff-added: #3fb950;
   --diff-removed: #f85149;
+  --code-keyword: #9b2393;
+  --code-string: #c41a16;
+  --code-number: #1c00cf;
+  --code-type: #0b4f79;
+  --code-comment: #5d6c79;
   --hue-wheel: conic-gradient(#f1a7a5, #e8d98f, #9bd3b4, #9ac7eb, #c3a5ea, #f1a7a5);
   --terminal-tile-bg: #1b1830;
   --terminal-tile-text: #f4f2ff;
@@ -204,6 +209,10 @@
   --z-tip: 99999;
 }
 
+:root[data-interface-size="compact"] { --interface-step: -1; }
+:root[data-interface-size="roomy"] { --interface-step: 1; }
+:root[data-interface-size="spacious"] { --interface-step: 2; }
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-primary: #0f0f1a;
@@ -219,6 +228,11 @@
     --text-muted: #b9b9c8;
 
     --danger-text: #fbaaaa;
+    --code-keyword: #fc5fa3;
+    --code-string: #fc6a5d;
+    --code-number: #d0bf69;
+    --code-type: #5dd8ff;
+    --code-comment: #8b98a5;
     --success-text: #4ade80;
     --accent-ink: color-mix(in srgb, var(--accent) 35%, var(--text-primary));
     --float-accent-ink: var(--accent-ink);
@@ -688,6 +702,12 @@ html.window-unfocused .anim *::after {
   }
 }
 
-:root[data-interface-size="compact"] { --interface-step: -1; }
-:root[data-interface-size="roomy"] { --interface-step: 1; }
-:root[data-interface-size="spacious"] { --interface-step: 2; }
+/* A conversation's find matches, in the system find colours: every match tinted, the current one solid. */
+::highlight(thread-find) {
+  background-color: color-mix(in srgb, #ffd60a 28%, transparent);
+}
+
+::highlight(thread-find-current) {
+  background-color: #ffd60a;
+  color: #1d1d1f;
+}

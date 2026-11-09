@@ -44,7 +44,8 @@
     if (!open) return;
     untrack(() => {
       const page = getActiveTab();
-      const web = page?.kind === "web" && page.url ? page : null;
+      // A page that failed to load holds only Lilo's error screen: nothing worth the agent's context.
+      const web = page?.kind === "web" && page.url && !page.hasNavigationError ? page : null;
       pageTabId = web?.id ?? null;
       text = "";
       const selection = web ? getAskSelection() : "";
@@ -138,8 +139,8 @@
 
 {#if open}
   <div class="ask-root chrome-content-overlay-root">
-    <!-- Veils the page and any conversation composer under the bar: one field in front, never two. -->
-    <div class="ask-scrim" transition:fade={{ duration: prefersReducedMotion() ? 0 : 160 }}></div>
+    <!-- Veils any conversation composer under the bar: one field in front, never two. A page being asked about stays readable. -->
+    <div class="ask-scrim" class:page={pageTabId} transition:fade={{ duration: prefersReducedMotion() ? 0 : 160 }}></div>
     <div
       class="ask-bar float-surface"
       out:closeBar
@@ -211,6 +212,10 @@
     border-radius: var(--chrome-overlay-boundary-radius);
     background: var(--chrome-overlay-backdrop-tint);
     backdrop-filter: blur(var(--chrome-overlay-backdrop-blur));
+  }
+
+  .ask-scrim.page {
+    backdrop-filter: none;
   }
 
   .ask-bar {

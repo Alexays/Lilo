@@ -1,0 +1,3 @@
+kind: Changed
+body: A collapsed conversation in the sidebar keeps a light highlight while one of its pages is the active tab, like a folder does.
+time: 2026-11-08T21:16:48.421761+01:00

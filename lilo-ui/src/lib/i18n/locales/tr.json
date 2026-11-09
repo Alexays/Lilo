@@ -1993,6 +1993,9 @@
 		"No changes on this branch": "Bu dalda değişiklik yok",
 		"Nothing differs from %@.": "%@ ile fark yok.",
 		"Show Uncommitted Changes": "Commit Edilmemiş Değişiklikleri Göster",
+		"Conversation": "Sohbet",
+		"No changes in this conversation": "Bu sohbette değişiklik yok",
+		"The project is as it was at the conversation's first prompt.": "Proje, sohbetin ilk isteminde olduğu gibi.",
 		"%@ files": {"one": "%@ dosya", "other": "%@ dosya"},
 		"against %@ from %@, uncommitted included": "%@ ile karşılaştırma, %@ başlangıcından, commit edilmemişler dahil",
 		"Binary file, not shown": "İkili dosya, gösterilmiyor",
@@ -2446,6 +2449,7 @@
 		"Choose": "Seç",
 		"New Conversation": "Yeni Sohbet",
 		"Screenshot of %@": "%@ ekran resmi",
+		"Selection from %@": "%@ içinden seçim",
 		"The agent stopped (code %d).": "Ajan durdu (kod %d).",
 		"This agent is no longer in the ACP registry.": "Bu ajan artık ACP kayıt defterinde değil.",
 		"The agent stopped.": "Ajan durdu.",
@@ -2624,6 +2628,8 @@
 		"conversation": {
 			"stop": "Durdur",
 			"mode": "Mod",
+			"compact": "bu konuşmayı sıkıştır",
+			"compactHint": "Sıkıştırmak için tıklayın: ajan, bağlamı boşaltmak için konuşmayı özetler.",
 			"context": "Bağlamın %{percent} kadarı kullanıldı",
 			"planSession": "Oturum sınırı: %{percent} kullanıldı, sıfırlanma {time}",
 			"planWeek": "Haftalık sınır: %{percent} kullanıldı, sıfırlanma {time}",
@@ -2635,13 +2641,10 @@
 				"one": "Önceki {count} öğeyi göster",
 				"other": "Önceki {count} öğeyi göster"
 			},
-			"queued": {
-				"one": "Sırada {count} mesaj",
-				"other": "Sırada {count} mesaj"
-			},
-			"queuedHint": "Ajan bitirince gönderilir. Cmd Return hemen gönderir.",
 			"queuedTag": "Sırada",
+			"sendNow": "Şimdi gönder",
 			"thought": "Düşünce",
+			"editPrompt": "Düzenle",
 			"restoreToHere": "Buraya kadar geri yükle",
 			"restoreConfirm": "Proje dosyaları bu mesajdaki hâline geri döndürülsün mü?",
 			"restore": "Geri yükle",
@@ -2653,6 +2656,10 @@
 			},
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "{count} adım tamamlandı",
+				"other": "{count} adım tamamlandı"
+			},
 			"planStatus": {
 				"pending": "Yapılacak",
 				"in_progress": "Sürüyor",
@@ -2669,7 +2676,8 @@
 			"moreOptions": "Diğer seçenekler",
 			"signInHint": "Ajanla oturum açın: oturum açtığınızda mesajınız gönderilir.",
 			"branch": "Dal {branch}",
-			"jumpToLatest": "En yeniye git"
+			"jumpToLatest": "En yeniye git",
+			"olderModels": "Eski modeller"
 		},
 		"tool": {
 			"untitled": "Araç çağrısı",
@@ -2760,7 +2768,10 @@
 			"allowAlways": "Her Zaman İzin Ver",
 			"reject": "İzin Verme",
 			"rejectAlways": "Asla İzin Verme",
-			"more": "Diğer Yanıtlar"
+			"more": "Diğer Yanıtlar",
+			"submit": "Yanıtla",
+			"skip": "Atla",
+			"skipped": "Atlandı"
 		},
 		"badge": {
 			"title": "Ajanlar",
@@ -2800,6 +2811,14 @@
 				"search": "Arandı",
 				"fetch": "Getirildi"
 			},
+			"verbActive": {
+				"read": "Okunuyor",
+				"edit": "Düzenleniyor",
+				"delete": "Siliniyor",
+				"move": "Taşınıyor",
+				"search": "Aranıyor",
+				"fetch": "Getiriliyor"
+			},
 			"summary": {
 				"read": {
 					"one": "{count} dosya okundu",
@@ -2829,6 +2848,10 @@
 					"one": "tarayıcı {count} kez kullanıldı",
 					"other": "tarayıcı {count} kez kullanıldı"
 				},
+				"browserOn": {
+					"one": "{site} üzerinde tarayıcı {count} kez kullanıldı",
+					"other": "{site} üzerinde tarayıcı {count} kez kullanıldı"
+				},
 				"tool": {
 					"one": "{count} araç kullanıldı",
 					"other": "{count} araç kullanıldı"
@@ -2837,6 +2860,54 @@
 					"one": "{count} ajan başlatıldı",
 					"other": "{count} ajan başlatıldı"
 				}
+			},
+			"browser": {
+				"closeTab": "Bir sekme kapattı",
+				"open": "{url} adresini açtı",
+				"openPage": "Bir sayfa açtı",
+				"search": "Sayfada arama yaptı",
+				"requestAny": "Bir istek gönderdi",
+				"back": "Geri gitti",
+				"forward": "İleri gitti",
+				"reload": "Sayfayı yeniden yükledi",
+				"screenshot": "Ekran görüntüsü aldı",
+				"click": "Sayfaya tıkladı",
+				"clickOn": "\"{name}\" öğesine tıkladı",
+				"type": "\"{text}\" yazdı",
+				"key": "{keys} tuşuna bastı",
+				"scroll": "Sayfayı kaydırdı",
+				"interact": "Sayfayı kullandı",
+				"read": "Sayfayı okudu",
+				"find": "\"{query}\" aradı",
+				"form": "Bir alanı doldurdu",
+				"script": "Sayfada bir betik çalıştırdı",
+				"batch": "Tarayıcıda birkaç işlem yaptı",
+				"waitFor": "Sayfayı bekledi",
+				"request": "{url} adresine istek gönderdi"
+			},
+			"browserActive": {
+				"closeTab": "Sekme kapatılıyor",
+				"open": "{url} açılıyor",
+				"openPage": "Sayfa açılıyor",
+				"search": "Sayfada aranıyor",
+				"requestAny": "İstek gönderiliyor",
+				"back": "Geri gidiliyor",
+				"forward": "İleri gidiliyor",
+				"reload": "Sayfa yenileniyor",
+				"screenshot": "Ekran görüntüsü alınıyor",
+				"click": "Sayfaya tıklanıyor",
+				"clickOn": "\"{name}\" öğesine tıklanıyor",
+				"type": "\"{text}\" yazılıyor",
+				"key": "{keys} tuşuna basılıyor",
+				"scroll": "Sayfa kaydırılıyor",
+				"interact": "Sayfa kullanılıyor",
+				"read": "Sayfa okunuyor",
+				"find": "\"{query}\" aranıyor",
+				"form": "Bir alan dolduruluyor",
+				"script": "Sayfada betik çalıştırılıyor",
+				"batch": "Birkaç tarayıcı işlemi yapılıyor",
+				"waitFor": "Sayfa bekleniyor",
+				"request": "{url} adresine istek gönderiliyor"
 			},
 			"exit": "Çıkış {code}",
 			"showAll": {
@@ -2869,6 +2940,7 @@
 		"markdown": {
 			"preview": "Önizleme",
 			"openPreview": "Önizlemeyi sekmede aç",
+			"openFile": "Açmak için tıklayın, Finder'da göstermek için ⌘-tıklayın",
 			"view": "Şu şekilde göster",
 			"code": "Kod",
 			"copy": "Kodu kopyala",

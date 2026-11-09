@@ -1,0 +1,3 @@
+kind: Changed
+body: The sidebar scrolls to the tab that becomes active, so a new conversation started from the Ask bar shows up even when the list is scrolled away.
+time: 2026-11-09T00:33:12.593838+01:00

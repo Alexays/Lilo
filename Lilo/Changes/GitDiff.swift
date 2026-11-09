@@ -4,11 +4,13 @@ import OSLog
 /// A repository's changes as git prints them, parsed once into line records over the raw output:
 /// no String exists for a line until it is drawn.
 struct GitDiff: Sendable {
-    enum Mode: Sendable {
+    enum Mode: Sendable, Equatable {
         /// The working tree and the index against HEAD.
         case uncommitted
         /// The working tree against the merge base with the default branch, as a pull request shows it.
         case branch
+        /// The project against a `ConversationCheckpoints` tree: what a conversation changed since its first prompt.
+        case since(String)
     }
 
     enum LineKind: UInt8, Sendable {
@@ -77,6 +79,8 @@ struct GitDiff: Sendable {
     static func load(in directory: String, mode: Mode) -> GitDiff? {
         var diff = GitDiff()
         let target: String
+        // A checkpoint holds untracked files, so it is compared with a fresh one: a file made before it is no change.
+        var current: String?
         switch mode {
         case .uncommitted:
             target = run(["rev-parse", "--verify", "--quiet", "HEAD"], in: directory) != nil ? "HEAD" : emptyTree
@@ -86,8 +90,13 @@ struct GitDiff: Sendable {
             target = (String(bytes: output, encoding: .utf8) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             diff.base = base
             diff.mergeBase = String(target.prefix(7))
+        case .since(let tree):
+            guard let snapshot = ConversationCheckpoints.snapshot(in: directory) else { return nil }
+            target = tree
+            current = snapshot
         }
-        guard let output = run(["diff", "--no-color", "--no-ext-diff", "--no-textconv", "-M", "--unified=3", target], in: directory) else { return nil }
+        let arguments = ["diff", "--no-color", "--no-ext-diff", "--no-textconv", "-M", "--unified=3", target] + (current.map { [$0] } ?? [])
+        guard let output = run(arguments, in: directory) else { return nil }
         diff.target = target
         diff.root = repositoryRoot(containing: directory)
         guard output.count <= maxBytes else {
@@ -96,7 +105,7 @@ struct GitDiff: Sendable {
         }
         diff.bytes = [UInt8](output)
         diff.parse()
-        diff.appendUntracked(in: directory)
+        if current == nil { diff.appendUntracked(in: directory) }
         return diff
     }
 

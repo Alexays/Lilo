@@ -128,6 +128,8 @@ enum AgentInteractionTools {
         AgentTools.tool("switch_browser", "Connect to a browser. Lilo is already connected.", [:])
     ]
 
+    static let browserPickers: Set = ["list_connected_browsers", "select_browser", "switch_browser"]
+
     static func call(
         _ name: String, arguments: [String: Any], session: AgentSession, control: AgentControl
     ) async throws -> [AgentContent]? {

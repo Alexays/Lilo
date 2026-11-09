@@ -165,8 +165,11 @@ export interface BridgeConversationSummary {
 	spaceName: string;
 	running: boolean;
 	/** The oldest open request; `count` includes it. */
-	permission?: { requestId: string; title: string; options: BridgePermissionOption[]; count: number };
+	/** `question` marks a form to fill in the conversation, which has no answers to offer here. */
+	permission?: { requestId: string; title: string; options: BridgePermissionOption[]; count: number; question?: boolean };
 	error?: string;
+	/** Epoch ms of the last prompt or turn's end. */
+	lastActivity?: number;
 }
 
 export interface BridgeAgentInfo {
@@ -837,6 +840,7 @@ export interface BridgeCommandPayloadMap {
 	cancelConversation: { tabId: string };
 	/** `optionId` absent cancels the request. */
 	answerConversation: { tabId: string; requestId: string; optionId?: string };
+	answerConversationQuestion: { tabId: string; requestId: string; action: "accept" | "decline"; content?: Record<string, string | number | boolean | string[]> };
 	setConversationMode: { tabId: string; modeId: string };
 	setConversationConfig: { tabId: string; configId: string; value: string | boolean };
 	/** The chrome shows (or stops showing) a conversation: Lilo replays it, then streams its updates. */
@@ -847,6 +851,7 @@ export interface BridgeCommandPayloadMap {
 	loadConversations: EmptyPayload;
 	chooseConversationProject: EmptyPayload;
 	openConversationChanges: { tabId: string };
+	openConversationFile: { tabId: string; path: string; reveal: boolean };
 	authenticateConversation: { tabId: string; methodId: string };
 	/** Starts the agent of a conversation whose `/` commands are not known yet: its session lists them. */
 	loadConversationCommands: { tabId: string };
@@ -1027,6 +1032,8 @@ export interface BridgeEventPayloadMap {
 	// The active page committed a new document while the find bar was open: closeFindBar when it was already
 	// open as the navigation started.
 	findPageCommitted: { closeFindBar: boolean };
+	// Find Next or Previous on a conversation, whose thread the find bar searches itself.
+	findStep: { forward: boolean };
 	contentInteraction: { isMouseDown?: boolean };
 	zoomChanged: { level: number };
 	blockerAllowlistChanged: { allowlist: string[] };

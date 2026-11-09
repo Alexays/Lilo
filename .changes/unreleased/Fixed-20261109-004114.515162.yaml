@@ -1,0 +1,3 @@
+kind: Fixed
+body: Code, links and file paths inside bold or italic text in an agent's answer render as such instead of showing their raw backticks or brackets.
+time: 2026-11-09T00:41:14.515162+01:00
