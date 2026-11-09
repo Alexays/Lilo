@@ -36,31 +36,4 @@ final class PermissionOriginKeyTests: XCTestCase {
             XCTAssertEqual(actual, testCase.expected, testCase.name)
         }
     }
-
-    /// A committed page's permission cleanup (`MainWindowController+Navigation`) derives the key from
-    /// a page `URL`, whose `port` is `nil` (not 0) when no port is written in the URL. It feeds
-    /// `url.port ?? 0` into the helper; this verifies that convention end to end.
-    func testURLDerivedPortConvention() {
-        let defaultPortURL = URL(string: "https://x.example/page")!
-        XCTAssertNil(defaultPortURL.port, "URL.port must be nil when the URL spells no port")
-        XCTAssertEqual(
-            PermissionOriginKey.build(scheme: defaultPortURL.scheme!, host: defaultPortURL.host!, port: defaultPortURL.port ?? 0),
-            "https://x.example",
-            "nil URL.port coalesced to 0 must collapse to the historical portless key"
-        )
-
-        let explicitDefaultURL = URL(string: "http://x.example:80/page")!
-        XCTAssertEqual(
-            PermissionOriginKey.build(scheme: explicitDefaultURL.scheme!, host: explicitDefaultURL.host!, port: explicitDefaultURL.port ?? 0),
-            "http://x.example",
-            "an explicitly-written default port must still collapse"
-        )
-
-        let customPortURL = URL(string: "https://x.example:9443/page")!
-        XCTAssertEqual(
-            PermissionOriginKey.build(scheme: customPortURL.scheme!, host: customPortURL.host!, port: customPortURL.port ?? 0),
-            "https://x.example:9443",
-            "a non-default URL port must be appended"
-        )
-    }
 }

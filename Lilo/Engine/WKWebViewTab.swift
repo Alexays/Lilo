@@ -589,17 +589,24 @@ final class WKWebViewTab: NSObject {
     var supportsWebInspector: Bool { WebInspectorSupport.isAvailable(for: webView) }
     var processDiagnostics: WebViewProcessDiagnostics {
         let accessors = WebViewPrivateAccessors(webView)
+        var diagnostics = processIdentifiers
+        diagnostics.webProcessIsResponsive = accessors.bool("_webProcessIsResponsive")
+        diagnostics.webProcessState = accessors.int("_webProcessState")
+        diagnostics.isPictureInPictureActive = accessors.bool("_isPictureInPictureActive")
+        diagnostics.committedURL = accessors.urlString("_committedURL")
+        diagnostics.mainFrameURL = accessors.urlString("_mainFrameURL")
+        return diagnostics
+    }
+
+    /// The tab's process ids alone, enough to key its processes without the rest of the diagnostics.
+    var processIdentifiers: WebViewProcessDiagnostics {
+        let accessors = WebViewPrivateAccessors(webView)
         return WebViewProcessDiagnostics(
             webProcessIdentifier: accessors.pid("_webProcessIdentifier"),
             provisionalWebProcessIdentifier: accessors.pid("_provisionalWebProcessIdentifier"),
             networkProcessIdentifier: accessors.pid("_networkProcessIdentifier"),
             gpuProcessIdentifier: accessors.pid("_gpuProcessIdentifier"),
-            modelProcessIdentifier: accessors.pid("_modelProcessIdentifier"),
-            webProcessIsResponsive: accessors.bool("_webProcessIsResponsive"),
-            webProcessState: accessors.int("_webProcessState"),
-            isPictureInPictureActive: accessors.bool("_isPictureInPictureActive"),
-            committedURL: accessors.urlString("_committedURL"),
-            mainFrameURL: accessors.urlString("_mainFrameURL")
+            modelProcessIdentifier: accessors.pid("_modelProcessIdentifier")
         )
     }
 

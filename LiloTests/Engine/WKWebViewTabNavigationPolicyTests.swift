@@ -102,7 +102,9 @@ final class WKWebViewTabNavigationPolicyTests: XCTestCase {
 
         tab.loadURL(target)
 
-        let started = await pollUntil(timeout: 10) { spy.events.count == 4 }
+        let started = await pollUntil(timeout: 10) {
+            spy.events.contains { if case .started(let url) = $0 { url == target } else { false } }
+        }
         XCTAssertTrue(started)
         XCTAssertEqual(tab.currentURL, target, "a typed address shows while it loads")
     }
