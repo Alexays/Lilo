@@ -1,3 +1,0 @@
-kind: Fixed
-body: An agent's answer draws a --- line as a divider and ~~text~~ as struck through, instead of showing the marks.
-time: 2026-11-09T01:38:32.285355+01:00

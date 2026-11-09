@@ -1,3 +1,0 @@
-kind: Changed
-body: Hovering a chip on a sent agent message shows a file's path within the project, or the page's address, in Lilo's own tooltip instead of a long system tooltip with the full path.
-time: 2026-11-09T02:41:02.736179+01:00

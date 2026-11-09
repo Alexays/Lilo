@@ -1,3 +1,0 @@
-kind: Fixed
-body: A conversation that never changed a file no longer shows the line counts of edits made in its folder by another conversation or by you.
-time: 2026-11-09T01:03:10.501372+01:00

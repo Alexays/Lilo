@@ -1,3 +1,0 @@
-kind: Fixed
-body: Numbered steps an agent splits with code blocks count on (1, 2, 3) instead of each restarting at 1.
-time: 2026-11-09T01:35:08.003058+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: Keyboard shortcuts an agent writes as <kbd> tags show as keys instead of raw markup.
-time: 2026-11-09T01:53:21.524194+01:00

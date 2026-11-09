@@ -1,3 +1,0 @@
-kind: Changed
-body: A code block without a language in an agent's answer drops its generic "Code" header; Copy shows over its corner on hover.
-time: 2026-11-08T22:32:51.45149+01:00

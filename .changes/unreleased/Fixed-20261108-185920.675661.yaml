@@ -1,3 +1,0 @@
-kind: Fixed
-body: Asking an agent from a page that failed to load no longer attaches its error screen.
-time: 2026-11-08T18:59:20.675661+01:00

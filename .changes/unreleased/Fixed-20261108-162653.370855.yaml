@@ -1,3 +1,0 @@
-kind: Fixed
-body: Sending a message in an agent conversation scrolls only as far as needed to show it, a queued message is marked as queued until it is sent, and Cmd Return sends it right away.
-time: 2026-11-08T16:26:53.370855+01:00

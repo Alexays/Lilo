@@ -4,6 +4,116 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.20.0] - 2026-11-09
+
+### Added
+
+- Resting the pointer on a closed folder in the sidebar shows its tabs beside it, with a search field to filter them; Space opens it from the keyboard
+- Agent conversations start with Lilo's own system prompt, which lets agents act with fewer restrictions and browse the web with Lilo first. Settings > Agents switches back to the agent's own prompt or edits Lilo's.
+- Agent replies fade in letter by letter as they stream, and a turn the model's safety checks stop now ends with a clear card explaining what happened.
+- Conversations pin the agent's task list above the composer while it works, with its progress, and Claude Agent now keeps one for multi-step work.
+- A conversation's header shows the lines it changed in the project, edits made through the shell included, and opens the review in one click; the counts and branch also come back after a relaunch.
+- Pointing at a message you sent shows Edit, Copy and Restore beside it: Edit puts its text back in the composer to change and send again.
+- Option-Return answers an agent's question with Always Allow, and the Allow menu shows the shortcut.
+- Find (Command-F) searches an agent conversation: every match is highlighted, and Return or Command-G steps through them.
+- Once half a conversation's context is used, its gauge compacts it in one click when the agent can, and turns orange from 80%.
+- Agents can ask you multiple-choice questions in a conversation: pick one or several answers, type your own, or skip, with the keyboard or the mouse.
+- A hex colour in an agent's answer shows a small swatch of that colour beside it.
+- The page and file chips on a sent agent message open what they name: a page goes back to its tab, or reopens if the tab was closed, and a file opens like a file link in a reply (Command-click reveals it).
+
+### Changed
+
+- Favorites line up as larger tiles in balanced rows, and stay pinned above the tabs as they scroll; a long set of favorites no longer squeezes the tab list away
+- A file an agent edits several times in a row shows once in its conversation, with its changes added up and an Undo that appears on hover; the Keep button is gone, since edits are already saved
+- Conversations describe what the agent does in the browser (the page it opens, the text it types, a screenshot) instead of showing tool names.
+- Conversations hide Claude Agent loading its own tools, and name a local file opened in the browser by its file name.
+- While an agent works, its status line names the step under way, and a finished task list folds into one line in the conversation.
+- The notification for a conversation that finished out of view shows the start of the agent's reply instead of just "Done".
+- VoiceOver announces when an agent finishes its turn or asks a question, and a finished plan says how many steps it completed.
+- A shell command too long for its row in an agent conversation opens to show it in full.
+- Long code blocks in agent replies show their first lines, with a button to show the rest, so the explanation around them stays in view.
+- A collapsed conversation in the sidebar keeps a light highlight while one of its pages is the active tab, like a folder does.
+- The Agents popover shows how long ago each finished conversation was last active.
+- An agent's browsing steps no longer list the empty tabs it opens or its look at its tab list: the page it opens next says it all.
+- An agent's multiple-choice question answers from the composer: a digit picks an option, Return answers and Escape skips, as for a permission.
+- An agent's script step in a page opens on the JavaScript it ran, above its result.
+- A new agent conversation starts on the model and options last picked for that agent; the mode is still picked per conversation.
+- An agent's file edit reads "Edited <file>" in its steps and lines up with the steps around it.
+- An agent's browser steps on a single site name it in their summary, as "Took 2 browser actions on example.com".
+- A code block without a language in an agent's answer drops its generic "Code" header; Copy shows over its corner on hover.
+- Agents: a file step still running reads in the present tense (Editing faq.html), and switches to the past once it is done.
+- Agents: code blocks in a reply are colored by language (keywords, strings, numbers, types and comments), in Xcode's palette, light and dark.
+- Agents: a browser step still running reads in the present tense (Reading the page), and a wait reads as one instead of Used the page.
+- Agents: a file the agent read or edited opens in its app when you click its name in a reply, and ⌘-click shows it in Finder; apps and scripts are only shown, never run.
+- Agents: a file location the agent writes in plain text, like faq.html:6, is a link too when the thread knows that file.
+- Sidebar: a conversation with pages opens as a block like a folder, its pages inside, instead of hanging them on a violet line; one with no page stays a single row.
+- Agents: the composer shows the effort level beside the options button, like Claude Code does next to the model.
+- Agents: Lilo speaks ACP v2 with agents that support it, such as Claude Agent: a follow-up the agent starts on its own after a background command shows its activity and how long it worked, and a command running in the background stays shown as running until it ends. Agents that only speak ACP v1 work as before.
+- The sidebar scrolls to the tab that becomes active, so a new conversation started from the Ask bar shows up even when the list is scrolled away.
+- Code blocks in an agent's answer fade out at the right edge while a line runs on past it, so it is clear the block scrolls sideways.
+- A conversation keeps the name it gets from its first prompt instead of being renamed by the agent on every turn, so its row in the sidebar stays where you expect it.
+- Review on a conversation's turn opens Changes on what that conversation changed since its first prompt, with Uncommitted and Branch one click away.
+- A page, file or folder attached to a sent message keeps its icon in the conversation, as it showed in the composer.
+- A conversation's text fades out above the composer instead of running under it and showing in the gap below.
+- Section headings in an agent's answer are larger and set apart, so a long answer reads as parts.
+- The model picker lists each model's latest version first and groups the versions it supersedes under Older models.
+- The composer shows the agent's effort beside the model only when it is set (High, Max), instead of an unexplained Default.
+- Code blocks with a language label sit tighter, with the label just above the code.
+- The conversation's extra options menu names agents and effort levels in plain words (Code simplifier, Extra high) instead of raw ids, without a repeated icon on every row.
+- The model picker lists older models by name alone, so the whole menu fits on screen without repeating each family's description.
+- The composer's / command list is wider, so each command's description is readable, and a plugin command no longer repeats its plugin's name at the start of its description.
+- A text file attached with @ goes to the agent with its contents, as in Claude Code, so it can answer about the file without reading it first; folders, binaries and files over 100 KB still go as a link.
+- Hovering a chip on a sent agent message shows a file's path within the project, or the page's address, in Lilo's own tooltip instead of a long system tooltip with the full path.
+- A queued agent message shows a Send now button beside its Queued label, which stops the running turn so it goes at once; the separate queue banner over the composer is gone.
+- The Ask bar keeps the page you ask about readable behind it instead of blurring it.
+- An agent tab shown outside its conversation, as in a split, takes its agent's icon like the conversation's row and the Agents list.
+- A selection sent to an agent shows as "Selection from" its page in the conversation, so it no longer looks like a second copy of the page.
+
+### Fixed
+
+- Sending a message in an agent conversation scrolls only as far as needed to show it, a queued message is marked as queued until it is sent, and Cmd Return sends it right away.
+- The Jump to latest button in an agent conversation no longer stays up once the whole thread fits on screen.
+- A command's output in an agent conversation no longer shows stray Markdown fences around it.
+- Asking an agent from a page that failed to load no longer attaches its error screen.
+- A conversation's work timer no longer restarts at 0s when you come back to it.
+- An agent pressing a shortcut such as Cmd+A no longer quits Lilo or runs a menu command, on AZERTY and other keyboard layouts.
+- A conversation keeps its title after /compact instead of being renamed to the command.
+- An agent conversation's context gauge no longer reads several times too full during its first turn.
+- Previewing the same HTML or SVG block of an agent reply again returns to its page instead of opening a duplicate tab.
+- The Agents popover lists conversations from the most recently active, instead of in no particular order.
+- A conversation whose turn was cut short by quitting or a crash now shows that turn as stopped, instead of a prompt left without an answer.
+- The context gauge of a new conversation no longer reads too full on its first turn after Lilo restarts.
+- A restored agent conversation shows its branch and changed lines as it opens, without its header shifting a few seconds later.
+- An agent reading a file or running a command whose path says "lilo" or "navigate" no longer shows it as a browser action.
+- What an agent does on its own once a background command finishes is saved right away, so a crash no longer loses it.
+- Agents: a table in a reply keeps a minimum width per column and keeps inline code on one line, so a wide table scrolls sideways instead of breaking labels and code over several lines.
+- Agents: a command's output sits on the same neutral gray as code blocks instead of the Space's tint, and starts on its first line of text.
+- Agents: the / and @ menus show a command or file name in full and shorten its description first.
+- Appearance: Lilo applies the theme chosen in Settings once it has started, so a stale launch cache can no longer keep it light while the setting says System.
+- Agents: a page the agent opens shows under its conversation in the sidebar, instead of loading inside the conversation's own tab.
+- Peek: Copy Page URL (Shift-Command-C), Copy as Markdown, Share, View Source, Reload, screenshots, Translate and the Web Inspector act on the peeked page, including a peek opened from a terminal or an agent.
+- A sidebar row reached with the arrow keys or revealed as the active tab stops above the list's bottom fade instead of looking dimmed under it.
+- Code, links and file paths inside bold or italic text in an agent's answer render as such instead of showing their raw backticks or brackets.
+- A conversation that never changed a file no longer shows the line counts of edits made in its folder by another conversation or by you.
+- Review on a conversation's turn opens its changes in a peek over the conversation, instead of a split that took the conversation out of its folder.
+- Task lists in an agent's answer show checkboxes, ticked or empty, instead of raw [ ] and [x] marks.
+- Nested lists in an agent's answer keep their indentation, with sub-items under the item they belong to instead of flattened into one list.
+- Numbered steps an agent splits with code blocks count on (1, 2, 3) instead of each restarting at 1.
+- An agent's answer draws a --- line as a divider and ~~text~~ as struck through, instead of showing the marks.
+- A code block indented inside a list item shows and copies its lines without the list's indent.
+- Keyboard shortcuts an agent writes as <kbd> tags show as keys instead of raw markup.
+- Footnotes in an agent's answer show as small superscript numbers, with their notes set in smaller text, instead of raw [^1] marks.
+- Agent replies show a code block written inside a list item under that item's text, as GitHub does, instead of flush with the list numbers.
+- The composer's mode, model and options menus show each description in full instead of cutting it off, and rows without an icon line up with their group title.
+- Every row of the composer's @ list has its icon, a tab's favicon or letter, a folder, a file or a page capture, so titles line up instead of shifting when a tab has no favicon.
+- In the composer's @ list, the project's files come right after open tabs and folders are capped like tabs, so a file match is never pushed out of view by folders with a similar name.
+- A command cut off when you stop the agent reads Stopped in grey instead of failing with a red error box and the agent's internal rejection text.
+- A message queued while the agent works stays at the bottom of the conversation until it is sent, so the running turn's work and reply show under the prompt that asked for them, live and after a relaunch.
+- An agent pressing a shortcut in a tab, such as Command-A, no longer quits Lilo, closes a tab or runs another shortcut on keyboard layouts like AZERTY
+- The bar over an agent conversation takes the conversation's background, instead of the Space's color that clashed with it in dark mode.
+- The command bar no longer lists a tab whose title or address holds the typed letters scattered from the middle of a word, so typing "maps" no longer puts a GitHub pull requests tab above Google Maps from your history.
+
+[0.20.0]: https://github.com/Alexays/Lilo/compare/v0.19.0...v0.20.0
 ## [0.19.0] - 2026-11-08
 
 ### Added

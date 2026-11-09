@@ -1,3 +1,0 @@
-kind: Fixed
-body: An agent pressing a shortcut in a tab, such as Command-A, no longer quits Lilo, closes a tab or runs another shortcut on keyboard layouts like AZERTY
-time: 2026-11-09T18:17:24.112502+02:00

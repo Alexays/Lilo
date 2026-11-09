@@ -1,3 +1,0 @@
-kind: Fixed
-body: A conversation's work timer no longer restarts at 0s when you come back to it.
-time: 2026-11-08T19:29:25.765842+01:00

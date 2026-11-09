@@ -1,3 +1,0 @@
-kind: Fixed
-body: The bar over an agent conversation takes the conversation's background, instead of the Space's color that clashed with it in dark mode.
-time: 2026-11-09T19:44:02.415134+01:00

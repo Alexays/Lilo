@@ -1,3 +1,0 @@
-kind: Changed
-body: A queued agent message shows a Send now button beside its Queued label, which stops the running turn so it goes at once; the separate queue banner over the composer is gone.
-time: 2026-11-09T02:45:20.234539+01:00

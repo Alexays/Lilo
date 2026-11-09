@@ -1,3 +1,0 @@
-kind: Added
-body: A conversation's header shows the lines it changed in the project, edits made through the shell included, and opens the review in one click; the counts and branch also come back after a relaunch.
-time: 2026-11-08T19:36:27.069549+01:00
