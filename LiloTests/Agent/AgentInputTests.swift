@@ -215,4 +215,16 @@ final class AgentInputTests: XCTestCase {
         let selected = try await js("(f => f.selectionEnd - f.selectionStart)(document.querySelector('iframe').contentDocument.getElementById('f'))") as? Int
         XCTAssertEqual(selected, 5)
     }
+
+    /// AppKit reads a ⌘ shortcut from the key code under the Mac's layout: a key the agent sends must type its own
+    /// character there, or ⌘A quits Lilo on AZERTY.
+    func testKeysTypeTheirOwnCharacterOnTheCurrentLayout() throws {
+        for character in "abcdefghijklmnopqrstuvwxyz".map(String.init) {
+            let event = try XCTUnwrap(NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil,
+                characters: character, charactersIgnoringModifiers: character, isARepeat: false, keyCode: AgentInput.keyCode(character)
+            ))
+            XCTAssertEqual(event.characters(byApplyingModifiers: []), character)
+        }
+    }
 }
