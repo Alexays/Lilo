@@ -395,11 +395,14 @@ enum AgentInput {
         return keys
     }()
 
-    /// The key typing `character` on the user's layout, as a real press of it carries. Once a field has focus,
-    /// AppKit matches a ⌘ shortcut by key code: an ANSI code presses another key (⌘A is ⌘Q on AZERTY).
+    /// The key typing `character` on the user's layout, as a real press of it carries: a page reading `code` sees
+    /// their keyboard. A digit AZERTY types unshifted only on the keypad keeps its main-row key, pressed with Shift there.
     static func keyCode(_ character: String) -> UInt16 {
-        KeyboardShortcuts.keyStroke(character)?.keyCode ?? keyCodes[character] ?? 0
+        if let code = KeyboardShortcuts.keyStroke(character)?.keyCode, !keypadKeyCodes.contains(code) { return code }
+        return keyCodes[character] ?? 0
     }
+
+    private static let keypadKeyCodes: Set<UInt16> = [65, 67, 69, 71, 75, 76, 78, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92]
 
     /// ANSI virtual key codes, for a character no key of the layout types unshifted.
     private static let keyCodes: [String: UInt16] = [
