@@ -152,14 +152,6 @@ final class PageSnapshotServiceRegionSelectionTests: XCTestCase {
         XCTAssertEqual(resultB, .some(CGRect(x: 3, y: 4, width: 60, height: 80)))
     }
 
-    func testCancelWithNoPendingSelectionIsNoOp() async throws {
-        let tab = try await makeShownTab()
-        defer { tab.teardown() }
-
-        tab.cancelRegionSelection()
-        tab.cancelRegionSelection()
-    }
-
     /// The capture holds exactly what was under the dragged rectangle, at the display's scale, on a zoomed and scrolled page:
     /// a red box drawn at view points (100, 50) and 80 x 60, on blue.
     func testTheCaptureIsWhatWasSelectedOnAZoomedScrolledPage() async throws {

@@ -42,16 +42,7 @@ extension BrowserContext {
         for window in windows.windows {
             add(WebViewPrivateAccessors(window.chromeWebView).pid("_webProcessIdentifier"), "chrome")
         }
-        let pidsOnly = { (engine: WKWebViewTab) in
-            let accessors = WebViewPrivateAccessors(engine.wkWebView)
-            return WebViewProcessDiagnostics(
-                webProcessIdentifier: accessors.pid("_webProcessIdentifier"),
-                networkProcessIdentifier: accessors.pid("_networkProcessIdentifier"),
-                gpuProcessIdentifier: accessors.pid("_gpuProcessIdentifier"),
-                modelProcessIdentifier: accessors.pid("_modelProcessIdentifier")
-            )
-        }
-        for process in browserState.processSnapshot(diagnosticsProvider: pidsOnly) {
+        for process in browserState.processSnapshot(diagnosticsProvider: { $0.processIdentifiers }) {
             switch process.kind {
             case .webContent, .provisionalWebContent: add(process.pid, "tab")
             case .network: add(process.pid, "network")
