@@ -571,6 +571,33 @@
 				"title": "智能体完成时通知",
 				"description": "你未在查看的对话完成时发送通知。",
 				"keywords": "智能体 通知 提醒 完成 结束"
+			},
+			"agentSystemPrompt": {
+				"title": "系统提示词",
+				"description": "每次对话开始时告诉代理的内容。",
+				"keywords": "系统提示词 指令 claude code 限制",
+				"lilo": "Lilo",
+				"agent": "代理自带",
+				"liloPoints": {
+					"browse": "用 Lilo 浏览网页",
+					"act": "无需每一步都询问",
+					"design": "以资深设计师的眼光设计"
+				},
+				"agentPoints": {
+					"same": "与其应用中的行为一致",
+					"asks": "更多操作前会先询问",
+					"updates": "跟随代理的更新"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo 提示词",
+				"description": "编辑替代代理自带提示词告诉它们的内容。",
+				"keywords": "系统提示词 指令 编辑",
+				"heading": "指令",
+				"note": "Lilo 会在末尾加上工作目录和今天的日期。更改适用于新建和重新打开的对话。",
+				"reset": "恢复默认",
+				"resetTitle": "要恢复 Lilo 提示词吗？",
+				"resetMessage": "你的更改将被默认提示词替换。"
 			}
 		},
 		"devices": {
@@ -889,7 +916,9 @@
 		"lockFolder": "用密码锁定",
 		"changePassword": "更改密码",
 		"removeLock": "移除锁定",
-		"lock": "锁定"
+		"lock": "锁定",
+		"searchFolder": "在“{name}”中搜索...",
+		"noMatches": "没有匹配的标签页"
 	},
 	"splitDrop": {
 		"left": "在左侧打开",
@@ -2070,6 +2099,7 @@
 		"Copy URL": "拷贝 URL",
 		"Search or enter address": "搜索或输入地址",
 		"Search with %@": "使用 %@ 搜索",
+		"Search Image with %@": "使用 %@ 搜索图片",
 		"New Private Space": "新建隐私空间",
 		"Duplicate Tab": "复制标签页",
 		"Bookmark This Page": "为此网页添加书签",
@@ -2453,6 +2483,12 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "看到什么，就搜什么。",
+				"description": "右键点按即可搜索页面上的任意图片，颜色更易读，终端也更稳定。",
+				"imageSearchTitle": "搜索图片。",
+				"imageSearchDescription": "了解图片的来源或内容。右键点按图片，选择“使用 Google Lens 搜索图片”；如果你的搜索引擎是 Bing，则使用 Bing 搜索。"
+			},
 			"v0180": {
 				"headline": "更整洁的下载菜单。",
 				"description": "直接在边栏清除已完成的下载，Bitwarden 和 Web Highlights 等扩展也能正常运行。",
@@ -2604,14 +2640,13 @@
 				"other": "{count} 条消息排队中"
 			},
 			"queuedHint": "智能体完成后发送。按 Cmd Return 立即发送。",
+			"queuedTag": "排队中",
 			"thought": "思考",
 			"restoreToHere": "恢复到此处",
 			"restoreConfirm": "将项目文件恢复到此消息时的状态？",
 			"restore": "恢复",
 			"undo": "撤销",
-			"keep": "保留",
 			"undone": "已撤销",
-			"kept": "已保留",
 			"moreLines": {
 				"one": "还有 {count} 行",
 				"other": "还有 {count} 行"
@@ -2813,6 +2848,8 @@
 		"turn": {
 			"workedFor": "工作了 {duration}",
 			"stopped": "已停止",
+			"refusalTitle": "模型拒绝继续",
+			"refusalHint": "它的安全机制停止了这一轮，有时也会误伤正当工作。请换种说法，或在下方选择其他模型。",
 			"files": {
 				"one": "更改了 {count} 个文件",
 				"other": "更改了 {count} 个文件"

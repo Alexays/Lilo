@@ -32,6 +32,10 @@
   let scrollViewportHeight = $state(0);
   let showTopScrollCue = $state(false);
   let showBottomScrollCue = $state(false);
+  // The favorites share the tabs' scroller: they stay pinned at its top while they fit in
+  // 40% of it, and past that scroll away with the tabs, so the tab list never collapses.
+  let favoritesHeight = $state(0);
+  const favoritesPinned = $derived(favoritesHeight > 0 && favoritesHeight <= scrollViewportHeight * 0.4);
 
   function updateScrollCues(): void {
     const el = spaceScrollEl;
@@ -102,18 +106,25 @@
         container={spaceStackEl}
         {spaceId}
       />
-      <div class="space-stack-section">
-        <BookmarkedTabs {spaceId} {interactive} />
-      </div>
       <div class="space-scroll-shell">
         <div
           class="space-scroll"
-          class:fade-top={showTopScrollCue}
+          class:fade-top={showTopScrollCue && !favoritesPinned}
           class:fade-bottom={showBottomScrollCue}
+          style:--favorites-pinned-height={favoritesPinned ? `${favoritesHeight}px` : undefined}
           bind:this={spaceScrollEl}
           bind:clientHeight={scrollViewportHeight}
         >
           <div class="space-scroll-content" bind:this={spaceScrollContentEl}>
+            <div
+              class="space-stack-section favorites-section"
+              class:pinned={favoritesPinned}
+              class:scrolled={showTopScrollCue}
+              data-dnd-sticky={favoritesPinned ? "" : undefined}
+              bind:clientHeight={favoritesHeight}
+            >
+              <BookmarkedTabs {spaceId} {interactive} />
+            </div>
             <div class="space-stack-section">
               <TabSection
                 section="pinned"
@@ -206,6 +217,8 @@
     /* The tab list swaps spacers for rows as it scrolls; scroll anchoring would shift the
        position to compensate and pull the window away from where the user scrolled. */
     overflow-anchor: none;
+    /* Rows revealed by keyboard or a scroll land below the pinned favorites, not under them. */
+    scroll-padding-top: var(--favorites-pinned-height, 0px);
     /* `scroll` keeps the 4px scrollbar's gutter even with nothing to scroll (WebKit ignores
        scrollbar-gutter here); it comes out of the 8px right pad so rows never shift and stay symmetric. */
     --sidebar-right-pad: 4px;
@@ -242,6 +255,31 @@
     display: flex;
     flex-direction: column;
     min-height: 100%;
+  }
+
+  .favorites-section.pinned {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--sidebar-bg);
+  }
+
+  /* The edge the tabs scroll under, once they do. */
+  .favorites-section::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: var(--sidebar-right-pad, 8px);
+    bottom: 0;
+    height: 0.5px;
+    background: var(--separator);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--motion-duration-fast) ease;
+  }
+
+  .favorites-section.pinned.scrolled::after {
+    opacity: 1;
   }
 
   .space-page-skeleton {

@@ -693,6 +693,7 @@
 		F61384D20E9CBE0329904C55 /* ProfileRemovalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70A41242B0F98014425C5992 /* ProfileRemovalTests.swift */; };
 		F6D0CDCA83211D878D6A1688 /* ConversationCheckpointsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59353B06598D5A5042D487B5 /* ConversationCheckpointsTests.swift */; };
 		F6E180E6F296B9D456F8A805 /* PrivateSpaceExtensionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3249054A8F9E2EAF249E9E /* PrivateSpaceExtensionTests.swift */; };
+		F74D503D437E73FA67D69B66 /* LiloApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A6689EE553343432ACFBDE /* LiloApplication.swift */; };
 		F7B9EE05E7EBA9F1779B1607 /* ChromeContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E81F713437F0CE95A4D96CD /* ChromeContractTests.swift */; };
 		F7CD3961DCB13983DAF4FFC0 /* TabShareSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CABDDC5FC76317C0127F6041 /* TabShareSessionController.swift */; };
 		F7D88088F0B54DE9BB6B9DA2 /* MainWindowController+Input.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D45D8E559247BAE6A0BB6C /* MainWindowController+Input.swift */; };
@@ -1304,6 +1305,7 @@
 		B5F14093D648D0F3628ECB11 /* MainWindowController+Lifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+Lifecycle.swift"; sourceTree = "<group>"; };
 		B6292409ECBF24660864AE69 /* top-manifest-errors.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "top-manifest-errors.txt"; sourceTree = "<group>"; };
 		B6967F93609CA6CFA4D08BB2 /* ChromeContentCompat.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ChromeContentCompat.js; sourceTree = "<group>"; };
+		B6A6689EE553343432ACFBDE /* LiloApplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiloApplication.swift; sourceTree = "<group>"; };
 		B6CF8BC122165D6C530F812A /* ChromeMasquerade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeMasquerade.swift; sourceTree = "<group>"; };
 		B7179F5D93FCC4DC7B23730D /* ApplicationsMover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationsMover.swift; sourceTree = "<group>"; };
 		B71BAB8475AC387E93B89428 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1970,6 +1972,7 @@
 				5B24DC9C85408005BBB82542 /* DeviceSetupController.swift */,
 				72AAFA48AA7D7B50E90A4C2B /* DeviceSetupMemory.swift */,
 				938677D9EF352E280A6AAC74 /* KeyboardShortcuts.swift */,
+				B6A6689EE553343432ACFBDE /* LiloApplication.swift */,
 				47B16C04BF2BF41B09F5677A /* LiloIntents.swift */,
 				0FD180FCC551B79222A54AE0 /* Localization.swift */,
 				F4B8966AB8CBDAEF66631B8A /* Logging.swift */,
@@ -3191,6 +3194,7 @@
 				B054C26A72C30A3DFD90BC6B /* KeepAwakeStatusItem.swift in Sources */,
 				5651234AA159D260B499A5C7 /* KeyboardShortcuts.swift in Sources */,
 				25C0A8DA80D86D9CD9758253 /* LifecyclePolicy.swift in Sources */,
+				F74D503D437E73FA67D69B66 /* LiloApplication.swift in Sources */,
 				8854035A1251D7D7CF6BE4B8 /* LiloIntents.swift in Sources */,
 				8687188245C6EAAF9E92830A /* LittleWindowController.swift in Sources */,
 				9D52B0C2856412798E1E5B9E /* LittleWindowHotKey.swift in Sources */,

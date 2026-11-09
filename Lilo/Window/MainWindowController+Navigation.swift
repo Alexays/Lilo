@@ -399,6 +399,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
         self.tab(tab, didCreateNewTab: URL(string: SearchQueryBridgeHandler.searchURL(for: text, settings: context.settingsStore)), inBackground: false)
     }
 
+    var imageSearchEngineName: String { SearchQueryBridgeHandler.imageSearchEngine(settings: context.settingsStore).name }
+
+    func tab(_ tab: WKWebViewTab, searchImage url: URL) {
+        let template = SearchQueryBridgeHandler.imageSearchEngine(settings: context.settingsStore).urlTemplate
+        self.tab(tab, didCreateNewTab: URL(string: SearchQueryBridgeHandler.searchURL(for: url.absoluteString, template: template)), inBackground: false)
+    }
+
     func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? {
         context.agentControl.openTab(from: tab, url: url, configuration: configuration)
     }

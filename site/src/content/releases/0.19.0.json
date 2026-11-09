@@ -1,0 +1,67 @@
+{
+  "version": "0.19.0",
+  "title": {
+    "en": "Search what you see.",
+    "fr": "Cherchez ce que vous voyez."
+  },
+  "introduction": {
+    "en": "Look up any image on a page in a right-click, with colors that read more clearly and a steadier terminal.",
+    "fr": "Retrouvez n'importe quelle image d'une page d'un clic droit, avec des couleurs plus lisibles et un terminal plus stable."
+  },
+  "highlights": [
+    {
+      "id": "image-search",
+      "title": {
+        "en": "Search an image.",
+        "fr": "Recherchez une image."
+      },
+      "body": {
+        "en": "Find where an image comes from or what it shows. Right-click it and choose Search Image with Google Lens, or with Bing when Bing is your search engine.",
+        "fr": "Découvrez d'où vient une image ou ce qu'elle montre. Faites un clic droit dessus et choisissez Rechercher l'image avec Google Lens, ou avec Bing si Bing est votre moteur de recherche."
+      },
+      "notes": [
+        "Right-clicking an image offers Search Image with Google Lens, or with Bing when it is your search engine"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "title": {
+        "en": "Appearance",
+        "fr": "Apparence"
+      },
+      "notes": [
+        "Every color picked for legibility follows perceived contrast, as the sidebar does: on a medium blue or red Space, terminal colors keep their hue instead of all turning white, and in dark mode secondary text, error messages and links read more clearly.",
+        "The Downloads and Archived headers in the sidebar menu no longer run into their actions in longer languages: clear and show all are now icons"
+      ]
+    },
+    {
+      "title": {
+        "en": "Terminal",
+        "fr": "Terminal"
+      },
+      "notes": [
+        "Holding ⌘ over a terminal line of wide characters, such as Chinese text or emoji, no longer freezes Lilo"
+      ]
+    },
+    {
+      "title": {
+        "en": "Calls",
+        "fr": "Appels"
+      },
+      "notes": [
+        "A call keeps sending your camera while you are on another tab, even with automatic picture in picture turned off"
+      ]
+    },
+    {
+      "title": {
+        "en": "Browsing and extensions",
+        "fr": "Navigation et extensions"
+      },
+      "notes": [
+        "Pressing Enter in a page's search field no longer plays the system alert sound",
+        "Extensions without the tabs permission learn a new tab's address when it starts loading, instead of sometimes missing it"
+      ]
+    }
+  ]
+}

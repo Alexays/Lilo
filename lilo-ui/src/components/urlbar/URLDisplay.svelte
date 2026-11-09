@@ -926,6 +926,7 @@
   onfocusout={leaveDetailsFocus}
 >
   <div class="url-surface">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="url-trigger"
       draggable={draggableURL}
@@ -1082,7 +1083,7 @@
   }
 
   :global(.sidebar-layout) .url-trigger {
-    min-height: var(--interface-address-height);
+    min-height: var(--interface-row-height);
     padding: clamp(6px, calc(8px + var(--interface-step) * 2px), 8px) 8px;
   }
 

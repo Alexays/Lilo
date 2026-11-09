@@ -64,7 +64,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
-        let app = NSApplication.shared
+        let app = LiloApplication.shared
+        // Before run: the test host never takes focus, neither at launch nor from an activate the tested code calls.
+        if ProcessInfo.isRunningUnderXCTest { app.setActivationPolicy(.prohibited) }
         let delegate = AppDelegate()
         app.delegate = delegate
         app.run()
@@ -88,11 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        guard !ProcessInfo.isRunningUnderXCTest else {
-            // The test host never shows a window; keep it out of the Dock.
-            NSApp.setActivationPolicy(.accessory)
-            return
-        }
+        guard !ProcessInfo.isRunningUnderXCTest else { return }
         StartupMetrics.mark("appDidFinishLaunching")
         #if !DEBUG
         // Before any window: the copy that relaunches from Applications owns the profiles.

@@ -139,7 +139,9 @@
     height: 32px;
     overflow: hidden;
     border-radius: var(--radius-sm);
-    animation: update-pop 640ms var(--motion-ease-bounce) 120ms both;
+    /* Backwards fill only: a held end state would override the hover transform. */
+    animation: update-pop 640ms var(--motion-ease-bounce) 120ms backwards;
+    transition: transform var(--motion-duration-slow) var(--motion-ease-bounce);
   }
 
   .update-icon img {
@@ -287,6 +289,25 @@
     outline: var(--focus-outline);
   }
 
+  @media (prefers-reduced-motion: no-preference) {
+    /* Listed after the landing sweep, which then stays finished instead of replaying on leave. */
+    .update-card:not(.restarting):hover::before {
+      animation:
+        update-sweep 1.6s var(--motion-ease-spring) 250ms both,
+        update-resweep 1.1s var(--motion-ease-standard);
+    }
+
+    .update-card:not(.restarting):hover .update-icon {
+      transform: rotate(-8deg) scale(1.08);
+    }
+
+    .update-card:not(.restarting):hover .update-icon::after {
+      animation:
+        update-shine 1.1s ease 900ms,
+        update-reshine 0.8s ease;
+    }
+  }
+
   @keyframes update-rise {
     from {
       transform: translateY(14px) scale(0.96);
@@ -303,6 +324,15 @@
     }
   }
 
+  @keyframes update-resweep {
+    from {
+      --update-sweep: 0deg;
+    }
+    to {
+      --update-sweep: 360deg;
+    }
+  }
+
   @keyframes update-pop {
     from {
       transform: scale(0.3) rotate(-30deg);
@@ -311,6 +341,12 @@
   }
 
   @keyframes update-shine {
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes update-reshine {
     to {
       transform: translateX(100%);
     }

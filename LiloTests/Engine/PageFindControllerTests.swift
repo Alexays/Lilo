@@ -170,9 +170,9 @@ final class PageFindControllerTests: XCTestCase {
         return spy.findResults.last
     }
 
-    private func loadedTab(dataStore: WKWebsiteDataStore = .default()) async throws -> WKWebViewTab {
+    private func loadedTab(dataStore: WKWebsiteDataStore? = nil) async throws -> WKWebViewTab {
         let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = dataStore
+        configuration.websiteDataStore = dataStore ?? .default()
         let tab = WKWebViewTab(configuration: configuration)
         tab.delegate = spy
         tab.wkWebView.frame = NSRect(x: 0, y: 0, width: 400, height: 300)

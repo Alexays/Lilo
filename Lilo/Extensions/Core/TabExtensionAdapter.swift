@@ -48,8 +48,10 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
         return webView
     }
 
+    func url(for context: WKWebExtensionContext) -> URL? { extensionURL }
+
     /// A new tab has no url until its first navigation starts, as Chrome reports none before it.
-    func url(for context: WKWebExtensionContext) -> URL? {
+    var extensionURL: URL? {
         guard let engineTab else { return visibleDurableTab?.url }
         return engineTab.hasCommittedContent || engineTab.isLoading ? engineTab.currentURL : nil
     }

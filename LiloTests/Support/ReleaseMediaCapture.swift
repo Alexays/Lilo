@@ -81,6 +81,8 @@ final class ReleaseMediaCapture {
         window.addChildWindow(backdrop, ordered: .below)
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
+        // The test host is otherwise prohibited from activating; a capture needs the active window's look.
+        NSApp.setActivationPolicy(.accessory)
         NSApp.activate()
         controller.loadChromeUI()
         do {

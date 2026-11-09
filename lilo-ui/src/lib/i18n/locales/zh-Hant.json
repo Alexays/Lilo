@@ -571,6 +571,33 @@
 				"title": "代理程式完成時通知",
 				"description": "你未在檢視的對話完成時發出通知。",
 				"keywords": "代理程式 通知 提醒 完成 結束"
+			},
+			"agentSystemPrompt": {
+				"title": "系統提示詞",
+				"description": "每次對話開始時告訴代理的內容。",
+				"keywords": "系統提示詞 指示 claude code 限制",
+				"lilo": "Lilo",
+				"agent": "代理自帶",
+				"liloPoints": {
+					"browse": "用 Lilo 瀏覽網頁",
+					"act": "無需每一步都詢問",
+					"design": "以資深設計師的眼光設計"
+				},
+				"agentPoints": {
+					"same": "與其 App 中的行為一致",
+					"asks": "更多操作前會先詢問",
+					"updates": "跟隨代理的更新"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo 提示詞",
+				"description": "編輯取代代理自帶提示詞告訴它們的內容。",
+				"keywords": "系統提示詞 指示 編輯",
+				"heading": "指示",
+				"note": "Lilo 會在結尾加上工作目錄和今天的日期。變更適用於新的和重新開啟的對話。",
+				"reset": "回復預設值",
+				"resetTitle": "要回復 Lilo 提示詞嗎？",
+				"resetMessage": "你的變更將被預設提示詞取代。"
 			}
 		},
 		"devices": {
@@ -889,7 +916,9 @@
 		"lockFolder": "以密碼鎖定",
 		"changePassword": "更改密碼",
 		"removeLock": "移除鎖定",
-		"lock": "鎖定"
+		"lock": "鎖定",
+		"searchFolder": "在「{name}」中搜尋...",
+		"noMatches": "沒有符合的分頁"
 	},
 	"splitDrop": {
 		"left": "在左側開啟",
@@ -2070,6 +2099,7 @@
 		"Copy URL": "拷貝 URL",
 		"Search or enter address": "搜尋或輸入網址",
 		"Search with %@": "使用 %@ 搜尋",
+		"Search Image with %@": "使用 %@ 搜尋圖片",
 		"New Private Space": "新增私密空間",
 		"Duplicate Tab": "複製分頁",
 		"Bookmark This Page": "將此網頁加入書籤",
@@ -2453,6 +2483,12 @@
 			"chat": "團隊聊天"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "看到什麼，就搜什麼。",
+				"description": "按右鍵即可搜尋頁面上的任何圖片，顏色更易讀，終端機也更穩定。",
+				"imageSearchTitle": "搜尋圖片。",
+				"imageSearchDescription": "了解圖片的來源或內容。在圖片上按右鍵，選擇「使用 Google Lens 搜尋圖片」；如果你的搜尋引擎是 Bing，則使用 Bing 搜尋。"
+			},
 			"v0180": {
 				"headline": "更整潔的下載項目選單。",
 				"description": "直接在側邊欄清除已完成的下載項目，Bitwarden 和 Web Highlights 等延伸功能也能正常運作。",
@@ -2604,14 +2640,13 @@
 				"other": "{count} 則訊息排隊中"
 			},
 			"queuedHint": "代理程式完成後傳送。按 Cmd Return 立即傳送。",
+			"queuedTag": "排隊中",
 			"thought": "思考",
 			"restoreToHere": "回復到此處",
 			"restoreConfirm": "要將專案檔案回復到這則訊息時的狀態嗎？",
 			"restore": "回復",
 			"undo": "還原",
-			"keep": "保留",
 			"undone": "已還原",
-			"kept": "已保留",
 			"moreLines": {
 				"one": "還有 {count} 行",
 				"other": "還有 {count} 行"
@@ -2813,6 +2848,8 @@
 		"turn": {
 			"workedFor": "工作了 {duration}",
 			"stopped": "已停止",
+			"refusalTitle": "模型拒絕繼續",
+			"refusalHint": "它的安全機制停止了這一輪，有時也會誤擋正當工作。請換個說法，或在下方選擇其他模型。",
 			"files": {
 				"one": "變更了 {count} 個檔案",
 				"other": "變更了 {count} 個檔案"

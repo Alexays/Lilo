@@ -1038,7 +1038,9 @@
     if (!scroller) return;
     const rowRect = next.getBoundingClientRect();
     const viewRect = scroller.getBoundingClientRect();
-    if (rowRect.top < viewRect.top) scroller.scrollTop += rowRect.top - viewRect.top;
+    // The pinned favorites cover the top of the scroller: a row goes no higher than their edge.
+    const viewTop = viewRect.top + (parseFloat(getComputedStyle(scroller).scrollPaddingTop) || 0);
+    if (rowRect.top < viewTop) scroller.scrollTop += rowRect.top - viewTop;
     else if (rowRect.bottom > viewRect.bottom) scroller.scrollTop += rowRect.bottom - viewRect.bottom;
   }
 
@@ -1203,6 +1205,7 @@
         {level}
         tabStop={folder.id === tabStopId}
         containsActiveTab={folderHolds(folder.id, activeTabId)}
+        peekTabs={interactive ? () => children.flatMap((child) => (child.kind === "tab" && tabsById.get(child.id)) || []) : undefined}
         onCollapse={(collapsed) =>
           folderActions.setCollapsed(folder.id, collapsed)}
         onRename={() => (renamingFolderId = folder.id)}
@@ -2430,7 +2433,8 @@
     justify-content: center;
     padding: 4px 0;
     position: sticky;
-    top: 0;
+    /* Below the favorites while they are pinned to the same scroller. */
+    top: var(--favorites-pinned-height, 0px);
     z-index: 1;
     background: var(--sidebar-bg);
     transition: padding var(--motion-duration-fast) var(--motion-ease-spring);

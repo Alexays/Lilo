@@ -9,12 +9,12 @@ final class TerminalThemeTests: XCTestCase {
             let colors = TerminalTheme.auto.resolved(surface: surface, accent: accent)
 
             XCTAssertEqual(colors.background, surface)
-            XCTAssertGreaterThanOrEqual(colors.foreground.contrast(with: surface), 7, "text on \(surface.hexString)")
+            XCTAssertGreaterThanOrEqual(colors.foreground.contrast(on: surface), 75, "text on \(surface.hexString)")
             for index in [1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14] {
-                XCTAssertGreaterThanOrEqual(colors.palette[index].contrast(with: surface), 4.5, "color \(index) on \(surface.hexString)")
+                XCTAssertGreaterThanOrEqual(colors.palette[index].contrast(on: surface), 60, "color \(index) on \(surface.hexString)")
             }
             for index in [0, 7, 8] {
-                XCTAssertGreaterThanOrEqual(colors.palette[index].contrast(with: surface), 3, "color \(index) on \(surface.hexString)")
+                XCTAssertGreaterThanOrEqual(colors.palette[index].contrast(on: surface), 45, "color \(index) on \(surface.hexString)")
             }
         }
     }

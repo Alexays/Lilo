@@ -4,8 +4,8 @@ import { initialWorld, SPACE_1, SPACE_2 } from "./fixtures";
 import { tab, treeItem } from "../src/stores/testFixtures";
 
 for (const [preset, row, text, favorite, space, palette] of [
-	["compact", 28, 12, 36, 24, 560], ["comfortable", 32, 13, 40, 28, 600],
-	["roomy", 36, 14, 44, 32, 640], ["spacious", 40, 15, 48, 36, 680],
+	["compact", 28, 12, 44, 24, 560], ["comfortable", 32, 13, 48, 28, 600],
+	["roomy", 36, 14, 52, 32, 640], ["spacious", 40, 15, 56, 36, 680],
 ] as const) {
 	test(`${preset} coordinates the sidebar and floating palette from saved settings`, async ({ page }) => {
 		await page.emulateMedia({ reducedMotion: "reduce" });
@@ -14,6 +14,7 @@ for (const [preset, row, text, favorite, space, palette] of [
 		await expect(page.locator('[data-tab-id="tab-alpha"]')).toHaveCSS("height", `${row}px`);
 		await expect(page.locator('[data-tab-id="tab-alpha"] .tab-title')).toHaveCSS("font-size", `${text}px`);
 		await expect(page.locator(".bookmark-tile").first()).toHaveCSS("height", `${favorite}px`);
+		await expect(page.locator(".bookmark-tile .site-favicon").first()).toHaveCSS("width", `${20 + (text - 13) * 2}px`);
 		await expect(page.locator(`[data-space-dnd-id="${SPACE_1}"] .space-glyph`)).toHaveCSS("width", `${space}px`);
 		await expect.poll(async () => Math.round((await page.locator(".sidebar-layout .url-trigger").boundingBox())!.height)).toBe(row);
 		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
@@ -23,6 +24,22 @@ for (const [preset, row, text, favorite, space, palette] of [
 		await expect(page.locator(".command-bar-chip").first()).toHaveCSS("height", `${row}px`);
 		await expect(page.locator(".scope-hint").first()).toHaveCSS("height", `${22 + (text - 13) * 2}px`);
 		await expect(page.locator(".command-bar-footer .keycap").first()).toHaveCSS("height", `${20 + (text - 13) * 2}px`);
+	});
+
+	test(`${preset} also scales the adaptive grid when many Favorites use compact tiles`, async ({ page }) => {
+		const world = initialWorld();
+		world.settings = { interfaceSize: preset };
+		const favorites = Array.from({ length: 11 }, (_, index) => `favorite-${index}`);
+		world.tabsBySpace[SPACE_1].push(...favorites.map((id) => tab(id, SPACE_1, { isBookmarked: true })));
+		world.treeItemsBySpace[SPACE_1].push(...favorites.map((id, index) => treeItem(id, SPACE_1, 10 + index, "bookmarked")));
+		await bootChrome(page, world);
+		const grid = page.locator(".bookmarked-list");
+		await expect(grid).toHaveClass(/compact/);
+		await expect(grid.locator(".bookmark-tile")).toHaveCount(12);
+		await expect(grid.locator(".bookmark-tile").first()).toHaveCSS("height", `${favorite - 8}px`);
+		await expect(grid.locator(".site-favicon").first()).toHaveCSS("width", `${18 + (text - 13) * 2}px`);
+		const tops = await grid.locator(".bookmark-tile").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+		expect([...new Set(tops)].map((top) => tops.filter((other) => other === top).length)).toEqual(preset === "compact" ? [6, 6] : [4, 4, 4]);
 	});
 
 	test(`${preset} also sizes the docked New Tab palette`, async ({ page }) => {

@@ -571,6 +571,33 @@
 				"title": "에이전트가 끝나면 알림",
 				"description": "보고 있지 않은 대화가 끝나면 알려 줍니다.",
 				"keywords": "에이전트 알림 경고 완료 종료"
+			},
+			"agentSystemPrompt": {
+				"title": "시스템 프롬프트",
+				"description": "각 대화를 시작할 때 에이전트에게 전하는 내용입니다.",
+				"keywords": "시스템 프롬프트 지침 claude code 제한",
+				"lilo": "Lilo",
+				"agent": "에이전트 자체",
+				"liloPoints": {
+					"browse": "Lilo로 웹 탐색",
+					"act": "단계마다 묻지 않고 실행",
+					"design": "시니어 디자이너의 안목으로 디자인"
+				},
+				"agentPoints": {
+					"same": "해당 앱과 동일하게 동작",
+					"asks": "더 많은 작업 전에 확인",
+					"updates": "에이전트 업데이트를 따름"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo 프롬프트",
+				"description": "에이전트 자체 프롬프트 대신 전할 내용을 편집합니다.",
+				"keywords": "시스템 프롬프트 지침 편집",
+				"heading": "지침",
+				"note": "Lilo는 끝에 작업 디렉터리와 오늘 날짜를 추가합니다. 변경 사항은 새 대화와 다시 연 대화에 적용됩니다.",
+				"reset": "기본값 복원",
+				"resetTitle": "Lilo 프롬프트를 복원할까요?",
+				"resetMessage": "변경 사항이 기본 프롬프트로 대체됩니다."
 			}
 		},
 		"devices": {
@@ -889,7 +916,9 @@
 		"lockFolder": "암호로 잠그기",
 		"changePassword": "암호 변경",
 		"removeLock": "잠금 제거",
-		"lock": "잠그기"
+		"lock": "잠그기",
+		"searchFolder": "{name}에서 검색...",
+		"noMatches": "일치하는 탭 없음"
 	},
 	"splitDrop": {
 		"left": "왼쪽에 열기",
@@ -2070,6 +2099,7 @@
 		"Copy URL": "URL 복사",
 		"Search or enter address": "검색 또는 주소 입력",
 		"Search with %@": "%@(으)로 검색",
+		"Search Image with %@": "%@(으)로 이미지 검색",
 		"New Private Space": "새 개인정보 보호 스페이스",
 		"Duplicate Tab": "탭 복제",
 		"Bookmark This Page": "이 페이지 책갈피 추가",
@@ -2453,6 +2483,12 @@
 			"chat": "팀 채팅"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "보이는 것을 검색하세요.",
+				"description": "페이지의 모든 이미지를 오른쪽 클릭으로 찾아보세요. 색상은 더 읽기 쉬워지고 터미널은 더 안정적입니다.",
+				"imageSearchTitle": "이미지를 검색하세요.",
+				"imageSearchDescription": "이미지의 출처나 내용을 알아볼 수 있습니다. 이미지를 오른쪽 클릭하고 'Google Lens(으)로 이미지 검색'을 선택하세요. 검색 엔진이 Bing이면 Bing으로 검색합니다."
+			},
 			"v0180": {
 				"headline": "더 깔끔해진 다운로드 메뉴.",
 				"description": "완료된 다운로드를 사이드바에서 바로 지우고, Bitwarden과 Web Highlights 같은 확장 프로그램이 제대로 동작합니다.",
@@ -2604,14 +2640,13 @@
 				"other": "대기 중인 메시지 {count}개"
 			},
 			"queuedHint": "에이전트가 끝나면 전송됩니다. Cmd Return을 누르면 바로 보냅니다.",
+			"queuedTag": "대기 중",
 			"thought": "생각",
 			"restoreToHere": "여기까지 복원",
 			"restoreConfirm": "프로젝트 파일을 이 메시지 시점으로 되돌릴까요?",
 			"restore": "복원",
 			"undo": "실행 취소",
-			"keep": "유지",
 			"undone": "취소됨",
-			"kept": "유지됨",
 			"moreLines": {
 				"one": "{count}줄 더",
 				"other": "{count}줄 더"
@@ -2813,6 +2848,8 @@
 		"turn": {
 			"workedFor": "{duration} 동안 작업함",
 			"stopped": "중지됨",
+			"refusalTitle": "모델이 계속하기를 거부했습니다",
+			"refusalHint": "안전 장치가 이 차례를 멈췄습니다. 정당한 작업에서도 일어날 수 있습니다. 요청을 바꿔 말하거나 아래에서 다른 모델을 선택하세요.",
 			"files": {
 				"one": "파일 {count}개 변경됨",
 				"other": "파일 {count}개 변경됨"

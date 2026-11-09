@@ -571,6 +571,33 @@
 				"title": "Powiadom, gdy agent skończy",
 				"description": "Powiadomienie, gdy skończy się rozmowa, której nie oglądasz.",
 				"keywords": "agent powiadomienie alert gotowe zakończone"
+			},
+			"agentSystemPrompt": {
+				"title": "Prompt systemowy",
+				"description": "Co agenci słyszą na początku każdej rozmowy.",
+				"keywords": "prompt systemowy instrukcje claude code ograniczenia",
+				"lilo": "Lilo",
+				"agent": "Własny agenta",
+				"liloPoints": {
+					"browse": "Przegląda sieć w Lilo",
+					"act": "Działa bez pytania na każdym kroku",
+					"design": "Projektuje okiem starszego projektanta"
+				},
+				"agentPoints": {
+					"same": "Zachowuje się jak w swojej aplikacji",
+					"asks": "Pyta przed większą liczbą działań",
+					"updates": "Podąża za aktualizacjami agenta"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Prompt Lilo",
+				"description": "Edytuj, co agenci słyszą zamiast własnego promptu.",
+				"keywords": "prompt systemowy instrukcje edycja",
+				"heading": "Instrukcje",
+				"note": "Lilo dodaje na końcu katalog roboczy i dzisiejszą datę. Zmiany dotyczą nowych i ponownie otwartych rozmów.",
+				"reset": "Przywróć domyślny",
+				"resetTitle": "Przywrócić prompt Lilo?",
+				"resetMessage": "Twoje zmiany zostaną zastąpione domyślnym promptem."
 			}
 		},
 		"devices": {
@@ -907,7 +934,9 @@
 		"lockFolder": "Zablokuj hasłem",
 		"changePassword": "Zmień hasło",
 		"removeLock": "Usuń blokadę",
-		"lock": "Zablokuj"
+		"lock": "Zablokuj",
+		"searchFolder": "Szukaj w {name}...",
+		"noMatches": "Brak pasujących kart"
 	},
 	"splitDrop": {
 		"left": "Otwórz po lewej",
@@ -2114,6 +2143,7 @@
 		"Copy URL": "Kopiuj URL",
 		"Search or enter address": "Szukaj lub wpisz adres",
 		"Search with %@": "Szukaj w %@",
+		"Search Image with %@": "Szukaj obrazu w %@",
 		"New Private Space": "Nowa przestrzeń prywatna",
 		"Duplicate Tab": "Powiel kartę",
 		"Bookmark This Page": "Dodaj tę stronę do zakładek",
@@ -2499,6 +2529,12 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Szukaj tego, co widzisz.",
+				"description": "Wyszukaj dowolny obraz na stronie prawym kliknięciem, z czytelniejszymi kolorami i stabilniejszym terminalem.",
+				"imageSearchTitle": "Wyszukaj obraz.",
+				"imageSearchDescription": "Sprawdź, skąd pochodzi obraz lub co przedstawia. Kliknij go prawym przyciskiem i wybierz Szukaj obrazu w Google Lens, albo w Bing, gdy Bing jest Twoją wyszukiwarką."
+			},
 			"v0180": {
 				"headline": "Uporządkowane menu pobranych.",
 				"description": "Czyść ukończone pobrania prosto z paska bocznego, a rozszerzenia takie jak Bitwarden i Web Highlights działają tak, jak powinny.",
@@ -2654,14 +2690,13 @@
 				"other": "{count} wiadomości w kolejce"
 			},
 			"queuedHint": "Zostanie wysłana, gdy agent skończy. Cmd Return wysyła od razu.",
+			"queuedTag": "W kolejce",
 			"thought": "Rozumowanie",
 			"restoreToHere": "Przywróć do tego miejsca",
 			"restoreConfirm": "Przywrócić pliki projektu do stanu z tej wiadomości?",
 			"restore": "Przywróć",
 			"undo": "Cofnij",
-			"keep": "Zachowaj",
 			"undone": "Cofnięto",
-			"kept": "Zachowano",
 			"moreLines": {
 				"one": "{count} linia więcej",
 				"few": "{count} linie więcej",
@@ -2907,6 +2942,8 @@
 		"turn": {
 			"workedFor": "Praca trwała {duration}",
 			"stopped": "Zatrzymano",
+			"refusalTitle": "Model odmówił kontynuacji",
+			"refusalHint": "Jego zabezpieczenia zatrzymały tę turę, czasem przy uzasadnionej pracy. Przeformułuj prośbę lub wybierz poniżej inny model.",
 			"files": {
 				"one": "Zmieniono {count} plik",
 				"few": "Zmieniono {count} pliki",

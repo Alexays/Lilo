@@ -131,7 +131,7 @@ func reconnect(_ bridge: Bridge) -> LineReader {
     bridge.lock.lock()
     defer { bridge.lock.unlock() }
     close(bridge.lilo)
-    for request in bridge.pending.values { fail(request.id, "Lilo restarted: try again.") }
+    for request in bridge.pending.values { fail(request.id, "Lilo quit or restarted: try again.") }
     bridge.pending = [:]
     // Never accepted (refused, or gone mid-handshake): reconnecting would only ask the user again.
     guard let accepted = bridge.accepted else { exit(0) }

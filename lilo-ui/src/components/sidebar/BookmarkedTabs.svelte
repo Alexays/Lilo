@@ -85,6 +85,20 @@
   });
   const bookmarkZoneItems = $derived(getZoneItems(bookmarkZone, bookmarkBaseItems));
   const bookmarkZoneIsEmpty = $derived(bookmarkZoneItems.length === 0);
+
+  // As many columns of tiles at least 64px wide as fit, then balanced rows: 4 tiles make 2 x 2,
+  // 5 make 3 + 2. Past three rows they go back to the compact size, so many favorites leave the tabs their room.
+  // Sized on the favorites, not the drag preview: a tile dragged in or out never reflows the grid under the pointer.
+  const GRID_GAP_PX = 6;
+  let listWidth = $state(0);
+  function columnsThatFit(minTileWidth: number): number {
+    return Math.max(1, Math.floor((listWidth + GRID_GAP_PX) / (minTileWidth + GRID_GAP_PX)));
+  }
+  const gridCompact = $derived(Math.ceil(bookmarks.length / columnsThatFit(64 + getInterfaceSizeStep() * 4)) > 3);
+  const gridColumns = $derived.by(() => {
+    const count = Math.max(1, bookmarks.length);
+    return Math.ceil(count / Math.ceil(count / columnsThatFit((gridCompact ? 40 : 64) + getInterfaceSizeStep() * 4)));
+  });
   const activeTabId = $derived(getActiveTabId(spaceId));
   const recentlyDraggedId = $derived(getRecentlyDroppedId());
   const previewedTabId = $derived(getTabPreviewTabId());
@@ -284,9 +298,12 @@
       class:drag-active={dragActive && isVisible}
       class:is-empty={bookmarkZoneIsEmpty}
       class:idle-empty={!isVisible}
+      class:compact={gridCompact}
       data-drop-label={t("bookmarks.dropToBookmark")}
+      style:grid-template-columns="repeat({gridColumns}, minmax(0, 1fr))"
       role="list"
       bind:this={listEl}
+      bind:clientWidth={listWidth}
       aria-hidden={!isVisible}
       use:dndZone={{
         id: bookmarkZone.id,
@@ -363,7 +380,7 @@
                       src={bookmark.faviconDataURL}
                       title={bookmark.title}
                       url={bookmark.url}
-                      size={18 + getInterfaceSizeStep() * 2}
+                      size={(gridCompact ? 18 : 20) + getInterfaceSizeStep() * 2}
                       radius={5}
                       asleep={bookmark.isClosed}
                     />
@@ -443,10 +460,10 @@
 
   .bookmarked-list {
     --bookmark-zone-color: var(--color-bookmark);
+    --bookmark-tile-height: calc(var(--interface-favorite-height) + 8px);
     position: relative;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(var(--interface-favorite-height), 1fr));
-    gap: 6px;
+    gap: 6px; /* GRID_GAP_PX, which sizes the columns. */
     min-height: 0;
     /* The drop zone's border, cancelled by the margin so the tiles line up with the rows. */
     margin: -1px;
@@ -466,6 +483,10 @@
       border-color var(--motion-duration-fast) ease;
   }
 
+  .bookmarked-list.compact {
+    --bookmark-tile-height: var(--interface-favorite-height);
+  }
+
   .bookmarked-list.idle-empty {
     height: 0;
     min-height: 0;
@@ -479,8 +500,8 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: var(--interface-favorite-height);
-    min-height: var(--interface-favorite-height);
+    height: var(--bookmark-tile-height);
+    min-height: var(--bookmark-tile-height);
     padding: 0 8px;
     overflow: hidden;
     border-color: color-mix(in srgb, var(--bookmark-zone-color) 36%, transparent);
@@ -526,7 +547,7 @@
 
   .bookmark-placeholder {
     width: 100%;
-    height: var(--interface-favorite-height);
+    height: var(--bookmark-tile-height);
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--bookmark-zone-color) 42%, transparent);
     border-radius: var(--radius-md);
@@ -544,7 +565,7 @@
   /* The sidebar's selected surface at rest; the hover layer goes over it, the open tile takes an accent ring. */
   .bookmark-tile {
     width: 100%;
-    height: var(--interface-favorite-height);
+    height: var(--bookmark-tile-height);
     padding: 0;
     border: none;
     border-radius: var(--radius-md);
@@ -591,10 +612,16 @@
     box-shadow: 0 0 0 2px var(--sidebar-bg, var(--bg-primary));
   }
 
+  /* Off the icon's lower corner, as a badge on an app icon, so it reads as the site's; ringed in the
+     tile's color so it holds on a favicon close to the accent. */
   .unread-dot {
+    top: calc(50% + 6px);
+    right: auto;
+    left: calc(50% + 10px);
     width: 6px;
     height: 6px;
     border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--sidebar-sel);
   }
 
   .unread-count {

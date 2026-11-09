@@ -1,6 +1,6 @@
 <script lang="ts" module>
   import { getFormatLocale } from "../../lib/i18n/state.svelte";
-  import type { ToolCallItem, ToolKind } from "./conversationModel";
+  import type { FileDiff, ToolCallItem, ToolKind } from "./conversationModel";
   import type { IconName } from "../ui/icons";
 
   const KIND_ICONS: Record<ToolKind, IconName> = {
@@ -158,6 +158,34 @@
     return { text: text.charAt(0).toUpperCase() + text.slice(1), added, removed, images, categories: [...counts.keys()] };
   });
 
+  // One row per file, at its first edit in the list: Undo puts back the whole file, not one edit.
+  const edits = $derived.by(() => {
+    void sig;
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt on each change
+    const rows = new Map<string, FileDiff[][]>();
+    const group = (list: ToolCallItem[]) => {
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one run
+      const byPath = new Map<string, FileDiff[]>();
+      for (const call of list) {
+        group(call.children);
+        for (const diff of call.diffs) {
+          const diffs = byPath.get(diff.path);
+          if (diffs) {
+            diffs.push(diff);
+            continue;
+          }
+          const fresh = [diff];
+          byPath.set(diff.path, fresh);
+          let own = rows.get(call.toolCallId);
+          if (!own) rows.set(call.toolCallId, (own = []));
+          own.push(fresh);
+        }
+      }
+    };
+    group(untrack(() => calls));
+    return rows;
+  });
+
   const running = $derived(views.some((view) => view.call.status === "in_progress" || view.call.status === "pending"));
   const enter = $derived(live && !done && !prefersReducedMotion() ? MOTION.itemEnterMs : 0);
 
@@ -198,6 +226,8 @@
   {@const duration = call.startedAt !== null && call.endedAt !== null && call.endedAt - call.startedAt >= 1000
     ? formatDuration(call.endedAt - call.startedAt)
     : ""}
+  <!-- An edit to files that already have their row draws nothing. -->
+  {#if !call.diffs.length || view.subagent || edits.has(call.toolCallId) || call.images.length}
   <div class="call" in:restingFly={{ duration: enter, easing: cubicOut, x: 0, y: 4 }}>
     {#if view.subagent}
       {@const shown = toggled.has(call.toolCallId)}
@@ -237,11 +267,13 @@
         </div>
       {/if}
     {:else if call.diffs.length}
-      {#each call.diffs as diff, index (index)}
-        <DiffCard {tabId} {diff} {cwd} checkpoint={Math.max(promptIndex, 0)} undone={undone.has(diff.path)} />
+      {#each edits.get(call.toolCallId) ?? [] as diffs (diffs[0].path)}
+        <DiffCard {tabId} {diffs} {cwd} checkpoint={Math.max(promptIndex, 0)} undone={undone.has(diffs[0].path)} />
       {/each}
     {:else}
-      {@const output = call.output.length > 0}
+      <!-- Claude's adapter wraps a command's output in a Markdown fence; the block below is already code. -->
+      {@const text = call.output.startsWith("```") ? call.output.replace(/^```[^\n]*\n?/, "").replace(/\n?```\s*$/, "") : call.output}
+      {@const output = text.length > 0}
       {@const expandable = output || (!view.command && call.locations.length > 0)}
       <!-- A failed command opens on its output; a click flips whichever way it starts. -->
       {@const showOutput = expandable && toggled.has(call.toolCallId) !== (view.command && call.status === "failed")}
@@ -278,7 +310,7 @@
         {@render status(call)}
       </button>
       {#if showOutput}
-        {@const lines = call.output.split("\n")}
+        {@const lines = text.split("\n")}
         {@const all = fullOutput.has(call.toolCallId)}
         <div class="detail" in:restingFly={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs, easing: cubicOut, x: 0, y: -4 }}>
           {#if !view.command}
@@ -288,7 +320,7 @@
           {/if}
           {#if output}
             <pre class="output" class:failed={call.status === "failed"}>{all
-                ? call.output.slice(0, MAX_OUTPUT)
+                ? text.slice(0, MAX_OUTPUT)
                 : lines.slice(-OUTPUT_TAIL).join("\n")}</pre>
             {#if lines.length > OUTPUT_TAIL}
               <button
@@ -311,6 +343,7 @@
       </div>
     {/if}
   </div>
+  {/if}
 {/snippet}
 
 <div class="work">

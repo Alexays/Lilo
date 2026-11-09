@@ -571,6 +571,33 @@
 				"title": "Notify when an agent finishes",
 				"description": "A notification when a conversation you are not looking at is done.",
 				"keywords": "agent notification alert done finished"
+			},
+			"agentSystemPrompt": {
+				"title": "System prompt",
+				"description": "What agents are told at the start of each conversation.",
+				"keywords": "system prompt instructions claude code restrictions",
+				"lilo": "Lilo",
+				"agent": "Agent's own",
+				"liloPoints": {
+					"browse": "Browses the web with Lilo",
+					"act": "Acts without asking at every step",
+					"design": "Designs with a senior designer's eye"
+				},
+				"agentPoints": {
+					"same": "Behaves as in its own app",
+					"asks": "Asks before more of its actions",
+					"updates": "Follows the agent's updates"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo's prompt",
+				"description": "Edit what agents are told in place of their own prompt.",
+				"keywords": "system prompt instructions edit",
+				"heading": "Instructions",
+				"note": "Lilo adds the working directory and today's date at the end. Changes apply to new and reopened conversations.",
+				"reset": "Restore Default",
+				"resetTitle": "Restore Lilo's prompt?",
+				"resetMessage": "Your changes are replaced by the default prompt."
 			}
 		},
 		"devices": {
@@ -889,7 +916,9 @@
 		"lockFolder": "Lock with a password",
 		"changePassword": "Change password",
 		"removeLock": "Remove lock",
-		"lock": "Lock"
+		"lock": "Lock",
+		"searchFolder": "Search {name}...",
+		"noMatches": "No matching tabs"
 	},
 	"splitDrop": {
 		"left": "Open on the left",
@@ -2070,6 +2099,7 @@
 		"Copy URL": "Copy URL",
 		"Search or enter address": "Search or enter address",
 		"Search with %@": "Search with %@",
+		"Search Image with %@": "Search Image with %@",
 		"New Private Space": "New Private Space",
 		"Duplicate Tab": "Duplicate Tab",
 		"Bookmark This Page": "Bookmark This Page",
@@ -2442,6 +2472,12 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0190": {
+				"headline": "Search what you see.",
+				"description": "Look up any image on a page in a right-click, with colors that read more clearly and a steadier terminal.",
+				"imageSearchTitle": "Search an image.",
+				"imageSearchDescription": "Find where an image comes from or what it shows. Right-click it and choose Search Image with Google Lens, or with Bing when Bing is your search engine."
+			},
 			"v0180": {
 				"headline": "A tidier downloads menu.",
 				"description": "Clear finished downloads right from the sidebar, and extensions such as Bitwarden and Web Highlights work as they should.",
@@ -2593,14 +2629,13 @@
 				"other": "{count} messages queued"
 			},
 			"queuedHint": "Sent when the agent finishes. Cmd Return sends now.",
+			"queuedTag": "Queued",
 			"thought": "Thought",
 			"restoreToHere": "Restore to here",
 			"restoreConfirm": "Put the project files back as they were at this message?",
 			"restore": "Restore",
 			"undo": "Undo",
-			"keep": "Keep",
 			"undone": "Undone",
-			"kept": "Kept",
 			"moreLines": {
 				"one": "{count} more line",
 				"other": "{count} more lines"
@@ -2802,6 +2837,8 @@
 		"turn": {
 			"workedFor": "Worked for {duration}",
 			"stopped": "Stopped",
+			"refusalTitle": "The model declined to continue",
+			"refusalHint": "Its safety checks stopped this turn, sometimes on legitimate work. Rephrase the request, or pick another model below.",
 			"files": {
 				"one": "{count} file changed",
 				"other": "{count} files changed"

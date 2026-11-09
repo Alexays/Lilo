@@ -174,6 +174,32 @@ final class AgentInputTests: XCTestCase {
         XCTAssertEqual(selected, 5)
     }
 
+    /// WebKit hands the page's unhandled key back to the app, where a menu shortcut on that key code would run.
+    func testAnAgentShortcutThePageLeavesNeverRunsAMenuItem() async throws {
+        final class Probe: NSObject {
+            var fired = 0
+            @objc func fire(_ sender: Any?) { fired += 1 }
+        }
+        let probe = Probe()
+        let item = NSMenuItem(title: "Probe", action: #selector(Probe.fire(_:)), keyEquivalent: "t")
+        item.target = probe
+        let top = NSMenuItem(title: "Probe", action: nil, keyEquivalent: "")
+        top.submenu = NSMenu(title: "Probe")
+        top.submenu?.addItem(item)
+        let saved = NSApp.mainMenu
+        defer { NSApp.mainMenu = saved }
+        NSApp.mainMenu = NSMenu(title: "")
+        NSApp.mainMenu?.addItem(top)
+        await AgentInput.click(webView, at: CGPoint(x: 120, y: 35))
+
+        await AgentInput.key(webView, chord: "cmd+t")
+        await pollUntil { (try? await self.js("keys.includes('t:M')") as? Bool) == true }
+        // A round trip to the page after the key: its unhandled key down is back in the app by then.
+        _ = try await js("0")
+
+        XCTAssertEqual(probe.fired, 0)
+    }
+
     func testSelectAllRunsInAFocusedFrame() async throws {
         _ = try await js("""
             const frame = document.createElement('iframe')

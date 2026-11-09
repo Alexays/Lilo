@@ -275,7 +275,7 @@ final class AgentControl {
         let helper = URL(fileURLWithPath: AgentClientConfig.helperPath).resolvingSymlinksInPath().path
         var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
         if unsafe client?.path == helper || (client == nil && (proc_pidpath(peer, &path, UInt32(path.count)) <= 0
-            || URL(fileURLWithPath: String(cString: path)).resolvingSymlinksInPath().path == helper)) {
+            || URL(fileURLWithPath: path.withUnsafeBufferPointer { unsafe $0.baseAddress.map { unsafe String(cString: $0) } } ?? "").resolvingSymlinksInPath().path == helper)) {
             var info = proc_bsdinfo()
             guard unsafe proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0 else { return ("", "", peer) }
             pid = pid_t(info.pbi_ppid)

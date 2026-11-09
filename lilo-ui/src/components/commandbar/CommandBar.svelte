@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { contrastRatio, ensureContrast, parseHexColor, toHex } from "../../lib/sidebarTheme";
+  import { apcaContrast, ensureContrast, parseHexColor, TEXT_CONTRAST, toHex } from "../../lib/sidebarTheme";
   import { themeSidebarBackground } from "../../stores/theme.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -57,14 +57,14 @@
     if (!bg) return "";
     const black = { r: 0, g: 0, b: 0 };
     const white = { r: 255, g: 255, b: 255 };
-    const ink = contrastRatio(black, bg) >= contrastRatio(white, bg) ? black : white;
+    const ink = apcaContrast(black, bg) >= apcaContrast(white, bg) ? black : white;
     const mix = (color: typeof bg, amount: number) => toHex({
       r: Math.round(bg.r * (1 - amount) + color.r * amount),
       g: Math.round(bg.g * (1 - amount) + color.g * amount),
       b: Math.round(bg.b * (1 - amount) + color.b * amount),
     });
     const primary = toHex(ink);
-    const secondary = ensureContrast(mix(ink, 0.8), background, 4.6, primary, contrastRatio);
+    const secondary = ensureContrast(mix(ink, 0.8), background, TEXT_CONTRAST, primary);
     // Moving the selection away from the ink preserves its contrast on mid-tone Spaces too.
     const selection = mix(ink === black ? white : black, 0.14);
     return `--cb-background:${background}; --cb-text:${primary}; --cb-secondary:${secondary}; --cb-selection:${selection};`;
@@ -761,6 +761,11 @@
   }
 
   .command-bar {
+    --interface-palette-width: calc(600px + var(--interface-step) * 40px);
+    --interface-palette-search-height: calc(52px + var(--interface-step) * 4px);
+    --interface-palette-input-size: calc(17px + var(--interface-step) * 1px);
+    --interface-palette-row-height: calc(40px + var(--interface-step) * 4px);
+    --interface-palette-icon-size: calc(24px + var(--interface-step) * 2px);
     --font-size-md: var(--interface-text-size);
     --font-size-sm: calc(var(--interface-text-size) - 1px);
     --font-size-xs: calc(var(--interface-text-size) - 2px);
@@ -944,16 +949,6 @@
   .command-bar-results:hover,
   .command-bar-results:focus-within {
     --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 28%, transparent);
-  }
-
-  .command-bar-results::-webkit-scrollbar { width: 6px; }
-  .command-bar-results::-webkit-scrollbar-track { background: transparent; }
-  .command-bar-results::-webkit-scrollbar-thumb {
-    background: var(--cb-scroll-thumb);
-    border-radius: var(--radius-chip);
-  }
-  .command-bar-results::-webkit-scrollbar-thumb:active {
-    background: color-mix(in srgb, var(--text-primary) 40%, transparent);
   }
 
   @media (prefers-contrast: more) {

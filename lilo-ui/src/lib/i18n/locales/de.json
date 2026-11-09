@@ -571,6 +571,33 @@
 				"title": "Benachrichtigen, wenn ein Agent fertig ist",
 				"description": "Eine Mitteilung, wenn eine Unterhaltung fertig ist, die du gerade nicht ansiehst.",
 				"keywords": "agent mitteilung benachrichtigung fertig abgeschlossen"
+			},
+			"agentSystemPrompt": {
+				"title": "Systemprompt",
+				"description": "Was Agenten zu Beginn jeder Unterhaltung gesagt wird.",
+				"keywords": "systemprompt anweisungen claude code einschränkungen",
+				"lilo": "Lilo",
+				"agent": "Eigener des Agenten",
+				"liloPoints": {
+					"browse": "Surft im Web mit Lilo",
+					"act": "Handelt ohne bei jedem Schritt zu fragen",
+					"design": "Gestaltet mit dem Blick eines Senior-Designers"
+				},
+				"agentPoints": {
+					"same": "Verhält sich wie in seiner App",
+					"asks": "Fragt vor mehr Aktionen nach",
+					"updates": "Folgt den Updates des Agenten"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Prompt von Lilo",
+				"description": "Bearbeiten, was Agenten anstelle ihres eigenen Prompts gesagt wird.",
+				"keywords": "systemprompt anweisungen bearbeiten",
+				"heading": "Anweisungen",
+				"note": "Lilo fügt am Ende das Arbeitsverzeichnis und das heutige Datum hinzu. Änderungen gelten für neue und wieder geöffnete Unterhaltungen.",
+				"reset": "Standard wiederherstellen",
+				"resetTitle": "Prompt von Lilo wiederherstellen?",
+				"resetMessage": "Deine Änderungen werden durch den Standardprompt ersetzt."
 			}
 		},
 		"devices": {
@@ -889,7 +916,9 @@
 		"lockFolder": "Mit Passwort sperren",
 		"changePassword": "Passwort ändern",
 		"removeLock": "Sperre entfernen",
-		"lock": "Sperren"
+		"lock": "Sperren",
+		"searchFolder": "{name} durchsuchen...",
+		"noMatches": "Keine passenden Tabs"
 	},
 	"splitDrop": {
 		"left": "Links öffnen",
@@ -2070,6 +2099,7 @@
 		"Copy URL": "URL kopieren",
 		"Search or enter address": "Suchen oder Adresse eingeben",
 		"Search with %@": "Mit %@ suchen",
+		"Search Image with %@": "Bild mit %@ suchen",
 		"New Private Space": "Neuer privater Space",
 		"Duplicate Tab": "Tab duplizieren",
 		"Bookmark This Page": "Lesezeichen für diese Seite hinzufügen",
@@ -2453,6 +2483,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Suchen Sie, was Sie sehen.",
+				"description": "Schlagen Sie jedes Bild einer Seite mit einem Rechtsklick nach, mit besser lesbaren Farben und einem stabileren Terminal.",
+				"imageSearchTitle": "Ein Bild suchen.",
+				"imageSearchDescription": "Finden Sie heraus, woher ein Bild stammt oder was es zeigt. Klicken Sie mit der rechten Maustaste darauf und wählen Sie „Bild mit Google Lens suchen“, oder mit Bing, wenn Bing Ihre Suchmaschine ist."
+			},
 			"v0180": {
 				"headline": "Ein aufgeräumteres Download-Menü.",
 				"description": "Leeren Sie abgeschlossene Downloads direkt in der Seitenleiste, und Erweiterungen wie Bitwarden und Web Highlights funktionieren wie vorgesehen.",
@@ -2604,14 +2640,13 @@
 				"other": "{count} Nachrichten in der Warteschlange"
 			},
 			"queuedHint": "Wird gesendet, wenn der Agent fertig ist. Cmd Return sendet sofort.",
+			"queuedTag": "In Warteschlange",
 			"thought": "Gedanken",
 			"restoreToHere": "Bis hierher wiederherstellen",
 			"restoreConfirm": "Projektdateien auf den Stand dieser Nachricht zurücksetzen?",
 			"restore": "Wiederherstellen",
 			"undo": "Widerrufen",
-			"keep": "Behalten",
 			"undone": "Rückgängig gemacht",
-			"kept": "Behalten",
 			"moreLines": {
 				"one": "{count} weitere Zeile",
 				"other": "{count} weitere Zeilen"
@@ -2813,6 +2848,8 @@
 		"turn": {
 			"workedFor": "Hat {duration} gearbeitet",
 			"stopped": "Gestoppt",
+			"refusalTitle": "Das Modell hat abgelehnt, fortzufahren",
+			"refusalHint": "Seine Schutzmechanismen haben diesen Schritt gestoppt, manchmal auch bei legitimer Arbeit. Formuliere die Anfrage um oder wähle unten ein anderes Modell.",
 			"files": {
 				"one": "{count} Datei geändert",
 				"other": "{count} Dateien geändert"

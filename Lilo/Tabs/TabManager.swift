@@ -316,9 +316,9 @@ final class TabManager {
     private func notifyExtensionsOfChanges(from old: Tab, to new: Tab) {
         guard let adapter = tabAdapter(for: new.id), let registry = extensionRegistry, registry.hasLoadedExtensions else { return }
         var changed: WKWebExtension.TabChangedProperties = []
-        // WebKit reads the url the page shows, which a navigation's start, redirect and commit may each change, or not.
-        let url = adapter.engineTab?.currentURL ?? new.url
-        if url != adapter.reportedURL {
+        // A navigation's start, redirect and commit may each change the url, or not. WebKit reads none before the tab
+        // starts loading: reported then, the url would go out empty and never again.
+        if let url = adapter.extensionURL, url != adapter.reportedURL {
             adapter.reportedURL = url
             changed.insert(.URL)
         }

@@ -76,7 +76,7 @@ final class WKWebViewTabDownloadReferrerTests: XCTestCase {
         element.hitTestResult.absoluteImageURL = image
         element.hitTestResult.absoluteLinkURL = link
         element.hitTestResult.frameInfo = collector.frames[frameURL]
-        if let hang { tab.wkWebView.evaluateJavaScript(hang, completionHandler: nil) }
+        if let hang { Task.immediate { _ = try? await tab.wkWebView.evaluateJavaScript(hang) } }
         let menu = NSMenu()
         tab.webView(tab.wkWebView, getContextMenuFromProposedMenu: menu, forElement: element, userInfo: nil) { _ in }
         let item = try XCTUnwrap(menu.items.first { $0.action == NSSelectorFromString("contextMenuDownload:") })

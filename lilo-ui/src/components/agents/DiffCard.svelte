@@ -6,27 +6,33 @@
   import { t } from "../../lib/i18n/state.svelte";
   import type { FileDiff } from "./conversationModel";
   import Icon from "../ui/Icon.svelte";
-  import { lineDiff } from "./threadView";
+  import { lineDiff, type DiffLine } from "./threadView";
 
   interface Props {
     tabId: string;
-    diff: FileDiff;
-    /** The prompt this edit answered: Undo puts the file back as it was before it. */
+    /** Every edit of one file in this block, in order. */
+    diffs: FileDiff[];
+    /** The prompt these edits answered: Undo puts the file back as it was before it. */
     checkpoint: number;
     undone: boolean;
     /** The project folder: paths inside it show relative. */
     cwd: string;
   }
 
-  let { tabId, diff, checkpoint, undone, cwd }: Props = $props();
+  let { tabId, diffs, checkpoint, undone, cwd }: Props = $props();
 
   const MAX_LINES = 400;
   let expanded = $state(false);
   // Only an opened diff pays for its lines; they stay once drawn, so closing can animate.
   let opened = $state(false);
-  let kept = $state(false);
-  const lines = $derived(opened ? lineDiff(diff.oldText, diff.newText) : []);
-  const relative = $derived(cwd && diff.path.startsWith(`${cwd}/`) ? diff.path.slice(cwd.length + 1) : diff.path);
+  const path = $derived(diffs[0].path);
+  const added = $derived(diffs.reduce((sum, diff) => sum + diff.added, 0));
+  const removed = $derived(diffs.reduce((sum, diff) => sum + diff.removed, 0));
+  // `null` separates one edit's lines from the next.
+  const lines = $derived<(DiffLine | null)[]>(
+    opened ? diffs.flatMap((diff, index) => (index ? [null, ...lineDiff(diff.oldText, diff.newText)] : lineDiff(diff.oldText, diff.newText))) : [],
+  );
+  const relative = $derived(cwd && path.startsWith(`${cwd}/`) ? path.slice(cwd.length + 1) : path);
   const slash = $derived(relative.lastIndexOf("/"));
 </script>
 
@@ -36,7 +42,7 @@
       type="button"
       class="diff-toggle"
       aria-expanded={expanded}
-      title={diff.path}
+      title={path}
       onclick={() => {
         expanded = !expanded;
         opened = true;
@@ -44,28 +50,23 @@
     >
       <span class="file-icon"><Icon name="file" size={13} /></span>
       <span class="diff-path"><span class="dir">{relative.slice(0, slash + 1)}</span><span class="name">{relative.slice(slash + 1)}</span></span>
-      <span class="count-added">+{diff.added}</span>
-      <span class="count-removed">-{diff.removed}</span>
+      <span class="count-added">+{added}</span>
+      <span class="count-removed">-{removed}</span>
       <span class="chevron" class:open={expanded}><Icon name="chevronRight" size={10} /></span>
     </button>
     {#if undone}
       <span class="diff-state" in:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs }}>{t("agents.conversation.undone")}</span>
-    {:else if kept}
-      <span class="diff-state" in:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemEnterMs }}>{t("agents.conversation.kept")}</span>
     {:else}
-      <span class="diff-actions">
-        <button type="button" class="diff-button" onclick={() => conversationActions.undoFile(tabId, diff.path, checkpoint)}>
-          {t("agents.conversation.undo")}
-        </button>
-        <button type="button" class="diff-button primary" onclick={() => (kept = true)}>{t("agents.conversation.keep")}</button>
-      </span>
+      <button type="button" class="diff-button" onclick={() => conversationActions.undoFile(tabId, path, checkpoint)}>
+        {t("agents.conversation.undo")}
+      </button>
     {/if}
   </div>
   <div class="diff-body" class:open={expanded} inert={!expanded}>
     <div class="diff-clip">
       {#if opened}
-        <pre class="diff-lines">{#each lines.slice(0, MAX_LINES) as line, index (index)}<span class="line {line.type}"><span class="line-number">{line.line}</span>{line.type === "added" ? "+" : line.type === "removed" ? "-" : " "} {line.text}
-</span>{/each}</pre>
+        <pre class="diff-lines">{#each lines.slice(0, MAX_LINES) as line, index (index)}{#if line}<span class="line {line.type}"><span class="line-number">{line.line}</span>{line.type === "added" ? "+" : line.type === "removed" ? "-" : " "} {line.text}
+</span>{:else}<span class="hunk-gap"></span>{/if}{/each}</pre>
         {#if lines.length > MAX_LINES}
           <div class="diff-more">{t("agents.conversation.moreLines", { count: lines.length - MAX_LINES })}</div>
         {/if}
@@ -76,16 +77,15 @@
 
 <style>
   .diff-card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    overflow: hidden;
+    min-width: 0;
   }
 
+  /* Lines up with the other call rows, which bleed into the gutter by the same amount. */
   .diff-head {
     display: flex;
     align-items: center;
-    gap: var(--space-8);
-    padding: var(--space-2) var(--space-6) var(--space-2) var(--space-2);
+    gap: var(--space-4);
+    margin-left: calc(-1 * var(--space-6));
   }
 
   .diff-toggle {
@@ -176,43 +176,30 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .diff-actions {
-    display: flex;
-    gap: var(--space-4);
-    flex: none;
-  }
-
+  /* Out of the way until the row is pointed at or focused, but still reachable by Tab. */
   .diff-button {
+    flex: none;
     height: var(--control-height-sm);
-    padding: 0 var(--space-10);
+    padding: 0 var(--space-8);
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--bg-primary);
-    box-shadow: inset 0 0 0 1px var(--border);
-    color: var(--text-primary);
+    background: none;
+    color: var(--text-secondary);
     font: inherit;
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
+    opacity: 0;
+    transition: opacity var(--motion-duration-fast) ease;
   }
 
-  .diff-button:active {
-    transform: scale(0.97);
+  .diff-head:hover .diff-button,
+  .diff-button:focus-visible {
+    opacity: 1;
   }
 
   .diff-button:hover {
     background: var(--bg-hover);
-  }
-
-  .diff-button.primary {
-    background: var(--accent);
-    box-shadow: none;
-    color: var(--accent-text);
-  }
-
-  .diff-button.primary:hover {
-    background: var(--accent-hover);
+    color: var(--text-primary);
   }
 
   .diff-state {
@@ -224,7 +211,9 @@
 
   .diff-body {
     display: grid;
-    border-top: 1px solid transparent;
+    margin-top: var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
     grid-template-rows: 0fr;
     opacity: 0;
     transition:
@@ -233,7 +222,7 @@
   }
 
   .diff-body.open {
-    border-top-color: var(--separator);
+    border-color: var(--border);
     grid-template-rows: 1fr;
     opacity: 1;
     transition-duration: var(--motion-duration-overlay), var(--motion-duration-normal);
@@ -251,6 +240,12 @@
     overflow: auto;
     font: var(--font-size-sm)/1.55 ui-monospace, "SF Mono", Menlo, monospace;
     user-select: text;
+  }
+
+  .hunk-gap {
+    display: block;
+    margin: var(--space-4) 0;
+    border-top: 1px dashed var(--separator);
   }
 
   .line {

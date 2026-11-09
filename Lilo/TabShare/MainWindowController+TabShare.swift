@@ -60,7 +60,7 @@ extension MainWindowController {
         for engine in tabShareSessions.sharedEngines where unsafe engine.view.window == nil { attachBelowContent(engine) }
     }
 
-    fileprivate func attachBelowContent(_ engine: WKWebViewTab) {
+    func attachBelowContent(_ engine: WKWebViewTab) {
         engine.view.frame = contentContainerView.bounds
         engine.view.autoresizingMask = [.width, .height]
         engine.view.isHidden = false

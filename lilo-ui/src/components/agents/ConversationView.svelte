@@ -119,15 +119,11 @@
     lightbox = { images: imgs.map((img) => ({ src: img.getAttribute("src") ?? "", alt: img.alt })), start: Math.max(0, start), opener };
   }
 
-  /**
-   * following: the end stays in view as the reply grows. anchoring: a prompt just sent sits near the top
-   * and its reply streams below it, until the reply reaches the composer. free: the reader scrolled up.
-   */
-  let scrollMode = $state<"following" | "anchoring" | "free">("following");
+  /** following: the end stays in view as the thread grows. free: the reader scrolled up. */
+  let scrollMode = $state<"following" | "free">("following");
   let atBottom = $state(true);
-  // The turn sent from here keeps a viewport of room below its prompt, so streaming never moves it.
-  let anchorKey = $state("");
-  let anchorPending = false;
+  // A prompt sent from here glides into view; growth after it follows at once.
+  let glidePending = false;
   let glide: { easing: string; duration: number } | null = null;
 
   const turns = $derived.by((): Turn[] => {
@@ -277,12 +273,11 @@
   function settleScroll(): void {
     const el = threadEl;
     if (!el) return;
+    if (scrollMode !== "following") return;
     const max = el.scrollHeight - el.clientHeight;
-    const anchor = anchorPending ? el.querySelector<HTMLElement>(`[data-turn="${anchorKey}"]`) : null;
-    anchorPending = false;
-    if (anchor) return glideTo(el, Math.min(anchor.offsetTop - PAD_TOP, max));
-    if (scrollMode === "anchoring" && max > el.scrollTop + 2) scrollMode = "following";
-    if (scrollMode === "following") scrollTo(el, max);
+    if (!glidePending) return scrollTo(el, max);
+    glidePending = false;
+    glideTo(el, max);
   }
 
   /** Where Lilo itself last scrolled the thread: the scroll event that follows is not the reader's. */
@@ -317,6 +312,21 @@
     if (bottom && scrollMode === "free") scrollMode = "following";
     else if (!bottom && scrollMode !== "free") scrollMode = "free";
   }
+
+  // A row that folds, or a taller pane, can bring the end into view without any scroll event.
+  $effect(() => {
+    const thread = threadEl;
+    const column = columnEl;
+    if (!thread || !column) return;
+    const observer = new ResizeObserver(() => {
+      if (scrollMode !== "free" || thread.scrollHeight - thread.scrollTop - thread.clientHeight >= PIN_SLACK) return;
+      atBottom = true;
+      scrollMode = "following";
+    });
+    observer.observe(thread);
+    observer.observe(column);
+    return () => observer.disconnect();
+  });
 
   function jumpToLatest(): void {
     if (!threadEl) return;
@@ -375,7 +385,11 @@
 
   function send(interrupt: boolean): void {
     const prompt = text.trim();
-    if (!prompt && attachments.length === 0) return;
+    // Cmd Return from an empty field stops the running turn, so the queued prompt goes now.
+    if (!prompt && attachments.length === 0) {
+      if (interrupt && header.queued > 0) stop();
+      return;
+    }
     const sent = attachments;
     conversationActions.send({
       tabId,
@@ -386,11 +400,9 @@
     text = "";
     attachments = [];
     sentPending = true;
-    const id = addLocalPrompt(tabId, prompt, sent.map((draft) => ({ label: draft.label, uri: "" })));
-    if (id === null) return;
-    anchorKey = `t${id}`;
-    anchorPending = true;
-    scrollMode = "anchoring";
+    if (addLocalPrompt(tabId, prompt, sent.map((draft) => ({ label: draft.label, uri: "" }))) === null) return;
+    glidePending = true;
+    scrollMode = "following";
   }
 
   function stop(): boolean {
@@ -515,8 +527,10 @@
             </div>
           </div>
         {/if}
+        <!-- Queued prompts close the thread: each starts a turn of its own that has not run yet. -->
         {#each turns as turn, turnIndex (turn.key)}
-          <div class="turn" data-turn={turn.key} style:min-height={turn.key === anchorKey ? `${reserve}px` : undefined}>
+          {@const queued = turnIndex >= turns.length - header.queued}
+          <div class="turn" class:queued>
             {#each turn.rows as row (row.key)}
               {@const permission = row.kind === "item" && row.item.kind === "permission"}
               <div
@@ -552,10 +566,16 @@
                 {/if}
               </div>
             {/each}
+            {#if queued}
+              <div class="queued-tag" in:fade={{ duration: prefersReducedMotion() ? 0 : 120 }}>
+                <Icon name="queue" size={11} />
+                {t("agents.conversation.queuedTag")}
+              </div>
+            {/if}
             <!-- Where the reply appears, right under the prompt: what the agent is doing reads where the eye is. -->
-            {#if working && turnIndex === turns.length - 1 && header.signingIn?.screen}
+            {#if working && turnIndex === turns.length - 1 - header.queued && header.signingIn?.screen}
               <SignInCard {tabId} agentId={header.agentId} agentName={header.agentName} screen={header.signingIn.screen} />
-            {:else if working && turnIndex === turns.length - 1}
+            {:else if working && turnIndex === turns.length - 1 - header.queued}
               <div class="activity" role="status" in:fade={{ duration: prefersReducedMotion() ? 0 : 120 }}>
                 {#if asking}
                   <span class="pip" aria-hidden="true"></span>
@@ -994,6 +1014,21 @@
     flex-direction: column;
     gap: var(--space-12);
     min-width: 0;
+  }
+
+  /* Not sent yet: the prompt waits, dimmed, under the turn still running. */
+  .turn.queued .row {
+    opacity: 0.6;
+  }
+
+  .queued-tag {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-end;
+    gap: var(--space-4);
+    margin-top: calc(-1 * var(--space-6));
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
   }
 
   /* A pending question docks over the composer and leaves its row empty. */

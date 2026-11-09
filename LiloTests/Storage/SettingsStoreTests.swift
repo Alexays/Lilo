@@ -27,7 +27,23 @@ final class SettingsStoreTests: XCTestCase {
         try dbPool.write { _ in } // waits for the queued write
         let reloaded = SettingsStore(dbPool: dbPool)
         XCTAssertEqual(reloaded.get("theme"), "dark")
-        XCTAssertEqual(reloaded.allSettings(), ["theme": "dark"])
+        XCTAssertEqual(reloaded.allSettings(), SettingsStore.defaults.merging(["theme": "dark"]) { $1 })
+    }
+
+    func testADefaultIsServedUntilChangedAndComesBackWhenCleared() throws {
+        let store = SettingsStore(dbPool: dbPool)
+        XCTAssertEqual(store.get("agentSystemPrompt"), "lilo")
+
+        store.set("agentSystemPrompt", value: "agent")
+        store.set("agentSystemPromptText", value: "Be brief.")
+        XCTAssertEqual(store.allSettings()["agentSystemPrompt"], "agent")
+        XCTAssertEqual(store.get("agentSystemPromptText"), "Be brief.")
+
+        store.set("agentSystemPromptText", value: "")
+        try dbPool.write { _ in }
+        let reloaded = SettingsStore(dbPool: dbPool)
+        XCTAssertEqual(reloaded.get("agentSystemPromptText"), ConversationHost.liloSystemPrompt)
+        XCTAssertEqual(reloaded.get("agentSystemPrompt"), "agent")
     }
 
     func testGlobalPrivacyControlIsOnUntilTurnedOff() {

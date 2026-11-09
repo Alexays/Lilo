@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin } from "vite";
 import { readFileSync } from "node:fs";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import { releaseNotesPlugin } from "./releaseNotesPlugin";
+import { releaseNotesPlugin } from "./releaseNotesPlugin.ts";
 
 function cspPlugin(): Plugin {
 	return {

@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld } from "./fixtures";
+import { apcaContrast, TEXT_CONTRAST } from "../src/lib/sidebarTheme";
 
 async function openProfiles(page: Page, spaceName: string): Promise<void> {
 	const world = initialWorld();
@@ -89,8 +90,10 @@ test("choosing Change color again closes the swatches without changing the color
 	expect(await colorUpdates(page)).toEqual([]);
 });
 
-/** Each card's background and the WCAG contrast of its name and Space chip text on it. */
-const cardColors = (page: Page) => page.locator(".profile-card").evaluateAll((cards) => {
+const lc = ([[r, g, b], [br, bg, bb]]: number[][]) => apcaContrast({ r, g, b }, { r: br, g: bg, b: bb });
+
+/** Each card's background and the APCA Lc of its name and Space chip text on it. */
+const cardColors = async (page: Page) => (await page.locator(".profile-card").evaluateAll((cards) => {
 	const canvas = document.createElement("canvas").getContext("2d", { willReadFrequently: true })!;
 	// Paints the colors over each other (translucent ones blend) and reads the result back.
 	const paint = (...colors: string[]) => {
@@ -100,14 +103,6 @@ const cardColors = (page: Page) => page.locator(".profile-card").evaluateAll((ca
 			canvas.fillRect(0, 0, 1, 1);
 		}
 		return [...canvas.getImageData(0, 0, 1, 1).data.slice(0, 3)];
-	};
-	const luminance = (rgb: number[]) => {
-		const [r, g, b] = rgb.map((c) => (c / 255 <= 0.03928 ? c / 255 / 12.92 : ((c / 255 + 0.055) / 1.055) ** 2.4));
-		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-	};
-	const ratio = (a: number[], b: number[]) => {
-		const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-		return (hi + 0.05) / (lo + 0.05);
 	};
 	const page = getComputedStyle(document.documentElement).getPropertyValue("--bg-primary");
 	return cards.map((card) => {
@@ -120,11 +115,11 @@ const cardColors = (page: Page) => page.locator(".profile-card").evaluateAll((ca
 			background: paint(background).join(","),
 			page: paint(page).join(","),
 			dot: getComputedStyle(card.querySelector(".profile-dot")!).backgroundColor,
-			nameContrast: ratio(paint(getComputedStyle(name).color), surface),
-			chipContrast: ratio(paint(getComputedStyle(chip).color), chipSurface),
+			name: [paint(getComputedStyle(name).color), surface],
+			chip: [paint(getComputedStyle(chip).color), chipSurface],
 		};
 	});
-});
+})).map(({ name, chip, ...card }) => ({ ...card, nameContrast: lc(name), chipContrast: lc(chip) }));
 
 for (const colorScheme of ["light", "dark"] as const) {
 	test(`a profile card shows its color as a dot, with readable text, in ${colorScheme} mode`, async ({ page }) => {
@@ -141,8 +136,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 		expect(personal.background).not.toBe(personal.page);
 		expect(work.dot).not.toBe(personal.dot);
 		for (const card of [personal, work]) {
-			expect(card.nameContrast).toBeGreaterThanOrEqual(4.5);
-			expect(card.chipContrast).toBeGreaterThanOrEqual(4.5);
+			expect(card.nameContrast).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+			expect(card.chipContrast).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		}
 	});
 }

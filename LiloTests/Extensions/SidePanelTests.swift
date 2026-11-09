@@ -563,12 +563,13 @@ final class SidePanelTests: XCTestCase {
         private(set) var base = ""
 
         /// `proxied` serves it through a CONNECT proxy, which the profile's store must use (`proxyConfiguration`).
+        /// The handlers hold the site weakly: a page left open after the test, like an offscreen document, still requests.
         init(proxied: Bool = false) async throws {
             if proxied {
-                proxy = try await TinyCONNECTProxy { [unowned self] _, request in respond(request) }
+                proxy = try await TinyCONNECTProxy { [weak self] _, request in self?.respond(request) ?? ("503 Service Unavailable", [], Data()) }
                 base = "http://framed.test"
             } else {
-                let server = try await TinyHTTPServer { [unowned self] request in respond(request) }
+                let server = try await TinyHTTPServer { [weak self] request in self?.respond(request) ?? ("503 Service Unavailable", [], Data()) }
                 self.server = server
                 base = "http://127.0.0.1:\(server.port)"
             }

@@ -18,6 +18,8 @@ export const TEXT_CONTRAST = 60;
 // Secondary text under the system's Increase contrast.
 export const MORE_TEXT_CONTRAST = 75;
 export const ICON_CONTRAST = 45;
+// Light text on the dark sidebar's lifted rows, above TEXT_CONTRAST so a dark sidebar stays deep, not merely legible.
+const DARK_ROW_CONTRAST = 75;
 // The dark sidebar's lifted rows, this far toward the text color, which its darkening keeps legible.
 const DARK_SELECTED_LIFT = 0.2;
 const ELEVATED_FILL = 0.08;
@@ -147,43 +149,23 @@ export function fromOklab(lightness: number, a: number, b: number): RGB {
 	};
 }
 
-export function relativeLuminance(color: RGB): number {
-	return (
-		0.2126 * linearize(color.r) +
-		0.7152 * linearize(color.g) +
-		0.0722 * linearize(color.b)
-	);
-}
-
-export function contrastRatio(a: RGB, b: RGB): number {
-	const la = relativeLuminance(a);
-	const lb = relativeLuminance(b);
-	return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
-}
-
 function tone(background: RGB, foreground: RGB, amount: number): string {
 	return toHex(mix(background, foreground, amount));
 }
 
 /**
  * `foreground`, darkened on a light `background` or lightened on a dark one until it clears
- * `minimum` by `measure`; `fallback` (the text color) when even black or white does not.
+ * `minimum` (APCA Lc); `fallback` (the text color) when even black or white does not.
  */
-export function ensureContrast(
-	foreground: string,
-	background: string,
-	minimum: number,
-	fallback: string,
-	measure: (text: RGB, background: RGB) => number = apcaContrast,
-): string {
+export function ensureContrast(foreground: string, background: string, minimum: number, fallback: string): string {
 	const fg = parseHexColor(foreground);
 	const bg = parseHexColor(background);
 	if (!fg || !bg) return fallback;
-	if (measure(fg, bg) >= minimum) return toHex(fg);
-	const target = measure(BLACK, bg) >= measure(WHITE, bg) ? BLACK : WHITE;
+	if (apcaContrast(fg, bg) >= minimum) return toHex(fg);
+	const target = apcaContrast(BLACK, bg) >= apcaContrast(WHITE, bg) ? BLACK : WHITE;
 	for (let step = 0.05; step <= 1.0001; step += 0.05) {
 		const candidate = mix(fg, target, step);
-		if (measure(candidate, bg) >= minimum) return toHex(candidate);
+		if (apcaContrast(candidate, bg) >= minimum) return toHex(candidate);
 	}
 	return fallback;
 }
@@ -200,11 +182,10 @@ export function deriveSidebarThemeVariables(
 	const tinted = mix(accentSource, DARK_CANVAS, 0.58);
 	const darkAccent = toHex(mix(accentSource, WHITE, 0.18));
 	let sidebar = tinted;
-	// Darken a too-light dark background in OKLCH, keeping the Space's hue, until primary text clears 4.5:1 on a lifted
-	// row and on that row tinted by the lightened Space color. NSColor+CSSHex mirrors it on WCAG 2 ratios: APCA would
-	// leave dark sidebars far lighter, and the text is always light there.
+	// Darken a too-light dark background in OKLCH, keeping the Space's hue, until primary text clears DARK_ROW_CONTRAST
+	// on a lifted row and on that row tinted by the lightened Space color. NSColor+CSSHex mirrors it.
 	const textFails = (candidate: RGB): boolean => {
-		const accent = parseHexColor(ensureContrast(darkAccent, toHex(candidate), 3, DARK_CONTRAST, contrastRatio)) ?? WHITE;
+		const accent = parseHexColor(ensureContrast(darkAccent, toHex(candidate), ICON_CONTRAST, DARK_CONTRAST)) ?? WHITE;
 		const selected = mix(candidate, DARK_CONTRAST_RGB, DARK_SELECTED_LIFT);
 		const activeTab = {
 			r: selected.r + (accent.r - selected.r) * ACTIVE_TAB_TINT,
@@ -212,8 +193,8 @@ export function deriveSidebarThemeVariables(
 			b: selected.b + (accent.b - selected.b) * ACTIVE_TAB_TINT,
 		};
 		return (
-			contrastRatio(DARK_CONTRAST_RGB, activeTab) < 4.5 ||
-			contrastRatio(DARK_CONTRAST_RGB, mix(candidate, DARK_CONTRAST_RGB, DARK_ACTIVE_LIFT)) < 4.5
+			apcaContrast(DARK_CONTRAST_RGB, activeTab) < DARK_ROW_CONTRAST ||
+			apcaContrast(DARK_CONTRAST_RGB, mix(candidate, DARK_CONTRAST_RGB, DARK_ACTIVE_LIFT)) < DARK_ROW_CONTRAST
 		);
 	};
 	if (textFails(sidebar)) {
@@ -242,10 +223,15 @@ export function apcaContrast(text: RGB, background: RGB): number {
 	return Math.abs(contrast) < 0.1 ? 0 : (Math.abs(contrast) - 0.027) * 100;
 }
 
+/** Whether light text reads better than dark text on `color`, by APCA: the polarity every surface's text takes. */
+export function prefersLightText(color: RGB): boolean {
+	return apcaContrast(DARK_CONTRAST_RGB, color) >= apcaContrast(LIGHT_CONTRAST_RGB, color);
+}
+
 /** `#1d1d1f` or `#f8f9fd`, whichever reads better on `color` by APCA; pure black or white of the same polarity when
  * that one is under the text threshold on the surface that moves furthest toward the text (cards, or the selected row under light text). */
 function textColor(color: RGB): RGB {
-	const light = apcaContrast(DARK_CONTRAST_RGB, color) >= apcaContrast(LIGHT_CONTRAST_RGB, color);
+	const light = prefersLightText(color);
 	const soft = light ? DARK_CONTRAST_RGB : LIGHT_CONTRAST_RGB;
 	if (apcaContrast(soft, mix(color, soft, light ? SELECTED_LIFT : ELEVATED_FILL)) >= TEXT_CONTRAST) return soft;
 	return light ? WHITE : BLACK;
@@ -287,7 +273,7 @@ export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: b
 	const sidebarHex = toHex(sidebar);
 	const contrastColor = textColor(sidebar);
 	const sidebarContrast = toHex(contrastColor);
-	const darkText = relativeLuminance(contrastColor) < 0.5;
+	const darkText = apcaLuminance(contrastColor) < 0.5;
 	// One selected surface for the selected row, the pinned tiles, the current Space and the update card: a lighter
 	// shade of the sidebar, white over it under dark text, the text color over it under light text.
 	const selectedLayer = darkText ? "#ffffff 40%" : `${sidebarContrast} ${SELECTED_LIFT * 100}%`;
@@ -356,7 +342,7 @@ export function deriveFolderColorVariables(
 	const folder = parseHexColor(folderColor) ?? sidebar;
 	const text = textColor(sidebar);
 	const [, a, b] = toOklab(folder);
-	const layer = fromOklab(relativeLuminance(text) < 0.5 ? 0.97 : 0.2, a, b);
+	const layer = fromOklab(apcaLuminance(text) < 0.5 ? 0.97 : 0.2, a, b);
 	const open = toHex(mix(sidebar, layer, FOLDER_OPEN_LAYER));
 	const textHex = toHex(text);
 	return {

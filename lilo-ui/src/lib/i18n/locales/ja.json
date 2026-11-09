@@ -571,6 +571,33 @@
 				"title": "エージェントの完了時に通知",
 				"description": "表示していない会話が完了したときに通知します。",
 				"keywords": "エージェント 通知 アラート 完了 終了"
+			},
+			"agentSystemPrompt": {
+				"title": "システムプロンプト",
+				"description": "各会話の最初にエージェントへ伝える内容です。",
+				"keywords": "システムプロンプト 指示 claude code 制限",
+				"lilo": "Lilo",
+				"agent": "エージェント独自",
+				"liloPoints": {
+					"browse": "Lilo で Web をブラウズ",
+					"act": "毎回確認せずに実行",
+					"design": "シニアデザイナーの目でデザイン"
+				},
+				"agentPoints": {
+					"same": "そのアプリと同じ動作",
+					"asks": "より多くの操作の前に確認",
+					"updates": "エージェントの更新に追従"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo のプロンプト",
+				"description": "エージェント独自のプロンプトの代わりに伝える内容を編集します。",
+				"keywords": "システムプロンプト 指示 編集",
+				"heading": "指示",
+				"note": "Lilo は末尾に作業ディレクトリと今日の日付を追加します。変更は新規および再開した会話に適用されます。",
+				"reset": "デフォルトに戻す",
+				"resetTitle": "Lilo のプロンプトを戻しますか？",
+				"resetMessage": "変更内容はデフォルトのプロンプトに置き換えられます。"
 			}
 		},
 		"devices": {
@@ -889,7 +916,9 @@
 		"lockFolder": "パスワードでロック",
 		"changePassword": "パスワードを変更",
 		"removeLock": "ロックを取り除く",
-		"lock": "ロック"
+		"lock": "ロック",
+		"searchFolder": "{name}内を検索...",
+		"noMatches": "一致するタブはありません"
 	},
 	"splitDrop": {
 		"left": "左に開く",
@@ -2070,6 +2099,7 @@
 		"Copy URL": "URL をコピー",
 		"Search or enter address": "検索またはアドレスを入力",
 		"Search with %@": "%@で検索",
+		"Search Image with %@": "%@で画像を検索",
 		"New Private Space": "新規プライベートスペース",
 		"Duplicate Tab": "タブを複製",
 		"Bookmark This Page": "このページをブックマーク",
@@ -2453,6 +2483,12 @@
 			"chat": "チームチャット"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "見たものを検索。",
+				"description": "ページ上のどの画像も右クリックで検索できます。色はより読みやすく、ターミナルはより安定しました。",
+				"imageSearchTitle": "画像を検索。",
+				"imageSearchDescription": "画像の出どころや写っているものを調べられます。画像を右クリックして「Google Lensで画像を検索」を選びます。検索エンジンがBingの場合はBingで検索します。"
+			},
 			"v0180": {
 				"headline": "すっきりしたダウンロードメニュー。",
 				"description": "完了したダウンロードをサイドバーから直接消去できます。Bitwarden や Web Highlights などの拡張機能も正しく動作します。",
@@ -2604,14 +2640,13 @@
 				"other": "{count} 件のメッセージが待機中"
 			},
 			"queuedHint": "エージェントの完了後に送信されます。Cmd Return ですぐに送信します。",
+			"queuedTag": "待機中",
 			"thought": "思考",
 			"restoreToHere": "ここまで復元",
 			"restoreConfirm": "プロジェクトのファイルをこのメッセージの時点の状態に戻しますか？",
 			"restore": "復元",
 			"undo": "取り消す",
-			"keep": "保持",
 			"undone": "取り消しました",
-			"kept": "保持しました",
 			"moreLines": {
 				"one": "さらに {count} 行",
 				"other": "さらに {count} 行"
@@ -2813,6 +2848,8 @@
 		"turn": {
 			"workedFor": "{duration} 作業",
 			"stopped": "停止しました",
+			"refusalTitle": "モデルが続行を拒否しました",
+			"refusalHint": "安全機能がこのターンを停止しました。正当な作業でも起こることがあります。依頼を言い換えるか、下で別のモデルを選んでください。",
 			"files": {
 				"one": "{count} 個のファイルを変更",
 				"other": "{count} 個のファイルを変更"

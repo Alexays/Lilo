@@ -571,6 +571,33 @@
 				"title": "Melden als een agent klaar is",
 				"description": "Een melding als een gesprek waar je niet naar kijkt klaar is.",
 				"keywords": "agent melding notificatie klaar afgerond"
+			},
+			"agentSystemPrompt": {
+				"title": "Systeemprompt",
+				"description": "Wat agenten aan het begin van elk gesprek te horen krijgen.",
+				"keywords": "systeemprompt instructies claude code beperkingen",
+				"lilo": "Lilo",
+				"agent": "Van de agent",
+				"liloPoints": {
+					"browse": "Surft op het web met Lilo",
+					"act": "Handelt zonder bij elke stap te vragen",
+					"design": "Ontwerpt met het oog van een senior designer"
+				},
+				"agentPoints": {
+					"same": "Gedraagt zich als in zijn app",
+					"asks": "Vraagt vóór meer acties",
+					"updates": "Volgt de updates van de agent"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Prompt van Lilo",
+				"description": "Bewerk wat agenten te horen krijgen in plaats van hun eigen prompt.",
+				"keywords": "systeemprompt instructies bewerken",
+				"heading": "Instructies",
+				"note": "Lilo voegt aan het eind de werkmap en de datum van vandaag toe. Wijzigingen gelden voor nieuwe en heropende gesprekken.",
+				"reset": "Herstel standaard",
+				"resetTitle": "Prompt van Lilo herstellen?",
+				"resetMessage": "Je wijzigingen worden vervangen door de standaardprompt."
 			}
 		},
 		"devices": {
@@ -889,7 +916,9 @@
 		"lockFolder": "Vergrendel met een wachtwoord",
 		"changePassword": "Wijzig wachtwoord",
 		"removeLock": "Verwijder vergrendeling",
-		"lock": "Vergrendel"
+		"lock": "Vergrendel",
+		"searchFolder": "Zoek in {name}...",
+		"noMatches": "Geen overeenkomende tabbladen"
 	},
 	"splitDrop": {
 		"left": "Open links",
@@ -2070,6 +2099,7 @@
 		"Copy URL": "Kopieer URL",
 		"Search or enter address": "Zoek of voer adres in",
 		"Search with %@": "Zoek met %@",
+		"Search Image with %@": "Zoek afbeelding met %@",
 		"New Private Space": "Nieuwe privéruimte",
 		"Duplicate Tab": "Dupliceer tabblad",
 		"Bookmark This Page": "Maak bladwijzer van deze pagina",
@@ -2453,6 +2483,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Zoek wat je ziet.",
+				"description": "Zoek elke afbeelding op een pagina op met een rechterklik, met beter leesbare kleuren en een stabielere terminal.",
+				"imageSearchTitle": "Zoek een afbeelding.",
+				"imageSearchDescription": "Ontdek waar een afbeelding vandaan komt of wat erop staat. Klik er met de rechtermuisknop op en kies Zoek afbeelding met Google Lens, of met Bing als Bing je zoekmachine is."
+			},
 			"v0180": {
 				"headline": "Een opgeruimder downloadmenu.",
 				"description": "Wis voltooide downloads direct vanuit de zijbalk, en extensies zoals Bitwarden en Web Highlights werken zoals bedoeld.",
@@ -2604,14 +2640,13 @@
 				"other": "{count} berichten in de wachtrij"
 			},
 			"queuedHint": "Wordt verstuurd als de agent klaar is. Cmd Return verstuurt nu.",
+			"queuedTag": "In wachtrij",
 			"thought": "Gedachte",
 			"restoreToHere": "Herstel tot hier",
 			"restoreConfirm": "Projectbestanden terugzetten naar hoe ze bij dit bericht waren?",
 			"restore": "Herstel",
 			"undo": "Ongedaan maken",
-			"keep": "Behoud",
 			"undone": "Ongedaan gemaakt",
-			"kept": "Behouden",
 			"moreLines": {
 				"one": "Nog {count} regel",
 				"other": "Nog {count} regels"
@@ -2813,6 +2848,8 @@
 		"turn": {
 			"workedFor": "{duration} gewerkt",
 			"stopped": "Gestopt",
+			"refusalTitle": "Het model weigerde door te gaan",
+			"refusalHint": "Zijn beveiligingen stopten deze beurt, soms ook bij legitiem werk. Herformuleer het verzoek of kies hieronder een ander model.",
 			"files": {
 				"one": "{count} bestand gewijzigd",
 				"other": "{count} bestanden gewijzigd"

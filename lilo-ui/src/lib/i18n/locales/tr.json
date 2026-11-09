@@ -571,6 +571,33 @@
 				"title": "Bir ajan bitirdiğinde bildir",
 				"description": "Bakmadığınız bir sohbet bittiğinde bildirim.",
 				"keywords": "ajan bildirim uyarı bitti tamamlandı"
+			},
+			"agentSystemPrompt": {
+				"title": "Sistem istemi",
+				"description": "Her sohbetin başında ajanlara söylenenler.",
+				"keywords": "sistem istemi talimatlar claude code kısıtlamalar",
+				"lilo": "Lilo",
+				"agent": "Ajanın kendi",
+				"liloPoints": {
+					"browse": "Web'de Lilo ile gezinir",
+					"act": "Her adımda sormadan çalışır",
+					"design": "Kıdemli bir tasarımcı gözüyle tasarlar"
+				},
+				"agentPoints": {
+					"same": "Kendi uygulamasındaki gibi davranır",
+					"asks": "Daha fazla işlemden önce sorar",
+					"updates": "Ajanın güncellemelerini izler"
+				}
+			},
+			"agentSystemPromptText": {
+				"title": "Lilo istemi",
+				"description": "Ajanların kendi istemi yerine söylenenleri düzenleyin.",
+				"keywords": "sistem istemi talimatlar düzenle",
+				"heading": "Talimatlar",
+				"note": "Lilo sona çalışma klasörünü ve bugünün tarihini ekler. Değişiklikler yeni ve yeniden açılan sohbetlere uygulanır.",
+				"reset": "Varsayılana dön",
+				"resetTitle": "Lilo istemi geri yüklensin mi?",
+				"resetMessage": "Değişiklikleriniz varsayılan istemle değiştirilecek."
 			}
 		},
 		"devices": {
@@ -889,7 +916,9 @@
 		"lockFolder": "Parolayla kilitle",
 		"changePassword": "Parolayı değiştir",
 		"removeLock": "Kilidi kaldır",
-		"lock": "Kilitle"
+		"lock": "Kilitle",
+		"searchFolder": "{name} içinde ara...",
+		"noMatches": "Eşleşen sekme yok"
 	},
 	"splitDrop": {
 		"left": "Solda aç",
@@ -2070,6 +2099,7 @@
 		"Copy URL": "URL'yi Kopyala",
 		"Search or enter address": "Arayın veya adres girin",
 		"Search with %@": "%@ ile ara",
+		"Search Image with %@": "Görseli %@ ile ara",
 		"New Private Space": "Yeni Özel Alan",
 		"Duplicate Tab": "Sekmeyi Çoğalt",
 		"Bookmark This Page": "Bu Sayfaya Yer İmi Ekle",
@@ -2453,6 +2483,12 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0190": {
+				"headline": "Gördüğünüzü arayın.",
+				"description": "Bir sayfadaki herhangi bir görseli sağ tıklamayla arayın; renkler daha okunaklı, terminal daha kararlı.",
+				"imageSearchTitle": "Bir görseli arayın.",
+				"imageSearchDescription": "Bir görselin nereden geldiğini veya ne gösterdiğini öğrenin. Görsele sağ tıklayıp Görseli Google Lens ile ara'yı seçin; arama motorunuz Bing ise Bing ile aranır."
+			},
 			"v0180": {
 				"headline": "Daha düzenli bir indirilenler menüsü.",
 				"description": "Tamamlanan indirmeleri doğrudan kenar çubuğundan temizleyin; Bitwarden ve Web Highlights gibi uzantılar da olması gerektiği gibi çalışır.",
@@ -2604,14 +2640,13 @@
 				"other": "Sırada {count} mesaj"
 			},
 			"queuedHint": "Ajan bitirince gönderilir. Cmd Return hemen gönderir.",
+			"queuedTag": "Sırada",
 			"thought": "Düşünce",
 			"restoreToHere": "Buraya kadar geri yükle",
 			"restoreConfirm": "Proje dosyaları bu mesajdaki hâline geri döndürülsün mü?",
 			"restore": "Geri yükle",
 			"undo": "Geri Al",
-			"keep": "Koru",
 			"undone": "Geri alındı",
-			"kept": "Korundu",
 			"moreLines": {
 				"one": "{count} satır daha",
 				"other": "{count} satır daha"
@@ -2813,6 +2848,8 @@
 		"turn": {
 			"workedFor": "{duration} çalıştı",
 			"stopped": "Durduruldu",
+			"refusalTitle": "Model devam etmeyi reddetti",
+			"refusalHint": "Güvenlik önlemleri bu turu durdurdu, bazen meşru işlerde de olur. İsteği yeniden ifade edin veya aşağıdan başka bir model seçin.",
 			"files": {
 				"one": "{count} dosya değişti",
 				"other": "{count} dosya değişti"

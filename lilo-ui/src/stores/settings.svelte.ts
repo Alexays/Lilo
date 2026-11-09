@@ -55,10 +55,10 @@ export function getInterfaceSizeStep(): number {
 }
 
 function applyInterfaceSize(): void {
-	if (typeof document !== "undefined" && document.documentElement) {
-		const size = getInterfaceSize();
-		if (document.documentElement.dataset.interfaceSize !== size) document.documentElement.dataset.interfaceSize = size;
-	}
+	if (typeof document === "undefined") return;
+	const root = document.documentElement;
+	const size = getInterfaceSize();
+	if (root && root.dataset.interfaceSize !== size) root.dataset.interfaceSize = size;
 }
 
 export function applyInterfaceSizeInitialState(data: Pick<BridgeInitialStatePayload, "interfaceSize">): void {

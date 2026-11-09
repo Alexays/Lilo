@@ -91,19 +91,20 @@ import os
         unsafe AudioObjectGetPropertyData(tap, &formatAddress, 0, nil, &size, &format)
         let rate = format.mSampleRate
         var output = AudioObjectID(kAudioObjectUnknown)
-        var outputUID = "" as CFString
+        var outputUIDRef = unsafe Unmanaged<CFString>?.none
         var outputAddress = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultSystemOutputDevice, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
         size = UInt32(MemoryLayout<AudioObjectID>.size)
         unsafe AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &outputAddress, 0, nil, &size, &output)
         outputAddress.mSelector = kAudioDevicePropertyDeviceUID
-        size = UInt32(MemoryLayout<CFString>.size)
-        unsafe AudioObjectGetPropertyData(output, &outputAddress, 0, nil, &size, &outputUID)
+        size = unsafe UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
+        unsafe AudioObjectGetPropertyData(output, &outputAddress, 0, nil, &size, &outputUIDRef)
+        let outputUID = unsafe outputUIDRef?.takeRetainedValue() as String? ?? ""
         let aggregate: [String: Any] = [
             kAudioAggregateDeviceNameKey: "Lilo screen share audio",
             kAudioAggregateDeviceUIDKey: UUID().uuidString,
             kAudioAggregateDeviceIsPrivateKey: true,
-            kAudioAggregateDeviceMainSubDeviceKey: outputUID as String,
-            kAudioAggregateDeviceSubDeviceListKey: [[kAudioSubDeviceUIDKey: outputUID as String]],
+            kAudioAggregateDeviceMainSubDeviceKey: outputUID,
+            kAudioAggregateDeviceSubDeviceListKey: [[kAudioSubDeviceUIDKey: outputUID]],
             kAudioAggregateDeviceTapAutoStartKey: true,
             kAudioAggregateDeviceTapListKey: [[kAudioSubTapUIDKey: description.uuid.uuidString, kAudioSubTapDriftCompensationKey: true]]
         ]
@@ -146,8 +147,8 @@ import os
         if objects != description.processes {
             description.processes = objects
             var address = AudioObjectPropertyAddress(mSelector: kAudioTapPropertyDescription, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-            var tapDescription = description
-            if unsafe AudioObjectSetPropertyData(tap, &address, 0, nil, UInt32(MemoryLayout<CATapDescription>.size), &tapDescription) != noErr {
+            var tapDescription = unsafe Unmanaged.passUnretained(description)
+            if unsafe AudioObjectSetPropertyData(tap, &address, 0, nil, UInt32(MemoryLayout<Unmanaged<CATapDescription>>.size), &tapDescription) != noErr {
                 // A running tap can refuse a new description: rebuild it around the new exclusion, silent if that fails.
                 stopDevice()
                 AudioHardwareDestroyProcessTap(tap)

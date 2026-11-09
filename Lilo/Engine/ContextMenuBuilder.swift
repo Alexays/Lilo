@@ -27,6 +27,7 @@ final class ContextMenuBuilder: NSObject {
     private let onHideElement: () -> Void
     private let onDownload: (URL) -> Void
     private let onSearchWeb: () -> Void
+    private let onSearchImage: (URL) -> Void
 
     init(
         webView: WKWebView,
@@ -37,7 +38,8 @@ final class ContextMenuBuilder: NSObject {
         onBookmark: @escaping () -> Void,
         onHideElement: @escaping () -> Void,
         onDownload: @escaping (URL) -> Void,
-        onSearchWeb: @escaping () -> Void
+        onSearchWeb: @escaping () -> Void,
+        onSearchImage: @escaping (URL) -> Void
     ) {
         self.webView = webView
         self.onOpenInNewTab = onOpenInNewTab
@@ -48,6 +50,7 @@ final class ContextMenuBuilder: NSObject {
         self.onHideElement = onHideElement
         self.onDownload = onDownload
         self.onSearchWeb = onSearchWeb
+        self.onSearchImage = onSearchImage
         super.init()
     }
 
@@ -74,7 +77,8 @@ final class ContextMenuBuilder: NSObject {
     /// `element` is the clicked `_WKContextMenuElementInfo`, whose hit test tells a text field or the selection.
     func build(
         _ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, element: NSObject? = nil,
-        offersNewWindow: Bool = true, offersHideElement: Bool = false, searchEngineName: String? = nil
+        offersNewWindow: Bool = true, offersHideElement: Bool = false, searchEngineName: String? = nil,
+        imageSearchEngineName: String? = nil
     ) {
         // WebKit's "Search with Google" hands the selection to the system's search service, which opens the default browser.
         if let searchEngineName, let item = menu.items.first(where: { $0.identifier?.rawValue.localizedCaseInsensitiveContains("SearchWeb") ?? false }) {
@@ -86,6 +90,14 @@ final class ContextMenuBuilder: NSObject {
         // WebKit's native "Download Image"/"Download Linked File" items never fire WKDownloadDelegate,
         // so route them through Lilo's download pipeline (via `onDownload`).
         wireDownloadItems(in: menu, imageURL: imageURL, linkURL: linkURL)
+
+        // After "Copy Image", which only an image's menu has (a video's has none). The engine fetches the image by URL.
+        if let imageSearchEngineName, let imageURL, ["http", "https"].contains(imageURL.scheme?.lowercased()),
+           let copyIndex = menu.items.lastIndex(where: { $0.identifier?.rawValue.localizedCaseInsensitiveContains("CopyImage") ?? false }) {
+            let item = makeLinkItem("Search Image with %@", icon: .searchImage, action: #selector(contextMenuSearchImage(_:)), url: imageURL)
+            item.title = unsafe String(format: item.title, imageSearchEngineName)
+            menu.insertItem(item, at: copyIndex + 1)
+        }
 
         // Read by KVC (private class), false when WebKit renames a property.
         let hitTest = element.flatMap { $0.responds(to: NSSelectorFromString("hitTestResult")) ? $0.value(forKey: "hitTestResult") as? NSObject : nil }
@@ -210,6 +222,11 @@ final class ContextMenuBuilder: NSObject {
     }
 
     @objc private func contextMenuSearchWeb() { onSearchWeb() }
+
+    @objc private func contextMenuSearchImage(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else { return }
+        onSearchImage(url)
+    }
 
     @objc private func contextMenuDownload(_ sender: NSMenuItem) {
         guard let url = sender.representedObject as? URL else { return }

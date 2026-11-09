@@ -4,7 +4,9 @@ import WebKit
 
 @MainActor
 final class ContextMenuBuilderTests: XCTestCase {
-    private func makeBuilder(onDownload: @escaping (URL) -> Void = { _ in }, onSearchWeb: @escaping () -> Void = {}) -> ContextMenuBuilder {
+    private func makeBuilder(
+        onDownload: @escaping (URL) -> Void = { _ in }, onSearchWeb: @escaping () -> Void = {}, onSearchImage: @escaping (URL) -> Void = { _ in }
+    ) -> ContextMenuBuilder {
         ContextMenuBuilder(
             webView: WKWebView(frame: .zero),
             onOpenInNewTab: { _ in },
@@ -14,7 +16,8 @@ final class ContextMenuBuilderTests: XCTestCase {
             onBookmark: {},
             onHideElement: {},
             onDownload: onDownload,
-            onSearchWeb: onSearchWeb
+            onSearchWeb: onSearchWeb,
+            onSearchImage: onSearchImage
         )
     }
 
@@ -95,6 +98,30 @@ final class ContextMenuBuilderTests: XCTestCase {
 
         item.map { _ = $0.target?.perform($0.action, with: $0) }
         XCTAssertEqual(downloaded, imageURL, "triggering the item routes the image URL to onDownload")
+    }
+
+    func testSearchImageItemFollowsCopyImageForWebImagesOnly() throws {
+        var searched: URL?
+        let builder = makeBuilder(onSearchImage: { searched = $0 })
+        func menu(imageURL: URL) -> NSMenu {
+            let menu = NSMenu()
+            for identifier in ["CopyImage", "DownloadImage"] {
+                menu.addItem(withTitle: identifier, action: nil, keyEquivalent: "").identifier = NSUserInterfaceItemIdentifier("WKMenuItemIdentifier" + identifier)
+            }
+            builder.build(menu, linkURL: nil, imageURL: imageURL, imageSearchEngineName: "Google Lens")
+            return menu
+        }
+        let title = String(format: "Search Image with %@".localized, "Google Lens")
+        let imageURL = try XCTUnwrap(URL(string: "https://example.com/cat.png"))
+        let item = menu(imageURL: imageURL).items[1]
+        XCTAssertEqual(item.title, title)
+        _ = item.target?.perform(item.action, with: item)
+        XCTAssertEqual(searched, imageURL)
+
+        XCTAssertFalse(menu(imageURL: try XCTUnwrap(URL(string: "data:image/png;base64,AA=="))).items.contains { $0.title == title }, "an engine cannot fetch it")
+        let video = NSMenu()
+        makeBuilder().build(video, linkURL: nil, imageURL: URL(string: "https://example.com/a.mp4"), imageSearchEngineName: "Google Lens")
+        XCTAssertFalse(video.items.contains { $0.title == title }, "a video's menu has no Copy Image")
     }
 
     func testBuildAddsDownloadLinkedFileItemForHTTPSLinkWhenNoImage() {

@@ -15,7 +15,9 @@
 		"noUnusedParameters": false,
 		"noFallthroughCasesInSwitch": true,
 		"moduleResolution": "bundler",
-		"verbatimModuleSyntax": true
+		"verbatimModuleSyntax": true,
+		"allowImportingTsExtensions": true,
+		"noEmit": true
 	},
 	"include": ["src/**/*.ts", "src/**/*.svelte", "preview/**/*.ts", "e2e/**/*.ts", "playwright.config.ts"]
 }
