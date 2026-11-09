@@ -337,6 +337,7 @@ extension MainWindowController {
     /// any other one only lets go of it.
     func leaveSpace(_ oldSpaceId: UUID, previousActiveTabId: UUID?, nextSpaceId: UUID?) {
         guard let spaceManager = context.spaceManager else { return }
+        endTabGlance(notify: true)
         activeTabBySpace[oldSpaceId] = previousActiveTabId
         if !context.browserState.releaseLiveHost(for: oldSpaceId) {
             // Another window still shows the leaving space: its runtime stays live there, and the

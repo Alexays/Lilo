@@ -470,7 +470,13 @@
     if (interactive) {
       const rect = e.currentTarget.getBoundingClientRect();
       hoverTabPreview(
-        { id: tab.id, title: displayTitle, url: tab.url ?? "", favicon: isTerminal ? "" : tab.faviconDataURL },
+        {
+          id: tab.id,
+          title: displayTitle,
+          url: tab.url ?? "",
+          favicon: isTerminal ? "" : tab.faviconDataURL,
+          glance: (tab.isPinned || tab.isBookmarked) && tab.kind === "web" && !!tab.url && !isActive,
+        },
         rect,
       );
     }

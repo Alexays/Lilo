@@ -134,6 +134,8 @@ export const tabActions = {
 	clearArchived: emitEmpty("clearArchivedTabs"),
 	requestPreview: (tabId: string): void => emit("requestTabPreview", { tabId }),
 	warm: (tabId: string): void => emit("warmTab", { tabId }),
+	showGlance: (tabId: string): void => emit("showTabGlance", { tabId }),
+	hideGlance: emitEmpty("hideTabGlance"),
 	findInPage: (query: string, options: { caseSensitive?: boolean } = {}): void =>
 		emit("findInPage", { query, ...options }),
 	findNext: emitEmpty("findNext"),

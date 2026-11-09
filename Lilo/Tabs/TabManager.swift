@@ -489,6 +489,11 @@ final class TabManager {
         }
     }
 
+    /// A warmed tab shown in the sidebar's hover card stays awake afterwards, as any tab the user looked at.
+    func keepWarmedTab(id: UUID) {
+        if warmedTab?.id == id { warmedTab = nil }
+    }
+
     private func sleepWarmedTab() {
         guard let (id, engine) = warmedTab else { return }
         warmedTab = nil

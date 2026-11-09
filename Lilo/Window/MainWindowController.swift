@@ -210,6 +210,8 @@ final class MainWindowController: NSWindowController {
     var terminalNotificationTexts: [UUID: (title: String, body: String)] = [:]
     /// Keeps a backgrounded call visible while the app is active: scaled dock in the sidebar.
     let tabDock = TabDockController()
+    /// A pinned tab's or a favorite's live page in the sidebar's hover card.
+    let tabGlance = TabGlanceController()
     let documentPiP = DocumentPiPController()
     /// The call tab asked for its PiP window on being left, until the window opens or the fallback runs.
     weak var awaitingDocumentPiP: WKWebViewTab?

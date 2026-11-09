@@ -91,6 +91,7 @@ extension MainWindowController {
             for id in lockedIds {
                 window.floatingTabPanel.dismiss(hosting: id)
                 if window.tabDock.engineId == id { window.tabDock.undock() }
+                if window.tabGlance.engineId == id { window.endTabGlance(notify: true) }
                 window.tabShareSessions.stop(sharing: id)
             }
         }
