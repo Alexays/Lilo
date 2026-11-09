@@ -1,0 +1,3 @@
+kind: Fixed
+body: The command bar no longer lists a tab whose title or address holds the typed letters scattered from the middle of a word, so typing "maps" no longer puts a GitHub pull requests tab above Google Maps from your history.
+time: 2026-11-09T19:48:03.265618+01:00

@@ -33,8 +33,11 @@ function matchRange(query: string, target: string, start: number, end: number): 
 	if (at >= 0) {
 		for (let qi = 0; qi < n; qi++) highlights[qi] = at + qi;
 	} else {
-		if (!isSubsequence(query, target, start, end)) return null;
-		for (let ti = start, qi = 0; qi < n; ti++) {
+		// A scattered match starts at a word start: "maps" never picks its "m" out of ".com".
+		let first = start;
+		while (first < end && (target[first] !== query[0] || (first > start && !WORD_SEPARATOR.test(target[first - 1])))) first++;
+		if (!isSubsequence(query, target, first, end)) return null;
+		for (let ti = first, qi = 0; qi < n; ti++) {
 			if (target[ti] === query[qi]) highlights[qi++] = ti;
 		}
 	}
