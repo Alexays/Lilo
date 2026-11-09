@@ -3,6 +3,7 @@
 import { deriveFolderColorVariables } from "../lib/sidebarTheme";
 import { getPageShell } from "./panels.svelte";
 import { isVerticalLayout } from "./tabLayout.svelte";
+import { getActiveTab } from "./tabs.svelte";
 
 export const FOLDER_COLORS = ["#5b7cff", "#5fd79a", "#ffcc57", "#ff8a5b", "#f06aa6", "#9b7cff", "#4ecdc4", "#8a9ba8"];
 
@@ -16,10 +17,12 @@ export function setThemeContext(sidebarBg: string, prefersDark: boolean, shellBg
 	context = { sidebarBg, prefersDark, shellBg };
 }
 
-/** The bar's color while a system screen covers the page, as a web page lends its own: none beside a vertical
- * sidebar, whose layout keeps the page's. */
+/** The bar's color while a system screen or a conversation covers the page, as a web page lends its own. A system
+ * screen gives none beside a vertical sidebar, whose layout keeps the page's. */
 export function shellBarColor(): string | undefined {
-	return getPageShell() && !isVerticalLayout() ? context.shellBg : undefined;
+	if (getPageShell()) return isVerticalLayout() ? undefined : context.shellBg;
+	// The conversation's background: `--bg-primary`, `--conversation-bg` in dark (global.css).
+	return getActiveTab()?.kind === "agent" ? (context.prefersDark ? "#1c1c1e" : "#ffffff") : undefined;
 }
 
 export function themeSidebarBackground(): string {

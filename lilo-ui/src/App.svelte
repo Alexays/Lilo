@@ -329,10 +329,11 @@
     scheduleSidebarBackgroundReport();
   });
 
+  // Derived apart so the active tab's other patches don't re-run the effect.
+  const barColor = $derived(shellBarColor());
   let sentBarColor: string | undefined;
   $effect(() => {
-    const color = shellBarColor();
-    if (color !== sentBarColor) chromeActions.setPageBarColor((sentBarColor = color));
+    if (barColor !== sentBarColor) chromeActions.setPageBarColor((sentBarColor = barColor));
   });
 
   // Mid-swipe the theme only switches at the midpoint, so the frame around the page takes the sidebar's color
