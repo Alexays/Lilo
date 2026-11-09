@@ -1983,6 +1983,9 @@
 		"No changes on this branch": "이 브랜치에 변경사항 없음",
 		"Nothing differs from %@.": "%@와 다른 내용이 없습니다.",
 		"Show Uncommitted Changes": "커밋하지 않은 변경사항 보기",
+		"Conversation": "대화",
+		"No changes in this conversation": "이 대화에서 변경된 내용이 없습니다",
+		"The project is as it was at the conversation's first prompt.": "프로젝트가 대화의 첫 프롬프트 때와 같습니다.",
 		"%@ files": {"one": "파일 %@개", "other": "파일 %@개"},
 		"against %@ from %@, uncommitted included": "%@와 비교, %@ 기준, 커밋하지 않은 변경사항 포함",
 		"Binary file, not shown": "바이너리 파일, 표시되지 않음",
@@ -2436,6 +2439,7 @@
 		"Choose": "선택",
 		"New Conversation": "새 대화",
 		"Screenshot of %@": "%@ 스크린샷",
+		"Selection from %@": "%@에서 선택한 내용",
 		"The agent stopped (code %d).": "에이전트가 중지되었습니다(코드 %d).",
 		"This agent is no longer in the ACP registry.": "이 에이전트는 더 이상 ACP 레지스트리에 없습니다.",
 		"The agent stopped.": "에이전트가 중지되었습니다.",
@@ -2614,6 +2618,8 @@
 		"conversation": {
 			"stop": "중지",
 			"mode": "모드",
+			"compact": "이 대화 압축",
+			"compactHint": "클릭하여 압축: 에이전트가 대화를 요약해 컨텍스트를 확보합니다.",
 			"context": "컨텍스트 {percent}% 사용",
 			"planSession": "세션 한도: {percent}% 사용, {time}에 초기화",
 			"planWeek": "주간 한도: {percent}% 사용, {time}에 초기화",
@@ -2625,13 +2631,10 @@
 				"one": "이전 항목 {count}개 보기",
 				"other": "이전 항목 {count}개 보기"
 			},
-			"queued": {
-				"one": "대기 중인 메시지 {count}개",
-				"other": "대기 중인 메시지 {count}개"
-			},
-			"queuedHint": "에이전트가 끝나면 전송됩니다. Cmd Return을 누르면 바로 보냅니다.",
 			"queuedTag": "대기 중",
+			"sendNow": "지금 보내기",
 			"thought": "생각",
+			"editPrompt": "편집",
 			"restoreToHere": "여기까지 복원",
 			"restoreConfirm": "프로젝트 파일을 이 메시지 시점으로 되돌릴까요?",
 			"restore": "복원",
@@ -2643,6 +2646,10 @@
 			},
 			"plan": "계획",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "{count}개 단계 완료",
+				"other": "{count}개 단계 완료"
+			},
 			"planStatus": {
 				"pending": "할 일",
 				"in_progress": "진행 중",
@@ -2659,7 +2666,8 @@
 			"moreOptions": "추가 옵션",
 			"signInHint": "에이전트로 로그인하세요. 로그인하면 메시지가 전송됩니다.",
 			"branch": "브랜치 {branch}",
-			"jumpToLatest": "최신으로 이동"
+			"jumpToLatest": "최신으로 이동",
+			"olderModels": "이전 모델"
 		},
 		"tool": {
 			"untitled": "도구 호출",
@@ -2750,7 +2758,10 @@
 			"allowAlways": "항상 허용",
 			"reject": "허용 안 함",
 			"rejectAlways": "항상 허용 안 함",
-			"more": "기타 응답"
+			"more": "기타 응답",
+			"submit": "답변",
+			"skip": "건너뛰기",
+			"skipped": "건너뜀"
 		},
 		"badge": {
 			"title": "에이전트",
@@ -2790,6 +2801,14 @@
 				"search": "검색함",
 				"fetch": "가져옴"
 			},
+			"verbActive": {
+				"read": "읽는 중",
+				"edit": "편집 중",
+				"delete": "삭제 중",
+				"move": "이동 중",
+				"search": "검색 중",
+				"fetch": "가져오는 중"
+			},
 			"summary": {
 				"read": {
 					"one": "파일 {count}개 읽음",
@@ -2819,6 +2838,10 @@
 					"one": "브라우저 {count}회 사용함",
 					"other": "브라우저 {count}회 사용함"
 				},
+				"browserOn": {
+					"one": "{site}에서 브라우저 {count}회 사용함",
+					"other": "{site}에서 브라우저 {count}회 사용함"
+				},
 				"tool": {
 					"one": "도구 {count}개 사용함",
 					"other": "도구 {count}개 사용함"
@@ -2827,6 +2850,54 @@
 					"one": "에이전트 {count}개 시작함",
 					"other": "에이전트 {count}개 시작함"
 				}
+			},
+			"browser": {
+				"closeTab": "탭을 닫음",
+				"open": "{url} 열기",
+				"openPage": "페이지를 열었습니다",
+				"search": "페이지를 검색했습니다",
+				"requestAny": "요청을 보냈습니다",
+				"back": "뒤로 이동함",
+				"forward": "앞으로 이동함",
+				"reload": "페이지를 새로 고침",
+				"screenshot": "스크린샷을 찍음",
+				"click": "페이지를 클릭함",
+				"clickOn": "\"{name}\" 클릭함",
+				"type": "\"{text}\" 입력함",
+				"key": "{keys} 누름",
+				"scroll": "페이지를 스크롤함",
+				"interact": "페이지를 사용함",
+				"read": "페이지를 읽음",
+				"find": "\"{query}\" 찾음",
+				"form": "필드를 채움",
+				"script": "페이지에서 스크립트를 실행함",
+				"batch": "브라우저 작업 여러 개를 실행함",
+				"waitFor": "페이지를 기다림",
+				"request": "{url}에 요청을 보냄"
+			},
+			"browserActive": {
+				"closeTab": "탭 닫는 중",
+				"open": "{url} 여는 중",
+				"openPage": "페이지 여는 중",
+				"search": "페이지 검색 중",
+				"requestAny": "요청 보내는 중",
+				"back": "뒤로 가는 중",
+				"forward": "앞으로 가는 중",
+				"reload": "페이지 새로고침 중",
+				"screenshot": "스크린샷 찍는 중",
+				"click": "페이지 클릭 중",
+				"clickOn": "\"{name}\" 클릭 중",
+				"type": "\"{text}\" 입력 중",
+				"key": "{keys} 누르는 중",
+				"scroll": "페이지 스크롤 중",
+				"interact": "페이지 사용 중",
+				"read": "페이지 읽는 중",
+				"find": "\"{query}\" 찾는 중",
+				"form": "필드 입력 중",
+				"script": "페이지에서 스크립트 실행 중",
+				"batch": "여러 브라우저 작업 실행 중",
+				"waitFor": "페이지 기다리는 중",
+				"request": "{url}에 요청 보내는 중"
 			},
 			"exit": "종료 코드 {code}",
 			"showAll": {
@@ -2859,6 +2930,7 @@
 		"markdown": {
 			"preview": "미리보기",
 			"openPreview": "미리보기를 탭에서 열기",
+			"openFile": "클릭하여 열기, ⌘-클릭하여 Finder에서 보기",
 			"view": "보기 방식",
 			"code": "코드",
 			"copy": "코드 복사",

@@ -1983,6 +1983,9 @@
 		"No changes on this branch": "No changes on this branch",
 		"Nothing differs from %@.": "Nothing differs from %@.",
 		"Show Uncommitted Changes": "Show Uncommitted Changes",
+		"Conversation": "Conversation",
+		"No changes in this conversation": "No changes in this conversation",
+		"The project is as it was at the conversation's first prompt.": "The project is as it was at the conversation's first prompt.",
 		"%@ files": {"one": "%@ file", "other": "%@ files"},
 		"against %@ from %@, uncommitted included": "against %@ from %@, uncommitted included",
 		"Binary file, not shown": "Binary file, not shown",
@@ -2436,6 +2439,7 @@
 		"Choose": "Choose",
 		"New Conversation": "New Conversation",
 		"Screenshot of %@": "Screenshot of %@",
+		"Selection from %@": "Selection from %@",
 		"The agent stopped (code %d).": "The agent stopped (code %d).",
 		"This agent is no longer in the ACP registry.": "This agent is no longer in the ACP registry.",
 		"The agent stopped.": "The agent stopped.",
@@ -2603,6 +2607,8 @@
 		"conversation": {
 			"stop": "Stop",
 			"mode": "Mode",
+			"compact": "compact this conversation",
+			"compactHint": "Click to compact: the agent summarizes the conversation to free its context.",
 			"context": "{percent}% of the context used",
 			"planSession": "Session limit: {percent}% used, resets {time}",
 			"planWeek": "Weekly limit: {percent}% used, resets {time}",
@@ -2614,13 +2620,10 @@
 				"one": "Show {count} earlier item",
 				"other": "Show {count} earlier items"
 			},
-			"queued": {
-				"one": "{count} message queued",
-				"other": "{count} messages queued"
-			},
-			"queuedHint": "Sent when the agent finishes. Cmd Return sends now.",
 			"queuedTag": "Queued",
+			"sendNow": "Send now",
 			"thought": "Thought",
+			"editPrompt": "Edit",
 			"restoreToHere": "Restore to here",
 			"restoreConfirm": "Put the project files back as they were at this message?",
 			"restore": "Restore",
@@ -2632,6 +2635,10 @@
 			},
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
+			"planDone": {
+				"one": "{count} step done",
+				"other": "{count} steps done"
+			},
 			"planStatus": {
 				"pending": "To do",
 				"in_progress": "In progress",
@@ -2648,7 +2655,8 @@
 			"moreOptions": "More options",
 			"signInHint": "Sign in with the agent: your message is sent once you are signed in.",
 			"branch": "Branch {branch}",
-			"jumpToLatest": "Jump to latest"
+			"jumpToLatest": "Jump to latest",
+			"olderModels": "Older models"
 		},
 		"tool": {
 			"untitled": "Tool call",
@@ -2739,7 +2747,10 @@
 			"allowAlways": "Always Allow",
 			"reject": "Don't Allow",
 			"rejectAlways": "Never Allow",
-			"more": "More Answers"
+			"more": "More Answers",
+			"submit": "Answer",
+			"skip": "Skip",
+			"skipped": "Skipped"
 		},
 		"badge": {
 			"title": "Agents",
@@ -2779,6 +2790,14 @@
 				"search": "Searched",
 				"fetch": "Fetched"
 			},
+			"verbActive": {
+				"read": "Reading",
+				"edit": "Editing",
+				"delete": "Deleting",
+				"move": "Moving",
+				"search": "Searching",
+				"fetch": "Fetching"
+			},
 			"summary": {
 				"read": {
 					"one": "read {count} file",
@@ -2808,6 +2827,10 @@
 					"one": "took {count} browser action",
 					"other": "took {count} browser actions"
 				},
+				"browserOn": {
+					"one": "took {count} browser action on {site}",
+					"other": "took {count} browser actions on {site}"
+				},
 				"tool": {
 					"one": "used {count} tool",
 					"other": "used {count} tools"
@@ -2816,6 +2839,54 @@
 					"one": "started {count} agent",
 					"other": "started {count} agents"
 				}
+			},
+			"browser": {
+				"closeTab": "Closed a tab",
+				"open": "Opened {url}",
+				"openPage": "Opened a page",
+				"search": "Searched the page",
+				"requestAny": "Sent a request",
+				"back": "Went back",
+				"forward": "Went forward",
+				"reload": "Reloaded the page",
+				"screenshot": "Took a screenshot",
+				"click": "Clicked on the page",
+				"clickOn": "Clicked \"{name}\"",
+				"type": "Typed \"{text}\"",
+				"key": "Pressed {keys}",
+				"scroll": "Scrolled the page",
+				"interact": "Used the page",
+				"read": "Read the page",
+				"find": "Looked for \"{query}\"",
+				"form": "Filled in a field",
+				"script": "Ran a script in the page",
+				"batch": "Ran several browser actions",
+				"waitFor": "Waited for the page",
+				"request": "Sent a request to {url}"
+			},
+			"browserActive": {
+				"closeTab": "Closing a tab",
+				"open": "Opening {url}",
+				"openPage": "Opening a page",
+				"search": "Searching the page",
+				"requestAny": "Sending a request",
+				"back": "Going back",
+				"forward": "Going forward",
+				"reload": "Reloading the page",
+				"screenshot": "Taking a screenshot",
+				"click": "Clicking on the page",
+				"clickOn": "Clicking \"{name}\"",
+				"type": "Typing \"{text}\"",
+				"key": "Pressing {keys}",
+				"scroll": "Scrolling the page",
+				"interact": "Using the page",
+				"read": "Reading the page",
+				"find": "Looking for \"{query}\"",
+				"form": "Filling in a field",
+				"script": "Running a script in the page",
+				"batch": "Running several browser actions",
+				"waitFor": "Waiting for the page",
+				"request": "Sending a request to {url}"
 			},
 			"exit": "Exit {code}",
 			"showAll": {
@@ -2848,6 +2919,7 @@
 		"markdown": {
 			"preview": "Preview",
 			"openPreview": "Open preview in a tab",
+			"openFile": "Click to open, ⌘-click to show in Finder",
 			"view": "View as",
 			"code": "Code",
 			"copy": "Copy code",

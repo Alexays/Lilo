@@ -219,6 +219,8 @@
     overflow-anchor: none;
     /* Rows revealed by keyboard or a scroll land below the pinned favorites, not under them. */
     scroll-padding-top: var(--favorites-pinned-height, 0px);
+    /* And above the bottom fade, where a row reads as dimmed. */
+    scroll-padding-bottom: 24px;
     /* `scroll` keeps the 4px scrollbar's gutter even with nothing to scroll (WebKit ignores
        scrollbar-gutter here); it comes out of the 8px right pad so rows never shift and stay symmetric. */
     --sidebar-right-pad: 4px;

@@ -1,0 +1,3 @@
+kind: Fixed
+body: In the composer's @ list, the project's files come right after open tabs and folders are capped like tabs, so a file match is never pushed out of view by folders with a similar name.
+time: 2026-11-09T02:27:56.868776+01:00

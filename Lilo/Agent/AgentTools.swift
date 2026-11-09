@@ -116,7 +116,8 @@ enum AgentTools {
             guard folderId != nil || !isolated.isEmpty else {
                 return [.text("No tab group exists yet. Call tabs_context_mcp with createIfEmpty: true, or tabs_create_mcp.")]
             }
-            var tabs = folderId.map { control.tabs(inFolder: $0, spaceId: space.id) } ?? []
+            // A conversation's own tab shares its folder with its pages, but is never one of them.
+            var tabs = folderId.map { control.tabs(inFolder: $0, spaceId: space.id).filter { $0.kind != .agent } } ?? []
             if tabs.isEmpty, isolated.isEmpty, create { tabs = [try control.createTab(inFolder: folderId, space: space, host: host)] }
             control.refreshControlledTabs()
             let entry = { (tab: Tab) -> [String: Any] in ["tabId": control.number(for: tab.id), "title": tab.title, "url": tab.url?.absoluteString ?? ""] }

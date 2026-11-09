@@ -1,0 +1,3 @@
+kind: Changed
+body: 'An agent''s browsing steps no longer list the empty tabs it opens or its look at its tab list: the page it opens next says it all.'
+time: 2026-11-08T21:36:58.325438+01:00

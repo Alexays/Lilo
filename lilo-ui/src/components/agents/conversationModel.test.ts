@@ -4,13 +4,16 @@ import test from "node:test";
 import {
   addNotice,
   addPermissionRequest,
+  addQuestion,
   addUserPrompt,
   applyUpdate,
   applyUpdates,
   diffStats,
   emptyConversation,
   endTurn,
+  questionFields,
   resolvePermission,
+  resolveQuestion,
   type SessionUpdate,
   type ToolCallItem,
 } from "./conversationModel";
@@ -108,6 +111,33 @@ test("tool calls stay in place as they complete, in any order", () => {
   assert.equal((state.items[0] as ToolCallItem).title, "renamed");
 });
 
+test("a slash command never becomes the conversation's title", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "session_info_update", title: "Fix the footer" },
+    { sessionUpdate: "session_info_update", title: "/compact" },
+  ]);
+  assert.equal(state.title, "Fix the footer");
+});
+
+test("Claude Code loading its deferred tools stays out of the thread", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "tool_call", toolCallId: "ts", title: "ToolSearch", kind: "other", status: "pending", _meta: { claudeCode: { toolName: "ToolSearch" } } },
+    { sessionUpdate: "tool_call_update", toolCallId: "ts", status: "completed" },
+    { sessionUpdate: "tool_call", toolCallId: "r1", title: "Read a", kind: "read", status: "completed" },
+  ]);
+  assert.deepEqual(state.items.map((item) => item.kind === "toolCall" && item.toolCallId), ["r1"]);
+});
+
+test("Lilo's empty new tab and tab listing stay out of the thread, the page opened next shows", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "tool_call", toolCallId: "ctx", title: "mcp__lilo__tabs_context_mcp", kind: "other", status: "completed" },
+    { sessionUpdate: "tool_call", toolCallId: "new", title: "mcp__lilo__tabs_create_mcp", kind: "other", status: "pending" },
+    { sessionUpdate: "tool_call_update", toolCallId: "new", status: "completed" },
+    { sessionUpdate: "tool_call", toolCallId: "nav", title: "mcp__lilo__navigate", kind: "other", status: "completed" },
+  ]);
+  assert.deepEqual(state.items.map((item) => item.kind === "toolCall" && item.toolCallId), ["nav"]);
+});
+
 test("a sub-agent's calls nest under the call that started it, and its own words stay out of the reply", () => {
   const child = { _meta: { claudeCode: { parentToolUseId: "task" } } };
   const state = applyUpdates(emptyConversation(), [
@@ -149,6 +179,45 @@ test("live updates time their calls and the turn; replayed ones do not", () => {
     null,
     { kind: "turnEnd", id: 3, stopReason: "cancelled", durationMs: null },
   ]);
+});
+
+test("a stop marks the call it cut off as stopped, never an earlier failure", () => {
+  const run = (calls: [string, number][], stopReason: string, at: number) => {
+    const state = addUserPrompt(emptyConversation(), "go", [], 1000);
+    for (const [id, end] of calls) {
+      applyUpdate(state, { sessionUpdate: "tool_call", toolCallId: id, title: id, kind: "execute", status: "in_progress" }, end - 500);
+      applyUpdate(state, { sessionUpdate: "tool_call_update", toolCallId: id, status: "failed" }, end);
+    }
+    endTurn(state, stopReason, at);
+    return state.items.filter((item): item is ToolCallItem => item.kind === "toolCall").map((call) => call.stopped);
+  };
+  assert.deepEqual(run([["a", 2000], ["b", 5000]], "cancelled", 5200), [false, true]);
+  assert.deepEqual(run([["a", 2000]], "cancelled", 9000), [false]);
+  assert.deepEqual(run([["a", 2000]], "end_turn", 2100), [false]);
+});
+
+test("prompts queued while a turn ran wait after its footer, and the first opens the next turn", () => {
+  const state = addUserPrompt(emptyConversation(), "first", [], 1000);
+  addUserPrompt(state, "second", [], 1200);
+  addUserPrompt(state, "third", [], 1300);
+  applyUpdate(state, agentText("working"), 2000);
+  endTurn(state, "end_turn", 3000);
+  const shape = () => state.items.map((item) => (item.kind === "user" ? `${item.text}${item.queued ? "?" : ""}` : item.kind));
+  assert.deepEqual(shape(), ["first", "agent", "turnEnd", "second", "third?"]);
+  applyUpdate(state, agentText("again"), 3500);
+  endTurn(state, "end_turn", 4000);
+  assert.deepEqual(shape(), ["first", "agent", "turnEnd", "second", "agent", "turnEnd", "third"]);
+
+  const midReply = addUserPrompt(emptyConversation(), "go", [], 1000);
+  applyUpdate(midReply, agentText("Hel"), 1100);
+  addUserPrompt(midReply, "next", [], 1150);
+  applyUpdate(midReply, agentText("lo"), 1200);
+  assert.deepEqual(midReply.items.flatMap((item) => (item.kind === "agent" ? [item.text] : [])), ["Hello"]);
+
+  const silent = addUserPrompt(emptyConversation(), "first", [], 1000);
+  addUserPrompt(silent, "queued", [], 1500);
+  endTurn(silent, "error", 2000);
+  assert.deepEqual(silent.items.map((item) => item.kind), ["user", "turnEnd", "user"]);
 });
 
 test("a turn starts with its first item, not with usage or command updates", () => {
@@ -324,4 +393,239 @@ test("tool call images are kept with the call and replaced with its content", ()
   assert.deepEqual(call.images, [{ src: "data:image/jpeg;base64,BBBB", alt: "Screenshot" }]);
   applyUpdate(state, { sessionUpdate: "tool_call_update", toolCallId: "s1", content: [] });
   assert.deepEqual(call.images, []);
+});
+
+test("an agent's question form reads as choices, several choices and typed answers", () => {
+  const fields = questionFields({
+    type: "object",
+    required: ["approach"],
+    properties: {
+      approach: { type: "string", title: "Approach", oneOf: [{ const: "a", title: "Rewrite", description: "Start over" }, { const: "b", title: "Patch" }] },
+      targets: { type: "array", items: { anyOf: [{ const: "web", title: "Web" }, { const: "mac", title: "Mac" }] } },
+      size: { type: "string", enum: ["s", "m"] },
+      note: { type: "string", title: "Other" },
+      count: { type: "integer" },
+      confirm: { type: "boolean", title: "Sure" },
+    },
+  });
+  assert.deepEqual(
+    fields.map((field) => [field.key, field.kind, field.options.map((option) => option.title), field.required]),
+    [
+      ["approach", "single", ["Rewrite", "Patch"], true],
+      ["confirm", "boolean", [], false],
+      ["count", "number", [], false],
+      ["note", "text", [], false],
+      ["size", "single", ["s", "m"], false],
+      ["targets", "multi", ["Web", "Mac"], false],
+    ],
+  );
+  assert.equal(fields[0].options[0].description, "Start over");
+});
+
+test("a question waits for its answer, then keeps it", () => {
+  const state = addQuestion(emptyConversation(), "q1", "Which one?", { type: "object", properties: { pick: { type: "string", enum: ["x"] } } });
+  const item = state.items[0];
+  assert.equal(item.kind === "question" && item.answer, null);
+  resolveQuestion(state, "q1", { action: "accept", content: { pick: "x" } });
+  // The call that asked leaves the thread: the question stands for it.
+  const asked = applyUpdates(emptyConversation(), [{ sessionUpdate: "tool_call", toolCallId: "t1", title: "Which one?", kind: "other", status: "pending" }]);
+  addQuestion(asked, "q2", "Which one?", {}, "t1");
+  assert.deepEqual(asked.items.map((entry) => entry.kind), ["question"]);
+  assert.deepEqual(item.kind === "question" && item.answer, { action: "accept", content: { pick: "x" } });
+});
+
+test("question fields come in natural key order, each companion after its question", () => {
+  const keys = questionFields({ properties: { question_1_custom: {}, question_10: {}, question_0: {}, question_1: {}, question_0_custom: {} } }).map((field) => field.key);
+  assert.deepEqual(keys, ["question_0", "question_0_custom", "question_1", "question_1_custom", "question_10"]);
+});
+
+// ACP v2
+
+const base64 = (text: string) => Buffer.from(text, "utf8").toString("base64");
+
+test("v2: the first tool_call_update creates the call, omitted fields keep, cancelled reads as failed", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "tool_call_update", toolCallId: "t1", title: "Read a.ts", kind: "read", status: "in_progress" },
+    { sessionUpdate: "tool_call_update", toolCallId: "t1", status: "cancelled" },
+  ]);
+  const call = state.items[0] as ToolCallItem;
+  assert.deepEqual([state.items.length, call.title, call.toolKind, call.status], [1, "Read a.ts", "read", "failed"]);
+});
+
+test("v2: Claude Code loading its deferred tools stays out of the thread, named on its first update", () => {
+  const state = applyUpdates(emptyConversation(), [{ sessionUpdate: "tool_call_update", toolCallId: "t1", name: "ToolSearch", title: "ToolSearch", status: "pending" }]);
+  assert.equal(state.items.length, 0);
+});
+
+test("v2: a command's terminal output streams in base64 into its call, and its exit sets the code", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "terminal_update", terminalId: "x", output: null },
+    { sessionUpdate: "tool_call_update", toolCallId: "t1", kind: "execute", status: "in_progress", content: [{ type: "terminal", terminalId: "x" }] },
+    { sessionUpdate: "terminal_output_chunk", terminalId: "x", data: base64("héllo ") },
+    { sessionUpdate: "terminal_output_chunk", terminalId: "x", data: base64("world") },
+    { sessionUpdate: "terminal_update", terminalId: "x", exitStatus: { exitCode: 2 } },
+  ]);
+  const call = state.items[0] as ToolCallItem;
+  assert.deepEqual([call.output, call.exitCode], ["héllo world", 2]);
+  applyUpdate(state, { sessionUpdate: "terminal_update", terminalId: "x", output: { data: base64("replaced") } });
+  assert.equal(call.output, "replaced");
+});
+
+test("v2: a call the agent reports done but lists in the background stays running until it leaves the list", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "tool_call_update", toolCallId: "bash", kind: "execute", status: "in_progress", content: [{ type: "terminal", terminalId: "bash" }] },
+    { sessionUpdate: "tool_call_update", toolCallId: "bash", status: "completed" },
+    { sessionUpdate: "state_update", state: "idle", stopReason: "end_turn", background: [{ type: "terminal", terminalId: "bash" }] },
+  ], 1000);
+  const call = state.items[0] as ToolCallItem;
+  assert.deepEqual([call.status, call.endedAt], ["in_progress", null]);
+  applyUpdate(state, { sessionUpdate: "tool_call_update", toolCallId: "bash", status: "completed" }, 1500);
+  assert.equal(call.status, "in_progress");
+  applyUpdate(state, { sessionUpdate: "state_update", state: "idle", background: [] }, 2000);
+  assert.deepEqual([call.status, call.endedAt], ["completed", 2000]);
+});
+
+test("v2: a background terminal's exit settles its call", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "tool_call_update", toolCallId: "bash", kind: "execute", status: "completed", content: [{ type: "terminal", terminalId: "bash" }] },
+    { sessionUpdate: "state_update", state: "running", background: [{ type: "terminal", terminalId: "bash" }] },
+    { sessionUpdate: "terminal_update", terminalId: "bash", exitStatus: { exitCode: null } },
+  ]);
+  assert.equal((state.items[0] as ToolCallItem).status, "completed");
+});
+
+test("v2: a turn the agent starts itself is timed from its running state", () => {
+  const state = emptyConversation();
+  applyUpdate(state, { sessionUpdate: "state_update", state: "running" }, 1000);
+  applyUpdate(state, agentText("Done."), 1200);
+  endTurn(state, "end_turn", 4000);
+  const end = state.items.at(-1);
+  assert.deepEqual([end?.kind, end?.kind === "turnEnd" && end.durationMs], ["turnEnd", 3000]);
+});
+
+test("v2: whole messages replace what their chunks drew, and the prompt's echo is not drawn again", () => {
+  const state = emptyConversation();
+  addUserPrompt(state, "Fix it", [], 1);
+  applyUpdates(state, [
+    { sessionUpdate: "state_update", state: "running" },
+    { sessionUpdate: "user_message", messageId: "u1", content: [{ type: "text", text: "Fix it" }] },
+    { sessionUpdate: "agent_message_chunk", messageId: "a1", content: { type: "text", text: "Wor" } },
+    { sessionUpdate: "agent_message", messageId: "a1", content: [{ type: "text", text: "Working on it." }] },
+  ]);
+  assert.deepEqual(
+    state.items.map((item) => [item.kind, (item as { text: string }).text, (item as { messageId: string | null }).messageId]),
+    [["user", "Fix it", "u1"], ["agent", "Working on it.", "a1"]],
+  );
+  applyUpdate(state, { sessionUpdate: "user_message", messageId: "u2", content: [{ type: "text", text: "Replayed" }] });
+  assert.equal((state.items.at(-1) as { text: string }).text, "Replayed");
+});
+
+test("v2: a diff's git patch gives the card both sides of each hunk and exact line counts", () => {
+  const patch = [
+    "diff --git a/src/a.ts b/src/a.ts",
+    "--- a/src/a.ts",
+    "+++ b/src/a.ts",
+    "@@ -1,3 +1,3 @@",
+    " keep",
+    "-old",
+    "+new",
+    "+more",
+    " tail",
+    "\\ No newline at end of file",
+    "diff --git a/src/b.ts b/src/b.ts",
+    "--- /dev/null",
+    "+++ b/src/b.ts",
+    "@@ -0,0 +1 @@",
+    "+created",
+  ].join("\n");
+  const state = applyUpdates(emptyConversation(), [
+    {
+      sessionUpdate: "tool_call_update",
+      toolCallId: "e1",
+      kind: "edit",
+      content: [{ type: "diff", changes: [{ operation: "modify", path: "/p/src/a.ts" }, { operation: "add", path: "/p/src/b.ts" }], patch: { format: "git_patch", text: patch } }],
+    },
+  ]);
+  assert.deepEqual((state.items[0] as ToolCallItem).diffs, [
+    { path: "/p/src/a.ts", oldText: "keep\nold\ntail\n", newText: "keep\nnew\nmore\ntail\n", added: 2, removed: 1 },
+    { path: "/p/src/b.ts", oldText: null, newText: "created\n", added: 1, removed: 0 },
+  ]);
+});
+
+test("v2: a diff without a patch still names its files", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "tool_call_update", toolCallId: "e1", content: [{ type: "diff", changes: [{ operation: "delete", path: "/p/gone.ts" }] }] },
+  ]);
+  assert.deepEqual((state.items[0] as ToolCallItem).diffs.map((diff) => diff.path), ["/p/gone.ts"]);
+});
+
+test("v2: tool call content chunks add to the call's content", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "tool_call_update", toolCallId: "t1", content: [{ type: "content", content: { type: "text", text: "a" } }] },
+    { sessionUpdate: "tool_call_content_chunk", toolCallId: "t1", content: { type: "content", content: { type: "text", text: "b" } } },
+  ]);
+  assert.equal((state.items[0] as ToolCallItem).output, "a\nb");
+});
+
+test("v2: plan_update replaces the plan like plan did", () => {
+  const entries = [{ content: "Step", priority: "high" as const, status: "pending" as const }];
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "plan_update", plan: { type: "items", planId: "plan", entries } },
+    { sessionUpdate: "plan_update", plan: { type: "items", planId: "plan", entries: [{ ...entries[0], status: "completed" }] } },
+  ]);
+  assert.equal(state.items.length, 1);
+  assert.equal(state.plan?.entries[0].status, "completed");
+  applyUpdate(state, { sessionUpdate: "plan_removed" });
+  assert.deepEqual([state.items.length, state.plan], [0, null]);
+});
+
+test("v2: a sub-agent's session nests as a sub-agent call with its calls and report, its words and usage stay out", () => {
+  const state = applyUpdates(emptyConversation(), [
+    { sessionUpdate: "usage_update", used: 10, size: 100 },
+    { sessionUpdate: "subagent_update", sessionId: "child", title: "Find the bug", description: "Explore", state: { state: "running" } },
+    { sessionUpdate: "tool_call_update", toolCallId: "c1", title: "Read a.ts", kind: "read", status: "completed", childSession: "child" },
+    { sessionUpdate: "agent_message_chunk", messageId: "m", content: { type: "text", text: "thinking aloud" }, childSession: "child" },
+    { sessionUpdate: "usage_update", used: 90, size: 100, childSession: "child" },
+    { sessionUpdate: "session_message", messageId: "launch:reply", senderSessionId: "child", recipientSessionId: "root", content: [{ type: "text", text: "Found it." }] },
+    { sessionUpdate: "state_update", state: "idle", stopReason: "end_turn", childSession: "child" },
+  ]);
+  assert.equal(state.items.length, 1);
+  const call = state.items[0] as ToolCallItem;
+  assert.deepEqual(
+    [call.title, call.rawInput, call.children.map((child) => child.title), call.output, call.status, state.usage?.used],
+    ["Find the bug", { subagent_type: "Explore", description: "Find the bug" }, ["Read a.ts"], "Found it.", "completed", 10],
+  );
+});
+
+test("v2: config options read configId as id and flatten grouped values", () => {
+  const state = applyUpdates(emptyConversation(), [
+    {
+      sessionUpdate: "config_option_update",
+      configOptions: [
+        { configId: "model", name: "Model", category: "model", currentValue: "a", options: [{ groupId: "g", name: "G", options: [{ value: "a", name: "A" }, { value: "b", name: "B" }] }] },
+      ] as never,
+    },
+  ]);
+  assert.deepEqual([state.configOptions[0].id, state.configOptions[0].options.map((option) => option.value)], ["model", ["a", "b"]]);
+});
+
+test("v2: a turn the agent started keeps its duration when the thread is replayed from disk", async () => {
+  const { openConversation } = await import("./conversationThread");
+  const conversation = openConversation(
+    {
+      tabId: "t",
+      agentId: "a",
+      cwd: "/",
+      checkpoints: [],
+      updates: [
+        { sessionUpdate: "state_update", state: "running", background: [], at: 1000 },
+        agentText("Finished."),
+        { sessionUpdate: "state_update", state: "idle", background: [] },
+        { sessionUpdate: "lilo_turn_end", stopReason: "end_turn", at: 4000 },
+      ],
+    } as never,
+    [],
+  );
+  const end = conversation.thread.items.at(-1);
+  assert.deepEqual([end?.kind, end?.kind === "turnEnd" && end.durationMs], ["turnEnd", 3000]);
 });

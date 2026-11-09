@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Agents: a page the agent opens shows under its conversation in the sidebar, instead of loading inside the conversation''s own tab.'
+time: 2026-11-08T23:32:30.012589+01:00

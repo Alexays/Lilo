@@ -380,7 +380,7 @@ final class TabBridgeHandler: BridgeHandler {
             windowController?.showNextWaitingTerminal(nil)
 
         case "showChanges":
-            if let id = message.uuid("tabId") { windowController?.showChanges(forTerminal: id) } else { windowController?.showChanges(nil) }
+            if let id = message.uuid("tabId") { windowController?.showChanges(for: id) } else { windowController?.showChanges(nil) }
 
         case "splitURL":
             if let url = message.string("url").flatMap(URL.init(string:)), url.scheme == "http" || url.scheme == "https",

@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Agents: a browser step still running reads in the present tense (Reading the page), and a wait reads as one instead of Used the page.'
+time: 2026-11-08T22:58:22.80599+01:00

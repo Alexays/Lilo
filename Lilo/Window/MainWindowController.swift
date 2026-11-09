@@ -202,8 +202,8 @@ final class MainWindowController: NSWindowController {
     /// The extension side panel docked right of the content.
     lazy var sidePanel = SidePanelController(window: self)
     /// The Changes peek over a terminal, if one is open.
-    var changesPeek: (terminalId: UUID, peek: PagePeekView, view: ChangesView)?
-    var changesPeekClosedByClick: (terminalId: UUID, time: TimeInterval)?
+    var changesPeek: (tabId: UUID, peek: PagePeekView, view: ChangesView)?
+    var changesPeekClosedByClick: (tabId: UUID, time: TimeInterval)?
     /// Terminals whose "waiting for you" notification goes out on the next pass, and the text a
     /// program sent with its own notification, used as the body when the screen shows no question.
     var terminalAttentionPending = Set<UUID>()
@@ -712,7 +712,7 @@ extension MainWindowController: TabManager.Delegate {
             sidePanel.activeTabDidChange()
             // Focusing a split pane shows no new view: the bar follows the active tab here.
             syncPageBar()
-            if let changesPeek, changesPeek.terminalId != id { dismissChangesPeek() }
+            if let changesPeek, changesPeek.tabId != id { dismissChangesPeek() }
         }
         let announcedByCommand = activationAnnouncedByCommand == id
         activationAnnouncedByCommand = nil

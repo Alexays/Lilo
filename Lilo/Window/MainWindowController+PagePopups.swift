@@ -129,9 +129,10 @@ extension MainWindowController {
     }
 
     /// The opener is a tab of this space that is not already a pane: a split never grows a third one.
+    /// Splits cannot nest, so a tab in a folder (a split, a conversation) would leave it for good.
     func canSplit(beside tabId: UUID) -> Bool {
         guard let opener = tabManager.context(for: tabId) else { return false }
-        return tabManager.browserStateStore?.space(id: opener.spaceId)?.spaceTab.splitGroup(containing: tabId) == nil
+        return tabManager.browserStateStore?.space(id: opener.spaceId)?.spaceTab.index.parentFolderId(for: tabId) == nil
     }
 
     /// The popup's live page becomes a tab right after its opener, in the opener's folder, or a pane

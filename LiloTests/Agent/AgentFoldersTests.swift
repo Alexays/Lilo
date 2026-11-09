@@ -360,6 +360,33 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertTrue(engine.view.window === other)
     }
 
+    func testAConversationsAgentNeverDrivesTheConversationsOwnTab() async throws {
+        let folder = TabFolder(spaceId: space.id, name: "Conversation", color: "#795ceb")
+        let agentTab = Tab(title: "Conversation", spaceId: space.id, kind: .agent, cwd: NSTemporaryDirectory(), agentId: "test-agent")
+        _ = try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
+        _ = try window.applyBrowserCommand(.createTab(spaceId: space.id, tab: agentTab, activate: false))
+        _ = try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: space.id, kind: .tab, itemId: agentTab.id, parentFolderId: folder.id, section: .unpinned, insert: .index(0)
+        ))
+        let session = try XCTUnwrap(control.sessions.first)
+        session.conversationSpaceId = space.id
+        session.conversationTabId = agentTab.id
+        session.folders[nil] = folder.id
+        let conversationNumber = control.number(for: agentTab.id)
+
+        let reply = await client.callTool("tabs_context_mcp", ["createIfEmpty": true])
+
+        XCTAssertFalse(reply.isError, reply.text)
+        let listed = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(reply.text.utf8)) as? [String: Any])
+        let numbers = (listed["availableTabs"] as? [[String: Any]] ?? []).compactMap { $0["tabId"] as? Int }
+        XCTAssertEqual(numbers.count, 1)
+        XCTAssertFalse(numbers.contains(conversationNumber), "the conversation is not one of its pages")
+        let pages = control.tabs(inFolder: folder.id, spaceId: space.id).filter { $0.kind == .web }
+        XCTAssertEqual(pages.count, 1, "a page of its own opens under the conversation")
+        let navigate = await client.callTool("navigate", ["tabId": conversationNumber, "url": "about:blank"])
+        XCTAssertTrue(navigate.isError, "the conversation's tab never loads a page")
+    }
+
     func testAConversationsAgentOpensItsTabsWhereTheConversationMoved() async throws {
         let first = TabFolder(spaceId: space.id, name: "Before", color: "#795ceb")
         let moved = TabFolder(spaceId: space.id, name: "After", color: "#795ceb")

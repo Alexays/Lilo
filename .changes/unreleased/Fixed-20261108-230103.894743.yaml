@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Agents: a command''s output sits on the same neutral gray as code blocks instead of the Space''s tint, and starts on its first line of text.'
+time: 2026-11-08T23:01:03.894743+01:00

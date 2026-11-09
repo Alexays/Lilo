@@ -9,6 +9,7 @@
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import Icon from "../ui/Icon.svelte";
+  import { clearThreadFind, findInThread, threadRoots } from "../agents/threadFind";
 
   type FindStatus = "idle" | "found" | "not-found";
 
@@ -23,6 +24,7 @@
   let currentActiveSpaceId = "";
   let currentActiveTabId = "";
   let searchTimer: ReturnType<typeof setTimeout> | undefined;
+  let threadMatch = 0;
 
   const canNavigate = $derived(
     hasSearched && status === "found" && query.trim().length > 0,
@@ -44,6 +46,15 @@
       hasSearched = true;
     });
     // As in Chrome, a new document ends the search of the old one, which a find bar opened during the load only forgets.
+    const offStep = on("findStep", (data) => {
+      if (!query.trim()) return;
+      if (!visible) {
+        visible = true;
+        focusInput();
+      }
+      if (lastSearchedQuery !== query || searchTimer !== undefined) search();
+      else findInConversation(data.forward ? 1 : -1);
+    });
     const offCommitted = on("findPageCommitted", (data) => {
       if (!visible) return;
       if (data.closeFindBar) {
@@ -65,6 +76,7 @@
       offToggle();
       offResult();
       offCommitted();
+      offStep();
       offInitialState();
       offSidebar();
     };
@@ -95,6 +107,18 @@
     });
   }
 
+  // A conversation's thread is searched here, each step afresh so text streamed in since is found too.
+  function findInConversation(step: number): boolean {
+    const root = threadRoots.get(currentActiveTabId);
+    if (!root) return false;
+    const result = findInThread(root, query, caseSensitive, threadMatch + step);
+    threadMatch = result.index;
+    status = result.count ? "found" : "not-found";
+    match = result.count ? { index: result.index + 1, count: result.count } : undefined;
+    hasSearched = true;
+    return true;
+  }
+
   function clearResult() {
     status = "idle";
     hasSearched = false;
@@ -108,6 +132,7 @@
     visible = false;
     clearResult();
     lastSearchedQuery = "";
+    clearThreadFind();
     tabActions.dismissFind();
     postMessage("focusPage");
   }
@@ -117,12 +142,16 @@
     clearTimeout(searchTimer);
     searchTimer = undefined;
     if (query.trim()) {
-      if (query !== lastSearchedQuery) clearResult();
+      if (query !== lastSearchedQuery) {
+        clearResult();
+        threadMatch = 0;
+      }
       lastSearchedQuery = query;
-      tabActions.findInPage(query, { caseSensitive });
+      if (!findInConversation(0)) tabActions.findInPage(query, { caseSensitive });
     } else {
       clearResult();
       lastSearchedQuery = "";
+      clearThreadFind();
       tabActions.dismissFind();
     }
   }
@@ -139,7 +168,7 @@
       search();
       return;
     }
-    if (!canNavigate) return;
+    if (!canNavigate || findInConversation(1)) return;
     tabActions.findNext();
   }
 
@@ -148,7 +177,7 @@
       search();
       return;
     }
-    if (!canNavigate) return;
+    if (!canNavigate || findInConversation(-1)) return;
     tabActions.findPrevious();
   }
 

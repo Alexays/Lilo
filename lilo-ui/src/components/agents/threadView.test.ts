@@ -1,19 +1,35 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatDuration, imageSource, lineDiff, parseInline, parseMarkdown, type MarkdownParse } from "./threadView";
+import { codeTokens, formatDuration, imageSource, lineDiff, parseInline, parseMarkdown, type MarkdownParse } from "./threadView";
 
 test("inline markdown splits code, emphasis and links", () => {
   assert.deepEqual(parseInline("Run `npm test` then **check** the *logs* at https://example.com/a."), [
     { type: "text", text: "Run " },
     { type: "code", text: "npm test" },
     { type: "text", text: " then " },
-    { type: "strong", text: "check" },
+    { type: "strong", inline: [{ type: "text", text: "check" }] },
     { type: "text", text: " the " },
-    { type: "em", text: "logs" },
+    { type: "em", inline: [{ type: "text", text: "logs" }] },
     { type: "text", text: " at " },
     { type: "link", text: "https://example.com/a", href: "https://example.com/a" },
     { type: "text", text: "." },
+  ]);
+});
+
+test("emphasis holds code and links", () => {
+  assert.deepEqual(parseInline("**`index.html`:** see *[docs](https://example.com)*"), [
+    { type: "strong", inline: [{ type: "code", text: "index.html" }, { type: "text", text: ":" }] },
+    { type: "text", text: " see " },
+    { type: "em", inline: [{ type: "link", text: "docs", href: "https://example.com" }] },
+  ]);
+});
+
+test("hex colours in prose, never issue numbers", () => {
+  assert.deepEqual(parseInline("Use #5B5BD6, not #123456 or #fed"), [
+    { type: "text", text: "Use " },
+    { type: "color", text: "#5B5BD6" },
+    { type: "text", text: ", not #123456 or #fed" },
   ]);
 });
 
@@ -30,7 +46,10 @@ test("blocks: paragraphs, headings, lists, quotes and fenced code", () => {
   assert.deepEqual(blocks[2], {
     type: "list",
     ordered: false,
-    items: [[{ type: "text", text: "one" }], [{ type: "text", text: "two wrapped" }]],
+    items: [
+      { inline: [{ type: "text", text: "one" }], lists: [] },
+      { inline: [{ type: "text", text: "two wrapped" }], lists: [] },
+    ],
   });
   assert.deepEqual(blocks[5], { type: "code", lang: "ts", text: "const a = 1;" });
 });
@@ -100,6 +119,11 @@ test("bare file paths become path chips, URLs and prose stay as they are", () =>
     { type: "text", text: "and/or 1/2.5 at " },
     { type: "link", text: "https://example.com/a/b.ts", href: "https://example.com/a/b.ts" },
   ]);
+  assert.deepEqual(parseInline("Title (faq.html:6), at 10:30 on v1.2"), [
+    { type: "text", text: "Title (" },
+    { type: "path", text: "faq.html:6" },
+    { type: "text", text: "), at 10:30 on v1.2" },
+  ]);
 });
 
 test("durations read in whole seconds, then minutes, then hours", () => {
@@ -128,4 +152,96 @@ test("image sources: local files go through Lilo, remote ones stay links", () =>
   assert.deepEqual(imageSource("data:image/png;base64,AAAA", ""), { type: "image", src: "data:image/png;base64,AAAA" });
   assert.deepEqual(imageSource("https://example.com/a.png", ""), { type: "remote", href: "https://example.com/a.png", host: "example.com" });
   assert.deepEqual([imageSource("notes.md", "/p"), imageSource("a.png", ""), imageSource("javascript:alert(1)", "/p")], [null, null, null]);
+});
+
+test("code tokens color keywords, strings, comments, numbers and types, and leave unknown languages plain", () => {
+  const kinds = (code: string, lang: string) => codeTokens(code, lang)?.filter((token) => token.kind).map((token) => `${token.kind}:${token.text}`);
+  assert.deepEqual(kinds('const map = new Map<HTMLElement>(MAX); // "note"\nlet n = 0x1F + 2.5e3;', "ts"), [
+    "keyword:const", "keyword:new", "type:Map", "type:HTMLElement", 'comment:// "note"', "keyword:let", "number:0x1F", "number:2.5e3",
+  ]);
+  assert.deepEqual(kinds("fn f<'a>(s: &'a str) -> String { \"x\".into() }", "rust"), ["keyword:fn", "type:String", 'string:"x"']);
+  assert.deepEqual(kinds("echo $# items # count\nif [ -f a ]; then", "sh"), ["comment:# count", "keyword:if", "keyword:then"]);
+  assert.deepEqual(kinds("SELECT id FROM users WHERE id = 1", "sql"), ["keyword:SELECT", "keyword:FROM", "keyword:WHERE", "number:1"]);
+  assert.equal(codeTokens("<p>hi</p>", "html"), null);
+  assert.equal(codeTokens("a\n  b", "ts")?.map((token) => token.text).join(""), "a\n  b");
+});
+
+test("a list item opening on a box is a task, checked or not", () => {
+  const { blocks } = parseMarkdown("- [ ] write `a.ts`\n- [x] ship\n- [link](https://example.com)");
+  assert.deepEqual(blocks[0], {
+    type: "list",
+    ordered: false,
+    items: [
+      { inline: [{ type: "task", checked: false }, { type: "text", text: "write " }, { type: "code", text: "a.ts" }], lists: [] },
+      { inline: [{ type: "task", checked: true }, { type: "text", text: "ship" }], lists: [] },
+      { inline: [{ type: "link", text: "link", href: "https://example.com" }], lists: [] },
+    ],
+  });
+});
+
+test("an indented item nests under the one above it, of either kind, and the outer list carries on after it", () => {
+  const { blocks } = parseMarkdown("1. Frontend\n   - UI\n     wrapped\n   - State\n2. Backend\n\t* API\n- after");
+  const item = (text: string, lists: unknown[] = []) => ({ inline: [{ type: "text", text }], lists });
+  assert.deepEqual(blocks, [
+    {
+      type: "list",
+      ordered: true,
+      items: [
+        item("Frontend", [{ type: "list", ordered: false, items: [item("UI wrapped"), item("State")] }]),
+        item("Backend", [{ type: "list", ordered: false, items: [item("API")] }]),
+      ],
+    },
+    { type: "list", ordered: false, items: [item("after")] },
+  ]);
+});
+
+test("an ordered list starts at its first number, so steps split by code blocks count on", () => {
+  const { blocks } = parseMarkdown("1. Create\n```bash\nnpm create vite\n```\n2. Install\n- 0. zero");
+  assert.deepEqual(
+    blocks.map((block) => (block.type === "list" ? [block.ordered, block.start] : block.type)),
+    [[true, undefined], "code", [true, 2], [false, undefined]],
+  );
+});
+
+test("a line of three dashes, stars or underscores is a rule; ~~text~~ is struck through", () => {
+  const { blocks } = parseMarkdown("Intro\n---\n* * *\n___\nWas ~~**old**~~ now\n- item");
+  assert.deepEqual(blocks.slice(0, 4), [
+    { type: "p", inline: [{ type: "text", text: "Intro" }] },
+    { type: "rule" },
+    { type: "rule" },
+    { type: "rule" },
+  ]);
+  assert.deepEqual(blocks[4], {
+    type: "p",
+    inline: [
+      { type: "text", text: "Was " },
+      { type: "del", inline: [{ type: "strong", inline: [{ type: "text", text: "old" }] }] },
+      { type: "text", text: " now" },
+    ],
+  });
+  assert.equal(blocks[5].type, "list");
+});
+
+test("a fence indented into a list item takes its indent off its lines, never more, and nests under it", () => {
+  const { blocks } = parseMarkdown("1. Add\n   ```bash\n   git remote -v\n     nested\n  short\n   ```\n2. Done");
+  assert.deepEqual(blocks[1], { type: "code", lang: "bash", text: "git remote -v\n  nested\nshort", nested: true });
+  assert.deepEqual(blocks[2].type === "list" && blocks[2].start, 2);
+  assert.deepEqual(parseMarkdown("Intro\n   ```\nx\n```").blocks[1], { type: "code", lang: "", text: "x" });
+});
+
+test("a <kbd> tag is a key, never raw markup", () => {
+  assert.deepEqual(parseInline("Press <kbd>Cmd</kbd>+<kbd>K</kbd>"), [
+    { type: "text", text: "Press " },
+    { type: "kbd", text: "Cmd" },
+    { type: "text", text: "+" },
+    { type: "kbd", text: "K" },
+  ]);
+});
+
+test("a footnote reference is a ref, its definition line a note", () => {
+  const { blocks } = parseMarkdown("Attached here[^1].\n\n[^1]: The **source**.");
+  assert.deepEqual(blocks, [
+    { type: "p", inline: [{ type: "text", text: "Attached here" }, { type: "ref", text: "1" }, { type: "text", text: "." }] },
+    { type: "note", id: "1", inline: [{ type: "text", text: "The " }, { type: "strong", inline: [{ type: "text", text: "source" }] }, { type: "text", text: "." }] },
+  ]);
 });

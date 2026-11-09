@@ -1,0 +1,3 @@
+kind: Changed
+body: A new agent conversation starts on the model and options last picked for that agent; the mode is still picked per conversation.
+time: 2026-11-08T22:02:46.746874+01:00

@@ -75,7 +75,10 @@ enum AgentMCP {
         case "ping":
             return result(id: id, [:])
         case "tools/list":
-            return result(id: id, ["tools": AgentTools.definitions])
+            // A conversation's agent drives the Lilo it runs in: the browser pickers, kept for agents used to them, only cost it tokens.
+            let tools = session.conversationTabId == nil ? AgentTools.definitions
+                : AgentTools.definitions.filter { !AgentInteractionTools.browserPickers.contains($0["name"] as? String ?? "") }
+            return result(id: id, ["tools": tools])
         case "tools/call":
             // Queued behind a freeze, a request whose client cancelled it or left does nothing.
             guard !Task.isCancelled else { return nil }

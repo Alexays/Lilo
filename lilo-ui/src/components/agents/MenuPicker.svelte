@@ -146,7 +146,7 @@
       {/if}
       {@const checked = option.checked ?? option.value === value}
       <button type="button" class="float-row item" role="menuitemradio" aria-checked={checked} onclick={() => choose(option)}>
-        <span class="glyph">{@render glyph(option)}</span>
+        {#if option.logo || option.agentId || option.icon}<span class="glyph">{@render glyph(option)}</span>{/if}
         <span class="text">
           <span class="name">{option.label}</span>
           {#if option.detail}<span class="detail">{option.detail}</span>{/if}
@@ -264,10 +264,9 @@
     font-size: var(--font-size-md);
   }
 
+  /* Wraps rather than truncates: a cut-off description hides what the choice does. */
   .detail {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    text-wrap: pretty;
     color: var(--float-text-muted);
     font-size: var(--font-size-xs);
   }

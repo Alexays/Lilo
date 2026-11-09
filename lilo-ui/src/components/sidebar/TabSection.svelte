@@ -544,7 +544,8 @@
       if (entry.kind !== "folder") continue;
       const folder = foldersById.get(entry.id);
       if (!folder || folder.splitLayout || folder.isCollapsed || folder.isSplit) continue;
-      const height = openFolderHeight(entry.id) + (getConversationTab(entry.id, spaceId) ? 0 : VIRTUAL_FOLDER_INSET);
+      const pageless = getConversationTab(entry.id, spaceId) && visibleChildren(entry.id).length === 0;
+      const height = openFolderHeight(entry.id) + (pageless ? 0 : VIRTUAL_FOLDER_INSET);
       heights.set(entry.id, height);
       if (lastExpandedFolderHeights.get(entry.id) !== height) changed = true;
     }
@@ -1034,16 +1035,38 @@
     if (!next) return;
     event.preventDefault();
     next.focus({ preventScroll: true });
-    // Only the Space's own list scrolls: scrollIntoView would also nudge the pager under it.
-    const scroller = next.closest<HTMLElement>(".space-scroll");
-    if (!scroller) return;
-    const rowRect = next.getBoundingClientRect();
-    const viewRect = scroller.getBoundingClientRect();
-    // The pinned favorites cover the top of the scroller: a row goes no higher than their edge.
-    const viewTop = viewRect.top + (parseFloat(getComputedStyle(scroller).scrollPaddingTop) || 0);
-    if (rowRect.top < viewTop) scroller.scrollTop += rowRect.top - viewTop;
-    else if (rowRect.bottom > viewRect.bottom) scroller.scrollTop += rowRect.bottom - viewRect.bottom;
+    scrollRowIntoView(next);
   }
+
+  function scrollRowIntoView(row: HTMLElement): void {
+    // Only the Space's own list scrolls: scrollIntoView would also nudge the pager under it.
+    const scroller = row.closest<HTMLElement>(".space-scroll");
+    if (!scroller) return;
+    const rowRect = row.getBoundingClientRect();
+    const viewRect = scroller.getBoundingClientRect();
+    const style = getComputedStyle(scroller);
+    // The pinned favorites cover the top and a fade the bottom: a row stays between the scroll paddings.
+    const viewTop = viewRect.top + (parseFloat(style.scrollPaddingTop) || 0);
+    const viewBottom = viewRect.bottom - (parseFloat(style.scrollPaddingBottom) || 0);
+    if (rowRect.top < viewTop) scroller.scrollTop += rowRect.top - viewTop;
+    else if (rowRect.bottom > viewBottom) scroller.scrollTop += rowRect.bottom - viewBottom;
+  }
+
+  // A tab that becomes active out of sight, a new conversation at the end of the list first, scrolls into view.
+  // Its row can land after the activation, so the root items re-run this until the row is there;
+  // the active row is always mounted, and one inside a closed folder has no box and stays put.
+  let revealedTabId: string | null = null;
+  $effect(() => {
+    const id = activeTabId;
+    void rootItems;
+    if (isPinned || !id || id === revealedTabId) return;
+    void tick().then(() => {
+      const row = tabListBodyEl?.querySelector<HTMLElement>("[role=treeitem][aria-selected=true]");
+      if (!row || row.getClientRects().length === 0) return;
+      revealedTabId = id;
+      scrollRowIntoView(row);
+    });
+  });
 
   // Reused while a folder's visible children stay the same: a new item array on every tab patch would re-run the
   // folder's animated each, a FLIP measure of every child row in each expanded folder.
@@ -1162,7 +1185,7 @@
 
   <div
     class="folder-drop-zone"
-    class:conversation={!!conversation}
+    class:pageless={!!conversation && children.length === 0}
     use:dndZone={{
       id: folderZone(folder.id).id,
       axis: "vertical",
@@ -1192,6 +1215,7 @@
           tab={conversation}
           pageCount={children.length}
           isActive={conversation.id === activeTabId}
+          containsActive={conversation.id !== activeTabId && folderHolds(folder.id, activeTabId)}
           interactive={interactive && shown}
           {level}
           tabStop={folder.id === tabStopId}
@@ -1234,7 +1258,6 @@
         {#if shouldRenderFolderContents(folder)}
           <div
             class="folder-contents"
-            class:conversation-contents={!!conversation}
             role="group"
             class:drag-active={dragActive}
             class:is-empty={childZoneEntries.length === 0}
@@ -1259,7 +1282,7 @@
                       onDropOutsideWindow: moveTabOutOfWindow,
                     }}
                   >
-                    {@render folderChild(row.item, level, level === 1 && !conversation, childrenShown, row.top)}
+                    {@render folderChild(row.item, level, level === 1, childrenShown, row.top)}
                   </div>
                 {/if}
               {/each}
@@ -1280,7 +1303,7 @@
                     onDropOutsideWindow: moveTabOutOfWindow,
                   }}
                 >
-                  {@render folderChild(childEntry, level, level === 1 && !conversation, childrenShown)}
+                  {@render folderChild(childEntry, level, level === 1, childrenShown)}
                 </div>
               {/each}
             {:else}
@@ -1301,7 +1324,7 @@
                     onDropOutsideWindow: moveTabOutOfWindow,
                   }}
                 >
-                  {@render folderChild(childEntry, level, level === 1 && !conversation, childrenShown)}
+                  {@render folderChild(childEntry, level, level === 1, childrenShown)}
                 </div>
               {/each}
             {/if}
@@ -2056,25 +2079,15 @@
   }
 
   /* The tinted block holds its rows 4px in from its edges; the head and first-level rows take the left one themselves. */
-  .folder-open-rail:not(.indented-tab-wrapper) > .folder-drop-zone:not(.conversation) > .folder-contents-shell > .folder-contents-clip > .folder-contents {
+  .folder-open-rail:not(.indented-tab-wrapper) > .folder-drop-zone:not(.pageless) > .folder-contents-shell > .folder-contents-clip > .folder-contents {
     padding-right: 4px;
     padding-bottom: 4px;
   }
 
+  /* A conversation with no page yet is one row, not a block. */
   .indented-tab-wrapper.folder-open-rail > .folder-drop-zone,
-  .folder-open-rail > .folder-drop-zone.conversation {
+  .folder-open-rail > .folder-drop-zone.pageless {
     background: none;
-  }
-
-  /* A conversation's pages hang on one straight violet rail under the agent's tile. */
-  .folder-open-rail .conversation-contents > .child-tab-wrapper::before {
-    content: "";
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    border-left: 2px solid color-mix(in srgb, var(--agents) 70%, transparent);
-    pointer-events: none;
   }
 
   .folder-header-drop {
