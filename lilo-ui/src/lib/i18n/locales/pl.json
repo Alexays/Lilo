@@ -2523,6 +2523,16 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0200": {
+				"headline": "Czytelniejsze rozmowy z agentami.",
+				"description": "Zajrzyj do folderu bez otwierania go, odpowiedz na pytania agenta jednym kliknięciem i śledź postęp jego pracy.",
+				"folderPeekTitle": "Zajrzyj do folderu.",
+				"folderPeekDescription": "Sprawdź, co zawiera folder, bez otwierania go. Zatrzymaj wskaźnik na zamkniętym folderze na pasku bocznym, aby zobaczyć obok jego karty z polem wyszukiwania do ich filtrowania, lub naciśnij spację, aby otworzyć go z klawiatury.",
+				"questionsTitle": "Odpowiadaj na pytania agenta.",
+				"questionsDescription": "Agent może zadać ci w rozmowie pytanie wielokrotnego wyboru. Wybierz jedną lub kilka odpowiedzi, wpisz własną albo pomiń pytanie. W polu wiadomości cyfra wybiera opcję, Return odpowiada, a Escape pomija.",
+				"tasksTitle": "Śledź plan agenta.",
+				"tasksDescription": "Śledź długie zadanie w trakcie: lista zadań agenta pozostaje przypięta nad polem wiadomości wraz z postępem, a wiersz stanu podaje bieżący krok. Po zakończeniu lista zwija się do jednego wiersza."
+			},
 			"v0190": {
 				"headline": "Szukaj tego, co widzisz.",
 				"description": "Wyszukaj dowolny obraz na stronie prawym kliknięciem, z czytelniejszymi kolorami i stabilniejszym terminalem.",

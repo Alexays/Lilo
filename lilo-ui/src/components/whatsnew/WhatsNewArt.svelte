@@ -206,6 +206,38 @@
     <rect x="60" y="56" width="54" height="14" rx="4" fill="var(--accent)" />
     <g fill="none" stroke="var(--accent-text)" stroke-width="1.3" stroke-linecap="round"><circle cx="68" cy="62.5" r="3" /><path d="m70.2 64.7 2.3 2.3" /></g>
     <rect x="77" y="61" width="30" height="3" rx="1.5" fill="var(--accent-text)" />
+  {:else if kind === "folderPeek"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="10" y="10" width="44" height="70" rx="6" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g fill="var(--separator)"><rect x="16" y="18" width="32" height="6" rx="3" /><rect x="16" y="54" width="32" height="6" rx="3" /><rect x="16" y="65" width="24" height="6" rx="3" /></g>
+    <rect x="15" y="34" width="34" height="11" rx="4" fill="var(--accent-tint-14)" />
+    <path d="M19 37.5h3.5l1.5 1.5h5v4h-10z" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-linejoin="round" />
+    <rect x="32" y="38" width="13" height="3" rx="1.5" fill="var(--accent)" />
+    <rect x="60" y="20" width="58" height="54" rx="6" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="66" y="26" width="46" height="9" rx="4.5" fill="var(--text-primary-tint-10)" />
+    <g fill="none" stroke="var(--text-secondary)" stroke-width="1" stroke-linecap="round"><circle cx="71" cy="30.5" r="2" /><path d="m72.5 32 1.5 1.5" /></g>
+    <g fill="var(--accent)"><circle cx="69" cy="44" r="3" /></g><rect x="75" y="42.5" width="30" height="3" rx="1.5" fill="var(--text-secondary)" />
+    <g fill="var(--separator)"><circle cx="69" cy="55" r="3" /><circle cx="69" cy="66" r="3" /><rect x="75" y="53.5" width="34" height="3" rx="1.5" /><rect x="75" y="64.5" width="24" height="3" rx="1.5" /></g>
+  {:else if kind === "choices"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="18" y="10" width="92" height="70" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="26" y="18" width="52" height="5" rx="2.5" fill="var(--text-secondary)" />
+    <rect x="24" y="29" width="80" height="12" rx="4" fill="var(--accent-tint-14)" stroke="var(--accent)" />
+    <rect x="29" y="32" width="6" height="6" rx="1.5" fill="var(--accent)" /><path d="m30.5 35 1.3 1.3 2.2-2.6" fill="none" stroke="var(--accent-text)" stroke-width="1" stroke-linecap="round" />
+    <rect x="40" y="33.5" width="36" height="3" rx="1.5" fill="var(--text-primary)" />
+    <g fill="none" stroke="var(--separator)"><rect x="24" y="45" width="80" height="12" rx="4" /><rect x="29.5" y="48.5" width="5" height="5" rx="1.5" /></g>
+    <rect x="40" y="49.5" width="28" height="3" rx="1.5" fill="var(--separator)" />
+    <rect x="24" y="63" width="80" height="11" rx="4" fill="none" stroke="var(--separator)" stroke-dasharray="2 2" />
+    <rect x="29" y="67" width="22" height="3" rx="1.5" fill="var(--separator)" />
+  {:else if kind === "tasks"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="18" y="10" width="92" height="70" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g fill="var(--separator)"><rect x="26" y="17" width="60" height="4" rx="2" /><rect x="26" y="25" width="44" height="4" rx="2" /></g>
+    <rect x="24" y="34" width="80" height="30" rx="5" fill="var(--text-primary-tint-10)" />
+    <rect x="29" y="38" width="70" height="2.5" rx="1.25" fill="var(--separator)" /><rect x="29" y="38" width="40" height="2.5" rx="1.25" fill="var(--accent)" />
+    <g fill="var(--accent)"><circle cx="32" cy="47" r="2.5" /></g><rect x="38" y="45.5" width="34" height="3" rx="1.5" fill="var(--text-secondary)" />
+    <circle cx="32" cy="56" r="2.5" fill="none" stroke="var(--accent)" stroke-width="1.2" /><rect x="38" y="54.5" width="44" height="3" rx="1.5" fill="var(--text-primary)" />
+    <rect x="24" y="67" width="80" height="9" rx="4.5" fill="none" stroke="var(--separator)" />
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

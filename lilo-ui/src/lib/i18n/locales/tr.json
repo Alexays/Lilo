@@ -2477,6 +2477,16 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0200": {
+				"headline": "Ajanlarla daha net sohbetler.",
+				"description": "Bir klasörü açmadan içine bakın, bir ajanın sorularını tek tıklamayla yanıtlayın ve çalışırken ilerlemesini izleyin.",
+				"folderPeekTitle": "Bir klasörün içine bakın.",
+				"folderPeekDescription": "Bir klasörde ne olduğunu açmadan görün. Kenar çubuğunda kapalı bir klasörün üzerinde işaretçiyi bekletince sekmeleri yanında, onları süzmek için bir arama alanıyla görünür; klavyeden açmak için Boşluk tuşuna basın.",
+				"questionsTitle": "Bir ajanın sorularını yanıtlayın.",
+				"questionsDescription": "Bir ajan sohbette size çoktan seçmeli bir soru sorabilir. Bir veya birkaç yanıt seçin, kendi yanıtınızı yazın ya da atlayın. Mesaj alanında bir rakam seçeneği seçer, Return yanıtlar, Escape atlar.",
+				"tasksTitle": "Ajanın planını izleyin.",
+				"tasksDescription": "Uzun bir görevi ilerlerken izleyin: ajanın görev listesi ilerlemesiyle birlikte mesaj alanının üstüne sabitlenir ve durum satırı süren adımı gösterir. Bittiğinde liste tek satıra katlanır."
+			},
 			"v0190": {
 				"headline": "Gördüğünüzü arayın.",
 				"description": "Bir sayfadaki herhangi bir görseli sağ tıklamayla arayın; renkler daha okunaklı, terminal daha kararlı.",

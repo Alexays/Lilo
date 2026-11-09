@@ -2466,6 +2466,16 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0200": {
+				"headline": "Des échanges plus clairs avec vos agents.",
+				"description": "Voyez le contenu d'un dossier sans l'ouvrir, répondez aux questions d'un agent en un clic et suivez son avancement pendant qu'il travaille.",
+				"folderPeekTitle": "Voyez le contenu d'un dossier.",
+				"folderPeekDescription": "Voyez ce que contient un dossier sans l'ouvrir. Laissez le pointeur sur un dossier fermé de la barre latérale pour afficher ses onglets à côté, avec un champ de recherche pour les filtrer, ou appuyez sur Espace pour l'ouvrir au clavier.",
+				"questionsTitle": "Répondez aux questions d'un agent.",
+				"questionsDescription": "Un agent peut vous poser une question à choix multiples dans une conversation. Choisissez une ou plusieurs réponses, écrivez la vôtre ou passez. Au clavier, un chiffre choisit une option, Retour répond et Échap passe.",
+				"tasksTitle": "Suivez le plan de l'agent.",
+				"tasksDescription": "Suivez une longue tâche pendant qu'elle avance : la liste de tâches de l'agent reste épinglée au-dessus de la zone de saisie avec sa progression, et sa ligne d'état nomme l'étape en cours. Terminée, la liste se replie sur une ligne."
+			},
 			"v0190": {
 				"headline": "Cherchez ce que vous voyez.",
 				"description": "Retrouvez n'importe quelle image d'une page d'un clic droit, avec des couleurs plus lisibles et un terminal plus stable.",

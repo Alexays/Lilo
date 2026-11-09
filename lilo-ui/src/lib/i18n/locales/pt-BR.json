@@ -2477,6 +2477,16 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0200": {
+				"headline": "Conversas mais claras com agentes.",
+				"description": "Veja o conteúdo de uma pasta sem abri-la, responda às perguntas de um agente com um clique e acompanhe o progresso dele enquanto trabalha.",
+				"folderPeekTitle": "Veja o conteúdo de uma pasta.",
+				"folderPeekDescription": "Confira o que uma pasta contém sem abri-la. Deixe o ponteiro sobre uma pasta fechada na barra lateral para ver as abas dela ao lado, com um campo de busca para filtrá-las, ou pressione Espaço para abri-la pelo teclado.",
+				"questionsTitle": "Responda às perguntas de um agente.",
+				"questionsDescription": "Um agente pode fazer uma pergunta de múltipla escolha em uma conversa. Escolha uma ou várias respostas, digite a sua ou pule. No campo de mensagem, um número escolhe uma opção, Return responde e Escape pula.",
+				"tasksTitle": "Acompanhe o plano do agente.",
+				"tasksDescription": "Acompanhe uma tarefa longa enquanto ela avança: a lista de tarefas do agente fica fixada acima do campo de mensagem com o progresso, e a linha de status indica a etapa em andamento. Ao terminar, a lista se recolhe em uma linha."
+			},
 			"v0190": {
 				"headline": "Pesquise o que você vê.",
 				"description": "Pesquise qualquer imagem de uma página com um clique direito, com cores mais legíveis e um terminal mais estável.",

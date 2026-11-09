@@ -2477,6 +2477,16 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0200": {
+				"headline": "Klarere Gespräche mit Agenten.",
+				"description": "Sieh in einen Ordner, ohne ihn zu öffnen, beantworte die Fragen eines Agenten mit einem Klick und verfolge seinen Fortschritt, während er arbeitet.",
+				"folderPeekTitle": "Sieh in einen Ordner.",
+				"folderPeekDescription": "Prüfe, was ein Ordner enthält, ohne ihn zu öffnen. Lass den Zeiger auf einem geschlossenen Ordner in der Seitenleiste ruhen, um seine Tabs daneben zu sehen, mit einem Suchfeld zum Filtern, oder drücke die Leertaste, um ihn per Tastatur zu öffnen.",
+				"questionsTitle": "Beantworte die Fragen eines Agenten.",
+				"questionsDescription": "Ein Agent kann dir in einem Gespräch eine Multiple-Choice-Frage stellen. Wähle eine oder mehrere Antworten, schreib deine eigene oder überspringe sie. Im Eingabefeld wählt eine Ziffer eine Option, Return antwortet und Escape überspringt.",
+				"tasksTitle": "Folge dem Plan des Agenten.",
+				"tasksDescription": "Verfolge eine lange Aufgabe, während sie läuft: Die Aufgabenliste des Agenten bleibt mit ihrem Fortschritt über dem Eingabefeld angeheftet, und seine Statuszeile nennt den aktuellen Schritt. Danach klappt die Liste zu einer Zeile zusammen."
+			},
 			"v0190": {
 				"headline": "Suchen Sie, was Sie sehen.",
 				"description": "Schlagen Sie jedes Bild einer Seite mit einem Rechtsklick nach, mit besser lesbaren Farben und einem stabileren Terminal.",

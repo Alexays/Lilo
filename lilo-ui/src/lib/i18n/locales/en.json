@@ -2466,6 +2466,16 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0200": {
+				"headline": "Clearer conversations with agents.",
+				"description": "See inside a folder without opening it, answer an agent's questions in a click, and follow its progress as it works.",
+				"folderPeekTitle": "See inside a folder.",
+				"folderPeekDescription": "Check what a folder holds without opening it. Rest the pointer on a closed folder in the sidebar to see its tabs beside it, with a search field to filter them, or press Space to open it from the keyboard.",
+				"questionsTitle": "Answer an agent's questions.",
+				"questionsDescription": "An agent can ask you a multiple-choice question in a conversation. Pick one or several answers, type your own or skip, and from the composer a digit picks an option, Return answers and Escape skips.",
+				"tasksTitle": "Follow the agent's plan.",
+				"tasksDescription": "Follow a long task as it runs: the agent's task list stays pinned above the composer with its progress, and its status line names the step under way. Once finished, the list folds into one line."
+			},
 			"v0190": {
 				"headline": "Search what you see.",
 				"description": "Look up any image on a page in a right-click, with colors that read more clearly and a steadier terminal.",

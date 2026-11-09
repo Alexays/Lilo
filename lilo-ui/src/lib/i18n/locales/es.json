@@ -2477,6 +2477,16 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0200": {
+				"headline": "Conversaciones más claras con los agentes.",
+				"description": "Mira dentro de una carpeta sin abrirla, responde a las preguntas de un agente con un clic y sigue su progreso mientras trabaja.",
+				"folderPeekTitle": "Mira dentro de una carpeta.",
+				"folderPeekDescription": "Comprueba qué contiene una carpeta sin abrirla. Deja el puntero sobre una carpeta cerrada de la barra lateral para ver sus pestañas al lado, con un campo de búsqueda para filtrarlas, o pulsa Espacio para abrirla con el teclado.",
+				"questionsTitle": "Responde a las preguntas de un agente.",
+				"questionsDescription": "Un agente puede hacerte una pregunta de opción múltiple en una conversación. Elige una o varias respuestas, escribe la tuya u omítela. Desde el campo de mensaje, un número elige una opción, Retorno responde y Escape la omite.",
+				"tasksTitle": "Sigue el plan del agente.",
+				"tasksDescription": "Sigue una tarea larga mientras avanza: la lista de tareas del agente queda fijada sobre el campo de mensaje con su progreso, y su línea de estado indica el paso en curso. Al terminar, la lista se pliega en una sola línea."
+			},
 			"v0190": {
 				"headline": "Busca lo que ves.",
 				"description": "Busca cualquier imagen de una página con un clic derecho, con colores más legibles y un terminal más estable.",

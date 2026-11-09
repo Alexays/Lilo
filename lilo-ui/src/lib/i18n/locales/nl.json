@@ -2477,6 +2477,16 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0200": {
+				"headline": "Duidelijkere gesprekken met agents.",
+				"description": "Kijk in een map zonder hem te openen, beantwoord de vragen van een agent met één klik en volg zijn voortgang terwijl hij werkt.",
+				"folderPeekTitle": "Kijk in een map.",
+				"folderPeekDescription": "Zie wat een map bevat zonder hem te openen. Laat de aanwijzer rusten op een gesloten map in de zijbalk om de tabbladen ernaast te zien, met een zoekveld om ze te filteren, of druk op de spatiebalk om hem met het toetsenbord te openen.",
+				"questionsTitle": "Beantwoord de vragen van een agent.",
+				"questionsDescription": "Een agent kan je in een gesprek een meerkeuzevraag stellen. Kies een of meer antwoorden, typ je eigen antwoord of sla de vraag over. In het invoerveld kiest een cijfer een optie, antwoordt Return en slaat Escape over.",
+				"tasksTitle": "Volg het plan van de agent.",
+				"tasksDescription": "Volg een lange taak terwijl die loopt: de takenlijst van de agent blijft met zijn voortgang boven het invoerveld vastgezet, en de statusregel noemt de stap die bezig is. Na afloop klapt de lijst samen tot één regel."
+			},
 			"v0190": {
 				"headline": "Zoek wat je ziet.",
 				"description": "Zoek elke afbeelding op een pagina op met een rechterklik, met beter leesbare kleuren en een stabielere terminal.",
