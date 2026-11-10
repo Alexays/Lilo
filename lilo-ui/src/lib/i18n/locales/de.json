@@ -350,6 +350,11 @@
 				"description": "Ein Link zu einer anderen Website öffnet sich über einem angehefteten Tab oder Lesezeichen-Tab, statt ihn zu ersetzen. Umschalt-Klick zeigt jeden Link als Vorschau.",
 				"keywords": "vorschau schnellansicht popup angeheftet lesezeichen umschalt klick"
 			},
+			"tabGlance": {
+				"title": "Live-Seite beim Verweilen auf einem angehefteten Tab",
+				"description": "Verweilt der Zeiger auf einem angehefteten Tab oder einem Favoriten, zeigt eine Karte dessen Seite: lesen und bedienen, ohne den aktuellen Tab zu verlassen. Ausgeschaltet zeigt die Karte ein Bild der Seite.",
+				"keywords": "vorschau schnellansicht zeiger karte live angeheftet favorit"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatisches Bild-in-Bild",
 				"description": "Einen Anruf oder ein laufendes Video in einem schwebenden Fenster anzeigen, wenn du den Tab oder Lilo verlässt.",

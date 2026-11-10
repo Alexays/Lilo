@@ -350,6 +350,11 @@
 				"description": "Başka bir siteye giden bağlantı, sabitlenmiş veya yer imli sekmenin yerine geçmeden üstünde açılır. Herhangi bir bağlantıyı Shift tuşuyla tıklayarak önizleyebilirsiniz.",
 				"keywords": "önizle göz at önizleme açılır pencere sabitlenmiş yer imi shift tıkla"
 			},
+			"tabGlance": {
+				"title": "Sabitlenmiş sekmenin üzerinde durunca canlı sayfa",
+				"description": "İşaretçiyi sabitlenmiş bir sekmenin veya bir favorinin üzerinde bekletince sayfası bir kartta görünür; geçerli sekmeden ayrılmadan okuyabilir ve kullanabilirsiniz. Kapalıyken kart sayfanın bir görüntüsünü gösterir.",
+				"keywords": "önizleme göz at işaretçi kart canlı sabitlenmiş favori"
+			},
 			"autoPictureInPicture": {
 				"title": "Otomatik resim içinde resim",
 				"description": "Sekmesinden veya Lilo'dan ayrıldığınızda aramayı veya oynayan videoyu yüzen bir pencerede gösterin.",

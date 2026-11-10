@@ -350,6 +350,11 @@
 				"description": "Un lien vers un autre site s'ouvre par-dessus un onglet épinglé ou favori au lieu de le remplacer. Maj-clic ouvre l'aperçu de n'importe quel lien.",
 				"keywords": "aperçu peek glance prévisualisation popup épinglé favori maj clic"
 			},
+			"tabGlance": {
+				"title": "Page en direct au survol d'un onglet épinglé",
+				"description": "Laisser le pointeur sur un onglet épinglé ou un favori affiche sa page dans une carte, à lire et à utiliser sans quitter l'onglet en cours. Désactivé, la carte montre une image de la page.",
+				"keywords": "aperçu survol carte en direct épinglé favori glance"
+			},
 			"autoPictureInPicture": {
 				"title": "Picture-in-picture automatique",
 				"description": "Passer un appel ou une vidéo en cours dans une fenêtre flottante quand vous quittez son onglet ou Lilo.",

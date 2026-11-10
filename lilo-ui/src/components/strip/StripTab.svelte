@@ -46,7 +46,17 @@
   class:active
   class:icon-only={iconOnly}
   data-tab-id={tab.id}
-  onmouseenter={(e) => hoverTabPreview({ id: tab.id, title, url: tab.url ?? "", favicon: tab.faviconDataURL }, e.currentTarget.getBoundingClientRect())}
+  onmouseenter={(e) =>
+    hoverTabPreview(
+      {
+        id: tab.id,
+        title,
+        url: tab.url ?? "",
+        favicon: tab.faviconDataURL,
+        glance: (tab.isPinned || tab.isBookmarked) && tab.kind === "web" && !!tab.url && !active,
+      },
+      e.currentTarget.getBoundingClientRect(),
+    )}
   onmouseleave={leaveTabPreview}
   oncontextmenu={showMenu}
   onauxclick={(e) => e.button === 1 && tabActions.close(tab.id)}

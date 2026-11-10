@@ -350,6 +350,11 @@
 				"description": "Un link a un altro sito si apre sopra una scheda fissata o nei segnalibri, senza sostituirla. Maiuscole-clic apre l'anteprima di qualsiasi link.",
 				"keywords": "anteprima finestra comparsa fissate segnalibri maiuscole clic"
 			},
+			"tabGlance": {
+				"title": "Pagina dal vivo fermando il puntatore su una scheda fissata",
+				"description": "Fermando il puntatore su una scheda fissata o su un preferito, una scheda mobile mostra la sua pagina, da leggere e usare senza lasciare la scheda attuale. Disattivata, mostra un'immagine della pagina.",
+				"keywords": "anteprima puntatore dal vivo fissata preferito"
+			},
 			"autoPictureInPicture": {
 				"title": "Picture in Picture automatico",
 				"description": "Mostra una chiamata o un video in riproduzione in una finestra mobile quando passi a un'altra scheda o esci da Lilo.",

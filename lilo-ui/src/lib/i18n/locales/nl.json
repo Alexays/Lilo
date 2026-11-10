@@ -350,6 +350,11 @@
 				"description": "Een link naar een andere website opent boven een vastgemaakt tabblad of bladwijzertabblad, zonder het te vervangen. Met Shift-klik bekijk je elke link vooraf.",
 				"keywords": "voorvertoning pop-up vastgemaakt bladwijzer shift klik"
 			},
+			"tabGlance": {
+				"title": "Live pagina bij stilhouden op een vastgemaakt tabblad",
+				"description": "Houd de aanwijzer stil op een vastgemaakt tabblad of een favoriet en een kaart toont de pagina, om te lezen en te gebruiken zonder het huidige tabblad te verlaten. Uitgeschakeld toont de kaart een afbeelding van de pagina.",
+				"keywords": "voorvertoning aanwijzer kaart live vastgemaakt favoriet"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatisch beeld in beeld",
 				"description": "Toon een gesprek of afspelende video in een zwevend venster wanneer je naar een ander tabblad of een andere app gaat.",

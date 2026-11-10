@@ -9,16 +9,20 @@ extension MainWindowController {
         tabGlance.onPointerInside = { [weak self] inside in
             self?.bridgeRouter.send(event: "tabGlancePointer", data: ["inside": inside])
         }
+        tabGlance.onUsed = { [weak self] in self?.tabManager.keepGlancedTabAwake() }
+        tabGlance.onDismiss = { [weak self] in self?.endTabGlance(notify: true) }
     }
 
-    /// Only a tab whose view nothing else shows: the shown tab, a split pane, the call dock or a PiP page keep theirs.
+    /// Only a tab whose view nothing else holds: the shown tab, a split pane, the call dock, a PiP page and a view kept
+    /// in the window (inspected, shared, an agent's) keep theirs.
     func showTabGlance(_ tabId: UUID) {
-        guard tabId != tabManager.activeOpenTabId, !context.browserState.displayedTabIds.contains(tabId),
+        guard tabGlance.engineId != tabId else { return }
+        endTabGlance()
+        let viewIsFree = unsafe tabManager.engineTab(for: tabId)?.view.superview == nil
+        guard viewIsFree, !context.browserState.displayedTabIds.contains(tabId),
               tabDock.engineId != tabId, floatingTabPanel.hostedEngineId != tabId, documentPiP.openerId != tabId,
-              let contentView = window?.contentView, let engine = tabManager.ensureLiveEngine(forTabId: tabId),
-              unsafe tabGlance.engineId == tabId || engine.view.superview == nil
+              let contentView = window?.contentView, let engine = tabManager.beginGlance(ofTab: tabId)
         else { return bridgeRouter.send(event: "tabGlanceEnded") }
-        tabManager.keepWarmedTab(id: tabId)
         engine.applyPageBackgroundColor(currentContentSurfaceColor)
         tabGlance.show(engine, in: contentView, above: chromeWebView)
     }
@@ -27,6 +31,7 @@ extension MainWindowController {
     func endTabGlance(notify: Bool = false) {
         guard tabGlance.engineId != nil else { return }
         if tabGlance.end() { window?.makeFirstResponder(tabManager.activeEngineTab?.wkWebView) }
+        tabManager.endGlance()
         if notify { bridgeRouter.send(event: "tabGlanceEnded") }
     }
 }

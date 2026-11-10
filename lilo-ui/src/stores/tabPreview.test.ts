@@ -319,3 +319,20 @@ test("a glance the host ends closes the card without asking it back", async () =
 		mock.timers.reset();
 	}
 });
+
+test("with glance turned off, a saved tab gets the snapshot card", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/tabPreview.svelte.ts");
+	(await loadStore("/src/stores/settings.svelte.ts")).setSetting("tabGlance", "false");
+
+	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+	try {
+		store.hoverTabPreview({ ...target("mail"), glance: true }, anchor);
+		mock.timers.tick(450);
+		assert.equal(posted.filter((m) => m.action === "showTabGlance").length, 0);
+		assert.deepEqual(previewRequests(posted).at(-1)?.payload, { tabId: "mail" });
+	} finally {
+		mock.timers.reset();
+	}
+});

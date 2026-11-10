@@ -350,6 +350,11 @@
 				"description": "A link to another site opens over a pinned or bookmarked tab instead of replacing it. Shift-click peeks at any link.",
 				"keywords": "peek glance preview popup pinned bookmarked shift click"
 			},
+			"tabGlance": {
+				"title": "Live page when resting on a pinned tab",
+				"description": "Resting the pointer on a pinned tab or a favorite shows its page in a card, to read and use without leaving the current tab. Off, the card shows a picture of the page.",
+				"keywords": "glance preview hover card live pinned favorite"
+			},
 			"autoPictureInPicture": {
 				"title": "Auto picture-in-picture",
 				"description": "Pop a call or playing video into a floating window when you switch away from its tab or from Lilo.",

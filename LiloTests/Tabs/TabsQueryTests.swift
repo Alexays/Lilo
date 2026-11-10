@@ -420,6 +420,44 @@ final class TabsQueryTests: XCTestCase {
         XCTAssertEqual(tabManager.currentTabs.first { $0.id == first.id }?.isLoading, engine?.isLoading, "opened, its row shows its loading")
     }
 
+    func testAGlancedSleepingTabWakesUnseenAndNoDiscardTakesItWhileTheCardHoldsIt() {
+        let active = makeTab()
+        let saved = makeTab(url: URL(string: "https://example.com/saved"))
+        installRuntimeTabs([active, saved], activeTabId: active.id)
+
+        let engine = tabManager.beginGlance(ofTab: saved.id)
+        XCTAssertNotNil(engine, "the card gets the page of a sleeping tab")
+        XCTAssertEqual(tabManager.activeTabId, active.id, "a glance does not switch to the tab")
+        XCTAssertEqual(tabManager.currentTabs.first { $0.id == saved.id }?.isLoading, false, "its row shows no loading")
+
+        tabManager.discardEngines([saved.id])
+        XCTAssertTrue(tabManager.engineTab(for: saved.id) === engine, "the card's page is never discarded under it")
+
+        tabManager.endGlance()
+        tabManager.discardEngines([saved.id])
+        XCTAssertNil(tabManager.engineTab(for: saved.id), "the card gone, the tab follows the usual lifecycle")
+    }
+
+    func testAGlancedTabOnlyLookedAtSleepsAgainAndOneTheUserUsedStaysAwake() {
+        let active = makeTab()
+        let looked = makeTab(url: URL(string: "https://example.com/looked")), used = makeTab(url: URL(string: "https://example.com/used"))
+        let other = makeTab(url: URL(string: "https://example.com/other"))
+        installRuntimeTabs([active, looked, used, other], activeTabId: active.id)
+
+        let usedEngine = tabManager.beginGlance(ofTab: used.id)
+        tabManager.keepGlancedTabAwake()
+        tabManager.endGlance()
+        XCTAssertNotNil(tabManager.beginGlance(ofTab: looked.id))
+        tabManager.endGlance()
+        // The next tab rested on takes the place of the one woken unseen before it.
+        tabManager.warmTab(id: other.id)
+
+        XCTAssertNil(tabManager.engineTab(for: looked.id), "a tab only looked at goes back to sleep")
+        XCTAssertNotNil(usedEngine)
+        XCTAssertTrue(tabManager.engineTab(for: used.id) === usedEngine, "a click or a key press in the card keeps the tab awake")
+        XCTAssertNotNil(tabManager.engineTab(for: other.id))
+    }
+
     func testActivatingColdTabRecreatesEngineWithoutTabLifecycleState() {
         let tab = makeTab(url: URL(string: "https://example.com"))
         installTabs([tab])

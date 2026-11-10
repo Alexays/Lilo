@@ -73,6 +73,9 @@ final class TabManager {
     /// The sleeping tab the pointer rested on, loading ahead of a click: it goes back to sleep unless it is shown.
     /// Loads unseen: its row shows no loading until it is opened.
     private(set) var warmedTab: (id: UUID, engine: WKWebViewTab)?
+    private var warmSleep: Task<Void, Never>?
+    /// The tab whose live page the sidebar's hover card shows: nothing freezes or discards it meanwhile.
+    private(set) var glancedTabId: UUID?
 
     let agentChatHost = AgentChatHost()
 
@@ -246,10 +249,7 @@ final class TabManager {
 
     func activateTabRuntime(id: UUID) {
         guard let tab = tab(for: id) else { return }
-        if let (warmedId, engine) = warmedTab, warmedId == id {
-            warmedTab = nil
-            if let shown = updateTab(id: id, mutate: { $0.isLoading = engine.isLoading }) { delegate?.tabManager(self, didUpdateTab: shown) }
-        }
+        keepAwake(id)
 
         // A locked folder's tab can be selected, never loaded: the window shows the lock placeholder.
         // A non-web tab has no engine to wake.
@@ -477,21 +477,62 @@ final class TabManager {
     /// bar item on hover). One at a time: the previous one, never shown, goes back to sleep, as this one does after 20 s.
     /// Never while the shown page loads, which it would compete with for the network and CPU.
     func warmTab(id: UUID) {
-        guard !engineFactory.suppressWarmPool, id != activeTabId, activeEngineTab?.isLoading != true, engineHost.engine(for: id) == nil,
-              let tab = tab(for: id), tab.url != nil, !tab.isClosed else { return }
+        guard !engineFactory.suppressWarmPool, activeEngineTab?.isLoading != true else { return }
+        wakeUnseen(id)
+    }
+
+    /// Loads a sleeping tab out of sight, in place of the one loaded so before it.
+    @discardableResult
+    private func wakeUnseen(_ id: UUID) -> WKWebViewTab? {
+        guard id != activeTabId, engineHost.engine(for: id) == nil, let tab = tab(for: id), tab.url != nil, !tab.isClosed else { return nil }
         sleepWarmedTab()
-        guard let engine = ensureLiveEngine(forTabId: id) else { return }
+        guard let engine = ensureLiveEngine(forTabId: id) else { return nil }
         warmedTab = (id, engine)
         if let unseen = updateTab(id: id, mutate: { $0.isLoading = false }) { delegate?.tabManager(self, didUpdateTab: unseen) }
-        Task { [weak self] in
+        scheduleWarmSleep()
+        return engine
+    }
+
+    /// Restarts the wait after which the tab woken unseen sleeps again.
+    private func scheduleWarmSleep() {
+        warmSleep?.cancel()
+        guard let engine = warmedTab?.engine else { return }
+        warmSleep = Task { [weak self] in
             try? await Task.sleep(for: .seconds(20))
+            guard !Task.isCancelled else { return }
             if self?.warmedTab?.engine === engine { self?.sleepWarmedTab() }
         }
     }
 
-    /// A warmed tab shown in the sidebar's hover card stays awake afterwards, as any tab the user looked at.
-    func keepWarmedTab(id: UUID) {
-        if warmedTab?.id == id { warmedTab = nil }
+    /// A tab woken unseen that the user opens or uses is awake for good: its row shows its loading from here on.
+    private func keepAwake(_ id: UUID) {
+        guard let (warmedId, engine) = warmedTab, warmedId == id else { return }
+        warmedTab = nil
+        if let shown = updateTab(id: id, mutate: { $0.isLoading = engine.isLoading }) { delegate?.tabManager(self, didUpdateTab: shown) }
+    }
+
+    /// Hands a tab's page to the sidebar's hover card. A sleeping tab wakes unseen, as one the pointer rests on, even when
+    /// warming is held back: the card shows the page now. It waits to sleep again until the card lets go of it.
+    func beginGlance(ofTab id: UUID) -> WKWebViewTab? {
+        endGlance()
+        guard id != activeTabId, let engine = engineHost.engine(for: id) == nil ? wakeUnseen(id) : ensureLiveEngine(forTabId: id) else { return nil }
+        if warmedTab?.id == id { warmSleep?.cancel() }
+        glancedTabId = id
+        browserStateStore?.glancedTabIds.insert(id)
+        return engine
+    }
+
+    /// The hover card let go of its tab: one it woke sleeps again after the usual wait, unless the user used the page.
+    func endGlance() {
+        guard let id = glancedTabId else { return }
+        glancedTabId = nil
+        browserStateStore?.glancedTabIds.remove(id)
+        if warmedTab?.id == id { scheduleWarmSleep() }
+    }
+
+    /// The user clicked or typed in the glanced page: more than a look, so the tab stays awake as one they opened.
+    func keepGlancedTabAwake() {
+        if let glancedTabId { keepAwake(glancedTabId) }
     }
 
     private func sleepWarmedTab() {

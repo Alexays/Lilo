@@ -4,6 +4,7 @@
 import { on } from "../lib/bridge";
 import { tabActions } from "../lib/bridge/actions";
 import type { BridgeTerminalPrompt } from "../lib/bridge/protocol";
+import { getSetting } from "./settings.svelte";
 
 const TAB_PREVIEW_HOVER_DELAY_MS = 450;
 // A pointer resting this long on a tab wakes it, if it sleeps, ahead of the click; a sweep down the list crosses a row faster.
@@ -122,7 +123,7 @@ function validCacheEntry(target: TabPreviewTarget): CacheEntry | undefined {
 function presentOrRequest(staleAfterMs = refreshIntervalMs): void {
 	if (!hovered?.delayElapsed) return;
 	const { target, anchor } = hovered;
-	if (target.glance) {
+	if (target.glance && getSetting("tabGlance", "true") === "true") {
 		// The live page needs no snapshot: the host shows the tab itself, once.
 		if (_previewTabId === target.id) return;
 		_preview = { tabId: target.id, title: target.title, url: target.url, favicon: target.favicon ?? "", image: "", terminal: null, anchor, glance: true };
