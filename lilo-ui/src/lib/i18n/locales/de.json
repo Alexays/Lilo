@@ -2477,6 +2477,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Seiten in deiner Sprache.",
+				"description": "Übersetzte Seiten lassen weniger aus und beginnen mit dem, was du siehst, während Lilos Oberfläche in jedem Fenster weniger Speicher belegt.",
+				"translationTitle": "Die ganze Seite übersetzen.",
+				"translationDescription": "Lies mehr von einer Seite in deiner Sprache. Die Übersetzung erfasst auch Platzhalter, Tooltips, Bildbeschreibungen, Tastenbeschriftungen und Text in Webkomponenten, beginnt mit dem Sichtbaren und lässt Passagen in deiner Sprache unverändert.",
+				"memoryTitle": "Sparsamer mit Speicher.",
+				"memoryDescription": "Halte mehr Fenster offen und belaste deinen Mac weniger. Lilos eigene Oberfläche braucht pro Fenster etwa 125 MB weniger Speicher."
+			},
 			"v0200": {
 				"headline": "Klarere Gespräche mit Agenten.",
 				"description": "Sieh in einen Ordner, ohne ihn zu öffnen, beantworte die Fragen eines Agenten mit einem Klick und verfolge seinen Fortschritt, während er arbeitet.",

@@ -2477,6 +2477,14 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Sayfalar sizin dilinizde.",
+				"description": "Çevrilen sayfalar daha az metni atlıyor ve gördüğünüz yerden başlıyor; Lilo'nun arayüzü de her pencerede daha az bellek kullanıyor.",
+				"translationTitle": "Sayfanın tamamını çevirin.",
+				"translationDescription": "Bir sayfanın daha fazlasını kendi dilinizde okuyun. Çeviri, yer tutucuları, ipuçlarını, görsel açıklamalarını, düğme etiketlerini ve web bileşenlerindeki metni de kapsar, ekrandakiyle başlar ve zaten sizin dilinizde olan bölümlere dokunmaz.",
+				"memoryTitle": "Bellekte daha hafif.",
+				"memoryDescription": "Mac'inizi daha az yorarak daha fazla pencere açık tutun. Lilo'nun kendi arayüzü pencere başına yaklaşık 125 MB daha az bellek kullanır."
+			},
 			"v0200": {
 				"headline": "Ajanlarla daha net sohbetler.",
 				"description": "Bir klasörü açmadan içine bakın, bir ajanın sorularını tek tıklamayla yanıtlayın ve çalışırken ilerlemesini izleyin.",

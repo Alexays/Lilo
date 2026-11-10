@@ -2466,6 +2466,14 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0210": {
+				"headline": "Pages in your language.",
+				"description": "Translated pages leave less untouched and start with what you see, while Lilo's interface takes less memory in every window.",
+				"translationTitle": "Translate the whole page.",
+				"translationDescription": "Read more of a page in your language. Translating it also covers placeholders, tooltips, image descriptions, button labels and text inside web components, starts with what is on screen, and leaves alone passages already in your language.",
+				"memoryTitle": "Lighter on memory.",
+				"memoryDescription": "Keep more windows open with less weight on your Mac. Lilo's own interface uses about 125 MB less memory per window."
+			},
 			"v0200": {
 				"headline": "Clearer conversations with agents.",
 				"description": "See inside a folder without opening it, answer an agent's questions in a click, and follow its progress as it works.",

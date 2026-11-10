@@ -2523,6 +2523,14 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Strony w Twoim języku.",
+				"description": "Tłumaczone strony pomijają mniej tekstu i zaczynają od tego, co widzisz, a interfejs Lilo zajmuje mniej pamięci w każdym oknie.",
+				"translationTitle": "Przetłumacz całą stronę.",
+				"translationDescription": "Czytaj więcej ze strony w swoim języku. Tłumaczenie obejmuje też teksty zastępcze, podpowiedzi, opisy obrazów, etykiety przycisków i tekst w komponentach webowych, zaczyna od tego, co na ekranie, i pozostawia fragmenty już w Twoim języku.",
+				"memoryTitle": "Lżej dla pamięci.",
+				"memoryDescription": "Miej otwartych więcej okien, mniej obciążając Maca. Interfejs Lilo zużywa około 125 MB mniej pamięci na okno."
+			},
 			"v0200": {
 				"headline": "Czytelniejsze rozmowy z agentami.",
 				"description": "Zajrzyj do folderu bez otwierania go, odpowiedz na pytania agenta jednym kliknięciem i śledź postęp jego pracy.",
