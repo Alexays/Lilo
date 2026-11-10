@@ -725,6 +725,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108,
 [ExtensionBackgroundPreparer.swift]: ../Lilo/Extensions/Core/ExtensionBackgroundPreparer.swift
 [ExtensionControllerDelegate.swift]: ../Lilo/Extensions/Core/ExtensionControllerDelegate.swift
 [ExtensionAccess.swift]: ../Lilo/Extensions/Core/ExtensionAccess.swift
+[ExtensionUIBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ExtensionUIBridgeHandler.swift
 [WKFeatureFlags.swift]: ../Lilo/Engine/WKFeatureFlags.swift
 [TabExtensionAdapter.swift]: ../Lilo/Extensions/Core/TabExtensionAdapter.swift
 [CookieChangeTracker.swift]: ../Lilo/Extensions/Core/CookieChangeTracker.swift
@@ -732,7 +733,6 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108,
 [ExtensionNativeMessaging.swift]: ../Lilo/Extensions/Core/ExtensionNativeMessaging.swift
 [ProfileExtensionRegistry.swift]: ../Lilo/Extensions/Core/ProfileExtensionRegistry.swift
 [ExtensionUserScripts.swift]: ../Lilo/Extensions/Core/ExtensionUserScripts.swift
-[ExtensionUIBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ExtensionUIBridgeHandler.swift
 [ActionColorBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ActionColorBridgeHandler.swift
 [PermissionsBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/PermissionsBridgeHandler.swift
 [WebSocketBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/WebSocketBridgeHandler.swift
