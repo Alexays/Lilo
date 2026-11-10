@@ -68,6 +68,8 @@ final class ExtensionAccess {
         // Granted beyond the manifest so every worker can open its channel to Lilo (GapEvents). Real
         // hosts still need it declared (ExtensionControllerDelegate) and the host's allowed_origins.
         permissions[.nativeMessaging] = distantFuture
+        // WebKit lets redirect and modifyHeaders rules act on the granted sites only under this name, Chrome under either.
+        if permissions[.declarativeNetRequest] != nil { permissions[.declarativeNetRequestWithHostAccess] = distantFuture }
         context.grantedPermissions = permissions
 
         var patterns = Self.grantedMatchPatterns(requested: Self.baseMatchPatterns(for: webExtension), allowedHosts: state.hosts)

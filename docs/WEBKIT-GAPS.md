@@ -595,6 +595,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108,
 - **Impact:** AdGuard's session rules failed and its engine did not start.
 - **Check:** `testDeclarativeNetRequestRejectsResourceTypesChromeKnows`.
 
+### 114. `declarativeNetRequest` alone redirects nothing
+
+- **Gap:** WebKit lets a `redirect` or `modifyHeaders` rule act on a request only when the navigation's policies name the extension's granted patterns, which it sets for a context holding `declarativeNetRequestWithHostAccess` alone (`WebExtensionController::updateWebsitePoliciesForNavigation`, read by `ContentExtensionsBackend`). Under `declarativeNetRequest` the rules compile and never apply. Chrome applies them under either name on the sites the extension has host access to.
+- **Lilo:** grants `declarativeNetRequestWithHostAccess` to a context holding `declarativeNetRequest` ([ExtensionAccess.swift] `apply`); WebKit keeps the rules to the granted patterns. User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
+- **Impact:** an extension redirecting a site it has access to, or changing its headers, did nothing.
+- **Check:** Manual; `testDeclarativeNetRequestCarriesWebKitsHostAccessPermission` for Lilo. Repro: permissions `declarativeNetRequest`, host permissions `<all_urls>`, a dynamic rule redirecting `||example.com^` main frames to `https://example.org/`; open example.com. Expected: example.org loads. Actual: example.com.
+
 ### 73. `declarativeNetRequest` rejects empty exclusion lists
 
 - **Gap:** a rule with an empty `excludedInitiatorDomains` or `excludedDomains` passes WebKit's validation and then fails the compile of every rule ("Unable to load declarativeNetRequest rules."); an empty `excludedRequestMethods` is rejected outright. Chrome takes all three empty, excluding nothing.
