@@ -59,4 +59,19 @@ final class TabGlanceControllerTests: XCTestCase {
 
         XCTAssertEqual(engine.pageZoom, 1.1)
     }
+
+    func testAViewAnotherWindowTookStaysThereWhenTheCardEnds() {
+        let (contentView, chromeView) = makeHost()
+        let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let glance = TabGlanceController()
+        let otherWindowContent = NSView()
+
+        glance.show(engine, in: contentView, above: chromeView)
+        otherWindowContent.addSubview(engine.view)
+        glance.end()
+        engine.setPageZoom(1.25)
+
+        XCTAssertTrue(engine.view.superview === otherWindowContent)
+        XCTAssertEqual(engine.pageZoom, 1.25, accuracy: 0.0001, "the other window's zoom, no longer scaled for the card")
+    }
 }

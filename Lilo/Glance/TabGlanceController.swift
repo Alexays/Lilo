@@ -19,6 +19,8 @@ final class TabGlanceController {
     private var wasUsed = false
 
     var engineId: UUID? { engine?.id }
+    /// The keyboard is in the page in the card.
+    var hasFocus: Bool { unsafe (container.window?.firstResponder as? NSView)?.isDescendant(of: container) == true }
     /// The pointer entered or left the page in the card, whose events the chrome below never sees.
     var onPointerInside: ((Bool) -> Void)?
     /// The first click or key press in the page: more than a look.
@@ -65,20 +67,21 @@ final class TabGlanceController {
         self.engine = nil
         if let inputMonitor { NSEvent.removeMonitor(inputMonitor) }
         inputMonitor = nil
-        let hadFocus = unsafe (container.window?.firstResponder as? NSView)?.isDescendant(of: container) == true
-        engine.view.removeFromSuperview()
+        let hadFocus = hasFocus
         engine.zoomScale = 1
+        container.isHidden = true
+        // A view another window took meanwhile is that window's now, its zoom included.
+        guard unsafe engine.view.superview === container else { return hadFocus }
+        engine.view.removeFromSuperview()
         // The exact zoom it had, unless a navigation in the card gave the page another site's.
         let zoom = engine.wkWebView.pageZoom
         engine.wkWebView.pageZoom = zoom == restoredZoom * CGFloat(Self.zoomFactor) ? restoredZoom : zoom / CGFloat(Self.zoomFactor)
-        container.isHidden = true
         return hadFocus
     }
 
     /// Whether the event stops here: only the Escape that closes the card does, unless it ends a text composition.
     private func handleInput(_ event: NSEvent) -> Bool {
         guard let window = unsafe container.window, event.window === window else { return false }
-        let hasFocus = (window.firstResponder as? NSView)?.isDescendant(of: container) == true
         if event.type == .keyDown, event.keyCode == 53, hasFocus, (window.firstResponder as? NSTextInputClient)?.hasMarkedText() != true {
             onDismiss?()
             return true
