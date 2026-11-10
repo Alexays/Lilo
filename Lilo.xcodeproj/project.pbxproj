@@ -100,6 +100,7 @@
 		27505790A131F590D93BDB27 /* CommandsBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40099ED7203812C7AC6D9955 /* CommandsBridgeHandler.swift */; };
 		278B820F8F85BA282884BA7F /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 81FD3781C43C0CE9E4862024 /* Localizable.strings */; };
 		27A71FEB5B594681720CB806 /* BrowserStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D523A09F4A56CCABF0176C0 /* BrowserStateStore.swift */; };
+		27B13367F1CD9A6D32AEB67C /* FilterTablesProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68191F789AD259FECF8EE0B5 /* FilterTablesProbe.swift */; };
 		280ED18230B108F628D2246C /* PowerHelperProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C79DA60312F9BAAA0E16659 /* PowerHelperProtocol.swift */; };
 		2829313333A86D7187B17E65 /* GeolocationBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D7323613A42BD1DC97DB49 /* GeolocationBridge.swift */; };
 		282E2D74385E5D55BD437F9D /* TinyHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 525B826141A01CE9CBD3F341 /* TinyHTTPServer.swift */; };
@@ -515,6 +516,7 @@
 		B67EA44A4050B595AE0D9125 /* SafariReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB0CE0D07F4ED20DE6B468F /* SafariReaderTests.swift */; };
 		B68944D015EFF199CC6FDD37 /* ExtensionDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432C11CE1AE1F9293931D612 /* ExtensionDiagnosticsTests.swift */; };
 		B6DC842FC3ECF2555454436C /* BuildIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6D2F424BD81028CBC3F2D7 /* BuildIdentityTests.swift */; };
+		B6EA4C135E72E9E1DD98A004 /* FilterLookup.js in Resources */ = {isa = PBXBuildFile; fileRef = F36523E56B8FF6415290BE91 /* FilterLookup.js */; };
 		B738FC18466953DED340FC80 /* HistoryPageBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 786883466FCC11DD7DA60DB9 /* HistoryPageBridgeHandler.swift */; };
 		B7846D1ED342D5A947115A89 /* ContentContainerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C45A79BA8A637E4D7600875 /* ContentContainerViewTests.swift */; };
 		B7A1CFE303F8210B01B8B0A2 /* AgentSocketServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E737360DDCB6613DC3CD391D /* AgentSocketServer.swift */; };
@@ -1073,6 +1075,7 @@
 		66D362EDC166C7BA54B345CA /* BridgeProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeProtocol.swift; sourceTree = "<group>"; };
 		679CBA4FBF82EC3604570BFB /* RecentTabsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentTabsTests.swift; sourceTree = "<group>"; };
 		67E40EDB4E5F12B521F3F99F /* MinimumFontSizeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimumFontSizeTests.swift; sourceTree = "<group>"; };
+		68191F789AD259FECF8EE0B5 /* FilterTablesProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTablesProbe.swift; sourceTree = "<group>"; };
 		682D3D1F1970F982CF1B53DE /* WKWebViewTabCommitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKWebViewTabCommitTests.swift; sourceTree = "<group>"; };
 		68DED751F6B383476F88AB2F /* AppShortcuts.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = AppShortcuts.strings; path = ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		6AA1880CDAF01D266BA850DA /* PiPController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPController.swift; sourceTree = "<group>"; };
@@ -1465,6 +1468,7 @@
 		F14320C179015732A2B1775D /* SearchBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchBridgeHandlerTests.swift; sourceTree = "<group>"; };
 		F16D548E0872FC4E3336367D /* PageCaptureGapAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageCaptureGapAPITests.swift; sourceTree = "<group>"; };
 		F2F642480C82D8687332852C /* WindowFrameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFrameView.swift; sourceTree = "<group>"; };
+		F36523E56B8FF6415290BE91 /* FilterLookup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = FilterLookup.js; sourceTree = "<group>"; };
 		F3696C6B2170D6955BC08BAD /* RealExtensionSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealExtensionSmokeTests.swift; sourceTree = "<group>"; };
 		F388357485E32883962C521E /* AppShortcuts.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = AppShortcuts.strings; path = de.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		F3ACCD8248F8F453C8D7993F /* PageSignalBridges.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageSignalBridges.swift; sourceTree = "<group>"; };
@@ -1798,6 +1802,7 @@
 				030767E1CC448A4ABC7A3EB4 /* ElementPicker.swift */,
 				759D738119077B180B51C5C8 /* FilterListConverter.swift */,
 				E6A3D703E1C841CF11F95529 /* FilterListService.swift */,
+				F36523E56B8FF6415290BE91 /* FilterLookup.js */,
 				43CE673EAC07CD546E7EC737 /* GenericCosmetics.js */,
 				35DB3552045162A7C7483438 /* MainWindowController+HideElement.swift */,
 				2D24BF900BE3A4131D4378A9 /* ProceduralCosmetics.js */,
@@ -2326,6 +2331,7 @@
 				DF5F4AFB0C021C061B8906E5 /* BridgeEventRecorder.swift */,
 				758C964D56746BC82A42145F /* BrowserStateFixtureSupport.swift */,
 				01838BCE08BCAEA786362E06 /* ExtensionRegistryFixture.swift */,
+				68191F789AD259FECF8EE0B5 /* FilterTablesProbe.swift */,
 				22AD4BA8211AEC8D9AB6672F /* GapCallSupport.swift */,
 				57E906D33DFB1DB3BDF44E90 /* ReleaseMediaCapture.swift */,
 				5135E1934C469BB54C50A03D /* SidebarState.swift */,
@@ -2990,6 +2996,7 @@
 				A1BEBB96E6A3182DF6F14057 /* ChromeContentCompat.js in Resources */,
 				FBA85C355F5CE58C11897363 /* ChromeStaticRules.js in Resources */,
 				D5718FA9F11909DC18838405 /* ChromeWebStoreShim.js in Resources */,
+				B6EA4C135E72E9E1DD98A004 /* FilterLookup.js in Resources */,
 				15A495CDA676B8FCF2AE68CB /* GenericCosmetics.js in Resources */,
 				83B04A7E50C6B83AB7FEA8F3 /* InfoPlist.strings in Resources */,
 				AA1981619C8086B31D41309C /* InfoPlist.strings in Resources */,
@@ -3519,6 +3526,7 @@
 				4F1506342386C257E7ABAD9D /* FilterListConverterTests.swift in Sources */,
 				AF16D38CD47BE7DD528E5E51 /* FilterListCoverageTests.swift in Sources */,
 				98ACAECB0CC04BEA779E3ECE /* FilterListServiceTests.swift in Sources */,
+				27B13367F1CD9A6D32AEB67C /* FilterTablesProbe.swift in Sources */,
 				CAD1C5453BC0C1D0A314F684 /* FirefoxReaderTests.swift in Sources */,
 				C67C2112F35E8163B23058B1 /* FloatingTabPanelControllerTests.swift in Sources */,
 				0F5AB6F06E1B9308169D5699 /* FolderAutoLockTests.swift in Sources */,

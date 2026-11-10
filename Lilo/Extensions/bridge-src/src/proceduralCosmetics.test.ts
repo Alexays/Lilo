@@ -2,7 +2,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { keyedTable } from "./filterTables.testkit.ts";
+import { lookupFrame } from "./filterTables.testkit.ts";
 
 const source = readFileSync(new URL("../../../ContentBlocker/ProceduralCosmetics.js", import.meta.url), "utf8");
 
@@ -102,12 +102,9 @@ function run(
 	ancestorOrigins?: Record<string | number, unknown>,
 	styleSheets: unknown[] = []
 ): Page {
-	const { index, groups, entries } = keyedTable(Array.isArray(selectors) ? { "example.com": selectors } : selectors);
-	const src = source
-		.replace("__LILO_PROCEDURAL_INDEX__", JSON.stringify(index))
-		.replace("__LILO_PROCEDURAL_GROUPS__", JSON.stringify(groups))
-		.replace("__LILO_PROCEDURAL_TABLE__", JSON.stringify(entries))
-		.replace("__LILO_ALLOWLIST__", JSON.stringify(`|${allowlist.join("|")}|`));
+	const location = { hostname: "example.com", host: "example.com", pathname: "/news/1", search: "?a=1", ancestorOrigins };
+	const frame = lookupFrame(Array.isArray(selectors) ? { "example.com": selectors } : selectors, [], allowlist, location);
+	frame.lookup();
 	const listeners: Record<string, () => void> = {};
 	const doc = {
 		readyState: "complete",
@@ -129,8 +126,8 @@ function run(
 	}
 	let timers: (() => void)[] = [];
 	const setTimeout = (cb: () => void) => timers.push(cb);
-	const fn = new Function("location", "document", "MutationObserver", "setTimeout", src);
-	fn({ hostname: "example.com", host: "example.com", pathname: "/news/1", search: "?a=1", ancestorOrigins }, doc, FakeMutationObserver, setTimeout);
+	const fn = new Function("location", "document", "MutationObserver", "setTimeout", "addEventListener", "dispatchEvent", source);
+	fn(location, doc, FakeMutationObserver, setTimeout, frame.addEventListener, frame.dispatchEvent);
 	return {
 		doc,
 		mutate: (records) => observer(records),

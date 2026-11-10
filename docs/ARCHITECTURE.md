@@ -377,6 +377,7 @@ Lilo/ContentBlocker/
 ├── FilterListService.swift        - filter list download, caching and rule application
 ├── FilterListConverter.swift      - filter list syntax to WebKit content rules and script tables
 ├── GenericCosmetics.js            - hand-written; generic cosmetic filtering
+├── FilterLookup.js                - hand-written; finds a frame's entries in a filter table for the two scripts below
 ├── ProceduralCosmetics.js         - hand-written; procedural cosmetic filtering
 ├── Scriptlets.js                  - hand-written; scriptlet injection for filter-list rules
 ├── content-blocker-rules.json     - bundled fallback block list until filter lists download

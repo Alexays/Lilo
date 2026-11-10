@@ -1,5 +1,8 @@
-// The filter tables as WKEngineFactory splices them into GenericCosmetics.js, ProceduralCosmetics.js and
-// Scriptlets.js, for their tests.
+// The filter tables as WKEngineFactory hands them to GenericCosmetics.js and FilterLookup.js, for their tests and
+// those of the page scripts FilterLookup.js serves.
+import { readFileSync } from "node:fs";
+
+const lookupSource = readFileSync(new URL("../../../ContentBlocker/FilterLookup.js", import.meta.url), "utf8");
 
 const DIGITS = "+/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -42,6 +45,25 @@ export function keyedTable(table: Record<string, string[]>): { index: string; gr
 	records.sort((a, b) => (a[0] < b[0] ? -1 : 1));
 	const index = records.map(([hash, group]) => hash + [18, 12, 6, 0].map((shift) => DIGITS[(group >> shift) & 63]).join("")).join("");
 	return { index, groups, entries };
+}
+
+/**
+ * FilterLookup.js over `table` for a frame at `location`: the window's event functions, which the table's page script
+ * shares with it, and `lookup` to run it, before or after that script.
+ */
+export function lookupFrame(table: Record<string, string[]>, names: string[], allowlist: string[], location: unknown) {
+	const { index, groups, entries } = keyedTable(table);
+	const src = lookupSource
+		.replace("__LILO_LOOKUP_INDEX__", JSON.stringify(index))
+		.replace("__LILO_LOOKUP_GROUPS__", JSON.stringify(groups))
+		.replace("__LILO_LOOKUP_TABLE__", JSON.stringify(entries))
+		.replace("__LILO_LOOKUP_NAMES__", JSON.stringify(names.join(" ")))
+		.replace("__LILO_ALLOWLIST__", JSON.stringify(`|${allowlist.join("|")}|`));
+	const window = new EventTarget();
+	const addEventListener = window.addEventListener.bind(window);
+	const dispatchEvent = window.dispatchEvent.bind(window);
+	const lookup = () => new Function("location", "addEventListener", "dispatchEvent", src)(location, addEventListener, dispatchEvent);
+	return { addEventListener, dispatchEvent, lookup };
 }
 
 /** FNV-1a, the hash WKEngineFactory.tokenBuckets buckets tokens by. */
