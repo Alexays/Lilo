@@ -53,14 +53,19 @@ enum AgentTools {
             "query": prop("string", "Text to look for."), "tabId": prop("number", "The tab to search.")
         ], required: ["query", "tabId"]),
         tool("wait_for", """
-            Wait until a text or an element shows, until it is gone, or until a control is enabled: an upload \
-            finishing, a reply appearing, a Post button turning active. Use it instead of sleeping or polling with \
-            javascript_tool. Checks the page (not its frames) every 250 ms.
+            Wait until a text or an element shows, until it is gone, until a control is enabled, or until the tab \
+            is at a URL: an upload finishing, a reply appearing, a Post button turning active, a redirect after \
+            sign-in. Use it instead of sleeping or polling with javascript_tool. Takes one of text, selector, role \
+            or url. Text, selector and role are checked in the page (not its frames) at once, then after each DOM \
+            change, at most every 100 ms; url is checked at once, then when the tab's URL or loading state changes.
             """, [
                 "text": prop("string", "Text that must show, case-insensitively."),
                 "selector": prop("string", "A CSS selector, instead of text."),
+                "role": prop("string", "An element's role as read_page gives it (button, link, textbox, heading...), instead of text."),
+                "name": prop("string", "With role: part of the element's name as read_page gives it, case-insensitively."),
+                "url": prop("string", "Part of the tab's URL, or with * for any run of characters a pattern for the whole URL (*/orders/*), case-sensitively. Takes no state."),
                 "state": ["type": "string", "enum": ["visible", "hidden", "enabled"],
-                          "description": "visible (default): until it shows; hidden: until it is gone; enabled: until the selector's element shows, not disabled."],
+                          "description": "visible (default): until it shows; hidden: until it is gone; enabled: until the selector's or role's element shows, not disabled."],
                 "timeout": prop("number", "Seconds, 10 by default, up to 50."),
                 "tabId": prop("number", "The tab.")
             ], required: ["tabId"]),
@@ -69,7 +74,9 @@ enum AgentTools {
         ], required: ["tabId"]),
         tool("form_input", """
             Set the value of a form element (input, textarea, select, checkbox, contenteditable) by ref. A native date, time \
-            or color picker draws outside the page and never shows in a screenshot: set those inputs here instead of clicking.
+            or color picker draws outside the page and never shows in a screenshot: set those inputs here instead of clicking. \
+            The reply gives what the element holds right after its input and change events, with a warning when the page \
+            changed or rejected the value; for a password, card or one-time code field, only whether it holds the value.
             """, [
             "ref": prop("string", "The element's ref from read_page or find."),
             "value": ["type": ["string", "boolean", "number"], "description": "The value; a boolean for a checkbox."],
@@ -201,18 +208,48 @@ enum AgentTools {
             return [.text(try await findInFrames(engine, arguments["query"] as? String ?? ""))]
         case "wait_for":
             let (_, engine) = try control.agentTab(arguments["tabId"], session: session)
-            let text = (arguments["text"] as? String).flatMap { $0.isEmpty ? nil : $0 }
-            let selector = (arguments["selector"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            let given = { (key: String) in (arguments[key] as? String).flatMap { $0.isEmpty ? nil : $0 } }
+            let text = given("text"), selector = given("selector"), role = given("role"), name = given("name"), url = given("url")
             let state = arguments["state"] as? String ?? "visible"
-            guard text != nil || selector != nil else { throw AgentToolError("text or selector is required") }
+            guard [text, selector, role, url].compactMap({ $0 }).count == 1 else { throw AgentToolError("one of text, selector, role or url is required") }
             guard ["visible", "hidden", "enabled"].contains(state) else { throw AgentToolError("state is visible, hidden or enabled") }
-            guard state != "enabled" || selector != nil else { throw AgentToolError("enabled needs a selector") }
+            guard state != "enabled" || selector != nil || role != nil else { throw AgentToolError("enabled needs a selector or a role") }
+            guard url == nil || state == "visible" else { throw AgentToolError("url takes no state") }
+            guard name == nil || role != nil else { throw AgentToolError("name needs a role") }
             let seconds = min(max((arguments["timeout"] as? NSNumber)?.doubleValue ?? 10, 0), 50)
+            if let url {
+                let parts = url.components(separatedBy: "*").map { NSRegularExpression.escapedPattern(for: $0) }
+                let pattern = parts.count > 1 ? "^" + parts.joined(separator: ".*") + "$" : parts[0]
+                let start = ContinuousClock.now
+                // A page script dies with its document, so the web view's own URL is observed. A navigation can
+                // show its URL before it commits: the end of its load is a change as well.
+                let (changes, changed) = AsyncStream.makeStream(of: Void.self, bufferingPolicy: .bufferingNewest(1))
+                let observations = [
+                    engine.wkWebView.observe(\.url, options: [.initial]) { _, _ in changed.yield() },
+                    engine.wkWebView.observe(\.isLoading) { _, _ in changed.yield() }
+                ]
+                let timer = Task {
+                    try? await Task.sleep(for: .seconds(seconds))
+                    changed.finish()
+                }
+                defer {
+                    observations.forEach { $0.invalidate() }
+                    timer.cancel()
+                }
+                for await _ in changes {
+                    guard let current = engine.currentURL?.absoluteString, current.range(of: pattern, options: .regularExpression) != nil else { continue }
+                    return [.text("The URL is \(current) after \(Int((ContinuousClock.now - start) / .milliseconds(1))) ms")]
+                }
+                try Task.checkCancellation()
+                throw AgentToolError(unsafe "The URL is still \(engine.currentURL?.absoluteString ?? "") after \(String(format: "%g", seconds)) s")
+            }
             var options: [String: Any] = ["state": state, "timeoutMs": seconds * 1000]
             options["text"] = text
             options["selector"] = selector
+            options["role"] = role
+            options["name"] = name
             guard let seen = try await page(engine, "waitFor", options) as? String else {
-                let what = selector ?? "\"\(text ?? "")\""
+                let what = selector ?? role.map { role in name.map { "\(role) \"\($0)\"" } ?? role } ?? "\"\(text ?? "")\""
                 let goal = ["hidden": "still shows", "enabled": "is still missing or disabled"][state] ?? "does not show"
                 throw AgentToolError(unsafe "\(what) \(goal) after \(String(format: "%g", seconds)) s")
             }

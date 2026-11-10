@@ -1,0 +1,3 @@
+kind: Fixed
+body: Agents no longer see what a password, card number or one-time code field holds when they read a page
+time: 2026-11-10T10:34:46.068447+01:00

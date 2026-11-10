@@ -152,6 +152,28 @@ final class AgentPageToolsTests: AgentToolTestCase {
         XCTAssertFalse(reply.text.components(separatedBy: "\n\n").dropFirst().joined().contains("Menu"), "the nav is outside main")
     }
 
+    func testReadPageAndFindKeepSecretFieldValuesOut() async throws {
+        let tab = try await agentTab(showing: """
+        <!doctype html><title>Sign in</title><body>
+        <input aria-label="Email" value="ada@example.com">
+        <input aria-label="Password" type="password" value="hunter2-secret">
+        <input aria-label="Shown password" type="text" autocomplete="current-password" value="hunter3-secret">
+        <input aria-label="Card" autocomplete="cc-number" value="4242424242424242">
+        <input aria-label="Code" autocomplete="one-time-code" value="918273">
+        </body>
+        """)
+
+        let tree = await client.callTool("read_page", ["tabId": tab]).text
+        let found = await client.callTool("find", ["tabId": tab, "query": "hunter2"]).text
+
+        XCTAssertTrue(tree.contains(#"value="ada@example.com""#), tree)
+        XCTAssertEqual(tree.components(separatedBy: "value=[redacted]").count - 1, 4, tree)
+        for secret in ["hunter2-secret", "hunter3-secret", "4242424242424242", "918273"] {
+            XCTAssertFalse(tree.contains(secret), tree)
+        }
+        XCTAssertFalse(found.contains("hunter2-secret"), found)
+    }
+
     func testFormInputSetsSelectAndCheckbox() async throws {
         let tab = try await agentTab(showing: Self.page)
         let tree = await client.callTool("read_page", ["tabId": tab, "filter": "interactive"]).text
@@ -391,5 +413,69 @@ final class AgentPageToolsTests: AgentToolTestCase {
         XCTAssertTrue(stuck.isError && stuck.text.hasPrefix("[needs_user] Tab \(tab) is not responding"), stuck.text)
         XCTAssertTrue(back, "the reload replaces the hung process and the page commits again")
         XCTAssertTrue(read.text.contains("Hello main"), read.text)
+    }
+
+    func testFormInputSaysWhatTheFieldHolds() async throws {
+        let tab = try await agentTab(showing: #"""
+            <!doctype html><body><input aria-label="Plain">
+            <input aria-label="Phone" oninput="this.value = this.value.replace(/^(\d{3})(\d{4})$/, '$1-$2')">
+            <input aria-label="Secret" type="password">
+            <input aria-label="Code" autocomplete="one-time-code" oninput="this.value = this.value.slice(0, 4)"></body>
+            """#)
+        let tree = await client.callTool("read_page", ["tabId": tab, "filter": "interactive"]).text
+        let phoneRef = try ref("Phone", in: tree)
+        let codeRef = try ref("Code", in: tree)
+
+        let plain = await client.callTool("form_input", ["tabId": tab, "ref": try ref("Plain", in: tree), "value": "Ann"]).text
+        let phone = await client.callTool("form_input", ["tabId": tab, "ref": phoneRef, "value": "5551234"]).text
+        let secret = await client.callTool("form_input", ["tabId": tab, "ref": try ref("Secret", in: tree), "value": "made-up-secret"]).text
+        let code = await client.callTool("form_input", ["tabId": tab, "ref": codeRef, "value": "918273"]).text
+
+        XCTAssertTrue(plain.hasSuffix(#"to "Ann""#), plain)
+        XCTAssertTrue(phone.hasPrefix(#"Warning: \#(phoneRef) holds "555-1234", not "5551234""#), phone)
+        XCTAssertTrue(secret.hasSuffix("it holds the value given"), secret)
+        XCTAssertFalse(secret.contains("made-up-secret"), secret)
+        XCTAssertTrue(code.hasPrefix("Warning: \(codeRef) does not hold the value given"), code)
+        XCTAssertFalse(code.contains("9182"), code)
+    }
+
+    func testWaitForSeesAnElementByRoleAndNameTurnEnabledThenGo() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><button disabled>Send order</button>
+            <script>setTimeout(() => { document.querySelector('button').disabled = false }, 600)</script></body>
+            """)
+
+        let enabled = await client.callTool("wait_for", ["tabId": tab, "role": "button", "name": "send order", "state": "enabled"])
+        _ = try await js("setTimeout(() => document.querySelector('button').remove(), 300)", tab: tab)
+        let gone = await client.callTool("wait_for", ["tabId": tab, "role": "button", "name": "Send order", "state": "hidden"])
+        let missing = await client.callTool("wait_for", ["tabId": tab, "role": "link", "name": "Send order", "timeout": 0.3])
+
+        XCTAssertTrue(enabled.text.hasPrefix(#"button "Send order" [ref_"#), enabled.text)
+        XCTAssertTrue(gone.text.hasPrefix(#"button "Send order" is gone after"#), gone.text)
+        XCTAssertTrue(missing.isError, missing.text)
+        XCTAssertTrue(missing.text.contains(#"link "Send order" does not show after 0.3 s"#), missing.text)
+    }
+
+    func testWaitForSeesTheURLChangeWithAndWithoutALoad() async throws {
+        let server = try await TinyHTTPServer { request in
+            let body = request.hasPrefix("GET /orders/") ? "<title>Order</title><p>Paid</p>" : """
+                <title>Cart</title><p>Cart</p><script>setTimeout(() => history.pushState(null, '', '/checkout'), 400)</script>
+                """
+            return ("200 OK", ["Content-Type: text/html"], Data(body.utf8))
+        }
+        let tab = try await newAgentTab()
+        _ = await client.callTool("navigate", ["tabId": tab, "url": "127.0.0.1:\(server.port)/"])
+
+        let pushed = await client.callTool("wait_for", ["tabId": tab, "url": "/checkout"])
+        _ = try await js("setTimeout(() => location.assign('/orders/42'), 300)", tab: tab)
+        let loaded = await client.callTool("wait_for", ["tabId": tab, "url": "*/orders/*"])
+        let missing = await client.callTool("wait_for", ["tabId": tab, "url": "*/refunds/*", "timeout": 0.3])
+        let both = await client.callTool("wait_for", ["tabId": tab, "url": "/orders/", "text": "Paid"])
+
+        XCTAssertTrue(pushed.text.hasPrefix("The URL is http://127.0.0.1:\(server.port)/checkout after"), pushed.text)
+        XCTAssertTrue(loaded.text.hasPrefix("The URL is http://127.0.0.1:\(server.port)/orders/42 after"), loaded.text)
+        XCTAssertTrue(missing.isError, missing.text)
+        XCTAssertTrue(missing.text.contains("The URL is still http://127.0.0.1:\(server.port)/orders/42 after 0.3 s"), missing.text)
+        XCTAssertTrue(both.isError && both.text.contains("one of text, selector, role or url is required"), both.text)
     }
 }

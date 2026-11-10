@@ -87,13 +87,15 @@
     for (let ancestor = el.parentElement; ancestor; ancestor = ancestor.parentElement) if (clipped(ancestor)) return false
     return true
   }
+  // A password shown as text keeps its autocomplete token.
+  const secret = el => el.type === 'password' || /\b(current-password|new-password|one-time-code|cc-number|cc-csc)\b/.test(el.autocomplete)
   const details = el => {
     const parts = []
     if (el.tagName === 'A' && el.href) parts.push(`href="${clip(el.getAttribute('href'), 200)}"`)
     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
       if (el.type && el.tagName === 'INPUT') parts.push(`type="${el.type}"`)
       if (el.type === 'checkbox' || el.type === 'radio') parts.push(el.checked ? 'checked' : 'unchecked')
-      else if (el.value) parts.push(`value="${clip(el.value, 200)}"`)
+      else if (el.value) parts.push(secret(el) ? 'value=[redacted]' : `value="${clip(el.value, 200)}"`)
     }
     if (el.disabled) parts.push('disabled')
     if (/^H[1-6]$/.test(el.tagName)) parts.push(`level=${el.tagName[1]}`)
@@ -201,9 +203,10 @@
 
   // Checked now, then after the DOM changes, at most every 100 ms: what was seen, or null once the time is up.
   // A timer coalesces the changes rather than a frame: frames stop in a hidden tab.
-  const waitFor = ({ text: wanted, selector, state = 'visible', timeoutMs = 10000 }) => new Promise(resolve => {
+  const waitFor = ({ text: wanted, selector, role: wantedRole, name: wantedName = '', state = 'visible', timeoutMs = 10000 }) => new Promise(resolve => {
     const started = Date.now()
     const needle = String(wanted).toLowerCase()
+    const nameNeedle = wantedName.toLowerCase()
     let pending = null
     const observer = new MutationObserver(() => { pending ??= setTimeout(check, 100) })
     const watched = new WeakSet()
@@ -222,6 +225,13 @@
       }
       return found
     }
+    // The first shown element read_page gives that role and name, into open shadow roots.
+    const named = () => {
+      for (const el of document.body ? elements(document.body) : []) {
+        if (el.shadowRoot) watch(el.shadowRoot)
+        if (role(el) === wantedRole && name(el).toLowerCase().includes(nameNeedle) && shown(el)) return el
+      }
+    }
     const finish = result => {
       observer.disconnect()
       clearTimeout(timer)
@@ -231,9 +241,9 @@
     const check = () => {
       pending = null
       let seen = null
-      if (selector) {
-        const el = [...document.querySelectorAll(selector)].find(shown)
-        if (state === 'hidden') seen = el ? null : `${selector} is gone`
+      if (selector || wantedRole) {
+        const el = selector ? [...document.querySelectorAll(selector)].find(shown) : named()
+        if (state === 'hidden') seen = el ? null : `${selector ?? (wantedName ? `${wantedRole} "${wantedName}"` : wantedRole)} is gone`
         else if (el && (state !== 'enabled' || !el.disabled && el.getAttribute('aria-disabled') !== 'true')) {
           seen = `${describe(el)} [${ref(el)}] is ${state === 'enabled' ? 'enabled' : 'shown'}`
         }
@@ -259,24 +269,32 @@
     const el = element(id)
     el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' })
     el.focus?.()
+    let wanted = String(value)
     if (el.tagName === 'SELECT') {
       const option = [...el.options].find(o => o.value === String(value) || o.text.trim() === String(value))
       if (!option) throw new Error(`No option "${value}" in ${id}: options are ${[...el.options].map(o => o.text.trim()).join(', ')}`)
-      el.value = option.value
+      el.value = wanted = option.value
     } else if (el.type === 'checkbox' || el.type === 'radio') {
-      el.checked = value === true || value === 'true'
+      el.checked = wanted = value === true || value === 'true'
     } else if (el.isContentEditable) {
-      el.textContent = String(value)
+      el.textContent = wanted
     } else if ('value' in el) {
       // The prototype setter, so frameworks that wrap the value property (React) see the change.
       const proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
-      Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, String(value))
+      Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, wanted)
     } else {
       throw new Error(`${id} is not a form field`)
     }
     el.dispatchEvent(new Event('input', { bubbles: true }))
     el.dispatchEvent(new Event('change', { bubbles: true }))
-    return `Set ${id} to ${JSON.stringify(value)}`
+    // Read after the events: the page's own handlers may have reformatted, cut or reverted the value.
+    const held = el.type === 'checkbox' || el.type === 'radio' ? el.checked : el.isContentEditable ? el.textContent : el.value
+    if (secret(el)) {
+      return held === wanted ? `Set ${id}: it holds the value given` : `Warning: ${id} does not hold the value given: the page changed or rejected it`
+    }
+    return held === wanted
+      ? `Set ${id} to ${JSON.stringify(held)}`
+      : `Warning: ${id} holds ${JSON.stringify(held)}, not ${JSON.stringify(wanted)}: the page changed or rejected the value`
   }
 
   const rect = ({ ref: id, scroll = true }) => {

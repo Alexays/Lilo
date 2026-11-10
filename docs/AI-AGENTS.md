@@ -18,6 +18,14 @@ take your keyboard or your tabs. They can borrow one of your profiles for a task
 
 - Open, navigate and close tabs in their own folder; click, type, fill forms, take screenshots.
 - Read pages (accessibility tree with element refs, page text), the console and the network.
+- `form_input`: set a field and get back what it holds once the page handled the change, with a
+  warning when the page reformatted, cut or rejected the value. For a password, card or one-time
+  code field the reply only says whether it holds the value given.
+- `wait_for`: wait, instead of sleeping, for one of: a text, a CSS selector, an element by the role
+  and name `read_page` gives it (each until it shows, is gone, or for an element is enabled), or the
+  tab's URL (a substring, or a pattern for the whole URL with `*`). The page is checked at once and
+  then after each DOM change, at most every 100 ms, frames left out; the URL when the tab's URL or
+  loading state changes. 10 s by default, 50 s at most.
 - Use devtools commands, network mocking and emulation.
 - `fetch`: send an HTTP request from a tab, as the page would, with its origin, CORS rules and
   cookies. Bodies are capped (1 MB by default); `Set-Cookie` and `Authorization` are never returned.
