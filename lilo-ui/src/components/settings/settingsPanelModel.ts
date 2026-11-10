@@ -80,6 +80,7 @@ export type SettingId =
   | "externalLinkRules"
   | "peekPinnedTabLinks"
   | "tabGlance"
+  | "meetingCard"
   | "developMenu"
   | "contentBlocker"
   | "blockerTrackers"
@@ -144,6 +145,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
   peekPinnedTabLinks: { key: "peekPinnedTabLinks", fallback: true },
   tabGlance: { key: "tabGlance", fallback: true },
+  meetingCard: { key: "meetingCard", fallback: false },
   seasonalAppIcon: { key: "seasonalAppIcon", fallback: true },
   hideSpaceNames: { key: "hideSpaceNames", fallback: false },
   contentBlocker: { key: "contentBlockerEnabled", fallback: true },
@@ -209,6 +211,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "littleWindowHotKey", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "peekPinnedTabLinks", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "tabGlance", section: "tabs", groupKey: "settings.groups.tabsWindows" },
+  { id: "meetingCard", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "contentBlocker", section: "privacy", groupKey: "settings.groups.contentBlocking" },
   { id: "blockerTrackers", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
   { id: "blockerCookieNotices", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },

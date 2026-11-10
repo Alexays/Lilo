@@ -355,6 +355,11 @@
 				"description": "将指针停留在固定标签页或个人收藏上，会在卡片中显示其网页，无需离开当前标签页即可阅读和操作。关闭后，卡片显示网页的图像。",
 				"keywords": "预览 指针 卡片 实时 固定 收藏"
 			},
+			"meetingCard": {
+				"title": "显示即将开始的会议",
+				"description": "Mac 日历中的日程开始前 10 分钟会显示一张卡片，日程带有链接时还会显示“加入”。开启此项时 Lilo 会请求日历访问权限，且只在这台 Mac 上读取。",
+				"keywords": "会议 日历 日程 加入 视频通话 提醒 meeting calendar"
+			},
 			"autoPictureInPicture": {
 				"title": "自动画中画",
 				"description": "切换到其他标签页或其他应用时，将通话或正在播放的视频放入悬浮窗口。",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "重新启动 Lilo 以安装版本 {version}",
 		"restarting": "正在重新启动...",
 		"later": "稍后"
+	},
+	"meetingCard": {
+		"join": "加入",
+		"joinLabel": "加入{title}",
+		"dismiss": "关闭",
+		"now": "现在",
+		"untitled": "无标题日程"
 	},
 	"sitePermissions": {
 		"manage": "网站控制",

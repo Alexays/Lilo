@@ -355,6 +355,11 @@
 				"description": "고정된 탭이나 즐겨찾기에 포인터를 올려 두면 해당 페이지가 카드에 표시되어, 현재 탭을 벗어나지 않고 읽고 사용할 수 있습니다. 끄면 카드에 페이지 이미지가 표시됩니다.",
 				"keywords": "미리보기 훑어보기 포인터 카드 실시간 고정 즐겨찾기"
 			},
+			"meetingCard": {
+				"title": "곧 시작하는 회의 표시",
+				"description": "Mac 캘린더의 이벤트가 시작되기 10분 전에 카드가 표시되며, 이벤트에 링크가 있으면 참여 버튼이 나타납니다. 이 설정을 켜면 Lilo가 캘린더 접근을 요청하며 이 Mac에서만 읽습니다.",
+				"keywords": "회의 캘린더 이벤트 참여 화상 통화 알림 meeting calendar"
+			},
 			"autoPictureInPicture": {
 				"title": "자동 화면 속 화면",
 				"description": "통화 중이거나 비디오가 재생 중인 탭이나 Lilo를 벗어나면 플로팅 윈도우로 표시합니다.",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "버전 {version}을 설치하려면 Lilo 재시동",
 		"restarting": "재시동 중...",
 		"later": "나중에"
+	},
+	"meetingCard": {
+		"join": "참여",
+		"joinLabel": "{title} 참여",
+		"dismiss": "닫기",
+		"now": "지금",
+		"untitled": "제목 없는 이벤트"
 	},
 	"sitePermissions": {
 		"manage": "사이트 제어",

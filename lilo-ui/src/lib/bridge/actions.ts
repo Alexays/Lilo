@@ -354,6 +354,11 @@ export const keepAwakeActions = {
 	loadAppNames: (ids: string[]): void => emit("getAppNames", { ids }),
 };
 
+export const meetingActions = {
+	join: emitId("joinMeeting"),
+	dismiss: emitId("dismissMeeting"),
+};
+
 export const omniboxActions = {
 	inputStarted: (sessionId: string, query: string): void =>
 		emit("omniboxInputStarted", { sessionId, query }),

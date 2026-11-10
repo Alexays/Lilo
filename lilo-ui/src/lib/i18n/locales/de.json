@@ -355,6 +355,11 @@
 				"description": "Verweilt der Zeiger auf einem angehefteten Tab oder einem Favoriten, zeigt eine Karte dessen Seite: lesen und bedienen, ohne den aktuellen Tab zu verlassen. Ausgeschaltet zeigt die Karte ein Bild der Seite.",
 				"keywords": "vorschau schnellansicht zeiger karte live angeheftet favorit"
 			},
+			"meetingCard": {
+				"title": "Bevorstehende Meetings anzeigen",
+				"description": "10 Minuten vor Beginn eines Termins aus den Kalendern deines Mac erscheint eine Karte, mit Teilnehmen, wenn der Termin einen Link enthält. Lilo fragt beim Aktivieren nach Kalenderzugriff und liest die Kalender nur auf diesem Mac.",
+				"keywords": "meeting kalender termin teilnehmen videoanruf erinnerung"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatisches Bild-in-Bild",
 				"description": "Einen Anruf oder ein laufendes Video in einem schwebenden Fenster anzeigen, wenn du den Tab oder Lilo verlässt.",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "Lilo neu starten, um Version {version} zu installieren",
 		"restarting": "Neustart läuft...",
 		"later": "Später"
+	},
+	"meetingCard": {
+		"join": "Teilnehmen",
+		"joinLabel": "An {title} teilnehmen",
+		"dismiss": "Ausblenden",
+		"now": "Jetzt",
+		"untitled": "Termin ohne Titel"
 	},
 	"sitePermissions": {
 		"manage": "Website-Steuerung",

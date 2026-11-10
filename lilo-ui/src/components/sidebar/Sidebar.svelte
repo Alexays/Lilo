@@ -21,6 +21,7 @@
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getReadyUpdate } from "../../stores/settings.svelte";
+  import { getMeeting } from "../../stores/meeting.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressInRightTabs, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
@@ -78,6 +79,11 @@
   let updateCardLoaded = $state(false);
   $effect(() => {
     if (getReadyUpdate()) updateCardLoaded = true;
+  });
+  // Kept mounted once loaded, so the card plays its own transitions.
+  let meetingCardLoaded = $state(false);
+  $effect(() => {
+    if (getMeeting()) meetingCardLoaded = true;
   });
 
   const addressCorner = $derived(getTabPosition() === "left" && getAddressPlacement() === "tabs");
@@ -154,6 +160,11 @@
 
     <!-- Fixed above the bottom bar: does NOT swipe -->
     <PipDock />
+    {#if meetingCardLoaded}
+      {#await import("./MeetingCard.svelte") then card}
+        <card.default />
+      {/await}
+    {/if}
     <!-- Loaded with the first call: it costs the chrome's first frame nothing. -->
     {#if getCallCardTab()}
       {#await import("./CallCard.svelte") then card}

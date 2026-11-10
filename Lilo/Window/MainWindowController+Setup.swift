@@ -663,6 +663,9 @@ extension MainWindowController {
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
+        let meetings = context.meetingController(settingsStore: settingsStore)
+        settingsHandler.onMeetingCardChanged = { [weak meetings] in meetings?.enabledDidChange() }
+        bridgeRouter.register(handler: MeetingBridgeHandler(windowController: self))
         settingsHandler.onRecordShortcut = { [weak self] in self?.recordingShortcutId = $0 }
         settingsHandler.onReloadTab = { [weak self] in self?.tabManager.engineTab(for: $0)?.reload() }
         settingsHandler.onTerminalSettingsChanged = { [weak self] in self?.applyTerminalSettings() }

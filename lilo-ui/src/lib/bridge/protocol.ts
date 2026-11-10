@@ -822,6 +822,8 @@ export interface BridgeCommandPayloadMap {
 	answerTerminal: { tabId: string; text: string };
 	restoreClosedTerminal: { index: number };
 	getKeepAwakeState: EmptyPayload;
+	joinMeeting: { id: string };
+	dismissMeeting: { id: string };
 	getAgentActivity: EmptyPayload;
 	/** `alwaysAllowSite`: the site whose consequential actions the user always allows from now on. */
 	agentControlResponse: { requestId: string; granted: boolean; alwaysAllowSite?: string };
@@ -1171,6 +1173,8 @@ export interface BridgeEventPayloadMap {
 		closedTerminals?: BridgeClosedTerminal[];
 	};
 	keepAwakeChanged: BridgeKeepAwakeState;
+	/** The calendar event whose card shows, null when none does. */
+	meetingChanged: { meeting: BridgeMeeting | null };
 	agentActivity: {
 		clients: BridgeAgentClient[];
 		/** One Agents space per profile agents work in. */
@@ -1302,6 +1306,16 @@ export interface BridgeTerminalOptions {
 }
 
 /** The install status of the root helper that keeps the Mac awake with the lid closed. */
+export interface BridgeMeeting {
+	/** One occurrence of the event. */
+	id: string;
+	title: string;
+	/** Epoch milliseconds. */
+	start: number;
+	/** The link the event itself carries, null when it has none. */
+	url: string | null;
+}
+
 export interface BridgeKeepAwakeState {
 	helperStatus: "unsigned" | "notRegistered" | "requiresApproval" | "enabled" | "notFound";
 }

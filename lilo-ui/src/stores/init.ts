@@ -22,6 +22,7 @@ import { initKeepAwakeStore } from "./keepAwake.svelte";
 import { initAgentsStore } from "./agents.svelte";
 import { initConversationsStore } from "./conversations.svelte";
 import { initMediaStore } from "./media.svelte";
+import { initMeetingStore } from "./meeting.svelte";
 import { applyProfileInitialState, initProfileStore } from "./profiles.svelte";
 import { initScreenshotEditor } from "./screenshotEditor.svelte";
 import { initSearchEngineStore } from "./searchEngines";
@@ -79,6 +80,7 @@ const DEFERRED_STORES: StoreInitializer[] = [
 	initAgentsStore,
 	initConversationsStore,
 	initMediaStore,
+	initMeetingStore,
 	initScreenshotEditor,
 	initSearchEngineStore,
 	initSettingsStore,

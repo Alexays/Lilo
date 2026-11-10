@@ -355,6 +355,11 @@
 				"description": "Houd de aanwijzer stil op een vastgemaakt tabblad of een favoriet en een kaart toont de pagina, om te lezen en te gebruiken zonder het huidige tabblad te verlaten. Uitgeschakeld toont de kaart een afbeelding van de pagina.",
 				"keywords": "voorvertoning aanwijzer kaart live vastgemaakt favoriet"
 			},
+			"meetingCard": {
+				"title": "Vergaderingen tonen die bijna beginnen",
+				"description": "Een kaart verschijnt 10 minuten voordat een activiteit uit de agenda's van je Mac begint, met Deelnemen als de activiteit een link bevat. Lilo vraagt toegang tot je agenda's wanneer je dit inschakelt en leest ze alleen op deze Mac.",
+				"keywords": "vergadering agenda activiteit deelnemen videogesprek herinnering"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatisch beeld in beeld",
 				"description": "Toon een gesprek of afspelende video in een zwevend venster wanneer je naar een ander tabblad of een andere app gaat.",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "Herstart Lilo om versie {version} te installeren",
 		"restarting": "Herstarten...",
 		"later": "Later"
+	},
+	"meetingCard": {
+		"join": "Deelnemen",
+		"joinLabel": "Deelnemen aan {title}",
+		"dismiss": "Verbergen",
+		"now": "Nu",
+		"untitled": "Activiteit zonder titel"
 	},
 	"sitePermissions": {
 		"manage": "Websitebediening",

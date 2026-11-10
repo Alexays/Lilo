@@ -355,6 +355,11 @@
 				"description": "Fermando il puntatore su una scheda fissata o su un preferito, una scheda mobile mostra la sua pagina, da leggere e usare senza lasciare la scheda attuale. Disattivata, mostra un'immagine della pagina.",
 				"keywords": "anteprima puntatore dal vivo fissata preferito"
 			},
+			"meetingCard": {
+				"title": "Mostra le riunioni in arrivo",
+				"description": "Una scheda appare 10 minuti prima che inizi un evento dei calendari del tuo Mac, con Partecipa quando l'evento contiene un link. Lilo chiede l'accesso ai calendari quando attivi questa opzione e li legge solo su questo Mac.",
+				"keywords": "riunione calendario evento partecipa videochiamata promemoria"
+			},
 			"autoPictureInPicture": {
 				"title": "Picture in Picture automatico",
 				"description": "Mostra una chiamata o un video in riproduzione in una finestra mobile quando passi a un'altra scheda o esci da Lilo.",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "Riavvia Lilo per installare la versione {version}",
 		"restarting": "Riavvio...",
 		"later": "Più tardi"
+	},
+	"meetingCard": {
+		"join": "Partecipa",
+		"joinLabel": "Partecipa a {title}",
+		"dismiss": "Ignora",
+		"now": "Ora",
+		"untitled": "Evento senza titolo"
 	},
 	"sitePermissions": {
 		"manage": "Controlli del sito",

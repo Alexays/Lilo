@@ -355,6 +355,11 @@
 				"description": "Resting the pointer on a pinned tab or a favorite shows its page in a card, to read and use without leaving the current tab. Off, the card shows a picture of the page.",
 				"keywords": "glance preview hover card live pinned favorite"
 			},
+			"meetingCard": {
+				"title": "Show meetings about to start",
+				"description": "A card shows 10 minutes before an event from your Mac's calendars starts, with Join when the event carries a link. Lilo asks for calendar access when you turn this on, and reads it only on this Mac.",
+				"keywords": "meeting calendar event join video call reminder"
+			},
 			"autoPictureInPicture": {
 				"title": "Auto picture-in-picture",
 				"description": "Pop a call or playing video into a floating window when you switch away from its tab or from Lilo.",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "Restart Lilo to install version {version}",
 		"restarting": "Restarting...",
 		"later": "Later"
+	},
+	"meetingCard": {
+		"join": "Join",
+		"joinLabel": "Join {title}",
+		"dismiss": "Dismiss",
+		"now": "Now",
+		"untitled": "Untitled event"
 	},
 	"sitePermissions": {
 		"manage": "Site controls",

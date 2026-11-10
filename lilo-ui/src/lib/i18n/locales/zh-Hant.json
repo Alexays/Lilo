@@ -355,6 +355,11 @@
 				"description": "將指標停留在釘選分頁或喜好項目上，會在卡片中顯示其網頁，不必離開目前的分頁即可閱讀和操作。關閉後，卡片顯示網頁的影像。",
 				"keywords": "預覽 指標 卡片 即時 釘選 喜好項目"
 			},
+			"meetingCard": {
+				"title": "顯示即將開始的會議",
+				"description": "Mac 行事曆中的行程開始前 10 分鐘會顯示一張卡片，行程附有連結時還會顯示「加入」。開啟此項時 Lilo 會要求行事曆取用權限，且只在這台 Mac 上讀取。",
+				"keywords": "會議 行事曆 行程 加入 視訊通話 提醒 meeting calendar"
+			},
 			"autoPictureInPicture": {
 				"title": "自動子母畫面",
 				"description": "切換至其他分頁或其他 App 時，將通話或播放中的影片移至浮動視窗。",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "重新啟動 Lilo 以安裝 {version} 版",
 		"restarting": "正在重新啟動...",
 		"later": "稍後"
+	},
+	"meetingCard": {
+		"join": "加入",
+		"joinLabel": "加入{title}",
+		"dismiss": "關閉",
+		"now": "現在",
+		"untitled": "無標題行程"
 	},
 	"sitePermissions": {
 		"manage": "網站控制項",
