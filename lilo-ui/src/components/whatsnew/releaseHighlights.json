@@ -1,4 +1,22 @@
 {
+	"0.21.0": {
+		"headlineKey": "whatsNew.releases.v0210.headline",
+		"descriptionKey": "whatsNew.releases.v0210.description",
+		"highlights": [
+			{
+				"id": "translation",
+				"illustration": "languages",
+				"titleKey": "whatsNew.releases.v0210.translationTitle",
+				"descriptionKey": "whatsNew.releases.v0210.translationDescription"
+			},
+			{
+				"id": "memory",
+				"illustration": "fresh",
+				"titleKey": "whatsNew.releases.v0210.memoryTitle",
+				"descriptionKey": "whatsNew.releases.v0210.memoryDescription"
+			}
+		]
+	},
 	"0.20.0": {
 		"headlineKey": "whatsNew.releases.v0200.headline",
 		"descriptionKey": "whatsNew.releases.v0200.description",

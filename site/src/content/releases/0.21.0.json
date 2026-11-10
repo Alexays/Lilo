@@ -1,0 +1,103 @@
+{
+  "version": "0.21.0",
+  "title": {
+    "en": "Pages in your language.",
+    "fr": "Des pages dans votre langue."
+  },
+  "introduction": {
+    "en": "Translated pages leave less untouched and start with what you see, while Lilo's interface takes less memory in every window.",
+    "fr": "Les pages traduites laissent moins de texte de côté et commencent par ce que vous voyez, tandis que l'interface de Lilo occupe moins de mémoire dans chaque fenêtre."
+  },
+  "highlights": [
+    {
+      "id": "translation",
+      "title": {
+        "en": "Translate the whole page.",
+        "fr": "Traduisez toute la page."
+      },
+      "body": {
+        "en": "Read more of a page in your language. Translating it also covers placeholders, tooltips, image descriptions, button labels and text inside web components, starts with what is on screen, and leaves alone passages already in your language.",
+        "fr": "Lisez une plus grande part de la page dans votre langue. La traduction couvre aussi les textes indicatifs, les infobulles, les descriptions d'images, les libellés de boutons et le texte des composants web, commence par ce qui est à l'écran et laisse tels quels les passages déjà dans votre langue."
+      },
+      "notes": [
+        "Translating a page now also covers placeholders, tooltips, image descriptions, button labels and the text inside web components, starts with what is on screen, and leaves alone the passages already in your language"
+      ]
+    },
+    {
+      "id": "memory",
+      "title": {
+        "en": "Lighter on memory.",
+        "fr": "Plus léger en mémoire."
+      },
+      "body": {
+        "en": "Keep more windows open with less weight on your Mac. Lilo's own interface uses about 125 MB less memory per window.",
+        "fr": "Gardez plus de fenêtres ouvertes en pesant moins sur votre Mac. L'interface de Lilo utilise environ 125 Mo de mémoire en moins par fenêtre."
+      },
+      "notes": [
+        "Lilo's own interface uses about 125 MB less memory per window"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "title": {
+        "en": "Browsing",
+        "fr": "Navigation"
+      },
+      "notes": [
+        "Going back or forward to a page that manages its own scrolling returns to where you left it instead of the top",
+        "Live video no longer hitches each time its player finishes catching up with the stream",
+        "A site's notification can open its page in a new tab when clicked (clients.openWindow from a service worker)"
+      ]
+    },
+    {
+      "title": {
+        "en": "Agents",
+        "fr": "Agents"
+      },
+      "notes": [
+        "Agents no longer see what a password, card number or one-time code field holds when they read a page",
+        "Agents can wait for a tab's URL or for an element by role and name, and filling a field tells them what it holds afterwards"
+      ]
+    },
+    {
+      "title": {
+        "en": "Split View",
+        "fr": "Split View"
+      },
+      "notes": [
+        "A split view no longer stays hidden behind the tab you just left when that tab has the Web Inspector open",
+        "The Web Inspector docked in a split view pane stays inside its pane instead of covering the other panes"
+      ]
+    },
+    {
+      "title": {
+        "en": "Extensions",
+        "fr": "Extensions"
+      },
+      "notes": [
+        "Extension pages and side panels show a streamed reply, such as an AI assistant's answer, as it arrives instead of all at once at the end",
+        "An extension's background worker now finds the extension's open pages (popup, side panel, tabs) with clients.matchAll()",
+        "Extensions that redirect requests or change headers with the declarativeNetRequest permission now do so on the sites they may access"
+      ]
+    },
+    {
+      "title": {
+        "en": "Sidebar",
+        "fr": "Barre latérale"
+      },
+      "notes": [
+        "The sidebar's scrollbar takes on the Space's color instead of a flat grey"
+      ]
+    },
+    {
+      "title": {
+        "en": "AppleScript",
+        "fr": "AppleScript"
+      },
+      "notes": [
+        "AppleScript: a window gives the name of its current Space and of that Space's profile, both empty for a private Space"
+      ]
+    }
+  ]
+}

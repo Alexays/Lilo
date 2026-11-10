@@ -2477,6 +2477,14 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Pagine nella tua lingua.",
+				"description": "Le pagine tradotte lasciano meno testo indietro e iniziano da ciò che vedi, mentre l'interfaccia di Lilo occupa meno memoria in ogni finestra.",
+				"translationTitle": "Traduci l'intera pagina.",
+				"translationDescription": "Leggi una parte maggiore della pagina nella tua lingua. La traduzione copre anche segnaposto, suggerimenti, descrizioni delle immagini, etichette dei pulsanti e testo dei componenti web, inizia da ciò che è sullo schermo e lascia invariati i passaggi già nella tua lingua.",
+				"memoryTitle": "Più leggero in memoria.",
+				"memoryDescription": "Tieni aperte più finestre pesando meno sul tuo Mac. L'interfaccia di Lilo usa circa 125 MB di memoria in meno per finestra."
+			},
 			"v0200": {
 				"headline": "Conversazioni più chiare con gli agenti.",
 				"description": "Guarda dentro una cartella senza aprirla, rispondi alle domande di un agente con un clic e segui i suoi progressi mentre lavora.",

@@ -2477,6 +2477,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Pagina's in je eigen taal.",
+				"description": "Vertaalde pagina's laten minder onvertaald en beginnen bij wat je ziet, terwijl de interface van Lilo in elk venster minder geheugen gebruikt.",
+				"translationTitle": "Vertaal de hele pagina.",
+				"translationDescription": "Lees meer van een pagina in je eigen taal. De vertaling omvat ook plaatsaanduidingen, tooltips, afbeeldingsbeschrijvingen, knoplabels en tekst in webcomponenten, begint bij wat op het scherm staat en laat passages die al in je taal zijn ongemoeid.",
+				"memoryTitle": "Lichter op geheugen.",
+				"memoryDescription": "Houd meer vensters open met minder belasting voor je Mac. De interface van Lilo gebruikt ongeveer 125 MB minder geheugen per venster."
+			},
 			"v0200": {
 				"headline": "Duidelijkere gesprekken met agents.",
 				"description": "Kijk in een map zonder hem te openen, beantwoord de vragen van een agent met één klik en volg zijn voortgang terwijl hij werkt.",
