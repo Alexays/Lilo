@@ -1,3 +1,0 @@
-kind: Fixed
-body: Extensions that redirect requests or change headers with the declarativeNetRequest permission now do so on the sites they may access
-time: 2026-11-10T10:45:17.152593+01:00

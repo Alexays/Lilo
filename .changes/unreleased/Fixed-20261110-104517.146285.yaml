@@ -1,3 +1,0 @@
-kind: Fixed
-body: An extension's background worker now finds the extension's open pages (popup, side panel, tabs) with clients.matchAll()
-time: 2026-11-10T10:45:17.146285+01:00

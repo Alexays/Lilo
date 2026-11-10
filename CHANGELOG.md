@@ -4,6 +4,32 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.21.0] - 2026-11-10
+
+### Added
+
+- Agents can wait for a tab's URL or for an element by role and name, and filling a field tells them what it holds afterwards
+- A site's notification can open its page in a new tab when clicked (clients.openWindow from a service worker)
+- AppleScript: a window gives the name of its current Space and of that Space's profile, both empty for a private Space
+
+### Changed
+
+- The sidebar's scrollbar takes on the Space's color instead of a flat grey
+- Lilo's own interface uses about 125 MB less memory per window
+- Translating a page now also covers placeholders, tooltips, image descriptions, button labels and the text inside web components, starts with what is on screen, and leaves alone the passages already in your language
+
+### Fixed
+
+- Agents no longer see what a password, card number or one-time code field holds when they read a page
+- Going back or forward to a page that manages its own scrolling returns to where you left it instead of the top
+- Live video no longer hitches each time its player finishes catching up with the stream
+- Extension pages and side panels show a streamed reply, such as an AI assistant's answer, as it arrives instead of all at once at the end
+- An extension's background worker now finds the extension's open pages (popup, side panel, tabs) with clients.matchAll()
+- Extensions that redirect requests or change headers with the declarativeNetRequest permission now do so on the sites they may access
+- A split view no longer stays hidden behind the tab you just left when that tab has the Web Inspector open
+- The Web Inspector docked in a split view pane stays inside its pane instead of covering the other panes
+
+[0.21.0]: https://github.com/Alexays/Lilo/compare/v0.20.0...v0.21.0
 ## [0.20.0] - 2026-11-09
 
 ### Added
