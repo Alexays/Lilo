@@ -193,8 +193,9 @@ extension TabManager {
     /// Drop live engines, stashing each one's interaction state first so a later reactivation restores
     /// it silently instead of cold-loading. The durable tabs stay in the sidebar; only the engines go.
     func discardEngines(_ ids: Set<UUID>) {
-        // A tab on screen in any window keeps its engine, whichever window asked for the discard.
-        for id in ids.subtracting(browserStateStore?.displayedTabIds ?? []) { discardEngine(id) }
+        // A tab on screen in any window, in its content area or its hover card, keeps its engine, whichever window asked for the discard.
+        let onScreen = (browserStateStore?.displayedTabIds ?? []).union(browserStateStore?.glancedTabIds ?? [])
+        for id in ids.subtracting(onScreen) { discardEngine(id) }
     }
 
     /// Rebuilds each tab built before its extension loaded, once `extensionRegistry` resolves its page.

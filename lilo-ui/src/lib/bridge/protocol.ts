@@ -678,6 +678,9 @@ export interface BridgeCommandPayloadMap {
 	clearArchivedTabs: EmptyPayload;
 	requestTabPreview: { tabId: string };
 	warmTab: { tabId: string };
+	// Shows a saved tab's live page over the hover card's page slot (zone `tab-glance-page`), until hideTabGlance.
+	showTabGlance: { tabId: string };
+	hideTabGlance: EmptyPayload;
 	navigate: { url: string; typed?: boolean };
 	goBack: EmptyPayload;
 	goForward: EmptyPayload;
@@ -1072,6 +1075,10 @@ export interface BridgeEventPayloadMap {
 	// Reply to requestTabPreview. `image` is a JPEG data URL; absent means no preview is
 	// available (typically a discarded engine). A terminal sends its screen as text instead.
 	tabPreviewReady: { tabId: string; image?: string } & Partial<BridgeTerminalPrompt>;
+	// The pointer entered or left the live page in the hover card, which the chrome does not see.
+	tabGlancePointer: { inside: boolean };
+	// The host gave the glanced tab its view back on its own (tab shown, closed, Space left), or could not glance it.
+	tabGlanceEnded: EmptyPayload;
 	/** A conversation the chrome asked to show: its whole log, then `conversationUpdate` as it grows. */
 	conversationOpened: BridgeConversationOpened;
 	/** Updates of one conversation since the last delivery, oldest first. */

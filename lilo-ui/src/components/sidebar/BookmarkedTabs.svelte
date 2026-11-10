@@ -28,6 +28,7 @@
     clearTabPreview,
     getTabPreviewTabId,
     hoverTabPreview,
+    leaveTabPreview,
   } from "../../stores/tabPreview.svelte";
   import { subscribeHoverClear } from "../../lib/hoverClear";
   import { tooltipTabURL } from "../../lib/bridge/coerceHelpers";
@@ -361,6 +362,7 @@
                         title: bookmarkLabel(bookmark),
                         url: bookmark.url ?? "",
                         favicon: bookmark.faviconDataURL,
+                        glance: bookmark.kind === "web" && !!bookmark.url && bookmark.id !== activeTabId,
                       },
                       rect,
                     );
@@ -368,7 +370,7 @@
                 }}
                 onmouseleave={() => {
                   if (hoveredBookmarkId === bookmark.id) hoveredBookmarkId = null;
-                  clearTabPreview();
+                  leaveTabPreview();
                 }}
               >
                 <div class="bookmark-icon-inner">

@@ -346,6 +346,7 @@ extension MainWindowController {
         }
         setupTabShare()
         setupTabDock()
+        setupTabGlance()
         restoredStartupSpaceIdsByProfile = startupSnapshot.storedSpaceIdsByProfile
         // The database keeps one color for both appearances: it stands in for a missing mirror only in the appearance it was picked in.
         if storedWindowBackgroundColor == nil, let color = startupSnapshot.windowBackgroundColor,
@@ -987,6 +988,8 @@ extension MainWindowController {
         engine.restoreFromAutoPictureInPicture()  // a tab auto-PiP'd on leaving comes back inline
         floatingTabPanel.dismiss(hosting: engine.id)
         if tabDock.engineId == engine.id { tabDock.undock() }
+        // Any window's hover card lets go first, or its end would pull the view out of this window.
+        for window in context.windows.windows where window.tabGlance.engineId == engine.id { window.endTabGlance(notify: true) }
         if awaitingDocumentPiP === engine { awaitingDocumentPiP = nil }
         if documentPiP.openerId == engine.id {
             if documentPiP.wasAutoEntered { documentPiP.close() } else { placeDocumentPiP() }

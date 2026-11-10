@@ -158,7 +158,9 @@ final class TabBridgeHandler: BridgeHandler {
         "setTabFolderBiometrics",
         "commitSidebarDrop",
         "requestTabPreview",
-        "warmTab"
+        "warmTab",
+        "showTabGlance",
+        "hideTabGlance"
     ]
 
     private weak var tabManager: TabManager?
@@ -423,6 +425,12 @@ final class TabBridgeHandler: BridgeHandler {
 
         case "warmTab":
             if let tabId = message.uuid("tabId") { tabManager.warmTab(id: tabId) }
+
+        case "showTabGlance":
+            if let tabId = message.uuid("tabId") { windowController?.showTabGlance(tabId) }
+
+        case "hideTabGlance":
+            windowController?.endTabGlance()
 
         case "zoomIn":
             windowController?.zoomActiveTab(in: true)

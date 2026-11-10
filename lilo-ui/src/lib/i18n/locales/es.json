@@ -350,6 +350,11 @@
 				"description": "Un enlace a otro sitio se abre sobre una pestaña fijada o guardada en marcadores en lugar de sustituirla. Mayúsculas-clic previsualiza cualquier enlace.",
 				"keywords": "previsualizar vista previa emergente fijada marcador mayúsculas clic"
 			},
+			"tabGlance": {
+				"title": "Página en vivo al detenerse sobre una pestaña fijada",
+				"description": "Al dejar el puntero sobre una pestaña fijada o un favorito, una tarjeta muestra su página, para leerla y usarla sin salir de la pestaña actual. Desactivado, la tarjeta muestra una imagen de la página.",
+				"keywords": "vista previa puntero tarjeta en vivo fijada favorito"
+			},
 			"autoPictureInPicture": {
 				"title": "Imagen dentro de imagen automática",
 				"description": "Muestra una llamada o un vídeo en reproducción en una ventana flotante al cambiar de pestaña o salir de Lilo.",

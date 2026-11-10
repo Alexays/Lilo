@@ -4,6 +4,7 @@
 import { on } from "../lib/bridge";
 import { tabActions } from "../lib/bridge/actions";
 import type { BridgeTerminalPrompt } from "../lib/bridge/protocol";
+import { getSetting } from "./settings.svelte";
 
 const TAB_PREVIEW_HOVER_DELAY_MS = 450;
 // A pointer resting this long on a tab wakes it, if it sleeps, ahead of the click; a sweep down the list crosses a row faster.
@@ -29,6 +30,8 @@ interface TabPreviewTarget {
 	title: string;
 	url: string;
 	favicon?: string;
+	/** A pinned tab or a favorite: the card shows its live page, which the host lays over the card. */
+	glance?: boolean;
 }
 
 /** The hovered row's rect: the card opens beside it, away from the tabs' edge. */
@@ -47,6 +50,7 @@ interface ShownTabPreview {
 	image: string;
 	terminal: BridgeTerminalPrompt | null;
 	anchor: TabPreviewAnchor;
+	glance: boolean;
 }
 
 interface CacheEntry {
@@ -119,9 +123,17 @@ function validCacheEntry(target: TabPreviewTarget): CacheEntry | undefined {
 function presentOrRequest(staleAfterMs = refreshIntervalMs): void {
 	if (!hovered?.delayElapsed) return;
 	const { target, anchor } = hovered;
+	if (target.glance && getSetting("tabGlance", "true") === "true") {
+		// The live page needs no snapshot: the host shows the tab itself, once.
+		if (_previewTabId === target.id) return;
+		_preview = { tabId: target.id, title: target.title, url: target.url, favicon: target.favicon ?? "", image: "", terminal: null, anchor, glance: true };
+		_previewTabId = target.id;
+		tabActions.showGlance(target.id);
+		return;
+	}
 	const entry = validCacheEntry(target);
 	if (entry?.image || entry?.terminal) {
-		_preview = { tabId: target.id, title: target.title, url: target.url, favicon: target.favicon ?? "", image: entry.image, terminal: entry.terminal, anchor };
+		_preview = { tabId: target.id, title: target.title, url: target.url, favicon: target.favicon ?? "", image: entry.image, terminal: entry.terminal, anchor, glance: false };
 		_previewTabId = target.id;
 	}
 	// The refresh loop re-enters here every cadence tick for as long as the hover lasts.
@@ -172,9 +184,9 @@ export function hoverTabPreview(
 
 let leaveTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** The pointer left the row: hide the card, after a grace period when it offers answers. */
+/** The pointer left the row or the card: hide the card, after a grace period when the card takes the pointer. */
 export function leaveTabPreview(): void {
-	if (!_preview?.terminal?.choices.length) return clearTabPreview();
+	if (!_preview?.terminal?.choices.length && !_preview?.glance) return clearTabPreview();
 	if (leaveTimer === null) leaveTimer = setTimeout(clearTabPreview, TAB_PREVIEW_LEAVE_GRACE_MS);
 }
 
@@ -186,8 +198,15 @@ export function holdTabPreview(): void {
 	}
 }
 
+// The page in the card is the host's view, above the chrome: the host reports the pointer over it.
+on("tabGlancePointer", ({ inside }) => (inside ? holdTabPreview() : leaveTabPreview()));
+on("tabGlanceEnded", () => {
+	if (_preview?.glance) clearTabPreview(false);
+});
+
 /** Hide the card and cancel any pending hover. An in-flight request just fills the cache. */
-export function clearTabPreview(): void {
+export function clearTabPreview(hideGlance = true): void {
+	if (hideGlance && _preview?.glance) tabActions.hideGlance();
 	holdTabPreview();
 	if (hoverTimer !== null) {
 		clearTimeout(hoverTimer);

@@ -48,6 +48,8 @@ final class BrowserStateStore {
     var displayedTabIds: Set<UUID> = []
     /// Tabs whose Document PiP window is open: its page runs in theirs.
     var pictureInPictureOpenerIds: Set<UUID> = []
+    /// Tabs whose live page a window's sidebar hover card shows: on screen, outside the content area.
+    var glancedTabIds: Set<UUID> = []
     /// Whether an origin may post notifications in a space's profile: an idle freeze spares its tabs, so a messaging app keeps receiving.
     var allowsNotifications: (_ origin: String, _ spaceId: UUID) -> Bool = { _, _ in false }
     /// Live runtime of each shown space and how many windows show it; every one of them uses this host.
@@ -734,7 +736,7 @@ final class BrowserStateStore {
                 availableEngineIds: Set(snapshot.engines.keys),
                 restoringTabIds: snapshot.restoringTabIds,
                 now: now
-            ).union(inspectedEngineIds(in: snapshot.engines)).union(displayedTabIds).union(pictureInPictureOpenerIds)
+            ).union(inspectedEngineIds(in: snapshot.engines)).union(displayedTabIds).union(pictureInPictureOpenerIds).union(glancedTabIds)
             if visibleSpaceIds.contains(spaceId), let visibleTabId = snapshot.spaceTab.state.activeTabId {
                 protectedTabIds.insert(visibleTabId)
                 if let split = snapshot.spaceTab.splitGroup(containing: visibleTabId) { protectedTabIds.formUnion(split.layout.paneIds) }
@@ -757,7 +759,7 @@ final class BrowserStateStore {
                 // loading or discarded meanwhile stays as it is.
                 WebViewPrivateAccessors(engine.wkWebView).callAsyncWithoutUserGesture(CompositeFreezer.webLockCheck, arguments: [:], in: PageWorld.bridgeWorld) { [weak self] error in
                     guard let self, error == nil, self.spaces[spaceId]?.engines[tabId] === engine, !self.displayedTabIds.contains(tabId),
-                          !engine.isLoading else { return }
+                          !self.glancedTabIds.contains(tabId), !engine.isLoading else { return }
                     engine.freeze(now: now)
                 }
             }
@@ -959,7 +961,7 @@ final class BrowserStateStore {
         var spaceByTab: [UUID: UUID] = [:]
         // Visible spaces are left to the window's own trim, since their EngineHost still holds the engine: a runaway there is frozen in place.
         var visibleEngines: [UUID: WKWebViewTab] = [:]
-        var freezeProtectedTabIds = displayedTabIds.union(pictureInPictureOpenerIds)
+        var freezeProtectedTabIds = displayedTabIds.union(pictureInPictureOpenerIds).union(glancedTabIds)
         for (spaceId, snapshot) in spaces where !snapshot.engines.isEmpty {
             let tabs = projectedSidebar(from: snapshot).tabs
             protectedTabIds.formUnion(discardProtectedEngineIds(spaceId: spaceId, snapshot: snapshot, tabs: tabs, coordinator: coordinator, now: now))
@@ -1023,7 +1025,7 @@ final class BrowserStateStore {
             availableEngineIds: Set(snapshot.engines.keys),
             restoringTabIds: snapshot.restoringTabIds,
             now: now
-        ).union(inspectedEngineIds(in: snapshot.engines)).union(displayedTabIds).union(pictureInPictureOpenerIds)
+        ).union(inspectedEngineIds(in: snapshot.engines)).union(displayedTabIds).union(pictureInPictureOpenerIds).union(glancedTabIds)
         if visibleSpaceIds.contains(spaceId), let visibleTabId = snapshot.spaceTab.state.activeTabId {
             protectedTabIds.insert(visibleTabId)
         }

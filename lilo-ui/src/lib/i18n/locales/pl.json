@@ -350,6 +350,11 @@
 				"description": "Łącze do innej witryny otwiera się nad przypiętą kartą lub zakładką, zamiast ją zastępować. Kliknięcie z Shift pokazuje podgląd dowolnego łącza.",
 				"keywords": "podgląd wyskakujące przypięte zakładki Shift kliknięcie"
 			},
+			"tabGlance": {
+				"title": "Strona na żywo po zatrzymaniu wskaźnika na przypiętej karcie",
+				"description": "Zatrzymanie wskaźnika na przypiętej karcie lub ulubionej pokazuje jej stronę w okienku: można ją czytać i używać bez opuszczania bieżącej karty. Po wyłączeniu okienko pokazuje obraz strony.",
+				"keywords": "podgląd wskaźnik okienko na żywo przypięte ulubione"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatyczny obraz w obrazie",
 				"description": "Przenieś rozmowę lub odtwarzane wideo do pływającego okna po przejściu do innej karty lub aplikacji.",

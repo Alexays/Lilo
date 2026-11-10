@@ -350,6 +350,11 @@
 				"description": "Um link para outro site abre sobre uma aba fixada ou salva nos favoritos, sem substituí-la. Clique com Shift para pré-visualizar qualquer link.",
 				"keywords": "espiar prévia pré-visualização pop-up fixada favoritos shift clique"
 			},
+			"tabGlance": {
+				"title": "Página ao vivo ao parar o cursor em uma aba fixada",
+				"description": "Parar o cursor em uma aba fixada ou em um favorito mostra a página em um cartão, para ler e usar sem sair da aba atual. Desativado, o cartão mostra uma imagem da página.",
+				"keywords": "prévia pré-visualização cursor cartão ao vivo fixada favorito"
+			},
 			"autoPictureInPicture": {
 				"title": "Picture in Picture automático",
 				"description": "Exiba uma chamada ou um vídeo em reprodução em uma janela flutuante ao sair da aba ou do Lilo.",
