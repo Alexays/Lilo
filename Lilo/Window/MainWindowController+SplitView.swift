@@ -197,6 +197,51 @@ final class SplitFocusRingView: NSView {
     }
 }
 
+/// Sits behind a web pane, at the pane's frame. WebKit docks the Web Inspector over the whole superview of the
+/// page's attachment view, so each web pane gets a superview of its own size and the page follows `anchor`.
+final class SplitPaneDockView: NSView {
+    /// The page's place in the pane, which WebKit sizes beside the docked inspector.
+    private let anchor = NSView()
+    private(set) weak var webView: WKWebView?
+
+    /// Nil when WebKit has no attachment view to set: the pane then frames its page itself.
+    init?(webView: WKWebView, frame: NSRect) {
+        self.webView = webView
+        super.init(frame: frame)
+        // Sized before WebKit sees it: an attached inspector docks against it at once.
+        anchor.frame = bounds
+        anchor.autoresizingMask = [.width, .height]
+        addSubview(anchor)
+        guard WebViewPrivateAccessors(webView).setInspectorAttachmentView(anchor) else { return nil }
+        NotificationCenter.default.addObserver(self, selector: #selector(syncPage), name: NSView.frameDidChangeNotification, object: anchor)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    override func setFrameOrigin(_ newOrigin: NSPoint) {
+        super.setFrameOrigin(newOrigin)
+        syncPage()
+    }
+
+    override func viewDidMoveToSuperview() {
+        super.viewDidMoveToSuperview()
+        syncPage()
+    }
+
+    @objc private func syncPage() {
+        guard let webView, let superview = unsafe superview else { return }
+        let frame = superview.convert(anchor.frame, from: self)
+        if webView.frame != frame { webView.frame = frame }
+    }
+
+    /// Hands the inspector back to the page's own superview and leaves the screen.
+    func detach() {
+        if let webView { _ = WebViewPrivateAccessors(webView).setInspectorAttachmentView(nil) }
+        removeFromSuperview()
+    }
+}
+
 /// Lays the displayed split out in the content area: pane frames, one divider per cut and the focus
 /// ring. Also finds the pane under the pointer and tells the chrome where each pane sits.
 @MainActor
@@ -209,6 +254,8 @@ final class SplitPanesController {
     private(set) var split: SplitGroup?
     /// One divider per cut, keyed by its path.
     private(set) var dividers: [[Bool]: SplitDividerView] = [:]
+    /// One dock per web pane, keyed by its tab.
+    private(set) var docks: [UUID: SplitPaneDockView] = [:]
     /// The layout while a divider is being dragged; persisted on the split folder on release.
     private var liveLayout: SplitLayout?
     /// Pane frames last sent to the chrome, as shares of the content area.
@@ -237,8 +284,16 @@ final class SplitPanesController {
         liveLayout = nil
         dividers.values.forEach { $0.removeFromSuperview() }
         dividers = [:]
+        docks.values.forEach { $0.detach() }
+        docks = [:]
         focusRing?.removeFromSuperview()
         sendPaneFrames([:])
+    }
+
+    /// Puts a pane's view over whatever stays shown under the content, and under the dividers and the focus ring.
+    func addPane(_ view: NSView, below sibling: NSView? = nil) {
+        let container = controller.contentContainerView
+        container.addSubview(view, positioned: .below, relativeTo: sibling ?? container.subviews.first { $0 is SplitDividerView } ?? focusRing)
     }
 
     private func makeDivider(path: [Bool]) -> SplitDividerView {
@@ -324,11 +379,6 @@ final class SplitPanesController {
         var panes: [UUID: NSRect] = [:]
         var cuts: [[Bool]: (divider: NSRect, bounds: NSRect, vertical: Bool)] = [:]
         frames(liveLayout ?? split.layout, in: container.bounds, path: [], panes: &panes, cuts: &cuts)
-        for (tabId, frame) in panes {
-            guard let view = tabManager.loadedContentView(forTabId: tabId) else { continue }
-            view.autoresizingMask = []
-            view.frame = frame
-        }
         for (path, divider) in dividers where cuts[path] == nil {
             divider.removeFromSuperview()
             dividers[path] = nil
@@ -340,6 +390,23 @@ final class SplitPanesController {
             divider.frame = cut.divider
             if unsafe divider.superview !== container {
                 container.addSubview(divider, positioned: .below, relativeTo: focusRing)
+            }
+        }
+        for (tabId, dock) in docks where panes[tabId] == nil || dock.webView !== tabManager.loadedContentView(forTabId: tabId) {
+            dock.detach()
+            docks[tabId] = nil
+        }
+        for (tabId, frame) in panes {
+            guard let view = tabManager.loadedContentView(forTabId: tabId) else { continue }
+            view.autoresizingMask = []
+            guard let dock = docks[tabId] ?? (view as? WKWebView).flatMap({ SplitPaneDockView(webView: $0, frame: frame) }) else {
+                view.frame = frame
+                continue
+            }
+            docks[tabId] = dock
+            dock.frame = frame
+            if unsafe dock.superview !== container {
+                addPane(dock, below: unsafe view.superview === container ? view : nil)
             }
         }
         // A divider drag reports its panes once, on release.
@@ -390,7 +457,7 @@ final class SplitPanesController {
         let tabManager = controller.tabManager
         guard let split = tabManager.activeSplit, split.layout.paneIds.contains(id) else { return [] }
         let panes: [NSView] = split.layout.paneIds.compactMap { $0 == id ? nil : tabManager.loadedContentView(forTabId: $0) }
-        return panes + Array(dividers.values) + [focusRing].compactMap { $0 }
+        return panes + Array(dividers.values) + Array(docks.values) + [focusRing].compactMap { $0 }
     }
 
     /// Pane (or divider) under the pointer. A press latches its target for the rest of the gesture
@@ -409,8 +476,12 @@ final class SplitPanesController {
         let hoveredDivider = dividers.values.first { $0.frame.contains(point) }
         for divider in dividers.values { divider.setHovered(divider === hoveredDivider) }
         let tabManager = controller.tabManager
+        let docks = docks
         let hit: (view: NSView, tabId: UUID?)? = hoveredDivider.map { ($0, nil) } ?? split.layout.paneIds.lazy.compactMap { id in
-            tabManager.loadedContentView(forTabId: id).flatMap { $0.frame.contains(point) ? ($0, id) : nil }
+            guard let view = tabManager.loadedContentView(forTabId: id) else { return nil }
+            if view.frame.contains(point) { return (view, id) }
+            // The inspector docked beside the pane's page.
+            return docks[id].flatMap { $0.frame.contains(point) ? ($0.hitTest(point) ?? $0, id) : nil }
         }.first
         guard let hit else { return nil }
         if event.type == .leftMouseDown || event.type == .rightMouseDown || event.type == .otherMouseDown {
@@ -474,10 +545,10 @@ extension MainWindowController {
             (view is WKWebView || view is TerminalView || view is ChangesView) && !paneViews.contains { $0 === view }
         })
         // Frames first: a pane joining the window at another size would size its shell and draw a
-        // frame for it. Joining panes go to the back, under the dividers and the focus ring.
+        // frame for it.
         splitPanes.show(split)
         for view in paneViews {
-            if unsafe view.superview !== contentContainerView { contentContainerView.addSubview(view, positioned: .below, relativeTo: nil) }
+            if unsafe view.superview !== contentContainerView { splitPanes.addPane(view) }
             view.isHidden = false
         }
     }

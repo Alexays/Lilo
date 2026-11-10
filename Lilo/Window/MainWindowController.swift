@@ -79,7 +79,8 @@ final class ContentContainerView: NSView {
             // An agent's page keeps its own size and may run past the container; the panes of a
             // split above it cover it together.
             let cover = shown.indices[(index + 1)...].filter { exposed[$0] }.reduce(NSRect.null) { $0.union(shown[$1].frame) }
-            return !cover.contains(shown[index].frame.intersection(bounds))
+            // A pane's dock holds the inspector docked beside its page, which no later view covers.
+            return shown[index] is SplitPaneDockView || !cover.contains(shown[index].frame.intersection(bounds))
         }.map { shown[$0] }
         guard uncovered.count < shown.count else { return super.accessibilityChildren() }
         // A web view hands VoiceOver a remote element, not itself: resolve each kept view to what it exposes.
