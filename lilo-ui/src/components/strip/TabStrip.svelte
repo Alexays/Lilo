@@ -11,6 +11,7 @@
   import UpdateCard from "../sidebar/UpdateCard.svelte";
   import { getCallCardTab, getMediaCardTab } from "../../stores/media.svelte";
   import { getChosenAppIcon, getReadyUpdate, getSetting } from "../../stores/settings.svelte";
+  import { getMeeting } from "../../stores/meeting.svelte";
   import { getConversationTab } from "../../stores/folders.svelte";
   import { chromeActions, tabActions } from "../../lib/bridge/actions";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
@@ -75,6 +76,8 @@
   let callButton: HTMLButtonElement | undefined = $state();
   let mediaOpen = $state(false);
   let mediaButton: HTMLButtonElement | undefined = $state();
+  let meetingOpen = $state(false);
+  let meetingButton: HTMLButtonElement | undefined = $state();
   let updateOpen = $state(false);
   let updateButton: HTMLButtonElement | undefined = $state();
 
@@ -401,6 +404,30 @@
   </div>
 
   <div class="trailing">
+    {#if getMeeting()}
+      <!-- Like the call card, the meeting card opens from its icon. -->
+      <button
+        bind:this={meetingButton}
+        class="strip-btn"
+        class:on={meetingOpen}
+        aria-label={getMeeting()?.title || t("meetingCard.untitled")}
+        aria-expanded={meetingOpen}
+        use:tooltip={{ text: getMeeting()?.title || t("meetingCard.untitled"), placement: edge === "top" ? "bottom" : "top" }}
+        onclick={() => (meetingOpen = !meetingOpen)}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2.5" />
+          <path d="M2 6.5h12M5.5 1.8v2.4M10.5 1.8v2.4" />
+        </svg>
+      </button>
+      {#if meetingOpen && meetingButton}
+        <StripPopover anchor={meetingButton} label={getMeeting()?.title ?? ""} role="dialog" onclose={() => (meetingOpen = false)}>
+          {#await import("../sidebar/MeetingCard.svelte") then card}
+            <card.default />
+          {/await}
+        </StripPopover>
+      {/if}
+    {/if}
     {#if getCallCardTab()}
       {@const call = getCallCardTab()}
       <!-- Like the media card, the call card opens from its icon; a muted microphone shows on it. -->

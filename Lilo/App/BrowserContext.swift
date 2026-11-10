@@ -102,6 +102,19 @@ final class BrowserContext {
         deviceSetup = controller
         return controller
     }
+    private(set) var meetings: MeetingController?
+    /// One per app, like the device setup: one calendar read and one timer, its card shown in every window.
+    func meetingController(settingsStore: SettingsStore) -> MeetingController {
+        if let meetings { return meetings }
+        let controller = MeetingController(settingsStore: settingsStore)
+        controller.onChange = { [weak self] in self?.windows.windows.forEach { $0.sendMeeting() } }
+        controller.onDisabled = { [weak self] in
+            let data: [String: Any] = ["settings": settingsStore.allSettings()]
+            self?.windows.windows.forEach { $0.bridgeRouter.send(event: "settingsLoaded", data: data) }
+        }
+        meetings = controller
+        return controller
+    }
     lazy var agentControl = AgentControl(context: self)
     lazy var conversations: ConversationHost = {
         let host = ConversationHost(directory: URL(fileURLWithPath: BuildIdentity.appSupportDirectory).appending(path: "Agents"))

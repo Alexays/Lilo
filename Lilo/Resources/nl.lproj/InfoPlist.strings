@@ -10,3 +10,5 @@
 "NSSpeechRecognitionUsageDescription" = "Deze website vraagt om spraakherkenning om wat je zegt om te zetten in tekst.";
 /* Shown by macOS when sharing system audio with a screen. */
 "NSAudioCaptureUsageDescription" = "Lilo deelt het geluid van je Mac wanneer een gesprek daar samen met je scherm om vraagt.";
+/* Shown by macOS when the meeting card is turned on. */
+"NSCalendarsFullAccessUsageDescription" = "Lilo leest de agenda's op deze Mac om vóór het begin van een vergadering een kaart met de deelnamelink te tonen.";

@@ -355,6 +355,11 @@
 				"description": "Al dejar el puntero sobre una pestaña fijada o un favorito, una tarjeta muestra su página, para leerla y usarla sin salir de la pestaña actual. Desactivado, la tarjeta muestra una imagen de la página.",
 				"keywords": "vista previa puntero tarjeta en vivo fijada favorito"
 			},
+			"meetingCard": {
+				"title": "Mostrar reuniones a punto de empezar",
+				"description": "Aparece una tarjeta 10 minutos antes de que empiece un evento de los calendarios de tu Mac, con Unirse cuando el evento incluye un enlace. Lilo pide acceso a los calendarios al activar esta opción y solo los lee en este Mac.",
+				"keywords": "reunión calendario evento unirse videollamada recordatorio"
+			},
 			"autoPictureInPicture": {
 				"title": "Imagen dentro de imagen automática",
 				"description": "Muestra una llamada o un vídeo en reproducción en una ventana flotante al cambiar de pestaña o salir de Lilo.",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "Reiniciar Lilo para instalar la versión {version}",
 		"restarting": "Reiniciando...",
 		"later": "Más tarde"
+	},
+	"meetingCard": {
+		"join": "Unirse",
+		"joinLabel": "Unirse a {title}",
+		"dismiss": "Descartar",
+		"now": "Ahora",
+		"untitled": "Evento sin título"
 	},
 	"sitePermissions": {
 		"manage": "Controles del sitio",

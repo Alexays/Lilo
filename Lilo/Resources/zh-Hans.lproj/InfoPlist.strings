@@ -10,3 +10,5 @@
 "NSLocalNetworkUsageDescription" = "当你打开路由器、打印机等本地网络设备的网页时，Lilo 会连接到这些设备。";
 /* Shown by macOS when a page starts speech recognition. */
 "NSSpeechRecognitionUsageDescription" = "此网站请求使用语音识别，将你说的话转换为文字。";
+/* Shown by macOS when the meeting card is turned on. */
+"NSCalendarsFullAccessUsageDescription" = "Lilo 会读取此 Mac 上的日历，在会议开始前显示一张附有加入链接的卡片。";

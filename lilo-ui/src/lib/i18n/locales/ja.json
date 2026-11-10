@@ -355,6 +355,11 @@
 				"description": "固定タブやお気に入りにポインタを置くと、そのページをカードに表示します。現在のタブを離れずに読んだり操作したりできます。オフにすると、カードにはページの画像を表示します。",
 				"keywords": "プレビュー ポインタ カード ライブ 固定 お気に入り"
 			},
+			"meetingCard": {
+				"title": "まもなく始まるミーティングを表示",
+				"description": "Mac のカレンダーにある予定の 10 分前にカードを表示し、予定にリンクがあれば「参加」を表示します。この設定をオンにするとカレンダーへのアクセスを求め、この Mac 上でのみ読み取ります。",
+				"keywords": "ミーティング カレンダー 予定 参加 ビデオ通話 リマインダー meeting calendar"
+			},
 			"autoPictureInPicture": {
 				"title": "自動ピクチャ・イン・ピクチャ",
 				"description": "通話中やビデオ再生中のタブやLiloから離れると、フローティングウインドウに表示します。",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "Lilo を再起動してバージョン {version} をインストール",
 		"restarting": "再起動中...",
 		"later": "あとで"
+	},
+	"meetingCard": {
+		"join": "参加",
+		"joinLabel": "{title} に参加",
+		"dismiss": "閉じる",
+		"now": "今すぐ",
+		"untitled": "タイトルなしの予定"
 	},
 	"sitePermissions": {
 		"manage": "サイトのコントロール",

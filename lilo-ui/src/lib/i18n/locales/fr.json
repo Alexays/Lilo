@@ -355,6 +355,11 @@
 				"description": "Laisser le pointeur sur un onglet épinglé ou un favori affiche sa page dans une carte, à lire et à utiliser sans quitter l'onglet en cours. Désactivé, la carte montre une image de la page.",
 				"keywords": "aperçu survol carte en direct épinglé favori glance"
 			},
+			"meetingCard": {
+				"title": "Afficher les réunions sur le point de commencer",
+				"description": "Une carte s'affiche 10 minutes avant le début d'un événement des calendriers de votre Mac, avec Rejoindre quand l'événement contient un lien. Lilo demande l'accès aux calendriers quand vous activez cette option et ne les lit que sur ce Mac.",
+				"keywords": "réunion calendrier événement rejoindre visio appel rappel"
+			},
 			"autoPictureInPicture": {
 				"title": "Picture-in-picture automatique",
 				"description": "Passer un appel ou une vidéo en cours dans une fenêtre flottante quand vous quittez son onglet ou Lilo.",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "Relancer Lilo pour installer la version {version}",
 		"restarting": "Redémarrage...",
 		"later": "Plus tard"
+	},
+	"meetingCard": {
+		"join": "Rejoindre",
+		"joinLabel": "Rejoindre {title}",
+		"dismiss": "Masquer",
+		"now": "Maintenant",
+		"untitled": "Événement sans titre"
 	},
 	"sitePermissions": {
 		"manage": "Contrôles du site",

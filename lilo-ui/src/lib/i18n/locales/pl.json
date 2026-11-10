@@ -355,6 +355,11 @@
 				"description": "Zatrzymanie wskaźnika na przypiętej karcie lub ulubionej pokazuje jej stronę w okienku: można ją czytać i używać bez opuszczania bieżącej karty. Po wyłączeniu okienko pokazuje obraz strony.",
 				"keywords": "podgląd wskaźnik okienko na żywo przypięte ulubione"
 			},
+			"meetingCard": {
+				"title": "Pokazuj zbliżające się spotkania",
+				"description": "Karta pojawia się 10 minut przed rozpoczęciem wydarzenia z kalendarzy na Twoim Macu, z przyciskiem Dołącz, gdy wydarzenie zawiera link. Lilo prosi o dostęp do kalendarzy po włączeniu tej opcji i odczytuje je tylko na tym Macu.",
+				"keywords": "spotkanie kalendarz wydarzenie dołącz rozmowa wideo przypomnienie"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatyczny obraz w obrazie",
 				"description": "Przenieś rozmowę lub odtwarzane wideo do pływającego okna po przejściu do innej karty lub aplikacji.",
@@ -1594,6 +1599,13 @@
 		"restartLabel": "Uruchom Lilo ponownie, aby zainstalować wersję {version}",
 		"restarting": "Ponowne uruchamianie...",
 		"later": "Później"
+	},
+	"meetingCard": {
+		"join": "Dołącz",
+		"joinLabel": "Dołącz do: {title}",
+		"dismiss": "Odrzuć",
+		"now": "Teraz",
+		"untitled": "Wydarzenie bez tytułu"
 	},
 	"sitePermissions": {
 		"manage": "Ustawienia witryny",

@@ -10,3 +10,5 @@
 "NSSpeechRecognitionUsageDescription" = "Ta witryna prosi o rozpoznawanie mowy, aby zamieniać Twoje słowa na tekst.";
 /* Shown by macOS when sharing system audio with a screen. */
 "NSAudioCaptureUsageDescription" = "Lilo udostępnia dźwięk Maca, gdy rozmowa wymaga go razem z ekranem.";
+/* Shown by macOS when the meeting card is turned on. */
+"NSCalendarsFullAccessUsageDescription" = "Lilo odczytuje kalendarze na tym Macu, aby przed rozpoczęciem spotkania pokazać kartę z linkiem do dołączenia.";

@@ -355,6 +355,11 @@
 				"description": "Parar o cursor em uma aba fixada ou em um favorito mostra a página em um cartão, para ler e usar sem sair da aba atual. Desativado, o cartão mostra uma imagem da página.",
 				"keywords": "prévia pré-visualização cursor cartão ao vivo fixada favorito"
 			},
+			"meetingCard": {
+				"title": "Mostrar reuniões prestes a começar",
+				"description": "Um cartão aparece 10 minutos antes de um evento dos calendários do seu Mac começar, com Entrar quando o evento tem um link. O Lilo pede acesso aos calendários quando você ativa esta opção e só os lê neste Mac.",
+				"keywords": "reunião calendário evento entrar videochamada lembrete"
+			},
 			"autoPictureInPicture": {
 				"title": "Picture in Picture automático",
 				"description": "Exiba uma chamada ou um vídeo em reprodução em uma janela flutuante ao sair da aba ou do Lilo.",
@@ -1560,6 +1565,13 @@
 		"restartLabel": "Reiniciar o Lilo para instalar a versão {version}",
 		"restarting": "Reiniciando...",
 		"later": "Mais tarde"
+	},
+	"meetingCard": {
+		"join": "Entrar",
+		"joinLabel": "Entrar em {title}",
+		"dismiss": "Dispensar",
+		"now": "Agora",
+		"untitled": "Evento sem título"
 	},
 	"sitePermissions": {
 		"manage": "Controles do site",
