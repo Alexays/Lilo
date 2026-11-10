@@ -33,9 +33,7 @@
         "en": "Keep more windows open with less weight on your Mac. Lilo's own interface uses about 125 MB less memory per window.",
         "fr": "Gardez plus de fenêtres ouvertes en pesant moins sur votre Mac. L'interface de Lilo utilise environ 125 Mo de mémoire en moins par fenêtre."
       },
-      "notes": [
-        "Lilo's own interface uses about 125 MB less memory per window"
-      ]
+      "notes": ["Lilo's own interface uses about 125 MB less memory per window"]
     }
   ],
   "groups": [
