@@ -8,7 +8,7 @@ import WebKit
 enum PageWorld {
     static let bridgeWorld = WKContentWorld.world(name: "lilo-bridge")
 
-    private static let channel = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+    static let channel = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
 
     /// Installs the relay and `modules`, sources of functions run at document start in every frame. Handlers they post to
     /// are registered in `bridgeWorld`; `push` reaches what they hand to `lilo.on`.

@@ -17,21 +17,34 @@ final class WKEngineFactoryScriptletTests: XCTestCase {
         }
     }
 
-    func testScriptletUserScriptInjectedWhenTableSet() {
+    func testScriptletUserScriptInjectedWhenTableSet() async {
         let factory = WKEngineFactory()
         let controller = factory.createTab(configuration: .init()).wkWebView.configuration.userContentController
         XCTAssertFalse(controller.userScripts.contains { $0.source.contains("/*lilo-scriptlets*/") })
 
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(cosmetic: nil, sites: nil, scriptlets: "{\"example.com\":[[\"json-prune\",[\"a\"]]]}", procedural: nil))
-        let sources = controller.userScripts.map(\.source)
-        XCTAssertTrue(sources.contains { $0.contains("/*lilo-scriptlets*/") })
-        XCTAssertTrue(sources.contains { $0.contains("\"\(WKEngineFactory.keyHash("example.com"))++++\"") },
-                      "the index must be spliced with the host's record")
-        XCTAssertTrue(sources.contains { $0.contains("\"0¦a§\"") && $0.contains("var NAMES = \"json-prune\"") },
-                      "the entries must be spliced alongside the index, naming their scriptlet by its index")
+        let scripts = controller.userScripts.map(\.source)
+        XCTAssertTrue(scripts.contains { $0.contains("/*lilo-scriptlets*/") })
+        XCTAssertTrue(scripts.contains { $0.contains("/*lilo-filter-lookup*/") }, "the script that looks the table up for it")
+        let sources = await controller.test_filterSources()
+        XCTAssertTrue(sources.contains("\(WKEngineFactory.keyHash("example.com"))++++"), "the index must hold the host's record")
+        XCTAssertTrue(sources.contains("0¦a§") && sources.contains("json-prune"),
+                      "the entries must come alongside the index, naming their scriptlet by its index")
     }
 
-    /// The installed scripts are the only copy kept: an allowlist edit re-splices them, a paused blocker keeps them for later.
+    /// WebKit copies a user script's source for each page and web process it starts: megabytes of tables, in a buffer, are mapped once.
+    func testTheTablesStayOutOfTheScriptsWhereWebKitHasBuffers() throws {
+        guard #available(macOS 27.0, *) else { throw XCTSkip("no user content buffers before macOS 27") }
+        let factory = WKEngineFactory()
+        let controller = factory.createTab(configuration: .init()).wkWebView.configuration.userContentController
+        factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(
+            cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: #"{"example.com":[["json-prune",["a"]]]}"#,
+            procedural: #"{"example.com":[".x:has-text(a)"]}"#
+        ))
+        XCTAssertFalse(controller.userScripts.contains { $0.source.contains(WKEngineFactory.keyHash("example.com")) })
+    }
+
+    /// An allowlist edit rebuilds the scripts that read the tables; a paused blocker keeps the tables for later.
     func testAllowlistAndBlockerToggleRebuildTheScriptsFromTheInstalledOnes() async {
         let factory = WKEngineFactory()
         let controller = factory.createTab(configuration: .init()).wkWebView.configuration.userContentController
@@ -52,7 +65,8 @@ final class WKEngineFactoryScriptletTests: XCTestCase {
         factory.applyBlockerChange(enabled: true)
         await factory.rebuildBlocker(allowlist: BlockerAllowlist())
         XCTAssertEqual(allowlists(), [#""||""#, #""||""#])
-        XCTAssertTrue(controller.userScripts.contains { $0.source.contains("\"0¦a§\"") }, "the tables survive every re-splice")
+        let sources = await controller.test_filterSources()
+        XCTAssertTrue(sources.contains("0¦a§"), "the tables survive every rebuild")
     }
 
     /// Hashes as the scripts compute them (reference values from an independent FNV-1a).
@@ -119,16 +133,16 @@ final class WKEngineFactoryScriptletTests: XCTestCase {
         XCTAssertNil(WKEngineFactory.hostTable(for: "not json"))
     }
 
-    func testProceduralUserScriptInjectedWhenTableSet() {
+    func testProceduralUserScriptInjectedWhenTableSet() async {
         let factory = WKEngineFactory()
         let controller = factory.createTab(configuration: .init()).wkWebView.configuration.userContentController
         XCTAssertFalse(controller.userScripts.contains { $0.source.contains("/*lilo-procedural*/") })
 
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(cosmetic: nil, sites: nil, scriptlets: nil, procedural: "{\"example.com\":[\".x:has-text(a)\"]}"))
-        let sources = controller.userScripts.map(\.source)
-        XCTAssertTrue(sources.contains { $0.contains("/*lilo-procedural*/") })
-        XCTAssertTrue(sources.contains { $0.contains("\"\(WKEngineFactory.keyHash("example.com"))++++\"") })
-        XCTAssertTrue(sources.contains { $0.contains("\".x:has-text(a)§\"") })
+        XCTAssertTrue(controller.userScripts.contains { $0.source.contains("/*lilo-procedural*/") })
+        let sources = await controller.test_filterSources()
+        XCTAssertTrue(sources.contains("\(WKEngineFactory.keyHash("example.com"))++++"))
+        XCTAssertTrue(sources.contains(".x:has-text(a)§"))
     }
 
     func testGenericCosmeticsUserScriptIsMainFrameOnly() {
@@ -142,10 +156,10 @@ final class WKEngineFactoryScriptletTests: XCTestCase {
 
     func testSiteCosmeticsAloneInjectTheCosmeticsScript() throws {
         let scripts = WKEngineFactory.makeFilterScripts(cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: nil, procedural: nil)
-        let source = try XCTUnwrap(scripts.genericCosmetics)
-        XCTAssertTrue(source.contains("\"\(WKEngineFactory.keyHash("example.com"))++++\""))
-        XCTAssertTrue(source.contains(#"".ad§""#))
-        XCTAssertTrue(source.contains(#"var CLASS_BUCKETS = "";"#), "a missing generic table splices as empty")
+        let tables = try XCTUnwrap(scripts.genericCosmetics)
+        XCTAssertTrue(tables.contains("\(WKEngineFactory.keyHash("example.com"))++++"))
+        XCTAssertTrue(tables.contains(".ad§"))
+        XCTAssertTrue(tables.hasPrefix("__LILO_COSMETIC_CLASSES__:0 "), "a missing generic table is empty")
     }
 
     /// Every part keeps the exception tail: an exception only overrides rules of its own list.

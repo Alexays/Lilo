@@ -116,10 +116,26 @@ final class WKEngineFactory {
     private var externalFilterRulesTag = "bundled"
     /// Bundle JS templates are immutable; memoized so rescript passes stop re-reading them from disk.
     private var templateSourceByResource: [String: String] = [:]
-    /// Identifies the filter scripts last applied: their multi-MB sources live in `filterUserScripts` only.
+    /// Identifies the filter tables last applied: `filterTables` holds the only copy kept of them.
     private var filterScriptsHash = FilterScripts().hashValue
-    /// The filter scripts with the allowlist spliced in, and the world each runs in.
-    private var filterUserScripts: [(script: WKUserScript, world: WKContentWorld)] = []
+    /// A filter script's tables as web processes get them. WebKit copies a user script source of 16 KB or more for each page
+    /// and web process it starts, so the multi-MB tables stay out of the scripts.
+    private struct FilterTables {
+        let name: String
+        /// The bridge-world script that reads the tables, and the page-world one it hands a frame's entries to.
+        let bridgeScript: String
+        let pageScript: String?
+        let mainFrameOnly: Bool
+        /// The JavaScript expression of each table, by its placeholder in `bridgeScript`.
+        var slices: [String: String] = [:]
+        /// The tables in a buffer of the bridge world, which every web process maps once (macOS 27 and later).
+        var buffer: Data?
+        /// Without buffers, a script setting the tables as a global of the bridge world.
+        var script: WKUserScript?
+    }
+    private var filterTables: [FilterTables] = []
+    /// One per filter script: its tables' buffer, or global, goes by it.
+    private static let filterTableNames = ["liloGenericCosmetics", "liloProcedural", "liloScriptlets"]
     /// The filter scripts installed on every live controller (none while the blocker is off), one shared set. A change removes
     /// exactly these, so the rest of a controller's scripts (extension content scripts included) stays put.
     private var installedFilterUserScripts: [WKUserScript] = []
@@ -610,34 +626,27 @@ final class WKEngineFactory {
         SHA256.hash(data: Data(s.utf8)).prefix(8).map { unsafe String(format: "%02x", $0) }.joined()
     }
 
-    /// Ready-to-inject filter user scripts, each nil when its table is absent or empty.
+    /// Each filter script's tables in one string, nil when they are absent or empty: a line of `placeholder:length` pairs
+    /// (lengths in UTF-16 units), then the tables in that order.
     struct FilterScripts: Hashable, Sendable {
         var genericCosmetics: String?
         var procedural: String?
         var scriptlets: String?
     }
 
-    /// Splices each table into its bundled template as a string literal (far cheaper for JSC than an
-    /// object literal). Reads templates and re-encodes a few hundred KB of per-host JSON, so callers run
-    /// it off the main actor.
+    /// Re-encodes a few hundred KB of per-host JSON, so callers run it off the main actor.
     nonisolated static func makeFilterScripts(cosmetic: String?, sites: String?, scriptlets: String?, procedural: String?) -> FilterScripts {
-        func splice(_ values: [String: String]?, into resource: String) -> String? {
-            guard let values else { return nil }
-            guard let url = Bundle.appResourceURL(resource, extension: "js"),
-                  var source = try? String(contentsOf: url, encoding: .utf8) else {
-                Self.logger.error("\(resource, privacy: .public).js not found in bundle - injection disabled")
-                return nil
+        func joined(_ values: [String: String]?) -> String? {
+            values.map { values in
+                let sorted = values.sorted { $0.key < $1.key }
+                return sorted.map { "\($0.key):\($0.value.utf16.count)" }.joined(separator: " ") + "\n" + sorted.map(\.value).joined()
             }
-            for (placeholder, value) in values {
-                source = source.replacingOccurrences(of: placeholder, with: Self.jsStringLiteral(value))
-            }
-            return source
         }
-        // A keyed table spliced as __LILO_<name>_INDEX__, _GROUPS__, _TABLE__ and, for scriptlets, _NAMES__; empty when absent.
+        // A keyed table goes by __LILO_<name>_INDEX__, _GROUPS__ and _TABLE__, with the scriptlets' _NAMES__ for FilterLookup.js.
         func hostTable(_ json: String?, name: String) -> [String: String]? {
             json.flatMap(Self.hostTable(for:)).map {
                 var values = ["__LILO_\(name)_INDEX__": $0.index, "__LILO_\(name)_GROUPS__": $0.groups, "__LILO_\(name)_TABLE__": $0.entries]
-                if !$0.names.isEmpty { values["__LILO_\(name)_NAMES__"] = $0.names }
+                if name == "LOOKUP" { values["__LILO_LOOKUP_NAMES__"] = $0.names }
                 return values
             }
         }
@@ -664,13 +673,8 @@ final class WKEngineFactory {
         for table in [siteTable, linkTable, keyedTable] { cosmeticValues.merge(table ?? [:]) { $1 } }
         let hasGeneric = cosmeticValues["__LILO_COSMETIC_CLASSES__"]?.isEmpty == false || cosmeticValues["__LILO_COSMETIC_IDS__"]?.isEmpty == false
         let cosmetics = hasGeneric || siteTable != nil || linkTable != nil || keyedTable != nil ? cosmeticValues : nil
-        return FilterScripts(
-            genericCosmetics: splice(cosmetics, into: "GenericCosmetics"),
-            procedural: splice(hostTable(procedural, name: "PROCEDURAL"),
-                               into: "ProceduralCosmetics"),
-            scriptlets: splice(hostTable(scriptlets, name: "SCRIPTLET"),
-                               into: "Scriptlets")
-        )
+        return FilterScripts(genericCosmetics: joined(cosmetics), procedural: joined(hostTable(procedural, name: "LOOKUP")),
+                             scriptlets: joined(hostTable(scriptlets, name: "LOOKUP")))
     }
 
     /// `rulesTag` (nil = bundled) keys the compiled cache; with nil `rules` a miss reads `FilterListService.cacheURL`. A script change
@@ -682,21 +686,67 @@ final class WKEngineFactory {
         let hash = scripts.hashValue
         guard hash != filterScriptsHash else { return }
         filterScriptsHash = hash
-        // Cosmetics are main frame only: the network rule list already catches subframe ads, and the
-        // ~100 KB procedural table would otherwise be parsed again in every iframe. The bridge world holds
+        // Cosmetics are main frame only: the network rule list already catches subframe ads. The bridge world holds
         // the cosmetics' sheet handler, and keeps their fallback sheet clear of the page's CSP.
-        let sources: [(String?, Bool, WKContentWorld)] = [
-            (scripts.genericCosmetics, true, PageWorld.bridgeWorld), (scripts.procedural, true, .page), (scripts.scriptlets, false, .page)
+        let kinds: [(tables: String?, bridgeScript: String, pageScript: String?, mainFrameOnly: Bool)] = [
+            (scripts.genericCosmetics, "GenericCosmetics", nil, true), (scripts.procedural, "FilterLookup", "ProceduralCosmetics", true),
+            (scripts.scriptlets, "FilterLookup", "Scriptlets", false)
         ]
-        let allowlist = Self.allowlistLiteral(blockerAllowlist)
-        filterUserScripts = sources.compactMap { source, mainFrameOnly, world in
-            source.map {
-                let spliced = Self.splicing("ALLOWLIST", in: $0, replacing: "__LILO_ALLOWLIST__", with: allowlist)
-                return (WKUserScript(source: Self.splicing("HIDDEN", in: spliced, replacing: "__LILO_HIDDEN__", with: hiddenElementsLiteral),
-                                     injectionTime: .atDocumentStart, forMainFrameOnly: mainFrameOnly, in: world), world)
+        filterTables = zip(Self.filterTableNames, kinds).compactMap { name, kind in
+            kind.tables.flatMap {
+                makeFilterTables($0, FilterTables(name: name, bridgeScript: kind.bridgeScript, pageScript: kind.pageScript,
+                                                  mainFrameOnly: kind.mainFrameOnly))
             }
         }
         reinstallFilterUserScripts()
+    }
+
+    /// Nil for tables without the line that tells them apart.
+    private func makeFilterTables(_ joined: String, _ tables: FilterTables) -> FilterTables? {
+        guard let lineEnd = joined.utf16.firstIndex(of: 0x0A) else { return nil }
+        var tables = tables
+        var reader = tables.name
+        if #available(macOS 27.0, *) {
+            // The tables are escape-free Latin-1 but for a class or id token outside it.
+            let latin1 = joined.data(using: .isoLatin1)
+            tables.buffer = latin1 ?? joined.data(using: .utf16LittleEndian)
+            reader = "webkit.buffers.\(tables.name).\(latin1 == nil ? "asUTF16String" : "asLatin1String")()"
+        } else {
+            tables.script = WKUserScript(source: "var \(tables.name) = \(Self.jsStringLiteral(joined));", injectionTime: .atDocumentStart,
+                                         forMainFrameOnly: tables.mainFrameOnly, in: PageWorld.bridgeWorld)
+        }
+        var offset = joined.utf16.distance(from: joined.utf16.startIndex, to: lineEnd) + 1
+        for pair in joined[..<lineEnd].split(separator: " ") {
+            guard let colon = pair.lastIndex(of: ":"), let length = Int(pair[pair.index(after: colon)...]) else { return nil }
+            tables.slices[String(pair[..<colon])] = "\(reader).substr(\(offset), \(length))"
+            offset += length
+        }
+        return tables
+    }
+
+    /// The filter scripts as the tables, the allowlist and the hidden elements stand: the tables' own, then the script
+    /// reading them and the page-world one it serves.
+    private func makeFilterUserScripts() -> [WKUserScript] {
+        let allowlist = Self.jsStringLiteral("|" + blockerAllowlist.joined(separator: "|") + "|")
+        var scripts: [WKUserScript?] = []
+        for tables in filterTables {
+            func script(_ resource: String, _ values: [String: String], in world: WKContentWorld) -> WKUserScript? {
+                guard var source = bundledTemplate(resource) else {
+                    Self.logger.error("\(resource, privacy: .public).js not found in bundle - injection disabled")
+                    return nil
+                }
+                for (placeholder, value) in values { source = source.replacingOccurrences(of: placeholder, with: value) }
+                return WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: tables.mainFrameOnly, in: world)
+            }
+            // A table's two scripts find each other by event types of their own, random per launch as the page-world channel.
+            let events = ["__LILO_FILTER_LOOKUP__": PageWorld.channel + tables.name + "l",
+                          "__LILO_FILTER_ENTRIES__": PageWorld.channel + tables.name + "e"]
+            let values = tables.slices.merging(events) { $1 }
+                .merging(["__LILO_ALLOWLIST__": allowlist, "__LILO_HIDDEN__": hiddenElementsLiteral]) { $1 }
+            scripts += [tables.script, script(tables.bridgeScript, values, in: PageWorld.bridgeWorld),
+                        tables.pageScript.flatMap { script($0, events, in: .page) }]
+        }
+        return scripts.compactMap { $0 }
     }
 
     /// Selectors by host without `www.`, applied by the generic cosmetics script from the next page on, allowlisted sites included.
@@ -704,12 +754,7 @@ final class WKEngineFactory {
         let data = (try? JSONSerialization.data(withJSONObject: elements, options: .sortedKeys)) ?? Data("{}".utf8)
         let literal = Self.jsStringLiteral(String(data: data, encoding: .utf8) ?? "{}")
         guard literal != hiddenElementsLiteral else { return }
-        let old = hiddenElementsLiteral
         hiddenElementsLiteral = literal
-        filterUserScripts = filterUserScripts.map { script, world in
-            (WKUserScript(source: Self.splicing("HIDDEN", in: script.source, replacing: old, with: literal), injectionTime: .atDocumentStart,
-                          forMainFrameOnly: script.isForMainFrameOnly, in: world), world)
-        }
         reinstallFilterUserScripts()
     }
 
@@ -718,11 +763,12 @@ final class WKEngineFactory {
     /// it already knows; it is only the fallback should the SPI go away.
     private func reinstallFilterUserScripts() {
         let previous = installedFilterUserScripts
-        installedFilterUserScripts = contentBlockerEnabled ? filterUserScripts.map(\.script) : []
+        installedFilterUserScripts = contentBlockerEnabled ? makeFilterUserScripts() : []
         let removeSelector = NSSelectorFromString("_removeUserScript:")
         for controller in liveContentControllers.allObjects {
             if controller.responds(to: removeSelector) {
                 previous.forEach { _ = unsafe controller.perform(removeSelector, with: $0) }
+                installFilterBuffers(on: controller)
                 installedFilterUserScripts.forEach { controller.addUserScript($0) }
             } else {
                 controller.removeAllUserScripts()
@@ -731,29 +777,10 @@ final class WKEngineFactory {
         }
     }
 
-    /// The scripts' allowlist is re-spliced into their installed sources, the only copy kept of them.
     private func setBlockerAllowlist(_ allowlist: [String]) {
         guard allowlist != blockerAllowlist else { return }
-        let old = Self.allowlistLiteral(blockerAllowlist)
         blockerAllowlist = allowlist
-        let new = Self.allowlistLiteral(allowlist)
-        filterUserScripts = filterUserScripts.map { script, world in
-            (WKUserScript(source: Self.splicing("ALLOWLIST", in: script.source, replacing: old, with: new), injectionTime: .atDocumentStart,
-                          forMainFrameOnly: script.isForMainFrameOnly, in: world), world)
-        }
         reinstallFilterUserScripts()
-    }
-
-    nonisolated private static func allowlistLiteral(_ sites: [String]) -> String {
-        jsStringLiteral("|" + sites.joined(separator: "|") + "|")
-    }
-
-    /// Every template opens with `var ALLOWLIST = __LILO_ALLOWLIST__;`, the generic cosmetics one then with `var HIDDEN`: no need
-    /// to scan the tables after them. A multi-MB template without the variable is never searched for it.
-    nonisolated private static func splicing(_ variable: String, in source: String, replacing old: String, with new: String) -> String {
-        guard variable == "ALLOWLIST" || source.hasPrefix("/*lilo-generic-cosmetics*/"),
-              let range = source.range(of: "var \(variable) = " + old) else { return source }
-        return source.replacingCharacters(in: range, with: "var \(variable) = " + new)
     }
 
     func rebuildBlocker(allowlist: BlockerAllowlist) async {
@@ -1052,7 +1079,18 @@ final class WKEngineFactory {
         } else {
             Self.logger.error("ChromeWebStoreShim.js not found in bundle: Chrome Web Store install will not work")
         }
+        installFilterBuffers(on: contentController)
         installedFilterUserScripts.forEach { contentController.addUserScript($0) }
+    }
+
+    /// Before the scripts, which read them at document start.
+    private func installFilterBuffers(on contentController: WKUserContentController) {
+        guard #available(macOS 27.0, *) else { return }
+        Self.filterTableNames.forEach { contentController.removeBuffer(named: $0, from: PageWorld.bridgeWorld) }
+        guard contentBlockerEnabled else { return }
+        for tables in filterTables {
+            tables.buffer.map { contentController.addBuffer($0.bytes, name: tables.name, to: PageWorld.bridgeWorld) }
+        }
     }
 
     /// Bundle JS templates are immutable; each resource is read once per factory lifetime.
@@ -1107,7 +1145,8 @@ final class WKEngineFactory {
     }
 
     /// A keyed table (hosts, `.class`/`#id`) the injected scripts binary-search: sorted `index` records point into shared `groups`,
-    /// which list offsets into `entries`. All escape-free Latin-1 so JSC lexes it fast; non-ASCII keys are dropped (hostname is punycode).
+    /// which list offsets into `entries`. All escape-free Latin-1, a byte per character in a buffer and fast for JSC to lex as a literal;
+    /// non-ASCII keys are dropped (hostname is punycode).
     /// A scriptlet entry names its scriptlet by a base-36 index into `names`, the most used first.
     nonisolated static func hostTable(for tableJSON: String) -> (index: String, groups: String, entries: String, names: String)? {
         guard let table = (try? JSONSerialization.jsonObject(with: Data(tableJSON.utf8))) as? [String: [Any]] else { return nil }

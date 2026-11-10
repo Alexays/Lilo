@@ -18,8 +18,7 @@
   var hidden = hiddenHost && HIDDEN.indexOf('"' + hiddenHost + '"') >= 0 ? JSON.parse(HIDDEN)[hiddenHost] : null;
   if (allowlisted && !hidden) return;
 
-  // Table entries spell `\`, `"`, line breaks and other special characters with Latin-1 marks
-  // (see WKEngineFactory.hostTable), so the multi-MB literal stays on JSC's fast lexing path.
+  // Table entries spell `\`, `"`, line breaks and other special characters with Latin-1 marks (see WKEngineFactory.hostTable).
   function decodeEntry(s) {
     return /[\xa4\xac\xb5\xb6]/.test(s) ? s.replace(/\xb5([0-9a-f]{4})|[\xa4\xac\xb6]/g, function (m, hex) {
       return hex ? String.fromCharCode(parseInt(hex, 16)) : m === '\xa4' ? '\\' : m === '\xac' ? '"' : '\n';

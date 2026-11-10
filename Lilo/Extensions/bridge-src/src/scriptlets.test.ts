@@ -2,7 +2,7 @@
 import { test, describe, beforeEach, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { keyHash, keyedTable } from "./filterTables.testkit.ts";
+import { keyHash, lookupFrame } from "./filterTables.testkit.ts";
 
 const source = readFileSync(new URL("../../../ContentBlocker/Scriptlets.js", import.meta.url), "utf8");
 
@@ -122,16 +122,11 @@ function run(
 	const flat = Object.fromEntries(
 		Object.entries(table).map(([host, list]) => [host, (list as [string, string[]][]).map(([name, args]) => [ref(name), ...args].join("\xa6"))])
 	);
-	const { index, groups, entries } = keyedTable(flat);
-	const src = source
-		.replace("__LILO_SCRIPTLET_INDEX__", JSON.stringify(index))
-		.replace("__LILO_SCRIPTLET_GROUPS__", JSON.stringify(groups))
-		.replace("__LILO_SCRIPTLET_TABLE__", JSON.stringify(entries))
-		.replace("__LILO_SCRIPTLET_NAMES__", JSON.stringify(names.join(" ")))
-		.replace("__LILO_ALLOWLIST__", JSON.stringify(`|${allowlist.join("|")}|`));
-	const fn = new Function("self", "location", "Response", "XMLHttpRequest", "JSON", src);
 	const location = { hostname, host: hostname, ancestorOrigins, reloads: 0, reload: () => location.reloads++ };
-	fn(self, location, FakeResponse, XHR, json);
+	const frame = lookupFrame(flat, names, allowlist, location);
+	frame.lookup();
+	const fn = new Function("self", "location", "Response", "XMLHttpRequest", "JSON", "addEventListener", "dispatchEvent", source);
+	fn(self, location, FakeResponse, XHR, json, frame.addEventListener, frame.dispatchEvent);
 	return { self, fetchCalls, XHR, json, location };
 }
 
