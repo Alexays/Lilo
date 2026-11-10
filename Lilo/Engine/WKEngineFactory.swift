@@ -825,6 +825,8 @@ final class WKEngineFactory {
             }
             lists.insert(list, at: 0)
         }
+        // malloc keeps the pages the conversion and the compile freed: megabytes that stay counted against Lilo otherwise.
+        Task.detached(priority: .utility) { _ = unsafe malloc_zone_pressure_relief(nil, 0) }
         guard generation == blockerGeneration else { return nil }
         // The multi-MB source is only needed on a compile cache miss; holding it for the process
         // lifetime wastes memory, so it is released once compiled lists exist.
