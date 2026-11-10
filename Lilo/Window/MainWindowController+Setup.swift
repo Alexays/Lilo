@@ -56,6 +56,11 @@ extension MainWindowController {
         if config.preferences.responds(to: NSSelectorFromString("_setShouldAllowUserInstalledFonts:")) {
             config.preferences.setValue(false, forKey: "shouldAllowUserInstalledFonts")
         }
+        // The chrome is a full-window layer that paints little and seldom. With accelerated drawing, WebKit keeps
+        // GPU surfaces the size of the window for it, its transparent root included; drawn in software it keeps none.
+        if config.preferences.responds(to: NSSelectorFromString("_setAcceleratedDrawingEnabled:")) {
+            config.preferences.setValue(false, forKey: "acceleratedDrawingEnabled")
+        }
         let webView = OverlayWebView(frame: frame, configuration: config)
         WebInspectorSupport.enable(for: webView)
         lastChromeWebView = webView
