@@ -159,8 +159,9 @@ Safari, whose user agent Lilo shows.
 ### Service worker notification clicks
 
 - **Status:** Partial - a click runs the worker's `notificationclick`, and `client.focus()` brings back a page it has open
-- **Impact:** `clients.openWindow()` opens no tab, and a notification clicked after Lilo relaunches reaches no worker: the
-  click only brings Lilo forward. A page's own notifications (`new Notification`) bring their tab back as in Chrome.
+- **Impact:** a notification clicked after Lilo relaunches reaches no worker: the click only brings Lilo forward.
+  `clients.openWindow()` opens its tab in a Space of the worker's profile, the one on screen when it has that profile.
+  A page's own notifications (`new Notification`) bring their tab back as in Chrome.
 
 ### Passkeys / WebAuthn
 

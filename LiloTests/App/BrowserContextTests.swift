@@ -1,3 +1,4 @@
+import WebKit
 import XCTest
 @testable import Lilo
 
@@ -112,5 +113,33 @@ final class BrowserContextTests: XCTestCase {
         XCTAssertTrue(try interactionStates.load(spaceId: gone.id).isEmpty)
         XCTAssertNotNil(try tabStates.load(spaceId: kept.id))
         XCTAssertEqual(try interactionStates.load(spaceId: kept.id).count, 1)
+    }
+
+    /// `clients.openWindow()` from a service worker: a tab in a Space of the worker's profile, and none for a private store.
+    func testAServiceWorkerOpensItsWindowInASpaceOfItsProfile() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let work = try context.profileManager!.createProfile(name: "Work").id
+        let home = try context.profileManager!.createProfile(name: "Home").id
+        _ = try context.spaceManager!.createSpace(name: "Office", profileId: work)
+        let homeSpace = try context.spaceManager!.createSpace(name: "Family", profileId: home)
+        let window = MainWindowController(context: context)
+        defer { window.window?.close() }
+        window.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        context.windows.add(window)
+        window.switchToSpace(homeSpace.id)
+        let url = try XCTUnwrap(URL(string: "https://example.com/inbox"))
+        let open = try XCTUnwrap(context.engineFactory.notificationBridge.openWindowHandler)
+
+        let webView = try XCTUnwrap(open(WKEngineFactory.persistentDataStore(for: work), url))
+
+        let tabId = try XCTUnwrap(window.tabManager.engineTab(forWebView: webView)?.id)
+        XCTAssertEqual(window.tabManager.activeTabId, tabId)
+        XCTAssertEqual(window.tabManager.tab(for: tabId)?.url, url)
+        XCTAssertEqual(context.spaceManager!.space(with: window.tabManager.currentSpaceId)?.profileId, work)
+
+        XCTAssertNil(open(WKWebsiteDataStore.nonPersistent(), url))
+        XCTAssertEqual(window.tabManager.activeTabId, tabId)
     }
 }
