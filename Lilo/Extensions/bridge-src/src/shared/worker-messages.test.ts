@@ -1,6 +1,7 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { installPageWorkerMessages, installWorkerClientMessages } from './worker-messages.ts';
+import { mockGapAPI } from './ipc.testkit.ts';
 
 class WindowClient {}
 
@@ -37,8 +38,8 @@ function page(href: string, registrations: unknown[] = [], serviceWorker: string
   return { scope, sent, looks: () => looks, worker: (script: string) => new ServiceWorker(script) };
 }
 
-function worker() {
-  const scope = Object.assign(new EventTarget(), { BroadcastChannel: Channel, WindowClient, MessageEvent, ExtendableMessageEvent, MessageChannel, crypto });
+function worker(clients?: object) {
+  const scope = Object.assign(new EventTarget(), { BroadcastChannel: Channel, WindowClient, MessageEvent, ExtendableMessageEvent, MessageChannel, crypto, clients });
   installWorkerClientMessages(scope);
   return scope;
 }
@@ -151,6 +152,38 @@ describe('worker messages', () => {
     void (options.scope.navigator.serviceWorker as any).ready;
     await new Promise((resolve) => setTimeout(resolve, 20));
     assert.equal(options.looks(), 0);
+  });
+
+  it('lists the open pages Lilo names among the worker\'s clients, in one call, and posts to them by url', async () => {
+    const calls: string[] = [];
+    mockGapAPI(({ namespace, method }) => {
+      calls.push(`${namespace}.${method}`);
+      return ['chrome-extension://abc/popup.html', 'chrome-extension://abc/worker/page.html'];
+    });
+    const own = { url: 'chrome-extension://abc/worker/page.html' };
+    const clients = { matchAll: async () => [own] };
+    worker(clients);
+    const popup = page('chrome-extension://abc/popup.html');
+    const options = page('chrome-extension://abc/options.html');
+    const optionsMessages: unknown[] = [];
+    options.scope.navigator.serviceWorker.addEventListener('message', (e) => optionsMessages.push((e as MessageEvent).data));
+
+    const found = await clients.matchAll() as any[];
+    assert.deepEqual(calls, ['runtime.clientPages']);
+    assert.equal(found.length, 2);
+    assert.equal(found[0], own);
+    assert.ok((found[1] as object) instanceof WindowClient);
+    assert.equal(found[1].url, 'chrome-extension://abc/popup.html');
+    assert.equal(found[1].type, 'window');
+
+    const received = next(popup.scope.navigator.serviceWorker);
+    found[1].postMessage({ refresh: true });
+    assert.deepEqual((await received).data, { refresh: true });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.deepEqual(optionsMessages, []);
+
+    assert.deepEqual(await (clients.matchAll as any)({ type: 'worker' }), [own]);
+    assert.deepEqual(calls, ['runtime.clientPages']);
   });
 
   it('leaves another origin\'s worker to the native postMessage', () => {

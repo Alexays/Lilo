@@ -143,7 +143,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108,
 ### 44. Extension pages are not clients of the extension's worker
 
 - **Gap:** WebKit registers the worker with its own directory as scope and counts no extension page as a client: `navigator.serviceWorker.ready` never resolves outside that directory, `clients.matchAll()` finds none, and a page's `postMessage` to the worker is lost. Chrome registers it for the whole extension.
-- **Lilo:** on extension pages, `ready` resolves with the extension's registration and `postMessage` to the worker goes over a `BroadcastChannel`; the worker gets a `message` event whose source is a `WindowClient` answering that page ([worker-messages.ts]). `clients.matchAll()` still finds no page (COMPATIBILITY.md, "Background worker").
+- **Lilo:** on extension pages, `ready` resolves with the extension's registration and `postMessage` to the worker goes over a `BroadcastChannel`; the worker gets a `message` event whose source is a `WindowClient` answering that page ([worker-messages.ts]). `clients.matchAll()` adds the open pages native names, one call each time (`installWorkerClientMessages`, [ExtensionUIBridgeHandler.swift] `runtime.clientPages`). User-visible side: COMPATIBILITY.md, "Background worker".
 - **Impact:** without it, MultiPassword's offscreen document never reaches its worker, which never starts.
 - **Check:** `testExtensionPagesAreNotClientsOfTheWorker`. Repro: worker at `worker/background.js`; a root page posts to the active registration's worker. Expected: scope is the root, the page is a client, the message arrives. Actual: scope `worker/`, no client, no message.
 
@@ -725,6 +725,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80, 84, 108,
 [ExtensionNativeMessaging.swift]: ../Lilo/Extensions/Core/ExtensionNativeMessaging.swift
 [ProfileExtensionRegistry.swift]: ../Lilo/Extensions/Core/ProfileExtensionRegistry.swift
 [ExtensionUserScripts.swift]: ../Lilo/Extensions/Core/ExtensionUserScripts.swift
+[ExtensionUIBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ExtensionUIBridgeHandler.swift
 [ActionColorBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ActionColorBridgeHandler.swift
 [PermissionsBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/PermissionsBridgeHandler.swift
 [WebSocketBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/WebSocketBridgeHandler.swift

@@ -1,17 +1,27 @@
 // WebKit sends an extension's credentialed fetch or XMLHttpRequest to another site without its SameSite=Lax and Strict
 // cookies, where Chrome sends every cookie to a host the extension may access (WEBKIT-GAPS.md, gap 81): such a request
 // goes through Lilo, which answers null when the extension may not access the host. Redirect "manual" stays WebKit's.
+// Lilo answers with the response's head and pushes its body after it, a chunk per network read.
 // SW-safe: the worker has no XMLHttpRequest.
-import { gapCall } from './ipc.ts';
+import { bridgeEvents, channelClosed, gapCall } from './ipc.ts';
 import { fromBase64, toBase64 } from './base64.ts';
 
 interface Answer {
   status: number;
   headers: [string, string][];
-  body: string;
   url: string;
   redirected: boolean;
 }
+
+// Half the unread bytes past which Lilo pauses a request (CredentialedFetchBridgeHandler.window): the body queues up to it,
+// and the reader reports what it read each time it has taken that much.
+const READ_BYTES = 512 * 1024;
+
+/** What takes each response's next body chunk, or its end, by request id. */
+const bodies = new Map<string, (chunk?: string, failed?: boolean) => void>();
+bridgeEvents.set('fetch.onBody', (event: any) => bodies.get(event?.requestId)?.(event.chunk, event.failed));
+// Lilo stops the requests of a context whose channel closed.
+channelClosed.push(() => bodies.forEach((take) => take(undefined, true)));
 
 // Statuses whose response has no body: Response throws when given one.
 const bodiless = new Set([101, 103, 204, 205, 304]);
@@ -30,24 +40,58 @@ async function sendThroughLilo(scope: any, request: Request): Promise<Response |
   if (!request.headers.has('user-agent')) headers.push(['User-Agent', scope.navigator?.userAgent ?? '']);
   // No timeout: a long poll or a large download takes as long as it takes, as in Chrome. An abort stops it in Lilo too.
   const requestId = `${context}-${++requests}`;
-  const call = gapCall<Answer | null>('fetch', 'credentialed', { url: request.url, method: request.method, headers, body, redirect: request.redirect, requestId }, 0);
   let onAbort = (): void => {};
+  const ended = (): void => {
+    bodies.delete(requestId);
+    signal.removeEventListener('abort', onAbort);
+  };
+  let controller!: ReadableStreamDefaultController<Uint8Array>;
+  let unread = 0;
+  const stream = new ReadableStream<Uint8Array>({
+    start(started) { controller = started; },
+    pull() {
+      if (unread < READ_BYTES) return;
+      gapCall('fetch', 'read', { requestId, bytes: unread }).catch(() => {});
+      unread = 0;
+    },
+    cancel() {
+      ended();
+      gapCall('fetch', 'cancel', { requestId }).catch(() => {});
+    },
+  }, new ByteLengthQueuingStrategy({ highWaterMark: READ_BYTES }));
+  // Before the call: a chunk can reach the context ahead of the head.
+  bodies.set(requestId, (chunk, failed) => {
+    if (chunk !== undefined) {
+      const bytes = fromBase64(chunk);
+      unread += bytes.byteLength;
+      controller.enqueue(bytes);
+      return;
+    }
+    ended();
+    if (failed) controller.error(new TypeError('Failed to fetch'));
+    else controller.close();
+  });
+  const call = gapCall<Answer | null>('fetch', 'credentialed', { url: request.url, method: request.method, headers, body, redirect: request.redirect, requestId }, 0);
   const aborted = new Promise<never>((_, reject) => {
     onAbort = () => {
+      ended();
       gapCall('fetch', 'cancel', { requestId }).catch(() => {});
-      reject(signal.reason ?? new DOMException('The operation was aborted.', 'AbortError'));
+      const reason = signal.reason ?? new DOMException('The operation was aborted.', 'AbortError');
+      controller.error(reason);
+      reject(reason);
     };
     signal.addEventListener('abort', onAbort, { once: true });
   });
-  let answer: Answer | null;
+  // An abort while the body is read rejects it with nobody racing.
+  aborted.catch(() => {});
+  let answer: Answer | null = null;
   try {
     answer = await Promise.race([call.catch((error) => { throw new TypeError(String(error?.message ?? 'Failed to fetch')); }), aborted]);
   } finally {
-    signal.removeEventListener('abort', onAbort);
+    if (answer == null) ended();
   }
   if (answer == null) return null;
-  const bytes = fromBase64(answer.body);
-  const response = new Response(bodiless.has(answer.status) ? null : bytes, { status: answer.status, headers: answer.headers });
+  const response = new Response(bodiless.has(answer.status) ? null : stream, { status: answer.status, headers: answer.headers });
   Object.defineProperties(response, { url: { value: answer.url }, redirected: { value: answer.redirected } });
   return response;
 }
