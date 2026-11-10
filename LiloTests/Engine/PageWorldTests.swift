@@ -201,6 +201,36 @@ final class PageWorldTests: XCTestCase {
         XCTAssertEqual(lilo.adoptedStyleSheets, bare.adoptedStyleSheets)
     }
 
+    func testAPageRestoringItsOwnScrollLeavesTheBackForwardCacheWhereItWasLeft() async throws {
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        defer { tab.teardown() }
+        tab.wkWebView.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
+        // A page loaded from a string has no history entry to carry `scrollRestoration`.
+        tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "data:text/html,<p>probe</p>"))))
+        let webView = tab.wkWebView
+        let loaded = await pollUntil(timeout: 10) {
+            ((try? await webView.evaluateJavaScript("location.protocol === 'data:' && document.readyState === 'complete'")) as? Bool) == true
+        }
+        XCTAssertTrue(loaded)
+        // The page's own events stand in for the cache: WebKit caches no page loaded from a string.
+        let offsets = try await tab.wkWebView.callAsyncJavaScript("""
+            document.body.style.height = '5000px';
+            const leaveAndReturn = (restoration, persisted, returnsAt) => {
+              history.scrollRestoration = restoration;
+              scrollTo(0, 700);
+              dispatchEvent(new PageTransitionEvent('pagehide', { persisted }));
+              scrollTo(0, returnsAt);
+              dispatchEvent(new PageTransitionEvent('pageshow', { persisted }));
+              return scrollY;
+            };
+            return [leaveAndReturn('manual', true, 0), leaveAndReturn('manual', true, 40), leaveAndReturn('manual', false, 0),
+                    leaveAndReturn('auto', true, 0)];
+            """, contentWorld: .page) as? [Double]
+
+        XCTAssertEqual(offsets, [700, 40, 0, 0], "only a cached page that restores its own scroll and came back at the top is moved")
+    }
+
     /// Geolocation calls a page makes before any permission decision: their ids and errors read as WebKit's own.
     func testGeolocationCallsAnswerAsInABareWebKitPage() async throws {
         let probe = """
