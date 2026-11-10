@@ -65,6 +65,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
     private static let websiteDataStoreDelegateSelectors = [
         "notificationPermissionsForWebsiteDataStore:",
         "websiteDataStore:showNotification:",
+        "websiteDataStore:openWindow:fromServiceWorkerOrigin:completionHandler:",
     ]
 
     func testNotificationBridgeClaimsEveryDataStoreHook() {

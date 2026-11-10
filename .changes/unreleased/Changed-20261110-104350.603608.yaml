@@ -1,0 +1,3 @@
+kind: Changed
+body: Translating a page now also covers placeholders, tooltips, image descriptions, button labels and the text inside web components, starts with what is on screen, and leaves alone the passages already in your language
+time: 2026-11-10T10:43:50.603608+01:00

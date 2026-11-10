@@ -1533,6 +1533,21 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertTrue(context.deniedPermissionMatchPatterns.keys.contains { $0.matches(URL(string: "https://chromewebstore.google.com/detail/x")) })
     }
 
+    func testDeclarativeNetRequestCarriesWebKitsHostAccessPermission() async throws {
+        for (name, permissions) in [("rules", #"["declarativeNetRequest"]"#), ("no_rules", #"["storage"]"#)] {
+            let extDir = tempDir.appendingPathComponent(name)
+            try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+            try """
+            {"manifest_version":3,"name":"\(name)","version":"1","permissions":\(permissions),"host_permissions":["https://example.com/*"]}
+            """.write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+            try await registry.load(from: extDir)
+        }
+        let contexts = Dictionary(uniqueKeysWithValues: registry.loadedExtensions.map { ($0.context.webExtension.manifest["name"] as? String ?? "", $0.context) })
+
+        XCTAssertEqual(contexts["rules"]?.hasPermission(.declarativeNetRequestWithHostAccess), true, "redirect and modifyHeaders rules act on the granted sites")
+        XCTAssertEqual(contexts["no_rules"]?.hasPermission(.declarativeNetRequestWithHostAccess), false)
+    }
+
     func testOptionalGrantsSurviveARestore() async throws {
         let profileId = TestProfileIds.next()
         let storage = try makeTestExtensionStorage(profileId: profileId, in: tempDir)

@@ -1,0 +1,3 @@
+kind: Fixed
+body: Going back or forward to a page that manages its own scrolling returns to where you left it instead of the top
+time: 2026-11-10T10:43:38.928036+01:00

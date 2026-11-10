@@ -37,6 +37,32 @@ final class AppleScriptSupportTests: XCTestCase {
         XCTAssertNil(nsWindow.valueInScriptTabsWithUniqueID(hidden.id.uuidString))
     }
 
+    func testAWindowNamesItsSpaceAndProfileUnlessTheSpaceIsPrivate() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager!.createProfile(name: "Work").id
+        let regular = try context.spaceManager!.createSpace(name: "Research", profileId: profileId)
+        let secret = try context.spaceManager!.createSpace(name: "Hidden", profileId: profileId, isPrivate: true)
+        let window = MainWindowController(context: context)
+        defer { window.window?.close() }
+        window.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        context.windows.add(window)
+        let nsWindow = try XCTUnwrap(window.window)
+
+        window.switchToSpace(regular.id)
+        XCTAssertEqual(nsWindow.scriptSpaceName, "Research")
+        XCTAssertEqual(nsWindow.scriptProfileName, "Work")
+
+        window.switchToSpace(secret.id)
+        XCTAssertEqual(nsWindow.scriptSpaceName, "")
+        XCTAssertEqual(nsWindow.scriptProfileName, "")
+
+        let windowClass = try XCTUnwrap(NSScriptSuiteRegistry.shared().classDescription(withAppleEventCode: FourCharCode(fourCharString: "cwin")))
+        XCTAssertEqual(windowClass.key(withAppleEventCode: FourCharCode(fourCharString: "LiSN")), "scriptSpaceName")
+        XCTAssertEqual(windowClass.key(withAppleEventCode: FourCharCode(fourCharString: "LiPN")), "scriptProfileName")
+    }
+
     func testALockedFolderKeepsItsTabsFromScripts() async throws {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }

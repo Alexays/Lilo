@@ -24,6 +24,9 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     /// The stored notification decisions of a data store's sites, by origin key (true allowed).
     var storeDecisionsHandler: ((WKWebsiteDataStore) -> [String: Bool])?
 
+    /// Opens the tab a service worker of a data store asks for and returns its web view; nil when none opens.
+    var openWindowHandler: ((WKWebsiteDataStore, URL) -> WKWebView?)?
+
     /// Told of each notification a page posts, with the web view that posted it.
     var shownHandler: ((WKWebView) -> Void)?
 
@@ -172,7 +175,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
 // MARK: - Website data store delegate
 
 /// `_WKWebsiteDataStoreDelegate`: each process WebKit launches for the store, service workers' included, learns every site's
-/// decision before its first script, and a service worker's `showNotification` goes through Lilo.
+/// decision before its first script, and a service worker's `showNotification` and `clients.openWindow()` go through Lilo.
 extension NotificationBridge {
     @objc(notificationPermissionsForWebsiteDataStore:)
     func notificationPermissions(for dataStore: WKWebsiteDataStore) -> [String: Bool] {
@@ -193,6 +196,17 @@ extension NotificationBridge {
                               tag: data.value(forKey: "tag") as? String, origin: origin, host: host, userInfo: [:])
         persistentPosted = persistentPosted.filter { $0.value.dataStore != nil }
         persistentPosted[identifier] = PersistentPosted(dataStore: dataStore, notification: notification)
+    }
+
+    /// A service worker's `clients.openWindow()`: the web view handed back is the page its promise resolves with, nil rejects it.
+    @objc(websiteDataStore:openWindow:fromServiceWorkerOrigin:completionHandler:)
+    func websiteDataStore(_ dataStore: WKWebsiteDataStore, openWindow url: URL, fromServiceWorkerOrigin origin: WKSecurityOrigin,
+                          completionHandler: @escaping (WKWebView?) -> Void) {
+        // Only a site whose notifications are allowed has a click to answer, and a web address is all it may open.
+        guard ["http", "https"].contains(url.scheme?.lowercased()), storeDecisionsHandler?(dataStore)[origin.permissionOriginKey] == true else {
+            return completionHandler(nil)
+        }
+        completionHandler(openWindowHandler?(dataStore, url))
     }
 }
 

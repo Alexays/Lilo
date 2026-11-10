@@ -82,7 +82,7 @@ final class ScriptTab: NSObject {
     }
 }
 
-/// The `window` class extension of Lilo.sdef. Windows other than browser windows have no tabs, and
+/// The `window` class extension of Lilo.sdef. Windows other than browser windows have no tabs and no names, and
 /// neither has a window showing a private space, as for Shortcuts. A locked folder's tabs stay hidden.
 extension NSWindow {
     private var browserWindowController: MainWindowController? {
@@ -126,6 +126,17 @@ extension NSWindow {
             }
             owner.activateTabStateFirst(id: tabs[newValue - 1].id)
         }
+    }
+
+    @objc var scriptSpaceName: String {
+        guard let owner = browserWindowController else { return "" }
+        return owner.context.spaceManager?.space(with: owner.tabManager.currentSpaceId)?.name ?? ""
+    }
+
+    @objc var scriptProfileName: String {
+        guard let owner = browserWindowController,
+              let profileId = owner.context.spaceManager?.space(with: owner.tabManager.currentSpaceId)?.profileId else { return "" }
+        return owner.context.profileManager?.profiles.first { $0.id == profileId }?.name ?? ""
     }
 
     /// `make new tab`: always appended to the current space, like a tab opened from the sidebar.

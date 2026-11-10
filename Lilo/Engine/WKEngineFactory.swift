@@ -825,6 +825,8 @@ final class WKEngineFactory {
             }
             lists.insert(list, at: 0)
         }
+        // malloc keeps the pages the conversion and the compile freed: megabytes that stay counted against Lilo otherwise.
+        Task.detached(priority: .utility) { _ = unsafe malloc_zone_pressure_relief(nil, 0) }
         guard generation == blockerGeneration else { return nil }
         // The multi-MB source is only needed on a compile cache miss; holding it for the process
         // lifetime wastes memory, so it is released once compiled lists exist.
@@ -1039,7 +1041,7 @@ final class WKEngineFactory {
         PageWorld.install([
             GeolocationBridge.pageModule, NotificationBridge.pageModule, SerialBridge.pageModule, EyeDropperBridge.pageModule,
             TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule,
-            DocumentPiPBridge.pageModule, AgentCapture.consoleModule
+            DocumentPiPBridge.pageModule, AgentCapture.consoleModule, WKWebViewTab.liveRateModule
         ] + (UserDefaults.standard.bool(forKey: "LiloMeetDocumentPiPDisabled") ? [] : [DocumentPiPBridge.meetModule]), on: contentController)
         // Store shim for regular tabs (the store is a normal https tab without ChromeAPIAugmentation.js), top-level only. Injected
         // only into the store when the match-pattern SPI exists; it self-guards on the hostname otherwise.
