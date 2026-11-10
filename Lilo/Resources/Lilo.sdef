@@ -16,6 +16,12 @@
             <property name="active tab index" code="LiAI" type="integer" description="The index of the active tab; setting it shows that tab.">
                 <cocoa key="scriptActiveTabIndex"/>
             </property>
+            <property name="space name" code="LiSN" type="text" access="r" description="The name of the window's current space; empty for a private space.">
+                <cocoa key="scriptSpaceName"/>
+            </property>
+            <property name="profile name" code="LiPN" type="text" access="r" description="The name of the current space's profile; empty for a private space.">
+                <cocoa key="scriptProfileName"/>
+            </property>
         </class-extension>
 
         <class name="tab" code="LiTb" plural="tabs" description="A browser tab.">
