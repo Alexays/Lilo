@@ -226,6 +226,46 @@ final class MediaControlTests: XCTestCase {
         XCTAssertEqual(throttled(), [true, true])
     }
 
+    func testARateBackToOneAfterACatchUpNudgeStaysBesideOneAndReadsAsOne() async throws {
+        let page = "<video id='live'></video><video id='menu'></video>"
+        let tab = try await loadedTab(page)
+        defer { tab.teardown() }
+        // With the misuse a bot detector tries on a replaced accessor: it must fail as WebKit's own does.
+        let script = """
+            const live = document.getElementById('live'), menu = document.getElementById('menu');
+            const rate = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'playbackRate');
+            const failure = call => { try { call(); return 'returned'; } catch (e) { return e.name + ': ' + e.message; } };
+            live.playbackRate = 1.04;
+            live.playbackRate = 1;
+            menu.playbackRate = 1.5;
+            menu.playbackRate = 1;
+            return [String(live.playbackRate), String(menu.playbackRate), failure(() => rate.get.call({})),
+                    failure(() => rate.set.call({}, 1)), failure(() => { live.playbackRate = NaN; }),
+                    failure(() => { live.playbackRate = Symbol(); }), String(live.playbackRate)];
+            """
+        let configuration = try XCTUnwrap(tab.wkWebView.configuration.copy() as? WKWebViewConfiguration)
+        configuration.userContentController = WKUserContentController()
+        let bareWebView = WKWebView(frame: .zero, configuration: configuration)
+        bareWebView.loadHTMLString(page, baseURL: URL(string: "https://example.com/"))
+        let loaded = await pollUntil(timeout: 5) {
+            let condition = "location.href === 'https://example.com/' && document.readyState === 'complete'"
+            return ((try? await bareWebView.evaluateJavaScript(condition)) as? Bool) == true
+        }
+        XCTAssertTrue(loaded)
+
+        let lilo = try await tab.wkWebView.callAsyncJavaScript(script, contentWorld: .page) as? [String]
+        let bare = try await bareWebView.callAsyncJavaScript(script, contentWorld: .page) as? [String]
+        // The bridge world has WebKit's own accessor: it reads the rate the engine plays at.
+        let played = try await tab.wkWebView.callAsyncJavaScript(
+            "return [document.getElementById('live').playbackRate, document.getElementById('menu').playbackRate];",
+            contentWorld: PageWorld.bridgeWorld
+        ) as? [Double]
+
+        XCTAssertEqual(bare?.first, "1")
+        XCTAssertEqual(lilo, bare, "the page reads the rate it set, and misuse fails as in a bare WebKit page")
+        XCTAssertEqual(played, [1.0001, 1], "only a catch-up nudge keeps the rate beside 1: a speed picked from a menu goes back to 1")
+    }
+
     private func loadedTab(_ html: String, factory: WKEngineFactory? = nil) async throws -> WKWebViewTab {
         let tab = (factory ?? WKEngineFactory()).createTab(configuration: WKEngineFactory.Configuration())
         tab.wkWebView.loadHTMLString(html, baseURL: URL(string: "https://example.com/"))

@@ -128,6 +128,27 @@ extension WKWebViewTab {
     }
     """#
 
+    /// For `PageWorld`, every frame. WebKit switches audio pitch algorithm when a rate reaches or leaves 1, heard as a hitch:
+    /// a live player that nudged its rate to catch up gets a rate beside 1 for the 1 it then asks for, and reads back 1.
+    static let liveRateModule = #"""
+    function () {
+      const original = getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'playbackRate'), nudged = new WeakMap(), beside = 1.0001;
+      lilo.accessors(HTMLMediaElement.prototype, {
+        get playbackRate() {
+          const rate = apply(original.get, this, []);
+          return rate === beside && apply(weakGet, nudged, [this]) ? 1 : rate;
+        },
+        set playbackRate(value) {
+          // Converted once, as WebKit does: a second conversion would call the page's valueOf twice.
+          const rate = +value;
+          apply(original.set, this, [rate === 1 && apply(weakGet, nudged, [this]) ? beside : rate]);
+          // A rate picked from a speed menu is further from 1 than a catch-up nudge.
+          if (rate !== 1 && rate >= 0.9 && rate <= 1.1) apply(weakSet, nudged, [this, true]);
+        },
+      });
+    }
+    """#
+
     /// Asks the page for its Document PiP window through its Media Session handler, as Chrome does when a call tab
     /// is left. As a `useraction`: the user left the tab with auto PiP on, and Meet keeps its automatic opening for
     /// some accounts only, where its menu's opening works for all.
