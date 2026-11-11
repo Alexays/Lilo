@@ -321,9 +321,9 @@ export function mcpPartial(parsed, summaries) {
   const pickers = new Set(parsed.flatMap((file) => file.pickers));
   const names = new Set(tools.map((tool) => tool.name));
   for (const tool of tools) {
-    if (typeof summaries[tool.name] !== "string" || !summaries[tool.name].trim()) fail(SOURCES.summaries, `no summary for the tool "${tool.name}" (${tool.file})`);
+    if (typeof summaries[tool.name] !== "string" || !summaries[tool.name].trim()) fail(SOURCES.summaries, `no summary for the tool "${tool.name}" (${tool.file}): add one to ${SOURCES.summaries}`);
   }
-  for (const name of Object.keys(summaries)) if (!names.has(name)) fail(SOURCES.summaries, `summary for "${name}", a tool no Swift file defines`);
+  for (const name of Object.keys(summaries)) if (!names.has(name)) fail(SOURCES.summaries, `summary for "${name}", a tool no Swift file defines: rename or remove it in ${SOURCES.summaries}`);
   for (const name of pickers) if (!names.has(name)) fail(SOURCES.tools[1], `browserPickers names "${name}", which is not a tool`);
   const sections = parsed.map(({ tools: own }) => {
     const file = own[0].file;
@@ -385,11 +385,24 @@ export function compatibilityPartials(markdown, pages) {
 
 // MARK: Output
 
+/** The settings model, which plain Node loads by stripping its types: anything else in it fails here. */
+export async function loadSettings(path = `${repo}${SOURCES.settings}`) {
+  try {
+    return await import(path);
+  } catch (error) {
+    return fail(SOURCES.settings, `plain Node cannot load it (${error.message.split("\n")[0]}): keep it to type-only imports, no enum or other TypeScript-only syntax`);
+  }
+}
+
+/** What a contributor who only touched app code reads when the generator fails. */
+export const errorReport = (error) =>
+  `docs-site/scripts/generate.mjs, which builds the docs reference tables from the app's sources, failed on ${error.message}\nFix the source it names as the message says (or the generator), then run make docs-check.`;
+
 /** Partial path, relative to docs-site/, to its Markdown. */
 export async function partials() {
   const catalogs = { en: JSON.parse(read(SOURCES.catalog("en"))), fr: JSON.parse(read(SOURCES.catalog("fr"))) };
   const actions = parseShortcuts(read(SOURCES.shortcuts));
-  const model = await import(`${repo}${SOURCES.settings}`);
+  const model = await loadSettings();
   const tools = SOURCES.tools.map((file) => parseTools(read(file), file));
   const compatibility = compatibilityPartials(read(SOURCES.compatibility), {
     "/reference/extension-compatibility": ["Chrome extensions"],
@@ -424,7 +437,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     for (const [path, text] of Object.entries(await partials())) write(path, text);
   } catch (error) {
-    console.error(`generate: ${error.message}`);
+    console.error(errorReport(error));
     process.exit(1);
   }
 }
