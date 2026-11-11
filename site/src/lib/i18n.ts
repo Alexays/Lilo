@@ -302,6 +302,10 @@ export const copy = {
 export const localizedPath = (lang: Locale, path = "") =>
   `/${lang === "fr" ? "fr/" : ""}${path}`;
 
+// The docs site links its pages without a trailing slash.
+export const docsUrl = (lang: Locale, path = "") =>
+  `https://docs.getlilo.app${lang === "fr" ? `/fr${path}` : path || "/"}`;
+
 export const demoMessages = {
   en: {
     about: "About",

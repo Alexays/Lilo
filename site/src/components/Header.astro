@@ -1,5 +1,5 @@
 ---
-import { copy, localizedPath } from "../lib/i18n";
+import { copy, docsUrl, localizedPath } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
 import Flower from "./Flower.astro";
 import GitHubIcon from "./GitHubIcon.astro";
@@ -15,10 +15,7 @@ const path = Astro.url.pathname;
 
 const links = [
   [`${home}moving/`, text.movingTitle],
-  [
-    "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
-    text.documentation,
-  ],
+  [docsUrl(lang), text.documentation],
   [`${home}changelog/`, text.changelog],
 ];
 ---

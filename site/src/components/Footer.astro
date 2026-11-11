@@ -1,5 +1,5 @@
 ---
-import { copy, localizedPath } from "../lib/i18n";
+import { copy, docsUrl, localizedPath } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
 import Flower from "./Flower.astro";
 import GitHubIcon from "./GitHubIcon.astro";
@@ -83,9 +83,7 @@ const text = copy[lang];
           <h2>{text.resources}</h2>
           <ul role="list">
             <li>
-              <a href="https://github.com/Alexays/Lilo/blob/main/docs/README.md">
-                {text.documentation}
-              </a>
+              <a href={docsUrl(lang)}>{text.documentation}</a>
             </li>
             <li>
               <a href="https://github.com/Alexays/Lilo/issues">
@@ -93,9 +91,7 @@ const text = copy[lang];
               </a>
             </li>
             <li>
-              <a href="https://github.com/Alexays/Lilo/blob/main/PRIVACY.md">
-                {text.privacy}
-              </a>
+              <a href={docsUrl(lang, "/about/privacy")}>{text.privacy}</a>
             </li>
           </ul>
         </div>

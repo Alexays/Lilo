@@ -79,10 +79,13 @@ class SiteTests(unittest.TestCase):
                 navigation = [node for node in nodes(header) if node.tag == "nav"]
                 self.assertEqual(len(navigation), 1)
                 links = [node.attrs["href"] for node in nodes(navigation[0]) if node.tag == "a"]
-                home = "/fr/" if page.startswith("fr/") else "/"
-                self.assertEqual(links, [home + "moving/",
-                                         "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
-                                         home + "changelog/"])
+                french = page.startswith("fr/")
+                home = "/fr/" if french else "/"
+                docs = "https://docs.getlilo.app" + ("/fr" if french else "/")
+                self.assertEqual(links, [home + "moving/", docs, home + "changelog/"])
+                footer_links = {node.attrs["href"] for node in nodes(footers[0]) if node.tag == "a"}
+                self.assertIn(docs, footer_links)
+                self.assertIn("https://docs.getlilo.app" + ("/fr" if french else "") + "/about/privacy", footer_links)
 
     def test_routes_language_alternates_and_markdown_copies(self):
         index = ET.parse(DIST / "sitemap-index.xml").find(".//{*}loc").text
