@@ -1,7 +1,7 @@
 ---
 import PageSection from "../../components/PageSection.astro";
 import Layout from "../../layouts/Layout.astro";
-import { copy } from "../../lib/i18n";
+import { copy, docsUrl } from "../../lib/i18n";
 
 const lang = "en";
 const text = copy[lang];
@@ -56,7 +56,11 @@ const schema = [
       <h2>A real browser, not a headless one.</h2>
       <p>
         Agents drive the same WebKit tabs you use, so you can watch them work
-        and take over at any moment.
+        and take over at any moment. {text.agentsToolsDocs}{" "}
+        <a href={docsUrl(lang, "/reference/mcp-tools")}>
+          {text.agentsToolsDocsLink}
+        </a>
+        .
       </p>
     </div>
     <div class="feat-list two">
@@ -209,10 +213,7 @@ const schema = [
       <h2>One switch, one click.</h2>
       <p>
         Agents connect to Lilo over a local socket on your Mac.{" "}
-        <a href="https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md">
-          Read the agent docs
-        </a>
-        .
+        <a href={docsUrl(lang, "/guides/ai-agents")}>Read the agent docs</a>.
       </p>
     </div>
     <div class="claims">

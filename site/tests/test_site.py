@@ -142,6 +142,21 @@ class SiteTests(unittest.TestCase):
                             ids = {item.attrs.get("id") for item in tree(path)}
                             self.assertIn(unquote(url.fragment), ids)
 
+    def test_documentation_links_name_existing_pages_in_the_page_language(self):
+        content = DIST.parents[1] / "docs-site/content"
+        for page in PAGES + ["404.html"]:
+            prefix = "/fr" if page.startswith("fr/") else ""
+            for node in tree(DIST / page):
+                url = urlparse(node.attrs.get("href", ""))
+                if url.netloc != "docs.getlilo.app":
+                    continue
+                with self.subTest(page=page, href=node.attrs["href"]):
+                    path = url.path.rstrip("/")
+                    self.assertEqual(url.path, "/" if not path else path)
+                    self.assertTrue(path.startswith(prefix))
+                    route = path.removeprefix(prefix).lstrip("/") or "index"
+                    self.assertTrue((content / (route + ".mdx")).is_file())
+
     def test_llms_index_and_full_content_ship_in_the_build(self):
         index = (DIST / "llms.txt").read_text()
         full = (DIST / "llms-full.txt").read_text()

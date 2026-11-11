@@ -9,6 +9,8 @@ export const copy = {
     agentsHeroLink: "Connect an agent",
     agentsIntroduction:
       "Lilo has a built-in MCP server. Claude Code, Codex, Cursor or any MCP client open tabs, click, type, and read pages, the console and the network, in a real browser beside you, in their own Space. There is no AI inside Lilo: bring the agent you already use.",
+    agentsToolsDocs: "Every tool and its parameters are listed in the",
+    agentsToolsDocsLink: "MCP tools reference",
     aiAgents: "Browser for AI agents",
     arcAlternative: "Arc alternative",
     arcClosingDescription:
@@ -81,6 +83,8 @@ export const copy = {
     extensionLink: "View extension: {name} on the Chrome Web Store",
     extensionStore: "Chrome Web Store extensions",
     extensionStoreHint: "Open these pages in Lilo to install.",
+    extensionsDocs: "See what still differs from Chrome in the",
+    extensionsDocsLink: "compatibility reference",
     footerDescription: "A free, open-source browser for Mac, built on WebKit.",
     footerNavigation: "Footer",
     getStarted: "Getting started",
@@ -113,6 +117,8 @@ export const copy = {
     movingClosingDescription:
       "Download Lilo, pick your browser, and your things are there in a few minutes.",
     movingClosingHeading: "Ready to move in?",
+    movingDocs: "For every screen and option, see the",
+    movingDocsLink: "import guide",
     movingHeading: "Moving to Lilo.",
     movingIntroduction:
       "Lilo reads your bookmarks, tabs, history, sign-ins and extensions straight from the browsers on your Mac. Nothing leaves your Mac, and your other browser stays exactly as it was.",
@@ -155,6 +161,8 @@ export const copy = {
     agentsHeroLink: "Connecter un agent",
     agentsIntroduction:
       "Lilo intègre un serveur MCP. Claude Code, Codex, Cursor ou tout client MCP ouvrent des onglets, cliquent, tapent, lisent les pages, la console et le réseau, dans un vrai navigateur à côté de vous, dans leur propre espace. Lilo n'embarque aucune IA : gardez l'agent que vous utilisez déjà.",
+    agentsToolsDocs: "Chaque outil et ses paramètres figurent dans la",
+    agentsToolsDocsLink: "référence des outils MCP",
     aiAgents: "Navigateur pour agents IA",
     arcAlternative: "Alternative à Arc",
     arcClosingDescription:
@@ -231,6 +239,8 @@ export const copy = {
     extensionStore: "Extensions du Chrome Web Store",
     extensionStoreHint:
       "Ouvrez ces pages dans Lilo pour installer les extensions.",
+    extensionsDocs: "Ce qui diffère encore de Chrome est détaillé dans la",
+    extensionsDocsLink: "référence de compatibilité",
     footerDescription:
       "Un navigateur gratuit et open source pour Mac, basé sur WebKit.",
     footerNavigation: "Pied de page",
@@ -263,6 +273,8 @@ export const copy = {
     movingClosingDescription:
       "Téléchargez Lilo, choisissez votre navigateur, et vos affaires sont là en quelques minutes.",
     movingClosingHeading: "Prêt à emménager ?",
+    movingDocs: "Pour chaque écran et chaque option, consultez le",
+    movingDocsLink: "guide d'import",
     movingHeading: "Passer à Lilo.",
     movingIntroduction:
       "Lilo lit vos favoris, onglets, historique, connexions et extensions directement dans les navigateurs de votre Mac. Rien ne quitte votre Mac, et votre autre navigateur reste exactement tel qu'il était.",
