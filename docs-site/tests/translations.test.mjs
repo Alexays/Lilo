@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { classify, readLedger, warningLine } from "../scripts/translations.mjs";
+import { classify, errorReport, readLedger, warningLine } from "../scripts/translations.mjs";
 
 const report = (fr, diagnostics = []) => ({ diagnostics, translate: { locales: { fr: { missing: [], stale: [], untracked: [], ...fr } } } });
 
@@ -47,7 +47,9 @@ test("a French file the ledger does not record fails, except the generator-owned
 test("a ledger that is missing, does not parse or tracks nothing fails", () => {
   assert.throws(() => readLedger(undefined), /blume\.translations\.json is missing/u);
   assert.throws(() => readLedger("{"), /blume\.translations\.json does not parse/u);
-  assert.throws(() => readLedger('{"files": {}}'), /blume\.translations\.json tracks no file/u);
+  for (const files of ['{}', '"abc"', '["a"]', "null"]) {
+    assert.throws(() => readLedger(`{"files": ${files}}`), /blume\.translations\.json tracks no file/u, files);
+  }
   assert.equal(Object.keys(readLedger('{"files": {"content/index.mdx": {"fr": "0"}}}').files).length, 1);
 });
 
@@ -81,4 +83,13 @@ test("make docs-translate checks the ledger before blume translate can read a br
   writeFileSync(join(dir, "blume.translations.json"), '{"files": {"content/index.mdx": {"fr": "0"}}}');
   assert.equal(run().status, 0);
   rmSync(dir, { recursive: true });
+});
+
+test("untracked files come first, to resolve before make docs-translate adopts them", () => {
+  const { errors } = classify(report({ stale: ["content/guides/b.mdx"], untracked: ["content/guides/a.mdx"] }));
+  const text = errorReport(errors);
+  assert.ok(text.indexOf("content/guides/a.mdx") < text.indexOf("content/guides/b.mdx"));
+  assert.match(text, /\nResolve the untracked files first, as said above, then run make docs-translate/u);
+  assert.match(errorReport(classify(report({ stale: ["content/guides/b.mdx"] })).errors), /\nRun make docs-translate/u);
+  assert.doesNotMatch(errorReport(classify(report({ untracked: ["content/guides/a.mdx"] })).errors), /make docs-translate \(needs/u);
 });
