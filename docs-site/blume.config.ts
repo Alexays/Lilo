@@ -30,8 +30,18 @@ export default defineConfig({
       {
         code: "fr",
         label: "Français",
-        style:
-          "French from France, vouvoiement, sentence-case headings; keep Lilo's terms exactly as the French interface names them; keyboard keys and menu paths as the French interface shows them; never translate tool names, parameter names, enum values or code",
+        // The translating agent cannot read the app, so the interface terms it must use ride along here, as fr.json spells them.
+        style: [
+          "French from France, vouvoiement, sentence-case headings, French typography (non-breaking space before : and inside « », narrow non-breaking space before ; ? !).",
+          "Bold text and menu paths name interface elements: write them exactly as the French interface labels them.",
+          "Never translate tool names, parameter names, enum values, code, <kbd> contents or URLs. Translate every sentence, adding, dropping or softening nothing.",
+          "Keep the description between 110 and 160 characters.",
+          "Glossary (English → French interface): Space → espace (Espaces as a menu and settings title); Private Space → espace privé; Agents Space → espace Agents; profile → profil; pinned tab → onglet épinglé;",
+          "favorite (the tiles above the tab list) and bookmark → favori; folder → dossier; archive → archiver, Archived Tabs → Onglets archivés; Peek → Aperçu; Little window → petite fenêtre; split view → vue partagée;",
+          "command bar → barre de commandes; address bar → barre d'adresse; sidebar → barre latérale; terminal tab → onglet terminal; Changes view → vue Modifications; Reader View → Mode lecture; Picture in Picture → Image dans l'image.",
+          "Menus: Lilo, Fichier (File), Édition (Edit), Présentation (View), Onglet (Tab), Espaces (Spaces), Historique (History), Fenêtre (Window), Développement (Develop), Aide (Help); Settings… → Réglages…; Settings → Réglages.",
+          "Settings sections: Général, Apparence, Onglets et Espaces, Audio et vidéo, Confidentialité, Extensions, Agents, Avancé. Keys named in prose: Commande, Option, Contrôle, Maj.",
+        ].join(" "),
       },
     ],
     routeByBrowserLanguage: true,
