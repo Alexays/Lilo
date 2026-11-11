@@ -95,6 +95,14 @@ test("compatibility sections keep their anchors and links across the two pages",
   assert.match(extensions, /\]\(https:\/\/github\.com\/Alexays\/Lilo\/blob\/main\/docs\/ARCHITECTURE\.md#extension-architecture\)/u);
 });
 
+test("every compatibility section is published once, matched by its exact heading", () => {
+  const pages = { "/a": ["Web APIs"] };
+  assert.throws(() => compatibilityPartials("## Web APIs\n\nx\n\n## Site quirks\n\ny\n", pages), /COMPATIBILITY\.md: the section "## Site quirks" is on no docs page: .+generate\.mjs/u);
+  assert.throws(() => compatibilityPartials("## Web APIs for extensions\n\nx\n", pages), /no "## Web APIs" heading/u);
+  const fenced = compatibilityPartials("## Web APIs\n\n```sh\n## not a heading\n```\n\nAfter the fence.\n", pages)["/a"];
+  assert.match(fenced, /```sh\n## not a heading\n```\n\nAfter the fence\./u);
+});
+
 test("the Swift reader reads string blocks and nested dictionaries", () => {
   const block = new SwiftReader(['"""', "        First line \\", "        continued, \\(no) \\\"quoted\\\".", "        Second line.", '        """'].join("\n"), "x.swift");
   assert.throws(() => block.value(), /x\.swift:\d+: string interpolation/u);
