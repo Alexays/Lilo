@@ -69,7 +69,7 @@ Lilo has no password manager of its own and does not save what you type into a p
   </Step>
 </Steps>
 
-The managers on offer are Bitwarden, 1Password, Proton Pass, Dashlane, NordPass and KeePassXC. Each one installs and starts in Lilo's own tests, signed out. Proton Pass and Dashlane also mark a test login form; Dashlane logs an error at startup that Chrome does not, and 1Password and Bitwarden fail some runs. NordPass and KeePassXC have no check of what they do on a page, and autofill with a signed-in account is not verified for any of them. [Extension compatibility](/reference/extension-compatibility#tested-store-extensions) has the result for each.
+The managers on offer are Bitwarden, 1Password, Proton Pass, Dashlane, NordPass and KeePassXC. Each one installs and starts in Lilo's own tests, signed out. Proton Pass and Dashlane also mark a test login form; Dashlane logs an error at startup that Chrome does not, and 1Password and Bitwarden fail some runs. NordPass and KeePassXC add their element to the test login form, as in Chrome; nothing else they do on a page is checked, and autofill with a signed-in account is not verified for any of them. [Extension compatibility](/reference/extension-compatibility#tested-store-extensions) has the result for each.
 
 - **1Password**: to unlock with the 1Password app and Touch ID, add Lilo in the app's **Settings > Browser > Add Browser**. The app connects on its own only to the browsers it already knows.
 - **KeePassXC**: the extension fills from the KeePassXC app on your Mac. That connection was not part of the tests.

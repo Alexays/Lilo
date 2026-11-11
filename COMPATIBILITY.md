@@ -78,7 +78,7 @@ Measured on 2026-10-23 with `make ext-smoke TOP=30` (the 30 most used extensions
 
 On 2026-10-24, past their popups and signed out: ColorZilla's eyedropper samples the page, Wappalyzer lists a local page's technologies, FireShot captures a whole page, Okta and 2FAS Auth leave a login form alone (as in Chrome), and Google Docs Offline and Application Launcher for Drive start their workers without errors. Lilo's own content blocker and Adblock Plus block side by side without breaking the page, a request either one blocks failing once; each keeps its own allowlist, so a site paused in Adblock Plus is still filtered by Lilo's blocker until it is allowed there too.
 
-`top-extensions.json`, measured on 2026-10-24, lists the 1000 most used extensions. `RealExtensionSmokeTests` lists, with their cause, the 36 known not to run cleanly (`knownFailures`) and the 30 that fail some runs (`intermittent`); 26 and 22 of them are among the 500 most used. In 11 of those 66 causes, Chrome fails, or would fail, the same way, or runs the same race; the others name a difference in WebKit, JavaScriptCore or Lilo, something of the test itself, or a cause not yet known. An extension whose store version is newer than Chrome's recording is compared with no reference, so all its errors count until `make chrome-smoke` records it again.
+`top-extensions.json`, measured on 2026-10-24, lists the 1000 most used extensions. `RealExtensionSmokeTests` lists, with their cause, the 36 known not to run cleanly (`knownFailures`) and the 30 that fail some runs (`intermittent`); 26 and 22 of them are among the 500 most used. In 11 of those 66 causes, Chrome fails, or would fail, the same way, or runs the same race; the others name a difference in WebKit, JavaScriptCore or Lilo, something of the test itself, or a cause not yet known. An extension whose store version differs from the one Chrome's recording holds is not compared with Chrome's rendering of its popup and pages until `make chrome-smoke` records it again; the errors Chrome recorded for it still do not count.
 
 | Extension | Status | Differs from Chrome |
 | --- | --- | --- |
@@ -89,13 +89,13 @@ On 2026-10-24, past their popups and signed out: ColorZilla's eyedropper samples
 | Malwarebytes Browser Guard | works with limits | its cosmetic filters hide none of the test page's ads, which Chrome's hide; once its worker was idle, its popup over a blank tab shows less than half of Chrome's; its request blocking was not tested |
 | GoFullPage | works with limits | its welcome page finds no window holding it ("No matching window found"), where Chrome's does |
 | Zotero Connector | not verified | on the test page its content script fails to set up translation, which is how it reads what a page holds: its worker creates its offscreen document twice ("Only a single offscreen document may be created"); saving to Zotero was not tested |
-| Kami | works with limits | its options page renders nothing in 20 seconds, where Chrome's shows its settings |
+| Kami | not verified | its options page renders nothing in 20 seconds, where Chrome's shows its settings; nothing else it does was tested |
 | Momentum, Bonjourr | works | nothing measured (new tab override) |
 | NordPass | works | nothing measured: it marks or decorates the login form |
 | Dashlane | works with limits | it decorates the login form as in Chrome, but logs an error at startup: while its settings are not yet populated, its device info falls back to a command it does not have (`getCommonAppSetting: a is not a function`); in Chrome they are by then |
 | Proton Pass | works | nothing measured: it injects its form UI into the login form |
 | Bitwarden | works | signed out, it changes the login form in neither browser; some runs, its badge update meets a tab the test closed meanwhile (`No tab with id`) |
-| KeePassXC-Browser | works | its desktop app, reached over native messaging, was not tested |
+| KeePassXC-Browser | works | it adds its element to the login form, as in Chrome; its desktop app, reached over native messaging, was not tested |
 | 1Password | works with limits | a tab activated while its core starts (within about 150 ms) logs "WASM is not initialized": Chrome reports a loading new tab with no url, which 1Password skips, where Lilo reports its target, as WebKit's own access checks on that tab need it; the login form gets its menu on focus, as in Chrome; its desktop app (unlock and Touch ID) needs the step in [Password managers](#password-managers) |
 | AdGuard AdBlocker | works with limits | its popup sometimes renders nothing: it can message its worker before the worker has set up the handler, a race Chrome runs too |
 | Keeper, Okta Browser Plugin, Wappalyzer, WhatFont, SelectorGadget, Google Docs Offline, Application Launcher for Drive | works | nothing measured |
