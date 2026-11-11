@@ -424,6 +424,7 @@ Main users:
 
 | File | Private surface |
 |------|-----------------|
+| `Lilo/App/AppDelegate.swift` | `+[WKProcessPool _setLinkedOnOrAfterEverything]`: every SDK-aligned behavior, as in Safari, for the user script sources WebKit then shares between web processes |
 | `Lilo/Engine/WKWebViewTab.swift` | private UI and navigation delegate hooks, `_close` / `_tryClose`, diagnostics through `WebViewPrivateAccessors` |
 | `Lilo/Engine/WebViewPrivateAccessors.swift` | typed wrappers: process pids and state, page suspend/resume, muting, PiP state, scripts run without a user gesture (the chrome bridge), alternate HTML for a failed load (a local folder's listing) |
 | `Lilo/Engine/WKEngineFactory.swift` | shared process pool and prewarming, `WKContextSetCacheModel` through `dlsym`, tracking prevention toggle and statistics clearing, user-script removal, match-pattern `WKUserScript` initializer (Web Store shim), private preferences |
