@@ -47,8 +47,8 @@
   import { getSetting } from "../../stores/settings.svelte";
   import {
     aggregateDownloadProgress,
-    dismissDownloadArrival,
-    getDownloadArrival,
+    dismissDownloadStack,
+    getDownloadStack,
     getDownloads,
     getRecentDownloads,
     getUnseenDownloads,
@@ -110,10 +110,10 @@
     if (isDownloadsVisible() || (menuOpen && showDownloads)) markDownloadsSeen();
   });
 
-  // The menu and the Downloads screen list the file themselves.
-  const arrival = $derived(showDownloads ? getDownloadArrival() : null);
+  // The menu and the Downloads screen list the files themselves.
+  const stack = $derived(showDownloads ? getDownloadStack() : []);
   $effect(() => {
-    if (arrival && (menuOpen || isDownloadsVisible())) dismissDownloadArrival();
+    if (stack.length > 0 && (menuOpen || isDownloadsVisible())) dismissDownloadStack();
   });
 
   // A system screen opened from elsewhere (a shortcut, the menu bar) takes the page: the menu goes with it.
@@ -563,9 +563,9 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="bottom-bar" oncontextmenu={showNativeSidebarContextMenu}>
-  {#if arrival}
-    {#await import("../downloads/DownloadArrivalCard.svelte") then card}
-      <card.default download={arrival} ondismiss={dismissDownloadArrival} />
+  {#if stack.length > 0}
+    {#await import("../downloads/DownloadStack.svelte") then module}
+      <module.default downloads={stack} ondismiss={dismissDownloadStack} />
     {/await}
   {/if}
   <!-- Two slots one button wide frame the tiles: the left one (downloads and archived tabs) stays reserved when empty,

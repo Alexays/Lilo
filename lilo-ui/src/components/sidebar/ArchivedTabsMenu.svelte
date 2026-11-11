@@ -8,7 +8,8 @@
   import { isActiveDownload } from "../../stores/downloads.svelte";
   import { openDownloadsPanel } from "../../stores/panels.svelte";
   import { downloadDrag } from "../downloads/downloadDrag";
-  import { canOpen, fileIconURL, inlineAction, metaLine, type InlineAction } from "../downloads/downloadsPanelModel";
+  import DownloadVisual from "../downloads/DownloadVisual.svelte";
+  import { canOpen, inlineAction, metaLine, type InlineAction } from "../downloads/downloadsPanelModel";
   import { getArchivedFavicons } from "../../stores/archivedTabs.svelte";
   import { openCommandBar } from "../../stores/commandBar.svelte";
   import { tooltip } from "../../lib/tooltip";
@@ -112,7 +113,7 @@
           onclick={() => openDownload(download)}
           use:downloadDrag={{ id: openable ? download.id : null }}
         >
-          <span class="file-tile"><img src={fileIconURL(download)} alt="" width="20" height="20" draggable="false" /></span>
+          <DownloadVisual {download} size={32} />
           <span class="row-text">
             <span class="row-title">{download.filename}</span>
             {#if isActiveDownload(download)}
@@ -258,16 +259,6 @@
     outline: var(--focus-outline);
   }
 
-  .file-tile {
-    flex: none;
-    width: 32px;
-    height: 32px;
-    display: grid;
-    place-items: center;
-    border-radius: var(--radius-md);
-    background: var(--bg-hover);
-  }
-
   .row-text {
     flex: 1;
     min-width: 0;
@@ -332,11 +323,6 @@
   .menu-row:hover,
   .menu-row:focus-visible {
     background: var(--bg-hover);
-  }
-
-  .menu-row.download:hover .file-tile,
-  .menu-row.download:focus-visible .file-tile {
-    background: var(--float-surface);
   }
 
   .row-title {

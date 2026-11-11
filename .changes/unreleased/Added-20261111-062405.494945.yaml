@@ -1,3 +1,3 @@
 kind: Added
-body: 'A file that just finished downloading waits above the downloads button for a few seconds: drag it straight to another app or the Finder, or click to open it. Downloads in the menu and on the Downloads screen drag out from anywhere on their row'
+body: 'A download shows in a stack of cards above the downloads button as it starts, with its progress, then waits there once finished: drag the file straight to another app or the Finder, or click to open it. Rest the pointer on the stack to fan out the last files. Downloads show a preview of the file where Quick Look has one, and drag out from anywhere on their row in the menu and on the Downloads screen'
 time: 2026-11-11T06:24:05.494945267Z

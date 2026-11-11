@@ -68,29 +68,42 @@ test("the library menu lists running downloads above the archived tabs, with the
 	await expect(page.getByRole("region", { name: "Downloads" })).toBeVisible();
 });
 
-test("a finished download waits above the downloads button, ready to drag out or open", async ({ page }) => {
+test("a download joins the stack above the downloads button as it starts, then drags out or opens once finished", async ({ page }) => {
 	await bootChrome(page, initialWorld());
-	const finish = (id: number, filename: string) => page.evaluate(([id, filename]) => window.__lilo!.receive({
-		event: "downloadUpdated", id, url: `https://example.com/${filename}`, filename, state: "complete",
-		bytesReceived: 100, totalBytes: 100, startedAt: 1, endedAt: 2, fileMissing: false, source: "wk",
-	}), [id, filename] as const);
+	const update = (id: number, filename: string, state: "inProgress" | "complete") => page.evaluate(([id, filename, state]) => window.__lilo!.receive({
+		event: "downloadUpdated", id, url: `https://example.com/${filename}`, filename, state,
+		bytesReceived: state === "complete" ? 100 : 40, totalBytes: 100, startedAt: 1, endedAt: 2, fileMissing: false, source: "wk",
+	}), [id, filename, state] as const);
+	const stack = page.getByRole("group", { name: "Downloads" });
 
-	await finish(1, "report.pdf");
-	const card = page.getByRole("group", { name: "Downloads" });
-	const file = card.getByRole("button", { name: /report\.pdf/ });
-	const box = (await file.boundingBox())!;
+	await update(1, "report.pdf", "inProgress");
+	await stack.getByRole("button", { name: "Pause" }).click();
+	expect((await sentCommands(page)).some((command) => command.action === "pauseDownload")).toBe(true);
+	await update(1, "report.pdf", "complete");
+	await expect(stack.getByRole("button", { name: "Pause" })).toHaveCount(0);
+
+	// The older card waits behind the newest and comes out under the pointer.
+	await update(2, "photo.png", "complete");
+	const older = stack.getByRole("button", { name: /report\.pdf/ });
+	const newest = stack.getByRole("button", { name: /photo\.png/ });
+	const top = async (card: typeof older) => (await card.boundingBox())!.y;
+	await page.mouse.move(600, 100);
+	await expect.poll(async () => await top(newest) - await top(older)).toBeLessThan(10);
+	await newest.hover();
+	await expect.poll(async () => await top(newest) - await top(older)).toBeGreaterThan(50);
+
+	const box = (await older.boundingBox())!;
 	await page.mouse.move(box.x + 20, box.y + 20);
 	await page.mouse.down();
 	await page.mouse.move(box.x + 40, box.y + 20);
 	await page.mouse.up();
-	await expect(card).toHaveCount(0);
+	await expect(older).toHaveCount(0);
 	const dragged = await sentCommands(page);
 	expect(dragged.some((command) => command.action === "startDownloadDrag")).toBe(true);
 	expect(dragged.some((command) => command.action === "openDownload")).toBe(false);
 
-	await finish(2, "photo.png");
-	await card.getByRole("button", { name: /photo\.png/ }).click();
-	await expect(card).toHaveCount(0);
+	await newest.click();
+	await expect(stack).toHaveCount(0);
 	expect((await sentCommands(page)).some((command) => command.action === "openDownload")).toBe(true);
 
 	await page.getByRole("button", { name: "Downloads and archived tabs" }).click();
