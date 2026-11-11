@@ -39,7 +39,7 @@ export function cell(text) {
 }
 
 /** Whether a Swift statement ends at `at`: no operator or method call carries the expression on to the next line. */
-export const endsAt = (source, at) => /[ \t]*(?:\/\/[^\n]*)?\n(?![ \t\n]*(?:[.+\-*?&|]|\/[^/*]))/uy.test(source.slice(at));
+export const endsAt = (source, at) => /[ \t]*(?:\/\/[^\n]*)?\n(?!(?:\s|\/\/[^\n]*\n)*(?:[.+\-*?&|]|\/[^/*]))/uy.test(source.slice(at));
 
 const table = (head, rows) =>
   [`| ${head.join(" | ")} |`, `| ${head.map(() => "---").join(" | ")} |`, ...rows.map((row) => `| ${row.join(" | ")} |`)].join("\n");
@@ -299,9 +299,11 @@ export function parseTools(source, file) {
       tools.push({ ...tool, file });
     }
   }
-  for (const match of source.matchAll(/static let (\w+): \[\[String: Any\]\] = (?!\[)(.*)/gu)) {
-    if (match[2] !== COMPOSED || !endsAt(source, match.index + match[0].length)) {
-      fail(file, `${match[1]} is not "${COMPOSED}": the reference reads only the literal tool lists, so anything else added to it would be missed`);
+  // What MCP serves is `definitions`: declared any other way than a typed literal or COMPOSED, it may hold tools the readers miss.
+  for (const match of source.matchAll(/static (?:let|var) (?:(definitions)\b[^=\n{]*|(\w+): \[\[String: Any\]\] *)(=|\{) *(.*)/gu)) {
+    const literal = /: \[\[String: Any\]\] *=/u.test(match[0]) && match[4].startsWith("[");
+    if (!literal && (match[3] !== "=" || match[4] !== COMPOSED || !endsAt(source, match.index + match[0].length))) {
+      fail(file, `${match[1] ?? match[2]} is not a \`[[String: Any]]\` literal nor "${COMPOSED}": the reference reads only those, so anything else added to it would be missed`);
     }
   }
   if (tools.length === 0) fail(file, "no tool definitions found");
@@ -309,12 +311,13 @@ export function parseTools(source, file) {
   return { tools, pickers: pickers ? new SwiftReader(pickers[1], file).value() : [] };
 }
 
-/** Every line-leading `tool("` in the agent sources must be a tool the readers found, or a list or file is missed. */
+/** Every `tool("` call in the agent sources, strings left out, must be a tool the readers found, or a list or file is missed. */
 export function checkToolCount(parsed, sources) {
   const found = parsed.reduce((count, file) => count + file.tools.length, 0);
-  const declared = Object.values(sources).reduce((count, source) => count + (source.match(/^\s*(?:AgentTools\.)?tool\("/gmu)?.length ?? 0), 0);
+  const code = (source) => source.replace(/"""[\s\S]*?"""/gu, '""').replace(/"(?:[^"\\\n]|\\.)*"/gu, '""');
+  const declared = Object.values(sources).reduce((count, source) => count + (code(source).match(/\btool\(\s*""/gu)?.length ?? 0), 0);
   if (declared !== found) {
-    fail("Lilo/Agent", `${declared} tool(…) definitions start a line but the generator read ${found} from ${SOURCES.tools.join(", ")}: a tool list it does not know needs adding to SOURCES.tools (and GROUPS) in docs-site/scripts/generate.mjs, as a \`static let …: [[String: Any]] = [ … ]\` literal`);
+    fail("Lilo/Agent", `${declared} tool(…) definitions are in the code but the generator read ${found} from ${SOURCES.tools.join(", ")}: a tool list it does not know needs adding to SOURCES.tools (and GROUPS) in docs-site/scripts/generate.mjs, as a \`static let …: [[String: Any]] = [ … ]\` literal`);
   }
 }
 
