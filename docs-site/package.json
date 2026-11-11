@@ -6,8 +6,9 @@
     "generate": "node scripts/generate.mjs",
     "dev": "npm run generate && blume dev",
     "build": "npm run generate && blume build && node scripts/headers.mjs",
-    "check": "npm run generate && blume validate --strict",
+    "check": "npm run generate && blume validate --strict && node scripts/translations.mjs",
     "test": "node --test tests/*.test.mjs && blume audit",
+    "translate": "npm run generate && blume translate --claude $DOCS_TRANSLATE_ARGS && node scripts/translations.mjs --prune && npm run generate",
     "preview": "wrangler dev --ip 127.0.0.1",
     "deploy": "npm run build && wrangler deploy",
     "deploy:check": "wrangler deploy --dry-run"
