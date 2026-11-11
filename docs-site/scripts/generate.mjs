@@ -363,34 +363,50 @@ export function mcpPartial(parsed, summaries) {
 /** GitHub's anchor for a heading, which COMPATIBILITY.md's own links use. */
 const githubSlug = (heading) => heading.toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, "").replace(/\s/gu, "-");
 
-/** The level-2 sections of COMPATIBILITY.md whose headings start with `starts`, as page bodies. */
+const FENCE = /(^```[^\n]*\n[\s\S]*?^```[^\n]*$)/mu;
+const outsideFences = (text, edit) => text.split(FENCE).map((part, index) => (index % 2 ? part : edit(part))).join("");
+
+/** The level-2 sections of COMPATIBILITY.md, each assigned to a page by its exact heading, as page bodies. */
 export function compatibilityPartials(markdown, pages) {
   const file = SOURCES.compatibility;
-  const sections = markdown.split(/^(?=## )/mu).slice(1);
+  const sections = [];
+  let fenced = false;
+  for (const line of markdown.split("\n")) {
+    if (line.startsWith("```")) fenced = !fenced;
+    if (!fenced && line.startsWith("## ")) sections.push({ heading: line.slice(3), lines: [] });
+    sections.at(-1)?.lines.push(line);
+  }
   const owner = new Map();
-  const slices = Object.entries(pages).map(([route, starts]) => {
-    const own = starts.map((start) => sections.find((section) => section.startsWith(`## ${start}`)) ?? fail(file, `no "## ${start}" heading`));
+  const slices = Object.entries(pages).map(([route, headings]) => {
+    const own = headings.map((heading) => sections.find((section) => section.heading === heading) ?? fail(file, `no "## ${heading}" heading`)).map((section) => section.lines.join("\n"));
     for (const section of own) {
-      for (const [, heading] of section.matchAll(/^#{2,6} (.+)$/gmu)) {
+      const prose = section.split(FENCE).filter((_, index) => index % 2 === 0).join("\n");
+      for (const [, heading] of prose.matchAll(/^#{2,6} (.+)$/gmu)) {
         if (owner.has(githubSlug(heading))) fail(file, `two headings share the anchor #${githubSlug(heading)}`);
         owner.set(githubSlug(heading), route);
       }
     }
     return [route, own.map((section) => section.replace(/\n---\s*$/u, "").trim()).join("\n\n")];
   });
+  const published = new Set(Object.values(pages).flat());
+  for (const { heading } of sections) {
+    if (!published.has(heading)) fail(file, `the section "## ${heading}" is on no docs page: add it to a page's list in compatibilityPartials' caller in docs-site/scripts/generate.mjs (${Object.keys(pages).join(" or ")})`);
+  }
   return Object.fromEntries(
     slices.map(([route, text]) => [
       route,
-      `${text
-        .replace(/^(#{2,6} .+)$/gmu, (_, heading) => `${heading} [#${githubSlug(heading.replace(/^#+ /u, ""))}]`)
-        .replace(/\]\(([^)\s]+)\)/gu, (link, target) => {
-          if (/^[a-z]+:/u.test(target)) return link;
-          if (target.startsWith("#")) {
-            const page = owner.get(target.slice(1)) ?? fail(file, `link to ${target}, a heading outside the published sections`);
-            return page === route ? link : `](${page}${target})`;
-          }
-          return `](https://github.com/Alexays/Lilo/blob/main/${target})`;
-        })
+      `${outsideFences(text, (prose) =>
+        prose
+          .replace(/^(#{2,6} .+)$/gmu, (_, heading) => `${heading} [#${githubSlug(heading.replace(/^#+ /u, ""))}]`)
+          .replace(/\]\(([^)\s]+)\)/gu, (link, target) => {
+            if (/^[a-z]+:/u.test(target)) return link;
+            if (target.startsWith("#")) {
+              const page = owner.get(target.slice(1)) ?? fail(file, `link to ${target}, a heading outside the published sections`);
+              return page === route ? link : `](${page}${target})`;
+            }
+            return `](https://github.com/Alexays/Lilo/blob/main/${target})`;
+          }),
+      )
         .split(/(```[\s\S]*?```|`[^`]*`)/u)
         .map((part, index) => (index % 2 ? part : part.replace(/[{}<^~]/gu, "\\$&")))
         .join("")}\n`,
@@ -423,7 +439,7 @@ export async function partials() {
   checkToolCount(tools, Object.fromEntries(agent.map((name) => [name, read(`Lilo/Agent/${name}`)])));
   const compatibility = compatibilityPartials(read(SOURCES.compatibility), {
     "/reference/extension-compatibility": ["Chrome extensions"],
-    "/reference/web-compatibility": ["Web APIs", "Known Limitations"],
+    "/reference/web-compatibility": ["Web APIs", "Known Limitations (WebKit/macOS level - no fix possible in Lilo)"],
   });
   return {
     "content/reference/_generated/shortcuts.md": shortcutsPartial(actions, catalogs.en, "en"),
