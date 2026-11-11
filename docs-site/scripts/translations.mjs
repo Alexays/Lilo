@@ -27,7 +27,10 @@ export function readLedger(text) {
   } catch (error) {
     throw new Error(`blume.translations.json does not parse: ${error.message}`);
   }
-  if (Object.keys(ledger?.files ?? {}).length === 0) throw new Error("blume.translations.json tracks no file");
+  const files = ledger?.files;
+  if (!files || typeof files !== "object" || Array.isArray(files) || Object.keys(files).length === 0) {
+    throw new Error("blume.translations.json tracks no file");
+  }
   return ledger;
 }
 
@@ -61,6 +64,18 @@ export function classify(report) {
     }
   }
   return { errors, warnings };
+}
+
+/** What the gate prints for its errors: untracked files first, since make docs-translate would adopt them as they are. */
+export function errorReport(errors) {
+  const untracked = errors.filter((line) => line.endsWith(UNTRACKED_REMEDY));
+  const rest = errors.filter((line) => !line.endsWith(UNTRACKED_REMEDY));
+  const lines = [`French translations out of date:\n  ${[...untracked, ...rest].join("\n  ")}`];
+  if (rest.length > 0) {
+    const translate = "run make docs-translate (needs Claude Code), review the diff and commit it with the change.";
+    lines.push(untracked.length > 0 ? `Resolve the untracked files first, as said above, then ${translate}` : `R${translate.slice(1)}`);
+  }
+  return lines.join("\n");
 }
 
 /** A warning line; in GitHub Actions an annotation, so it shows on the run and not only in the log. */
@@ -107,10 +122,7 @@ function check() {
     console.warn(warningLine(line));
   }
   if (errors.length > 0) {
-    console.error(`French translations out of date:\n  ${errors.join("\n  ")}`);
-    if (errors.some((line) => !line.endsWith(UNTRACKED_REMEDY))) {
-      console.error("Run make docs-translate (needs Claude Code), review the diff and commit it with the change.");
-    }
+    console.error(errorReport(errors));
     process.exit(1);
   }
   console.log(`French translations up to date (${report.translate?.upToDate ?? 0} files)`);
