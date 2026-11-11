@@ -1,9 +1,11 @@
 // The French translation gate, run by `make docs-check`. Wraps `blume translate --check --json`:
-// a missing or stale French page or folder title fails; a translated reference partial fails when
-// missing and only warns when stale, since its sources (COMPATIBILITY.md, the agent tool
-// definitions) are edited by app contributors who may have no agent CLI. The shortcut and
-// settings partials get their French from the app's catalog, so they are never Blume's to translate.
-// `--prune` removes those two from the ledger after `blume translate` adopted them.
+// a missing or stale French page or folder title fails, and so does a French file the ledger does
+// not record (copied by hand, or its entry deleted), which Blume would never call stale. A
+// translated reference partial fails when missing and only warns when stale, since its sources
+// (COMPATIBILITY.md, the agent tool definitions) are edited by app contributors who may have no
+// agent CLI. The shortcut and settings partials get their French from the app's catalog, so they are
+// never Blume's to translate. `--prune` removes those two from the ledger after `blume translate`
+// adopted them.
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -14,6 +16,19 @@ const GENERATED = "content/reference/_generated/";
 export const GENERATOR_OWNED = new Set([`${GENERATED}shortcuts.md`, `${GENERATED}settings.md`]);
 const DRIFT_CODES = new Set(["BLUME_TRANSLATE_MISSING", "BLUME_TRANSLATE_STALE"]);
 
+/** The ledger parsed from its text (undefined when absent). Blume reads a missing or broken ledger as empty and passes. */
+export function readLedger(text) {
+  if (text === undefined) throw new Error("blume.translations.json is missing");
+  let ledger;
+  try {
+    ledger = JSON.parse(text);
+  } catch (error) {
+    throw new Error(`blume.translations.json does not parse: ${error.message}`);
+  }
+  if (Object.keys(ledger?.files ?? {}).length === 0) throw new Error("blume.translations.json tracks no file");
+  return ledger;
+}
+
 /** Splits a `blume translate --check --json` report into the errors that fail the gate and warnings. */
 export function classify(report) {
   const errors = [];
@@ -23,10 +38,11 @@ export function classify(report) {
       errors.push(`${diagnostic.code}: ${diagnostic.message}`);
     }
   }
-  for (const [locale, { missing = [], stale = [] }] of Object.entries(report.translate?.locales ?? {})) {
+  for (const [locale, { missing = [], stale = [], untracked = [] }] of Object.entries(report.translate?.locales ?? {})) {
     for (const [status, sources] of [
       ["missing", missing],
       ["stale", stale],
+      ["untracked", untracked],
     ]) {
       for (const source of sources) {
         if (GENERATOR_OWNED.has(source)) {
@@ -44,7 +60,27 @@ export function classify(report) {
   return { errors, warnings };
 }
 
+/** A warning line; in GitHub Actions an annotation, so it shows on the run and not only in the log. */
+export const warningLine = (line, env = process.env) =>
+  `${env.GITHUB_ACTIONS ? "::warning::" : "warning: "}${line} (refresh it with make docs-translate)`;
+
+function readLedgerFile() {
+  let text;
+  try {
+    text = readFileSync(LEDGER, "utf-8");
+  } catch {
+    text = undefined;
+  }
+  try {
+    return readLedger(text);
+  } catch (error) {
+    console.error(`French translation gate: ${error.message}. Restore it from git: only make docs-translate writes it.`);
+    process.exit(1);
+  }
+}
+
 function check() {
+  readLedgerFile();
   let stdout;
   try {
     stdout = execFileSync("blume", ["translate", "--check", "--json"], {
@@ -65,7 +101,7 @@ function check() {
   }
   const { errors, warnings } = classify(report);
   for (const line of warnings) {
-    console.warn(`warning: ${line} (refresh it with make docs-translate)`);
+    console.warn(warningLine(line));
   }
   if (errors.length > 0) {
     console.error(`French translations out of date:\n  ${errors.join("\n  ")}`);
@@ -76,7 +112,7 @@ function check() {
 }
 
 function prune() {
-  const ledger = JSON.parse(readFileSync(LEDGER, "utf-8"));
+  const ledger = readLedgerFile();
   for (const source of GENERATOR_OWNED) {
     delete ledger.files[source];
   }

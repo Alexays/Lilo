@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { classify } from "../scripts/translations.mjs";
+import { classify, readLedger, warningLine } from "../scripts/translations.mjs";
 
 const report = (fr, diagnostics = []) => ({ diagnostics, translate: { locales: { fr: { missing: [], stale: [], untracked: [], ...fr } } } });
 
@@ -31,8 +31,22 @@ test("the generator-owned partials are never Blume's to translate", () => {
   assert.deepEqual(classify(report({ missing: owned, stale: owned })), { errors: [], warnings: [] });
 });
 
-test("an untracked translation passes", () => {
-  assert.deepEqual(classify(report({ untracked: ["content/guides/a.mdx"] })), { errors: [], warnings: [] });
+test("a French file the ledger does not record fails, except the generator-owned partials", () => {
+  const owned = ["content/reference/_generated/shortcuts.md", "content/reference/_generated/settings.md"];
+  const { errors } = classify(report({ untracked: ["content/guides/a.mdx", ...owned] }));
+  assert.deepEqual(errors, ["content/guides/a.mdx → fr: untracked"]);
+});
+
+test("a ledger that is missing, does not parse or tracks nothing fails", () => {
+  assert.throws(() => readLedger(undefined), /blume\.translations\.json is missing/u);
+  assert.throws(() => readLedger("{"), /blume\.translations\.json does not parse/u);
+  assert.throws(() => readLedger('{"files": {}}'), /blume\.translations\.json tracks no file/u);
+  assert.equal(Object.keys(readLedger('{"files": {"content/index.mdx": {"fr": "0"}}}').files).length, 1);
+});
+
+test("a stale partial warning is a GitHub annotation in Actions", () => {
+  assert.equal(warningLine("x → fr: stale", {}), "warning: x → fr: stale (refresh it with make docs-translate)");
+  assert.equal(warningLine("x → fr: stale", { GITHUB_ACTIONS: "true" }), "::warning::x → fr: stale (refresh it with make docs-translate)");
 });
 
 test("an error diagnostic other than drift fails", () => {
