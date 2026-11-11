@@ -5,12 +5,15 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { inlineScripts, scriptHash } from "../scripts/headers.mjs";
+import { createHash } from "node:crypto";
+
+import { inlineScripts, scriptHash, START_TAG } from "../scripts/headers.mjs";
 
 const dist = fileURLToPath(new URL("../dist", import.meta.url));
 const headers = readFileSync(join(dist, "_headers"), "utf-8");
 const csp = headers.match(/^ {2}Content-Security-Policy: (.+)$/mu)?.[1] ?? "";
 const scriptSrc = csp.split("; ").find((directive) => directive.startsWith("script-src ")) ?? "";
+const PINNED_SCRIPTS = "149921fae96b5259";
 
 test("every inline script of every page is allowed by its hash", () => {
   const html = readdirSync(dist, { recursive: true }).filter((entry) => entry.endsWith(".html"));
@@ -22,22 +25,42 @@ test("every inline script of every page is allowed by its hash", () => {
   }
 });
 
+/** What in a page's tags could run code the CSP's hashes do not cover. */
+function tagProblems(html) {
+  const problems = [];
+  const page = html.replace(/<script\b(?:"[^"]*"|'[^']*'|[^"'>])*>[\s\S]*?<\/script\s*>/giu, (script) => script.match(START_TAG)[0]);
+  for (const [tag] of page.matchAll(START_TAG)) {
+    const attributes = tag.replace(/"[^"]*"|'[^']*'/gu, '""');
+    if (/\son[a-z]+\s*=/iu.test(attributes)) problems.push(`event handler attribute in ${tag.slice(0, 80)}`);
+    if (/\s(?:href|src|action|formaction)\s*=\s*["']?\s*javascript:/iu.test(tag)) problems.push(`javascript: URL in ${tag.slice(0, 80)}`);
+    const src = tag.match(/^<script\b(?:"[^"]*"|'[^']*'|[^"'>])*?\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/iu);
+    if (src && !/^\/(?!\/)/u.test(src[1] ?? src[2] ?? src[3])) problems.push(`script from another origin: ${tag.slice(0, 80)}`);
+  }
+  return problems;
+}
+
 test("pages hold no script the CSP cannot hash, and only the inline scripts it was checked with", () => {
   const html = readdirSync(dist, { recursive: true }).filter((entry) => entry.endsWith(".html"));
-  for (const entry of html) {
-    const page = readFileSync(join(dist, entry), "utf-8").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gu, (script) => script.slice(0, script.indexOf(">") + 1));
-    for (const [tag] of page.matchAll(/<[a-zA-Z][^>]*>/gu)) {
-      const attributes = tag.replace(/"[^"]*"|'[^']*'/gu, '""');
-      assert.doesNotMatch(attributes, /\son[a-z]+\s*=/iu, `${entry}: event handler attribute in ${tag.slice(0, 80)}`);
-      assert.doesNotMatch(tag, /\s(?:href|src|action|formaction)\s*=\s*["']?\s*javascript:/iu, `${entry}: javascript: URL in ${tag.slice(0, 80)}`);
-      const src = tag.match(/^<script\b[^>]*\ssrc="([^"]*)"/u)?.[1];
-      if (src !== undefined) assert.match(src, /^\/(?!\/)/u, `${entry}: script from another origin: ${src}`);
-    }
+  for (const entry of html) assert.deepEqual(tagProblems(readFileSync(join(dist, entry), "utf-8")), [], entry);
+  const hashes = (scriptSrc.match(/'sha256-[^']+'/gu) ?? []).sort();
+  const digest = createHash("sha256").update(hashes.join(" ")).digest("hex").slice(0, 16);
+  // A Blume upgrade that adds or changes an inline script lands here: before updating the digest, read
+  // the new scripts in dist/ and check they run nothing a page or URL can inject into.
+  assert.equal(digest, PINNED_SCRIPTS, `the CSP's ${hashes.length} inline script hashes changed (digest ${digest}): read the scripts in dist/ before updating PINNED_SCRIPTS`);
+});
+
+test("the tag check sees past a > in a quoted attribute, and any case or quoting of a script", () => {
+  for (const html of [
+    '<a title="a > b" onclick="run()">x</a>',
+    '<a title=\'x>\' href="javascript:run()">x</a>',
+    "<script src='//cdn.example.com/a.js'></script>",
+    "<script src=//cdn.example.com/a.js></script>",
+    '<SCRIPT SRC="https://cdn.example.com/a.js"></SCRIPT>',
+    '<script data-x="a>b" src="//cdn.example.com/a.js"></script>',
+  ]) {
+    assert.equal(tagProblems(html).length, 1, html);
   }
-  const hashes = scriptSrc.match(/'sha256-/gu)?.length;
-  // A Blume upgrade that adds or changes an inline script lands here: before raising the number, read
-  // the new script in dist/ and check it runs nothing a page or URL can inject into.
-  assert.equal(hashes, 6, `the CSP now hashes ${hashes} inline scripts, not 6: read the new ones in dist/ before updating this number`);
+  assert.deepEqual(tagProblems('<a title="a > b" href="/x">x</a><script src="/_astro/a.js"></script><script>if (a > b) run()</script>'), []);
 });
 
 test("no later _headers rule detaches or replaces the CSP", () => {
@@ -65,6 +88,7 @@ test("Blume's own header rules stay below ours", () => {
 
 test("the inline script reader skips external scripts and data blocks", () => {
   const html = `<script src="/a.js"></script><script type="application/ld+json">{}</script>
-<script type="application/json">[]</script><script>run()</script><script type="module">go()</script>`;
-  assert.deepEqual(inlineScripts(html), ["run()", "go()"]);
+<script type="application/json">[]</script><script>run()</script><script type="module">go()</script>
+<SCRIPT data-x="a>b">up()</SCRIPT><script src='/b.js'></script>`;
+  assert.deepEqual(inlineScripts(html), ["run()", "go()", "up()"]);
 });
