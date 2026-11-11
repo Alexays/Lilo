@@ -132,9 +132,15 @@ test("the generator names the file and the item it cannot read", () => {
 test("a tool list the reader would only partly read fails", () => {
   const [file, source] = [SOURCES.tools[2], read(SOURCES.tools[2])];
   const end = source.indexOf("\n    ]\n", source.indexOf("static let definitions"));
-  for (const tail of ["] + experimentalDefinitions", "].filter { _ in true }"]) {
+  for (const tail of ["] + experimentalDefinitions", "].filter { _ in true }", "]\n    .filter { _ in true }", "]\n        + experimentalDefinitions", "] // done\n    + experimentalDefinitions"]) {
     const changed = `${source.slice(0, end)}\n    ${tail}\n${source.slice(end + 7)}`;
     assert.throws(() => parseTools(changed, file), /AgentDevTools\.swift:\d+: a tool list must end at its closing \]/u);
+  }
+  const [main, mainSource] = [SOURCES.tools[0], read(SOURCES.tools[0])];
+  const composed = "tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions";
+  assert.ok(mainSource.includes(composed));
+  for (const extra of [`${composed} + [["name": "extra", "description": "x"]]`, `${composed}\n        + [["name": "extra"]]`, `${composed}.filter { _ in true }`]) {
+    assert.throws(() => parseTools(mainSource.replace(composed, extra), main), /AgentTools\.swift: definitions is not "tabAndPageDefinitions \+ .+ would be missed/u);
   }
   const sources = Object.fromEntries(SOURCES.tools.map((name) => [name, read(name)]));
   assert.doesNotThrow(() => checkToolCount(tools, sources));
@@ -145,9 +151,15 @@ test("a tool list the reader would only partly read fails", () => {
 });
 
 test("a shortcut list changed after its literal fails", () => {
-  const filtered = swift.replace(/\n {4}\]\n/u, "\n    ]\n    .filter { $0.id != \"app.quit\" }\n");
-  assert.notEqual(filtered, swift);
-  assert.throws(() => parseShortcuts(filtered), /KeyboardShortcuts\.swift: the actions list is changed after its literal/u);
+  for (const tail of ["\n    .filter { $0.id != \"app.quit\" }\n", "\n        + extraActions\n"]) {
+    const changed = swift.replace(/\n {4}\]\n/u, `\n    ]${tail}`);
+    assert.notEqual(changed, swift);
+    assert.throws(() => parseShortcuts(changed), /KeyboardShortcuts\.swift: the actions list is changed after its literal/u);
+  }
+});
+
+test("a compatibility heading written twice fails instead of dropping the second section", () => {
+  assert.throws(() => compatibilityPartials("## Web APIs\n\nx\n\n## Web APIs\n\ny\n", { "/a": ["Web APIs"] }), /COMPATIBILITY\.md: two "## Web APIs" sections/u);
 });
 
 test("an enum value or parameter name with a pipe stays in its cell", () => {
