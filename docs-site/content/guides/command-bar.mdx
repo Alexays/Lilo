@@ -5,4 +5,76 @@ sidebar:
   order: 3
 ---
 
-This page is being written.
+The command bar is the field over the page where you type an address, find a tab you already have open, reopen a page from your history or run a Lilo command. This page shows how to open it, narrow what it searches, and act on a result without reaching for the mouse.
+
+## Open the command bar
+
+| To | Do this |
+| --- | --- |
+| Open a page in a new tab | Press <kbd>⌘T</kbd> (**File > New Tab**). Lilo opens a blank tab with the command bar over it. |
+| Replace the current page | Press <kbd>⌘L</kbd> (**File > Open Location…**). The command bar opens on the page's address, selected. |
+| Reopen an archived tab | Choose **History > Archived Tabs…**. |
+
+Press <kbd>Esc</kbd> to close it. Closing the command bar of a new tab without picking anything closes that blank tab too, unless it is the only one.
+
+If an extension replaces Chrome's new tab page, <kbd>⌘T</kbd> opens that page instead, except in a Private Space.
+
+## Go to a page or search the web
+
+<Steps>
+  <Step title="Type">
+    Type an address, a site name or a search. When the top result is a page, Lilo completes its address after your text; press <kbd>⇥</kbd> or <kbd>→</kbd> to accept the completion, or <kbd>⌫</kbd> to drop it.
+  </Step>
+  <Step title="Pick a result">
+    Use <kbd>↑</kbd> and <kbd>↓</kbd> to move through the results: open tabs, Spaces, bookmarks, history, actions and search suggestions.
+  </Step>
+  <Step title="Open it">
+    Press <kbd>↩</kbd>. A page already open in a tab switches to that tab instead of opening a second copy.
+  </Step>
+</Steps>
+
+Anything that is not an address goes to your search engine, Google unless you chose another in **Settings > General > Search engine**. Under **Search engines** you can give an engine a keyword: type the keyword, a space and your query to search that engine once. **Search suggestions** sends what you type to the search engine to show its suggestions; turn it off to keep typing local.
+
+## Narrow the search with a prefix
+
+Start with one character to search only one kind of result. The scope shows as a token at the start of the field; <kbd>⌫</kbd> at the start of the field removes it and keeps your text.
+
+| Prefix | Searches |
+| --- | --- |
+| `:` | Lilo's actions |
+| `>` | Terminal: runs a shell command in a new terminal tab |
+| `@` | Open tabs of the current Space |
+| `#` | Bookmarks in this Space |
+| `/` | History |
+| `<` | Archived tabs of the current Space |
+
+The `>` scope appears only while terminal tabs are on (see [Terminal](/guides/terminal)).
+
+## Act on a result
+
+The footer of the command bar names the keys the selected result answers to.
+
+| Keys | What they do | Works on |
+| --- | --- | --- |
+| <kbd>↩</kbd> | Open or switch to it | Every result |
+| <kbd>⌘↩</kbd> | Open it in a new tab | Pages and searches |
+| <kbd>⌥↩</kbd> | Open it in a [split view](/guides/split-view) beside the current tab | Tabs, bookmarks, web pages |
+| <kbd>⇧↩</kbd> | Open it in a [Peek](/guides/peek-and-little-window) over the current tab | Web pages |
+| <kbd>⌘C</kbd> | Copy its link | Anything with an address |
+| <kbd>⌘⌫</kbd> | Close the tab, or remove the page from history | Open tabs, history |
+| <kbd>⌘M</kbd> | Move the tab to another Space | Open tabs |
+
+## Run a command
+
+Type `:` and part of a command's name, such as `: split` or `: reader`, then press <kbd>↩</kbd>. The actions include **New Space**, **Private Space**, **New Split View**, **Separate Split View**, **Clear Unpinned Tabs**, **Reopen Closed Tab**, **Pin or Unpin Tab**, **Duplicate Tab**, **Reader View**, **Translate Page**, **Capture Full Page**, **Copy Page URL**, **Show History**, **Show Downloads** and **Settings**. Each row shows its keyboard shortcut when it has one.
+
+Without a prefix, a command name of two words or more, such as `new tab`, runs the command; a single word such as `reload` runs it only after `:`.
+
+## What it shows before you type
+
+An empty command bar lists your open tabs, this Space's bookmarks, the sites you visit most, your recent history and a few quick actions.
+
+## Limits
+
+- Tab and bookmark results come from the current Space only. To reach another Space, type its name and choose **Switch to** it.
+- A locked folder's tabs never appear by name. When one matches, the command bar shows a single **Results in** row for the folder, which offers to unlock it. See [Lock a folder](/guides/tabs-and-folders#lock-a-folder).
