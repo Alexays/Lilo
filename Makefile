@@ -757,7 +757,7 @@ docs-translate: $(DOCS_DEPS)
 
 ## Ask an agent the questions in docs-site/evals.yaml and grade its answers (Claude Code; costs model time)
 docs-eval: $(DOCS_DEPS)
-	@cd docs-site && npx blume eval --agent claude
+	@npm --prefix docs-site run generate && cd docs-site && npx blume eval --agent claude
 
 ## Update the docs' dependencies and lockfile after changing package.json
 docs-lock:
