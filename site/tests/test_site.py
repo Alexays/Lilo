@@ -161,6 +161,9 @@ class SiteTests(unittest.TestCase):
         index = (DIST / "llms.txt").read_text()
         full = (DIST / "llms-full.txt").read_text()
         self.assertIn("https://getlilo.app/llms-full.txt", index)
+        docs = index.split("\n## Docs\n")[1].split("\n## ")[0]
+        self.assertIn("(https://docs.getlilo.app/llms.txt)", docs)
+        self.assertIn("(https://docs.getlilo.app/llms-full.txt)", docs)
         for page in PAGES:
             if not page.startswith("fr/"):
                 with self.subTest(page=page):
