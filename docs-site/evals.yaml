@@ -78,7 +78,7 @@ questions:
   - id: connect-claude-code
     question: How do I let Claude Code control Lilo?
     expected:
-      - turn on Let agents use Lilo in Settings > Agents, since agent control is off by default
+      - turn on Let agents use Lilo in Settings > Agents; it is off on a new installation unless the setup was answered With my agents or For developing
       - click Connect on the Claude Code tile, or run claude mcp add --scope user lilo -- /Applications/Lilo.app/Contents/MacOS/lilo-mcp
       - allow the agent the first time it connects
     routes: /guides/ai-agents
@@ -86,15 +86,18 @@ questions:
   - id: agent-isolation
     question: Can an AI agent connected to Lilo see my own tabs and sign-ins?
     expected:
-      - agents work in a folder of the Agents Space, with a separate Agents profile that has none of your cookies, sign-ins or history
-      - an agent sees only the tabs it opened, never your other tabs or private Spaces
-      - an agent must ask before using one of your profiles
-    routes: /about/agent-safety
+      - an agent connected from another app works in a folder of an Agents Space, with a separate Agents profile that has none of your cookies, sign-ins or history, and Lilo asks you before it uses one of your profiles
+      - an agent reaches only the tabs of its own folders, never your other tabs or Private Spaces
+      - an agent you talk to in a Lilo conversation is different, browsing in your own Space with that Space's profile and your sign-ins, and running on your Mac with its own file and command tools, which Lilo does not limit
+    routes:
+      - /about/agent-safety
+      - /guides/ai-agents
 
   - id: agent-confirmation
     question: Does Lilo ask me before an agent sends, pays, deletes or publishes something?
     expected:
-      - yes, Ask before sending, paying, deleting or publishing is on by default in Settings > Agents
+      - yes for clicks and Enter on a button, link or form whose label or form address contains one of a fixed list of words such as send, pay, delete or publish, and for requests other than GET or HEAD with your cookies, while Ask before sending, paying, deleting or publishing is on (the default) in Settings > Agents
+      - it is a best-effort check of the wording, not a guarantee; other labels, other languages, icons, custom controls, Enter in a message box and code the agent runs itself are not asked about
     routes:
       - /guides/ai-agents
       - /about/agent-safety

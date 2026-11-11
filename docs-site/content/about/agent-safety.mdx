@@ -10,7 +10,7 @@ Lilo lets the AI agents you already run on your Mac, such as Claude Code, Codex 
 Two kinds of agent use Lilo, and they are not kept apart in the same way:
 
 - **An agent you connect from another app** (Claude Code, Codex, Cursor or any MCP client) works in an Agents Space, in a throwaway profile, and reaches your sign-ins only after you allow one of your profiles. Most of this page is about it.
-- **An agent you talk to in a Lilo conversation** (**File > Ask an Agent**, <kbd>⇧⌘A</kbd>) works in your own Space, with that Space's profile and your sign-ins, from the start. See [Agents in a Lilo conversation](#agents-in-a-lilo-conversation).
+- **An agent you talk to in a Lilo conversation** (**File > Ask an Agent**, <kbd>⇧⌘A</kbd>) is a program Lilo starts on your Mac, with your user account's access to your files and commands. In the browser it works in your own Space, with that Space's profile and your sign-ins, from the start. Lilo's protections cover only what it does in the browser. See [Agents in a Lilo conversation](#agents-in-a-lilo-conversation).
 
 ## Off until you turn it on
 
@@ -32,26 +32,27 @@ An agent you connect from another app does not work in your tabs. It opens its t
 
 - **Your other tabs are out of reach.** An agent sees and acts only on the tabs of its own folders. It never sees your other tabs.
 - **Private Spaces are out of reach.** An agent can never see or act on one of your Private Spaces, nor learn which profile it is based on. An agent can open an `isolated` tab, which lives in a Private Space of the agent's own, apart from yours, and shares no cookies with the agent's other tabs.
-- **Your profiles need your permission.** Some tasks need your sign-ins. An agent can ask to work in one of your profiles; Lilo asks you first, once per agent and profile. Once allowed, its tabs move to that profile's own Agents Space (each profile agents work in gets one) and load with that profile's cookies.
+- **Your profiles need your permission.** Some tasks need your sign-ins. An agent can ask to work in one of your profiles; Lilo asks you first, once per agent and profile. Once allowed, its tabs move to that profile's own Agents Space (each profile agents work in gets one) and load with that profile's cookies. Without asking, any agent you approved can list your profiles' names and see which one you are using, unless you are in a Private Space.
 
-What an agent can read in its own tabs: the page text, the accessibility tree, screenshots, the console, network requests, and the cookies of the sites those tabs show. Its `fetch` tool never returns `Set-Cookie` or `Authorization` headers.
+What an agent can read in its own tabs: the page text, the accessibility tree, screenshots, the console, network requests, and the cookies of the sites those tabs show, `HttpOnly` ones included. Its `fetch` tool never returns `Set-Cookie` or `Authorization` headers.
 
 ## Agents in a Lilo conversation
 
-An agent you start yourself in a Lilo conversation (**File > Ask an Agent**, <kbd>⇧⌘A</kbd>, once **Conversations with your agents** is on) is not kept apart like that. Lilo trusts it because you chose it:
+An agent you start yourself in a Lilo conversation (**File > Ask an Agent**, <kbd>⇧⌘A</kbd>, once **Conversations with your agents** is on) is not kept apart like that. Lilo starts the agent's own program, such as Claude Agent, Codex or Gemini CLI, on your Mac, in the working folder you pick for the conversation (your home folder, or the folder of a terminal or an earlier conversation). Lilo gives it browser tools only: it reads and edits files and runs commands with its own tools, with your user account's access.
 
-- **No connection or profile question.** Lilo does not ask whether the agent may control Lilo, nor whether it may use your profile.
-- **Your Space and your sign-ins.** The conversation is a folder of the Space you started it in, and the pages its agent opens go in that folder. They load with that Space's profile: your cookies and sign-ins are there from the first page. A conversation never starts in a Private Space.
-- **Only its folder.** The agent reaches only the tabs in its conversation's folder, not your other tabs.
-- **The same questions before acting.** The questions below, before a click or Enter that sends, pays or deletes and before a `fetch` that changes something, apply to it as to any agent, and so do their limits.
+- **On your Mac, the agent's own rules.** What it does outside the browser is limited only by the agent's own permission questions, which appear in the conversation as **Allow this action?**, with **Allow** and **Don't Allow**. Which actions it asks about is up to the agent. By default Lilo replaces the agent's own prompt with Lilo's (**System prompt** set to **Lilo** in Settings > Agents, under **Conversations**), for agents that accept a replacement: it tells the agent that it has full access to your machine and to act instead of asking for confirmation when a request is clear, except before an action that cannot be undone and reaches beyond your Mac, such as pushing code, deleting remote data, sending messages or spending money. Choose **Agent's own** to keep the agent's prompt, which asks before more of its actions. Nothing else on this page limits what it does outside the browser.
+- **No connection question.** Lilo does not ask whether the agent may control Lilo.
+- **Your Space and your sign-ins.** The conversation is a folder of the Space you started it in, and the pages its agent opens go in that folder. They load with that Space's profile: your cookies and sign-ins are there from the first page. They stay in that profile: to work in another one, start the conversation in a Space of that profile. A conversation never starts in a Private Space.
+- **In the browser, only its folder.** Its browser tools reach only the tabs in its conversation's folder, and the `isolated` tabs it opens, not your other tabs. Tabs you attach to a message reach it as text: the page you are reading when you press <kbd>⇧⌘A</kbd>, and the tabs you add with `@`, up to 50,000 characters each.
+- **The same questions before acting in the browser.** The questions below, before a click or Enter that sends, pays or deletes and before a `fetch` that changes something, apply to its browser tools as to any agent's, and so do their limits.
 
-Its browser tools work only while **Let agents use Lilo** is on. If you want an agent to browse without your sign-ins, connect it from another app instead, or ask it to open `isolated` tabs.
+Its browser tools work only while **Let agents use Lilo** is on. If you want an agent to browse without your sign-ins, connect it from another app instead. You can also ask it to open `isolated` tabs, but that is a request to the agent: nothing makes it do so.
 
 ## What waits for your answer
 
 Unless you turn off **Ask before sending, paying, deleting or publishing** in Settings > Agents, Lilo stops an agent before:
 
-- **a click or Enter whose wording looks consequential:** a click (`left_click`, `double_click` or `triple_click`) or an Enter on a button, link or form whose label, or the address the form submits to, contains one of a fixed list of words such as "send", "pay", "delete" or "publish". It is a best-effort check on the control's wording, not an understanding of what the click does: see [How Lilo recognizes a consequential action](#how-lilo-recognizes-a-consequential-action) for the list and the gaps. It applies inside frames too; a click in a frame of another origin, which Lilo cannot read, is always asked;
+- **a click or Enter whose wording looks consequential:** a click (`left_click`, `double_click` or `triple_click`) or an Enter on a button, link or form whose label, or the address the form submits to, contains one of a fixed list of words such as "send", "pay", "delete" or "publish". It is a best-effort check on the control's wording, not an understanding of what the click does, and other kinds of control are not checked at all: see [How Lilo recognizes a consequential action](#how-lilo-recognizes-a-consequential-action) for the list and the gaps. It applies inside frames too. A click at a point that lands in a frame of another origin, which Lilo cannot read, is always asked; a click on an element by its reference (`ref`) is checked by its wording inside whichever frame holds it;
 - **a request that carries your cookies:** a `fetch` other than GET or HEAD sent from one of your own profiles.
 
 A prompt opens under the address bar, naming the agent, the action and the site, with three answers: **Allow Once**, **Always Allow on This Site** and **Don't Allow**. The agent waits. If nobody answers within 45 seconds, the action is refused, and the agent is told that it needs you.
@@ -62,8 +63,9 @@ Sites you always allow are listed under **Always allowed** in Settings > Agents,
 
 ### How Lilo recognizes a consequential action
 
-Lilo reads the label of the control the click or Enter would trigger, and the address the form would submit to, and looks for one of these whole words: "send", "pay", "payment", "buy", "purchase", "order", "checkout", "delete", "transfer", "publish", "post", "tweet", "reply", "sign up", "register", "subscribe" or "donate", and their French equivalents. The list is fixed. So:
+Lilo looks for the control the click or Enter would trigger: a button, a link, a submit, button or image input, or an element with the role `button`, `link` or `menuitem`. It reads that control's label and the address the form would submit to, and looks for one of these whole words: "send", "pay", "payment", "buy", "purchase", "order", "checkout", "delete", "transfer", "publish", "post", "tweet", "reply", "sign up", "register", "subscribe" or "donate", and their French equivalents. The list is fixed. So:
 
+- **A click on any other element does not prompt**, whatever its label: a custom control built from a `div` or `span` without one of those roles, a checkbox, a radio button or a select, for example.
 - **A label not on the list does not prompt**, unless the form's address contains a listed word: "Submit", "Confirm", "Remove", "Save", "Share" or "Unsubscribe", for example.
 - **A button labeled in another language than English or French, or with only an icon and no accessible name, does not prompt** either.
 - **Enter in a message box does not prompt.** Lilo checks Enter only on a focused button or link, or in a single-line text field that belongs to a form. Enter in a multi-line field or a rich text editor, which is how most chat and comment boxes send, and Enter in a field outside a form, go through without a question.
@@ -74,13 +76,14 @@ Lilo reads the label of the control the click or Enter would trigger, and the ad
 
 The approval prompt is a safety net for well-behaved agents, not a sandbox.
 
-- **Code the agent runs itself is not checked.** An agent can run JavaScript in its tabs (`javascript_tool`, `run`) and send Web Inspector commands (`devtools_command`). That code can click, submit and send requests without any prompt. In one of your profiles, it acts with your sign-ins.
+- **Code the agent runs itself is not checked.** An agent can run JavaScript in its tabs (`javascript_tool`) and send Web Inspector commands (`devtools_command`). That code can click, submit and send requests without any prompt. In one of your profiles, it acts with your sign-ins. A `run` program is different: it runs in a blank page of its own, with no cookies or sign-ins, and each tool it calls asks as it would alone, but it can call `javascript_tool`.
+- **A conversation agent's own tools are not Lilo's.** Its file and command tools answer only to its own permission questions, as [Agents in a Lilo conversation](#agents-in-a-lilo-conversation) explains.
 - **Requests from the Agents profile are not gated.** A `fetch` from the Agents profile carries none of your cookies, so Lilo does not ask before it.
 - **Cookies can be written without asking.** The `cookies` tool's `set` action writes a cookie for any domain into the profile the agent works in, with no prompt. Reading and deleting reach only the cookies of the sites its tabs show.
 - **Local files can be read without asking.** See [Local files](#local-files).
 - **Approval is per action, not per intent.** Lilo cannot tell whether a task is what you wanted; it can only stop at the steps listed above.
 
-So the safest setup keeps agents in their own Agents profile, and lets one into your profiles only for tasks you trust it with. Remember that a conversation agent starts in your profile.
+So the safest setup keeps agents in their own Agents profile, and lets one into your profiles only for tasks you trust it with. Remember that a conversation agent starts in your profile, and runs on your Mac with tools Lilo does not check.
 
 ### When an action may have gone through
 
@@ -88,7 +91,7 @@ If a tool call fails after it sent something that can change a site (a click, En
 
 ## Local files
 
-An agent can read your files without asking. `navigate` loads any address, `file://` ones included, in the agent's own tab, and the agent can then read what the tab shows with `get_page_text`, `read_page` or a screenshot. That works for any file your account can read, and a folder shows its listing. No prompt guards it: the upload prompt covers only handing a file to a page, not opening one in a tab.
+An agent can read your files without asking. `navigate` loads any address, `file://` ones included, in the agent's own tab, and the agent can then read what the tab shows with `get_page_text`, `read_page` or a screenshot. That works for any file Lilo can read, and a folder shows its listing. No prompt guards it: the upload prompt covers only handing a file to a page, not opening one in a tab.
 
 What a `file://` page can load depends on its kind. An HTML page (`.html`, `.htm`, `.xhtml`) may load images, styles and scripts from any folder of your Mac, as in Chrome, so generated documentation that links to `../style.css` works; WebKit still blocks its `fetch` and `XMLHttpRequest` of other files. Any other file, an SVG or a text file included, can read only itself.
 
