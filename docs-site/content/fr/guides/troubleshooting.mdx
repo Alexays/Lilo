@@ -1,8 +1,98 @@
 ---
-title: "Dépannage"
-description: "Réglez les problèmes courants de pages, d'extensions, d'import et de mises à jour, recueillez des diagnostics en cas de souci et signalez un bug exploitable."
+title: Dépannage
+description: "Corrigez une page qui se comporte mal ou se fige, une extension qui échoue, un import incomplet, une mise à jour manquante ou un agent qui ne se connecte pas."
 sidebar:
   order: 14
 ---
+Trouvez votre symptôme ci-dessous et suivez sa solution. Si aucune ne vous aide, recueillez des diagnostics et [signalez le bug](#report-a-bug).
 
-Cette page est en cours de rédaction.
+## Un site ne fonctionne pas comme dans un autre navigateur [#a-site-does-not-work-as-in-another-browser]
+
+Lilo fonctionne avec WebKit, le moteur de Safari, et les sites le voient comme Safari. Un site qui ne fonctionne pas dans Lilo ne fonctionne souvent pas non plus dans Safari. Essayez ces solutions dans l'ordre :
+
+1. **Rechargez sans le bloqueur de contenu.** Placez le pointeur sur la barre d'adresse et cliquez sur le bouclier à côté de l'adresse (son info-bulle indique **Désactiver le blocage sur ce site**, ou le nombre de traqueurs qu'il a bloqués sur la page), puis rechargez la page (<kbd>⌘R</kbd>). Le site figure alors dans **Réglages > Confidentialité > Sites sans blocage**. Pour réactiver le blocage, cliquez de nouveau sur le bouclier (**Réactiver le blocage sur ce site**).
+2. **Rechargez sans le cache** : <kbd>⇧⌘R</kbd>.
+3. **Vérifiez les autorisations du site.** **Réglages > Confidentialité > Réglages par site** affiche les autorisations, le zoom et les données stockées de chaque site.
+4. **Connexions et widgets intégrés.** Si un site intégré que vous utilisez cesse de fonctionner (une connexion dans un cadre, un widget de commentaires), désactivez **Empêcher le suivi entre sites** dans **Réglages > Confidentialité**, puis réactivez-le lorsque vous avez terminé.
+5. **Vérifiez les limites connues.** Certaines fonctionnalités ne peuvent fonctionner dans aucun navigateur WebKit autre que Safari : Web Push, Apple Pay sur le web et l'extension Mots de passe iCloud, entre autres. [Compatibilité web](/reference/web-compatibility) les répertorie toutes avec leur cause.
+
+Pour en savoir plus sur ces commandes, consultez [Contrôles de confidentialité](/guides/privacy-controls).
+
+## Une page ne répond plus [#a-page-stops-responding]
+
+Lorsqu'une page se fige, Lilo affiche « example.com ne répond plus » par-dessus. Vos autres onglets continuent de fonctionner. Choisissez **Attendre**, **Recharger** ou **Fermer l'onglet**.
+
+Si le même site se fige de nouveau, la carte propose **Recharger sans le bloqueur** : sur certains sites, le bloqueur de contenu provoque le blocage. **Signaler le problème** ouvre un rapport de bug sur la page figée, prérempli avec l'origine de la page (son schéma et son hôte, sans chemin) et les noms de vos extensions activées. L'adresse du formulaire les contient, donc `github.com` les reçoit à l'ouverture de l'onglet ; vous relisez le formulaire avant de l'envoyer.
+
+## Une page ne peut pas être chargée [#a-page-cannot-be-loaded]
+
+La page d'erreur nomme le problème, par exemple **Serveur introuvable**, **Délai de connexion dépassé** ou **Aucune connexion Internet**, et propose **Réessayer**. Lorsque la connexion échoue ou que vous êtes hors ligne, **Afficher la copie enregistrée** affiche la copie de la page présente dans le cache de Lilo, s'il en a une.
+
+**Connexion non sécurisée** signifie que le certificat du site est invalide ou a expiré. Choisissez **Retour**, sauf si vous savez pourquoi le certificat échoue.
+
+## Une extension ne fonctionne pas [#an-extension-does-not-work]
+
+1. Consultez [Compatibilité des extensions](/reference/extension-compatibility) : cette page répertorie ce qui diffère de Chrome et les extensions testées, avec leurs résultats. Les extensions Manifest V2 ne s'exécutent pas.
+2. Ouvrez l'extension dans **Réglages > Extensions** et vérifiez qu'elle est **Activée** et que **Accès aux sites** inclut le site. Dans un espace privé, elle a besoin de **Autoriser dans les espaces privés**.
+3. Si ses détails indiquent « Impossible de charger cette extension. », cliquez sur **Réessayer**. S'ils indiquent « Arrière-plan arrêté : certaines fonctionnalités peuvent ne pas fonctionner. », désactivez-la puis réactivez-la avec **Activée**, ou quittez Lilo et rouvrez-le.
+4. Ouvrez **Aide > Diagnostics** et choisissez **Journal**, puis **Extensions**, pour voir les erreurs de l'extension. **Copier** les copie pour un signalement.
+
+Pour signaler une extension qui échoue, utilisez le formulaire de compatibilité des extensions dans [GitHub Issues](https://github.com/Alexays/Lilo/issues/new/choose).
+
+## Un import depuis un autre navigateur est incomplet [#an-import-from-another-browser-is-incomplete]
+
+Lorsqu'un import se termine, Lilo indique ce qu'il a importé et nomme ce qu'il n'a pas pu importer, avec le navigateur, le type de données et, lorsqu'il la connaît, la cause : par exemple « Certaines données n'ont pas pu être importées : Chrome (Rester connecté : accès au trousseau refusé). Vous pourrez réessayer depuis les Réglages. » Pour relancer l'import, ouvrez **Réglages > Général**, repérez **Importer depuis un autre navigateur** et cliquez sur **Importer...**.
+
+| Ce que vous voyez | Ce qu'il faut faire |
+| --- | --- |
+| **accès au trousseau refusé** | macOS a demandé si Lilo pouvait utiliser la clé du navigateur dans votre trousseau, et la réponse a été non. Vos connexions ne peuvent pas être lues sans elle ; les autres types de données sont importés dans tous les cas. Relancez l'import en ne sélectionnant que **Rester connecté**, et choisissez **Autoriser** lorsque macOS vous le demande. |
+| **fichier en cours d'utilisation, quittez le navigateur et réessayez** | L'autre navigateur garde la main sur ses fichiers. Quittez-le, puis relancez l'import. |
+| **l'accès complet au disque est nécessaire**, ou la carte d'un navigateur indique **Autoriser l'accès** | macOS garde privés les fichiers de ce navigateur, ceux de Safari en particulier. Cliquez sur **Autoriser l'accès** et activez Lilo dans **Confidentialité et sécurité > Accès complet au disque**, comme le montre [Autoriser l'accès à un navigateur](/start/import#allow-access-to-a-browser), puis relancez l'import. |
+| Un type de données nommé sans cause, par exemple **Extensions** | Autre chose a échoué, par exemple une extension que le Chrome Web Store n'a pas voulu fournir. Relancez l'import ; s'il continue d'échouer, [signalez un bug](#report-a-bug). |
+| « C'est fait : rien de nouveau à importer. » | Tout était déjà là. Les favoris et les onglets que l'espace possède déjà, ainsi que les pages que votre historique contient déjà, ne sont pas ajoutés deux fois. |
+| « Aucun autre navigateur sur ce Mac. » | Lilo ne répertorie un navigateur que lorsqu'il est installé sur ce Mac et que Lilo trouve ses données. |
+
+Les mots de passe ne sont jamais importés, depuis aucun navigateur ; [Sources d'import](/reference/import-sources) répertorie ce que chaque navigateur apporte.
+
+## Lilo ne se met pas à jour [#lilo-does-not-update]
+
+Lorsque **Installer les mises à jour automatiquement** est activé (**Réglages > Général**), ce qui est le cas par défaut, Lilo recherche des mises à jour toutes les heures et les télécharge en arrière-plan. Lorsque ce réglage est désactivé, Lilo ne recherche ni ne télécharge rien de lui-même : seuls **Rechercher des mises à jour…** et **Rechercher** recherchent une nouvelle version. Lorsqu'une mise à jour est prête, la barre latérale affiche **Prête à installer** : cliquez sur **Relancer** pour l'installer maintenant, ou sur **Plus tard**.
+
+- Pour vérifier maintenant, choisissez **Lilo > Rechercher des mises à jour…**, ou cliquez sur **Rechercher** dans **Réglages > Général**, à côté de votre version de Lilo.
+- Si Lilo s'exécute depuis l'image disque, il ne peut pas se mettre à jour. Lilo propose de se déplacer dans Applications (« Déplacer Lilo dans Applications ? ») : choisissez **Déplacer dans Applications**. Si le déplacement échoue, faites glisser Lilo dans le dossier Applications dans le Finder, puis ouvrez-le depuis cet emplacement.
+- Si **Réglages > Général** indique « Cette version ne se met pas à jour toute seule. », vous utilisez une version qui ne se met pas à jour elle-même, par exemple une version compilée à partir des sources. Installez la version publiée depuis [Installation](/start/install).
+
+## Un agent ne parvient pas à se connecter [#an-agent-cannot-connect]
+
+1. **Activez le contrôle par les agents.** Il est désactivé sur une nouvelle installation, sauf si vous avez répondu **Avec mes agents** ou **Pour développer** lors de la configuration, et il s'agit d'un seul réglage pour tous vos profils. Dans **Réglages > Agents**, activez **Laisser les agents utiliser Lilo**. Tant que vous ne l'avez pas fait, chaque appel d'outil échoue avec `[needs_user] Lilo is not accepting agents: in Lilo, turn on Settings > AI agents > Let agents use Lilo, then reconnect the lilo MCP server.` (la section des Réglages s'appelle **Agents**).
+2. **Reconnectez le serveur.** Après l'avoir activé, redémarrez votre agent ou reconnectez son serveur MCP `lilo` : un agent démarré avant conserve la réponse précédente.
+3. **Répondez à la demande.** La première connexion attend que vous choisissiez **Autoriser** dans Lilo. Si vous avez choisi **Ne pas autoriser**, reconnectez le serveur pour que la question vous soit posée de nouveau.
+4. **Vérifiez l'emplacement de Lilo.** Les agents lancent `/Applications/Lilo.app/Contents/MacOS/lilo-mcp`. Si vous avez déplacé Lilo, Lilo corrige la configuration de Claude Desktop, Cursor et Codex à son prochain lancement. Pour Claude Code, cliquez de nouveau sur **Connecter** dans **Réglages > Agents**.
+5. **Lilo ne répond pas.** Si l'agent signale `Lilo is not responding`, quittez Lilo et rouvrez-le, puis reconnectez-vous.
+
+La configuration complète se trouve dans [Agents IA](/guides/ai-agents).
+
+## Lilo semble lent ou utilise trop de mémoire [#lilo-feels-slow-or-uses-too-much-memory]
+
+- **Aide > Diagnostics** affiche **Démarrage**, la durée du lancement avec l'étape la plus lente mise en évidence, et **Mémoire**, le nombre de pages chargées et en veille. Le bouton **Lancer** applique immédiatement la politique de mise en veille automatique.
+- **Gestionnaire de processus**, dans **Réglages > Avancé** sous **Outils de développement**, affiche la mémoire et le processeur utilisés par chaque onglet et chaque processus.
+- **Aide > Enregistrer une session de performance** enregistre ce que fait Lilo, pendant 10 minutes au maximum, jusqu'à ce que vous le choisissiez de nouveau. L'enregistrement est sauvegardé dans votre dossier Téléchargements, prêt à être joint à un signalement. Rien n'est enregistré en dehors d'une session.
+
+## Signaler un bug [#report-a-bug]
+
+<Steps>
+  <Step title="Cherchez d'abord">
+    Parcourez [GitHub Issues](https://github.com/Alexays/Lilo/issues) à la recherche du même problème. Pour une question plutôt qu'un bug, posez-la dans [GitHub Discussions](https://github.com/Alexays/Lilo/discussions).
+  </Step>
+  <Step title="Copiez les diagnostics">
+    Ouvrez **Aide > Diagnostics** et choisissez **Copier le rapport**. Cette commande copie les mesures de démarrage et les compteurs du cycle de vie des onglets. Pour une extension, copiez aussi son journal depuis **Journal**.
+  </Step>
+  <Step title="Ouvrez le formulaire">
+    Choisissez **Aide > Signaler un problème…**. Lilo ouvre le formulaire de rapport de bug avec vos versions de Lilo, de WebKit et de macOS préremplies.
+  </Step>
+  <Step title="Décrivez-le">
+    Indiquez les étapes qui reproduisent le problème, collez le rapport et envoyez-le. Remplacez les adresses et les noms réels par des adresses et des noms inventés, comme `example.com`.
+  </Step>
+</Steps>
+
+Ne signalez jamais une faille de sécurité en public : suivez la [politique de sécurité](https://github.com/Alexays/Lilo/blob/main/SECURITY.md) pour la signaler en privé.

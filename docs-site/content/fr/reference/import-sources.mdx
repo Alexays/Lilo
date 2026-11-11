@@ -1,8 +1,62 @@
 ---
-title: "Sources d'import"
-description: "Les navigateurs dont Lilo importe les données et ce qui vient de chacun : favoris, onglets, historique, connexions, extensions, jamais les mots de passe."
+title: Sources d'import
+description: "Les navigateurs depuis lesquels Lilo importe et ce qui vient de chacun : favoris, onglets ouverts, historique, connexions, extensions, jamais les mots de passe."
 sidebar:
   order: 4
 ---
+Les navigateurs depuis lesquels Lilo importe, ce qu'il reprend de chacun et ce qu'il laisse de côté. Pour lancer un import, consultez [Importer depuis un autre navigateur](/start/import) ; vous pouvez en démarrer un plus tard depuis Réglages > Général > **Importer depuis un autre navigateur**.
 
-Cette page est en cours de rédaction.
+## Navigateurs et données [#browsers-and-data]
+
+Lilo ne propose un navigateur que si l'application est installée sur votre Mac (une version bêta, dev, canary ou nightly compte) et s'il trouve les données de ce navigateur. Safari est proposé dès que son dossier de données existe.
+
+| Navigateur | Favoris | Onglets ouverts | Historique | Rester connecté | Extensions |
+| --- | --- | --- | --- | --- | --- |
+| Chrome | oui | oui | oui | oui | oui |
+| Arc | oui | oui, depuis la barre latérale | oui | oui | oui |
+| Brave | oui | oui | oui | oui | oui |
+| Edge | oui | oui | oui | oui | oui |
+| Vivaldi | oui | oui | oui | oui | oui |
+| Dia | oui | oui | oui | oui | oui |
+| Comet | oui | oui | oui | oui | oui |
+| Opera | oui | oui | oui | oui | oui |
+| Chromium | oui | oui | oui | oui | oui |
+| Safari | oui | oui | oui | oui | non |
+| Firefox | oui | oui | oui | oui | non |
+| Zen | oui | oui | oui | oui | non |
+
+Tous les navigateurs situés au-dessus de Safari reposent sur Chromium. Chaque profil de navigateur est listé séparément, et vous choisissez les types de données à reprendre de chacun. Le premier profil que vous choisissez va dans le profil et l'espace que vous utilisez ; chaque profil supplémentaire reçoit son propre profil Lilo, nommé d'après le navigateur et le profil, afin que leurs connexions restent séparées.
+
+## Ce que chaque type apporte [#what-each-kind-brings]
+
+**Favoris.** La barre de favoris devient des onglets épinglés de l'espace, et tous les autres favoris vont dans un seul dossier épinglé replié, nommé « Autres favoris (Chrome) » pour Chrome, et de même pour les autres. Les dossiers conservent leur imbrication jusqu'à cinq niveaux ; tout ce qui est plus profond rejoint le cinquième.
+
+**Onglets ouverts.** Les onglets de la dernière session du navigateur arrivent comme onglets de l'espace, et ses onglets épinglés comme onglets épinglés. Les onglets épinglés de Safari ne sont pas importés comme épinglés. Un groupe d'onglets d'un navigateur basé sur Chromium devient un dossier.
+
+- Arc : chaque espace Arc devient un espace Lilo avec ses onglets épinglés et non épinglés, les favoris d'Arc deviennent des favoris, et une vue partagée d'Arc devient une vue partagée.
+- Zen : chaque espace de travail devient un espace Lilo, et ses essentiels deviennent des favoris.
+
+**Historique.** Les 50 000 pages les plus récentes que vous avez consultées, avec leurs titres et leurs nombres de visites.
+
+**Rester connecté.** Les cookies du navigateur, pour que vous restiez connecté à vos sites. Pour un navigateur basé sur Chromium, macOS demande si Lilo peut utiliser la clé du navigateur dans votre trousseau : choisissez **Autoriser**. Les cookies qui ont expiré sont ignorés.
+
+**Extensions.** Lilo liste les extensions du profil qui proviennent du Chrome Web Store, et réinstalle depuis le store celles que vous choisissez. Les extensions épinglées à la barre d'outils du navigateur restent épinglées, dans le même ordre, après celles que Lilo avait déjà.
+
+Depuis les navigateurs basés sur Chromium, Firefox et Zen, les icônes de site de ce que vous importez sont reprises, de sorte que les onglets les affichent avant de se charger ; depuis Safari, elles ne le sont pas. Seules les pages `http` et `https` sont importées, à une exception près : les onglets ouverts d'un navigateur basé sur Chromium apportent aussi les fichiers locaux (`file://`). Relancer un import dans le même espace n'ajoute que ce qui y est nouveau : un favori ou un onglet que cet espace possède déjà n'est pas ajouté deux fois, et une page déjà présente dans l'historique du profil est fusionnée avec lui. Importer dans un autre espace ajoute de nouveau les favoris et les onglets.
+
+## Ce qui n'est jamais importé [#what-is-never-imported]
+
+- Les mots de passe, quel que soit le navigateur. Lilo n'a pas de gestionnaire de mots de passe qui lui soit propre : ajoutez une extension de gestionnaire de mots de passe, comme l'explique [Extensions](/guides/extensions).
+- Les extensions de Safari, Firefox et Zen, et les extensions qui ne proviennent pas du Chrome Web Store.
+- La liste de lecture de Safari.
+- Les pages propres à un navigateur, et les fichiers locaux autres que les onglets ouverts d'un navigateur basé sur Chromium.
+
+## Accès complet au disque [#full-disk-access]
+
+macOS garde certaines données de navigateur derrière sa protection de la confidentialité ; le dossier de Safari est le cas habituel. Lorsque Lilo ne peut pas lire les données d'un navigateur, ce navigateur affiche **Autoriser l'accès** :
+
+1. Cliquez sur **Autoriser l'accès**. Réglages Système s'ouvre sur **Confidentialité et sécurité > Accès complet au disque**, avec un petit panneau à côté.
+2. Activez Lilo dans la liste. Si Lilo n'y figure pas, faites glisser l'icône du panneau dans la liste.
+3. Lilo revient au premier plan et recherche de nouveau vos navigateurs.
+
+Lilo n'a besoin de l'accès complet au disque que pour lire ces fichiers, sur votre Mac. Ce que vous importez reste sur votre Mac, à l'exception des identifiants des extensions que vous avez choisi de réinstaller, qui sont envoyés au Chrome Web Store (`clients2.google.com`) pour les télécharger.

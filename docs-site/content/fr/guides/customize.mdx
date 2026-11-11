@@ -1,8 +1,81 @@
 ---
-title: "Personnaliser Lilo"
-description: "Modifiez l'apparence et la barre latérale de Lilo, choisissez un jeu de raccourcis clavier ou enregistrez les vôtres, et adaptez le navigateur à vos habitudes."
+title: Personnaliser Lilo
+description: >-
+  Modifiez l'apparence et la barre latérale de Lilo, choisissez un jeu de
+  raccourcis clavier ou enregistrez les vôtres, et adaptez le navigateur à vos
+  habitudes.
 sidebar:
   order: 12
 ---
+Ce guide vous montre comment modifier l'apparence de Lilo, l'emplacement de ses onglets et de son adresse, la taille des pages et le rôle de chaque touche. Ouvrez les Réglages avec <kbd>⌘,</kbd> et saisissez du texte dans **Rechercher un réglage** pour accéder directement à n'importe quel réglage. Tous les réglages, accompagnés de leur description, figurent dans la [référence des réglages](/reference/settings), et tous les raccourcis par défaut dans la [référence des raccourcis clavier](/reference/keyboard-shortcuts).
 
-Cette page est en cours de rédaction.
+## Modifier l'apparence [#change-the-appearance]
+
+<Steps>
+  <Step title="Ouvrir les réglages Apparence">
+    Choisissez **Lilo > Réglages…**, puis **Apparence**.
+  </Step>
+  <Step title="Choisir un thème">
+    Sous **Thème**, choisissez **Système**, **Clair** ou **Sombre**. **Système** suit votre Mac.
+  </Step>
+  <Step title="Choisir une icône d'app">
+    Sous **Icône de l'app**, choisissez l'une des icônes pour le Dock. Seule l'icône **Classique** suit les styles d'icône sombre, teinté et transparent de macOS. **Icône de saison**, activée par défaut, passe à une icône festive à l'approche de fêtes comme Halloween.
+  </Step>
+</Steps>
+
+Pour changer la langue de l'interface de Lilo, utilisez **Langue** dans **Réglages > Général**. Les menus et les boîtes de dialogue changent au redémarrage de Lilo.
+
+## Disposer les onglets et la barre d'adresse [#arrange-tabs-and-the-address-bar]
+
+Dans **Réglages > Apparence**, sous **Disposition** :
+
+- **Onglets** place vos onglets, vos espaces et vos favoris à **Gauche**, à **Droite**, en **Haut** ou en **Bas** de la fenêtre. Vous pouvez aussi faire glisser la barre latérale vers un autre bord.
+- **Adresse** affiche l'adresse **Avec les onglets**, **Au-dessus de la page**, ou la garde **Masquée**. Lorsque l'adresse est masquée, utilisez la [barre de commandes](/guides/command-bar) pour saisir une adresse.
+- **Masquer le nom des espaces** affiche chaque espace sous la forme de sa seule icône dans la barre du bas, même lorsqu'il y a assez de place pour son nom.
+
+Pour donner plus de place à la page, choisissez **Présentation > Masquer la barre latérale** (<kbd>⇧⌘S</kbd>) ou **Présentation > Masquer la barre d'outils** (<kbd>⌥⌘T</kbd>).
+
+## Régler la taille des pages et du texte [#size-pages-and-text]
+
+Dans **Réglages > Apparence**, sous **Pages** :
+
+- **Zoom par défaut** définit la taille des pages que vous n'avez pas zoomées vous-même, de 75 % à 150 %. Zoomez sur un seul site avec <kbd>⌘=</kbd> et <kbd>⌘-</kbd>, et appuyez sur <kbd>⌘0</kbd> pour revenir à sa taille réelle. Lilo mémorise le zoom de chaque site.
+- **Taille de police minimale** empêche le texte des pages de s'afficher dans une taille inférieure à celle que vous choisissez, de 9 à 24 points, ou **Aucune**.
+- **Fréquence d'affichage maximale**, activée par défaut, permet aux pages de s'animer et de défiler à la fréquence maximale de votre écran, ce qui consomme davantage de batterie. Les nouveaux onglets suivent le réglage ; les onglets ouverts changent au redémarrage de Lilo.
+
+Le niveau de zoom d'un site est indiqué, et peut être réinitialisé, dans **Réglages > Confidentialité > Réglages par site**.
+
+## Choisir un préréglage de raccourcis [#pick-a-shortcut-preset]
+
+Lilo est fourni avec deux jeux de raccourcis : le sien, et un autre inspiré de ceux d'Arc.
+
+<Steps>
+  <Step title="Ouvrir les raccourcis">
+    Choisissez **Aide > Raccourcis clavier** (<kbd>⌘/</kbd>), ou accédez à **Réglages > Général** et cliquez sur **Raccourcis clavier**.
+  </Step>
+  <Step title="Choisir un préréglage">
+    À côté de **Préréglage**, cliquez sur **Lilo** ou sur **Arc**.
+  </Step>
+</Steps>
+
+Un préréglage remplace tous les raccourcis que vous avez modifiés. Le préréglage **Arc** utilise les touches d'Arc lorsque Lilo propose la même action : par exemple, Commande-S affiche ou masque la barre latérale, Commande-D épingle un onglet et Maj-Commande-J ouvre Téléchargements.
+
+Sur la même page, **Contrôle-Tab parcourt les onglets dans l'ordre** détermine ce que fait <kbd>⌃⇥</kbd> : **Récent** affiche vos derniers onglets, tous espaces confondus, jusqu'à ce que vous relâchiez Contrôle ; **De la barre latérale** suit la barre latérale.
+
+## Réattribuer un raccourci [#rebind-a-shortcut]
+
+<Steps>
+  <Step title="Trouver l'action">
+    Dans **Aide > Raccourcis clavier**, saisissez du texte dans **Rechercher un raccourci**. Vous pouvez rechercher par nom ou par touches. Les actions sont regroupées selon le menu dans lequel elles se trouvent.
+  </Step>
+  <Step title="Enregistrer de nouvelles touches">
+    Cliquez sur le raccourci de l'action, puis appuyez sur les nouvelles touches. Appuyez sur <kbd>Esc</kbd> pour annuler, ou sur Supprimer pour laisser l'action sans raccourci.
+  </Step>
+  <Step title="Résoudre un conflit">
+    Si une autre action utilise déjà ces touches, Lilo la nomme (« … est déjà utilisé par … »). Cliquez sur **Remplacer** pour attribuer les touches à cette action, ou sur **Annuler**.
+  </Step>
+</Steps>
+
+Cliquez sur **Réinitialiser** à côté d'un raccourci modifié pour rétablir sa valeur par défaut, ou sur **Tout réinitialiser** pour rétablir toutes les valeurs par défaut. Plusieurs actions, comme **Afficher le lecteur**, **Traduire la page** et **Image dans l'image**, n'ont pas de raccourci par défaut : attribuez-leur-en un ici.
+
+Les raccourcis que vous définissez pour Lilo dans **Réglages Système > Clavier > Raccourcis clavier > Raccourcis des apps** sont prioritaires. Lilo les lit lorsqu'il construit ses menus, au lancement : après en avoir modifié un à cet endroit, quittez puis rouvrez Lilo pour le voir sur la page des raccourcis.

@@ -1,8 +1,92 @@
 ---
-title: "Onglets de terminal"
-description: "Ouvrez un onglet de terminal à côté de vos pages, configurez son shell et son apparence, et laissez tourner vos longues commandes pendant que vous naviguez."
+title: Onglets terminal
+description: "Ouvrez un onglet terminal à côté de vos pages, examinez les modifications d'un dépôt, réglez thème et police, et gardez le Mac éveillé pendant les commandes."
 sidebar:
   order: 10
 ---
+Un onglet terminal est un shell dans un onglet de votre barre latérale, à côté de vos pages, construit sur la bibliothèque de terminal de Ghostty. Cette page montre comment activer les onglets terminal, en ouvrir un, exécuter des commandes depuis la barre de commandes, examiner les modifications d'un dépôt et configurer le terminal.
 
-Cette page est en cours de rédaction.
+## Activer les onglets terminal [#turn-on-terminal-tabs]
+
+Les onglets terminal ne sont activés que si vous avez répondu **Pour développer** lorsque la configuration a demandé **Comment allez-vous utiliser Lilo ?** (ou si vous n'y avez jamais répondu). Après toute autre réponse, ils sont désactivés, et leurs raccourcis, boutons et menus sont masqués.
+
+1. Ouvrez **Réglages** (<kbd>⌘,</kbd>) et choisissez **Terminal**, sous **Outils**.
+2. Activez **Onglets terminal**. Les autres réglages du terminal apparaissent en dessous.
+
+## Ouvrir un onglet terminal [#open-a-terminal-tab]
+
+- **Fichier > Nouvel onglet terminal** (<kbd>⌃\`</kbd>) ouvre un onglet terminal.
+- **Fichier > Nouveau terminal à côté** (<kbd>⌘D</kbd>) en ouvre un dans un volet partagé à côté de l'onglet actuel, et **Fichier > Nouveau terminal en dessous** (<kbd>⇧⌘D</kbd>) dans un volet en dessous. Voir [Vue partagée](/guides/split-view). Avec le préréglage de raccourcis **Arc**, <kbd>⌘D</kbd> épingle plutôt un onglet et **Nouveau terminal à côté** n'a pas de raccourci.
+
+Le shell est votre shell de connexion. Il démarre dans le dossier de l'onglet au premier plan : le dossier propre à un terminal, le dossier d'un fichier local que vous consultez, ou sinon votre dossier personnel. Le titre de l'onglet suit ce qui s'y exécute : le titre propre à un programme lorsqu'il en définit un, puis la commande en cours, sinon le processus et le dossier.
+
+## Exécuter une commande depuis la barre de commandes [#run-a-command-from-the-command-bar]
+
+<Steps>
+  <Step title="Ouvrez la barre de commandes">
+    Appuyez sur <kbd>⌘T</kbd>. Si une extension remplace la page de nouvel onglet, <kbd>⌘T</kbd> ouvre cette page à la place : appuyez sur <kbd>⌘L</kbd>.
+  </Step>
+  <Step title="Saisissez > et votre commande">
+    Saisissez `>` pour rechercher dans **Terminal**. Lilo suggère des commandes issues de l'historique de votre shell, les plus récentes d'abord, puis les programmes de votre `PATH`.
+  </Step>
+  <Step title="Appuyez sur Retour">
+    La commande s'exécute dans un nouvel onglet terminal.
+  </Step>
+</Steps>
+
+Le même champ de recherche répertorie vos terminaux ouverts et, sous **Fermés récemment**, les terminaux que vous avez fermés. Un terminal rouvert revient avec son écran, son historique et son dernier programme saisi à l'invite. Pour en savoir plus, consultez [Barre de commandes](/guides/command-bar).
+
+## Travailler avec les terminaux [#work-with-terminals]
+
+- **Liens** : un lien web que vous ouvrez depuis un terminal s'affiche dans un Aperçu par-dessus celui-ci. <kbd>Esc</kbd> le ferme, ou conservez-le sous forme d'onglet ou de volet partagé.
+- **Sortie en arrière-plan** : un terminal qui affiche quelque chose pendant que vous êtes ailleurs est marqué comme non lu dans la barre latérale.
+- **Terminaux en attente** : **Fenêtre > Afficher le prochain terminal en attente** (<kbd>⌃⌘J</kbd>) passe au terminal qui attend votre réponse depuis le plus longtemps, puis au suivant à chaque pression.
+- **Longues commandes** : lorsqu'une commande qui a tourné pendant 10 secondes ou plus se termine pendant que vous êtes ailleurs, Lilo envoie une notification, « Commande terminée » ou « Échec de la commande » avec son code de sortie.
+- **Fermeture** : la fermeture d'un terminal qui exécute encore une commande demande d'abord confirmation (« Fermer ce terminal ? »).
+- **Relance** : Lilo enregistre l'écran et l'historique de chaque terminal et les rétablit au lancement suivant. Les terminaux d'un espace privé ne sont jamais écrits sur le disque.
+
+## Examiner les modifications d'un dépôt [#review-a-repositorys-changes]
+
+Lorsque le terminal au premier plan se trouve dans un dépôt git, choisissez **Présentation > Afficher les modifications** (<kbd>⌃⌘G</kbd>). Lilo affiche le diff du dépôt par-dessus le terminal. Appuyez de nouveau sur le raccourci pour le fermer.
+
+- **Non commité** affiche ce qui a changé depuis le dernier commit, fichiers non suivis compris. **Branche** compare votre copie de travail, modifications non validées comprises, avec le point où votre branche a quitté la branche par défaut du dépôt distant (`origin/HEAD`), ou sinon `main` ou `master`.
+- **Unifié** et **Côte à côte** changent la disposition du diff.
+- **Ouvrir en split** conserve le diff sous forme d'onglet Modifications à côté du terminal.
+
+La vue se recharge d'elle-même tant qu'elle est à l'écran, lorsque des fichiers changent. Elle nécessite git sur votre Mac et affiche des diffs allant jusqu'à 256 Mo.
+
+## Configurer le terminal [#set-up-the-terminal]
+
+Ouvrez **Réglages** (<kbd>⌘,</kbd>) et choisissez **Terminal**, sous **Outils**. Toutes les lignes sauf la première ne s'affichent que lorsque **Onglets terminal** est activé.
+
+| Réglage | Ce qu'il fait | Par défaut |
+| --- | --- | --- |
+| **Onglets terminal** | Ouvre des shells sous forme d'onglets à côté de vos pages. Lorsqu'il est désactivé, les raccourcis, boutons et menus du terminal sont masqués ; les terminaux ouverts restent jusqu'à leur fermeture. | Dépend de votre réponse lors de la configuration : activé pour **Pour développer**, désactivé sinon |
+| **Thème** | Les couleurs du terminal. Lilo suit la couleur de chaque espace et y garde chaque couleur lisible. **Importer…** accepte un préréglage de couleurs iTerm2 (`.itermcolors`), un thème de couleurs VS Code (`.json`) ou un fichier de thème Ghostty. | |
+| **Police** | La famille de police et sa taille en points, pour tous les onglets terminal. Les polices à ligatures, comme JetBrains Mono ou Fira Code, les affichent. | Système (SF Mono), 13 pt |
+| **Historique par terminal** | La quantité d'historique de défilement que conserve chaque terminal : 2, 10, 50 ou 200 Mo. 10 Mo représentent environ 100 000 lignes. | 10 Mo |
+| **Prévenir quand une longue commande se termine** | Après 10 secondes, lorsque vous êtes ailleurs. | Activé |
+| **Touche Option** | **Tape des caractères**, ou fait de la touche Option gauche, droite ou des deux la touche Meta, de sorte qu'Option-B et Option-F se déplacent mot par mot dans le shell. | Tape des caractères |
+| **Garder le Mac éveillé pendant les commandes** | **Non**, **Oui** ou **Même capot fermé**. Voir ci-dessous. | Oui |
+
+## Maintenir votre Mac en éveil pendant l'exécution des commandes [#keep-your-mac-awake-while-commands-run]
+
+Lorsque **Garder le Mac éveillé pendant les commandes** est réglé sur **Oui**, votre Mac ne se met pas en veille tant qu'une commande travaille dans un terminal, ni tant qu'un agent travaille par l'intermédiaire de Lilo. Une commande qui vous attend, ou silencieuse depuis 5 minutes, ne compte pas. **Arrêter après** fixe la durée maximale : 2, 4, 8, 12 ou 24 heures, 8 par défaut.
+
+Tant que Lilo maintient le Mac en éveil, un élément de la barre des menus l'indique (« Reste éveillé »). Son menu répertorie ce qui retient le Mac, et **Laisser dormir** rend la veille possible jusqu'au démarrage de la commande suivante.
+
+**Même capot fermé** maintient également le Mac en éveil avec le capot fermé. Il nécessite un assistant système, que macOS vous demande d'autoriser une seule fois :
+
+<Steps>
+  <Step title="Choisissez Même capot fermé">
+    Sous **Capot fermé**, la ligne **Assistant système** affiche son état.
+  </Step>
+  <Step title="Autorisez l'assistant">
+    Si elle indique **À autoriser**, cliquez sur **Ouvrir Réglages Système** et autorisez Lilo dans **Général > Ouverture**.
+  </Step>
+</Steps>
+
+Avec le capot fermé, Lilo règle la luminosité de l'écran sur zéro et coupe le son, puis rétablit les deux lorsque vous l'ouvrez. Deux autres réglages s'appliquent :
+
+- **Arrêter sous ce niveau de batterie** : 10, 15, 20, 30 ou 40 %, 20 % par défaut.
+- **Mettre en pause les autres apps** : les apps du Dock dont un agent n'a pas besoin, autres que celles d'Apple, sont mises en pause tant que le capot est fermé, et reprennent là où elles en étaient lorsqu'il s'ouvre. Ce réglage est activé par défaut ; ajoutez les apps qui doivent continuer à fonctionner sous **Laisser tourner**.
