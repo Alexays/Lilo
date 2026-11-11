@@ -1,9 +1,14 @@
 // Runs the generator on the real sources, and its readers on small snippets that must fail loudly.
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 
 import {
   compatibilityPartials,
+  errorReport,
+  loadSettings,
   mcpPartial,
   parseShortcuts,
   parseTools,
@@ -113,6 +118,17 @@ test("the generator names the file and the item it cannot read", () => {
   assert.throws(() => mcpPartial(tools, missing), /mcp-tools\.json: no summary for the tool "tabs_context_mcp"/u);
   assert.throws(() => mcpPartial(tools, { ...summaries, open_window: "Opens." }), /summary for "open_window", a tool no Swift file defines/u);
   assert.throws(() => compatibilityPartials("## Web APIs\n", { "/x": ["Chrome extensions"] }), /COMPATIBILITY\.md: no "## Chrome extensions" heading/u);
+});
+
+test("a failure tells an app contributor what failed and what to do", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "docs-generate-"));
+  const model = join(dir, "model.ts");
+  writeFileSync(model, "export enum Mode { A }\n");
+  await assert.rejects(loadSettings(model), new RegExp(`${SOURCES.settings}: plain Node cannot load it .+type-only imports, no enum`, "u"));
+  rmSync(dir, { recursive: true });
+  assert.match(errorReport(new Error("x.swift: odd")), /^docs-site\/scripts\/generate\.mjs, .+ failed on x\.swift: odd\n.+make docs-check/u);
+  const { navigate: _, ...renamed } = summaries;
+  assert.throws(() => mcpPartial(tools, renamed), /no summary for the tool "navigate" \(Lilo\/Agent\/AgentTools\.swift\): add one to docs-site\/scripts\/mcp-tools\.json/u);
 });
 
 test("a shortcut title or setting without a catalog string fails", async () => {
