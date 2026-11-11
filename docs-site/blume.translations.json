@@ -1,7 +1,7 @@
 {
   "files": {
     "content/about/agent-safety.mdx": {
-      "fr": "1c1e81d028318f97"
+      "fr": "c792d1070fa94e1c"
     },
     "content/about/energy.mdx": {
       "fr": "3c933668f80caf61"
@@ -10,19 +10,19 @@
       "fr": "ee4ea94a90dc40d6"
     },
     "content/about/privacy.mdx": {
-      "fr": "36a08ce79bd56371"
+      "fr": "7fa5c4d6fb817b90"
     },
     "content/about/why-webkit.mdx": {
-      "fr": "28282a03a475d7ac"
+      "fr": "ba9ca99c0c464a2f"
     },
     "content/guides/ai-agents.mdx": {
-      "fr": "9c6150c70a093914"
+      "fr": "02b4178859e48a80"
     },
     "content/guides/automation.mdx": {
       "fr": "10c6267c3e8cba35"
     },
     "content/guides/command-bar.mdx": {
-      "fr": "a5bf9cab79255774"
+      "fr": "9687b8db3a79858f"
     },
     "content/guides/customize.mdx": {
       "fr": "92b7c461e66ea1a4"
@@ -31,7 +31,7 @@
       "fr": "82f97a56b0b872bd"
     },
     "content/guides/extensions.mdx": {
-      "fr": "74250a4003b5b780"
+      "fr": "25e3ee47e459b11b"
     },
     "content/guides/meta.ts": {
       "fr": "688e6f164d73f4c7"
@@ -52,37 +52,37 @@
       "fr": "a10efb36571014f8"
     },
     "content/guides/tabs-and-folders.mdx": {
-      "fr": "fffc88897deb6b4c"
+      "fr": "a8ec338de0c3461d"
     },
     "content/guides/terminal.mdx": {
       "fr": "1b3f896aaa693398"
     },
     "content/guides/troubleshooting.mdx": {
-      "fr": "67c3c7a0092827d4"
+      "fr": "f9e7fe010161d6eb"
     },
     "content/index.mdx": {
       "fr": "e07f775c43b293b8"
     },
     "content/reference/_generated/extension-compatibility.md": {
-      "fr": "39274a38fba16386"
+      "fr": "fb47e94f6a2de971"
     },
     "content/reference/_generated/mcp-tools.md": {
       "fr": "4d186823126519f5"
     },
     "content/reference/_generated/web-compatibility.md": {
-      "fr": "7a2ea927ed8c93f9"
+      "fr": "32c323b6de558fe6"
     },
     "content/reference/extension-compatibility.mdx": {
       "fr": "9de1777bd8c95ed8"
     },
     "content/reference/import-sources.mdx": {
-      "fr": "ab5a046883b8d9f8"
+      "fr": "d0c3ad7b33f09b87"
     },
     "content/reference/keyboard-shortcuts.mdx": {
       "fr": "58a8ac5973815c04"
     },
     "content/reference/mcp-tools.mdx": {
-      "fr": "85678e1002d1d2a2"
+      "fr": "862648aa7526ac70"
     },
     "content/reference/meta.ts": {
       "fr": "d2e909390ad3975f"
@@ -94,7 +94,7 @@
       "fr": "2dff91aeef55cfdc"
     },
     "content/start/first-five-minutes.mdx": {
-      "fr": "4fa93d1b45bb6abe"
+      "fr": "e13442aeb5d2e4cc"
     },
     "content/start/import.mdx": {
       "fr": "0f4edd5084fafa5b"

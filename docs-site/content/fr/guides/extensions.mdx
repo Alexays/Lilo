@@ -1,6 +1,8 @@
 ---
 title: Extensions
-description: "Installez des extensions du Chrome Web Store, gérez autorisations et accès aux sites, mettez-les à jour et ajoutez votre gestionnaire de mots de passe."
+description: >-
+  Installez des extensions du Chrome Web Store, gérez autorisations et accès aux
+  sites, mettez-les à jour et ajoutez votre gestionnaire de mots de passe.
 sidebar:
   order: 6
 ---
@@ -68,7 +70,7 @@ Lilo n'a pas de gestionnaire de mots de passe qui lui soit propre et n'enregistr
   </Step>
 </Steps>
 
-Les gestionnaires proposés sont Bitwarden, 1Password, Proton Pass, Dashlane, NordPass et KeePassXC. Chacun s'installe, démarre et atteint un formulaire de connexion dans les tests de Lilo, sans compte connecté : le remplissage automatique avec un compte connecté n'est pas vérifié par ces tests.
+Les gestionnaires proposés sont Bitwarden, 1Password, Proton Pass, Dashlane, NordPass et KeePassXC. Chacun s'installe et démarre dans les tests de Lilo, sans compte connecté. Proton Pass et Dashlane marquent également un formulaire de connexion de test ; Dashlane consigne au démarrage une erreur que Chrome ne consigne pas, et 1Password et Bitwarden échouent lors de certaines exécutions. Pour NordPass et KeePassXC, rien ne vérifie ce qu'ils font sur une page, et le remplissage automatique avec un compte connecté n'est vérifié pour aucun d'entre eux. [Compatibilité des extensions](/reference/extension-compatibility#tested-store-extensions) donne le résultat pour chacun.
 
 - **1Password** : pour déverrouiller avec l'app 1Password et Touch ID, ajoutez Lilo dans **Réglages > Navigateur > Ajouter un navigateur** de l'app. L'app ne se connecte d'elle-même qu'aux navigateurs qu'elle connaît déjà.
 - **KeePassXC** : l'extension effectue le remplissage à partir de l'app KeePassXC sur votre Mac. Cette connexion ne faisait pas partie des tests.
@@ -82,7 +84,7 @@ Lilo exécute les extensions Manifest V3 sur l'environnement d'exécution d'exte
 - `webRequest` peut observer les requêtes, mais pas les bloquer. Les bloqueurs de publicités comme uBlock Origin Lite, AdGuard et Adblock Plus bloquent bien les publicités dans les tests de Lilo.
 - Une extension qui modifie le moteur de recherche ou la page d'accueil n'a aucun effet sur eux.
 - Une extension ne s'exécute dans les espaces privés qu'une fois que vous l'y avez autorisée (**Autoriser dans les espaces privés**).
-- Le Chrome Web Store voit Lilo comme Chrome, si bien que son bouton d'installation fonctionne. Les sites web voient Lilo comme Safari, et les extensions lisent une identité Chrome. Google ne cautionne pas Lilo et pourrait modifier le store de sorte que les installations ou les mises à jour depuis Lilo cessent de fonctionner.
+- Le Chrome Web Store voit Lilo comme Chrome, si bien que son bouton d'installation fonctionne. Les sites web voient Lilo comme Safari. Les extensions lisent une identité Chrome, et les serveurs que contacte le worker, le popup ou le panneau d'une extension voient l'agent utilisateur de Chrome. Google ne cautionne pas Lilo et pourrait modifier le store de sorte que les installations ou les mises à jour depuis Lilo cessent de fonctionner.
 
 [Compatibilité des extensions](/reference/extension-compatibility) liste toutes les différences d'API, les extensions testées avec leurs résultats, et les détails de la messagerie native.
 
