@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting"
-description: "Fix a page that misbehaves or freezes, an extension that fails, an update that does not arrive or an agent that cannot connect, then report a bug."
+description: "Fix a page that misbehaves or freezes, an extension that fails, an incomplete import, a missing update or an agent that cannot connect."
 sidebar:
   order: 14
 ---
@@ -11,7 +11,7 @@ Find your symptom below and follow its fix. If none helps, collect diagnostics a
 
 Lilo runs on WebKit, the engine of Safari, and sites see it as Safari. A site that breaks in Lilo often breaks in Safari too. Try these in order:
 
-1. **Reload without the content blocker.** Click the shield in the address bar (**Disable blocking on this site**), then reload the page (<kbd>⌘R</kbd>). The site is then listed in **Settings > Privacy > Sites without blocking**. To turn blocking back on, click the shield again (**Re-enable blocking on this site**).
+1. **Reload without the content blocker.** Point at the address bar and click the shield beside the address (its tooltip reads **Disable blocking on this site**, or the number of trackers it blocked on the page), then reload the page (<kbd>⌘R</kbd>). The site is then listed in **Settings > Privacy > Sites without blocking**. To turn blocking back on, click the shield again (**Re-enable blocking on this site**).
 2. **Reload without the cache**: <kbd>⇧⌘R</kbd>.
 3. **Check the site's permissions.** **Settings > Privacy > Settings by site** shows the permissions, zoom and stored data of each site.
 4. **Embedded sign-ins and widgets.** If an embedded site you use stops working (a sign-in in a frame, a comment widget), turn off **Prevent cross-site tracking** in **Settings > Privacy**, then turn it back on when you are done.
@@ -23,7 +23,7 @@ More about these controls in [Privacy controls](/guides/privacy-controls).
 
 When a page freezes, Lilo shows "example.com isn't responding" over it. Your other tabs keep working. Choose **Wait**, **Reload** or **Close Tab**.
 
-If the same site freezes again, the card offers **Reload Without Blocker**: on some sites the content blocker causes the freeze. **Report a problem** opens a bug report about the frozen page, with only its site's address in it.
+If the same site freezes again, the card offers **Reload Without Blocker**: on some sites the content blocker causes the freeze. **Report a problem** opens a bug report about the frozen page, filled in with the page's origin (its scheme and host, no path) and the names of your enabled extensions. The form's address carries them, so `github.com` receives them when the tab opens; you review the form before you submit it.
 
 ## A page cannot be loaded
 
@@ -34,15 +34,30 @@ The error page names the problem, such as **Server Not Found**, **Connection Tim
 ## An extension does not work
 
 1. Check [Extension compatibility](/reference/extension-compatibility): it lists what differs from Chrome and the extensions tested, with their results. Manifest V2 extensions do not run.
-2. Open the extension in **Settings > Extensions** and check that it is **Enabled** and that **Site access** includes the site. On a private Space, it needs **Allow in private Spaces**.
+2. Open the extension in **Settings > Extensions** and check that it is **Enabled** and that **Site access** includes the site. In a Private Space, it needs **Allow in private Spaces**.
 3. If its details read "Couldn't load this extension.", click **Retry**. If they read "Background stopped: some features may not work.", turn it off and on again with **Enabled**, or quit and reopen Lilo.
 4. Open **Help > Diagnostics** and choose **Log**, then **Extensions**, to see the extension's errors. **Copy** copies them for a report.
 
 To report an extension that fails, use the extension compatibility form in [GitHub Issues](https://github.com/Alexays/Lilo/issues/new/choose).
 
+## An import from another browser is incomplete
+
+When an import ends, Lilo says what it brought and names what it could not, with the browser, the kind of data and, when it knows it, the cause: for example "Some data could not be imported: Chrome (Stay signed in: Keychain access was denied). You can retry later from Settings." To run the import again, open **Settings > General**, find **Import from another browser** and click **Import...**.
+
+| What you see | What to do |
+| --- | --- |
+| **Keychain access was denied** | macOS asked whether Lilo may use the browser's key in your keychain, and the answer was no. Your sign-ins cannot be read without it; the other kinds of data import either way. Run the import again with only **Stay signed in** selected, and choose **Allow** when macOS asks. |
+| **the file is in use, quit the browser and retry** | The other browser holds its files. Quit it, then run the import again. |
+| **Full Disk Access is needed**, or a browser's card reads **Allow access** | macOS keeps that browser's files private, Safari's in particular. Click **Allow access** and turn Lilo on in **Privacy & Security > Full Disk Access**, as [Allow access to a browser](/start/import#allow-access-to-a-browser) shows, then import again. |
+| A kind of data named with no cause, such as **Extensions** | Something else failed, such as an extension the Chrome Web Store would not deliver. Run the import again; if it keeps failing, [report a bug](#report-a-bug). |
+| "Done: nothing new to import." | Everything was already there. Bookmarks and tabs the Space already has, and pages your history already holds, are not added twice. |
+| "No other browser found on this Mac." | Lilo lists a browser only when it is installed on this Mac and Lilo finds its data. |
+
+Passwords are never imported, from any browser; [Import sources](/reference/import-sources) lists what each browser brings.
+
 ## Lilo does not update
 
-Lilo checks for updates on its own every hour and, with **Install updates automatically** on (**Settings > General**), downloads them in the background. When an update is ready, the sidebar shows **Ready to install**: click **Restart** to install it now, or **Later**.
+With **Install updates automatically** on (**Settings > General**), the default, Lilo checks for updates every hour and downloads them in the background. Turned off, Lilo neither checks nor downloads on its own: only **Check for Updates…** and **Check Now** look for a new version. When an update is ready, the sidebar shows **Ready to install**: click **Restart** to install it now, or **Later**.
 
 - To check now, choose **Lilo > Check for Updates…**, or click **Check Now** in **Settings > General**, next to your Lilo version.
 - If Lilo runs from the disk image, it cannot update itself. Lilo offers to move itself to Applications ("Move Lilo to Applications?"): choose **Move to Applications**. If the move fails, drag Lilo to the Applications folder in the Finder, then open it from there.
@@ -50,7 +65,7 @@ Lilo checks for updates on its own every hour and, with **Install updates automa
 
 ## An agent cannot connect
 
-1. **Turn on agent control.** It is off in a new profile. In **Settings > Agents**, turn on **Let agents use Lilo**. Until you do, every tool call fails with `[needs_user] Lilo is not accepting agents: in Lilo, turn on Settings > AI agents > Let agents use Lilo, then reconnect the lilo MCP server.` (the Settings section is named **Agents**).
+1. **Turn on agent control.** It is off on a new installation unless you answered **With my agents** or **For developing** in the setup, and it is one setting for all your profiles. In **Settings > Agents**, turn on **Let agents use Lilo**. Until you do, every tool call fails with `[needs_user] Lilo is not accepting agents: in Lilo, turn on Settings > AI agents > Let agents use Lilo, then reconnect the lilo MCP server.` (the Settings section is named **Agents**).
 2. **Reconnect the server.** After turning it on, restart your agent or reconnect its `lilo` MCP server: an agent started before keeps the earlier answer.
 3. **Answer the prompt.** The first connection waits for you to choose **Allow** in Lilo. If you chose **Don't Allow**, reconnect the server to be asked again.
 4. **Check where Lilo is.** Agents start `/Applications/Lilo.app/Contents/MacOS/lilo-mcp`. If you moved Lilo, Lilo fixes the configuration of Claude Desktop, Cursor and Codex at its next launch. For Claude Code, click **Connect** again in **Settings > Agents**.
