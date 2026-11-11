@@ -5,4 +5,159 @@ sidebar:
   order: 7
 ---
 
-This page is being written.
+This guide shows you how to block ads and trackers, let a site through, hide an element on a page, decide what a site may use, browse in a Private Space and clear what Lilo keeps. Every setting named here sits in **Settings > Privacy**. Open Settings with <kbd>⌘,</kbd>. The full list of settings is in the [settings reference](/reference/settings), and [Privacy at Lilo](/about/privacy) lists every request Lilo makes on its own.
+
+## Block ads and trackers
+
+Blocking is on from the first launch. You don't need to install an extension.
+
+<Steps>
+  <Step title="Open the content blocking settings">
+    Choose **Lilo > Settings…**, then **Privacy**. The **Content blocking** group lists what is blocked.
+  </Step>
+  <Step title="Pick the categories">
+    **Block ads and trackers** turns the blocker on or off. Under it, choose what else to block:
+
+    - **Trackers**: tracking scripts and pixels. On by default.
+    - **Cookie notices**: refused where possible, then hidden. On by default.
+    - **Dangerous sites**: known scam and malware sites. On by default.
+    - **Pop-ups and social widgets**: off by default, because it may break some sites.
+    - **Regional ad lists**: lists for the languages your Mac is set to. On by default.
+  </Step>
+  <Step title="Reload the page">
+    A change applies from the next page load.
+  </Step>
+</Steps>
+
+The blocker uses public filter lists: EasyList and EasyPrivacy from `easylist.to`, uBlock Origin's lists from `ublockorigin.github.io`, and, for the regional lists, lists from `easylist-downloads.adblockplus.org` and `raw.githubusercontent.com`. Lilo checks for new versions every four hours at most, in the background, and not on a Low Data Mode network. Until the lists first arrive, a small list built into Lilo does the blocking. **Filter lists** shows how many lists are in use and when they were last updated. Click **Update Now** to fetch them at once.
+
+The blocker always lets bot-defense and captcha services load (such as hCaptcha and Cloudflare Turnstile). Sites use them to tell people from bots, and if they were blocked, those sites would show you a captcha on every visit.
+
+:::note
+Turning **Block ads and trackers** off stops the blocking at the next page load. Lilo stops downloading the filter lists at the next launch.
+:::
+
+## Allow a site that breaks
+
+If a site doesn't work with blocking on, turn blocking off for that site only.
+
+<Steps>
+  <Step title="Find the shield in the address bar">
+    Point at the address bar. A shield button appears beside the address. It shows how many trackers were blocked on the page.
+  </Step>
+  <Step title="Turn blocking off">
+    Click the shield. Its tooltip reads **Disable blocking on this site**, and the shield gets a slash.
+  </Step>
+  <Step title="Reload the page">
+    The site now loads every request its pages make.
+  </Step>
+</Steps>
+
+Click the shield again (**Re-enable blocking on this site**) to block on that site again. The sites you let through are listed under **Settings > Privacy > Sites without blocking**, where **Block again** removes a site from the list.
+
+To let one service through on every site, for example a sign-in or image service a site depends on, add its domain to **Requests never blocked**. Separate domains with commas. Subdomains are included.
+
+## Hide an element on a page
+
+You can hide a banner, a sidebar or anything else the filter lists missed. This uses the content blocker, so **Block ads and trackers** must be on.
+
+<Steps>
+  <Step title="Start the picker">
+    Choose **View > Hide Element…**, or right-click the element and choose **Hide Element…**. A hint reads "Click an element to hide it on this site. Press Esc to cancel."
+  </Step>
+  <Step title="Click the element">
+    Move the pointer until the highlight covers what you want gone, then click. The element disappears at once.
+  </Step>
+</Steps>
+
+Lilo hides it on every page of that site, with or without `www.`. Press <kbd>Esc</kbd> to stop without hiding anything.
+
+To bring hidden elements back on the site you're on, open the site's controls (see the next section) and click **Show again** in the **Hidden elements** row. The page reloads. To remove one element at a time, go to **Settings > Privacy > Settings by site**, choose the site, and click **Remove** next to the element.
+
+## Manage what a site may use
+
+When a site asks for your camera, microphone, location or notifications, Lilo asks you in the address bar: "example.com wants to use your camera". Click **Allow** or **Don't Allow**. Lilo remembers your answer for that site. Press <kbd>Esc</kbd> to dismiss the request without answering: the site may ask again later.
+
+To change a decision for the site you're on:
+
+<Steps>
+  <Step title="Open the site's controls">
+    Rest the pointer on the address, or move the keyboard focus to it. The site's card opens with its connection, what the blocker did, the page's memory use, and a **Site controls** section.
+  </Step>
+  <Step title="Change a permission">
+    Each permission the site has used or that you decided shows a menu: **Ask**, **Allow** or **Block**. Pop-up windows offer **Block** or **Allow**.
+  </Step>
+  <Step title="See everything for the site">
+    Click **All permissions** to open Settings filtered to that site.
+  </Step>
+</Steps>
+
+**Settings > Privacy > Settings by site** lists every site with a decided permission, a zoom level, hidden elements or stored data. Choose a site to **Revoke** a permission, **Reset** its zoom, or **Clear** its stored data.
+
+To stop sites from asking at all, set **Notifications**, **Camera and microphone** or **Location** under **Site permissions** from **Ask** to **Never ask**. Requests of that kind are then refused without a prompt, except from sites you already allowed.
+
+When a page tries to open a pop-up window without your click, Lilo blocks it and shows a button in the address bar. Click it, then **Always Allow** to let that site open pop-ups (the page has to try again), or **Keep Blocking**.
+
+## Browse privately
+
+A Private Space is a Space whose browsing Lilo forgets when it closes.
+
+<Steps>
+  <Step title="Open a Private Space">
+    Choose **File > New Private Space**, or press <kbd>⇧⌘N</kbd>. To open one link privately, right-click it and choose **Open Link in New Private Space**.
+  </Step>
+  <Step title="Browse">
+    The Private Space has its own tabs and its own website data. If a Private Space is already open, Lilo switches to it and opens a new tab there.
+  </Step>
+  <Step title="Close it">
+    Close its last tab, or delete the Space. Quitting Lilo also ends it.
+  </Step>
+</Steps>
+
+What a Private Space keeps, and for how long:
+
+- **Cookies, site storage and cache** live only in memory and are discarded when the Space closes.
+- **History**: none. Visits in a Private Space are never recorded, and macOS Screen Time doesn't receive them.
+- **Site permissions** you answer are kept in memory for the Space's life only. A site you blocked in your profile stays blocked there.
+- **Downloads**: the files you download stay in your downloads folder, but the Downloads list forgets them when the Space closes.
+- **Tabs and terminals** are not saved for the next launch.
+- **AI agents** never see or act on a Private Space.
+
+Bookmarked tabs can't be moved into a Private Space, since they would be lost when it closes.
+
+## Turn on other protections
+
+The **Protection** group in **Settings > Privacy** holds the rest:
+
+- **Always use secure connections**: Lilo warns you before opening a page over HTTP. Off by default.
+- **Ask sites not to sell my data**: sends the Global Privacy Control signal. On by default.
+- **Prevent cross-site tracking**: WebKit's tracking prevention, which keeps sites embedded in other sites from reading their own cookies there, so they can't follow you from site to site. On by default. Turn it off only if an embedded site you use stops working.
+- **Lock folders after**: see [Tabs and folders](/guides/tabs-and-folders).
+
+## Clear your browsing data
+
+<Steps>
+  <Step title="Open Clear Browsing Data">
+    Choose **History > Clear Browsing Data…**, press <kbd>⇧⌘⌫</kbd>, or click **Clear Browsing Data...** in **Settings > Privacy**.
+  </Step>
+  <Step title="Choose what to clear">
+    Check what goes: **Browsing history**, **Cookies**, **Cached files**, or **Site data and permissions**. Browsing history and cached files are checked to begin with. **Site data and permissions** takes the cookies and cached files with it.
+  </Step>
+  <Step title="Choose a time range">
+    Pick **Last hour**, **Last 24 hours**, **Last week** or **All time** under **History time range**.
+  </Step>
+  <Step title="Clear">
+    Click **Clear**.
+  </Step>
+</Steps>
+
+What each choice removes:
+
+- **Browsing history**: the pages you visited in that range.
+- **Cookies**: the cookies of that range, which signs you out of websites, and the HTTP passwords Lilo saved in your keychain for this profile.
+- **Cached files**: copies of pages and files kept to load them faster.
+- **Site data and permissions**: all website data (storage, cookies, cache) and saved HTTP passwords. Site permissions are removed only with **All time**, because Lilo doesn't record when they were given.
+
+The clear applies to the profile of the window you're in. The window shows how much that profile stores. To clear one site's history only, see [Downloads, history and bookmarks](/guides/downloads-history-bookmarks#search-and-clear-your-history).
+
+To start every launch fresh, turn on **Clear site data on quit** under **Browsing data**. When Lilo quits, it removes the cookies, storage and cache of every profile. History is kept.
