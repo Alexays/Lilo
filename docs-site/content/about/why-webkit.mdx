@@ -1,8 +1,58 @@
 ---
 title: "Why WebKit"
-description: "Why Lilo is built on the WebKit engine that ships with macOS instead of Chromium, what that means for speed and battery, and how Lilo gives back to WebKit."
+description: "Why Lilo runs on the WebKit engine that ships with macOS instead of Chromium, what that costs in compatibility, and how its optional WebKit fork stays safe."
 sidebar:
   order: 1
 ---
 
-This page is being written.
+Lilo is a Mac browser built on WebKit, the engine Safari uses, rather than on Chromium. This page explains why, what you give up for it, and how Lilo's own build of WebKit works when it runs. Read it to decide whether the trade fits the sites and extensions you rely on.
+
+## The engine already in your Mac
+
+macOS ships WebKit as a system framework. Lilo uses that copy: the same engine Safari runs, updated by the same macOS updates. Lilo itself is a native Swift and AppKit app, with its sidebar and settings written in Svelte, around that engine. Two things follow from it.
+
+- **Security fixes arrive with macOS.** When Apple fixes a WebKit vulnerability, the macOS or Safari update that carries the fix also fixes Lilo. Lilo does not have to ship its own engine release to catch up.
+- **Energy use close to Safari's.** In a measured run in October 2026, with the same tabs on the same Mac, Lilo drew about as much power as Safari. With an animated page and four busy background tabs, Chrome drew about three times Lilo's power and Firefox about ten times. The numbers, the machine and the method are on [Energy use](/about/energy).
+
+## What WebKit costs
+
+Choosing WebKit is a trade. Some things work differently from Chrome, and a few cannot work at all.
+
+- **Chrome extensions run on WebKit's extension runtime.** Lilo installs Manifest V3 extensions from the Chrome Web Store and fills many of the gaps itself, but some Chrome APIs are missing or behave differently. Blocking `webRequest` and Manifest V2 extensions are not available. [Extension compatibility](/reference/extension-compatibility) lists every difference.
+- **Some web features are missing or limited.** WebKit outside Safari has no Web Push, no Apple Pay on the web and no Widevine or PlayReady DRM (FairPlay works, so streaming services that support Safari play). Passkey autofill in username fields may be unavailable. [Web compatibility](/reference/web-compatibility) lists each limit and whether Lilo can do anything about it.
+- **Sites see Safari.** Web pages get WebKit's Safari user agent, so a site serves its Safari version. Only the Chrome Web Store, and the extension downloads and update checks Lilo makes there, see a Chrome identity, so that its install button works. Google does not endorse this and could change the store so that installs from Lilo stop working.
+- **Some Apple features stay with Safari.** The iCloud Passwords extension cannot reach its helper app from Lilo, and Apple Pay needs entitlements Apple grants only to Safari.
+
+If a site you need works only in Chrome, Lilo cannot change that by changing a setting. Try your daily sites before you switch.
+
+## Fixing WebKit instead of working around it
+
+When a page is slow or broken because of the engine, Lilo's approach is to fix WebKit itself. Each fix has a WebKit bug and an upstream pull request, so Safari and every Mac app that shows the web benefit once it lands. The current patches, with their bugs and pull requests, are listed in [`docs/WEBKIT_FORK.md`](https://github.com/Alexays/Lilo/blob/main/docs/WEBKIT_FORK.md#patches).
+
+## The optional WebKit fork
+
+A fix sent upstream takes months to reach macOS. To bring such fixes earlier, a Lilo release can embed its own build of WebKit: WebKit's `main` branch plus Lilo's short list of patches. It runs on Apple silicon only.
+
+The fork is an early delivery of fixes, never a requirement. Every Lilo feature works on the WebKit of macOS, and no feature may depend on something only the fork has, because the fork can switch off at any launch.
+
+### Why the fork never makes you less safe
+
+Apple ships WebKit security fixes in macOS updates before their source is public, so a WebKit built from public source can lag the system. Running it then would undo a fix you already have. Lilo prevents that:
+
+1. When the fork is packaged, a script walks Apple's security advisories for the macOS it is built for and checks that every WebKit bug they list has a commit in the fork. The newest fully covered Safari version is written into the app.
+2. At every launch, before anything else, Lilo compares the installed Safari, which follows the system's WebKit, with that version.
+3. The fork runs only on the same macOS major version and with a Safari that is the same or older. A newer Safari, a Background Security Improvement (a version such as "27.0.1 (a)"), a missing Safari or an Intel Mac all run the WebKit of macOS.
+
+Every doubt resolves to the WebKit of macOS: an advisory the script cannot read stops the packaging, and a bug it cannot find stops the coverage there. So after you install a macOS update with WebKit fixes, Lilo runs the system's WebKit, fixes included, until a release with a rebuilt fork ships.
+
+### Seeing which engine runs
+
+Settings shows the engine next to the Lilo version. When the fork runs, it reads "WebKit *version*, Lilo fork"; otherwise it shows the WebKit of macOS. The About panel and the bug report form that Help > Report an Issue… opens show the same.
+
+The fork has costs too: about 300 MB more in the app (75 MB compressed), and roughly 130 ms added to the first page of a cold launch, because its frameworks are not in the system's shared cache. A release built without a pinned fork runs on the WebKit of macOS alone.
+
+## Learn more
+
+- [`docs/WEBKIT_FORK.md`](https://github.com/Alexays/Lilo/blob/main/docs/WEBKIT_FORK.md): how the fork is built, checked and embedded.
+- [Extension compatibility](/reference/extension-compatibility) and [Web compatibility](/reference/web-compatibility): what differs from Chrome today.
+- [Energy use](/about/energy): what the engine choice means for power.
