@@ -27,7 +27,7 @@ jobs:
         with:
           fetch-depth: 0
       # Documentation, release notes and the website alone skip the builds, which then count as passed:
-      # release-tooling, never skipped, checks the website. COMPATIBILITY.md is a test input; a range git cannot
+      # release-tooling, never skipped, checks the websites. COMPATIBILITY.md is a test input; a range git cannot
       # read (a force-push) runs everything.
       - id: diff
         env:
@@ -36,23 +36,26 @@ jobs:
           code=true
           if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
             files=$(git diff --name-only "$BASE" "$GITHUB_SHA")
-            printf '%s\n' "$files" | grep -qvE '^(docs/|\.changes/|site/)|\.md$' \
+            printf '%s\n' "$files" | grep -qvE '^(docs/|docs-site/|\.changes/|site/)|\.md$' \
               || printf '%s\n' "$files" | grep -qx COMPATIBILITY.md || code=false
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
 
   release-tooling:
-    name: Release tooling and website
+    name: Release tooling and websites
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: 'site/.nvmrc'
           cache: 'npm'
-          cache-dependency-path: site/package-lock.json
-      - run: make release-status release-test release-media-test perf-summary-test site-check site-test site-deploy-check
+          cache-dependency-path: |
+            site/package-lock.json
+            docs-site/package-lock.json
+      # The documentation generators read the app's sources, so a Swift or UI change that breaks one fails here.
+      - run: make release-status release-test release-media-test perf-summary-test site-check site-test site-deploy-check docs-check docs-test docs-deploy-check
 
   ui:
     name: UI (lint, test, build)
