@@ -31,12 +31,19 @@ make docs-deploy-check  # Check the Cloudflare deployment without publishing
 
 The site is the `lilo-docs` Worker on `docs.getlilo.app` (`wrangler.toml`), deployed by Cloudflare Workers Builds with root directory `docs-site` and deploy command `npm run deploy`.
 
-**docs.getlilo.app must answer before any link to it is published on getlilo.app.** The marketing site's Documentation and Privacy links, its feature pages and its `llms.txt` point there; merged first, they would send every visitor and crawler to a dead host. The first deployment, in order:
+**docs.getlilo.app must answer before any link to it is published on getlilo.app.** The marketing site's Documentation and Privacy links, its feature pages and its `llms.txt` point there; merged first, they would send every visitor and crawler to a dead host. So those links live on a branch of their own, and the first deployment goes in this order:
 
-1. In Cloudflare, create the `lilo-docs` Worker through **Workers Builds**, connected to this repository: root directory `docs-site`, build command `npm ci --ignore-scripts` (as `make` installs), deploy command `npm run deploy`, production branch `main`, a `NODE_VERSION` build variable of 22.23.4 or later if the image's default Node is older, and the watch paths below.
-2. Let the first build deploy, then check that the custom domain `docs.getlilo.app` from `wrangler.toml` is attached to the Worker (**Settings > Domains & Routes**); attach it there if the deploy did not.
-3. Check that these answer 200, in English and French (`/fr` before the path): `/`, `/start/install`, `/start/import`, `/guides/ai-agents`, `/reference/mcp-tools`, `/reference/extension-compatibility`, `/about/privacy`, `/llms.txt` and `/llms-full.txt`, plus `/sitemap.xml`. Those are the pages getlilo.app links to.
-4. Only then merge the marketing-site changes that link to docs.getlilo.app.
+1. Merge the docs site (this folder, with no marketing-site link to it) into `main`.
+2. In Cloudflare, create the `lilo-docs` Worker through **Workers Builds**, connected to this repository, from `main`:
+   - root directory `docs-site`;
+   - build command `npm ci --ignore-scripts`, as `make` installs, with the build variable `SKIP_DEPENDENCY_INSTALL` set to `1`, so Workers Builds does not install the dependencies itself first;
+   - deploy command `npm run deploy` (the default, `npx wrangler deploy`, would deploy without building);
+   - production branch `main`, and the watch paths below.
+
+   The build image's default Node.js (24.22.1 when this was written) is newer than the 22.23.4 the site needs; a `NODE_VERSION` build variable overrides it. Cloudflare's documentation does not say in which folder its own dependency install runs, nor the syntax of its watch paths: check them in the dashboard.
+3. Let the first build deploy, then check that the custom domain `docs.getlilo.app` from `wrangler.toml` is attached to the Worker (**Settings > Domains & Routes**); attach it there if the deploy did not.
+4. Check that these answer 200: `/`, `/start/install`, `/start/import`, `/guides/ai-agents`, `/reference/mcp-tools`, `/reference/extension-compatibility` and `/about/privacy`, and their French pages `/fr`, `/fr/start/install`, `/fr/start/import`, `/fr/guides/ai-agents`, `/fr/reference/mcp-tools`, `/fr/reference/extension-compatibility` and `/fr/about/privacy`, plus `/llms.txt`, `/llms-full.txt` and `/sitemap.xml`, which exist in English only. Those are the pages getlilo.app links to.
+5. Only then merge the branch with the marketing-site changes that link to docs.getlilo.app.
 
 `make docs-deploy-check` runs the same build and a `wrangler deploy --dry-run` locally; it needs no Cloudflare account. The watch paths are the files the build reads:
 
