@@ -1,7 +1,7 @@
 {
   "files": {
     "content/about/agent-safety.mdx": {
-      "fr": "c792d1070fa94e1c"
+      "fr": "94c015873f0f826d"
     },
     "content/about/energy.mdx": {
       "fr": "3c933668f80caf61"
@@ -10,13 +10,13 @@
       "fr": "ee4ea94a90dc40d6"
     },
     "content/about/privacy.mdx": {
-      "fr": "7fa5c4d6fb817b90"
+      "fr": "1a43a840163ad2ea"
     },
     "content/about/why-webkit.mdx": {
-      "fr": "ba9ca99c0c464a2f"
+      "fr": "5ed1c39063d9c150"
     },
     "content/guides/ai-agents.mdx": {
-      "fr": "02b4178859e48a80"
+      "fr": "efda09f013f1911d"
     },
     "content/guides/automation.mdx": {
       "fr": "10c6267c3e8cba35"
@@ -31,7 +31,7 @@
       "fr": "82f97a56b0b872bd"
     },
     "content/guides/extensions.mdx": {
-      "fr": "25e3ee47e459b11b"
+      "fr": "09b265ab1b139232"
     },
     "content/guides/meta.ts": {
       "fr": "688e6f164d73f4c7"
@@ -64,7 +64,7 @@
       "fr": "e07f775c43b293b8"
     },
     "content/reference/_generated/extension-compatibility.md": {
-      "fr": "fb47e94f6a2de971"
+      "fr": "c60bf8f251f82308"
     },
     "content/reference/_generated/mcp-tools.md": {
       "fr": "4d186823126519f5"
