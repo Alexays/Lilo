@@ -1,8 +1,54 @@
 ---
 title: "Split view"
-description: "Show several pages side by side in one window with split view, rearrange and resize the panes, and turn a split back into separate tabs."
+description: "Show up to four pages side by side in one window with split view, rearrange and resize the panes, and turn a split back into separate tabs."
 sidebar:
   order: 4
 ---
 
-This page is being written.
+Split view shows up to four tabs side by side in one window: a document beside its source, a call beside your notes. This page shows how to open one, arrange it and take it apart.
+
+## Open two pages side by side
+
+<Steps>
+  <Step title="Show the first page">
+    Select the tab you want to keep on screen.
+  </Step>
+  <Step title="Add the second one">
+    Right-click another tab in the sidebar and choose **Open in Split View**. It opens to the right of the current tab.
+  </Step>
+  <Step title="Or start from a blank pane">
+    Choose **Tab > New Split View**. A new tab opens beside the current one with the [command bar](/guides/command-bar) over it, ready for an address.
+  </Step>
+</Steps>
+
+Other ways to make or grow a split:
+
+- **Drag a tab from the sidebar onto the page.** Drop it near an edge of a pane to open it there: **Open on the left**, **Open on the right**, **Open above** or **Open below**.
+- **Drag a tab onto another tab in the sidebar.** The row shows **Split view**; drop to put the two side by side.
+- **From the command bar**, select a tab or a page and press <kbd>⌥↩</kbd>.
+- **From a [Peek](/guides/peek-and-little-window)**, click **Open in Split**.
+- **Drag a link from another app** to the left or right edge of a pane.
+- **With a terminal**: **File > New Terminal Beside** (<kbd>⌘D</kbd>) and **New Terminal Below** (<kbd>⇧⌘D</kbd>) cut the current pane with a new terminal. See [Terminal](/guides/terminal).
+
+Each new pane takes half of the pane it lands on. In the sidebar, the split shows as one row holding its tabs.
+
+## Work in a split
+
+- **Focus a pane** by clicking in it. A thin outline marks the focused pane, and the keyboard, the address and the page menus act on it.
+- **Resize** by dragging the gap between two panes. A pane keeps at least 200 points along the side you drag.
+- **Turn the split** by right-clicking its row in the sidebar and choosing **Arrange Top and Bottom** or **Arrange Side by Side**. This turns the cut that divides the whole split.
+- **Swap or replace a pane**: when the split is full, dragging a tab over a pane offers **Replace**. The tab takes that pane, and the tab it replaces goes back to the list. Two panes of the same split trade places this way.
+- **Undo** a change to the split with **Edit > Undo** (<kbd>⌘Z</kbd>): panes that joined go back to the list, panes that left come back, and the arrangement returns to what it was.
+
+## Close a pane or end the split
+
+- **Close one pane** by closing its tab (<kbd>⌘W</kbd> while it is focused). The pane next to it takes its place. When one pane is left, the split ends.
+- **End the split** with **Tab > Separate Split View**, or right-click the split's row or one of its tabs and choose **Separate Split View**. The tabs stay in the sidebar as separate tabs.
+
+## Limits
+
+- A split holds four panes at most. When it is full, **New Split View** is unavailable and a dropped tab can only replace a pane.
+- Splits do not nest, and a tab joining a split leaves the folder it was in.
+- A favorite keeps its place among the tiles: when you split one, Lilo opens its page in a new tab for the pane.
+- **New Split View** and **Separate Split View** have no default shortcut. Give them one in **Settings > General > Keyboard shortcuts**, or pick the Arc preset there, which binds them to <kbd>⌃⇧=</kbd> and <kbd>⌃⇧-</kbd>. See [Customize Lilo](/guides/customize).
+- Chrome extensions that know Chrome's split view do not recognize Lilo's: the tabs of a split carry no split view id. See [Extension compatibility](/reference/extension-compatibility).
