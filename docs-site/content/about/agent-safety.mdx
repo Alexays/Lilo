@@ -1,8 +1,77 @@
 ---
 title: "Agent safety"
-description: "How Lilo keeps AI agents in check: a Space of their own, approval before sensitive actions, no access to private Spaces, and what agents cannot reach."
+description: "What an AI agent can do in Lilo without asking, what needs your approval, how agents stay apart from your tabs and private Spaces, and the limits."
 sidebar:
   order: 4
 ---
 
-This page is being written.
+Lilo lets the AI agents you already run on your Mac, such as Claude Code, Codex or Cursor, drive a browser through its MCP server. This page explains how Lilo keeps those agents apart from your own browsing, which actions wait for your answer, and what the protections do not cover, so you can decide how much to let an agent do. To connect an agent, see [AI agents](/guides/ai-agents).
+
+## Off until you turn it on
+
+Lilo has no AI of its own and agent control is off by default. Nothing can drive Lilo until you turn on **Let agents use Lilo** in Settings > Agents. Until then, an agent that tries gets an error telling you to turn it on.
+
+Once it is on, agents reach Lilo through `lilo-mcp`, a small MCP server inside the app, over a Unix socket in Lilo's support folder that only your user account can open. Nothing listens on the network.
+
+## Each agent is approved once
+
+The first time an agent connects, Lilo asks you whether to allow it. The approval is tied to the program behind the connection, not to the name the agent announces: its code signature (signing identifier and team) when Apple's certificate chain vouches for it, or its executable path when it is unsigned. Another program cannot borrow an approved agent's name to get in.
+
+Settings > Agents lists the apps you approved under **Apps that can use Lilo**; **Remove** revokes one, along with the profiles you let it into.
+
+This guards against a program pretending to be an agent you approved. It does not protect against malware already running as you: anything running under your account can still read Lilo's data on disk.
+
+## A Space and a profile of their own
+
+Agents do not work in your tabs. Each agent opens its tabs in a folder of the **Agents Space**, which uses a separate "Agents" profile with none of your cookies, sign-ins or history. Lilo wipes that profile when agent control starts and when the last agent working in it leaves, so what one agent left behind never reaches the next. An agent never takes your keyboard or your tabs.
+
+- **Your other tabs are out of reach.** An agent sees and acts only on the tabs it opened. It never sees your other tabs.
+- **Private Spaces are out of reach.** An agent can never see or act on one of your private Spaces, nor learn which profile it is based on.
+- **Your profiles need your permission.** Some tasks need your sign-ins. An agent can ask to work in one of your profiles; Lilo asks you first, once per agent and profile. Once allowed, its tabs move to that profile's Agents Space and load with that profile's cookies.
+
+What an agent can read in its own tabs: the page text, the accessibility tree, screenshots, the console, network requests, and the cookies of the sites those tabs show. Its `fetch` tool never returns `Set-Cookie` or `Authorization` headers.
+
+## What waits for your answer
+
+Unless you turn off **Ask before sending, paying, deleting or publishing** in Settings > Agents, Lilo stops an agent before:
+
+- **a click or Enter on something consequential:** a button or link whose label, or the form it submits, says it sends, pays, buys, orders, deletes, transfers, publishes or signs up. This applies inside frames too; a click in a frame of another origin, which Lilo cannot read, is always asked;
+- **a request that carries your cookies:** a `fetch` other than GET or HEAD sent from one of your own profiles.
+
+A prompt opens under the address bar, naming the agent, the action and the site, with three answers: **Allow Once**, **Always Allow on This Site** and **Don't Allow**. The agent waits. If nobody answers within 45 seconds, the action is refused, and the agent is told that it needs you.
+
+Sites you always allow are listed under **Always allowed** in Settings > Agents, subdomains included, and you can remove them there.
+
+**Files always ask.** Before an agent hands a page one of your files (an upload), Lilo asks every time, whatever the setting above, and offers no "always allow".
+
+### How Lilo recognizes a consequential action
+
+Lilo reads the label of the control the click or Enter would trigger, and the address the form would submit to, and looks for words such as "send", "pay", "buy", "order", "checkout", "delete", "transfer", "publish", "post", "reply", "sign up", "register", "subscribe" or "donate", and their French equivalents. Two consequences follow:
+
+- A button labeled in another language, or with only an icon and no accessible name, does not prompt, unless the address its form submits to contains one of these words.
+- A harmless button whose label contains one of these words prompts anyway.
+
+## What the gate does not cover
+
+The approval prompt is a safety net for well-behaved agents, not a sandbox.
+
+- **Code the agent runs itself is not checked.** An agent can run JavaScript in its tabs (`javascript_tool`, `run`) and send Web Inspector commands (`devtools_command`). That code can click, submit and send requests without any prompt. In one of your profiles, it acts with your sign-ins.
+- **Requests from the Agents profile are not gated.** A `fetch` from the Agents profile carries none of your cookies, so Lilo does not ask before it.
+- **Approval is per action, not per intent.** Lilo cannot tell whether a task is what you wanted; it can only stop at the steps listed above.
+
+So the safest setup keeps agents in their own Agents profile, and lets one into your profiles only for tasks you trust it with.
+
+### When an action may have gone through
+
+If a tool call fails after it sent something that can change a site (a click, Enter, or a `fetch` other than GET, HEAD or OPTIONS), Lilo marks the error as a possible commit. The agent should read the site back before trying again, so it does not, for example, place an order twice.
+
+## Local files
+
+A `file://` page you open may read the folder it sits in only when it is an HTML page (`.html`, `.htm`, `.xhtml`), so the images, styles and scripts beside it load. Any other file, an SVG or a text file included, can read only itself.
+
+## Learn more
+
+- [AI agents](/guides/ai-agents): connect an agent and use Conversations.
+- [MCP tools](/reference/mcp-tools): every tool an agent can call, with its parameters.
+- [Privacy](/about/privacy): what agents and everything else in Lilo send, and where.
+- [`SECURITY.md`](https://github.com/Alexays/Lilo/blob/main/SECURITY.md): how to report a vulnerability, including in agent control.
