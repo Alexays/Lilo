@@ -142,6 +142,13 @@ test("a shortcut list changed after its literal fails", () => {
   assert.throws(() => parseShortcuts(filtered), /KeyboardShortcuts\.swift: the actions list is changed after its literal/u);
 });
 
+test("an enum value or parameter name with a pipe stays in its cell", () => {
+  const file = SOURCES.tools[0];
+  const odd = read(file).replace('"enum": ["interactive", "all"]', '"enum": ["inter|active", "all"]').replace('"filter": [', '"fil|ter": [');
+  const markdown = mcpPartial([parseTools(odd, file), tools[1], tools[2]], summaries);
+  assert.match(markdown, /^\| `fil\\\|ter` \| `string`: `inter\\\|active`, `all` \| no \|/mu);
+});
+
 test("a failure tells an app contributor what failed and what to do", async () => {
   const dir = mkdtempSync(join(tmpdir(), "docs-generate-"));
   const model = join(dir, "model.ts");

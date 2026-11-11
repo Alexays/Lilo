@@ -319,7 +319,7 @@ function parameterRows(properties, required, prefix = "") {
     const path = `${prefix}${name}`;
     const nested = schema.items?.properties ? [schema.items, `${path}[].`] : schema.properties ? [schema, `${path}.`] : null;
     return [
-      [`\`${path}\``, typeText(schema), required.includes(name) ? "yes" : "no", cell(schema.description ?? "")],
+      [cell(`\`${path}\``), cell(typeText(schema)), required.includes(name) ? "yes" : "no", cell(schema.description ?? "")],
       ...(nested ? parameterRows(nested[0].properties, nested[0].required ?? [], nested[1]) : []),
     ];
   });
@@ -353,7 +353,7 @@ export function mcpPartial(parsed, summaries) {
   });
   const closing = tools
     .filter((tool) => pickers.has(tool.name))
-    .map((tool) => [`\`${tool.name}\``, Object.keys(tool.properties).map((name) => `\`${name}\``).join(", ") || "none", cell(summaries[tool.name])]);
+    .map((tool) => [cell(`\`${tool.name}\``), cell(Object.keys(tool.properties).map((name) => `\`${name}\``).join(", ")) || "none", cell(summaries[tool.name])]);
   const pickerSection = closing.length ? `## Browser selection [#browser-selection]\n\n${table(["Tool", "Parameters", "Summary"], closing)}\n` : "";
   return [...sections, pickerSection].filter(Boolean).join("\n");
 }
