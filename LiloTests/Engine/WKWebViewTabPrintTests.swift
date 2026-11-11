@@ -74,6 +74,45 @@ final class WKWebViewTabPrintTests: XCTestCase {
             draw(tab, selector, tab.wkWebView, CGRect(x: 0, y: 0, width: 300, height: 18), nil, nil)
         }
     }
+
+    func testFooterDrawsWhileThePageCountIsUnknown() throws {
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        addTeardownBlock { @MainActor in tab.teardown() }
+        let page = OpenEndedPages(tab: tab)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("print-\(UUID().uuidString).pdf")
+        addTeardownBlock { try? FileManager.default.removeItem(at: url) }
+        let printInfo = try XCTUnwrap(NSPrintInfo.shared.copy() as? NSPrintInfo)
+        printInfo.jobDisposition = .save
+        printInfo.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = url
+        let operation = NSPrintOperation(view: page, printInfo: printInfo)
+        operation.showsPrintPanel = false
+        operation.showsProgressPanel = false
+        operation.run()
+        XCTAssertTrue(page.drewFooter)
+    }
+}
+
+/// Reports an open-ended page range, as WebKit's printing view does before it has laid out the pages, and draws the tab's footer.
+private final class OpenEndedPages: NSView {
+    private let tab: WKWebViewTab
+    private(set) var drewFooter = false
+    init(tab: WKWebViewTab) {
+        self.tab = tab
+        super.init(frame: NSRect(x: 0, y: 0, width: 500, height: 700))
+    }
+    required init?(coder: NSCoder) { nil }
+    override func knowsPageRange(_ range: NSRangePointer) -> Bool {
+        range.pointee = NSRange(location: 1, length: Int.max)
+        return true
+    }
+    override func rectForPage(_ page: Int) -> NSRect { page == 1 ? bounds : .zero }
+    override func drawPageBorder(with borderSize: NSSize) {
+        typealias DrawEdge = @convention(c) (AnyObject, Selector, WKWebView, CGRect, NSString?, NSURL?) -> Void
+        let selector = NSSelectorFromString("_webView:drawFooterInRect:forPageWithTitle:URL:")
+        let draw = unsafeBitCast(tab.method(for: selector), to: DrawEdge.self)
+        draw(tab, selector, tab.wkWebView, CGRect(x: 0, y: 0, width: 500, height: 18), nil, nil)
+        drewFooter = true
+    }
 }
 
 private final class PrintEnd: NSObject, @unchecked Sendable {

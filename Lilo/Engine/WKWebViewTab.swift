@@ -2673,7 +2673,13 @@ extension WKWebViewTab: WKUIDelegate {
     }
     @objc(_webView:drawFooterInRect:forPageWithTitle:URL:)
     nonisolated func webView(_ webView: WKWebView, drawFooterInRect rect: CGRect, forPageWithTitle title: String?, url: URL?) {
-        let pageNumber = MainActor.assumeIsolated { NSPrintOperation.current.map { "\($0.currentPage)/\($0.pageRange.upperBound - 1)" } }
+        let pageNumber = MainActor.assumeIsolated {
+            NSPrintOperation.current.map { operation in
+                // Until WebKit has laid out the pages (the print panel's preview), the range is {1, Int.max}.
+                let (end, unknown) = operation.pageRange.location.addingReportingOverflow(operation.pageRange.length)
+                return unknown ? "\(operation.currentPage)" : "\(operation.currentPage)/\(end - 1)"
+            }
+        }
         Self.drawPrintEdge(in: rect, leading: url?.absoluteString ?? "", trailing: pageNumber)
     }
 
