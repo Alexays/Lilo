@@ -53,10 +53,12 @@ Safari, dont Lilo affiche l'agent utilisateur.
   accorde par identifiant d'app. Sans elle, la vérification `getCanCurrentProcessAccessPasskeysForRelyingParty`
   de WebKit échoue : `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()` vaut false et
   `navigator.credentials.create()` / `.get()` rejettent aussitôt avec `NotAllowedError` (vérifié sur
-  macOS 27). Apple ne l'a pas encore accordée, donc les versions publiées ne la portent pas : aucun WebAuthn n'y
-  fonctionne, clés d'accès comme clés de sécurité USB/NFC. Une requête échoue aussitôt avec `NotAllowedError`,
+  macOS 27). Apple ne l'a pas encore accordée, donc les versions publiées ne la portent pas : le WebAuthn propre à WebKit n'y
+  fonctionne pas, clés d'accès comme clés de sécurité USB/NFC. Une requête que traite WebKit échoue aussitôt avec `NotAllowedError`,
   sans aucune invite, et ressemble à une annulation par l'utilisateur ; un compte dont le seul second facteur est une clé
-  matérielle ne peut pas se connecter. Une fois l'habilitation accordée, les builds de publication la portent par l'intermédiaire d'un profil d'approvisionnement, voir
+  matérielle ne peut pas se connecter. Une extension de gestionnaire de mots de passe qui répond elle-même aux requêtes de clés d'accès, par son crochet sur
+  `navigator.credentials`, ne passe pas par la vérification de WebKit, et Lilo maintient ce crochet en place (`PageWorld`) ;
+  le fonctionnement des clés d'accès d'un gestionnaire donné dans Lilo n'a pas été testé. Une fois l'habilitation accordée, les builds de publication la portent par l'intermédiaire d'un profil d'approvisionnement, voir
   [docs/RELEASING.md](https://github.com/Alexays/Lilo/blob/main/docs/RELEASING.md#browser-passkey-entitlement) ; les builds ad hoc et Debug ne la portent jamais.
 - **Pistes écartées :** une intégration sur mesure de `ASAuthorizationPlatformPublicKeyCredentialProvider` ne ferait
   que dupliquer WebKit. `com.apple.developer.associated-domains` (`webcredentials:`) régit les
@@ -163,7 +165,7 @@ Safari, dont Lilo affiche l'agent utilisateur.
 - **Cause profonde :** la prise en charge de la médiation conditionnelle par WebKit en dehors de Safari. Il n'existe aucun remède côté app.
   Les flux de clés d'accès explicites (non conditionnels) nécessitent eux aussi l'habilitation décrite dans
   [Clés d'accès / WebAuthn](#passkeys--webauthn), que les versions publiées ne portent pas encore : aucune
-  requête WebAuthn n'y fonctionne.
+  requête que traite WebKit n'y fonctionne.
 
 ### Apple Pay sur le web [#apple-pay-on-the-web]
 

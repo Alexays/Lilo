@@ -1,6 +1,9 @@
 ---
 title: Dépannage
-description: "Corrigez une page qui se comporte mal ou se fige, une extension qui échoue, un import incomplet, une mise à jour manquante ou un agent qui ne se connecte pas."
+description: >-
+  Corrigez une page qui se comporte mal ou se fige, une extension qui échoue, un
+  import incomplet, une mise à jour manquante ou un agent qui ne se connecte
+  pas.
 sidebar:
   order: 14
 ---
@@ -22,7 +25,7 @@ Pour en savoir plus sur ces commandes, consultez [Contrôles de confidentialité
 
 Lorsqu'une page se fige, Lilo affiche « example.com ne répond plus » par-dessus. Vos autres onglets continuent de fonctionner. Choisissez **Attendre**, **Recharger** ou **Fermer l'onglet**.
 
-Si le même site se fige de nouveau, la carte propose **Recharger sans le bloqueur** : sur certains sites, le bloqueur de contenu provoque le blocage. **Signaler le problème** ouvre un rapport de bug sur la page figée, prérempli avec l'origine de la page (son schéma et son hôte, sans chemin) et les noms de vos extensions activées. L'adresse du formulaire les contient, donc `github.com` les reçoit à l'ouverture de l'onglet ; vous relisez le formulaire avant de l'envoyer.
+Si le même site se fige de nouveau, la carte propose **Recharger sans le bloqueur** : sur certains sites, le bloqueur de contenu provoque le blocage. **Signaler le problème** ouvre un rapport de bug sur la page figée, prérempli avec un titre nommant l'hôte de la page, l'origine de la page (son schéma et son hôte, sans chemin), les noms de vos extensions activées et les versions de Lilo, de WebKit et de macOS. L'adresse du formulaire les contient, donc `github.com` les reçoit à l'ouverture de l'onglet ; vous relisez le formulaire avant de l'envoyer.
 
 ## Une page ne peut pas être chargée [#a-page-cannot-be-loaded]
 
@@ -49,7 +52,7 @@ Lorsqu'un import se termine, Lilo indique ce qu'il a importé et nomme ce qu'il 
 | **fichier en cours d'utilisation, quittez le navigateur et réessayez** | L'autre navigateur garde la main sur ses fichiers. Quittez-le, puis relancez l'import. |
 | **l'accès complet au disque est nécessaire**, ou la carte d'un navigateur indique **Autoriser l'accès** | macOS garde privés les fichiers de ce navigateur, ceux de Safari en particulier. Cliquez sur **Autoriser l'accès** et activez Lilo dans **Confidentialité et sécurité > Accès complet au disque**, comme le montre [Autoriser l'accès à un navigateur](/start/import#allow-access-to-a-browser), puis relancez l'import. |
 | Un type de données nommé sans cause, par exemple **Extensions** | Autre chose a échoué, par exemple une extension que le Chrome Web Store n'a pas voulu fournir. Relancez l'import ; s'il continue d'échouer, [signalez un bug](#report-a-bug). |
-| « C'est fait : rien de nouveau à importer. » | Tout était déjà là. Les favoris et les onglets que l'espace possède déjà, ainsi que les pages que votre historique contient déjà, ne sont pas ajoutés deux fois. |
+| « C'est fait : rien de nouveau à importer. » | Les types que vous avez choisis n'ont rien apporté : le navigateur n'en contenait aucun, ou ses favoris et ses onglets étaient déjà dans l'espace. Les favoris et les onglets que l'espace possède déjà, ainsi que les visites que votre historique contient déjà, ne sont pas ajoutés deux fois. L'historique, les connexions et les extensions sont comptés dans le résultat chaque fois que vous les importez, donc un nouvel import qui les inclut les répertorie de nouveau même lorsque rien de nouveau n'a été importé. |
 | « Aucun autre navigateur sur ce Mac. » | Lilo ne répertorie un navigateur que lorsqu'il est installé sur ce Mac et que Lilo trouve ses données. |
 
 Les mots de passe ne sont jamais importés, depuis aucun navigateur ; [Sources d'import](/reference/import-sources) répertorie ce que chaque navigateur apporte.

@@ -1,6 +1,8 @@
 ---
 title: Outils MCP
-description: "Les outils que le serveur MCP intégré de Lilo offre aux agents IA, avec leurs paramètres, types et champs requis, générés depuis les définitions de l'app."
+description: >-
+  Les outils que le serveur MCP intégré de Lilo offre aux agents IA, avec leurs
+  paramètres, types et champs requis, générés depuis les définitions de l'app.
 sidebar:
   order: 3
 ---
@@ -9,8 +11,8 @@ Les outils qu'un agent IA peut appeler une fois que vous avez activé **Laisser 
 Ce qui vaut pour chaque outil :
 
 - Les outils dont dispose Claude in Chrome conservent ses noms et ses formes, de sorte qu'un agent écrit pour lui n'a besoin de rien de nouveau. Lilo en ajoute d'autres, tels que les outils d'inspecteur web, de réseau et de profil.
-- Un agent travaille dans son propre dossier, que les descriptions des outils appellent son groupe d'onglets. `tabId` est le numéro que `tabs_context_mcp` et `tabs_create_mcp` donnent pour un onglet de ce dossier, et un agent n'atteint que les onglets de ses dossiers. Un agent connecté depuis une autre app travaille dans un espace Agents, dans le profil Agents jusqu'à ce que vous autorisiez l'un des vôtres ; un agent dans une conversation Lilo travaille dans le dossier de la conversation, dans votre propre espace, avec le profil de cet espace et vos connexions. Aucun agent n'atteint l'un de vos espaces privés.
-- Certaines actions attendent votre approbation, sauf si vous désactivez **Demander avant d'envoyer, payer, supprimer ou publier** : un clic ou un appui sur Entrée sur un contrôle dont le libellé ou l'adresse de formulaire contient l'un des mots d'une liste fixe, tels que « send », « pay », « delete » ou « publish », et une requête autre que GET ou HEAD avec les cookies de l'un de vos profils. La vérification des mots se fait au mieux : les autres libellés, les autres langues, les icônes et la touche Entrée dans une zone de message passent sans question. Quel que soit ce réglage, Lilo demande avant qu'un agent ne remette à une page l'un de vos fichiers. Ouvrir un fichier local avec `navigate` et le lire ne demande rien. [Sécurité des agents](/about/agent-safety) explique ce que les approbations couvrent et ce qu'elles ne couvrent pas.
+- Un agent travaille dans son propre dossier, que les descriptions des outils appellent son groupe d'onglets. `tabId` est le numéro que `tabs_context_mcp` et `tabs_create_mcp` donnent pour un onglet de ce dossier, et un agent n'atteint que les onglets de ses dossiers. Un agent connecté depuis une autre app travaille dans un espace Agents, dans le profil Agents jusqu'à ce que vous autorisiez l'un des vôtres ; un agent dans une conversation Lilo travaille dans le dossier de la conversation, dans votre propre espace, avec le profil de cet espace et vos connexions. Aucun agent n'atteint l'un de vos espaces privés. Ces outils sont tout ce que Lilo donne à un agent : les outils de fichiers et de commandes propres à un agent de conversation sont ceux de l'agent, pas ceux de Lilo, et rien de ce qui suit ne s'y applique.
+- Certaines actions attendent votre approbation, sauf si vous désactivez **Demander avant d'envoyer, payer, supprimer ou publier** : un clic ou un appui sur Entrée sur un bouton, un lien ou un formulaire dont le libellé ou l'adresse de formulaire contient l'un des mots d'une liste fixe, tels que « send », « pay », « delete » ou « publish », et une requête autre que GET ou HEAD avec les cookies de l'un de vos profils. La vérification des mots se fait au mieux : les clics sur d'autres types d'éléments, les autres libellés, les autres langues, les icônes et la touche Entrée dans une zone de message passent sans question. Quel que soit ce réglage, Lilo demande avant qu'un agent ne remette à une page l'un de vos fichiers. Ouvrir un fichier local avec `navigate` et le lire ne demande rien. [Sécurité des agents](/about/agent-safety) explique ce que les approbations couvrent et ce qu'elles ne couvrent pas.
 - Une description de paramètre ci-dessous traduit le texte, en anglais, que l'agent lit lui-même.
 
 <include>./_generated/mcp-tools.md</include>
