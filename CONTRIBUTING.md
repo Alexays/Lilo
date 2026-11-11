@@ -134,8 +134,12 @@ make validate
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
 tests; SwiftLint; the Xcode build and the Swift tests; commit hook and perf summary tests; website
-checks and tests; release-note and version sync checks.
+checks and tests; documentation site checks and tests; release-note and version sync checks.
 Run it once your change is done, and confirm it passes before you open a pull request.
+Editing an English page of the documentation site fails `make docs-check` until its French
+translation is refreshed with `make docs-translate`, which needs Claude Code; without it, ask a
+maintainer to run it on your branch. A change to `COMPATIBILITY.md` or to an agent tool definition
+only makes the French reference tables stale, which warns.
 
 | Command | Runs |
 |---------|------|
@@ -152,6 +156,8 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
 | `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
 | `make site-test` | website build, release notes, routes, links and metadata |
+| `make docs-check` | documentation site links and anchors, and the French translation gate |
+| `make docs-test` | documentation site build, headers, routes and metadata, and `blume audit` |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
 | `make swift-test-slow` | the few Swift tests that wait out real clocks, WebKit's or Lilo's (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
@@ -187,7 +193,7 @@ rather than carving out a helper just to reach it.
 
 `.github/workflows/build.yml` runs on every push to `main` and every pull request:
 
-- **Release tooling and website** (ubuntu): Changie fragments, version sync, Ultracite and Astro checks, website tests and a Cloudflare deployment dry run.
+- **Release tooling and websites** (ubuntu): Changie fragments, version sync, Ultracite and Astro checks, website and documentation site checks and tests, and a Cloudflare deployment dry run of each.
 - **UI** (ubuntu): `make validate-ui` and `make e2e`.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.
