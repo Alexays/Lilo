@@ -360,6 +360,16 @@
 				"description": "Un lien vers un autre site s'ouvre par-dessus un onglet épinglé ou favori au lieu de le remplacer. Maj-clic ouvre l'aperçu de n'importe quel lien.",
 				"keywords": "aperçu peek glance prévisualisation popup épinglé favori maj clic"
 			},
+			"tabGlance": {
+				"title": "Page en direct au survol d'un onglet épinglé",
+				"description": "Laisser le pointeur sur un onglet épinglé ou un favori affiche sa page dans une carte, à lire et à utiliser sans quitter l'onglet en cours. Désactivé, la carte montre une image de la page.",
+				"keywords": "aperçu survol carte en direct épinglé favori glance"
+			},
+			"meetingCard": {
+				"title": "Afficher les réunions sur le point de commencer",
+				"description": "Une carte s'affiche 10 minutes avant le début d'un événement des calendriers de votre Mac, avec Rejoindre quand l'événement contient un lien. Lilo demande l'accès aux calendriers quand vous activez cette option et ne les lit que sur ce Mac.",
+				"keywords": "réunion calendrier événement rejoindre visio appel rappel"
+			},
 			"autoPictureInPicture": {
 				"title": "Picture-in-picture automatique",
 				"description": "Passer un appel ou une vidéo en cours dans une fenêtre flottante quand vous quittez son onglet ou Lilo.",
@@ -1566,6 +1576,13 @@
 		"restarting": "Redémarrage...",
 		"later": "Plus tard"
 	},
+	"meetingCard": {
+		"join": "Rejoindre",
+		"joinLabel": "Rejoindre {title}",
+		"dismiss": "Masquer",
+		"now": "Maintenant",
+		"untitled": "Événement sans titre"
+	},
 	"sitePermissions": {
 		"manage": "Contrôles du site",
 		"camera": "Caméra",
@@ -2476,6 +2493,24 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0210": {
+				"headline": "Des pages dans votre langue.",
+				"description": "Les pages traduites laissent moins de texte de côté et commencent par ce que vous voyez, tandis que l'interface de Lilo occupe moins de mémoire dans chaque fenêtre.",
+				"translationTitle": "Traduisez toute la page.",
+				"translationDescription": "Lisez une plus grande part de la page dans votre langue. La traduction couvre aussi les textes indicatifs, les infobulles, les descriptions d'images, les libellés de boutons et le texte des composants web, commence par ce qui est à l'écran et laisse tels quels les passages déjà dans votre langue.",
+				"memoryTitle": "Plus léger en mémoire.",
+				"memoryDescription": "Gardez plus de fenêtres ouvertes en pesant moins sur votre Mac. L'interface de Lilo utilise environ 125 Mo de mémoire en moins par fenêtre."
+			},
+			"v0200": {
+				"headline": "Des échanges plus clairs avec vos agents.",
+				"description": "Voyez le contenu d'un dossier sans l'ouvrir, répondez aux questions d'un agent en un clic et suivez son avancement pendant qu'il travaille.",
+				"folderPeekTitle": "Voyez le contenu d'un dossier.",
+				"folderPeekDescription": "Voyez ce que contient un dossier sans l'ouvrir. Laissez le pointeur sur un dossier fermé de la barre latérale pour afficher ses onglets à côté, avec un champ de recherche pour les filtrer, ou appuyez sur Espace pour l'ouvrir au clavier.",
+				"questionsTitle": "Répondez aux questions d'un agent.",
+				"questionsDescription": "Un agent peut vous poser une question à choix multiples dans une conversation. Choisissez une ou plusieurs réponses, écrivez la vôtre ou passez. Au clavier, un chiffre choisit une option, Retour répond et Échap passe.",
+				"tasksTitle": "Suivez le plan de l'agent.",
+				"tasksDescription": "Suivez une longue tâche pendant qu'elle avance : la liste de tâches de l'agent reste épinglée au-dessus de la zone de saisie avec sa progression, et sa ligne d'état nomme l'étape en cours. Terminée, la liste se replie sur une ligne."
+			},
 			"v0190": {
 				"headline": "Cherchez ce que vous voyez.",
 				"description": "Retrouvez n'importe quelle image d'une page d'un clic droit, avec des couleurs plus lisibles et un terminal plus stable.",

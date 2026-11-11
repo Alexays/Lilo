@@ -66,6 +66,15 @@ struct WebViewPrivateAccessors {
         unsafe unsafeBitCast(imp, to: SetMethod.self)(object, selector, value)
     }
 
+    /// `_setInspectorAttachmentView:`: the view WebKit sizes beside a docked Web Inspector, which goes in that view's
+    /// superview; nil for the web view itself. False if absent.
+    func setInspectorAttachmentView(_ view: NSView?) -> Bool {
+        guard let (selector, imp) = unsafe method("_setInspectorAttachmentView:") else { return false }
+        typealias SetMethod = @convention(c) (NSObject, Selector, NSView?) -> Void
+        unsafe unsafeBitCast(imp, to: SetMethod.self)(object, selector, view)
+        return true
+    }
+
     /// `evaluateJavaScript(_:in:in:)` without the user gesture WebKit runs it under: a script Lilo runs
     /// on its own must not activate the page, which may then hold its own navigations behind a
     /// beforeunload panel, waiting synchronously for an answer.

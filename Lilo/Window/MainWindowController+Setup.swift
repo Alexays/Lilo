@@ -56,6 +56,11 @@ extension MainWindowController {
         if config.preferences.responds(to: NSSelectorFromString("_setShouldAllowUserInstalledFonts:")) {
             config.preferences.setValue(false, forKey: "shouldAllowUserInstalledFonts")
         }
+        // The chrome is a full-window layer that paints little and seldom. With accelerated drawing, WebKit keeps
+        // GPU surfaces the size of the window for it, its transparent root included; drawn in software it keeps none.
+        if config.preferences.responds(to: NSSelectorFromString("_setAcceleratedDrawingEnabled:")) {
+            config.preferences.setValue(false, forKey: "acceleratedDrawingEnabled")
+        }
         let webView = OverlayWebView(frame: frame, configuration: config)
         WebInspectorSupport.enable(for: webView)
         lastChromeWebView = webView
@@ -341,6 +346,7 @@ extension MainWindowController {
         }
         setupTabShare()
         setupTabDock()
+        setupTabGlance()
         restoredStartupSpaceIdsByProfile = startupSnapshot.storedSpaceIdsByProfile
         // The database keeps one color for both appearances: it stands in for a missing mirror only in the appearance it was picked in.
         if storedWindowBackgroundColor == nil, let color = startupSnapshot.windowBackgroundColor,
@@ -657,6 +663,9 @@ extension MainWindowController {
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
+        let meetings = context.meetingController(settingsStore: settingsStore)
+        settingsHandler.onMeetingCardChanged = { [weak meetings] in meetings?.enabledDidChange() }
+        bridgeRouter.register(handler: MeetingBridgeHandler(windowController: self))
         settingsHandler.onRecordShortcut = { [weak self] in self?.recordingShortcutId = $0 }
         settingsHandler.onReloadTab = { [weak self] in self?.tabManager.engineTab(for: $0)?.reload() }
         settingsHandler.onTerminalSettingsChanged = { [weak self] in self?.applyTerminalSettings() }
@@ -983,6 +992,8 @@ extension MainWindowController {
         engine.restoreFromAutoPictureInPicture()  // a tab auto-PiP'd on leaving comes back inline
         floatingTabPanel.dismiss(hosting: engine.id)
         if tabDock.engineId == engine.id { tabDock.undock() }
+        // Any window's hover card lets go first, or its end would pull the view out of this window.
+        for window in context.windows.windows where window.tabGlance.engineId == engine.id { window.endTabGlance(notify: true) }
         if awaitingDocumentPiP === engine { awaitingDocumentPiP = nil }
         if documentPiP.openerId == engine.id {
             if documentPiP.wasAutoEntered { documentPiP.close() } else { placeDocumentPiP() }

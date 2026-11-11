@@ -215,4 +215,19 @@ final class AgentInputTests: XCTestCase {
         let selected = try await js("(f => f.selectionEnd - f.selectionStart)(document.querySelector('iframe').contentDocument.getElementById('f'))") as? Int
         XCTAssertEqual(selected, 5)
     }
+
+    /// A letter the agent sends comes from the key typing it on the Mac's layout, as a real press: KeyQ for A on AZERTY.
+    func testKeysTypeTheirOwnCharacterOnTheCurrentLayout() throws {
+        // A layout of another script (Cyrillic) types no Latin letter: those keep their ANSI key.
+        for character in "abcdefghijklmnopqrstuvwxyz".map(String.init) where KeyboardShortcuts.keyStroke(character) != nil {
+            let event = try XCTUnwrap(NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil,
+                characters: character, charactersIgnoringModifiers: character, isARepeat: false, keyCode: AgentInput.keyCode(character)
+            ))
+            XCTAssertEqual(event.characters(byApplyingModifiers: []), character)
+        }
+        // A digit never comes from the keypad, which AZERTY types digits on unshifted: its number-row key takes Shift there.
+        let keypad: Set<UInt16> = [65, 67, 69, 71, 75, 76, 78, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92]
+        XCTAssertTrue(Set((0...9).map { AgentInput.keyCode(String($0)) }).isDisjoint(with: keypad))
+    }
 }

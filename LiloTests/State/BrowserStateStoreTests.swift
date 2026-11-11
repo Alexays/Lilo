@@ -3789,6 +3789,27 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertFalse(engine.isFrozen, "its PiP window runs in the opener's page")
     }
 
+    func testFreezeIdleEnginesNeverFreezesATabTheHoverCardShows() async {
+        let activeSpaceId = UUID(), hiddenSpaceId = UUID()
+        var glanced = Tab(id: UUID(), url: URL(string: "https://mail.example"), title: "Mail", spaceId: hiddenSpaceId)
+        glanced.lastActiveAt = Date(timeIntervalSince1970: 1)
+        let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let store = BrowserStateStore()
+        store.runtimeOverlay.setRuntimeState(from: glanced)
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [glanced], folders: [], treeItems: [], engines: [glanced.id: engine])
+        )
+        store.storeActiveSpace(id: activeSpaceId, snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:]))
+        store.glancedTabIds = [glanced.id]
+
+        store.freezeIdleEngines(freezeThreshold: 60)
+        // The sweep's own check, answered after any check the sweep sent.
+        _ = try? await engine.wkWebView.callAsyncJavaScript(CompositeFreezer.webLockCheck, contentWorld: PageWorld.bridgeWorld)
+
+        XCTAssertFalse(engine.isFrozen, "the card shows its live page")
+    }
+
     func testFreezeIdleEnginesNeverFreezesAgentTabs() async {
         let activeSpaceId = UUID(), hiddenSpaceId = UUID()
         var agent = Tab(id: UUID(), url: URL(string: "https://agent.example"), title: "Agent", spaceId: hiddenSpaceId)

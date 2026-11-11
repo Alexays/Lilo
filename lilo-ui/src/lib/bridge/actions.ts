@@ -134,6 +134,8 @@ export const tabActions = {
 	clearArchived: emitEmpty("clearArchivedTabs"),
 	requestPreview: (tabId: string): void => emit("requestTabPreview", { tabId }),
 	warm: (tabId: string): void => emit("warmTab", { tabId }),
+	showGlance: (tabId: string): void => emit("showTabGlance", { tabId }),
+	hideGlance: emitEmpty("hideTabGlance"),
 	findInPage: (query: string, options: { caseSensitive?: boolean } = {}): void =>
 		emit("findInPage", { query, ...options }),
 	findNext: emitEmpty("findNext"),
@@ -350,6 +352,11 @@ export const keepAwakeActions = {
 	openLoginItems: emitEmpty("openLoginItemsSettings"),
 	loadRunningApps: emitEmpty("getRunningApps"),
 	loadAppNames: (ids: string[]): void => emit("getAppNames", { ids }),
+};
+
+export const meetingActions = {
+	join: emitId("joinMeeting"),
+	dismiss: emitId("dismissMeeting"),
 };
 
 export const omniboxActions = {

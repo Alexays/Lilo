@@ -1428,92 +1428,36 @@
     }
   };
 
-  // Table entries spell `\`, `"`, line breaks and other special characters with Latin-1 marks
-  // (see WKEngineFactory.hostTable), so the multi-MB literal stays on JSC's fast lexing path.
+  // Table entries spell `\`, `"`, line breaks and other special characters with Latin-1 marks (see WKEngineFactory.hostTable).
   function decodeEntry(s) {
     return /[\xa4\xac\xb5\xb6]/.test(s) ? s.replace(/\xb5([0-9a-f]{4})|[\xa4\xac\xb6]/g, function (m, hex) {
       return hex ? String.fromCharCode(parseInt(hex, 16)) : m === '\xa4' ? '\\' : m === '\xac' ? '"' : '\n';
     }) : s;
   }
 
-  // Keyed tables (see WKEngineFactory.hostTable): sorted 12-character INDEX records (8-digit hash, 4-digit GROUPS offset),
-  // GROUPS lists of base-36 TABLE offsets closed by `|`, entries closed by \xa7. Binary search avoids scanning megabytes per frame.
-  var DIGITS = '+/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  function keyHash(key) {
-    var a = 2166136261, b = 0x9747b28c;
-    for (var i = 0; i < key.length; i++) {
-      var c = key.charCodeAt(i);
-      a = Math.imul(a ^ c, 16777619) >>> 0;
-      b = Math.imul(b ^ c, 16777619) >>> 0;
-    }
-    var value = a * 65536 + (b >>> 16), out = '';
-    for (var d = 0; d < 8; d++) { out = DIGITS[value % 64] + out; value = Math.floor(value / 64); }
-    return out;
-  }
-  function lookup(index, groups, table, key) {
-    var hash = keyHash(key), lo = 0, hi = index.length / 12 - 1;
-    while (lo <= hi) {
-      var mid = (lo + hi) >> 1, record = index.substr(mid * 12, 8);
-      if (record < hash) { lo = mid + 1; continue; }
-      if (record > hash) { hi = mid - 1; continue; }
-      var group = 0;
-      for (var d = 8; d < 12; d++) group = group * 64 + DIGITS.indexOf(index.charAt(mid * 12 + d));
-      return groups.slice(group, groups.indexOf('|', group)).split(',').map(function (offset) {
-        var start = parseInt(offset, 36);
-        return table.slice(start, table.indexOf('\xa7', start));
-      });
-    }
-    return [];
-  }
-
   // ---------- dispatch ----------
   var ancestors = location.ancestorOrigins;
-  // A frame without a host of its own (about:blank, srcdoc) runs its parent's scriptlets, as uBO does:
-  // a page creating one to reach pristine fetch or JSON.parse finds them patched too. WebKit injects
-  // the script there synchronously, before the page can read the new frame.
-  var hostname = location.hostname ||
-    (ancestors && ancestors.length ? ancestors[0].replace(/^[^:]+:\/\//, '').replace(/:\d+$/, '') : '');
-  if (!hostname) return;
-  // An allowlisted site runs no filtering, as the rule list stands down for it (if-top-url). A frame
-  // goes by its top document, like the rule list; `www.` is optional on the site, as in its rule.
-  var ALLOWLIST = __LILO_ALLOWLIST__;
-  var topHost = ancestors && ancestors.length
-    ? ancestors[ancestors.length - 1].replace(/^[^:]+:\/\//, '')
-    : location.host;
-  // A hostless top document (about:blank, file:) must not match the empty list's "||".
-  if (topHost && (ALLOWLIST.indexOf('|' + topHost + '|') >= 0 ||
-      ALLOWLIST.indexOf('|' + topHost.replace(/^www\./, '') + '|') >= 0)) return;
-  // The table covers thousands of hosts and is injected into every frame. An entry is a scriptlet's
-  // base-36 index into NAMES and its args, joined by \xa6.
-  var INDEX = __LILO_SCRIPTLET_INDEX__;
-  var GROUPS = __LILO_SCRIPTLET_GROUPS__;
-  var TABLE = __LILO_SCRIPTLET_TABLE__;
-  var NAMES = __LILO_SCRIPTLET_NAMES__.split(' ');
-  // A uBO `example.*` entry names the site under any public suffix: try the host with its last label,
-  // and with a likely two-label suffix (co.uk, com.br), replaced by `*`.
-  var parts = hostname.split('.');
-  var n = parts.length, twoLabelSuffix = n > 2 && parts[n - 1].length === 2 && parts[n - 2].length <= 3;
-  var hosts = [];
-  for (var h = 0; h < n - 1; h++) {
-    hosts.push(parts.slice(h).join('.'), parts.slice(h, n - 1).join('.') + '.*');
-    if (twoLabelSuffix && h < n - 2) hosts.push(parts.slice(h, n - 2).join('.') + '.*');
-  }
-  // `*` lists what runs on every site.
-  hosts.push('*');
-  // An entry starting with `@` excepts the same entry on this host and its subdomains, `@` alone every scriptlet. A rule
-  // naming both the host and its entity runs once.
-  var entries = new Set(), excepted = new Set();
-  for (var i = 0; i < hosts.length; i++) {
-    var found = lookup(INDEX, GROUPS, TABLE, hosts[i]);
+  // FilterLookup.js, in the bridge world, holds the table and sends this frame's entries with the scriptlets' names: at once
+  // when it ran first, else as it runs, before any script of the page either way. An entry is a scriptlet's base-36 index
+  // into the names and its args, joined by \xa6.
+  var dispatched = false;
+  addEventListener('__LILO_FILTER_ENTRIES__', function (event) {
+    if (dispatched) return;
+    dispatched = true;
+    var message = JSON.parse(event.detail), NAMES = message.n.split(' '), found = message.e;
+    // An entry starting with `@` excepts the same entry on this host and its subdomains, `@` alone every scriptlet. A rule
+    // naming both the host and its entity runs once.
+    var entries = new Set(), excepted = new Set();
     for (var f = 0; f < found.length; f++) {
       if (found[f][0] === '@') excepted.add(found[f].slice(1)); else entries.add(found[f]);
     }
-  }
-  if (excepted.has('')) return;
-  entries.forEach(function (raw) {
-    if (excepted.has(raw)) return;
-    var entry = raw.split('\xa6').map(decodeEntry);
-    var fn = S[NAMES[parseInt(entry[0], 36)]];
-    if (fn) { try { fn.apply(null, entry.slice(1)); } catch (err) {} }
+    if (excepted.has('')) return;
+    entries.forEach(function (raw) {
+      if (excepted.has(raw)) return;
+      var entry = raw.split('\xa6').map(decodeEntry);
+      var fn = S[NAMES[parseInt(entry[0], 36)]];
+      if (fn) { try { fn.apply(null, entry.slice(1)); } catch (err) {} }
+    });
   });
+  dispatchEvent(new Event('__LILO_FILTER_LOOKUP__'));
 })();

@@ -16,9 +16,10 @@ final class WebViewPrivateAccessorsTests: XCTestCase {
     func testSetUIntInvokesPageMuteAndNoOpsForMissingSelector() {
         let webView = WKWebView(frame: .zero)
         let accessors = WebViewPrivateAccessors(webView)
-        // Real private setter: must invoke without trapping (mute then unmute).
         accessors.setUInt("_setPageMuted:", 1)
+        XCTAssertEqual(accessors.int("_mediaMutedState").map { $0 & 1 }, 1, "the page's audio is muted")
         accessors.setUInt("_setPageMuted:", 0)
+        XCTAssertEqual(accessors.int("_mediaMutedState").map { $0 & 1 }, 0)
         // A non-existent selector is filtered by the responds(to:) guard, so this must not crash.
         accessors.setUInt("_definitelyNotARealSetter:", 1)
     }

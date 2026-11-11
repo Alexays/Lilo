@@ -1,4 +1,46 @@
 {
+	"0.21.0": {
+		"headlineKey": "whatsNew.releases.v0210.headline",
+		"descriptionKey": "whatsNew.releases.v0210.description",
+		"highlights": [
+			{
+				"id": "translation",
+				"illustration": "languages",
+				"titleKey": "whatsNew.releases.v0210.translationTitle",
+				"descriptionKey": "whatsNew.releases.v0210.translationDescription"
+			},
+			{
+				"id": "memory",
+				"illustration": "fresh",
+				"titleKey": "whatsNew.releases.v0210.memoryTitle",
+				"descriptionKey": "whatsNew.releases.v0210.memoryDescription"
+			}
+		]
+	},
+	"0.20.0": {
+		"headlineKey": "whatsNew.releases.v0200.headline",
+		"descriptionKey": "whatsNew.releases.v0200.description",
+		"highlights": [
+			{
+				"id": "folder-peek",
+				"illustration": "folderPeek",
+				"titleKey": "whatsNew.releases.v0200.folderPeekTitle",
+				"descriptionKey": "whatsNew.releases.v0200.folderPeekDescription"
+			},
+			{
+				"id": "questions",
+				"illustration": "choices",
+				"titleKey": "whatsNew.releases.v0200.questionsTitle",
+				"descriptionKey": "whatsNew.releases.v0200.questionsDescription"
+			},
+			{
+				"id": "tasks",
+				"illustration": "tasks",
+				"titleKey": "whatsNew.releases.v0200.tasksTitle",
+				"descriptionKey": "whatsNew.releases.v0200.tasksDescription"
+			}
+		]
+	},
 	"0.19.0": {
 		"headlineKey": "whatsNew.releases.v0190.headline",
 		"descriptionKey": "whatsNew.releases.v0190.description",

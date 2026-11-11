@@ -102,6 +102,19 @@ final class BrowserContext {
         deviceSetup = controller
         return controller
     }
+    private(set) var meetings: MeetingController?
+    /// One per app, like the device setup: one calendar read and one timer, its card shown in every window.
+    func meetingController(settingsStore: SettingsStore) -> MeetingController {
+        if let meetings { return meetings }
+        let controller = MeetingController(settingsStore: settingsStore)
+        controller.onChange = { [weak self] in self?.windows.windows.forEach { $0.sendMeeting() } }
+        controller.onDisabled = { [weak self] in
+            let data: [String: Any] = ["settings": settingsStore.allSettings()]
+            self?.windows.windows.forEach { $0.bridgeRouter.send(event: "settingsLoaded", data: data) }
+        }
+        meetings = controller
+        return controller
+    }
     lazy var agentControl = AgentControl(context: self)
     lazy var conversations: ConversationHost = {
         let host = ConversationHost(directory: URL(fileURLWithPath: BuildIdentity.appSupportDirectory).appending(path: "Agents"))
@@ -335,6 +348,16 @@ final class BrowserContext {
         engineFactory.notificationStoreDecisionsHandler = { [weak self] store in
             guard let profileId = store.identifier, let profile = self?.profileContexts.existingContext(for: profileId) else { return [:] }
             return profile.sitePermissions.decisions(ofType: "notifications")
+        }
+        // A worker has a profile and no Space: its tab opens in the Space on screen when that one has its profile, else in the profile's first.
+        engineFactory.notificationBridge.openWindowHandler = { [weak self] store, url in
+            guard let self, let profileId = store.identifier, let window = windows.activeWindow,
+                  let spaces = spaceManager?.spaces(for: profileId).filter({ !$0.isPrivate }),
+                  let space = spaces.first(where: { $0.id == window.tabManager.currentSpaceId }) ?? spaces.first else { return nil }
+            if space.id != window.tabManager.currentSpaceId { window.requestSpaceSwitch(id: space.id) }
+            guard let tab = window.createTabStateFirst(url: url, inSpace: space.id) else { return nil }
+            window.window?.makeKeyAndOrderFront(nil)
+            return window.tabManager.engineTab(for: tab.id)?.wkWebView
         }
         let profileManager = ProfileManager(dbManager: dbManager, engineFactory: engineFactory, makeProfileId: makeProfileId)
         self.profileManager = profileManager

@@ -29,18 +29,7 @@ final class ProcessManagerBridgeHandler: BridgeHandler {
         windowController: MainWindowController,
         bridgeRouter: BridgeRouter,
         killProcess: @escaping (Int32) -> Int32 = { kill($0, SIGTERM) },
-        identityDiagnostics: @escaping @MainActor (WKWebViewTab) -> WebViewProcessDiagnostics = { engine in
-            // Pid-only reflection: enough to key processes for id/pid/kind resolution without the
-            // full per-webview diagnostics sweep.
-            let accessors = WebViewPrivateAccessors(engine.wkWebView)
-            return WebViewProcessDiagnostics(
-                webProcessIdentifier: accessors.pid("_webProcessIdentifier"),
-                provisionalWebProcessIdentifier: accessors.pid("_provisionalWebProcessIdentifier"),
-                networkProcessIdentifier: accessors.pid("_networkProcessIdentifier"),
-                gpuProcessIdentifier: accessors.pid("_gpuProcessIdentifier"),
-                modelProcessIdentifier: accessors.pid("_modelProcessIdentifier")
-            )
-        }
+        identityDiagnostics: @escaping @MainActor (WKWebViewTab) -> WebViewProcessDiagnostics = { $0.processIdentifiers }
     ) {
         self.browserStateStore = browserStateStore
         self.tabManager = tabManager

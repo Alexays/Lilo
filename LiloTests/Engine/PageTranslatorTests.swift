@@ -18,11 +18,19 @@ final class PageTranslatorTests: XCTestCase {
             (() => {
               const state = window.__liloTranslation;
               if (!state) return null;
-              const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), texts = [];
-              while (walker.nextNode()) {
-                const text = state.originals.get(walker.currentNode);
-                if (text !== undefined) texts.push(text.trim());
-              }
+              const texts = [];
+              const read = (root) => {
+                const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+                while (walker.nextNode()) {
+                  const node = walker.currentNode;
+                  for (const item of node.nodeType === Node.TEXT_NODE ? [node] : Object.values(state.attrs.get(node) ?? {})) {
+                    const text = state.originals.get(item);
+                    if (text !== undefined) texts.push(text.trim());
+                  }
+                  if (node.shadowRoot) read(node.shadowRoot);
+                }
+              };
+              read(document.body);
               return texts;
             })()
             """, in: nil, contentWorld: .world(name: "lilo-translate")) as? [String]
@@ -47,5 +55,57 @@ final class PageTranslatorTests: XCTestCase {
         await translator.toggle(in: webView)
         let restored = try await originals(webView)
         XCTAssertNil(restored)
+    }
+
+    func testTranslationCoversLabelsAndOpenShadowRootsAndRestoresThem() async throws {
+        let webView = WKWebView()
+        webView.loadHTMLString("""
+            <p>Il gatto dorme sul divano tutto il giorno mentre la pioggia cade sulla città.</p>
+            <input type="search" placeholder="Cerca nel sito" value="parola digitata">
+            <input type="submit" value="Invia la richiesta">
+            <button value="valore inviato" aria-label="Chiudi la finestra"></button>
+            <img title="Fotografia del gatto" alt="Un gatto che dorme">
+            <div id="card"></div>
+            <div id="sealed"></div>
+            <script>
+              card.attachShadow({ mode: "open" }).innerHTML = "<span>Testo nel componente</span>";
+              sealed.attachShadow({ mode: "closed" }).innerHTML = "<span>Testo sigillato</span>";
+            </script>
+            """, baseURL: URL(string: "https://news.example/"))
+        let loaded = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript("document.readyState === 'complete' && !!card.shadowRoot")) as? Bool == true }
+        XCTAssertTrue(loaded)
+        let translator = PageTranslator()
+
+        await translator.toggle(in: webView)
+        let collected = try await originals(webView)
+        XCTAssertEqual(collected, [
+            "Il gatto dorme sul divano tutto il giorno mentre la pioggia cade sulla città.",
+            "Cerca nel sito", "Invia la richiesta", "Chiudi la finestra", "Fotografia del gatto", "Un gatto che dorme",
+            "Testo nel componente"
+        ], "labels and open shadow roots are collected; a typed value, a form value and a closed root are not")
+
+        _ = try await webView.evaluateJavaScript("""
+            document.querySelector("[type=search]").placeholder = "Trova un articolo";
+            card.shadowRoot.firstChild.insertAdjacentHTML("afterend", "<b>Aggiunto nel componente</b>"); 0
+            """)
+        let followed = await pollUntil(timeout: 5) {
+            let texts = try? await self.originals(webView)
+            return texts?.contains("Trova un articolo") == true && texts?.contains("Aggiunto nel componente") == true
+        }
+        XCTAssertTrue(followed, "a label rewritten and shadow content added while translated are translated too")
+
+        // Stands in for a translation landing: writes, then drops their records as the translator does.
+        _ = try await webView.evaluateJavaScript("""
+            document.querySelector("[type=search]").setAttribute("placeholder", "Find an article");
+            document.querySelector("[type=submit]").setAttribute("value", "Send the request");
+            card.shadowRoot.firstChild.firstChild.nodeValue = "Text in the component";
+            window.__liloTranslation.observer.takeRecords(); 0
+            """, in: nil, contentWorld: .world(name: "lilo-translate"))
+        await translator.toggle(in: webView)
+        let restored = try await webView.evaluateJavaScript("""
+            [document.querySelector("[type=search]").placeholder, document.querySelector("[type=search]").value,
+             document.querySelector("[type=submit]").value, card.shadowRoot.firstChild.textContent]
+            """) as? [String]
+        XCTAssertEqual(restored, ["Trova un articolo", "parola digitata", "Invia la richiesta", "Testo nel componente"])
     }
 }

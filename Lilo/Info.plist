@@ -136,6 +136,8 @@
     <string>Lilo connects to devices on your local network, such as a router or printer, when you open their pages or an extension looks for them.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>This website requests speech recognition to turn what you say into text.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Lilo reads your calendars on this Mac to show a card with the join link before a meeting starts.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This website requests access to your location.</string>
     <key>NSAppTransportSecurity</key>

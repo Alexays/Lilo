@@ -546,16 +546,12 @@ final class FilterListService {
     /// The `scriptsKey` the cached scripts were spliced under; without it they are never read.
     private nonisolated static var scriptsKeyURL: URL { cacheDirectory.appendingPathComponent("filter-scripts.key") }
 
-    /// Names the tables and the build behind spliced scripts: the templates and their encoding ship
-    /// with the app, so an app update (or a dev rebuild) re-splices.
+    /// Names the tables and the build behind the scripts' cached tables: their encoding ships with the app, so an app
+    /// update (or a dev rebuild) encodes them again.
     private nonisolated static func scriptsKey(rulesTag: String, stamp: String) -> String {
-        let build = [Bundle.main.executableURL, Bundle.appResourceURL("GenericCosmetics", extension: "js"),
-                     Bundle.appResourceURL("ProceduralCosmetics", extension: "js"), Bundle.appResourceURL("Scriptlets", extension: "js")]
-            .map { url in
-                (try? url?.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
-                    .map { String($0.timeIntervalSince1970) } ?? "-"
-            }
-        return ([rulesTag, stamp] + build).joined(separator: " ")
+        let build = (try? Bundle.main.executableURL?.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+            .map { String($0.timeIntervalSince1970) } ?? "-"
+        return [rulesTag, stamp, build].joined(separator: " ")
     }
 
     /// Serializes the scripts' writes (launch-time splice, refresh) and the launch-time read, so one

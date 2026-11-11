@@ -85,17 +85,17 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
 
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(cosmetic: nil, sites: nil, scriptlets: "{\"example.com\":[[\"json-prune\",[\"a\"]]]}", procedural: nil))
         XCTAssertEqual(factory.test_warmPoolCount, 1, "cached tables arriving at boot must not drop the warm pool")
-        XCTAssertTrue(controller.userScripts.contains { $0.source.contains(WKEngineFactory.keyHash("example.com")) },
-                      "the live controller must carry the newly arrived table")
+        let arrived = await controller.test_filterSources()
+        XCTAssertTrue(arrived.contains(WKEngineFactory.keyHash("example.com")), "the live controller must carry the newly arrived table")
 
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(cosmetic: nil, sites: nil, scriptlets: "{\"example.com\":[[\"json-prune\",[\"a\"]]]}", procedural: nil))
         XCTAssertEqual(factory.test_warmPoolCount, 1, "re-applying an identical table is a no-op")
 
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(cosmetic: nil, sites: nil, scriptlets: "{\"example.org\":[[\"json-prune\",[\"b\"]]]}", procedural: nil))
         XCTAssertEqual(factory.test_warmPoolCount, 1, "a table change rescripts in place instead of dropping the pool")
-        let sources = controller.userScripts.map(\.source)
-        XCTAssertTrue(sources.contains { $0.contains(WKEngineFactory.keyHash("example.org")) })
-        XCTAssertFalse(sources.contains { $0.contains(WKEngineFactory.keyHash("example.com")) }, "the old table must not linger after the rescript")
+        let sources = await controller.test_filterSources()
+        XCTAssertTrue(sources.contains(WKEngineFactory.keyHash("example.org")))
+        XCTAssertFalse(sources.contains(WKEngineFactory.keyHash("example.com")), "the old table must not linger after the rescript")
         let warmTab = factory.createTab(configuration: .init())
         XCTAssertTrue(warmTab.wkWebView.configuration.userContentController === controller,
                       "the warm view carries the rescripted live controller")

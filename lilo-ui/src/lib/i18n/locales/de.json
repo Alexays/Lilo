@@ -360,6 +360,16 @@
 				"description": "Ein Link zu einer anderen Website öffnet sich über einem angehefteten Tab oder Lesezeichen-Tab, statt ihn zu ersetzen. Umschalt-Klick zeigt jeden Link als Vorschau.",
 				"keywords": "vorschau schnellansicht popup angeheftet lesezeichen umschalt klick"
 			},
+			"tabGlance": {
+				"title": "Live-Seite beim Verweilen auf einem angehefteten Tab",
+				"description": "Verweilt der Zeiger auf einem angehefteten Tab oder einem Favoriten, zeigt eine Karte dessen Seite: lesen und bedienen, ohne den aktuellen Tab zu verlassen. Ausgeschaltet zeigt die Karte ein Bild der Seite.",
+				"keywords": "vorschau schnellansicht zeiger karte live angeheftet favorit"
+			},
+			"meetingCard": {
+				"title": "Bevorstehende Meetings anzeigen",
+				"description": "10 Minuten vor Beginn eines Termins aus den Kalendern deines Mac erscheint eine Karte, mit Teilnehmen, wenn der Termin einen Link enthält. Lilo fragt beim Aktivieren nach Kalenderzugriff und liest die Kalender nur auf diesem Mac.",
+				"keywords": "meeting kalender termin teilnehmen videoanruf erinnerung"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatisches Bild-in-Bild",
 				"description": "Einen Anruf oder ein laufendes Video in einem schwebenden Fenster anzeigen, wenn du den Tab oder Lilo verlässt.",
@@ -1566,6 +1576,13 @@
 		"restarting": "Neustart läuft...",
 		"later": "Später"
 	},
+	"meetingCard": {
+		"join": "Teilnehmen",
+		"joinLabel": "An {title} teilnehmen",
+		"dismiss": "Ausblenden",
+		"now": "Jetzt",
+		"untitled": "Termin ohne Titel"
+	},
 	"sitePermissions": {
 		"manage": "Website-Steuerung",
 		"camera": "Kamera",
@@ -2487,6 +2504,24 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Seiten in deiner Sprache.",
+				"description": "Übersetzte Seiten lassen weniger aus und beginnen mit dem, was du siehst, während Lilos Oberfläche in jedem Fenster weniger Speicher belegt.",
+				"translationTitle": "Die ganze Seite übersetzen.",
+				"translationDescription": "Lies mehr von einer Seite in deiner Sprache. Die Übersetzung erfasst auch Platzhalter, Tooltips, Bildbeschreibungen, Tastenbeschriftungen und Text in Webkomponenten, beginnt mit dem Sichtbaren und lässt Passagen in deiner Sprache unverändert.",
+				"memoryTitle": "Sparsamer mit Speicher.",
+				"memoryDescription": "Halte mehr Fenster offen und belaste deinen Mac weniger. Lilos eigene Oberfläche braucht pro Fenster etwa 125 MB weniger Speicher."
+			},
+			"v0200": {
+				"headline": "Klarere Gespräche mit Agenten.",
+				"description": "Sieh in einen Ordner, ohne ihn zu öffnen, beantworte die Fragen eines Agenten mit einem Klick und verfolge seinen Fortschritt, während er arbeitet.",
+				"folderPeekTitle": "Sieh in einen Ordner.",
+				"folderPeekDescription": "Prüfe, was ein Ordner enthält, ohne ihn zu öffnen. Lass den Zeiger auf einem geschlossenen Ordner in der Seitenleiste ruhen, um seine Tabs daneben zu sehen, mit einem Suchfeld zum Filtern, oder drücke die Leertaste, um ihn per Tastatur zu öffnen.",
+				"questionsTitle": "Beantworte die Fragen eines Agenten.",
+				"questionsDescription": "Ein Agent kann dir in einem Gespräch eine Multiple-Choice-Frage stellen. Wähle eine oder mehrere Antworten, schreib deine eigene oder überspringe sie. Im Eingabefeld wählt eine Ziffer eine Option, Return antwortet und Escape überspringt.",
+				"tasksTitle": "Folge dem Plan des Agenten.",
+				"tasksDescription": "Verfolge eine lange Aufgabe, während sie läuft: Die Aufgabenliste des Agenten bleibt mit ihrem Fortschritt über dem Eingabefeld angeheftet, und seine Statuszeile nennt den aktuellen Schritt. Danach klappt die Liste zu einer Zeile zusammen."
+			},
 			"v0190": {
 				"headline": "Suchen Sie, was Sie sehen.",
 				"description": "Schlagen Sie jedes Bild einer Seite mit einem Rechtsklick nach, mit besser lesbaren Farben und einem stabileren Terminal.",

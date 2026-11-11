@@ -1172,9 +1172,11 @@
       if (!profile) throw new Error('Call performance start first')
       const running = profile
       await stopInstruments()
-      // The sampling profiler sends its samples once tracking completes, long after a long profile.
+      // The sampling profiler sends its samples once tracking completes, long after a long profile. Only the
+      // last process counts: one left by a cross-site navigation has already sent its own.
+      const last = running.messages.findLast(m => m.method === 'ScriptProfiler.trackingStart')?.process
       const deadline = Date.now() + 10000
-      while (!running.messages.some(m => m.method === 'ScriptProfiler.trackingComplete') && Date.now() < deadline) {
+      while (!running.messages.some(m => m.method === 'ScriptProfiler.trackingComplete' && m.process === last) && Date.now() < deadline) {
         await new Promise(resolve => setTimeout(resolve, 50))
       }
       profile = null

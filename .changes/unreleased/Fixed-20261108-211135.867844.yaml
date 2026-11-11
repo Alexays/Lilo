@@ -1,3 +1,0 @@
-kind: Fixed
-body: Previewing the same HTML or SVG block of an agent reply again returns to its page instead of opening a duplicate tab.
-time: 2026-11-08T21:11:35.867844+01:00

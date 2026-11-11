@@ -360,6 +360,16 @@
 				"description": "Een link naar een andere website opent boven een vastgemaakt tabblad of bladwijzertabblad, zonder het te vervangen. Met Shift-klik bekijk je elke link vooraf.",
 				"keywords": "voorvertoning pop-up vastgemaakt bladwijzer shift klik"
 			},
+			"tabGlance": {
+				"title": "Live pagina bij stilhouden op een vastgemaakt tabblad",
+				"description": "Houd de aanwijzer stil op een vastgemaakt tabblad of een favoriet en een kaart toont de pagina, om te lezen en te gebruiken zonder het huidige tabblad te verlaten. Uitgeschakeld toont de kaart een afbeelding van de pagina.",
+				"keywords": "voorvertoning aanwijzer kaart live vastgemaakt favoriet"
+			},
+			"meetingCard": {
+				"title": "Vergaderingen tonen die bijna beginnen",
+				"description": "Een kaart verschijnt 10 minuten voordat een activiteit uit de agenda's van je Mac begint, met Deelnemen als de activiteit een link bevat. Lilo vraagt toegang tot je agenda's wanneer je dit inschakelt en leest ze alleen op deze Mac.",
+				"keywords": "vergadering agenda activiteit deelnemen videogesprek herinnering"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatisch beeld in beeld",
 				"description": "Toon een gesprek of afspelende video in een zwevend venster wanneer je naar een ander tabblad of een andere app gaat.",
@@ -1566,6 +1576,13 @@
 		"restarting": "Herstarten...",
 		"later": "Later"
 	},
+	"meetingCard": {
+		"join": "Deelnemen",
+		"joinLabel": "Deelnemen aan {title}",
+		"dismiss": "Verbergen",
+		"now": "Nu",
+		"untitled": "Activiteit zonder titel"
+	},
 	"sitePermissions": {
 		"manage": "Websitebediening",
 		"camera": "Camera",
@@ -2487,6 +2504,24 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Pagina's in je eigen taal.",
+				"description": "Vertaalde pagina's laten minder onvertaald en beginnen bij wat je ziet, terwijl de interface van Lilo in elk venster minder geheugen gebruikt.",
+				"translationTitle": "Vertaal de hele pagina.",
+				"translationDescription": "Lees meer van een pagina in je eigen taal. De vertaling omvat ook plaatsaanduidingen, tooltips, afbeeldingsbeschrijvingen, knoplabels en tekst in webcomponenten, begint bij wat op het scherm staat en laat passages die al in je taal zijn ongemoeid.",
+				"memoryTitle": "Lichter op geheugen.",
+				"memoryDescription": "Houd meer vensters open met minder belasting voor je Mac. De interface van Lilo gebruikt ongeveer 125 MB minder geheugen per venster."
+			},
+			"v0200": {
+				"headline": "Duidelijkere gesprekken met agents.",
+				"description": "Kijk in een map zonder hem te openen, beantwoord de vragen van een agent met één klik en volg zijn voortgang terwijl hij werkt.",
+				"folderPeekTitle": "Kijk in een map.",
+				"folderPeekDescription": "Zie wat een map bevat zonder hem te openen. Laat de aanwijzer rusten op een gesloten map in de zijbalk om de tabbladen ernaast te zien, met een zoekveld om ze te filteren, of druk op de spatiebalk om hem met het toetsenbord te openen.",
+				"questionsTitle": "Beantwoord de vragen van een agent.",
+				"questionsDescription": "Een agent kan je in een gesprek een meerkeuzevraag stellen. Kies een of meer antwoorden, typ je eigen antwoord of sla de vraag over. In het invoerveld kiest een cijfer een optie, antwoordt Return en slaat Escape over.",
+				"tasksTitle": "Volg het plan van de agent.",
+				"tasksDescription": "Volg een lange taak terwijl die loopt: de takenlijst van de agent blijft met zijn voortgang boven het invoerveld vastgezet, en de statusregel noemt de stap die bezig is. Na afloop klapt de lijst samen tot één regel."
+			},
 			"v0190": {
 				"headline": "Zoek wat je ziet.",
 				"description": "Zoek elke afbeelding op een pagina op met een rechterklik, met beter leesbare kleuren en een stabielere terminal.",

@@ -1,3 +1,0 @@
-kind: Changed
-body: A text file attached with @ goes to the agent with its contents, as in Claude Code, so it can answer about the file without reading it first; folders, binaries and files over 100 KB still go as a link.
-time: 2026-11-09T02:34:24.292376+01:00

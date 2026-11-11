@@ -1,3 +1,0 @@
-kind: Fixed
-body: What an agent does on its own once a background command finishes is saved right away, so a crash no longer loses it.
-time: 2026-11-08T22:26:14.90308+01:00

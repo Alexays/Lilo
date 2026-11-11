@@ -1,3 +1,0 @@
-kind: Fixed
-body: Task lists in an agent's answer show checkboxes, ticked or empty, instead of raw [ ] and [x] marks.
-time: 2026-11-09T01:28:35.316626+01:00

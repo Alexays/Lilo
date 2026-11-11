@@ -8,7 +8,7 @@ import WebKit
 enum PageWorld {
     static let bridgeWorld = WKContentWorld.world(name: "lilo-bridge")
 
-    private static let channel = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+    static let channel = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
 
     /// Installs the relay and `modules`, sources of functions run at document start in every frame. Handlers they post to
     /// are registered in `bridgeWorld`; `push` reaches what they hand to `lilo.on`.
@@ -31,8 +31,8 @@ enum PageWorld {
             .replacingOccurrences(of: "__LILO_SHARE__", with: channel + "s")
     }
 
-    // Form-dirty tracking rides in the relay's script, so each frame evaluates one script in this world rather than two; it
-    // stays inert where its handler is not registered.
+    // Form-dirty tracking and scroll keeping ride in the relay's script, so each frame evaluates one script in this world
+    // rather than three; the first stays inert where its handler is not registered.
     private static let relaySource = channelSpliced(#"""
     (function () {
       'use strict';
@@ -51,7 +51,24 @@ enum PageWorld {
       // Dispatch is synchronous: the page world's answer to a push arrives before it returns.
       window.push = message => { answer = undefined; send(message); return answer; };
     })();
-    """#) + "\n" + FormDirtyBridge.scriptSource
+    """#) + "\n" + FormDirtyBridge.scriptSource + "\n" + scrollKeepingSource
+
+    /// A page that restores its own scroll (`history.scrollRestoration = 'manual'`) leaves the back/forward cache at the top:
+    /// it goes back where it was left, unless it has scrolled itself. The page's own `pageshow` listeners run later and win.
+    private static let scrollKeepingSource = """
+    (function () {
+      'use strict';
+      if (window.top !== window) return;
+      var left = null;
+      addEventListener('pagehide', function (event) {
+        left = event.persisted && history.scrollRestoration === 'manual' ? [scrollX, scrollY] : null;
+      });
+      addEventListener('pageshow', function (event) {
+        if (event.persisted && left && scrollX === 0 && scrollY === 0) scrollTo({ left: left[0], top: left[1], behavior: 'instant' });
+        left = null;
+      });
+    })();
+    """
 
     /// Every native the toolkit and modules use is captured here, before any page script can wrap it.
     private static let toolkitSource = channelSpliced(#"""

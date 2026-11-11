@@ -1,3 +1,0 @@
-kind: Fixed
-body: An agent pressing a shortcut such as Cmd+A no longer quits Lilo or runs a menu command, on AZERTY and other keyboard layouts.
-time: 2026-11-08T20:10:06.133449+01:00

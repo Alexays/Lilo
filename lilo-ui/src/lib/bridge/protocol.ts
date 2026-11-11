@@ -679,6 +679,9 @@ export interface BridgeCommandPayloadMap {
 	clearArchivedTabs: EmptyPayload;
 	requestTabPreview: { tabId: string };
 	warmTab: { tabId: string };
+	// Shows a saved tab's live page over the hover card's page slot (zone `tab-glance-page`), until hideTabGlance.
+	showTabGlance: { tabId: string };
+	hideTabGlance: EmptyPayload;
 	navigate: { url: string; typed?: boolean };
 	goBack: EmptyPayload;
 	goForward: EmptyPayload;
@@ -820,6 +823,8 @@ export interface BridgeCommandPayloadMap {
 	answerTerminal: { tabId: string; text: string };
 	restoreClosedTerminal: { index: number };
 	getKeepAwakeState: EmptyPayload;
+	joinMeeting: { id: string };
+	dismissMeeting: { id: string };
 	getAgentActivity: EmptyPayload;
 	/** `alwaysAllowSite`: the site whose consequential actions the user always allows from now on. */
 	agentControlResponse: { requestId: string; granted: boolean; alwaysAllowSite?: string };
@@ -1073,6 +1078,10 @@ export interface BridgeEventPayloadMap {
 	// Reply to requestTabPreview. `image` is a JPEG data URL; absent means no preview is
 	// available (typically a discarded engine). A terminal sends its screen as text instead.
 	tabPreviewReady: { tabId: string; image?: string } & Partial<BridgeTerminalPrompt>;
+	// The pointer entered or left the live page in the hover card, which the chrome does not see.
+	tabGlancePointer: { inside: boolean };
+	// The host gave the glanced tab its view back on its own (tab shown, closed, Space left), or could not glance it.
+	tabGlanceEnded: EmptyPayload;
 	/** A conversation the chrome asked to show: its whole log, then `conversationUpdate` as it grows. */
 	conversationOpened: BridgeConversationOpened;
 	/** Updates of one conversation since the last delivery, oldest first. */
@@ -1165,6 +1174,8 @@ export interface BridgeEventPayloadMap {
 		closedTerminals?: BridgeClosedTerminal[];
 	};
 	keepAwakeChanged: BridgeKeepAwakeState;
+	/** The calendar event whose card shows, null when none does. */
+	meetingChanged: { meeting: BridgeMeeting | null };
 	agentActivity: {
 		clients: BridgeAgentClient[];
 		/** One Agents space per profile agents work in. */
@@ -1296,6 +1307,16 @@ export interface BridgeTerminalOptions {
 }
 
 /** The install status of the root helper that keeps the Mac awake with the lid closed. */
+export interface BridgeMeeting {
+	/** One occurrence of the event. */
+	id: string;
+	title: string;
+	/** Epoch milliseconds. */
+	start: number;
+	/** The link the event itself carries, null when it has none. */
+	url: string | null;
+}
+
 export interface BridgeKeepAwakeState {
 	helperStatus: "unsigned" | "notRegistered" | "requiresApproval" | "enabled" | "notFound";
 }

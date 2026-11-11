@@ -1,3 +1,0 @@
-kind: Fixed
-body: A message queued while the agent works stays at the bottom of the conversation until it is sent, so the running turn's work and reply show under the prompt that asked for them, live and after a relaunch.
-time: 2026-11-09T02:58:13.017151+01:00

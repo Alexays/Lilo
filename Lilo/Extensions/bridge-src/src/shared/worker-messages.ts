@@ -1,9 +1,12 @@
 // WebKit delivers no postMessage between an extension page and its worker, Chrome does (MultiPassword relies on it).
 // SW-safe: only globalThis-style lookups on the given scope.
 
+import { gapCall } from './ipc.ts';
+
 const CHANNEL = 'lilo-worker-messages';
 
-type Envelope = { page: string; toWorker: boolean; data: unknown; url?: string; ports?: string[] };
+/** Without a `page`, a worker's message goes to every page showing `url`. */
+type Envelope = { page?: string; toWorker: boolean; data: unknown; url?: string; ports?: string[] };
 /** A message on a transferred port, which BroadcastChannel cannot carry: each end relays its own real port. */
 type PortEnvelope = { port: string; toWorker: boolean; data: unknown };
 
@@ -45,7 +48,7 @@ export function installPageWorkerMessages(scope: any): void {
     channel.postMessage({ page, toWorker: true, data, url: location.href, ports } satisfies Envelope);
   };
   channel.addEventListener('message', ({ data }: { data: Envelope }) => {
-    if (data?.toWorker !== false || data.page !== page) return;
+    if (data?.toWorker !== false || (data.page ? data.page !== page : data.url !== location.href)) return;
     container.dispatchEvent(new scope.MessageEvent('message', { data: data.data }));
   });
   // WebKit scopes the worker to its script's directory, Chrome to the extension's root: a page outside
@@ -95,6 +98,25 @@ export function installWorkerClientMessages(scope: any): void {
   if (!BroadcastChannel || !WindowClient) return;
   const channel = new BroadcastChannel(CHANNEL);
   const Event = scope.ExtendableMessageEvent ?? scope.MessageEvent;
+  // A WindowClient, as Chrome's is: extensions check a message comes from one of their own pages.
+  const client = (id: string, url: string, page?: string) => Object.create(WindowClient.prototype, {
+    id: { value: id },
+    url: { value: url },
+    type: { value: 'window' },
+    frameType: { value: 'top-level' },
+    postMessage: { value: (data: unknown) => channel.postMessage({ page, toWorker: false, data, url } satisfies Envelope) },
+  });
+  const { clients } = scope;
+  const matchAll = clients?.matchAll;
+  if (matchAll) {
+    // WebKit counts no extension page as a client: Lilo names the open ones.
+    clients.matchAll = async (options?: { type?: string }) => {
+      const own: { url: string }[] = await matchAll.call(clients, options);
+      if (options?.type === 'worker' || options?.type === 'sharedworker') return own;
+      const pages = await gapCall<string[]>('runtime', 'clientPages').catch(() => []);
+      return [...own, ...pages.filter((url) => !own.some((found) => found.url === url)).map((url) => client(url, url))];
+    };
+  }
   channel.addEventListener('message', ({ data }: { data: Envelope & { ping?: string } }) => {
     if (typeof data?.ping === 'string') return channel.postMessage({ pong: data.ping });
     if (data?.toWorker !== true || typeof data.url !== 'string') return;
@@ -104,18 +126,10 @@ export function installWorkerClientMessages(scope: any): void {
       relayPort(channel, port2, id, false);
       return port1;
     });
-    // A WindowClient, as Chrome's source is: extensions check it comes from one of their own pages.
-    const source = Object.create(WindowClient.prototype, {
-      id: { value: data.page },
-      url: { value: data.url },
-      type: { value: 'window' },
-      frameType: { value: 'top-level' },
-      postMessage: { value: (answer: unknown) => channel.postMessage({ page: data.page, toWorker: false, data: answer } satisfies Envelope) },
-    });
     const event = new Event('message', { data: data.data, origin: new URL(data.url).origin, ports });
     // WebKit's waitUntil throws InvalidStateError on a script-built event; its promise has no worker lifetime to extend.
     Object.defineProperties(event, {
-      source: { value: source },
+      source: { value: client(data.page ?? data.url, data.url, data.page) },
       waitUntil: { value: (promise: unknown) => { Promise.resolve(promise).catch(() => {}); } },
     });
     scope.dispatchEvent(event);

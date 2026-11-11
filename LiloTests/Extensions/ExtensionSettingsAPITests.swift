@@ -1,3 +1,4 @@
+import Network
 import os
 import WebKit
 import XCTest
@@ -113,6 +114,38 @@ final class ExtensionSettingsAPITests: XCTestCase {
         XCTAssertEqual(direct, 0)
         XCTAssertEqual(proxied, 1, "the fetch goes through the proxy once it applies")
         XCTAssertEqual(cleared, 1, "and no longer once it is cleared")
+    }
+
+    /// A credentialed fetch answers with the response's head, pushes each chunk of its body as it arrives, and stops at an abort.
+    func testCredentialedFetchStreamsItsBodyAndStopsOnceAborted() async throws {
+        let closed = OSAllocatedUnfairLock(initialState: false)
+        let listener = try NWListener(using: .tcp, on: .any)
+        // Answers a head and a first chunk, then leaves the response open and notes when the client lets go.
+        listener.newConnectionHandler = { connection in
+            connection.start(queue: .global())
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { _, _, _, _ in
+                let opening = "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\ndata: one\n\n"
+                connection.send(content: Data(opening.utf8), completion: .contentProcessed { _ in })
+                connection.receive(minimumIncompleteLength: 1, maximumLength: 1) { _, _, _, _ in closed.withLock { $0 = true } }
+            }
+        }
+        listener.start(queue: .global())
+        defer { listener.cancel() }
+        _ = await pollUntil { (listener.port?.rawValue ?? 0) != 0 }
+        let id = try await loadExtension(hostPermissions: ["<all_urls>"])
+
+        let (head, error) = await call("fetch", "credentialed", ["url": "http://127.0.0.1:\(listener.port?.rawValue ?? 0)/", "requestId": "r"], from: id)
+        let chunk = Data("data: one\n\n".utf8).base64EncodedString()
+        let streamed = await pollUntil { self.events("fetch.onBody", to: id).contains { $0["chunk"] as? String == chunk } }
+        let ended = events("fetch.onBody", to: id).contains { $0["failed"] != nil }
+        _ = await call("fetch", "cancel", ["requestId": "r"], from: id)
+        let stopped = await pollUntil { closed.withLock { $0 } }
+
+        XCTAssertNil(error)
+        XCTAssertEqual((head as? [String: Any])?["status"] as? Int, 200)
+        XCTAssertTrue(streamed, "the chunk arrives while the response is still open")
+        XCTAssertFalse(ended, "the response has not ended")
+        XCTAssertTrue(stopped, "the abort closes the connection")
     }
 
     func testProxyRejectsWhatChromeRejects() async throws {

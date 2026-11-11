@@ -360,6 +360,16 @@
 				"description": "固定标签页或书签标签页中指向其他网站的链接会在浮层中打开，不会替换原网页。按住 Shift 点按可预览任意链接。",
 				"keywords": "预览 浮层 弹出窗口 固定 书签 Shift 点按"
 			},
+			"tabGlance": {
+				"title": "指针停留在固定标签页上时显示实时网页",
+				"description": "将指针停留在固定标签页或个人收藏上，会在卡片中显示其网页，无需离开当前标签页即可阅读和操作。关闭后，卡片显示网页的图像。",
+				"keywords": "预览 指针 卡片 实时 固定 收藏"
+			},
+			"meetingCard": {
+				"title": "显示即将开始的会议",
+				"description": "Mac 日历中的日程开始前 10 分钟会显示一张卡片，日程带有链接时还会显示“加入”。开启此项时 Lilo 会请求日历访问权限，且只在这台 Mac 上读取。",
+				"keywords": "会议 日历 日程 加入 视频通话 提醒 meeting calendar"
+			},
 			"autoPictureInPicture": {
 				"title": "自动画中画",
 				"description": "切换到其他标签页或其他应用时，将通话或正在播放的视频放入悬浮窗口。",
@@ -1566,6 +1576,13 @@
 		"restarting": "正在重新启动...",
 		"later": "稍后"
 	},
+	"meetingCard": {
+		"join": "加入",
+		"joinLabel": "加入{title}",
+		"dismiss": "关闭",
+		"now": "现在",
+		"untitled": "无标题日程"
+	},
 	"sitePermissions": {
 		"manage": "网站控制",
 		"camera": "摄像头",
@@ -2487,6 +2504,24 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "用你的语言浏览网页。",
+				"description": "翻译后的网页遗漏更少，并从你看到的内容开始翻译；同时 Lilo 的界面在每个窗口中占用的内存更少。",
+				"translationTitle": "翻译整个网页。",
+				"translationDescription": "用你的语言阅读网页的更多内容。翻译还会涵盖占位文本、工具提示、图像描述、按钮标签和网页组件中的文字，从屏幕上显示的内容开始，并保留已经是你的语言的段落。",
+				"memoryTitle": "更省内存。",
+				"memoryDescription": "打开更多窗口，同时减轻 Mac 的负担。Lilo 自身的界面每个窗口大约少用 125 MB 内存。"
+			},
+			"v0200": {
+				"headline": "与智能体的对话更清晰。",
+				"description": "无需打开即可查看文件夹内容，一键回答智能体的问题，并随时了解它的工作进度。",
+				"folderPeekTitle": "查看文件夹内容。",
+				"folderPeekDescription": "无需打开即可了解文件夹里有什么。将指针停在边栏中已合上的文件夹上，旁边会显示其中的标签页，并提供搜索栏进行筛选；也可以按空格键用键盘打开。",
+				"questionsTitle": "回答智能体的问题。",
+				"questionsDescription": "智能体可以在对话中向你提出选择题。选择一个或多个答案、输入你自己的答案，或者跳过。在输入框中，按数字选择选项，按 Return 回答，按 Escape 跳过。",
+				"tasksTitle": "跟进智能体的计划。",
+				"tasksDescription": "随时跟进一项长任务：智能体的任务列表连同进度固定在输入框上方，状态栏会显示正在进行的步骤。完成后，列表会折叠成一行。"
+			},
 			"v0190": {
 				"headline": "看到什么，就搜什么。",
 				"description": "右键点按即可搜索页面上的任意图片，颜色更易读，终端也更稳定。",

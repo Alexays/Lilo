@@ -1,3 +1,0 @@
-kind: Changed
-body: Conversations hide Claude Agent loading its own tools, and name a local file opened in the browser by its file name.
-time: 2026-11-08T19:29:25.772397+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: Nested lists in an agent's answer keep their indentation, with sub-items under the item they belong to instead of flattened into one list.
-time: 2026-11-09T01:31:39.835087+01:00

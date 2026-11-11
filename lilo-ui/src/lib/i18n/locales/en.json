@@ -360,6 +360,16 @@
 				"description": "A link to another site opens over a pinned or bookmarked tab instead of replacing it. Shift-click peeks at any link.",
 				"keywords": "peek glance preview popup pinned bookmarked shift click"
 			},
+			"tabGlance": {
+				"title": "Live page when resting on a pinned tab",
+				"description": "Resting the pointer on a pinned tab or a favorite shows its page in a card, to read and use without leaving the current tab. Off, the card shows a picture of the page.",
+				"keywords": "glance preview hover card live pinned favorite"
+			},
+			"meetingCard": {
+				"title": "Show meetings about to start",
+				"description": "A card shows 10 minutes before an event from your Mac's calendars starts, with Join when the event carries a link. Lilo asks for calendar access when you turn this on, and reads it only on this Mac.",
+				"keywords": "meeting calendar event join video call reminder"
+			},
 			"autoPictureInPicture": {
 				"title": "Auto picture-in-picture",
 				"description": "Pop a call or playing video into a floating window when you switch away from its tab or from Lilo.",
@@ -1566,6 +1576,13 @@
 		"restarting": "Restarting...",
 		"later": "Later"
 	},
+	"meetingCard": {
+		"join": "Join",
+		"joinLabel": "Join {title}",
+		"dismiss": "Dismiss",
+		"now": "Now",
+		"untitled": "Untitled event"
+	},
 	"sitePermissions": {
 		"manage": "Site controls",
 		"camera": "Camera",
@@ -2476,6 +2493,24 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0210": {
+				"headline": "Pages in your language.",
+				"description": "Translated pages leave less untouched and start with what you see, while Lilo's interface takes less memory in every window.",
+				"translationTitle": "Translate the whole page.",
+				"translationDescription": "Read more of a page in your language. Translating it also covers placeholders, tooltips, image descriptions, button labels and text inside web components, starts with what is on screen, and leaves alone passages already in your language.",
+				"memoryTitle": "Lighter on memory.",
+				"memoryDescription": "Keep more windows open with less weight on your Mac. Lilo's own interface uses about 125 MB less memory per window."
+			},
+			"v0200": {
+				"headline": "Clearer conversations with agents.",
+				"description": "See inside a folder without opening it, answer an agent's questions in a click, and follow its progress as it works.",
+				"folderPeekTitle": "See inside a folder.",
+				"folderPeekDescription": "Check what a folder holds without opening it. Rest the pointer on a closed folder in the sidebar to see its tabs beside it, with a search field to filter them, or press Space to open it from the keyboard.",
+				"questionsTitle": "Answer an agent's questions.",
+				"questionsDescription": "An agent can ask you a multiple-choice question in a conversation. Pick one or several answers, type your own or skip, and from the composer a digit picks an option, Return answers and Escape skips.",
+				"tasksTitle": "Follow the agent's plan.",
+				"tasksDescription": "Follow a long task as it runs: the agent's task list stays pinned above the composer with its progress, and its status line names the step under way. Once finished, the list folds into one line."
+			},
 			"v0190": {
 				"headline": "Search what you see.",
 				"description": "Look up any image on a page in a right-click, with colors that read more clearly and a steadier terminal.",

@@ -360,6 +360,16 @@
 				"description": "Um link para outro site abre sobre uma aba fixada ou salva nos favoritos, sem substituí-la. Clique com Shift para pré-visualizar qualquer link.",
 				"keywords": "espiar prévia pré-visualização pop-up fixada favoritos shift clique"
 			},
+			"tabGlance": {
+				"title": "Página ao vivo ao parar o cursor em uma aba fixada",
+				"description": "Parar o cursor em uma aba fixada ou em um favorito mostra a página em um cartão, para ler e usar sem sair da aba atual. Desativado, o cartão mostra uma imagem da página.",
+				"keywords": "prévia pré-visualização cursor cartão ao vivo fixada favorito"
+			},
+			"meetingCard": {
+				"title": "Mostrar reuniões prestes a começar",
+				"description": "Um cartão aparece 10 minutos antes de um evento dos calendários do seu Mac começar, com Entrar quando o evento tem um link. O Lilo pede acesso aos calendários quando você ativa esta opção e só os lê neste Mac.",
+				"keywords": "reunião calendário evento entrar videochamada lembrete"
+			},
 			"autoPictureInPicture": {
 				"title": "Picture in Picture automático",
 				"description": "Exiba uma chamada ou um vídeo em reprodução em uma janela flutuante ao sair da aba ou do Lilo.",
@@ -1566,6 +1576,13 @@
 		"restarting": "Reiniciando...",
 		"later": "Mais tarde"
 	},
+	"meetingCard": {
+		"join": "Entrar",
+		"joinLabel": "Entrar em {title}",
+		"dismiss": "Dispensar",
+		"now": "Agora",
+		"untitled": "Evento sem título"
+	},
 	"sitePermissions": {
 		"manage": "Controles do site",
 		"camera": "Câmera",
@@ -2487,6 +2504,24 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Páginas no seu idioma.",
+				"description": "As páginas traduzidas deixam menos texto de fora e começam pelo que você vê, enquanto a interface do Lilo ocupa menos memória em cada janela.",
+				"translationTitle": "Traduza a página inteira.",
+				"translationDescription": "Leia mais de uma página no seu idioma. A tradução também cobre textos de exemplo, dicas, descrições de imagens, rótulos de botões e o texto dos componentes web, começa pelo que está na tela e mantém os trechos que já estão no seu idioma.",
+				"memoryTitle": "Mais leve na memória.",
+				"memoryDescription": "Mantenha mais janelas abertas pesando menos no seu Mac. A interface do Lilo usa cerca de 125 MB a menos de memória por janela."
+			},
+			"v0200": {
+				"headline": "Conversas mais claras com agentes.",
+				"description": "Veja o conteúdo de uma pasta sem abri-la, responda às perguntas de um agente com um clique e acompanhe o progresso dele enquanto trabalha.",
+				"folderPeekTitle": "Veja o conteúdo de uma pasta.",
+				"folderPeekDescription": "Confira o que uma pasta contém sem abri-la. Deixe o ponteiro sobre uma pasta fechada na barra lateral para ver as abas dela ao lado, com um campo de busca para filtrá-las, ou pressione Espaço para abri-la pelo teclado.",
+				"questionsTitle": "Responda às perguntas de um agente.",
+				"questionsDescription": "Um agente pode fazer uma pergunta de múltipla escolha em uma conversa. Escolha uma ou várias respostas, digite a sua ou pule. No campo de mensagem, um número escolhe uma opção, Return responde e Escape pula.",
+				"tasksTitle": "Acompanhe o plano do agente.",
+				"tasksDescription": "Acompanhe uma tarefa longa enquanto ela avança: a lista de tarefas do agente fica fixada acima do campo de mensagem com o progresso, e a linha de status indica a etapa em andamento. Ao terminar, a lista se recolhe em uma linha."
+			},
 			"v0190": {
 				"headline": "Pesquise o que você vê.",
 				"description": "Pesquise qualquer imagem de uma página com um clique direito, com cores mais legíveis e um terminal mais estável.",

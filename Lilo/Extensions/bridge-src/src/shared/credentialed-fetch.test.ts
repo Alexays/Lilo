@@ -1,14 +1,22 @@
 import { describe, it, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { mockGapAPI } from './ipc.testkit.ts';
+import { mockGapAPI, pushGapEvent } from './ipc.testkit.ts';
 import { installCredentialedFetch } from './credentialed-fetch.ts';
 
 const calls: any[] = [];
 let answer: unknown = null;
-// A cancel is answered at once: left pending, its 30 s ipc timeout would keep the test process alive.
+const pushBody = (requestId: string, part: { chunk: string } | { failed: boolean }) => pushGapEvent({ namespace: 'fetch', event: 'onBody', args: [{ requestId, ...part }] });
+// A cancel or a read is answered at once: left pending, its 30 s ipc timeout would keep the test process alive.
+// An answer's `body` follows its head whole, then its end.
 mockGapAPI((call) => {
   calls.push(call.params);
-  return call.method === 'cancel' ? null : answer;
+  if (call.method !== 'credentialed') return null;
+  Promise.resolve(answer).then((head: any) => {
+    if (typeof head?.body !== 'string') return;
+    pushBody(call.params.requestId, { chunk: head.body });
+    pushBody(call.params.requestId, { failed: false });
+  }, () => {});
+  return answer;
 });
 
 describe('credentialed fetch', () => {
@@ -72,6 +80,51 @@ describe('credentialed fetch', () => {
     const [sentRequest, cancel] = calls;
     assert.equal(typeof sentRequest.requestId, 'string');
     assert.deepEqual(cancel, { requestId: sentRequest.requestId });
+  });
+
+  it('yields each chunk as it arrives, before the response ends', async () => {
+    answer = { status: 200, headers: [['content-type', 'text/event-stream']], url: 'https://example.com/stream', redirected: false };
+    const response = await scope.fetch('https://example.com/stream', { credentials: 'include' });
+    const reader = response.body.getReader();
+    const { requestId } = calls[0];
+    pushBody(requestId, { chunk: btoa('data: one\n\n') });
+    assert.equal(new TextDecoder().decode((await reader.read()).value), 'data: one\n\n');
+    pushBody(requestId, { chunk: btoa('data: two\n\n') });
+    pushBody(requestId, { failed: false });
+    assert.equal(new TextDecoder().decode((await reader.read()).value), 'data: two\n\n');
+    assert.equal((await reader.read()).done, true);
+  });
+
+  it('cancels the request in Lilo when aborted while its body is read', async () => {
+    answer = { status: 200, headers: [], url: 'https://example.com/stream', redirected: false };
+    const controller = new AbortController();
+    const response = await scope.fetch('https://example.com/stream', { credentials: 'include', signal: controller.signal });
+    const reader = response.body.getReader();
+    pushBody(calls[0].requestId, { chunk: btoa('one') });
+    await reader.read();
+    controller.abort();
+    await assert.rejects(reader.read(), { name: 'AbortError' });
+    assert.deepEqual(calls[1], { requestId: calls[0].requestId });
+  });
+
+  it('fails the body when the response breaks off', async () => {
+    answer = { status: 200, headers: [], url: 'https://example.com/stream', redirected: false };
+    const response = await scope.fetch('https://example.com/stream', { credentials: 'include' });
+    pushBody(calls[0].requestId, { failed: true });
+    await assert.rejects(response.text(), TypeError);
+  });
+
+  it('tells Lilo what it read only once it has taken half of what Lilo lets go unread', async () => {
+    answer = { status: 200, headers: [], url: 'https://example.com/file', redirected: false };
+    const response = await scope.fetch('https://example.com/file', { credentials: 'include' });
+    const reader = response.body.getReader();
+    const { requestId } = calls[0];
+    pushBody(requestId, { chunk: btoa('x'.repeat(1024)) });
+    await reader.read();
+    assert.equal(calls.length, 1);
+    pushBody(requestId, { chunk: btoa('x'.repeat(512 * 1024)) });
+    await reader.read();
+    assert.deepEqual(calls[1], { requestId, bytes: 513 * 1024 });
   });
 
   it('waits past the ipc timeout for a long poll', async () => {

@@ -42,6 +42,7 @@ test("hover requests a preview after the delay; leaving first cancels it", async
 			image: "data:image/jpeg;base64,AAA",
 			terminal: null,
 			anchor,
+			glance: false,
 		});
 
 		store.clearTabPreview();
@@ -267,5 +268,71 @@ test("resting on a tab asks to wake it before the preview; sweeping past does no
 	} finally {
 		mock.timers.reset();
 		store.clearTabPreview();
+	}
+});
+
+test("a glance shows the live page once, stays up while the pointer is on the page, and gives it back", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/tabPreview.svelte.ts");
+	const glances = () => posted.filter((m) => m.action === "showTabGlance" || m.action === "hideTabGlance").map((m) => m.action);
+
+	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+	try {
+		store.hoverTabPreview({ ...target("mail"), glance: true }, anchor);
+		mock.timers.tick(450);
+		assert.deepEqual(glances(), ["showTabGlance"]);
+		assert.equal(store.getTabPreview()?.glance, true);
+		mock.timers.tick(10_000);
+		assert.equal(previewRequests(posted).length, 0, "no snapshot: the host shows the page itself");
+		assert.deepEqual(glances(), ["showTabGlance"], "asked once for the whole hover");
+
+		// Off the row, onto the page the host draws over the card.
+		store.leaveTabPreview();
+		mock.timers.tick(100);
+		receive({ event: "tabGlancePointer", inside: true });
+		mock.timers.tick(5_000);
+		assert.ok(store.getTabPreview(), "the pointer on the page keeps the card");
+
+		receive({ event: "tabGlancePointer", inside: false });
+		mock.timers.tick(250);
+		assert.equal(store.getTabPreview(), null);
+		assert.deepEqual(glances(), ["showTabGlance", "hideTabGlance"]);
+	} finally {
+		mock.timers.reset();
+	}
+});
+
+test("a glance the host ends closes the card without asking it back", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/tabPreview.svelte.ts");
+
+	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+	try {
+		store.hoverTabPreview({ ...target("mail"), glance: true }, anchor);
+		mock.timers.tick(450);
+		receive({ event: "tabGlanceEnded" });
+		assert.equal(store.getTabPreview(), null);
+		assert.equal(posted.filter((m) => m.action === "hideTabGlance").length, 0);
+	} finally {
+		mock.timers.reset();
+	}
+});
+
+test("with glance turned off, a saved tab gets the snapshot card", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/tabPreview.svelte.ts");
+	(await loadStore("/src/stores/settings.svelte.ts")).setSetting("tabGlance", "false");
+
+	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+	try {
+		store.hoverTabPreview({ ...target("mail"), glance: true }, anchor);
+		mock.timers.tick(450);
+		assert.equal(posted.filter((m) => m.action === "showTabGlance").length, 0);
+		assert.deepEqual(previewRequests(posted).at(-1)?.payload, { tabId: "mail" });
+	} finally {
+		mock.timers.reset();
 	}
 });

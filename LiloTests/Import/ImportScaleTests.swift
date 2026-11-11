@@ -131,6 +131,7 @@ final class ImportScaleTests: XCTestCase {
         try writeSafari(bookmarks: 4000, history: 20_000)
         let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         // Chrome hides one row in 50, Firefox never visited its bookmarked places, Safari keeps four visits per item.
+        var importsMainCPU = 0.0
         for (source, profile, kinds, visited) in [("chrome", "Default", Set<ImportKind>([.bookmarks, .history]), 19_600),
                                                   ("firefox", "p", [.bookmarks, .history, .cookies], 16_000),
                                                   ("safari", "safari", [.bookmarks, .history], 5000)] {
@@ -147,7 +148,9 @@ final class ImportScaleTests: XCTestCase {
             _ = try window.applyBrowserCommand(.setFolderCollapsed(spaceId: activeSpaceId, folderId: folder.id, isCollapsed: !folder.isCollapsed))
             let toggle = Double(clock_gettime_nsec_np(CLOCK_THREAD_CPUTIME_ID) - before) / 1e9
             print(String(format: "IMPORT-SCALE %@: folder toggle on the imported space %.0f ms main cpu", source, toggle * 1000))
-            XCTAssertLessThan(toggle, run.mainCPU / 2, "\(source): a click on the imported space costs far less than the import")
+            // The space holds every import so far, so the click is weighed against all of them.
+            importsMainCPU += run.mainCPU
+            XCTAssertLessThan(toggle, importsMainCPU / 2, "\(source): a click on the imported space costs far less than the imports")
             let again = await measure("\(source) rerun", [.init(sourceId: source, profileId: profile, kinds: kinds, extensionIds: [])], sources)
             XCTAssertEqual(again.summary.first { $0.kind == .bookmarks }?.imported, 0, "\(source): a rerun adds no bookmark twice")
         }

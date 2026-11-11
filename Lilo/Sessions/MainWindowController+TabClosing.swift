@@ -177,6 +177,7 @@ extension MainWindowController {
         // current-space only, so cleanup placed after it would never run for those.
         floatingTabPanel.dismiss(hosting: id)
         if tabDock.engineId == id { tabDock.undock() }
+        if tabGlance.engineId == id { endTabGlance(notify: true) }
         // Stop the ferry while the engine is still alive, whether the tab is its source or its
         // requester: the page gets its 'ended' event and the capture ends now, not on a watchdog tick.
         let closingView = tabManager.engineTab(for: id)?.view

@@ -360,6 +360,16 @@
 				"description": "Łącze do innej witryny otwiera się nad przypiętą kartą lub zakładką, zamiast ją zastępować. Kliknięcie z Shift pokazuje podgląd dowolnego łącza.",
 				"keywords": "podgląd wyskakujące przypięte zakładki Shift kliknięcie"
 			},
+			"tabGlance": {
+				"title": "Strona na żywo po zatrzymaniu wskaźnika na przypiętej karcie",
+				"description": "Zatrzymanie wskaźnika na przypiętej karcie lub ulubionej pokazuje jej stronę w okienku: można ją czytać i używać bez opuszczania bieżącej karty. Po wyłączeniu okienko pokazuje obraz strony.",
+				"keywords": "podgląd wskaźnik okienko na żywo przypięte ulubione"
+			},
+			"meetingCard": {
+				"title": "Pokazuj zbliżające się spotkania",
+				"description": "Karta pojawia się 10 minut przed rozpoczęciem wydarzenia z kalendarzy na Twoim Macu, z przyciskiem Dołącz, gdy wydarzenie zawiera link. Lilo prosi o dostęp do kalendarzy po włączeniu tej opcji i odczytuje je tylko na tym Macu.",
+				"keywords": "spotkanie kalendarz wydarzenie dołącz rozmowa wideo przypomnienie"
+			},
 			"autoPictureInPicture": {
 				"title": "Automatyczny obraz w obrazie",
 				"description": "Przenieś rozmowę lub odtwarzane wideo do pływającego okna po przejściu do innej karty lub aplikacji.",
@@ -1600,6 +1610,13 @@
 		"restarting": "Ponowne uruchamianie...",
 		"later": "Później"
 	},
+	"meetingCard": {
+		"join": "Dołącz",
+		"joinLabel": "Dołącz do: {title}",
+		"dismiss": "Odrzuć",
+		"now": "Teraz",
+		"untitled": "Wydarzenie bez tytułu"
+	},
 	"sitePermissions": {
 		"manage": "Ustawienia witryny",
 		"camera": "Kamera",
@@ -2533,6 +2550,24 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0210": {
+				"headline": "Strony w Twoim języku.",
+				"description": "Tłumaczone strony pomijają mniej tekstu i zaczynają od tego, co widzisz, a interfejs Lilo zajmuje mniej pamięci w każdym oknie.",
+				"translationTitle": "Przetłumacz całą stronę.",
+				"translationDescription": "Czytaj więcej ze strony w swoim języku. Tłumaczenie obejmuje też teksty zastępcze, podpowiedzi, opisy obrazów, etykiety przycisków i tekst w komponentach webowych, zaczyna od tego, co na ekranie, i pozostawia fragmenty już w Twoim języku.",
+				"memoryTitle": "Lżej dla pamięci.",
+				"memoryDescription": "Miej otwartych więcej okien, mniej obciążając Maca. Interfejs Lilo zużywa około 125 MB mniej pamięci na okno."
+			},
+			"v0200": {
+				"headline": "Czytelniejsze rozmowy z agentami.",
+				"description": "Zajrzyj do folderu bez otwierania go, odpowiedz na pytania agenta jednym kliknięciem i śledź postęp jego pracy.",
+				"folderPeekTitle": "Zajrzyj do folderu.",
+				"folderPeekDescription": "Sprawdź, co zawiera folder, bez otwierania go. Zatrzymaj wskaźnik na zamkniętym folderze na pasku bocznym, aby zobaczyć obok jego karty z polem wyszukiwania do ich filtrowania, lub naciśnij spację, aby otworzyć go z klawiatury.",
+				"questionsTitle": "Odpowiadaj na pytania agenta.",
+				"questionsDescription": "Agent może zadać ci w rozmowie pytanie wielokrotnego wyboru. Wybierz jedną lub kilka odpowiedzi, wpisz własną albo pomiń pytanie. W polu wiadomości cyfra wybiera opcję, Return odpowiada, a Escape pomija.",
+				"tasksTitle": "Śledź plan agenta.",
+				"tasksDescription": "Śledź długie zadanie w trakcie: lista zadań agenta pozostaje przypięta nad polem wiadomości wraz z postępem, a wiersz stanu podaje bieżący krok. Po zakończeniu lista zwija się do jednego wiersza."
+			},
 			"v0190": {
 				"headline": "Szukaj tego, co widzisz.",
 				"description": "Wyszukaj dowolny obraz na stronie prawym kliknięciem, z czytelniejszymi kolorami i stabilniejszym terminalem.",

@@ -10,3 +10,5 @@
 "NSLocalNetworkUsageDescription" = "Lilo se conecta a los dispositivos de tu red local cuando abres sus páginas, como las de un router o una impresora.";
 /* Shown by macOS when a page starts speech recognition. */
 "NSSpeechRecognitionUsageDescription" = "Este sitio solicita reconocimiento de voz para convertir lo que dices en texto.";
+/* Shown by macOS when the meeting card is turned on. */
+"NSCalendarsFullAccessUsageDescription" = "Lilo lee los calendarios de este Mac para mostrar una tarjeta con el enlace para unirte antes de que empiece una reunión.";

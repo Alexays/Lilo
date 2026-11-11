@@ -10,6 +10,7 @@ extension MainWindowController {
         chromeInteractiveZones.onZonesChanged = { [weak self] zones in
             self?.chromeInput.debugOverlay?.zones = zones
             self?.tabDock.zonesChanged(zones)
+            self?.tabGlance.zonesChanged(zones)
         }
         // Every undock path funnels here, so the chrome slot can never outlive the native view.
         tabDock.onDockCleared = { [weak self] in self?.setPipDockActive(false) }

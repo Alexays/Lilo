@@ -85,7 +85,7 @@ enum AgentInput {
             for character in text {
                 let string = String(character)
                 pressKey(webView, characters: string, ignoringModifiers: string.lowercased(),
-                         keyCode: keyCodes[string.lowercased()] ?? 0, modifiers: character.isUppercase ? [.shift] : [])
+                         keyCode: keyCode(string.lowercased()), modifiers: character.isUppercase ? [.shift] : [])
                 // A rich editor (X's composer) opens the new paragraph, then puts the caret in it at its next
                 // render: keys sent before that land in the old one, out of order.
                 if character.isNewline {
@@ -141,7 +141,7 @@ enum AgentInput {
         let named = namedKeys[key.lowercased()]
         let characters = text.isEmpty ? named?.characters ?? (key.count == 1 ? key : "") : text
         pressKey(webView, characters: characters, ignoringModifiers: characters.lowercased(),
-                 keyCode: keyCode ?? named?.keyCode ?? keyCodes[key.lowercased()] ?? 0, modifiers: modifiers, types: [down ? .keyDown : .keyUp])
+                 keyCode: keyCode ?? named?.keyCode ?? Self.keyCode(key.lowercased()), modifiers: modifiers, types: [down ? .keyDown : .keyUp])
     }
 
     /// Presses chords like `"cmd+a"`, `"Return"` or `"Backspace Backspace"`: space separated, modifiers joined by `+`.
@@ -220,7 +220,7 @@ enum AgentInput {
         guard keyName.count == 1 else { return nil }
         let base = keyName.lowercased()
         let characters = modifiers.contains(.shift) && !modifiers.contains(.command) ? keyName.uppercased() : base
-        return KeyPress(characters: characters, ignoringModifiers: base, keyCode: keyCodes[base] ?? 0, modifiers: modifiers)
+        return KeyPress(characters: characters, ignoringModifiers: base, keyCode: keyCode(base), modifiers: modifiers)
     }
 
     /// Sends `down` then `up` until the page has seen the press: WebKit drops pointer events that come
@@ -395,7 +395,16 @@ enum AgentInput {
         return keys
     }()
 
-    /// ANSI virtual key codes, for the `code` a page reads from a key event.
+    /// The key typing `character` on the user's layout, as a real press of it carries: a page reading `code` sees
+    /// their keyboard. A digit AZERTY types unshifted only on the keypad keeps its main-row key, pressed with Shift there.
+    static func keyCode(_ character: String) -> UInt16 {
+        if let code = KeyboardShortcuts.keyStroke(character)?.keyCode, !keypadKeyCodes.contains(code) { return code }
+        return keyCodes[character] ?? 0
+    }
+
+    private static let keypadKeyCodes: Set<UInt16> = [65, 67, 69, 71, 75, 76, 78, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92]
+
+    /// ANSI virtual key codes, for a character no key of the layout types unshifted.
     private static let keyCodes: [String: UInt16] = [
         "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11, "q": 12,
         "w": 13, "e": 14, "r": 15, "y": 16, "t": 17, "1": 18, "2": 19, "3": 20, "4": 21, "6": 22, "5": 23,

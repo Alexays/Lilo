@@ -214,7 +214,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
     ]
 
     /// Extensions reach only these; install and uninstall stay on the chrome UI bridge.
-    let gapActions: Set<String> = ["action.openPopup", "runtime.extensionViews"]
+    let gapActions: Set<String> = ["action.openPopup", "runtime.extensionViews", "runtime.clientPages"]
 
     init(extensionRegistryProvider: (@MainActor () -> ProfileExtensionRegistry?)? = nil) {
         self.extensionRegistryProvider = extensionRegistryProvider
@@ -251,13 +251,25 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
     }
 
     /// `action.openPopup` opens the caller's popup, in the caller's profile; `runtime.extensionViews`
-    /// lists its pages on screen outside tabs.
+    /// lists its pages on screen outside tabs, `runtime.clientPages` the urls of those and of its pages in tabs.
     func handle(_ call: GapCall) async -> Any? {
-        guard call.action == "runtime.extensionViews" else {
+        guard call.action != "action.openPopup" else {
             return await openPopup(call)
         }
         guard let context = call.context else { return [] }
-        return call.registry.delegate.extensionViews(of: context).map { ["contextType": $0.contextType, "url": $0.url.absoluteString] }
+        let views = call.registry.delegate.extensionViews(of: context)
+        guard call.action == "runtime.clientPages" else {
+            return views.map { ["contextType": $0.contextType, "url": $0.url.absoluteString] }
+        }
+        let host = context.baseURL.host?.lowercased()
+        // The views already hold the tab of each window the extension opened.
+        let popupWindows = call.registry.delegate.popupWindowAdapters
+        let tabs = call.registry.extensionWindows(for: context)
+            .filter { window in !popupWindows.contains { $0 === window } }
+            .flatMap { $0.tabs(for: context) }
+            .compactMap { $0.url?(for: context) }
+            .filter { $0.host?.lowercased() == host }
+        return (views.map(\.url) + tabs).map(\.absoluteString)
     }
 
     func handle(message: BridgeMessage) async -> Any? {

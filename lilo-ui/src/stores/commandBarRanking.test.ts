@@ -244,6 +244,17 @@ test("a long query scattered letter by letter across a tab never lists that tab"
 	assert.deepEqual(tabs, ["tab-moulures"]);
 });
 
+test("a scattered match that starts in the middle of a word never lists the tab", () => {
+	seed([tab("pulls", "home", { title: "Pull requests · Alexays/Lilo", url: "https://github.com/Alexays/Lilo/pulls" })]);
+	const maps = toHistoryResults(
+		[{ id: "m", title: "Google Maps", url: "https://www.google.com/maps", visitCount: 30, lastVisitedAt: Date.now() }],
+		"maps",
+	);
+	const results = search("maps", maps).results;
+	assert.equal(results.some((result) => result.id === "tab-pulls"), false);
+	assert.equal(results[0]?.title, "Google Maps");
+});
+
 test("a query spanning a tab's title and URL lists it only when each word matches one of them", () => {
 	seed([
 		tab("klima", "home", {

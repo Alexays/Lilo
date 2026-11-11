@@ -188,6 +188,25 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(views as? [[String: String]], [["contextType": "TAB", "url": pageURL.absoluteString]])
     }
 
+    func testClientPagesNameThePageInATabAndTheOneInAWindowTheExtensionOpenedOnceEach() async throws {
+        let (_, registry, extensionId, pageURL, _, _) = try await openExtensionPage()
+        let context = try XCTUnwrap(registry.context(for: extensionId))
+        let panel = try XCTUnwrap(registry.delegate.presentExtensionPanel(
+            url: pageURL, type: .popup, isPrivate: false, for: context, controller: registry.controller, size: NSSize(width: 360, height: 600)
+        ))
+        defer { panel.nsWindow?.close() }
+        let router = browserContext.context.engineFactory.gapRouter
+
+        let shown = await pollUntil { (registry.delegate.extensionViews(of: context).first?.url) == pageURL }
+        let (pages, error) = await router.route(
+            namespace: "runtime", method: "clientPages", params: [:], extensionId: extensionId, fromWorker: true, registry: registry
+        )
+
+        XCTAssertTrue(shown)
+        XCTAssertNil(error)
+        XCTAssertEqual(pages as? [String], [pageURL.absoluteString, pageURL.absoluteString], "the window's page, then the tab's")
+    }
+
     /// Saladict's startup measure: a normal window and a panel, created then removed, are windows of their own.
     func testANormalWindowsCreateOpensItsOwnWindowAndRemovingItLeavesTheUsersOne() async throws {
         let (window, _, _, _, tabId, _) = try await openExtensionPage()

@@ -248,8 +248,9 @@
     width: 4px;
   }
 
+  /* A translucent layer, like the sidebar's hover and separators, so the Space color shows through. */
   .space-scroll::-webkit-scrollbar-thumb {
-    background: var(--text-muted);
+    background: color-mix(in srgb, var(--text-primary) 30%, transparent);
     border-radius: var(--radius-2xs);
   }
 

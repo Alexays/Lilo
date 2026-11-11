@@ -52,6 +52,8 @@ extension MainWindowController {
     @objc func closeCurrentTab(_ sender: Any?) {
         if let popup = pagePopups.values.first(where: { $0.window?.isKeyWindow == true }) {
             popup.requestClose()
+        } else if tabGlance.hasFocus {
+            endTabGlance(notify: true)
         } else if changesPeek != nil {
             dismissChangesPeek()
         } else if let peek = pagePopups.values.first(where: { unsafe $0.peekView?.superview != nil }) {
