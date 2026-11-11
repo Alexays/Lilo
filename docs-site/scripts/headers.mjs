@@ -11,11 +11,14 @@ const dist = fileURLToPath(new URL("../dist", import.meta.url));
 const MAX_LINE = 2000;
 const MAX_RULES = 100;
 
+/** An HTML start tag, which a `>` inside a quoted attribute does not end. */
+export const START_TAG = /<[a-z][^\s/>]*(?:"[^"]*"|'[^']*'|[^"'>])*>/giu;
+
 /** The source of every inline script a browser executes; JSON data blocks run nothing. */
 export function inlineScripts(html) {
   const scripts = [];
-  for (const [, attrs, body] of html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gu)) {
-    if (body && !/\ssrc=/u.test(attrs) && !/type="application\/(?:ld\+)?json"/u.test(attrs)) {
+  for (const [, attrs, body] of html.matchAll(/<script\b((?:"[^"]*"|'[^']*'|[^"'>])*)>([\s\S]*?)<\/script\s*>/giu)) {
+    if (body && !/\ssrc\s*=/iu.test(attrs) && !/\stype\s*=\s*["']?application\/(?:ld\+)?json\b/iu.test(attrs)) {
       scripts.push(body);
     }
   }
