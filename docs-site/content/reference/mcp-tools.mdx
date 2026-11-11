@@ -5,4 +5,15 @@ sidebar:
   order: 3
 ---
 
-This page is being written.
+The tools an AI agent can call once you turn on **Let agents use Lilo** in Settings > Agents. Each one has a short summary and the parameters an MCP client sends, with their types, allowed values and whether they are required. To connect an agent, see [AI agents](/guides/ai-agents).
+
+What holds for every tool:
+
+- The tools are named and shaped like those of Claude in Chrome, so an agent written for it needs nothing new.
+- An agent works in its own tab group, in the Agents Space. `tabId` is the number `tabs_context_mcp` and `tabs_create_mcp` give for a tab of that group. An agent reaches only the tabs of its group, never a Private Space.
+- Some actions wait for your approval: a click or Enter that sends, pays, buys, orders, deletes, transfers, publishes or signs up, and a request other than GET or HEAD with the cookies of one of your profiles, unless you turn off **Ask before sending, paying, deleting or publishing**; and, whatever that setting, every file from your Mac an agent hands a page. [Agent safety](/about/agent-safety) explains what the approvals cover and what they do not.
+- A parameter description below is the text the agent itself reads.
+
+<include>./_generated/mcp-tools.md</include>
+
+The browser selection tools exist so that clients written for several browsers find the one they expect. They are not offered to the agents you talk to in a Lilo conversation.
