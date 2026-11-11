@@ -1,8 +1,75 @@
 ---
 title: "Energy use"
-description: "How much energy Lilo uses compared with other browsers, how it was measured, and what Lilo does to stay light on your Mac's battery when idle."
+description: "How much power Lilo drew next to Safari, Chrome and Firefox in a measured run, how it was measured, and how Lilo keeps idle background tabs from using energy."
 sidebar:
   order: 3
 ---
 
-This page is being written.
+This page gives the energy numbers measured for Lilo, explains what they do and do not show, and describes what Lilo does to keep background tabs cheap. Use it to judge what to expect on your own Mac, and to rerun the measurement if you want your own numbers.
+
+## The measurement
+
+The numbers below come from one measured run, published in [`docs/ENERGY.md`](https://github.com/Alexays/Lilo/blob/main/docs/ENERGY.md), which holds the full method.
+
+- **Date:** 2026-10-29.
+- **Machine:** MacBook Pro (M4 Pro, 48 GB), macOS 27.0.1, plugged in.
+- **Browsers:** Lilo 0.11.0 (`93e8173e`), Safari 27.0.1, Chrome 156.0.8078.49, Firefox 159.0.
+- **Method:** medians of 3 rounds of 60 seconds each, sampled with `powermetrics` on local pages, with no extension and no content blocker in any browser.
+
+The run used Lilo 0.11.0, an older version than the current release. Treat the numbers as a measurement of that version on that Mac, not as a promise for every Mac or every version.
+
+### Idle
+
+Five static pages, the first one visible.
+
+| Browser | Power above idle Mac | CPU | Energy impact |
+|---------|---------------------:|----:|--------------:|
+| Lilo    |   6 mW | 0.11 % |  0.04 |
+| Safari  |   3 mW | 0.14 % |  0.11 |
+| Chrome  |  62 mW | 1.25 % | 10.33 |
+| Firefox |  45 mW | 1.09 % | 46.29 |
+
+### Active
+
+A visible page with a CSS animation and a clock ticking every second, and four background tabs whose timers update the page four times a second.
+
+| Browser | Power above idle Mac | CPU | Energy impact |
+|---------|---------------------:|----:|--------------:|
+| Lilo    |  37 mW |  1.38 % |  0.54 |
+| Safari  |  34 mW |  1.22 % |  0.49 |
+| Chrome  | 102 mW | 14.70 % | 69.12 |
+| Firefox | 370 mW | 26.85 % | 72.88 |
+
+## How to read the numbers
+
+- **Power above idle Mac** is the whole Mac's CPU and GPU power during the run, minus a sample taken with no browser open at the start of each round (53 to 68 mW). Idle readings under about 15 mW are within that noise: at idle, Lilo and Safari cannot be told apart from a Mac with no browser open.
+- **CPU** sums every process of the browser: the app, its helpers, and its web, GPU and network processes. 100 % is one core.
+- **Energy impact** is the score Activity Monitor shows. It weighs CPU, GPU and wakeups, and is better for comparing browsers on one Mac than as an absolute value. Chrome's idle score moved between 10 and 62 from one round to the next.
+
+In short: in the active scenario, Chrome drew about three times Lilo's power and Firefox about ten times; at idle and in the active scenario, Lilo and Safari were close. The measurement says nothing about video playback or long sessions: the method defines those scenarios, but `docs/ENERGY.md` publishes no results for them.
+
+## Why Lilo stays close to Safari
+
+Most of the difference comes from the engine: Lilo runs on the WebKit that ships with macOS, the engine Safari uses ([Why WebKit](/about/why-webkit)). On top of it, Lilo avoids spending energy on tabs you are not looking at.
+
+### Background tabs are frozen
+
+A background tab you have not used for a while is frozen: its page stops running until you come back to it, and then resumes where it was. How soon depends on the Settings > Tabs and Spaces > **Idle tabs** preset, and on the power source.
+
+| Idle tabs | Freezes a background tab after (plugged in) | Unloads it |
+|---|---|---|
+| Keep Loaded | 15 minutes | only under memory pressure |
+| Balanced (default) | 5 minutes | only under memory pressure |
+| Save Memory | 2 minutes | after 10 minutes |
+
+An unloaded tab stays in the sidebar and loads its page again when you return to it. On battery, every preset freezes a background tab after 1 minute. In Low Power Mode, or when the Mac is running hot, Lilo also keeps fewer pages loaded. With any preset, a background tab whose page keeps using about 30 % of a CPU core, or grows very large in memory, is unloaded. When loaded pages together reach about 40 % of the Mac's memory, Lilo unloads tabs of other Spaces first, then tabs you cannot see in the current one.
+
+A tab is not frozen while it plays sound you can hear, uses your camera, microphone or screen, is in a call, or plays in Picture in Picture. A muted tab can be frozen. [Web compatibility](/reference/web-compatibility) lists the other cases Lilo spares, such as a page holding a live WebRTC connection, and their limits.
+
+### Refresh rate
+
+On a 120 Hz display, Lilo draws pages at the display's full rate by default. Settings > Appearance > **Full refresh rate** turns that off: pages then draw at about 60 frames per second, which uses less battery. New tabs follow the setting; open tabs change when Lilo restarts.
+
+## Measure it yourself
+
+The measurement is a Make target in the repository, `make energy-browsers`. It takes about five hours and needs the Mac left alone, plugged in and unlocked, so overnight suits it. The steps, the scenarios and the options are in the [method section of `docs/ENERGY.md`](https://github.com/Alexays/Lilo/blob/main/docs/ENERGY.md#method).
