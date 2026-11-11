@@ -23,7 +23,7 @@ More about these controls in [Privacy controls](/guides/privacy-controls).
 
 When a page freezes, Lilo shows "example.com isn't responding" over it. Your other tabs keep working. Choose **Wait**, **Reload** or **Close Tab**.
 
-If the same site freezes again, the card offers **Reload Without Blocker**: on some sites the content blocker causes the freeze. **Report a problem** opens a bug report about the frozen page, filled in with the page's origin (its scheme and host, no path) and the names of your enabled extensions. The form's address carries them, so `github.com` receives them when the tab opens; you review the form before you submit it.
+If the same site freezes again, the card offers **Reload Without Blocker**: on some sites the content blocker causes the freeze. **Report a problem** opens a bug report about the frozen page, filled in with a title naming the page's host, the page's origin (its scheme and host, no path), the names of your enabled extensions, and the versions of Lilo, WebKit and macOS. The form's address carries them, so `github.com` receives them when the tab opens; you review the form before you submit it.
 
 ## A page cannot be loaded
 
@@ -50,7 +50,7 @@ When an import ends, Lilo says what it brought and names what it could not, with
 | **the file is in use, quit the browser and retry** | The other browser holds its files. Quit it, then run the import again. |
 | **Full Disk Access is needed**, or a browser's card reads **Allow access** | macOS keeps that browser's files private, Safari's in particular. Click **Allow access** and turn Lilo on in **Privacy & Security > Full Disk Access**, as [Allow access to a browser](/start/import#allow-access-to-a-browser) shows, then import again. |
 | A kind of data named with no cause, such as **Extensions** | Something else failed, such as an extension the Chrome Web Store would not deliver. Run the import again; if it keeps failing, [report a bug](#report-a-bug). |
-| "Done: nothing new to import." | Everything was already there. Bookmarks and tabs the Space already has, and pages your history already holds, are not added twice. |
+| "Done: nothing new to import." | The kinds you chose brought nothing: the browser had none of them, or its bookmarks and tabs were already in the Space. Bookmarks and tabs the Space already has, and visits your history already holds, are not added twice. History, sign-ins and extensions are counted in the result each time you import them, so a repeat import that includes them lists them again even when nothing new came. |
 | "No other browser found on this Mac." | Lilo lists a browser only when it is installed on this Mac and Lilo finds its data. |
 
 Passwords are never imported, from any browser; [Import sources](/reference/import-sources) lists what each browser brings.
