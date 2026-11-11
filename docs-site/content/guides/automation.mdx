@@ -22,8 +22,8 @@ The first time a script or app controls Lilo, macOS asks whether to allow it. Yo
 | `tabs` | list of `tab` | read, make new | The tabs of the window's current Space. |
 | `active tab` | `tab` | read | The tab shown in the window. |
 | `active tab index` | integer | read and write | The index of the active tab, from 1; setting it shows that tab. |
-| `space name` | text | read | The name of the window's current Space; empty for a private Space. |
-| `profile name` | text | read | The name of the current Space's profile; empty for a private Space. |
+| `space name` | text | read | The name of the window's current Space; empty for a Private Space. |
+| `profile name` | text | read | The name of the current Space's profile; empty for a Private Space. |
 
 **tab**:
 
@@ -36,7 +36,7 @@ The first time a script or app controls Lilo, macOS asks whether to allow it. Yo
 
 A tab responds to `close`, `reload`, `go back` and `go forward`.
 
-Some tabs stay out of reach: a window that shows a private Space lists no tabs and no names, and the tabs of a locked folder are left out. A script can load only `http`, `https` and `file` addresses.
+Some tabs stay out of reach: a window that shows a Private Space lists no tabs and no names, and the tabs of a locked folder are left out. Windows that are not browser windows, such as a Little window, have no tabs either: when one is in front, `tabs of front window` is empty and `make new tab` in it fails, so bring a browser window to the front first. A script can load only `http`, `https` and `file` addresses.
 
 ### Examples
 
@@ -98,7 +98,7 @@ Lilo adds these actions to the Shortcuts app. They act on the Lilo window you us
 | Action | Input | What it does |
 | --- | --- | --- |
 | **Open URL in Lilo** | URL | Opens the address in Lilo, as a link from another app would. |
-| **Get Current Tab** | none | Returns the address of the tab shown in the front Lilo window. It returns nothing when that window shows a private Space. |
+| **Get Current Tab** | none | Returns the address of the tab shown in the front Lilo window. It returns nothing when that window shows a Private Space. |
 | **Open Space** | Space | Switches the window to that Space. Private Spaces are never offered. |
 
 Two of them work by voice or from Spotlight with no setup: "Get the current tab in Lilo" and "Open a space in Lilo".

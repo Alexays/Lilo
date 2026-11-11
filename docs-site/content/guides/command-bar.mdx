@@ -33,7 +33,7 @@ If an extension replaces Chrome's new tab page, <kbd>⌘T</kbd> opens that page 
   </Step>
 </Steps>
 
-Anything that is not an address goes to your search engine, Google unless you chose another in **Settings > General > Search engine**. Under **Search engines** you can give an engine a keyword: type the keyword, a space and your query to search that engine once. **Search suggestions** sends what you type to the search engine to show its suggestions; turn it off to keep typing local.
+Anything that is not an address goes to your search engine, Google unless you chose another in **Settings > General > Search engine**. Under **Search engines** you can give an engine a keyword: type the keyword, a space and your query to search that engine once. **Search suggestions** sends what you type to the search engine to show its suggestions; turn it off and what you type stays on your Mac. Either way, while you type a search Lilo opens a connection to your search engine ahead of time, without sending your text.
 
 ## Narrow the search with a prefix
 
@@ -68,13 +68,15 @@ The footer of the command bar names the keys the selected result answers to.
 
 Type `:` and part of a command's name, such as `: split` or `: reader`, then press <kbd>↩</kbd>. The actions include **New Space**, **Private Space**, **New Split View**, **Separate Split View**, **Clear Unpinned Tabs**, **Reopen Closed Tab**, **Pin or Unpin Tab**, **Duplicate Tab**, **Reader View**, **Translate Page**, **Capture Full Page**, **Copy Page URL**, **Show History**, **Show Downloads** and **Settings**. Each row shows its keyboard shortcut when it has one.
 
-Without a prefix, a command name of two words or more, such as `new tab`, runs the command; a single word such as `reload` runs it only after `:`.
+Without a prefix, a few fixed English phrases run a command directly when you type one exactly and press <kbd>↩</kbd>, such as `new tab`, `close tab`, `reload page`, `split view` or `copy link`. Only phrases of two words or more work this way, and only these exact phrases, not every command's name. A single word such as `reload` runs the command only after `:`; anything else goes to your search engine.
 
 ## What it shows before you type
 
-An empty command bar lists your open tabs, this Space's bookmarks, the sites you visit most, your recent history and a few quick actions.
+- **On a new blank tab**: **Frequent Sites**, the sites your recent history goes back to most, as tiles, and **Recent Conversations** when you have conversations with agents.
+- **Over a page, once you clear the field**: this Space's **Bookmarks** as tiles, **Recent History**, **Open Tabs** of this Space and two **Quick Actions**.
+- **After a prefix**: the empty list of that scope, such as your open tabs after `@` or your recent history after `/`.
 
 ## Limits
 
-- Tab and bookmark results come from the current Space only. To reach another Space, type its name and choose **Switch to** it.
+- Tab and bookmark results come from the current Space only. To reach another Space, type its name and pick it under **Spaces**; after `:`, the row reads **Switch to** and the Space's name.
 - A locked folder's tabs never appear by name. When one matches, the command bar shows a single **Results in** row for the folder, which offers to unlock it. See [Lock a folder](/guides/tabs-and-folders#lock-a-folder).
