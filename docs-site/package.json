@@ -5,9 +5,9 @@
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "dev": "npm run generate && blume dev",
-    "build": "npm run generate && blume build",
+    "build": "npm run generate && blume build && node scripts/headers.mjs",
     "check": "npm run generate && blume validate --strict",
-    "test": "blume audit",
+    "test": "node --test tests/*.test.mjs && blume audit",
     "preview": "wrangler dev --ip 127.0.0.1",
     "deploy": "npm run build && wrangler deploy",
     "deploy:check": "wrangler deploy --dry-run"
