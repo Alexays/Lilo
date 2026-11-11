@@ -1,24 +1,44 @@
-<!-- The downloads that just started or ended, stacked above the downloads button for a few seconds: the pointer
-     fans them out, a finished one drags out or opens on a click. -->
+<!-- The downloads that just started or ended, stacked above the sidebar's downloads button for a few seconds: the
+     pointer fans them out, a finished one drags out or opens on a click. Mounted with the deferred chrome, so the
+     first frame pays nothing for it. -->
 <script lang="ts">
   import { getFormatLocale, getLocale, t } from "../../lib/i18n/state.svelte";
+  import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { downloadActions } from "../../lib/bridge/actions";
   import type { BridgeDownloadSnapshot } from "../../lib/bridge/protocol";
   import { progress } from "../../lib/downloadFormat";
   import { popoverOut } from "../../lib/motion/restingTransitions";
+  import { dismissDownloadStack as ondismiss, getDownloadStack } from "../../stores/downloadStack.svelte";
   import { isActiveDownload } from "../../stores/downloads.svelte";
-  import { openDownloadsPanel } from "../../stores/panels.svelte";
+  import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
+  import { isDownloadsVisible, openDownloadsPanel } from "../../stores/panels.svelte";
   import { tooltip } from "../../lib/tooltip";
   import Icon from "../ui/Icon.svelte";
   import { downloadDrag } from "./downloadDrag";
   import DownloadVisual from "./DownloadVisual.svelte";
   import { canOpen, inlineAction, metaLine, type InlineAction } from "./downloadsPanelModel";
 
-  let { downloads, ondismiss }: {
-    /** Newest first. */
-    downloads: BridgeDownloadSnapshot[];
-    ondismiss: (id?: number) => void;
-  } = $props();
+  // Newest first.
+  const downloads = $derived(getDownloadStack());
+
+  // Above the sidebar's bottom bar and as wide as it: without one on screen (tabs on top or bottom, the rail, a
+  // hidden sidebar), no stack.
+  const bar = $derived.by(() => {
+    if (downloads.length === 0) return undefined;
+    const rect = document.querySelector(".bottom-bar")?.getBoundingClientRect();
+    return rect && rect.width > 0 && rect.right > 0 && rect.left < window.innerWidth ? rect : undefined;
+  });
+
+  // The Downloads screen lists the files itself, and so does the menu the downloads button opens.
+  $effect(() => {
+    if (downloads.length === 0) return;
+    if (!bar || isDownloadsVisible() || !isDownloadUiEnabled()) return ondismiss();
+    const handleClick = (event: MouseEvent) => {
+      if ((event.target as Element).closest(".download-btn-wrap")) ondismiss();
+    };
+    window.addEventListener("click", handleClick, true);
+    return () => window.removeEventListener("click", handleClick, true);
+  });
 
   const HOLD_MS = 6000;
   // Fanned out, and kept, while the pointer or the keyboard is on it.
@@ -29,8 +49,12 @@
   // Restarts when a download joins or changes state, never on a progress tick.
   const holdKey = $derived(downloads.map((dl) => `${dl.id}:${dl.state}`).join());
   $effect(() => {
-    void holdKey;
-    if (open) return;
+    // The stack leaves without telling the pointer or the focus that were on it.
+    if (!holdKey) {
+      hovered = false;
+      focused = false;
+    }
+    if (!holdKey || open) return;
     const timer = setTimeout(ondismiss, HOLD_MS);
     return () => clearTimeout(timer);
   });
@@ -63,9 +87,11 @@
   }
 </script>
 
+{#if bar && downloads.length > 0}
 <div
   class="download-stack"
   class:open
+  style={`left: ${bar.left + 8}px; bottom: ${window.innerHeight - bar.top}px; width: ${Math.min(bar.width - 16, 280)}px;`}
   role="group"
   aria-label={t("downloadsPanel.title")}
   onpointerenter={() => (hovered = true)}
@@ -73,6 +99,7 @@
   onfocusin={() => (focused = true)}
   onfocusout={() => (focused = false)}
   out:popoverOut|global
+  use:reportInteractiveZone={{ id: "download-stack" }}
 >
   {#each downloads as download, depth (download.id)}
     {@const meta = metaLine(download, getLocale(), getFormatLocale(), Date.now())}
@@ -141,6 +168,7 @@
     </div>
   {/each}
 </div>
+{/if}
 
 <style>
   /* Covers the end of the tab list, as wide as the bar: nothing moves to make room for it. The newest card sits
@@ -149,11 +177,8 @@
     --card-height: 60px;
     --card-gap: 6px;
     --card-peek: 5px;
-    position: absolute;
-    left: var(--sidebar-right-pad, 8px);
-    right: var(--sidebar-right-pad, 8px);
-    bottom: 100%;
-    max-width: 280px;
+    position: fixed;
+    z-index: var(--z-card);
     display: flex;
     flex-direction: column-reverse;
     gap: var(--card-gap);

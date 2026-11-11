@@ -9,26 +9,18 @@
   const preview = $derived(canOpen(download) && failedId !== download.id);
 </script>
 
+<!-- Styled inline: a stylesheet of its own would add a file to the first frame's preload map. -->
 <img
-  class:preview
   src={preview ? previewURL(download) : fileIconURL(download)}
   alt=""
   width={size}
   height={size}
   draggable="false"
+  style:flex="none"
+  style:object-fit="contain"
+  style:pointer-events="none"
+  style:border-radius={preview ? "var(--radius-xs)" : undefined}
   onerror={() => {
     if (preview) failedId = download.id;
   }}
 />
-
-<style>
-  img {
-    flex: none;
-    object-fit: contain;
-    pointer-events: none;
-  }
-
-  .preview {
-    border-radius: var(--radius-xs);
-  }
-</style>
