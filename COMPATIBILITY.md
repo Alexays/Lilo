@@ -74,21 +74,22 @@ MV3 only, on WebKit's `WKWebExtension` runtime plus Lilo's Gap APIs ([docs/ARCHI
 
 ### Tested store extensions
 
-Measured on 2026-10-23 with `make ext-smoke TOP=30` (the 30 most used extensions of `top-extensions.json`, the password managers onboarding proposes, and the new tab pages in the list), against Chrome 156's recording (`make chrome-smoke`): each one installs from the store, its worker starts and its popup renders. The password managers also opened a local login form, signed out, to check their content scripts reach it. Errors Chrome reports too do not count. `ext-smoke` also checks, on a local sign-in page and signed out, that Dark Reader's theme applies and its shortcut turns it off for the site, that Grammarly, Quillbot, LastPass, Dashlane, Proton Pass, Keeper, DeepL and Immersive Translate mark the page, that DeepL and AdBlock add their context menu entries, that Adblock Plus blocks an ad request, that the toolbar buttons of WhatFont and SelectorGadget act on the page and Claude's opens its side panel. Since 2026-10-24 it also checks that uBlock Origin Lite and AdGuard block that ad request; that React, Vue.js and Redux DevTools hook into the page from its first script; that JSON Formatter and JSONVue format a JSON document; that Video Speed Controller adds its controller to a playing video; that LanguageTool and Wordtune reach the page; that Sider's toolbar button opens its side panel, Session Buddy's its manager and GoFullPage's a capture of the whole page. Ghostery blocks nothing until its onboarding terms are accepted, which the test does not do. `top-extensions.json` also lists extensions picked by hand outside the most used (`extra`), which `ext-smoke` runs every time. Nothing here was signed in, so signed-in features (autofill, translation, grammar suggestions) are not verified.
+Measured on 2026-10-23 with `make ext-smoke TOP=30` (the 30 most used extensions of `top-extensions.json` as it stood then, the password managers onboarding proposes, and the new tab pages in the list), against Chrome 156's recording of the time (`make chrome-smoke`): each one installs from the store, its worker starts and its popup renders. The password managers also opened a local login form, signed out, to check their content scripts reach it. Errors Chrome reports too do not count. `ext-smoke` also checks, on a local sign-in page and signed out, that Dark Reader's theme applies and its shortcut turns it off for the site, that Grammarly, Quillbot, LastPass, Dashlane, Proton Pass, Keeper, DeepL and Immersive Translate mark the page, that DeepL and AdBlock add their context menu entries, that Adblock Plus blocks an ad request, that the toolbar buttons of WhatFont and SelectorGadget act on the page and Claude's opens its side panel. Since 2026-10-24 it also checks that uBlock Origin Lite and AdGuard block that ad request; that React, Vue.js and Redux DevTools hook into the page from its first script; that JSON Formatter and JSONVue format a JSON document; that Video Speed Controller adds its controller to a playing video; that LanguageTool and Wordtune reach the page; that Sider's toolbar button opens its side panel, Session Buddy's its manager and GoFullPage's a capture of the whole page. Ghostery blocks nothing until its onboarding terms are accepted, which the test does not do. `top-extensions.json` also lists extensions picked by hand outside the most used (`extra`), which `ext-smoke` runs every time. Nothing here was signed in, so signed-in features (autofill, translation, grammar suggestions) are not verified. The list and Chrome's recording (now Chrome 157's) have been measured again since, so the table below is not today's 30 most used: it lists the extensions measured then, plus Kami, and its statuses follow the current `knownFailures` and `intermittent` lists of `RealExtensionSmokeTests`.
 
 On 2026-10-24, past their popups and signed out: ColorZilla's eyedropper samples the page, Wappalyzer lists a local page's technologies, FireShot captures a whole page, Okta and 2FAS Auth leave a login form alone (as in Chrome), and Google Docs Offline and Application Launcher for Drive start their workers without errors. Lilo's own content blocker and Adblock Plus block side by side without breaking the page, a request either one blocks failing once; each keeps its own allowlist, so a site paused in Adblock Plus is still filtered by Lilo's blocker until it is allowed there too.
 
-Of the 500 extensions `top-extensions.json` held on 2026-10-24 (`make ext-smoke TOP=500`), 478 ran cleanly. The list has since grown to 1000. `RealExtensionSmokeTests` lists, with their cause, the extensions known not to run cleanly (`knownFailures`) or to fail some runs (`intermittent`): most fail in Chrome too, or lose a race Chrome runs too. Loom and Browsec VPN shipped a version Chrome's recording predates, so all their errors count until `make chrome-smoke` records them again.
+`top-extensions.json`, measured on 2026-10-24, lists the 1000 most used extensions. `RealExtensionSmokeTests` lists, with their cause, the 36 known not to run cleanly (`knownFailures`) and the 30 that fail some runs (`intermittent`); 26 and 22 of them are among the 500 most used. In 11 of those 66 causes, Chrome fails, or would fail, the same way, or runs the same race; the others name a difference in WebKit, JavaScriptCore or Lilo, something of the test itself, or a cause not yet known. An extension whose store version is newer than Chrome's recording is compared with no reference, so all its errors count until `make chrome-smoke` records it again.
 
 | Extension | Status | Differs from Chrome |
 | --- | --- | --- |
 | Adobe Acrobat, McAfee WebAdvisor, Thunder download support, Chrome Remote Desktop, Google Translate, Microsoft Single Sign On, Cisco Webex, uBlock Origin Lite, 360 Internet Protection, Claude, NordVPN, VeePN, Honey, Adblock for Youtube, Online Security, Teleparty, Authenticator, Foxit PDF Creator, 1clickVPN, Screencastify | works | nothing measured |
-| Grammarly | works | some runs log an error Chrome's recording does not: on its first start it injects a script into its welcome page beside the one it declares, and the second run fails to redeclare a name |
+| Grammarly | works with limits | some runs log an error Chrome's recording does not: on its first start it injects a script into its welcome page beside the one it declares, and the second run fails to redeclare a name: Lilo reports the welcome page's address while it loads, where Chrome reports none, as for 1Password |
 | AdBlock | works with limits | its welcome page logs an error: two of its content script entries list the same script, which WebKit runs twice in one page, where Chrome reports nothing |
-| Adblock Plus | works with limits | it blocks ad requests, but its options page reads its worker's answers as undefined and logs errors, where Chrome's renders without one |
-| Malwarebytes Browser Guard | works with limits | its cosmetic filters hide none of the test page's ads, which Chrome's hide; once its worker was idle, its popup over a blank tab shows less than half of Chrome's |
+| Adblock Plus | works with limits | it blocks ad requests, but its options page reads its worker's answers (its language, its features and its subscriptions) as undefined, where Chrome's renders without an error |
+| Malwarebytes Browser Guard | works with limits | its cosmetic filters hide none of the test page's ads, which Chrome's hide; once its worker was idle, its popup over a blank tab shows less than half of Chrome's; its request blocking was not tested |
 | GoFullPage | works with limits | its welcome page finds no window holding it ("No matching window found"), where Chrome's does |
-| Zotero Connector | works with limits | on the test page its content script fails to set up translation: its worker creates its offscreen document twice ("Only a single offscreen document may be created") |
+| Zotero Connector | not verified | on the test page its content script fails to set up translation, which is how it reads what a page holds: its worker creates its offscreen document twice ("Only a single offscreen document may be created"); saving to Zotero was not tested |
+| Kami | works with limits | its options page renders nothing in 20 seconds, where Chrome's shows its settings |
 | Momentum, Bonjourr | works | nothing measured (new tab override) |
 | NordPass | works | nothing measured: it marks or decorates the login form |
 | Dashlane | works with limits | it decorates the login form as in Chrome, but logs an error at startup: while its settings are not yet populated, its device info falls back to a command it does not have (`getCommonAppSetting: a is not a function`); in Chrome they are by then |
@@ -100,7 +101,7 @@ Of the 500 extensions `top-extensions.json` held on 2026-10-24 (`make ext-smoke 
 | Keeper, Okta Browser Plugin, Wappalyzer, WhatFont, SelectorGadget, Google Docs Offline, Application Launcher for Drive | works | nothing measured |
 | ColorZilla | works | some runs it scripts or messages a tab the test just closed (`Tab not found`); over a blank tab, WebKit refuses its `tabs.captureVisibleTab` |
 | FireShot | works with limits | it captures a whole page, but over a blank tab its popup offers to capture that tab, where Chrome's recording opens the popup in a tab of its own |
-| 2FAS Auth | works | nothing measured: its worker stores its keys in IndexedDB, which stalled it until Lilo stored them itself (see Background worker in [API differences](#api-differences)); pairing with its phone app was not tested |
+| 2FAS Auth | covered by unit tests only | it installs and starts, but the smoke run cannot see the stall this row is about: its worker stores its keys in IndexedDB, which stalled it until Lilo stored them itself (see Background worker in [API differences](#api-differences)), and only unit tests check that storage; pairing with its phone app was not tested |
 | Endpoint Verification | does not work | it reads `chrome.enterprise.reportingPrivate`, a private API Chrome gives this Google extension only, to report the device to Google Workspace; Lilo cannot provide it, so access policies that require a verified device refuse Lilo |
 | Tampermonkey | works | nothing measured: as in Chrome, its scripts need "Allow user scripts" |
 
@@ -111,7 +112,8 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 - **Web pages** get WebKit's Safari user agent, with no Lilo token, so sites serve their Safari variant.
 - **The Chrome Web Store** (`chromewebstore.google.com`) gets a Chrome user agent and `navigator.userAgentData`, and a `chrome.webstorePrivate` shim, so its install button works; Lilo relabels it "Add to Lilo" and hides the store's prompts to switch to Chrome. The packages and update checks Lilo downloads from `clients2.google.com` send the same Chrome user agent.
 - **Extension code** (extension pages, the background worker and content scripts' isolated world) reads Chrome's `navigator.userAgent`, `appVersion`, `vendor` and `userAgentData`; the page around a content script keeps the Safari one.
-- **What it means for you:** extensions install and update from the store as in Chrome, and sites never see a Chrome identity. The store and its terms are made for Chrome, and Google does not endorse Lilo: Google could change the store or its update service so that installs or updates from Lilo stop working.
+- **Extension requests:** the workers, popups and panels WebKit creates for an extension send Chrome's user agent, so the servers an extension's own requests reach see Chrome.
+- **What it means for you:** extensions install and update from the store as in Chrome, and the pages you visit get Safari's user agent. The store and its terms are made for Chrome, and Google does not endorse Lilo: Google could change the store or its update service so that installs or updates from Lilo stop working.
 
 ### Password managers
 
@@ -178,10 +180,12 @@ Safari, whose user agent Lilo shows.
   Apple grants per app ID. Without it, WebKit's `getCanCurrentProcessAccessPasskeysForRelyingParty`
   check fails: `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()` is false and
   `navigator.credentials.create()` / `.get()` reject at once with `NotAllowedError` (checked on
-  macOS 27). Apple has not granted it yet, so published releases do not carry it: no WebAuthn works
-  in them, passkeys and USB/NFC security keys alike. A request fails at once with `NotAllowedError`,
+  macOS 27). Apple has not granted it yet, so published releases do not carry it: WebKit's own WebAuthn does not
+  work in them, passkeys and USB/NFC security keys alike. A request WebKit handles fails at once with `NotAllowedError`,
   with no prompt, and reads like a user cancel; an account whose only second factor is a hardware
-  key cannot sign in. Once granted, release builds carry it through a provisioning profile, see
+  key cannot sign in. A password manager extension that answers passkey requests itself, through its hook on
+  `navigator.credentials`, does not go through WebKit's check, and Lilo keeps that hook in place (`PageWorld`);
+  whether a given manager's passkeys work in Lilo was not tested. Once granted, release builds carry it through a provisioning profile, see
   [docs/RELEASING.md](docs/RELEASING.md#browser-passkey-entitlement); ad-hoc and Debug builds never do.
 - **Not pursued:** A custom `ASAuthorizationPlatformPublicKeyCredentialProvider` integration would
   only duplicate WebKit. `com.apple.developer.associated-domains` (`webcredentials:`) governs the
@@ -290,7 +294,7 @@ Safari, whose user agent Lilo shows.
 - **Root cause:** WebKit's conditional-mediation support outside Safari. There is no app-side remedy.
   Explicit (non-conditional) passkey flows also need the entitlement described in
   [Passkeys / WebAuthn](#passkeys--webauthn), which published releases do not carry yet: there, no
-  WebAuthn request works.
+  request WebKit handles works.
 
 ### Apple Pay on the web
 
