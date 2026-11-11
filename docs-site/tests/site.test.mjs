@@ -46,6 +46,13 @@ test("agents get llms.txt and a Markdown copy of each page", () => {
   }
 });
 
+test("every eval question names pages that exist", () => {
+  const evals = readFileSync(join(docs, "evals.yaml"), "utf-8");
+  const named = [...evals.matchAll(/^ {4}(?:routes:| {2}-) (\/\S*)$/gmu)].map((match) => match[1]);
+  assert.ok(evals.match(/^ {2}- id: /gmu).length >= 10 && named.length >= 10, "evals.yaml lost its questions or routes");
+  for (const route of named) assert.ok(routes.includes(route), `evals.yaml names ${route}, which no page has`);
+});
+
 test("no built file points at a development server", () => {
   for (const entry of readdirSync(dist, { recursive: true })) {
     if (/\.(html|md|txt|xml|json)$/u.test(entry)) {
