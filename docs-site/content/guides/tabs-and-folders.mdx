@@ -5,4 +5,138 @@ sidebar:
   order: 2
 ---
 
-This page is being written.
+This page shows how to keep the tabs you use, let the others go on their own, group tabs in folders and lock a folder behind a password.
+
+## How the sidebar is laid out
+
+Each [Space](/guides/spaces-and-profiles) has three kinds of tabs, top to bottom:
+
+- **Favorites**, the tiles at the top. **Bookmark Tab** in a tab's right-click menu, or **Tab > Bookmark This Page**, puts a tab there.
+- **Pinned tabs**, under the tiles. They stay until you remove them.
+- **Open tabs**, the rest of the list. These are the tabs Lilo archives once you leave them alone.
+
+Favorites and pinned tabs keep the page you saved them on as their home page. Closing one unloads it but keeps it in the sidebar; clicking it opens that page again. When you have browsed away, its right-click menu offers **Back to Home Page**, and **Edit...** changes its name or address.
+
+## Keep a tab for good
+
+- Right-click the tab and choose **Pin Tab**, or use **Tab > Pin Tab** for the current tab.
+- Or drag the tab up into the pinned tabs.
+
+To remove a pinned tab, right-click it and choose **Unpin Tab**, or close it and choose **Remove Pinned Tab**.
+
+A link to another site opens in a [Peek](/guides/peek-and-little-window) over a pinned tab or a favorite, so the tab stays on its own site.
+
+## Stop tabs piling up
+
+Lilo archives an open tab you have not looked at for 12 hours. Archiving closes the tab and keeps its address and title in the Space's archive, where you can reopen it.
+
+<Steps>
+  <Step title="Choose the delay for a Space">
+    Choose **Spaces > Edit Space…** and set **Archive tabs after** to **12 hours**, **24 hours**, **7 days**, **30 days** or **Never**. Each Space has its own delay.
+  </Step>
+  <Step title="Archive now, if you want">
+    Choose **Tab > Clear Unpinned Tabs** or press <kbd>⇧⌘K</kbd>, or click **Archive unpinned tabs** on the divider above your open tabs. A message offers **Undo**, which puts the tabs back where they were.
+  </Step>
+  <Step title="Find an archived tab">
+    Choose **History > Archived Tabs…**, which opens the [command bar](/guides/command-bar) on the archive, or click the downloads and archived tabs button at the bottom of the sidebar. Pick a tab to reopen it, or choose **Restore**.
+  </Step>
+</Steps>
+
+What Lilo never archives:
+
+- pinned tabs, favorites and tabs inside folders;
+- the tab on screen and the Space's selected tab;
+- a tab playing sound, in a call, in Picture in Picture, holding text you typed and have not sent, or controlled by an AI agent;
+- terminal tabs.
+
+Lilo checks every five minutes while it is the active app. The archive keeps tabs for 30 days, up to 200 per Space. A Private Space's archive is never written to disk.
+
+When you come back to Lilo after an absence longer than a Space's delay, that Space opens with no tab selected and its pinned tabs back on their home pages. **Settings > Tabs and Spaces > Open to an empty window** does this at every launch.
+
+## Choose how quickly idle tabs sleep
+
+Separately from archiving, Lilo pauses tabs you are not using so they cost no energy, and empties them when memory runs short. A paused tab shows its page again when you select it; an emptied one reloads.
+
+Set the pace in **Settings > Tabs and Spaces > Idle tabs**:
+
+| Choice | What it does |
+| --- | --- |
+| **Keep Loaded** | Paused after 15 min, rarely emptied. Fewer reloads, more memory. |
+| **Balanced** (default) | Paused after 5 min, emptied only when memory runs low. |
+| **Save Memory** | Paused after 2 min, emptied after 10 min. Best battery life; tabs reload more often. |
+
+On battery power, every choice pauses background tabs after one minute. A tab playing sound or in a call is not paused, a tab holding unsaved text is never emptied, and **Save Memory** does not empty pinned tabs for idleness.
+
+## Group tabs in folders
+
+<Steps>
+  <Step title="Create a folder">
+    Right-click a tab and choose **Create Folder from Tab**, or right-click an empty part of the sidebar and choose **Create Folder**.
+  </Step>
+  <Step title="Name it">
+    Right-click the folder and choose **Edit Folder** to give it a name and a color.
+  </Step>
+  <Step title="Add tabs">
+    Drag tabs onto the folder, or right-click a tab and choose **Move to Folder**. **Remove from Folder** takes a tab back out.
+  </Step>
+</Steps>
+
+- Right-click a folder and choose **New Folder** to nest one inside it. Folders nest up to five levels.
+- **Open Folder** and **Close Folder** show or hide its tabs.
+- **Delete Folder** deletes the folder with its tabs and subfolders, after you confirm. It cannot be undone.
+- A folder in the pinned tabs pins what you move into it. Tabs in folders are never archived.
+- Extensions see folders as Chrome tab groups.
+
+## Stack and sort the open tabs
+
+Click **Sort and Group** on the divider above your open tabs, or right-click an empty part of the sidebar:
+
+- **Stack Tabs by Site** (on by default) folds three or more open tabs of one site into one row, which stays until one tab is left. Right-click a stack for **Move Stack to New Folder**, **Move Stack to Space**, **Don't Stack** that site, or **Close Stack**. **Never Stack** lists the sites you excluded.
+- **Group by Type** puts agent and terminal tabs in trays of their own, above the web pages. **Group by Project** gives each project that two or more tabs belong to a tray.
+- **Sort by Site** and **Sort by Title** order the open tabs once; folders keep their places.
+
+## Lock a folder
+
+A locked folder stays closed, and its tabs are hidden from the sidebar and from the command bar's results until you unlock it.
+
+<Steps>
+  <Step title="Set a password">
+    Right-click the folder and choose **Lock Folder…**. Type a **Password**, type it again under **Confirm**, and check **Allow Touch ID** if your Mac has it.
+  </Step>
+  <Step title="Lock it">
+    Click **Lock**. The folder closes and shows a lock.
+  </Step>
+  <Step title="Unlock it">
+    Click the folder, or right-click it and choose **Unlock Folder…**, then use **Unlock with Touch ID** or type the password.
+  </Step>
+</Steps>
+
+An unlocked folder locks again after 15 minutes without activity, and whenever the screen locks, the Mac sleeps or you switch user. Change the delay to 5, 15, 30 or 60 minutes in **Settings > Privacy > Lock folders after**. While a locked folder is open, its row shows **Lock now**.
+
+To change or drop the password, right-click the unlocked folder and choose **Change Password…** or **Remove Lock**; macOS asks for your Mac password or Touch ID first.
+
+:::warning[Forgotten passwords]
+With Touch ID allowed, **Forgot password** lets your Mac account password open the folder. Without Touch ID, a forgotten password cannot be recovered: the only way out is **Delete folder and its tabs**.
+:::
+
+Lilo stores only a salted hash of the password, in your Mac's Keychain, for this Mac only.
+
+## Move between tabs from the keyboard
+
+| Action | Keys |
+| --- | --- |
+| New Tab | <kbd>⌘T</kbd> |
+| Close Tab | <kbd>⌘W</kbd> |
+| Reopen Last Closed Tab | <kbd>⇧⌘T</kbd> |
+| Show Next Tab, Show Previous Tab | <kbd>⇧⌘]</kbd> <kbd>⇧⌘[</kbd>, or <kbd>⌥⌘→</kbd> <kbd>⌥⌘←</kbd> |
+| Switch to Recent Tab | <kbd>⌃⇥</kbd> |
+| Tab 1 to Tab 8, Last Tab | <kbd>⌘1</kbd> to <kbd>⌘8</kbd>, <kbd>⌘9</kbd> |
+| Close Other Tabs | <kbd>⌥⌘W</kbd> |
+| Mute Tab | <kbd>⇧⌘M</kbd> |
+| Toggle Sidebar | <kbd>⇧⌘S</kbd> |
+
+<kbd>⌃⇥</kbd> walks your most recent tabs, from every Space, until you release Control. To make it follow the sidebar order instead, change **Control-Tab switches tabs in** in **Settings > General > Keyboard shortcuts**. Every shortcut is listed in [Keyboard shortcuts](/reference/keyboard-shortcuts).
+
+## Put the tabs on another edge
+
+Drag the sidebar to another edge of the window, choose **View > Move Tabs to the Left**, **Right**, **Top** or **Bottom**, or set **Tabs** in **Settings > Appearance**.
