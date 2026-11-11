@@ -28,9 +28,9 @@ The extension installs into the profile of the window you install it from. Each 
 
 ## Use and pin extensions
 
-Installed extensions are listed in **Lilo > Extensions**, and in the **Extensions** menu of the address bar. In that menu, choose **Pin to the address bar** to keep an extension's button in view, or **Unpin from the address bar** to put it back.
+The extensions you have turned on are listed in **Lilo > Extensions**, and in the **Extensions** popover that the extensions button of the address bar opens; a turned-off extension shows only in **Settings > Extensions**. In the popover, each extension has a pin button: its tooltip reads **Pin to the address bar**, and clicking it keeps the extension's button in view. Click it again (**Unpin from the address bar**) to put it back.
 
-When an extension asks to reach the site you are on, the address bar offers **Allow** ("Let this extension access this site").
+When an extension asks to reach the site you are on, its row in the **Extensions** popover shows an **Allow** button ("Let this extension access this site").
 
 ## Manage an extension
 
@@ -55,7 +55,7 @@ An update that asks for more access is never installed on its own. The extension
 
 ## Set up a password manager
 
-Lilo keeps no passwords itself. Credential storage and autofill come from your password manager's extension.
+Lilo has no password manager of its own and does not save what you type into a page's login form. Credential storage and autofill come from your password manager's extension.
 
 <Steps>
   <Step title="Open the passwords step">
@@ -82,7 +82,7 @@ Lilo runs Manifest V3 extensions on WebKit's extension runtime, with additions o
 - Manifest V2 extensions do not run.
 - `webRequest` can observe requests but not block them. Ad blockers such as uBlock Origin Lite, AdGuard and Adblock Plus do block ads in Lilo's tests.
 - An extension that changes the search engine or the home page has no effect on them.
-- An extension runs in private Spaces only once you allow it there.
+- An extension runs in Private Spaces only once you allow it there (**Allow in private Spaces**).
 - The Chrome Web Store sees Lilo as Chrome, so its install button works. Websites see Lilo as Safari, and extensions read a Chrome identity. Google does not endorse Lilo and could change the store so that installs or updates from Lilo stop working.
 
 [Extension compatibility](/reference/extension-compatibility) lists every API difference, the extensions tested with their results, and the details of native messaging.

@@ -51,21 +51,21 @@ What Lilo never archives:
 
 Lilo checks every five minutes while it is the active app. The archive keeps tabs for 30 days, up to 200 per Space. A Private Space's archive is never written to disk.
 
-When you come back to Lilo after an absence longer than a Space's delay, that Space opens with no tab selected and its pinned tabs back on their home pages. **Settings > Tabs and Spaces > Open to an empty window** does this at every launch.
+When you open Lilo again after it was closed for longer than a Space's delay, that Space opens with no tab selected and its pinned and bookmarked tabs back on their home pages. This happens at launch only, not when you come back to a Lilo that kept running. **Settings > Tabs and Spaces > Open to an empty window** does this at every launch.
 
 ## Choose how quickly idle tabs sleep
 
-Separately from archiving, Lilo pauses tabs you are not using so they cost no energy, and empties them when memory runs short. A paused tab shows its page again when you select it; an emptied one reloads.
+Separately from archiving, Lilo pauses tabs you are not using so they cost no energy, and empties them when you have more loaded tabs than it keeps or memory runs short. A paused tab shows its page again when you select it; an emptied one reloads.
 
 Set the pace in **Settings > Tabs and Spaces > Idle tabs**:
 
 | Choice | What it does |
 | --- | --- |
-| **Keep Loaded** | Paused after 15 min, rarely emptied. Fewer reloads, more memory. |
-| **Balanced** (default) | Paused after 5 min, emptied only when memory runs low. |
+| **Keep Loaded** | Paused after 15 min, never emptied for idleness. Fewer reloads, more memory. |
+| **Balanced** (default) | Paused after 5 min, never emptied for idleness. |
 | **Save Memory** | Paused after 2 min, emptied after 10 min. Best battery life; tabs reload more often. |
 
-On battery power, every choice pauses background tabs after one minute. A tab playing sound or in a call is not paused, a tab holding unsaved text is never emptied, and **Save Memory** does not empty pinned tabs for idleness.
+With every choice, Lilo also empties the tabs you used least once there are more loaded tabs than it keeps (up to 24 in the current Space, depending on your Mac's memory, and a few in other Spaces), and more of them when memory runs low. [Energy use](/about/energy#background-tabs-are-frozen) gives the numbers. On battery power, every choice pauses background tabs after one minute. A tab playing sound or in a call is not paused, a tab holding unsaved text is never emptied, and **Save Memory** does not empty pinned tabs for idleness.
 
 ## Group tabs in folders
 

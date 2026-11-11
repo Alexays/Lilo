@@ -5,12 +5,19 @@ sidebar:
   order: 10
 ---
 
-A terminal tab is a shell in a tab of your sidebar, next to your pages, built on Ghostty's terminal library. This page shows how to open one, run commands from the command bar, review a repository's changes, and set the terminal up.
+A terminal tab is a shell in a tab of your sidebar, next to your pages, built on Ghostty's terminal library. This page shows how to turn terminal tabs on, open one, run commands from the command bar, review a repository's changes, and set the terminal up.
+
+## Turn on terminal tabs
+
+Terminal tabs are on only if you answered **For developing** when the setup asked **How will you use Lilo?** (or if you never answered it). After any other answer, they are off, and their shortcuts, buttons and menus are hidden.
+
+1. Open **Settings** (<kbd>⌘,</kbd>) and choose **Terminal**, under **Tools**.
+2. Turn on **Terminal tabs**. The terminal's other settings appear below it.
 
 ## Open a terminal tab
 
 - **File > New Terminal Tab** (<kbd>⌃\`</kbd>) opens a terminal tab.
-- **File > New Terminal Beside** (<kbd>⌘D</kbd>) opens one in a split pane beside the current tab, and **File > New Terminal Below** (<kbd>⇧⌘D</kbd>) in a pane below it. See [Split view](/guides/split-view).
+- **File > New Terminal Beside** (<kbd>⌘D</kbd>) opens one in a split pane beside the current tab, and **File > New Terminal Below** (<kbd>⇧⌘D</kbd>) in a pane below it. See [Split view](/guides/split-view). With the **Arc** shortcut preset, <kbd>⌘D</kbd> pins a tab instead and **New Terminal Beside** has no shortcut.
 
 The shell is your login shell. It starts in the folder of the tab in front: a terminal's own folder, the folder of a local file you are viewing, or else your home folder. The tab's title follows what runs in it: a program's own title when it sets one, then the running command, else the process and the folder.
 
@@ -18,7 +25,7 @@ The shell is your login shell. It starts in the folder of the tab in front: a te
 
 <Steps>
   <Step title="Open the command bar">
-    Press <kbd>⌘T</kbd>.
+    Press <kbd>⌘T</kbd>. If an extension replaces the new tab page, <kbd>⌘T</kbd> opens that page instead: press <kbd>⌘L</kbd>.
   </Step>
   <Step title="Type > and your command">
     Type `>` to search in **Terminal**. Lilo suggests commands from your shell history, most recent first, then the programs on your `PATH`.
@@ -37,13 +44,13 @@ The same scope lists your open terminals, and under **Recently closed**, the ter
 - **Waiting terminals**: **Window > Show Next Waiting Terminal** (<kbd>⌃⌘J</kbd>) goes to the terminal that has waited longest for your answer, then the next one on each press.
 - **Long commands**: when a command that ran for 10 seconds or more finishes while you are elsewhere, Lilo sends a notification, "Command finished" or "Command failed" with its exit code.
 - **Closing**: closing a terminal that is still running a command asks first ("Close this terminal?").
-- **Relaunch**: Lilo saves each terminal's screen and history and brings them back at the next launch. Terminals in a private Space are never written to disk.
+- **Relaunch**: Lilo saves each terminal's screen and history and brings them back at the next launch. Terminals in a Private Space are never written to disk.
 
 ## Review a repository's changes
 
 When the terminal in front is inside a git repository, choose **View > Show Changes** (<kbd>⌃⌘G</kbd>). Lilo shows the repository's diff over the terminal. Press the shortcut again to close it.
 
-- **Uncommitted** shows what changed since the last commit, untracked files included. **Branch** compares the branch with its base on `main` or `master`.
+- **Uncommitted** shows what changed since the last commit, untracked files included. **Branch** compares your working copy, uncommitted changes included, with the point where your branch left the remote's default branch (`origin/HEAD`), or else `main` or `master`.
 - **Unified** and **Split** switch the diff layout.
 - **Open in Split** keeps the diff as a Changes tab beside the terminal.
 
@@ -51,11 +58,11 @@ The view reloads by itself while it is on screen, when files change. It needs gi
 
 ## Set up the terminal
 
-Open **Settings** (<kbd>⌘,</kbd>) and choose **Terminal**, under **Tools**.
+Open **Settings** (<kbd>⌘,</kbd>) and choose **Terminal**, under **Tools**. Every row but the first shows only while **Terminal tabs** is on.
 
 | Setting | What it does | Default |
 | --- | --- | --- |
-| **Terminal tabs** | Open shells as tabs next to your pages. When off, the terminal shortcuts, buttons and menus are hidden; open terminals stay until closed. | On |
+| **Terminal tabs** | Open shells as tabs next to your pages. When off, the terminal shortcuts, buttons and menus are hidden; open terminals stay until closed. | Depends on your setup answer: on for **For developing**, off otherwise |
 | **Theme** | The terminal's colors. Lilo follows each Space's color and keeps every color readable on it. **Import...** takes an iTerm2 color preset (`.itermcolors`), a VS Code color theme (`.json`) or a Ghostty theme file. | |
 | **Font** | The font family and its size in points, for every terminal tab. Fonts with ligatures, like JetBrains Mono or Fira Code, show them. | System (SF Mono), 13 pt |
 | **History per terminal** | How much scrollback each terminal keeps: 2, 10, 50 or 200 MB. 10 MB is about 100,000 lines. | 10 MB |

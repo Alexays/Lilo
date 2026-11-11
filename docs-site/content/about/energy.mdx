@@ -56,19 +56,21 @@ Most of the difference comes from the engine: Lilo runs on the WebKit that ships
 
 A background tab you have not used for a while is frozen: its page stops running until you come back to it, and then resumes where it was. How soon depends on the Settings > Tabs and Spaces > **Idle tabs** preset, and on the power source.
 
-| Idle tabs | Freezes a background tab after (plugged in) | Unloads it |
-|---|---|---|
-| Keep Loaded | 15 minutes | only under memory pressure |
-| Balanced (default) | 5 minutes | only under memory pressure |
-| Save Memory | 2 minutes | after 10 minutes |
+| Idle tabs | Freezes a background tab after (plugged in) | Unloads it after an idle time | Loaded tabs kept in other Spaces |
+|---|---|---|---|
+| Keep Loaded | 15 minutes | never | up to 12 in each of 3 Spaces |
+| Balanced (default) | 5 minutes | never | up to 6 in each of 2 Spaces |
+| Save Memory | 2 minutes | 10 minutes | 1 in 1 Space |
 
-An unloaded tab stays in the sidebar and loads its page again when you return to it. On battery, every preset freezes a background tab after 1 minute. In Low Power Mode, or when the Mac is running hot, Lilo also keeps fewer pages loaded. With any preset, a background tab whose page keeps using about 30 % of a CPU core, or grows very large in memory, is unloaded. When loaded pages together reach about 40 % of the Mac's memory, Lilo unloads tabs of other Spaces first, then tabs you cannot see in the current one.
+Idle time is not the only reason a tab unloads. Lilo also keeps a budget of loaded tabs: past it, the tabs you used least recently unload first. In the Spaces you are not looking at, it keeps the counts in the table. In the current Space, it keeps up to 24 loaded tabs on a Mac with 32 GB of memory or more, 16 with 16 GB, and 10 below, half as many with **Save Memory**. Under memory pressure, it unloads more.
+
+An unloaded tab stays in the sidebar and loads its page again when you return to it. On battery, every preset freezes a background tab after 1 minute. In Low Power Mode, or when the Mac is running hot, Lilo also keeps fewer pages loaded in the current Space: 6, or 4 with **Save Memory**. With any preset, a background tab whose page keeps using about 30 % of a CPU core, or grows very large in memory, is unloaded. When loaded pages together reach about 40 % of the Mac's memory, Lilo unloads tabs of other Spaces first, then tabs you cannot see in the current one.
 
 A tab is not frozen while it plays sound you can hear, uses your camera, microphone or screen, is in a call, or plays in Picture in Picture. A muted tab can be frozen. [Web compatibility](/reference/web-compatibility) lists the other cases Lilo spares, such as a page holding a live WebRTC connection, and their limits.
 
 ### Refresh rate
 
-On a 120 Hz display, Lilo draws pages at the display's full rate by default. Settings > Appearance > **Full refresh rate** turns that off: pages then draw at about 60 frames per second, which uses less battery. New tabs follow the setting; open tabs change when Lilo restarts.
+On a 120 Hz display, Lilo draws pages at the display's full rate by default. Settings > Appearance > **Full refresh rate** turns that off: pages then draw at about 60 frames per second, which uses less battery. New tabs follow the setting; open tabs change when Lilo restarts. Even with the setting on, tabs opened in Low Power Mode or while the Mac is running hot draw at about 60 frames per second, and so do the tabs of agents working in the Agents profile.
 
 ## Measure it yourself
 
