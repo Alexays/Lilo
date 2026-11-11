@@ -22,6 +22,31 @@ test("every inline script of every page is allowed by its hash", () => {
   }
 });
 
+test("pages hold no script the CSP cannot hash, and only the inline scripts it was checked with", () => {
+  const html = readdirSync(dist, { recursive: true }).filter((entry) => entry.endsWith(".html"));
+  for (const entry of html) {
+    const page = readFileSync(join(dist, entry), "utf-8").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gu, (script) => script.slice(0, script.indexOf(">") + 1));
+    for (const [tag] of page.matchAll(/<[a-zA-Z][^>]*>/gu)) {
+      const attributes = tag.replace(/"[^"]*"|'[^']*'/gu, '""');
+      assert.doesNotMatch(attributes, /\son[a-z]+\s*=/iu, `${entry}: event handler attribute in ${tag.slice(0, 80)}`);
+      assert.doesNotMatch(tag, /\s(?:href|src|action|formaction)\s*=\s*["']?\s*javascript:/iu, `${entry}: javascript: URL in ${tag.slice(0, 80)}`);
+      const src = tag.match(/^<script\b[^>]*\ssrc="([^"]*)"/u)?.[1];
+      if (src !== undefined) assert.match(src, /^\/(?!\/)/u, `${entry}: script from another origin: ${src}`);
+    }
+  }
+  const hashes = scriptSrc.match(/'sha256-/gu)?.length;
+  // A Blume upgrade that adds or changes an inline script lands here: before raising the number, read
+  // the new script in dist/ and check it runs nothing a page or URL can inject into.
+  assert.equal(hashes, 6, `the CSP now hashes ${hashes} inline scripts, not 6: read the new ones in dist/ before updating this number`);
+});
+
+test("no later _headers rule detaches or replaces the CSP", () => {
+  const later = headers.slice(headers.indexOf("\n\n"));
+  assert.doesNotMatch(later, /^\s*!\s*Content-Security-Policy/imu);
+  // Cloudflare joins a header set by several rules, so a later CSP adds a policy; only Blume's SVG sandbox may.
+  for (const [, value] of later.matchAll(/^\s*Content-Security-Policy:\s*(.*)$/gimu)) assert.equal(value, "sandbox");
+});
+
 test("scripts never run inline without a hash", () => {
   assert.match(scriptSrc, /^script-src 'self' 'sha256-/u);
   assert.doesNotMatch(scriptSrc, /'unsafe-inline'|'unsafe-eval'/u);
