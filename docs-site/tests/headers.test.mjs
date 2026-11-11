@@ -1,6 +1,6 @@
 // Runs on the build `make docs-test` makes first.
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -45,6 +45,10 @@ test("no later _headers rule detaches or replaces the CSP", () => {
   assert.doesNotMatch(later, /^\s*!\s*Content-Security-Policy/imu);
   // Cloudflare joins a header set by several rules, so a later CSP adds a policy; only Blume's SVG sandbox may.
   for (const [, value] of later.matchAll(/^\s*Content-Security-Policy:\s*(.*)$/gimu)) assert.equal(value, "sandbox");
+});
+
+test("only Cloudflare's files are deployed", () => {
+  assert.ok(!existsSync(join(dist, "vercel.json")), "dist/vercel.json would be served as a page");
 });
 
 test("scripts never run inline without a hash", () => {

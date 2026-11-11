@@ -2,7 +2,7 @@
 // has no CSP support and renders its theme and layout scripts inline, so each inline script gets a
 // hash instead of allowing 'unsafe-inline'.
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -66,6 +66,8 @@ ${readFileSync(file, "utf-8")}`;
     throw new Error(`_headers has ${rules} rules, more than Cloudflare's ${MAX_RULES}`);
   }
   writeFileSync(file, headers);
+  // Blume writes Vercel's config for every build; on Cloudflare it would only be served as a file.
+  rmSync(join(dist, "vercel.json"), { force: true });
   console.log(`_headers: ${hashes.size} inline script hashes, ${rules} rules, CSP line ${csp.length} characters`);
 }
 
