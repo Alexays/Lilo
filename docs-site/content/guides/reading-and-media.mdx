@@ -5,4 +5,111 @@ sidebar:
   order: 8
 ---
 
-This page is being written.
+This guide shows you how to read an article without clutter, translate a page, find text on it, keep a video in a floating window, take and annotate a screenshot, and share a page or a tab. Most of these actions are also in the [command bar](/guides/command-bar): press <kbd>⌘T</kbd> and type their name. Shortcuts you can assign to the ones that have none are in [Customize Lilo](/guides/customize#rebind-a-shortcut).
+
+## Read an article in Reader
+
+<Steps>
+  <Step title="Open Reader">
+    On an article, choose **View > Show Reader**. In the command bar, the action is **Reader View**.
+  </Step>
+  <Step title="Adjust the text">
+    The bar at the top of the article has four buttons: smaller text, larger text, theme (each click moves on through automatic, light, sepia and dark) and column width (narrow, normal, wide). Lilo remembers your choice for every site.
+  </Step>
+  <Step title="Leave Reader">
+    Choose **View > Hide Reader**. The page reloads as it was.
+  </Step>
+</Steps>
+
+Reader shows the title, the site name and author when the page gives them, an estimated reading time and the article text. If Lilo can't find an article on the page, it beeps and leaves the page as it is.
+
+## Translate a page
+
+<Steps>
+  <Step title="Translate">
+    Choose **View > Translate Page**, or right-click an empty part of the page and choose **Translate Page**.
+  </Step>
+  <Step title="Download the language if asked">
+    The first time you translate from a language, macOS may ask to download it.
+  </Step>
+  <Step title="Show the original">
+    Choose **Translate Page** again to restore the original text.
+  </Step>
+</Steps>
+
+Lilo translates into the first language in your Mac's preferred languages (System Settings > General > Language & Region). The translation runs on your Mac with Apple's Translation framework, and text the page adds later is translated as it appears. If the page is already in your language, Lilo beeps and changes nothing.
+
+## Find text on a page
+
+<Steps>
+  <Step title="Open the find bar">
+    Press <kbd>⌘F</kbd>, or choose **Edit > Find > Find…**. If you selected text first, the find bar starts with it.
+  </Step>
+  <Step title="Type what you're looking for">
+    Matches are highlighted, and the bar shows which one you're on, such as "2 of 7". Turn on **Match case** to match capital letters exactly.
+  </Step>
+  <Step title="Move between matches">
+    Press Return for the next match and Shift-Return for the previous one. **Find Next** (<kbd>⌘G</kbd>) and **Find Previous** (<kbd>⇧⌘G</kbd>) do the same from anywhere on the page.
+  </Step>
+  <Step title="Close the find bar">
+    Press <kbd>Esc</kbd>.
+  </Step>
+</Steps>
+
+To search for a word without opening the bar, select it and press <kbd>⌘E</kbd> (**Use Selection for Find**), then <kbd>⌘G</kbd> for each next match. On a page with more than 1,000 matches, the bar doesn't show a count.
+
+## Watch a video picture in picture
+
+<Steps>
+  <Step title="Start a video">
+    Play the video on the page.
+  </Step>
+  <Step title="Pop it out">
+    Choose **View > Picture in Picture**, or right-click the page and choose **Picture in Picture**. The video moves to a floating window that stays above your other apps.
+  </Step>
+  <Step title="Bring it back">
+    Choose **Picture in Picture** again, or use the controls of the floating window.
+  </Step>
+</Steps>
+
+With **Auto picture-in-picture** on (**Settings > Audio and video**, on by default), a call or a playing video pops into a floating window by itself when you switch away from its tab or from Lilo. With **Keep calls in the sidebar** on, a tab using your camera, microphone or screen docks in the sidebar instead of floating.
+
+## Take a screenshot
+
+<Steps>
+  <Step title="Choose what to capture">
+    Choose **File > Take Screenshot**, then **Selected Area** (<kbd>⇧⌘2</kbd>), **Visible Area** or **Full Page**. You can also point at the address bar, click the camera button, and choose **Full page**, **Visible area** or **Selection...**.
+  </Step>
+  <Step title="Paste it, or edit it">
+    The screenshot is copied to the clipboard, and a card confirms it. Click **Edit** on the card to open the editor.
+  </Step>
+  <Step title="Annotate">
+    Draw with **Arrow**, **Rectangle**, **Ellipse**, **Text**, **Pen** and **Highlighter**, hide details with **Blur**, number steps with **Numbered badge**, or **Crop** the image.
+  </Step>
+  <Step title="Save or copy">
+    Click **Save** to save a PNG into your downloads folder, choose **Save As...** from its menu to pick a place, or click **Copy** to copy the edited image.
+  </Step>
+</Steps>
+
+A full-page capture of a very long page stops before the end, and Lilo tells you so.
+
+## Share a page
+
+- **Send the link**: choose **File > Share…** to open the macOS share menu (Mail, Messages, AirDrop and others). The page title goes in as the subject where the service has one.
+- **Show a QR code**: choose **File > Create QR Code…** to open the page on a phone.
+- **Copy the link**: press <kbd>⇧⌘C</kbd> (**Edit > Copy Page URL**). Hold Option in the Edit menu for **Copy Page Link as Markdown** (<kbd>⌥⇧⌘C</kbd>).
+
+## Share a tab in a call
+
+When a site, such as a video call on example.com, asks to share your screen, Lilo shows a picker of your tabs instead of the whole screen.
+
+<Steps>
+  <Step title="Choose a tab">
+    Pick a tab in **Choose a tab to share**, or search for it. Use the arrow keys and Return, or click **Share**.
+  </Step>
+  <Step title="Or share a window or the screen">
+    Click **Window or Screen...** to use the macOS picker instead. When the page asks for sound, check **Share audio too** first to add what your Mac plays. The call's own voices are never sent back into it.
+  </Step>
+</Steps>
+
+The shared tab is captured inside Lilo, video only, and handed to that page alone. The sidebar marks the tab while it is shared. Closing the tab ends the share.
