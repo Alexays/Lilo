@@ -32,7 +32,7 @@ Every browser above Safari is built on Chromium. Each browser profile is listed 
 
 **Bookmarks.** The bookmarks bar becomes pinned tabs of the Space, and every other bookmark goes into one collapsed pinned folder, named "Other Bookmarks (Chrome)" for Chrome and likewise for the others. Folders keep their nesting down to five levels; anything deeper joins the fifth.
 
-**Open tabs.** The tabs of the browser's last session come in as tabs of the Space, and its pinned tabs as pinned tabs. A tab group of a Chromium-based browser becomes a folder.
+**Open tabs.** The tabs of the browser's last session come in as tabs of the Space, and its pinned tabs as pinned tabs. Safari's pinned tabs are not imported as pinned. A tab group of a Chromium-based browser becomes a folder.
 
 - Arc: each Arc Space becomes a Lilo Space with its pinned and unpinned tabs, Arc's favorites become favorites, and an Arc split view becomes a split view.
 - Zen: each workspace becomes a Lilo Space, and its essentials become favorites.
@@ -43,14 +43,14 @@ Every browser above Safari is built on Chromium. Each browser profile is listed 
 
 **Extensions.** Lilo lists the profile's extensions that come from the Chrome Web Store, and reinstalls the ones you choose from the store. Extensions pinned to the browser's toolbar stay pinned, in the same order, after any Lilo already had.
 
-The site icons of what you import come along, so tabs show them before they load. Only `http` and `https` pages are imported. Running an import again adds only what is new: a bookmark, tab or page of history Lilo already has is not added twice.
+From Chromium-based browsers, Firefox and Zen, the site icons of what you import come along, so tabs show them before they load; from Safari they do not. Only `http` and `https` pages are imported, with one exception: the open tabs of a Chromium-based browser also bring local files (`file://`). Running an import again into the same Space adds only what is new there: a bookmark or tab that Space already has is not added twice, and a page already in the profile's history is merged with it. Importing into another Space adds the bookmarks and tabs again.
 
 ## What is never imported
 
-- Passwords, from any browser. Lilo keeps no passwords itself: add a password manager extension, as [Extensions](/guides/extensions) explains.
+- Passwords, from any browser. Lilo has no password manager of its own: add a password manager extension, as [Extensions](/guides/extensions) explains.
 - Extensions from Safari, Firefox and Zen, and extensions that do not come from the Chrome Web Store.
 - Safari's Reading List.
-- Pages that are not on the web, such as local files or a browser's own pages.
+- A browser's own pages, and local files other than the open tabs of a Chromium-based browser.
 
 ## Full Disk Access
 
@@ -60,4 +60,4 @@ macOS keeps some browser data behind its privacy protection; Safari's folder is 
 2. Turn Lilo on in the list. If Lilo is not listed, drag the icon from the panel into the list.
 3. Lilo comes back to the front and looks for your browsers again.
 
-Lilo needs Full Disk Access only to read those files, on your Mac: nothing you import leaves it.
+Lilo needs Full Disk Access only to read those files, on your Mac. What you import stays on your Mac, except the ids of the extensions you chose to reinstall, which go to the Chrome Web Store (`clients2.google.com`) to download them.
