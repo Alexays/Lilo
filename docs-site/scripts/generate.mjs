@@ -3,7 +3,7 @@
 // deterministic: the translation ledger compares a hash of each English partial. It never writes the
 // French partials that `blume translate` produces (MCP tools, compatibility). Anything it does not
 // understand in a source throws, naming the file and the item: a partial table is worse than none.
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -55,6 +55,7 @@ export function parseShortcuts(source, file = SOURCES.shortcuts) {
   const start = source.indexOf("static let actions: [Action] = [");
   const end = source.indexOf("\n    ]\n", start);
   if (start === -1 || end === -1) fail(file, "no `static let actions: [Action] = [ … ]` block");
+  if (/\s*\./uy.test(source.slice(end + "\n    ]\n".length))) fail(file, "the actions list is changed after its literal (`.filter`, `.map`…), which the reference cannot follow");
   const body = source.slice(start + "static let actions: [Action] = [".length, end).replace(/^\s*\/\/.*$/gmu, "");
   const actions = [];
   const leftover = body.replace(new RegExp(`${ACTION}|${FAMILY}`, "gu"), (_, id, title, category, defaults, family, expression, familyCategory, modifiers) => {
@@ -285,6 +286,7 @@ export function parseTools(source, file) {
     const reader = new SwiftReader(source, file);
     reader.at = match.index + match[0].length;
     const list = reader.collection();
+    if (source[reader.at] !== "\n") reader.fail("a tool list must end at its closing ], or the reference misses what is added or filtered after it");
     for (const tool of Array.isArray(list) ? list : [list]) {
       if (!tool?.name || !tool.properties) reader.fail("a tool list holds something other than tool(…)");
       for (const [name, schema] of Object.entries(tool.properties)) checkSchema(schema, `${tool.name}.${name}`, file);
@@ -295,6 +297,15 @@ export function parseTools(source, file) {
   if (tools.length === 0) fail(file, "no tool definitions found");
   const pickers = source.match(/static let browserPickers: Set = (\[[^\]]*\])/u);
   return { tools, pickers: pickers ? new SwiftReader(pickers[1], file).value() : [] };
+}
+
+/** Every line-leading `tool("` in the agent sources must be a tool the readers found, or a list or file is missed. */
+export function checkToolCount(parsed, sources) {
+  const found = parsed.reduce((count, file) => count + file.tools.length, 0);
+  const declared = Object.values(sources).reduce((count, source) => count + (source.match(/^\s*(?:AgentTools\.)?tool\("/gmu)?.length ?? 0), 0);
+  if (declared !== found) {
+    fail("Lilo/Agent", `${declared} tool(…) definitions start a line but the generator read ${found} from ${SOURCES.tools.join(", ")}: a tool list it does not know needs adding to SOURCES.tools (and GROUPS) in docs-site/scripts/generate.mjs, as a \`static let …: [[String: Any]] = [ … ]\` literal`);
+  }
 }
 
 const typeText = (schema) => {
@@ -319,7 +330,11 @@ const GROUPS = { "Lilo/Agent/AgentTools.swift": "Tabs and pages", "Lilo/Agent/Ag
 export function mcpPartial(parsed, summaries) {
   const tools = parsed.flatMap((file) => file.tools);
   const pickers = new Set(parsed.flatMap((file) => file.pickers));
-  const names = new Set(tools.map((tool) => tool.name));
+  const names = new Set();
+  for (const tool of tools) {
+    if (names.has(tool.name)) fail(tool.file, `two tools are named "${tool.name}"`);
+    names.add(tool.name);
+  }
   for (const tool of tools) {
     if (typeof summaries[tool.name] !== "string" || !summaries[tool.name].trim()) fail(SOURCES.summaries, `no summary for the tool "${tool.name}" (${tool.file}): add one to ${SOURCES.summaries}`);
   }
@@ -404,6 +419,8 @@ export async function partials() {
   const actions = parseShortcuts(read(SOURCES.shortcuts));
   const model = await loadSettings();
   const tools = SOURCES.tools.map((file) => parseTools(read(file), file));
+  const agent = readdirSync(`${repo}Lilo/Agent`).filter((name) => name.endsWith(".swift"));
+  checkToolCount(tools, Object.fromEntries(agent.map((name) => [name, read(`Lilo/Agent/${name}`)])));
   const compatibility = compatibilityPartials(read(SOURCES.compatibility), {
     "/reference/extension-compatibility": ["Chrome extensions"],
     "/reference/web-compatibility": ["Web APIs", "Known Limitations"],
