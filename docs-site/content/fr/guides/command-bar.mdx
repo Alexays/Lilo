@@ -1,8 +1,81 @@
 ---
-title: "Barre de commande"
-description: "Ouvrez des pages, cherchez dans vos onglets, votre historique et vos favoris, et lancez toute commande de Lilo depuis la barre de commande, au clavier."
+title: Barre de commandes
+description: "Ouvrez des pages, cherchez dans vos onglets, votre historique et vos favoris, et lancez toute commande de Lilo depuis la barre de commandes, au clavier."
 sidebar:
   order: 3
 ---
+La barre de commandes est le champ affiché par-dessus la page dans lequel vous saisissez une adresse, retrouvez un onglet déjà ouvert, rouvrez une page de votre historique ou lancez une commande de Lilo. Cette page explique comment l'ouvrir, restreindre ce qu'elle recherche et agir sur un résultat sans toucher à la souris.
 
-Cette page est en cours de rédaction.
+## Ouvrir la barre de commandes [#open-the-command-bar]
+
+| Pour | Faites ceci |
+| --- | --- |
+| Ouvrir une page dans un nouvel onglet | Appuyez sur <kbd>⌘T</kbd> (**Fichier > Nouvel onglet**). Lilo ouvre un onglet vide avec la barre de commandes par-dessus. |
+| Remplacer la page actuelle | Appuyez sur <kbd>⌘L</kbd> (**Fichier > Ouvrir l'adresse…**). La barre de commandes s'ouvre sur l'adresse de la page, sélectionnée. |
+| Rouvrir un onglet archivé | Choisissez **Historique > Onglets archivés…**. |
+
+Appuyez sur <kbd>Esc</kbd> pour la fermer. Fermer la barre de commandes d'un nouvel onglet sans rien choisir ferme aussi cet onglet vide, sauf s'il est le seul.
+
+Si une extension remplace la page de nouvel onglet de Chrome, <kbd>⌘T</kbd> ouvre cette page à la place, sauf dans un espace privé.
+
+## Accéder à une page ou chercher sur le web [#go-to-a-page-or-search-the-web]
+
+<Steps>
+  <Step title="Saisissez">
+    Saisissez une adresse, un nom de site ou une recherche. Lorsque le premier résultat est une page, Lilo complète son adresse après votre texte ; appuyez sur <kbd>⇥</kbd> ou <kbd>→</kbd> pour accepter la complétion, ou sur <kbd>⌫</kbd> pour l'abandonner.
+  </Step>
+  <Step title="Choisissez un résultat">
+    Utilisez <kbd>↑</kbd> et <kbd>↓</kbd> pour parcourir les résultats : onglets ouverts, espaces, favoris, historique, actions et suggestions de recherche.
+  </Step>
+  <Step title="Ouvrez-le">
+    Appuyez sur <kbd>↩</kbd>. Pour une page déjà ouverte dans un onglet, Lilo bascule vers cet onglet au lieu d'en ouvrir une seconde copie.
+  </Step>
+</Steps>
+
+Tout ce qui n'est pas une adresse est envoyé à votre moteur de recherche, Google à moins que vous n'en ayez choisi un autre dans **Réglages > Général > Moteur de recherche**. Sous **Moteurs de recherche**, vous pouvez attribuer un mot-clé à un moteur : saisissez le mot-clé, une espace et votre requête pour interroger ce moteur une seule fois. **Suggestions de recherche** envoie ce que vous saisissez au moteur de recherche pour afficher ses suggestions ; désactivez cette option et ce que vous saisissez reste sur votre Mac. Dans les deux cas, pendant que vous saisissez une recherche, Lilo ouvre à l'avance une connexion à votre moteur de recherche, sans envoyer votre texte.
+
+## Restreindre la recherche avec un préfixe [#narrow-the-search-with-a-prefix]
+
+Commencez par un caractère pour ne chercher qu'un seul type de résultat. Le périmètre s'affiche sous forme de jeton au début du champ ; <kbd>⌫</kbd> au début du champ le supprime et conserve votre texte.
+
+| Préfixe | Recherche |
+| --- | --- |
+| `:` | Les actions de Lilo |
+| `>` | Terminal : exécute une commande shell dans un nouvel onglet terminal |
+| `@` | Les onglets ouverts de l'espace actuel |
+| `#` | Les favoris de cet espace |
+| `/` | L'historique |
+| `<` | Les onglets archivés de l'espace actuel |
+
+Le périmètre `>` n'apparaît que lorsque les onglets terminal sont activés (voir [Terminal](/guides/terminal)).
+
+## Agir sur un résultat [#act-on-a-result]
+
+Le pied de la barre de commandes indique les touches auxquelles répond le résultat sélectionné.
+
+| Touches | Ce qu'elles font | Fonctionne sur |
+| --- | --- | --- |
+| <kbd>↩</kbd> | L'ouvrir ou basculer vers lui | Tous les résultats |
+| <kbd>⌘↩</kbd> | L'ouvrir dans un nouvel onglet | Les pages et les recherches |
+| <kbd>⌥↩</kbd> | L'ouvrir dans une [vue partagée](/guides/split-view) à côté de l'onglet actuel | Les onglets, les favoris, les pages web |
+| <kbd>⇧↩</kbd> | L'ouvrir dans un [Aperçu](/guides/peek-and-little-window) par-dessus l'onglet actuel | Les pages web |
+| <kbd>⌘C</kbd> | Copier son lien | Tout ce qui a une adresse |
+| <kbd>⌘⌫</kbd> | Fermer l'onglet, ou supprimer la page de l'historique | Les onglets ouverts, l'historique |
+| <kbd>⌘M</kbd> | Déplacer l'onglet vers un autre espace | Les onglets ouverts |
+
+## Lancer une commande [#run-a-command]
+
+Saisissez `:` et une partie du nom d'une commande, par exemple `: split` ou `: reader`, puis appuyez sur <kbd>↩</kbd>. Les actions comprennent **Nouvel espace**, **Espace privé**, **Nouvelle vue partagée**, **Séparer la vue partagée**, **Ranger les onglets non épinglés**, **Rouvrir l'onglet fermé**, **Épingler ou désépingler l'onglet**, **Dupliquer l'onglet**, **Mode lecture**, **Traduire la page**, **Capturer la page entière**, **Copier l'URL de la page**, **Afficher l'historique**, **Afficher les téléchargements** et **Réglages**. Chaque ligne affiche son raccourci clavier lorsqu'elle en a un.
+
+Sans préfixe, quelques expressions anglaises fixes lancent directement une commande lorsque vous en saisissez une exactement et appuyez sur <kbd>↩</kbd>, par exemple `new tab`, `close tab`, `reload page`, `split view` ou `copy link`. Seules les expressions de deux mots ou plus fonctionnent ainsi, et seulement ces expressions exactes, pas le nom de chaque commande. Un mot seul tel que `reload` ne lance la commande qu'après `:` ; tout le reste est envoyé à votre moteur de recherche.
+
+## Ce qu'elle affiche avant que vous ne saisissiez [#what-it-shows-before-you-type]
+
+- **Sur un nouvel onglet vide** : **Sites fréquents**, les sites auxquels votre historique récent revient le plus, sous forme de tuiles, et **Conversations récentes** lorsque vous avez des conversations avec des agents.
+- **Par-dessus une page, une fois le champ effacé** : les **Favoris** de cet espace sous forme de tuiles, **Historique récent**, les **Onglets ouverts** de cet espace et deux **Actions rapides**.
+- **Après un préfixe** : la liste à vide de ce périmètre, par exemple vos onglets ouverts après `@` ou votre historique récent après `/`.
+
+## Limites [#limits]
+
+- Les résultats d'onglets et de favoris proviennent uniquement de l'espace actuel. Pour atteindre un autre espace, saisissez son nom et choisissez-le sous **Espaces** ; après `:`, la ligne indique **Basculer vers** et le nom de l'espace.
+- Les onglets d'un dossier verrouillé n'apparaissent jamais par leur nom. Lorsque l'un d'eux correspond, la barre de commandes affiche une seule ligne **Résultats dans** pour le dossier, qui propose de le déverrouiller. Voir [Verrouiller un dossier](/guides/tabs-and-folders#lock-a-folder).

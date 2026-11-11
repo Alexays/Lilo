@@ -1,8 +1,141 @@
 ---
-title: "Onglets et dossiers"
-description: "Épinglez, regroupez et archivez vos onglets dans la barre latérale, rangez-les dans des dossiers, verrouillez un dossier et réglez la durée de vie des onglets."
+title: Onglets et dossiers
+description: "Épinglez, regroupez et archivez vos onglets, rangez-les dans des dossiers, verrouillez un dossier et choisissez combien de temps les onglets inutilisés restent."
 sidebar:
   order: 2
 ---
+Cette page montre comment conserver les onglets que vous utilisez, laisser les autres partir d'eux-mêmes, regrouper des onglets dans des dossiers et verrouiller un dossier par un mot de passe.
 
-Cette page est en cours de rédaction.
+## Comment la barre latérale est organisée [#how-the-sidebar-is-laid-out]
+
+Chaque [espace](/guides/spaces-and-profiles) comporte trois sortes d'onglets, de haut en bas :
+
+- Les **favoris**, les tuiles tout en haut. **Ajouter l'onglet aux favoris** dans le menu contextuel d'un onglet, ou **Onglet > Ajouter cette page aux favoris**, y place un onglet.
+- Les **onglets épinglés**, sous les tuiles. Ils restent jusqu'à ce que vous les retiriez.
+- Les **onglets ouverts**, le reste de la liste. Ce sont les onglets que Lilo archive une fois que vous n'y touchez plus.
+
+Les favoris et les onglets épinglés gardent comme page d'accueil la page sur laquelle vous les avez enregistrés. En fermer un le décharge mais le conserve dans la barre latérale ; cliquer dessus rouvre cette page. Lorsque vous avez navigué ailleurs, son menu contextuel propose **Revenir à la page d'accueil**, et **Modifier...** change son nom ou son adresse.
+
+## Conserver un onglet pour de bon [#keep-a-tab-for-good]
+
+- Cliquez sur l'onglet avec le bouton droit et choisissez **Épingler l'onglet**, ou utilisez **Onglet > Épingler l'onglet** pour l'onglet actuel.
+- Ou faites glisser l'onglet vers le haut, parmi les onglets épinglés.
+
+Pour retirer un onglet épinglé, cliquez dessus avec le bouton droit et choisissez **Désépingler l'onglet**, ou fermez-le et choisissez **Supprimer l'onglet épinglé**.
+
+Un lien vers un autre site s'ouvre dans un [Aperçu](/guides/peek-and-little-window) par-dessus un onglet épinglé ou un favori, de sorte que l'onglet reste sur son propre site.
+
+## Empêcher les onglets de s'accumuler [#stop-tabs-piling-up]
+
+Lilo archive un onglet ouvert que vous n'avez pas consulté depuis 12 heures. L'archivage ferme l'onglet et conserve son adresse et son titre dans les archives de l'espace, où vous pouvez le rouvrir.
+
+<Steps>
+  <Step title="Choisir le délai pour un espace">
+    Choisissez **Espaces > Modifier l'espace…** et réglez **Archiver les onglets après** sur **12 heures**, **24 heures**, **7 jours**, **30 jours** ou **Jamais**. Chaque espace a son propre délai.
+  </Step>
+  <Step title="Archiver maintenant, si vous le souhaitez">
+    Choisissez **Onglet > Archiver les onglets non épinglés** ou appuyez sur <kbd>⇧⌘K</kbd>, ou cliquez sur **Archiver les onglets non épinglés** sur le séparateur au-dessus de vos onglets ouverts. Un message propose **Annuler**, qui remet les onglets là où ils étaient.
+  </Step>
+  <Step title="Retrouver un onglet archivé">
+    Choisissez **Historique > Onglets archivés…**, qui ouvre la [barre de commandes](/guides/command-bar) sur les archives, ou cliquez sur le bouton des téléchargements et des onglets archivés en bas de la barre latérale. Sélectionnez un onglet pour le rouvrir, ou choisissez **Restaurer**.
+  </Step>
+</Steps>
+
+Ce que Lilo n'archive jamais :
+
+- les onglets épinglés, les favoris et les onglets placés dans des dossiers ;
+- l'onglet à l'écran et l'onglet sélectionné de l'espace ;
+- un onglet qui diffuse du son, en cours d'appel, en Image dans l'image, contenant du texte que vous avez saisi et pas encore envoyé, ou contrôlé par un agent IA ;
+- les onglets terminal.
+
+Lilo vérifie toutes les cinq minutes tant qu'il est l'app active. Les archives conservent les onglets pendant 30 jours, jusqu'à 200 par espace. Les archives d'un espace privé ne sont jamais écrites sur le disque.
+
+Lorsque vous rouvrez Lilo après qu'il est resté fermé plus longtemps que le délai d'un espace, cet espace s'ouvre sans aucun onglet sélectionné et avec ses onglets épinglés et ses favoris revenus sur leur page d'accueil. Cela ne se produit qu'au lancement, pas lorsque vous revenez à un Lilo resté ouvert. **Réglages > Onglets et Espaces > Ouvrir sur une fenêtre vide** le fait à chaque lancement.
+
+## Choisir à quelle vitesse les onglets inactifs se mettent en veille [#choose-how-quickly-idle-tabs-sleep]
+
+Indépendamment de l'archivage, Lilo met en pause les onglets que vous n'utilisez pas afin qu'ils ne consomment aucune énergie, et les vide lorsque vous avez plus d'onglets chargés qu'il n'en conserve ou que la mémoire vient à manquer. Un onglet en pause réaffiche sa page lorsque vous le sélectionnez ; un onglet vidé se recharge.
+
+Réglez le rythme dans **Réglages > Onglets et Espaces > Onglets inactifs** :
+
+| Choix | Ce qu'il fait |
+| --- | --- |
+| **Garder chargés** | Mis en pause après 15 min, jamais vidés pour inactivité. Moins de rechargements, plus de mémoire. |
+| **Équilibré** (par défaut) | Mis en pause après 5 min, jamais vidés pour inactivité. |
+| **Économiser** | Mis en pause après 2 min, vidés après 10 min. Meilleure autonomie ; les onglets se rechargent plus souvent. |
+
+Quel que soit le choix, Lilo vide aussi les onglets que vous avez le moins utilisés dès qu'il y a plus d'onglets chargés qu'il n'en conserve (jusqu'à 24 dans l'espace actuel, selon la mémoire de votre Mac, et quelques-uns dans les autres espaces), et davantage encore lorsque la mémoire vient à manquer. [Consommation d'énergie](/about/energy#background-tabs-are-frozen) donne les chiffres. Sur batterie, chaque choix met en pause les onglets en arrière-plan après une minute. Un onglet qui diffuse du son ou en cours d'appel n'est pas mis en pause, un onglet contenant du texte non enregistré n'est jamais vidé, et **Économiser** ne vide pas les onglets épinglés pour inactivité.
+
+## Regrouper des onglets dans des dossiers [#group-tabs-in-folders]
+
+<Steps>
+  <Step title="Créer un dossier">
+    Cliquez sur un onglet avec le bouton droit et choisissez **Créer un dossier à partir de l'onglet**, ou cliquez avec le bouton droit sur une zone vide de la barre latérale et choisissez **Créer un dossier**.
+  </Step>
+  <Step title="Le nommer">
+    Cliquez sur le dossier avec le bouton droit et choisissez **Modifier le dossier** pour lui donner un nom et une couleur.
+  </Step>
+  <Step title="Ajouter des onglets">
+    Faites glisser des onglets sur le dossier, ou cliquez sur un onglet avec le bouton droit et choisissez **Déplacer dans un dossier**. **Retirer du dossier** ressort un onglet du dossier.
+  </Step>
+</Steps>
+
+- Cliquez sur un dossier avec le bouton droit et choisissez **Nouveau dossier** pour en imbriquer un à l'intérieur. Les dossiers s'imbriquent sur cinq niveaux au maximum.
+- **Ouvrir le dossier** et **Fermer le dossier** affichent ou masquent ses onglets.
+- **Supprimer le dossier** supprime le dossier avec ses onglets et ses sous-dossiers, après votre confirmation. Cette action est irréversible.
+- Un dossier placé parmi les onglets épinglés épingle ce que vous y déplacez. Les onglets placés dans des dossiers ne sont jamais archivés.
+- Les extensions voient les dossiers comme des groupes d'onglets Chrome.
+
+## Empiler et trier les onglets ouverts [#stack-and-sort-the-open-tabs]
+
+Cliquez sur **Trier et regrouper** sur le séparateur au-dessus de vos onglets ouverts, ou cliquez avec le bouton droit sur une zone vide de la barre latérale :
+
+- **Empiler les onglets par site** (activé par défaut) replie trois onglets ouverts ou plus d'un même site en une seule ligne, qui reste jusqu'à ce qu'il ne reste qu'un onglet. Cliquez sur une pile avec le bouton droit pour **Déplacer la pile dans un nouveau dossier**, **Déplacer la pile vers un espace**, **Ne pas empiler** ce site, ou **Fermer la pile**. **Ne jamais empiler** répertorie les sites que vous avez exclus.
+- **Regrouper par type** place les onglets d'agent et les onglets terminal dans des bacs qui leur sont propres, au-dessus des pages web. **Regrouper par projet** attribue un bac à chaque projet auquel appartiennent deux onglets ou plus.
+- **Trier par site** et **Trier par titre** ordonnent les onglets ouverts une seule fois ; les dossiers gardent leur place.
+
+## Verrouiller un dossier [#lock-a-folder]
+
+Un dossier verrouillé reste fermé, et ses onglets sont masqués dans la barre latérale et dans les résultats de la barre de commandes jusqu'à ce que vous le déverrouilliez.
+
+<Steps>
+  <Step title="Définir un mot de passe">
+    Cliquez sur le dossier avec le bouton droit et choisissez **Verrouiller le dossier…**. Saisissez un **Mot de passe**, saisissez-le de nouveau sous **Confirmer**, et cochez **Autoriser Touch ID** si votre Mac en est équipé.
+  </Step>
+  <Step title="Le verrouiller">
+    Cliquez sur **Verrouiller**. Le dossier se ferme et affiche un cadenas.
+  </Step>
+  <Step title="Le déverrouiller">
+    Cliquez sur le dossier, ou cliquez dessus avec le bouton droit et choisissez **Déverrouiller le dossier…**, puis utilisez **Déverrouiller avec Touch ID** ou saisissez le mot de passe.
+  </Step>
+</Steps>
+
+Un dossier déverrouillé se verrouille de nouveau après 15 minutes sans activité, et chaque fois que l'écran se verrouille, que le Mac se met en veille ou que vous changez d'utilisateur. Modifiez le délai pour 5, 15, 30 ou 60 minutes dans **Réglages > Confidentialité > Reverrouiller les dossiers après**. Tant qu'un dossier verrouillé est ouvert, sa ligne affiche **Verrouiller maintenant**.
+
+Pour modifier ou supprimer le mot de passe, cliquez avec le bouton droit sur le dossier déverrouillé et choisissez **Modifier le mot de passe…** ou **Retirer le verrou** ; macOS demande d'abord le mot de passe de votre Mac ou Touch ID.
+
+:::warning[Mots de passe oubliés]
+Lorsque Touch ID est autorisé, **Mot de passe oublié** permet au mot de passe de votre compte Mac d'ouvrir le dossier. Sans Touch ID, un mot de passe oublié ne peut pas être récupéré : la seule issue est **Supprimer le dossier et ses onglets**.
+:::
+
+Lilo ne stocke qu'une empreinte salée du mot de passe, dans le trousseau de votre Mac, pour ce Mac uniquement.
+
+## Passer d'un onglet à l'autre au clavier [#move-between-tabs-from-the-keyboard]
+
+| Action | Touches |
+| --- | --- |
+| Nouvel onglet | <kbd>⌘T</kbd> |
+| Fermer l'onglet | <kbd>⌘W</kbd> |
+| Rouvrir le dernier onglet fermé | <kbd>⇧⌘T</kbd> |
+| Afficher l'onglet suivant, Afficher l'onglet précédent | <kbd>⇧⌘]</kbd> <kbd>⇧⌘[</kbd>, ou <kbd>⌥⌘→</kbd> <kbd>⌥⌘←</kbd> |
+| Passer à un onglet récent | <kbd>⌃⇥</kbd> |
+| Onglet 1 à Onglet 8, Dernier onglet | <kbd>⌘1</kbd> à <kbd>⌘8</kbd>, <kbd>⌘9</kbd> |
+| Fermer les autres onglets | <kbd>⌥⌘W</kbd> |
+| Couper le son de l'onglet | <kbd>⇧⌘M</kbd> |
+| Afficher ou masquer la barre latérale | <kbd>⇧⌘S</kbd> |
+
+<kbd>⌃⇥</kbd> parcourt vos onglets les plus récents, de tous les espaces, jusqu'à ce que vous relâchiez Contrôle. Pour qu'il suive plutôt l'ordre de la barre latérale, modifiez **Contrôle-Tab parcourt les onglets dans l'ordre** dans **Réglages > Général > Raccourcis clavier**. Tous les raccourcis sont répertoriés dans [Raccourcis clavier](/reference/keyboard-shortcuts).
+
+## Placer les onglets sur un autre bord [#put-the-tabs-on-another-edge]
+
+Faites glisser la barre latérale vers un autre bord de la fenêtre, choisissez **Présentation > Placer les onglets à gauche**, **Droite**, **Haut** ou **Bas**, ou réglez **Onglets** dans **Réglages > Apparence**.

@@ -1,8 +1,92 @@
 ---
-title: "Aperçu et Petite fenêtre"
-description: "Prévisualisez un lien dans l'Aperçu sans quitter la page en cours, ouvrez des liens rapides dans une Petite fenêtre et choisissez où s'ouvre chaque lien."
+title: Aperçu et petite fenêtre
+description: "Prévisualisez un lien dans l'Aperçu sans quitter la page, ouvrez un lien rapide dans une petite fenêtre et choisissez où chaque lien s'ouvre dans Lilo."
 sidebar:
   order: 5
 ---
+L'Aperçu ouvre une page dans une carte au-dessus de celle que vous lisez, afin que vous puissiez consulter un lien et revenir exactement là où vous étiez. Une petite fenêtre ouvre une page dans une fenêtre réduite qui lui est propre, en dehors de vos espaces, pour jeter un coup d'œil rapide à un lien provenant d'une autre app. Cette page montre comment utiliser les deux et comment choisir où s'ouvre chaque lien.
 
-Cette page est en cours de rédaction.
+## Consulter un lien sans perdre le fil [#look-at-a-link-without-losing-your-place]
+
+<Steps>
+  <Step title="Cliquez sur le lien en maintenant Maj">
+    Maintenez la touche Maj enfoncée et cliquez sur n'importe quel lien. La page s'ouvre dans un Aperçu au-dessus de l'onglet en cours, connectée avec le même profil.
+  </Step>
+  <Step title="Lisez-la ou utilisez-la">
+    Les liens sur lesquels vous cliquez dans l'Aperçu s'ouvrent dans l'Aperçu.
+  </Step>
+  <Step title="Fermez-la ou conservez-la">
+    Appuyez sur <kbd>Esc</kbd>, cliquez en dehors de la carte ou appuyez sur <kbd>⌘W</kbd> pour fermer l'Aperçu. Pour conserver la page, cliquez sur **Ouvrir dans un onglet** (<kbd>⌘O</kbd>, **Fichier > Ouvrir dans un onglet**) : elle devient un onglet placé juste après celui où vous étiez, avec sa position de défilement et tout ce que vous avez saisi. Cliquez sur **Ouvrir en split** pour la placer plutôt dans une [vue partagée](/guides/split-view) à côté de cet onglet.
+  </Step>
+</Steps>
+
+La barre en haut de la carte affiche l'adresse du site, **Ouvrir en split**, **Ouvrir dans un onglet**, **Copier l'URL de la page** et **Fermer**. **Ouvrir en split** n'y figure que lorsque l'onglet situé sous l'Aperçu peut accueillir un volet de vue partagée : ce n'est pas le cas lorsque cet onglet se trouve déjà dans un dossier ou dans une vue partagée.
+
+Autres façons d'ouvrir un Aperçu :
+
+- Depuis la [barre de commandes](/guides/command-bar), sélectionnez une page web et appuyez sur <kbd>⇧↩</kbd>.
+- Depuis un onglet épinglé ou un favori, cliquez sur un lien vers un autre site (section suivante).
+
+Une fenêtre affiche un seul Aperçu de lien à la fois : en ouvrir un autre ferme le premier. Un Aperçu appartient à son onglet : passez à un autre onglet et il se masque, revenez et il est là.
+
+## Garder les onglets épinglés sur leur propre site [#keep-pinned-tabs-on-their-own-site]
+
+Un onglet épinglé ou un favori contient généralement un seul site, comme votre messagerie ou votre calendrier. Lorsque vous y cliquez sur un lien qui mène à un autre site, le lien s'ouvre dans un Aperçu au-dessus de l'onglet, et l'onglet reste sur sa page. Un lien vers une page du même site s'ouvre dans l'onglet comme d'habitude.
+
+Si la page de l'Aperçu vous ramène ensuite au site de l'onglet, comme le fait une connexion passant par un autre site, Lilo ferme l'Aperçu et charge cette page dans l'onglet.
+
+Pour désactiver ce comportement, décochez **Réglages > Onglets et Espaces > Aperçu des liens des onglets épinglés**. Un clic avec la touche Maj ouvre toujours un Aperçu sur n'importe quel lien.
+
+## Jeter un coup d'œil à un onglet épinglé [#glance-at-a-pinned-tab]
+
+Laissez le pointeur sur un onglet épinglé ou un favori et sa page apparaît dans une carte à côté de la barre latérale, en direct : vous pouvez y faire défiler, cliquer et saisir du texte sans quitter l'onglet en cours. Appuyez sur <kbd>Esc</kbd> ou éloignez le pointeur pour la fermer. Redimensionnez la carte une fois et toutes les cartes conservent cette taille.
+
+Lorsque **Réglages > Onglets et Espaces > Page en direct au survol d'un onglet épinglé** est désactivé, la carte affiche une image de la page à la place.
+
+## Ouvrir une page rapide dans une petite fenêtre [#open-a-quick-page-in-a-little-window]
+
+<Steps>
+  <Step title="Ouvrez une petite fenêtre">
+    Choisissez **Fichier > Nouvelle petite fenêtre** ou appuyez sur <kbd>⌥⌘N</kbd>. Le raccourci fonctionne depuis n'importe quelle app, même lorsque Lilo n'est pas au premier plan.
+  </Step>
+  <Step title="Saisissez une adresse ou une recherche">
+    Le champ d'adresse est sélectionné. Saisissez votre texte et appuyez sur <kbd>↩</kbd>.
+  </Step>
+  <Step title="Conservez-la ou laissez-la partir">
+    Cliquez sur **Ouvrir dans** suivi du nom de l'espace pour déplacer la page dans cet espace sous forme d'onglet, ou cliquez sur la flèche située à côté pour choisir un autre espace. Fermez la fenêtre avec <kbd>⌘W</kbd> lorsque vous avez terminé.
+  </Step>
+</Steps>
+
+Ce qu'il faut savoir sur les petites fenêtres :
+
+- Une petite fenêtre ne figure dans la liste d'onglets d'aucun espace. Sa page s'exécute dans le profil de l'espace affiché dans la fenêtre du navigateur, ou du dernier espace que vous avez utilisé lorsque celui-ci est un espace privé.
+- Un lien qui ouvre une nouvelle fenêtre depuis une petite fenêtre ouvre une autre petite fenêtre.
+- La page d'une petite fenêtre fermée va dans **Historique > Fermés récemment**, afin que vous puissiez la rouvrir.
+- **Copier l'URL**, dans sa barre, copie l'adresse de la page.
+- Lilo mémorise l'endroit où vous avez placé la fenêtre ainsi que sa taille.
+
+Pour empêcher <kbd>⌥⌘N</kbd> de fonctionner en dehors de Lilo, décochez **Réglages > Onglets et Espaces > Raccourci de la petite fenêtre**. Pour changer les touches, modifiez **Nouvelle petite fenêtre** dans **Réglages > Général > Raccourcis clavier** ; le raccourci depuis les autres apps suit.
+
+## Choisir où s'ouvrent les liens provenant d'autres apps [#choose-where-links-from-other-apps-open]
+
+Lorsque Lilo est votre navigateur par défaut, les liens sur lesquels vous cliquez dans Mail, Slack ou toute autre app s'ouvrent dans Lilo. Les réglages déterminent où.
+
+<Steps>
+  <Step title="Définissez le comportement par défaut">
+    Dans **Réglages > Général**, sous **Liens venant d'autres apps**, réglez **Ouvrir les liens dans** sur **Espace actuel**, **Petite fenêtre** ou l'un de vos espaces.
+  </Step>
+  <Step title="Ajoutez des règles pour certains sites">
+    Sous **Règles**, cliquez sur **Ajouter une règle**. Choisissez **L'hôte est** et saisissez un hôte tel que `example.com`, ou **L'URL contient** et saisissez une partie d'adresse telle que `example.com/docs`. Sous **S'ouvre dans**, choisissez **Petite fenêtre** ou un espace, puis cliquez sur **Ajouter**.
+  </Step>
+  <Step title="Ordonnez les règles">
+    La première règle qui correspond à un lien détermine où il s'ouvre ; placez donc les règles les plus spécifiques en haut. Un hôte correspond aussi à ses sous-domaines : `example.com` correspond à `docs.example.com`.
+  </Step>
+</Steps>
+
+Un lien auquel aucune règle ne correspond va là où l'indique **Ouvrir les liens dans**. Une règle dont l'espace a été supprimé utilise le comportement par défaut. Les liens provenant d'autres apps ne s'ouvrent jamais dans un espace privé : si **Espace actuel** est sélectionné alors qu'un espace privé est à l'écran, ils vont dans le dernier autre espace que vous avez utilisé.
+
+## Limites [#limits]
+
+- L'Aperçu n'est pas disponible dans les onglets contrôlés par un agent IA.
+- Un Aperçu n'a pas de fenêtre qui lui est propre : lorsque sa page demande l'accès à la caméra ou au microphone, c'est l'onglet situé en dessous qui vous le demande.
+- Lorsque **Réglages > Onglets et Espaces > Tout garder dans une seule fenêtre** est activé, les fenêtres contextuelles d'une page s'ouvrent sous forme d'Aperçu au-dessus de leur onglet plutôt que dans une fenêtre séparée.

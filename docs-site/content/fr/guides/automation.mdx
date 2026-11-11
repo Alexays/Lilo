@@ -1,8 +1,142 @@
 ---
-title: "Automatisation"
-description: "Pilotez Lilo avec AppleScript et Raccourcis : ouvrez et lisez des onglets, lancez ses actions depuis vos propres flux et associez Lilo à d'autres apps du Mac."
+title: Automatisation
+description: "Pilotez les fenêtres et onglets de Lilo avec AppleScript, et ouvrez des pages, lisez l'onglet actuel ou changez d'espace avec ses actions Raccourcis."
 sidebar:
   order: 13
 ---
+Lilo fonctionne avec AppleScript et Raccourcis. Les scripts peuvent lister, ouvrir, charger, recharger et fermer des onglets ; Raccourcis peut ouvrir une adresse, lire l'adresse de l'onglet actuel et changer d'espace, y compris lorsqu'un mode de concentration s'active. Pour les agents qui naviguent et agissent sur les pages, consultez [Agents IA](/guides/ai-agents).
 
-Cette page est en cours de rédaction.
+## AppleScript
+
+Le dictionnaire de Lilo suit le modèle d'onglets de Chrome et de Safari (onglets de fenêtre, onglet actif, URL, titre) : de nombreux scripts écrits pour eux fonctionnent donc avec Lilo une fois le nom de l'application modifié. Pour lire le dictionnaire, ouvrez Éditeur de script, choisissez **Fichier > Ouvrir un dictionnaire…** et sélectionnez Lilo.
+
+La première fois qu'un script ou une app contrôle Lilo, macOS vous demande s'il faut l'autoriser. Vous pouvez modifier votre réponse dans **Réglages Système > Confidentialité et sécurité > Automatisation**.
+
+### Ce qu'un script peut atteindre [#what-a-script-can-reach]
+
+**window** (de la suite standard) gagne :
+
+| Propriété ou élément | Type | Accès | Signification |
+| --- | --- | --- | --- |
+| `tabs` | liste de `tab` | lecture, création | Les onglets de l'espace actuel de la fenêtre. |
+| `active tab` | `tab` | lecture | L'onglet affiché dans la fenêtre. |
+| `active tab index` | entier | lecture et écriture | L'index de l'onglet actif, à partir de 1 ; le définir affiche cet onglet. |
+| `space name` | texte | lecture | Le nom de l'espace actuel de la fenêtre ; vide pour un espace privé. |
+| `profile name` | texte | lecture | Le nom du profil de l'espace actuel ; vide pour un espace privé. |
+
+**tab** :
+
+| Propriété | Type | Accès | Signification |
+| --- | --- | --- | --- |
+| `id` | texte | lecture | L'identifiant unique de l'onglet. |
+| `title` | texte | lecture | Le titre de la page. |
+| `URL` | texte | lecture et écriture | L'adresse de la page ; la définir charge cette adresse. |
+| `loading` | booléen | lecture | Indique si la page est encore en cours de chargement. |
+
+Un onglet répond à `close`, `reload`, `go back` et `go forward`.
+
+Certains onglets restent hors d'atteinte : une fenêtre qui affiche un espace privé ne liste aucun onglet ni aucun nom, et les onglets d'un dossier verrouillé sont exclus. Les fenêtres qui ne sont pas des fenêtres de navigation, comme une petite fenêtre, n'ont pas d'onglets non plus : lorsque l'une d'elles est au premier plan, `tabs of front window` est vide et `make new tab` y échoue ; placez donc d'abord une fenêtre de navigation au premier plan. Un script ne peut charger que des adresses `http`, `https` et `file`.
+
+### Exemples [#examples]
+
+Lister les onglets ouverts de la fenêtre au premier plan :
+
+```applescript
+tell application "Lilo"
+    set report to "Space: " & space name of front window & return
+    repeat with t in tabs of front window
+        set report to report & title of t & " - " & URL of t & return
+    end repeat
+    return report
+end tell
+```
+
+Ouvrir une page dans un nouvel onglet :
+
+```applescript
+tell application "Lilo"
+    make new tab at end of tabs of front window with properties {URL:"https://example.com"}
+end tell
+```
+
+Un nouvel onglet se place toujours à la fin de l'espace actuel de la fenêtre, comme un onglet ouvert depuis la barre latérale.
+
+Charger une autre adresse dans l'onglet que vous consultez, attendre la fin du chargement et lire son titre :
+
+```applescript
+tell application "Lilo"
+    set URL of active tab of front window to "https://example.com"
+    delay 0.5
+    repeat while loading of active tab of front window
+        delay 0.5
+    end repeat
+    return title of active tab of front window
+end tell
+```
+
+Afficher le deuxième onglet, le recharger et fermer les onglets d'un site :
+
+```applescript
+tell application "Lilo"
+    set active tab index of front window to 2
+    reload active tab of front window
+    close (every tab of front window whose URL contains "example.com")
+end tell
+```
+
+Revenir en arrière dans l'onglet actif :
+
+```applescript
+tell application "Lilo" to go back active tab of front window
+```
+
+## Raccourcis [#shortcuts]
+
+Lilo ajoute ces actions à l'app Raccourcis. Elles agissent sur la fenêtre Lilo que vous avez utilisée en dernier.
+
+| Action | Entrée | Ce qu'elle fait |
+| --- | --- | --- |
+| **Ouvrir l'URL dans Lilo** | URL | Ouvre l'adresse dans Lilo, comme le ferait un lien provenant d'une autre app. |
+| **Obtenir l'onglet actuel** | aucune | Renvoie l'adresse de l'onglet affiché dans la fenêtre Lilo au premier plan. Elle ne renvoie rien lorsque cette fenêtre affiche un espace privé. |
+| **Ouvrir l'espace** | Espace | Fait basculer la fenêtre vers cet espace. Les espaces privés ne sont jamais proposés. |
+
+Deux d'entre elles fonctionnent à la voix ou depuis Spotlight sans aucune configuration : « Obtenir l'onglet actuel dans Lilo » et « Ouvrir un espace dans Lilo ».
+
+### Exemple : envoyer la page que vous lisez vers Notes [#example-send-the-page-you-are-reading-to-notes]
+
+<Steps>
+  <Step title="Créez un raccourci">
+    Dans l'app Raccourcis, créez un nouveau raccourci et ajoutez **Obtenir l'onglet actuel** parmi les actions de Lilo.
+  </Step>
+  <Step title="Utilisez son résultat">
+    Ajoutez l'action **Créer une note** de Notes et transmettez-lui le résultat de **Obtenir l'onglet actuel**.
+  </Step>
+  <Step title="Exécutez-le">
+    Exécutez le raccourci pendant que Lilo affiche la page : la note contient l'adresse de la page.
+  </Step>
+</Steps>
+
+### Changer d'espace avec un mode de concentration [#switch-space-with-a-focus]
+
+Lilo propose aussi un filtre de mode de concentration, **Définir l'espace Lilo** : tant que ce mode de concentration est activé, Lilo affiche l'espace que vous choisissez.
+
+<Steps>
+  <Step title="Ouvrez le mode de concentration">
+    Ouvrez **Réglages Système > Concentration** et choisissez un mode de concentration, par exemple Travail.
+  </Step>
+  <Step title="Ajoutez le filtre de Lilo">
+    Sous **Filtres de mode de concentration**, cliquez sur **Ajouter un filtre**, choisissez Lilo, puis sélectionnez un espace.
+  </Step>
+</Steps>
+
+Lorsque le mode de concentration s'active, Lilo bascule vers cet espace. Pour en savoir plus sur les espaces, consultez [Espaces et profils](/guides/spaces-and-profiles).
+
+## Depuis le Terminal [#from-terminal]
+
+Lilo ouvre les adresses qui lui sont transmises, comme n'importe quel navigateur sur macOS :
+
+```sh
+open -a Lilo https://example.com
+```
+
+Lorsque Lilo est votre navigateur par défaut, `open https://example.com` fait la même chose.

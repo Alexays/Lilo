@@ -1,8 +1,90 @@
 ---
-title: "Espaces et profils"
-description: "Séparez navigation professionnelle et personnelle avec les Espaces, donnez à chacun son profil et ses connexions, et passez de l'un à l'autre au clavier."
+title: Espaces et profils
+description: "Séparez travail et vie personnelle avec les espaces, donnez à chacun son profil et ses connexions, et passez de l'un à l'autre à la souris ou au clavier."
 sidebar:
   order: 1
 ---
+Avec les espaces, vous séparez les différentes parties de votre navigation : un ensemble d'onglets pour le travail, un autre pour la maison, chacun avec son nom, son emoji et sa couleur. Avec les profils, vous décidez lesquels de ces espaces partagent leurs connexions.
 
-Cette page est en cours de rédaction.
+## Les espaces et les profils en un paragraphe [#spaces-and-profiles-in-one-paragraph]
+
+Un **espace** est un ensemble d'onglets dans la barre latérale : ses onglets épinglés, ses favoris, ses dossiers et ses onglets ouverts, son nom, son emoji, sa couleur et la durée pendant laquelle ses onglets inactifs restent ouverts. Un **profil** est un ensemble de données de sites web : cookies et connexions, stockage et cache des sites, historique, favoris, téléchargements, autorisations des sites et extensions. Chaque espace est connecté avec un seul profil, et plusieurs espaces peuvent en partager un. Deux espaces du même profil voient les mêmes comptes et les mêmes extensions avec des onglets différents ; deux espaces de profils différents sont aussi séparés que deux navigateurs.
+
+Un nouveau Lilo comporte un seul profil, nommé Par défaut, et chaque espace que vous créez l'utilise tant que vous n'en décidez pas autrement.
+
+## Créer un espace [#create-a-space]
+
+<Steps>
+  <Step title="Ouvrez l'éditeur d'espace">
+    Choisissez **Espaces > Nouvel espace…** dans la barre des menus, faites un clic droit sur les icônes des espaces en bas de la barre latérale et choisissez **Nouvel espace**, ou allez dans **Réglages > Onglets et Espaces** et cliquez sur **Créer** à côté de **Nouvel espace**.
+  </Step>
+  <Step title="Nommez-le">
+    Saisissez un nom, et cliquez sur l'emoji pour en choisir un autre. Sous **Apparence**, choisissez une couleur et une matière (**Uni**, **Verre** ou **Grain**).
+  </Step>
+  <Step title="Choisissez avec quel profil il est connecté">
+    Sous **Connecté avec**, choisissez un profil existant, **Nouveau profil** pour démarrer déconnecté partout et sans extension, ou **Privé** pour un espace qui oublie tout à sa fermeture. La ligne sous la liste indique ce que ce choix partage, par exemple « Partage connexions, cookies et extensions avec Accueil. »
+  </Step>
+  <Step title="Créez-le">
+    Cliquez sur **Créer l'espace**. Lilo bascule vers le nouvel espace.
+  </Step>
+</Steps>
+
+## Séparer les connexions professionnelles et personnelles [#keep-work-and-personal-sign-ins-apart]
+
+Pour être connecté au même site avec deux comptes, l'un pour le travail et l'autre pour vous, donnez à chaque espace son propre profil.
+
+<Steps>
+  <Step title="Créez l'espace pour le second compte">
+    Ouvrez l'éditeur d'espace comme ci-dessus et nommez l'espace, par exemple « Travail ».
+  </Step>
+  <Step title="Donnez-lui un nouveau profil">
+    Sous **Connecté avec**, choisissez **Nouveau profil** et saisissez un nom de profil. L'indication affiche « Démarre déconnecté partout, sans extension. »
+  </Step>
+  <Step title="Connectez-vous">
+    Cliquez sur **Créer l'espace**, puis connectez-vous à vos comptes professionnels dans cet espace. Vos autres espaces conservent leurs propres connexions.
+  </Step>
+</Steps>
+
+Les extensions appartiennent elles aussi à un profil : installez vos extensions professionnelles dans un espace du profil professionnel, et elles apparaissent dans chaque espace de ce profil et dans aucun espace d'un autre. Consultez [Extensions](/guides/extensions).
+
+Pour déplacer un espace existant vers un autre profil, ouvrez-le avec **Espaces > Modifier l'espace…** et choisissez l'autre profil sous **Connecté avec**. Ses onglets le suivent et se rechargent, connectés avec ce profil.
+
+## Passer d'un espace à l'autre [#switch-between-spaces]
+
+- Cliquez sur l'icône d'un espace en bas de la barre latérale.
+- Balayez latéralement avec deux doigts sur la barre latérale.
+- Appuyez sur <kbd>⌃⌘→</kbd> pour l'espace suivant et sur <kbd>⌃⌘←</kbd> pour le précédent (**Espaces > Espace suivant** et **Espace précédent**).
+- Appuyez sur <kbd>⌃1</kbd> à <kbd>⌃9</kbd> pour accéder aux neuf premiers espaces.
+- Dans la [barre de commandes](/guides/command-bar), saisissez le nom d'un espace et choisissez **Basculer vers** celui-ci.
+
+Chaque fenêtre affiche un seul espace. Changer d'espace dans une fenêtre laisse les autres sur le leur, et deux fenêtres peuvent afficher le même espace.
+
+## Modifier, réorganiser ou supprimer un espace [#edit-reorder-or-delete-a-space]
+
+- **Modifier** : choisissez **Espaces > Modifier l'espace…**, ou faites un clic droit sur l'icône de l'espace et choisissez **Modifier l'espace**. Les modifications s'appliquent à mesure que vous les faites. L'éditeur contient aussi **Archiver les onglets après**, expliqué dans [Onglets et dossiers](/guides/tabs-and-folders#stop-tabs-piling-up).
+- **Réorganiser** : faites glisser l'icône d'un espace le long de la barre du bas, ou placez le focus dessus et appuyez sur <kbd>⌥←</kbd> ou <kbd>⌥→</kbd>.
+- **Supprimer** : faites un clic droit sur l'icône de l'espace et choisissez **Supprimer l'espace…**, ou cliquez sur **Supprimer l'espace...** dans son éditeur. L'espace et tous ses onglets sont supprimés définitivement. Le dernier espace ne peut pas être supprimé. Supprimer un espace ne supprime jamais son profil.
+
+**Réglages > Apparence > Masquer le nom des espaces** affiche chaque espace dans la barre du bas sous la forme de sa seule icône.
+
+## Déplacer un onglet vers un autre espace [#move-a-tab-to-another-space]
+
+- Faites un clic droit sur l'onglet et choisissez **Déplacer vers un espace**, ou utilisez **Onglet > Déplacer vers un espace** pour l'onglet actuel.
+- Faites glisser l'onglet sur l'icône d'un espace en bas de la barre latérale.
+- Dans la barre de commandes, sélectionnez un onglet ouvert, appuyez sur <kbd>⌘M</kbd> et choisissez l'espace.
+
+Entre deux espaces du même profil, la page est déplacée telle quelle. Vers un espace d'un autre profil, la page s'y recharge, connectée avec ce profil. Un favori ne peut pas être déplacé dans un espace privé.
+
+## Espace privé [#private-space]
+
+Choisissez **Fichier > Nouvel espace privé** ou appuyez sur <kbd>⇧⌘N</kbd>. Un espace privé possède ses propres données de sites web, conservées uniquement en mémoire : rien n'est enregistré, et ses onglets, son historique et ses cookies disparaissent à la fermeture de l'espace, au plus tard lorsque vous quittez Lilo. Appuyer de nouveau sur <kbd>⇧⌘N</kbd> revient à l'espace privé que vous avez déjà au lieu d'en créer un second. Un espace privé ne peut pas changer de profil, et une extension ne voit ses onglets qu'une fois que vous l'y avez autorisée. Pour en savoir plus, consultez [Contrôles de confidentialité](/guides/privacy-controls).
+
+## Gérer les profils [#manage-profiles]
+
+Les profils se trouvent dans **Réglages > Onglets et Espaces**, sous **Profils**. Chaque carte affiche les espaces connectés avec ce profil et son nombre d'extensions.
+
+- **Nouveau profil...** en crée un avec des cookies, des connexions et des extensions vierges. Vous pouvez aussi en créer un depuis l'éditeur d'espace.
+- Le menu **…** d'une carte propose **Renommer**, **Changer la couleur**, **Gérer les extensions**, **Effacer les données...** et **Supprimer...**.
+- **Supprimer...** supprime les cookies, les connexions, l'historique et les extensions du profil. Ses espaces restent, avec leurs onglets : vous choisissez le profil qui les reprend. Votre dernier profil reste, car chaque espace en a besoin d'un.
+
+Sous les cartes, Lilo affiche le profil Agents : les agents IA travaillent dans ce profil jetable, effacé après chaque session, et n'empruntent l'un des vôtres qu'après votre autorisation. Consultez [Agents IA](/guides/ai-agents).

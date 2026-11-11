@@ -1,8 +1,114 @@
 ---
-title: "Lecture et médias"
-description: "Lisez dans le lecteur, traduisez une page, cherchez-y du texte, regardez une vidéo en image dans l'image, faites des captures et partagez des onglets."
+title: Lecture et médias
+description: "Lisez en Mode lecture, traduisez une page, cherchez-y du texte, regardez une vidéo en image dans l'image, faites des captures et partagez des onglets."
 sidebar:
   order: 8
 ---
+Ce guide vous montre comment lire un article sans éléments superflus, traduire une page, y chercher du texte, garder une vidéo dans une fenêtre flottante, faire une capture d'écran et l'annoter, et partager une page ou un onglet. La plupart de ces actions se trouvent aussi dans la [barre de commandes](/guides/command-bar) : sur la page, appuyez sur <kbd>⌘L</kbd>, saisissez `:` puis leur nom. (<kbd>⌘T</kbd> ouvrirait un nouvel onglet vide, et l'action s'appliquerait à cet onglet.) Les raccourcis que vous pouvez attribuer à celles qui n'en ont pas se trouvent dans [Personnaliser Lilo](/guides/customize#rebind-a-shortcut).
 
-Cette page est en cours de rédaction.
+## Lire un article dans le Mode lecture [#read-an-article-in-reader]
+
+<Steps>
+  <Step title="Ouvrir le Mode lecture">
+    Sur un article, choisissez **Présentation > Afficher le lecteur**. Dans la barre de commandes, l'action s'appelle **Mode lecture**.
+  </Step>
+  <Step title="Ajuster le texte">
+    La barre située en haut de l'article comporte quatre boutons : texte plus petit, texte plus grand, thème (chaque clic passe au suivant parmi automatique, clair, sépia et sombre) et largeur de colonne (étroite, normale, large). Lilo conserve votre dernier choix et l'utilise pour chaque article, sur tous les sites.
+  </Step>
+  <Step title="Quitter le Mode lecture">
+    Choisissez **Présentation > Masquer le lecteur**. La page se recharge telle qu'elle était.
+  </Step>
+</Steps>
+
+Le Mode lecture affiche le titre, le nom du site et l'auteur lorsque la page les fournit, un temps de lecture estimé et le texte de l'article. Si Lilo ne trouve pas d'article sur la page, il émet un bip et laisse la page telle quelle.
+
+## Traduire une page [#translate-a-page]
+
+<Steps>
+  <Step title="Traduire">
+    Choisissez **Présentation > Traduire la page**, ou faites un clic droit sur une zone vide de la page et choisissez **Traduire la page**.
+  </Step>
+  <Step title="Télécharger la langue si on vous le demande">
+    La première fois que vous traduisez depuis une langue, macOS peut vous demander de la télécharger.
+  </Step>
+  <Step title="Afficher l'original">
+    Choisissez de nouveau **Traduire la page** pour rétablir le texte d'origine.
+  </Step>
+</Steps>
+
+Lilo traduit vers la première langue des langues préférées de votre Mac (Réglages Système > Général > Langue et région). La traduction s'exécute sur votre Mac avec le framework Translation d'Apple, et le texte que la page ajoute par la suite est traduit à mesure qu'il apparaît. Si la page est déjà dans votre langue, Lilo émet un bip et ne modifie rien.
+
+## Rechercher du texte sur une page [#find-text-on-a-page]
+
+<Steps>
+  <Step title="Ouvrir la barre de recherche">
+    Appuyez sur <kbd>⌘F</kbd>, ou choisissez **Édition > Rechercher > Rechercher…**. Si vous avez d'abord sélectionné du texte, la barre de recherche s'ouvre avec celui-ci.
+  </Step>
+  <Step title="Saisir ce que vous cherchez">
+    Les occurrences sont surlignées, et la barre indique celle sur laquelle vous vous trouvez, par exemple « 2 sur 7 ». Activez **Respecter la casse** pour faire correspondre exactement les majuscules.
+  </Step>
+  <Step title="Passer d'une occurrence à l'autre">
+    Appuyez sur Retour pour l'occurrence suivante et sur Maj-Retour pour la précédente. **Rechercher le suivant** (<kbd>⌘G</kbd>) et **Rechercher le précédent** (<kbd>⇧⌘G</kbd>) font de même depuis n'importe quel endroit de la page.
+  </Step>
+  <Step title="Fermer la barre de recherche">
+    Appuyez sur <kbd>Esc</kbd>.
+  </Step>
+</Steps>
+
+Pour rechercher un mot sans ouvrir la barre, sélectionnez-le et appuyez sur <kbd>⌘E</kbd> (**Utiliser la sélection pour rechercher**), puis sur <kbd>⌘G</kbd> pour chaque occurrence suivante. Sur une page comptant plus de 1 000 occurrences, la barre n'affiche pas de décompte.
+
+## Regarder une vidéo en image dans l'image [#watch-a-video-picture-in-picture]
+
+<Steps>
+  <Step title="Lancer une vidéo">
+    Lancez la lecture de la vidéo sur la page.
+  </Step>
+  <Step title="La détacher">
+    Choisissez **Présentation > Image dans l'image**, ou faites un clic droit sur la page et choisissez **Image dans l'image**. La vidéo passe dans une fenêtre flottante qui reste au-dessus de vos autres apps.
+  </Step>
+  <Step title="La ramener">
+    Choisissez de nouveau **Image dans l'image**, ou utilisez les commandes de la fenêtre flottante.
+  </Step>
+</Steps>
+
+Lorsque **Picture-in-picture automatique** est activé (**Réglages > Audio et vidéo**, activé par défaut), un appel ou une vidéo en cours de lecture passe de lui-même dans une fenêtre flottante lorsque vous quittez son onglet ou Lilo. Lorsque **Garder les appels dans la barre latérale** est activé, un onglet qui utilise votre caméra, votre micro ou votre écran s'ancre dans la barre latérale au lieu de flotter.
+
+## Faire une capture d'écran [#take-a-screenshot]
+
+<Steps>
+  <Step title="Choisir ce qu'il faut capturer">
+    Choisissez **Fichier > Prendre une capture d'écran**, puis **Zone sélectionnée** (<kbd>⇧⌘2</kbd>), **Zone visible** ou **Page entière**. Vous pouvez aussi placer le pointeur sur la barre d'adresse, cliquer sur le bouton en forme d'appareil photo, puis choisir **Page entière**, **Zone visible** ou **Sélection...**.
+  </Step>
+  <Step title="La coller ou la modifier">
+    La capture d'écran est copiée dans le presse-papiers, et une carte le confirme. Cliquez sur **Modifier** sur la carte pour ouvrir l'éditeur.
+  </Step>
+  <Step title="Annoter">
+    Dessinez avec **Flèche**, **Rectangle**, **Ellipse**, **Texte**, **Crayon** et **Surligneur**, masquez des détails avec **Flou**, numérotez des étapes avec **Badge numéroté**, ou utilisez **Recadrer** pour recadrer l'image.
+  </Step>
+  <Step title="Enregistrer ou copier">
+    Cliquez sur **Enregistrer** pour enregistrer un fichier PNG dans votre dossier de téléchargements, choisissez **Enregistrer sous...** dans son menu pour choisir un emplacement, ou cliquez sur **Copier** pour copier l'image modifiée.
+  </Step>
+</Steps>
+
+La capture en page entière d'une page très longue s'arrête avant la fin, et Lilo vous en informe.
+
+## Partager une page [#share-a-page]
+
+- **Envoyer le lien** : choisissez **Fichier > Partager…** pour ouvrir le menu de partage de macOS (Mail, Messages, AirDrop et d'autres). Le titre de la page est repris comme objet lorsque le service en comporte un.
+- **Afficher un code QR** : choisissez **Fichier > Créer un QR code…** pour ouvrir la page sur un téléphone.
+- **Copier le lien** : appuyez sur <kbd>⇧⌘C</kbd> (**Édition > Copier l'URL de la page**). Maintenez la touche Option enfoncée dans le menu Édition pour obtenir **Copier le lien de la page en Markdown** (<kbd>⌥⇧⌘C</kbd>).
+
+## Partager un onglet lors d'un appel [#share-a-tab-in-a-call]
+
+Lorsqu'un site, par exemple un appel vidéo sur example.com, demande à partager votre écran, Lilo affiche un sélecteur de vos onglets au lieu de l'écran entier.
+
+<Steps>
+  <Step title="Choisir un onglet">
+    Sélectionnez un onglet dans **Choisissez un onglet à partager**, ou recherchez-le. Utilisez les touches fléchées et Retour, ou cliquez sur **Partager**.
+  </Step>
+  <Step title="Ou partager une fenêtre ou l'écran">
+    Cliquez sur **Fenêtre ou écran...** pour utiliser à la place le sélecteur de macOS. Lorsque la page demande le son, cochez d'abord **Partager aussi le son** pour ajouter ce que votre Mac diffuse. Les voix de l'appel lui-même n'y sont jamais renvoyées.
+  </Step>
+</Steps>
+
+L'onglet partagé est capturé à l'intérieur de Lilo, en vidéo uniquement, et transmis à cette seule page. La barre latérale signale l'onglet tant qu'il est partagé. La fermeture de l'onglet met fin au partage.

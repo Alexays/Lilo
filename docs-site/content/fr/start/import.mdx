@@ -1,8 +1,86 @@
 ---
-title: "Importer depuis un autre navigateur"
-description: "Apportez vos favoris, onglets ouverts, historique, connexions et extensions depuis Safari, Chrome, Arc, Firefox et d'autres navigateurs, pas à pas."
+title: Importer depuis un autre navigateur
+description: >-
+  Apportez vos favoris, onglets ouverts, historique, connexions et extensions
+  depuis Safari, Chrome, Arc, Firefox et d'autres navigateurs dans Lilo, pas à
+  pas.
 sidebar:
   order: 2
 ---
+À la fin de cette page, vos favoris, onglets ouverts, historique et connexions de votre ancien navigateur sont dans Lilo, ses extensions sont réinstallées et votre gestionnaire de mots de passe est ajouté. L'import lit les fichiers de votre autre navigateur sur votre Mac et n'en envoie aucun nulle part ; seules les extensions que vous réinstallez sont téléchargées à nouveau depuis le Chrome Web Store, qui apprend leurs identifiants.
 
-Cette page est en cours de rédaction.
+Vous arrivez ici depuis l'écran **Récupérez vos favoris** de la configuration. Si vous l'avez ignoré, ouvrez **Réglages** (<kbd>⌘,</kbd>) > **Général**, repérez **Importer depuis un autre navigateur** et cliquez sur **Importer…** : le même écran s'ouvre.
+
+## Ce que Lilo peut apporter [#what-lilo-can-bring-over]
+
+Lilo recherche ces navigateurs et ne liste que ceux qui sont installés sur votre Mac : Safari, Chrome, Arc, Brave, Edge, Vivaldi, Dia, Comet, Opera, Chromium, Firefox et Zen. Le navigateur qui ouvre actuellement vos liens vient en premier.
+
+| À l'écran | Ce qui est importé |
+|---|---|
+| **Favoris** | Votre barre de favoris, plus tous les autres favoris dans un seul dossier, par exemple **Autres favoris (Chrome)**. |
+| **Onglets ouverts** | Les onglets de votre dernière session, avec leurs onglets épinglés et leurs groupes d'onglets. Depuis Arc, ses espaces et ses favoris. |
+| **Historique** | Les pages que vous avez consultées, dans la limite des 50 000 plus récentes. |
+| **Rester connecté** | Vos cookies, pour que les sites auxquels vous êtes connecté le restent. |
+| **Extensions** | Les extensions que vous utilisez, téléchargées à nouveau depuis le Chrome Web Store. Leurs réglages restent dans l'ancien navigateur. Navigateurs basés sur Chromium uniquement. |
+
+Lilo n'importe jamais les mots de passe et n'a pas de gestionnaire de mots de passe qui lui soit propre : le même écran vous permet d'ajouter le gestionnaire de mots de passe que vous utilisez déjà. Tous les navigateurs n'ont pas tous les types de données ; [Sources d'import](/reference/import-sources) donne la liste complète par navigateur.
+
+## Importer [#import]
+
+<Steps>
+  <Step title="Choisissez le navigateur">
+    Lilo affiche une carte pour chaque navigateur qu'il a trouvé et sélectionne le premier qu'il peut lire. Cliquez sur une carte pour la sélectionner ou la désélectionner. Vous pouvez sélectionner plusieurs navigateurs.
+
+    Si une carte indique **Autoriser l'accès**, macOS garde les fichiers de ce navigateur privés. Consultez [Autoriser l'accès à un navigateur](#allow-access-to-a-browser) ci-dessous.
+  </Step>
+  <Step title="Vérifiez ce qui vous accompagne">
+    Sous les cartes, une phrase énumère ce qui sera importé. Par défaut, c'est tout : les favoris, les onglets ouverts, l'historique, vos connexions et les extensions. Pour le modifier, cliquez sur **Modifier**, puis :
+
+    - sous **Quoi importer**, activez ou désactivez des types de données ;
+    - sous **Profils Chrome** (ou le nom de votre navigateur), choisissez les profils à importer, lorsqu'il en a plusieurs ;
+    - sous **Extensions à réinstaller**, décochez les extensions dont vous ne voulez plus.
+  </Step>
+  <Step title="Cliquez sur Importer">
+    Cliquez sur **Importer**. L'écran affiche chaque étape au fil de son exécution, par exemple **Import des favoris depuis Chrome**.
+
+    Si vous importez les connexions d'un navigateur basé sur Chromium, macOS demande si Lilo peut utiliser la clé de ce navigateur dans votre trousseau. Cliquez sur **Autoriser** : sans cela, vos connexions ne peuvent pas être lues. Les autres types de données sont importés dans les deux cas.
+  </Step>
+  <Step title="Lisez le résultat">
+    Lorsque l'import se termine, Lilo indique ce qu'il a apporté, par exemple **C'est fait : 214 favoris, 12 onglets ouverts, 1 830 pages d'historique, 412 cookies et 3 extensions.** Cliquez sur **Continuer**.
+
+    Si quelque chose n'a pas pu être importé, Lilo le nomme et, lorsqu'il le sait, explique pourquoi, et vous pouvez relancer l'import plus tard depuis les Réglages. Un navigateur ouvert peut retenir ses fichiers : quittez-le, puis importez à nouveau. [Dépannage](/guides/troubleshooting#an-import-from-another-browser-is-incomplete) énumère chaque cause. Importer deux fois dans le même espace n'ajoute rien en double.
+  </Step>
+</Steps>
+
+## Où vos éléments arrivent [#where-your-things-land]
+
+- Le premier profil que vous importez va dans l'espace où vous vous trouvez : les favoris et les onglets épinglés deviennent ses onglets épinglés, les autres favoris un dossier fermé, et vos onglets ouverts sa liste d'onglets. Les groupes d'onglets deviennent des dossiers.
+- Chaque profil supplémentaire reçoit son propre profil Lilo et un espace à lui, de sorte que ses connexions restent séparées de celles du premier.
+- Les espaces d'Arc et les espaces de travail de Zen deviennent chacun un espace Lilo. Les favoris d'Arc et les essentiels de Zen deviennent des favoris, les tuiles en haut de la barre latérale.
+- Les extensions épinglées à la barre d'outils de votre ancien navigateur sont épinglées à la barre d'adresse de Lilo, dans le même ordre, après celles que vous avez épinglées dans Lilo.
+
+## Autoriser l'accès à un navigateur [#allow-access-to-a-browser]
+
+macOS protège les fichiers de certains navigateurs, ceux de Safari en particulier. Lilo ne peut les lire qu'une fois que vous lui avez accordé l'accès complet au disque. Il ne le demande que lorsqu'un navigateur que vous avez en a besoin, et seulement lorsque vous cliquez sur la carte de ce navigateur.
+
+<Steps>
+  <Step title="Cliquez sur Autoriser l'accès">
+    Cliquez sur la carte **Autoriser l'accès** du navigateur. Réglages Système s'ouvre sur **Confidentialité et sécurité** > **Accès complet au disque**.
+  </Step>
+  <Step title="Activez Lilo">
+    Activez Lilo dans la liste. Si Lilo ne figure pas dans la liste, faites glisser l'icône de Lilo depuis le petit panneau situé à côté de Réglages Système jusque dans la liste.
+  </Step>
+  <Step title="Revenez à Lilo">
+    Revenez à Lilo. Il cherche à nouveau, et la carte du navigateur peut désormais être sélectionnée.
+  </Step>
+</Steps>
+
+Vous pouvez désactiver à nouveau l'accès complet au disque une fois l'import terminé.
+
+## Ajouter votre gestionnaire de mots de passe [#add-your-password-manager]
+
+Sous les navigateurs, sous **Vos mots de passe**, cliquez sur **Choisir** à côté de **Gestionnaire de mots de passe**, puis sur **Ajouter** à côté du vôtre : Lilo installe son extension. NordPass, Bitwarden, 1Password, Proton Pass, Dashlane et KeePassXC sont proposés ; Mots de passe iCloud porte la mention **Bientôt** en attendant l'approbation d'Apple. Par la suite, la même liste se trouve dans **Réglages** > **Extensions** > **Ajouter un gestionnaire de mots de passe**. [Extensions](/guides/extensions) couvre toutes les autres extensions.
+
+## Et ensuite [#next]
+
+Poursuivez la configuration dans [Vos cinq premières minutes](/start/first-five-minutes).

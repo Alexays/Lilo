@@ -1,8 +1,76 @@
 ---
-title: "Consommation d'énergie"
-description: "Combien d'énergie Lilo consomme face aux autres navigateurs, comment elle a été mesurée, et ce que fait Lilo pour ménager la batterie de votre Mac au repos."
+title: Consommation d'énergie
+description: "La puissance consommée par Lilo face à Safari, Chrome et Firefox lors d'une mesure, la méthode, et comment Lilo évite que les onglets inactifs consomment."
 sidebar:
   order: 3
 ---
+Cette page donne les chiffres de consommation d'énergie mesurés pour Lilo, explique ce qu'ils montrent et ce qu'ils ne montrent pas, et décrit ce que fait Lilo pour que les onglets en arrière-plan coûtent peu. Servez-vous-en pour évaluer ce à quoi vous attendre sur votre propre Mac, et pour relancer la mesure si vous voulez vos propres chiffres.
 
-Cette page est en cours de rédaction.
+## La mesure [#the-measurement]
+
+Les chiffres ci-dessous proviennent d'une seule série de mesures, publiée dans [`docs/ENERGY.md`](https://github.com/Alexays/Lilo/blob/main/docs/ENERGY.md), qui contient la méthode complète.
+
+- **Date :** 2026-10-29.
+- **Machine :** MacBook Pro (M4 Pro, 48 Go), macOS 27.0.1, branché sur secteur.
+- **Navigateurs :** Lilo 0.11.0 (`93e8173e`), Safari 27.0.1, Chrome 156.0.8078.49, Firefox 159.0.
+- **Méthode :** médianes de 3 passes de 60 secondes chacune, échantillonnées avec `powermetrics` sur des pages locales, sans extension ni bloqueur de contenu dans aucun navigateur.
+
+La série de mesures a utilisé Lilo 0.11.0, une version plus ancienne que la version actuelle. Considérez ces chiffres comme une mesure de cette version sur ce Mac, et non comme une promesse pour tous les Mac ou toutes les versions.
+
+### Au repos [#idle]
+
+Cinq pages statiques, la première étant visible.
+
+| Navigateur | Puissance au-dessus du Mac au repos | Processeur | Impact énergétique |
+|---------|---------------------:|----:|--------------:|
+| Lilo    |   6 mW | 0,11 % |  0,04 |
+| Safari  |   3 mW | 0,14 % |  0,11 |
+| Chrome  |  62 mW | 1,25 % | 10,33 |
+| Firefox |  45 mW | 1,09 % | 46,29 |
+
+### En activité [#active]
+
+Une page visible avec une animation CSS et une horloge qui avance chaque seconde, et quatre onglets en arrière-plan dont les minuteurs mettent la page à jour quatre fois par seconde.
+
+| Navigateur | Puissance au-dessus du Mac au repos | Processeur | Impact énergétique |
+|---------|---------------------:|----:|--------------:|
+| Lilo    |  37 mW |  1,38 % |  0,54 |
+| Safari  |  34 mW |  1,22 % |  0,49 |
+| Chrome  | 102 mW | 14,70 % | 69,12 |
+| Firefox | 370 mW | 26,85 % | 72,88 |
+
+## Comment lire les chiffres [#how-to-read-the-numbers]
+
+- La **puissance au-dessus du Mac au repos** est la puissance du processeur et du processeur graphique du Mac entier pendant la mesure, moins un échantillon pris sans aucun navigateur ouvert au début de chaque passe (53 à 68 mW). Les relevés au repos inférieurs à environ 15 mW se situent dans ce bruit : au repos, Lilo et Safari ne peuvent pas être distingués d'un Mac sans aucun navigateur ouvert.
+- Le **processeur** additionne tous les processus du navigateur : l'application, ses processus auxiliaires, et ses processus web, graphique et réseau. 100 % correspond à un cœur.
+- L'**impact énergétique** est le score qu'affiche le Moniteur d'activité. Il pondère le processeur, le processeur graphique et les réveils, et sert mieux à comparer des navigateurs sur un même Mac que comme valeur absolue. Le score de Chrome au repos a varié entre 10 et 62 d'une passe à l'autre.
+
+En bref : dans le scénario en activité, Chrome a consommé environ trois fois la puissance de Lilo et Firefox environ dix fois ; au repos comme dans le scénario en activité, Lilo et Safari étaient proches. La mesure ne dit rien de la lecture vidéo ni des longues sessions : la méthode définit ces scénarios, mais `docs/ENERGY.md` ne publie aucun résultat pour eux.
+
+## Pourquoi Lilo reste proche de Safari [#why-lilo-stays-close-to-safari]
+
+L'essentiel de la différence vient du moteur : Lilo fonctionne avec le WebKit livré avec macOS, le moteur qu'utilise Safari ([Pourquoi WebKit](/about/why-webkit)). En plus de cela, Lilo évite de dépenser de l'énergie pour les onglets que vous ne regardez pas.
+
+### Les onglets en arrière-plan sont figés [#background-tabs-are-frozen]
+
+Un onglet en arrière-plan que vous n'avez pas utilisé depuis un moment est figé : sa page cesse de s'exécuter jusqu'à ce que vous y reveniez, puis reprend là où elle en était. Le délai dépend du préréglage Réglages > Onglets et Espaces > **Onglets inactifs**, et de la source d'alimentation.
+
+| Onglets inactifs | Fige un onglet en arrière-plan après (sur secteur) | Le décharge après un temps d'inactivité | Onglets chargés conservés dans les autres espaces |
+|---|---|---|---|
+| Garder chargés | 15 minutes | jamais | jusqu'à 12 dans chacun de 3 espaces |
+| Équilibré (par défaut) | 5 minutes | jamais | jusqu'à 6 dans chacun de 2 espaces |
+| Économiser | 2 minutes | 10 minutes | 1 dans 1 espace |
+
+Le temps d'inactivité n'est pas la seule raison pour laquelle un onglet est déchargé. Lilo tient aussi un budget d'onglets chargés : au-delà, les onglets que vous avez utilisés le moins récemment sont déchargés en premier. Dans les espaces que vous ne regardez pas, il conserve les nombres indiqués dans le tableau. Dans l'espace actuel, il conserve jusqu'à 24 onglets chargés sur un Mac doté de 32 Go de mémoire ou plus, 16 avec 16 Go, et 10 en dessous, moitié moins avec **Économiser**. Lorsque la mémoire est sous pression, il en décharge davantage.
+
+Un onglet déchargé reste dans la barre latérale et recharge sa page lorsque vous y revenez. Sur batterie, tous les préréglages figent un onglet en arrière-plan après 1 minute. En mode Économie d'énergie, ou lorsque le Mac chauffe, Lilo conserve aussi moins de pages chargées dans l'espace actuel : 6, ou 4 avec **Économiser**. Quel que soit le préréglage, un onglet en arrière-plan dont la page continue d'utiliser environ 30 % d'un cœur de processeur, ou devient très volumineuse en mémoire, est déchargé. Lorsque les pages chargées atteignent ensemble environ 40 % de la mémoire du Mac, Lilo décharge d'abord les onglets des autres espaces, puis les onglets que vous ne pouvez pas voir dans l'espace actuel.
+
+Un onglet n'est pas figé tant qu'il diffuse un son que vous pouvez entendre, utilise votre caméra, votre micro ou votre écran, est en appel, ou est lu en Image dans l'image. Un onglet dont le son est coupé peut être figé. La page [Compatibilité web](/reference/web-compatibility) énumère les autres cas que Lilo épargne, comme une page qui maintient une connexion WebRTC active, ainsi que leurs limites.
+
+### Fréquence de rafraîchissement [#refresh-rate]
+
+Sur un écran 120 Hz, Lilo affiche par défaut les pages à la fréquence maximale de l'écran. Réglages > Apparence > **Fréquence d'affichage maximale** désactive ce comportement : les pages s'affichent alors à environ 60 images par seconde, ce qui consomme moins de batterie. Les nouveaux onglets suivent le réglage ; les onglets ouverts changent au redémarrage de Lilo. Même lorsque le réglage est activé, les onglets ouverts en mode Économie d'énergie ou pendant que le Mac chauffe s'affichent à environ 60 images par seconde, tout comme les onglets des agents qui travaillent dans le profil Agents.
+
+## Mesurez-la vous-même [#measure-it-yourself]
+
+La mesure est une cible Make du dépôt, `make energy-browsers`. Elle prend environ cinq heures et exige que le Mac soit laissé tranquille, branché sur secteur et déverrouillé ; la nuit lui convient donc bien. Les étapes, les scénarios et les options se trouvent dans la [section consacrée à la méthode de `docs/ENERGY.md`](https://github.com/Alexays/Lilo/blob/main/docs/ENERGY.md#method).

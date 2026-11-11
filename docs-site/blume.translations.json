@@ -1,97 +1,106 @@
 {
   "files": {
     "content/about/agent-safety.mdx": {
-      "fr": "8dfa4d5721d96e66"
+      "fr": "1c1e81d028318f97"
     },
     "content/about/energy.mdx": {
-      "fr": "d96a8309625d6f39"
+      "fr": "3c933668f80caf61"
     },
     "content/about/meta.ts": {
       "fr": "ee4ea94a90dc40d6"
     },
     "content/about/privacy.mdx": {
-      "fr": "fc7004e6fa9c43d8"
+      "fr": "36a08ce79bd56371"
     },
     "content/about/why-webkit.mdx": {
-      "fr": "4d91ac6e1b2fb473"
+      "fr": "28282a03a475d7ac"
     },
     "content/guides/ai-agents.mdx": {
-      "fr": "8539b98ec0c146bf"
+      "fr": "9c6150c70a093914"
     },
     "content/guides/automation.mdx": {
-      "fr": "d7beb933f9725be6"
+      "fr": "10c6267c3e8cba35"
     },
     "content/guides/command-bar.mdx": {
-      "fr": "0aa5756fb9de04c0"
+      "fr": "a5bf9cab79255774"
     },
     "content/guides/customize.mdx": {
-      "fr": "750877e6acc36033"
+      "fr": "92b7c461e66ea1a4"
     },
     "content/guides/downloads-history-bookmarks.mdx": {
-      "fr": "da3efa0a665dfb00"
+      "fr": "82f97a56b0b872bd"
     },
     "content/guides/extensions.mdx": {
-      "fr": "983b77cd985a1904"
+      "fr": "74250a4003b5b780"
     },
     "content/guides/meta.ts": {
       "fr": "688e6f164d73f4c7"
     },
     "content/guides/peek-and-little-window.mdx": {
-      "fr": "adb6b355e193fb96"
+      "fr": "0333a739ffda0390"
     },
     "content/guides/privacy-controls.mdx": {
-      "fr": "ea3ff482476cf66b"
+      "fr": "c4456e893684ce17"
     },
     "content/guides/reading-and-media.mdx": {
-      "fr": "749fcc655d7c0690"
+      "fr": "3ccee9d3bd2e1a75"
     },
     "content/guides/spaces-and-profiles.mdx": {
-      "fr": "6d63ec840b7a21bb"
+      "fr": "781bc9880d0616b7"
     },
     "content/guides/split-view.mdx": {
-      "fr": "7f0f3bf72dc6510c"
+      "fr": "a10efb36571014f8"
     },
     "content/guides/tabs-and-folders.mdx": {
-      "fr": "0d6487da4a55cd6c"
+      "fr": "fffc88897deb6b4c"
     },
     "content/guides/terminal.mdx": {
-      "fr": "5f579b61df60ff86"
+      "fr": "1b3f896aaa693398"
     },
     "content/guides/troubleshooting.mdx": {
-      "fr": "2f6724eff6eaf08c"
+      "fr": "67c3c7a0092827d4"
     },
     "content/index.mdx": {
-      "fr": "59637a7eb5dd8f50"
+      "fr": "e07f775c43b293b8"
+    },
+    "content/reference/_generated/extension-compatibility.md": {
+      "fr": "39274a38fba16386"
+    },
+    "content/reference/_generated/mcp-tools.md": {
+      "fr": "4d186823126519f5"
+    },
+    "content/reference/_generated/web-compatibility.md": {
+      "fr": "7a2ea927ed8c93f9"
     },
     "content/reference/extension-compatibility.mdx": {
-      "fr": "ac08a781801d684a"
+      "fr": "9de1777bd8c95ed8"
     },
     "content/reference/import-sources.mdx": {
-      "fr": "3d9ab8ba2d2e0e5b"
+      "fr": "ab5a046883b8d9f8"
     },
     "content/reference/keyboard-shortcuts.mdx": {
-      "fr": "68af5488560d0e54"
+      "fr": "58a8ac5973815c04"
     },
     "content/reference/mcp-tools.mdx": {
-      "fr": "185eb02715345d72"
+      "fr": "85678e1002d1d2a2"
     },
     "content/reference/meta.ts": {
       "fr": "d2e909390ad3975f"
     },
     "content/reference/settings.mdx": {
-      "fr": "28c505a246e2bb38"
+      "fr": "c3c3e898f9b9861b"
     },
     "content/reference/web-compatibility.mdx": {
-      "fr": "aa1c38649191972a"
+      "fr": "2dff91aeef55cfdc"
     },
     "content/start/first-five-minutes.mdx": {
-      "fr": "796cc030db63e5d2"
+      "fr": "4fa93d1b45bb6abe"
     },
     "content/start/import.mdx": {
-      "fr": "b8991fadbb1aa314"
+      "fr": "0f4edd5084fafa5b"
     },
     "content/start/install.mdx": {
-      "fr": "f5da848a1568a6d2"
+      "fr": "804086b13d314096"
     },
     "content/start/meta.ts": {
       "fr": "41a017b4f6b000f5"
