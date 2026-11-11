@@ -1,8 +1,183 @@
 ---
 title: "AI agents"
-description: "Connect Claude Code, Codex, Cursor or any MCP client to Lilo, let agents browse in a Space of their own, and approve what they do before it happens."
+description: "Connect Claude Code, Claude Desktop, Codex, Cursor or any MCP client to Lilo, let agents browse in a Space of their own, and approve what they do."
 sidebar:
   order: 11
 ---
 
-This page is being written.
+Lilo has no AI of its own. If you turn agent control on, the agents you already use on your Mac can open tabs in Lilo, read pages and act on them, in a Space kept apart from yours. This page takes you from a fresh install to an agent that browses for you, and explains what each approval allows.
+
+Agents reach Lilo through `lilo-mcp`, a small MCP server inside the app bundle. When Lilo is in your Applications folder, its path is:
+
+```text
+/Applications/Lilo.app/Contents/MacOS/lilo-mcp
+```
+
+## Turn on agent control
+
+Agent control is off in a new profile. Until you turn it on, Lilo accepts no agent.
+
+<Steps>
+  <Step title="Open Settings">
+    Choose **Lilo > Settings…** or press <kbd>⌘,</kbd>.
+  </Step>
+  <Step title="Open the Agents section">
+    In the sidebar, under **Tools**, choose **Agents**.
+  </Step>
+  <Step title="Turn on Let agents use Lilo">
+    Under **Agents using Lilo**, turn on **Let agents use Lilo**. Two more settings appear below it: **Ask before sending, paying, deleting or publishing** (on by default) and **Always allowed**, the sites where agents act without asking.
+  </Step>
+</Steps>
+
+:::note
+Some messages from `lilo-mcp` call this section "Settings > AI agents". In the Settings window it is named **Agents**.
+:::
+
+## Connect your agent
+
+Once agent control is on, **Apps that can use Lilo** shows a tile for each supported app that Lilo finds on your Mac: Claude Code, Claude Desktop, Codex and Cursor. Click **Connect** on a tile and Lilo writes that app's MCP configuration for you, keeping every other server already in it. The tile then reads **Configured. Lilo asks you the first time it connects.**
+
+To set an app up by hand, use the configuration for your client below.
+
+<Tabs>
+  <Tab title="Claude Code">
+    Run this in Terminal:
+
+    ```sh
+    claude mcp add --scope user lilo -- /Applications/Lilo.app/Contents/MacOS/lilo-mcp
+    ```
+
+    **Connect** runs the same command, after removing any earlier `lilo` server from your user scope.
+  </Tab>
+  <Tab title="Claude Desktop">
+    Add the server to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "lilo": {
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+        }
+      }
+    }
+    ```
+
+    Quit and reopen Claude to load it.
+  </Tab>
+  <Tab title="Codex">
+    Add this table to `~/.codex/config.toml`:
+
+    ```toml
+    [mcp_servers.lilo]
+    command = "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    Add the server to `~/.cursor/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "lilo": {
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Other MCP clients">
+    Any client that starts a local MCP server over standard input and output works. In **Agents**, find **Other agents** and click **Copy Configuration**: Lilo copies an `mcpServers` entry like the one for Claude Desktop, with the path of the Lilo you are running.
+  </Tab>
+</Tabs>
+
+If Lilo cannot read an existing configuration file (a comment or a trailing comma in a JSON file, for example), it leaves the file alone and tells you what to add yourself.
+
+## Allow the agent the first time
+
+The first time an agent connects, Lilo shows a dialog titled with the agent's name, such as **Claude Code wants to control Lilo**, with the path of the program behind the connection. It lists what you allow:
+
+- Open tabs in its own folder of the Agents Space
+- Read the pages it opens
+- Act in them with your sign-ins
+
+While **Ask before sending, paying, deleting or publishing** is on, the dialog adds: "It asks before sending, paying, deleting or publishing."
+
+Choose **Allow** (<kbd>⌘↩</kbd>) or **Don't Allow** (<kbd>Esc</kbd>). The question waits up to ten minutes, so the agent does not time out while you come back to your Mac.
+
+Lilo remembers **Allow** for that program, not for the name the agent gives: a signed app is known by its signature, so its updates keep the approval; an unsigned one by its path. After **Don't Allow**, the agent's tool calls fail until you reconnect it and allow it.
+
+To take an approval back, find the app's tile in **Apps that can use Lilo** and click **Remove**. The agent's connection closes and it has to ask again.
+
+## Try it
+
+Ask your agent something like "Open example.com in Lilo and tell me what the page says." A short session looks like this, from the agent's side:
+
+1. `tabs_context_mcp` lists the tabs of its group. Called with `createIfEmpty`, it starts a new group with one empty tab.
+2. `tabs_create_mcp` answers `Created new tab. Tab ID: 2`.
+3. `navigate` to `https://example.com` answers `Navigated to https://example.com/ - Example Domain`.
+4. `get_page_text` returns the page's title, address and text.
+
+Every tool, with its parameters, is listed in [MCP tools](/reference/mcp-tools).
+
+## Where agents work
+
+Agents open their tabs in the **Agents Space**, one folder per task, never among your own tabs. Each agent sees only the tabs of its own folders.
+
+By default those tabs run in **Agents**, a throwaway profile with no cookie, sign-in or history of yours. Lilo wipes it at launch and when the last agent working in it leaves. When a session ends, its folders and tabs close. If a window shows the Agents Space at that moment, they stay in view until Lilo cleans the space up later.
+
+An agent can ask to borrow one of your profiles, to act with its sign-ins. Lilo asks you first, for example **Claude Code wants to use the profile Work** ("It moves its tabs there, to act with that profile's sign-ins."). You allow each profile once per agent. Going back to the Agents profile needs no question.
+
+## What Lilo asks before an agent acts
+
+While **Ask before sending, paying, deleting or publishing** is on, Lilo stops an agent before it:
+
+- clicks, or presses Enter on, something that sends, pays, buys, orders, deletes, transfers, publishes or signs up, inside frames too;
+- sends a request other than GET or HEAD with the cookies of one of your profiles.
+
+The question appears under the address bar, for example: **Claude Code** wants to click "Delete account" in Example Domain (example.com). The agent waits for your answer. You can choose:
+
+- **Allow Once**: this action only.
+- **Always Allow on This Site**: this action, and from now on every such action on that site and its subdomains. The site is added to **Always allowed**, where you can remove it.
+- **Don't Allow**: the action does not happen.
+
+If you do not answer within 45 seconds, the action does not happen either. The agent gets an error it can act on, such as `The user did not allow clicking "Delete account" on example.com: ask them to do it or to allow it`.
+
+Whatever the setting, Lilo asks every time before an agent hands a page one of your files (`file_upload`, `upload_image`), and that prompt has no "always" answer.
+
+## What an agent cannot do
+
+- See or act on your own tabs. It works only in its folders of the Agents Space.
+- See or act on a private Space.
+- Use the sign-ins of one of your profiles before you allow that profile.
+- Hand a page one of your files without asking you, every time.
+
+The questions above cover clicks, Enter and requests. They do not cover code the agent runs itself through `javascript_tool`, `run` or `devtools_command`: an agent working in one of your profiles can act there with your sign-ins. The prompt is a safety net for well-behaved agents, not a sandbox. [Agent safety](/about/agent-safety) explains the reasoning.
+
+## If the agent cannot connect
+
+The agent's tool calls fail with a message that starts with `[needs_user]` when only you can fix the problem. They name the agent as it names itself, such as `claude-code`. The most common ones:
+
+| The agent reports | What to do |
+| --- | --- |
+| `Lilo is not accepting agents: in Lilo, turn on Settings > AI agents > Let agents use Lilo, then reconnect the lilo MCP server.` | Turn on **Let agents use Lilo**, then restart or reconnect the MCP server in your agent. |
+| `Lilo is waiting for the user to allow claude-code: …` | Answer the connection dialog in Lilo, then ask the agent to try again. |
+| `Lilo has no window to ask the user to allow claude-code in: …` | Open a Lilo window, then ask the agent to try again. |
+| `The user did not allow claude-code to control Lilo: …` | You chose **Don't Allow**. Reconnect the MCP server in your agent and choose **Allow**. |
+| `Lilo is not responding: quit and reopen Lilo, then reconnect the lilo MCP server.` | Quit and reopen Lilo, then reconnect. |
+
+If Lilo is not running when an agent starts `lilo-mcp`, it opens Lilo in the background. More fixes are in [Troubleshooting](/guides/troubleshooting#an-agent-cannot-connect).
+
+## Talk to your agents in Lilo
+
+Lilo can also host conversations with agents that speak the Agent Client Protocol, such as Claude Agent, Codex, Gemini CLI and Copilot. Lilo still ships no model and holds no API key: it starts the agent's own program, which signs in to your own account.
+
+<Steps>
+  <Step title="Turn conversations on">
+    In **Settings > Agents**, under **Conversations**, turn on **Conversations with your agents**. It is off by default.
+  </Step>
+  <Step title="Ask an agent">
+    Choose **File > Ask an Agent** or press <kbd>⇧⌘A</kbd> from any page. The page you are reading comes along; type `@` to add tabs, folders, a screenshot or files.
+  </Step>
+</Steps>
+
+A conversation gets a row of its own in the sidebar, with the pages its agent opens under it. That agent drives only those pages, with the same questions as above. Agents installed with `npx` or `uvx` need Node.js or uv on your Mac. An agent idle for ten minutes stops, and picks its session up again when you come back.
