@@ -19,6 +19,8 @@ These rules apply to `docs-site/`, the user documentation at docs.getlilo.app, a
 ## Translation
 
 - French is produced by `make docs-translate`, which runs `blume translate` with Claude Code, then review the diff against the French interface strings and commit the pages, partials and `blume.translations.json` together. Never edit the ledger by hand.
+- After the agent, `scripts/typography.mjs` restores French spacing (no-break spaces before `:` and inside « », narrow ones before `;` `?` `!`) and straight apostrophes, which every retranslation loses.
+- Interface labels stay a manual check: the translating agent cannot read the repository, so it guesses names it does not know, and a retranslation can revert an earlier hand correction even in a sentence whose English did not change. In the diff, compare every bold label, menu path and quoted message with `lilo-ui/src/lib/i18n/locales/fr.json` and fix the French file by hand; hand edits keep the page current in the ledger.
 - `make docs-check` fails when a French page is missing, out of date or absent from the ledger, when the ledger is missing or broken, and when a translated reference partial is missing; a stale translated partial only warns (a `::warning::` annotation in GitHub Actions).
 
 ## Headers and deployment
