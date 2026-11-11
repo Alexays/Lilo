@@ -46,7 +46,7 @@ If a site doesn't work with blocking on, turn blocking off for that site only.
     Point at the address bar. A shield button appears beside the address. It shows how many trackers were blocked on the page.
   </Step>
   <Step title="Turn blocking off">
-    Click the shield. Its tooltip reads **Disable blocking on this site**, and the shield gets a slash.
+    Click the shield. Its tooltip reads **Disable blocking on this site** when it blocked nothing on the page, or the number of trackers it blocked. After the click, the shield gets a slash.
   </Step>
   <Step title="Reload the page">
     The site now loads every request its pages make.
@@ -82,7 +82,7 @@ To change a decision for the site you're on:
 
 <Steps>
   <Step title="Open the site's controls">
-    Rest the pointer on the address, or move the keyboard focus to it. The site's card opens with its connection, what the blocker did, the page's memory use, and a **Site controls** section.
+    Rest the pointer on the address, or move the keyboard focus to it. The site's card opens with its connection, what the blocker did and the page's memory use. Once the site has used or been given a permission, a zoom level or hidden elements, the card also has a **Site controls** section.
   </Step>
   <Step title="Change a permission">
     Each permission the site has used or that you decided shows a menu: **Ask**, **Allow** or **Block**. Pop-up windows offer **Block** or **Allow**.
@@ -117,11 +117,11 @@ A Private Space is a Space whose browsing Lilo forgets when it closes.
 What a Private Space keeps, and for how long:
 
 - **Cookies, site storage and cache** live only in memory and are discarded when the Space closes.
-- **History**: none. Visits in a Private Space are never recorded, and macOS Screen Time doesn't receive them.
-- **Site permissions** you answer are kept in memory for the Space's life only. A site you blocked in your profile stays blocked there.
+- **History**: none. Visits in a Private Space are never recorded in history. macOS Screen Time records no usage for them, but its limits still apply there.
+- **Site permissions** you answer are kept in memory for the Space's life only. A site you blocked in your profile stays blocked there. Notification requests are refused without asking, as in Chrome's incognito windows.
 - **Downloads**: the files you download stay in your downloads folder, but the Downloads list forgets them when the Space closes.
 - **Tabs and terminals** are not saved for the next launch.
-- **AI agents** never see or act on a Private Space.
+- **AI agents** never see or act on one of your Private Spaces, and a conversation with an agent cannot start in one.
 
 Bookmarked tabs can't be moved into a Private Space, since they would be lost when it closes.
 
@@ -130,7 +130,7 @@ Bookmarked tabs can't be moved into a Private Space, since they would be lost wh
 The **Protection** group in **Settings > Privacy** holds the rest:
 
 - **Always use secure connections**: Lilo warns you before opening a page over HTTP. Off by default.
-- **Ask sites not to sell my data**: sends the Global Privacy Control signal. On by default.
+- **Ask sites not to sell my data**: sends the Global Privacy Control signal. On by default. It works on macOS 27 and later only: on macOS 26, the switch shows but has no effect.
 - **Prevent cross-site tracking**: WebKit's tracking prevention, which keeps sites embedded in other sites from reading their own cookies there, so they can't follow you from site to site. On by default. Turn it off only if an embedded site you use stops working.
 - **Lock folders after**: see [Tabs and folders](/guides/tabs-and-folders).
 
@@ -160,4 +160,4 @@ What each choice removes:
 
 The clear applies to the profile of the window you're in. The window shows how much that profile stores. To clear one site's history only, see [Downloads, history and bookmarks](/guides/downloads-history-bookmarks#search-and-clear-your-history).
 
-To start every launch fresh, turn on **Clear site data on quit** under **Browsing data**. When Lilo quits, it removes the cookies, storage and cache of every profile. History is kept.
+To start every launch fresh, turn on **Clear site data on quit** under **Browsing data**. When Lilo quits, it removes the cookies, storage and cache of every profile, and the HTTP passwords it saved in your keychain. History is kept.
