@@ -38,6 +38,9 @@ export function cell(text) {
     .join("");
 }
 
+/** Whether a Swift statement ends at `at`: no operator or method call carries the expression on to the next line. */
+export const endsAt = (source, at) => /[ \t]*(?:\/\/[^\n]*)?\n(?![ \t\n]*(?:[.+\-*?&|]|\/[^/*]))/uy.test(source.slice(at));
+
 const table = (head, rows) =>
   [`| ${head.join(" | ")} |`, `| ${head.map(() => "---").join(" | ")} |`, ...rows.map((row) => `| ${row.join(" | ")} |`)].join("\n");
 
@@ -55,7 +58,7 @@ export function parseShortcuts(source, file = SOURCES.shortcuts) {
   const start = source.indexOf("static let actions: [Action] = [");
   const end = source.indexOf("\n    ]\n", start);
   if (start === -1 || end === -1) fail(file, "no `static let actions: [Action] = [ … ]` block");
-  if (/\s*\./uy.test(source.slice(end + "\n    ]\n".length))) fail(file, "the actions list is changed after its literal (`.filter`, `.map`…), which the reference cannot follow");
+  if (!endsAt(source, end + "\n    ]".length)) fail(file, "the actions list is changed after its literal (`.filter`, `+ more`…), which the reference cannot follow");
   const body = source.slice(start + "static let actions: [Action] = [".length, end).replace(/^\s*\/\/.*$/gmu, "");
   const actions = [];
   const leftover = body.replace(new RegExp(`${ACTION}|${FAMILY}`, "gu"), (_, id, title, category, defaults, family, expression, familyCategory, modifiers) => {
@@ -279,6 +282,8 @@ function checkSchema(schema, where, file) {
   }
 }
 
+const COMPOSED = "tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions";
+
 /** The tools a file defines in its `static let …: [[String: Any]] = [ … ]` lists, and its browser pickers. */
 export function parseTools(source, file) {
   const tools = [];
@@ -286,12 +291,17 @@ export function parseTools(source, file) {
     const reader = new SwiftReader(source, file);
     reader.at = match.index + match[0].length;
     const list = reader.collection();
-    if (source[reader.at] !== "\n") reader.fail("a tool list must end at its closing ], or the reference misses what is added or filtered after it");
+    if (!endsAt(source, reader.at)) reader.fail("a tool list must end at its closing ], or the reference misses what is added or filtered after it");
     for (const tool of Array.isArray(list) ? list : [list]) {
       if (!tool?.name || !tool.properties) reader.fail("a tool list holds something other than tool(…)");
       for (const [name, schema] of Object.entries(tool.properties)) checkSchema(schema, `${tool.name}.${name}`, file);
       for (const name of tool.required) if (!Object.hasOwn(tool.properties, name)) fail(file, `${tool.name} requires "${name}", which it does not define`);
       tools.push({ ...tool, file });
+    }
+  }
+  for (const match of source.matchAll(/static let (\w+): \[\[String: Any\]\] = (?!\[)(.*)/gu)) {
+    if (match[2] !== COMPOSED || !endsAt(source, match.index + match[0].length)) {
+      fail(file, `${match[1]} is not "${COMPOSED}": the reference reads only the literal tool lists, so anything else added to it would be missed`);
     }
   }
   if (tools.length === 0) fail(file, "no tool definitions found");
@@ -373,7 +383,10 @@ export function compatibilityPartials(markdown, pages) {
   let fenced = false;
   for (const line of markdown.split("\n")) {
     if (line.startsWith("```")) fenced = !fenced;
-    if (!fenced && line.startsWith("## ")) sections.push({ heading: line.slice(3), lines: [] });
+    if (!fenced && line.startsWith("## ")) {
+      if (sections.some((section) => section.heading === line.slice(3))) fail(file, `two "${line}" sections: the docs would publish only the first`);
+      sections.push({ heading: line.slice(3), lines: [] });
+    }
     sections.at(-1)?.lines.push(line);
   }
   const owner = new Map();
