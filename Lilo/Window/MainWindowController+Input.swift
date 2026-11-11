@@ -190,9 +190,12 @@ extension MainWindowController {
     }
 
     @objc func translatePage(_ sender: Any?) {
-        guard let webView = focusedEngineTab?.wkWebView else { return }
+        if let engine = focusedEngineTab { tabRequestsTranslation(engine) }
+    }
+
+    func tabRequestsTranslation(_ tab: WKWebViewTab) {
         if unsafe pageTranslator.hostView.superview == nil { window?.contentView?.addSubview(pageTranslator.hostView) }
-        Task { await pageTranslator.toggle(in: webView) }
+        Task { await pageTranslator.toggle(in: tab.wkWebView) }
     }
 
     @objc func viewPageSource(_ sender: Any?) {
