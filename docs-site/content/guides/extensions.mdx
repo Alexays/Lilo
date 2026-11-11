@@ -1,8 +1,94 @@
 ---
 title: "Extensions"
-description: "Install Chrome Web Store extensions in Lilo, manage their permissions and toolbar buttons, and learn what to expect from password managers."
+description: "Install Chrome Web Store extensions in Lilo, manage their permissions and site access, keep them updated, and set up the password manager you already use."
 sidebar:
   order: 6
 ---
 
-This page is being written.
+Lilo runs Chrome extensions from the Chrome Web Store. This page shows how to install one, choose where it runs, keep it up to date, and set up a password manager.
+
+## Install an extension
+
+<Steps>
+  <Step title="Open the Chrome Web Store">
+    Choose **Lilo > Extensions > Add Extension…**, or click **Add Extensions** in **Settings > Extensions**. Lilo opens `chromewebstore.google.com` in a new tab.
+  </Step>
+  <Step title="Find the extension">
+    Open the extension's page in the store.
+  </Step>
+  <Step title="Add it">
+    Click **Add to Lilo** on the store page, or the install button that appears in the address bar ("Install this Chrome extension").
+  </Step>
+  <Step title="Review its permissions">
+    Lilo asks **Install** followed by the extension's name, and lists what it will be able to do, such as "Read and change all your data on all websites you visit". Click **Install**, or **Cancel**.
+  </Step>
+</Steps>
+
+The extension installs into the profile of the window you install it from. Each profile has its own extensions, cookies and storage. When you [import from another browser](/start/import), Lilo reinstalls that browser's extensions from the store.
+
+## Use and pin extensions
+
+Installed extensions are listed in **Lilo > Extensions**, and in the **Extensions** menu of the address bar. In that menu, choose **Pin to the address bar** to keep an extension's button in view, or **Unpin from the address bar** to put it back.
+
+When an extension asks to reach the site you are on, the address bar offers **Allow** ("Let this extension access this site").
+
+## Manage an extension
+
+Open **Settings > Extensions** and click an extension under **Installed** to see its details:
+
+- **Enabled** turns it on or off.
+- **Permissions** lists what it asked for.
+- **Site access**: **All sites** runs it on every site it asked for; **Selected sites** runs it only on the sites you add.
+- **Allow in private Spaces** lets it run on pages in private Spaces. It is off until you turn it on.
+- **Allow user scripts** lets it run the scripts it registers, such as a script manager's user scripts. Turn it on only for extensions you trust.
+- **Keyboard shortcuts** shows the extension's commands; click one to record a new shortcut.
+- **Chrome Web Store** opens its store page, with reviews and the developer's page.
+- **Remove Extension...** deletes the extension and its data.
+
+If you have more than one profile, the **Profile** menu at the top of **Settings > Extensions** shows the extensions of another profile.
+
+## Keep extensions up to date
+
+**Update extensions automatically**, in **Settings > Extensions** under **Updates**, is on by default: Lilo installs new versions from the Chrome Web Store as they come out. To look for updates now, click **Check Now** next to **Check for updates**, or choose **Lilo > Extensions > Check for Extension Updates**.
+
+An update that asks for more access is never installed on its own. The extension keeps running on its current version, and **Update** appears next to it in **Installed**. When you click it, Lilo turns the extension off and lists the new access: **Accept and Enable** installs the update, **Keep Disabled** leaves the extension off on its current version, with **Review** to decide again later.
+
+## Set up a password manager
+
+Lilo keeps no passwords itself. Credential storage and autofill come from your password manager's extension.
+
+<Steps>
+  <Step title="Open the passwords step">
+    In **Settings > Extensions**, under **Passwords**, find **Add a password manager** and click **Choose**. The same step appears during onboarding.
+  </Step>
+  <Step title="Pick your manager">
+    Choose the manager you already use and click **Add**. Lilo installs its extension from the Chrome Web Store.
+  </Step>
+  <Step title="Sign in">
+    Open the extension from the address bar and sign in to your account.
+  </Step>
+</Steps>
+
+The managers on offer are Bitwarden, 1Password, Proton Pass, Dashlane, NordPass and KeePassXC. Each one installs, starts and reaches a login form in Lilo's own tests, signed out: autofill with a signed-in account is not verified by those tests.
+
+- **1Password**: to unlock with the 1Password app and Touch ID, add Lilo in the app's **Settings > Browser > Add Browser**. The app connects on its own only to the browsers it already knows.
+- **KeePassXC**: the extension fills from the KeePassXC app on your Mac. That connection was not part of the tests.
+- **iCloud Passwords** is listed as **Soon**: its extension cannot reach its helper in Lilo until Apple grants Lilo the entitlement it requires.
+
+## What works and what differs
+
+Lilo runs Manifest V3 extensions on WebKit's extension runtime, with additions of its own where WebKit lacks a Chrome API. Most extensions behave as in Chrome. The main differences:
+
+- Manifest V2 extensions do not run.
+- `webRequest` can observe requests but not block them. Ad blockers such as uBlock Origin Lite, AdGuard and Adblock Plus do block ads in Lilo's tests.
+- An extension that changes the search engine or the home page has no effect on them.
+- An extension runs in private Spaces only once you allow it there.
+- The Chrome Web Store sees Lilo as Chrome, so its install button works. Websites see Lilo as Safari, and extensions read a Chrome identity. Google does not endorse Lilo and could change the store so that installs or updates from Lilo stop working.
+
+[Extension compatibility](/reference/extension-compatibility) lists every API difference, the extensions tested with their results, and the details of native messaging.
+
+## Load an extension you are developing
+
+To run an extension from a folder on disk, go to **Settings > Advanced**, find **Load an unpacked extension** under **Developer tools**, and click **Load Unpacked Extension...**, then choose the folder that holds its `manifest.json`. The extension's details then offer **Reload**, which reads the folder again to pick up your changes.
+
+If an extension does not work, see [Troubleshooting](/guides/troubleshooting#an-extension-does-not-work).
