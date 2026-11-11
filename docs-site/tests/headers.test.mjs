@@ -44,6 +44,7 @@ test("pages hold no script the CSP cannot hash, and only the inline scripts it w
   for (const entry of html) assert.deepEqual(tagProblems(readFileSync(join(dist, entry), "utf-8")), [], entry);
   const hashes = (scriptSrc.match(/'sha256-[^']+'/gu) ?? []).sort();
   const digest = createHash("sha256").update(hashes.join(" ")).digest("hex").slice(0, 16);
+  // A tripwire for Blume upgrades, not the protection: the CSP header itself blocks what this tag scan misses.
   // A Blume upgrade that adds or changes an inline script lands here: before updating the digest, read
   // the new scripts in dist/ and check they run nothing a page or URL can inject into.
   assert.equal(digest, PINNED_SCRIPTS, `the CSP's ${hashes.length} inline script hashes changed (digest ${digest}): read the scripts in dist/ before updating PINNED_SCRIPTS`);
