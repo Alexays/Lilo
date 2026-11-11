@@ -5,6 +5,7 @@
   import type { BridgeDownloadSnapshot } from "../../lib/bridge/protocol";
   import { progress } from "../../lib/downloadFormat";
   import { isActiveDownload } from "../../stores/downloads.svelte";
+  import { downloadDrag } from "./downloadDrag";
   import {
     canOpen,
     fileIconURL,
@@ -80,6 +81,7 @@
     onclick={onselect}
     ondblclick={() => openable && downloadActions.open(download.id)}
     oncontextmenu={handleContextMenu}
+    use:downloadDrag={{ id: openable ? download.id : null }}
     onkeydown={(event) => {
       if (event.key === "Enter") {
         event.preventDefault();

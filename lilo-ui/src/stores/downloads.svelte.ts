@@ -10,7 +10,9 @@ import { t } from "../lib/i18n/state.svelte";
 let _downloads = $state.raw<BridgeDownloadSnapshot[]>([]);
 // The last few finished downloads, newest first, so the library menu is never a dead end.
 let _recent = $state.raw<BridgeDownloadSnapshot[]>([]);
-const RECENT_LIMIT = 3;
+const RECENT_LIMIT = 5;
+// The download that just finished, until its card above the downloads button leaves.
+let _arrival = $state.raw<BridgeDownloadSnapshot | null>(null);
 // Whether anything downloaded since launch, and which of those ended unseen (id to failed).
 let _sessionHasDownloads = $state(false);
 let _unseen = $state.raw<Map<number, boolean>>(new Map());
@@ -35,6 +37,7 @@ export function initDownloadsStore(): void {
 			if (_announcedEnd.get(dl.id) !== failed) {
 				_announcedEnd.set(dl.id, failed);
 				announce(t(failed ? "downloadsPanel.announceFailed" : "downloadsPanel.announceDone", { filename: dl.filename }));
+				if (!failed) _arrival = dl;
 			}
 		}
 		const idx = _downloads.findIndex((d) => d.id === dl.id);
@@ -51,6 +54,7 @@ export function initDownloadsStore(): void {
 	on("downloadErased", (data) => {
 		_downloads = _downloads.filter((d) => d.id !== data.id);
 		_recent = _recent.filter((d) => d.id !== data.id);
+		if (_arrival?.id === data.id) _arrival = null;
 	});
 	// Paused or failed downloads from a previous launch only exist in the snapshot.
 	downloadActions.requestSnapshot();
@@ -62,6 +66,12 @@ export function getDownloads(): BridgeDownloadSnapshot[] {
 
 export function getRecentDownloads(): BridgeDownloadSnapshot[] {
 	return _recent;
+}
+
+export const getDownloadArrival = (): BridgeDownloadSnapshot | null => _arrival;
+
+export function dismissDownloadArrival(): void {
+	if (_arrival) _arrival = null;
 }
 
 export const hasSessionDownloads = (): boolean => _sessionHasDownloads;

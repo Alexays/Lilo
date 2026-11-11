@@ -1104,6 +1104,7 @@
 		"showFolder": "Показати папку завантажень",
 		"clearFinished": "Очистити завершені завантаження",
 		"dragFile": "Перетягнути файл",
+		"showInFinder": "Показати у Finder",
 		"announceDone": "{filename} завантажено",
 		"announceFailed": "Не вдалося завантажити {filename}"
 	},

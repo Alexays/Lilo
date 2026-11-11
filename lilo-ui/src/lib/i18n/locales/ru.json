@@ -1104,6 +1104,7 @@
 		"showFolder": "Показать папку загрузок",
 		"clearFinished": "Очистить завершённые загрузки",
 		"dragFile": "Перетащить файл",
+		"showInFinder": "Показать в Finder",
 		"announceDone": "Файл {filename} загружен",
 		"announceFailed": "Не удалось загрузить {filename}"
 	},

@@ -67,3 +67,35 @@ test("the library menu lists running downloads above the archived tabs, with the
 	await expect(menu).toHaveCount(0);
 	await expect(page.getByRole("region", { name: "Downloads" })).toBeVisible();
 });
+
+test("a finished download waits above the downloads button, ready to drag out or open", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const finish = (id: number, filename: string) => page.evaluate(([id, filename]) => window.__lilo!.receive({
+		event: "downloadUpdated", id, url: `https://example.com/${filename}`, filename, state: "complete",
+		bytesReceived: 100, totalBytes: 100, startedAt: 1, endedAt: 2, fileMissing: false, source: "wk",
+	}), [id, filename] as const);
+
+	await finish(1, "report.pdf");
+	const card = page.getByRole("group", { name: "Downloads" });
+	const file = card.getByRole("button", { name: /report\.pdf/ });
+	const box = (await file.boundingBox())!;
+	await page.mouse.move(box.x + 20, box.y + 20);
+	await page.mouse.down();
+	await page.mouse.move(box.x + 40, box.y + 20);
+	await page.mouse.up();
+	await expect(card).toHaveCount(0);
+	const dragged = await sentCommands(page);
+	expect(dragged.some((command) => command.action === "startDownloadDrag")).toBe(true);
+	expect(dragged.some((command) => command.action === "openDownload")).toBe(false);
+
+	await finish(2, "photo.png");
+	await card.getByRole("button", { name: /photo\.png/ }).click();
+	await expect(card).toHaveCount(0);
+	expect((await sentCommands(page)).some((command) => command.action === "openDownload")).toBe(true);
+
+	await page.getByRole("button", { name: "Downloads and archived tabs" }).click();
+	const menu = page.getByRole("menu", { name: "Downloads and archived tabs", exact: true });
+	await menu.getByRole("menuitem", { name: /report\.pdf/ }).hover();
+	await menu.getByRole("menuitem", { name: "Show in Finder" }).first().click();
+	expect((await sentCommands(page)).some((command) => command.action === "showDownloadInFinder")).toBe(true);
+});

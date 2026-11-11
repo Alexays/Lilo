@@ -1086,6 +1086,7 @@
 		"showFolder": "Mostrar carpeta de descargas",
 		"clearFinished": "Borrar descargas finalizadas",
 		"dragFile": "Arrastrar archivo",
+		"showInFinder": "Mostrar en el Finder",
 		"announceDone": "{filename} descargado",
 		"announceFailed": "No se ha podido descargar {filename}"
 	},

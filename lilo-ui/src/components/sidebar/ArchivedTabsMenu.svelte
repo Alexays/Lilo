@@ -7,7 +7,8 @@
   import { progress } from "../../lib/downloadFormat";
   import { isActiveDownload } from "../../stores/downloads.svelte";
   import { openDownloadsPanel } from "../../stores/panels.svelte";
-  import { fileIconURL, inlineAction, metaLine, type InlineAction } from "../downloads/downloadsPanelModel";
+  import { downloadDrag } from "../downloads/downloadDrag";
+  import { canOpen, fileIconURL, inlineAction, metaLine, type InlineAction } from "../downloads/downloadsPanelModel";
   import { getArchivedFavicons } from "../../stores/archivedTabs.svelte";
   import { openCommandBar } from "../../stores/commandBar.svelte";
   import { tooltip } from "../../lib/tooltip";
@@ -75,6 +76,11 @@
     onclose();
   }
 
+  function showInFinder(download: BridgeDownloadSnapshot): void {
+    downloadActions.showInFinder(download.id);
+    onclose();
+  }
+
   function showAll(): void {
     onclose();
     openCommandBar("<");
@@ -98,8 +104,14 @@
     </div>
     {#each downloads as download (download.id)}
       {@const action = inlineAction(download)}
-      <div class="download-row" class:with-action={!!action}>
-        <button class="menu-row download" role="menuitem" onclick={() => openDownload(download)}>
+      {@const openable = canOpen(download)}
+      <div class="download-row" class:with-action={!!action || openable}>
+        <button
+          class="menu-row download"
+          role="menuitem"
+          onclick={() => openDownload(download)}
+          use:downloadDrag={{ id: openable ? download.id : null }}
+        >
           <span class="file-tile"><img src={fileIconURL(download)} alt="" width="20" height="20" draggable="false" /></span>
           <span class="row-text">
             <span class="row-title">{download.filename}</span>
@@ -128,6 +140,16 @@
                 <path d="M13 8a5 5 0 1 1-1.6-3.7" /><path d="M13 2.5v3h-3" />
               {/if}
             </svg>
+          </button>
+        {:else if openable}
+          <button
+            class="row-action on-hover"
+            role="menuitem"
+            aria-label={t("downloadsPanel.showInFinder")}
+            use:tooltip={t("downloadsPanel.showInFinder")}
+            onclick={() => showInFinder(download)}
+          >
+            <Icon name="search" size={12} />
           </button>
         {/if}
       </div>
@@ -202,6 +224,15 @@
 
   .download-row.with-action .menu-row {
     padding-right: 40px;
+  }
+
+  .row-action.on-hover {
+    opacity: 0;
+  }
+
+  .download-row:hover .row-action.on-hover,
+  .row-action.on-hover:focus-visible {
+    opacity: 1;
   }
 
   .row-action {

@@ -1086,6 +1086,7 @@
 		"showFolder": "Show Downloads Folder",
 		"clearFinished": "Clear Finished Downloads",
 		"dragFile": "Drag file",
+		"showInFinder": "Show in Finder",
 		"announceDone": "{filename} downloaded",
 		"announceFailed": "{filename} failed to download"
 	},

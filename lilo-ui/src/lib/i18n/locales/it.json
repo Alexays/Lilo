@@ -1086,6 +1086,7 @@
 		"showFolder": "Mostra cartella dei download",
 		"clearFinished": "Cancella download completati",
 		"dragFile": "Trascina file",
+		"showInFinder": "Mostra nel Finder",
 		"announceDone": "{filename} scaricato",
 		"announceFailed": "Impossibile scaricare {filename}"
 	},

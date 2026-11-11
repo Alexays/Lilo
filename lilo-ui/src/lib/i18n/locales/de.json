@@ -1086,6 +1086,7 @@
 		"showFolder": "Downloadordner anzeigen",
 		"clearFinished": "Abgeschlossene Downloads entfernen",
 		"dragFile": "Datei ziehen",
+		"showInFinder": "Im Finder anzeigen",
 		"announceDone": "{filename} heruntergeladen",
 		"announceFailed": "{filename} konnte nicht heruntergeladen werden"
 	},

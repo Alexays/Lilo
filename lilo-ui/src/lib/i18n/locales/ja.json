@@ -1086,6 +1086,7 @@
 		"showFolder": "ダウンロードフォルダを表示",
 		"clearFinished": "完了したダウンロードを消去",
 		"dragFile": "ファイルをドラッグ",
+		"showInFinder": "Finder に表示",
 		"announceDone": "{filename}をダウンロードしました",
 		"announceFailed": "{filename}をダウンロードできませんでした"
 	},

@@ -36,6 +36,7 @@ A piece of information takes the form of its family, never another.
 | Sidebar editor | Inside the sidebar alone; the page stays visible and the sidebar repaints live as its own preview | New Space, Space editor | Its buttons, Esc |
 
 - Nothing pushes the tab list or the page: a drawer or a popover covers, it never inserts itself.
+- A file that just finished downloading waits in a card above the downloads button for 6 s, longer under the pointer: drag it out or click to open it. The card covers the end of the tab list and takes no focus.
 - A system screen in the sidebar is one navigation level: a close button on the right of the traffic lights line, then the title, the search field and the navigation list, in the same places for every system screen. It slides in from the side and back; nothing else in the sidebar changes shape.
 - The page area of a system screen holds its content: a 20 px semibold title top left, a short count or note top right, then the content. It is never left blank or showing an unrelated page.
 - A system screen edits live: no Cancel and Save pair. Its sidebar holds only places; its commands sit behind one "..." button at the end of the page header, a destructive one last, in red, under a separator.
