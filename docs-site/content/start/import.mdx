@@ -5,4 +5,80 @@ sidebar:
   order: 2
 ---
 
-This page is being written.
+By the end of this page your bookmarks, open tabs, history and sign-ins from your old browser are in Lilo, its extensions are reinstalled, and your password manager is added. The import reads your other browser's files on your Mac: nothing is sent anywhere.
+
+You arrive here from the **Bring your favorites** screen of the setup. If you skipped it, open **Settings** (<kbd>⌘,</kbd>) > **General**, find **Import from another browser** and click **Import...**: the same screen opens.
+
+## What Lilo can bring over
+
+Lilo looks for these browsers, and lists only the ones installed on your Mac: Safari, Chrome, Arc, Brave, Edge, Vivaldi, Dia, Comet, Opera, Chromium, Firefox and Zen. The browser that currently opens your links comes first.
+
+| On the screen | What it imports |
+|---|---|
+| **Bookmarks** | Your bookmarks bar, plus every other bookmark in one folder, such as **Other Bookmarks (Chrome)**. |
+| **Open tabs** | The tabs of your last session, with their pinned tabs and tab groups. From Arc, its Spaces and favorites. |
+| **History** | The pages you visited, up to the 50,000 most recent. |
+| **Stay signed in** | Your cookies, so the sites you are signed in to stay signed in. |
+| **Extensions** | The extensions you use, downloaded again from the Chrome Web Store. Their settings stay in the old browser. Chromium-based browsers only. |
+
+Lilo never imports passwords, and it keeps none itself: the same screen lets you add the password manager you already use. Not every browser has every kind of data; [Import sources](/reference/import-sources) has the full list per browser.
+
+## Import
+
+<Steps>
+  <Step title="Choose the browser">
+    Lilo shows a card for each browser it found, and selects the first one it can read. Click a card to select it or deselect it. You can select several browsers.
+
+    If a card says **Allow access**, macOS is keeping that browser's files private. See [Allow access to a browser](#allow-access-to-a-browser) below.
+  </Step>
+  <Step title="Check what comes along">
+    Under the cards, a sentence lists what will be imported. By default that is everything: bookmarks, open tabs, history, your sign-ins and extensions. To change it, click **Change**, then:
+
+    - under **What to import**, turn kinds of data on or off;
+    - under **Chrome profiles** (or the name of your browser), pick which profiles to import, when it has several;
+    - under **Extensions to reinstall**, uncheck the extensions you no longer want.
+  </Step>
+  <Step title="Click Import">
+    Click **Import**. The screen shows each step as it runs, such as **Importing bookmarks from Chrome**.
+
+    If you import sign-ins from a Chromium-based browser, macOS asks whether Lilo may use that browser's key in your keychain. Click **Allow**: without it, your sign-ins cannot be read. The other kinds of data import either way.
+  </Step>
+  <Step title="Read the result">
+    When the import ends, Lilo says what it brought, for example **Done: 214 bookmarks, 12 open tabs, 1,830 pages of history, 412 cookies and 3 extensions.** Click **Continue**.
+
+    If something could not be imported, Lilo names it and why, and you can run the import again later from Settings. A browser that is open can hold its files: quit it, then import again. Importing twice adds nothing twice.
+  </Step>
+</Steps>
+
+## Where your things land
+
+- The first profile you import goes into the Space you are in: bookmarks and pinned tabs become its pinned tabs, the other bookmarks one closed folder, and your open tabs its tab list. Tab groups become folders.
+- Each further profile gets its own Lilo profile and a Space of its own, so its sign-ins stay apart from the first one.
+- Arc Spaces and Zen workspaces each become a Lilo Space. Arc favorites and Zen essentials become favorites, the tiles at the top of the sidebar.
+- Extensions pinned to your old browser's toolbar are pinned to Lilo's address bar, in the same order, after any you pinned in Lilo.
+
+## Allow access to a browser
+
+macOS protects some browsers' files, Safari's in particular. Lilo can only read them once you give it Full Disk Access. It asks only when a browser you have needs it, and only when you click that browser's card.
+
+<Steps>
+  <Step title="Click Allow access">
+    Click the browser's **Allow access** card. System Settings opens on **Privacy & Security** > **Full Disk Access**.
+  </Step>
+  <Step title="Turn Lilo on">
+    Turn on Lilo in the list. If Lilo is not in the list, drag the Lilo icon from the small panel beside System Settings into the list.
+  </Step>
+  <Step title="Come back to Lilo">
+    Switch back to Lilo. It looks again, and the browser's card can now be selected.
+  </Step>
+</Steps>
+
+You can turn Full Disk Access off again once the import is done.
+
+## Add your password manager
+
+Below the browsers, under **Your passwords**, click **Choose** next to **Password manager**, then **Add** next to yours: Lilo installs its extension. NordPass, Bitwarden, 1Password, Proton Pass, Dashlane and KeePassXC are offered; iCloud Passwords is marked **Soon** while it waits for Apple's approval. Later, the same list is in **Settings** > **Extensions** > **Add a password manager**. [Extensions](/guides/extensions) covers every other extension.
+
+## Next
+
+Continue the setup in [Your first five minutes](/start/first-five-minutes).
