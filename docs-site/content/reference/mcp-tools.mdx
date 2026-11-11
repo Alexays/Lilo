@@ -9,9 +9,9 @@ The tools an AI agent can call once you turn on **Let agents use Lilo** in Setti
 
 What holds for every tool:
 
-- The tools are named and shaped like those of Claude in Chrome, so an agent written for it needs nothing new.
-- An agent works in its own tab group, in the Agents Space. `tabId` is the number `tabs_context_mcp` and `tabs_create_mcp` give for a tab of that group. An agent reaches only the tabs of its group, never a Private Space.
-- Some actions wait for your approval: a click or Enter that sends, pays, buys, orders, deletes, transfers, publishes or signs up, and a request other than GET or HEAD with the cookies of one of your profiles, unless you turn off **Ask before sending, paying, deleting or publishing**; and, whatever that setting, every file from your Mac an agent hands a page. [Agent safety](/about/agent-safety) explains what the approvals cover and what they do not.
+- The tools Claude in Chrome has keep its names and shapes, so an agent written for it needs nothing new. Lilo adds more, such as the Web Inspector, network and profile tools.
+- An agent works in its own folder, which the tool descriptions call its tab group. `tabId` is the number `tabs_context_mcp` and `tabs_create_mcp` give for a tab of that folder, and an agent reaches only the tabs of its folders. An agent connected from another app works in an Agents Space, in the Agents profile until you allow one of yours; an agent in a Lilo conversation works in the conversation's folder of your own Space, with that Space's profile and your sign-ins. No agent reaches one of your Private Spaces.
+- Some actions wait for your approval, unless you turn off **Ask before sending, paying, deleting or publishing**: a click or Enter on a control whose label or form address contains one of a fixed list of words such as "send", "pay", "delete" or "publish", and a request other than GET or HEAD with the cookies of one of your profiles. The word check is best effort: other labels, other languages, icons and Enter in a message box pass without a question. Whatever that setting, Lilo asks before an agent hands a page one of your files. Opening a local file with `navigate` and reading it asks nothing. [Agent safety](/about/agent-safety) explains what the approvals cover and what they do not.
 - A parameter description below is the text the agent itself reads.
 
 <include>./_generated/mcp-tools.md</include>

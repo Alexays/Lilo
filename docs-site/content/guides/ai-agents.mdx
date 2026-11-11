@@ -5,7 +5,7 @@ sidebar:
   order: 11
 ---
 
-Lilo has no AI of its own. If you turn agent control on, the agents you already use on your Mac can open tabs in Lilo, read pages and act on them, in a Space kept apart from yours. This page takes you from a fresh install to an agent that browses for you, and explains what each approval allows.
+Lilo has no AI of its own. If you turn agent control on, the agents you already use on your Mac can open tabs in Lilo, read pages and act on them, in a Space kept apart from yours. This page takes you from a fresh install to an agent that browses for you, and explains what each approval allows. An agent you talk to in a Lilo conversation works differently, in your own Space and profile: see [Talk to your agents in Lilo](#talk-to-your-agents-in-lilo).
 
 Agents reach Lilo through `lilo-mcp`, a small MCP server inside the app bundle. When Lilo is in your Applications folder, its path is:
 
@@ -15,7 +15,7 @@ Agents reach Lilo through `lilo-mcp`, a small MCP server inside the app bundle. 
 
 ## Turn on agent control
 
-Agent control is off in a new profile. Until you turn it on, Lilo accepts no agent.
+Agent control is one setting for all of Lilo, not per profile. The setup turns it on if you answered **With my agents** or **For developing** to **How will you use Lilo?**, and leaves it off if you answered **For browsing** or skipped the question. While it is off, Lilo accepts no agent.
 
 <Steps>
   <Step title="Open Settings">
@@ -112,7 +112,7 @@ To take an approval back, find the app's tile in **Apps that can use Lilo** and 
 
 Ask your agent something like "Open example.com in Lilo and tell me what the page says." A short session looks like this, from the agent's side:
 
-1. `tabs_context_mcp` lists the tabs of its group. Called with `createIfEmpty`, it starts a new group with one empty tab.
+1. `tabs_context_mcp` lists the tabs of its folder. Called with `createIfEmpty`, it starts a new folder with one empty tab.
 2. `tabs_create_mcp` answers `Created new tab. Tab ID: 2`.
 3. `navigate` to `https://example.com` answers `Navigated to https://example.com/ - Example Domain`.
 4. `get_page_text` returns the page's title, address and text.
@@ -121,18 +121,20 @@ Every tool, with its parameters, is listed in [MCP tools](/reference/mcp-tools).
 
 ## Where agents work
 
-Agents open their tabs in the **Agents Space**, one folder per task, never among your own tabs. Each agent sees only the tabs of its own folders.
+An agent you connect from another app opens its tabs in an **Agents Space**, one folder per task, never among your own tabs. Each agent sees only the tabs of its own folders.
 
-By default those tabs run in **Agents**, a throwaway profile with no cookie, sign-in or history of yours. Lilo wipes it at launch and when the last agent working in it leaves. When a session ends, its folders and tabs close. If a window shows the Agents Space at that moment, they stay in view until Lilo cleans the space up later.
+By default those tabs run in **Agents**, a throwaway profile with no cookie, sign-in or history of yours. Lilo wipes it when agent control starts and when the last agent working in it leaves. When a session ends, its folders and tabs close. If a window shows the Agents Space at that moment, they stay in view until Lilo cleans the Space up later. An agent can also open `isolated` tabs, which live in a Private Space of its own and share no cookies with its other tabs.
 
-An agent can ask to borrow one of your profiles, to act with its sign-ins. Lilo asks you first, for example **Claude Code wants to use the profile Work** ("It moves its tabs there, to act with that profile's sign-ins."). You allow each profile once per agent. Going back to the Agents profile needs no question.
+An agent can ask to borrow one of your profiles, to act with its sign-ins. Lilo asks you first, for example **Claude Code wants to use the profile Work** ("It moves its tabs there, to act with that profile's sign-ins."). You allow each profile once per agent. Its folders then move to that profile's own Agents Space. Going back to the Agents profile needs no question.
 
 ## What Lilo asks before an agent acts
 
 While **Ask before sending, paying, deleting or publishing** is on, Lilo stops an agent before it:
 
-- clicks, or presses Enter on, something that sends, pays, buys, orders, deletes, transfers, publishes or signs up, inside frames too;
+- clicks, or presses Enter on, a button, link or form whose label or form address contains one of a fixed list of English and French words, such as "send", "pay", "buy", "order", "delete", "transfer", "publish" or "sign up", inside frames too;
 - sends a request other than GET or HEAD with the cookies of one of your profiles.
+
+The first check is a best-effort match on the control's wording, not on what it does. A label that is not on the list ("Submit", "Confirm", "Remove"), a label in another language, an icon with no name, and Enter in a message box all go through without a question. [Agent safety](/about/agent-safety#how-lilo-recognizes-a-consequential-action) lists the words and the gaps.
 
 The question appears under the address bar, for example: **Claude Code** wants to click "Delete account" in Example Domain (example.com). The agent waits for your answer. You can choose:
 
@@ -142,16 +144,26 @@ The question appears under the address bar, for example: **Claude Code** wants t
 
 If you do not answer within 45 seconds, the action does not happen either. The agent gets an error it can act on, such as `The user did not allow clicking "Delete account" on example.com: ask them to do it or to allow it`.
 
-Whatever the setting, Lilo asks every time before an agent hands a page one of your files (`file_upload`, `upload_image`), and that prompt has no "always" answer.
+Whatever the setting, Lilo asks every time before an agent hands a page one of your files (`file_upload`, `upload_image` with a file path, or a `network_mock` rule that serves a file), and that prompt has no "always" answer.
 
 ## What an agent cannot do
 
-- See or act on your own tabs. It works only in its folders of the Agents Space.
-- See or act on a private Space.
+An agent connected from another app cannot:
+
+- See or act on your own tabs. It works only in its folders of an Agents Space.
+- See or act on one of your Private Spaces.
 - Use the sign-ins of one of your profiles before you allow that profile.
 - Hand a page one of your files without asking you, every time.
 
-The questions above cover clicks, Enter and requests. They do not cover code the agent runs itself through `javascript_tool`, `run` or `devtools_command`: an agent working in one of your profiles can act there with your sign-ins. The prompt is a safety net for well-behaved agents, not a sandbox. [Agent safety](/about/agent-safety) explains the reasoning.
+An agent in a Lilo conversation is different: it works in a folder of your own Space rather than an Agents Space, and with your sign-ins without being asked (see [Talk to your agents in Lilo](#talk-to-your-agents-in-lilo)). It still reaches only the tabs of that folder.
+
+What no agent is stopped from doing:
+
+- **Reading your files.** `navigate` opens a `file://` address in the agent's own tab, and the agent can read the file, or a folder's listing, without any prompt. The upload prompt covers only handing a file to a page.
+- **Running its own code.** The questions above cover clicks, Enter and requests. They do not cover code the agent runs itself through `javascript_tool`, `run` or `devtools_command`: an agent working in one of your profiles can act there with your sign-ins.
+- **Writing cookies.** The `cookies` tool can set a cookie for any domain in the agent's profile without asking.
+
+The prompt is a safety net for well-behaved agents, not a sandbox. [Agent safety](/about/agent-safety) explains the reasoning.
 
 ## If the agent cannot connect
 
@@ -180,4 +192,8 @@ Lilo can also host conversations with agents that speak the Agent Client Protoco
   </Step>
 </Steps>
 
-A conversation gets a row of its own in the sidebar, with the pages its agent opens under it. That agent drives only those pages, with the same questions as above. Agents installed with `npx` or `uvx` need Node.js or uv on your Mac. An agent idle for ten minutes stops, and picks its session up again when you come back.
+A conversation is a folder of the Space you start it in, with the agent's tab first and the pages it opens under it. It never starts in a Private Space.
+
+A conversation agent is not kept apart the way a connected agent is. You started it, so Lilo asks no connection or profile question: its pages load with the profile of the Space the conversation is in, with your cookies and sign-ins. It reaches only the tabs in its conversation's folder, and the questions before acting described above apply to it, with the same limits. Its browser tools work only while **Let agents use Lilo** is on. For a task that should not see your sign-ins, ask it to use `isolated` tabs, or connect the agent from another app instead.
+
+Agents installed with `npx` or `uvx` need Node.js or uv on your Mac. An agent idle for ten minutes stops, and picks its session up again when you come back.
