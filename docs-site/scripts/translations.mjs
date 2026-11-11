@@ -5,7 +5,8 @@
 // (COMPATIBILITY.md, the agent tool definitions) are edited by app contributors who may have no
 // agent CLI. The shortcut and settings partials get their French from the app's catalog, so they are
 // never Blume's to translate. `--prune` removes those two from the ledger after `blume translate`
-// adopted them.
+// adopted them; `--ledger` only checks the ledger, before `blume translate`, which would read a broken
+// one as empty and record every French file as current.
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -15,6 +16,7 @@ const LEDGER = `${root}blume.translations.json`;
 const GENERATED = "content/reference/_generated/";
 export const GENERATOR_OWNED = new Set([`${GENERATED}shortcuts.md`, `${GENERATED}settings.md`]);
 const DRIFT_CODES = new Set(["BLUME_TRANSLATE_MISSING", "BLUME_TRANSLATE_STALE"]);
+const UNTRACKED_REMEDY = " (delete the French file so make docs-translate translates it afresh, or restore its ledger entry from git)";
 
 /** The ledger parsed from its text (undefined when absent). Blume reads a missing or broken ledger as empty and passes. */
 export function readLedger(text) {
@@ -48,7 +50,8 @@ export function classify(report) {
         if (GENERATOR_OWNED.has(source)) {
           continue;
         }
-        const line = `${source} → ${locale}: ${status}`;
+        // `make docs-translate` would adopt an untracked file as it is, whatever it holds.
+        const line = `${source} → ${locale}: ${status}${status === "untracked" ? UNTRACKED_REMEDY : ""}`;
         if (status === "stale" && source.startsWith(GENERATED)) {
           warnings.push(line);
         } else {
@@ -105,7 +108,9 @@ function check() {
   }
   if (errors.length > 0) {
     console.error(`French translations out of date:\n  ${errors.join("\n  ")}`);
-    console.error("Run make docs-translate (needs Claude Code), review the diff and commit it with the change.");
+    if (errors.some((line) => !line.endsWith(UNTRACKED_REMEDY))) {
+      console.error("Run make docs-translate (needs Claude Code), review the diff and commit it with the change.");
+    }
     process.exit(1);
   }
   console.log(`French translations up to date (${report.translate?.upToDate ?? 0} files)`);
@@ -122,6 +127,8 @@ function prune() {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (process.argv.includes("--prune")) {
     prune();
+  } else if (process.argv.includes("--ledger")) {
+    readLedgerFile();
   } else {
     check();
   }
