@@ -26,6 +26,12 @@ body {
   font-feature-settings: "cv11", "ss01", "ss03";
 }
 
+/* A long page title wraps in the sidebar instead of ending in an ellipsis. */
+.blume-nav-link.truncate {
+  white-space: normal;
+  text-overflow: clip;
+}
+
 /* Blume's drawer slide, hover fades and page cross-fades ignore Reduce Motion. */
 @media (prefers-reduced-motion: reduce) {
   *,
