@@ -62,6 +62,8 @@ export default defineConfig({
     ],
     socials: { discord: "https://discord.gg/NyJRAapk76" },
   },
+  // GitHub's default light and dark code themes leave some tokens under AA on Lilo's backgrounds.
+  markdown: { code: { theme: { light: "github-light-high-contrast", dark: "github-dark-default" } } },
   variables: { version, macos: "26" },
   seo: { sitemap: { alternates: true }, og: { image: "/og.png" } },
   agents: {
