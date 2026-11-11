@@ -1,8 +1,86 @@
 ---
 title: "Terminal tabs"
-description: "Open a terminal tab beside your pages, set up its shell and appearance, and keep long-running commands going while you browse in Lilo."
+description: "Open a terminal tab beside your pages, review a repository's changes, set the terminal's theme and font, and keep your Mac awake while commands run."
 sidebar:
   order: 10
 ---
 
-This page is being written.
+A terminal tab is a shell in a tab of your sidebar, next to your pages, built on Ghostty's terminal library. This page shows how to open one, run commands from the command bar, review a repository's changes, and set the terminal up.
+
+## Open a terminal tab
+
+- **File > New Terminal Tab** (<kbd>⌃\`</kbd>) opens a terminal tab.
+- **File > New Terminal Beside** (<kbd>⌘D</kbd>) opens one in a split pane beside the current tab, and **File > New Terminal Below** (<kbd>⇧⌘D</kbd>) in a pane below it. See [Split view](/guides/split-view).
+
+The shell is your login shell. It starts in the folder of the tab in front: a terminal's own folder, the folder of a local file you are viewing, or else your home folder. The tab's title follows what runs in it: a program's own title when it sets one, then the running command, else the process and the folder.
+
+## Run a command from the command bar
+
+<Steps>
+  <Step title="Open the command bar">
+    Press <kbd>⌘T</kbd>.
+  </Step>
+  <Step title="Type > and your command">
+    Type `>` to search in **Terminal**. Lilo suggests commands from your shell history, most recent first, then the programs on your `PATH`.
+  </Step>
+  <Step title="Press Return">
+    The command runs in a new terminal tab.
+  </Step>
+</Steps>
+
+The same scope lists your open terminals, and under **Recently closed**, the terminals you closed. A reopened terminal comes back with its screen, its history and its last program typed at the prompt. More in [Command bar](/guides/command-bar).
+
+## Work with terminals
+
+- **Links**: a web link you open from a terminal shows in a Peek over it. <kbd>Esc</kbd> dismisses it, or keep it as a tab or a split pane.
+- **Background output**: a terminal that prints something while you are elsewhere is marked unread in the sidebar.
+- **Waiting terminals**: **Window > Show Next Waiting Terminal** (<kbd>⌃⌘J</kbd>) goes to the terminal that has waited longest for your answer, then the next one on each press.
+- **Long commands**: when a command that ran for 10 seconds or more finishes while you are elsewhere, Lilo sends a notification, "Command finished" or "Command failed" with its exit code.
+- **Closing**: closing a terminal that is still running a command asks first ("Close this terminal?").
+- **Relaunch**: Lilo saves each terminal's screen and history and brings them back at the next launch. Terminals in a private Space are never written to disk.
+
+## Review a repository's changes
+
+When the terminal in front is inside a git repository, choose **View > Show Changes** (<kbd>⌃⌘G</kbd>). Lilo shows the repository's diff over the terminal. Press the shortcut again to close it.
+
+- **Uncommitted** shows what changed since the last commit, untracked files included. **Branch** compares the branch with its base on `main` or `master`.
+- **Unified** and **Split** switch the diff layout.
+- **Open in Split** keeps the diff as a Changes tab beside the terminal.
+
+The view reloads by itself while it is on screen, when files change. It needs git on your Mac, and shows diffs of up to 256 MB.
+
+## Set up the terminal
+
+Open **Settings** (<kbd>⌘,</kbd>) and choose **Terminal**, under **Tools**.
+
+| Setting | What it does | Default |
+| --- | --- | --- |
+| **Terminal tabs** | Open shells as tabs next to your pages. When off, the terminal shortcuts, buttons and menus are hidden; open terminals stay until closed. | On |
+| **Theme** | The terminal's colors. Lilo follows each Space's color and keeps every color readable on it. **Import...** takes an iTerm2 color preset (`.itermcolors`), a VS Code color theme (`.json`) or a Ghostty theme file. | |
+| **Font** | The font family and its size in points, for every terminal tab. Fonts with ligatures, like JetBrains Mono or Fira Code, show them. | System (SF Mono), 13 pt |
+| **History per terminal** | How much scrollback each terminal keeps: 2, 10, 50 or 200 MB. 10 MB is about 100,000 lines. | 10 MB |
+| **Notify when a long command finishes** | After 10 seconds, when you are elsewhere. | On |
+| **Option key** | **Types characters**, or makes the left, right or both Option keys Meta, so Option-B and Option-F move by word in the shell. | Types characters |
+| **Keep the Mac awake during commands** | **Off**, **On**, or **Lid Closed Too**. See below. | On |
+
+## Keep your Mac awake while commands run
+
+With **Keep the Mac awake during commands** set to **On**, your Mac does not go to sleep while a command works in a terminal, nor while an agent is working through Lilo. A command waiting for you, or silent for 5 minutes, does not count. **Stop after** sets the longest stretch: 2, 4, 8, 12 or 24 hours, 8 by default.
+
+While Lilo keeps the Mac awake, a menu bar item shows it ("Staying awake"). Its menu lists what holds the Mac, and **Let sleep** gives sleep back until the next command starts.
+
+**Lid Closed Too** also keeps the Mac awake with the lid closed. It needs a system helper, which macOS asks you to allow once:
+
+<Steps>
+  <Step title="Choose Lid Closed Too">
+    Under **Lid closed**, the **System helper** row shows its state.
+  </Step>
+  <Step title="Allow the helper">
+    If it reads **Needs approval**, click **Open System Settings** and allow Lilo in **General > Login Items**.
+  </Step>
+</Steps>
+
+With the lid closed, Lilo sets the screen brightness to zero and turns the sound off, and puts both back when you open it. Two more settings apply:
+
+- **Stop below this battery level**: 10, 15, 20, 30 or 40%, 20% by default.
+- **Pause other apps**: apps in the Dock that an agent does not need, other than Apple's, are paused while the lid is closed, and resume where they were when it opens. It is on by default; add the apps that must keep working under **Keep running**.
