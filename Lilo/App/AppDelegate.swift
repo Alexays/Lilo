@@ -77,6 +77,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSWindow.allowsAutomaticWindowTabbing = false
         // Before any WKWebExtensionController exists: extensions serve their pages from chrome-extension://.
         WKWebExtension.MatchPattern.registerCustomURLScheme("chrome-extension")
+        // Before any web process starts. WebKit shares one copy of a user script's source (megabytes of extension content
+        // scripts) between its web processes only for an app taking every SDK-aligned behavior, as Safari does: each
+        // page and process gets its own otherwise.
+        let allBehaviors = NSSelectorFromString("_setLinkedOnOrAfterEverything")
+        if WKProcessPool.responds(to: allBehaviors) { _ = unsafe (WKProcessPool.self as AnyObject).perform(allBehaviors) }
         ThemePreference.applyCachedAtLaunch()
         // The test host never shows the window it would be for.
         if !ProcessInfo.isRunningUnderXCTest { MainWindowController.preloadChromeWebView() }
