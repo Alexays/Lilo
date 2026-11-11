@@ -1,0 +1,12 @@
+name = "lilo-docs"
+compatibility_date = "2026-10-01"
+routes = [{ pattern = "docs.getlilo.app", custom_domain = true }]
+# Served on docs.getlilo.app only: a workers.dev copy would be duplicate content
+workers_dev = false
+preview_urls = false
+
+[assets]
+directory = "./dist"
+# Blume writes pages as <route>/index.html and links them without a trailing slash
+html_handling = "drop-trailing-slash"
+not_found_handling = "404-page"
