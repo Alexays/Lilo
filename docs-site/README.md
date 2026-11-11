@@ -31,25 +31,26 @@ make docs-deploy-check  # Check the Cloudflare deployment without publishing
 
 The site is the `lilo-docs` Worker on `docs.getlilo.app` (`wrangler.toml`), deployed by Cloudflare Workers Builds with root directory `docs-site` and deploy command `npm run deploy`.
 
-**docs.getlilo.app must answer before any link to it is published on getlilo.app.** The marketing site's Documentation and Privacy links, its feature pages and its `llms.txt` point there; merged first, they would send every visitor and crawler to a dead host. So those links live on a branch of their own, and the first deployment goes in this order:
+**docs.getlilo.app must answer before any link to it is published on getlilo.app.** The marketing site's Documentation and Privacy links, its feature pages and its `llms.txt` point there; merged first, they would send every visitor and crawler to a dead host. So those links live on a branch of their own, `feat/docs-site-links`, and the first deployment goes in this order:
 
-1. Merge the docs site (this folder, with no marketing-site link to it) into `main`.
+1. Merge the docs site (this folder, with no marketing-site link to it) into `main`. `feat/docs-site-links` stays unmerged until step 5.
 2. In Cloudflare, create the `lilo-docs` Worker through **Workers Builds**, connected to this repository, from `main`:
    - root directory `docs-site`;
    - build command `npm ci --ignore-scripts`, as `make` installs, with the build variable `SKIP_DEPENDENCY_INSTALL` set to `1`, so Workers Builds does not install the dependencies itself first;
    - deploy command `npm run deploy` (the default, `npx wrangler deploy`, would deploy without building);
-   - production branch `main`, and the watch paths below.
+   - production branch `main`, and the build watch paths below (**Settings > Build > Build watch paths**, as include paths);
+   - preview builds (**Settings > Build > Branch control > Enable Preview Builds**) left off. For a branch other than `main`, Workers Builds runs the build command and then the preview command, `npx wrangler preview` by default, and the build command here only installs, so there would be no `dist/` to preview. To turn them on, set the preview command to build first, for example `npm run build && npx wrangler versions upload`; that command is not tested.
 
-   The build image's default Node.js (24.22.1 when this was written) is newer than the 22.23.4 the site needs; a `NODE_VERSION` build variable overrides it. Cloudflare's documentation does not say in which folder its own dependency install runs, nor the syntax of its watch paths: check them in the dashboard.
+   The build runs on Node.js 22.23.4: the build image reads `docs-site/.nvmrc` from the root directory. Cloudflare's documentation does not say in which folder its own dependency install runs, nor whether watch paths are read from the repository root or the root directory; the paths below are from the repository root.
 3. Let the first build deploy, then check that the custom domain `docs.getlilo.app` from `wrangler.toml` is attached to the Worker (**Settings > Domains & Routes**); attach it there if the deploy did not.
 4. Check that these answer 200: `/`, `/start/install`, `/start/import`, `/guides/ai-agents`, `/reference/mcp-tools`, `/reference/extension-compatibility` and `/about/privacy`, and their French pages `/fr`, `/fr/start/install`, `/fr/start/import`, `/fr/guides/ai-agents`, `/fr/reference/mcp-tools`, `/fr/reference/extension-compatibility` and `/fr/about/privacy`, plus `/llms.txt`, `/llms-full.txt` and `/sitemap.xml`, which exist in English only. Those are the pages getlilo.app links to.
 5. Only then merge the branch with the marketing-site changes that link to docs.getlilo.app.
 
-`make docs-deploy-check` runs the same build and a `wrangler deploy --dry-run` locally; it needs no Cloudflare account. The watch paths are the files the build reads:
+`make docs-deploy-check` runs the same build and a `wrangler deploy --dry-run` locally; it needs no Cloudflare account. The watch paths are the files the build reads, written as Cloudflare documents them (a file path, or a `*` at the start or end of a rule):
 
-- `docs-site/**`
+- `docs-site/*`
 - `Lilo/App/KeyboardShortcuts.swift`
-- `Lilo/Agent/*.swift`
+- `Lilo/Agent/*`
 - `Lilo/Import/BrowserImportScanner.swift`
 - `lilo-ui/src/components/settings/settingsPanelModel.ts`
 - `lilo-ui/src/lib/i18n/locales/en.json`
