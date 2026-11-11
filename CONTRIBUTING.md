@@ -193,7 +193,7 @@ rather than carving out a helper just to reach it.
 
 `.github/workflows/build.yml` runs on every push to `main` and every pull request:
 
-- **Release tooling and websites** (ubuntu): Changie fragments, version sync, Ultracite and Astro checks, website and documentation site checks and tests, and a Cloudflare deployment dry run of each.
+- **Release tooling and website** (ubuntu): Changie fragments, version sync, Ultracite and Astro checks, website and documentation site checks and tests, and a Cloudflare deployment dry run of each.
 - **UI** (ubuntu): `make validate-ui` and `make e2e`.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.

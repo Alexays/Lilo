@@ -42,7 +42,7 @@ jobs:
           echo "code=$code" >> "$GITHUB_OUTPUT"
 
   release-tooling:
-    name: Release tooling and websites
+    name: Release tooling and website
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
