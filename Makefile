@@ -12,6 +12,7 @@ BRIDGE_DIR := Lilo/Extensions/bridge-src
 UI_DEPS := $(UI_DIR)/node_modules/.package-lock.json
 BRIDGE_DEPS := $(BRIDGE_DIR)/node_modules/.package-lock.json
 SITE_DEPS := site/node_modules/.package-lock.json
+DOCS_DEPS := docs-site/node_modules/.package-lock.json
 CHANGIE_VERSION := 1.26.0
 CHANGIE := $(CURDIR)/build/changie-$(CHANGIE_VERSION)/changie
 CHANGIE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -94,6 +95,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
+	docs-dev docs-build docs-check docs-test docs-preview docs-deploy-check docs-deploy docs-translate docs-eval docs-lock \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test release-media-stage release-media-test changelog-context changelog-draft changelog-media
 
@@ -130,10 +132,10 @@ bootstrap:
 
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
-## Run UI and website checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
-validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(SWIFTLINT) $(CHANGIE)
+## Run UI, website and docs checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
+validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(DOCS_DEPS) $(SWIFTLINT) $(CHANGIE)
 	@logs=$$(mktemp -d); checks=; \
-	for group in ui-lint ui-test "site-check site-test" "hooks-test perf-summary-test ext-bridge-test swiftlint release-status"; do \
+	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test perf-summary-test ext-bridge-test swiftlint release-status"; do \
 		name=$${group%% *}; $(MAKE) -k --no-print-directory $$group > "$$logs/$$name.log" 2>&1 & checks="$$checks $$!:$$name"; \
 	done; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
@@ -185,6 +187,10 @@ $(BRIDGE_DEPS): $(BRIDGE_DIR)/package-lock.json
 
 $(SITE_DEPS): site/package.json site/package-lock.json
 	@npm --prefix site ci
+
+# Blume builds without its dependencies' install scripts.
+$(DOCS_DEPS): docs-site/package.json docs-site/package-lock.json
+	@npm --prefix docs-site ci --ignore-scripts
 
 $(CHANGIE): scripts/changie-checksums.txt
 	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
@@ -716,3 +722,43 @@ site-deploy-check: site-generate
 ## Deploy getlilo.app to Cloudflare (requires authentication)
 site-deploy: $(SITE_DEPS)
 	@npm --prefix site run deploy
+
+## Serve docs.getlilo.app with Blume and live reload
+docs-dev: $(DOCS_DEPS)
+	@npm --prefix docs-site run dev
+
+## Build docs.getlilo.app: generated reference, pages and security headers in docs-site/dist/
+docs-build: $(DOCS_DEPS)
+	@npm --prefix docs-site run build
+
+## Check the docs' links and anchors, and that no French page is missing or out of date
+docs-check: $(DOCS_DEPS)
+	@npm --prefix docs-site run check
+
+## Build and test the docs' headers, routes and metadata, then audit the build
+docs-test: docs-build
+	@npm --prefix docs-site run test
+
+## Preview the built docs with Cloudflare's headers on localhost:8789
+docs-preview: docs-build
+	@npm --prefix docs-site run preview -- --port $(or $(DOCS_PREVIEW_PORT),8789)
+
+## Check the docs' Cloudflare deployment without publishing
+docs-deploy-check: docs-build
+	@npm --prefix docs-site run deploy:check
+
+## Deploy docs.getlilo.app to Cloudflare (requires authentication)
+docs-deploy: $(DOCS_DEPS)
+	@npm --prefix docs-site run deploy
+
+## Translate new and changed docs pages into French with Claude Code (DOCS_TRANSLATE_ARGS passes blume translate flags)
+docs-translate: $(DOCS_DEPS)
+	@DOCS_TRANSLATE_ARGS='$(DOCS_TRANSLATE_ARGS)' npm --prefix docs-site run translate
+
+## Ask an agent the questions in docs-site/evals.yaml and grade its answers (Claude Code; costs model time)
+docs-eval: $(DOCS_DEPS)
+	@cd docs-site && npx blume eval --agent claude
+
+## Update the docs' dependencies and lockfile after changing package.json
+docs-lock:
+	@npm --prefix docs-site update
