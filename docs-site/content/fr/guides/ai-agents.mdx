@@ -1,0 +1,207 @@
+---
+title: Agents IA
+description: >-
+  Connectez Claude Code, Claude Desktop, Codex, Cursor ou tout client MCP à
+  Lilo, laissez les agents naviguer dans leur propre espace et approuvez ce
+  qu'ils font.
+sidebar:
+  order: 11
+---
+Lilo n'a pas d'IA propre. Si vous activez le contrôle par les agents, les agents que vous utilisez déjà sur votre Mac peuvent ouvrir des onglets dans Lilo, lire des pages et y agir, dans un espace tenu à l'écart du vôtre. Cette page vous mène d'une installation toute neuve à un agent qui navigue pour vous, et explique ce que chaque autorisation permet. Un agent auquel vous parlez dans une conversation Lilo fonctionne différemment : c'est un programme qui s'exécute sur votre Mac avec l'accès de votre compte aux fichiers et aux commandes, et il navigue dans votre propre espace et votre propre profil. Voir [Parler à vos agents dans Lilo](#talk-to-your-agents-in-lilo).
+
+Les agents accèdent à Lilo par `lilo-mcp`, un petit serveur MCP situé dans le paquet de l'application. Lorsque Lilo se trouve dans votre dossier Applications, son chemin est :
+
+```text
+/Applications/Lilo.app/Contents/MacOS/lilo-mcp
+```
+
+## Activer le contrôle par les agents [#turn-on-agent-control]
+
+Le contrôle par les agents est un réglage unique pour tout Lilo, et non par profil. La configuration initiale l'active si vous avez répondu **Avec mes agents** ou **Pour développer** à **Comment allez-vous utiliser Lilo ?**, et le laisse désactivé si vous avez répondu **Pour naviguer** ou ignoré la question. Tant qu'il est désactivé, Lilo n'accepte aucun agent.
+
+<Steps>
+  <Step title="Ouvrir les Réglages">
+    Choisissez **Lilo > Réglages…** ou appuyez sur <kbd>⌘,</kbd>.
+  </Step>
+  <Step title="Ouvrir la section Agents">
+    Dans la barre latérale, sous **Outils**, choisissez **Agents**.
+  </Step>
+  <Step title="Activer Laisser les agents utiliser Lilo">
+    Sous **Agents qui utilisent Lilo**, activez **Laisser les agents utiliser Lilo**. Deux autres réglages apparaissent en dessous : **Demander avant d'envoyer, payer, supprimer ou publier** (activé par défaut) et **Toujours autorisés**, les sites où les agents agissent sans demander.
+  </Step>
+</Steps>
+
+:::note
+Certains messages de `lilo-mcp` appellent cette section « Settings > AI agents ». Dans la fenêtre Réglages, elle s'appelle **Agents**.
+:::
+
+## Connecter votre agent [#connect-your-agent]
+
+Une fois le contrôle par les agents activé, **Apps qui peuvent utiliser Lilo** affiche une tuile pour chaque app prise en charge que Lilo trouve sur votre Mac : Claude Code, Claude Desktop, Codex et Cursor. Cliquez sur **Connecter** sur une tuile et Lilo écrit pour vous la configuration MCP de cette app, en conservant tous les autres serveurs qui s'y trouvent déjà. La tuile indique alors **Configuré. Lilo vous demande à sa première connexion.**
+
+Pour configurer une app à la main, utilisez ci-dessous la configuration correspondant à votre client.
+
+<Tabs>
+  <Tab title="Claude Code">
+    Exécutez ceci dans Terminal :
+
+    ```sh
+    claude mcp add --scope user lilo -- /Applications/Lilo.app/Contents/MacOS/lilo-mcp
+    ```
+
+    **Connecter** exécute la même commande, après avoir supprimé tout serveur `lilo` antérieur de votre portée utilisateur.
+  </Tab>
+  <Tab title="Claude Desktop">
+    Ajoutez le serveur à `~/Library/Application Support/Claude/claude_desktop_config.json` :
+
+    ```json
+    {
+      "mcpServers": {
+        "lilo": {
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+        }
+      }
+    }
+    ```
+
+    Quittez et rouvrez Claude pour le charger.
+  </Tab>
+  <Tab title="Codex">
+    Ajoutez cette table à `~/.codex/config.toml` :
+
+    ```toml
+    [mcp_servers.lilo]
+    command = "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    Ajoutez le serveur à `~/.cursor/mcp.json` :
+
+    ```json
+    {
+      "mcpServers": {
+        "lilo": {
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Autres clients MCP">
+    Tout client qui démarre un serveur MCP local sur l'entrée et la sortie standard fonctionne. Dans **Agents**, repérez **Autres agents** et cliquez sur **Copier la configuration** : Lilo copie une entrée `mcpServers` semblable à celle de Claude Desktop, avec le chemin du Lilo que vous utilisez.
+  </Tab>
+</Tabs>
+
+Si Lilo ne parvient pas à lire un fichier de configuration existant (un commentaire ou une virgule finale dans un fichier JSON, par exemple), il ne touche pas au fichier et vous indique ce qu'il faut ajouter vous-même.
+
+## Autoriser l'agent la première fois [#allow-the-agent-the-first-time]
+
+La première fois qu'un agent se connecte, Lilo affiche une boîte de dialogue dont le titre porte le nom de l'agent, par exemple **Claude Code veut piloter Lilo**, avec le chemin du programme à l'origine de la connexion. Elle énumère ce que vous autorisez :
+
+- Ouvrir des onglets dans son propre dossier du Space Agents
+- Lire les pages qu'il ouvre
+- Y agir avec vos connexions
+
+Tant que **Demander avant d'envoyer, payer, supprimer ou publier** est activé, la boîte de dialogue ajoute : « Il demande avant d'envoyer, de payer, de supprimer ou de publier. »
+
+Choisissez **Autoriser** (<kbd>⌘↩</kbd>) ou **Ne pas autoriser** (<kbd>Esc</kbd>). La question attend jusqu'à dix minutes, afin que l'agent n'expire pas pendant que vous revenez à votre Mac.
+
+Lilo mémorise **Autoriser** pour ce programme, et non pour le nom que l'agent donne : une app signée est reconnue par sa signature, de sorte que ses mises à jour conservent l'autorisation ; une app non signée, par son chemin. Après **Ne pas autoriser**, les appels d'outils de l'agent échouent jusqu'à ce que vous le reconnectiez et l'autorisiez.
+
+Pour retirer une autorisation, repérez la tuile de l'app dans **Apps qui peuvent utiliser Lilo** et cliquez sur **Retirer**. La connexion de l'agent se ferme et il doit redemander.
+
+## Essayer [#try-it]
+
+Demandez à votre agent quelque chose comme « Ouvre example.com dans Lilo et dis-moi ce que dit la page. » Une courte session ressemble à ceci, du point de vue de l'agent :
+
+1. `tabs_context_mcp` énumère les onglets de son dossier. Appelé avec `createIfEmpty`, il crée un nouveau dossier contenant un onglet vide.
+2. `tabs_create_mcp` répond `Created new tab. Tab ID: 2`.
+3. `navigate` vers `https://example.com` répond `Navigated to https://example.com/ - Example Domain`.
+4. `get_page_text` renvoie le titre, l'adresse et le texte de la page.
+
+Chaque outil, avec ses paramètres, est répertorié dans [Outils MCP](/reference/mcp-tools).
+
+## Où travaillent les agents [#where-agents-work]
+
+Un agent que vous connectez depuis une autre app ouvre ses onglets dans un **espace Agents**, un dossier par tâche, jamais parmi vos propres onglets. Chaque agent ne voit que les onglets de ses propres dossiers.
+
+Par défaut, ces onglets s'exécutent dans **Agents**, un profil jetable qui ne contient aucun de vos cookies, connexions ou historique. Lilo l'efface lorsque le contrôle par les agents démarre et lorsque le dernier agent qui y travaille s'en va. Lorsqu'une session se termine, ses dossiers et ses onglets se ferment. Si une fenêtre affiche l'espace Agents à ce moment-là, ils restent visibles jusqu'à ce que Lilo nettoie l'espace plus tard. Un agent peut aussi ouvrir des onglets `isolated`, qui résident dans un espace privé propre à l'agent et ne partagent aucun cookie avec ses autres onglets.
+
+Un agent peut demander à emprunter l'un de vos profils, pour agir avec ses connexions. Lilo vous le demande d'abord, par exemple **Claude Code veut utiliser le profil Travail** (« Il y déplace ses onglets, pour agir avec les connexions de ce profil. »). Vous autorisez chaque profil une fois par agent. Ses dossiers sont alors déplacés vers l'espace Agents propre à ce profil. Revenir au profil Agents ne nécessite aucune question.
+
+## Ce que Lilo demande avant qu'un agent agisse [#what-lilo-asks-before-an-agent-acts]
+
+Tant que **Demander avant d'envoyer, payer, supprimer ou publier** est activé, Lilo arrête un agent avant qu'il :
+
+- clique, ou appuie sur Entrée, sur un bouton, un lien ou un formulaire dont le libellé ou l'adresse de formulaire contient l'un des mots d'une liste fixe de mots anglais et français, tels que « send », « pay », « buy », « order », « delete », « transfer », « publish » ou « sign up », y compris à l'intérieur des cadres ;
+- envoie une requête autre que GET ou HEAD avec les cookies de l'un de vos profils.
+
+La première vérification est une correspondance au mieux sur le libellé du contrôle, et non sur ce qu'il fait, et elle ne porte que sur les boutons, les liens, les champs de formulaire et les éléments ayant le rôle de bouton, de lien ou d'élément de menu. Un clic sur tout autre élément, tel qu'un contrôle personnalisé construit à partir d'un `div`, passe quel que soit son libellé, de même qu'un libellé qui ne figure pas dans la liste (« Submit », « Confirm », « Remove »), un libellé dans une autre langue, une icône sans nom et la touche Entrée dans une zone de message. [Sécurité des agents](/about/agent-safety#how-lilo-recognizes-a-consequential-action) énumère les mots et les lacunes.
+
+La question apparaît sous la barre d'adresse, par exemple : **Claude Code** veut cliquer sur « Delete account » dans Example Domain (example.com). L'agent attend votre réponse. Vous pouvez choisir :
+
+- **Autoriser une fois** : cette action uniquement.
+- **Toujours autoriser sur ce site** : cette action, et désormais toute action de ce type sur ce site et ses sous-domaines. Le site est ajouté à **Toujours autorisés**, où vous pouvez le supprimer.
+- **Ne pas autoriser** : l'action n'a pas lieu.
+
+Si vous ne répondez pas dans les 45 secondes, l'action n'a pas lieu non plus. L'agent reçoit une erreur dont il peut tenir compte, telle que `The user did not allow clicking "Delete account" on example.com: ask them to do it or to allow it`.
+
+Quel que soit le réglage, Lilo demande à chaque fois avant qu'un agent remette à une page l'un de vos fichiers (`file_upload`, `upload_image` avec un chemin de fichier, ou une règle `network_mock` qui sert un fichier), et cette demande ne propose pas de réponse « toujours ».
+
+## Ce qu'un agent ne peut pas faire [#what-an-agent-cannot-do]
+
+Un agent connecté depuis une autre app ne peut pas :
+
+- Voir vos propres onglets ni y agir. Il ne travaille que dans ses dossiers d'un espace Agents.
+- Voir l'un de vos espaces privés ni y agir.
+- Utiliser les connexions de l'un de vos profils avant que vous n'autorisiez ce profil.
+- Remettre à une page l'un de vos fichiers sans vous le demander, à chaque fois.
+
+Un agent dans une conversation Lilo est différent : il navigue dans un dossier de votre propre espace plutôt que dans un espace Agents, avec vos connexions sans qu'on vous le demande, et il s'exécute sur votre Mac avec ses propres outils de fichiers et de commandes (voir [Parler à vos agents dans Lilo](#talk-to-your-agents-in-lilo)). Ses outils de navigation n'accèdent malgré tout qu'aux onglets de ce dossier.
+
+Ce qu'aucun agent n'est empêché de faire :
+
+- **Lire vos fichiers.** `navigate` ouvre une adresse `file://` dans l'onglet de l'agent, et l'agent peut lire le fichier, ou la liste du contenu d'un dossier, sans aucune demande. La demande de téléversement ne couvre que la remise d'un fichier à une page.
+- **Exécuter son propre code.** Les questions ci-dessus couvrent les clics, la touche Entrée et les requêtes. Elles ne couvrent pas le code que l'agent exécute dans ses onglets par `javascript_tool` ou `devtools_command` : un agent qui travaille dans l'un de vos profils peut y agir avec vos connexions. Un programme `run` s'exécute dans une page vierge qui lui est propre, sans aucune connexion, et les outils qu'il appelle demandent comme ils le feraient seuls.
+- **Écrire des cookies.** L'outil `cookies` peut définir un cookie pour n'importe quel domaine dans le profil de l'agent sans demander.
+
+La demande est un filet de sécurité pour les agents qui se comportent bien, pas un bac à sable. [Sécurité des agents](/about/agent-safety) explique le raisonnement.
+
+## Si l'agent ne parvient pas à se connecter [#if-the-agent-cannot-connect]
+
+Les appels d'outils de l'agent échouent avec un message qui commence par `[needs_user]` lorsque vous seul pouvez résoudre le problème. Ils nomment l'agent tel qu'il se nomme lui-même, par exemple `claude-code`. Les plus courants :
+
+| L'agent signale | Ce qu'il faut faire |
+| --- | --- |
+| `Lilo is not accepting agents: in Lilo, turn on Settings > AI agents > Let agents use Lilo, then reconnect the lilo MCP server.` | Activez **Laisser les agents utiliser Lilo**, puis redémarrez ou reconnectez le serveur MCP dans votre agent. |
+| `Lilo is waiting for the user to allow claude-code: …` | Répondez à la boîte de dialogue de connexion dans Lilo, puis demandez à l'agent de réessayer. |
+| `Lilo has no window to ask the user to allow claude-code in: …` | Ouvrez une fenêtre Lilo, puis demandez à l'agent de réessayer. |
+| `The user did not allow claude-code to control Lilo: …` | Vous avez choisi **Ne pas autoriser**. Reconnectez le serveur MCP dans votre agent et choisissez **Autoriser**. |
+| `Lilo is not responding: quit and reopen Lilo, then reconnect the lilo MCP server.` | Quittez et rouvrez Lilo, puis reconnectez. |
+
+Si Lilo n'est pas en cours d'exécution lorsqu'un agent démarre `lilo-mcp`, celui-ci ouvre Lilo en arrière-plan. D'autres solutions se trouvent dans [Dépannage](/guides/troubleshooting#an-agent-cannot-connect).
+
+## Parler à vos agents dans Lilo [#talk-to-your-agents-in-lilo]
+
+Lilo peut aussi héberger des conversations avec des agents qui parlent l'Agent Client Protocol, tels que Claude Agent, Codex, Gemini CLI et Copilot. Lilo ne fournit toujours aucun modèle et ne détient aucune clé d'API : il démarre le programme propre à l'agent, qui se connecte à votre propre compte.
+
+<Steps>
+  <Step title="Activer les conversations">
+    Dans **Réglages > Agents**, sous **Conversations**, activez **Conversations avec vos agents**. Ce réglage est désactivé par défaut.
+  </Step>
+  <Step title="Demander à un agent">
+    Choisissez **Fichier > Demander à un agent** ou appuyez sur <kbd>⇧⌘A</kbd> depuis n'importe quelle page. La page que vous lisez est jointe ; saisissez `@` pour ajouter des onglets, des dossiers, une capture d'écran ou des fichiers.
+  </Step>
+</Steps>
+
+Une conversation est un dossier de l'espace dans lequel vous la démarrez, avec l'onglet de l'agent en premier et les pages qu'il ouvre en dessous. Elle ne démarre jamais dans un espace privé.
+
+Un agent de conversation n'est pas tenu à l'écart comme l'est un agent connecté :
+
+- **Il s'exécute sur votre Mac.** Lilo le démarre dans le dossier de travail que vous choisissez pour la conversation : **Aucun dossier**, le premier choix, lui donne un dossier qui lui est propre dans le dossier de support de Lilo, et **Choisir un dossier...** accepte n'importe quel dossier ; dans un dépôt où travaille l'agent d'une autre conversation, il obtient un worktree git qui lui est propre. Le dossier est l'endroit où il démarre, pas une limite à ce qu'il peut atteindre. Il lit et modifie des fichiers et exécute des commandes avec ses propres outils, avec l'accès de votre compte utilisateur. Seules les questions d'autorisation propres à l'agent limitent cela ; elles apparaissent dans la conversation sous la forme **Autoriser cette action ?**, et lorsque l'agent les propose, **Toujours autoriser** (<kbd>⌥↩</kbd>) ou **Ne jamais autoriser** dans le menu du bouton **Autoriser** met fin aux questions pour ce type d'action. Par défaut, Lilo envoie son propre prompt aux agents qui acceptent un remplacement (**Prompt système**, sous **Conversations**). Son texte par défaut indique à l'agent qu'il a un accès complet à votre machine et qu'il doit agir au lieu de demander confirmation lorsqu'une demande est claire, sauf avant une action qui ne peut pas être annulée et qui s'étend au-delà de votre Mac, à moins que vous ne l'ayez déjà demandée. Vous pouvez modifier ce texte, ou choisir **Celui de l'agent** pour conserver le prompt de l'agent, qui demande avant un plus grand nombre de ses actions.
+- **Il navigue avec vos connexions.** C'est vous qui l'avez démarré, donc Lilo ne pose aucune question de connexion : ses pages se chargent avec le profil de l'espace où se trouve la conversation, avec vos cookies et vos connexions, et restent dans ce profil ; déplacez la conversation vers un espace d'un autre profil et ses prochains onglets s'y ouvrent.
+- **Dans le navigateur, il n'accède qu'à son dossier.** Ses outils de navigation n'accèdent qu'aux onglets du dossier de sa conversation et aux onglets `isolated` qu'il ouvre. Ce que vous joignez à un message lui parvient aussi : un onglet sous la forme du texte de sa page (jusqu'à 50 000 caractères), un dossier sous la forme du texte de ses onglets, une sélection sous la forme de son texte, une capture d'écran sous la forme d'une image, un fichier texte de 100 000 octets ou moins en entier, et tout autre fichier sous la forme d'un lien. Les questions avant d'agir décrites ci-dessus s'appliquent à ses outils de navigation, avec les mêmes limites.
+
+Ses outils de navigation ne fonctionnent que tant que **Laisser les agents utiliser Lilo** est activé. Pour une tâche qui ne doit pas voir vos connexions, connectez plutôt l'agent depuis une autre app. Vous pouvez aussi lui demander d'utiliser des onglets `isolated`, mais c'est une demande adressée à l'agent, pas un réglage : rien ne l'y oblige. [Sécurité des agents](/about/agent-safety#agents-in-a-lilo-conversation) donne les détails.
+
+Les agents installés avec `npx` ou `uvx` nécessitent Node.js ou uv sur votre Mac. Un agent inactif pendant dix minutes s'arrête, et reprend sa session lorsque vous revenez.

@@ -1,0 +1,9 @@
+node_modules/
+.blume/
+dist/
+.wrangler/
+.env.local
+# Written by scripts/generate.mjs; the other French partials are translations and are committed
+content/reference/_generated/
+content/fr/reference/_generated/shortcuts.md
+content/fr/reference/_generated/settings.md

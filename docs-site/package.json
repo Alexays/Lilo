@@ -1,0 +1,25 @@
+{
+  "name": "lilo-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "dev": "npm run generate && blume dev",
+    "build": "npm run generate && blume build && node scripts/headers.mjs",
+    "check": "npm run generate && blume validate --strict && node scripts/translations.mjs",
+    "test": "node --test tests/*.test.mjs && blume audit",
+    "translate": "node scripts/translations.mjs --ledger && npm run generate && { blume translate --claude $DOCS_TRANSLATE_ARGS; code=$?; node scripts/typography.mjs && node scripts/translations.mjs --prune && npm run generate && exit $code; }",
+    "preview": "wrangler dev --ip 127.0.0.1",
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:check": "wrangler deploy --dry-run"
+  },
+  "dependencies": {
+    "blume": "2.2.7"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  },
+  "engines": {
+    "node": ">=22.23.4"
+  }
+}
