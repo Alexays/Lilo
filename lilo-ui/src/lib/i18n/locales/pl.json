@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "Domyślny",
+			"compact": "Kompaktowy"
+		},
 		"terminalEnabled": "Karty terminala",
 		"terminalEnabledDescription": "Otwieraj powłoki w kartach obok stron. Po wyłączeniu skróty, przyciski i menu terminala są ukryte. Otwarte terminale pozostają do ich zamknięcia.",
 		"terminalTheme": "Motyw",
@@ -211,6 +215,11 @@
 			"more": "Jeszcze {count}. Wyszukaj, aby zawęzić listę."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "Układ paska poleceń",
+				"description": "Wybierz domyślny lub kompaktowy układ.",
+				"keywords": "Układ paska poleceń Domyślny Kompaktowy"
+			},
 			"appIcon": {
 				"title": "Ikona aplikacji",
 				"description": "Tylko ikona Klasyczna obsługuje ciemny, barwiony i przezroczysty styl ikon macOS."
@@ -1185,6 +1194,7 @@
 		"installed": "Zainstalowane"
 	},
 	"commandBar": {
+		"showDetails": "Pokaż skróty klawiszowe",
 		"hintPeek": "Podgląd",
 		"hintCopyLink": "Kopiuj łącze",
 		"hintCloseTab": "Zamknij kartę",

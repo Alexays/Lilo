@@ -184,6 +184,7 @@
   /* Floating surfaces (tips, cards, popovers). Declared here so they resolve against the app
      palette: a surface floating over a tinted Space keeps neutral text and hovers. */
   --float-surface: var(--bg-elevated);
+  --float-sheen: rgb(255 255 255 / 16%);
   --float-text: var(--text-primary);
   --float-text-secondary: var(--text-secondary);
   --float-text-muted: var(--text-muted);

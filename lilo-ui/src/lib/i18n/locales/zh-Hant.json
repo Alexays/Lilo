@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "預設",
+			"compact": "精簡"
+		},
 		"terminalEnabled": "終端機分頁",
 		"terminalEnabledDescription": "在網頁旁以分頁開啟 shell。關閉此選項時，終端機的快速鍵、按鈕和選單會隱藏；已開啟的終端機會保留，直到你將其關閉。",
 		"terminalTheme": "主題",
@@ -211,6 +215,11 @@
 			"more": "另有 {count} 項。請搜尋以縮小範圍。"
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "命令列配置",
+				"description": "選擇預設或精簡配置。",
+				"keywords": "命令列配置 預設 精簡"
+			},
 			"appIcon": {
 				"title": "App 圖像",
 				"description": "只有「經典」會配合 macOS 的深色、色調與透明圖像樣式。"
@@ -1167,6 +1176,7 @@
 		"installed": "已安裝"
 	},
 	"commandBar": {
+		"showDetails": "顯示鍵盤提示",
 		"hintPeek": "預覽",
 		"hintCopyLink": "拷貝連結",
 		"hintCloseTab": "關閉分頁",

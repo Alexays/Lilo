@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CommandBarLayoutPicker from "./CommandBarLayoutPicker.svelte";
   import LayoutPicker from "./LayoutPicker.svelte";
   import { extensionActions, profileActions, settingsActions } from "../../lib/bridge/actions";
   import { isAgentsSpace } from "../../stores/agents.svelte";
@@ -224,6 +225,8 @@
     <ThemePicker />
   {:else if id === "tabPosition"}
     <LayoutPicker />
+  {:else if id === "commandBarLayout"}
+    <CommandBarLayoutPicker />
   {:else if id === "addressPlacement"}
     <LayoutPicker kind="address" />
   {:else if id === "defaultZoom"}

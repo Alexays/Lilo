@@ -532,7 +532,7 @@ extension MainWindowController {
         let menu = NSMenu()
         menu.addItem("New Tab".localized, icon: .newTab) {
             self.switchToSpace(targetSpaceId)
-            self.createTabStateFirst(url: nil)
+            self.newTab(nil)
         }
         if context.settingsStore?.terminalEnabled != false {
             menu.addItem("New Terminal Tab".localized, icon: .newTerminalTab) {

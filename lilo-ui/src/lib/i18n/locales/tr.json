@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "Varsayılan",
+			"compact": "Kompakt"
+		},
 		"terminalEnabled": "Terminal sekmeleri",
 		"terminalEnabledDescription": "Sayfalarınızın yanında kabukları sekme olarak açın. Kapalıyken terminal kestirmeleri, düğmeleri ve menüleri gizlenir. Açık terminaller kapatılana kadar kalır.",
 		"terminalTheme": "Tema",
@@ -211,6 +215,11 @@
 			"more": "{count} tane daha. Listeyi daraltmak için arayın."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "Komut çubuğu düzeni",
+				"description": "Varsayılan veya kompakt düzeni seçin.",
+				"keywords": "Komut çubuğu düzeni Varsayılan Kompakt"
+			},
 			"appIcon": {
 				"title": "Uygulama simgesi",
 				"description": "Yalnızca Klasik, macOS'in koyu, renk tonlu ve saydam simge stillerine uyar."
@@ -1167,6 +1176,7 @@
 		"installed": "Yüklü"
 	},
 	"commandBar": {
+		"showDetails": "Klavye ipuçlarını göster",
 		"hintPeek": "Önizle",
 		"hintCopyLink": "Bağlantıyı Kopyala",
 		"hintCloseTab": "Sekmeyi Kapat",

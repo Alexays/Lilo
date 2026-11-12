@@ -10,7 +10,12 @@ extension MainWindowController {
     @objc func newTab(_ sender: Any?) {
         // A chrome_url_overrides.newtab extension replaces the blank new tab (only this user-facing
         // path, never session-restore or programmatic tab creation).
-        createTabStateFirst(url: newTabOverrideURL)
+        if let url = newTabOverrideURL {
+            createTabStateFirst(url: url)
+        } else {
+            focusChrome()
+            bridgeRouter.send(event: "openCommandBar", data: ["createOnSubmit": true])
+        }
     }
 
     /// As in Chrome, no extension page replaces a private space's new tab: it would run outside the space's store.
@@ -476,13 +481,11 @@ extension MainWindowController {
         if focusedEngineTab == nil, ["history.back", "history.forward", "page.print", "page.save"].contains(id) { return false }
         switch id {
         case "tab.new":
-            // The chrome knows whether the command bar is open, so it toggles the blank new tab.
-            if newTabOverrideURL != nil {
-                newTab(nil)
-            } else if let activeTab = tabManager.activeTab, activeTab.url == nil, activeTab.kind == .web {
+            // A blank tab keeps its existing toggle behavior; a page stays visible under the new-tab bar.
+            if newTabOverrideURL == nil, let activeTab = tabManager.activeTab, activeTab.url == nil, activeTab.kind == .web {
                 bridgeRouter.send(event: "toggleNewTab")
             } else {
-                openBlankTabWithCommandBar()
+                newTab(nil)
             }
         case "space.newPrivate": newPrivateSpace(nil)
         case "tab.close": closeCurrentTab(nil)

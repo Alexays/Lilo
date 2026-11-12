@@ -1129,6 +1129,7 @@ export function computeResults(
 	currentSelectedId?: string,
 ): ComputeResultsOutput {
 	const { parsed, historyResults, searchSuggestions, searchEngine } = params;
+	const compact = getSetting("commandBarLayout", "default") === "compact";
 	rankNow = Date.now();
 	historyVisitsByURL = new Map();
 	for (const result of historyResults) {
@@ -1152,7 +1153,7 @@ export function computeResults(
 		);
 	} else if (parsed.scope === "archive") {
 		sectionDrafts = buildArchiveSections(parsed.query, params.archivedTabs ?? []);
-	} else if (!parsed.query && parsed.scope === "all" && params.docked) {
+	} else if (!parsed.query && parsed.scope === "all" && params.docked && !compact) {
 		sectionDrafts = buildBlankTabSections(historyResults);
 	} else if (!parsed.query) {
 		sectionDrafts = buildEmptySections(parsed.scope, historyResults);
@@ -1160,6 +1161,11 @@ export function computeResults(
 		sectionDrafts = buildAllSections(parsed, historyResults, searchSuggestions, searchEngine, params.spaces ?? [], params.autofill ?? true);
 	} else {
 		sectionDrafts = buildScopedSections(parsed.scope, parsed.query, historyResults, params.spaces ?? []);
+	}
+
+	// Quiet compact landing: bookmarks and frequent sites remain available through search.
+	if (!parsed.query && parsed.scope === "all" && compact) {
+		sectionDrafts = sectionDrafts.filter((section) => !section.tiles);
 	}
 
 	const flatResults: CommandResult[] = [];

@@ -15,7 +15,8 @@ catalog_count = sum(name.endswith(".json") for name in os.listdir(catalog_dir))
 max_embedded_bytes = 2_032_500 + max(0, catalog_count - 6) * 280_000
 # The part of it loaded before the chrome's first frame, which every launch parses.
 # Includes script-aware locale resolution and registration; catalogs stay deferred.
-max_first_frame_bytes = 603_840 + max(0, catalog_count - 6) * 128
+# The persisted command bar layout adds labels, and New Tab tracks its deferred creation intent.
+max_first_frame_bytes = 604_608 + max(0, catalog_count - 6) * 128
 
 mime_types = {
     ".html": "text/html",

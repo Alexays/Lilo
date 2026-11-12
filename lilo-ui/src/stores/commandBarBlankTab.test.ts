@@ -56,7 +56,7 @@ async function withStore() {
 	) => void;
 	const closeCommandBar = commandBarModule.closeCommandBar as () => void;
 
-	return { sent, closes, receive, seed, openCommandBar, closeCommandBar, commandBarModule };
+	return { sent, closes, receive, seed, openCommandBar, closeCommandBar, commandBarModule, loadStore };
 }
 
 test("dismissing with only a blank tab keeps it (closing it would close the window)", async () => {
@@ -146,4 +146,73 @@ test("a typed address reaches native marked as typed, a history result does not"
 		{ url: "https://youtube.com", typed: true },
 		{ url: "https://youtube.com/", typed: false },
 	]);
+});
+
+
+test("compact new-tab results stay the same after clearing scopes, queries, and dismissing", async () => {
+ const ctx = await withStore();
+ const settings = await ctx.loadStore("/src/stores/settings.svelte.ts");
+ settings.initSettingsStore();
+ ctx.receive({ event: "settingsLoaded", settings: { commandBarLayout: "compact" } });
+ ctx.seed([tab("blank-tab", spaceId, { url: "" }), tab("other-tab", spaceId, { title: "Example" })]);
+ const bar = ctx.commandBarModule;
+ bar.applyCommandBarInitialState();
+ flushSync();
+ assert.equal(bar.isCommandBarDocked(), true);
+ const initial = bar.getResults().map((result: { id: string }) => result.id);
+ assert.ok(initial.length > 0, "the idle landing still offers useful tabs and actions");
+ assert.equal(bar.getSections().some((section: { tiles?: boolean }) => section.tiles), false);
+ ctx.openCommandBar();
+ flushSync();
+ assert.equal(bar.isCommandBarDocked(), false);
+ assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
+ for (const scope of ["bookmark", "tab", "action", "history", "terminal", "archive"]) {
+  bar.setCommandBarScope(scope);
+  bar.setCommandBarScope("all");
+  flushSync();
+  assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial, scope);
+ }
+ bar.setQuery("example query");
+ bar.setQuery("");
+ flushSync();
+ assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
+ ctx.closeCommandBar();
+ flushSync();
+ assert.equal(bar.isCommandBarDocked(), true);
+ assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
+});
+
+
+test("new-tab intent creates destinations on submit, cancels without a tab, and resets for address editing", async () => {
+ const ctx = await withStore();
+ ctx.seed([tab("blank-tab", spaceId, { url: "https://current.example/" }), tab("other-tab", spaceId)]);
+ const bar = ctx.commandBarModule;
+ const mutations = () => ctx.sent.filter((message) => ["createTab", "navigate", "closeTab", "switchTab"].includes(message.action));
+ const open = () => ctx.receive({ event: "openCommandBar", createOnSubmit: true });
+ open();
+ assert.equal(bar.isCommandBarOpen(), true);
+ assert.deepEqual(mutations(), []);
+ ctx.closeCommandBar();
+ assert.deepEqual(mutations(), []);
+ for (const raw of [false, true]) {
+  open();
+  bar.setQuery("https://destination.example/new");
+  if (raw) bar.executeRawQuery();
+  else bar.executeSelected();
+  assert.equal(mutations().at(-1)?.action, "createTab");
+  assert.equal(mutations().at(-1)?.payload.url, "https://destination.example/new");
+ }
+ open();
+ bar.setQuery("a test search");
+ bar.executeRawQuery();
+ assert.equal(mutations().at(-1)?.action, "createTab");
+ assert.match(String(mutations().at(-1)?.payload.url), /search/);
+ const beforeSwitch = mutations().length;
+ open();
+ bar.executeResult({ id: "other", kind: "tab", title: "Other", payload: { tabId: "other-tab" }, url: "https://other.example/" });
+ assert.deepEqual(mutations().slice(beforeSwitch).map((message) => message.action), ["switchTab"]);
+ ctx.openCommandBar();
+ bar.setQuery("https://edit.example/");
+ bar.executeRawQuery();
+ assert.equal(mutations().at(-1)?.action, "navigate", "normal address editing keeps its existing behavior");
 });

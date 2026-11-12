@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "默认",
+			"compact": "紧凑"
+		},
 		"terminalEnabled": "终端标签页",
 		"terminalEnabledDescription": "在网页旁以标签页打开 Shell。关闭此选项后，终端的快捷键、按钮和菜单将隐藏；已打开的终端会保留，直到你将其关闭。",
 		"terminalTheme": "主题",
@@ -211,6 +215,11 @@
 			"more": "另有 {count} 项。搜索以缩小列表范围。"
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "命令栏布局",
+				"description": "选择默认或紧凑布局。",
+				"keywords": "命令栏布局 默认 紧凑"
+			},
 			"appIcon": {
 				"title": "App 图标",
 				"description": "仅“经典”图标支持 macOS 的深色、色调和透明图标样式。"
@@ -1167,6 +1176,7 @@
 		"installed": "已安装"
 	},
 	"commandBar": {
+		"showDetails": "显示键盘提示",
 		"hintPeek": "预览",
 		"hintCopyLink": "拷贝链接",
 		"hintCloseTab": "关闭标签页",

@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "Predeterminado",
+			"compact": "Compacto"
+		},
 		"terminalEnabled": "Pestañas de terminal",
 		"terminalEnabledDescription": "Abre sesiones de shell en pestañas junto a tus páginas. Al desactivarlo, se ocultan los atajos, botones y menús del terminal; los terminales abiertos permanecen hasta que los cierres.",
 		"terminalTheme": "Tema",
@@ -211,6 +215,11 @@
 			"more": "{count} más. Busca para reducir la lista."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "Diseño de la barra de comandos",
+				"description": "Elige el diseño predeterminado o compacto.",
+				"keywords": "Diseño de la barra de comandos Predeterminado Compacto"
+			},
 			"appIcon": {
 				"title": "Icono de la app",
 				"description": "Solo Clásico sigue los estilos de iconos oscuro, teñido y transparente de macOS."
@@ -1167,6 +1176,7 @@
 		"installed": "Instaladas"
 	},
 	"commandBar": {
+		"showDetails": "Mostrar atajos de teclado",
 		"hintPeek": "Vista previa",
 		"hintCopyLink": "Copiar enlace",
 		"hintCloseTab": "Cerrar pestaña",

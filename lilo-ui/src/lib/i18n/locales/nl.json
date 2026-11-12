@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "Standaard",
+			"compact": "Compact"
+		},
 		"terminalEnabled": "Terminaltabbladen",
 		"terminalEnabledDescription": "Open shells als tabbladen naast je pagina's. Als dit uitstaat, worden sneltoetsen, knoppen en menu's voor de terminal verborgen; geopende terminals blijven staan totdat je ze sluit.",
 		"terminalTheme": "Thema",
@@ -211,6 +215,11 @@
 			"more": "Nog {count}. Zoek om de lijst te verkleinen."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "Indeling van de opdrachtbalk",
+				"description": "Kies de standaard- of compacte indeling.",
+				"keywords": "Indeling van de opdrachtbalk Standaard Compact"
+			},
 			"appIcon": {
 				"title": "Appsymbool",
 				"description": "Alleen Klassiek volgt de donkere, getinte en doorzichtige symboolstijlen van macOS."
@@ -1167,6 +1176,7 @@
 		"installed": "Geïnstalleerd"
 	},
 	"commandBar": {
+		"showDetails": "Sneltoetsen tonen",
 		"hintPeek": "Voorvertoning",
 		"hintCopyLink": "Kopieer link",
 		"hintCloseTab": "Sluit tabblad",

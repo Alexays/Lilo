@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "Default",
+			"compact": "Compact"
+		},
 		"terminalEnabled": "Terminal tabs",
 		"terminalEnabledDescription": "Open shells as tabs next to your pages. When off, the terminal shortcuts, buttons and menus are hidden; open terminals stay until closed.",
 		"terminalTheme": "Theme",
@@ -211,6 +215,11 @@
 			"more": "{count} more. Search to narrow the list."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "Command bar layout",
+				"description": "Choose the default or compact command bar.",
+				"keywords": "Command bar layout Default Compact"
+			},
 			"appIcon": {
 				"title": "App icon",
 				"description": "Only Classic follows the macOS dark, tinted and clear icon styles."
@@ -1167,6 +1176,7 @@
 		"installed": "Installed"
 	},
 	"commandBar": {
+		"showDetails": "Show keyboard hints",
 		"hintPeek": "Peek",
 		"hintCopyLink": "Copy Link",
 		"hintCloseTab": "Close Tab",
