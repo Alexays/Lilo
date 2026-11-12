@@ -204,6 +204,7 @@ Apple ID.
 
 ## Documentation
 
+- [docs.getlilo.app](https://docs.getlilo.app/): how to use Lilo, from install to every shortcut, setting and MCP tool
 - [docs/](docs/README.md): architecture, debugging, localization, releasing, AI agents
 - [docs/WEBKIT_FORK.md](docs/WEBKIT_FORK.md): Lilo's WebKit build, its patches and how it stays as secure as macOS
 - [COMPATIBILITY.md](COMPATIBILITY.md): what still differs from Chrome for extensions and sites

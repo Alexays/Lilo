@@ -79,10 +79,13 @@ class SiteTests(unittest.TestCase):
                 navigation = [node for node in nodes(header) if node.tag == "nav"]
                 self.assertEqual(len(navigation), 1)
                 links = [node.attrs["href"] for node in nodes(navigation[0]) if node.tag == "a"]
-                home = "/fr/" if page.startswith("fr/") else "/"
-                self.assertEqual(links, [home + "moving/",
-                                         "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
-                                         home + "changelog/"])
+                french = page.startswith("fr/")
+                home = "/fr/" if french else "/"
+                docs = "https://docs.getlilo.app" + ("/fr" if french else "/")
+                self.assertEqual(links, [home + "moving/", docs, home + "changelog/"])
+                footer_links = {node.attrs["href"] for node in nodes(footers[0]) if node.tag == "a"}
+                self.assertIn(docs, footer_links)
+                self.assertIn("https://docs.getlilo.app" + ("/fr" if french else "") + "/about/privacy", footer_links)
 
     def test_routes_language_alternates_and_markdown_copies(self):
         index = ET.parse(DIST / "sitemap-index.xml").find(".//{*}loc").text
@@ -139,10 +142,28 @@ class SiteTests(unittest.TestCase):
                             ids = {item.attrs.get("id") for item in tree(path)}
                             self.assertIn(unquote(url.fragment), ids)
 
+    def test_documentation_links_name_existing_pages_in_the_page_language(self):
+        content = DIST.parents[1] / "docs-site/content"
+        for page in PAGES + ["404.html"]:
+            prefix = "/fr" if page.startswith("fr/") else ""
+            for node in tree(DIST / page):
+                url = urlparse(node.attrs.get("href", ""))
+                if url.netloc != "docs.getlilo.app":
+                    continue
+                with self.subTest(page=page, href=node.attrs["href"]):
+                    path = url.path.rstrip("/")
+                    self.assertEqual(url.path, "/" if not path else path)
+                    self.assertTrue(path.startswith(prefix))
+                    route = path.removeprefix(prefix).lstrip("/") or "index"
+                    self.assertTrue((content / (route + ".mdx")).is_file())
+
     def test_llms_index_and_full_content_ship_in_the_build(self):
         index = (DIST / "llms.txt").read_text()
         full = (DIST / "llms-full.txt").read_text()
         self.assertIn("https://getlilo.app/llms-full.txt", index)
+        docs = index.split("\n## Docs\n")[1].split("\n## ")[0]
+        self.assertIn("(https://docs.getlilo.app/llms.txt)", docs)
+        self.assertIn("(https://docs.getlilo.app/llms-full.txt)", docs)
         for page in PAGES:
             if not page.startswith("fr/"):
                 with self.subTest(page=page):
