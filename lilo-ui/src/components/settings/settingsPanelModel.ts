@@ -1,3 +1,4 @@
+// The docs site's generator (docs-site/scripts/generate.mjs) imports this file with plain Node: type-only imports, no enums.
 import type {
   BridgeBrowsingDataKind,
   BridgeSitePermissionSnapshot,

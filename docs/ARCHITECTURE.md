@@ -65,6 +65,7 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 - `Lilo/Engine/` is WebKit glue: the tab's web view, the engine factory, data stores, private API accessors.
 - Tests mirror source paths: the tests of `Lilo/<Folder>/X.swift` go in `LiloTests/<Folder>/`.
 - In `lilo-ui/src/`, UI components go in `components/<area>/` with their `*Model.ts` beside them, state in `stores/`, shared pure logic in `lib/`.
+- User documentation goes in `docs-site/content/` (published at docs.getlilo.app, rules in [docs-site/AGENTS.md](../docs-site/AGENTS.md)); this `docs/` folder is for contributors.
 
 `project.yml` lists `Lilo/` as one source folder, so a new folder needs no project change: `make project-sync` picks it up.
 

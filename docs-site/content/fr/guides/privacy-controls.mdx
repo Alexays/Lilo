@@ -1,0 +1,162 @@
+---
+title: Contrôles de confidentialité
+description: "Bloquez pubs et traqueurs, décidez de ce que chaque site peut utiliser, naviguez dans un espace privé et passez en revue les réglages de confidentialité."
+sidebar:
+  order: 7
+---
+Ce guide vous montre comment bloquer les publicités et les traqueurs, laisser passer un site, masquer un élément sur une page, décider de ce qu'un site peut utiliser, naviguer dans un espace privé et effacer ce que Lilo conserve. Tous les réglages nommés ici se trouvent dans **Réglages > Confidentialité**. Ouvrez les Réglages avec <kbd>⌘,</kbd>. La liste complète des réglages figure dans la [référence des réglages](/reference/settings), et [La confidentialité chez Lilo](/about/privacy) énumère toutes les requêtes que Lilo effectue de lui-même.
+
+## Bloquer les publicités et les traqueurs [#block-ads-and-trackers]
+
+Le blocage est actif dès le premier lancement. Vous n'avez pas besoin d'installer une extension.
+
+<Steps>
+  <Step title="Ouvrir les réglages de blocage de contenu">
+    Choisissez **Lilo > Réglages…**, puis **Confidentialité**. Le groupe **Blocage de contenu** énumère ce qui est bloqué.
+  </Step>
+  <Step title="Choisir les catégories">
+    **Bloquer pubs et traqueurs** active ou désactive le bloqueur. En dessous, choisissez ce qu'il faut bloquer d'autre :
+
+    - **Traqueurs** : scripts et pixels de suivi. Activé par défaut.
+    - **Bannières cookies** : refusées lorsque c'est possible, puis masquées. Activé par défaut.
+    - **Sites dangereux** : sites connus d'arnaque et de logiciels malveillants. Activé par défaut.
+    - **Popups et widgets sociaux** : désactivé par défaut, car cela peut perturber le fonctionnement de certains sites.
+    - **Listes publicitaires régionales** : listes correspondant aux langues configurées sur votre Mac. Activé par défaut.
+  </Step>
+  <Step title="Recharger la page">
+    Une modification s'applique à partir du prochain chargement de page.
+  </Step>
+</Steps>
+
+Le bloqueur utilise des listes de filtres publiques : EasyList et EasyPrivacy depuis `easylist.to`, les listes d'uBlock Origin depuis `ublockorigin.github.io` et, pour les listes régionales, des listes depuis `easylist-downloads.adblockplus.org` et `raw.githubusercontent.com`. Lilo recherche de nouvelles versions toutes les quatre heures au maximum, en arrière-plan, et jamais sur un réseau en mode Données réduites. Tant que les listes ne sont pas arrivées une première fois, une petite liste intégrée à Lilo assure le blocage. **Listes de filtres** indique combien de listes sont utilisées et quand elles ont été mises à jour pour la dernière fois. Cliquez sur **Mettre à jour** pour les récupérer immédiatement.
+
+Le bloqueur laisse toujours se charger les services de protection contre les robots et de captcha (comme hCaptcha et Cloudflare Turnstile). Les sites les utilisent pour distinguer les personnes des robots et, s'ils étaient bloqués, ces sites vous afficheraient un captcha à chaque visite.
+
+:::note
+Désactiver **Bloquer pubs et traqueurs** arrête le blocage au prochain chargement de page. Lilo cesse de télécharger les listes de filtres au prochain lancement.
+:::
+
+## Autoriser un site qui ne fonctionne plus [#allow-a-site-that-breaks]
+
+Si un site ne fonctionne pas lorsque le blocage est activé, désactivez le blocage pour ce site uniquement.
+
+<Steps>
+  <Step title="Repérer le bouclier dans la barre d'adresse">
+    Pointez sur la barre d'adresse. Un bouton en forme de bouclier apparaît à côté de l'adresse. Il indique combien de traqueurs ont été bloqués sur la page.
+  </Step>
+  <Step title="Désactiver le blocage">
+    Cliquez sur le bouclier. Son info-bulle affiche **Désactiver le blocage sur ce site** lorsqu'il n'a rien bloqué sur la page, ou le nombre de traqueurs qu'il a bloqués. Après le clic, le bouclier est barré.
+  </Step>
+  <Step title="Recharger la page">
+    Le site charge désormais toutes les requêtes effectuées par ses pages.
+  </Step>
+</Steps>
+
+Cliquez de nouveau sur le bouclier (**Réactiver le blocage sur ce site**) pour bloquer à nouveau sur ce site. Les sites que vous laissez passer sont répertoriés dans **Réglages > Confidentialité > Sites sans blocage**, où **Rebloquer** retire un site de la liste.
+
+Pour laisser passer un service sur tous les sites, par exemple un service de connexion ou d'images dont dépend un site, ajoutez son domaine à **Requêtes jamais bloquées**. Séparez les domaines par des virgules. Les sous-domaines sont inclus.
+
+## Masquer un élément sur une page [#hide-an-element-on-a-page]
+
+Vous pouvez masquer une bannière, une barre latérale ou tout autre élément que les listes de filtres ont laissé passer. Cette fonction utilise le bloqueur de contenu : **Bloquer pubs et traqueurs** doit donc être activé.
+
+<Steps>
+  <Step title="Lancer le sélecteur">
+    Choisissez **Présentation > Masquer l'élément…**, ou faites un clic droit sur l'élément et choisissez **Masquer l'élément…**. Une indication affiche « Cliquez sur un élément pour le masquer sur ce site. Appuyez sur Échap pour annuler. »
+  </Step>
+  <Step title="Cliquer sur l'élément">
+    Déplacez le pointeur jusqu'à ce que la surbrillance recouvre ce que vous voulez faire disparaître, puis cliquez. L'élément disparaît immédiatement.
+  </Step>
+</Steps>
+
+Lilo le masque sur toutes les pages de ce site, avec ou sans `www.`. Appuyez sur <kbd>Esc</kbd> pour arrêter sans rien masquer.
+
+Pour faire réapparaître les éléments masqués sur le site où vous vous trouvez, ouvrez les contrôles du site (voir la section suivante) et cliquez sur **Réafficher** dans la ligne **Éléments masqués**. La page se recharge. Pour retirer un élément à la fois, allez dans **Réglages > Confidentialité > Réglages par site**, choisissez le site, puis cliquez sur **Retirer** à côté de l'élément.
+
+## Gérer ce qu'un site peut utiliser [#manage-what-a-site-may-use]
+
+Lorsqu'un site demande votre caméra, votre microphone, votre position ou l'envoi de notifications, Lilo vous pose la question dans la barre d'adresse : « example.com veut utiliser votre caméra ». Cliquez sur **Autoriser** ou **Ne pas autoriser**. Lilo mémorise votre réponse pour ce site. Appuyez sur <kbd>Esc</kbd> pour ignorer la demande sans répondre : le site pourra redemander plus tard.
+
+Pour modifier une décision concernant le site où vous vous trouvez :
+
+<Steps>
+  <Step title="Ouvrir les contrôles du site">
+    Laissez le pointeur sur l'adresse, ou placez-y le focus clavier. La fiche du site s'ouvre avec sa connexion, ce que le bloqueur a fait et l'utilisation de la mémoire par la page. Dès que le site a utilisé ou reçu une autorisation, un niveau de zoom ou des éléments masqués, la fiche comporte aussi une section **Contrôles du site**.
+  </Step>
+  <Step title="Modifier une autorisation">
+    Chaque autorisation que le site a utilisée ou sur laquelle vous vous êtes prononcé affiche un menu : **Demander**, **Autoriser** ou **Bloquer**. Les fenêtres pop-up proposent **Bloquer** ou **Autoriser**.
+  </Step>
+  <Step title="Voir tout ce qui concerne le site">
+    Cliquez sur **Toutes les permissions** pour ouvrir les Réglages filtrés sur ce site.
+  </Step>
+</Steps>
+
+**Réglages > Confidentialité > Réglages par site** répertorie tous les sites ayant une autorisation décidée, un niveau de zoom, des éléments masqués ou des données stockées. Choisissez un site pour **Révoquer** une autorisation, **Réinitialiser** son zoom ou **Effacer** ses données stockées.
+
+Pour empêcher complètement les sites de demander, faites passer **Notifications**, **Caméra et micro** ou **Position**, sous **Autorisations des sites**, de **Demander** à **Ne jamais demander**. Les demandes de ce type sont alors refusées sans invite, sauf celles des sites que vous avez déjà autorisés.
+
+Lorsqu'une page tente d'ouvrir une fenêtre pop-up sans clic de votre part, Lilo la bloque et affiche un bouton dans la barre d'adresse. Cliquez dessus, puis sur **Toujours autoriser** pour laisser ce site ouvrir des pop-ups (la page doit réessayer), ou sur **Continuer à bloquer**.
+
+## Naviguer en privé [#browse-privately]
+
+Un espace privé est un espace dont Lilo oublie la navigation à sa fermeture.
+
+<Steps>
+  <Step title="Ouvrir un espace privé">
+    Choisissez **Fichier > Nouvel espace privé**, ou appuyez sur <kbd>⇧⌘N</kbd>. Pour ouvrir un seul lien en privé, faites un clic droit dessus et choisissez **Ouvrir le lien dans un nouvel espace privé**.
+  </Step>
+  <Step title="Naviguer">
+    L'espace privé possède ses propres onglets et ses propres données de sites web. Si un espace privé est déjà ouvert, Lilo y bascule et y ouvre un nouvel onglet.
+  </Step>
+  <Step title="Le fermer">
+    Fermez son dernier onglet, ou supprimez l'espace. Quitter Lilo y met également fin.
+  </Step>
+</Steps>
+
+Ce qu'un espace privé conserve, et pendant combien de temps :
+
+- **Les cookies, le stockage des sites et le cache** n'existent qu'en mémoire et sont supprimés à la fermeture de l'espace.
+- **Historique** : aucun. Les visites effectuées dans un espace privé ne sont jamais enregistrées dans l'historique. Temps d'écran de macOS n'enregistre aucune utilisation pour elles, mais ses limites s'y appliquent tout de même.
+- **Les autorisations des sites** auxquelles vous répondez ne sont conservées en mémoire que pendant la durée de vie de l'espace. Un site que vous avez bloqué dans votre profil y reste bloqué. Les demandes de notification sont refusées sans poser la question, comme dans les fenêtres de navigation privée de Chrome.
+- **Téléchargements** : les fichiers que vous téléchargez restent dans votre dossier de téléchargements, mais la liste Téléchargements les oublie à la fermeture de l'espace.
+- **Les onglets et les terminaux** ne sont pas enregistrés pour le prochain lancement.
+- **Les agents IA** ne voient jamais l'un de vos espaces privés et n'y agissent jamais, et une conversation avec un agent ne peut pas y démarrer.
+
+Les onglets mis en favoris ne peuvent pas être déplacés dans un espace privé, car ils seraient perdus à sa fermeture.
+
+## Activer d'autres protections [#turn-on-other-protections]
+
+Le groupe **Protection** de **Réglages > Confidentialité** contient le reste :
+
+- **Toujours utiliser une connexion sécurisée** : Lilo vous avertit avant d'ouvrir une page en HTTP. Désactivé par défaut.
+- **Demander aux sites de ne pas vendre mes données** : envoie le signal Global Privacy Control. Activé par défaut. Il ne fonctionne que sur macOS 27 et versions ultérieures : sur macOS 26, l'interrupteur s'affiche mais n'a aucun effet.
+- **Empêcher le suivi entre sites** : la prévention du suivi de WebKit, qui empêche les sites intégrés dans d'autres sites d'y lire leurs propres cookies, afin qu'ils ne puissent pas vous suivre de site en site. Activé par défaut. Ne le désactivez que si un site intégré que vous utilisez cesse de fonctionner.
+- **Reverrouiller les dossiers après** : voir [Onglets et dossiers](/guides/tabs-and-folders).
+
+## Effacer vos données de navigation [#clear-your-browsing-data]
+
+<Steps>
+  <Step title="Ouvrir Effacer les données de navigation">
+    Choisissez **Historique > Effacer les données de navigation…**, appuyez sur <kbd>⇧⌘⌫</kbd>, ou cliquez sur **Effacer les données de navigation...** dans **Réglages > Confidentialité**.
+  </Step>
+  <Step title="Choisir ce qu'il faut effacer">
+    Cochez ce qui doit disparaître : **Historique de navigation**, **Cookies**, **Fichiers en cache** ou **Données et permissions des sites**. L'historique de navigation et les fichiers en cache sont cochés au départ. **Données et permissions des sites** emporte avec lui les cookies et les fichiers en cache.
+  </Step>
+  <Step title="Choisir une période">
+    Sélectionnez **Dernière heure**, **Dernières 24 heures**, **Dernière semaine** ou **Tout l'historique** sous **Période de l'historique**.
+  </Step>
+  <Step title="Effacer">
+    Cliquez sur **Effacer**.
+  </Step>
+</Steps>
+
+Ce que chaque choix supprime :
+
+- **Historique de navigation** : les pages que vous avez visitées pendant cette période.
+- **Cookies** : les cookies de cette période, ce qui vous déconnecte des sites web, ainsi que les mots de passe HTTP que Lilo a enregistrés dans votre trousseau pour ce profil.
+- **Fichiers en cache** : des copies de pages et de fichiers conservées pour les charger plus vite.
+- **Données et permissions des sites** : toutes les données de sites web (stockage, cookies, cache) et les mots de passe HTTP enregistrés. Les autorisations des sites ne sont supprimées qu'avec **Tout l'historique**, car Lilo n'enregistre pas le moment où elles ont été accordées.
+
+L'effacement s'applique au profil de la fenêtre dans laquelle vous vous trouvez. La fenêtre indique le volume de données que ce profil stocke. Pour effacer l'historique d'un seul site, voir [Téléchargements, historique et favoris](/guides/downloads-history-bookmarks#search-and-clear-your-history).
+
+Pour repartir de zéro à chaque lancement, activez **Effacer les données des sites en quittant** sous **Données de navigation**. Lorsque Lilo se ferme, il supprime les cookies, le stockage et le cache de tous les profils, ainsi que les mots de passe HTTP qu'il a enregistrés dans votre trousseau. L'historique est conservé.

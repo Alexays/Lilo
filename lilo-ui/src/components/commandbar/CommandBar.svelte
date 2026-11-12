@@ -389,6 +389,8 @@
   const escapeLeavesScope = $derived(query.length > 0 && SCOPE_PREFIX_CHARS.has(query[0]!));
 
   function handleKeydown(e: KeyboardEvent) {
+    // IME confirmation can report keyCode 229 even after composition ends.
+    if (e.isComposing || e.keyCode === 229) return;
     if (compact && detailsOpen && e.key === "Escape") {
       e.preventDefault();
       detailsOpen = false;

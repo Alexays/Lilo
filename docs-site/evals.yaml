@@ -1,0 +1,129 @@
+# Questions people and agents ask about Lilo, for `make docs-eval` (blume eval with Claude Code).
+# Each expected fact is stated on the routes listed and was checked against the app's source.
+questions:
+  - id: macos-requirement
+    question: Which version of macOS does Lilo need, and does it run on Intel Macs?
+    expected:
+      - macOS 26 or later
+      - it runs natively on both Apple silicon and Intel Macs
+    routes: /start/install
+
+  - id: install-homebrew
+    question: How do I install Lilo with Homebrew?
+    expected:
+      - brew install --cask alexays/tap/lilo
+    routes: /start/install
+
+  - id: updates
+    question: How does Lilo update itself, and can I stop automatic updates?
+    expected:
+      - Lilo checks for a new version every hour and downloads it in the background
+      - an update installs when you click Restart on the sidebar card, or at the next restart
+      - turn off Install updates automatically in Settings > General
+    routes: /start/install
+
+  - id: import-browsers
+    question: Which browsers can I import from, and does Lilo import my passwords?
+    expected:
+      - Safari, Chrome, Arc, Brave, Edge, Vivaldi, Dia, Comet, Opera, Chromium, Firefox and Zen
+      - passwords are never imported; add a password manager extension instead
+    routes:
+      - /start/import
+      - /reference/import-sources
+
+  - id: import-history-limit
+    question: How much browsing history does an import bring over?
+    expected:
+      - up to the 50,000 most recent pages
+    routes:
+      - /start/import
+      - /reference/import-sources
+
+  - id: split-view-limit
+    question: How many pages can a split view show, and how do I separate it again?
+    expected:
+      - four panes at most
+      - Tab > Separate Split View, or right-click the split and choose Separate Split View
+    routes: /guides/split-view
+
+  - id: terminal-beside
+    question: How do I open a terminal next to the page I am reading?
+    expected:
+      - File > New Terminal Beside, with Command-D
+      - New Terminal Below is Shift-Command-D
+    routes:
+      - /guides/terminal
+      - /guides/split-view
+
+  - id: open-location
+    question: What is the shortcut to type a new address for the current tab?
+    expected:
+      - Command-L (File > Open Location…)
+      - Command-T opens a new tab with the command bar instead
+    routes: /guides/command-bar
+
+  - id: peek-keep
+    question: How do I turn a Peek into a normal tab?
+    expected:
+      - click Open as Tab, or press Command-O
+    routes: /guides/peek-and-little-window
+
+  - id: install-extension
+    question: How do I install a Chrome extension in Lilo?
+    expected:
+      - open the Chrome Web Store (Lilo > Extensions > Add Extension…, or Settings > Extensions)
+      - click Add to Lilo on the extension's page, then Install after reviewing its permissions
+    routes: /guides/extensions
+
+  - id: connect-claude-code
+    question: How do I let Claude Code control Lilo?
+    expected:
+      - turn on Let agents use Lilo in Settings > Agents; it is off on a new installation unless the setup was answered With my agents or For developing
+      - click Connect on the Claude Code tile, or run claude mcp add --scope user lilo -- /Applications/Lilo.app/Contents/MacOS/lilo-mcp
+      - allow the agent the first time it connects
+    routes: /guides/ai-agents
+
+  - id: agent-isolation
+    question: Can an AI agent connected to Lilo see my own tabs and sign-ins?
+    expected:
+      - an agent connected from another app works in a folder of an Agents Space, with a separate Agents profile that has none of your cookies, sign-ins or history, and Lilo asks you before it uses one of your profiles
+      - an agent reaches only the tabs of its own folders, never your other tabs or Private Spaces
+      - an agent you talk to in a Lilo conversation is different, browsing in your own Space with that Space's profile and your sign-ins, and running on your Mac with its own file and command tools, which Lilo does not limit
+    routes:
+      - /about/agent-safety
+      - /guides/ai-agents
+
+  - id: agent-confirmation
+    question: Does Lilo ask me before an agent sends, pays, deletes or publishes something?
+    expected:
+      - yes for clicks and Enter on a button, link or form whose label or form address contains one of a fixed list of words such as send, pay, delete or publish, and for requests other than GET or HEAD with your cookies, while Ask before sending, paying, deleting or publishing is on (the default) in Settings > Agents
+      - it is a best-effort check of the wording, not a guarantee; other labels, other languages, icons, custom controls, Enter in a message box and code the agent runs itself are not asked about
+    routes:
+      - /guides/ai-agents
+      - /about/agent-safety
+
+  - id: telemetry
+    question: Does Lilo send telemetry or have an account?
+    expected:
+      - no account, no sync, no telemetry and no analytics
+      - data stays on the Mac under ~/Library/Application Support/Lilo
+    routes: /about/privacy
+
+  - id: ad-blocking
+    question: Does Lilo block ads, and how do I let one site through?
+    expected:
+      - blocking ads and trackers is on from the first launch, with no extension needed
+      - click the shield in the address bar (Disable blocking on this site), then reload
+    routes:
+      - /guides/privacy-controls
+      - /guides/troubleshooting
+
+  - id: auto-archive
+    question: What happens to tabs I leave open and do not use?
+    expected:
+      - unpinned tabs idle past the Space's delay, 12 hours by default, move to the Space's archive
+      - the archive keeps them for 30 days
+    routes:
+      - /guides/tabs-and-folders
+      - /about/privacy
+    severity: warning
