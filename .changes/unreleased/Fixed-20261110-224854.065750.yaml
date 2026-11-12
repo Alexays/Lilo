@@ -1,0 +1,3 @@
+kind: Fixed
+body: With extensions installed, tabs share the extensions' content scripts instead of each page and web process getting its own copy, so Lilo uses less memory
+time: 2026-11-10T22:48:54.06575+01:00

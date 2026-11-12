@@ -1,0 +1,3 @@
+kind: Fixed
+body: Keep input method confirmation and candidate navigation from triggering command bar actions.
+time: 2026-11-12T12:01:29.712738+08:00

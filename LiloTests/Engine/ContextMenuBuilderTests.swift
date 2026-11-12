@@ -5,7 +5,7 @@ import WebKit
 @MainActor
 final class ContextMenuBuilderTests: XCTestCase {
     private func makeBuilder(
-        onDownload: @escaping (URL) -> Void = { _ in }, onSearchWeb: @escaping () -> Void = {}, onSearchImage: @escaping (URL) -> Void = { _ in }
+        onTranslate: @escaping () -> Void = {}, onDownload: @escaping (URL) -> Void = { _ in }, onSearchWeb: @escaping () -> Void = {}, onSearchImage: @escaping (URL) -> Void = { _ in }
     ) -> ContextMenuBuilder {
         ContextMenuBuilder(
             webView: WKWebView(frame: .zero),
@@ -15,6 +15,7 @@ final class ContextMenuBuilderTests: XCTestCase {
             onTogglePiP: {},
             onBookmark: {},
             onHideElement: {},
+            onTranslate: onTranslate,
             onDownload: onDownload,
             onSearchWeb: onSearchWeb,
             onSearchImage: onSearchImage
@@ -47,20 +48,26 @@ final class ContextMenuBuilderTests: XCTestCase {
         XCTAssertFalse(ContextMenuBuilder.isOpenInNewWindowItem(NSMenuItem()))
     }
 
-    func testBuildAppendsNavigationAndPiPItems() {
+    func testBuildAppendsNavigationTranslateAndPiPItems() throws {
+        var translated = false
         let menu = NSMenu()
-        makeBuilder().build(menu, linkURL: nil)
+        let builder = makeBuilder(onTranslate: { translated = true })
+        builder.build(menu, linkURL: nil)
         let titles = menu.items.map(\.title)
         XCTAssertTrue(titles.contains("Back".localized))
         XCTAssertTrue(titles.contains("Forward".localized))
         XCTAssertTrue(titles.contains("Reload".localized))
         XCTAssertTrue(titles.contains("Picture in Picture".localized))
         XCTAssertFalse(titles.contains("Open Link in New Tab".localized))
+
+        let item = try XCTUnwrap(menu.items.first { $0.title == "Translate Page".localized })
+        NSApp.sendAction(try XCTUnwrap(item.action), to: item.target, from: item)
+        XCTAssertTrue(translated)
     }
 
     /// As Chrome, a link, media, selection or text field menu has no Back, Reload, page or PiP items.
     func testPageItemsStayOutOfLinkMediaSelectionAndFieldMenus() {
-        let pageTitles = ["Back", "Forward", "Reload", "Bookmark This Page", "Picture in Picture"].map(\.localized)
+        let pageTitles = ["Back", "Forward", "Reload", "Bookmark This Page", "Translate Page", "Picture in Picture"].map(\.localized)
         func titles(linkURL: URL? = nil, imageURL: URL? = nil, element: NSObject? = nil) -> Set<String> {
             let menu = NSMenu()
             makeBuilder().build(menu, linkURL: linkURL, imageURL: imageURL, element: element)
@@ -71,7 +78,7 @@ final class ContextMenuBuilderTests: XCTestCase {
         XCTAssertEqual(titles(imageURL: URL(string: "https://example.com/a.mp4")), [])
         XCTAssertEqual(titles(element: FakeElementInfo(editable: true, selected: false)), [])
         XCTAssertEqual(titles(element: FakeElementInfo(editable: false, selected: true)), [])
-        XCTAssertEqual(titles(element: FakeElementInfo(editable: false, selected: false)).count, 4)
+        XCTAssertEqual(titles(element: FakeElementInfo(editable: false, selected: false)).count, 5)
     }
 
     func testBuildAddsLinkActionsWhenLinkPresent() {

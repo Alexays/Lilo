@@ -137,7 +137,7 @@ of its own.
 - **You say yes first.** Lilo asks before an agent sends, pays, deletes or publishes (Allow Once,
   Always Allow on the site, or Deny), and before it hands a page one of your files. Each client is
   approved once, tied to the program behind it rather than the name it gives.
-- **One click to connect.** In Settings > AI agents, turn on "Let agents use Lilo", then press
+- **One click to connect.** In Settings > Agents, turn on "Let agents use Lilo", then press
   Connect next to Claude Code, Claude Desktop, Codex or Cursor: Lilo adds itself to that client's
   MCP servers. Any other client copies the configuration from "Other agents".
 

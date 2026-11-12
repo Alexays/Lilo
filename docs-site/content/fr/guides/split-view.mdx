@@ -1,0 +1,56 @@
+---
+title: Vue partagée
+description: >-
+  Affichez jusqu'à quatre pages côte à côte dans une même fenêtre avec la vue
+  partagée, réorganisez et redimensionnez les volets, puis séparez-les en
+  onglets.
+sidebar:
+  order: 4
+---
+La vue partagée affiche jusqu'à quatre onglets côte à côte dans une même fenêtre : un document à côté de sa source, un appel à côté de vos notes. Cette page montre comment en ouvrir une, l'organiser et la défaire.
+
+## Ouvrir deux pages côte à côte [#open-two-pages-side-by-side]
+
+<Steps>
+  <Step title="Affichez la première page">
+    Sélectionnez l'onglet que vous voulez garder à l'écran.
+  </Step>
+  <Step title="Ajoutez la seconde">
+    Faites un clic droit sur un autre onglet dans la barre latérale et choisissez **Ouvrir en vue partagée**. Il s'ouvre à droite de l'onglet actuel.
+  </Step>
+  <Step title="Ou partez d'un volet vide">
+    Choisissez **Onglet > Nouvelle vue partagée**. Un nouvel onglet s'ouvre à côté de l'onglet actuel, avec la [barre de commandes](/guides/command-bar) par-dessus, prête à recevoir une adresse.
+  </Step>
+</Steps>
+
+Autres façons de créer ou d'agrandir une vue partagée :
+
+- **Faites glisser un onglet de la barre latérale sur la page.** Déposez-le près d'un bord d'un volet pour l'ouvrir à cet endroit : **Ouvrir à gauche**, **Ouvrir à droite**, **Ouvrir en haut** ou **Ouvrir en bas**.
+- **Faites glisser un onglet sur un autre onglet dans la barre latérale.** La ligne affiche **Vue partagée** ; déposez-le pour placer les deux côte à côte.
+- **Depuis la barre de commandes**, sélectionnez un onglet ou une page et appuyez sur <kbd>⌥↩</kbd>.
+- **Depuis un [Aperçu](/guides/peek-and-little-window)**, cliquez sur **Ouvrir en split**.
+- **Faites glisser un lien depuis une autre app** vers le bord gauche ou droit d'un volet.
+- **Avec un terminal** : **Fichier > Nouveau terminal à côté** (<kbd>⌘D</kbd>) et **Nouveau terminal en dessous** (<kbd>⇧⌘D</kbd>) coupent le volet actuel avec un nouveau terminal. Consultez [Terminal](/guides/terminal).
+
+Chaque nouveau volet prend la moitié du volet sur lequel il arrive. Dans la barre latérale, la vue partagée apparaît comme une seule ligne contenant ses onglets.
+
+## Travailler dans une vue partagée [#work-in-a-split]
+
+- **Activez un volet** en cliquant dedans. Un fin contour signale le volet actif, et le clavier, l'adresse et les menus de la page agissent sur lui.
+- **Redimensionnez** en faisant glisser l'espacement entre deux volets. Un volet conserve au moins 200 points le long du côté que vous faites glisser.
+- **Faites pivoter la vue partagée** en faisant un clic droit sur sa ligne dans la barre latérale et en choisissant **Disposer l'un au-dessus de l'autre** ou **Disposer côte à côte**. Cela fait pivoter la coupe qui divise toute la vue partagée.
+- **Échangez ou remplacez un volet** : lorsque la vue partagée est pleine, faire glisser un onglet sur un volet propose **Remplacer**. L'onglet prend ce volet, et l'onglet qu'il remplace retourne dans la liste. Deux volets d'une même vue partagée échangent leurs places de cette façon.
+- **Annulez** une modification de la vue partagée avec **Édition > Annuler** (<kbd>⌘Z</kbd>) : les volets qui l'ont rejointe retournent dans la liste, les volets qui l'ont quittée reviennent, et la disposition redevient ce qu'elle était.
+
+## Fermer un volet ou mettre fin à la vue partagée [#close-a-pane-or-end-the-split]
+
+- **Fermez un volet** en fermant son onglet (<kbd>⌘W</kbd> lorsqu'il est actif). Le volet voisin prend sa place. Lorsqu'il ne reste qu'un volet, la vue partagée prend fin.
+- **Mettez fin à la vue partagée** avec **Onglet > Séparer la vue partagée**, ou faites un clic droit sur la ligne de la vue partagée ou sur l'un de ses onglets et choisissez **Séparer la vue partagée**. Les onglets restent dans la barre latérale comme des onglets séparés.
+
+## Limites [#limits]
+
+- Une vue partagée contient quatre volets au maximum. Lorsqu'elle est pleine, **Nouvelle vue partagée** est indisponible et un onglet déposé ne peut que remplacer un volet.
+- Les vues partagées ne s'imbriquent pas, et un onglet qui rejoint une vue partagée quitte le dossier dans lequel il se trouvait.
+- Un favori garde sa place parmi les tuiles : lorsque vous en placez un en vue partagée, Lilo ouvre sa page dans un nouvel onglet pour le volet.
+- **Nouvelle vue partagée** et **Séparer la vue partagée** n'ont pas de raccourci par défaut. Attribuez-leur-en un dans **Réglages > Général > Raccourcis clavier**, ou choisissez-y le préréglage Arc, qui les associe à <kbd>⌃⇧=</kbd> et <kbd>⌃⇧-</kbd>. Consultez [Personnaliser Lilo](/guides/customize).
+- Les extensions Chrome qui connaissent la vue partagée de Chrome ne reconnaissent pas celle de Lilo : les onglets d'une vue partagée ne portent aucun identifiant de vue partagée. Consultez [Compatibilité des extensions](/reference/extension-compatibility).

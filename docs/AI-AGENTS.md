@@ -6,7 +6,7 @@ server inside the app bundle.
 
 ## Turning it on
 
-Settings > AI agents > "Let agents use Lilo". Lilo can write the MCP configuration for the
+Settings > Agents > "Let agents use Lilo". Lilo can write the MCP configuration for the
 clients it finds. The first time a client connects, Lilo asks you to allow it; the approval is
 tied to the program behind the connection (its code signature, or its path when unsigned), not to
 the name the client announces.
@@ -51,7 +51,7 @@ Agents can never see or act on a private Space.
 
 ## Conversations with your agents
 
-Settings > AI agents > "Conversations with your agents" lets you talk to the agents you use
+Settings > Agents > "Conversations with your agents" lets you talk to the agents you use
 (Claude Agent, Codex, Gemini CLI, Copilot and the rest of the [ACP registry](https://agentclientprotocol.com))
 in Lilo itself, over the Agent Client Protocol. Lilo still ships no model and holds no API key: it
 starts the agent's own program, which signs in to its own account (your subscription) and talks to
