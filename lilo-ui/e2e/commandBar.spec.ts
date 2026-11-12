@@ -59,6 +59,37 @@ test("Escape closing the command bar hands the keyboard back to the page", async
 	await expect.poll(async () => (await sentCommands(page)).some((c) => c.action === "focusPage")).toBe(true);
 });
 
+test("IME key events do not run command bar shortcuts or prevent the browser default", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	const input = page.locator(".command-bar-input");
+	await input.fill("@");
+	const selected = page.locator(".command-bar-result.selected");
+	const selectedText = await selected.textContent();
+
+	for (const composing of [true, false]) {
+		for (const key of ["Enter", "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Tab", "Escape"]) {
+			const notPrevented = await input.evaluate((el, init) => el.dispatchEvent(new KeyboardEvent("keydown", {
+				key: init.key,
+				keyCode: init.composing ? 0 : 229,
+				isComposing: init.composing,
+				bubbles: true,
+				cancelable: true,
+			})), { key, composing });
+			expect(notPrevented, `${key} with isComposing=${composing}`).toBe(true);
+		}
+	}
+
+	await expect(page.locator(".command-bar")).toBeVisible();
+	await expect(selected).toHaveText(selectedText!);
+	await expect(input).toHaveValue("");
+	await expect(page.locator(".scope-token")).toHaveText("Tabs");
+	expect((await sentCommands(page)).some((c) => c.action === "switchTab" || c.action === "focusPage")).toBe(false);
+
+	await input.press("ArrowDown");
+	await expect(selected).not.toHaveText(selectedText!);
+});
+
 for (const prefix of [":", "<", ">"]) {
 	test(`Escape in the ${prefix} scope leaves the scope before closing`, async ({ page }) => {
 		await bootChrome(page, initialWorld());
