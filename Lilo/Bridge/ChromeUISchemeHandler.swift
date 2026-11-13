@@ -1,4 +1,5 @@
 import AppKit
+import QuickLookThumbnailing
 import UniformTypeIdentifiers
 import WebKit
 
@@ -12,6 +13,8 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
     private static var dataByPath: [String: Data] = [:]
     private static let fileIconPrefix = "file-icon/"
     private static let fileIconPointSize: CGFloat = 64
+    private static let downloadPreviewPrefix = "download-preview/"
+    private static let downloadPreviewPointSize: CGFloat = 80
     private static let screenshotPrefix = "screenshot/"
     /// Bundle resources rather than embedded assets: the embed is text only.
     private static let passwordManagerPrefix = "password-managers/"
@@ -23,7 +26,7 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
     /// The projects of open conversations: the only folders `conversation-file/` reads, and images only.
     static var conversationRoots: Set<String> = []
     private static let conversationImageTypes: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "svg", "heic", "avif"]
-    /// `conversation-file/` tasks whose read is in flight; `webView(_:stop:)` drops a task from it.
+    /// `conversation-file/` and `download-preview/` tasks whose read is in flight; `webView(_:stop:)` drops a task from it.
     private var pendingFileReads: Set<ObjectIdentifier> = []
 
     /// Holds `png` until `discardScreenshot(id:)` and returns the URL the editor loads it from.
@@ -56,6 +59,30 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
             ))
             urlSchemeTask.didReceive(data)
             urlSchemeTask.didFinish()
+            return
+        }
+        if path.hasPrefix(Self.downloadPreviewPrefix) {
+            // The window's own store resolves the id: ids repeat from one profile to the next.
+            guard let id = Int64(path.dropFirst(Self.downloadPreviewPrefix.count)),
+                  let controller = unsafe webView.window?.windowController as? MainWindowController,
+                  let store = controller.downloadStore,
+                  let file = controller.context.downloadManager.fileURL(id: id, in: store) else {
+                urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+                return
+            }
+            let key = ObjectIdentifier(urlSchemeTask)
+            pendingFileReads.insert(key)
+            Task {
+                let png = await Self.thumbnailPNG(of: file)
+                guard pendingFileReads.remove(key) != nil else { return }
+                guard let png else {
+                    urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+                    return
+                }
+                urlSchemeTask.didReceive(URLResponse(url: url, mimeType: "image/png", expectedContentLength: png.count, textEncodingName: nil))
+                urlSchemeTask.didReceive(png)
+                urlSchemeTask.didFinish()
+            }
             return
         }
         if path.hasPrefix(Self.screenshotPrefix) {
@@ -207,6 +234,19 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
             ?? Data()
         dataByPath[path] = data
         return data
+    }
+
+    /// Quick Look's thumbnail of the file's content, or nil for a type that has none: the chrome then shows the type's icon.
+    private static func thumbnailPNG(of file: URL) async -> Data? {
+        let size = CGSize(width: downloadPreviewPointSize, height: downloadPreviewPointSize)
+        let request = QLThumbnailGenerator.Request(fileAt: file, size: size, scale: 2, representationTypes: .thumbnail)
+        return await withCheckedContinuation { continuation in
+            QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { thumbnail, _ in
+                continuation.resume(returning: thumbnail.flatMap {
+                    NSBitmapImageRep(cgImage: $0.cgImage).representation(using: .png, properties: [:])
+                })
+            }
+        }
     }
 
     /// Maps a lilo-chrome:// URL to its embedded-asset key ("" and "/" resolve to index.html).

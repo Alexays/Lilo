@@ -1086,6 +1086,7 @@
 		"showFolder": "다운로드 폴더 보기",
 		"clearFinished": "완료된 다운로드 지우기",
 		"dragFile": "파일 드래그",
+		"showInFinder": "Finder에서 보기",
 		"announceDone": "{filename} 다운로드 완료",
 		"announceFailed": "{filename} 다운로드 실패"
 	},

@@ -36,6 +36,7 @@ A piece of information takes the form of its family, never another.
 | Sidebar editor | Inside the sidebar alone; the page stays visible and the sidebar repaints live as its own preview | New Space, Space editor | Its buttons, Esc |
 
 - Nothing pushes the tab list or the page: a drawer or a popover covers, it never inserts itself.
+- A download joins a stack of cards above the downloads button as it starts (progress, Pause, Cancel) and comes back to its front as it ends: drag the file out or click to open it. The stack leaves after 6 s, shows at most three cards, the older ones as slivers behind the newest until the pointer or the keyboard fans them out. It covers the end of the tab list and takes no focus.
 - A system screen in the sidebar is one navigation level: a close button on the right of the traffic lights line, then the title, the search field and the navigation list, in the same places for every system screen. It slides in from the side and back; nothing else in the sidebar changes shape.
 - The page area of a system screen holds its content: a 20 px semibold title top left, a short count or note top right, then the content. It is never left blank or showing an unrelated page.
 - A system screen edits live: no Cancel and Save pair. Its sidebar holds only places; its commands sit behind one "..." button at the end of the page header, a destructive one last, in red, under a separator.
@@ -89,7 +90,7 @@ A request tied to a tab lives in a single drawer; the row keeps only the orange 
 - Spacing sits on a 4 px grid: 4, 8, 12, 16, 20, 24, 28, 40. A page area is padded 28 px at the top and 40 px at the sides; a section header has 22 px above it and 8 px below.
 - A grouped row is padded 11 px by 14 px, a nested row is indented 38 px; an icon sits 14 px from its text in an object row, 8 px in a navigation row.
 - Heights: 24 px for buttons, selects and segmented controls, 28 px for a navigation row, 32 px for a plain list row and the sidebar search field, 52 to 58 px for a row with a detail line; a switch is 32 by 19 px.
-- Visuals: 16 px inline and navigation icons, 32 px favicons in lists (24 px in the command bar's 40 px rows, 20 px in its bookmark strip), 40 px file or image visuals, 44 px app tiles. Thumbnails offered as one choice share one size.
+- Visuals: 16 px inline and navigation icons, 32 px favicons in lists (24 px in the command bar's 40 px rows, 20 px in its bookmark strip), 40 px file or image visuals (a finished download shows Quick Look's thumbnail of the file, else its type's icon), 44 px app tiles. Thumbnails offered as one choice share one size.
 - The same element has the same metrics on every screen: a section header, a grouped row or a page title never varies from one screen to the next.
 - One concept, one name:
 

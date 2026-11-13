@@ -1086,6 +1086,7 @@
 		"showFolder": "İndirilenler klasörünü göster",
 		"clearFinished": "Tamamlanan indirmeleri temizle",
 		"dragFile": "Dosyayı sürükle",
+		"showInFinder": "Finder'da Göster",
 		"announceDone": "{filename} indirildi",
 		"announceFailed": "{filename} indirilemedi"
 	},

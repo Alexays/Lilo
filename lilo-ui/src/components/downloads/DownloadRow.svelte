@@ -5,9 +5,10 @@
   import type { BridgeDownloadSnapshot } from "../../lib/bridge/protocol";
   import { progress } from "../../lib/downloadFormat";
   import { isActiveDownload } from "../../stores/downloads.svelte";
+  import { downloadDrag } from "./downloadDrag";
+  import DownloadVisual from "./DownloadVisual.svelte";
   import {
     canOpen,
-    fileIconURL,
     inlineAction,
     metaLine,
     type InlineAction,
@@ -71,7 +72,7 @@
       if (openable) downloadActions.startDrag(download.id);
     }}
   >
-    <img src={fileIconURL(download)} alt="" width="40" height="40" draggable="false" />
+    <DownloadVisual {download} size={40} />
   </button>
 
   <button
@@ -80,6 +81,7 @@
     onclick={onselect}
     ondblclick={() => openable && downloadActions.open(download.id)}
     oncontextmenu={handleContextMenu}
+    use:downloadDrag={{ id: openable ? download.id : null }}
     onkeydown={(event) => {
       if (event.key === "Enter") {
         event.preventDefault();
@@ -179,12 +181,6 @@
     background: none;
     padding: 0;
     flex-shrink: 0;
-  }
-
-  .file-icon img {
-    width: 40px;
-    height: 40px;
-    pointer-events: none;
   }
 
   .file-icon.draggable:not(:disabled) {

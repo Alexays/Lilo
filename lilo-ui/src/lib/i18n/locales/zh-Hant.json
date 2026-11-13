@@ -1086,6 +1086,7 @@
 		"showFolder": "顯示下載資料夾",
 		"clearFinished": "清除已完成的下載項目",
 		"dragFile": "拖移檔案",
+		"showInFinder": "在 Finder 中顯示",
 		"announceDone": "已下載 {filename}",
 		"announceFailed": "無法下載 {filename}"
 	},

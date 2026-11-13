@@ -1104,6 +1104,7 @@
 		"showFolder": "Pokaż folder pobierania",
 		"clearFinished": "Wyczyść zakończone pobierania",
 		"dragFile": "Przeciągnij plik",
+		"showInFinder": "Pokaż w Finderze",
 		"announceDone": "Pobrano {filename}",
 		"announceFailed": "Nie udało się pobrać {filename}"
 	},

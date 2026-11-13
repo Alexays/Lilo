@@ -14,6 +14,7 @@
   import PageHangCard from "./page/PageHangCard.svelte";
   import ScreenshotEditor from "./screenshot/ScreenshotEditor.svelte";
   import CaptureCard from "./screenshot/CaptureCard.svelte";
+  import DownloadStack from "./downloads/DownloadStack.svelte";
   import TabSharePicker from "./page/TabSharePicker.svelte";
   import TabPreviewCard from "./sidebar/TabPreviewCard.svelte";
   import TabSwitcher from "./sidebar/TabSwitcher.svelte";
@@ -74,6 +75,7 @@
 {/each}
 <ErrorBoundary><OnboardingShell /></ErrorBoundary>
 <ContextTips />
+<DownloadStack />
 <WhatsNewHost />
 <!-- Design System showcase is a contributor tool. Shipped in every build so it's reachable from
      installed/release apps too; self-gates via its UiShellFrame `active`.

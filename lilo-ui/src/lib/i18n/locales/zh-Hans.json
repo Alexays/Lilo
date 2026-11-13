@@ -1086,6 +1086,7 @@
 		"showFolder": "显示下载文件夹",
 		"clearFinished": "清除已完成的下载",
 		"dragFile": "拖移文件",
+		"showInFinder": "在“访达”中显示",
 		"announceDone": "{filename} 已下载",
 		"announceFailed": "{filename} 下载失败"
 	},

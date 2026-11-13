@@ -1086,6 +1086,7 @@
 		"showFolder": "Afficher le dossier des téléchargements",
 		"clearFinished": "Effacer les téléchargements terminés",
 		"dragFile": "Faire glisser le fichier",
+		"showInFinder": "Afficher dans le Finder",
 		"announceDone": "{filename} téléchargé",
 		"announceFailed": "Échec du téléchargement de {filename}"
 	},
