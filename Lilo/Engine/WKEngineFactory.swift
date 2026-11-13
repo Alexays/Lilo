@@ -1318,6 +1318,8 @@ final class WKEngineFactory {
             warmKeyOrder.removeFirst()
         }
         let webView = PageWebView(frame: .zero, configuration: wkConfig)
+        // Otherwise the blank document the script below creates paints white over the surface, until the first commit.
+        if webView.responds(to: NSSelectorFromString("_setDrawsBackground:")) { webView.setValue(false, forKey: "drawsBackground") }
         // A bare WKWebView is an unspawned shell, and this one carries the right per-data-store config, so
         // the tab that takes it reuses the process. Forced with a trivial script rather than about:blank,
         // which would commit a back-forward entry the back-swipe would land on.
