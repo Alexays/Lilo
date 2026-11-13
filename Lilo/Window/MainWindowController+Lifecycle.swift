@@ -72,7 +72,8 @@ extension MainWindowController {
         let tabTitle = isPrivate ? "" : tabManager.visibleActiveTab?.title ?? ""
         let activeTitle = tabTitle == Tab.placeholderTitle ? tabTitle.localized : tabTitle
         let title = activeTitle.isEmpty ? "Lilo" : activeTitle
-        if window?.title != title { window?.title = title }
+        let windowTitle = title.count > 60 ? String(title.prefix(59)) + "\u{2026}" : title
+        if window?.title != windowTitle { window?.title = windowTitle }
         if let browsingActivity, browsingActivity.title != activeTitle { browsingActivity.title = activeTitle }
         let url = tabManager.visibleActiveTab?.url
         let scheme = url?.scheme?.lowercased()
