@@ -9,9 +9,14 @@ final class CosmeticStyleSheets: NSObject, WKScriptMessageHandler {
 
     private static let addSelector = NSSelectorFromString("_addUserStyleSheet:")
     private static let removeSelector = NSSelectorFromString("_removeUserStyleSheet:")
+    /// Removing a sheet empties the controller's cache of user script sources, so each web process started after gets its own
+    /// copy of every one, megabytes of extension content scripts charged to the app. The sheets of pages that left wait until
+    /// this many can leave together.
+    static let retiredLimit = 128
 
-    /// `_WKUserStyleSheet`'s initializer for a user-level, main-frame sheet that only `webView`'s page gets; nil without the SPI.
-    private static let makeSheet: ((String, WKWebView) -> NSObject)? = {
+    /// `_WKUserStyleSheet`'s initializer for a user-level, main-frame sheet that only `webView`'s page gets, in the documents
+    /// `pattern` matches; nil without the SPI.
+    private static let makeSheet: ((String, WKWebView, String, URL) -> NSObject)? = {
         let initializer = NSSelectorFromString(
             "initWithSource:forWKWebView:forMainFrameOnly:includeMatchPatternStrings:excludeMatchPatternStrings:baseURL:level:contentWorld:"
         )
@@ -25,29 +30,37 @@ final class CosmeticStyleSheets: NSObject, WKScriptMessageHandler {
                                          WKContentWorld?) -> Unmanaged<NSObject>
         let allocate = unsafe unsafeBitCast(method_getImplementation(allocMethod), to: Alloc.self)
         let initialize = unsafe unsafeBitCast(initImplementation, to: Init.self)
-        return { source, webView in
+        return { source, webView, pattern, url in
             // `alloc` hands over a +1 instance that the initializer consumes; it returns its own +1. Level 0 is `_WKUserStyleUserLevel`.
-            unsafe initialize(allocate(sheetClass, alloc), initializer, source as NSString, webView, true, nil, nil, nil, 0, nil).takeRetainedValue()
+            unsafe initialize(allocate(sheetClass, alloc), initializer, source as NSString, webView, true, [pattern], nil, url as NSURL, 0, nil)
+                .takeRetainedValue()
         }
     }()
 
     static var isSupported: Bool { makeSheet != nil }
 
-    /// The sheets a web view's page got, held by the web view so they also leave the controller, which others share, with it.
-    private final class Page: NSObject {
+    /// The sheets a web view's current page got, held by the web view so they also retire with it.
+    @MainActor private final class Page: NSObject {
         nonisolated(unsafe) static var key: UInt8 = 0
         let controller: WKUserContentController
         var sheets: [NSObject] = []
         init(controller: WKUserContentController) { self.controller = controller }
-        deinit { sheets.forEach { _ = unsafe controller.perform(NSSelectorFromString("_removeUserStyleSheet:"), with: $0) } }
+        isolated deinit { CosmeticStyleSheets.shared.retire(sheets, from: controller) }
     }
+
+    private let retired = NSMapTable<WKUserContentController, NSMutableArray>.weakToStrongObjects()
+    private var sheetCount = 0
 
     /// Each message is one batch of new rules: added as a sheet of its own, so the earlier ones are neither resent nor parsed again.
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.frameInfo.isMainFrame, let css = message.body as? String, let webView = message.webView,
+        let origin = message.frameInfo.securityOrigin
+        guard message.frameInfo.isMainFrame, let css = message.body as? String, let webView = message.webView, !origin.host.isEmpty,
               // After a process swap, the last page's process may still post once the next page has committed.
-              message.frameInfo.securityOrigin.host == webView.url?.host ?? "",
-              let sheet = Self.makeSheet?(css, webView) else { return }
+              origin.host == webView.url?.host,
+              // WebKit takes a sheet out of a page by its URL.
+              let url = URL(string: "lilo-cosmetics:\(sheetCount)"),
+              let sheet = Self.makeSheet?(css, webView, "\(origin.protocol)://\(origin.host)/*", url) else { return }
+        sheetCount += 1
         let page = unsafe objc_getAssociatedObject(webView, &Page.key) as? Page ?? {
             let page = Page(controller: controller)
             unsafe objc_setAssociatedObject(webView, &Page.key, page, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
@@ -57,9 +70,22 @@ final class CosmeticStyleSheets: NSObject, WKScriptMessageHandler {
         page.sheets.append(sheet)
     }
 
-    /// When the web view commits another document or closes. WebKit applies a sheet to the document it reached only, but keeps it
-    /// in the controller, which hands it to every web process it starts.
+    /// When the web view commits another document or closes. WebKit applies a sheet to the document it reached only, but keeps
+    /// it in the controller, which hands it to every web process it starts: a process that creates this page again may apply it,
+    /// to documents of the sheet's origin only, where its rules hide what they would anyway.
     func removeSheets(of webView: WKWebView) {
         unsafe objc_setAssociatedObject(webView, &Page.key, nil, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    }
+
+    private func retire(_ sheets: [NSObject], from controller: WKUserContentController) {
+        let list = retired.object(forKey: controller) ?? {
+            let list = NSMutableArray()
+            retired.setObject(list, forKey: controller)
+            return list
+        }()
+        list.addObjects(from: sheets)
+        guard list.count > Self.retiredLimit else { return }
+        list.forEach { _ = unsafe controller.perform(Self.removeSelector, with: $0) }
+        list.removeAllObjects()
     }
 }
