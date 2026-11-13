@@ -399,6 +399,22 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         }
     }
 
+    func testWindowTitleTruncationPreservesTheTabTitle() throws {
+        let window = makeWindow()
+        browserContext.context.windows.add(window)
+        window.switchToSpace(spaceS.id)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com")))
+        let limitTitle = String(repeating: "x", count: 60)
+
+        for (title, expected) in [(limitTitle, limitTitle), (limitTitle + "x", String(repeating: "x", count: 59) + "…")] {
+            window.updateRuntimeTab(id: tab.id) { $0.title = title }
+            window.publishActiveTab()
+
+            XCTAssertEqual(window.window?.title, expected)
+            XCTAssertEqual(window.tabManager.tab(for: tab.id)?.title, title)
+        }
+    }
+
     /// Review I7: a private space shown in another window still opens here on Cmd+Shift+N.
     func testNewPrivateSpaceShowsThePrivateSpaceInThisWindow() throws {
         let first = makeWindow(), second = makeWindow()

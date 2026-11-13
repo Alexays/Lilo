@@ -1,0 +1,3 @@
+kind: Fixed
+body: Limit system window titles to 60 characters so long page titles no longer stretch the Window and Dock menus.
+time: 2026-11-13T17:22:57.509354+08:00
