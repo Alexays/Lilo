@@ -1986,6 +1986,10 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.cancelPendingDocumentPiP()
             if tab.navigationSignpost != nil { PerfSignposts.navigation.emitEvent("commit") }
             if tab.isAgentControlled { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(AgentCapture.startConsole, in: nil, in: PageWorld.bridgeWorld) }
+            // A warm web view drew no background while blank: the page takes it back from its first frame.
+            if !tab.hasCommittedContent, webView.responds(to: NSSelectorFromString("_setDrawsBackground:")) {
+                webView.setValue(true, forKey: "drawsBackground")
+            }
             tab.hasCommittedContent = true
             tab.isPageLost = false   // a navigation brought an off-screen lost page back on its own
             tab.subframes.removeAll()

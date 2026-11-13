@@ -151,6 +151,23 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
         XCTAssertTrue(tab.wkWebView.configuration.webExtensionController === rebuiltA.extensions.controller)
     }
 
+    /// The warm view's blank document would paint white over the themed surface behind the new tab's command bar.
+    func testWarmTabDrawsNoBackgroundUntilItsFirstCommit() async throws {
+        let factory = WKEngineFactory()
+        let store = factory.defaultDataStore()
+        await warm(factory, store)
+        let tab = factory.createTab(configuration: .init(dataStore: store))
+        defer { tab.teardown() }
+        guard tab.wkWebView.responds(to: NSSelectorFromString("_drawsBackground")) else {
+            throw XCTSkip("_drawsBackground SPI unavailable on this OS")
+        }
+        XCTAssertEqual(tab.wkWebView.value(forKey: "drawsBackground") as? Bool, false)
+
+        tab.loadURL(URL(string: "data:text/html,<p>page</p>")!)
+        let drawn = await pollUntil(timeout: 5) { tab.wkWebView.value(forKey: "drawsBackground") as? Bool == true }
+        XCTAssertTrue(drawn, "a page without a background of its own must still get the white one")
+    }
+
     /// Fills a slot through the factory's real, deferred refill path.
     func testTabsDisablePrivateClickMeasurement() {
         let tab = WKEngineFactory().createTab(configuration: .init(dataStore: nil))
