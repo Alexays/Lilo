@@ -151,7 +151,6 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
         XCTAssertTrue(tab.wkWebView.configuration.webExtensionController === rebuiltA.extensions.controller)
     }
 
-    /// The warm view's blank document would paint white over the themed surface behind the new tab's command bar.
     func testWarmTabDrawsNoBackgroundUntilItsFirstCommit() async throws {
         let factory = WKEngineFactory()
         let store = factory.defaultDataStore()

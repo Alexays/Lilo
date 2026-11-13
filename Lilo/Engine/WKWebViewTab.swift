@@ -1986,7 +1986,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.cancelPendingDocumentPiP()
             if tab.navigationSignpost != nil { PerfSignposts.navigation.emitEvent("commit") }
             if tab.isAgentControlled { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(AgentCapture.startConsole, in: nil, in: PageWorld.bridgeWorld) }
-            // A warm web view drew no background while blank: the page takes it back from its first frame.
+            // See WKEngineFactory.prepareWarm.
             if !tab.hasCommittedContent, webView.responds(to: NSSelectorFromString("_setDrawsBackground:")) {
                 webView.setValue(true, forKey: "drawsBackground")
             }
