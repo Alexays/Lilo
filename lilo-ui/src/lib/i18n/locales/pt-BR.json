@@ -272,6 +272,16 @@
 				"description": "Onde os arquivos baixados são salvos.",
 				"keywords": "download salvar local diretório"
 			},
+			"interfaceSize": {
+				"title": "Tamanho da interface",
+				"description": "Ajuste o texto, o espaçamento e os ícones da barra lateral e da paleta de comandos.",
+				"keywords": "interface tamanho barra lateral densidade fonte texto espaçamento ícones paleta comandos",
+				"compact": "Compacto",
+				"comfortable": "Confortável",
+				"roomy": "Amplo",
+				"spacious": "Espaçoso",
+				"default": "Padrão"
+			},
 			"tabPosition": {
 				"title": "Abas",
 				"description": "Onde ficam suas abas, Espaços e favoritos. Você também pode arrastar a barra lateral para outra borda.",

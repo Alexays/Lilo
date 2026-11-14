@@ -45,6 +45,7 @@
     settingDescriptionKey,
     settingTitleKey,
   } from "./settingsPanelModel";
+  import InterfaceSizePicker from "./InterfaceSizePicker.svelte";
   import AgentPromptPicker from "./AgentPromptPicker.svelte";
   import AppIconPicker from "./AppIconPicker.svelte";
   import CallDockPicker from "./CallDockPicker.svelte";
@@ -220,6 +221,8 @@
 <UiListRow {title} {description} icon={id === "newSpace" || id === "deviceSetup" ? objectIcon : undefined}>
   {#if id === "appIcon"}
     <AppIconPicker />
+  {:else if id === "interfaceSize"}
+    <InterfaceSizePicker />
   {:else if id === "theme"}
     <ThemePicker />
   {:else if id === "tabPosition"}

@@ -499,7 +499,7 @@
 		gap: 8px;
 		width: 100%;
 		min-width: 0;
-		height: 32px;
+		height: var(--interface-row-height);
 		padding: 0 8px;
 		box-sizing: border-box;
 		border-radius: var(--radius-md);
@@ -535,8 +535,8 @@
 	/* A favicon's 16px box, pulled back over the shell's 1px border: the 18px glyph overflows it
 	   evenly, so it centers on the favicon column and the title starts where a tab's does. */
 	.folder-icon {
-		width: 16px;
-		height: 18px;
+		width: var(--interface-icon-size);
+		height: calc(var(--interface-icon-size) + 2px);
 		margin-left: -1px;
 		flex-shrink: 0;
 		display: flex;

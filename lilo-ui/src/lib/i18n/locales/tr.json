@@ -272,6 +272,16 @@
 				"description": "İndirilen dosyaların kaydedildiği yer.",
 				"keywords": "indirme kaydet konum dizin"
 			},
+			"interfaceSize": {
+				"title": "Arayüz boyutu",
+				"description": "Kenar çubuğu ve komut paletindeki metin, aralık ve simgeleri ayarlayın.",
+				"keywords": "arayüz boyut kenar çubuğu yoğunluk yazı tipi metin aralık simge komut paleti",
+				"compact": "Kompakt",
+				"comfortable": "Rahat",
+				"roomy": "Ferah",
+				"spacious": "Geniş",
+				"default": "Varsayılan"
+			},
 			"tabPosition": {
 				"title": "Sekmeler",
 				"description": "Sekmelerinizin, Alanlarınızın ve favorilerinizin bulunduğu yer. Kenar çubuğunu başka bir kenara da sürükleyebilirsiniz.",

@@ -272,6 +272,16 @@
 				"description": "Miejsce zachowywania pobranych plików.",
 				"keywords": "pobieranie zachowywanie miejsce katalog"
 			},
+			"interfaceSize": {
+				"title": "Rozmiar interfejsu",
+				"description": "Dostosuj tekst, odstępy i ikony na pasku bocznym i w palecie poleceń.",
+				"keywords": "interfejs rozmiar pasek boczny gęstość czcionka tekst odstępy ikony paleta polecenia",
+				"compact": "Kompaktowy",
+				"comfortable": "Wygodny",
+				"roomy": "Luźny",
+				"spacious": "Przestronny",
+				"default": "Domyślny"
+			},
 			"tabPosition": {
 				"title": "Karty",
 				"description": "Miejsce kart, przestrzeni i ulubionych. Możesz też przeciągnąć pasek boczny do innej krawędzi.",

@@ -44,7 +44,7 @@
   } from "../../stores/sidebarDnd.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
-  import { getSetting } from "../../stores/settings.svelte";
+  import { getInterfaceSizeStep, getSetting } from "../../stores/settings.svelte";
   import {
     aggregateDownloadProgress,
     getDownloads,
@@ -483,7 +483,7 @@
   // The tiles, the name's padding and the bar's own inset come off; too little left and the tile stays an icon.
   const labelRoom = $derived.by(() => {
     if (getSetting("hideSpaceNames", "false") === "true") return 0;
-    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * 34 - 16);
+    const room = Math.min(96, iconsWrapWidth - spaceZoneItems.length * (34 + getInterfaceSizeStep() * 4) - 16);
     return room < 32 ? 0 : room;
   });
 
@@ -494,7 +494,7 @@
     labelMeasurer ??= document.createElement("canvas").getContext("2d");
     if (!labelMeasurer) return undefined;
     const root = getComputedStyle(document.documentElement);
-    const base = Number.parseFloat(root.getPropertyValue("--font-size-sm"));
+    const base = 12 + getInterfaceSizeStep();
     for (let size = base; size >= 10; size -= 1) {
       labelMeasurer.font = `${root.getPropertyValue("--font-weight-semibold")} ${size}px ${root.fontFamily}`;
       if (labelMeasurer.measureText(name).width <= labelRoom) return size === base ? undefined : size;
@@ -540,7 +540,7 @@
       {#if isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)}
         <!-- Loaded on demand: the tile shows only once an agent connects, so the first frame goes without. -->
         {#await import("./AgentMascot.svelte") then { default: AgentMascot }}
-          <AgentMascot mood={getAgentMood(space.id)} ghost={isIsolatedAgentSpace(space.id)} />
+          <AgentMascot mood={getAgentMood(space.id)} ghost={isIsolatedAgentSpace(space.id)} size={18 + getInterfaceSizeStep() * 2} />
         {/await}
       {:else}
         {space.icon || "🌐"}
@@ -736,8 +736,8 @@
   }
 
   .bottom-btn {
-    width: 28px;
-    height: 28px;
+    width: var(--interface-space-height);
+    height: var(--interface-space-height);
     border: none;
     background: none;
     color: var(--text-muted);
@@ -763,9 +763,9 @@
   }
 
   .bottom-side {
-    flex: 0 0 28px;
-    width: 28px;
-    height: 28px;
+    flex: 0 0 var(--interface-space-height);
+    width: var(--interface-space-height);
+    height: var(--interface-space-height);
     display: flex;
     align-items: center;
   }
@@ -794,8 +794,8 @@
 
   .download-btn-wrap {
     position: relative;
-    width: 28px;
-    height: 28px;
+    width: var(--interface-space-height);
+    height: var(--interface-space-height);
     flex-shrink: 0;
   }
 
@@ -948,7 +948,7 @@
     align-items: center;
     justify-content: center;
     flex: none;
-    min-width: 28px;
+    min-width: var(--interface-space-height);
     box-sizing: border-box;
     min-height: 36px;
     flex-shrink: 0;
@@ -956,8 +956,8 @@
   }
 
   .space-dnd-placeholder {
-    width: 28px;
-    min-width: 28px;
+    width: var(--interface-space-height);
+    min-width: var(--interface-space-height);
     height: 36px;
     border-radius: var(--radius-md);
     box-sizing: border-box;
@@ -1083,8 +1083,8 @@
   }
 
   .space-icon-btn {
-    min-width: 28px;
-    height: 28px;
+    min-width: var(--interface-space-height);
+    height: var(--interface-space-height);
     border-radius: var(--radius-sm);
     border: none;
     background: none;
@@ -1106,8 +1106,8 @@
 
   .space-glyph {
     flex: none;
-    width: 28px;
-    height: 28px;
+    width: var(--interface-space-height);
+    height: var(--interface-space-height);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1117,7 +1117,7 @@
   .space-label {
     position: relative;
     flex: none;
-    height: 28px;
+    height: var(--interface-space-height);
     overflow: hidden;
     pointer-events: none;
   }

@@ -2,7 +2,7 @@
   import type { BridgeAgentMood } from "../../lib/bridge/protocol";
 
   // A ghost for the private space an agent opens: like its tabs, it leaves nothing behind.
-  let { mood, ghost = false }: { mood?: BridgeAgentMood; ghost?: boolean } = $props();
+  let { mood, ghost = false, size = 18 }: { mood?: BridgeAgentMood; ghost?: boolean; size?: number } = $props();
 
   // Blinks on a timer: a repeating CSS blink would keep the compositor busy while the agents are idle.
   function blink(eyes: HTMLElement) {
@@ -40,7 +40,7 @@
 
 <!-- The cursor's mascot (AgentCursorView) in swapped colors, drawn at its 22 pt and scaled. Only transform
      and opacity animate, and only while a call runs, so moods stay on the compositor. -->
-<span class="mascot" data-mood={mood} aria-hidden="true">
+<span class="mascot" data-mood={mood} style={`--mascot-scale:${size / 22}; --mascot-margin:${(size - 22) / 2}px`} aria-hidden="true">
   {#if mood === "waitingForUser"}<span class="halo"></span>{/if}
   <span class="body" class:ghost>
     {#if ghost}<svg viewBox="0 0 22 22"><path d="M3 10.5a8 8 0 0 1 16 0V20l-2.67-1.8-2.67 1.8-2.66-1.8-2.67 1.8-2.66-1.8L3 20Z" /></svg>{/if}
@@ -60,9 +60,9 @@
     position: relative;
     width: 22px;
     height: 22px;
-    margin: -2px;
+    margin: var(--mascot-margin);
     flex: none;
-    transform: scale(calc(18 / 22));
+    transform: scale(var(--mascot-scale));
   }
 
   .body,

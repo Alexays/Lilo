@@ -114,7 +114,7 @@
 
   .agents-button.row {
     width: 32px;
-    height: 32px;
+    height: var(--interface-row-height);
     border-radius: var(--radius-md);
     color: var(--text-muted);
     transition:

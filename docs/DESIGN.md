@@ -153,3 +153,16 @@ Nothing else animates. With Reduce motion, everything becomes a 150 ms fade. A s
 ## First run
 
 One full-bleed container from start to finish. Welcome stays almost empty: the mark, one line and Get Started. Then one question per screen: How will you use Lilo (thumbnails of each answer's result), Import (passwords included), Your Lilo (a live preview beside rows of settings for its look), Agents when that path is chosen. Tips arrive in context, the first time the user does the thing.
+
+## Interface size
+
+Appearance offers Compact, Comfortable, Roomy and Spacious presets. Comfortable preserves the default metrics above.
+The other presets adjust the expanded sidebar's row height, text, icons, Favorites, address field and Space controls
+along with the floating and docked command palettes. Settings pages and the folded icon rail keep their own metrics.
+Virtualized rows, folders, stacks and trays use the same chosen heights as their rendered rows.
+Favorites keep their adaptive grid and switch to denser tiles for long lists; both tile sizes follow the preset.
+
+The command palette uses the active Space’s resolved background, with text and selection colors checked for readable contrast.
+Its search field, result rows, bookmark chips, scope controls and footer keycaps follow the interface size preset.
+Its result scrollbar has no track fill, stays quiet at rest and becomes clearer on hover or focus; Increase Contrast
+makes the thumb easier to find. These appearance choices do not change search scopes or hint behavior.

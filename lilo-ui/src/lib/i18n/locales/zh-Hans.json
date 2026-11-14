@@ -272,6 +272,16 @@
 				"description": "下载文件的存储位置。",
 				"keywords": "下载 存储 位置 目录"
 			},
+			"interfaceSize": {
+				"title": "界面大小",
+				"description": "统一调整侧边栏和命令面板中的文字、间距和图标。",
+				"keywords": "界面 大小 侧边栏 密度 字体 文字 间距 图标 命令 面板",
+				"compact": "紧凑",
+				"comfortable": "舒适",
+				"roomy": "宽松",
+				"spacious": "宽敞",
+				"default": "默认"
+			},
 			"tabPosition": {
 				"title": "标签页",
 				"description": "存放标签页、空间和个人收藏。你也可以将侧边栏拖到其他边缘。",

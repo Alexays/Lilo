@@ -2,6 +2,7 @@
      It opens and closes like a folder; its tabs keep their own rows. Closed on the active page, it
      wears that page as its face, a card's edge under it for the pages behind. -->
 <script lang="ts">
+  import { getInterfaceSizeStep } from "../../stores/settings.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { t } from "../../lib/i18n/state.svelte";
@@ -62,7 +63,7 @@
 >
   <span class="stack-icon" aria-hidden="true">
     {#if lead}
-      <SiteFavicon src={lead.faviconDataURL} title={lead.title} url={lead.url} size={16} radius={4} />
+      <SiteFavicon src={lead.faviconDataURL} title={lead.title} url={lead.url} size={16 + getInterfaceSizeStep() * 2} radius={4} />
     {/if}
   </span>
   <span class="stack-name">{title}</span>
@@ -97,7 +98,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 32px;
+    height: var(--interface-row-height);
     padding: 0 8px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
@@ -138,8 +139,8 @@
   .stack-icon {
     position: relative;
     flex: none;
-    width: 16px;
-    height: 16px;
+    width: var(--interface-icon-size);
+    height: var(--interface-icon-size);
   }
 
   .stack-icon::before,

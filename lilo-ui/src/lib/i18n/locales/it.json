@@ -272,6 +272,16 @@
 				"description": "Dove vengono salvati i file scaricati.",
 				"keywords": "download salva posizione cartella"
 			},
+			"interfaceSize": {
+				"title": "Dimensioni dell’interfaccia",
+				"description": "Regola testo, spaziatura e icone nella barra laterale e nella tavolozza dei comandi.",
+				"keywords": "interfaccia dimensioni barra laterale densità carattere testo spaziatura icone tavolozza comandi",
+				"compact": "Compatta",
+				"comfortable": "Comoda",
+				"roomy": "Ampia",
+				"spacious": "Spaziosa",
+				"default": "Predefinito"
+			},
 			"tabPosition": {
 				"title": "Schede",
 				"description": "Dove si trovano schede, spazi e preferiti. Puoi anche trascinare la barra laterale su un altro bordo.",

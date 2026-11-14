@@ -211,6 +211,9 @@
   }
 
   .sidebar-layout {
+    --font-size-md: var(--interface-text-size);
+    --font-size-sm: calc(var(--interface-text-size) - 1px);
+    --font-size-xs: calc(var(--interface-text-size) - 2px);
     position: relative;
     display: flex;
     flex-direction: column;

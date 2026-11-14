@@ -9,6 +9,7 @@
 <script lang="ts">
   import { tooltipSide } from "../../stores/tabLayout.svelte";
   import { untrack } from "svelte";
+  import { getInterfaceSizeStep } from "../../stores/settings.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import TabLoader from "./TabLoader.svelte";
   import { strippedTitle } from "./tabSectionModel";
@@ -564,7 +565,7 @@
           src={tab.faviconDataURL}
           title={tab.title}
           url={tab.url}
-          size={16}
+          size={16 + getInterfaceSizeStep() * 2}
           radius={4}
           asleep={tab.isClosed}
         />
@@ -700,7 +701,7 @@
     width: 100%;
     min-width: 0;
     padding: 0 8px;
-    height: 32px;
+    height: var(--interface-row-height);
     box-sizing: border-box;
     border-radius: var(--radius-md);
     cursor: default;
@@ -764,8 +765,8 @@
   }
 
   .tab-icon {
-    width: 16px;
-    height: 16px;
+    width: var(--interface-icon-size);
+    height: var(--interface-icon-size);
     flex-shrink: 0;
     display: flex;
     align-items: center;

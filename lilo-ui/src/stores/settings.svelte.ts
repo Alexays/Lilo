@@ -1,3 +1,5 @@
+import { interfaceSizeStep, resolveInterfaceSize } from "../lib/interfaceSizing";
+import type { BridgeInitialStatePayload } from "../lib/bridge/protocol";
 import { on } from "../lib/bridge";
 import { featureFlagsActions, settingsActions } from "../lib/bridge/actions";
 import type {
@@ -44,12 +46,33 @@ let _recordingShortcut = $state<string | null>(null);
 let _shortcutConflict = $state.raw<BridgeShortcutConflict | null>(null);
 let statusTimer: ReturnType<typeof setTimeout> | null = null;
 
+export function getInterfaceSize() {
+	return resolveInterfaceSize(getSetting("interfaceSize", "comfortable"));
+}
+
+export function getInterfaceSizeStep(): number {
+	return interfaceSizeStep(getInterfaceSize());
+}
+
+function applyInterfaceSize(): void {
+	if (typeof document === "undefined") return;
+	const root = document.documentElement;
+	const size = getInterfaceSize();
+	if (root && root.dataset.interfaceSize !== size) root.dataset.interfaceSize = size;
+}
+
+export function applyInterfaceSizeInitialState(data: Pick<BridgeInitialStatePayload, "interfaceSize">): void {
+	_values.interfaceSize = resolveInterfaceSize(data.interfaceSize);
+	applyInterfaceSize();
+}
+
 export function initSettingsStore(): void {
 	// Every setting change republishes the whole map: merged key by key, only the readers of a changed key re-run.
 	on("settingsLoaded", (data) => {
 		const next = data.settings ?? {};
 		for (const key in _values) if (!(key in next)) delete _values[key];
 		for (const key in next) if (_values[key] !== next[key]) _values[key] = next[key];
+		applyInterfaceSize();
 		const locale = _values["locale"];
 		if (locale && isSupportedLocale(locale)) void setLocale(locale);
 	});
@@ -148,6 +171,7 @@ export function getSetting(key: string, fallback: string): string {
 
 export function setSetting(key: string, value: string): void {
 	_values[key] = value;
+	if (key === "interfaceSize") applyInterfaceSize();
 	settingsActions.set(key, value);
 }
 

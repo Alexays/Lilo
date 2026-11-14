@@ -25,7 +25,7 @@
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
-  import { getSetting, setSetting } from "../../stores/settings.svelte";
+  import { getInterfaceSizeStep, getSetting, setSetting } from "../../stores/settings.svelte";
   import { hostOf } from "../../lib/url";
   import { isChromaticHex } from "../../lib/sidebarTheme";
   import {
@@ -226,7 +226,7 @@
   }
 
   // The heads load once a list has a stack or a tray: most first frames have neither. Their slots
-  // keep the heads' 32px height meanwhile, so nothing moves when they land.
+  // keep the heads' chosen row height meanwhile, so nothing moves when they land.
   let heads = $state.raw<{
     StackRow: typeof import("./TabStackRow.svelte").default;
     TrayHeader: typeof import("./TabTrayHeader.svelte").default;
@@ -460,12 +460,11 @@
   const VIRTUAL_BUFFER_PX = 320;
   // The window moves in steps of this many pixels, so a scroll frame inside a step re-renders nothing.
   const VIRTUAL_WINDOW_STEP_PX = 160;
-  // Mirror the row CSS (32px rows, 2px --sidebar-tab-row-gap, the same gap above a folder's
-  // contents, 32px empty-folder placeholder); the buffer absorbs small drift.
-  const VIRTUAL_ROW_H = 32;
+  // Match the chosen row height and the 2px gaps above and between folder children; the buffer absorbs small drift.
+  const VIRTUAL_ROW_H = $derived(32 + getInterfaceSizeStep() * 4);
   const VIRTUAL_FOLDER_TOP_MARGIN = 2;
   const VIRTUAL_FOLDER_INSET = 4;
-  const VIRTUAL_EMPTY_FOLDER_H = 32;
+  const VIRTUAL_EMPTY_FOLDER_H = $derived(VIRTUAL_ROW_H);
 
   // How far the list's top sits above the shared scroller's viewport top, floored to a window step.
   let listScrollTop = $state(0);
@@ -1861,8 +1860,8 @@
   }
 
   .pinned-list.drag-active.is-empty {
-    height: 32px;
-    min-height: 32px;
+    height: var(--interface-row-height);
+    min-height: var(--interface-row-height);
     overflow: hidden;
     border-color: transparent;
     background: transparent;
@@ -1948,7 +1947,7 @@
   }
 
   .tab-list.drag-active.is-empty {
-    min-height: 32px;
+    min-height: var(--interface-row-height);
     opacity: 1;
     transform: scaleY(1);
     overflow: hidden;
@@ -2046,7 +2045,7 @@
   .group-head-slot {
     position: relative;
     min-width: 0;
-    min-height: 32px;
+    min-height: var(--interface-row-height);
   }
 
   .virtual-spacer {
@@ -2144,12 +2143,12 @@
   }
 
   .folder-contents.drag-active.is-empty {
-    min-height: 32px;
+    min-height: var(--interface-row-height);
   }
 
   .folder-empty-placeholder {
     margin-left: 24px;
-    height: 32px;
+    height: var(--interface-row-height);
     display: flex;
     align-items: center;
     padding: 0 8px;
@@ -2208,7 +2207,7 @@
   }
 
   .sidebar-dnd-placeholder {
-    height: 32px;
+    height: var(--interface-row-height);
     width: 100%;
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--text-primary) 18%, transparent);
@@ -2248,7 +2247,7 @@
     gap: 8px;
     flex: 1;
     min-width: 0;
-    height: 32px;
+    height: var(--interface-row-height);
     padding: 0 8px;
     border: none;
     background: none;
@@ -2287,7 +2286,7 @@
   /* Centered on the rows' accessory slot: 20px, inset by the row's 8px padding. */
   .new-terminal-button {
     width: 32px;
-    height: 32px;
+    height: var(--interface-row-height);
     margin-left: 2px;
     margin-right: 2px;
     flex-shrink: 0;
@@ -2343,7 +2342,7 @@
   }
 
   .new-tab-icon {
-    width: 16px;
+    width: var(--interface-icon-size);
     height: 16px;
     flex-shrink: 0;
     display: flex;

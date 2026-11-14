@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getInterfaceSizeStep } from "../../stores/settings.svelte";
   import { tick } from "svelte";
   import { tooltipSide } from "../../stores/tabLayout.svelte";
   import { translateFlip } from "../../lib/motion/translateFlip";
@@ -94,10 +95,10 @@
   function columnsThatFit(minTileWidth: number): number {
     return Math.max(1, Math.floor((listWidth + GRID_GAP_PX) / (minTileWidth + GRID_GAP_PX)));
   }
-  const gridCompact = $derived(Math.ceil(bookmarks.length / columnsThatFit(64)) > 3);
+  const gridCompact = $derived(Math.ceil(bookmarks.length / columnsThatFit(64 + getInterfaceSizeStep() * 4)) > 3);
   const gridColumns = $derived.by(() => {
     const count = Math.max(1, bookmarks.length);
-    return Math.ceil(count / Math.ceil(count / columnsThatFit(gridCompact ? 40 : 64)));
+    return Math.ceil(count / Math.ceil(count / columnsThatFit((gridCompact ? 40 : 64) + getInterfaceSizeStep() * 4)));
   });
   const activeTabId = $derived(getActiveTabId(spaceId));
   const recentlyDraggedId = $derived(getRecentlyDroppedId());
@@ -381,7 +382,7 @@
                       src={bookmark.faviconDataURL}
                       title={bookmark.title}
                       url={bookmark.url}
-                      size={gridCompact ? 18 : 20}
+                      size={(gridCompact ? 18 : 20) + getInterfaceSizeStep() * 2}
                       radius={5}
                       asleep={bookmark.isClosed}
                     />
@@ -461,7 +462,7 @@
 
   .bookmarked-list {
     --bookmark-zone-color: var(--color-bookmark);
-    --bookmark-tile-height: 48px;
+    --bookmark-tile-height: calc(var(--interface-favorite-height) + 8px);
     position: relative;
     display: grid;
     gap: 6px; /* GRID_GAP_PX, which sizes the columns. */
@@ -485,7 +486,7 @@
   }
 
   .bookmarked-list.compact {
-    --bookmark-tile-height: 40px;
+    --bookmark-tile-height: var(--interface-favorite-height);
   }
 
   .bookmarked-list.idle-empty {
@@ -501,8 +502,8 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 40px;
-    min-height: 40px;
+    height: var(--bookmark-tile-height);
+    min-height: var(--bookmark-tile-height);
     padding: 0 8px;
     overflow: hidden;
     border-color: color-mix(in srgb, var(--bookmark-zone-color) 36%, transparent);
@@ -632,7 +633,7 @@
     box-sizing: border-box;
     border-radius: var(--radius-chip);
     color: var(--accent-text);
-    font-size: var(--font-size-2xs);
+    font-size: var(--interface-favorite-badge-size);
     font-weight: var(--font-weight-semibold);
     font-variant-numeric: tabular-nums;
     font-feature-settings: "case";

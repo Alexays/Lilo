@@ -112,7 +112,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 32px;
+    height: var(--interface-row-height);
     padding: 0 8px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
@@ -142,8 +142,8 @@
     flex: none;
     display: grid;
     place-items: center;
-    width: 16px;
-    height: 16px;
+    width: var(--interface-icon-size);
+    height: var(--interface-icon-size);
     opacity: 0.85;
   }
 

@@ -272,6 +272,16 @@
 				"description": "다운로드한 파일이 저장되는 위치입니다.",
 				"keywords": "다운로드 저장 위치 디렉토리"
 			},
+			"interfaceSize": {
+				"title": "인터페이스 크기",
+				"description": "사이드바와 명령 팔레트의 텍스트, 간격 및 아이콘을 함께 조정합니다.",
+				"keywords": "인터페이스 크기 사이드바 밀도 글꼴 텍스트 간격 아이콘 명령 팔레트",
+				"compact": "좁게",
+				"comfortable": "보통",
+				"roomy": "여유롭게",
+				"spacious": "넓게",
+				"default": "기본값"
+			},
 			"tabPosition": {
 				"title": "탭",
 				"description": "탭, 스페이스, 즐겨찾기가 표시되는 위치입니다. 사이드바를 다른 가장자리로 드래그할 수도 있습니다.",

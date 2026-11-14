@@ -1,0 +1,60 @@
+import { expect, test } from "@playwright/test";
+import { bootChrome } from "./fakeHost";
+import { initialWorld, SPACE_1 } from "./fixtures";
+import { tab, treeItem } from "../src/stores/testFixtures";
+
+test("the whole palette follows a changed Space color", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	const world = initialWorld();
+	await bootChrome(page, world);
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	await page.locator(".command-bar-input").fill("beta");
+	const palette = page.locator(".command-bar");
+	const selected = page.locator(".command-bar-result.selected");
+	await expect(selected).toBeVisible();
+	const backgroundMatchesSpace = () => palette.evaluate((el) => {
+		const background = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-bg").trim();
+		const channels = [1, 3, 5].map((offset) => Number.parseInt(background.slice(offset, offset + 2), 16));
+		return getComputedStyle(el).backgroundColor === `rgb(${channels.join(", ")})`;
+	});
+	await expect.poll(backgroundMatchesSpace).toBe(true);
+	const background = await palette.evaluate((el) => getComputedStyle(el).backgroundColor);
+	const edge = await palette.evaluate((el) => getComputedStyle(el).outlineColor);
+	const fill = await selected.evaluate((el) => getComputedStyle(el).backgroundColor);
+	await page.evaluate((space) => window.__lilo!.receive({ event: "spaceUpdated", ...space, color: "#be4162" }), world.spaces[0]);
+	await expect.poll(() => palette.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(background);
+	await expect.poll(backgroundMatchesSpace).toBe(true);
+	await expect.poll(() => palette.evaluate((el) => getComputedStyle(el).outlineColor)).not.toBe(edge);
+	await expect.poll(() => selected.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(fill);
+});
+
+test("the quiet scrollbar becomes clearer on hover without shifting rows or blocking keyboard scrolling", async ({ page }) => {
+	await page.setViewportSize({ width: 1000, height: 400 });
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	const world = initialWorld();
+	const tabs = Array.from({ length: 40 }, (_, i) => tab(`appearance-${i}`, SPACE_1, { title: `Palette item ${i}`, url: `https://example.com/${i}` }));
+	world.tabsBySpace[SPACE_1] = tabs;
+	world.treeItemsBySpace[SPACE_1] = tabs.map((item, index) => treeItem(item.id, SPACE_1, index));
+	world.activeTabBySpace[SPACE_1] = tabs[0].id;
+	await bootChrome(page, world);
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	const input = page.locator(".command-bar-input");
+	await input.fill("@Palette item");
+	const results = page.locator(".command-bar-results");
+	await expect.poll(() => results.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+	await expect(results).toHaveCSS("scrollbar-width", "thin");
+	const resting = await results.evaluate((el) => getComputedStyle(el).scrollbarColor);
+	const width = (await results.boundingBox())!.width;
+	await results.hover();
+	await expect.poll(() => results.evaluate((el) => getComputedStyle(el).scrollbarColor)).not.toBe(resting);
+	expect((await results.boundingBox())!.width).toBeCloseTo(width, 2);
+	await page.mouse.move(990, 390);
+	await input.fill("@Palette");
+	await expect(page.locator(".command-bar-result").first()).toHaveClass(/selected/);
+	await input.press("ArrowUp");
+	await expect(page.locator(".command-bar-result.selected")).toBeInViewport();
+	await expect.poll(() => results.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+	await page.mouse.move(990, 390);
+	await page.emulateMedia({ contrast: "more" });
+	await expect.poll(() => results.evaluate((el) => getComputedStyle(el).scrollbarColor)).not.toBe(resting);
+});

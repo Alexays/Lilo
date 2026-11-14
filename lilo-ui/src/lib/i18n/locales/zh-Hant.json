@@ -272,6 +272,16 @@
 				"description": "下載檔案的儲存位置。",
 				"keywords": "下載 儲存 位置 目錄"
 			},
+			"interfaceSize": {
+				"title": "介面大小",
+				"description": "一併調整側邊欄和命令面板中的文字、間距和圖示。",
+				"keywords": "介面 大小 側邊欄 密度 字型 文字 間距 圖示 命令 面板",
+				"compact": "緊湊",
+				"comfortable": "舒適",
+				"roomy": "寬鬆",
+				"spacious": "寬敞",
+				"default": "預設"
+			},
 			"tabPosition": {
 				"title": "分頁",
 				"description": "分頁、空間與喜好項目的位置。你也可以將側邊欄拖到其他邊緣。",

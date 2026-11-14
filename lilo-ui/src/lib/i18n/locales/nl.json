@@ -272,6 +272,16 @@
 				"description": "Waar gedownloade bestanden worden bewaard.",
 				"keywords": "download bewaar locatie map"
 			},
+			"interfaceSize": {
+				"title": "Interfacegrootte",
+				"description": "Pas tekst, afstand en pictogrammen in de zijbalk en het opdrachtenpalet aan.",
+				"keywords": "interface grootte zijbalk dichtheid lettertype tekst afstand pictogrammen opdrachtenpalet",
+				"compact": "Compact",
+				"comfortable": "Comfortabel",
+				"roomy": "Ruim",
+				"spacious": "Extra ruim",
+				"default": "Standaard"
+			},
 			"tabPosition": {
 				"title": "Tabbladen",
 				"description": "Waar je tabbladen, ruimtes en favorieten staan. Je kunt ook de navigatiekolom naar een andere rand slepen.",
