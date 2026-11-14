@@ -77,18 +77,22 @@ const ACTION_HANDLERS: Record<CommandActionId, () => void> = {
 	showChanges: () => terminalActions.showChanges(),
 };
 
-function navigateTo(url?: string, typed?: boolean): void {
-	if (url) tabActions.navigate(url, typed);
+function navigateTo(url?: string, typed?: boolean, newTab = false): void {
+	if (url) {
+		if (newTab) tabActions.create(url, typed);
+		else tabActions.navigate(url, typed);
+	}
 }
 
 export function executeResult(
 	result: CommandResult,
 	onFinish: (closeBlankTab?: boolean) => void,
+	newTab = false,
 ): void {
 	if (result.kind === "action") {
 		ACTION_HANDLERS[result.payload.action as CommandActionId]();
 	} else if (result.kind === "terminal") {
-		terminalActions.run(result.payload.command as string, false);
+		terminalActions.run(result.payload.command as string, newTab);
 	} else if (result.kind === "terminalTab") {
 		terminalActions.reveal(result.payload.tabId as string);
 	} else if (result.kind === "closedTerminal") {
@@ -116,7 +120,7 @@ export function executeResult(
 		const tabId = (result.payload.tabId as string | undefined) ?? getActiveTab()?.id;
 		if (tabId) spaceActions.moveTabToSpace(tabId, result.payload.spaceId as string);
 	} else {
-		navigateTo(result.url, result.payload.typed === true);
+		navigateTo(result.url, result.payload.typed === true, newTab);
 	}
 	// Switching to or opening another tab leaves the blank one behind: close it.
 	onFinish(

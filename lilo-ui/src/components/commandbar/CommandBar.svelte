@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { portal } from "../../lib/actions/portal";
+  import { dismissable } from "../../lib/actions/dismissable";
+  import CommandScopePicker from "./CommandScopePicker.svelte";
   import { untrack } from "svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -30,6 +33,7 @@
     cancelMoveTab,
     isCommandBarDocked,
     isCommandBarOpen,
+    isNewTabCommandBar,
     isMovingTab,
     runSelectedResultKey,
     type ResultKey,
@@ -102,6 +106,31 @@
     return out;
   }
 
+  const compact = $derived(getSetting("commandBarLayout", "default") === "compact");
+  let detailsOpen = $state(false);
+  let helpPosition = $state({ right: 16, top: 0 });
+  function showDetails() {
+    if (!detailsButton) return;
+    const rect = detailsButton.getBoundingClientRect();
+    helpPosition = { right: Math.max(16, window.innerWidth - rect.right), top: rect.bottom + 8 };
+    detailsOpen = true;
+  }
+  let detailsButton: HTMLButtonElement | undefined = $state();
+  $effect(() => {
+    void getCommandBarOpenRequestId();
+    void compact;
+    void isCommandBarOpen();
+    detailsOpen = false;
+  });
+
+  $effect(() => {
+    if (!detailsOpen) return;
+    const timer = setTimeout(() => {
+      detailsOpen = false;
+    }, 2000);
+    return () => clearTimeout(timer);
+  });
+
   const commandBarOpen = $derived(isCommandBarOpen());
   const docked = $derived(isCommandBarDocked());
   // In place on a blank tab, the bar steps aside for a screen that covers the page.
@@ -121,9 +150,20 @@
   const scopedQuery = $derived(parseInput(query, activeScope).query.trim());
   const results = $derived(getResults());
   const sections = $derived(getSections());
+  const canSearchWeb = $derived(
+    scopedQuery.trim().length > 0 && ["tab", "bookmark", "history"].includes(activeScope) &&
+      results.every((result) => result.kind === "showAllHistory"),
+  );
   const selectedIndex = $derived(getSelectedIndex());
   const selectedResult = $derived(getSelectedResult());
   const selectedKeys = $derived(getSelectedResultKeys());
+  const primaryActionLabel = $derived.by(() => {
+    const result = selectedResult;
+    const opensURL = result?.url && ["navigate", "search", "history", "bookmark"].includes(result.kind) &&
+      !(result.kind === "bookmark" && typeof result.payload.tabId === "string");
+    if (opensURL) return isNewTabCommandBar() ? t("historyPage.openInNewTab") : t("common.open");
+    return result?.hint || t("common.open");
+  });
   const movingTab = $derived(isMovingTab());
   const tileSection = $derived(sections.find((section) => section.tiles));
   const firstTile = $derived(tileSection?.items[0]?.index ?? -1);
@@ -264,7 +304,7 @@
   });
 
   $effect(() => {
-    if (!commandBarOpen) {
+    if (!commandBarOpen || compact) {
       heightAnimationFrame.cancel();
       finishHeightAnimation();
       panelHadResults = false;
@@ -272,7 +312,7 @@
   });
 
   $effect(() => {
-    if (!commandBarOpen || !commandBarContentEl) {
+    if (compact || !commandBarOpen || !commandBarContentEl) {
       return;
     }
 
@@ -308,9 +348,13 @@
     }
 
     const handleWindowPointerDown = (event: PointerEvent) => {
-      const target = event.target as Node | null;
+      const target = event.target as Element | null;
+      // Portaled menus and help still belong to the bar's interaction surface.
+      if (target?.closest("[data-command-bar-popover]")) return;
       if (commandBarEl && target && !commandBarEl.contains(target)) {
         closeCommandBar();
+        // The backdrop catches page clicks; sidebar controls keep their native click focus.
+        if (target.classList.contains("command-bar-backdrop")) postMessage("focusPage");
       }
     };
 
@@ -347,6 +391,15 @@
   function handleKeydown(e: KeyboardEvent) {
     // IME confirmation can report keyCode 229 even after composition ends.
     if (e.isComposing || e.keyCode === 229) return;
+    if (compact && detailsOpen && e.key === "Escape") {
+      e.preventDefault();
+      detailsOpen = false;
+      detailsButton?.focus();
+      return;
+    }
+    // Buttons keep their native keyboard activation and focus navigation.
+    if (e.target !== inputEl && e.key !== "Escape") return;
+    if (compact && e.key === "Tab" && (e.shiftKey || !autocompleteSuggestion)) return;
     // The grey inline completion counts as typed while it shows.
     const completionShown = autocompleteSuffix !== "" && caretAtEnd;
     switch (e.key) {
@@ -565,12 +618,27 @@
   {/if}
 {/snippet}
 
+{#snippet keyboardHints()}
+          <span class="footer-hints">
+            <span class="key-hint key-hint-default"><span>{primaryActionLabel}</span><kbd class="keycap">{formatShortcut("Enter")}</kbd></span>
+            {#each selectedKeys as key (key)}
+              <span class="key-hint">
+                <span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd class="keycap">{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
+              </span>
+            {/each}
+          </span>
+          {#if !docked || movingTab || escapeLeavesScope}
+            <span class="key-hint"><span>{t(movingTab || escapeLeavesScope ? "common.back" : "common.close")}</span><kbd class="keycap">esc</kbd></span>
+          {/if}
+{/snippet}
+
 {#if shown}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="command-bar-backdrop chrome-content-overlay-root"
     class:sidebar-hidden={!isSidebarVisible()}
     class:docked
+    class:compact
     use:reportInteractiveZone={{
       id: "command-bar-backdrop",
       active: shown,
@@ -581,15 +649,28 @@
     <div
       bind:this={commandBarEl}
       class="command-bar float-surface"
+      class:compact
     >
       <div bind:this={commandBarContentEl} class="command-bar-content">
         <div class="command-bar-header">
           <div class="command-bar-input-row">
+            {#if compact}
+              <CommandScopePicker
+                hints={scopeHints}
+                active={activeScope}
+                disabled={movingTab}
+                onselect={(scope) => {
+                  setCommandBarScope(scope);
+                  inputEl?.focus();
+                }}
+              />
+            {:else}
             <svg class="command-bar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5" />
               <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
             </svg>
-            {#if tokenLabel}
+            {/if}
+            {#if !compact && tokenLabel}
               <span class="scope-token">{t(tokenLabel)}</span>
             {/if}
             <div class="command-bar-input-wrap">
@@ -628,12 +709,29 @@
                 onselect={trackCaret}
               />
             </div>
-            {#if autocompleteSuggestion && caretAtEnd}
+            {#if autocompleteSuggestion && caretAtEnd && !compact}
               <span class="key-hint"><span>{t("commandBar.hintComplete")}</span><kbd class="keycap">tab</kbd></span>
+            {/if}
+            {#if compact}
+              <button
+                bind:this={detailsButton}
+                type="button"
+                class="command-bar-info"
+                aria-label={t("commandBar.showDetails")}
+                title={t("commandBar.showDetails")}
+                aria-expanded={detailsOpen}
+                aria-controls={detailsOpen ? "cb-hints" : undefined}
+                onclick={showDetails}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3" />
+                  <path d="M8 7v4M8 4.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+              </button>
             {/if}
           </div>
 
-          <div class="command-bar-scopes">
+          <div class="command-bar-scopes" id="cb-scopes" hidden={compact}>
             {#each scopeHints as hint (hint.scope)}
               <button
                 type="button"
@@ -652,6 +750,7 @@
           </div>
         </div>
 
+        <div class="command-bar-results-area">
         {#if sections.length > 0}
           <div class="command-bar-results" id="cb-results" role="listbox" aria-label={t("commandBar.resultsLabel")}>
             {#each sections as section (section.id)}
@@ -679,13 +778,18 @@
                       {:else}
                         {@const subtitle = detail(entry.result)}
                         <div class="result-main">
-                          <span class="result-title">{@render highlightedText(entry.result.title, entry.result.titleHighlights)}</span>
+                          <span class="result-title" title={entry.result.title}>{@render highlightedText(entry.result.title, entry.result.titleHighlights)}</span>
                           {#if subtitle.text}
-                            <span class="result-subtitle">{@render highlightedText(subtitle.text, subtitle.highlights)}</span>
+                            <span class="result-subtitle" title={subtitle.text}>{@render highlightedText(subtitle.text, subtitle.highlights)}</span>
                           {/if}
                         </div>
 
-                        {#if entry.result.helper}
+                        {#if compact && entry.index === selectedIndex}
+                          <span class="result-action" title={primaryActionLabel} aria-hidden="true">
+                            <span class="result-action-label">{primaryActionLabel}</span>
+                            <kbd class="keycap">{formatShortcut("Enter")}</kbd>
+                          </span>
+                        {:else if entry.result.helper}
                           {#if entry.result.kind === "action"}
                             <kbd class="keycap result-shortcut">{entry.result.helper}</kbd>
                           {:else}
@@ -699,33 +803,54 @@
               </div>
             {/each}
           </div>
-        {:else}
+        {:else if !compact || scopedQuery || activeScope !== "all"}
           <div class="command-bar-empty">
             <p class="command-bar-empty-title">{emptyStateTitle()}</p>
             <p class="command-bar-empty-subtitle">{emptyStateSubtitle()}</p>
           </div>
         {/if}
 
-        <div class="command-bar-footer" aria-hidden="true">
-          <span class="footer-hints">
-            <span class="key-hint key-hint-default"><span>{selectedResult?.hint || t("common.open")}</span><kbd class="keycap">{formatShortcut("Enter")}</kbd></span>
-            {#each selectedKeys as key (key)}
-              <span class="key-hint">
-                <span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd class="keycap">{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
-              </span>
-            {/each}
-          </span>
-          {#if !docked || movingTab || escapeLeavesScope}
-            <span class="key-hint"><span>{t(movingTab || escapeLeavesScope ? "common.back" : "common.close")}</span><kbd class="keycap">esc</kbd></span>
-          {/if}
+        {#if canSearchWeb}
+          <div class="command-bar-search-fallback">
+            <button type="button" class="scope-hint web-search-button" onclick={executeRawQuery}>
+              {t("commandBar.sectionSearchWeb")}
+            </button>
+          </div>
+        {/if}
         </div>
+
+        {#if !compact}
+        <div class="command-bar-footer" id="cb-hints" aria-hidden="true">
+          {@render keyboardHints()}
+        </div>
+        {/if}
       </div>
     </div>
   </div>
+  {#if compact && detailsOpen}
+    <div
+      id="cb-hints"
+      class="command-bar-help float-surface float-popover"
+      data-command-bar-popover
+      role="status"
+      aria-label={t("commandBar.showDetails")}
+      style:right="{helpPosition.right}px"
+      style:top="{helpPosition.top}px"
+      style:max-height="calc(100dvh - {helpPosition.top + 8}px)"
+      use:portal
+      use:reportInteractiveZone={{ id: "command-bar-help" }}
+      {@attach dismissable({ onDismiss: () => (detailsOpen = false), ignore: ".command-bar-info" })}
+    >
+      {#if autocompleteSuggestion && caretAtEnd}
+        <span class="key-hint"><span>{t("commandBar.hintComplete")}</span><kbd class="keycap">tab</kbd></span>
+      {/if}
+      {@render keyboardHints()}
+    </div>
+  {/if}
 {/if}
 
 <style>
-  /* Clear: the page stays in view under the bar; the backdrop only catches the page area's clicks. */
+  /* A quiet tint distinguishes the floating bar while the current page remains visible. */
   .command-bar-backdrop {
     position: fixed;
     display: flex;
@@ -734,6 +859,10 @@
     padding: 64px 16px 16px;
     z-index: 60;
     pointer-events: auto;
+  }
+
+  .command-bar-backdrop:not(.docked) {
+    background: color-mix(in srgb, var(--chrome-overlay-backdrop-tint) 50%, transparent);
   }
 
   .command-bar-backdrop.docked {
@@ -760,7 +889,80 @@
     animation: none;
   }
 
+  .command-bar-backdrop.compact {
+    --compact-top: clamp(24px, 18vh, 180px);
+    padding-top: var(--compact-top);
+  }
+
+  @media (max-height: 520px) {
+    .command-bar-backdrop.compact { --compact-top: 24px; }
+  }
+
+  .command-bar.compact {
+    width: min(480px, 100%);
+    height: min(320px, calc(100dvh - var(--compact-top) - 80px));
+    max-height: 100%;
+    transition: none;
+    background:
+      linear-gradient(160deg, var(--float-sheen), transparent 48%),
+      color-mix(in srgb, var(--float-surface) 94%, transparent);
+    backdrop-filter: blur(var(--chrome-floating-blur)) saturate(140%);
+    border: 1px solid var(--float-border);
+    box-shadow: inset 0 1px 0 var(--float-sheen), var(--float-shadow);
+  }
+
+  :global(html.reduced-transparency) .command-bar.compact {
+    background: var(--float-surface);
+    backdrop-filter: none;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .command-bar.compact { background: var(--float-surface); backdrop-filter: none; }
+  }
+
+  .compact .command-bar-section-header { padding-top: 8px; }
+  .compact .command-bar-input-row { height: 56px; }
+  .compact .command-bar-header { border-bottom-color: transparent; }
+  .compact .command-bar-results-area { border-top: 1px solid var(--separator); }
+  .command-bar-results-area { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+  .compact .command-bar-empty { overflow-y: auto; }
+  .compact .command-bar-result:not(.selected) .result-helper,
+  .compact .command-bar-result:not(.selected) .result-shortcut { visibility: hidden; }
+
+  .command-bar-help {
+    position: fixed;
+    z-index: var(--z-popover);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(360px, calc(100vw - 32px));
+    padding: 12px 16px;
+    overflow-y: auto;
+  }
+  .command-bar-help .footer-hints { flex: none; height: auto; overflow: visible; gap: 12px 16px; }
+
+
+
+  .command-bar-scopes[hidden] { display: none; }
+
+  .command-bar-info {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .command-bar-info:hover { background: var(--bg-hover); }
+  .command-bar-info:focus-visible { outline: var(--focus-outline); }
+
   .command-bar-content {
+    container: command-bar / inline-size;
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
@@ -894,7 +1096,27 @@
     color: inherit;
   }
 
+  .command-bar-results,
+  .command-bar-help { scrollbar-gutter: stable; }
+
+  .command-bar-results::-webkit-scrollbar,
+  .command-bar-help::-webkit-scrollbar { width: 8px; background: transparent; }
+
+  .command-bar-results::-webkit-scrollbar-thumb,
+  .command-bar-help::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text-secondary) 32%, transparent);
+    border: 2px solid transparent;
+    border-radius: var(--radius-chip);
+    background-clip: padding-box;
+  }
+
+  .command-bar-results::-webkit-scrollbar-thumb:hover,
+  .command-bar-help::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--text-secondary) 55%, transparent);
+  }
+
   .command-bar-results {
+    overflow-x: hidden;
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -1006,6 +1228,20 @@
   }
 
   /* The address follows the title on its line, and gives way to it. */
+  .result-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+  .result-action-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .command-bar-search-fallback { flex: none; padding: 8px 16px 16px; text-align: center; }
+  .web-search-button { height: auto; min-height: 28px; max-width: 100%; padding: 4px 12px; white-space: normal; background: var(--accent); color: var(--accent-text); cursor: pointer; }
+  .web-search-button:hover { background: var(--accent-hover); }
+
   .result-main {
     display: flex;
     align-items: baseline;
@@ -1036,14 +1272,14 @@
     color: var(--text-primary);
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
-    line-height: 18px;
+    line-height: max(18px, 1.3em);
   }
 
   .result-subtitle,
   .result-helper {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
-    line-height: 16px;
+    line-height: max(16px, 1.3em);
   }
 
   .result-hl {
@@ -1138,6 +1374,37 @@
     color: var(--text-primary);
   }
 
+  .compact .result-main { flex-direction: column; align-items: stretch; gap: 0; }
+  .compact .result-title { max-width: 100%; }
+  .compact .command-bar-result {
+    height: auto;
+    min-height: 48px;
+    padding-block: 6px;
+    gap: 8px;
+    grid-template-columns: 24px minmax(0, 1fr) minmax(0, max-content);
+  }
+  .compact .result-action { max-width: 160px; }
+
+  @container command-bar (max-width: 440px) {
+    .command-bar-result {
+      height: auto;
+      min-height: 48px;
+      padding-block: 6px;
+      gap: 8px;
+      grid-template-columns: 24px minmax(0, 1fr) minmax(0, 32%);
+    }
+    .result-main { flex-direction: column; align-items: stretch; gap: 0; }
+    .result-title { max-width: 100%; }
+    .scope-token { max-width: 32%; overflow: hidden; white-space: nowrap; }
+    .command-bar-input-row { gap: 8px; }
+  }
+
+  @container command-bar (max-width: 340px) {
+    .result-action-label { display: none; }
+    .compact .command-bar-result { grid-template-columns: 24px minmax(0, 1fr) auto; }
+  }
+
+
   @keyframes command-bar-in {
     from {
       opacity: 0;
@@ -1157,7 +1424,7 @@
       padding: 12px 8px 8px;
     }
 
-    .command-bar-footer,
+    .command-bar:not(.compact) .command-bar-footer,
     .result-helper {
       display: none;
     }

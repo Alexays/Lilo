@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "Padrão",
+			"compact": "Compacto"
+		},
 		"terminalEnabled": "Abas de terminal",
 		"terminalEnabledDescription": "Abra shells em abas ao lado das suas páginas. Quando desativado, os atalhos, botões e menus do terminal ficam ocultos; os terminais abertos permanecem até serem fechados.",
 		"terminalTheme": "Tema",
@@ -211,6 +215,11 @@
 			"more": "Mais {count}. Faça uma busca para filtrar a lista."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "Layout da barra de comandos",
+				"description": "Escolha o layout padrão ou compacto.",
+				"keywords": "Layout da barra de comandos Padrão Compacto"
+			},
 			"appIcon": {
 				"title": "Ícone do app",
 				"description": "Apenas o Clássico acompanha os estilos de ícones escuro, tonalizado e transparente do macOS."
@@ -1167,6 +1176,7 @@
 		"installed": "Instaladas"
 	},
 	"commandBar": {
+		"showDetails": "Mostrar atalhos de teclado",
 		"hintPeek": "Pré-visualizar",
 		"hintCopyLink": "Copiar link",
 		"hintCloseTab": "Fechar aba",

@@ -46,4 +46,21 @@ final class InitialStateCommandBarTests: XCTestCase {
         // Sent in the same turn as the initial state, the command bar would have shipped with it.
         XCTAssertFalse(events.events.contains { $0.name == "openCommandBar" })
     }
+
+    func testNewTabKeepsTheCurrentPageUntilSubmission() throws {
+        let context = browserContext.context
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
+        let window = makeTestWindow(context, showing: space.id)
+        let page = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let count = window.tabManager.tabs(forSpace: space.id).count
+        let events = BridgeEventRecorder(window.bridgeRouter)
+
+        window.newTab(nil)
+
+        XCTAssertEqual(window.tabManager.tabs(forSpace: space.id).count, count)
+        XCTAssertEqual(window.tabManager.activeTab?.id, page.id)
+        XCTAssertEqual(events.data("openCommandBar").last?["createOnSubmit"] as? Bool, true)
+    }
+
 }

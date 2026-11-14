@@ -23,6 +23,10 @@
 		"terabyte": "To"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "Par défaut",
+			"compact": "Compacte"
+		},
 		"terminalEnabled": "Onglets terminal",
 		"terminalEnabledDescription": "Ouvre des shells en onglets à côté de vos pages. Désactivé, les raccourcis, boutons et menus du terminal sont masqués ; les terminaux ouverts restent jusqu'à leur fermeture.",
 		"terminalTheme": "Thème",
@@ -211,6 +215,11 @@
 			"more": "{count} de plus. Utilisez la recherche pour affiner."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "Disposition de la barre de commandes",
+				"description": "Choisissez la disposition standard ou compacte.",
+				"keywords": "Disposition de la barre de commandes Par défaut Compacte"
+			},
 			"appIcon": {
 				"title": "Icône de l'app",
 				"description": "Seule Classique suit les styles d'icône sombre, teinté et transparent de macOS."
@@ -1167,6 +1176,7 @@
 		"installed": "Installées"
 	},
 	"commandBar": {
+		"showDetails": "Afficher les raccourcis clavier",
 		"hintPeek": "Aperçu",
 		"hintCopyLink": "Copier le lien",
 		"hintCloseTab": "Fermer l'onglet",

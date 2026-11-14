@@ -37,6 +37,7 @@ import {
 export type ResultKey = "newTab" | "split" | "peek" | "copy" | "close" | "remove" | "move";
 
 let _open = $state(false);
+let _createOnSubmit = $state(false);
 // Open in place on a blank active tab: nothing to dismiss, it leaves when the tab gets a page.
 let _docked = $state(false);
 let _query = $state("");
@@ -90,6 +91,7 @@ let _preloadTimer: ReturnType<typeof setTimeout> | null = null;
 const PRELOAD_MIN_VISITS = 3;
 
 export const isCommandBarOpen = (): boolean => _open;
+export const isNewTabCommandBar = (): boolean => _createOnSubmit;
 export const isCommandBarDocked = (): boolean => _docked;
 export const getQuery = (): string => _query;
 export const getResults = (): CommandResult[] => _results;
@@ -482,7 +484,9 @@ export function openCommandBar(
 	prefill?: string,
 	closeBlankTabOnDismiss = false,
 	selectAllOnOpen = false,
+	createOnSubmit = false,
 ): void {
+	_createOnSubmit = createOnSubmit && !isBlankTab(getActiveTab());
 	_open = true;
 	_docked = false;
 	_query = prefill ?? "";
@@ -510,6 +514,7 @@ export function closeCommandBar(): void {
 	const closeBlankTab = !executed && _closeBlankTabOnDismiss;
 	let closingBlankTab = false;
 	_open = false;
+	_createOnSubmit = false;
 	_docked = false;
 	_query = "";
 	_results = [];
@@ -582,7 +587,7 @@ export function dismissAutofill(): void {
 
 export function executeSelected(): void {
 	if (_omniboxSessionId) {
-		submitOmnibox("currentTab");
+		submitOmnibox(_createOnSubmit ? "newForegroundTab" : "currentTab");
 		return;
 	}
 	const result = _results[_selectedIndex];
@@ -599,7 +604,7 @@ export function executeSelectedInNewTab(): void {
 }
 
 export function executeResult(result: CommandResult): void {
-	_executeResult(result, finishExecution);
+	_executeResult(result, finishExecution, _createOnSubmit);
 }
 
 function executeResultInNewTab(result: CommandResult): void {
@@ -685,10 +690,13 @@ export function cancelMoveTab(): void {
 
 export function executeRawQuery(): void {
 	if (_omniboxSessionId) {
-		submitOmnibox("currentTab");
+		submitOmnibox(_createOnSubmit ? "newForegroundTab" : "currentTab");
 		return;
 	}
-	_executeRawQuery(getParsedInput(), _searchEngine, finishExecution);
+	const parsed = getParsedInput();
+	if (_createOnSubmit) {
+		if (parsed.query) _executeRawQueryInNewTab(parsed, _searchEngine, finishExecution);
+	} else _executeRawQuery(parsed, _searchEngine, finishExecution);
 }
 
 export function executeRawQueryInNewTab(): void {
@@ -762,6 +770,7 @@ export function initCommandBarStore(): void {
 			data?.newTab ? "" : data?.prefill,
 			data?.newTab ?? false,
 			data?.selectAll ?? false,
+			data?.createOnSubmit ?? false,
 		),
 	);
 	on("closeCommandBarAfterNavigation", closeCommandBarAfterNavigation);

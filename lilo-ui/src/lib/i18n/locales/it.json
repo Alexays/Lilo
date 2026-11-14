@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "Predefinito",
+			"compact": "Compatto"
+		},
 		"terminalEnabled": "Schede del terminale",
 		"terminalEnabledDescription": "Apri shell come schede accanto alle pagine. Se disattivato, le abbreviazioni, i pulsanti e i menu del terminale vengono nascosti; i terminali aperti restano finché non li chiudi.",
 		"terminalTheme": "Tema",
@@ -211,6 +215,11 @@
 			"more": "Altri {count}. Cerca per restringere l'elenco."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "Layout della barra dei comandi",
+				"description": "Scegli il layout predefinito o compatto.",
+				"keywords": "Layout della barra dei comandi Predefinito Compatto"
+			},
 			"appIcon": {
 				"title": "Icona dell'app",
 				"description": "Solo Classica segue gli stili scuro, colorato e trasparente delle icone di macOS."
@@ -1167,6 +1176,7 @@
 		"installed": "Installate"
 	},
 	"commandBar": {
+		"showDetails": "Mostra scorciatoie da tastiera",
 		"hintPeek": "Anteprima",
 		"hintCopyLink": "Copia link",
 		"hintCloseTab": "Chiudi scheda",

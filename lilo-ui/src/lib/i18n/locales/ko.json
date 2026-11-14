@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "기본",
+			"compact": "간결하게"
+		},
 		"terminalEnabled": "터미널 탭",
 		"terminalEnabledDescription": "페이지 옆에서 셸을 탭으로 엽니다. 끄면 터미널 단축키, 버튼, 메뉴가 숨겨집니다. 열려 있는 터미널은 닫을 때까지 유지됩니다.",
 		"terminalTheme": "테마",
@@ -211,6 +215,11 @@
 			"more": "{count}개 더 있습니다. 검색으로 목록을 좁혀 보세요."
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "명령 모음 레이아웃",
+				"description": "기본 또는 간결한 레이아웃을 선택하세요.",
+				"keywords": "명령 모음 레이아웃 기본 간결하게"
+			},
 			"appIcon": {
 				"title": "앱 아이콘",
 				"description": "클래식만 macOS의 다크, 색조 및 투명 아이콘 스타일을 따릅니다."
@@ -1167,6 +1176,7 @@
 		"installed": "설치됨"
 	},
 	"commandBar": {
+		"showDetails": "키보드 힌트 표시",
 		"hintPeek": "미리보기",
 		"hintCopyLink": "링크 복사",
 		"hintCloseTab": "탭 닫기",

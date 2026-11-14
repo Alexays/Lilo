@@ -23,6 +23,10 @@
 		"terabyte": "TB"
 	},
 	"settings": {
+		"commandBarLayout": {
+			"default": "デフォルト",
+			"compact": "コンパクト"
+		},
 		"terminalEnabled": "ターミナルタブ",
 		"terminalEnabledDescription": "ページの隣にシェルをタブとして開きます。オフにするとターミナルのショートカット、ボタン、メニューが非表示になります。開いているターミナルは閉じるまで残ります。",
 		"terminalTheme": "テーマ",
@@ -211,6 +215,11 @@
 			"more": "ほかに{count}件あります。検索して絞り込んでください。"
 		},
 		"items": {
+			"commandBarLayout": {
+				"title": "コマンドバーのレイアウト",
+				"description": "標準またはコンパクトなレイアウトを選択します。",
+				"keywords": "コマンドバーのレイアウト デフォルト コンパクト"
+			},
 			"appIcon": {
 				"title": "アプリアイコン",
 				"description": "macOS のダーク、色合い調整、クリアのアイコンスタイルに対応するのはクラシックのみです。"
@@ -1167,6 +1176,7 @@
 		"installed": "インストール済み"
 	},
 	"commandBar": {
+		"showDetails": "キーボードヒントを表示",
 		"hintPeek": "プレビュー",
 		"hintCopyLink": "リンクをコピー",
 		"hintCloseTab": "タブを閉じる",

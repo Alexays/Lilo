@@ -1001,7 +1001,7 @@ export interface BridgeEventPayloadMap {
 	cancelDrag: EmptyPayload;
 	/** A drag entered the chrome: its links (file URLs included), else its text. */
 	linkDrag: { urls: string[]; text: string };
-	openCommandBar: { newTab?: boolean; prefill?: string; selectAll?: boolean };
+	openCommandBar: { createOnSubmit?: boolean; newTab?: boolean; prefill?: string; selectAll?: boolean };
 	toggleCommandBar: { prefill?: string; selectAll?: boolean };
 	openHistory: { query?: string; host?: string; openedFrom?: string };
 	closeCommandBarAfterNavigation: EmptyPayload;
