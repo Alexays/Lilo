@@ -19,7 +19,7 @@ extension MainWindowController {
     }
 
     /// As in Chrome, no extension page replaces a private space's new tab: it would run outside the space's store.
-    private var newTabOverrideURL: URL? {
+    var newTabOverrideURL: URL? {
         tabManager.windowAdapter?.isPrivateWindow == true ? nil : profileContext?.extensions.activeNewTabOverrideURL
     }
 

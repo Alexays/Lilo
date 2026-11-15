@@ -95,7 +95,8 @@ extension MainWindowController {
         finishSessionRestore(appliedWindowChrome: true, deferNonCriticalUIUntilChromeNavigation: true)
         switch opening {
         case .nothing: break
-        case .newTab: newTab(nil)
+        // A new window has no page to keep under the command bar: it opens on its new tab.
+        case .newTab: createTabStateFirst(url: newTabOverrideURL)
         case let .urls(urls): urls.forEach { createTabStateFirst(url: $0) }
         case let .tab(tabId): reclaimDisplayedTab(tabId)
         }
