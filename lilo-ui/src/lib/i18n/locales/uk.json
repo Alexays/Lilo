@@ -23,10 +23,6 @@
 		"terabyte": "ТБ"
 	},
 	"settings": {
-		"commandBarLayout": {
-			"default": "Типовий",
-			"compact": "Компактний"
-		},
 		"terminalEnabled": "Вкладки термінала",
 		"terminalEnabledDescription": "Відкривайте оболонки у вкладках поруч зі сторінками. Якщо вимкнути, клавіатурні скорочення, кнопки й меню термінала буде приховано. Відкриті термінали залишаться до закриття.",
 		"terminalTheme": "Тема",
@@ -215,11 +211,6 @@
 			"more": "Ще {count}. Скористайтеся пошуком, щоб звузити список."
 		},
 		"items": {
-			"commandBarLayout": {
-				"title": "Вигляд панелі команд",
-				"description": "Виберіть типовий або компактний вигляд.",
-				"keywords": "Вигляд панелі команд Типовий Компактний"
-			},
 			"appIcon": {
 				"title": "Іконка програми",
 				"description": "Лише Класична підтримує темний, тонований і прозорий стилі іконок macOS."
@@ -1261,8 +1252,6 @@
 		"sectionOpenTabs": "Відкриті вкладки",
 		"sectionBookmarks": "Закладки",
 		"sectionRecentHistory": "Недавня історія",
-		"sectionFrequentSites": "Часто відвідувані сайти",
-		"sectionRecentConversations": "Недавні розмови",
 		"sectionHistory": "Історія",
 		"sectionSwitchToTab": "Перейти до вкладки",
 		"sectionGoTo": "Перейти до",

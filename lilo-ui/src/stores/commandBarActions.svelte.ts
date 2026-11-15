@@ -92,7 +92,7 @@ export function executeResult(
 	if (result.kind === "action") {
 		ACTION_HANDLERS[result.payload.action as CommandActionId]();
 	} else if (result.kind === "terminal") {
-		terminalActions.run(result.payload.command as string, newTab);
+		terminalActions.run(result.payload.command as string, false);
 	} else if (result.kind === "terminalTab") {
 		terminalActions.reveal(result.payload.tabId as string);
 	} else if (result.kind === "closedTerminal") {

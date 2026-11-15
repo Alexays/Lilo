@@ -23,10 +23,6 @@
 		"terabyte": "ТБ"
 	},
 	"settings": {
-		"commandBarLayout": {
-			"default": "По умолчанию",
-			"compact": "Компактный"
-		},
 		"terminalEnabled": "Вкладки терминала",
 		"terminalEnabledDescription": "Открывайте оболочки во вкладках рядом со страницами. Если выключить, сочетания клавиш, кнопки и меню терминала будут скрыты; открытые терминалы останутся до закрытия.",
 		"terminalTheme": "Тема",
@@ -215,11 +211,6 @@
 			"more": "Ещё: {count}. Используйте поиск, чтобы сократить список."
 		},
 		"items": {
-			"commandBarLayout": {
-				"title": "Вид панели команд",
-				"description": "Выберите обычный или компактный вид.",
-				"keywords": "Вид панели команд По умолчанию Компактный"
-			},
 			"appIcon": {
 				"title": "Значок приложения",
 				"description": "Только классический значок поддерживает тёмный, тонированный и прозрачный стили macOS."
@@ -1261,8 +1252,6 @@
 		"sectionOpenTabs": "Открытые вкладки",
 		"sectionBookmarks": "Закладки",
 		"sectionRecentHistory": "Недавняя история",
-		"sectionFrequentSites": "Часто посещаемые сайты",
-		"sectionRecentConversations": "Недавние беседы",
 		"sectionHistory": "История",
 		"sectionSwitchToTab": "Перейти к вкладке",
 		"sectionGoTo": "Перейти",

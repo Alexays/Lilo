@@ -23,10 +23,6 @@
 		"terabyte": "TB"
 	},
 	"settings": {
-		"commandBarLayout": {
-			"default": "Standard",
-			"compact": "Kompakt"
-		},
 		"terminalEnabled": "Terminal-Tabs",
 		"terminalEnabledDescription": "Shells als Tabs neben deinen Seiten öffnen. Ist dies deaktiviert, werden Terminal-Kurzbefehle, -Tasten und -Menüs ausgeblendet. Offene Terminals bleiben bis zum Schließen erhalten.",
 		"terminalTheme": "Design",
@@ -215,11 +211,6 @@
 			"more": "{count} weitere. Grenze die Liste mit der Suche ein."
 		},
 		"items": {
-			"commandBarLayout": {
-				"title": "Befehlsleistenlayout",
-				"description": "Standard- oder kompakte Befehlsleiste wählen.",
-				"keywords": "Befehlsleistenlayout Standard Kompakt"
-			},
 			"appIcon": {
 				"title": "App-Symbol",
 				"description": "Nur „Klassisch“ unterstützt die macOS-Symbolstile „Dunkel“, „Eingefärbt“ und „Transparent“."
@@ -1243,8 +1234,6 @@
 		"sectionOpenTabs": "Offene Tabs",
 		"sectionBookmarks": "Lesezeichen",
 		"sectionRecentHistory": "Letzter Verlauf",
-		"sectionFrequentSites": "Häufig besuchte Websites",
-		"sectionRecentConversations": "Letzte Unterhaltungen",
 		"sectionHistory": "Verlauf",
 		"sectionSwitchToTab": "Zum Tab wechseln",
 		"sectionGoTo": "Gehe zu",

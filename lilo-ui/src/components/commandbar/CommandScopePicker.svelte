@@ -115,13 +115,13 @@
   .scope-picker {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 4px;
     flex: none;
     width: 40px;
     height: 28px;
+    /* The icon keeps the rows' left edge; the hover surface extends past it. */
     margin-left: -8px;
-    padding: 0;
+    padding: 0 0 0 8px;
     border: 0;
     border-radius: var(--radius-sm);
     background: transparent;

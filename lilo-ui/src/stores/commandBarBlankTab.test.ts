@@ -56,7 +56,7 @@ async function withStore() {
 	) => void;
 	const closeCommandBar = commandBarModule.closeCommandBar as () => void;
 
-	return { sent, closes, receive, seed, openCommandBar, closeCommandBar, commandBarModule, loadStore };
+	return { sent, closes, receive, seed, openCommandBar, closeCommandBar, commandBarModule };
 }
 
 test("dismissing with only a blank tab keeps it (closing it would close the window)", async () => {
@@ -149,11 +149,8 @@ test("a typed address reaches native marked as typed, a history result does not"
 });
 
 
-test("compact new-tab results stay the same after clearing scopes, queries, and dismissing", async () => {
+test("a blank tab's results stay the same after clearing scopes, queries, and dismissing", async () => {
  const ctx = await withStore();
- const settings = await ctx.loadStore("/src/stores/settings.svelte.ts");
- settings.initSettingsStore();
- ctx.receive({ event: "settingsLoaded", settings: { commandBarLayout: "compact" } });
  ctx.seed([tab("blank-tab", spaceId, { url: "" }), tab("other-tab", spaceId, { title: "Example" })]);
  const bar = ctx.commandBarModule;
  bar.applyCommandBarInitialState();
@@ -161,7 +158,6 @@ test("compact new-tab results stay the same after clearing scopes, queries, and 
  assert.equal(bar.isCommandBarDocked(), true);
  const initial = bar.getResults().map((result: { id: string }) => result.id);
  assert.ok(initial.length > 0, "the idle landing still offers useful tabs and actions");
- assert.equal(bar.getSections().some((section: { tiles?: boolean }) => section.tiles), false);
  ctx.openCommandBar();
  flushSync();
  assert.equal(bar.isCommandBarDocked(), false);

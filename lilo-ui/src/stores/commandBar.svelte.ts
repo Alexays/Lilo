@@ -253,15 +253,6 @@ export function setSelectedIndex(index: number): void {
 	_selectionMoved = true;
 }
 
-export function autocompleteSelected(): void {
-	const selected = _results[_selectedIndex];
-	if (selected?.kind === "terminal") {
-		setQuery(`${scopePrefix("terminal")}${selected.payload.command as string}`);
-	} else if (selected?.url && selected.kind !== "search") {
-		setQuery(selected.url);
-	}
-}
-
 export function setCommandBarScope(scope: CommandScope): void {
 	const parsed = getParsedInput();
 	const nextQuery =
@@ -288,7 +279,6 @@ function computeResults(options: { pinSelection?: boolean } = {}): void {
 			archivedTabs: _archivedTabs,
 			spaces: getPagedSpaces(),
 			moveTabId: _moveTabId,
-			docked: _docked,
 			autofill: _autofill,
 			omnibox: {
 				active: !!_omniboxSessionId,
@@ -734,10 +724,6 @@ export function initCommandBarStore(): void {
 		_terminals = data.terminals;
 		computeResults({ pinSelection: true });
 	});
-	// After the conversations store took the list, whatever the listeners' order.
-	on("conversationsChanged", () => queueMicrotask(() => {
-		if (_docked) computeResults({ pinSelection: true });
-	}));
 	on("archivedTabs", (data) => {
 		keepFavicons(data.favicons);
 		if (!_open) return;
