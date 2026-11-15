@@ -64,6 +64,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
+        // An exception AppKit swallows unwinds through the Swift runtime and leaves its executor tracking dangling:
+        // the app would crash later, far from the cause.
+        UserDefaults.standard.register(defaults: ["NSApplicationCrashOnExceptions": true])
         let app = LiloApplication.shared
         // Before run: the test host never takes focus, neither at launch nor from an activate the tested code calls.
         if ProcessInfo.isRunningUnderXCTest { app.setActivationPolicy(.prohibited) }
