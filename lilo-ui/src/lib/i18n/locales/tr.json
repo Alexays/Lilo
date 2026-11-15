@@ -1167,6 +1167,7 @@
 		"installed": "Yüklü"
 	},
 	"commandBar": {
+		"showDetails": "Klavye ipuçlarını göster",
 		"hintPeek": "Önizle",
 		"hintCopyLink": "Bağlantıyı Kopyala",
 		"hintCloseTab": "Sekmeyi Kapat",
@@ -1233,8 +1234,6 @@
 		"sectionOpenTabs": "Açık Sekmeler",
 		"sectionBookmarks": "Yer İmleri",
 		"sectionRecentHistory": "Son Geçmiş",
-		"sectionFrequentSites": "Sık Ziyaret Edilenler",
-		"sectionRecentConversations": "Son Sohbetler",
 		"sectionHistory": "Geçmiş",
 		"sectionSwitchToTab": "Sekmeye Geç",
 		"sectionGoTo": "Git",

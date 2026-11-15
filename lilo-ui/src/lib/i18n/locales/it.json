@@ -1167,6 +1167,7 @@
 		"installed": "Installate"
 	},
 	"commandBar": {
+		"showDetails": "Mostra scorciatoie da tastiera",
 		"hintPeek": "Anteprima",
 		"hintCopyLink": "Copia link",
 		"hintCloseTab": "Chiudi scheda",
@@ -1233,8 +1234,6 @@
 		"sectionOpenTabs": "Schede aperte",
 		"sectionBookmarks": "Segnalibri",
 		"sectionRecentHistory": "Cronologia recente",
-		"sectionFrequentSites": "Siti frequenti",
-		"sectionRecentConversations": "Conversazioni recenti",
 		"sectionHistory": "Cronologia",
 		"sectionSwitchToTab": "Passa alla scheda",
 		"sectionGoTo": "Vai a",

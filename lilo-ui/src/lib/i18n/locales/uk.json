@@ -1185,6 +1185,7 @@
 		"installed": "Встановлені"
 	},
 	"commandBar": {
+		"showDetails": "Показати сполучення клавіш",
 		"hintPeek": "Попередній перегляд",
 		"hintCopyLink": "Копіювати посилання",
 		"hintCloseTab": "Закрити вкладку",
@@ -1251,8 +1252,6 @@
 		"sectionOpenTabs": "Відкриті вкладки",
 		"sectionBookmarks": "Закладки",
 		"sectionRecentHistory": "Недавня історія",
-		"sectionFrequentSites": "Часто відвідувані сайти",
-		"sectionRecentConversations": "Недавні розмови",
 		"sectionHistory": "Історія",
 		"sectionSwitchToTab": "Перейти до вкладки",
 		"sectionGoTo": "Перейти до",

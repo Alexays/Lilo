@@ -1167,6 +1167,7 @@
 		"installed": "Installées"
 	},
 	"commandBar": {
+		"showDetails": "Afficher les raccourcis clavier",
 		"hintPeek": "Aperçu",
 		"hintCopyLink": "Copier le lien",
 		"hintCloseTab": "Fermer l'onglet",
@@ -1233,8 +1234,6 @@
 		"sectionOpenTabs": "Onglets ouverts",
 		"sectionBookmarks": "Favoris",
 		"sectionRecentHistory": "Historique récent",
-		"sectionFrequentSites": "Sites fréquents",
-		"sectionRecentConversations": "Conversations récentes",
 		"sectionHistory": "Historique",
 		"sectionSwitchToTab": "Basculer vers l'onglet",
 		"sectionGoTo": "Aller à",

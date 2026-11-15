@@ -1185,6 +1185,7 @@
 		"installed": "Zainstalowane"
 	},
 	"commandBar": {
+		"showDetails": "Pokaż skróty klawiszowe",
 		"hintPeek": "Podgląd",
 		"hintCopyLink": "Kopiuj łącze",
 		"hintCloseTab": "Zamknij kartę",
@@ -1251,8 +1252,6 @@
 		"sectionOpenTabs": "Otwarte karty",
 		"sectionBookmarks": "Zakładki",
 		"sectionRecentHistory": "Ostatnia historia",
-		"sectionFrequentSites": "Częste witryny",
-		"sectionRecentConversations": "Ostatnie rozmowy",
 		"sectionHistory": "Historia",
 		"sectionSwitchToTab": "Przełącz na kartę",
 		"sectionGoTo": "Przejdź do",
