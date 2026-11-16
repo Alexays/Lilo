@@ -272,6 +272,13 @@
 				"description": "Onde os arquivos baixados são salvos.",
 				"keywords": "download salvar local diretório"
 			},
+			"interfaceStyle": {
+				"title": "Estilo da interface",
+				"description": "Combine espaçamento, texto e pastas da barra lateral com o tamanho da barra de comandos.",
+				"default": "Padrão",
+				"streamlined": "Simplificado",
+				"keywords": "sidebar appearance style Arc interface tamanho barra lateral densidade fonte texto espaçamento ícones paleta comandos"
+			},
 			"tabPosition": {
 				"title": "Abas",
 				"description": "Onde ficam suas abas, Espaços e favoritos. Você também pode arrastar a barra lateral para outra borda.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, conectado como {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "Seus sites mais usados ficam aqui.",
+			"pinned": "Guarde abas e pastas para este espaço.",
+			"open": "Novas abas aparecem aqui."
+		},
 		"resize": "Largura da barra lateral",
 		"movedToPosition": "Movido para a posição {position} de {count}",
 		"movedInto": "Movido para {name}",
@@ -948,6 +960,7 @@
 		"trayHide": "Ocultar {name}"
 	},
 	"bookmarks": {
+		"favorites": "Favoritos",
 		"groupLabel": "Abas nos favoritos",
 		"dropToBookmark": "Solte para adicionar aos favoritos"
 	},

@@ -1,10 +1,14 @@
 <script lang="ts">
+  import { emptySection } from "./SidebarEmptySections.svelte";
+  import { getRootItems } from "../../stores/folders.svelte";
+  import { getInterfaceStyle } from "../../stores/settings.svelte";
+  import { getSpaceById } from "../../stores/spaces.svelte";
   import BookmarkedTabs from "./BookmarkedTabs.svelte";
   import TabSection from "./TabSection.svelte";
   import SidebarDropDock from "./SidebarDropDock.svelte";
   import SelectionIndicator from "./SelectionIndicator.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
-  import { getActiveTabId, isSpaceHydrated } from "../../stores/tabs.svelte";
+  import { getActiveTabId, getBookmarkedTabs, getTabsById, isBlankTab, isSpaceHydrated } from "../../stores/tabs.svelte";
   import { getSpacePagerVirtualIndex } from "../../stores/pager.svelte";
   import { trackUserScroll } from "../../lib/motion/userScroll";
 
@@ -21,7 +25,13 @@
     Math.abs(index - getSpacePagerVirtualIndex()) < 0.98,
   );
 
+  const space = $derived(getSpaceById(spaceId));
   const hydrated = $derived(isSpaceHydrated(spaceId));
+  const hasFavorites = $derived(getBookmarkedTabs(spaceId).length > 0);
+  const hasPinned = $derived(getRootItems(spaceId, true).length > 0);
+  const hasOpen = $derived(getRootItems(spaceId, false).some((item) =>
+    item.kind === "folder" || item.id !== getActiveTabId(spaceId) || !isBlankTab(getTabsById(spaceId).get(item.id)),
+  ));
 
   // Each row owns its active highlight (TabItem `.active`); this component only flies a
   // one-shot travel ghost between rows on activation, across the pinned/unpinned boundary.
@@ -35,7 +45,7 @@
   // The favorites share the tabs' scroller: they stay pinned at its top while they fit in
   // 40% of it, and past that scroll away with the tabs, so the tab list never collapses.
   let favoritesHeight = $state(0);
-  const favoritesPinned = $derived(favoritesHeight > 0 && favoritesHeight <= scrollViewportHeight * 0.4);
+  const favoritesPinned = $derived(hasFavorites && favoritesHeight > 0 && favoritesHeight <= scrollViewportHeight * 0.4);
 
   function updateScrollCues(): void {
     const el = spaceScrollEl;
@@ -92,6 +102,8 @@
   }
 </script>
 
+
+
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="space-page" oncontextmenu={openContextMenu}>
   <div class="space-bar-slot">
@@ -124,8 +136,18 @@
               bind:clientHeight={favoritesHeight}
             >
               <BookmarkedTabs {spaceId} {interactive} />
+              {#if !hasFavorites}
+                {@render emptySection("favorites")}
+              {/if}
             </div>
+            {#if getInterfaceStyle() === "streamlined" && space}
+              <h2 class="space-heading" title={space.name}>
+                <span class="space-heading-icon" aria-hidden="true">{space.icon || "🌐"}</span>
+                <span class="space-heading-name">{space.name}</span>
+              </h2>
+            {/if}
             <div class="space-stack-section">
+              {#if !hasPinned && !hasOpen}{@render emptySection("pinned")}{/if}
               <TabSection
                 section="pinned"
                 {spaceId}
@@ -137,6 +159,7 @@
             <div class="space-stack-section space-stack-section-fill">
               <TabSection
                 section="unpinned"
+                showEmptyHint={!hasOpen}
                 {spaceId}
                 {interactive}
                 scroller={spaceScrollEl}
@@ -163,6 +186,23 @@
 </div>
 
 <style>
+  .space-heading {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 20px;
+    margin: 6px 0 4px 8px;
+    padding: 0 0 0 8px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+  .space-heading::after { content: ""; flex: 1; min-width: 24px; height: 1px; background: var(--sidebar-border); }
+  .space-heading-icon { flex: none; width: 16px; text-align: center; }
+  .space-heading-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   /* Takes no room: the drop dock floats over the top of the list while a drag runs. */
   .space-bar-slot {
     position: relative;

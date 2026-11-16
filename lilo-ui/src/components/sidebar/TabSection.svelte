@@ -25,7 +25,7 @@
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
-  import { getSetting, setSetting } from "../../stores/settings.svelte";
+  import { getInterfaceStyle, getSidebarRowHeight, getSetting, setSetting } from "../../stores/settings.svelte";
   import { hostOf } from "../../lib/url";
   import { isChromaticHex } from "../../lib/sidebarTheme";
   import {
@@ -78,6 +78,7 @@
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
   import { on } from "../../lib/bridge";
   import { t } from "../../lib/i18n/state.svelte";
+  import { emptySection } from "./SidebarEmptySections.svelte";
   import { announce } from "../../lib/announce";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
@@ -89,6 +90,7 @@
     interactive,
     scroller,
     scrollerHeight = 0,
+    showEmptyHint = false,
   }: {
     section: "pinned" | "unpinned";
     spaceId: string;
@@ -96,6 +98,7 @@
     /** Shared space scroller, for windowed rendering. */
     scroller?: HTMLElement;
     scrollerHeight?: number;
+    showEmptyHint?: boolean;
   } = $props();
 
   const isPinned = $derived(section === "pinned");
@@ -226,7 +229,7 @@
   }
 
   // The heads load once a list has a stack or a tray: most first frames have neither. Their slots
-  // keep the heads' 32px height meanwhile, so nothing moves when they land.
+  // keep the heads' chosen row height meanwhile, so nothing moves when they land.
   let heads = $state.raw<{
     StackRow: typeof import("./TabStackRow.svelte").default;
     TrayHeader: typeof import("./TabTrayHeader.svelte").default;
@@ -460,12 +463,12 @@
   const VIRTUAL_BUFFER_PX = 320;
   // The window moves in steps of this many pixels, so a scroll frame inside a step re-renders nothing.
   const VIRTUAL_WINDOW_STEP_PX = 160;
-  // Mirror the row CSS (32px rows, 2px --sidebar-tab-row-gap, the same gap above a folder's
-  // contents, 32px empty-folder placeholder); the buffer absorbs small drift.
-  const VIRTUAL_ROW_H = 32;
+  // Match the chosen row height and the 2px gaps above and between folder children; the buffer absorbs small drift.
+  const VIRTUAL_ROW_H = $derived(getSidebarRowHeight());
+  const VIRTUAL_FOLDER_H = 32;
   const VIRTUAL_FOLDER_TOP_MARGIN = 2;
   const VIRTUAL_FOLDER_INSET = 4;
-  const VIRTUAL_EMPTY_FOLDER_H = 32;
+  const VIRTUAL_EMPTY_FOLDER_H = $derived(VIRTUAL_FOLDER_H);
 
   // How far the list's top sits above the shared scroller's viewport top, floored to a window step.
   let listScrollTop = $state(0);
@@ -499,24 +502,28 @@
     if (entry.kind !== "folder") return VIRTUAL_ROW_H;
     const folder = foldersById.get(entry.id);
     if (folder?.splitLayout) return splitPanes(folder.splitLayout).length * VIRTUAL_ROW_H;
-    return expandedFolderHeights.get(entry.id) ?? VIRTUAL_ROW_H;
+    return expandedFolderHeights.get(entry.id) ?? folderHeaderHeight(entry.id);
   }
 
   // An open folder's rows, its open subfolders' rows included.
-  function openFolderHeight(folderId: string): number {
+  function folderHeaderHeight(folderId: string, nested = false): number {
+    return !nested && getConversationTab(folderId, spaceId) ? VIRTUAL_ROW_H : VIRTUAL_FOLDER_H;
+  }
+
+  function openFolderHeight(folderId: string, nested = false): number {
     const childCount = countVisibleFolderChildren(folderId, spaceId, isPinned, tabsById);
     if (childCount === 0) {
-      return VIRTUAL_ROW_H + VIRTUAL_FOLDER_TOP_MARGIN + VIRTUAL_EMPTY_FOLDER_H;
+      return folderHeaderHeight(folderId, nested) + VIRTUAL_FOLDER_TOP_MARGIN + VIRTUAL_EMPTY_FOLDER_H;
     }
     let height =
-      VIRTUAL_ROW_H +
+      folderHeaderHeight(folderId, nested) +
       VIRTUAL_FOLDER_TOP_MARGIN +
-      childCount * VIRTUAL_ROW_H +
+      childCount * VIRTUAL_FOLDER_H +
       (childCount - 1) * VIRTUAL_ROW_GAP;
     for (const child of childrenByFolderId.get(folderId) ?? []) {
       if (child.kind !== "folder" || child.section !== section) continue;
       const folder = foldersById.get(child.itemId);
-      if (folder && !folder.isCollapsed) height += openFolderHeight(child.itemId) - VIRTUAL_ROW_H;
+      if (folder && !folder.isCollapsed) height += openFolderHeight(child.itemId, true) - VIRTUAL_FOLDER_H;
     }
     return height;
   }
@@ -565,7 +572,8 @@
   }
 
   function childRowHeight(entry: SidebarDndItem): number {
-    return entry.kind === "folder" && foldersById.get(entry.id)?.isCollapsed === false ? openFolderHeight(entry.id) : VIRTUAL_ROW_H;
+    const folder = entry.kind === "folder" ? foldersById.get(entry.id) : undefined;
+    return folder?.isCollapsed === false ? openFolderHeight(entry.id, true) : VIRTUAL_FOLDER_H;
   }
 
   const listSegments: WindowRow<Segment>[] | null = $derived(
@@ -1181,7 +1189,7 @@
   {@const children = visibleChildren(folder.id)}
   {@const childZoneEntries = childZoneItems(folder.id, children)}
   {@const childrenShown = shown && !folder.isCollapsed}
-  {@const childRows = top === undefined ? null : windowRows(childZoneEntries, top + VIRTUAL_ROW_H + VIRTUAL_FOLDER_TOP_MARGIN, windowMinY, windowMaxY, childRowHeight, keepMounted)}
+  {@const childRows = top === undefined ? null : windowRows(childZoneEntries, top + folderHeaderHeight(folder.id, level > 1) + VIRTUAL_FOLDER_TOP_MARGIN, windowMinY, windowMaxY, childRowHeight, keepMounted)}
 
   <div
     class="folder-drop-zone"
@@ -1734,9 +1742,13 @@
         onCancel: resetSidebarDrag,
       }}
     >
+      {#if getInterfaceStyle() === "streamlined" && pinnedRootCount === 0 && rootItems.length > 0}
+        <h3 class="sidebar-section-caption open-tabs-caption"><span class="section-caption-name">{t("tabSection.openTabs")}</span></h3>
+      {/if}
       {#if showPinnedDivider}
         <div
           class="pinned-tab-divider-shell"
+          class:captioned={getInterfaceStyle() === "streamlined" && !pinnedDividerHidden && !dragActive}
           bind:this={dividerEl}
           class:stuck={dividerStuck}
           class:pinned-transfer-gate={pinnedTransferGateActive}
@@ -1744,6 +1756,9 @@
           class:with-actions={!dragActive && !pinnedDividerHidden}
           class:with-clear={canClear}
         >
+          {#if getInterfaceStyle() === "streamlined" && !pinnedDividerHidden && !dragActive}
+            <h3 class="sidebar-section-caption open-tabs-caption"><span class="section-caption-name">{t("tabSection.openTabs")}</span></h3>
+          {/if}
           <div
             class="pinned-tab-divider"
             class:pinned-transfer-gate={pinnedTransferGateActive}
@@ -1798,12 +1813,15 @@
         {@render zoneItems()}
       </div>
 
+      {#if showEmptyHint}<div class="empty-tabs-hint">{@render emptySection("open")}</div>{/if}
       {@render newTabRow()}
     </div>
   </div>
 {/if}
 
 <style>
+  .empty-tabs-hint { margin-inline: -8px calc(-1 * var(--sidebar-right-pad, 8px)); }
+
   .pinned-section {
     --sidebar-tab-row-gap: 2px;
     position: relative;
@@ -1861,8 +1879,8 @@
   }
 
   .pinned-list.drag-active.is-empty {
-    height: 32px;
-    min-height: 32px;
+    height: var(--interface-row-height);
+    min-height: var(--interface-row-height);
     overflow: hidden;
     border-color: transparent;
     background: transparent;
@@ -1948,7 +1966,7 @@
   }
 
   .tab-list.drag-active.is-empty {
-    min-height: 32px;
+    min-height: var(--interface-row-height);
     opacity: 1;
     transform: scaleY(1);
     overflow: hidden;
@@ -2019,12 +2037,12 @@
   }
 
   .group-block.stack-open {
-    background: var(--folder-open-bg);
+    background: var(--sidebar-folder-open-bg, var(--folder-open-bg));
   }
 
   /* An open stack is one block like an open folder, painted by its head and rows. */
   .stack-block {
-    background: var(--folder-open-bg);
+    background: var(--sidebar-folder-open-bg, var(--folder-open-bg));
   }
 
   .stack-block:not(.stack-end) {
@@ -2046,7 +2064,7 @@
   .group-head-slot {
     position: relative;
     min-width: 0;
-    min-height: 32px;
+    min-height: var(--interface-row-height);
   }
 
   .virtual-spacer {
@@ -2075,7 +2093,7 @@
 
   /* One tinted block per open root folder, the only mark of what it holds: subfolders inside it show through. */
   .folder-open-rail > .folder-drop-zone {
-    background: var(--folder-open-bg);
+    background: var(--sidebar-folder-open-bg, var(--folder-open-bg));
   }
 
   /* The tinted block holds its rows 4px in from its edges; the head and first-level rows take the left one themselves. */
@@ -2144,12 +2162,12 @@
   }
 
   .folder-contents.drag-active.is-empty {
-    min-height: 32px;
+    min-height: var(--interface-row-height);
   }
 
   .folder-empty-placeholder {
     margin-left: 24px;
-    height: 32px;
+    height: var(--interface-row-height);
     display: flex;
     align-items: center;
     padding: 0 8px;
@@ -2208,7 +2226,7 @@
   }
 
   .sidebar-dnd-placeholder {
-    height: 32px;
+    height: var(--interface-row-height);
     width: 100%;
     box-sizing: border-box;
     border: 1px solid color-mix(in srgb, var(--text-primary) 18%, transparent);
@@ -2248,7 +2266,7 @@
     gap: 8px;
     flex: 1;
     min-width: 0;
-    height: 32px;
+    height: var(--interface-row-height);
     padding: 0 8px;
     border: none;
     background: none;
@@ -2287,7 +2305,7 @@
   /* Centered on the rows' accessory slot: 20px, inset by the row's 8px padding. */
   .new-terminal-button {
     width: 32px;
-    height: 32px;
+    height: var(--interface-row-height);
     margin-left: 2px;
     margin-right: 2px;
     flex-shrink: 0;

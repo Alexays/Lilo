@@ -44,6 +44,16 @@
      (overflow: hidden / contain: paint) so the ring stays inside the box. */
   --focus-outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
 
+  /* Default geometry; the Streamlined style overrides only its coordinated metrics. */
+  --interface-row-height: 32px;
+  --interface-text-size: 13px;
+  --interface-palette-width: 480px;
+  --interface-palette-height: 320px;
+  --interface-palette-search-height: 56px;
+  --interface-palette-input-size: 17px;
+  --interface-palette-row-height: 48px;
+  --interface-palette-icon-size: 24px;
+
   --sidebar-width: 260px;
   /* Mirrors MainWindowController.sidebarRailWidth. */
   --sidebar-rail-width: 76px;
@@ -199,6 +209,14 @@
   --z-popover: 10000;
   --z-card: 10001;
   --z-tip: 99999;
+}
+
+:root[data-interface-style="streamlined"] {
+  --interface-row-height: 36px;
+  --interface-text-size: 14px;
+  --interface-palette-width: 520px;
+  --interface-palette-height: 344px;
+  --interface-palette-input-size: 18px;
 }
 
 @media (prefers-color-scheme: dark) {

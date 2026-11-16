@@ -501,8 +501,8 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 40px;
-    min-height: 40px;
+    height: var(--bookmark-tile-height);
+    min-height: var(--bookmark-tile-height);
     padding: 0 8px;
     overflow: hidden;
     border-color: color-mix(in srgb, var(--bookmark-zone-color) 36%, transparent);

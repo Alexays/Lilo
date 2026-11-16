@@ -272,6 +272,13 @@
 				"description": "ダウンロードしたファイルの保存先。",
 				"keywords": "ダウンロード 保存 場所 ディレクトリ"
 			},
+			"interfaceStyle": {
+				"title": "インターフェースのスタイル",
+				"description": "サイドバーの間隔、文字、フォルダとコマンドバーのサイズをまとめて調整します。",
+				"default": "デフォルト",
+				"streamlined": "すっきり",
+				"keywords": "sidebar appearance style Arc インターフェイス サイズ サイドバー 密度 フォント 文字 間隔 アイコン コマンドパレット"
+			},
 			"tabPosition": {
 				"title": "タブ",
 				"description": "タブ、スペース、お気に入りを表示する場所。サイドバーを別の端にドラッグしても変更できます。",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}、{profile}としてサインイン"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "よく使うサイトがここに表示されます。",
+			"pinned": "このスペースのタブやフォルダを保存します。",
+			"open": "新しいタブがここに表示されます。"
+		},
 		"resize": "サイドバーの幅",
 		"movedToPosition": "{count} 個中 {position} 番目に移動しました",
 		"movedInto": "{name} に移動しました",
@@ -948,6 +960,7 @@
 		"trayHide": "{name}を隠す"
 	},
 	"bookmarks": {
+		"favorites": "お気に入り",
 		"groupLabel": "ブックマーク済みのタブ",
 		"dropToBookmark": "ドロップしてブックマーク"
 	},

@@ -272,6 +272,13 @@
 				"description": "Emplacement des fichiers téléchargés.",
 				"keywords": "téléchargements enregistrer emplacement"
 			},
+			"interfaceStyle": {
+				"title": "Style de l’interface",
+				"description": "Harmonisez l’espacement, le texte et les dossiers de la barre latérale avec la taille de la barre de commandes.",
+				"default": "Par défaut",
+				"streamlined": "Épuré",
+				"keywords": "sidebar appearance style Arc interface taille barre latérale densité police texte espacement icônes palette commandes"
+			},
 			"tabPosition": {
 				"title": "Onglets",
 				"description": "Où vivent vos onglets, Spaces et favoris. Vous pouvez aussi glisser la barre latérale vers un autre bord.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, connecté avec {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "Vos sites les plus utilisés se trouvent ici.",
+			"pinned": "Gardez ici les onglets et dossiers de cet espace.",
+			"open": "Les nouveaux onglets apparaissent ici."
+		},
 		"resize": "Largeur de la barre latérale",
 		"movedToPosition": "Déplacé en position {position} sur {count}",
 		"movedInto": "Déplacé dans {name}",
@@ -948,6 +960,7 @@
 		"trayHide": "Masquer {name}"
 	},
 	"bookmarks": {
+		"favorites": "Favoris",
 		"groupLabel": "Onglets favoris",
 		"dropToBookmark": "Déposer en favori"
 	},

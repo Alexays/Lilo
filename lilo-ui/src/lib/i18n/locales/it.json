@@ -272,6 +272,13 @@
 				"description": "Dove vengono salvati i file scaricati.",
 				"keywords": "download salva posizione cartella"
 			},
+			"interfaceStyle": {
+				"title": "Stile dell’interfaccia",
+				"description": "Coordina spaziatura, testo e cartelle della barra laterale con le dimensioni della barra dei comandi.",
+				"default": "Predefinito",
+				"streamlined": "Essenziale",
+				"keywords": "sidebar appearance style Arc interfaccia dimensioni barra laterale densità carattere testo spaziatura icone tavolozza comandi"
+			},
 			"tabPosition": {
 				"title": "Schede",
 				"description": "Dove si trovano schede, spazi e preferiti. Puoi anche trascinare la barra laterale su un altro bordo.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, accesso come {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "Qui trovi i siti che usi di più.",
+			"pinned": "Conserva schede e cartelle per questo spazio.",
+			"open": "Le nuove schede appaiono qui."
+		},
 		"resize": "Larghezza della barra laterale",
 		"movedToPosition": "Spostato in posizione {position} di {count}",
 		"movedInto": "Spostato in {name}",
@@ -948,6 +960,7 @@
 		"trayHide": "Nascondi {name}"
 	},
 	"bookmarks": {
+		"favorites": "Preferiti",
 		"groupLabel": "Schede nei segnalibri",
 		"dropToBookmark": "Rilascia per aggiungere ai segnalibri"
 	},

@@ -3,6 +3,8 @@
   import { dismissable } from "../../lib/actions/dismissable";
   import CommandScopePicker from "./CommandScopePicker.svelte";
   import { untrack } from "svelte";
+  import { apcaContrast, ensureContrast, parseHexColor, TEXT_CONTRAST, toHex } from "../../lib/sidebarTheme";
+  import { themeSidebarBackground } from "../../stores/theme.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { t } from "../../lib/i18n/state.svelte";
@@ -50,6 +52,25 @@
   import { getTabs } from "../../stores/tabs.svelte";
   import type { CommandResult } from "../../stores/commandBarSearch.svelte";
   import { buildTabFaviconLookup, LINE_ICONS, resolveResultIcon } from "./commandBarIcons";
+
+  const paletteStyle = $derived.by(() => {
+    const background = themeSidebarBackground();
+    const bg = parseHexColor(background);
+    if (!bg) return "";
+    const black = { r: 0, g: 0, b: 0 };
+    const white = { r: 255, g: 255, b: 255 };
+    const ink = apcaContrast(black, bg) >= apcaContrast(white, bg) ? black : white;
+    const mix = (color: typeof bg, amount: number) => toHex({
+      r: Math.round(bg.r * (1 - amount) + color.r * amount),
+      g: Math.round(bg.g * (1 - amount) + color.g * amount),
+      b: Math.round(bg.b * (1 - amount) + color.b * amount),
+    });
+    const primary = toHex(ink);
+    const secondary = ensureContrast(mix(ink, 0.8), background, TEXT_CONTRAST, primary);
+    // Moving the selection away from the ink preserves its contrast on mid-tone Spaces too.
+    const selection = mix(ink === black ? white : black, 0.14);
+    return `--cb-background:${background}; --cb-text:${primary}; --cb-secondary:${secondary}; --cb-selection:${selection};`;
+  });
 
   setTopLevelDomains(TOP_LEVEL_DOMAINS);
 
@@ -490,6 +511,7 @@
     <div
       bind:this={commandBarEl}
       class="command-bar float-surface"
+      style={paletteStyle}
     >
       <div bind:this={commandBarContentEl} class="command-bar-content">
         <div class="command-bar-header">
@@ -675,8 +697,24 @@
 
   /* One height whatever the results, so typing never moves the panel. */
   .command-bar {
-    width: min(480px, 100%);
-    height: min(320px, calc(100dvh - var(--bar-top) - 80px));
+    --font-size-md: var(--interface-text-size);
+    --font-size-sm: calc(var(--interface-text-size) - 1px);
+    --font-size-xs: calc(var(--interface-text-size) - 2px);
+    /* Keep the Space surface while guarding text and selection contrast for the palette. */
+    --text-primary: var(--cb-text, var(--sidebar-contrast));
+    --text-secondary: var(--cb-secondary, var(--sidebar-secondary));
+    --text-muted: var(--cb-secondary, var(--sidebar-muted));
+    --accent-ink: var(--text-primary);
+    --bg-hover: var(--cb-selection);
+    --bg-active: var(--cb-selection);
+    --border: var(--sidebar-border);
+    --separator: var(--sidebar-separator);
+    --cb-selection: var(--sidebar-sel);
+    --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 14%, transparent);
+    outline: 1px solid color-mix(in srgb, var(--accent) 22%, var(--sidebar-border));
+    outline-offset: -1px;
+    width: min(var(--interface-palette-width), 100%);
+    height: min(var(--interface-palette-height), calc(100dvh - var(--bar-top) - 80px));
     max-height: 100%;
     border: 1px solid var(--float-border);
     border-radius: var(--radius-lg);
@@ -686,7 +724,7 @@
     transform-origin: 50% 0;
     animation: command-bar-in var(--motion-duration-overlay) var(--motion-ease-spring);
     contain: layout style;
-    background: linear-gradient(160deg, var(--float-sheen), transparent 48%), var(--float-surface);
+    background: var(--cb-background, var(--sidebar-bg));
     box-shadow: inset 0 1px 0 var(--float-sheen), var(--float-shadow);
   }
 
@@ -703,6 +741,10 @@
     width: min(360px, calc(100vw - 32px));
     padding: 12px 16px;
     overflow-y: auto;
+  }
+
+  .command-bar-help {
+    --font-size-sm: calc(var(--interface-text-size) - 1px);
   }
 
   .command-bar-info {
@@ -737,14 +779,14 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    height: 56px;
+    height: var(--interface-palette-search-height);
     padding: 0 16px;
   }
 
   .command-bar-input,
   .command-bar-autocomplete {
     font: inherit;
-    font-size: var(--font-size-modal);
+    font-size: var(--interface-palette-input-size);
     letter-spacing: 0;
     line-height: 24px;
   }
@@ -800,7 +842,7 @@
 
   .command-bar-results::-webkit-scrollbar-thumb,
   .command-bar-help::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--text-secondary) 32%, transparent);
+    background: var(--cb-scroll-thumb, color-mix(in srgb, var(--text-secondary) 32%, transparent));
     border: 2px solid transparent;
     border-radius: var(--radius-chip);
     background-clip: padding-box;
@@ -817,7 +859,29 @@
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--cb-scroll-thumb) transparent;
     padding: 0 8px 8px;
+  }
+
+  .command-bar-results:hover,
+  .command-bar-results:focus-within {
+    --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 28%, transparent);
+  }
+
+  @media (prefers-contrast: more) {
+    .command-bar {
+      --text-secondary: var(--text-primary);
+      --text-muted: var(--text-primary);
+      --separator: color-mix(in srgb, var(--text-primary) 30%, transparent);
+    }
+    .command-bar-results { --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 45%, transparent); }
+    .command-bar-results:hover,
+    .command-bar-results:focus-within { --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 60%, transparent); }
+  }
+
+  @media (forced-colors: active) {
+    .command-bar-results { scrollbar-color: auto; }
   }
 
   .command-bar-section-header {
@@ -847,10 +911,10 @@
   .command-bar-result {
     display: grid;
     /* The helper shows whole while the title keeps its room, then gives way first. */
-    grid-template-columns: 24px minmax(min(160px, 50%), 1fr) minmax(0, max-content);
+    grid-template-columns: var(--interface-palette-icon-size) minmax(min(160px, 50%), 1fr) minmax(0, max-content);
     align-items: center;
     gap: 8px;
-    min-height: 48px;
+    min-height: var(--interface-palette-row-height);
     padding: 6px 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -864,8 +928,8 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
+    width: var(--interface-palette-icon-size);
+    height: var(--interface-palette-icon-size);
     border-radius: var(--radius-sm);
     background: var(--bg-hover);
     color: var(--text-primary);
@@ -1024,6 +1088,12 @@
     font-size: var(--font-size-sm);
   }
 
+  .keycap {
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+  }
+
   .key-hint {
     display: inline-flex;
     flex: none;
@@ -1039,13 +1109,13 @@
   }
 
   @container command-bar (max-width: 440px) {
-    .command-bar-result { grid-template-columns: 24px minmax(0, 1fr) minmax(0, 32%); }
+    .command-bar-result { grid-template-columns: var(--interface-palette-icon-size) minmax(0, 1fr) minmax(0, 32%); }
     .command-bar-input-row { gap: 8px; }
   }
 
   @container command-bar (max-width: 340px) {
     .result-action-label { display: none; }
-    .command-bar-result { grid-template-columns: 24px minmax(0, 1fr) auto; }
+    .command-bar-result { grid-template-columns: var(--interface-palette-icon-size) minmax(0, 1fr) auto; }
   }
 
   @keyframes command-bar-in {

@@ -7,8 +7,10 @@
 </script>
 
 <script lang="ts">
+  import { getInterfaceStyle } from "../../stores/settings.svelte";
   import { tooltipSide } from "../../stores/tabLayout.svelte";
   import { untrack } from "svelte";
+
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import TabLoader from "./TabLoader.svelte";
   import { strippedTitle } from "./tabSectionModel";
@@ -74,6 +76,7 @@
   } = $props();
 
   let isHovered = $state(false);
+  let hasFocus = $state(false);
   let tabItemEl: HTMLDivElement | undefined = $state();
 
   // The row owns its active highlight; it is only held back while the SelectionIndicator
@@ -309,7 +312,7 @@
     isBlankTab(tab) && !tab.isPinned && !tab.isBookmarked && getOpenTabs(tab.spaceId).length === 1 &&
       !getSpaceById(tab.spaceId)?.isPrivate && !isAgentsSpace(tab.spaceId ?? ""),
   );
-  const isCloseVisible = $derived((isHovered || isActive) && !isKeptBlankTab);
+  const isCloseVisible = $derived((isHovered || hasFocus || (isActive && getInterfaceStyle() !== "streamlined")) && !isKeptBlankTab);
 
   // Read only while hovered, like the memory line: a running command's elapsed time is taken then.
   const terminalStatusDetail = $derived.by((): string => {
@@ -464,6 +467,8 @@
       requestCloseTab();
     }
   }}
+  onfocusin={() => { hasFocus = true; }}
+  onfocusout={(e) => { hasFocus = e.currentTarget.contains(e.relatedTarget as Node | null); }}
   onmouseenter={(e) => {
     if (document.body.classList.contains("sidebar-dnd-active")) return;
     isHovered = true;
@@ -700,7 +705,7 @@
     width: 100%;
     min-width: 0;
     padding: 0 8px;
-    height: 32px;
+    height: var(--interface-row-height);
     box-sizing: border-box;
     border-radius: var(--radius-md);
     cursor: default;
@@ -734,7 +739,7 @@
      identical to `.selection-ghost` so landing is seamless. */
   .tab-item.active:not(.travel-hold) {
     background: var(--sidebar-sel);
-    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
+    box-shadow: var(--sidebar-row-shadow, inset 0 0 0 0.5px var(--sidebar-sel-ring));
   }
 
   .tab-item.split-drop-target {

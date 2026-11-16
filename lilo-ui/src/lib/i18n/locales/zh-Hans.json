@@ -272,6 +272,13 @@
 				"description": "下载文件的存储位置。",
 				"keywords": "下载 存储 位置 目录"
 			},
+			"interfaceStyle": {
+				"title": "界面风格",
+				"description": "统一调整侧边栏间距、文字、文件夹与命令栏大小。",
+				"default": "默认",
+				"streamlined": "精简",
+				"keywords": "sidebar appearance style Arc 界面 大小 侧边栏 密度 字体 文字 间距 图标 命令 面板"
+			},
 			"tabPosition": {
 				"title": "标签页",
 				"description": "存放标签页、空间和个人收藏。你也可以将侧边栏拖到其他边缘。",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}，已登录为 {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "常用网站会显示在这里。",
+			"pinned": "保留此空间的标签页和文件夹。",
+			"open": "新标签页会显示在这里。"
+		},
 		"resize": "边栏宽度",
 		"movedToPosition": "已移到第 {position} 位，共 {count} 项",
 		"movedInto": "已移入 {name}",
@@ -948,6 +960,7 @@
 		"trayHide": "隐藏{name}"
 	},
 	"bookmarks": {
+		"favorites": "收藏夹",
 		"groupLabel": "书签标签页",
 		"dropToBookmark": "放下以添加书签"
 	},

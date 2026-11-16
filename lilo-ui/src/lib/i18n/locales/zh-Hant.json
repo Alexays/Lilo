@@ -272,6 +272,13 @@
 				"description": "下載檔案的儲存位置。",
 				"keywords": "下載 儲存 位置 目錄"
 			},
+			"interfaceStyle": {
+				"title": "介面風格",
+				"description": "統一調整側邊欄間距、文字、資料夾與命令列大小。",
+				"default": "預設",
+				"streamlined": "精簡",
+				"keywords": "sidebar appearance style Arc 介面 大小 側邊欄 密度 字型 文字 間距 圖示 命令 面板"
+			},
 			"tabPosition": {
 				"title": "分頁",
 				"description": "分頁、空間與喜好項目的位置。你也可以將側邊欄拖到其他邊緣。",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}，以 {profile} 登入"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "常用網站會顯示在這裡。",
+			"pinned": "保留此空間的分頁和檔案夾。",
+			"open": "新分頁會顯示在這裡。"
+		},
 		"resize": "側邊欄寬度",
 		"movedToPosition": "已移到第 {position} 位，共 {count} 項",
 		"movedInto": "已移入 {name}",
@@ -948,6 +960,7 @@
 		"trayHide": "隱藏{name}"
 	},
 	"bookmarks": {
+		"favorites": "喜好項目",
 		"groupLabel": "書籤分頁",
 		"dropToBookmark": "放下以加入書籤"
 	},

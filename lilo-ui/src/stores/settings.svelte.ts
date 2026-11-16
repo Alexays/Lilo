@@ -1,3 +1,4 @@
+import type { BridgeInitialStatePayload } from "../lib/bridge/protocol";
 import { on } from "../lib/bridge";
 import { featureFlagsActions, settingsActions } from "../lib/bridge/actions";
 import type {
@@ -44,12 +45,37 @@ let _recordingShortcut = $state<string | null>(null);
 let _shortcutConflict = $state.raw<BridgeShortcutConflict | null>(null);
 let statusTimer: ReturnType<typeof setTimeout> | null = null;
 
+export function getInterfaceStyle(): "default" | "streamlined" {
+	return getSetting("interfaceStyle", "default") === "streamlined" ? "streamlined" : "default";
+}
+
+export function getInterfaceTextSize(): number {
+	return getInterfaceStyle() === "streamlined" ? 14 : 13;
+}
+
+export function getSidebarRowHeight(): number {
+	return getInterfaceStyle() === "streamlined" ? 36 : 32;
+}
+
+function applyInterfaceStyle(): void {
+	if (typeof document === "undefined") return;
+	const root = document.documentElement;
+	const style = getInterfaceStyle();
+	if (root && root.dataset.interfaceStyle !== style) root.dataset.interfaceStyle = style;
+}
+
+export function applyInterfaceStyleInitialState(data: Pick<BridgeInitialStatePayload, "interfaceStyle">): void {
+	_values.interfaceStyle = data.interfaceStyle === "streamlined" ? "streamlined" : "default";
+	applyInterfaceStyle();
+}
+
 export function initSettingsStore(): void {
 	// Every setting change republishes the whole map: merged key by key, only the readers of a changed key re-run.
 	on("settingsLoaded", (data) => {
 		const next = data.settings ?? {};
 		for (const key in _values) if (!(key in next)) delete _values[key];
 		for (const key in next) if (_values[key] !== next[key]) _values[key] = next[key];
+		applyInterfaceStyle();
 		const locale = _values["locale"];
 		if (locale && isSupportedLocale(locale)) void setLocale(locale);
 	});
@@ -148,6 +174,7 @@ export function getSetting(key: string, fallback: string): string {
 
 export function setSetting(key: string, value: string): void {
 	_values[key] = value;
+	if (key === "interfaceStyle") applyInterfaceStyle();
 	settingsActions.set(key, value);
 }
 

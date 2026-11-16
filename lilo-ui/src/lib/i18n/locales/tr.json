@@ -272,6 +272,13 @@
 				"description": "İndirilen dosyaların kaydedildiği yer.",
 				"keywords": "indirme kaydet konum dizin"
 			},
+			"interfaceStyle": {
+				"title": "Arayüz stili",
+				"description": "Kenar çubuğu aralıklarını, metni ve klasörleri komut çubuğu boyutuyla birlikte ayarlayın.",
+				"default": "Varsayılan",
+				"streamlined": "Sade",
+				"keywords": "sidebar appearance style Arc arayüz boyut kenar çubuğu yoğunluk yazı tipi metin aralık simge komut paleti"
+			},
 			"tabPosition": {
 				"title": "Sekmeler",
 				"description": "Sekmelerinizin, Alanlarınızın ve favorilerinizin bulunduğu yer. Kenar çubuğunu başka bir kenara da sürükleyebilirsiniz.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, {profile} olarak oturum açıldı"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "En sık kullandığınız siteler burada yer alır.",
+			"pinned": "Bu alan için sekmeleri ve klasörleri saklayın.",
+			"open": "Yeni sekmeler burada görünür."
+		},
 		"resize": "Kenar çubuğu genişliği",
 		"movedToPosition": "{count} içinde {position}. konuma taşındı",
 		"movedInto": "{name} içine taşındı",
@@ -948,6 +960,7 @@
 		"trayHide": "{name} gizle"
 	},
 	"bookmarks": {
+		"favorites": "Favoriler",
 		"groupLabel": "Yer imli sekmeler",
 		"dropToBookmark": "Yer imi eklemek için bırakın"
 	},

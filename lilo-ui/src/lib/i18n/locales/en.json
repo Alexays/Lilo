@@ -272,6 +272,13 @@
 				"description": "Where downloaded files are saved.",
 				"keywords": "download save location directory"
 			},
+			"interfaceStyle": {
+				"title": "Interface style",
+				"description": "Coordinate sidebar spacing, text, folders and command bar sizing in one style.",
+				"default": "Default",
+				"streamlined": "Streamlined",
+				"keywords": "sidebar appearance style Arc interface size sidebar density font text spacing icons command palette compact comfortable roomy spacious"
+			},
 			"tabPosition": {
 				"title": "Tabs",
 				"description": "Where your tabs, Spaces and favorites live. You can also drag the sidebar to another edge.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, signed in as {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "Your most-used sites live here.",
+			"pinned": "Keep tabs and folders for this Space.",
+			"open": "New tabs appear here."
+		},
 		"resize": "Sidebar width",
 		"movedToPosition": "Moved to position {position} of {count}",
 		"movedInto": "Moved into {name}",
@@ -948,6 +960,7 @@
 		"trayHide": "Hide {name}"
 	},
 	"bookmarks": {
+		"favorites": "Favorites",
 		"groupLabel": "Bookmarked tabs",
 		"dropToBookmark": "Drop to bookmark"
 	},

@@ -272,6 +272,13 @@
 				"description": "Waar gedownloade bestanden worden bewaard.",
 				"keywords": "download bewaar locatie map"
 			},
+			"interfaceStyle": {
+				"title": "Interfacestijl",
+				"description": "Stem zijbalkafstand, tekst en mappen af op de grootte van de opdrachtbalk.",
+				"default": "Standaard",
+				"streamlined": "Gestroomlijnd",
+				"keywords": "sidebar appearance style Arc interface grootte zijbalk dichtheid lettertype tekst afstand pictogrammen opdrachtenpalet"
+			},
 			"tabPosition": {
 				"title": "Tabbladen",
 				"description": "Waar je tabbladen, ruimtes en favorieten staan. Je kunt ook de navigatiekolom naar een andere rand slepen.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, aangemeld als {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "Hier staan je meestgebruikte websites.",
+			"pinned": "Bewaar tabbladen en mappen voor deze ruimte.",
+			"open": "Nieuwe tabbladen verschijnen hier."
+		},
 		"resize": "Breedte van navigatiekolom",
 		"movedToPosition": "Verplaatst naar positie {position} van {count}",
 		"movedInto": "Verplaatst naar {name}",
@@ -948,6 +960,7 @@
 		"trayHide": "Verberg {name}"
 	},
 	"bookmarks": {
+		"favorites": "Favorieten",
 		"groupLabel": "Bladwijzertabbladen",
 		"dropToBookmark": "Laat los om bladwijzer te maken"
 	},
