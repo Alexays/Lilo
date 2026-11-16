@@ -794,6 +794,7 @@ extension MainWindowController {
             "treeItems": currentTreeItems.map(\.bridgeData),
             "activeTabId": tabManager.activeOpenTabId?.uuidString ?? "",
             "sidebarWidth": sidebarExpandedWidth,
+            "interfaceStyle": context.settingsStore?.get("interfaceStyle") ?? "default",
             "sidebarVisible": sidebarVisible,
             "sidebarRail": sidebarRail,
             "toolbarVisible": toolbarVisible,

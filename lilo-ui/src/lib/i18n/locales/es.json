@@ -272,6 +272,13 @@
 				"description": "Dónde se guardan los archivos descargados.",
 				"keywords": "descarga guardar ubicación directorio"
 			},
+			"interfaceStyle": {
+				"title": "Estilo de interfaz",
+				"description": "Coordina el espaciado, el texto y las carpetas de la barra lateral con el tamaño de la barra de comandos.",
+				"default": "Predeterminado",
+				"streamlined": "Simplificado",
+				"keywords": "sidebar appearance style Arc interfaz tamaño barra lateral densidad fuente texto espaciado iconos paleta comandos"
+			},
 			"tabPosition": {
 				"title": "Pestañas",
 				"description": "Dónde están tus pestañas, Espacios y favoritos. También puedes arrastrar la barra lateral a otro borde.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, sesión iniciada como {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "Aquí están tus sitios más utilizados.",
+			"pinned": "Guarda pestañas y carpetas para este espacio.",
+			"open": "Las pestañas nuevas aparecen aquí."
+		},
 		"resize": "Ancho de la barra lateral",
 		"movedToPosition": "Movido a la posición {position} de {count}",
 		"movedInto": "Movido a {name}",
@@ -948,6 +960,7 @@
 		"trayHide": "Ocultar {name}"
 	},
 	"bookmarks": {
+		"favorites": "Favoritos",
 		"groupLabel": "Pestañas guardadas en marcadores",
 		"dropToBookmark": "Suelta para guardar en marcadores"
 	},

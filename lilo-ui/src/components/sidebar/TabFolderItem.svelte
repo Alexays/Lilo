@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getInterfaceStyle } from "../../stores/settings.svelte";
 	import type { FolderState } from "../../stores/folders.svelte";
 	import { t } from "../../lib/i18n/state.svelte";
 	import { folderActions } from "../../lib/bridge/actions";
@@ -286,6 +287,13 @@
 			class:folder-icon--open={!folder.isCollapsed}
 			aria-hidden="true"
 		>
+			{#if getInterfaceStyle() === "streamlined"}
+				<svg class="flat-folder" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+					<path class="folder-icon-outline" d={folder.isCollapsed
+						? "M2 4.5A1.5 1.5 0 0 1 3.5 3H6l1.5 1.5h5A1.5 1.5 0 0 1 14 6v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1Z"
+						: "M2 7V4.5A1.5 1.5 0 0 1 3.5 3H6l1.5 1.5h5A1.5 1.5 0 0 1 14 6v1M2 7h12l-1 6H3Z"} />
+				</svg>
+			{:else}
 			<svg width="18" height="18" viewBox="0 0 18 18" fill="none">
 				<g>
 					<g class="folder-back">
@@ -320,6 +328,7 @@
 					</g>
 				</g>
 			</svg>
+			{/if}
 		</div>
 
 		{#if isRenaming}
@@ -472,6 +481,7 @@
 <style>
 	/* The edit border takes no row height, so a folder spaces like a tab. */
 	.folder-edit-shell {
+		--folder-render-accent: var(--folder-accent);
 		position: relative;
 		margin-block: -1px;
 		width: 100%;
@@ -499,7 +509,7 @@
 		gap: 8px;
 		width: 100%;
 		min-width: 0;
-		height: 32px;
+		height: var(--interface-row-height);
 		padding: 0 8px;
 		box-sizing: border-box;
 		border-radius: var(--radius-md);
@@ -525,7 +535,7 @@
 	/* The folder holding the active tab: a faint persistent wash in its own colour, well under the
 	   active tab's own fill, so a collapsed folder still shows where you are. */
 	.folder-row.contains-active {
-		background: color-mix(in srgb, var(--folder-accent) 11%, transparent);
+		background: color-mix(in srgb, var(--folder-render-accent) 11%, transparent);
 	}
 
 	.folder-row.contains-active .folder-title {
@@ -536,13 +546,13 @@
 	   evenly, so it centers on the favicon column and the title starts where a tab's does. */
 	.folder-icon {
 		width: 16px;
-		height: 18px;
+		height: calc(16px + 2px);
 		margin-left: -1px;
 		flex-shrink: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--folder-accent);
+		color: var(--folder-render-accent);
 	}
 
 	.folder-icon svg {
@@ -588,32 +598,32 @@
 	}
 
 	.folder-back-fill {
-		fill: color-mix(in srgb, var(--folder-accent) 42%, var(--bg-hover) 28%);
+		fill: color-mix(in srgb, var(--folder-render-accent) 42%, var(--bg-hover) 28%);
 	}
 
 	.folder-file-fill {
-		fill: color-mix(in srgb, white 72%, var(--folder-accent) 28%);
+		fill: color-mix(in srgb, white 72%, var(--folder-render-accent) 28%);
 		opacity: 0.9;
 	}
 
 	/* Near-white papers vanish on a light sidebar. */
 	@media (prefers-color-scheme: light) {
 		.folder-file-fill {
-			fill: color-mix(in srgb, white 20%, var(--folder-accent) 80%);
+			fill: color-mix(in srgb, white 20%, var(--folder-render-accent) 80%);
 		}
 	}
 
 	.folder-lid-fill {
-		fill: color-mix(in srgb, var(--folder-accent) 74%, white 18%);
+		fill: color-mix(in srgb, var(--folder-render-accent) 74%, white 18%);
 	}
 
 	.folder-front-fill {
-		fill: color-mix(in srgb, var(--folder-accent) 86%, var(--text-primary) 10%);
+		fill: color-mix(in srgb, var(--folder-render-accent) 86%, var(--text-primary) 10%);
 	}
 
 	.folder-icon-outline {
 		fill: none;
-		stroke: color-mix(in srgb, white 78%, var(--folder-accent) 22%);
+		stroke: color-mix(in srgb, white 78%, var(--folder-render-accent) 22%);
 		stroke-width: 1.2;
 		stroke-linecap: round;
 		stroke-linejoin: round;

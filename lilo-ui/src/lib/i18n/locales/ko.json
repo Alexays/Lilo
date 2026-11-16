@@ -272,6 +272,13 @@
 				"description": "다운로드한 파일이 저장되는 위치입니다.",
 				"keywords": "다운로드 저장 위치 디렉토리"
 			},
+			"interfaceStyle": {
+				"title": "인터페이스 스타일",
+				"description": "사이드바 간격, 텍스트, 폴더와 명령 모음 크기를 함께 조정합니다.",
+				"default": "기본",
+				"streamlined": "간결하게",
+				"keywords": "sidebar appearance style Arc 인터페이스 크기 사이드바 밀도 글꼴 텍스트 간격 아이콘 명령 팔레트"
+			},
 			"tabPosition": {
 				"title": "탭",
 				"description": "탭, 스페이스, 즐겨찾기가 표시되는 위치입니다. 사이드바를 다른 가장자리로 드래그할 수도 있습니다.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, {profile} 프로필로 로그인됨"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "자주 사용하는 사이트가 여기에 표시됩니다.",
+			"pinned": "이 공간의 탭과 폴더를 보관하세요.",
+			"open": "새 탭이 여기에 표시됩니다."
+		},
 		"resize": "사이드바 너비",
 		"movedToPosition": "{count}개 중 {position}번째로 이동함",
 		"movedInto": "{name}(으)로 이동함",
@@ -948,6 +960,7 @@
 		"trayHide": "{name} 숨기기"
 	},
 	"bookmarks": {
+		"favorites": "즐겨찾기",
 		"groupLabel": "책갈피로 저장된 탭",
 		"dropToBookmark": "놓아서 책갈피 추가"
 	},

@@ -149,7 +149,7 @@
     pointer-events: none;
     border-radius: var(--radius-md);
     background: var(--sidebar-sel);
-    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
+    box-shadow: var(--sidebar-row-shadow, inset 0 0 0 0.5px var(--sidebar-sel-ring));
     transition-property: transform, width, height;
     transition-timing-function: var(--motion-ease-spring);
     /* transition-duration is set inline from MOTION.selectionMs so the CSS flight and the

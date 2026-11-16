@@ -20,7 +20,8 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
-  import { getReadyUpdate } from "../../stores/settings.svelte";
+  import { emptySection } from "./SidebarEmptySections.svelte";
+  import { getReadyUpdate, getInterfaceStyle } from "../../stores/settings.svelte";
   import { getMeeting } from "../../stores/meeting.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressInRightTabs, isAddressVisible } from "../../stores/tabLayout.svelte";
@@ -99,6 +100,7 @@
 <div class="sidebar-viewport">
   <div
     class="sidebar-layout"
+    class:streamlined-sidebar={getInterfaceStyle() === "streamlined"}
     class:pushed={isOverlayPanelOpen}
     class:compact-header={isSidebarVisible() && hasPageToolbar()}
     class:address-corner={addressCorner}
@@ -153,6 +155,12 @@
                 />
               {/if}
             </div>
+          {:else}
+            <div class="empty-profile-sidebar">
+              {@render emptySection("favorites")}
+              {@render emptySection("pinned")}
+              {@render emptySection("open")}
+            </div>
           {/each}
         </div>
       </div>
@@ -191,6 +199,8 @@
 </div>
 
 <style>
+  .empty-profile-sidebar { flex: 0 0 100%; min-width: 0; overflow-y: auto; padding-top: 4px; }
+
   .sidebar-viewport {
     position: relative;
     /* clip, not hidden: a focus reveal while a panel slides in would scroll it, with no way back. */
@@ -211,6 +221,9 @@
   }
 
   .sidebar-layout {
+    --font-size-md: var(--interface-text-size);
+    --font-size-sm: calc(var(--interface-text-size) - 1px);
+    --font-size-xs: calc(var(--interface-text-size) - 2px);
     position: relative;
     display: flex;
     flex-direction: column;
@@ -220,6 +233,61 @@
       transform var(--motion-duration-overlay) var(--motion-ease-spring),
       opacity var(--motion-duration-normal) ease;
   }
+
+  .streamlined-sidebar {
+    --sidebar-folder-row-height: 32px;
+    --sidebar-folder-open-bg: transparent;
+    --sidebar-row-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring), var(--shadow-control);
+  }
+
+  .streamlined-sidebar :global(.tab-title) { font-weight: var(--font-weight-medium); }
+  .streamlined-sidebar :global(.folder-title) { font-weight: var(--font-weight-semibold); }
+  .streamlined-sidebar :global(.bookmark-tile) { box-shadow: none; }
+  .streamlined-sidebar :global(.bookmark-tile.active) {
+    box-shadow: inset 0 0 0 1px var(--accent), var(--shadow-control);
+  }
+  .streamlined-sidebar :global(.bookmarked-tabs-body) { padding-block: 4px; }
+  .streamlined-sidebar :global(.url-trigger) {
+    border-radius: var(--radius-md);
+    background: var(--bg-hover);
+  }
+  .streamlined-sidebar :global(.nav-controls) { gap: 0; }
+  .streamlined-sidebar :global(.url-display) { padding-block: 2px; }
+  .streamlined-sidebar :global(.bottom-bar) { gap: 4px; padding-block: 6px; }
+  .streamlined-sidebar :global(.pinned-tab-divider-shell) { padding-block: 4px; }
+  .streamlined-sidebar :global(.pinned-tab-divider-shell.captioned .pinned-tab-divider) { display: none; }
+  .streamlined-sidebar :global(.sidebar-section-caption) {
+    position: relative; display: flex; align-items: center; min-height: 12px; margin: 0;
+    color: var(--text-secondary); font-size: var(--font-size-xs);
+  }
+  .streamlined-sidebar :global(.section-caption-name) {
+    position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .streamlined-sidebar :global(.sidebar-section-caption::after) {
+    content: ""; flex: 1; height: 1px; background: var(--sidebar-border);
+  }
+  .streamlined-sidebar :global(.open-tabs-caption) { margin-inline: -8px calc(-1 * var(--sidebar-right-pad, 8px)); }
+  .streamlined-sidebar :global(.pinned-tab-divider-shell.captioned .divider-action) { background: var(--sidebar-bg); }
+  .streamlined-sidebar :global(.pinned-tab-divider-shell.captioned .list-options) { left: auto; right: 32px; }
+  .streamlined-sidebar :global(.folder-actions) { min-width: 44px; max-width: 44px; }
+  .streamlined-sidebar :global(.folder-row) { height: var(--sidebar-folder-row-height); }
+  .streamlined-sidebar :global(.folder-contents) { --interface-row-height: var(--sidebar-folder-row-height); box-shadow: inset 1px 0 0 var(--sidebar-border); }
+  .streamlined-sidebar :global(.indented-tab-wrapper) { padding-left: 8px; }
+  .streamlined-sidebar :global(.indented-tab-wrapper.first-level) { padding-left: 8px; }
+  .streamlined-sidebar :global(.folder-contents .folder-title) { font-weight: var(--font-weight-medium); }
+  .streamlined-sidebar :global(.folder-empty-placeholder) { margin-left: 32px; }
+  .streamlined-sidebar :global(.folder-icon) { height: 16px; }
+  .streamlined-sidebar :global(.flat-folder .folder-icon-outline) { fill: color-mix(in srgb, var(--folder-render-accent) 20%, transparent); }
+  .streamlined-sidebar :global(.folder-edit-shell) {
+    --folder-render-accent: color-mix(in srgb, var(--sidebar-accent) 75%, var(--folder-accent));
+  }
+  .streamlined-sidebar :global(.folder-row.contains-active:not(:hover)) { background: transparent; }
+  .streamlined-sidebar :global(.folder-row.contains-active:hover) { background: var(--bg-hover); }
+  .streamlined-sidebar :global(.folder-row.contains-active.collapsed) { background: var(--sidebar-sel); box-shadow: inset 0 0 0 1px var(--sidebar-sel-ring); }
+  .streamlined-sidebar :global(.folder-icon-outline) { stroke: var(--text-primary); }
+  .streamlined-sidebar :global(.folder-icon-contrast) { filter: none; }
+  .streamlined-sidebar :global(.folder-title:hover) { color: var(--text-primary); }
+
 
   /* With a page toolbar beside it, the header holds only the lights and the toggle, on that toolbar's line. */
   .compact-header .sidebar-header {

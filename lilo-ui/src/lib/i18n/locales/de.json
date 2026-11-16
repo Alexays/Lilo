@@ -272,6 +272,13 @@
 				"description": "Hier werden heruntergeladene Dateien gesichert.",
 				"keywords": "download sichern speicherort verzeichnis"
 			},
+			"interfaceStyle": {
+				"title": "Oberflächenstil",
+				"description": "Abstände, Text und Ordner der Seitenleiste sowie die Größe der Befehlsleiste gemeinsam abstimmen.",
+				"default": "Standard",
+				"streamlined": "Reduziert",
+				"keywords": "sidebar appearance style Arc oberfläche größe seitenleiste dichte schrift text abstände symbole befehlspalette"
+			},
 			"tabPosition": {
 				"title": "Tabs",
 				"description": "Hier befinden sich deine Tabs, Spaces und Favoriten. Du kannst die Seitenleiste auch an einen anderen Rand ziehen.",
@@ -818,6 +825,11 @@
 		"signedInAs": "{space}, angemeldet als {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "Hier stehen deine meistgenutzten Websites.",
+			"pinned": "Behalte hier Tabs und Ordner für diesen Space.",
+			"open": "Neue Tabs erscheinen hier."
+		},
 		"resize": "Breite der Seitenleiste",
 		"movedToPosition": "An Position {position} von {count} verschoben",
 		"movedInto": "In {name} verschoben",
@@ -948,6 +960,7 @@
 		"trayHide": "{name} ausblenden"
 	},
 	"bookmarks": {
+		"favorites": "Favoriten",
 		"groupLabel": "Tabs mit Lesezeichen",
 		"dropToBookmark": "Zum Hinzufügen als Lesezeichen ablegen"
 	},

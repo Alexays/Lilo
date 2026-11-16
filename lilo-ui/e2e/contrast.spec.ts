@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome } from "./fakeHost";
-import { initialWorld, SPACE_1 } from "./fixtures";
+import { initialWorld, deepFolderWorld, SPACE_1 } from "./fixtures";
 import { tab, treeItem } from "../src/stores/testFixtures";
 import { apcaContrast, ICON_CONTRAST, TEXT_CONTRAST } from "../src/lib/sidebarTheme";
 
@@ -644,4 +644,88 @@ for (const colorScheme of ["light", "dark"] as const) {
 		await page.locator(".all-permissions").waitFor();
 		expect(await textContrast(page, ".all-permissions")).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 	});
+}
+
+
+for (const colorScheme of ["light", "dark"] as const) {
+	for (const spaceColor of ["#247a53", "#be4162", "#d4ae36", "#20242e"]) {
+		test(`the accented palette stays readable on ${spaceColor} in ${colorScheme} mode`, async ({ page }) => {
+			await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+			const world = initialWorld();
+			world.spaces[0].color = spaceColor;
+			await bootChrome(page, world);
+			await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+			await page.locator(".command-bar-input").fill("beta");
+			for (const selector of [".command-bar-input", ".scope-picker", ".command-bar-result.selected .result-title",
+				".command-bar-result.selected .result-subtitle", ".command-bar-result.selected .result-hl"]) {
+				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+			}
+		});
+	}
+}
+
+
+for (const colorScheme of ["light", "dark"] as const) {
+	for (const color of ["#247a53", "#be4162", "#d4ae36", "#20242e"]) {
+		test(`Streamlined sidebar labels stay readable on ${color} in ${colorScheme} mode`, async ({ page }) => {
+			await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+			const world = initialWorld();
+			world.spaces[0].color = color;
+			world.settings = { interfaceStyle: "streamlined" };
+			await bootChrome(page, world);
+			for (const selector of ['[data-tab-id="tab-alpha"] .tab-title', ".space-pane:not(.pane-hidden) .space-heading-name"]) {
+				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+			}
+		});
+	}
+}
+
+
+for (const colorScheme of ["light", "dark"] as const) {
+	for (const color of ["#247a53", "#be4162", "#d4ae36", "#20242e"]) {
+		test(`Streamlined section captions and nested folders read on ${color} in ${colorScheme} mode`, async ({ page }) => {
+			await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+			const world = deepFolderWorld();
+			world.spaces[0].color = color;
+			world.settings = { interfaceStyle: "streamlined" };
+			await bootChrome(page, world, ".folder-row");
+			const pane = ".space-pane:not(.pane-hidden)";
+			for (const selector of [".open-tabs-caption", ".folder-title"]) {
+				expect(await textContrast(page, `${pane} ${selector}`), selector).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+			}
+			const activeFolder = page.locator(`${pane} .folder-row`).first();
+			await activeFolder.focus();
+			await activeFolder.press("ArrowLeft");
+			await page.mouse.move(0, 0);
+			await activeFolder.evaluate((el) => (el as HTMLElement).blur());
+			await expect(activeFolder).toHaveClass(/collapsed/);
+			expect(await textContrast(page, `${pane} .folder-row.contains-active.collapsed .folder-title`)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+			const outline = await page.locator(`${pane} .folder-icon-outline`).first().evaluate((el) => getComputedStyle(el).stroke);
+			const background = await cssColor(page, ".sidebar", "backgroundColor");
+			expect(await ratio(page, outline, background)).toBeGreaterThanOrEqual(ICON_CONTRAST);
+		});
+	}
+}
+
+
+for (const colorScheme of ["light", "dark"] as const) {
+	for (const appearance of ["default", "streamlined"]) {
+		for (const color of ["#247a53", "#d4ae36"]) {
+			test(`empty sidebar guidance reads in ${appearance} on ${color} in ${colorScheme} mode`, async ({ page }) => {
+				await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+				const world = initialWorld();
+				world.spaces[0].color = color;
+				world.settings = { interfaceStyle: appearance };
+				world.tabsBySpace[SPACE_1] = [];
+				world.treeItemsBySpace[SPACE_1] = [];
+				world.activeTabBySpace[SPACE_1] = "";
+				await bootChrome(page, world, ".sidebar-empty-slot");
+				for (const kind of ["favorites", "pinned", "open"]) {
+					for (const part of ["strong", "p"]) {
+						await expect.poll(() => textContrast(page, `.space-pane:not(.pane-hidden) [data-empty-section="${kind}"] ${part}`)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+					}
+				}
+			});
+		}
+	}
 }

@@ -112,7 +112,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 32px;
+    height: var(--interface-row-height);
     padding: 0 8px;
     box-sizing: border-box;
     border-radius: var(--radius-md);

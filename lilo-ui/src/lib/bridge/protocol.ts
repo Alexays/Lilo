@@ -550,6 +550,7 @@ export interface BridgeInitialStatePayload {
 	treeItems: BridgeSidebarTreeItemSnapshot[];
 	activeTabId: string;
 	sidebarWidth: number;
+	interfaceStyle?: string;
 	sidebarVisible: boolean;
 	sidebarRail?: boolean;
 	toolbarVisible?: boolean;

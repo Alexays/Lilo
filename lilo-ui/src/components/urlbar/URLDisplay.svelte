@@ -1082,6 +1082,11 @@
     outline: none;
   }
 
+  :global(.sidebar-layout) .url-trigger {
+    min-height: var(--interface-row-height);
+    padding: 8px 8px;
+  }
+
   .url-trigger-button {
     position: absolute;
     inset: 0;

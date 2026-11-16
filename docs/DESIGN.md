@@ -153,3 +153,26 @@ Nothing else animates. With Reduce motion, everything becomes a 150 ms fade. A s
 ## First run
 
 One full-bleed container from start to finish. Welcome stays almost empty: the mark, one line and Get Started. Then one question per screen: How will you use Lilo (thumbnails of each answer's result), Import (passwords included), Your Lilo (a live preview beside rows of settings for its look), Agents when that path is chosen. Tips arrive in context, the first time the user does the thing.
+
+## Interface style
+
+Appearance offers one Interface style setting: Default and Streamlined. Default preserves Lilo’s standard layout.
+Streamlined coordinates the expanded sidebar and command bar as one fixed visual treatment; there are no independent density presets.
+It uses 14 px sidebar text, 36 px root tab rows and compact 32 px folders and child rows. Default uses 13 px text and 32 px rows.
+Favorites retain their adaptive grid; icons and Space controls keep familiar click targets. Settings pages, horizontal tabs and the folded icon rail retain their own geometry.
+Virtualization uses the same row heights as the rendered rows, including nested folders, stacks and trays.
+
+Streamlined adds a compact Space-name heading with a trailing full-width rule and quiet section boundaries.
+Folders use flat open/closed glyphs, colors harmonized with the Space without changing saved hues, transparent surfaces and subtle nesting guides.
+Sibling folders and tabs align on the same icon/title columns, with 8 px nesting steps. Children remain immediately below their parent in stored mixed order.
+Navigation and footer gaps tighten while click targets stay unchanged. There is no extra divider beneath the address field.
+
+Both styles explain empty Favorites, pinned-tab and open-tab areas with non-interactive placeholders, including a profile with no Spaces.
+These scroll with the list and create no synthetic tabs, Spaces or drop zones; existing New Tab and New Space actions remain unchanged.
+
+The command bar uses the active Space’s resolved background, with readable text and selection contrast in both styles.
+Default keeps its compact 480 × 320 px dimensions; Streamlined uses 520 × 344 px with a slightly larger search font.
+Floating and docked bars follow the same style and remain constrained by the window. Result scrollbars stay quiet until hover or focus;
+Increase Contrast makes the thumb easier to find. Styles do not change command scopes, hints, shortcuts or tab behavior.
+
+The chosen style restores in the initial chrome state and syncs between windows. Returning to Default restores the standard geometry.

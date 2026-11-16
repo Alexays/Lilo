@@ -44,7 +44,7 @@
   } from "../../stores/sidebarDnd.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
-  import { getSetting } from "../../stores/settings.svelte";
+  import { getInterfaceTextSize, getSetting } from "../../stores/settings.svelte";
   import {
     aggregateDownloadProgress,
     getDownloads,
@@ -494,7 +494,7 @@
     labelMeasurer ??= document.createElement("canvas").getContext("2d");
     if (!labelMeasurer) return undefined;
     const root = getComputedStyle(document.documentElement);
-    const base = Number.parseFloat(root.getPropertyValue("--font-size-sm"));
+    const base = getInterfaceTextSize() - 1;
     for (let size = base; size >= 10; size -= 1) {
       labelMeasurer.font = `${root.getPropertyValue("--font-weight-semibold")} ${size}px ${root.fontFamily}`;
       if (labelMeasurer.measureText(name).width <= labelRoom) return size === base ? undefined : size;

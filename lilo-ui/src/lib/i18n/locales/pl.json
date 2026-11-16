@@ -272,6 +272,13 @@
 				"description": "Miejsce zachowywania pobranych plików.",
 				"keywords": "pobieranie zachowywanie miejsce katalog"
 			},
+			"interfaceStyle": {
+				"title": "Styl interfejsu",
+				"description": "Dostosuj wspólnie odstępy, tekst i foldery paska bocznego oraz rozmiar paska poleceń.",
+				"default": "Domyślny",
+				"streamlined": "Uproszczony",
+				"keywords": "sidebar appearance style Arc interfejs rozmiar pasek boczny gęstość czcionka tekst odstępy ikony paleta polecenia"
+			},
 			"tabPosition": {
 				"title": "Karty",
 				"description": "Miejsce kart, przestrzeni i ulubionych. Możesz też przeciągnąć pasek boczny do innej krawędzi.",
@@ -836,6 +843,11 @@
 		"signedInAs": "{space}, zalogowano jako {profile}"
 	},
 	"sidebar": {
+		"emptySections": {
+			"favorites": "Tutaj znajdziesz najczęściej używane witryny.",
+			"pinned": "Zachowaj karty i foldery dla tej przestrzeni.",
+			"open": "Nowe karty pojawiają się tutaj."
+		},
 		"resize": "Szerokość paska bocznego",
 		"movedToPosition": "Przeniesiono na pozycję {position} z {count}",
 		"movedInto": "Przeniesiono do: {name}",
@@ -966,6 +978,7 @@
 		"trayHide": "Ukryj: {name}"
 	},
 	"bookmarks": {
+		"favorites": "Ulubione",
 		"groupLabel": "Karty zapisane w zakładkach",
 		"dropToBookmark": "Upuść, aby dodać zakładkę"
 	},
