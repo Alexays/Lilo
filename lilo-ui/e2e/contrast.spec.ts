@@ -235,14 +235,13 @@ async function textContrast(page: Page, selector: string): Promise<number> {
 }
 
 for (const colorScheme of ["light", "dark"] as const) {
-	test(`the command bar's scope chips and selected row read in ${colorScheme} mode`, async ({ page }) => {
+	test(`the command bar's selected row reads in ${colorScheme} mode`, async ({ page }) => {
 		await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 		await page.locator(".command-bar-input").fill("beta");
 		await page.locator(".command-bar-result.selected .result-subtitle").waitFor();
 
-		expect(await textContrast(page, ".scope-hint:not(.selected)")).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		expect(await textContrast(page, ".command-bar-result.selected .result-subtitle")).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 	});
 
@@ -657,8 +656,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 			await bootChrome(page, world);
 			await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 			await page.locator(".command-bar-input").fill("beta");
-			for (const selector of [".command-bar-input", ".scope-hint.selected", ".command-bar-result.selected .result-title",
-				".command-bar-result.selected .result-subtitle", ".command-bar-result.selected .result-hl", ".command-bar-footer .key-hint"]) {
+			for (const selector of [".command-bar-input", ".scope-picker", ".command-bar-result.selected .result-title",
+				".command-bar-result.selected .result-subtitle", ".command-bar-result.selected .result-hl"]) {
 				expect(await textContrast(page, selector), selector).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 			}
 		});

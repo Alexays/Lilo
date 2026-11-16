@@ -1195,6 +1195,7 @@
 		"installed": "Установленные"
 	},
 	"commandBar": {
+		"showDetails": "Показать сочетания клавиш",
 		"hintPeek": "Быстрый просмотр",
 		"hintCopyLink": "Скопировать ссылку",
 		"hintCloseTab": "Закрыть вкладку",
@@ -1261,8 +1262,6 @@
 		"sectionOpenTabs": "Открытые вкладки",
 		"sectionBookmarks": "Закладки",
 		"sectionRecentHistory": "Недавняя история",
-		"sectionFrequentSites": "Часто посещаемые сайты",
-		"sectionRecentConversations": "Недавние беседы",
 		"sectionHistory": "История",
 		"sectionSwitchToTab": "Перейти к вкладке",
 		"sectionGoTo": "Перейти",

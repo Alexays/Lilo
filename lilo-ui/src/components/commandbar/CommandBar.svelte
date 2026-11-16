@@ -1,16 +1,17 @@
 <script lang="ts">
+  import { portal } from "../../lib/actions/portal";
+  import { dismissable } from "../../lib/actions/dismissable";
+  import CommandScopePicker from "./CommandScopePicker.svelte";
   import { untrack } from "svelte";
   import { apcaContrast, ensureContrast, parseHexColor, TEXT_CONTRAST, toHex } from "../../lib/sidebarTheme";
   import { themeSidebarBackground } from "../../stores/theme.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
-  import { createFrameScheduler } from "../../lib/motion/frameScheduler";
   import { t } from "../../lib/i18n/state.svelte";
   import { formatShortcut, parseInput, scopePrefix, setTopLevelDomains, type CommandScope } from "../../lib/inputParser";
   import { TOP_LEVEL_DOMAINS } from "../../lib/topLevelDomains.gen";
   import { fade } from "svelte/transition";
   import {
-    autocompleteSelected,
     closeCommandBar,
     dismissAutofill,
     consumeSelectAllOnOpen,
@@ -32,6 +33,7 @@
     cancelMoveTab,
     isCommandBarDocked,
     isCommandBarOpen,
+    isNewTabCommandBar,
     isMovingTab,
     runSelectedResultKey,
     type ResultKey,
@@ -123,6 +125,23 @@
     return out;
   }
 
+  let detailsOpen = $state(false);
+  let helpPosition = $state({ right: 16, top: 0 });
+  function showDetails() {
+    if (!detailsButton) return;
+    const rect = detailsButton.getBoundingClientRect();
+    helpPosition = { right: Math.max(16, window.innerWidth - rect.right), top: rect.bottom + 8 };
+    detailsOpen = true;
+  }
+  let detailsButton: HTMLButtonElement | undefined = $state();
+  // The hints cover the results: typing puts them away.
+  $effect(() => {
+    void getCommandBarOpenRequestId();
+    void isCommandBarOpen();
+    void getQuery();
+    detailsOpen = false;
+  });
+
   const commandBarOpen = $derived(isCommandBarOpen());
   const docked = $derived(isCommandBarDocked());
   // In place on a blank tab, the bar steps aside for a screen that covers the page.
@@ -132,7 +151,7 @@
   );
   const activeScope = $derived(getActiveScope());
   const query = $derived(getQuery());
-  // A typed scope prefix shows as a token before the field; the query keeps it.
+  // A typed scope prefix leaves the field for the scope picker; the query keeps it.
   const tokenPrefix = $derived(
     activeScope !== "all" && !isMovingTab() && query.trimStart().startsWith(scopePrefix(activeScope)) ? scopePrefix(activeScope) : "",
   );
@@ -142,14 +161,21 @@
   const scopedQuery = $derived(parseInput(query, activeScope).query.trim());
   const results = $derived(getResults());
   const sections = $derived(getSections());
+  const canSearchWeb = $derived(
+    scopedQuery.length > 0 && ["tab", "bookmark", "history"].includes(activeScope) &&
+      results.every((result) => result.kind === "showAllHistory"),
+  );
   const selectedIndex = $derived(getSelectedIndex());
   const selectedResult = $derived(getSelectedResult());
   const selectedKeys = $derived(getSelectedResultKeys());
+  const primaryActionLabel = $derived.by(() => {
+    const result = selectedResult;
+    const opensURL = result?.url && ["navigate", "search", "history", "bookmark"].includes(result.kind) &&
+      !(result.kind === "bookmark" && typeof result.payload.tabId === "string");
+    if (opensURL) return isNewTabCommandBar() ? t("historyPage.openInNewTab") : t("common.open");
+    return result?.hint || t("common.open");
+  });
   const movingTab = $derived(isMovingTab());
-  const tileSection = $derived(sections.find((section) => section.tiles));
-  const firstTile = $derived(tileSection?.items[0]?.index ?? -1);
-  const lastTile = $derived(tileSection?.items.at(-1)?.index ?? -1);
-  const inTiles = (index: number) => firstTile >= 0 && index >= firstTile && index <= lastTile;
   const autocompleteSuggestion = $derived(getAutocompleteSuggestion());
   const autocompleteSuffix = $derived(
     autocompleteSuggestion &&
@@ -174,90 +200,6 @@
   let commandBarEl: HTMLDivElement | undefined = $state();
   let commandBarContentEl: HTMLDivElement | undefined = $state();
   let inputEl: HTMLInputElement | undefined = $state();
-  const heightAnimationFrame = createFrameScheduler();
-  let panelHadResults = false;
-  let disposeHeightTransition: (() => void) | undefined;
-
-  function finishHeightAnimation() {
-    if (!commandBarEl) {
-      return;
-    }
-
-    disposeHeightTransition?.();
-    disposeHeightTransition = undefined;
-    commandBarEl.style.height = "";
-  }
-
-  function measureCommandBarHeight(): number | undefined {
-    if (!commandBarEl || !commandBarContentEl) {
-      return undefined;
-    }
-
-    // With no inline height the panel already sits at its natural size, so the content's
-    // rendered height is the target; only a mid-animation panel needs the auto toggle.
-    if (!commandBarEl.style.height) {
-      const height = commandBarContentEl.offsetHeight;
-      return height > 0 ? height : undefined;
-    }
-
-    const previousHeight = commandBarEl.style.height;
-    const previousTransition = commandBarEl.style.transition;
-    commandBarEl.style.height = "auto";
-    commandBarEl.style.transition = "none";
-    const nextHeight = Math.ceil(
-      commandBarContentEl.getBoundingClientRect().height,
-    );
-    commandBarEl.style.height = previousHeight;
-    void commandBarEl.offsetHeight; // flush layout
-    commandBarEl.style.transition = previousTransition;
-
-    return nextHeight > 0 ? nextHeight : undefined;
-  }
-
-  function animateCommandBarHeight() {
-    heightAnimationFrame.cancel();
-
-    const panel = commandBarEl;
-    const nextHeight = measureCommandBarHeight();
-    if (!panel || !nextHeight) {
-      return;
-    }
-
-    const startHeight = Math.ceil(panel.getBoundingClientRect().height);
-    const hasResults = results.length > 0;
-    const crossesEmpty = hasResults !== panelHadResults;
-    panelHadResults = hasResults;
-    const delta = Math.abs(startHeight - nextHeight);
-
-    // A height transition relayouts the panel under the backdrop blur every frame: only the
-    // empty/non-empty switch and large jumps animate, smaller changes snap to the natural height.
-    if (delta < 1 || (!crossesEmpty && delta <= 40)) {
-      finishHeightAnimation();
-      return;
-    }
-
-    disposeHeightTransition?.();
-    panel.style.height = `${startHeight}px`;
-    void panel.offsetHeight; // flush layout
-    panel.style.height = `${nextHeight}px`;
-
-    const handleTransitionEnd = (event: TransitionEvent) => {
-      if (event.propertyName !== "height") {
-        return;
-      }
-
-      finishHeightAnimation();
-    };
-
-    panel.addEventListener("transitionend", handleTransitionEnd);
-    disposeHeightTransition = () => {
-      panel.removeEventListener("transitionend", handleTransitionEnd);
-    };
-  }
-
-  function scheduleCommandBarHeightAnimation() {
-    heightAnimationFrame.schedule(animateCommandBarHeight);
-  }
 
   function focusCommandBarInput(selectAll: boolean, attempts = 0) {
     inputEl?.focus();
@@ -285,40 +227,11 @@
   });
 
   $effect(() => {
-    if (!commandBarOpen) {
-      heightAnimationFrame.cancel();
-      finishHeightAnimation();
-      panelHadResults = false;
-    }
-  });
-
-  $effect(() => {
-    if (!commandBarOpen || !commandBarContentEl) {
-      return;
-    }
-
-    void query.length;
-    void sections.length;
-    for (const section of sections) void section.items.length;
-
-    scheduleCommandBarHeightAnimation();
-  });
-
-  $effect(() => {
     const idx = selectedIndex;
     if (!commandBarOpen) return;
     commandBarContentEl
       ?.querySelector<HTMLElement>(`#cb-result-${idx}`)
       ?.scrollIntoView({ block: "nearest" });
-  });
-
-  $effect(() => {
-    if (!commandBarOpen) {
-      return;
-    }
-
-    window.addEventListener("resize", scheduleCommandBarHeightAnimation);
-    return () => window.removeEventListener("resize", scheduleCommandBarHeightAnimation);
   });
 
   // The backdrop leaves the sidebar uncovered, so clicks there never reach it: dismiss on any
@@ -329,9 +242,13 @@
     }
 
     const handleWindowPointerDown = (event: PointerEvent) => {
-      const target = event.target as Node | null;
+      const target = event.target as Element | null;
+      // Portaled menus and help still belong to the bar's interaction surface.
+      if (target?.closest("[data-command-bar-popover]")) return;
       if (commandBarEl && target && !commandBarEl.contains(target)) {
         closeCommandBar();
+        // The backdrop catches page clicks; sidebar controls keep their native click focus.
+        if (target.classList.contains("command-bar-backdrop")) postMessage("focusPage");
       }
     };
 
@@ -368,6 +285,16 @@
   function handleKeydown(e: KeyboardEvent) {
     // IME confirmation can report keyCode 229 even after composition ends.
     if (e.isComposing || e.keyCode === 229) return;
+    if (detailsOpen && e.key === "Escape") {
+      e.preventDefault();
+      detailsOpen = false;
+      detailsButton?.focus();
+      return;
+    }
+    // Buttons keep their native keyboard activation and focus navigation.
+    if (e.target !== inputEl && e.key !== "Escape") return;
+    // Tab moves focus as usual, unless it takes the inline completion.
+    if (e.key === "Tab" && (e.shiftKey || !autocompleteSuggestion)) return;
     // The grey inline completion counts as typed while it shows.
     const completionShown = autocompleteSuffix !== "" && caretAtEnd;
     switch (e.key) {
@@ -382,29 +309,16 @@
           postMessage("focusPage");
         }
         break;
-      // The strip of chips counts as one row for the up and down arrows; the side arrows walk it.
       case "ArrowDown":
         e.preventDefault();
-        if (inTiles(selectedIndex)) setSelectedIndex(lastTile);
         selectNext();
         break;
       case "ArrowUp":
         e.preventDefault();
-        if (inTiles(selectedIndex)) setSelectedIndex(firstTile);
         selectPrev();
-        if (inTiles(getSelectedIndex())) setSelectedIndex(firstTile);
-        break;
-      case "ArrowLeft":
-        if (inTiles(selectedIndex)) {
-          e.preventDefault();
-          setSelectedIndex(Math.max(firstTile, selectedIndex - 1));
-        }
         break;
       case "ArrowRight":
-        if (inTiles(selectedIndex)) {
-          e.preventDefault();
-          setSelectedIndex(Math.min(lastTile, selectedIndex + 1));
-        } else if (completionShown) {
+        if (completionShown) {
           // Accept the inline completion; otherwise the arrow moves the caret.
           e.preventDefault();
           setQuery(autocompleteSuggestion);
@@ -426,12 +340,7 @@
       }
       case "Tab":
         e.preventDefault();
-        if (!caretAtEnd) break;
-        if (autocompleteSuggestion) {
-          setQuery(autocompleteSuggestion);
-        } else {
-          autocompleteSelected();
-        }
+        if (caretAtEnd) setQuery(autocompleteSuggestion);
         break;
       case "Backspace":
       case "Delete":
@@ -607,13 +516,15 @@
       <div bind:this={commandBarContentEl} class="command-bar-content">
         <div class="command-bar-header">
           <div class="command-bar-input-row">
-            <svg class="command-bar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5" />
-              <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-            {#if tokenLabel}
-              <span class="scope-token">{t(tokenLabel)}</span>
-            {/if}
+            <CommandScopePicker
+              hints={scopeHints}
+              active={activeScope}
+              disabled={movingTab}
+              onselect={(scope) => {
+                setCommandBarScope(scope);
+                inputEl?.focus();
+              }}
+            />
             <div class="command-bar-input-wrap">
               {#if autocompleteSuffix && caretAtEnd}
                 <div class="command-bar-autocomplete" aria-hidden="true">
@@ -637,7 +548,7 @@
                 value={fieldText}
                 oninput={(e) => {
                   const field = e.target as HTMLInputElement;
-                  // A prefix typed first takes over from the token, as a press on its chip would.
+                  // A prefix typed first takes over from the token.
                   const ownPrefix = SCOPE_HINTS.some((hint) => hint.prefix && field.value.startsWith(hint.prefix));
                   const typed = tokenPrefix && !ownPrefix ? (field.value ? `${tokenPrefix} ${field.value}` : tokenPrefix) : field.value;
                   setQuery(typed, !(e instanceof InputEvent && e.inputType.startsWith("delete")));
@@ -650,30 +561,25 @@
                 onselect={trackCaret}
               />
             </div>
-            {#if autocompleteSuggestion && caretAtEnd}
-              <span class="key-hint"><span>{t("commandBar.hintComplete")}</span><kbd class="keycap">tab</kbd></span>
-            {/if}
-          </div>
-
-          <div class="command-bar-scopes">
-            {#each scopeHints as hint (hint.scope)}
-              <button
-                type="button"
-                class:selected={!movingTab && hint.scope === activeScope}
-                class="scope-hint"
-                disabled={movingTab}
-                onmousedown={(e) => e.preventDefault()}
-                onclick={() => setCommandBarScope(hint.scope)}
-              >
-                <span class="scope-hint-label">{hint.label}</span>
-                {#if hint.prefix}
-                  <span class="scope-hint-prefix" aria-hidden="true">{hint.prefix}</span>
-                {/if}
-              </button>
-            {/each}
+            <button
+              bind:this={detailsButton}
+              type="button"
+              class="command-bar-info"
+              aria-label={t("commandBar.showDetails")}
+              title={t("commandBar.showDetails")}
+              aria-expanded={detailsOpen}
+              aria-controls={detailsOpen ? "cb-hints" : undefined}
+              onclick={showDetails}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3" />
+                <path d="M8 7v4M8 4.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+            </button>
           </div>
         </div>
 
+        <div class="command-bar-results-area">
         {#if sections.length > 0}
           <div class="command-bar-results" id="cb-results" role="listbox" aria-label={t("commandBar.resultsLabel")}>
             {#each sections as section (section.id)}
@@ -683,11 +589,12 @@
                   {#if section.subtitle}<span class="command-bar-section-subtitle">{section.subtitle}</span>{/if}
                 </div>
 
-                <div class={section.tiles ? "command-bar-strip" : "command-bar-section-results"}>
+                <div class="command-bar-section-results">
                   {#each section.items as entry (entry.result.id)}
+                    {@const subtitle = detail(entry.result)}
                     <div
                       id={`cb-result-${entry.index}`}
-                      class={section.tiles ? "command-bar-chip" : "command-bar-result"}
+                      class="command-bar-result"
                       class:selected={entry.index === selectedIndex}
                       role="option"
                       tabindex="-1"
@@ -696,24 +603,22 @@
                       onmousemove={(e) => selectUnderPointer(e, entry.index)}
                     >
                       {@render resultIcon(entry.result)}
-                      {#if section.tiles}
-                        <span class="chip-title">{entry.result.title}</span>
-                      {:else}
-                        {@const subtitle = detail(entry.result)}
-                        <div class="result-main">
-                          <span class="result-title">{@render highlightedText(entry.result.title, entry.result.titleHighlights)}</span>
-                          {#if subtitle.text}
-                            <span class="result-subtitle">{@render highlightedText(subtitle.text, subtitle.highlights)}</span>
-                          {/if}
-                        </div>
-
-                        {#if entry.result.helper}
-                          {#if entry.result.kind === "action"}
-                            <kbd class="keycap result-shortcut">{entry.result.helper}</kbd>
-                          {:else}
-                            <span class="result-helper">{entry.result.helper}</span>
-                          {/if}
+                      <div class="result-main">
+                        <span class="result-title" title={entry.result.title}>{@render highlightedText(entry.result.title, entry.result.titleHighlights)}</span>
+                        {#if subtitle.text}
+                          <span class="result-subtitle" title={subtitle.text}>{@render highlightedText(subtitle.text, subtitle.highlights)}</span>
                         {/if}
+                      </div>
+
+                      {#if entry.result.kind === "action" && entry.result.helper}
+                        <kbd class="keycap result-shortcut">{entry.result.helper}</kbd>
+                      {:else if entry.index === selectedIndex}
+                        <span class="result-action" title={primaryActionLabel} aria-hidden="true">
+                          <span class="result-action-label">{primaryActionLabel}</span>
+                          <kbd class="keycap">{formatShortcut("Enter")}</kbd>
+                        </span>
+                      {:else if entry.result.helper}
+                        <span class="result-helper">{entry.result.helper}</span>
                       {/if}
                     </div>
                   {/each}
@@ -721,52 +626,81 @@
               </div>
             {/each}
           </div>
-        {:else}
+        {:else if scopedQuery || activeScope !== "all"}
           <div class="command-bar-empty">
             <p class="command-bar-empty-title">{emptyStateTitle()}</p>
             <p class="command-bar-empty-subtitle">{emptyStateSubtitle()}</p>
           </div>
         {/if}
 
-        <div class="command-bar-footer" aria-hidden="true">
-          <span class="footer-hints">
-            <span class="key-hint key-hint-default"><span>{selectedResult?.hint || t("common.open")}</span><kbd class="keycap">{formatShortcut("Enter")}</kbd></span>
-            {#each selectedKeys as key (key)}
-              <span class="key-hint">
-                <span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd class="keycap">{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
-              </span>
-            {/each}
-          </span>
-          {#if !docked || movingTab || escapeLeavesScope}
-            <span class="key-hint"><span>{t(movingTab || escapeLeavesScope ? "common.back" : "common.close")}</span><kbd class="keycap">esc</kbd></span>
-          {/if}
+        {#if canSearchWeb}
+          <div class="command-bar-search-fallback">
+            <button type="button" class="web-search-button" onclick={executeRawQuery}>
+              {t("commandBar.sectionSearchWeb")}
+            </button>
+          </div>
+        {/if}
         </div>
       </div>
     </div>
   </div>
+  {#if detailsOpen}
+    <div
+      id="cb-hints"
+      class="command-bar-help float-surface float-popover"
+      data-command-bar-popover
+      role="status"
+      aria-label={t("commandBar.showDetails")}
+      style:right="{helpPosition.right}px"
+      style:top="{helpPosition.top}px"
+      style:max-height="calc(100dvh - {helpPosition.top + 8}px)"
+      use:portal
+      use:reportInteractiveZone={{ id: "command-bar-help" }}
+      {@attach dismissable({ onDismiss: () => (detailsOpen = false), ignore: ".command-bar-info" })}
+    >
+      {#if autocompleteSuggestion && caretAtEnd}
+        <span class="key-hint"><span>{t("commandBar.hintComplete")}</span><kbd class="keycap">tab</kbd></span>
+      {/if}
+      <span class="key-hint key-hint-default"><span>{primaryActionLabel}</span><kbd class="keycap">{formatShortcut("Enter")}</kbd></span>
+      {#each selectedKeys as key (key)}
+        <span class="key-hint">
+          <span>{t(key === "newTab" && activeScope === "terminal" ? "commandBar.hintSplit" : RESULT_KEY_HINTS[key].labelKey)}</span><kbd class="keycap">{formatShortcut(RESULT_KEY_HINTS[key].keys)}</kbd>
+        </span>
+      {/each}
+      {#if !docked || movingTab || escapeLeavesScope}
+        <span class="key-hint"><span>{t(movingTab || escapeLeavesScope ? "common.back" : "common.close")}</span><kbd class="keycap">esc</kbd></span>
+      {/if}
+    </div>
+  {/if}
 {/if}
 
 <style>
-  /* Clear: the page stays in view under the bar; the backdrop only catches the page area's clicks. */
+  /* A quiet tint distinguishes the floating bar while the current page remains visible. */
   .command-bar-backdrop {
+    --bar-top: clamp(24px, 18vh, 180px);
     position: fixed;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 64px 16px 16px;
+    padding: var(--bar-top) 16px 16px;
     z-index: 60;
     pointer-events: auto;
   }
 
-  .command-bar-backdrop.docked {
-    padding-top: clamp(40px, 13vh, 104px);
+  .command-bar-backdrop:not(.docked) {
+    background: color-mix(in srgb, var(--chrome-overlay-backdrop-tint) 50%, transparent);
   }
 
+  @media (max-height: 520px) {
+    .command-bar-backdrop { --bar-top: 24px; }
+  }
+
+  /* One height whatever the results, so typing never moves the panel. */
   .command-bar {
-    --interface-palette-width: calc(600px + var(--interface-step) * 40px);
-    --interface-palette-search-height: calc(52px + var(--interface-step) * 4px);
+    --interface-palette-width: calc(480px + var(--interface-step) * 40px);
+    --interface-palette-search-height: calc(56px + var(--interface-step) * 4px);
     --interface-palette-input-size: calc(17px + var(--interface-step) * 1px);
-    --interface-palette-row-height: calc(40px + var(--interface-step) * 4px);
+    --interface-palette-row-height: calc(48px + var(--interface-step) * 4px);
     --interface-palette-icon-size: calc(24px + var(--interface-step) * 2px);
     --font-size-md: var(--interface-text-size);
     --font-size-sm: calc(var(--interface-text-size) - 1px);
@@ -781,30 +715,61 @@
     --border: var(--sidebar-border);
     --separator: var(--sidebar-separator);
     --cb-selection: var(--sidebar-sel);
-    background: var(--cb-background, var(--sidebar-bg));
     --cb-scroll-thumb: color-mix(in srgb, var(--text-primary) 14%, transparent);
     outline: 1px solid color-mix(in srgb, var(--accent) 22%, var(--sidebar-border));
     outline-offset: -1px;
     width: min(var(--interface-palette-width), 100%);
+    height: min(calc(320px + var(--interface-step) * 24px), calc(100dvh - var(--bar-top) - 80px));
     max-height: 100%;
+    border: 1px solid var(--float-border);
     border-radius: var(--radius-lg);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     transform-origin: 50% 0;
     animation: command-bar-in var(--motion-duration-overlay) var(--motion-ease-spring);
-    transition: height var(--motion-duration-normal) var(--motion-ease-organic);
     contain: layout style;
+    background: var(--cb-background, var(--sidebar-bg));
+    box-shadow: inset 0 1px 0 var(--float-sheen), var(--float-shadow);
   }
 
-  /* Part of the page rather than over it: a quiet edge, no shadow to lift it. */
+  /* Part of the page rather than over it: no shadow to lift it. */
   .docked .command-bar {
-    max-height: calc(100% - 40px);
-    box-shadow: 0 0 0 1px var(--border);
+    box-shadow: inset 0 1px 0 var(--float-sheen);
     animation: none;
   }
 
+  .command-bar-help {
+    position: fixed;
+    z-index: var(--z-popover);
+    gap: 12px;
+    width: min(360px, calc(100vw - 32px));
+    padding: 12px 16px;
+    overflow-y: auto;
+  }
+
+  .command-bar-help {
+    --font-size-sm: calc(var(--interface-text-size) - 1px);
+  }
+
+  .command-bar-info {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: calc(28px + var(--interface-step) * 2px);
+    height: calc(28px + var(--interface-step) * 2px);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .command-bar-info:hover { background: var(--bg-hover); }
+  .command-bar-info:focus-visible { outline: var(--focus-outline); }
+
   .command-bar-content {
+    container: command-bar / inline-size;
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
@@ -813,7 +778,6 @@
 
   .command-bar-header {
     flex: none;
-    border-bottom: 1px solid var(--separator);
   }
 
   .command-bar-input-row {
@@ -822,11 +786,6 @@
     gap: 12px;
     height: var(--interface-palette-search-height);
     padding: 0 16px;
-  }
-
-  .command-bar-icon {
-    flex: none;
-    color: var(--text-secondary);
   }
 
   .command-bar-input,
@@ -872,73 +831,35 @@
     color: transparent;
   }
 
-  .command-bar-scopes {
+  .command-bar-results-area {
     display: flex;
-    /* A narrow bar wraps the chips: clipped, the last scopes could not be clicked. */
-    flex-wrap: wrap;
-    gap: 2px;
-    padding: 0 12px 10px;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    border-top: 1px solid var(--separator);
   }
 
-  .scope-hint,
-  .scope-token {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    gap: 6px;
-    height: calc(22px + var(--interface-step) * 2px);
-    padding: 0 8px;
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    line-height: 1;
+  .command-bar-results,
+  .command-bar-help { scrollbar-gutter: stable; }
+
+  .command-bar-results::-webkit-scrollbar,
+  .command-bar-help::-webkit-scrollbar { width: 8px; background: transparent; }
+
+  .command-bar-results::-webkit-scrollbar-thumb,
+  .command-bar-help::-webkit-scrollbar-thumb {
+    background: var(--cb-scroll-thumb, color-mix(in srgb, var(--text-secondary) 32%, transparent));
+    border: 2px solid transparent;
+    border-radius: var(--radius-chip);
+    background-clip: padding-box;
   }
 
-  .scope-hint {
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: background var(--transition-fast), color var(--transition-fast);
-    -webkit-appearance: none;
-    appearance: none;
-  }
-
-  .scope-hint:hover:not(:disabled) {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-  }
-
-  /* The Space picker of a tab move has no scope. */
-  .scope-hint:disabled {
-    cursor: default;
-    opacity: var(--disabled-opacity);
-  }
-
-  .scope-hint.selected,
-  .scope-token {
-    background: var(--cb-selection);
-    color: var(--text-primary);
-  }
-
-  .scope-hint:focus-visible {
-    outline: var(--focus-outline);
-    outline-offset: -2px;
-  }
-
-  /* One slot for every prefix, so the labels line up whatever the glyph. */
-  .scope-hint-prefix {
-    display: inline-block;
-    width: 1em;
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    text-align: center;
-  }
-
-  .scope-hint.selected .scope-hint-prefix {
-    color: inherit;
+  .command-bar-results::-webkit-scrollbar-thumb:hover,
+  .command-bar-help::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--text-secondary) 55%, transparent);
   }
 
   .command-bar-results {
+    overflow-x: hidden;
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -972,7 +893,7 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
-    padding: 14px 8px 6px;
+    padding: 8px 8px 6px;
   }
 
   .command-bar-section:first-child .command-bar-section-header {
@@ -997,16 +918,15 @@
     /* The helper shows whole while the title keeps its room, then gives way first. */
     grid-template-columns: var(--interface-palette-icon-size) minmax(min(160px, 50%), 1fr) minmax(0, max-content);
     align-items: center;
-    gap: 12px;
-    height: var(--interface-palette-row-height);
-    padding: 0 8px;
+    gap: 8px;
+    min-height: var(--interface-palette-row-height);
+    padding: 6px 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
   }
 
-  .command-bar-result.selected,
-  .command-bar-chip.selected {
-    background: var(--cb-selection);
+  .command-bar-result.selected {
+    background: var(--bg-hover);
   }
 
   .result-icon {
@@ -1071,27 +991,60 @@
     box-shadow: 0 0 0 2px var(--float-surface);
   }
 
-  /* The address follows the title on its line, and gives way to it. */
+  .result-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 160px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .result-action-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .command-bar-search-fallback {
+    flex: none;
+    padding: 8px 16px 16px;
+    text-align: center;
+  }
+
+  .web-search-button {
+    min-height: 28px;
+    max-width: 100%;
+    padding: 4px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--accent-text);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+  }
+
+  .web-search-button:hover {
+    background: var(--accent-hover);
+  }
+
+  .web-search-button:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+  }
+
+  /* The address sits under the title. */
   .result-main {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    flex-direction: column;
     min-width: 0;
-  }
-
-  .result-title {
-    flex: none;
-    max-width: 70%;
-  }
-
-  .result-subtitle {
-    flex: 1;
   }
 
   .result-title,
   .result-subtitle,
-  .result-helper,
-  .chip-title {
+  .result-helper {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1102,14 +1055,14 @@
     color: var(--text-primary);
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-medium);
-    line-height: 18px;
+    line-height: max(18px, 1.3em);
   }
 
   .result-subtitle,
   .result-helper {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
-    line-height: 16px;
+    line-height: max(16px, 1.3em);
   }
 
   .result-hl {
@@ -1118,40 +1071,11 @@
     font-weight: var(--font-weight-semibold);
   }
 
-  .command-bar-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .command-bar-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    max-width: 180px;
-    height: var(--interface-row-height);
-    padding: 0 10px 0 8px;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-  }
-
-  .command-bar-chip .result-icon {
-    flex: none;
-    width: calc(var(--interface-palette-icon-size) - 4px);
-    height: calc(var(--interface-palette-icon-size) - 4px);
-    border-radius: var(--radius-xs);
-    font-size: var(--font-size-xs);
-  }
-
-  .chip-title {
-    color: var(--text-primary);
-    font-size: var(--font-size-md);
-  }
-
   .command-bar-empty {
     display: grid;
     gap: 4px;
     padding: 24px 16px;
+    overflow-y: auto;
     text-align: center;
   }
 
@@ -1167,27 +1091,6 @@
     margin: 0 auto;
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
-  }
-
-  .command-bar-footer {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: 16px;
-    height: calc(36px + var(--interface-step) * 4px);
-    padding: 0 16px;
-    border-top: 1px solid var(--separator);
-  }
-
-  /* A hint that does not fit wraps onto a hidden second line: it drops whole, and Esc keeps its place. */
-  .footer-hints {
-    display: flex;
-    flex: 1;
-    flex-wrap: wrap;
-    gap: 0 16px;
-    height: calc(20px + var(--interface-step) * 2px);
-    min-width: 0;
-    overflow: hidden;
   }
 
   .keycap {
@@ -1210,6 +1113,16 @@
     color: var(--text-primary);
   }
 
+  @container command-bar (max-width: 440px) {
+    .command-bar-result { grid-template-columns: var(--interface-palette-icon-size) minmax(0, 1fr) minmax(0, 32%); }
+    .command-bar-input-row { gap: 8px; }
+  }
+
+  @container command-bar (max-width: 340px) {
+    .result-action-label { display: none; }
+    .command-bar-result { grid-template-columns: var(--interface-palette-icon-size) minmax(0, 1fr) auto; }
+  }
+
   @keyframes command-bar-in {
     from {
       opacity: 0;
@@ -1226,10 +1139,9 @@
 
   @media (max-width: 640px) {
     .command-bar-backdrop {
-      padding: 12px 8px 8px;
+      padding: var(--bar-top) 8px 8px;
     }
 
-    .command-bar-footer,
     .result-helper {
       display: none;
     }
@@ -1238,7 +1150,6 @@
   @media (prefers-reduced-motion: reduce) {
     .command-bar {
       animation: command-bar-fade 150ms ease !important;
-      transition: none;
     }
 
     @keyframes command-bar-fade {

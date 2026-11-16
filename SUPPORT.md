@@ -4,6 +4,9 @@ Lilo is maintained by volunteers in their spare time. These are the fastest ways
 
 ## Questions and ideas
 
+Start with the [documentation](https://docs.getlilo.app/) and its
+[troubleshooting guide](https://docs.getlilo.app/guides/troubleshooting).
+
 Ask in [GitHub Discussions](https://github.com/Alexays/Lilo/discussions): how to do something,
 whether a feature fits, help building from source. Search first, someone may have asked already.
 

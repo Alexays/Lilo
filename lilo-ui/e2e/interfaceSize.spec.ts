@@ -4,8 +4,8 @@ import { initialWorld, SPACE_1, SPACE_2 } from "./fixtures";
 import { tab, treeItem } from "../src/stores/testFixtures";
 
 for (const [preset, row, text, favorite, space, palette] of [
-	["compact", 28, 12, 44, 24, 560], ["comfortable", 32, 13, 48, 28, 600],
-	["roomy", 36, 14, 52, 32, 640], ["spacious", 40, 15, 56, 36, 680],
+	["compact", 28, 12, 44, 24, 440], ["comfortable", 32, 13, 48, 28, 480],
+	["roomy", 36, 14, 52, 32, 520], ["spacious", 40, 15, 56, 36, 560],
 ] as const) {
 	test(`${preset} coordinates the sidebar and floating palette from saved settings`, async ({ page }) => {
 		await page.emulateMedia({ reducedMotion: "reduce" });
@@ -19,11 +19,12 @@ for (const [preset, row, text, favorite, space, palette] of [
 		await expect.poll(async () => Math.round((await page.locator(".sidebar-layout .url-trigger").boundingBox())!.height)).toBe(row);
 		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 		await expect(page.locator(".command-bar")).toHaveCSS("width", `${palette}px`);
-		await expect(page.locator(".command-bar-result").first()).toHaveCSS("height", `${row + 8}px`);
+		await expect(page.locator(".command-bar")).toHaveCSS("height", `${320 + (text - 13) * 24}px`);
+		await expect(page.locator(".command-bar-result").first()).toHaveCSS("min-height", `${row + 16}px`);
 		await expect(page.locator(".command-bar-input")).toHaveCSS("font-size", `${text + 4}px`);
-		await expect(page.locator(".command-bar-chip").first()).toHaveCSS("height", `${row}px`);
-		await expect(page.locator(".scope-hint").first()).toHaveCSS("height", `${22 + (text - 13) * 2}px`);
-		await expect(page.locator(".command-bar-footer .keycap").first()).toHaveCSS("height", `${20 + (text - 13) * 2}px`);
+		await expect(page.locator(".scope-picker").first()).toHaveCSS("height", `${28 + (text - 13) * 2}px`);
+		await page.locator(".command-bar-info").click();
+		await expect(page.locator(".command-bar-help .keycap").first()).toHaveCSS("height", `${20 + (text - 13) * 2}px`);
 	});
 
 	test(`${preset} also scales the adaptive grid when many Favorites use compact tiles`, async ({ page }) => {
@@ -52,7 +53,8 @@ for (const [preset, row, text, favorite, space, palette] of [
 		await bootChrome(page, world);
 		await expect(page.locator(".command-bar-backdrop")).toHaveClass(/docked/);
 		await expect(page.locator(".command-bar")).toHaveCSS("width", `${palette}px`);
-		await expect(page.locator(".scope-hint").first()).toHaveCSS("height", `${22 + (text - 13) * 2}px`);
+		await expect(page.locator(".command-bar")).toHaveCSS("height", `${320 + (text - 13) * 24}px`);
+		await expect(page.locator(".scope-picker").first()).toHaveCSS("height", `${28 + (text - 13) * 2}px`);
 		await expect(page.locator(".command-bar-input")).toHaveCSS("font-size", `${text + 4}px`);
 	});
 }
@@ -116,9 +118,29 @@ test.describe("a narrow French settings page", () => {
 test("an open palette immediately follows a changed interface size", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
-	await expect(page.locator(".command-bar")).toHaveCSS("width", "600px");
+	await expect(page.locator(".command-bar")).toHaveCSS("width", "480px");
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { interfaceSize: "spacious" } }));
-	await expect(page.locator(".command-bar")).toHaveCSS("width", "680px");
-	await expect(page.locator(".command-bar-chip").first()).toHaveCSS("height", "40px");
+	await expect(page.locator(".command-bar")).toHaveCSS("width", "560px");
+	await expect(page.locator(".command-bar-result").first()).toHaveCSS("min-height", "56px");
 	await expect(page.locator(".command-bar-input")).toHaveCSS("font-size", "19px");
+});
+
+
+test("the spacious palette stays within a short, narrow window", async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 300 });
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	await bootChrome(page, { ...initialWorld(), settings: { interfaceSize: "spacious" } });
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	await page.locator(".command-bar-input").fill(":");
+	const bounds = (await page.locator(".command-bar").boundingBox())!;
+	expect(bounds.x).toBeGreaterThanOrEqual(0);
+	expect(bounds.y).toBeGreaterThanOrEqual(0);
+	expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
+	expect(bounds.y + bounds.height).toBeLessThanOrEqual(300);
+	await expect(page.locator(".scope-picker")).toBeInViewport();
+	await expect(page.locator(".command-bar-info")).toBeInViewport();
+	const results = page.locator(".command-bar-results");
+	await expect.poll(() => results.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+	await page.locator(".command-bar-input").press("ArrowUp");
+	await expect(page.locator(".command-bar-result.selected")).toBeInViewport();
 });

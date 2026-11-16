@@ -163,6 +163,7 @@ Virtualized rows, folders, stacks and trays use the same chosen heights as their
 Favorites keep their adaptive grid and switch to denser tiles for long lists; both tile sizes follow the preset.
 
 The command palette uses the active Space’s resolved background, with text and selection colors checked for readable contrast.
-Its search field, result rows, bookmark chips, scope controls and footer keycaps follow the interface size preset.
+Its search field, result rows, scope controls and keyboard-help keycaps follow the interface size preset.
+Comfortable keeps the compact command bar’s default dimensions; other presets scale it without restoring idle tiles or a permanent footer.
 Its result scrollbar has no track fill, stays quiet at rest and becomes clearer on hover or focus; Increase Contrast
 makes the thumb easier to find. These appearance choices do not change search scopes or hint behavior.

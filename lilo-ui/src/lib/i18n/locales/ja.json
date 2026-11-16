@@ -1177,6 +1177,7 @@
 		"installed": "インストール済み"
 	},
 	"commandBar": {
+		"showDetails": "キーボードヒントを表示",
 		"hintPeek": "プレビュー",
 		"hintCopyLink": "リンクをコピー",
 		"hintCloseTab": "タブを閉じる",
@@ -1243,8 +1244,6 @@
 		"sectionOpenTabs": "開いているタブ",
 		"sectionBookmarks": "ブックマーク",
 		"sectionRecentHistory": "最近の履歴",
-		"sectionFrequentSites": "よく見るサイト",
-		"sectionRecentConversations": "最近の会話",
 		"sectionHistory": "履歴",
 		"sectionSwitchToTab": "タブに切り替える",
 		"sectionGoTo": "移動",

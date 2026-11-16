@@ -1,0 +1,3 @@
+kind: Fixed
+body: With extensions installed, opening pages and browsing with the content blocker on no longer gives each new web process its own copy of the extensions' content scripts, so Lilo uses less memory
+time: 2026-11-14T00:20:26.737526+02:00

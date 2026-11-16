@@ -1,0 +1,3 @@
+kind: Changed
+body: New Tab opens the command bar over the current page and creates a destination tab only when a URL or search is submitted.
+time: 2026-11-12T12:00:40.752776+05:30

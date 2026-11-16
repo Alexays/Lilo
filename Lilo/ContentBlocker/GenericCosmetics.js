@@ -60,7 +60,7 @@
   var sheet = null;
   // CosmeticStyleSheets.swift, registered when WebKit can add a user style sheet to one page.
   var userSheets = self.webkit && self.webkit.messageHandlers && self.webkit.messageHandlers.liloCosmetics;
-  // Leaving the page took its sheets away: back from the back/forward cache, every rule posted goes again.
+  // Leaving the page may have taken its sheets away: back from the back/forward cache, every rule posted goes again.
   var posted = '';
   if (userSheets) self.addEventListener('pageshow', function (event) { if (event.persisted && posted) userSheets.postMessage(posted); });
   if (hidden) pending.push.apply(pending, hidden);

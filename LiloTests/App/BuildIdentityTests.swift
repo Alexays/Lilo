@@ -28,6 +28,11 @@ final class BuildIdentityTests: XCTestCase {
         #endif
     }
 
+    /// A swallowed exception corrupts the Swift runtime's state: the crash must be at the throw, with its backtrace.
+    func testAnUncaughtExceptionCrashesTheAppWhereItIsThrown() {
+        XCTAssertTrue(UserDefaults.standard.bool(forKey: "NSApplicationCrashOnExceptions"))
+    }
+
     /// Sparkle's updater refuses to start, so no build would ever check for updates, when a signed feed lacks this pair.
     func testASignedUpdateFeedAlsoVerifiesUpdatesBeforeExtraction() {
         let info = Bundle.main.infoDictionary ?? [:]

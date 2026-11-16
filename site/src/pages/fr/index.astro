@@ -5,7 +5,7 @@ import FeatureDemo from "../../components/FeatureDemo.astro";
 import PageSection from "../../components/PageSection.astro";
 import ReleaseLink from "../../components/ReleaseLink.astro";
 import Layout from "../../layouts/Layout.astro";
-import { copy } from "../../lib/i18n";
+import { copy, docsUrl } from "../../lib/i18n";
 
 const lang = "fr";
 const text = copy[lang];
@@ -228,7 +228,11 @@ const schema = [
       <p>
         Parcourez la boutique que vous connaissez et installez en un clic. Lilo
         exécute les extensions Manifest V3 sur WebKit, les tient à jour et donne
-        à chaque profil les siennes.
+        à chaque profil les siennes. {text.extensionsDocs}{" "}
+        <a href={docsUrl(lang, "/reference/extension-compatibility")}>
+          {text.extensionsDocsLink}
+        </a>
+        .
       </p>
       <div class="cats">
         <span>Gestionnaires de mots de passe</span>
