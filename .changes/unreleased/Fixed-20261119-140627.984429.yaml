@@ -1,0 +1,3 @@
+kind: Fixed
+body: Agents dragging an element with the mouse now start the page's own drag and drop, so a list can be reordered by dragging instead of only selecting text
+time: 2026-11-19T14:06:27.984429-08:00
