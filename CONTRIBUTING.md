@@ -198,8 +198,9 @@ rather than carving out a helper just to reach it.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.
 - **App** (the GitHub-hosted `xcode-27` macOS image, no signing secrets): a check that
-  `Lilo.xcodeproj` matches `project.yml`, SwiftLint, the Debug and Release builds,
-  `make swift-test` and `make swift-test-slow`.
+  `Lilo.xcodeproj` matches `project.yml`, SwiftLint, the Debug build,
+  `make swift-test` and `make swift-test-slow`. The Release build (`make release-archive`) runs on
+  pushes to `main` only, not on pull requests, to leave a macOS slot free.
 - **libghostty-vt** (`.github/workflows/ghostty-vt.yml`, by hand or when `GHOSTTY_SHA` changes on
   `main`): builds the xcframework `make vt-build` downloads and publishes it as the
   `ghostty-vt-<sha>` prerelease, whose notes give the new `VT_SHA256`.
