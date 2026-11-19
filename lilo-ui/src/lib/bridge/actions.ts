@@ -49,6 +49,7 @@ export const chromeActions = {
 	setSidebarRail: (rail: boolean): void => emit("setSidebarRail", { rail }),
 	sidebarOverlayChanged: (visible: boolean): void =>
 		emit("sidebarOverlayChanged", { visible }),
+	pageShellChanged: (open: boolean): void => emit("pageShellChanged", { open }),
 	permissionResponse: (requestId: string, granted: boolean): void =>
 		emit("permissionResponse", { requestId, granted }),
 	dismissPermissionRequest: (requestId: string): void =>
