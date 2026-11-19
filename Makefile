@@ -492,22 +492,23 @@ xcode-build-release: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 run-ui-dev: app
 	@LILO_UI_DEV_SERVER=http://localhost:5173 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo
 
-# LILO_AGENT_ALLOW_ALL only lets any agent client in without asking; LILO_AGENT_CLICKS=allow|deny answers every
-# question before a send, payment or deletion yes or no at once. Only a Debug build reads them. agent-app sets
-# both so a run is unattended; CLICKS=deny makes it refuse instead.
+# LILO_AGENT_ALLOW_ALL lets any agent client in without asking, LILO_AGENT_CLICKS=allow|deny answers every
+# question before a send, payment or deletion yes or no at once, and LILO_HEADLESS keeps the app from taking
+# focus, a Dock icon or a visible window: only a Debug build reads them. agent-app sets all three so a run is
+# unattended (CLICKS=deny refuses, HEADLESS=0 keeps the window).
 AGENT_DATA = $(or $(LILO_APP_SUPPORT_DIR),$(HOME)/Library/Application Support/Lilo-Debug)
 # A fresh Debug profile has agent control off, and the app reads that setting only at launch: it is switched on
 # in the profile's database, which a first launch creates, before the app a client talks to starts.
 agent-app:
 	@test -d build/debug/export/Lilo.app || { echo "run make app first" >&2; exit 1; }
-	@pgrep -qf "build/debug/export/Lilo.app/Contents/MacOS/Lilo$$" || { \
+	@pgrep -qf "^$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/Lilo$$" || { \
 		on="INSERT OR REPLACE INTO settings(key, value) VALUES ('agentControlEnabled', 'true')"; \
 		/bin/rm -f "$(AGENT_DATA)/agent.sock"; \
 		sqlite3 "$(AGENT_DATA)/global.db" "$$on" 2>/dev/null || { \
-			./build/debug/export/Lilo.app/Contents/MacOS/Lilo >/dev/null 2>&1 & first=$$!; \
+			LILO_HEADLESS=$(or $(HEADLESS),1) "$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/Lilo" >/dev/null 2>&1 & first=$$!; \
 			until sqlite3 "$(AGENT_DATA)/global.db" "$$on" 2>/dev/null; do sleep 1; done; \
 			kill $$first; wait $$first 2>/dev/null; /bin/rm -f "$(AGENT_DATA)/agent.sock"; }; \
-		LILO_AGENT_ALLOW_ALL=1 LILO_AGENT_CLICKS=$(or $(CLICKS),allow) ./build/debug/export/Lilo.app/Contents/MacOS/Lilo >/dev/null 2>&1 & \
+		LILO_AGENT_ALLOW_ALL=1 LILO_AGENT_CLICKS=$(or $(CLICKS),allow) LILO_HEADLESS=$(or $(HEADLESS),1) "$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/Lilo" >/dev/null 2>&1 & \
 		until [ -S "$(AGENT_DATA)/agent.sock" ] && sleep 3; do sleep 1; done; }
 
 ## Call the debug app's agent tools from a shell, starting the app first if needed (CALLS=calls.json, see scripts/agent_call.mjs)
