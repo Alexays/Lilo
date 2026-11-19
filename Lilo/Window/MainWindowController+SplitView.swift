@@ -201,6 +201,80 @@ final class SplitFocusRingView: NSView {
     }
 }
 
+/// The hover pill at a split pane's top edge: × takes the pane out of the split, the arrows make
+/// it the only tab. It floats over the pane, so showing it never moves anything.
+final class SplitPaneHandleView: NSView {
+    static let pillSize = NSSize(width: 66, height: 26)
+    private static let fadeDuration: TimeInterval = 0.15
+
+    var onClose: (() -> Void)?
+    var onMaximize: (() -> Void)?
+
+    private var revealed = false
+    private let closeButton = NSButton()
+    private let maximizeButton = NSButton()
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        alphaValue = 0
+        let pill = NSVisualEffectView()
+        pill.material = .hudWindow
+        pill.state = .active
+        pill.blendingMode = .behindWindow
+        pill.wantsLayer = true
+        pill.layer?.cornerRadius = Self.pillSize.height / 2
+        pill.layer?.masksToBounds = true
+        pill.autoresizingMask = [.width, .height]
+        addSubview(pill)
+        for (button, symbol, action, label) in [
+            (closeButton, "xmark", #selector(closePressed), "Close Split Pane".localized),
+            (maximizeButton, "arrow.up.left.and.arrow.down.right", #selector(maximizePressed), "Maximize Split Pane".localized),
+        ] {
+            button.bezelStyle = .inline
+            button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+            button.contentTintColor = .labelColor
+            button.toolTip = label
+            button.setAccessibilityLabel(label)
+            button.target = self
+            button.action = action
+            button.setButtonType(.momentaryChange)
+            addSubview(button)
+        }
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    override func layout() {
+        super.layout()
+        for (button, x) in [(closeButton, CGFloat(5)), (maximizeButton, CGFloat(37))] {
+            button.frame = NSRect(x: x, y: (bounds.height - 22) / 2, width: 24, height: 22)
+        }
+    }
+
+    /// Only the buttons take clicks; the pill's own pixels fall through to the page.
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard revealed, let hit = super.hitTest(point) else { return nil }
+        return hit is NSButton ? hit : nil
+    }
+
+    func setRevealed(_ revealed: Bool) {
+        guard revealed != self.revealed else { return }
+        self.revealed = revealed
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(Self.fadeDuration)
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            CATransaction.setDisableActions(true)
+        }
+        alphaValue = revealed ? 1 : 0
+        CATransaction.commit()
+    }
+
+    @objc private func closePressed() { onClose?() }
+    @objc private func maximizePressed() { onMaximize?() }
+}
+
 /// Sits behind a web pane, at the pane's frame. WebKit docks the Web Inspector over the whole superview of the
 /// page's attachment view, so each web pane gets a superview of its own size and the page follows `anchor`.
 final class SplitPaneDockView: NSView {
@@ -262,6 +336,8 @@ final class SplitPanesController {
     private(set) var docks: [UUID: SplitPaneDockView] = [:]
     /// The layout while a divider is being dragged; persisted on the split folder on release.
     private var liveLayout: SplitLayout?
+    /// One hover handle per pane, keyed by its tab.
+    private var handles: [UUID: SplitPaneHandleView] = [:]
     /// Pane frames last sent to the chrome, as shares of the content area.
     var sentPaneFrames: [UUID: NSRect] = [:]
     private var focusRing: SplitFocusRingView?
@@ -290,6 +366,8 @@ final class SplitPanesController {
         dividers = [:]
         docks.values.forEach { $0.detach() }
         docks = [:]
+        handles.values.forEach { $0.removeFromSuperview() }
+        handles = [:]
         focusRing?.removeFromSuperview()
         sendPaneFrames([:])
     }
@@ -335,6 +413,20 @@ final class SplitPanesController {
         }
         dividers[path] = divider
         return divider
+    }
+
+    private func makeHandle(for tabId: UUID) -> SplitPaneHandleView {
+        let handle = SplitPaneHandleView(frame: .zero)
+        handle.onClose = { [weak self] in self?.controller.unsplitTab(tabId) }
+        handle.onMaximize = { [weak self] in self?.controller.maximizeSplitPane(tabId) }
+        handles[tabId] = handle
+        return handle
+    }
+
+    /// The pill's place: centered on the pane's top edge, inside the pane so it never covers a divider.
+    private static func handleFrame(in pane: NSRect) -> NSRect {
+        let size = SplitPaneHandleView.pillSize
+        return NSRect(x: pane.midX - size.width / 2, y: pane.maxY - size.height - 6, width: size.width, height: size.height)
     }
 
     /// How short a part can get along a cut's axis: its panes' minimum, plus the dividers between
@@ -413,6 +505,17 @@ final class SplitPanesController {
                 addPane(dock, below: unsafe view.superview === container ? view : nil)
             }
         }
+        for (tabId, handle) in handles where panes[tabId] == nil {
+            handle.removeFromSuperview()
+            handles[tabId] = nil
+        }
+        for (tabId, frame) in panes where tabManager.loadedContentView(forTabId: tabId) != nil {
+            let handle = handles[tabId] ?? makeHandle(for: tabId)
+            handle.frame = Self.handleFrame(in: frame)
+            if unsafe handle.superview !== container {
+                container.addSubview(handle, positioned: .above, relativeTo: nil)
+            }
+        }
         // A divider drag reports its panes once, on release.
         if liveLayout == nil { sendPaneFrames(panes) }
         guard let ring = focusRing, let focused = tabManager.activeOpenTabId.flatMap({ panes[$0] }) else { return }
@@ -461,7 +564,7 @@ final class SplitPanesController {
         let tabManager = controller.tabManager
         guard let split = tabManager.activeSplit, split.layout.paneIds.contains(id) else { return [] }
         let panes: [NSView] = split.layout.paneIds.compactMap { $0 == id ? nil : tabManager.loadedContentView(forTabId: $0) }
-        return panes + Array(dividers.values) + Array(docks.values) + [focusRing].compactMap { $0 }
+        return panes + Array(dividers.values) + Array(docks.values) + Array(handles.values) + [focusRing].compactMap { $0 }
     }
 
     /// Pane (or divider) under the pointer. A press latches its target for the rest of the gesture
@@ -481,7 +584,11 @@ final class SplitPanesController {
         for divider in dividers.values { divider.setHovered(divider === hoveredDivider) }
         let tabManager = controller.tabManager
         let docks = docks
-        let hit: (view: NSView, tabId: UUID?)? = hoveredDivider.map { ($0, nil) } ?? split.layout.paneIds.lazy.compactMap { id in
+        var hit: (view: NSView, tabId: UUID?)?
+        for (id, handle) in handles {
+            if let target = handle.hitTest(point) { hit = (target, id); break }
+        }
+        hit = hit ?? hoveredDivider.map { ($0, nil) } ?? split.layout.paneIds.lazy.compactMap { id in
             guard let view = tabManager.loadedContentView(forTabId: id) else { return nil }
             if view.frame.contains(point) { return (view, id) }
             // The inspector docked beside the pane's page.
@@ -493,6 +600,29 @@ final class SplitPanesController {
             if let tabId = hit.tabId, tabId != tabManager.activeOpenTabId { controller.activateTabStateFirst(id: tabId) }
         }
         return hit.view
+    }
+
+    /// The pointer monitor's every-move feed: reveals the hovered pane's handle and the divider
+    /// under the pointer, and hides the handles anywhere else. Nil hides them all (pointer left).
+    func updateHover(atWindowPoint point: NSPoint?) {
+        guard let split, let point,
+              case let container = controller.contentContainerView,
+              !container.subviews.contains(where: { $0 is PagePeekView }) else {
+            for handle in handles.values { handle.setRevealed(false) }
+            return
+        }
+        let local = container.convert(point, from: nil)
+        let hoveredDivider = dividers.values.first { $0.frame.contains(local) }
+        for divider in dividers.values { divider.setHovered(divider === hoveredDivider) }
+        let tabManager = controller.tabManager
+        let docks = docks
+        let hoveredPane = split.layout.paneIds.first { id in
+            guard let view = tabManager.loadedContentView(forTabId: id) else { return false }
+            return view.frame.contains(local) || docks[id]?.frame.contains(local) == true
+        }
+        for (id, handle) in handles {
+            handle.setRevealed(id == hoveredPane)
+        }
     }
 
     /// A web link dragged from outside the pages over a narrow strip at a pane's left or right edge goes to the chrome, which
@@ -703,6 +833,32 @@ extension MainWindowController {
     @objc func closeSplitView(_ sender: Any?) {
         guard let spaceId = tabManager.currentSpaceId, let split = tabManager.activeSplit else { return }
         _ = try? applyBrowserCommand(.deleteFolder(spaceId: spaceId, folderId: split.folderId))
+    }
+
+    /// Takes `tabId` out of its split, back into the list just after it; the tab stays open.
+    func unsplitTab(_ tabId: UUID) {
+        guard let spaceId = tabManager.context(for: tabId)?.spaceId ?? tabManager.currentSpaceId else { return }
+        _ = try? applyBrowserCommand(.unsplitTab(spaceId: spaceId, tabId: tabId))
+    }
+
+    /// Leaves `tabId` as the split's only pane: the others rejoin the list and it takes the page.
+    func maximizeSplitPane(_ tabId: UUID) {
+        guard let spaceId = tabManager.context(for: tabId)?.spaceId ?? tabManager.currentSpaceId,
+              let split = tabManager.activeSplit, split.layout.paneIds.contains(tabId) else { return }
+        for id in split.layout.paneIds where id != tabId {
+            _ = try? applyBrowserCommand(.unsplitTab(spaceId: spaceId, tabId: id))
+        }
+        activateTabStateFirst(id: tabId)
+    }
+
+    @objc func closeActiveSplitPane(_ sender: Any?) {
+        guard let id = tabManager.activeOpenTabId else { return }
+        unsplitTab(id)
+    }
+
+    @objc func maximizeActiveSplitPane(_ sender: Any?) {
+        guard let id = tabManager.activeOpenTabId else { return }
+        maximizeSplitPane(id)
     }
 }
 
