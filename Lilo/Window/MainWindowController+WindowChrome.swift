@@ -101,7 +101,11 @@ extension MainWindowController {
 
     func updateSidebarWidth(_ width: CGFloat) {
         sidebarExpandedWidth = width.clamped(to: Self.sidebarWidthRange)
-        applySidebarLayout(animated: false)
+        // The folded rail's edge holds still whatever width it unfolds to: only a change of the
+        // fitted width relayouts, so the width a fold remembers cannot cut its slide short.
+        if fittedSidebarWidth != sidebarWidth {
+            applySidebarLayout(animated: false)
+        }
 
         // Persist only after the drag comes to rest (~500ms trailing) to avoid a synchronous
         // SQLite INSERT OR REPLACE + UserDefaults write on every rAF frame during live resize.
@@ -121,7 +125,7 @@ extension MainWindowController {
         sidebarRail = rail
         context.settingsStore?.sidebarRail = rail
         unsafe UserDefaults.lilo.set(rail, forKey: "cachedSidebarRail")
-        applySidebarLayout(animated: false)
+        applySidebarLayout(animated: true)
     }
 
     func setSidebarCollapseLocked(_ locked: Bool) {

@@ -21,6 +21,7 @@
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { easeStandard } from "../../lib/motion/easing";
 
   // Floating: revealed from the window's edge over the page while the sidebar is hidden.
   let { floating, onenter, onleave, onresize }: {
@@ -88,6 +89,15 @@
     event.preventDefault();
     buttons[(index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length].focus();
   }
+
+  // Docked, the rail slides with the sidebar's fold: WindowFrameView.toggleDuration on --motion-ease-standard.
+  // The slide is the rail's whole width (--sidebar-rail-width + --content-inset), off its window edge.
+  const railFly = $derived({
+    x: getTabPosition() === "right" ? 84 : -84,
+    opacity: 1,
+    duration: prefersReducedMotion() ? 0 : floating ? 240 : 280,
+    easing: floating ? undefined : easeStandard,
+  });
 </script>
 
 {#snippet tabIcon(tab: TabState)}
@@ -171,7 +181,7 @@
   use:reportInteractiveZone={{ id: "sidebar-rail" }}
   onmouseenter={onenter}
   onmouseleave={onleave}
-  transition:fly|global={{ x: getTabPosition() === "right" ? 84 : -84, opacity: 1, duration: floating && !prefersReducedMotion() ? 240 : 0 }}
+  transition:fly|global={railFly}
 >
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <nav class="rail" aria-label={t("sidebar.ariaLabel")} onkeydown={handleArrows}>
