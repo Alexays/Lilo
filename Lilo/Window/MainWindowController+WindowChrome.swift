@@ -234,6 +234,8 @@ extension MainWindowController {
         sentArchiveFavicons = [:]
         searchHandler?.sentFaviconHosts = []
         historyPageHandler?.sentFaviconHosts = []
+        // A reloaded chrome starts with no system screen open, and reports one only when it opens.
+        pageShellOpen = false
         // A reloaded chrome has lost its capture cards: nothing can open their captures any more.
         copiedCaptures.keys.forEach(ChromeUISchemeHandler.discardScreenshot)
         copiedCaptures = [:]
