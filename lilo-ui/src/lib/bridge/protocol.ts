@@ -629,7 +629,7 @@ export interface BridgeCommandPayloadMap {
 	sampleScreenColor: EmptyPayload;
 	sidebarOverlayChanged: { visible: boolean };
 	showTabSecurityInfo: EmptyPayload;
-	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
+	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number; selectedIds?: string[] };
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showTabStackContextMenu: { ids: string[]; host: string; name: string; x: number; y: number; width: number; height: number };
 	showSidebarContextMenu: { x: number; y: number; width: number; height: number; spaceId?: string };
