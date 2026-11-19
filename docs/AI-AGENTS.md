@@ -78,6 +78,25 @@ registry and are checked against its SHA-256 before they run.
   Undo puts back one file. An agent can work on its own copy of the project (a git worktree).
 - An idle agent stops after ten minutes and resumes its session when you come back.
 
+## The action log
+
+Lilo keeps one local line per tool call an agent makes, in `Agents/Actions/` of Lilo's support folder (`~/Library/Application Support/Lilo/Agents/Actions/`). A conversation has its own file (`conversation-<tab id>.jsonl`), and every other client its own (`client-<name>.jsonl`). Nothing leaves your Mac, nothing is written while no agent calls a tool, and no screenshot, page text or video is ever stored. It is the record a replay, a retry or a skill is built from later.
+
+Each line is a JSON object:
+
+```json
+{"args":{"ref":"ref_12","tabId":3,"value":{"chars":9}},"duration_ms":41,"host":"example.com","ok":true,"tabId":3,"tool":"form_input","ts":"2026-11-19T10:15:02.317Z"}
+```
+
+- `ts`, `tool`, `ok`, `duration_ms`, and `code` (the error code, such as `needs_user`) when the call failed.
+- `possibleCommit` when the call sent a write to a site: a retry could happen twice.
+- `tabId` and `host`: the tab the call named, and the host of its page, never a path or a query.
+- `args`: the arguments with their content removed. Ids, actions, numbers and coordinates stay. A URL keeps its host. Every other string (typed text, scripts, selectors, headers, bodies, cookie values) becomes its length, `{"chars": 9}`, and so does any `value`, even a number, because it can be a one-time code.
+
+What is never logged: what you or the agent typed, a password, a card or a one-time code, cookie values, request or response bodies, page text, screenshots, error messages and URLs past their host.
+
+Each file stops at 1 MB and rotates to a single `.1.jsonl` next to it, so a source never holds more than 2 MB. Closing a conversation deletes its log when Lilo quits. To delete the rest, quit Lilo and remove the `Agents/Actions` folder. To stop logging, turn off Settings > Agents > "Keep a log of agent actions"; lines already written stay until you delete them.
+
 ## Known limitations
 
 - An agent's `emulate` and an extension's `chrome.debugger` on the same tab share its Web Inspector, so each can overwrite the other's user agent, media and init script.
