@@ -93,7 +93,11 @@ def reordered(events, answer):
     if why:
         return False, why
     order = data.get("order") or []
-    return order[:1] == ["Gamma"] and sorted(order) == ["Alpha", "Beta", "Delta", "Gamma"], f"order {order}"
+    if order[:1] != ["Gamma"] or sorted(order) != ["Alpha", "Beta", "Delta", "Gamma"]:
+        return False, f"order {order}"
+    if data.get("trusted") is not True:
+        return False, "reordered without a trusted dragstart (synthetic events)"
+    return True, None
 
 
 def held(event):
