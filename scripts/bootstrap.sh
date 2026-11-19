@@ -1,6 +1,6 @@
 #!/bin/bash
 # make bootstrap: checks what building Lilo needs, then runs the make targets that prepare a clone.
-# $1 installs the npm dependencies, $2 builds the rest; both are no-ops once done.
+# $1 installs the pnpm and npm dependencies, $2 builds the rest; both are no-ops once done.
 echo "Checking the prerequisites"
 
 missing=()
@@ -36,12 +36,20 @@ else
     exit 1
 fi
 
+# The version package.json pins is Corepack's to fetch; any pnpm that is not it refuses to install.
+if pnpm -v >/dev/null 2>&1; then
+    echo "  ok  pnpm $(pnpm -v)"
+else
+    echo "Missing: pnpm. Run corepack enable (it comes with Node.js 22), then rerun make bootstrap." >&2
+    exit 1
+fi
+
 # shellcheck disable=SC2086 # each argument is a list of make targets
 make -s --no-print-directory $1 || exit 1
 
 if [ ${#missing[@]} -gt 0 ]; then
     echo >&2
-    echo "The npm dependencies are installed: make ui-preview already works. Building the app needs:" >&2
+    echo "The JavaScript dependencies are installed: make ui-preview already works. Building the app needs:" >&2
     printf '  - %s\n' "${missing[@]}" >&2
     echo "Install them, then rerun make bootstrap." >&2
     exit 1

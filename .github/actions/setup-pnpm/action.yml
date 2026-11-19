@@ -1,0 +1,13 @@
+name: Set up Node.js and pnpm
+description: Node.js at the version .nvmrc names, and the pnpm that package.json's packageManager pins, through Corepack.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: '.nvmrc'
+    # No cache: a filtered install from the registry takes seconds, less than restoring a pnpm store.
+    - run: corepack enable
+      shell: bash
+      env:
+        COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'

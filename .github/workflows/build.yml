@@ -47,13 +47,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: 'site/.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: |
-            site/package-lock.json
-            docs-site/package-lock.json
+      - uses: ./.github/actions/setup-pnpm
       # The documentation generators read the app's sources, so a Swift or UI change that breaks one fails here.
       - run: make release-status release-test release-media-test perf-summary-test site-check site-test site-deploy-check docs-check docs-test docs-deploy-check
 
@@ -65,20 +59,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: lilo-ui/package-lock.json
-      # Restored files predate the checkout's lockfile: the touch keeps make from installing them again.
-      - name: Restore lilo-ui/node_modules
-        id: ui-modules
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: lilo-ui/node_modules
-          key: ui-modules-${{ runner.os }}-${{ hashFiles('.nvmrc', 'lilo-ui/package-lock.json') }}
-      - if: steps.ui-modules.outputs.cache-hit == 'true'
-        run: touch lilo-ui/node_modules/.package-lock.json
+      - uses: ./.github/actions/setup-pnpm
       - run: make validate-ui
 
   e2e:
@@ -93,29 +74,16 @@ jobs:
         shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: lilo-ui/package-lock.json
-      # Restored files predate the checkout's lockfile: the touch keeps make from installing them again.
-      - name: Restore lilo-ui/node_modules
-        id: ui-modules
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: lilo-ui/node_modules
-          key: ui-modules-${{ runner.os }}-${{ hashFiles('.nvmrc', 'lilo-ui/package-lock.json') }}
-      - if: steps.ui-modules.outputs.cache-hit == 'true'
-        run: touch lilo-ui/node_modules/.package-lock.json
-      # Before the browser install, so npx runs the locked Playwright.
-      - run: make lilo-ui/node_modules/.package-lock.json
+      - uses: ./.github/actions/setup-pnpm
+      # Before the browser install, so pnpm exec runs the locked Playwright.
+      - run: make lilo-ui/node_modules/.installed
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-shell-${{ runner.os }}-${{ hashFiles('lilo-ui/package-lock.json') }}
+          key: playwright-shell-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       # The image's Chrome already brings the libraries the headless shell needs; --with-deps would also apt-get
       # fonts and Xvfb from a mirror that takes up to 13 minutes.
-      - run: npx playwright install --only-shell chromium
+      - run: pnpm exec playwright install --only-shell chromium
         working-directory: lilo-ui
       - run: make e2e E2E_ARGS=--shard=${{ matrix.shard }}/3
       - name: List tests that passed only on a retry
@@ -175,18 +143,12 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ hashFiles('lilo-ui/package-lock.json', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'release-media/catalog.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+          key: ui-${{ hashFiles('pnpm-lock.yaml', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'release-media/catalog.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+      - uses: ./.github/actions/setup-pnpm
         if: steps.ui-cache.outputs.cache-hit != 'true'
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: lilo-ui/package-lock.json
       - name: Build the UI
         if: steps.ui-cache.outputs.cache-hit != 'true'
-        run: |
-          npm --prefix lilo-ui ci --ignore-scripts
-          make ui-build
+        run: make ui-build
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .derived.noindex/xcode/SourcePackages
@@ -265,18 +227,12 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ hashFiles('lilo-ui/package-lock.json', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'release-media/catalog.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: lilo-ui/package-lock.json
+          key: ui-${{ hashFiles('pnpm-lock.yaml', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'release-media/catalog.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+      - uses: ./.github/actions/setup-pnpm
       # As release.yml builds it: no install script runs.
       - name: Build the UI
         if: steps.ui-cache.outputs.cache-hit != 'true'
-        run: |
-          npm --prefix lilo-ui ci --ignore-scripts
-          make ui-build
+        run: make ui-build
       - name: Date files by their content
         run: |
           { git ls-files -s -z

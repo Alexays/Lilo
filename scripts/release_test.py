@@ -13,6 +13,7 @@ CHANGIE = os.environ.get("CHANGIE", "")
 CONFIG = Path("Xcode/Configs/Base.xcconfig")
 HIGHLIGHTS = Path("lilo-ui/src/components/whatsnew/releaseHighlights.json")
 DIRECTORIES = [Path("lilo-ui"), Path("Lilo/Extensions/bridge-src")]
+LOCKED = Path("Lilo/Extensions/bridge-src")  # the only one with an npm lockfile that holds the version
 BASE = "SWIFT_VERSION = 6.0\nCURRENT_PROJECT_VERSION = 5\nMARKETING_VERSION = 0.1.4\n"
 HISTORY = "## [0.1.4] - 2026-10-24\n\n- Existing release.\n"
 
@@ -37,11 +38,12 @@ class ReleaseTests(unittest.TestCase):
         for directory in DIRECTORIES:
             package = {"name": directory.name, "private": True, "version": "0.1.4"}
             self.write(directory / "package.json", json.dumps(package, indent=2) + "\n")
-            lock = dict(package, lockfileVersion=3, packages={
-                "": package,
-                "node_modules/example": {"version": "1.2.3"},
-            })
-            self.write(directory / "package-lock.json", json.dumps(lock, indent=2) + "\n")
+            if directory == LOCKED:
+                lock = dict(package, lockfileVersion=3, packages={
+                    "": package,
+                    "node_modules/example": {"version": "1.2.3"},
+                })
+                self.write(directory / "package-lock.json", json.dumps(lock, indent=2) + "\n")
 
     def write(self, file, content):
         path = self.root / file
@@ -76,10 +78,11 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(self.read(CONFIG), BASE.replace("= 5", f"= {build}").replace("0.1.4", version))
         for directory in DIRECTORIES:
             self.assertEqual(json.loads(self.read(directory / "package.json"))["version"], version)
-            lock = json.loads(self.read(directory / "package-lock.json"))
-            self.assertEqual(lock["version"], version)
-            self.assertEqual(lock["packages"][""]["version"], version)
-            self.assertEqual(lock["packages"]["node_modules/example"]["version"], "1.2.3")
+            if directory == LOCKED:
+                lock = json.loads(self.read(directory / "package-lock.json"))
+                self.assertEqual(lock["version"], version)
+                self.assertEqual(lock["packages"][""]["version"], version)
+                self.assertEqual(lock["packages"]["node_modules/example"]["version"], "1.2.3")
         self.assertFalse((self.root / "package.json").exists())
         self.assertFalse((self.root / "package-lock.json").exists())
         self.assertFalse((self.root / "node_modules").exists())
@@ -191,7 +194,7 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(self.snapshot(), before)
         self.run_release("version")
         self.assert_versions("0.1.5")
-        lock_path = DIRECTORIES[0] / "package-lock.json"
+        lock_path = LOCKED / "package-lock.json"
         stale = self.read(lock_path).replace("0.1.5", "0.1.4")
         self.write(lock_path, stale)
         before = self.snapshot()

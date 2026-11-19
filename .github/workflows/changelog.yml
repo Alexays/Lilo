@@ -23,14 +23,11 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
+      - uses: ./.github/actions/setup-pnpm
       - name: Install the tools
         run: |
           xcodebuild -downloadComponent MetalToolchain
           brew install ffmpeg
-          npm --prefix lilo-ui ci --ignore-scripts
       - name: Film the highlights
         run: |
           version="${GITHUB_REF_NAME#changelog/}"
