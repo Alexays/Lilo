@@ -331,6 +331,18 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(openTabCount, tabs)
     }
 
+    func testCloseTabWithAPageShellClosesTheShellNotTheTab() throws {
+        let tabs = openTabCount
+        controller.pageShellOpen = true
+        let events = BridgeEventRecorder(controller.bridgeRouter)
+
+        controller.closeCurrentTab(nil)
+
+        XCTAssertEqual(openTabCount, tabs, "the tab under the system screen stays")
+        XCTAssertEqual(controller.tabManager.activeOpenTabId, opener.id)
+        XCTAssertEqual(events.data("closePageShell").count, 1, "the chrome is asked to close the screen")
+    }
+
     func testClickOutsideThePeekCardDismissesIt() async throws {
         controller.context.settingsStore!.set("singleWindow", value: "true")
         let window = NSWindow(contentRect: controller.contentContainerView.frame, styleMask: [.titled], backing: .buffered, defer: false)
