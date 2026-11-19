@@ -134,6 +134,7 @@ final class TabBridgeHandler: BridgeHandler {
         "showNextWaitingTerminal",
         "showChanges",
         "splitTab",
+        "unsplitTab",
         "splitURL",
         "openDroppedLinks",
         "peekURL",
@@ -406,6 +407,12 @@ final class TabBridgeHandler: BridgeHandler {
         case "splitTab":
             if let tabId = message.uuid("tabId"), let side = SplitDropSide(message.string("side")) {
                 windowController?.dropTab(tabId, at: message.uuid("targetTabId"), side: side)
+            }
+
+        case "unsplitTab":
+            if let tabId = message.uuid("tabId"),
+               let spaceId = tabManager.context(for: tabId)?.spaceId ?? tabManager.currentSpaceId {
+                _ = tryApplyStateCommand(.unsplitTab(spaceId: spaceId, tabId: tabId))
             }
 
         case "closeSplitView":
