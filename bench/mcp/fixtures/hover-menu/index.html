@@ -1,0 +1,11 @@
+<!doctype html><meta charset="utf-8"><title>Reports</title><script src="../lib.js"></script>
+<style>.menu{position:relative;display:inline-block}.menu ul{display:none;position:absolute;list-style:none;padding:4px;margin:0;border:1px solid #999;background:#fff}
+.menu:hover ul{display:block}</style>
+<h1>Quarterly report</h1>
+<div class="menu"><span tabindex="0">More actions ▾</span><ul><li><a href="#" id="print">Print</a></li><li><a href="#" id="csv">Export CSV</a></li></ul></div>
+<p id="result" role="status"></p>
+<script>
+// The menu opens on hover only, through CSS.
+csv.onclick = event => { event.preventDefault(); record('export', { format: 'csv' }).then(() => { result.textContent = 'Export started' }) }
+print.onclick = event => { event.preventDefault(); record('export', { format: 'print' }) }
+</script>

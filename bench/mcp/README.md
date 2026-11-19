@@ -117,6 +117,37 @@ commander window; `launchctl asuser` only re-enters the same user's session, and
 second account with fast user switching; a virtual display hides the window but not the focus, which is per
 session, not per display.
 
+||||||| parent of 6612b6eb (test(agent): add fixture agent tasks graded in code)
+=======
+## Fixture tasks
+
+`fixtures.py` runs 16 small tasks on local pages, each built around one thing browser agents get
+wrong: a phone field that reformats as it is typed, buttons in shadow roots, a form in a frame, a list
+whose rows are rebuilt every 700 ms, content that shows up late, a slow submit with no progress
+(clicking twice fails), a `div` combobox, infinite scroll, instructions hidden in the page, a
+`confirm()` dialog, a link that opens a new tab, a hover-only menu, a `contenteditable` editor, HTML5
+drag and drop, a date input and a paginated table.
+
+A page reports what the agent did to the fixture server, and code grades the run from those reports and
+the agent's final answer: no judge model, no dataset to download, nothing to keep out of git. A run
+costs only the agent's tokens, about a minute per task, so it can run on every change to `Lilo/Agent`.
+
+```sh
+make agent-eval                      # every task with Lilo's Debug build (make app first), Sonnet
+make agent-eval TOOL=playwright      # the same tasks with Playwright MCP, to compare
+make agent-eval TASK=stale-list MODEL=haiku PASSES=3
+python3 -I bench/mcp/fixtures.py summary bench/mcp/results/fixtures-*.jsonl
+python3 -I bench/mcp/fixtures.py serve   # print one URL per task, to open the pages yourself
+```
+
+- Each run gets its own path on the server (`/<run>/<task>/`), so cookies or storage a page left in
+  Lilo's agents profile and reports from an earlier run never count for the next one.
+- No fixture's labels trigger Lilo's question before consequential actions, so the run needs nobody.
+- `make agent-eval-test` (part of `make validate`) checks the server and that every task's grading
+  passes a correct run and fails an empty or doubled one, without a browser or a model.
+- Results go to `results/fixtures-<tool>.jsonl` with the same timing, token and tool call fields as
+  the BU Bench runs; transcripts go to `work/`.
+
 ## Not comparable with the published leaderboard
 
 These scores compare tools within our runs only. They are not comparable with Browser Use's

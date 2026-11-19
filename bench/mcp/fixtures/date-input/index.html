@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><title>Reminder</title><script src="../lib.js"></script>
+<h1>New reminder</h1>
+<label>Title <input id="title"></label><br><label>Date <input id="date" type="date"></label><br>
+<button id="save">Save reminder</button><p id="result" role="status"></p>
+<script>save.onclick = () => record('save', { title: title.value, date: date.value }).then(() => { result.textContent = 'Reminder saved' })</script>

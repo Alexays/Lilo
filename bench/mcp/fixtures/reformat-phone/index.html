@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>Contact details</title><script src="../lib.js"></script>
+<h1>Contact details</h1>
+<label>Phone <input id="phone" inputmode="tel" autocomplete="off"></label>
+<button id="save">Save</button><p id="result" role="status"></p>
+<script>
+// Formats as the user types, like most phone fields: the value never holds the raw digits.
+const phone = document.getElementById('phone')
+phone.addEventListener('input', () => {
+  const d = phone.value.replace(/\D/g, '').slice(0, 10)
+  phone.value = d.length > 6 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : d.length > 3 ? `(${d.slice(0, 3)}) ${d.slice(3)}` : d
+})
+document.getElementById('save').onclick = () => record('save', { phone: phone.value }).then(() => { result.textContent = 'Saved' })
+</script>

@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>Room booking</title><script src="../lib.js"></script>
+<h1>Room 4B, Tuesday 10:00</h1>
+<button id="book">Confirm booking</button><p id="result" role="status"></p>
+<script>
+// The server takes several seconds and the page gives no sign of progress until it answers.
+book.onclick = () => record('book').then(() => { result.textContent = 'Booked. Reference R-2291.' })
+</script>

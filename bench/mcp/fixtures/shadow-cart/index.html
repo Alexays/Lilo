@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>Mugs</title><script src="../lib.js"></script>
+<h1>Mugs</h1><p id="cart" role="status">Cart: empty</p><div id="grid"></div>
+<script>
+// Each card lives in its own shadow root, like a design-system web component.
+customElements.define('product-card', class extends HTMLElement {
+  connectedCallback () {
+    const root = this.attachShadow({ mode: 'open' })
+    root.innerHTML = `<style>div{border:1px solid #ccc;padding:8px;margin:4px;display:inline-block}</style>
+      <div><strong>${this.dataset.name}</strong><br>$${this.dataset.price}<br><button>Add to cart</button></div>`
+    root.querySelector('button').onclick = () =>
+      record('cart', { item: this.dataset.id }).then(() => { cart.textContent = 'Cart: ' + this.dataset.name })
+  }
+})
+for (const [id, name, price] of [['red-mug', 'Red Mug', 12], ['blue-mug', 'Blue Mug', 14], ['green-mug', 'Green Mug', 13], ['blue-bowl', 'Blue Bowl', 18]]) {
+  const card = document.createElement('product-card')
+  Object.assign(card.dataset, { id, name, price })
+  grid.append(card)
+}
+</script>

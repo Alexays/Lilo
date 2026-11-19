@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>Invoices</title><script src="../lib.js"></script>
+<h1>Invoices</h1><p role="status" id="result"></p><ul id="list"></ul>
+<script>
+// Rebuilds every row from scratch on each tick, in a new order, like a list fed by a live query:
+// an element found a moment ago is gone by the time it is clicked.
+const rows = Array.from({ length: 10 }, (_, i) => ({ id: i + 1, done: false }))
+const render = () => {
+  rows.sort(() => Math.random() - 0.5)
+  list.replaceChildren(...rows.map(row => {
+    const li = document.createElement('li')
+    li.innerHTML = `Invoice ${row.id} <button ${row.done ? 'disabled' : ''}>${row.done ? 'Done' : 'Mark done'}</button>`
+    li.querySelector('button').onclick = () => record('done', { id: row.id }).then(() => { row.done = true; result.textContent = `Invoice ${row.id} marked done` })
+    return li
+  }))
+}
+render(); setInterval(render, 700)
+</script>

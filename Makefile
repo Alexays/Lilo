@@ -93,7 +93,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly ext-e2e-passwords ext-e2e-passwords-trust top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-app agent-call \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-app agent-call agent-eval agent-eval-test \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	docs-dev docs-build docs-check docs-test docs-preview docs-deploy-check docs-deploy docs-translate docs-eval docs-lock \
 	hooks-install hooks-test lint-commit-message lint-commits \
@@ -135,7 +135,7 @@ bootstrap:
 ## Run UI, website and docs checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
 validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(DOCS_DEPS) $(SWIFTLINT) $(CHANGIE)
 	@logs=$$(mktemp -d); checks=; \
-	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test perf-summary-test ext-bridge-test swiftlint release-status"; do \
+	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test perf-summary-test agent-eval-test ext-bridge-test swiftlint release-status"; do \
 		name=$${group%% *}; $(MAKE) -k --no-print-directory $$group > "$$logs/$$name.log" 2>&1 & checks="$$checks $$!:$$name"; \
 	done; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
@@ -516,6 +516,16 @@ agent-call:
 	@test -n "$(CALLS)" || { echo "CALLS=calls.json is required" >&2; exit 2; }
 	@$(MAKE) --no-print-directory agent-app
 	@node scripts/agent_call.mjs build/debug/export/Lilo.app/Contents/MacOS/lilo-mcp "$(CALLS)"
+
+## Run the fixture agent tasks with Claude Code, graded in code (TOOL=lilo|playwright|chrome-devtools MODEL=sonnet PASSES=1 TASK=name)
+agent-eval:
+	@$(if $(filter-out lilo,$(or $(TOOL),lilo)),,$(MAKE) --no-print-directory agent-app)
+	@LILO_MCP="$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/lilo-mcp" python3 -I bench/mcp/fixtures.py run \
+		--tool $(or $(TOOL),lilo) --model $(or $(MODEL),sonnet) --passes $(or $(PASSES),1) $(if $(TASK),--task $(TASK))
+
+## Test the fixture agent tasks' server and grading (no browser, no model)
+agent-eval-test:
+	@python3 -I bench/mcp/fixtures_test.py -q
 
 ## Build the UI bundle and create release artifacts
 release: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(if $(WEBKIT_FORK_URL),webkit-fork)

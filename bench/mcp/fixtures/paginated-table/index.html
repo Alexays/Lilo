@@ -1,0 +1,18 @@
+<!doctype html><meta charset="utf-8"><title>Customers</title>
+<h1>Customers</h1><table border="1"><thead><tr><th>Name</th><th>Balance</th></tr></thead><tbody id="rows"></tbody></table>
+<button id="prev">Previous</button> <span id="page"></span> <button id="next">Next</button>
+<script>
+// Eight rows a page, three pages; the largest balance is on the last one.
+const first = ['Avery', 'Blake', 'Casey', 'Devon', 'Emery', 'Finley', 'Harper', 'Jordan']
+const last = ['Ashdown', 'Brightwell', 'Corran']
+const customers = Array.from({ length: 24 }, (_, i) => [`${first[i % 8]} ${last[Math.floor(i / 8)]}`, 1000 + ((i * 7919) % 5000)])
+customers[19] = ['Marlow Fenwick', 9875]
+let at = 0
+const render = () => {
+  rows.replaceChildren(...customers.slice(at * 8, at * 8 + 8).map(([name, balance]) => {
+    const tr = document.createElement('tr'); tr.innerHTML = `<td>${name}</td><td>$${balance.toLocaleString('en-US')}</td>`; return tr
+  }))
+  page.textContent = `Page ${at + 1} of 3`; prev.disabled = at === 0; next.disabled = at === 2
+}
+prev.onclick = () => { at--; render() }; next.onclick = () => { at++; render() }; render()
+</script>

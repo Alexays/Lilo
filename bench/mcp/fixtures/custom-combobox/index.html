@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><title>Shipping</title><script src="../lib.js"></script>
+<style>[role=listbox]{border:1px solid #999;max-height:120px;overflow:auto;list-style:none;padding:0;margin:0;width:200px}
+[role=option]{padding:2px 6px;cursor:pointer}[role=option]:hover{background:#def}</style>
+<h1>Shipping country</h1>
+<div id="box" role="combobox" aria-expanded="false" aria-controls="opts" tabindex="0" style="border:1px solid #999;width:200px;padding:4px">Choose a country</div>
+<ul id="opts" role="listbox" hidden></ul>
+<button id="save">Save</button><p id="result" role="status"></p>
+<script>
+// A div-based select: no <select> element for a form tool to set.
+let value = null
+const countries = [['FR', 'France'], ['DE', 'Germany'], ['IT', 'Italy'], ['NL', 'Netherlands'], ['PL', 'Poland'], ['PT', 'Portugal'], ['ES', 'Spain'], ['SE', 'Sweden']]
+opts.replaceChildren(...countries.map(([code, name]) => {
+  const li = document.createElement('li')
+  li.textContent = name; li.setAttribute('role', 'option')
+  li.onclick = () => { value = code; box.textContent = name; opts.hidden = true; box.setAttribute('aria-expanded', 'false') }
+  return li
+}))
+box.onclick = () => { opts.hidden = !opts.hidden; box.setAttribute('aria-expanded', String(!opts.hidden)) }
+save.onclick = () => record('save', { country: value }).then(() => { result.textContent = 'Saved' })
+</script>
