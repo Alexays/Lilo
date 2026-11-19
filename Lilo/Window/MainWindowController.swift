@@ -263,6 +263,8 @@ final class MainWindowController: NSWindowController {
     var sentWallpaperKey: String?
     /// The color applyWindowChromeColors last painted everywhere, so a resend of it is a no-op.
     var lastAppliedWindowChromeColor: NSColor?
+    /// The frame color last sent to the window frame and the dividers, glass wash included.
+    var currentFrameColor = MainWindowController.defaultSidebarBackgroundColor()
     var didStartChromeUILoad = false
     var didReceiveChromeReady = false
     var didChromeVisualReady = false

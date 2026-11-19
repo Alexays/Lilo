@@ -35,6 +35,7 @@ final class SplitDividerView: NSView {
     /// Leading pane's two corners, then the trailing pane's.
     private let corners = (0..<4).map { _ in CAShapeLayer() }
     private var frameColor = NSColor.clear
+    private var fillColor = NSColor.clear
     private var isHovered = false
 
     override init(frame frameRect: NSRect) {
@@ -70,16 +71,19 @@ final class SplitDividerView: NSView {
         onSuperviewResize?()
     }
 
-    func setFrameColor(_ color: NSColor, animated: Bool) {
-        guard color != frameColor else { return }
+    /// `gapColor` overrides the gap's own paint: the side panel's divider leaves it to the frame's band.
+    func setFrameColor(_ color: NSColor, gapColor: NSColor? = nil, animated: Bool) {
+        let painted = gapColor ?? color
+        guard color != frameColor || painted != fillColor else { return }
         frameColor = color
+        fillColor = painted
         CATransaction.begin()
         if animated {
             CATransaction.setAnimationDuration(WindowFrameView.colorFadeDuration)
         } else {
             CATransaction.setDisableActions(true)
         }
-        fill.backgroundColor = color.cgColor
+        fill.backgroundColor = painted.cgColor
         corners.forEach { $0.fillColor = color.cgColor }
         applyHandleColor()
         CATransaction.commit()
@@ -298,7 +302,7 @@ final class SplitPanesController {
 
     private func makeDivider(path: [Bool]) -> SplitDividerView {
         let divider = SplitDividerView()
-        divider.setFrameColor(controller.window?.backgroundColor ?? MainWindowController.defaultSidebarBackgroundColor(), animated: false)
+        divider.setFrameColor(controller.currentFrameColor, animated: false)
         // The root cut always exists while a split shows, so it alone relays container resizes.
         if path.isEmpty {
             // AppKit skips resize(withOldSuperviewSize:) on a subview with an empty mask; the frame it sets is overwritten anyway.

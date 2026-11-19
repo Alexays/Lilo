@@ -1,0 +1,3 @@
+kind: Fixed
+body: Split view and side panel dividers now take the window frame's color, so the gap between panes blends into a glass or tinted Space instead of showing a solid band
+time: 2026-11-19T14:01:06.695747-08:00
