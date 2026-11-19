@@ -102,7 +102,7 @@
     return parts.length ? ' ' + parts.join(' ') : ''
   }
 
-  const readPage = ({ filter = 'all', refId, depth = 15, maxChars = 50000 } = {}) => {
+  const readPage = ({ filter = 'all', refId, depth = 15, maxChars = 50000, viewport = false } = {}) => {
     const root = refId ? element(refId) : document.body
     const lines = []
     let size = 0
@@ -114,17 +114,24 @@
       lines.push(line)
       size += line.length + 1
     }
+    // viewport keeps what shows on or within 100 px of the screen's edge, each line with its box.
+    const margin = 100
     const walk = (el, level) => {
       if (truncated || level > depth || !visible(el)) return
       const r = role(el)
       const isInteractive = interactive(el)
-      const shown = filter === 'interactive' ? isInteractive : r !== null || isInteractive
-      if (shown) emit(filter === 'interactive' ? 0 : level, `${r ?? 'generic'} "${name(el)}" [${ref(el)}]${details(el)}`)
+      const box = viewport ? el.getBoundingClientRect() : null
+      const near = !box || box.left < innerWidth + margin && box.right > -margin && box.top < innerHeight + margin && box.bottom > -margin
+      const shown = near && (filter === 'interactive' ? isInteractive : r !== null || isInteractive)
+      if (shown) {
+        const at = box ? ` box="${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}"` : ''
+        emit(filter === 'interactive' ? 0 : level, `${r ?? 'generic'} "${name(el)}" [${ref(el)}]${details(el)}${at}`)
+      }
       if (isInteractive && filter === 'interactive' && leafRoles.has(r)) return
       const childLevel = shown ? level + 1 : level
       for (const node of (el.shadowRoot ?? el).childNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) walk(node, childLevel)
-        else if (node.nodeType === Node.TEXT_NODE && filter === 'all' && !isInteractive && !(r === 'heading' || r === 'link')) {
+        else if (node.nodeType === Node.TEXT_NODE && filter === 'all' && near && !isInteractive && !(r === 'heading' || r === 'link')) {
           const text = clip(node.textContent, 200)
           if (text) emit(childLevel, `text "${text}"`)
         }

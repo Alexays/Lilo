@@ -478,4 +478,24 @@ final class AgentPageToolsTests: AgentToolTestCase {
         XCTAssertTrue(missing.text.contains("The URL is still http://127.0.0.1:\(server.port)/orders/42 after 0.3 s"), missing.text)
         XCTAssertTrue(both.isError && both.text.contains("one of text, selector, role or url is required"), both.text)
     }
+
+    func testReadPageViewportKeepsOnlyWhatIsOnOrNearTheScreen() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body style="margin:0">
+            <button style="position:absolute;left:20px;top:20px">Top</button>
+            <button style="position:absolute;left:20px;top:5000px">Far below</button>
+            <button style="position:absolute;left:2000px;top:20px">Far right</button>
+            </body>
+            """)
+
+        let viewport = await client.callTool("read_page", ["tabId": tab, "viewport": true]).text
+        let whole = await client.callTool("read_page", ["tabId": tab]).text
+
+        XCTAssertTrue(viewport.contains(#"button "Top" [ref_"#), viewport)
+        XCTAssertTrue(viewport.contains("box=\""), viewport)
+        XCTAssertFalse(viewport.contains("Far below"), viewport)
+        XCTAssertFalse(viewport.contains("Far right"), viewport)
+        XCTAssertTrue(whole.contains("Far below") && whole.contains("Far right"), whole)
+        XCTAssertFalse(whole.contains("box="), whole)
+    }
 }

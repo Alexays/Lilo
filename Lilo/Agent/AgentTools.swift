@@ -41,13 +41,15 @@ enum AgentTools {
         tool("read_page", """
             Get an accessibility tree of the page: each element as role, name and a ref like [ref_N] that the other \
             tools accept. Use filter "interactive" for clickable and typable elements only. Iframes follow the page, \
-            their refs prefixed by their frame (f1a2b3_ref_N).
+            their refs prefixed by their frame (f1a2b3_ref_N). viewport: true keeps only the elements on or near \
+            the screen, each with its box.
             """, [
                 "tabId": prop("number", "The tab to read."),
                 "filter": ["type": "string", "enum": ["interactive", "all"], "description": "\"all\" (default) or \"interactive\"."],
                 "ref_id": prop("string", "Read only this element's subtree."),
                 "depth": prop("number", "Maximum tree depth (default 15)."),
-                "max_chars": prop("number", "Maximum characters of output (default 50000).")
+                "max_chars": prop("number", "Maximum characters of output (default 50000)."),
+                "viewport": prop("boolean", "Only elements on or within 100 px of the screen's edge, each line ending in box=\"x,y,w,h\" in viewport pixels.")
             ], required: ["tabId"]),
         tool("find", "Find elements whose role, name or text contains `query`, case-insensitively. Returns up to 20 refs, of shown elements only.", [
             "query": prop("string", "Text to look for."), "tabId": prop("number", "The tab to search.")
@@ -202,6 +204,7 @@ enum AgentTools {
             options["refId"] = arguments["ref_id"]
             options["depth"] = arguments["depth"]
             options["maxChars"] = arguments["max_chars"]
+            options["viewport"] = arguments["viewport"]
             return [.text(try await readFrames(engine, options))]
         case "find":
             let (_, engine) = try control.agentTab(arguments["tabId"], session: session)
