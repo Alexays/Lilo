@@ -24,7 +24,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `npx vite dev --host localhost --port ${port} --strictPort`,
+		command: `pnpm exec vite dev --host localhost --port ${port} --strictPort`,
 		port,
 		reuseExistingServer: false,
 	},

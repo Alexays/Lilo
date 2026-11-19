@@ -9,10 +9,10 @@ SHELL := /bin/bash
 
 UI_DIR := lilo-ui
 BRIDGE_DIR := Lilo/Extensions/bridge-src
-UI_DEPS := $(UI_DIR)/node_modules/.package-lock.json
+UI_DEPS := $(UI_DIR)/node_modules/.installed
 BRIDGE_DEPS := $(BRIDGE_DIR)/node_modules/.package-lock.json
-SITE_DEPS := site/node_modules/.package-lock.json
-DOCS_DEPS := docs-site/node_modules/.package-lock.json
+SITE_DEPS := site/node_modules/.installed
+DOCS_DEPS := docs-site/node_modules/.installed
 CHANGIE_VERSION := 1.26.0
 CHANGIE := $(CURDIR)/build/changie-$(CHANGIE_VERSION)/changie
 CHANGIE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -26,7 +26,7 @@ XCODEGEN_VERSION := 2.46.0
 XCODEGEN_SHA256 := 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
 XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
 # What the UI and bridge builds read, and the stamps they leave once built from them.
-UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
+UI_SOURCES := pnpm-lock.yaml $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html svelte.config.js tsconfig.json vite.config.ts) \
 	$(UI_DIR)/releaseNotesPlugin.ts $(wildcard .changes/v*.md) scripts/embed_chrome_ui.py scripts/generate_native_strings.py
 UI_SOURCES += release-media/catalog.ts release-media/stage-native.mjs $(wildcard release-media/assets/*/*)
 BRIDGE_SOURCES := $(shell find $(BRIDGE_DIR)/src $(BRIDGE_DIR)/scripts) $(addprefix $(BRIDGE_DIR)/,esbuild.mjs package-lock.json tsconfig.json)
@@ -126,7 +126,7 @@ lint-commits:
 hooks-test:
 	@scripts/commit_hooks.test.sh
 
-## Check the prerequisites, then fetch and build what a fresh clone needs (npm deps, libghostty-vt, UI bundle, bridge)
+## Check the prerequisites, then fetch and build what a fresh clone needs (JavaScript deps, libghostty-vt, UI bundle, bridge)
 bootstrap:
 	@scripts/bootstrap.sh "$(UI_DEPS) $(BRIDGE_DEPS)" "vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(SWIFTLINT) $(XCODEGEN)"
 
@@ -179,18 +179,18 @@ $(XCODEGEN):
 	rm -rf '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; mkdir -p build; \
 	mv "$$work/xcodegen" '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; touch '$@'
 
-$(UI_DEPS): $(UI_DIR)/package-lock.json
-	@npm --prefix $(UI_DIR) ci
+# One lockfile for the three web projects, each installed alone with what it needs from the others. Blume,
+# Sharp and the rest build without their dependencies' install scripts.
+$(UI_DEPS) $(SITE_DEPS) $(DOCS_DEPS): pnpm-lock.yaml pnpm-workspace.yaml package.json
+$(UI_DEPS): $(UI_DIR)/package.json
+$(SITE_DEPS): site/package.json
+$(DOCS_DEPS): docs-site/package.json
+$(UI_DEPS) $(SITE_DEPS) $(DOCS_DEPS):
+	@pnpm install --frozen-lockfile --ignore-scripts --filter './$(patsubst %/node_modules/.installed,%,$@)...'
+	@touch $@
 
 $(BRIDGE_DEPS): $(BRIDGE_DIR)/package-lock.json
 	@npm --prefix $(BRIDGE_DIR) ci
-
-$(SITE_DEPS): site/package.json site/package-lock.json
-	@npm --prefix site ci
-
-# Blume builds without its dependencies' install scripts.
-$(DOCS_DEPS): docs-site/package.json docs-site/package-lock.json
-	@npm --prefix docs-site ci --ignore-scripts
 
 $(CHANGIE): scripts/changie-checksums.txt
 	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
@@ -232,7 +232,7 @@ release-test: $(CHANGIE)
 
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
 ui-build: $(UI_DEPS) release-media-stage
-	@npm --prefix $(UI_DIR) run build
+	@pnpm --dir $(UI_DIR) run build
 	@python3 scripts/embed_chrome_ui.py
 	@python3 scripts/generate_native_strings.py
 
@@ -282,27 +282,27 @@ password-manager-icons:
 
 ## Rebuild the UI bundle (build/chrome-ui) on change; use ui-dev for live reload in the app
 ui-watch: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) run watch
+	@pnpm --dir $(UI_DIR) run watch
 
 ## Start the Vite dev server on localhost:5173
 ui-dev: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) run dev
+	@pnpm --dir $(UI_DIR) run dev
 
 ## Open the interface in a browser against a fake host, with hot reload and no Xcode (lilo-ui/preview/)
 ui-preview: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) run dev -- --open /preview/
+	@pnpm --dir $(UI_DIR) run dev --open /preview/
 
 ## Run ESLint + svelte-check
 ui-lint: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) run lint
+	@pnpm --dir $(UI_DIR) run lint
 
 ## Run lightweight UI regression tests
 ui-test: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) run test
+	@pnpm --dir $(UI_DIR) run test
 
 ## Run the chrome UI end-to-end tests (Playwright; E2E_ARGS narrows the run)
 e2e: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) run test:e2e -- $(E2E_ARGS) || { echo 'If Chromium is missing, install it with: npx --prefix $(UI_DIR) playwright install chromium' >&2; exit 1; }
+	@pnpm --dir $(UI_DIR) run test:e2e $(E2E_ARGS) || { echo 'If Chromium is missing, install it with: pnpm --dir $(UI_DIR) exec playwright install chromium' >&2; exit 1; }
 
 # Not part of e2e: it takes about three minutes and drives the app with System Events keystrokes.
 ## Leave a Release build idle with tabs and a hidden terminal; fail on idle git, worker or snapshot work (IDLE=45 TABS=3 TERMINAL=1)
@@ -511,7 +511,7 @@ release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(if $(WEBKIT_FORK_URL),w
 	@scripts/build-app.sh release notarize
 
 # CI's release path: the UI is built or restored beforehand and the committed bridge bundles are checked
-# against bridge-src on main, so neither needs npm here.
+# against bridge-src on main, so neither installs anything here.
 ## Archive and export the release app from the UI already built (CI)
 release-archive: release-media-stage vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(if $(WEBKIT_FORK_URL),webkit-fork)
 	@scripts/build-app.sh release
@@ -638,15 +638,15 @@ logs-stream:
 
 ## Serve getlilo.app with Astro and live reload on localhost:8787
 site-dev: $(SITE_DEPS)
-	@npm --prefix site run dev
+	@pnpm --dir site run dev
 
 ## Stop Astro when it has started its dev server in the background
 site-dev-stop: $(SITE_DEPS)
-	@npm --prefix site run dev -- stop
+	@pnpm --dir site run dev stop
 
 ## Preview the built website with Cloudflare's headers and redirects on localhost:8788
 site-preview: site-generate
-	@npm --prefix site run preview -- --port $(or $(SITE_PREVIEW_PORT),8788)
+	@pnpm --dir site run preview --port $(or $(SITE_PREVIEW_PORT),8788)
 
 ## Compare the website with a disposable native Debug session (no personal profiles or preferences)
 site-native-preview: app
@@ -659,55 +659,55 @@ site-native-preview: app
 
 ## Build getlilo.app with Astro, Markdown copies and FAQ metadata
 site-generate: $(SITE_DEPS)
-	@npm --prefix site run build
+	@pnpm --dir site run build
 
 ## Check website lint, formatting, Astro templates and TypeScript
 site-check: $(SITE_DEPS)
-	@npm --prefix site run check
+	@pnpm --dir site run check
 
 ## Fix website lint and formatting with Ultracite
 site-fix: $(SITE_DEPS)
-	@npm --prefix site run fix
+	@pnpm --dir site run fix
 
 ## Build and test the website's release notes, routes and metadata
 site-test: site-generate
-	@npm --prefix site run test
+	@pnpm --dir site run test
 
 ## Exercise the interactive website demo with production headers (SITE_E2E_ARGS passes Playwright flags)
 site-e2e: site-generate
-	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
+	@pnpm --dir site run test:e2e $(SITE_E2E_ARGS)
 
 ## Capture a prepared release's recording and posters (RELEASE=x.y.z; RECAPTURE=1 replaces archived media)
 site-release-capture: $(SITE_DEPS)
-	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' npm --prefix site run capture:release
+	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' pnpm --dir site run capture:release
 
 ## Encode reviewed native Lilo frames (FRAMES=/path/to/manifest.json; RECAPTURE=1 replaces archived media)
 site-release-import: $(SITE_DEPS)
-	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_FRAMES='$(FRAMES)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' npm --prefix site run capture:import
+	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_FRAMES='$(FRAMES)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' pnpm --dir site run capture:import
 
 # Playwright owns this foreground server; it leaves the maintainer's dev server alone.
 site-capture-server: $(SITE_DEPS)
-	@ASTRO_DEV_BACKGROUND=0 npm --prefix site run dev -- --port 8791 --ignore-lock
+	@ASTRO_DEV_BACKGROUND=0 pnpm --dir site run dev --port 8791 --ignore-lock
 
 ## Install the release recording encoder at the website's pinned Sharp version
 site-capture-deps:
-	@npm --prefix site install --save-dev --save-exact sharp@0.35.5
+	@pnpm --dir site add --save-dev --save-exact sharp@0.35.5
 
 ## Update the website's dependencies and lockfile after changing package.json
 site-lock:
-	@npm --prefix site update
+	@pnpm --dir site update
 
 ## Set up Astro's official Svelte integration
 site-add-svelte: $(SITE_DEPS)
-	@cd site && npm exec astro add svelte -- --yes
+	@cd site && pnpm exec astro add svelte --yes
 
 ## Install the browser-only terminal and MCP playground libraries
 site-playground-deps: $(SITE_DEPS)
-	@npm --prefix site install --save-exact @xterm/xterm @xterm/addon-fit just-bash @modelcontextprotocol/client @modelcontextprotocol/server zod
+	@pnpm --dir site add --save-exact @xterm/xterm @xterm/addon-fit just-bash @modelcontextprotocol/client @modelcontextprotocol/server zod
 
 ## Audit the website's dependency tree
 site-audit: $(SITE_DEPS)
-	@npm --prefix site audit
+	@pnpm --dir site audit
 
 ## Export the built Mac app's classic icon and Codex's app icon for the website (macOS; CODEX_ICON=path)
 site-demo-icons:
@@ -717,48 +717,48 @@ site-demo-icons:
 
 ## Check the Cloudflare deployment without publishing
 site-deploy-check: site-generate
-	@npm --prefix site run deploy:check
+	@pnpm --dir site run deploy:check
 
 ## Deploy getlilo.app to Cloudflare (requires authentication)
 site-deploy: $(SITE_DEPS)
-	@npm --prefix site run deploy
+	@pnpm --dir site run deploy
 
 ## Serve docs.getlilo.app with Blume and live reload
 docs-dev: $(DOCS_DEPS)
-	@npm --prefix docs-site run dev
+	@pnpm --dir docs-site run dev
 
 ## Build docs.getlilo.app: generated reference, pages and security headers in docs-site/dist/
 docs-build: $(DOCS_DEPS)
-	@npm --prefix docs-site run build
+	@pnpm --dir docs-site run build
 
 ## Check the docs' links and anchors, and that no French page is missing or out of date
 docs-check: $(DOCS_DEPS)
-	@npm --prefix docs-site run check
+	@pnpm --dir docs-site run check
 
 ## Build and test the docs' headers, routes and metadata, then audit the build
 docs-test: docs-build
-	@npm --prefix docs-site run test
+	@pnpm --dir docs-site run test
 
 ## Preview the built docs with Cloudflare's headers on localhost:8789
 docs-preview: docs-build
-	@npm --prefix docs-site run preview -- --port $(or $(DOCS_PREVIEW_PORT),8789)
+	@pnpm --dir docs-site run preview --port $(or $(DOCS_PREVIEW_PORT),8789)
 
 ## Check the docs' Cloudflare deployment without publishing
 docs-deploy-check: docs-build
-	@npm --prefix docs-site run deploy:check
+	@pnpm --dir docs-site run deploy:check
 
 ## Deploy docs.getlilo.app to Cloudflare (requires authentication)
 docs-deploy: $(DOCS_DEPS)
-	@npm --prefix docs-site run deploy
+	@pnpm --dir docs-site run deploy
 
 ## Translate new and changed docs pages into French with Claude Code (DOCS_TRANSLATE_ARGS passes blume translate flags)
 docs-translate: $(DOCS_DEPS)
-	@DOCS_TRANSLATE_ARGS='$(DOCS_TRANSLATE_ARGS)' npm --prefix docs-site run translate
+	@DOCS_TRANSLATE_ARGS='$(DOCS_TRANSLATE_ARGS)' pnpm --dir docs-site run translate
 
 ## Ask an agent the questions in docs-site/evals.yaml and grade its answers (Claude Code; costs model time)
 docs-eval: $(DOCS_DEPS)
-	@npm --prefix docs-site run generate && cd docs-site && npx blume eval --agent claude
+	@pnpm --dir docs-site run generate && cd docs-site && pnpm exec blume eval --agent claude
 
 ## Update the docs' dependencies and lockfile after changing package.json
 docs-lock:
-	@npm --prefix docs-site update
+	@pnpm --dir docs-site update

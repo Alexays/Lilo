@@ -5,7 +5,7 @@ These rules apply to `site/`, alongside the repository's [AGENTS.md](../AGENTS.m
 ## Documentation and tooling
 
 - Before changing Astro APIs or configuration, consult the Astro Docs MCP server (`https://mcp.docs.astro.build/mcp`) and check compatibility with the version in `package.json`. If MCP is unavailable, use the [official docs](https://docs.astro.build/).
-- Build on the existing project. When an official integration is needed, follow the documented `astro add` workflow; install other packages with npm. Expose these operations through the root Makefile, extending it when necessary, and commit the dependency and lockfile changes together.
+- Build on the existing project. When an official integration is needed, follow the documented `astro add` workflow; install other packages with pnpm (`pnpm --dir site add`). Expose these operations through the root Makefile, extending it when necessary, and commit `package.json` and the root `pnpm-lock.yaml` together.
 - Keep strict TypeScript and the existing Ultracite Astro lint/format presets enabled. Fix diagnostics without weakening the checks.
 
 ## Components, scripts and styles

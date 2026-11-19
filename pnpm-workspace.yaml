@@ -1,0 +1,8 @@
+packages:
+  - lilo-ui
+  - site
+  - docs-site
+
+# Held at a patched version for every project (the website pulls undici in through wrangler).
+overrides:
+  undici: 7.30.1

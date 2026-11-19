@@ -33,11 +33,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: lilo-ui/package-lock.json
+      - uses: ./.github/actions/setup-pnpm
       - run: xcodebuild -downloadComponent MetalToolchain
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -51,12 +47,10 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ hashFiles('lilo-ui/package-lock.json', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'release-media/catalog.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+          key: ui-${{ hashFiles('pnpm-lock.yaml', 'lilo-ui/package.json', 'lilo-ui/src/**', 'lilo-ui/public/**', 'lilo-ui/index.html', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'release-media/catalog.ts', '.changes/v*.md', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
       - name: Build the UI
         if: steps.ui-cache.outputs.cache-hit != 'true'
-        run: |
-          npm --prefix lilo-ui ci --ignore-scripts
-          make ui-build
+        run: make ui-build
       # As in build.yml's app job: unchanged files keep the date of their content, so the cached build stays valid.
       - name: Date files by their content
         run: |

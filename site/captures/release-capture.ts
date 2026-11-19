@@ -52,7 +52,7 @@ export const captureSourceDigest = (root: string) => {
       "site/src/lib/demo-assets.ts",
       "site/src/lib/native-demo-data.ts",
       "site/src/pages/demo.astro",
-      "site/package-lock.json",
+      "pnpm-lock.yaml",
     ],
     { cwd: root, encoding: "utf-8" }
   )
