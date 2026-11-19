@@ -229,7 +229,7 @@ final class SplitPaneHandleView: NSView {
         addSubview(pill)
         for (button, symbol, action, label) in [
             (closeButton, "xmark", #selector(closePressed), "Close Split Pane".localized),
-            (maximizeButton, "arrow.up.left.and.arrow.down.right", #selector(maximizePressed), "Maximize Split Pane".localized),
+            (maximizeButton, "arrow.up.left.and.arrow.down.right", #selector(maximizePressed), "Maximize Split Pane".localized)
         ] {
             button.bezelStyle = .inline
             button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
