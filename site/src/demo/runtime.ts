@@ -601,6 +601,32 @@ export const startDemo = async (
     ],
     ["separateSplit", () => host.dispatch("closeSplitView", {})],
     [
+      "closeSplitPane",
+      () => {
+        const { activeTabId } = host.snapshot();
+
+        if (activeTabId) {
+          host.dispatch("unsplitTab", { tabId: activeTabId });
+        }
+      },
+    ],
+    [
+      "maximizeSplitPane",
+      () => {
+        const { activeTabId, splitIds } = host.snapshot();
+
+        for (const tabId of splitIds) {
+          if (tabId !== activeTabId) {
+            host.dispatch("unsplitTab", { tabId });
+          }
+        }
+
+        if (activeTabId) {
+          host.dispatch("switchTab", { id: activeTabId });
+        }
+      },
+    ],
+    [
       "mute",
       () => {
         const tab = host.activeTab();

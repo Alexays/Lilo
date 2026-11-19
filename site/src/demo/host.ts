@@ -2845,6 +2845,10 @@ export const createDemoHost = (
       changeSection(id, "unpinned");
       publish();
     },
+    unsplitTab: ({ tabId }) => {
+      removeFromSplit(tabId);
+      publish();
+    },
     updateExtension: ({ id }) =>
       emit("extensionActionCompleted", {
         action: "update",
