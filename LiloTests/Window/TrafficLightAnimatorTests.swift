@@ -64,6 +64,22 @@ final class TrafficLightAnimatorTests: XCTestCase {
         }
     }
 
+    func testTheRailLeavesTheLightsWhereAHiddenSidebarDoes() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let layout = TabLayout(position: .left, address: .page)
+
+        controller.sidebarVisible = false
+        let hidden = try closeButtonFrame(controller, layout: layout)
+
+        controller.sidebarVisible = true
+        controller.sidebarRail = true
+        XCTAssertTrue(controller.areTrafficLightsVisible(), "the page toolbar still holds them")
+        XCTAssertEqual(try closeButtonFrame(controller, layout: layout), hidden, "the toolbar row, not the rail")
+
+        controller.tabLayout = .default
+        XCTAssertFalse(controller.areTrafficLightsVisible(), "no toolbar row holds them, as with the sidebar hidden")
+    }
+
     func testCollapsedSidebarHidesTheTrafficLightsAndShowingItBringsThemBack() throws {
         let controller = MainWindowController(context: browserContext.context)
         let buttons = try [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].map {
