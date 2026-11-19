@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><title>Order 1042</title><script src="../lib.js"></script>
+<h1>Order 1042</h1><p>2 × Blue Mug, shipped on Monday.</p><p><a href="#history">Order history</a></p>
+<form id="note" method="post" action="/orders/1042">
+  <label>Delivery note <input name="note"></label>
+  <button>Save order</button>
+</form><p id="result" role="status"></p>
+<script>
+note.onsubmit = event => {
+  event.preventDefault()
+  record('save', { note: note.elements.note.value }).then(() => { result.textContent = 'Saved' })
+}
+</script>
