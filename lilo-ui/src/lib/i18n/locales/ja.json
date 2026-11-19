@@ -206,6 +206,17 @@
 			"more": "ほかに{count}件あります。検索して絞り込んでください。"
 		},
 		"items": {
+			"customAgent": {
+				"title": "カスタムエージェント",
+				"description": "レジストリのエージェントと並べて、自分のプログラムをエージェントとして起動します。",
+				"keywords": "カスタム エージェント コマンド acp ローカル スクリプト 環境 変数 引数",
+				"name": "名前",
+				"namePlaceholder": "マイエージェント",
+				"executable": "コマンド",
+				"arguments": "引数（1行に1つ）",
+				"environment": "環境（1行に NAME=値）",
+				"note": "コマンドは、標準入出力で Agent Client Protocol を話す実行可能ファイルのフルパスです。保存するとエージェントの一覧に加わり、コマンドを空にすると取り除かれます。"
+			},
 			"appIcon": {
 				"title": "アプリアイコン",
 				"description": "macOS のダーク、色合い調整、クリアのアイコンスタイルに対応するのはクラシックのみです。"
@@ -2391,6 +2402,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ はチェックサムが一致しなかったため、インストールされませんでした。",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ には Node.js が必要です。nodejs.org からインストールしてから、もう一度お試しください。",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ には uv が必要です。astral.sh/uv からインストールしてから、もう一度お試しください。",
+		"%@ must be the full path of an executable file: %@": "%@ には実行可能ファイルのフルパスが必要です: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ に NAME=値 の形ではない環境の行があります: %@",
 		"Choose": "選択",
 		"New Conversation": "新しい会話",
 		"Screenshot of %@": "%@ のスクリーンショット",

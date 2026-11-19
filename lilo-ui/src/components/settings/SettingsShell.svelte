@@ -37,6 +37,7 @@
     if (subpage === "sites") return t(settingTitleKey("sites"));
     if (subpage === "blockerSites") return t(settingTitleKey("blockerSites"));
     if (subpage === "agentPrompt") return t(settingTitleKey("agentSystemPromptText"));
+    if (subpage === "customAgent") return t(settingTitleKey("customAgent"));
     if (subpage?.startsWith("site:")) return subpage.slice("site:".length);
     if (subpage?.startsWith("extension:")) {
       const extension = getShownExtensions()?.find((candidate) => `extension:${candidate.id}` === subpage);

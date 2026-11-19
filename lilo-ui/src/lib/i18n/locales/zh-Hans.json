@@ -206,6 +206,17 @@
 			"more": "另有 {count} 项。搜索以缩小列表范围。"
 		},
 		"items": {
+			"customAgent": {
+				"title": "自定义代理",
+				"description": "把你自己的程序作为代理启动，与注册表中的代理并列。",
+				"keywords": "自定义 代理 命令 acp 本地 脚本 环境 变量 参数",
+				"name": "名称",
+				"namePlaceholder": "我的代理",
+				"executable": "命令",
+				"arguments": "参数，每行一个",
+				"environment": "环境，每行 NAME=值",
+				"note": "命令是可执行文件的完整路径，该文件通过标准输入输出使用 Agent Client Protocol。保存后它会加入代理列表；清空命令即可移除。"
+			},
 			"appIcon": {
 				"title": "App 图标",
 				"description": "仅“经典”图标支持 macOS 的深色、色调和透明图标样式。"
@@ -2391,6 +2402,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ 的校验和不匹配，未安装。",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ 需要 Node.js：请从 nodejs.org 安装，然后重试。",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ 需要 uv：请从 astral.sh/uv 安装，然后重试。",
+		"%@ must be the full path of an executable file: %@": "%@ 必须是可执行文件的完整路径：%@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ 有一行环境设置不是 NAME=值 的形式：%@",
 		"Choose": "选取",
 		"New Conversation": "新建对话",
 		"Screenshot of %@": "%@ 的屏幕快照",

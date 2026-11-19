@@ -78,6 +78,17 @@ registry and are checked against its SHA-256 before they run.
   Undo puts back one file. An agent can work on its own copy of the project (a git worktree).
 - An idle agent stops after ten minutes and resumes its session when you come back.
 
+### Your own agent command
+
+Settings > Agents > "Custom agent" starts a program of your own as an agent, next to the registry's, in the Ask bar's agent picker. Any harness that speaks ACP over standard input and output works, such as `dsh --profile acp` or a wrapper script.
+
+- **Command** is the full path of an executable file (`~/` is expanded). Lilo checks it each time the agent starts and says so in the conversation when it is missing or not executable.
+- **Arguments** are one per line, passed as they are: no shell runs, so no quoting or expansion.
+- **Environment** is one `NAME=value` line per variable, added to the environment Lilo starts agents with (your shell's `PATH` included) and overriding it. Blank lines and lines starting with `#` are skipped.
+- **Name** is what the picker and the sidebar show; the command's file name when left empty.
+
+There is one custom agent. Registry agents, sign-in and conversations work the same for it; Lilo does not give it a terminal.
+
 ## Known limitations
 
 - An agent's `emulate` and an extension's `chrome.debugger` on the same tab share its Web Inspector, so each can overwrite the other's user agent, media and init script.

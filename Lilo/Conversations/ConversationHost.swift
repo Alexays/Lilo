@@ -114,6 +114,7 @@ final class ConversationHost {
     init(directory: URL) {
         catalog = ACPAgentCatalog(directory: directory)
         threads = directory.appending(path: "Conversations")
+        catalog.customAgentSetting = { [weak self] in self?.context?.settingsStore?.get("customAgent") }
     }
 
     func conversation(forToken token: String) -> Conversation? {

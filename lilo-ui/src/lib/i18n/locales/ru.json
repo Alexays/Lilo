@@ -206,6 +206,17 @@
 			"more": "Ещё: {count}. Используйте поиск, чтобы сократить список."
 		},
 		"items": {
+			"customAgent": {
+				"title": "Свой агент",
+				"description": "Запустите свою программу как агента рядом с агентами из реестра.",
+				"keywords": "свой агент команда acp локальный скрипт окружение переменные аргументы",
+				"name": "Название",
+				"namePlaceholder": "Мой агент",
+				"executable": "Команда",
+				"arguments": "Аргументы, по одному в строке",
+				"environment": "Окружение, ИМЯ=значение в строке",
+				"note": "Команда — полный путь к исполняемому файлу, который говорит на Agent Client Protocol через стандартный ввод и вывод. После сохранения он появится в списке агентов; пустая команда его убирает."
+			},
 			"appIcon": {
 				"title": "Значок приложения",
 				"description": "Только классический значок поддерживает тёмный, тонированный и прозрачный стили macOS."
@@ -2391,6 +2402,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ не совпал с контрольной суммой и не был установлен.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "Для %@ нужен Node.js: установите его с nodejs.org и повторите попытку.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "Для %@ нужен uv: установите его с astral.sh/uv и повторите попытку.",
+		"%@ must be the full path of an executable file: %@": "%@ должен быть полным путём к исполняемому файлу: %@",
+		"%@ has an environment line that is not NAME=value: %@": "В %@ есть строка окружения не вида ИМЯ=значение: %@",
 		"Choose": "Выбрать",
 		"New Conversation": "Новый разговор",
 		"Screenshot of %@": "Снимок экрана: %@",

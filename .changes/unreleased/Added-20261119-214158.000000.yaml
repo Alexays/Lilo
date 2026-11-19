@@ -1,0 +1,3 @@
+kind: Added
+body: 'Settings > Agents > Custom agent starts a program of your own, with its arguments and environment variables, as an agent next to the registry''s, so any ACP harness or wrapper script works in conversations'
+time: 2026-11-19T21:41:58.000000000Z

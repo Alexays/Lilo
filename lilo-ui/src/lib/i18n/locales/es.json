@@ -206,6 +206,17 @@
 			"more": "{count} más. Busca para reducir la lista."
 		},
 		"items": {
+			"customAgent": {
+				"title": "Agente personalizado",
+				"description": "Inicia un programa propio como agente, junto a los del registro.",
+				"keywords": "agente personalizado comando acp local script entorno variables argumentos",
+				"name": "Nombre",
+				"namePlaceholder": "Mi agente",
+				"executable": "Comando",
+				"arguments": "Argumentos, uno por línea",
+				"environment": "Entorno, NOMBRE=valor por línea",
+				"note": "El comando es la ruta completa de un archivo ejecutable que habla el Agent Client Protocol por la entrada y la salida estándar. Se une a la lista de agentes al guardarse; vaciarlo lo quita."
+			},
 			"appIcon": {
 				"title": "Icono de la app",
 				"description": "Solo Clásico sigue los estilos de iconos oscuro, teñido y transparente de macOS."
@@ -2391,6 +2402,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ no coincidía con su suma de comprobación y no se instaló.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ necesita Node.js: instálalo desde nodejs.org y vuelve a intentarlo.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ necesita uv: instálalo desde astral.sh/uv y vuelve a intentarlo.",
+		"%@ must be the full path of an executable file: %@": "%@ debe ser la ruta completa de un archivo ejecutable: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ tiene una línea de entorno que no es NOMBRE=valor: %@",
 		"Choose": "Elegir",
 		"New Conversation": "Nueva conversación",
 		"Screenshot of %@": "Captura de pantalla de %@",

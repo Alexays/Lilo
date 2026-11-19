@@ -6,6 +6,7 @@
   import SearchEngineEditor from "./SearchEngineEditor.svelte";
   import SettingsAdvanced from "./SettingsAdvanced.svelte";
   import SettingsAgentPrompt from "./SettingsAgentPrompt.svelte";
+  import SettingsCustomAgent from "./SettingsCustomAgent.svelte";
   import SettingsExtensions from "./SettingsExtensions.svelte";
   import SettingsGroups from "./SettingsGroups.svelte";
   import SettingsSearchResults from "./SettingsSearchResults.svelte";
@@ -65,6 +66,8 @@
           <SettingsBlockerSites />
         {:else if subpage === "agentPrompt"}
           <SettingsAgentPrompt />
+        {:else if subpage === "customAgent"}
+          <SettingsCustomAgent />
         {:else if subpage === "sites" || subpage?.startsWith("site:")}
           <SettingsSites {subpage} />
         {:else if section === "terminal"}

@@ -206,6 +206,17 @@
 			"more": "{count} tane daha. Listeyi daraltmak için arayın."
 		},
 		"items": {
+			"customAgent": {
+				"title": "Özel ajan",
+				"description": "Kayıt defterindekilerin yanında, kendi programınızı ajan olarak başlatın.",
+				"keywords": "özel ajan komut acp yerel betik ortam değişkenler argümanlar",
+				"name": "Ad",
+				"namePlaceholder": "Ajanım",
+				"executable": "Komut",
+				"arguments": "Argümanlar, her satırda bir tane",
+				"environment": "Ortam, her satırda AD=değer",
+				"note": "Komut, Agent Client Protocol'ü standart girdi ve çıktı üzerinden konuşan çalıştırılabilir bir dosyanın tam yoludur. Kaydedilince ajan listesine katılır; komutu boşaltmak onu kaldırır."
+			},
 			"appIcon": {
 				"title": "Uygulama simgesi",
 				"description": "Yalnızca Klasik, macOS'in koyu, renk tonlu ve saydam simge stillerine uyar."
@@ -2391,6 +2402,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ sağlama toplamıyla eşleşmedi ve yüklenmedi.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ için Node.js gerekli: nodejs.org adresinden yükleyip yeniden deneyin.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ için uv gerekli: astral.sh/uv adresinden yükleyip yeniden deneyin.",
+		"%@ must be the full path of an executable file: %@": "%@ çalıştırılabilir bir dosyanın tam yolu olmalı: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ için AD=değer biçiminde olmayan bir ortam satırı var: %@",
 		"Choose": "Seç",
 		"New Conversation": "Yeni Sohbet",
 		"Screenshot of %@": "%@ ekran resmi",

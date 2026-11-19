@@ -206,6 +206,17 @@
 			"more": "{count}개 더 있습니다. 검색으로 목록을 좁혀 보세요."
 		},
 		"items": {
+			"customAgent": {
+				"title": "사용자 지정 에이전트",
+				"description": "레지스트리의 에이전트 옆에 직접 만든 프로그램을 에이전트로 실행합니다.",
+				"keywords": "사용자 지정 에이전트 명령 acp 로컬 스크립트 환경 변수 인자",
+				"name": "이름",
+				"namePlaceholder": "내 에이전트",
+				"executable": "명령",
+				"arguments": "인자, 한 줄에 하나",
+				"environment": "환경, 한 줄에 NAME=값",
+				"note": "명령은 표준 입출력으로 Agent Client Protocol을 사용하는 실행 파일의 전체 경로입니다. 저장하면 에이전트 목록에 추가되고, 명령을 비우면 제거됩니다."
+			},
 			"appIcon": {
 				"title": "앱 아이콘",
 				"description": "클래식만 macOS의 다크, 색조 및 투명 아이콘 스타일을 따릅니다."
@@ -2391,6 +2402,8 @@
 		"%@ did not match its checksum and was not installed.": "%@의 체크섬이 일치하지 않아 설치하지 않았습니다.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@에는 Node.js가 필요합니다. nodejs.org에서 설치한 후 다시 시도하세요.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@에는 uv가 필요합니다. astral.sh/uv에서 설치한 후 다시 시도하세요.",
+		"%@ must be the full path of an executable file: %@": "%@에는 실행 파일의 전체 경로가 필요합니다: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@에 NAME=값 형식이 아닌 환경 줄이 있습니다: %@",
 		"Choose": "선택",
 		"New Conversation": "새 대화",
 		"Screenshot of %@": "%@ 스크린샷",

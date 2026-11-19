@@ -206,6 +206,17 @@
 			"more": "Nog {count}. Zoek om de lijst te verkleinen."
 		},
 		"items": {
+			"customAgent": {
+				"title": "Eigen agent",
+				"description": "Start een eigen programma als agent, naast die van het register.",
+				"keywords": "eigen agent opdracht acp lokaal script omgeving variabelen argumenten",
+				"name": "Naam",
+				"namePlaceholder": "Mijn agent",
+				"executable": "Opdracht",
+				"arguments": "Argumenten, één per regel",
+				"environment": "Omgeving, NAAM=waarde per regel",
+				"note": "De opdracht is het volledige pad van een uitvoerbaar bestand dat het Agent Client Protocol spreekt via standaardinvoer en -uitvoer. Het komt in de agentenlijst zodra het is bewaard; leegmaken haalt het weg."
+			},
 			"appIcon": {
 				"title": "Appsymbool",
 				"description": "Alleen Klassiek volgt de donkere, getinte en doorzichtige symboolstijlen van macOS."
@@ -2391,6 +2402,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ kwam niet overeen met de checksum en is niet geïnstalleerd.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ heeft Node.js nodig: installeer het via nodejs.org en probeer het opnieuw.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ heeft uv nodig: installeer het via astral.sh/uv en probeer het opnieuw.",
+		"%@ must be the full path of an executable file: %@": "%@ moet het volledige pad van een uitvoerbaar bestand zijn: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ heeft een omgevingsregel die niet NAAM=waarde is: %@",
 		"Choose": "Kies",
 		"New Conversation": "Nieuw gesprek",
 		"Screenshot of %@": "Schermafbeelding van %@",
