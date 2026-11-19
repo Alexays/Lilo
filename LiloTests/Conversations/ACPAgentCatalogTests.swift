@@ -86,6 +86,37 @@ final class ACPAgentCatalogTests: XCTestCase {
         XCTAssertNotNil(launch.environment["PATH"])
     }
 
+    /// The whole way in: the stored setting, the launch, a real process and the ACP handshake over its stdio.
+    @MainActor
+    func testACustomAgentAnswersInitializeWithItsArgumentsAndEnvironment() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let command = directory.appending(path: "harness")
+        let script = """
+        #!/usr/bin/python3
+        import json, os, sys
+        for line in sys.stdin:
+            message = json.loads(line)
+            info = {"name": " ".join(sys.argv[1:]) + " " + os.environ.get("HARNESS_MODE", "")}
+            print(json.dumps({"jsonrpc": "2.0", "id": message["id"], "result": {"protocolVersion": 1, "agentInfo": info}}), flush=True)
+        """
+        FileManager.default.createFile(atPath: command.path, contents: Data(script.utf8), attributes: [.posixPermissions: 0o755])
+        let json = try String(data: JSONSerialization.data(withJSONObject: [
+            "executable": command.path, "arguments": "--profile\nacp", "environment": "HARNESS_MODE=demo"
+        ]), encoding: .utf8)
+        let catalog = ACPAgentCatalog(directory: directory)
+        catalog.customAgentSetting = { json }
+        let launch = try await catalog.launch(try XCTUnwrap(catalog.agent(id: ACPAgentCatalog.customId)))
+        let connection = ACPConnection(executable: launch.executable, arguments: launch.arguments, environment: launch.environment, directory: directory)
+        try connection.start()
+        defer { connection.terminate() }
+
+        let answer = try await connection.request("initialize", ["protocolVersion": 1])
+
+        XCTAssertEqual((answer["agentInfo"] as? [String: Any])?["name"] as? String, "--profile acp demo")
+    }
+
     @MainActor
     func testACustomAgentNeedsAFullPathToAnExecutableFile() async throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
