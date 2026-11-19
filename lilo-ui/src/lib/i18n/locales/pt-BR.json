@@ -492,6 +492,11 @@
 				"description": "O agente aguarda sua resposta.",
 				"keywords": "agente aprovação confirmar pagamento compra pedido apagar enviar publicar"
 			},
+			"agentActionLog": {
+				"title": "Manter um registro das ações do agente",
+				"description": "Um arquivo local lista cada chamada, nunca o texto digitado nem o conteúdo das páginas.",
+				"keywords": "agente registro histórico auditoria ações reproduzir"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Sempre permitido",
 				"description": "Agentes atuam nestes sites sem perguntar.",

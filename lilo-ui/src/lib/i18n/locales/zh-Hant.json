@@ -492,6 +492,11 @@
 				"description": "代理程式會等待你的回應。",
 				"keywords": "代理程式 核准 確認 付款 購買 訂單 刪除 傳送 發佈"
 			},
+			"agentActionLog": {
+				"title": "記錄代理程式的操作",
+				"description": "本機檔案逐條列出每次呼叫,絕不包含輸入的文字或頁面內容。",
+				"keywords": "代理程式 日誌 歷史 稽核 操作 重播"
+			},
 			"agentAlwaysAllowed": {
 				"title": "一律允許",
 				"description": "代理程式在這些網站上執行動作時不會詢問。",
