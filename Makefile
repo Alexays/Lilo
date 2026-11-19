@@ -93,7 +93,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly ext-e2e-passwords ext-e2e-passwords-trust top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-app agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	docs-dev docs-build docs-check docs-test docs-preview docs-deploy-check docs-deploy docs-translate docs-eval docs-lock \
 	hooks-install hooks-test lint-commit-message lint-commits \
@@ -494,14 +494,25 @@ run-ui-dev: app
 
 # LILO_AGENT_ALLOW_ALL only lets any agent client in without asking; LILO_AGENT_CLICKS=allow|deny answers every
 # question before a send, payment or deletion yes or no at once. Only a Debug build reads them.
+AGENT_DATA = $(or $(LILO_APP_SUPPORT_DIR),$(HOME)/Library/Application Support/Lilo-Debug)
+# A fresh Debug profile has agent control off, and the app reads that setting only at launch: it is switched on
+# in the profile's database, which a first launch creates, before the app a client talks to starts.
+agent-app:
+	@test -d build/debug/export/Lilo.app || { echo "run make app first" >&2; exit 1; }
+	@pgrep -qf "build/debug/export/Lilo.app/Contents/MacOS/Lilo$$" || { \
+		on="INSERT OR REPLACE INTO settings(key, value) VALUES ('agentControlEnabled', 'true')"; \
+		/bin/rm -f "$(AGENT_DATA)/agent.sock"; \
+		sqlite3 "$(AGENT_DATA)/global.db" "$$on" 2>/dev/null || { \
+			./build/debug/export/Lilo.app/Contents/MacOS/Lilo >/dev/null 2>&1 & first=$$!; \
+			until sqlite3 "$(AGENT_DATA)/global.db" "$$on" 2>/dev/null; do sleep 1; done; \
+			kill $$first; wait $$first 2>/dev/null; /bin/rm -f "$(AGENT_DATA)/agent.sock"; }; \
+		LILO_AGENT_ALLOW_ALL=1 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo >/dev/null 2>&1 & \
+		until [ -S "$(AGENT_DATA)/agent.sock" ] && sleep 3; do sleep 1; done; }
+
 ## Call the debug app's agent tools from a shell, starting the app first if needed (CALLS=calls.json, see scripts/agent_call.mjs)
 agent-call:
 	@test -n "$(CALLS)" || { echo "CALLS=calls.json is required" >&2; exit 2; }
-	@test -d build/debug/export/Lilo.app || { echo "run make app first" >&2; exit 1; }
-	@pgrep -qf "build/debug/export/Lilo.app/Contents/MacOS/Lilo$$" || { \
-		/bin/rm -f "$(HOME)/Library/Application Support/Lilo-Debug/agent.sock"; \
-		LILO_AGENT_ALLOW_ALL=1 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo >/dev/null 2>&1 & \
-		until [ -S "$(HOME)/Library/Application Support/Lilo-Debug/agent.sock" ] && sleep 3; do sleep 1; done; }
+	@$(MAKE) --no-print-directory agent-app
 	@node scripts/agent_call.mjs build/debug/export/Lilo.app/Contents/MacOS/lilo-mcp "$(CALLS)"
 
 ## Build the UI bundle and create release artifacts
