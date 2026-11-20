@@ -95,14 +95,16 @@
     if (!(event.target as HTMLElement).closest("button, a, input, select, textarea")) chromeActions.maximizeWindow();
   }
 
-  // Docked, the rail slides with the sidebar's fold: WindowFrameView.toggleDuration on --motion-ease-standard.
-  // The slide is the rail's whole width (--sidebar-rail-width + --content-inset), off its window edge.
-  const railFly = $derived({
-    x: getTabPosition() === "right" ? 48 : -48,
-    opacity: 1,
-    duration: prefersReducedMotion() ? 0 : floating ? 240 : 280,
-    easing: floating ? undefined : easeStandard,
-  });
+  // The rail slides its whole width off its window edge; docked, with the sidebar's fold:
+  // WindowFrameView.toggleDuration on --motion-ease-standard.
+  function railSlide(node: HTMLElement) {
+    return fly(node, {
+      x: (getTabPosition() === "right" ? 1 : -1) * node.offsetWidth,
+      opacity: 1,
+      duration: prefersReducedMotion() ? 0 : floating ? 240 : 280,
+      easing: floating ? undefined : easeStandard,
+    });
+  }
 </script>
 
 {#snippet tabIcon(tab: TabState)}
@@ -186,7 +188,7 @@
   use:reportInteractiveZone={{ id: "sidebar-rail" }}
   onmouseenter={onenter}
   onmouseleave={onleave}
-  transition:fly|global={railFly}
+  transition:railSlide|global
 >
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <nav class="rail" aria-label={t("sidebar.ariaLabel")} onkeydown={handleArrows}>
