@@ -348,6 +348,29 @@ html[data-sidebar-rail]:not([data-tabs-hidden])[data-tab-position='right'] {
   --tabs-right: calc(var(--sidebar-rail-width) + var(--content-inset));
 }
 
+/* Narrowed past the lights' threshold, the sidebar's header keeps only its own line: the lights sit on
+   the toolbar row, as over the rail. The spacer that reserved them leaves with no jump. */
+html[data-sidebar-narrow] .header-spacer {
+  width: 8px;
+}
+
+/* The sidebar is a container over its viewport's width (--sidebar-width plus the inset): the tab rows'
+   titles give back their room continuously toward the rail's width, where only the icons remain. */
+@container sidebar (width < 211px) {
+  /* The close and sound buttons keep the title from reading: they wait behind the row's fade. */
+  .tab-item .tab-actions,
+  .new-tab-line :is(.new-terminal-button, .new-agents-slot) {
+    display: none;
+  }
+}
+
+@container sidebar (width < 141px) {
+  .tab-item .tab-title,
+  .new-tab-line .new-tab-label {
+    display: none;
+  }
+}
+
 /* Hidden or floating over the page, the tabs leave it every edge. */
 html[data-tabs-hidden] {
   --tabs-left: var(--content-inset);
