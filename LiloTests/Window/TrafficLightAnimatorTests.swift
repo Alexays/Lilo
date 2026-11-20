@@ -99,6 +99,97 @@ final class TrafficLightAnimatorTests: XCTestCase {
         XCTAssertFalse(controller.areTrafficLightsVisible(), "no toolbar row holds them, as with the sidebar hidden")
     }
 
+    /// A sidebar merely narrowed keeps its chrome: the lights sit past its column where a toolbar
+    /// row's would, in every layout — the rail alone leaves them nowhere without a real row.
+    func testTheLightsKeepAHomeWhileTheSidebarNarrows() {
+        for position in TabPosition.allCases {
+            for address in [AddressPlacement.tabs, .page, .hidden] {
+                let layout = TabLayout(position: position, address: address)
+                for toolbarVisible in [true, false] {
+                    let shown = MainWindowController.showsTrafficLights(
+                        layout: layout, toolbarVisible: toolbarVisible, sidebarVisible: true,
+                        sidebarRail: false, overlayCoversLights: false, isFullscreen: false
+                    )
+                    XCTAssertTrue(shown, "\(position)/\(address) toolbar \(toolbarVisible): a shown sidebar always holds the lights")
+                }
+            }
+        }
+    }
+
+    /// Folded to the rail the sidebar's header is gone: only a row over the page still holds the
+    /// lights — the right layout's permanent one included.
+    func testTheRailKeepsTheLightsOnlyWhereARowHoldsThem() {
+        for address in [AddressPlacement.tabs, .hidden] {
+            let layout = TabLayout(position: .left, address: address)
+            XCTAssertFalse(MainWindowController.showsTrafficLights(
+                layout: layout, toolbarVisible: true, sidebarVisible: true,
+                sidebarRail: true, overlayCoversLights: false, isFullscreen: false
+            ), "left/\(address): no row, as with the sidebar hidden")
+        }
+        XCTAssertTrue(MainWindowController.showsTrafficLights(
+            layout: TabLayout(position: .left, address: .page), toolbarVisible: true,
+            sidebarVisible: true, sidebarRail: true, overlayCoversLights: false, isFullscreen: false
+        ), "the shown address toolbar's row")
+        XCTAssertFalse(MainWindowController.showsTrafficLights(
+            layout: TabLayout(position: .left, address: .page), toolbarVisible: false,
+            sidebarVisible: true, sidebarRail: true, overlayCoversLights: false, isFullscreen: false
+        ), "the toolbar hides apart from the tabs")
+        for position in [TabPosition.right, .top, .bottom] {
+            XCTAssertTrue(MainWindowController.showsTrafficLights(
+                layout: TabLayout(position: position, address: .tabs), toolbarVisible: true,
+                sidebarVisible: true, sidebarRail: true, overlayCoversLights: false, isFullscreen: false
+            ), "\(position): the lights never sat over the sidebar")
+        }
+    }
+
+    /// The address toolbar's row outlives the sidebar, the floating overlay takes the lights over its
+    /// corner, and full screen hands them to its own title bar.
+    func testTheLightsNeedTheSidebarUnlessARowOrAnOverlayHoldsThem() {
+        for position in TabPosition.allCases {
+            for toolbarVisible in [true, false] {
+                let row = toolbarVisible && (position == .left || position == .top)
+                let shown = MainWindowController.showsTrafficLights(
+                    layout: TabLayout(position: position, address: .page), toolbarVisible: toolbarVisible,
+                    sidebarVisible: false, sidebarRail: false, overlayCoversLights: false, isFullscreen: false
+                )
+                XCTAssertEqual(shown, row, "\(position) toolbar \(toolbarVisible): only a shown address toolbar keeps them")
+            }
+        }
+        XCTAssertTrue(MainWindowController.showsTrafficLights(
+            layout: .default, toolbarVisible: false, sidebarVisible: false,
+            sidebarRail: false, overlayCoversLights: true, isFullscreen: false
+        ))
+        XCTAssertFalse(MainWindowController.showsTrafficLights(
+            layout: .default, toolbarVisible: false, sidebarVisible: true,
+            sidebarRail: false, overlayCoversLights: false, isFullscreen: true
+        ))
+    }
+
+    func testANarrowedSidebarKeepsTheLightsPastItsColumn() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        controller.sidebarWidth = 180
+        controller.sidebarExpandedWidth = 180
+
+        // The default layout has no toolbar row: the lights still stay, past the sidebar's column.
+        XCTAssertTrue(controller.areTrafficLightsVisible())
+        let narrow = try closeButtonFrame(controller, layout: .default)
+        XCTAssertEqual(narrow.minX, 180 + MainWindowController.contentInset + MainWindowController.trafficLightsInset,
+                       "as far past the column as they sit into the header")
+
+        // Folding to the rail takes their home with it.
+        controller.sidebarRail = true
+        XCTAssertFalse(controller.areTrafficLightsVisible(), "no toolbar row holds them, as with the sidebar hidden")
+    }
+
+    func testARightSidebarKeepsTheLightsOnItsToolbarRowDownTheNarrowRange() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        controller.sidebarWidth = 180
+        controller.tabLayout = TabLayout(position: .right, address: .page)
+        XCTAssertTrue(controller.areTrafficLightsVisible(), "its toolbar row never leaves")
+        controller.sidebarRail = true
+        XCTAssertTrue(controller.areTrafficLightsVisible(), "the rail is on the right, the lights on the left")
+    }
+
     func testCollapsedSidebarHidesTheTrafficLightsAndShowingItBringsThemBack() throws {
         let controller = MainWindowController(context: browserContext.context)
         let buttons = try [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].map {

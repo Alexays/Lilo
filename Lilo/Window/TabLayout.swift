@@ -38,6 +38,16 @@ struct TabLayout: Equatable {
         canHideToolbar && !toolbarVisible ? TabLayout(position: position, address: .hidden) : self
     }
 
+    /// A row over the page holds the address, the history or the lights: the right and bottom
+    /// layouts' permanent one, or the left's address toolbar while it shows.
+    func showsPageToolbar(toolbarVisible: Bool) -> Bool {
+        switch position {
+        case .left: shown(toolbarVisible: toolbarVisible).address == .page
+        case .right, .bottom: true
+        case .top: false
+        }
+    }
+
     /// An address nobody chose follows the position.
     init(position: TabPosition, storedAddress: String?) {
         self.init(position: position, address: storedAddress.flatMap(AddressPlacement.init(rawValue:)) ?? .default(for: position))

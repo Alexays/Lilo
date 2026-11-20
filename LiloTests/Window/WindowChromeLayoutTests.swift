@@ -108,6 +108,26 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(window.sidebarWidth, 480, "its width once there is room")
     }
 
+    func testTheLightsFollowTheSidebarEdgeDownTheNarrowRange() throws {
+        let window = try makeSizedWindow()
+        let nsWindow = try XCTUnwrap(window.window)
+
+        window.updateSidebarWidth(180)
+        window.pendingSidebarWidthPersistWork?.cancel()
+
+        XCTAssertEqual(window.sidebarWidth, 180)
+        XCTAssertTrue(window.areTrafficLightsVisible(), "narrowed, not folded: they sit past the column")
+        let button = try XCTUnwrap(nsWindow.standardWindowButton(.closeButton))
+        let frame = button.convert(button.bounds, to: nil)
+        XCTAssertEqual(frame.minX, 180 + MainWindowController.contentInset + MainWindowController.trafficLightsInset,
+                       "the drag re-places them with the sidebar's edge, where a toolbar row's would be")
+
+        window.updateSidebarWidth(260)
+        window.pendingSidebarWidthPersistWork?.cancel()
+        let back = button.convert(button.bounds, to: nil)
+        XCTAssertEqual(back.minX, MainWindowController.trafficLightsInset, "back over the header past the threshold")
+    }
+
     func testHiddenTabsGiveThePageEveryEdge() throws {
         let window = try makeSizedWindow()
         window.toggleSidebar()

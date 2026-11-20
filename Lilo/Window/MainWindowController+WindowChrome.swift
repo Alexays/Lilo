@@ -103,8 +103,9 @@ extension MainWindowController {
         sidebarExpandedWidth = width.clamped(to: Self.sidebarWidthRange)
         // The folded rail's edge holds still whatever width it unfolds to: only a change of the
         // fitted width relayouts, so the width a fold remembers cannot cut its slide short.
+        // The lights move with the sidebar's edge in the narrow range; the sync is a no-op elsewhere.
         if fittedSidebarWidth != sidebarWidth {
-            applySidebarLayout(animated: false)
+            applySidebarLayout(animated: false, syncTrafficLights: true)
         }
 
         // Persist only after the drag comes to rest (~500ms trailing) to avoid a synchronous
@@ -164,15 +165,42 @@ extension MainWindowController {
         bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": sidebarVisible, "width": sidebarExpandedWidth])
     }
 
-    /// The folded rail and a narrowed sidebar alike leave the lights where a hidden sidebar does: the toolbar row, or nowhere.
+    /// The folded rail and a narrowed sidebar alike leave the header's lights' spot: the lights sit
+    /// past the sidebar's column, where a toolbar row's would be.
     var railReplacesSidebar: Bool { (sidebarRail || sidebarWidth < Self.narrowSidebarWidth) && tabLayout.position.isVertical }
+
+    /// Whether the layout leaves the lights a home. The address toolbar's row keeps them even with
+    /// the sidebar hidden, the floating overlay takes them over its corner, and a shown sidebar holds
+    /// them — folded to the rail only while a row over the page still does; merely narrowed, it keeps
+    /// them past its column rather than losing them.
+    static func showsTrafficLights(
+        layout: TabLayout,
+        toolbarVisible: Bool,
+        sidebarVisible: Bool,
+        sidebarRail: Bool,
+        overlayCoversLights: Bool,
+        isFullscreen: Bool
+    ) -> Bool {
+        if isFullscreen { return false }
+        if layout.canHideToolbar && toolbarVisible { return true }
+        if overlayCoversLights { return true }
+        guard sidebarVisible else { return false }
+        if sidebarRail && layout.position.isVertical {
+            return layout.showsPageToolbar(toolbarVisible: toolbarVisible)
+        }
+        return true
+    }
 
     /// A floating overlay covers the lights' top-left corner only when it comes from the left or the top.
     func areTrafficLightsVisible() -> Bool {
-        let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
-        let toolbarHoldsLights = tabLayout.canHideToolbar && toolbarVisible
-        let sidebarHoldsLights = sidebarVisible && !railReplacesSidebar
-        return window?.styleMask.contains(.fullScreen) != true && (sidebarHoldsLights || overlayCoversLights || toolbarHoldsLights)
+        Self.showsTrafficLights(
+            layout: tabLayout,
+            toolbarVisible: toolbarVisible,
+            sidebarVisible: sidebarVisible,
+            sidebarRail: sidebarRail,
+            overlayCoversLights: sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top),
+            isFullscreen: window?.styleMask.contains(.fullScreen) == true
+        )
     }
 
     func showActiveTabSecurityInfo() {
