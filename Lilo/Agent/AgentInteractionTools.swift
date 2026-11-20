@@ -251,7 +251,7 @@ enum AgentInteractionTools {
                     content += try await AgentTools.call(tool, arguments: action["input"] as? [String: Any] ?? [:], session: session, control: control)
                 } catch {
                     let done = content.compactMap { if case .text(let text) = $0 { text } else { nil } }.joined(separator: "\n")
-                    throw AgentToolError("\(done)\nAction \(index + 1) (\(tool)) failed: \(error.localizedDescription)", code: (error as? AgentToolError)?.code)
+                    throw AgentToolError("\(done)\nAction \(index + 1) (\(tool)) failed: \(error.localizedDescription)", code: (error as? AgentToolError)?.code, consent: (error as? AgentToolError)?.consent)
                 }
             }
             return content
@@ -435,7 +435,7 @@ enum AgentInteractionTools {
             return "\(value as? String ?? "undefined")\n(\(tools.calls) tool calls)"
         } catch {
             let message = (error as NSError).userInfo["WKJavaScriptExceptionMessage"] as? String ?? error.localizedDescription
-            throw AgentToolError("\(message)\n(\(tools.calls) tool calls)", code: tools.errorCode)
+            throw AgentToolError("\(message)\n(\(tools.calls) tool calls)", code: tools.errorCode, consent: tools.errorConsent)
         }
     }
 
@@ -451,6 +451,8 @@ enum AgentInteractionTools {
         var isStopped = false
         /// The code of the last tool error, kept for the run's own error when the program lets it through.
         var errorCode: String?
+        /// The consent answer of the last tool error, kept the same way.
+        var errorConsent: ConsentAnswer?
 
         init(session: AgentSession, control: AgentControl) {
             self.session = session
@@ -476,6 +478,7 @@ enum AgentInteractionTools {
                     replyHandler(content.compactMap { if case .text(let text) = $0 { text } else { nil } }.joined(separator: "\n"), nil)
                 } catch {
                     errorCode = (error as? AgentToolError)?.code ?? errorCode
+                    errorConsent = (error as? AgentToolError)?.consent ?? errorConsent
                     replyHandler(nil, error.localizedDescription)
                 }
             }
