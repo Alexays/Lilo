@@ -201,6 +201,59 @@ final class SplitFocusRingView: NSView {
     }
 }
 
+/// The frame-colored ring a split keeps around its panes: it lifts them off the chrome over the
+/// page and the window frame, and bites their outer corners as the dividers bite the inner ones,
+/// so every pane stays a rounded card. Paint only, never takes events.
+final class SplitMarginView: NSView {
+    /// Half a divider's gap: a pane sits closer to the frame than to another pane.
+    static let width = SplitDividerView.width / 2
+
+    private let band = CAShapeLayer()
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        band.fillRule = .evenOdd
+        layer?.addSublayer(band)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    /// Standalone sublayers don't inherit the backing scale: see `WindowFrameView`.
+    override func viewDidChangeBackingProperties() {
+        super.viewDidChangeBackingProperties()
+        band.contentsScale = unsafe window?.backingScaleFactor ?? 2
+    }
+
+    /// The frame is the panes' rectangle: the band rings it and bites its corners.
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        let radius = WindowFrameView.contentCornerRadius
+        let path = CGMutablePath()
+        path.addRect(bounds.insetBy(dx: -Self.width, dy: -Self.width))
+        path.addRoundedRect(in: bounds, cornerWidth: radius, cornerHeight: radius)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        band.path = path
+        CATransaction.commit()
+    }
+
+    /// Matches the dividers' fade.
+    func setFrameColor(_ color: NSColor, animated: Bool) {
+        CATransaction.begin()
+        if animated {
+            CATransaction.setAnimationDuration(WindowFrameView.colorFadeDuration)
+        } else {
+            CATransaction.setDisableActions(true)
+        }
+        band.fillColor = color.cgColor
+        CATransaction.commit()
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+}
+
 /// Sits behind a web pane, at the pane's frame. WebKit docks the Web Inspector over the whole superview of the
 /// page's attachment view, so each web pane gets a superview of its own size and the page follows `anchor`.
 final class SplitPaneDockView: NSView {
@@ -265,6 +318,7 @@ final class SplitPanesController {
     /// Pane frames last sent to the chrome, as shares of the content area.
     var sentPaneFrames: [UUID: NSRect] = [:]
     private var focusRing: SplitFocusRingView?
+    private var marginView: SplitMarginView?
     private weak var pointerTarget: NSView?
     /// Whether the drag with this sequence number carries a web link; read once per drag.
     private var linkDragCache: (sequence: Int, isWebLink: Bool)?
@@ -291,13 +345,15 @@ final class SplitPanesController {
         docks.values.forEach { $0.detach() }
         docks = [:]
         focusRing?.removeFromSuperview()
+        marginView?.removeFromSuperview()
+        marginView = nil
         sendPaneFrames([:])
     }
 
     /// Puts a pane's view over whatever stays shown under the content, and under the dividers and the focus ring.
     func addPane(_ view: NSView, below sibling: NSView? = nil) {
         let container = controller.contentContainerView
-        container.addSubview(view, positioned: .below, relativeTo: sibling ?? container.subviews.first { $0 is SplitDividerView } ?? focusRing)
+        container.addSubview(view, positioned: .below, relativeTo: sibling ?? marginView ?? container.subviews.first { $0 is SplitDividerView } ?? focusRing)
     }
 
     private func makeDivider(path: [Bool]) -> SplitDividerView {
@@ -347,8 +403,8 @@ final class SplitPanesController {
     }
 
     /// Each pane's frame and each cut's divider frame and bounds, in the container's coordinates.
-    private func frames(
-        _ layout: SplitLayout, in rect: NSRect, path: [Bool],
+    static func frames(
+        _ layout: SplitLayout, in rect: NSRect, flipped: Bool, path: [Bool],
         panes: inout [UUID: NSRect], cuts: inout [[Bool]: (divider: NSRect, bounds: NSRect, vertical: Bool)]
     ) {
         guard case let .split(vertical, ratio, first, second) = layout else {
@@ -361,7 +417,6 @@ final class SplitPanesController {
             let firstHeight = ((rect.height - gap) * CGFloat(ratio)).rounded()
             let secondHeight = rect.height - firstHeight - gap
             // First on top, whichever way the container counts y.
-            let flipped = controller.contentContainerView.isFlipped
             firstRect = NSRect(x: rect.minX, y: flipped ? rect.minY : rect.maxY - firstHeight, width: rect.width, height: firstHeight)
             divider = NSRect(x: rect.minX, y: flipped ? rect.minY + firstHeight : rect.minY + secondHeight, width: rect.width, height: gap)
             secondRect = NSRect(x: rect.minX, y: flipped ? rect.maxY - secondHeight : rect.minY, width: rect.width, height: secondHeight)
@@ -372,8 +427,8 @@ final class SplitPanesController {
             secondRect = NSRect(x: divider.maxX, y: rect.minY, width: rect.maxX - divider.maxX, height: rect.height)
         }
         cuts[path] = (divider, rect, vertical)
-        frames(first, in: firstRect, path: path + [false], panes: &panes, cuts: &cuts)
-        frames(second, in: secondRect, path: path + [true], panes: &panes, cuts: &cuts)
+        frames(first, in: firstRect, flipped: flipped, path: path + [false], panes: &panes, cuts: &cuts)
+        frames(second, in: secondRect, flipped: flipped, path: path + [true], panes: &panes, cuts: &cuts)
     }
 
     func applyFrames(animatesFocus: Bool = true) {
@@ -382,7 +437,17 @@ final class SplitPanesController {
         let container: NSView = controller.contentContainerView
         var panes: [UUID: NSRect] = [:]
         var cuts: [[Bool]: (divider: NSRect, bounds: NSRect, vertical: Bool)] = [:]
-        frames(liveLayout ?? split.layout, in: container.bounds, path: [], panes: &panes, cuts: &cuts)
+        // The margin keeps the panes off the chrome over the page and the window frame.
+        let outer = container.bounds.insetBy(dx: SplitMarginView.width, dy: SplitMarginView.width)
+        Self.frames(liveLayout ?? split.layout, in: outer, flipped: container.isFlipped, path: [], panes: &panes, cuts: &cuts)
+        // Over the panes, under the focus ring: the margin bites the panes' outer corners.
+        let margin = marginView ?? SplitMarginView()
+        marginView = margin
+        margin.frame = outer
+        if unsafe margin.superview !== container {
+            margin.setFrameColor(controller.currentFrameColor, animated: false)
+            container.addSubview(margin, positioned: .below, relativeTo: focusRing)
+        }
         for (path, divider) in dividers where cuts[path] == nil {
             divider.removeFromSuperview()
             dividers[path] = nil
@@ -461,7 +526,13 @@ final class SplitPanesController {
         let tabManager = controller.tabManager
         guard let split = tabManager.activeSplit, split.layout.paneIds.contains(id) else { return [] }
         let panes: [NSView] = split.layout.paneIds.compactMap { $0 == id ? nil : tabManager.loadedContentView(forTabId: $0) }
-        return panes + Array(dividers.values) + Array(docks.values) + [focusRing].compactMap { $0 }
+        return panes + Array(dividers.values) + Array(docks.values) + [focusRing, marginView].compactMap { $0 }
+    }
+
+    /// Dividers and the margin share the window frame's color, fading together.
+    func setFrameColor(_ color: NSColor, animated: Bool) {
+        marginView?.setFrameColor(color, animated: animated)
+        for divider in dividers.values { divider.setFrameColor(color, animated: animated) }
     }
 
     /// Pane (or divider) under the pointer. A press latches its target for the rest of the gesture
