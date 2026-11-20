@@ -386,19 +386,6 @@ final class AgentControl {
         }
     }
 
-    #if DEBUG
-    /// Unattended harness runs: nobody is there to answer a click's question. `LILO_AGENT_CLICKS=allow|deny`
-    /// answers it yes or no at once (no is the `needs_user` of a user who declined, without the wait); unset,
-    /// `LILO_AGENT_ALLOW_ALL=1` means allow. Nil asks the user. A Release build never reads either.
-    static func debugClickAnswer(_ environment: [String: String] = ProcessInfo.processInfo.environment) -> Bool? {
-        switch environment["LILO_AGENT_CLICKS"] {
-        case "allow": return true
-        case "deny": return false
-        default: return environment["LILO_AGENT_ALLOW_ALL"] == "1" ? true : nil
-        }
-    }
-    #endif
-
     /// Asked in the address-bar drawer, which leaves the user's typing alone, of every window, or of the one holding
     /// `tabId` for a question about that tab's page: the other windows' prompts go on meanwhile. The Dock icon
     /// bounces when Lilo is in the background. `.unavailable` when nothing could ask, `.expired` when nothing
@@ -408,8 +395,14 @@ final class AgentControl {
         timeout: TimeInterval = AgentControl.consentTimeout
     ) async -> ConsentAnswer {
         #if DEBUG
-        // Unattended harness runs: nobody is there to answer a click's question either.
-        if action != nil, let answer = Self.debugClickAnswer() { return answer ? .allowed : .denied }
+        // An unattended harness run answers a send, payment or deletion question at once; a Release build never reads this.
+        if action != nil {
+            switch ProcessInfo.processInfo.environment["LILO_AGENT_CLICKS"] {
+            case "allow": return .allowed
+            case "deny": return .denied
+            default: break
+            }
+        }
         #endif
         guard let windows = context?.windows.windows, !windows.isEmpty else { return .unavailable }
         let requestId = UUID().uuidString

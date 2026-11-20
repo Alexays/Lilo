@@ -492,8 +492,8 @@ xcode-build-release: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 run-ui-dev: app
 	@LILO_UI_DEV_SERVER=http://localhost:5173 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo
 
-# LILO_AGENT_ALLOW_ALL lets any agent client in without asking, and LILO_AGENT_CLICKS=allow|deny answers
-# every question before a send, payment or deletion yes or no at once: only a Debug build reads them.
+# LILO_AGENT_ALLOW_ALL only lets any agent client in without asking; LILO_AGENT_CLICKS=allow|deny answers every
+# question before a send, payment or deletion yes or no at once. Only a Debug build reads them.
 ## Call the debug app's agent tools from a shell, starting the app first if needed (CALLS=calls.json, see scripts/agent_call.mjs)
 agent-call:
 	@test -n "$(CALLS)" || { echo "CALLS=calls.json is required" >&2; exit 2; }
