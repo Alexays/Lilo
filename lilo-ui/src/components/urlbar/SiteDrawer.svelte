@@ -3,6 +3,7 @@
 <script lang="ts">
   import { settingsActions, tabActions } from "../../lib/bridge/actions";
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
+  import "../../lib/i18n/settingsCatalog";
   import { sitePermissionRows } from "../../lib/sitePermissions";
   import { openSettings, setSettingsQuery } from "../../stores/panels.svelte";
   import { getHiddenElements, getSitePermissions, getZoomLevels, setHiddenElements } from "../../stores/settings.svelte";

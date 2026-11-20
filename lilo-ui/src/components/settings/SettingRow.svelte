@@ -293,7 +293,7 @@
         <UiBadge tone="success">{t("settings.defaultBrowserActive")}</UiBadge>
       {:else}
         <UiButton variant="primary" onclick={() => settingsActions.setDefaultBrowser()}>
-          {t("settings.defaultBrowserSet")}
+          {t("urlBar.defaultBrowserSet")}
         </UiButton>
       {/if}
     {:else if id === "importBrowsers"}
