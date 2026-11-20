@@ -631,7 +631,7 @@ export interface BridgeCommandPayloadMap {
 	/** A system screen covers the page (Settings, History, Downloads, ...); ⌘W closes it before the tab. */
 	pageShellChanged: { open: boolean };
 	showTabSecurityInfo: EmptyPayload;
-	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
+	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number; selectedIds?: string[] };
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showTabStackContextMenu: { ids: string[]; host: string; name: string; x: number; y: number; width: number; height: number };
 	showSidebarContextMenu: { x: number; y: number; width: number; height: number; spaceId?: string };

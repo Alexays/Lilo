@@ -131,3 +131,29 @@ test("Shift-F10 opens the focused row's context menu", async ({ page }) => {
 
 	expect((await sentCommands(page)).filter((c) => c.action === "showTabContextMenu").at(-1)?.payload).toMatchObject({ id: "tab-beta" });
 });
+
+test("Command-click and Shift-click select tabs without switching, and the context menu carries the selection", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const menus = async () => (await sentCommands(page)).filter((c) => c.action === "showTabContextMenu").map((c) => c.payload as Record<string, unknown>);
+
+	await row(page, /^Beta Mail/).click({ modifiers: ["Meta"] });
+	await row(page, /^Gamma News/).click({ modifiers: ["Meta"] });
+	await expect(row(page, /^Beta Mail/)).toHaveAttribute("aria-selected", "true");
+	await expect(row(page, /^Gamma News/)).toHaveAttribute("aria-selected", "true");
+	expect((await sentCommands(page)).some((c) => c.action === "switchTab")).toBe(false);
+
+	await row(page, /^Gamma News/).click({ button: "right" });
+	expect([...((await menus()).at(-1)?.selectedIds as string[])].sort()).toEqual(["tab-beta", "tab-gamma"]);
+
+	// A right-click outside the selection collapses it to the clicked tab.
+	await row(page, /^Alpha Docs/).click({ button: "right" });
+	expect((await menus()).at(-1)?.selectedIds).toEqual([]);
+	await expect(row(page, /^Beta Mail/)).toHaveAttribute("aria-selected", "false");
+
+	// Shift-click selects the range back to the anchor; Escape clears it.
+	await row(page, /^Alpha Docs/).click();
+	await row(page, /^Gamma News/).click({ modifiers: ["Shift"] });
+	for (const name of [/^Alpha Docs/, /^Beta Mail/, /^Gamma News/]) await expect(row(page, name)).toHaveAttribute("aria-selected", "true");
+	await page.keyboard.press("Escape");
+	await expect(row(page, /^Beta Mail/)).toHaveAttribute("aria-selected", "false");
+});
