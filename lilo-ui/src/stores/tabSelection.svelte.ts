@@ -10,7 +10,8 @@ let _anchor: string | null = null;
 
 const inActiveSpace = (): boolean => _spaceId !== null && _spaceId === getActiveSpaceId();
 
-export const isTabSelected = (id: string): boolean => inActiveSpace() && _ids.has(id);
+// `_ids` first: a derived calling this must track it even before the selection has a Space.
+export const isTabSelected = (id: string): boolean => _ids.has(id) && inActiveSpace();
 export const getSelectedTabIds = (): ReadonlySet<string> => (inActiveSpace() ? _ids : EMPTY);
 
 function commit(ids: ReadonlySet<string>): void {
