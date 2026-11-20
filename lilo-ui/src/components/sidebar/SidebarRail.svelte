@@ -21,6 +21,7 @@
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { easeStandard } from "../../lib/motion/easing";
 
   // Floating: revealed from the window's edge over the page while the sidebar is hidden.
   let { floating, onenter, onleave, onresize }: {
@@ -41,8 +42,9 @@
     return id;
   });
   const spaces = $derived(getPagedSpaces());
-  const lights = $derived(getTabPosition() === "left" && areTrafficLightsVisible());
-  // The sidebar header's height, so the lights keep their place as the sidebar unfolds from the rail.
+  // Only the rail floating over the page still hosts the lights' row; docked, they take the toolbar row.
+  const lights = $derived(floating && getTabPosition() === "left" && areTrafficLightsVisible());
+  // The sidebar header's height, so the lights keep their place as the rail becomes the sidebar again.
   const lightsHeight = $derived(getAddressPlacement() === "tabs" || hasPageToolbar() ? 44 : 52);
   // Where the sidebar header holds the toggle: the page toolbar keeps it otherwise.
   const showsToggle = $derived(!(getTabPosition() === "left" && hasPageToolbar()) && !isAddressInRightTabs());
@@ -87,6 +89,21 @@
     if (index < 0) return;
     event.preventDefault();
     buttons[(index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length].focus();
+  }
+
+  function maximizeWindow(event: MouseEvent): void {
+    if (!(event.target as HTMLElement).closest("button, a, input, select, textarea")) chromeActions.maximizeWindow();
+  }
+
+  // The rail slides its whole width off its window edge; docked, with the sidebar's fold:
+  // WindowFrameView.toggleDuration on --motion-ease-standard.
+  function railSlide(node: HTMLElement) {
+    return fly(node, {
+      x: (getTabPosition() === "right" ? 1 : -1) * node.offsetWidth,
+      opacity: 1,
+      duration: prefersReducedMotion() ? 0 : floating ? 240 : 280,
+      easing: floating ? undefined : easeStandard,
+    });
   }
 </script>
 
@@ -171,7 +188,7 @@
   use:reportInteractiveZone={{ id: "sidebar-rail" }}
   onmouseenter={onenter}
   onmouseleave={onleave}
-  transition:fly|global={{ x: getTabPosition() === "right" ? 84 : -84, opacity: 1, duration: floating && !prefersReducedMotion() ? 240 : 0 }}
+  transition:railSlide|global
 >
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <nav class="rail" aria-label={t("sidebar.ariaLabel")} onkeydown={handleArrows}>
@@ -179,7 +196,8 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="lights" style:height="{lightsHeight}px" onpointerdown={pressTabsHeader} ondblclick={() => chromeActions.maximizeWindow()}></div>
   {/if}
-  <div class="tools" class:top={!lights}>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="tools" class:top={!lights} onpointerdown={pressTabsHeader} ondblclick={maximizeWindow}>
     {#if showsToggle}<NavControls show="toggle" />{/if}
     <!-- The command bar carries the address, the history and Agents: the rail needs none of them. -->
     <button
@@ -326,7 +344,7 @@
     background: var(--accent-tint-12);
   }
 
-  /* The column spans the rail to the page, so its icons center under the traffic lights. */
+  /* The rail is its icons' column: they center in it. */
   .rail {
     display: flex;
     flex-direction: column;

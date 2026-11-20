@@ -93,8 +93,8 @@ final class MainWindowController: NSWindowController {
 
     static let defaultSidebarWidth: CGFloat = 260
     static let sidebarWidthRange: ClosedRange<CGFloat> = 203...480
-    /// The icon rail's width: with the content inset, the traffic lights sit centered on it, 15pt from either side.
-    static let sidebarRailWidth: CGFloat = 76
+    /// The icon rail's width, the content inset aside: its icons' column.
+    static let sidebarRailWidth: CGFloat = 40
     static let contentInset: CGFloat = 8
     /// Matches the 320px of `--sidebar-fitted-width` in the chrome UI's global.css.
     static let minimumContentWidth: CGFloat = 320
@@ -265,6 +265,10 @@ final class MainWindowController: NSWindowController {
     var sentWallpaperKey: String?
     /// The color applyWindowChromeColors last painted everywhere, so a resend of it is a no-op.
     var lastAppliedWindowChromeColor: NSColor?
+    /// The color the window frame paints, glass wash included: new dividers take it.
+    var currentFrameColor: NSColor {
+        windowFrameView?.frameColor.flatMap(NSColor.init(cgColor:)) ?? Self.defaultSidebarBackgroundColor()
+    }
     var didStartChromeUILoad = false
     var didReceiveChromeReady = false
     var didChromeVisualReady = false

@@ -101,7 +101,11 @@ extension MainWindowController {
 
     func updateSidebarWidth(_ width: CGFloat) {
         sidebarExpandedWidth = width.clamped(to: Self.sidebarWidthRange)
-        applySidebarLayout(animated: false)
+        // The folded rail's edge holds still whatever width it unfolds to: only a change of the
+        // fitted width relayouts, so the width a fold remembers cannot cut its slide short.
+        if fittedSidebarWidth != sidebarWidth {
+            applySidebarLayout(animated: false)
+        }
 
         // Persist only after the drag comes to rest (~500ms trailing) to avoid a synchronous
         // SQLite INSERT OR REPLACE + UserDefaults write on every rAF frame during live resize.
@@ -115,13 +119,13 @@ extension MainWindowController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
-    /// Folding to the rail or out of it moves the page edge with it.
+    /// Folding to the rail or out of it moves the page edge with it, and the lights take their hidden-sidebar place.
     func setSidebarRail(_ rail: Bool) {
         guard rail != sidebarRail else { return }
         sidebarRail = rail
         context.settingsStore?.sidebarRail = rail
         unsafe UserDefaults.lilo.set(rail, forKey: "cachedSidebarRail")
-        applySidebarLayout(animated: false)
+        applySidebarLayout(animated: true, syncTrafficLights: true)
     }
 
     func setSidebarCollapseLocked(_ locked: Bool) {
@@ -160,11 +164,15 @@ extension MainWindowController {
         bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": sidebarVisible, "width": sidebarExpandedWidth])
     }
 
+    /// The folded rail leaves the lights where a hidden sidebar does: the toolbar row, or nowhere.
+    var railReplacesSidebar: Bool { sidebarRail && tabLayout.position.isVertical }
+
     /// A floating overlay covers the lights' top-left corner only when it comes from the left or the top.
     func areTrafficLightsVisible() -> Bool {
         let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
         let toolbarHoldsLights = tabLayout.canHideToolbar && toolbarVisible
-        return window?.styleMask.contains(.fullScreen) != true && (sidebarVisible || overlayCoversLights || toolbarHoldsLights)
+        let sidebarHoldsLights = sidebarVisible && !railReplacesSidebar
+        return window?.styleMask.contains(.fullScreen) != true && (sidebarHoldsLights || overlayCoversLights || toolbarHoldsLights)
     }
 
     func showActiveTabSecurityInfo() {
@@ -215,10 +223,15 @@ extension MainWindowController {
     func placeTrafficLights() {
         guard let window else { return }
         let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
-        let overSidebar = !window.styleMask.contains(.fullScreen) && ((tabLayout.position == .left && sidebarVisible) || overlayCoversLights)
+        let overSidebar = !window.styleMask.contains(.fullScreen) && ((tabLayout.position == .left && sidebarVisible && !railReplacesSidebar) || overlayCoversLights)
         let compactBar = !window.styleMask.contains(.fullScreen) && sidebarVisible && hasCompactPageToolbar
         let corner = (overSidebar && tabLayout.shown(toolbarVisible: toolbarVisible) == .default) || compactBar
-        let inset: CGFloat? = overSidebar || compactBar ? Self.trafficLightsInset : nil
+        // Docked on the left, the rail takes the sidebar's place: the lights move onto the toolbar row,
+        // the rail's column plus the same inset they keep over the sidebar.
+        let rail = sidebarRail && tabLayout.position == .left
+        let inset: CGFloat? = overSidebar || compactBar ? Self.trafficLightsInset
+            : rail ? Self.sidebarRailWidth + Self.contentInset + Self.trafficLightsInset
+            : nil
         trafficLightAnimator.place(window: window, inset: inset, square: corner)
     }
 

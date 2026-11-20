@@ -2,6 +2,7 @@
   "name": "lilo-docs",
   "private": true,
   "type": "module",
+  "packageManager": "npm@10.9.9",
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "dev": "npm run generate && blume dev",
