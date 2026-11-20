@@ -345,19 +345,22 @@ final class AgentCaptureTests: AgentToolTestCase {
         XCTAssertEqual(Set(tools.compactMap { $0["name"] as? String }), [
             "tabs_context_mcp", "tabs_create_mcp", "tabs_close_mcp", "navigate", "computer", "read_page", "find", "wait_for", "form_input",
             "get_page_text", "javascript_tool", "read_console_messages", "read_network_requests", "resize_window", "file_upload",
-            "upload_image", "gif_creator", "browser_batch", "list_connected_browsers", "select_browser", "switch_browser",
+            "upload_image", "gif_creator", "browser_batch",
             "list_profiles", "switch_profile", "reset_profile", "fetch", "run",
             "devtools_command", "devtools_events", "network_mock", "network_response", "cookies", "emulate", "performance"
         ])
     }
 
-    func testAConversationsAgentIsNotOfferedTheBrowserPickers() async throws {
-        try XCTUnwrap(control.sessions.first).conversationTabId = UUID()
+    func testTheBrowserPickersAreNotListedButStillAnswered() async throws {
+        let listed = Set(((await client.request("tools/list"))?["tools"] as? [[String: Any]] ?? []).compactMap { $0["name"] as? String })
+        XCTAssertTrue(listed.isDisjoint(with: ["list_connected_browsers", "select_browser", "switch_browser"]))
 
-        let tools = (await client.request("tools/list"))?["tools"] as? [[String: Any]] ?? []
-
-        XCTAssertTrue(Set(tools.compactMap { $0["name"] as? String }).isDisjoint(with: AgentInteractionTools.browserPickers))
-        let reply = await client.callTool("select_browser")
-        XCTAssertEqual(reply.text, "Connected to Lilo", "an agent calling one anyway still succeeds")
+        let browsers = await client.callTool("list_connected_browsers")
+        XCTAssertFalse(browsers.isError, browsers.text)
+        XCTAssertTrue(browsers.text.contains("\"deviceId\""), browsers.text)
+        for name in ["select_browser", "switch_browser"] {
+            let reply = await client.callTool(name)
+            XCTAssertEqual(reply.text, "Connected to Lilo", "a client calling \(name) anyway still succeeds")
+        }
     }
 }
