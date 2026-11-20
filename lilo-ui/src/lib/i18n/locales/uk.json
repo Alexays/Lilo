@@ -198,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Масштаб {zoom}",
-			"hiddenSummary": {"one": "{count} прихований елемент", "few": "{count} приховані елементи", "many": "{count} прихованих елементів", "other": "{count} прихованого елемента"},
+			"hiddenSummary": "{count, plural, one{# прихований елемент} few{# приховані елементи} many{# прихованих елементів} other{# прихованого елемента}}",
 			"dataSummary": "Збережені дані",
 			"permissionUpdated": "{origin} · Оновлено {time}",
 			"emptyTitle": "Параметрів сайтів ще немає",
@@ -605,36 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Оновити зараз",
-			"summary": {
-				"one": "{count} список",
-				"few": "{count} списки",
-				"many": "{count} списків",
-				"other": "{count} списку"
-			},
+			"summary": "{count, plural, one{# список} few{# списки} many{# списків} other{# списку}}",
 			"updated": "оновлено {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Перевірити зараз",
 			"checking": "Перевірка оновлень...",
 			"upToDate": "Оновлень немає",
-			"updated": {
-				"one": "Оновлено: {count}",
-				"few": "Оновлено: {count}",
-				"many": "Оновлено: {count}",
-				"other": "Оновлено: {count}"
-			},
-			"available": {
-				"one": "{count} доступне оновлення",
-				"few": "{count} доступні оновлення",
-				"many": "{count} доступних оновлень",
-				"other": "{count} доступного оновлення"
-			},
-			"failed": {
-				"one": "Не вдалося перевірити: {count}",
-				"few": "Не вдалося перевірити: {count}",
-				"many": "Не вдалося перевірити: {count}",
-				"other": "Не вдалося перевірити: {count}"
-			},
+			"updated": "{count, plural, one{Оновлено: #} few{Оновлено: #} many{Оновлено: #} other{Оновлено: #}}",
+			"available": "{count, plural, one{# доступне оновлення} few{# доступні оновлення} many{# доступних оновлень} other{# доступного оновлення}}",
+			"failed": "{count, plural, one{Не вдалося перевірити: #} few{Не вдалося перевірити: #} many{Не вдалося перевірити: #} other{Не вдалося перевірити: #}}",
 			"lastChecked": "Остання перевірка: {time}"
 		},
 		"folderAutoLock": {
@@ -685,12 +665,7 @@
 			"clearData": "Очистити дані...",
 			"remove": "Вилучити...",
 			"lastProfile": "Останній профіль залишається: кожному простору потрібен профіль.",
-			"extensionCount": {
-				"one": "{count} розширення",
-				"few": "{count} розширення",
-				"many": "{count} розширень",
-				"other": "{count} розширення"
-			},
+			"extensionCount": "{count, plural, one{# розширення} few{# розширення} many{# розширень} other{# розширення}}",
 			"newProfile": "Новий профіль...",
 			"newProfileDetail": "Нові файли cookie, сеанси входу й розширення",
 			"namePlaceholder": "Назва профілю",
@@ -765,36 +740,16 @@
 		},
 		"notes": {
 			"live": "Зміни застосовуються одразу",
-			"spaces": {
-				"one": "{count} простір",
-				"few": "{count} простори",
-				"many": "{count} просторів",
-				"other": "{count} простору"
-			},
-			"profiles": {
-				"one": "{count} профіль",
-				"few": "{count} профілі",
-				"many": "{count} профілів",
-				"other": "{count} профілю"
-			},
+			"spaces": "{count, plural, one{# простір} few{# простори} many{# просторів} other{# простору}}",
+			"profiles": "{count, plural, one{# профіль} few{# профілі} many{# профілів} other{# профілю}}",
 			"blocking": "Блокується {count} з {total} типів",
 			"blockingOff": "Блокування вимкнено",
 			"profile": "Профіль {name}",
-			"extensions": {
-				"one": "{count} розширення в {profile}",
-				"few": "{count} розширення в {profile}",
-				"many": "{count} розширень у {profile}",
-				"other": "{count} розширення в {profile}"
-			},
+			"extensions": "{count, plural, one{# розширення в {profile}} few{# розширення в {profile}} many{# розширень у {profile}} other{# розширення в {profile}}}",
 			"terminal": "Зміни діють у кожній вкладці термінала",
 			"agents": "У Lilo немає власного ШІ",
 			"advanced": "Для розробки й тестування",
-			"searchMatches": {
-				"one": "{count} налаштування відповідає «{query}»",
-				"few": "{count} налаштування відповідають «{query}»",
-				"many": "{count} налаштувань відповідають «{query}»",
-				"other": "{count} налаштування відповідають «{query}»"
-			}
+			"searchMatches": "{count, plural, one{# налаштування відповідає «{query}»} few{# налаштування відповідають «{query}»} many{# налаштувань відповідають «{query}»} other{# налаштування відповідають «{query}»}}"
 		},
 		"callDock": {
 			"sidebar": "На бічній панелі",
@@ -950,13 +905,13 @@
 		"pinnedTabs": "Закріплені вкладки",
 		"openTabs": "Відкриті вкладки",
 		"dropToPin": "Перетягніть сюди для закріплення",
-		"stackLabel": {"one": "{name}, {count} вкладка", "few": "{name}, {count} вкладки", "many": "{name}, {count} вкладок", "other": "{name}, {count} вкладки"},
+		"stackLabel": "{count, plural, one{{name}, # вкладка} few{{name}, # вкладки} many{{name}, # вкладок} other{{name}, # вкладки}}",
 		"closeStack": "Закрити стос",
 		"trayAgents": "Агенти",
 		"trayTerminals": "Термінали",
-		"trayNeedsInput": {"one": "{count} чекає на відповідь", "few": "{count} чекають на відповідь", "many": "{count} чекають на відповідь", "other": "{count} чекають на відповідь"},
-		"trayWorking": {"one": "{count} працює", "few": "{count} працюють", "many": "{count} працюють", "other": "{count} працюють"},
-		"trayRunning": {"one": "{count} виконується", "few": "{count} виконуються", "many": "{count} виконуються", "other": "{count} виконуються"},
+		"trayNeedsInput": "{count, plural, one{# чекає на відповідь} few{# чекають на відповідь} many{# чекають на відповідь} other{# чекають на відповідь}}",
+		"trayWorking": "{count, plural, one{# працює} few{# працюють} many{# працюють} other{# працюють}}",
+		"trayRunning": "{count, plural, one{# виконується} few{# виконуються} many{# виконуються} other{# виконуються}}",
 		"trayShow": "Показати: {name}",
 		"trayHide": "Сховати: {name}"
 	},
@@ -1361,7 +1316,7 @@
 		"tabStartup": "Запуск",
 		"tabMemory": "Пам’ять",
 		"tabLog": "Журнал",
-		"errorCount": {"one": "{count} помилка", "few": "{count} помилки", "many": "{count} помилок", "other": "{count} помилки"},
+		"errorCount": "{count, plural, one{# помилка} few{# помилки} many{# помилок} other{# помилки}}",
 		"copyReport": "Копіювати звіт",
 		"recordSession": "Записати сеанс",
 		"stopRecording": "Зупинити запис",
@@ -1403,31 +1358,11 @@
 		"navLabel": "Розділи диспетчера процесів",
 		"searchPlaceholder": "Пошук вкладок",
 		"memoryAriaLabel": "Використання пам’яті",
-		"tabsCount": {
-			"one": "{count} вкладка",
-			"few": "{count} вкладки",
-			"many": "{count} вкладок",
-			"other": "{count} вкладки"
-		},
+		"tabsCount": "{count, plural, one{# вкладка} few{# вкладки} many{# вкладок} other{# вкладки}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "{count} інший",
-			"few": "{count} інші",
-			"many": "{count} інших",
-			"other": "{count} іншого"
-		},
-		"reclaim": {
-			"one": "{count} прихована вкладка використовує {size}",
-			"few": "{count} приховані вкладки використовують {size}",
-			"many": "{count} прихованих вкладок використовують {size}",
-			"other": "{count} прихованої вкладки використовує {size}"
-		},
-		"reclaimNoSize": {
-			"one": "{count} прихована вкладка ще завантажена",
-			"few": "{count} приховані вкладки ще завантажені",
-			"many": "{count} прихованих вкладок ще завантажені",
-			"other": "{count} прихованої вкладки ще завантажено"
-		},
+		"others": "{count, plural, one{# інший} few{# інші} many{# інших} other{# іншого}}",
+		"reclaim": "{count, plural, one{# прихована вкладка використовує {size}} few{# приховані вкладки використовують {size}} many{# прихованих вкладок використовують {size}} other{# прихованої вкладки використовує {size}}}",
+		"reclaimNoSize": "{count, plural, one{# прихована вкладка ще завантажена} few{# приховані вкладки ще завантажені} many{# прихованих вкладок ще завантажені} other{# прихованої вкладки ще завантажено}}",
 		"sleep": "Перевести в сон",
 		"groupTabs": "Вкладки",
 		"groupSleeping": "У режимі сну",
@@ -1437,12 +1372,7 @@
 		"audioPlaying": "Відтворюється аудіо",
 		"frozen": "Призупинена",
 		"sharedEstimate": "Має спільний процес з іншими вкладками, тому це приблизне значення",
-		"sharedWith": {
-			"one": "спільний процес із {count} іншою вкладкою",
-			"few": "спільний процес із {count} іншими вкладками",
-			"many": "спільний процес із {count} іншими вкладками",
-			"other": "інші вкладки в спільному процесі: {count}"
-		},
+		"sharedWith": "{count, plural, one{спільний процес із # іншою вкладкою} few{спільний процес із # іншими вкладками} many{спільний процес із # іншими вкладками} other{інші вкладки в спільному процесі: #}}",
 		"pid": "PID {pid}",
 		"focus": "Показати",
 		"details": "Показати подробиці",
@@ -1471,20 +1401,10 @@
 	"urlToast": {
 		"pageActions": "Дії зі сторінкою",
 		"reEnableBlocking": "Знову ввімкнути блокування на цьому сайті",
-		"trackersBlockedOnPage": {
-			"one": "На цій сторінці заблоковано {count} трекер",
-			"few": "На цій сторінці заблоковано {count} трекери",
-			"many": "На цій сторінці заблоковано {count} трекерів",
-			"other": "На цій сторінці заблоковано {count} трекера"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{На цій сторінці заблоковано # трекер} few{На цій сторінці заблоковано # трекери} many{На цій сторінці заблоковано # трекерів} other{На цій сторінці заблоковано # трекера}}",
 		"disableBlocking": "Вимкнути блокування на цьому сайті",
 		"adsAllowed": "Рекламу дозволено",
-		"trackersBlockedLabel": {
-			"one": "Заблоковано {count} трекер",
-			"few": "Заблоковано {count} трекери",
-			"many": "Заблоковано {count} трекерів",
-			"other": "Заблоковано {count} трекера"
-		},
+		"trackersBlockedLabel": "{count, plural, one{Заблоковано # трекер} few{Заблоковано # трекери} many{Заблоковано # трекерів} other{Заблоковано # трекера}}",
 		"adsBlocked": "Рекламу заблоковано",
 		"extensionAlreadyInstalled": "Розширення вже інстальовано",
 		"installChromeExtension": "Інсталювати це розширення Chrome",
@@ -1528,12 +1448,7 @@
 		"stop": "Зупинити налагодження"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "ще {count} сповіщення",
-			"few": "ще {count} сповіщення",
-			"many": "ще {count} сповіщень",
-			"other": "ще {count} сповіщення"
-		},
+		"moreNotices": "{count, plural, one{ще # сповіщення} few{ще # сповіщення} many{ще # сповіщень} other{ще # сповіщення}}",
 		"more": "ще {count}"
 	},
 	"crashRecovery": {
@@ -1574,7 +1489,7 @@
 	},
 	"archivedTabs": {
 		"title": "В архіві",
-		"buttonLabel": {"one": "{count} нещодавно архівована вкладка", "few": "{count} нещодавно архівовані вкладки", "many": "{count} нещодавно архівованих вкладок", "other": "{count} нещодавно архівованої вкладки"},
+		"buttonLabel": "{count, plural, one{# нещодавно архівована вкладка} few{# нещодавно архівовані вкладки} many{# нещодавно архівованих вкладок} other{# нещодавно архівованої вкладки}}",
 		"restore": "Відновити",
 		"showAll": "Показати всі вкладки в архіві",
 		"showAllDownloads": "Показати всі завантаження"
@@ -1585,7 +1500,7 @@
 		"undo": "Скасувати",
 		"reopen": "Відкрити знову",
 		"archived": "«{title}» в архіві",
-		"archivedCount": {"one": "В архіві {count} вкладка", "few": "В архіві {count} вкладки", "many": "В архіві {count} вкладок", "other": "В архіві {count} вкладки"}
+		"archivedCount": "{count, plural, one{В архіві # вкладка} few{В архіві # вкладки} many{В архіві # вкладок} other{В архіві # вкладки}}"
 	},
 	"updateCard": {
 		"ready": "Готово до інсталяції",
@@ -1802,36 +1717,11 @@
 			"done": "Готово: {list}.",
 			"nothing": "Готово: немає нових даних для імпорту.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} закладка",
-					"few": "{count} закладки",
-					"many": "{count} закладок",
-					"other": "{count} закладки"
-				},
-				"tabs": {
-					"one": "{count} відкрита вкладка",
-					"few": "{count} відкриті вкладки",
-					"many": "{count} відкритих вкладок",
-					"other": "{count} відкритої вкладки"
-				},
-				"history": {
-					"one": "{count} сторінка історії",
-					"few": "{count} сторінки історії",
-					"many": "{count} сторінок історії",
-					"other": "{count} сторінки історії"
-				},
-				"cookies": {
-					"one": "{count} файл cookie",
-					"few": "{count} файли cookie",
-					"many": "{count} файлів cookie",
-					"other": "{count} файлу cookie"
-				},
-				"extensions": {
-					"one": "{count} розширення",
-					"few": "{count} розширення",
-					"many": "{count} розширень",
-					"other": "{count} розширення"
-				}
+				"bookmarks": "{count, plural, one{# закладка} few{# закладки} many{# закладок} other{# закладки}}",
+				"tabs": "{count, plural, one{# відкрита вкладка} few{# відкриті вкладки} many{# відкритих вкладок} other{# відкритої вкладки}}",
+				"history": "{count, plural, one{# сторінка історії} few{# сторінки історії} many{# сторінок історії} other{# сторінки історії}}",
+				"cookies": "{count, plural, one{# файл cookie} few{# файли cookie} many{# файлів cookie} other{# файлу cookie}}",
+				"extensions": "{count, plural, one{# розширення} few{# розширення} many{# розширень} other{# розширення}}"
 			},
 			"step": {
 				"bookmarks": "Імпорт закладок із {from}",
@@ -1949,11 +1839,11 @@
 		"sectionSites": "Найчастіше відвідувані сайти",
 		"sectionTerminals": "З терміналів",
 		"searchResults": "Результати пошуку",
-		"dayPages": {"one": "{count} сторінка", "few": "{count} сторінки", "many": "{count} сторінок", "other": "{count} сторінки"},
-		"daySites": {"one": "{count} сайт", "few": "{count} сайти", "many": "{count} сайтів", "other": "{count} сайти"},
+		"dayPages": "{count, plural, one{# сторінка} few{# сторінки} many{# сторінок} other{# сторінки}}",
+		"daySites": "{count, plural, one{# сайт} few{# сайти} many{# сайтів} other{# сайти}}",
 		"openInNewTab": "Відкрити в новій вкладці",
-		"selected": {"one": "Вибрано: {count}", "few": "Вибрано: {count}", "many": "Вибрано: {count}", "other": "Вибрано: {count}"},
-		"visits": {"one": "{count} відвідування", "few": "{count} відвідування", "many": "{count} відвідувань", "other": "{count} відвідування"},
+		"selected": "{count, plural, one{Вибрано: #} few{Вибрано: #} many{Вибрано: #} other{Вибрано: #}}",
+		"visits": "{count, plural, one{# відвідування} few{# відвідування} many{# відвідувань} other{# відвідування}}",
 		"openInNewTabs": "Відкрити в нових вкладках",
 		"delete": "Видалити",
 		"clearSelection": "Зняти виділення",
@@ -2523,12 +2413,7 @@
 		"title": "Що нового в Lilo",
 		"description": "Кілька невеликих покращень для щоденного перегляду.",
 		"allChanges": "Усе в цьому оновленні",
-		"changes": {
-			"one": "{count} зміна",
-			"few": "{count} зміни",
-			"many": "{count} змін",
-			"other": "{count} зміни"
-		},
+		"changes": "{count, plural, one{# зміна} few{# зміни} many{# змін} other{# зміни}}",
 		"originalNotes": "Оригінальні примітки до випуску.",
 		"unavailable": "Примітки до випуску недоступні в цій збірці.",
 		"reopen": "Завжди в меню «Довідка» > «Що нового».",
@@ -2712,12 +2597,7 @@
 			"ownCopyHint": "Працює в окремій копії проєкту. Об'єднайте її в розділі «Зміни».",
 			"starting": "Запуск агента...",
 			"errorHint": "Надішліть повідомлення, щоб спробувати знову.",
-			"showEarlier": {
-				"one": "Показати {count} попередній елемент",
-				"few": "Показати {count} попередні елементи",
-				"many": "Показати {count} попередніх елементів",
-				"other": "Показати {count} попереднього елемента"
-			},
+			"showEarlier": "{count, plural, one{Показати # попередній елемент} few{Показати # попередні елементи} many{Показати # попередніх елементів} other{Показати # попереднього елемента}}",
 			"queuedTag": "У черзі",
 			"sendNow": "Надіслати зараз",
 			"thought": "Міркування",
@@ -2727,20 +2607,10 @@
 			"restore": "Відновити",
 			"undo": "Скасувати",
 			"undone": "Скасовано",
-			"moreLines": {
-				"one": "Ще {count} рядок",
-				"few": "Ще {count} рядки",
-				"many": "Ще {count} рядків",
-				"other": "Ще {count} рядка"
-			},
+			"moreLines": "{count, plural, one{Ще # рядок} few{Ще # рядки} many{Ще # рядків} other{Ще # рядка}}",
 			"plan": "План",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} крок виконано",
-				"few": "{count} кроки виконано",
-				"many": "{count} кроків виконано",
-				"other": "{count} кроків виконано"
-			},
+			"planDone": "{count, plural, one{# крок виконано} few{# кроки виконано} many{# кроків виконано} other{# кроків виконано}}",
 			"planStatus": {
 				"pending": "Заплановано",
 				"in_progress": "Виконується",
@@ -2768,36 +2638,11 @@
 				"failed": "Помилка"
 			},
 			"group": {
-				"read": {
-					"one": "Прочитано {count} файл",
-					"few": "Прочитано {count} файли",
-					"many": "Прочитано {count} файлів",
-					"other": "Прочитано {count} файлу"
-				},
-				"search": {
-					"one": "{count} пошук",
-					"few": "{count} пошуки",
-					"many": "{count} пошуків",
-					"other": "{count} пошуку"
-				},
-				"fetch": {
-					"one": "Завантажено {count} сторінку",
-					"few": "Завантажено {count} сторінки",
-					"many": "Завантажено {count} сторінок",
-					"other": "Завантажено {count} сторінки"
-				},
-				"think": {
-					"one": "Міркував {count} раз",
-					"few": "Міркував {count} рази",
-					"many": "Міркував {count} разів",
-					"other": "Міркував {count} раза"
-				},
-				"action": {
-					"one": "{count} дія",
-					"few": "{count} дії",
-					"many": "{count} дій",
-					"other": "{count} дії"
-				}
+				"read": "{count, plural, one{Прочитано # файл} few{Прочитано # файли} many{Прочитано # файлів} other{Прочитано # файлу}}",
+				"search": "{count, plural, one{# пошук} few{# пошуки} many{# пошуків} other{# пошуку}}",
+				"fetch": "{count, plural, one{Завантажено # сторінку} few{Завантажено # сторінки} many{Завантажено # сторінок} other{Завантажено # сторінки}}",
+				"think": "{count, plural, one{Міркував # раз} few{Міркував # рази} many{Міркував # разів} other{Міркував # раза}}",
+				"action": "{count, plural, one{# дія} few{# дії} many{# дій} other{# дії}}"
 			}
 		},
 		"composer": {
@@ -2835,32 +2680,12 @@
 			"untitled": "Нова розмова",
 			"working": "Працює",
 			"failed": "Зупинено через помилку",
-			"linesAdded": {
-				"one": "{count} рядок додано",
-				"few": "{count} рядки додано",
-				"many": "{count} рядків додано",
-				"other": "{count} рядка додано"
-			},
-			"linesRemoved": {
-				"one": "{count} рядок видалено",
-				"few": "{count} рядки видалено",
-				"many": "{count} рядків видалено",
-				"other": "{count} рядка видалено"
-			},
-			"pages": {
-				"one": "{count} сторінка",
-				"few": "{count} сторінки",
-				"many": "{count} сторінок",
-				"other": "{count} сторінки"
-			},
+			"linesAdded": "{count, plural, one{# рядок додано} few{# рядки додано} many{# рядків додано} other{# рядка додано}}",
+			"linesRemoved": "{count, plural, one{# рядок видалено} few{# рядки видалено} many{# рядків видалено} other{# рядка видалено}}",
+			"pages": "{count, plural, one{# сторінка} few{# сторінки} many{# сторінок} other{# сторінки}}",
 			"showPages": "Показати сторінки",
 			"hidePages": "Сховати сторінки",
-			"morePermissions": {
-				"one": "ще {count} запит чекає",
-				"few": "ще {count} запити чекають",
-				"many": "ще {count} запитів чекають",
-				"other": "ще {count} запиту чекають"
-			}
+			"morePermissions": "{count, plural, one{ще # запит чекає} few{ще # запити чекають} many{ще # запитів чекають} other{ще # запиту чекають}}"
 		},
 		"question": {
 			"allow": "Дозволити",
@@ -2874,12 +2699,7 @@
 		},
 		"badge": {
 			"title": "Агенти",
-			"waiting": {
-				"one": "Агенти, {count} чекає на вас",
-				"few": "Агенти, {count} чекають на вас",
-				"many": "Агенти, {count} чекають на вас",
-				"other": "Агенти, {count} чекають на вас"
-			},
+			"waiting": "{count, plural, one{Агенти, # чекає на вас} few{Агенти, # чекають на вас} many{Агенти, # чекають на вас} other{Агенти, # чекають на вас}}",
 			"new": "Нова",
 			"needsYou": "Чекає на вас",
 			"running": "Виконується",
@@ -2900,12 +2720,7 @@
 			"signInOpenTerminal": "Відкрити в терміналі"
 		},
 		"work": {
-			"images": {
-				"one": "{count} зображення",
-				"few": "{count} зображення",
-				"many": "{count} зображень",
-				"other": "{count} зображення"
-			},
+			"images": "{count, plural, one{# зображення} few{# зображення} many{# зображень} other{# зображення}}",
 			"verb": {
 				"read": "Прочитано",
 				"edit": "Змінено",
@@ -2923,66 +2738,16 @@
 				"fetch": "Завантаження"
 			},
 			"summary": {
-				"read": {
-					"one": "прочитано {count} файл",
-					"few": "прочитано {count} файли",
-					"many": "прочитано {count} файлів",
-					"other": "прочитано {count} файлу"
-				},
-				"edit": {
-					"one": "змінено {count} файл",
-					"few": "змінено {count} файли",
-					"many": "змінено {count} файлів",
-					"other": "змінено {count} файлу"
-				},
-				"execute": {
-					"one": "виконано {count} команду",
-					"few": "виконано {count} команди",
-					"many": "виконано {count} команд",
-					"other": "виконано {count} команди"
-				},
-				"search": {
-					"one": "{count} пошук",
-					"few": "{count} пошуки",
-					"many": "{count} пошуків",
-					"other": "{count} пошуку"
-				},
-				"fetch": {
-					"one": "завантажено {count} сторінку",
-					"few": "завантажено {count} сторінки",
-					"many": "завантажено {count} сторінок",
-					"other": "завантажено {count} сторінки"
-				},
-				"think": {
-					"one": "міркував {count} раз",
-					"few": "міркував {count} рази",
-					"many": "міркував {count} разів",
-					"other": "міркував {count} раза"
-				},
-				"browser": {
-					"one": "браузер використано {count} раз",
-					"few": "браузер використано {count} рази",
-					"many": "браузер використано {count} разів",
-					"other": "браузер використано {count} раза"
-				},
-				"browserOn": {
-					"one": "браузер використано {count} раз на {site}",
-					"few": "браузер використано {count} рази на {site}",
-					"many": "браузер використано {count} разів на {site}",
-					"other": "браузер використано {count} раза на {site}"
-				},
-				"tool": {
-					"one": "використано {count} інструмент",
-					"few": "використано {count} інструменти",
-					"many": "використано {count} інструментів",
-					"other": "використано {count} інструмента"
-				},
-				"agent": {
-					"one": "запущено {count} агента",
-					"few": "запущено {count} агенти",
-					"many": "запущено {count} агентів",
-					"other": "запущено {count} агента"
-				}
+				"read": "{count, plural, one{прочитано # файл} few{прочитано # файли} many{прочитано # файлів} other{прочитано # файлу}}",
+				"edit": "{count, plural, one{змінено # файл} few{змінено # файли} many{змінено # файлів} other{змінено # файлу}}",
+				"execute": "{count, plural, one{виконано # команду} few{виконано # команди} many{виконано # команд} other{виконано # команди}}",
+				"search": "{count, plural, one{# пошук} few{# пошуки} many{# пошуків} other{# пошуку}}",
+				"fetch": "{count, plural, one{завантажено # сторінку} few{завантажено # сторінки} many{завантажено # сторінок} other{завантажено # сторінки}}",
+				"think": "{count, plural, one{міркував # раз} few{міркував # рази} many{міркував # разів} other{міркував # раза}}",
+				"browser": "{count, plural, one{браузер використано # раз} few{браузер використано # рази} many{браузер використано # разів} other{браузер використано # раза}}",
+				"browserOn": "{count, plural, one{браузер використано # раз на {site}} few{браузер використано # рази на {site}} many{браузер використано # разів на {site}} other{браузер використано # раза на {site}}}",
+				"tool": "{count, plural, one{використано # інструмент} few{використано # інструменти} many{використано # інструментів} other{використано # інструмента}}",
+				"agent": "{count, plural, one{запущено # агента} few{запущено # агенти} many{запущено # агентів} other{запущено # агента}}"
 			},
 			"browser": {
 				"closeTab": "Закрив вкладку",
@@ -3033,12 +2798,7 @@
 				"request": "Надсилає запит на {url}"
 			},
 			"exit": "Код виходу {code}",
-			"showAll": {
-				"one": "Показати {count} рядок",
-				"few": "Показати всі {count} рядки",
-				"many": "Показати всі {count} рядків",
-				"other": "Показати всі {count} рядка"
-			},
+			"showAll": "{count, plural, one{Показати # рядок} few{Показати всі # рядки} many{Показати всі # рядків} other{Показати всі # рядка}}",
 			"showLess": "Показати останні рядки"
 		},
 		"turn": {
@@ -3046,12 +2806,7 @@
 			"stopped": "Зупинено",
 			"refusalTitle": "Модель відмовилася продовжувати",
 			"refusalHint": "Її захисні механізми зупинили цей крок, іноді й під час законної роботи. Переформулюйте запит або виберіть іншу модель нижче.",
-			"files": {
-				"one": "Змінено {count} файл",
-				"few": "Змінено {count} файли",
-				"many": "Змінено {count} файлів",
-				"other": "Змінено {count} файлу"
-			},
+			"files": "{count, plural, one{Змінено # файл} few{Змінено # файли} many{Змінено # файлів} other{Змінено # файлу}}",
 			"review": "Переглянути",
 			"copy": "Копіювати відповідь",
 			"copied": "Скопійовано"

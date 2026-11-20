@@ -198,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Büyütme {zoom}",
-			"hiddenSummary": {"one": "{count} gizlenen öğe", "other": "{count} gizlenen öğe"},
+			"hiddenSummary": "{count, plural, one{# gizlenen öğe} other{# gizlenen öğe}}",
 			"dataSummary": "Saklanan veriler",
 			"permissionUpdated": "{origin} · Güncelleme: {time}",
 			"emptyTitle": "Henüz site ayarı yok",
@@ -605,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Şimdi güncelle",
-			"summary": {
-				"one": "{count} liste",
-				"other": "{count} liste"
-			},
+			"summary": "{count, plural, one{# liste} other{# liste}}",
 			"updated": "güncelleme: {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Şimdi denetle",
 			"checking": "Güncellemeler denetleniyor...",
 			"upToDate": "Güncel",
-			"updated": {
-				"one": "{count} güncellendi",
-				"other": "{count} güncellendi"
-			},
-			"available": {
-				"one": "{count} güncelleme var",
-				"other": "{count} güncelleme var"
-			},
-			"failed": {
-				"one": "{count} öğe denetlenemedi",
-				"other": "{count} öğe denetlenemedi"
-			},
+			"updated": "{count, plural, one{# güncellendi} other{# güncellendi}}",
+			"available": "{count, plural, one{# güncelleme var} other{# güncelleme var}}",
+			"failed": "{count, plural, one{# öğe denetlenemedi} other{# öğe denetlenemedi}}",
 			"lastChecked": "Son denetleme: {time}"
 		},
 		"folderAutoLock": {
@@ -677,10 +665,7 @@
 			"clearData": "Verileri Temizle...",
 			"remove": "Kaldır...",
 			"lastProfile": "Son profiliniz kalır. Her alanın bir profile ihtiyacı vardır.",
-			"extensionCount": {
-				"one": "{count} genişletme",
-				"other": "{count} genişletme"
-			},
+			"extensionCount": "{count, plural, one{# genişletme} other{# genişletme}}",
 			"newProfile": "Yeni profil...",
 			"newProfileDetail": "Yeni çerezler, oturumlar ve genişletmeler",
 			"namePlaceholder": "Profil adı",
@@ -755,28 +740,16 @@
 		},
 		"notes": {
 			"live": "Değişiklikler seçtiğiniz anda uygulanır",
-			"spaces": {
-				"one": "{count} alan",
-				"other": "{count} alan"
-			},
-			"profiles": {
-				"one": "{count} profil",
-				"other": "{count} profil"
-			},
+			"spaces": "{count, plural, one{# alan} other{# alan}}",
+			"profiles": "{count, plural, one{# profil} other{# profil}}",
 			"blocking": "{total} türden {count} tanesi engelleniyor",
 			"blockingOff": "Engelleme kapalı",
 			"profile": "{name} profili",
-			"extensions": {
-				"one": "{profile} içinde {count} uzantı",
-				"other": "{profile} içinde {count} uzantı"
-			},
+			"extensions": "{count, plural, one{{profile} içinde # uzantı} other{{profile} içinde # uzantı}}",
 			"terminal": "Değişiklikler her terminal sekmesine uygulanır",
 			"agents": "Lilo'nun kendi yapay zekâsı yoktur",
 			"advanced": "Geliştirme ve test için",
-			"searchMatches": {
-				"one": "\"{query}\" ile eşleşen {count} ayar",
-				"other": "\"{query}\" ile eşleşen {count} ayar"
-			}
+			"searchMatches": "{count, plural, one{\"{query}\" ile eşleşen # ayar} other{\"{query}\" ile eşleşen # ayar}}"
 		},
 		"callDock": {
 			"sidebar": "Kenar çubuğunda",
@@ -932,13 +905,13 @@
 		"pinnedTabs": "Sabitlenmiş sekmeler",
 		"openTabs": "Açık sekmeler",
 		"dropToPin": "Sabitlemek için bırakın",
-		"stackLabel": {"one": "{name}, {count} sekme", "other": "{name}, {count} sekme"},
+		"stackLabel": "{count, plural, one{{name}, # sekme} other{{name}, # sekme}}",
 		"closeStack": "Yığını Kapat",
 		"trayAgents": "Ajanlar",
 		"trayTerminals": "Terminaller",
-		"trayNeedsInput": {"one": "{count} yanıt bekliyor", "other": "{count} yanıt bekliyor"},
-		"trayWorking": {"one": "{count} çalışıyor", "other": "{count} çalışıyor"},
-		"trayRunning": {"one": "{count} yürütülüyor", "other": "{count} yürütülüyor"},
+		"trayNeedsInput": "{count, plural, one{# yanıt bekliyor} other{# yanıt bekliyor}}",
+		"trayWorking": "{count, plural, one{# çalışıyor} other{# çalışıyor}}",
+		"trayRunning": "{count, plural, one{# yürütülüyor} other{# yürütülüyor}}",
 		"trayShow": "{name} göster",
 		"trayHide": "{name} gizle"
 	},
@@ -1343,7 +1316,7 @@
 		"tabStartup": "Başlatma",
 		"tabMemory": "Bellek",
 		"tabLog": "Günlük",
-		"errorCount": {"one": "{count} hata", "other": "{count} hata"},
+		"errorCount": "{count, plural, one{# hata} other{# hata}}",
 		"copyReport": "Raporu kopyala",
 		"recordSession": "Oturumu kaydet",
 		"stopRecording": "Kaydı durdur",
@@ -1385,23 +1358,11 @@
 		"navLabel": "İşlem yöneticisi görünümleri",
 		"searchPlaceholder": "Sekmelerde ara",
 		"memoryAriaLabel": "Bellek kullanımı",
-		"tabsCount": {
-			"one": "{count} sekme",
-			"other": "{count} sekme"
-		},
+		"tabsCount": "{count, plural, one{# sekme} other{# sekme}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "{count} diğer",
-			"other": "{count} diğer"
-		},
-		"reclaim": {
-			"one": "{count} gizli sekme {size} kullanıyor",
-			"other": "{count} gizli sekme {size} kullanıyor"
-		},
-		"reclaimNoSize": {
-			"one": "{count} gizli sekme hâlâ yüklü",
-			"other": "{count} gizli sekme hâlâ yüklü"
-		},
+		"others": "{count, plural, one{# diğer} other{# diğer}}",
+		"reclaim": "{count, plural, one{# gizli sekme {size} kullanıyor} other{# gizli sekme {size} kullanıyor}}",
+		"reclaimNoSize": "{count, plural, one{# gizli sekme hâlâ yüklü} other{# gizli sekme hâlâ yüklü}}",
 		"sleep": "Uyut",
 		"groupTabs": "Sekmeler",
 		"groupSleeping": "Uykuda",
@@ -1411,10 +1372,7 @@
 		"audioPlaying": "Ses çalıyor",
 		"frozen": "Donduruldu",
 		"sharedEstimate": "İşlemini diğer sekmelerle paylaştığından bu bir tahmindir",
-		"sharedWith": {
-			"one": "{count} diğer sekmeyle paylaşılıyor",
-			"other": "{count} diğer sekmeyle paylaşılıyor"
-		},
+		"sharedWith": "{count, plural, one{# diğer sekmeyle paylaşılıyor} other{# diğer sekmeyle paylaşılıyor}}",
 		"pid": "PID {pid}",
 		"focus": "Göster",
 		"details": "Ayrıntıları göster",
@@ -1443,16 +1401,10 @@
 	"urlToast": {
 		"pageActions": "Sayfa işlemleri",
 		"reEnableBlocking": "Bu sitede engellemeyi yeniden aç",
-		"trackersBlockedOnPage": {
-			"one": "Bu sayfada {count} izleyici engellendi",
-			"other": "Bu sayfada {count} izleyici engellendi"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{Bu sayfada # izleyici engellendi} other{Bu sayfada # izleyici engellendi}}",
 		"disableBlocking": "Bu sitede engellemeyi kapat",
 		"adsAllowed": "Reklamlara izin verildi",
-		"trackersBlockedLabel": {
-			"one": "{count} izleyici engellendi",
-			"other": "{count} izleyici engellendi"
-		},
+		"trackersBlockedLabel": "{count, plural, one{# izleyici engellendi} other{# izleyici engellendi}}",
 		"adsBlocked": "Reklamlar engellendi",
 		"extensionAlreadyInstalled": "Genişletme zaten yüklü",
 		"installChromeExtension": "Bu Chrome genişletmesini yükle",
@@ -1496,10 +1448,7 @@
 		"stop": "Hata ayıklamayı durdur"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "{count} bildirim daha",
-			"other": "{count} bildirim daha"
-		},
+		"moreNotices": "{count, plural, one{# bildirim daha} other{# bildirim daha}}",
 		"more": "{count} tane daha"
 	},
 	"crashRecovery": {
@@ -1540,7 +1489,7 @@
 	},
 	"archivedTabs": {
 		"title": "Arşivlenenler",
-		"buttonLabel": {"one": "Son arşivlenen {count} sekme", "other": "Son arşivlenen {count} sekme"},
+		"buttonLabel": "{count, plural, one{Son arşivlenen # sekme} other{Son arşivlenen # sekme}}",
 		"restore": "Geri yükle",
 		"showAll": "Tüm arşivlenmiş sekmeleri göster",
 		"showAllDownloads": "Tüm indirmeleri göster"
@@ -1551,7 +1500,7 @@
 		"undo": "Geri Al",
 		"reopen": "Yeniden aç",
 		"archived": "“{title}” arşivlendi",
-		"archivedCount": {"one": "{count} sekme arşivlendi", "other": "{count} sekme arşivlendi"}
+		"archivedCount": "{count, plural, one{# sekme arşivlendi} other{# sekme arşivlendi}}"
 	},
 	"updateCard": {
 		"ready": "Yüklemeye hazır",
@@ -1768,26 +1717,11 @@
 			"done": "Tamamlandı: {list}.",
 			"nothing": "Tamamlandı: İçe aktarılacak yeni bir şey yok.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} yer imi",
-					"other": "{count} yer imi"
-				},
-				"tabs": {
-					"one": "{count} açık sekme",
-					"other": "{count} açık sekme"
-				},
-				"history": {
-					"one": "{count} geçmiş sayfası",
-					"other": "{count} geçmiş sayfası"
-				},
-				"cookies": {
-					"one": "{count} çerez",
-					"other": "{count} çerez"
-				},
-				"extensions": {
-					"one": "{count} genişletme",
-					"other": "{count} genişletme"
-				}
+				"bookmarks": "{count, plural, one{# yer imi} other{# yer imi}}",
+				"tabs": "{count, plural, one{# açık sekme} other{# açık sekme}}",
+				"history": "{count, plural, one{# geçmiş sayfası} other{# geçmiş sayfası}}",
+				"cookies": "{count, plural, one{# çerez} other{# çerez}}",
+				"extensions": "{count, plural, one{# genişletme} other{# genişletme}}"
 			},
 			"step": {
 				"bookmarks": "{from} tarayıcısından yer imleri aktarılıyor",
@@ -1905,11 +1839,11 @@
 		"sectionSites": "En çok ziyaret edilen siteler",
 		"sectionTerminals": "Terminallerden",
 		"searchResults": "Arama sonuçları",
-		"dayPages": {"one": "{count} sayfa", "other": "{count} sayfa"},
-		"daySites": {"one": "{count} site", "other": "{count} site"},
+		"dayPages": "{count, plural, one{# sayfa} other{# sayfa}}",
+		"daySites": "{count, plural, one{# site} other{# site}}",
 		"openInNewTab": "Yeni sekmede aç",
-		"selected": {"one": "{count} seçildi", "other": "{count} seçildi"},
-		"visits": {"one": "{count} ziyaret", "other": "{count} ziyaret"},
+		"selected": "{count, plural, one{# seçildi} other{# seçildi}}",
+		"visits": "{count, plural, one{# ziyaret} other{# ziyaret}}",
 		"openInNewTabs": "Yeni sekmelerde aç",
 		"delete": "Sil",
 		"clearSelection": "Tüm seçimi kaldır",
@@ -2479,10 +2413,7 @@
 		"title": "Lilo'daki yenilikler",
 		"description": "Günlük gezintinizi kolaylaştıran birkaç küçük iyileştirme.",
 		"allChanges": "Bu güncellemedeki her şey",
-		"changes": {
-			"one": "{count} değişiklik",
-			"other": "{count} değişiklik"
-		},
+		"changes": "{count, plural, one{# değişiklik} other{# değişiklik}}",
 		"originalNotes": "Özgün sürüm notları.",
 		"unavailable": "Bu derlemede sürüm notları kullanılamıyor.",
 		"reopen": "Her zaman Yardım > Yenilikler bölümünde.",
@@ -2666,10 +2597,7 @@
 			"ownCopyHint": "Projenin kendi kopyası üzerinde çalışır. Değişiklikler'den birleştirin.",
 			"starting": "Ajan başlatılıyor...",
 			"errorHint": "Yeniden denemek için bir mesaj gönderin.",
-			"showEarlier": {
-				"one": "Önceki {count} öğeyi göster",
-				"other": "Önceki {count} öğeyi göster"
-			},
+			"showEarlier": "{count, plural, one{Önceki # öğeyi göster} other{Önceki # öğeyi göster}}",
 			"queuedTag": "Sırada",
 			"sendNow": "Şimdi gönder",
 			"thought": "Düşünce",
@@ -2679,16 +2607,10 @@
 			"restore": "Geri yükle",
 			"undo": "Geri Al",
 			"undone": "Geri alındı",
-			"moreLines": {
-				"one": "{count} satır daha",
-				"other": "{count} satır daha"
-			},
+			"moreLines": "{count, plural, one{# satır daha} other{# satır daha}}",
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} adım tamamlandı",
-				"other": "{count} adım tamamlandı"
-			},
+			"planDone": "{count, plural, one{# adım tamamlandı} other{# adım tamamlandı}}",
 			"planStatus": {
 				"pending": "Yapılacak",
 				"in_progress": "Sürüyor",
@@ -2716,26 +2638,11 @@
 				"failed": "Başarısız"
 			},
 			"group": {
-				"read": {
-					"one": "{count} dosya okundu",
-					"other": "{count} dosya okundu"
-				},
-				"search": {
-					"one": "{count} arama",
-					"other": "{count} arama"
-				},
-				"fetch": {
-					"one": "{count} sayfa alındı",
-					"other": "{count} sayfa alındı"
-				},
-				"think": {
-					"one": "{count} kez düşündü",
-					"other": "{count} kez düşündü"
-				},
-				"action": {
-					"one": "{count} işlem",
-					"other": "{count} işlem"
-				}
+				"read": "{count, plural, one{# dosya okundu} other{# dosya okundu}}",
+				"search": "{count, plural, one{# arama} other{# arama}}",
+				"fetch": "{count, plural, one{# sayfa alındı} other{# sayfa alındı}}",
+				"think": "{count, plural, one{# kez düşündü} other{# kez düşündü}}",
+				"action": "{count, plural, one{# işlem} other{# işlem}}"
 			}
 		},
 		"composer": {
@@ -2773,24 +2680,12 @@
 			"untitled": "Yeni sohbet",
 			"working": "Çalışıyor",
 			"failed": "Bir hatayla durdu",
-			"linesAdded": {
-				"one": "{count} satır eklendi",
-				"other": "{count} satır eklendi"
-			},
-			"linesRemoved": {
-				"one": "{count} satır silindi",
-				"other": "{count} satır silindi"
-			},
-			"pages": {
-				"one": "{count} sayfa",
-				"other": "{count} sayfa"
-			},
+			"linesAdded": "{count, plural, one{# satır eklendi} other{# satır eklendi}}",
+			"linesRemoved": "{count, plural, one{# satır silindi} other{# satır silindi}}",
+			"pages": "{count, plural, one{# sayfa} other{# sayfa}}",
 			"showPages": "Sayfaları göster",
 			"hidePages": "Sayfaları gizle",
-			"morePermissions": {
-				"one": "{count} istek daha bekliyor",
-				"other": "{count} istek daha bekliyor"
-			}
+			"morePermissions": "{count, plural, one{# istek daha bekliyor} other{# istek daha bekliyor}}"
 		},
 		"question": {
 			"allow": "İzin Ver",
@@ -2804,10 +2699,7 @@
 		},
 		"badge": {
 			"title": "Ajanlar",
-			"waiting": {
-				"one": "Ajanlar, {count} tanesi sizi bekliyor",
-				"other": "Ajanlar, {count} tanesi sizi bekliyor"
-			},
+			"waiting": "{count, plural, one{Ajanlar, # tanesi sizi bekliyor} other{Ajanlar, # tanesi sizi bekliyor}}",
 			"new": "Yeni",
 			"needsYou": "Sizi bekliyor",
 			"running": "Çalışıyor",
@@ -2828,10 +2720,7 @@
 			"signInOpenTerminal": "Terminalde aç"
 		},
 		"work": {
-			"images": {
-				"one": "{count} görsel",
-				"other": "{count} görsel"
-			},
+			"images": "{count, plural, one{# görsel} other{# görsel}}",
 			"verb": {
 				"read": "Okundu",
 				"edit": "Düzenlendi",
@@ -2849,46 +2738,16 @@
 				"fetch": "Getiriliyor"
 			},
 			"summary": {
-				"read": {
-					"one": "{count} dosya okundu",
-					"other": "{count} dosya okundu"
-				},
-				"edit": {
-					"one": "{count} dosya düzenlendi",
-					"other": "{count} dosya düzenlendi"
-				},
-				"execute": {
-					"one": "{count} komut çalıştırıldı",
-					"other": "{count} komut çalıştırıldı"
-				},
-				"search": {
-					"one": "{count} arama",
-					"other": "{count} arama"
-				},
-				"fetch": {
-					"one": "{count} sayfa getirildi",
-					"other": "{count} sayfa getirildi"
-				},
-				"think": {
-					"one": "{count} kez düşündü",
-					"other": "{count} kez düşündü"
-				},
-				"browser": {
-					"one": "tarayıcı {count} kez kullanıldı",
-					"other": "tarayıcı {count} kez kullanıldı"
-				},
-				"browserOn": {
-					"one": "{site} üzerinde tarayıcı {count} kez kullanıldı",
-					"other": "{site} üzerinde tarayıcı {count} kez kullanıldı"
-				},
-				"tool": {
-					"one": "{count} araç kullanıldı",
-					"other": "{count} araç kullanıldı"
-				},
-				"agent": {
-					"one": "{count} ajan başlatıldı",
-					"other": "{count} ajan başlatıldı"
-				}
+				"read": "{count, plural, one{# dosya okundu} other{# dosya okundu}}",
+				"edit": "{count, plural, one{# dosya düzenlendi} other{# dosya düzenlendi}}",
+				"execute": "{count, plural, one{# komut çalıştırıldı} other{# komut çalıştırıldı}}",
+				"search": "{count, plural, one{# arama} other{# arama}}",
+				"fetch": "{count, plural, one{# sayfa getirildi} other{# sayfa getirildi}}",
+				"think": "{count, plural, one{# kez düşündü} other{# kez düşündü}}",
+				"browser": "{count, plural, one{tarayıcı # kez kullanıldı} other{tarayıcı # kez kullanıldı}}",
+				"browserOn": "{count, plural, one{{site} üzerinde tarayıcı # kez kullanıldı} other{{site} üzerinde tarayıcı # kez kullanıldı}}",
+				"tool": "{count, plural, one{# araç kullanıldı} other{# araç kullanıldı}}",
+				"agent": "{count, plural, one{# ajan başlatıldı} other{# ajan başlatıldı}}"
 			},
 			"browser": {
 				"closeTab": "Bir sekme kapattı",
@@ -2939,10 +2798,7 @@
 				"request": "{url} adresine istek gönderiliyor"
 			},
 			"exit": "Çıkış {code}",
-			"showAll": {
-				"one": "{count} satırın tümünü göster",
-				"other": "{count} satırın tümünü göster"
-			},
+			"showAll": "{count, plural, one{# satırın tümünü göster} other{# satırın tümünü göster}}",
 			"showLess": "Son satırları göster"
 		},
 		"turn": {
@@ -2950,10 +2806,7 @@
 			"stopped": "Durduruldu",
 			"refusalTitle": "Model devam etmeyi reddetti",
 			"refusalHint": "Güvenlik önlemleri bu turu durdurdu, bazen meşru işlerde de olur. İsteği yeniden ifade edin veya aşağıdan başka bir model seçin.",
-			"files": {
-				"one": "{count} dosya değişti",
-				"other": "{count} dosya değişti"
-			},
+			"files": "{count, plural, one{# dosya değişti} other{# dosya değişti}}",
 			"review": "İncele",
 			"copy": "Yanıtı kopyala",
 			"copied": "Kopyalandı"

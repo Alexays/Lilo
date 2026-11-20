@@ -198,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Масштаб {zoom}",
-			"hiddenSummary": {"one": "{count} скрытый элемент", "few": "{count} скрытых элемента", "many": "{count} скрытых элементов", "other": "{count} скрытого элемента"},
+			"hiddenSummary": "{count, plural, one{# скрытый элемент} few{# скрытых элемента} many{# скрытых элементов} other{# скрытого элемента}}",
 			"dataSummary": "Сохранённые данные",
 			"permissionUpdated": "{origin} · Обновлено {time}",
 			"emptyTitle": "Настроек сайтов пока нет",
@@ -605,36 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Обновить",
-			"summary": {
-				"one": "{count} список",
-				"few": "{count} списка",
-				"many": "{count} списков",
-				"other": "{count} списка"
-			},
+			"summary": "{count, plural, one{# список} few{# списка} many{# списков} other{# списка}}",
 			"updated": "обновлено {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Проверить",
 			"checking": "Проверка обновлений...",
 			"upToDate": "Обновления не требуются",
-			"updated": {
-				"one": "Обновлено: {count}",
-				"few": "Обновлено: {count}",
-				"many": "Обновлено: {count}",
-				"other": "Обновлено: {count}"
-			},
-			"available": {
-				"one": "Доступно {count} обновление",
-				"few": "Доступно {count} обновления",
-				"many": "Доступно {count} обновлений",
-				"other": "Доступно {count} обновления"
-			},
-			"failed": {
-				"one": "Не удалось проверить: {count}",
-				"few": "Не удалось проверить: {count}",
-				"many": "Не удалось проверить: {count}",
-				"other": "Не удалось проверить: {count}"
-			},
+			"updated": "{count, plural, one{Обновлено: #} few{Обновлено: #} many{Обновлено: #} other{Обновлено: #}}",
+			"available": "{count, plural, one{Доступно # обновление} few{Доступно # обновления} many{Доступно # обновлений} other{Доступно # обновления}}",
+			"failed": "{count, plural, one{Не удалось проверить: #} few{Не удалось проверить: #} many{Не удалось проверить: #} other{Не удалось проверить: #}}",
 			"lastChecked": "Последняя проверка {time}"
 		},
 		"folderAutoLock": {
@@ -685,12 +665,7 @@
 			"clearData": "Очистить данные...",
 			"remove": "Удалить...",
 			"lastProfile": "Последний профиль нельзя удалить: каждому пространству нужен профиль.",
-			"extensionCount": {
-				"one": "{count} расширение",
-				"few": "{count} расширения",
-				"many": "{count} расширений",
-				"other": "{count} расширения"
-			},
+			"extensionCount": "{count, plural, one{# расширение} few{# расширения} many{# расширений} other{# расширения}}",
 			"newProfile": "Новый профиль...",
 			"newProfileDetail": "Без cookie, учётных записей и расширений",
 			"namePlaceholder": "Название профиля",
@@ -765,36 +740,16 @@
 		},
 		"notes": {
 			"live": "Изменения применяются сразу",
-			"spaces": {
-				"one": "{count} пространство",
-				"few": "{count} пространства",
-				"many": "{count} пространств",
-				"other": "{count} пространства"
-			},
-			"profiles": {
-				"one": "{count} профиль",
-				"few": "{count} профиля",
-				"many": "{count} профилей",
-				"other": "{count} профиля"
-			},
+			"spaces": "{count, plural, one{# пространство} few{# пространства} many{# пространств} other{# пространства}}",
+			"profiles": "{count, plural, one{# профиль} few{# профиля} many{# профилей} other{# профиля}}",
 			"blocking": "Блокируется {count} из {total} типов",
 			"blockingOff": "Блокировка выключена",
 			"profile": "Профиль {name}",
-			"extensions": {
-				"one": "{count} расширение в {profile}",
-				"few": "{count} расширения в {profile}",
-				"many": "{count} расширений в {profile}",
-				"other": "{count} расширения в {profile}"
-			},
+			"extensions": "{count, plural, one{# расширение в {profile}} few{# расширения в {profile}} many{# расширений в {profile}} other{# расширения в {profile}}}",
 			"terminal": "Изменения действуют во всех вкладках терминала",
 			"agents": "У Lilo нет собственного ИИ",
 			"advanced": "Для разработки и тестирования",
-			"searchMatches": {
-				"one": "{count} настройка соответствует «{query}»",
-				"few": "{count} настройки соответствуют «{query}»",
-				"many": "{count} настроек соответствуют «{query}»",
-				"other": "{count} настройки соответствуют «{query}»"
-			}
+			"searchMatches": "{count, plural, one{# настройка соответствует «{query}»} few{# настройки соответствуют «{query}»} many{# настроек соответствуют «{query}»} other{# настройки соответствуют «{query}»}}"
 		},
 		"callDock": {
 			"sidebar": "На боковой панели",
@@ -950,13 +905,13 @@
 		"pinnedTabs": "Закреплённые вкладки",
 		"openTabs": "Открытые вкладки",
 		"dropToPin": "Отпустите, чтобы закрепить",
-		"stackLabel": {"one": "{name}, {count} вкладка", "few": "{name}, {count} вкладки", "many": "{name}, {count} вкладок", "other": "{name}, {count} вкладки"},
+		"stackLabel": "{count, plural, one{{name}, # вкладка} few{{name}, # вкладки} many{{name}, # вкладок} other{{name}, # вкладки}}",
 		"closeStack": "Закрыть стопку",
 		"trayAgents": "Агенты",
 		"trayTerminals": "Терминалы",
-		"trayNeedsInput": {"one": "{count} ждёт ответа", "few": "{count} ждут ответа", "many": "{count} ждут ответа", "other": "{count} ждут ответа"},
-		"trayWorking": {"one": "{count} работает", "few": "{count} работают", "many": "{count} работают", "other": "{count} работают"},
-		"trayRunning": {"one": "{count} выполняется", "few": "{count} выполняются", "many": "{count} выполняются", "other": "{count} выполняются"},
+		"trayNeedsInput": "{count, plural, one{# ждёт ответа} few{# ждут ответа} many{# ждут ответа} other{# ждут ответа}}",
+		"trayWorking": "{count, plural, one{# работает} few{# работают} many{# работают} other{# работают}}",
+		"trayRunning": "{count, plural, one{# выполняется} few{# выполняются} many{# выполняются} other{# выполняются}}",
 		"trayShow": "Показать: {name}",
 		"trayHide": "Скрыть: {name}"
 	},
@@ -1361,7 +1316,7 @@
 		"tabStartup": "Запуск",
 		"tabMemory": "Память",
 		"tabLog": "Журнал",
-		"errorCount": {"one": "{count} ошибка", "few": "{count} ошибки", "many": "{count} ошибок", "other": "{count} ошибки"},
+		"errorCount": "{count, plural, one{# ошибка} few{# ошибки} many{# ошибок} other{# ошибки}}",
 		"copyReport": "Скопировать отчёт",
 		"recordSession": "Записать сеанс",
 		"stopRecording": "Остановить запись",
@@ -1403,31 +1358,11 @@
 		"navLabel": "Разделы диспетчера процессов",
 		"searchPlaceholder": "Поиск вкладок",
 		"memoryAriaLabel": "Использование памяти",
-		"tabsCount": {
-			"one": "{count} вкладка",
-			"few": "{count} вкладки",
-			"many": "{count} вкладок",
-			"other": "{count} вкладки"
-		},
+		"tabsCount": "{count, plural, one{# вкладка} few{# вкладки} many{# вкладок} other{# вкладки}}",
 		"cpu": "ЦП {value}",
-		"others": {
-			"one": "Ещё {count}",
-			"few": "Ещё {count}",
-			"many": "Ещё {count}",
-			"other": "Ещё {count}"
-		},
-		"reclaim": {
-			"one": "{count} скрытая вкладка использует {size}",
-			"few": "{count} скрытые вкладки используют {size}",
-			"many": "{count} скрытых вкладок используют {size}",
-			"other": "{count} скрытой вкладки использует {size}"
-		},
-		"reclaimNoSize": {
-			"one": "В памяти остаётся {count} скрытая вкладка",
-			"few": "В памяти остаются {count} скрытые вкладки",
-			"many": "В памяти остаются {count} скрытых вкладок",
-			"other": "В памяти остаётся {count} скрытой вкладки"
-		},
+		"others": "{count, plural, one{Ещё #} few{Ещё #} many{Ещё #} other{Ещё #}}",
+		"reclaim": "{count, plural, one{# скрытая вкладка использует {size}} few{# скрытые вкладки используют {size}} many{# скрытых вкладок используют {size}} other{# скрытой вкладки использует {size}}}",
+		"reclaimNoSize": "{count, plural, one{В памяти остаётся # скрытая вкладка} few{В памяти остаются # скрытые вкладки} many{В памяти остаются # скрытых вкладок} other{В памяти остаётся # скрытой вкладки}}",
 		"sleep": "Выгрузить",
 		"groupTabs": "Вкладки",
 		"groupSleeping": "Выгруженные",
@@ -1437,12 +1372,7 @@
 		"audioPlaying": "Воспроизводит звук",
 		"frozen": "Приостановлена",
 		"sharedEstimate": "Использует общий процесс с другими вкладками, поэтому значение приблизительное",
-		"sharedWith": {
-			"one": "общий процесс; других вкладок: {count}",
-			"few": "общий процесс; других вкладок: {count}",
-			"many": "общий процесс; других вкладок: {count}",
-			"other": "общий процесс; других вкладок: {count}"
-		},
+		"sharedWith": "{count, plural, one{общий процесс; других вкладок: #} few{общий процесс; других вкладок: #} many{общий процесс; других вкладок: #} other{общий процесс; других вкладок: #}}",
 		"pid": "PID {pid}",
 		"focus": "Показать",
 		"details": "Показать подробности",
@@ -1471,20 +1401,10 @@
 	"urlToast": {
 		"pageActions": "Действия со страницей",
 		"reEnableBlocking": "Включить блокировку на этом сайте",
-		"trackersBlockedOnPage": {
-			"one": "На странице заблокирован {count} трекер",
-			"few": "На странице заблокировано {count} трекера",
-			"many": "На странице заблокировано {count} трекеров",
-			"other": "На странице заблокировано {count} трекера"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{На странице заблокирован # трекер} few{На странице заблокировано # трекера} many{На странице заблокировано # трекеров} other{На странице заблокировано # трекера}}",
 		"disableBlocking": "Отключить блокировку на этом сайте",
 		"adsAllowed": "Реклама разрешена",
-		"trackersBlockedLabel": {
-			"one": "Заблокирован {count} трекер",
-			"few": "Заблокировано {count} трекера",
-			"many": "Заблокировано {count} трекеров",
-			"other": "Заблокировано {count} трекера"
-		},
+		"trackersBlockedLabel": "{count, plural, one{Заблокирован # трекер} few{Заблокировано # трекера} many{Заблокировано # трекеров} other{Заблокировано # трекера}}",
 		"adsBlocked": "Реклама заблокирована",
 		"extensionAlreadyInstalled": "Расширение уже установлено",
 		"installChromeExtension": "Установить это расширение Chrome",
@@ -1528,12 +1448,7 @@
 		"stop": "Остановить отладку"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "ещё {count} уведомление",
-			"few": "ещё {count} уведомления",
-			"many": "ещё {count} уведомлений",
-			"other": "ещё {count} уведомления"
-		},
+		"moreNotices": "{count, plural, one{ещё # уведомление} few{ещё # уведомления} many{ещё # уведомлений} other{ещё # уведомления}}",
 		"more": "ещё {count}"
 	},
 	"crashRecovery": {
@@ -1574,7 +1489,7 @@
 	},
 	"archivedTabs": {
 		"title": "В архиве",
-		"buttonLabel": {"one": "{count} недавно архивированная вкладка", "few": "{count} недавно архивированные вкладки", "many": "{count} недавно архивированных вкладок", "other": "{count} недавно архивированной вкладки"},
+		"buttonLabel": "{count, plural, one{# недавно архивированная вкладка} few{# недавно архивированные вкладки} many{# недавно архивированных вкладок} other{# недавно архивированной вкладки}}",
 		"restore": "Восстановить",
 		"showAll": "Показать все вкладки в архиве",
 		"showAllDownloads": "Показать все загрузки"
@@ -1585,7 +1500,7 @@
 		"undo": "Отменить",
 		"reopen": "Открыть снова",
 		"archived": "«{title}» в архиве",
-		"archivedCount": {"one": "В архиве {count} вкладка", "few": "В архиве {count} вкладки", "many": "В архиве {count} вкладок", "other": "В архиве {count} вкладки"}
+		"archivedCount": "{count, plural, one{В архиве # вкладка} few{В архиве # вкладки} many{В архиве # вкладок} other{В архиве # вкладки}}"
 	},
 	"updateCard": {
 		"ready": "Готово к установке",
@@ -1802,36 +1717,11 @@
 			"done": "Готово: {list}.",
 			"nothing": "Готово: новых данных для импорта нет.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} закладка",
-					"few": "{count} закладки",
-					"many": "{count} закладок",
-					"other": "{count} закладки"
-				},
-				"tabs": {
-					"one": "{count} открытая вкладка",
-					"few": "{count} открытые вкладки",
-					"many": "{count} открытых вкладок",
-					"other": "{count} открытой вкладки"
-				},
-				"history": {
-					"one": "{count} страница истории",
-					"few": "{count} страницы истории",
-					"many": "{count} страниц истории",
-					"other": "{count} страницы истории"
-				},
-				"cookies": {
-					"one": "{count} файл cookie",
-					"few": "{count} файла cookie",
-					"many": "{count} файлов cookie",
-					"other": "{count} файла cookie"
-				},
-				"extensions": {
-					"one": "{count} расширение",
-					"few": "{count} расширения",
-					"many": "{count} расширений",
-					"other": "{count} расширения"
-				}
+				"bookmarks": "{count, plural, one{# закладка} few{# закладки} many{# закладок} other{# закладки}}",
+				"tabs": "{count, plural, one{# открытая вкладка} few{# открытые вкладки} many{# открытых вкладок} other{# открытой вкладки}}",
+				"history": "{count, plural, one{# страница истории} few{# страницы истории} many{# страниц истории} other{# страницы истории}}",
+				"cookies": "{count, plural, one{# файл cookie} few{# файла cookie} many{# файлов cookie} other{# файла cookie}}",
+				"extensions": "{count, plural, one{# расширение} few{# расширения} many{# расширений} other{# расширения}}"
 			},
 			"step": {
 				"bookmarks": "Импорт закладок из {from}",
@@ -1949,11 +1839,11 @@
 		"sectionSites": "Часто посещаемые сайты",
 		"sectionTerminals": "Из терминалов",
 		"searchResults": "Результаты поиска",
-		"dayPages": {"one": "{count} страница", "few": "{count} страницы", "many": "{count} страниц", "other": "{count} страницы"},
-		"daySites": {"one": "{count} сайт", "few": "{count} сайта", "many": "{count} сайтов", "other": "{count} сайта"},
+		"dayPages": "{count, plural, one{# страница} few{# страницы} many{# страниц} other{# страницы}}",
+		"daySites": "{count, plural, one{# сайт} few{# сайта} many{# сайтов} other{# сайта}}",
 		"openInNewTab": "Открыть в новой вкладке",
-		"selected": {"one": "Выбрано: {count}", "few": "Выбрано: {count}", "many": "Выбрано: {count}", "other": "Выбрано: {count}"},
-		"visits": {"one": "{count} посещение", "few": "{count} посещения", "many": "{count} посещений", "other": "{count} посещения"},
+		"selected": "{count, plural, one{Выбрано: #} few{Выбрано: #} many{Выбрано: #} other{Выбрано: #}}",
+		"visits": "{count, plural, one{# посещение} few{# посещения} many{# посещений} other{# посещения}}",
 		"openInNewTabs": "Открыть в новых вкладках",
 		"delete": "Удалить",
 		"clearSelection": "Снять выделение",
@@ -2523,12 +2413,7 @@
 		"title": "Что нового в Lilo",
 		"description": "Небольшие улучшения для повседневной работы в браузере.",
 		"allChanges": "Все изменения в этом обновлении",
-		"changes": {
-			"one": "{count} изменение",
-			"few": "{count} изменения",
-			"many": "{count} изменений",
-			"other": "{count} изменения"
-		},
+		"changes": "{count, plural, one{# изменение} few{# изменения} many{# изменений} other{# изменения}}",
 		"originalNotes": "Исходные примечания к выпуску на английском языке.",
 		"unavailable": "Примечания к выпуску недоступны в этой сборке.",
 		"reopen": "Всегда в меню «Справка > Что нового».",
@@ -2712,12 +2597,7 @@
 			"ownCopyHint": "Работает в отдельной копии проекта. Объедините её в разделе «Изменения».",
 			"starting": "Запуск агента...",
 			"errorHint": "Отправьте сообщение, чтобы повторить попытку.",
-			"showEarlier": {
-				"one": "Показать {count} предыдущий элемент",
-				"few": "Показать {count} предыдущих элемента",
-				"many": "Показать {count} предыдущих элементов",
-				"other": "Показать {count} предыдущего элемента"
-			},
+			"showEarlier": "{count, plural, one{Показать # предыдущий элемент} few{Показать # предыдущих элемента} many{Показать # предыдущих элементов} other{Показать # предыдущего элемента}}",
 			"queuedTag": "В очереди",
 			"sendNow": "Отправить сейчас",
 			"thought": "Размышления",
@@ -2727,20 +2607,10 @@
 			"restore": "Восстановить",
 			"undo": "Отменить",
 			"undone": "Отменено",
-			"moreLines": {
-				"one": "Ещё {count} строка",
-				"few": "Ещё {count} строки",
-				"many": "Ещё {count} строк",
-				"other": "Ещё {count} строки"
-			},
+			"moreLines": "{count, plural, one{Ещё # строка} few{Ещё # строки} many{Ещё # строк} other{Ещё # строки}}",
 			"plan": "План",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} шаг выполнен",
-				"few": "{count} шага выполнено",
-				"many": "{count} шагов выполнено",
-				"other": "{count} шагов выполнено"
-			},
+			"planDone": "{count, plural, one{# шаг выполнен} few{# шага выполнено} many{# шагов выполнено} other{# шагов выполнено}}",
 			"planStatus": {
 				"pending": "Предстоит",
 				"in_progress": "Выполняется",
@@ -2768,36 +2638,11 @@
 				"failed": "Ошибка"
 			},
 			"group": {
-				"read": {
-					"one": "Прочитан {count} файл",
-					"few": "Прочитано {count} файла",
-					"many": "Прочитано {count} файлов",
-					"other": "Прочитано {count} файла"
-				},
-				"search": {
-					"one": "{count} поиск",
-					"few": "{count} поиска",
-					"many": "{count} поисков",
-					"other": "{count} поиска"
-				},
-				"fetch": {
-					"one": "Загружена {count} страница",
-					"few": "Загружено {count} страницы",
-					"many": "Загружено {count} страниц",
-					"other": "Загружено {count} страницы"
-				},
-				"think": {
-					"one": "Размышлял {count} раз",
-					"few": "Размышлял {count} раза",
-					"many": "Размышлял {count} раз",
-					"other": "Размышлял {count} раза"
-				},
-				"action": {
-					"one": "{count} действие",
-					"few": "{count} действия",
-					"many": "{count} действий",
-					"other": "{count} действия"
-				}
+				"read": "{count, plural, one{Прочитан # файл} few{Прочитано # файла} many{Прочитано # файлов} other{Прочитано # файла}}",
+				"search": "{count, plural, one{# поиск} few{# поиска} many{# поисков} other{# поиска}}",
+				"fetch": "{count, plural, one{Загружена # страница} few{Загружено # страницы} many{Загружено # страниц} other{Загружено # страницы}}",
+				"think": "{count, plural, one{Размышлял # раз} few{Размышлял # раза} many{Размышлял # раз} other{Размышлял # раза}}",
+				"action": "{count, plural, one{# действие} few{# действия} many{# действий} other{# действия}}"
 			}
 		},
 		"composer": {
@@ -2835,32 +2680,12 @@
 			"untitled": "Новый разговор",
 			"working": "Работает",
 			"failed": "Остановлен из-за ошибки",
-			"linesAdded": {
-				"one": "{count} строка добавлена",
-				"few": "{count} строки добавлены",
-				"many": "{count} строк добавлено",
-				"other": "{count} строки добавлено"
-			},
-			"linesRemoved": {
-				"one": "{count} строка удалена",
-				"few": "{count} строки удалены",
-				"many": "{count} строк удалено",
-				"other": "{count} строки удалено"
-			},
-			"pages": {
-				"one": "{count} страница",
-				"few": "{count} страницы",
-				"many": "{count} страниц",
-				"other": "{count} страницы"
-			},
+			"linesAdded": "{count, plural, one{# строка добавлена} few{# строки добавлены} many{# строк добавлено} other{# строки добавлено}}",
+			"linesRemoved": "{count, plural, one{# строка удалена} few{# строки удалены} many{# строк удалено} other{# строки удалено}}",
+			"pages": "{count, plural, one{# страница} few{# страницы} many{# страниц} other{# страницы}}",
 			"showPages": "Показать страницы",
 			"hidePages": "Скрыть страницы",
-			"morePermissions": {
-				"one": "ещё {count} запрос ждёт",
-				"few": "ещё {count} запроса ждут",
-				"many": "ещё {count} запросов ждут",
-				"other": "ещё {count} запроса ждут"
-			}
+			"morePermissions": "{count, plural, one{ещё # запрос ждёт} few{ещё # запроса ждут} many{ещё # запросов ждут} other{ещё # запроса ждут}}"
 		},
 		"question": {
 			"allow": "Разрешить",
@@ -2874,12 +2699,7 @@
 		},
 		"badge": {
 			"title": "Агенты",
-			"waiting": {
-				"one": "Агенты, {count} ждёт вас",
-				"few": "Агенты, {count} ждут вас",
-				"many": "Агенты, {count} ждут вас",
-				"other": "Агенты, {count} ждут вас"
-			},
+			"waiting": "{count, plural, one{Агенты, # ждёт вас} few{Агенты, # ждут вас} many{Агенты, # ждут вас} other{Агенты, # ждут вас}}",
 			"new": "Новый",
 			"needsYou": "Ждёт вас",
 			"running": "Выполняется",
@@ -2900,12 +2720,7 @@
 			"signInOpenTerminal": "Открыть в терминале"
 		},
 		"work": {
-			"images": {
-				"one": "{count} изображение",
-				"few": "{count} изображения",
-				"many": "{count} изображений",
-				"other": "{count} изображения"
-			},
+			"images": "{count, plural, one{# изображение} few{# изображения} many{# изображений} other{# изображения}}",
 			"verb": {
 				"read": "Прочитан",
 				"edit": "Изменён",
@@ -2923,66 +2738,16 @@
 				"fetch": "Загрузка"
 			},
 			"summary": {
-				"read": {
-					"one": "прочитан {count} файл",
-					"few": "прочитано {count} файла",
-					"many": "прочитано {count} файлов",
-					"other": "прочитано {count} файла"
-				},
-				"edit": {
-					"one": "изменён {count} файл",
-					"few": "изменено {count} файла",
-					"many": "изменено {count} файлов",
-					"other": "изменено {count} файла"
-				},
-				"execute": {
-					"one": "выполнена {count} команда",
-					"few": "выполнено {count} команды",
-					"many": "выполнено {count} команд",
-					"other": "выполнено {count} команды"
-				},
-				"search": {
-					"one": "{count} поиск",
-					"few": "{count} поиска",
-					"many": "{count} поисков",
-					"other": "{count} поиска"
-				},
-				"fetch": {
-					"one": "загружена {count} страница",
-					"few": "загружено {count} страницы",
-					"many": "загружено {count} страниц",
-					"other": "загружено {count} страницы"
-				},
-				"think": {
-					"one": "размышлял {count} раз",
-					"few": "размышлял {count} раза",
-					"many": "размышлял {count} раз",
-					"other": "размышлял {count} раза"
-				},
-				"browser": {
-					"one": "браузер использован {count} раз",
-					"few": "браузер использован {count} раза",
-					"many": "браузер использован {count} раз",
-					"other": "браузер использован {count} раза"
-				},
-				"browserOn": {
-					"one": "браузер использован {count} раз на {site}",
-					"few": "браузер использован {count} раза на {site}",
-					"many": "браузер использован {count} раз на {site}",
-					"other": "браузер использован {count} раза на {site}"
-				},
-				"tool": {
-					"one": "использован {count} инструмент",
-					"few": "использовано {count} инструмента",
-					"many": "использовано {count} инструментов",
-					"other": "использовано {count} инструмента"
-				},
-				"agent": {
-					"one": "запущен {count} агент",
-					"few": "запущено {count} агента",
-					"many": "запущено {count} агентов",
-					"other": "запущено {count} агента"
-				}
+				"read": "{count, plural, one{прочитан # файл} few{прочитано # файла} many{прочитано # файлов} other{прочитано # файла}}",
+				"edit": "{count, plural, one{изменён # файл} few{изменено # файла} many{изменено # файлов} other{изменено # файла}}",
+				"execute": "{count, plural, one{выполнена # команда} few{выполнено # команды} many{выполнено # команд} other{выполнено # команды}}",
+				"search": "{count, plural, one{# поиск} few{# поиска} many{# поисков} other{# поиска}}",
+				"fetch": "{count, plural, one{загружена # страница} few{загружено # страницы} many{загружено # страниц} other{загружено # страницы}}",
+				"think": "{count, plural, one{размышлял # раз} few{размышлял # раза} many{размышлял # раз} other{размышлял # раза}}",
+				"browser": "{count, plural, one{браузер использован # раз} few{браузер использован # раза} many{браузер использован # раз} other{браузер использован # раза}}",
+				"browserOn": "{count, plural, one{браузер использован # раз на {site}} few{браузер использован # раза на {site}} many{браузер использован # раз на {site}} other{браузер использован # раза на {site}}}",
+				"tool": "{count, plural, one{использован # инструмент} few{использовано # инструмента} many{использовано # инструментов} other{использовано # инструмента}}",
+				"agent": "{count, plural, one{запущен # агент} few{запущено # агента} many{запущено # агентов} other{запущено # агента}}"
 			},
 			"browser": {
 				"closeTab": "Закрыл вкладку",
@@ -3033,12 +2798,7 @@
 				"request": "Отправляет запрос на {url}"
 			},
 			"exit": "Код выхода {code}",
-			"showAll": {
-				"one": "Показать {count} строку",
-				"few": "Показать все {count} строки",
-				"many": "Показать все {count} строк",
-				"other": "Показать все {count} строки"
-			},
+			"showAll": "{count, plural, one{Показать # строку} few{Показать все # строки} many{Показать все # строк} other{Показать все # строки}}",
 			"showLess": "Показать последние строки"
 		},
 		"turn": {
@@ -3046,12 +2806,7 @@
 			"stopped": "Остановлено",
 			"refusalTitle": "Модель отказалась продолжать",
 			"refusalHint": "Её защитные механизмы остановили этот шаг, иногда и при законной работе. Переформулируйте запрос или выберите другую модель ниже.",
-			"files": {
-				"one": "Изменён {count} файл",
-				"few": "Изменено {count} файла",
-				"many": "Изменено {count} файлов",
-				"other": "Изменено {count} файла"
-			},
+			"files": "{count, plural, one{Изменён # файл} few{Изменено # файла} many{Изменено # файлов} other{Изменено # файла}}",
 			"review": "Просмотреть",
 			"copy": "Копировать ответ",
 			"copied": "Скопировано"

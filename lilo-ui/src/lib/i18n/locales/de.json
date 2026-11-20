@@ -198,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Zoom {zoom}",
-			"hiddenSummary": {"one": "{count} ausgeblendetes Element", "other": "{count} ausgeblendete Elemente"},
+			"hiddenSummary": "{count, plural, one{# ausgeblendetes Element} other{# ausgeblendete Elemente}}",
 			"dataSummary": "Gespeicherte Daten",
 			"permissionUpdated": "{origin} · Aktualisiert {time}",
 			"emptyTitle": "Noch keine Websiteeinstellungen",
@@ -605,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Jetzt aktualisieren",
-			"summary": {
-				"one": "{count} Liste",
-				"other": "{count} Listen"
-			},
+			"summary": "{count, plural, one{# Liste} other{# Listen}}",
 			"updated": "aktualisiert {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Jetzt suchen",
 			"checking": "Nach Updates suchen...",
 			"upToDate": "Auf dem neuesten Stand",
-			"updated": {
-				"one": "{count} aktualisiert",
-				"other": "{count} aktualisiert"
-			},
-			"available": {
-				"one": "{count} Update verfügbar",
-				"other": "{count} Updates verfügbar"
-			},
-			"failed": {
-				"one": "{count} konnte nicht geprüft werden",
-				"other": "{count} konnten nicht geprüft werden"
-			},
+			"updated": "{count, plural, one{# aktualisiert} other{# aktualisiert}}",
+			"available": "{count, plural, one{# Update verfügbar} other{# Updates verfügbar}}",
+			"failed": "{count, plural, one{# konnte nicht geprüft werden} other{# konnten nicht geprüft werden}}",
 			"lastChecked": "Zuletzt geprüft {time}"
 		},
 		"folderAutoLock": {
@@ -677,10 +665,7 @@
 			"clearData": "Daten löschen...",
 			"remove": "Entfernen...",
 			"lastProfile": "Dein letztes Profil bleibt erhalten. Jeder Space benötigt eines.",
-			"extensionCount": {
-				"one": "{count} Erweiterung",
-				"other": "{count} Erweiterungen"
-			},
+			"extensionCount": "{count, plural, one{# Erweiterung} other{# Erweiterungen}}",
 			"newProfile": "Neues Profil...",
 			"newProfileDetail": "Neue Cookies, Anmeldungen und Erweiterungen",
 			"namePlaceholder": "Profilname",
@@ -755,28 +740,16 @@
 		},
 		"notes": {
 			"live": "Änderungen gelten sofort",
-			"spaces": {
-				"one": "{count} Space",
-				"other": "{count} Spaces"
-			},
-			"profiles": {
-				"one": "{count} Profil",
-				"other": "{count} Profile"
-			},
+			"spaces": "{count, plural, one{# Space} other{# Spaces}}",
+			"profiles": "{count, plural, one{# Profil} other{# Profile}}",
 			"blocking": "{count} von {total} Arten blockiert",
 			"blockingOff": "Blockieren ist aus",
 			"profile": "Profil {name}",
-			"extensions": {
-				"one": "{count} Erweiterung in {profile}",
-				"other": "{count} Erweiterungen in {profile}"
-			},
+			"extensions": "{count, plural, one{# Erweiterung in {profile}} other{# Erweiterungen in {profile}}}",
 			"terminal": "Änderungen gelten für jeden Terminal-Tab",
 			"agents": "Lilo hat keine eigene KI",
 			"advanced": "Für Entwicklung und Tests",
-			"searchMatches": {
-				"one": "{count} Einstellung passt zu „{query}“",
-				"other": "{count} Einstellungen passen zu „{query}“"
-			}
+			"searchMatches": "{count, plural, one{# Einstellung passt zu „{query}“} other{# Einstellungen passen zu „{query}“}}"
 		},
 		"callDock": {
 			"sidebar": "In der Seitenleiste",
@@ -932,13 +905,13 @@
 		"pinnedTabs": "Angeheftete Tabs",
 		"openTabs": "Offene Tabs",
 		"dropToPin": "Zum Anheften ablegen",
-		"stackLabel": {"one": "{name}, {count} Tab", "other": "{name}, {count} Tabs"},
+		"stackLabel": "{count, plural, one{{name}, # Tab} other{{name}, # Tabs}}",
 		"closeStack": "Stapel schließen",
 		"trayAgents": "Agenten",
 		"trayTerminals": "Terminals",
-		"trayNeedsInput": {"one": "{count} wartet auf Eingabe", "other": "{count} warten auf Eingabe"},
-		"trayWorking": {"one": "{count} arbeitet", "other": "{count} arbeiten"},
-		"trayRunning": {"one": "{count} läuft", "other": "{count} laufen"},
+		"trayNeedsInput": "{count, plural, one{# wartet auf Eingabe} other{# warten auf Eingabe}}",
+		"trayWorking": "{count, plural, one{# arbeitet} other{# arbeiten}}",
+		"trayRunning": "{count, plural, one{# läuft} other{# laufen}}",
 		"trayShow": "{name} einblenden",
 		"trayHide": "{name} ausblenden"
 	},
@@ -1343,7 +1316,7 @@
 		"tabStartup": "Start",
 		"tabMemory": "Speicher",
 		"tabLog": "Protokoll",
-		"errorCount": {"one": "{count} Fehler", "other": "{count} Fehler"},
+		"errorCount": "{count, plural, one{# Fehler} other{# Fehler}}",
 		"copyReport": "Bericht kopieren",
 		"recordSession": "Sitzung aufzeichnen",
 		"stopRecording": "Aufzeichnung stoppen",
@@ -1385,23 +1358,11 @@
 		"navLabel": "Ansichten der Prozessverwaltung",
 		"searchPlaceholder": "Tabs durchsuchen",
 		"memoryAriaLabel": "Speichernutzung",
-		"tabsCount": {
-			"one": "{count} Tab",
-			"other": "{count} Tabs"
-		},
+		"tabsCount": "{count, plural, one{# Tab} other{# Tabs}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "{count} weiterer",
-			"other": "{count} weitere"
-		},
-		"reclaim": {
-			"one": "{count} ausgeblendeter Tab belegt {size}",
-			"other": "{count} ausgeblendete Tabs belegen {size}"
-		},
-		"reclaimNoSize": {
-			"one": "{count} ausgeblendeter Tab ist noch geladen",
-			"other": "{count} ausgeblendete Tabs sind noch geladen"
-		},
+		"others": "{count, plural, one{# weiterer} other{# weitere}}",
+		"reclaim": "{count, plural, one{# ausgeblendeter Tab belegt {size}} other{# ausgeblendete Tabs belegen {size}}}",
+		"reclaimNoSize": "{count, plural, one{# ausgeblendeter Tab ist noch geladen} other{# ausgeblendete Tabs sind noch geladen}}",
 		"sleep": "In Ruhezustand versetzen",
 		"groupTabs": "Tabs",
 		"groupSleeping": "Im Ruhezustand",
@@ -1411,10 +1372,7 @@
 		"audioPlaying": "Audiowiedergabe",
 		"frozen": "Eingefroren",
 		"sharedEstimate": "Teilt seinen Prozess mit anderen Tabs. Daher ist dies eine Schätzung.",
-		"sharedWith": {
-			"one": "mit {count} anderem Tab geteilt",
-			"other": "mit {count} anderen Tabs geteilt"
-		},
+		"sharedWith": "{count, plural, one{mit # anderem Tab geteilt} other{mit # anderen Tabs geteilt}}",
 		"pid": "PID {pid}",
 		"focus": "Anzeigen",
 		"details": "Details anzeigen",
@@ -1443,16 +1401,10 @@
 	"urlToast": {
 		"pageActions": "Seitenaktionen",
 		"reEnableBlocking": "Blockierung auf dieser Website wieder aktivieren",
-		"trackersBlockedOnPage": {
-			"one": "{count} Tracker auf dieser Seite blockiert",
-			"other": "{count} Tracker auf dieser Seite blockiert"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{# Tracker auf dieser Seite blockiert} other{# Tracker auf dieser Seite blockiert}}",
 		"disableBlocking": "Blockierung auf dieser Website deaktivieren",
 		"adsAllowed": "Werbung erlaubt",
-		"trackersBlockedLabel": {
-			"one": "{count} Tracker blockiert",
-			"other": "{count} Tracker blockiert"
-		},
+		"trackersBlockedLabel": "{count, plural, one{# Tracker blockiert} other{# Tracker blockiert}}",
 		"adsBlocked": "Werbung blockiert",
 		"extensionAlreadyInstalled": "Erweiterung bereits installiert",
 		"installChromeExtension": "Diese Chrome-Erweiterung installieren",
@@ -1496,10 +1448,7 @@
 		"stop": "Debugging beenden"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "{count} weiterer Hinweis",
-			"other": "{count} weitere Hinweise"
-		},
+		"moreNotices": "{count, plural, one{# weiterer Hinweis} other{# weitere Hinweise}}",
 		"more": "{count} weitere"
 	},
 	"crashRecovery": {
@@ -1540,7 +1489,7 @@
 	},
 	"archivedTabs": {
 		"title": "Archiviert",
-		"buttonLabel": {"one": "{count} kürzlich archivierter Tab", "other": "{count} kürzlich archivierte Tabs"},
+		"buttonLabel": "{count, plural, one{# kürzlich archivierter Tab} other{# kürzlich archivierte Tabs}}",
 		"restore": "Wiederherstellen",
 		"showAll": "Alle archivierten Tabs anzeigen",
 		"showAllDownloads": "Alle Downloads anzeigen"
@@ -1551,7 +1500,7 @@
 		"undo": "Widerrufen",
 		"reopen": "Wieder öffnen",
 		"archived": "„{title}“ archiviert",
-		"archivedCount": {"one": "{count} Tab archiviert", "other": "{count} Tabs archiviert"}
+		"archivedCount": "{count, plural, one{# Tab archiviert} other{# Tabs archiviert}}"
 	},
 	"updateCard": {
 		"ready": "Bereit zur Installation",
@@ -1768,26 +1717,11 @@
 			"done": "Fertig: {list}.",
 			"nothing": "Fertig: Es gibt nichts Neues zu importieren.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} Lesezeichen",
-					"other": "{count} Lesezeichen"
-				},
-				"tabs": {
-					"one": "{count} offener Tab",
-					"other": "{count} offene Tabs"
-				},
-				"history": {
-					"one": "{count} Seite im Verlauf",
-					"other": "{count} Seiten im Verlauf"
-				},
-				"cookies": {
-					"one": "{count} Cookie",
-					"other": "{count} Cookies"
-				},
-				"extensions": {
-					"one": "{count} Erweiterung",
-					"other": "{count} Erweiterungen"
-				}
+				"bookmarks": "{count, plural, one{# Lesezeichen} other{# Lesezeichen}}",
+				"tabs": "{count, plural, one{# offener Tab} other{# offene Tabs}}",
+				"history": "{count, plural, one{# Seite im Verlauf} other{# Seiten im Verlauf}}",
+				"cookies": "{count, plural, one{# Cookie} other{# Cookies}}",
+				"extensions": "{count, plural, one{# Erweiterung} other{# Erweiterungen}}"
 			},
 			"step": {
 				"bookmarks": "Lesezeichen aus {from} werden importiert",
@@ -1905,11 +1839,11 @@
 		"sectionSites": "Meistbesuchte Websites",
 		"sectionTerminals": "Aus Terminals",
 		"searchResults": "Suchergebnisse",
-		"dayPages": {"one": "{count} Seite", "other": "{count} Seiten"},
-		"daySites": {"one": "{count} Website", "other": "{count} Websites"},
+		"dayPages": "{count, plural, one{# Seite} other{# Seiten}}",
+		"daySites": "{count, plural, one{# Website} other{# Websites}}",
 		"openInNewTab": "In neuem Tab öffnen",
-		"selected": {"one": "{count} ausgewählt", "other": "{count} ausgewählt"},
-		"visits": {"one": "{count} Besuch", "other": "{count} Besuche"},
+		"selected": "{count, plural, one{# ausgewählt} other{# ausgewählt}}",
+		"visits": "{count, plural, one{# Besuch} other{# Besuche}}",
 		"openInNewTabs": "In neuen Tabs öffnen",
 		"delete": "Löschen",
 		"clearSelection": "Auswahl aufheben",
@@ -2479,10 +2413,7 @@
 		"title": "Neu in Lilo",
 		"description": "Ein paar kleine Verbesserungen für dein tägliches Surfen.",
 		"allChanges": "Alles in diesem Update",
-		"changes": {
-			"one": "{count} Änderung",
-			"other": "{count} Änderungen"
-		},
+		"changes": "{count, plural, one{# Änderung} other{# Änderungen}}",
 		"originalNotes": "Ursprüngliche Versionshinweise.",
 		"unavailable": "In dieser Version sind keine Versionshinweise verfügbar.",
 		"reopen": "Jederzeit unter Hilfe > Neuigkeiten zu finden.",
@@ -2666,10 +2597,7 @@
 			"ownCopyHint": "Arbeitet an einer eigenen Kopie des Projekts. Führe sie unter Änderungen zusammen.",
 			"starting": "Agent wird gestartet...",
 			"errorHint": "Sende eine Nachricht, um es erneut zu versuchen.",
-			"showEarlier": {
-				"one": "{count} früheren Eintrag anzeigen",
-				"other": "{count} frühere Einträge anzeigen"
-			},
+			"showEarlier": "{count, plural, one{# früheren Eintrag anzeigen} other{# frühere Einträge anzeigen}}",
 			"queuedTag": "In Warteschlange",
 			"sendNow": "Jetzt senden",
 			"thought": "Gedanken",
@@ -2679,16 +2607,10 @@
 			"restore": "Wiederherstellen",
 			"undo": "Widerrufen",
 			"undone": "Rückgängig gemacht",
-			"moreLines": {
-				"one": "{count} weitere Zeile",
-				"other": "{count} weitere Zeilen"
-			},
+			"moreLines": "{count, plural, one{# weitere Zeile} other{# weitere Zeilen}}",
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} Schritt erledigt",
-				"other": "{count} Schritte erledigt"
-			},
+			"planDone": "{count, plural, one{# Schritt erledigt} other{# Schritte erledigt}}",
 			"planStatus": {
 				"pending": "Offen",
 				"in_progress": "In Arbeit",
@@ -2716,26 +2638,11 @@
 				"failed": "Fehlgeschlagen"
 			},
 			"group": {
-				"read": {
-					"one": "{count} Datei gelesen",
-					"other": "{count} Dateien gelesen"
-				},
-				"search": {
-					"one": "{count} Suche",
-					"other": "{count} Suchen"
-				},
-				"fetch": {
-					"one": "{count} Seite abgerufen",
-					"other": "{count} Seiten abgerufen"
-				},
-				"think": {
-					"one": "{count}-mal nachgedacht",
-					"other": "{count}-mal nachgedacht"
-				},
-				"action": {
-					"one": "{count} Aktion",
-					"other": "{count} Aktionen"
-				}
+				"read": "{count, plural, one{# Datei gelesen} other{# Dateien gelesen}}",
+				"search": "{count, plural, one{# Suche} other{# Suchen}}",
+				"fetch": "{count, plural, one{# Seite abgerufen} other{# Seiten abgerufen}}",
+				"think": "{count, plural, one{#-mal nachgedacht} other{#-mal nachgedacht}}",
+				"action": "{count, plural, one{# Aktion} other{# Aktionen}}"
 			}
 		},
 		"composer": {
@@ -2773,24 +2680,12 @@
 			"untitled": "Neue Unterhaltung",
 			"working": "Arbeitet",
 			"failed": "Mit einem Fehler gestoppt",
-			"linesAdded": {
-				"one": "{count} Zeile hinzugefügt",
-				"other": "{count} Zeilen hinzugefügt"
-			},
-			"linesRemoved": {
-				"one": "{count} Zeile entfernt",
-				"other": "{count} Zeilen entfernt"
-			},
-			"pages": {
-				"one": "{count} Seite",
-				"other": "{count} Seiten"
-			},
+			"linesAdded": "{count, plural, one{# Zeile hinzugefügt} other{# Zeilen hinzugefügt}}",
+			"linesRemoved": "{count, plural, one{# Zeile entfernt} other{# Zeilen entfernt}}",
+			"pages": "{count, plural, one{# Seite} other{# Seiten}}",
 			"showPages": "Seiten einblenden",
 			"hidePages": "Seiten ausblenden",
-			"morePermissions": {
-				"one": "{count} weitere Anfrage wartet",
-				"other": "{count} weitere Anfragen warten"
-			}
+			"morePermissions": "{count, plural, one{# weitere Anfrage wartet} other{# weitere Anfragen warten}}"
 		},
 		"question": {
 			"allow": "Erlauben",
@@ -2804,10 +2699,7 @@
 		},
 		"badge": {
 			"title": "Agenten",
-			"waiting": {
-				"one": "Agenten, {count} wartet auf dich",
-				"other": "Agenten, {count} warten auf dich"
-			},
+			"waiting": "{count, plural, one{Agenten, # wartet auf dich} other{Agenten, # warten auf dich}}",
 			"new": "Neu",
 			"needsYou": "Wartet auf dich",
 			"running": "Läuft",
@@ -2828,10 +2720,7 @@
 			"signInOpenTerminal": "Im Terminal öffnen"
 		},
 		"work": {
-			"images": {
-				"one": "{count} Bild",
-				"other": "{count} Bilder"
-			},
+			"images": "{count, plural, one{# Bild} other{# Bilder}}",
 			"verb": {
 				"read": "Gelesen",
 				"edit": "Bearbeitet",
@@ -2849,46 +2738,16 @@
 				"fetch": "Ruft ab"
 			},
 			"summary": {
-				"read": {
-					"one": "{count} Datei gelesen",
-					"other": "{count} Dateien gelesen"
-				},
-				"edit": {
-					"one": "{count} Datei bearbeitet",
-					"other": "{count} Dateien bearbeitet"
-				},
-				"execute": {
-					"one": "{count} Befehl ausgeführt",
-					"other": "{count} Befehle ausgeführt"
-				},
-				"search": {
-					"one": "{count}-mal gesucht",
-					"other": "{count}-mal gesucht"
-				},
-				"fetch": {
-					"one": "{count} Seite abgerufen",
-					"other": "{count} Seiten abgerufen"
-				},
-				"think": {
-					"one": "{count}-mal nachgedacht",
-					"other": "{count}-mal nachgedacht"
-				},
-				"browser": {
-					"one": "{count}-mal den Browser genutzt",
-					"other": "{count}-mal den Browser genutzt"
-				},
-				"browserOn": {
-					"one": "{count}-mal den Browser auf {site} genutzt",
-					"other": "{count}-mal den Browser auf {site} genutzt"
-				},
-				"tool": {
-					"one": "{count} Tool genutzt",
-					"other": "{count} Tools genutzt"
-				},
-				"agent": {
-					"one": "{count} Agent gestartet",
-					"other": "{count} Agenten gestartet"
-				}
+				"read": "{count, plural, one{# Datei gelesen} other{# Dateien gelesen}}",
+				"edit": "{count, plural, one{# Datei bearbeitet} other{# Dateien bearbeitet}}",
+				"execute": "{count, plural, one{# Befehl ausgeführt} other{# Befehle ausgeführt}}",
+				"search": "{count, plural, one{#-mal gesucht} other{#-mal gesucht}}",
+				"fetch": "{count, plural, one{# Seite abgerufen} other{# Seiten abgerufen}}",
+				"think": "{count, plural, one{#-mal nachgedacht} other{#-mal nachgedacht}}",
+				"browser": "{count, plural, one{#-mal den Browser genutzt} other{#-mal den Browser genutzt}}",
+				"browserOn": "{count, plural, one{#-mal den Browser auf {site} genutzt} other{#-mal den Browser auf {site} genutzt}}",
+				"tool": "{count, plural, one{# Tool genutzt} other{# Tools genutzt}}",
+				"agent": "{count, plural, one{# Agent gestartet} other{# Agenten gestartet}}"
 			},
 			"browser": {
 				"closeTab": "Tab geschlossen",
@@ -2939,10 +2798,7 @@
 				"request": "Sendet eine Anfrage an {url}"
 			},
 			"exit": "Exit-Code {code}",
-			"showAll": {
-				"one": "Alle {count} Zeile anzeigen",
-				"other": "Alle {count} Zeilen anzeigen"
-			},
+			"showAll": "{count, plural, one{Alle # Zeile anzeigen} other{Alle # Zeilen anzeigen}}",
 			"showLess": "Nur die letzten Zeilen anzeigen"
 		},
 		"turn": {
@@ -2950,10 +2806,7 @@
 			"stopped": "Gestoppt",
 			"refusalTitle": "Das Modell hat abgelehnt, fortzufahren",
 			"refusalHint": "Seine Schutzmechanismen haben diesen Schritt gestoppt, manchmal auch bei legitimer Arbeit. Formuliere die Anfrage um oder wähle unten ein anderes Modell.",
-			"files": {
-				"one": "{count} Datei geändert",
-				"other": "{count} Dateien geändert"
-			},
+			"files": "{count, plural, one{# Datei geändert} other{# Dateien geändert}}",
 			"review": "Prüfen",
 			"copy": "Antwort kopieren",
 			"copied": "Kopiert"

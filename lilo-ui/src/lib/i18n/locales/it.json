@@ -198,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Zoom {zoom}",
-			"hiddenSummary": {"one": "{count} elemento nascosto", "other": "{count} elementi nascosti"},
+			"hiddenSummary": "{count, plural, one{# elemento nascosto} other{# elementi nascosti}}",
 			"dataSummary": "Dati archiviati",
 			"permissionUpdated": "{origin} · Aggiornato {time}",
 			"emptyTitle": "Ancora nessuna impostazione per i siti",
@@ -605,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Aggiorna ora",
-			"summary": {
-				"one": "{count} elenco",
-				"other": "{count} elenchi"
-			},
+			"summary": "{count, plural, one{# elenco} other{# elenchi}}",
 			"updated": "aggiornati {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Verifica ora",
 			"checking": "Ricerca di aggiornamenti...",
 			"upToDate": "Aggiornate",
-			"updated": {
-				"one": "{count} aggiornata",
-				"other": "{count} aggiornate"
-			},
-			"available": {
-				"one": "{count} aggiornamento disponibile",
-				"other": "{count} aggiornamenti disponibili"
-			},
-			"failed": {
-				"one": "Impossibile verificare {count} estensione",
-				"other": "Impossibile verificare {count} estensioni"
-			},
+			"updated": "{count, plural, one{# aggiornata} other{# aggiornate}}",
+			"available": "{count, plural, one{# aggiornamento disponibile} other{# aggiornamenti disponibili}}",
+			"failed": "{count, plural, one{Impossibile verificare # estensione} other{Impossibile verificare # estensioni}}",
 			"lastChecked": "Ultima verifica {time}"
 		},
 		"folderAutoLock": {
@@ -677,10 +665,7 @@
 			"clearData": "Cancella dati...",
 			"remove": "Rimuovi...",
 			"lastProfile": "L'ultimo profilo viene mantenuto: ogni spazio ne ha bisogno.",
-			"extensionCount": {
-				"one": "{count} estensione",
-				"other": "{count} estensioni"
-			},
+			"extensionCount": "{count, plural, one{# estensione} other{# estensioni}}",
 			"newProfile": "Nuovo profilo...",
 			"newProfileDetail": "Cookie, accessi ed estensioni nuovi",
 			"namePlaceholder": "Nome del profilo",
@@ -755,28 +740,16 @@
 		},
 		"notes": {
 			"live": "Le modifiche si applicano subito",
-			"spaces": {
-				"one": "{count} spazio",
-				"other": "{count} spazi"
-			},
-			"profiles": {
-				"one": "{count} profilo",
-				"other": "{count} profili"
-			},
+			"spaces": "{count, plural, one{# spazio} other{# spazi}}",
+			"profiles": "{count, plural, one{# profilo} other{# profili}}",
 			"blocking": "Blocco attivo per {count} tipi su {total}",
 			"blockingOff": "Il blocco è disattivato",
 			"profile": "Profilo {name}",
-			"extensions": {
-				"one": "{count} estensione in {profile}",
-				"other": "{count} estensioni in {profile}"
-			},
+			"extensions": "{count, plural, one{# estensione in {profile}} other{# estensioni in {profile}}}",
 			"terminal": "Le modifiche valgono per ogni scheda del terminale",
 			"agents": "Lilo non ha una propria IA",
 			"advanced": "Per sviluppo e test",
-			"searchMatches": {
-				"one": "{count} impostazione corrisponde a \"{query}\"",
-				"other": "{count} impostazioni corrispondono a \"{query}\""
-			}
+			"searchMatches": "{count, plural, one{# impostazione corrisponde a \"{query}\"} other{# impostazioni corrispondono a \"{query}\"}}"
 		},
 		"callDock": {
 			"sidebar": "Nella barra laterale",
@@ -932,13 +905,13 @@
 		"pinnedTabs": "Schede fissate",
 		"openTabs": "Schede aperte",
 		"dropToPin": "Rilascia per fissare",
-		"stackLabel": {"one": "{name}, {count} scheda", "other": "{name}, {count} schede"},
+		"stackLabel": "{count, plural, one{{name}, # scheda} other{{name}, # schede}}",
 		"closeStack": "Chiudi pila",
 		"trayAgents": "Agenti",
 		"trayTerminals": "Terminali",
-		"trayNeedsInput": {"one": "{count} attende input", "other": "{count} attendono input"},
-		"trayWorking": {"one": "{count} al lavoro", "other": "{count} al lavoro"},
-		"trayRunning": {"one": "{count} in esecuzione", "other": "{count} in esecuzione"},
+		"trayNeedsInput": "{count, plural, one{# attende input} other{# attendono input}}",
+		"trayWorking": "{count, plural, one{# al lavoro} other{# al lavoro}}",
+		"trayRunning": "{count, plural, one{# in esecuzione} other{# in esecuzione}}",
 		"trayShow": "Mostra {name}",
 		"trayHide": "Nascondi {name}"
 	},
@@ -1343,7 +1316,7 @@
 		"tabStartup": "Avvio",
 		"tabMemory": "Memoria",
 		"tabLog": "Registro",
-		"errorCount": {"one": "{count} errore", "other": "{count} errori"},
+		"errorCount": "{count, plural, one{# errore} other{# errori}}",
 		"copyReport": "Copia resoconto",
 		"recordSession": "Registra sessione",
 		"stopRecording": "Interrompi registrazione",
@@ -1385,23 +1358,11 @@
 		"navLabel": "Viste del gestore processi",
 		"searchPlaceholder": "Cerca schede",
 		"memoryAriaLabel": "Uso della memoria",
-		"tabsCount": {
-			"one": "{count} scheda",
-			"other": "{count} schede"
-		},
+		"tabsCount": "{count, plural, one{# scheda} other{# schede}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "{count} altro",
-			"other": "{count} altri"
-		},
-		"reclaim": {
-			"one": "{count} scheda nascosta usa {size}",
-			"other": "{count} schede nascoste usano {size}"
-		},
-		"reclaimNoSize": {
-			"one": "{count} scheda nascosta è ancora caricata",
-			"other": "{count} schede nascoste sono ancora caricate"
-		},
+		"others": "{count, plural, one{# altro} other{# altri}}",
+		"reclaim": "{count, plural, one{# scheda nascosta usa {size}} other{# schede nascoste usano {size}}}",
+		"reclaimNoSize": "{count, plural, one{# scheda nascosta è ancora caricata} other{# schede nascoste sono ancora caricate}}",
 		"sleep": "Metti in stop",
 		"groupTabs": "Schede",
 		"groupSleeping": "In stop",
@@ -1411,10 +1372,7 @@
 		"audioPlaying": "Audio in riproduzione",
 		"frozen": "Sospesa",
 		"sharedEstimate": "Condivide il processo con altre schede, quindi questa è una stima",
-		"sharedWith": {
-			"one": "condiviso con {count} altra scheda",
-			"other": "condiviso con {count} altre schede"
-		},
+		"sharedWith": "{count, plural, one{condiviso con # altra scheda} other{condiviso con # altre schede}}",
 		"pid": "PID {pid}",
 		"focus": "Mostra",
 		"details": "Mostra dettagli",
@@ -1443,16 +1401,10 @@
 	"urlToast": {
 		"pageActions": "Azioni della pagina",
 		"reEnableBlocking": "Riattiva il blocco su questo sito",
-		"trackersBlockedOnPage": {
-			"one": "{count} tracker bloccato su questa pagina",
-			"other": "{count} tracker bloccati su questa pagina"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{# tracker bloccato su questa pagina} other{# tracker bloccati su questa pagina}}",
 		"disableBlocking": "Disattiva il blocco su questo sito",
 		"adsAllowed": "Pubblicità consentita",
-		"trackersBlockedLabel": {
-			"one": "{count} tracker bloccato",
-			"other": "{count} tracker bloccati"
-		},
+		"trackersBlockedLabel": "{count, plural, one{# tracker bloccato} other{# tracker bloccati}}",
 		"adsBlocked": "Pubblicità bloccata",
 		"extensionAlreadyInstalled": "Estensione già installata",
 		"installChromeExtension": "Installa questa estensione Chrome",
@@ -1496,10 +1448,7 @@
 		"stop": "Interrompi debug"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "{count} altro avviso",
-			"other": "{count} altri avvisi"
-		},
+		"moreNotices": "{count, plural, one{# altro avviso} other{# altri avvisi}}",
 		"more": "altri {count}"
 	},
 	"crashRecovery": {
@@ -1540,7 +1489,7 @@
 	},
 	"archivedTabs": {
 		"title": "Archiviate",
-		"buttonLabel": {"one": "{count} scheda archiviata di recente", "other": "{count} schede archiviate di recente"},
+		"buttonLabel": "{count, plural, one{# scheda archiviata di recente} other{# schede archiviate di recente}}",
 		"restore": "Ripristina",
 		"showAll": "Mostra tutte le schede archiviate",
 		"showAllDownloads": "Mostra tutti i download"
@@ -1551,7 +1500,7 @@
 		"undo": "Annulla",
 		"reopen": "Riapri",
 		"archived": "«{title}» archiviata",
-		"archivedCount": {"one": "{count} scheda archiviata", "other": "{count} schede archiviate"}
+		"archivedCount": "{count, plural, one{# scheda archiviata} other{# schede archiviate}}"
 	},
 	"updateCard": {
 		"ready": "Pronto per l'installazione",
@@ -1768,26 +1717,11 @@
 			"done": "Fatto: {list}.",
 			"nothing": "Fatto: niente di nuovo da importare.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} segnalibro",
-					"other": "{count} segnalibri"
-				},
-				"tabs": {
-					"one": "{count} scheda aperta",
-					"other": "{count} schede aperte"
-				},
-				"history": {
-					"one": "{count} pagina di cronologia",
-					"other": "{count} pagine di cronologia"
-				},
-				"cookies": {
-					"one": "{count} cookie",
-					"other": "{count} cookie"
-				},
-				"extensions": {
-					"one": "{count} estensione",
-					"other": "{count} estensioni"
-				}
+				"bookmarks": "{count, plural, one{# segnalibro} other{# segnalibri}}",
+				"tabs": "{count, plural, one{# scheda aperta} other{# schede aperte}}",
+				"history": "{count, plural, one{# pagina di cronologia} other{# pagine di cronologia}}",
+				"cookies": "{count, plural, one{# cookie} other{# cookie}}",
+				"extensions": "{count, plural, one{# estensione} other{# estensioni}}"
 			},
 			"step": {
 				"bookmarks": "Importazione dei segnalibri da {from}",
@@ -1905,11 +1839,11 @@
 		"sectionSites": "Siti più visitati",
 		"sectionTerminals": "Dai terminali",
 		"searchResults": "Risultati della ricerca",
-		"dayPages": {"one": "{count} pagina", "other": "{count} pagine"},
-		"daySites": {"one": "{count} sito", "other": "{count} siti"},
+		"dayPages": "{count, plural, one{# pagina} other{# pagine}}",
+		"daySites": "{count, plural, one{# sito} other{# siti}}",
 		"openInNewTab": "Apri in un nuovo pannello",
-		"selected": {"one": "{count} selezionata", "other": "{count} selezionate"},
-		"visits": {"one": "{count} visita", "other": "{count} visite"},
+		"selected": "{count, plural, one{# selezionata} other{# selezionate}}",
+		"visits": "{count, plural, one{# visita} other{# visite}}",
 		"openInNewTabs": "Apri in nuovi pannelli",
 		"delete": "Elimina",
 		"clearSelection": "Deseleziona tutto",
@@ -2479,10 +2413,7 @@
 		"title": "Novità di Lilo",
 		"description": "Piccoli miglioramenti per la navigazione di ogni giorno.",
 		"allChanges": "Tutto in questo aggiornamento",
-		"changes": {
-			"one": "{count} modifica",
-			"other": "{count} modifiche"
-		},
+		"changes": "{count, plural, one{# modifica} other{# modifiche}}",
 		"originalNotes": "Note di rilascio originali.",
 		"unavailable": "Le note di rilascio non sono disponibili in questa versione.",
 		"reopen": "Sempre qui in Aiuto > Novità.",
@@ -2666,10 +2597,7 @@
 			"ownCopyHint": "Lavora su una propria copia del progetto. Uniscila da Modifiche.",
 			"starting": "Avvio dell'agente...",
 			"errorHint": "Invia un messaggio per riprovare.",
-			"showEarlier": {
-				"one": "Mostra {count} elemento precedente",
-				"other": "Mostra {count} elementi precedenti"
-			},
+			"showEarlier": "{count, plural, one{Mostra # elemento precedente} other{Mostra # elementi precedenti}}",
 			"queuedTag": "In coda",
 			"sendNow": "Invia ora",
 			"thought": "Ragionamento",
@@ -2679,16 +2607,10 @@
 			"restore": "Ripristina",
 			"undo": "Annulla",
 			"undone": "Annullato",
-			"moreLines": {
-				"one": "{count} riga in più",
-				"other": "{count} righe in più"
-			},
+			"moreLines": "{count, plural, one{# riga in più} other{# righe in più}}",
 			"plan": "Piano",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} passaggio completato",
-				"other": "{count} passaggi completati"
-			},
+			"planDone": "{count, plural, one{# passaggio completato} other{# passaggi completati}}",
 			"planStatus": {
 				"pending": "Da fare",
 				"in_progress": "In corso",
@@ -2716,26 +2638,11 @@
 				"failed": "Non riuscito"
 			},
 			"group": {
-				"read": {
-					"one": "{count} file letto",
-					"other": "{count} file letti"
-				},
-				"search": {
-					"one": "{count} ricerca",
-					"other": "{count} ricerche"
-				},
-				"fetch": {
-					"one": "{count} pagina recuperata",
-					"other": "{count} pagine recuperate"
-				},
-				"think": {
-					"one": "Ha riflettuto {count} volta",
-					"other": "Ha riflettuto {count} volte"
-				},
-				"action": {
-					"one": "{count} azione",
-					"other": "{count} azioni"
-				}
+				"read": "{count, plural, one{# file letto} other{# file letti}}",
+				"search": "{count, plural, one{# ricerca} other{# ricerche}}",
+				"fetch": "{count, plural, one{# pagina recuperata} other{# pagine recuperate}}",
+				"think": "{count, plural, one{Ha riflettuto # volta} other{Ha riflettuto # volte}}",
+				"action": "{count, plural, one{# azione} other{# azioni}}"
 			}
 		},
 		"composer": {
@@ -2773,24 +2680,12 @@
 			"untitled": "Nuova conversazione",
 			"working": "Al lavoro",
 			"failed": "Interrotto per un errore",
-			"linesAdded": {
-				"one": "{count} riga aggiunta",
-				"other": "{count} righe aggiunte"
-			},
-			"linesRemoved": {
-				"one": "{count} riga rimossa",
-				"other": "{count} righe rimosse"
-			},
-			"pages": {
-				"one": "{count} pagina",
-				"other": "{count} pagine"
-			},
+			"linesAdded": "{count, plural, one{# riga aggiunta} other{# righe aggiunte}}",
+			"linesRemoved": "{count, plural, one{# riga rimossa} other{# righe rimosse}}",
+			"pages": "{count, plural, one{# pagina} other{# pagine}}",
 			"showPages": "Mostra pagine",
 			"hidePages": "Nascondi pagine",
-			"morePermissions": {
-				"one": "{count} altra richiesta in attesa",
-				"other": "altre {count} richieste in attesa"
-			}
+			"morePermissions": "{count, plural, one{# altra richiesta in attesa} other{altre # richieste in attesa}}"
 		},
 		"question": {
 			"allow": "Consenti",
@@ -2804,10 +2699,7 @@
 		},
 		"badge": {
 			"title": "Agenti",
-			"waiting": {
-				"one": "Agenti, {count} ti aspetta",
-				"other": "Agenti, {count} ti aspettano"
-			},
+			"waiting": "{count, plural, one{Agenti, # ti aspetta} other{Agenti, # ti aspettano}}",
 			"new": "Nuovo",
 			"needsYou": "Ti aspetta",
 			"running": "In esecuzione",
@@ -2828,10 +2720,7 @@
 			"signInOpenTerminal": "Apri nel terminale"
 		},
 		"work": {
-			"images": {
-				"one": "{count} immagine",
-				"other": "{count} immagini"
-			},
+			"images": "{count, plural, one{# immagine} other{# immagini}}",
 			"verb": {
 				"read": "Letto",
 				"edit": "Modificato",
@@ -2849,46 +2738,16 @@
 				"fetch": "Recupero di"
 			},
 			"summary": {
-				"read": {
-					"one": "letto {count} file",
-					"other": "letti {count} file"
-				},
-				"edit": {
-					"one": "modificato {count} file",
-					"other": "modificati {count} file"
-				},
-				"execute": {
-					"one": "eseguito {count} comando",
-					"other": "eseguiti {count} comandi"
-				},
-				"search": {
-					"one": "cercato {count} volta",
-					"other": "cercato {count} volte"
-				},
-				"fetch": {
-					"one": "recuperata {count} pagina",
-					"other": "recuperate {count} pagine"
-				},
-				"think": {
-					"one": "riflettuto {count} volta",
-					"other": "riflettuto {count} volte"
-				},
-				"browser": {
-					"one": "usato il browser {count} volta",
-					"other": "usato il browser {count} volte"
-				},
-				"browserOn": {
-					"one": "usato il browser {count} volta su {site}",
-					"other": "usato il browser {count} volte su {site}"
-				},
-				"tool": {
-					"one": "usato {count} strumento",
-					"other": "usati {count} strumenti"
-				},
-				"agent": {
-					"one": "avviato {count} agente",
-					"other": "avviati {count} agenti"
-				}
+				"read": "{count, plural, one{letto # file} other{letti # file}}",
+				"edit": "{count, plural, one{modificato # file} other{modificati # file}}",
+				"execute": "{count, plural, one{eseguito # comando} other{eseguiti # comandi}}",
+				"search": "{count, plural, one{cercato # volta} other{cercato # volte}}",
+				"fetch": "{count, plural, one{recuperata # pagina} other{recuperate # pagine}}",
+				"think": "{count, plural, one{riflettuto # volta} other{riflettuto # volte}}",
+				"browser": "{count, plural, one{usato il browser # volta} other{usato il browser # volte}}",
+				"browserOn": "{count, plural, one{usato il browser # volta su {site}} other{usato il browser # volte su {site}}}",
+				"tool": "{count, plural, one{usato # strumento} other{usati # strumenti}}",
+				"agent": "{count, plural, one{avviato # agente} other{avviati # agenti}}"
 			},
 			"browser": {
 				"closeTab": "Ha chiuso un pannello",
@@ -2939,10 +2798,7 @@
 				"request": "Invio di una richiesta a {url}"
 			},
 			"exit": "Uscita {code}",
-			"showAll": {
-				"one": "Mostra {count} riga",
-				"other": "Mostra tutte le {count} righe"
-			},
+			"showAll": "{count, plural, one{Mostra # riga} other{Mostra tutte le # righe}}",
 			"showLess": "Mostra le ultime righe"
 		},
 		"turn": {
@@ -2950,10 +2806,7 @@
 			"stopped": "Interrotto",
 			"refusalTitle": "Il modello ha rifiutato di continuare",
 			"refusalHint": "Le sue protezioni hanno fermato questo turno, a volte su lavoro legittimo. Riformula la richiesta o scegli un altro modello qui sotto.",
-			"files": {
-				"one": "{count} file modificato",
-				"other": "{count} file modificati"
-			},
+			"files": "{count, plural, one{# file modificato} other{# file modificati}}",
 			"review": "Esamina",
 			"copy": "Copia risposta",
 			"copied": "Copiato"
