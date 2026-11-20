@@ -73,7 +73,8 @@ extension MainWindowController {
             }
             NSAnimationContext.runAnimationGroup({ context in
                 context.duration = duration
-                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                // The toggle's curve (WindowFrameView.toggleTiming): every sidebar motion keeps one ease.
+                context.timingFunction = WindowFrameView.toggleTiming
                 for button in buttons { button.animator().alphaValue = show ? 1 : 0 }
             }, completionHandler: { [weak self] in
                 MainActor.assumeIsolated {
