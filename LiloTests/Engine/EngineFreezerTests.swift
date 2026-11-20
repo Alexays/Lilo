@@ -91,7 +91,9 @@ final class EngineFreezerTests: XCTestCase {
         let afterResumeValue = try await tab.wkWebView.evaluateJavaScript("window.ticks")
         let afterResume = try XCTUnwrap(afterResumeValue as? NSNumber).intValue
         XCTAssertLessThan(afterResume - before, 10, "timers kept firing while the page was frozen")
-        XCTAssertEqual(WebViewPrivateAccessors(tab.wkWebView).bool("_isSuspended"), false)
+        // The flag is the content process's: it clears once the system runs the process again, later under load.
+        let running = await pollUntil(timeout: 15) { WebViewPrivateAccessors(tab.wkWebView).bool("_isSuspended") == false }
+        XCTAssertTrue(running, "resume must run the page's process again")
         let resumed = await pollUntil {
             ((try? await tab.wkWebView.evaluateJavaScript("window.ticks")) as? NSNumber)?.intValue ?? 0 > afterResume
         }
