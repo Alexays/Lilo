@@ -1,0 +1,3 @@
+kind: Fixed
+body: Closing a tab lets its page finish saving what it writes as it leaves, such as a sign-in, instead of losing it on a busy Mac
+time: 2026-11-20T12:03:26.772676+01:00
