@@ -91,6 +91,7 @@ function context(locale: Locale): MessageContext {
 	if (!ctx) {
 		ctx = {
 			pluralRules: new Intl.PluralRules(locale),
+			ordinalRules: new Intl.PluralRules(locale, { type: "ordinal" }),
 			numberFormat: new Intl.NumberFormat(locale),
 		};
 		contexts.set(locale, ctx);
@@ -110,6 +111,6 @@ export function translate(
 	params?: Record<string, string | number>,
 ): string {
 	const template = (flatCatalog(catalogs[locale] ?? catalogs.en).get(key) ?? flatCatalog(catalogs.en).get(key)) ?? key;
-	// A message without braces is already final — the common case stays a Map lookup.
+	// A message without braces is already final: the common case stays a Map lookup.
 	return template.indexOf("{") === -1 ? template : formatMessage(template, params ?? EMPTY, context(locale));
 }

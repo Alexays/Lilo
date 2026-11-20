@@ -1,7 +1,7 @@
 // Minimal ICU MessageFormat subset: {name} arguments, {n, plural|selectordinal|select, ...}
 // with `=N` exact selectors and `offset:N`, and `#` for the formatted number inside plural
 // options. Apostrophes are literal text (Lilo catalogs do not use ICU quoting, so French
-// "l'onglet" needs no escaping — a deliberate deviation from full ICU). A malformed
+// "l'onglet" needs no escaping: a deliberate deviation from full ICU). A malformed
 // pattern degrades to its literal source instead of throwing.
 
 export type Part = string | { arg: string } | { pound: true } | {
@@ -135,6 +135,7 @@ function parseParts(src: string, start: number, inPlural: boolean, inElement = f
 
 export interface MessageContext {
 	pluralRules: Intl.PluralRules;
+	ordinalRules: Intl.PluralRules;
 	numberFormat: Intl.NumberFormat;
 }
 
@@ -157,7 +158,7 @@ function render(parts: Part[], params: Record<string, string | number>, ctx: Mes
 			const count = typeof raw === "number" ? raw : NaN;
 			const key = part.kind === "select" ? String(raw ?? "other")
 				: part.options.some(([sel]) => sel === `=${count}`) ? `=${count}`
-				: ctx.pluralRules.select(count - part.offset);
+				: (part.kind === "selectordinal" ? ctx.ordinalRules : ctx.pluralRules).select(count - part.offset);
 			const pick = part.options.find(([sel]) => sel === key)?.[1]
 				?? part.options.find(([sel]) => sel === "other")?.[1];
 			// A select has no number of its own: `#` inside its options stays the

@@ -65,6 +65,14 @@ test("translate renders nested select inside a plural option", () => {
 	catalogs.en = en;
 });
 
+test("selectordinal picks the ordinal category, not the cardinal one", () => {
+	const en = catalogs.en;
+	catalogs.en = { ...en, __test: { rank: "{n, selectordinal, one{#st} two{#nd} few{#rd} other{#th}}" } };
+	const ranks = [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111].map((n) => translate("en", "__test.rank", { n }));
+	assert.deepEqual(ranks, ["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd", "23rd", "101st", "111th"]);
+	catalogs.en = en;
+});
+
 test("malformed ICU patterns fall back to the literal message, never blank or wrong output", () => {
 	const en = catalogs.en;
 	catalogs.en = {
