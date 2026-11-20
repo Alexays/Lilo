@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Saved flows: a second flow_start no longer discards the recording in progress, and flow_save lists the recorded steps so an agent can see what was captured'
+time: '2026-11-19T20:15:39.349-08:00'
