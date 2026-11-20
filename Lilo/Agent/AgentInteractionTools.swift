@@ -122,13 +122,8 @@ enum AgentInteractionTools {
             Start over signed in nowhere: wipes the ephemeral Agents profile (cookies, storage, cache, history) and reloads \
             your tabs. Only that profile, never one of the user's; refused while another agent has tabs in it, unless wait \
             lets it finish first.
-            """, ["wait": AgentTools.prop("number", "Seconds to wait for other agents to close their tabs, up to 600 (default 0).")]),
-        AgentTools.tool("list_connected_browsers", "Lists the browsers this server can drive: the running Lilo.", [:]),
-        AgentTools.tool("select_browser", "Select the browser to drive. Lilo is the only one.", ["deviceId": AgentTools.prop("string", "The browser id.")]),
-        AgentTools.tool("switch_browser", "Connect to a browser. Lilo is already connected.", [:])
+            """, ["wait": AgentTools.prop("number", "Seconds to wait for other agents to close their tabs, up to 600 (default 0).")])
     ]
-
-    static let browserPickers: Set = ["list_connected_browsers", "select_browser", "switch_browser"]
 
     static func call(
         _ name: String, arguments: [String: Any], session: AgentSession, control: AgentControl
@@ -263,6 +258,7 @@ enum AgentInteractionTools {
             return [.text(try await control.resetProfile(for: session, wait: arguments["wait"]))]
         case "switch_profile":
             return [.text(try await control.switchProfile(arguments["profile"] as? String ?? "", for: session))]
+        // Claude in Chrome's browser pickers: not listed (Lilo is the one browser), answered for a client that calls them anyway.
         case "list_connected_browsers":
             return [.text(AgentTools.json([["deviceId": "lilo", "name": "Lilo", "isCurrent": true]]))]
         case "select_browser", "switch_browser":

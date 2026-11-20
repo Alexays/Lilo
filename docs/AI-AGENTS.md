@@ -32,6 +32,10 @@ take your keyboard or your tabs. They can borrow one of your profiles for a task
 - `run`: execute a JavaScript program that calls the other tools in a loop, in one call
   (at most 200 tool calls and 60 s by default).
 
+Lilo is the one browser, so it lists no browser to choose. A client written for Claude in Chrome that
+still calls `list_connected_browsers`, `select_browser` or `switch_browser` gets an answer instead
+of an error, and no schema of them is sent on each turn.
+
 ## What Lilo asks you first
 
 Unless you turn it off in Settings, Lilo asks before an agent:
