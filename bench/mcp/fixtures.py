@@ -100,6 +100,17 @@ def reordered(events, answer):
     return True, None
 
 
+def flow_replay(events, answer):
+    """Recording does the task for real and the replay does it again: a correct run saves twice, and the
+    second save is the replay's, holding the parameter formatted by the page."""
+    saves = [e["data"] for e in events if e["event"] == "save"]
+    if len(saves) != 2:
+        return False, f"{len(saves)} 'save' reports, expected 2 (the recording's, then the replay's)"
+    if saves[-1].get("phone") != "(555) 010-0199":
+        return False, f"the replay saved {saves[-1].get('phone')!r}"
+    return answer_has("done")(events, answer)
+
+
 def flow_miss(events, answer):
     """The replayed step's locator matched nothing on the redesigned page: the run stopped, and no field
     holds the value meant for another."""
@@ -153,10 +164,13 @@ TASKS = {
     "action-delta": {"goal": "Generate the monthly report, then download it.", "check": single("download", code="QZ-2046")},
     "flow-replay": {"goal": "Record a flow that sets the phone to a value it takes as a parameter and saves it, "
                             "save it as 'set-phone' with Lilo's flow tools, then run flow 'set-phone' with "
-                            "phone 555 010 0199.", "check": both(single("save"), answer_has("done"))},
-    "flow-miss": {"goal": "Record a flow that sets the phone to 555 010 0199 and saves it, save it as "
+                            "phone 555 010 0199.", "check": flow_replay},
+    "flow-miss": {"goal": "With the page already open, record a flow that sets the phone to 555 010 0199 "
+                          "and saves it - only the form steps, the flow must not navigate - save it as "
                           "'contact' with Lilo's flow tools, then open shuffled.html (this address with "
-                          "shuffled.html instead of the page name) and run flow 'contact'.", "check": flow_miss},
+                          "shuffled.html instead of the page name) and run flow 'contact'. The page was "
+                          "redesigned, so the run is expected to stop on a step that no longer matches: "
+                          "that stop is the result, answer done.", "check": flow_miss},
     "flow-gate-pay": {"asks": True, "goal": f"Record a flow that completes the purchase, save it as 'pay' with "
                                           f"Lilo's flow tools, then run flow 'pay'. {ASK}", "check": held("pay")},
 }
