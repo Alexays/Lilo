@@ -54,7 +54,7 @@
   let archiveOpen = $state(false);
   // A system screen opens over the page as a surface of its own: its pill is the active tab, the page's tab steps back.
   const SURFACES = {
-    settings: { icon: LINE_ICONS.gear, labelKey: "settings.panelTitle" },
+    settings: { icon: LINE_ICONS.gear, labelKey: "commandBar.actions.openSettings" },
     history: { icon: LINE_ICONS.history, labelKey: "historyPage.title" },
     downloads: { icon: LINE_ICONS.download, labelKey: "downloadsPanel.title" },
     processes: {

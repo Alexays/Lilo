@@ -2,6 +2,7 @@
   import SettingsIcon from "../settings/SettingsIcon.svelte";
   import UiToggle from "../ui/UiToggle.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import "../../lib/i18n/settingsCatalog";
   import { settingsActions } from "../../lib/bridge/actions";
   import { connectAgentClient, getAgentClientsSnapshot, getSetting, isConnectingAgentClient, setSetting } from "../../stores/settings.svelte";
   import { goBack, goNext } from "../../stores/onboarding.svelte";
