@@ -247,11 +247,13 @@ jobs:
           if-no-files-found: ignore
 
   # Beside the tests rather than before them: a Release-only build error still fails the run. It is release.yml's
-  # build, ad-hoc signed for want of secrets (signing compiles nothing), so a release tag finds it built.
+  # build, ad-hoc signed for want of secrets (signing compiles nothing), so a release tag finds it built. It runs on
+  # pushes to main only, which frees one of the five free macOS slots for every pull request: a Release-only break
+  # surfaces on main, after the merge.
   release-build:
     name: Release Build (macOS)
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: github.event_name == 'push' && needs.changes.outputs.code == 'true'
     runs-on: xcode-27
     timeout-minutes: 30
     steps:
@@ -291,10 +293,7 @@ jobs:
             !.derived.noindex/build-app/Logs
           key: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
           restore-keys: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
-      # A pull request builds the runner's architecture only; main keeps the universal build its cache saves.
       - run: make release-archive
-        env:
-          LILO_NATIVE_ARCH: ${{ github.event_name == 'pull_request' && '1' || '' }}
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
