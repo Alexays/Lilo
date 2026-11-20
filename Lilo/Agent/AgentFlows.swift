@@ -224,7 +224,7 @@ enum AgentFlows {
     private static func stepLines(_ steps: [[String: Any]]) throws -> [String] {
         try steps.map {
             let data = try JSONSerialization.data(withJSONObject: $0, options: [.sortedKeys, .withoutEscapingSlashes])
-            return String(decoding: data, as: UTF8.self)
+            return String(data: data, encoding: .utf8) ?? ""
         }
     }
 
@@ -310,7 +310,7 @@ enum AgentFlows {
               let data = FileManager.default.contents(atPath: file.path) else {
             throw AgentToolError("No flow named \"\(arguments["name"] as? String ?? "")\"")
         }
-        let lines = String(decoding: data, as: UTF8.self).split(separator: "\n").map(String.init)
+        let lines = (String(data: data, encoding: .utf8) ?? "").split(separator: "\n").map(String.init)
         guard let headerLine = lines.first,
               let header = try? JSONSerialization.jsonObject(with: Data(headerLine.utf8)) as? [String: Any] else {
             throw AgentToolError("Flow \"\(arguments["name"] ?? "")\" is not a saved flow")
