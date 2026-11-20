@@ -2076,6 +2076,7 @@
 		"Open in Split View": "分割表示で開く",
 		"Hide Element…": "要素を非表示…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "このサイトで非表示にする要素をクリックしてください。キャンセルするにはEscキーを押します。",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "要素をクリックするか、範囲をドラッグします。矢印キーで要素を変更し、Returnでキャプチャ、Escでキャンセルします。",
 		"Picture in Picture": "ピクチャ・イン・ピクチャ",
 		"Develop": "開発",
 		"Show Web Inspector": "Web インスペクタを表示",

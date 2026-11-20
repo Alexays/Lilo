@@ -1,0 +1,3 @@
+kind: Added
+body: Selected Area screenshots now outline the element under the pointer: click it to capture it, use the up and down arrow keys to pick its parent or child and Return to capture, or drag to draw a free region as before
+time: 2026-11-20T15:00:00.000000-08:00

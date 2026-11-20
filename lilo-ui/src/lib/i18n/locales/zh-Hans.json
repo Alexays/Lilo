@@ -2076,6 +2076,7 @@
 		"Open in Split View": "在分屏浏览中打开",
 		"Hide Element…": "隐藏元素…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "点按要在此网站上隐藏的元素。按 Esc 键取消。",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "点按元素或拖移选取区域。方向键可更改元素,按 Return 截图,按 Esc 取消。",
 		"Picture in Picture": "画中画",
 		"Develop": "开发",
 		"Show Web Inspector": "显示网页检查器",

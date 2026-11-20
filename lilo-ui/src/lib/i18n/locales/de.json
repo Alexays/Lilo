@@ -2076,6 +2076,7 @@
 		"Open in Split View": "In geteilter Ansicht öffnen",
 		"Hide Element…": "Element ausblenden…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Klicke auf ein Element, um es auf dieser Website auszublenden. Drücke Esc zum Abbrechen.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Klicke auf ein Element oder ziehe einen Bereich auf. Pfeiltasten wechseln das Element, Return nimmt auf, Esc bricht ab.",
 		"Picture in Picture": "Bild-in-Bild",
 		"Develop": "Entwickler",
 		"Show Web Inspector": "Webinformationen einblenden",
