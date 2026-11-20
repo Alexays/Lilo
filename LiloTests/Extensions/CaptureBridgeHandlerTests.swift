@@ -200,7 +200,7 @@ final class CaptureBridgeHandlerTests: XCTestCase {
         let stop;
         chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (message.stop) {
-            stop().then(sendResponse);
+            stop().then(sendResponse, (error) => sendResponse({ error: String(error) }));
             return true;
           }
           (async () => {
@@ -215,8 +215,12 @@ final class CaptureBridgeHandlerTests: XCTestCase {
             const recorder = new MediaRecorder(stream);
             recorder.start(250);
             stop = async () => {
-              recorder.stop();
-              await new Promise((resolve) => { recorder.onstop = resolve; });
+              // A machine that encodes nothing stops the recorder on its own: no second stop event would come.
+              if (recorder.state !== 'inactive') {
+                const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
+                recorder.stop();
+                await stopped;
+              }
               track.stop();
               return true;
             };
