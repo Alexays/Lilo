@@ -155,6 +155,36 @@ final class SidePanelTests: XCTestCase {
         XCTAssertEqual(panel.engine.wkWebView.underPageBackgroundColor, tabPage, "under the page, as under the tab's")
     }
 
+    /// The gap beside the panel is the frame's own band: the divider leaves it clear and takes
+    /// the frame color only for its corner bites, on solid and on glass.
+    func testTheDividerLeavesItsGapToTheFrameBand() async throws {
+        await call("open", gesture(thisWindow))
+        let loaded = await panelLoads("panel")
+        XCTAssertTrue(loaded)
+        let panel = try XCTUnwrap(panelView)
+        let divider = try XCTUnwrap(try XCTUnwrap(window.window?.contentView).subviews
+            .lazy.compactMap { $0 as? SplitDividerView }.first { $0.frame.maxX == panel.frame.minX })
+        window.pendingWindowBackgroundPersistWork?.cancel()
+
+        let spaceColor = try XCTUnwrap(NSColor(cssHex: "#841b23"))
+        func assertDivider(_ expected: NSColor, _ label: String, file: StaticString = #filePath, line: UInt = #line) {
+            let layers = divider.layer?.sublayers ?? []
+            let gap = layers.first?.backgroundColor.flatMap { NSColor(cgColor: $0) }
+            XCTAssertEqual(gap?.alphaComponent ?? -1, 0, "\(label): the gap stays clear for the frame band", file: file, line: line)
+            // Sublayer 2 is the first corner bite; a shape layer paints with fillColor.
+            let bite = (layers.dropFirst(2).first as? CAShapeLayer)?.fillColor.flatMap { NSColor(cgColor: $0) }
+            XCTAssertEqual(bite?.cssHexString, expected.cssHexString, "\(label) bite", file: file, line: line)
+            XCTAssertEqual(bite?.alphaComponent ?? -1, expected.alphaComponent, accuracy: 0.001, "\(label) bite", file: file, line: line)
+        }
+
+        window.applyWindowChromeColors("#841b23")
+        assertDivider(spaceColor, "solid")
+        window.applyWindowMaterial("glass")
+        assertDivider(spaceColor.withAlphaComponent(0.06), "glass")
+        window.applyWindowMaterial("solid")
+        assertDivider(spaceColor, "solid again")
+    }
+
     func testAShrinkingWindowNarrowsThePanelInsteadOfCoveringTheSidebar() async throws {
         await call("open", gesture(thisWindow))
         let panel = try XCTUnwrap(panelView)
