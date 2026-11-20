@@ -178,6 +178,7 @@ enum AgentMCP {
                 var reply: [String: Any] = ["content": [AgentContent.text(text).json], "isError": true]
                 var meta: [String: Any] = [:]
                 meta["lilo/errorCode"] = code
+                if let consent = (error as? AgentToolError)?.consent { meta["lilo/consent"] = consent.rawValue }
                 if sent.write { meta["lilo/possibleCommit"] = true }
                 if !meta.isEmpty { reply["_meta"] = meta }
                 return result(id: id, reply)
@@ -251,9 +252,12 @@ struct AgentToolError: LocalizedError {
     let message: String
     /// Stable and machine-readable, sent as `_meta["lilo/errorCode"]`: "needs_user" when only the user can unblock the call.
     let code: String?
-    init(_ message: String, code: String? = nil) {
+    /// The consent answer behind a `needs_user` refusal, sent as `_meta["lilo/consent"]`.
+    let consent: ConsentAnswer?
+    init(_ message: String, code: String? = nil, consent: ConsentAnswer? = nil) {
         self.message = message
         self.code = code
+        self.consent = consent
     }
     var errorDescription: String? { message }
 }
