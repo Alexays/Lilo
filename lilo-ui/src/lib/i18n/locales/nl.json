@@ -1054,6 +1054,7 @@
 		"showFolder": "Toon downloadmap",
 		"clearFinished": "Wis voltooide downloads",
 		"dragFile": "Sleep bestand",
+		"showInFinder": "Toon in Finder",
 		"announceDone": "{filename} gedownload",
 		"announceFailed": "Downloaden van {filename} mislukt"
 	},
