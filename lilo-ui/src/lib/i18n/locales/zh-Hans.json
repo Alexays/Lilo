@@ -832,6 +832,8 @@
 		"unreadCount": "{count} 项未读",
 		"previewOpen": "打开",
 		"sleeping": "已休眠",
+		"dozing": "休眠中",
+		"dozingHint": "已休眠以节省内存,打开时唤醒。",
 		"pinned": "已固定",
 		"loading": "正在载入",
 		"muted": "已静音",

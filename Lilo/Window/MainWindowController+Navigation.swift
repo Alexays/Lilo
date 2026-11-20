@@ -320,6 +320,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
         if !isLoading { context.hiddenSpaceLifecycle.scheduleHiddenRefreeze() }
     }
 
+    func tab(_ tab: WKWebViewTab, didUpdateSleeping isSleeping: Bool) {
+        updateAndEmit(tab.id) { $0.isSleeping = isSleeping }
+    }
+
     func tabDidWake(_ tab: WKWebViewTab) {
         context.hiddenSpaceLifecycle.scheduleHiddenRefreeze()
     }

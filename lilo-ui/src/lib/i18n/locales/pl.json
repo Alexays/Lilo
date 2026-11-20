@@ -832,6 +832,8 @@
 		"unreadCount": "Nieprzeczytane: {count}",
 		"previewOpen": "Otwórz",
 		"sleeping": "Uśpiona",
+		"dozing": "Uśpiona",
+		"dozingHint": "Uśpiona, by oszczędzać pamięć. Wybudzi się po otwarciu.",
 		"pinned": "Przypięta",
 		"loading": "Wczytywanie",
 		"muted": "Wyciszona",

@@ -832,6 +832,8 @@
 		"unreadCount": "未読{count}件",
 		"previewOpen": "開く",
 		"sleeping": "スリープ中",
+		"dozing": "休止中",
+		"dozingHint": "メモリを節約するため休止中です。開くと復帰します。",
 		"pinned": "固定済み",
 		"loading": "読み込み中",
 		"muted": "消音中",

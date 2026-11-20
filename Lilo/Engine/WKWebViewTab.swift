@@ -92,6 +92,8 @@ final class WKWebViewTab: NSObject {
         func tabRequestsForeground(_ tab: WKWebViewTab)
         /// A call outside activation resumed this frozen tab.
         func tabDidWake(_ tab: WKWebViewTab)
+        /// The page was suspended in place or resumed.
+        func tab(_ tab: WKWebViewTab, didUpdateSleeping isSleeping: Bool)
         /// The page handed us raw bytes to save to a file (blob/canvas export).
         func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL)
         /// The user asked to bookmark the current page (page context menu / Cmd+D).
@@ -642,6 +644,7 @@ final class WKWebViewTab: NSObject {
         guard !isFrozen, lentToExtensionAt.map({ now.timeIntervalSince($0) >= 2 }) ?? true else { return }
         isFrozen = true
         freezer.freeze(webView)
+        delegate?.tab(self, didUpdateSleeping: true)
         if let adapter = tabManager?.tabAdapter(for: id) { tabManager?.reportExtensionTabChange(of: adapter, ["frozen"]) }
     }
 
@@ -650,6 +653,7 @@ final class WKWebViewTab: NSObject {
     func resume(completion: @escaping () -> Void = {}) {
         guard isFrozen, !isPageLost else { return completion() }
         isFrozen = false
+        delegate?.tab(self, didUpdateSleeping: false)
         if let adapter = tabManager?.tabAdapter(for: id) { tabManager?.reportExtensionTabChange(of: adapter, ["frozen"]) }
         freezer.resume(webView) { [weak self] in
             self?.capturePageColorIfStale()
@@ -1721,6 +1725,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didHoverLink href: String?) {}
     func tabRequestsForeground(_ tab: WKWebViewTab) {}
     func tabDidWake(_ tab: WKWebViewTab) {}
+    func tab(_ tab: WKWebViewTab, didUpdateSleeping isSleeping: Bool) {}
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {}
     func tabRequestsBookmark(_ tab: WKWebViewTab) {}
     var hidesElements: Bool { false }

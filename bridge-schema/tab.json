@@ -23,6 +23,8 @@
     { "name": "isMicrophoneMuted",         "type": "bool",    "tsOptional": false, "tsDefault": "false" },
     { "name": "isCameraActive",            "type": "bool",    "tsOptional": false, "tsDefault": "false" },
     { "name": "isScreenSharing",           "type": "bool",    "tsOptional": false, "tsDefault": "false" },
+    { "name": "isSleeping",              "type": "bool",    "tsOptional": true,  "tsDefault": "false",
+      "_comment": "Web tabs: the page is suspended in place or its engine was discarded; it wakes on activation." },
     { "name": "hasPopup",                  "type": "bool",    "tsOptional": true,  "tsDefault": "false",
       "_comment": "A page popup opened by this tab is still open." },
     { "name": "spaceId",                   "type": "string",  "tsOptional": true,  "tsPatchSkip": true,

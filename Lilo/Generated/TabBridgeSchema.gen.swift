@@ -23,6 +23,7 @@ enum TabBridgeField: String, CaseIterable {
 	case isMicrophoneMuted = "isMicrophoneMuted"
 	case isCameraActive = "isCameraActive"
 	case isScreenSharing = "isScreenSharing"
+	case isSleeping = "isSleeping"
 	case hasPopup = "hasPopup"
 	case spaceId = "spaceId"
 	case groupId = "groupId"

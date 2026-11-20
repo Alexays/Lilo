@@ -579,6 +579,7 @@ final class TabManager {
             loading: requestedURL ?? ((tab.isPinned || tab.isBookmarked) ? (tab.homeURL ?? tab.url) : tab.url),
             markRestoring: true
         )
+        updateTab(id: id) { $0.isSleeping = false }
         // A rebuilt engine (discard, crash, extension change) takes back what the tab was set to.
         if tab.isMuted { engine.setMuted(true) }
         engine.isAgentControlled = tab.isAgentControlled
