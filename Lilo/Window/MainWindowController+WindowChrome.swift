@@ -226,7 +226,12 @@ extension MainWindowController {
         let overSidebar = !window.styleMask.contains(.fullScreen) && ((tabLayout.position == .left && sidebarVisible && !railReplacesSidebar) || overlayCoversLights)
         let compactBar = !window.styleMask.contains(.fullScreen) && sidebarVisible && hasCompactPageToolbar
         let corner = (overSidebar && tabLayout.shown(toolbarVisible: toolbarVisible) == .default) || compactBar
-        let inset: CGFloat? = overSidebar || compactBar ? Self.trafficLightsInset : nil
+        // Docked on the left, the rail takes the sidebar's place: the lights move onto the toolbar row,
+        // the rail's column plus the same inset they keep over the sidebar.
+        let rail = sidebarRail && tabLayout.position == .left
+        let inset: CGFloat? = overSidebar || compactBar ? Self.trafficLightsInset
+            : rail ? Self.sidebarRailWidth + Self.contentInset + Self.trafficLightsInset
+            : nil
         trafficLightAnimator.place(window: window, inset: inset, square: corner)
     }
 
