@@ -358,15 +358,31 @@ html[data-sidebar-narrow] .header-spacer {
    titles give back their room continuously toward the rail's width, where only the icons remain. */
 @container sidebar (width < 211px) {
   /* The close and sound buttons keep the title from reading: they wait behind the row's fade. */
-  .tab-item .tab-actions,
-  .new-tab-line :is(.new-terminal-button, .new-agents-slot) {
+  .tab-item .tab-actions {
     display: none;
+  }
+}
+
+/* The New Tab row keeps its terminal and agents buttons at every width; its label steps down
+   instead. Fixed room: the list's 8+4 pads + 4 scrollbar gutter, the row's 8 pad + 16 icon +
+   8 gap, terminal 2+32+2, agents 32+2 = 118 px of the container. "New Tab" wants ~48 px of
+   label: under 166 px "New" (~24 px) takes over, and under 141 px even that loses to the "+". */
+.new-tab-line .new-tab-label-short {
+  display: none;
+}
+
+@container sidebar (width < 166px) {
+  .new-tab-line .new-tab-label {
+    display: none;
+  }
+  .new-tab-line .new-tab-label-short {
+    display: inline;
   }
 }
 
 @container sidebar (width < 141px) {
   .tab-item .tab-title,
-  .new-tab-line .new-tab-label {
+  .new-tab-line .new-tab-label-short {
     display: none;
   }
 }

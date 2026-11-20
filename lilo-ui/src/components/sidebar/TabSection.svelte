@@ -1418,6 +1418,7 @@
     </svg>
   </span>
   <span class="new-tab-label">{t("tabSection.newTab")}</span>
+  <span class="new-tab-label-short">{t("tabSection.newTabShort")}</span>
 {/snippet}
 
 {#snippet newTabRow()}
@@ -1432,6 +1433,7 @@
       <div class="new-tab-line" bind:this={newTabLineEl}>
         <button
           class="new-tab-row"
+          aria-label={t("tabSection.newTab")}
           disabled={!interactive}
           use:tooltip={{ text: t("tabSection.newTab"), shortcut: shortcutKeys("tab.new") }}
           onclick={toggleNewTab}
@@ -2248,6 +2250,9 @@
   .new-tab-line {
     display: flex;
     align-items: center;
+    /* Below ~110 px of container the buttons run past the row's end: they clip here,
+       progressively, so the space pager's scroller never sees the overflow. */
+    overflow: clip;
   }
 
   .new-tab-row {
@@ -2359,7 +2364,8 @@
     justify-content: center;
   }
 
-  .new-tab-label {
+  .new-tab-label,
+  .new-tab-label-short {
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;

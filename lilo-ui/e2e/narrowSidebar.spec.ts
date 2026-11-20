@@ -122,3 +122,55 @@ test("in the continuous narrow range, the header drops its spacer and the tab ro
 	await expect.poll(sidebarWidth).toBe("107px");
 	await expect(page.locator(".tab-item .tab-title").first()).toBeHidden();
 });
+
+// The New Tab row answers the narrowing the other way: the terminal and agents buttons stay at
+// every width and the label steps down "New Tab" -> "New" -> "+" (the container thresholds live
+// in global.css, on the row's fixed furniture: 8+8 list pads, 8 pad + 16 icon + 8 gap, the
+// buttons' 36 and 34 px = 118 px of label room).
+test("the New Tab row keeps its buttons while the label steps down to the icon", async ({ page }) => {
+	await bootNarrow(page, "tabs", 203);
+	const handle = page.locator(".sidebar-resize-handle");
+	const sidebarWidth = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width"));
+
+	const line = page.locator(".new-tab-line");
+	const fullLabel = line.locator(".new-tab-label");
+	const shortLabel = line.locator(".new-tab-label-short");
+	const terminal = line.locator(".new-terminal-button");
+	const agents = line.locator(".agents-button");
+
+	await expect(fullLabel).toBeVisible();
+	await expect(shortLabel).toBeHidden();
+	await expect(terminal).toBeVisible();
+	await expect(agents).toBeVisible();
+
+	await handle.focus();
+	// ~155 pt: under the 166 px container threshold the short label takes over; the buttons stay.
+	for (let i = 0; i < 6; i++) await page.keyboard.press("ArrowLeft");
+	await expect.poll(sidebarWidth).toBe("155px");
+	await expect(fullLabel).toBeHidden();
+	await expect(shortLabel).toBeVisible();
+	await expect(terminal).toBeVisible();
+	await expect(agents).toBeVisible();
+
+	// ~131 pt: under 141 px only the "+" and the buttons remain.
+	for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowLeft");
+	await expect.poll(sidebarWidth).toBe("131px");
+	await expect(shortLabel).toBeHidden();
+	await expect(terminal).toBeVisible();
+	await expect(agents).toBeVisible();
+
+	// Down to the rail's width the buttons run past the row's edge: the row holds its place
+	// and clips them progressively instead of squashing or hiding them.
+	for (let i = 0; i < 12; i++) await page.keyboard.press("ArrowLeft");
+	await expect.poll(sidebarWidth).toBe("40px");
+	const lineBox = (await line.boundingBox())!;
+	const viewportBox = (await page.locator(".sidebar-viewport").boundingBox())!;
+	expect(lineBox.x + lineBox.width).toBeLessThanOrEqual(viewportBox.x + viewportBox.width);
+	expect((await terminal.boundingBox())!.width).toBe(32);
+	// Past the line's edge the clipped button no longer takes the hit.
+	const hit = await page.evaluate(
+		([x, y]) => document.elementFromPoint(x, y)?.className ?? "",
+		[lineBox.x + lineBox.width + 2, lineBox.y + lineBox.height / 2],
+	);
+	expect(hit).not.toMatch(/new-tab-row|new-terminal-button|agents-button/);
+});

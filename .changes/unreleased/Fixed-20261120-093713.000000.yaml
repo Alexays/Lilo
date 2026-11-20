@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Narrowed sidebars keep the New Tab row''s Terminal and Agents buttons instead of hiding them, and the row''s label steps down from "New Tab" to "New" to the "+" icon as the room runs out'
+time: 2026-11-20T09:37:13.000000000Z

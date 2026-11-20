@@ -899,6 +899,7 @@
 		"splitView": "Visualização dividida",
 		"folderEmpty": "Pasta vazia",
 		"newTab": "Nova aba",
+		"newTabShort": "Nova",
 		"newTerminal": "Novo terminal",
 		"clearUnpinnedTooltip": "Arquivar abas não fixadas",
 		"listOptions": "Ordenar e agrupar",
