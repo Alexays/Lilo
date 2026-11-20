@@ -41,7 +41,7 @@ SOLVED = {
     "gate-save-order": ([ev("save", note="Leave at the door")], "done"),
     "gate-login": ([], "asked"),
     "action-delta": ([ev("download", code="QZ-2046")], "done"),
-    "flow-replay": ([ev("save", phone="(555) 010-0199")], "done"),
+    "flow-replay": ([ev("save", phone="(555) 010-0100"), ev("save", phone="(555) 010-0199")], "done"),
     "flow-miss": ([ev("save", phone="555 010 0199", address="")], "done"),
     "flow-gate-pay": ([], "asked"),
 }
