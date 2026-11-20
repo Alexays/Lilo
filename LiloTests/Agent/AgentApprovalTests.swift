@@ -88,6 +88,83 @@ final class AgentApprovalTests: AgentToolTestCase {
         XCTAssertEqual(title, "Shop")
     }
 
+    /// A second window on a space of its own, with a tab of its own: it holds no page of the agent.
+    private func otherWindow() throws -> MainWindowController {
+        let profileId = space.profileId
+        let other = MainWindowController(context: context)
+        let nsWindow = try XCTUnwrap(other.window)
+        nsWindow.alphaValue = 0
+        nsWindow.orderFrontRegardless()
+        nsWindow.setFrame(NSRect(x: -20000, y: -20000, width: 1000, height: 700), display: false)
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 1000, height: 650))
+        try XCTUnwrap(nsWindow.contentView).addSubview(container)
+        other.contentContainerView = container
+        context.windows.add(other)
+        other.switchToSpace(try context.spaceManager!.createSpace(name: "Other", profileId: profileId).id)
+        other.createTabStateFirst(url: URL(string: "about:blank"))
+        addTeardownBlock { @MainActor in nsWindow.close() }
+        return other
+    }
+
+    func testAnActionQuestionIsShownOnlyInTheWindowHoldingTheAgentsTab() async throws {
+        let other = try otherWindow()
+        let here = BridgeEventRecorder(window.bridgeRouter)
+        let there = BridgeEventRecorder(other.bridgeRouter)
+        let tab = try await shopTab()
+
+        let reply = Task { try await click("Place order", tab: tab) }
+        let requestId = try await pendingQuestion()
+
+        let holder = try XCTUnwrap(context.windows.window(forTab: try XCTUnwrap(control.pendingConsentAnswers[requestId]?.tabId)))
+        let (asked, free, freeWindow) = holder === window ? (here, there, other) : (there, here, window!)
+        await pollUntil(timeout: 5) { asked.events.contains { $0.name == "agentControlRequested" } }
+        XCTAssertEqual(asked.events.filter { $0.name == "agentControlRequested" }.count, 1)
+        XCTAssertTrue(free.events.filter { $0.name == "agentControlRequested" }.isEmpty, "the other window's drawer stays free")
+
+        let handler = SettingsBridgeHandler(
+            settingsStore: context.settingsStore!, sitePermissionStoreProvider: { nil }, zoomStoreProvider: { nil },
+            historyStoreProvider: { nil }, extensionRegistryProvider: { nil }, dataStoreProvider: { nil }, context: context,
+            bridgeRouter: freeWindow.bridgeRouter
+        )
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "getAgentActivity", "payload": [:]])))
+        await pollUntil(timeout: 1) { free.events.contains { $0.name == "agentControlRequested" } }
+        XCTAssertTrue(free.events.filter { $0.name == "agentControlRequested" }.isEmpty, "a reloaded window does not get another window's question")
+
+        control.answerConsent(requestId, granted: true)
+        let result = try await reply.value
+        XCTAssertFalse(result.isError, result.text)
+    }
+
+    func testAConversationsRowTurnsAmberWhileItsAgentsQuestionWaits() async throws {
+        let folder = TabFolder(spaceId: space.id, name: "Conversation", color: "#795ceb")
+        let conversation = Tab(title: "Conversation", spaceId: space.id, kind: .agent, cwd: NSTemporaryDirectory(), agentId: "test-agent")
+        _ = try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
+        _ = try window.applyBrowserCommand(.createTab(spaceId: space.id, tab: conversation, activate: false))
+        _ = try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: space.id, kind: .tab, itemId: conversation.id, parentFolderId: folder.id, section: .unpinned, insert: .index(0)
+        ))
+        context.conversations.register(conversation, folderId: folder.id)
+        let session = try XCTUnwrap(control.sessions.first)
+        session.conversationSpaceId = space.id
+        session.conversationTabId = conversation.id
+        session.folders[nil] = folder.id
+        let listed = await client.callTool("tabs_context_mcp", ["createIfEmpty": true])
+        let tabs = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(listed.text.utf8)) as? [String: Any])
+        let tab = try XCTUnwrap((tabs["availableTabs"] as? [[String: Any]])?.first?["tabId"] as? Int, listed.text)
+        let navigated = await client.callTool("navigate", ["tabId": tab, "url": "http://127.0.0.1:\(server.port)/"])
+        XCTAssertFalse(navigated.isError, navigated.text)
+        func awaiting() -> Date? { window.updateRuntimeTab(id: conversation.id) { _ in }?.awaitingInputSince }
+        XCTAssertNil(awaiting())
+
+        let reply = Task { try await click("Place order", tab: tab) }
+        let requestId = try await pendingQuestion()
+
+        XCTAssertNotNil(awaiting(), "the row turns amber like for an agent's permission")
+        control.answerConsent(requestId, granted: false)
+        _ = try await reply.value
+        XCTAssertNil(awaiting(), "and back once answered")
+    }
+
     func testPostingButtonsAreAsked() async throws {
         let tab = try await agentTab(showing: """
             <!doctype html><body><div role="button">Tout poster</div><button>Post all</button><button>Reply</button><button>Répondre</button></body>

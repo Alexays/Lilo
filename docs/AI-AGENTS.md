@@ -41,6 +41,8 @@ Unless you turn it off in Settings, Lilo asks before an agent:
   a frame of another origin, which Lilo cannot read, is always asked;
 - sends a request other than GET or HEAD with the cookies of one of your profiles.
 
+The question opens in the window that holds the agent's page, and the agent's conversation row turns amber meanwhile; your other windows, and the site and extension prompts there, are not held up by it. It counts as a refusal after 45 seconds without an answer.
+
 Sites you always allow are listed in Settings, where you can remove them. Whatever the setting,
 Lilo always asks before an agent hands a page one of your files (`file_upload`, `upload_image`).
 

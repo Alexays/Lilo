@@ -227,8 +227,13 @@ final class AgentControl {
     private static let allowedClientsKey = "agentAllowedClients"
     /// The question asked of each client, by name and identity, and how many of its connections still wait on it.
     private var pendingConsents: [String: (question: Task<Bool?, Never>, waiting: Int)] = [:]
-    /// Questions shown in the drawers, by request id, with what the drawers show, until the user answers.
-    private(set) var pendingConsentAnswers: [String: (answer: CheckedContinuation<Bool?, Never>, request: [String: Any])] = [:]
+    /// Questions shown in the drawers, by request id, with what the drawers show, until the user answers. `tabId` is
+    /// the tab of a question about a page: only the window holding it shows the question.
+    private(set) var pendingConsentAnswers: [String: (answer: CheckedContinuation<Bool?, Never>, request: [String: Any], tabId: UUID?)] = [:]
+    /// The conversations whose agent waits on a question about a page, with how many: their rows turn amber.
+    private var askingConversations: [UUID: Int] = [:]
+
+    func isAsking(conversation tabId: UUID) -> Bool { askingConversations[tabId] != nil }
 
     /// The client names the user let drive Lilo, each with the identities (`clientIdentity`) it was allowed as.
     var allowedClients: [String: [String]] {
@@ -364,10 +369,12 @@ final class AgentControl {
         }
     }
 
-    /// Asked in every window's address-bar drawer, which leaves the user's typing alone; the Dock icon
+    /// Asked in the address-bar drawer, which leaves the user's typing alone, of every window, or of the one holding
+    /// `tabId` for a question about that tab's page: the other windows' prompts go on meanwhile. The Dock icon
     /// bounces when Lilo is in the background. Nil when nothing could ask, or unanswered after `timeout`, or cancelled.
     func askConsent(
-        _ name: String, executable: String = "", profileName: String? = nil, action: [String: String]? = nil, timeout: TimeInterval = 120
+        _ name: String, executable: String = "", profileName: String? = nil, action: [String: String]? = nil, tabId: UUID? = nil,
+        timeout: TimeInterval = 120
     ) async -> Bool? {
         guard let windows = context?.windows.windows, !windows.isEmpty else { return nil }
         let requestId = UUID().uuidString
@@ -375,11 +382,11 @@ final class AgentControl {
             "requestId": requestId, "clientName": Self.displayName(name), "executable": executable, "profileName": profileName ?? "",
             "action": action ?? NSNull()
         ]
-        for window in windows { window.bridgeRouter.send(event: "agentControlRequested", data: request) }
+        for window in shows(tabId, among: windows) { window.bridgeRouter.send(event: "agentControlRequested", data: request) }
         if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in self?.answerConsent(requestId, granted: nil) }
         return await withTaskCancellationHandler {
-            await withCheckedContinuation { pendingConsentAnswers[requestId] = ($0, request) }
+            await withCheckedContinuation { pendingConsentAnswers[requestId] = ($0, request, tabId) }
         } onCancel: {
             Task { @MainActor [weak self] in self?.answerConsent(requestId, granted: nil) }
         }
@@ -388,7 +395,16 @@ final class AgentControl {
     /// Shows the questions still waiting in a window whose chrome page just loaded: one that loaded or reloaded
     /// after a question was sent never got it.
     func resendPendingConsents(to router: BridgeRouter?) {
-        for pending in pendingConsentAnswers.values { router?.send(event: "agentControlRequested", data: pending.request) }
+        let windows = context?.windows.windows ?? []
+        for pending in pendingConsentAnswers.values {
+            guard let router, pending.tabId == nil || shows(pending.tabId, among: windows).contains(where: { $0.bridgeRouter === router }) else { continue }
+            router.send(event: "agentControlRequested", data: pending.request)
+        }
+    }
+
+    private func shows(_ tabId: UUID?, among windows: [MainWindowController]) -> [MainWindowController] {
+        guard let tabId, let holder = context?.windows.window(forTab: tabId) else { return windows }
+        return [holder]
     }
 
     static let asksBeforeActionsKey = "agentAskBeforeActions"
@@ -424,18 +440,30 @@ final class AgentControl {
             }
         }
         guard let label = found else { return false }
-        // Answered before the tool's own deadline, so the agent learns the user is needed.
         let action = ["kind": kind, "label": label, "site": site, "tab": engine.currentTitle ?? ""]
-        session.waitingForUser = true
-        publishActivity()
-        let allowed = await askConsent(session.clientName, action: action, timeout: 45)
-        session.waitingForUser = false
-        publishActivity()
+        let allowed = await askAboutAction(action, engine: engine, session: session)
         guard allowed == true else {
             let what = ["enter": "pressing Enter to submit", "fetch": "sending"][kind] ?? "clicking"
             throw AgentToolError("The user did not allow \(what) \"\(label)\" on \(site): ask them to do it or to allow it", code: "needs_user")
         }
         return true
+    }
+
+    /// Asks about an action on `engine`'s page in the window holding it, where its agent's conversation row turns amber
+    /// until the answer. Answered before the tool's own deadline, so the agent learns the user is needed.
+    private func askAboutAction(_ action: [String: String], engine: WKWebViewTab, session: AgentSession) async -> Bool? {
+        session.waitingForUser = true
+        let conversation = session.conversationTabId
+        if let conversation { askingConversations[conversation, default: 0] += 1; context?.conversations.questionChanged(tabId: conversation) }
+        publishActivity()
+        let allowed = await askConsent(session.clientName, action: action, tabId: engine.id, timeout: 45)
+        session.waitingForUser = false
+        if let conversation {
+            askingConversations[conversation] = askingConversations[conversation].flatMap { $0 > 1 ? $0 - 1 : nil }
+            context?.conversations.questionChanged(tabId: conversation)
+        }
+        publishActivity()
+        return allowed
     }
 
     /// Asks the user before a page receives one of their files, whatever the setting above: an agent could
@@ -445,11 +473,7 @@ final class AgentControl {
         let site = engine.currentURL?.host() ?? ""
         let path = (file.path as NSString).abbreviatingWithTildeInPath
         let action = ["kind": "upload", "label": path, "site": site, "tab": engine.currentTitle ?? ""]
-        session.waitingForUser = true
-        publishActivity()
-        let allowed = await askConsent(session.clientName, action: action, timeout: 45)
-        session.waitingForUser = false
-        publishActivity()
+        let allowed = await askAboutAction(action, engine: engine, session: session)
         guard allowed == true else {
             throw AgentToolError("The user did not allow uploading \(path) to \(site): ask them to upload it or to allow it", code: "needs_user")
         }

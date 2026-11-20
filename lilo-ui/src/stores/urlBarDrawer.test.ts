@@ -82,3 +82,20 @@ test("the blocked pop-up drawer gives way to a site request and to the Site draw
 	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "site");
 	assert.equal(drawer.isPopupBlockedDrawerOpen(), false);
 });
+
+test("an agent's action question shows ahead of an extension's prompt, which waits for its answer", async () => {
+	const { drawer } = await loadDrawerStore();
+
+	receive({
+		event: "extensionPermissionRequested", requestId: "e1", extensionId: "ext", extensionName: "Ext", permissions: ["tabs"], origins: [], type: "permissions",
+	});
+	receive({
+		event: "agentControlRequested", requestId: "a1", clientName: "Agent", executable: "", profileName: "",
+		action: { kind: "click", label: "Place order", site: "shop.example.com", tab: "Shop" },
+	});
+	const asked = drawer.getActiveUrlBarDrawer();
+	assert.equal(asked?.kind, "agentControl");
+
+	drawer.respondToPermissionRequest(asked, false);
+	assert.equal(drawer.getActiveUrlBarDrawer()?.kind, "extensionPermission", "the extension's prompt is next, not lost");
+});
