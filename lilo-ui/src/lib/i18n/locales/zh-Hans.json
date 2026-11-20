@@ -902,6 +902,7 @@
 		"newTerminal": "新建终端",
 		"clearUnpinnedTooltip": "归档未固定的标签页",
 		"listOptions": "排序和分组",
+		"searchTabs": "搜索标签页",
 		"pinnedTabs": "固定标签页",
 		"openTabs": "打开的标签页",
 		"dropToPin": "放下以固定",

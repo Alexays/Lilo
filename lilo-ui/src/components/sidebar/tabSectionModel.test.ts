@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { arrangeRows, keepSameGroups, nextStackHosts, stackEntries, stackName, strippedTitle, windowRows, type ArrangeEntry } from "./tabSectionModel";
+import { arrangeRows, keepSameGroups, nextStackHosts, pinnedAreaCollapsed, stackEntries, stackName, strippedTitle, windowRows, type ArrangeEntry } from "./tabSectionModel";
 
 const web = (id: string, host: string): ArrangeEntry => ({ id, type: "web", host, project: null });
 const term = (id: string, project: string | null = null): ArrangeEntry => ({ id, type: "terminal", host: null, project });
@@ -114,4 +114,13 @@ test("grouped by project and type, what no project holds falls into its type's t
 	const rows = arrangeRows(entries, new Set(), true, true);
 	assert.deepEqual(rows.map((row) => row.id), ["t1", "a2", "a1", "t2", "w1"]);
 	assert.deepEqual(rows.map((row) => row.tray), ["project:/r/acme", "project:/r/acme", "agent", "terminal", null]);
+});
+
+test("the pinned area folds only while nothing active and no drag needs it open", () => {
+	assert.equal(pinnedAreaCollapsed(false, false, false), false);
+	assert.equal(pinnedAreaCollapsed(true, false, false), true);
+	// A pinned active tab keeps the area open, so does a drag aiming into it.
+	assert.equal(pinnedAreaCollapsed(true, true, false), false);
+	assert.equal(pinnedAreaCollapsed(true, false, true), false);
+	assert.equal(pinnedAreaCollapsed(true, true, true), false);
 });

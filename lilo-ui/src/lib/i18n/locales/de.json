@@ -902,6 +902,7 @@
 		"newTerminal": "Neues Terminal",
 		"clearUnpinnedTooltip": "Nicht angeheftete Tabs archivieren",
 		"listOptions": "Sortieren und gruppieren",
+		"searchTabs": "Tabs durchsuchen",
 		"pinnedTabs": "Angeheftete Tabs",
 		"openTabs": "Offene Tabs",
 		"dropToPin": "Zum Anheften ablegen",
