@@ -5,7 +5,7 @@
   import { chromeActions } from "../../lib/bridge/actions";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { getTabPosition, isAddressInPageToolbar, isAddressInRightTabs } from "../../stores/tabLayout.svelte";
-  import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
+  import { areTrafficLightsVisible, isSidebarRail, isSidebarVisible } from "../../stores/ui.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { pageBarStyle } from "../../lib/pageBarTheme";
   import { shellBarColor } from "../../stores/theme.svelte";
@@ -21,8 +21,9 @@
 
   const navigationInStrip = $derived(getTabPosition() === "bottom" && !isAddressInPageToolbar());
 
-  // The traffic lights sit top-left of the window: room for them when the toolbar starts there.
-  const besideTrafficLights = $derived(!row && (getTabPosition() !== "left" || !isSidebarVisible()) && areTrafficLightsVisible());
+  // The traffic lights sit top-left of the window: room for them when the toolbar starts there, and
+  // past the docked rail, whose column they clear onto this row.
+  const besideTrafficLights = $derived(!row && areTrafficLightsVisible() && (getTabPosition() !== "left" || !isSidebarVisible() || isSidebarRail()));
 
   // The address text centers on its field: the room its trailing buttons take on the right (capture,
   // pinned extensions) is mirrored on the left, measured since that cluster grows and shrinks.

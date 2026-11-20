@@ -63,7 +63,7 @@ final class WindowFrameView: NSView {
     private static let colorFadeTiming = CAMediaTimingFunction(controlPoints: 0.22, 1, 0.36, 1)
 
     private(set) var edges: ContentEdges
-    private var frameColor: CGColor?
+    private(set) var frameColor: CGColor?
     private var cornerPathRadius: CGFloat = -1
 
     private let leftBand = CALayer()

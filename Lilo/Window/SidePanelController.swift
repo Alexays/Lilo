@@ -163,12 +163,18 @@ final class SidePanelController: NSObject {
         divider.setHovered(divider.frame.contains(contentView.convert(windowPoint, from: nil)))
     }
 
-    func setFrameColor(_ color: NSColor) {
-        divider.setFrameColor(color, animated: true)
+    /// `color` is the Space's resolved color for the panel's surface; `frameColor` is what the frame bands paint.
+    func setFrameColor(_ color: NSColor, frameColor: NSColor) {
+        setDividerFrameColor(frameColor)
         guard let panel else { return }
         let surface = color.contentSurfaceColor
         panel.layer?.backgroundColor = surface.cgColor
         panel.engine.applyPageBackgroundColor(surface)
+    }
+
+    /// The divider's bites and hover take the frame color; the gap is the frame's own band, so its fill stays clear.
+    func setDividerFrameColor(_ color: NSColor, animated: Bool = true) {
+        divider.setFrameColor(color, gapColor: .clear, animated: animated)
     }
 
     // MARK: - State
@@ -307,7 +313,7 @@ final class SidePanelController: NSObject {
 
     private func makeDivider() -> SplitDividerView {
         let divider = SplitDividerView()
-        divider.setFrameColor(window.window?.backgroundColor ?? MainWindowController.defaultSidebarBackgroundColor(), animated: false)
+        divider.setFrameColor(window.currentFrameColor, gapColor: .clear, animated: false)
         divider.addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .cursorUpdate, .activeInKeyWindow, .inVisibleRect], owner: self))
         divider.onSuperviewResize = { [weak self] in
             guard let self else { return }

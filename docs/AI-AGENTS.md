@@ -41,7 +41,10 @@ Unless you turn it off in Settings, Lilo asks before an agent:
   a frame of another origin, which Lilo cannot read, is always asked;
 - sends a request other than GET or HEAD with the cookies of one of your profiles.
 
-The question opens in the window that holds the agent's page, and the agent's conversation row turns amber meanwhile; your other windows, and the site and extension prompts there, are not held up by it. It counts as a refusal after 45 seconds without an answer.
+The question opens in the window that holds the agent's page, and the agent's conversation row turns amber
+meanwhile; your other windows, and the site and extension prompts there, are not held up by it.
+It counts as a refusal when you decline; one nobody answers in 45 seconds is withdrawn, and the agent
+may ask once more; with no window open the agent is told to ask you to open one first.
 
 Sites you always allow are listed in Settings, where you can remove them. Whatever the setting,
 Lilo always asks before an agent hands a page one of your files (`file_upload`, `upload_image`).
@@ -77,10 +80,12 @@ registry and are checked against its SHA-256 before they run.
 
 ## Errors that need you
 
-An error only you can resolve (a denied prompt, agent access turned off, Lilo not running, no window
+An error only you can resolve (a declined prompt, agent access turned off, Lilo not running, no window
 open) carries the code `needs_user`: in `_meta["lilo/errorCode"]` on a tool result, in
-`error.data.code` on a JSON-RPC error, and as a `[needs_user]` prefix in the message. When Lilo
-can't take an agent at all, `lilo-mcp` still answers at once and says why.
+`error.data.code` on a JSON-RPC error, and as a `[needs_user]` prefix in the message. A prompt that ended
+without your answer also says how in `_meta["lilo/consent"]`: `denied`, `expired` (nobody answered in
+time) or `unavailable` (no window could ask). When Lilo can't take an agent at all, `lilo-mcp` still
+answers at once and says why.
 
 A tool call that fails after it sent something that can change the site (a click, Enter, a `fetch`
 other than GET, HEAD or OPTIONS, including inside `browser_batch` or `run`) carries

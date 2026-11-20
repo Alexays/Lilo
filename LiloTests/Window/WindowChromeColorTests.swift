@@ -72,6 +72,41 @@ final class WindowChromeColorTests: XCTestCase {
         XCTAssertEqual(colors[0], colors[1], "the pane out of focus shows the new color under its page too")
     }
 
+    /// The gap between split panes paints the frame's color: the Space color on solid, its glass wash on glass.
+    func testSplitDividersTakeTheFrameColorOnGlassAndSolid() throws {
+        let context = browserContext.context
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
+        let window = makeTestWindow(context, showing: space.id)
+        window.didCompleteSessionRestore = true
+        let first = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let second = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank"), activate: false))
+        window.splitTab(second.id, at: first.id, vertical: false, before: false)
+        window.applyWindowChromeColors("#841b23")
+        // Its persistence would land in the next test's first-frame cache.
+        window.pendingWindowBackgroundPersistWork?.cancel()
+
+        let divider = try XCTUnwrap(window.splitPanes.dividers.values.first)
+        // Sublayer 0 is the gap's fill, 2 the first corner bite; a shape layer paints with fillColor.
+        func paintedColor(_ index: Int) -> NSColor? {
+            guard let layer = divider.layer?.sublayers?[index] else { return nil }
+            return ((layer as? CAShapeLayer)?.fillColor ?? layer.backgroundColor).flatMap(NSColor.init(cgColor:))
+        }
+        func assertFrameColor(_ expected: NSColor, _ label: String, file: StaticString = #filePath, line: UInt = #line) {
+            for index in [0, 2] {
+                let color = paintedColor(index)
+                XCTAssertEqual(color?.cssHexString, expected.cssHexString, "\(label) layer \(index)", file: file, line: line)
+                XCTAssertEqual(color?.alphaComponent ?? -1, expected.alphaComponent, accuracy: 0.001, "\(label) layer \(index)", file: file, line: line)
+            }
+        }
+
+        let spaceColor = try XCTUnwrap(NSColor(cssHex: "#841b23"))
+        assertFrameColor(spaceColor, "solid")
+        window.applyWindowMaterial("glass")
+        assertFrameColor(spaceColor.withAlphaComponent(0.06), "glass")
+        window.applyWindowMaterial("solid")
+        assertFrameColor(spaceColor, "solid again")
+    }
+
     func testTheFirstFrameAfterAnAppearanceSwitchKeepsTheNewAppearance() async throws {
         let keys = ["cachedWindowBgColor", "cachedWindowBgColor.light", "cachedWindowBgColor.dark"]
         let saved = keys.map { UserDefaults.lilo.object(forKey: $0) }

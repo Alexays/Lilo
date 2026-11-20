@@ -3,6 +3,12 @@ import Security
 import WebKit
 import os
 
+/// How the user's answer to a consent question ended: allowed, declined, or no answer at all (the question
+/// expired unanswered, or no window could ask). `AgentToolError.consent` carries the raw value to the agent.
+enum ConsentAnswer: String {
+    case allowed, denied, expired, unavailable
+}
+
 /// Lets local AI agents drive Lilo over MCP: one session per socket connection.
 @MainActor
 final class AgentControl {
@@ -21,6 +27,10 @@ final class AgentControl {
     /// How long the question letting a client in waits for the user: long enough to come back to the Mac, as the
     /// client is told it waits, so nothing times out meanwhile.
     static var connectionConsentTimeout: TimeInterval = 600
+    /// How long a consent question waits for the user unless the caller says otherwise.
+    static var consentTimeout: TimeInterval = 120
+    /// How long a question about a page action waits, inside the tool call's deadline.
+    static var actionConsentTimeout: TimeInterval = 45
     /// Chrome-style integer ids for tabs, stable for the app's lifetime.
     var tabNumbers: [UUID: Int] = [:]
     var nextTabNumber = 1
@@ -229,7 +239,7 @@ final class AgentControl {
     private var pendingConsents: [String: (question: Task<Bool?, Never>, waiting: Int)] = [:]
     /// Questions shown in the drawers, by request id, with what the drawers show, until the user answers. `tabId` is
     /// the tab of a question about a page: only the window holding it shows the question.
-    private(set) var pendingConsentAnswers: [String: (answer: CheckedContinuation<Bool?, Never>, request: [String: Any], tabId: UUID?)] = [:]
+    private(set) var pendingConsentAnswers: [String: (answer: CheckedContinuation<ConsentAnswer, Never>, request: [String: Any], tabId: UUID?)] = [:]
     /// The conversations whose agent waits on a question about a page, with how many: their rows turn amber.
     private var askingConversations: [UUID: Int] = [:]
 
@@ -343,7 +353,14 @@ final class AgentControl {
         let identity = session.identity
         let question = pendingConsents[key]?.question ?? Task { @MainActor in
             Self.logger.notice("Asking the user to allow \(name, privacy: .public)")
-            let allowed = await self.askConsent(name, executable: session.executable, timeout: Self.connectionConsentTimeout)
+            let answer = await self.askConsent(name, executable: session.executable, timeout: Self.connectionConsentTimeout)
+            // The connection gate's three outcomes: allowed, refused, and unanswered, asked again at the next call.
+            let allowed: Bool?
+            switch answer {
+            case .allowed: allowed = true
+            case .denied: allowed = false
+            case .expired, .unavailable: allowed = nil
+            }
             Self.logger.notice("\(name, privacy: .public) \(allowed.map { $0 ? "allowed" : "denied" } ?? "unanswered", privacy: .public)")
             // Dropped here, as every connection waiting on it may have left: a finished question is never reused.
             self.pendingConsents[key] = nil
@@ -371,12 +388,13 @@ final class AgentControl {
 
     /// Asked in the address-bar drawer, which leaves the user's typing alone, of every window, or of the one holding
     /// `tabId` for a question about that tab's page: the other windows' prompts go on meanwhile. The Dock icon
-    /// bounces when Lilo is in the background. Nil when nothing could ask, or unanswered after `timeout`, or cancelled.
+    /// bounces when Lilo is in the background. `.unavailable` when nothing could ask, `.expired` when nothing
+    /// answered within `timeout` (a cancelled caller's question is withdrawn the same way).
     func askConsent(
         _ name: String, executable: String = "", profileName: String? = nil, action: [String: String]? = nil, tabId: UUID? = nil,
-        timeout: TimeInterval = 120
-    ) async -> Bool? {
-        guard let windows = context?.windows.windows, !windows.isEmpty else { return nil }
+        timeout: TimeInterval = AgentControl.consentTimeout
+    ) async -> ConsentAnswer {
+        guard let windows = context?.windows.windows, !windows.isEmpty else { return .unavailable }
         let requestId = UUID().uuidString
         let request: [String: Any] = [
             "requestId": requestId, "clientName": Self.displayName(name), "executable": executable, "profileName": profileName ?? "",
@@ -441,29 +459,34 @@ final class AgentControl {
         }
         guard let label = found else { return false }
         let action = ["kind": kind, "label": label, "site": site, "tab": engine.currentTitle ?? ""]
-        let allowed = await askAboutAction(action, engine: engine, session: session)
-        guard allowed == true else {
+        switch await askAboutAction(action, engine: engine, session: session) {
+        case .allowed:
+            return true
+        case .denied:
             let what = ["enter": "pressing Enter to submit", "fetch": "sending"][kind] ?? "clicking"
-            throw AgentToolError("The user did not allow \(what) \"\(label)\" on \(site): ask them to do it or to allow it", code: "needs_user")
+            throw AgentToolError("The user declined \(what) \"\(label)\" on \(site): do not try again, report that it was declined and ask what to do instead", code: "needs_user", consent: .denied)
+        case .expired:
+            throw Self.expiredConsentError(timeout: Self.actionConsentTimeout)
+        case .unavailable:
+            throw Self.unavailableConsentError
         }
-        return true
     }
 
     /// Asks about an action on `engine`'s page in the window holding it, where its agent's conversation row turns amber
     /// until the answer. Answered before the tool's own deadline, so the agent learns the user is needed.
-    private func askAboutAction(_ action: [String: String], engine: WKWebViewTab, session: AgentSession) async -> Bool? {
+    private func askAboutAction(_ action: [String: String], engine: WKWebViewTab, session: AgentSession) async -> ConsentAnswer {
         session.waitingForUser = true
         let conversation = session.conversationTabId
         if let conversation { askingConversations[conversation, default: 0] += 1; context?.conversations.questionChanged(tabId: conversation) }
         publishActivity()
-        let allowed = await askConsent(session.clientName, action: action, tabId: engine.id, timeout: 45)
+        let answer = await askConsent(session.clientName, action: action, tabId: engine.id, timeout: Self.actionConsentTimeout)
         session.waitingForUser = false
         if let conversation {
             askingConversations[conversation] = askingConversations[conversation].flatMap { $0 > 1 ? $0 - 1 : nil }
             context?.conversations.questionChanged(tabId: conversation)
         }
         publishActivity()
-        return allowed
+        return answer
     }
 
     /// Asks the user before a page receives one of their files, whatever the setting above: an agent could
@@ -473,11 +496,27 @@ final class AgentControl {
         let site = engine.currentURL?.host() ?? ""
         let path = (file.path as NSString).abbreviatingWithTildeInPath
         let action = ["kind": "upload", "label": path, "site": site, "tab": engine.currentTitle ?? ""]
-        let allowed = await askAboutAction(action, engine: engine, session: session)
-        guard allowed == true else {
-            throw AgentToolError("The user did not allow uploading \(path) to \(site): ask them to upload it or to allow it", code: "needs_user")
+        switch await askAboutAction(action, engine: engine, session: session) {
+        case .allowed:
+            break
+        case .denied:
+            throw AgentToolError("The user declined uploading \(path) to \(site): do not try again, report that it was declined and ask what to do instead", code: "needs_user", consent: .denied)
+        case .expired:
+            throw Self.expiredConsentError(timeout: Self.actionConsentTimeout)
+        case .unavailable:
+            throw Self.unavailableConsentError
         }
         return file
+    }
+
+    /// `needs_user` for a question that expired unanswered: withdrawn, and the agent may ask once more.
+    static func expiredConsentError(timeout: TimeInterval) -> AgentToolError {
+        AgentToolError("The user did not answer within \(Int(timeout)) s, so the question was withdrawn: call the tool again once to ask again; if it expires again, stop and tell the user what is waiting", code: "needs_user", consent: .expired)
+    }
+
+    /// `needs_user` for a question no window could show.
+    static var unavailableConsentError: AgentToolError {
+        AgentToolError("Lilo has no window to ask the user in: ask them to open one, then call again", code: "needs_user", consent: .unavailable)
     }
 
     /// The user's answer from a window's drawer, nil when nobody answered: the others drop the same question.
@@ -491,7 +530,7 @@ final class AgentControl {
         for window in context?.windows.windows ?? [] {
             window.bridgeRouter.send(event: "permissionRequestClosed", data: ["requestId": requestId])
         }
-        answer.resume(returning: granted)
+        answer.resume(returning: granted.map { $0 ? .allowed : .denied } ?? .expired)
     }
 
     /// The session's tabs go back to normal first, then close: an engine held elsewhere keeps no agent state.
