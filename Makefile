@@ -292,9 +292,10 @@ ui-dev: $(UI_DEPS)
 ui-preview: $(UI_DEPS)
 	@npm --prefix $(UI_DIR) run dev -- --open /preview/
 
-## Run ESLint + svelte-check
+## Run ESLint + svelte-check + the i18n copy check
 ui-lint: $(UI_DEPS)
 	@npm --prefix $(UI_DIR) run lint
+	@node scripts/i18n_check.mjs
 
 ## Run lightweight UI regression tests
 ui-test: $(UI_DEPS)
