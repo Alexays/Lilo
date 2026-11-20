@@ -198,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "확대/축소 {zoom}",
-			"hiddenSummary": {"one": "숨긴 요소 {count}개", "other": "숨긴 요소 {count}개"},
+			"hiddenSummary": "{count, plural, one{숨긴 요소 #개} other{숨긴 요소 #개}}",
 			"dataSummary": "저장된 데이터",
 			"permissionUpdated": "{origin} · 업데이트: {time}",
 			"emptyTitle": "아직 사이트 설정 없음",
@@ -605,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "지금 업데이트",
-			"summary": {
-				"one": "목록 {count}개",
-				"other": "목록 {count}개"
-			},
+			"summary": "{count, plural, one{목록 #개} other{목록 #개}}",
 			"updated": "업데이트: {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "지금 확인",
 			"checking": "업데이트 확인 중...",
 			"upToDate": "최신 버전",
-			"updated": {
-				"one": "{count}개 업데이트됨",
-				"other": "{count}개 업데이트됨"
-			},
-			"available": {
-				"one": "업데이트 {count}개 사용 가능",
-				"other": "업데이트 {count}개 사용 가능"
-			},
-			"failed": {
-				"one": "{count}개 확인하지 못함",
-				"other": "{count}개 확인하지 못함"
-			},
+			"updated": "{count, plural, one{#개 업데이트됨} other{#개 업데이트됨}}",
+			"available": "{count, plural, one{업데이트 #개 사용 가능} other{업데이트 #개 사용 가능}}",
+			"failed": "{count, plural, one{#개 확인하지 못함} other{#개 확인하지 못함}}",
 			"lastChecked": "마지막 확인: {time}"
 		},
 		"folderAutoLock": {
@@ -677,10 +665,7 @@
 			"clearData": "데이터 지우기...",
 			"remove": "제거...",
 			"lastProfile": "모든 스페이스에는 프로필이 필요하므로 마지막 프로필은 유지됩니다.",
-			"extensionCount": {
-				"one": "확장 프로그램 {count}개",
-				"other": "확장 프로그램 {count}개"
-			},
+			"extensionCount": "{count, plural, one{확장 프로그램 #개} other{확장 프로그램 #개}}",
 			"newProfile": "새 프로필...",
 			"newProfileDetail": "새로운 쿠키, 로그인 및 확장 프로그램",
 			"namePlaceholder": "프로필 이름",
@@ -755,28 +740,16 @@
 		},
 		"notes": {
 			"live": "선택하는 즉시 적용됩니다",
-			"spaces": {
-				"one": "스페이스 {count}개",
-				"other": "스페이스 {count}개"
-			},
-			"profiles": {
-				"one": "프로필 {count}개",
-				"other": "프로필 {count}개"
-			},
+			"spaces": "{count, plural, one{스페이스 #개} other{스페이스 #개}}",
+			"profiles": "{count, plural, one{프로필 #개} other{프로필 #개}}",
 			"blocking": "{total}가지 중 {count}가지 차단 중",
 			"blockingOff": "차단이 꺼져 있습니다",
 			"profile": "{name} 프로필",
-			"extensions": {
-				"one": "{profile}의 확장 프로그램 {count}개",
-				"other": "{profile}의 확장 프로그램 {count}개"
-			},
+			"extensions": "{count, plural, one{{profile}의 확장 프로그램 #개} other{{profile}의 확장 프로그램 #개}}",
 			"terminal": "모든 터미널 탭에 적용됩니다",
 			"agents": "Lilo에는 자체 AI가 없습니다",
 			"advanced": "개발 및 테스트용",
-			"searchMatches": {
-				"one": "'{query}'와 일치하는 설정 {count}개",
-				"other": "'{query}'와 일치하는 설정 {count}개"
-			}
+			"searchMatches": "{count, plural, one{'{query}'와 일치하는 설정 #개} other{'{query}'와 일치하는 설정 #개}}"
 		},
 		"callDock": {
 			"sidebar": "사이드바에",
@@ -932,13 +905,13 @@
 		"pinnedTabs": "고정된 탭",
 		"openTabs": "열린 탭",
 		"dropToPin": "놓아서 고정",
-		"stackLabel": {"one": "{name}, 탭 {count}개", "other": "{name}, 탭 {count}개"},
+		"stackLabel": "{count, plural, one{{name}, 탭 #개} other{{name}, 탭 #개}}",
 		"closeStack": "스택 닫기",
 		"trayAgents": "에이전트",
 		"trayTerminals": "터미널",
-		"trayNeedsInput": {"one": "{count}개 입력 대기 중", "other": "{count}개 입력 대기 중"},
-		"trayWorking": {"one": "{count}개 작업 중", "other": "{count}개 작업 중"},
-		"trayRunning": {"one": "{count}개 실행 중", "other": "{count}개 실행 중"},
+		"trayNeedsInput": "{count, plural, one{#개 입력 대기 중} other{#개 입력 대기 중}}",
+		"trayWorking": "{count, plural, one{#개 작업 중} other{#개 작업 중}}",
+		"trayRunning": "{count, plural, one{#개 실행 중} other{#개 실행 중}}",
 		"trayShow": "{name} 보기",
 		"trayHide": "{name} 숨기기"
 	},
@@ -1343,7 +1316,7 @@
 		"tabStartup": "시작",
 		"tabMemory": "메모리",
 		"tabLog": "로그",
-		"errorCount": {"one": "오류 {count}개", "other": "오류 {count}개"},
+		"errorCount": "{count, plural, one{오류 #개} other{오류 #개}}",
 		"copyReport": "보고서 복사",
 		"recordSession": "세션 기록",
 		"stopRecording": "기록 중단",
@@ -1385,23 +1358,11 @@
 		"navLabel": "프로세스 관리자 보기",
 		"searchPlaceholder": "탭 검색",
 		"memoryAriaLabel": "메모리 사용량",
-		"tabsCount": {
-			"one": "탭 {count}개",
-			"other": "탭 {count}개"
-		},
+		"tabsCount": "{count, plural, one{탭 #개} other{탭 #개}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "기타 {count}개",
-			"other": "기타 {count}개"
-		},
-		"reclaim": {
-			"one": "숨겨진 탭 {count}개가 {size} 사용 중",
-			"other": "숨겨진 탭 {count}개가 {size} 사용 중"
-		},
-		"reclaimNoSize": {
-			"one": "숨겨진 탭 {count}개가 아직 로드되어 있음",
-			"other": "숨겨진 탭 {count}개가 아직 로드되어 있음"
-		},
+		"others": "{count, plural, one{기타 #개} other{기타 #개}}",
+		"reclaim": "{count, plural, one{숨겨진 탭 #개가 {size} 사용 중} other{숨겨진 탭 #개가 {size} 사용 중}}",
+		"reclaimNoSize": "{count, plural, one{숨겨진 탭 #개가 아직 로드되어 있음} other{숨겨진 탭 #개가 아직 로드되어 있음}}",
 		"sleep": "잠자기로 전환",
 		"groupTabs": "탭",
 		"groupSleeping": "잠자기",
@@ -1411,10 +1372,7 @@
 		"audioPlaying": "오디오 재생 중",
 		"frozen": "일시 정지됨",
 		"sharedEstimate": "다른 탭과 프로세스를 공유하므로 추정치입니다",
-		"sharedWith": {
-			"one": "다른 탭 {count}개와 공유",
-			"other": "다른 탭 {count}개와 공유"
-		},
+		"sharedWith": "{count, plural, one{다른 탭 #개와 공유} other{다른 탭 #개와 공유}}",
 		"pid": "PID {pid}",
 		"focus": "보기",
 		"details": "세부 정보 보기",
@@ -1443,16 +1401,10 @@
 	"urlToast": {
 		"pageActions": "페이지 동작",
 		"reEnableBlocking": "이 사이트에서 차단 다시 활성화",
-		"trackersBlockedOnPage": {
-			"one": "이 페이지에서 추적기 {count}개 차단됨",
-			"other": "이 페이지에서 추적기 {count}개 차단됨"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{이 페이지에서 추적기 #개 차단됨} other{이 페이지에서 추적기 #개 차단됨}}",
 		"disableBlocking": "이 사이트에서 차단 비활성화",
 		"adsAllowed": "광고 허용됨",
-		"trackersBlockedLabel": {
-			"one": "추적기 {count}개 차단됨",
-			"other": "추적기 {count}개 차단됨"
-		},
+		"trackersBlockedLabel": "{count, plural, one{추적기 #개 차단됨} other{추적기 #개 차단됨}}",
 		"adsBlocked": "광고 차단됨",
 		"extensionAlreadyInstalled": "이미 설치된 확장 프로그램",
 		"installChromeExtension": "이 Chrome 확장 프로그램 설치",
@@ -1496,10 +1448,7 @@
 		"stop": "디버깅 중지"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "알림 {count}개 더",
-			"other": "알림 {count}개 더"
-		},
+		"moreNotices": "{count, plural, one{알림 #개 더} other{알림 #개 더}}",
 		"more": "{count}개 더"
 	},
 	"crashRecovery": {
@@ -1540,7 +1489,7 @@
 	},
 	"archivedTabs": {
 		"title": "보관됨",
-		"buttonLabel": {"one": "최근 보관한 탭 {count}개", "other": "최근 보관한 탭 {count}개"},
+		"buttonLabel": "{count, plural, one{최근 보관한 탭 #개} other{최근 보관한 탭 #개}}",
 		"restore": "복원",
 		"showAll": "보관한 모든 탭 보기",
 		"showAllDownloads": "모든 다운로드 보기"
@@ -1551,7 +1500,7 @@
 		"undo": "실행 취소",
 		"reopen": "다시 열기",
 		"archived": "'{title}' 보관됨",
-		"archivedCount": {"one": "탭 {count}개 보관됨", "other": "탭 {count}개 보관됨"}
+		"archivedCount": "{count, plural, one{탭 #개 보관됨} other{탭 #개 보관됨}}"
 	},
 	"updateCard": {
 		"ready": "설치 준비 완료",
@@ -1768,26 +1717,11 @@
 			"done": "완료: {list}.",
 			"nothing": "완료: 새로 가져올 항목이 없습니다.",
 			"count": {
-				"bookmarks": {
-					"one": "책갈피 {count}개",
-					"other": "책갈피 {count}개"
-				},
-				"tabs": {
-					"one": "열린 탭 {count}개",
-					"other": "열린 탭 {count}개"
-				},
-				"history": {
-					"one": "방문 기록 {count}페이지",
-					"other": "방문 기록 {count}페이지"
-				},
-				"cookies": {
-					"one": "쿠키 {count}개",
-					"other": "쿠키 {count}개"
-				},
-				"extensions": {
-					"one": "확장 프로그램 {count}개",
-					"other": "확장 프로그램 {count}개"
-				}
+				"bookmarks": "{count, plural, one{책갈피 #개} other{책갈피 #개}}",
+				"tabs": "{count, plural, one{열린 탭 #개} other{열린 탭 #개}}",
+				"history": "{count, plural, one{방문 기록 #페이지} other{방문 기록 #페이지}}",
+				"cookies": "{count, plural, one{쿠키 #개} other{쿠키 #개}}",
+				"extensions": "{count, plural, one{확장 프로그램 #개} other{확장 프로그램 #개}}"
 			},
 			"step": {
 				"bookmarks": "{from}에서 책갈피 가져오는 중",
@@ -1905,11 +1839,11 @@
 		"sectionSites": "자주 방문한 사이트",
 		"sectionTerminals": "터미널에서",
 		"searchResults": "검색 결과",
-		"dayPages": {"one": "{count}개 페이지", "other": "{count}개 페이지"},
-		"daySites": {"one": "{count}개 사이트", "other": "{count}개 사이트"},
+		"dayPages": "{count, plural, one{#개 페이지} other{#개 페이지}}",
+		"daySites": "{count, plural, one{#개 사이트} other{#개 사이트}}",
 		"openInNewTab": "새 탭에서 열기",
-		"selected": {"one": "{count}개 선택됨", "other": "{count}개 선택됨"},
-		"visits": {"one": "{count}회 방문", "other": "{count}회 방문"},
+		"selected": "{count, plural, one{#개 선택됨} other{#개 선택됨}}",
+		"visits": "{count, plural, one{#회 방문} other{#회 방문}}",
 		"openInNewTabs": "새 탭에서 열기",
 		"delete": "삭제",
 		"clearSelection": "모두 선택 해제",
@@ -2479,10 +2413,7 @@
 		"title": "Lilo의 새로운 기능",
 		"description": "일상적인 인터넷 사용을 위한 작은 개선사항입니다.",
 		"allChanges": "이번 업데이트의 모든 변경사항",
-		"changes": {
-			"one": "변경사항 {count}개",
-			"other": "변경사항 {count}개"
-		},
+		"changes": "{count, plural, one{변경사항 #개} other{변경사항 #개}}",
 		"originalNotes": "원본 릴리즈 노트.",
 		"unavailable": "이 빌드에서는 릴리즈 노트를 사용할 수 없습니다.",
 		"reopen": "도움말 > 새로운 기능에서 언제든 볼 수 있습니다.",
@@ -2666,10 +2597,7 @@
 			"ownCopyHint": "프로젝트의 별도 사본에서 작업합니다. 변경사항에서 병합하세요.",
 			"starting": "에이전트 시작 중...",
 			"errorHint": "다시 시도하려면 메시지를 보내세요.",
-			"showEarlier": {
-				"one": "이전 항목 {count}개 보기",
-				"other": "이전 항목 {count}개 보기"
-			},
+			"showEarlier": "{count, plural, one{이전 항목 #개 보기} other{이전 항목 #개 보기}}",
 			"queuedTag": "대기 중",
 			"sendNow": "지금 보내기",
 			"thought": "생각",
@@ -2679,16 +2607,10 @@
 			"restore": "복원",
 			"undo": "실행 취소",
 			"undone": "취소됨",
-			"moreLines": {
-				"one": "{count}줄 더",
-				"other": "{count}줄 더"
-			},
+			"moreLines": "{count, plural, one{#줄 더} other{#줄 더}}",
 			"plan": "계획",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count}개 단계 완료",
-				"other": "{count}개 단계 완료"
-			},
+			"planDone": "{count, plural, one{#개 단계 완료} other{#개 단계 완료}}",
 			"planStatus": {
 				"pending": "할 일",
 				"in_progress": "진행 중",
@@ -2716,26 +2638,11 @@
 				"failed": "실패"
 			},
 			"group": {
-				"read": {
-					"one": "파일 {count}개 읽음",
-					"other": "파일 {count}개 읽음"
-				},
-				"search": {
-					"one": "검색 {count}회",
-					"other": "검색 {count}회"
-				},
-				"fetch": {
-					"one": "페이지 {count}개 가져옴",
-					"other": "페이지 {count}개 가져옴"
-				},
-				"think": {
-					"one": "{count}회 생각함",
-					"other": "{count}회 생각함"
-				},
-				"action": {
-					"one": "작업 {count}개",
-					"other": "작업 {count}개"
-				}
+				"read": "{count, plural, one{파일 #개 읽음} other{파일 #개 읽음}}",
+				"search": "{count, plural, one{검색 #회} other{검색 #회}}",
+				"fetch": "{count, plural, one{페이지 #개 가져옴} other{페이지 #개 가져옴}}",
+				"think": "{count, plural, one{#회 생각함} other{#회 생각함}}",
+				"action": "{count, plural, one{작업 #개} other{작업 #개}}"
 			}
 		},
 		"composer": {
@@ -2773,24 +2680,12 @@
 			"untitled": "새 대화",
 			"working": "작업 중",
 			"failed": "오류로 중지됨",
-			"linesAdded": {
-				"one": "{count}줄 추가",
-				"other": "{count}줄 추가"
-			},
-			"linesRemoved": {
-				"one": "{count}줄 삭제",
-				"other": "{count}줄 삭제"
-			},
-			"pages": {
-				"one": "페이지 {count}개",
-				"other": "페이지 {count}개"
-			},
+			"linesAdded": "{count, plural, one{#줄 추가} other{#줄 추가}}",
+			"linesRemoved": "{count, plural, one{#줄 삭제} other{#줄 삭제}}",
+			"pages": "{count, plural, one{페이지 #개} other{페이지 #개}}",
 			"showPages": "페이지 보기",
 			"hidePages": "페이지 숨기기",
-			"morePermissions": {
-				"one": "확인 대기 중인 요청 {count}개 더",
-				"other": "확인 대기 중인 요청 {count}개 더"
-			}
+			"morePermissions": "{count, plural, one{확인 대기 중인 요청 #개 더} other{확인 대기 중인 요청 #개 더}}"
 		},
 		"question": {
 			"allow": "허용",
@@ -2804,10 +2699,7 @@
 		},
 		"badge": {
 			"title": "에이전트",
-			"waiting": {
-				"one": "에이전트, {count}개가 확인 대기 중",
-				"other": "에이전트, {count}개가 확인 대기 중"
-			},
+			"waiting": "{count, plural, one{에이전트, #개가 확인 대기 중} other{에이전트, #개가 확인 대기 중}}",
 			"new": "신규",
 			"needsYou": "확인 필요",
 			"running": "실행 중",
@@ -2828,10 +2720,7 @@
 			"signInOpenTerminal": "터미널에서 열기"
 		},
 		"work": {
-			"images": {
-				"one": "이미지 {count}개",
-				"other": "이미지 {count}개"
-			},
+			"images": "{count, plural, one{이미지 #개} other{이미지 #개}}",
 			"verb": {
 				"read": "읽음",
 				"edit": "편집함",
@@ -2849,46 +2738,16 @@
 				"fetch": "가져오는 중"
 			},
 			"summary": {
-				"read": {
-					"one": "파일 {count}개 읽음",
-					"other": "파일 {count}개 읽음"
-				},
-				"edit": {
-					"one": "파일 {count}개 편집함",
-					"other": "파일 {count}개 편집함"
-				},
-				"execute": {
-					"one": "명령 {count}개 실행함",
-					"other": "명령 {count}개 실행함"
-				},
-				"search": {
-					"one": "{count}회 검색함",
-					"other": "{count}회 검색함"
-				},
-				"fetch": {
-					"one": "페이지 {count}개 가져옴",
-					"other": "페이지 {count}개 가져옴"
-				},
-				"think": {
-					"one": "{count}회 생각함",
-					"other": "{count}회 생각함"
-				},
-				"browser": {
-					"one": "브라우저 {count}회 사용함",
-					"other": "브라우저 {count}회 사용함"
-				},
-				"browserOn": {
-					"one": "{site}에서 브라우저 {count}회 사용함",
-					"other": "{site}에서 브라우저 {count}회 사용함"
-				},
-				"tool": {
-					"one": "도구 {count}개 사용함",
-					"other": "도구 {count}개 사용함"
-				},
-				"agent": {
-					"one": "에이전트 {count}개 시작함",
-					"other": "에이전트 {count}개 시작함"
-				}
+				"read": "{count, plural, one{파일 #개 읽음} other{파일 #개 읽음}}",
+				"edit": "{count, plural, one{파일 #개 편집함} other{파일 #개 편집함}}",
+				"execute": "{count, plural, one{명령 #개 실행함} other{명령 #개 실행함}}",
+				"search": "{count, plural, one{#회 검색함} other{#회 검색함}}",
+				"fetch": "{count, plural, one{페이지 #개 가져옴} other{페이지 #개 가져옴}}",
+				"think": "{count, plural, one{#회 생각함} other{#회 생각함}}",
+				"browser": "{count, plural, one{브라우저 #회 사용함} other{브라우저 #회 사용함}}",
+				"browserOn": "{count, plural, one{{site}에서 브라우저 #회 사용함} other{{site}에서 브라우저 #회 사용함}}",
+				"tool": "{count, plural, one{도구 #개 사용함} other{도구 #개 사용함}}",
+				"agent": "{count, plural, one{에이전트 #개 시작함} other{에이전트 #개 시작함}}"
 			},
 			"browser": {
 				"closeTab": "탭을 닫음",
@@ -2939,10 +2798,7 @@
 				"request": "{url}에 요청 보내는 중"
 			},
 			"exit": "종료 코드 {code}",
-			"showAll": {
-				"one": "{count}줄 모두 보기",
-				"other": "{count}줄 모두 보기"
-			},
+			"showAll": "{count, plural, one{#줄 모두 보기} other{#줄 모두 보기}}",
 			"showLess": "마지막 줄만 보기"
 		},
 		"turn": {
@@ -2950,10 +2806,7 @@
 			"stopped": "중지됨",
 			"refusalTitle": "모델이 계속하기를 거부했습니다",
 			"refusalHint": "안전 장치가 이 차례를 멈췄습니다. 정당한 작업에서도 일어날 수 있습니다. 요청을 바꿔 말하거나 아래에서 다른 모델을 선택하세요.",
-			"files": {
-				"one": "파일 {count}개 변경됨",
-				"other": "파일 {count}개 변경됨"
-			},
+			"files": "{count, plural, one{파일 #개 변경됨} other{파일 #개 변경됨}}",
 			"review": "검토",
 			"copy": "응답 복사",
 			"copied": "복사됨"

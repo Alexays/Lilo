@@ -198,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}：{decision}",
 			"zoomSummary": "ズーム {zoom}",
-			"hiddenSummary": {"one": "{count}個の非表示要素", "other": "{count}個の非表示要素"},
+			"hiddenSummary": "{count, plural, one{#個の非表示要素} other{#個の非表示要素}}",
 			"dataSummary": "保存データ",
 			"permissionUpdated": "{origin} · 更新：{time}",
 			"emptyTitle": "サイトの設定はまだありません",
@@ -605,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "今すぐ更新",
-			"summary": {
-				"one": "リスト数：{count}",
-				"other": "リスト数：{count}"
-			},
+			"summary": "{count, plural, one{リスト数：#} other{リスト数：#}}",
 			"updated": "更新：{time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "今すぐ確認",
 			"checking": "アップデートを確認中...",
 			"upToDate": "最新です",
-			"updated": {
-				"one": "{count}件更新しました",
-				"other": "{count}件更新しました"
-			},
-			"available": {
-				"one": "{count}件のアップデートがあります",
-				"other": "{count}件のアップデートがあります"
-			},
-			"failed": {
-				"one": "{count}件確認できませんでした",
-				"other": "{count}件確認できませんでした"
-			},
+			"updated": "{count, plural, one{#件更新しました} other{#件更新しました}}",
+			"available": "{count, plural, one{#件のアップデートがあります} other{#件のアップデートがあります}}",
+			"failed": "{count, plural, one{#件確認できませんでした} other{#件確認できませんでした}}",
 			"lastChecked": "最終確認：{time}"
 		},
 		"folderAutoLock": {
@@ -677,10 +665,7 @@
 			"clearData": "データを消去...",
 			"remove": "取り除く...",
 			"lastProfile": "最後のプロファイルは削除できません。すべてのスペースにプロファイルが必要です。",
-			"extensionCount": {
-				"one": "機能拡張：{count}個",
-				"other": "機能拡張：{count}個"
-			},
+			"extensionCount": "{count, plural, one{機能拡張：#個} other{機能拡張：#個}}",
 			"newProfile": "新規プロファイル...",
 			"newProfileDetail": "新しい Cookie、サインイン、機能拡張",
 			"namePlaceholder": "プロファイル名",
@@ -755,28 +740,16 @@
 		},
 		"notes": {
 			"live": "選ぶとすぐに反映されます",
-			"spaces": {
-				"one": "{count} 個のスペース",
-				"other": "{count} 個のスペース"
-			},
-			"profiles": {
-				"one": "{count} 個のプロファイル",
-				"other": "{count} 個のプロファイル"
-			},
+			"spaces": "{count, plural, one{# 個のスペース} other{# 個のスペース}}",
+			"profiles": "{count, plural, one{# 個のプロファイル} other{# 個のプロファイル}}",
 			"blocking": "{total} 種類中 {count} 種類をブロック",
 			"blockingOff": "ブロックはオフです",
 			"profile": "{name} プロファイル",
-			"extensions": {
-				"one": "{profile} の拡張機能 {count} 個",
-				"other": "{profile} の拡張機能 {count} 個"
-			},
+			"extensions": "{count, plural, one{{profile} の拡張機能 # 個} other{{profile} の拡張機能 # 個}}",
 			"terminal": "変更はすべてのターミナルタブに反映されます",
 			"agents": "Lilo 自体に AI は搭載していません",
 			"advanced": "開発とテスト用",
-			"searchMatches": {
-				"one": "「{query}」に一致する設定 {count} 件",
-				"other": "「{query}」に一致する設定 {count} 件"
-			}
+			"searchMatches": "{count, plural, one{「{query}」に一致する設定 # 件} other{「{query}」に一致する設定 # 件}}"
 		},
 		"callDock": {
 			"sidebar": "サイドバー内",
@@ -932,13 +905,13 @@
 		"pinnedTabs": "固定タブ",
 		"openTabs": "開いているタブ",
 		"dropToPin": "ドロップして固定",
-		"stackLabel": {"one": "{name}、タブ {count}個", "other": "{name}、タブ {count}個"},
+		"stackLabel": "{count, plural, one{{name}、タブ #個} other{{name}、タブ #個}}",
 		"closeStack": "スタックを閉じる",
 		"trayAgents": "エージェント",
 		"trayTerminals": "ターミナル",
-		"trayNeedsInput": {"one": "{count}件が入力待ち", "other": "{count}件が入力待ち"},
-		"trayWorking": {"one": "{count}件が作業中", "other": "{count}件が作業中"},
-		"trayRunning": {"one": "{count}件が実行中", "other": "{count}件が実行中"},
+		"trayNeedsInput": "{count, plural, one{#件が入力待ち} other{#件が入力待ち}}",
+		"trayWorking": "{count, plural, one{#件が作業中} other{#件が作業中}}",
+		"trayRunning": "{count, plural, one{#件が実行中} other{#件が実行中}}",
 		"trayShow": "{name}を表示",
 		"trayHide": "{name}を隠す"
 	},
@@ -1343,7 +1316,7 @@
 		"tabStartup": "起動",
 		"tabMemory": "メモリ",
 		"tabLog": "ログ",
-		"errorCount": {"one": "{count}件のエラー", "other": "{count}件のエラー"},
+		"errorCount": "{count, plural, one{#件のエラー} other{#件のエラー}}",
 		"copyReport": "レポートをコピー",
 		"recordSession": "セッションを記録",
 		"stopRecording": "記録を停止",
@@ -1385,23 +1358,11 @@
 		"navLabel": "プロセスマネージャの表示",
 		"searchPlaceholder": "タブを検索",
 		"memoryAriaLabel": "メモリ使用量",
-		"tabsCount": {
-			"one": "{count}個のタブ",
-			"other": "{count}個のタブ"
-		},
+		"tabsCount": "{count, plural, one{#個のタブ} other{#個のタブ}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "その他{count}件",
-			"other": "その他{count}件"
-		},
-		"reclaim": {
-			"one": "非表示の{count}個のタブが{size}を使用中",
-			"other": "非表示の{count}個のタブが{size}を使用中"
-		},
-		"reclaimNoSize": {
-			"one": "非表示の{count}個のタブが読み込まれたままです",
-			"other": "非表示の{count}個のタブが読み込まれたままです"
-		},
+		"others": "{count, plural, one{その他#件} other{その他#件}}",
+		"reclaim": "{count, plural, one{非表示の#個のタブが{size}を使用中} other{非表示の#個のタブが{size}を使用中}}",
+		"reclaimNoSize": "{count, plural, one{非表示の#個のタブが読み込まれたままです} other{非表示の#個のタブが読み込まれたままです}}",
 		"sleep": "スリープさせる",
 		"groupTabs": "タブ",
 		"groupSleeping": "スリープ中",
@@ -1411,10 +1372,7 @@
 		"audioPlaying": "オーディオを再生中",
 		"frozen": "一時停止中",
 		"sharedEstimate": "ほかのタブとプロセスを共有しているため、推定値です",
-		"sharedWith": {
-			"one": "ほかの{count}個のタブと共有",
-			"other": "ほかの{count}個のタブと共有"
-		},
+		"sharedWith": "{count, plural, one{ほかの#個のタブと共有} other{ほかの#個のタブと共有}}",
 		"pid": "PID {pid}",
 		"focus": "表示",
 		"details": "詳細を表示",
@@ -1443,16 +1401,10 @@
 	"urlToast": {
 		"pageActions": "ページのアクション",
 		"reEnableBlocking": "このサイトでブロックを再び有効にする",
-		"trackersBlockedOnPage": {
-			"one": "このページで{count}件のトラッカーをブロック",
-			"other": "このページで{count}件のトラッカーをブロック"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{このページで#件のトラッカーをブロック} other{このページで#件のトラッカーをブロック}}",
 		"disableBlocking": "このサイトでブロックを無効にする",
 		"adsAllowed": "広告を許可",
-		"trackersBlockedLabel": {
-			"one": "{count}件のトラッカーをブロック",
-			"other": "{count}件のトラッカーをブロック"
-		},
+		"trackersBlockedLabel": "{count, plural, one{#件のトラッカーをブロック} other{#件のトラッカーをブロック}}",
 		"adsBlocked": "広告をブロック",
 		"extensionAlreadyInstalled": "機能拡張はインストール済みです",
 		"installChromeExtension": "この Chrome 機能拡張をインストール",
@@ -1496,10 +1448,7 @@
 		"stop": "デバッグを停止"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "他{count}件のお知らせ",
-			"other": "他{count}件のお知らせ"
-		},
+		"moreNotices": "{count, plural, one{他#件のお知らせ} other{他#件のお知らせ}}",
 		"more": "他{count}件"
 	},
 	"crashRecovery": {
@@ -1540,7 +1489,7 @@
 	},
 	"archivedTabs": {
 		"title": "アーカイブ済み",
-		"buttonLabel": {"one": "最近アーカイブしたタブ {count}個", "other": "最近アーカイブしたタブ {count}個"},
+		"buttonLabel": "{count, plural, one{最近アーカイブしたタブ #個} other{最近アーカイブしたタブ #個}}",
 		"restore": "復元",
 		"showAll": "アーカイブしたすべてのタブを表示",
 		"showAllDownloads": "すべてのダウンロードを表示"
@@ -1551,7 +1500,7 @@
 		"undo": "取り消す",
 		"reopen": "もう一度開く",
 		"archived": "「{title}」をアーカイブしました",
-		"archivedCount": {"one": "{count}個のタブをアーカイブしました", "other": "{count}個のタブをアーカイブしました"}
+		"archivedCount": "{count, plural, one{#個のタブをアーカイブしました} other{#個のタブをアーカイブしました}}"
 	},
 	"updateCard": {
 		"ready": "インストールの準備ができました",
@@ -1768,26 +1717,11 @@
 			"done": "完了：{list}。",
 			"nothing": "完了しました。新しく読み込むデータはありませんでした。",
 			"count": {
-				"bookmarks": {
-					"one": "{count}個のブックマーク",
-					"other": "{count}個のブックマーク"
-				},
-				"tabs": {
-					"one": "開いているタブ{count}個",
-					"other": "開いているタブ{count}個"
-				},
-				"history": {
-					"one": "{count}ページの履歴",
-					"other": "{count}ページの履歴"
-				},
-				"cookies": {
-					"one": "{count}個の Cookie",
-					"other": "{count}個の Cookie"
-				},
-				"extensions": {
-					"one": "{count}個の機能拡張",
-					"other": "{count}個の機能拡張"
-				}
+				"bookmarks": "{count, plural, one{#個のブックマーク} other{#個のブックマーク}}",
+				"tabs": "{count, plural, one{開いているタブ#個} other{開いているタブ#個}}",
+				"history": "{count, plural, one{#ページの履歴} other{#ページの履歴}}",
+				"cookies": "{count, plural, one{#個の Cookie} other{#個の Cookie}}",
+				"extensions": "{count, plural, one{#個の機能拡張} other{#個の機能拡張}}"
 			},
 			"step": {
 				"bookmarks": "{from}からブックマークを読み込み中",
@@ -1905,11 +1839,11 @@
 		"sectionSites": "よく閲覧するサイト",
 		"sectionTerminals": "ターミナルから",
 		"searchResults": "検索結果",
-		"dayPages": {"one": "{count}ページ", "other": "{count}ページ"},
-		"daySites": {"one": "{count}サイト", "other": "{count}サイト"},
+		"dayPages": "{count, plural, one{#ページ} other{#ページ}}",
+		"daySites": "{count, plural, one{#サイト} other{#サイト}}",
 		"openInNewTab": "新規タブで開く",
-		"selected": {"one": "{count}件選択中", "other": "{count}件選択中"},
-		"visits": {"one": "{count}回のアクセス", "other": "{count}回のアクセス"},
+		"selected": "{count, plural, one{#件選択中} other{#件選択中}}",
+		"visits": "{count, plural, one{#回のアクセス} other{#回のアクセス}}",
 		"openInNewTabs": "新しいタブで開く",
 		"delete": "削除",
 		"clearSelection": "すべての選択を解除",
@@ -2479,10 +2413,7 @@
 		"title": "Lilo の新機能",
 		"description": "毎日のブラウジングを少し快適にする改善です。",
 		"allChanges": "このアップデートのすべての変更",
-		"changes": {
-			"one": "{count}件の変更",
-			"other": "{count}件の変更"
-		},
+		"changes": "{count, plural, one{#件の変更} other{#件の変更}}",
 		"originalNotes": "元のリリースノート。",
 		"unavailable": "このビルドではリリースノートを利用できません。",
 		"reopen": "「ヘルプ」>「新機能」からいつでも開けます。",
@@ -2666,10 +2597,7 @@
 			"ownCopyHint": "プロジェクトの専用コピーで作業します。「変更」からマージしてください。",
 			"starting": "エージェントを起動中...",
 			"errorHint": "もう一度試すにはメッセージを送信してください。",
-			"showEarlier": {
-				"one": "前の項目を {count} 件表示",
-				"other": "前の項目を {count} 件表示"
-			},
+			"showEarlier": "{count, plural, one{前の項目を # 件表示} other{前の項目を # 件表示}}",
 			"queuedTag": "待機中",
 			"sendNow": "今すぐ送信",
 			"thought": "思考",
@@ -2679,16 +2607,10 @@
 			"restore": "復元",
 			"undo": "取り消す",
 			"undone": "取り消しました",
-			"moreLines": {
-				"one": "さらに {count} 行",
-				"other": "さらに {count} 行"
-			},
+			"moreLines": "{count, plural, one{さらに # 行} other{さらに # 行}}",
 			"plan": "プラン",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} 件のステップが完了",
-				"other": "{count} 件のステップが完了"
-			},
+			"planDone": "{count, plural, one{# 件のステップが完了} other{# 件のステップが完了}}",
 			"planStatus": {
 				"pending": "未着手",
 				"in_progress": "進行中",
@@ -2716,26 +2638,11 @@
 				"failed": "失敗"
 			},
 			"group": {
-				"read": {
-					"one": "{count} 個のファイルを読み込み",
-					"other": "{count} 個のファイルを読み込み"
-				},
-				"search": {
-					"one": "{count} 回検索",
-					"other": "{count} 回検索"
-				},
-				"fetch": {
-					"one": "{count} ページを取得",
-					"other": "{count} ページを取得"
-				},
-				"think": {
-					"one": "{count} 回思考",
-					"other": "{count} 回思考"
-				},
-				"action": {
-					"one": "{count} 件の操作",
-					"other": "{count} 件の操作"
-				}
+				"read": "{count, plural, one{# 個のファイルを読み込み} other{# 個のファイルを読み込み}}",
+				"search": "{count, plural, one{# 回検索} other{# 回検索}}",
+				"fetch": "{count, plural, one{# ページを取得} other{# ページを取得}}",
+				"think": "{count, plural, one{# 回思考} other{# 回思考}}",
+				"action": "{count, plural, one{# 件の操作} other{# 件の操作}}"
 			}
 		},
 		"composer": {
@@ -2773,24 +2680,12 @@
 			"untitled": "新しい会話",
 			"working": "作業中",
 			"failed": "エラーで停止",
-			"linesAdded": {
-				"one": "{count} 行追加",
-				"other": "{count} 行追加"
-			},
-			"linesRemoved": {
-				"one": "{count} 行削除",
-				"other": "{count} 行削除"
-			},
-			"pages": {
-				"one": "{count} ページ",
-				"other": "{count} ページ"
-			},
+			"linesAdded": "{count, plural, one{# 行追加} other{# 行追加}}",
+			"linesRemoved": "{count, plural, one{# 行削除} other{# 行削除}}",
+			"pages": "{count, plural, one{# ページ} other{# ページ}}",
 			"showPages": "ページを表示",
 			"hidePages": "ページを隠す",
-			"morePermissions": {
-				"one": "ほかに {count} 件のリクエストが対応待ち",
-				"other": "ほかに {count} 件のリクエストが対応待ち"
-			}
+			"morePermissions": "{count, plural, one{ほかに # 件のリクエストが対応待ち} other{ほかに # 件のリクエストが対応待ち}}"
 		},
 		"question": {
 			"allow": "許可",
@@ -2804,10 +2699,7 @@
 		},
 		"badge": {
 			"title": "エージェント",
-			"waiting": {
-				"one": "エージェント、{count} 件が対応待ち",
-				"other": "エージェント、{count} 件が対応待ち"
-			},
+			"waiting": "{count, plural, one{エージェント、# 件が対応待ち} other{エージェント、# 件が対応待ち}}",
 			"new": "新規",
 			"needsYou": "対応待ち",
 			"running": "実行中",
@@ -2828,10 +2720,7 @@
 			"signInOpenTerminal": "ターミナルで開く"
 		},
 		"work": {
-			"images": {
-				"one": "{count} 枚の画像",
-				"other": "{count} 枚の画像"
-			},
+			"images": "{count, plural, one{# 枚の画像} other{# 枚の画像}}",
 			"verb": {
 				"read": "読み込み",
 				"edit": "編集",
@@ -2849,46 +2738,16 @@
 				"fetch": "取得中"
 			},
 			"summary": {
-				"read": {
-					"one": "{count} 個のファイルを読み込み",
-					"other": "{count} 個のファイルを読み込み"
-				},
-				"edit": {
-					"one": "{count} 個のファイルを編集",
-					"other": "{count} 個のファイルを編集"
-				},
-				"execute": {
-					"one": "{count} 個のコマンドを実行",
-					"other": "{count} 個のコマンドを実行"
-				},
-				"search": {
-					"one": "{count} 回検索",
-					"other": "{count} 回検索"
-				},
-				"fetch": {
-					"one": "{count} 個のページを取得",
-					"other": "{count} 個のページを取得"
-				},
-				"think": {
-					"one": "{count} 回思考",
-					"other": "{count} 回思考"
-				},
-				"browser": {
-					"one": "ブラウザを {count} 回使用",
-					"other": "ブラウザを {count} 回使用"
-				},
-				"browserOn": {
-					"one": "{site} でブラウザを {count} 回使用",
-					"other": "{site} でブラウザを {count} 回使用"
-				},
-				"tool": {
-					"one": "{count} 個のツールを使用",
-					"other": "{count} 個のツールを使用"
-				},
-				"agent": {
-					"one": "{count} 個のエージェントを起動",
-					"other": "{count} 個のエージェントを起動"
-				}
+				"read": "{count, plural, one{# 個のファイルを読み込み} other{# 個のファイルを読み込み}}",
+				"edit": "{count, plural, one{# 個のファイルを編集} other{# 個のファイルを編集}}",
+				"execute": "{count, plural, one{# 個のコマンドを実行} other{# 個のコマンドを実行}}",
+				"search": "{count, plural, one{# 回検索} other{# 回検索}}",
+				"fetch": "{count, plural, one{# 個のページを取得} other{# 個のページを取得}}",
+				"think": "{count, plural, one{# 回思考} other{# 回思考}}",
+				"browser": "{count, plural, one{ブラウザを # 回使用} other{ブラウザを # 回使用}}",
+				"browserOn": "{count, plural, one{{site} でブラウザを # 回使用} other{{site} でブラウザを # 回使用}}",
+				"tool": "{count, plural, one{# 個のツールを使用} other{# 個のツールを使用}}",
+				"agent": "{count, plural, one{# 個のエージェントを起動} other{# 個のエージェントを起動}}"
 			},
 			"browser": {
 				"closeTab": "タブを閉じました",
@@ -2939,10 +2798,7 @@
 				"request": "{url} にリクエストを送信しています"
 			},
 			"exit": "終了コード {code}",
-			"showAll": {
-				"one": "{count} 行すべてを表示",
-				"other": "{count} 行すべてを表示"
-			},
+			"showAll": "{count, plural, one{# 行すべてを表示} other{# 行すべてを表示}}",
 			"showLess": "最後の行だけを表示"
 		},
 		"turn": {
@@ -2950,10 +2806,7 @@
 			"stopped": "停止しました",
 			"refusalTitle": "モデルが続行を拒否しました",
 			"refusalHint": "安全機能がこのターンを停止しました。正当な作業でも起こることがあります。依頼を言い換えるか、下で別のモデルを選んでください。",
-			"files": {
-				"one": "{count} 個のファイルを変更",
-				"other": "{count} 個のファイルを変更"
-			},
+			"files": "{count, plural, one{# 個のファイルを変更} other{# 個のファイルを変更}}",
 			"review": "確認",
 			"copy": "応答をコピー",
 			"copied": "コピーしました"
