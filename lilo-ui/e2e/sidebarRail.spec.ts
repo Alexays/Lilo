@@ -35,6 +35,8 @@ test("dragging the edge under the detent folds the sidebar to its rail, and back
 	expect(labels.every(Boolean)).toBe(true);
 	await expect(rail.locator(".rail-item[aria-current='page']")).toHaveCount(1);
 
+	// The rail slides in over 280 ms; its edge is only grabbable once it rests on the window's edge.
+	await expect.poll(async () => (await rail.boundingBox())?.x).toBe(0);
 	await drag(page, await handleCenter(page), 220);
 	await expect(rail).toHaveCount(0);
 	expect(await sidebarWidth(page)).toBe("300px");

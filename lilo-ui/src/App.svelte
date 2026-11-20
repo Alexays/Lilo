@@ -290,7 +290,8 @@
     function applyPendingSidebarWidth() {
       handleWidth = pendingSidebarWidth;
       root.style.setProperty("--sidebar-width", `${pendingSidebarWidth}px`);
-      setSidebarWidth(pendingSidebarWidth);
+      // While the drag holds the sidebar folded, the pending width is the fold's kept width: writing it must not unfold the rail.
+      if (!isSidebarRail()) setSidebarWidth(pendingSidebarWidth);
     }
 
     function scheduleSidebarWidth(width: number) {
