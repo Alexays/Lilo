@@ -23,6 +23,13 @@ function applySidebarRail(rail: boolean): void {
 }
 
 let _sidebarNarrow = $state(false);
+// The lights' threshold, carried by the bridge's initial state
+// (MainWindowController.narrowSidebarWidth); the literal stands only until it lands.
+let _narrowSidebarWidth = 203;
+
+export function narrowSidebarWidth(): number {
+	return _narrowSidebarWidth;
+}
 
 /** Narrower than the lights' threshold: they take the toolbar row, as on the rail. */
 function applySidebarNarrow(narrow: boolean): void {
@@ -38,6 +45,8 @@ let _isFullscreen = $state<boolean>(false);
 export function applyUIInitialState(data: BridgeInitialStatePayload): void {
 	setSidebarMode(data.sidebarVisible ? "visible" : "hidden");
 	applySidebarRail(data.sidebarRail ?? false);
+	_narrowSidebarWidth = data.narrowSidebarWidth ?? _narrowSidebarWidth;
+	applySidebarNarrow(data.sidebarWidth > 0 && data.sidebarWidth < _narrowSidebarWidth);
 	_trafficLightsVisible = data.trafficLightsVisible ?? true;
 	_isFullscreen = data.isFullscreen ?? false;
 }
@@ -78,8 +87,8 @@ export function isSidebarNarrow(): boolean {
 
 export function setSidebarWidth(width: number): void {
 	applySidebarRail(false);
-	// The lights' threshold mirrors MainWindowController.narrowSidebarWidth; the floor is the rail's column.
-	applySidebarNarrow(width < 203);
+	// Below the lights' threshold they leave the header; the floor is the rail's column.
+	applySidebarNarrow(width < _narrowSidebarWidth);
 	chromeActions.sidebarResized(width);
 }
 

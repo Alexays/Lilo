@@ -29,6 +29,7 @@
     isSidebarRail,
     isSidebarShown,
     isSidebarVisible,
+    narrowSidebarWidth,
     setSidebarRail,
     setSidebarWidth,
     showSidebarOverlay,
@@ -124,26 +125,24 @@
   let sidebarOverlayHideTimeout: ReturnType<typeof setTimeout> | null = null;
   const sidebarResizeFrame = createFrameScheduler();
   // The narrowest sidebar whose top line holds every button whole with the lights over it. Below it the
-  // lights take the toolbar row (as on the rail), and the tab rows' titles truncate: the drag runs on to
-  // the rail's width. With the address hidden the line also holds the page's overflow button.
-  const sidebarMinWidth = $derived(getTabPosition() === "left" && !isAddressVisible() ? 215 : 203);
+  // lights take the toolbar row's place past the column (as on the rail), and the tab rows' titles
+  // truncate: the drag runs on to the rail's width. With the address hidden the line also holds the
+  // page's overflow button.
+  const sidebarMinWidth = $derived(getTabPosition() === "left" && !isAddressVisible() ? 215 : narrowSidebarWidth());
   // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
   const SIDEBAR_RAIL_THRESHOLD = 150;
   const SIDEBAR_RAIL_WIDTH = 40;
-  // Swift's narrowSidebarWidth: below it the traffic lights take the toolbar row. A width a roomier
-  // layout kept between here and the minimum widens back to the minimum; narrower than here holds.
-  const SWIFT_MIN_WIDTH = 203;
   const SIDEBAR_MAX_WIDTH = 480;
 
   // What the resize handle reports to VoiceOver, read from the stylesheet when it takes focus.
   let handleWidth = $state(0);
 
-  // A width a roomier layout kept, between the rail and its minimum, widens to the minimum; anything
-  // narrower is already inside the continuous range (the lights moved to the toolbar row) and holds.
+  // A width a roomier layout kept, between the lights' threshold and the minimum, widens to the
+  // minimum; anything narrower is already inside the continuous range and holds.
   $effect(() => {
     const root = document.documentElement;
     const width = parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width"));
-    if (!(width < sidebarMinWidth && width > SIDEBAR_RAIL_WIDTH && width >= SWIFT_MIN_WIDTH)) return;
+    if (!(width < sidebarMinWidth && width > SIDEBAR_RAIL_WIDTH && width >= narrowSidebarWidth())) return;
     root.style.setProperty("--sidebar-width", `${sidebarMinWidth}px`);
     handleWidth = sidebarMinWidth;
     setSidebarWidth(sidebarMinWidth);

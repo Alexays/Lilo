@@ -552,6 +552,8 @@ export interface BridgeInitialStatePayload {
 	sidebarWidth: number;
 	sidebarVisible: boolean;
 	sidebarRail?: boolean;
+	/** MainWindowController.narrowSidebarWidth: the sidebar width under which the lights leave the header. */
+	narrowSidebarWidth?: number;
 	toolbarVisible?: boolean;
 	trafficLightsVisible?: boolean;
 	tabPosition?: TabPosition;
