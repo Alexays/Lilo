@@ -177,7 +177,8 @@ extension MainWindowController {
 
     /// The menu of a multi-tab selection: the same actions as a single tab's, applied to the whole set.
     private func showMultiTabContextMenu(tabIds: [UUID], spaceId: UUID, anchorRect: NSRect?) {
-        let tabs = tabIds.compactMap { tabManager.tab(for: $0) }.filter { !$0.isClosed }
+        // `context(for:)` resolves only tabs of the current Space: a selection never reaches into another.
+        let tabs = tabIds.compactMap { tabManager.context(for: $0)?.tab }.filter { !$0.isClosed }
         guard tabs.count > 1 else { return }
         let menu = NSMenu()
         let unpinned = tabs.filter { !$0.isPinned }
@@ -192,14 +193,12 @@ extension MainWindowController {
                 self.applyContextMenuStateCommands(unbookmarked.map { .setBookmarked(spaceId: spaceId, tabId: $0.id, isBookmarked: true) })
             }
         }
-        if spaceId == tabManager.currentSpaceId {
-            let spaceMenu = NSMenu(title: "Move Tabs to Space".localized)
-            addMoveToSpaceItems(to: spaceMenu, tabIds: tabs.map(\.id))
-            if !spaceMenu.items.isEmpty {
-                let item = menu.addItem(withTitle: spaceMenu.title, action: nil, keyEquivalent: "")
-                item.image = MenuIcon.moveToSpace.image
-                item.submenu = spaceMenu
-            }
+        let spaceMenu = NSMenu(title: "Move Tabs to Space".localized)
+        addMoveToSpaceItems(to: spaceMenu, tabIds: tabs.map(\.id))
+        if !spaceMenu.items.isEmpty {
+            let item = menu.addItem(withTitle: spaceMenu.title, action: nil, keyEquivalent: "")
+            item.image = MenuIcon.moveToSpace.image
+            item.submenu = spaceMenu
         }
         if !menu.items.isEmpty { menu.addItem(.separator()) }
         unsafe menu.addItem(String(format: "Close %d Tabs".localized(count: tabs.count), tabs.count), icon: .close) {
