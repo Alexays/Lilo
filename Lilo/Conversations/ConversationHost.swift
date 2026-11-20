@@ -1205,12 +1205,18 @@ final class ConversationHost {
         if state == .busy { keepAwake(conversation) }
     }
 
+    /// The agent's question about a page opened or closed: its row turns amber or back.
+    func questionChanged(tabId: UUID) {
+        if let conversation = conversations[tabId] { updateTab(conversation) }
+    }
+
     private func updateTab(_ conversation: Conversation) {
         scheduleSummary()
+        let asking = context?.agentControl.isAsking(conversation: conversation.tabId) == true
         guard let window = context?.windows.window(forTab: conversation.tabId) else { return }
         let updated = window.updateRuntimeTab(id: conversation.tabId) { tab in
             tab.terminalState = conversation.state.rawValue
-            tab.awaitingInputSince = conversation.permissions.isEmpty ? nil : (tab.awaitingInputSince ?? Date())
+            tab.awaitingInputSince = conversation.permissions.isEmpty && !asking ? nil : (tab.awaitingInputSince ?? Date())
             tab.hasUnreadOutput = conversation.unread
             if !conversation.title.isEmpty { tab.title = conversation.title }
         }

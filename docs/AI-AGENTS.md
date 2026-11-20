@@ -45,6 +45,8 @@ Unless you turn it off in Settings, Lilo asks before an agent:
   a frame of another origin, which Lilo cannot read, is always asked;
 - sends a request other than GET or HEAD with the cookies of one of your profiles.
 
+The question opens in the window that holds the agent's page, and the agent's conversation row turns amber
+meanwhile; your other windows, and the site and extension prompts there, are not held up by it.
 It counts as a refusal when you decline; one nobody answers in 45 seconds is withdrawn, and the agent
 may ask once more; with no window open the agent is told to ask you to open one first.
 
