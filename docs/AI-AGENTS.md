@@ -87,6 +87,31 @@ registry and are checked against its SHA-256 before they run.
   Undo puts back one file. An agent can work on its own copy of the project (a git worktree).
 - An idle agent stops after ten minutes and resumes its session when you come back.
 
+## Saved flows
+
+An agent can record a task once and replay it later with three tools:
+
+- `flow_start`: start recording. Every mutating call it makes from then on becomes a step - a click or a filled
+  field as a stable locator (the role and name `read_page` gives the element, never a ref or a pixel),
+  `navigate` and `wait_for` verbatim. Reads, scripts and coordinate clicks record nothing.
+- `flow_save` with a name: stop and write the flow as JSONL in `Agents/Flows/` of Lilo's support folder,
+  readable only by you, with a hash that fails a file edited on disk.
+- `flow_run` with the name and a tab: replay each step through the same tool path a live call takes, so a
+  replayed click asks for your approval exactly as the agent's own click would. A saved flow is a recording,
+  not a standing authorization.
+
+A value the user must supply each run is a parameter (`{"param": name}` in the file): the agent marks it with
+`flowParam` at record time or declares it at `flow_save`, and a password, card or one-time code field always
+becomes one - its value is never stored. `flow_run` fails before the first step if a parameter is missing.
+
+Replay stops at the first step whose locator matches nothing (or whose element changed name since the
+recording) and reports `{failedStep, reason}` - it never picks a near match. The agent then owns the page
+again and can resume with `from`. A consent answer of `denied` or `expired` stops the run the same way.
+
+A conversation's first prompt carries a short skill describing these tools, the same way a tab or a selection
+is attached, so any ACP agent learns them without configuration.
+
+>>>>>>> 9c04b166 (feat(agent): saved flows agents record once and replay deterministically)
 ## The action log
 
 Lilo keeps one local line per tool call an agent makes, in `Agents/Actions/` of Lilo's support folder (`~/Library/Application Support/Lilo/Agents/Actions/`). A conversation has its own file (`conversation-<tab id>.jsonl`), and every other client its own (`client-<name>.jsonl`). Nothing leaves your Mac, nothing is written while no agent calls a tool, and no screenshot, page text or video is ever stored. It is the record a replay, a retry or a skill is built from later.

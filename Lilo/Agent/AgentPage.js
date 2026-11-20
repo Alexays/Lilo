@@ -278,6 +278,35 @@
     return matches
   }
 
+  // What a recorded flow stores instead of `ref`: the element's role and name as read_page gives them, its
+  // ordinal among the shown elements sharing both, and whether its value is a secret (password, card,
+  // one-time code) which a flow never stores.
+  const locate = ({ ref: id }) => {
+    const el = element(id)
+    const r = role(el) ?? 'generic'
+    const n = name(el)
+    let nth = 0
+    for (const other of document.body ? elements(document.body) : []) {
+      if (other === el) break
+      if ((role(other) ?? 'generic') === r && name(other) === n && shown(other)) nth++
+    }
+    const autocomplete = (el.getAttribute('autocomplete') ?? '').toLowerCase()
+    const sensitive = el.type === 'password' || autocomplete === 'one-time-code' || autocomplete.startsWith('cc-')
+    return { role: r, name: n, nth, sensitive }
+  }
+
+  // A recorded step's locator back to a live ref: the nth shown element with exactly that role and name,
+  // into open shadow roots. A miss, or an element whose name changed since the recording, throws: replay
+  // never picks a near match.
+  const resolveTarget = ({ role: wanted, name: wantedName = '', nth = 0 }) => {
+    let seen = 0
+    for (const el of document.body ? elements(document.body) : []) {
+      if ((role(el) ?? 'generic') !== wanted || name(el) !== wantedName || !shown(el)) continue
+      if (seen++ === nth) return { ref: ref(el) }
+    }
+    throw new Error(`no ${wanted} "${clip(wantedName, 60)}" shows: the page no longer matches the recording`)
+  }
+
   // What a click at (x, y) lands on, into open shadow roots.
   const hitAt = ({ x, y }) => {
     let el = document.elementFromPoint(x, y)
@@ -658,7 +687,7 @@
   const captureRestore = ({ x, y }) => instantScroll(x, y)
 
   window.__liloAgent = {
-    prefix: () => prefix, readPage, find, hitAt, focusedField, waitFor, text, setValue, rect, scrollState, scrollBy, dropFile, act,
+    prefix: () => prefix, readPage, find, hitAt, focusedField, waitFor, text, setValue, rect, scrollState, scrollBy, dropFile, act, locate, resolveTarget,
     request, consequential, captureScroll, captureBox, captureRestore, snapshot, delta
   }
 })()
