@@ -95,7 +95,8 @@ final class ACPConnectionTests: XCTestCase {
             exited.fulfill()
         }
         connection.notify("exit", [:])
-        await fulfillment(of: [exited], timeout: 5)
+        // Exit delivery rides process teardown and a dispatch to the main thread, which CI contention can hold past a smaller timeout.
+        await fulfillment(of: [exited], timeout: 10)
         do {
             _ = try await connection.request("initialize", [:])
             XCTFail("expected an error")
