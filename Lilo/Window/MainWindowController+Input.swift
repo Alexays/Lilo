@@ -63,6 +63,9 @@ extension MainWindowController {
             dismissChangesPeek()
         } else if let peek = pagePopups.values.first(where: { unsafe $0.peekView?.superview != nil }) {
             peek.requestClose()
+        } else if pageShellOpen {
+            // The chrome closes the system screen covering the page; the tab under it stays.
+            bridgeRouter.send(event: "closePageShell")
         } else if let id = tabManager.activeOpenTabId {
             closeTabStateFirst(id: id)
         }
@@ -609,7 +612,7 @@ extension MainWindowController: NSUserInterfaceValidations {
         let action = item.action
         if isShowingWhatsNew && action != #selector(showWhatsNew(_:)) { return false }
 
-        if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil }
+        if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil || pageShellOpen }
         if action == #selector(openPageAsTab(_:)) { return pagePopups.values.contains { unsafe $0.peekView?.superview != nil } }
         if action == #selector(goBackInHistory(_:)) { return focusedEngineTab?.canGoBack == true }
         if action == #selector(goForwardInHistory(_:)) { return focusedEngineTab?.wkWebView.canGoForward == true }

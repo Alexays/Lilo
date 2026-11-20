@@ -21,7 +21,7 @@
   import WhatsNewHost from "./whatsnew/WhatsNewHost.svelte";
   import AgentConnectModal from "./agents/AgentConnectModal.svelte";
   import ErrorBoundary from "./ui/ErrorBoundary.svelte";
-  import { getPageShell, isClearBrowsingDataOpen, isDesignSystemShellOpen } from "../stores/panels.svelte";
+  import { getPageShell, isClearBrowsingDataOpen, isDesignSystemShellOpen, reportPageShellState } from "../stores/panels.svelte";
   import { getSetting } from "../stores/settings.svelte";
   import { getSplitPanes } from "../stores/splitPanes.svelte";
   import { getActiveTab, getTabsById } from "../stores/tabs.svelte";
@@ -46,6 +46,8 @@
   $effect(() => {
     const shell = getPageShell();
     if (shell && !shellsLoaded.includes(shell)) shellsLoaded = [...shellsLoaded, shell];
+    // ⌘W closes the open system screen before the tab behind it; native learns the state here.
+    reportPageShellState();
   });
   let askBarLoaded = $state(false);
   $effect(() => {

@@ -628,6 +628,8 @@ export interface BridgeCommandPayloadMap {
 	/** The system color sampler, answered by `screenColorSampled`. */
 	sampleScreenColor: EmptyPayload;
 	sidebarOverlayChanged: { visible: boolean };
+	/** A system screen covers the page (Settings, History, Downloads, ...); ⌘W closes it before the tab. */
+	pageShellChanged: { open: boolean };
 	showTabSecurityInfo: EmptyPayload;
 	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
@@ -1013,6 +1015,8 @@ export interface BridgeEventPayloadMap {
 	openDiagnostics: EmptyPayload;
 	openProcessManager: EmptyPayload;
 	openDownloads: EmptyPayload;
+	// ⌘W while a system screen covers the page: close it, leaving the tab behind.
+	closePageShell: EmptyPayload;
 	/** `id`: the extension whose details page opens. */
 	openExtensions: { id?: string };
 	openConfig: EmptyPayload;

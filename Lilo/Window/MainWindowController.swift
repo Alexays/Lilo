@@ -258,6 +258,8 @@ final class MainWindowController: NSWindowController {
     var storedWindowBackgroundColor: String?
     /// The CSS background of the system screen covering the page, which the bar takes over the page's color.
     var systemScreenBarColor: String?
+    /// A system screen (Settings, History, Downloads, ...) covers the page in the chrome; ⌘W closes it first.
+    var pageShellOpen = false
     /// Set while the chrome shows a Space that follows the wallpaper.
     var wallpaperColorObservers: [(NotificationCenter, NSObjectProtocol)] = []
     var sentWallpaperKey: String?
