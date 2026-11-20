@@ -315,6 +315,12 @@
 				"description": "비활성 탭을 일시 정지하고 메모리에서 내리는 속도입니다.",
 				"keywords": "메모리 성능 배터리 정지 내리기 잠자기"
 			},
+			"tabSleepAllowlist": {
+				"title": "계속 로드할 사이트",
+				"description": "이 사이트(하위 도메인 포함)의 탭은 절대 동결되거나 언로드되지 않으므로 메모리와 배터리를 계속 사용합니다. 쉼표로 구분합니다.",
+				"keywords": "로드 유지 예외 허용 목록 절전 안 함 동결 언로드",
+				"placeholder": "mail.example.com, example.org"
+			},
 			"singleWindow": {
 				"title": "하나의 윈도우에서 모두 유지",
 				"description": "새 윈도우와 페이지 팝업을 여기에 탭으로 엽니다.",
@@ -835,6 +841,7 @@
 		"pinned": "고정됨",
 		"loading": "로드 중",
 		"muted": "음소거됨",
+		"keepLoaded": "로드 유지됨",
 		"playingAudio": "오디오 재생 중",
 		"terminalCommand": "명령",
 		"terminalAwaitingFor": "{command} 명령이 {duration} 동안 응답을 기다리고 있습니다",
@@ -2165,6 +2172,7 @@
 		"Sleep is back on": "잠자기가 다시 활성화되었습니다",
 		"The battery is below %d%%.": "배터리가 %d%% 미만입니다.",
 		"The Mac is too hot.": "Mac이 너무 뜨겁습니다.",
+		"Keep Loaded": "계속 로드 유지",
 		"Commands kept the Mac awake for the maximum duration.": "명령이 최대 시간 동안 Mac의 잠자기를 방지했습니다.",
 		"While the lid was closed": "덮개가 닫혀 있는 동안",
 		"%d commands finished": {"one": "명령 %d개 완료", "other": "명령 %d개 완료"},

@@ -315,6 +315,12 @@
 				"description": "使っていないタブを一時停止し、メモリから解放するまでの時間。",
 				"keywords": "メモリ パフォーマンス バッテリー 一時停止 解放 スリープ"
 			},
+			"tabSleepAllowlist": {
+				"title": "読み込んだままにするサイト",
+				"description": "これらのサイト(サブドメインを含む)のタブは凍結も解放もされないため、メモリとバッテリーを使い続けます。カンマで区切ります。",
+				"keywords": "読み込んだまま 例外 許可リスト スリープしない 凍結 解放",
+				"placeholder": "mail.example.com, example.org"
+			},
 			"singleWindow": {
 				"title": "すべてを1つのウインドウにまとめる",
 				"description": "新規ウインドウやページのポップアップを、このウインドウのタブとして開きます。",
@@ -835,6 +841,7 @@
 		"pinned": "固定済み",
 		"loading": "読み込み中",
 		"muted": "消音中",
+		"keepLoaded": "読み込んだまま",
 		"playingAudio": "オーディオを再生中",
 		"terminalCommand": "コマンド",
 		"terminalAwaitingFor": "{command}は{duration}入力を待っています",
@@ -2165,6 +2172,7 @@
 		"Sleep is back on": "スリープが再び有効になりました",
 		"The battery is below %d%%.": "バッテリー残量が %d%% を下回りました。",
 		"The Mac is too hot.": "Mac が熱くなりすぎています。",
+		"Keep Loaded": "読み込んだままにする",
 		"Commands kept the Mac awake for the maximum duration.": "コマンドによるスリープ防止が上限時間に達しました。",
 		"While the lid was closed": "蓋を閉じている間",
 		"%d commands finished": {"one": "%d個のコマンドが完了しました", "other": "%d個のコマンドが完了しました"},

@@ -315,6 +315,12 @@
 				"description": "How quickly inactive tabs are frozen and unloaded.",
 				"keywords": "memory performance battery freeze unload sleep"
 			},
+			"tabSleepAllowlist": {
+				"title": "Sites kept loaded",
+				"description": "Tabs on these sites, subdomains included, are never frozen or unloaded, so they keep using memory and battery. Separated by commas.",
+				"keywords": "keep loaded allowlist whitelist exception never sleep freeze unload discard",
+				"placeholder": "mail.example.com, example.org"
+			},
 			"singleWindow": {
 				"title": "Keep everything in one window",
 				"description": "New windows and page popups open as tabs here.",
@@ -835,6 +841,7 @@
 		"pinned": "Pinned",
 		"loading": "Loading",
 		"muted": "Muted",
+		"keepLoaded": "Kept loaded",
 		"playingAudio": "Playing audio",
 		"terminalCommand": "Command",
 		"terminalAwaitingFor": "{command} has been waiting for you for {duration}",
@@ -2165,6 +2172,7 @@
 		"Sleep is back on": "Sleep is back on",
 		"The battery is below %d%%.": "The battery is below %d%%.",
 		"The Mac is too hot.": "The Mac is too hot.",
+		"Keep Loaded": "Keep Loaded",
 		"Commands kept the Mac awake for the maximum duration.": "Commands kept the Mac awake for the maximum duration.",
 		"While the lid was closed": "While the lid was closed",
 		"%d commands finished": {"one": "%d command finished", "other": "%d commands finished"},

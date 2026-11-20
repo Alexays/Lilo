@@ -22,6 +22,8 @@ struct StoredTab: Codable, Sendable, Equatable, Identifiable {
     var pageColor: String?
     var agentId: String?
     var agentSessionId: String?
+    /// Kept loaded by the user: never frozen or discarded.
+    var neverSleep = false
 }
 
 extension StoredTab {
@@ -29,7 +31,7 @@ extension StoredTab {
         case id, url, title, faviconDominantColor
         case isPinned, isBookmarked, isClosed
         case homeURL, homeTitle, homeFaviconDominantColor
-        case kind, cwd, resumeCommand, customTitle, pageColor, agentId, agentSessionId
+        case kind, cwd, resumeCommand, customTitle, pageColor, agentId, agentSessionId, neverSleep
     }
 
     init(from decoder: Decoder) throws {
@@ -52,6 +54,7 @@ extension StoredTab {
         pageColor = try container.decodeIfPresent(String.self, forKey: .pageColor)
         agentId = try container.decodeIfPresent(String.self, forKey: .agentId)
         agentSessionId = try container.decodeIfPresent(String.self, forKey: .agentSessionId)
+        neverSleep = try container.decodeIfPresent(Bool.self, forKey: .neverSleep) ?? false
     }
 
     /// Favicon data URLs (~800 B of base64 each) are deliberately not encoded: they persist in
@@ -76,6 +79,7 @@ extension StoredTab {
         try container.encodeIfPresent(pageColor, forKey: .pageColor)
         try container.encodeIfPresent(agentId, forKey: .agentId)
         try container.encodeIfPresent(agentSessionId, forKey: .agentSessionId)
+        if neverSleep { try container.encode(neverSleep, forKey: .neverSleep) }
     }
 }
 
@@ -522,6 +526,7 @@ extension Tab {
             agentSessionId: storedTab.agentSessionId
         )
         pageColor = storedTab.pageColor
+        neverSleep = storedTab.neverSleep
     }
 }
 

@@ -285,6 +285,8 @@
   const agentActing = $derived(getActingAgentTabIds().has(tab.id));
   const hangSeconds = $derived(getHangSeconds(tab.id));
   const hangRepeat = $derived(hangSeconds !== null && !!getPageHang(tab.id)?.repeat);
+  // Kept loaded: the tab is exempt from freezing and unloading, so it keeps using memory.
+  const keptLoaded = $derived(!!tab.neverSleep && !tab.isClosed && !isTerminal);
   const rowLabel = $derived(
     [
       terminalLabel || displayTitle,
@@ -296,6 +298,7 @@
       captureLabel,
       tab.isMuted ? t("tabItem.muted") : tab.isAudioPlaying ? t("tabItem.playingAudio") : "",
       tab.isClosed && !isTerminal ? t("tabItem.sleeping") : "",
+      keptLoaded ? t("tabItem.keepLoaded") : "",
       awaitingInput && !isTerminal ? t("tabItem.terminalAttention") : "",
       pageUnreadCount > 0 ? t("tabItem.unreadCount", { count: String(pageUnreadCount) }) : hasPageUnread ? t("tabItem.unread") : "",
       terminalIconLabel,
@@ -614,6 +617,11 @@
         class="tab-title"
         ondblclick={tab.isPinned && interactive ? () => setRenamingTabId(tab.id) : undefined}
       >{terminalLabel || rowTitle}{#if awayTitle}<span class="away-title"><span class="away-slash" aria-hidden="true">/</span>{awayTitle}</span>{/if}</span>
+      {#if keptLoaded}
+        <span class="keep-loaded" aria-hidden="true" use:tooltip={{ text: t("tabItem.keepLoaded"), placement: tooltipSide() }}>
+          <svg viewBox="0 0 16 16"><path d="M9 1.5 3.5 9H8l-1 5.5L12.5 7H8z" fill="currentColor"/></svg>
+        </span>
+      {/if}
     {/if}
     {#if terminalHint}
       <span class="terminal-hint">{terminalHint}</span>
@@ -818,6 +826,14 @@
   }
 
   .away-title {
+    color: var(--text-secondary);
+  }
+
+  .keep-loaded {
+    display: flex;
+    flex: none;
+    width: 11px;
+    height: 11px;
     color: var(--text-secondary);
   }
 

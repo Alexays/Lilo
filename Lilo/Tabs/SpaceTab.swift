@@ -156,6 +156,12 @@ struct SpaceTab {
         finishContentMutation()
     }
 
+    mutating func setNeverSleep(_ tabId: UUID, _ neverSleep: Bool) {
+        guard storedTab(tabId)?.neverSleep != neverSleep,
+              updateTab(tabId, in: &state.tree, mutate: { $0.neverSleep = neverSleep }) else { return }
+        finishContentMutation()
+    }
+
     /// A folder created inside another lands first among its children, in the parent's section; a root one lands last.
     mutating func createFolder(_ folder: TabFolder, section: TabTreeItem.Section, parentFolderId: UUID? = nil) {
         guard section != .bookmarked, canNestFolder(height: 1, in: parentFolderId) else { return }
