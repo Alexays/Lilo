@@ -72,6 +72,23 @@ final class AgentFlowTests: AgentToolTestCase {
         XCTAssertEqual(saves, 1, "a replay saves exactly once")
     }
 
+    func testASecondFlowStartKeepsTheOpenRecording() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        let startArgs: [String: Any] = ["tabId": tab, "name": "set-phone"]
+        _ = await client.callTool("flow_start", startArgs)
+        let read = await client.callTool("read_page", ["tabId": tab, "filter": "interactive"])
+        _ = await client.callTool("form_input", ["tabId": tab, "ref": try self.ref("Phone", in: read.text), "value": "1"])
+
+        let again = await client.callTool("flow_start", startArgs)
+        XCTAssertFalse(again.isError, again.text)
+        XCTAssertTrue(again.text.contains("Already recording"), again.text)
+        XCTAssertTrue(again.text.contains("1 steps"), again.text)
+
+        let save = await client.callTool("flow_save", ["name": "set-phone"])
+        XCTAssertFalse(save.isError, save.text)
+        XCTAssertTrue(save.text.contains("form_input textbox \"Phone\""), save.text)
+    }
+
     func testAPasswordFieldRecordsAParameterNeverTheValue() async throws {
         let tab = try await agentTab(showing: Self.page)
         let save = try await recordFlow("sign-in", tab: tab) {

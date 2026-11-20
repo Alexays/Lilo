@@ -36,7 +36,8 @@ enum AgentFlows {
             cannot express (javascript_tool, coordinate clicks, uploads) are not recorded. A value the user \
             must supply at each run, like a phone number or a password, is a parameter: pass "flowParam" with \
             its name on the call that types it, or declare it at flow_save. For a password, card or one-time \
-            code field the value always becomes a parameter, never stored.
+            code field the value always becomes a parameter, never stored. Calling flow_start again while a
+            recording is open keeps it and reports the steps so far; it does not restart.
             """, [
                 "tabId": AgentTools.prop("number", "The tab the recording starts on, for your notes; recording covers every tab you act on."),
                 "name": AgentTools.prop("string", "The name flow_save will use if you do not give one.")
@@ -84,6 +85,9 @@ enum AgentFlows {
     ) async throws -> [AgentContent]? {
         switch name {
         case "flow_start":
+            if let recording = session.flow {
+                return [.text("Already recording a flow (\(recording.steps.count) steps so far): keep going, then call flow_save to keep it under a name.")]
+            }
             var recording = Recording()
             if let tab = (arguments["tabId"] as? NSNumber)?.intValue { _ = recording.symbolicTab(tab) }
             session.flow = recording
@@ -282,10 +286,29 @@ enum AgentFlows {
             reply += "\nSteps holding a literal value (declare them as params if the user should supply them each run): "
                 + literals.map { "\($0 + 1) (\(steps[$0]["tool"] ?? "?"))" }.joined(separator: ", ")
         }
+        reply += "\nRecorded steps:\n" + steps.indices.map { "\($0 + 1). \(stepSummary(steps[$0]))" }.joined(separator: "\n")
         if !recording.dropped.isEmpty {
             reply += "\nNot recorded, replay stops at these steps: " + recording.dropped.joined(separator: "; ")
         }
         return [.text(reply)]
+    }
+
+    /// One step in the save reply's preview, compact enough to read at a glance:
+    /// `form_input textbox "Phone" = {param phone}`, `computer left_click button "Save"`.
+    private static func stepSummary(_ step: [String: Any]) -> String {
+        if let dropped = step["dropped"] as? String { return "dropped: \(dropped)" }
+        let tool = step["tool"] as? String ?? "?"
+        let args = step["args"] as? [String: Any] ?? [:]
+        var parts = [tool]
+        if let action = args["action"] as? String { parts.append(action) }
+        if let target = args["target"] as? [String: Any] {
+            parts.append("\(target["role"] ?? "?") \"\(target["name"] ?? "")\"")
+        }
+        for key in ["value", "text"] {
+            if let param = (args[key] as? [String: Any])?["param"] as? String { parts.append("= {param \(param)}") } else if let literal = args[key] { parts.append("= \(literal)") }
+        }
+        if let url = args["url"] as? String { parts.append(url) }
+        return parts.joined(separator: " ")
     }
 
     /// Every `{"param": key}` anywhere in the steps' arguments.
