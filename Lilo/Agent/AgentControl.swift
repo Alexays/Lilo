@@ -394,6 +394,16 @@ final class AgentControl {
         _ name: String, executable: String = "", profileName: String? = nil, action: [String: String]? = nil, tabId: UUID? = nil,
         timeout: TimeInterval = AgentControl.consentTimeout
     ) async -> ConsentAnswer {
+        #if DEBUG
+        // An unattended harness run answers a send, payment or deletion question at once; a Release build never reads this.
+        if action != nil {
+            switch ProcessInfo.processInfo.environment["LILO_AGENT_CLICKS"] {
+            case "allow": return .allowed
+            case "deny": return .denied
+            default: break
+            }
+        }
+        #endif
         guard let windows = context?.windows.windows, !windows.isEmpty else { return .unavailable }
         let requestId = UUID().uuidString
         let request: [String: Any] = [
