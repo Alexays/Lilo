@@ -208,7 +208,6 @@ extension MainWindowController {
         // The visible frame paint: fades over ~0.34s to match the chrome sidebar's own background-color transition.
         // Space swipes take `applySwipeFrameColor` instead, frame by frame without a fade.
         windowFrameView?.setFrameColor(frameColor)
-        currentFrameColor = frameColor
         syncPageBar()
         (contentContainerView as? ContentContainerView)?.stageColor = resolvedColor
         for divider in splitPanes.dividers.values { divider.setFrameColor(frameColor, animated: true) }
@@ -242,7 +241,6 @@ extension MainWindowController {
         windowFrameView?.setFrameColor(frameColor, animated: false)
         for divider in splitPanes.dividers.values { divider.setFrameColor(frameColor, animated: false) }
         sidePanel.setDividerFrameColor(frameColor, animated: false)
-        currentFrameColor = frameColor
         lastAppliedWindowChromeColor = nil
     }
 
