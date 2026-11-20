@@ -229,7 +229,7 @@ enum AgentFlows {
     }
 
     private static func hash(_ lines: [String]) -> String {
-        SHA256.hash(data: Data(lines.joined(separator: "\n").utf8)).map { String(format: "%02x", $0) }.joined()
+        SHA256.hash(data: Data(lines.joined(separator: "\n").utf8)).map { unsafe String(format: "%02x", $0) }.joined()
     }
 
     /// Writes the recording as `<name>.jsonl` (header, then a step per line, mode 0600): the header holds the
@@ -329,9 +329,9 @@ enum AgentFlows {
         let tabId = arguments["tabId"]
         guard (tabId as? NSNumber) != nil else { throw AgentToolError("flow_run needs the tab to replay in") }
         let from = max((arguments["from"] as? NSNumber)?.intValue ?? 1, 1)
-        var completed = from - 1
-        var lastPossibleCommit = steps[..<min(completed, steps.count)].lastIndex { $0["possibleCommit"] as? Bool == true }
-        for index in (from - 1)..<steps.count {
+        var completed = min(from - 1, steps.count)
+        var lastPossibleCommit = steps[..<completed].lastIndex { $0["possibleCommit"] as? Bool == true }.map { $0 + 1 }
+        for index in completed..<steps.count {
             let step = steps[index]
             if let why = step["dropped"] as? String {
                 return [.text(runResult(header, completed: completed, failedStep: index + 1,
