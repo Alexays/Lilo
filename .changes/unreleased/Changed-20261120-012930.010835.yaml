@@ -1,0 +1,3 @@
+kind: Changed
+body: 'The favorites grid in the sidebar takes less room: smaller tiles, and they keep the sidebar''s own background at rest instead of a filled chip.'
+time: 2026-11-20T01:29:30.010835-08:00
