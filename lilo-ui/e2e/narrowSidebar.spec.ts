@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bootChrome } from "./fakeHost";
+import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld, SPACE_1 } from "./fixtures";
 import { tab } from "../src/stores/testFixtures";
 import type { AddressPlacement } from "../src/lib/bridge/protocol";
@@ -99,26 +99,25 @@ test("with the address hidden, a too narrow sidebar widens to the line's minimum
 	await expect(row).toHaveCount(0);
 });
 
-// The continuous narrow range: the keyboard resize runs under the lights' threshold instead of
-// bouncing back at the minimum, the header drops its spacer, and the tab rows shed their titles.
-test("in the continuous narrow range, the header drops its spacer and the tab rows shed their titles", async ({ page }) => {
+// Under the lights' threshold the keyboard runs on to the drag's floor outside the rail, where the host
+// has taken the lights away: the line still fits and the tab rows keep their titles.
+test("under the lights' threshold, the arrows narrow the sidebar to the rail's detent and the line still fits", async ({ page }) => {
 	await bootNarrow(page, "tabs", 203);
-	const handle = page.locator(".sidebar-resize-handle");
-	const narrow = () => page.evaluate(() => document.documentElement.dataset.sidebarNarrow !== undefined);
 	const sidebarWidth = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width"));
 
-	await handle.focus();
-	// ~160 pt: five 8 px steps down from 203. The lights leave the header (their spacer is gone)
-	// and the tab rows lose their close/sound buttons, but the titles still read.
+	await page.locator(".sidebar-resize-handle").focus();
 	for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
 	await expect.poll(sidebarWidth).toBe("163px");
-	await expect.poll(narrow).toBe(true);
-	await expect(page.locator(".sidebar-header .header-spacer")).toHaveCSS("width", "8px");
-	await expect(page.locator(".tab-item .tab-title").first()).toBeVisible();
 	await expect(page.locator(".tab-item .tab-actions").first()).toBeHidden();
 
-	// ~100 pt (seven more steps): the titles go too, and the width still holds above the rail.
-	for (let i = 0; i < 7; i++) await page.keyboard.press("ArrowLeft");
-	await expect.poll(sidebarWidth).toBe("107px");
-	await expect(page.locator(".tab-item .tab-title").first()).toBeHidden();
+	// The arrows stop at the detent: folding would take the focused handle away.
+	for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
+	await expect.poll(sidebarWidth).toBe("150px");
+	await expect(page.locator(".sidebar-resize-handle")).toBeFocused();
+	expect((await sentCommands(page)).filter((c) => c.action === "setSidebarRail")).toEqual([]);
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "windowChromeStateChanged", trafficLightsVisible: false }));
+	await expect(page.locator(".sidebar-header .header-spacer")).toHaveCSS("width", "8px");
+	await expectLineFits(page);
+	await expect(page.locator(".tab-item .tab-title").first()).toBeVisible();
 });
