@@ -23,8 +23,9 @@ struct ACPAgentInstance: Equatable, Sendable {
 
     /// The `agentAcpInstances` setting as entries; malformed ones are dropped.
     static func list(from json: String?) -> [ACPAgentInstance] {
-        guard let json, let entries = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: Any]] else { return [] }
+        guard let json, let entries = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [Any] else { return [] }
         return entries.compactMap { entry in
+            guard let entry = entry as? [String: Any] else { return nil }
             guard let id = entry["id"] as? String, !id.isEmpty,
                   let source = Source(rawValue: entry["source"] as? String ?? "") else { return nil }
             var instance = ACPAgentInstance(id: id, source: source)
