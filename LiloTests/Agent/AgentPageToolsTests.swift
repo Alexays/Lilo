@@ -431,9 +431,9 @@ final class AgentPageToolsTests: AgentToolTestCase {
         let secret = await client.callTool("form_input", ["tabId": tab, "ref": try ref("Secret", in: tree), "value": "made-up-secret"]).text
         let code = await client.callTool("form_input", ["tabId": tab, "ref": codeRef, "value": "918273"]).text
 
-        XCTAssertTrue(plain.hasSuffix(#"to "Ann""#), plain)
+        XCTAssertTrue(plain.contains(#"to "Ann""#), plain)
         XCTAssertTrue(phone.hasPrefix(#"Warning: \#(phoneRef) holds "555-1234", not "5551234""#), phone)
-        XCTAssertTrue(secret.hasSuffix("it holds the value given"), secret)
+        XCTAssertTrue(secret.contains("it holds the value given"), secret)
         XCTAssertFalse(secret.contains("made-up-secret"), secret)
         XCTAssertTrue(code.hasPrefix("Warning: \(codeRef) does not hold the value given"), code)
         XCTAssertFalse(code.contains("9182"), code)
@@ -477,5 +477,65 @@ final class AgentPageToolsTests: AgentToolTestCase {
         XCTAssertTrue(missing.isError, missing.text)
         XCTAssertTrue(missing.text.contains("The URL is still http://127.0.0.1:\(server.port)/orders/42 after 0.3 s"), missing.text)
         XCTAssertTrue(both.isError && both.text.contains("one of text, selector, role or url is required"), both.text)
+    }
+
+    func testReadPageViewportKeepsOnlyWhatIsOnOrNearTheScreen() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body style="margin:0">
+            <button style="position:absolute;left:20px;top:20px">Top</button>
+            <button style="position:absolute;left:20px;top:5000px">Far below</button>
+            <button style="position:absolute;left:2000px;top:20px">Far right</button>
+            </body>
+            """)
+
+        let viewport = await client.callTool("read_page", ["tabId": tab, "viewport": true]).text
+        let whole = await client.callTool("read_page", ["tabId": tab]).text
+
+        XCTAssertTrue(viewport.contains(#"button "Top" [ref_"#), viewport)
+        XCTAssertTrue(viewport.contains("box=\""), viewport)
+        XCTAssertFalse(viewport.contains("Far below"), viewport)
+        XCTAssertFalse(viewport.contains("Far right"), viewport)
+        XCTAssertTrue(whole.contains("Far below") && whole.contains("Far right"), whole)
+        XCTAssertFalse(whole.contains("box="), whole)
+    }
+
+    func testActionReplyListsWhatThePageChanged() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><button onclick="document.body.insertAdjacentHTML('beforeend', '<p role=status>Report QZ-2046 is ready</p>')">Generate</button></body>
+            """)
+        let found = await client.callTool("find", ["tabId": tab, "query": "Generate"]).text
+        let ref = try ref("Generate", in: found)
+
+        let reply = await client.callTool("computer", ["tabId": tab, "action": "left_click", "ref": ref])
+
+        XCTAssertFalse(reply.isError, reply.text)
+        XCTAssertTrue(reply.text.contains("Page changes:"), reply.text)
+        XCTAssertTrue(reply.text.contains("added"), reply.text)
+        XCTAssertTrue(reply.text.contains("QZ-2046"), reply.text)
+    }
+
+    func testFormInputReplyShowsTheElementsItChanged() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><label><input type="checkbox" id="c" onchange="document.getElementById('go').disabled = !this.checked"> Agree</label>
+            <button id="go" disabled>Save</button></body>
+            """)
+        let tree = await client.callTool("read_page", ["tabId": tab, "filter": "interactive"]).text
+
+        let reply = await client.callTool("form_input", ["tabId": tab, "ref": try ref("Agree", in: tree), "value": true])
+
+        XCTAssertFalse(reply.isError, reply.text)
+        XCTAssertTrue(reply.text.contains("Page changes:"), reply.text)
+        XCTAssertTrue(reply.text.contains("~"), reply.text)
+        XCTAssertTrue(reply.text.contains("Save"), reply.text)
+    }
+
+    func testActionOnAStaticPageSaysNothingChanged() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        let found = await client.callTool("find", ["tabId": tab, "query": "Save"]).text
+
+        let reply = await client.callTool("computer", ["tabId": tab, "action": "left_click", "ref": try ref("Save", in: found)])
+
+        XCTAssertFalse(reply.isError, reply.text)
+        XCTAssertTrue(reply.text.hasSuffix("No page changes"), reply.text)
     }
 }

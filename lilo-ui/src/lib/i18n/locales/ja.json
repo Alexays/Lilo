@@ -501,6 +501,11 @@
 				"description": "エージェントは回答があるまで待機します。",
 				"keywords": "エージェント 承認 確認 支払い 購入 注文 削除 送信 公開"
 			},
+			"agentActionLog": {
+				"title": "エージェントの操作ログを残す",
+				"description": "ローカルのファイルに各呼び出しを記録します。入力したテキストやページの内容は含まれません。",
+				"keywords": "エージェント ログ 履歴 監査 操作 再生"
+			},
 			"agentAlwaysAllowed": {
 				"title": "常に許可",
 				"description": "これらのサイトでは、エージェントが確認なしで操作します。",
@@ -1063,6 +1068,7 @@
 		"showFolder": "ダウンロードフォルダを表示",
 		"clearFinished": "完了したダウンロードを消去",
 		"dragFile": "ファイルをドラッグ",
+		"showInFinder": "Finder に表示",
 		"announceDone": "{filename}をダウンロードしました",
 		"announceFailed": "{filename}をダウンロードできませんでした"
 	},
