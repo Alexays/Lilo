@@ -121,6 +121,7 @@ export const tabActions = {
 	newTerminal: emitEmpty("newTerminal"),
 	splitTab: (tabId: string, side: SplitDropSide, targetTabId?: string): void =>
 		emit("splitTab", { tabId, side, targetTabId }),
+	unsplitTab: (tabId: string): void => emit("unsplitTab", { tabId }),
 	splitURL: (url: string, side: SplitDropSide, targetTabId?: string): void =>
 		emit("splitURL", { url, side, targetTabId }),
 	openDroppedLinks: (urls: string[], target: BridgeLinkDropTarget): void =>
