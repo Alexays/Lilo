@@ -40,9 +40,14 @@ of an error, and no schema of them is sent on each turn.
 
 Unless you turn it off in Settings, Lilo asks before an agent:
 
-- clicks or presses Enter on something that sends, pays, buys, orders, deletes, transfers,
+- clicks or presses Enter on something that signs you in, pays, sends, buys, deletes, transfers,
   publishes or signs up (Allow Once, Always Allow on the site, or Deny), inside frames too; a click in
-  a frame of another origin, which Lilo cannot read, is always asked;
+  a frame of another origin, which Lilo cannot read, is always asked. Lilo decides from the page's
+  structure first, so it works in any language and for an icon-only button: submitting a form that
+  holds a password, a card field or a one-time code, or that sends its data to another origin with a
+  method other than GET. A short list of commit verbs (send, pay, buy, delete, publish and their
+  translations) is the fallback for buttons outside a form; a bare "order" is not on it, so "Save
+  order" goes through;
 - sends a request other than GET or HEAD with the cookies of one of your profiles.
 
 The question opens in the window that holds the agent's page, and the agent's conversation row turns amber

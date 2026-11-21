@@ -431,10 +431,37 @@
     return { status: response.status, statusText: response.statusText, url: response.url, redirected: response.redirected, headers: shown, bytes: size, truncated, body: result }
   }
 
-  // Matched as whole words once lowercased and stripped of accents.
-  const consequentialWords = /\b(send|pay|payment|buy|purchase|order|checkout|delete|transfer|publish|post|tweet|reply|sign ?up|register|subscribe|donate|envoyer|payer|paiement|acheter|commander|supprimer|virement|transferer|publier|poster|repondre|inscription|inscrire|souscrire)\b/
+  // The fallback when a control's form says nothing: verbs matched as whole words (any script), once lowercased
+  // and stripped of accents. A bare "order" is a noun on most pages ("Save order", "Order history"), so only
+  // phrases that place one are listed.
+  const commitWords = new RegExp(`(?<!\\p{L})(?:${[
+    'send|pay|payment|buy|purchase|checkout|delete|transfer|publish|post|tweet|reply|sign ?up|register|subscribe|donate',
+    '(?:place|confirm|complete|submit)(?: your| the| my)? order|order now',
+    'envoyer|payer|paiement|acheter|commander|supprimer|virement|transferer|publier|poster|repondre|inscription|inscrire|souscrire',
+    'enviar|pagar|comprar|eliminar|borrar|excluir|publicar|invia|inviare|paga|pagare|acquista|acquistare|elimina|eliminare|pubblica',
+    'senden|absenden|bezahlen|kaufen|löschen|verzenden|betalen|kopen|verwijderen|wyślij|zapłać|kup|usuń|gönder|satın al',
+    'отправить|оплатить|купить|удалить|надіслати|сплатити|купити|видалити'
+  ].join('|').normalize('NFD').replace(/\p{M}/gu, '')})(?!\\p{L})`, 'u')
+  // Scripts written without spaces: no word boundary to match.
+  const commitGlyphs = /支付|付款|购买|購買|购物|删除|刪除|发送|發送|提交订单|提交訂單|購入|削除|送信|支払|결제|구매|삭제|전송/
+  // Fields a form holds only to sign in or to pay: submitting it authenticates, or charges.
+  const credential = el => secret(el) || /\bcc-[a-z-]+/.test(el.autocomplete)
+  // A control submits its form when it is a submit button, or the form itself stands for Enter in a field.
+  const submitsForm = el =>
+    el.tagName === 'FORM' ? el
+      : el.form && (el.matches('input[type=submit], input[type=image]') || el.tagName === 'BUTTON' && !/^(button|reset)$/.test(el.type)) ? el.form
+        : null
+  // The form sends data to another origin with a method that is not GET: it hands the data to a third party.
+  const leavesOrigin = (control, form) => {
+    const attr = key => control !== form && control.getAttribute(key)
+    const method = (attr('formmethod') || form.getAttribute('method') || 'get').toLowerCase()
+    if (method === 'get' || method === 'dialog') return false
+    try { return new URL(attr('formaction') || form.getAttribute('action') || '', document.baseURI).origin !== location.origin } catch { return false }
+  }
   // The label of the control a click on `ref` or at (x, y), or Enter in the focused field, would trigger, when it
-  // sends, pays, buys, orders, deletes, transfers, publishes or signs up; null otherwise.
+  // submits a form that signs in or pays or sends data to another origin, or says it sends, pays, buys, orders,
+  // deletes, transfers, publishes or signs up; null otherwise. The form decides first: a label can be an icon, or
+  // in any language.
   const consequential = ({ ref: id, x, y, enter }) => {
     const controls = 'button, a[href], input[type=submit], input[type=button], input[type=image], [role=button], [role=link], [role=menuitem]'
     const focused = document.activeElement
@@ -466,9 +493,11 @@
       : null)
     if (!target) return null
     const label = name(target) || clip(target.value)
+    const form = submitsForm(target)
     const action = (target.form ?? target).getAttribute?.('action') ?? ''
     const words = `${label} ${action}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-    return consequentialWords.test(words) ? label || clip(action) : null
+    const asks = form && ([...form.elements].some(credential) || leavesOrigin(target, form)) || commitWords.test(words) || commitGlyphs.test(words)
+    return asks ? label || clip(action) || location.host : null
   }
 
   // Screenshots. A requestAnimationFrame never fires in a page that is not painted: the timeout keeps it from hanging.
