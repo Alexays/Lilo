@@ -363,3 +363,11 @@ Mesure un onglet : métriques de chargement et d'affichage et mémoire, un prof
 | `list_connected_browsers` | aucun | Liste les navigateurs que ce serveur peut piloter, c'est-à-dire uniquement le Lilo en cours d'exécution. |
 | `select_browser` | `deviceId` | Sélectionne le navigateur à piloter ; Lilo est le seul. |
 | `switch_browser` | aucun | Se connecte à un navigateur ; Lilo est déjà connecté. |
+
+## Lilo [#lilo]
+
+### `browser_config` [#browser_config]
+
+Renvoie un instantané en lecture seule de Lilo lui-même : sa version, l'état du bloqueur de contenu, le zoom de page par défaut, et l'état des autorisations de l'agent (son profil, s'il demande avant d'agir, si les appels sont consignés, et les sites où les actions sont toujours autorisées). Rien ne peut être modifié.
+
+Aucun paramètre.
