@@ -1348,11 +1348,12 @@ export interface BridgeAgentClientPreview {
 	blocked: string | null;
 }
 
-/** Agent apps installed or naming Lilo in their configuration, and the agents the user let in. */
+/** The catalog's agent apps, which are installed or name Lilo in their configuration, and the agents the user let in. */
 export interface BridgeAgentClientsSnapshot {
-	/** `icon` is a PNG data URL of the app (Terminal's for a command-line tool), null when it is not installed.
-	 * `stale` is a configuration naming a Lilo at another path, which Connect repoints. */
-	clients: { id: string; configured: boolean; stale?: boolean; icon: string | null }[];
+	/** Every app of the catalog. `installed` is what the scan of the home found; `icon` is a PNG data URL of the app
+	 * (Terminal's for a command-line tool), null when it is not installed. `stale` is a configuration naming a
+	 * Lilo at another path, which Connect repoints. */
+	clients: { id: string; configured: boolean; installed: boolean; stale?: boolean; icon: string | null }[];
 	/** `name` is what the agent calls itself; `displayName` is how people know it ("Claude Code"); `client` the
 	 * entry of `clients` it is, null for an agent Lilo has no configuration for. */
 	allowed: { name: string; displayName: string; lastSeen: number | null; client: string | null }[];
