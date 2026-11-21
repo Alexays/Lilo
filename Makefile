@@ -20,7 +20,16 @@ CHANGIE_ARCH := $(shell uname -m | sed -e 's/^x86_64$$/amd64/' -e 's/^aarch64$$/
 CHANGIE_ARCHIVE := changie_$(CHANGIE_VERSION)_$(CHANGIE_OS)_$(CHANGIE_ARCH).tar.gz
 # Pinned so a new release's rules or project output never break validate or the xcodeproj sync check.
 SWIFTLINT_VERSION := 0.65.0
+# Linux takes the static build: it needs no Swift toolchain, but skips the two rules that need SourceKit.
+ifeq ($(CHANGIE_OS),linux)
+SWIFTLINT_ZIP := swiftlint_linux_amd64.zip
+SWIFTLINT_SHA256 := 79306a34e5c7cc55a220cd108cbb861dcad5f10138dcdf261e2624ae8b0a486b
+SWIFTLINT_BIN := swiftlint-static
+else
+SWIFTLINT_ZIP := portable_swiftlint.zip
 SWIFTLINT_SHA256 := d6cb0aa7a2f5f1ef306fc9e37bcb54dc9a26facc8f7784ac0c3dd3eccf5c6ba6
+SWIFTLINT_BIN := swiftlint
+endif
 SWIFTLINT := $(CURDIR)/build/swiftlint-$(SWIFTLINT_VERSION)/swiftlint
 XCODEGEN_VERSION := 2.46.0
 XCODEGEN_SHA256 := 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
@@ -90,7 +99,7 @@ TEST := $(TEST_LOCK) $(TEST_CONFIG) test-without-building $(TEST_TIMEOUTS)
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
-.PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
+.PHONY: help site-release-import validate validate-ui linux-checks swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly ext-e2e-passwords ext-e2e-passwords-trust top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
@@ -155,6 +164,9 @@ $(BRIDGE_STAMP): $(BRIDGE_DEPS) $(BRIDGE_SOURCES)
 ## Run the CI UI validation sequence (lint + test + build)
 validate-ui: ui-lint ui-test ui-build
 
+## Run the checks that need no Xcode (what a Linux box can run): UI, website, docs, bridge, hooks, release tooling and Swift lint
+linux-checks: ui-lint ui-test site-check site-test docs-check docs-test hooks-test perf-summary-test ext-bridge-test swiftlint release-status release-test release-media-test
+
 ## Run Swift lint only
 swiftlint: $(SWIFTLINT)
 	@'$(SWIFTLINT)' lint --config .swiftlint.yml --strict
@@ -165,10 +177,11 @@ project-sync: $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(XCODEGEN)
 
 $(SWIFTLINT):
 	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
-	curl -fLsS --retry 3 'https://github.com/realm/SwiftLint/releases/download/$(SWIFTLINT_VERSION)/portable_swiftlint.zip' -o "$$work/swiftlint.zip"; \
+	[ '$(CHANGIE_OS)' != linux ] || [ '$(CHANGIE_ARCH)' = amd64 ] || { echo "Unsupported SwiftLint platform: $(CHANGIE_OS) $(CHANGIE_ARCH)" >&2; exit 1; }; \
+	curl -fLsS --retry 3 'https://github.com/realm/SwiftLint/releases/download/$(SWIFTLINT_VERSION)/$(SWIFTLINT_ZIP)' -o "$$work/swiftlint.zip"; \
 	echo '$(SWIFTLINT_SHA256)  '"$$work/swiftlint.zip" | shasum -a 256 -c - >/dev/null; \
-	unzip -q "$$work/swiftlint.zip" swiftlint -d "$$work"; \
-	mkdir -p '$(@D)'; mv "$$work/swiftlint" '$@'; touch '$@'
+	unzip -q "$$work/swiftlint.zip" '$(SWIFTLINT_BIN)' -d "$$work"; \
+	mkdir -p '$(@D)'; mv "$$work/$(SWIFTLINT_BIN)" '$@'; touch '$@'
 
 # The binary reads its setting presets from ../share beside it.
 $(XCODEGEN):

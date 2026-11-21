@@ -22,6 +22,7 @@ to build it and send a change.
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Where code lives, the overlay and bridge, windows and shared state, the extension runtime, private WebKit API, glossary |
 | [WEB-CHROME.md](WEB-CHROME.md) | Why the sidebar and panels are a web view rather than native: what it buys, what it costs (measured), when a screen moves to native |
 | [DEBUGGING.md](DEBUGGING.md) | Inspectors, the diagnostics panel, logs, debug switches, energy measurement, common failures |
+| [LINUX-AGENTS.md](LINUX-AGENTS.md) | Which checks a coding agent on Linux can run (`make linux-checks`), working in parallel worktrees, why Swift stays on macOS |
 | [I18N.md](I18N.md) | Translating the interface and native strings, adding a language |
 | [PRELOAD-TOP-HIT.md](PRELOAD-TOP-HIT.md) | Loading the command bar's top hit before Return: the confidence rule, what history and extensions see, the cost and the benchmark |
 | [WEBKIT-GAPS.md](WEBKIT-GAPS.md) | WebKit extension bugs and gaps Lilo works around, with their reproductions |
