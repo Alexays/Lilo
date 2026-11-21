@@ -573,7 +573,7 @@ final class TabManager {
 
     /// A private space's tab browses in a store of its own, so private tabs share no cookies or storage. A page
     /// popup (`nativeConfiguration`) keeps its opener's, and a tab the user opens gets a fresh one.
-    private func dataStore(forTab id: UUID, nativeConfiguration: WKWebViewConfiguration?) -> WKEngineDataStore {
+    func dataStore(forTab id: UUID, nativeConfiguration: WKWebViewConfiguration?) -> WKEngineDataStore {
         let shared = dataStore ?? engineFactory.defaultDataStore()
         guard !shared.backingStore.isPersistent, let profileManager, let spaceId = currentSpaceId else { return shared }
         if let nativeConfiguration {
