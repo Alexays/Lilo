@@ -111,7 +111,6 @@ again and can resume with `from`. A consent answer of `denied` or `expired` stop
 A conversation's first prompt carries a short skill describing these tools, the same way a tab or a selection
 is attached, so any ACP agent learns them without configuration.
 
->>>>>>> 9c04b166 (feat(agent): saved flows agents record once and replay deterministically)
 ## The action log
 
 Lilo keeps one local line per tool call an agent makes, in `Agents/Actions/` of Lilo's support folder (`~/Library/Application Support/Lilo/Agents/Actions/`). A conversation has its own file (`conversation-<tab id>.jsonl`), and every other client its own (`client-<name>.jsonl`). Nothing leaves your Mac, nothing is written while no agent calls a tool, and no screenshot, page text or video is ever stored. It is the record a replay, a retry or a skill is built from later.

@@ -98,6 +98,19 @@ final class AgentFlowTests: AgentToolTestCase {
         XCTAssertEqual(secret, "open-sesame-9")
     }
 
+    func testTextTypedIntoAPasswordFieldRecordsAParameterNeverTheValue() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = try await recordFlow("typed-sign-in", tab: tab) {
+            _ = try await self.js("document.getElementById('secret').focus(); 1", tab: tab)
+            let type = await client.callTool("computer", ["tabId": tab, "action": "type", "text": "hunter2-example"])
+            XCTAssertFalse(type.isError, type.text)
+        }
+        let file = AgentFlows.directory(control: control).appending(path: "typed-sign-in.jsonl")
+        let contents = try String(contentsOf: file, encoding: .utf8)
+        XCTAssertFalse(contents.contains("hunter2-example"), "the secret never reaches the file")
+        XCTAssertTrue(contents.contains(#""param":"secret""#), contents)
+    }
+
     func testALocatorMissStopsTheRunAtThatStep() async throws {
         let tab = try await agentTab(showing: Self.page)
         _ = try await recordFlow("set-phone", tab: tab) {

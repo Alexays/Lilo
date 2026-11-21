@@ -290,9 +290,14 @@
       if (other === el) break
       if ((role(other) ?? 'generic') === r && name(other) === n && shown(other)) nth++
     }
-    const autocomplete = (el.getAttribute('autocomplete') ?? '').toLowerCase()
-    const sensitive = el.type === 'password' || autocomplete === 'one-time-code' || autocomplete.startsWith('cc-')
-    return { role: r, name: n, nth, sensitive }
+    return { role: r, name: n, nth, sensitive: credential(el) }
+  }
+
+  // Whether keys sent now would land in a secret field. A frame's field is out of reach: counted as one.
+  const focusedSecret = () => {
+    let el = document.activeElement
+    while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement
+    return ['IFRAME', 'FRAME'].includes(el?.tagName) || !!el && credential(el)
   }
 
   // A recorded step's locator back to a live ref: the nth shown element with exactly that role and name,
@@ -687,7 +692,7 @@
   const captureRestore = ({ x, y }) => instantScroll(x, y)
 
   window.__liloAgent = {
-    prefix: () => prefix, readPage, find, hitAt, focusedField, waitFor, text, setValue, rect, scrollState, scrollBy, dropFile, act, locate, resolveTarget,
+    prefix: () => prefix, readPage, find, hitAt, focusedField, waitFor, text, setValue, rect, scrollState, scrollBy, dropFile, act, locate, resolveTarget, focusedSecret,
     request, consequential, captureScroll, captureBox, captureRestore, snapshot, delta
   }
 })()
