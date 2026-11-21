@@ -492,6 +492,11 @@
 				"description": "에이전트가 사용자의 응답을 기다립니다.",
 				"keywords": "에이전트 승인 확인 결제 구매 주문 삭제 전송 게시"
 			},
+			"agentActionLog": {
+				"title": "에이전트 작업 기록 남기기",
+				"description": "로컬 파일에 각 호출이 기록되며, 입력한 텍스트나 페이지 내용은 포함되지 않습니다.",
+				"keywords": "에이전트 로그 기록 감사 작업 재생"
+			},
 			"agentAlwaysAllowed": {
 				"title": "항상 허용",
 				"description": "에이전트가 이 사이트에서는 묻지 않고 작업합니다.",
@@ -1062,6 +1067,7 @@
 		"showFolder": "다운로드 폴더 보기",
 		"clearFinished": "완료된 다운로드 지우기",
 		"dragFile": "파일 드래그",
+		"showInFinder": "Finder에서 보기",
 		"announceDone": "{filename} 다운로드 완료",
 		"announceFailed": "{filename} 다운로드 실패"
 	},

@@ -5,6 +5,7 @@ import WebKit
 @MainActor
 enum AgentTools {
     static let definitions: [[String: Any]] = tabAndPageDefinitions + AgentInteractionTools.definitions + AgentDevTools.definitions
+    static let toolNames = Set(definitions.compactMap { $0["name"] as? String })
 
     private static let tabAndPageDefinitions: [[String: Any]] = [
         tool("tabs_context_mcp", """

@@ -167,9 +167,13 @@ final class ConversationHost {
             stopSignIn(conversation)
             if conversation.restored { save(conversation, synchronously: true) }
         }
-        let gone = closed.filter { context?.browserState.durableTab(for: $0) == nil }.map(threadFile)
-        guard !gone.isEmpty else { return }
-        saveQueue.sync { for file in gone { try? FileManager.default.removeItem(at: file) } }
+        let ended = closed.filter { context?.browserState.durableTab(for: $0) == nil }
+        guard !ended.isEmpty else { return }
+        let files = ended.map(threadFile), actions = threads.deletingLastPathComponent().appending(path: "Actions")
+        saveQueue.sync {
+            for file in files { try? FileManager.default.removeItem(at: file) }
+            for tabId in ended { AgentActionLog.remove("conversation-\(tabId.uuidString)", in: actions) }
+        }
     }
 
     private func threadFile(_ tabId: UUID) -> URL { threads.appending(path: "\(tabId.uuidString).json") }

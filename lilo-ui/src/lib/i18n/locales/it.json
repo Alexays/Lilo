@@ -492,6 +492,11 @@
 				"description": "L'agente attende la tua risposta.",
 				"keywords": "agente approvazione conferma pagamento acquisto ordine elimina invia pubblica"
 			},
+			"agentActionLog": {
+				"title": "Tieni un registro delle azioni dell'agente",
+				"description": "Un file locale elenca ogni chiamata, mai il testo digitato né il contenuto delle pagine.",
+				"keywords": "agente registro cronologia audit azioni riproduzione"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Sempre consentiti",
 				"description": "Gli agenti agiscono su questi siti senza chiedere.",
@@ -1062,6 +1067,7 @@
 		"showFolder": "Mostra cartella dei download",
 		"clearFinished": "Cancella download completati",
 		"dragFile": "Trascina file",
+		"showInFinder": "Mostra nel Finder",
 		"announceDone": "{filename} scaricato",
 		"announceFailed": "Impossibile scaricare {filename}"
 	},

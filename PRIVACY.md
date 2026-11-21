@@ -70,6 +70,11 @@ listens on the network.
   cookies. Sites you always allow are listed in Settings. Handing a page one of your files always
   asks, whatever the setting.
 
+- **Action log:** one line per agent tool call (tool, time, result, the host of the page, and the
+  arguments without typed text, cookie values or bodies) is written to a local file in Lilo's
+  support folder, never sent anywhere. Turn it off in Settings > Agents, or delete the
+  `Agents/Actions` folder. See [docs/AI-AGENTS.md](docs/AI-AGENTS.md#the-action-log).
+
 The gate is a safety net, not a sandbox: code an agent runs in a page can act without asking. See
 [docs/AI-AGENTS.md](docs/AI-AGENTS.md).
 
