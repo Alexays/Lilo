@@ -899,6 +899,7 @@
 		"splitView": "Vista dividida",
 		"folderEmpty": "Carpeta vacía",
 		"newTab": "Nueva pestaña",
+		"newTabShort": "Nueva",
 		"newTerminal": "Nuevo terminal",
 		"clearUnpinnedTooltip": "Archivar pestañas sin fijar",
 		"listOptions": "Ordenar y agrupar",

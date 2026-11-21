@@ -899,6 +899,7 @@
 		"splitView": "Vue partagée",
 		"folderEmpty": "Dossier vide",
 		"newTab": "Nouvel onglet",
+		"newTabShort": "Nouvel",
 		"newTerminal": "Nouveau terminal",
 		"clearUnpinnedTooltip": "Archiver les onglets non épinglés",
 		"listOptions": "Trier et regrouper",

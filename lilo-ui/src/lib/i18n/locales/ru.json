@@ -899,6 +899,7 @@
 		"splitView": "Разделённый вид",
 		"folderEmpty": "Папка пуста",
 		"newTab": "Новая вкладка",
+		"newTabShort": "Новая",
 		"newTerminal": "Новый терминал",
 		"clearUnpinnedTooltip": "Архивировать незакреплённые вкладки",
 		"listOptions": "Сортировка и группировка",
