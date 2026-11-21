@@ -527,8 +527,8 @@
   }
 
   // The fallback when a control's form says nothing: verbs matched as whole words (any script), once lowercased
-  // and stripped of accents. A bare "order" is a noun on most pages ("Save order", "Order history"), so only
-  // phrases that place one are listed.
+  // and stripped of accents. "order" is a noun on most pages ("Save order", "Order history"), so it asks only as
+  // the whole label or in a phrase that places one.
   const commitWords = new RegExp(`(?<!\\p{L})(?:${[
     'send|pay|payment|buy|purchase|checkout|delete|transfer|publish|post|tweet|reply|sign ?up|register|subscribe|donate',
     '(?:place|confirm|complete|submit)(?: your| the| my)? order|order now',
@@ -592,6 +592,7 @@
     const action = (target.form ?? target).getAttribute?.('action') ?? ''
     const words = `${label} ${action}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
     const asks = form && ([...form.elements].some(credential) || leavesOrigin(target, form)) || commitWords.test(words) || commitGlyphs.test(words)
+      || label.trim().toLowerCase() === 'order'
     return asks ? label || clip(action) || location.host : null
   }
 

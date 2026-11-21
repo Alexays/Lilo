@@ -314,6 +314,20 @@ final class AgentApprovalTests: AgentToolTestCase {
         XCTAssertTrue(saved)
     }
 
+    func testAButtonThatSaysOnlyOrderIsAsked() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><button onclick="document.title = 'ordered'">Order</button></body>
+            """)
+
+        let reply = Task { try await click("Order", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+        let title = try await title(tab)
+        XCTAssertNotEqual(title, "ordered")
+    }
+
     func testEnterInAFormThatSendsIsAsked() async throws {
         let tab = try await shopTab()
         _ = try await js("document.getElementById('message').focus(); 1", tab: tab)
