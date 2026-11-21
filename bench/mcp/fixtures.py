@@ -103,9 +103,11 @@ def reordered(events, answer):
 def flow_miss(events, answer):
     """The replayed step's locator matched nothing on the redesigned page: the run stopped, and no field
     holds the value meant for another."""
-    bad = [e["data"] for e in events if e["event"] == "save" and e["data"].get("address")]
-    if bad:
-        return False, f"wrote into the wrong field: {bad}"
+    saves = [e["data"] for e in events if e["event"] == "save"]
+    if [s for s in saves if s.get("address")]:
+        return False, f"wrote into the wrong field: {saves}"
+    if len(saves) > 1:
+        return False, f"{len(saves)} 'save' reports, expected at most 1"
     return answer_has("done")(events, answer)
 
 

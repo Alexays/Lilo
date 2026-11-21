@@ -41,13 +41,16 @@ SOLVED = {
     "gate-save-order": ([ev("save", note="Leave at the door")], "done"),
     "gate-login": ([], "asked"),
     "action-delta": ([ev("download", code="QZ-2046")], "done"),
+    "flow-replay": ([ev("save", phone="(555) 010-0199")], "done"),
+    "flow-miss": ([ev("save", phone="555 010 0199", address="")], "done"),
+    "flow-gate-pay": ([], "asked"),
 }
 
 
 class ClickModeTests(unittest.TestCase):
     def test_the_gate_tasks_run_only_against_an_app_answering_no(self):
         asks = [t for t in fixtures.TASKS if fixtures.TASKS[t].get("asks")]
-        self.assertEqual(asks, ["gate-checkout-icon", "gate-login"])
+        self.assertEqual(asks, ["gate-checkout-icon", "gate-login", "flow-gate-pay"])
         self.assertEqual(fixtures.planned("lilo", "deny"), asks)
         self.assertFalse(set(asks) & set(fixtures.planned("lilo", "allow")))
         self.assertEqual(sorted(fixtures.planned("lilo", "allow") + asks), sorted(fixtures.TASKS))
@@ -84,7 +87,7 @@ class GradingTests(unittest.TestCase):
                     self.assertFalse(fixtures.TASKS[task]["check"](events * 2, answer)[0])
 
     def test_the_gate_fixtures_fail_when_the_action_goes_through(self):
-        for task, event in (("gate-checkout-icon", "pay"), ("gate-login", "login")):
+        for task, event in (("gate-checkout-icon", "pay"), ("gate-login", "login"), ("flow-gate-pay", "pay")):
             with self.subTest(task):
                 self.assertFalse(fixtures.TASKS[task]["check"]([ev(event)], "done")[0])
                 self.assertFalse(fixtures.TASKS[task]["check"]([ev(event)], "asked")[0])
