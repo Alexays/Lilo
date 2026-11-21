@@ -37,7 +37,7 @@ Certains messages de `lilo-mcp` appellent cette section « Settings > AI agents
 
 ## Connecter votre agent [#connect-your-agent]
 
-Une fois le contrôle par les agents activé, **Apps qui peuvent utiliser Lilo** affiche une tuile pour chaque app prise en charge que Lilo trouve sur votre Mac : Claude Code, Claude Desktop, Codex et Cursor. Cliquez sur **Connecter** sur une tuile et Lilo écrit pour vous la configuration MCP de cette app, en conservant tous les autres serveurs qui s'y trouvent déjà. La tuile indique alors **Configuré. Lilo vous demande à sa première connexion.**
+Une fois le contrôle par les agents activé, **Apps qui peuvent utiliser Lilo** affiche une tuile pour chaque app prise en charge que Lilo trouve sur votre Mac : Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode et Gemini CLI. Les apps trouvées sur votre Mac passent en premier et indiquent **Trouvé sur ce Mac. Pas encore configuré.** ; les autres attendent sous **Autres apps**. Cliquez sur **Connecter** sur une tuile et Lilo montre le fichier qu'il va modifier et les lignes qu'il ajoute ; une fois confirmé, il écrit pour vous la configuration MCP de cette app, en conservant tous les autres serveurs qui s'y trouvent déjà. La tuile indique alors **Configuré. Lilo vous demande à sa première connexion.**
 
 Pour configurer une app à la main, utilisez ci-dessous la configuration correspondant à votre client.
 
@@ -76,6 +76,65 @@ Pour configurer une app à la main, utilisez ci-dessous la configuration corresp
   </Tab>
   <Tab title="Cursor">
     Ajoutez le serveur à `~/.cursor/mcp.json` :
+
+    ```json
+    {
+      "mcpServers": {
+        "lilo": {
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Zed">
+    Ajoutez le serveur à `context_servers` dans `~/.config/zed/settings.json` :
+
+    ```json
+    {
+      "context_servers": {
+        "lilo": {
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+        }
+      }
+    }
+    ```
+
+    Le fichier de réglages de Zed accepte les commentaires. **Connecter** n'écrit le fichier que s'il s'agit de JSON simple ; s'il contient des commentaires, Lilo n'y touche pas et indique ce qu'il faut ajouter.
+  </Tab>
+  <Tab title="VS Code">
+    Ajoutez le serveur à `~/.copilot/mcp-config.json`, le fichier que lit l'agent Copilot de VS Code (GitHub Copilot CLI le lit aussi) :
+
+    ```json
+    {
+      "mcpServers": {
+        "lilo": {
+          "type": "stdio",
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp",
+          "tools": ["*"]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="OpenCode">
+    Ajoutez le serveur à `mcp` dans `~/.config/opencode/opencode.json` :
+
+    ```json
+    {
+      "mcp": {
+        "lilo": {
+          "type": "local",
+          "command": ["/Applications/Lilo.app/Contents/MacOS/lilo-mcp"]
+        }
+      }
+    }
+    ```
+
+    Si vous utilisez `opencode.jsonc`, ajoutez l'entrée vous-même : **Connecter** n'écrit `opencode.json` que s'il s'agit de JSON simple.
+  </Tab>
+  <Tab title="Gemini CLI">
+    Ajoutez le serveur à `~/.gemini/settings.json` :
 
     ```json
     {

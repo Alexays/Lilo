@@ -35,7 +35,7 @@ Some messages from `lilo-mcp` call this section "Settings > AI agents". In the S
 
 ## Connect your agent
 
-Once agent control is on, **Apps that can use Lilo** shows a tile for each supported app that Lilo finds on your Mac: Claude Code, Claude Desktop, Codex and Cursor. Click **Connect** on a tile and Lilo writes that app's MCP configuration for you, keeping every other server already in it. The tile then reads **Configured. Lilo asks you the first time it connects.**
+Once agent control is on, **Apps that can use Lilo** shows a tile for each supported app that Lilo finds on your Mac: Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode and Gemini CLI. Apps found on your Mac come first and read **Found on this Mac. Not set up yet.**; the others wait under **More apps**. Click **Connect** on a tile and Lilo shows the file it will change and the lines it adds; confirm and it writes that app's MCP configuration for you, keeping every other server already in it. The tile then reads **Configured. Lilo asks you the first time it connects.**
 
 To set an app up by hand, use the configuration for your client below.
 
@@ -74,6 +74,65 @@ To set an app up by hand, use the configuration for your client below.
   </Tab>
   <Tab title="Cursor">
     Add the server to `~/.cursor/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "lilo": {
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Zed">
+    Add the server to `context_servers` in `~/.config/zed/settings.json`:
+
+    ```json
+    {
+      "context_servers": {
+        "lilo": {
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp"
+        }
+      }
+    }
+    ```
+
+    Zed's settings file takes comments. **Connect** only writes the file when it is plain JSON; with comments in it, Lilo leaves it alone and shows what to add.
+  </Tab>
+  <Tab title="VS Code">
+    Add the server to `~/.copilot/mcp-config.json`, the file VS Code's Copilot agent reads (GitHub Copilot CLI reads it too):
+
+    ```json
+    {
+      "mcpServers": {
+        "lilo": {
+          "type": "stdio",
+          "command": "/Applications/Lilo.app/Contents/MacOS/lilo-mcp",
+          "tools": ["*"]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="OpenCode">
+    Add the server to `mcp` in `~/.config/opencode/opencode.json`:
+
+    ```json
+    {
+      "mcp": {
+        "lilo": {
+          "type": "local",
+          "command": ["/Applications/Lilo.app/Contents/MacOS/lilo-mcp"]
+        }
+      }
+    }
+    ```
+
+    If you use `opencode.jsonc`, add the entry yourself: **Connect** writes `opencode.json` only when it is plain JSON.
+  </Tab>
+  <Tab title="Gemini CLI">
+    Add the server to `~/.gemini/settings.json`:
 
     ```json
     {

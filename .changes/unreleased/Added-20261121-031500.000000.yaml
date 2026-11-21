@@ -1,0 +1,3 @@
+kind: Added
+body: 'Settings > Agents finds the agent apps installed on this Mac, such as Zed, VS Code, OpenCode and Gemini CLI, and offers to add Lilo to each after showing what changes; apps that are not installed wait under More apps'
+time: 2026-11-21T03:15:00.000000000Z
