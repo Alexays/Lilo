@@ -527,8 +527,8 @@
 				"keywords": "键盘 快捷键 热键 按键 命令"
 			},
 			"holdToQuit": {
-				"title": "按住 ⌘Q 以退出",
-				"description": "按下 ⌘Q 会显示提示；只有按住按键不放时 Lilo 才会退出。",
+				"title": "按住退出快捷键以退出",
+				"description": "按下退出快捷键会显示提示；只有按住按键不放时 Lilo 才会退出。",
 				"keywords": "退出 关闭 命令 q 误按 按住"
 			},
 			"newProfile": {

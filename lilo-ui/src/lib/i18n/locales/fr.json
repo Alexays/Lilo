@@ -527,8 +527,8 @@
 				"keywords": "clavier raccourci touches commande"
 			},
 			"holdToQuit": {
-				"title": "Maintenir ⌘Q pour quitter",
-				"description": "⌘Q affiche une invite ; Lilo ne quitte que si les touches restent enfoncées.",
+				"title": "Maintenir le raccourci pour quitter",
+				"description": "Le raccourci pour quitter affiche une invite ; Lilo ne quitte que si les touches restent enfoncées.",
 				"keywords": "quitter fermer commande q accidentel maintenir"
 			},
 			"newProfile": {

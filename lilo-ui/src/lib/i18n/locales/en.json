@@ -527,8 +527,8 @@
 				"keywords": "keyboard shortcut hotkey keys command"
 			},
 			"holdToQuit": {
-				"title": "Hold ⌘Q to quit",
-				"description": "Pressing ⌘Q shows a prompt; Lilo quits only when the keys are held down.",
+				"title": "Hold the quit shortcut to quit",
+				"description": "Pressing the quit shortcut shows a prompt; Lilo quits only when the keys are held down.",
 				"keywords": "quit exit command q accidental hold"
 			},
 			"newProfile": {

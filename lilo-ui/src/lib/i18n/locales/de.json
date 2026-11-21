@@ -527,8 +527,8 @@
 				"keywords": "tastatur kurzbefehl tastenkombination tasten befehl"
 			},
 			"holdToQuit": {
-				"title": "Zum Beenden ⌘Q gedrückt halten",
-				"description": "⌘Q zeigt einen Hinweis; Lilo wird nur beendet, wenn die Tasten gedrückt bleiben.",
+				"title": "Zum Beenden den Kurzbefehl gedrückt halten",
+				"description": "Der Kurzbefehl zum Beenden zeigt einen Hinweis; Lilo wird nur beendet, wenn die Tasten gedrückt bleiben.",
 				"keywords": "beenden verlassen Befehl q versehentlich halten"
 			},
 			"newProfile": {

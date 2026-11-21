@@ -527,8 +527,8 @@
 				"keywords": "klavye kestirme kısayol tuş komut"
 			},
 			"holdToQuit": {
-				"title": "Çıkmak için ⌘Q'yu basılı tut",
-				"description": "⌘Q bir uyarı gösterir; Lilo yalnızca tuşlar basılı tutulduğunda kapanır.",
+				"title": "Çıkmak için çıkış kestirmesini basılı tut",
+				"description": "Çıkış kestirmesi bir uyarı gösterir; Lilo yalnızca tuşlar basılı tutulduğunda kapanır.",
 				"keywords": "çık kapat komut q yanlışlıkla basılı"
 			},
 			"newProfile": {

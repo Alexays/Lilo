@@ -527,8 +527,8 @@
 				"keywords": "teclado atalho tecla teclas comando"
 			},
 			"holdToQuit": {
-				"title": "Manter ⌘Q pressionado para encerrar",
-				"description": "⌘Q mostra um aviso; o Lilo só é encerrado se as teclas continuarem pressionadas.",
+				"title": "Manter o atalho de encerrar pressionado para encerrar",
+				"description": "O atalho de encerrar mostra um aviso; o Lilo só é encerrado se as teclas continuarem pressionadas.",
 				"keywords": "encerrar sair comando q acidental manter"
 			},
 			"newProfile": {

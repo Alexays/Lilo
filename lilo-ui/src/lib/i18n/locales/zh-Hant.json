@@ -527,8 +527,8 @@
 				"keywords": "鍵盤 快速鍵 按鍵 command"
 			},
 			"holdToQuit": {
-				"title": "按住 ⌘Q 以結束",
-				"description": "按下 ⌘Q 會顯示提示；只有按住按鍵不放時 Lilo 才會結束。",
+				"title": "按住結束快速鍵以結束",
+				"description": "按下結束快速鍵會顯示提示；只有按住按鍵不放時 Lilo 才會結束。",
 				"keywords": "結束 關閉 指令 q 誤觸 按住"
 			},
 			"newProfile": {

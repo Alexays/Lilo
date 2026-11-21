@@ -527,8 +527,8 @@
 				"keywords": "toetsenbord sneltoets toetsen command"
 			},
 			"holdToQuit": {
-				"title": "Houd ⌘Q ingedrukt om te stoppen",
-				"description": "⌘Q toont een melding; Lilo stopt alleen als de toetsen ingedrukt blijven.",
+				"title": "Houd de stopsneltoets ingedrukt om te stoppen",
+				"description": "De stopsneltoets toont een melding; Lilo stopt alleen als de toetsen ingedrukt blijven.",
 				"keywords": "stoppen afsluiten commando q per ongeluk houden"
 			},
 			"newProfile": {

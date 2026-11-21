@@ -527,8 +527,8 @@
 				"keywords": "klawiatura skrót klawisz polecenie"
 			},
 			"holdToQuit": {
-				"title": "Przytrzymaj ⌘Q, aby zakończyć",
-				"description": "⌘Q pokazuje wskazówkę; Lilo kończy działanie tylko po przytrzymaniu klawiszy.",
+				"title": "Przytrzymaj skrót zakończenia, aby zakończyć",
+				"description": "Skrót zakończenia pokazuje wskazówkę; Lilo kończy działanie tylko po przytrzymaniu klawiszy.",
 				"keywords": "zakończ wyjdź polecenie q przypadkowo przytrzymaj"
 			},
 			"newProfile": {

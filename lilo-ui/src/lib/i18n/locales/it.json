@@ -527,8 +527,8 @@
 				"keywords": "tastiera abbreviazione tasti comando"
 			},
 			"holdToQuit": {
-				"title": "Tieni premuto ⌘Q per uscire",
-				"description": "⌘Q mostra un avviso; Lilo si chiude solo se i tasti restano premuti.",
+				"title": "Tieni premuta l'abbreviazione per uscire",
+				"description": "L'abbreviazione per uscire mostra un avviso; Lilo si chiude solo se i tasti restano premuti.",
 				"keywords": "esci chiudi comando q accidentale tieni"
 			},
 			"newProfile": {
