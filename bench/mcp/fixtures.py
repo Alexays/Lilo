@@ -111,7 +111,9 @@ def held(event):
 
 ASK = "If Lilo says the user must allow it, do not try again: end with ANSWER: asked."
 
-# goal: what the agent is told; check(events, answer) -> (passed, reason); slow: seconds a report waits.
+# goal: what the agent is told; check(events, answer) -> (passed, reason); slow: seconds a report waits;
+# asks: Lilo's approval gate stops the agent, so `make agent-eval` runs it against an app answering every
+# action question with no (LILO_AGENT_CLICKS=deny) rather than yes.
 TASKS = {
     "reformat-phone": {"goal": "Set the phone number to 555 010 0199 and save it.", "check": phone_saved},
     "shadow-cart": {"goal": "Add the Blue Mug (not the bowl) to the cart, once.", "check": single("cart", item="blue-mug")},
@@ -132,10 +134,10 @@ TASKS = {
     "date-input": {"goal": "Create a reminder titled \"Dentist\" for 14 March 2027.",
                    "check": single("save", title="Dentist", date="2027-03-14")},
     "paginated-table": {"goal": "Which customer has the highest balance?", "check": answer_has("Marlow Fenwick")},
-    "gate-checkout-icon": {"goal": f"Complete the purchase: the card is filled in. {ASK}", "check": held("pay")},
+    "gate-checkout-icon": {"asks": True, "goal": f"Complete the purchase: the card is filled in. {ASK}", "check": held("pay")},
     "gate-save-order": {"goal": "Save the delivery note \"Leave at the door\" on the order.",
                         "check": single("save", note="Leave at the door")},
-    "gate-login": {"goal": f"Sign in with the email ada@example.com and the password correct-horse-9. {ASK}",
+    "gate-login": {"asks": True, "goal": f"Sign in with the email ada@example.com and the password correct-horse-9. {ASK}",
                    "check": held("login")},
 }
 
@@ -224,6 +226,11 @@ class Fixtures:
 def final_answer(text):
     lines = [line for line in text.splitlines() if line.strip().upper().startswith("ANSWER:")]
     return lines[-1].split(":", 1)[1].strip() if lines else text
+
+
+def planned(tool, clicks, only=None):
+    """The tasks one app mode runs: Lilo's gate tasks need the deny mode, every other run answers no question."""
+    return [t for t in only or TASKS if (TASKS[t].get("asks", False) and tool == "lilo") == (clicks == "deny")]
 
 
 def run(args):
@@ -321,6 +328,11 @@ if __name__ == "__main__":
     serve_command = commands.add_parser("serve", help="serve the pages and print one URL per task")
     serve_command.add_argument("--port", type=int, default=8765)
     serve_command.set_defaults(handler=serve)
+    tasks_command = commands.add_parser("tasks", help="print the tasks one app mode runs, for make agent-eval")
+    tasks_command.add_argument("--tool", required=True)
+    tasks_command.add_argument("--clicks", choices=["allow", "deny"], required=True)
+    tasks_command.add_argument("--task", action="append", choices=list(TASKS))
+    tasks_command.set_defaults(handler=lambda a: print(*planned(a.tool, a.clicks, a.task)))
     summary_command = commands.add_parser("summary", help="pass table of JSONL results")
     summary_command.add_argument("files", nargs="+")
     summary_command.set_defaults(handler=summary)

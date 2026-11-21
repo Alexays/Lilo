@@ -43,6 +43,24 @@ SOLVED = {
 }
 
 
+class ClickModeTests(unittest.TestCase):
+    def test_the_gate_tasks_run_only_against_an_app_answering_no(self):
+        asks = [t for t in fixtures.TASKS if fixtures.TASKS[t].get("asks")]
+        self.assertEqual(asks, ["gate-checkout-icon", "gate-login"])
+        self.assertEqual(fixtures.planned("lilo", "deny"), asks)
+        self.assertFalse(set(asks) & set(fixtures.planned("lilo", "allow")))
+        self.assertEqual(sorted(fixtures.planned("lilo", "allow") + asks), sorted(fixtures.TASKS))
+
+    def test_another_tool_runs_every_task_in_one_pass(self):
+        self.assertEqual(fixtures.planned("playwright", "allow"), list(fixtures.TASKS))
+        self.assertEqual(fixtures.planned("playwright", "deny"), [])
+
+    def test_a_chosen_task_runs_in_its_own_mode_only(self):
+        self.assertEqual(fixtures.planned("lilo", "deny", ["gate-login"]), ["gate-login"])
+        self.assertEqual(fixtures.planned("lilo", "allow", ["gate-login"]), [])
+        self.assertEqual(fixtures.planned("lilo", "allow", ["stale-list"]), ["stale-list"])
+
+
 class GradingTests(unittest.TestCase):
     def test_every_task_has_a_solved_case(self):
         self.assertEqual(set(SOLVED), set(fixtures.TASKS))
