@@ -2674,7 +2674,11 @@
 			"noFolder": "Kein Ordner",
 			"noFolderDetail": "Der Agent arbeitet in einem eigenen Ordner",
 			"backgroundHint": "{shortcut}, um es im Hintergrund zu behalten",
-			"start": "Starten"
+			"start": "Starten",
+			"searchAgents": "Agenten suchen",
+			"featuredAgents": "Empfohlen",
+			"registryAgents": "Registrierung",
+			"noMatches": "Keine passenden Agenten"
 		},
 		"row": {
 			"untitled": "Neue Unterhaltung",

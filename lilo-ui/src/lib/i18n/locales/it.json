@@ -2674,7 +2674,11 @@
 			"noFolder": "Nessuna cartella",
 			"noFolderDetail": "L'agente lavora in una cartella propria",
 			"backgroundHint": "{shortcut} per tenerlo in background",
-			"start": "Avvia"
+			"start": "Avvia",
+			"searchAgents": "Cerca agenti",
+			"featuredAgents": "In primo piano",
+			"registryAgents": "Registro",
+			"noMatches": "Nessun agente corrispondente"
 		},
 		"row": {
 			"untitled": "Nuova conversazione",

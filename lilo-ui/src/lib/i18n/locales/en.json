@@ -2666,7 +2666,11 @@
 			"noFolder": "No Folder",
 			"noFolderDetail": "The agent works in a folder of its own",
 			"backgroundHint": "{shortcut} to keep it in the background",
-			"start": "Start"
+			"start": "Start",
+			"searchAgents": "Search agents",
+			"featuredAgents": "Featured",
+			"registryAgents": "Registry",
+			"noMatches": "No matching agents"
 		},
 		"row": {
 			"untitled": "New conversation",
