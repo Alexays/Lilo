@@ -170,8 +170,9 @@ final class PageSnapshotService {
         return canvas
     }
 
-    /// Lets the user drag out a region of the viewport over a native overlay, so the page never sees it. `completion` gets
-    /// the region in CSS pixels, or nil once cancelled (Escape, a click without a drag, or the view leaving its window).
+    /// Lets the user pick an element or drag out a region of the viewport over a native overlay, so the page never sees it.
+    /// `completion` gets the region in CSS pixels, or nil once cancelled (Escape, a click on no element, or the view
+    /// leaving its window).
     func startRegionSelection(completion: @escaping (CGRect?) -> Void) {
         regionOverlay?.finish(nil)
         let overlay = RegionSelectionOverlay(webView: webView) { [weak webView] rect in
