@@ -835,6 +835,9 @@ export interface BridgeCommandPayloadMap {
 	showChanges: { tabId?: string };
 	importTerminalTheme: EmptyPayload;
 	connectAgentClient: { client: string };
+	/** Asks what Connect (or Remove) would write to the app's configuration: answered with `agentClientPreview`. */
+	previewAgentClient: { client: string; remove: boolean };
+	removeAgentClient: { client: string };
 	startConversation: {
 		agentId: string;
 		cwd: string;
@@ -1193,6 +1196,7 @@ export interface BridgeEventPayloadMap {
 		moods: Record<string, BridgeAgentMood>;
 	};
 	agentClientsLoaded: BridgeAgentClientsSnapshot;
+	agentClientPreview: BridgeAgentClientPreview;
 	appNames: { names: Record<string, string> };
 	updaterStatus: BridgeUpdaterStatus;
 	/** The downloaded update waiting for a relaunch; null once dismissed. */
@@ -1329,10 +1333,26 @@ export interface BridgeRunningApp {
 	name: string;
 }
 
+/** What Connect or Remove writes to an agent app's configuration, before it does. Native sends only the lines that
+ * change: `number` is the line in the file as it is (`removed`) or as it will be. Claude Code has a `command` instead. */
+export interface BridgeAgentClientPreview {
+	client: string;
+	remove: boolean;
+	/** The file, with the home as `~`. */
+	path: string;
+	command: string | null;
+	lines: { number: number; removed: boolean; text: string }[];
+	/** What to paste by hand: the configuration, empty for a removal. */
+	snippet: string;
+	/** Why Lilo will not write the file; null when it can. */
+	blocked: string | null;
+}
+
 /** Agent apps installed or naming Lilo in their configuration, and the agents the user let in. */
 export interface BridgeAgentClientsSnapshot {
-	/** `icon` is a PNG data URL of the app (Terminal's for a command-line tool), null when it is not installed. */
-	clients: { id: string; configured: boolean; icon: string | null }[];
+	/** `icon` is a PNG data URL of the app (Terminal's for a command-line tool), null when it is not installed.
+	 * `stale` is a configuration naming a Lilo at another path, which Connect repoints. */
+	clients: { id: string; configured: boolean; stale?: boolean; icon: string | null }[];
 	/** `name` is what the agent calls itself; `displayName` is how people know it ("Claude Code"); `client` the
 	 * entry of `clients` it is, null for an agent Lilo has no configuration for. */
 	allowed: { name: string; displayName: string; lastSeen: number | null; client: string | null }[];

@@ -3,12 +3,14 @@
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { CLAUDE, type TerminalProgramIcon } from "../../lib/terminalIcons";
   import { getAgentClients } from "../../stores/agents.svelte";
-  import { connectAgentClient, getAgentClientsSnapshot, isConnectingAgentClient } from "../../stores/settings.svelte";
+  import { getAgentClientsSnapshot, getAgentPreview, isConnectingAgentClient, previewAgentClient } from "../../stores/settings.svelte";
   import { OPENAI } from "../agents/modelLogos";
+  import SettingsAgentConfigSheet from "./SettingsAgentConfigSheet.svelte";
   import SettingsIcon from "./SettingsIcon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
+  import UiMoreMenu from "../ui/UiMoreMenu.svelte";
 
   let { title }: { title: string } = $props();
 
@@ -17,6 +19,7 @@
 
   const relative = $derived(new Intl.RelativeTimeFormat(getFormatLocale(), { numeric: "auto" }));
   const snapshot = $derived(getAgentClientsSnapshot());
+  const preview = $derived(getAgentPreview());
 
   // One tile per installed or configured app, with the agents it connected as; then the agents Lilo has no
   // configuration for.
@@ -78,16 +81,26 @@
             <UiButton onclick={() => row.agents.forEach((agent) => settingsActions.revokeAgentClient(agent.name))}>
               {t("settings.agents.revoke")}
             </UiButton>
-          {:else if row.client && !row.client.configured}
-            <UiButton variant="primary" busy={isConnectingAgentClient(row.client.id)} onclick={() => connectAgentClient(row.client?.id ?? "")}>
-              {t("settings.agents.connect")}
+          {:else if row.client && (!row.client.configured || row.client.stale)}
+            <UiButton variant="primary" busy={isConnectingAgentClient(row.client.id)} onclick={() => previewAgentClient(row.client?.id ?? "")}>
+              {row.client.configured ? t("settings.agents.repair") : t("settings.agents.connect")}
             </UiButton>
+          {/if}
+          {#if row.client?.configured}
+            <UiMoreMenu
+              label={t("settings.agents.moreFor", { client: row.title })}
+              items={[{ label: t("settings.agents.removeFrom", { client: row.title }), danger: true, onclick: () => previewAgentClient(row.client?.id ?? "", true) }]}
+            />
           {/if}
         </div>
       {/each}
     </div>
   {/if}
 </UiInsetList>
+
+{#if preview}
+  <SettingsAgentConfigSheet {preview} repair={snapshot.clients.find((client) => client.id === preview.client)?.stale === true} />
+{/if}
 
 <UiInsetList>
   <div data-setting-id="agentOther">
