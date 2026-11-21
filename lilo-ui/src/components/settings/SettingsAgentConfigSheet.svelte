@@ -4,7 +4,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { copyText } from "../../lib/clipboard";
   import { connectAgentClient, closeAgentPreview, isConnectingAgentClient, removeAgentClient } from "../../stores/settings.svelte";
-  import type { BridgeAgentClientPreview } from "../../lib/bridge";
+  import type { BridgeAgentClientPreview } from "../../lib/bridge/protocol";
   import UiButton from "../ui/UiButton.svelte";
   import UiModal from "../ui/UiModal.svelte";
 
@@ -51,7 +51,7 @@
             <span aria-hidden="true">{line.removed ? "−" : "+"}</span>
             <span class="sr-only">{t(line.removed ? "settings.agents.sheet.removedLine" : "settings.agents.sheet.addedLine")}</span>
           </span>
-          <code class="diff-text" role="cell">{line.text}</code>
+          <span class="diff-text" role="cell">{line.text}</span>
         </div>
       {/each}
     </div>

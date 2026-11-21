@@ -516,7 +516,7 @@ test("a configured app can be repaired or removed through the same sheet", async
 	await page.getByRole("menuitem", { name: "Remove Lilo from Claude Code…" }).click();
 	expect((await sentCommands(page)).filter((command) => command.action === "previewAgentClient").map((command) => command.payload).at(-1))
 		.toEqual({ client: "claudeCode", remove: true });
-	await page.evaluate((preview) => window.__lilo!.receive({ ...preview, remove: true, lines: PREVIEW.lines.slice(2).map((line) => ({ ...line, removed: true })) }), PREVIEW);
+	await page.evaluate((preview) => window.__lilo!.receive({ ...preview, remove: true, lines: preview.lines.slice(2).map((line) => ({ ...line, removed: true })) }), PREVIEW);
 	await expect(sheet.getByRole("heading")).toHaveText("Remove Lilo from Claude Code");
 	await expect(sheet.locator(".diff-line:not(.removed)")).toHaveCount(0);
 	await expect(sheet.getByRole("button", { name: "Copy" })).toHaveCount(0);

@@ -228,13 +228,13 @@ final class AgentClientConfigTests: XCTestCase {
     /// The preview is made by the code that writes: what it says the file becomes is the file, byte for byte,
     /// for every client of the table that Lilo writes itself.
     func testPreviewIsWhatConnectWritesForEveryClient() async throws {
-        let seeds = [
-            AgentClientConfig.Client.claudeDesktop: #"{"mcpServers": {"other": {"command": "/bin/other"}}, "theme": "dark"}"#,
-            .cursor: "",
-            .codex: "# my settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n"
+        let seeds: [(AgentClientConfig.Client, String)] = [
+            (.claudeDesktop, #"{"mcpServers": {"other": {"command": "/bin/other"}}, "theme": "dark"}"#),
+            (.cursor, ""),
+            (.codex, "# my settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n")
         ]
-        for client in AgentClientConfig.Client.all where !isCLI(client) {
-            if let seed = seeds[client], !seed.isEmpty { try write(seed, to: client.config.path) }
+        for (client, seed) in seeds {
+            if !seed.isEmpty { try write(seed, to: client.config.path) }
             let preview = AgentClientConfig.preview(client, home: home)
             XCTAssertNil(preview.blocked, client.id)
             XCTAssertEqual(preview.path, "~/" + client.config.path)
@@ -256,7 +256,8 @@ final class AgentClientConfigTests: XCTestCase {
     }
 
     func testPreviewShowsOnlyTheChangedLines() throws {
-        try write("{\n  \"mcpServers\" : {\n    \"other\" : {\n      \"command\" : \"/bin/other\",\n      \"env\" : { \"KEY\" : \"secret\" }\n    }\n  }\n}", to: ".cursor/mcp.json")
+        // As the writer lays a file out, so only the new entry differs.
+        try write("{\n  \"mcpServers\" : {\n    \"other\" : {\n      \"command\" : \"/bin/other\",\n      \"env\" : {\n        \"KEY\" : \"secret\"\n      }\n    }\n  }\n}", to: ".cursor/mcp.json")
 
         let preview = AgentClientConfig.preview(.cursor, home: home)
 
@@ -324,10 +325,5 @@ final class AgentClientConfigTests: XCTestCase {
     func testLineDiffKeepsMatchingLinesAndOrdersChanges() {
         let lines = AgentClientConfig.diff("a\nb\nc\nd", "a\nB\nc\nd\ne")
         XCTAssertEqual(lines.map { "\($0.removed ? "-" : "+")\($0.number) \($0.text)" }, ["-2 b", "+2 B", "+5 e"])
-    }
-
-    private func isCLI(_ client: AgentClientConfig.Client) -> Bool {
-        if case .claudeCLI = client.config { return true }
-        return false
     }
 }
