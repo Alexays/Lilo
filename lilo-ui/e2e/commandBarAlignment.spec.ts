@@ -56,23 +56,36 @@ test("action rows draw a line icon centered in its tile, the tile centered on th
 });
 
 for (const width of [1000, 600]) {
-	test(`the scope icon, the section header and the row tiles share one left edge at ${width}px`, async ({ page }) => {
+	test(`the search icon, the section header and the row tiles share one left edge at ${width}px`, async ({ page }) => {
 		await page.setViewportSize({ width, height: 640 });
 		await openActions(page);
 
-		const edge = (await box(page.locator(".scope-picker svg").first())).x;
+		const edge = (await box(page.locator(".command-bar-icon"))).x;
 		expect(Math.abs((await textBox(page.locator(".command-bar-section-title").first())).x - edge)).toBeLessThanOrEqual(0.5);
 		expect(Math.abs((await box(page.locator(".command-bar-result .result-icon").first())).x - edge)).toBeLessThanOrEqual(0.5);
 	});
 }
 
+test("scope chip prefixes sit in one fixed-width slot, centered on their label", async ({ page }) => {
+	await openActions(page);
+
+	const widths = new Set<number>();
+	for (const chip of await page.locator(".scope-hint").all()) {
+		const prefix = chip.locator(".scope-hint-prefix");
+		if (!(await prefix.count())) continue;
+		widths.add(Math.round((await box(prefix)).width * 100));
+		const label = await textBox(chip.locator(".scope-hint-label"));
+		expect(Math.abs(centerY(await textBox(prefix)) - centerY(label))).toBeLessThanOrEqual(0.5);
+	}
+	expect(widths.size).toBe(1);
+});
+
 test("key pills share one height and font family with the labels, their text centered, the pill centered on its label", async ({ page }) => {
 	await openActions(page);
-	await page.locator(".command-bar-info").click();
 	const labelFont = await page.locator(".key-hint > span").first().evaluate((el) => getComputedStyle(el).fontFamily);
 
 	const pills = [
-		...(await page.locator(".command-bar-help kbd").all()),
+		...(await page.locator(".command-bar-footer kbd").all()),
 		...(await page.locator(".command-bar-result .result-shortcut").all()),
 	];
 	expect(pills.length).toBeGreaterThan(3);
@@ -87,25 +100,43 @@ test("key pills share one height and font family with the labels, their text cen
 	}
 	expect(heights.size).toBe(1);
 
-	for (const hint of await page.locator(".command-bar-help .key-hint").all()) {
+	for (const hint of await page.locator(".command-bar-footer .key-hint").all()) {
 		const key = await textBox(hint.locator("kbd"));
 		const label = await textBox(hint.locator("> span"));
 		expect(Math.abs(centerY(key) - centerY(label))).toBeLessThanOrEqual(0.5);
 	}
 });
 
-test("reduced motion stills the bar", async ({ page }) => {
+test("footer hints that do not fit drop whole instead of showing a cut word", async ({ page }) => {
+	await page.setViewportSize({ width: 1000, height: 640 });
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	await page.locator(".command-bar-input").fill("beta");
+	await expect(page.locator(".footer-hints .key-hint")).toHaveCount(7);
+
+	const row = await box(page.locator(".footer-hints"));
+	for (const hint of await page.locator(".footer-hints .key-hint").all()) {
+		const hintBox = await box(hint);
+		const shownWhole = hintBox.x + hintBox.width <= row.x + row.width && hintBox.y < row.y + row.height;
+		const hidden = hintBox.y >= row.y + row.height;
+		expect(shownWhole || hidden, (await hint.textContent()) ?? "").toBe(true);
+	}
+});
+
+test("reduced motion stills the footer like the rest of the bar", async ({ page }) => {
 	await openActions(page);
 
 	// The panel only fades in, as every surface does under Reduce motion.
 	await expect(page.locator(".command-bar")).toHaveCSS("transform", "none");
-	await expect(page.locator(".command-bar-results")).toHaveCSS("animation-name", "none");
+	for (const selector of [".command-bar-results", ".command-bar-footer"]) {
+		await expect(page.locator(selector), selector).toHaveCSS("animation-name", "none");
+	}
 });
 
 test("monogram tiles use the labels' font", async ({ page }) => {
 	await openActions(page);
-	await page.locator(".scope-picker").click();
-	await page.getByRole("menuitemradio", { name: "All", exact: true }).click();
+	await page.locator(".scope-hint", { hasText: "All" }).click();
 	await page.locator(".command-bar-input").fill("beta");
 	const labelFont = await page.locator(".result-title").first().evaluate((el) => getComputedStyle(el).fontFamily);
 
