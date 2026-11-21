@@ -48,6 +48,8 @@ test("agent picker rows keep their height, and the filter narrows a long list", 
 	const bar = await openAskBar(page);
 	await bar.getByRole("button", { name: "Agent", exact: true }).click();
 	const rows = page.getByRole("menuitemradio");
+	// The popover scales in from 0.96: measure once it rests.
+	await page.getByRole("menu").evaluate((menu) => Promise.all(menu.getAnimations().map((animation) => animation.finished)));
 	const boxes = await rows.evaluateAll((els) => els.map((el) => el.getBoundingClientRect()));
 	const visible = boxes.filter((box) => box.bottom <= 700 && box.height > 0);
 	for (let i = 1; i < visible.length; i++) expect(visible[i].top).toBeGreaterThanOrEqual(visible[i - 1].bottom);
