@@ -346,7 +346,7 @@ final class AgentCaptureTests: AgentToolTestCase {
             "tabs_context_mcp", "tabs_create_mcp", "tabs_close_mcp", "navigate", "computer", "read_page", "find", "wait_for", "form_input",
             "get_page_text", "javascript_tool", "read_console_messages", "read_network_requests", "resize_window", "file_upload",
             "upload_image", "gif_creator", "browser_batch",
-            "list_profiles", "switch_profile", "reset_profile", "fetch", "run",
+            "list_profiles", "switch_profile", "reset_profile", "fetch", "run", "browser_config",
             "devtools_command", "devtools_events", "network_mock", "network_response", "cookies", "emulate", "performance"
         ])
     }

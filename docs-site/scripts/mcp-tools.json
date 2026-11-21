@@ -22,6 +22,7 @@
   "list_profiles": "Lists Lilo's profiles, marking the one the agent's tabs use (the Agents profile by default) and the one you work in.",
   "switch_profile": "Moves the agent's tabs to another profile so it can act with that profile's sign-ins, once you allow that profile.",
   "reset_profile": "Wipes the Agents profile's cookies, storage, cache and history and reloads the agent's tabs; it never touches your own profiles.",
+  "browser_config": "Returns a read-only snapshot of Lilo itself: its version, whether the content blocker is on, the default page zoom, and the agent's own permission state - its profile, whether actions ask first, whether calls are logged, and the sites where actions are always allowed. Nothing can be set.",
   "devtools_command": "Sends a command of WebKit's Web Inspector protocol to a tab and returns its result, or lists every command this WebKit supports.",
   "devtools_events": "Reads the Web Inspector protocol events of a tab, from the domains the agent sent commands to.",
   "network_mock": "Intercepts a tab's requests whose URL matches a regular expression to mock, fail, rewrite or delay them.",
