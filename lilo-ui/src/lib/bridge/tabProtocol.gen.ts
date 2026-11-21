@@ -24,6 +24,7 @@ export interface BridgeTabSnapshot {
 	isMicrophoneMuted: boolean;
 	isCameraActive: boolean;
 	isScreenSharing: boolean;
+	isSleeping?: boolean;
 	hasPopup?: boolean;
 	spaceId?: string;
 	groupId?: string;
@@ -81,6 +82,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		isMicrophoneMuted: data.isMicrophoneMuted ?? false,
 		isCameraActive: data.isCameraActive ?? false,
 		isScreenSharing: data.isScreenSharing ?? false,
+		isSleeping: data.isSleeping ?? false,
 		hasPopup: data.hasPopup ?? false,
 		spaceId: data.spaceId,
 		groupId: data.groupId,
@@ -139,6 +141,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.isMicrophoneMuted !== undefined) out.isMicrophoneMuted = data.isMicrophoneMuted;
 	if (data.isCameraActive !== undefined) out.isCameraActive = data.isCameraActive;
 	if (data.isScreenSharing !== undefined) out.isScreenSharing = data.isScreenSharing;
+	if (data.isSleeping !== undefined) out.isSleeping = data.isSleeping;
 	if (data.hasPopup !== undefined) out.hasPopup = data.hasPopup;
 	if (data.groupId !== undefined) out.groupId = data.groupId;
 	if (data.faviconDataURL !== undefined) out.faviconDataURL = coerceTrimmedOptional(data.faviconDataURL);

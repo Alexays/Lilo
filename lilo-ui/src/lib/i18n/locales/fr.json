@@ -832,6 +832,8 @@
 		"unreadCount": "Non lus : {count}",
 		"previewOpen": "Ouvrir",
 		"sleeping": "En veille",
+		"dozing": "Endormi",
+		"dozingHint": "Endormi pour économiser la mémoire. Se réveille à l'ouverture.",
 		"pinned": "Épinglé",
 		"loading": "Chargement",
 		"muted": "Son coupé",

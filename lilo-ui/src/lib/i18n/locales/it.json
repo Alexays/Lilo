@@ -832,6 +832,8 @@
 		"unreadCount": "{count} da leggere",
 		"previewOpen": "Apri",
 		"sleeping": "In stop",
+		"dozing": "Inattiva",
+		"dozingHint": "Sospesa per risparmiare memoria. Si riattiva quando la apri.",
 		"pinned": "Fissata",
 		"loading": "Caricamento",
 		"muted": "Audio disattivato",

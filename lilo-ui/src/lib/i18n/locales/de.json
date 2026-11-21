@@ -832,6 +832,8 @@
 		"unreadCount": "{count} ungelesen",
 		"previewOpen": "Öffnen",
 		"sleeping": "Im Ruhezustand",
+		"dozing": "Schläft",
+		"dozingHint": "Schläft, um Speicher zu sparen. Wacht beim Öffnen auf.",
 		"pinned": "Angeheftet",
 		"loading": "Wird geladen",
 		"muted": "Stumm",

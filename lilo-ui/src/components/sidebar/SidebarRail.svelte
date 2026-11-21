@@ -113,14 +113,15 @@
   {@const waiting = !!tab.awaitingInputSince && !active}
   {@const sound = tab.isMuted ? t("tabItem.muted") : tab.isAudioPlaying ? t("tabItem.playingAudio") : ""}
   {@const title = tabTitle(tab)}
+  {@const dozing = !!tab.isSleeping && !tab.isClosed && tab.kind !== "terminal" && tab.kind !== "agent"}
   <button
     class="rail-item"
     class:active
     class:asleep={tab.isClosed}
     data-tab-id={tab.id}
     aria-current={active ? "page" : undefined}
-    aria-label={[title, acting ? t("tabItem.agentActing") : "", waiting ? t("tabItem.terminalAttention") : "", sound].filter(Boolean).join(", ")}
-    use:tooltip={{ text: title, placement: tooltipSide() }}
+    aria-label={[title, acting ? t("tabItem.agentActing") : "", waiting ? t("tabItem.terminalAttention") : "", sound, dozing ? t("tabItem.dozing") : ""].filter(Boolean).join(", ")}
+    use:tooltip={{ text: dozing ? `${title} · ${t("tabItem.dozing")}` : title, placement: tooltipSide() }}
     onclick={() => activate(tab)}
     oncontextmenu={(e) => showMenu(e, tab)}
     onauxclick={(e) => e.button === 1 && tabActions.close(tab.id)}
@@ -133,7 +134,7 @@
       {:else if tab.kind === "agent"}
         {#await import("../agents/MascotGlyph.svelte") then { default: MascotGlyph }}<MascotGlyph />{/await}
       {:else}
-        <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} asleep={tab.isClosed} />
+        <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} asleep={tab.isClosed || dozing} />
       {/if}
       {#if waiting}
         <span class="attention" aria-hidden="true"></span>
