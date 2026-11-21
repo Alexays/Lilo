@@ -563,13 +563,15 @@
     animation: sidebar-dz-placeholder-absorb 230ms var(--motion-ease-spring);
   }
 
-  /* The sidebar's own surface at rest; the tab rows' hover layer on hover, the open tile their selected surface. */
+  /* The sidebar's selected surface at rest; the hover layer goes over it, the open tile takes an accent ring. */
   .bookmark-tile {
     width: 100%;
     height: var(--bookmark-tile-height);
     padding: 0;
     border: none;
     border-radius: var(--radius-md);
+    background: var(--sidebar-sel);
+    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
     color: var(--text-primary);
     cursor: pointer;
     display: flex;
@@ -588,13 +590,11 @@
   }
 
   .bookmark-tile:hover {
-    background: var(--bg-hover);
+    background: linear-gradient(var(--bg-hover), var(--bg-hover)), var(--sidebar-sel);
   }
 
-  /* The same surface the active tab row wears. */
   .bookmark-tile.active {
-    background: var(--sidebar-sel);
-    box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .bookmark-icon-inner {
@@ -614,7 +614,7 @@
   }
 
   /* Off the icon's lower corner, as a badge on an app icon, so it reads as the site's; ringed in the
-     sidebar's color so it holds on a favicon close to the accent. */
+     tile's color so it holds on a favicon close to the accent. */
   .unread-dot {
     top: calc(50% + 4px);
     right: auto;
@@ -622,6 +622,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--sidebar-sel);
   }
 
   .bookmarked-list.compact .unread-dot {

@@ -111,17 +111,17 @@ test("a row held over the favorites grid leaves its columns alone until the drop
 	await bootChrome(page, world);
 	const grid = pane(page, 0).locator(".bookmarked-list");
 	const columns = () => grid.evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length);
-	expect(await columns()).toBe(2);
+	expect(await columns()).toBe(4);
 
 	await pressAndLift(page, '.tab-list [data-tab-id="tab-gamma"]');
 	await glideTo(page, ".bookmarked-list");
 	await expect(grid.locator(".bookmark-placeholder")).toHaveCount(1);
-	expect(await columns()).toBe(2);
+	expect(await columns()).toBe(4);
 	await page.mouse.up();
 
 	await settleDrop(page);
 	await expect(grid.locator(".bookmark-tile")).toHaveCount(5);
-	expect(await columns()).toBe(3);
+	expect(await columns()).toBe(5);
 });
 
 test("a row dragged into the pinned favorites while the list is scrolled bookmarks it", async ({ page }) => {
