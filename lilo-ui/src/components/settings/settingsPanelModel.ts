@@ -64,6 +64,7 @@ export type SettingId =
   | "shortcuts"
   | "theme"
   | "tabPosition"
+  | "commandBarLayout"
   | "addressPlacement"
   | "appIcon"
   | "seasonalAppIcon"
@@ -199,6 +200,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "appIcon", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "seasonalAppIcon", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "tabPosition", section: "appearance", groupKey: "settings.groups.tabLayout" },
+  { id: "commandBarLayout", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "addressPlacement", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "hideSpaceNames", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "defaultZoom", section: "appearance", groupKey: "settings.groups.pages" },
