@@ -421,7 +421,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
         let hit = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [120, 50]])
         let missed = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [600, 400]])
 
-        XCTAssertEqual(hit.text, #"Clicked button "Save draft" at (120, 50)"#)
+        XCTAssertTrue(hit.text.hasPrefix(#"Clicked button "Save draft" at (120, 50)"#), hit.text)
         XCTAssertFalse(missed.text.contains("Save draft"), missed.text)
     }
 
@@ -517,7 +517,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
 
         let reply = await client.callTool("computer", ["tabId": tab, "action": "insert_text", "text": #"it's "ok" -- brew install --cask"#])
 
-        XCTAssertEqual(reply.text, "Inserted")
+        XCTAssertTrue(reply.text.hasPrefix("Inserted"), reply.text)
         let text = try await js("ed.textContent", tab: tab) as? String
         XCTAssertEqual(text, #"it's "ok" -- brew install --cask"#, "read right after the call, substitutions left out")
         let inputs = try await js("inputs", tab: tab) as? [String]

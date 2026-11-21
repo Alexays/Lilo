@@ -80,21 +80,21 @@ async function tilesPerRow(page: Page, count: number): Promise<number[]> {
 	return [...new Set(tops)].map((top) => tops.filter((other) => other === top).length);
 }
 
-test("four favorites line up two by two, as large tiles", async ({ page }) => {
+test("four favorites fill one row, as large tiles", async ({ page }) => {
 	await bootChrome(page, favoritesWorld(4));
-	expect(await tilesPerRow(page, 4)).toEqual([2, 2]);
-	await expect(page.locator(".space-pane").first().locator(".bookmark-tile").first()).toHaveCSS("height", "48px");
+	expect(await tilesPerRow(page, 4)).toEqual([4]);
+	await expect(page.locator(".space-pane").first().locator(".bookmark-tile").first()).toHaveCSS("height", "32px");
 });
 
-test("five favorites take the three columns that fit, then two", async ({ page }) => {
-	await bootChrome(page, favoritesWorld(5));
-	expect(await tilesPerRow(page, 5)).toEqual([3, 2]);
+test("six favorites take the three columns that fit, then three", async ({ page }) => {
+	await bootChrome(page, favoritesWorld(6));
+	expect(await tilesPerRow(page, 6)).toEqual([3, 3]);
 });
 
 test("past three rows the favorites go back to compact tiles", async ({ page }) => {
-	await bootChrome(page, favoritesWorld(12));
-	expect(await tilesPerRow(page, 12)).toEqual([4, 4, 4]);
-	await expect(page.locator(".space-pane").first().locator(".bookmark-tile").first()).toHaveCSS("height", "40px");
+	await bootChrome(page, favoritesWorld(16));
+	expect(await tilesPerRow(page, 16)).toEqual([6, 6, 4]);
+	await expect(page.locator(".space-pane").first().locator(".bookmark-tile").first()).toHaveCSS("height", "28px");
 });
 
 test("favorites stay pinned above the scrolled tabs while they fit", async ({ page }) => {
@@ -111,7 +111,7 @@ test("favorites stay pinned above the scrolled tabs while they fit", async ({ pa
 });
 
 test("a grid too tall to pin scrolls away with the tabs, and the tab list keeps its room", async ({ page }) => {
-	await bootChrome(page, favoritesWorld(60));
+	await bootChrome(page, favoritesWorld(120));
 	const pane = page.locator(".space-pane").first();
 	await expect(pane.locator(".favorites-section")).not.toHaveClass(/pinned/);
 	await expect(pane.locator(".space-scroll")).toHaveCount(1);
