@@ -563,6 +563,7 @@ enum AgentInteractionTools {
         var name = filename ?? "lilo-recording-\(Int(Date().timeIntervalSince1970)).gif"
         if !name.lowercased().hasSuffix(".gif") { name += ".gif" }
         let url = downloads.appending(path: (name as NSString).lastPathComponent)
+        try? FileManager.default.createDirectory(at: downloads, withIntermediateDirectories: true)
         guard let destination = CGImageDestinationCreateWithURL(url as CFURL, UTType.gif.identifier as CFString, frames.count, nil) else {
             throw AgentToolError("Could not write \(url.path)")
         }
