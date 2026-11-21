@@ -30,10 +30,15 @@ extension MainWindowController {
     }
 
     /// Trims this window's space to the engine budget of `policy`; the shared lifecycle controller
-    /// asks every window in turn.
-    func trimActiveSpace(policy: TabLifecycleCoordinator.Policy, cap: Int?) {
+    /// asks every window in turn. `freezesExcessEngines` suspends over-budget tabs instead of
+    /// discarding them — the routine trims call it so a space switch never reloads a page.
+    func trimActiveSpace(policy: TabLifecycleCoordinator.Policy, cap: Int?, freezesExcessEngines: Bool = false) {
         let budget = activeSpaceTrimBudget(policy: policy, cap: cap)
-        guard tabManager.trimActiveSpaceEngines(maxLiveEngines: budget, discardThreshold: context.lifecycleConfig.discardThreshold) else { return }
+        guard tabManager.trimActiveSpaceEngines(
+            maxLiveEngines: budget,
+            discardThreshold: context.lifecycleConfig.discardThreshold,
+            freezesExcessEngines: freezesExcessEngines
+        ) else { return }
         // The store's runtime maps still hold the discarded engines, and with them their web
         // views and content processes, until the next sync; under memory pressure that
         // could be the next tab switch.

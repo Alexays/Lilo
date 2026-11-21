@@ -560,8 +560,8 @@ final class BrowserContext {
             config: lifecycleConfig,
             discardEngine: { [weak self] in self?.discardEngine($0) },
             syncActiveState: { [weak self] in self?.windows.windows.forEach { $0.syncActiveBrowserState() } },
-            trimActiveSpaceEngines: { [weak self] policy, cap in
-                self?.windows.windows.forEach { $0.trimActiveSpace(policy: policy, cap: cap) }
+            trimActiveSpaceEngines: { [weak self] policy, cap, freezes in
+                self?.windows.windows.forEach { $0.trimActiveSpace(policy: policy, cap: cap, freezesExcessEngines: freezes) }
             }
         )
         controller.onConstrainedPowerChange = { [weak self] constrained in

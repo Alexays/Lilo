@@ -1,0 +1,3 @@
+kind: Fixed
+body: Switching Spaces freezes the tabs of the Space you left instead of discarding them, so unsaved form input, pending navigations and in-page state survive the switch; discards now happen only under real memory pressure.
+time: 2026-11-21T15:35:43.85341-08:00

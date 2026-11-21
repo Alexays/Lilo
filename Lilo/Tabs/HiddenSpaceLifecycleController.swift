@@ -10,8 +10,8 @@ final class HiddenSpaceLifecycleController {
     private let discardEngine: (WKWebViewTab) -> Any?
     private let syncActiveState: () -> Void
     /// Runs on the same triggers as the hidden-space trim plus after tab activations, so the visible
-    /// space also obeys a live-engine budget.
-    private let trimActiveSpaceEngines: (TabLifecycleCoordinator.Policy, Int?) -> Void
+    /// space also obeys a live-engine budget. The bool mirrors `freezesExcessEngines` below.
+    private let trimActiveSpaceEngines: (TabLifecycleCoordinator.Policy, Int?, Bool) -> Void
     /// Live probe for "the system wants us to spend less energy" (Low Power Mode / serious thermal).
     /// Injected so tests can force the constrained state without touching real `ProcessInfo`.
     private let isPowerConstrained: () -> Bool
@@ -92,7 +92,7 @@ final class HiddenSpaceLifecycleController {
         config: LifecyclePolicyConfig,
         discardEngine: @escaping (WKWebViewTab) -> Any?,
         syncActiveState: @escaping () -> Void,
-        trimActiveSpaceEngines: @escaping (TabLifecycleCoordinator.Policy, Int?) -> Void = { _, _ in },
+        trimActiveSpaceEngines: @escaping (TabLifecycleCoordinator.Policy, Int?, Bool) -> Void = { _, _, _ in },
         isPowerConstrained: @escaping () -> Bool = { HiddenSpaceLifecycleController.systemIsPowerConstrained() },
         footprintSampler: @escaping @MainActor ([UUID: WKWebViewTab]) -> [UUID: UInt64] = BrowserStateStore.sampleWebContentFootprint
     ) {
@@ -121,6 +121,13 @@ final class HiddenSpaceLifecycleController {
     /// a trim to `.background`. Occlusion, not app activation: another app's focus leaves this window on screen.
     var currentPolicy: TabLifecycleCoordinator.Policy {
         isWindowVisible ? .foreground : .background
+    }
+
+    /// Whether a routine trim freezes excess engines rather than discarding them. Real memory
+    /// pressure (warning or critical) and every tightened policy keep discarding: freezing keeps
+    /// the pages' memory resident, which is what a reclaim must release.
+    private func freezesExcessEngines(policy: TabLifecycleCoordinator.Policy) -> Bool {
+        policy == .foreground && !memoryPressure.contains(.warning) && !memoryPressure.contains(.critical)
     }
 
     /// Tightens a trim's policy and active-space cap to the memory pressure in force.
@@ -156,15 +163,17 @@ final class HiddenSpaceLifecycleController {
                     if remaining <= 0 { self.store.freezeIdleEngines(freezeThreshold: 0) } else { freezeDelay = remaining }
                 }
                 let plan = self.memoryPressurePlan(policy: policy ?? .foreground, cap: activeBudgetCap)
+                let freezes = self.freezesExcessEngines(policy: plan.policy)
                 self.store.trimInactiveEngines(
                     excluding: protectedSpaceId,
                     policy: plan.policy,
                     maxRetainedEnginesPerHiddenSpace: self.config.maxNormalRetainedEnginesPerHiddenSpace,
                     maxHiddenSpacesWithRetainedEngines: self.config.maxHiddenSpacesWithNormalRetainedEngines,
                     discardEngine: self.discardEngine,
-                    discardThreshold: self.config.discardThreshold
+                    discardThreshold: self.config.discardThreshold,
+                    freezesExcessEngines: freezes
                 )
-                self.trimActiveSpaceEngines(plan.policy, plan.cap)
+                self.trimActiveSpaceEngines(plan.policy, plan.cap, freezes)
                 #if DEBUG
                 StartupMetrics.trace("lifecycle", self.store.lifecycleDiagnostics().traceMessage)
                 #endif
@@ -197,7 +206,7 @@ final class HiddenSpaceLifecycleController {
                 guard let self else { return }
                 self.pendingActiveSpaceTrimWorkItem = nil
                 let plan = self.memoryPressurePlan(policy: .foreground, cap: nil)
-                self.trimActiveSpaceEngines(plan.policy, plan.cap)
+                self.trimActiveSpaceEngines(plan.policy, plan.cap, self.freezesExcessEngines(policy: plan.policy))
             }
         }
         pendingActiveSpaceTrimWorkItem = workItem
@@ -214,7 +223,7 @@ final class HiddenSpaceLifecycleController {
             maxHiddenSpacesWithRetainedEngines: 0,
             discardEngine: discardEngine
         )
-        trimActiveSpaceEngines(.background, nil)
+        trimActiveSpaceEngines(.background, nil, false)
         #if DEBUG
         StartupMetrics.trace("lifecycle", store.lifecycleDiagnostics().traceMessage)
         #endif
@@ -261,6 +270,7 @@ final class HiddenSpaceLifecycleController {
         guard currentPolicy == .foreground else { return }
         // Under constrained power, stop spending energy on speculative retained engines.
         let sweepPolicy = memoryPressurePlan(policy: isConstrainedPower ? .background : .foreground, cap: nil).policy
+        let freezes = freezesExcessEngines(policy: sweepPolicy)
         store.freezeIdleEngines(freezeThreshold: config.freezeThreshold)
         store.trimInactiveEngines(
             excluding: nil,
@@ -268,12 +278,13 @@ final class HiddenSpaceLifecycleController {
             maxRetainedEnginesPerHiddenSpace: config.maxNormalRetainedEnginesPerHiddenSpace,
             maxHiddenSpacesWithRetainedEngines: config.maxHiddenSpacesWithNormalRetainedEngines,
             discardEngine: discardEngine,
-            discardThreshold: config.discardThreshold
+            discardThreshold: config.discardThreshold,
+            freezesExcessEngines: freezes
         )
         // The active space keeps up to constrainedForegroundEngineBudget engines: a .background trim would
         // collapse it to one and discard the user's other open tabs.
         let activePlan = memoryPressurePlan(policy: .foreground, cap: nil)
-        trimActiveSpaceEngines(activePlan.policy, activePlan.cap)
+        trimActiveSpaceEngines(activePlan.policy, activePlan.cap, freezes)
         let physical = ProcessInfo.processInfo.physicalMemory
         let ceiling = max(
             LifecyclePolicyConfig.memoryFootprintCeilingFloorBytes,
@@ -297,7 +308,7 @@ final class HiddenSpaceLifecycleController {
                 footprintSampler: footprintSampler
             )
             // The hidden spaces could not cover the excess: the visible ones drop their off-screen tabs.
-            if footprint.remaining > ceiling { trimActiveSpaceEngines(.foreground, config.constrainedForegroundEngineBudget) }
+            if footprint.remaining > ceiling { trimActiveSpaceEngines(.foreground, config.constrainedForegroundEngineBudget, false) }
             lastFootprintTotal = footprint.total
             lastFootprintEngineCount = engineCount
         }

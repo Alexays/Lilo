@@ -682,9 +682,15 @@ final class BrowserStateStore {
         visibleSpaceIds.remove(id)
         let spaceTabs = runtime.tabs.filter { $0.spaceId == id }
         let now = Date()
+        // The space's shown tabs are left now: the active one and its split panes were all on screen,
+        // so their idle time starts here rather than at their last in-space activation.
+        var justVisibleIds = Set([runtime.activeTabId].compactMap { $0 })
+        if let activeTabId = runtime.activeTabId,
+           let split = spaces[id]?.spaceTab.splitGroup(containing: activeTabId) {
+            justVisibleIds.formUnion(split.layout.paneIds)
+        }
         for var tab in spaceTabs {
-            // The space's shown tab is left now: its idle time starts here.
-            if tab.id == runtime.activeTabId { tab.lastActiveAt = now }
+            if justVisibleIds.contains(tab.id) { tab.lastActiveAt = now }
             runtimeOverlay.setRuntimeState(from: tab)
         }
         let tabIds = Set(spaceTabs.map(\.id))
@@ -761,14 +767,19 @@ final class BrowserStateStore {
                 }
                 let last = lastActiveByTab[tabId] ?? engine.createdAt
                 guard !protectedTabIds.contains(tabId), !engine.isLoading, now.timeIntervalSince(last) > freezeThreshold else { continue }
-                // A frozen lock holder would hold up every tab waiting for the lock. The page answers later: a tab shown,
-                // loading or discarded meanwhile stays as it is.
-                WebViewPrivateAccessors(engine.wkWebView).callAsyncWithoutUserGesture(CompositeFreezer.webLockCheck, arguments: [:], in: PageWorld.bridgeWorld) { [weak self] error in
-                    guard let self, error == nil, self.spaces[spaceId]?.engines[tabId] === engine, !self.displayedTabIds.contains(tabId),
-                          !self.glancedTabIds.contains(tabId), !engine.isLoading else { return }
-                    engine.freeze(now: now)
-                }
+                freezeParkedEngine(tabId: tabId, spaceId: spaceId, engine: engine, now: now)
             }
+        }
+    }
+
+    /// Freezes a parked engine once its page reports holding no Web Lock — a frozen lock holder would
+    /// hold up every tab waiting for the lock. The page answers later: a tab shown, loading or
+    /// discarded meanwhile stays as it is.
+    private func freezeParkedEngine(tabId: UUID, spaceId: UUID, engine: WKWebViewTab, now: Date) {
+        WebViewPrivateAccessors(engine.wkWebView).callAsyncWithoutUserGesture(CompositeFreezer.webLockCheck, arguments: [:], in: PageWorld.bridgeWorld) { [weak self] error in
+            guard let self, error == nil, self.spaces[spaceId]?.engines[tabId] === engine, !self.displayedTabIds.contains(tabId),
+                  !self.glancedTabIds.contains(tabId), !engine.isLoading else { return }
+            engine.freeze(now: now)
         }
     }
 
@@ -785,16 +796,29 @@ final class BrowserStateStore {
         return frozen
     }
 
+    /// `freezesExcessEngines` switches the reclaim flavor: routine trims (a space switch, the idle
+    /// sweep under normal memory) suspend engines beyond the budgets in place instead of discarding
+    /// them, so a returning user loses no page state; the budgets then bound live engines only and
+    /// real memory pressure, constrained power and forced trims keep discarding.
     func trimInactiveEngines(
         excluding protectedSpaceId: UUID?,
         policy: TabLifecycleCoordinator.Policy,
         maxRetainedEnginesPerHiddenSpace: Int,
         maxHiddenSpacesWithRetainedEngines: Int,
         discardEngine: (WKWebViewTab) -> Any?,
-        discardThreshold: TimeInterval = .infinity
+        discardThreshold: TimeInterval = .infinity,
+        freezesExcessEngines: Bool = false
     ) {
         let inactiveSpaces = spaces.filter { !$0.value.engines.isEmpty && !visibleSpaceIds.contains($0.key) }
         guard !inactiveSpaces.isEmpty else { return }
+
+        // Under freeze mode the budgets count only engines not already suspended: a frozen engine is
+        // handled, neither re-frozen nor discarded by a routine trim.
+        func liveEngineIds(_ snapshot: SpaceSnapshot) -> Set<UUID> {
+            freezesExcessEngines
+                ? Set(snapshot.engines.filter { !$0.value.isFrozen }.map(\.key))
+                : Set(snapshot.engines.keys)
+        }
 
         let coordinator = TabLifecycleCoordinator(
             maxNormalRetainedEnginesPerHiddenSpace: maxRetainedEnginesPerHiddenSpace,
@@ -808,7 +832,7 @@ final class BrowserStateStore {
             return TabLifecycleCoordinator.HiddenSpace(
                 id: spaceId,
                 tabs: tabs,
-                retainedEngineIds: Set(snapshot.engines.keys),
+                retainedEngineIds: liveEngineIds(snapshot),
                 restoringTabIds: snapshot.restoringTabIds,
                 lastAccessedAt: snapshot.lastAccessedAt
             )
@@ -825,13 +849,18 @@ final class BrowserStateStore {
             let tabs = projectedTabsBySpace[spaceId] ?? projectedSidebar(from: snapshot).tabs
             let protectedTabIds = coordinator.discardProtectedEngineIds(
                 tabs: tabs,
-                availableEngineIds: Set(snapshot.engines.keys),
+                availableEngineIds: liveEngineIds(snapshot),
                 restoringTabIds: snapshot.restoringTabIds,
                 now: now
             ).union(inspectedEngineIds(in: snapshot.engines))
-            let evictedEngines = snapshot.engines.filter { !protectedTabIds.contains($0.key) }
-            for (tabId, engine) in evictedEngines {
-                applyEngineDiscard(tabId: tabId, engine: engine, in: &snapshot, discardEngine: discardEngine)
+            let evictedEngines = liveEngineIds(snapshot).filter { !protectedTabIds.contains($0) }
+            for tabId in evictedEngines {
+                guard let engine = snapshot.engines[tabId] else { continue }
+                if freezesExcessEngines {
+                    freezeParkedEngine(tabId: tabId, spaceId: spaceId, engine: engine, now: now)
+                } else {
+                    applyEngineDiscard(tabId: tabId, engine: engine, in: &snapshot, discardEngine: discardEngine)
+                }
             }
             if snapshot.engines.isEmpty {
                 snapshot.lastAccessedAt = now
@@ -844,16 +873,21 @@ final class BrowserStateStore {
         for spaceId in inactiveSpaces.keys where !evictedSpaceIds.contains(spaceId) {
             guard var snapshot = spaces[spaceId] else { continue }
             let tabs = projectedTabsBySpace[spaceId] ?? projectedSidebar(from: snapshot).tabs
+            let live = liveEngineIds(snapshot)
             let retained = coordinator.retainedEngineIds(
                 tabs: tabs,
-                availableEngineIds: Set(snapshot.engines.keys),
+                availableEngineIds: live,
                 preferredTabId: snapshot.spaceTab.state.activeTabId ?? tabs.first(where: { !$0.isClosed })?.id,
                 restoringTabIds: snapshot.restoringTabIds,
                 now: now
             ).union(inspectedEngineIds(in: snapshot.engines))
             var budgetChanged = false
-            for (tabId, engine) in snapshot.engines where !retained.contains(tabId) {
-                applyEngineDiscard(tabId: tabId, engine: engine, in: &snapshot, discardEngine: discardEngine)
+            for (tabId, engine) in snapshot.engines where live.contains(tabId) && !retained.contains(tabId) {
+                if freezesExcessEngines {
+                    freezeParkedEngine(tabId: tabId, spaceId: spaceId, engine: engine, now: now)
+                } else {
+                    applyEngineDiscard(tabId: tabId, engine: engine, in: &snapshot, discardEngine: discardEngine)
+                }
                 budgetChanged = true
             }
             if budgetChanged { spaces[spaceId] = snapshot }
