@@ -497,6 +497,9 @@ test("apps found on this Mac offer Connect, the others wait under More apps", as
 
 	const more = page.getByRole("button", { name: "More apps" });
 	await expect(more).toHaveAttribute("aria-expanded", "false");
+	// A quiet text button: not WebKit's default gray button face.
+	await expect(more).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+	await expect(more).toHaveCSS("border-top-width", "0px");
 	await more.click();
 	await expect(more).toHaveAttribute("aria-expanded", "true");
 	await expect(tile("Gemini CLI").locator(".status")).toHaveText("Not installed");

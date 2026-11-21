@@ -151,7 +151,9 @@
     gap: var(--space-6);
     margin-top: var(--space-12);
     padding: var(--space-4) var(--space-6);
+    border: 0;
     border-radius: var(--radius-sm);
+    background: transparent;
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
   }
