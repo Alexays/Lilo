@@ -83,6 +83,32 @@ final class TrafficLightAnimatorTests: XCTestCase {
         XCTAssertFalse(controller.areTrafficLightsVisible(), "no toolbar row holds them, as with the sidebar hidden")
     }
 
+    func testANarrowSidebarFadesTheLightsOutInPlaceOnlyWhereItsHeaderHoldsButtons() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let window = try XCTUnwrap(controller.window)
+        window.setContentSize(NSSize(width: 1200, height: 800))
+        controller.window?.contentView?.addSubview(controller.contentContainerView)
+        defer { controller.pendingSidebarWidthPersistWork?.cancel() }
+        let close = try XCTUnwrap(window.standardWindowButton(.closeButton))
+        let corner = try closeButtonFrame(controller, layout: .default)
+        controller.updateSidebarWidth(260)
+        controller.syncTrafficLights(animated: false)
+        XCTAssertEqual(controller.lastSentTrafficLightsVisible, true)
+
+        controller.updateSidebarWidth(MainWindowController.narrowSidebarWidth - 1)
+        XCTAssertEqual(controller.lastSentTrafficLightsVisible, false, "the crossing syncs them, with no full sync per frame")
+        XCTAssertEqual(close.convert(close.bounds, to: nil).minX, corner.minX, "they fade where they sit, no jump")
+        controller.updateSidebarWidth(MainWindowController.narrowSidebarWidth)
+        XCTAssertEqual(controller.lastSentTrafficLightsVisible, true)
+
+        controller.updateSidebarWidth(MainWindowController.sidebarWidthRange.lowerBound)
+        XCTAssertFalse(controller.areTrafficLightsVisible())
+        controller.tabLayout = TabLayout(position: .left, address: .page)
+        XCTAssertTrue(controller.areTrafficLightsVisible(), "the page toolbar takes the header's buttons: the lights stay")
+        controller.tabLayout = TabLayout(position: .right, address: .tabs)
+        XCTAssertTrue(controller.areTrafficLightsVisible(), "nothing covers them beside a right sidebar")
+    }
+
     func testCollapsedSidebarHidesTheTrafficLightsAndShowingItBringsThemBack() throws {
         let controller = MainWindowController(context: browserContext.context)
         let buttons = try [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].map {

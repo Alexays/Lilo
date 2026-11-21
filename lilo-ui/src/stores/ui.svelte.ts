@@ -21,17 +21,6 @@ function applySidebarRail(rail: boolean): void {
 	if (rail) document.documentElement.dataset.sidebarRail = "";
 	else delete document.documentElement.dataset.sidebarRail;
 }
-
-let _sidebarNarrow = $state(false);
-
-/** Narrower than the lights' threshold: they take the toolbar row, as on the rail. */
-function applySidebarNarrow(narrow: boolean): void {
-	if (narrow === _sidebarNarrow) return;
-	_sidebarNarrow = narrow;
-	if (typeof document === "undefined") return;
-	if (narrow) document.documentElement.dataset.sidebarNarrow = "";
-	else delete document.documentElement.dataset.sidebarNarrow;
-}
 let _trafficLightsVisible = $state<boolean>(true);
 let _isFullscreen = $state<boolean>(false);
 
@@ -50,6 +39,7 @@ export function initUIStore(): void {
 	on("windowChromeStateChanged", (data) => {
 		_trafficLightsVisible = data.trafficLightsVisible ?? true;
 	});
+
 	on("windowFullscreenChanged", (data) => {
 		_isFullscreen = data.isFullscreen;
 	});
@@ -70,17 +60,6 @@ export function isSidebarShown(): boolean {
 /** Folded to its icon rail; it only shows with the tabs on the left or the right. */
 export function isSidebarRail(): boolean {
 	return _sidebarRail;
-}
-
-export function isSidebarNarrow(): boolean {
-	return _sidebarNarrow;
-}
-
-export function setSidebarWidth(width: number): void {
-	applySidebarRail(false);
-	// The lights' threshold mirrors MainWindowController.narrowSidebarWidth; the floor is the rail's column.
-	applySidebarNarrow(width < 203);
-	chromeActions.sidebarResized(width);
 }
 
 export function setSidebarRail(rail: boolean): void {

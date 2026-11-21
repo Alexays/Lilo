@@ -66,11 +66,17 @@ extension MainWindowController {
     }
 
     func applySidebarLayout(animated: Bool, syncTrafficLights: Bool = false) {
-        let animated = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let animated = animated && !reduceMotion
         sidebarWidth = fittedSidebarWidth
         sidePanel.fitToWindow()
         updateContentContainerFrame(animated: animated)
-        if syncTrafficLights { self.syncTrafficLights(animated: animated) }
+        if syncTrafficLights {
+            self.syncTrafficLights(animated: animated)
+        } else if let shown = lastSentTrafficLightsVisible, shown != areTrafficLightsVisible() {
+            // A live resize across narrowSidebarWidth: the lights fade once, at the crossing.
+            self.syncTrafficLights(animated: !reduceMotion)
+        }
     }
 
     func applyTabLayout(_ layout: TabLayout, animated: Bool) {
@@ -164,14 +170,18 @@ extension MainWindowController {
         bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": sidebarVisible, "width": sidebarExpandedWidth])
     }
 
-    /// The folded rail and a narrowed sidebar alike leave the lights where a hidden sidebar does: the toolbar row, or nowhere.
-    var railReplacesSidebar: Bool { (sidebarRail || sidebarWidth < Self.narrowSidebarWidth) && tabLayout.position.isVertical }
+    /// The folded rail leaves the lights where a hidden sidebar does: the toolbar row, or nowhere.
+    var railReplacesSidebar: Bool { sidebarRail && tabLayout.position.isVertical }
 
     /// A floating overlay covers the lights' top-left corner only when it comes from the left or the top.
     func areTrafficLightsVisible() -> Bool {
-        let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
+        // A left sidebar narrower than its header's line gives the lights up: they fade out where they sit.
+        // A page toolbar still holds them there, as it takes the header's buttons.
+        let tooNarrow = tabLayout.position == .left && !sidebarRail
+            && (sidebarVisible ? sidebarWidth : sidebarExpandedWidth) < Self.narrowSidebarWidth
+        let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top) && !tooNarrow
         let toolbarHoldsLights = tabLayout.canHideToolbar && toolbarVisible
-        let sidebarHoldsLights = sidebarVisible && !railReplacesSidebar
+        let sidebarHoldsLights = sidebarVisible && !railReplacesSidebar && !tooNarrow
         return window?.styleMask.contains(.fullScreen) != true && (sidebarHoldsLights || overlayCoversLights || toolbarHoldsLights)
     }
 
@@ -226,11 +236,11 @@ extension MainWindowController {
         let overSidebar = !window.styleMask.contains(.fullScreen) && ((tabLayout.position == .left && sidebarVisible && !railReplacesSidebar) || overlayCoversLights)
         let compactBar = !window.styleMask.contains(.fullScreen) && sidebarVisible && hasCompactPageToolbar
         let corner = (overSidebar && tabLayout.shown(toolbarVisible: toolbarVisible) == .default) || compactBar
-        // Docked on the left past the narrow range, the rail or the narrowed sidebar takes the sidebar's place:
-        // the lights move onto the toolbar row, past its column, as far in as they sit over the sidebar.
-        let rail = railReplacesSidebar && tabLayout.position == .left
+        // Docked on the left, the rail takes the sidebar's place: the lights move onto the toolbar row,
+        // the rail's column plus the same inset they keep over the sidebar.
+        let rail = sidebarRail && tabLayout.position == .left
         let inset: CGFloat? = overSidebar || compactBar ? Self.trafficLightsInset
-            : rail ? (sidebarRail ? Self.sidebarRailWidth : sidebarWidth) + Self.contentInset + Self.trafficLightsInset
+            : rail ? Self.sidebarRailWidth + Self.contentInset + Self.trafficLightsInset
             : nil
         trafficLightAnimator.place(window: window, inset: inset, square: corner)
     }
