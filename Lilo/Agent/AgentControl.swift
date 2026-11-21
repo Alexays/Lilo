@@ -699,6 +699,10 @@ final class AgentSession {
     var isRefused = false
     /// The question ended unanswered (no window, timed out, withdrawn): the next tool call asks again.
     var isUnanswered = false
+    /// The flow being recorded, between `flow_start` and `flow_save`: see `AgentFlows`.
+    var flow: AgentFlows.Recording?
+    /// The name `flow_start` gave, which `flow_save` uses when its own `name` is empty.
+    var flowName: String?
 
     init(connection: AgentConnection) {
         self.connection = connection
