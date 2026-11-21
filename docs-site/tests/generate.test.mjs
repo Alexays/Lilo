@@ -157,7 +157,7 @@ test("a tool list the reader would only partly read fails", () => {
   assert.throws(() => checkToolCount(tools, more), /Lilo\/Agent: 32 tool\(…\) definitions are in the code but the generator read 31 .+SOURCES\.tools/u);
   // Mid-line and one-line lists count too; a tool named in a description's text does not.
   const inline = { ...sources, "Lilo/Agent/AgentMoreTools.swift": 'let more = [Self.tool("a", "Calls tool(\\"b\\", x).", [:]), tool("c", """\n    Calls tool("d").\n    """, [:])]\n' };
-  assert.throws(() => checkToolCount(tools, inline), /Lilo\/Agent: 32 tool\(…\) definitions are in the code but the generator read 31/u);
+  assert.throws(() => checkToolCount(tools, inline), /Lilo\/Agent: 33 tool\(…\) definitions are in the code but the generator read 31/u);
   const twice = source.replace("static let definitions: [[String: Any]] = [", 'static let definitions: [[String: Any]] = [\n        AgentTools.tool("navigate", "dup", [:]),');
   assert.throws(() => mcpPartial([tools[0], tools[1], parseTools(twice, file)], summaries), /two tools are named "navigate"/u);
 });
