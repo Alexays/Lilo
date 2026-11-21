@@ -896,6 +896,13 @@
 		"bottom": "Altta aç",
 		"replace": "Değiştir"
 	},
+	"paneMove": {
+		"left": "Sola taşı",
+		"right": "Sağa taşı",
+		"top": "Üste taşı",
+		"bottom": "Alta taşı",
+		"replace": "Yer değiştir"
+	},
 	"tabSection": {
 		"splitView": "Bölünmüş görünüm",
 		"folderEmpty": "Klasör boş",
@@ -2076,6 +2083,10 @@
 		"Separate Split View": "Bölünmüş Görünümü Ayır",
 		"Close Split Pane": "Bölünmüş bölmeyi kapat",
 		"Maximize Split Pane": "Bölünmüş bölümü büyüt",
+		"Move Pane Left": "Bölünmüş bölmeyi sola taşı",
+		"Move Pane Right": "Bölünmüş bölmeyi sağa taşı",
+		"Move Pane Up": "Bölünmüş bölmeyi yukarı taşı",
+		"Move Pane Down": "Bölünmüş bölmeyi aşağı taşı",
 		"Open in Split View": "Bölünmüş Görünümde Aç",
 		"Hide Element…": "Öğeyi Gizle…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Bu sitede gizlemek için bir öğeye tıklayın. İptal etmek için Esc tuşuna basın.",

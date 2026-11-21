@@ -896,6 +896,13 @@
 		"bottom": "在下方開啟",
 		"replace": "取代"
 	},
+	"paneMove": {
+		"left": "移到左側",
+		"right": "移到右側",
+		"top": "移到上方",
+		"bottom": "移到下方",
+		"replace": "交換"
+	},
 	"tabSection": {
 		"splitView": "分割顯示",
 		"folderEmpty": "資料夾是空的",
@@ -2076,6 +2083,10 @@
 		"Separate Split View": "分開分割顯示",
 		"Close Split Pane": "關閉分割窗格",
 		"Maximize Split Pane": "最大化分割窗格",
+		"Move Pane Left": "將分割窗格移到左側",
+		"Move Pane Right": "將分割窗格移到右側",
+		"Move Pane Up": "將分割窗格移到上方",
+		"Move Pane Down": "將分割窗格移到下方",
 		"Open in Split View": "以分割顯示開啟",
 		"Hide Element…": "隱藏元素…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "按一下要在此網站上隱藏的元素。按 Esc 鍵取消。",

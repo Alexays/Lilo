@@ -1222,6 +1222,8 @@ export interface BridgeEventPayloadMap {
 	processSnapshotUpdated: BridgeProcessSnapshot;
 	tabMemoryUpdated: { tabId: string; bytes: number; cpuPercent?: number };
 	splitPanesChanged: { panes: BridgeSplitPaneFrame[] };
+	/** A split pane dragged by its handle, at the content-area point (fractions, as the pane frames). */
+	splitPaneDrag: { tabId: string; phase: "move" | "end" | "cancel"; x: number; y: number };
 	/** Width the extension side panel and its divider take right of the content; 0 when closed. */
 	sidePanelWidthChanged: { width: number };
 	processManagerActionCompleted: BridgeProcessManagerActionStatusPayload;

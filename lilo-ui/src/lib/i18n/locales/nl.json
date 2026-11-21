@@ -896,6 +896,13 @@
 		"bottom": "Open eronder",
 		"replace": "Vervang"
 	},
+	"paneMove": {
+		"left": "Verplaats naar links",
+		"right": "Verplaats naar rechts",
+		"top": "Verplaats erboven",
+		"bottom": "Verplaats eronder",
+		"replace": "Wissel"
+	},
 	"tabSection": {
 		"splitView": "Gesplitste weergave",
 		"folderEmpty": "Map leeg",
@@ -2076,6 +2083,10 @@
 		"Separate Split View": "Hef gesplitste weergave op",
 		"Close Split Pane": "Gesplitst deelvenster sluiten",
 		"Maximize Split Pane": "Gesplitst deelvenster maximaliseren",
+		"Move Pane Left": "Gesplitst deelvenster naar links verplaatsen",
+		"Move Pane Right": "Gesplitst deelvenster naar rechts verplaatsen",
+		"Move Pane Up": "Gesplitst deelvenster naar boven verplaatsen",
+		"Move Pane Down": "Gesplitst deelvenster naar beneden verplaatsen",
 		"Open in Split View": "Open in gesplitste weergave",
 		"Hide Element…": "Element verbergen…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Klik op een element om het op deze site te verbergen. Druk op Esc om te annuleren.",

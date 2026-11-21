@@ -896,6 +896,13 @@
 		"bottom": "Darunter öffnen",
 		"replace": "Ersetzen"
 	},
+	"paneMove": {
+		"left": "Nach links bewegen",
+		"right": "Nach rechts bewegen",
+		"top": "Nach oben bewegen",
+		"bottom": "Nach unten bewegen",
+		"replace": "Tauschen"
+	},
 	"tabSection": {
 		"splitView": "Geteilte Ansicht",
 		"folderEmpty": "Ordner leer",
@@ -2076,6 +2083,10 @@
 		"Separate Split View": "Geteilte Ansicht trennen",
 		"Close Split Pane": "Geteilten Bereich schließen",
 		"Maximize Split Pane": "Geteilten Bereich maximieren",
+		"Move Pane Left": "Geteilten Bereich nach links bewegen",
+		"Move Pane Right": "Geteilten Bereich nach rechts bewegen",
+		"Move Pane Up": "Geteilten Bereich nach oben bewegen",
+		"Move Pane Down": "Geteilten Bereich nach unten bewegen",
 		"Open in Split View": "In geteilter Ansicht öffnen",
 		"Hide Element…": "Element ausblenden…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Klicke auf ein Element, um es auf dieser Website auszublenden. Drücke Esc zum Abbrechen.",

@@ -896,6 +896,13 @@
 		"bottom": "Otwórz poniżej",
 		"replace": "Zastąp"
 	},
+	"paneMove": {
+		"left": "Przenieś po lewej",
+		"right": "Przenieś po prawej",
+		"top": "Przenieś powyżej",
+		"bottom": "Przenieś poniżej",
+		"replace": "Zamień"
+	},
 	"tabSection": {
 		"splitView": "Widok podzielony",
 		"folderEmpty": "Pusty folder",
@@ -2076,6 +2083,10 @@
 		"Separate Split View": "Rozdziel widok",
 		"Close Split Pane": "Zamknij panel podziału",
 		"Maximize Split Pane": "Maksymalizuj panel podziału",
+		"Move Pane Left": "Przenieś panel podziału w lewo",
+		"Move Pane Right": "Przenieś panel podziału w prawo",
+		"Move Pane Up": "Przenieś panel podziału w górę",
+		"Move Pane Down": "Przenieś panel podziału w dół",
 		"Open in Split View": "Otwórz w widoku podzielonym",
 		"Hide Element…": "Ukryj element…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Kliknij element, aby ukryć go w tej witrynie. Naciśnij Esc, aby anulować.",
