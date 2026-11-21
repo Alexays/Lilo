@@ -218,6 +218,21 @@ final class SpaceTabStateTests: XCTestCase {
         XCTAssertEqual(projection.tabs.first?.isBookmarked, true)
     }
 
+    func testKeepLoadedSurvivesStorageAndAMoveToAnotherSpace() throws {
+        var tab = Tab(id: UUID(), url: URL(string: "https://example.com"))
+        tab.neverSleep = true
+        let state = SpaceTabState(
+            activeTabId: tab.id,
+            activationHistory: [],
+            tree: StoredSidebarTree(pinned: [], unpinned: [.tab(StoredTab(tab))], bookmarked: [])
+        )
+
+        guard case let .tab(decoded)? = try SpaceTabStateCodec.decode(SpaceTabStateCodec.encode(state)).tree.unpinned.first else {
+            return XCTFail("expected a tab node")
+        }
+        XCTAssertTrue(decoded.neverSleep)
+    }
+
     func testEncodedBlobOmitsFaviconDataURLs() throws {
         let payload = "data:image/png;base64,QUFBQUFBQUFBQUFBQUFBQQ=="
         var tab = Self.storedTab(id: UUID(), url: "https://example.com", title: "Example")

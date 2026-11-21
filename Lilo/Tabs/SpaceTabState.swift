@@ -480,7 +480,8 @@ extension StoredTab {
             customTitle: tab.customTitle,
             pageColor: tab.pageColor,
             agentId: tab.agentId,
-            agentSessionId: tab.agentSessionId
+            agentSessionId: tab.agentSessionId,
+            neverSleep: tab.neverSleep
         )
     }
 }
