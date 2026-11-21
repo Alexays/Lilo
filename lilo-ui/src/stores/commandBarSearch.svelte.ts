@@ -487,8 +487,16 @@ function getBookmarkResults(query: string, limit: number, minScore = -Infinity):
 	return fuzzyTabResults(getBookmarkedTabs(), toBookmarkResult, query, limit, minScore);
 }
 
+let actionsEnabled = true;
+
+/** A bar that sits outside a browser window (the Little window's) has no action to run. */
+export function setActionResultsEnabled(enabled: boolean): void {
+	actionsEnabled = enabled;
+}
+
 // With `wordStart`, only actions where the query starts a word of their name or keywords.
 function getActionResults(query: string, limit: number, wordStart = false): CommandResult[] {
+	if (!actionsEnabled) return [];
 	const needle = ` ${query.trim().toLowerCase()}`;
 	const index = actionSearchIndex();
 	return fuzzySearch(

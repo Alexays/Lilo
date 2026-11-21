@@ -1398,6 +1398,15 @@
 		"resetTitle": "Changed flags",
 		"reloadNote": "Reload a page for a change to take effect"
 	},
+	"little": {
+		"openIn": "Open in {space}",
+		"openInMenu": "Open in another Space",
+		"copyLink": "Copy link",
+		"linkCopied": "Link copied",
+		"placeholder": "Search or enter URL...",
+		"emptyTitle": "Search the web or enter a URL",
+		"emptySubtitle": "Type / to search the pages you visited."
+	},
 	"urlToast": {
 		"pageActions": "Page actions",
 		"reEnableBlocking": "Re-enable blocking on this site",

@@ -1398,6 +1398,15 @@
 		"resetTitle": "已更改的旗標",
 		"reloadNote": "重新載入頁面以套用變更"
 	},
+	"little": {
+		"openIn": "在 {space} 中開啟",
+		"openInMenu": "在其他空間中開啟",
+		"copyLink": "拷貝連結",
+		"linkCopied": "連結已拷貝",
+		"placeholder": "搜尋或輸入網址...",
+		"emptyTitle": "搜尋網頁或輸入網址",
+		"emptySubtitle": "輸入 / 可搜尋你造訪過的頁面。"
+	},
 	"urlToast": {
 		"pageActions": "頁面操作",
 		"reEnableBlocking": "重新啟用此網站的阻擋功能",
