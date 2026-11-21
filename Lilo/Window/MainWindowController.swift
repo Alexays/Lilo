@@ -11,6 +11,10 @@ extension Comparable {
 }
 
 private final class LiloWindow: NSWindow {
+    // Headless: a window the web views live in, never one the user sees, clicks or types into.
+    override var canBecomeKey: Bool { !Headless.isOn && super.canBecomeKey }
+    override var canBecomeMain: Bool { !Headless.isOn && super.canBecomeMain }
+
     override var contentLayoutRect: NSRect {
         contentView?.bounds ?? super.contentLayoutRect
     }
@@ -657,6 +661,11 @@ final class MainWindowController: NSWindowController {
             window.center()
         }
         window.identifier = NSUserInterfaceItemIdentifier("LiloMainWindow")
+        if Headless.isOn {
+            window.alphaValue = 0
+            window.ignoresMouseEvents = true
+            window.collectionBehavior = [.transient, .ignoresCycle, .stationary]
+        }
         window.restorationClass = MainWindowController.self
         return window
     }

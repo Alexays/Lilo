@@ -50,6 +50,22 @@ final class TrafficLightAnimatorTests: XCTestCase {
         XCTAssertEqual(try closeButtonFrame(controller, layout: .default), corner)
     }
 
+    /// AppKit's theme frame re-lays the buttons at a smaller size during a live resize; the held
+    /// frame restores the standard size along with the place, whatever AppKit's last layout did.
+    func testTheHeldLightsKeepTheirStandardSizeWhenAppKitShrinksThem() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let window = try XCTUnwrap(controller.window)
+        let close = try XCTUnwrap(window.standardWindowButton(.closeButton))
+        controller.placeTrafficLights()
+        let standard = close.frame.size
+        XCTAssertGreaterThan(standard.width, 0)
+
+        close.setFrameSize(NSSize(width: 1, height: 1))
+        controller.placeTrafficLights()
+        RunLoop.main.run(mode: .default, before: .now)
+        XCTAssertEqual(close.frame.size, standard, "back at the standard size after AppKit's move")
+    }
+
     func testTheLightsStayInTheAddressBarsCornerWhenTheTitleChanges() throws {
         let controller = MainWindowController(context: browserContext.context)
         let window = try XCTUnwrap(controller.window)
