@@ -104,7 +104,6 @@
   .sheet-code,
   .diff {
     margin: 0;
-    overflow-x: auto;
     border-radius: var(--radius-md);
     background: var(--bg-hover);
     box-shadow: inset 0 0 0 1px var(--separator);
@@ -128,7 +127,6 @@
     display: grid;
     grid-template-columns: var(--number-width) 1.5ch 1fr;
     gap: var(--space-8);
-    min-width: max-content;
     padding: 0 var(--space-12);
     background: color-mix(in srgb, var(--success) 14%, transparent);
   }
@@ -152,7 +150,8 @@
 
   .diff-text {
     font: inherit;
-    white-space: pre;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
   }
 
   .sr-only {
