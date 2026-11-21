@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+# A merge's content was checked on its branches.
+if [ -f "$(git rev-parse --git-path MERGE_HEAD)" ]; then
+    exit 0
+fi
+
+cd "$(git rev-parse --show-toplevel)"
+LILO_CHECK_TRIGGER=hook make --no-print-directory check-staged || {
+    echo "pre-commit: fix the above; git commit --no-verify skips this check (CI and pre-push still run theirs)" >&2
+    exit 1
+}

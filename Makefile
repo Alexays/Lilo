@@ -91,10 +91,10 @@ TEST := $(TEST_LOCK) $(TEST_CONFIG) test-without-building $(TEST_TIMEOUTS)
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
-.PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
+.PHONY: help site-release-import validate validate-scope validate-ui check check-staged ui-check swiftlint-changed sync-check swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly ext-e2e-passwords ext-e2e-passwords-trust top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test check-summary-test agent-call \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test check-summary-test scope-test tier-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	docs-dev docs-build docs-check docs-test docs-preview docs-deploy-check docs-deploy docs-translate docs-eval docs-lock \
 	hooks-install hooks-test lint-commit-message lint-commits \
@@ -137,7 +137,7 @@ bootstrap:
 ## Run UI, website and docs checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
 validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(DOCS_DEPS) $(SWIFTLINT) $(CHANGIE)
 	@logs=$$(mktemp -d); names=; pids=; \
-	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test perf-summary-test check-summary-test ext-bridge-test swiftlint release-status"; do \
+	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test perf-summary-test check-summary-test scope-test tier-test ext-bridge-test swiftlint release-status"; do \
 		name=$${group%% *}; names="$$names $$name"; \
 		$(CHECK_SUMMARY) run $$name "$$logs" -- $(MAKE) -k --no-print-directory $$group & pids="$$pids $$!"; \
 	done; \
@@ -158,6 +158,50 @@ $(UI_STAMP): $(UI_DEPS) $(UI_SOURCES)
 $(BRIDGE_STAMP): $(BRIDGE_DEPS) $(BRIDGE_SOURCES)
 	@$(MAKE) --no-print-directory ext-bridge-build
 	@mkdir -p $(@D) && touch $@
+
+## Run only the checks the diff against origin/main needs (BASE=ref), in parallel as in validate: a UI, website or docs change skips the Swift build and the installs it does not use
+validate-scope:
+	@checks=$$(scripts/scope_checks.sh $(BASE)); echo "validate-scope: $$checks" >&2; export LILO_CHECK_SCOPE="$$checks"; \
+	if [ "$$checks" = full ]; then $(MAKE) --no-print-directory validate; exit $$?; fi; \
+	deps=$(CHANGIE); \
+	case " $$checks " in *" ui-"*) deps="$$deps $(UI_DEPS)";; esac; \
+	case " $$checks " in *" site-"*) deps="$$deps $(SITE_DEPS)";; esac; \
+	case " $$checks " in *" docs-"*) deps="$$deps $(DOCS_DEPS)";; esac; \
+	$(MAKE) --no-print-directory $$deps || exit $$?; \
+	logs=$$(mktemp -d); names=; pids=; \
+	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" release-status; do \
+		name=$${group%% *}; \
+		case " $$checks " in *" $$name "*) \
+			names="$$names $$name"; \
+			$(CHECK_SUMMARY) run $$name "$$logs" -- $(MAKE) -k --no-print-directory $$group & pids="$$pids $$!";; \
+		esac; \
+	done; \
+	wait $$pids; \
+	$(CHECK_SUMMARY) report $(if $(JSON),--json) "$$logs" $$names; status=$$?; \
+	/bin/rm -rf "$$logs"; exit $$status
+
+# The quick tiers (scripts/check_tier.sh): no builds, fail at the first check, the checks chosen from the changed files.
+## Run the quick checks the diff against origin/main needs, under 10 s, no builds (BASE=ref): lint and the tests beside the changed files
+check:
+	@scripts/check_tier.sh check $(BASE)
+
+## Run the pre-commit checks on the staged files: lint, generated files and Lilo.xcodeproj in sync (what the pre-commit hook runs)
+check-staged:
+	@scripts/check_tier.sh commit
+
+## eslint on the changed UI files and the tests beside them (LILO_CHECK_FILES, empty for all; LILO_CHECK_TESTS=0 skips the tests)
+ui-check: $(UI_DEPS)
+	@scripts/ui_check.sh
+
+## SwiftLint on the changed Swift files (LILO_CHECK_FILES, empty for all)
+swiftlint-changed: $(SWIFTLINT)
+	@files=$$(printf '%s\n' "$$LILO_CHECK_FILES" | grep -E '^Lilo/.*\.swift$$' || :); \
+	if [ -z "$$LILO_CHECK_FILES" ]; then '$(SWIFTLINT)' lint --config .swiftlint.yml --strict; \
+	elif [ -n "$$files" ]; then '$(SWIFTLINT)' lint --config .swiftlint.yml --strict --force-exclude $$files; fi
+
+## Check the staged bridge outputs and Lilo.xcodeproj are in sync with their sources
+sync-check:
+	@scripts/sync_check.sh
 
 ## Run the CI UI validation sequence (lint + test + build)
 validate-ui: ui-lint ui-test ui-build
@@ -634,9 +678,17 @@ perf-compare:
 perf-summary-test:
 	@python3 scripts/perf_summary_test.py -q
 
-## Test the quiet check summary behind validate
+## Test the quiet check summary behind validate and validate-scope
 check-summary-test:
 	@python3 scripts/check_summary_test.py -q
+
+## Test the diff scoping behind validate-scope and the quick tiers
+scope-test:
+	@scripts/scope_checks.test.sh
+
+## Test the quick tiers and their Git hooks
+tier-test:
+	@scripts/check_tier.test.sh
 
 # --info --debug are required: os_log info/debug messages are memory-only and absent from `log show` without them.
 ## Dump the app log to lilo-log.txt (SINCE=15m OUT=path)
