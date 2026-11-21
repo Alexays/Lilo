@@ -162,6 +162,7 @@
 			"passwords": "密码",
 			"agentAccess": "使用 Lilo 的智能体",
 			"agentClients": "可使用 Lilo 的应用",
+			"agentActivity": "活动",
 			"lilo": "Lilo",
 			"tabsWindows": "标签页与窗口",
 			"sitePermissions": "网站权限",
@@ -506,6 +507,11 @@
 				"title": "其他智能体",
 				"description": "使用 Lilo 配置的其他 MCP 客户端。"
 			},
+			"agentActivity": {
+				"title": "最近的智能体调用",
+				"description": "每个应用最近的调用，最新的在前。打开此页面或刷新时读取。",
+				"keywords": "智能体 日志 历史 审计 操作 最近 调用 活动"
+			},
 			"autoplay": {
 				"title": "自动播放",
 				"description": "应用于此后打开的网页。",
@@ -645,6 +651,15 @@
 			},
 			"allowedSeen": "已允许，上次连接 {time}",
 			"readyLine": "已配置。首次连接时 Lilo 会询问你。"
+		},
+		"agentActivity": {
+			"refresh": "刷新",
+			"open": "打开操作日志",
+			"off": "操作日志已关闭",
+			"offDescription": "Lilo 没有记录智能体的调用。打开后会显示在这里。",
+			"turnOn": "打开",
+			"empty": "尚无已记录的调用。",
+			"failed": "失败"
 		},
 		"navGroups": {
 			"tools": "工具"

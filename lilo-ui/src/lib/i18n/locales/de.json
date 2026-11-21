@@ -162,6 +162,7 @@
 			"passwords": "Passwörter",
 			"agentAccess": "Agenten, die Lilo nutzen",
 			"agentClients": "Apps, die Lilo nutzen können",
+			"agentActivity": "Aktivität",
 			"lilo": "Lilo",
 			"tabsWindows": "Tabs und Fenster",
 			"sitePermissions": "Websiteberechtigungen",
@@ -506,6 +507,11 @@
 				"title": "Andere Agenten",
 				"description": "Jeder andere MCP-Client mit Lilos Konfiguration."
 			},
+			"agentActivity": {
+				"title": "Letzte Agentenaufrufe",
+				"description": "Die letzten Aufrufe jeder App, neueste zuerst. Gelesen beim Öffnen dieser Seite oder beim Aktualisieren.",
+				"keywords": "agent protokoll verlauf audit aktionen letzte aufrufe aktivität"
+			},
 			"autoplay": {
 				"title": "Automatische Wiedergabe",
 				"description": "Gilt für ab jetzt geöffnete Seiten.",
@@ -645,6 +651,15 @@
 			},
 			"allowedSeen": "Erlaubt, zuletzt gesehen {time}",
 			"readyLine": "Eingerichtet. Lilo fragt dich bei der ersten Verbindung."
+		},
+		"agentActivity": {
+			"refresh": "Aktualisieren",
+			"open": "Aktionsprotokoll öffnen",
+			"off": "Das Aktionsprotokoll ist aus",
+			"offDescription": "Lilo zeichnet keine Agentenaufrufe auf. Schalte es ein, um sie hier zu sehen.",
+			"turnOn": "Einschalten",
+			"empty": "Noch keine Aufrufe aufgezeichnet.",
+			"failed": "Fehlgeschlagen"
 		},
 		"navGroups": {
 			"tools": "Werkzeuge"

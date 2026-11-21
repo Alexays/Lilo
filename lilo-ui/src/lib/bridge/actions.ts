@@ -235,6 +235,8 @@ export const settingsActions = {
 	connectAgentClient: (client: string): void => emit("connectAgentClient", { client }),
 	loadAgentClients: emitEmpty("getAgentClients"),
 	revokeAgentClient: (name: string): void => emit("revokeAgentClient", { name }),
+	loadAgentActionLog: emitEmpty("getAgentActionLog"),
+	openAgentActionLog: emitEmpty("openAgentActionLog"),
 	loadUpdaterStatus: emitEmpty("getUpdaterStatus"),
 	checkForUpdates: emitEmpty("checkForUpdates"),
 	installUpdate: emitEmpty("installUpdate"),

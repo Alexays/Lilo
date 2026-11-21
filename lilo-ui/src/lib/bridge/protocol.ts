@@ -870,6 +870,10 @@ export interface BridgeCommandPayloadMap {
 	/** Opens an HTML or SVG block of the thread as a page beside the conversation. */
 	previewConversationArtifact: { tabId: string; code: string; language: string };
 	getAgentClients: EmptyPayload;
+	/** Asks for each agent's latest calls: answered with `agentActionLog`. */
+	getAgentActionLog: EmptyPayload;
+	/** Reveals the folder of the action log in Finder. */
+	openAgentActionLog: EmptyPayload;
 	revokeAgentClient: { name: string };
 	getAppNames: { ids: string[] };
 	getUpdaterStatus: EmptyPayload;
@@ -1193,6 +1197,7 @@ export interface BridgeEventPayloadMap {
 		moods: Record<string, BridgeAgentMood>;
 	};
 	agentClientsLoaded: BridgeAgentClientsSnapshot;
+	agentActionLog: BridgeAgentActionLog;
 	appNames: { names: Record<string, string> };
 	updaterStatus: BridgeUpdaterStatus;
 	/** The downloaded update waiting for a relaunch; null once dismissed. */
@@ -1318,6 +1323,16 @@ export interface BridgeMeeting {
 	start: number;
 	/** The link the event itself carries, null when it has none. */
 	url: string | null;
+}
+
+/** Each agent's latest calls from the action log: what the writer kept, never an argument. */
+export interface BridgeAgentActionLog {
+	/** Most recently active first. `name` is how people know the agent; `calls` run newest first. */
+	clients: {
+		name: string;
+		/** `time` is ISO 8601; `host` the page's host when the call named a tab; `code` the failure's, when it failed. */
+		calls: { time: string; tool: string; host: string | null; ok: boolean; code: string | null }[];
+	}[];
 }
 
 export interface BridgeKeepAwakeState {

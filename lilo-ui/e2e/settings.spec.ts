@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld } from "./fixtures";
 
@@ -602,4 +602,65 @@ test("seven clicks on the version row unlock Lilo's developer tools, once", asyn
 	await expect(row).toContainText("developer tools are now in the Develop menu");
 	const button = (await row.getByRole("button", { name: "Check now" }).boundingBox())!;
 	expect(button.x, "the button sits beside the text, as on every row").toBeGreaterThan((await row.locator(".ui-list-row-title").boundingBox())!.x + 100);
+});
+
+const ACTIVITY_LOG = {
+	event: "agentActionLog",
+	clients: [
+		{
+			name: "Claude Code",
+			calls: [
+				{ time: "2026-01-02T03:04:09.000Z", tool: "form_input", host: "example.com", ok: false, code: "no_such_ref" },
+				{ time: "2026-01-02T03:04:05.000Z", tool: "navigate", host: "example.org", ok: true, code: null },
+			],
+		},
+		{ name: "Codex", calls: [{ time: "2026-01-02T03:03:00.000Z", tool: "tabs_context_mcp", host: null, ok: true, code: null }] },
+	],
+};
+
+async function openAgentsActivity(page: Page, settings: Record<string, string>) {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.evaluate((settings) => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true", ...settings } }), settings);
+	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
+}
+
+test("the activity list asks for the log once when it opens, shows each agent's calls, and Refresh asks again", async ({ page }) => {
+	await openAgentsActivity(page, {});
+	const asked = async () => (await sentCommands(page)).filter((command) => command.action === "getAgentActionLog").length;
+	await expect.poll(asked).toBe(1);
+
+	await page.evaluate((log) => window.__lilo!.receive(log), ACTIVITY_LOG);
+	const activity = page.getByRole("region", { name: "Activity" });
+	const claude = activity.getByRole("group", { name: "Claude Code" });
+	await expect(claude.locator("li")).toHaveCount(2);
+	await expect(claude.locator("li").first()).toContainText("form_input");
+	await expect(claude.locator("li").first()).toContainText("example.com");
+	await expect(claude.locator("li").first().locator(".badge")).toHaveText("Failed");
+	await expect(claude.locator("li").last().locator(".badge")).toHaveCount(0);
+	await expect(activity.getByRole("group", { name: "Codex" }).locator("li")).toHaveCount(1);
+	expect(await asked()).toBe(1);
+
+	await activity.getByRole("button", { name: "Refresh" }).click();
+	await expect.poll(asked).toBe(2);
+	await activity.getByRole("button", { name: "Open Action Log" }).click();
+	expect((await sentCommands(page)).some((command) => command.action === "openAgentActionLog")).toBe(true);
+});
+
+test("an empty log says so, and a log that is off offers to turn it on without reading anything", async ({ page }) => {
+	await openAgentsActivity(page, {});
+	await page.evaluate(() => window.__lilo!.receive({ event: "agentActionLog", clients: [] }));
+	const activity = page.getByRole("region", { name: "Activity" });
+	await expect(activity).toContainText("No calls recorded yet.");
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true", agentActionLog: "false" } }));
+	await expect(activity).toContainText("The action log is off");
+	await expect(activity.getByRole("button", { name: "Refresh" })).toHaveCount(0);
+	await expect(activity.getByRole("button", { name: "Open Action Log" })).toBeVisible();
+	const before = (await sentCommands(page)).filter((command) => command.action === "getAgentActionLog").length;
+
+	await activity.getByRole("button", { name: "Turn On" }).click();
+	expect((await sentCommands(page)).filter((command) => command.action === "setSetting").at(-1)?.payload).toEqual({ key: "agentActionLog", value: "true" });
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true", agentActionLog: "true" } }));
+	await expect.poll(async () => (await sentCommands(page)).filter((command) => command.action === "getAgentActionLog").length).toBe(before + 1);
 });

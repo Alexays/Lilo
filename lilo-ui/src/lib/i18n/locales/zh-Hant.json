@@ -162,6 +162,7 @@
 			"passwords": "密碼",
 			"agentAccess": "使用 Lilo 的代理程式",
 			"agentClients": "可使用 Lilo 的 App",
+			"agentActivity": "活動",
 			"lilo": "Lilo",
 			"tabsWindows": "分頁與視窗",
 			"sitePermissions": "網站權限",
@@ -506,6 +507,11 @@
 				"title": "其他代理程式",
 				"description": "使用 Lilo 設定的任何其他 MCP 用戶端。"
 			},
+			"agentActivity": {
+				"title": "最近的代理程式呼叫",
+				"description": "每個 App 最近的呼叫，最新的在前。開啟此頁面或重新整理時讀取。",
+				"keywords": "代理程式 日誌 記錄 稽核 操作 最近 呼叫 活動"
+			},
 			"autoplay": {
 				"title": "自動播放",
 				"description": "套用至從現在起開啟的網頁。",
@@ -645,6 +651,15 @@
 			},
 			"allowedSeen": "已允許，上次連線 {time}",
 			"readyLine": "已設定。首次連線時 Lilo 會詢問你。"
+		},
+		"agentActivity": {
+			"refresh": "重新整理",
+			"open": "打開操作日誌",
+			"off": "操作日誌已關閉",
+			"offDescription": "Lilo 沒有記錄代理程式的呼叫。開啟後會顯示在這裡。",
+			"turnOn": "開啟",
+			"empty": "尚無已記錄的呼叫。",
+			"failed": "失敗"
 		},
 		"navGroups": {
 			"tools": "工具"
