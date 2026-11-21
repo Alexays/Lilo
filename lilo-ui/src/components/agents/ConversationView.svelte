@@ -352,6 +352,18 @@
     return getSplitPanes().find((pane) => tabs.get(pane.tabId)?.kind === "web")?.tabId ?? null;
   });
 
+  // In a split, the corners of the pane that are corners of the whole group go flat against the
+  // chrome, as the native panes' do; the pane shares are rounded to 0.001 by the host.
+  const inSplit = $derived(getSplitPanes().some((pane) => pane.tabId === tabId));
+  const EDGE = 0.001;
+  const flatCorners = $derived.by(() => {
+    const none = { tl: false, tr: false, bl: false, br: false };
+    if (!inSplit) return none;
+    const left = frame.x < EDGE, right = frame.x + frame.width > 1 - EDGE;
+    const top = frame.y < EDGE, bottom = frame.y + frame.height > 1 - EDGE;
+    return { tl: left && top, tr: right && top, bl: left && bottom, br: right && bottom };
+  });
+
   $effect(() => {
     void turns;
     void composerHeight;
@@ -566,6 +578,10 @@
     style:top="{frame.y * 100}%"
     style:width="{frame.width * 100}%"
     style:height="{frame.height * 100}%"
+    style:border-top-left-radius={flatCorners.tl ? "0" : undefined}
+    style:border-top-right-radius={flatCorners.tr ? "0" : undefined}
+    style:border-bottom-left-radius={flatCorners.bl ? "0" : undefined}
+    style:border-bottom-right-radius={flatCorners.br ? "0" : undefined}
     aria-label={header.title}
     use:reportInteractiveZone={{ id: `conversation-${tabId}` }}
     onkeydown={(event) => {

@@ -154,13 +154,33 @@ final class SplitDividerView: NSView {
     override func mouseUp(with event: NSEvent) { onDragEnd?() }
 }
 
-/// A thin accent outline over the focused pane of a split; never takes events.
+/// A thin accent outline over the focused pane of a split; never takes events. Corners on the
+/// group's outer edge are flat like the pane's; only the ones between panes keep the radius.
 final class SplitFocusRingView: NSView {
+    private static let allCorners: CACornerMask = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+
+    /// Which corners keep the radius: those of the pane's that are not a corner of `outer`,
+    /// the whole split's rectangle, whose own corners go flat against the chrome.
+    var roundedCorners = allCorners {
+        didSet { layer?.maskedCorners = roundedCorners }
+    }
+
+    /// `frame` is the pane's rect, `outer` the whole split's, in the same coordinates.
+    func roundCorners(of frame: NSRect, inside outer: NSRect) {
+        var mask = Self.allCorners
+        if frame.minX == outer.minX && frame.minY == outer.minY { mask.remove(.layerMinXMinYCorner) }
+        if frame.maxX == outer.maxX && frame.minY == outer.minY { mask.remove(.layerMaxXMinYCorner) }
+        if frame.minX == outer.minX && frame.maxY == outer.maxY { mask.remove(.layerMinXMaxYCorner) }
+        if frame.maxX == outer.maxX && frame.maxY == outer.maxY { mask.remove(.layerMaxXMaxYCorner) }
+        roundedCorners = mask
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
         layer?.borderWidth = 2
         layer?.cornerRadius = WindowFrameView.contentCornerRadius
+        layer?.maskedCorners = roundedCorners
         layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.55).cgColor
     }
 
@@ -202,8 +222,8 @@ final class SplitFocusRingView: NSView {
 }
 
 /// The frame-colored ring a split keeps around its panes: it lifts them off the chrome over the
-/// page and the window frame, and bites their outer corners as the dividers bite the inner ones,
-/// so every pane stays a rounded card. Paint only, never takes events.
+/// page and the window frame. The group's outer corners stay flat against the chrome; only the
+/// corners between panes are rounded, which the dividers bite. Paint only, never takes events.
 final class SplitMarginView: NSView {
     /// Half a divider's gap: a pane sits closer to the frame than to another pane.
     static let width = SplitDividerView.width / 2
@@ -226,13 +246,12 @@ final class SplitMarginView: NSView {
         band.contentsScale = unsafe window?.backingScaleFactor ?? 2
     }
 
-    /// The frame is the panes' rectangle: the band rings it and bites its corners.
+    /// The frame is the panes' rectangle: the band rings it square, flat against the chrome.
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
-        let radius = WindowFrameView.contentCornerRadius
         let path = CGMutablePath()
         path.addRect(bounds.insetBy(dx: -Self.width, dy: -Self.width))
-        path.addRoundedRect(in: bounds, cornerWidth: radius, cornerHeight: radius)
+        path.addRect(bounds)
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         band.path = path
@@ -483,17 +502,20 @@ final class SplitPanesController {
         guard let ring = focusRing, let focused = tabManager.activeOpenTabId.flatMap({ panes[$0] }) else { return }
         // Only an activation animates; resizes and divider drags follow at once.
         guard animatesFocus, ring.frame != .zero, ring.frame != focused else {
+            ring.roundCorners(of: focused, inside: outer)
             ring.frame = focused
             return
         }
         // The old ring fades where it is and the new one pulses on its pane: nothing crosses the content.
         let ghost = SplitFocusRingView(frame: ring.frame)
+        ghost.roundedCorners = ring.roundedCorners
         container.addSubview(ghost, positioned: .below, relativeTo: ring)
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.12
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             ghost.animator().alphaValue = 0
         }, completionHandler: { MainActor.assumeIsolated { ghost.removeFromSuperview() } })
+        ring.roundCorners(of: focused, inside: outer)
         ring.frame = focused
         ring.pulse()
     }
