@@ -1,11 +1,11 @@
 import AppKit
 
-/// The "Hold ⌘Q to quit" setting: pressing the quit shortcut shows a HUD and quits only when the
-/// keys stay down for `holdDuration` (about a second, as Chrome's warn-before-quit); letting one go
-/// cancels. The key event is intercepted in `LiloApplication.sendEvent`, ahead of the menus'
-/// key-equivalent match, so it covers the quit action however its shortcut is bound. A quit asked
-/// for any other way - the menu item, the Dock, an Apple Event - still quits at once, and at idle
-/// nothing runs: the panel and its one timer exist only while the keys are down.
+/// The "Hold the quit shortcut to quit" setting: pressing the quit shortcut shows a HUD and quits only
+/// when the keys stay down for `holdDuration` (about a second, as Chrome's warn-before-quit); letting
+/// one go, or the app losing focus, cancels. The key event is intercepted in `LiloApplication.sendEvent`,
+/// ahead of the menus' key-equivalent match, so it covers the quit action however its shortcut is bound.
+/// A quit asked for any other way - the menu item, the Dock, an Apple Event - still quits at once, and at
+/// idle nothing runs: the panel, its timer and its observer exist only while the keys are down.
 @MainActor
 final class HoldToQuit {
     static let defaultHoldDuration: TimeInterval = 1
@@ -19,82 +19,73 @@ final class HoldToQuit {
     var quit: () -> Void = { NSApp.terminate(nil) }
     var holdDuration = defaultHoldDuration
     private(set) var isHolding = false
-    /// The keys stayed down through a completed hold: their repeats must not begin another.
-    private var awaitingRelease = false
+    private var holdKeyCode: UInt16 = 0
     private var holdMask: NSEvent.ModifierFlags = []
-    private var startedAt: Date?
     private var timer: Timer?
+    private var resignObserver: NSObjectProtocol?
     private var hud: HoldToQuitPanel?
 
-    isolated deinit { timer?.invalidate() }
+    isolated deinit { cancel() }
 
     /// Called from `sendEvent` for every event; true drops it before the menus can match it.
     func handle(_ event: NSEvent) -> Bool {
         switch event.type {
-        case .keyDown where Self.isQuit(event):
-            guard isEnabled() else { return false }
-            // A repeat of the held keys, or keys still down from a finished hold, never re-begins.
-            if !isHolding, !awaitingRelease { begin(with: event) }
+        case .keyDown:
+            guard isEnabled(), KeyboardShortcuts.action(for: event) == "app.quit" else { return false }
+            // A repeat, of a hold or of keys still down after one ended, never begins a hold.
+            if !isHolding, !event.isARepeat { begin(with: event) }
             return true
-        case .keyUp where Self.isQuit(event):
-            awaitingRelease = false
-            if isHolding { cancel() }
+        case .keyUp where isHolding && event.keyCode == holdKeyCode:
+            cancel()
             return true
-        case .flagsChanged:
-            if !holdMask.isSubset(of: event.modifierFlags.intersection(Self.modifiers)) {
-                awaitingRelease = false
-                if isHolding { cancel() }
-            }
+        case .flagsChanged where isHolding:
+            if !holdMask.isSubset(of: event.modifierFlags.intersection(Self.modifiers)) { cancel() }
             return false
         default:
             return false
         }
     }
 
-    private static func isQuit(_ event: NSEvent) -> Bool {
-        KeyboardShortcuts.action(for: event) == "app.quit"
-    }
-
     private func begin(with event: NSEvent) {
         isHolding = true
+        holdKeyCode = event.keyCode
         holdMask = event.modifierFlags.intersection(Self.modifiers)
-        startedAt = Date()
         let hud = self.hud ?? HoldToQuitPanel()
         self.hud = hud
-        hud.show(over: event.window ?? NSApp.mainWindow)
+        hud.show(over: event.window ?? NSApp.mainWindow, filling: holdDuration)
         // Common modes: the deadline must hold even while a menu or a trackpad keeps the run loop busy.
-        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tick() }
+        let timer = Timer(timeInterval: holdDuration, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.fire() }
         }
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
-    }
-
-    private func tick() {
-        guard isHolding, let startedAt else { return }
-        let elapsed = Date().timeIntervalSince(startedAt)
-        guard elapsed < holdDuration else { return fire() }
-        hud?.bar.progress = elapsed / holdDuration
+        // Once another app has focus the key-up goes there, so the hold must end with the focus.
+        resignObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification, object: nil, queue: nil
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.cancel() }
+        }
     }
 
     private func cancel() {
         isHolding = false
         timer?.invalidate()
         timer = nil
+        if let resignObserver { NotificationCenter.default.removeObserver(resignObserver) }
+        resignObserver = nil
         hud?.orderOut(nil)
     }
 
     private func fire() {
         cancel()
-        awaitingRelease = true
         quit()
     }
 }
 
-/// The "Hold ⌘Q to Quit" overlay: a dark bezel like the system's, centered over the window the key
+/// The hold-to-quit overlay: a dark bezel like the system's, centered over the window the key
 /// went to (the screen when none), showing a fill that tracks how much of the hold remains.
 private final class HoldToQuitPanel: NSPanel {
-    let bar = HoldToQuitBar()
+    private let bar = HoldToQuitBar()
     private let label = NSTextField(labelWithString: "")
 
     init() {
@@ -140,37 +131,58 @@ private final class HoldToQuitPanel: NSPanel {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
-    /// Centers over `window` (the main screen when nil) and fades in, except under Reduce motion.
-    func show(over window: NSWindow?) {
+    /// Centers over `window` (the main screen when nil), fades in and fills the bar over `duration`.
+    func show(over window: NSWindow?, filling duration: TimeInterval) {
         // The quit shortcut is rebindable: name whichever keys trigger it now.
         let combo = KeyboardShortcuts.display(KeyboardShortcuts.bindings("app.quit").first ?? "⌘q")
         label.stringValue = unsafe String(format: "Hold %@ to Quit".localized, combo)
-        bar.progress = 0
         setContentSize(contentView?.fittingSize ?? .zero)
+        contentView?.layoutSubtreeIfNeeded()
         let anchor = window?.frame ?? NSScreen.main?.visibleFrame ?? .zero
         setFrameOrigin(NSPoint(x: anchor.midX - frame.width / 2, y: anchor.midY - frame.height / 2))
-        orderFrontRegardless()
-        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
         alphaValue = 0
+        orderFrontRegardless()
+        // A 150 ms fade, which is also what Reduce motion turns every surface's motion into.
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.15
             animator().alphaValue = 1
         }
+        bar.fill(over: duration)
     }
 }
 
-/// The hold's fill: a track with a bar growing left to right as `progress` goes to 1.
+/// The hold's fill: a track with a bar Core Animation grows left to right, so no code runs per frame.
 private final class HoldToQuitBar: NSView {
-    var progress: CGFloat = 0 { didSet { needsDisplay = true } }
+    private let fillLayer = CALayer()
 
-    override func draw(_ dirtyRect: NSRect) {
-        let radius = bounds.height / 2
-        NSColor.labelColor.withAlphaComponent(0.25).setFill()
-        NSBezierPath(roundedRect: bounds, xRadius: radius, yRadius: radius).fill()
-        guard progress > 0 else { return }
-        var fill = bounds
-        fill.size.width = max(bounds.height, bounds.width * min(progress, 1))
-        NSColor.labelColor.setFill()
-        NSBezierPath(roundedRect: fill, xRadius: radius, yRadius: radius).fill()
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.addSublayer(fillLayer)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        layer?.cornerRadius = bounds.height / 2
+        layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.25).cgColor
+        fillLayer.backgroundColor = NSColor.labelColor.cgColor
+    }
+
+    func fill(over duration: TimeInterval) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        fillLayer.anchorPoint = .zero
+        fillLayer.frame = bounds
+        fillLayer.cornerRadius = bounds.height / 2
+        CATransaction.commit()
+        let grow = CABasicAnimation(keyPath: "bounds.size.width")
+        grow.fromValue = bounds.height
+        grow.toValue = bounds.width
+        grow.duration = duration
+        fillLayer.add(grow, forKey: "fill")
     }
 }

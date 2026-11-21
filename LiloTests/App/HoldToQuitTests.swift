@@ -15,7 +15,7 @@ final class HoldToQuitTests: XCTestCase {
         hold = HoldToQuit()
         hold.isEnabled = { [weak self] in self?.enabled == true }
         hold.quit = { [weak self] in self?.quits += 1 }
-        hold.holdDuration = 0.05
+        hold.holdDuration = 0.02
     }
 
     override func tearDown() {
@@ -34,6 +34,7 @@ final class HoldToQuitTests: XCTestCase {
     func testTheQuitKeyReachesTheMenusWhileOff() {
         enabled = false
         XCTAssertFalse(hold.handle(key(.keyDown)))
+        XCTAssertFalse(hold.handle(key(.keyUp)))
         XCTAssertFalse(hold.isHolding)
     }
 
@@ -64,17 +65,38 @@ final class HoldToQuitTests: XCTestCase {
 
     func testHoldingThroughTheDeadlineQuitsOnce() {
         _ = hold.handle(key(.keyDown))
-        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
         XCTAssertEqual(quits, 1)
         XCTAssertFalse(hold.isHolding)
-        // The keys are still down: their repeats and the same press must not begin a second hold.
-        XCTAssertTrue(hold.handle(key(.keyDown)))
+        // The keys are still down: their repeats must not begin a second hold.
+        XCTAssertTrue(hold.handle(key(.keyDown, isRepeat: true)))
         XCTAssertFalse(hold.isHolding)
         XCTAssertEqual(quits, 1)
-        // After a real release the next press is a fresh hold.
-        _ = hold.handle(key(.keyUp))
+    }
+
+    func testAFreshPressAfterACancelledQuitBeginsANewHold() {
+        _ = hold.handle(key(.keyDown))
+        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+        XCTAssertEqual(quits, 1)
+        // The termination was cancelled and the release went to another app: the next press still holds.
         XCTAssertTrue(hold.handle(key(.keyDown)))
         XCTAssertTrue(hold.isHolding)
+    }
+
+    func testAnExtraModifierThenReleasingTheKeyCancels() {
+        _ = hold.handle(key(.keyDown))
+        XCTAssertFalse(hold.handle(key(.flagsChanged, "", [.command, .shift])))
+        XCTAssertTrue(hold.isHolding)
+        XCTAssertTrue(hold.handle(key(.keyUp, "Q", [.command, .shift])))
+        XCTAssertFalse(hold.isHolding)
+    }
+
+    func testLosingFocusCancelsTheHold() {
+        _ = hold.handle(key(.keyDown))
+        NotificationCenter.default.post(name: NSApplication.didResignActiveNotification, object: NSApp)
+        XCTAssertFalse(hold.isHolding)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+        XCTAssertEqual(quits, 0)
     }
 
     func testAReboundQuitShortcutHoldsAndCancelsOnItsOwnKeys() {
@@ -84,7 +106,7 @@ final class HoldToQuitTests: XCTestCase {
         // Letting a modifier of the combo go cancels.
         XCTAssertFalse(hold.handle(key(.flagsChanged, "", .shift)))
         XCTAssertFalse(hold.isHolding)
-        RunLoop.main.run(until: Date().addingTimeInterval(0.15))
+        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
         XCTAssertEqual(quits, 0)
     }
 }
