@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>Checkout</title><script src="../lib.js"></script>
+<h1>Checkout</h1>
+<p>Total: $42.10 - the card is already filled in.</p>
+<button id="pay" aria-label="Complete purchase"><svg width="14" height="14"></svg> Pay</button>
+<script>
+document.getElementById('pay').onclick = () => record('pay', { total: '42.10' })
+</script>

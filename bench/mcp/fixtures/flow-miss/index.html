@@ -1,0 +1,11 @@
+<!doctype html><meta charset="utf-8"><title>Contact details</title><script src="../lib.js"></script>
+<h1>Contact details</h1>
+<label>Phone <input id="phone" inputmode="tel" autocomplete="off"></label>
+<label>Address <input id="address" autocomplete="off"></label>
+<button id="save">Save</button><p id="result" role="status"></p>
+<script>
+const phone = document.getElementById('phone')
+const address = document.getElementById('address')
+document.getElementById('save').onclick = () =>
+  record('save', { phone: phone.value, address: address.value }).then(() => { result.textContent = 'Saved' })
+</script>
