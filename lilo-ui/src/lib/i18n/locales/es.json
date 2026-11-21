@@ -625,7 +625,11 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
 			"connect": "Conectar",
 			"copy": "Copiar configuración",
@@ -657,7 +661,9 @@
 				"ready": "Configurado"
 			},
 			"allowedSeen": "Permitido, visto por última vez {time}",
-			"readyLine": "Configurado. Lilo te pregunta la primera vez que se conecta."
+			"readyLine": "Configurado. Lilo te pregunta la primera vez que se conecta.",
+			"detectedLine": "Encontrado en este Mac. Aún sin configurar.",
+			"moreApps": "Más apps"
 		},
 		"navGroups": {
 			"tools": "Herramientas"
@@ -2335,6 +2341,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Lilo añadido a Claude Desktop: cierra y vuelve a abrir Claude para cargarlo",
 		"Added Lilo to Cursor": "Lilo añadido a Cursor",
 		"Added Lilo to Codex": "Lilo añadido a Codex",
+		"Added Lilo to Zed": "Lilo añadido a Zed",
+		"Added Lilo to VS Code": "Lilo añadido a VS Code",
+		"Added Lilo to OpenCode": "Lilo añadido a OpenCode",
+		"Added Lilo to Gemini CLI": "Lilo añadido a Gemini CLI",
 		"Removed Lilo": "Lilo quitado",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo no ha podido leer %@: añade este servidor manualmente: %@",
 		"Stop Agents": "Detener agentes",

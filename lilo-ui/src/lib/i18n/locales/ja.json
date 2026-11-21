@@ -625,7 +625,11 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
 			"connect": "接続",
 			"copy": "構成をコピー",
@@ -657,7 +661,9 @@
 				"ready": "構成済み"
 			},
 			"allowedSeen": "許可済み、最終接続 {time}",
-			"readyLine": "設定済み。初回接続時に Lilo が確認します。"
+			"readyLine": "設定済み。初回接続時に Lilo が確認します。",
+			"detectedLine": "この Mac で見つかりました。未設定です。",
+			"moreApps": "その他の App"
 		},
 		"navGroups": {
 			"tools": "ツール"
@@ -2335,6 +2341,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Claude Desktop に Lilo を追加しました。Claude を終了して開き直すと読み込まれます",
 		"Added Lilo to Cursor": "Cursor に Lilo を追加しました",
 		"Added Lilo to Codex": "Codex に Lilo を追加しました",
+		"Added Lilo to Zed": "Zed に Lilo を追加しました",
+		"Added Lilo to VS Code": "VS Code に Lilo を追加しました",
+		"Added Lilo to OpenCode": "OpenCode に Lilo を追加しました",
+		"Added Lilo to Gemini CLI": "Gemini CLI に Lilo を追加しました",
 		"Removed Lilo": "Lilo を削除しました",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo は %@ を読み取れませんでした。このサーバを手動で追加してください：%@",
 		"Stop Agents": "エージェントを停止",

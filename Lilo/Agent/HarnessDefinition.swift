@@ -7,14 +7,33 @@ struct HarnessDefinition: Equatable, Sendable {
     enum Config: Equatable, Sendable {
         /// `claude mcp add` owns the file; Lilo only reads it.
         case claudeCLI(store: String)
-        /// `mcpServers.lilo`, merged into the file's other keys.
-        case json(path: String)
+        /// `<key>.lilo`, merged into the file's other keys. Only a file that parses as strict JSON is written:
+        /// the apps whose settings take comments (Zed, OpenCode) get copy instructions instead of a rewrite.
+        case json(path: String, key: String = "mcpServers", entry: Entry = .command)
         /// A `[mcp_servers.lilo]` table, replaced in place.
         case toml(path: String)
 
         var path: String {
             switch self {
-            case .claudeCLI(let path), .json(let path), .toml(let path): path
+            case .claudeCLI(let path), .json(let path, _, _), .toml(let path): path
+            }
+        }
+    }
+
+    /// What the client wants under Lilo's name: each app words the same stdio command its own way.
+    enum Entry: Equatable, Sendable {
+        /// `{"command": …}`
+        case command
+        /// `{"type": "stdio", "command": …, "tools": ["*"]}`
+        case stdio
+        /// `{"type": "local", "command": […]}`
+        case local
+
+        func value(_ helper: String) -> [String: Any] {
+            switch self {
+            case .command: ["command": helper]
+            case .stdio: ["type": "stdio", "command": helper, "tools": ["*"]]
+            case .local: ["type": "local", "command": [helper]]
             }
         }
     }
@@ -103,6 +122,44 @@ struct HarnessDefinition: Equatable, Sendable {
         docsURL: "https://cursor.com/docs/context/mcp", verified: "2026-11-21",
         added: { "Added Lilo to Cursor".localized })
 
+    // Zed keeps MCP servers in `context_servers` of ~/.config/zed/settings.json (a command alone is enough).
+    // Its settings file is JSONC, so a file with comments is never rewritten.
+    static let zed = Self(
+        id: "zed",
+        config: .json(path: ".config/zed/settings.json", key: "context_servers"),
+        detect: Detect(bundleID: "dev.zed.Zed", binary: "zed", folders: [".config/zed"]),
+        handshakes: ["zed"],
+        docsURL: "https://zed.dev/docs/ai/mcp", verified: "2026-11-21",
+        added: { "Added Lilo to Zed".localized })
+
+    // VS Code's current MCP path is the Copilot harness, which reads `mcpServers` of ~/.copilot/mcp-config.json
+    // (the profile mcp.json it replaces is marked deprecated). The file is shared with Copilot CLI.
+    static let vscode = Self(
+        id: "vscode",
+        config: .json(path: ".copilot/mcp-config.json", entry: .stdio),
+        detect: Detect(bundleID: "com.microsoft.VSCode", binary: "code", folders: [".vscode"]),
+        handshakes: ["visual studio code", "vscode"],
+        docsURL: "https://code.visualstudio.com/docs/agents/reference/mcp-configuration", verified: "2026-11-21",
+        added: { "Added Lilo to VS Code".localized })
+
+    // OpenCode V2 reads the V1 shape (`mcp.<name>`) of ~/.config/opencode/opencode.json, which also works on V1.
+    // The file may be opencode.jsonc: only a strict opencode.json is written.
+    static let opencode = Self(
+        id: "opencode",
+        config: .json(path: ".config/opencode/opencode.json", key: "mcp", entry: .local),
+        detect: Detect(binary: "opencode", binaryExtra: [".opencode/bin/opencode"], folders: [".config/opencode"]),
+        handshakes: ["opencode"],
+        docsURL: "https://opencode.ai/v1/docs/mcp-servers/", verified: "2026-11-21",
+        added: { "Added Lilo to OpenCode".localized })
+
+    static let gemini = Self(
+        id: "gemini",
+        config: .json(path: ".gemini/settings.json"),
+        detect: Detect(binary: "gemini", folders: [".gemini"]),
+        handshakes: ["gemini-cli-mcp-client"],
+        docsURL: "https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md", verified: "2026-11-21",
+        added: { "Added Lilo to Gemini CLI".localized })
+
     /// In the order the settings page lists them.
-    static let all = [claudeCode, claudeDesktop, codex, cursor]
+    static let all = [claudeCode, claudeDesktop, codex, cursor, zed, vscode, opencode, gemini]
 }

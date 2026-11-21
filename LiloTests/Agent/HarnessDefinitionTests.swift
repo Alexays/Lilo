@@ -33,6 +33,8 @@ final class HarnessDefinitionTests: XCTestCase {
         XCTAssertEqual(HarnessDefinition(clientName: "local-agent-mode-lilo"), .claudeDesktop)
         XCTAssertEqual(HarnessDefinition(clientName: "codex-mcp-client"), .codex)
         XCTAssertEqual(HarnessDefinition(clientName: "cursor-vscode"), .cursor)
-        XCTAssertNil(HarnessDefinition(clientName: "gemini-cli-mcp-client"))
+        XCTAssertEqual(HarnessDefinition(clientName: "gemini-cli-mcp-client"), .gemini)
+        XCTAssertEqual(HarnessDefinition(clientName: "Zed"), .zed)
+        XCTAssertNil(HarnessDefinition(clientName: "unknown-agent"))
     }
 }

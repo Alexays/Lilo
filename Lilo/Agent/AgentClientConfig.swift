@@ -85,7 +85,7 @@ enum AgentClientConfig {
     private static func manualSnippet(_ client: Client) -> String {
         switch client.config {
         case .claudeCLI: "claude mcp add --scope user lilo -- \(helperPath)"
-        case .json: genericConfigJSON
+        case .json(_, let key, let entry): json([key: ["lilo": entry.value(helperPath)]])
         case .toml: tomlTable
         }
     }
@@ -113,7 +113,7 @@ enum AgentClientConfig {
             if case .toml = client.config {
                 return (try? String(contentsOf: url, encoding: .utf8)).flatMap { liloTable(in: $0) } != nil
             }
-            return (readJSON(url)["mcpServers"] as? [String: Any])?["lilo"] != nil
+            return liloServer(of: client, readJSON(url)) != nil
         }
     }
 
@@ -152,24 +152,25 @@ enum AgentClientConfig {
         switch client.config {
         case .claudeCLI:
             return nil
-        case .json(let path):
+        case .json(let path, let key, let entry):
             let url = home.appending(path: path)
             let before = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
             var config: [String: Any] = [:]
-            if FileManager.default.fileExists(atPath: url.path) {
+            // An empty file is a fresh one; anything else must parse as strict JSON, or comments would be lost.
+            if FileManager.default.fileExists(atPath: url.path), !before.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 guard let data = try? Data(contentsOf: url), let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
                     if remove { return nil }
-                    throw unsafe AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, genericConfigJSON))
+                    throw unsafe AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, manualSnippet(client)))
                 }
                 config = object
             }
-            var servers = config["mcpServers"] as? [String: Any] ?? [:]
+            var servers = config[key] as? [String: Any] ?? [:]
             if remove {
                 guard servers.removeValue(forKey: "lilo") != nil else { return nil }
             } else {
-                servers["lilo"] = ["command": helperPath]
+                servers["lilo"] = entry.value(helperPath)
             }
-            config["mcpServers"] = servers
+            config[key] = servers
             return (url, before, json(config))
         case .toml(let path):
             let url = home.appending(path: path)
@@ -205,7 +206,14 @@ enum AgentClientConfig {
             return text[range].split(separator: "\n").first(where: { $0.hasPrefix("command") })?
                 .split(separator: "\"").dropFirst().first.map(String.init)
         }
-        return ((readJSON(url)["mcpServers"] as? [String: Any])?["lilo"] as? [String: Any])?["command"] as? String
+        guard let server = liloServer(of: client, readJSON(url)) else { return nil }
+        return (server["command"] as? String) ?? (server["command"] as? [String])?.first
+    }
+
+    /// Lilo's entry among the servers a JSON client keeps under its own key.
+    private static func liloServer(of client: Client, _ config: [String: Any]) -> [String: Any]? {
+        guard case .json(_, let key, _) = client.config else { return nil }
+        return (config[key] as? [String: Any])?["lilo"] as? [String: Any]
     }
 
     /// Writes through a symlink, so a dotfiles link stays one, and keeps the file's permissions, which may guard keys.

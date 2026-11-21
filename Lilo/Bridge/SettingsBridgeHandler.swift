@@ -552,20 +552,21 @@ final class SettingsBridgeHandler: BridgeHandler {
         ])
     }
 
-    /// The agent apps installed or naming Lilo in their configuration (read off the main thread), and the
-    /// agents allowed in.
+    /// The catalog's agent apps, with which are installed and which name Lilo in their configuration (read off
+    /// the main thread), and the agents allowed in.
     private func publishAgentClients() async {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let found = await Task.detached {
             let connected = AgentClientConfig.connectedClients(home: home)
             let stale = AgentClientConfig.staleClients(home: home)
-            return AgentClientConfig.Client.all.compactMap { client -> (AgentClientConfig.Client, Bool, Bool, URL?)? in
-                let app = AgentClientConfig.iconApp(of: client, home: home)
-                return app != nil || connected.contains(client) ? (client, connected.contains(client), stale.contains(client), app) : nil
+            return AgentClientConfig.Client.all.map { client in
+                (client, connected.contains(client), stale.contains(client), AgentClientConfig.iconApp(of: client, home: home))
             }
         }.value
+        // Every catalog row, installed or not: the page keeps the ones it did not find under "More apps".
         let clients = found.map { client, configured, stale, app in
-            ["id": client.rawValue, "configured": configured, "stale": stale, "icon": app.flatMap(Self.appIconDataURL) ?? NSNull()] as [String: Any]
+            ["id": client.rawValue, "configured": configured, "stale": stale, "installed": app != nil,
+             "icon": app.flatMap(Self.appIconDataURL) ?? NSNull()] as [String: Any]
         }
         let control = context?.agentControl
         let lastSeen = control?.lastSeen ?? [:]

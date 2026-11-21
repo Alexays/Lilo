@@ -625,7 +625,11 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
 			"connect": "Під’єднати",
 			"copy": "Копіювати конфігурацію",
@@ -657,7 +661,9 @@
 				"ready": "Налаштовано"
 			},
 			"allowedSeen": "Дозволено, востаннє {time}",
-			"readyLine": "Налаштовано. Lilo запитає вас під час першого підключення."
+			"readyLine": "Налаштовано. Lilo запитає вас під час першого підключення.",
+			"detectedLine": "Знайдено на цьому Mac. Ще не налаштовано.",
+			"moreApps": "Інші застосунки"
 		},
 		"navGroups": {
 			"tools": "Інструменти"
@@ -2335,6 +2341,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Lilo додано до Claude Desktop: закрийте й знову відкрийте Claude, щоб завантажити",
 		"Added Lilo to Cursor": "Lilo додано до Cursor",
 		"Added Lilo to Codex": "Lilo додано до Codex",
+		"Added Lilo to Zed": "Lilo додано до Zed",
+		"Added Lilo to VS Code": "Lilo додано до VS Code",
+		"Added Lilo to OpenCode": "Lilo додано до OpenCode",
+		"Added Lilo to Gemini CLI": "Lilo додано до Gemini CLI",
 		"Removed Lilo": "Lilo вилучено",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo не вдалося прочитати %@: додайте цей сервер самостійно: %@",
 		"Stop Agents": "Зупинити агентів",

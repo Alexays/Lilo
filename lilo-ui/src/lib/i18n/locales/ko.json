@@ -625,7 +625,11 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
 			"connect": "연결",
 			"copy": "설정 복사",
@@ -657,7 +661,9 @@
 				"ready": "설정됨"
 			},
 			"allowedSeen": "허용됨, 마지막 접속 {time}",
-			"readyLine": "구성됨. 처음 연결할 때 Lilo가 묻습니다."
+			"readyLine": "구성됨. 처음 연결할 때 Lilo가 묻습니다.",
+			"detectedLine": "이 Mac에서 찾았습니다. 아직 설정되지 않음.",
+			"moreApps": "더 많은 앱"
 		},
 		"navGroups": {
 			"tools": "도구"
@@ -2335,6 +2341,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Claude Desktop에 Lilo가 추가되었습니다. Claude를 종료하고 다시 열면 로드됩니다",
 		"Added Lilo to Cursor": "Cursor에 Lilo 추가됨",
 		"Added Lilo to Codex": "Codex에 Lilo 추가됨",
+		"Added Lilo to Zed": "Zed에 Lilo 추가됨",
+		"Added Lilo to VS Code": "VS Code에 Lilo 추가됨",
+		"Added Lilo to OpenCode": "OpenCode에 Lilo 추가됨",
+		"Added Lilo to Gemini CLI": "Gemini CLI에 Lilo 추가됨",
 		"Removed Lilo": "Lilo 제거됨",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo가 %@ 파일을 읽을 수 없습니다. 다음 서버를 직접 추가하세요: %@",
 		"Stop Agents": "에이전트 중단",
