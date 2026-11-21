@@ -168,16 +168,6 @@ export function strippedTitle(title: string, name: string): string {
 	return title;
 }
 
-/** Whether the pinned area draws folded: its stored fold holds unless the active tab is pinned
- *  or a drag is aiming into the area, both of which open it so nothing is lost to the fold. */
-export function pinnedAreaCollapsed(
-	folded: boolean,
-	holdsActive: boolean,
-	dragTargetsArea: boolean,
-): boolean {
-	return folded && !holdsActive && !dragTargetsArea;
-}
-
 /** The gap between two rows, mirroring --sidebar-tab-row-gap. */
 export const VIRTUAL_ROW_GAP = 2;
 
