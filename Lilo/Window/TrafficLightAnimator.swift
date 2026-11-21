@@ -10,9 +10,9 @@ extension MainWindowController {
         private var shown: Bool?
         private var observed = false
         private var offset = CGSize.zero
-        /// Where AppKit puts each button, and where it was moved to.
-        private var appKitOrigins: [ObjectIdentifier: NSPoint] = [:]
-        private var heldOrigins: [ObjectIdentifier: NSPoint] = [:]
+        /// Where AppKit puts each button (its frame, size included), and where it was moved to.
+        private var appKitFrames: [ObjectIdentifier: CGRect] = [:]
+        private var heldFrames: [ObjectIdentifier: CGRect] = [:]
 
         /// Puts the close button `inset` from the window's left edge, and as far from its top when `square`;
         /// nil leaves them to AppKit. AppKit puts the buttons back at its own spot on every title change,
@@ -27,17 +27,17 @@ extension MainWindowController {
                 }
             }
             guard let close = buttons.first, let titlebar = unsafe close.superview else { return }
-            let appKit = appKitOrigins[ObjectIdentifier(close)] ?? close.frame.origin
+            let appKit = appKitFrames[ObjectIdentifier(close)]?.origin ?? close.frame.origin
             let appKitTop = titlebar.isFlipped ? appKit.y : titlebar.bounds.height - appKit.y - close.frame.height
             let next = inset.map { CGSize(width: $0 - appKit.x, height: square ? appKitTop - $0 : 0) } ?? .zero
-            guard next != offset || heldOrigins.isEmpty else { return }
+            guard next != offset || heldFrames.isEmpty else { return }
             offset = next
             buttons.forEach(hold)
         }
 
         @objc private func buttonMoved(_ notification: Notification) {
             guard let button = notification.object as? NSView else { return }
-            // Moved back during AppKit's own frame change, the button would not stay: the run loop runs
+            // Restored during AppKit's own frame change, the button would not stay: the run loop runs
             // the block once that change is over, still ahead of the commit.
             CFRunLoopPerformBlock(CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue) { [weak self, weak button] in
                 MainActor.assumeIsolated {
@@ -48,12 +48,20 @@ extension MainWindowController {
 
         private func hold(_ button: NSView) {
             let id = ObjectIdentifier(button)
-            if heldOrigins[id] != button.frame.origin { appKitOrigins[id] = button.frame.origin }
-            guard let appKit = appKitOrigins[id] else { return }
+            // The origin records where AppKit last put the button; a frame change during a live
+            // resize also carries a smaller size, which the held frame must undo, not re-record.
+            let isAppKitLayout = heldFrames[id]?.origin != button.frame.origin
+            if isAppKitLayout { appKitFrames[id] = button.frame }
+            guard let appKit = appKitFrames[id] else { return }
             let up = unsafe button.superview?.isFlipped == true ? -offset.height : offset.height
-            let origin = NSPoint(x: appKit.x + offset.width, y: appKit.y + up)
-            heldOrigins[id] = origin
-            if button.frame.origin != origin { button.setFrameOrigin(origin) }
+            let frame = NSRect(
+                x: appKit.minX + offset.width,
+                y: appKit.minY + up,
+                width: appKit.width,
+                height: appKit.height
+            )
+            heldFrames[id] = frame
+            if button.frame != frame { button.setFrameSize(frame.size); button.setFrameOrigin(frame.origin) }
         }
 
         func sync(window: NSWindow, visible: Bool, animated: Bool, duration: TimeInterval) {

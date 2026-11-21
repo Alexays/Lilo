@@ -17,7 +17,11 @@ Agents work in their own Agents Space, in a throwaway profile wiped after each s
 take your keyboard or your tabs. They can borrow one of your profiles for a task after you allow it.
 
 - Open, navigate and close tabs in their own folder; click, type, fill forms, take screenshots.
-- Read pages (accessibility tree with element refs, page text), the console and the network.
+- Read pages (accessibility tree with element refs, page text; `read_page` with `viewport` returns only
+  the elements on or near the screen, each with its box), the console and the network.
+- Actions that can change the page (clicks, keys, typing, scrolls, `form_input`, file uploads) end their
+  reply with what changed: the page's new URL, or a compact diff of the elements it added, removed and
+  changed, so a full re-read is only needed for detail.
 - `form_input`: set a field and get back what it holds once the page handled the change, with a
   warning when the page reformatted, cut or rejected the value. For a password, card or one-time
   code field the reply only says whether it holds the value given.
@@ -40,9 +44,14 @@ of an error, and no schema of them is sent on each turn.
 
 Unless you turn it off in Settings, Lilo asks before an agent:
 
-- clicks or presses Enter on something that sends, pays, buys, orders, deletes, transfers,
+- clicks or presses Enter on something that signs you in, pays, sends, buys, deletes, transfers,
   publishes or signs up (Allow Once, Always Allow on the site, or Deny), inside frames too; a click in
-  a frame of another origin, which Lilo cannot read, is always asked;
+  a frame of another origin, which Lilo cannot read, is always asked. Lilo decides from the page's
+  structure first, so it works in any language and for an icon-only button: submitting a form that
+  holds a password, a card field or a one-time code, or that sends its data to another origin with a
+  method other than GET. A short list of commit verbs (send, pay, buy, delete, publish and their
+  translations) is the fallback for buttons outside a form; "order" counts only as a whole label
+  ("Order") or in a phrase like "Place order", so "Save order" goes through;
 - sends a request other than GET or HEAD with the cookies of one of your profiles.
 
 The question opens in the window that holds the agent's page, and the agent's conversation row turns amber
