@@ -54,7 +54,7 @@ extension MainWindowController {
 
     func handleSidebarOverlay(visible: Bool) {
         sidebarOverlayVisible = visible && !sidebarVisible
-        syncTrafficLights(animated: true)
+        syncTrafficLights(animated: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
     }
 
     /// The sidebar's width as the window lets it be: it narrows before the content gets under `minimumContentWidth`.

@@ -55,6 +55,8 @@ final class ConversationHost {
         var acceptsImages = false
         var replacesSystemPrompt = false
         var authMethods: [[String: Any]] = []
+        /// The saved-flows skill goes with the first prompt, as an attachment does: once is enough.
+        var flowsSkillSent = false
         /// Replays of `session/load` repeat what the log already holds after an idle stop.
         var replaying = false
         var title = ""
