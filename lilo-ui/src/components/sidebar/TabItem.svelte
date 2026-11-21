@@ -31,6 +31,7 @@
   } from "../../stores/tabPreview.svelte";
   import { subscribeHoverClear } from "../../lib/hoverClear";
   import { getSelectionTravelTarget } from "../../stores/selectionTravel.svelte";
+  import { contextSelectionIds, isTabSelected, tabClickSelection } from "../../stores/tabSelection.svelte";
   import { getRenamingTabId, setRenamingTabId } from "../../stores/tabRename.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { getActingAgentTabIds, isAgentsSpace } from "../../stores/agents.svelte";
@@ -116,6 +117,10 @@
   });
 
   const tooltipURL = $derived(tooltipTabURL(tab.url));
+
+  function handleClick(event: MouseEvent) {
+    if (interactive && !tabClickSelection(event, tab.id, tabItemEl?.closest(".space-page") ?? null)) switchToTab();
+  }
 
   function switchToTab() {
     if (!interactive) return;
@@ -339,6 +344,7 @@
   // two rows that actually flip rebuild their tooltip params.
   const isPreviewedTab = $derived(getTabPreviewTabId() === tab.id);
 
+  const isSelected = $derived(interactive && isTabSelected(tab.id));
   const isRenaming = $derived(interactive && getRenamingTabId() === tab.id);
 
   const tooltipContent = $derived({
@@ -408,6 +414,7 @@
       rect.top,
       rect.width,
       rect.height,
+      contextSelectionIds(tab.id),
     );
   }
 
@@ -437,6 +444,7 @@
   data-tab-id={tab.id}
   class="tab-item"
   class:active={isActive}
+  class:selected={isSelected}
   class:travel-hold={travelHold}
   class:closed={tab.isClosed}
   class:loading={tab.isLoading}
@@ -446,10 +454,10 @@
   role="treeitem"
   tabindex={interactive && tabStop ? 0 : -1}
   aria-level={level}
-  aria-selected={isActive}
+  aria-selected={isActive || isSelected}
   aria-label={rowLabel}
   use:tooltip={tooltipContent}
-  onclick={switchToTab}
+  onclick={handleClick}
   onauxclick={(e) => e.button === 1 && requestCloseTab()}
   oncontextmenu={handleContextMenu}
   onkeydown={(e) => {
@@ -735,6 +743,11 @@
   .tab-item.active:not(.travel-hold) {
     background: var(--sidebar-sel);
     box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
+  }
+
+  /* A selected row away from the active tab wears the same surface, a little quieter. */
+  .tab-item.selected:not(.active) {
+    background: color-mix(in srgb, var(--sidebar-sel) 65%, transparent);
   }
 
   .tab-item.split-drop-target {

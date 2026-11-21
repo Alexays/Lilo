@@ -21,6 +21,7 @@
   import TabItem from "./TabItem.svelte";
   import SavedTabEditor from "./SavedTabEditor.svelte";
   import { closeTabEditor, getEditingTab } from "../../stores/tabRename.svelte";
+  import { clearTabSelection, getSelectedTabIds } from "../../stores/tabSelection.svelte";
   import { MAX_SPLIT_PANES, type BridgeSplitLayout } from "../../lib/bridge/protocol";
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
@@ -1003,6 +1004,11 @@
     const row = event.target instanceof HTMLElement ? event.target : null;
     if (!row?.matches("[role=treeitem]")) return;
     const isFolder = row.matches(".folder-row");
+    if (event.key === "Escape" && getSelectedTabIds().size) {
+      event.preventDefault();
+      clearTabSelection();
+      return;
+    }
     if ((event.key === "F10" && event.shiftKey) || event.key === "ContextMenu") {
       event.preventDefault();
       const rect = row.getBoundingClientRect();
@@ -1695,6 +1701,7 @@
         data-drop-label={t("tabSection.dropToPin")}
         bind:this={pinnedListEl}
         role="tree"
+        aria-multiselectable="true"
         tabindex="-1"
         aria-label={t("tabSection.pinnedTabs")}
         onkeydown={handleListKeydown}
@@ -1791,6 +1798,7 @@
         class:is-empty={listIsEmpty}
         class:pinned-transfer-source={pinnedTransferSourceActive}
         role="tree"
+        aria-multiselectable="true"
         tabindex="-1"
         aria-label={t("tabSection.openTabs")}
         onkeydown={handleListKeydown}

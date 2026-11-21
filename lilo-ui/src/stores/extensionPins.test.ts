@@ -39,22 +39,28 @@ test("the pinned list comes from the settings snapshot", async () => {
 	assert.equal(store.isExtensionPinned("gamma"), false);
 });
 
-test("uninstalled ids never show, and drop on the next write", async () => {
+test("ids not loaded in this window never show, and writes keep them", async () => {
 	const posted = stubBridgeWindow();
 	const store = await loadPinsStore();
 
-	settings("alpha,gone,beta");
+	settings("alpha,other-profile,beta");
 	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "beta"]);
 
 	store.toggleExtensionPin("gamma");
 	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "beta", "gamma"]);
 	assert.deepEqual(posted.at(-1), {
 		action: "setSetting",
-		payload: { key: "pinnedExtensions", value: "alpha,beta,gamma" },
+		payload: { key: "pinnedExtensions", value: "alpha,other-profile,beta,gamma" },
 	});
 
-	installed("alpha", "gamma");
-	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "gamma"]);
+	store.toggleExtensionPin("alpha");
+	assert.deepEqual(posted.at(-1), {
+		action: "setSetting",
+		payload: { key: "pinnedExtensions", value: "other-profile,beta,gamma" },
+	});
+
+	installed("gamma");
+	assert.deepEqual(store.getPinnedExtensionIds(), ["gamma"]);
 });
 
 test("toggling pins persists the list in pin order, with no cap", async () => {

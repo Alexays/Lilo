@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { parseMessage, type Part } from "./icu";
 import { catalogs, loadCatalog, resolveLocale, SUPPORTED_LOCALES, translate, type Locale } from "./translate";
 
 for (const { code } of SUPPORTED_LOCALES) await loadCatalog(code);
@@ -40,8 +41,8 @@ test("translate interpolates {named} placeholders", () => {
 test("translate picks a count's plural form and groups its digits", () => {
 	const en = catalogs.en;
 	const fr = catalogs.fr;
-	catalogs.en = { ...en, __test: { pages: { one: "{count} page", other: "{count} pages" } } };
-	catalogs.fr = { ...fr, __test: { pages: { one: "{count} page importée", other: "{count} pages importées" } } };
+	catalogs.en = { ...en, __test: { pages: "{count, plural, one{# page} other{# pages}}" } };
+	catalogs.fr = { ...fr, __test: { pages: "{count, plural, one{# page importée} other{# pages importées}}" } };
 	assert.equal(translate("en", "__test.pages", { count: 1 }), "1 page");
 	assert.equal(translate("en", "__test.pages", { count: 0 }), "0 pages");
 	assert.equal(translate("en", "__test.pages", { count: 12345 }), "12,345 pages");
@@ -50,6 +51,54 @@ test("translate picks a count's plural form and groups its digits", () => {
 	assert.equal(translate("fr", "__test.pages", { count: 1000000 }).replace(/\s/g, " "), "1 000 000 pages importées");
 	catalogs.en = en;
 	catalogs.fr = fr;
+});
+
+test("translate renders nested select inside a plural option", () => {
+	const en = catalogs.en;
+	catalogs.en = {
+		...en,
+		__test: { items: "{count, plural, one{{kind, select, tab{# tab} other{# item}}} other{# items}}" },
+	};
+	assert.equal(translate("en", "__test.items", { count: 1, kind: "tab" }), "1 tab");
+	assert.equal(translate("en", "__test.items", { count: 1, kind: "window" }), "1 item");
+	assert.equal(translate("en", "__test.items", { count: 3, kind: "tab" }), "3 items");
+	catalogs.en = en;
+});
+
+test("selectordinal picks the ordinal category, not the cardinal one", () => {
+	const en = catalogs.en;
+	catalogs.en = { ...en, __test: { rank: "{n, selectordinal, one{#st} two{#nd} few{#rd} other{#th}}" } };
+	const ranks = [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111].map((n) => translate("en", "__test.rank", { n }));
+	assert.deepEqual(ranks, ["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd", "23rd", "101st", "111th"]);
+	catalogs.en = en;
+});
+
+test("malformed ICU patterns fall back to the literal message, never blank or wrong output", () => {
+	const en = catalogs.en;
+	catalogs.en = {
+		...en,
+		__test: {
+			unbalanced: "Open {count, plural, one{# tab",
+			unknownTag: "Done {count, sparkle, one{#}}",
+			noOther: "{count, plural, one{# tab}}",
+			badSelector: "{count, plural, bogus{# tab} other{# tabs}}",
+		},
+	};
+	assert.equal(translate("en", "__test.unbalanced", { count: 1 }), "Open {count, plural, one{# tab");
+	assert.equal(translate("en", "__test.unknownTag", { count: 1 }), "Done {count, sparkle, one{#}}");
+	assert.equal(translate("en", "__test.noOther", { count: 2 }), "{count, plural, one{# tab}}");
+	// An unknown selector is a valid option ICU-wise (ignored at render); a count that
+	// misses it still lands on `other`.
+	assert.equal(translate("en", "__test.badSelector", { count: 4 }), "4 tabs");
+	catalogs.en = en;
+});
+
+test("non-numeric and missing plural arguments select the other form", () => {
+	const en = catalogs.en;
+	catalogs.en = { ...en, __test: { tabs: "{count, plural, one{# tab} other{# tabs}}" } };
+	assert.equal(translate("en", "__test.tabs", { count: "2" as unknown as number }), "NaN tabs");
+	assert.equal(translate("en", "__test.tabs"), "NaN tabs");
+	catalogs.en = en;
 });
 
 test("resolveLocale maps BCP-47 tags to a supported locale, defaulting to English", () => {
@@ -99,28 +148,70 @@ function flatten(obj: Record<string, unknown>, prefix = ""): Array<[string, unkn
 	);
 }
 
+// Argument names referenced by a message part tree (`#` is the plural's count, not an arg).
+function argsOf(parts: Part[]): string[] {
+	const names: string[] = [];
+	for (const part of parts) {
+		if (typeof part === "string" || "pound" in part) continue;
+		names.push(part.arg);
+		if ("options" in part) for (const [, body] of part.options) names.push(...argsOf(body));
+	}
+	return [...new Set(names)].sort();
+}
+
 test("every catalog exposes the same keys and placeholders as English", () => {
 	const english = new Map(flatten(catalogs.en));
 	const placeholders = (value: string) => [...value.matchAll(/\{\w+\}|%[-+\d.#]*[@a-zA-Z%]/g)].map(([match]) => match).sort();
 	for (const { code } of SUPPORTED_LOCALES) {
 		const catalog = new Map(flatten(catalogs[code] ?? {}));
 		assert.deepEqual([...catalog.keys()].sort(), [...english.keys()].sort(), `${code}.json must define the same keys as en.json`);
+		const cldr = new Intl.PluralRules(code).resolvedOptions().pluralCategories;
+		// Selectors a locale may carry: every CLDR keyword (even ones the locale never
+		// selects, like zh's "one") plus exact `=N` matches and the required `other`.
+		const keywords = new Set(["zero", "one", "two", "few", "many", "other"]);
 		for (const [key, source] of english) {
 			const value = catalog.get(key);
 			assert.equal(typeof value, typeof source, `${code}.${key}`);
-			const plural = typeof source === "object" && source !== null;
-			if (plural) {
-				const expected = new Intl.PluralRules(code).resolvedOptions().pluralCategories.includes("few")
-					? new Intl.PluralRules(code).resolvedOptions().pluralCategories
-					: Object.keys(source);
+			if (typeof source === "object" && source !== null) {
+				// native.* plural dicts stay objects for String(format:); keep their category rule.
+				const expected = cldr.includes("few") ? cldr : Object.keys(source);
 				assert.deepEqual(Object.keys(value as object).sort(), expected.sort(), `${code}.${key}`);
+				for (const form of Object.values(value as object)) {
+					assert.equal(typeof form, "string", `${code}.${key} must be a string`);
+					assert.deepEqual(placeholders(form as string), placeholders((source as Record<string, string>).other), `${code}.${key} must preserve placeholders`);
+				}
+				continue;
 			}
-			const forms = plural ? Object.values(value as object) : [value];
-			const template = plural ? (source as Record<string, string>).other : source as string;
-			for (const form of forms) {
-				assert.equal(typeof form, "string", `${code}.${key} must be a string`);
-				assert.ok((form as string).trim(), `${code}.${key} must not be empty`);
-				assert.deepEqual(placeholders(form as string), placeholders(template), `${code}.${key} must preserve placeholders`);
+			assert.equal(typeof value, "string", `${code}.${key}`);
+			assert.ok((value as string).trim(), `${code}.${key} must not be empty`);
+			const enParts = parseMessage(source as string);
+			const parts = parseMessage(value as string);
+			const structured = enParts.filter((p) => typeof p === "object" && "kind" in p);
+			if (!structured.length) {
+				// Plain message: placeholder parity, printf tokens included (native.* strings).
+				assert.deepEqual(placeholders(value as string), placeholders(source as string), `${code}.${key} must preserve placeholders`);
+				continue;
+			}
+			// ICU message: same arguments overall, same plural/select elements, selectors valid
+			// for the locale's CLDR categories, `other` present, and every option keeps the
+			// placeholders of the English `other` option.
+			assert.deepEqual(argsOf(parts), argsOf(enParts), `${code}.${key} must preserve arguments`);
+			for (const enEl of structured) {
+				if (!("options" in enEl)) continue;
+				const el = parts.find(
+					(p): p is Extract<Part, { kind: string }> =>
+						typeof p === "object" && "kind" in p && p.arg === enEl.arg && p.kind === enEl.kind,
+				);
+				assert.ok(el && "options" in el, `${code}.${key}: missing ${enEl.kind} on {${enEl.arg}}`);
+				const enOther = enEl.options.find(([sel]) => sel === "other");
+				assert.ok(enOther, `${code}.${key}: English needs an "other" option`);
+				for (const [sel, body] of el.options) {
+					const valid = /^=\d+$/.test(sel)
+						|| (enEl.kind === "select" ? sel === "other" || !keywords.has(sel) : keywords.has(sel));
+					assert.ok(valid, `${code}.${key}: selector "${sel}" is not a plural keyword`);
+					assert.deepEqual(argsOf(body), argsOf(enOther[1]), `${code}.${key} ${sel}: placeholders must match the English "other" option`);
+				}
+				assert.ok(el.options.some(([sel]) => sel === "other"), `${code}.${key}: needs an "other" option`);
 			}
 		}
 	}

@@ -32,7 +32,8 @@ function parsePinned(raw: string | undefined): string[] {
 		.filter(Boolean);
 }
 
-// Ids of uninstalled extensions stay in the setting until the next write but never show.
+// The setting is app-wide but each profile loads its own extensions: ids not loaded in this
+// window never show, and writes keep them so another profile's pins survive.
 const _pinnedIds = $derived(_pinned.filter((id) => getExtensions().some((ext) => ext.id === id)));
 
 export function getPinnedExtensionIds(): string[] {
@@ -51,12 +52,10 @@ function savePinned(pinned: string[]): void {
 
 /** Pins `id` after the existing pins; a no-op when it is already pinned. */
 export function pinExtension(id: string): void {
-	const pinned = getPinnedExtensionIds();
-	if (!pinned.includes(id)) savePinned([...pinned, id]);
+	if (!_pinned.includes(id)) savePinned([..._pinned, id]);
 }
 
 export function toggleExtensionPin(id: string): void {
-	const pinned = getPinnedExtensionIds();
-	if (pinned.includes(id)) savePinned(pinned.filter((pinnedId) => pinnedId !== id));
+	if (_pinned.includes(id)) savePinned(_pinned.filter((pinnedId) => pinnedId !== id));
 	else pinExtension(id);
 }

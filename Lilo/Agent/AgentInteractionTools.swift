@@ -122,13 +122,8 @@ enum AgentInteractionTools {
             Start over signed in nowhere: wipes the ephemeral Agents profile (cookies, storage, cache, history) and reloads \
             your tabs. Only that profile, never one of the user's; refused while another agent has tabs in it, unless wait \
             lets it finish first.
-            """, ["wait": AgentTools.prop("number", "Seconds to wait for other agents to close their tabs, up to 600 (default 0).")]),
-        AgentTools.tool("list_connected_browsers", "Lists the browsers this server can drive: the running Lilo.", [:]),
-        AgentTools.tool("select_browser", "Select the browser to drive. Lilo is the only one.", ["deviceId": AgentTools.prop("string", "The browser id.")]),
-        AgentTools.tool("switch_browser", "Connect to a browser. Lilo is already connected.", [:])
+            """, ["wait": AgentTools.prop("number", "Seconds to wait for other agents to close their tabs, up to 600 (default 0).")])
     ]
-
-    static let browserPickers: Set = ["list_connected_browsers", "select_browser", "switch_browser"]
 
     static func call(
         _ name: String, arguments: [String: Any], session: AgentSession, control: AgentControl
@@ -251,7 +246,7 @@ enum AgentInteractionTools {
                     content += try await AgentTools.call(tool, arguments: action["input"] as? [String: Any] ?? [:], session: session, control: control)
                 } catch {
                     let done = content.compactMap { if case .text(let text) = $0 { text } else { nil } }.joined(separator: "\n")
-                    throw AgentToolError("\(done)\nAction \(index + 1) (\(tool)) failed: \(error.localizedDescription)", code: (error as? AgentToolError)?.code)
+                    throw AgentToolError("\(done)\nAction \(index + 1) (\(tool)) failed: \(error.localizedDescription)", code: (error as? AgentToolError)?.code, consent: (error as? AgentToolError)?.consent)
                 }
             }
             return content
@@ -263,6 +258,7 @@ enum AgentInteractionTools {
             return [.text(try await control.resetProfile(for: session, wait: arguments["wait"]))]
         case "switch_profile":
             return [.text(try await control.switchProfile(arguments["profile"] as? String ?? "", for: session))]
+        // Claude in Chrome's browser pickers: not listed (Lilo is the one browser), answered for a client that calls them anyway.
         case "list_connected_browsers":
             return [.text(AgentTools.json([["deviceId": "lilo", "name": "Lilo", "isCurrent": true]]))]
         case "select_browser", "switch_browser":
@@ -435,7 +431,7 @@ enum AgentInteractionTools {
             return "\(value as? String ?? "undefined")\n(\(tools.calls) tool calls)"
         } catch {
             let message = (error as NSError).userInfo["WKJavaScriptExceptionMessage"] as? String ?? error.localizedDescription
-            throw AgentToolError("\(message)\n(\(tools.calls) tool calls)", code: tools.errorCode)
+            throw AgentToolError("\(message)\n(\(tools.calls) tool calls)", code: tools.errorCode, consent: tools.errorConsent)
         }
     }
 
@@ -451,6 +447,8 @@ enum AgentInteractionTools {
         var isStopped = false
         /// The code of the last tool error, kept for the run's own error when the program lets it through.
         var errorCode: String?
+        /// The consent answer of the last tool error, kept the same way.
+        var errorConsent: ConsentAnswer?
 
         init(session: AgentSession, control: AgentControl) {
             self.session = session
@@ -476,6 +474,7 @@ enum AgentInteractionTools {
                     replyHandler(content.compactMap { if case .text(let text) = $0 { text } else { nil } }.joined(separator: "\n"), nil)
                 } catch {
                     errorCode = (error as? AgentToolError)?.code ?? errorCode
+                    errorConsent = (error as? AgentToolError)?.consent ?? errorConsent
                     replyHandler(nil, error.localizedDescription)
                 }
             }
@@ -564,6 +563,7 @@ enum AgentInteractionTools {
         var name = filename ?? "lilo-recording-\(Int(Date().timeIntervalSince1970)).gif"
         if !name.lowercased().hasSuffix(".gif") { name += ".gif" }
         let url = downloads.appending(path: (name as NSString).lastPathComponent)
+        try? FileManager.default.createDirectory(at: downloads, withIntermediateDirectories: true)
         guard let destination = CGImageDestinationCreateWithURL(url as CFURL, UTType.gif.identifier as CFString, frames.count, nil) else {
             throw AgentToolError("Could not write \(url.path)")
         }

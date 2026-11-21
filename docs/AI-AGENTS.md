@@ -32,14 +32,28 @@ take your keyboard or your tabs. They can borrow one of your profiles for a task
 - `run`: execute a JavaScript program that calls the other tools in a loop, in one call
   (at most 200 tool calls and 60 s by default).
 
+Lilo is the one browser, so it lists no browser to choose. A client written for Claude in Chrome that
+still calls `list_connected_browsers`, `select_browser` or `switch_browser` gets an answer instead
+of an error, and no schema of them is sent on each turn.
+
 ## What Lilo asks you first
 
 Unless you turn it off in Settings, Lilo asks before an agent:
 
-- clicks or presses Enter on something that sends, pays, buys, orders, deletes, transfers,
+- clicks or presses Enter on something that signs you in, pays, sends, buys, deletes, transfers,
   publishes or signs up (Allow Once, Always Allow on the site, or Deny), inside frames too; a click in
-  a frame of another origin, which Lilo cannot read, is always asked;
+  a frame of another origin, which Lilo cannot read, is always asked. Lilo decides from the page's
+  structure first, so it works in any language and for an icon-only button: submitting a form that
+  holds a password, a card field or a one-time code, or that sends its data to another origin with a
+  method other than GET. A short list of commit verbs (send, pay, buy, delete, publish and their
+  translations) is the fallback for buttons outside a form; "order" counts only as a whole label
+  ("Order") or in a phrase like "Place order", so "Save order" goes through;
 - sends a request other than GET or HEAD with the cookies of one of your profiles.
+
+The question opens in the window that holds the agent's page, and the agent's conversation row turns amber
+meanwhile; your other windows, and the site and extension prompts there, are not held up by it.
+It counts as a refusal when you decline; one nobody answers in 45 seconds is withdrawn, and the agent
+may ask once more; with no window open the agent is told to ask you to open one first.
 
 Sites you always allow are listed in Settings, where you can remove them. Whatever the setting,
 Lilo always asks before an agent hands a page one of your files (`file_upload`, `upload_image`).
@@ -75,10 +89,12 @@ registry and are checked against its SHA-256 before they run.
 
 ## Errors that need you
 
-An error only you can resolve (a denied prompt, agent access turned off, Lilo not running, no window
+An error only you can resolve (a declined prompt, agent access turned off, Lilo not running, no window
 open) carries the code `needs_user`: in `_meta["lilo/errorCode"]` on a tool result, in
-`error.data.code` on a JSON-RPC error, and as a `[needs_user]` prefix in the message. When Lilo
-can't take an agent at all, `lilo-mcp` still answers at once and says why.
+`error.data.code` on a JSON-RPC error, and as a `[needs_user]` prefix in the message. A prompt that ended
+without your answer also says how in `_meta["lilo/consent"]`: `denied`, `expired` (nobody answered in
+time) or `unavailable` (no window could ask). When Lilo can't take an agent at all, `lilo-mcp` still
+answers at once and says why.
 
 A tool call that fails after it sent something that can change the site (a click, Enter, a `fetch`
 other than GET, HEAD or OPTIONS, including inside `browser_batch` or `run`) carries

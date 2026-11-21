@@ -1,4 +1,5 @@
 import { on } from "../lib/bridge";
+import { chromeActions } from "../lib/bridge/actions";
 import type { BridgeHistoryFilter, SpaceColorMode, SpaceMaterial } from "../lib/bridge/protocol";
 import {
 	DEFAULT_ACCENT_COLOR,
@@ -159,6 +160,10 @@ export function initPanelsStore(): void {
 		openHistoryPage({ query: data?.query ?? "", host: data?.host, openedFrom: data?.openedFrom });
 	});
 
+	on("closePageShell", () => {
+		closePageShell();
+	});
+
 	// An `id` names an extension of this window's profile.
 	on("openExtensions", (data) => {
 		openSettings("extensions");
@@ -280,6 +285,17 @@ export function getPageShell(): Exclude<ShellKind, "designSystem"> | null {
 /** Closes whichever system screen covers the page. */
 export function closePageShell(): void {
 	if (getPageShell()) _shell.activeSurface = null;
+}
+
+// Native's ⌘W unwinds the topmost surface before the tab, so it learns a system screen is open
+// from this report; sent once per change of the open state, not per shell.
+let reportedPageShellOpen = false;
+
+export function reportPageShellState(): void {
+	const open = getPageShell() !== null;
+	if (open === reportedPageShellOpen) return;
+	reportedPageShellOpen = open;
+	chromeActions.pageShellChanged(open);
 }
 
 export const isDiagnosticsVisible = (): boolean => _shell.activeSurface === "diagnostics";

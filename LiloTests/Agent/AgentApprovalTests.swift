@@ -84,8 +84,166 @@ final class AgentApprovalTests: AgentToolTestCase {
         XCTAssertTrue(result.isError)
         XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
         XCTAssertTrue(result.text.contains("Place order"), result.text)
+        XCTAssertEqual(result.meta["lilo/consent"] as? String, "denied")
         let title = try await title(tab)
         XCTAssertEqual(title, "Shop")
+    }
+
+    /// A second window on a space of its own, with a tab of its own: it holds no page of the agent.
+    private func otherWindow() throws -> MainWindowController {
+        let profileId = space.profileId
+        let other = MainWindowController(context: context)
+        let nsWindow = try XCTUnwrap(other.window)
+        nsWindow.alphaValue = 0
+        nsWindow.orderFrontRegardless()
+        nsWindow.setFrame(NSRect(x: -20000, y: -20000, width: 1000, height: 700), display: false)
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 1000, height: 650))
+        try XCTUnwrap(nsWindow.contentView).addSubview(container)
+        other.contentContainerView = container
+        context.windows.add(other)
+        other.switchToSpace(try context.spaceManager!.createSpace(name: "Other", profileId: profileId).id)
+        other.createTabStateFirst(url: URL(string: "about:blank"))
+        addTeardownBlock { @MainActor in nsWindow.close() }
+        return other
+    }
+
+    func testAnActionQuestionIsShownOnlyInTheWindowHoldingTheAgentsTab() async throws {
+        let other = try otherWindow()
+        let here = BridgeEventRecorder(window.bridgeRouter)
+        let there = BridgeEventRecorder(other.bridgeRouter)
+        let tab = try await shopTab()
+
+        let reply = Task { try await click("Place order", tab: tab) }
+        let requestId = try await pendingQuestion()
+
+        let holder = try XCTUnwrap(context.windows.window(forTab: try XCTUnwrap(control.pendingConsentAnswers[requestId]?.tabId)))
+        let (asked, free, freeWindow) = holder === window ? (here, there, other) : (there, here, window!)
+        await pollUntil(timeout: 5) { asked.events.contains { $0.name == "agentControlRequested" } }
+        XCTAssertEqual(asked.events.filter { $0.name == "agentControlRequested" }.count, 1)
+        XCTAssertTrue(free.events.filter { $0.name == "agentControlRequested" }.isEmpty, "the other window's drawer stays free")
+
+        let handler = SettingsBridgeHandler(
+            settingsStore: context.settingsStore!, sitePermissionStoreProvider: { nil }, zoomStoreProvider: { nil },
+            historyStoreProvider: { nil }, extensionRegistryProvider: { nil }, dataStoreProvider: { nil }, context: context,
+            bridgeRouter: freeWindow.bridgeRouter
+        )
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "getAgentActivity", "payload": [:]])))
+        await pollUntil(timeout: 1) { free.events.contains { $0.name == "agentControlRequested" } }
+        XCTAssertTrue(free.events.filter { $0.name == "agentControlRequested" }.isEmpty, "a reloaded window does not get another window's question")
+
+        control.answerConsent(requestId, granted: true)
+        let result = try await reply.value
+        XCTAssertFalse(result.isError, result.text)
+    }
+
+    func testAConversationsRowTurnsAmberWhileItsAgentsQuestionWaits() async throws {
+        let folder = TabFolder(spaceId: space.id, name: "Conversation", color: "#795ceb")
+        let conversation = Tab(title: "Conversation", spaceId: space.id, kind: .agent, cwd: NSTemporaryDirectory(), agentId: "test-agent")
+        _ = try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
+        _ = try window.applyBrowserCommand(.createTab(spaceId: space.id, tab: conversation, activate: false))
+        _ = try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: space.id, kind: .tab, itemId: conversation.id, parentFolderId: folder.id, section: .unpinned, insert: .index(0)
+        ))
+        context.conversations.register(conversation, folderId: folder.id)
+        let session = try XCTUnwrap(control.sessions.first)
+        session.conversationSpaceId = space.id
+        session.conversationTabId = conversation.id
+        session.folders[nil] = folder.id
+        let listed = await client.callTool("tabs_context_mcp", ["createIfEmpty": true])
+        let tabs = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(listed.text.utf8)) as? [String: Any])
+        let tab = try XCTUnwrap((tabs["availableTabs"] as? [[String: Any]])?.first?["tabId"] as? Int, listed.text)
+        let navigated = await client.callTool("navigate", ["tabId": tab, "url": "http://127.0.0.1:\(server.port)/"])
+        XCTAssertFalse(navigated.isError, navigated.text)
+        func awaiting() -> Date? { window.updateRuntimeTab(id: conversation.id) { _ in }?.awaitingInputSince }
+        XCTAssertNil(awaiting())
+
+        let reply = Task { try await click("Place order", tab: tab) }
+        let requestId = try await pendingQuestion()
+
+        XCTAssertNotNil(awaiting(), "the row turns amber like for an agent's permission")
+        control.answerConsent(requestId, granted: false)
+        _ = try await reply.value
+        XCTAssertNil(awaiting(), "and back once answered")
+    }
+
+    /// The question nobody answers is withdrawn, and the agent is told so rather than that the user said no.
+    func testAnUnansweredOrderExpiresAndSaysSo() async throws {
+        AgentControl.actionConsentTimeout = 0.3
+        defer { AgentControl.actionConsentTimeout = 45 }
+        let tab = try await shopTab()
+
+        let reply = Task { try await click("Place order", tab: tab) }
+        let asked = await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(asked, "the user is asked")
+        let withdrawn = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(withdrawn, "the question is withdrawn unanswered")
+
+        let result = try await reply.value
+        XCTAssertTrue(result.isError)
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+        XCTAssertTrue(result.text.contains("did not answer"), result.text)
+        XCTAssertEqual(result.meta["lilo/consent"] as? String, "expired")
+        let title = try await title(tab)
+        XCTAssertEqual(title, "Shop")
+    }
+
+    /// An expired question does not count as an answer: the next call asks again.
+    func testAnExpiredOrderIsAskedAgainAtTheNextCall() async throws {
+        AgentControl.actionConsentTimeout = 0.3
+        defer { AgentControl.actionConsentTimeout = 45 }
+        let tab = try await shopTab()
+
+        let first = Task { try await click("Place order", tab: tab) }
+        let asked = await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(asked)
+        let withdrawn = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(withdrawn)
+        _ = try await first.value
+
+        let second = Task { try await click("Place order", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+        let result = try await second.value
+        XCTAssertTrue(result.isError)
+        XCTAssertEqual(result.meta["lilo/consent"] as? String, "denied")
+    }
+
+    /// With no window to ask in, the agent is told so instead of that the user said no. No tool call gets this
+    /// far without a window, so the gate itself is asked directly.
+    func testAnOrderWithNoWindowSaysSo() async throws {
+        let tab = try await shopTab()
+        let engine = try engine(forTab: tab)
+        let session = try XCTUnwrap(control.sessions.first)
+        context.windows.remove(window)
+        defer { context.windows.add(window) }
+
+        do {
+            _ = try await control.approveConsequentialAction("click", label: "Place order", frame: nil, engine: engine, session: session)
+            XCTFail("the order needs the user")
+        } catch let error as AgentToolError {
+            XCTAssertEqual(error.code, "needs_user")
+            XCTAssertEqual(error.consent, .unavailable)
+            XCTAssertTrue(error.message.contains("no window"), error.message)
+        }
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "nothing was shown")
+    }
+
+    /// A call the client cancelled withdraws its question from the drawers.
+    func testACancelledOrderWithdrawsItsQuestion() async throws {
+        let tab = try await shopTab()
+        let found = await client.callTool("find", ["tabId": tab, "query": "Place order"])
+        let range = try XCTUnwrap(found.text.range(of: #"ref_\d+"#, options: .regularExpression), found.text)
+        let recorder = BridgeEventRecorder(window.bridgeRouter)
+        client.send(["jsonrpc": "2.0", "id": 999, "method": "tools/call",
+                     "params": ["name": "computer", "arguments": ["tabId": tab, "action": "left_click", "ref": String(found.text[range])]]])
+        let asked = await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(asked, "the user is asked")
+
+        client.send(["jsonrpc": "2.0", "method": "notifications/cancelled", "params": ["requestId": 999]])
+
+        let withdrawn = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(withdrawn, "the question leaves the drawers")
+        let closed = await pollUntil(timeout: 5) { recorder.events.contains { $0.name == "permissionRequestClosed" } }
+        XCTAssertTrue(closed, "the drawers are told to drop it")
     }
 
     func testPostingButtonsAreAsked() async throws {
@@ -99,6 +257,75 @@ final class AgentApprovalTests: AgentToolTestCase {
             let result = try await reply.value
             XCTAssertTrue(result.text.hasPrefix("[needs_user]"), "\(label): \(result.text)")
         }
+    }
+
+    func testAnIconOnlySubmitOfAPaymentFormIsAskedInAnyLanguage() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><form onsubmit="document.title = 'charged'; return false">
+            <input autocomplete="cc-number"><button aria-label="Confirmar la compra del carrito">\u{2192}</button></form></body>
+            """)
+
+        let reply = Task { try await click("Confirmar", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+        let title = try await title(tab)
+        XCTAssertNotEqual(title, "charged")
+    }
+
+    func testASignInFormIsAskedWhateverItsButtonSays() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><form onsubmit="document.title = 'in'; return false">
+            <input autocomplete="username"><input type="password"><button>Weiter</button></form></body>
+            """)
+
+        let reply = Task { try await click("Weiter", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+    }
+
+    func testAFormPostedToAnotherOriginIsAsked() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><form method="post" action="https://example.com/collect" target="_blank" onsubmit="return false">
+            <input name="q"><button>Continue</button></form></body>
+            """)
+
+        let reply = Task { try await click("Continue", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+    }
+
+    func testSavingAnOrderNoteIsNotAsked() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><form method="post" action="/orders" onsubmit="document.title = 'saved'; return false">
+            <input name="note"><button>Save order</button></form><a href="/orders">Order history</a></body>
+            """)
+
+        let reply = try await click("Save order", tab: tab)
+
+        XCTAssertFalse(reply.isError, reply.text)
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty)
+        let saved = await pollUntil(timeout: 5) { (try? await self.title(tab)) == "saved" }
+        XCTAssertTrue(saved)
+    }
+
+    func testAButtonThatSaysOnlyOrderIsAsked() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><button onclick="document.title = 'ordered'">Order</button></body>
+            """)
+
+        let reply = Task { try await click("Order", tab: tab) }
+        control.answerConsent(try await pendingQuestion(), granted: false)
+
+        let result = try await reply.value
+        XCTAssertTrue(result.text.hasPrefix("[needs_user]"), result.text)
+        let title = try await title(tab)
+        XCTAssertNotEqual(title, "ordered")
     }
 
     func testEnterInAFormThatSendsIsAsked() async throws {

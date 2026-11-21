@@ -79,11 +79,6 @@
 		"passwordManagerAction": "Elegir",
 		"passwordManagerChange": "Cambiar",
 		"replayOnboardingAction": "Repetir",
-		"defaultBrowserSet": "Usar por omisión",
-		"defaultBrowserLater": "Más tarde",
-		"defaultBrowserBannerText": "¿Usar Lilo como navegador por omisión?",
-		"defaultBrowserSetSuccess": "Lilo es ahora tu navegador por omisión.",
-		"defaultBrowserSetFailed": "No se ha establecido Lilo como navegador por omisión. Puedes cambiarlo en Ajustes del Sistema.",
 		"engineName": "Nombre",
 		"engineUrlTemplate": "URL de búsqueda (%s = consulta)",
 		"engineKeyword": "Palabra clave",
@@ -203,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Zoom {zoom}",
-			"hiddenSummary": {"one": "{count} elemento oculto", "other": "{count} elementos ocultos"},
+			"hiddenSummary": "{count, plural, one{# elemento oculto} other{# elementos ocultos}}",
 			"dataSummary": "Datos almacenados",
 			"permissionUpdated": "{origin} · Actualizado {time}",
 			"emptyTitle": "Aún no hay ajustes de sitios",
@@ -610,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Actualizar ahora",
-			"summary": {
-				"one": "{count} lista",
-				"other": "{count} listas"
-			},
+			"summary": "{count, plural, one{# lista} other{# listas}}",
 			"updated": "actualizado {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Comprobar ahora",
 			"checking": "Buscando actualizaciones...",
 			"upToDate": "Actualizado",
-			"updated": {
-				"one": "{count} actualizada",
-				"other": "{count} actualizadas"
-			},
-			"available": {
-				"one": "{count} actualización disponible",
-				"other": "{count} actualizaciones disponibles"
-			},
-			"failed": {
-				"one": "No se han podido comprobar {count}",
-				"other": "No se han podido comprobar {count}"
-			},
+			"updated": "{count, plural, one{# actualizada} other{# actualizadas}}",
+			"available": "{count, plural, one{# actualización disponible} other{# actualizaciones disponibles}}",
+			"failed": "{count, plural, one{No se han podido comprobar #} other{No se han podido comprobar #}}",
 			"lastChecked": "Última comprobación {time}"
 		},
 		"folderAutoLock": {
@@ -682,10 +665,7 @@
 			"clearData": "Borrar datos...",
 			"remove": "Quitar...",
 			"lastProfile": "El último perfil se conserva: cada espacio necesita uno.",
-			"extensionCount": {
-				"one": "{count} extensión",
-				"other": "{count} extensiones"
-			},
+			"extensionCount": "{count, plural, one{# extensión} other{# extensiones}}",
 			"newProfile": "Nuevo perfil...",
 			"newProfileDetail": "Cookies, sesiones y extensiones nuevas",
 			"namePlaceholder": "Nombre del perfil",
@@ -760,28 +740,16 @@
 		},
 		"notes": {
 			"live": "Los cambios se aplican al elegir",
-			"spaces": {
-				"one": "{count} espacio",
-				"other": "{count} espacios"
-			},
-			"profiles": {
-				"one": "{count} perfil",
-				"other": "{count} perfiles"
-			},
+			"spaces": "{count, plural, one{# espacio} other{# espacios}}",
+			"profiles": "{count, plural, one{# perfil} other{# perfiles}}",
 			"blocking": "Bloqueando {count} de {total} tipos",
 			"blockingOff": "El bloqueo está desactivado",
 			"profile": "Perfil {name}",
-			"extensions": {
-				"one": "{count} extensión en {profile}",
-				"other": "{count} extensiones en {profile}"
-			},
+			"extensions": "{count, plural, one{# extensión en {profile}} other{# extensiones en {profile}}}",
 			"terminal": "Los cambios se aplican a cada pestaña de terminal",
 			"agents": "Lilo no tiene IA propia",
 			"advanced": "Para desarrollo y pruebas",
-			"searchMatches": {
-				"one": "{count} ajuste coincide con «{query}»",
-				"other": "{count} ajustes coinciden con «{query}»"
-			}
+			"searchMatches": "{count, plural, one{# ajuste coincide con «{query}»} other{# ajustes coinciden con «{query}»}}"
 		},
 		"callDock": {
 			"sidebar": "En la barra lateral",
@@ -937,13 +905,13 @@
 		"pinnedTabs": "Pestañas fijadas",
 		"openTabs": "Pestañas abiertas",
 		"dropToPin": "Suelta para fijar",
-		"stackLabel": {"one": "{name}, {count} pestaña", "other": "{name}, {count} pestañas"},
+		"stackLabel": "{count, plural, one{{name}, # pestaña} other{{name}, # pestañas}}",
 		"closeStack": "Cerrar pila",
 		"trayAgents": "Agentes",
 		"trayTerminals": "Terminales",
-		"trayNeedsInput": {"one": "{count} espera respuesta", "other": "{count} esperan respuesta"},
-		"trayWorking": {"one": "{count} trabajando", "other": "{count} trabajando"},
-		"trayRunning": {"one": "{count} en ejecución", "other": "{count} en ejecución"},
+		"trayNeedsInput": "{count, plural, one{# espera respuesta} other{# esperan respuesta}}",
+		"trayWorking": "{count, plural, one{# trabajando} other{# trabajando}}",
+		"trayRunning": "{count, plural, one{# en ejecución} other{# en ejecución}}",
 		"trayShow": "Mostrar {name}",
 		"trayHide": "Ocultar {name}"
 	},
@@ -1348,7 +1316,7 @@
 		"tabStartup": "Inicio",
 		"tabMemory": "Memoria",
 		"tabLog": "Registro",
-		"errorCount": {"one": "{count} error", "other": "{count} errores"},
+		"errorCount": "{count, plural, one{# error} other{# errores}}",
 		"copyReport": "Copiar informe",
 		"recordSession": "Grabar sesión",
 		"stopRecording": "Detener grabación",
@@ -1390,23 +1358,11 @@
 		"navLabel": "Vistas del gestor de procesos",
 		"searchPlaceholder": "Buscar pestañas",
 		"memoryAriaLabel": "Uso de memoria",
-		"tabsCount": {
-			"one": "{count} pestaña",
-			"other": "{count} pestañas"
-		},
+		"tabsCount": "{count, plural, one{# pestaña} other{# pestañas}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "{count} otro",
-			"other": "{count} otros"
-		},
-		"reclaim": {
-			"one": "{count} pestaña oculta usa {size}",
-			"other": "{count} pestañas ocultas usan {size}"
-		},
-		"reclaimNoSize": {
-			"one": "{count} pestaña oculta sigue cargada",
-			"other": "{count} pestañas ocultas siguen cargadas"
-		},
+		"others": "{count, plural, one{# otro} other{# otros}}",
+		"reclaim": "{count, plural, one{# pestaña oculta usa {size}} other{# pestañas ocultas usan {size}}}",
+		"reclaimNoSize": "{count, plural, one{# pestaña oculta sigue cargada} other{# pestañas ocultas siguen cargadas}}",
 		"sleep": "Poner en reposo",
 		"groupTabs": "Pestañas",
 		"groupSleeping": "En reposo",
@@ -1416,10 +1372,7 @@
 		"audioPlaying": "Reproduciendo audio",
 		"frozen": "Pausada",
 		"sharedEstimate": "Comparte su proceso con otras pestañas, por lo que es una estimación",
-		"sharedWith": {
-			"one": "compartido con {count} pestaña más",
-			"other": "compartido con {count} pestañas más"
-		},
+		"sharedWith": "{count, plural, one{compartido con # pestaña más} other{compartido con # pestañas más}}",
 		"pid": "PID {pid}",
 		"focus": "Mostrar",
 		"details": "Mostrar detalles",
@@ -1448,16 +1401,10 @@
 	"urlToast": {
 		"pageActions": "Acciones de la página",
 		"reEnableBlocking": "Reactivar el bloqueo en este sitio",
-		"trackersBlockedOnPage": {
-			"one": "{count} rastreador bloqueado en esta página",
-			"other": "{count} rastreadores bloqueados en esta página"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{# rastreador bloqueado en esta página} other{# rastreadores bloqueados en esta página}}",
 		"disableBlocking": "Desactivar el bloqueo en este sitio",
 		"adsAllowed": "Anuncios permitidos",
-		"trackersBlockedLabel": {
-			"one": "{count} rastreador bloqueado",
-			"other": "{count} rastreadores bloqueados"
-		},
+		"trackersBlockedLabel": "{count, plural, one{# rastreador bloqueado} other{# rastreadores bloqueados}}",
 		"adsBlocked": "Anuncios bloqueados",
 		"extensionAlreadyInstalled": "Extensión ya instalada",
 		"installChromeExtension": "Instalar esta extensión de Chrome",
@@ -1501,10 +1448,7 @@
 		"stop": "Detener depuración"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "{count} aviso más",
-			"other": "{count} avisos más"
-		},
+		"moreNotices": "{count, plural, one{# aviso más} other{# avisos más}}",
 		"more": "{count} más"
 	},
 	"crashRecovery": {
@@ -1545,7 +1489,7 @@
 	},
 	"archivedTabs": {
 		"title": "Archivadas",
-		"buttonLabel": {"one": "{count} pestaña archivada recientemente", "other": "{count} pestañas archivadas recientemente"},
+		"buttonLabel": "{count, plural, one{# pestaña archivada recientemente} other{# pestañas archivadas recientemente}}",
 		"restore": "Restaurar",
 		"showAll": "Ver todas las pestañas archivadas",
 		"showAllDownloads": "Mostrar todas las descargas"
@@ -1556,7 +1500,7 @@
 		"undo": "Deshacer",
 		"reopen": "Reabrir",
 		"archived": "«{title}» archivada",
-		"archivedCount": {"one": "{count} pestaña archivada", "other": "{count} pestañas archivadas"}
+		"archivedCount": "{count, plural, one{# pestaña archivada} other{# pestañas archivadas}}"
 	},
 	"updateCard": {
 		"ready": "Listo para instalar",
@@ -1589,6 +1533,11 @@
 		"placeholder": "Buscar o introducir URL...",
 		"addressBar": "Barra de direcciones: {url}",
 		"noProject": "Sin proyecto",
+		"defaultBrowserSet": "Usar por omisión",
+		"defaultBrowserLater": "Más tarde",
+		"defaultBrowserBannerText": "¿Usar Lilo como navegador por omisión?",
+		"defaultBrowserSetSuccess": "Lilo es ahora tu navegador por omisión.",
+		"defaultBrowserSetFailed": "No se ha establecido Lilo como navegador por omisión. Puedes cambiarlo en Ajustes del Sistema.",
 		"details": {
 			"branch": "Rama",
 			"command": "Comando",
@@ -1646,6 +1595,7 @@
 		"allow": "Permitir",
 		"allowOnce": "Permitir una vez",
 		"alwaysAllowOnSite": "Permitir siempre en este sitio",
+		"agentWaitsForAnswer": "El agente espera tu respuesta.",
 		"popup": {
 			"blocked": "Ventana emergente bloqueada",
 			"tried": "ha intentado abrir una ventana emergente",
@@ -1767,26 +1717,11 @@
 			"done": "Listo: {list}.",
 			"nothing": "Listo: no hay nada nuevo que importar.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} marcador",
-					"other": "{count} marcadores"
-				},
-				"tabs": {
-					"one": "{count} pestaña abierta",
-					"other": "{count} pestañas abiertas"
-				},
-				"history": {
-					"one": "{count} página del historial",
-					"other": "{count} páginas del historial"
-				},
-				"cookies": {
-					"one": "{count} cookie",
-					"other": "{count} cookies"
-				},
-				"extensions": {
-					"one": "{count} extensión",
-					"other": "{count} extensiones"
-				}
+				"bookmarks": "{count, plural, one{# marcador} other{# marcadores}}",
+				"tabs": "{count, plural, one{# pestaña abierta} other{# pestañas abiertas}}",
+				"history": "{count, plural, one{# página del historial} other{# páginas del historial}}",
+				"cookies": "{count, plural, one{# cookie} other{# cookies}}",
+				"extensions": "{count, plural, one{# extensión} other{# extensiones}}"
 			},
 			"step": {
 				"bookmarks": "Importando marcadores de {from}",
@@ -1904,11 +1839,11 @@
 		"sectionSites": "Sitios más visitados",
 		"sectionTerminals": "Desde terminales",
 		"searchResults": "Resultados de búsqueda",
-		"dayPages": {"one": "{count} página", "other": "{count} páginas"},
-		"daySites": {"one": "{count} sitio", "other": "{count} sitios"},
+		"dayPages": "{count, plural, one{# página} other{# páginas}}",
+		"daySites": "{count, plural, one{# sitio} other{# sitios}}",
 		"openInNewTab": "Abrir en una pestaña nueva",
-		"selected": {"one": "{count} seleccionada", "other": "{count} seleccionadas"},
-		"visits": {"one": "{count} visita", "other": "{count} visitas"},
+		"selected": "{count, plural, one{# seleccionada} other{# seleccionadas}}",
+		"visits": "{count, plural, one{# visita} other{# visitas}}",
 		"openInNewTabs": "Abrir en pestañas nuevas",
 		"delete": "Eliminar",
 		"clearSelection": "Deseleccionar todo",
@@ -2255,6 +2190,10 @@
 		"A command is still running in it and will be stopped.": "Se está ejecutando un comando que se detendrá.",
 		"Close": "Cerrar",
 		"New Terminal Tab": "Nueva pestaña de terminal",
+		"Pin %d Tabs": {"one": "Fijar %d pestaña", "other": "Fijar %d pestañas"},
+		"Bookmark %d Tabs": {"one": "Guardar %d pestaña en marcadores", "other": "Guardar %d pestañas en marcadores"},
+		"Move Tabs to Space": "Mover pestañas a un Espacio",
+		"Close %d Tabs": {"one": "Cerrar %d pestaña", "other": "Cerrar %d pestañas"},
 		"Close %d terminals?": {"one": "¿Cerrar %d terminal?", "other": "¿Cerrar %d terminales?"},
 		"Commands are still running in them and will be stopped.": "Se están ejecutando comandos que se detendrán.",
 		"The terminal could not start.": "No se ha podido iniciar el terminal.",
@@ -2474,10 +2413,7 @@
 		"title": "Novedades de Lilo",
 		"description": "Pequeñas mejoras para tu navegación diaria.",
 		"allChanges": "Todo lo que incluye esta actualización",
-		"changes": {
-			"one": "{count} cambio",
-			"other": "{count} cambios"
-		},
+		"changes": "{count, plural, one{# cambio} other{# cambios}}",
 		"originalNotes": "Notas de versión originales, en inglés.",
 		"unavailable": "Las notas de versión no están disponibles en esta compilación.",
 		"reopen": "Siempre en Ayuda > Novedades.",
@@ -2661,10 +2597,7 @@
 			"ownCopyHint": "Trabaja en su propia copia del proyecto. Combínala desde Cambios.",
 			"starting": "Iniciando el agente...",
 			"errorHint": "Envía un mensaje para volver a intentarlo.",
-			"showEarlier": {
-				"one": "Mostrar {count} elemento anterior",
-				"other": "Mostrar {count} elementos anteriores"
-			},
+			"showEarlier": "{count, plural, one{Mostrar # elemento anterior} other{Mostrar # elementos anteriores}}",
 			"queuedTag": "En cola",
 			"sendNow": "Enviar ahora",
 			"thought": "Razonamiento",
@@ -2674,16 +2607,10 @@
 			"restore": "Restaurar",
 			"undo": "Deshacer",
 			"undone": "Deshecho",
-			"moreLines": {
-				"one": "{count} línea más",
-				"other": "{count} líneas más"
-			},
+			"moreLines": "{count, plural, one{# línea más} other{# líneas más}}",
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} paso hecho",
-				"other": "{count} pasos hechos"
-			},
+			"planDone": "{count, plural, one{# paso hecho} other{# pasos hechos}}",
 			"planStatus": {
 				"pending": "Pendiente",
 				"in_progress": "En curso",
@@ -2711,26 +2638,11 @@
 				"failed": "Error"
 			},
 			"group": {
-				"read": {
-					"one": "{count} archivo leído",
-					"other": "{count} archivos leídos"
-				},
-				"search": {
-					"one": "{count} búsqueda",
-					"other": "{count} búsquedas"
-				},
-				"fetch": {
-					"one": "{count} página obtenida",
-					"other": "{count} páginas obtenidas"
-				},
-				"think": {
-					"one": "Pensó {count} vez",
-					"other": "Pensó {count} veces"
-				},
-				"action": {
-					"one": "{count} acción",
-					"other": "{count} acciones"
-				}
+				"read": "{count, plural, one{# archivo leído} other{# archivos leídos}}",
+				"search": "{count, plural, one{# búsqueda} other{# búsquedas}}",
+				"fetch": "{count, plural, one{# página obtenida} other{# páginas obtenidas}}",
+				"think": "{count, plural, one{Pensó # vez} other{Pensó # veces}}",
+				"action": "{count, plural, one{# acción} other{# acciones}}"
 			}
 		},
 		"composer": {
@@ -2768,24 +2680,12 @@
 			"untitled": "Nueva conversación",
 			"working": "Trabajando",
 			"failed": "Detenido por un error",
-			"linesAdded": {
-				"one": "{count} línea añadida",
-				"other": "{count} líneas añadidas"
-			},
-			"linesRemoved": {
-				"one": "{count} línea eliminada",
-				"other": "{count} líneas eliminadas"
-			},
-			"pages": {
-				"one": "{count} página",
-				"other": "{count} páginas"
-			},
+			"linesAdded": "{count, plural, one{# línea añadida} other{# líneas añadidas}}",
+			"linesRemoved": "{count, plural, one{# línea eliminada} other{# líneas eliminadas}}",
+			"pages": "{count, plural, one{# página} other{# páginas}}",
 			"showPages": "Mostrar páginas",
 			"hidePages": "Ocultar páginas",
-			"morePermissions": {
-				"one": "{count} solicitud más en espera",
-				"other": "{count} solicitudes más en espera"
-			}
+			"morePermissions": "{count, plural, one{# solicitud más en espera} other{# solicitudes más en espera}}"
 		},
 		"question": {
 			"allow": "Permitir",
@@ -2799,10 +2699,7 @@
 		},
 		"badge": {
 			"title": "Agentes",
-			"waiting": {
-				"one": "Agentes, {count} te espera",
-				"other": "Agentes, {count} te esperan"
-			},
+			"waiting": "{count, plural, one{Agentes, # te espera} other{Agentes, # te esperan}}",
 			"new": "Nuevo",
 			"needsYou": "Te necesita",
 			"running": "En ejecución",
@@ -2823,10 +2720,7 @@
 			"signInOpenTerminal": "Abrir en el terminal"
 		},
 		"work": {
-			"images": {
-				"one": "{count} imagen",
-				"other": "{count} imágenes"
-			},
+			"images": "{count, plural, one{# imagen} other{# imágenes}}",
 			"verb": {
 				"read": "Leído",
 				"edit": "Editado",
@@ -2844,46 +2738,16 @@
 				"fetch": "Obteniendo"
 			},
 			"summary": {
-				"read": {
-					"one": "leyó {count} archivo",
-					"other": "leyó {count} archivos"
-				},
-				"edit": {
-					"one": "editó {count} archivo",
-					"other": "editó {count} archivos"
-				},
-				"execute": {
-					"one": "ejecutó {count} comando",
-					"other": "ejecutó {count} comandos"
-				},
-				"search": {
-					"one": "buscó {count} vez",
-					"other": "buscó {count} veces"
-				},
-				"fetch": {
-					"one": "obtuvo {count} página",
-					"other": "obtuvo {count} páginas"
-				},
-				"think": {
-					"one": "pensó {count} vez",
-					"other": "pensó {count} veces"
-				},
-				"browser": {
-					"one": "usó el navegador {count} vez",
-					"other": "usó el navegador {count} veces"
-				},
-				"browserOn": {
-					"one": "usó el navegador {count} vez en {site}",
-					"other": "usó el navegador {count} veces en {site}"
-				},
-				"tool": {
-					"one": "usó {count} herramienta",
-					"other": "usó {count} herramientas"
-				},
-				"agent": {
-					"one": "inició {count} agente",
-					"other": "inició {count} agentes"
-				}
+				"read": "{count, plural, one{leyó # archivo} other{leyó # archivos}}",
+				"edit": "{count, plural, one{editó # archivo} other{editó # archivos}}",
+				"execute": "{count, plural, one{ejecutó # comando} other{ejecutó # comandos}}",
+				"search": "{count, plural, one{buscó # vez} other{buscó # veces}}",
+				"fetch": "{count, plural, one{obtuvo # página} other{obtuvo # páginas}}",
+				"think": "{count, plural, one{pensó # vez} other{pensó # veces}}",
+				"browser": "{count, plural, one{usó el navegador # vez} other{usó el navegador # veces}}",
+				"browserOn": "{count, plural, one{usó el navegador # vez en {site}} other{usó el navegador # veces en {site}}}",
+				"tool": "{count, plural, one{usó # herramienta} other{usó # herramientas}}",
+				"agent": "{count, plural, one{inició # agente} other{inició # agentes}}"
 			},
 			"browser": {
 				"closeTab": "Cerró una pestaña",
@@ -2934,10 +2798,7 @@
 				"request": "Enviando una solicitud a {url}"
 			},
 			"exit": "Salida {code}",
-			"showAll": {
-				"one": "Mostrar {count} línea",
-				"other": "Mostrar las {count} líneas"
-			},
+			"showAll": "{count, plural, one{Mostrar # línea} other{Mostrar las # líneas}}",
 			"showLess": "Mostrar las últimas líneas"
 		},
 		"turn": {
@@ -2945,10 +2806,7 @@
 			"stopped": "Detenido",
 			"refusalTitle": "El modelo se negó a continuar",
 			"refusalHint": "Sus salvaguardas detuvieron este turno, a veces en trabajo legítimo. Reformula la petición o elige otro modelo abajo.",
-			"files": {
-				"one": "{count} archivo cambiado",
-				"other": "{count} archivos cambiados"
-			},
+			"files": "{count, plural, one{# archivo cambiado} other{# archivos cambiados}}",
 			"review": "Revisar",
 			"copy": "Copiar respuesta",
 			"copied": "Copiado"

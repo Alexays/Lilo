@@ -1136,12 +1136,13 @@ final class WKWebViewTab: NSObject {
     /// Closes the page through its beforeunload, pagehide and unload handlers: `_close` alone fires no
     /// beforeunload, where a site may write state back, such as its sign-in.
     private func closePage() {
-        if !isLeaving {
-            isLeaving = true
-            _ = tryClose()
+        let close = { [webView] in
+            let selector = NSSelectorFromString("_close")
+            if webView.responds(to: selector) { unsafe webView.perform(selector) }
         }
-        let close = NSSelectorFromString("_close")
-        if webView.responds(to: close) { unsafe webView.perform(close) }
+        // The content process exits with its last page, dropping what the handler still had to send (a
+        // storage write, a beacon): the close waits until the handler ran.
+        if isLeaving { close() } else { runBeforeUnload(then: close) }
     }
 
     func selectedTextForFind() async -> String? { await findController.selectedText() }

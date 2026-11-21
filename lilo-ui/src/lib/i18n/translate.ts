@@ -1,6 +1,7 @@
 // Tiny dependency-free i18n core. Pure functions only (unit-tested in translate.test.ts);
 // the reactive current-locale state lives in ./state.svelte.ts.
 
+import { formatMessage, type MessageContext } from "./icu";
 import en from "./locales/en.json";
 
 export type Locale = "en" | "fr" | "es" | "zh-Hans" | "pt-BR" | "ru" | "uk" | "de" | "ja" | "it" | "ko" | "zh-Hant" | "pl" | "tr" | "nl";
@@ -82,44 +83,34 @@ function flatCatalog(catalog: Messages): Map<string, string> {
 	return flat;
 }
 
-const pluralRules = new Map<Locale, Intl.PluralRules>();
-const countFormats = new Map<Locale, Intl.NumberFormat>();
+const EMPTY: Record<string, string | number> = {};
+const contexts = new Map<Locale, MessageContext>();
 
-function cached<T>(cache: Map<Locale, T>, locale: Locale, make: () => T): T {
-	let value = cache.get(locale);
-	if (!value) {
-		value = make();
-		cache.set(locale, value);
+function context(locale: Locale): MessageContext {
+	let ctx = contexts.get(locale);
+	if (!ctx) {
+		ctx = {
+			pluralRules: new Intl.PluralRules(locale),
+			ordinalRules: new Intl.PluralRules(locale, { type: "ordinal" }),
+			numberFormat: new Intl.NumberFormat(locale),
+		};
+		contexts.set(locale, ctx);
 	}
-	return value;
-}
-
-function interpolate(locale: Locale, template: string, params: Record<string, string | number>): string {
-	return template.replace(/\{(\w+)\}/g, (match, name: string) => {
-		if (!(name in params)) return match;
-		const value = params[name];
-		return name === "count" && typeof value === "number"
-			? cached(countFormats, locale, () => new Intl.NumberFormat(locale)).format(value)
-			: String(value);
-	});
+	return ctx;
 }
 
 /**
  * Resolve `key` for `locale`, falling back to English, then to the key itself so a missing
- * translation is visible rather than blank. `{name}` placeholders are filled from `params`.
- * A numeric `count` picks the key's plural form (`key.one`, `key.other`...) and is digit-grouped.
+ * translation is visible rather than blank. Messages are an ICU MessageFormat subset
+ * (see ./icu.ts): `{name}` placeholders are filled from `params`, `{count, plural, ...}`
+ * picks the locale's CLDR category and `#` renders the digit-grouped count.
  */
 export function translate(
 	locale: Locale,
 	key: string,
 	params?: Record<string, string | number>,
 ): string {
-	const lookup = (candidate: string) =>
-		flatCatalog(catalogs[locale] ?? catalogs.en).get(candidate) ?? flatCatalog(catalogs.en).get(candidate);
-	const count = params?.count;
-	const plural = typeof count === "number"
-		? `${key}.${cached(pluralRules, locale, () => new Intl.PluralRules(locale)).select(count)}`
-		: null;
-	const template = (plural && (lookup(plural) ?? lookup(`${key}.other`))) || lookup(key) || key;
-	return params ? interpolate(locale, template, params) : template;
+	const template = (flatCatalog(catalogs[locale] ?? catalogs.en).get(key) ?? flatCatalog(catalogs.en).get(key)) ?? key;
+	// A message without braces is already final: the common case stays a Map lookup.
+	return template.indexOf("{") === -1 ? template : formatMessage(template, params ?? EMPTY, context(locale));
 }

@@ -171,4 +171,23 @@ final class AgentConsentTests: AgentToolTestCase {
         XCTAssertEqual(control.allowedClients.keys.sorted(), ["Codex", "claude-code"])
         XCTAssertEqual(context.settingsStore!.get("agentProfileGrants"), #"["Codex|codex|\#(profileId)"]"#, "its profiles are asked again too")
     }
+
+    func testTheClickModeAnswersAtOnceAndAllowAllOnlyLetsClientsIn() async {
+        let click = ["kind": "click", "label": "Buy", "site": "example.com", "tab": "Shop"]
+        setenv("LILO_AGENT_ALLOW_ALL", "1", 1)
+        defer { unsetenv("LILO_AGENT_ALLOW_ALL"); unsetenv("LILO_AGENT_CLICKS") }
+        let unanswered = await control.askConsent("Test Agent", action: click, timeout: 0.2)
+        XCTAssertNotEqual(unanswered, .allowed, "letting every client in is no yes to a payment")
+
+        setenv("LILO_AGENT_CLICKS", "allow", 1)
+        let allowed = await control.askConsent("Test Agent", action: click, timeout: 45)
+        XCTAssertEqual(allowed, .allowed)
+
+        setenv("LILO_AGENT_CLICKS", "deny", 1)
+        let started = Date()
+        let denied = await control.askConsent("Test Agent", action: click, timeout: 45)
+        XCTAssertEqual(denied, .denied, "no at once, which the click reports as the user's refusal")
+        XCTAssertLessThan(Date().timeIntervalSince(started), 5, "without the wait")
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty)
+    }
 }

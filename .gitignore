@@ -69,3 +69,5 @@ docs/superpowers/
 .mcp.json
 lilo-ui/public/release-media/*
 !lilo-ui/public/release-media/.gitkeep
+
+.trail/

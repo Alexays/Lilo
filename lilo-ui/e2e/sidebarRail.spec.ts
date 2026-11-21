@@ -14,6 +14,8 @@ async function drag(page: Page, from: { x: number; y: number }, toX: number) {
 }
 
 async function handleCenter(page: Page) {
+	// The docked rail slides in with the fold: its handle is where it ends.
+	await page.locator(".sidebar-rail").evaluateAll((rails) => Promise.all(rails.flatMap((rail) => rail.getAnimations().map((animation) => animation.finished))));
 	const box = (await page.locator(".sidebar-resize-handle, .sidebar-rail .resize-handle").first().boundingBox())!;
 	return { x: box.x + box.width / 2, y: 600 };
 }

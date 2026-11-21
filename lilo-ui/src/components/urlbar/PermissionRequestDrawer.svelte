@@ -53,7 +53,7 @@
         site: agentAction.site,
         tab: agentAction.tab,
       })}
-      <span class="request-note">{t("settings.items.agentAskBeforeActions.description")}</span>
+      <span class="request-note">{t("permissionPrompt.agentWaitsForAnswer")}</span>
     {/if}
   {:else}
     <strong>{request.extensionName}</strong> {t("permissionPrompt.requestsAccess")}

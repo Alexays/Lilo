@@ -82,6 +82,44 @@ test("a link opened from another app closes the shell covering the page", async 
 	assert.equal(panels.isDesignSystemShellOpen(), false);
 });
 
+test("the page shell's open state is reported to native once per change", async () => {
+	const posted = stubBridgeWindow({ document: true });
+	const loadStore = await freshStores();
+	const panels = await loadStore("/src/stores/panels.svelte.ts");
+	panels.initPanelsStore();
+	const shellReports = () => posted.filter((m) => m.action === "pageShellChanged");
+
+	panels.reportPageShellState();
+	assert.equal(shellReports().length, 0, "no shell open, nothing to report");
+
+	panels.openSettings();
+	panels.reportPageShellState();
+	panels.reportPageShellState();
+	assert.deepEqual(shellReports(), [{ action: "pageShellChanged", payload: { open: true } }]);
+
+	// Another shell keeps the state open: no new report.
+	panels.openDownloadsPanel();
+	panels.reportPageShellState();
+	assert.equal(shellReports().length, 1);
+
+	// The design system showcase is not a page shell.
+	panels.openDesignSystem();
+	panels.reportPageShellState();
+	assert.deepEqual(shellReports().at(-1), { action: "pageShellChanged", payload: { open: false } });
+
+	panels.openHistoryShell();
+	panels.reportPageShellState();
+	assert.equal(shellReports().at(-1)?.payload.open, true);
+
+	// Native's ⌘W asks the chrome to close the screen.
+	const { receive } = (globalThis as { window: { __lilo: { receive(msg: Record<string, unknown>): void } } }).window.__lilo;
+	receive({ event: "closePageShell" });
+	assert.equal(panels.getPageShell(), null);
+	panels.reportPageShellState();
+	assert.deepEqual(shellReports().at(-1), { action: "pageShellChanged", payload: { open: false } });
+	assert.equal(shellReports().length, 4);
+});
+
 test("openExtensions lands on the named extension's details page", async () => {
 	stubBridgeWindow({ document: true });
 	const loadStore = await freshStores();

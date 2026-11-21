@@ -112,6 +112,15 @@ final class MenuValidationTests: XCTestCase {
         XCTAssertFalse(isEnabled(#selector(MainWindowController.findPreviousMatch(_:))))
     }
 
+    func testCloseTabStaysEnabledWhileASystemScreenIsOpen() {
+        let closeTab = #selector(MainWindowController.closeCurrentTab(_:))
+        XCTAssertFalse(isEnabled(closeTab), "no tab and no screen: nothing to close")
+
+        window.pageShellOpen = true
+
+        XCTAssertTrue(isEnabled(closeTab), "⌘W closes the screen covering the page")
+    }
+
     func testReopenLastClosedTabNeedsAClosedTab() throws {
         let reopen = #selector(MainWindowController.restoreClosedTab(_:))
         XCTAssertFalse(isEnabled(reopen))

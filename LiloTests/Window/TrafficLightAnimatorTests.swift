@@ -50,6 +50,22 @@ final class TrafficLightAnimatorTests: XCTestCase {
         XCTAssertEqual(try closeButtonFrame(controller, layout: .default), corner)
     }
 
+    /// AppKit's theme frame re-lays the buttons at a smaller size during a live resize; the held
+    /// frame restores the standard size along with the place, whatever AppKit's last layout did.
+    func testTheHeldLightsKeepTheirStandardSizeWhenAppKitShrinksThem() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let window = try XCTUnwrap(controller.window)
+        let close = try XCTUnwrap(window.standardWindowButton(.closeButton))
+        controller.placeTrafficLights()
+        let standard = close.frame.size
+        XCTAssertGreaterThan(standard.width, 0)
+
+        close.setFrameSize(NSSize(width: 1, height: 1))
+        controller.placeTrafficLights()
+        RunLoop.main.run(mode: .default, before: .now)
+        XCTAssertEqual(close.frame.size, standard, "back at the standard size after AppKit's move")
+    }
+
     func testTheLightsStayInTheAddressBarsCornerWhenTheTitleChanges() throws {
         let controller = MainWindowController(context: browserContext.context)
         let window = try XCTUnwrap(controller.window)
@@ -62,6 +78,25 @@ final class TrafficLightAnimatorTests: XCTestCase {
             RunLoop.main.run(mode: .default, before: .now)
             XCTAssertEqual(try closeButtonFrame(controller, layout: .default), corner)
         }
+    }
+
+    func testTheRailMovesTheLightsOntoTheToolbarRowPastItsColumn() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let layout = TabLayout(position: .left, address: .page)
+
+        controller.sidebarVisible = false
+        let hidden = try closeButtonFrame(controller, layout: layout)
+
+        controller.sidebarVisible = true
+        controller.sidebarRail = true
+        XCTAssertTrue(controller.areTrafficLightsVisible(), "the page toolbar still holds them")
+        let rail = try closeButtonFrame(controller, layout: layout)
+        XCTAssertEqual(rail.minX, MainWindowController.sidebarRailWidth + MainWindowController.contentInset + MainWindowController.trafficLightsInset,
+                       "past the rail's column, as far in as they sit over the sidebar")
+        XCTAssertEqual(rail.midY, hidden.midY, "the toolbar row, not the rail")
+
+        controller.tabLayout = .default
+        XCTAssertFalse(controller.areTrafficLightsVisible(), "no toolbar row holds them, as with the sidebar hidden")
     }
 
     func testCollapsedSidebarHidesTheTrafficLightsAndShowingItBringsThemBack() throws {

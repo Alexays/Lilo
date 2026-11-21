@@ -1,0 +1,85 @@
+#!/usr/bin/env node
+// i18n lint: user-facing copy lives in the catalogs, not in the presentational layer.
+// (a) every literal t("ns.key") call in src resolves in en.json (dynamic keys are skipped);
+// (b) .svelte templates hold no literal text nodes or label/title/placeholder/aria-label
+// attributes outside a small allowlist. components/diagnostics is a contributor
+// showcase and exempt. Runs under `make ui-lint`.
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
+
+const SRC = "lilo-ui/src";
+const en = JSON.parse(readFileSync(join(SRC, "lib/i18n/locales/en.json"), "utf8"));
+
+// Not copy: the wordmark, the match-case glyph, format examples (the search URL, the
+// custom-agent placeholders) and the decorative words of WhatsNewArt.
+const ALLOWED = new Set(["Lilo", "Aa", "https://example.com/search?q=%s", "/usr/local/bin/my-agent", "--profile&#10;acp", "NAME=value", "Hallo", "Ciao", "こんにちは"]);
+const PLURALS = new Set(["zero", "one", "two", "few", "many", "other"]);
+const TEXT_ATTR = /(?<![\w-])(?:aria-label|label|title|placeholder)\s*=\s*(["'])([\s\S]*?)\1/g;
+
+// Every key translate() can resolve: leaf strings, plus plural parents ({one, other...}).
+const keys = new Set();
+(function walk(node, path) {
+	for (const [key, value] of Object.entries(node)) {
+		const p = path ? `${path}.${key}` : key;
+		if (typeof value === "string") keys.add(p);
+		else if (value && typeof value === "object") {
+			if (Object.keys(value).every((c) => PLURALS.has(c))) keys.add(p);
+			walk(value, p);
+		}
+	}
+})(en, "");
+
+function* sources(dir) {
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		const path = join(dir, entry.name);
+		if (entry.isDirectory()) yield* sources(path);
+		else if (/\.(ts|svelte)$/.test(entry.name)) yield path;
+	}
+}
+
+// Blanks keep their newlines so reported line numbers match the source file.
+const blank = (m) => m.replace(/[^\n]/g, " ");
+const line = (text, index) => text.slice(0, index).split("\n").length;
+const isCopy = (value) => /\p{L}/u.test(value) && !ALLOWED.has(value.trim());
+
+const problems = [];
+for (const file of sources(SRC)) {
+	const rel = relative(SRC, file);
+	const src = readFileSync(file, "utf8");
+
+	for (const m of src.matchAll(/(?<![.\w])t\s*\(\s*(?:"([^"]*)"|'([^']*)')/g)) {
+		const key = m[1] ?? m[2];
+		if (key && !keys.has(key)) problems.push(`${rel}: missing catalog key t("${key}")`);
+	}
+	if (!file.endsWith(".svelte") || rel.startsWith("components/diagnostics/")) continue;
+
+	let markup = src
+		.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, blank)
+		.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, blank)
+		.replace(/<!--[\s\S]*?-->/g, blank)
+		.replace(/<kbd\b[^>]*>[\s\S]*?<\/kbd>/gi, blank);
+	for (const m of markup.matchAll(TEXT_ATTR)) {
+		const value = m[2].trim();
+		if (isCopy(value)) problems.push(`${rel}:${line(markup, m.index)}: literal ${m[0].split("=")[0].trim()}="${value}"`);
+	}
+	let body = markup;
+	for (let i = 0; i < 10; i++) {
+		const next = body.replace(/\{[^{}]*\}/g, blank);
+		if (next === body) break;
+		body = next;
+	}
+	body = body
+		.replace(/<[^>]*>/g, (m) => `\0${blank(m)}`)
+		.replace(/&(?:#\d+|#x[\da-f]+|\w+);/gi, " ");
+	for (const m of body.matchAll(/[^\u0000]+/g)) {
+		const text = m[0].replace(/\s+/g, " ").trim();
+		if (isCopy(text)) problems.push(`${rel}:${line(body, m.index)}: literal text "${text.slice(0, 80)}"`);
+	}
+}
+
+if (problems.length) {
+	console.error(`i18n check failed (${problems.length}):`);
+	for (const p of problems) console.error(`  ${p}`);
+	process.exit(1);
+}
+console.log("i18n check ok");

@@ -6,6 +6,7 @@
   import DayStrip from "../spaces/DayStrip.svelte";
   import UiToggle from "../ui/UiToggle.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import "../../lib/i18n/settingsCatalog";
   import { settingsActions, spaceActions } from "../../lib/bridge/actions";
   import type { AddressPlacement, SpaceMaterial, TabPosition } from "../../lib/bridge/protocol";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";

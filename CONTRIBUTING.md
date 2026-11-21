@@ -23,7 +23,7 @@ extensions.
 |------|---------|------------|
 | macOS | 26 or later | running Lilo |
 | Xcode | 27, selected with `xcode-select`, and its Metal toolchain | building the app (Swift 6, the macOS 27 SDK) |
-| Node.js | 22.23.4+ (`.nvmrc` pins 22) | the Svelte interface, extension bridge and Astro website; all `make ui-preview` needs |
+| Node.js | 22.23.4+ (`.nvmrc` pins 22.23.4) | the Svelte interface, extension bridge and Astro website; all `make ui-preview` needs |
 | Changie | 1.26.0 (downloaded by Make) | release notes and app versioning |
 | SwiftLint, XcodeGen | 0.65.0 and 2.46.0 (downloaded by Make) | `make validate` and `make project-sync` |
 | Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
@@ -74,6 +74,15 @@ settings. Query parameters pick what it shows: `?world=default|empty|onboarding`
 `&theme=light|dark` (the system's otherwise) and `&open=settings|commandbar`, for example
 `/preview/?world=onboarding&theme=dark`. Commands the interface sends are in
 `window.__sentCommands`. The preview never ships: the app embeds only the `index.html` build.
+
+### Package manager
+
+Every `package.json` (the repository root and each project) sets `packageManager` to the same
+exact npm, `npm@10.9.9`, the one Node.js 22.23.4 ships with, so CI, Cloudflare's builds and your
+machine install with one version. npm itself ignores the field; only Corepack (`corepack enable`)
+enforces it, refusing another package manager or another npm version with an error that names the
+expected one. In that case run `corepack install`, or leave Corepack off and use the npm that comes
+with the Node.js version `.nvmrc` pins.
 
 ### Signing
 
@@ -207,8 +216,9 @@ rather than carving out a helper just to reach it.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.
 - **App** (the GitHub-hosted `xcode-27` macOS image, no signing secrets): a check that
-  `Lilo.xcodeproj` matches `project.yml`, SwiftLint, the Debug and Release builds,
-  `make swift-test` and `make swift-test-slow`.
+  `Lilo.xcodeproj` matches `project.yml`, SwiftLint, the Debug build,
+  `make swift-test` and `make swift-test-slow`. The Release build (`make release-archive`) runs on
+  pushes to `main` only, not on pull requests, to leave a macOS slot free.
 - **libghostty-vt** (`.github/workflows/ghostty-vt.yml`, by hand or when `GHOSTTY_SHA` changes on
   `main`): builds the xcframework `make vt-build` downloads and publishes it as the
   `ghostty-vt-<sha>` prerelease, whose notes give the new `VT_SHA256`.
