@@ -844,6 +844,7 @@
 		"loading": "載入中",
 		"muted": "已靜音",
 		"keepLoaded": "已保持載入",
+		"keepLoadedHint": "不休眠，隨時可用。",
 		"playingAudio": "正在播放音訊",
 		"terminalCommand": "指令",
 		"terminalAwaitingFor": "{command} 已等待你回應 {duration}",

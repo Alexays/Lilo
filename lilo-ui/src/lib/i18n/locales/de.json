@@ -844,6 +844,7 @@
 		"loading": "Wird geladen",
 		"muted": "Stumm",
 		"keepLoaded": "Bleibt geladen",
+		"keepLoadedHint": "Schläft nie und ist immer bereit.",
 		"playingAudio": "Audiowiedergabe",
 		"terminalCommand": "Befehl",
 		"terminalAwaitingFor": "{command} wartet seit {duration} auf dich",

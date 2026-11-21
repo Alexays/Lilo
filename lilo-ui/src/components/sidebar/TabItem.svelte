@@ -584,8 +584,8 @@
           asleep={tab.isClosed || isDozing}
         />
       </div>
-      {#if isDozing}
-        <span class="doze-ring" aria-hidden="true" use:tooltip={{ text: t("tabItem.dozingHint"), placement: tooltipSide() }}></span>
+      {#if isDozing || keptLoaded}
+        <span class="doze-ring" class:kept={keptLoaded && !isDozing} aria-hidden={!isDozing} use:tooltip={{ text: isDozing ? t("tabItem.dozingHint") : t("tabItem.keepLoadedHint"), placement: tooltipSide() }}></span>
       {/if}
     {/if}
     <!-- One corner mark at a time: the orange dot for a page or an agent's action waiting on you, else what the tab captures. -->
@@ -624,11 +624,6 @@
         class="tab-title"
         ondblclick={tab.isPinned && interactive ? () => setRenamingTabId(tab.id) : undefined}
       >{terminalLabel || rowTitle}{#if awayTitle}<span class="away-title"><span class="away-slash" aria-hidden="true">/</span>{awayTitle}</span>{/if}</span>
-      {#if keptLoaded}
-        <span class="keep-loaded" aria-hidden="true" use:tooltip={{ text: t("tabItem.keepLoaded"), placement: tooltipSide() }}>
-          <svg viewBox="0 0 16 16"><path d="M9 1.5 3.5 9H8l-1 5.5L12.5 7H8z" fill="currentColor"/></svg>
-        </span>
-      {/if}
     {/if}
     {#if terminalHint}
       <span class="terminal-hint">{terminalHint}</span>
@@ -796,12 +791,18 @@
     color: var(--text-secondary);
   }
 
-  /* Auto Tab Discard's cue: a dotted circle around the favicon. It sits outside the 16px box, so nothing shifts. */
+  /* Auto Tab Discard's cue: a dotted circle around the favicon. It sits outside the 16px box, so nothing shifts.
+     A kept-loaded tab shares the ring's spot and size with a solid stroke: sleeping and kept loaded stay one family of cues. */
   .doze-ring {
     position: absolute;
     inset: -3px;
     border: 1.5px dotted var(--text-secondary);
     border-radius: 50%;
+  }
+
+  .doze-ring.kept {
+    border-style: solid;
+    border-color: var(--accent);
   }
 
   .tab-icon {
@@ -849,13 +850,6 @@
     color: var(--text-secondary);
   }
 
-  .keep-loaded {
-    display: flex;
-    flex: none;
-    width: 11px;
-    height: 11px;
-    color: var(--text-secondary);
-  }
 
   .away-slash {
     margin: 0 5px;

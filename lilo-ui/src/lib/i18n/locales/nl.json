@@ -844,6 +844,7 @@
 		"loading": "Laden",
 		"muted": "Gedempt",
 		"keepLoaded": "Blijft geladen",
+		"keepLoadedHint": "Slaapt nooit en is altijd klaar.",
 		"playingAudio": "Speelt audio af",
 		"terminalCommand": "Commando",
 		"terminalAwaitingFor": "{command} wacht al {duration} op je",

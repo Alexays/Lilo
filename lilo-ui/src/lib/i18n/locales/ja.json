@@ -844,6 +844,7 @@
 		"loading": "読み込み中",
 		"muted": "消音中",
 		"keepLoaded": "読み込んだまま",
+		"keepLoadedHint": "スリープせず、いつでもすぐ使えます。",
 		"playingAudio": "オーディオを再生中",
 		"terminalCommand": "コマンド",
 		"terminalAwaitingFor": "{command}は{duration}入力を待っています",

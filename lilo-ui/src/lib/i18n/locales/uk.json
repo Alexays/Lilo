@@ -844,6 +844,7 @@
 		"loading": "Завантаження",
 		"muted": "Звук вимкнено",
 		"keepLoaded": "Залишається завантаженою",
+		"keepLoadedHint": "Не засинає і завжди готова.",
 		"playingAudio": "Відтворюється аудіо",
 		"terminalCommand": "Команда",
 		"terminalAwaitingFor": "{command} чекає на вас протягом {duration}",

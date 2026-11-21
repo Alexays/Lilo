@@ -844,6 +844,7 @@
 		"loading": "Загрузка",
 		"muted": "Звук выключен",
 		"keepLoaded": "Остаётся загруженной",
+		"keepLoadedHint": "Не засыпает и всегда готова.",
 		"playingAudio": "Воспроизводит звук",
 		"terminalCommand": "Команда",
 		"terminalAwaitingFor": "{command} ожидает вашего ввода уже {duration}",

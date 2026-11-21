@@ -844,6 +844,7 @@
 		"loading": "로드 중",
 		"muted": "음소거됨",
 		"keepLoaded": "로드 유지됨",
+		"keepLoadedHint": "절전하지 않고 항상 준비되어 있습니다.",
 		"playingAudio": "오디오 재생 중",
 		"terminalCommand": "명령",
 		"terminalAwaitingFor": "{command} 명령이 {duration} 동안 응답을 기다리고 있습니다",

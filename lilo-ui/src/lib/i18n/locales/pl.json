@@ -844,6 +844,7 @@
 		"loading": "Wczytywanie",
 		"muted": "Wyciszona",
 		"keepLoaded": "Pozostaje wczytana",
+		"keepLoadedHint": "Nigdy nie śpi i jest zawsze gotowa.",
 		"playingAudio": "Odtwarza dźwięk",
 		"terminalCommand": "Polecenie",
 		"terminalAwaitingFor": "{command} czeka na Ciebie od {duration}",

@@ -844,6 +844,7 @@
 		"loading": "Yükleniyor",
 		"muted": "Sesi kapalı",
 		"keepLoaded": "Yüklü tutuluyor",
+		"keepLoadedHint": "Hiç uyumaz, her zaman hazır.",
 		"playingAudio": "Ses çalıyor",
 		"terminalCommand": "Komut",
 		"terminalAwaitingFor": "{command}, {duration} süredir sizi bekliyor",

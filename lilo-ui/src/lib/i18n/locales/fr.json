@@ -844,6 +844,7 @@
 		"loading": "Chargement",
 		"muted": "Son coupé",
 		"keepLoaded": "Gardé chargé",
+		"keepLoadedHint": "Ne s'endort jamais ; toujours prête.",
 		"playingAudio": "Lecture audio en cours",
 		"terminalCommand": "Commande",
 		"terminalAwaitingFor": "{command} attend votre réponse depuis {duration}",
