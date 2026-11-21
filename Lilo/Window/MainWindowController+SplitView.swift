@@ -265,14 +265,22 @@ final class SplitPaneHandleView: NSView {
     func setRevealed(_ revealed: Bool) {
         guard revealed != self.revealed else { return }
         self.revealed = revealed
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(Self.fadeDuration)
-        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-            CATransaction.setDisableActions(true)
+        // A fade, so Reduce motion keeps it; a plain alphaValue set on a layer-backed view would not animate.
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Self.fadeDuration
+            animator().alphaValue = revealed ? 1 : 0
         }
-        alphaValue = revealed ? 1 : 0
-        CATransaction.commit()
     }
+
+    /// The hover feed only sees moves inside the window: a pointer leaving it from the strip hides the pill here.
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if trackingAreas.isEmpty {
+            addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect], owner: self))
+        }
+    }
+
+    override func mouseExited(with event: NSEvent) { setRevealed(false) }
 
     @objc private func closePressed() { onClose?() }
     @objc private func maximizePressed() { onMaximize?() }

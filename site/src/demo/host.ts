@@ -2848,6 +2848,7 @@ export const createDemoHost = (
     unsplitTab: ({ tabId }) => {
       // The pane beside the leaving one takes the focus, so the rest of the split stays shown.
       const rest = splitIds.filter((id) => id !== tabId);
+
       const beside = world.tabs.find(
         (tab) =>
           tab.id === rest[Math.min(splitIds.indexOf(tabId), rest.length - 1)]
