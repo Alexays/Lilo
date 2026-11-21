@@ -17,7 +17,11 @@ Agents work in their own Agents Space, in a throwaway profile wiped after each s
 take your keyboard or your tabs. They can borrow one of your profiles for a task after you allow it.
 
 - Open, navigate and close tabs in their own folder; click, type, fill forms, take screenshots.
-- Read pages (accessibility tree with element refs, page text), the console and the network.
+- Read pages (accessibility tree with element refs, page text; `read_page` with `viewport` returns only
+  the elements on or near the screen, each with its box), the console and the network.
+- Actions that can change the page (clicks, keys, typing, scrolls, `form_input`, file uploads) end their
+  reply with what changed: the page's new URL, or a compact diff of the elements it added, removed and
+  changed, so a full re-read is only needed for detail.
 - `form_input`: set a field and get back what it holds once the page handled the change, with a
   warning when the page reformatted, cut or rejected the value. For a password, card or one-time
   code field the reply only says whether it holds the value given.
