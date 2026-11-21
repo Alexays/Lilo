@@ -2674,7 +2674,11 @@
 			"noFolder": "폴더 없음",
 			"noFolderDetail": "에이전트가 자체 폴더에서 작업합니다",
 			"backgroundHint": "{shortcut}로 백그라운드에서 유지",
-			"start": "시작"
+			"start": "시작",
+			"searchAgents": "에이전트 검색",
+			"featuredAgents": "추천",
+			"registryAgents": "레지스트리",
+			"noMatches": "일치하는 에이전트 없음"
 		},
 		"row": {
 			"untitled": "새 대화",

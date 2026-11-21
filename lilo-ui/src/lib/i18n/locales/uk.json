@@ -2674,7 +2674,11 @@
 			"noFolder": "Без теки",
 			"noFolderDetail": "Агент працює у власній теці",
 			"backgroundHint": "{shortcut}, щоб залишити у фоні",
-			"start": "Почати"
+			"start": "Почати",
+			"searchAgents": "Пошук агентів",
+			"featuredAgents": "Рекомендовані",
+			"registryAgents": "Реєстр",
+			"noMatches": "Немає відповідних агентів"
 		},
 		"row": {
 			"untitled": "Нова розмова",

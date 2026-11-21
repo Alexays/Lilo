@@ -2674,7 +2674,11 @@
 			"noFolder": "无文件夹",
 			"noFolderDetail": "智能体在自己的文件夹中工作",
 			"backgroundHint": "按 {shortcut} 在后台进行",
-			"start": "开始"
+			"start": "开始",
+			"searchAgents": "搜索智能体",
+			"featuredAgents": "精选",
+			"registryAgents": "注册表",
+			"noMatches": "没有匹配的智能体"
 		},
 		"row": {
 			"untitled": "新对话",
