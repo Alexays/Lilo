@@ -224,4 +224,110 @@ final class AgentClientConfigTests: XCTestCase {
         XCTAssertEqual(try String(contentsOf: home.appending(path: ".codex/config.toml"), encoding: .utf8),
                        "[mcp_servers.lilo]\ncommand = \"\(AgentClientConfig.helperPath)\"\n")
     }
+
+    /// The preview is made by the code that writes: what it says the file becomes is the file, byte for byte,
+    /// for every client of the table that Lilo writes itself.
+    func testPreviewIsWhatConnectWritesForEveryClient() async throws {
+        let seeds = [
+            AgentClientConfig.Client.claudeDesktop: #"{"mcpServers": {"other": {"command": "/bin/other"}}, "theme": "dark"}"#,
+            .cursor: "",
+            .codex: "# my settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n"
+        ]
+        for client in AgentClientConfig.Client.all where !isCLI(client) {
+            if let seed = seeds[client], !seed.isEmpty { try write(seed, to: client.config.path) }
+            let preview = AgentClientConfig.preview(client, home: home)
+            XCTAssertNil(preview.blocked, client.id)
+            XCTAssertEqual(preview.path, "~/" + client.config.path)
+            XCTAssertFalse(preview.lines.isEmpty, client.id)
+
+            _ = try await AgentClientConfig.connect(client, home: home)
+
+            XCTAssertEqual(try String(contentsOf: home.appending(path: client.config.path), encoding: .utf8), preview.after, client.id)
+            XCTAssertTrue(AgentClientConfig.preview(client, home: home).lines.isEmpty, "connected again: nothing left to change")
+        }
+    }
+
+    func testPreviewOfAnEmptyHomeIsTheWholeEntry() {
+        let preview = AgentClientConfig.preview(.codex, home: home)
+        XCTAssertEqual(preview.lines.map(\.text), ["[mcp_servers.lilo]", "command = \"\(AgentClientConfig.helperPath)\"", ""])
+        XCTAssertEqual(preview.lines.map(\.number), [1, 2, 3])
+        XCTAssertTrue(preview.lines.allSatisfy { !$0.removed })
+        XCTAssertEqual(preview.snippet, "[mcp_servers.lilo]\ncommand = \"\(AgentClientConfig.helperPath)\"\n")
+    }
+
+    func testPreviewShowsOnlyTheChangedLines() throws {
+        try write("{\n  \"mcpServers\" : {\n    \"other\" : {\n      \"command\" : \"/bin/other\",\n      \"env\" : { \"KEY\" : \"secret\" }\n    }\n  }\n}", to: ".cursor/mcp.json")
+
+        let preview = AgentClientConfig.preview(.cursor, home: home)
+
+        XCTAssertFalse(preview.lines.contains { $0.text.contains("secret") }, "a neighbouring server's values stay off the page")
+        XCTAssertTrue(preview.lines.contains { !$0.removed && $0.text.contains("\"lilo\"") })
+        XCTAssertTrue(preview.lines.contains { !$0.removed && $0.text.contains(AgentClientConfig.helperPath.replacingOccurrences(of: "/", with: "\\/")) })
+    }
+
+    func testPreviewOfARepairShowsTheOldPathReplaced() throws {
+        try write("[mcp_servers.lilo]\ncommand = \"/gone/lilo-mcp\"\n", to: ".codex/config.toml")
+
+        let preview = AgentClientConfig.preview(.codex, home: home)
+
+        XCTAssertEqual(preview.lines.map(\.removed), [true, false])
+        XCTAssertEqual(preview.lines.map(\.text), ["command = \"/gone/lilo-mcp\"", "command = \"\(AgentClientConfig.helperPath)\""])
+        XCTAssertEqual(AgentClientConfig.staleClients(home: home), [.codex])
+    }
+
+    func testPreviewOfARemoveIsWhatRemoveWrites() async throws {
+        try write(#"{"mcpServers": {"other": {"command": "/bin/other"}}}"#, to: ".cursor/mcp.json")
+        try write("# mine\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n", to: ".codex/config.toml")
+        _ = try await AgentClientConfig.connect(.cursor, home: home)
+        _ = try await AgentClientConfig.connect(.codex, home: home)
+
+        for client in [AgentClientConfig.Client.cursor, .codex] {
+            let preview = AgentClientConfig.preview(client, home: home, remove: true)
+            XCTAssertFalse(preview.lines.isEmpty, client.id)
+            XCTAssertTrue(preview.lines.allSatisfy(\.removed), "a removal only takes lines away: \(client.id)")
+
+            try await AgentClientConfig.remove(client, home: home)
+
+            XCTAssertEqual(try String(contentsOf: home.appending(path: client.config.path), encoding: .utf8), preview.after, client.id)
+        }
+        XCTAssertTrue(AgentClientConfig.preview(.cursor, home: home, remove: true).lines.isEmpty, "nothing left to remove")
+    }
+
+    func testPreviewOfAnUnreadableFileSaysWhyAndWritesNothing() throws {
+        try write("// mine\n{\"mcpServers\": {},}", to: ".cursor/mcp.json")
+
+        let preview = AgentClientConfig.preview(.cursor, home: home)
+
+        XCTAssertNotNil(preview.blocked)
+        XCTAssertTrue(preview.lines.isEmpty)
+        XCTAssertEqual(preview.snippet, AgentClientConfig.genericConfigJSON)
+        XCTAssertNil(AgentClientConfig.preview(.cursor, home: home, remove: true).blocked, "leaving a file it cannot read is not an error")
+    }
+
+    func testPreviewOfClaudeCodeIsTheCommandItRuns() {
+        let add = AgentClientConfig.preview(.claudeCode, home: home)
+        XCTAssertEqual(add.command, "claude mcp add --scope user lilo -- \(AgentClientConfig.helperPath)")
+        XCTAssertTrue(add.lines.isEmpty)
+        XCTAssertEqual(AgentClientConfig.preview(.claudeCode, home: home, remove: true).command, "claude mcp remove --scope user lilo")
+    }
+
+    func testRemoveRunsClaudeCodesOwnCommand() async throws {
+        let log = home.appending(path: "claude-args.txt")
+        try write("#!/bin/sh\necho \"$@\" >> '\(log.path)'\n", to: ".local/bin/claude")
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: home.appending(path: ".local/bin/claude").path)
+
+        try await AgentClientConfig.remove(.claudeCode, home: home)
+
+        XCTAssertEqual(try String(contentsOf: log, encoding: .utf8), "mcp remove --scope user lilo\n")
+    }
+
+    func testLineDiffKeepsMatchingLinesAndOrdersChanges() {
+        let lines = AgentClientConfig.diff("a\nb\nc\nd", "a\nB\nc\nd\ne")
+        XCTAssertEqual(lines.map { "\($0.removed ? "-" : "+")\($0.number) \($0.text)" }, ["-2 b", "+2 B", "+5 e"])
+    }
+
+    private func isCLI(_ client: AgentClientConfig.Client) -> Bool {
+        if case .claudeCLI = client.config { return true }
+        return false
+    }
 }
