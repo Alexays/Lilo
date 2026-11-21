@@ -29,10 +29,14 @@ test("the start view is the command bar in place, focused, with no tab, Space or
 	await expect(page.locator(".little-bar")).toHaveCount(0);
 	// Nothing about tabs or actions: the bar has none here.
 	await expect(page.locator(".command-bar-input")).toHaveAttribute("placeholder", "Search or enter URL...");
+	await expect(page.locator(".command-bar-section-title", { hasText: "Quick actions" })).toHaveCount(0);
 	await page.locator(".command-bar-input").fill(":settings");
 	await expect(page.locator(".command-bar-section-title", { hasText: "Actions" })).toHaveCount(0);
 	// Chips for what a window without tabs can search: everything and history.
-	await expect(page.locator(".scope-hint .scope-hint-label")).toHaveText(["All", "History"]);
+	// The chips row in the default layout, the scope menu in the compact one.
+	const picker = page.locator(".scope-picker");
+	if (await picker.count()) await picker.click();
+	await expect(page.locator(".scope-hint .scope-hint-label, .scope-menu .scope-label")).toHaveText(["All", "History"]);
 });
 
 test("Escape and the close button close the start view", async ({ page }) => {

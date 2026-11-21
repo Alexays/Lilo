@@ -699,6 +699,7 @@ function emptyStateBookmarkResults(limit: number): CommandResult[] {
 }
 
 function emptyStateActionResults(limit: number): CommandResult[] {
+	if (!actionsEnabled) return [];
 	return COMMAND_ACTIONS.filter((action) => EMPTY_STATE_ACTIONS.has(action.id))
 		.slice(0, limit)
 		.map((action) => toActionResult(action));
