@@ -301,6 +301,7 @@
 		714A318DC9BFE492C65D0DB1 /* InteractionStateRestoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA71CC882B7A32DDBC90DF1 /* InteractionStateRestoreTests.swift */; };
 		717E773EBC0116FE4EB837C3 /* ExtensionUpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99A7333A1D83DE4DE198A1A /* ExtensionUpdateChecker.swift */; };
 		7184FE5D8274DC0CF5F15450 /* CaptureUsageObserverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36638B06A4A888385340A81E /* CaptureUsageObserverTests.swift */; };
+		71D0A3A8B3B4EC1ADEFC5980 /* GestureForwardingPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264524B84CE88B4DDF5C9613 /* GestureForwardingPanelTests.swift */; };
 		720EEDBF9BC1B4E69E487858 /* TraditionalChineseLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6E4C686494304EB3C12561 /* TraditionalChineseLocalizationTests.swift */; };
 		733FF31D58F45F81D359C723 /* NativeMessaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F387BD7442412B893689E36 /* NativeMessaging.swift */; };
 		7347B5EE09265AB1363C7C3C /* QRCodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1957E0C36D17C64137430863 /* QRCodeTests.swift */; };
@@ -377,6 +378,7 @@
 		8E05C3D97CC6FCBF59160FE4 /* PiPControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90B505FA8F44EC058C864BFA /* PiPControllerTests.swift */; };
 		8F11135AB1781461D345AFA0 /* WebKitGapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1C1A77F1C3408FD1C89D61 /* WebKitGapTests.swift */; };
 		8F38D3DF5861B548B5D43F4F /* MainWindowController+WhatsNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF2F9A7280DF0D9ED172E6BE /* MainWindowController+WhatsNew.swift */; };
+		8F9623DAA2FC41D45CA2D1AE /* GestureForwardingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D23FEBC7A213E6F8D148A52 /* GestureForwardingPanel.swift */; };
 		903549B3D1355E612B6EA0CB /* chrome-smoke.json in Resources */ = {isa = PBXBuildFile; fileRef = 3B439B798EAB8C06D971E750 /* chrome-smoke.json */; };
 		9059C080A938D81CB4492B0E /* BrowserProcessSnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20DCB51549B44043195601EB /* BrowserProcessSnapshotBuilder.swift */; };
 		90820755D7E584E668A98202 /* TopManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56926E17D2D6CE0E7EB001A5 /* TopManifestTests.swift */; };
@@ -894,6 +896,7 @@
 		25070794B4BCDF01CE236E9C /* smoke-sentinels.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "smoke-sentinels.txt"; sourceTree = "<group>"; };
 		2521868A0E2897106F9F72A7 /* MainWindowController+TabArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+TabArchive.swift"; sourceTree = "<group>"; };
 		25AD58D14FCE14EFCD3D7CD1 /* PerfRecorderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerfRecorderTests.swift; sourceTree = "<group>"; };
+		264524B84CE88B4DDF5C9613 /* GestureForwardingPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureForwardingPanelTests.swift; sourceTree = "<group>"; };
 		26FC433BB1995D1405AE72C7 /* NotificationPolyfillTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPolyfillTests.swift; sourceTree = "<group>"; };
 		2796BC634BEA848B9AB4C7B1 /* FullPageSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullPageSnapshotTests.swift; sourceTree = "<group>"; };
 		280FDCE1DE656133E7952F1E /* DocumentPictureInPicture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPictureInPicture.swift; sourceTree = "<group>"; };
@@ -911,6 +914,7 @@
 		2C5F024425A45722773238EE /* AgentFolders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFolders.swift; sourceTree = "<group>"; };
 		2C7F940372202EA7DFB8229B /* AgentInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentInput.swift; sourceTree = "<group>"; };
 		2D0A9E30F6B3FBDFADF75B3C /* release-media */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "release-media"; path = "lilo-ui/public/release-media"; sourceTree = SOURCE_ROOT; };
+		2D23FEBC7A213E6F8D148A52 /* GestureForwardingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureForwardingPanel.swift; sourceTree = "<group>"; };
 		2D24BF900BE3A4131D4378A9 /* ProceduralCosmetics.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ProceduralCosmetics.js; sourceTree = "<group>"; };
 		2D8452792228C102FF9E9860 /* ExtensionLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLifecycleTests.swift; sourceTree = "<group>"; };
 		2DFCC36C22B7A6970C465AF4 /* TerminalFrameBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalFrameBuilderTests.swift; sourceTree = "<group>"; };
@@ -1635,6 +1639,7 @@
 			children = (
 				E0597C73354C06382A05C80A /* DocumentPiPController.swift */,
 				49FDF64515A5A6AA694D292F /* FloatingTabPanelController.swift */,
+				2D23FEBC7A213E6F8D148A52 /* GestureForwardingPanel.swift */,
 				8313C9333B9A2BFADFF9DB18 /* MainWindowController+DocumentPiP.swift */,
 				6F6ED6D5C416BB6186B04F06 /* MainWindowController+TabDock.swift */,
 				552F286BB712D9077DE2C288 /* TabDockController.swift */,
@@ -1842,6 +1847,7 @@
 			children = (
 				B45064E061C0179A0E09E79D /* DocumentPiPControllerTests.swift */,
 				701C19D4AB3D4D44D9B3D841 /* FloatingTabPanelControllerTests.swift */,
+				264524B84CE88B4DDF5C9613 /* GestureForwardingPanelTests.swift */,
 				3DB6014F5EBAD318EBFE4320 /* TabDockControllerTests.swift */,
 			);
 			path = PictureInPicture;
@@ -3228,6 +3234,7 @@
 				61C9A55E16172E76E57FAB78 /* GapBridgeRouter.swift in Sources */,
 				34414D3C7093E9EEDBD716C8 /* GapEvents.swift in Sources */,
 				2829313333A86D7187B17E65 /* GeolocationBridge.swift in Sources */,
+				8F9623DAA2FC41D45CA2D1AE /* GestureForwardingPanel.swift in Sources */,
 				CB7EB0245F229DFAA2BC73AA /* GhosttyVT.swift in Sources */,
 				338CDAA0CE2EB0BA3299F256 /* GitDiff.swift in Sources */,
 				9FD71999A8C2830595253C37 /* GlyphAtlas.swift in Sources */,
@@ -3567,6 +3574,7 @@
 				245492795F640E3D34A269EB /* GapRouterStoreProviderTests.swift in Sources */,
 				ED445F61514163A8D36265F1 /* GeolocationBridgeTests.swift in Sources */,
 				60F9EE3DF4112BC208DDA97A /* GermanLocalizationTests.swift in Sources */,
+				71D0A3A8B3B4EC1ADEFC5980 /* GestureForwardingPanelTests.swift in Sources */,
 				8D8C4F5A123A9A8DB53C12C2 /* GitDiffTests.swift in Sources */,
 				9EDAAE1ADAF5139944476FDD /* HTTPAuthKeychainTests.swift in Sources */,
 				92E37AF860E6672876D98983 /* HiddenSpaceEngineRetentionTests.swift in Sources */,

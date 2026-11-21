@@ -53,7 +53,7 @@ final class FloatingTabPanelController: NSObject, NSWindowDelegate {
     private func makePanel() -> NSPanel {
         // Non-activating so clicking the call doesn't pull the whole browser forward, which is what
         // makes the panel usable on top of another app.
-        let panel = NSPanel(
+        let panel = GestureForwardingPanel(
             contentRect: NSRect(origin: .zero, size: Self.defaultSize),
             styleMask: [.titled, .closable, .resizable, .utilityWindow, .nonactivatingPanel],
             backing: .buffered,
