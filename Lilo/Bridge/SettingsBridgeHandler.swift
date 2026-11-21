@@ -195,6 +195,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 if key == "minimumFontSize" { engineFactory?.setMinimumFontSize(CGFloat(Double(value) ?? 0)) }
                 if key == "fullRefreshRate" { engineFactory?.setFullRefreshRate(value == "true") }
                 if key == "autoplayPolicy" { engineFactory?.setAutoplayPolicy(value) }
+                if key == "tabSleepAllowlist" { context?.browserState.neverSleepHosts = store.tabSleepAllowlist }
                 if key == "lifecyclePreset", let context {
                     context.applyLifecyclePreset(LifecyclePreset(rawValue: value) ?? .default)
                     // Reclaim promptly under the new (possibly tighter) policy.

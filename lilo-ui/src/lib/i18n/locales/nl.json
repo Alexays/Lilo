@@ -315,6 +315,12 @@
 				"description": "Hoe snel inactieve tabbladen worden bevroren en uit het geheugen worden verwijderd.",
 				"keywords": "geheugen prestaties batterij bevries verwijder sluimer"
 			},
+			"tabSleepAllowlist": {
+				"title": "Sites die geladen blijven",
+				"description": "Tabbladen van deze sites, subdomeinen inbegrepen, worden nooit bevroren of ontladen en blijven geheugen en accu gebruiken. Gescheiden door komma's.",
+				"keywords": "geladen houden uitzondering toegestane lijst nooit slapen bevriezen ontladen",
+				"placeholder": "mail.example.com, example.org"
+			},
 			"singleWindow": {
 				"title": "Houd alles in één venster",
 				"description": "Nieuwe vensters en pop-upvensters openen hier als tabbladen.",
@@ -835,6 +841,7 @@
 		"pinned": "Vastgemaakt",
 		"loading": "Laden",
 		"muted": "Gedempt",
+		"keepLoaded": "Blijft geladen",
 		"playingAudio": "Speelt audio af",
 		"terminalCommand": "Commando",
 		"terminalAwaitingFor": "{command} wacht al {duration} op je",
@@ -2165,6 +2172,7 @@
 		"Sleep is back on": "Sluimerstand is weer toegestaan",
 		"The battery is below %d%%.": "De batterij is onder %d%%.",
 		"The Mac is too hot.": "De Mac is te warm.",
+		"Keep Loaded": "Geladen houden",
 		"Commands kept the Mac awake for the maximum duration.": "Commando's hebben de Mac gedurende de maximale tijd wakker gehouden.",
 		"While the lid was closed": "Terwijl de klep gesloten was",
 		"%d commands finished": {"one": "%d commando voltooid", "other": "%d commando's voltooid"},

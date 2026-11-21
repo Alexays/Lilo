@@ -239,6 +239,13 @@
       ariaLabel={title}
       oncommit={(value) => setSetting("contentBlockerAllowedDomains", value.trim())}
     />
+  {:else if id === "tabSleepAllowlist"}
+    <UiTextField
+      value={getSetting("tabSleepAllowlist", "")}
+      placeholder={t("settings.items.tabSleepAllowlist.placeholder")}
+      ariaLabel={title}
+      oncommit={(value) => setSetting("tabSleepAllowlist", value.trim())}
+    />
   {:else if id === "agentSystemPrompt"}
     <AgentPromptPicker />
   {:else if id === "agentAlwaysAllowed"}

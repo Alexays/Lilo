@@ -278,6 +278,9 @@ final class SettingsStore {
         }
     }
 
+    /// Hosts whose tabs are never frozen or discarded.
+    var tabSleepAllowlist: Set<String> { TabLifecycleCoordinator.neverSleepHosts(from: get("tabSleepAllowlist") ?? "") }
+
     /// Domains whose requests are never blocked, whatever the page: the user's comma or space
     /// separated list, with entries that are not plain hostnames dropped.
     var blockerAllowlist: BlockerAllowlist {

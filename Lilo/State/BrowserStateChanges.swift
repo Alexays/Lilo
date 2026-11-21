@@ -209,6 +209,7 @@ enum BrowserCommand: Sendable {
     case activateTab(spaceId: UUID, tabId: UUID)
     case closeTab(spaceId: UUID, tabId: UUID)
     case setPinned(spaceId: UUID, tabId: UUID, isPinned: Bool)
+    case setNeverSleep(spaceId: UUID, tabId: UUID, neverSleep: Bool)
     case setBookmarked(spaceId: UUID, tabId: UUID, isBookmarked: Bool)
     case setTabHomeURL(spaceId: UUID, tabId: UUID, url: URL?)
     /// A pinned or bookmarked tab's own name; nil or blank goes back to the page title.

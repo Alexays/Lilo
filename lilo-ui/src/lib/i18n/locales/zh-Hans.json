@@ -315,6 +315,12 @@
 				"description": "不活跃的标签页在多久后冻结和卸载。",
 				"keywords": "内存 性能 电池 冻结 卸载 睡眠"
 			},
+			"tabSleepAllowlist": {
+				"title": "保持加载的网站",
+				"description": "这些网站(包括子域名)的标签页不会被冻结或卸载,因此会持续占用内存和电量。以逗号分隔。",
+				"keywords": "保持加载 例外 允许列表 永不休眠 冻结 卸载",
+				"placeholder": "mail.example.com, example.org"
+			},
 			"singleWindow": {
 				"title": "在同一个窗口中打开所有内容",
 				"description": "新窗口和网页弹出窗口都会在此作为标签页打开。",
@@ -835,6 +841,7 @@
 		"pinned": "已固定",
 		"loading": "正在载入",
 		"muted": "已静音",
+		"keepLoaded": "已保持加载",
 		"playingAudio": "正在播放音频",
 		"terminalCommand": "命令",
 		"terminalAwaitingFor": "{command} 已等待你操作 {duration}",
@@ -2165,6 +2172,7 @@
 		"Sleep is back on": "已恢复睡眠",
 		"The battery is below %d%%.": "电池电量低于 %d%%。",
 		"The Mac is too hot.": "Mac 温度过高。",
+		"Keep Loaded": "保持加载",
 		"Commands kept the Mac awake for the maximum duration.": "命令保持 Mac 唤醒的时间已达上限。",
 		"While the lid was closed": "合上屏幕期间",
 		"%d commands finished": {"one": "%d 条命令已完成", "other": "%d 条命令已完成"},
