@@ -657,6 +657,20 @@
 				"ready": "설정됨"
 			},
 			"allowedSeen": "허용됨, 마지막 접속 {time}",
+			"permissions": {
+				"button": "권한",
+				"group": "{client} 권한",
+				"act": "페이지에서의 작업",
+				"actHint": "전송, 결제, 구매, 삭제 또는 게시하는 클릭과 요청입니다.",
+				"askingOff": "위 설정에서 모든 에이전트의 확인이 꺼져 있습니다.",
+				"ask": "매번 묻기",
+				"always": "항상 허용",
+				"sites": "이 사이트에서 허용됨",
+				"addSite": "사이트 추가",
+				"addSiteLabel": "{client}이(가) 묻지 않고 작업할 수 있는 사이트 추가",
+				"removeSite": "{site} 제거",
+				"floor": "로그인, 결제, 다른 사이트로의 데이터 전송은 항상 확인합니다."
+			},
 			"readyLine": "구성됨. 처음 연결할 때 Lilo가 묻습니다."
 		},
 		"navGroups": {

@@ -657,6 +657,20 @@
 				"ready": "Konfiguriert"
 			},
 			"allowedSeen": "Erlaubt, zuletzt gesehen {time}",
+			"permissions": {
+				"button": "Berechtigungen",
+				"group": "Berechtigungen von {client}",
+				"act": "Aktionen auf Seiten",
+				"actHint": "Klicks und Anfragen, die senden, bezahlen, kaufen, löschen oder veröffentlichen.",
+				"askingOff": "Nachfragen ist für alle Agenten in der Einstellung oben ausgeschaltet.",
+				"ask": "Jedes Mal fragen",
+				"always": "Immer erlauben",
+				"sites": "Auf diesen Websites erlaubt",
+				"addSite": "Website hinzufügen",
+				"addSiteLabel": "Website hinzufügen, auf der {client} ohne Nachfrage handeln darf",
+				"removeSite": "{site} entfernen",
+				"floor": "Anmelden, Bezahlen und das Senden von Daten an eine andere Website werden immer abgefragt."
+			},
 			"readyLine": "Eingerichtet. Lilo fragt dich bei der ersten Verbindung."
 		},
 		"navGroups": {

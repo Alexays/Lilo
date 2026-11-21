@@ -657,6 +657,20 @@
 				"ready": "已設定"
 			},
 			"allowedSeen": "已允許，上次連線 {time}",
+			"permissions": {
+				"button": "權限",
+				"group": "{client}的權限",
+				"act": "在頁面上的操作",
+				"actHint": "傳送、付款、購買、刪除或發布的點按和要求。",
+				"askingOff": "在上方的設定中,所有代理的詢問均已關閉。",
+				"ask": "每次詢問",
+				"always": "一律允許",
+				"sites": "在這些網站上允許",
+				"addSite": "加入網站",
+				"addSiteLabel": "加入 {client} 無需詢問即可操作的網站",
+				"removeSite": "移除 {site}",
+				"floor": "登入、付款和向其他網站傳送資料一律會詢問。"
+			},
 			"readyLine": "已設定。首次連線時 Lilo 會詢問你。"
 		},
 		"navGroups": {

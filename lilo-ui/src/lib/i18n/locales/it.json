@@ -657,6 +657,20 @@
 				"ready": "Configurato"
 			},
 			"allowedSeen": "Consentito, visto l'ultima volta {time}",
+			"permissions": {
+				"button": "Permessi",
+				"group": "Permessi di {client}",
+				"act": "Azioni sulle pagine",
+				"actHint": "Clic e richieste che inviano, pagano, acquistano, eliminano o pubblicano.",
+				"askingOff": "Le richieste sono disattivate per tutti gli agenti, nell'impostazione qui sopra.",
+				"ask": "Chiedi ogni volta",
+				"always": "Consenti sempre",
+				"sites": "Consentito su questi siti",
+				"addSite": "Aggiungi un sito",
+				"addSiteLabel": "Aggiungi un sito su cui {client} può agire senza chiedere",
+				"removeSite": "Rimuovi {site}",
+				"floor": "Accedere, pagare e inviare dati a un altro sito vengono sempre chiesti."
+			},
 			"readyLine": "Configurato. Lilo te lo chiede alla prima connessione."
 		},
 		"navGroups": {

@@ -657,6 +657,20 @@
 				"ready": "Geconfigureerd"
 			},
 			"allowedSeen": "Toegestaan, laatst gezien {time}",
+			"permissions": {
+				"button": "Rechten",
+				"group": "Rechten van {client}",
+				"act": "Handelen op pagina's",
+				"actHint": "Klikken en verzoeken die versturen, betalen, kopen, verwijderen of publiceren.",
+				"askingOff": "Vragen staat voor alle agents uit, in de instelling hierboven.",
+				"ask": "Elke keer vragen",
+				"always": "Altijd toestaan",
+				"sites": "Toegestaan op deze sites",
+				"addSite": "Site toevoegen",
+				"addSiteLabel": "Site toevoegen waarop {client} zonder te vragen mag handelen",
+				"removeSite": "{site} verwijderen",
+				"floor": "Inloggen, betalen en gegevens naar een andere site sturen worden altijd gevraagd."
+			},
 			"readyLine": "Ingesteld. Lilo vraagt het je bij de eerste verbinding."
 		},
 		"navGroups": {

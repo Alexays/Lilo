@@ -657,6 +657,20 @@
 				"ready": "Configured"
 			},
 			"allowedSeen": "Allowed, last seen {time}",
+			"permissions": {
+				"button": "Permissions",
+				"group": "Permissions of {client}",
+				"act": "Acting on pages",
+				"actHint": "Clicks and requests that send, pay, buy, delete or publish.",
+				"askingOff": "Questions are turned off for every agent, in the setting above.",
+				"ask": "Ask each time",
+				"always": "Always allow",
+				"sites": "Allowed on these sites",
+				"addSite": "Add a site",
+				"addSiteLabel": "Add a site {client} may act on without asking",
+				"removeSite": "Remove {site}",
+				"floor": "Signing in, paying and sending data to another site are always asked."
+			},
 			"readyLine": "Configured. Lilo asks you the first time it connects."
 		},
 		"navGroups": {

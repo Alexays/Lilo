@@ -657,6 +657,20 @@
 				"ready": "構成済み"
 			},
 			"allowedSeen": "許可済み、最終接続 {time}",
+			"permissions": {
+				"button": "権限",
+				"group": "{client}の権限",
+				"act": "ページでの操作",
+				"actHint": "送信、支払い、購入、削除、公開を行うクリックとリクエスト。",
+				"askingOff": "上の設定で、すべてのエージェントの確認がオフになっています。",
+				"ask": "毎回確認",
+				"always": "常に許可",
+				"sites": "これらのサイトで許可",
+				"addSite": "サイトを追加",
+				"addSiteLabel": "{client}が確認なしで操作できるサイトを追加",
+				"removeSite": "{site}を削除",
+				"floor": "サインイン、支払い、他のサイトへのデータ送信は常に確認されます。"
+			},
 			"readyLine": "設定済み。初回接続時に Lilo が確認します。"
 		},
 		"navGroups": {

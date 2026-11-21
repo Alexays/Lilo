@@ -657,6 +657,20 @@
 				"ready": "Configurado"
 			},
 			"allowedSeen": "Permitido, visto por última vez {time}",
+			"permissions": {
+				"button": "Permisos",
+				"group": "Permisos de {client}",
+				"act": "Acciones en las páginas",
+				"actHint": "Clics y solicitudes que envían, pagan, compran, eliminan o publican.",
+				"askingOff": "Las preguntas están desactivadas para todos los agentes, en el ajuste de arriba.",
+				"ask": "Preguntar cada vez",
+				"always": "Permitir siempre",
+				"sites": "Permitido en estos sitios",
+				"addSite": "Añadir un sitio",
+				"addSiteLabel": "Añadir un sitio donde {client} puede actuar sin preguntar",
+				"removeSite": "Quitar {site}",
+				"floor": "Iniciar sesión, pagar y enviar datos a otro sitio se preguntan siempre."
+			},
 			"readyLine": "Configurado. Lilo te pregunta la primera vez que se conecta."
 		},
 		"navGroups": {

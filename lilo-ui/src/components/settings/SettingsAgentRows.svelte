@@ -3,9 +3,11 @@
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { CLAUDE, type TerminalProgramIcon } from "../../lib/terminalIcons";
   import { getAgentClients } from "../../stores/agents.svelte";
-  import { getAgentClientsSnapshot, getAgentPreview, isConnectingAgentClient, previewAgentClient } from "../../stores/settings.svelte";
+  import { getAgentClientsSnapshot, getAgentPreview, getSetting, isConnectingAgentClient, previewAgentClient, setSetting } from "../../stores/settings.svelte";
   import { OPENAI } from "../agents/modelLogos";
   import SettingsAgentConfigSheet from "./SettingsAgentConfigSheet.svelte";
+  import SettingsAgentPermissions from "./SettingsAgentPermissions.svelte";
+  import { parseAgentPermissions, setAgentPermission, DEFAULT_AGENT_PERMISSION } from "./agentPermissions";
   import SettingsIcon from "./SettingsIcon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
@@ -34,6 +36,18 @@
       .filter((agent) => !snapshot.clients.some((client) => client.id === agent.client))
       .map((agent) => ({ key: agent.name, title: agent.displayName, client: null, agents: [agent] })),
   ]);
+  // The row whose permissions show under it.
+  let permissionsOpen = $state<string | null>(null);
+
+  // Revoking forgets what an agent may do unasked, as Lilo does: the page must not write it back.
+  function revoke(names: string[]): void {
+    const stored = getSetting("agentClientPermissions", "");
+    const known = parseAgentPermissions(stored);
+    if (names.some((name) => name in known)) {
+      setSetting("agentClientPermissions", names.reduce((value, name) => setAgentPermission(value, name, DEFAULT_AGENT_PERMISSION), stored));
+    }
+    names.forEach((name) => settingsActions.revokeAgentClient(name));
+  }
 
   // Coarsest unit that keeps the number above one: "3 minutes ago", "yesterday".
   function lastSeen(seconds: number): string {
@@ -78,7 +92,7 @@
             </span>
           </span>
           {#if row.agents.length}
-            <UiButton onclick={() => row.agents.forEach((agent) => settingsActions.revokeAgentClient(agent.name))}>
+            <UiButton onclick={() => revoke(row.agents.map((agent) => agent.name))}>
               {t("settings.agents.revoke")}
             </UiButton>
           {:else if row.client && (!row.client.configured || row.client.stale)}
@@ -86,13 +100,21 @@
               {row.client.configured ? t("settings.agents.repair") : t("settings.agents.connect")}
             </UiButton>
           {/if}
-          {#if row.client?.configured}
+          {#if row.client?.configured || row.agents.length}
             <UiMoreMenu
               label={t("settings.agents.moreFor", { client: row.title })}
-              items={[{ label: t("settings.agents.removeFrom", { client: row.title }), danger: true, onclick: () => previewAgentClient(row.client?.id ?? "", true) }]}
+              items={[
+                ...(row.agents.length ? [{ label: t("settings.agents.permissions.button"), onclick: () => (permissionsOpen = permissionsOpen === row.key ? null : row.key) }] : []),
+                ...(row.client?.configured ? [{ label: t("settings.agents.removeFrom", { client: row.title }), danger: true, onclick: () => previewAgentClient(row.client?.id ?? "", true) }] : []),
+              ]}
             />
           {/if}
         </div>
+        {#if permissionsOpen === row.key}
+          {#each row.agents as agent (agent.name)}
+            <div class="agent-permissions"><SettingsAgentPermissions name={agent.name} title={agent.displayName} /></div>
+          {/each}
+        {/if}
       {/each}
     </div>
   {/if}
@@ -117,6 +139,10 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--space-12);
+  }
+
+  .agent-permissions {
+    grid-column: 1 / -1;
   }
 
   .agent-tile {

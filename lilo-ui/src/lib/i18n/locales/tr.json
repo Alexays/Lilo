@@ -657,6 +657,20 @@
 				"ready": "Yapılandırıldı"
 			},
 			"allowedSeen": "İzin verildi, son görülme {time}",
+			"permissions": {
+				"button": "İzinler",
+				"group": "{client} izinleri",
+				"act": "Sayfalarda eylemler",
+				"actHint": "Gönderen, ödeme yapan, satın alan, silen veya yayımlayan tıklamalar ve istekler.",
+				"askingOff": "Sorular, yukarıdaki ayarda tüm aracılar için kapalı.",
+				"ask": "Her seferinde sor",
+				"always": "Her zaman izin ver",
+				"sites": "Bu sitelerde izinli",
+				"addSite": "Site ekle",
+				"addSiteLabel": "{client} için sormadan eylem yapılabilecek bir site ekle",
+				"removeSite": "{site} sitesini kaldır",
+				"floor": "Oturum açma, ödeme ve başka bir siteye veri gönderme her zaman sorulur."
+			},
 			"readyLine": "Yapılandırıldı. Lilo ilk bağlantıda size sorar."
 		},
 		"navGroups": {

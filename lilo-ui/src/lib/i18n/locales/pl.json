@@ -657,6 +657,20 @@
 				"ready": "Skonfigurowany"
 			},
 			"allowedSeen": "Dozwolony, ostatnio {time}",
+			"permissions": {
+				"button": "Uprawnienia",
+				"group": "Uprawnienia: {client}",
+				"act": "Działania na stronach",
+				"actHint": "Kliknięcia i żądania, które wysyłają, płacą, kupują, usuwają lub publikują.",
+				"askingOff": "Pytania są wyłączone dla wszystkich agentów w ustawieniu powyżej.",
+				"ask": "Pytaj za każdym razem",
+				"always": "Zawsze zezwalaj",
+				"sites": "Dozwolone na tych stronach",
+				"addSite": "Dodaj stronę",
+				"addSiteLabel": "Dodaj stronę, na której {client} może działać bez pytania",
+				"removeSite": "Usuń {site}",
+				"floor": "Logowanie, płatności i wysyłanie danych do innej strony zawsze wymagają pytania."
+			},
 			"readyLine": "Skonfigurowano. Lilo zapyta przy pierwszym połączeniu."
 		},
 		"navGroups": {
