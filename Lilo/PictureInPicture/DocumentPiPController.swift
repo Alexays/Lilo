@@ -212,7 +212,7 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
 }
 
 /// Borderless panels refuse key status by default; the PiP page needs it for its controls' keyboard handling.
-private final class PiPPanel: NSPanel {
+private final class PiPPanel: GestureForwardingPanel {
     override var canBecomeKey: Bool { true }
 }
 

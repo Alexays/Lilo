@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Trackpad gestures over a floating window no longer move or resize it: a two-finger scroll meant for the picture-in-picture page could fling the window across the screen or stretch it, and the call panel had the same slip. Moving stays a press-drag and resizing an edge drag'
+time: 2026-11-21T06:58:03.000000Z
