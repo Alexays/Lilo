@@ -46,8 +46,8 @@ Unless you turn it off in Settings, Lilo asks before an agent:
   structure first, so it works in any language and for an icon-only button: submitting a form that
   holds a password, a card field or a one-time code, or that sends its data to another origin with a
   method other than GET. A short list of commit verbs (send, pay, buy, delete, publish and their
-  translations) is the fallback for buttons outside a form; a bare "order" is not on it, so "Save
-  order" goes through;
+  translations) is the fallback for buttons outside a form; "order" counts only as a whole label
+  ("Order") or in a phrase like "Place order", so "Save order" goes through;
 - sends a request other than GET or HEAD with the cookies of one of your profiles.
 
 The question opens in the window that holds the agent's page, and the agent's conversation row turns amber
