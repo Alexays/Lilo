@@ -192,4 +192,36 @@ final class AgentClientConfigTests: XCTestCase {
         XCTAssertEqual(try String(contentsOf: log, encoding: .utf8),
                        "mcp remove --scope user lilo\nmcp add --scope user lilo -- \(AgentClientConfig.helperPath)\n")
     }
+
+    func testRemoveTakesOnlyLiloOutOfAFileClient() async throws {
+        try write(#"{"mcpServers": {"other": {"command": "/bin/other"}}, "theme": "dark"}"#, to: ".cursor/mcp.json")
+        try write("# my settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n", to: ".codex/config.toml")
+        _ = try await AgentClientConfig.connect(.cursor, home: home)
+        _ = try await AgentClientConfig.connect(.codex, home: home)
+        XCTAssertEqual(AgentClientConfig.connectedClients(home: home), [.codex, .cursor])
+
+        try await AgentClientConfig.remove(.cursor, home: home)
+        try await AgentClientConfig.remove(.codex, home: home)
+
+        XCTAssertEqual(AgentClientConfig.connectedClients(home: home), [])
+        let cursor = try json(".cursor/mcp.json")
+        XCTAssertEqual(Set((cursor["mcpServers"] as? [String: Any] ?? [:]).keys), ["other"])
+        XCTAssertEqual(cursor["theme"] as? String, "dark")
+        let codex = try String(contentsOf: home.appending(path: ".codex/config.toml"), encoding: .utf8)
+        XCTAssertEqual(codex, "# my settings\nmodel = \"o3\"\n\n[mcp_servers.other]\ncommand = \"/bin/other\"\n\n")
+    }
+
+    func testRemoveWithoutAConfigDoesNothing() async throws {
+        for client in AgentClientConfig.Client.all { try await AgentClientConfig.remove(client, home: home) }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: home.appending(path: ".cursor").path))
+    }
+
+    func testMovedCodexConfigIsRepaired() throws {
+        try write("[mcp_servers.lilo]\ncommand = \"/gone/Lilo.app/Contents/MacOS/lilo-mcp\"\n", to: ".codex/config.toml")
+
+        XCTAssertEqual(AgentClientConfig.repairMovedConfigs(home: home), [.codex])
+
+        XCTAssertEqual(try String(contentsOf: home.appending(path: ".codex/config.toml"), encoding: .utf8),
+                       "[mcp_servers.lilo]\ncommand = \"\(AgentClientConfig.helperPath)\"\n")
+    }
 }
