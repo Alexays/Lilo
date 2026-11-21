@@ -99,9 +99,8 @@ test("with the address hidden, a too narrow sidebar widens to the line's minimum
 	await expect(row).toHaveCount(0);
 });
 
-// Under the lights' threshold the keyboard runs on to the drag's floor outside the rail, where the host
-// has taken the lights away: the line still fits and the tab rows keep their titles.
-test("under the lights' threshold, the arrows narrow the sidebar to the rail's detent and the line still fits", async ({ page }) => {
+// The arrows run on under the minimum to the drag's floor outside the rail, and stop there rather than fold.
+test("under the minimum, the arrows narrow the sidebar to the rail's detent", async ({ page }) => {
 	await bootNarrow(page, "tabs", 203);
 	const sidebarWidth = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width"));
 
@@ -110,14 +109,30 @@ test("under the lights' threshold, the arrows narrow the sidebar to the rail's d
 	await expect.poll(sidebarWidth).toBe("163px");
 	await expect(page.locator(".tab-item .tab-actions").first()).toBeHidden();
 
-	// The arrows stop at the detent: folding would take the focused handle away.
 	for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
 	await expect.poll(sidebarWidth).toBe("150px");
 	await expect(page.locator(".sidebar-resize-handle")).toBeFocused();
 	expect((await sentCommands(page)).filter((c) => c.action === "setSidebarRail")).toEqual([]);
-
-	await page.evaluate(() => window.__lilo!.receive({ event: "windowChromeStateChanged", trafficLightsVisible: false }));
-	await expect(page.locator(".sidebar-header .header-spacer")).toHaveCSS("width", "8px");
-	await expectLineFits(page);
 	await expect(page.locator(".tab-item .tab-title").first()).toBeVisible();
 });
+
+// The lights keep their place down the narrow range: the history buttons give way, the toggle stays, and
+// nothing passes the sidebar's edge, in either appearance.
+for (const scheme of ["light", "dark"] as const) {
+	for (const address of ["tabs", "hidden"] as const) {
+		test(`in ${scheme} with the address ${address === "tabs" ? "in the sidebar" : "hidden"}, the top line fits beside the lights down to the detent`, async ({ page }) => {
+			await page.emulateMedia({ colorScheme: scheme });
+			for (const width of [260, 203, 170, 150]) {
+				await bootNarrow(page, address, width);
+				await expect(page.locator(".sidebar-header .header-spacer")).toHaveCSS("width", "81px");
+				const [toggle] = await expectLineFits(page);
+				expect(toggle.left).toBe(81);
+				const sidebar = (await page.locator(".sidebar-viewport").boundingBox())!;
+				const row = await page.locator(".new-tab-line button").evaluateAll((buttons) =>
+					buttons.filter((b) => b.getClientRects().length).map((b) => b.getBoundingClientRect().right),
+				);
+				for (const right of row) expect(right).toBeLessThanOrEqual(sidebar.x + sidebar.width - 8);
+			}
+		});
+	}
+}

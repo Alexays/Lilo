@@ -66,17 +66,11 @@ extension MainWindowController {
     }
 
     func applySidebarLayout(animated: Bool, syncTrafficLights: Bool = false) {
-        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        let animated = animated && !reduceMotion
+        let animated = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         sidebarWidth = fittedSidebarWidth
         sidePanel.fitToWindow()
         updateContentContainerFrame(animated: animated)
-        if syncTrafficLights {
-            self.syncTrafficLights(animated: animated)
-        } else if let shown = lastSentTrafficLightsVisible, shown != areTrafficLightsVisible() {
-            // A live resize across narrowSidebarWidth: the lights fade once, at the crossing.
-            self.syncTrafficLights(animated: !reduceMotion)
-        }
+        if syncTrafficLights { self.syncTrafficLights(animated: animated) }
     }
 
     func applyTabLayout(_ layout: TabLayout, animated: Bool) {
@@ -175,13 +169,9 @@ extension MainWindowController {
 
     /// A floating overlay covers the lights' top-left corner only when it comes from the left or the top.
     func areTrafficLightsVisible() -> Bool {
-        // A left sidebar narrower than its header's line gives the lights up: they fade out where they sit.
-        // A page toolbar still holds them there, as it takes the header's buttons.
-        let tooNarrow = tabLayout.position == .left && !sidebarRail
-            && (sidebarVisible ? sidebarWidth : sidebarExpandedWidth) < Self.narrowSidebarWidth
-        let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top) && !tooNarrow
+        let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
         let toolbarHoldsLights = tabLayout.canHideToolbar && toolbarVisible
-        let sidebarHoldsLights = sidebarVisible && !railReplacesSidebar && !tooNarrow
+        let sidebarHoldsLights = sidebarVisible && !railReplacesSidebar
         return window?.styleMask.contains(.fullScreen) != true && (sidebarHoldsLights || overlayCoversLights || toolbarHoldsLights)
     }
 

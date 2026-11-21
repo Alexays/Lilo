@@ -122,10 +122,9 @@
   let lastThemeVars: Record<string, string> = {};
   let sidebarOverlayHideTimeout: ReturnType<typeof setTimeout> | null = null;
   const sidebarResizeFrame = createFrameScheduler();
-  // Swift's narrowSidebarWidth: narrower, the header's line no longer holds the traffic lights, which leave it.
+  // The narrowest sidebar whose top line holds every button whole beside the lights; narrower, the history
+  // buttons give way (Sidebar.svelte). With the address hidden the line also holds the page's overflow button.
   const NARROW_SIDEBAR_WIDTH = 203;
-  // The narrowest sidebar whose top line holds every button whole with the lights over it. With the
-  // address hidden the line also holds the page's overflow button.
   const sidebarMinWidth = $derived(getTabPosition() === "left" && !isAddressVisible() ? 215 : NARROW_SIDEBAR_WIDTH);
   // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
   const SIDEBAR_RAIL_THRESHOLD = 150;
@@ -135,8 +134,8 @@
   // What the resize handle reports to VoiceOver, read from the stylesheet when it takes focus.
   let handleWidth = $state(0);
 
-  // A width a roomier layout kept, where the lights still sit on a line too short for them, widens to
-  // the minimum; a narrower one has given the lights up and holds.
+  // A width a roomier layout kept, between the narrow range and this layout's minimum, widens to the
+  // minimum; inside the narrow range the history buttons give way and it holds.
   $effect(() => {
     const root = document.documentElement;
     const width = parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width"));

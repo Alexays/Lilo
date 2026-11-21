@@ -94,8 +94,6 @@ final class MainWindowController: NSWindowController {
     static let defaultSidebarWidth: CGFloat = 260
     /// Down to the rail's detent: the chrome folds a narrower sidebar to the rail.
     static let sidebarWidthRange: ClosedRange<CGFloat> = 150...480
-    /// Narrower, a left sidebar's header line no longer holds its buttons with the traffic lights over it.
-    static let narrowSidebarWidth: CGFloat = 203
     /// The icon rail's width, the content inset aside: its icons' column.
     static let sidebarRailWidth: CGFloat = 40
     static let contentInset: CGFloat = 8
