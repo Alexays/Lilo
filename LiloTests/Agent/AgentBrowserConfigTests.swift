@@ -79,7 +79,8 @@ final class AgentBrowserConfigTests: AgentToolTestCase {
         ])
         XCTAssertFalse(reply.isError, reply.text)
         XCTAssertEqual(reply.text, AgentTools.json(before))
-        XCTAssertEqual(AgentTools.json(try await snapshot()), AgentTools.json(before))
+        let after = AgentTools.json(try await snapshot())
+        XCTAssertEqual(after, AgentTools.json(before))
         XCTAssertNil(context.settingsStore!.get(AgentControl.asksBeforeActionsKey))
     }
 
