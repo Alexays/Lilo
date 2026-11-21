@@ -86,18 +86,18 @@
   const bookmarkZoneItems = $derived(getZoneItems(bookmarkZone, bookmarkBaseItems));
   const bookmarkZoneIsEmpty = $derived(bookmarkZoneItems.length === 0);
 
-  // As many columns of tiles at least 64px wide as fit, then balanced rows: 4 tiles make 2 x 2,
-  // 5 make 3 + 2. Past three rows they go back to the compact size, so many favorites leave the tabs their room.
+  // As many columns of tiles at least 44px wide as fit, then balanced rows: 6 tiles make 3 + 3,
+  // 7 make 4 + 3. Past three rows they go back to the compact size, so many favorites leave the tabs their room.
   // Sized on the favorites, not the drag preview: a tile dragged in or out never reflows the grid under the pointer.
   const GRID_GAP_PX = 6;
   let listWidth = $state(0);
   function columnsThatFit(minTileWidth: number): number {
     return Math.max(1, Math.floor((listWidth + GRID_GAP_PX) / (minTileWidth + GRID_GAP_PX)));
   }
-  const gridCompact = $derived(Math.ceil(bookmarks.length / columnsThatFit(64)) > 3);
+  const gridCompact = $derived(Math.ceil(bookmarks.length / columnsThatFit(44)) > 3);
   const gridColumns = $derived.by(() => {
     const count = Math.max(1, bookmarks.length);
-    return Math.ceil(count / Math.ceil(count / columnsThatFit(gridCompact ? 40 : 64)));
+    return Math.ceil(count / Math.ceil(count / columnsThatFit(gridCompact ? 30 : 44)));
   });
   const activeTabId = $derived(getActiveTabId(spaceId));
   const recentlyDraggedId = $derived(getRecentlyDroppedId());
@@ -381,8 +381,8 @@
                       src={bookmark.faviconDataURL}
                       title={bookmark.title}
                       url={bookmark.url}
-                      size={gridCompact ? 18 : 20}
-                      radius={5}
+                      size={gridCompact ? 14 : 16}
+                      radius={gridCompact ? 3 : 4}
                       asleep={bookmark.isClosed}
                     />
                   {/if}
@@ -461,7 +461,7 @@
 
   .bookmarked-list {
     --bookmark-zone-color: var(--color-bookmark);
-    --bookmark-tile-height: 48px;
+    --bookmark-tile-height: 32px;
     position: relative;
     display: grid;
     gap: 6px; /* GRID_GAP_PX, which sizes the columns. */
@@ -485,7 +485,7 @@
   }
 
   .bookmarked-list.compact {
-    --bookmark-tile-height: 40px;
+    --bookmark-tile-height: 28px;
   }
 
   .bookmarked-list.idle-empty {
@@ -501,8 +501,8 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 40px;
-    min-height: 40px;
+    height: var(--bookmark-tile-height);
+    min-height: var(--bookmark-tile-height);
     padding: 0 8px;
     overflow: hidden;
     border-color: color-mix(in srgb, var(--bookmark-zone-color) 36%, transparent);
@@ -616,13 +616,18 @@
   /* Off the icon's lower corner, as a badge on an app icon, so it reads as the site's; ringed in the
      tile's color so it holds on a favicon close to the accent. */
   .unread-dot {
-    top: calc(50% + 6px);
+    top: calc(50% + 4px);
     right: auto;
-    left: calc(50% + 10px);
+    left: calc(50% + 8px);
     width: 6px;
     height: 6px;
     border-radius: 50%;
     box-shadow: 0 0 0 2px var(--sidebar-sel);
+  }
+
+  .bookmarked-list.compact .unread-dot {
+    top: calc(50% + 3px);
+    left: calc(50% + 7px);
   }
 
   .unread-count {
