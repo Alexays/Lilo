@@ -40,6 +40,7 @@ SOLVED = {
     "gate-checkout-icon": ([], "asked"),
     "gate-save-order": ([ev("save", note="Leave at the door")], "done"),
     "gate-login": ([], "asked"),
+    "action-delta": ([ev("download", code="QZ-2046")], "done"),
 }
 
 

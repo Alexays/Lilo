@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>Reports</title><script src="../lib.js"></script>
+<h1>Monthly reports</h1>
+<p>Generate a report, then download it when it is ready.</p>
+<button id="gen">Generate report</button>
+<div id="out"></div>
+<script>
+// The result lands a beat after the click, like a real job: the action's own reply is the only
+// place the agent learns it exists without re-reading the page.
+gen.onclick = async () => {
+  gen.disabled = true
+  await new Promise(resolve => setTimeout(resolve, 500))
+  out.innerHTML = '<p role="status">Report QZ-2046 is ready. <button id="dl">Download</button></p>'
+  document.getElementById('dl').onclick = () => record('download', { code: 'QZ-2046' })
+}
+</script>

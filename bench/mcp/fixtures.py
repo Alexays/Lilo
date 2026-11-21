@@ -139,6 +139,7 @@ TASKS = {
                         "check": single("save", note="Leave at the door")},
     "gate-login": {"asks": True, "goal": f"Sign in with the email ada@example.com and the password correct-horse-9. {ASK}",
                    "check": held("login")},
+    "action-delta": {"goal": "Generate the monthly report, then download it.", "check": single("download", code="QZ-2046")},
 }
 
 
