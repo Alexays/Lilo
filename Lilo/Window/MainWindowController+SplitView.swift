@@ -213,7 +213,8 @@ final class SplitPaneHandleView: NSView {
     var onMaximize: (() -> Void)?
 
     private var revealed = false
-    private let pill = NSVisualEffectView()
+    /// Opaque, as a tab's modal panel: a translucent material vanished over dark pages.
+    private let pill = NSBox()
     private let closeButton = NSButton()
     private let maximizeButton = NSButton()
 
@@ -221,25 +222,25 @@ final class SplitPaneHandleView: NSView {
         super.init(frame: frameRect)
         wantsLayer = true
         alphaValue = 0
-        pill.material = .hudWindow
-        pill.state = .active
-        pill.blendingMode = .withinWindow
-        pill.wantsLayer = true
-        pill.layer?.cornerRadius = Self.pillSize.height / 2
-        pill.layer?.masksToBounds = true
+        pill.boxType = .custom
+        pill.titlePosition = .noTitle
+        pill.fillColor = .windowBackgroundColor
+        pill.borderColor = .separatorColor
+        pill.borderWidth = 1
+        pill.cornerRadius = Self.pillSize.height / 2
         addSubview(pill)
         for (button, symbol, action, label) in [
             (closeButton, "xmark", #selector(closePressed), "Close Split Pane".localized),
             (maximizeButton, "arrow.up.left.and.arrow.down.right", #selector(maximizePressed), "Maximize Split Pane".localized)
         ] {
-            button.bezelStyle = .inline
+            button.isBordered = false
             button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
             button.contentTintColor = .labelColor
             button.toolTip = label
             button.setAccessibilityLabel(label)
             button.target = self
             button.action = action
-            button.setButtonType(.momentaryChange)
+            button.setButtonType(.momentaryPushIn)
             addSubview(button)
         }
     }

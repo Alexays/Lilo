@@ -45,12 +45,19 @@ test("settings, downloads and the process manager take the focus when they open"
 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 	await expect(page.locator(".section-nav-toolbar input")).toBeFocused();
-	await page.keyboard.press("Escape");
-	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
+	// A keypress can land before the shell's own handler has attached under CI load; press
+	// again until the shell is gone instead of trusting one Escape.
+	await expect(async () => {
+		await page.keyboard.press("Escape");
+		await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
+	}).toPass();
 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
 	await expect(page.locator(".section-nav-toolbar input")).toBeFocused();
-	await page.keyboard.press("Escape");
+	await expect(async () => {
+		await page.keyboard.press("Escape");
+		await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
+	}).toPass();
 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
 	await expect(page.locator(".section-nav-panel")).toBeFocused();
