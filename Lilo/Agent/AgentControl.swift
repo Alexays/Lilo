@@ -57,6 +57,8 @@ final class AgentControl {
     var sleepingTabIds: Set<UUID> = []
     /// Tabs a `performance` profile records, which never sleep: it spans the calls between its start and its stop.
     var profilingTabIds: Set<UUID> = []
+    /// The per-call record of what agents did, in the app's support folder.
+    lazy var actionLog = AgentActionLog(directory: URL(fileURLWithPath: context?.appSupportDirectory ?? BuildIdentity.appSupportDirectory).appending(path: "Agents/Actions"))
     /// Console and network capture of each controlled tab.
     var captures: [UUID: AgentCapture] = [:]
     /// The inspector of each tab a devtools tool ran on.

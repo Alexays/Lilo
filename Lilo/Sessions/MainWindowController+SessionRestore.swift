@@ -224,6 +224,7 @@ extension MainWindowController {
             ).union([space.profileId])
         }
         tabManager.profileId = space.profileId
+        tabManager.profileManager = context.profileManager
         tabManager.dataStore = space.isPrivate
             ? context.profileManager?.ephemeralDataStore(for: space.id)
             : context.profileManager?.dataStore(for: space.profileId)

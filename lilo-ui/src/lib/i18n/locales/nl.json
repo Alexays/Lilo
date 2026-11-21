@@ -498,6 +498,11 @@
 				"description": "De agent wacht op je antwoord.",
 				"keywords": "agent toestemming bevestig betaling aankoop bestelling verwijder verstuur publiceer"
 			},
+			"agentActionLog": {
+				"title": "Een logboek van de acties van de agent bijhouden",
+				"description": "Een lokaal bestand somt elke aanroep op, nooit getypte tekst of pagina-inhoud.",
+				"keywords": "agent logboek geschiedenis audit acties herhalen"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Altijd toegestaan",
 				"description": "Agents voeren op deze websites acties uit zonder te vragen.",
@@ -1061,6 +1066,7 @@
 		"showFolder": "Toon downloadmap",
 		"clearFinished": "Wis voltooide downloads",
 		"dragFile": "Sleep bestand",
+		"showInFinder": "Toon in Finder",
 		"announceDone": "{filename} gedownload",
 		"announceFailed": "Downloaden van {filename} mislukt"
 	},

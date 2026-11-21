@@ -498,6 +498,11 @@
 				"description": "Agent czeka na Twoją odpowiedź.",
 				"keywords": "agent zgoda potwierdzenie płatność zakup zamówienie usuń wyślij publikuj"
 			},
+			"agentActionLog": {
+				"title": "Prowadź dziennik działań agenta",
+				"description": "Lokalny plik wymienia każde wywołanie, nigdy wpisanego tekstu ani treści stron.",
+				"keywords": "agent dziennik historia audyt działania odtwarzanie"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Zawsze dozwolone",
 				"description": "Na tych witrynach agenci działają bez pytania.",
@@ -1061,6 +1066,7 @@
 		"showFolder": "Pokaż folder pobierania",
 		"clearFinished": "Wyczyść zakończone pobierania",
 		"dragFile": "Przeciągnij plik",
+		"showInFinder": "Pokaż w Finderze",
 		"announceDone": "Pobrano {filename}",
 		"announceFailed": "Nie udało się pobrać {filename}"
 	},
