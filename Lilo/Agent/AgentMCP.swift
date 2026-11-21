@@ -145,6 +145,13 @@ enum AgentMCP {
             // Cancelled once the call ends, so it stops holding the call's result.
             var timer: Task<Void, Never>?
             defer { timer?.cancel() }
+            let record = { (ok: Bool, code: String?) in
+                guard control.context?.settingsStore?.get(AgentActionLog.settingKey) != "false", AgentTools.toolNames.contains(name) else { return }
+                control.actionLog.record(
+                    tool: name, arguments: arguments, session: session, host: control.actionHost(arguments, session: session),
+                    ok: ok, code: code, possibleCommit: sent.write, startedAt: startedAt
+                )
+            }
             do {
                 let content = try await withTaskCancellationHandler {
                     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[AgentContent], Error>) in
@@ -167,9 +174,11 @@ enum AgentMCP {
                 } onCancel: {
                     work.cancel()
                 }
+                record(true, nil)
                 return result(id: id, ["content": (warning.map(AgentContent.text) + content).map(\.json)])
             } catch {
                 let code = (error as? AgentToolError)?.code
+                record(false, code)
                 let commit = sent.write ? ["It may have reached the site already: read the page or the data back before trying again, or it may happen twice."] : []
                 let text = (warning + [(code.map { "[\($0)] " } ?? "") + error.localizedDescription] + commit).joined(separator: "\n")
                 var reply: [String: Any] = ["content": [AgentContent.text(text).json], "isError": true]

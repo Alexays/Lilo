@@ -492,6 +492,11 @@
 				"description": "Der Agent wartet auf deine Antwort.",
 				"keywords": "agent erlaubnis bestätigen zahlung kauf bestellung löschen senden veröffentlichen"
 			},
+			"agentActionLog": {
+				"title": "Protokoll der Agentenaktionen führen",
+				"description": "Eine lokale Datei listet jeden Aufruf, nie eingegebenen Text oder Seiteninhalt.",
+				"keywords": "agent protokoll verlauf audit aktionen wiedergabe"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Immer erlaubt",
 				"description": "Auf diesen Websites handeln Agenten ohne Nachfrage.",
