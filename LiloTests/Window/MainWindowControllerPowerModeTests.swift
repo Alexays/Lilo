@@ -29,7 +29,7 @@ final class MainWindowControllerPowerModeTests: XCTestCase {
         factory.dropWarmPool()
         lifecycle.onForegrounded?()
         // Scheduled after any rebuild the activation could have asked for, so it lands after it too.
-        let witness = factory.createDataStore(persistent: false, identifier: nil)
+        let witness = factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString)
         factory.rearmWarmPool(dataStore: witness, profileId: nil)
         let witnessed = await pollUntil { factory.test_warmPoolCount > 0 }
         XCTAssertTrue(witnessed)

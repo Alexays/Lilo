@@ -122,17 +122,24 @@
   let lastThemeVars: Record<string, string> = {};
   let sidebarOverlayHideTimeout: ReturnType<typeof setTimeout> | null = null;
   const sidebarResizeFrame = createFrameScheduler();
-  // The narrowest sidebar whose top line holds every button whole; Swift's range keeps the lowest of them.
-  // With the address hidden the line also holds the page's overflow button.
-  const sidebarMinWidth = $derived(getTabPosition() === "left" && !isAddressVisible() ? 215 : 203);
+  // The narrowest sidebar whose top line holds every button whole beside the lights; narrower, the history
+  // buttons give way (Sidebar.svelte). With the address hidden the line also holds the page's overflow button.
+  const NARROW_SIDEBAR_WIDTH = 203;
+  const sidebarMinWidth = $derived(getTabPosition() === "left" && !isAddressVisible() ? 215 : NARROW_SIDEBAR_WIDTH);
+  // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
+  const SIDEBAR_RAIL_THRESHOLD = 150;
+  const SIDEBAR_RAIL_WIDTH = 40;
+  const SIDEBAR_MAX_WIDTH = 480;
 
   // What the resize handle reports to VoiceOver, read from the stylesheet when it takes focus.
   let handleWidth = $state(0);
 
-  // A width kept from a roomier layout widens to the new one's minimum.
+  // A width a roomier layout kept, between the narrow range and this layout's minimum, widens to the
+  // minimum; inside the narrow range the history buttons give way and it holds.
   $effect(() => {
     const root = document.documentElement;
-    if (!(parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width")) < sidebarMinWidth)) return;
+    const width = parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width"));
+    if (!(width >= NARROW_SIDEBAR_WIDTH && width < sidebarMinWidth)) return;
     root.style.setProperty("--sidebar-width", `${sidebarMinWidth}px`);
     handleWidth = sidebarMinWidth;
     chromeActions.sidebarResized(sidebarMinWidth);
@@ -149,17 +156,13 @@
   });
   let isSidebarResizing = $state(false);
 
-  // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
-  const SIDEBAR_RAIL_THRESHOLD = 150;
-  const SIDEBAR_RAIL_WIDTH = 40;
-  const SIDEBAR_MAX_WIDTH = 480;
-
-  // The arrows move the edge they point to, 8 px a step, inside the range a drag keeps.
+  // The arrows move the edge they point to, 8 px a step, inside the range a drag keeps outside the rail:
+  // they stop at the detent rather than fold, which would take the focused handle away.
   function resizeWithKeys(e: KeyboardEvent) {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     e.preventDefault();
     const grow = (e.key === "ArrowRight") !== (getTabPosition() === "right");
-    const width = Math.max(sidebarMinWidth, Math.min(SIDEBAR_MAX_WIDTH, handleWidth + (grow ? 8 : -8)));
+    const width = Math.max(SIDEBAR_RAIL_THRESHOLD, Math.min(SIDEBAR_MAX_WIDTH, handleWidth + (grow ? 8 : -8)));
     if (width === handleWidth) return;
     handleWidth = width;
     document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
@@ -304,7 +307,7 @@
       }
       setSidebarRail(false);
       // Out of the rail, the sidebar comes back at its width, and grows once the drag goes past it.
-      scheduleSidebarWidth(Math.max(sidebarMinWidth, Math.min(SIDEBAR_MAX_WIDTH, startRail ? Math.max(startWidth, width) : width)));
+      scheduleSidebarWidth(Math.min(SIDEBAR_MAX_WIDTH, startRail ? Math.max(startWidth, width) : width));
     }
 
     function onUp() {
@@ -471,7 +474,7 @@
         role="separator"
         aria-orientation="vertical"
         aria-label={t("sidebar.resize")}
-        aria-valuemin={sidebarMinWidth}
+        aria-valuemin={SIDEBAR_RAIL_THRESHOLD}
         aria-valuemax={SIDEBAR_MAX_WIDTH}
         aria-valuenow={handleWidth || undefined}
         tabindex="0"
