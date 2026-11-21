@@ -211,7 +211,7 @@ export async function installFakeHost(
 			return { ...layout, first, second };
 		}
 
-		// Mirrors SpaceTab.unsplitTab plus the repair that dissolves a split under two panes.
+		// Mirrors MainWindowController.unsplitTab plus the repair that dissolves a split under two panes.
 		function unsplitTab(tabId: string): void {
 			const spaceId = findTabSpace(tabId);
 			const folders = spaceId ? (state.foldersBySpace?.[spaceId] ?? []) : [];
@@ -220,6 +220,12 @@ export async function installFakeHost(
 			);
 			if (!spaceId || !folder?.splitLayout) return;
 			const layout = folder.splitLayout;
+			// The pane beside the leaving one takes the focus, so the rest of the split stays shown.
+			const panes = paneIds(layout);
+			if (state.activeTabBySpace[spaceId] === tabId) {
+				const rest = panes.filter((id) => id !== tabId);
+				state.activeTabBySpace[spaceId] = rest[Math.min(panes.indexOf(tabId), rest.length - 1)];
+			}
 			const kept = removePane(layout, tabId);
 			const items = itemsOf(spaceId);
 			const folderItem = items.find((i) => i.itemId === folder.id);

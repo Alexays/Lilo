@@ -610,22 +610,7 @@ export const startDemo = async (
         }
       },
     ],
-    [
-      "maximizeSplitPane",
-      () => {
-        const { activeTabId, splitIds } = host.snapshot();
-
-        for (const tabId of splitIds) {
-          if (tabId !== activeTabId) {
-            host.dispatch("unsplitTab", { tabId });
-          }
-        }
-
-        if (activeTabId) {
-          host.dispatch("switchTab", { id: activeTabId });
-        }
-      },
-    ],
+    ["maximizeSplitPane", () => host.dispatch("closeSplitView", {})],
     [
       "mute",
       () => {
