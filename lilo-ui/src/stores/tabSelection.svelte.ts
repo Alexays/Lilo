@@ -4,7 +4,7 @@ import { getActiveSpaceId } from "./spaces.svelte";
 
 const EMPTY: ReadonlySet<string> = new Set();
 
-let _spaceId: string | null = null;
+let _spaceId = $state<string | null>(null);
 let _ids = $state.raw<ReadonlySet<string>>(EMPTY);
 let _anchor: string | null = null;
 
