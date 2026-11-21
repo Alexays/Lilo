@@ -353,14 +353,16 @@
   });
 
   // In a split, the corners of the pane that are corners of the whole group go flat against the
-  // chrome, as the native panes' do; the pane shares are rounded to 0.001 by the host.
-  const inSplit = $derived(getSplitPanes().some((pane) => pane.tabId === tabId));
-  const EDGE = 0.001;
+  // chrome, as the native panes' do. The group sits inside a margin, so its edges are the panes'
+  // extremes, not 0 and 1; each share is rounded to 0.001 by the host, hence the tolerance.
   const flatCorners = $derived.by(() => {
-    const none = { tl: false, tr: false, bl: false, br: false };
-    if (!inSplit) return none;
-    const left = frame.x < EDGE, right = frame.x + frame.width > 1 - EDGE;
-    const top = frame.y < EDGE, bottom = frame.y + frame.height > 1 - EDGE;
+    const panes = getSplitPanes();
+    if (!panes.some((pane) => pane.tabId === tabId)) return { tl: false, tr: false, bl: false, br: false };
+    const near = (a: number, b: number) => Math.abs(a - b) < 0.0025;
+    const left = near(frame.x, Math.min(...panes.map((pane) => pane.x)));
+    const top = near(frame.y, Math.min(...panes.map((pane) => pane.y)));
+    const right = near(frame.x + frame.width, Math.max(...panes.map((pane) => pane.x + pane.width)));
+    const bottom = near(frame.y + frame.height, Math.max(...panes.map((pane) => pane.y + pane.height)));
     return { tl: left && top, tr: right && top, bl: left && bottom, br: right && bottom };
   });
 
