@@ -299,7 +299,7 @@ final class SplitPaneHandleView: NSView {
     func setRevealed(_ revealed: Bool) {
         guard revealed != self.revealed else { return }
         self.revealed = revealed
-        window?.invalidateCursorRects(for: self)
+        unsafe window?.invalidateCursorRects(for: self)
         // A fade, so Reduce motion keeps it; a plain alphaValue set on a layer-backed view would not animate.
         NSAnimationContext.runAnimationGroup { context in
             context.duration = Self.fadeDuration
