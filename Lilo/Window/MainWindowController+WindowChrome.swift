@@ -164,8 +164,8 @@ extension MainWindowController {
         bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": sidebarVisible, "width": sidebarExpandedWidth])
     }
 
-    /// The folded rail and a narrowed sidebar alike leave the lights where a hidden sidebar does: the toolbar row, or nowhere.
-    var railReplacesSidebar: Bool { (sidebarRail || sidebarWidth < Self.narrowSidebarWidth) && tabLayout.position.isVertical }
+    /// The folded rail leaves the lights where a hidden sidebar does: the toolbar row, or nowhere.
+    var railReplacesSidebar: Bool { sidebarRail && tabLayout.position.isVertical }
 
     /// A floating overlay covers the lights' top-left corner only when it comes from the left or the top.
     func areTrafficLightsVisible() -> Bool {
@@ -226,11 +226,11 @@ extension MainWindowController {
         let overSidebar = !window.styleMask.contains(.fullScreen) && ((tabLayout.position == .left && sidebarVisible && !railReplacesSidebar) || overlayCoversLights)
         let compactBar = !window.styleMask.contains(.fullScreen) && sidebarVisible && hasCompactPageToolbar
         let corner = (overSidebar && tabLayout.shown(toolbarVisible: toolbarVisible) == .default) || compactBar
-        // Docked on the left past the narrow range, the rail or the narrowed sidebar takes the sidebar's place:
-        // the lights move onto the toolbar row, past its column, as far in as they sit over the sidebar.
-        let rail = railReplacesSidebar && tabLayout.position == .left
+        // Docked on the left, the rail takes the sidebar's place: the lights move onto the toolbar row,
+        // the rail's column plus the same inset they keep over the sidebar.
+        let rail = sidebarRail && tabLayout.position == .left
         let inset: CGFloat? = overSidebar || compactBar ? Self.trafficLightsInset
-            : rail ? (sidebarRail ? Self.sidebarRailWidth : sidebarWidth) + Self.contentInset + Self.trafficLightsInset
+            : rail ? Self.sidebarRailWidth + Self.contentInset + Self.trafficLightsInset
             : nil
         trafficLightAnimator.place(window: window, inset: inset, square: corner)
     }

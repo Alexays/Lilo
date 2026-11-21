@@ -92,10 +92,8 @@ final class MainWindowController: NSWindowController {
     nonisolated static let logger = Logger(liloCategory: "MainWindowController")
 
     static let defaultSidebarWidth: CGFloat = 260
-    /// Continuous down to the rail: past `narrowSidebarWidth` the traffic lights take the toolbar row (as on
-    /// the rail) so the header keeps its line whole while the tab rows' titles truncate to nothing.
-    static let sidebarWidthRange: ClosedRange<CGFloat> = sidebarRailWidth...480
-    static let narrowSidebarWidth: CGFloat = 203
+    /// Down to the rail's detent: the chrome folds a narrower sidebar to the rail.
+    static let sidebarWidthRange: ClosedRange<CGFloat> = 150...480
     /// The icon rail's width, the content inset aside: its icons' column.
     static let sidebarRailWidth: CGFloat = 40
     static let contentInset: CGFloat = 8

@@ -29,6 +29,8 @@ test("dragging the edge under the detent folds the sidebar to its rail, and back
 	await expect(page.locator("#chrome-root > .sidebar")).toHaveClass(/rail-folded/);
 	expect(await sidebarWidth(page)).toBe("300px");
 	expect((await sentCommands(page)).filter((c) => c.action === "setSidebarRail").at(-1)?.payload).toEqual({ rail: true });
+	// The host keeps the width the fold remembers, not one the drag passed through on its way.
+	expect((await sentCommands(page)).filter((c) => c.action === "sidebarResized").at(-1)?.payload).toEqual({ width: 300 });
 
 	// Every icon is named for VoiceOver and the active one is marked.
 	const labels = await rail.locator(".rail-item[data-tab-id]").evaluateAll((items) => items.map((item) => item.getAttribute("aria-label")));
