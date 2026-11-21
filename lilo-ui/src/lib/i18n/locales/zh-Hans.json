@@ -492,6 +492,11 @@
 				"description": "智能体会等待你的答复。",
 				"keywords": "智能体 批准 确认 付款 购买 订单 删除 发送 发布"
 			},
+			"agentActionLog": {
+				"title": "记录智能体的操作",
+				"description": "本地文件逐条列出每次调用,绝不包含输入的文字或页面内容。",
+				"keywords": "智能体 日志 历史 审计 操作 回放"
+			},
 			"agentAlwaysAllowed": {
 				"title": "始终允许",
 				"description": "智能体在这些网站上操作时无需询问。",
@@ -1055,6 +1060,7 @@
 		"showFolder": "显示下载文件夹",
 		"clearFinished": "清除已完成的下载",
 		"dragFile": "拖移文件",
+		"showInFinder": "在“访达”中显示",
 		"announceDone": "{filename} 已下载",
 		"announceFailed": "{filename} 下载失败"
 	},
