@@ -206,16 +206,18 @@
 			"more": "{count} de plus. Utilisez la recherche pour affiner."
 		},
 		"items": {
+			"agentInstances": {
+				"title": "Agents",
+				"description": "Les agents du registre et vos propres commandes que la barre de question propose ; un agent désactivé quitte le sélecteur.",
+				"keywords": "agents acp registre commande personnalisée fournisseur instance activer désactiver sélecteur"
+			},
 			"customAgent": {
-				"title": "Agent personnalisé",
-				"description": "Lancez un programme à vous comme agent, à côté de ceux du registre.",
-				"keywords": "agent personnalisé commande acp local script environnement variables arguments",
 				"name": "Nom",
 				"namePlaceholder": "Mon agent",
 				"executable": "Commande",
 				"arguments": "Arguments, un par ligne",
 				"environment": "Environnement, NOM=valeur par ligne",
-				"note": "La commande est le chemin complet d'un fichier exécutable qui parle l'Agent Client Protocol sur l'entrée et la sortie standard. Elle rejoint la liste des agents une fois enregistrée ; vider la commande la retire."
+				"note": "La commande est le chemin complet d'un fichier exécutable qui parle l'Agent Client Protocol sur l'entrée et la sortie standard."
 			},
 			"appIcon": {
 				"title": "Icône de l'app",
@@ -766,7 +768,27 @@
 			"sidebar": "Dans la barre latérale",
 			"floating": "Fenêtre flottante"
 		},
-		"terminalImportCaption": "L'import accepte un préréglage de couleurs iTerm2 (.itermcolors), un thème de couleurs VS Code (.json) ou un fichier de thème Ghostty."
+		"terminalImportCaption": "L'import accepte un préréglage de couleurs iTerm2 (.itermcolors), un thème de couleurs VS Code (.json) ou un fichier de thème Ghostty.",
+		"agentInstances": {
+			"registry": "Registre",
+			"command": "Commande",
+			"add": "Ajouter un agent",
+			"hint": "Un agent du registre que la liste ne nomme pas apparaît toujours dans le sélecteur ; ajoutez-le ici pour le désactiver.",
+			"menu": "Actions pour {name}",
+			"edit": "Modifier"
+		},
+		"agentSheet": {
+			"addTitle": "Ajouter un agent",
+			"editTitle": "Modifier l'agent",
+			"registryTab": "Du registre",
+			"commandTab": "Commande personnalisée",
+			"sourceLabel": "Source de l'agent",
+			"searchPlaceholder": "Rechercher des agents",
+			"add": "Ajouter",
+			"added": "Ajouté",
+			"loading": "Chargement du registre…",
+			"none": "Aucun agent ne correspond."
+		}
 	},
 	"nav": {
 		"navigationControls": "Commandes de navigation",

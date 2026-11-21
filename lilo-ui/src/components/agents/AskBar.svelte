@@ -6,6 +6,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { dismissable } from "../../lib/actions/dismissable";
   import { conversationActions } from "./conversationActions";
+  import { disabledAgentIds, parseAgentInstances } from "../../lib/agentInstances";
   import { t } from "../../lib/i18n/state.svelte";
   import { formatShortcut } from "../../lib/inputParser";
   import {
@@ -82,8 +83,15 @@
     conversationActions.loadCatalog(true);
   });
 
+  // The agents the picker offers: every catalog agent an `agentAcpInstances` entry does not disable.
+  // A disabled one keeps running where a conversation already uses it; it only leaves the picker.
+  const enabledAgents = $derived.by(() => {
+    const disabled = disabledAgentIds(parseAgentInstances(getSetting("agentAcpInstances", "[]")));
+    return getAgents().filter((agent) => !disabled.has(agent.id));
+  });
+
   $effect(() => {
-    const agents = getAgents();
+    const agents = enabledAgents;
     if (agents.length === 0 || agents.some((agent) => agent.id === agentId)) return;
     const last = getSetting("agentsLastAgent", "");
     agentId = agents.some((agent) => agent.id === last) ? last : agents[0].id;
@@ -107,7 +115,7 @@
   });
   // Featured agents and the user's own first, the rest of the registry under their own heading.
   const agentOptions = $derived.by(() => {
-    const agents = getAgents();
+    const agents = enabledAgents;
     const featured = agents.filter((candidate) => candidate.featured);
     const rest = agents.filter((candidate) => !candidate.featured);
     const grouped = featured.length > 0 && rest.length > 0;

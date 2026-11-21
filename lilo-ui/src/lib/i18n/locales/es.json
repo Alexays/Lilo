@@ -206,16 +206,18 @@
 			"more": "{count} más. Busca para reducir la lista."
 		},
 		"items": {
+			"agentInstances": {
+				"title": "Agentes",
+				"description": "Agentes del registro y comandos propios que ofrece la barra de preguntas; al desactivar uno, sale del selector.",
+				"keywords": "agentes acp registro comando propio proveedor instancia activar desactivar selector"
+			},
 			"customAgent": {
-				"title": "Agente personalizado",
-				"description": "Inicia un programa propio como agente, junto a los del registro.",
-				"keywords": "agente personalizado comando acp local script entorno variables argumentos",
 				"name": "Nombre",
 				"namePlaceholder": "Mi agente",
 				"executable": "Comando",
 				"arguments": "Argumentos, uno por línea",
 				"environment": "Entorno, NOMBRE=valor por línea",
-				"note": "El comando es la ruta completa de un archivo ejecutable que habla el Agent Client Protocol por la entrada y la salida estándar. Se une a la lista de agentes al guardarse; vaciarlo lo quita."
+				"note": "El comando es la ruta completa de un archivo ejecutable que habla el Agent Client Protocol por la entrada y la salida estándar."
 			},
 			"appIcon": {
 				"title": "Icono de la app",
@@ -766,7 +768,27 @@
 			"sidebar": "En la barra lateral",
 			"floating": "Ventana flotante"
 		},
-		"terminalImportCaption": "Importar acepta un preajuste de colores de iTerm2 (.itermcolors), un tema de colores de VS Code (.json) o un archivo de tema de Ghostty."
+		"terminalImportCaption": "Importar acepta un preajuste de colores de iTerm2 (.itermcolors), un tema de colores de VS Code (.json) o un archivo de tema de Ghostty.",
+		"agentInstances": {
+			"registry": "Registro",
+			"command": "Comando",
+			"add": "Añadir agente",
+			"hint": "Un agente del registro que la lista no nombra sigue apareciendo en el selector; añádelo aquí para desactivarlo.",
+			"menu": "Acciones para {name}",
+			"edit": "Editar"
+		},
+		"agentSheet": {
+			"addTitle": "Añadir agente",
+			"editTitle": "Editar agente",
+			"registryTab": "Del registro",
+			"commandTab": "Comando personalizado",
+			"sourceLabel": "Origen del agente",
+			"searchPlaceholder": "Buscar agentes",
+			"add": "Añadir",
+			"added": "Añadido",
+			"loading": "Cargando el registro…",
+			"none": "Ningún agente coincide."
+		}
 	},
 	"nav": {
 		"navigationControls": "Controles de navegación",

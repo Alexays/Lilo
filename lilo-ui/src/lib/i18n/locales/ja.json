@@ -206,16 +206,18 @@
 			"more": "ほかに{count}件あります。検索して絞り込んでください。"
 		},
 		"items": {
+			"agentInstances": {
+				"title": "エージェント",
+				"description": "質問バーが提供するレジストリのエージェントと独自のコマンドです。オフにしたものはピッカーから外れます。",
+				"keywords": "エージェント acp レジストリ カスタム コマンド プロバイダ インスタンス 有効 無効 ピッカー"
+			},
 			"customAgent": {
-				"title": "カスタムエージェント",
-				"description": "レジストリのエージェントと並べて、自分のプログラムをエージェントとして起動します。",
-				"keywords": "カスタム エージェント コマンド acp ローカル スクリプト 環境 変数 引数",
 				"name": "名前",
 				"namePlaceholder": "マイエージェント",
 				"executable": "コマンド",
 				"arguments": "引数（1行に1つ）",
 				"environment": "環境（1行に NAME=値）",
-				"note": "コマンドは、標準入出力で Agent Client Protocol を話す実行可能ファイルのフルパスです。保存するとエージェントの一覧に加わり、コマンドを空にすると取り除かれます。"
+				"note": "コマンドは、標準入出力で Agent Client Protocol を話す実行可能ファイルのフルパスです。"
 			},
 			"appIcon": {
 				"title": "アプリアイコン",
@@ -766,7 +768,27 @@
 			"sidebar": "サイドバー内",
 			"floating": "フローティングウインドウ"
 		},
-		"terminalImportCaption": "読み込めるのは iTerm2 のカラープリセット (.itermcolors)、VS Code のカラーテーマ (.json)、Ghostty のテーマファイルです。"
+		"terminalImportCaption": "読み込めるのは iTerm2 のカラープリセット (.itermcolors)、VS Code のカラーテーマ (.json)、Ghostty のテーマファイルです。",
+		"agentInstances": {
+			"registry": "レジストリ",
+			"command": "コマンド",
+			"add": "エージェントを追加",
+			"hint": "リストに載っていないレジストリのエージェントもピッカーには表示されます。オフにするにはここに追加します。",
+			"menu": "{name} のアクション",
+			"edit": "編集"
+		},
+		"agentSheet": {
+			"addTitle": "エージェントを追加",
+			"editTitle": "エージェントを編集",
+			"registryTab": "レジストリから",
+			"commandTab": "カスタムコマンド",
+			"sourceLabel": "エージェントのソース",
+			"searchPlaceholder": "エージェントを検索",
+			"add": "追加",
+			"added": "追加済み",
+			"loading": "レジストリを読み込み中…",
+			"none": "一致するエージェントがありません。"
+		}
 	},
 	"nav": {
 		"navigationControls": "ナビゲーションコントロール",

@@ -206,16 +206,18 @@
 			"more": "{count} tane daha. Listeyi daraltmak için arayın."
 		},
 		"items": {
+			"agentInstances": {
+				"title": "Ajanlar",
+				"description": "Soru çubuğunun sunduğu kayıt ajanları ve kendi komutlarınız; kapatılan seçiciden çıkar.",
+				"keywords": "ajanlar acp kayıt özel komut sağlayıcı örnek etkinleştir devre dışı seçici"
+			},
 			"customAgent": {
-				"title": "Özel ajan",
-				"description": "Kayıt defterindekilerin yanında, kendi programınızı ajan olarak başlatın.",
-				"keywords": "özel ajan komut acp yerel betik ortam değişkenler argümanlar",
 				"name": "Ad",
 				"namePlaceholder": "Ajanım",
 				"executable": "Komut",
 				"arguments": "Argümanlar, her satırda bir tane",
 				"environment": "Ortam, her satırda AD=değer",
-				"note": "Komut, Agent Client Protocol'ü standart girdi ve çıktı üzerinden konuşan çalıştırılabilir bir dosyanın tam yoludur. Kaydedilince ajan listesine katılır; komutu boşaltmak onu kaldırır."
+				"note": "Komut, Agent Client Protocol'ü standart girdi ve çıktı üzerinden konuşan çalıştırılabilir bir dosyanın tam yoludur."
 			},
 			"appIcon": {
 				"title": "Uygulama simgesi",
@@ -766,7 +768,27 @@
 			"sidebar": "Kenar çubuğunda",
 			"floating": "Yüzen pencere"
 		},
-		"terminalImportCaption": "İçe aktarma bir iTerm2 renk ön ayarı (.itermcolors), bir VS Code renk teması (.json) veya bir Ghostty tema dosyası alır."
+		"terminalImportCaption": "İçe aktarma bir iTerm2 renk ön ayarı (.itermcolors), bir VS Code renk teması (.json) veya bir Ghostty tema dosyası alır.",
+		"agentInstances": {
+			"registry": "Kayıt",
+			"command": "Komut",
+			"add": "Ajan Ekle",
+			"hint": "Listenin adlandırmadığı bir kayıt ajanı yine seçicide görünür; kapatmak için buraya ekleyin.",
+			"menu": "{name} için eylemler",
+			"edit": "Düzenle"
+		},
+		"agentSheet": {
+			"addTitle": "Ajan Ekle",
+			"editTitle": "Ajanı Düzenle",
+			"registryTab": "Kayıttan",
+			"commandTab": "Özel Komut",
+			"sourceLabel": "Ajan kaynağı",
+			"searchPlaceholder": "Ajan ara",
+			"add": "Ekle",
+			"added": "Eklendi",
+			"loading": "Kayıt yükleniyor…",
+			"none": "Eşleşen ajan yok."
+		}
 	},
 	"nav": {
 		"navigationControls": "Gezinme denetimleri",

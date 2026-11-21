@@ -206,16 +206,18 @@
 			"more": "Nog {count}. Zoek om de lijst te verkleinen."
 		},
 		"items": {
+			"agentInstances": {
+				"title": "Agenten",
+				"description": "Agents uit het register en eigen opdrachten die de vraagbalk aanbiedt; een uitgeschakelde verdwijnt uit de kiezer.",
+				"keywords": "agenten acp register eigen opdracht provider instantie inschakelen uitschakelen kiezer"
+			},
 			"customAgent": {
-				"title": "Eigen agent",
-				"description": "Start een eigen programma als agent, naast die van het register.",
-				"keywords": "eigen agent opdracht acp lokaal script omgeving variabelen argumenten",
 				"name": "Naam",
 				"namePlaceholder": "Mijn agent",
 				"executable": "Opdracht",
 				"arguments": "Argumenten, één per regel",
 				"environment": "Omgeving, NAAM=waarde per regel",
-				"note": "De opdracht is het volledige pad van een uitvoerbaar bestand dat het Agent Client Protocol spreekt via standaardinvoer en -uitvoer. Het komt in de agentenlijst zodra het is bewaard; leegmaken haalt het weg."
+				"note": "De opdracht is het volledige pad van een uitvoerbaar bestand dat het Agent Client Protocol spreekt via standaardinvoer en -uitvoer."
 			},
 			"appIcon": {
 				"title": "Appsymbool",
@@ -766,7 +768,27 @@
 			"sidebar": "In de zijbalk",
 			"floating": "Zwevend venster"
 		},
-		"terminalImportCaption": "Importeren neemt een iTerm2-kleurvoorinstelling (.itermcolors), een VS Code-kleurthema (.json) of een Ghostty-themabestand."
+		"terminalImportCaption": "Importeren neemt een iTerm2-kleurvoorinstelling (.itermcolors), een VS Code-kleurthema (.json) of een Ghostty-themabestand.",
+		"agentInstances": {
+			"registry": "Register",
+			"command": "Opdracht",
+			"add": "Agent toevoegen",
+			"hint": "Een agent uit het register die de lijst niet noemt, verschijnt nog steeds in de kiezer; voeg hem hier toe om hem uit te schakelen.",
+			"menu": "Acties voor {name}",
+			"edit": "Bewerk"
+		},
+		"agentSheet": {
+			"addTitle": "Agent toevoegen",
+			"editTitle": "Agent bewerken",
+			"registryTab": "Uit het register",
+			"commandTab": "Eigen opdracht",
+			"sourceLabel": "Agentbron",
+			"searchPlaceholder": "Zoek agenten",
+			"add": "Voeg toe",
+			"added": "Toegevoegd",
+			"loading": "Register wordt geladen…",
+			"none": "Geen agenten gevonden."
+		}
 	},
 	"nav": {
 		"navigationControls": "Navigatieknoppen",

@@ -206,16 +206,18 @@
 			"more": "{count}개 더 있습니다. 검색으로 목록을 좁혀 보세요."
 		},
 		"items": {
+			"agentInstances": {
+				"title": "에이전트",
+				"description": "질문 바가 제공하는 레지스트리 에이전트와 직접 만든 명령입니다. 끈 것은 선택기에서 사라집니다.",
+				"keywords": "에이전트 acp 레지스트리 사용자 지정 명령 제공자 인스턴스 활성화 비활성화 선택기"
+			},
 			"customAgent": {
-				"title": "사용자 지정 에이전트",
-				"description": "레지스트리의 에이전트 옆에 직접 만든 프로그램을 에이전트로 실행합니다.",
-				"keywords": "사용자 지정 에이전트 명령 acp 로컬 스크립트 환경 변수 인자",
 				"name": "이름",
 				"namePlaceholder": "내 에이전트",
 				"executable": "명령",
 				"arguments": "인자, 한 줄에 하나",
 				"environment": "환경, 한 줄에 NAME=값",
-				"note": "명령은 표준 입출력으로 Agent Client Protocol을 사용하는 실행 파일의 전체 경로입니다. 저장하면 에이전트 목록에 추가되고, 명령을 비우면 제거됩니다."
+				"note": "명령은 표준 입출력으로 Agent Client Protocol을 사용하는 실행 파일의 전체 경로입니다."
 			},
 			"appIcon": {
 				"title": "앱 아이콘",
@@ -766,7 +768,27 @@
 			"sidebar": "사이드바에",
 			"floating": "플로팅 윈도우"
 		},
-		"terminalImportCaption": "iTerm2 색상 프리셋(.itermcolors), VS Code 색상 테마(.json), Ghostty 테마 파일을 가져올 수 있습니다."
+		"terminalImportCaption": "iTerm2 색상 프리셋(.itermcolors), VS Code 색상 테마(.json), Ghostty 테마 파일을 가져올 수 있습니다.",
+		"agentInstances": {
+			"registry": "레지스트리",
+			"command": "명령",
+			"add": "에이전트 추가",
+			"hint": "목록에 없는 레지스트리 에이전트도 선택기에 표시됩니다. 끄려면 여기에 추가하세요.",
+			"menu": "{name} 동작",
+			"edit": "편집"
+		},
+		"agentSheet": {
+			"addTitle": "에이전트 추가",
+			"editTitle": "에이전트 편집",
+			"registryTab": "레지스트리에서",
+			"commandTab": "사용자 지정 명령",
+			"sourceLabel": "에이전트 소스",
+			"searchPlaceholder": "에이전트 검색",
+			"add": "추가",
+			"added": "추가됨",
+			"loading": "레지스트리를 불러오는 중…",
+			"none": "일치하는 에이전트가 없습니다."
+		}
 	},
 	"nav": {
 		"navigationControls": "탐색 제어",

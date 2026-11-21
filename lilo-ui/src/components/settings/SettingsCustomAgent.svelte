@@ -1,25 +1,16 @@
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
-  import { getSetting, setSetting } from "../../stores/settings.svelte";
+  import type { CommandFields } from "../../lib/agentInstances";
   import UiTextField from "../ui/UiTextField.svelte";
 
-  type Field = "name" | "executable" | "arguments" | "environment";
+  type Field = keyof CommandFields;
 
-  function read(): Record<Field, string> {
-    try {
-      return { name: "", executable: "", arguments: "", environment: "", ...JSON.parse(getSetting("customAgent", "{}")) };
-    } catch {
-      return { name: "", executable: "", arguments: "", environment: "" };
-    }
-  }
+  /** The form's fields, edited in place by the sheet that hosts it. */
+  let { values = $bindable() }: { values: CommandFields } = $props();
 
-  // Saved whole when a field is left; an empty command removes the agent.
   function save(field: Field, value: string): void {
-    const next = { ...read(), [field]: value.trim() };
-    setSetting("customAgent", next.executable ? JSON.stringify(next) : "");
+    values = { ...values, [field]: value.trim() };
   }
-
-  const values = $derived(read());
 </script>
 
 <!-- A program Lilo starts as an agent next to the registry's: one text per field, arguments and variables one per line. -->
