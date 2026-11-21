@@ -98,3 +98,27 @@ test("with the address hidden, a too narrow sidebar widens to the line's minimum
 	await page.keyboard.press("Escape");
 	await expect(row).toHaveCount(0);
 });
+
+// The continuous narrow range: the keyboard resize runs under the lights' threshold instead of
+// bouncing back at the minimum, the header drops its spacer, and the tab rows shed their titles.
+test("in the continuous narrow range, the header drops its spacer and the tab rows shed their titles", async ({ page }) => {
+	await bootNarrow(page, "tabs", 203);
+	const handle = page.locator(".sidebar-resize-handle");
+	const narrow = () => page.evaluate(() => document.documentElement.dataset.sidebarNarrow !== undefined);
+	const sidebarWidth = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width"));
+
+	await handle.focus();
+	// ~160 pt: five 8 px steps down from 203. The lights leave the header (their spacer is gone)
+	// and the tab rows lose their close/sound buttons, but the titles still read.
+	for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
+	await expect.poll(sidebarWidth).toBe("163px");
+	await expect.poll(narrow).toBe(true);
+	await expect(page.locator(".sidebar-header .header-spacer")).toHaveCSS("width", "8px");
+	await expect(page.locator(".tab-item .tab-title").first()).toBeVisible();
+	await expect(page.locator(".tab-item .tab-actions").first()).toBeHidden();
+
+	// ~100 pt (seven more steps): the titles go too, and the width still holds above the rail.
+	for (let i = 0; i < 7; i++) await page.keyboard.press("ArrowLeft");
+	await expect.poll(sidebarWidth).toBe("107px");
+	await expect(page.locator(".tab-item .tab-title").first()).toBeHidden();
+});
