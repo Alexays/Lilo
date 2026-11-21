@@ -155,3 +155,13 @@ test("away from its page, a pinned tab shows its name, a slash and the page, and
 
 	expect((await sentCommands(page)).some((command) => command.action === "returnTabHome" && command.payload.id === "tab-home")).toBe(true);
 });
+
+test("Command-click adds a pinned tab to the selection and removes it again", async ({ page }) => {
+	await bootWithHome(page);
+	const other = page.locator('.tab-item:not([data-tab-id="tab-home"])').first();
+	await other.click();
+	await page.locator(HOME).click({ modifiers: ["Meta"] });
+	await expect(page.locator(HOME)).toHaveClass(/selected/);
+	await page.locator(HOME).click({ modifiers: ["Meta"] });
+	await expect(page.locator(HOME)).not.toHaveClass(/selected/);
+});
