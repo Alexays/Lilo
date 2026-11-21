@@ -160,7 +160,7 @@ Three tiers run less than `make validate`, each with a time budget, so a mistake
 
 `make check BASE=<ref>` compares with another ref (default `origin/main`); without that ref it checks the whole tree. A diff with no quick check (the Makefile, scripts, the websites) prints so and leaves it to pre-push.
 `svelte-check` type-checks the whole UI in about 7 s, so it waits for `make ui-lint` in pre-push.
-`make hooks-install` enables the hooks. `git commit --no-verify` and `git push --no-verify` skip them, and CI runs the full gate either way; the hooks never skip on their own. `BASE=<ref> git push` makes pre-push compare with another ref.
+`make hooks-install` enables only the `commit-msg` hook. The pre-commit and pre-push checks are opt-in, each on its own: `make hooks-install-checks` (pre-commit) and `make hooks-install-push-checks` (pre-push, which queues on `/tmp/tsc.lock` behind other worktrees' pushes). They are off after a pull in a clone that only ran `make hooks-install`, and `git config --local --unset lilo.hooks.pre-commit` (or `lilo.hooks.pre-push`) turns one off. A quick check whose dependencies are missing or older than the lockfile is skipped with a message, never installed (`make bootstrap` installs them). `git commit --no-verify` and `git push --no-verify` skip them, and CI runs the full gate either way; the hooks never skip on their own. `BASE=<ref> git push` makes pre-push compare with another ref.
 Editing an English page of the documentation site fails `make docs-check` until its French
 translation is refreshed with `make docs-translate`, which needs Claude Code; without it, ask a
 maintainer to run it on your branch. A change to `COMPATIBILITY.md` or to an agent tool definition
@@ -358,7 +358,7 @@ and `!` before the colon for a breaking change. Types: `feat`, `fix`, `perf`, `r
 `extensions`, `agent`, `terminal`, `window`, `bridge`, `import`, `ui`.
 
 `make hooks-install` points this clone's Git `core.hooksPath` at the tracked `.githooks/`
-directory (`commit-msg`, `pre-commit` and `pre-push`; see [Tests and validation](#tests-and-validation)). It refuses when `core.hooksPath` is already set or `.git/hooks` holds a hook that
+directory (`commit-msg` runs; `pre-commit` and `pre-push` do nothing until opted in; see [Tests and validation](#tests-and-validation)). It refuses when `core.hooksPath` is already set or `.git/hooks` holds a hook that
 would stop running. The native `commit-msg` hook and CI share a shell validator for the
 header's type, syntax, lowercase scope, lowercase nonempty description and absence of trailing
 whitespace or a final period. Git's `Revert "..."` and `Reapply "..."` headers are accepted.

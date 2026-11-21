@@ -97,14 +97,14 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test check-summary-test scope-test tier-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	docs-dev docs-build docs-check docs-test docs-preview docs-deploy-check docs-deploy docs-translate docs-eval docs-lock \
-	hooks-install hooks-test lint-commit-message lint-commits \
+	hooks-install hooks-install-checks hooks-install-push-checks quick-deps hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test release-media-stage release-media-test changelog-context changelog-draft changelog-media
 
 ## List the targets
 help:
 	@awk '/^## /{d=substr($$0,4);next} d&&/^[a-z0-9-]+:/{sub(/:.*/,"");printf "  make %-20s %s\n",$$0,d} {d=""}' Makefile
 
-## Enable the tracked Git hooks for this clone
+## Enable the tracked commit-message hook for this clone (the pre-commit and pre-push checks stay off)
 hooks-install:
 	@current=$$(git config core.hooksPath || true); \
 	[ "$$current" = .githooks ] && exit 0; \
@@ -114,6 +114,14 @@ hooks-install:
 		if [ -f "$$hook" ]; then echo "$$hook would stop running; move it into .githooks first" >&2; exit 1; fi; \
 	done; \
 	git config --local core.hooksPath .githooks
+
+## Also run the quick checks before each commit (opt-in; they skip, never install, when dependencies are missing)
+hooks-install-checks: hooks-install
+	@git config --local lilo.hooks.pre-commit true
+
+## Also run validate-scope before each push (opt-in; serialized machine-wide by /tmp/tsc.lock, minutes with several worktrees)
+hooks-install-push-checks: hooks-install
+	@git config --local lilo.hooks.pre-push true
 
 ## Validate a Conventional Commit header from stdin
 lint-commit-message:
@@ -184,6 +192,14 @@ validate-scope:
 ## Run the quick checks the diff against origin/main needs, under 10 s, no builds (BASE=ref): lint and the tests beside the changed files
 check:
 	@scripts/check_tier.sh check $(BASE)
+
+# What each quick check needs installed. The tiers skip a check whose dependencies are missing or stale and never install.
+QUICK_DEPS_ui-check := $(UI_DEPS)
+QUICK_DEPS_swiftlint-changed := $(SWIFTLINT)
+QUICK_DEPS_docs-check := $(DOCS_DEPS)
+QUICK_DEPS_release-status := $(CHANGIE)
+quick-deps:
+	@echo '$(QUICK_DEPS_$(CHECK))'
 
 ## Run the pre-commit checks on the staged files: lint, generated files and Lilo.xcodeproj in sync (what the pre-commit hook runs)
 check-staged:

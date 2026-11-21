@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+# Opt-in: `make hooks-install-checks` sets lilo.hooks.pre-commit; without it this hook does nothing.
+[ "$(git config --bool lilo.hooks.pre-commit 2> /dev/null || echo false)" = true ] || exit 0
+
 # A merge's content was checked on its branches.
 if [ -f "$(git rev-parse --git-path MERGE_HEAD)" ]; then
     exit 0

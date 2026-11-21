@@ -30,10 +30,15 @@ export LILO_CHECK_TIER=$tier_name LILO_CHECK_TRIGGER=$trigger LILO_CHECK_SCOPE="
 
 logs=$(mktemp -d)
 trap 'rm -rf "$logs"' EXIT
-ran=; status=0
+ran=; skipped=; status=0
 for check in $checks; do
+    # Never install: a check whose dependencies are missing or older than the lockfile is skipped (make -q runs no recipe).
+    for dep in $(make -s --no-print-directory quick-deps CHECK="$check"); do
+        make -q -s --no-print-directory "$dep" > /dev/null 2>&1 || { skipped="$skipped $check"; continue 2; }
+    done
     ran="$ran $check"
     python3 scripts/check_summary.py run "$check" "$logs" -- make --no-print-directory "$check" || { status=1; break; }
 done
-python3 scripts/check_summary.py report ${JSON:+--json} "$logs" $ran || status=1
+[ -z "$skipped" ] || echo "$metrics_tier: skipped$skipped, dependencies missing or out of date (make bootstrap installs them)" >&2
+[ -z "$ran" ] || python3 scripts/check_summary.py report ${JSON:+--json} "$logs" $ran || status=1
 exit $status

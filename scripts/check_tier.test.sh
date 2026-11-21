@@ -28,10 +28,17 @@ cp "$ROOT"/.githooks/pre-commit "$ROOT"/.githooks/pre-push .githooks/
 cat > Makefile << 'MK'
 check check-staged:
 	@scripts/check_tier.sh $(if $(filter check-staged,$@),commit,check) $(BASE)
+# A stale stamp reinstalls like npm ci does: the real recipe empties a linked node_modules.
+quick-deps:
+	@[ "$(CHECK)" != ui-check ] || echo lilo-ui/node_modules/.package-lock.json
+lilo-ui/node_modules/.package-lock.json: package-lock.json
+	@find lilo-ui/node_modules/ -mindepth 1 -delete; touch $@
+ui-check: lilo-ui/node_modules/.package-lock.json
 ui-check swiftlint-changed docs-check release-status sync-check validate-scope:
 	@echo "$@ tier=$$LILO_CHECK_TIER trigger=$$LILO_CHECK_TRIGGER tests=$$LILO_CHECK_TESTS files=$$(echo $$LILO_CHECK_FILES)" >> "$(CURDIR)/ran"
 	@[ "$$STUB_FAIL" != "$@" ] || { echo "$@ broke"; exit 1; }
 MK
+mkdir -p lilo-ui/node_modules; echo lock > package-lock.json; touch lilo-ui/node_modules/.package-lock.json
 echo base > docs/base.md; echo a > lilo-ui/src/a.ts; echo a > Lilo/A.swift
 git add -A && git -c core.hooksPath=/dev/null commit -q -m "chore: base"
 git branch base
@@ -73,8 +80,14 @@ git checkout -q .
 
 # pre-commit: the staged files only, tests off, trigger hook; a failure blocks the commit and names the way out.
 git config core.hooksPath .githooks
-echo b >> Lilo/A.swift; echo c >> lilo-ui/src/a.ts
-git add Lilo/A.swift
+# Opt-in: with only the commit-msg hook installed, a commit and a push run no check.
+echo b >> Lilo/A.swift; git add Lilo/A.swift
+status_of 0 git commit -q -m "chore: hooks off"
+git init -q --bare "$WORK/off.git"
+status_of 0 git push -q "$WORK/off.git" HEAD:refs/heads/off
+[ ! -e ran ] || fail "a hook ran without its opt-in: $(cat ran)"
+git config lilo.hooks.pre-commit true
+echo c >> lilo-ui/src/a.ts; echo b2 >> Lilo/A.swift; git add Lilo/A.swift
 status_of 0 git commit -q -m "chore: stage swift only"
 [ "$(names)" = "swiftlint-changed sync-check " ] || fail "pre-commit ran the wrong checks: $(cat "$WORK/out")"
 echo d >> Lilo/A.swift; git add Lilo/A.swift
@@ -88,6 +101,11 @@ git checkout -q .
 # pre-push: validate-scope with the tier and trigger; a failure blocks; --no-verify and a branch deletion do not run it.
 git init -q --bare "$WORK/remote.git"
 git remote add origin "$WORK/remote.git"
+rm -f ran
+git config lilo.hooks.pre-push true
+git config --unset lilo.hooks.pre-commit
+status_of 0 git commit -q --allow-empty -m "chore: pre-commit stays off"
+[ ! -e ran ] || fail "pre-push opt-in enabled pre-commit"
 status_of 0 git push -q origin HEAD:refs/heads/one
 [ "$(ran)" = "validate-scope tier=pre-push trigger=hook tests= files=" ] || fail "pre-push"
 status_of 1 env STUB_FAIL=validate-scope git push -q origin HEAD:refs/heads/two
@@ -96,6 +114,20 @@ rm -f ran
 status_of 0 env STUB_FAIL=validate-scope git push -q --no-verify origin HEAD:refs/heads/two
 status_of 0 env STUB_FAIL=validate-scope git push -q origin :refs/heads/two
 [ ! -e ran ] || fail "--no-verify or a deletion ran validate-scope"
+
+# Never install: a symlinked shared node_modules with a lockfile newer than the stamp is left intact and ui-check is skipped.
+git config lilo.hooks.pre-commit true
+mkdir -p "$WORK/shared"; echo dep > "$WORK/shared/a"; echo dep > "$WORK/shared/b"
+rm -rf lilo-ui/node_modules; ln -s "$WORK/shared" lilo-ui/node_modules; touch -t 200001010000 "$WORK/shared/.installed"
+touch package-lock.json
+echo z >> lilo-ui/src/a.ts; echo z >> Lilo/A.swift; git add lilo-ui/src/a.ts Lilo/A.swift
+status_of 0 git commit -q -m "chore: stale install"
+[ "$(ls -A "$WORK/shared" | wc -l | tr -d ' ')" = 3 ] || fail "a hook emptied the shared node_modules: $(ls "$WORK/shared")"
+grep -q 'skipped ui-check' "$WORK/out" || fail "the skipped check is not reported: $(cat "$WORK/out")"
+[ "$(names)" = "swiftlint-changed sync-check " ] || fail "a stale install still ran ui-check"
+status_of 0 scripts/check_tier.sh check base
+[ "$(ls -A "$WORK/shared" | wc -l | tr -d ' ')" = 3 ] || fail "make check emptied the shared node_modules"
+git reset -q --hard
 
 # sync-check: a Swift file added or deleted needs Lilo.xcodeproj, so does project.yml; the bridge outputs must be fresh.
 git config core.hooksPath /dev/null

@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+# Opt-in: `make hooks-install-push-checks` sets lilo.hooks.pre-push; without it this hook does nothing.
+[ "$(git config --bool lilo.hooks.pre-push 2> /dev/null || echo false)" = true ] || exit 0
+
 # Deleting a branch has nothing to validate.
 zero=0000000000000000000000000000000000000000
 pushing=
