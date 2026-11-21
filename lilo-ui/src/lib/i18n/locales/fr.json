@@ -492,6 +492,11 @@
 				"description": "L'agent attend votre réponse.",
 				"keywords": "agent approbation confirmer paiement achat commande supprimer envoyer publier"
 			},
+			"agentActionLog": {
+				"title": "Garder un journal des actions de l'agent",
+				"description": "Un fichier local liste chaque appel, jamais le texte saisi ni le contenu des pages.",
+				"keywords": "agent journal historique audit actions rejouer"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Toujours autorisés",
 				"description": "Les agents y agissent sans demander.",
@@ -1054,6 +1059,7 @@
 		"showFolder": "Afficher le dossier des téléchargements",
 		"clearFinished": "Effacer les téléchargements terminés",
 		"dragFile": "Faire glisser le fichier",
+		"showInFinder": "Afficher dans le Finder",
 		"announceDone": "{filename} téléchargé",
 		"announceFailed": "Échec du téléchargement de {filename}"
 	},

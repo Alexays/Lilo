@@ -14,7 +14,7 @@ Four elements keep the same place in all twelve layouts (tabs left, right, top, 
 | Update card | At the bottom of the tab collection, with its animation: it is meant to make people want to update |
 
 - With the sidebar hidden, nothing stays over the page: the left edge slides the sidebar back with its landmarks, and ⇧⌘S toggles it.
-- Back and Reload never leave their line; on a narrow sidebar only an unavailable Forward gives way. Each layout has a minimum sidebar width that keeps its top line whole, nothing past the edge: 203 pt with the address in the sidebar, 243 pt with the address hidden and Agents on, 215 pt without Agents.
+- The traffic lights never fade or move with the sidebar's width. Each layout has a minimum sidebar width that keeps its top line whole beside them: 203 pt with the address in the sidebar, 243 pt with the address hidden and Agents on, 215 pt without Agents; there only an unavailable Forward gives way. Narrower, down to the rail's 150 pt detent, the history buttons shrink to 24 pt and give way in turn (Forward, Reload, then Back) while the toggle stays, and the tab rows give their close and sound buttons back to the titles.
 - With the tabs on the left or the right, dragging the sidebar's edge under 150 pt folds it to a 48 pt icon rail, and back past 150 pt unfolds it at its width; the minimums above hold only outside the rail. Top to bottom, centered: the toggle, Search (the command bar carries the address, the history and Agents), the favorites, pinned and today's tabs as 16 pt icons in 30 pt targets (the active one on the selected surface, its badges kept), folders by their icon, then the update and the Spaces as dots at the bottom. Each icon has its tooltip. The traffic lights take the hidden sidebar's place: the toolbar row, or nowhere.
 - The rail never unfolds on hover. A folder opens its tabs in a popover beside the rail, toward the page, sleeping ones included; a locked one offers to unfold the sidebar to unlock it. With the sidebar hidden, the window's edge reveals the rail over the page, not the full sidebar.
 - With the address hidden, the page's buttons (site controls, content blocking, screenshot, copy link, extensions) wait behind one button at the end of the top line and open in a row under it.
@@ -36,6 +36,7 @@ A piece of information takes the form of its family, never another.
 | Sidebar editor | Inside the sidebar alone; the page stays visible and the sidebar repaints live as its own preview | New Space, Space editor | Its buttons, Esc |
 
 - Nothing pushes the tab list or the page: a drawer or a popover covers, it never inserts itself.
+- A download joins a stack of cards above the downloads button as it starts (progress, Pause, Cancel) and comes back to its front as it ends: drag the file out or click to open it. The stack leaves after 6 s, shows at most three cards, the older ones as slivers behind the newest until the pointer or the keyboard fans them out. It covers the end of the tab list and takes no focus.
 - A system screen in the sidebar is one navigation level: a close button on the right of the traffic lights line, then the title, the search field and the navigation list, in the same places for every system screen. It slides in from the side and back; nothing else in the sidebar changes shape.
 - The page area of a system screen holds its content: a 20 px semibold title top left, a short count or note top right, then the content. It is never left blank or showing an unrelated page.
 - A system screen edits live: no Cancel and Save pair. Its sidebar holds only places; its commands sit behind one "..." button at the end of the page header, a destructive one last, in red, under a separator.
@@ -89,7 +90,7 @@ A request tied to a tab lives in a single drawer; the row keeps only the orange 
 - Spacing sits on a 4 px grid: 4, 8, 12, 16, 20, 24, 28, 40. A page area is padded 28 px at the top and 40 px at the sides; a section header has 22 px above it and 8 px below.
 - A grouped row is padded 11 px by 14 px, a nested row is indented 38 px; an icon sits 14 px from its text in an object row, 8 px in a navigation row.
 - Heights: 24 px for buttons, selects and segmented controls, 28 px for a navigation row, 32 px for a plain list row and the sidebar search field, 52 to 58 px for a row with a detail line; a switch is 32 by 19 px.
-- Visuals: 16 px inline and navigation icons, 32 px favicons in lists (24 px in the command bar's 40 px rows, 20 px in its bookmark strip), 40 px file or image visuals, 44 px app tiles. Thumbnails offered as one choice share one size.
+- Visuals: 16 px inline and navigation icons, 32 px favicons in lists (24 px in the command bar's 40 px rows, 20 px in its bookmark strip), 40 px file or image visuals (a finished download shows Quick Look's thumbnail of the file, else its type's icon), 44 px app tiles. Thumbnails offered as one choice share one size.
 - The same element has the same metrics on every screen: a section header, a grouped row or a page title never varies from one screen to the next.
 - One concept, one name:
 
