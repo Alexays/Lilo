@@ -46,6 +46,41 @@ final class AgentFlowTests: AgentToolTestCase {
         try XCTUnwrap(JSONSerialization.jsonObject(with: Data(reply.text.utf8)) as? [String: Any], reply.text)
     }
 
+    func testTheFlowsSkillRidesThePromptOnlyOnceAgentControlIsOn() async throws {
+        let tab = Tab(title: "Conversation", spaceId: space.id, kind: .agent, cwd: NSTemporaryDirectory(), agentId: "test-agent")
+        let conversation = try XCTUnwrap(context.conversations.register(tab, folderId: nil))
+        // A pending sign-in holds the prompt's blocks instead of starting an agent.
+        let signIn = TerminalSession(cwd: NSTemporaryDirectory(), cols: 80, rows: 5, command: ["/bin/cat"])
+        conversation.signIn = signIn
+        let settings = try XCTUnwrap(context.settingsStore)
+        defer {
+            conversation.signIn = nil
+            signIn.terminate()
+            settings.remove("agentControlEnabled")
+        }
+        let handler = ConversationBridgeHandler(window: window)
+        let send = { (text: String) async throws -> [[String: Any]] in
+            let message = try XCTUnwrap(BridgeMessage(dictionary: [
+                "action": "sendConversationPrompt", "payload": ["tabId": tab.id.uuidString, "text": text]
+            ]))
+            _ = await handler.handle(message: message)
+            return conversation.awaitingSignIn ?? []
+        }
+        let skill = { (blocks: [[String: Any]]) in
+            blocks.contains { ($0["resource"] as? [String: Any])?["uri"] as? String == "lilo://skills/saved-flows.md" }
+        }
+
+        settings.set("agentControlEnabled", value: "false")
+        let off = try await send("first")
+        XCTAssertFalse(skill(off), "no flow tools without agent control, so no skill")
+
+        settings.set("agentControlEnabled", value: "true")
+        let on = try await send("second")
+        XCTAssertTrue(skill(on), "the first prompt once agent control is on carries the skill")
+        let again = try await send("third")
+        XCTAssertFalse(skill(again), "once is enough")
+    }
+
     func testRecordSaveAndReplayFillsTheParam() async throws {
         let tab = try await agentTab(showing: Self.page)
         let save = try await recordFlow("set-phone", tab: tab) {

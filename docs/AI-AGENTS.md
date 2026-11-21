@@ -108,8 +108,8 @@ Replay stops at the first step whose locator matches nothing (or whose element c
 recording) and reports `{failedStep, reason}` - it never picks a near match. The agent then owns the page
 again and can resume with `from`. A consent answer of `denied` or `expired` stops the run the same way.
 
-A conversation's first prompt carries a short skill describing these tools, the same way a tab or a selection
-is attached, so any ACP agent learns them without configuration.
+While agent control is on, a conversation's first prompt carries a short skill describing these tools, the
+same way a tab or a selection is attached, so any ACP agent learns them without configuration.
 
 ## The action log
 
