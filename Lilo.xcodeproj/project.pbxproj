@@ -40,6 +40,7 @@
 		0B38D969E6952A05070A10F3 /* ChromeUIAssetsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924A388624EC114B981DE1B5 /* ChromeUIAssetsTests.swift */; };
 		0B631544276930B9258B91C5 /* TabLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B523A389F7E8333256B9883 /* TabLayoutTests.swift */; };
 		0BC201A4D2126D96035815D7 /* VTTerminalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F909EF3668D9F6FE65691B /* VTTerminalTests.swift */; };
+		0BF53958451E6F851292E11B /* AgentActionTailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2820E1750F4A3E3301E39D8B /* AgentActionTailTests.swift */; };
 		0C03F53B6EAFD4C1D7C81F45 /* MainWindowController+PagePopups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7164868E958F8A24D37CEFE7 /* MainWindowController+PagePopups.swift */; };
 		0D7D2142DACE0B8C33752872 /* HitboxDebugOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A11FD5FAE3C28A3988EEC3 /* HitboxDebugOverlayView.swift */; };
 		0DCA19D9A1D9E1A3B510F8A8 /* MainWindowController+TabDock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F6ED6D5C416BB6186B04F06 /* MainWindowController+TabDock.swift */; };
@@ -363,6 +364,7 @@
 		87A0CE80FFCC0F5E733B2A03 /* SpaceTabStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D45E0B4C896809F3CA2B68 /* SpaceTabStateTests.swift */; };
 		87BF52E44AC92861055E6CC5 /* BrowserImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 792B9177EDFB6A1F310FE9C0 /* BrowserImporterTests.swift */; };
 		87D48937D2123F7C56A4456C /* SplitPanesControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F13600639DAEB0FA8ED0BE36 /* SplitPanesControllerTests.swift */; };
+		8823954F3DF3705179890214 /* AgentActionTail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CDD5880E8FCAC8E84C1326 /* AgentActionTail.swift */; };
 		8854035A1251D7D7CF6BE4B8 /* LiloIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B16C04BF2BF41B09F5677A /* LiloIntents.swift */; };
 		88E60B6C386F499FD87AB954 /* WebKitFork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54606608AFEE53B274E62005 /* WebKitFork.swift */; };
 		8970298C0A01596DFEFECAAD /* AgentMCP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7863654FA36B9E0C0EEC0F66 /* AgentMCP.swift */; };
@@ -902,6 +904,7 @@
 		26FC433BB1995D1405AE72C7 /* NotificationPolyfillTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPolyfillTests.swift; sourceTree = "<group>"; };
 		2796BC634BEA848B9AB4C7B1 /* FullPageSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullPageSnapshotTests.swift; sourceTree = "<group>"; };
 		280FDCE1DE656133E7952F1E /* DocumentPictureInPicture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPictureInPicture.swift; sourceTree = "<group>"; };
+		2820E1750F4A3E3301E39D8B /* AgentActionTailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentActionTailTests.swift; sourceTree = "<group>"; };
 		282B99D94E7BB3F133171B88 /* MenuIconTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuIconTests.swift; sourceTree = "<group>"; };
 		2848B352725E442709C3FDEB /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		292A55E3946115C3552E1B11 /* MainWindowController+SplitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+SplitView.swift"; sourceTree = "<group>"; };
@@ -1046,6 +1049,7 @@
 		588DBF129A3AEF2628F2FA6C /* ChromiumSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumSessionTests.swift; sourceTree = "<group>"; };
 		59353B06598D5A5042D487B5 /* ConversationCheckpointsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationCheckpointsTests.swift; sourceTree = "<group>"; };
 		5970C3BEE3FB82050318B9AC /* LocalNetworkBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNetworkBridgeHandler.swift; sourceTree = "<group>"; };
+		59CDD5880E8FCAC8E84C1326 /* AgentActionTail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentActionTail.swift; sourceTree = "<group>"; };
 		5A71C552CC20324A27A705FC /* FirefoxReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirefoxReaderTests.swift; sourceTree = "<group>"; };
 		5B0ADA4FA130D5616136D531 /* ProgressEmitGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressEmitGate.swift; sourceTree = "<group>"; };
 		5B1BA9B9CF2570DAFD17722B /* ProfileExtensionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileExtensionRegistry.swift; sourceTree = "<group>"; };
@@ -2085,6 +2089,7 @@
 			isa = PBXGroup;
 			children = (
 				357D35CADAD798B60683A2E9 /* AgentActionLog.swift */,
+				59CDD5880E8FCAC8E84C1326 /* AgentActionTail.swift */,
 				3C5612A8DBC9C2C3C7F20E38 /* AgentBrowserConfig.swift */,
 				ACE35B10767659425C93E8C4 /* AgentCapture.swift */,
 				98C343DF6BF6796711B5F5EA /* AgentClientConfig.swift */,
@@ -2310,6 +2315,7 @@
 			isa = PBXGroup;
 			children = (
 				EF85FC163B7F84E0D9BA9C8D /* AgentActionLogTests.swift */,
+				2820E1750F4A3E3301E39D8B /* AgentActionTailTests.swift */,
 				B54915CFF5E01DAEA0834D28 /* AgentApprovalTests.swift */,
 				028F34A6E60CE2C922DB6311 /* AgentBrowserConfigTests.swift */,
 				ADA7210C9C9A59FD53B2EC5C /* AgentCaptureTests.swift */,
@@ -3123,6 +3129,7 @@
 				2411A4E1BCA83C7F9D685BE8 /* ACPConnection.swift in Sources */,
 				3B30B2CB3238951D8C998938 /* ActionColorBridgeHandler.swift in Sources */,
 				BC9E621E943975CA1A14A423 /* AgentActionLog.swift in Sources */,
+				8823954F3DF3705179890214 /* AgentActionTail.swift in Sources */,
 				8D8FC7BE3715D3FD0EFEFBBC /* AgentBrowserConfig.swift in Sources */,
 				6AA37CB9BD59DFDB2E8DFD28 /* AgentCapture.swift in Sources */,
 				F374AFB1ACDA5776FEC46C10 /* AgentClientConfig.swift in Sources */,
@@ -3464,6 +3471,7 @@
 				D59F8B14915851CFC9A74907 /* ACPAgentCatalogTests.swift in Sources */,
 				3D919F5C44D94CC41F91662F /* ACPConnectionTests.swift in Sources */,
 				857B6BE69587E95DBF709C8C /* AgentActionLogTests.swift in Sources */,
+				0BF53958451E6F851292E11B /* AgentActionTailTests.swift in Sources */,
 				C270763C21E4A7E4C96B6697 /* AgentApprovalTests.swift in Sources */,
 				0489C38D8821EBEDA814A57A /* AgentBrowserConfigTests.swift in Sources */,
 				17A66E132E78A25103A03593 /* AgentCaptureTests.swift in Sources */,
