@@ -160,4 +160,36 @@ final class AgentClientConfigTests: XCTestCase {
         let cursor = try json(".cursor/mcp.json")
         XCTAssertEqual(((cursor["mcpServers"] as? [String: Any])?["lilo"] as? [String: Any])?["command"] as? String, "/bin/sh")
     }
+
+    /// What each client's file holds right after Connect on an empty home: the refactor of the writers into
+    /// a table must keep these bytes.
+    func testGoldenOutputOfEveryClient() async throws {
+        let helper = AgentClientConfig.helperPath
+        // JSONSerialization escapes slashes.
+        let escaped = helper.replacingOccurrences(of: "/", with: "\\/")
+        let jsonEntry = "{\n  \"mcpServers\" : {\n    \"lilo\" : {\n      \"command\" : \"\(escaped)\"\n    }\n  }\n}"
+        let files = [
+            ("Library/Application Support/Claude/claude_desktop_config.json", jsonEntry, AgentClientConfig.Client.claudeDesktop),
+            (".cursor/mcp.json", jsonEntry, .cursor),
+            (".codex/config.toml", "[mcp_servers.lilo]\ncommand = \"\(helper)\"\n", .codex)
+        ]
+        for (path, golden, client) in files {
+            let message = try await AgentClientConfig.connect(client, home: home)
+            XCTAssertEqual(try String(contentsOf: home.appending(path: path), encoding: .utf8), golden, path)
+            XCTAssertFalse(message.isEmpty)
+        }
+        XCTAssertEqual(AgentClientConfig.genericConfigJSON, jsonEntry)
+    }
+
+    func testGoldenCommandsOfClaudeCode() async throws {
+        let log = home.appending(path: "claude-args.txt")
+        try write("#!/bin/sh\necho \"$@\" >> '\(log.path)'\n", to: ".local/bin/claude")
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: home.appending(path: ".local/bin/claude").path)
+
+        let message = try await AgentClientConfig.connect(.claudeCode, home: home)
+
+        XCTAssertEqual(message, "Added Lilo to Claude Code".localized)
+        XCTAssertEqual(try String(contentsOf: log, encoding: .utf8),
+                       "mcp remove --scope user lilo\nmcp add --scope user lilo -- \(AgentClientConfig.helperPath)\n")
+    }
 }
