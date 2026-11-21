@@ -651,6 +651,75 @@ test("each agent app shows its status line and at most one action", async ({ pag
 	expect(revoked.map((command) => command.payload)).toEqual([{ name: "claude-code" }]);
 });
 
+test("an allowed agent's permissions row sets its default and its own sites", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true" } }));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "agentClientsLoaded",
+		clients: [{ id: "claudeCode", configured: true, installed: true, icon: null }],
+		allowed: [
+			{ name: "claude-code", displayName: "Claude Code", lastSeen: null, client: "claudeCode" },
+			{ name: "Other Agent", displayName: "Other Agent", lastSeen: null, client: null },
+		],
+	}));
+	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
+	const saved = async () => {
+		const sent = (await sentCommands(page)).filter((command) => command.action === "setSetting" && (command.payload as { key: string }).key === "agentClientPermissions");
+		return sent.map((command) => JSON.parse((command.payload as { value: string }).value));
+	};
+
+	await expect(page.getByRole("group", { name: /Permissions of/ })).toHaveCount(0);
+	await page.locator(".agent-tile").filter({ hasText: "Claude Code" }).getByRole("button", { name: "More actions for Claude Code" }).click();
+	await page.getByRole("menuitem", { name: "Permissions" }).click();
+	const permissions = page.getByRole("group", { name: "Permissions of Claude Code" });
+	await expect(permissions.getByRole("radio", { name: "Ask each time" })).toBeChecked();
+	await expect(permissions).toContainText("Signing in, paying and sending data to another site are always asked.");
+
+	await permissions.getByRole("radio", { name: "Always allow" }).click();
+	expect((await saved()).at(-1)).toEqual({ "claude-code": { act: "always", sites: [] } });
+
+	const field = permissions.getByRole("textbox", { name: "Add a site Claude Code may act on without asking" });
+	await field.fill("not a site");
+	await field.press("Enter");
+	await expect(permissions.locator(".ui-chip")).toHaveCount(0);
+	await field.fill("https://Shop.Example.com/cart");
+	await field.press("Enter");
+	await expect(permissions.locator(".ui-chip")).toHaveText(["shop.example.com"]);
+	expect((await saved()).at(-1)).toEqual({ "claude-code": { act: "always", sites: ["shop.example.com"] } });
+	await expect(field).toHaveValue("");
+
+	await permissions.getByRole("button", { name: "Remove shop.example.com" }).click();
+	await permissions.getByRole("radio", { name: "Ask each time" }).click();
+	expect((await saved()).at(-1)).toEqual({});
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true", agentAskBeforeActions: "false" } }));
+	await expect(permissions).toContainText("Questions are turned off for every agent");
+});
+
+test("removing an agent forgets what it was allowed to do unasked", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "settingsLoaded",
+		settings: { agentControlEnabled: "true", agentClientPermissions: JSON.stringify({ "claude-code": { act: "always", sites: [] }, Codex: { act: "always", sites: [] } }) },
+	}));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "agentClientsLoaded",
+		clients: [{ id: "claudeCode", configured: true, installed: true, icon: null }],
+		allowed: [{ name: "claude-code", displayName: "Claude Code", lastSeen: null, client: "claudeCode" }],
+	}));
+	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
+
+	await page.locator(".agent-tile").filter({ hasText: "Claude Code" }).getByRole("button", { name: "Remove", exact: true }).click();
+
+	const sent = await sentCommands(page);
+	expect(sent.filter((command) => command.action === "revokeAgentClient").map((command) => command.payload)).toEqual([{ name: "claude-code" }]);
+	const saved = sent.filter((command) => command.action === "setSetting").at(-1)?.payload as { key: string; value: string };
+	expect(saved.key).toBe("agentClientPermissions");
+	expect(JSON.parse(saved.value)).toEqual({ Codex: { act: "always", sites: [] } });
+});
+
 test("content blocking nests what it blocks under its switch, then its lists", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
