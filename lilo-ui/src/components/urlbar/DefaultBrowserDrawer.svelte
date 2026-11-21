@@ -28,8 +28,8 @@
 
 <DrawerPrompt
   icon="browser"
-  dismissLabel={t("settings.defaultBrowserLater")}
-  confirmLabel={t("settings.defaultBrowserSet")}
+  dismissLabel={t("urlBar.defaultBrowserLater")}
+  confirmLabel={t("urlBar.defaultBrowserSet")}
   confirmDisabled={pending}
   showActions={outcome !== "info"}
   error={outcome === "error"}
@@ -37,10 +37,10 @@
   onconfirm={setDefault}
 >
   {#if outcome === "info"}
-    {t("settings.defaultBrowserSetSuccess")}
+    {t("urlBar.defaultBrowserSetSuccess")}
   {:else if outcome === "error"}
-    {t("settings.defaultBrowserSetFailed")}
+    {t("urlBar.defaultBrowserSetFailed")}
   {:else}
-    {t("settings.defaultBrowserBannerText")}
+    {t("urlBar.defaultBrowserBannerText")}
   {/if}
 </DrawerPrompt>

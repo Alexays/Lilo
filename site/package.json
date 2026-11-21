@@ -47,5 +47,6 @@
   },
   "engines": {
     "node": ">=22.23.4"
-  }
+  },
+  "packageManager": "npm@10.9.9"
 }

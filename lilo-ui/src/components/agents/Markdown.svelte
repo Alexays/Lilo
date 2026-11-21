@@ -148,7 +148,8 @@
 
   function openLink(event: MouseEvent, href: string): void {
     event.preventDefault();
-    tabActions.create(href);
+    // Safari's convention: Cmd opens behind, Cmd+Shift brings it forward.
+    tabActions.create(href, false, event.metaKey && !event.shiftKey);
   }
 </script>
 

@@ -79,11 +79,6 @@
 		"passwordManagerAction": "Choisir",
 		"passwordManagerChange": "Changer",
 		"replayOnboardingAction": "Revoir",
-		"defaultBrowserSet": "Définir par défaut",
-		"defaultBrowserLater": "Plus tard",
-		"defaultBrowserSetSuccess": "Lilo est maintenant votre navigateur par défaut.",
-		"defaultBrowserSetFailed": "Lilo n'a pas été défini comme navigateur par défaut. Vous pouvez le modifier dans Réglages Système.",
-		"defaultBrowserBannerText": "Définir Lilo comme navigateur par défaut ?",
 		"engineName": "Nom",
 		"engineUrlTemplate": "URL de recherche (%s = requête)",
 		"engineKeyword": "Mot-clé",
@@ -203,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type} : {decision}",
 			"zoomSummary": "Zoom {zoom}",
-			"hiddenSummary": {"one": "{count} élément masqué", "other": "{count} éléments masqués"},
+			"hiddenSummary": "{count, plural, one{# élément masqué} other{# éléments masqués}}",
 			"dataSummary": "Données stockées",
 			"permissionUpdated": "{origin} · Modifié le {time}",
 			"emptyTitle": "Aucun réglage de site pour l'instant",
@@ -610,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Mettre à jour",
-			"summary": {
-				"one": "{count} liste",
-				"other": "{count} listes"
-			},
+			"summary": "{count, plural, one{# liste} other{# listes}}",
 			"updated": "mises à jour le {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Rechercher",
 			"checking": "Recherche de mises à jour...",
 			"upToDate": "À jour",
-			"updated": {
-				"one": "{count} mise à jour",
-				"other": "{count} mises à jour"
-			},
-			"available": {
-				"one": "{count} mise à jour disponible",
-				"other": "{count} mises à jour disponibles"
-			},
-			"failed": {
-				"one": "{count} non vérifiée",
-				"other": "{count} non vérifiées"
-			},
+			"updated": "{count, plural, one{# mise à jour} other{# mises à jour}}",
+			"available": "{count, plural, one{# mise à jour disponible} other{# mises à jour disponibles}}",
+			"failed": "{count, plural, one{# non vérifiée} other{# non vérifiées}}",
 			"lastChecked": "Dernière vérification à {time}"
 		},
 		"folderAutoLock": {
@@ -682,10 +665,7 @@
 			"clearData": "Effacer les données...",
 			"remove": "Supprimer...",
 			"lastProfile": "Votre dernier profil reste : chaque espace en a besoin.",
-			"extensionCount": {
-				"one": "{count} extension",
-				"other": "{count} extensions"
-			},
+			"extensionCount": "{count, plural, one{# extension} other{# extensions}}",
 			"newProfile": "Nouveau profil...",
 			"newProfileDetail": "Cookies, connexions et extensions vierges",
 			"namePlaceholder": "Nom du profil",
@@ -760,28 +740,16 @@
 		},
 		"notes": {
 			"live": "Les changements s'appliquent aussitôt",
-			"spaces": {
-				"one": "{count} espace",
-				"other": "{count} espaces"
-			},
-			"profiles": {
-				"one": "{count} profil",
-				"other": "{count} profils"
-			},
+			"spaces": "{count, plural, one{# espace} other{# espaces}}",
+			"profiles": "{count, plural, one{# profil} other{# profils}}",
 			"blocking": "{count} types bloqués sur {total}",
 			"blockingOff": "Le blocage est désactivé",
 			"profile": "Profil {name}",
-			"extensions": {
-				"one": "{count} extension dans {profile}",
-				"other": "{count} extensions dans {profile}"
-			},
+			"extensions": "{count, plural, one{# extension dans {profile}} other{# extensions dans {profile}}}",
 			"terminal": "Les changements s'appliquent à chaque onglet de terminal",
 			"agents": "Lilo n'embarque aucune IA",
 			"advanced": "Pour le développement et les tests",
-			"searchMatches": {
-				"one": "{count} réglage correspond à « {query} »",
-				"other": "{count} réglages correspondent à « {query} »"
-			}
+			"searchMatches": "{count, plural, one{# réglage correspond à « {query} »} other{# réglages correspondent à « {query} »}}"
 		},
 		"callDock": {
 			"sidebar": "Dans la barre latérale",
@@ -937,13 +905,13 @@
 		"pinnedTabs": "Onglets épinglés",
 		"openTabs": "Onglets ouverts",
 		"dropToPin": "Déposer pour épingler",
-		"stackLabel": {"one": "{name}, {count} onglet", "other": "{name}, {count} onglets"},
+		"stackLabel": "{count, plural, one{{name}, # onglet} other{{name}, # onglets}}",
 		"closeStack": "Fermer la pile",
 		"trayAgents": "Agents",
 		"trayTerminals": "Terminaux",
-		"trayNeedsInput": {"one": "{count} attend une réponse", "other": "{count} attendent une réponse"},
-		"trayWorking": {"one": "{count} au travail", "other": "{count} au travail"},
-		"trayRunning": {"one": "{count} en cours", "other": "{count} en cours"},
+		"trayNeedsInput": "{count, plural, one{# attend une réponse} other{# attendent une réponse}}",
+		"trayWorking": "{count, plural, one{# au travail} other{# au travail}}",
+		"trayRunning": "{count, plural, one{# en cours} other{# en cours}}",
 		"trayShow": "Afficher {name}",
 		"trayHide": "Masquer {name}"
 	},
@@ -1168,6 +1136,7 @@
 		"installed": "Installées"
 	},
 	"commandBar": {
+		"showDetails": "Afficher les raccourcis clavier",
 		"hintPeek": "Aperçu",
 		"hintCopyLink": "Copier le lien",
 		"hintCloseTab": "Fermer l'onglet",
@@ -1234,8 +1203,6 @@
 		"sectionOpenTabs": "Onglets ouverts",
 		"sectionBookmarks": "Favoris",
 		"sectionRecentHistory": "Historique récent",
-		"sectionFrequentSites": "Sites fréquents",
-		"sectionRecentConversations": "Conversations récentes",
 		"sectionHistory": "Historique",
 		"sectionSwitchToTab": "Basculer vers l'onglet",
 		"sectionGoTo": "Aller à",
@@ -1350,7 +1317,7 @@
 		"tabStartup": "Démarrage",
 		"tabMemory": "Mémoire",
 		"tabLog": "Journal",
-		"errorCount": {"one": "{count} erreur", "other": "{count} erreurs"},
+		"errorCount": "{count, plural, one{# erreur} other{# erreurs}}",
 		"copyReport": "Copier le rapport",
 		"recordSession": "Enregistrer une session",
 		"stopRecording": "Arrêter l'enregistrement",
@@ -1392,23 +1359,11 @@
 		"navLabel": "Vues du gestionnaire de processus",
 		"searchPlaceholder": "Rechercher des onglets",
 		"memoryAriaLabel": "Utilisation de la mémoire",
-		"tabsCount": {
-			"one": "{count} onglet",
-			"other": "{count} onglets"
-		},
+		"tabsCount": "{count, plural, one{# onglet} other{# onglets}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "{count} autre",
-			"other": "{count} autres"
-		},
-		"reclaim": {
-			"one": "{count} onglet caché occupe {size}",
-			"other": "{count} onglets cachés occupent {size}"
-		},
-		"reclaimNoSize": {
-			"one": "{count} onglet caché est encore chargé",
-			"other": "{count} onglets cachés sont encore chargés"
-		},
+		"others": "{count, plural, one{# autre} other{# autres}}",
+		"reclaim": "{count, plural, one{# onglet caché occupe {size}} other{# onglets cachés occupent {size}}}",
+		"reclaimNoSize": "{count, plural, one{# onglet caché est encore chargé} other{# onglets cachés sont encore chargés}}",
 		"sleep": "Mettre en veille",
 		"groupTabs": "Onglets",
 		"groupSleeping": "En veille",
@@ -1418,10 +1373,7 @@
 		"audioPlaying": "Lecture audio",
 		"frozen": "Gelé",
 		"sharedEstimate": "Partage son processus avec d'autres onglets : valeur estimée",
-		"sharedWith": {
-			"one": "partagé avec {count} autre onglet",
-			"other": "partagé avec {count} autres onglets"
-		},
+		"sharedWith": "{count, plural, one{partagé avec # autre onglet} other{partagé avec # autres onglets}}",
 		"pid": "PID {pid}",
 		"focus": "Afficher",
 		"details": "Afficher les détails",
@@ -1450,16 +1402,10 @@
 	"urlToast": {
 		"pageActions": "Actions de la page",
 		"reEnableBlocking": "Réactiver le blocage sur ce site",
-		"trackersBlockedOnPage": {
-			"one": "{count} traqueur bloqué sur cette page",
-			"other": "{count} traqueurs bloqués sur cette page"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{# traqueur bloqué sur cette page} other{# traqueurs bloqués sur cette page}}",
 		"disableBlocking": "Désactiver le blocage sur ce site",
 		"adsAllowed": "Publicités autorisées",
-		"trackersBlockedLabel": {
-			"one": "{count} traqueur bloqué",
-			"other": "{count} traqueurs bloqués"
-		},
+		"trackersBlockedLabel": "{count, plural, one{# traqueur bloqué} other{# traqueurs bloqués}}",
 		"adsBlocked": "Publicités bloquées",
 		"extensionAlreadyInstalled": "Extension déjà installée",
 		"installChromeExtension": "Installer cette extension Chrome",
@@ -1503,10 +1449,7 @@
 		"stop": "Arrêter le débogage"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "{count} autre avis",
-			"other": "{count} autres avis"
-		},
+		"moreNotices": "{count, plural, one{# autre avis} other{# autres avis}}",
 		"more": "{count} de plus"
 	},
 	"crashRecovery": {
@@ -1547,7 +1490,7 @@
 	},
 	"archivedTabs": {
 		"title": "Archivés",
-		"buttonLabel": {"one": "{count} onglet archivé récemment", "other": "{count} onglets archivés récemment"},
+		"buttonLabel": "{count, plural, one{# onglet archivé récemment} other{# onglets archivés récemment}}",
 		"restore": "Restaurer",
 		"showAll": "Voir tous les onglets archivés",
 		"showAllDownloads": "Voir tous les téléchargements"
@@ -1558,7 +1501,7 @@
 		"undo": "Annuler",
 		"reopen": "Rouvrir",
 		"archived": "« {title} » archivé",
-		"archivedCount": {"one": "{count} onglet archivé", "other": "{count} onglets archivés"}
+		"archivedCount": "{count, plural, one{# onglet archivé} other{# onglets archivés}}"
 	},
 	"updateCard": {
 		"ready": "Prête à installer",
@@ -1591,6 +1534,11 @@
 		"placeholder": "Rechercher ou saisir une URL...",
 		"addressBar": "Barre d'adresse : {url}",
 		"noProject": "Sans projet",
+		"defaultBrowserSet": "Définir par défaut",
+		"defaultBrowserLater": "Plus tard",
+		"defaultBrowserSetSuccess": "Lilo est maintenant votre navigateur par défaut.",
+		"defaultBrowserSetFailed": "Lilo n'a pas été défini comme navigateur par défaut. Vous pouvez le modifier dans Réglages Système.",
+		"defaultBrowserBannerText": "Définir Lilo comme navigateur par défaut ?",
 		"details": {
 			"branch": "Branche",
 			"command": "Commande",
@@ -1648,6 +1596,7 @@
 		"allow": "Autoriser",
 		"allowOnce": "Autoriser une fois",
 		"alwaysAllowOnSite": "Toujours autoriser sur ce site",
+		"agentWaitsForAnswer": "L'agent attend votre réponse.",
 		"popup": {
 			"blocked": "Pop-up bloquée",
 			"tried": "a tenté d'ouvrir une fenêtre pop-up",
@@ -1769,26 +1718,11 @@
 			"done": "C'est fait : {list}.",
 			"nothing": "C'est fait : rien de nouveau à importer.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} favori",
-					"other": "{count} favoris"
-				},
-				"tabs": {
-					"one": "{count} onglet ouvert",
-					"other": "{count} onglets ouverts"
-				},
-				"history": {
-					"one": "{count} page d'historique",
-					"other": "{count} pages d'historique"
-				},
-				"cookies": {
-					"one": "{count} cookie",
-					"other": "{count} cookies"
-				},
-				"extensions": {
-					"one": "{count} extension",
-					"other": "{count} extensions"
-				}
+				"bookmarks": "{count, plural, one{# favori} other{# favoris}}",
+				"tabs": "{count, plural, one{# onglet ouvert} other{# onglets ouverts}}",
+				"history": "{count, plural, one{# page d'historique} other{# pages d'historique}}",
+				"cookies": "{count, plural, one{# cookie} other{# cookies}}",
+				"extensions": "{count, plural, one{# extension} other{# extensions}}"
 			},
 			"step": {
 				"bookmarks": "Import des favoris depuis {from}",
@@ -1906,11 +1840,11 @@
 		"sectionSites": "Sites les plus visités",
 		"sectionTerminals": "Depuis les terminaux",
 		"searchResults": "Résultats de recherche",
-		"dayPages": {"one": "{count} page", "other": "{count} pages"},
-		"daySites": {"one": "{count} site", "other": "{count} sites"},
+		"dayPages": "{count, plural, one{# page} other{# pages}}",
+		"daySites": "{count, plural, one{# site} other{# sites}}",
 		"openInNewTab": "Ouvrir dans un nouvel onglet",
-		"selected": {"one": "{count} page sélectionnée", "other": "{count} pages sélectionnées"},
-		"visits": {"one": "{count} visite", "other": "{count} visites"},
+		"selected": "{count, plural, one{# page sélectionnée} other{# pages sélectionnées}}",
+		"visits": "{count, plural, one{# visite} other{# visites}}",
 		"openInNewTabs": "Ouvrir dans de nouveaux onglets",
 		"delete": "Supprimer",
 		"clearSelection": "Tout désélectionner",
@@ -2258,6 +2192,10 @@
 		"Close": "Fermer",
 		"New Terminal Tab": "Nouvel onglet terminal",
 		"Close %d terminals?": {"one": "Fermer %d terminal ?", "other": "Fermer %d terminaux ?"},
+		"Pin %d Tabs": {"one": "Épingler %d onglet", "other": "Épingler %d onglets"},
+		"Bookmark %d Tabs": {"one": "Ajouter %d onglet aux favoris", "other": "Ajouter %d onglets aux favoris"},
+		"Move Tabs to Space": "Déplacer les onglets vers un espace",
+		"Close %d Tabs": {"one": "Fermer %d onglet", "other": "Fermer %d onglets"},
 		"Commands are still running in them and will be stopped.": "Des commandes y sont en cours et seront arrêtées.",
 		"The terminal could not start.": "Le terminal n'a pas pu démarrer.",
 		"Close the tab and try again.": "Fermez l'onglet et réessayez.",
@@ -2476,7 +2414,7 @@
 		"title": "Les nouveautés de Lilo",
 		"description": "De petites améliorations pour votre navigation au quotidien.",
 		"allChanges": "Tout dans cette mise à jour",
-		"changes": { "one": "{count} changement", "other": "{count} changements" },
+		"changes": "{count, plural, one{# changement} other{# changements}}",
 		"originalNotes": "Notes de version originales, en anglais.",
 		"unavailable": "Les notes de version ne sont pas disponibles dans cette version de développement.",
 		"reopen": "À retrouver dans Aide > Nouveautés.",
@@ -2652,10 +2590,7 @@
 			"ownCopyHint": "Travaille sur sa propre copie du projet. Fusionnez-la depuis Modifications.",
 			"starting": "Démarrage de l'agent...",
 			"errorHint": "Envoyez un message pour réessayer.",
-			"showEarlier": {
-				"one": "Afficher {count} élément précédent",
-				"other": "Afficher {count} éléments précédents"
-			},
+			"showEarlier": "{count, plural, one{Afficher # élément précédent} other{Afficher # éléments précédents}}",
 			"queuedTag": "En file",
 			"sendNow": "Envoyer maintenant",
 			"thought": "Réflexion",
@@ -2665,16 +2600,10 @@
 			"restore": "Restaurer",
 			"undo": "Annuler",
 			"undone": "Annulé",
-			"moreLines": {
-				"one": "{count} ligne de plus",
-				"other": "{count} lignes de plus"
-			},
+			"moreLines": "{count, plural, one{# ligne de plus} other{# lignes de plus}}",
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} étape terminée",
-				"other": "{count} étapes terminées"
-			},
+			"planDone": "{count, plural, one{# étape terminée} other{# étapes terminées}}",
 			"planStatus": {
 				"pending": "À faire",
 				"in_progress": "En cours",
@@ -2702,26 +2631,11 @@
 				"failed": "Échec"
 			},
 			"group": {
-				"read": {
-					"one": "{count} fichier lu",
-					"other": "{count} fichiers lus"
-				},
-				"search": {
-					"one": "{count} recherche",
-					"other": "{count} recherches"
-				},
-				"fetch": {
-					"one": "{count} page récupérée",
-					"other": "{count} pages récupérées"
-				},
-				"think": {
-					"one": "{count} réflexion",
-					"other": "{count} réflexions"
-				},
-				"action": {
-					"one": "{count} action",
-					"other": "{count} actions"
-				}
+				"read": "{count, plural, one{# fichier lu} other{# fichiers lus}}",
+				"search": "{count, plural, one{# recherche} other{# recherches}}",
+				"fetch": "{count, plural, one{# page récupérée} other{# pages récupérées}}",
+				"think": "{count, plural, one{# réflexion} other{# réflexions}}",
+				"action": "{count, plural, one{# action} other{# actions}}"
 			}
 		},
 		"composer": {
@@ -2759,24 +2673,12 @@
 			"untitled": "Nouvelle conversation",
 			"working": "En cours",
 			"failed": "Arrêté sur une erreur",
-			"linesAdded": {
-				"one": "{count} ligne ajoutée",
-				"other": "{count} lignes ajoutées"
-			},
-			"linesRemoved": {
-				"one": "{count} ligne supprimée",
-				"other": "{count} lignes supprimées"
-			},
-			"pages": {
-				"one": "{count} page",
-				"other": "{count} pages"
-			},
+			"linesAdded": "{count, plural, one{# ligne ajoutée} other{# lignes ajoutées}}",
+			"linesRemoved": "{count, plural, one{# ligne supprimée} other{# lignes supprimées}}",
+			"pages": "{count, plural, one{# page} other{# pages}}",
 			"showPages": "Afficher les pages",
 			"hidePages": "Masquer les pages",
-			"morePermissions": {
-				"one": "{count} autre demande en attente",
-				"other": "{count} autres demandes en attente"
-			}
+			"morePermissions": "{count, plural, one{# autre demande en attente} other{# autres demandes en attente}}"
 		},
 		"question": {
 			"allow": "Autoriser",
@@ -2790,10 +2692,7 @@
 		},
 		"badge": {
 			"title": "Agents",
-			"waiting": {
-				"one": "Agents, {count} vous attend",
-				"other": "Agents, {count} vous attendent"
-			},
+			"waiting": "{count, plural, one{Agents, # vous attend} other{Agents, # vous attendent}}",
 			"new": "Nouveau",
 			"needsYou": "Vous attend",
 			"running": "En cours",
@@ -2814,10 +2713,7 @@
 			"signInOpenTerminal": "Ouvrir dans un terminal"
 		},
 		"work": {
-			"images": {
-				"one": "{count} image",
-				"other": "{count} images"
-			},
+			"images": "{count, plural, one{# image} other{# images}}",
 			"verb": {
 				"read": "Lu",
 				"edit": "Modifié",
@@ -2835,46 +2731,16 @@
 				"fetch": "Récupération de"
 			},
 			"summary": {
-				"read": {
-					"one": "{count} fichier lu",
-					"other": "{count} fichiers lus"
-				},
-				"edit": {
-					"one": "{count} fichier modifié",
-					"other": "{count} fichiers modifiés"
-				},
-				"execute": {
-					"one": "{count} commande exécutée",
-					"other": "{count} commandes exécutées"
-				},
-				"search": {
-					"one": "{count} recherche",
-					"other": "{count} recherches"
-				},
-				"fetch": {
-					"one": "{count} page récupérée",
-					"other": "{count} pages récupérées"
-				},
-				"think": {
-					"one": "{count} réflexion",
-					"other": "{count} réflexions"
-				},
-				"browser": {
-					"one": "navigateur utilisé {count} fois",
-					"other": "navigateur utilisé {count} fois"
-				},
-				"browserOn": {
-					"one": "navigateur utilisé {count} fois sur {site}",
-					"other": "navigateur utilisé {count} fois sur {site}"
-				},
-				"tool": {
-					"one": "{count} outil utilisé",
-					"other": "{count} outils utilisés"
-				},
-				"agent": {
-					"one": "{count} agent lancé",
-					"other": "{count} agents lancés"
-				}
+				"read": "{count, plural, one{# fichier lu} other{# fichiers lus}}",
+				"edit": "{count, plural, one{# fichier modifié} other{# fichiers modifiés}}",
+				"execute": "{count, plural, one{# commande exécutée} other{# commandes exécutées}}",
+				"search": "{count, plural, one{# recherche} other{# recherches}}",
+				"fetch": "{count, plural, one{# page récupérée} other{# pages récupérées}}",
+				"think": "{count, plural, one{# réflexion} other{# réflexions}}",
+				"browser": "{count, plural, one{navigateur utilisé # fois} other{navigateur utilisé # fois}}",
+				"browserOn": "{count, plural, one{navigateur utilisé # fois sur {site}} other{navigateur utilisé # fois sur {site}}}",
+				"tool": "{count, plural, one{# outil utilisé} other{# outils utilisés}}",
+				"agent": "{count, plural, one{# agent lancé} other{# agents lancés}}"
 			},
 			"browser": {
 				"closeTab": "A fermé un onglet",
@@ -2925,10 +2791,7 @@
 				"request": "Envoi d'une requête à {url}"
 			},
 			"exit": "Sortie {code}",
-			"showAll": {
-				"one": "Afficher {count} ligne",
-				"other": "Afficher les {count} lignes"
-			},
+			"showAll": "{count, plural, one{Afficher # ligne} other{Afficher les # lignes}}",
 			"showLess": "Afficher les dernières lignes"
 		},
 		"turn": {
@@ -2936,10 +2799,7 @@
 			"stopped": "Arrêté",
 			"refusalTitle": "Le modèle a refusé de continuer",
 			"refusalHint": "Ses protections ont arrêté ce tour, parfois sur un travail légitime. Reformulez la demande, ou choisissez un autre modèle ci-dessous.",
-			"files": {
-				"one": "{count} fichier modifié",
-				"other": "{count} fichiers modifiés"
-			},
+			"files": "{count, plural, one{# fichier modifié} other{# fichiers modifiés}}",
 			"review": "Relire",
 			"copy": "Copier la réponse",
 			"copied": "Copié"

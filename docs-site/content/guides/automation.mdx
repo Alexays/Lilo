@@ -1,0 +1,143 @@
+---
+title: "Automation"
+description: "Script Lilo's windows and tabs with AppleScript, and use its Shortcuts actions to open pages, get the current tab or switch Space with a Focus."
+sidebar:
+  order: 13
+---
+
+Lilo works with AppleScript and Shortcuts. Scripts can list, open, load, reload and close tabs; Shortcuts can open an address, read the current tab's address and switch Space, also when a Focus turns on. For agents that browse and act on pages, see [AI agents](/guides/ai-agents).
+
+## AppleScript
+
+Lilo's dictionary follows the tab model of Chrome and Safari (window tabs, active tab, URL, title), so many scripts written for them work with Lilo once you change the application name. To read the dictionary, open Script Editor, choose **File > Open Dictionary…** and pick Lilo.
+
+The first time a script or app controls Lilo, macOS asks whether to allow it. You can change your answer in **System Settings > Privacy & Security > Automation**.
+
+### What a script can reach
+
+**window** (from the standard suite) gains:
+
+| Property or element | Type | Access | Meaning |
+| --- | --- | --- | --- |
+| `tabs` | list of `tab` | read, make new | The tabs of the window's current Space. |
+| `active tab` | `tab` | read | The tab shown in the window. |
+| `active tab index` | integer | read and write | The index of the active tab, from 1; setting it shows that tab. |
+| `space name` | text | read | The name of the window's current Space; empty for a Private Space. |
+| `profile name` | text | read | The name of the current Space's profile; empty for a Private Space. |
+
+**tab**:
+
+| Property | Type | Access | Meaning |
+| --- | --- | --- | --- |
+| `id` | text | read | The tab's unique identifier. |
+| `title` | text | read | The page title. |
+| `URL` | text | read and write | The page address; setting it loads that address. |
+| `loading` | boolean | read | Whether the page is still loading. |
+
+A tab responds to `close`, `reload`, `go back` and `go forward`.
+
+Some tabs stay out of reach: a window that shows a Private Space lists no tabs and no names, and the tabs of a locked folder are left out. Windows that are not browser windows, such as a Little window, have no tabs either: when one is in front, `tabs of front window` is empty and `make new tab` in it fails, so bring a browser window to the front first. A script can load only `http`, `https` and `file` addresses.
+
+### Examples
+
+List the open tabs of the front window:
+
+```applescript
+tell application "Lilo"
+    set report to "Space: " & space name of front window & return
+    repeat with t in tabs of front window
+        set report to report & title of t & " - " & URL of t & return
+    end repeat
+    return report
+end tell
+```
+
+Open a page in a new tab:
+
+```applescript
+tell application "Lilo"
+    make new tab at end of tabs of front window with properties {URL:"https://example.com"}
+end tell
+```
+
+A new tab always goes at the end of the window's current Space, as one opened from the sidebar.
+
+Load another address in the tab you are looking at, wait for it, and read its title:
+
+```applescript
+tell application "Lilo"
+    set URL of active tab of front window to "https://example.com"
+    delay 0.5
+    repeat while loading of active tab of front window
+        delay 0.5
+    end repeat
+    return title of active tab of front window
+end tell
+```
+
+Show the second tab, reload it, and close the tabs of a site:
+
+```applescript
+tell application "Lilo"
+    set active tab index of front window to 2
+    reload active tab of front window
+    close (every tab of front window whose URL contains "example.com")
+end tell
+```
+
+Go back in the active tab:
+
+```applescript
+tell application "Lilo" to go back active tab of front window
+```
+
+## Shortcuts
+
+Lilo adds these actions to the Shortcuts app. They act on the Lilo window you used last.
+
+| Action | Input | What it does |
+| --- | --- | --- |
+| **Open URL in Lilo** | URL | Opens the address in Lilo, as a link from another app would. |
+| **Get Current Tab** | none | Returns the address of the tab shown in the front Lilo window. It returns nothing when that window shows a Private Space. |
+| **Open Space** | Space | Switches the window to that Space. Private Spaces are never offered. |
+
+Two of them work by voice or from Spotlight with no setup: "Get the current tab in Lilo" and "Open a space in Lilo".
+
+### Example: send the page you are reading to Notes
+
+<Steps>
+  <Step title="Create a shortcut">
+    In the Shortcuts app, create a new shortcut and add **Get Current Tab** from Lilo's actions.
+  </Step>
+  <Step title="Use its result">
+    Add Notes' **Create Note** action and pass it the result of **Get Current Tab**.
+  </Step>
+  <Step title="Run it">
+    Run the shortcut while Lilo shows the page: the note holds the page's address.
+  </Step>
+</Steps>
+
+### Switch Space with a Focus
+
+Lilo also offers a Focus filter, **Set Lilo Space**: while that Focus is on, Lilo shows the Space you pick.
+
+<Steps>
+  <Step title="Open the Focus">
+    Open **System Settings > Focus** and choose a Focus, such as Work.
+  </Step>
+  <Step title="Add Lilo's filter">
+    Under **Focus Filters**, click **Add Filter**, choose Lilo, and pick a Space.
+  </Step>
+</Steps>
+
+When the Focus turns on, Lilo switches to that Space. More about Spaces in [Spaces and profiles](/guides/spaces-and-profiles).
+
+## From Terminal
+
+Lilo opens addresses handed to it like any browser on macOS:
+
+```sh
+open -a Lilo https://example.com
+```
+
+When Lilo is your default browser, `open https://example.com` does the same.

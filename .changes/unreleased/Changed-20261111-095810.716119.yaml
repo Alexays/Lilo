@@ -1,0 +1,3 @@
+kind: Changed
+body: Tabs an agent opens stay out of the sidebar until it loads a page in them, instead of piling up as empty New Tab rows
+time: 2026-11-11T09:58:10.716119+01:00

@@ -1,0 +1,13 @@
+---
+title: Compatibilité des extensions
+description: >-
+  Les API d'extension Chrome que Lilo prend en charge, celles qui se comportent
+  autrement que dans Chrome, et ce que cela change pour vos extensions.
+sidebar:
+  order: 5
+---
+Lilo exécute les extensions Chrome sur WebKit et comble une grande partie des API Chrome qui manquent à WebKit. Cette page ne recense que ce qui manque ou diffère de Chrome, ainsi que les extensions du store qui ont été testées : une API qui n'y figure pas se comporte comme dans Chrome. Pour installer et gérer des extensions, consultez [Extensions](/guides/extensions).
+
+Le texte ci-dessous provient du suivi de compatibilité du projet, [COMPATIBILITY.md](https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md), et s'adresse autant aux développeurs d'extensions qu'aux personnes qui utilisent Lilo. Pour savoir si une extension que vous utilisez fonctionne, rendez-vous à la section [Extensions du store testées](#tested-store-extensions) : son tableau indique l'état de chaque extension. Les paragraphes qui précèdent ce tableau décrivent la façon dont le projet teste les extensions : des noms tels que `make ext-smoke`, `top-extensions.json` ou `RealExtensionSmokeTests` désignent les commandes et fichiers de test propres au projet, dont vous n'avez pas besoin pour utiliser Lilo. Si une extension dont vous dépendez fonctionne mal et que son problème ne figure pas ici, [signalez-le](https://github.com/Alexays/Lilo/issues).
+
+<include>./_generated/extension-compatibility.md</include>

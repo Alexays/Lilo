@@ -29,14 +29,12 @@ Lilo is for Mac users who live in a sidebar, people leaving Arc or looking for a
 
 ## Docs
 
-- [README](https://github.com/Alexays/Lilo/blob/main/README.md): features, install and building from source
-- [AI agents](https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md): connecting an MCP client, the tools agents get, and the approval rules
-- [Chrome extension compatibility](https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md): what still differs from Chrome
-- [Privacy](https://github.com/Alexays/Lilo/blob/main/PRIVACY.md): what stays on your Mac and what agents can read
-- [Changelog](https://github.com/Alexays/Lilo/blob/main/CHANGELOG.md): releases
+- [Documentation index](https://docs.getlilo.app/llms.txt): the user documentation at docs.getlilo.app, page by page: getting started, guides, reference (shortcuts, settings, MCP tools, compatibility) and explanations
+- [Full documentation](https://docs.getlilo.app/llms-full.txt): every documentation page in one file
 
 ## Optional
 
 - [Full English content](https://getlilo.app/llms-full.txt): the home, moving, Arc alternative, comparison, AI agents, WebKit and changelog pages in one file
+- [README](https://github.com/Alexays/Lilo/blob/main/README.md): features, install and building from source
 - [Contributing](https://github.com/Alexays/Lilo/blob/main/CONTRIBUTING.md): setup, tests and the pull request flow
 - [License](https://github.com/Alexays/Lilo/blob/main/LICENSE): MIT

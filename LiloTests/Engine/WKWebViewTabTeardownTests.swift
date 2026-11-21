@@ -20,10 +20,9 @@ final class WKWebViewTabTeardownTests: XCTestCase {
 
         tab.teardown()
 
-        do {
-            _ = try await webView.evaluateJavaScript("1")
-            XCTFail("A torn-down page must not run scripts")
-        } catch {}
+        // The page closes once its beforeunload handler ran, a round trip later.
+        let stopped = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript("1")) == nil }
+        XCTAssertTrue(stopped, "A torn-down page must not run scripts")
     }
 
     func testTeardownRunsTheBeforeUnloadHandlerSuspendedPagesIncluded() async throws {

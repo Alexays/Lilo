@@ -628,8 +628,10 @@ export interface BridgeCommandPayloadMap {
 	/** The system color sampler, answered by `screenColorSampled`. */
 	sampleScreenColor: EmptyPayload;
 	sidebarOverlayChanged: { visible: boolean };
+	/** A system screen covers the page (Settings, History, Downloads, ...); ⌘W closes it before the tab. */
+	pageShellChanged: { open: boolean };
 	showTabSecurityInfo: EmptyPayload;
-	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
+	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number; selectedIds?: string[] };
 	showFolderContextMenu: { id: string; x: number; y: number; width: number; height: number };
 	showTabStackContextMenu: { ids: string[]; host: string; name: string; x: number; y: number; width: number; height: number };
 	showSidebarContextMenu: { x: number; y: number; width: number; height: number; spaceId?: string };
@@ -1001,7 +1003,7 @@ export interface BridgeEventPayloadMap {
 	cancelDrag: EmptyPayload;
 	/** A drag entered the chrome: its links (file URLs included), else its text. */
 	linkDrag: { urls: string[]; text: string };
-	openCommandBar: { newTab?: boolean; prefill?: string; selectAll?: boolean };
+	openCommandBar: { createOnSubmit?: boolean; newTab?: boolean; prefill?: string; selectAll?: boolean };
 	toggleCommandBar: { prefill?: string; selectAll?: boolean };
 	openHistory: { query?: string; host?: string; openedFrom?: string };
 	closeCommandBarAfterNavigation: EmptyPayload;
@@ -1013,6 +1015,8 @@ export interface BridgeEventPayloadMap {
 	openDiagnostics: EmptyPayload;
 	openProcessManager: EmptyPayload;
 	openDownloads: EmptyPayload;
+	// ⌘W while a system screen covers the page: close it, leaving the tab behind.
+	closePageShell: EmptyPayload;
 	/** `id`: the extension whose details page opens. */
 	openExtensions: { id?: string };
 	openConfig: EmptyPayload;

@@ -1,0 +1,82 @@
+---
+title: Téléchargements, historique et favoris
+description: >-
+  Retrouvez et gérez vos téléchargements, cherchez dans votre historique ou
+  effacez-le, et enregistrez et rangez vos favoris dans Lilo sur votre Mac.
+sidebar:
+  order: 9
+---
+Ce guide vous montre comment retrouver et gérer ce que vous avez téléchargé, chercher dans votre historique et le supprimer, et conserver sous forme de favoris les pages sur lesquelles vous revenez. Chaque profil conserve sa propre liste de téléchargements, son propre historique et ses propres favoris, uniquement sur votre Mac.
+
+## Retrouver et gérer vos téléchargements [#find-and-manage-your-downloads]
+
+<Steps>
+  <Step title="Ouvrir Téléchargements">
+    Appuyez sur <kbd>⌥⌘L</kbd>, ou choisissez **Fenêtre > Téléchargements**. Dans la barre de commandes, l'action s'appelle **Afficher les téléchargements**. Pour un coup d'œil rapide aux derniers, choisissez **Fenêtre > Téléchargements récents**.
+  </Step>
+  <Step title="Retrouver un fichier">
+    Les téléchargements sont regroupés sous **En cours**, **Aujourd'hui**, **Hier** et les jours plus anciens. Saisissez du texte dans **Rechercher dans les téléchargements** pour restreindre la liste.
+  </Step>
+  <Step title="Agir sur un téléchargement">
+    Double-cliquez sur un téléchargement terminé pour l'ouvrir, ou faites glisser son icône vers le Finder ou une autre app. Cliquez dessus avec le bouton droit, ou cliquez sur son bouton **Plus d'actions**, pour accéder à **Ouvrir**, **Coup d'œil**, **Afficher dans le Finder**, **Ouvrir dans le terminal** (lorsque les [onglets terminal](/guides/terminal) sont activés), **Copier l'URL**, **Supprimer le fichier** et **Retirer de la liste**.
+  </Step>
+</Steps>
+
+Un téléchargement en cours peut être mis en pause et repris depuis sa ligne, ou annulé depuis son menu. Si un téléchargement échoue, sa ligne indique pourquoi, et **Réessayer** le relance lorsque le serveur le permet. Lilo réessaie aussi de lui-même plusieurs fois lorsque la connexion réseau est interrompue.
+
+Le menu **Plus d'actions**, en haut de la page Téléchargements, contient **Afficher le dossier Téléchargements** et **Effacer les téléchargements terminés**. Effacer la liste laisse les fichiers là où ils sont. Dans **Fenêtre > Téléchargements récents**, maintenez la touche Option enfoncée pour afficher un fichier dans le Finder au lieu de l'ouvrir.
+
+### Choisir où vont les fichiers [#choose-where-files-go]
+
+Dans **Réglages > Général**, sous **Téléchargements** :
+
+- **Dossier de téléchargement** est l'endroit où les fichiers sont enregistrés. Il s'agit du dossier Téléchargements de votre Mac tant que vous n'en choisissez pas un autre.
+- **Demander où enregistrer chaque fichier** vous permet de choisir un dossier et un nom pour chaque téléchargement. Désactivé par défaut.
+
+Lilo marque chaque fichier téléchargé avec l'indicateur de quarantaine de macOS, afin que macOS le vérifie la première fois que vous l'ouvrez. Avant d'ouvrir une app ou un script téléchargé encore en quarantaine, Lilo vous demande de confirmer. Si vous quittez Lilo pendant que des fichiers sont en cours de téléchargement, Lilo vous demande d'abord confirmation, puis les met en pause jusqu'à sa prochaine ouverture.
+
+## Chercher dans votre historique et l'effacer [#search-and-clear-your-history]
+
+<Steps>
+  <Step title="Ouvrir Historique">
+    Appuyez sur <kbd>⌘Y</kbd>, ou choisissez **Historique > Afficher tout l'historique…**. Les dernières pages que vous avez consultées se trouvent aussi dans **Historique > Visités récemment**.
+  </Step>
+  <Step title="Parcourir par période ou par site">
+    Choisissez **Tout l'historique**, **Aujourd'hui**, **Hier**, **7 derniers jours** ou **Plus ancien**. Sous **Sites les plus visités**, choisissez un site pour n'afficher que ses pages. **Depuis les terminaux** répertorie les pages ouvertes à partir de liens dans un [onglet terminal](/guides/terminal).
+  </Step>
+  <Step title="Rechercher">
+    Saisissez du texte dans **Rechercher dans l'historique**. La recherche porte sur les titres et les adresses des pages que vous avez consultées.
+  </Step>
+  <Step title="Ouvrir une page">
+    Cliquez sur une ligne pour l'ouvrir. Cliquez en maintenant la touche Commande enfoncée pour l'ouvrir dans un nouvel onglet.
+  </Step>
+</Steps>
+
+Pour voir l'historique du site affiché dans un onglet, cliquez sur l'onglet avec le bouton droit et choisissez **Afficher l'historique de example.com**. La [barre de commandes](/guides/command-bar) trouve aussi des pages de votre historique au fil de votre saisie.
+
+### Supprimer l'historique [#delete-history]
+
+- **Une page** : cliquez sur le bouton **Supprimer** de sa ligne, ou placez le focus sur la ligne et appuyez sur Suppr.
+- **Plusieurs pages** : sélectionnez-les à l'aide de leurs cases à cocher, ou cliquez dessus en maintenant la touche Maj enfoncée, puis cliquez sur **Supprimer** dans la barre qui apparaît. **Ouvrir dans de nouveaux onglets** les ouvre toutes à la place.
+- **Tout ce qui provient d'un site** : cliquez avec le bouton droit sur l'une de ses pages et choisissez **Tout supprimer de example.com…**, puis confirmez. Toutes les visites sur ce site disparaissent, quelle que soit la période ou la recherche affichée.
+- **Une période** : cliquez sur **Effacer les données de navigation...** dans la barre latérale de l'historique, ou appuyez sur <kbd>⇧⌘⌫</kbd>. Consultez [Effacer vos données de navigation](/guides/privacy-controls#clear-your-browsing-data).
+
+Lilo n'enregistre aucune visite dans un [espace privé](/guides/privacy-controls#browse-privately), ni dans un dossier verrouillé. L'historique conserve les 50 000 pages consultées le plus récemment et leurs 250 000 dernières visites ; les entrées plus anciennes sont supprimées à mesure que de nouvelles arrivent.
+
+## Conserver des favoris [#keep-bookmarks]
+
+Dans Lilo, un favori est un onglet qui reste dans votre barre latérale. Chaque espace possède ses propres onglets favoris, dans leur propre section de la barre latérale.
+
+<Steps>
+  <Step title="Ajouter une page aux favoris">
+    Choisissez **Onglet > Ajouter cette page aux favoris**, cliquez avec le bouton droit sur la page ou sur son onglet et choisissez **Ajouter cette page aux favoris** ou **Ajouter l'onglet aux favoris**, ou faites glisser l'onglet dans la section des favoris. Dans la barre de commandes, l'action s'appelle **Ajouter aux favoris**.
+  </Step>
+  <Step title="L'ouvrir plus tard">
+    Cliquez sur le favori dans la barre latérale. Vous pouvez aussi saisir son nom dans la barre de commandes.
+  </Step>
+  <Step title="Le retirer">
+    Cliquez sur le favori avec le bouton droit et choisissez **Supprimer le favori** (ou **Retirer l'onglet des favoris**). Un favori dont la page est ouverte reste sous forme d'onglet ordinaire ; un favori dont la page n'est pas ouverte quitte la barre latérale. **Historique > Rouvrir le dernier onglet fermé** le fait revenir.
+  </Step>
+</Steps>
+
+Les onglets favoris restent en place lorsque vous utilisez **Fermer les autres onglets** ou **Archiver les onglets non épinglés**, et ils ne peuvent pas être déplacés dans un espace privé. Pour récupérer les favoris d'un autre navigateur, consultez [Importer depuis un autre navigateur](/start/import). Pour les dossiers, les onglets épinglés et le déplacement d'onglets entre espaces, consultez [Onglets et dossiers](/guides/tabs-and-folders).

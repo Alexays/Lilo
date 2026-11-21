@@ -32,6 +32,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "setWallpaperColorWatch",
         "sampleScreenColor",
         "sidebarOverlayChanged",
+        "pageShellChanged",
         "showTabContextMenu",
         "showFolderContextMenu",
         "showTabStackContextMenu",
@@ -188,8 +189,13 @@ final class ChromeBridgeHandler: BridgeHandler {
         case "sidebarOverlayChanged":
             windowController?.handleSidebarOverlay(visible: message.bool("visible"))
 
+        case "pageShellChanged":
+            windowController?.pageShellOpen = message.bool("open")
+
         case "showTabContextMenu":
-            if let id = message.string("id") { windowController?.showTabContextMenu(tabId: id, anchorRect: anchorRect(from: message)) }
+            if let id = message.string("id") {
+                windowController?.showTabContextMenu(tabId: id, selectedIds: message.payload["selectedIds"] as? [String] ?? [], anchorRect: anchorRect(from: message))
+            }
 
         case "showFolderContextMenu":
             if let id = message.string("id") { windowController?.showFolderContextMenu(folderId: id, anchorRect: anchorRect(from: message)) }

@@ -35,6 +35,7 @@ final class SplitDividerView: NSView {
     /// Leading pane's two corners, then the trailing pane's.
     private let corners = (0..<4).map { _ in CAShapeLayer() }
     private var frameColor = NSColor.clear
+    private var fillColor = NSColor.clear
     private var isHovered = false
 
     override init(frame frameRect: NSRect) {
@@ -70,16 +71,19 @@ final class SplitDividerView: NSView {
         onSuperviewResize?()
     }
 
-    func setFrameColor(_ color: NSColor, animated: Bool) {
-        guard color != frameColor else { return }
+    /// `gapColor` overrides the gap's own paint: the side panel's divider leaves it to the frame's band.
+    func setFrameColor(_ color: NSColor, gapColor: NSColor? = nil, animated: Bool) {
+        let painted = gapColor ?? color
+        guard color != frameColor || painted != fillColor else { return }
         frameColor = color
+        fillColor = painted
         CATransaction.begin()
         if animated {
             CATransaction.setAnimationDuration(WindowFrameView.colorFadeDuration)
         } else {
             CATransaction.setDisableActions(true)
         }
-        fill.backgroundColor = color.cgColor
+        fill.backgroundColor = painted.cgColor
         corners.forEach { $0.fillColor = color.cgColor }
         applyHandleColor()
         CATransaction.commit()
@@ -298,7 +302,7 @@ final class SplitPanesController {
 
     private func makeDivider(path: [Bool]) -> SplitDividerView {
         let divider = SplitDividerView()
-        divider.setFrameColor(controller.window?.backgroundColor ?? MainWindowController.defaultSidebarBackgroundColor(), animated: false)
+        divider.setFrameColor(controller.currentFrameColor, animated: false)
         // The root cut always exists while a split shows, so it alone relays container resizes.
         if path.isEmpty {
             // AppKit skips resize(withOldSuperviewSize:) on a subview with an empty mask; the frame it sets is overwritten anyway.
@@ -489,6 +493,27 @@ final class SplitPanesController {
             if let tabId = hit.tabId, tabId != tabManager.activeOpenTabId { controller.activateTabStateFirst(id: tabId) }
         }
         return hit.view
+    }
+
+    /// The pane whose conversation surface claims `point` as a chrome zone, or nil. A conversation
+    /// draws in the chrome web view and registers its whole pane as a `conversation-<tabId>` zone, so
+    /// presses on the pane classify chrome and the tab is recovered through the zone id.
+    private func conversationPaneTabId(atWindowPoint point: NSPoint) -> UUID? {
+        guard let split,
+              let zone = controller.chromeInteractiveZones.zoneId(
+                  at: controller.chromeWebView.convert(point, from: nil),
+                  in: controller.chromeWebView.bounds, isFlipped: controller.chromeWebView.isFlipped),
+              zone.hasPrefix("conversation-"),
+              let tabId = UUID(uuidString: String(zone.dropFirst("conversation-".count))),
+              split.layout.paneIds.contains(tabId) else { return nil }
+        return tabId
+    }
+
+    /// Click-to-focus for a conversation pane: its zone swallows the press before `view(for:)` can run.
+    func activatePaneForChromePress(atWindowPoint point: NSPoint) {
+        guard let tabId = conversationPaneTabId(atWindowPoint: point),
+              tabId != controller.tabManager.activeOpenTabId else { return }
+        controller.activateTabStateFirst(id: tabId)
     }
 
     /// A web link dragged from outside the pages over a narrow strip at a pane's left or right edge goes to the chrome, which

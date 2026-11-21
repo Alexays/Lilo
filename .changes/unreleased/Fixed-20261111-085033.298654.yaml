@@ -1,0 +1,3 @@
+kind: Fixed
+body: Printing a page no longer crashes Lilo on a Mac without a printer
+time: 2026-11-11T08:50:33.298654+01:00

@@ -75,10 +75,7 @@ enum AgentMCP {
         case "ping":
             return result(id: id, [:])
         case "tools/list":
-            // A conversation's agent drives the Lilo it runs in: the browser pickers, kept for agents used to them, only cost it tokens.
-            let tools = session.conversationTabId == nil ? AgentTools.definitions
-                : AgentTools.definitions.filter { !AgentInteractionTools.browserPickers.contains($0["name"] as? String ?? "") }
-            return result(id: id, ["tools": tools])
+            return result(id: id, ["tools": AgentTools.definitions])
         case "tools/call":
             // Queued behind a freeze, a request whose client cancelled it or left does nothing.
             guard !Task.isCancelled else { return nil }
@@ -178,6 +175,7 @@ enum AgentMCP {
                 var reply: [String: Any] = ["content": [AgentContent.text(text).json], "isError": true]
                 var meta: [String: Any] = [:]
                 meta["lilo/errorCode"] = code
+                if let consent = (error as? AgentToolError)?.consent { meta["lilo/consent"] = consent.rawValue }
                 if sent.write { meta["lilo/possibleCommit"] = true }
                 if !meta.isEmpty { reply["_meta"] = meta }
                 return result(id: id, reply)
@@ -251,9 +249,12 @@ struct AgentToolError: LocalizedError {
     let message: String
     /// Stable and machine-readable, sent as `_meta["lilo/errorCode"]`: "needs_user" when only the user can unblock the call.
     let code: String?
-    init(_ message: String, code: String? = nil) {
+    /// The consent answer behind a `needs_user` refusal, sent as `_meta["lilo/consent"]`.
+    let consent: ConsentAnswer?
+    init(_ message: String, code: String? = nil, consent: ConsentAnswer? = nil) {
         self.message = message
         self.code = code
+        self.consent = consent
     }
     var errorDescription: String? { message }
 }

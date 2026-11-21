@@ -1,0 +1,48 @@
+/* Lilo's tokens from site/src/styles/global.css. Blume declares its dark values on
+   :root[data-theme="dark"], so both blocks are needed. */
+:root {
+  --blume-background: #f7f4fc;
+  --blume-foreground: #1a1a2e;
+  --blume-muted: #ffffff;
+  --blume-muted-foreground: #4b4b63;
+  --blume-border: rgba(26, 26, 46, 0.1);
+  --blume-accent: #4a2fc8;
+  --blume-accent-foreground: #ffffff;
+  --blume-code-background: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --blume-background: #0f0f1a;
+  --blume-foreground: #e8e8ee;
+  --blume-muted: #1e1e2e;
+  --blume-muted-foreground: #b9b9cc;
+  --blume-border: rgba(232, 232, 238, 0.1);
+  --blume-accent: #cdbaff;
+  --blume-accent-foreground: #1a1a2e;
+  --blume-code-background: #1e1e2e;
+}
+
+body {
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+
+/* A long page title wraps in the sidebar instead of ending in an ellipsis. */
+.blume-nav-link.truncate {
+  white-space: normal;
+  text-overflow: clip;
+}
+
+/* Blume's drawer slide, hover fades and page cross-fades ignore Reduce Motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition: none !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

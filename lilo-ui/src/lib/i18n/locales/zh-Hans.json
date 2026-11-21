@@ -79,11 +79,6 @@
 		"passwordManagerAction": "选取",
 		"passwordManagerChange": "更改",
 		"replayOnboardingAction": "重新播放",
-		"defaultBrowserSet": "设为默认",
-		"defaultBrowserLater": "稍后",
-		"defaultBrowserBannerText": "将 Lilo 设为默认浏览器？",
-		"defaultBrowserSetSuccess": "Lilo 现已设为默认浏览器。",
-		"defaultBrowserSetFailed": "未能将 Lilo 设为默认浏览器。你可以在“系统设置”中更改。",
 		"engineName": "名称",
 		"engineUrlTemplate": "搜索 URL（%s = 查询内容）",
 		"engineKeyword": "关键词",
@@ -203,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}：{decision}",
 			"zoomSummary": "缩放 {zoom}",
-			"hiddenSummary": {"one": "已隐藏 {count} 个元素", "other": "已隐藏 {count} 个元素"},
+			"hiddenSummary": "{count, plural, one{已隐藏 # 个元素} other{已隐藏 # 个元素}}",
 			"dataSummary": "已存储的数据",
 			"permissionUpdated": "{origin} · 更新于 {time}",
 			"emptyTitle": "还没有网站设置",
@@ -610,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "立即更新",
-			"summary": {
-				"one": "{count} 个列表",
-				"other": "{count} 个列表"
-			},
+			"summary": "{count, plural, one{# 个列表} other{# 个列表}}",
 			"updated": "更新于 {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "立即检查",
 			"checking": "正在检查更新...",
 			"upToDate": "已是最新版本",
-			"updated": {
-				"one": "已更新 {count} 项",
-				"other": "已更新 {count} 项"
-			},
-			"available": {
-				"one": "有 {count} 项更新可用",
-				"other": "有 {count} 项更新可用"
-			},
-			"failed": {
-				"one": "无法检查 {count} 项",
-				"other": "无法检查 {count} 项"
-			},
+			"updated": "{count, plural, one{已更新 # 项} other{已更新 # 项}}",
+			"available": "{count, plural, one{有 # 项更新可用} other{有 # 项更新可用}}",
+			"failed": "{count, plural, one{无法检查 # 项} other{无法检查 # 项}}",
 			"lastChecked": "上次检查于 {time}"
 		},
 		"folderAutoLock": {
@@ -682,10 +665,7 @@
 			"clearData": "清除数据...",
 			"remove": "移除...",
 			"lastProfile": "最后一个个人资料必须保留：每个空间都需要一个个人资料。",
-			"extensionCount": {
-				"one": "{count} 个扩展",
-				"other": "{count} 个扩展"
-			},
+			"extensionCount": "{count, plural, one{# 个扩展} other{# 个扩展}}",
 			"newProfile": "新建个人资料...",
 			"newProfileDetail": "独立的 Cookie、登录信息和扩展",
 			"namePlaceholder": "个人资料名称",
@@ -760,28 +740,16 @@
 		},
 		"notes": {
 			"live": "选择后立即生效",
-			"spaces": {
-				"one": "{count} 个空间",
-				"other": "{count} 个空间"
-			},
-			"profiles": {
-				"one": "{count} 个配置文件",
-				"other": "{count} 个配置文件"
-			},
+			"spaces": "{count, plural, one{# 个空间} other{# 个空间}}",
+			"profiles": "{count, plural, one{# 个配置文件} other{# 个配置文件}}",
 			"blocking": "正在拦截 {total} 类中的 {count} 类",
 			"blockingOff": "拦截已关闭",
 			"profile": "{name} 配置文件",
-			"extensions": {
-				"one": "{profile} 中有 {count} 个扩展",
-				"other": "{profile} 中有 {count} 个扩展"
-			},
+			"extensions": "{count, plural, one{{profile} 中有 # 个扩展} other{{profile} 中有 # 个扩展}}",
 			"terminal": "更改适用于每个终端标签页",
 			"agents": "Lilo 本身不内置 AI",
 			"advanced": "供开发和测试使用",
-			"searchMatches": {
-				"one": "{count} 项设置与“{query}”匹配",
-				"other": "{count} 项设置与“{query}”匹配"
-			}
+			"searchMatches": "{count, plural, one{# 项设置与“{query}”匹配} other{# 项设置与“{query}”匹配}}"
 		},
 		"callDock": {
 			"sidebar": "在边栏中",
@@ -937,13 +905,13 @@
 		"pinnedTabs": "固定标签页",
 		"openTabs": "打开的标签页",
 		"dropToPin": "放下以固定",
-		"stackLabel": {"one": "{name}，{count} 个标签页", "other": "{name}，{count} 个标签页"},
+		"stackLabel": "{count, plural, one{{name}，# 个标签页} other{{name}，# 个标签页}}",
 		"closeStack": "关闭堆叠",
 		"trayAgents": "智能体",
 		"trayTerminals": "终端",
-		"trayNeedsInput": {"one": "{count} 个等待输入", "other": "{count} 个等待输入"},
-		"trayWorking": {"one": "{count} 个工作中", "other": "{count} 个工作中"},
-		"trayRunning": {"one": "{count} 个运行中", "other": "{count} 个运行中"},
+		"trayNeedsInput": "{count, plural, one{# 个等待输入} other{# 个等待输入}}",
+		"trayWorking": "{count, plural, one{# 个工作中} other{# 个工作中}}",
+		"trayRunning": "{count, plural, one{# 个运行中} other{# 个运行中}}",
 		"trayShow": "显示{name}",
 		"trayHide": "隐藏{name}"
 	},
@@ -1168,6 +1136,7 @@
 		"installed": "已安装"
 	},
 	"commandBar": {
+		"showDetails": "显示键盘提示",
 		"hintPeek": "预览",
 		"hintCopyLink": "拷贝链接",
 		"hintCloseTab": "关闭标签页",
@@ -1234,8 +1203,6 @@
 		"sectionOpenTabs": "打开的标签页",
 		"sectionBookmarks": "书签",
 		"sectionRecentHistory": "最近的历史记录",
-		"sectionFrequentSites": "常用网站",
-		"sectionRecentConversations": "最近的对话",
 		"sectionHistory": "历史记录",
 		"sectionSwitchToTab": "切换到标签页",
 		"sectionGoTo": "前往",
@@ -1350,7 +1317,7 @@
 		"tabStartup": "启动",
 		"tabMemory": "内存",
 		"tabLog": "日志",
-		"errorCount": {"one": "{count} 个错误", "other": "{count} 个错误"},
+		"errorCount": "{count, plural, one{# 个错误} other{# 个错误}}",
 		"copyReport": "拷贝报告",
 		"recordSession": "录制会话",
 		"stopRecording": "停止录制",
@@ -1392,23 +1359,11 @@
 		"navLabel": "进程管理器视图",
 		"searchPlaceholder": "搜索标签页",
 		"memoryAriaLabel": "内存用量",
-		"tabsCount": {
-			"one": "{count} 个标签页",
-			"other": "{count} 个标签页"
-		},
+		"tabsCount": "{count, plural, one{# 个标签页} other{# 个标签页}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "其他 {count} 项",
-			"other": "其他 {count} 项"
-		},
-		"reclaim": {
-			"one": "{count} 个隐藏标签页使用了 {size}",
-			"other": "{count} 个隐藏标签页使用了 {size}"
-		},
-		"reclaimNoSize": {
-			"one": "{count} 个隐藏标签页仍处于载入状态",
-			"other": "{count} 个隐藏标签页仍处于载入状态"
-		},
+		"others": "{count, plural, one{其他 # 项} other{其他 # 项}}",
+		"reclaim": "{count, plural, one{# 个隐藏标签页使用了 {size}} other{# 个隐藏标签页使用了 {size}}}",
+		"reclaimNoSize": "{count, plural, one{# 个隐藏标签页仍处于载入状态} other{# 个隐藏标签页仍处于载入状态}}",
 		"sleep": "使其休眠",
 		"groupTabs": "标签页",
 		"groupSleeping": "休眠中",
@@ -1418,10 +1373,7 @@
 		"audioPlaying": "正在播放音频",
 		"frozen": "已冻结",
 		"sharedEstimate": "与其他标签页共享进程，因此此值为估算值",
-		"sharedWith": {
-			"one": "与另外 {count} 个标签页共享",
-			"other": "与另外 {count} 个标签页共享"
-		},
+		"sharedWith": "{count, plural, one{与另外 # 个标签页共享} other{与另外 # 个标签页共享}}",
 		"pid": "PID {pid}",
 		"focus": "显示",
 		"details": "显示详细信息",
@@ -1450,16 +1402,10 @@
 	"urlToast": {
 		"pageActions": "页面操作",
 		"reEnableBlocking": "重新启用此网站的拦截",
-		"trackersBlockedOnPage": {
-			"one": "已在此网页拦截 {count} 个跟踪器",
-			"other": "已在此网页拦截 {count} 个跟踪器"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{已在此网页拦截 # 个跟踪器} other{已在此网页拦截 # 个跟踪器}}",
 		"disableBlocking": "停用此网站的拦截",
 		"adsAllowed": "已允许广告",
-		"trackersBlockedLabel": {
-			"one": "已拦截 {count} 个跟踪器",
-			"other": "已拦截 {count} 个跟踪器"
-		},
+		"trackersBlockedLabel": "{count, plural, one{已拦截 # 个跟踪器} other{已拦截 # 个跟踪器}}",
 		"adsBlocked": "已拦截广告",
 		"extensionAlreadyInstalled": "扩展已安装",
 		"installChromeExtension": "安装此 Chrome 扩展",
@@ -1503,10 +1449,7 @@
 		"stop": "停止调试"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "还有 {count} 条通知",
-			"other": "还有 {count} 条通知"
-		},
+		"moreNotices": "{count, plural, one{还有 # 条通知} other{还有 # 条通知}}",
 		"more": "还有 {count} 条"
 	},
 	"crashRecovery": {
@@ -1547,7 +1490,7 @@
 	},
 	"archivedTabs": {
 		"title": "已归档",
-		"buttonLabel": {"one": "最近归档的 {count} 个标签页", "other": "最近归档的 {count} 个标签页"},
+		"buttonLabel": "{count, plural, one{最近归档的 # 个标签页} other{最近归档的 # 个标签页}}",
 		"restore": "恢复",
 		"showAll": "显示所有已归档的标签页",
 		"showAllDownloads": "显示所有下载项"
@@ -1558,7 +1501,7 @@
 		"undo": "撤销",
 		"reopen": "重新打开",
 		"archived": "已归档“{title}”",
-		"archivedCount": {"one": "已归档 {count} 个标签页", "other": "已归档 {count} 个标签页"}
+		"archivedCount": "{count, plural, one{已归档 # 个标签页} other{已归档 # 个标签页}}"
 	},
 	"updateCard": {
 		"ready": "已准备好安装",
@@ -1591,6 +1534,11 @@
 		"placeholder": "搜索或输入 URL...",
 		"addressBar": "地址栏：{url}",
 		"noProject": "无项目",
+		"defaultBrowserSet": "设为默认",
+		"defaultBrowserLater": "稍后",
+		"defaultBrowserBannerText": "将 Lilo 设为默认浏览器？",
+		"defaultBrowserSetSuccess": "Lilo 现已设为默认浏览器。",
+		"defaultBrowserSetFailed": "未能将 Lilo 设为默认浏览器。你可以在“系统设置”中更改。",
 		"details": {
 			"branch": "分支",
 			"command": "命令",
@@ -1648,6 +1596,7 @@
 		"allow": "允许",
 		"allowOnce": "允许一次",
 		"alwaysAllowOnSite": "在此网站上始终允许",
+		"agentWaitsForAnswer": "智能体会等待你的答复。",
 		"popup": {
 			"blocked": "已阻止弹出式窗口",
 			"tried": "试图打开弹出式窗口",
@@ -1769,26 +1718,11 @@
 			"done": "已完成：{list}。",
 			"nothing": "已完成：没有新内容可导入。",
 			"count": {
-				"bookmarks": {
-					"one": "{count} 个书签",
-					"other": "{count} 个书签"
-				},
-				"tabs": {
-					"one": "{count} 个打开的标签页",
-					"other": "{count} 个打开的标签页"
-				},
-				"history": {
-					"one": "{count} 条历史记录",
-					"other": "{count} 条历史记录"
-				},
-				"cookies": {
-					"one": "{count} 个 Cookie",
-					"other": "{count} 个 Cookie"
-				},
-				"extensions": {
-					"one": "{count} 个扩展",
-					"other": "{count} 个扩展"
-				}
+				"bookmarks": "{count, plural, one{# 个书签} other{# 个书签}}",
+				"tabs": "{count, plural, one{# 个打开的标签页} other{# 个打开的标签页}}",
+				"history": "{count, plural, one{# 条历史记录} other{# 条历史记录}}",
+				"cookies": "{count, plural, one{# 个 Cookie} other{# 个 Cookie}}",
+				"extensions": "{count, plural, one{# 个扩展} other{# 个扩展}}"
 			},
 			"step": {
 				"bookmarks": "正在从 {from} 导入书签",
@@ -1906,11 +1840,11 @@
 		"sectionSites": "最常访问的网站",
 		"sectionTerminals": "来自终端",
 		"searchResults": "搜索结果",
-		"dayPages": {"one": "{count} 个页面", "other": "{count} 个页面"},
-		"daySites": {"one": "{count} 个网站", "other": "{count} 个网站"},
+		"dayPages": "{count, plural, one{# 个页面} other{# 个页面}}",
+		"daySites": "{count, plural, one{# 个网站} other{# 个网站}}",
 		"openInNewTab": "在新标签页中打开",
-		"selected": {"one": "已选择 {count} 项", "other": "已选择 {count} 项"},
-		"visits": {"one": "{count} 次访问", "other": "{count} 次访问"},
+		"selected": "{count, plural, one{已选择 # 项} other{已选择 # 项}}",
+		"visits": "{count, plural, one{# 次访问} other{# 次访问}}",
 		"openInNewTabs": "在新标签页中打开",
 		"delete": "删除",
 		"clearSelection": "取消全选",
@@ -2258,6 +2192,10 @@
 		"Close": "关闭",
 		"New Terminal Tab": "新建终端标签页",
 		"Close %d terminals?": {"one": "关闭 %d 个终端？", "other": "关闭 %d 个终端？"},
+		"Pin %d Tabs": {"one": "固定 %d 个标签页", "other": "固定 %d 个标签页"},
+		"Bookmark %d Tabs": {"one": "为 %d 个标签页添加书签", "other": "为 %d 个标签页添加书签"},
+		"Move Tabs to Space": "将标签页移至空间",
+		"Close %d Tabs": {"one": "关闭 %d 个标签页", "other": "关闭 %d 个标签页"},
 		"Commands are still running in them and will be stopped.": "其中仍有命令在运行，将被停止。",
 		"The terminal could not start.": "终端无法启动。",
 		"Close the tab and try again.": "请关闭标签页，然后重试。",
@@ -2476,10 +2414,7 @@
 		"title": "Lilo 更新内容",
 		"description": "让日常浏览更顺手的一些小改进。",
 		"allChanges": "本次更新的全部内容",
-		"changes": {
-			"one": "{count} 项更改",
-			"other": "{count} 项更改"
-		},
+		"changes": "{count, plural, one{# 项更改} other{# 项更改}}",
 		"originalNotes": "原始版本说明（英文）。",
 		"unavailable": "此构建版本暂未提供版本说明。",
 		"reopen": "随时可从「帮助 > 更新内容」再次查看。",
@@ -2663,10 +2598,7 @@
 			"ownCopyHint": "在项目的独立副本中工作。可在更改中合并。",
 			"starting": "正在启动智能体...",
 			"errorHint": "发送消息即可重试。",
-			"showEarlier": {
-				"one": "显示前 {count} 项",
-				"other": "显示前 {count} 项"
-			},
+			"showEarlier": "{count, plural, one{显示前 # 项} other{显示前 # 项}}",
 			"queuedTag": "排队中",
 			"sendNow": "立即发送",
 			"thought": "思考",
@@ -2676,16 +2608,10 @@
 			"restore": "恢复",
 			"undo": "撤销",
 			"undone": "已撤销",
-			"moreLines": {
-				"one": "还有 {count} 行",
-				"other": "还有 {count} 行"
-			},
+			"moreLines": "{count, plural, one{还有 # 行} other{还有 # 行}}",
 			"plan": "计划",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "已完成 {count} 个步骤",
-				"other": "已完成 {count} 个步骤"
-			},
+			"planDone": "{count, plural, one{已完成 # 个步骤} other{已完成 # 个步骤}}",
 			"planStatus": {
 				"pending": "待办",
 				"in_progress": "进行中",
@@ -2713,26 +2639,11 @@
 				"failed": "失败"
 			},
 			"group": {
-				"read": {
-					"one": "读取了 {count} 个文件",
-					"other": "读取了 {count} 个文件"
-				},
-				"search": {
-					"one": "{count} 次搜索",
-					"other": "{count} 次搜索"
-				},
-				"fetch": {
-					"one": "获取了 {count} 个页面",
-					"other": "获取了 {count} 个页面"
-				},
-				"think": {
-					"one": "思考了 {count} 次",
-					"other": "思考了 {count} 次"
-				},
-				"action": {
-					"one": "{count} 个操作",
-					"other": "{count} 个操作"
-				}
+				"read": "{count, plural, one{读取了 # 个文件} other{读取了 # 个文件}}",
+				"search": "{count, plural, one{# 次搜索} other{# 次搜索}}",
+				"fetch": "{count, plural, one{获取了 # 个页面} other{获取了 # 个页面}}",
+				"think": "{count, plural, one{思考了 # 次} other{思考了 # 次}}",
+				"action": "{count, plural, one{# 个操作} other{# 个操作}}"
 			}
 		},
 		"composer": {
@@ -2770,24 +2681,12 @@
 			"untitled": "新对话",
 			"working": "工作中",
 			"failed": "因出错而停止",
-			"linesAdded": {
-				"one": "新增 {count} 行",
-				"other": "新增 {count} 行"
-			},
-			"linesRemoved": {
-				"one": "删除 {count} 行",
-				"other": "删除 {count} 行"
-			},
-			"pages": {
-				"one": "{count} 个页面",
-				"other": "{count} 个页面"
-			},
+			"linesAdded": "{count, plural, one{新增 # 行} other{新增 # 行}}",
+			"linesRemoved": "{count, plural, one{删除 # 行} other{删除 # 行}}",
+			"pages": "{count, plural, one{# 个页面} other{# 个页面}}",
 			"showPages": "显示页面",
 			"hidePages": "隐藏页面",
-			"morePermissions": {
-				"one": "还有 {count} 个请求在等你",
-				"other": "还有 {count} 个请求在等你"
-			}
+			"morePermissions": "{count, plural, one{还有 # 个请求在等你} other{还有 # 个请求在等你}}"
 		},
 		"question": {
 			"allow": "允许",
@@ -2801,10 +2700,7 @@
 		},
 		"badge": {
 			"title": "智能体",
-			"waiting": {
-				"one": "智能体，{count} 个在等你",
-				"other": "智能体，{count} 个在等你"
-			},
+			"waiting": "{count, plural, one{智能体，# 个在等你} other{智能体，# 个在等你}}",
 			"new": "新",
 			"needsYou": "等你处理",
 			"running": "运行中",
@@ -2825,10 +2721,7 @@
 			"signInOpenTerminal": "在终端中打开"
 		},
 		"work": {
-			"images": {
-				"one": "{count} 张图片",
-				"other": "{count} 张图片"
-			},
+			"images": "{count, plural, one{# 张图片} other{# 张图片}}",
 			"verb": {
 				"read": "读取",
 				"edit": "编辑",
@@ -2846,46 +2739,16 @@
 				"fetch": "正在获取"
 			},
 			"summary": {
-				"read": {
-					"one": "读取了 {count} 个文件",
-					"other": "读取了 {count} 个文件"
-				},
-				"edit": {
-					"one": "编辑了 {count} 个文件",
-					"other": "编辑了 {count} 个文件"
-				},
-				"execute": {
-					"one": "运行了 {count} 条命令",
-					"other": "运行了 {count} 条命令"
-				},
-				"search": {
-					"one": "搜索了 {count} 次",
-					"other": "搜索了 {count} 次"
-				},
-				"fetch": {
-					"one": "获取了 {count} 个网页",
-					"other": "获取了 {count} 个网页"
-				},
-				"think": {
-					"one": "思考了 {count} 次",
-					"other": "思考了 {count} 次"
-				},
-				"browser": {
-					"one": "使用了 {count} 次浏览器",
-					"other": "使用了 {count} 次浏览器"
-				},
-				"browserOn": {
-					"one": "在 {site} 使用了 {count} 次浏览器",
-					"other": "在 {site} 使用了 {count} 次浏览器"
-				},
-				"tool": {
-					"one": "使用了 {count} 个工具",
-					"other": "使用了 {count} 个工具"
-				},
-				"agent": {
-					"one": "启动了 {count} 个智能体",
-					"other": "启动了 {count} 个智能体"
-				}
+				"read": "{count, plural, one{读取了 # 个文件} other{读取了 # 个文件}}",
+				"edit": "{count, plural, one{编辑了 # 个文件} other{编辑了 # 个文件}}",
+				"execute": "{count, plural, one{运行了 # 条命令} other{运行了 # 条命令}}",
+				"search": "{count, plural, one{搜索了 # 次} other{搜索了 # 次}}",
+				"fetch": "{count, plural, one{获取了 # 个网页} other{获取了 # 个网页}}",
+				"think": "{count, plural, one{思考了 # 次} other{思考了 # 次}}",
+				"browser": "{count, plural, one{使用了 # 次浏览器} other{使用了 # 次浏览器}}",
+				"browserOn": "{count, plural, one{在 {site} 使用了 # 次浏览器} other{在 {site} 使用了 # 次浏览器}}",
+				"tool": "{count, plural, one{使用了 # 个工具} other{使用了 # 个工具}}",
+				"agent": "{count, plural, one{启动了 # 个智能体} other{启动了 # 个智能体}}"
 			},
 			"browser": {
 				"closeTab": "关闭了一个标签页",
@@ -2936,10 +2799,7 @@
 				"request": "正在向 {url} 发送请求"
 			},
 			"exit": "退出码 {code}",
-			"showAll": {
-				"one": "显示全部 {count} 行",
-				"other": "显示全部 {count} 行"
-			},
+			"showAll": "{count, plural, one{显示全部 # 行} other{显示全部 # 行}}",
 			"showLess": "只显示最后几行"
 		},
 		"turn": {
@@ -2947,10 +2807,7 @@
 			"stopped": "已停止",
 			"refusalTitle": "模型拒绝继续",
 			"refusalHint": "它的安全机制停止了这一轮，有时也会误伤正当工作。请换种说法，或在下方选择其他模型。",
-			"files": {
-				"one": "更改了 {count} 个文件",
-				"other": "更改了 {count} 个文件"
-			},
+			"files": "{count, plural, one{更改了 # 个文件} other{更改了 # 个文件}}",
 			"review": "查看",
 			"copy": "复制回复",
 			"copied": "已复制"

@@ -30,13 +30,13 @@ final class DockMenuTests: XCTestCase {
         nsWindow.orderOut(nil)
         let delegate = AppDelegate()
         delegate.browserContext.windows.add(window)
-        let tabs = window.tabManager.openTabs.count
+        let events = BridgeEventRecorder(window.bridgeRouter)
 
         let menu = try XCTUnwrap(delegate.applicationDockMenu(NSApp))
         let item = try XCTUnwrap(menu.items.first { $0.title == "New Tab".localized })
         NSApp.sendAction(try XCTUnwrap(item.action), to: item.target, from: item)
 
-        XCTAssertEqual(window.tabManager.openTabs.count, tabs + 1)
-        XCTAssertTrue(nsWindow.isVisible, "the new tab shows")
+        XCTAssertEqual(events.data("openCommandBar").last?["createOnSubmit"] as? Bool, true)
+        XCTAssertTrue(nsWindow.isVisible, "the new tab's command bar shows")
     }
 }

@@ -1,0 +1,95 @@
+---
+title: "Privacy"
+description: "What Lilo does and does not collect, every request it makes on its own and how to turn it off, and where your data is stored. No account, no telemetry."
+sidebar:
+  order: 2
+---
+
+Lilo is a local browser. It has no account, no sync, no telemetry and no analytics, and the project runs no server: nothing you do in Lilo is sent to its developers. This page tells you what Lilo keeps on your Mac, every service it contacts on its own and how to turn each one off, and what WebKit and macOS do alongside it.
+
+:::note
+Lilo's repository holds its privacy statement, [`PRIVACY.md`](https://github.com/Alexays/Lilo/blob/main/PRIVACY.md). This page covers the same ground, checked against the app's code.
+:::
+
+## What stays on your Mac
+
+History, bookmarks, sessions, settings, site permissions, downloads and extension data live in SQLite databases under `~/Library/Application Support/Lilo`, separated per profile. Website data (cookies, site storage, caches) lives in WebKit's data stores under `~/Library/WebKit/fr.arouillard.lilo`, one per profile. Private Spaces use non-persistent WebKit data stores that are discarded when they close. Bookmarks are also indexed in Spotlight, on this Mac only, so they show up in Spotlight searches.
+
+Lilo has no password manager and does not save the passwords you type into web pages. It keeps a few secrets in the macOS keychain, on this Mac: the HTTP sign-ins (basic authentication) you ask it to remember, a hash of each folder lock's password, and the Google sign-in tokens of extensions that use `chrome.identity`.
+
+Features that keep their own data, all on this Mac:
+
+- **Auto-archive:** unpinned tabs left idle past a Space's delay (12 hours by default, or never) move to the Space's archive, which keeps their URL and title for 30 days, at most 200 per Space. Private Spaces are never written to disk.
+- **Terminal tabs** run your shell as you. Lilo saves each terminal's screen and scrollback under `Terminals/` to restore it on relaunch, and deletes a saved screen not reopened for 30 days. Terminals of Private Spaces are not saved.
+- **Link rules** (Settings, links opened from other apps) are matched on your Mac to choose the Space or Little window a link opens in.
+- **Peek and Little windows** open pages in the profile of the Space they belong to, like any tab. The Little window shortcut works from any app through a system hot key: Lilo needs no Accessibility permission and sees no other keystrokes.
+- **Downloads** are stamped with macOS quarantine (the file's source URL, agent "Lilo"), so Gatekeeper checks them when you first open them. Outside Private Spaces, they also get Finder's "Where from": the file's address and the page it came from.
+- **Diagnostics** (Help > Diagnostics) are built on demand: **Copy Report** puts startup metrics and tab lifecycle counts on your clipboard, for you to paste where you choose. Lilo sends no crash report; macOS keeps its own under `~/Library/Logs/DiagnosticReports`. When Lilo quits, it notes in the macOS log on this Mac where the request came from: a key or click, or the identifier of the app that asked, and the name of the last agent tool. It holds no URL, title, or key or text you typed.
+- **Performance recordings** (Help > Record Performance Session) are written to your Downloads folder when you stop one, for you to share or delete: timings of Lilo's own work, CPU, memory, energy and disk use of its processes, the names of menu commands you used, the ids of your installed extensions, and your Mac's model and macOS version. They contain no URL, page title, name or text you typed. Lilo also keeps the hang and crash diagnostics macOS hands it (MetricKit) in its Application Support folder, to add them to the next recording; they never leave your Mac otherwise.
+- **Bug reports:** Help > Report an Issue… opens GitHub's bug report form in a tab, filled in with your Lilo, WebKit and macOS versions. Those versions are in the form's address, so `github.com` receives them when the tab opens; no issue is created until you submit the form yourself. The report a frozen page's **Report a problem** opens also carries that page's origin (its scheme and host, no path) and the names of your enabled extensions.
+
+To see or clear what a profile stores, use Settings > Privacy. [Privacy controls](/guides/privacy-controls) walks through the settings.
+
+## Requests Lilo makes on its own
+
+Besides the pages you open, Lilo contacts these services:
+
+| What | Where | When | How to turn it off |
+|---|---|---|---|
+| Filter lists for content blocking | `easylist.to`, `ublockorigin.github.io`, and for the regional lists of your languages `easylist-downloads.adblockplus.org` and `raw.githubusercontent.com` | Every four hours at most | Turn off **Block ads and trackers** in Settings > Privacy (takes effect at the next launch); turn off **Regional ad lists** there |
+| Search suggestions | Your search engine's suggestion endpoint (Google, Bing, DuckDuckGo, Brave) with what you type in the address bar | While typing | Turn off **Search suggestions** in Settings |
+| Preload top hit | A site from your history you visit often, loaded with your cookies as if you had opened it | While you type its address in a blank tab, before you press Return; in a tab already showing a page, Lilo only opens a connection to that site | Turn off **Preload top hit** in Settings |
+| Extension installs and updates | `clients2.google.com` (Chrome Web Store), with the ids and versions of your store extensions | On install, and an update check every five hours while store extensions are installed | Remove store extensions; turning off **Update extensions automatically** only stops installing new versions |
+| Google sign-in for extensions (`chrome.identity.getAuthToken`) | `accounts.google.com`, with the extension's OAuth client id and scopes | Only when an extension asks you to sign in, in a panel you see | Remove the extension, or close the panel |
+| Agents for Conversations | `cdn.agentclientprotocol.com` (the ACP registry, kept a day) and the icon addresses it lists; then the chosen agent itself: its package from npm or PyPI, or its archive from the address the registry lists, checked against the registry's SHA-256 | When you pick an agent or start a conversation | Leave **Conversations with your agents** off in Settings > Agents (off by default) |
+| App updates (Sparkle) | `github.com` (the latest release's `appcast.xml`, then the update itself), with Lilo's version in the User-Agent; no system profile | Once an hour, from the first launch | Turn off **Install updates automatically** in Settings (it stops the hourly check too; **Check Now** still checks when you ask) |
+| Connection warm-ups | A site's server, contacted to open a connection (address lookup and secure handshake) before you need it; no page is requested | When you point at a link to another site; while you type a search in the address bar, your search engine when it is one of the four built-in ones (Google, DuckDuckGo, Bing, Brave Search), even with **Search suggestions** off; when you open a site, the other servers its pages used earlier in this session | No setting turns them off. Private Spaces do not reuse the servers learned elsewhere |
+
+The Chrome Web Store sees Lilo as Chrome, so its install button (relabeled "Add to Lilo") works. [Extension compatibility](/reference/extension-compatibility) explains how. Local and debug builds never check for app updates.
+
+## Requests WebKit and macOS make
+
+Lilo uses the WebKit framework that ships with macOS, and with it these system services:
+
+- **Fraudulent website warnings** (Safe Browsing) check visited addresses against Google's or Tencent's lists through Apple's privacy-preserving proxy.
+- **Link tracking protection** strips known tracking parameters using a list macOS keeps up to date.
+- **Page translation** runs on device with Apple's Translation framework. The first time you translate from a language, macOS may ask to download it from Apple.
+- **Screen Time** is told the address of each web page a tab shows, so it can enforce the limits set in System Settings > Screen Time in every tab, Private Spaces and agent tabs included. It records your usage only for your own tabs outside Private Spaces: Lilo turns usage recording off for Private Spaces and for agents' tabs.
+
+## Tracking prevention and GPC
+
+WebKit's cross-site tracking prevention (Intelligent Tracking Prevention) is on by default, as in Safari. A site embedded in another (an iframe, an image, a script) gets none of its own cookies there, so it cannot recognize you across the sites that embed it. An embed can ask for its cookies through the Storage Access API, and Lilo asks you first. Tracking prevention also deletes the cookies of sites it classifies as trackers, unless you used that site in the last 30 days: a click on a page counts as using its site. It keeps its statistics on your Mac only.
+
+Cookies a site marks `Partitioned` still work in its frames, kept apart for each site embedding it, so embedded apps that sign in with them, such as claude.ai artifacts, keep working. With **Prevent cross-site tracking** turned off in Settings > Privacy, third-party cookies work as in Chrome, and a `Partitioned` cookie is stored unpartitioned. Turning it off clears its statistics, not the sites' data.
+
+The content blocker lets bot-defense and captcha vendors through (PerimeterX/HUMAN, DataDome, Arkose Labs, hCaptcha, Cloudflare Turnstile): sites rely on their scripts to tell people from bots, and with them blocked they show a captcha on every visit. They can still see your visits to the sites using them.
+
+On macOS 27 and later, Lilo sends the Global Privacy Control signal (`Sec-GPC`, `navigator.globalPrivacyControl`) by default; turn it off with **Ask sites not to sell my data** in Settings > Privacy. On macOS 26, WebKit gives Lilo no way to set the signal: the switch shows, but it has no effect.
+
+## Import from other browsers
+
+Import reads, on your Mac, the data of Chrome, Arc, Brave, Edge, Vivaldi, Dia, Comet, Opera, Chromium, Firefox, Zen and Safari: bookmarks, open tabs and Spaces, history, cookies and the list of installed extensions. It never reads passwords or payment data. Chromium cookies are decrypted with the browser's "Safe Storage" keychain item, which macOS asks you to allow; Safari needs Full Disk Access. Imported extensions are installed again from the Chrome Web Store: the id of each extension you chose goes to `clients2.google.com` to download it, and their data stays in the other browser. Nothing else of what you import leaves your Mac. See [Import sources](/reference/import-sources) for what comes from each browser.
+
+## AI agents
+
+Lilo has no AI of its own. Agents can drive Lilo only while **Let agents use Lilo** is on in Settings > Agents: it is off on a new installation unless you answered **With my agents** or **For developing** in the setup, and it applies to every profile. Agents connect through `lilo-mcp`, a local MCP server in the app bundle, over a Unix socket (`agent.sock` in Lilo's support folder) that only your user account can reach; nothing listens on the network.
+
+- **Each client is approved once:** Lilo asks the first time an agent connects from another app, and ties the approval to the program behind it (its code signature, or its path when unsigned). Settings lists approved clients and can revoke them.
+- **Connected agents work in an Agents Space**, in a separate "Agents" profile with none of your cookies, sign-ins or history, wiped when agent control starts and when the last agent leaves. An agent can move to one of your profiles only after you allow that profile.
+- **Conversation agents run on your Mac and browse in your Space.** An agent you start in a Lilo conversation (**File > Ask an Agent**) is the agent's own program, which Lilo starts on your Mac: it reads files and runs commands with its own tools and your user account's access, limited only by its own permission questions. It is asked no connection question: its pages open in the conversation's folder, in the Space you started it in, with that Space's profile, your cookies and sign-ins included.
+- **What agents can read in Lilo:** the pages of their own tabs (text, accessibility tree, screenshots, console, network, cookies of the sites those tabs show, `HttpOnly` ones included, so of any site an agent in one of your profiles navigates to), any local file or folder they open with a `file://` address, without a prompt, and the names of your profiles. They see your other tabs only when you attach them to a conversation message, as page text or a screenshot, and never see or act on one of your Private Spaces. Their `fetch` tool never returns `Set-Cookie` or `Authorization`.
+- **Approval gate:** unless you turn it off, Lilo asks before an agent clicks or presses Enter on a button, link or form whose label or form address contains one of a fixed list of words such as "send", "pay", "delete" or "publish" (**Allow Once**, **Always Allow on This Site**, **Don't Allow**), and before it sends a request other than GET or HEAD with your cookies. The word check is best effort: clicks on other kinds of element, other labels, other languages, icons and Enter in a message box pass without a question. Sites you always allow are listed in Settings. Handing a page one of your files always asks, whatever the setting.
+
+The gate is a safety net, not a sandbox: code an agent runs in a page can act without asking, and it covers only what agents do in the browser. [Agent safety](/about/agent-safety) explains what the gate covers and what it does not.
+
+## Tab sharing
+
+When a page asks to share your screen, Lilo's picker lists your tabs. The tab you pick is captured inside Lilo and handed to that page only, video only; the sidebar marks the shared tab. **Window or Screen...** opens the macOS picker instead. When the page also asks for sound, **Share audio too** adds what your Mac plays to a window or screen share, leaving out Lilo's own sound, so the voices of a call are never sent back into it. An extension using `chrome.desktopCapture` goes through the same pickers. One using `chrome.tabCapture` shows no picker: as in Chrome, it captures the tab you invoked it on, for example by clicking its button.
+
+## Extensions
+
+Extensions you install run with the permissions they request, which Lilo shows before installing. What an extension does with your data is governed by that extension's own privacy policy.
+
+## Questions
+
+Questions about privacy: open a [discussion](https://github.com/Alexays/Lilo/discussions). To report a security issue privately, follow [`SECURITY.md`](https://github.com/Alexays/Lilo/blob/main/SECURITY.md).

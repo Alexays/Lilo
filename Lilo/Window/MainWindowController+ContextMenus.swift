@@ -81,11 +81,17 @@ extension MainWindowController {
 
     // MARK: - Tab Context Menu
 
-    func showTabContextMenu(tabId: String, anchorRect: NSRect?) {
+    func showTabContextMenu(tabId: String, selectedIds: [String] = [], anchorRect: NSRect?) {
         guard let uuid = UUID(uuidString: tabId),
               let context = tabManager.context(for: uuid) else { return }
         let tab = context.tab
         let spaceId = context.spaceId
+        // Right-click inside a multi-selection: the menu applies to the whole set, as in Chrome.
+        let selection = selectedIds.compactMap(UUID.init(uuidString:))
+        if selection.count > 1, selection.contains(uuid) {
+            showMultiTabContextMenu(tabIds: selection, spaceId: spaceId, anchorRect: anchorRect)
+            return
+        }
         let togglePin = { self.applyContextMenuStateCommands([.setPinned(spaceId: spaceId, tabId: uuid, isPinned: !tab.isPinned)]) }
         let toggleBookmark = {
             self.applyContextMenuStateCommands([.setBookmarked(spaceId: spaceId, tabId: uuid, isBookmarked: !tab.isBookmarked)])
@@ -166,6 +172,38 @@ extension MainWindowController {
         let closeOthers = menu.addItem("Close Other Tabs".localized, icon: .closeOthers) { self.closeOtherTabs(keeping: tab) }
         if !tabManager.currentTabs.contains(where: { $0.id != uuid && !$0.isPinned && !$0.isBookmarked }) { closeOthers.action = nil }
 
+        presentContextMenu(menu, anchorRect: anchorRect)
+    }
+
+    /// The menu of a multi-tab selection: the same actions as a single tab's, applied to the whole set.
+    private func showMultiTabContextMenu(tabIds: [UUID], spaceId: UUID, anchorRect: NSRect?) {
+        // `context(for:)` resolves only tabs of the current Space: a selection never reaches into another.
+        let tabs = tabIds.compactMap { tabManager.context(for: $0)?.tab }.filter { !$0.isClosed }
+        guard tabs.count > 1 else { return }
+        let menu = NSMenu()
+        let unpinned = tabs.filter { !$0.isPinned }
+        if !unpinned.isEmpty {
+            unsafe menu.addItem(String(format: "Pin %d Tabs".localized(count: unpinned.count), unpinned.count), icon: .pin) {
+                self.applyContextMenuStateCommands(unpinned.map { .setPinned(spaceId: spaceId, tabId: $0.id, isPinned: true) })
+            }
+        }
+        let unbookmarked = tabs.filter { !$0.isBookmarked }
+        if !unbookmarked.isEmpty {
+            unsafe menu.addItem(String(format: "Bookmark %d Tabs".localized(count: unbookmarked.count), unbookmarked.count), icon: .bookmark) {
+                self.applyContextMenuStateCommands(unbookmarked.map { .setBookmarked(spaceId: spaceId, tabId: $0.id, isBookmarked: true) })
+            }
+        }
+        let spaceMenu = NSMenu(title: "Move Tabs to Space".localized)
+        addMoveToSpaceItems(to: spaceMenu, tabIds: tabs.map(\.id))
+        if !spaceMenu.items.isEmpty {
+            let item = menu.addItem(withTitle: spaceMenu.title, action: nil, keyEquivalent: "")
+            item.image = MenuIcon.moveToSpace.image
+            item.submenu = spaceMenu
+        }
+        if !menu.items.isEmpty { menu.addItem(.separator()) }
+        unsafe menu.addItem(String(format: "Close %d Tabs".localized(count: tabs.count), tabs.count), icon: .close) {
+            self.closeTabsAsOne(tabs, spaceId: spaceId)
+        }
         presentContextMenu(menu, anchorRect: anchorRect)
     }
 
@@ -532,7 +570,7 @@ extension MainWindowController {
         let menu = NSMenu()
         menu.addItem("New Tab".localized, icon: .newTab) {
             self.switchToSpace(targetSpaceId)
-            self.createTabStateFirst(url: nil)
+            self.newTab(nil)
         }
         if context.settingsStore?.terminalEnabled != false {
             menu.addItem("New Terminal Tab".localized, icon: .newTerminalTab) {

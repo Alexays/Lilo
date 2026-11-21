@@ -23,7 +23,7 @@ extensions.
 |------|---------|------------|
 | macOS | 26 or later | running Lilo |
 | Xcode | 27, selected with `xcode-select`, and its Metal toolchain | building the app (Swift 6, the macOS 27 SDK) |
-| Node.js | 22.23.4+ (`.nvmrc` pins 22) | the Svelte interface, extension bridge and Astro website; all `make ui-preview` needs |
+| Node.js | 22.23.4+ (`.nvmrc` pins 22.23.4) | the Svelte interface, extension bridge and Astro website; all `make ui-preview` needs |
 | Changie | 1.26.0 (downloaded by Make) | release notes and app versioning |
 | SwiftLint, XcodeGen | 0.65.0 and 2.46.0 (downloaded by Make) | `make validate` and `make project-sync` |
 | Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
@@ -65,6 +65,15 @@ settings. Query parameters pick what it shows: `?world=default|empty|onboarding`
 `&theme=light|dark` (the system's otherwise) and `&open=settings|commandbar`, for example
 `/preview/?world=onboarding&theme=dark`. Commands the interface sends are in
 `window.__sentCommands`. The preview never ships: the app embeds only the `index.html` build.
+
+### Package manager
+
+Every `package.json` (the repository root and each project) sets `packageManager` to the same
+exact npm, `npm@10.9.9`, the one Node.js 22.23.4 ships with, so CI, Cloudflare's builds and your
+machine install with one version. npm itself ignores the field; only Corepack (`corepack enable`)
+enforces it, refusing another package manager or another npm version with an error that names the
+expected one. In that case run `corepack install`, or leave Corepack off and use the npm that comes
+with the Node.js version `.nvmrc` pins.
 
 ### Signing
 
@@ -134,8 +143,12 @@ make validate
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
 tests; SwiftLint; the Xcode build and the Swift tests; commit hook and perf summary tests; website
-checks and tests; release-note and version sync checks.
+checks and tests; documentation site checks and tests; release-note and version sync checks.
 Run it once your change is done, and confirm it passes before you open a pull request.
+Editing an English page of the documentation site fails `make docs-check` until its French
+translation is refreshed with `make docs-translate`, which needs Claude Code; without it, ask a
+maintainer to run it on your branch. A change to `COMPATIBILITY.md` or to an agent tool definition
+only makes the French reference tables stale, which warns.
 
 | Command | Runs |
 |---------|------|
@@ -152,6 +165,8 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
 | `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
 | `make site-test` | website build, release notes, routes, links and metadata |
+| `make docs-check` | documentation site links and anchors, and the French translation gate |
+| `make docs-test` | documentation site build, headers, routes and metadata, and `blume audit` |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
 | `make swift-test-slow` | the few Swift tests that wait out real clocks, WebKit's or Lilo's (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
@@ -187,13 +202,14 @@ rather than carving out a helper just to reach it.
 
 `.github/workflows/build.yml` runs on every push to `main` and every pull request:
 
-- **Release tooling and website** (ubuntu): Changie fragments, version sync, Ultracite and Astro checks, website tests and a Cloudflare deployment dry run.
+- **Release tooling and website** (ubuntu): Changie fragments, version sync, Ultracite and Astro checks, website and documentation site checks and tests, and a Cloudflare deployment dry run of each.
 - **UI** (ubuntu): `make validate-ui` and `make e2e`.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.
 - **App** (the GitHub-hosted `xcode-27` macOS image, no signing secrets): a check that
-  `Lilo.xcodeproj` matches `project.yml`, SwiftLint, the Debug and Release builds,
-  `make swift-test` and `make swift-test-slow`.
+  `Lilo.xcodeproj` matches `project.yml`, SwiftLint, the Debug build,
+  `make swift-test` and `make swift-test-slow`. The Release build (`make release-archive`) runs on
+  pushes to `main` only, not on pull requests, to leave a macOS slot free.
 - **libghostty-vt** (`.github/workflows/ghostty-vt.yml`, by hand or when `GHOSTTY_SHA` changes on
   `main`): builds the xcframework `make vt-build` downloads and publishes it as the
   `ghostty-vt-<sha>` prerelease, whose notes give the new `VT_SHA256`.

@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions pinned to the address bar no longer get unpinned when you pin or unpin one in a window of another profile
+time: 2026-11-20T13:38:28.64565+01:00

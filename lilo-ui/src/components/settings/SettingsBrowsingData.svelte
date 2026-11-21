@@ -6,6 +6,7 @@
   import type { BridgeBrowsingDataKind } from "../../lib/bridge/protocol";
   import { formatByteSize } from "../../lib/format";
   import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import "../../lib/i18n/settingsCatalog";
   import { getBrowsingDataSizes, getWebsiteData } from "../../stores/settings.svelte";
   import { BROWSING_DATA_KINDS } from "./settingsPanelModel";
   import UiButton from "../ui/UiButton.svelte";

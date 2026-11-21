@@ -10,11 +10,16 @@ extension MainWindowController {
     @objc func newTab(_ sender: Any?) {
         // A chrome_url_overrides.newtab extension replaces the blank new tab (only this user-facing
         // path, never session-restore or programmatic tab creation).
-        createTabStateFirst(url: newTabOverrideURL)
+        if let url = newTabOverrideURL {
+            createTabStateFirst(url: url)
+        } else {
+            focusChrome()
+            bridgeRouter.send(event: "openCommandBar", data: ["createOnSubmit": true])
+        }
     }
 
     /// As in Chrome, no extension page replaces a private space's new tab: it would run outside the space's store.
-    private var newTabOverrideURL: URL? {
+    var newTabOverrideURL: URL? {
         tabManager.windowAdapter?.isPrivateWindow == true ? nil : profileContext?.extensions.activeNewTabOverrideURL
     }
 
@@ -58,6 +63,9 @@ extension MainWindowController {
             dismissChangesPeek()
         } else if let peek = pagePopups.values.first(where: { unsafe $0.peekView?.superview != nil }) {
             peek.requestClose()
+        } else if pageShellOpen {
+            // The chrome closes the system screen covering the page; the tab under it stays.
+            bridgeRouter.send(event: "closePageShell")
         } else if let id = tabManager.activeOpenTabId {
             closeTabStateFirst(id: id)
         }
@@ -190,9 +198,12 @@ extension MainWindowController {
     }
 
     @objc func translatePage(_ sender: Any?) {
-        guard let webView = focusedEngineTab?.wkWebView else { return }
+        if let engine = focusedEngineTab { tabRequestsTranslation(engine) }
+    }
+
+    func tabRequestsTranslation(_ tab: WKWebViewTab) {
         if unsafe pageTranslator.hostView.superview == nil { window?.contentView?.addSubview(pageTranslator.hostView) }
-        Task { await pageTranslator.toggle(in: webView) }
+        Task { await pageTranslator.toggle(in: tab.wkWebView) }
     }
 
     @objc func viewPageSource(_ sender: Any?) {
@@ -473,13 +484,11 @@ extension MainWindowController {
         if focusedEngineTab == nil, ["history.back", "history.forward", "page.print", "page.save"].contains(id) { return false }
         switch id {
         case "tab.new":
-            // The chrome knows whether the command bar is open, so it toggles the blank new tab.
-            if newTabOverrideURL != nil {
-                newTab(nil)
-            } else if let activeTab = tabManager.activeTab, activeTab.url == nil, activeTab.kind == .web {
+            // A blank tab keeps its existing toggle behavior; a page stays visible under the new-tab bar.
+            if newTabOverrideURL == nil, let activeTab = tabManager.activeTab, activeTab.url == nil, activeTab.kind == .web {
                 bridgeRouter.send(event: "toggleNewTab")
             } else {
-                openBlankTabWithCommandBar()
+                newTab(nil)
             }
         case "space.newPrivate": newPrivateSpace(nil)
         case "tab.close": closeCurrentTab(nil)
@@ -603,7 +612,7 @@ extension MainWindowController: NSUserInterfaceValidations {
         let action = item.action
         if isShowingWhatsNew && action != #selector(showWhatsNew(_:)) { return false }
 
-        if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil }
+        if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil || pageShellOpen }
         if action == #selector(openPageAsTab(_:)) { return pagePopups.values.contains { unsafe $0.peekView?.superview != nil } }
         if action == #selector(goBackInHistory(_:)) { return focusedEngineTab?.canGoBack == true }
         if action == #selector(goForwardInHistory(_:)) { return focusedEngineTab?.wkWebView.canGoForward == true }

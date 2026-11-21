@@ -100,6 +100,8 @@ final class WKWebViewTab: NSObject {
         var hidesElements: Bool { get }
         /// The user asked to pick an element of the page to hide (page context menu).
         func tabRequestsHideElement(_ tab: WKWebViewTab)
+        /// The user asked to translate the page, or to restore it when translated (page context menu).
+        func tabRequestsTranslation(_ tab: WKWebViewTab)
         /// A non-web scheme (mailto:, tel:, slack:, ...) wants to open in an external app, pending user confirmation.
         /// `origin` is the permission origin of the frame that asked, nil when it has none; `userInitiated` when a gesture or Lilo started it.
         func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?, userInitiated: Bool)
@@ -254,6 +256,7 @@ final class WKWebViewTab: NSObject {
         onTogglePiP: { [weak self] in self?.togglePictureInPicture() },
         onBookmark: { [weak self] in if let self { delegate?.tabRequestsBookmark(self) } },
         onHideElement: { [weak self] in if let self { delegate?.tabRequestsHideElement(self) } },
+        onTranslate: { [weak self] in if let self { delegate?.tabRequestsTranslation(self) } },
         onDownload: { [weak self] url in self?.startContextMenuDownload(from: url) },
         onSearchWeb: { [weak self] in
             Task { @MainActor [weak self] in
@@ -1133,12 +1136,13 @@ final class WKWebViewTab: NSObject {
     /// Closes the page through its beforeunload, pagehide and unload handlers: `_close` alone fires no
     /// beforeunload, where a site may write state back, such as its sign-in.
     private func closePage() {
-        if !isLeaving {
-            isLeaving = true
-            _ = tryClose()
+        let close = { [webView] in
+            let selector = NSSelectorFromString("_close")
+            if webView.responds(to: selector) { unsafe webView.perform(selector) }
         }
-        let close = NSSelectorFromString("_close")
-        if webView.responds(to: close) { unsafe webView.perform(close) }
+        // The content process exits with its last page, dropping what the handler still had to send (a
+        // storage write, a beacon): the close waits until the handler ran.
+        if isLeaving { close() } else { runBeforeUnload(then: close) }
     }
 
     func selectedTextForFind() async -> String? { await findController.selectedText() }
@@ -1721,6 +1725,7 @@ extension WKWebViewTab.Delegate {
     func tabRequestsBookmark(_ tab: WKWebViewTab) {}
     var hidesElements: Bool { false }
     func tabRequestsHideElement(_ tab: WKWebViewTab) {}
+    func tabRequestsTranslation(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?, userInitiated: Bool) {}
     func tab(_ tab: WKWebViewTab, offersIcons icons: [WKWebViewTab.LinkIcon]) { icons.forEach { $0.decide(nil) } }
     func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool { false }
@@ -1982,6 +1987,10 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.cancelPendingDocumentPiP()
             if tab.navigationSignpost != nil { PerfSignposts.navigation.emitEvent("commit") }
             if tab.isAgentControlled { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(AgentCapture.startConsole, in: nil, in: PageWorld.bridgeWorld) }
+            // See WKEngineFactory.prepareWarm.
+            if !tab.hasCommittedContent, webView.responds(to: NSSelectorFromString("_setDrawsBackground:")) {
+                webView.setValue(true, forKey: "drawsBackground")
+            }
             tab.hasCommittedContent = true
             tab.isPageLost = false   // a navigation brought an off-screen lost page back on its own
             tab.subframes.removeAll()
@@ -2673,7 +2682,13 @@ extension WKWebViewTab: WKUIDelegate {
     }
     @objc(_webView:drawFooterInRect:forPageWithTitle:URL:)
     nonisolated func webView(_ webView: WKWebView, drawFooterInRect rect: CGRect, forPageWithTitle title: String?, url: URL?) {
-        let pageNumber = MainActor.assumeIsolated { NSPrintOperation.current.map { "\($0.currentPage)/\($0.pageRange.upperBound - 1)" } }
+        let pageNumber = MainActor.assumeIsolated {
+            NSPrintOperation.current.map { operation in
+                // Until WebKit has laid out the pages (the print panel's preview), the range is {1, Int.max}.
+                let (end, unknown) = operation.pageRange.location.addingReportingOverflow(operation.pageRange.length)
+                return unknown ? "\(operation.currentPage)" : "\(operation.currentPage)/\(end - 1)"
+            }
+        }
         Self.drawPrintEdge(in: rect, leading: url?.absoluteString ?? "", trailing: pageNumber)
     }
 

@@ -12,6 +12,8 @@
   const drafts: Record<string, { text: string; attachments: AttachmentDraft[] }> = {};
   /** When each conversation was first seen working: the timer's start while its thread is not loaded yet, kept across views. */
   const workingSince: Record<string, number> = {};
+  /** Where the reader left each scrolled-up conversation: `start` is the first item drawn, so rows added since keep it. */
+  const readingPositions: Record<string, { top: number; start: number }> = {};
 </script>
 
 <script lang="ts">
@@ -80,7 +82,14 @@
   $effect(() => {
     const id = tabId;
     showConversation(id);
-    return () => hideConversation(id);
+    return () => {
+      // Read before hiding: hiding drops the loaded thread.
+      const items = getOpenConversation(id)?.thread.items.length;
+      if (restore) readingPositions[id] = restore;
+      else if (scrollMode === "free" && items !== undefined) readingPositions[id] = { top: readTop, start: items - limit };
+      else delete readingPositions[id];
+      hideConversation(id);
+    };
   });
 
   const version = $derived(getConversationVersion());
@@ -119,6 +128,9 @@
   const tab = $derived(getTabsById().get(tabId));
 
   let limit = $state(PAGE);
+  // The thread loads after the view mounts: the saved position applies once it is drawn.
+  let restore: { top: number; start: number } | null = untrack(() => readingPositions[tabId]) ?? null;
+  let readTop = 0;
   // The agent lists its `/` commands once its session opens: asked once per view.
   let commandsRequested = false;
   let text = $state(untrack(() => drafts[tabId]?.text ?? ""));
@@ -153,7 +165,7 @@
   }
 
   /** following: the end stays in view as the thread grows. free: the reader scrolled up. */
-  let scrollMode = $state<"following" | "free">("following");
+  let scrollMode = $state<"following" | "free">(restore ? "free" : "following");
   let atBottom = $state(true);
   // A prompt sent from here glides into view; growth after it follows at once.
   let glidePending = false;
@@ -350,6 +362,16 @@
   function settleScroll(): void {
     const el = threadEl;
     if (!el) return;
+    if (restore) {
+      if (!conversation) return;
+      const wanted = Math.max(PAGE, conversation.thread.items.length - restore.start);
+      // The effect runs again once the rows for this limit are drawn.
+      if (limit !== wanted) return void (limit = wanted);
+      scrollTo(el, restore.top);
+      readTop = el.scrollTop;
+      restore = null;
+      return;
+    }
     if (scrollMode !== "following") return;
     const max = el.scrollHeight - el.clientHeight;
     if (!glidePending) return scrollTo(el, max);
@@ -383,6 +405,7 @@
   // Lilo only ever scrolls to the end or to an anchored prompt, so landing anywhere else is the reader scrolling.
   function onThreadScroll(): void {
     if (!threadEl) return;
+    readTop = threadEl.scrollTop;
     const bottom = threadEl.scrollHeight - threadEl.scrollTop - threadEl.clientHeight < PIN_SLACK;
     if (bottom !== atBottom) atBottom = bottom;
     if (Math.abs(threadEl.scrollTop - ownScrollTop) < 2) return;
@@ -396,7 +419,7 @@
     const column = columnEl;
     if (!thread || !column) return;
     const observer = new ResizeObserver(() => {
-      if (scrollMode !== "free" || thread.scrollHeight - thread.scrollTop - thread.clientHeight >= PIN_SLACK) return;
+      if (restore || scrollMode !== "free" || thread.scrollHeight - thread.scrollTop - thread.clientHeight >= PIN_SLACK) return;
       atBottom = true;
       scrollMode = "following";
     });

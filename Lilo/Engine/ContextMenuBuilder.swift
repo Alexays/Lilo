@@ -13,7 +13,7 @@ private func isDownloadable(_ url: URL) -> Bool {
 }
 
 /// Builds a tab's context menu from WebKit's: Lilo's tab, window and space actions replace "Open Link in New Window", plus
-/// nav/copy/PiP items. It is the items' `@objc` target, hence `NSObject`; the tab injects the behavior.
+/// nav/copy/translate/PiP items. It is the items' `@objc` target, hence `NSObject`; the tab injects the behavior.
 @MainActor
 final class ContextMenuBuilder: NSObject {
     private static let logger = Logger(liloCategory: "context-menu")
@@ -25,6 +25,7 @@ final class ContextMenuBuilder: NSObject {
     private let onTogglePiP: () -> Void
     private let onBookmark: () -> Void
     private let onHideElement: () -> Void
+    private let onTranslate: () -> Void
     private let onDownload: (URL) -> Void
     private let onSearchWeb: () -> Void
     private let onSearchImage: (URL) -> Void
@@ -37,6 +38,7 @@ final class ContextMenuBuilder: NSObject {
         onTogglePiP: @escaping () -> Void,
         onBookmark: @escaping () -> Void,
         onHideElement: @escaping () -> Void,
+        onTranslate: @escaping () -> Void,
         onDownload: @escaping (URL) -> Void,
         onSearchWeb: @escaping () -> Void,
         onSearchImage: @escaping (URL) -> Void
@@ -48,6 +50,7 @@ final class ContextMenuBuilder: NSObject {
         self.onTogglePiP = onTogglePiP
         self.onBookmark = onBookmark
         self.onHideElement = onHideElement
+        self.onTranslate = onTranslate
         self.onDownload = onDownload
         self.onSearchWeb = onSearchWeb
         self.onSearchImage = onSearchImage
@@ -154,6 +157,7 @@ final class ContextMenuBuilder: NSObject {
         }
 
         menu.addItem(.separator())
+        menu.addItem(makeMenuItem("Translate Page", icon: .translate, action: #selector(contextMenuTranslate)))
         menu.addItem(makeMenuItem("Picture in Picture", icon: .pictureInPicture, action: #selector(contextMenuTogglePiP)))
         addHideElement()
         // Inspect Element is left to WebKit's own default item.
@@ -259,4 +263,5 @@ final class ContextMenuBuilder: NSObject {
     @objc private func contextMenuTogglePiP() { onTogglePiP() }
     @objc private func contextMenuBookmark() { onBookmark() }
     @objc private func contextMenuHideElement() { onHideElement() }
+    @objc private func contextMenuTranslate() { onTranslate() }
 }

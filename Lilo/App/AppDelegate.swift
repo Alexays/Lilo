@@ -64,9 +64,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 exit(0)
             }
         }
+        // An exception AppKit swallows unwinds through the Swift runtime and leaves its executor tracking dangling:
+        // the app would crash later, far from the cause.
+        UserDefaults.standard.register(defaults: ["NSApplicationCrashOnExceptions": true])
         let app = LiloApplication.shared
         // Before run: the test host never takes focus, neither at launch nor from an activate the tested code calls.
-        if ProcessInfo.isRunningUnderXCTest { app.setActivationPolicy(.prohibited) }
+        if ProcessInfo.isRunningUnderXCTest {
+            app.setActivationPolicy(.prohibited)
+        } else if Headless.isOn {
+            app.setActivationPolicy(.accessory)
+        }
         let delegate = AppDelegate()
         app.delegate = delegate
         app.run()
@@ -77,6 +84,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSWindow.allowsAutomaticWindowTabbing = false
         // Before any WKWebExtensionController exists: extensions serve their pages from chrome-extension://.
         WKWebExtension.MatchPattern.registerCustomURLScheme("chrome-extension")
+        // Before any web process starts. WebKit shares one copy of a user script's source (megabytes of extension content
+        // scripts) between its web processes only for an app taking every SDK-aligned behavior, as Safari does: each
+        // page and process gets its own otherwise.
+        let allBehaviors = NSSelectorFromString("_setLinkedOnOrAfterEverything")
+        if WKProcessPool.responds(to: allBehaviors) { _ = unsafe (WKProcessPool.self as AnyObject).perform(allBehaviors) }
         ThemePreference.applyCachedAtLaunch()
         // The test host never shows the window it would be for.
         if !ProcessInfo.isRunningUnderXCTest { MainWindowController.preloadChromeWebView() }
@@ -99,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Launch benchmark seed (scripts/bench_startup.sh): pages opened as if handed over by another app.
         ProcessInfo.processInfo.environment["LILO_BENCH_SEED_URLS"]?.split(separator: "\n")
             .compactMap { URL(string: String($0)) }.forEach(routeExternalURL)
-        NSApp.setActivationPolicy(.regular)
+        if !Headless.isOn { NSApp.setActivationPolicy(.regular) }
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().setNotificationCategories(UNNotificationCategory.terminalAttentionCategories.union([NotificationsBridgeHandler.plainCategory]))
         NSWorkspace.shared.notificationCenter.addObserver(

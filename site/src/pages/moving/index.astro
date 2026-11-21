@@ -1,7 +1,7 @@
 ---
 import PageSection from "../../components/PageSection.astro";
 import Layout from "../../layouts/Layout.astro";
-import { copy } from "../../lib/i18n";
+import { copy, docsUrl } from "../../lib/i18n";
 
 const lang = "en";
 const text = copy[lang];
@@ -233,7 +233,8 @@ const schema = [
       <h2>A few clicks, then you are home.</h2>
       <p>
         Import is part of the welcome tour. Skip it and come back whenever you
-        like.
+        like. {text.movingDocs}{" "}
+        <a href={docsUrl(lang, "/start/import")}>{text.movingDocsLink}</a>.
       </p>
     </div>
     <div class="claims">

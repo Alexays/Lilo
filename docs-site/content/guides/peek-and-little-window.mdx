@@ -1,0 +1,93 @@
+---
+title: "Peek and Little window"
+description: "Preview a link in Peek without leaving the page you are on, open quick links in a Little window, and choose which links open where in Lilo."
+sidebar:
+  order: 5
+---
+
+Peek opens a page in a card over the one you are reading, so you can look at a link and come back to exactly where you were. A Little window opens a page in a small window of its own, outside your Spaces, for a quick look at a link from another app. This page shows how to use both and how to choose which links go where.
+
+## Look at a link without losing your place
+
+<Steps>
+  <Step title="Shift-click the link">
+    Hold Shift and click any link. The page opens in a Peek over the current tab, signed in as the same profile.
+  </Step>
+  <Step title="Read or use it">
+    Links you click inside the Peek open in the Peek.
+  </Step>
+  <Step title="Close it or keep it">
+    Press <kbd>Esc</kbd>, click outside the card, or press <kbd>⌘W</kbd> to close the Peek. To keep the page, click **Open as Tab** (<kbd>⌘O</kbd>, **File > Open as Tab**): it becomes a tab right after the one you were on, with its scroll position and anything you typed. Click **Open in Split** to put it in a [split view](/guides/split-view) beside that tab instead.
+  </Step>
+</Steps>
+
+The bar at the top of the card shows the site's address, **Open in Split**, **Open as Tab**, **Copy Page URL** and **Close**. **Open in Split** is there only when the tab under the Peek can take a split pane: not when that tab is already in a folder or a split.
+
+Other ways to open a Peek:
+
+- From the [command bar](/guides/command-bar), select a web page and press <kbd>⇧↩</kbd>.
+- From a pinned tab or a favorite, click a link to another site (next section).
+
+A window shows one Peek of a link at a time: opening another closes the first. A Peek belongs to its tab: switch to another tab and it hides, come back and it is there.
+
+## Keep pinned tabs on their own site
+
+A pinned tab or a favorite usually holds one site, like your mail or calendar. When you click a link in it that leads to another site, the link opens in a Peek over the tab, and the tab stays on its page. A link to a page of the same site opens in the tab as usual.
+
+If the page in the Peek later brings you back to the tab's own site, as a sign-in through another site does, Lilo closes the Peek and loads that page in the tab.
+
+To turn this off, clear **Settings > Tabs and Spaces > Peek at links from pinned tabs**. Shift-click still opens a Peek on any link.
+
+## Glance at a pinned tab
+
+Rest the pointer on a pinned tab or a favorite and its page appears in a card beside the sidebar, live: you can scroll, click and type in it without leaving the current tab. Press <kbd>Esc</kbd> or move the pointer away to close it. Resize the card once and every card keeps that size.
+
+With **Settings > Tabs and Spaces > Live page when resting on a pinned tab** turned off, the card shows a picture of the page instead.
+
+## Open a quick page in a Little window
+
+<Steps>
+  <Step title="Open a Little window">
+    Choose **File > New Little Window** or press <kbd>⌥⌘N</kbd>. The shortcut works from any app, even when Lilo is not in front.
+  </Step>
+  <Step title="Type an address or a search">
+    The address field has the focus. Type and press <kbd>↩</kbd>.
+  </Step>
+  <Step title="Keep it or let it go">
+    Click **Open in** followed by the Space's name to move the page into that Space as a tab, or click the arrow beside it to pick another Space. Close the window with <kbd>⌘W</kbd> when you are done.
+  </Step>
+</Steps>
+
+What to know about Little windows:
+
+- A Little window is in no Space's tab list. Its page runs in the profile of the Space shown in the browser window, or of the last Space you used when that one is a Private Space.
+- A link that opens a new window from a Little window opens another Little window.
+- A closed Little window's page goes to **History > Recently Closed**, so you can reopen it.
+- **Copy URL** in its bar copies the page's address.
+- Lilo remembers where you put the window and its size.
+
+To stop <kbd>⌥⌘N</kbd> from working outside Lilo, clear **Settings > Tabs and Spaces > Little window shortcut**. To change the keys, change **New Little Window** in **Settings > General > Keyboard shortcuts**; the shortcut from other apps follows.
+
+## Choose where links from other apps open
+
+When Lilo is your default browser, links you click in Mail, Slack or any other app open in Lilo. Settings decide where.
+
+<Steps>
+  <Step title="Set the default">
+    In **Settings > General**, under **Links from other apps**, set **Open links in** to **Current Space**, **Little window** or one of your Spaces.
+  </Step>
+  <Step title="Add rules for some sites">
+    Under **Rules**, click **Add Rule**. Choose **Host is** and type a host such as `example.com`, or **URL contains** and type part of an address such as `example.com/docs`. Under **Opens in**, choose **Little window** or a Space, then click **Add**.
+  </Step>
+  <Step title="Order the rules">
+    The first rule that matches a link decides where it opens, so move the most specific rules up. A host also matches its subdomains: `example.com` matches `docs.example.com`.
+  </Step>
+</Steps>
+
+A link that no rule matches goes where **Open links in** says. A rule whose Space was deleted uses the default. Links from other apps never open in a Private Space: with **Current Space** set while a Private Space is on screen, they go to the last other Space you used.
+
+## Limits
+
+- Peek is not available in tabs an AI agent controls.
+- A Peek has no window of its own: when its page asks for the camera or microphone, the tab under it asks you.
+- With **Settings > Tabs and Spaces > Keep everything in one window** on, a page's popup windows open as a Peek over their tab instead of a separate window.

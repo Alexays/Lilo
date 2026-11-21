@@ -2,6 +2,7 @@
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import { tabActions } from "../../lib/bridge/actions";
   import { optimisticallyActivateTab } from "../../stores/sidebar.svelte";
+  import { contextSelectionIds, isTabSelected, tabClickSelection } from "../../stores/tabSelection.svelte";
   import { hoverTabPreview, leaveTabPreview } from "../../stores/tabPreview.svelte";
   import { tabDisplayTitle, type TabState } from "../../stores/tabs.svelte";
   import { t } from "../../lib/i18n/state.svelte";
@@ -23,6 +24,12 @@
       return null;
     }
   });
+  const selected = $derived(isTabSelected(tab.id));
+
+  function handleClick(event: MouseEvent) {
+    if (!tabClickSelection(event, tab.id, (event.currentTarget as HTMLElement).closest(".tab-strip"))) activate();
+  }
+
   function activate() {
     closePageShell();
     if (active && editsAddress) {
@@ -36,7 +43,7 @@
   function showMenu(event: MouseEvent) {
     event.preventDefault();
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    tabActions.showContextMenu(tab.id, rect.x, rect.y, rect.width, rect.height);
+    tabActions.showContextMenu(tab.id, rect.x, rect.y, rect.width, rect.height, contextSelectionIds(tab.id));
   }
 </script>
 
@@ -44,6 +51,7 @@
 <div
   class="strip-tab"
   class:active
+  class:selected
   class:icon-only={iconOnly}
   data-tab-id={tab.id}
   onmouseenter={(e) =>
@@ -65,11 +73,11 @@
   <button
     class="strip-tab-main"
     role="tab"
-    aria-selected={active}
+    aria-selected={active || selected}
     aria-label={site ? `${site.host}, ${title}` : title}
     tabindex={active ? 0 : -1}
     data-roving
-    onclick={activate}
+    onclick={handleClick}
   >
     <span class="strip-tab-icon">
       {#if tab.kind === "terminal"}
@@ -143,6 +151,10 @@
     background: var(--sidebar-sel);
     color: var(--text-primary);
     box-shadow: inset 0 0 0 0.5px var(--sidebar-sel-ring);
+  }
+
+  .strip-tab.selected:not(.active) {
+    background: color-mix(in srgb, var(--sidebar-sel) 65%, transparent);
   }
 
   .strip-tab.icon-only {

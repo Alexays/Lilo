@@ -1,0 +1,79 @@
+---
+title: "Customize Lilo"
+description: "Change Lilo's appearance and sidebar, pick a keyboard shortcut preset or record your own shortcuts, and make the browser fit the way you work."
+sidebar:
+  order: 12
+---
+
+This guide shows you how to change how Lilo looks, where its tabs and address sit, how pages are sized, and which keys do what. Open Settings with <kbd>⌘,</kbd> and type in **Search settings** to jump to any setting. Every setting with its description is in the [settings reference](/reference/settings), and every default shortcut in the [keyboard shortcuts reference](/reference/keyboard-shortcuts).
+
+## Change the appearance
+
+<Steps>
+  <Step title="Open the Appearance settings">
+    Choose **Lilo > Settings…**, then **Appearance**.
+  </Step>
+  <Step title="Pick a theme">
+    Under **Theme**, choose **System**, **Light** or **Dark**. **System** follows your Mac.
+  </Step>
+  <Step title="Pick an app icon">
+    Under **App icon**, choose one of the icons for the Dock. Only **Classic** follows the macOS dark, tinted and clear icon styles. **Seasonal icon**, on by default, switches to a festive icon around holidays like Halloween.
+  </Step>
+</Steps>
+
+To change the language of Lilo's interface, use **Language** in **Settings > General**. Menus and dialogs switch when Lilo restarts.
+
+## Arrange tabs and the address bar
+
+In **Settings > Appearance**, under **Layout**:
+
+- **Tabs** places your tabs, Spaces and favorites on the **Left**, **Right**, **Top** or **Bottom** of the window. You can also drag the sidebar to another edge.
+- **Address** shows the address **With the tabs**, **Above the page**, or keeps it **Hidden**. With the address hidden, use the [command bar](/guides/command-bar) to enter an address.
+- **Hide Space names** shows each Space as its icon alone in the bottom bar, even when there is room for its name.
+
+To get more room for the page, choose **View > Hide Sidebar** (<kbd>⇧⌘S</kbd>) or **View > Hide Toolbar** (<kbd>⌥⌘T</kbd>).
+
+## Size pages and text
+
+In **Settings > Appearance**, under **Pages**:
+
+- **Default zoom** sets the size of pages you haven't zoomed yourself, from 75% to 150%. Zoom a single site with <kbd>⌘=</kbd> and <kbd>⌘-</kbd>, and press <kbd>⌘0</kbd> for its actual size. Lilo remembers the zoom of each site.
+- **Minimum font size** keeps page text from rendering smaller than the size you pick, from 9 to 24 points, or **None**.
+- **Full refresh rate**, on by default, lets pages animate and scroll at your display's full rate, which uses more battery. New tabs follow the setting; open tabs change when Lilo restarts.
+
+A site's zoom level is listed, and can be reset, in **Settings > Privacy > Settings by site**.
+
+## Pick a shortcut preset
+
+Lilo comes with two sets of shortcuts: its own, and one based on Arc's.
+
+<Steps>
+  <Step title="Open the shortcuts">
+    Choose **Help > Keyboard Shortcuts** (<kbd>⌘/</kbd>), or go to **Settings > General** and click **Keyboard shortcuts**.
+  </Step>
+  <Step title="Choose a preset">
+    Next to **Preset**, click **Lilo** or **Arc**.
+  </Step>
+</Steps>
+
+A preset replaces every shortcut you changed. The **Arc** preset uses Arc's keys where Lilo has the same action: for example, Command-S toggles the sidebar, Command-D pins a tab, and Shift-Command-J opens Downloads.
+
+On the same page, **Control-Tab switches tabs in** chooses what <kbd>⌃⇥</kbd> does: **Recent Order** shows your last tabs, from every Space, until you release Control; **Sidebar Order** follows the sidebar.
+
+## Rebind a shortcut
+
+<Steps>
+  <Step title="Find the action">
+    In **Help > Keyboard Shortcuts**, type in **Search shortcuts**. You can search by name or by keys. Actions are grouped by the menu they sit in.
+  </Step>
+  <Step title="Record new keys">
+    Click the action's shortcut, then press the new keys. Press <kbd>Esc</kbd> to cancel, or Delete to leave the action without a shortcut.
+  </Step>
+  <Step title="Resolve a conflict">
+    If another action already uses those keys, Lilo names it ("… is already used by …"). Click **Replace** to move the keys to this action, or **Cancel**.
+  </Step>
+</Steps>
+
+Click **Reset** next to a changed shortcut to restore its default, or **Reset All** to restore every default. Several actions, such as **Show Reader**, **Translate Page** and **Picture in Picture**, have no default shortcut: give them one here.
+
+Shortcuts you set for Lilo in **System Settings > Keyboard > Keyboard Shortcuts > App Shortcuts** take precedence. Lilo reads them when it builds its menus, at launch: after you change one there, quit and reopen Lilo to see it on the shortcuts page.

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
+  import "../../lib/i18n/settingsCatalog";
   import { getAgentsProfileId, isAgentsSpace } from "../../stores/agents.svelte";
   import { getShownExtensions, getShownExtensionsProfileId, showProfileExtensions } from "../../stores/extensions.svelte";
   import {

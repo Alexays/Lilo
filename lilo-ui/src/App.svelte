@@ -151,7 +151,7 @@
 
   // Finder's detent: a drag under this width folds the sidebar to its icon rail, and back past it unfolds it.
   const SIDEBAR_RAIL_THRESHOLD = 150;
-  const SIDEBAR_RAIL_WIDTH = 76;
+  const SIDEBAR_RAIL_WIDTH = 40;
   const SIDEBAR_MAX_WIDTH = 480;
 
   // The arrows move the edge they point to, 8 px a step, inside the range a drag keeps.

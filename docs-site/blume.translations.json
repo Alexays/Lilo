@@ -1,0 +1,110 @@
+{
+  "files": {
+    "content/about/agent-safety.mdx": {
+      "fr": "94c015873f0f826d"
+    },
+    "content/about/energy.mdx": {
+      "fr": "3c933668f80caf61"
+    },
+    "content/about/meta.ts": {
+      "fr": "ee4ea94a90dc40d6"
+    },
+    "content/about/privacy.mdx": {
+      "fr": "1a43a840163ad2ea"
+    },
+    "content/about/why-webkit.mdx": {
+      "fr": "5ed1c39063d9c150"
+    },
+    "content/guides/ai-agents.mdx": {
+      "fr": "efda09f013f1911d"
+    },
+    "content/guides/automation.mdx": {
+      "fr": "10c6267c3e8cba35"
+    },
+    "content/guides/command-bar.mdx": {
+      "fr": "9687b8db3a79858f"
+    },
+    "content/guides/customize.mdx": {
+      "fr": "92b7c461e66ea1a4"
+    },
+    "content/guides/downloads-history-bookmarks.mdx": {
+      "fr": "82f97a56b0b872bd"
+    },
+    "content/guides/extensions.mdx": {
+      "fr": "09b265ab1b139232"
+    },
+    "content/guides/meta.ts": {
+      "fr": "688e6f164d73f4c7"
+    },
+    "content/guides/peek-and-little-window.mdx": {
+      "fr": "0333a739ffda0390"
+    },
+    "content/guides/privacy-controls.mdx": {
+      "fr": "c4456e893684ce17"
+    },
+    "content/guides/reading-and-media.mdx": {
+      "fr": "3ccee9d3bd2e1a75"
+    },
+    "content/guides/spaces-and-profiles.mdx": {
+      "fr": "781bc9880d0616b7"
+    },
+    "content/guides/split-view.mdx": {
+      "fr": "a10efb36571014f8"
+    },
+    "content/guides/tabs-and-folders.mdx": {
+      "fr": "a8ec338de0c3461d"
+    },
+    "content/guides/terminal.mdx": {
+      "fr": "1b3f896aaa693398"
+    },
+    "content/guides/troubleshooting.mdx": {
+      "fr": "f9e7fe010161d6eb"
+    },
+    "content/index.mdx": {
+      "fr": "e07f775c43b293b8"
+    },
+    "content/reference/_generated/extension-compatibility.md": {
+      "fr": "c60bf8f251f82308"
+    },
+    "content/reference/_generated/mcp-tools.md": {
+      "fr": "4d186823126519f5"
+    },
+    "content/reference/_generated/web-compatibility.md": {
+      "fr": "32c323b6de558fe6"
+    },
+    "content/reference/extension-compatibility.mdx": {
+      "fr": "9de1777bd8c95ed8"
+    },
+    "content/reference/import-sources.mdx": {
+      "fr": "d0c3ad7b33f09b87"
+    },
+    "content/reference/keyboard-shortcuts.mdx": {
+      "fr": "58a8ac5973815c04"
+    },
+    "content/reference/mcp-tools.mdx": {
+      "fr": "862648aa7526ac70"
+    },
+    "content/reference/meta.ts": {
+      "fr": "d2e909390ad3975f"
+    },
+    "content/reference/settings.mdx": {
+      "fr": "c3c3e898f9b9861b"
+    },
+    "content/reference/web-compatibility.mdx": {
+      "fr": "2dff91aeef55cfdc"
+    },
+    "content/start/first-five-minutes.mdx": {
+      "fr": "e13442aeb5d2e4cc"
+    },
+    "content/start/import.mdx": {
+      "fr": "0f4edd5084fafa5b"
+    },
+    "content/start/install.mdx": {
+      "fr": "804086b13d314096"
+    },
+    "content/start/meta.ts": {
+      "fr": "41a017b4f6b000f5"
+    }
+  },
+  "version": 1
+}

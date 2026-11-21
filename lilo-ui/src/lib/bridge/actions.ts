@@ -49,6 +49,7 @@ export const chromeActions = {
 	setSidebarRail: (rail: boolean): void => emit("setSidebarRail", { rail }),
 	sidebarOverlayChanged: (visible: boolean): void =>
 		emit("sidebarOverlayChanged", { visible }),
+	pageShellChanged: (open: boolean): void => emit("pageShellChanged", { open }),
 	permissionResponse: (requestId: string, granted: boolean): void =>
 		emit("permissionResponse", { requestId, granted }),
 	dismissPermissionRequest: (requestId: string): void =>
@@ -93,8 +94,8 @@ export const tabActions = {
 	returnHome: emitId("returnTabHome"),
 	setMuted: (id: string, muted: boolean): void =>
 		emit(muted ? "muteTab" : "unmuteTab", { id }),
-	showContextMenu: (id: string, x: number, y: number, width: number, height: number): void =>
-		emit("showTabContextMenu", { id, x, y, width, height }),
+	showContextMenu: (id: string, x: number, y: number, width: number, height: number, selectedIds?: string[]): void =>
+		emit("showTabContextMenu", { id, x, y, width, height, selectedIds }),
 	navigate: (url: string, typed?: boolean): void => emit("navigate", { url, typed }),
 	goBack: emitEmpty("goBack"),
 	goForward: emitEmpty("goForward"),

@@ -1,0 +1,108 @@
+---
+title: Installer Lilo
+description: "Téléchargez Lilo ou installez-le avec Homebrew, vérifiez la version de macOS requise et voyez comment les mises à jour arrivent toutes seules."
+sidebar:
+  order: 1
+---
+À la fin de cette page, Lilo se trouve dans votre dossier Applications, ouvert sur son écran d'accueil et configuré pour se mettre à jour tout seul. Cela prend environ deux minutes.
+
+## Vérifier votre Mac [#check-your-mac]
+
+Lilo {{version}} nécessite **macOS {{macos}} ou une version ultérieure**. Il s'exécute nativement sur les Mac avec puce Apple et sur les Mac Intel. Il n'y a rien d'autre à installer : Lilo utilise le moteur WebKit fourni avec macOS.
+
+## Installer [#install]
+
+Choisissez l'une des deux méthodes. Les deux vous donnent la même app signée et notarisée.
+
+<Tabs>
+  <Tab title="Téléchargement">
+    <Steps>
+      <Step title="Télécharger l'image disque">
+        Téléchargez [Lilo.dmg](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg) depuis la dernière version publiée sur GitHub.
+      </Step>
+      <Step title="Copier Lilo dans Applications">
+        Ouvrez `Lilo.dmg`, puis faites glisser l'icône de Lilo sur le dossier **Applications** situé à côté.
+      </Step>
+      <Step title="Ouvrir Lilo">
+        Ouvrez Lilo depuis votre dossier Applications ou avec Spotlight. Vous pouvez ensuite éjecter l'image disque.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Homebrew">
+    <Steps>
+      <Step title="Installer le cask">
+        Dans Terminal, exécutez :
+
+        ```bash
+        brew install --cask alexays/tap/lilo
+        ```
+
+        Homebrew place Lilo dans votre dossier Applications.
+      </Step>
+      <Step title="Ouvrir Lilo">
+        Ouvrez Lilo depuis votre dossier Applications ou avec Spotlight.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+:::tip[Vous avez ouvert Lilo directement depuis l'image disque ?]
+Lilo demande **Déplacer Lilo dans Applications ?** Choisissez **Déplacer dans Applications**. Lilo ne peut se mettre à jour, et les apps d'agents IA ne peuvent le trouver, que lorsqu'il s'exécute depuis le dossier Applications. Si le déplacement échoue, quittez Lilo, faites-le glisser dans Applications dans le Finder, puis ouvrez-le depuis cet emplacement.
+:::
+
+## Lancer la configuration [#start-the-setup]
+
+À sa première ouverture, Lilo affiche **Bienvenue chez vous.** avec un bouton **Commencer**.
+
+<Steps>
+  <Step title="Commencer">
+    Cliquez sur **Commencer**, ou appuyez sur <kbd>Return</kbd>.
+  </Step>
+  <Step title="Indiquer comment vous utiliserez Lilo">
+    Lilo demande **Comment allez-vous utiliser Lilo ?** Choisissez une réponse, puis cliquez sur **Continuer** :
+
+    - **Pour naviguer** : vos favoris, votre apparence, l'essentiel.
+    - **Avec mes agents** : permet aussi aux agents IA tels que Claude Code, Codex ou Cursor d'utiliser Lilo.
+    - **Pour développer** : tout ce qui précède, plus les onglets terminal.
+
+    **Passer** équivaut à **Pour naviguer**. Vous pourrez tout modifier plus tard dans les Réglages.
+  </Step>
+  <Step title="Rapatrier votre navigateur">
+    L'écran suivant, **Récupérez vos favoris**, importe les données du navigateur que vous utilisiez jusqu'ici. Suivez [Importer depuis un autre navigateur](/start/import).
+  </Step>
+</Steps>
+
+Appuyez sur <kbd>Esc</kbd> sur l'écran d'accueil, ou fermez la configuration avec son bouton de fermeture, pour la remettre à plus tard : un bouton **Reprendre l'accueil** reste dans le coin de la fenêtre jusqu'à ce que vous y reveniez.
+
+## Comment les mises à jour arrivent [#how-updates-arrive]
+
+Vous n'avez rien à faire pour rester à jour.
+
+- Lilo recherche une nouvelle version toutes les heures et la télécharge en arrière-plan.
+- Lorsqu'une mise à jour est prête, une carte dans la barre latérale indique **Prête à installer**. Cliquez sur **Relancer** pour l'installer maintenant, ou continuez à travailler : elle s'installera au prochain redémarrage de Lilo.
+- Chaque mise à jour est signée, et Lilo vérifie la signature avant d'installer quoi que ce soit.
+
+Pour vérifier immédiatement, choisissez **Lilo** > **Rechercher des mises à jour…** dans la barre des menus, ou ouvrez **Réglages** (<kbd>⌘,</kbd>) > **Général** et cliquez sur **Rechercher**. Désactiver **Installer les mises à jour automatiquement** au même endroit arrête à la fois la vérification horaire et le téléchargement : Lilo ne recherche alors une nouvelle version que lorsque vous choisissez **Rechercher des mises à jour…** ou cliquez sur **Rechercher**.
+
+## Où Lilo conserve vos données [#where-lilo-keeps-your-data]
+
+Tout reste sur votre Mac :
+
+| Quoi | Où |
+|---|---|
+| Espaces, onglets, historique, favoris et extensions | `~/Library/Application Support/Lilo` |
+| Préférences | `~/Library/Preferences/fr.arouillard.lilo.plist` |
+| Données de sites web (cookies, stockage des sites, caches) | `~/Library/WebKit/fr.arouillard.lilo` |
+
+[Confidentialité](/about/privacy) répertorie toutes les requêtes que Lilo effectue de lui-même.
+
+## Et ensuite [#next]
+
+<CardGroup cols={2}>
+  <Card title="Importer depuis un autre navigateur" href="/start/import" icon="import">
+    Rapatriez vos favoris, vos onglets ouverts, votre historique et vos connexions.
+  </Card>
+  <Card title="Vos cinq premières minutes" href="/start/first-five-minutes" icon="timer">
+    Terminez la configuration et apprenez la poignée de gestes qui font tout l'intérêt de Lilo.
+  </Card>
+</CardGroup>

@@ -23,7 +23,7 @@ final class CosmeticStyleSheetsTests: XCTestCase {
         (controller.perform(NSSelectorFromString("_userStyleSheets"))?.takeUnretainedValue() as? NSArray)?.count ?? -1
     }
 
-    func testCosmeticsHideWithSheetsThePageCannotSeeRemoveOrOutrankAndThatLeaveWithIt() async throws {
+    func testCosmeticsHideWithSheetsThePageCannotSeeRemoveOrOutrankAndThatStayWithIt() async throws {
         try XCTSkipUnless(CosmeticStyleSheets.isSupported, "this WebKit has no user style sheet SPI")
         let factory = WKEngineFactory()
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(
@@ -59,11 +59,12 @@ final class CosmeticStyleSheetsTests: XCTestCase {
         await load(page, at: "https://other.example/", in: webView)
         let shown = await isHidden("ad", in: webView)
         XCTAssertFalse(shown)
-        XCTAssertEqual(sheetCount(in: controller), 0)
+        XCTAssertEqual(sheetCount(in: controller), before + 1, "removing them would empty WebKit's cache of user script sources")
     }
 
-    /// A web view released without a teardown takes its sheets out of the controller its profile's other tabs share.
-    func testAReleasedWebViewTakesItsSheetsAlong() async throws {
+    /// A web view released without a teardown retires its sheets, which leave the controller its profile's other tabs share
+    /// together with the others once there are more than the limit.
+    func testRetiredSheetsLeaveTogether() async throws {
         try XCTSkipUnless(CosmeticStyleSheets.isSupported, "this WebKit has no user style sheet SPI")
         let factory = WKEngineFactory()
         factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(
@@ -76,6 +77,12 @@ final class CosmeticStyleSheetsTests: XCTestCase {
         let hidden = await pollUntil(timeout: 10) { await self.isHidden("ad", in: webView!) }
         XCTAssertTrue(hidden)
         XCTAssertEqual(sheetCount(in: controller), 1)
+        _ = try await webView?.callAsyncJavaScript(
+            "for (let i = 0; i < limit; i++) webkit.messageHandlers.liloCosmetics.postMessage(`#none${i}{display:none}`)",
+            arguments: ["limit": CosmeticStyleSheets.retiredLimit], contentWorld: PageWorld.bridgeWorld
+        )
+        let posted = await pollUntil(timeout: 10) { self.sheetCount(in: controller) == CosmeticStyleSheets.retiredLimit + 1 }
+        XCTAssertTrue(posted)
 
         webView = nil
         let gone = await pollUntil(timeout: 10) { released == nil }

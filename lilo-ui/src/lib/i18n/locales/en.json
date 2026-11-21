@@ -79,11 +79,6 @@
 		"passwordManagerAction": "Choose",
 		"passwordManagerChange": "Change",
 		"replayOnboardingAction": "Replay",
-		"defaultBrowserSet": "Set as Default",
-		"defaultBrowserLater": "Later",
-		"defaultBrowserBannerText": "Make Lilo your default browser?",
-		"defaultBrowserSetSuccess": "Lilo is now your default browser.",
-		"defaultBrowserSetFailed": "Lilo was not set as the default browser. You can change this in System Settings.",
 		"engineName": "Name",
 		"engineUrlTemplate": "Search URL (%s = query)",
 		"engineKeyword": "Keyword",
@@ -203,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Zoom {zoom}",
-			"hiddenSummary": {"one": "{count} hidden element", "other": "{count} hidden elements"},
+			"hiddenSummary": "{count, plural, one{# hidden element} other{# hidden elements}}",
 			"dataSummary": "Stored data",
 			"permissionUpdated": "{origin} · Updated {time}",
 			"emptyTitle": "No site settings yet",
@@ -610,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Update Now",
-			"summary": {
-				"one": "{count} list",
-				"other": "{count} lists"
-			},
+			"summary": "{count, plural, one{# list} other{# lists}}",
 			"updated": "updated {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Check Now",
 			"checking": "Checking for updates...",
 			"upToDate": "Up to date",
-			"updated": {
-				"one": "{count} updated",
-				"other": "{count} updated"
-			},
-			"available": {
-				"one": "{count} update available",
-				"other": "{count} updates available"
-			},
-			"failed": {
-				"one": "{count} could not be checked",
-				"other": "{count} could not be checked"
-			},
+			"updated": "{count, plural, one{# updated} other{# updated}}",
+			"available": "{count, plural, one{# update available} other{# updates available}}",
+			"failed": "{count, plural, one{# could not be checked} other{# could not be checked}}",
 			"lastChecked": "Last checked {time}"
 		},
 		"folderAutoLock": {
@@ -682,10 +665,7 @@
 			"clearData": "Clear data...",
 			"remove": "Remove...",
 			"lastProfile": "Your last profile stays: every Space needs one.",
-			"extensionCount": {
-				"one": "{count} extension",
-				"other": "{count} extensions"
-			},
+			"extensionCount": "{count, plural, one{# extension} other{# extensions}}",
 			"newProfile": "New Profile...",
 			"newProfileDetail": "Fresh cookies, sign-ins and extensions",
 			"namePlaceholder": "Profile name",
@@ -760,28 +740,16 @@
 		},
 		"notes": {
 			"live": "Changes apply as you pick",
-			"spaces": {
-				"one": "{count} Space",
-				"other": "{count} Spaces"
-			},
-			"profiles": {
-				"one": "{count} profile",
-				"other": "{count} profiles"
-			},
+			"spaces": "{count, plural, one{# Space} other{# Spaces}}",
+			"profiles": "{count, plural, one{# profile} other{# profiles}}",
 			"blocking": "Blocking {count} of {total} kinds",
 			"blockingOff": "Blocking is off",
 			"profile": "{name} profile",
-			"extensions": {
-				"one": "{count} extension in {profile}",
-				"other": "{count} extensions in {profile}"
-			},
+			"extensions": "{count, plural, one{# extension in {profile}} other{# extensions in {profile}}}",
 			"terminal": "Changes apply to every terminal tab",
 			"agents": "Lilo has no AI of its own",
 			"advanced": "For developers and testing",
-			"searchMatches": {
-				"one": "{count} setting matches \"{query}\"",
-				"other": "{count} settings match \"{query}\""
-			}
+			"searchMatches": "{count, plural, one{# setting matches \"{query}\"} other{# settings match \"{query}\"}}"
 		},
 		"callDock": {
 			"sidebar": "In the sidebar",
@@ -937,13 +905,13 @@
 		"pinnedTabs": "Pinned tabs",
 		"openTabs": "Open tabs",
 		"dropToPin": "Drop to pin",
-		"stackLabel": {"one": "{name}, {count} tab", "other": "{name}, {count} tabs"},
+		"stackLabel": "{count, plural, one{{name}, # tab} other{{name}, # tabs}}",
 		"closeStack": "Close Stack",
 		"trayAgents": "Agents",
 		"trayTerminals": "Terminals",
-		"trayNeedsInput": {"one": "{count} needs input", "other": "{count} need input"},
-		"trayWorking": {"one": "{count} working", "other": "{count} working"},
-		"trayRunning": {"one": "{count} running", "other": "{count} running"},
+		"trayNeedsInput": "{count, plural, one{# needs input} other{# need input}}",
+		"trayWorking": "{count, plural, one{# working} other{# working}}",
+		"trayRunning": "{count, plural, one{# running} other{# running}}",
 		"trayShow": "Show {name}",
 		"trayHide": "Hide {name}"
 	},
@@ -1168,6 +1136,7 @@
 		"installed": "Installed"
 	},
 	"commandBar": {
+		"showDetails": "Show keyboard hints",
 		"hintPeek": "Peek",
 		"hintCopyLink": "Copy Link",
 		"hintCloseTab": "Close Tab",
@@ -1234,8 +1203,6 @@
 		"sectionOpenTabs": "Open Tabs",
 		"sectionBookmarks": "Bookmarks",
 		"sectionRecentHistory": "Recent History",
-		"sectionFrequentSites": "Frequent Sites",
-		"sectionRecentConversations": "Recent Conversations",
 		"sectionHistory": "History",
 		"sectionSwitchToTab": "Switch to Tab",
 		"sectionGoTo": "Go To",
@@ -1350,7 +1317,7 @@
 		"tabStartup": "Startup",
 		"tabMemory": "Memory",
 		"tabLog": "Log",
-		"errorCount": {"one": "{count} error", "other": "{count} errors"},
+		"errorCount": "{count, plural, one{# error} other{# errors}}",
 		"copyReport": "Copy Report",
 		"recordSession": "Record Session",
 		"stopRecording": "Stop Recording",
@@ -1392,23 +1359,11 @@
 		"navLabel": "Process Manager views",
 		"searchPlaceholder": "Search tabs",
 		"memoryAriaLabel": "Memory use",
-		"tabsCount": {
-			"one": "{count} tab",
-			"other": "{count} tabs"
-		},
+		"tabsCount": "{count, plural, one{# tab} other{# tabs}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "{count} other",
-			"other": "{count} others"
-		},
-		"reclaim": {
-			"one": "{count} hidden tab uses {size}",
-			"other": "{count} hidden tabs use {size}"
-		},
-		"reclaimNoSize": {
-			"one": "{count} hidden tab is still loaded",
-			"other": "{count} hidden tabs are still loaded"
-		},
+		"others": "{count, plural, one{# other} other{# others}}",
+		"reclaim": "{count, plural, one{# hidden tab uses {size}} other{# hidden tabs use {size}}}",
+		"reclaimNoSize": "{count, plural, one{# hidden tab is still loaded} other{# hidden tabs are still loaded}}",
 		"sleep": "Put to Sleep",
 		"groupTabs": "Tabs",
 		"groupSleeping": "Sleeping",
@@ -1418,10 +1373,7 @@
 		"audioPlaying": "Playing audio",
 		"frozen": "Frozen",
 		"sharedEstimate": "Shares its process with other tabs, so this is an estimate",
-		"sharedWith": {
-			"one": "shared with {count} other tab",
-			"other": "shared with {count} other tabs"
-		},
+		"sharedWith": "{count, plural, one{shared with # other tab} other{shared with # other tabs}}",
 		"pid": "PID {pid}",
 		"focus": "Show",
 		"details": "Show details",
@@ -1450,16 +1402,10 @@
 	"urlToast": {
 		"pageActions": "Page actions",
 		"reEnableBlocking": "Re-enable blocking on this site",
-		"trackersBlockedOnPage": {
-			"one": "{count} tracker blocked on this page",
-			"other": "{count} trackers blocked on this page"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{# tracker blocked on this page} other{# trackers blocked on this page}}",
 		"disableBlocking": "Disable blocking on this site",
 		"adsAllowed": "Ads allowed",
-		"trackersBlockedLabel": {
-			"one": "{count} tracker blocked",
-			"other": "{count} trackers blocked"
-		},
+		"trackersBlockedLabel": "{count, plural, one{# tracker blocked} other{# trackers blocked}}",
 		"adsBlocked": "Ads blocked",
 		"extensionAlreadyInstalled": "Extension already installed",
 		"installChromeExtension": "Install this Chrome extension",
@@ -1503,10 +1449,7 @@
 		"stop": "Stop Debugging"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "{count} more notice",
-			"other": "{count} more notices"
-		},
+		"moreNotices": "{count, plural, one{# more notice} other{# more notices}}",
 		"more": "{count} more"
 	},
 	"crashRecovery": {
@@ -1547,7 +1490,7 @@
 	},
 	"archivedTabs": {
 		"title": "Archived",
-		"buttonLabel": {"one": "{count} recently archived tab", "other": "{count} recently archived tabs"},
+		"buttonLabel": "{count, plural, one{# recently archived tab} other{# recently archived tabs}}",
 		"restore": "Restore",
 		"showAll": "Show all archived tabs",
 		"showAllDownloads": "Show all downloads"
@@ -1558,7 +1501,7 @@
 		"undo": "Undo",
 		"reopen": "Reopen",
 		"archived": "\"{title}\" archived",
-		"archivedCount": {"one": "{count} tab archived", "other": "{count} tabs archived"}
+		"archivedCount": "{count, plural, one{# tab archived} other{# tabs archived}}"
 	},
 	"updateCard": {
 		"ready": "Ready to install",
@@ -1591,6 +1534,11 @@
 		"placeholder": "Search or enter URL...",
 		"addressBar": "Address bar: {url}",
 		"noProject": "No project",
+		"defaultBrowserSet": "Set as Default",
+		"defaultBrowserLater": "Later",
+		"defaultBrowserBannerText": "Make Lilo your default browser?",
+		"defaultBrowserSetSuccess": "Lilo is now your default browser.",
+		"defaultBrowserSetFailed": "Lilo was not set as the default browser. You can change this in System Settings.",
 		"details": {
 			"branch": "Branch",
 			"command": "Command",
@@ -1648,6 +1596,7 @@
 		"allow": "Allow",
 		"allowOnce": "Allow Once",
 		"alwaysAllowOnSite": "Always Allow on This Site",
+		"agentWaitsForAnswer": "The agent waits for your answer.",
 		"popup": {
 			"blocked": "Pop-up blocked",
 			"tried": "tried to open a pop-up window",
@@ -1769,26 +1718,11 @@
 			"done": "Done: {list}.",
 			"nothing": "Done: nothing new to import.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} bookmark",
-					"other": "{count} bookmarks"
-				},
-				"tabs": {
-					"one": "{count} open tab",
-					"other": "{count} open tabs"
-				},
-				"history": {
-					"one": "{count} page of history",
-					"other": "{count} pages of history"
-				},
-				"cookies": {
-					"one": "{count} cookie",
-					"other": "{count} cookies"
-				},
-				"extensions": {
-					"one": "{count} extension",
-					"other": "{count} extensions"
-				}
+				"bookmarks": "{count, plural, one{# bookmark} other{# bookmarks}}",
+				"tabs": "{count, plural, one{# open tab} other{# open tabs}}",
+				"history": "{count, plural, one{# page of history} other{# pages of history}}",
+				"cookies": "{count, plural, one{# cookie} other{# cookies}}",
+				"extensions": "{count, plural, one{# extension} other{# extensions}}"
 			},
 			"step": {
 				"bookmarks": "Importing bookmarks from {from}",
@@ -1906,11 +1840,11 @@
 		"sectionSites": "Most Visited Sites",
 		"sectionTerminals": "From Terminals",
 		"searchResults": "Search Results",
-		"dayPages": {"one": "{count} page", "other": "{count} pages"},
-		"daySites": {"one": "{count} site", "other": "{count} sites"},
+		"dayPages": "{count, plural, one{# page} other{# pages}}",
+		"daySites": "{count, plural, one{# site} other{# sites}}",
 		"openInNewTab": "Open in New Tab",
-		"selected": {"one": "{count} selected", "other": "{count} selected"},
-		"visits": {"one": "{count} visit", "other": "{count} visits"},
+		"selected": "{count, plural, one{# selected} other{# selected}}",
+		"visits": "{count, plural, one{# visit} other{# visits}}",
 		"openInNewTabs": "Open in New Tabs",
 		"delete": "Delete",
 		"clearSelection": "Deselect All",
@@ -2258,6 +2192,10 @@
 		"Close": "Close",
 		"New Terminal Tab": "New Terminal Tab",
 		"Close %d terminals?": {"one": "Close %d terminal?", "other": "Close %d terminals?"},
+		"Pin %d Tabs": {"one": "Pin %d Tab", "other": "Pin %d Tabs"},
+		"Bookmark %d Tabs": {"one": "Bookmark %d Tab", "other": "Bookmark %d Tabs"},
+		"Move Tabs to Space": "Move Tabs to Space",
+		"Close %d Tabs": {"one": "Close %d Tab", "other": "Close %d Tabs"},
 		"Commands are still running in them and will be stopped.": "Commands are still running in them and will be stopped.",
 		"The terminal could not start.": "The terminal could not start.",
 		"Close the tab and try again.": "Close the tab and try again.",
@@ -2476,7 +2414,7 @@
 		"title": "What's new in Lilo",
 		"description": "A few small improvements for your everyday browsing.",
 		"allChanges": "Everything in this update",
-		"changes": { "one": "{count} change", "other": "{count} changes" },
+		"changes": "{count, plural, one{# change} other{# changes}}",
 		"originalNotes": "Original release notes.",
 		"unavailable": "Release notes aren't available in this build.",
 		"reopen": "Always here in Help > What's New.",
@@ -2652,10 +2590,7 @@
 			"ownCopyHint": "Works on its own copy of the project. Merge it from Changes.",
 			"starting": "Starting the agent...",
 			"errorHint": "Send a message to try again.",
-			"showEarlier": {
-				"one": "Show {count} earlier item",
-				"other": "Show {count} earlier items"
-			},
+			"showEarlier": "{count, plural, one{Show # earlier item} other{Show # earlier items}}",
 			"queuedTag": "Queued",
 			"sendNow": "Send now",
 			"thought": "Thought",
@@ -2665,16 +2600,10 @@
 			"restore": "Restore",
 			"undo": "Undo",
 			"undone": "Undone",
-			"moreLines": {
-				"one": "{count} more line",
-				"other": "{count} more lines"
-			},
+			"moreLines": "{count, plural, one{# more line} other{# more lines}}",
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} step done",
-				"other": "{count} steps done"
-			},
+			"planDone": "{count, plural, one{# step done} other{# steps done}}",
 			"planStatus": {
 				"pending": "To do",
 				"in_progress": "In progress",
@@ -2702,26 +2631,11 @@
 				"failed": "Failed"
 			},
 			"group": {
-				"read": {
-					"one": "Read {count} file",
-					"other": "Read {count} files"
-				},
-				"search": {
-					"one": "{count} search",
-					"other": "{count} searches"
-				},
-				"fetch": {
-					"one": "Fetched {count} page",
-					"other": "Fetched {count} pages"
-				},
-				"think": {
-					"one": "Thought {count} time",
-					"other": "Thought {count} times"
-				},
-				"action": {
-					"one": "{count} action",
-					"other": "{count} actions"
-				}
+				"read": "{count, plural, one{Read # file} other{Read # files}}",
+				"search": "{count, plural, one{# search} other{# searches}}",
+				"fetch": "{count, plural, one{Fetched # page} other{Fetched # pages}}",
+				"think": "{count, plural, one{Thought # time} other{Thought # times}}",
+				"action": "{count, plural, one{# action} other{# actions}}"
 			}
 		},
 		"composer": {
@@ -2759,24 +2673,12 @@
 			"untitled": "New conversation",
 			"working": "Working",
 			"failed": "Stopped with an error",
-			"linesAdded": {
-				"one": "{count} line added",
-				"other": "{count} lines added"
-			},
-			"linesRemoved": {
-				"one": "{count} line removed",
-				"other": "{count} lines removed"
-			},
-			"pages": {
-				"one": "{count} page",
-				"other": "{count} pages"
-			},
+			"linesAdded": "{count, plural, one{# line added} other{# lines added}}",
+			"linesRemoved": "{count, plural, one{# line removed} other{# lines removed}}",
+			"pages": "{count, plural, one{# page} other{# pages}}",
 			"showPages": "Show pages",
 			"hidePages": "Hide pages",
-			"morePermissions": {
-				"one": "{count} more request waiting",
-				"other": "{count} more requests waiting"
-			}
+			"morePermissions": "{count, plural, one{# more request waiting} other{# more requests waiting}}"
 		},
 		"question": {
 			"allow": "Allow",
@@ -2790,10 +2692,7 @@
 		},
 		"badge": {
 			"title": "Agents",
-			"waiting": {
-				"one": "Agents, {count} waiting for you",
-				"other": "Agents, {count} waiting for you"
-			},
+			"waiting": "{count, plural, one{Agents, # waiting for you} other{Agents, # waiting for you}}",
 			"new": "New",
 			"needsYou": "Needs you",
 			"running": "Running",
@@ -2814,10 +2713,7 @@
 			"signInOpenTerminal": "Open in Terminal"
 		},
 		"work": {
-			"images": {
-				"one": "{count} image",
-				"other": "{count} images"
-			},
+			"images": "{count, plural, one{# image} other{# images}}",
 			"verb": {
 				"read": "Read",
 				"edit": "Edited",
@@ -2835,46 +2731,16 @@
 				"fetch": "Fetching"
 			},
 			"summary": {
-				"read": {
-					"one": "read {count} file",
-					"other": "read {count} files"
-				},
-				"edit": {
-					"one": "edited {count} file",
-					"other": "edited {count} files"
-				},
-				"execute": {
-					"one": "ran {count} command",
-					"other": "ran {count} commands"
-				},
-				"search": {
-					"one": "ran {count} search",
-					"other": "ran {count} searches"
-				},
-				"fetch": {
-					"one": "fetched {count} page",
-					"other": "fetched {count} pages"
-				},
-				"think": {
-					"one": "thought {count} time",
-					"other": "thought {count} times"
-				},
-				"browser": {
-					"one": "took {count} browser action",
-					"other": "took {count} browser actions"
-				},
-				"browserOn": {
-					"one": "took {count} browser action on {site}",
-					"other": "took {count} browser actions on {site}"
-				},
-				"tool": {
-					"one": "used {count} tool",
-					"other": "used {count} tools"
-				},
-				"agent": {
-					"one": "started {count} agent",
-					"other": "started {count} agents"
-				}
+				"read": "{count, plural, one{read # file} other{read # files}}",
+				"edit": "{count, plural, one{edited # file} other{edited # files}}",
+				"execute": "{count, plural, one{ran # command} other{ran # commands}}",
+				"search": "{count, plural, one{ran # search} other{ran # searches}}",
+				"fetch": "{count, plural, one{fetched # page} other{fetched # pages}}",
+				"think": "{count, plural, one{thought # time} other{thought # times}}",
+				"browser": "{count, plural, one{took # browser action} other{took # browser actions}}",
+				"browserOn": "{count, plural, one{took # browser action on {site}} other{took # browser actions on {site}}}",
+				"tool": "{count, plural, one{used # tool} other{used # tools}}",
+				"agent": "{count, plural, one{started # agent} other{started # agents}}"
 			},
 			"browser": {
 				"closeTab": "Closed a tab",
@@ -2925,10 +2791,7 @@
 				"request": "Sending a request to {url}"
 			},
 			"exit": "Exit {code}",
-			"showAll": {
-				"one": "Show all {count} line",
-				"other": "Show all {count} lines"
-			},
+			"showAll": "{count, plural, one{Show all # line} other{Show all # lines}}",
 			"showLess": "Show the last lines"
 		},
 		"turn": {
@@ -2936,10 +2799,7 @@
 			"stopped": "Stopped",
 			"refusalTitle": "The model declined to continue",
 			"refusalHint": "Its safety checks stopped this turn, sometimes on legitimate work. Rephrase the request, or pick another model below.",
-			"files": {
-				"one": "{count} file changed",
-				"other": "{count} files changed"
-			},
+			"files": "{count, plural, one{# file changed} other{# files changed}}",
 			"review": "Review",
 			"copy": "Copy response",
 			"copied": "Copied"

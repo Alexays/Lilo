@@ -1,0 +1,91 @@
+---
+title: "Spaces and profiles"
+description: "Separate work and personal browsing with Spaces, give each one its own profile and sign-ins, and switch between them from the sidebar or the keyboard."
+sidebar:
+  order: 1
+---
+
+With Spaces you keep different parts of your browsing apart: a set of tabs for work, another for home, each with its own name, emoji and color. With profiles you decide which of those Spaces share sign-ins.
+
+## Spaces and profiles in one paragraph
+
+A **Space** is a set of tabs in the sidebar: its pinned tabs, favorites, folders and open tabs, its name, emoji, color, and how long its idle tabs stay open. A **profile** is a set of website data: cookies and sign-ins, site storage and cache, history, bookmarks, downloads, site permissions and extensions. Every Space is signed in as exactly one profile, and several Spaces can share one. Two Spaces on the same profile see the same accounts and extensions with different tabs; two Spaces on different profiles are as separate as two browsers.
+
+A new Lilo has one profile, named Default, and every Space you create uses it until you choose otherwise.
+
+## Create a Space
+
+<Steps>
+  <Step title="Open the Space editor">
+    Choose **Spaces > New Space…** in the menu bar, right-click the Space icons at the bottom of the sidebar and choose **New Space**, or go to **Settings > Tabs and Spaces** and click **Create** next to **New Space**.
+  </Step>
+  <Step title="Name it">
+    Type a name, and click the emoji to pick another one. Under **Appearance**, choose a color and a material (**Solid**, **Glass** or **Grain**).
+  </Step>
+  <Step title="Choose who it is signed in as">
+    Under **Signed in as**, pick an existing profile, **New Profile** to start signed out everywhere with no extensions, or **Private** for a Space that forgets everything when it closes. The line under the list says what the choice shares, for example "Shares sign-ins, cookies and extensions with Home."
+  </Step>
+  <Step title="Create it">
+    Click **Create Space**. Lilo switches to the new Space.
+  </Step>
+</Steps>
+
+## Keep work and personal sign-ins apart
+
+To be signed in to the same site with two accounts, one for work and one for yourself, give each Space its own profile.
+
+<Steps>
+  <Step title="Create the Space for the second account">
+    Open the Space editor as above and name the Space, for example "Work".
+  </Step>
+  <Step title="Give it a new profile">
+    Under **Signed in as**, choose **New Profile** and type a profile name. The hint reads "Starts signed out everywhere, with no extensions."
+  </Step>
+  <Step title="Sign in">
+    Click **Create Space**, then sign in to your work accounts in that Space. Your other Spaces keep their own sign-ins.
+  </Step>
+</Steps>
+
+Extensions belong to a profile too: install your work extensions in a Space of the work profile, and they appear in every Space of that profile and in no Space of another. See [Extensions](/guides/extensions).
+
+To move an existing Space to another profile, open it with **Spaces > Edit Space…** and pick the other profile under **Signed in as**. Its tabs move with it and load again signed in as that profile.
+
+## Switch between Spaces
+
+- Click a Space's icon at the bottom of the sidebar.
+- Swipe sideways with two fingers on the sidebar.
+- Press <kbd>⌃⌘→</kbd> for the next Space and <kbd>⌃⌘←</kbd> for the previous one (**Spaces > Next Space** and **Previous Space**).
+- Press <kbd>⌃1</kbd> to <kbd>⌃9</kbd> to go to the first nine Spaces.
+- In the [command bar](/guides/command-bar), type a Space's name and choose **Switch to** it.
+
+Each window shows one Space. Switching Spaces in one window leaves the others on theirs, and two windows can show the same Space.
+
+## Edit, reorder or delete a Space
+
+- **Edit**: choose **Spaces > Edit Space…**, or right-click the Space's icon and choose **Edit Space**. Changes apply as you make them. The editor also holds **Archive tabs after**, explained in [Tabs and folders](/guides/tabs-and-folders#stop-tabs-piling-up).
+- **Reorder**: drag a Space's icon along the bottom bar, or focus it and press <kbd>⌥←</kbd> or <kbd>⌥→</kbd>.
+- **Delete**: right-click the Space's icon and choose **Delete Space…**, or click **Delete Space...** in its editor. The Space and all its tabs are deleted permanently. The last Space cannot be deleted. Deleting a Space never deletes its profile.
+
+**Settings > Appearance > Hide Space names** shows each Space in the bottom bar as its icon alone.
+
+## Move a tab to another Space
+
+- Right-click the tab and choose **Move to Space**, or use **Tab > Move to Space** for the current tab.
+- Drag the tab onto a Space's icon at the bottom of the sidebar.
+- In the command bar, select an open tab, press <kbd>⌘M</kbd> and pick the Space.
+
+Between two Spaces of the same profile, the page moves as it is. Into a Space of another profile, the page loads again there, signed in as that profile. A favorite cannot move into a Private Space.
+
+## Private Space
+
+Choose **File > New Private Space** or press <kbd>⇧⌘N</kbd>. A Private Space has its own website data, held in memory only: nothing is saved, and its tabs, history and cookies go when the Space closes, at the latest when you quit Lilo. Pressing <kbd>⇧⌘N</kbd> again returns to the Private Space you already have instead of making a second one. A Private Space cannot change profile, and an extension sees its tabs only once you allow it there. More in [Privacy controls](/guides/privacy-controls).
+
+## Manage profiles
+
+Profiles live in **Settings > Tabs and Spaces**, under **Profiles**. Each card shows the Spaces signed in as that profile and its number of extensions.
+
+- **New Profile...** creates one with fresh cookies, sign-ins and extensions. You can also create one from the Space editor.
+- The **…** menu of a card offers **Rename**, **Change color**, **Manage extensions**, **Clear data...** and **Remove...**.
+- **Remove...** deletes the profile's cookies, sign-ins, history and extensions. Its Spaces stay, with their tabs: you choose the profile that takes them. Your last profile stays, because every Space needs one.
+
+Below the cards, Lilo lists the Agents profile: AI agents work in that throwaway profile, wiped after each session, and borrow one of yours only after you allow it. See [AI agents](/guides/ai-agents).

@@ -121,8 +121,15 @@ extension AgentControl {
         let current = session.profileId ?? agents
         guard current != profile.id else { return "Already in the profile \(profile.name)" }
         if profile.id != agents, !grantedProfiles.contains(Self.grantKey(session, profile.id)) {
-            guard await askConsent(session.clientName, profileName: profile.name) == true else {
-                throw AgentToolError("The user did not allow the profile \(profile.name)", code: "needs_user")
+            switch await askConsent(session.clientName, profileName: profile.name) {
+            case .allowed:
+                break
+            case .denied:
+                throw AgentToolError("The user declined the profile \(profile.name): do not try again, report that it was declined and ask what to do instead", code: "needs_user", consent: .denied)
+            case .expired:
+                throw Self.expiredConsentError(timeout: Self.consentTimeout)
+            case .unavailable:
+                throw Self.unavailableConsentError
             }
             grantProfile(profile.id, to: session)
         }

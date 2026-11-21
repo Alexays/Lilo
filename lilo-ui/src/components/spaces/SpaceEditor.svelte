@@ -3,6 +3,7 @@
   import { scale } from "svelte/transition";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
+  import "../../lib/i18n/settingsCatalog";
   import { tooltip } from "../../lib/tooltip";
   import UiConfirmModal from "../ui/UiConfirmModal.svelte";
   import { getAgentsProfileId, getAgentsSpaceIds, isAgentsSpace } from "../../stores/agents.svelte";

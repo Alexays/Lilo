@@ -1,0 +1,95 @@
+---
+title: Extensions
+description: >-
+  Installez des extensions du Chrome Web Store, gérez autorisations et accès aux
+  sites, mettez-les à jour et ajoutez votre gestionnaire de mots de passe.
+sidebar:
+  order: 6
+---
+Lilo exécute les extensions Chrome du Chrome Web Store. Cette page explique comment en installer une, choisir où elle s'exécute, la maintenir à jour et configurer un gestionnaire de mots de passe.
+
+## Installer une extension [#install-an-extension]
+
+<Steps>
+  <Step title="Ouvrez le Chrome Web Store">
+    Choisissez **Lilo > Extensions > Ajouter une extension…**, ou cliquez sur **Ajouter des extensions** dans **Réglages > Extensions**. Lilo ouvre `chromewebstore.google.com` dans un nouvel onglet.
+  </Step>
+  <Step title="Trouvez l'extension">
+    Ouvrez la page de l'extension dans le store.
+  </Step>
+  <Step title="Ajoutez-la">
+    Cliquez sur **Ajouter à Lilo** sur la page du store, ou sur le bouton d'installation qui apparaît dans la barre d'adresse (« Installer cette extension Chrome »).
+  </Step>
+  <Step title="Vérifiez ses autorisations">
+    Lilo demande **Installer** suivi du nom de l'extension, et liste ce qu'elle pourra faire, par exemple « Lire et modifier toutes vos données sur tous les sites que vous visitez ». Cliquez sur **Installer** ou sur **Annuler**.
+  </Step>
+</Steps>
+
+L'extension s'installe dans le profil de la fenêtre depuis laquelle vous l'installez. Chaque profil a ses propres extensions, cookies et stockage. Lorsque vous [importez depuis un autre navigateur](/start/import), Lilo réinstalle les extensions de ce navigateur depuis le store.
+
+## Utiliser et épingler des extensions [#use-and-pin-extensions]
+
+Les extensions que vous avez activées sont listées dans **Lilo > Extensions**, ainsi que dans le popover **Extensions** qu'ouvre le bouton des extensions de la barre d'adresse ; une extension désactivée n'apparaît que dans **Réglages > Extensions**. Dans le popover, chaque extension a un bouton d'épinglage : son infobulle indique **Épingler à la barre d'adresse**, et un clic dessus garde le bouton de l'extension visible. Cliquez de nouveau dessus (**Détacher de la barre d'adresse**) pour le remettre à sa place.
+
+Lorsqu'une extension demande à accéder au site sur lequel vous vous trouvez, sa ligne dans le popover **Extensions** affiche un bouton **Autoriser** (« Autoriser cette extension à accéder à ce site »).
+
+## Gérer une extension [#manage-an-extension]
+
+Ouvrez **Réglages > Extensions** et cliquez sur une extension sous **Installées** pour voir ses détails :
+
+- **Activée** l'active ou la désactive.
+- **Permissions** liste ce qu'elle a demandé.
+- **Accès aux sites** : **Tous les sites** l'exécute sur tous les sites qu'elle a demandés ; **Sites choisis** ne l'exécute que sur les sites que vous ajoutez.
+- **Autoriser dans les espaces privés** lui permet de s'exécuter sur les pages des espaces privés. Cette option est désactivée tant que vous ne l'activez pas.
+- **Autoriser les scripts utilisateur** lui permet d'exécuter les scripts qu'elle enregistre, comme les scripts utilisateur d'un gestionnaire de scripts. N'activez cette option que pour les extensions auxquelles vous faites confiance.
+- **Raccourcis clavier** affiche les commandes de l'extension ; cliquez sur l'une d'elles pour enregistrer un nouveau raccourci.
+- **Chrome Web Store** ouvre sa page dans le store, avec les avis et la page du développeur.
+- **Supprimer l'extension...** supprime l'extension et ses données.
+
+Si vous avez plusieurs profils, le menu **Profil** en haut de **Réglages > Extensions** affiche les extensions d'un autre profil.
+
+## Maintenir les extensions à jour [#keep-extensions-up-to-date]
+
+**Mettre à jour les extensions automatiquement**, dans **Réglages > Extensions** sous **Mises à jour**, est activé par défaut : Lilo installe les nouvelles versions depuis le Chrome Web Store dès leur sortie. Pour rechercher des mises à jour maintenant, cliquez sur **Rechercher** à côté de **Rechercher des mises à jour**, ou choisissez **Lilo > Extensions > Rechercher des mises à jour des extensions**.
+
+Une mise à jour qui demande davantage d'accès n'est jamais installée d'elle-même. L'extension continue de fonctionner dans sa version actuelle, et **Mettre à jour** apparaît à côté d'elle dans **Installées**. Lorsque vous cliquez dessus, Lilo désactive l'extension et liste les nouveaux accès : **Accepter et activer** installe la mise à jour, **Laisser désactivée** laisse l'extension désactivée dans sa version actuelle, avec **Examiner** pour décider de nouveau plus tard.
+
+## Configurer un gestionnaire de mots de passe [#set-up-a-password-manager]
+
+Lilo n'a pas de gestionnaire de mots de passe qui lui soit propre et n'enregistre pas ce que vous saisissez dans le formulaire de connexion d'une page. Le stockage des identifiants et le remplissage automatique sont assurés par l'extension de votre gestionnaire de mots de passe.
+
+<Steps>
+  <Step title="Ouvrez l'étape des mots de passe">
+    Dans **Réglages > Extensions**, sous **Mots de passe**, repérez **Ajouter un gestionnaire de mots de passe** et cliquez sur **Choisir**. La même étape apparaît lors de la configuration initiale.
+  </Step>
+  <Step title="Choisissez votre gestionnaire">
+    Choisissez le gestionnaire que vous utilisez déjà et cliquez sur **Ajouter**. Lilo installe son extension depuis le Chrome Web Store.
+  </Step>
+  <Step title="Connectez-vous">
+    Ouvrez l'extension depuis la barre d'adresse et connectez-vous à votre compte.
+  </Step>
+</Steps>
+
+Les gestionnaires proposés sont Bitwarden, 1Password, Proton Pass, Dashlane, NordPass et KeePassXC. Chacun s'installe et démarre dans les tests de Lilo, sans compte connecté. Proton Pass et Dashlane marquent également un formulaire de connexion de test ; Dashlane consigne au démarrage une erreur que Chrome ne consigne pas, et 1Password et Bitwarden échouent lors de certaines exécutions. NordPass et KeePassXC ajoutent leur élément au formulaire de connexion de test, comme dans Chrome ; rien d'autre de ce qu'ils font sur une page n'est vérifié, et le remplissage automatique avec un compte connecté n'est vérifié pour aucun d'entre eux. [Compatibilité des extensions](/reference/extension-compatibility#tested-store-extensions) donne le résultat pour chacun.
+
+- **1Password** : pour déverrouiller avec l'app 1Password et Touch ID, ajoutez Lilo dans **Réglages > Navigateur > Ajouter un navigateur** de l'app. L'app ne se connecte d'elle-même qu'aux navigateurs qu'elle connaît déjà.
+- **KeePassXC** : l'extension effectue le remplissage à partir de l'app KeePassXC sur votre Mac. Cette connexion ne faisait pas partie des tests.
+- **Mots de passe iCloud** est indiqué comme **Bientôt** : son extension ne peut pas atteindre son programme auxiliaire dans Lilo tant qu'Apple n'accorde pas à Lilo l'autorisation qu'il requiert.
+
+## Ce qui fonctionne et ce qui diffère [#what-works-and-what-differs]
+
+Lilo exécute les extensions Manifest V3 sur l'environnement d'exécution d'extensions de WebKit, avec ses propres ajouts là où il manque une API Chrome à WebKit. La plupart des extensions se comportent comme dans Chrome. Les principales différences :
+
+- Les extensions Manifest V2 ne s'exécutent pas.
+- `webRequest` peut observer les requêtes, mais pas les bloquer. Les bloqueurs de publicités comme uBlock Origin Lite, AdGuard et Adblock Plus bloquent bien les publicités dans les tests de Lilo.
+- Une extension qui modifie le moteur de recherche ou la page d'accueil n'a aucun effet sur eux.
+- Une extension ne s'exécute dans les espaces privés qu'une fois que vous l'y avez autorisée (**Autoriser dans les espaces privés**).
+- Le Chrome Web Store voit Lilo comme Chrome, si bien que son bouton d'installation fonctionne. Les sites web voient Lilo comme Safari. Les extensions lisent une identité Chrome, et les serveurs que contacte le worker, le popup ou le panneau d'une extension voient l'agent utilisateur de Chrome. Google ne cautionne pas Lilo et pourrait modifier le store de sorte que les installations ou les mises à jour depuis Lilo cessent de fonctionner.
+
+[Compatibilité des extensions](/reference/extension-compatibility) liste toutes les différences d'API, les extensions testées avec leurs résultats, et les détails de la messagerie native.
+
+## Charger une extension que vous développez [#load-an-extension-you-are-developing]
+
+Pour exécuter une extension à partir d'un dossier sur le disque, allez dans **Réglages > Avancé**, repérez **Charger une extension non empaquetée** sous **Outils de développement**, et cliquez sur **Charger une extension décompressée...**, puis choisissez le dossier qui contient son `manifest.json`. Les détails de l'extension proposent alors **Recharger**, qui relit le dossier pour prendre en compte vos modifications.
+
+Si une extension ne fonctionne pas, consultez [Dépannage](/guides/troubleshooting#an-extension-does-not-work).

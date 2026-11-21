@@ -12,6 +12,7 @@ BRIDGE_DIR := Lilo/Extensions/bridge-src
 UI_DEPS := $(UI_DIR)/node_modules/.package-lock.json
 BRIDGE_DEPS := $(BRIDGE_DIR)/node_modules/.package-lock.json
 SITE_DEPS := site/node_modules/.package-lock.json
+DOCS_DEPS := docs-site/node_modules/.package-lock.json
 CHANGIE_VERSION := 1.26.0
 CHANGIE := $(CURDIR)/build/changie-$(CHANGIE_VERSION)/changie
 CHANGIE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -92,8 +93,9 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly ext-e2e-passwords ext-e2e-passwords-trust top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-app agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
+	docs-dev docs-build docs-check docs-test docs-preview docs-deploy-check docs-deploy docs-translate docs-eval docs-lock \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test release-media-stage release-media-test changelog-context changelog-draft changelog-media
 
@@ -130,10 +132,10 @@ bootstrap:
 
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
-## Run UI and website checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
-validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(SWIFTLINT) $(CHANGIE)
+## Run UI, website and docs checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
+validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(DOCS_DEPS) $(SWIFTLINT) $(CHANGIE)
 	@logs=$$(mktemp -d); checks=; \
-	for group in ui-lint ui-test "site-check site-test" "hooks-test perf-summary-test ext-bridge-test swiftlint release-status"; do \
+	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test perf-summary-test ext-bridge-test swiftlint release-status"; do \
 		name=$${group%% *}; $(MAKE) -k --no-print-directory $$group > "$$logs/$$name.log" 2>&1 & checks="$$checks $$!:$$name"; \
 	done; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
@@ -185,6 +187,10 @@ $(BRIDGE_DEPS): $(BRIDGE_DIR)/package-lock.json
 
 $(SITE_DEPS): site/package.json site/package-lock.json
 	@npm --prefix site ci
+
+# Blume builds without its dependencies' install scripts.
+$(DOCS_DEPS): docs-site/package.json docs-site/package-lock.json
+	@npm --prefix docs-site ci --ignore-scripts
 
 $(CHANGIE): scripts/changie-checksums.txt
 	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
@@ -286,9 +292,10 @@ ui-dev: $(UI_DEPS)
 ui-preview: $(UI_DEPS)
 	@npm --prefix $(UI_DIR) run dev -- --open /preview/
 
-## Run ESLint + svelte-check
+## Run ESLint + svelte-check + the i18n copy check
 ui-lint: $(UI_DEPS)
 	@npm --prefix $(UI_DIR) run lint
+	@node scripts/i18n_check.mjs
 
 ## Run lightweight UI regression tests
 ui-test: $(UI_DEPS)
@@ -485,15 +492,29 @@ xcode-build-release: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 run-ui-dev: app
 	@LILO_UI_DEV_SERVER=http://localhost:5173 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo
 
-# LILO_AGENT_ALLOW_ALL lets any agent client in without asking: only a Debug build reads it.
+# LILO_AGENT_ALLOW_ALL lets any agent client in without asking, LILO_AGENT_CLICKS=allow|deny answers every
+# question before a send, payment or deletion yes or no at once, and LILO_HEADLESS keeps the app from taking
+# focus, a Dock icon or a visible window: only a Debug build reads them. agent-app sets all three so a run is
+# unattended (CLICKS=deny refuses, HEADLESS=0 keeps the window).
+AGENT_DATA = $(or $(LILO_APP_SUPPORT_DIR),$(HOME)/Library/Application Support/Lilo-Debug)
+# A fresh Debug profile has agent control off, and the app reads that setting only at launch: it is switched on
+# in the profile's database, which a first launch creates, before the app a client talks to starts.
+agent-app:
+	@test -d build/debug/export/Lilo.app || { echo "run make app first" >&2; exit 1; }
+	@pgrep -qf "^$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/Lilo$$" || { \
+		on="INSERT OR REPLACE INTO settings(key, value) VALUES ('agentControlEnabled', 'true')"; \
+		/bin/rm -f "$(AGENT_DATA)/agent.sock"; \
+		sqlite3 "$(AGENT_DATA)/global.db" "$$on" 2>/dev/null || { \
+			LILO_HEADLESS=$(or $(HEADLESS),1) "$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/Lilo" >/dev/null 2>&1 & first=$$!; \
+			until sqlite3 "$(AGENT_DATA)/global.db" "$$on" 2>/dev/null; do sleep 1; done; \
+			kill $$first; wait $$first 2>/dev/null; /bin/rm -f "$(AGENT_DATA)/agent.sock"; }; \
+		LILO_AGENT_ALLOW_ALL=1 LILO_AGENT_CLICKS=$(or $(CLICKS),allow) LILO_HEADLESS=$(or $(HEADLESS),1) "$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/Lilo" >/dev/null 2>&1 & \
+		until [ -S "$(AGENT_DATA)/agent.sock" ] && sleep 3; do sleep 1; done; }
+
 ## Call the debug app's agent tools from a shell, starting the app first if needed (CALLS=calls.json, see scripts/agent_call.mjs)
 agent-call:
 	@test -n "$(CALLS)" || { echo "CALLS=calls.json is required" >&2; exit 2; }
-	@test -d build/debug/export/Lilo.app || { echo "run make app first" >&2; exit 1; }
-	@pgrep -qf "build/debug/export/Lilo.app/Contents/MacOS/Lilo$$" || { \
-		/bin/rm -f "$(HOME)/Library/Application Support/Lilo-Debug/agent.sock"; \
-		LILO_AGENT_ALLOW_ALL=1 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo >/dev/null 2>&1 & \
-		until [ -S "$(HOME)/Library/Application Support/Lilo-Debug/agent.sock" ] && sleep 3; do sleep 1; done; }
+	@$(MAKE) --no-print-directory agent-app
 	@node scripts/agent_call.mjs build/debug/export/Lilo.app/Contents/MacOS/lilo-mcp "$(CALLS)"
 
 ## Build the UI bundle and create release artifacts
@@ -716,3 +737,43 @@ site-deploy-check: site-generate
 ## Deploy getlilo.app to Cloudflare (requires authentication)
 site-deploy: $(SITE_DEPS)
 	@npm --prefix site run deploy
+
+## Serve docs.getlilo.app with Blume and live reload
+docs-dev: $(DOCS_DEPS)
+	@npm --prefix docs-site run dev
+
+## Build docs.getlilo.app: generated reference, pages and security headers in docs-site/dist/
+docs-build: $(DOCS_DEPS)
+	@npm --prefix docs-site run build
+
+## Check the docs' links and anchors, and that no French page is missing or out of date
+docs-check: $(DOCS_DEPS)
+	@npm --prefix docs-site run check
+
+## Build and test the docs' headers, routes and metadata, then audit the build
+docs-test: docs-build
+	@npm --prefix docs-site run test
+
+## Preview the built docs with Cloudflare's headers on localhost:8789
+docs-preview: docs-build
+	@npm --prefix docs-site run preview -- --port $(or $(DOCS_PREVIEW_PORT),8789)
+
+## Check the docs' Cloudflare deployment without publishing
+docs-deploy-check: docs-build
+	@npm --prefix docs-site run deploy:check
+
+## Deploy docs.getlilo.app to Cloudflare (requires authentication)
+docs-deploy: $(DOCS_DEPS)
+	@npm --prefix docs-site run deploy
+
+## Translate new and changed docs pages into French with Claude Code (DOCS_TRANSLATE_ARGS passes blume translate flags)
+docs-translate: $(DOCS_DEPS)
+	@DOCS_TRANSLATE_ARGS='$(DOCS_TRANSLATE_ARGS)' npm --prefix docs-site run translate
+
+## Ask an agent the questions in docs-site/evals.yaml and grade its answers (Claude Code; costs model time)
+docs-eval: $(DOCS_DEPS)
+	@npm --prefix docs-site run generate && cd docs-site && npx blume eval --agent claude
+
+## Update the docs' dependencies and lockfile after changing package.json
+docs-lock:
+	@npm --prefix docs-site update

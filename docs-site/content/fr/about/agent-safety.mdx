@@ -1,0 +1,105 @@
+---
+title: Sécurité des agents
+description: >-
+  Ce qu'un agent IA peut faire dans Lilo sans demander, ce qui requiert votre
+  accord, comment il reste à l'écart de vos onglets et espaces privés, et les
+  limites.
+sidebar:
+  order: 4
+---
+Lilo permet aux agents IA que vous utilisez déjà sur votre Mac, comme Claude Code, Codex ou Cursor, de piloter un navigateur par l'intermédiaire de son serveur MCP. Cette page explique comment Lilo tient ces agents à l'écart de votre propre navigation, quelles actions attendent votre réponse et ce que les protections ne couvrent pas, afin que vous puissiez décider de ce que vous laissez faire à un agent. Pour connecter un agent, consultez [Agents IA](/guides/ai-agents).
+
+Deux sortes d'agents utilisent Lilo, et ils ne sont pas tenus à l'écart de la même manière :
+
+- **Un agent que vous connectez depuis une autre app** (Claude Code, Codex, Cursor ou tout client MCP) travaille dans un espace Agents, dans un profil jetable, et n'accède à vos connexions qu'après que vous avez autorisé l'un de vos profils. L'essentiel de cette page le concerne.
+- **Un agent avec lequel vous discutez dans une conversation Lilo** (**Fichier > Demander à un agent**, <kbd>⇧⌘A</kbd>) est un programme que Lilo lance sur votre Mac, avec l'accès de votre compte utilisateur à vos fichiers et à vos commandes. Dans le navigateur, il travaille dans votre propre espace, avec le profil de cet espace et vos connexions, dès le départ. Les protections de Lilo ne couvrent que ce qu'il fait dans le navigateur. Consultez [Les agents dans une conversation Lilo](#agents-in-a-lilo-conversation).
+
+## Désactivé tant que vous ne l'activez pas [#off-until-you-turn-it-on]
+
+Lilo n'a pas d'IA qui lui soit propre. Rien ne peut piloter Lilo tant que **Laisser les agents utiliser Lilo** n'est pas activé dans Réglages > Agents. Ce réglage est désactivé sur une nouvelle installation, sauf si vous avez répondu **Avec mes agents** ou **Pour développer** lorsque la configuration a demandé **Comment allez-vous utiliser Lilo ?** : ces réponses l'activent. Le réglage s'applique à tous les profils. Tant qu'il est désactivé, un agent qui essaie reçoit une erreur vous indiquant de l'activer.
+
+Une fois le réglage activé, les agents accèdent à Lilo par `lilo-mcp`, un petit serveur MCP intégré à l'app, au moyen d'un socket Unix situé dans le dossier de support de Lilo et que seul votre compte utilisateur peut ouvrir. Rien n'écoute sur le réseau.
+
+## Chaque agent est approuvé une seule fois [#each-agent-is-approved-once]
+
+La première fois qu'un agent se connecte depuis une autre app, Lilo vous demande s'il faut l'autoriser. L'approbation est liée au programme à l'origine de la connexion, et non au nom que l'agent annonce : sa signature de code (identifiant de signature et équipe) lorsque la chaîne de certificats d'Apple s'en porte garante, ou le chemin de son exécutable lorsqu'il n'est pas signé. Un autre programme ne peut pas emprunter le nom d'un agent approuvé pour entrer.
+
+Réglages > Agents répertorie les apps que vous avez approuvées sous **Apps qui peuvent utiliser Lilo** ; **Retirer** en révoque une, ainsi que les profils auxquels vous lui aviez donné accès.
+
+Cela protège contre un programme qui se ferait passer pour un agent que vous avez approuvé. Cela ne protège pas contre un logiciel malveillant qui s'exécute déjà sous votre identité : tout ce qui s'exécute sous votre compte peut toujours lire les données de Lilo sur le disque.
+
+## Un espace et un profil à eux [#a-space-and-a-profile-of-their-own]
+
+Un agent que vous connectez depuis une autre app ne travaille pas dans vos onglets. Il ouvre ses onglets dans un dossier d'un **espace Agents**, à raison d'un dossier par tâche. Par défaut, cet espace utilise un profil « Agents » distinct, sans aucun de vos cookies, de vos connexions ni de votre historique. Lilo efface ce profil lorsque le contrôle par les agents démarre et lorsque le dernier agent qui y travaille s'en va, de sorte que ce qu'un agent a laissé derrière lui n'atteint jamais le suivant. Un agent ne prend jamais votre clavier ni vos onglets.
+
+- **Vos autres onglets sont hors d'atteinte.** Un agent ne voit que les onglets de ses propres dossiers et n'agit que sur eux. Il ne voit jamais vos autres onglets.
+- **Les espaces privés sont hors d'atteinte.** Un agent ne peut jamais voir l'un de vos espaces privés ni agir dessus, ni apprendre sur quel profil il est fondé. Un agent peut ouvrir un onglet `isolated`, qui vit dans un espace privé propre à l'agent, à l'écart des vôtres, et ne partage aucun cookie avec les autres onglets de l'agent.
+- **Vos profils nécessitent votre autorisation.** Certaines tâches ont besoin de vos connexions. Un agent peut demander à travailler dans l'un de vos profils ; Lilo vous pose d'abord la question, une fois par agent et par profil. Une fois l'autorisation accordée, ses onglets sont déplacés vers l'espace Agents propre à ce profil (chaque profil dans lequel des agents travaillent en reçoit un) et se chargent avec les cookies de ce profil. Sans demander, tout agent que vous avez approuvé peut répertorier les noms de vos profils et voir lequel vous utilisez, sauf si vous êtes dans un espace privé.
+
+Ce qu'un agent peut lire dans ses propres onglets : le texte de la page, l'arborescence d'accessibilité, les captures d'écran, la console, les requêtes réseau et les cookies des sites que ces onglets affichent, cookies `HttpOnly` compris. Comme un agent peut faire naviguer un onglet vers n'importe quel site, un agent qui travaille dans l'un de vos profils peut y lire les cookies de n'importe quel site. Son outil `fetch` ne renvoie jamais les en-têtes `Set-Cookie` ni `Authorization`.
+
+## Les agents dans une conversation Lilo [#agents-in-a-lilo-conversation]
+
+Un agent que vous lancez vous-même dans une conversation Lilo (**Fichier > Demander à un agent**, <kbd>⇧⌘A</kbd>, une fois **Conversations avec vos agents** activé) n'est pas tenu à l'écart de cette manière. Lilo lance le programme propre à l'agent, comme Claude Agent, Codex ou Gemini CLI, sur votre Mac, dans le dossier de travail que vous choisissez pour la conversation : **Aucun dossier**, le premier choix, lui donne un dossier à lui dans le dossier de support de Lilo, et **Choisir un dossier...** accepte n'importe quel dossier ; dans un dépôt où travaille l'agent d'une autre conversation, il reçoit un worktree git à lui. Le dossier est l'endroit où il démarre, pas une limite à ce qu'il peut atteindre. Lilo ne lui fournit que des outils de navigation : il lit et modifie des fichiers et exécute des commandes avec ses propres outils, avec l'accès de votre compte utilisateur.
+
+- **Sur votre Mac, les règles propres à l'agent.** Ce qu'il fait hors du navigateur n'est limité que par les questions d'autorisation propres à l'agent, qui apparaissent dans la conversation sous la forme **Autoriser cette action ?**, avec **Autoriser** et **Ne pas autoriser**. Lorsque l'agent les propose, le menu du bouton **Autoriser** contient aussi **Toujours autoriser** (<kbd>⌥↩</kbd>) et **Ne jamais autoriser** : une seule réponse de ce type met fin aux questions pour ce genre d'action. C'est l'agent qui décide des actions pour lesquelles il pose la question. Par défaut, Lilo remplace le prompt propre à l'agent par celui de Lilo (**Prompt système** réglé sur **Lilo** dans Réglages > Agents, sous **Conversations**), pour les agents qui acceptent un remplacement. Le texte par défaut de Lilo indique à l'agent qu'il a un accès complet à votre machine et qu'il doit agir au lieu de demander confirmation lorsqu'une demande est claire, sauf avant une action qui ne peut pas être annulée et qui porte au-delà de votre Mac, comme pousser du code, supprimer des données distantes, envoyer des messages ou dépenser de l'argent, à moins que vous ne l'ayez déjà demandée. Vous pouvez modifier ce texte dans Réglages, ou choisir **Celui de l'agent** pour conserver le prompt de l'agent, qui pose la question avant un plus grand nombre de ses actions. Rien d'autre sur cette page ne limite ce qu'il fait hors du navigateur.
+- **Aucune question sur la connexion.** Lilo ne demande pas si l'agent peut contrôler Lilo.
+- **Votre espace et vos connexions.** La conversation est un dossier de l'espace dans lequel vous l'avez lancée, et les pages que son agent ouvre vont dans ce dossier. Elles se chargent avec le profil de cet espace : vos cookies et vos connexions sont là dès la première page. Elles restent dans ce profil : pour travailler dans un autre, lancez la conversation dans un espace de ce profil, ou déplacez-y la conversation, et les prochains onglets de l'agent s'y ouvrent. Une conversation ne démarre jamais dans un espace privé.
+- **Dans le navigateur, uniquement son dossier.** Ses outils de navigation n'accèdent qu'aux onglets du dossier de sa conversation et aux onglets `isolated` qu'il ouvre, pas à vos autres onglets. La page que vous lisez lorsque vous appuyez sur <kbd>⇧⌘A</kbd> est jointe, et `@` en ajoute d'autres. Ce que vous joignez à un message lui parvient aussi : un onglet sous la forme du texte de sa page (jusqu'à 50 000 caractères), un dossier sous la forme du texte de ses onglets, une sélection sous la forme de son texte, une capture d'écran sous la forme d'une image, un fichier texte de 100 000 octets ou moins en entier, et tout autre fichier sous la forme d'un lien.
+- **Les mêmes questions avant d'agir dans le navigateur.** Les questions ci-dessous, avant un clic ou une pression sur Entrée qui envoie, paie ou supprime et avant un `fetch` qui modifie quelque chose, s'appliquent à ses outils de navigation comme à ceux de tout agent, de même que leurs limites.
+
+Ses outils de navigation ne fonctionnent que tant que **Laisser les agents utiliser Lilo** est activé. Si vous voulez qu'un agent navigue sans vos connexions, connectez-le plutôt depuis une autre app. Vous pouvez aussi lui demander d'ouvrir des onglets `isolated`, mais il s'agit d'une demande adressée à l'agent : rien ne l'y oblige.
+
+## Ce qui attend votre réponse [#what-waits-for-your-answer]
+
+À moins que vous ne désactiviez **Demander avant d'envoyer, payer, supprimer ou publier** dans Réglages > Agents, Lilo arrête un agent avant :
+
+- **un clic ou une pression sur Entrée dont le libellé semble lourd de conséquences :** un clic (`left_click`, `double_click` ou `triple_click`) ou une pression sur Entrée sur un bouton, un lien ou un formulaire dont le libellé, ou l'adresse à laquelle le formulaire est envoyé, contient l'un des mots d'une liste fixe, comme « send », « pay », « delete » ou « publish ». Il s'agit d'une vérification au mieux, portant sur le libellé de la commande, et non d'une compréhension de ce que fait le clic, et les autres types de commande ne sont pas vérifiés du tout : consultez [Comment Lilo reconnaît une action lourde de conséquences](#how-lilo-recognizes-a-consequential-action) pour la liste et les lacunes. Elle s'applique aussi à l'intérieur des cadres. Un clic en un point situé dans un cadre d'une autre origine, que Lilo ne peut pas lire, fait toujours l'objet d'une question ; un clic sur un élément désigné par sa référence (`ref`) est vérifié d'après son libellé, à l'intérieur du cadre qui le contient, quel qu'il soit ;
+- **une requête qui transporte vos cookies :** un `fetch` autre que GET ou HEAD envoyé depuis l'un de vos propres profils.
+
+Une invite s'ouvre sous la barre d'adresse, nommant l'agent, l'action et le site, avec trois réponses : **Autoriser une fois**, **Toujours autoriser sur ce site** et **Ne pas autoriser**. L'agent attend. Si personne ne répond dans les 45 secondes, l'action est refusée et l'agent est informé qu'il a besoin de vous.
+
+Les sites que vous autorisez toujours sont répertoriés sous **Toujours autorisés** dans Réglages > Agents, sous-domaines compris, et vous pouvez les y supprimer.
+
+**Les envois de fichiers font toujours l'objet d'une question.** Avant qu'un agent ne remette l'un de vos fichiers à une page (`file_upload`, `upload_image` avec un chemin de fichier, ou une règle `network_mock` qui sert un fichier), Lilo pose la question à chaque fois, quel que soit le réglage ci-dessus, et ne propose pas de « toujours autoriser ». Cette invite ne couvre que la remise d'un fichier à une page : elle n'empêche pas un agent de lire lui-même vos fichiers, comme l'explique [Fichiers locaux](#local-files).
+
+### Comment Lilo reconnaît une action lourde de conséquences [#how-lilo-recognizes-a-consequential-action]
+
+Lilo cherche la commande que le clic ou la pression sur Entrée déclencherait : un bouton, un lien, un champ de saisie de type submit, button ou image, ou un élément ayant le rôle `button`, `link` ou `menuitem`. Il lit le libellé de cette commande, ainsi que l'adresse à laquelle le formulaire serait envoyé, et y cherche l'un de ces mots entiers : « send », « pay », « payment », « buy », « purchase », « order », « checkout », « delete », « transfer », « publish », « post », « tweet », « reply », « sign up », « register », « subscribe » ou « donate », et leurs équivalents français. La liste est fixe. Par conséquent :
+
+- **Un clic sur tout autre élément ne déclenche pas d'invite**, quel que soit son libellé : une commande personnalisée construite à partir d'un `div` ou d'un `span` sans l'un de ces rôles, une case à cocher, un bouton radio ou une liste de sélection, par exemple.
+- **Un libellé absent de la liste ne déclenche pas d'invite**, à moins que l'adresse du formulaire ne contienne un mot de la liste : « Submit », « Confirm », « Remove », « Save », « Share » ou « Unsubscribe », par exemple.
+- **Un bouton libellé dans une autre langue que l'anglais ou le français, ou ne comportant qu'une icône sans nom accessible, ne déclenche pas d'invite** non plus.
+- **Entrée dans une zone de message ne déclenche pas d'invite.** Lilo ne vérifie Entrée que sur un bouton ou un lien ayant le focus, ou dans un champ de texte à une seule ligne appartenant à un formulaire. Entrée dans un champ multiligne ou un éditeur de texte enrichi, ce qui est la façon dont la plupart des zones de discussion et de commentaire envoient, et Entrée dans un champ situé hors d'un formulaire, passent sans question.
+- **Seuls les clics et Entrée sont vérifiés.** La barre d'espace sur un bouton ayant le focus, `form_input`, l'action `insert_text` et un glisser-déposer ne le sont pas.
+- **Un bouton inoffensif dont le libellé contient l'un de ces mots déclenche quand même une invite.**
+
+## Ce que le garde-fou ne couvre pas [#what-the-gate-does-not-cover]
+
+L'invite d'approbation est un filet de sécurité pour les agents qui se comportent bien, pas un bac à sable.
+
+- **Le code que l'agent exécute lui-même n'est pas vérifié.** Un agent peut exécuter du JavaScript dans ses onglets (`javascript_tool`) et envoyer des commandes de l'inspecteur web (`devtools_command`). Ce code peut cliquer, soumettre des formulaires et envoyer des requêtes sans aucune invite. Dans l'un de vos profils, il agit avec vos connexions. Un programme `run` est différent : il s'exécute dans une page vierge qui lui est propre, sans cookies ni connexions, et chaque outil qu'il appelle pose la question comme il le ferait seul, mais il peut appeler `javascript_tool`.
+- **Les outils propres à un agent de conversation ne sont pas ceux de Lilo.** Ses outils de fichiers et de commandes ne répondent qu'à ses propres questions d'autorisation, comme l'explique [Les agents dans une conversation Lilo](#agents-in-a-lilo-conversation).
+- **Les requêtes issues du profil Agents ne sont pas soumises au garde-fou.** Un `fetch` issu du profil Agents ne transporte aucun de vos cookies, donc Lilo ne pose pas de question avant.
+- **Des cookies peuvent être écrits sans demander.** L'action `set` de l'outil `cookies` écrit un cookie pour n'importe quel domaine dans le profil où travaille l'agent, sans invite. La lecture et la suppression n'atteignent que les cookies des sites que ses onglets affichent.
+- **Les fichiers locaux peuvent être lus sans demander.** Consultez [Fichiers locaux](#local-files).
+- **L'approbation porte sur l'action, pas sur l'intention.** Lilo ne peut pas savoir si une tâche correspond à ce que vous vouliez ; il peut seulement s'arrêter aux étapes énumérées ci-dessus.
+
+La configuration la plus sûre consiste donc à garder les agents dans leur propre profil Agents et à n'en laisser entrer un dans vos profils que pour les tâches que vous lui confiez en toute confiance. N'oubliez pas qu'un agent de conversation démarre dans votre profil et s'exécute sur votre Mac avec des outils que Lilo ne vérifie pas.
+
+### Quand une action a peut-être abouti [#when-an-action-may-have-gone-through]
+
+Si un appel d'outil échoue après avoir envoyé quelque chose qui peut modifier un site (un clic, Entrée ou un `fetch` autre que GET, HEAD ou OPTIONS), Lilo signale dans l'erreur que l'action a peut-être été effectuée. L'agent doit relire le site avant de réessayer, afin de ne pas, par exemple, passer deux fois une commande.
+
+## Fichiers locaux [#local-files]
+
+Un agent peut lire vos fichiers sans demander. `navigate` charge n'importe quelle adresse, y compris les adresses `file://`, dans l'onglet de l'agent, et l'agent peut ensuite lire ce que l'onglet affiche avec `get_page_text`, `read_page` ou une capture d'écran. Cela fonctionne pour tout fichier que Lilo peut lire, et un dossier affiche la liste de son contenu. Aucune invite ne s'y oppose : l'invite d'envoi de fichier ne couvre que la remise d'un fichier à une page, pas son ouverture dans un onglet.
+
+Ce qu'une page `file://` peut charger dépend de sa nature. Une page HTML (`.html`, `.htm`, `.xhtml`) peut charger des images, des styles et des scripts depuis n'importe quel dossier de votre Mac, comme dans Chrome, de sorte qu'une documentation générée qui renvoie à `../style.css` fonctionne ; WebKit bloque tout de même ses appels `fetch` et `XMLHttpRequest` vers d'autres fichiers. Tout autre fichier, y compris un fichier SVG ou un fichier texte, ne peut lire que lui-même.
+
+## En savoir plus [#learn-more]
+
+- [Agents IA](/guides/ai-agents) : connecter un agent et utiliser les conversations.
+- [Outils MCP](/reference/mcp-tools) : tous les outils qu'un agent peut appeler, avec leurs paramètres.
+- [Confidentialité](/about/privacy) : ce que les agents et tout le reste de Lilo envoient, et où.
+- [`SECURITY.md`](https://github.com/Alexays/Lilo/blob/main/SECURITY.md) : comment signaler une vulnérabilité, y compris dans le contrôle par les agents.

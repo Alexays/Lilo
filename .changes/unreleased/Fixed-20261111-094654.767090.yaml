@@ -1,0 +1,3 @@
+kind: Fixed
+body: Cmd-clicking a link in an agent conversation opens it in a background tab, and Cmd-Shift-click opens it in front
+time: 2026-11-11T09:46:54.76709+01:00

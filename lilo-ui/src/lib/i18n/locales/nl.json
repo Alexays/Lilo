@@ -79,11 +79,6 @@
 		"passwordManagerAction": "Kies",
 		"passwordManagerChange": "Wijzig",
 		"replayOnboardingAction": "Speel opnieuw af",
-		"defaultBrowserSet": "Stel in als standaard",
-		"defaultBrowserLater": "Later",
-		"defaultBrowserBannerText": "Lilo instellen als je standaardbrowser?",
-		"defaultBrowserSetSuccess": "Lilo is nu je standaardbrowser.",
-		"defaultBrowserSetFailed": "Lilo is niet ingesteld als standaardbrowser. Je kunt dit wijzigen in Systeeminstellingen.",
 		"engineName": "Naam",
 		"engineUrlTemplate": "Zoek-URL (%s = zoekopdracht)",
 		"engineKeyword": "Trefwoord",
@@ -203,7 +198,7 @@
 		"sites": {
 			"permissionSummary": "{type}: {decision}",
 			"zoomSummary": "Zoom {zoom}",
-			"hiddenSummary": {"one": "{count} verborgen element", "other": "{count} verborgen elementen"},
+			"hiddenSummary": "{count, plural, one{# verborgen element} other{# verborgen elementen}}",
 			"dataSummary": "Opgeslagen gegevens",
 			"permissionUpdated": "{origin} · Bijgewerkt {time}",
 			"emptyTitle": "Nog geen website-instellingen",
@@ -610,28 +605,16 @@
 		},
 		"filterLists": {
 			"update": "Werk nu bij",
-			"summary": {
-				"one": "{count} lijst",
-				"other": "{count} lijsten"
-			},
+			"summary": "{count, plural, one{# lijst} other{# lijsten}}",
 			"updated": "bijgewerkt {time}"
 		},
 		"extensionUpdates": {
 			"checkNow": "Controleer nu",
 			"checking": "Zoeken naar updates...",
 			"upToDate": "Up-to-date",
-			"updated": {
-				"one": "{count} bijgewerkt",
-				"other": "{count} bijgewerkt"
-			},
-			"available": {
-				"one": "{count} update beschikbaar",
-				"other": "{count} updates beschikbaar"
-			},
-			"failed": {
-				"one": "{count} kon niet worden gecontroleerd",
-				"other": "{count} konden niet worden gecontroleerd"
-			},
+			"updated": "{count, plural, one{# bijgewerkt} other{# bijgewerkt}}",
+			"available": "{count, plural, one{# update beschikbaar} other{# updates beschikbaar}}",
+			"failed": "{count, plural, one{# kon niet worden gecontroleerd} other{# konden niet worden gecontroleerd}}",
 			"lastChecked": "Laatst gecontroleerd {time}"
 		},
 		"folderAutoLock": {
@@ -682,10 +665,7 @@
 			"clearData": "Wis gegevens...",
 			"remove": "Verwijder...",
 			"lastProfile": "Je laatste profiel blijft bestaan: elke ruimte heeft er één nodig.",
-			"extensionCount": {
-				"one": "{count} extensie",
-				"other": "{count} extensies"
-			},
+			"extensionCount": "{count, plural, one{# extensie} other{# extensies}}",
 			"newProfile": "Nieuw profiel...",
 			"newProfileDetail": "Nieuwe cookies, aanmeldingen en extensies",
 			"namePlaceholder": "Profielnaam",
@@ -760,28 +740,16 @@
 		},
 		"notes": {
 			"live": "Wijzigingen gelden meteen",
-			"spaces": {
-				"one": "{count} ruimte",
-				"other": "{count} ruimtes"
-			},
-			"profiles": {
-				"one": "{count} profiel",
-				"other": "{count} profielen"
-			},
+			"spaces": "{count, plural, one{# ruimte} other{# ruimtes}}",
+			"profiles": "{count, plural, one{# profiel} other{# profielen}}",
 			"blocking": "{count} van {total} soorten geblokkeerd",
 			"blockingOff": "Blokkeren staat uit",
 			"profile": "Profiel {name}",
-			"extensions": {
-				"one": "{count} extensie in {profile}",
-				"other": "{count} extensies in {profile}"
-			},
+			"extensions": "{count, plural, one{# extensie in {profile}} other{# extensies in {profile}}}",
 			"terminal": "Wijzigingen gelden voor elk terminaltabblad",
 			"agents": "Lilo heeft zelf geen AI",
 			"advanced": "Voor ontwikkeling en testen",
-			"searchMatches": {
-				"one": "{count} instelling past bij \"{query}\"",
-				"other": "{count} instellingen passen bij \"{query}\""
-			}
+			"searchMatches": "{count, plural, one{# instelling past bij \"{query}\"} other{# instellingen passen bij \"{query}\"}}"
 		},
 		"callDock": {
 			"sidebar": "In de zijbalk",
@@ -937,13 +905,13 @@
 		"pinnedTabs": "Vastgemaakte tabbladen",
 		"openTabs": "Geopende tabbladen",
 		"dropToPin": "Laat los om vast te maken",
-		"stackLabel": {"one": "{name}, {count} tabblad", "other": "{name}, {count} tabbladen"},
+		"stackLabel": "{count, plural, one{{name}, # tabblad} other{{name}, # tabbladen}}",
 		"closeStack": "Sluit stapel",
 		"trayAgents": "Agents",
 		"trayTerminals": "Terminals",
-		"trayNeedsInput": {"one": "{count} wacht op invoer", "other": "{count} wachten op invoer"},
-		"trayWorking": {"one": "{count} aan het werk", "other": "{count} aan het werk"},
-		"trayRunning": {"one": "{count} actief", "other": "{count} actief"},
+		"trayNeedsInput": "{count, plural, one{# wacht op invoer} other{# wachten op invoer}}",
+		"trayWorking": "{count, plural, one{# aan het werk} other{# aan het werk}}",
+		"trayRunning": "{count, plural, one{# actief} other{# actief}}",
 		"trayShow": "Toon {name}",
 		"trayHide": "Verberg {name}"
 	},
@@ -1168,6 +1136,7 @@
 		"installed": "Geïnstalleerd"
 	},
 	"commandBar": {
+		"showDetails": "Sneltoetsen tonen",
 		"hintPeek": "Voorvertoning",
 		"hintCopyLink": "Kopieer link",
 		"hintCloseTab": "Sluit tabblad",
@@ -1234,8 +1203,6 @@
 		"sectionOpenTabs": "Geopende tabbladen",
 		"sectionBookmarks": "Bladwijzers",
 		"sectionRecentHistory": "Recente geschiedenis",
-		"sectionFrequentSites": "Vaak bezochte sites",
-		"sectionRecentConversations": "Recente gesprekken",
 		"sectionHistory": "Geschiedenis",
 		"sectionSwitchToTab": "Schakel over naar tabblad",
 		"sectionGoTo": "Ga naar",
@@ -1350,7 +1317,7 @@
 		"tabStartup": "Opstarten",
 		"tabMemory": "Geheugen",
 		"tabLog": "Logboek",
-		"errorCount": {"one": "{count} fout", "other": "{count} fouten"},
+		"errorCount": "{count, plural, one{# fout} other{# fouten}}",
 		"copyReport": "Kopieer rapport",
 		"recordSession": "Sessie opnemen",
 		"stopRecording": "Opname stoppen",
@@ -1392,23 +1359,11 @@
 		"navLabel": "Weergaven van procesbeheer",
 		"searchPlaceholder": "Zoek tabbladen",
 		"memoryAriaLabel": "Geheugengebruik",
-		"tabsCount": {
-			"one": "{count} tabblad",
-			"other": "{count} tabbladen"
-		},
+		"tabsCount": "{count, plural, one{# tabblad} other{# tabbladen}}",
 		"cpu": "CPU {value}",
-		"others": {
-			"one": "{count} ander",
-			"other": "{count} andere"
-		},
-		"reclaim": {
-			"one": "{count} verborgen tabblad gebruikt {size}",
-			"other": "{count} verborgen tabbladen gebruiken {size}"
-		},
-		"reclaimNoSize": {
-			"one": "{count} verborgen tabblad is nog geladen",
-			"other": "{count} verborgen tabbladen zijn nog geladen"
-		},
+		"others": "{count, plural, one{# ander} other{# andere}}",
+		"reclaim": "{count, plural, one{# verborgen tabblad gebruikt {size}} other{# verborgen tabbladen gebruiken {size}}}",
+		"reclaimNoSize": "{count, plural, one{# verborgen tabblad is nog geladen} other{# verborgen tabbladen zijn nog geladen}}",
 		"sleep": "Zet in sluimerstand",
 		"groupTabs": "Tabbladen",
 		"groupSleeping": "In sluimerstand",
@@ -1418,10 +1373,7 @@
 		"audioPlaying": "Speelt audio af",
 		"frozen": "Bevroren",
 		"sharedEstimate": "Deelt het proces met andere tabbladen, dus dit is een schatting",
-		"sharedWith": {
-			"one": "Gedeeld met {count} ander tabblad",
-			"other": "Gedeeld met {count} andere tabbladen"
-		},
+		"sharedWith": "{count, plural, one{Gedeeld met # ander tabblad} other{Gedeeld met # andere tabbladen}}",
 		"pid": "PID {pid}",
 		"focus": "Toon",
 		"details": "Details tonen",
@@ -1450,16 +1402,10 @@
 	"urlToast": {
 		"pageActions": "Pagina-acties",
 		"reEnableBlocking": "Schakel blokkering op deze website weer in",
-		"trackersBlockedOnPage": {
-			"one": "{count} tracker geblokkeerd op deze pagina",
-			"other": "{count} trackers geblokkeerd op deze pagina"
-		},
+		"trackersBlockedOnPage": "{count, plural, one{# tracker geblokkeerd op deze pagina} other{# trackers geblokkeerd op deze pagina}}",
 		"disableBlocking": "Schakel blokkering op deze website uit",
 		"adsAllowed": "Advertenties toegestaan",
-		"trackersBlockedLabel": {
-			"one": "{count} tracker geblokkeerd",
-			"other": "{count} trackers geblokkeerd"
-		},
+		"trackersBlockedLabel": "{count, plural, one{# tracker geblokkeerd} other{# trackers geblokkeerd}}",
 		"adsBlocked": "Advertenties geblokkeerd",
 		"extensionAlreadyInstalled": "Extensie al geïnstalleerd",
 		"installChromeExtension": "Installeer deze Chrome-extensie",
@@ -1503,10 +1449,7 @@
 		"stop": "Debuggen stoppen"
 	},
 	"notices": {
-		"moreNotices": {
-			"one": "nog {count} melding",
-			"other": "nog {count} meldingen"
-		},
+		"moreNotices": "{count, plural, one{nog # melding} other{nog # meldingen}}",
 		"more": "nog {count}"
 	},
 	"crashRecovery": {
@@ -1547,7 +1490,7 @@
 	},
 	"archivedTabs": {
 		"title": "Gearchiveerd",
-		"buttonLabel": {"one": "{count} onlangs gearchiveerd tabblad", "other": "{count} onlangs gearchiveerde tabbladen"},
+		"buttonLabel": "{count, plural, one{# onlangs gearchiveerd tabblad} other{# onlangs gearchiveerde tabbladen}}",
 		"restore": "Herstellen",
 		"showAll": "Alle gearchiveerde tabbladen tonen",
 		"showAllDownloads": "Alle downloads tonen"
@@ -1558,7 +1501,7 @@
 		"undo": "Herstel",
 		"reopen": "Heropenen",
 		"archived": "‘{title}’ gearchiveerd",
-		"archivedCount": {"one": "{count} tabblad gearchiveerd", "other": "{count} tabbladen gearchiveerd"}
+		"archivedCount": "{count, plural, one{# tabblad gearchiveerd} other{# tabbladen gearchiveerd}}"
 	},
 	"updateCard": {
 		"ready": "Klaar om te installeren",
@@ -1591,6 +1534,11 @@
 		"placeholder": "Zoek of voer URL in...",
 		"addressBar": "Adresbalk: {url}",
 		"noProject": "Geen project",
+		"defaultBrowserSet": "Stel in als standaard",
+		"defaultBrowserLater": "Later",
+		"defaultBrowserBannerText": "Lilo instellen als je standaardbrowser?",
+		"defaultBrowserSetSuccess": "Lilo is nu je standaardbrowser.",
+		"defaultBrowserSetFailed": "Lilo is niet ingesteld als standaardbrowser. Je kunt dit wijzigen in Systeeminstellingen.",
 		"details": {
 			"branch": "Branch",
 			"command": "Commando",
@@ -1648,6 +1596,7 @@
 		"allow": "Sta toe",
 		"allowOnce": "Sta één keer toe",
 		"alwaysAllowOnSite": "Sta altijd toe op deze website",
+		"agentWaitsForAnswer": "De agent wacht op je antwoord.",
 		"popup": {
 			"blocked": "Pop-up geblokkeerd",
 			"tried": "probeerde een pop-upvenster te openen",
@@ -1769,26 +1718,11 @@
 			"done": "Klaar: {list}.",
 			"nothing": "Klaar: niets nieuws om te importeren.",
 			"count": {
-				"bookmarks": {
-					"one": "{count} bladwijzer",
-					"other": "{count} bladwijzers"
-				},
-				"tabs": {
-					"one": "{count} geopend tabblad",
-					"other": "{count} geopende tabbladen"
-				},
-				"history": {
-					"one": "{count} pagina geschiedenis",
-					"other": "{count} pagina's geschiedenis"
-				},
-				"cookies": {
-					"one": "{count} cookie",
-					"other": "{count} cookies"
-				},
-				"extensions": {
-					"one": "{count} extensie",
-					"other": "{count} extensies"
-				}
+				"bookmarks": "{count, plural, one{# bladwijzer} other{# bladwijzers}}",
+				"tabs": "{count, plural, one{# geopend tabblad} other{# geopende tabbladen}}",
+				"history": "{count, plural, one{# pagina geschiedenis} other{# pagina's geschiedenis}}",
+				"cookies": "{count, plural, one{# cookie} other{# cookies}}",
+				"extensions": "{count, plural, one{# extensie} other{# extensies}}"
 			},
 			"step": {
 				"bookmarks": "Bladwijzers importeren uit {from}",
@@ -1906,11 +1840,11 @@
 		"sectionSites": "Meestbezochte sites",
 		"sectionTerminals": "Vanuit terminals",
 		"searchResults": "Zoekresultaten",
-		"dayPages": {"one": "{count} pagina", "other": "{count} pagina's"},
-		"daySites": {"one": "{count} site", "other": "{count} sites"},
+		"dayPages": "{count, plural, one{# pagina} other{# pagina's}}",
+		"daySites": "{count, plural, one{# site} other{# sites}}",
 		"openInNewTab": "Openen in nieuw tabblad",
-		"selected": {"one": "{count} geselecteerd", "other": "{count} geselecteerd"},
-		"visits": {"one": "{count} bezoek", "other": "{count} bezoeken"},
+		"selected": "{count, plural, one{# geselecteerd} other{# geselecteerd}}",
+		"visits": "{count, plural, one{# bezoek} other{# bezoeken}}",
 		"openInNewTabs": "Openen in nieuwe tabbladen",
 		"delete": "Verwijderen",
 		"clearSelection": "Alles deselecteren",
@@ -2258,6 +2192,10 @@
 		"Close": "Sluit",
 		"New Terminal Tab": "Nieuw terminaltabblad",
 		"Close %d terminals?": {"one": "%d terminal sluiten?", "other": "%d terminals sluiten?"},
+		"Pin %d Tabs": {"one": "Maak %d tabblad vast", "other": "Maak %d tabbladen vast"},
+		"Bookmark %d Tabs": {"one": "Maak bladwijzer van %d tabblad", "other": "Maak bladwijzer van %d tabbladen"},
+		"Move Tabs to Space": "Verplaats tabbladen naar ruimte",
+		"Close %d Tabs": {"one": "Sluit %d tabblad", "other": "Sluit %d tabbladen"},
 		"Commands are still running in them and will be stopped.": "Er zijn nog commando's actief die worden gestopt.",
 		"The terminal could not start.": "De terminal kon niet starten.",
 		"Close the tab and try again.": "Sluit het tabblad en probeer het opnieuw.",
@@ -2476,10 +2414,7 @@
 		"title": "Nieuw in Lilo",
 		"description": "Een paar kleine verbeteringen voor dagelijks surfen.",
 		"allChanges": "Alles in deze update",
-		"changes": {
-			"one": "{count} wijziging",
-			"other": "{count} wijzigingen"
-		},
+		"changes": "{count, plural, one{# wijziging} other{# wijzigingen}}",
 		"originalNotes": "Oorspronkelijke versie-informatie.",
 		"unavailable": "Versie-informatie is niet beschikbaar in deze versie.",
 		"reopen": "Altijd te vinden via Help > Nieuw in Lilo.",
@@ -2663,10 +2598,7 @@
 			"ownCopyHint": "Werkt aan een eigen kopie van het project. Voeg die samen vanuit Wijzigingen.",
 			"starting": "Agent starten...",
 			"errorHint": "Stuur een bericht om het opnieuw te proberen.",
-			"showEarlier": {
-				"one": "Toon {count} eerder item",
-				"other": "Toon {count} eerdere items"
-			},
+			"showEarlier": "{count, plural, one{Toon # eerder item} other{Toon # eerdere items}}",
 			"queuedTag": "In wachtrij",
 			"sendNow": "Nu verzenden",
 			"thought": "Gedachte",
@@ -2676,16 +2608,10 @@
 			"restore": "Herstel",
 			"undo": "Ongedaan maken",
 			"undone": "Ongedaan gemaakt",
-			"moreLines": {
-				"one": "Nog {count} regel",
-				"other": "Nog {count} regels"
-			},
+			"moreLines": "{count, plural, one{Nog # regel} other{Nog # regels}}",
 			"plan": "Plan",
 			"planProgress": "{done}/{total}",
-			"planDone": {
-				"one": "{count} stap klaar",
-				"other": "{count} stappen klaar"
-			},
+			"planDone": "{count, plural, one{# stap klaar} other{# stappen klaar}}",
 			"planStatus": {
 				"pending": "Te doen",
 				"in_progress": "Bezig",
@@ -2713,26 +2639,11 @@
 				"failed": "Mislukt"
 			},
 			"group": {
-				"read": {
-					"one": "{count} bestand gelezen",
-					"other": "{count} bestanden gelezen"
-				},
-				"search": {
-					"one": "{count} zoekopdracht",
-					"other": "{count} zoekopdrachten"
-				},
-				"fetch": {
-					"one": "{count} pagina opgehaald",
-					"other": "{count} pagina's opgehaald"
-				},
-				"think": {
-					"one": "{count} keer nagedacht",
-					"other": "{count} keer nagedacht"
-				},
-				"action": {
-					"one": "{count} actie",
-					"other": "{count} acties"
-				}
+				"read": "{count, plural, one{# bestand gelezen} other{# bestanden gelezen}}",
+				"search": "{count, plural, one{# zoekopdracht} other{# zoekopdrachten}}",
+				"fetch": "{count, plural, one{# pagina opgehaald} other{# pagina's opgehaald}}",
+				"think": "{count, plural, one{# keer nagedacht} other{# keer nagedacht}}",
+				"action": "{count, plural, one{# actie} other{# acties}}"
 			}
 		},
 		"composer": {
@@ -2770,24 +2681,12 @@
 			"untitled": "Nieuw gesprek",
 			"working": "Bezig",
 			"failed": "Gestopt met een fout",
-			"linesAdded": {
-				"one": "{count} regel toegevoegd",
-				"other": "{count} regels toegevoegd"
-			},
-			"linesRemoved": {
-				"one": "{count} regel verwijderd",
-				"other": "{count} regels verwijderd"
-			},
-			"pages": {
-				"one": "{count} pagina",
-				"other": "{count} pagina's"
-			},
+			"linesAdded": "{count, plural, one{# regel toegevoegd} other{# regels toegevoegd}}",
+			"linesRemoved": "{count, plural, one{# regel verwijderd} other{# regels verwijderd}}",
+			"pages": "{count, plural, one{# pagina} other{# pagina's}}",
 			"showPages": "Toon pagina's",
 			"hidePages": "Verberg pagina's",
-			"morePermissions": {
-				"one": "nog {count} verzoek wacht",
-				"other": "nog {count} verzoeken wachten"
-			}
+			"morePermissions": "{count, plural, one{nog # verzoek wacht} other{nog # verzoeken wachten}}"
 		},
 		"question": {
 			"allow": "Sta toe",
@@ -2801,10 +2700,7 @@
 		},
 		"badge": {
 			"title": "Agents",
-			"waiting": {
-				"one": "Agents, {count} wacht op je",
-				"other": "Agents, {count} wachten op je"
-			},
+			"waiting": "{count, plural, one{Agents, # wacht op je} other{Agents, # wachten op je}}",
 			"new": "Nieuw",
 			"needsYou": "Wacht op je",
 			"running": "Actief",
@@ -2825,10 +2721,7 @@
 			"signInOpenTerminal": "Open in terminal"
 		},
 		"work": {
-			"images": {
-				"one": "{count} afbeelding",
-				"other": "{count} afbeeldingen"
-			},
+			"images": "{count, plural, one{# afbeelding} other{# afbeeldingen}}",
 			"verb": {
 				"read": "Gelezen",
 				"edit": "Bewerkt",
@@ -2846,46 +2739,16 @@
 				"fetch": "Haalt op"
 			},
 			"summary": {
-				"read": {
-					"one": "{count} bestand gelezen",
-					"other": "{count} bestanden gelezen"
-				},
-				"edit": {
-					"one": "{count} bestand bewerkt",
-					"other": "{count} bestanden bewerkt"
-				},
-				"execute": {
-					"one": "{count} opdracht uitgevoerd",
-					"other": "{count} opdrachten uitgevoerd"
-				},
-				"search": {
-					"one": "{count} keer gezocht",
-					"other": "{count} keer gezocht"
-				},
-				"fetch": {
-					"one": "{count} pagina opgehaald",
-					"other": "{count} pagina's opgehaald"
-				},
-				"think": {
-					"one": "{count} keer nagedacht",
-					"other": "{count} keer nagedacht"
-				},
-				"browser": {
-					"one": "{count} keer de browser gebruikt",
-					"other": "{count} keer de browser gebruikt"
-				},
-				"browserOn": {
-					"one": "{count} keer de browser gebruikt op {site}",
-					"other": "{count} keer de browser gebruikt op {site}"
-				},
-				"tool": {
-					"one": "{count} tool gebruikt",
-					"other": "{count} tools gebruikt"
-				},
-				"agent": {
-					"one": "{count} agent gestart",
-					"other": "{count} agents gestart"
-				}
+				"read": "{count, plural, one{# bestand gelezen} other{# bestanden gelezen}}",
+				"edit": "{count, plural, one{# bestand bewerkt} other{# bestanden bewerkt}}",
+				"execute": "{count, plural, one{# opdracht uitgevoerd} other{# opdrachten uitgevoerd}}",
+				"search": "{count, plural, one{# keer gezocht} other{# keer gezocht}}",
+				"fetch": "{count, plural, one{# pagina opgehaald} other{# pagina's opgehaald}}",
+				"think": "{count, plural, one{# keer nagedacht} other{# keer nagedacht}}",
+				"browser": "{count, plural, one{# keer de browser gebruikt} other{# keer de browser gebruikt}}",
+				"browserOn": "{count, plural, one{# keer de browser gebruikt op {site}} other{# keer de browser gebruikt op {site}}}",
+				"tool": "{count, plural, one{# tool gebruikt} other{# tools gebruikt}}",
+				"agent": "{count, plural, one{# agent gestart} other{# agents gestart}}"
 			},
 			"browser": {
 				"closeTab": "Tabblad gesloten",
@@ -2936,10 +2799,7 @@
 				"request": "Verstuurt een verzoek naar {url}"
 			},
 			"exit": "Exitcode {code}",
-			"showAll": {
-				"one": "Toon {count} regel",
-				"other": "Toon alle {count} regels"
-			},
+			"showAll": "{count, plural, one{Toon # regel} other{Toon alle # regels}}",
 			"showLess": "Toon de laatste regels"
 		},
 		"turn": {
@@ -2947,10 +2807,7 @@
 			"stopped": "Gestopt",
 			"refusalTitle": "Het model weigerde door te gaan",
 			"refusalHint": "Zijn beveiligingen stopten deze beurt, soms ook bij legitiem werk. Herformuleer het verzoek of kies hieronder een ander model.",
-			"files": {
-				"one": "{count} bestand gewijzigd",
-				"other": "{count} bestanden gewijzigd"
-			},
+			"files": "{count, plural, one{# bestand gewijzigd} other{# bestanden gewijzigd}}",
 			"review": "Bekijken",
 			"copy": "Antwoord kopiëren",
 			"copied": "Gekopieerd"

@@ -29,7 +29,7 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 - Tab sharing in screen-share calls (`getDisplayMedia`): a picker with previews, suggestions and folders, and switching the shared tab without a cut from the call card
 - Multiple windows over shared Spaces, with per-window selection and windows restored on relaunch
 - Accessibility: VoiceOver across the sidebar tree, panels, Changes view and terminal, full keyboard reach, Reduce motion and Increase contrast
-- Localization in 17 languages: English, French, Spanish, German, Italian, Dutch, Polish, Turkish, Ukrainian, Russian, Brazilian Portuguese, Japanese, Korean, Simplified and Traditional Chinese
+- Localization in 15 languages: English, French, Spanish, German, Italian, Dutch, Polish, Turkish, Ukrainian, Russian, Brazilian Portuguese, Japanese, Korean, Simplified and Traditional Chinese
 - Signed, notarized DMG built by CI from a tag, a Homebrew cask, and signed updates through Sparkle, with the release highlights shown after an update
 - AppleScript dictionary, Shortcuts actions and a Focus filter, bookmarks in Spotlight, Screen Time
 - Opt-in AI agent control over local MCP, with Claude in Chrome's tool set (no AI built in): an Agents Space, agent icons in the bottom bar, agent pages in Lilo violet with a mascot cursor, and an approval gate for consequential actions

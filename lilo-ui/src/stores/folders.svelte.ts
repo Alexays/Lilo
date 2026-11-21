@@ -2,6 +2,7 @@ import type {
 	BridgeTabFolderSnapshot,
 	BridgeTabSnapshot,
 } from "../lib/bridge/protocol";
+import { isAgentsSpace, isIsolatedAgentSpace } from "./agents.svelte";
 import { getActiveSpaceId } from "./spaces.svelte";
 import {
 	getPendingTabDrop,
@@ -59,6 +60,12 @@ export function getLockedFolderRoots(spaceId?: string): Map<string, string> {
 	return roots;
 }
 
+/** A tab an agent opened and has not sent anywhere yet: it shows once the agent navigates it. */
+function isPendingAgentTab(tab: TabState, spaceId: string, activeTabId: string): boolean {
+	return !tab.url && !tab.isLoading && (tab.kind ?? "web") === "web" && tab.id !== activeTabId
+		&& (isAgentsSpace(spaceId) || isIsolatedAgentSpace(spaceId));
+}
+
 /** `getVisibleFolderChildren(...).length` without building the arrays: called per folder on every tab patch. */
 export function countVisibleFolderChildren(
 	folderId: string,
@@ -66,7 +73,8 @@ export function countVisibleFolderChildren(
 	pinned: boolean | undefined,
 	tabsById: Map<string, TabState>,
 ): number {
-	const { view } = getSpaceSidebar(resolveSpaceId(spaceId));
+	const resolvedSpaceId = resolveSpaceId(spaceId);
+	const { view, activeTabId } = getSpaceSidebar(resolvedSpaceId);
 	let count = 0;
 	for (const item of view.treeIndex.childrenByFolderId.get(folderId) ?? []) {
 		if (pinned != null && item.section !== (pinned ? "pinned" : "unpinned")) continue;
@@ -75,7 +83,7 @@ export function countVisibleFolderChildren(
 			continue;
 		}
 		const tab = tabsById.get(item.itemId);
-		if (tab && !tab.isBookmarked && (!tab.isClosed || (pinned === true && tab.isPinned))) count++;
+		if (tab && !tab.isBookmarked && (!tab.isClosed || (pinned === true && tab.isPinned)) && !isPendingAgentTab(tab, resolvedSpaceId, activeTabId)) count++;
 	}
 	return count;
 }
@@ -96,7 +104,7 @@ export function getVisibleFolderChildren(
 	tabsById?: Map<string, TabState>,
 ): RootItem[] {
 	const resolvedSpaceId = resolveSpaceId(spaceId);
-	const { view } = getSpaceSidebar(resolvedSpaceId);
+	const { view, activeTabId } = getSpaceSidebar(resolvedSpaceId);
 	const excludedTabId = tabsById ? null : dragExcludedTabId(resolvedSpaceId);
 	const tabsByIdResolved = tabsById ?? view.tabsById;
 	const children: RootItem[] = [];
@@ -108,7 +116,7 @@ export function getVisibleFolderChildren(
 		}
 		if (item.itemId === excludedTabId) continue;
 		const tab = tabsByIdResolved.get(item.itemId);
-		if (tab && !tab.isBookmarked && (!tab.isClosed || (pinned === true && tab.isPinned))) {
+		if (tab && !tab.isBookmarked && (!tab.isClosed || (pinned === true && tab.isPinned)) && !isPendingAgentTab(tab, resolvedSpaceId, activeTabId)) {
 			children.push({ kind: "tab", id: tab.id });
 		}
 	}

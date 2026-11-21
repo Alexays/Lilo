@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import "../../lib/i18n/settingsCatalog";
   import SectionNavPanel from "../ui/SectionNavPanel.svelte";
   import UiSearchField from "../ui/UiSearchField.svelte";
   import { SETTINGS_NAV_GROUPS } from "./settingsPanelModel";
