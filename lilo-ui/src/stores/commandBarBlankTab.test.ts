@@ -56,7 +56,7 @@ async function withStore() {
 	) => void;
 	const closeCommandBar = commandBarModule.closeCommandBar as () => void;
 
-	return { sent, closes, receive, seed, openCommandBar, closeCommandBar, commandBarModule, loadStore };
+	return { sent, closes, receive, seed, openCommandBar, closeCommandBar, commandBarModule };
 }
 
 test("dismissing with only a blank tab keeps it (closing it would close the window)", async () => {
@@ -146,40 +146,6 @@ test("a typed address reaches native marked as typed, a history result does not"
 		{ url: "https://youtube.com", typed: true },
 		{ url: "https://youtube.com/", typed: false },
 	]);
-});
-
-
-test("compact new-tab results stay the same after clearing scopes, queries, and dismissing", async () => {
- const ctx = await withStore();
- const settings = await ctx.loadStore("/src/stores/settings.svelte.ts");
- settings.initSettingsStore();
- ctx.receive({ event: "settingsLoaded", settings: { commandBarLayout: "compact" } });
- ctx.seed([tab("blank-tab", spaceId, { url: "" }), tab("other-tab", spaceId, { title: "Example" })]);
- const bar = ctx.commandBarModule;
- bar.applyCommandBarInitialState();
- flushSync();
- assert.equal(bar.isCommandBarDocked(), true);
- const initial = bar.getResults().map((result: { id: string }) => result.id);
- assert.ok(initial.length > 0, "the idle landing still offers useful tabs and actions");
- assert.equal(bar.getSections().some((section: { tiles?: boolean }) => section.tiles), false);
- ctx.openCommandBar();
- flushSync();
- assert.equal(bar.isCommandBarDocked(), false);
- assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
- for (const scope of ["bookmark", "tab", "action", "history", "terminal", "archive"]) {
-  bar.setCommandBarScope(scope);
-  bar.setCommandBarScope("all");
-  flushSync();
-  assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial, scope);
- }
- bar.setQuery("example query");
- bar.setQuery("");
- flushSync();
- assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
- ctx.closeCommandBar();
- flushSync();
- assert.equal(bar.isCommandBarDocked(), true);
- assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
 });
 
 

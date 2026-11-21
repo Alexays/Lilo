@@ -59,39 +59,36 @@ test("Escape closing the command bar hands the keyboard back to the page", async
 	await expect.poll(async () => (await sentCommands(page)).some((c) => c.action === "focusPage")).toBe(true);
 });
 
-for (const layout of ["default", "compact"] as const) {
-	test(`${layout} IME key events do not run command bar shortcuts or prevent the browser default`, async ({ page }) => {
-		await bootChrome(page, { ...initialWorld(), settings: { commandBarLayout: layout } });
-		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
-		const input = page.locator(".command-bar-input");
-		await input.fill("@");
-		const selected = page.locator(".command-bar-result.selected");
-		const selectedText = await selected.textContent();
+test("IME key events do not run command bar shortcuts or prevent the browser default", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	const input = page.locator(".command-bar-input");
+	await input.fill("@");
+	const selected = page.locator(".command-bar-result.selected");
+	const selectedText = await selected.textContent();
 
-		for (const composing of [true, false]) {
-			for (const key of ["Enter", "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Tab", "Escape"]) {
-				const notPrevented = await input.evaluate((el, init) => el.dispatchEvent(new KeyboardEvent("keydown", {
-					key: init.key,
-					keyCode: init.composing ? 0 : 229,
-					isComposing: init.composing,
-					bubbles: true,
-					cancelable: true,
-				})), { key, composing });
-				expect(notPrevented, `${key} with isComposing=${composing}`).toBe(true);
-			}
+	for (const composing of [true, false]) {
+		for (const key of ["Enter", "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Tab", "Escape"]) {
+			const notPrevented = await input.evaluate((el, init) => el.dispatchEvent(new KeyboardEvent("keydown", {
+				key: init.key,
+				keyCode: init.composing ? 0 : 229,
+				isComposing: init.composing,
+				bubbles: true,
+				cancelable: true,
+			})), { key, composing });
+			expect(notPrevented, `${key} with isComposing=${composing}`).toBe(true);
 		}
+	}
 
-		await expect(page.locator(".command-bar")).toBeVisible();
-		await expect(selected).toHaveText(selectedText!);
-		await expect(input).toHaveValue("");
-		if (layout === "compact") await expect(page.locator(".scope-picker")).toHaveAccessibleName("Tabs");
-		else await expect(page.locator(".scope-token")).toHaveText("Tabs");
-		expect((await sentCommands(page)).some((c) => c.action === "switchTab" || c.action === "focusPage")).toBe(false);
+	await expect(page.locator(".command-bar")).toBeVisible();
+	await expect(selected).toHaveText(selectedText!);
+	await expect(input).toHaveValue("");
+	await expect(page.locator(".scope-token")).toHaveText("Tabs");
+	expect((await sentCommands(page)).some((c) => c.action === "switchTab" || c.action === "focusPage")).toBe(false);
 
-		await input.press("ArrowDown");
-		await expect(selected).not.toHaveText(selectedText!);
-	});
-}
+	await input.press("ArrowDown");
+	await expect(selected).not.toHaveText(selectedText!);
+});
 
 for (const prefix of [":", "<", ">"]) {
 	test(`Escape in the ${prefix} scope leaves the scope before closing`, async ({ page }) => {
@@ -135,11 +132,10 @@ test("row shortcuts and footer keys spell keys with the same symbols", async ({ 
 	await expect(page.locator(".command-bar-footer kbd")).toHaveText(["↩", "⌘↩", "⌥↩", "⇧↩", "⌘C", "⌘⌫", "⌘M", "esc"]);
 });
 
-test("the default layout keeps its scope chips row and its footer hints", async ({ page }) => {
+test("the command bar shows its scope chips row and its footer hints", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 
-	await expect(page.locator(".command-bar")).not.toHaveClass(/compact/);
 	const scopes = page.locator(".command-bar-scopes");
 	await expect(scopes).toBeVisible();
 	await expect(scopes.locator(".scope-hint .scope-hint-label")).toHaveText([
@@ -448,130 +444,44 @@ test("bookmarks sit in one strip of chips that the side arrows walk and the up a
 	await expect(chips.nth(0)).toHaveClass(/selected/);
 });
 
-for (const docked of [false, true]) {
- test(`compact command bar preserves controls and execution (docked=${docked})`, async ({ page }) => {
-  const world = initialWorld();
-  if (docked) {
-   world.tabsBySpace[SPACE_1].push(tab("tab-empty-compact", SPACE_1, { url: "", title: "" }));
-   world.treeItemsBySpace[SPACE_1].push(treeItem("tab-empty-compact", SPACE_1, 5));
-   world.activeTabBySpace[SPACE_1] = "tab-empty-compact";
-  }
-  await bootChrome(page, world);
-  await page.evaluate((isDocked) => {
-   window.__lilo!.receive({ event: "settingsLoaded", settings: { commandBarLayout: "compact" } });
-   if (!isDocked) window.__lilo!.receive({ event: "openCommandBar" });
-  }, docked);
-  const bar = page.locator(".command-bar");
-  await expect(bar).toHaveClass(/compact/);
-  await expect(page.locator(".command-bar-backdrop")).toHaveClass(docked ? /docked/ : /command-bar-backdrop/);
-  await expect(page.locator(".command-bar-scopes")).toBeHidden();
-  await expect(page.locator(".command-bar-footer")).toBeHidden();
-  await expect.poll(async () => (await bar.boundingBox())?.height).toBe(320);
-  const bounds = await bar.boundingBox();
-  const input = page.locator(".command-bar-input");
-  await input.press("Tab");
-  // The info button is also reachable directly by its accessible name.
-  const info = page.getByRole("button", { name: "Show keyboard hints" });
-  await expect(info).toBeFocused();
-  await info.press("Enter");
-  await expect(info).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator(".command-bar-scopes")).toBeHidden();
-  await expect(page.locator(".command-bar-help")).toBeVisible();
-  const composingEscapeAllowed = await info.evaluate((el) => el.dispatchEvent(new KeyboardEvent("keydown", {
-   key: "Escape", isComposing: true, bubbles: true, cancelable: true,
-  })));
-  expect(composingEscapeAllowed).toBe(true);
-  await expect(info).toHaveAttribute("aria-expanded", "true");
-  expect(await bar.boundingBox()).toEqual(bounds);
-  await expect(page.locator(".command-bar-strip")).toHaveCount(0);
-  await expect(info).toHaveAttribute("aria-expanded", "false", { timeout: 5000 });
-  await expect(page.locator(".command-bar-scopes")).toBeHidden();
-  await info.press("Enter");
-  await info.press("Escape");
-  await expect(info).toBeFocused();
-  await expect(page.locator(".command-bar-scopes")).toBeHidden();
-  const scopePicker = page.locator(".scope-picker");
-  await scopePicker.click();
-  const menu = page.getByRole("menu", { name: "All", exact: true });
-  await expect(menu).toBeVisible();
-  await page.getByRole("menuitemradio", { name: "Tabs", exact: true }).click();
-  await expect(scopePicker).toHaveAccessibleName("Tabs");
-  await expect(input).toBeFocused();
-  expect(await bar.boundingBox()).toEqual(bounds);
-  await expect(page.locator(".scope-token")).toHaveCount(0);
-  await input.press("Escape");
-  await expect(scopePicker).toHaveAccessibleName("All");
-  await expect(input).toBeFocused();
-  await scopePicker.click();
-  await page.getByRole("menuitemradio", { name: "Tabs", exact: true }).click();
-  await input.fill("beta");
-  expect(await bar.boundingBox()).toEqual(bounds);
-  await expect(page.locator(".command-bar-result.selected")).toContainText("Beta Mail");
-  await input.press("Enter");
-  await expect.poll(async () => (await sentCommands(page)).some((c) => c.action === "switchTab" && c.payload.id === "tab-beta")).toBe(true);
- });
-}
-
-
-test("compact scope menu mouse selections keep the floating command bar open", async ({ page }) => {
+test("new-tab overlay defers creation until submission", async ({ page }) => {
  await bootChrome(page, initialWorld());
- await page.evaluate(() => {
-  window.__lilo!.receive({ event: "settingsLoaded", settings: { commandBarLayout: "compact" } });
-  window.__lilo!.receive({ event: "openCommandBar" });
- });
+ await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar", createOnSubmit: true }));
  const bar = page.locator(".command-bar");
- const picker = page.locator(".scope-picker");
- for (const name of ["Bookmarks", "Tabs", "Actions", "History", "Terminal", "Archived", "All"]) {
-  await picker.click();
-  await page.getByRole("menuitemradio", { name, exact: true }).click();
-  await expect(bar).toBeVisible();
-  await expect(picker).toHaveAccessibleName(name);
-  await expect(page.locator(".command-bar-input")).toBeFocused();
- }
- await page.getByRole("button", { name: "Show keyboard hints" }).click();
- await page.locator(".command-bar-help").click({ position: { x: 8, y: 8 } });
+ const input = page.locator(".command-bar-input");
  await expect(bar).toBeVisible();
- const backdrop = await page.locator(".command-bar-backdrop").boundingBox();
- await page.mouse.click(backdrop!.x + 4, backdrop!.y + 4);
+ const mutations = async () => (await sentCommands(page)).filter((command) => ["createTab", "navigate", "closeTab"].includes(command.action));
+ expect(await mutations()).toEqual([]);
+ await input.press("Escape");
  await expect(bar).toBeHidden();
+ expect(await mutations()).toEqual([]);
+ await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar", createOnSubmit: true }));
+ await input.fill("https://destination.example/new");
+ await input.press("Enter");
+ await expect(bar).toBeHidden();
+ await expect.poll(async () => (await mutations()).map((command) => command.action)).toEqual(["createTab"]);
+ expect((await mutations())[0].payload.url).toBe("https://destination.example/new");
 });
 
 
-for (const layout of ["default", "compact"]) {
- test(`new-tab overlay defers creation until submission (${layout})`, async ({ page }) => {
+test("a terminal command run from the new-tab overlay opens no split", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar", createOnSubmit: true }));
+	const input = page.locator(".command-bar-input");
+	await input.fill(">ls");
+	await expect(page.locator(".command-bar-result.selected")).toBeVisible();
+	await input.press("Enter");
+	await expect
+		.poll(async () => (await sentCommands(page)).filter((c) => c.action === "runInTerminal").map((c) => c.payload.split))
+		.toEqual([false]);
+});
+
+test("destination labels and dismissal focus reflect the opening intent", async ({ page }) => {
   await bootChrome(page, initialWorld());
-  await page.evaluate((commandBarLayout) => {
-   window.__lilo!.receive({ event: "settingsLoaded", settings: { commandBarLayout } });
-   window.__lilo!.receive({ event: "openCommandBar", createOnSubmit: true });
-  }, layout);
-  const bar = page.locator(".command-bar");
-  const input = page.locator(".command-bar-input");
-  await expect(bar).toBeVisible();
-  const mutations = async () => (await sentCommands(page)).filter((command) => ["createTab", "navigate", "closeTab"].includes(command.action));
-  expect(await mutations()).toEqual([]);
-  await input.press("Escape");
-  await expect(bar).toBeHidden();
-  expect(await mutations()).toEqual([]);
   await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar", createOnSubmit: true }));
-  await input.fill("https://destination.example/new");
-  await input.press("Enter");
-  await expect(bar).toBeHidden();
-  await expect.poll(async () => (await mutations()).map((command) => command.action)).toEqual(["createTab"]);
-  expect((await mutations())[0].payload.url).toBe("https://destination.example/new");
- });
-}
-
-
-for (const layout of ["default", "compact"]) {
- test(`destination labels and dismissal focus reflect the opening intent (${layout})`, async ({ page }) => {
-  await bootChrome(page, initialWorld());
-  await page.evaluate((commandBarLayout) => {
-   window.__lilo!.receive({ event: "settingsLoaded", settings: { commandBarLayout } });
-   window.__lilo!.receive({ event: "openCommandBar", createOnSubmit: true });
-  }, layout);
   const input = page.locator(".command-bar-input");
   const bar = page.locator(".command-bar");
-  const hint = page.locator(layout === "compact" ? ".command-bar-result.selected .result-action-label" : ".key-hint-default > span");
+  const hint = page.locator(".key-hint-default > span");
   const focusRequests = async () => (await sentCommands(page)).filter((command) => command.action === "focusPage").length;
   await input.fill("https://destination.example/new");
   await expect(hint).toHaveText("Open in New Tab");
@@ -598,13 +508,10 @@ for (const layout of ["default", "compact"]) {
   await expect(target).toBeFocused();
   expect(await focusRequests()).toBe(2);
  });
-}
 
 
-for (const layout of ["default", "compact"]) {
- test(`empty web-related scopes offer an explicit web search (${layout})`, async ({ page }) => {
+test("empty web-related scopes offer an explicit web search", async ({ page }) => {
   await bootChrome(page, initialWorld());
-  await page.evaluate((commandBarLayout) => window.__lilo!.receive({ event: "settingsLoaded", settings: { commandBarLayout } }), layout);
   const input = page.locator(".command-bar-input");
   for (const prefix of ["@", "#", "/"]) {
    await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar", createOnSubmit: true }));
@@ -624,17 +531,16 @@ for (const layout of ["default", "compact"]) {
  });
 
  for (const constrainedContainer of [false, true]) {
-  test(`long destinations and larger text fit constrained layouts (${layout}, container=${constrainedContainer})`, async ({ page }) => {
+  test(`long destinations and larger text fit constrained layouts (container=${constrainedContainer})`, async ({ page }) => {
    await page.setViewportSize({ width: constrainedContainer ? 820 : 390, height: 480 });
    await page.emulateMedia({ reducedMotion: "reduce" });
    const world = initialWorld();
    world.sidebarVisible = false;
    await bootChrome(page, world);
-   await page.evaluate(({ commandBarLayout, constrain }) => {
+   await page.evaluate((constrain) => {
     if (constrain) document.documentElement.style.setProperty("--chrome-content-left", "450px");
-    window.__lilo!.receive({ event: "settingsLoaded", settings: { commandBarLayout } });
     window.__lilo!.receive({ event: "openCommandBar", createOnSubmit: true });
-   }, { commandBarLayout: layout, constrain: constrainedContainer });
+   }, constrainedContainer);
    await page.addStyleTag({ content: ".command-bar { --font-size-md: 20px; --font-size-sm: 18px; }" });
    const input = page.locator(".command-bar-input");
    await input.fill("https://destination.example/" + "long-path/".repeat(24));
@@ -656,4 +562,3 @@ for (const layout of ["default", "compact"]) {
    await expect(bar).toHaveCSS("backdrop-filter", "none");
   });
  }
-}
