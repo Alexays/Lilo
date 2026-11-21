@@ -145,6 +145,10 @@ make validate
 tests; SwiftLint; the Xcode build and the Swift tests; commit hook and perf summary tests; website
 checks and tests; documentation site checks and tests; release-note and version sync checks.
 Run it once your change is done, and confirm it passes before you open a pull request.
+It prints one line per check, `ok  ui-lint 12.3s` or `FAIL ui-lint 12.3s`, then the full log of the failed
+checks only and a count of the bytes printed; a green run is a dozen short lines. `make validate JSON=1` prints
+one JSON object per check instead (`check`, `ok`, `dur_s`, `bytes`, and the last 20 log lines as `log_tail` when
+it failed), for scripts and agents.
 Editing an English page of the documentation site fails `make docs-check` until its French
 translation is refreshed with `make docs-translate`, which needs Claude Code; without it, ask a
 maintainer to run it on your branch. A change to `COMPATIBILITY.md` or to an agent tool definition
