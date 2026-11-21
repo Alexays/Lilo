@@ -460,7 +460,7 @@
   }
   // The label of the control a click on `ref` or at (x, y), or Enter in the focused field, would trigger, when it
   // submits a form that signs in or pays or sends data to another origin, or says it sends, pays, buys, orders,
-  // deletes, transfers, publishes or signs up; null otherwise. The form decides first: a label can be an icon, or
+  // deletes, transfers, publishes or signs up, with whether the form said so (`structural`); null otherwise. The form decides first: a label can be an icon, or
   // in any language.
   const consequential = ({ ref: id, x, y, enter }) => {
     const controls = 'button, a[href], input[type=submit], input[type=button], input[type=image], [role=button], [role=link], [role=menuitem]'
@@ -482,7 +482,7 @@
         if (!start.contentDocument) {
           let host = ''
           try { host = new URL(start.src, location.href).host } catch {}
-          return clip(start.title) || host || start.tagName.toLowerCase()
+          return { label: clip(start.title) || host || start.tagName.toLowerCase(), structural: true }
         }
         start = start.contentDocument.elementFromPoint(px, py)
       }
@@ -496,9 +496,9 @@
     const form = submitsForm(target)
     const action = (target.form ?? target).getAttribute?.('action') ?? ''
     const words = `${label} ${action}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-    const asks = form && ([...form.elements].some(credential) || leavesOrigin(target, form)) || commitWords.test(words) || commitGlyphs.test(words)
-      || label.trim().toLowerCase() === 'order'
-    return asks ? label || clip(action) || location.host : null
+    // Structural hits are asked of every agent whatever the user let it do unasked; a word is only the fallback.
+    const structural = !!form && ([...form.elements].some(credential) || leavesOrigin(target, form))
+    return structural || commitWords.test(words) || commitGlyphs.test(words) || label.trim().toLowerCase() === 'order' ? { label: label || clip(action) || location.host, structural } : null
   }
 
   // Screenshots. A requestAnimationFrame never fires in a page that is not painted: the timeout keeps it from hanging.
