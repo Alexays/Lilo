@@ -127,6 +127,8 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 
 ## Web APIs
 
+- **Private Spaces:** each private tab has its own cookies, storage and service workers, as in Safari, where Chrome's incognito windows share theirs. A tab the user opens from a private tab (Cmd-click, "Open in new tab") starts signed out; a page popup keeps its opener's session.
+
 `navigator.serial`, `window.EyeDropper` and `window.documentPictureInPicture` exist only in secure
 contexts, as in Chrome, but Safari has none of them: a page testing for them can tell a Lilo tab from
 Safari, whose user agent Lilo shows.
