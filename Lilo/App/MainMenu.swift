@@ -175,10 +175,11 @@ extension AppDelegate {
         tabMenu.add("Separate Split View".localized, #selector(MainWindowController.closeSplitView(_:)), icon: .separateSplit, shortcut: "split.close")
         tabMenu.add("Close Split Pane".localized, #selector(MainWindowController.closeActiveSplitPane(_:)), icon: .close, shortcut: "split.closePane")
         tabMenu.add("Maximize Split Pane".localized, #selector(MainWindowController.maximizeActiveSplitPane(_:)), icon: .fullScreen, shortcut: "split.maximizePane")
-        tabMenu.add("Move Pane Left".localized, #selector(MainWindowController.moveSplitPane(_:)), icon: .arrangeSideBySide, shortcut: "split.movePaneLeft").tag = SplitPaneDirection.left.rawValue
-        tabMenu.add("Move Pane Right".localized, #selector(MainWindowController.moveSplitPane(_:)), icon: .arrangeSideBySide, shortcut: "split.movePaneRight").tag = SplitPaneDirection.right.rawValue
-        tabMenu.add("Move Pane Up".localized, #selector(MainWindowController.moveSplitPane(_:)), icon: .arrangeTopAndBottom, shortcut: "split.movePaneUp").tag = SplitPaneDirection.up.rawValue
-        tabMenu.add("Move Pane Down".localized, #selector(MainWindowController.moveSplitPane(_:)), icon: .arrangeTopAndBottom, shortcut: "split.movePaneDown").tag = SplitPaneDirection.down.rawValue
+        let movePaneMenu = submenu("Move Pane".localized, in: tabMenu, icon: .arrangeSideBySide)
+        movePaneMenu.add("Left".localized, #selector(MainWindowController.moveSplitPane(_:)), shortcut: "split.movePaneLeft").tag = SplitPaneDirection.left.rawValue
+        movePaneMenu.add("Right".localized, #selector(MainWindowController.moveSplitPane(_:)), shortcut: "split.movePaneRight").tag = SplitPaneDirection.right.rawValue
+        movePaneMenu.add("Top".localized, #selector(MainWindowController.moveSplitPane(_:)), shortcut: "split.movePaneUp").tag = SplitPaneDirection.up.rawValue
+        movePaneMenu.add("Bottom".localized, #selector(MainWindowController.moveSplitPane(_:)), shortcut: "split.movePaneDown").tag = SplitPaneDirection.down.rawValue
         tabMenu.addItem(.separator())
         tabMenu.add("Mute Tab".localized, #selector(MainWindowController.toggleMuteCurrentTab(_:)), icon: .mute, shortcut: "tab.mute")
         tabMenu.add("Keep Awake Until Done".localized, #selector(MainWindowController.keepCurrentTabAwakeUntilDone(_:)), icon: .keepAwake)
