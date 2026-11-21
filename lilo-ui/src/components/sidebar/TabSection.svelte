@@ -25,7 +25,6 @@
   import { MAX_SPLIT_PANES, type BridgeSplitLayout } from "../../lib/bridge/protocol";
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
-  import Icon from "../ui/Icon.svelte";
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { hostOf } from "../../lib/url";
@@ -1767,7 +1766,9 @@
               aria-label={t("tabSection.searchTabs")}
               onclick={() => openCommandBar("@")}
             >
-              <Icon name="search" size={12} />
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M7 2.5a4.5 4.5 0 1 0 0 9a4.5 4.5 0 1 0 0-9zM10.25 10.25l3.25 3.25" />
+              </svg>
             </button>
             <button
               class="divider-action list-options"
