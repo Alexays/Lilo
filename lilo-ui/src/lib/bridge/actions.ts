@@ -76,6 +76,14 @@ export const chromeActions = {
 	): void => emit("traceSpaceDnd", payload),
 };
 
+/** The Little window's own commands; its command bar's navigations go through `tabActions`. */
+export const littleActions = {
+	ready: emitEmpty("littleReady"),
+	openInSpace: (spaceId?: string): void => emit("littleOpenInSpace", spaceId ? { spaceId } : {}),
+	copyLink: emitEmpty("littleCopyLink"),
+	close: emitEmpty("littleClose"),
+};
+
 export const tabActions = {
 	create: (url?: string, typed?: boolean, background?: boolean): void =>
 		url ? emit("createTab", background ? { url, typed, background } : { url, typed }) : emit("createTab"),

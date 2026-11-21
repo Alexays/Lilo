@@ -21,6 +21,7 @@ import {
 	computeResults as _computeResults,
 	getLocalHostCompletion,
 	normalizeSearchSuggestions,
+	setActionResultsEnabled,
 	HISTORY_SEARCH_DEBOUNCE_MS,
 	forgetClosedTabActivations,
 	noteActiveTab,
@@ -154,6 +155,22 @@ function closeBlankTabKeepingWindow(tabId: string): boolean {
 /** A window that starts on a blank tab shows the bar in place. */
 export function applyCommandBarInitialState(): void {
 	dockOnBlankTab();
+}
+
+/** The bar in place, as on a blank tab, for a window that is nothing but the bar: the Little window's start view. */
+export function dockCommandBar(): void {
+	if (_open) return;
+	openCommandBar();
+	_docked = true;
+	computeResults();
+}
+
+let _allowedKeys: ResultKey[] | undefined;
+
+/** Narrows the bar to a window without tabs, Spaces or actions: only `keys` stay on a row, and no action is offered. */
+export function restrictCommandBar(keys: ResultKey[]): void {
+	_allowedKeys = keys;
+	setActionResultsEnabled(false);
 }
 
 function dockOnBlankTab(): void {
@@ -605,6 +622,12 @@ const WEB_URL = /^https?:\/\//i;
 
 /** The actions the selected row answers to beyond Enter, in footer order. */
 export function getSelectedResultKeys(): ResultKey[] {
+	const allowed = _allowedKeys;
+	const keys = allSelectedResultKeys();
+	return allowed ? keys.filter((key) => allowed.includes(key)) : keys;
+}
+
+function allSelectedResultKeys(): ResultKey[] {
 	const result = _results[_selectedIndex];
 	if (!result) return getParsedInput().query && !_moveTabId ? ["newTab"] : [];
 	const keys: ResultKey[] = [];

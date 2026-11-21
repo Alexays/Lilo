@@ -1398,6 +1398,15 @@
 		"resetTitle": "Gewijzigde vlaggen",
 		"reloadNote": "Herlaad een pagina om een wijziging toe te passen"
 	},
+	"little": {
+		"openIn": "Openen in {space}",
+		"openInMenu": "Openen in een andere Ruimte",
+		"copyLink": "Link kopiëren",
+		"linkCopied": "Link gekopieerd",
+		"placeholder": "Zoek of voer een URL in...",
+		"emptyTitle": "Zoek op het web of voer een URL in",
+		"emptySubtitle": "Typ / om bezochte pagina's te doorzoeken."
+	},
 	"urlToast": {
 		"pageActions": "Pagina-acties",
 		"reEnableBlocking": "Schakel blokkering op deze website weer in",

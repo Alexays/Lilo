@@ -38,7 +38,18 @@ final class LittleWindowTests: XCTestCase {
         await pollUntil { !little.engine.wkWebView.isLoading && little.engine.currentURL != nil }
     }
 
-    func testNewLittleWindowOpensBlankOutsideTheTabListWithTheAddressFieldFocused() throws {
+    private func openPage(_ address: String = "https://example.com/page") throws -> LittleWindowController {
+        try XCTUnwrap(controller.openLittleWindow(url: try XCTUnwrap(URL(string: address))))
+    }
+
+    private func escape(in window: NSWindow) throws -> NSEvent {
+        try XCTUnwrap(NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: window.windowNumber,
+            context: nil, characters: "\u{1b}", charactersIgnoringModifiers: "\u{1b}", isARepeat: false, keyCode: 53
+        ))
+    }
+
+    func testNewLittleWindowOpensTheStartCardOutsideTheTabList() throws {
         let tabs = controller.tabManager.openTabs.count
 
         let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
@@ -47,55 +58,134 @@ final class LittleWindowTests: XCTestCase {
         XCTAssertEqual(controller.tabManager.openTabs.count, tabs)
         XCTAssertEqual(little.spaceId, home.id)
         XCTAssertNil(little.engine.currentURL)
-        XCTAssertEqual(little.window.frame.width, LittleWindowController.defaultSize.width)
-        XCTAssertTrue(little.window.firstResponder is NSText, "the address field is being edited")
-    }
-
-    func testTheAddressShowsTheHostInBoldAndTheFullURLOnlyWhileEdited() async throws {
-        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
-        let url = try XCTUnwrap(URL(string: "https://example.com/read?page=2"))
-        try await load(little, url)
-        little.window.makeFirstResponder(little.engine.wkWebView)
-        let titlebar = try XCTUnwrap(little.window.standardWindowButton(.closeButton)?.superview)
-        titlebar.layoutSubtreeIfNeeded()
-        let pill = try XCTUnwrap(titlebar.subviews.lazy.flatMap(\.subviews).first { $0 is PillView })
-        let field = try XCTUnwrap(pill.subviews.first { $0 is NSTextField } as? NSTextField)
-
-        XCTAssertEqual(field.stringValue, "example.com/read?page=2")
-        let shown = field.attributedStringValue
-        let hostFont = shown.attribute(.font, at: 0, effectiveRange: nil) as? NSFont
-        let pathFont = shown.attribute(.font, at: shown.length - 1, effectiveRange: nil) as? NSFont
-        XCTAssertNotEqual(hostFont, pathFont, "the host stands out from the path")
-
-        little.openLocation(nil)
-        XCTAssertEqual(field.currentEditor()?.string, url.absoluteString)
-
-        little.window.makeFirstResponder(little.engine.wkWebView)
-        XCTAssertEqual(field.stringValue, "example.com/read?page=2")
-    }
-
-    func testTheAddressFieldOpensAddressesAndSearchesTheRest() throws {
-        let settings = try XCTUnwrap(browserContext.context.settingsStore)
-        settings.set("searchEngines", value: #"[{"id":"test","name":"Test","urlTemplate":"https://search.example/?q=%s"}]"#)
-        defer { settings.remove("searchEngines") }
-        let cases = [
-            "v1.2": "https://search.example/?q=v1.2",
-            "example.test/a": "https://example.test/a",
-            "пример.испытание/a": "https://xn--e1afmkfd.xn--80akhbyknj4f/a",
-            "localhost:8080/a": "http://localhost:8080/a",
-            "127.0.0.1:9/a": "http://127.0.0.1:9/a",
-            "me@example.test": "https://search.example/?q=me%40example.test"
-        ]
-        for (typed, expected) in cases {
-            let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
-            let editor = try XCTUnwrap(little.window.firstResponder as? NSTextView)
-            editor.insertText(typed, replacementRange: NSRange(location: NSNotFound, length: 0))
-
-            editor.doCommand(by: #selector(NSResponder.insertNewline(_:)))
-
-            XCTAssertEqual(little.engine.currentURL?.absoluteString, expected, typed)
-            little.window.close()
+        XCTAssertEqual(little.mode, .start)
+        XCTAssertEqual(little.window.frame.size, LittleWindowController.startSize)
+        XCTAssertTrue(little.window.firstResponder is WKWebView, "the command bar's chrome has the keyboard")
+        XCTAssertNotIdentical(little.window.firstResponder, little.engine.wkWebView)
+        for type in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+            XCTAssertEqual(little.window.standardWindowButton(type)?.isHidden, true, "the card has no traffic lights")
         }
+    }
+
+    func testThePanelJoinsEverySpaceAndSitsBesideAFullScreenWindow() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+
+        XCTAssertTrue(little.window.collectionBehavior.contains(.canJoinAllSpaces))
+        XCTAssertTrue(little.window.collectionBehavior.contains(.fullScreenAuxiliary))
+        XCTAssertTrue(little.window.styleMask.contains(.nonactivatingPanel))
+        XCTAssertTrue(little.window.canBecomeKey)
+        XCTAssertFalse(little.window.hidesOnDeactivate)
+    }
+
+    func testANavigationTurnsTheCardIntoThePageWindow() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+
+        little.navigate(to: try XCTUnwrap(URL(string: "https://example.com/page")))
+
+        XCTAssertEqual(little.mode, .page)
+        XCTAssertEqual(little.window.frame.size, LittleWindowController.defaultSize)
+        for type in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+            XCTAssertEqual(little.window.standardWindowButton(type)?.isHidden, false)
+        }
+        XCTAssertIdentical(little.window.firstResponder, little.engine.wkWebView)
+        XCTAssertEqual(little.window.level, .normal)
+        XCTAssertTrue(little.window.isVisible)
+    }
+
+    func testOnlyWebPagesAndLocalFilesAreOpenedFromTheBar() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+
+        for address in ["javascript:alert(1)", "data:text/html,hi", "lilo-chrome://ui/index.html"] {
+            little.navigate(to: try XCTUnwrap(URL(string: address)))
+            XCTAssertEqual(little.mode, .start, address)
+        }
+    }
+
+    func testEscapeClosesAPageWindowWhileThePageHasTheKeyboard() throws {
+        let little = try openPage()
+        little.chromeDidLoad()
+        XCTAssertIdentical(little.window.firstResponder, little.engine.wkWebView)
+
+        little.window.sendEvent(try escape(in: little.window))
+
+        XCTAssertFalse(little.window.isVisible)
+        XCTAssertTrue(controller.littleWindows.isEmpty)
+    }
+
+    func testEscapeInTheStartCardIsTheCommandBarsToHandle() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        little.chromeDidLoad()
+
+        little.window.sendEvent(try escape(in: little.window))
+
+        XCTAssertTrue(little.window.isVisible, "the chrome's own Escape leaves a scope first, then asks the window to close")
+    }
+
+    func testEscapeClosesBeforeTheChromeHasLoaded() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        XCTAssertFalse(little.isChromeReady)
+
+        little.window.sendEvent(try escape(in: little.window))
+
+        XCTAssertFalse(little.window.isVisible)
+    }
+
+    func testTheStartCardClosesWhenTheUserClicksAwayButAPageWindowStays() throws {
+        let card = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let page = try openPage()
+        for little in [card, page] {
+            little.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification))
+            little.chromeDidLoad()
+            little.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification))
+        }
+
+        XCTAssertFalse(card.window.isVisible)
+        XCTAssertTrue(page.window.isVisible)
+        XCTAssertTrue(card.engine.currentURL == nil && browserContext.context.recentlyClosed.recentEntries.isEmpty, "an empty card leaves nothing behind")
+    }
+
+    func testTheChromeOnlyTakesThePointerWhereItReportsAZone() throws {
+        let little = try openPage()
+        let host = little.chromeHost
+        let inside = NSPoint(x: 100, y: host.bounds.height - 20)
+        XCTAssertNil(host.hitTest(inside), "no zone yet: the page and the title bar below take it")
+
+        host.zones.registerZones([(id: "little-bar", rect: NSRect(x: 0, y: 0, width: host.bounds.width, height: 52))])
+
+        XCTAssertNotNil(host.hitTest(inside))
+        XCTAssertNil(host.hitTest(NSPoint(x: 100, y: 40)), "the page below the strip is not covered")
+    }
+
+    func testTheBarsBridgeNavigatesAndFilesThePage() async throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let handler = LittleWindowBridgeHandler(little: little)
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "navigate", "payload": ["url": "https://example.com/a"]])))
+        XCTAssertEqual(little.mode, .page)
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "littleOpenInSpace", "payload": ["spaceId": work.id.uuidString]])))
+        XCTAssertEqual(controller.tabManager.currentSpaceId, work.id)
+        XCTAssertTrue(controller.littleWindows.isEmpty)
+        XCTAssertFalse(little.window.isVisible)
+    }
+
+    func testCommandEnterInTheBarOpensTheAddressAsATabAndClosesTheWindow() async throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let tabs = controller.tabManager.openTabs.count
+        let handler = LittleWindowBridgeHandler(little: little)
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "createTab", "payload": ["url": "https://example.com/b"]])))
+
+        XCTAssertEqual(controller.tabManager.openTabs.count, tabs + 1)
+        XCTAssertEqual(controller.tabManager.activeTab?.url, URL(string: "https://example.com/b"))
+        XCTAssertFalse(little.window.isVisible)
+    }
+
+    func testTheBarsBridgeSharesOnlyTheSearchSettings() async throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let handler = LittleWindowBridgeHandler(little: little)
+        XCTAssertTrue(handler.handledActions.isDisjoint(with: ["setSetting", "closeTab", "createSpace", "toggleSidebar"]))
+        XCTAssertTrue(handler.handledActions.contains("getSettings"))
     }
 
     func testOpenInSpaceMovesTheLivePageIntoThatSpace() throws {
@@ -141,7 +231,7 @@ final class LittleWindowTests: XCTestCase {
     }
 
     func testClosingTheBrowserWindowHandsItsLittleWindowsToAnother() throws {
-        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let little = try openPage()
         let other = makeTestWindow(browserContext.context, showing: work.id)
         defer { other.littleWindows.values.forEach { $0.window.close() }; other.window?.close() }
 
@@ -154,7 +244,7 @@ final class LittleWindowTests: XCTestCase {
     }
 
     func testTheLastBrowserWindowHidesWhileALittleWindowIsOpen() throws {
-        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let little = try openPage()
         let window = try XCTUnwrap(controller.window)
         window.makeKeyAndOrderFront(nil)
 
@@ -196,24 +286,5 @@ final class LittleWindowTests: XCTestCase {
         XCTAssertEqual(shown.engine.wkWebView.underPageBackgroundColor, reference.underPageBackgroundColor, "under its page too")
         reference.underPageBackgroundColor = other.window.backgroundColor.contentSurfaceColor
         XCTAssertEqual(other.engine.wkWebView.underPageBackgroundColor, reference.underPageBackgroundColor)
-    }
-
-    func testAtItsSmallestTheWindowKeepsRoomForTheAddress() throws {
-        let space = try browserContext.context.spaceManager!.createSpace(name: "A Space With A Rather Long Name", profileId: home.profileId)
-        controller.switchToSpace(space.id)
-        let engine = WKWebViewTab(webView: WKWebView(frame: .zero))
-        let little = LittleWindowController(engine: engine, spaceId: space.id, dataStore: browserContext.context.engineFactory.defaultDataStore(), owner: controller)
-        defer { little.window.close() }
-
-        little.window.setContentSize(little.window.contentMinSize)
-        let titlebar = try XCTUnwrap(little.window.standardWindowButton(.closeButton)?.superview)
-        titlebar.layoutSubtreeIfNeeded()
-
-        let pill = try XCTUnwrap(titlebar.subviews.lazy.flatMap(\.subviews).first { $0 is PillView })
-        XCTAssertGreaterThanOrEqual(pill.frame.width, 120, "the address field stays usable")
-        let controls = try XCTUnwrap(pill.superview).subviews.filter { !$0.isHidden && !($0 is PopupProgressBar) }
-        for (index, view) in controls.enumerated() {
-            for other in controls[(index + 1)...] { XCTAssertFalse(view.frame.intersects(other.frame), "\(view) overlaps \(other)") }
-        }
     }
 }
