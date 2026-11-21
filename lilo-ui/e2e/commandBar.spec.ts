@@ -135,6 +135,27 @@ test("row shortcuts and footer keys spell keys with the same symbols", async ({ 
 	await expect(page.locator(".command-bar-footer kbd")).toHaveText(["↩", "⌘↩", "⌥↩", "⇧↩", "⌘C", "⌘⌫", "⌘M", "esc"]);
 });
 
+test("the default layout keeps its scope chips row and its footer hints", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+
+	await expect(page.locator(".command-bar")).not.toHaveClass(/compact/);
+	const scopes = page.locator(".command-bar-scopes");
+	await expect(scopes).toBeVisible();
+	await expect(scopes.locator(".scope-hint .scope-hint-label")).toHaveText([
+		"All",
+		"Actions",
+		"Terminal",
+		"Tabs",
+		"Bookmarks",
+		"History",
+		"Archived",
+	]);
+	await expect(scopes.locator(".scope-hint-prefix")).toHaveText([":", ">", "@", "#", "/", "<"]);
+	await expect(page.locator(".command-bar-footer")).toBeVisible();
+	await expect(page.locator(".command-bar-footer kbd").last()).toHaveText("esc");
+});
+
 test("scope chips are set in the footer hints' size", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
