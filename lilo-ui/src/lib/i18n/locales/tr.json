@@ -838,6 +838,8 @@
 		"unreadCount": "{count} okunmamış",
 		"previewOpen": "Aç",
 		"sleeping": "Uykuda",
+		"dozing": "Uyuyor",
+		"dozingHint": "Bellek tasarrufu için uyuyor. Açtığınızda uyanır.",
 		"pinned": "Sabitlenmiş",
 		"loading": "Yükleniyor",
 		"muted": "Sesi kapalı",

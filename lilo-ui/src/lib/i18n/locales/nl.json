@@ -838,6 +838,8 @@
 		"unreadCount": "{count} ongelezen",
 		"previewOpen": "Open",
 		"sleeping": "In sluimerstand",
+		"dozing": "Slaapt",
+		"dozingHint": "Slaapt om geheugen te besparen. Wordt wakker zodra je het opent.",
 		"pinned": "Vastgemaakt",
 		"loading": "Laden",
 		"muted": "Gedempt",

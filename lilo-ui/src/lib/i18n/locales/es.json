@@ -838,6 +838,8 @@
 		"unreadCount": "{count} sin leer",
 		"previewOpen": "Abrir",
 		"sleeping": "En reposo",
+		"dozing": "Dormida",
+		"dozingHint": "Dormida para ahorrar memoria. Se reactiva al abrirla.",
 		"pinned": "Fijada",
 		"loading": "Cargando",
 		"muted": "Silenciada",
