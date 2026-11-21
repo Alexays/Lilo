@@ -24,6 +24,7 @@
 		04286CABF2965C3CB293520A /* WKEngineFactoryScriptletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41B43C831833AD0D8279C79E /* WKEngineFactoryScriptletTests.swift */; };
 		04F5D2FE5569F59A21652CA9 /* TabModalDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7903E95332ACF9AF41922079 /* TabModalDialog.swift */; };
 		0557133FDE9D0B01465A21A1 /* OmniboxBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9701BB474C5D4FD7055B9993 /* OmniboxBridgeHandler.swift */; };
+		064A5AB02CF29B011B3AA8AA /* SplitPaneChromePressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14E58A0A08E9FB06A4BB77A8 /* SplitPaneChromePressTests.swift */; };
 		065A22042826A2D12C45B35D /* SpeedometerBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A092BFAA00A2246E685E3CD0 /* SpeedometerBenchmarkTests.swift */; };
 		065AFC84B5E000C6EC025732 /* ChromeMasquerade.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6CF8BC122165D6C530F812A /* ChromeMasquerade.swift */; };
 		0686B8F23554B02148FBF17F /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = B99882422E6612B227F35C07 /* GRDB */; };
@@ -845,6 +846,7 @@
 		13965ECB8EC158753CB9C3FD /* MenuIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuIcon.swift; sourceTree = "<group>"; };
 		13E28E9808F214A6501531E7 /* SessionPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPersistenceTests.swift; sourceTree = "<group>"; };
 		1440ACDBF23EE0F24A55B00D /* PageZoomTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageZoomTests.swift; sourceTree = "<group>"; };
+		14E58A0A08E9FB06A4BB77A8 /* SplitPaneChromePressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitPaneChromePressTests.swift; sourceTree = "<group>"; };
 		15E352D8AF7C9DBB3E4F57EB /* PageFindController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageFindController.swift; sourceTree = "<group>"; };
 		160716B6CD17524C433E53CA /* FontSettingsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontSettingsBridgeHandler.swift; sourceTree = "<group>"; };
 		1612E7CB0B3577AD79CB1BF8 /* PowerHelperListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerHelperListener.swift; sourceTree = "<group>"; };
@@ -2847,6 +2849,7 @@
 				1957E0C36D17C64137430863 /* QRCodeTests.swift */,
 				BC423BCE8DBDE092FDE06546 /* ReleaseMediaCaptureTests.swift */,
 				42E6A2F13825700070354B2E /* SharedSpaceRuntimeTests.swift */,
+				14E58A0A08E9FB06A4BB77A8 /* SplitPaneChromePressTests.swift */,
 				F13600639DAEB0FA8ED0BE36 /* SplitPanesControllerTests.swift */,
 				095C1DCC47901E0E37EE95BB /* TabContextMenuActionsTests.swift */,
 				4B523A389F7E8333256B9883 /* TabLayoutTests.swift */,
@@ -3681,6 +3684,7 @@
 				87A0CE80FFCC0F5E733B2A03 /* SpaceTabStateTests.swift in Sources */,
 				065A22042826A2D12C45B35D /* SpeedometerBenchmarkTests.swift in Sources */,
 				C6614F25C52FE416C5BAFA5D /* SplitLayoutTests.swift in Sources */,
+				064A5AB02CF29B011B3AA8AA /* SplitPaneChromePressTests.swift in Sources */,
 				87D48937D2123F7C56A4456C /* SplitPanesControllerTests.swift in Sources */,
 				95584475A73795C7B9EDFEC0 /* StartupBackgroundWorkTests.swift in Sources */,
 				3FE769CAC98DB5F8AD166EC0 /* StartupMetricsExportTests.swift in Sources */,
