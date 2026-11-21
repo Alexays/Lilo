@@ -118,7 +118,7 @@ status_of 0 env STUB_FAIL=validate-scope git push -q origin :refs/heads/two
 # Never install: a symlinked shared node_modules with a lockfile newer than the stamp is left intact and ui-check is skipped.
 git config lilo.hooks.pre-commit true
 mkdir -p "$WORK/shared"; echo dep > "$WORK/shared/a"; echo dep > "$WORK/shared/b"
-rm -rf lilo-ui/node_modules; ln -s "$WORK/shared" lilo-ui/node_modules; touch -t 200001010000 "$WORK/shared/.installed"
+rm -rf lilo-ui/node_modules; ln -s "$WORK/shared" lilo-ui/node_modules; touch -t 200001010000 "$WORK/shared/.package-lock.json"
 touch package-lock.json
 echo z >> lilo-ui/src/a.ts; echo z >> Lilo/A.swift; git add lilo-ui/src/a.ts Lilo/A.swift
 status_of 0 git commit -q -m "chore: stale install"

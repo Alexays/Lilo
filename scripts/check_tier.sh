@@ -39,6 +39,6 @@ for check in $checks; do
     ran="$ran $check"
     python3 scripts/check_summary.py run "$check" "$logs" -- make --no-print-directory "$check" || { status=1; break; }
 done
-[ -z "$skipped" ] || echo "$metrics_tier: skipped$skipped, dependencies missing or out of date (make bootstrap installs them)" >&2
+[ -z "$skipped" ] || echo "$tier_name: skipped$skipped, dependencies missing or out of date (make bootstrap installs them)" >&2
 [ -z "$ran" ] || python3 scripts/check_summary.py report ${JSON:+--json} "$logs" $ran || status=1
 exit $status
