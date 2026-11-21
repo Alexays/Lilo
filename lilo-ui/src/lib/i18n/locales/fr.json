@@ -2679,7 +2679,11 @@
 			"noFolder": "Aucun dossier",
 			"noFolderDetail": "L'agent travaille dans son propre dossier",
 			"backgroundHint": "{shortcut} pour le garder en arrière-plan",
-			"start": "Démarrer"
+			"start": "Démarrer",
+			"searchAgents": "Rechercher des agents",
+			"featuredAgents": "À la une",
+			"registryAgents": "Registre",
+			"noMatches": "Aucun agent correspondant"
 		},
 		"row": {
 			"untitled": "Nouvelle conversation",

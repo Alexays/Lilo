@@ -2687,7 +2687,11 @@
 			"noFolder": "Bez folderu",
 			"noFolderDetail": "Agent pracuje we własnym folderze",
 			"backgroundHint": "{shortcut}, aby zostawić w tle",
-			"start": "Rozpocznij"
+			"start": "Rozpocznij",
+			"searchAgents": "Szukaj agentów",
+			"featuredAgents": "Polecane",
+			"registryAgents": "Rejestr",
+			"noMatches": "Brak pasujących agentów"
 		},
 		"row": {
 			"untitled": "Nowa rozmowa",

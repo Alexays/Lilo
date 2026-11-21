@@ -2687,7 +2687,11 @@
 			"noFolder": "無檔案夾",
 			"noFolderDetail": "代理程式在自己的檔案夾中工作",
 			"backgroundHint": "按 {shortcut} 在背景進行",
-			"start": "開始"
+			"start": "開始",
+			"searchAgents": "搜尋代理程式",
+			"featuredAgents": "精選",
+			"registryAgents": "註冊表",
+			"noMatches": "沒有相符的代理程式"
 		},
 		"row": {
 			"untitled": "新對話",
