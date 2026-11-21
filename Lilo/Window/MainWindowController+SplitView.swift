@@ -626,6 +626,27 @@ final class SplitPanesController {
         for handle in handles.values { handle.setRevealed(handle.frame.contains(local)) }
     }
 
+    /// The pane whose conversation surface claims `point` as a chrome zone, or nil. A conversation
+    /// draws in the chrome web view and registers its whole pane as a `conversation-<tabId>` zone, so
+    /// presses on the pane classify chrome and the tab is recovered through the zone id.
+    private func conversationPaneTabId(atWindowPoint point: NSPoint) -> UUID? {
+        guard let split,
+              let zone = controller.chromeInteractiveZones.zoneId(
+                  at: controller.chromeWebView.convert(point, from: nil),
+                  in: controller.chromeWebView.bounds, isFlipped: controller.chromeWebView.isFlipped),
+              zone.hasPrefix("conversation-"),
+              let tabId = UUID(uuidString: String(zone.dropFirst("conversation-".count))),
+              split.layout.paneIds.contains(tabId) else { return nil }
+        return tabId
+    }
+
+    /// Click-to-focus for a conversation pane: its zone swallows the press before `view(for:)` can run.
+    func activatePaneForChromePress(atWindowPoint point: NSPoint) {
+        guard let tabId = conversationPaneTabId(atWindowPoint: point),
+              tabId != controller.tabManager.activeOpenTabId else { return }
+        controller.activateTabStateFirst(id: tabId)
+    }
+
     /// A web link dragged from outside the pages over a narrow strip at a pane's left or right edge goes to the chrome, which
     /// offers it as a split pane; the rest of the pane, where a page's own fields and drop targets sit, keeps the drop.
     func isLinkDrag(_ sender: any NSDraggingInfo) -> Bool {

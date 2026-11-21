@@ -359,6 +359,9 @@ final class ChromeInputController {
         if event.isMouseDown, target == .content {
             _ = controller.splitPanes.view(for: event)
             controller.tabManager.activeEngineTab?.logUserInteraction()
+        } else if event.isMouseDown, target == .chrome {
+            // A conversation pane is all chrome zone: the press still focuses the pane's tab.
+            controller.splitPanes.activatePaneForChromePress(atWindowPoint: event.locationInWindow)
         }
     }
 
