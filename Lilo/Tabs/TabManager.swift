@@ -19,6 +19,8 @@ final class TabManager {
 
     /// The data store to use for new tabs (set per-profile or ephemeral for private spaces).
     var dataStore: WKEngineDataStore?
+    /// Hands each tab of a private space a data store of its own; nil keeps `dataStore` shared by every tab.
+    weak var profileManager: ProfileManager?
     /// Profile of the displayed space: new engines bind to its extension controller.
     var profileId: UUID?
 
@@ -230,6 +232,7 @@ final class TabManager {
         }
         extensionRegistry?.forgetTab(id)
         engineHost.teardown(engineHost.removeEngine(for: id))
+        profileManager?.releaseEphemeralDataStore(forTab: id)
         // Close/discard removes the tab from the tree; drop its overlay entry at the source so it can't
         // orphan. This is what lets the post-command projection skip the O(all-tabs) global prune.
         runtimeOverlay.removeRuntimeState(for: id)
@@ -466,7 +469,7 @@ final class TabManager {
             return
         }
         let preload = engineFactory.createTab(configuration: .init(
-            dataStore: dataStore ?? engineFactory.defaultDataStore(), tabId: tab.id, profileId: profileId, refillsWarmPool: false
+            dataStore: dataStore(forTab: tab.id, nativeConfiguration: nil), tabId: tab.id, profileId: profileId, refillsWarmPool: false
         ))
         if let pageContainer { preload.fitView(in: pageContainer.bounds) }
         preload.loadURL(url)
@@ -551,9 +554,9 @@ final class TabManager {
         markRestoring: Bool = false
     ) -> (engine: WKWebViewTab, url: URL?) {
         let target = nativeConfiguration == nil ? url.flatMap { extensionRegistry?.extensionNavigationTarget(for: $0) } : nil
-        let store = dataStore ?? engineFactory.defaultDataStore()
+        let id = tabId ?? UUID()
         let engine = engineHost.createEngine(
-            dataStore: store, profileId: profileId, tabId: tabId,
+            dataStore: dataStore(forTab: id, nativeConfiguration: nativeConfiguration), profileId: profileId, tabId: id,
             nativeConfiguration: nativeConfiguration ?? target?.webViewConfiguration, markRestoring: markRestoring
         )
         engine.extensionHost = target?.url.host?.lowercased()
@@ -566,6 +569,17 @@ final class TabManager {
             tabsAwaitingTheirExtension.remove(engine.id)
         }
         return (engine, target?.url ?? url)
+    }
+
+    /// A private space's tab browses in a store of its own, so private tabs share no cookies or storage. A page
+    /// popup (`nativeConfiguration`) keeps its opener's, and a tab the user opens gets a fresh one.
+    private func dataStore(forTab id: UUID, nativeConfiguration: WKWebViewConfiguration?) -> WKEngineDataStore {
+        let shared = dataStore ?? engineFactory.defaultDataStore()
+        guard !shared.backingStore.isPersistent, let profileManager, let spaceId = currentSpaceId else { return shared }
+        if let nativeConfiguration {
+            return profileManager.adoptEphemeralDataStore(nativeConfiguration.websiteDataStore, forTab: id, in: spaceId)
+        }
+        return profileManager.ephemeralDataStore(forTab: id, in: spaceId)
     }
 
     /// `url` overrides the tab's own page and its saved history.
