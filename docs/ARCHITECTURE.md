@@ -22,7 +22,7 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 | `Lilo/Favicons/` | FaviconService (cache, extraction) and FaviconCoordinator (request coalescing) |
 | `Lilo/Generated/` | Generated Swift: the tab bridge schema (committed), native strings and embedded chrome UI assets (git-ignored, written by `make ui-build`) |
 | `Lilo/Import/` | Importing from other browsers (Safari, Firefox and Zen, Chromium browsers): bookmarks, open tabs and Spaces (Chromium session files, Arc's sidebar), history, cookies (Chromium cookie decryption) and extensions, and its bridge handler |
-| `Lilo/LittleWindow/` | Little windows: one page in a small window outside every Space, and the global hot key that opens one |
+| `Lilo/LittleWindow/` | Little windows: one page in a small panel outside every Space, opening on the command bar (its own chrome view and bridge handler), and the global hot key that opens one |
 | `Lilo/Onboarding/` | The first-run onboarding bridge handler |
 | `Lilo/PictureInPicture/` | An in-call tab kept in view: docked at the bottom of the sidebar, or floated in an always-on-top panel |
 | `Lilo/Power/` | Keep-awake and lid-closed power management, the privileged helper's protocol and its bridge handler |
