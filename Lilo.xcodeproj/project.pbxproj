@@ -504,6 +504,7 @@
 		B20C5881D0256E977B861949 /* BlankTabLoadingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA3DDCB41A878DF793E369B /* BlankTabLoadingTests.swift */; };
 		B2A7CD0EC82D30EA10A1E0D7 /* WKWebViewTabLoggingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24395920E5020A85C239D981 /* WKWebViewTabLoggingTests.swift */; };
 		B2BCB377F4AD279B8167A38E /* TopSitesBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9322AD23E2D393D0057D02BC /* TopSitesBridgeHandler.swift */; };
+		B2C8F76425AD3A1146E9A280 /* ACPAgentInstances.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3BA23517A87223541B914F /* ACPAgentInstances.swift */; };
 		B35F74F54B7FCBA0B6BAC2D7 /* BridgeProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D362EDC166C7BA54B345CA /* BridgeProtocol.swift */; };
 		B36C5B9B863534F7E9999629 /* DeviceSetupMemoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A965BB60BB116FC2EE91E6B8 /* DeviceSetupMemoryTests.swift */; };
 		B3BBC4A3D196F2F15E610437 /* ProceduralCosmetics.js in Resources */ = {isa = PBXBuildFile; fileRef = 2D24BF900BE3A4131D4378A9 /* ProceduralCosmetics.js */; };
@@ -641,6 +642,7 @@
 		DFE84DF26A5EA74CC64BFFF0 /* PerfSignposts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6C133268E79C157E6C2D45 /* PerfSignposts.swift */; };
 		E02826AC84647672FAE862ED /* AgentInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4549E15BF0BBE811DBBC6B7B /* AgentInspector.swift */; };
 		E057394D5C9BBFCEABADA463 /* ExtensionStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79F51236521456CD8B541DD7 /* ExtensionStorage.swift */; };
+		E08A005ED0A67636824240D6 /* ACPAgentInstancesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 507EA4E707607E50FFB2045F /* ACPAgentInstancesTests.swift */; };
 		E08CDE3CE98664B6A5357D25 /* DeclarativeNetRequestMergeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91924230611A1600D94EF9F8 /* DeclarativeNetRequestMergeTests.swift */; };
 		E0F3214D71BE29635ED9E1A5 /* BlockerLayersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 339032779E0E89C768271912 /* BlockerLayersTests.swift */; };
 		E14C493ED82CBFA44E7BC3EF /* SidebarDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D4B8DA08C136C82AE88833 /* SidebarDiffTests.swift */; };
@@ -1017,6 +1019,7 @@
 		50161F1234611D849C5A3968 /* DownloadStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadStoreTests.swift; sourceTree = "<group>"; };
 		502A94CAA975A5A19D0F37A7 /* BrowserContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserContext.swift; sourceTree = "<group>"; };
 		504B756029FD96861BFCE401 /* ExtensionAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionAccess.swift; sourceTree = "<group>"; };
+		507EA4E707607E50FFB2045F /* ACPAgentInstancesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ACPAgentInstancesTests.swift; sourceTree = "<group>"; };
 		50C5246025382370EB7F259B /* DeclarativeNetRequestMerge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarativeNetRequestMerge.swift; sourceTree = "<group>"; };
 		50F18350F0E5A5E8CD4A5A6B /* SidePanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidePanelController.swift; sourceTree = "<group>"; };
 		5135E1934C469BB54C50A03D /* SidebarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarState.swift; sourceTree = "<group>"; };
@@ -1386,6 +1389,7 @@
 		CB3690C88F10B056692F8F83 /* KeepAwakeBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepAwakeBridgeHandlerTests.swift; sourceTree = "<group>"; };
 		CB96370139765B31D9813437 /* ItalianLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItalianLocalizationTests.swift; sourceTree = "<group>"; };
 		CC7223C298DFFD2FC2523D85 /* KeepAwakeBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepAwakeBridgeHandler.swift; sourceTree = "<group>"; };
+		CD3BA23517A87223541B914F /* ACPAgentInstances.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ACPAgentInstances.swift; sourceTree = "<group>"; };
 		CD580195B559238125EA0500 /* WKEngineFactoryWarmPoolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKEngineFactoryWarmPoolTests.swift; sourceTree = "<group>"; };
 		CE0702AD85CA546A7F2F8A43 /* MeetingBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingBridgeHandler.swift; sourceTree = "<group>"; };
 		CE808064190AE0292EFCAADF /* public-suffix-list.dat */ = {isa = PBXFileReference; path = "public-suffix-list.dat"; sourceTree = "<group>"; };
@@ -1538,6 +1542,7 @@
 			isa = PBXGroup;
 			children = (
 				A3D683A17B01E7A414F82772 /* ACPAgentCatalog.swift */,
+				CD3BA23517A87223541B914F /* ACPAgentInstances.swift */,
 				380EA58FDE9F1A1B3EF905D0 /* ACPConnection.swift */,
 				C66440537ECC07290E7880A7 /* ConversationBridgeHandler.swift */,
 				CE82CB8210066CE791C3A7D9 /* ConversationCheckpoints.swift */,
@@ -2515,6 +2520,7 @@
 			isa = PBXGroup;
 			children = (
 				5BAAFA57FE539F2CCD4E28EF /* ACPAgentCatalogTests.swift */,
+				507EA4E707607E50FFB2045F /* ACPAgentInstancesTests.swift */,
 				047932A7009C4C689BD92897 /* ACPConnectionTests.swift */,
 				59353B06598D5A5042D487B5 /* ConversationCheckpointsTests.swift */,
 			);
@@ -3108,6 +3114,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B4481A3BCDEAACCE28E3BDAD /* ACPAgentCatalog.swift in Sources */,
+				B2C8F76425AD3A1146E9A280 /* ACPAgentInstances.swift in Sources */,
 				2411A4E1BCA83C7F9D685BE8 /* ACPConnection.swift in Sources */,
 				3B30B2CB3238951D8C998938 /* ActionColorBridgeHandler.swift in Sources */,
 				6AA37CB9BD59DFDB2E8DFD28 /* AgentCapture.swift in Sources */,
@@ -3448,6 +3455,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D59F8B14915851CFC9A74907 /* ACPAgentCatalogTests.swift in Sources */,
+				E08A005ED0A67636824240D6 /* ACPAgentInstancesTests.swift in Sources */,
 				3D919F5C44D94CC41F91662F /* ACPConnectionTests.swift in Sources */,
 				C270763C21E4A7E4C96B6697 /* AgentApprovalTests.swift in Sources */,
 				17A66E132E78A25103A03593 /* AgentCaptureTests.swift in Sources */,

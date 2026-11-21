@@ -68,12 +68,11 @@ final class ACPAgentCatalogTests: XCTestCase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let command = directory.appending(path: "my-agent")
         FileManager.default.createFile(atPath: command.path, contents: Data("#!/bin/sh\n".utf8), attributes: [.posixPermissions: 0o755])
-        let json = try String(data: JSONSerialization.data(withJSONObject: [
-            "name": "Mine", "executable": command.path, "arguments": "--profile\n\nacp\n",
-            "environment": "# for tests\nMODE=a=b\n\nEMPTY="
-        ]), encoding: .utf8)
         let catalog = ACPAgentCatalog(directory: directory)
-        catalog.customAgentSetting = { json }
+        catalog.instancesSetting = {
+            ACPAgentInstance.json([ACPAgentInstance(id: "custom", source: .command, name: "Mine", executable: command.path,
+                                                  arguments: "--profile\n\nacp\n", environment: "# for tests\nMODE=a=b\n\nEMPTY=")])
+        }
 
         let agent = try XCTUnwrap(catalog.agent(id: ACPAgentCatalog.customId))
         let launch = try await catalog.launch(agent)
@@ -102,11 +101,11 @@ final class ACPAgentCatalogTests: XCTestCase {
             print(json.dumps({"jsonrpc": "2.0", "id": message["id"], "result": {"protocolVersion": 1, "agentInfo": info}}), flush=True)
         """
         FileManager.default.createFile(atPath: command.path, contents: Data(script.utf8), attributes: [.posixPermissions: 0o755])
-        let json = try String(data: JSONSerialization.data(withJSONObject: [
-            "executable": command.path, "arguments": "--profile\nacp", "environment": "HARNESS_MODE=demo"
-        ]), encoding: .utf8)
         let catalog = ACPAgentCatalog(directory: directory)
-        catalog.customAgentSetting = { json }
+        catalog.instancesSetting = {
+            ACPAgentInstance.json([ACPAgentInstance(id: "custom", source: .command, executable: command.path,
+                                                  arguments: "--profile\nacp", environment: "HARNESS_MODE=demo")])
+        }
         let launch = try await catalog.launch(try XCTUnwrap(catalog.agent(id: ACPAgentCatalog.customId)))
         let connection = ACPConnection(executable: launch.executable, arguments: launch.arguments, environment: launch.environment, directory: directory)
         try connection.start()

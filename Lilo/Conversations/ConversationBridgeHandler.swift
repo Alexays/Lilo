@@ -63,8 +63,11 @@ final class ConversationBridgeHandler: BridgeHandler {
             window.bridgeRouter.send(event: "agentCatalog", data: [
                 "agents": await host.catalog.runnableAgents().map { agent in
                     var data: [String: Any] = ["id": agent.id, "name": agent.name, "description": agent.description]
-                    if featuredIds.contains(agent.id) { data["featured"] = true }
+                    if featuredIds.contains(agent.id) || agent.isCommand { data["featured"] = true }
+                    if agent.isCommand { data["command"] = true }
                     if let icon = host.catalog.iconDataURL(for: agent.id) { data["icon"] = icon }
+                    if !agent.repository.isEmpty { data["repository"] = agent.repository }
+                    if !agent.license.isEmpty { data["license"] = agent.license }
                     return data
                 },
                 "projects": projects(),

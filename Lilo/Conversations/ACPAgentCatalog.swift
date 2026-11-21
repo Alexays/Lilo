@@ -19,7 +19,15 @@ final class ACPAgentCatalog {
         let name: String
         let description: String
         let version: String
+        /// What the registry publishes about the agent's source; empty for a command of the user's.
+        var repository = ""
+        var license = ""
         let distribution: Distribution
+
+        var isCommand: Bool {
+            if case .command = distribution { return true }
+            return false
+        }
     }
 
     struct LaunchError: LocalizedError {
@@ -48,8 +56,8 @@ final class ACPAgentCatalog {
     private var loadedAt: Date?
     private var loading: Task<Void, Never>?
     private var shellPath: String?
-    /// The stored JSON of the custom agent, read at each use so a change in Settings needs no restart.
-    var customAgentSetting: () -> String? = { nil }
+    /// The stored JSON of the agents list, read at each use so a change in Settings needs no restart.
+    var instancesSetting: () -> String? = { nil }
     /// npm agent folders started or being installed since launch: a running conversation may still use them.
     private var npmInUse: Set<String> = []
 
@@ -58,19 +66,28 @@ final class ACPAgentCatalog {
     }
 
     func agent(id: String) -> Agent? {
-        id == Self.customId ? Self.customAgent(customAgentSetting()) : agents.first { $0.id == id }
+        agents.first { $0.id == id } ?? Self.commandAgents(from: instancesSetting()).first { $0.id == id }
     }
 
-    /// The custom agent from its settings JSON (`name`, `executable`, `arguments` and `environment`, all text,
-    /// the last two one entry per line), or nil while no command is set. Whether it can run is checked at launch.
-    nonisolated static func customAgent(_ json: String?) -> Agent? {
-        guard let json, let fields = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: String] else { return nil }
-        let executable = ((fields["executable"] ?? "").trimmingCharacters(in: .whitespaces) as NSString).expandingTildeInPath
+    /// The user's own commands as agents, each entry of the instances setting that has an executable.
+    /// Whether one can run is checked at launch.
+    private nonisolated static func commandAgents(from json: String?) -> [Agent] {
+        ACPAgentInstance.list(from: json).compactMap(commandAgent)
+    }
+
+    private nonisolated static func commandAgent(_ instance: ACPAgentInstance) -> Agent? {
+        guard instance.source == .command else { return nil }
+        let executable = (instance.executable.trimmingCharacters(in: .whitespaces) as NSString).expandingTildeInPath
         guard !executable.isEmpty else { return nil }
-        let name = (fields["name"] ?? "").trimmingCharacters(in: .whitespaces)
-        let args = (fields["arguments"] ?? "").split(whereSeparator: \.isNewline).map(String.init).filter { !$0.isEmpty }
-        return Agent(id: customId, name: name.isEmpty ? URL(fileURLWithPath: executable).lastPathComponent : name,
-                     description: executable, version: "", distribution: .command(executable: executable, args: args, environment: fields["environment"] ?? ""))
+        let name = instance.name.trimmingCharacters(in: .whitespaces)
+        let args = instance.arguments.split(whereSeparator: \.isNewline).map(String.init).filter { !$0.isEmpty }
+        return Agent(id: instance.id, name: name.isEmpty ? URL(fileURLWithPath: executable).lastPathComponent : name,
+                     description: executable, version: "", distribution: .command(executable: executable, args: args, environment: instance.environment))
+    }
+
+    /// The one-command JSON the `customAgent` setting held, as an agent; the instances setting replaced it.
+    nonisolated static func customAgent(_ json: String?) -> Agent? {
+        ACPAgentInstance.migrate(customAgent: json).flatMap(commandAgent)
     }
 
     /// The `KEY=value` lines as variables; blank lines and `#` comments are skipped, anything else must be one.
@@ -165,7 +182,9 @@ final class ACPAgentCatalog {
                 return nil
             }
             return Agent(id: id, name: name, description: entry["description"] as? String ?? "",
-                         version: entry["version"] as? String ?? "", distribution: resolved)
+                         version: entry["version"] as? String ?? "",
+                         repository: entry["repository"] as? String ?? "", license: entry["license"] as? String ?? "",
+                         distribution: resolved)
         }
     }
 
@@ -222,7 +241,7 @@ final class ACPAgentCatalog {
             case .uvx: hasUvx
             case .binary, .command: true
             }
-        } + [agent(id: Self.customId)].compactMap { $0 }
+        } + Self.commandAgents(from: instancesSetting())
     }
 
     private func userPath() async -> String {
