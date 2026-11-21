@@ -3138,6 +3138,120 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertEqual(discardCount, 0)
     }
 
+    /// A routine trim (a space switch, the idle sweep under normal memory) freezes the over-budget
+    /// engine instead of discarding it: the engine stays parked and the page keeps its state.
+    func testTrimInactiveEnginesFreezesExcessEngineInsteadOfDiscarding() async {
+        let activeSpaceId = UUID()
+        let hiddenSpaceId = UUID()
+        let tabId = UUID()
+        let tab = Tab(id: tabId, url: URL(string: "https://example.com"), title: "Example", spaceId: hiddenSpaceId)
+        let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let store = BrowserStateStore()
+        var discardCount = 0
+
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(
+                tabs: [tab], folders: [], treeItems: [],
+                engines: [tabId: engine], activeTabId: tabId,
+                lastAccessedAt: Date(timeIntervalSince1970: 1)
+            )
+        )
+        store.storeActiveSpace(
+            id: activeSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:])
+        )
+
+        store.trimInactiveEngines(
+            excluding: nil,
+            policy: .foreground,
+            maxRetainedEnginesPerHiddenSpace: 0,
+            maxHiddenSpacesWithRetainedEngines: 0,
+            discardEngine: { _ in discardCount += 1; return nil },
+            freezesExcessEngines: true
+        )
+
+        XCTAssertEqual(discardCount, 0)
+        XCTAssertTrue(store.space(id: hiddenSpaceId)?.engines[tabId] === engine)
+        XCTAssertTrue(await pollUntil(timeout: 10) { engine.isFrozen })
+    }
+
+    /// The same routine trim leaves an unsaved-form engine alone entirely: the veto covers both the
+    /// freeze and the discard, so the page can keep autosaving while its space is hidden.
+    func testTrimInactiveEnginesFreezeModeKeepsUnsavedFormEngineLive() async throws {
+        let activeSpaceId = UUID()
+        let hiddenSpaceId = UUID()
+        let tabId = UUID()
+        var tab = Tab(id: tabId, url: URL(string: "https://example.com"), title: "Example", spaceId: hiddenSpaceId)
+        tab.hasUnsavedFormData = true
+        let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let store = BrowserStateStore()
+        var discardCount = 0
+
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(
+                tabs: [tab], folders: [], treeItems: [],
+                engines: [tabId: engine], activeTabId: tabId,
+                lastAccessedAt: Date(timeIntervalSince1970: 1)
+            )
+        )
+        store.storeActiveSpace(
+            id: activeSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:])
+        )
+
+        store.trimInactiveEngines(
+            excluding: nil,
+            policy: .foreground,
+            maxRetainedEnginesPerHiddenSpace: 0,
+            maxHiddenSpacesWithRetainedEngines: 0,
+            discardEngine: { _ in discardCount += 1; return nil },
+            freezesExcessEngines: true
+        )
+
+        XCTAssertEqual(discardCount, 0)
+        XCTAssertTrue(store.space(id: hiddenSpaceId)?.engines[tabId] === engine)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertFalse(engine.isFrozen)
+    }
+
+    /// Memory pressure keeps discarding: `freezesExcessEngines: false` on the same setup removes the
+    /// engine like before.
+    func testTrimInactiveEnginesReclaimModeStillDiscards() {
+        let activeSpaceId = UUID()
+        let hiddenSpaceId = UUID()
+        let tabId = UUID()
+        let tab = Tab(id: tabId, url: URL(string: "https://example.com"), title: "Example", spaceId: hiddenSpaceId)
+        let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let store = BrowserStateStore()
+        var discardCount = 0
+
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(
+                tabs: [tab], folders: [], treeItems: [],
+                engines: [tabId: engine], activeTabId: tabId,
+                lastAccessedAt: Date(timeIntervalSince1970: 1)
+            )
+        )
+        store.storeActiveSpace(
+            id: activeSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:])
+        )
+
+        store.trimInactiveEngines(
+            excluding: nil,
+            policy: .foreground,
+            maxRetainedEnginesPerHiddenSpace: 0,
+            maxHiddenSpacesWithRetainedEngines: 0,
+            discardEngine: { _ in discardCount += 1; return nil }
+        )
+
+        XCTAssertEqual(discardCount, 1)
+        XCTAssertNil(store.space(id: hiddenSpaceId)?.engines[tabId])
+    }
+
     func testTrimInactiveEnginesKeepsTheTabAdapterWithoutItsEngine() {
         let activeSpaceId = UUID()
         let hiddenSpaceId = UUID()

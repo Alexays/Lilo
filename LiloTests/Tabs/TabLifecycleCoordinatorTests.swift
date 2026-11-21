@@ -386,9 +386,9 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         XCTAssertEqual(budgeted, [preferred, dirty])
         XCTAssertEqual(collapsed, [dirty])
         XCTAssertEqual(keep, [preferred, dirty])
-        XCTAssertFalse(
+        XCTAssertTrue(
             TabLifecycleCoordinator().protectedEngineIds(tabs: tabs, availableEngineIds: [preferred, dirty]).contains(dirty),
-            "a form tab can still be frozen"
+            "unsaved form input vetoes freezing too: a frozen page cannot autosave mid-edit"
         )
     }
 
@@ -401,6 +401,48 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
 
         XCTAssertFalse(coordinator.protectedEngineIds(tabs: [mutedTab], availableEngineIds: [muted]).contains(muted))
         XCTAssertTrue(coordinator.discardProtectedEngineIds(tabs: [mutedTab], availableEngineIds: [muted]).contains(muted))
+    }
+
+    /// Table over tab state x the lifecycle triggers that matter: a routine trim (which freezes,
+    /// `protectedEngineIds`), a reclaiming trim (which discards, `discardProtectedEngineIds`) and the
+    /// idle-discard pass the memory-pressure and aggressive presets use (`idleDiscardProtectedEngineIds`).
+    func testProtectionMatrixAcrossFreezeDiscardAndIdleDiscard() {
+        struct Case {
+            let name: String
+            let mutate: (inout Tab) -> Void
+            let freezeProtected: Bool
+            let discardProtected: Bool
+            let idleDiscardProtected: Bool
+        }
+        let cases: [Case] = [
+            Case(name: "plain", mutate: { _ in }, freezeProtected: false, discardProtected: false, idleDiscardProtected: false),
+            Case(name: "unsaved form", mutate: { $0.hasUnsavedFormData = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "loading", mutate: { $0.isLoading = true }, freezeProtected: false, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "agent controlled", mutate: { $0.isAgentControlled = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "picture in picture", mutate: { $0.isInPictureInPicture = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "microphone", mutate: { $0.isMicrophoneActive = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "screen sharing", mutate: { $0.isScreenSharing = true }, freezeProtected: true, discardProtected: true, idleDiscardProtected: true),
+            Case(name: "pinned", mutate: { $0.isPinned = true }, freezeProtected: false, discardProtected: false, idleDiscardProtected: true)
+        ]
+        for policy in [TabLifecycleCoordinator.Policy.foreground, .background] {
+            let coordinator = TabLifecycleCoordinator(policy: policy)
+            for testCase in cases {
+                let id = UUID()
+                var tab = makeTab(id: id)
+                testCase.mutate(&tab)
+                let tabs = [tab]
+                let engines: Set<UUID> = [id]
+                XCTAssertEqual(
+                    coordinator.protectedEngineIds(tabs: tabs, availableEngineIds: engines).contains(id),
+                    testCase.freezeProtected, "\(testCase.name) freeze under \(policy)")
+                XCTAssertEqual(
+                    coordinator.discardProtectedEngineIds(tabs: tabs, availableEngineIds: engines).contains(id),
+                    testCase.discardProtected, "\(testCase.name) discard under \(policy)")
+                XCTAssertEqual(
+                    coordinator.idleDiscardProtectedEngineIds(tabs: tabs, availableEngineIds: engines).contains(id),
+                    testCase.idleDiscardProtected, "\(testCase.name) idle discard under \(policy)")
+            }
+        }
     }
 
     func testPinnedAndBookmarkedTabsDoNotBypassNormalHiddenRetentionLimit() {
