@@ -74,7 +74,6 @@ export type SettingId =
   | "newSpace"
   | "newProfile"
   | "lifecyclePreset"
-  | "tabSleepAllowlist"
   | "singleWindow"
   | "emptyWindowOnLaunch"
   | "littleWindowHotKey"
@@ -210,7 +209,6 @@ export const SETTINGS: SettingModel[] = [
   { id: "newSpace", section: "tabs", groupKey: "settings.groups.spaces" },
   { id: "newProfile", section: "tabs", groupKey: "settings.groups.profiles" },
   { id: "lifecyclePreset", section: "tabs", groupKey: "settings.groups.tabsWindows" },
-  { id: "tabSleepAllowlist", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "singleWindow", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "emptyWindowOnLaunch", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "littleWindowHotKey", section: "tabs", groupKey: "settings.groups.tabsWindows" },

@@ -315,12 +315,6 @@
 				"description": "Quanto rapidamente le schede inattive vengono sospese e scaricate dalla memoria.",
 				"keywords": "memoria prestazioni batteria sospendi scarica stop"
 			},
-			"tabSleepAllowlist": {
-				"title": "Siti mantenuti caricati",
-				"description": "Le schede di questi siti, sottodomini inclusi, non vengono mai congelate né scaricate e continuano a usare memoria e batteria. Separati da virgole.",
-				"keywords": "mantieni caricata eccezione lista consentita mai sospendere congelare scaricare",
-				"placeholder": "mail.example.com, example.org"
-			},
 			"singleWindow": {
 				"title": "Mantieni tutto in una finestra",
 				"description": "Nuove finestre e finestre a comparsa si aprono qui come schede.",
@@ -846,7 +840,7 @@
 		"pinned": "Fissata",
 		"loading": "Caricamento",
 		"muted": "Audio disattivato",
-		"keepLoaded": "Resta caricata",
+		"neverSleeps": "Mai in stop",
 		"playingAudio": "Audio in riproduzione",
 		"terminalCommand": "Comando",
 		"terminalAwaitingFor": "{command} attende una tua risposta da {duration}",
@@ -2178,7 +2172,7 @@
 		"Sleep is back on": "Lo stop è di nuovo attivo",
 		"The battery is below %d%%.": "La batteria è sotto il %d%%.",
 		"The Mac is too hot.": "Il Mac è troppo caldo.",
-		"Keep Loaded": "Mantieni caricata",
+		"Never Sleep": "Mai in stop",
 		"Commands kept the Mac awake for the maximum duration.": "I comandi hanno mantenuto attivo il Mac per la durata massima.",
 		"While the lid was closed": "Mentre il coperchio era chiuso",
 		"%d commands finished": {"one": "%d comando terminato", "other": "%d comandi terminati"},

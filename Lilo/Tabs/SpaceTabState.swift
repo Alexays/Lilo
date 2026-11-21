@@ -22,7 +22,7 @@ struct StoredTab: Codable, Sendable, Equatable, Identifiable {
     var pageColor: String?
     var agentId: String?
     var agentSessionId: String?
-    /// Kept loaded by the user: never frozen or discarded.
+    /// Never Sleep, set by the user: never frozen or discarded.
     var neverSleep = false
 }
 

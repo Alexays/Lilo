@@ -52,8 +52,6 @@ final class BrowserStateStore {
     var glancedTabIds: Set<UUID> = []
     /// Whether an origin may post notifications in a space's profile: an idle freeze spares its tabs, so a messaging app keeps receiving.
     var allowsNotifications: (_ origin: String, _ spaceId: UUID) -> Bool = { _, _ in false }
-    /// The `tabSleepAllowlist` hosts: tabs on them are never frozen or discarded.
-    var neverSleepHosts: Set<String> = []
     /// Live runtime of each shown space and how many windows show it; every one of them uses this host.
     private var liveHosts: [UUID: (host: EngineHost, viewers: Int)] = [:]
 
@@ -734,8 +732,7 @@ final class BrowserStateStore {
     /// but stops spending CPU/energy. The freeze lands once the page said it holds no Web Lock.
     func freezeIdleEngines(freezeThreshold: TimeInterval, now: Date = Date()) {
         guard freezeThreshold.isFinite else { return }
-        var coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
-        coordinator.neverSleepHosts = neverSleepHosts
+        let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
         // Active space included so idle same-window tabs freeze too; its visible tab is protected below.
         for (spaceId, snapshot) in spaces where !snapshot.engines.isEmpty {
             let tabs = projectedSidebar(from: snapshot).tabs
@@ -798,12 +795,11 @@ final class BrowserStateStore {
         let inactiveSpaces = spaces.filter { !$0.value.engines.isEmpty && !visibleSpaceIds.contains($0.key) }
         guard !inactiveSpaces.isEmpty else { return }
 
-        var coordinator = TabLifecycleCoordinator(
+        let coordinator = TabLifecycleCoordinator(
             maxNormalRetainedEnginesPerHiddenSpace: maxRetainedEnginesPerHiddenSpace,
             maxHiddenSpacesWithNormalRetainedEngines: maxHiddenSpacesWithRetainedEngines,
             policy: policy
         )
-        coordinator.neverSleepHosts = neverSleepHosts
         var projectedTabsBySpace: [UUID: [Tab]] = [:]
         let hiddenSpaceModels = inactiveSpaces.map { spaceId, snapshot in
             let tabs = projectedSidebar(from: snapshot).tabs
@@ -927,8 +923,7 @@ final class BrowserStateStore {
         guard total > ceilingBytes else { return (total, total) }
 
         struct Candidate { let spaceId: UUID; let tabId: UUID; let engine: WKWebViewTab; let lastActiveAt: Date }
-        var coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
-        coordinator.neverSleepHosts = neverSleepHosts
+        let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
         var candidates: [Candidate] = []
         // Visible spaces are left to the window's own trim: their EngineHost still holds the engine.
         for (spaceId, snapshot) in spaces where !visibleSpaceIds.contains(spaceId) {
@@ -966,8 +961,7 @@ final class BrowserStateStore {
     ) {
         let allEngines = enginesAcrossSpaces
         let cpuByTab = cpuSampler(allEngines)
-        var coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
-        coordinator.neverSleepHosts = neverSleepHosts
+        let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
         var protectedTabIds: Set<UUID> = []
         var spaceByTab: [UUID: UUID] = [:]
         // Visible spaces are left to the window's own trim, since their EngineHost still holds the engine: a runaway there is frozen in place.

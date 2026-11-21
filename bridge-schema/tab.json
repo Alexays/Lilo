@@ -16,7 +16,7 @@
     { "name": "canGoForward",              "type": "bool",    "tsOptional": false, "tsDefault": "false" },
     { "name": "isPinned",                  "type": "bool",    "tsOptional": false, "tsDefault": "false" },
     { "name": "neverSleep",                "type": "bool",    "tsOptional": true,  "tsDefault": "false",
-      "_comment": "Kept Loaded: exempt from freezing and unloading." },
+      "_comment": "Never Sleep: exempt from freezing and unloading." },
     { "name": "isBookmarked",              "type": "bool",    "tsOptional": false, "tsDefault": "false" },
     { "name": "isClosed",                  "type": "bool",    "tsOptional": false, "tsDefault": "false" },
     { "name": "isAudioPlaying",            "type": "bool",    "tsOptional": false, "tsDefault": "false" },

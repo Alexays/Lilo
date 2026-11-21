@@ -218,7 +218,7 @@ final class SpaceTabStateTests: XCTestCase {
         XCTAssertEqual(projection.tabs.first?.isBookmarked, true)
     }
 
-    func testKeepLoadedSurvivesStorageAndAMoveToAnotherSpace() throws {
+    func testNeverSleepSurvivesStorageAndAMoveToAnotherSpace() throws {
         var tab = Tab(id: UUID(), url: URL(string: "https://example.com"))
         tab.neverSleep = true
         let state = SpaceTabState(

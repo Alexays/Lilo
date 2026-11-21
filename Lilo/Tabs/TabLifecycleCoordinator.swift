@@ -67,22 +67,6 @@ struct TabLifecycleCoordinator {
     /// A tab paused from the media card keeps its playback session this long, to play again from the card.
     var cardPauseGracePeriod: TimeInterval = 30 * 60
     var policy: Policy = .foreground
-    /// Hosts the user keeps loaded (the `tabSleepAllowlist` setting): a tab on one, or on a subdomain of one, is never frozen or discarded.
-    var neverSleepHosts: Set<String> = []
-
-    /// The setting's comma or space separated hostnames, lowercased; a leading `*.` is allowed and means the same as the bare host.
-    static func neverSleepHosts(from setting: String) -> Set<String> {
-        Set(setting.lowercased()
-            .split(whereSeparator: { $0 == "," || $0.isWhitespace })
-            .map { $0.hasPrefix("*.") ? String($0.dropFirst(2)) : String($0) }
-            .filter { !$0.isEmpty && $0.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "." || $0 == "-") } })
-    }
-
-    private func isKeptLoaded(_ tab: Tab) -> Bool {
-        if tab.neverSleep { return true }
-        guard !neverSleepHosts.isEmpty, let host = tab.url?.host()?.lowercased() else { return false }
-        return neverSleepHosts.contains { host == $0 || host.hasSuffix("." + $0) }
-    }
 
     private var effectiveMaxNormalRetainedEnginesPerHiddenSpace: Int {
         switch policy {
@@ -296,7 +280,7 @@ struct TabLifecycleCoordinator {
     }
 
     private func shouldRetainProtected(_ tab: Tab, restoringTabIds: [UUID: Date], now: Date, freezing: Bool = false) -> Bool {
-        tab.isAgentControlled || tab.isInPictureInPicture || isKeptLoaded(tab) ||
+        tab.isAgentControlled || tab.isInPictureInPicture || tab.neverSleep ||
             shouldRetainForAudio(tab, now: now, freezing: freezing) ||
             shouldRetainForCapture(tab, now: now) ||
             shouldRetainForRestoration(tab, restoringTabIds: restoringTabIds, now: now)

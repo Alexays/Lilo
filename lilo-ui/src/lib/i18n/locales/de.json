@@ -315,12 +315,6 @@
 				"description": "Wie schnell inaktive Tabs eingefroren und entladen werden.",
 				"keywords": "speicher leistung batterie einfrieren entladen ruhezustand"
 			},
-			"tabSleepAllowlist": {
-				"title": "Websites, die geladen bleiben",
-				"description": "Tabs dieser Websites, Subdomains eingeschlossen, werden nie eingefroren oder entladen und verbrauchen weiter Speicher und Akku. Durch Kommas getrennt.",
-				"keywords": "geladen lassen ausnahme erlaubnisliste nie einfrieren entladen ruhezustand",
-				"placeholder": "mail.example.com, example.org"
-			},
 			"singleWindow": {
 				"title": "Alles in einem Fenster behalten",
 				"description": "Neue Fenster und Pop-ups werden hier als Tabs geöffnet.",
@@ -846,7 +840,7 @@
 		"pinned": "Angeheftet",
 		"loading": "Wird geladen",
 		"muted": "Stumm",
-		"keepLoaded": "Bleibt geladen",
+		"neverSleeps": "Geht nie in Ruhezustand",
 		"playingAudio": "Audiowiedergabe",
 		"terminalCommand": "Befehl",
 		"terminalAwaitingFor": "{command} wartet seit {duration} auf dich",
@@ -2178,7 +2172,7 @@
 		"Sleep is back on": "Ruhezustand ist wieder aktiviert",
 		"The battery is below %d%%.": "Der Batteriestand liegt unter %d%%.",
 		"The Mac is too hot.": "Der Mac ist zu heiß.",
-		"Keep Loaded": "Geladen lassen",
+		"Never Sleep": "Nie in Ruhezustand",
 		"Commands kept the Mac awake for the maximum duration.": "Befehle haben den Mac für die maximale Dauer wach gehalten.",
 		"While the lid was closed": "Während der Deckel geschlossen war",
 		"%d commands finished": {"one": "%d Befehl beendet", "other": "%d Befehle beendet"},

@@ -315,12 +315,6 @@
 				"description": "Etkin olmayan sekmelerin ne kadar hızlı dondurulup bellekten çıkarılacağı.",
 				"keywords": "bellek performans pil dondur boşalt uyku"
 			},
-			"tabSleepAllowlist": {
-				"title": "Yüklü tutulan siteler",
-				"description": "Bu sitelerin sekmeleri, alt alan adları dahil, asla dondurulmaz veya bellekten çıkarılmaz; bellek ve pil kullanmaya devam eder. Virgülle ayırın.",
-				"keywords": "yüklü tut istisna izin listesi asla uyutma dondurma boşaltma",
-				"placeholder": "mail.example.com, example.org"
-			},
 			"singleWindow": {
 				"title": "Her şeyi tek pencerede tut",
 				"description": "Yeni pencereler ve sayfa açılır pencereleri burada sekme olarak açılır.",
@@ -846,7 +840,7 @@
 		"pinned": "Sabitlenmiş",
 		"loading": "Yükleniyor",
 		"muted": "Sesi kapalı",
-		"keepLoaded": "Yüklü tutuluyor",
+		"neverSleeps": "Hiç uyumaz",
 		"playingAudio": "Ses çalıyor",
 		"terminalCommand": "Komut",
 		"terminalAwaitingFor": "{command}, {duration} süredir sizi bekliyor",
@@ -2178,7 +2172,7 @@
 		"Sleep is back on": "Uyku yeniden açık",
 		"The battery is below %d%%.": "Pil %d%% altında.",
 		"The Mac is too hot.": "Mac çok sıcak.",
-		"Keep Loaded": "Yüklü Tut",
+		"Never Sleep": "Asla Uyutma",
 		"Commands kept the Mac awake for the maximum duration.": "Komutlar Mac'i izin verilen en uzun süre boyunca uyanık tuttu.",
 		"While the lid was closed": "Kapak kapalıyken",
 		"%d commands finished": {"one": "%d komut tamamlandı", "other": "%d komut tamamlandı"},

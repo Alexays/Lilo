@@ -1,0 +1,3 @@
+kind: Added
+body: 'Never Sleep in a tab''s context menu keeps that tab running: it is never frozen, unloaded or archived when idle, and shows a bolt in the sidebar'
+time: 2026-11-20T15:00:00.000000-08:00

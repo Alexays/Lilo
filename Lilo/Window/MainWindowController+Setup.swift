@@ -328,7 +328,6 @@ extension MainWindowController {
             }
         }
         context.applyLifecyclePreset(settingsStore.lifecyclePreset)
-        context.browserState.neverSleepHosts = settingsStore.tabSleepAllowlist
         applyTerminalSettings()
         Task { @MainActor [context] in await context.startContentBlocker() }
         let permissionDecisionHandler: GeolocationBridge.PermissionDecisionHandler = { [weak context] webView, type, origin, completion in

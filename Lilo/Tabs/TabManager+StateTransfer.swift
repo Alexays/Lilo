@@ -133,8 +133,7 @@ extension TabManager {
         }
         // activeSpaceEnginesToKeep reads only the grace periods, identical across every LifecyclePreset, so .default matches the active one;
         // the engine budget comes from the caller.
-        var coordinator = TabLifecycleCoordinator(config: .default)
-        coordinator.neverSleepHosts = browserStateStore?.neverSleepHosts ?? []
+        let coordinator = TabLifecycleCoordinator(config: .default)
         let keep = coordinator.activeSpaceEnginesToKeep(
             tabs: tabs,
             availableEngineIds: availableEngineIds,
@@ -174,8 +173,7 @@ extension TabManager {
         guard !toDiscard.isEmpty else { return false }
 
         // Grace periods are identical across every LifecyclePreset, so .default matches the active one.
-        var coordinator = TabLifecycleCoordinator(config: .default)
-        coordinator.neverSleepHosts = browserStateStore?.neverSleepHosts ?? []
+        let coordinator = TabLifecycleCoordinator(config: .default)
         toDiscard.subtract(coordinator.idleDiscardProtectedEngineIds(
             tabs: openTabs,
             availableEngineIds: toDiscard,

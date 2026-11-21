@@ -315,12 +315,6 @@
 				"description": "閒置分頁凍結及卸載的速度。",
 				"keywords": "記憶體 效能 電池 凍結 卸載 睡眠"
 			},
-			"tabSleepAllowlist": {
-				"title": "保持載入的網站",
-				"description": "這些網站(包括子網域)的分頁不會被凍結或卸載,因此會持續佔用記憶體與電力。以逗號分隔。",
-				"keywords": "保持載入 例外 允許清單 永不休眠 凍結 卸載",
-				"placeholder": "mail.example.com, example.org"
-			},
 			"singleWindow": {
 				"title": "將所有內容保留在一個視窗中",
 				"description": "新視窗與網頁彈出式視窗會在此處以分頁開啟。",
@@ -846,7 +840,7 @@
 		"pinned": "已釘選",
 		"loading": "載入中",
 		"muted": "已靜音",
-		"keepLoaded": "已保持載入",
+		"neverSleeps": "永不睡眠",
 		"playingAudio": "正在播放音訊",
 		"terminalCommand": "指令",
 		"terminalAwaitingFor": "{command} 已等待你回應 {duration}",
@@ -2178,7 +2172,7 @@
 		"Sleep is back on": "已恢復允許睡眠",
 		"The battery is below %d%%.": "電池電量低於 %d%%。",
 		"The Mac is too hot.": "Mac 溫度過高。",
-		"Keep Loaded": "保持載入",
+		"Never Sleep": "永不睡眠",
 		"Commands kept the Mac awake for the maximum duration.": "指令已讓 Mac 保持喚醒達最長時間。",
 		"While the lid was closed": "上蓋闔上期間",
 		"%d commands finished": {"one": "%d 個指令已完成", "other": "%d 個指令已完成"},

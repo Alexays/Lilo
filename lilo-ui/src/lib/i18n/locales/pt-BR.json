@@ -315,12 +315,6 @@
 				"description": "Em quanto tempo as abas inativas são pausadas e descarregadas.",
 				"keywords": "memória desempenho bateria pausar descarregar repouso"
 			},
-			"tabSleepAllowlist": {
-				"title": "Sites mantidos carregados",
-				"description": "As abas desses sites, subdomínios incluídos, nunca são congeladas nem descarregadas e continuam usando memória e bateria. Separados por vírgulas.",
-				"keywords": "manter carregada exceção lista permitida nunca suspender congelar descarregar",
-				"placeholder": "mail.example.com, example.org"
-			},
 			"singleWindow": {
 				"title": "Manter tudo em uma janela",
 				"description": "Novas janelas e pop-ups de páginas abrem como abas aqui.",
@@ -846,7 +840,7 @@
 		"pinned": "Fixada",
 		"loading": "Carregando",
 		"muted": "Sem som",
-		"keepLoaded": "Mantida carregada",
+		"neverSleeps": "Nunca em repouso",
 		"playingAudio": "Reproduzindo áudio",
 		"terminalCommand": "Comando",
 		"terminalAwaitingFor": "{command} está aguardando você há {duration}",
@@ -2178,7 +2172,7 @@
 		"Sleep is back on": "O repouso foi reativado",
 		"The battery is below %d%%.": "A bateria está abaixo de %d%%.",
 		"The Mac is too hot.": "O Mac está quente demais.",
-		"Keep Loaded": "Manter carregada",
+		"Never Sleep": "Nunca pôr em repouso",
 		"Commands kept the Mac awake for the maximum duration.": "Os comandos mantiveram o Mac ativo pelo tempo máximo.",
 		"While the lid was closed": "Enquanto a tampa estava fechada",
 		"%d commands finished": {"one": "%d comando concluído", "other": "%d comandos concluídos"},
