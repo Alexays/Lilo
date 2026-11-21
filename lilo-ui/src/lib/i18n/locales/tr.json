@@ -526,6 +526,11 @@
 				"description": "Herhangi bir kestirmeyi değiştirin veya Arc'ın kestirmeleriyle başlayın.",
 				"keywords": "klavye kestirme kısayol tuş komut"
 			},
+			"holdToQuit": {
+				"title": "Çıkmak için ⌘Q'yu basılı tut",
+				"description": "⌘Q bir uyarı gösterir; Lilo yalnızca tuşlar basılı tutulduğunda kapanır.",
+				"keywords": "çık kapat komut q yanlışlıkla basılı"
+			},
 			"newProfile": {
 				"title": "Yeni profil",
 				"description": "Profiller çerezleri, oturumları ve genişletmeleri birbirinden ayırır.",
@@ -2028,6 +2033,7 @@
 		"Hide Others": "Diğerlerini Gizle",
 		"Show All": "Tümünü Göster",
 		"Quit Lilo": "Lilo'dan Çık",
+		"Hold %@ to Quit": "Çıkmak için %@ basılı tutun",
 		"File": "Dosya",
 		"New Tab": "Yeni Sekme",
 		"Back to tab": "Sekmeye dön",

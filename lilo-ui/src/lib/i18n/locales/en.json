@@ -526,6 +526,11 @@
 				"description": "Change any shortcut, or start from Arc's.",
 				"keywords": "keyboard shortcut hotkey keys command"
 			},
+			"holdToQuit": {
+				"title": "Hold ⌘Q to quit",
+				"description": "Pressing ⌘Q shows a prompt; Lilo quits only when the keys are held down.",
+				"keywords": "quit exit command q accidental hold"
+			},
 			"newProfile": {
 				"title": "New profile",
 				"description": "Profiles keep cookies, sign-ins and extensions apart.",
@@ -2028,6 +2033,7 @@
 		"Hide Others": "Hide Others",
 		"Show All": "Show All",
 		"Quit Lilo": "Quit Lilo",
+		"Hold %@ to Quit": "Hold %@ to Quit",
 		"File": "File",
 		"New Tab": "New Tab",
 		"Back to tab": "Back to tab",

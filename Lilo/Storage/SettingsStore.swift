@@ -196,6 +196,9 @@ final class SettingsStore {
     /// Remove every persistent profile's cookies and website data when the app quits.
     var clearSiteDataOnQuit: Bool { (get("clearSiteDataOnQuit") ?? "false") == "true" }
 
+    /// The quit shortcut must be held about a second to quit; a tap only shows the HUD.
+    var holdToQuit: Bool { self.get("holdToQuit") == "true" }
+
     /// Auto-enter Picture-in-Picture when leaving a tab with active media (a call or playing video).
     var autoPictureInPicture: Bool { (get("autoPictureInPicture") ?? "true") == "true" }
 

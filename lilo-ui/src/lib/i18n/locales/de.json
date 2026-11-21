@@ -526,6 +526,11 @@
 				"description": "Jeden Kurzbefehl ändern oder die von Arc übernehmen.",
 				"keywords": "tastatur kurzbefehl tastenkombination tasten befehl"
 			},
+			"holdToQuit": {
+				"title": "Zum Beenden ⌘Q gedrückt halten",
+				"description": "⌘Q zeigt einen Hinweis; Lilo wird nur beendet, wenn die Tasten gedrückt bleiben.",
+				"keywords": "beenden verlassen Befehl q versehentlich halten"
+			},
 			"newProfile": {
 				"title": "Neues Profil",
 				"description": "Profile halten Cookies, Anmeldungen und Erweiterungen getrennt.",
@@ -2028,6 +2033,7 @@
 		"Hide Others": "Andere ausblenden",
 		"Show All": "Alle einblenden",
 		"Quit Lilo": "Lilo beenden",
+		"Hold %@ to Quit": "Zum Beenden %@ gedrückt halten",
 		"File": "Ablage",
 		"New Tab": "Neuer Tab",
 		"Back to tab": "Zurück zum Tab",

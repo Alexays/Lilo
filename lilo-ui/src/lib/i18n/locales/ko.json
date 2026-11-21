@@ -526,6 +526,11 @@
 				"description": "모든 단축키를 변경하거나 Arc의 단축키로 시작할 수 있습니다.",
 				"keywords": "키보드 단축키 키 명령"
 			},
+			"holdToQuit": {
+				"title": "⌘Q를 길게 눌러 종료",
+				"description": "⌘Q를 누르면 안내가 표시되고, 키를 계속 누르고 있을 때만 Lilo가 종료됩니다.",
+				"keywords": "종료 끝내기 명령 q 실수 길게"
+			},
 			"newProfile": {
 				"title": "새 프로필",
 				"description": "프로필별로 쿠키, 로그인, 확장 프로그램을 분리합니다.",
@@ -2028,6 +2033,7 @@
 		"Hide Others": "기타 가리기",
 		"Show All": "모두 보기",
 		"Quit Lilo": "Lilo 종료",
+		"Hold %@ to Quit": "%@를 길게 눌러 종료",
 		"File": "파일",
 		"New Tab": "새 탭",
 		"Back to tab": "탭으로 돌아가기",
