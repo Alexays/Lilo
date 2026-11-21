@@ -212,7 +212,12 @@ enum AgentClientConfig {
 
     /// Lilo's entry among the servers a JSON client keeps under its own key.
     private static func liloServer(of client: Client, _ config: [String: Any]) -> [String: Any]? {
-        guard case .json(_, let key, _) = client.config else { return nil }
+        var key = "mcpServers"
+        switch client.config {
+        case .json(_, let own, _): key = own
+        case .claudeCLI: break
+        case .toml: return nil
+        }
         return (config[key] as? [String: Any])?["lilo"] as? [String: Any]
     }
 
