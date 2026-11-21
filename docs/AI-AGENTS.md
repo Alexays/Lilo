@@ -55,7 +55,7 @@ meanwhile; your other windows, and the site and extension prompts there, are not
 It counts as a refusal when you decline; one nobody answers in 45 seconds is withdrawn, and the agent
 may ask once more; with no window open the agent is told to ask you to open one first.
 
-Sites you always allow are listed in Settings, where you can remove them. Whatever the setting,
+Sites you always allow are listed in Settings, where you can remove them. Each agent also has a Permissions row (the ... menu of its tile in Settings > Agents): leave it on Ask each time, or choose Always allow so that agent acts on ordinary buttons without asking, and list sites where only that agent acts unasked. Both leave out what the page's structure flags (a form with a password or card field, a post to another origin, a frame Lilo cannot read, a cross-origin request) and every file upload: those are asked of every agent. An agent you have not set follows the setting above, and removing an agent forgets its Permissions. Whatever the setting,
 Lilo always asks before an agent hands a page one of your files (`file_upload`, `upload_image`).
 
 Code an agent runs itself through `javascript_tool`, `run` or `devtools_command` is not covered:

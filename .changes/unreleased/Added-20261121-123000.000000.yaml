@@ -1,0 +1,3 @@
+kind: Added
+body: 'Each agent that uses Lilo has a Permissions row in Settings > Agents: choose Always allow to let it act on ordinary buttons without asking, or list the sites where only that agent acts unasked. Signing in, paying, posting to another site and file uploads are still asked of every agent'
+time: 2026-11-21T12:30:00.000000Z
