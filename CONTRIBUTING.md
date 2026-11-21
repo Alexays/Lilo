@@ -148,7 +148,19 @@ Run it once your change is done, and confirm it passes before you open a pull re
 It prints one line per check, `ok  ui-lint 12.3s` or `FAIL ui-lint 12.3s`, then the full log of the failed
 checks only and a count of the bytes printed; a green run is a dozen short lines. `make validate JSON=1` prints
 one JSON object per check instead (`check`, `ok`, `dur_s`, `bytes`, and the last 20 log lines as `log_tail` when
-it failed), for scripts and agents.
+it failed), for scripts and agents. `make validate-scope` prints the same lines for the checks a diff needs.
+
+Three tiers run less than `make validate`, each with a time budget, so a mistake shows up where it is cheapest to fix:
+
+| Tier | When | Budget | Runs |
+|------|------|--------|------|
+| `make check` | in your session, by hand or by an agent | under 10 s | no builds: eslint on the changed UI files and the tests beside them (the catalog tests for a locale), SwiftLint on the changed Swift files, the documentation site check, the release-note check. A Swift-only change runs SwiftLint alone. It stops at the first failure |
+| pre-commit hook | `git commit` | under 15 s | the same on the staged files, without the tests, plus `sync-check`: the tab bridge outputs match `make bridge-gen`, and a Swift file added or deleted, or a change to `project.yml`, comes with `Lilo.xcodeproj` (`make project-sync`) |
+| pre-push hook | `git push` | about 30 s warm | `make validate-scope` under `/tmp/tsc.lock` |
+
+`make check BASE=<ref>` compares with another ref (default `origin/main`); without that ref it checks the whole tree. A diff with no quick check (the Makefile, scripts, the websites) prints so and leaves it to pre-push.
+`svelte-check` type-checks the whole UI in about 7 s, so it waits for `make ui-lint` in pre-push.
+`make hooks-install` enables the hooks. `git commit --no-verify` and `git push --no-verify` skip them, and CI runs the full gate either way; the hooks never skip on their own. `BASE=<ref> git push` makes pre-push compare with another ref.
 Editing an English page of the documentation site fails `make docs-check` until its French
 translation is refreshed with `make docs-translate`, which needs Claude Code; without it, ask a
 maintainer to run it on your branch. A change to `COMPATIBILITY.md` or to an agent tool definition
@@ -156,6 +168,9 @@ only makes the French reference tables stale, which warns.
 
 | Command | Runs |
 |---------|------|
+| `make check` | the quick tier above: lint and the related tests of the changed files, no builds |
+| `make scope-test` | the diff scoping behind `validate-scope` and the tiers |
+| `make tier-test` | the quick tiers and their Git hooks, in temporary repositories with a stub Makefile |
 | `make ui-lint` | ESLint and svelte-check over `lilo-ui/` |
 | `make ui-test` | UI unit tests, including the catalog key and placeholder parity checks |
 | `make e2e` | Playwright end-to-end tests of the interface, in Chromium |
@@ -343,7 +358,7 @@ and `!` before the colon for a breaking change. Types: `feat`, `fix`, `perf`, `r
 `extensions`, `agent`, `terminal`, `window`, `bridge`, `import`, `ui`.
 
 `make hooks-install` points this clone's Git `core.hooksPath` at the tracked `.githooks/`
-directory. It refuses when `core.hooksPath` is already set or `.git/hooks` holds a hook that
+directory (`commit-msg`, `pre-commit` and `pre-push`; see [Tests and validation](#tests-and-validation)). It refuses when `core.hooksPath` is already set or `.git/hooks` holds a hook that
 would stop running. The native `commit-msg` hook and CI share a shell validator for the
 header's type, syntax, lowercase scope, lowercase nonempty description and absence of trailing
 whitespace or a final period. Git's `Revert "..."` and `Reapply "..."` headers are accepted.
