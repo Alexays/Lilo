@@ -526,6 +526,11 @@
 				"description": "Altere qualquer atalho ou comece com os do Arc.",
 				"keywords": "teclado atalho tecla teclas comando"
 			},
+			"holdToQuit": {
+				"title": "Manter ⌘Q pressionado para encerrar",
+				"description": "⌘Q mostra um aviso; o Lilo só é encerrado se as teclas continuarem pressionadas.",
+				"keywords": "encerrar sair comando q acidental manter"
+			},
 			"newProfile": {
 				"title": "Novo perfil",
 				"description": "Os perfis separam cookies, sessões e extensões.",
@@ -2028,6 +2033,7 @@
 		"Hide Others": "Ocultar outros",
 		"Show All": "Mostrar tudo",
 		"Quit Lilo": "Encerrar Lilo",
+		"Hold %@ to Quit": "Mantenha %@ pressionado para encerrar",
 		"File": "Arquivo",
 		"New Tab": "Nova aba",
 		"Back to tab": "Voltar à aba",

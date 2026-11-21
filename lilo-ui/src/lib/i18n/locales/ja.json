@@ -526,6 +526,11 @@
 				"description": "すべてのショートカットを変更でき、Arc の設定から始めることもできます。",
 				"keywords": "キーボード ショートカット ホットキー キー コマンド"
 			},
+			"holdToQuit": {
+				"title": "⌘Q を長押しで終了",
+				"description": "⌘Q を押すと確認が表示され、キーを押し続けた場合のみ Lilo を終了します。",
+				"keywords": "終了 閉じる q 誤操作 長押し"
+			},
 			"newProfile": {
 				"title": "新規プロファイル",
 				"description": "プロファイルごとに Cookie、サインイン、機能拡張を分けられます。",
@@ -2028,6 +2033,7 @@
 		"Hide Others": "ほかを非表示",
 		"Show All": "すべてを表示",
 		"Quit Lilo": "Lilo を終了",
+		"Hold %@ to Quit": "%@ を長押しで終了",
 		"File": "ファイル",
 		"New Tab": "新規タブ",
 		"Back to tab": "タブに戻る",
