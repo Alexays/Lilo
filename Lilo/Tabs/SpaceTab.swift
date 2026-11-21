@@ -385,6 +385,15 @@ struct SpaceTab {
         finishMutation()
     }
 
+    /// Takes a split pane's tab out of the split, back into the list just after it; repair
+    /// dissolves the split once a single pane remains.
+    mutating func unsplitTab(_ tabId: UUID) {
+        guard let folderId = index.parentFolderId(for: tabId),
+              folder(id: folderId)?.isSplit == true,
+              let section = section(of: tabId) else { return }
+        moveNode(tabId, toFolder: nil, section: section, insert: .anchored(fallbackIndex: .max, insertBeforeId: nil, insertAfterId: folderId))
+    }
+
     mutating func removeTabForTransfer(_ tabId: UUID) -> StoredSidebarNode? {
         guard let removed = removeNode(tabId, from: &state.tree) else { return nil }
         reselectActiveTab(excluding: [tabId])

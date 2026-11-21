@@ -1,0 +1,3 @@
+kind: Added
+body: 'Agents can record a task once and replay it later: flow_start records each call as a step with a stable locator, flow_save stores it under a name in Agents/Flows (with parameters for values supplied at each run, secrets never stored), and flow_run replays the steps asking for approval exactly as a live call would'
+time: 2026-11-20T02:30:54.147038Z

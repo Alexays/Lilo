@@ -54,6 +54,7 @@
     tooltipAnchor,
     actionsInert = false,
     splitDropTarget = false,
+    inSplit = false,
     level = 1,
     tabStop = true,
     stackName,
@@ -66,6 +67,8 @@
     tooltipAnchor?: string;
     actionsInert?: boolean;
     splitDropTarget?: boolean;
+    /** The row is a pane of a split: its × takes the tab out of the split instead of closing it. */
+    inSplit?: boolean;
     /** Depth in the sidebar tree, 1 at the root. */
     level?: number;
     /** The one row of its tree that Tab lands on; arrows move between the others. */
@@ -168,6 +171,11 @@
     // The row unmounts on close, so its mouseleave never fires.
     clearTabPreview();
 
+    if (inSplit) {
+      tabActions.unsplitTab(tab.id);
+      return;
+    }
+
     const intent = resolveTabCloseIntent(tab);
     if (intent === "unpin") {
       tabActions.unpin(tab.id);
@@ -192,6 +200,7 @@
   }
 
   const closeButtonLabel = $derived(
+    inSplit ? t("tabItem.removeFromSplit") :
     tab.isClosed && tab.isPinned ? t("tabItem.removePinnedTab") :
     tab.isClosed && tab.isBookmarked ? t("tabItem.removeBookmark") :
     t("tabItem.closeTab")

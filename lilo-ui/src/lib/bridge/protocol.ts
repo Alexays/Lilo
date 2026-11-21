@@ -717,6 +717,8 @@ export interface BridgeCommandPayloadMap {
 	newSplitView: EmptyPayload;
 	newTerminal: EmptyPayload;
 	splitTab: { tabId: string; side: SplitDropSide; targetTabId?: string };
+	/** Takes a split pane's tab out of the split, back into the list; the tab stays open. */
+	unsplitTab: { tabId: string };
 	splitURL: { url: string; side: SplitDropSide; targetTabId?: string };
 	openDroppedLinks: { urls: string[] } & BridgeLinkDropTarget;
 	peekURL: { url: string };
