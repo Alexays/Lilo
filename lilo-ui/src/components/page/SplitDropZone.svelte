@@ -14,6 +14,8 @@
   import { getConversationTab } from "../../stores/folders.svelte";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
   import { getSidebarDrag } from "../../stores/sidebarDnd.svelte";
+  import { paneMoveTarget } from "../../lib/splitPaneMove";
+  import { getSplitPaneDrag } from "../../stores/splitPaneDrag.svelte";
   import { getSplitPanes } from "../../stores/splitPanes.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { isSidebarVisible } from "../../stores/ui.svelte";
@@ -133,8 +135,16 @@
     };
   });
 
-  const showsTargets = $derived(visible || linkTarget !== null);
-  const activeTarget = $derived(hoveredTarget ?? linkTarget);
+  // A pane dragged by its handle: the native side streams the drag through the
+  // splitPaneDrag store; the same edge targets show, the center trading places.
+  const paneDrag = $derived(getSplitPaneDrag());
+  const paneDragTarget = $derived(
+    paneDrag ? paneMoveTarget(panes, paneDrag.x, paneDrag.y, paneDrag.tabId) : null,
+  );
+
+  const showsTargets = $derived(visible || linkTarget !== null || paneDrag !== null);
+  const activeTarget = $derived(hoveredTarget ?? linkTarget ?? paneDragTarget);
+  const labelKey = $derived(paneDrag !== null ? "paneMove" : "splitDrop");
 
   function canResolve(context: DndTargetContext): boolean {
     const tabId = splitTabId(context.dragSource.kind, context.dragSource.id);
@@ -183,12 +193,12 @@
       >
         {#if aimed === "replace"}
           <div class="split-drop-target active">
-            <span class="split-drop-label">{t("splitDrop.replace")}</span>
+            <span class="split-drop-label">{t(`${labelKey}.replace`)}</span>
           </div>
         {:else if aimed}
           {#each halves as side (side)}
             <div class="split-drop-target" class:active={aimed === side}>
-              <span class="split-drop-label">{t(`splitDrop.${side}`)}</span>
+              <span class="split-drop-label">{t(`${labelKey}.${side}`)}</span>
             </div>
           {/each}
         {:else}

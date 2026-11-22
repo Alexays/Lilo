@@ -21,7 +21,7 @@ extension MainWindowController {
         let little = LittleWindowController(engine: engine, spaceId: spaceId, dataStore: dataStore, owner: self)
         littleWindows[engine.id] = little
         if let url, configuration == nil { engine.loadURL(url) }
-        little.show()
+        little.show(inPage: url != nil || configuration != nil)
         return little
     }
 
@@ -29,8 +29,7 @@ extension MainWindowController {
     /// else the active window switched to it. The live page moves when the Space runs in the same
     /// data store; otherwise its URL reloads there.
     func moveLittleWindow(_ little: LittleWindowController, toSpace spaceId: UUID) {
-        let target = context.windows.windows(showing: spaceId).first ?? context.windows.activeWindow ?? self
-        if target.tabManager.currentSpaceId != spaceId { target.switchToSpace(spaceId) }
+        let target = windowForLittleWindowTab(in: spaceId)
         // Out of the map first: the adopted engine's events must reach the tab, not the Little window.
         littleWindows[little.engine.id] = nil
         let engine = little.detachEngine()
@@ -43,5 +42,20 @@ extension MainWindowController {
         little.window.close()
         target.showWindow(nil)
         target.window?.makeKeyAndOrderFront(nil)
+    }
+
+    /// A page the Little window never loaded opens as a new tab of its Space, and the window closes.
+    func openLittleWindowURLAsTab(_ url: URL, from little: LittleWindowController) {
+        let target = windowForLittleWindowTab(in: little.spaceId)
+        target.createTabStateFirst(url: url)
+        little.window.close()
+        target.showWindow(nil)
+        target.window?.makeKeyAndOrderFront(nil)
+    }
+
+    private func windowForLittleWindowTab(in spaceId: UUID) -> MainWindowController {
+        let target = context.windows.windows(showing: spaceId).first ?? context.windows.activeWindow ?? self
+        if target.tabManager.currentSpaceId != spaceId { target.switchToSpace(spaceId) }
+        return target
     }
 }

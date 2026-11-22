@@ -108,7 +108,7 @@ extension BrowserContext {
     /// agent: neither the idle sweep nor Clear takes it.
     func isBusy(_ tab: Tab, engine: WKWebViewTab?) -> Bool {
         tab.isAudioPlaying || tab.isMicrophoneActive || tab.isCameraActive || tab.isScreenSharing || tab.isInCall
-            || tab.isAgentControlled || tab.hasUnsavedFormData || engine?.isInPictureInPicture == true
+            || tab.isAgentControlled || tab.neverSleep || tab.hasUnsavedFormData || engine?.isInPictureInPicture == true
     }
 
     /// Runs `archiveIdleTabs` every few minutes while Lilo is active, the first pass right after launch: in the

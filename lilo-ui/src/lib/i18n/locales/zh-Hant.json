@@ -492,6 +492,11 @@
 				"description": "代理程式會等待你的回應。",
 				"keywords": "代理程式 核准 確認 付款 購買 訂單 刪除 傳送 發佈"
 			},
+			"agentActionLog": {
+				"title": "記錄代理程式的操作",
+				"description": "本機檔案逐條列出每次呼叫,絕不包含輸入的文字或頁面內容。",
+				"keywords": "代理程式 日誌 歷史 稽核 操作 重播"
+			},
 			"agentAlwaysAllowed": {
 				"title": "一律允許",
 				"description": "代理程式在這些網站上執行動作時不會詢問。",
@@ -525,6 +530,11 @@
 				"title": "鍵盤快速鍵",
 				"description": "更改任何快速鍵，或從 Arc 的配置開始。",
 				"keywords": "鍵盤 快速鍵 按鍵 command"
+			},
+			"holdToQuit": {
+				"title": "按住結束快速鍵以結束",
+				"description": "按下結束快速鍵會顯示提示；只有按住按鍵不放時 Lilo 才會結束。",
+				"keywords": "結束 關閉 指令 q 誤觸 按住"
 			},
 			"newProfile": {
 				"title": "新增個人檔案",
@@ -853,6 +863,7 @@
 		"pinned": "已釘選",
 		"loading": "載入中",
 		"muted": "已靜音",
+		"neverSleeps": "永不睡眠",
 		"playingAudio": "正在播放音訊",
 		"terminalCommand": "指令",
 		"terminalAwaitingFor": "{command} 已等待你回應 {duration}",
@@ -860,6 +871,7 @@
 		"terminalFailedDetail": "{command} 在 {duration} 後失敗（結束代碼 {code}）",
 		"terminalSucceededDetail": "{command} 已於 {duration} 內完成",
 		"closeTab": "關閉分頁",
+		"removeFromSplit": "從分割檢視移除",
 		"removePinnedTab": "移除釘選分頁",
 		"tabName": "分頁名稱",
 		"removeBookmark": "移除書籤",
@@ -913,13 +925,22 @@
 		"bottom": "在下方開啟",
 		"replace": "取代"
 	},
+	"paneMove": {
+		"left": "移到左側",
+		"right": "移到右側",
+		"top": "移到上方",
+		"bottom": "移到下方",
+		"replace": "交換"
+	},
 	"tabSection": {
 		"splitView": "分割顯示",
 		"folderEmpty": "資料夾是空的",
 		"newTab": "新增分頁",
+		"newTabShort": "新增",
 		"newTerminal": "新增終端機",
 		"clearUnpinnedTooltip": "封存未釘選分頁",
 		"listOptions": "排序與分組",
+		"searchTabs": "搜尋分頁",
 		"pinnedTabs": "釘選分頁",
 		"openTabs": "已開啟分頁",
 		"dropToPin": "放下以釘選",
@@ -1072,6 +1093,7 @@
 		"showFolder": "顯示下載資料夾",
 		"clearFinished": "清除已完成的下載項目",
 		"dragFile": "拖移檔案",
+		"showInFinder": "在 Finder 中顯示",
 		"announceDone": "已下載 {filename}",
 		"announceFailed": "無法下載 {filename}"
 	},
@@ -1153,7 +1175,6 @@
 		"installed": "已安裝"
 	},
 	"commandBar": {
-		"showDetails": "顯示鍵盤提示",
 		"hintPeek": "預覽",
 		"hintCopyLink": "拷貝連結",
 		"hintCloseTab": "關閉分頁",
@@ -1185,6 +1206,7 @@
 		"terminalProgram": "程式",
 		"hintRun": "執行",
 		"hintSplit": "分割",
+		"splitFull": "分割顯示已滿（{count} 個窗格）",
 		"scopeTabs": "分頁",
 		"scopeBookmarks": "書籤",
 		"scopeHistory": "歷史記錄",
@@ -1220,6 +1242,8 @@
 		"sectionOpenTabs": "已開啟分頁",
 		"sectionBookmarks": "書籤",
 		"sectionRecentHistory": "最近的歷史記錄",
+		"sectionFrequentSites": "常用網站",
+		"sectionRecentConversations": "最近的對話",
 		"sectionHistory": "歷史記錄",
 		"sectionSwitchToTab": "切換至分頁",
 		"sectionGoTo": "前往",
@@ -1415,6 +1439,15 @@
 		"title": "WebKit 旗標",
 		"resetTitle": "已更改的旗標",
 		"reloadNote": "重新載入頁面以套用變更"
+	},
+	"little": {
+		"openIn": "在 {space} 中開啟",
+		"openInMenu": "在其他空間中開啟",
+		"copyLink": "拷貝連結",
+		"linkCopied": "連結已拷貝",
+		"placeholder": "搜尋或輸入網址...",
+		"emptyTitle": "搜尋網頁或輸入網址",
+		"emptySubtitle": "輸入 / 可搜尋你造訪過的頁面。"
 	},
 	"urlToast": {
 		"pageActions": "頁面操作",
@@ -2046,6 +2079,7 @@
 		"Hide Others": "隱藏其他",
 		"Show All": "全部顯示",
 		"Quit Lilo": "結束 Lilo",
+		"Hold %@ to Quit": "按住 %@ 以結束",
 		"File": "檔案",
 		"New Tab": "新增分頁",
 		"Back to tab": "返回分頁",
@@ -2091,9 +2125,18 @@
 		"New Split View": "新增分割顯示",
 		"Split View": "分割顯示",
 		"Separate Split View": "分開分割顯示",
+		"Close Split Pane": "關閉分割窗格",
+		"Maximize Split Pane": "最大化分割窗格",
+		"Move Pane": "移動窗格",
+		"Move Pane Left": "將分割窗格移到左側",
+		"Move Pane Right": "將分割窗格移到右側",
+		"Move Pane Up": "將分割窗格移到上方",
+		"Move Pane Down": "將分割窗格移到下方",
 		"Open in Split View": "以分割顯示開啟",
+		"Split view is full (%lld panes)": "分割顯示已滿（%lld 個窗格）",
 		"Hide Element…": "隱藏元素…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "按一下要在此網站上隱藏的元素。按 Esc 鍵取消。",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "點按元素或拖移選取區域。方向鍵可更改元素,按 Return 截圖,按 Esc 取消。",
 		"Picture in Picture": "子母畫面",
 		"Develop": "開發",
 		"Show Web Inspector": "顯示網頁檢閱器",
@@ -2183,6 +2226,7 @@
 		"Sleep is back on": "已恢復允許睡眠",
 		"The battery is below %d%%.": "電池電量低於 %d%%。",
 		"The Mac is too hot.": "Mac 溫度過高。",
+		"Never Sleep": "永不睡眠",
 		"Commands kept the Mac awake for the maximum duration.": "指令已讓 Mac 保持喚醒達最長時間。",
 		"While the lid was closed": "上蓋闔上期間",
 		"%d commands finished": {"one": "%d 個指令已完成", "other": "%d 個指令已完成"},
@@ -2693,7 +2737,11 @@
 			"noFolder": "無檔案夾",
 			"noFolderDetail": "代理程式在自己的檔案夾中工作",
 			"backgroundHint": "按 {shortcut} 在背景進行",
-			"start": "開始"
+			"start": "開始",
+			"searchAgents": "搜尋代理程式",
+			"featuredAgents": "精選",
+			"registryAgents": "註冊表",
+			"noMatches": "沒有相符的代理程式"
 		},
 		"row": {
 			"untitled": "新對話",

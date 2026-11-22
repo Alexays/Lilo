@@ -206,3 +206,8 @@ export function fileIconURL(dl: BridgeDownloadSnapshot): string {
   const ext = dot > 0 ? dl.filename.slice(dot + 1).toLowerCase() : "";
   return `lilo-chrome://ui/file-icon/${encodeURIComponent(ext)}`;
 }
+
+/** Quick Look's thumbnail of a finished download's file; it fails for a type that has none. */
+export function previewURL(dl: BridgeDownloadSnapshot): string {
+  return `lilo-chrome://ui/download-preview/${dl.id}`;
+}
