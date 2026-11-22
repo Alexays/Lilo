@@ -75,12 +75,12 @@ full successes, median tokens, wall time and tool calls, and the summed cost.
 
 ## Fixture tasks
 
-`fixtures.py` runs 22 small tasks on local pages, each built around one thing browser agents get
+`fixtures.py` runs 19 small tasks on local pages, each built around one thing browser agents get
 wrong: a phone field that reformats as it is typed, buttons in shadow roots, a form in a frame, a list
 whose rows are rebuilt every 700 ms, content that shows up late, a slow submit with no progress
 (clicking twice fails), a `div` combobox, infinite scroll, instructions hidden in the page, a
-`confirm()` dialog, a link that opens a new tab, a hover-only menu, a `contenteditable` editor, a date
-input and a paginated table. Three `gate-*` tasks check the approval gate: an icon-only
+`confirm()` dialog, a link that opens a new tab, a hover-only menu, a `contenteditable` editor, HTML5
+drag and drop, a date input and a paginated table. Three `gate-*` tasks check the approval gate: an icon-only
 purchase button in another language and a login must stop for the user's allow (the agent answers
 `asked`), and a harmless "Save order" must not.
 
@@ -98,7 +98,7 @@ python3 -I bench/mcp/fixtures.py serve   # print one URL per task, to open the p
 
 - Each run gets its own path on the server (`/<run>/<task>/`), so cookies or storage a page left in
   Lilo's agents profile and reports from an earlier run never count for the next one.
-- Only the `gate-checkout-icon`, `gate-login` and `flow-gate-pay` tasks (marked `asks`) trigger Lilo's question before consequential actions. A Debug build answers it by itself: `LILO_AGENT_CLICKS=allow` (the default of `make agent-app`, `CLICKS=allow`) says yes to every question, so the other tasks never wait, and `deny` says no at once, which the click reports as the `needs_user` of a user who declined, without the 45 s wait. `make agent-eval` runs the `asks` tasks against an app started with `CLICKS=deny` and the rest against one started with `allow`, restarting the app it started between the two (`make agent-app-restart CLICKS=deny`; quit a Debug app started by hand first) and stopping it at the end. Only a Debug build reads the variable.
+- Only the `gate-checkout-icon` and `gate-login` tasks (marked `asks`) trigger Lilo's question before consequential actions. A Debug build answers it by itself: `LILO_AGENT_CLICKS=allow` (the default of `make agent-app`, `CLICKS=allow`) says yes to every question, so the other tasks never wait, and `deny` says no at once, which the click reports as the `needs_user` of a user who declined, without the 45 s wait. `make agent-eval` runs the `asks` tasks against an app started with `CLICKS=deny` and the rest against one started with `allow`, restarting the app it started between the two (`make agent-app-restart CLICKS=deny`; quit a Debug app started by hand first) and stopping it at the end. Only a Debug build reads the variable.
 - `make agent-eval-test` (part of `make validate`) checks the server and that every task's grading
   passes a correct run and fails an empty or doubled one, without a browser or a model.
 - Results go to `results/fixtures-<tool>.jsonl` with the same timing, token and tool call fields as
@@ -124,7 +124,7 @@ debug app's windows listed by the window server (`CGWindowListCopyWindowInfo`):
 | Launch, `HEADLESS=0` (default of the app) | Yes, by construction | Not measured live: it would take the owner's focus. `AppDelegate.applicationDidFinishLaunching` sets the policy to regular, `makeKeyAndOrderFront` and `NSApp.activate(ignoringOtherApps: true)` |
 | Launch, `make agent-app` (headless) | No | Policy `accessory` (`lsappinfo`: `UIElement`), not active, frontmost app unchanged, windows at alpha 0 |
 | Agent opens tabs and windows | No | The new-tab fixture passes headless; agent tabs live in the Agents space or in an off-screen parking window at (-20000, 20156), alpha 0. `tabRequestsForeground` already ignores agent tabs |
-| Native clicks, drag, keys, scroll | No | `AgentInput` hands `NSEvent`s straight to the `WKWebView` (`mouseDown`, `keyDown`), never through window routing. 15 of 16 fixtures pass with a non-key window, among them contenteditable, custom-combobox, hover-menu and date-input |
+| Native clicks, drag, keys, scroll | No | `AgentInput` hands `NSEvent`s straight to the `WKWebView` (`mouseDown`, `keyDown`), never through window routing. 15 of 16 fixtures pass with a non-key window, among them drag-reorder, contenteditable, custom-combobox, hover-menu and date-input |
 | `make agent-eval`, 16 fixtures | No | One frontmost app for the whole run (about 3.5 minutes), 15 of 16 pass (stale-list failed on the agent's behavior: two `done` reports) |
 | `make swift-test` | No | `PageWorldTests` and `AgentInputTests` ran with the frontmost app unchanged; the test host runs `.prohibited` under XCTest (`AppDelegate.main`) |
 | `make e2e` | No, by configuration | Playwright's `chrome-headless-shell`, not the app; not measured live because that browser was not installed on the measuring Mac |
