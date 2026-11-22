@@ -700,7 +700,8 @@
 				"addSite": "Dodaj witrynę…",
 				"addSiteLabel": "Dodaj stronę, na której {client} może działać bez pytania",
 				"removeSite": "Usuń {site}",
-				"floor": "Logowanie, płacenie, kupowanie, usuwanie, publikowanie i wysyłanie danych do innej witryny zawsze wymagają pytania, dla każdego agenta."
+				"floor": "Logowanie, płacenie, kupowanie, usuwanie, publikowanie i wysyłanie danych do innej witryny zawsze wymagają pytania, dla każdego agenta.",
+				"floorOff": "Pytania są wyłączone: agenci działają bez pytania, także przy działaniach wrażliwych."
 			}
 		},
 		"agentActivity": {

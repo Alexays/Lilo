@@ -3,7 +3,7 @@
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { CLAUDE, type TerminalProgramIcon } from "../../lib/terminalIcons";
   import { getAgentClients } from "../../stores/agents.svelte";
-  import { getAgentClientsSnapshot, getAgentPreview, isConnectingAgentClient, previewAgentClient } from "../../stores/settings.svelte";
+  import { getAgentClientsSnapshot, getAgentPreview, getSetting, isConnectingAgentClient, previewAgentClient } from "../../stores/settings.svelte";
   import { OPENAI } from "../agents/modelLogos";
   import SettingsAgentConfigSheet from "./SettingsAgentConfigSheet.svelte";
   import SettingsAgentPermissions from "./SettingsAgentPermissions.svelte";
@@ -118,7 +118,9 @@
   </div>
 </UiInsetList>
 <p class="footnote">
-  {#if rows.some((row) => row.client?.configured || !row.client)}{t("settings.agents.permissions.floor")}{/if}
+  {#if rows.some((row) => row.client?.configured || !row.client)}
+    {getSetting("agentAskBeforeActions", "true") === "true" ? t("settings.agents.permissions.floor") : t("settings.agents.permissions.floorOff")}
+  {/if}
   {t("settings.agents.footnote")}
 </p>
 

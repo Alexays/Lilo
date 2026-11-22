@@ -700,7 +700,8 @@
 				"addSite": "Site Ekle…",
 				"addSiteLabel": "{client} için sormadan eylem yapılabilecek bir site ekle",
 				"removeSite": "{site} sitesini kaldır",
-				"floor": "Oturum açma, ödeme, satın alma, silme, yayımlama ve başka bir siteye veri gönderme her ajan için her zaman sorulur."
+				"floor": "Oturum açma, ödeme, satın alma, silme, yayımlama ve başka bir siteye veri gönderme her ajan için her zaman sorulur.",
+				"floorOff": "Sorular kapalı: ajanlar hassas işlemler dahil sormadan işlem yapar."
 			}
 		},
 		"agentActivity": {

@@ -700,7 +700,8 @@
 				"addSite": "Añadir sitio…",
 				"addSiteLabel": "Añadir un sitio donde {client} puede actuar sin preguntar",
 				"removeSite": "Quitar {site}",
-				"floor": "Iniciar sesión, pagar, comprar, eliminar, publicar y enviar datos a otro sitio siempre preguntan, para todo agente."
+				"floor": "Iniciar sesión, pagar, comprar, eliminar, publicar y enviar datos a otro sitio siempre preguntan, para todo agente.",
+				"floorOff": "Las preguntas están desactivadas: los agentes actúan sin preguntar, incluso en acciones sensibles."
 			}
 		},
 		"agentActivity": {

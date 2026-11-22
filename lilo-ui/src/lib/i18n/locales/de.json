@@ -700,7 +700,8 @@
 				"addSite": "Website hinzufügen…",
 				"addSiteLabel": "Website hinzufügen, auf der {client} ohne Nachfrage handeln darf",
 				"removeSite": "{site} entfernen",
-				"floor": "Anmelden, Bezahlen, Kaufen, Löschen, Veröffentlichen und das Senden von Daten an eine andere Website fragen immer nach, bei jedem Agenten."
+				"floor": "Anmelden, Bezahlen, Kaufen, Löschen, Veröffentlichen und das Senden von Daten an eine andere Website fragen immer nach, bei jedem Agenten.",
+				"floorOff": "Nachfragen sind aus: Agenten handeln ohne Nachfrage, auch bei sensiblen Aktionen."
 			}
 		},
 		"agentActivity": {

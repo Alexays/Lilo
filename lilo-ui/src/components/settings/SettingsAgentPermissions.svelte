@@ -32,56 +32,72 @@
   }
 </script>
 
+<!-- With questions off for every agent the choice has no effect: disabled, the row and the note below say why. -->
 <div class="agent-nested" data-agent-permission={key}>
-  <UiListRow
-    title={t("settings.agents.permissions.act")}
-    description={asking ? t(`settings.agents.permissions.${permission.act}Line`) : t("settings.agents.permissions.askingOff")}
-  >
-    {#snippet action()}
-      <UiSelect
-        value={permission.act}
-        ariaLabel={t("settings.agents.permissions.actLabel", { client: title })}
-        options={[
-          { value: "ask", label: t("settings.agents.permissions.ask") },
-          { value: "sites", label: t("settings.agents.permissions.sites") },
-          { value: "always", label: t("settings.agents.permissions.always") },
-        ]}
-        onchange={(act) => settingsActions.setAgentClientPermission(key, { ...permission, act: act as BridgeAgentPermission["act"] })}
-      />
-    {/snippet}
-  </UiListRow>
+  <fieldset disabled={!asking}>
+    <UiListRow
+      title={t("settings.agents.permissions.act")}
+      description={asking ? t(`settings.agents.permissions.${permission.act}Line`) : t("settings.agents.permissions.askingOff")}
+    >
+      {#snippet action()}
+        <UiSelect
+          value={permission.act}
+          ariaLabel={t("settings.agents.permissions.actLabel", { client: title })}
+          options={[
+            { value: "ask", label: t("settings.agents.permissions.ask") },
+            { value: "sites", label: t("settings.agents.permissions.sites") },
+            { value: "always", label: t("settings.agents.permissions.always") },
+          ]}
+          onchange={(act) => settingsActions.setAgentClientPermission(key, { ...permission, act: act as BridgeAgentPermission["act"] })}
+        />
+      {/snippet}
+    </UiListRow>
+  </fieldset>
 </div>
 {#if permission.act === "sites"}
   <div class="agent-nested">
-    <UiListRow title={t("settings.agents.permissions.sitesTitle")}>
-      <span class="chips">
-        {#each permission.sites as site (site)}
-          <UiChip
-            label={site}
-            removeLabel={t("settings.agents.permissions.removeSite", { site })}
-            onremove={() => settingsActions.setAgentClientPermission(key, { ...permission, sites: permission.sites.filter((entry) => entry !== site) })}
-          />
-        {:else}
-          <span class="empty">{t("settings.agents.permissions.noSites")}</span>
-        {/each}
-      </span>
-      {#snippet action()}
-        {#if adding}
-          <!-- Enter or leaving the field adds what it holds; Esc puts the button back. -->
-          <span class="add" role="presentation" bind:this={field} onfocusout={() => (adding = false)} onkeydown={(event) => event.key === "Escape" && (adding = false)}>
-            <UiTextField ariaLabel={t("settings.agents.permissions.addSiteLabel", { client: title })} oncommit={addSite} />
-          </span>
-        {:else}
-          <UiButton onclick={startAdding}>{t("settings.agents.permissions.addSite")}</UiButton>
-        {/if}
-      {/snippet}
-    </UiListRow>
+    <fieldset disabled={!asking}>
+      <UiListRow title={t("settings.agents.permissions.sitesTitle")}>
+        <span class="chips">
+          {#each permission.sites as site (site)}
+            <UiChip
+              label={site}
+              removeLabel={t("settings.agents.permissions.removeSite", { site })}
+              onremove={() => settingsActions.setAgentClientPermission(key, { ...permission, sites: permission.sites.filter((entry) => entry !== site) })}
+            />
+          {:else}
+            <span class="empty">{t("settings.agents.permissions.noSites")}</span>
+          {/each}
+        </span>
+        {#snippet action()}
+          {#if adding}
+            <!-- Enter or leaving the field adds what it holds; Esc puts the button back. -->
+            <span class="add" role="presentation" bind:this={field} onfocusout={() => (adding = false)} onkeydown={(event) => event.key === "Escape" && (adding = false)}>
+              <UiTextField ariaLabel={t("settings.agents.permissions.addSiteLabel", { client: title })} oncommit={addSite} />
+            </span>
+          {:else}
+            <UiButton onclick={startAdding}>{t("settings.agents.permissions.addSite")}</UiButton>
+          {/if}
+        {/snippet}
+      </UiListRow>
+    </fieldset>
   </div>
 {/if}
 
 <style>
   .agent-nested :global(.ui-list-row) {
     padding-left: 38px;
+  }
+
+  fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  fieldset:disabled {
+    opacity: var(--disabled-opacity);
   }
 
   .chips {

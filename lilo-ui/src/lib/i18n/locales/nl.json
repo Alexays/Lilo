@@ -700,7 +700,8 @@
 				"addSite": "Site toevoegen…",
 				"addSiteLabel": "Site toevoegen waarop {client} zonder te vragen mag handelen",
 				"removeSite": "{site} verwijderen",
-				"floor": "Inloggen, betalen, kopen, verwijderen, publiceren en gegevens naar een andere site sturen vragen altijd, voor elke agent."
+				"floor": "Inloggen, betalen, kopen, verwijderen, publiceren en gegevens naar een andere site sturen vragen altijd, voor elke agent.",
+				"floorOff": "Vragen staan uit: agents handelen zonder te vragen, ook bij gevoelige acties."
 			}
 		},
 		"agentActivity": {

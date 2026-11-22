@@ -731,6 +731,9 @@ test("a connected app's Acts on pages row asks first, or acts on chosen sites or
 
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true", agentAskBeforeActions: "false" } }));
 	await expect(acts).toContainText("Questions are turned off for every agent");
+	await expect(acts.getByRole("combobox", { name: "How Claude Code acts on pages" })).toBeDisabled();
+	await expect(page.getByText("Questions are off: agents act without asking, sensitive actions included.")).toBeVisible();
+	await expect(page.getByText("Signing in, paying, buying, deleting, publishing and sending data to another site always ask, for every agent.")).toHaveCount(0);
 });
 
 test("an agent Lilo has no app for gets its own Acts on pages row, by its name", async ({ page }) => {

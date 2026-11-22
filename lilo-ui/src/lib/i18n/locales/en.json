@@ -700,7 +700,8 @@
 				"addSite": "Add Site…",
 				"addSiteLabel": "Add a site {client} may act on without asking",
 				"removeSite": "Remove {site}",
-				"floor": "Signing in, paying, buying, deleting, publishing and sending data to another site always ask, for every agent."
+				"floor": "Signing in, paying, buying, deleting, publishing and sending data to another site always ask, for every agent.",
+				"floorOff": "Questions are off: agents act without asking, sensitive actions included."
 			}
 		},
 		"agentActivity": {

@@ -700,7 +700,8 @@
 				"addSite": "Aggiungi sito…",
 				"addSiteLabel": "Aggiungi un sito su cui {client} può agire senza chiedere",
 				"removeSite": "Rimuovi {site}",
-				"floor": "Accedere, pagare, acquistare, eliminare, pubblicare e inviare dati a un altro sito chiedono sempre, per ogni agente."
+				"floor": "Accedere, pagare, acquistare, eliminare, pubblicare e inviare dati a un altro sito chiedono sempre, per ogni agente.",
+				"floorOff": "Le domande sono disattivate: gli agenti agiscono senza chiedere, anche per le azioni sensibili."
 			}
 		},
 		"agentActivity": {
