@@ -1155,7 +1155,6 @@
 		"installed": "설치됨"
 	},
 	"commandBar": {
-		"showDetails": "키보드 힌트 표시",
 		"hintPeek": "미리보기",
 		"hintCopyLink": "링크 복사",
 		"hintCloseTab": "탭 닫기",
@@ -1223,6 +1222,8 @@
 		"sectionOpenTabs": "열린 탭",
 		"sectionBookmarks": "책갈피",
 		"sectionRecentHistory": "최근 방문 기록",
+		"sectionFrequentSites": "자주 방문한 사이트",
+		"sectionRecentConversations": "최근 대화",
 		"sectionHistory": "방문 기록",
 		"sectionSwitchToTab": "탭으로 전환",
 		"sectionGoTo": "이동",

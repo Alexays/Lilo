@@ -1155,7 +1155,6 @@
 		"installed": "Installed"
 	},
 	"commandBar": {
-		"showDetails": "Show keyboard hints",
 		"hintPeek": "Peek",
 		"hintCopyLink": "Copy Link",
 		"hintCloseTab": "Close Tab",
@@ -1223,6 +1222,8 @@
 		"sectionOpenTabs": "Open Tabs",
 		"sectionBookmarks": "Bookmarks",
 		"sectionRecentHistory": "Recent History",
+		"sectionFrequentSites": "Frequent Sites",
+		"sectionRecentConversations": "Recent Conversations",
 		"sectionHistory": "History",
 		"sectionSwitchToTab": "Switch to Tab",
 		"sectionGoTo": "Go To",

@@ -1155,7 +1155,6 @@
 		"installed": "Instaladas"
 	},
 	"commandBar": {
-		"showDetails": "Mostrar atalhos de teclado",
 		"hintPeek": "Pré-visualizar",
 		"hintCopyLink": "Copiar link",
 		"hintCloseTab": "Fechar aba",
@@ -1223,6 +1222,8 @@
 		"sectionOpenTabs": "Abas abertas",
 		"sectionBookmarks": "Favoritos",
 		"sectionRecentHistory": "Histórico recente",
+		"sectionFrequentSites": "Sites frequentes",
+		"sectionRecentConversations": "Conversas recentes",
 		"sectionHistory": "Histórico",
 		"sectionSwitchToTab": "Alternar para aba",
 		"sectionGoTo": "Ir para",

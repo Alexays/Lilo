@@ -1155,7 +1155,6 @@
 		"installed": "Geïnstalleerd"
 	},
 	"commandBar": {
-		"showDetails": "Sneltoetsen tonen",
 		"hintPeek": "Voorvertoning",
 		"hintCopyLink": "Kopieer link",
 		"hintCloseTab": "Sluit tabblad",
@@ -1223,6 +1222,8 @@
 		"sectionOpenTabs": "Geopende tabbladen",
 		"sectionBookmarks": "Bladwijzers",
 		"sectionRecentHistory": "Recente geschiedenis",
+		"sectionFrequentSites": "Vaak bezochte sites",
+		"sectionRecentConversations": "Recente gesprekken",
 		"sectionHistory": "Geschiedenis",
 		"sectionSwitchToTab": "Schakel over naar tabblad",
 		"sectionGoTo": "Ga naar",

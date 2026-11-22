@@ -1155,7 +1155,6 @@
 		"installed": "Instaladas"
 	},
 	"commandBar": {
-		"showDetails": "Mostrar atajos de teclado",
 		"hintPeek": "Vista previa",
 		"hintCopyLink": "Copiar enlace",
 		"hintCloseTab": "Cerrar pestaña",
@@ -1223,6 +1222,8 @@
 		"sectionOpenTabs": "Pestañas abiertas",
 		"sectionBookmarks": "Marcadores",
 		"sectionRecentHistory": "Historial reciente",
+		"sectionFrequentSites": "Sitios frecuentes",
+		"sectionRecentConversations": "Conversaciones recientes",
 		"sectionHistory": "Historial",
 		"sectionSwitchToTab": "Cambiar a la pestaña",
 		"sectionGoTo": "Ir a",

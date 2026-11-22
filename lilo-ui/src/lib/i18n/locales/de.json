@@ -1155,7 +1155,6 @@
 		"installed": "Installiert"
 	},
 	"commandBar": {
-		"showDetails": "Tastaturhinweise anzeigen",
 		"hintPeek": "Vorschau",
 		"hintCopyLink": "Link kopieren",
 		"hintCloseTab": "Tab schließen",
@@ -1223,6 +1222,8 @@
 		"sectionOpenTabs": "Offene Tabs",
 		"sectionBookmarks": "Lesezeichen",
 		"sectionRecentHistory": "Letzter Verlauf",
+		"sectionFrequentSites": "Häufig besuchte Websites",
+		"sectionRecentConversations": "Letzte Unterhaltungen",
 		"sectionHistory": "Verlauf",
 		"sectionSwitchToTab": "Zum Tab wechseln",
 		"sectionGoTo": "Gehe zu",
