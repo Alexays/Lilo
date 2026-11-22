@@ -143,4 +143,18 @@ final class TabLifecycleIdleTests: XCTestCase {
         )
         XCTAssertTrue(keep.contains(dirty))
     }
+
+    func testANeverSleepTabIsNeverFrozen() {
+        let flagged = UUID(), other = UUID()
+        var flaggedTab = Tab(id: flagged)
+        flaggedTab.neverSleep = true
+        let coordinator = TabLifecycleCoordinator(policy: .foreground)
+
+        let protected = coordinator.protectedEngineIds(
+            tabs: [flaggedTab, Tab(id: other)],
+            availableEngineIds: [flagged, other],
+            now: Date()
+        )
+        XCTAssertEqual(protected, [flagged])
+    }
 }

@@ -280,7 +280,7 @@ struct TabLifecycleCoordinator {
     }
 
     private func shouldRetainProtected(_ tab: Tab, restoringTabIds: [UUID: Date], now: Date, freezing: Bool = false) -> Bool {
-        tab.isAgentControlled || tab.isInPictureInPicture ||
+        tab.isAgentControlled || tab.isInPictureInPicture || tab.neverSleep ||
             shouldRetainForAudio(tab, now: now, freezing: freezing) ||
             shouldRetainForCapture(tab, now: now) ||
             shouldRetainForRestoration(tab, restoringTabIds: restoringTabIds, now: now)

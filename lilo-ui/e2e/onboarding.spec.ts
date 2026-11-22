@@ -387,6 +387,29 @@ test("the agents screen copies Lilo's configuration for any other agent", async 
 	await expect(card).toContainText("Copied");
 });
 
+test("the agents screen shows what Connect writes before writing it", async ({ page }) => {
+	await bootOnboarding(page, 1);
+	const card = page.locator(".onb");
+	await card.getByRole("radio", { name: /With my agents/ }).click();
+	await card.getByRole("button", { name: "Continue" }).click();
+	await receive(page, { event: "settingsLoaded", settings: { agentControlEnabled: "true" } });
+	await receive(page, { event: "onboardingState", show: true, step: 4, usage: "agents" });
+	await receive(page, { event: "agentClientsLoaded", clients: [{ id: "cursor", configured: false, icon: "data:image/png;base64,AA==" }], allowed: [] });
+
+	await card.getByRole("button", { name: /Connect/ }).click();
+	expect((await sentCommands(page)).filter((c) => c.action === "previewAgentClient").map((c) => c.payload)).toEqual([{ client: "cursor", remove: false }]);
+	expect((await sentCommands(page)).filter((c) => c.action === "connectAgentClient")).toHaveLength(0);
+
+	await receive(page, {
+		event: "agentClientPreview", client: "cursor", remove: false, path: "~/.cursor/mcp.json", command: null, snippet: "{}", blocked: null,
+		lines: [{ number: 3, removed: false, text: '    "lilo": {' }],
+	});
+	const sheet = page.locator('[data-modal="agent-config"]');
+	await expect(sheet.getByRole("heading")).toHaveText("Add Lilo to Cursor");
+	await sheet.getByRole("button", { name: /Add Lilo/ }).click();
+	expect((await sentCommands(page)).filter((c) => c.action === "connectAgentClient").map((c) => c.payload)).toEqual([{ client: "cursor" }]);
+});
+
 test("a browser without its own icon is read by its name alone", async ({ page }) => {
 	await bootOnboarding(page, 2);
 	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });

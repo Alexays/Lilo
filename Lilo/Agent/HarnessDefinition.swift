@@ -22,18 +22,19 @@ struct HarnessDefinition: Equatable, Sendable {
 
     /// What the client wants under Lilo's name: each app words the same stdio command its own way.
     enum Entry: Equatable, Sendable {
-        /// `{"command": …}`
+        /// `{"command": ...}`
         case command
-        /// `{"type": "stdio", "command": …, "tools": ["*"]}`
+        /// `{"type": "stdio", "command": ..., "tools": ["*"]}`
         case stdio
-        /// `{"type": "local", "command": […]}`
+        /// `{"type": "local", "command": [...]}`
         case local
 
-        func value(_ helper: String) -> [String: Any] {
+        /// The entry's fields in the order they are written, values as JSON; `helper` is already a JSON string.
+        func fields(_ helper: String) -> KeyValuePairs<String, String> {
             switch self {
             case .command: ["command": helper]
-            case .stdio: ["type": "stdio", "command": helper, "tools": ["*"]]
-            case .local: ["type": "local", "command": [helper]]
+            case .stdio: ["type": "\"stdio\"", "command": helper, "tools": "[\"*\"]"]
+            case .local: ["type": "\"local\"", "command": "[\(helper)]"]
             }
         }
     }

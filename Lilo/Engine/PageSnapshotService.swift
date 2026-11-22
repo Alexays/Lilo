@@ -170,11 +170,12 @@ final class PageSnapshotService {
         return canvas
     }
 
-    /// Lets the user drag out a region of the viewport over a native overlay, so the page never sees it. `completion` gets
-    /// the region in CSS pixels, or nil once cancelled (Escape, a click without a drag, or the view leaving its window).
+    /// Lets the user pick an element or drag out a region of the viewport over a native overlay, so the page never sees it.
+    /// `completion` gets the region in CSS pixels, or nil once cancelled (Escape, a click on no element, or the view
+    /// leaving its window).
     func startRegionSelection(completion: @escaping (CGRect?) -> Void) {
         regionOverlay?.finish(nil)
-        let overlay = RegionSelectionOverlay(frame: webView.bounds) { [weak webView] rect in
+        let overlay = RegionSelectionOverlay(webView: webView) { [weak webView] rect in
             completion(rect.map { rect in
                 let zoom = webView?.pageZoom ?? 1
                 return CGRect(x: rect.minX / zoom, y: rect.minY / zoom, width: rect.width / zoom, height: rect.height / zoom)
@@ -202,8 +203,32 @@ final class PageSnapshotService {
 
 // MARK: - RegionSelectionOverlay
 
-/// Covers the web view during a region selection: dims it, draws the dragged rectangle and reports it in view points.
+/// Where a picked element lands in the overlay: its viewport rect in CSS pixels, scaled to view points and kept inside
+/// the view. Nil when nothing is left to capture.
+enum ElementRegion {
+    static func viewRect(fromCSS rect: [Double], zoom: CGFloat, in bounds: CGRect) -> CGRect? {
+        guard rect.count >= 4 else { return nil }
+        let scaled = CGRect(x: rect[0] * zoom, y: rect[1] * zoom, width: rect[2] * zoom, height: rect[3] * zoom).intersection(bounds)
+        return scaled.isNull || scaled.width < 4 || scaled.height < 4 ? nil : scaled.integral.intersection(bounds)
+    }
+}
+
+/// Covers the web view during a region selection: dims it and outlines the element under the pointer, or the rectangle
+/// dragged out. Reports the region in view points; a click captures the outlined element.
 private final class RegionSelectionOverlay: NSView {
+    /// Body of an async function of `x`, `y` (CSS pixels) and `up`: the viewport rect of the element there, or of its
+    /// `up`th ancestor, and how many ancestors it climbed. Nil over the page's root or body.
+    private static let script = """
+    var el = document.elementFromPoint(x, y);
+    while (el && el.shadowRoot) { var inner = el.shadowRoot.elementFromPoint(x, y); if (!inner || inner === el) break; el = inner; }
+    if (!el || el === document.documentElement || el === document.body) return null;
+    var climbed = 0;
+    while (climbed < up && el.parentElement && el.parentElement !== document.body && el.parentElement !== document.documentElement) { el = el.parentElement; climbed++; }
+    var r = el.getBoundingClientRect();
+    return [r.left, r.top, r.width, r.height, climbed];
+    """
+
+    private weak var webView: WKWebView?
     private var completion: ((CGRect?) -> Void)?
     private var keyMonitor: Any?
     private var origin: NSPoint?
@@ -211,10 +236,18 @@ private final class RegionSelectionOverlay: NSView {
     /// Dims everything around its hole, as a border at least as wide as the view, like CSS's `box-shadow: 0 0 0 100vmax`.
     private let dim = CALayer()
     private let outline = CALayer()
+    private let hint = NSVisualEffectView()
+    /// The pointer's last point; one probe runs at a time, and the latest point goes next.
+    private var pointer: NSPoint?
+    private var isProbing = false
+    /// The outlined element in view points, and how many ancestors above the one under the pointer it is.
+    private var hovered: CGRect?
+    private var ancestors = 0
 
-    init(frame: NSRect, completion: @escaping (CGRect?) -> Void) {
+    init(webView: WKWebView, completion: @escaping (CGRect?) -> Void) {
+        self.webView = webView
         self.completion = completion
-        super.init(frame: frame)
+        super.init(frame: webView.bounds)
         autoresizingMask = [.width, .height]
         wantsLayer = true
         layer?.masksToBounds = true
@@ -225,6 +258,27 @@ private final class RegionSelectionOverlay: NSView {
         layer?.addSublayer(dim)
         layer?.addSublayer(outline)
         updateLayers()
+
+        let text = "Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.".localized
+        let label = NSTextField(labelWithString: text)
+        label.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        hint.material = .hudWindow
+        hint.state = .active
+        hint.wantsLayer = true
+        hint.layer?.cornerRadius = 8
+        hint.translatesAutoresizingMaskIntoConstraints = false
+        hint.addSubview(label)
+        addSubview(hint)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: hint.leadingAnchor, constant: 12),
+            label.trailingAnchor.constraint(equalTo: hint.trailingAnchor, constant: -12),
+            label.topAnchor.constraint(equalTo: hint.topAnchor, constant: 6),
+            label.bottomAnchor.constraint(equalTo: hint.bottomAnchor, constant: -6),
+            hint.centerXAnchor.constraint(equalTo: centerXAnchor),
+            hint.topAnchor.constraint(equalTo: topAnchor, constant: 12)
+        ])
+        setAccessibilityLabel(text)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -240,16 +294,22 @@ private final class RegionSelectionOverlay: NSView {
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
-        guard let hit = super.hitTest(point) else { return nil }
+        guard super.hitTest(point) != nil else { return nil }
         // WebKit only passes a move on to the page when this hit test lands inside the web view: landing outside keeps
         // hover and cursor changes off the page under the overlay, as when the overlay was a page element.
         if let type = NSApp.currentEvent?.type, type == .mouseMoved || type == .mouseEntered { return unsafe window?.contentView }
-        return hit
+        return self
     }
 
     // A cursor rect, as WebKit never sets the page's cursor over one.
     override func resetCursorRects() {
         addCursorRect(bounds, cursor: .crosshair)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .activeInKeyWindow, .inVisibleRect], owner: self))
     }
 
     override func layout() {
@@ -266,18 +326,17 @@ private final class RegionSelectionOverlay: NSView {
             finish(nil)
             return
         }
-        guard unsafe window != nil else { return }
-        // A monitor, as key focus is usually in the chrome; an IME composition keeps its Escape.
+        guard let window = unsafe window else { return }
+        probe(at: convert(window.mouseLocationOutsideOfEventStream, from: nil))
+        // A monitor, as key focus is usually in the chrome; an IME composition keeps its keys.
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard event.keyCode == 53 else { return event }
             let eventWindow = event.window
-            let cancelled = MainActor.assumeIsolated {
+            let handled = MainActor.assumeIsolated {
                 guard let self, unsafe eventWindow === self.window,
                       unsafe (self.window?.firstResponder as? NSTextInputClient)?.hasMarkedText() != true else { return false }
-                self.finish(nil)
-                return true
+                return self.handleKey(event.keyCode)
             }
-            return cancelled ? nil : event
+            return handled ? nil : event
         }
     }
 
@@ -286,9 +345,40 @@ private final class RegionSelectionOverlay: NSView {
         finish(nil)
     }
 
+    /// Escape cancels. With an element outlined, up and down arrows move the outline to its parent and back down toward
+    /// the pointer, and Return captures it.
+    private func handleKey(_ keyCode: UInt16) -> Bool {
+        switch keyCode {
+        case 53:
+            finish(nil)
+        case 126 where hovered != nil, 125 where hovered != nil:
+            ancestors = max(0, ancestors + (keyCode == 126 ? 1 : -1))
+            if let pointer { probe(at: pointer) }
+        case 36 where hovered != nil, 76 where hovered != nil:
+            finish(hovered)
+        default:
+            return false
+        }
+        return true
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        if point != pointer { ancestors = 0 }
+        probe(at: point)
+    }
+
+    /// The web view scrolls as usual; the element under the pointer may have changed.
+    override func scrollWheel(with event: NSEvent) {
+        super.scrollWheel(with: event)
+        ancestors = 0
+        if let pointer { probe(at: pointer) }
+    }
+
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
         origin = point
+        hovered = nil
         selection = CGRect(origin: point, size: .zero)
         outline.isHidden = false
         updateLayers()
@@ -303,9 +393,19 @@ private final class RegionSelectionOverlay: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
-        guard origin != nil else { return }
+        guard let origin else { return }
         mouseDragged(with: event)
-        finish(selection.width < 4 || selection.height < 4 ? nil : selection.integral)
+        self.origin = nil
+        if max(selection.width, selection.height) >= 4 {
+            finish(selection.width < 4 || selection.height < 4 ? nil : selection.integral)
+        } else {
+            // A click: the element is probed afresh, as the page may have moved since the last hover.
+            let climb = ancestors
+            Task { @MainActor in
+                let rect = await run(at: origin, ancestors: climb)
+                finish(rect.flatMap { ElementRegion.viewRect(fromCSS: $0, zoom: webView?.pageZoom ?? 1, in: bounds) })
+            }
+        }
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -313,6 +413,33 @@ private final class RegionSelectionOverlay: NSView {
     // Swallowed, so no page menu or middle click acts under the overlay.
     override func rightMouseDown(with event: NSEvent) {}
     override func otherMouseDown(with event: NSEvent) {}
+
+    private func probe(at point: NSPoint) {
+        pointer = point
+        guard !isProbing else { return }
+        isProbing = true
+        Task { @MainActor in
+            let rect = await run(at: point, ancestors: ancestors)
+            isProbing = false
+            guard completion != nil, origin == nil else { return }
+            hovered = rect.flatMap { ElementRegion.viewRect(fromCSS: $0, zoom: webView?.pageZoom ?? 1, in: bounds) }
+            ancestors = Int(rect?[4] ?? 0)
+            selection = hovered ?? .zero
+            outline.isHidden = hovered == nil
+            updateLayers()
+            if let pointer, pointer != point { probe(at: pointer) }
+        }
+    }
+
+    private func run(at point: NSPoint, ancestors: Int) async -> [Double]? {
+        guard let webView else { return nil }
+        let zoom = webView.pageZoom
+        let result = try? await webView.callAsyncJavaScript(
+            Self.script, arguments: ["x": Double(point.x / zoom), "y": Double(point.y / zoom), "up": ancestors],
+            in: nil, contentWorld: PageWorld.bridgeWorld
+        )
+        return (result as? [Double]).flatMap { $0.count == 5 ? $0 : nil }
+    }
 
     private func updateLayers() {
         let reach = max(bounds.width, bounds.height)

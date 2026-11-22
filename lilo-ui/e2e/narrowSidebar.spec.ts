@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bootChrome } from "./fakeHost";
+import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld, SPACE_1 } from "./fixtures";
 import { tab } from "../src/stores/testFixtures";
 import type { AddressPlacement } from "../src/lib/bridge/protocol";
@@ -98,3 +98,59 @@ test("with the address hidden, a too narrow sidebar widens to the line's minimum
 	await page.keyboard.press("Escape");
 	await expect(row).toHaveCount(0);
 });
+
+// The arrows run on under the minimum to the drag's floor outside the rail, and stop there rather than fold.
+test("under the minimum, the arrows narrow the sidebar to the rail's detent", async ({ page }) => {
+	await bootNarrow(page, "tabs", 203);
+	const sidebarWidth = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width"));
+
+	await page.locator(".sidebar-resize-handle").focus();
+	for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
+	await expect.poll(sidebarWidth).toBe("163px");
+	await expect(page.locator(".tab-item .tab-actions").first()).toBeHidden();
+
+	for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
+	await expect.poll(sidebarWidth).toBe("150px");
+	await expect(page.locator(".sidebar-resize-handle")).toBeFocused();
+	expect((await sentCommands(page)).filter((c) => c.action === "setSidebarRail")).toEqual([]);
+	await expect(page.locator(".tab-item .tab-title").first()).toBeVisible();
+});
+
+// The New Tab row keeps its terminal and agents buttons down to the detent, whole and inside the
+// sidebar; its label shows the longest of its forms that fits, never truncated.
+test("the New Tab row keeps its buttons and steps its label down to the detent", async ({ page }) => {
+	for (const [locale, width, label] of [["en", 260, "New Tab"], ["en", 170, "New Tab"], ["en", 150, "New"], ["fr", 203, "Nouvel onglet"], ["fr", 170, "Nouveau"], ["fr", 150, ""]] as const) {
+		await bootNarrow(page, "tabs", width);
+		await page.evaluate((locale) => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentsEnabled: "true", locale } }), locale);
+		const line = page.locator(".new-tab-line");
+		await expect(line.locator(".new-terminal-button")).toBeVisible();
+		await expect(line.locator(".agents-button")).toBeVisible();
+		const shown = line.locator(".new-tab-label");
+		await expect(shown).toHaveText(label);
+		expect(await shown.evaluate((span) => span.scrollWidth <= span.clientWidth)).toBe(true);
+		const sidebar = (await page.locator(".sidebar-viewport").boundingBox())!;
+		const rights = await line.locator("button").evaluateAll((buttons) => buttons.map((b) => b.getBoundingClientRect().right));
+		for (const right of rights) expect(right).toBeLessThanOrEqual(sidebar.x + sidebar.width - 8);
+	}
+});
+
+// The lights keep their place down the narrow range: the history buttons give way, the toggle stays, and
+// nothing passes the sidebar's edge, in either appearance.
+for (const scheme of ["light", "dark"] as const) {
+	for (const address of ["tabs", "hidden"] as const) {
+		test(`in ${scheme} with the address ${address === "tabs" ? "in the sidebar" : "hidden"}, the top line fits beside the lights down to the detent`, async ({ page }) => {
+			await page.emulateMedia({ colorScheme: scheme });
+			for (const width of [260, 203, 170, 150]) {
+				await bootNarrow(page, address, width);
+				await expect(page.locator(".sidebar-header .header-spacer")).toHaveCSS("width", "81px");
+				const [toggle] = await expectLineFits(page);
+				expect(toggle.left).toBe(81);
+				const sidebar = (await page.locator(".sidebar-viewport").boundingBox())!;
+				const row = await page.locator(".new-tab-line button").evaluateAll((buttons) =>
+					buttons.filter((b) => b.getClientRects().length).map((b) => b.getBoundingClientRect().right),
+				);
+				for (const right of row) expect(right).toBeLessThanOrEqual(sidebar.x + sidebar.width - 8);
+			}
+		});
+	}
+}

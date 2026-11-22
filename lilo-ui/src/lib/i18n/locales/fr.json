@@ -492,6 +492,11 @@
 				"description": "L'agent attend votre réponse.",
 				"keywords": "agent approbation confirmer paiement achat commande supprimer envoyer publier"
 			},
+			"agentActionLog": {
+				"title": "Garder un journal des actions de l'agent",
+				"description": "Un fichier local liste chaque appel, jamais le texte saisi ni le contenu des pages.",
+				"keywords": "agent journal historique audit actions rejouer"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Toujours autorisés",
 				"description": "Les agents y agissent sans demander.",
@@ -525,6 +530,11 @@
 				"title": "Raccourcis clavier",
 				"description": "Modifiez n'importe quel raccourci, ou partez de ceux d'Arc.",
 				"keywords": "clavier raccourci touches commande"
+			},
+			"holdToQuit": {
+				"title": "Maintenir le raccourci pour quitter",
+				"description": "Le raccourci pour quitter affiche une invite ; Lilo ne quitte que si les touches restent enfoncées.",
+				"keywords": "quitter fermer commande q accidentel maintenir"
 			},
 			"newProfile": {
 				"title": "Nouveau profil",
@@ -859,6 +869,7 @@
 		"pinned": "Épinglé",
 		"loading": "Chargement",
 		"muted": "Son coupé",
+		"neverSleeps": "Jamais en veille",
 		"playingAudio": "Lecture audio en cours",
 		"terminalCommand": "Commande",
 		"terminalAwaitingFor": "{command} attend votre réponse depuis {duration}",
@@ -866,6 +877,7 @@
 		"terminalFailedDetail": "{command} a échoué (code {code}) après {duration}",
 		"terminalSucceededDetail": "{command} terminée en {duration}",
 		"closeTab": "Fermer l'onglet",
+		"removeFromSplit": "Retirer de la vue fractionnée",
 		"removePinnedTab": "Retirer l'onglet épinglé",
 		"tabName": "Nom de l'onglet",
 		"removeBookmark": "Retirer le favori",
@@ -919,13 +931,22 @@
 		"bottom": "Ouvrir en bas",
 		"replace": "Remplacer"
 	},
+	"paneMove": {
+		"left": "Déplacer à gauche",
+		"right": "Déplacer à droite",
+		"top": "Déplacer au-dessus",
+		"bottom": "Déplacer en dessous",
+		"replace": "Échanger"
+	},
 	"tabSection": {
 		"splitView": "Vue partagée",
 		"folderEmpty": "Dossier vide",
 		"newTab": "Nouvel onglet",
+		"newTabShort": "Nouveau",
 		"newTerminal": "Nouveau terminal",
 		"clearUnpinnedTooltip": "Archiver les onglets non épinglés",
 		"listOptions": "Trier et regrouper",
+		"searchTabs": "Rechercher dans les onglets",
 		"pinnedTabs": "Onglets épinglés",
 		"openTabs": "Onglets ouverts",
 		"dropToPin": "Déposer pour épingler",
@@ -1078,6 +1099,7 @@
 		"showFolder": "Afficher le dossier des téléchargements",
 		"clearFinished": "Effacer les téléchargements terminés",
 		"dragFile": "Faire glisser le fichier",
+		"showInFinder": "Afficher dans le Finder",
 		"announceDone": "{filename} téléchargé",
 		"announceFailed": "Échec du téléchargement de {filename}"
 	},
@@ -1159,7 +1181,6 @@
 		"installed": "Installées"
 	},
 	"commandBar": {
-		"showDetails": "Afficher les raccourcis clavier",
 		"hintPeek": "Aperçu",
 		"hintCopyLink": "Copier le lien",
 		"hintCloseTab": "Fermer l'onglet",
@@ -1191,6 +1212,7 @@
 		"terminalProgram": "Programme",
 		"hintRun": "Exécuter",
 		"hintSplit": "Côte à côte",
+		"splitFull": "Vue partagée pleine ({count} volets)",
 		"scopeTabs": "Onglets",
 		"scopeBookmarks": "Favoris",
 		"scopeHistory": "Historique",
@@ -1226,6 +1248,8 @@
 		"sectionOpenTabs": "Onglets ouverts",
 		"sectionBookmarks": "Favoris",
 		"sectionRecentHistory": "Historique récent",
+		"sectionFrequentSites": "Sites fréquents",
+		"sectionRecentConversations": "Conversations récentes",
 		"sectionHistory": "Historique",
 		"sectionSwitchToTab": "Basculer vers l'onglet",
 		"sectionGoTo": "Aller à",
@@ -1421,6 +1445,15 @@
 		"title": "Indicateurs WebKit",
 		"resetTitle": "Indicateurs modifiés",
 		"reloadNote": "Rechargez une page pour qu'un changement s'applique"
+	},
+	"little": {
+		"openIn": "Ouvrir dans {space}",
+		"openInMenu": "Ouvrir dans un autre Espace",
+		"copyLink": "Copier le lien",
+		"linkCopied": "Lien copié",
+		"placeholder": "Rechercher ou saisir une URL...",
+		"emptyTitle": "Recherchez sur le web ou saisissez une URL",
+		"emptySubtitle": "Tapez / pour chercher dans les pages visitées."
 	},
 	"urlToast": {
 		"pageActions": "Actions de la page",
@@ -2052,6 +2085,7 @@
 		"Hide Others": "Masquer les autres",
 		"Show All": "Tout afficher",
 		"Quit Lilo": "Quitter Lilo",
+		"Hold %@ to Quit": "Maintenez %@ pour quitter",
 		"File": "Fichier",
 		"New Tab": "Nouvel onglet",
 		"Back to tab": "Revenir à l'onglet",
@@ -2097,9 +2131,18 @@
 		"New Split View": "Nouvelle vue partagée",
 		"Split View": "Vue partagée",
 		"Separate Split View": "Séparer la vue partagée",
+		"Close Split Pane": "Fermer le volet fractionné",
+		"Maximize Split Pane": "Agrandir le volet fractionné",
+		"Move Pane": "Déplacer le volet",
+		"Move Pane Left": "Déplacer le volet fractionné à gauche",
+		"Move Pane Right": "Déplacer le volet fractionné à droite",
+		"Move Pane Up": "Déplacer le volet fractionné vers le haut",
+		"Move Pane Down": "Déplacer le volet fractionné vers le bas",
 		"Open in Split View": "Ouvrir en vue partagée",
+		"Split view is full (%lld panes)": "Vue partagée pleine (%lld volets)",
 		"Hide Element…": "Masquer l'élément…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Cliquez sur un élément pour le masquer sur ce site. Appuyez sur Échap pour annuler.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Cliquez sur un élément ou faites glisser une zone. Les flèches changent d'élément, Retour capture, Échap annule.",
 		"Picture in Picture": "Image dans l'image",
 		"Develop": "Développement",
 		"Show Web Inspector": "Afficher l'inspecteur web",
@@ -2189,6 +2232,7 @@
 		"Sleep is back on": "La veille est rétablie",
 		"The battery is below %d%%.": "La batterie est sous %d %%.",
 		"The Mac is too hot.": "Le Mac est trop chaud.",
+		"Never Sleep": "Jamais en veille",
 		"Commands kept the Mac awake for the maximum duration.": "Les commandes ont gardé le Mac éveillé pendant la durée maximale.",
 		"While the lid was closed": "Pendant la fermeture du capot",
 		"%d commands finished": {"one": "%d commande a terminé", "other": "%d commandes ont terminé"},
@@ -2695,7 +2739,11 @@
 			"noFolder": "Aucun dossier",
 			"noFolderDetail": "L'agent travaille dans son propre dossier",
 			"backgroundHint": "{shortcut} pour le garder en arrière-plan",
-			"start": "Démarrer"
+			"start": "Démarrer",
+			"searchAgents": "Rechercher des agents",
+			"featuredAgents": "À la une",
+			"registryAgents": "Registre",
+			"noMatches": "Aucun agent correspondant"
 		},
 		"row": {
 			"untitled": "Nouvelle conversation",
