@@ -139,14 +139,21 @@ hooks-test:
 bootstrap:
 	@scripts/bootstrap.sh "$(UI_DEPS) $(BRIDGE_DEPS)" "vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(SWIFTLINT) $(XCODEGEN)"
 
+# The checks that need no Xcode, one source for validate and linux-checks so the two cannot drift.
+# ';' groups run as one parallel job inside validate; linux-checks flattens the list and adds
+# the release tests its Linux CI job runs.
+VALIDATE_CHECKS := ui-lint;ui-test;site-check site-test;docs-check docs-test;hooks-test perf-summary-test ext-bridge-test swiftlint release-status
+LINUX_CHECKS := $(subst ;, ,$(VALIDATE_CHECKS)) release-test release-media-test
+
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
 ## Run UI, website and docs checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
 validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(DOCS_DEPS) $(SWIFTLINT) $(CHANGIE)
 	@logs=$$(mktemp -d); checks=; \
-	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test perf-summary-test ext-bridge-test swiftlint release-status"; do \
+	printf '%s\n' '$(VALIDATE_CHECKS)' | tr ';' '\n' > "$$logs/groups"; \
+	while IFS= read -r group; do \
 		name=$${group%% *}; $(MAKE) -k --no-print-directory $$group > "$$logs/$$name.log" 2>&1 & checks="$$checks $$!:$$name"; \
-	done; \
+	done < "$$logs/groups"; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
 	$(MAKE) --no-print-directory $(UI_STAMP); ui=$$?; wait $$bridge; bridge=$$?; \
 	[ $$ui -eq 0 ] && [ $$bridge -eq 0 ] && $(MAKE) --no-print-directory swift-test; swift=$$?; \

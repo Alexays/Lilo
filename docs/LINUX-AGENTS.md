@@ -6,7 +6,7 @@ A coding agent in a Linux sandbox or cloud box can do most of the work on the we
 
 ## What runs on Linux
 
-`make linux-checks` runs every check that needs no Xcode, in the order `make validate` runs them: `validate` without the app build and the Swift tests.
+`make linux-checks` runs every check that needs no Xcode: the same list `make validate` reads (the `VALIDATE_CHECKS` variable in the Makefile is the one source for both, so they cannot drift), plus `release-test` and `release-media-test`, minus the app build and the Swift tests.
 CI already runs the same targets on `ubuntu-latest`, so what passes there passes in a Linux sandbox.
 Measured on Debian 13 (6 cores, 11 GB) against `c24fc63c`:
 
