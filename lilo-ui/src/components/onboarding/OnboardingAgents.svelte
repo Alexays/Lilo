@@ -1,10 +1,11 @@
 <script lang="ts">
   import SettingsIcon from "../settings/SettingsIcon.svelte";
+  import SettingsAgentConfigSheet from "../settings/SettingsAgentConfigSheet.svelte";
   import UiToggle from "../ui/UiToggle.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import "../../lib/i18n/settingsCatalog";
   import { settingsActions } from "../../lib/bridge/actions";
-  import { connectAgentClient, getAgentClientsSnapshot, getSetting, isConnectingAgentClient, setSetting } from "../../stores/settings.svelte";
+  import { getAgentClientsSnapshot, getAgentPreview, getSetting, isConnectingAgentClient, previewAgentClient, setSetting } from "../../stores/settings.svelte";
   import { goBack, goNext } from "../../stores/onboarding.svelte";
 
   settingsActions.loadAgentClients();
@@ -12,8 +13,13 @@
   const enabled = $derived(getSetting("agentControlEnabled", "false") === "true");
   // Only the apps on this Mac, or already pointed at Lilo.
   const clients = $derived(getAgentClientsSnapshot().clients.filter((client) => client.icon || client.configured));
+  const preview = $derived(getAgentPreview());
   let otherCopied = $state(false);
 </script>
+
+{#if preview}
+  <SettingsAgentConfigSheet {preview} repair={false} />
+{/if}
 
 <div class="ob-head">
   <h2>{t("onboarding.agents.title")}</h2>
@@ -43,7 +49,7 @@
           {:else}
             {@const busy = isConnectingAgentClient(client.id)}
             <button class="ob-btn primary connect" class:busy disabled={busy} aria-busy={busy}
-              aria-label={t("onboarding.agents.connectNamed", { name })} onclick={() => connectAgentClient(client.id)}>
+              aria-label={t("onboarding.agents.connectNamed", { name })} onclick={() => previewAgentClient(client.id)}>
               {#if busy}<span class="spinner" aria-hidden="true"></span>{/if}{t("settings.agents.connect")}
             </button>
           {/if}

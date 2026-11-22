@@ -492,6 +492,11 @@
 				"description": "Агент ждёт вашего ответа.",
 				"keywords": "агент разрешение подтверждение оплата покупка заказ удалить отправить опубликовать"
 			},
+			"agentActionLog": {
+				"title": "Вести журнал действий агента",
+				"description": "Локальный файл перечисляет каждый вызов, но не введённый текст и не содержимое страниц.",
+				"keywords": "агент журнал история аудит действия воспроизведение"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Всегда разрешено",
 				"description": "На этих сайтах агенты действуют без подтверждения.",
@@ -525,6 +530,11 @@
 				"title": "Сочетания клавиш",
 				"description": "Измените любое сочетание или начните с сочетаний Arc.",
 				"keywords": "клавиатура сочетание клавиши команда"
+			},
+			"holdToQuit": {
+				"title": "Удерживайте сочетание выхода для выхода",
+				"description": "Сочетание выхода показывает подсказку; Lilo завершает работу, только если удерживать клавиши.",
+				"keywords": "выход завершить команда q случайно удерживать"
 			},
 			"newProfile": {
 				"title": "Новый профиль",
@@ -625,9 +635,13 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
-			"connect": "Подключить",
+			"connect": "Подключить…",
 			"copy": "Скопировать конфигурацию",
 			"clientDescription": "Добавляет Lilo к его MCP-серверам.",
 			"revoke": "Убрать",
@@ -647,31 +661,24 @@
 				"repair": "Исправить",
 				"remove": "Удалить Lilo",
 				"copy": "Скопировать",
-				"copied": "Скопировано"
+				"copied": "Скопировано",
+				"showTitle": "Что Lilo добавил в {client}",
+				"added": "Эти строки файла принадлежат Lilo.",
+				"done": "Готово"
 			},
 			"status": {
 				"acting": "Выполняет действие",
 				"connected": "Подключён",
-				"allowed": "Разрешён",
-				"notInstalled": "Не установлен",
-				"ready": "Настроен"
+				"allowed": "Разрешён"
 			},
 			"allowedSeen": "Разрешён, последний раз {time}",
-			"permissions": {
-				"button": "Разрешения",
-				"group": "Разрешения: {client}",
-				"act": "Действия на страницах",
-				"actHint": "Нажатия и запросы, которые отправляют, оплачивают, покупают, удаляют или публикуют.",
-				"askingOff": "Вопросы отключены для всех агентов в настройке выше.",
-				"ask": "Спрашивать каждый раз",
-				"always": "Всегда разрешать",
-				"sites": "Разрешено на этих сайтах",
-				"addSite": "Добавить сайт",
-				"addSiteLabel": "Добавить сайт, на котором {client} может действовать без вопросов",
-				"removeSite": "Удалить {site}",
-				"floor": "Вход, оплата и отправка данных на другой сайт всегда запрашиваются."
-			},
-			"readyLine": "Настроено. Lilo спросит вас при первом подключении."
+			"foundLine": "На этом Mac",
+			"copyOnlyLine": "На этом Mac. В файле настроек есть комментарии: скопируйте запись Lilo.",
+			"connectedSeen": "Подключено, последнее использование {time}",
+			"copyEntry": "Скопировать запись",
+			"showAdded": "Показать, что добавил Lilo…",
+			"revealFile": "Показать файл настроек",
+			"footnote": "Приложения, которых нет на этом Mac, не показаны. Lilo ищет снова при открытии этой страницы."
 		},
 		"navGroups": {
 			"tools": "Инструменты"
@@ -867,6 +874,7 @@
 		"pinned": "Закреплена",
 		"loading": "Загрузка",
 		"muted": "Звук выключен",
+		"neverSleeps": "Не усыпляется",
 		"playingAudio": "Воспроизводит звук",
 		"terminalCommand": "Команда",
 		"terminalAwaitingFor": "{command} ожидает вашего ввода уже {duration}",
@@ -874,6 +882,7 @@
 		"terminalFailedDetail": "{command}: ошибка (код {code}) через {duration}",
 		"terminalSucceededDetail": "{command}: завершено за {duration}",
 		"closeTab": "Закрыть вкладку",
+		"removeFromSplit": "Убрать из разделённого вида",
 		"removePinnedTab": "Убрать закреплённую вкладку",
 		"tabName": "Название вкладки",
 		"removeBookmark": "Убрать закладку",
@@ -927,13 +936,22 @@
 		"bottom": "Открыть снизу",
 		"replace": "Заменить"
 	},
+	"paneMove": {
+		"left": "Переместить влево",
+		"right": "Переместить вправо",
+		"top": "Переместить вверх",
+		"bottom": "Переместить вниз",
+		"replace": "Поменять местами"
+	},
 	"tabSection": {
 		"splitView": "Разделённый вид",
 		"folderEmpty": "Папка пуста",
 		"newTab": "Новая вкладка",
+		"newTabShort": "Новая",
 		"newTerminal": "Новый терминал",
 		"clearUnpinnedTooltip": "Архивировать незакреплённые вкладки",
 		"listOptions": "Сортировка и группировка",
+		"searchTabs": "Поиск по вкладкам",
 		"pinnedTabs": "Закреплённые вкладки",
 		"openTabs": "Открытые вкладки",
 		"dropToPin": "Отпустите, чтобы закрепить",
@@ -1086,6 +1104,7 @@
 		"showFolder": "Показать папку загрузок",
 		"clearFinished": "Очистить завершённые загрузки",
 		"dragFile": "Перетащить файл",
+		"showInFinder": "Показать в Finder",
 		"announceDone": "Файл {filename} загружен",
 		"announceFailed": "Не удалось загрузить {filename}"
 	},
@@ -1167,7 +1186,6 @@
 		"installed": "Установленные"
 	},
 	"commandBar": {
-		"showDetails": "Показать сочетания клавиш",
 		"hintPeek": "Быстрый просмотр",
 		"hintCopyLink": "Скопировать ссылку",
 		"hintCloseTab": "Закрыть вкладку",
@@ -1199,6 +1217,7 @@
 		"terminalProgram": "Программа",
 		"hintRun": "Запустить",
 		"hintSplit": "Разделить",
+		"splitFull": "Разделённый вид заполнен (панелей: {count})",
 		"scopeTabs": "Вкладки",
 		"scopeBookmarks": "Закладки",
 		"scopeHistory": "История",
@@ -1234,6 +1253,8 @@
 		"sectionOpenTabs": "Открытые вкладки",
 		"sectionBookmarks": "Закладки",
 		"sectionRecentHistory": "Недавняя история",
+		"sectionFrequentSites": "Часто посещаемые сайты",
+		"sectionRecentConversations": "Недавние беседы",
 		"sectionHistory": "История",
 		"sectionSwitchToTab": "Перейти к вкладке",
 		"sectionGoTo": "Перейти",
@@ -1429,6 +1450,15 @@
 		"title": "Флаги WebKit",
 		"resetTitle": "Изменённые флаги",
 		"reloadNote": "Перезагрузите страницу, чтобы изменение вступило в силу"
+	},
+	"little": {
+		"openIn": "Открыть в {space}",
+		"openInMenu": "Открыть в другом пространстве",
+		"copyLink": "Скопировать ссылку",
+		"linkCopied": "Ссылка скопирована",
+		"placeholder": "Поиск или адрес...",
+		"emptyTitle": "Найдите в интернете или введите адрес",
+		"emptySubtitle": "Введите /, чтобы искать по посещённым страницам."
 	},
 	"urlToast": {
 		"pageActions": "Действия со страницей",
@@ -2060,6 +2090,7 @@
 		"Hide Others": "Скрыть остальные",
 		"Show All": "Показать все",
 		"Quit Lilo": "Завершить Lilo",
+		"Hold %@ to Quit": "Удерживайте %@ для выхода",
 		"File": "Файл",
 		"New Tab": "Новая вкладка",
 		"Back to tab": "Вернуться к вкладке",
@@ -2105,9 +2136,18 @@
 		"New Split View": "Новый разделённый вид",
 		"Split View": "Разделённый вид",
 		"Separate Split View": "Разделить на вкладки",
+		"Close Split Pane": "Закрыть панель разделённого вида",
+		"Maximize Split Pane": "Развернуть панель разделённого вида",
+		"Move Pane": "Переместить панель",
+		"Move Pane Left": "Переместить панель разделённого вида влево",
+		"Move Pane Right": "Переместить панель разделённого вида вправо",
+		"Move Pane Up": "Переместить панель разделённого вида вверх",
+		"Move Pane Down": "Переместить панель разделённого вида вниз",
 		"Open in Split View": "Открыть в разделённом виде",
+		"Split view is full (%lld panes)": "Разделённый вид заполнен (%lld панели)",
 		"Hide Element…": "Скрыть элемент…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Нажмите на элемент, чтобы скрыть его на этом сайте. Нажмите Esc для отмены.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Нажмите на элемент или выделите область. Стрелки меняют элемент, Return делает снимок, Esc отменяет.",
 		"Picture in Picture": "Картинка в картинке",
 		"Develop": "Разработка",
 		"Show Web Inspector": "Показать веб-инспектор",
@@ -2197,6 +2237,7 @@
 		"Sleep is back on": "Режим сна снова разрешён",
 		"The battery is below %d%%.": "Заряд батареи ниже %d%%.",
 		"The Mac is too hot.": "Mac перегрелся.",
+		"Never Sleep": "Не усыплять",
 		"Commands kept the Mac awake for the maximum duration.": "Достигнуто предельное время работы Mac без сна во время команд.",
 		"While the lid was closed": "Пока крышка была закрыта",
 		"%d commands finished": {"one": "Завершена %d команда", "few": "Завершены %d команды", "many": "Завершено %d команд", "other": "Завершено %d команды"},
@@ -2349,6 +2390,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Lilo добавлен в Claude Desktop: закройте и снова откройте Claude для применения",
 		"Added Lilo to Cursor": "Lilo добавлен в Cursor",
 		"Added Lilo to Codex": "Lilo добавлен в Codex",
+		"Added Lilo to Zed": "Lilo добавлен в Zed",
+		"Added Lilo to VS Code": "Lilo добавлен в VS Code",
+		"Added Lilo to OpenCode": "Lilo добавлен в OpenCode",
+		"Added Lilo to Gemini CLI": "Lilo добавлен в Gemini CLI",
 		"Removed Lilo": "Lilo удалён",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo не удалось прочитать %@: добавьте этот сервер вручную: %@",
 		"Stop Agents": "Остановить агентов",
@@ -2439,7 +2484,8 @@
 		"Show Pages": "Показать страницы",
 		"Hide Pages": "Скрыть страницы",
 		"Close Conversation": "Закрыть разговор",
-		"Pasted image": "Вставленное изображение"
+		"Pasted image": "Вставленное изображение",
+		"Copied Lilo's entry": "Запись Lilo скопирована"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2707,7 +2753,11 @@
 			"noFolder": "Без папки",
 			"noFolderDetail": "Агент работает в собственной папке",
 			"backgroundHint": "{shortcut}, чтобы оставить в фоне",
-			"start": "Начать"
+			"start": "Начать",
+			"searchAgents": "Поиск агентов",
+			"featuredAgents": "Рекомендуемые",
+			"registryAgents": "Реестр",
+			"noMatches": "Нет подходящих агентов"
 		},
 		"row": {
 			"untitled": "Новый разговор",

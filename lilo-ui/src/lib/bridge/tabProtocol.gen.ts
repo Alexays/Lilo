@@ -16,6 +16,7 @@ export interface BridgeTabSnapshot {
 	canGoBack: boolean;
 	canGoForward: boolean;
 	isPinned: boolean;
+	neverSleep?: boolean;
 	isBookmarked: boolean;
 	isClosed: boolean;
 	isAudioPlaying: boolean;
@@ -73,6 +74,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		canGoBack: data.canGoBack ?? false,
 		canGoForward: data.canGoForward ?? false,
 		isPinned: data.isPinned ?? false,
+		neverSleep: data.neverSleep ?? false,
 		isBookmarked: data.isBookmarked ?? false,
 		isClosed: data.isClosed ?? false,
 		isAudioPlaying: data.isAudioPlaying ?? false,
@@ -131,6 +133,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.canGoBack !== undefined) out.canGoBack = data.canGoBack;
 	if (data.canGoForward !== undefined) out.canGoForward = data.canGoForward;
 	if (data.isPinned !== undefined) out.isPinned = data.isPinned;
+	if (data.neverSleep !== undefined) out.neverSleep = data.neverSleep;
 	if (data.isBookmarked !== undefined) out.isBookmarked = data.isBookmarked;
 	if (data.isClosed !== undefined) out.isClosed = data.isClosed;
 	if (data.isAudioPlaying !== undefined) out.isAudioPlaying = data.isAudioPlaying;

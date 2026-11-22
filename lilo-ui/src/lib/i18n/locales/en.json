@@ -492,6 +492,11 @@
 				"description": "The agent waits for your answer.",
 				"keywords": "agent approval confirm payment purchase order delete send publish"
 			},
+			"agentActionLog": {
+				"title": "Keep a log of agent actions",
+				"description": "A local file lists each call, never typed text or page content.",
+				"keywords": "agent log history audit actions replay record"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Always allowed",
 				"description": "Agents act on these sites without asking.",
@@ -525,6 +530,11 @@
 				"title": "Keyboard shortcuts",
 				"description": "Change any shortcut, or start from Arc's.",
 				"keywords": "keyboard shortcut hotkey keys command"
+			},
+			"holdToQuit": {
+				"title": "Hold the quit shortcut to quit",
+				"description": "Pressing the quit shortcut shows a prompt; Lilo quits only when the keys are held down.",
+				"keywords": "quit exit command q accidental hold"
 			},
 			"newProfile": {
 				"title": "New profile",
@@ -625,9 +635,13 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
-			"connect": "Connect",
+			"connect": "Connect…",
 			"copy": "Copy Configuration",
 			"clientDescription": "Adds Lilo to its MCP servers.",
 			"revoke": "Remove",
@@ -647,31 +661,24 @@
 				"repair": "Repair",
 				"remove": "Remove Lilo",
 				"copy": "Copy",
-				"copied": "Copied"
+				"copied": "Copied",
+				"showTitle": "What Lilo Added to {client}",
+				"added": "These lines of the file are Lilo's.",
+				"done": "Done"
 			},
 			"status": {
 				"acting": "Acting now",
 				"connected": "Connected",
-				"allowed": "Allowed",
-				"notInstalled": "Not installed",
-				"ready": "Configured"
+				"allowed": "Allowed"
 			},
 			"allowedSeen": "Allowed, last seen {time}",
-			"permissions": {
-				"button": "Permissions",
-				"group": "Permissions of {client}",
-				"act": "Acting on pages",
-				"actHint": "Clicks and requests that send, pay, buy, delete or publish.",
-				"askingOff": "Questions are turned off for every agent, in the setting above.",
-				"ask": "Ask each time",
-				"always": "Always allow",
-				"sites": "Allowed on these sites",
-				"addSite": "Add a site",
-				"addSiteLabel": "Add a site {client} may act on without asking",
-				"removeSite": "Remove {site}",
-				"floor": "Signing in, paying and sending data to another site are always asked."
-			},
-			"readyLine": "Configured. Lilo asks you the first time it connects."
+			"foundLine": "On this Mac",
+			"copyOnlyLine": "On this Mac. Its settings file has comments: copy Lilo's entry.",
+			"connectedSeen": "Connected, last used {time}",
+			"copyEntry": "Copy Entry",
+			"showAdded": "Show What Lilo Added…",
+			"revealFile": "Reveal Settings File",
+			"footnote": "Apps not on this Mac are not listed. Lilo looks again when this page opens."
 		},
 		"navGroups": {
 			"tools": "Tools"
@@ -867,6 +874,7 @@
 		"pinned": "Pinned",
 		"loading": "Loading",
 		"muted": "Muted",
+		"neverSleeps": "Never sleeps",
 		"playingAudio": "Playing audio",
 		"terminalCommand": "Command",
 		"terminalAwaitingFor": "{command} has been waiting for you for {duration}",
@@ -874,6 +882,7 @@
 		"terminalFailedDetail": "{command} failed (exit {code}) after {duration}",
 		"terminalSucceededDetail": "{command} finished in {duration}",
 		"closeTab": "Close tab",
+		"removeFromSplit": "Remove from Split View",
 		"removePinnedTab": "Remove pinned tab",
 		"tabName": "Tab name",
 		"removeBookmark": "Remove bookmark",
@@ -927,13 +936,22 @@
 		"bottom": "Open below",
 		"replace": "Replace"
 	},
+	"paneMove": {
+		"left": "Move left",
+		"right": "Move right",
+		"top": "Move above",
+		"bottom": "Move below",
+		"replace": "Swap"
+	},
 	"tabSection": {
 		"splitView": "Split view",
 		"folderEmpty": "Folder empty",
 		"newTab": "New Tab",
+		"newTabShort": "New",
 		"newTerminal": "New Terminal",
 		"clearUnpinnedTooltip": "Archive unpinned tabs",
 		"listOptions": "Sort and Group",
+		"searchTabs": "Search tabs",
 		"pinnedTabs": "Pinned tabs",
 		"openTabs": "Open tabs",
 		"dropToPin": "Drop to pin",
@@ -1086,6 +1104,7 @@
 		"showFolder": "Show Downloads Folder",
 		"clearFinished": "Clear Finished Downloads",
 		"dragFile": "Drag file",
+		"showInFinder": "Show in Finder",
 		"announceDone": "{filename} downloaded",
 		"announceFailed": "{filename} failed to download"
 	},
@@ -1167,7 +1186,6 @@
 		"installed": "Installed"
 	},
 	"commandBar": {
-		"showDetails": "Show keyboard hints",
 		"hintPeek": "Peek",
 		"hintCopyLink": "Copy Link",
 		"hintCloseTab": "Close Tab",
@@ -1199,6 +1217,7 @@
 		"terminalProgram": "Program",
 		"hintRun": "Run",
 		"hintSplit": "Split",
+		"splitFull": "Split view is full ({count} panes)",
 		"scopeTabs": "Tabs",
 		"scopeBookmarks": "Bookmarks",
 		"scopeHistory": "History",
@@ -1234,6 +1253,8 @@
 		"sectionOpenTabs": "Open Tabs",
 		"sectionBookmarks": "Bookmarks",
 		"sectionRecentHistory": "Recent History",
+		"sectionFrequentSites": "Frequent Sites",
+		"sectionRecentConversations": "Recent Conversations",
 		"sectionHistory": "History",
 		"sectionSwitchToTab": "Switch to Tab",
 		"sectionGoTo": "Go To",
@@ -1429,6 +1450,15 @@
 		"title": "WebKit flags",
 		"resetTitle": "Changed flags",
 		"reloadNote": "Reload a page for a change to take effect"
+	},
+	"little": {
+		"openIn": "Open in {space}",
+		"openInMenu": "Open in another Space",
+		"copyLink": "Copy link",
+		"linkCopied": "Link copied",
+		"placeholder": "Search or enter URL...",
+		"emptyTitle": "Search the web or enter a URL",
+		"emptySubtitle": "Type / to search the pages you visited."
 	},
 	"urlToast": {
 		"pageActions": "Page actions",
@@ -2060,6 +2090,7 @@
 		"Hide Others": "Hide Others",
 		"Show All": "Show All",
 		"Quit Lilo": "Quit Lilo",
+		"Hold %@ to Quit": "Hold %@ to Quit",
 		"File": "File",
 		"New Tab": "New Tab",
 		"Back to tab": "Back to tab",
@@ -2105,9 +2136,18 @@
 		"New Split View": "New Split View",
 		"Split View": "Split View",
 		"Separate Split View": "Separate Split View",
+		"Close Split Pane": "Close Split Pane",
+		"Maximize Split Pane": "Maximize Split Pane",
+		"Move Pane": "Move Pane",
+		"Move Pane Left": "Move Pane Left",
+		"Move Pane Right": "Move Pane Right",
+		"Move Pane Up": "Move Pane Up",
+		"Move Pane Down": "Move Pane Down",
 		"Open in Split View": "Open in Split View",
+		"Split view is full (%lld panes)": "Split view is full (%lld panes)",
 		"Hide Element…": "Hide Element…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Click an element to hide it on this site. Press Esc to cancel.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.",
 		"Picture in Picture": "Picture in Picture",
 		"Develop": "Develop",
 		"Show Web Inspector": "Show Web Inspector",
@@ -2197,6 +2237,7 @@
 		"Sleep is back on": "Sleep is back on",
 		"The battery is below %d%%.": "The battery is below %d%%.",
 		"The Mac is too hot.": "The Mac is too hot.",
+		"Never Sleep": "Never Sleep",
 		"Commands kept the Mac awake for the maximum duration.": "Commands kept the Mac awake for the maximum duration.",
 		"While the lid was closed": "While the lid was closed",
 		"%d commands finished": {"one": "%d command finished", "other": "%d commands finished"},
@@ -2349,6 +2390,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Added Lilo to Claude Desktop: quit and reopen Claude to load it",
 		"Added Lilo to Cursor": "Added Lilo to Cursor",
 		"Added Lilo to Codex": "Added Lilo to Codex",
+		"Added Lilo to Zed": "Added Lilo to Zed",
+		"Added Lilo to VS Code": "Added Lilo to VS Code",
+		"Added Lilo to OpenCode": "Added Lilo to OpenCode",
+		"Added Lilo to Gemini CLI": "Added Lilo to Gemini CLI",
 		"Removed Lilo": "Removed Lilo",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo could not read %@: add this server to it yourself: %@",
 		"Stop Agents": "Stop Agents",
@@ -2439,7 +2484,8 @@
 		"Show Pages": "Show Pages",
 		"Hide Pages": "Hide Pages",
 		"Close Conversation": "Close Conversation",
-		"Pasted image": "Pasted image"
+		"Pasted image": "Pasted image",
+		"Copied Lilo's entry": "Copied Lilo's entry"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2699,7 +2745,11 @@
 			"noFolder": "No Folder",
 			"noFolderDetail": "The agent works in a folder of its own",
 			"backgroundHint": "{shortcut} to keep it in the background",
-			"start": "Start"
+			"start": "Start",
+			"searchAgents": "Search agents",
+			"featuredAgents": "Featured",
+			"registryAgents": "Registry",
+			"noMatches": "No matching agents"
 		},
 		"row": {
 			"untitled": "New conversation",

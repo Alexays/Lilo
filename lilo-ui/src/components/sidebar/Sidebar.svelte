@@ -331,9 +331,8 @@
   }
 
 
-  /* Back and Reload always stay: short of room beside the toggle for all three with 6 px before Back, only an
-     unavailable Forward gives way, and with the address hidden the buttons take 24 px. App's per-layout minimum
-     width keeps the rest whole. */
+  /* The lights keep their place: short of room beside the toggle with 6 px before Back, the history buttons
+     take 24 px and an unavailable Forward gives way, then Forward, Reload and Back in turn. The toggle stays. */
   .sidebar-layout:not(.compact-header) .sidebar-header :global(.nav-controls) {
     container: nav / inline-size;
   }
@@ -343,9 +342,27 @@
       display: none;
     }
 
-    .address-hidden :global(.nav-btn.history) {
+    .sidebar-header :global(.nav-btn.history) {
       width: 24px;
       height: 24px;
+    }
+  }
+
+  @container nav (width < 110px) {
+    .sidebar-header :global(.forward) {
+      display: none;
+    }
+  }
+
+  @container nav (width < 84px) {
+    .sidebar-header :global(.reload) {
+      display: none;
+    }
+  }
+
+  @container nav (width < 58px) {
+    .sidebar-header :global(.nav-btn.history) {
+      display: none;
     }
   }
 

@@ -105,6 +105,20 @@
       { value: CHOOSE, label: t("agents.ask.chooseFolder"), icon: "folder" as const },
     ];
   });
+  // Featured agents and the user's own first, the rest of the registry under their own heading.
+  const agentOptions = $derived.by(() => {
+    const agents = getAgents();
+    const featured = agents.filter((candidate) => candidate.featured);
+    const rest = agents.filter((candidate) => !candidate.featured);
+    const grouped = featured.length > 0 && rest.length > 0;
+    return [...featured, ...rest].map((candidate) => ({
+      value: candidate.id,
+      label: candidate.name,
+      detail: candidate.description || undefined,
+      agentId: candidate.id,
+      group: grouped ? t(candidate.featured ? "agents.ask.featuredAgents" : "agents.ask.registryAgents") : undefined,
+    }));
+  });
   const agent = $derived(getAgents().find((candidate) => candidate.id === agentId));
   const canStart = $derived(!!agentId && text.trim().length > 0);
 
@@ -169,8 +183,10 @@
         <span class="spacer"></span>
         <MenuPicker
           value={agentId}
-          options={getAgents().map((candidate) => ({ value: candidate.id, label: candidate.name, detail: candidate.description || undefined, agentId: candidate.id }))}
+          options={agentOptions}
           ariaLabel={t("agents.ask.agent")}
+          searchPlaceholder={t("agents.ask.searchAgents")}
+          searchEmptyLabel={t("agents.ask.noMatches")}
           onchange={(value) => (agentId = value)}
         >
           {#if agent}<AgentTile agentId={agent.id} />{/if}

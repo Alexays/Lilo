@@ -178,6 +178,8 @@ export interface BridgeAgentInfo {
 	description: string;
 	/** An SVG data URL from the ACP registry. */
 	icon?: string;
+	/** Offered first: one of Lilo's featured agents. */
+	featured?: boolean;
 }
 
 export interface BridgeFolderLock {
@@ -700,6 +702,12 @@ export interface BridgeCommandPayloadMap {
 	dismissFind: EmptyPayload;
 	/** A chrome bar closed: the keyboard goes back to the page. */
 	focusPage: EmptyPayload;
+	/** The Little window's chrome is up and wants its state. */
+	littleReady: EmptyPayload;
+	/** Files the Little window's page as a tab: of `spaceId`, else of the Space the window was opened for. */
+	littleOpenInSpace: { spaceId?: string };
+	littleCopyLink: EmptyPayload;
+	littleClose: EmptyPayload;
 	screenshotPage: { mode: "full" | "viewport" | "region" };
 	/** Opens the editor on a copied capture, which it holds from then on. */
 	editCapture: { captureId: string };
@@ -717,6 +725,8 @@ export interface BridgeCommandPayloadMap {
 	newSplitView: EmptyPayload;
 	newTerminal: EmptyPayload;
 	splitTab: { tabId: string; side: SplitDropSide; targetTabId?: string };
+	/** Takes a split pane's tab out of the split, back into the list; the tab stays open. */
+	unsplitTab: { tabId: string };
 	splitURL: { url: string; side: SplitDropSide; targetTabId?: string };
 	openDroppedLinks: { urls: string[] } & BridgeLinkDropTarget;
 	peekURL: { url: string };
@@ -838,6 +848,9 @@ export interface BridgeCommandPayloadMap {
 	/** Asks what Connect (or Remove) would write to the app's configuration: answered with `agentClientPreview`. */
 	previewAgentClient: { client: string; remove: boolean };
 	removeAgentClient: { client: string };
+	revealAgentClientConfig: { client: string };
+	/** Copies Lilo's entry for an app whose settings file Lilo cannot rewrite. */
+	copyAgentClientEntry: { client: string };
 	startConversation: {
 		agentId: string;
 		cwd: string;
@@ -1007,6 +1020,7 @@ export interface BridgeEventPayloadMap {
 	/** A drag entered the chrome: its links (file URLs included), else its text. */
 	linkDrag: { urls: string[]; text: string };
 	openCommandBar: { createOnSubmit?: boolean; newTab?: boolean; prefill?: string; selectAll?: boolean };
+	littleState: BridgeLittleState;
 	toggleCommandBar: { prefill?: string; selectAll?: boolean };
 	openHistory: { query?: string; host?: string; openedFrom?: string };
 	closeCommandBarAfterNavigation: EmptyPayload;
@@ -1224,6 +1238,8 @@ export interface BridgeEventPayloadMap {
 	processSnapshotUpdated: BridgeProcessSnapshot;
 	tabMemoryUpdated: { tabId: string; bytes: number; cpuPercent?: number };
 	splitPanesChanged: { panes: BridgeSplitPaneFrame[] };
+	/** A split pane dragged by its handle, at the content-area point (fractions, as the pane frames). */
+	splitPaneDrag: { tabId: string; phase: "move" | "end" | "cancel"; x: number; y: number };
 	/** Width the extension side panel and its divider take right of the content; 0 when closed. */
 	sidePanelWidthChanged: { width: number };
 	processManagerActionCompleted: BridgeProcessManagerActionStatusPayload;
@@ -1272,6 +1288,19 @@ export interface BridgeEventPayloadMap {
 	openAddSpaceEditor: EmptyPayload;
 	urlCopied: EmptyPayload;
 	urlCopyFailed: EmptyPayload;
+}
+
+/** What a Little window's chrome shows: the start search, or the page's address and where it can be filed. */
+export interface BridgeLittleState {
+	mode: "start" | "page";
+	/** The page's address; empty before its first navigation. */
+	url: string;
+	loading: boolean;
+	/** The Space the window was opened for, its accent color for the strip's palette. */
+	space: { id: string; name: string; icon: string; color: string };
+	otherSpaces: { id: string; name: string; icon: string }[];
+	/** Width the traffic lights take at the strip's start. */
+	leadingInset: number;
 }
 
 export type BridgeCommandName = keyof BridgeCommandPayloadMap;
@@ -1348,11 +1377,12 @@ export interface BridgeAgentClientPreview {
 	blocked: string | null;
 }
 
-/** Agent apps installed or naming Lilo in their configuration, and the agents the user let in. */
+/** The catalog's agent apps, which are installed or name Lilo in their configuration, and the agents the user let in. */
 export interface BridgeAgentClientsSnapshot {
-	/** `icon` is a PNG data URL of the app (Terminal's for a command-line tool), null when it is not installed.
-	 * `stale` is a configuration naming a Lilo at another path, which Connect repoints. */
-	clients: { id: string; configured: boolean; stale?: boolean; icon: string | null }[];
+	/** The apps on this Mac or naming Lilo. `icon` is a PNG data URL of the app (Terminal's for a command-line tool),
+	 * null when it is not installed. `stale` is a configuration naming a Lilo at another path, which Connect repoints;
+	 * `copyOnly` a settings file Lilo cannot rewrite (comments), whose entry the user copies instead. */
+	clients: { id: string; configured: boolean; stale?: boolean; copyOnly?: boolean; icon: string | null }[];
 	/** `name` is what the agent calls itself; `displayName` is how people know it ("Claude Code"); `client` the
 	 * entry of `clients` it is, null for an agent Lilo has no configuration for. */
 	allowed: { name: string; displayName: string; lastSeen: number | null; client: string | null }[];

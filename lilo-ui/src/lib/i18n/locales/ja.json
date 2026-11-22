@@ -492,6 +492,11 @@
 				"description": "エージェントは回答があるまで待機します。",
 				"keywords": "エージェント 承認 確認 支払い 購入 注文 削除 送信 公開"
 			},
+			"agentActionLog": {
+				"title": "エージェントの操作ログを残す",
+				"description": "ローカルのファイルに各呼び出しを記録します。入力したテキストやページの内容は含まれません。",
+				"keywords": "エージェント ログ 履歴 監査 操作 再生"
+			},
 			"agentAlwaysAllowed": {
 				"title": "常に許可",
 				"description": "これらのサイトでは、エージェントが確認なしで操作します。",
@@ -525,6 +530,11 @@
 				"title": "キーボードショートカット",
 				"description": "すべてのショートカットを変更でき、Arc の設定から始めることもできます。",
 				"keywords": "キーボード ショートカット ホットキー キー コマンド"
+			},
+			"holdToQuit": {
+				"title": "終了ショートカットを長押しで終了",
+				"description": "終了ショートカットを押すと確認が表示され、キーを押し続けた場合のみ Lilo を終了します。",
+				"keywords": "終了 閉じる q 誤操作 長押し"
 			},
 			"newProfile": {
 				"title": "新規プロファイル",
@@ -625,9 +635,13 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
-			"connect": "接続",
+			"connect": "接続…",
 			"copy": "構成をコピー",
 			"clientDescription": "MCP サーバーに Lilo を追加します。",
 			"revoke": "取り除く",
@@ -647,31 +661,24 @@
 				"repair": "修復",
 				"remove": "Lilo を削除",
 				"copy": "コピー",
-				"copied": "コピーしました"
+				"copied": "コピーしました",
+				"showTitle": "Liloが{client}に追加した内容",
+				"added": "ファイル内のこれらの行がLiloのものです。",
+				"done": "完了"
 			},
 			"status": {
 				"acting": "操作中",
 				"connected": "接続済み",
-				"allowed": "許可済み",
-				"notInstalled": "未インストール",
-				"ready": "構成済み"
+				"allowed": "許可済み"
 			},
 			"allowedSeen": "許可済み、最終接続 {time}",
-			"permissions": {
-				"button": "権限",
-				"group": "{client}の権限",
-				"act": "ページでの操作",
-				"actHint": "送信、支払い、購入、削除、公開を行うクリックとリクエスト。",
-				"askingOff": "上の設定で、すべてのエージェントの確認がオフになっています。",
-				"ask": "毎回確認",
-				"always": "常に許可",
-				"sites": "これらのサイトで許可",
-				"addSite": "サイトを追加",
-				"addSiteLabel": "{client}が確認なしで操作できるサイトを追加",
-				"removeSite": "{site}を削除",
-				"floor": "サインイン、支払い、他のサイトへのデータ送信は常に確認されます。"
-			},
-			"readyLine": "設定済み。初回接続時に Lilo が確認します。"
+			"foundLine": "このMac上",
+			"copyOnlyLine": "このMac上。設定ファイルにコメントがあるため、Liloの項目をコピーしてください。",
+			"connectedSeen": "接続済み、最終使用 {time}",
+			"copyEntry": "項目をコピー",
+			"showAdded": "Liloが追加した内容を表示…",
+			"revealFile": "設定ファイルを表示",
+			"footnote": "このMacにないアプリは表示されません。このページを開くたびにLiloが再確認します。"
 		},
 		"navGroups": {
 			"tools": "ツール"
@@ -867,6 +874,7 @@
 		"pinned": "固定済み",
 		"loading": "読み込み中",
 		"muted": "消音中",
+		"neverSleeps": "スリープしない",
 		"playingAudio": "オーディオを再生中",
 		"terminalCommand": "コマンド",
 		"terminalAwaitingFor": "{command}は{duration}入力を待っています",
@@ -874,6 +882,7 @@
 		"terminalFailedDetail": "{command}が{duration}後に失敗しました（終了コード{code}）",
 		"terminalSucceededDetail": "{command}が{duration}で完了しました",
 		"closeTab": "タブを閉じる",
+		"removeFromSplit": "分割ビューから削除",
 		"removePinnedTab": "固定タブを取り除く",
 		"tabName": "タブ名",
 		"removeBookmark": "ブックマークを取り除く",
@@ -927,13 +936,22 @@
 		"bottom": "下に開く",
 		"replace": "置き換える"
 	},
+	"paneMove": {
+		"left": "左に移動",
+		"right": "右に移動",
+		"top": "上に移動",
+		"bottom": "下に移動",
+		"replace": "入れ替え"
+	},
 	"tabSection": {
 		"splitView": "分割表示",
 		"folderEmpty": "空のフォルダ",
 		"newTab": "新規タブ",
+		"newTabShort": "新規",
 		"newTerminal": "新規ターミナル",
 		"clearUnpinnedTooltip": "固定されていないタブをアーカイブ",
 		"listOptions": "並べ替えとグループ化",
+		"searchTabs": "タブを検索",
 		"pinnedTabs": "固定タブ",
 		"openTabs": "開いているタブ",
 		"dropToPin": "ドロップして固定",
@@ -1086,6 +1104,7 @@
 		"showFolder": "ダウンロードフォルダを表示",
 		"clearFinished": "完了したダウンロードを消去",
 		"dragFile": "ファイルをドラッグ",
+		"showInFinder": "Finder に表示",
 		"announceDone": "{filename}をダウンロードしました",
 		"announceFailed": "{filename}をダウンロードできませんでした"
 	},
@@ -1167,7 +1186,6 @@
 		"installed": "インストール済み"
 	},
 	"commandBar": {
-		"showDetails": "キーボードヒントを表示",
 		"hintPeek": "プレビュー",
 		"hintCopyLink": "リンクをコピー",
 		"hintCloseTab": "タブを閉じる",
@@ -1199,6 +1217,7 @@
 		"terminalProgram": "プログラム",
 		"hintRun": "実行",
 		"hintSplit": "分割",
+		"splitFull": "分割表示はいっぱいです（{count} ペイン）",
 		"scopeTabs": "タブ",
 		"scopeBookmarks": "ブックマーク",
 		"scopeHistory": "履歴",
@@ -1234,6 +1253,8 @@
 		"sectionOpenTabs": "開いているタブ",
 		"sectionBookmarks": "ブックマーク",
 		"sectionRecentHistory": "最近の履歴",
+		"sectionFrequentSites": "よく見るサイト",
+		"sectionRecentConversations": "最近の会話",
 		"sectionHistory": "履歴",
 		"sectionSwitchToTab": "タブに切り替える",
 		"sectionGoTo": "移動",
@@ -1429,6 +1450,15 @@
 		"title": "WebKit のフラグ",
 		"resetTitle": "変更したフラグ",
 		"reloadNote": "変更を反映するにはページを再読み込みしてください"
+	},
+	"little": {
+		"openIn": "{space}で開く",
+		"openInMenu": "別のスペースで開く",
+		"copyLink": "リンクをコピー",
+		"linkCopied": "リンクをコピーしました",
+		"placeholder": "検索または URL を入力...",
+		"emptyTitle": "Web を検索、または URL を入力",
+		"emptySubtitle": "/ を入力すると、閲覧したページを検索できます。"
 	},
 	"urlToast": {
 		"pageActions": "ページのアクション",
@@ -2060,6 +2090,7 @@
 		"Hide Others": "ほかを非表示",
 		"Show All": "すべてを表示",
 		"Quit Lilo": "Lilo を終了",
+		"Hold %@ to Quit": "%@ を長押しで終了",
 		"File": "ファイル",
 		"New Tab": "新規タブ",
 		"Back to tab": "タブに戻る",
@@ -2105,9 +2136,18 @@
 		"New Split View": "新規分割表示",
 		"Split View": "分割表示",
 		"Separate Split View": "分割表示を解除",
+		"Close Split Pane": "分割ペインを閉じる",
+		"Maximize Split Pane": "分割ペインを最大化",
+		"Move Pane": "ペインを移動",
+		"Move Pane Left": "分割ペインを左に移動",
+		"Move Pane Right": "分割ペインを右に移動",
+		"Move Pane Up": "分割ペインを上に移動",
+		"Move Pane Down": "分割ペインを下に移動",
 		"Open in Split View": "分割表示で開く",
+		"Split view is full (%lld panes)": "分割表示はいっぱいです（%lld ペイン）",
 		"Hide Element…": "要素を非表示…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "このサイトで非表示にする要素をクリックしてください。キャンセルするにはEscキーを押します。",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "要素をクリックするか、範囲をドラッグします。矢印キーで要素を変更し、Returnでキャプチャ、Escでキャンセルします。",
 		"Picture in Picture": "ピクチャ・イン・ピクチャ",
 		"Develop": "開発",
 		"Show Web Inspector": "Web インスペクタを表示",
@@ -2197,6 +2237,7 @@
 		"Sleep is back on": "スリープが再び有効になりました",
 		"The battery is below %d%%.": "バッテリー残量が %d%% を下回りました。",
 		"The Mac is too hot.": "Mac が熱くなりすぎています。",
+		"Never Sleep": "スリープしない",
 		"Commands kept the Mac awake for the maximum duration.": "コマンドによるスリープ防止が上限時間に達しました。",
 		"While the lid was closed": "蓋を閉じている間",
 		"%d commands finished": {"one": "%d個のコマンドが完了しました", "other": "%d個のコマンドが完了しました"},
@@ -2349,6 +2390,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Claude Desktop に Lilo を追加しました。Claude を終了して開き直すと読み込まれます",
 		"Added Lilo to Cursor": "Cursor に Lilo を追加しました",
 		"Added Lilo to Codex": "Codex に Lilo を追加しました",
+		"Added Lilo to Zed": "Zed に Lilo を追加しました",
+		"Added Lilo to VS Code": "VS Code に Lilo を追加しました",
+		"Added Lilo to OpenCode": "OpenCode に Lilo を追加しました",
+		"Added Lilo to Gemini CLI": "Gemini CLI に Lilo を追加しました",
 		"Removed Lilo": "Lilo を削除しました",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo は %@ を読み取れませんでした。このサーバを手動で追加してください：%@",
 		"Stop Agents": "エージェントを停止",
@@ -2439,7 +2484,8 @@
 		"Show Pages": "ページを表示",
 		"Hide Pages": "ページを隠す",
 		"Close Conversation": "会話を閉じる",
-		"Pasted image": "貼り付けた画像"
+		"Pasted image": "貼り付けた画像",
+		"Copied Lilo's entry": "Liloの項目をコピーしました"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2707,7 +2753,11 @@
 			"noFolder": "フォルダなし",
 			"noFolderDetail": "エージェントは専用のフォルダで作業します",
 			"backgroundHint": "{shortcut} でバックグラウンドのままにする",
-			"start": "開始"
+			"start": "開始",
+			"searchAgents": "エージェントを検索",
+			"featuredAgents": "注目",
+			"registryAgents": "レジストリ",
+			"noMatches": "一致するエージェントがありません"
 		},
 		"row": {
 			"untitled": "新しい会話",

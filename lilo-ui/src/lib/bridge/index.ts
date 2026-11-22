@@ -19,6 +19,7 @@ export type {
   BridgeExtensionSnapshot,
   BridgeExtensionUpdateCheck,
   BridgeInitialStatePayload,
+  BridgeLittleState,
   BridgeProfileSnapshot,
   BridgeSpaceSnapshot,
   BridgeTabSnapshot,

@@ -492,6 +492,11 @@
 				"description": "O agente aguarda sua resposta.",
 				"keywords": "agente aprovação confirmar pagamento compra pedido apagar enviar publicar"
 			},
+			"agentActionLog": {
+				"title": "Manter um registro das ações do agente",
+				"description": "Um arquivo local lista cada chamada, nunca o texto digitado nem o conteúdo das páginas.",
+				"keywords": "agente registro histórico auditoria ações reproduzir"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Sempre permitido",
 				"description": "Agentes atuam nestes sites sem perguntar.",
@@ -525,6 +530,11 @@
 				"title": "Atalhos de teclado",
 				"description": "Altere qualquer atalho ou comece com os do Arc.",
 				"keywords": "teclado atalho tecla teclas comando"
+			},
+			"holdToQuit": {
+				"title": "Manter o atalho de encerrar pressionado para encerrar",
+				"description": "O atalho de encerrar mostra um aviso; o Lilo só é encerrado se as teclas continuarem pressionadas.",
+				"keywords": "encerrar sair comando q acidental manter"
 			},
 			"newProfile": {
 				"title": "Novo perfil",
@@ -625,9 +635,13 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
-			"connect": "Conectar",
+			"connect": "Conectar…",
 			"copy": "Copiar configuração",
 			"clientDescription": "Adiciona o Lilo aos seus servidores MCP.",
 			"revoke": "Remover",
@@ -647,31 +661,24 @@
 				"repair": "Reparar",
 				"remove": "Remover o Lilo",
 				"copy": "Copiar",
-				"copied": "Copiado"
+				"copied": "Copiado",
+				"showTitle": "O que o Lilo adicionou ao {client}",
+				"added": "Estas linhas do arquivo são do Lilo.",
+				"done": "Concluído"
 			},
 			"status": {
 				"acting": "Em ação agora",
 				"connected": "Conectado",
-				"allowed": "Permitido",
-				"notInstalled": "Não instalado",
-				"ready": "Configurado"
+				"allowed": "Permitido"
 			},
 			"allowedSeen": "Permitido, visto por último {time}",
-			"permissions": {
-				"button": "Permissões",
-				"group": "Permissões de {client}",
-				"act": "Ações nas páginas",
-				"actHint": "Cliques e solicitações que enviam, pagam, compram, excluem ou publicam.",
-				"askingOff": "As perguntas estão desativadas para todos os agentes, na configuração acima.",
-				"ask": "Perguntar sempre",
-				"always": "Permitir sempre",
-				"sites": "Permitido nestes sites",
-				"addSite": "Adicionar um site",
-				"addSiteLabel": "Adicionar um site em que {client} pode agir sem perguntar",
-				"removeSite": "Remover {site}",
-				"floor": "Entrar, pagar e enviar dados a outro site sempre são perguntados."
-			},
-			"readyLine": "Configurado. O Lilo pergunta na primeira conexão."
+			"foundLine": "Neste Mac",
+			"copyOnlyLine": "Neste Mac. O arquivo de ajustes tem comentários: copie a entrada do Lilo.",
+			"connectedSeen": "Conectado, último uso {time}",
+			"copyEntry": "Copiar Entrada",
+			"showAdded": "Mostrar o Que o Lilo Adicionou…",
+			"revealFile": "Mostrar Arquivo de Ajustes",
+			"footnote": "Apps que não estão neste Mac não aparecem. O Lilo procura de novo quando esta página abre."
 		},
 		"navGroups": {
 			"tools": "Ferramentas"
@@ -867,6 +874,7 @@
 		"pinned": "Fixada",
 		"loading": "Carregando",
 		"muted": "Sem som",
+		"neverSleeps": "Nunca em repouso",
 		"playingAudio": "Reproduzindo áudio",
 		"terminalCommand": "Comando",
 		"terminalAwaitingFor": "{command} está aguardando você há {duration}",
@@ -874,6 +882,7 @@
 		"terminalFailedDetail": "{command} falhou (código {code}) após {duration}",
 		"terminalSucceededDetail": "{command} terminou em {duration}",
 		"closeTab": "Fechar aba",
+		"removeFromSplit": "Remover da visualização dividida",
 		"removePinnedTab": "Remover aba fixada",
 		"tabName": "Nome da aba",
 		"removeBookmark": "Remover favorito",
@@ -927,13 +936,22 @@
 		"bottom": "Abrir abaixo",
 		"replace": "Substituir"
 	},
+	"paneMove": {
+		"left": "Mover à esquerda",
+		"right": "Mover à direita",
+		"top": "Mover acima",
+		"bottom": "Mover abaixo",
+		"replace": "Trocar"
+	},
 	"tabSection": {
 		"splitView": "Visualização dividida",
 		"folderEmpty": "Pasta vazia",
 		"newTab": "Nova aba",
+		"newTabShort": "Nova",
 		"newTerminal": "Novo terminal",
 		"clearUnpinnedTooltip": "Arquivar abas não fixadas",
 		"listOptions": "Ordenar e agrupar",
+		"searchTabs": "Pesquisar nas abas",
 		"pinnedTabs": "Abas fixadas",
 		"openTabs": "Abas abertas",
 		"dropToPin": "Solte para fixar",
@@ -1086,6 +1104,7 @@
 		"showFolder": "Mostrar pasta de downloads",
 		"clearFinished": "Limpar downloads concluídos",
 		"dragFile": "Arrastar arquivo",
+		"showInFinder": "Mostrar no Finder",
 		"announceDone": "{filename} baixado",
 		"announceFailed": "Falha ao baixar {filename}"
 	},
@@ -1167,7 +1186,6 @@
 		"installed": "Instaladas"
 	},
 	"commandBar": {
-		"showDetails": "Mostrar atalhos de teclado",
 		"hintPeek": "Pré-visualizar",
 		"hintCopyLink": "Copiar link",
 		"hintCloseTab": "Fechar aba",
@@ -1199,6 +1217,7 @@
 		"terminalProgram": "Programa",
 		"hintRun": "Executar",
 		"hintSplit": "Dividir",
+		"splitFull": "A visualização dividida está cheia ({count} painéis)",
 		"scopeTabs": "Abas",
 		"scopeBookmarks": "Favoritos",
 		"scopeHistory": "Histórico",
@@ -1234,6 +1253,8 @@
 		"sectionOpenTabs": "Abas abertas",
 		"sectionBookmarks": "Favoritos",
 		"sectionRecentHistory": "Histórico recente",
+		"sectionFrequentSites": "Sites frequentes",
+		"sectionRecentConversations": "Conversas recentes",
 		"sectionHistory": "Histórico",
 		"sectionSwitchToTab": "Alternar para aba",
 		"sectionGoTo": "Ir para",
@@ -1429,6 +1450,15 @@
 		"title": "Recursos do WebKit",
 		"resetTitle": "Recursos alterados",
 		"reloadNote": "Recarregue uma página para a mudança valer"
+	},
+	"little": {
+		"openIn": "Abrir em {space}",
+		"openInMenu": "Abrir em outro Espaço",
+		"copyLink": "Copiar link",
+		"linkCopied": "Link copiado",
+		"placeholder": "Pesquise ou digite uma URL...",
+		"emptyTitle": "Pesquise na web ou digite uma URL",
+		"emptySubtitle": "Digite / para buscar nas páginas visitadas."
 	},
 	"urlToast": {
 		"pageActions": "Ações da página",
@@ -2060,6 +2090,7 @@
 		"Hide Others": "Ocultar outros",
 		"Show All": "Mostrar tudo",
 		"Quit Lilo": "Encerrar Lilo",
+		"Hold %@ to Quit": "Mantenha %@ pressionado para encerrar",
 		"File": "Arquivo",
 		"New Tab": "Nova aba",
 		"Back to tab": "Voltar à aba",
@@ -2105,9 +2136,18 @@
 		"New Split View": "Nova visualização dividida",
 		"Split View": "Visualização dividida",
 		"Separate Split View": "Separar visualização dividida",
+		"Close Split Pane": "Fechar painel dividido",
+		"Maximize Split Pane": "Maximizar painel dividido",
+		"Move Pane": "Mover painel",
+		"Move Pane Left": "Mover painel dividido para a esquerda",
+		"Move Pane Right": "Mover painel dividido para a direita",
+		"Move Pane Up": "Mover painel dividido para cima",
+		"Move Pane Down": "Mover painel dividido para baixo",
 		"Open in Split View": "Abrir em visualização dividida",
+		"Split view is full (%lld panes)": "A visualização dividida está cheia (%lld painéis)",
 		"Hide Element…": "Ocultar elemento…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Clique em um elemento para ocultá-lo neste site. Pressione Esc para cancelar.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Clique em um elemento ou arraste uma área. As setas mudam o elemento, Return captura e Esc cancela.",
 		"Picture in Picture": "Picture in Picture",
 		"Develop": "Desenvolvedor",
 		"Show Web Inspector": "Mostrar Inspetor Web",
@@ -2197,6 +2237,7 @@
 		"Sleep is back on": "O repouso foi reativado",
 		"The battery is below %d%%.": "A bateria está abaixo de %d%%.",
 		"The Mac is too hot.": "O Mac está quente demais.",
+		"Never Sleep": "Nunca pôr em repouso",
 		"Commands kept the Mac awake for the maximum duration.": "Os comandos mantiveram o Mac ativo pelo tempo máximo.",
 		"While the lid was closed": "Enquanto a tampa estava fechada",
 		"%d commands finished": {"one": "%d comando concluído", "other": "%d comandos concluídos"},
@@ -2349,6 +2390,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Lilo adicionado ao Claude Desktop: encerre e reabra o Claude para carregá-lo",
 		"Added Lilo to Cursor": "Lilo adicionado ao Cursor",
 		"Added Lilo to Codex": "Lilo adicionado ao Codex",
+		"Added Lilo to Zed": "Lilo adicionado ao Zed",
+		"Added Lilo to VS Code": "Lilo adicionado ao VS Code",
+		"Added Lilo to OpenCode": "Lilo adicionado ao OpenCode",
+		"Added Lilo to Gemini CLI": "Lilo adicionado ao Gemini CLI",
 		"Removed Lilo": "Lilo removido",
 		"Lilo could not read %@: add this server to it yourself: %@": "O Lilo não conseguiu ler %@: adicione este servidor manualmente: %@",
 		"Stop Agents": "Parar agentes",
@@ -2439,7 +2484,8 @@
 		"Show Pages": "Mostrar páginas",
 		"Hide Pages": "Ocultar páginas",
 		"Close Conversation": "Fechar conversa",
-		"Pasted image": "Imagem colada"
+		"Pasted image": "Imagem colada",
+		"Copied Lilo's entry": "Entrada do Lilo copiada"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2707,7 +2753,11 @@
 			"noFolder": "Nenhuma pasta",
 			"noFolderDetail": "O agente trabalha em uma pasta própria",
 			"backgroundHint": "{shortcut} para manter em segundo plano",
-			"start": "Iniciar"
+			"start": "Iniciar",
+			"searchAgents": "Buscar agentes",
+			"featuredAgents": "Em destaque",
+			"registryAgents": "Registro",
+			"noMatches": "Nenhum agente correspondente"
 		},
 		"row": {
 			"untitled": "Nova conversa",
