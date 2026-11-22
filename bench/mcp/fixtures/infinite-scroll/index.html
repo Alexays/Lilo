@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>Catalog</title>
+<h1>Catalog</h1><ol id="list"></ol><p id="more">Loading more…</p>
+<script>
+// Ten items at a time, more only when the end of the list scrolls into view.
+const adjectives = ['Amber', 'Brisk', 'Quiet', 'Lucid', 'Rustic', 'Velvet', 'Hollow']
+const nouns = ['Kettle', 'Compass', 'Ledger', 'Satchel', 'Spindle', 'Trellis', 'Beacon', 'Quill', 'Anvil', 'Harbor', 'Thimble']
+const name = i => i === 47 ? 'Cobalt Lantern' : `${adjectives[i % 7]} ${nouns[i % 11]}`
+let shown = 0
+const observer = new IntersectionObserver(entries => { if (entries[0].isIntersecting) setTimeout(load, 500) })
+const load = () => {
+  for (const end = Math.min(shown + 10, 80); shown < end;) { shown++; const li = document.createElement('li'); li.textContent = name(shown); list.append(li) }
+  observer.unobserve(more)
+  if (shown < 80) observer.observe(more)
+  else more.textContent = 'End of catalog'
+}
+load()
+</script>

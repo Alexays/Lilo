@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><title>Team note</title><script src="../lib.js"></script>
+<h1>Team note</h1>
+<div id="editor" contenteditable="true" role="textbox" aria-label="Note" aria-multiline="true" style="border:1px solid #999;min-height:60px;padding:6px"></div>
+<button id="save">Save note</button><p id="result" role="status"></p>
+<script>save.onclick = () => record('save', { text: editor.innerText.trim() }).then(() => { result.textContent = 'Note saved' })</script>

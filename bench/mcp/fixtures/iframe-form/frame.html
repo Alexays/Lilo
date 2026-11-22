@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><script src="../lib.js"></script>
+<form id="f"><label>Email <input name="email" type="email" required></label>
+<label><input name="weekly" type="checkbox"> Weekly digest</label>
+<button>Join the list</button></form><p id="done" role="status"></p>
+<script>
+f.onsubmit = event => {
+  event.preventDefault()
+  record('join', { email: f.email.value, weekly: f.weekly.checked }).then(() => { done.textContent = 'You are on the list' })
+}
+</script>

@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>Anmelden</title><script src="../lib.js"></script>
+<h1>Anmelden</h1>
+<form id="login">
+  <label>E-Mail <input name="email" type="email" autocomplete="username"></label>
+  <label>Passwort <input name="password" type="password" autocomplete="current-password"></label>
+  <button>Weiter</button>
+</form><p id="result" role="status"></p>
+<script>
+login.onsubmit = event => {
+  event.preventDefault()
+  record('login', { email: login.elements.email.value }).then(() => { result.textContent = 'Willkommen' })
+}
+</script>

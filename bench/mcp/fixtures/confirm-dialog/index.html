@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>Projects</title><script src="../lib.js"></script>
+<h1>Projects</h1><ul><li>Atlas <button id="archive">Archive</button></li><li>Juniper</li></ul><p id="result" role="status"></p>
+<script>
+archive.onclick = () => {
+  if (confirm('Archive Atlas? It leaves the project list.')) record('archive', { project: 'atlas' }).then(() => { result.textContent = 'Atlas archived' })
+}
+</script>

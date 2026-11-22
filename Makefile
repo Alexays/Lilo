@@ -94,7 +94,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly ext-e2e-passwords ext-e2e-passwords-trust top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap bootstrap-test ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test check-summary-test agent-app agent-call \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip webkit-fork bootstrap bootstrap-test ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test check-summary-test agent-app agent-app-stop agent-app-restart agent-call agent-eval agent-eval-test \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	docs-dev docs-build docs-check docs-test docs-preview docs-deploy-check docs-deploy docs-translate docs-eval docs-lock \
 	hooks-install hooks-test lint-commit-message lint-commits \
@@ -142,7 +142,7 @@ bootstrap-test:
 ## Run UI, website and docs checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
 validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(DOCS_DEPS) $(SWIFTLINT) $(CHANGIE)
 	@logs=$$(mktemp -d); names=; pids=; \
-	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test bootstrap-test perf-summary-test check-summary-test ext-bridge-test swiftlint release-status"; do \
+	for group in ui-lint ui-test "site-check site-test" "docs-check docs-test" "hooks-test bootstrap-test perf-summary-test check-summary-test agent-eval-test ext-bridge-test swiftlint release-status"; do \
 		name=$${group%% *}; names="$$names $$name"; \
 		$(CHECK_SUMMARY) run $$name "$$logs" -- $(MAKE) -k --no-print-directory $$group & pids="$$pids $$!"; \
 	done; \
@@ -521,13 +521,42 @@ agent-app:
 			until sqlite3 "$(AGENT_DATA)/global.db" "$$on" 2>/dev/null; do sleep 1; done; \
 			kill $$first; wait $$first 2>/dev/null; /bin/rm -f "$(AGENT_DATA)/agent.sock"; }; \
 		LILO_AGENT_ALLOW_ALL=1 LILO_AGENT_CLICKS=$(or $(CLICKS),allow) LILO_HEADLESS=$(or $(HEADLESS),1) "$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/Lilo" >/dev/null 2>&1 & \
+		echo $$! > "$(AGENT_DATA)/agent-app.pid"; \
 		until [ -S "$(AGENT_DATA)/agent.sock" ] && sleep 3; do sleep 1; done; }
+
+## Stop the Debug app agent-app started (never another one)
+agent-app-stop:
+	@pid=$$(cat "$(AGENT_DATA)/agent-app.pid" 2>/dev/null); \
+	if [ -n "$$pid" ] && ps -p $$pid -o command= | grep -q "^$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/Lilo$$"; then \
+		kill $$pid; while kill -0 $$pid 2>/dev/null; do sleep 0.2; done; fi; \
+		/bin/rm -f "$(AGENT_DATA)/agent-app.pid" "$(AGENT_DATA)/agent.sock"
+
+## Start the Debug app in a click mode (CLICKS=allow|deny), replacing the one agent-app started
+agent-app-restart: agent-app-stop agent-app
+	@kill -0 "$$(cat "$(AGENT_DATA)/agent-app.pid" 2>/dev/null)" 2>/dev/null || { \
+		echo "A Debug app that make did not start is running: quit it to run in CLICKS=$(CLICKS)" >&2; exit 1; }
 
 ## Call the debug app's agent tools from a shell, starting the app first if needed (CALLS=calls.json, see scripts/agent_call.mjs)
 agent-call:
 	@test -n "$(CALLS)" || { echo "CALLS=calls.json is required" >&2; exit 2; }
 	@$(MAKE) --no-print-directory agent-app
 	@node scripts/agent_call.mjs build/debug/export/Lilo.app/Contents/MacOS/lilo-mcp "$(CALLS)"
+
+## Run the fixture agent tasks with Claude Code, graded in code (TOOL=lilo|playwright|chrome-devtools MODEL=sonnet PASSES=1 TASK=name)
+# The gate tasks (`asks`) run against an app answering every action question no, the others against one answering yes.
+agent-eval:
+	@set -e; for clicks in allow deny; do \
+		tasks=$$(python3 -I bench/mcp/fixtures.py tasks --tool $(or $(TOOL),lilo) --clicks $$clicks $(if $(TASK),--task $(TASK))); \
+		[ -n "$$tasks" ] || continue; \
+		$(if $(filter-out lilo,$(or $(TOOL),lilo)),,$(MAKE) --no-print-directory agent-app-restart CLICKS=$$clicks;) \
+		LILO_MCP="$(CURDIR)/build/debug/export/Lilo.app/Contents/MacOS/lilo-mcp" python3 -I bench/mcp/fixtures.py run \
+			--tool $(or $(TOOL),lilo) --model $(or $(MODEL),sonnet) --passes $(or $(PASSES),1) $$(printf -- '--task %s ' $$tasks); \
+	done
+	@$(if $(filter-out lilo,$(or $(TOOL),lilo)),,$(MAKE) --no-print-directory agent-app-stop)
+
+## Test the fixture agent tasks' server and grading (no browser, no model)
+agent-eval-test:
+	@python3 -I bench/mcp/fixtures_test.py -q
 
 ## Build the UI bundle and create release artifacts
 release: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(if $(WEBKIT_FORK_URL),webkit-fork)

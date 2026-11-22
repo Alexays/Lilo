@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>Contact details</title><script src="../lib.js"></script>
+<h1>Contact details</h1>
+<!-- The same form after a redesign: the fields swapped places and the phone label changed. A flow
+recorded on index.html finds no "Phone" textbox here and must stop rather than write into Address. -->
+<label>Address <input id="address" autocomplete="off"></label>
+<label>Phone number <input id="phone" inputmode="tel" autocomplete="off"></label>
+<button id="save">Save</button><p id="result" role="status"></p>
+<script>
+const phone = document.getElementById('phone')
+const address = document.getElementById('address')
+document.getElementById('save').onclick = () =>
+  record('save', { phone: phone.value, address: address.value }).then(() => { result.textContent = 'Saved' })
+</script>

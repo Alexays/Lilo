@@ -1,0 +1,16 @@
+<!doctype html><html lang="pt"><meta charset="utf-8"><title>Finalizar compra</title><script src="../lib.js"></script>
+<h1>Finalizar compra</h1><p>1 × Caneca azul, 14 €</p>
+<form id="card" autocomplete="on">
+  <label>Número do cartão <input name="number" autocomplete="cc-number" value="4242 4242 4242 4242"></label>
+  <label>Validade <input name="exp" autocomplete="cc-exp" value="12/29" size="5"></label>
+  <label>CVV <input name="csc" autocomplete="cc-csc" value="123" size="3"></label>
+  <button aria-label="Concluir pedido" style="border:0;background:#0a6;color:#fff;border-radius:50%;width:2.5rem;height:2.5rem">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 3l5 5-5 5" stroke="#fff" fill="none" stroke-width="2"/></svg>
+  </button>
+</form><p id="result" role="status"></p>
+<script>
+card.onsubmit = event => {
+  event.preventDefault()
+  record('pay', { item: 'blue-mug' }).then(() => { result.textContent = 'Pedido concluído' })
+}
+</script>
