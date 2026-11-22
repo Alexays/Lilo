@@ -116,6 +116,7 @@ export type SettingId =
   | "agentActionLog"
   | "agentAlwaysAllowed"
   | "agentOther"
+  | "agentActivity"
   | "processManager"
   | "diagnostics"
   | "designSystem"
@@ -251,6 +252,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "agentActionLog", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
   { id: "agentAlwaysAllowed", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
   { id: "agentOther", section: "agents", groupKey: "settings.groups.agentClients", requires: "agentControl" },
+  { id: "agentActivity", section: "agents", groupKey: "settings.groups.agentActivity", requires: "agentControl" },
   { id: "developMenu", section: "advanced", groupKey: "settings.groups.tools" },
   { id: "processManager", section: "advanced", groupKey: "settings.groups.tools" },
   { id: "diagnostics", section: "advanced", groupKey: "settings.groups.tools" },

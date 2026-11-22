@@ -17,15 +17,22 @@ final class AgentActionLog {
     private static let alwaysMasked: Set<String> = ["value", "text", "cookie", "body", "headers", "params"]
 
     private let writer: Writer
+    let directory: URL
 
     init(directory: URL, maxBytes: Int = defaultMaxBytes) {
+        self.directory = directory
         writer = Writer(directory: directory, maxBytes: maxBytes)
     }
 
     /// The file a session's calls go to: its conversation's, else its client's.
     static func name(for session: AgentSession) -> String {
         if let tab = session.conversationTabId { return "conversation-\(tab.uuidString)" }
-        let client = session.clientName.lowercased().unicodeScalars.map { $0.isASCII && ($0.properties.isAlphabetic || ("0"..."9").contains($0)) ? Character($0) : "-" }
+        return clientFile(session.clientName)
+    }
+
+    /// The file an MCP client's calls go to.
+    nonisolated static func clientFile(_ clientName: String) -> String {
+        let client = clientName.lowercased().unicodeScalars.map { $0.isASCII && ($0.properties.isAlphabetic || ("0"..."9").contains($0)) ? Character($0) : "-" }
         return "client-" + String(String(client).prefix(40))
     }
 

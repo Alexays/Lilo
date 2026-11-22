@@ -1,0 +1,3 @@
+kind: Added
+body: 'Settings > Agents lists the latest calls each app made (the time, the tool and the site, never typed text or page content) and opens the action log in Finder. The list is read only when you open the page or refresh it, and says so when the log is off'
+time: 2026-11-21T13:00:00.000000Z

@@ -387,3 +387,11 @@ Rejoue un flux enregistré dans un onglet par le même acheminement qu'un appel 
 | `tabId` | `number` | oui | L'onglet dans lequel rejouer. |
 | `params` | `object` | non | Chaque paramètre que le flux déclare, par nom. |
 | `from` | `number` | non | L'étape, numérotée à partir de 1, où reprendre, 1 par défaut. |
+
+## Lilo [#lilo]
+
+### `browser_config` [#browser_config]
+
+Renvoie un instantané en lecture seule de Lilo lui-même : sa version, l'état du bloqueur de contenu, le zoom de page par défaut, et l'état des autorisations de l'agent (son profil, s'il demande avant d'agir, et si les appels sont consignés). Rien ne peut être modifié.
+
+Aucun paramètre.
