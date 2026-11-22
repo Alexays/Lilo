@@ -10,9 +10,7 @@ function receive(msg: Record<string, unknown>): void {
 
 async function loadStore() {
 	const loadStores = await freshStores();
-	const store = await loadStores("/src/stores/agentActionLog.svelte.ts");
-	store.initAgentActionLogStore();
-	return store;
+	return loadStores("/src/stores/agentActionLog.svelte.ts");
 }
 
 test("nothing is read or asked for until the page asks", async () => {

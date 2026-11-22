@@ -20,7 +20,6 @@ import { initSidePanelStore } from "./sidePanel";
 import { initSplitPanesStore } from "./splitPanes.svelte";
 import { initSplitPaneDragStore } from "./splitPaneDrag.svelte";
 import { initKeepAwakeStore } from "./keepAwake.svelte";
-import { initAgentActionLogStore } from "./agentActionLog.svelte";
 import { initAgentsStore } from "./agents.svelte";
 import { initConversationsStore } from "./conversations.svelte";
 import { initMediaStore } from "./media.svelte";
@@ -81,7 +80,6 @@ const DEFERRED_STORES: StoreInitializer[] = [
 	initSplitPaneDragStore,
 	initKeepAwakeStore,
 	initAgentsStore,
-	initAgentActionLogStore,
 	initConversationsStore,
 	initMediaStore,
 	initMeetingStore,

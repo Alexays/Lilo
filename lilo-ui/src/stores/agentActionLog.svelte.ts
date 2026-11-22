@@ -4,11 +4,10 @@ import type { BridgeAgentActionLog } from "../lib/bridge/protocol";
 
 let _log = $state.raw<BridgeAgentActionLog["clients"] | null>(null);
 
-export function initAgentActionLogStore(): void {
-	on("agentActionLog", (data) => {
-		_log = data.clients ?? [];
-	});
-}
+// Registered on import: only the Settings activity list imports this, so it stays out of the first frame.
+on("agentActionLog", (data) => {
+	_log = data.clients ?? [];
+});
 
 /** Each agent's latest calls; null until native has read the log once. */
 export function getAgentActionLog(): BridgeAgentActionLog["clients"] | null {
