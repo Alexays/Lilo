@@ -32,19 +32,18 @@ Python 3 comes with Xcode. No Apple Developer account is needed.
 
 ### Package manager
 
-The interface (`lilo-ui`), the website (`site`) and the documentation site (`docs-site`) are one pnpm
-workspace (`pnpm-workspace.yaml`) with one lockfile, `pnpm-lock.yaml`. The root `package.json` pins
-`pnpm@12.16.1` in `packageManager`, so CI, Cloudflare's builds and your machine install with one
-version. Corepack (`corepack enable`, which comes with Node.js 22) fetches it on first use, and pnpm
-refuses to install with another version. `make` installs a project alone
+Every JavaScript package in the repository (the interface `lilo-ui`, the website `site`, the
+documentation site `docs-site`, the extension bridge `Lilo/Extensions/bridge-src` and
+`release-media`) is one pnpm workspace (`pnpm-workspace.yaml`) with one lockfile, `pnpm-lock.yaml`.
+The root `package.json` pins `pnpm@12.16.1` in `packageManager`, so CI, Cloudflare's builds and your
+machine install with one version. Corepack (`corepack enable`, which comes with Node.js 22) fetches
+it on first use, and pnpm refuses to install with another version. `make` installs a project alone
 (`pnpm install --frozen-lockfile --ignore-scripts --filter ./site...`), so `make ui-test` never
 downloads the website's dependencies, and pnpm clones every package from its one store on your
 disk: a second worktree installs in about a second and costs almost no space.
 
-The extension bridge (`Lilo/Extensions/bridge-src`) and `release-media` stay separate npm projects
-with their own `package-lock.json`. To change a dependency of a workspace project, run
-`pnpm --dir site add ...` (or `make site-lock` for an update) and commit `package.json` and
-`pnpm-lock.yaml` together.
+To change a dependency of a workspace project, run `pnpm --dir site add ...` (or `make site-lock`
+for an update) and commit `package.json` and `pnpm-lock.yaml` together.
 
 ## Setup
 

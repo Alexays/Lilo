@@ -2,7 +2,20 @@ packages:
   - lilo-ui
   - site
   - docs-site
+  - Lilo/Extensions/bridge-src
+  - release-media
 
 # Held at a patched version for every project (the website pulls undici in through wrangler).
 overrides:
   undici: 7.30.1
+  zod: 4.6.7
+
+# esbuild's postinstall (which npm ran in bridge-src and release-media) stays allowed, so a plain
+# `pnpm install` keeps the same result `npm ci` had. The others fetch optional binaries their
+# JavaScript fallbacks or optional dependencies already cover, so they stay off; make's installs
+# pass --ignore-scripts regardless.
+allowBuilds:
+  esbuild: true
+  '@mongodb-js/zstd': false
+  node-liblzma: false
+  workerd: false

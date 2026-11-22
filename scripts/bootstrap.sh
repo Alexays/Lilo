@@ -1,6 +1,6 @@
 #!/bin/bash
 # make bootstrap: checks what building Lilo needs, then runs the make targets that prepare a clone.
-# $1 installs the pnpm and npm dependencies, $2 builds the rest; both are no-ops once done.
+# $1 installs the pnpm dependencies, $2 builds the rest; both are no-ops once done.
 echo "Checking the prerequisites"
 
 missing=()

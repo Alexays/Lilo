@@ -22,13 +22,11 @@ def version_updates(version, released):
         config = re.sub(r"^MARKETING_VERSION = \S+$", f"MARKETING_VERSION = {version}", config, flags=re.MULTILINE)
         config = re.sub(r"^CURRENT_PROJECT_VERSION = \d+$", f"CURRENT_PROJECT_VERSION = {int(build[1]) + 1}", config, flags=re.MULTILINE)
         updates[config_path] = config
-    # pnpm-lock.yaml records no project version, unlike the bridge's npm lockfile.
-    for path in [Path("lilo-ui/package.json"), *(Path("Lilo/Extensions/bridge-src") / name for name in ["package.json", "package-lock.json"])]:
+    # pnpm-lock.yaml records no project version; only the package.json files carry it.
+    for path in [Path("lilo-ui/package.json"), Path("Lilo/Extensions/bridge-src/package.json")]:
         data = json.loads(path.read_text())
-        root = data["packages"][""] if path.name == "package-lock.json" else data
-        # Rewritten only when a version differs, so the file keeps npm's formatting otherwise.
-        if data["version"] != version or root["version"] != version:
-            data["version"] = root["version"] = version
+        if data["version"] != version:
+            data["version"] = version
             updates[path] = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
     return updates
 

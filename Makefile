@@ -10,9 +10,10 @@ SHELL := /bin/bash
 UI_DIR := lilo-ui
 BRIDGE_DIR := Lilo/Extensions/bridge-src
 UI_DEPS := $(UI_DIR)/node_modules/.installed
-BRIDGE_DEPS := $(BRIDGE_DIR)/node_modules/.package-lock.json
+BRIDGE_DEPS := $(BRIDGE_DIR)/node_modules/.installed
 SITE_DEPS := site/node_modules/.installed
 DOCS_DEPS := docs-site/node_modules/.installed
+MEDIA_DEPS := release-media/node_modules/.installed
 CHANGIE_VERSION := 1.26.0
 CHANGIE := $(CURDIR)/build/changie-$(CHANGIE_VERSION)/changie
 CHANGIE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -29,7 +30,7 @@ XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
 UI_SOURCES := pnpm-lock.yaml $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html svelte.config.js tsconfig.json vite.config.ts) \
 	$(UI_DIR)/releaseNotesPlugin.ts $(wildcard .changes/v*.md) scripts/embed_chrome_ui.py scripts/generate_native_strings.py
 UI_SOURCES += release-media/catalog.ts release-media/stage-native.mjs $(wildcard release-media/assets/*/*)
-BRIDGE_SOURCES := $(shell find $(BRIDGE_DIR)/src $(BRIDGE_DIR)/scripts) $(addprefix $(BRIDGE_DIR)/,esbuild.mjs package-lock.json tsconfig.json)
+BRIDGE_SOURCES := pnpm-lock.yaml $(shell find $(BRIDGE_DIR)/src $(BRIDGE_DIR)/scripts) $(addprefix $(BRIDGE_DIR)/,esbuild.mjs package.json tsconfig.json)
 UI_STAMP := build/.ui-build.stamp
 BRIDGE_STAMP := build/.ext-bridge-build.stamp
 CHROME_UI_ASSETS := Lilo/Generated/ChromeUIAssets.swift
@@ -179,18 +180,18 @@ $(XCODEGEN):
 	rm -rf '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; mkdir -p build; \
 	mv "$$work/xcodegen" '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; touch '$@'
 
-# One lockfile for the three web projects, each installed alone with what it needs from the others. Blume,
-# Sharp and the rest build without their dependencies' install scripts.
-$(UI_DEPS) $(SITE_DEPS) $(DOCS_DEPS): pnpm-lock.yaml pnpm-workspace.yaml package.json
+# One lockfile for the five JavaScript packages, each installed alone with what it needs from the others.
+# Blume, Sharp and the rest build without their dependencies' install scripts; only esbuild's is approved
+# (onlyBuiltDependencies in pnpm-workspace.yaml), and these installs skip even that.
+$(UI_DEPS) $(SITE_DEPS) $(DOCS_DEPS) $(BRIDGE_DEPS) $(MEDIA_DEPS): pnpm-lock.yaml pnpm-workspace.yaml package.json
 $(UI_DEPS): $(UI_DIR)/package.json
 $(SITE_DEPS): site/package.json
 $(DOCS_DEPS): docs-site/package.json
-$(UI_DEPS) $(SITE_DEPS) $(DOCS_DEPS):
+$(BRIDGE_DEPS): $(BRIDGE_DIR)/package.json
+$(MEDIA_DEPS): release-media/package.json
+$(UI_DEPS) $(SITE_DEPS) $(DOCS_DEPS) $(BRIDGE_DEPS) $(MEDIA_DEPS):
 	@pnpm install --frozen-lockfile --ignore-scripts --filter './$(patsubst %/node_modules/.installed,%,$@)...'
 	@touch $@
-
-$(BRIDGE_DEPS): $(BRIDGE_DIR)/package-lock.json
-	@npm --prefix $(BRIDGE_DIR) ci
 
 $(CHANGIE): scripts/changie-checksums.txt
 	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
@@ -240,27 +241,23 @@ ui-build: $(UI_DEPS) release-media-stage
 release-media-stage:
 	@node release-media/stage-native.mjs
 
-release-media/node_modules/.installed: release-media/package.json release-media/package-lock.json
-	@npm --prefix release-media ci --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
-	@touch $@
-
 ## Test the release media tooling
-release-media-test: release-media/node_modules/.installed
+release-media-test: $(MEDIA_DEPS)
 	@node --test release-media/*.test.mjs
 
 ## Capture and render a drafted entry's media (RELEASE=x.y.z; needs ffmpeg). A plan that fails leaves its highlight text-only
-changelog-media: release-media/node_modules/.installed
+changelog-media: $(MEDIA_DEPS)
 	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
 	-@TEST_RUNNER_LILO_RELEASE_MEDIA_PLANS='$(CURDIR)/release-media/plans/$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_SHOTS='$(CURDIR)/build/release-media/shots/$(RELEASE)' \
 		$(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
 	@LILO_RELEASE='$(RELEASE)' node release-media/media.mjs
 
 ## Print what the changelog-draft skill drafts an entry from (RELEASE=x.y.z; pending notes by default)
-changelog-context: release-media/node_modules/.installed $(CHANGIE)
+changelog-context: $(MEDIA_DEPS) $(CHANGIE)
 	@CHANGIE='$(CHANGIE)' LILO_RELEASE='$(RELEASE)' node release-media/draft.mjs
 
 ## Check a drafted entry and write its story, What's New copy and plans (DRAFT=file; RELEASE as above)
-changelog-draft: release-media/node_modules/.installed $(CHANGIE)
+changelog-draft: $(MEDIA_DEPS) $(CHANGIE)
 	@test -n '$(DRAFT)' || { echo 'DRAFT=file is required: the changelog-draft skill writes it' >&2; exit 2; }
 	@CHANGIE='$(CHANGIE)' LILO_RELEASE='$(RELEASE)' LILO_DRAFT='$(DRAFT)' node release-media/draft.mjs
 
@@ -396,11 +393,11 @@ terminal-bench: test-build
 
 ## Build the extension bridge JS artifacts from bridge-src
 ext-bridge-build: $(BRIDGE_DEPS)
-	@npm --prefix $(BRIDGE_DIR) run build
+	@pnpm --dir $(BRIDGE_DIR) run build
 
 ## Run extension bridge unit tests
 ext-bridge-test: $(BRIDGE_DEPS)
-	@npm --prefix $(BRIDGE_DIR) test
+	@pnpm --dir $(BRIDGE_DIR) test
 
 ## Install the most used Chrome Web Store extensions and the MV3 probe in parallel runs, and check they run and what a few do on a page (network; TOP=100 IDS=a,b SHARDS=6)
 ext-smoke: vt-build $(BRIDGE_STAMP) $(UI_STAMP) $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
