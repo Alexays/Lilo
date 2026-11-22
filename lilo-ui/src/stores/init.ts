@@ -18,6 +18,7 @@ import { initPipDockStore } from "./pipDock.svelte";
 import { initPowerStore } from "./power.svelte";
 import { initSidePanelStore } from "./sidePanel";
 import { initSplitPanesStore } from "./splitPanes.svelte";
+import { initSplitPaneDragStore } from "./splitPaneDrag.svelte";
 import { initKeepAwakeStore } from "./keepAwake.svelte";
 import { initAgentsStore } from "./agents.svelte";
 import { initConversationsStore } from "./conversations.svelte";
@@ -76,6 +77,7 @@ const DEFERRED_STORES: StoreInitializer[] = [
 	initPowerStore,
 	initSidePanelStore,
 	initSplitPanesStore,
+	initSplitPaneDragStore,
 	initKeepAwakeStore,
 	initAgentsStore,
 	initConversationsStore,

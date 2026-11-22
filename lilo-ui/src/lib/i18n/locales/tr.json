@@ -492,6 +492,11 @@
 				"description": "Ajan yanıtınızı bekler.",
 				"keywords": "ajan onay doğrula ödeme satın al sipariş sil gönder yayımla"
 			},
+			"agentActionLog": {
+				"title": "Ajan eylemlerinin günlüğünü tut",
+				"description": "Yerel bir dosya her çağrıyı listeler; yazılan metni ya da sayfa içeriğini asla içermez.",
+				"keywords": "ajan günlük geçmiş denetim eylemler yeniden oynatma"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Her zaman izin verilenler",
 				"description": "Ajanlar bu sitelerde sormadan işlem yapar.",
@@ -525,6 +530,11 @@
 				"title": "Klavye kestirmeleri",
 				"description": "Herhangi bir kestirmeyi değiştirin veya Arc'ın kestirmeleriyle başlayın.",
 				"keywords": "klavye kestirme kısayol tuş komut"
+			},
+			"holdToQuit": {
+				"title": "Çıkmak için çıkış kestirmesini basılı tut",
+				"description": "Çıkış kestirmesi bir uyarı gösterir; Lilo yalnızca tuşlar basılı tutulduğunda kapanır.",
+				"keywords": "çık kapat komut q yanlışlıkla basılı"
 			},
 			"newProfile": {
 				"title": "Yeni profil",
@@ -842,6 +852,7 @@
 		"terminalFailedDetail": "{command}, {duration} sonra başarısız oldu (çıkış kodu {code})",
 		"terminalSucceededDetail": "{command}, {duration} içinde tamamlandı",
 		"closeTab": "Sekmeyi kapat",
+		"removeFromSplit": "Bölünmüş görünümden kaldır",
 		"removePinnedTab": "Sabitlenmiş sekmeyi kaldır",
 		"tabName": "Sekme adı",
 		"removeBookmark": "Yer imini kaldır",
@@ -895,6 +906,13 @@
 		"bottom": "Altta aç",
 		"replace": "Değiştir"
 	},
+	"paneMove": {
+		"left": "Sola taşı",
+		"right": "Sağa taşı",
+		"top": "Üste taşı",
+		"bottom": "Alta taşı",
+		"replace": "Yer değiştir"
+	},
 	"tabSection": {
 		"splitView": "Bölünmüş görünüm",
 		"folderEmpty": "Klasör boş",
@@ -903,6 +921,7 @@
 		"newTerminal": "Yeni Terminal",
 		"clearUnpinnedTooltip": "Sabitlenmemiş sekmeleri arşivle",
 		"listOptions": "Sırala ve Grupla",
+		"searchTabs": "Sekmelerde ara",
 		"pinnedTabs": "Sabitlenmiş sekmeler",
 		"openTabs": "Açık sekmeler",
 		"dropToPin": "Sabitlemek için bırakın",
@@ -1055,6 +1074,7 @@
 		"showFolder": "İndirilenler klasörünü göster",
 		"clearFinished": "Tamamlanan indirmeleri temizle",
 		"dragFile": "Dosyayı sürükle",
+		"showInFinder": "Finder'da Göster",
 		"announceDone": "{filename} indirildi",
 		"announceFailed": "{filename} indirilemedi"
 	},
@@ -1136,7 +1156,6 @@
 		"installed": "Yüklü"
 	},
 	"commandBar": {
-		"showDetails": "Klavye ipuçlarını göster",
 		"hintPeek": "Önizle",
 		"hintCopyLink": "Bağlantıyı Kopyala",
 		"hintCloseTab": "Sekmeyi Kapat",
@@ -1168,6 +1187,7 @@
 		"terminalProgram": "Program",
 		"hintRun": "Çalıştır",
 		"hintSplit": "Böl",
+		"splitFull": "Bölünmüş görünüm dolu ({count} bölme)",
 		"scopeTabs": "Sekmeler",
 		"scopeBookmarks": "Yer İmleri",
 		"scopeHistory": "Geçmiş",
@@ -1203,6 +1223,8 @@
 		"sectionOpenTabs": "Açık Sekmeler",
 		"sectionBookmarks": "Yer İmleri",
 		"sectionRecentHistory": "Son Geçmiş",
+		"sectionFrequentSites": "Sık Ziyaret Edilenler",
+		"sectionRecentConversations": "Son Sohbetler",
 		"sectionHistory": "Geçmiş",
 		"sectionSwitchToTab": "Sekmeye Geç",
 		"sectionGoTo": "Git",
@@ -1398,6 +1420,15 @@
 		"title": "WebKit bayrakları",
 		"resetTitle": "Değiştirilen bayraklar",
 		"reloadNote": "Değişikliğin geçerli olması için sayfayı yeniden yükleyin"
+	},
+	"little": {
+		"openIn": "{space} içinde aç",
+		"openInMenu": "Başka bir Alanda aç",
+		"copyLink": "Bağlantıyı kopyala",
+		"linkCopied": "Bağlantı kopyalandı",
+		"placeholder": "Ara veya URL gir...",
+		"emptyTitle": "Web'de ara veya bir URL gir",
+		"emptySubtitle": "Ziyaret ettiğin sayfalarda aramak için / yaz."
 	},
 	"urlToast": {
 		"pageActions": "Sayfa işlemleri",
@@ -2029,6 +2060,7 @@
 		"Hide Others": "Diğerlerini Gizle",
 		"Show All": "Tümünü Göster",
 		"Quit Lilo": "Lilo'dan Çık",
+		"Hold %@ to Quit": "Çıkmak için %@ basılı tutun",
 		"File": "Dosya",
 		"New Tab": "Yeni Sekme",
 		"Back to tab": "Sekmeye dön",
@@ -2074,9 +2106,18 @@
 		"New Split View": "Yeni Bölünmüş Görünüm",
 		"Split View": "Bölünmüş Görünüm",
 		"Separate Split View": "Bölünmüş Görünümü Ayır",
+		"Close Split Pane": "Bölünmüş bölmeyi kapat",
+		"Maximize Split Pane": "Bölünmüş bölümü büyüt",
+		"Move Pane": "Bölmeyi Taşı",
+		"Move Pane Left": "Bölünmüş bölmeyi sola taşı",
+		"Move Pane Right": "Bölünmüş bölmeyi sağa taşı",
+		"Move Pane Up": "Bölünmüş bölmeyi yukarı taşı",
+		"Move Pane Down": "Bölünmüş bölmeyi aşağı taşı",
 		"Open in Split View": "Bölünmüş Görünümde Aç",
+		"Split view is full (%lld panes)": "Bölünmüş görünüm dolu (%lld bölme)",
 		"Hide Element…": "Öğeyi Gizle…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Bu sitede gizlemek için bir öğeye tıklayın. İptal etmek için Esc tuşuna basın.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Bir öğeye tıklayın veya bir alan sürükleyin. Ok tuşları öğeyi değiştirir, Return yakalar, Esc iptal eder.",
 		"Picture in Picture": "Resim İçinde Resim",
 		"Develop": "Geliştirme",
 		"Show Web Inspector": "Web Denetçisi'ni Göster",
@@ -2675,7 +2716,11 @@
 			"noFolder": "Klasör yok",
 			"noFolderDetail": "Ajan kendi klasöründe çalışır",
 			"backgroundHint": "Arka planda tutmak için {shortcut}",
-			"start": "Başlat"
+			"start": "Başlat",
+			"searchAgents": "Ajanları ara",
+			"featuredAgents": "Öne çıkanlar",
+			"registryAgents": "Kayıt",
+			"noMatches": "Eşleşen ajan yok"
 		},
 		"row": {
 			"untitled": "Yeni sohbet",

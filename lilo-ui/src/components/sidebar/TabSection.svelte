@@ -1432,6 +1432,7 @@
           tooltipAnchor=".split-row"
           actionsInert={dragActive}
           splitDropTarget={splitDropTabId === tab.id}
+          inSplit
           tabStop={tab.id === tabStopId}
         />
       </div>
@@ -1787,6 +1788,17 @@
             aria-hidden="true"
           ></div>
           {#if !dragActive && !pinnedDividerHidden}
+            <button
+              class="divider-action search-tabs"
+              disabled={!interactive}
+              use:tooltip={{ text: t("tabSection.searchTabs") }}
+              aria-label={t("tabSection.searchTabs")}
+              onclick={() => openCommandBar("@")}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M7 2.5a4.5 4.5 0 1 0 0 9a4.5 4.5 0 1 0 0-9zM10.25 10.25l3.25 3.25" />
+              </svg>
+            </button>
             <button
               class="divider-action list-options"
               disabled={!interactive}
@@ -2559,9 +2571,13 @@
       color var(--transition-fast);
   }
 
-  /* Centered on the rows' 16px favicons, 8px into the row. */
-  .list-options {
+  /* The leftmost sits centered on the rows' 16px favicons, 8px into the row. */
+  .search-tabs {
     left: 6px;
+  }
+
+  .list-options {
+    left: 26px;
   }
 
   .clear-unpinned {
@@ -2622,12 +2638,12 @@
 
   .tab-list-shell:hover .with-actions .pinned-tab-divider,
   .with-actions:focus-within .pinned-tab-divider {
-    clip-path: inset(0 0 0 24px);
+    clip-path: inset(0 0 0 44px);
   }
 
   .tab-list-shell:hover .with-actions.with-clear .pinned-tab-divider,
   .with-actions.with-clear:focus-within .pinned-tab-divider {
-    clip-path: inset(0 24px);
+    clip-path: inset(0 24px 0 44px);
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,3 @@
+kind: Changed
+body: 'The Little window opens on the command bar and closes with Esc, even over a full-screen app; picking a result turns it into a small window with the page, its address, a copy link button and "Open in" your Space, with the other Spaces in a menu'
+time: 2026-11-21T10:00:00.000000000Z
