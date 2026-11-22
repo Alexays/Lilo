@@ -155,6 +155,12 @@ extension MainWindowController {
         if tab.kind == .web {
             menu.addItem((tab.isMuted ? "Unmute Tab" : "Mute Tab").localized, icon: tab.isMuted ? .unmute : .mute) { self.tabManager.setTabMuted(id: uuid, muted: !tab.isMuted) }
         }
+        if tab.kind == .web {
+            let neverSleep = menu.addItem("Never Sleep".localized, icon: .neverSleep) {
+                self.applyContextMenuStateCommands([.setNeverSleep(spaceId: spaceId, tabId: uuid, neverSleep: !tab.neverSleep)])
+            }
+            neverSleep.state = tab.neverSleep ? .on : .off
+        }
         // An item without an action is greyed out.
         let duplicate = menu.addItem("Duplicate Tab".localized, icon: .duplicate) { self.duplicateTab(tab) }
         if tab.url == nil { duplicate.action = nil }

@@ -251,6 +251,11 @@ final class BrowserStateStore {
                 guard !tab.isClosed else { throw BrowserMutationError.closedTab(tabId) }
                 session.setTabHomeURL(tabId, url: url)
             }
+        case let .setNeverSleep(spaceId, tabId, neverSleep):
+            return try mutateSpaceTab(spaceId: spaceId) { session in
+                guard session.tab(id: tabId) != nil else { throw BrowserMutationError.missingTab(tabId) }
+                session.setNeverSleep(tabId, neverSleep)
+            }
         case let .renameTab(spaceId, tabId, title):
             return try mutateSpaceTab(spaceId: spaceId) { session in
                 guard let tab = session.tab(id: tabId) else { throw BrowserMutationError.missingTab(tabId) }
