@@ -531,6 +531,11 @@
 				"description": "更改任何快速鍵，或從 Arc 的配置開始。",
 				"keywords": "鍵盤 快速鍵 按鍵 command"
 			},
+			"holdToQuit": {
+				"title": "按住結束快速鍵以結束",
+				"description": "按下結束快速鍵會顯示提示；只有按住按鍵不放時 Lilo 才會結束。",
+				"keywords": "結束 關閉 指令 q 誤觸 按住"
+			},
 			"newProfile": {
 				"title": "新增個人檔案",
 				"description": "個人檔案可將 Cookie、登入狀態與延伸功能分開。",
@@ -915,6 +920,7 @@
 		"newTerminal": "新增終端機",
 		"clearUnpinnedTooltip": "封存未釘選分頁",
 		"listOptions": "排序與分組",
+		"searchTabs": "搜尋分頁",
 		"pinnedTabs": "釘選分頁",
 		"openTabs": "已開啟分頁",
 		"dropToPin": "放下以釘選",
@@ -1181,6 +1187,7 @@
 		"terminalProgram": "程式",
 		"hintRun": "執行",
 		"hintSplit": "分割",
+		"splitFull": "分割顯示已滿（{count} 個窗格）",
 		"scopeTabs": "分頁",
 		"scopeBookmarks": "書籤",
 		"scopeHistory": "歷史記錄",
@@ -2042,6 +2049,7 @@
 		"Hide Others": "隱藏其他",
 		"Show All": "全部顯示",
 		"Quit Lilo": "結束 Lilo",
+		"Hold %@ to Quit": "按住 %@ 以結束",
 		"File": "檔案",
 		"New Tab": "新增分頁",
 		"Back to tab": "返回分頁",
@@ -2095,8 +2103,10 @@
 		"Move Pane Up": "將分割窗格移到上方",
 		"Move Pane Down": "將分割窗格移到下方",
 		"Open in Split View": "以分割顯示開啟",
+		"Split view is full (%lld panes)": "分割顯示已滿（%lld 個窗格）",
 		"Hide Element…": "隱藏元素…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "按一下要在此網站上隱藏的元素。按 Esc 鍵取消。",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "點按元素或拖移選取區域。方向鍵可更改元素,按 Return 截圖,按 Esc 取消。",
 		"Picture in Picture": "子母畫面",
 		"Develop": "開發",
 		"Show Web Inspector": "顯示網頁檢閱器",
@@ -2695,7 +2705,11 @@
 			"noFolder": "無檔案夾",
 			"noFolderDetail": "代理程式在自己的檔案夾中工作",
 			"backgroundHint": "按 {shortcut} 在背景進行",
-			"start": "開始"
+			"start": "開始",
+			"searchAgents": "搜尋代理程式",
+			"featuredAgents": "精選",
+			"registryAgents": "註冊表",
+			"noMatches": "沒有相符的代理程式"
 		},
 		"row": {
 			"untitled": "新對話",

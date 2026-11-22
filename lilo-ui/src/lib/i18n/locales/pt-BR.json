@@ -531,6 +531,11 @@
 				"description": "Altere qualquer atalho ou comece com os do Arc.",
 				"keywords": "teclado atalho tecla teclas comando"
 			},
+			"holdToQuit": {
+				"title": "Manter o atalho de encerrar pressionado para encerrar",
+				"description": "O atalho de encerrar mostra um aviso; o Lilo só é encerrado se as teclas continuarem pressionadas.",
+				"keywords": "encerrar sair comando q acidental manter"
+			},
 			"newProfile": {
 				"title": "Novo perfil",
 				"description": "Os perfis separam cookies, sessões e extensões.",
@@ -915,6 +920,7 @@
 		"newTerminal": "Novo terminal",
 		"clearUnpinnedTooltip": "Arquivar abas não fixadas",
 		"listOptions": "Ordenar e agrupar",
+		"searchTabs": "Pesquisar nas abas",
 		"pinnedTabs": "Abas fixadas",
 		"openTabs": "Abas abertas",
 		"dropToPin": "Solte para fixar",
@@ -1181,6 +1187,7 @@
 		"terminalProgram": "Programa",
 		"hintRun": "Executar",
 		"hintSplit": "Dividir",
+		"splitFull": "A visualização dividida está cheia ({count} painéis)",
 		"scopeTabs": "Abas",
 		"scopeBookmarks": "Favoritos",
 		"scopeHistory": "Histórico",
@@ -2042,6 +2049,7 @@
 		"Hide Others": "Ocultar outros",
 		"Show All": "Mostrar tudo",
 		"Quit Lilo": "Encerrar Lilo",
+		"Hold %@ to Quit": "Mantenha %@ pressionado para encerrar",
 		"File": "Arquivo",
 		"New Tab": "Nova aba",
 		"Back to tab": "Voltar à aba",
@@ -2095,8 +2103,10 @@
 		"Move Pane Up": "Mover painel dividido para cima",
 		"Move Pane Down": "Mover painel dividido para baixo",
 		"Open in Split View": "Abrir em visualização dividida",
+		"Split view is full (%lld panes)": "A visualização dividida está cheia (%lld painéis)",
 		"Hide Element…": "Ocultar elemento…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Clique em um elemento para ocultá-lo neste site. Pressione Esc para cancelar.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Clique em um elemento ou arraste uma área. As setas mudam o elemento, Return captura e Esc cancela.",
 		"Picture in Picture": "Picture in Picture",
 		"Develop": "Desenvolvedor",
 		"Show Web Inspector": "Mostrar Inspetor Web",
@@ -2695,7 +2705,11 @@
 			"noFolder": "Nenhuma pasta",
 			"noFolderDetail": "O agente trabalha em uma pasta própria",
 			"backgroundHint": "{shortcut} para manter em segundo plano",
-			"start": "Iniciar"
+			"start": "Iniciar",
+			"searchAgents": "Buscar agentes",
+			"featuredAgents": "Em destaque",
+			"registryAgents": "Registro",
+			"noMatches": "Nenhum agente correspondente"
 		},
 		"row": {
 			"untitled": "Nova conversa",

@@ -531,6 +531,11 @@
 				"description": "Змініть будь-яке скорочення або почніть із набору Arc.",
 				"keywords": "клавіатура скорочення гарячі клавіші команда"
 			},
+			"holdToQuit": {
+				"title": "Утримуйте сполучення виходу, щоб вийти",
+				"description": "Сполучення виходу показує підказку; Lilo завершує роботу, лише якщо утримувати клавіші.",
+				"keywords": "вийти завершити команда q випадково утримувати"
+			},
 			"newProfile": {
 				"title": "Новий профіль",
 				"description": "Профілі відокремлюють файли cookie, сеанси входу та розширення.",
@@ -915,6 +920,7 @@
 		"newTerminal": "Новий термінал",
 		"clearUnpinnedTooltip": "Архівувати незакріплені вкладки",
 		"listOptions": "Сортування й групування",
+		"searchTabs": "Пошук у вкладках",
 		"pinnedTabs": "Закріплені вкладки",
 		"openTabs": "Відкриті вкладки",
 		"dropToPin": "Перетягніть сюди для закріплення",
@@ -1181,6 +1187,7 @@
 		"terminalProgram": "Програма",
 		"hintRun": "Виконати",
 		"hintSplit": "Розділити",
+		"splitFull": "Розділений перегляд заповнений (панелей: {count})",
 		"scopeTabs": "Вкладки",
 		"scopeBookmarks": "Закладки",
 		"scopeHistory": "Історія",
@@ -2042,6 +2049,7 @@
 		"Hide Others": "Приховати інші",
 		"Show All": "Показати всі",
 		"Quit Lilo": "Вийти з Lilo",
+		"Hold %@ to Quit": "Утримуйте %@, щоб вийти",
 		"File": "Файл",
 		"New Tab": "Нова вкладка",
 		"Back to tab": "Повернутися до вкладки",
@@ -2095,8 +2103,10 @@
 		"Move Pane Up": "Перемістити панель розділеного перегляду угору",
 		"Move Pane Down": "Перемістити панель розділеного перегляду униз",
 		"Open in Split View": "Відкрити в розділеному перегляді",
+		"Split view is full (%lld panes)": "Розділений перегляд заповнений (%lld панелі)",
 		"Hide Element…": "Приховати елемент…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Натисніть на елемент, щоб приховати його на цьому сайті. Натисніть Esc, щоб скасувати.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Натисніть на елемент або виділіть область. Стрілки змінюють елемент, Return робить знімок, Esc скасовує.",
 		"Picture in Picture": "Кадр у кадрі",
 		"Develop": "Розробка",
 		"Show Web Inspector": "Показати Вебінспектор",
@@ -2695,7 +2705,11 @@
 			"noFolder": "Без теки",
 			"noFolderDetail": "Агент працює у власній теці",
 			"backgroundHint": "{shortcut}, щоб залишити у фоні",
-			"start": "Почати"
+			"start": "Почати",
+			"searchAgents": "Пошук агентів",
+			"featuredAgents": "Рекомендовані",
+			"registryAgents": "Реєстр",
+			"noMatches": "Немає відповідних агентів"
 		},
 		"row": {
 			"untitled": "Нова розмова",

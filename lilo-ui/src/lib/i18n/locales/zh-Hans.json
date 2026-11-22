@@ -531,6 +531,11 @@
 				"description": "更改任意快捷键，或使用 Arc 的预置。",
 				"keywords": "键盘 快捷键 热键 按键 命令"
 			},
+			"holdToQuit": {
+				"title": "按住退出快捷键以退出",
+				"description": "按下退出快捷键会显示提示；只有按住按键不放时 Lilo 才会退出。",
+				"keywords": "退出 关闭 命令 q 误按 按住"
+			},
 			"newProfile": {
 				"title": "新建个人资料",
 				"description": "个人资料会将 Cookie、登录信息和扩展分开。",
@@ -915,6 +920,7 @@
 		"newTerminal": "新建终端",
 		"clearUnpinnedTooltip": "归档未固定的标签页",
 		"listOptions": "排序和分组",
+		"searchTabs": "搜索标签页",
 		"pinnedTabs": "固定标签页",
 		"openTabs": "打开的标签页",
 		"dropToPin": "放下以固定",
@@ -1181,6 +1187,7 @@
 		"terminalProgram": "程序",
 		"hintRun": "运行",
 		"hintSplit": "分屏",
+		"splitFull": "分屏浏览已满（{count} 个窗格）",
 		"scopeTabs": "标签页",
 		"scopeBookmarks": "书签",
 		"scopeHistory": "历史记录",
@@ -2042,6 +2049,7 @@
 		"Hide Others": "隐藏其他",
 		"Show All": "全部显示",
 		"Quit Lilo": "退出 Lilo",
+		"Hold %@ to Quit": "按住 %@ 以退出",
 		"File": "文件",
 		"New Tab": "新建标签页",
 		"Back to tab": "返回标签页",
@@ -2095,8 +2103,10 @@
 		"Move Pane Up": "将拆分窗格移到上方",
 		"Move Pane Down": "将拆分窗格移到下方",
 		"Open in Split View": "在分屏浏览中打开",
+		"Split view is full (%lld panes)": "分屏浏览已满（%lld 个窗格）",
 		"Hide Element…": "隐藏元素…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "点按要在此网站上隐藏的元素。按 Esc 键取消。",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "点按元素或拖移选取区域。方向键可更改元素,按 Return 截图,按 Esc 取消。",
 		"Picture in Picture": "画中画",
 		"Develop": "开发",
 		"Show Web Inspector": "显示网页检查器",
@@ -2695,7 +2705,11 @@
 			"noFolder": "无文件夹",
 			"noFolderDetail": "智能体在自己的文件夹中工作",
 			"backgroundHint": "按 {shortcut} 在后台进行",
-			"start": "开始"
+			"start": "开始",
+			"searchAgents": "搜索智能体",
+			"featuredAgents": "精选",
+			"registryAgents": "注册表",
+			"noMatches": "没有匹配的智能体"
 		},
 		"row": {
 			"untitled": "新对话",

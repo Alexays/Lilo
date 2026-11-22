@@ -531,6 +531,11 @@
 				"description": "모든 단축키를 변경하거나 Arc의 단축키로 시작할 수 있습니다.",
 				"keywords": "키보드 단축키 키 명령"
 			},
+			"holdToQuit": {
+				"title": "종료 단축키를 길게 눌러 종료",
+				"description": "종료 단축키를 누르면 안내가 표시되고, 키를 계속 누르고 있을 때만 Lilo가 종료됩니다.",
+				"keywords": "종료 끝내기 명령 q 실수 길게"
+			},
 			"newProfile": {
 				"title": "새 프로필",
 				"description": "프로필별로 쿠키, 로그인, 확장 프로그램을 분리합니다.",
@@ -915,6 +920,7 @@
 		"newTerminal": "새 터미널",
 		"clearUnpinnedTooltip": "고정되지 않은 탭 보관",
 		"listOptions": "정렬 및 그룹화",
+		"searchTabs": "탭 검색",
 		"pinnedTabs": "고정된 탭",
 		"openTabs": "열린 탭",
 		"dropToPin": "놓아서 고정",
@@ -1181,6 +1187,7 @@
 		"terminalProgram": "프로그램",
 		"hintRun": "실행",
 		"hintSplit": "분할",
+		"splitFull": "분할 보기가 가득 찼습니다(패널: {count})",
 		"scopeTabs": "탭",
 		"scopeBookmarks": "책갈피",
 		"scopeHistory": "방문 기록",
@@ -2042,6 +2049,7 @@
 		"Hide Others": "기타 가리기",
 		"Show All": "모두 보기",
 		"Quit Lilo": "Lilo 종료",
+		"Hold %@ to Quit": "%@를 길게 눌러 종료",
 		"File": "파일",
 		"New Tab": "새 탭",
 		"Back to tab": "탭으로 돌아가기",
@@ -2095,8 +2103,10 @@
 		"Move Pane Up": "분할 창을 위로 이동",
 		"Move Pane Down": "분할 창을 아래로 이동",
 		"Open in Split View": "분할 보기에서 열기",
+		"Split view is full (%lld panes)": "분할 보기가 가득 찼습니다(%lld개 패널)",
 		"Hide Element…": "요소 가리기…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "이 사이트에서 가릴 요소를 클릭하세요. 취소하려면 Esc 키를 누르세요.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "요소를 클릭하거나 영역을 드래그하세요. 화살표 키로 요소를 바꾸고, Return으로 캡처하고, Esc로 취소합니다.",
 		"Picture in Picture": "화면 속 화면",
 		"Develop": "개발자용",
 		"Show Web Inspector": "웹 속성 보기",
@@ -2695,7 +2705,11 @@
 			"noFolder": "폴더 없음",
 			"noFolderDetail": "에이전트가 자체 폴더에서 작업합니다",
 			"backgroundHint": "{shortcut}로 백그라운드에서 유지",
-			"start": "시작"
+			"start": "시작",
+			"searchAgents": "에이전트 검색",
+			"featuredAgents": "추천",
+			"registryAgents": "레지스트리",
+			"noMatches": "일치하는 에이전트 없음"
 		},
 		"row": {
 			"untitled": "새 대화",

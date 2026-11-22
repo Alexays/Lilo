@@ -531,6 +531,11 @@
 				"description": "Modifica qualsiasi abbreviazione o parti da quelle di Arc.",
 				"keywords": "tastiera abbreviazione tasti comando"
 			},
+			"holdToQuit": {
+				"title": "Tieni premuta l'abbreviazione per uscire",
+				"description": "L'abbreviazione per uscire mostra un avviso; Lilo si chiude solo se i tasti restano premuti.",
+				"keywords": "esci chiudi comando q accidentale tieni"
+			},
 			"newProfile": {
 				"title": "Nuovo profilo",
 				"description": "I profili tengono separati cookie, accessi ed estensioni.",
@@ -915,6 +920,7 @@
 		"newTerminal": "Nuovo terminale",
 		"clearUnpinnedTooltip": "Archivia le schede non fissate",
 		"listOptions": "Ordina e raggruppa",
+		"searchTabs": "Cerca nelle schede",
 		"pinnedTabs": "Schede fissate",
 		"openTabs": "Schede aperte",
 		"dropToPin": "Rilascia per fissare",
@@ -1181,6 +1187,7 @@
 		"terminalProgram": "Programma",
 		"hintRun": "Esegui",
 		"hintSplit": "Dividi",
+		"splitFull": "Vista divisa piena ({count} riquadri)",
 		"scopeTabs": "Schede",
 		"scopeBookmarks": "Segnalibri",
 		"scopeHistory": "Cronologia",
@@ -2042,6 +2049,7 @@
 		"Hide Others": "Nascondi altre",
 		"Show All": "Mostra tutto",
 		"Quit Lilo": "Esci da Lilo",
+		"Hold %@ to Quit": "Tieni premuto %@ per uscire",
 		"File": "File",
 		"New Tab": "Nuova scheda",
 		"Back to tab": "Torna alla scheda",
@@ -2095,8 +2103,10 @@
 		"Move Pane Up": "Sposta riquadro diviso in alto",
 		"Move Pane Down": "Sposta riquadro diviso in basso",
 		"Open in Split View": "Apri in vista divisa",
+		"Split view is full (%lld panes)": "Vista divisa piena (%lld riquadri)",
 		"Hide Element…": "Nascondi elemento…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Fai clic su un elemento per nasconderlo su questo sito. Premi Esc per annullare.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Fai clic su un elemento o trascina un'area. Le frecce cambiano elemento, Invio cattura, Esc annulla.",
 		"Picture in Picture": "Picture in Picture",
 		"Develop": "Sviluppo",
 		"Show Web Inspector": "Mostra Inspector web",
@@ -2695,7 +2705,11 @@
 			"noFolder": "Nessuna cartella",
 			"noFolderDetail": "L'agente lavora in una cartella propria",
 			"backgroundHint": "{shortcut} per tenerlo in background",
-			"start": "Avvia"
+			"start": "Avvia",
+			"searchAgents": "Cerca agenti",
+			"featuredAgents": "In primo piano",
+			"registryAgents": "Registro",
+			"noMatches": "Nessun agente corrispondente"
 		},
 		"row": {
 			"untitled": "Nuova conversazione",

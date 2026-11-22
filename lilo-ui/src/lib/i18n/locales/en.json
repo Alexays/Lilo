@@ -531,6 +531,11 @@
 				"description": "Change any shortcut, or start from Arc's.",
 				"keywords": "keyboard shortcut hotkey keys command"
 			},
+			"holdToQuit": {
+				"title": "Hold the quit shortcut to quit",
+				"description": "Pressing the quit shortcut shows a prompt; Lilo quits only when the keys are held down.",
+				"keywords": "quit exit command q accidental hold"
+			},
 			"newProfile": {
 				"title": "New profile",
 				"description": "Profiles keep cookies, sign-ins and extensions apart.",
@@ -915,6 +920,7 @@
 		"newTerminal": "New Terminal",
 		"clearUnpinnedTooltip": "Archive unpinned tabs",
 		"listOptions": "Sort and Group",
+		"searchTabs": "Search tabs",
 		"pinnedTabs": "Pinned tabs",
 		"openTabs": "Open tabs",
 		"dropToPin": "Drop to pin",
@@ -1181,6 +1187,7 @@
 		"terminalProgram": "Program",
 		"hintRun": "Run",
 		"hintSplit": "Split",
+		"splitFull": "Split view is full ({count} panes)",
 		"scopeTabs": "Tabs",
 		"scopeBookmarks": "Bookmarks",
 		"scopeHistory": "History",
@@ -2042,6 +2049,7 @@
 		"Hide Others": "Hide Others",
 		"Show All": "Show All",
 		"Quit Lilo": "Quit Lilo",
+		"Hold %@ to Quit": "Hold %@ to Quit",
 		"File": "File",
 		"New Tab": "New Tab",
 		"Back to tab": "Back to tab",
@@ -2095,8 +2103,10 @@
 		"Move Pane Up": "Move Pane Up",
 		"Move Pane Down": "Move Pane Down",
 		"Open in Split View": "Open in Split View",
+		"Split view is full (%lld panes)": "Split view is full (%lld panes)",
 		"Hide Element…": "Hide Element…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Click an element to hide it on this site. Press Esc to cancel.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.",
 		"Picture in Picture": "Picture in Picture",
 		"Develop": "Develop",
 		"Show Web Inspector": "Show Web Inspector",
@@ -2687,7 +2697,11 @@
 			"noFolder": "No Folder",
 			"noFolderDetail": "The agent works in a folder of its own",
 			"backgroundHint": "{shortcut} to keep it in the background",
-			"start": "Start"
+			"start": "Start",
+			"searchAgents": "Search agents",
+			"featuredAgents": "Featured",
+			"registryAgents": "Registry",
+			"noMatches": "No matching agents"
 		},
 		"row": {
 			"untitled": "New conversation",
