@@ -3,9 +3,10 @@
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { CLAUDE, type TerminalProgramIcon } from "../../lib/terminalIcons";
   import { getAgentClients } from "../../stores/agents.svelte";
-  import { getAgentClientsSnapshot, getAgentPreview, isConnectingAgentClient, previewAgentClient } from "../../stores/settings.svelte";
+  import { getAgentClientsSnapshot, getAgentPreview, getSetting, isConnectingAgentClient, previewAgentClient } from "../../stores/settings.svelte";
   import { OPENAI } from "../agents/modelLogos";
   import SettingsAgentConfigSheet from "./SettingsAgentConfigSheet.svelte";
+  import SettingsAgentPermissions from "./SettingsAgentPermissions.svelte";
   import SettingsIcon from "./SettingsIcon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
@@ -101,6 +102,9 @@
         {/snippet}
       </UiListRow>
     </div>
+    {#if client?.configured || !client}
+      <SettingsAgentPermissions key={client?.id ?? row.key} title={row.title} />
+    {/if}
   {/each}
   <div data-setting-id="agentOther">
     <UiListRow title={t("settings.items.agentOther.title")} description={t("settings.items.agentOther.description")}>
@@ -113,7 +117,12 @@
     </UiListRow>
   </div>
 </UiInsetList>
-<p class="footnote">{t("settings.agents.footnote")}</p>
+<p class="footnote">
+  {#if rows.some((row) => row.client?.configured || !row.client)}
+    {getSetting("agentAskBeforeActions", "true") === "true" ? t("settings.agents.permissions.floor") : t("settings.agents.permissions.floorOff")}
+  {/if}
+  {t("settings.agents.footnote")}
+</p>
 
 {#if preview}
   <SettingsAgentConfigSheet {preview} repair={snapshot.clients.find((client) => client.id === preview.client)?.stale === true} />

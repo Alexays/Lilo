@@ -697,7 +697,25 @@
 			"copyEntry": "Copy Entry",
 			"showAdded": "Show What Lilo Added…",
 			"revealFile": "Reveal Settings File",
-			"footnote": "Apps not on this Mac are not listed. Lilo looks again when this page opens."
+			"footnote": "Apps not on this Mac are not listed. Lilo looks again when this page opens.",
+			"permissions": {
+				"act": "Acts on pages",
+				"actLabel": "How {client} acts on pages",
+				"ask": "Ask First",
+				"sites": "On Chosen Sites",
+				"always": "Everywhere",
+				"askLine": "Asks first, as every agent does by default.",
+				"sitesLine": "Without asking on the sites below, except for the actions listed under this list.",
+				"alwaysLine": "Without asking, except for the actions listed under this list.",
+				"askingOff": "Questions are turned off for every agent, in the setting above.",
+				"sitesTitle": "Sites",
+				"noSites": "No sites yet.",
+				"addSite": "Add Site…",
+				"addSiteLabel": "Add a site {client} may act on without asking",
+				"removeSite": "Remove {site}",
+				"floor": "Signing in, paying, buying, deleting, publishing and sending data to another site always ask, for every agent.",
+				"floorOff": "Questions are off: agents act without asking, sensitive actions included."
+			}
 		},
 		"agentActivity": {
 			"refresh": "Refresh",

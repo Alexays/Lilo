@@ -1,0 +1,3 @@
+kind: Added
+body: 'Each connected agent app has an Acts on pages row in Settings > Agents: Ask First, On Chosen Sites (with its own list of sites) or Everywhere. Signing in, paying, buying, deleting, publishing and sending data to another site still ask for every agent, buttons included'
+time: 2026-11-21T12:30:00.000000Z

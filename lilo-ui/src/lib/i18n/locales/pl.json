@@ -697,7 +697,25 @@
 			"copyEntry": "Kopiuj wpis",
 			"showAdded": "Pokaż, co dodało Lilo…",
 			"revealFile": "Pokaż plik ustawień",
-			"footnote": "Aplikacje, których nie ma na tym Macu, nie są wymienione. Lilo szuka ponownie po otwarciu tej strony."
+			"footnote": "Aplikacje, których nie ma na tym Macu, nie są wymienione. Lilo szuka ponownie po otwarciu tej strony.",
+			"permissions": {
+				"act": "Działa na stronach",
+				"actLabel": "Jak {client} działa na stronach",
+				"ask": "Najpierw pytaj",
+				"sites": "Na wybranych witrynach",
+				"always": "Wszędzie",
+				"askLine": "Najpierw pyta, jak domyślnie każdy agent.",
+				"sitesLine": "Bez pytania na witrynach poniżej, z wyjątkiem działań wymienionych pod tą listą.",
+				"alwaysLine": "Bez pytania, z wyjątkiem działań wymienionych pod tą listą.",
+				"askingOff": "Pytania są wyłączone dla wszystkich agentów w ustawieniu powyżej.",
+				"sitesTitle": "Witryny",
+				"noSites": "Brak witryn.",
+				"addSite": "Dodaj witrynę…",
+				"addSiteLabel": "Dodaj stronę, na której {client} może działać bez pytania",
+				"removeSite": "Usuń {site}",
+				"floor": "Logowanie, płacenie, kupowanie, usuwanie, publikowanie i wysyłanie danych do innej witryny zawsze wymagają pytania, dla każdego agenta.",
+				"floorOff": "Pytania są wyłączone: agenci działają bez pytania, także przy działaniach wrażliwych."
+			}
 		},
 		"agentActivity": {
 			"refresh": "Odśwież",

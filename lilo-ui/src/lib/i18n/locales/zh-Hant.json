@@ -697,7 +697,25 @@
 			"copyEntry": "拷貝項目",
 			"showAdded": "顯示 Lilo 加入的內容…",
 			"revealFile": "顯示設定檔",
-			"footnote": "未列出不在這部 Mac 上的 App。每次打開此頁面時 Lilo 都會重新尋找。"
+			"footnote": "未列出不在這部 Mac 上的 App。每次打開此頁面時 Lilo 都會重新尋找。",
+			"permissions": {
+				"act": "在網頁上操作",
+				"actLabel": "{client} 在網頁上的操作方式",
+				"ask": "先詢問",
+				"sites": "在所選網站上",
+				"always": "所有網站",
+				"askLine": "先詢問，與所有代理程式的預設設定相同。",
+				"sitesLine": "在下方網站上無需詢問，但此列表下方列出的操作除外。",
+				"alwaysLine": "無需詢問，但此列表下方列出的操作除外。",
+				"askingOff": "在上方的設定中,所有代理的詢問均已關閉。",
+				"sitesTitle": "網站",
+				"noSites": "尚無網站。",
+				"addSite": "加入網站…",
+				"addSiteLabel": "加入 {client} 無需詢問即可操作的網站",
+				"removeSite": "移除 {site}",
+				"floor": "登入、付款、購買、刪除、發佈以及向其他網站傳送資料時，所有代理程式都會先詢問。",
+				"floorOff": "詢問已關閉：代理程式會直接操作，敏感操作也不例外。"
+			}
 		},
 		"agentActivity": {
 			"refresh": "重新整理",

@@ -45,6 +45,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         "copyAgentClientEntry",
         "getAgentClients",
         "revokeAgentClient",
+        "setAgentClientPermission",
         "getAgentActionLog",
         "openAgentActionLog",
         "getUpdaterStatus",
@@ -269,10 +270,11 @@ final class SettingsBridgeHandler: BridgeHandler {
             if let client = message.string("client").flatMap(AgentClientConfig.Client.init(rawValue:)) {
                 do {
                     try await AgentClientConfig.remove(client, home: FileManager.default.homeDirectoryForCurrentUser)
-                    // Removing the app also forgets the agents it connected as.
+                    // Removing the app also forgets the agents it connected as, and how they act on pages.
                     for name in (context?.agentControl.allowedClients ?? [:]).keys where AgentClientConfig.Client(clientName: name) == client {
                         context?.agentControl.revoke(name)
                     }
+                    context?.agentControl.setClientPermission(client.rawValue, AgentClientPermission())
                 } catch {
                     text = error.localizedDescription
                     level = "error"
@@ -300,6 +302,12 @@ final class SettingsBridgeHandler: BridgeHandler {
         case "revokeAgentClient":
             if let name = message.string("name") {
                 context?.agentControl.revoke(name)
+                await publishAgentClients()
+            }
+
+        case "setAgentClientPermission":
+            if let key = message.string("key"), let act = message.string("act").flatMap(AgentClientPermission.Act.init(rawValue:)) {
+                context?.agentControl.setClientPermission(key, AgentClientPermission(act: act, sites: message.payload["sites"] as? [String] ?? []))
                 await publishAgentClients()
             }
 
@@ -608,7 +616,8 @@ final class SettingsBridgeHandler: BridgeHandler {
             ["name": $0, "displayName": AgentControl.displayName($0), "lastSeen": lastSeen[$0] ?? NSNull(),
              "client": AgentClientConfig.Client(clientName: $0)?.rawValue ?? NSNull()] as [String: Any]
         }
-        bridgeRouter?.send(event: "agentClientsLoaded", data: ["clients": clients, "allowed": allowed])
+        let permissions = (control?.clientPermissions ?? [:]).mapValues { ["act": $0.act.rawValue, "sites": $0.sites] as [String: Any] }
+        bridgeRouter?.send(event: "agentClientsLoaded", data: ["clients": clients, "allowed": allowed, "permissions": permissions])
     }
 
     /// The latest calls of each client that has a log, read off the main thread when the page asks.

@@ -1,5 +1,6 @@
 import { postMessage as emit, type BridgeCommandPayloadMap } from "./index";
 import type {
+	BridgeAgentPermission,
 	BridgeBrowsingDataKind,
 	BridgeCallAction,
 	BridgeCommandName,
@@ -248,6 +249,7 @@ export const settingsActions = {
 	copyAgentClientEntry: (client: string): void => emit("copyAgentClientEntry", { client }),
 	loadAgentClients: emitEmpty("getAgentClients"),
 	revokeAgentClient: (name: string): void => emit("revokeAgentClient", { name }),
+	setAgentClientPermission: (key: string, permission: BridgeAgentPermission): void => emit("setAgentClientPermission", { key, ...permission }),
 	loadAgentActionLog: emitEmpty("getAgentActionLog"),
 	openAgentActionLog: emitEmpty("openAgentActionLog"),
 	loadUpdaterStatus: emitEmpty("getUpdaterStatus"),

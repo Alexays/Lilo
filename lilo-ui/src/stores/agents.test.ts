@@ -35,6 +35,7 @@ function snapshot(): void {
 			{ name: "cursor-vscode", displayName: "Cursor", lastSeen: null, client: "cursor" },
 			{ name: "my-script", displayName: "my-script", lastSeen: null, client: null },
 		],
+		permissions: {},
 	});
 }
 

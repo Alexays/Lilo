@@ -697,7 +697,25 @@
 			"copyEntry": "Copier l'entrée",
 			"showAdded": "Afficher ce que Lilo a ajouté…",
 			"revealFile": "Afficher le fichier de réglages",
-			"footnote": "Les apps absentes de ce Mac ne sont pas listées. Lilo cherche à nouveau à l'ouverture de cette page."
+			"footnote": "Les apps absentes de ce Mac ne sont pas listées. Lilo cherche à nouveau à l'ouverture de cette page.",
+			"permissions": {
+				"act": "Actions sur les pages",
+				"actLabel": "Comment {client} agit sur les pages",
+				"ask": "Demander d'abord",
+				"sites": "Sur les sites choisis",
+				"always": "Partout",
+				"askLine": "Demande d'abord, comme tout agent par défaut.",
+				"sitesLine": "Sans demander sur les sites ci-dessous, sauf pour les actions indiquées sous cette liste.",
+				"alwaysLine": "Sans demander, sauf pour les actions indiquées sous cette liste.",
+				"askingOff": "Les questions sont désactivées pour tous les agents, dans le réglage ci-dessus.",
+				"sitesTitle": "Sites",
+				"noSites": "Aucun site pour l'instant.",
+				"addSite": "Ajouter un site…",
+				"addSiteLabel": "Ajouter un site où {client} peut agir sans demander",
+				"removeSite": "Retirer {site}",
+				"floor": "Se connecter, payer, acheter, supprimer, publier et envoyer des données vers un autre site demandent toujours, pour tout agent.",
+				"floorOff": "Les questions sont désactivées : les agents agissent sans demander, actions sensibles comprises."
+			}
 		},
 		"agentActivity": {
 			"refresh": "Actualiser",

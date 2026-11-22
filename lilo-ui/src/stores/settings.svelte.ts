@@ -35,7 +35,7 @@ let _blockerStatus = $state.raw<BridgeContentBlockerStatus | null>(null);
 let _terminalOptions = $state.raw<BridgeTerminalOptions | null>(null);
 let _status = $state<BridgeSettingsActionStatusPayload | null>(null);
 let _appIcons = $state.raw<{ id: string; dataURL: string; seasonalDataURL?: string }[]>([]);
-let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowed: [] });
+let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowed: [], permissions: {} });
 // What the open connect sheet shows: native answers the preview, and the sheet opens on it.
 let _agentPreview = $state.raw<BridgeAgentClientPreview | null>(null);
 let _previewingAgentClient = $state<string | null>(null);

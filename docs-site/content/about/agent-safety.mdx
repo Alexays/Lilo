@@ -63,7 +63,7 @@ Sites you always allow are listed under **Always allowed** in Settings > Agents,
 
 ### How Lilo recognizes a consequential action
 
-Lilo looks for the control the click or Enter would trigger: a button, a link, a submit, button or image input, or an element with the role `button`, `link` or `menuitem`. It reads that control's label and the address the form would submit to, and looks for one of these whole words: "send", "pay", "payment", "buy", "purchase", "order", "checkout", "delete", "transfer", "publish", "post", "tweet", "reply", "sign up", "register", "subscribe" or "donate", and their French equivalents. The list is fixed. So:
+Lilo looks for the control the click or Enter would trigger: a button, a link, a submit, button or image input, or an element with the role `button`, `link` or `menuitem`. It reads that control's label and the address the form would submit to, and looks for one of these whole words: "sign in", "log in", "send", "pay", "payment", "buy", "purchase", "order", "checkout", "delete", "transfer", "publish", "post", "tweet", "reply", "sign up", "register", "subscribe" or "donate", and their French equivalents. The list is fixed. "Send", "sign up" and "register" are ordinary actions, which an agent's **Acts on pages** choice in Settings can let through; every other word marks a sensitive action, which asks every agent. So:
 
 - **A click on any other element does not prompt**, whatever its label: a custom control built from a `div` or `span` without one of those roles, a checkbox, a radio button or a select, for example.
 - **A label not on the list does not prompt**, unless the form's address contains a listed word: "Submit", "Confirm", "Remove", "Save", "Share" or "Unsubscribe", for example.

@@ -203,6 +203,8 @@ The question appears under the address bar, for example: **Claude Code** wants t
 
 If you do not answer within 45 seconds, the action does not happen either. The agent gets an error it can act on, such as `The user did not allow clicking "Delete account" on example.com: ask them to do it or to allow it`.
 
+Each connected app has an **Acts on pages** row under it in **Settings > Agents**. **Ask First**, the default, asks as above. **On Chosen Sites** lets that app's agent act without asking on the sites you add in the **Sites** row below it, their subdomains included, and **Everywhere** on any site. Signing in, paying, buying, deleting, publishing and sending data to another site still ask, for every agent, whether a form or a button does it. Removing the app forgets its choice.
+
 Whatever the setting, Lilo asks every time before an agent hands a page one of your files (`file_upload`, `upload_image` with a file path, or a `network_mock` rule that serves a file), and that prompt has no "always" answer.
 
 ## What an agent cannot do

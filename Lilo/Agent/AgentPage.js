@@ -563,16 +563,24 @@
   // The fallback when a control's form says nothing: verbs matched as whole words (any script), once lowercased
   // and stripped of accents. "order" is a noun on most pages ("Save order", "Order history"), so it asks only as
   // the whole label or in a phrase that places one.
-  const commitWords = new RegExp(`(?<!\\p{L})(?:${[
-    'send|pay|payment|buy|purchase|checkout|delete|transfer|publish|post|tweet|reply|sign ?up|register|subscribe|donate',
+  const words = list => new RegExp(`(?<!\\p{L})(?:${list.join('|').normalize('NFD').replace(/\p{M}/gu, '')})(?!\\p{L})`, 'u')
+  // Signing in, paying, buying, deleting and publishing ask every agent, whatever it may do unasked elsewhere.
+  const sensitiveWords = words([
+    'sign ?in|log ?in|pay|payment|buy|purchase|checkout|delete|transfer|publish|post|tweet|reply|subscribe|donate',
     '(?:place|confirm|complete|submit)(?: your| the| my)? order|order now',
-    'envoyer|payer|paiement|acheter|commander|supprimer|virement|transferer|publier|poster|repondre|inscription|inscrire|souscrire',
-    'enviar|pagar|comprar|eliminar|borrar|excluir|publicar|invia|inviare|paga|pagare|acquista|acquistare|elimina|eliminare|pubblica',
-    'senden|absenden|bezahlen|kaufen|löschen|verzenden|betalen|kopen|verwijderen|wyślij|zapłać|kup|usuń|gönder|satın al',
-    'отправить|оплатить|купить|удалить|надіслати|сплатити|купити|видалити'
-  ].join('|').normalize('NFD').replace(/\p{M}/gu, '')})(?!\\p{L})`, 'u')
+    'se connecter|connexion|payer|paiement|acheter|commander|supprimer|virement|transferer|publier|poster|repondre|souscrire',
+    'iniciar sesion|entrar|accedi|pagar|comprar|eliminar|borrar|excluir|publicar|paga|pagare|acquista|acquistare|elimina|eliminare|pubblica',
+    'anmelden|einloggen|inloggen|zaloguj|giriş yap|bezahlen|kaufen|löschen|betalen|kopen|verwijderen|zapłać|kup|usuń|satın al',
+    'войти|увійти|оплатить|купить|удалить|сплатити|купити|видалити'
+  ])
+  // Sending a message or signing up asks by default only.
+  const ordinaryWords = words([
+    'send|sign ?up|register|envoyer|inscription|inscrire|enviar|invia|inviare|senden|absenden|verzenden|wyślij|gönder',
+    'отправить|надіслати'
+  ])
   // Scripts written without spaces: no word boundary to match.
-  const commitGlyphs = /支付|付款|购买|購買|购物|删除|刪除|发送|發送|提交订单|提交訂單|購入|削除|送信|支払|결제|구매|삭제|전송/
+  const sensitiveGlyphs = /登录|登入|ログイン|로그인|支付|付款|购买|購買|购物|删除|刪除|提交订单|提交訂單|購入|削除|支払|결제|구매|삭제/
+  const ordinaryGlyphs = /发送|發送|送信|전송/
   // Fields a form holds only to sign in or to pay: submitting it authenticates, or charges.
   const credential = el => secret(el) || /\bcc-[a-z-]+/.test(el.autocomplete)
   // A control submits its form when it is a submit button, or the form itself stands for Enter in a field.
@@ -588,9 +596,9 @@
     try { return new URL(attr('formaction') || form.getAttribute('action') || '', document.baseURI).origin !== location.origin } catch { return false }
   }
   // The label of the control a click on `ref` or at (x, y), or Enter in the focused field, would trigger, when it
-  // submits a form that signs in or pays or sends data to another origin, or says it sends, pays, buys, orders,
-  // deletes, transfers, publishes or signs up; null otherwise. The form decides first: a label can be an icon, or
-  // in any language.
+  // submits a form that signs in or pays or sends data to another origin, or says it signs in, pays, buys, deletes,
+  // publishes, sends or signs up, with whether that is `sensitive`; null otherwise. The form decides first: a label
+  // can be an icon, or in any language.
   const consequential = ({ ref: id, x, y, enter }) => {
     const controls = 'button, a[href], input[type=submit], input[type=button], input[type=image], [role=button], [role=link], [role=menuitem]'
     const focused = document.activeElement
@@ -611,7 +619,7 @@
         if (!start.contentDocument) {
           let host = ''
           try { host = new URL(start.src, location.href).host } catch {}
-          return clip(start.title) || host || start.tagName.toLowerCase()
+          return { label: clip(start.title) || host || start.tagName.toLowerCase(), sensitive: true }
         }
         start = start.contentDocument.elementFromPoint(px, py)
       }
@@ -624,10 +632,10 @@
     const label = name(target) || clip(target.value)
     const form = submitsForm(target)
     const action = (target.form ?? target).getAttribute?.('action') ?? ''
-    const words = `${label} ${action}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-    const asks = form && ([...form.elements].some(credential) || leavesOrigin(target, form)) || commitWords.test(words) || commitGlyphs.test(words)
-      || label.trim().toLowerCase() === 'order'
-    return asks ? label || clip(action) || location.host : null
+    const said = `${label} ${action}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+    const sensitive = !!form && ([...form.elements].some(credential) || leavesOrigin(target, form))
+      || sensitiveWords.test(said) || sensitiveGlyphs.test(said) || label.trim().toLowerCase() === 'order'
+    return sensitive || ordinaryWords.test(said) || ordinaryGlyphs.test(said) ? { label: label || clip(action) || location.host, sensitive } : null
   }
 
   // Screenshots. A requestAnimationFrame never fires in a page that is not painted: the timeout keeps it from hanging.

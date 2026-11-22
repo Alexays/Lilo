@@ -264,6 +264,7 @@ final class AgentControl {
         var clients = allowedClients
         clients[name] = nil
         saveAllowedClients(clients)
+        setClientPermission(AgentClientConfig.Client(clientName: name)?.rawValue ?? name, AgentClientPermission())
         forgetProfileGrants(of: name)
         for session in sessions where session.clientName == name {
             session.connection.close()
@@ -446,30 +447,46 @@ final class AgentControl {
             .flatMap { try? JSONDecoder().decode([String].self, from: Data($0.utf8)) } ?? []
     }
 
-    /// Asks the user before a click or Enter whose target sends, pays, buys, orders, deletes, transfers, publishes
-    /// or signs up, and before a request the page's cookies sign. `target` locates the control for AgentPage.js's
-    /// `consequential`; `kind` is "click", "enter" or "fetch", whose `label` is the request.
+    /// How each agent acts on pages, by app id, or by agent name when no app is known.
+    var clientPermissions: [String: AgentClientPermission] {
+        AgentClientPermission.decode(context?.settingsStore?.get(AgentClientPermission.settingKey))
+    }
+
+    func setClientPermission(_ key: String, _ permission: AgentClientPermission) {
+        var all = clientPermissions
+        all[key] = permission
+        context?.settingsStore?.set(AgentClientPermission.settingKey, value: AgentClientPermission.encode(all))
+    }
+
+    /// Asks the user before a click or Enter whose target signs in, pays, buys, deletes, publishes, sends or signs
+    /// up, and before a request the page's cookies sign. `target` locates the control for AgentPage.js's
+    /// `consequential`; `kind` is "click", "enter" or "fetch", whose `label` is the request and `sensitive` its class.
     /// True when the user was asked and allowed it.
     @discardableResult
     func approveConsequentialAction(
-        _ kind: String, target: [String: Any] = [:], label: String? = nil, frame: WKFrameInfo?, engine: WKWebViewTab, session: AgentSession
+        _ kind: String, target: [String: Any] = [:], label: String? = nil, sensitive: Bool = false,
+        frame: WKFrameInfo?, engine: WKWebViewTab, session: AgentSession
     ) async throws -> Bool {
-        guard context?.settingsStore?.get(Self.asksBeforeActionsKey) != "false" else { return false }
+        let globalAsks = context?.settingsStore?.get(Self.asksBeforeActionsKey) != "false"
         let site = engine.currentURL?.host() ?? ""
-        guard !alwaysAllowedSites.contains(where: { site == $0 || site.hasSuffix("." + $0) }) else { return false }
-        var found = label
+        guard AgentClientPermission.asks(sensitive: true, site: site, globalAsks: globalAsks, globalSites: alwaysAllowedSites, client: nil) else { return false }
+        var found = label.map { ($0, sensitive) }
         if found == nil {
             let answer = try await AgentTools.page(engine, "consequential", target, in: frame)
-            found = answer as? String
+            found = Self.classified(answer)
             // Focus inside a frame (an embedded payment form): the frame holding the field says what Enter submits.
             if found == nil, (answer as? [String: Any])?["inFrame"] != nil {
                 for (_, subframe) in await AgentTools.subframes(of: engine) {
-                    found = try? await AgentTools.page(engine, "consequential", target, in: subframe) as? String
+                    found = (try? await AgentTools.page(engine, "consequential", target, in: subframe)).flatMap(Self.classified)
                     if found != nil { break }
                 }
             }
         }
-        guard let label = found else { return false }
+        guard let (label, sensitive) = found else { return false }
+        let client = clientPermissions[AgentClientConfig.Client(clientName: session.clientName)?.rawValue ?? session.clientName]
+        guard AgentClientPermission.asks(
+            sensitive: sensitive, site: site, globalAsks: globalAsks, globalSites: alwaysAllowedSites, client: client
+        ) else { return false }
         let action = ["kind": kind, "label": label, "site": site, "tab": engine.currentTitle ?? ""]
         switch await askAboutAction(action, engine: engine, session: session) {
         case .allowed:
@@ -482,6 +499,12 @@ final class AgentControl {
         case .unavailable:
             throw Self.unavailableConsentError
         }
+    }
+
+    /// The label of a control the page classifier flagged, and whether the action is sensitive.
+    private static func classified(_ answer: Any?) -> (String, Bool)? {
+        guard let flagged = answer as? [String: Any], let label = flagged["label"] as? String else { return nil }
+        return (label, flagged["sensitive"] as? Bool ?? true)
     }
 
     /// Asks about an action on `engine`'s page in the window holding it, where its agent's conversation row turns amber
