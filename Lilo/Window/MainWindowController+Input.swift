@@ -692,8 +692,11 @@ extension MainWindowController: NSUserInterfaceValidations {
             return tabManager.activeSplit?.layout.paneIds.contains(id) ?? false
         }
         if action == #selector(showChanges(_:)) { return tabManager.activeTab.map { $0.kind == .terminal && !$0.gitBranch.isEmpty } ?? false }
-        if action == #selector(newTerminalBeside(_:)) || action == #selector(newTerminalBelow(_:)) || action == #selector(newTerminalTab(_:))
-            || action == #selector(showNextWaitingTerminal(_:)) {
+        if action == #selector(newTerminalBeside(_:)) || action == #selector(newTerminalBelow(_:)) {
+            return context.settingsStore?.terminalEnabled != false
+                && (tabManager.activeSplit?.layout.paneIds.count ?? 0) < SplitLayout.maxPanes
+        }
+        if action == #selector(newTerminalTab(_:)) || action == #selector(showNextWaitingTerminal(_:)) {
             return context.settingsStore?.terminalEnabled != false
         }
         if action == #selector(askAgent(_:)) {
