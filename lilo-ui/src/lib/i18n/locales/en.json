@@ -207,6 +207,19 @@
 			"more": "{count} more. Search to narrow the list."
 		},
 		"items": {
+			"agentList": {
+				"title": "Agent list",
+				"description": "Registry agents and commands of your own that the ask bar offers; turn one off and it leaves the picker.",
+				"keywords": "agents acp registry custom command provider enable disable picker"
+			},
+			"customAgent": {
+				"name": "Name",
+				"namePlaceholder": "My agent",
+				"executable": "Command",
+				"arguments": "Arguments, one per line",
+				"environment": "Environment, NAME=value per line",
+				"note": "The command is the full path of an executable file that speaks the Agent Client Protocol over standard input and output."
+			},
 			"appIcon": {
 				"title": "App icon",
 				"description": "Only Classic follows the macOS dark, tinted and clear icon styles."
@@ -779,7 +792,19 @@
 			"sidebar": "In the sidebar",
 			"floating": "Floating window"
 		},
-		"terminalImportCaption": "Import takes an iTerm2 color preset (.itermcolors), a VS Code color theme (.json) or a Ghostty theme file."
+		"terminalImportCaption": "Import takes an iTerm2 color preset (.itermcolors), a VS Code color theme (.json) or a Ghostty theme file.",
+		"agentList": {
+			"commands": "Commands",
+			"registry": "Registry",
+			"add": "Add Command",
+			"menu": "Actions for {name}",
+			"edit": "Edit"
+		},
+		"agentSheet": {
+			"addTitle": "Add Command",
+			"editTitle": "Edit Command",
+			"add": "Add"
+		}
 	},
 	"nav": {
 		"navigationControls": "Navigation controls",
@@ -2449,6 +2474,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ did not match its checksum and was not installed.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ needs Node.js: install it from nodejs.org, then try again.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ needs uv: install it from astral.sh/uv, then try again.",
+		"%@ must be the full path of an executable file: %@": "%@ must be the full path of an executable file: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ has an environment line that is not NAME=value: %@",
 		"Choose": "Choose",
 		"New Conversation": "New Conversation",
 		"Screenshot of %@": "Screenshot of %@",

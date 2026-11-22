@@ -180,6 +180,8 @@ export interface BridgeAgentInfo {
 	icon?: string;
 	/** Offered first: one of Lilo's featured agents. */
 	featured?: boolean;
+	/** One of the user's own commands from Settings rather than a registry entry. */
+	command?: boolean;
 }
 
 export interface BridgeFolderLock {

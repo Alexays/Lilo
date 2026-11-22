@@ -207,6 +207,19 @@
 			"more": "另有 {count} 項。請搜尋以縮小範圍。"
 		},
 		"items": {
+			"agentList": {
+				"title": "代理程式列表",
+				"description": "提問列提供的註冊表代理程式和自訂指令；關閉後將從選擇器中移除。",
+				"keywords": "代理程式 acp 註冊表 自訂 指令 提供者 執行個體 啟用 停用 選擇器"
+			},
+			"customAgent": {
+				"name": "名稱",
+				"namePlaceholder": "我的代理",
+				"executable": "指令",
+				"arguments": "引數，每行一個",
+				"environment": "環境，每行 NAME=值",
+				"note": "指令是可執行檔的完整路徑，該檔案透過標準輸入輸出使用 Agent Client Protocol。"
+			},
 			"appIcon": {
 				"title": "App 圖像",
 				"description": "只有「經典」會配合 macOS 的深色、色調與透明圖像樣式。"
@@ -779,7 +792,19 @@
 			"sidebar": "在側邊欄中",
 			"floating": "浮動視窗"
 		},
-		"terminalImportCaption": "可匯入 iTerm2 顏色預設 (.itermcolors)、VS Code 顏色主題 (.json) 或 Ghostty 主題檔案。"
+		"terminalImportCaption": "可匯入 iTerm2 顏色預設 (.itermcolors)、VS Code 顏色主題 (.json) 或 Ghostty 主題檔案。",
+		"agentList": {
+			"commands": "指令",
+			"registry": "註冊表",
+			"add": "新增指令",
+			"menu": "{name} 的操作",
+			"edit": "編輯"
+		},
+		"agentSheet": {
+			"addTitle": "新增指令",
+			"editTitle": "編輯指令",
+			"add": "新增"
+		}
 	},
 	"nav": {
 		"navigationControls": "導覽控制項",
@@ -2449,6 +2474,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ 的檢查碼不符，未安裝。",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ 需要 Node.js：請從 nodejs.org 安裝，然後再試一次。",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ 需要 uv：請從 astral.sh/uv 安裝，然後再試一次。",
+		"%@ must be the full path of an executable file: %@": "%@ 必須是可執行檔的完整路徑：%@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ 有一行環境設定不是 NAME=值 的格式：%@",
 		"Choose": "選擇",
 		"New Conversation": "新對話",
 		"Screenshot of %@": "%@ 的截圖",

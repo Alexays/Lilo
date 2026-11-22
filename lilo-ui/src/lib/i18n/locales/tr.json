@@ -207,6 +207,19 @@
 			"more": "{count} tane daha. Listeyi daraltmak için arayın."
 		},
 		"items": {
+			"agentList": {
+				"title": "Ajan listesi",
+				"description": "Soru çubuğunun sunduğu kayıt ajanları ve kendi komutlarınız; kapatılan seçiciden çıkar.",
+				"keywords": "ajanlar acp kayıt özel komut sağlayıcı örnek etkinleştir devre dışı seçici"
+			},
+			"customAgent": {
+				"name": "Ad",
+				"namePlaceholder": "Ajanım",
+				"executable": "Komut",
+				"arguments": "Argümanlar, her satırda bir tane",
+				"environment": "Ortam, her satırda AD=değer",
+				"note": "Komut, Agent Client Protocol'ü standart girdi ve çıktı üzerinden konuşan çalıştırılabilir bir dosyanın tam yoludur."
+			},
 			"appIcon": {
 				"title": "Uygulama simgesi",
 				"description": "Yalnızca Klasik, macOS'in koyu, renk tonlu ve saydam simge stillerine uyar."
@@ -779,7 +792,19 @@
 			"sidebar": "Kenar çubuğunda",
 			"floating": "Yüzen pencere"
 		},
-		"terminalImportCaption": "İçe aktarma bir iTerm2 renk ön ayarı (.itermcolors), bir VS Code renk teması (.json) veya bir Ghostty tema dosyası alır."
+		"terminalImportCaption": "İçe aktarma bir iTerm2 renk ön ayarı (.itermcolors), bir VS Code renk teması (.json) veya bir Ghostty tema dosyası alır.",
+		"agentList": {
+			"commands": "Komutlar",
+			"registry": "Kayıt",
+			"add": "Komut Ekle",
+			"menu": "{name} için eylemler",
+			"edit": "Düzenle"
+		},
+		"agentSheet": {
+			"addTitle": "Komut Ekle",
+			"editTitle": "Komutu Düzenle",
+			"add": "Ekle"
+		}
 	},
 	"nav": {
 		"navigationControls": "Gezinme denetimleri",
@@ -2449,6 +2474,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ sağlama toplamıyla eşleşmedi ve yüklenmedi.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ için Node.js gerekli: nodejs.org adresinden yükleyip yeniden deneyin.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ için uv gerekli: astral.sh/uv adresinden yükleyip yeniden deneyin.",
+		"%@ must be the full path of an executable file: %@": "%@ çalıştırılabilir bir dosyanın tam yolu olmalı: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ için AD=değer biçiminde olmayan bir ortam satırı var: %@",
 		"Choose": "Seç",
 		"New Conversation": "Yeni Sohbet",
 		"Screenshot of %@": "%@ ekran resmi",

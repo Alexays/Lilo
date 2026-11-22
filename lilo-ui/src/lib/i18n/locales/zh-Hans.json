@@ -207,6 +207,19 @@
 			"more": "另有 {count} 项。搜索以缩小列表范围。"
 		},
 		"items": {
+			"agentList": {
+				"title": "智能体列表",
+				"description": "提问栏提供的注册表智能体和自定义命令；关闭后将从选择器中移除。",
+				"keywords": "智能体 acp 注册表 自定义 命令 提供方 实例 启用 禁用 选择器"
+			},
+			"customAgent": {
+				"name": "名称",
+				"namePlaceholder": "我的代理",
+				"executable": "命令",
+				"arguments": "参数，每行一个",
+				"environment": "环境，每行 NAME=值",
+				"note": "命令是可执行文件的完整路径，该文件通过标准输入输出使用 Agent Client Protocol。"
+			},
 			"appIcon": {
 				"title": "App 图标",
 				"description": "仅“经典”图标支持 macOS 的深色、色调和透明图标样式。"
@@ -779,7 +792,19 @@
 			"sidebar": "在边栏中",
 			"floating": "浮动窗口"
 		},
-		"terminalImportCaption": "可导入 iTerm2 颜色预设 (.itermcolors)、VS Code 颜色主题 (.json) 或 Ghostty 主题文件。"
+		"terminalImportCaption": "可导入 iTerm2 颜色预设 (.itermcolors)、VS Code 颜色主题 (.json) 或 Ghostty 主题文件。",
+		"agentList": {
+			"commands": "命令",
+			"registry": "注册表",
+			"add": "添加命令",
+			"menu": "{name} 的操作",
+			"edit": "编辑"
+		},
+		"agentSheet": {
+			"addTitle": "添加命令",
+			"editTitle": "编辑命令",
+			"add": "添加"
+		}
 	},
 	"nav": {
 		"navigationControls": "导航控制",
@@ -2449,6 +2474,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ 的校验和不匹配，未安装。",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ 需要 Node.js：请从 nodejs.org 安装，然后重试。",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ 需要 uv：请从 astral.sh/uv 安装，然后重试。",
+		"%@ must be the full path of an executable file: %@": "%@ 必须是可执行文件的完整路径：%@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ 有一行环境设置不是 NAME=值 的形式：%@",
 		"Choose": "选取",
 		"New Conversation": "新建对话",
 		"Screenshot of %@": "%@ 的屏幕快照",

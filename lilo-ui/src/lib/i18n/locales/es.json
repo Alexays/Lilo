@@ -207,6 +207,19 @@
 			"more": "{count} más. Busca para reducir la lista."
 		},
 		"items": {
+			"agentList": {
+				"title": "Lista de agentes",
+				"description": "Agentes del registro y comandos propios que ofrece la barra de preguntas; al desactivar uno, sale del selector.",
+				"keywords": "agentes acp registro comando propio proveedor instancia activar desactivar selector"
+			},
+			"customAgent": {
+				"name": "Nombre",
+				"namePlaceholder": "Mi agente",
+				"executable": "Comando",
+				"arguments": "Argumentos, uno por línea",
+				"environment": "Entorno, NOMBRE=valor por línea",
+				"note": "El comando es la ruta completa de un archivo ejecutable que habla el Agent Client Protocol por la entrada y la salida estándar."
+			},
 			"appIcon": {
 				"title": "Icono de la app",
 				"description": "Solo Clásico sigue los estilos de iconos oscuro, teñido y transparente de macOS."
@@ -779,7 +792,19 @@
 			"sidebar": "En la barra lateral",
 			"floating": "Ventana flotante"
 		},
-		"terminalImportCaption": "Importar acepta un preajuste de colores de iTerm2 (.itermcolors), un tema de colores de VS Code (.json) o un archivo de tema de Ghostty."
+		"terminalImportCaption": "Importar acepta un preajuste de colores de iTerm2 (.itermcolors), un tema de colores de VS Code (.json) o un archivo de tema de Ghostty.",
+		"agentList": {
+			"commands": "Comandos",
+			"registry": "Registro",
+			"add": "Añadir comando",
+			"menu": "Acciones para {name}",
+			"edit": "Editar"
+		},
+		"agentSheet": {
+			"addTitle": "Añadir comando",
+			"editTitle": "Editar comando",
+			"add": "Añadir"
+		}
 	},
 	"nav": {
 		"navigationControls": "Controles de navegación",
@@ -2449,6 +2474,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ no coincidía con su suma de comprobación y no se instaló.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ necesita Node.js: instálalo desde nodejs.org y vuelve a intentarlo.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ necesita uv: instálalo desde astral.sh/uv y vuelve a intentarlo.",
+		"%@ must be the full path of an executable file: %@": "%@ debe ser la ruta completa de un archivo ejecutable: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ tiene una línea de entorno que no es NOMBRE=valor: %@",
 		"Choose": "Elegir",
 		"New Conversation": "Nueva conversación",
 		"Screenshot of %@": "Captura de pantalla de %@",

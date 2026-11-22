@@ -87,6 +87,17 @@ registry and are checked against its SHA-256 before they run.
   Undo puts back one file. An agent can work on its own copy of the project (a git worktree).
 - An idle agent stops after ten minutes and resumes its session when you come back.
 
+### Your own agents
+
+Settings > Agents > "Agent list" has a switch for every agent: turn one off and the Ask bar's agent picker no longer offers it, while a conversation already started with it keeps working. "Add Command" adds a program of your own as an agent: any harness that speaks ACP over standard input and output, such as `dsh --profile acp` or a wrapper script.
+
+- **Command** is the full path of an executable file (`~/` is expanded). Lilo checks it each time the agent starts and says so in the conversation when it is missing or not executable.
+- **Arguments** are one per line, passed as they are: no shell runs, so no quoting or expansion.
+- **Environment** is one `NAME=value` line per variable, added to the environment Lilo starts agents with (your shell's `PATH` included) and overriding it. Blank lines and lines starting with `#` are skipped. Values are stored in Lilo's settings, not in the Keychain.
+- **Name** is what the picker and the sidebar show; the command's file name when left empty.
+
+Registry agents, sign-in and conversations work the same for a command; Lilo does not give it a terminal.
+
 ## Saved flows
 
 An agent can record a task once and replay it later with three tools:

@@ -11,6 +11,8 @@ final class ACPAgentCatalog {
             case npx(package: String, args: [String])
             case uvx(package: String, args: [String])
             case binary(archive: URL, cmd: String, args: [String], sha256: String)
+            /// A program the user chose in Settings, with `KEY=value` lines for its environment.
+            case command(executable: String, args: [String], environment: String)
         }
 
         let id: String
@@ -45,6 +47,8 @@ final class ACPAgentCatalog {
     private var loadedAt: Date?
     private var loading: Task<Void, Never>?
     private var shellPath: String?
+    /// The stored JSON of the user's commands, read at each use so a change in Settings needs no restart.
+    var commandsSetting: () -> String? = { nil }
     /// npm agent folders started or being installed since launch: a running conversation may still use them.
     private var npmInUse: Set<String> = []
 
@@ -52,7 +56,40 @@ final class ACPAgentCatalog {
         self.directory = directory
     }
 
-    func agent(id: String) -> Agent? { agents.first { $0.id == id } }
+    func agent(id: String) -> Agent? {
+        agents.first { $0.id == id } ?? Self.commandAgents(commandsSetting()).first { $0.id == id }
+    }
+
+    /// The user's own agents from the `agentCommands` setting: a JSON list of `id`, `name`, `executable`,
+    /// `arguments` and `environment`, all text, the last two one entry per line. An entry without an id or
+    /// a command is skipped; whether a command can run is checked at launch.
+    nonisolated static func commandAgents(_ json: String?) -> [Agent] {
+        guard let json, let entries = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [Any] else { return [] }
+        return entries.compactMap { entry in
+            guard let fields = entry as? [String: String], let id = fields["id"], !id.isEmpty else { return nil }
+            let executable = ((fields["executable"] ?? "").trimmingCharacters(in: .whitespaces) as NSString).expandingTildeInPath
+            guard !executable.isEmpty else { return nil }
+            let name = (fields["name"] ?? "").trimmingCharacters(in: .whitespaces)
+            let args = (fields["arguments"] ?? "").split(whereSeparator: \.isNewline).map(String.init).filter { !$0.isEmpty }
+            return Agent(id: id, name: name.isEmpty ? URL(fileURLWithPath: executable).lastPathComponent : name, description: executable,
+                         version: "", distribution: .command(executable: executable, args: args, environment: fields["environment"] ?? ""))
+        }
+    }
+
+    /// The `KEY=value` lines as variables; blank lines and `#` comments are skipped, anything else must be one.
+    nonisolated static func environment(_ lines: String, agent: String) throws -> [String: String] {
+        var result: [String: String] = [:]
+        for line in lines.split(whereSeparator: \.isNewline) {
+            let line = line.trimmingCharacters(in: .whitespaces)
+            if line.isEmpty || line.hasPrefix("#") { continue }
+            guard let equals = line.firstIndex(of: "="), equals != line.startIndex,
+                  line[..<equals].allSatisfy({ $0 == "_" || ($0.isASCII && ($0.isLetter || $0.isNumber)) }), !line[line.startIndex].isNumber else {
+                throw unsafe LaunchError(message: String(format: "%@ has an environment line that is not NAME=value: %@".localized, agent, line))
+            }
+            result[String(line[..<equals])] = String(line[line.index(after: equals)...])
+        }
+        return result
+    }
 
     /// The cached registry when it is recent, else a fresh one; the featured agents when neither is there.
     func load() async {
@@ -167,6 +204,14 @@ final class ACPAgentCatalog {
         case .binary(let archive, let cmd, let args, let sha256):
             let executable = try await install(agent, archive: archive, cmd: cmd, sha256: sha256)
             return (executable, args, environment)
+        case .command(let executable, let args, let overrides):
+            var isDirectory: ObjCBool = false
+            guard executable.hasPrefix("/"), unsafe FileManager.default.fileExists(atPath: executable, isDirectory: &isDirectory),
+                  !isDirectory.boolValue, FileManager.default.isExecutableFile(atPath: executable) else {
+                throw unsafe LaunchError(message: String(format: "%@ must be the full path of an executable file: %@".localized, agent.name, executable))
+            }
+            environment.merge(try Self.environment(overrides, agent: agent.name)) { _, new in new }
+            return (URL(fileURLWithPath: executable), args, environment)
         }
     }
 
@@ -178,9 +223,9 @@ final class ACPAgentCatalog {
             switch agent.distribution {
             case .npx: hasNpx
             case .uvx: hasUvx
-            case .binary: true
+            case .binary, .command: true
             }
-        }
+        } + Self.commandAgents(commandsSetting())
     }
 
     private func userPath() async -> String {

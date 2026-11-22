@@ -207,6 +207,19 @@
 			"more": "Jeszcze {count}. Wyszukaj, aby zawęzić listę."
 		},
 		"items": {
+			"agentList": {
+				"title": "Lista agentów",
+				"description": "Agenci z rejestru i własne polecenia, których oferuje pasek pytań; wyłączony znika z selektora.",
+				"keywords": "agenci acp rejestr własne polecenie dostawca instancja włącz wyłącz selektor"
+			},
+			"customAgent": {
+				"name": "Nazwa",
+				"namePlaceholder": "Mój agent",
+				"executable": "Polecenie",
+				"arguments": "Argumenty, po jednym w wierszu",
+				"environment": "Środowisko, NAZWA=wartość w wierszu",
+				"note": "Polecenie to pełna ścieżka pliku wykonywalnego, który porozumiewa się przez Agent Client Protocol na standardowym wejściu i wyjściu."
+			},
 			"appIcon": {
 				"title": "Ikona aplikacji",
 				"description": "Tylko ikona Klasyczna obsługuje ciemny, barwiony i przezroczysty styl ikon macOS."
@@ -779,7 +792,19 @@
 			"sidebar": "Na pasku bocznym",
 			"floating": "Pływające okno"
 		},
-		"terminalImportCaption": "Import przyjmuje ustawienie kolorów iTerm2 (.itermcolors), motyw kolorów VS Code (.json) lub plik motywu Ghostty."
+		"terminalImportCaption": "Import przyjmuje ustawienie kolorów iTerm2 (.itermcolors), motyw kolorów VS Code (.json) lub plik motywu Ghostty.",
+		"agentList": {
+			"commands": "Polecenia",
+			"registry": "Rejestr",
+			"add": "Dodaj polecenie",
+			"menu": "Akcje dla {name}",
+			"edit": "Edytuj"
+		},
+		"agentSheet": {
+			"addTitle": "Dodaj polecenie",
+			"editTitle": "Edytuj polecenie",
+			"add": "Dodaj"
+		}
 	},
 	"nav": {
 		"navigationControls": "Przyciski nawigacji",
@@ -2449,6 +2474,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ nie zgadzał się z sumą kontrolną i nie został zainstalowany.",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ wymaga Node.js: zainstaluj go z nodejs.org i spróbuj ponownie.",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ wymaga uv: zainstaluj go z astral.sh/uv i spróbuj ponownie.",
+		"%@ must be the full path of an executable file: %@": "%@ musi być pełną ścieżką pliku wykonywalnego: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ ma wiersz środowiska, który nie ma postaci NAZWA=wartość: %@",
 		"Choose": "Wybierz",
 		"New Conversation": "Nowa rozmowa",
 		"Screenshot of %@": "Zrzut ekranu: %@",

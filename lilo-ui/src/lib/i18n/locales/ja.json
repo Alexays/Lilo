@@ -207,6 +207,19 @@
 			"more": "ほかに{count}件あります。検索して絞り込んでください。"
 		},
 		"items": {
+			"agentList": {
+				"title": "エージェント一覧",
+				"description": "質問バーが提供するレジストリのエージェントと独自のコマンドです。オフにしたものはピッカーから外れます。",
+				"keywords": "エージェント acp レジストリ カスタム コマンド プロバイダ インスタンス 有効 無効 ピッカー"
+			},
+			"customAgent": {
+				"name": "名前",
+				"namePlaceholder": "マイエージェント",
+				"executable": "コマンド",
+				"arguments": "引数（1行に1つ）",
+				"environment": "環境（1行に NAME=値）",
+				"note": "コマンドは、標準入出力で Agent Client Protocol を話す実行可能ファイルのフルパスです。"
+			},
 			"appIcon": {
 				"title": "アプリアイコン",
 				"description": "macOS のダーク、色合い調整、クリアのアイコンスタイルに対応するのはクラシックのみです。"
@@ -779,7 +792,19 @@
 			"sidebar": "サイドバー内",
 			"floating": "フローティングウインドウ"
 		},
-		"terminalImportCaption": "読み込めるのは iTerm2 のカラープリセット (.itermcolors)、VS Code のカラーテーマ (.json)、Ghostty のテーマファイルです。"
+		"terminalImportCaption": "読み込めるのは iTerm2 のカラープリセット (.itermcolors)、VS Code のカラーテーマ (.json)、Ghostty のテーマファイルです。",
+		"agentList": {
+			"commands": "コマンド",
+			"registry": "レジストリ",
+			"add": "コマンドを追加",
+			"menu": "{name} のアクション",
+			"edit": "編集"
+		},
+		"agentSheet": {
+			"addTitle": "コマンドを追加",
+			"editTitle": "コマンドを編集",
+			"add": "追加"
+		}
 	},
 	"nav": {
 		"navigationControls": "ナビゲーションコントロール",
@@ -2449,6 +2474,8 @@
 		"%@ did not match its checksum and was not installed.": "%@ はチェックサムが一致しなかったため、インストールされませんでした。",
 		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ には Node.js が必要です。nodejs.org からインストールしてから、もう一度お試しください。",
 		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ には uv が必要です。astral.sh/uv からインストールしてから、もう一度お試しください。",
+		"%@ must be the full path of an executable file: %@": "%@ には実行可能ファイルのフルパスが必要です: %@",
+		"%@ has an environment line that is not NAME=value: %@": "%@ に NAME=値 の形ではない環境の行があります: %@",
 		"Choose": "選択",
 		"New Conversation": "新しい会話",
 		"Screenshot of %@": "%@ のスクリーンショット",
