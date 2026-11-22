@@ -50,8 +50,10 @@
             <li class:failed={!call.ok}>
               <time datetime={call.time}>{when(call.time)}</time>
               <span class="tool">{call.tool}</span>
-              <span class="host">{call.host ?? ""}</span>
-              {#if !call.ok}<span class="badge" title={call.code ?? ""}>{t("settings.agentActivity.failed")}</span>{/if}
+              <span class="outcome">
+                <span class="host">{call.host ?? ""}</span>
+                {#if !call.ok}<span class="badge" title={call.code ?? ""}>{t("settings.agentActivity.failed")}</span>{/if}
+              </span>
             </li>
           {/each}
         </ol>
@@ -82,17 +84,20 @@
 
   ol {
     display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: var(--space-12);
     margin: 0;
     padding: 0;
     list-style: none;
     font-size: var(--font-size-sm);
   }
 
+  /* One grid for the whole list, so each column lines up across rows. */
   li {
     display: grid;
-    grid-template-columns: minmax(110px, auto) minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
     align-items: baseline;
-    gap: var(--space-12);
     padding: 3px 0;
     color: var(--text-secondary);
   }
@@ -110,13 +115,23 @@
     white-space: nowrap;
   }
 
+  .outcome {
+    display: flex;
+    gap: var(--space-12);
+    align-items: baseline;
+    min-width: 0;
+  }
+
   .host {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .badge {
+    flex: none;
     color: var(--danger-text);
     font-weight: var(--font-weight-medium);
   }
