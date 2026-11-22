@@ -170,12 +170,100 @@ final class AgentClientConfigTests: XCTestCase {
             (".cursor/mcp.json", jsonEntry + "\n", .cursor),
             (".codex/config.toml", "[mcp_servers.lilo]\ncommand = \"\(helper)\"\n", .codex)
         ]
-        for (path, golden, client) in files {
+        for (path, golden, client) in files + discoveredGoldens(helper: helper) {
             let message = try await AgentClientConfig.connect(client, home: home)
             XCTAssertEqual(try String(contentsOf: home.appending(path: path), encoding: .utf8), golden, path)
             XCTAssertFalse(message.isEmpty)
         }
         XCTAssertEqual(AgentClientConfig.genericConfigJSON, jsonEntry)
+    }
+
+    /// Each app's own wording of the entry, as its first-party page shows it (see `HarnessDefinition`).
+    private func discoveredGoldens(helper: String) -> [(String, String, AgentClientConfig.Client)] {
+        let file = { (key: String, fields: String) in "{\n  \"\(key)\": {\n    \"lilo\": {\n\(fields)\n    }\n  }\n}\n" }
+        return [
+            (".config/zed/settings.json", file("context_servers", "      \"command\": \"\(helper)\""), .zed),
+            (".copilot/mcp-config.json",
+             file("mcpServers", "      \"type\": \"stdio\",\n      \"command\": \"\(helper)\",\n      \"tools\": [\"*\"]"), .vscode),
+            (".config/opencode/opencode.json", file("mcp", "      \"type\": \"local\",\n      \"command\": [\"\(helper)\"]"), .opencode),
+            (".gemini/settings.json", file("mcpServers", "      \"command\": \"\(helper)\""), .gemini)
+        ]
+    }
+
+    func testDiscoveredClientsKeepTheirOtherSettingsAndShowTheSameFileTheyWrite() async throws {
+        let seeds: [(AgentClientConfig.Client, String, String)] = [
+            (.zed, #"{"theme": "One Dark", "context_servers": {"other": {"command": "/bin/other"}}}"#, "context_servers"),
+            (.vscode, #"{"mcpServers": {"other": {"type": "stdio", "command": "/bin/other"}}}"#, "mcpServers"),
+            (.opencode, #"{"model": "example/model", "mcp": {"other": {"type": "local", "command": ["/bin/other"]}}}"#, "mcp"),
+            (.gemini, #"{"theme": "Default", "mcpServers": {"other": {"command": "/bin/other"}}}"#, "mcpServers")
+        ]
+        for (client, seed, key) in seeds {
+            try write(seed, to: client.config.path)
+            let preview = AgentClientConfig.preview(client, home: home)
+            XCTAssertNil(preview.blocked, client.id)
+            XCTAssertFalse(preview.lines.isEmpty, client.id)
+
+            _ = try await AgentClientConfig.connect(client, home: home)
+
+            XCTAssertEqual(try String(contentsOf: home.appending(path: client.config.path), encoding: .utf8), preview.after, client.id)
+            let written = try json(client.config.path)
+            let servers = try XCTUnwrap(written[key] as? [String: Any], client.id)
+            XCTAssertEqual(Set(servers.keys), ["lilo", "other"], client.id)
+            XCTAssertEqual(written.count, (try XCTUnwrap(JSONSerialization.jsonObject(with: Data(seed.utf8)) as? [String: Any])).count, "\(client.id) keeps its other keys")
+            XCTAssertEqual(AgentClientConfig.connectedClients(home: home), [client])
+
+            try await AgentClientConfig.remove(client, home: home)
+            let left = try XCTUnwrap(try json(client.config.path)[key] as? [String: Any])
+            XCTAssertEqual(Set(left.keys), ["other"], client.id)
+            try FileManager.default.removeItem(at: home.appending(path: client.config.path))
+        }
+    }
+
+    /// Zed's and OpenCode's settings take comments: Lilo does not rewrite a file it cannot parse, and says what to paste.
+    func testASettingsFileWithCommentsIsNeverRewritten() async throws {
+        let original = "// my editor\n{\n  \"theme\": \"One Dark\", // trailing comma next\n}"
+        for client in [AgentClientConfig.Client.zed, .opencode] {
+            try write(original, to: client.config.path)
+
+            let preview = AgentClientConfig.preview(client, home: home)
+            XCTAssertNotNil(preview.blocked, client.id)
+            XCTAssertTrue(preview.lines.isEmpty, client.id)
+            XCTAssertTrue(preview.snippet.contains(AgentClientConfig.helperPath), client.id)
+            do {
+                _ = try await AgentClientConfig.connect(client, home: home)
+                XCTFail("\(client.id): a file with comments is not rewritten")
+            } catch {}
+            XCTAssertEqual(try String(contentsOf: home.appending(path: client.config.path), encoding: .utf8), original, client.id)
+        }
+        XCTAssertTrue(AgentClientConfig.preview(.zed, home: home).snippet.contains("\"context_servers\""))
+    }
+
+    func testAMovedOpenCodeEntryIsRepairedInItsOwnShape() throws {
+        try write(#"{"mcp": {"lilo": {"type": "local", "command": ["/gone/Lilo.app/Contents/MacOS/lilo-mcp"]}}}"#, to: ".config/opencode/opencode.json")
+
+        XCTAssertEqual(AgentClientConfig.staleClients(home: home), [.opencode])
+        XCTAssertEqual(AgentClientConfig.repairMovedConfigs(home: home), [.opencode])
+
+        let server = try XCTUnwrap(((try json(".config/opencode/opencode.json"))["mcp"] as? [String: [String: Any]])?["lilo"])
+        XCTAssertEqual(server["command"] as? [String], [AgentClientConfig.helperPath])
+        XCTAssertEqual(AgentClientConfig.staleClients(home: home), [])
+    }
+
+    /// The scan reads the home only: a folder or a tool an app leaves there is what says it is installed.
+    func testAnAppIsDetectedByWhatItLeavesInTheHome() throws {
+        let fingerprints: [(AgentClientConfig.Client, String)] = [
+            (.zed, ".config/zed/settings.json"), (.vscode, ".vscode/extensions/extensions.json"),
+            (.opencode, ".config/opencode/opencode.json"), (.gemini, ".gemini/settings.json")
+        ]
+        for (client, path) in fingerprints {
+            try write("{}", to: path)
+            XCTAssertNotNil(AgentClientConfig.iconApp(of: client, home: home), client.id)
+        }
+        let tool = home.appending(path: ".opencode/bin/opencode")
+        try FileManager.default.removeItem(at: home.appending(path: ".config/opencode"))
+        try write("#!/bin/sh\n", to: ".opencode/bin/opencode")
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tool.path)
+        XCTAssertNotNil(AgentClientConfig.iconApp(of: .opencode, home: home), "where OpenCode's installer puts it")
     }
 
     func testGoldenCommandsOfClaudeCode() async throws {

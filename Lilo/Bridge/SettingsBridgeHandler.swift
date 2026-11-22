@@ -41,6 +41,8 @@ final class SettingsBridgeHandler: BridgeHandler {
         "connectAgentClient",
         "previewAgentClient",
         "removeAgentClient",
+        "revealAgentClientConfig",
+        "copyAgentClientEntry",
         "getAgentClients",
         "revokeAgentClient",
         "getAgentActionLog",
@@ -267,6 +269,10 @@ final class SettingsBridgeHandler: BridgeHandler {
             if let client = message.string("client").flatMap(AgentClientConfig.Client.init(rawValue:)) {
                 do {
                     try await AgentClientConfig.remove(client, home: FileManager.default.homeDirectoryForCurrentUser)
+                    // Removing the app also forgets the agents it connected as.
+                    for name in (context?.agentControl.allowedClients ?? [:]).keys where AgentClientConfig.Client(clientName: name) == client {
+                        context?.agentControl.revoke(name)
+                    }
                 } catch {
                     text = error.localizedDescription
                     level = "error"
@@ -274,6 +280,19 @@ final class SettingsBridgeHandler: BridgeHandler {
             }
             bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "connectAgentClient", message: text, level: level)
             await publishAgentClients()
+
+        case "revealAgentClientConfig":
+            if let client = message.string("client").flatMap(AgentClientConfig.Client.init(rawValue:)) {
+                let url = FileManager.default.homeDirectoryForCurrentUser.appending(path: client.config.path)
+                NSWorkspace.shared.activateFileViewerSelecting([FileManager.default.fileExists(atPath: url.path) ? url : url.deletingLastPathComponent()])
+            }
+
+        case "copyAgentClientEntry":
+            if let client = message.string("client").flatMap(AgentClientConfig.Client.init(rawValue:)) {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(AgentClientConfig.manualSnippet(client), forType: .string)
+                bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "copyAgentClientEntry", message: "Copied Lilo's entry".localized, level: "info")
+            }
 
         case "getAgentClients":
             await publishAgentClients()
@@ -570,13 +589,18 @@ final class SettingsBridgeHandler: BridgeHandler {
         let found = await Task.detached {
             let connected = AgentClientConfig.connectedClients(home: home)
             let stale = AgentClientConfig.staleClients(home: home)
-            return AgentClientConfig.Client.all.compactMap { client -> (AgentClientConfig.Client, Bool, Bool, URL?)? in
+            // Only the apps on this Mac or naming Lilo; one whose file Lilo cannot rewrite gets its entry to copy.
+            return AgentClientConfig.Client.all.compactMap { client -> (AgentClientConfig.Client, Bool, Bool, Bool, URL?)? in
                 let app = AgentClientConfig.iconApp(of: client, home: home)
-                return app != nil || connected.contains(client) ? (client, connected.contains(client), stale.contains(client), app) : nil
+                let configured = connected.contains(client)
+                guard app != nil || configured else { return nil }
+                let copyOnly = !configured && AgentClientConfig.preview(client, home: home).blocked != nil
+                return (client, configured, stale.contains(client), copyOnly, app)
             }
         }.value
-        let clients = found.map { client, configured, stale, app in
-            ["id": client.rawValue, "configured": configured, "stale": stale, "icon": app.flatMap(Self.appIconDataURL) ?? NSNull()] as [String: Any]
+        let clients = found.map { client, configured, stale, copyOnly, app in
+            ["id": client.rawValue, "configured": configured, "stale": stale, "copyOnly": copyOnly,
+             "icon": app.flatMap(Self.appIconDataURL) ?? NSNull()] as [String: Any]
         }
         let control = context?.agentControl
         let lastSeen = control?.lastSeen ?? [:]

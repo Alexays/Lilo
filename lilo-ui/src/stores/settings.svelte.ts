@@ -39,6 +39,8 @@ let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowe
 // What the open connect sheet shows: native answers the preview, and the sheet opens on it.
 let _agentPreview = $state.raw<BridgeAgentClientPreview | null>(null);
 let _previewingAgentClient = $state<string | null>(null);
+// The sheet only shows Lilo's lines in the file, with nothing to confirm.
+let _agentPreviewShows = $state(false);
 let _updater = $state.raw<BridgeUpdaterStatus | null>(null);
 let _readyUpdate = $state<string | null>(null);
 let _restartingForUpdate = $state(false);
@@ -247,11 +249,17 @@ export function connectAgentClient(client: string): void {
 	settingsActions.connectAgentClient(client);
 }
 
-/** Opens the sheet that shows what Connect (or Remove) writes, once native has worked it out. */
-export function previewAgentClient(client: string, remove = false): void {
+/** Opens the sheet that shows what Connect (or Remove) writes, once native has worked it out; `show` only shows
+ * the lines Lilo added. */
+export function previewAgentClient(client: string, remove = false, show = false): void {
 	if (_previewingAgentClient) return;
 	_previewingAgentClient = client;
-	settingsActions.previewAgentClient(client, remove);
+	_agentPreviewShows = show;
+	settingsActions.previewAgentClient(client, remove || show);
+}
+
+export function agentPreviewShows(): boolean {
+	return _agentPreviewShows;
 }
 
 export function getAgentPreview(): BridgeAgentClientPreview | null {

@@ -3,7 +3,7 @@
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
   import { copyText } from "../../lib/clipboard";
-  import { connectAgentClient, closeAgentPreview, isConnectingAgentClient, removeAgentClient } from "../../stores/settings.svelte";
+  import { agentPreviewShows, connectAgentClient, closeAgentPreview, isConnectingAgentClient, removeAgentClient } from "../../stores/settings.svelte";
   import type { BridgeAgentClientPreview } from "../../lib/bridge/protocol";
   import UiButton from "../ui/UiButton.svelte";
   import UiModal from "../ui/UiModal.svelte";
@@ -11,10 +11,13 @@
   let { preview, repair }: { preview: BridgeAgentClientPreview; repair: boolean } = $props();
 
   const client = $derived(t(`settings.agents.names.${preview.client}`));
-  const kind = $derived(preview.remove ? "remove" : repair ? "repair" : "add");
+  const shows = $derived(agentPreviewShows());
+  const kind = $derived(shows ? "show" : preview.remove ? "remove" : repair ? "repair" : "add");
+  // Shown, Lilo's lines are the ones a removal takes out, as they stand in the file.
+  const lines = $derived(shows ? preview.lines.filter((line) => line.removed) : preview.lines);
   const busy = $derived(isConnectingAgentClient(preview.client));
   const canWrite = $derived(!preview.blocked && (preview.command !== null || preview.lines.length > 0));
-  const numberWidth = $derived(`${Math.max(2, ...preview.lines.map((line) => String(line.number).length))}ch`);
+  const numberWidth = $derived(`${Math.max(2, ...lines.map((line) => String(line.number).length))}ch`);
 
   function confirm(): void {
     if (!canWrite || busy) return;
@@ -28,7 +31,7 @@
   }
 </script>
 
-<UiModal zone="agent-config" width={560} scrolls oncancel={closeAgentPreview} ondefault={canWrite ? confirm : undefined}>
+<UiModal zone="agent-config" width={560} scrolls oncancel={closeAgentPreview} ondefault={shows ? closeAgentPreview : canWrite ? confirm : undefined}>
   {#snippet header(titleId)}
     <div class="sheet-head">
       <h2 id={titleId}>{t(`settings.agents.sheet.${kind}Title`, { client })}</h2>
@@ -41,10 +44,10 @@
   {:else if preview.command !== null}
     <p class="sheet-note">{t("settings.agents.sheet.runs")}</p>
     <pre class="sheet-code"><code>{preview.command}</code></pre>
-  {:else if preview.lines.length}
-    <p class="sheet-note">{t("settings.agents.sheet.diff")}</p>
-    <div class="diff" role="table" aria-label={preview.path} style:--number-width={numberWidth}>
-      {#each preview.lines as line (`${line.removed ? "-" : "+"}${line.number}`)}
+  {:else if lines.length}
+    <p class="sheet-note">{t(shows ? "settings.agents.sheet.added" : "settings.agents.sheet.diff")}</p>
+    <div class="diff" class:shows role="table" aria-label={preview.path} style:--number-width={numberWidth}>
+      {#each lines as line (`${line.removed ? "-" : "+"}${line.number}`)}
         <div class="diff-line" class:removed={line.removed} role="row">
           <span class="diff-number" role="cell" aria-hidden="true">{line.number}</span>
           <span class="diff-sign" role="cell">
@@ -60,16 +63,20 @@
   {/if}
 
   {#snippet leading()}
-    {#if preview.snippet && !preview.remove}
+    {#if preview.snippet && !preview.remove && !shows}
       <UiButton variant="ghost" onclick={copy}>{copied ? t("settings.agents.sheet.copied") : t("settings.agents.sheet.copy")}</UiButton>
     {/if}
   {/snippet}
 
   {#snippet actions()}
-    <UiButton onclick={closeAgentPreview}>{t("common.cancel")}</UiButton>
-    <UiButton variant={preview.remove ? "destructive" : "primary"} {busy} disabled={!canWrite} onclick={confirm}>
-      {t(`settings.agents.sheet.${kind}`)} <kbd>⌘↩</kbd>
-    </UiButton>
+    {#if shows}
+      <UiButton variant="primary" onclick={closeAgentPreview}>{t("settings.agents.sheet.done")}</UiButton>
+    {:else}
+      <UiButton onclick={closeAgentPreview}>{t("common.cancel")}</UiButton>
+      <UiButton variant={preview.remove ? "destructive" : "primary"} {busy} disabled={!canWrite} onclick={confirm}>
+        {t(`settings.agents.sheet.${kind}`)} <kbd>⌘↩</kbd>
+      </UiButton>
+    {/if}
   {/snippet}
 </UiModal>
 
@@ -135,6 +142,10 @@
     background: color-mix(in srgb, var(--danger) 14%, transparent);
   }
 
+  .shows .diff-line {
+    background: none;
+  }
+
   .diff-number {
     color: var(--text-muted);
     text-align: right;
@@ -146,6 +157,10 @@
 
   .removed .diff-sign {
     color: var(--danger-text);
+  }
+
+  .shows .diff-sign {
+    visibility: hidden;
   }
 
   .diff-text {

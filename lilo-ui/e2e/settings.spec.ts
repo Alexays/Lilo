@@ -45,7 +45,7 @@ test("a shortcut conflict moves focus to Replace, and Cancel gives it back to th
 	await expect(keys).toBeFocused();
 });
 
-test("the agent tiles style their secondary buttons like the other agent rows", async ({ page }) => {
+test("the agent rows style their buttons like the other settings rows", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true" } }));
@@ -56,7 +56,7 @@ test("the agent tiles style their secondary buttons like the other agent rows", 
 	}));
 	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
 
-	await expect(page.locator(".ui-shell-frame .agent-tile")).toHaveCount(1);
+	await expect(page.locator(".ui-shell-frame .agent-row")).toHaveCount(1);
 	await expect(page.locator(".ui-shell-frame [data-setting-id='agentOther'] .ui-list-row-title")).toHaveCount(1);
 	const backgrounds = await page.locator(".ui-shell-frame .ui-button:not(.primary)").evaluateAll((els) => [...new Set(els.map((el) => getComputedStyle(el).backgroundColor))]);
 	expect(backgrounds).toHaveLength(1);
@@ -450,7 +450,7 @@ async function openAgentsSettings(page: Page, clients: unknown[]) {
 test("Connect shows what it will write, and writes only when confirmed", async ({ page }) => {
 	await openAgentsSettings(page, [{ id: "claudeCode", configured: false, icon: null }]);
 
-	await page.locator(".agent-tile .ui-button.primary").click();
+	await page.locator(".agent-row").getByRole("button", { name: "Connect…" }).click();
 	expect((await sentCommands(page)).filter((command) => command.action === "previewAgentClient").map((command) => command.payload))
 		.toEqual([{ client: "claudeCode", remove: false }]);
 	await expect(page.locator('[data-modal="agent-config"]')).toHaveCount(0);
@@ -469,7 +469,7 @@ test("Connect shows what it will write, and writes only when confirmed", async (
 	await expect(sheet).toHaveCount(0);
 	expect((await sentCommands(page)).filter((command) => command.action === "connectAgentClient")).toHaveLength(0);
 
-	await page.locator(".agent-tile .ui-button.primary").click();
+	await page.locator(".agent-row").getByRole("button", { name: "Connect…" }).click();
 	await page.evaluate((preview) => window.__lilo!.receive(preview), PREVIEW);
 	const write = sheet.getByRole("button", { name: /Add Lilo/ });
 	await write.click();
@@ -482,16 +482,51 @@ test("Connect shows what it will write, and writes only when confirmed", async (
 	await expect(sheet).toHaveCount(0);
 });
 
+test("the apps on this Mac are one list: Connect, Copy Entry for a file with comments, and a menu once connected", async ({ page }) => {
+	await openAgentsSettings(page, [
+		{ id: "opencode", configured: false, icon: null },
+		{ id: "vscode", configured: false, copyOnly: true, icon: null },
+		{ id: "zed", configured: true, icon: null },
+	]);
+	const tile = (name: string) => page.locator(".agent-row").filter({ has: page.locator(".ui-list-row-title", { hasText: name }) });
+	await expect(tile("OpenCode")).toContainText("On this Mac");
+	await expect(tile("Zed")).toContainText("Connected");
+	await expect(page.locator(".agent-row .ui-button.primary")).toHaveCount(0);
+	await expect(page.getByText("Apps not on this Mac are not listed.")).toBeVisible();
+
+	await tile("VS Code").getByRole("button", { name: "Copy Entry" }).click();
+	expect((await sentCommands(page)).filter((command) => command.action === "copyAgentClientEntry").map((command) => command.payload)).toEqual([{ client: "vscode" }]);
+
+	await tile("Zed").getByRole("button", { name: "More actions for Zed" }).click();
+	await expect(page.getByRole("menuitem")).toHaveText(["Show What Lilo Added…", "Reveal Settings File", "Remove Lilo from Zed…"]);
+	await page.getByRole("menuitem", { name: "Reveal Settings File" }).click();
+	expect((await sentCommands(page)).filter((command) => command.action === "revealAgentClientConfig").map((command) => command.payload)).toEqual([{ client: "zed" }]);
+
+	await tile("Zed").getByRole("button", { name: "More actions for Zed" }).click();
+	await page.getByRole("menuitem", { name: "Show What Lilo Added…" }).click();
+	expect((await sentCommands(page)).filter((command) => command.action === "previewAgentClient").map((command) => command.payload).at(-1)).toEqual({ client: "zed", remove: true });
+	await page.evaluate((preview) => window.__lilo!.receive({ ...preview, client: "zed", remove: true, lines: [
+		{ number: 3, removed: true, text: "    }," }, { number: 4, removed: true, text: '    "lilo": {' }, { number: 3, removed: false, text: "    }" },
+	] }), PREVIEW);
+	const sheet = page.locator('[data-modal="agent-config"]');
+	await expect(sheet.getByRole("heading")).toHaveText("What Lilo Added to Zed");
+	await expect(sheet.locator(".diff-line")).toHaveCount(2);
+	await expect(sheet.getByRole("button")).toHaveText(["Done"]);
+	await sheet.getByRole("button", { name: "Done" }).click();
+	await expect(sheet).toHaveCount(0);
+	expect((await sentCommands(page)).filter((command) => command.action === "removeAgentClient")).toHaveLength(0);
+});
+
 test("Claude Code's preview is the command, and a file Lilo cannot read blocks the write", async ({ page }) => {
 	await openAgentsSettings(page, [{ id: "claudeCode", configured: false, icon: null }]);
-	await page.locator(".agent-tile .ui-button.primary").click();
+	await page.locator(".agent-row").getByRole("button", { name: "Connect…" }).click();
 	await page.evaluate((preview) => window.__lilo!.receive({ ...preview, command: "claude mcp add --scope user lilo -- /Applications/Lilo.app/Contents/MacOS/lilo-mcp", lines: [], path: "~/.claude.json" }), PREVIEW);
 	const sheet = page.locator('[data-modal="agent-config"]');
 	await expect(sheet.locator(".sheet-code")).toContainText("claude mcp add --scope user lilo --");
 	await expect(sheet.getByRole("button", { name: /Add Lilo/ })).toBeEnabled();
 	await page.keyboard.press("Escape");
 
-	await page.locator(".agent-tile .ui-button.primary").click();
+	await page.locator(".agent-row").getByRole("button", { name: "Connect…" }).click();
 	await page.evaluate((preview) => window.__lilo!.receive({ ...preview, lines: [], blocked: "Lilo could not read ~/.cursor/mcp.json" }), PREVIEW);
 	await expect(sheet.getByRole("alert")).toContainText("could not read");
 	await expect(sheet.getByRole("button", { name: /Add Lilo/ })).toBeDisabled();
@@ -503,7 +538,7 @@ test("a configured app can be repaired or removed through the same sheet", async
 		{ id: "claudeCode", configured: true, stale: false, icon: null },
 		{ id: "codex", configured: true, stale: true, icon: null },
 	]);
-	const tile = (name: string) => page.locator(".agent-tile").filter({ has: page.locator(".name", { hasText: name }) });
+	const tile = (name: string) => page.locator(".agent-row").filter({ has: page.locator(".ui-list-row-title", { hasText: name }) });
 
 	await expect(tile("Claude Code").locator("button:not(.ui-more-button)")).toHaveCount(0);
 	await tile("Codex").getByRole("button", { name: "Repair" }).click();
@@ -616,39 +651,40 @@ test("each agent app shows its status line and at most one action", async ({ pag
 		event: "agentClientsLoaded",
 		clients: [
 			{ id: "claudeCode", configured: true, icon },
-			{ id: "cursor", configured: true, icon: null },
 			{ id: "codex", configured: false, icon },
 			{ id: "claudeDesktop", configured: true, icon },
 		],
-		allowed: [{ name: "claude-code", displayName: "Claude Code", lastSeen: null, client: "claudeCode" }],
+		allowed: [
+			{ name: "claude-code", displayName: "Claude Code", lastSeen: null, client: "claudeCode" },
+			{ name: "my-agent", displayName: "My Agent", lastSeen: null, client: null },
+		],
 	}), icon);
 	await page.evaluate(() => window.__lilo!.receive({
 		event: "agentActivity", moods: {}, clients: [{ name: "claude-code", busy: false, actingTabIds: [], spaceIds: [] }], agentsSpaceIds: [], agentsProfileId: "", hiddenAgentsSpaceIds: [],
 	}));
 	await page.locator(".section-nav-button").filter({ hasText: "Agents" }).click();
 
-	const row = (name: string) => page.locator(".agent-tile, [data-setting-id='agentOther']").filter({ has: page.locator(".name, .ui-list-row-title", { hasText: name }) });
+	const row = (name: string) => page.locator(".agent-row, [data-setting-id='agentOther']").filter({ has: page.locator(".ui-list-row-title", { hasText: name }) });
 	const expectRow = async (name: string, status: string | null, buttons: string[]) => {
-		if (status) await expect(row(name).locator(".status")).toHaveText(status);
+		if (status) await expect(row(name).locator(".detail")).toHaveText(status);
 		await expect(row(name).locator("button:not(.ui-more-button)")).toHaveText(buttons);
 	};
-	await expectRow("Claude Code", "Connected", ["Remove"]);
-	await expectRow("Cursor", "Not installed", []);
-	await expectRow("Codex", "Adds Lilo to its MCP servers.", ["Connect"]);
-	await expectRow("Claude Desktop", "Configured. Lilo asks you the first time it connects.", []);
+	await expectRow("Claude Code", "Connected", []);
+	await expectRow("Codex", "On this Mac", ["Connect…"]);
+	await expectRow("Claude Desktop", "Connected", []);
+	await expectRow("My Agent", "Allowed", []);
 	await expectRow("Other agents", null, ["Copy Configuration"]);
 	await expect(row("Claude Code")).toHaveAttribute("data-agent-status", "connected");
 
 	await page.evaluate(() => window.__lilo!.receive({
 		event: "agentActivity", moods: {}, clients: [{ name: "claude-code", busy: true, actingTabIds: [], spaceIds: [] }], agentsSpaceIds: [], agentsProfileId: "", hiddenAgentsSpaceIds: [],
 	}));
-	await expectRow("Claude Code", "Acting now", ["Remove"]);
-	await page.evaluate(() => window.__lilo!.receive({ event: "agentActivity", moods: {}, clients: [], agentsSpaceIds: [], agentsProfileId: "", hiddenAgentsSpaceIds: [] }));
-	await expectRow("Claude Code", "Allowed", ["Remove"]);
+	await expectRow("Claude Code", "Acting now", []);
 
-	await row("Claude Code").getByRole("button", { name: "Remove" }).click();
+	await row("My Agent").getByRole("button", { name: "More actions for My Agent" }).click();
+	await page.getByRole("menuitem", { name: "Remove" }).click();
 	const revoked = (await sentCommands(page)).filter((command) => command.action === "revokeAgentClient");
-	expect(revoked.map((command) => command.payload)).toEqual([{ name: "claude-code" }]);
+	expect(revoked.map((command) => command.payload)).toEqual([{ name: "my-agent" }]);
 });
 
 test("content blocking nests what it blocks under its switch, then its lists", async ({ page }) => {

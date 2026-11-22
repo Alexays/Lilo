@@ -654,9 +654,13 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
-			"connect": "Verbind",
+			"connect": "Verbind…",
 			"copy": "Kopieer configuratie",
 			"clientDescription": "Voegt Lilo toe aan de MCP-servers.",
 			"revoke": "Verwijder",
@@ -676,17 +680,24 @@
 				"repair": "Herstellen",
 				"remove": "Lilo verwijderen",
 				"copy": "Kopieer",
-				"copied": "Gekopieerd"
+				"copied": "Gekopieerd",
+				"showTitle": "Wat Lilo aan {client} heeft toegevoegd",
+				"added": "Deze regels van het bestand zijn van Lilo.",
+				"done": "Gereed"
 			},
 			"status": {
 				"acting": "Nu bezig",
 				"connected": "Verbonden",
-				"allowed": "Toegestaan",
-				"notInstalled": "Niet geïnstalleerd",
-				"ready": "Geconfigureerd"
+				"allowed": "Toegestaan"
 			},
 			"allowedSeen": "Toegestaan, laatst gezien {time}",
-			"readyLine": "Ingesteld. Lilo vraagt het je bij de eerste verbinding."
+			"foundLine": "Op deze Mac",
+			"copyOnlyLine": "Op deze Mac. Het instellingenbestand bevat opmerkingen: kopieer de vermelding van Lilo.",
+			"connectedSeen": "Verbonden, laatst gebruikt {time}",
+			"copyEntry": "Vermelding kopiëren",
+			"showAdded": "Toon wat Lilo heeft toegevoegd…",
+			"revealFile": "Toon instellingenbestand",
+			"footnote": "Apps die niet op deze Mac staan, worden niet getoond. Lilo zoekt opnieuw wanneer deze pagina opent."
 		},
 		"agentActivity": {
 			"refresh": "Ververs",
@@ -2418,6 +2429,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Lilo toegevoegd aan Claude Desktop: stop en heropen Claude om het te laden",
 		"Added Lilo to Cursor": "Lilo toegevoegd aan Cursor",
 		"Added Lilo to Codex": "Lilo toegevoegd aan Codex",
+		"Added Lilo to Zed": "Lilo toegevoegd aan Zed",
+		"Added Lilo to VS Code": "Lilo toegevoegd aan VS Code",
+		"Added Lilo to OpenCode": "Lilo toegevoegd aan OpenCode",
+		"Added Lilo to Gemini CLI": "Lilo toegevoegd aan Gemini CLI",
 		"Removed Lilo": "Lilo verwijderd",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo kon %@ niet lezen: voeg deze server zelf toe: %@",
 		"Stop Agents": "Stop agents",
@@ -2510,7 +2525,8 @@
 		"Show Pages": "Pagina's tonen",
 		"Hide Pages": "Pagina's verbergen",
 		"Close Conversation": "Gesprek sluiten",
-		"Pasted image": "Geplakte afbeelding"
+		"Pasted image": "Geplakte afbeelding",
+		"Copied Lilo's entry": "Vermelding van Lilo gekopieerd"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

@@ -10,9 +10,25 @@ enum AgentClientConfig {
         Bundle.main.bundleURL.appending(path: "Contents/MacOS/lilo-mcp").path
     }
 
-    static var genericConfigJSON: String {
-        let path = (String(bytes: (try? JSONSerialization.data(withJSONObject: helperPath, options: [.fragmentsAllowed, .withoutEscapingSlashes])) ?? Data(), encoding: .utf8) ?? "")
-        return "{\n  \"mcpServers\": {\n    \"lilo\": {\n      \"command\": \(path)\n    }\n  }\n}"
+    static var genericConfigJSON: String { newJSON(key: "mcpServers", entry: .command) }
+
+    /// A whole file holding only Lilo's entry, laid out as people write JSON.
+    private static func newJSON(key: String, entry: HarnessDefinition.Entry) -> String {
+        "{\n  \(jsonString(key)): {\n    \(liloMember(entry, colon: ": ", newline: "\n", indent: "  ", at: "    "))\n  }\n}"
+    }
+
+    private static func jsonString(_ text: String) -> String {
+        (try? JSONSerialization.data(withJSONObject: text, options: [.fragmentsAllowed, .withoutEscapingSlashes]))
+            .flatMap { String(bytes: $0, encoding: .utf8) } ?? "\"\""
+    }
+
+    /// `"lilo": {...}` with the file's own colon spacing: on one line when `at` is nil, else one field per line
+    /// below `at`, the indentation of its first line.
+    private static func liloMember(_ entry: HarnessDefinition.Entry, colon: String, newline: String, indent: String, at: String?) -> String {
+        let fields = entry.fields(jsonString(helperPath)).map { "\(jsonString($0.key))\(colon)\($0.value)" }
+        guard let at else { return "\"lilo\"\(colon){\(fields.joined(separator: ", "))}" }
+        let body = fields.map { newline + at + indent + $0 }.joined(separator: ",")
+        return "\"lilo\"\(colon){\(body)\(newline)\(at)}"
     }
 
     /// Writes the client's configuration and says what it did, for the settings page.
@@ -83,10 +99,10 @@ enum AgentClientConfig {
     }
 
     /// What the user pastes into the client's file themselves.
-    private static func manualSnippet(_ client: Client) -> String {
+    static func manualSnippet(_ client: Client) -> String {
         switch client.config {
         case .claudeCLI: "claude mcp add --scope user lilo -- \(helperPath)"
-        case .json: genericConfigJSON
+        case .json(_, let key, let entry): newJSON(key: key, entry: entry)
         case .toml: (String(bytes: tomlTable([10]) + [10], encoding: .utf8) ?? "")
         }
     }
@@ -114,7 +130,7 @@ enum AgentClientConfig {
             if case .toml = client.config {
                 return (try? Data(contentsOf: url)).flatMap { liloTable(Array($0)) } != nil
             }
-            return (readJSON(url)["mcpServers"] as? [String: Any])?["lilo"] != nil
+            return liloServer(of: client, readJSON(url)) != nil
         }
     }
 
@@ -154,7 +170,7 @@ enum AgentClientConfig {
         let url: URL
         switch client.config {
         case .claudeCLI: return nil
-        case .json(let path), .toml(let path): url = home.appending(path: path)
+        case .json(let path, _, _), .toml(let path): url = home.appending(path: path)
         }
         var bytes: [UInt8] = []
         if FileManager.default.fileExists(atPath: url.path) {
@@ -165,15 +181,15 @@ enum AgentClientConfig {
             bytes = Array(data)
         }
         let edited: [UInt8]?
-        if case .toml = client.config {
-            edited = editTOML(bytes, remove: remove)
-        } else {
+        if case .json(_, let key, let entry) = client.config {
             do {
-                edited = try editJSON(bytes, remove: remove)
+                edited = try editJSON(bytes, key: key, entry: entry, remove: remove)
             } catch {
                 if remove { return nil }
-                throw unsafe AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, genericConfigJSON))
+                throw unsafe AgentToolError(String(format: "Lilo could not read %@: add this server to it yourself: %@".localized, url.path, manualSnippet(client)))
             }
+        } else {
+            edited = editTOML(bytes, remove: remove)
         }
         guard let edited, edited != bytes else { return nil }
         return (url, (String(bytes: bytes, encoding: .utf8) ?? ""), (String(bytes: edited, encoding: .utf8) ?? ""))
@@ -189,7 +205,19 @@ enum AgentClientConfig {
             return (String(bytes: Array(data)[range], encoding: .utf8) ?? "").split(whereSeparator: \.isNewline).first(where: { $0.hasPrefix("command") })?
                 .split(separator: "\"").dropFirst().first.map(String.init)
         }
-        return ((readJSON(url)["mcpServers"] as? [String: Any])?["lilo"] as? [String: Any])?["command"] as? String
+        guard let server = liloServer(of: client, readJSON(url)) else { return nil }
+        return (server["command"] as? String) ?? (server["command"] as? [String])?.first
+    }
+
+    /// Lilo's entry among the servers a JSON client keeps under its own key.
+    private static func liloServer(of client: Client, _ config: [String: Any]) -> [String: Any]? {
+        var key = "mcpServers"
+        switch client.config {
+        case .json(_, let own, _): key = own
+        case .claudeCLI: break
+        case .toml: return nil
+        }
+        return (config[key] as? [String: Any])?["lilo"] as? [String: Any]
     }
 
     /// Writes through a symlink, so a dotfiles link stays one, and keeps the file's permissions, which may guard keys.
@@ -261,28 +289,23 @@ enum AgentClientConfig {
     /// Adds, replaces or removes `mcpServers.lilo` in the text itself, with the spacing and indentation of its
     /// neighbours, so the rest of the file (key order, spacing, escapes) is left byte for byte. Throws on a file
     /// that is no strict JSON object, or whose `mcpServers` is no object: rewriting it could lose the user's servers.
-    private static func editJSON(_ text: [UInt8], remove: Bool) throws -> [UInt8]? {
+    private static func editJSON(_ text: [UInt8], key: String, entry: HarnessDefinition.Entry, remove: Bool) throws -> [UInt8]? {
         let newline = lineEnding(text)
-        let path = (String(bytes: (try? JSONSerialization.data(withJSONObject: helperPath, options: [.fragmentsAllowed, .withoutEscapingSlashes])) ?? Data(), encoding: .utf8) ?? "")
         guard text.contains(where: { !jsonSpace($0) }) else {
-            return remove ? nil : Array(genericConfigJSON.utf8) + newline
+            return remove ? nil : Array(newJSON(key: key, entry: entry).utf8) + newline
         }
         guard (try? JSONSerialization.jsonObject(with: Data(text))) is [String: Any] else { throw CocoaError(.fileReadCorruptFile) }
         let root = jsonObject(text, open: skipJSONSpace(text, 0))
         // `"key": ` as the file writes it, from the first member that shows it.
         let colon = root.members.first.map { (String(bytes: text[$0.keyEnd..<$0.valueStart], encoding: .utf8) ?? "") } ?? ": "
         let indent = indentUnit(text)
-        let lilo = { (at: String?) -> String in
-            guard let at else { return "\"lilo\"\(colon){\"command\"\(colon)\(path)}" }
-            let nl = (String(bytes: newline, encoding: .utf8) ?? "")
-            return "\"lilo\"\(colon){\(nl)\(at)\(indent)\"command\"\(colon)\(path)\(nl)\(at)}"
-        }
-        guard let servers = root.members.first(where: { $0.key == "mcpServers" }) else {
+        let nl = String(bytes: newline, encoding: .utf8) ?? "\n"
+        let lilo = { (at: String?) in liloMember(entry, colon: colon, newline: nl, indent: indent, at: at) }
+        guard let servers = root.members.first(where: { $0.key == key }) else {
             if remove { return nil }
             return insert(text, into: root, newline: newline, indent: indent) { at in
-                guard let at else { return "\"mcpServers\"\(colon){\(lilo(nil))}" }
-                let nl = (String(bytes: newline, encoding: .utf8) ?? "")
-                return "\"mcpServers\"\(colon){\(nl)\(at)\(indent)\(lilo(at + indent))\(nl)\(at)}"
+                guard let at else { return "\(jsonString(key))\(colon){\(lilo(nil))}" }
+                return "\(jsonString(key))\(colon){\(nl)\(at)\(indent)\(lilo(at + indent))\(nl)\(at)}"
             }
         }
         guard text[servers.valueStart] == UInt8(ascii: "{") else { throw CocoaError(.fileReadCorruptFile) }

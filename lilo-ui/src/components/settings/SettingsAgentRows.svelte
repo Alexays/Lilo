@@ -21,7 +21,7 @@
   const snapshot = $derived(getAgentClientsSnapshot());
   const preview = $derived(getAgentPreview());
 
-  // One tile per installed or configured app, with the agents it connected as; then the agents Lilo has no
+  // One row per app on this Mac or naming Lilo, with the agents it connected as; then the agents Lilo has no
   // configuration for.
   const rows = $derived([
     ...snapshot.clients.map((client) => ({
@@ -45,97 +45,92 @@
   }
 </script>
 
-<UiInsetList {title} boxed={false}>
-  {#if rows.length}
-    <div class="agent-tiles">
-      {#each rows as row (row.key)}
-        {@const live = getAgentClients().find((client) => row.agents.some((agent) => agent.name === client.name))}
-        {@const seen = Math.max(0, ...row.agents.map((agent) => agent.lastSeen ?? 0))}
-        {@const provider = row.client ? PROVIDER_ICONS[row.client.id] : undefined}
-        <!-- Most telling first: acting or connected now, allowed in before, then how far the app is set up. -->
-        {@const status = live
-          ? live.busy ? "acting" : "connected"
-          : row.agents.length ? "allowed" : row.client?.configured ? row.client.icon ? "ready" : "notInstalled" : "notSetUp"}
-        <div class="agent-tile" data-agent-status={status}>
-          <span class="app-icon" class:provider={!!provider} class:placeholder={!provider && !row.client?.icon} aria-hidden="true">
+<UiInsetList {title}>
+  {#each rows as row (row.key)}
+    {@const client = row.client}
+    {@const busy = getAgentClients().some((live) => live.busy && row.agents.some((agent) => agent.name === live.name))}
+    {@const seen = Math.max(0, ...row.agents.map((agent) => agent.lastSeen ?? 0))}
+    {@const provider = client ? PROVIDER_ICONS[client.id] : undefined}
+    {@const status = busy ? "acting" : client?.configured ? "connected" : client ? "found" : "allowed"}
+    <div class="agent-row" data-agent-status={status}>
+      <UiListRow title={row.title}>
+        {#snippet icon()}
+          <span class="app-icon" class:provider={!!provider} class:placeholder={!provider && !client?.icon}>
             {#if provider}
               <svg viewBox="0 0 24 24" fill={provider.color ?? "currentColor"}><path d={provider.path} /></svg>
-            {:else if row.client?.icon}
-              <img src={row.client.icon} alt="" />
+            {:else if client?.icon}
+              <img src={client.icon} alt="" />
             {:else}
               <SettingsIcon name="agents" />
             {/if}
           </span>
-          <span class="copy">
-            <span class="name">{row.title}</span>
-            <span class="status">
-              {#if status !== "notSetUp"}<span class="dot {status}" aria-hidden="true"></span>{/if}
-              {status === "allowed" && seen
-                ? t("settings.agents.allowedSeen", { time: lastSeen(seen) })
-                : status === "ready" ? t("settings.agents.readyLine")
-                : status === "notSetUp" ? t("settings.agents.clientDescription")
-                : t(`settings.agents.status.${status}`)}
-            </span>
-          </span>
-          {#if row.agents.length}
-            <UiButton onclick={() => row.agents.forEach((agent) => settingsActions.revokeAgentClient(agent.name))}>
-              {t("settings.agents.revoke")}
-            </UiButton>
-          {:else if row.client && (!row.client.configured || row.client.stale)}
-            <UiButton variant="primary" busy={isConnectingAgentClient(row.client.id)} onclick={() => previewAgentClient(row.client?.id ?? "")}>
-              {row.client.configured ? t("settings.agents.repair") : t("settings.agents.connect")}
-            </UiButton>
+        {/snippet}
+        <span class="detail">
+          {#if status !== "found"}<span class="dot {status}" aria-hidden="true"></span>{/if}
+          {#if status === "acting"}{t("settings.agents.status.acting")}
+          {:else if status === "found"}{client?.copyOnly ? t("settings.agents.copyOnlyLine") : t("settings.agents.foundLine")}
+          {:else if status === "connected"}{seen ? t("settings.agents.connectedSeen", { time: lastSeen(seen) }) : t("settings.agents.status.connected")}
+          {:else}{seen ? t("settings.agents.allowedSeen", { time: lastSeen(seen) }) : t("settings.agents.status.allowed")}{/if}
+        </span>
+        {#snippet action()}
+          {#if client && (!client.configured || client.stale)}
+            {#if client.copyOnly && !client.configured}
+              <UiButton onclick={() => settingsActions.copyAgentClientEntry(client.id)}>{t("settings.agents.copyEntry")}</UiButton>
+            {:else}
+              <UiButton busy={isConnectingAgentClient(client.id)} onclick={() => previewAgentClient(client.id)}>
+                {client.configured ? t("settings.agents.repair") : t("settings.agents.connect")}
+              </UiButton>
+            {/if}
           {/if}
-          {#if row.client?.configured}
+          {#if client?.configured}
             <UiMoreMenu
               label={t("settings.agents.moreFor", { client: row.title })}
-              items={[{ label: t("settings.agents.removeFrom", { client: row.title }), danger: true, onclick: () => previewAgentClient(row.client?.id ?? "", true) }]}
+              items={[
+                // Claude Code's store is its CLI's own: there is no part of a file to show.
+                ...(client.id === "claudeCode" ? [] : [{ label: t("settings.agents.showAdded"), onclick: () => previewAgentClient(client.id, true, true) }]),
+                { label: t("settings.agents.revealFile"), onclick: () => settingsActions.revealAgentClientConfig(client.id) },
+                { label: t("settings.agents.removeFrom", { client: row.title }), danger: true, onclick: () => previewAgentClient(client.id, true) },
+              ]}
+            />
+          {:else if !client}
+            <UiMoreMenu
+              label={t("settings.agents.moreFor", { client: row.title })}
+              items={[{ label: t("settings.agents.revoke"), danger: true, onclick: () => row.agents.forEach((agent) => settingsActions.revokeAgentClient(agent.name)) }]}
             />
           {/if}
-        </div>
-      {/each}
+        {/snippet}
+      </UiListRow>
     </div>
-  {/if}
-</UiInsetList>
-
-{#if preview}
-  <SettingsAgentConfigSheet {preview} repair={snapshot.clients.find((client) => client.id === preview.client)?.stale === true} />
-{/if}
-
-<UiInsetList>
+  {/each}
   <div data-setting-id="agentOther">
     <UiListRow title={t("settings.items.agentOther.title")} description={t("settings.items.agentOther.description")}>
+      {#snippet icon()}
+        <span class="app-icon placeholder"><SettingsIcon name="grid" /></span>
+      {/snippet}
       {#snippet action()}
         <UiButton onclick={() => settingsActions.connectAgentClient("other")}>{t("settings.agents.copy")}</UiButton>
       {/snippet}
     </UiListRow>
   </div>
 </UiInsetList>
+<p class="footnote">{t("settings.agents.footnote")}</p>
+
+{#if preview}
+  <SettingsAgentConfigSheet {preview} repair={snapshot.clients.find((client) => client.id === preview.client)?.stale === true} />
+{/if}
 
 <style>
-  .agent-tiles {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--space-12);
-  }
-
-  .agent-tile {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-    padding: var(--space-16) 14px;
-    border-radius: var(--radius-box);
-    background: var(--group-box-bg);
-    box-shadow: inset 0 0 0 1px var(--separator);
+  .footnote {
+    margin: calc(var(--space-4) - var(--space-8)) 4px 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
   }
 
   .app-icon {
-    flex: none;
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
     border-radius: var(--radius-md);
     color: var(--text-muted);
   }
@@ -150,28 +145,16 @@
   }
 
   .app-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
   }
 
   .app-icon img {
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
   }
 
-  .copy {
-    flex: 1;
-    display: grid;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .name {
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-medium);
-  }
-
-  .status {
+  .detail {
     display: flex;
     align-items: baseline;
     gap: var(--space-6);
@@ -192,8 +175,13 @@
     background: var(--accent);
   }
 
-  .dot.connected,
-  .dot.ready {
+  .dot.connected {
     background: var(--success);
+  }
+
+  .agent-row :global(.ui-list-row-action) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
   }
 </style>

@@ -654,9 +654,13 @@
 				"claudeCode": "Claude Code",
 				"claudeDesktop": "Claude Desktop",
 				"codex": "Codex",
-				"cursor": "Cursor"
+				"cursor": "Cursor",
+				"zed": "Zed",
+				"vscode": "VS Code",
+				"opencode": "OpenCode",
+				"gemini": "Gemini CLI"
 			},
-			"connect": "Bağlan",
+			"connect": "Bağlan…",
 			"copy": "Yapılandırmayı kopyala",
 			"clientDescription": "Lilo'yu istemcinin MCP sunucularına ekler.",
 			"revoke": "Kaldır",
@@ -676,17 +680,24 @@
 				"repair": "Onar",
 				"remove": "Lilo'yu kaldır",
 				"copy": "Kopyala",
-				"copied": "Kopyalandı"
+				"copied": "Kopyalandı",
+				"showTitle": "Lilo'nun {client} uygulamasına ekledikleri",
+				"added": "Dosyadaki bu satırlar Lilo'ya ait.",
+				"done": "Bitti"
 			},
 			"status": {
 				"acting": "İşlem yapıyor",
 				"connected": "Bağlı",
-				"allowed": "İzin verildi",
-				"notInstalled": "Yüklü değil",
-				"ready": "Yapılandırıldı"
+				"allowed": "İzin verildi"
 			},
 			"allowedSeen": "İzin verildi, son görülme {time}",
-			"readyLine": "Yapılandırıldı. Lilo ilk bağlantıda size sorar."
+			"foundLine": "Bu Mac'te",
+			"copyOnlyLine": "Bu Mac'te. Ayar dosyasında yorumlar var: Lilo'nun girdisini kopyalayın.",
+			"connectedSeen": "Bağlı, son kullanım {time}",
+			"copyEntry": "Girdiyi Kopyala",
+			"showAdded": "Lilo'nun Eklediklerini Göster…",
+			"revealFile": "Ayar Dosyasını Göster",
+			"footnote": "Bu Mac'te olmayan uygulamalar listelenmez. Lilo bu sayfa açıldığında yeniden bakar."
 		},
 		"agentActivity": {
 			"refresh": "Yenile",
@@ -2418,6 +2429,10 @@
 		"Added Lilo to Claude Desktop: quit and reopen Claude to load it": "Lilo, Claude Desktop'a eklendi. Yüklenmesi için Claude'dan çıkıp yeniden açın",
 		"Added Lilo to Cursor": "Lilo, Cursor'a eklendi",
 		"Added Lilo to Codex": "Lilo, Codex'e eklendi",
+		"Added Lilo to Zed": "Lilo, Zed'e eklendi",
+		"Added Lilo to VS Code": "Lilo, VS Code'a eklendi",
+		"Added Lilo to OpenCode": "Lilo, OpenCode'a eklendi",
+		"Added Lilo to Gemini CLI": "Lilo, Gemini CLI'ya eklendi",
 		"Removed Lilo": "Lilo kaldırıldı",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo %@ dosyasını okuyamadı. Şu sunucuyu kendiniz ekleyin: %@",
 		"Stop Agents": "Ajanları Durdur",
@@ -2510,7 +2525,8 @@
 		"Show Pages": "Sayfaları göster",
 		"Hide Pages": "Sayfaları gizle",
 		"Close Conversation": "Sohbeti kapat",
-		"Pasted image": "Yapıştırılan görsel"
+		"Pasted image": "Yapıştırılan görsel",
+		"Copied Lilo's entry": "Lilo'nun girdisi kopyalandı"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
