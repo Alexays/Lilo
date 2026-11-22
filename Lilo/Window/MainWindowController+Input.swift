@@ -691,6 +691,11 @@ extension MainWindowController: NSUserInterfaceValidations {
             guard let id = tabManager.activeOpenTabId else { return false }
             return tabManager.activeSplit?.layout.paneIds.contains(id) ?? false
         }
+        if action == #selector(moveSplitPane(_:)) {
+            guard let item = item as? NSMenuItem, let id = tabManager.activeOpenTabId,
+                  let direction = SplitPaneDirection(rawValue: item.tag) else { return false }
+            return SplitPanesController.neighborPane(of: id, in: splitPanes.sentPaneFrames, direction: direction) != nil
+        }
         if action == #selector(showChanges(_:)) { return tabManager.activeTab.map { $0.kind == .terminal && !$0.gitBranch.isEmpty } ?? false }
         if action == #selector(newTerminalBeside(_:)) || action == #selector(newTerminalBelow(_:)) {
             return context.settingsStore?.terminalEnabled != false

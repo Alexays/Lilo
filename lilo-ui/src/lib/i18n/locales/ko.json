@@ -906,6 +906,13 @@
 		"bottom": "아래에 열기",
 		"replace": "대체"
 	},
+	"paneMove": {
+		"left": "왼쪽으로 이동",
+		"right": "오른쪽으로 이동",
+		"top": "위로 이동",
+		"bottom": "아래로 이동",
+		"replace": "교체"
+	},
 	"tabSection": {
 		"splitView": "분할 보기",
 		"folderEmpty": "폴더가 비어 있음",
@@ -2091,6 +2098,11 @@
 		"Separate Split View": "분할 보기 분리",
 		"Close Split Pane": "분할 창 닫기",
 		"Maximize Split Pane": "분할 창 최대화",
+		"Move Pane": "창 이동",
+		"Move Pane Left": "분할 창을 왼쪽으로 이동",
+		"Move Pane Right": "분할 창을 오른쪽으로 이동",
+		"Move Pane Up": "분할 창을 위로 이동",
+		"Move Pane Down": "분할 창을 아래로 이동",
 		"Open in Split View": "분할 보기에서 열기",
 		"Split view is full (%lld panes)": "분할 보기가 가득 찼습니다(%lld개 패널)",
 		"Hide Element…": "요소 가리기…",
