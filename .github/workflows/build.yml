@@ -54,8 +54,15 @@ jobs:
           cache-dependency-path: |
             site/package-lock.json
             docs-site/package-lock.json
+      # The 66.7 MB static SwiftLint zip is a Linux-only path: cache the unpacked binary (key mirrors the
+      # Makefile's pinned version and sha256) so ordinary PRs never pay the release download.
+      - name: Restore SwiftLint
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build/swiftlint-0.65.0
+          key: swiftlint-linux-amd64-0.65.0-79306a34
       # The documentation generators read the app's sources, so a Swift or UI change that breaks one fails here.
-      # swiftlint keeps the Linux download path working; its static build skips two SourceKit rules that the macOS job runs.
+      # swiftlint keeps the Linux download path working; its static build cannot run two SourceKit rules that the macOS job runs.
       - run: make release-status release-test release-media-test perf-summary-test swiftlint site-check site-test site-deploy-check docs-check docs-test docs-deploy-check
 
   ui:
