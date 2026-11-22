@@ -175,10 +175,14 @@ enum AgentMCP {
                     work.cancel()
                 }
                 record(true, nil)
+                // A successful call becomes a step while a flow records: locate reads its live element.
+                if session.flow != nil { await AgentFlows.record(name, arguments: arguments, session: session, control: control) }
                 return result(id: id, ["content": (warning.map(AgentContent.text) + content).map(\.json)])
             } catch {
                 let code = (error as? AgentToolError)?.code
                 record(false, code)
+                // A call the user refused is still the flow's intent: it records, and replay asks again.
+                if session.flow != nil { await AgentFlows.record(name, arguments: arguments, session: session, control: control) }
                 let commit = sent.write ? ["It may have reached the site already: read the page or the data back before trying again, or it may happen twice."] : []
                 let text = (warning + [(code.map { "[\($0)] " } ?? "") + error.localizedDescription] + commit).joined(separator: "\n")
                 var reply: [String: Any] = ["content": [AgentContent.text(text).json], "isError": true]

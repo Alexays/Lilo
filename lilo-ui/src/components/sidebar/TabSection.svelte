@@ -1405,6 +1405,7 @@
           tooltipAnchor=".split-row"
           actionsInert={dragActive}
           splitDropTarget={splitDropTabId === tab.id}
+          inSplit
           tabStop={tab.id === tabStopId}
         />
       </div>
