@@ -42,11 +42,11 @@
   {:else if clients && !clients.length}
     <p class="empty">{t("settings.agentActivity.empty")}</p>
   {:else if clients}
-    {#each clients as client (client.name)}
+    {#each clients as client, index (index)}
       <div class="client" role="group" aria-label={client.name}>
         <h4>{client.name}</h4>
         <ol>
-          {#each client.calls as call (call.time + call.tool)}
+          {#each client.calls as call, row (row)}
             <li class:failed={!call.ok}>
               <time datetime={call.time}>{when(call.time)}</time>
               <span class="tool">{call.tool}</span>
