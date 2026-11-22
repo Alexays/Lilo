@@ -162,6 +162,7 @@
 			"passwords": "Password",
 			"agentAccess": "Agenti che usano Lilo",
 			"agentClients": "App che possono usare Lilo",
+			"agentActivity": "Attività",
 			"lilo": "Lilo",
 			"tabsWindows": "Schede e finestre",
 			"sitePermissions": "Permessi dei siti",
@@ -506,6 +507,11 @@
 				"title": "Altri agenti",
 				"description": "Qualsiasi altro client MCP, con la configurazione di Lilo."
 			},
+			"agentActivity": {
+				"title": "Chiamate recenti degli agenti",
+				"description": "Le ultime chiamate di ogni app, dalla più recente. Lette quando apri questa pagina o aggiorni.",
+				"keywords": "agente registro cronologia audit azioni chiamate recenti attività"
+			},
 			"autoplay": {
 				"title": "Riproduzione automatica",
 				"description": "Si applica alle pagine aperte da ora in poi.",
@@ -668,6 +674,14 @@
 			},
 			"allowedSeen": "Consentito, visto l'ultima volta {time}",
 			"readyLine": "Configurato. Lilo te lo chiede alla prima connessione."
+		},
+		"agentActivity": {
+			"refresh": "Aggiorna",
+			"open": "Apri il registro delle azioni",
+			"off": "Il registro delle azioni è disattivato",
+			"offDescription": "Lilo non registra le chiamate degli agenti. Attivalo per vederle qui.",
+			"empty": "Nessuna chiamata registrata finora.",
+			"failed": "Non riuscita"
 		},
 		"navGroups": {
 			"tools": "Strumenti"
