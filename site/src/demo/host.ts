@@ -1331,7 +1331,6 @@ export const createDemoHost = (
             configured: id === "codex" && agentAuthorized,
             icon: id === "codex" ? (assets?.images.codex ?? null) : null,
             id,
-            installed: true,
           })
         ),
       }),

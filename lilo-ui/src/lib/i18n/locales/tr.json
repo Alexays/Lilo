@@ -641,7 +641,7 @@
 				"opencode": "OpenCode",
 				"gemini": "Gemini CLI"
 			},
-			"connect": "Bağlan",
+			"connect": "Bağlan…",
 			"copy": "Yapılandırmayı kopyala",
 			"clientDescription": "Lilo'yu istemcinin MCP sunucularına ekler.",
 			"revoke": "Kaldır",
@@ -661,19 +661,24 @@
 				"repair": "Onar",
 				"remove": "Lilo'yu kaldır",
 				"copy": "Kopyala",
-				"copied": "Kopyalandı"
+				"copied": "Kopyalandı",
+				"showTitle": "Lilo'nun {client} uygulamasına ekledikleri",
+				"added": "Dosyadaki bu satırlar Lilo'ya ait.",
+				"done": "Bitti"
 			},
 			"status": {
 				"acting": "İşlem yapıyor",
 				"connected": "Bağlı",
-				"allowed": "İzin verildi",
-				"notInstalled": "Yüklü değil",
-				"ready": "Yapılandırıldı"
+				"allowed": "İzin verildi"
 			},
 			"allowedSeen": "İzin verildi, son görülme {time}",
-			"readyLine": "Yapılandırıldı. Lilo ilk bağlantıda size sorar.",
-			"detectedLine": "Bu Mac'te bulundu. Henüz yapılandırılmadı.",
-			"moreApps": "Diğer uygulamalar"
+			"foundLine": "Bu Mac'te",
+			"copyOnlyLine": "Bu Mac'te. Ayar dosyasında yorumlar var: Lilo'nun girdisini kopyalayın.",
+			"connectedSeen": "Bağlı, son kullanım {time}",
+			"copyEntry": "Girdiyi Kopyala",
+			"showAdded": "Lilo'nun Eklediklerini Göster…",
+			"revealFile": "Ayar Dosyasını Göster",
+			"footnote": "Bu Mac'te olmayan uygulamalar listelenmez. Lilo bu sayfa açıldığında yeniden bakar."
 		},
 		"navGroups": {
 			"tools": "Araçlar"
@@ -2479,7 +2484,8 @@
 		"Show Pages": "Sayfaları göster",
 		"Hide Pages": "Sayfaları gizle",
 		"Close Conversation": "Sohbeti kapat",
-		"Pasted image": "Yapıştırılan görsel"
+		"Pasted image": "Yapıştırılan görsel",
+		"Copied Lilo's entry": "Lilo'nun girdisi kopyalandı"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

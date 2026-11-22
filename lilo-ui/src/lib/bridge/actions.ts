@@ -244,6 +244,8 @@ export const settingsActions = {
 	connectAgentClient: (client: string): void => emit("connectAgentClient", { client }),
 	previewAgentClient: (client: string, remove: boolean): void => emit("previewAgentClient", { client, remove }),
 	removeAgentClient: (client: string): void => emit("removeAgentClient", { client }),
+	revealAgentClientConfig: (client: string): void => emit("revealAgentClientConfig", { client }),
+	copyAgentClientEntry: (client: string): void => emit("copyAgentClientEntry", { client }),
 	loadAgentClients: emitEmpty("getAgentClients"),
 	revokeAgentClient: (name: string): void => emit("revokeAgentClient", { name }),
 	loadUpdaterStatus: emitEmpty("getUpdaterStatus"),

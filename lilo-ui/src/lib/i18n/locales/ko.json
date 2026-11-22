@@ -641,7 +641,7 @@
 				"opencode": "OpenCode",
 				"gemini": "Gemini CLI"
 			},
-			"connect": "연결",
+			"connect": "연결…",
 			"copy": "설정 복사",
 			"clientDescription": "이 클라이언트의 MCP 서버에 Lilo를 추가합니다.",
 			"revoke": "제거",
@@ -661,19 +661,24 @@
 				"repair": "복구",
 				"remove": "Lilo 제거",
 				"copy": "복사",
-				"copied": "복사됨"
+				"copied": "복사됨",
+				"showTitle": "Lilo가 {client}에 추가한 내용",
+				"added": "파일의 이 줄들이 Lilo의 것입니다.",
+				"done": "완료"
 			},
 			"status": {
 				"acting": "작업 중",
 				"connected": "연결됨",
-				"allowed": "허용됨",
-				"notInstalled": "설치되지 않음",
-				"ready": "설정됨"
+				"allowed": "허용됨"
 			},
 			"allowedSeen": "허용됨, 마지막 접속 {time}",
-			"readyLine": "구성됨. 처음 연결할 때 Lilo가 묻습니다.",
-			"detectedLine": "이 Mac에서 찾았습니다. 아직 설정되지 않음.",
-			"moreApps": "더 많은 앱"
+			"foundLine": "이 Mac에 있음",
+			"copyOnlyLine": "이 Mac에 있음. 설정 파일에 주석이 있으니 Lilo 항목을 복사하세요.",
+			"connectedSeen": "연결됨, 마지막 사용 {time}",
+			"copyEntry": "항목 복사",
+			"showAdded": "Lilo가 추가한 내용 보기…",
+			"revealFile": "설정 파일 보기",
+			"footnote": "이 Mac에 없는 앱은 표시되지 않습니다. 이 페이지를 열 때마다 Lilo가 다시 찾습니다."
 		},
 		"navGroups": {
 			"tools": "도구"
@@ -2479,7 +2484,8 @@
 		"Show Pages": "페이지 보기",
 		"Hide Pages": "페이지 숨기기",
 		"Close Conversation": "대화 닫기",
-		"Pasted image": "붙여넣은 이미지"
+		"Pasted image": "붙여넣은 이미지",
+		"Copied Lilo's entry": "Lilo 항목을 복사했습니다"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

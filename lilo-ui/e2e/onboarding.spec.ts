@@ -553,7 +553,7 @@ test("the intro is a modal dialog, so VoiceOver stays out of the chrome under it
 test("each agent's connect button names it", async ({ page }) => {
 	await bootOnboarding(page, 4, "develop");
 	await receive(page, { event: "settingsLoaded", settings: { agentControlEnabled: "true" } });
-	await receive(page, { event: "agentClientsLoaded", clients: [{ id: "codex", configured: false, installed: true, icon: "data:image/png;base64,AA==" }], allowed: [] });
+	await receive(page, { event: "agentClientsLoaded", clients: [{ id: "codex", configured: false, icon: "data:image/png;base64,AA==" }], allowed: [] });
 	await expect(page.locator(".onb").getByRole("button", { name: "Connect Codex" })).toBeVisible();
 });
 

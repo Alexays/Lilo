@@ -641,7 +641,7 @@
 				"opencode": "OpenCode",
 				"gemini": "Gemini CLI"
 			},
-			"connect": "Під’єднати",
+			"connect": "Під’єднати…",
 			"copy": "Копіювати конфігурацію",
 			"clientDescription": "Додає Lilo до його серверів MCP.",
 			"revoke": "Вилучити",
@@ -661,19 +661,24 @@
 				"repair": "Виправити",
 				"remove": "Вилучити Lilo",
 				"copy": "Копіювати",
-				"copied": "Скопійовано"
+				"copied": "Скопійовано",
+				"showTitle": "Що Lilo додав до {client}",
+				"added": "Ці рядки файлу належать Lilo.",
+				"done": "Готово"
 			},
 			"status": {
 				"acting": "Діє зараз",
 				"connected": "Підключено",
-				"allowed": "Дозволено",
-				"notInstalled": "Не інстальовано",
-				"ready": "Налаштовано"
+				"allowed": "Дозволено"
 			},
 			"allowedSeen": "Дозволено, востаннє {time}",
-			"readyLine": "Налаштовано. Lilo запитає вас під час першого підключення.",
-			"detectedLine": "Знайдено на цьому Mac. Ще не налаштовано.",
-			"moreApps": "Інші застосунки"
+			"foundLine": "На цьому Mac",
+			"copyOnlyLine": "На цьому Mac. У файлі налаштувань є коментарі: скопіюйте запис Lilo.",
+			"connectedSeen": "Під'єднано, востаннє використано {time}",
+			"copyEntry": "Скопіювати запис",
+			"showAdded": "Показати, що додав Lilo…",
+			"revealFile": "Показати файл налаштувань",
+			"footnote": "Програми, яких немає на цьому Mac, не показано. Lilo шукає знову, коли відкривається ця сторінка."
 		},
 		"navGroups": {
 			"tools": "Інструменти"
@@ -2479,7 +2484,8 @@
 		"Show Pages": "Показати сторінки",
 		"Hide Pages": "Сховати сторінки",
 		"Close Conversation": "Закрити розмову",
-		"Pasted image": "Вставлене зображення"
+		"Pasted image": "Вставлене зображення",
+		"Copied Lilo's entry": "Запис Lilo скопійовано"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

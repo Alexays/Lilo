@@ -641,7 +641,7 @@
 				"opencode": "OpenCode",
 				"gemini": "Gemini CLI"
 			},
-			"connect": "Подключить",
+			"connect": "Подключить…",
 			"copy": "Скопировать конфигурацию",
 			"clientDescription": "Добавляет Lilo к его MCP-серверам.",
 			"revoke": "Убрать",
@@ -661,19 +661,24 @@
 				"repair": "Исправить",
 				"remove": "Удалить Lilo",
 				"copy": "Скопировать",
-				"copied": "Скопировано"
+				"copied": "Скопировано",
+				"showTitle": "Что Lilo добавил в {client}",
+				"added": "Эти строки файла принадлежат Lilo.",
+				"done": "Готово"
 			},
 			"status": {
 				"acting": "Выполняет действие",
 				"connected": "Подключён",
-				"allowed": "Разрешён",
-				"notInstalled": "Не установлен",
-				"ready": "Настроен"
+				"allowed": "Разрешён"
 			},
 			"allowedSeen": "Разрешён, последний раз {time}",
-			"readyLine": "Настроено. Lilo спросит вас при первом подключении.",
-			"detectedLine": "Найдено на этом Mac. Ещё не настроено.",
-			"moreApps": "Другие приложения"
+			"foundLine": "На этом Mac",
+			"copyOnlyLine": "На этом Mac. В файле настроек есть комментарии: скопируйте запись Lilo.",
+			"connectedSeen": "Подключено, последнее использование {time}",
+			"copyEntry": "Скопировать запись",
+			"showAdded": "Показать, что добавил Lilo…",
+			"revealFile": "Показать файл настроек",
+			"footnote": "Приложения, которых нет на этом Mac, не показаны. Lilo ищет снова при открытии этой страницы."
 		},
 		"navGroups": {
 			"tools": "Инструменты"
@@ -2479,7 +2484,8 @@
 		"Show Pages": "Показать страницы",
 		"Hide Pages": "Скрыть страницы",
 		"Close Conversation": "Закрыть разговор",
-		"Pasted image": "Вставленное изображение"
+		"Pasted image": "Вставленное изображение",
+		"Copied Lilo's entry": "Запись Lilo скопирована"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

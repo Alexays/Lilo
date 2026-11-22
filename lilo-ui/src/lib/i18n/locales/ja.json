@@ -641,7 +641,7 @@
 				"opencode": "OpenCode",
 				"gemini": "Gemini CLI"
 			},
-			"connect": "接続",
+			"connect": "接続…",
 			"copy": "構成をコピー",
 			"clientDescription": "MCP サーバーに Lilo を追加します。",
 			"revoke": "取り除く",
@@ -661,19 +661,24 @@
 				"repair": "修復",
 				"remove": "Lilo を削除",
 				"copy": "コピー",
-				"copied": "コピーしました"
+				"copied": "コピーしました",
+				"showTitle": "Liloが{client}に追加した内容",
+				"added": "ファイル内のこれらの行がLiloのものです。",
+				"done": "完了"
 			},
 			"status": {
 				"acting": "操作中",
 				"connected": "接続済み",
-				"allowed": "許可済み",
-				"notInstalled": "未インストール",
-				"ready": "構成済み"
+				"allowed": "許可済み"
 			},
 			"allowedSeen": "許可済み、最終接続 {time}",
-			"readyLine": "設定済み。初回接続時に Lilo が確認します。",
-			"detectedLine": "この Mac で見つかりました。未設定です。",
-			"moreApps": "その他の App"
+			"foundLine": "このMac上",
+			"copyOnlyLine": "このMac上。設定ファイルにコメントがあるため、Liloの項目をコピーしてください。",
+			"connectedSeen": "接続済み、最終使用 {time}",
+			"copyEntry": "項目をコピー",
+			"showAdded": "Liloが追加した内容を表示…",
+			"revealFile": "設定ファイルを表示",
+			"footnote": "このMacにないアプリは表示されません。このページを開くたびにLiloが再確認します。"
 		},
 		"navGroups": {
 			"tools": "ツール"
@@ -2479,7 +2484,8 @@
 		"Show Pages": "ページを表示",
 		"Hide Pages": "ページを隠す",
 		"Close Conversation": "会話を閉じる",
-		"Pasted image": "貼り付けた画像"
+		"Pasted image": "貼り付けた画像",
+		"Copied Lilo's entry": "Liloの項目をコピーしました"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

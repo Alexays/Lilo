@@ -641,7 +641,7 @@
 				"opencode": "OpenCode",
 				"gemini": "Gemini CLI"
 			},
-			"connect": "連接",
+			"connect": "連接…",
 			"copy": "拷貝設定",
 			"clientDescription": "將 Lilo 加入其 MCP 伺服器。",
 			"revoke": "移除",
@@ -661,19 +661,24 @@
 				"repair": "修復",
 				"remove": "移除 Lilo",
 				"copy": "拷貝",
-				"copied": "已拷貝"
+				"copied": "已拷貝",
+				"showTitle": "Lilo 加入 {client} 的內容",
+				"added": "檔案中的這些行屬於 Lilo。",
+				"done": "完成"
 			},
 			"status": {
 				"acting": "正在執行動作",
 				"connected": "已連接",
-				"allowed": "已允許",
-				"notInstalled": "未安裝",
-				"ready": "已設定"
+				"allowed": "已允許"
 			},
 			"allowedSeen": "已允許，上次連線 {time}",
-			"readyLine": "已設定。首次連線時 Lilo 會詢問你。",
-			"detectedLine": "在這台 Mac 上找到。尚未設定。",
-			"moreApps": "更多 App"
+			"foundLine": "在這部 Mac 上",
+			"copyOnlyLine": "在這部 Mac 上。其設定檔含有註解：請拷貝 Lilo 的項目。",
+			"connectedSeen": "已連接，上次使用於{time}",
+			"copyEntry": "拷貝項目",
+			"showAdded": "顯示 Lilo 加入的內容…",
+			"revealFile": "顯示設定檔",
+			"footnote": "未列出不在這部 Mac 上的 App。每次打開此頁面時 Lilo 都會重新尋找。"
 		},
 		"navGroups": {
 			"tools": "工具"
@@ -2479,7 +2484,8 @@
 		"Show Pages": "顯示頁面",
 		"Hide Pages": "隱藏頁面",
 		"Close Conversation": "關閉對話",
-		"Pasted image": "貼上的圖片"
+		"Pasted image": "貼上的圖片",
+		"Copied Lilo's entry": "已拷貝 Lilo 的項目"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

@@ -27,8 +27,8 @@ function snapshot(): void {
 	receive({
 		event: "agentClientsLoaded",
 		clients: [
-			{ id: "claudeDesktop", configured: true, installed: true, icon: "data:claude" },
-			{ id: "cursor", configured: true, installed: true, icon: "data:cursor" },
+			{ id: "claudeDesktop", configured: true, icon: "data:claude" },
+			{ id: "cursor", configured: true, icon: "data:cursor" },
 		],
 		allowed: [
 			{ name: "claude-ai", displayName: "Claude", lastSeen: null, client: "claudeDesktop" },

@@ -35,7 +35,7 @@ Some messages from `lilo-mcp` call this section "Settings > AI agents". In the S
 
 ## Connect your agent
 
-Once agent control is on, **Apps that can use Lilo** shows a tile for each supported app that Lilo finds on your Mac: Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode and Gemini CLI. Apps found on your Mac come first and read **Found on this Mac. Not set up yet.**; the others wait under **More apps**. Click **Connect** on a tile and Lilo shows the file it will change and the lines it adds; confirm and it writes that app's MCP configuration for you, keeping every other server already in it. The tile then reads **Configured. Lilo asks you the first time it connects.**
+Once agent control is on, **Apps that can use Lilo** lists the supported apps that Lilo finds on your Mac, one row each: Claude Code, Claude Desktop, Codex, Cursor, Zed, VS Code, OpenCode and Gemini CLI. Apps that are not on your Mac are not listed; Lilo looks again each time the page opens. Click **Connect...** on a row and Lilo shows the file it will change and the lines it adds; confirm and it adds its own entry to that app's MCP configuration, leaving every other line of the file as it was. When the app's settings file has comments, Lilo does not rewrite it: the row offers **Copy Entry** so you can paste Lilo's entry yourself. A connected app's **...** menu shows what Lilo added, reveals the settings file in the Finder, and removes Lilo from the app again.
 
 To set an app up by hand, use the configuration for your client below.
 

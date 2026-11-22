@@ -848,6 +848,9 @@ export interface BridgeCommandPayloadMap {
 	/** Asks what Connect (or Remove) would write to the app's configuration: answered with `agentClientPreview`. */
 	previewAgentClient: { client: string; remove: boolean };
 	removeAgentClient: { client: string };
+	revealAgentClientConfig: { client: string };
+	/** Copies Lilo's entry for an app whose settings file Lilo cannot rewrite. */
+	copyAgentClientEntry: { client: string };
 	startConversation: {
 		agentId: string;
 		cwd: string;
@@ -1376,10 +1379,10 @@ export interface BridgeAgentClientPreview {
 
 /** The catalog's agent apps, which are installed or name Lilo in their configuration, and the agents the user let in. */
 export interface BridgeAgentClientsSnapshot {
-	/** Every app of the catalog. `installed` is what the scan of the home found; `icon` is a PNG data URL of the app
-	 * (Terminal's for a command-line tool), null when it is not installed. `stale` is a configuration naming a
-	 * Lilo at another path, which Connect repoints. */
-	clients: { id: string; configured: boolean; installed: boolean; stale?: boolean; icon: string | null }[];
+	/** The apps on this Mac or naming Lilo. `icon` is a PNG data URL of the app (Terminal's for a command-line tool),
+	 * null when it is not installed. `stale` is a configuration naming a Lilo at another path, which Connect repoints;
+	 * `copyOnly` a settings file Lilo cannot rewrite (comments), whose entry the user copies instead. */
+	clients: { id: string; configured: boolean; stale?: boolean; copyOnly?: boolean; icon: string | null }[];
 	/** `name` is what the agent calls itself; `displayName` is how people know it ("Claude Code"); `client` the
 	 * entry of `clients` it is, null for an agent Lilo has no configuration for. */
 	allowed: { name: string; displayName: string; lastSeen: number | null; client: string | null }[];

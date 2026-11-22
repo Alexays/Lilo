@@ -641,7 +641,7 @@
 				"opencode": "OpenCode",
 				"gemini": "Gemini CLI"
 			},
-			"connect": "Połącz",
+			"connect": "Połącz…",
 			"copy": "Kopiuj konfigurację",
 			"clientDescription": "Dodaje Lilo do jego serwerów MCP.",
 			"revoke": "Usuń",
@@ -661,19 +661,24 @@
 				"repair": "Napraw",
 				"remove": "Usuń Lilo",
 				"copy": "Kopiuj",
-				"copied": "Skopiowano"
+				"copied": "Skopiowano",
+				"showTitle": "Co Lilo dodało do {client}",
+				"added": "Te wiersze pliku należą do Lilo.",
+				"done": "Gotowe"
 			},
 			"status": {
 				"acting": "Działa teraz",
 				"connected": "Połączony",
-				"allowed": "Dozwolony",
-				"notInstalled": "Niezainstalowany",
-				"ready": "Skonfigurowany"
+				"allowed": "Dozwolony"
 			},
 			"allowedSeen": "Dozwolony, ostatnio {time}",
-			"readyLine": "Skonfigurowano. Lilo zapyta przy pierwszym połączeniu.",
-			"detectedLine": "Znaleziono na tym Macu. Jeszcze nie skonfigurowano.",
-			"moreApps": "Więcej aplikacji"
+			"foundLine": "Na tym Macu",
+			"copyOnlyLine": "Na tym Macu. Plik ustawień zawiera komentarze: skopiuj wpis Lilo.",
+			"connectedSeen": "Połączono, ostatnio używane {time}",
+			"copyEntry": "Kopiuj wpis",
+			"showAdded": "Pokaż, co dodało Lilo…",
+			"revealFile": "Pokaż plik ustawień",
+			"footnote": "Aplikacje, których nie ma na tym Macu, nie są wymienione. Lilo szuka ponownie po otwarciu tej strony."
 		},
 		"navGroups": {
 			"tools": "Narzędzia"
@@ -2479,7 +2484,8 @@
 		"Show Pages": "Pokaż strony",
 		"Hide Pages": "Ukryj strony",
 		"Close Conversation": "Zamknij rozmowę",
-		"Pasted image": "Wklejony obraz"
+		"Pasted image": "Wklejony obraz",
+		"Copied Lilo's entry": "Skopiowano wpis Lilo"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
