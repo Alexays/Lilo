@@ -10,7 +10,7 @@ import { t } from "../lib/i18n/state.svelte";
 let _downloads = $state.raw<BridgeDownloadSnapshot[]>([]);
 // The last few finished downloads, newest first, so the library menu is never a dead end.
 let _recent = $state.raw<BridgeDownloadSnapshot[]>([]);
-const RECENT_LIMIT = 3;
+const RECENT_LIMIT = 5;
 // Whether anything downloaded since launch, and which of those ended unseen (id to failed).
 let _sessionHasDownloads = $state(false);
 let _unseen = $state.raw<Map<number, boolean>>(new Map());

@@ -537,6 +537,11 @@
 				"description": "Wijzig elke sneltoets of begin met die van Arc.",
 				"keywords": "toetsenbord sneltoets toetsen command"
 			},
+			"holdToQuit": {
+				"title": "Houd de stopsneltoets ingedrukt om te stoppen",
+				"description": "De stopsneltoets toont een melding; Lilo stopt alleen als de toetsen ingedrukt blijven.",
+				"keywords": "stoppen afsluiten commando q per ongeluk houden"
+			},
 			"newProfile": {
 				"title": "Nieuw profiel",
 				"description": "Profielen houden cookies, aanmeldingen en extensies gescheiden.",
@@ -855,6 +860,7 @@
 		"pinned": "Vastgemaakt",
 		"loading": "Laden",
 		"muted": "Gedempt",
+		"neverSleeps": "Sluimert nooit",
 		"playingAudio": "Speelt audio af",
 		"terminalCommand": "Commando",
 		"terminalAwaitingFor": "{command} wacht al {duration} op je",
@@ -862,6 +868,7 @@
 		"terminalFailedDetail": "{command} is na {duration} mislukt (afsluitcode {code})",
 		"terminalSucceededDetail": "{command} is in {duration} voltooid",
 		"closeTab": "Sluit tabblad",
+		"removeFromSplit": "Verwijderen uit gesplitste weergave",
 		"removePinnedTab": "Verwijder vastgemaakt tabblad",
 		"tabName": "Tabbladnaam",
 		"removeBookmark": "Verwijder bladwijzer",
@@ -915,13 +922,22 @@
 		"bottom": "Open eronder",
 		"replace": "Vervang"
 	},
+	"paneMove": {
+		"left": "Verplaats naar links",
+		"right": "Verplaats naar rechts",
+		"top": "Verplaats erboven",
+		"bottom": "Verplaats eronder",
+		"replace": "Wissel"
+	},
 	"tabSection": {
 		"splitView": "Gesplitste weergave",
 		"folderEmpty": "Map leeg",
 		"newTab": "Nieuw tabblad",
+		"newTabShort": "Nieuw",
 		"newTerminal": "Nieuwe terminal",
 		"clearUnpinnedTooltip": "Archiveer niet-vastgemaakte tabbladen",
 		"listOptions": "Sorteren en groeperen",
+		"searchTabs": "Zoek in tabbladen",
 		"pinnedTabs": "Vastgemaakte tabbladen",
 		"openTabs": "Geopende tabbladen",
 		"dropToPin": "Laat los om vast te maken",
@@ -1074,6 +1090,7 @@
 		"showFolder": "Toon downloadmap",
 		"clearFinished": "Wis voltooide downloads",
 		"dragFile": "Sleep bestand",
+		"showInFinder": "Toon in Finder",
 		"announceDone": "{filename} gedownload",
 		"announceFailed": "Downloaden van {filename} mislukt"
 	},
@@ -1155,7 +1172,6 @@
 		"installed": "Geïnstalleerd"
 	},
 	"commandBar": {
-		"showDetails": "Sneltoetsen tonen",
 		"hintPeek": "Voorvertoning",
 		"hintCopyLink": "Kopieer link",
 		"hintCloseTab": "Sluit tabblad",
@@ -1187,6 +1203,7 @@
 		"terminalProgram": "Programma",
 		"hintRun": "Voer uit",
 		"hintSplit": "Splits",
+		"splitFull": "Gesplitste weergave is vol ({count} deelvensters)",
 		"scopeTabs": "Tabbladen",
 		"scopeBookmarks": "Bladwijzers",
 		"scopeHistory": "Geschiedenis",
@@ -1222,6 +1239,8 @@
 		"sectionOpenTabs": "Geopende tabbladen",
 		"sectionBookmarks": "Bladwijzers",
 		"sectionRecentHistory": "Recente geschiedenis",
+		"sectionFrequentSites": "Vaak bezochte sites",
+		"sectionRecentConversations": "Recente gesprekken",
 		"sectionHistory": "Geschiedenis",
 		"sectionSwitchToTab": "Schakel over naar tabblad",
 		"sectionGoTo": "Ga naar",
@@ -1417,6 +1436,15 @@
 		"title": "WebKit-vlaggen",
 		"resetTitle": "Gewijzigde vlaggen",
 		"reloadNote": "Herlaad een pagina om een wijziging toe te passen"
+	},
+	"little": {
+		"openIn": "Openen in {space}",
+		"openInMenu": "Openen in een andere Ruimte",
+		"copyLink": "Link kopiëren",
+		"linkCopied": "Link gekopieerd",
+		"placeholder": "Zoek of voer een URL in...",
+		"emptyTitle": "Zoek op het web of voer een URL in",
+		"emptySubtitle": "Typ / om bezochte pagina's te doorzoeken."
 	},
 	"urlToast": {
 		"pageActions": "Pagina-acties",
@@ -2048,6 +2076,7 @@
 		"Hide Others": "Verberg andere",
 		"Show All": "Toon alles",
 		"Quit Lilo": "Stop Lilo",
+		"Hold %@ to Quit": "Houd %@ ingedrukt om te stoppen",
 		"File": "Archief",
 		"New Tab": "Nieuw tabblad",
 		"Back to tab": "Terug naar tabblad",
@@ -2093,9 +2122,18 @@
 		"New Split View": "Nieuwe gesplitste weergave",
 		"Split View": "Gesplitste weergave",
 		"Separate Split View": "Hef gesplitste weergave op",
+		"Close Split Pane": "Gesplitst deelvenster sluiten",
+		"Maximize Split Pane": "Gesplitst deelvenster maximaliseren",
+		"Move Pane": "Deelvenster verplaatsen",
+		"Move Pane Left": "Gesplitst deelvenster naar links verplaatsen",
+		"Move Pane Right": "Gesplitst deelvenster naar rechts verplaatsen",
+		"Move Pane Up": "Gesplitst deelvenster naar boven verplaatsen",
+		"Move Pane Down": "Gesplitst deelvenster naar beneden verplaatsen",
 		"Open in Split View": "Open in gesplitste weergave",
+		"Split view is full (%lld panes)": "Gesplitste weergave is vol (%lld deelvensters)",
 		"Hide Element…": "Element verbergen…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Klik op een element om het op deze site te verbergen. Druk op Esc om te annuleren.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Klik op een element of sleep een gebied. Met de pijltjestoetsen wijzig je het element, Return legt vast, Esc annuleert.",
 		"Picture in Picture": "Beeld in beeld",
 		"Develop": "Ontwikkel",
 		"Show Web Inspector": "Toon webinfovenster",
@@ -2185,6 +2223,7 @@
 		"Sleep is back on": "Sluimerstand is weer toegestaan",
 		"The battery is below %d%%.": "De batterij is onder %d%%.",
 		"The Mac is too hot.": "De Mac is te warm.",
+		"Never Sleep": "Nooit laten sluimeren",
 		"Commands kept the Mac awake for the maximum duration.": "Commando's hebben de Mac gedurende de maximale tijd wakker gehouden.",
 		"While the lid was closed": "Terwijl de klep gesloten was",
 		"%d commands finished": {"one": "%d commando voltooid", "other": "%d commando's voltooid"},
@@ -2694,7 +2733,11 @@
 			"noFolder": "Geen map",
 			"noFolderDetail": "De agent werkt in een eigen map",
 			"backgroundHint": "{shortcut} om het op de achtergrond te houden",
-			"start": "Start"
+			"start": "Start",
+			"searchAgents": "Zoek agents",
+			"featuredAgents": "Uitgelicht",
+			"registryAgents": "Register",
+			"noMatches": "Geen overeenkomende agents"
 		},
 		"row": {
 			"untitled": "Nieuw gesprek",

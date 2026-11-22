@@ -51,6 +51,7 @@ final class BrowserRuntimeCoordinator {
         switch command {
         case .activateTab,
              .setTabHomeURL,
+             .setNeverSleep,
              .renameTab,
              .createFolder,
              .updateFolder,
@@ -72,6 +73,7 @@ final class BrowserRuntimeCoordinator {
              .groupTabs,
              .splitTabs,
              .replaceSplitPane,
+             .unsplitTab,
              .importSidebarNodes,
              .moveSidebarItem:
             return true
@@ -81,6 +83,7 @@ final class BrowserRuntimeCoordinator {
     private func shouldSyncActiveBrowserState(before command: BrowserCommand) -> Bool {
         switch command {
         case .activateTab,
+             .setNeverSleep,
              .renameTab,
              .updateFolder,
              .setFolderCollapsed,
@@ -103,6 +106,7 @@ final class BrowserRuntimeCoordinator {
              .groupTabs,
              .splitTabs,
              .replaceSplitPane,
+             .unsplitTab,
              .importSidebarNodes,
              .moveSidebarItem:
             return true

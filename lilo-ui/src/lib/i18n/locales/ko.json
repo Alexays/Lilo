@@ -537,6 +537,11 @@
 				"description": "모든 단축키를 변경하거나 Arc의 단축키로 시작할 수 있습니다.",
 				"keywords": "키보드 단축키 키 명령"
 			},
+			"holdToQuit": {
+				"title": "종료 단축키를 길게 눌러 종료",
+				"description": "종료 단축키를 누르면 안내가 표시되고, 키를 계속 누르고 있을 때만 Lilo가 종료됩니다.",
+				"keywords": "종료 끝내기 명령 q 실수 길게"
+			},
 			"newProfile": {
 				"title": "새 프로필",
 				"description": "프로필별로 쿠키, 로그인, 확장 프로그램을 분리합니다.",
@@ -855,6 +860,7 @@
 		"pinned": "고정됨",
 		"loading": "로드 중",
 		"muted": "음소거됨",
+		"neverSleeps": "잠자기 안 함",
 		"playingAudio": "오디오 재생 중",
 		"terminalCommand": "명령",
 		"terminalAwaitingFor": "{command} 명령이 {duration} 동안 응답을 기다리고 있습니다",
@@ -862,6 +868,7 @@
 		"terminalFailedDetail": "{command} 명령이 {duration} 후 실패함(종료 코드 {code})",
 		"terminalSucceededDetail": "{command} 명령이 {duration} 만에 완료됨",
 		"closeTab": "탭 닫기",
+		"removeFromSplit": "분할 보기에서 제거",
 		"removePinnedTab": "고정된 탭 제거",
 		"tabName": "탭 이름",
 		"removeBookmark": "책갈피 제거",
@@ -915,13 +922,22 @@
 		"bottom": "아래에 열기",
 		"replace": "대체"
 	},
+	"paneMove": {
+		"left": "왼쪽으로 이동",
+		"right": "오른쪽으로 이동",
+		"top": "위로 이동",
+		"bottom": "아래로 이동",
+		"replace": "교체"
+	},
 	"tabSection": {
 		"splitView": "분할 보기",
 		"folderEmpty": "폴더가 비어 있음",
 		"newTab": "새 탭",
+		"newTabShort": "새 탭",
 		"newTerminal": "새 터미널",
 		"clearUnpinnedTooltip": "고정되지 않은 탭 보관",
 		"listOptions": "정렬 및 그룹화",
+		"searchTabs": "탭 검색",
 		"pinnedTabs": "고정된 탭",
 		"openTabs": "열린 탭",
 		"dropToPin": "놓아서 고정",
@@ -1074,6 +1090,7 @@
 		"showFolder": "다운로드 폴더 보기",
 		"clearFinished": "완료된 다운로드 지우기",
 		"dragFile": "파일 드래그",
+		"showInFinder": "Finder에서 보기",
 		"announceDone": "{filename} 다운로드 완료",
 		"announceFailed": "{filename} 다운로드 실패"
 	},
@@ -1155,7 +1172,6 @@
 		"installed": "설치됨"
 	},
 	"commandBar": {
-		"showDetails": "키보드 힌트 표시",
 		"hintPeek": "미리보기",
 		"hintCopyLink": "링크 복사",
 		"hintCloseTab": "탭 닫기",
@@ -1187,6 +1203,7 @@
 		"terminalProgram": "프로그램",
 		"hintRun": "실행",
 		"hintSplit": "분할",
+		"splitFull": "분할 보기가 가득 찼습니다(패널: {count})",
 		"scopeTabs": "탭",
 		"scopeBookmarks": "책갈피",
 		"scopeHistory": "방문 기록",
@@ -1222,6 +1239,8 @@
 		"sectionOpenTabs": "열린 탭",
 		"sectionBookmarks": "책갈피",
 		"sectionRecentHistory": "최근 방문 기록",
+		"sectionFrequentSites": "자주 방문한 사이트",
+		"sectionRecentConversations": "최근 대화",
 		"sectionHistory": "방문 기록",
 		"sectionSwitchToTab": "탭으로 전환",
 		"sectionGoTo": "이동",
@@ -1417,6 +1436,15 @@
 		"title": "WebKit 플래그",
 		"resetTitle": "변경된 플래그",
 		"reloadNote": "변경 사항을 적용하려면 페이지를 새로 고치세요"
+	},
+	"little": {
+		"openIn": "{space}에서 열기",
+		"openInMenu": "다른 스페이스에서 열기",
+		"copyLink": "링크 복사",
+		"linkCopied": "링크를 복사했습니다",
+		"placeholder": "검색하거나 URL 입력...",
+		"emptyTitle": "웹을 검색하거나 URL을 입력하세요",
+		"emptySubtitle": "/ 를 입력하면 방문한 페이지를 검색합니다."
 	},
 	"urlToast": {
 		"pageActions": "페이지 동작",
@@ -2048,6 +2076,7 @@
 		"Hide Others": "기타 가리기",
 		"Show All": "모두 보기",
 		"Quit Lilo": "Lilo 종료",
+		"Hold %@ to Quit": "%@를 길게 눌러 종료",
 		"File": "파일",
 		"New Tab": "새 탭",
 		"Back to tab": "탭으로 돌아가기",
@@ -2093,9 +2122,18 @@
 		"New Split View": "새 분할 보기",
 		"Split View": "분할 보기",
 		"Separate Split View": "분할 보기 분리",
+		"Close Split Pane": "분할 창 닫기",
+		"Maximize Split Pane": "분할 창 최대화",
+		"Move Pane": "창 이동",
+		"Move Pane Left": "분할 창을 왼쪽으로 이동",
+		"Move Pane Right": "분할 창을 오른쪽으로 이동",
+		"Move Pane Up": "분할 창을 위로 이동",
+		"Move Pane Down": "분할 창을 아래로 이동",
 		"Open in Split View": "분할 보기에서 열기",
+		"Split view is full (%lld panes)": "분할 보기가 가득 찼습니다(%lld개 패널)",
 		"Hide Element…": "요소 가리기…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "이 사이트에서 가릴 요소를 클릭하세요. 취소하려면 Esc 키를 누르세요.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "요소를 클릭하거나 영역을 드래그하세요. 화살표 키로 요소를 바꾸고, Return으로 캡처하고, Esc로 취소합니다.",
 		"Picture in Picture": "화면 속 화면",
 		"Develop": "개발자용",
 		"Show Web Inspector": "웹 속성 보기",
@@ -2185,6 +2223,7 @@
 		"Sleep is back on": "잠자기가 다시 활성화되었습니다",
 		"The battery is below %d%%.": "배터리가 %d%% 미만입니다.",
 		"The Mac is too hot.": "Mac이 너무 뜨겁습니다.",
+		"Never Sleep": "잠자기 안 함",
 		"Commands kept the Mac awake for the maximum duration.": "명령이 최대 시간 동안 Mac의 잠자기를 방지했습니다.",
 		"While the lid was closed": "덮개가 닫혀 있는 동안",
 		"%d commands finished": {"one": "명령 %d개 완료", "other": "명령 %d개 완료"},
@@ -2694,7 +2733,11 @@
 			"noFolder": "폴더 없음",
 			"noFolderDetail": "에이전트가 자체 폴더에서 작업합니다",
 			"backgroundHint": "{shortcut}로 백그라운드에서 유지",
-			"start": "시작"
+			"start": "시작",
+			"searchAgents": "에이전트 검색",
+			"featuredAgents": "추천",
+			"registryAgents": "레지스트리",
+			"noMatches": "일치하는 에이전트 없음"
 		},
 		"row": {
 			"untitled": "새 대화",

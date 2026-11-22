@@ -235,13 +235,14 @@ async function textContrast(page: Page, selector: string): Promise<number> {
 }
 
 for (const colorScheme of ["light", "dark"] as const) {
-	test(`the command bar's selected row reads in ${colorScheme} mode`, async ({ page }) => {
+	test(`the command bar's scope chips and selected row read in ${colorScheme} mode`, async ({ page }) => {
 		await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 		await page.locator(".command-bar-input").fill("beta");
 		await page.locator(".command-bar-result.selected .result-subtitle").waitFor();
 
+		expect(await textContrast(page, ".scope-hint:not(.selected)")).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 		expect(await textContrast(page, ".command-bar-result.selected .result-subtitle")).toBeGreaterThanOrEqual(TEXT_CONTRAST);
 	});
 

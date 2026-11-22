@@ -96,7 +96,8 @@ final class MainWindowController: NSWindowController {
     nonisolated static let logger = Logger(liloCategory: "MainWindowController")
 
     static let defaultSidebarWidth: CGFloat = 260
-    static let sidebarWidthRange: ClosedRange<CGFloat> = 203...480
+    /// Down to the rail's detent: the chrome folds a narrower sidebar to the rail.
+    static let sidebarWidthRange: ClosedRange<CGFloat> = 150...480
     /// The icon rail's width, the content inset aside: its icons' column.
     static let sidebarRailWidth: CGFloat = 40
     static let contentInset: CGFloat = 8

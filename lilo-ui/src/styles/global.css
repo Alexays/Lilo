@@ -348,6 +348,14 @@ html[data-sidebar-rail]:not([data-tabs-hidden])[data-tab-position='right'] {
   --tabs-right: calc(var(--sidebar-rail-width) + var(--content-inset));
 }
 
+/* The sidebar viewport is --sidebar-width plus the 8 px inset: under a 203 px sidebar, the close and
+   sound buttons wait behind the row's fade so the titles keep their room. */
+@container sidebar (width < 211px) {
+  .tab-item .tab-actions {
+    display: none;
+  }
+}
+
 /* Hidden or floating over the page, the tabs leave it every edge. */
 html[data-tabs-hidden] {
   --tabs-left: var(--content-inset);

@@ -537,6 +537,11 @@
 				"description": "Cambia cualquier atajo o usa los de Arc como punto de partida.",
 				"keywords": "teclado atajo teclas comando"
 			},
+			"holdToQuit": {
+				"title": "Mantener el atajo de salida para salir",
+				"description": "El atajo de salida muestra un aviso; Lilo solo se cierra si se mantienen las teclas pulsadas.",
+				"keywords": "salir cerrar comando q accidental mantener"
+			},
 			"newProfile": {
 				"title": "Nuevo perfil",
 				"description": "Los perfiles mantienen separados las cookies, las sesiones y las extensiones.",
@@ -855,6 +860,7 @@
 		"pinned": "Fijada",
 		"loading": "Cargando",
 		"muted": "Silenciada",
+		"neverSleeps": "Nunca en reposo",
 		"playingAudio": "Reproduciendo audio",
 		"terminalCommand": "Comando",
 		"terminalAwaitingFor": "{command} lleva {duration} esperando tu respuesta",
@@ -862,6 +868,7 @@
 		"terminalFailedDetail": "{command} ha fallado (código {code}) tras {duration}",
 		"terminalSucceededDetail": "{command} ha terminado en {duration}",
 		"closeTab": "Cerrar pestaña",
+		"removeFromSplit": "Quitar de la vista dividida",
 		"removePinnedTab": "Quitar pestaña fijada",
 		"tabName": "Nombre de la pestaña",
 		"removeBookmark": "Quitar marcador",
@@ -915,13 +922,22 @@
 		"bottom": "Abrir abajo",
 		"replace": "Sustituir"
 	},
+	"paneMove": {
+		"left": "Mover a la izquierda",
+		"right": "Mover a la derecha",
+		"top": "Mover arriba",
+		"bottom": "Mover abajo",
+		"replace": "Intercambiar"
+	},
 	"tabSection": {
 		"splitView": "Vista dividida",
 		"folderEmpty": "Carpeta vacía",
 		"newTab": "Nueva pestaña",
+		"newTabShort": "Nueva",
 		"newTerminal": "Nuevo terminal",
 		"clearUnpinnedTooltip": "Archivar pestañas sin fijar",
 		"listOptions": "Ordenar y agrupar",
+		"searchTabs": "Buscar pestañas",
 		"pinnedTabs": "Pestañas fijadas",
 		"openTabs": "Pestañas abiertas",
 		"dropToPin": "Suelta para fijar",
@@ -1074,6 +1090,7 @@
 		"showFolder": "Mostrar carpeta de descargas",
 		"clearFinished": "Borrar descargas finalizadas",
 		"dragFile": "Arrastrar archivo",
+		"showInFinder": "Mostrar en el Finder",
 		"announceDone": "{filename} descargado",
 		"announceFailed": "No se ha podido descargar {filename}"
 	},
@@ -1155,7 +1172,6 @@
 		"installed": "Instaladas"
 	},
 	"commandBar": {
-		"showDetails": "Mostrar atajos de teclado",
 		"hintPeek": "Vista previa",
 		"hintCopyLink": "Copiar enlace",
 		"hintCloseTab": "Cerrar pestaña",
@@ -1187,6 +1203,7 @@
 		"terminalProgram": "Programa",
 		"hintRun": "Ejecutar",
 		"hintSplit": "Dividir",
+		"splitFull": "La vista dividida está llena ({count} paneles)",
 		"scopeTabs": "Pestañas",
 		"scopeBookmarks": "Marcadores",
 		"scopeHistory": "Historial",
@@ -1222,6 +1239,8 @@
 		"sectionOpenTabs": "Pestañas abiertas",
 		"sectionBookmarks": "Marcadores",
 		"sectionRecentHistory": "Historial reciente",
+		"sectionFrequentSites": "Sitios frecuentes",
+		"sectionRecentConversations": "Conversaciones recientes",
 		"sectionHistory": "Historial",
 		"sectionSwitchToTab": "Cambiar a la pestaña",
 		"sectionGoTo": "Ir a",
@@ -1417,6 +1436,15 @@
 		"title": "Opciones de WebKit",
 		"resetTitle": "Opciones modificadas",
 		"reloadNote": "Recarga una página para que el cambio surta efecto"
+	},
+	"little": {
+		"openIn": "Abrir en {space}",
+		"openInMenu": "Abrir en otro Espacio",
+		"copyLink": "Copiar enlace",
+		"linkCopied": "Enlace copiado",
+		"placeholder": "Busca o introduce una URL...",
+		"emptyTitle": "Busca en la web o introduce una URL",
+		"emptySubtitle": "Escribe / para buscar en las páginas que visitaste."
 	},
 	"urlToast": {
 		"pageActions": "Acciones de la página",
@@ -2048,6 +2076,7 @@
 		"Hide Others": "Ocultar otros",
 		"Show All": "Mostrar todo",
 		"Quit Lilo": "Salir de Lilo",
+		"Hold %@ to Quit": "Mantén %@ para salir",
 		"File": "Archivo",
 		"New Tab": "Nueva pestaña",
 		"Back to tab": "Volver a la pestaña",
@@ -2093,9 +2122,18 @@
 		"New Split View": "Nueva vista dividida",
 		"Split View": "Vista dividida",
 		"Separate Split View": "Separar vista dividida",
+		"Close Split Pane": "Cerrar panel dividido",
+		"Maximize Split Pane": "Maximizar panel dividido",
+		"Move Pane": "Mover panel",
+		"Move Pane Left": "Mover panel dividido a la izquierda",
+		"Move Pane Right": "Mover panel dividido a la derecha",
+		"Move Pane Up": "Mover panel dividido arriba",
+		"Move Pane Down": "Mover panel dividido abajo",
 		"Open in Split View": "Abrir en vista dividida",
+		"Split view is full (%lld panes)": "La vista dividida está llena (%lld paneles)",
 		"Hide Element…": "Ocultar elemento…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Haz clic en un elemento para ocultarlo en este sitio. Pulsa Esc para cancelar.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Haz clic en un elemento o arrastra un área. Las flechas cambian el elemento, Intro captura y Esc cancela.",
 		"Picture in Picture": "Imagen dentro de imagen",
 		"Develop": "Desarrollo",
 		"Show Web Inspector": "Mostrar inspector web",
@@ -2185,6 +2223,7 @@
 		"Sleep is back on": "El reposo vuelve a estar permitido",
 		"The battery is below %d%%.": "La batería está por debajo del %d%%.",
 		"The Mac is too hot.": "El Mac está demasiado caliente.",
+		"Never Sleep": "No poner nunca en reposo",
 		"Commands kept the Mac awake for the maximum duration.": "Los comandos han mantenido el Mac activo durante el tiempo máximo.",
 		"While the lid was closed": "Mientras la tapa estaba cerrada",
 		"%d commands finished": {"one": "%d comando finalizado", "other": "%d comandos finalizados"},
@@ -2694,7 +2733,11 @@
 			"noFolder": "Sin carpeta",
 			"noFolderDetail": "El agente trabaja en una carpeta propia",
 			"backgroundHint": "{shortcut} para mantenerlo en segundo plano",
-			"start": "Empezar"
+			"start": "Empezar",
+			"searchAgents": "Buscar agentes",
+			"featuredAgents": "Destacados",
+			"registryAgents": "Registro",
+			"noMatches": "No hay agentes coincidentes"
 		},
 		"row": {
 			"untitled": "Nueva conversación",

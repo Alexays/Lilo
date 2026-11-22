@@ -166,6 +166,13 @@ final class KeyboardShortcutsTests: XCTestCase {
         XCTAssertTrue(KeyboardShortcuts.overrides.isEmpty)
     }
 
+    func testTheSplitViewActionsHaveTheirKeysWithoutAPreset() {
+        KeyboardShortcuts.applyPreset("lilo", store: nil)
+
+        XCTAssertEqual(KeyboardShortcuts.bindings("split.new"), ["⌃⇧="])
+        XCTAssertEqual(KeyboardShortcuts.bindings("split.close"), ["⌃⇧-"])
+    }
+
     func testCommandOOpensAsTabAndOpenFileIsUnbound() {
         for preset in ["lilo", "arc"] {
             KeyboardShortcuts.applyPreset(preset, store: nil)
