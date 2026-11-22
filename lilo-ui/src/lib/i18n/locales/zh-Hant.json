@@ -908,6 +908,7 @@
 		"newTerminal": "新增終端機",
 		"clearUnpinnedTooltip": "封存未釘選分頁",
 		"listOptions": "排序與分組",
+		"searchTabs": "搜尋分頁",
 		"pinnedTabs": "釘選分頁",
 		"openTabs": "已開啟分頁",
 		"dropToPin": "放下以釘選",

@@ -908,6 +908,7 @@
 		"newTerminal": "新規ターミナル",
 		"clearUnpinnedTooltip": "固定されていないタブをアーカイブ",
 		"listOptions": "並べ替えとグループ化",
+		"searchTabs": "タブを検索",
 		"pinnedTabs": "固定タブ",
 		"openTabs": "開いているタブ",
 		"dropToPin": "ドロップして固定",

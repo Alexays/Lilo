@@ -908,6 +908,7 @@
 		"newTerminal": "Nouveau terminal",
 		"clearUnpinnedTooltip": "Archiver les onglets non épinglés",
 		"listOptions": "Trier et regrouper",
+		"searchTabs": "Rechercher dans les onglets",
 		"pinnedTabs": "Onglets épinglés",
 		"openTabs": "Onglets ouverts",
 		"dropToPin": "Déposer pour épingler",
