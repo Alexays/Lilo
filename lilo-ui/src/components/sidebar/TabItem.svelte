@@ -54,6 +54,7 @@
     tooltipAnchor,
     actionsInert = false,
     splitDropTarget = false,
+    inSplit = false,
     level = 1,
     tabStop = true,
     stackName,
@@ -66,6 +67,8 @@
     tooltipAnchor?: string;
     actionsInert?: boolean;
     splitDropTarget?: boolean;
+    /** The row is a pane of a split: its × takes the tab out of the split instead of closing it. */
+    inSplit?: boolean;
     /** Depth in the sidebar tree, 1 at the root. */
     level?: number;
     /** The one row of its tree that Tab lands on; arrows move between the others. */
@@ -168,6 +171,11 @@
     // The row unmounts on close, so its mouseleave never fires.
     clearTabPreview();
 
+    if (inSplit) {
+      tabActions.unsplitTab(tab.id);
+      return;
+    }
+
     const intent = resolveTabCloseIntent(tab);
     if (intent === "unpin") {
       tabActions.unpin(tab.id);
@@ -192,6 +200,7 @@
   }
 
   const closeButtonLabel = $derived(
+    inSplit ? t("tabItem.removeFromSplit") :
     tab.isClosed && tab.isPinned ? t("tabItem.removePinnedTab") :
     tab.isClosed && tab.isBookmarked ? t("tabItem.removeBookmark") :
     t("tabItem.closeTab")
@@ -285,6 +294,8 @@
   const agentActing = $derived(getActingAgentTabIds().has(tab.id));
   const hangSeconds = $derived(getHangSeconds(tab.id));
   const hangRepeat = $derived(hangSeconds !== null && !!getPageHang(tab.id)?.repeat);
+  // Never sleeps: the tab is exempt from freezing and unloading, so it keeps using memory.
+  const neverSleeps = $derived(!!tab.neverSleep && !tab.isClosed && !isTerminal);
   const rowLabel = $derived(
     [
       terminalLabel || displayTitle,
@@ -296,6 +307,7 @@
       captureLabel,
       tab.isMuted ? t("tabItem.muted") : tab.isAudioPlaying ? t("tabItem.playingAudio") : "",
       tab.isClosed && !isTerminal ? t("tabItem.sleeping") : "",
+      neverSleeps ? t("tabItem.neverSleeps") : "",
       awaitingInput && !isTerminal ? t("tabItem.terminalAttention") : "",
       pageUnreadCount > 0 ? t("tabItem.unreadCount", { count: String(pageUnreadCount) }) : hasPageUnread ? t("tabItem.unread") : "",
       terminalIconLabel,
@@ -614,6 +626,11 @@
         class="tab-title"
         ondblclick={tab.isPinned && interactive ? () => setRenamingTabId(tab.id) : undefined}
       >{terminalLabel || rowTitle}{#if awayTitle}<span class="away-title"><span class="away-slash" aria-hidden="true">/</span>{awayTitle}</span>{/if}</span>
+      {#if neverSleeps}
+        <span class="never-sleep" aria-hidden="true" use:tooltip={{ text: t("tabItem.neverSleeps"), placement: tooltipSide() }}>
+          <svg viewBox="0 0 16 16"><path d="M9 1.5 3.5 9H8l-1 5.5L12.5 7H8z" fill="currentColor"/></svg>
+        </span>
+      {/if}
     {/if}
     {#if terminalHint}
       <span class="terminal-hint">{terminalHint}</span>
@@ -818,6 +835,14 @@
   }
 
   .away-title {
+    color: var(--text-secondary);
+  }
+
+  .never-sleep {
+    display: flex;
+    flex: none;
+    width: 11px;
+    height: 11px;
     color: var(--text-secondary);
   }
 

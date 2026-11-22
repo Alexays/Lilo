@@ -161,6 +161,9 @@ enum AgentFlows {
                 args["action"] = action
                 if let param = arguments["flowParam"] as? String {
                     args["text"] = ["param": param]
+                } else if action != "key", let (_, engine) = try? control.agentTab(arguments["tabId"], session: session),
+                          (try? await AgentTools.page(engine, "focusedSecret", [:])) as? Bool != false {
+                    args["text"] = ["param": "secret"]
                 } else {
                     args["text"] = arguments["text"]
                 }
@@ -173,11 +176,15 @@ enum AgentFlows {
             // wait, screenshot and the rest record nothing: a replay needs no sleeps and no reads.
             else { return }
         case "fetch":
+            // Its body, headers and params are never stored, so a replay could not send the same request.
+            if ["body", "headers", "params"].contains(where: { arguments[$0] != nil }) {
+                drop("a request with a body, headers or params cannot be stored without them")
+                break
+            }
             args["url"] = arguments["url"]
             for key in ["method", "credentials", "responseType", "maxBytes"] { args[key] = arguments[key] ?? NSNull() }
             args = args.filter { !($0.value is NSNull) }
-            // Bodies, headers and params are the action log's masked keys: never stored. A method that can
-            // change the site replays flagged like the call it records.
+            // A method that can change the site replays flagged like the call it records.
             if !["GET", "HEAD"].contains((arguments["method"] as? String ?? "GET").uppercased()) { step["possibleCommit"] = true }
         default:
             return

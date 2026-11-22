@@ -50,6 +50,22 @@ final class TrafficLightAnimatorTests: XCTestCase {
         XCTAssertEqual(try closeButtonFrame(controller, layout: .default), corner)
     }
 
+    /// AppKit's theme frame re-lays the buttons at a smaller size during a live resize; the held
+    /// frame restores the standard size along with the place, whatever AppKit's last layout did.
+    func testTheHeldLightsKeepTheirStandardSizeWhenAppKitShrinksThem() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let window = try XCTUnwrap(controller.window)
+        let close = try XCTUnwrap(window.standardWindowButton(.closeButton))
+        controller.placeTrafficLights()
+        let standard = close.frame.size
+        XCTAssertGreaterThan(standard.width, 0)
+
+        close.setFrameSize(NSSize(width: 1, height: 1))
+        controller.placeTrafficLights()
+        RunLoop.main.run(mode: .default, before: .now)
+        XCTAssertEqual(close.frame.size, standard, "back at the standard size after AppKit's move")
+    }
+
     func testTheLightsStayInTheAddressBarsCornerWhenTheTitleChanges() throws {
         let controller = MainWindowController(context: browserContext.context)
         let window = try XCTUnwrap(controller.window)
@@ -81,6 +97,25 @@ final class TrafficLightAnimatorTests: XCTestCase {
 
         controller.tabLayout = .default
         XCTAssertFalse(controller.areTrafficLightsVisible(), "no toolbar row holds them, as with the sidebar hidden")
+    }
+
+    func testTheLightsKeepTheirPlaceOverTheSidebarDownToItsNarrowest() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let window = try XCTUnwrap(controller.window)
+        window.setContentSize(NSSize(width: 1200, height: 800))
+        controller.window?.contentView?.addSubview(controller.contentContainerView)
+        defer { controller.pendingSidebarWidthPersistWork?.cancel() }
+        let corner = try closeButtonFrame(controller, layout: .default)
+        controller.syncTrafficLights(animated: false)
+
+        // The header's buttons give way under 203 pt; the lights never fade or move.
+        for width: CGFloat in [202, 170, MainWindowController.sidebarWidthRange.lowerBound] {
+            controller.updateSidebarWidth(width)
+            XCTAssertEqual(controller.sidebarWidth, width)
+            XCTAssertTrue(controller.areTrafficLightsVisible(), "\(width)")
+            XCTAssertEqual(controller.lastSentTrafficLightsVisible, true)
+            XCTAssertEqual(try closeButtonFrame(controller, layout: .default), corner, "\(width)")
+        }
     }
 
     func testCollapsedSidebarHidesTheTrafficLightsAndShowingItBringsThemBack() throws {

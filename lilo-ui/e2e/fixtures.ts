@@ -141,6 +141,38 @@ export function deepFolderWorld(): FakeHostWorld {
 	return world;
 }
 
+// Space 1 with tab-alpha and tab-beta as the two panes of a split, tab-gamma beside them.
+export function splitWorld(): FakeHostWorld {
+	const world = initialWorld();
+	world.foldersBySpace = {
+		[SPACE_1]: [
+			{
+				id: "folder-split",
+				spaceId: SPACE_1,
+				name: "Split",
+				color: "#4a90d9",
+				isCollapsed: false,
+				isSplit: true,
+				splitLayout: {
+					vertical: false,
+					first: { tabId: "tab-alpha" },
+					second: { tabId: "tab-beta" },
+				},
+			},
+		],
+	};
+	world.treeItemsBySpace[SPACE_1] = [
+		treeItem("tab-wiki", SPACE_1, 0, "bookmarked"),
+		treeItem("tab-home", SPACE_1, 1, "pinned"),
+		treeItem("folder-split", SPACE_1, 2, "unpinned", "folder"),
+		treeItem("tab-alpha", SPACE_1, 3, "unpinned", "tab", "folder-split"),
+		treeItem("tab-beta", SPACE_1, 4, "unpinned", "tab", "folder-split"),
+		treeItem("tab-gamma", SPACE_1, 5),
+	];
+	world.activeTabBySpace[SPACE_1] = "tab-alpha";
+	return world;
+}
+
 // Space 1 with folders around the plain rows: an expanded one holding tab-alpha, an
 // expanded empty one and a collapsed empty one.
 export function folderWorld(): FakeHostWorld {

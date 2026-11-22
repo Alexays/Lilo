@@ -59,9 +59,11 @@ final class ConversationBridgeHandler: BridgeHandler {
             }
         case "loadAgentCatalog":
             if payload["refresh"] as? Bool ?? false { await host.catalog.load() }
+            let featuredIds = Set(ACPAgentCatalog.featured.map(\.id))
             window.bridgeRouter.send(event: "agentCatalog", data: [
                 "agents": await host.catalog.runnableAgents().map { agent in
                     var data: [String: Any] = ["id": agent.id, "name": agent.name, "description": agent.description]
+                    if featuredIds.contains(agent.id) { data["featured"] = true }
                     if let icon = host.catalog.iconDataURL(for: agent.id) { data["icon"] = icon }
                     return data
                 },
@@ -170,7 +172,9 @@ final class ConversationBridgeHandler: BridgeHandler {
         var blocks: [[String: Any]] = [["type": "text", "text": text]] + images
         // The saved-flows skill rides the first prompt the way a tab or a selection does: every agent
         // that can read an attachment learns the flow tools exist, whichever ACP agent the user picked.
-        if let conversation = host.conversations[tabId], !conversation.flowsSkillSent {
+        // Without agent control the tools do not exist, so it waits for the first prompt after it is on.
+        if window.context.settingsStore?.get("agentControlEnabled") == "true",
+           let conversation = host.conversations[tabId], !conversation.flowsSkillSent {
             conversation.flowsSkillSent = true
             blocks.append(["type": "resource", "resource": [
                 "uri": "lilo://skills/saved-flows.md", "text": AgentFlows.skill, "mimeType": "text/markdown"

@@ -46,6 +46,41 @@ final class AgentFlowTests: AgentToolTestCase {
         try XCTUnwrap(JSONSerialization.jsonObject(with: Data(reply.text.utf8)) as? [String: Any], reply.text)
     }
 
+    func testTheFlowsSkillRidesThePromptOnlyOnceAgentControlIsOn() async throws {
+        let tab = Tab(title: "Conversation", spaceId: space.id, kind: .agent, cwd: NSTemporaryDirectory(), agentId: "test-agent")
+        let conversation = try XCTUnwrap(context.conversations.register(tab, folderId: nil))
+        // A pending sign-in holds the prompt's blocks instead of starting an agent.
+        let signIn = TerminalSession(cwd: NSTemporaryDirectory(), cols: 80, rows: 5, command: ["/bin/cat"])
+        conversation.signIn = signIn
+        let settings = try XCTUnwrap(context.settingsStore)
+        defer {
+            conversation.signIn = nil
+            signIn.terminate()
+            settings.remove("agentControlEnabled")
+        }
+        let handler = ConversationBridgeHandler(window: window)
+        let send = { (text: String) async throws -> [[String: Any]] in
+            let message = try XCTUnwrap(BridgeMessage(dictionary: [
+                "action": "sendConversationPrompt", "payload": ["tabId": tab.id.uuidString, "text": text]
+            ]))
+            _ = await handler.handle(message: message)
+            return conversation.awaitingSignIn ?? []
+        }
+        let skill = { (blocks: [[String: Any]]) in
+            blocks.contains { ($0["resource"] as? [String: Any])?["uri"] as? String == "lilo://skills/saved-flows.md" }
+        }
+
+        settings.set("agentControlEnabled", value: "false")
+        let off = try await send("first")
+        XCTAssertFalse(skill(off), "no flow tools without agent control, so no skill")
+
+        settings.set("agentControlEnabled", value: "true")
+        let on = try await send("second")
+        XCTAssertTrue(skill(on), "the first prompt once agent control is on carries the skill")
+        let again = try await send("third")
+        XCTAssertFalse(skill(again), "once is enough")
+    }
+
     func testRecordSaveAndReplayFillsTheParam() async throws {
         let tab = try await agentTab(showing: Self.page)
         let save = try await recordFlow("set-phone", tab: tab) {
@@ -60,7 +95,7 @@ final class AgentFlowTests: AgentToolTestCase {
         XCTAssertTrue(save.contains("Saved flow \"set-phone\""), save)
         XCTAssertTrue(save.contains("parameters: phone"), save)
 
-        try await js("document.getElementById('phone').value=''; window.saved=0; document.getElementById('result').textContent=''", tab: tab)
+        _ = try await js("document.getElementById('phone').value=''; window.saved=0; document.getElementById('result').textContent=''", tab: tab)
         let run = await client.callTool("flow_run", ["name": "set-phone", "tabId": tab, "params": ["phone": "555 010 0199"]])
 
         XCTAssertFalse(run.isError, run.text)
@@ -115,6 +150,19 @@ final class AgentFlowTests: AgentToolTestCase {
         XCTAssertEqual(secret, "open-sesame-9")
     }
 
+    func testTextTypedIntoAPasswordFieldRecordsAParameterNeverTheValue() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = try await recordFlow("typed-sign-in", tab: tab) {
+            _ = try await self.js("document.getElementById('secret').focus(); 1", tab: tab)
+            let type = await client.callTool("computer", ["tabId": tab, "action": "type", "text": "hunter2-example"])
+            XCTAssertFalse(type.isError, type.text)
+        }
+        let file = AgentFlows.directory(control: control).appending(path: "typed-sign-in.jsonl")
+        let contents = try String(contentsOf: file, encoding: .utf8)
+        XCTAssertFalse(contents.contains("hunter2-example"), "the secret never reaches the file")
+        XCTAssertTrue(contents.contains(#""param":"secret""#), contents)
+    }
+
     func testALocatorMissStopsTheRunAtThatStep() async throws {
         let tab = try await agentTab(showing: Self.page)
         _ = try await recordFlow("set-phone", tab: tab) {
@@ -123,7 +171,7 @@ final class AgentFlowTests: AgentToolTestCase {
             _ = await client.callTool("computer", ["tabId": tab, "action": "left_click", "ref": try self.ref("Save", in: read.text)])
         }
         // The page drifts: the button's name is no longer the recorded one. Replay must stop, not guess.
-        try await js("document.getElementById('save').textContent='Delete'", tab: tab)
+        _ = try await js("document.getElementById('save').textContent='Delete'", tab: tab)
 
         let run = await client.callTool("flow_run", ["name": "set-phone", "tabId": tab, "params": ["phone": "2"]])
 
@@ -147,7 +195,7 @@ final class AgentFlowTests: AgentToolTestCase {
             control.answerConsent(try XCTUnwrap(control.pendingConsentAnswers.keys.first), granted: true)
             _ = await recording.value
         }
-        try await js("window.paid = false", tab: tab)
+        _ = try await js("window.paid = false", tab: tab)
 
         let running = Task { await client.callTool("flow_run", ["name": "checkout", "tabId": tab]) }
         await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }

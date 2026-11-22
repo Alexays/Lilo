@@ -378,10 +378,12 @@ final class WKEngineFactory {
         } else {
             let store = configuration.dataStore ?? sharedDefaultDataStore
             let poolKey = WarmKey(content: contentControllerKey(for: store), profileId: configuration.profileId)
+            // A warm view is bound to one data store, and a private tab has a store of its own: none is kept warm.
+            let isWarmable = store.backingStore.isPersistent
             // Consult the warm pool first: a hit skips the config + feature-flag pass entirely.
-            webView = takeWarm(key: poolKey)
+            webView = (isWarmable ? takeWarm(key: poolKey) : nil)
                 ?? PageWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: false))
-            if configuration.refillsWarmPool { scheduleWarmRefill(dataStore: store, key: poolKey) }
+            if isWarmable, configuration.refillsWarmPool { scheduleWarmRefill(dataStore: store, key: poolKey) }
         }
 
         let tabId = configuration.tabId ?? UUID()
@@ -1226,8 +1228,12 @@ final class WKEngineFactory {
         return exceptions
     }
 
-    func releaseContentController(for dataStore: WKEngineDataStore) {
+    func releaseTrustExceptions(for dataStore: WKEngineDataStore) {
         insecureTrustExceptionsByStore.removeObject(forKey: dataStore.backingStore)
+    }
+
+    func releaseContentController(for dataStore: WKEngineDataStore) {
+        releaseTrustExceptions(for: dataStore)
         let key = contentControllerKey(for: dataStore)
         contentControllersByKey.removeValue(forKey: key)
         for warmKey in warmKeyOrder where warmKey.content == key { warmWebViewsByKey.removeValue(forKey: warmKey) }
@@ -1306,7 +1312,7 @@ final class WKEngineFactory {
     }
 
     private func prepareWarm(dataStore: WKEngineDataStore, key: WarmKey) {
-        guard !suppressWarmPool, warmWebViewsByKey[key] == nil else { return }
+        guard !suppressWarmPool, dataStore.backingStore.isPersistent, warmWebViewsByKey[key] == nil else { return }
         // A refill can land after its profile was evicted: the view would carry no controller.
         if let profileId = key.profileId, profileContexts?.existingContext(for: profileId) == nil { return }
         let wkConfig = configuredWebViewConfiguration(

@@ -209,6 +209,7 @@ enum BrowserCommand: Sendable {
     case activateTab(spaceId: UUID, tabId: UUID)
     case closeTab(spaceId: UUID, tabId: UUID)
     case setPinned(spaceId: UUID, tabId: UUID, isPinned: Bool)
+    case setNeverSleep(spaceId: UUID, tabId: UUID, neverSleep: Bool)
     case setBookmarked(spaceId: UUID, tabId: UUID, isBookmarked: Bool)
     case setTabHomeURL(spaceId: UUID, tabId: UUID, url: URL?)
     /// A pinned or bookmarked tab's own name; nil or blank goes back to the page title.
@@ -231,6 +232,8 @@ enum BrowserCommand: Sendable {
     /// Cuts `targetTabId`'s pane in two, `tabId` on the left or top half when `before`.
     case splitTabs(spaceId: UUID, tabId: UUID, targetTabId: UUID, vertical: Bool, before: Bool)
     case replaceSplitPane(spaceId: UUID, targetTabId: UUID, tabId: UUID)
+    /// Takes a split pane's tab out of the split, back into the list; the tab stays open.
+    case unsplitTab(spaceId: UUID, tabId: UUID)
     case setSplitLayout(spaceId: UUID, folderId: UUID, layout: SplitLayout)
     /// Appends whole imported subtrees (tabs and folders) to a section in one mutation.
     case importSidebarNodes(spaceId: UUID, nodes: [StoredSidebarNode], section: TabTreeItem.Section)

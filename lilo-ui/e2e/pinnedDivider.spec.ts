@@ -119,3 +119,14 @@ test("the divider's sort and group button opens the tab list menu for its Space"
 	const menu = (await sentCommands(page)).find((command) => command.action === "showTabListMenu");
 	expect(menu?.payload.spaceId).toBe(SPACE_1);
 });
+
+test("the divider's search button opens the command bar in the Tabs scope", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.locator('.tab-list [data-tab-id="tab-alpha"]').hover();
+	const search = page.getByRole("button", { name: "Search tabs" });
+	await expect(search).toHaveCSS("opacity", "1");
+	await search.click();
+
+	await expect(page.locator(".command-bar")).toBeVisible();
+	await expect(page.locator(".scope-token")).toHaveText("Tabs");
+});

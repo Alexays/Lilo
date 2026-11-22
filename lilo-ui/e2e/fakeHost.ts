@@ -6,6 +6,7 @@ import type {
 	BridgeProfileSnapshot,
 	BridgeSidebarTreeItemSnapshot,
 	BridgeSpaceSnapshot,
+	BridgeSplitLayout,
 	BridgeTabFolderSnapshot,
 	BridgeTabSnapshot,
 	TabPosition,
@@ -197,6 +198,55 @@ export async function installFakeHost(
 			echo(entry.spaceId, [entry.spaceId]);
 		}
 
+		function paneIds(layout: BridgeSplitLayout): string[] {
+			return "tabId" in layout ? [layout.tabId] : [...paneIds(layout.first), ...paneIds(layout.second)];
+		}
+
+		function removePane(layout: BridgeSplitLayout, tabId: string): BridgeSplitLayout | null {
+			if ("tabId" in layout) return layout.tabId === tabId ? null : layout;
+			const first = removePane(layout.first, tabId);
+			const second = removePane(layout.second, tabId);
+			if (first === null) return second;
+			if (second === null) return first;
+			return { ...layout, first, second };
+		}
+
+		// Mirrors MainWindowController.unsplitTab plus the repair that dissolves a split under two panes.
+		function unsplitTab(tabId: string): void {
+			const spaceId = findTabSpace(tabId);
+			const folders = spaceId ? (state.foldersBySpace?.[spaceId] ?? []) : [];
+			const folder = folders.find(
+				(f) => f.splitLayout && paneIds(f.splitLayout).includes(tabId),
+			);
+			if (!spaceId || !folder?.splitLayout) return;
+			const layout = folder.splitLayout;
+			// The pane beside the leaving one takes the focus, so the rest of the split stays shown.
+			const panes = paneIds(layout);
+			if (state.activeTabBySpace[spaceId] === tabId) {
+				const rest = panes.filter((id) => id !== tabId);
+				state.activeTabBySpace[spaceId] = rest[Math.min(panes.indexOf(tabId), rest.length - 1)];
+			}
+			const kept = removePane(layout, tabId);
+			const items = itemsOf(spaceId);
+			const folderItem = items.find((i) => i.itemId === folder.id);
+			const tabItem = items.find((i) => i.itemId === tabId);
+			if (kept === null || paneIds(kept).length < 2) {
+				// The split dissolves: the folder goes, every pane tab rejoins the list.
+				state.foldersBySpace![spaceId] = folders.filter((f) => f.id !== folder.id);
+				state.treeItemsBySpace[spaceId] = items.filter((i) => i.itemId !== folder.id);
+				for (const item of itemsOf(spaceId)) {
+					if (item.parentFolderId === folder.id) item.parentFolderId = null;
+				}
+			} else {
+				folder.splitLayout = kept;
+				if (tabItem) {
+					tabItem.parentFolderId = null;
+					tabItem.sortOrder = (folderItem?.sortOrder ?? 0) + 0.5;
+				}
+			}
+			echo(spaceId, [spaceId]);
+		}
+
 		function moveTabToSpace(tabId: string, targetSpaceId: string): void {
 			const sourceSpaceId = findTabSpace(tabId);
 			if (!sourceSpaceId || sourceSpaceId === targetSpaceId) return;
@@ -280,6 +330,9 @@ export async function installFakeHost(
 					}
 					break;
 				}
+				case "unsplitTab":
+					unsplitTab(payload.tabId ?? id);
+					break;
 				case "moveTabToSpace":
 					moveTabToSpace(payload.tabId ?? "", payload.spaceId ?? "");
 					break;
