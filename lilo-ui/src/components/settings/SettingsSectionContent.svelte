@@ -5,7 +5,7 @@
   import { getSettingsStatus } from "../../stores/settings.svelte";
   import SearchEngineEditor from "./SearchEngineEditor.svelte";
   import SettingsAdvanced from "./SettingsAdvanced.svelte";
-  import SettingsAgentInstances from "./SettingsAgentInstances.svelte";
+  import SettingsAgentList from "./SettingsAgentList.svelte";
   import SettingsAgentPrompt from "./SettingsAgentPrompt.svelte";
   import SettingsExtensions from "./SettingsExtensions.svelte";
   import SettingsGroups from "./SettingsGroups.svelte";
@@ -66,8 +66,8 @@
           <SettingsBlockerSites />
         {:else if subpage === "agentPrompt"}
           <SettingsAgentPrompt />
-        {:else if subpage === "agentInstances"}
-          <SettingsAgentInstances />
+        {:else if subpage === "agentList"}
+          <SettingsAgentList />
         {:else if subpage === "sites" || subpage?.startsWith("site:")}
           <SettingsSites {subpage} />
         {:else if section === "terminal"}

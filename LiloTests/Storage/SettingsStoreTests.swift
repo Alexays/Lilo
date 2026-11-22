@@ -46,30 +46,6 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.get("agentSystemPrompt"), "agent")
     }
 
-    /// The single custom agent becomes the instances list's first command entry once, at store load;
-    /// a list already stored is never rewritten.
-    func testTheCustomAgentMigratesIntoTheInstancesSetting() throws {
-        try dbPool.write { db in
-            try db.execute(sql: "INSERT INTO settings (key, value) VALUES ('customAgent', ?)",
-                           arguments: [#"{"name": "Mine", "executable": "/opt/mine", "arguments": "--acp"}"#])
-        }
-
-        let store = SettingsStore(dbPool: dbPool)
-
-        XCTAssertNil(store.get("customAgent"))
-        let instances = ACPAgentInstance.list(from: store.get(SettingsStore.agentAcpInstancesKey))
-        XCTAssertEqual(instances.count, 1)
-        XCTAssertEqual(instances[0].id, "custom")
-        XCTAssertEqual(instances[0].source, .command)
-        XCTAssertEqual(instances[0].executable, "/opt/mine")
-        XCTAssertTrue(instances[0].enabled)
-
-        try dbPool.write { _ in } // waits for the queued writes
-        let reloaded = SettingsStore(dbPool: dbPool)
-        XCTAssertEqual(ACPAgentInstance.list(from: reloaded.get(SettingsStore.agentAcpInstancesKey)).count, 1)
-        XCTAssertNil(reloaded.get("customAgent"))
-    }
-
     func testGlobalPrivacyControlIsOnUntilTurnedOff() {
         let store = SettingsStore(dbPool: dbPool)
         XCTAssertTrue(store.sendGPC)

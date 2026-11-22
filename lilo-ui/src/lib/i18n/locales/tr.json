@@ -206,8 +206,8 @@
 			"more": "{count} tane daha. Listeyi daraltmak için arayın."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "Ajanlar",
+			"agentList": {
+				"title": "Ajan listesi",
 				"description": "Soru çubuğunun sunduğu kayıt ajanları ve kendi komutlarınız; kapatılan seçiciden çıkar.",
 				"keywords": "ajanlar acp kayıt özel komut sağlayıcı örnek etkinleştir devre dışı seçici"
 			},
@@ -779,25 +779,17 @@
 			"floating": "Yüzen pencere"
 		},
 		"terminalImportCaption": "İçe aktarma bir iTerm2 renk ön ayarı (.itermcolors), bir VS Code renk teması (.json) veya bir Ghostty tema dosyası alır.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "Komutlar",
 			"registry": "Kayıt",
-			"command": "Komut",
-			"add": "Ajan Ekle",
-			"hint": "Listenin adlandırmadığı bir kayıt ajanı yine seçicide görünür; kapatmak için buraya ekleyin.",
+			"add": "Komut Ekle",
 			"menu": "{name} için eylemler",
 			"edit": "Düzenle"
 		},
 		"agentSheet": {
-			"addTitle": "Ajan Ekle",
-			"editTitle": "Ajanı Düzenle",
-			"registryTab": "Kayıttan",
-			"commandTab": "Özel Komut",
-			"sourceLabel": "Ajan kaynağı",
-			"searchPlaceholder": "Ajan ara",
-			"add": "Ekle",
-			"added": "Eklendi",
-			"loading": "Kayıt yükleniyor…",
-			"none": "Eşleşen ajan yok."
+			"addTitle": "Komut Ekle",
+			"editTitle": "Komutu Düzenle",
+			"add": "Ekle"
 		}
 	},
 	"nav": {

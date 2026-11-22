@@ -206,8 +206,8 @@
 			"more": "另有 {count} 項。請搜尋以縮小範圍。"
 		},
 		"items": {
-			"agentInstances": {
-				"title": "代理程式",
+			"agentList": {
+				"title": "代理程式列表",
 				"description": "提問列提供的註冊表代理程式和自訂指令；關閉後將從選擇器中移除。",
 				"keywords": "代理程式 acp 註冊表 自訂 指令 提供者 執行個體 啟用 停用 選擇器"
 			},
@@ -779,25 +779,17 @@
 			"floating": "浮動視窗"
 		},
 		"terminalImportCaption": "可匯入 iTerm2 顏色預設 (.itermcolors)、VS Code 顏色主題 (.json) 或 Ghostty 主題檔案。",
-		"agentInstances": {
+		"agentList": {
+			"commands": "指令",
 			"registry": "註冊表",
-			"command": "指令",
-			"add": "新增代理程式",
-			"hint": "清單未列出的註冊表代理程式仍會出現在選擇器中；在此新增即可將其關閉。",
+			"add": "新增指令",
 			"menu": "{name} 的操作",
 			"edit": "編輯"
 		},
 		"agentSheet": {
-			"addTitle": "新增代理程式",
-			"editTitle": "編輯代理程式",
-			"registryTab": "從註冊表",
-			"commandTab": "自訂指令",
-			"sourceLabel": "代理程式來源",
-			"searchPlaceholder": "搜尋代理程式",
-			"add": "新增",
-			"added": "已新增",
-			"loading": "正在載入註冊表…",
-			"none": "沒有符合的代理程式。"
+			"addTitle": "新增指令",
+			"editTitle": "編輯指令",
+			"add": "新增"
 		}
 	},
 	"nav": {

@@ -19,15 +19,7 @@ final class ACPAgentCatalog {
         let name: String
         let description: String
         let version: String
-        /// What the registry publishes about the agent's source; empty for a command of the user's.
-        var repository = ""
-        var license = ""
         let distribution: Distribution
-
-        var isCommand: Bool {
-            if case .command = distribution { return true }
-            return false
-        }
     }
 
     struct LaunchError: LocalizedError {
@@ -35,7 +27,6 @@ final class ACPAgentCatalog {
         var errorDescription: String? { message }
     }
 
-    nonisolated static let customId = "custom"
     static let registryURL = URL(string: "https://cdn.agentclientprotocol.com/registry/v1/latest/registry.json")!
     /// Offered first, in this order; also what Lilo knows without the registry.
     static let featured: [Agent] = [
@@ -56,8 +47,8 @@ final class ACPAgentCatalog {
     private var loadedAt: Date?
     private var loading: Task<Void, Never>?
     private var shellPath: String?
-    /// The stored JSON of the agents list, read at each use so a change in Settings needs no restart.
-    var instancesSetting: () -> String? = { nil }
+    /// The stored JSON of the user's commands, read at each use so a change in Settings needs no restart.
+    var commandsSetting: () -> String? = { nil }
     /// npm agent folders started or being installed since launch: a running conversation may still use them.
     private var npmInUse: Set<String> = []
 
@@ -66,28 +57,23 @@ final class ACPAgentCatalog {
     }
 
     func agent(id: String) -> Agent? {
-        agents.first { $0.id == id } ?? Self.commandAgents(from: instancesSetting()).first { $0.id == id }
+        agents.first { $0.id == id } ?? Self.commandAgents(commandsSetting()).first { $0.id == id }
     }
 
-    /// The user's own commands as agents, each entry of the instances setting that has an executable.
-    /// Whether one can run is checked at launch.
-    private nonisolated static func commandAgents(from json: String?) -> [Agent] {
-        ACPAgentInstance.list(from: json).compactMap(commandAgent)
-    }
-
-    private nonisolated static func commandAgent(_ instance: ACPAgentInstance) -> Agent? {
-        guard instance.source == .command else { return nil }
-        let executable = (instance.executable.trimmingCharacters(in: .whitespaces) as NSString).expandingTildeInPath
-        guard !executable.isEmpty else { return nil }
-        let name = instance.name.trimmingCharacters(in: .whitespaces)
-        let args = instance.arguments.split(whereSeparator: \.isNewline).map(String.init).filter { !$0.isEmpty }
-        return Agent(id: instance.id, name: name.isEmpty ? URL(fileURLWithPath: executable).lastPathComponent : name,
-                     description: executable, version: "", distribution: .command(executable: executable, args: args, environment: instance.environment))
-    }
-
-    /// The one-command JSON the `customAgent` setting held, as an agent; the instances setting replaced it.
-    nonisolated static func customAgent(_ json: String?) -> Agent? {
-        ACPAgentInstance.migrate(customAgent: json).flatMap(commandAgent)
+    /// The user's own agents from the `agentCommands` setting: a JSON list of `id`, `name`, `executable`,
+    /// `arguments` and `environment`, all text, the last two one entry per line. An entry without an id or
+    /// a command is skipped; whether a command can run is checked at launch.
+    nonisolated static func commandAgents(_ json: String?) -> [Agent] {
+        guard let json, let entries = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [Any] else { return [] }
+        return entries.compactMap { entry in
+            guard let fields = entry as? [String: String], let id = fields["id"], !id.isEmpty else { return nil }
+            let executable = ((fields["executable"] ?? "").trimmingCharacters(in: .whitespaces) as NSString).expandingTildeInPath
+            guard !executable.isEmpty else { return nil }
+            let name = (fields["name"] ?? "").trimmingCharacters(in: .whitespaces)
+            let args = (fields["arguments"] ?? "").split(whereSeparator: \.isNewline).map(String.init).filter { !$0.isEmpty }
+            return Agent(id: id, name: name.isEmpty ? URL(fileURLWithPath: executable).lastPathComponent : name, description: executable,
+                         version: "", distribution: .command(executable: executable, args: args, environment: fields["environment"] ?? ""))
+        }
     }
 
     /// The `KEY=value` lines as variables; blank lines and `#` comments are skipped, anything else must be one.
@@ -182,9 +168,7 @@ final class ACPAgentCatalog {
                 return nil
             }
             return Agent(id: id, name: name, description: entry["description"] as? String ?? "",
-                         version: entry["version"] as? String ?? "",
-                         repository: entry["repository"] as? String ?? "", license: entry["license"] as? String ?? "",
-                         distribution: resolved)
+                         version: entry["version"] as? String ?? "", distribution: resolved)
         }
     }
 
@@ -241,7 +225,7 @@ final class ACPAgentCatalog {
             case .uvx: hasUvx
             case .binary, .command: true
             }
-        } + Self.commandAgents(from: instancesSetting())
+        } + Self.commandAgents(commandsSetting())
     }
 
     private func userPath() async -> String {

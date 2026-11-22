@@ -206,8 +206,8 @@
 			"more": "Jeszcze {count}. Wyszukaj, aby zawęzić listę."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "Agenci",
+			"agentList": {
+				"title": "Lista agentów",
 				"description": "Agenci z rejestru i własne polecenia, których oferuje pasek pytań; wyłączony znika z selektora.",
 				"keywords": "agenci acp rejestr własne polecenie dostawca instancja włącz wyłącz selektor"
 			},
@@ -779,25 +779,17 @@
 			"floating": "Pływające okno"
 		},
 		"terminalImportCaption": "Import przyjmuje ustawienie kolorów iTerm2 (.itermcolors), motyw kolorów VS Code (.json) lub plik motywu Ghostty.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "Polecenia",
 			"registry": "Rejestr",
-			"command": "Polecenie",
-			"add": "Dodaj agenta",
-			"hint": "Agent z rejestru, którego lista nie wymienia, nadal pojawia się w selektorze; dodaj go tutaj, aby go wyłączyć.",
+			"add": "Dodaj polecenie",
 			"menu": "Akcje dla {name}",
 			"edit": "Edytuj"
 		},
 		"agentSheet": {
-			"addTitle": "Dodaj agenta",
-			"editTitle": "Edytuj agenta",
-			"registryTab": "Z rejestru",
-			"commandTab": "Własne polecenie",
-			"sourceLabel": "Źródło agenta",
-			"searchPlaceholder": "Szukaj agentów",
-			"add": "Dodaj",
-			"added": "Dodano",
-			"loading": "Wczytywanie rejestru…",
-			"none": "Brak pasujących agentów."
+			"addTitle": "Dodaj polecenie",
+			"editTitle": "Edytuj polecenie",
+			"add": "Dodaj"
 		}
 	},
 	"nav": {

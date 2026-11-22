@@ -206,8 +206,8 @@
 			"more": "Nog {count}. Zoek om de lijst te verkleinen."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "Agenten",
+			"agentList": {
+				"title": "Agentenlijst",
 				"description": "Agents uit het register en eigen opdrachten die de vraagbalk aanbiedt; een uitgeschakelde verdwijnt uit de kiezer.",
 				"keywords": "agenten acp register eigen opdracht provider instantie inschakelen uitschakelen kiezer"
 			},
@@ -779,25 +779,17 @@
 			"floating": "Zwevend venster"
 		},
 		"terminalImportCaption": "Importeren neemt een iTerm2-kleurvoorinstelling (.itermcolors), een VS Code-kleurthema (.json) of een Ghostty-themabestand.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "Opdrachten",
 			"registry": "Register",
-			"command": "Opdracht",
-			"add": "Agent toevoegen",
-			"hint": "Een agent uit het register die de lijst niet noemt, verschijnt nog steeds in de kiezer; voeg hem hier toe om hem uit te schakelen.",
+			"add": "Opdracht toevoegen",
 			"menu": "Acties voor {name}",
 			"edit": "Bewerk"
 		},
 		"agentSheet": {
-			"addTitle": "Agent toevoegen",
-			"editTitle": "Agent bewerken",
-			"registryTab": "Uit het register",
-			"commandTab": "Eigen opdracht",
-			"sourceLabel": "Agentbron",
-			"searchPlaceholder": "Zoek agenten",
-			"add": "Voeg toe",
-			"added": "Toegevoegd",
-			"loading": "Register wordt geladen…",
-			"none": "Geen agenten gevonden."
+			"addTitle": "Opdracht toevoegen",
+			"editTitle": "Opdracht bewerken",
+			"add": "Voeg toe"
 		}
 	},
 	"nav": {

@@ -1,3 +1,3 @@
 kind: Added
-body: 'Settings > Agents can now hold several agents, each with its own switch: add one from the ACP registry or as a custom command in the new Add Agent sheet, and turn one off to hide it from the ask bar''s agent picker. A previous Custom agent setting moves into the list automatically.'
+body: 'Settings > Agents > Agent list runs programs of your own as agents, with their arguments and environment variables, so any ACP harness or wrapper script works in conversations; every agent there has a switch that hides it from the ask bar''s agent picker'
 time: 2026-11-21T09:48:00.939108-08:00

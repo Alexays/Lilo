@@ -206,8 +206,8 @@
 			"more": "Altri {count}. Cerca per restringere l'elenco."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "Agenti",
+			"agentList": {
+				"title": "Elenco degli agenti",
 				"description": "Agenti del registro e comandi personalizzati che la barra delle domande offre; disattivandone uno esce dal selettore.",
 				"keywords": "agenti acp registro comando personalizzato fornitore istanza attivare disattivare selettore"
 			},
@@ -779,25 +779,17 @@
 			"floating": "Finestra mobile"
 		},
 		"terminalImportCaption": "Importa accetta un preset di colori iTerm2 (.itermcolors), un tema di colori VS Code (.json) o un file di tema Ghostty.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "Comandi",
 			"registry": "Registro",
-			"command": "Comando",
-			"add": "Aggiungi agente",
-			"hint": "Un agente del registro che la lista non nomina appare comunque nel selettore; aggiungilo qui per disattivarlo.",
+			"add": "Aggiungi comando",
 			"menu": "Azioni per {name}",
 			"edit": "Modifica"
 		},
 		"agentSheet": {
-			"addTitle": "Aggiungi agente",
-			"editTitle": "Modifica agente",
-			"registryTab": "Dal registro",
-			"commandTab": "Comando personalizzato",
-			"sourceLabel": "Origine dell'agente",
-			"searchPlaceholder": "Cerca agenti",
-			"add": "Aggiungi",
-			"added": "Aggiunto",
-			"loading": "Caricamento del registro…",
-			"none": "Nessun agente corrisponde."
+			"addTitle": "Aggiungi comando",
+			"editTitle": "Modifica comando",
+			"add": "Aggiungi"
 		}
 	},
 	"nav": {

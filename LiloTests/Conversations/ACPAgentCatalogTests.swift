@@ -69,12 +69,11 @@ final class ACPAgentCatalogTests: XCTestCase {
         let command = directory.appending(path: "my-agent")
         FileManager.default.createFile(atPath: command.path, contents: Data("#!/bin/sh\n".utf8), attributes: [.posixPermissions: 0o755])
         let catalog = ACPAgentCatalog(directory: directory)
-        catalog.instancesSetting = {
-            ACPAgentInstance.json([ACPAgentInstance(id: "custom", source: .command, name: "Mine", executable: command.path,
-                                                  arguments: "--profile\n\nacp\n", environment: "# for tests\nMODE=a=b\n\nEMPTY=")])
-        }
+        let json = try commandsJSON(["id": "command-1", "name": "Mine", "executable": command.path,
+                                     "arguments": "--profile\n\nacp\n", "environment": "# for tests\nMODE=a=b\n\nEMPTY="])
+        catalog.commandsSetting = { json }
 
-        let agent = try XCTUnwrap(catalog.agent(id: ACPAgentCatalog.customId))
+        let agent = try XCTUnwrap(catalog.agent(id: "command-1"))
         let launch = try await catalog.launch(agent)
 
         XCTAssertEqual(agent.name, "Mine")
@@ -102,11 +101,9 @@ final class ACPAgentCatalogTests: XCTestCase {
         """
         FileManager.default.createFile(atPath: command.path, contents: Data(script.utf8), attributes: [.posixPermissions: 0o755])
         let catalog = ACPAgentCatalog(directory: directory)
-        catalog.instancesSetting = {
-            ACPAgentInstance.json([ACPAgentInstance(id: "custom", source: .command, executable: command.path,
-                                                  arguments: "--profile\nacp", environment: "HARNESS_MODE=demo")])
-        }
-        let launch = try await catalog.launch(try XCTUnwrap(catalog.agent(id: ACPAgentCatalog.customId)))
+        let json = try commandsJSON(["id": "command-1", "executable": command.path, "arguments": "--profile\nacp", "environment": "HARNESS_MODE=demo"])
+        catalog.commandsSetting = { json }
+        let launch = try await catalog.launch(try XCTUnwrap(catalog.agent(id: "command-1")))
         let connection = ACPConnection(executable: launch.executable, arguments: launch.arguments, environment: launch.environment, directory: directory)
         try connection.start()
         defer { connection.terminate() }
@@ -126,17 +123,17 @@ final class ACPAgentCatalogTests: XCTestCase {
         let catalog = ACPAgentCatalog(directory: directory)
 
         for executable in ["dsh", directory.appending(path: "missing").path, plain.path, directory.path] {
-            let agent = try XCTUnwrap(ACPAgentCatalog.customAgent(#"{"executable": "\#(executable)"}"#))
+            let agent = try XCTUnwrap(ACPAgentCatalog.commandAgents(try commandsJSON(["id": "a", "executable": executable])).first)
             do {
                 _ = try await catalog.launch(agent)
                 XCTFail("\(executable) must not start")
             } catch is ACPAgentCatalog.LaunchError {}
         }
-        // The name falls back to the command's, and an empty command is no agent.
-        XCTAssertEqual(ACPAgentCatalog.customAgent(#"{"executable": "/usr/local/bin/dsh"}"#)?.name, "dsh")
-        XCTAssertNil(ACPAgentCatalog.customAgent(#"{"executable": "  "}"#))
-        XCTAssertNil(ACPAgentCatalog.customAgent(nil))
-        XCTAssertNil(ACPAgentCatalog.customAgent("not json"))
+        // The name falls back to the command's; an entry without a command or an id is no agent.
+        XCTAssertEqual(ACPAgentCatalog.commandAgents(try commandsJSON(["id": "a", "executable": "/usr/local/bin/dsh"])).first?.name, "dsh")
+        XCTAssertEqual(ACPAgentCatalog.commandAgents(try commandsJSON(["id": "a", "executable": "  "], ["executable": "/bin/sh"])), [])
+        XCTAssertEqual(ACPAgentCatalog.commandAgents(nil), [])
+        XCTAssertEqual(ACPAgentCatalog.commandAgents("not json"), [])
     }
 
     func testACustomAgentRefusesAnEnvironmentLineThatIsNotAVariable() {
@@ -155,5 +152,9 @@ final class ACPAgentCatalogTests: XCTestCase {
         XCTAssertEqual(restored.agentId, "claude-acp")
         XCTAssertEqual(restored.agentSessionId, "s1")
         XCTAssertEqual(restored.cwd, "/tmp/acme")
+    }
+
+    private func commandsJSON(_ entries: [String: String]...) throws -> String {
+        String(decoding: try JSONSerialization.data(withJSONObject: entries), as: UTF8.self)
     }
 }

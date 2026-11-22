@@ -6,7 +6,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { dismissable } from "../../lib/actions/dismissable";
   import { conversationActions } from "./conversationActions";
-  import { disabledAgentIds, parseAgentInstances } from "../../lib/agentInstances";
+  import { parseHiddenAgents } from "../../lib/agentCommands";
   import { t } from "../../lib/i18n/state.svelte";
   import { formatShortcut } from "../../lib/inputParser";
   import {
@@ -83,11 +83,10 @@
     conversationActions.loadCatalog(true);
   });
 
-  // The agents the picker offers: every catalog agent an `agentAcpInstances` entry does not disable.
-  // A disabled one keeps running where a conversation already uses it; it only leaves the picker.
+  // A hidden agent only leaves the picker: a conversation already using it keeps running.
   const enabledAgents = $derived.by(() => {
-    const disabled = disabledAgentIds(parseAgentInstances(getSetting("agentAcpInstances", "[]")));
-    return getAgents().filter((agent) => !disabled.has(agent.id));
+    const hidden = parseHiddenAgents(getSetting("agentsHidden", "[]"));
+    return getAgents().filter((agent) => !hidden.has(agent.id));
   });
 
   $effect(() => {

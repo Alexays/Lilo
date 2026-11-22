@@ -206,10 +206,10 @@
 			"more": "{count} more. Search to narrow the list."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "Agents",
+			"agentList": {
+				"title": "Agent list",
 				"description": "Registry agents and commands of your own that the ask bar offers; turn one off and it leaves the picker.",
-				"keywords": "agents acp registry custom command provider instance enable disable picker"
+				"keywords": "agents acp registry custom command provider enable disable picker"
 			},
 			"customAgent": {
 				"name": "Name",
@@ -779,25 +779,17 @@
 			"floating": "Floating window"
 		},
 		"terminalImportCaption": "Import takes an iTerm2 color preset (.itermcolors), a VS Code color theme (.json) or a Ghostty theme file.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "Commands",
 			"registry": "Registry",
-			"command": "Command",
-			"add": "Add Agent",
-			"hint": "A registry agent the list does not name still appears in the picker; add it here to turn it off.",
+			"add": "Add Command",
 			"menu": "Actions for {name}",
 			"edit": "Edit"
 		},
 		"agentSheet": {
-			"addTitle": "Add Agent",
-			"editTitle": "Edit Agent",
-			"registryTab": "From Registry",
-			"commandTab": "Custom Command",
-			"sourceLabel": "Agent source",
-			"searchPlaceholder": "Search agents",
-			"add": "Add",
-			"added": "Added",
-			"loading": "Loading the registry…",
-			"none": "No agents match."
+			"addTitle": "Add Command",
+			"editTitle": "Edit Command",
+			"add": "Add"
 		}
 	},
 	"nav": {

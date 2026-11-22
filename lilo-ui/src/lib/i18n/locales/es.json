@@ -206,8 +206,8 @@
 			"more": "{count} más. Busca para reducir la lista."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "Agentes",
+			"agentList": {
+				"title": "Lista de agentes",
 				"description": "Agentes del registro y comandos propios que ofrece la barra de preguntas; al desactivar uno, sale del selector.",
 				"keywords": "agentes acp registro comando propio proveedor instancia activar desactivar selector"
 			},
@@ -779,25 +779,17 @@
 			"floating": "Ventana flotante"
 		},
 		"terminalImportCaption": "Importar acepta un preajuste de colores de iTerm2 (.itermcolors), un tema de colores de VS Code (.json) o un archivo de tema de Ghostty.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "Comandos",
 			"registry": "Registro",
-			"command": "Comando",
-			"add": "Añadir agente",
-			"hint": "Un agente del registro que la lista no nombra sigue apareciendo en el selector; añádelo aquí para desactivarlo.",
+			"add": "Añadir comando",
 			"menu": "Acciones para {name}",
 			"edit": "Editar"
 		},
 		"agentSheet": {
-			"addTitle": "Añadir agente",
-			"editTitle": "Editar agente",
-			"registryTab": "Del registro",
-			"commandTab": "Comando personalizado",
-			"sourceLabel": "Origen del agente",
-			"searchPlaceholder": "Buscar agentes",
-			"add": "Añadir",
-			"added": "Añadido",
-			"loading": "Cargando el registro…",
-			"none": "Ningún agente coincide."
+			"addTitle": "Añadir comando",
+			"editTitle": "Editar comando",
+			"add": "Añadir"
 		}
 	},
 	"nav": {

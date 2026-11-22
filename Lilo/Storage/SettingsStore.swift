@@ -25,7 +25,6 @@ final class SettingsStore {
             cache = [:]
             initialLoadError = error
         }
-        migrateAgentInstances()
     }
 
     /// Served while nothing is stored, and never stored themselves, so a newer default reaches everyone who
@@ -261,17 +260,6 @@ final class SettingsStore {
             let json = (try? String(data: JSONEncoder().encode(newValue), encoding: .utf8)) ?? "[]"
             set("contentBlockerAllowlist", value: json)
         }
-    }
-
-    static let agentAcpInstancesKey = "agentAcpInstances"
-
-    /// The one custom agent moves into the instances list once, as its first command entry; the list
-    /// wins from then on, so a value already stored is never rewritten.
-    private func migrateAgentInstances() {
-        guard get(Self.agentAcpInstancesKey) == nil, let custom = get("customAgent"),
-              let instance = ACPAgentInstance.migrate(customAgent: custom) else { return }
-        set(Self.agentAcpInstancesKey, value: ACPAgentInstance.json([instance]))
-        remove("customAgent")
     }
 
     static let hiddenElementsKey = "hiddenElements"

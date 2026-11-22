@@ -206,10 +206,10 @@
 			"more": "{count} de plus. Utilisez la recherche pour affiner."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "Agents",
+			"agentList": {
+				"title": "Liste des agents",
 				"description": "Les agents du registre et vos propres commandes que la barre de question propose ; un agent désactivé quitte le sélecteur.",
-				"keywords": "agents acp registre commande personnalisée fournisseur instance activer désactiver sélecteur"
+				"keywords": "agents acp registre commande personnalisée fournisseur activer désactiver sélecteur"
 			},
 			"customAgent": {
 				"name": "Nom",
@@ -779,25 +779,17 @@
 			"floating": "Fenêtre flottante"
 		},
 		"terminalImportCaption": "L'import accepte un préréglage de couleurs iTerm2 (.itermcolors), un thème de couleurs VS Code (.json) ou un fichier de thème Ghostty.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "Commandes",
 			"registry": "Registre",
-			"command": "Commande",
-			"add": "Ajouter un agent",
-			"hint": "Un agent du registre que la liste ne nomme pas apparaît toujours dans le sélecteur ; ajoutez-le ici pour le désactiver.",
+			"add": "Ajouter une commande",
 			"menu": "Actions pour {name}",
 			"edit": "Modifier"
 		},
 		"agentSheet": {
-			"addTitle": "Ajouter un agent",
-			"editTitle": "Modifier l'agent",
-			"registryTab": "Du registre",
-			"commandTab": "Commande personnalisée",
-			"sourceLabel": "Source de l'agent",
-			"searchPlaceholder": "Rechercher des agents",
-			"add": "Ajouter",
-			"added": "Ajouté",
-			"loading": "Chargement du registre…",
-			"none": "Aucun agent ne correspond."
+			"addTitle": "Ajouter une commande",
+			"editTitle": "Modifier la commande",
+			"add": "Ajouter"
 		}
 	},
 	"nav": {

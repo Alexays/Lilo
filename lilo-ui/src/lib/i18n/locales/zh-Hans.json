@@ -206,8 +206,8 @@
 			"more": "另有 {count} 项。搜索以缩小列表范围。"
 		},
 		"items": {
-			"agentInstances": {
-				"title": "智能体",
+			"agentList": {
+				"title": "智能体列表",
 				"description": "提问栏提供的注册表智能体和自定义命令；关闭后将从选择器中移除。",
 				"keywords": "智能体 acp 注册表 自定义 命令 提供方 实例 启用 禁用 选择器"
 			},
@@ -779,25 +779,17 @@
 			"floating": "浮动窗口"
 		},
 		"terminalImportCaption": "可导入 iTerm2 颜色预设 (.itermcolors)、VS Code 颜色主题 (.json) 或 Ghostty 主题文件。",
-		"agentInstances": {
+		"agentList": {
+			"commands": "命令",
 			"registry": "注册表",
-			"command": "命令",
-			"add": "添加智能体",
-			"hint": "列表未列出的注册表智能体仍会出现在选择器中；在此添加即可将其关闭。",
+			"add": "添加命令",
 			"menu": "{name} 的操作",
 			"edit": "编辑"
 		},
 		"agentSheet": {
-			"addTitle": "添加智能体",
-			"editTitle": "编辑智能体",
-			"registryTab": "从注册表",
-			"commandTab": "自定义命令",
-			"sourceLabel": "智能体来源",
-			"searchPlaceholder": "搜索智能体",
-			"add": "添加",
-			"added": "已添加",
-			"loading": "正在加载注册表…",
-			"none": "没有匹配的智能体。"
+			"addTitle": "添加命令",
+			"editTitle": "编辑命令",
+			"add": "添加"
 		}
 	},
 	"nav": {

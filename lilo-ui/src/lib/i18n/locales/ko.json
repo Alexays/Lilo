@@ -206,8 +206,8 @@
 			"more": "{count}개 더 있습니다. 검색으로 목록을 좁혀 보세요."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "에이전트",
+			"agentList": {
+				"title": "에이전트 목록",
 				"description": "질문 바가 제공하는 레지스트리 에이전트와 직접 만든 명령입니다. 끈 것은 선택기에서 사라집니다.",
 				"keywords": "에이전트 acp 레지스트리 사용자 지정 명령 제공자 인스턴스 활성화 비활성화 선택기"
 			},
@@ -779,25 +779,17 @@
 			"floating": "플로팅 윈도우"
 		},
 		"terminalImportCaption": "iTerm2 색상 프리셋(.itermcolors), VS Code 색상 테마(.json), Ghostty 테마 파일을 가져올 수 있습니다.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "명령",
 			"registry": "레지스트리",
-			"command": "명령",
-			"add": "에이전트 추가",
-			"hint": "목록에 없는 레지스트리 에이전트도 선택기에 표시됩니다. 끄려면 여기에 추가하세요.",
+			"add": "명령 추가",
 			"menu": "{name} 동작",
 			"edit": "편집"
 		},
 		"agentSheet": {
-			"addTitle": "에이전트 추가",
-			"editTitle": "에이전트 편집",
-			"registryTab": "레지스트리에서",
-			"commandTab": "사용자 지정 명령",
-			"sourceLabel": "에이전트 소스",
-			"searchPlaceholder": "에이전트 검색",
-			"add": "추가",
-			"added": "추가됨",
-			"loading": "레지스트리를 불러오는 중…",
-			"none": "일치하는 에이전트가 없습니다."
+			"addTitle": "명령 추가",
+			"editTitle": "명령 편집",
+			"add": "추가"
 		}
 	},
 	"nav": {

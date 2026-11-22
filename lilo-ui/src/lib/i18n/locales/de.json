@@ -206,8 +206,8 @@
 			"more": "{count} weitere. Grenze die Liste mit der Suche ein."
 		},
 		"items": {
-			"agentInstances": {
-				"title": "Agenten",
+			"agentList": {
+				"title": "Agentenliste",
 				"description": "Agenten aus der Registrierung und eigene Befehle, die die Fragenleiste anbietet; ein ausgeschalteter verlässt die Auswahl.",
 				"keywords": "agenten acp registrierung eigener befehl anbieter instanz aktivieren deaktivieren auswahl"
 			},
@@ -779,25 +779,17 @@
 			"floating": "Schwebendes Fenster"
 		},
 		"terminalImportCaption": "Importieren nimmt ein iTerm2-Farbschema (.itermcolors), ein VS-Code-Farbdesign (.json) oder eine Ghostty-Theme-Datei.",
-		"agentInstances": {
+		"agentList": {
+			"commands": "Befehle",
 			"registry": "Registrierung",
-			"command": "Befehl",
-			"add": "Agent hinzufügen",
-			"hint": "Ein Agent der Registrierung, den die Liste nicht nennt, erscheint weiterhin in der Auswahl; füge ihn hinzu, um ihn auszuschalten.",
+			"add": "Befehl hinzufügen",
 			"menu": "Aktionen für {name}",
 			"edit": "Bearbeiten"
 		},
 		"agentSheet": {
-			"addTitle": "Agent hinzufügen",
-			"editTitle": "Agent bearbeiten",
-			"registryTab": "Aus der Registrierung",
-			"commandTab": "Eigener Befehl",
-			"sourceLabel": "Agentenquelle",
-			"searchPlaceholder": "Agenten suchen",
-			"add": "Hinzufügen",
-			"added": "Hinzugefügt",
-			"loading": "Registrierung wird geladen…",
-			"none": "Keine Agenten gefunden."
+			"addTitle": "Befehl hinzufügen",
+			"editTitle": "Befehl bearbeiten",
+			"add": "Hinzufügen"
 		}
 	},
 	"nav": {

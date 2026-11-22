@@ -89,7 +89,7 @@ registry and are checked against its SHA-256 before they run.
 
 ### Your own agents
 
-Settings > Agents > "Agents" lists the agents you manage, each with a switch: turn one off and the Ask bar's agent picker no longer offers it, while a conversation already started with it keeps working. A registry agent that is not in the list stays on. "Add Agent" adds one from the registry, or a command of your own: any harness that speaks ACP over standard input and output, such as `dsh --profile acp` or a wrapper script.
+Settings > Agents > "Agent list" has a switch for every agent: turn one off and the Ask bar's agent picker no longer offers it, while a conversation already started with it keeps working. "Add Command" adds a program of your own as an agent: any harness that speaks ACP over standard input and output, such as `dsh --profile acp` or a wrapper script.
 
 - **Command** is the full path of an executable file (`~/` is expanded). Lilo checks it each time the agent starts and says so in the conversation when it is missing or not executable.
 - **Arguments** are one per line, passed as they are: no shell runs, so no quoting or expansion.

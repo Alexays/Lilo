@@ -73,7 +73,7 @@
     shortcuts: () => openSettingsSubpage("general", "shortcuts"),
     sites: () => openSettingsSubpage("privacy", "sites"),
     agentSystemPromptText: () => openSettingsSubpage("agents", "agentPrompt"),
-    agentInstances: () => openSettingsSubpage("agents", "agentInstances"),
+    agentList: () => openSettingsSubpage("agents", "agentList"),
     blockerSites: () => openSettingsSubpage("privacy", "blockerSites"),
     processManager: openProcessManager,
     diagnostics: openDiagnostics,

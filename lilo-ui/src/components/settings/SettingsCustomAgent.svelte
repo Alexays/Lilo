@@ -1,10 +1,10 @@
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
-  import type { CommandFields } from "../../lib/agentInstances";
+  import type { AgentCommand } from "../../lib/agentCommands";
   import UiTextField from "../ui/UiTextField.svelte";
 
   /** The form's fields, edited in place as they are typed so the sheet's Add button follows them. */
-  let { values = $bindable() }: { values: CommandFields } = $props();
+  let { values = $bindable() }: { values: Omit<AgentCommand, "id"> } = $props();
 </script>
 
 <!-- A program Lilo starts as an agent next to the registry's: one text per field, arguments and variables one per line. -->
