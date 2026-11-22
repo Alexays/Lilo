@@ -43,10 +43,9 @@ enum AgentActionTail {
     static func recent(_ name: String, in directory: URL, limit: Int, maxBytes: Int = maxBytes) -> [Call] {
         var calls: [Call] = []
         for suffix in [".jsonl", ".1.jsonl"] where calls.count < limit {
-            let older = tail(directory.appending(path: name + suffix), maxBytes: maxBytes).compactMap(parse)
-            calls = older.suffix(limit - calls.count) + calls
+            calls += tail(directory.appending(path: name + suffix), maxBytes: maxBytes).reversed().lazy.compactMap(parse).prefix(limit - calls.count)
         }
-        return calls.reversed()
+        return calls
     }
 
     /// The whole lines in the last `maxBytes` of a file, oldest first. A line the cut or a write in flight split
