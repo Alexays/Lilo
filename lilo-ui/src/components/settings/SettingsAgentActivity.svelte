@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getFormatLocale, t } from "../../lib/i18n/state.svelte";
   import { getAgentActionLog, loadAgentActionLog, openAgentActionLog } from "../../stores/agentActionLog.svelte";
-  import { getSetting, setSetting } from "../../stores/settings.svelte";
+  import { getSetting } from "../../stores/settings.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
@@ -34,11 +34,7 @@
     </UiListRow>
   </div>
   {#if !enabled}
-    <UiListRow title={t("settings.agentActivity.off")} description={t("settings.agentActivity.offDescription")}>
-      {#snippet action()}
-        <UiButton variant="primary" onclick={() => setSetting("agentActionLog", "true")}>{t("settings.agentActivity.turnOn")}</UiButton>
-      {/snippet}
-    </UiListRow>
+    <UiListRow title={t("settings.agentActivity.off")} description={t("settings.agentActivity.offDescription")} />
   {:else if clients && !clients.length}
     <p class="empty">{t("settings.agentActivity.empty")}</p>
   {:else if clients}

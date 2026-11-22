@@ -662,7 +662,6 @@
 			"open": "Aktionsprotokoll öffnen",
 			"off": "Das Aktionsprotokoll ist aus",
 			"offDescription": "Lilo zeichnet keine Agentenaufrufe auf. Schalte es ein, um sie hier zu sehen.",
-			"turnOn": "Einschalten",
 			"empty": "Noch keine Aufrufe aufgezeichnet.",
 			"failed": "Fehlgeschlagen"
 		},

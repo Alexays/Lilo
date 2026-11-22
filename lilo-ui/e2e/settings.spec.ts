@@ -647,7 +647,7 @@ test("the activity list asks for the log once when it opens, shows each agent's 
 	expect((await sentCommands(page)).some((command) => command.action === "openAgentActionLog")).toBe(true);
 });
 
-test("an empty log says so, and a log that is off offers to turn it on without reading anything", async ({ page }) => {
+test("an empty log says so, and a log that is off says so without reading anything", async ({ page }) => {
 	await openAgentsActivity(page, {});
 	await page.evaluate(() => window.__lilo!.receive({ event: "agentActionLog", clients: [] }));
 	const activity = page.getByRole("region", { name: "Activity" });
@@ -659,8 +659,7 @@ test("an empty log says so, and a log that is off offers to turn it on without r
 	await expect(activity.getByRole("button", { name: "Open Action Log" })).toBeVisible();
 	const before = (await sentCommands(page)).filter((command) => command.action === "getAgentActionLog").length;
 
-	await activity.getByRole("button", { name: "Turn On" }).click();
-	expect((await sentCommands(page)).filter((command) => command.action === "setSetting").at(-1)?.payload).toEqual({ key: "agentActionLog", value: "true" });
+	await expect(activity.getByRole("button")).toHaveCount(1);
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true", agentActionLog: "true" } }));
 	await expect.poll(async () => (await sentCommands(page)).filter((command) => command.action === "getAgentActionLog").length).toBe(before + 1);
 });

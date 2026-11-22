@@ -662,7 +662,6 @@
 			"open": "Ouvrir le journal des actions",
 			"off": "Le journal des actions est désactivé",
 			"offDescription": "Lilo n'enregistre pas les appels des agents. Activez-le pour les voir ici.",
-			"turnOn": "Activer",
 			"empty": "Aucun appel enregistré pour l'instant.",
 			"failed": "Échec"
 		},

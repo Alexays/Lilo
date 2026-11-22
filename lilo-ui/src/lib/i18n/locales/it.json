@@ -662,7 +662,6 @@
 			"open": "Apri il registro delle azioni",
 			"off": "Il registro delle azioni è disattivato",
 			"offDescription": "Lilo non registra le chiamate degli agenti. Attivalo per vederle qui.",
-			"turnOn": "Attiva",
 			"empty": "Nessuna chiamata registrata finora.",
 			"failed": "Non riuscita"
 		},

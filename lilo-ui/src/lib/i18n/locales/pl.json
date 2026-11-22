@@ -662,7 +662,6 @@
 			"open": "Otwórz dziennik akcji",
 			"off": "Dziennik akcji jest wyłączony",
 			"offDescription": "Lilo nie zapisuje wywołań agentów. Włącz go, aby zobaczyć je tutaj.",
-			"turnOn": "Włącz",
 			"empty": "Nie zapisano jeszcze żadnych wywołań.",
 			"failed": "Niepowodzenie"
 		},

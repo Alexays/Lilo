@@ -662,7 +662,6 @@
 			"open": "Open Action Log",
 			"off": "The action log is off",
 			"offDescription": "Lilo is not recording agent calls. Turn it on to see them here.",
-			"turnOn": "Turn On",
 			"empty": "No calls recorded yet.",
 			"failed": "Failed"
 		},

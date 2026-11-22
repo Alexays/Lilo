@@ -662,7 +662,6 @@
 			"open": "Eylem günlüğünü aç",
 			"off": "Eylem günlüğü kapalı",
 			"offDescription": "Lilo aracı çağrılarını kaydetmiyor. Burada görmek için açın.",
-			"turnOn": "Aç",
 			"empty": "Henüz kaydedilmiş çağrı yok.",
 			"failed": "Başarısız"
 		},
