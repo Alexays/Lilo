@@ -73,6 +73,7 @@ final class BrowserRuntimeCoordinator {
              .groupTabs,
              .splitTabs,
              .replaceSplitPane,
+             .unsplitTab,
              .importSidebarNodes,
              .moveSidebarItem:
             return true
@@ -105,6 +106,7 @@ final class BrowserRuntimeCoordinator {
              .groupTabs,
              .splitTabs,
              .replaceSplitPane,
+             .unsplitTab,
              .importSidebarNodes,
              .moveSidebarItem:
             return true

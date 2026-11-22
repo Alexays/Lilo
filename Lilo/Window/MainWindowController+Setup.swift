@@ -210,7 +210,7 @@ extension MainWindowController {
         windowFrameView?.setFrameColor(frameColor)
         syncPageBar()
         (contentContainerView as? ContentContainerView)?.stageColor = resolvedColor
-        for divider in splitPanes.dividers.values { divider.setFrameColor(frameColor, animated: true) }
+        splitPanes.setFrameColor(frameColor, animated: true)
         sidePanel.setFrameColor(resolvedColor, frameColor: frameColor)
         // A Changes view paints the frame color under its cards.
         for case let view as ChangesView in contentContainerView.subviews { view.needsDisplay = true }
@@ -239,7 +239,7 @@ extension MainWindowController {
         glassView?.tintColor = color.withAlphaComponent(0.2)
         let frameColor = glassView == nil ? color : color.withAlphaComponent(0.06)
         windowFrameView?.setFrameColor(frameColor, animated: false)
-        for divider in splitPanes.dividers.values { divider.setFrameColor(frameColor, animated: false) }
+        splitPanes.setFrameColor(frameColor, animated: false)
         sidePanel.setDividerFrameColor(frameColor, animated: false)
         lastAppliedWindowChromeColor = nil
     }

@@ -231,10 +231,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// Opens a Little window on the active window's Space, a browser window first when none is open.
     @objc func newLittleWindow(_ sender: Any?) {
+        // Active first, so the window takes the keyboard as it opens: a shortcut from another app starts the search at once.
+        NSApp.activate(ignoringOtherApps: true)
         let owner = mainWindowController
             ?? browserContext.spaceManager?.spaces.first.map { browserContext.openWindow(on: $0.id, opening: .nothing) }
         owner?.openLittleWindow(url: nil)
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     /// Follows the `littleWindowHotKey` setting.

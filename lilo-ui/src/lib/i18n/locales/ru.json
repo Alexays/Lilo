@@ -531,6 +531,11 @@
 				"description": "Измените любое сочетание или начните с сочетаний Arc.",
 				"keywords": "клавиатура сочетание клавиши команда"
 			},
+			"holdToQuit": {
+				"title": "Удерживайте сочетание выхода для выхода",
+				"description": "Сочетание выхода показывает подсказку; Lilo завершает работу, только если удерживать клавиши.",
+				"keywords": "выход завершить команда q случайно удерживать"
+			},
 			"newProfile": {
 				"title": "Новый профиль",
 				"description": "У профилей свои cookie, учётные записи и расширения.",
@@ -848,6 +853,7 @@
 		"terminalFailedDetail": "{command}: ошибка (код {code}) через {duration}",
 		"terminalSucceededDetail": "{command}: завершено за {duration}",
 		"closeTab": "Закрыть вкладку",
+		"removeFromSplit": "Убрать из разделённого вида",
 		"removePinnedTab": "Убрать закреплённую вкладку",
 		"tabName": "Название вкладки",
 		"removeBookmark": "Убрать закладку",
@@ -901,13 +907,22 @@
 		"bottom": "Открыть снизу",
 		"replace": "Заменить"
 	},
+	"paneMove": {
+		"left": "Переместить влево",
+		"right": "Переместить вправо",
+		"top": "Переместить вверх",
+		"bottom": "Переместить вниз",
+		"replace": "Поменять местами"
+	},
 	"tabSection": {
 		"splitView": "Разделённый вид",
 		"folderEmpty": "Папка пуста",
 		"newTab": "Новая вкладка",
+		"newTabShort": "Новая",
 		"newTerminal": "Новый терминал",
 		"clearUnpinnedTooltip": "Архивировать незакреплённые вкладки",
 		"listOptions": "Сортировка и группировка",
+		"searchTabs": "Поиск по вкладкам",
 		"pinnedTabs": "Закреплённые вкладки",
 		"openTabs": "Открытые вкладки",
 		"dropToPin": "Отпустите, чтобы закрепить",
@@ -1142,7 +1157,6 @@
 		"installed": "Установленные"
 	},
 	"commandBar": {
-		"showDetails": "Показать сочетания клавиш",
 		"hintPeek": "Быстрый просмотр",
 		"hintCopyLink": "Скопировать ссылку",
 		"hintCloseTab": "Закрыть вкладку",
@@ -1174,6 +1188,7 @@
 		"terminalProgram": "Программа",
 		"hintRun": "Запустить",
 		"hintSplit": "Разделить",
+		"splitFull": "Разделённый вид заполнен (панелей: {count})",
 		"scopeTabs": "Вкладки",
 		"scopeBookmarks": "Закладки",
 		"scopeHistory": "История",
@@ -1209,6 +1224,8 @@
 		"sectionOpenTabs": "Открытые вкладки",
 		"sectionBookmarks": "Закладки",
 		"sectionRecentHistory": "Недавняя история",
+		"sectionFrequentSites": "Часто посещаемые сайты",
+		"sectionRecentConversations": "Недавние беседы",
 		"sectionHistory": "История",
 		"sectionSwitchToTab": "Перейти к вкладке",
 		"sectionGoTo": "Перейти",
@@ -1404,6 +1421,15 @@
 		"title": "Флаги WebKit",
 		"resetTitle": "Изменённые флаги",
 		"reloadNote": "Перезагрузите страницу, чтобы изменение вступило в силу"
+	},
+	"little": {
+		"openIn": "Открыть в {space}",
+		"openInMenu": "Открыть в другом пространстве",
+		"copyLink": "Скопировать ссылку",
+		"linkCopied": "Ссылка скопирована",
+		"placeholder": "Поиск или адрес...",
+		"emptyTitle": "Найдите в интернете или введите адрес",
+		"emptySubtitle": "Введите /, чтобы искать по посещённым страницам."
 	},
 	"urlToast": {
 		"pageActions": "Действия со страницей",
@@ -2035,6 +2061,7 @@
 		"Hide Others": "Скрыть остальные",
 		"Show All": "Показать все",
 		"Quit Lilo": "Завершить Lilo",
+		"Hold %@ to Quit": "Удерживайте %@ для выхода",
 		"File": "Файл",
 		"New Tab": "Новая вкладка",
 		"Back to tab": "Вернуться к вкладке",
@@ -2080,9 +2107,18 @@
 		"New Split View": "Новый разделённый вид",
 		"Split View": "Разделённый вид",
 		"Separate Split View": "Разделить на вкладки",
+		"Close Split Pane": "Закрыть панель разделённого вида",
+		"Maximize Split Pane": "Развернуть панель разделённого вида",
+		"Move Pane": "Переместить панель",
+		"Move Pane Left": "Переместить панель разделённого вида влево",
+		"Move Pane Right": "Переместить панель разделённого вида вправо",
+		"Move Pane Up": "Переместить панель разделённого вида вверх",
+		"Move Pane Down": "Переместить панель разделённого вида вниз",
 		"Open in Split View": "Открыть в разделённом виде",
+		"Split view is full (%lld panes)": "Разделённый вид заполнен (%lld панели)",
 		"Hide Element…": "Скрыть элемент…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Нажмите на элемент, чтобы скрыть его на этом сайте. Нажмите Esc для отмены.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Нажмите на элемент или выделите область. Стрелки меняют элемент, Return делает снимок, Esc отменяет.",
 		"Picture in Picture": "Картинка в картинке",
 		"Develop": "Разработка",
 		"Show Web Inspector": "Показать веб-инспектор",
@@ -2682,7 +2718,11 @@
 			"noFolder": "Без папки",
 			"noFolderDetail": "Агент работает в собственной папке",
 			"backgroundHint": "{shortcut}, чтобы оставить в фоне",
-			"start": "Начать"
+			"start": "Начать",
+			"searchAgents": "Поиск агентов",
+			"featuredAgents": "Рекомендуемые",
+			"registryAgents": "Реестр",
+			"noMatches": "Нет подходящих агентов"
 		},
 		"row": {
 			"untitled": "Новый разговор",

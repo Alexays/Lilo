@@ -531,6 +531,11 @@
 				"description": "Zmień dowolny skrót lub zacznij od ustawień Arc.",
 				"keywords": "klawiatura skrót klawisz polecenie"
 			},
+			"holdToQuit": {
+				"title": "Przytrzymaj skrót zakończenia, aby zakończyć",
+				"description": "Skrót zakończenia pokazuje wskazówkę; Lilo kończy działanie tylko po przytrzymaniu klawiszy.",
+				"keywords": "zakończ wyjdź polecenie q przypadkowo przytrzymaj"
+			},
 			"newProfile": {
 				"title": "Nowy profil",
 				"description": "Profile oddzielają pliki cookie, logowania i rozszerzenia.",
@@ -848,6 +853,7 @@
 		"terminalFailedDetail": "{command} nie powiodło się (kod {code}) po {duration}",
 		"terminalSucceededDetail": "{command} zakończono w {duration}",
 		"closeTab": "Zamknij kartę",
+		"removeFromSplit": "Usuń z podzielonego widoku",
 		"removePinnedTab": "Usuń przypiętą kartę",
 		"tabName": "Nazwa karty",
 		"removeBookmark": "Usuń zakładkę",
@@ -901,13 +907,22 @@
 		"bottom": "Otwórz poniżej",
 		"replace": "Zastąp"
 	},
+	"paneMove": {
+		"left": "Przenieś po lewej",
+		"right": "Przenieś po prawej",
+		"top": "Przenieś powyżej",
+		"bottom": "Przenieś poniżej",
+		"replace": "Zamień"
+	},
 	"tabSection": {
 		"splitView": "Widok podzielony",
 		"folderEmpty": "Pusty folder",
 		"newTab": "Nowa karta",
+		"newTabShort": "Nowa",
 		"newTerminal": "Nowy terminal",
 		"clearUnpinnedTooltip": "Archiwizuj nieprzypięte karty",
 		"listOptions": "Sortowanie i grupowanie",
+		"searchTabs": "Szukaj kart",
 		"pinnedTabs": "Przypięte karty",
 		"openTabs": "Otwarte karty",
 		"dropToPin": "Upuść, aby przypiąć",
@@ -1142,7 +1157,6 @@
 		"installed": "Zainstalowane"
 	},
 	"commandBar": {
-		"showDetails": "Pokaż skróty klawiszowe",
 		"hintPeek": "Podgląd",
 		"hintCopyLink": "Kopiuj łącze",
 		"hintCloseTab": "Zamknij kartę",
@@ -1174,6 +1188,7 @@
 		"terminalProgram": "Program",
 		"hintRun": "Uruchom",
 		"hintSplit": "Podziel",
+		"splitFull": "Widok podzielony jest pełny (panele: {count})",
 		"scopeTabs": "Karty",
 		"scopeBookmarks": "Zakładki",
 		"scopeHistory": "Historia",
@@ -1209,6 +1224,8 @@
 		"sectionOpenTabs": "Otwarte karty",
 		"sectionBookmarks": "Zakładki",
 		"sectionRecentHistory": "Ostatnia historia",
+		"sectionFrequentSites": "Częste witryny",
+		"sectionRecentConversations": "Ostatnie rozmowy",
 		"sectionHistory": "Historia",
 		"sectionSwitchToTab": "Przełącz na kartę",
 		"sectionGoTo": "Przejdź do",
@@ -1404,6 +1421,15 @@
 		"title": "Flagi WebKit",
 		"resetTitle": "Zmienione flagi",
 		"reloadNote": "Odśwież stronę, aby zmiana zadziałała"
+	},
+	"little": {
+		"openIn": "Otwórz w: {space}",
+		"openInMenu": "Otwórz w innej Przestrzeni",
+		"copyLink": "Kopiuj link",
+		"linkCopied": "Skopiowano link",
+		"placeholder": "Szukaj lub wpisz adres URL...",
+		"emptyTitle": "Szukaj w sieci lub wpisz adres URL",
+		"emptySubtitle": "Wpisz /, aby przeszukać odwiedzone strony."
 	},
 	"urlToast": {
 		"pageActions": "Akcje strony",
@@ -2035,6 +2061,7 @@
 		"Hide Others": "Ukryj inne",
 		"Show All": "Pokaż wszystkie",
 		"Quit Lilo": "Zakończ Lilo",
+		"Hold %@ to Quit": "Przytrzymaj %@, aby zakończyć",
 		"File": "Plik",
 		"New Tab": "Nowa karta",
 		"Back to tab": "Wróć do karty",
@@ -2080,9 +2107,18 @@
 		"New Split View": "Nowy widok podzielony",
 		"Split View": "Widok podzielony",
 		"Separate Split View": "Rozdziel widok",
+		"Close Split Pane": "Zamknij panel podziału",
+		"Maximize Split Pane": "Maksymalizuj panel podziału",
+		"Move Pane": "Przenieś panel",
+		"Move Pane Left": "Przenieś panel podziału w lewo",
+		"Move Pane Right": "Przenieś panel podziału w prawo",
+		"Move Pane Up": "Przenieś panel podziału w górę",
+		"Move Pane Down": "Przenieś panel podziału w dół",
 		"Open in Split View": "Otwórz w widoku podzielonym",
+		"Split view is full (%lld panes)": "Widok podzielony jest pełny (%lld panele)",
 		"Hide Element…": "Ukryj element…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Kliknij element, aby ukryć go w tej witrynie. Naciśnij Esc, aby anulować.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Kliknij element lub przeciągnij obszar. Strzałki zmieniają element, Return robi zrzut, Esc anuluje.",
 		"Picture in Picture": "Obraz w obrazie",
 		"Develop": "Programowanie",
 		"Show Web Inspector": "Pokaż Inspektora WWW",
@@ -2682,7 +2718,11 @@
 			"noFolder": "Bez folderu",
 			"noFolderDetail": "Agent pracuje we własnym folderze",
 			"backgroundHint": "{shortcut}, aby zostawić w tle",
-			"start": "Rozpocznij"
+			"start": "Rozpocznij",
+			"searchAgents": "Szukaj agentów",
+			"featuredAgents": "Polecane",
+			"registryAgents": "Rejestr",
+			"noMatches": "Brak pasujących agentów"
 		},
 		"row": {
 			"untitled": "Nowa rozmowa",

@@ -345,6 +345,12 @@ final class BrowserStateStore {
                 guard !tab.isClosed else { throw BrowserMutationError.closedTab(tabId) }
                 session.replaceSplitPane(targetTabId, with: tabId)
             }
+        case let .unsplitTab(spaceId, tabId):
+            return try mutateSpaceTab(spaceId: spaceId) { session in
+                guard let tab = session.tab(id: tabId) else { throw BrowserMutationError.missingTab(tabId) }
+                guard !tab.isClosed else { throw BrowserMutationError.closedTab(tabId) }
+                session.unsplitTab(tabId)
+            }
         case let .importSidebarNodes(spaceId, nodes, section):
             return try mutateSpaceTab(spaceId: spaceId) { session in
                 session.appendImportedNodes(nodes, section: section)
