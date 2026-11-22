@@ -105,8 +105,14 @@ enum KeyboardShortcuts {
         Action("tab.pin", "Pin Tab", "Tab"),
         Action("tab.bookmark", "Bookmark This Page", "Tab"),
         Action("tab.moveToNewWindow", "Move to New Window", "Tab"),
-        Action("split.new", "New Split View", "Tab"),
-        Action("split.close", "Separate Split View", "Tab"),
+        Action("split.new", "New Split View", "Tab", ["⌃⇧="]),
+        Action("split.close", "Separate Split View", "Tab", ["⌃⇧-"]),
+        Action("split.closePane", "Close Split Pane", "Tab"),
+        Action("split.maximizePane", "Maximize Split Pane", "Tab"),
+        Action("split.movePaneLeft", "Move Pane Left", "Tab"),
+        Action("split.movePaneRight", "Move Pane Right", "Tab"),
+        Action("split.movePaneUp", "Move Pane Up", "Tab"),
+        Action("split.movePaneDown", "Move Pane Down", "Tab"),
         Action("tab.mute", "Mute Tab", "Tab", ["⇧⌘m"]),
         Action("tab.clearUnpinned", "Clear Unpinned Tabs", "Tab", ["⇧⌘k"]),
         Action("devtools.inspector", "Show Web Inspector", "Develop", ["⌥⌘i"]),
@@ -135,8 +141,6 @@ enum KeyboardShortcuts {
             "tab.next": ["⌥⌘down", "⇧⌘]"],
             "space.previous": ["⌥⌘left", "⌃⌘left"],
             "space.next": ["⌥⌘right", "⌃⌘right"],
-            "split.new": ["⌃⇧="],
-            "split.close": ["⌃⇧-"],
             "downloads.show": ["⇧⌘j"]
         ]
     ]

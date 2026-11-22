@@ -352,11 +352,16 @@ final class ChromeInputController {
         // never sees scroll or zoom gestures (those reach the shield), so this feed carries no fling phase.
         let sample = PointerSample(target: target, isMouseDown: event.isMouseDown, scrollPhase: .none)
         apply(coordinator.updatePointer(sample), for: event)
+        // Every move, press or not: the split panes' hover handles and divider pills follow the pointer.
+        controller.splitPanes.updateHover(atWindowPoint: target == .content ? event.locationInWindow : nil)
         // A press on a pane goes straight to its view, never through the shield: this is where it
         // makes that pane's tab the active one.
         if event.isMouseDown, target == .content {
             _ = controller.splitPanes.view(for: event)
             controller.tabManager.activeEngineTab?.logUserInteraction()
+        } else if event.isMouseDown, target == .chrome {
+            // A conversation pane is all chrome zone: the press still focuses the pane's tab.
+            controller.splitPanes.activatePaneForChromePress(atWindowPoint: event.locationInWindow)
         }
     }
 

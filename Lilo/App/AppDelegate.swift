@@ -69,7 +69,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         UserDefaults.standard.register(defaults: ["NSApplicationCrashOnExceptions": true])
         let app = LiloApplication.shared
         // Before run: the test host never takes focus, neither at launch nor from an activate the tested code calls.
-        if ProcessInfo.isRunningUnderXCTest { app.setActivationPolicy(.prohibited) }
+        if ProcessInfo.isRunningUnderXCTest {
+            app.setActivationPolicy(.prohibited)
+        } else if Headless.isOn {
+            app.setActivationPolicy(.accessory)
+        }
         let delegate = AppDelegate()
         app.delegate = delegate
         app.run()
@@ -107,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Launch benchmark seed (scripts/bench_startup.sh): pages opened as if handed over by another app.
         ProcessInfo.processInfo.environment["LILO_BENCH_SEED_URLS"]?.split(separator: "\n")
             .compactMap { URL(string: String($0)) }.forEach(routeExternalURL)
-        NSApp.setActivationPolicy(.regular)
+        if !Headless.isOn { NSApp.setActivationPolicy(.regular) }
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().setNotificationCategories(UNNotificationCategory.terminalAttentionCategories.union([NotificationsBridgeHandler.plainCategory]))
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -227,10 +231,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// Opens a Little window on the active window's Space, a browser window first when none is open.
     @objc func newLittleWindow(_ sender: Any?) {
+        // Active first, so the window takes the keyboard as it opens: a shortcut from another app starts the search at once.
+        NSApp.activate(ignoringOtherApps: true)
         let owner = mainWindowController
             ?? browserContext.spaceManager?.spaces.first.map { browserContext.openWindow(on: $0.id, opening: .nothing) }
         owner?.openLittleWindow(url: nil)
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     /// Follows the `littleWindowHotKey` setting.

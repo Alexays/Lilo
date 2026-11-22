@@ -62,6 +62,7 @@ export type SettingId =
   | "appUpdates"
   | "autoUpdate"
   | "shortcuts"
+  | "holdToQuit"
   | "theme"
   | "tabPosition"
   | "addressPlacement"
@@ -112,6 +113,7 @@ export type SettingId =
   | "agentInstances"
   | "agentControl"
   | "agentAskBeforeActions"
+  | "agentActionLog"
   | "agentAlwaysAllowed"
   | "agentOther"
   | "processManager"
@@ -143,6 +145,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   dockCallsInSidebar: { key: "dockCallsInSidebar", fallback: true },
   autoDevices: { key: "autoDeviceSwitching", fallback: false },
   singleWindow: { key: "singleWindow", fallback: false },
+  holdToQuit: { key: "holdToQuit", fallback: false },
   emptyWindowOnLaunch: { key: "emptyWindowOnLaunch", fallback: false },
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
   peekPinnedTabLinks: { key: "peekPinnedTabLinks", fallback: true },
@@ -166,6 +169,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   agentsNotifyDone: { key: "agentsNotifyDone", fallback: true },
   agentControl: { key: "agentControlEnabled", fallback: false },
   agentAskBeforeActions: { key: "agentAskBeforeActions", fallback: true },
+  agentActionLog: { key: "agentActionLog", fallback: true },
   developMenu: { key: "showDevelopMenu", fallback: true },
 };
 
@@ -196,6 +200,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "appUpdates", section: "general", groupKey: "settings.groups.lilo" },
   { id: "autoUpdate", section: "general", groupKey: "settings.groups.lilo" },
   { id: "shortcuts", section: "general", groupKey: "settings.groups.lilo" },
+  { id: "holdToQuit", section: "general", groupKey: "settings.groups.lilo" },
   { id: "theme", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "appIcon", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "seasonalAppIcon", section: "appearance", groupKey: "settings.groups.theme" },
@@ -243,6 +248,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "agentInstances", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },
   { id: "agentControl", section: "agents", groupKey: "settings.groups.agentAccess" },
   { id: "agentAskBeforeActions", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
+  { id: "agentActionLog", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
   { id: "agentAlwaysAllowed", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
   { id: "agentOther", section: "agents", groupKey: "settings.groups.agentClients", requires: "agentControl" },
   { id: "developMenu", section: "advanced", groupKey: "settings.groups.tools" },

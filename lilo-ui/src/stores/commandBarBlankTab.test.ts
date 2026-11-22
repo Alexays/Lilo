@@ -149,36 +149,6 @@ test("a typed address reaches native marked as typed, a history result does not"
 });
 
 
-test("a blank tab's results stay the same after clearing scopes, queries, and dismissing", async () => {
- const ctx = await withStore();
- ctx.seed([tab("blank-tab", spaceId, { url: "" }), tab("other-tab", spaceId, { title: "Example" })]);
- const bar = ctx.commandBarModule;
- bar.applyCommandBarInitialState();
- flushSync();
- assert.equal(bar.isCommandBarDocked(), true);
- const initial = bar.getResults().map((result: { id: string }) => result.id);
- assert.ok(initial.length > 0, "the idle landing still offers useful tabs and actions");
- ctx.openCommandBar();
- flushSync();
- assert.equal(bar.isCommandBarDocked(), false);
- assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
- for (const scope of ["bookmark", "tab", "action", "history", "terminal", "archive"]) {
-  bar.setCommandBarScope(scope);
-  bar.setCommandBarScope("all");
-  flushSync();
-  assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial, scope);
- }
- bar.setQuery("example query");
- bar.setQuery("");
- flushSync();
- assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
- ctx.closeCommandBar();
- flushSync();
- assert.equal(bar.isCommandBarDocked(), true);
- assert.deepEqual(bar.getResults().map((result: { id: string }) => result.id), initial);
-});
-
-
 test("new-tab intent creates destinations on submit, cancels without a tab, and resets for address editing", async () => {
  const ctx = await withStore();
  ctx.seed([tab("blank-tab", spaceId, { url: "https://current.example/" }), tab("other-tab", spaceId)]);

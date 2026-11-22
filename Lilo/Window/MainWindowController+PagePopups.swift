@@ -79,13 +79,13 @@ extension MainWindowController {
         return popup
     }
 
-    /// Opens `url` in a Peek over `sourceTabId`, in its space's data store. A window shows one link peek
+    /// Opens `url` in a Peek over `sourceTabId`, in that tab's data store. A window shows one link peek
     /// at a time: any other one closes, its page torn down. A page's own popups stay.
     @discardableResult
     func openLinkPeek(_ url: URL, from sourceTabId: UUID) -> PagePopupController {
         pagePopups.values.filter(\.isLinkPeek).forEach { $0.close() }
         let engine = context.engineFactory.createTab(configuration: .init(
-            dataStore: tabManager.dataStore,
+            dataStore: tabManager.dataStore(forTab: sourceTabId, nativeConfiguration: nil),
             tabId: nil,
             nativeConfiguration: nil,
             profileId: tabManager.profileId

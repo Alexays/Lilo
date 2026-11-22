@@ -11,6 +11,10 @@ extension Comparable {
 }
 
 private final class LiloWindow: NSWindow {
+    // Headless: a window the web views live in, never one the user sees, clicks or types into.
+    override var canBecomeKey: Bool { !Headless.isOn && super.canBecomeKey }
+    override var canBecomeMain: Bool { !Headless.isOn && super.canBecomeMain }
+
     override var contentLayoutRect: NSRect {
         contentView?.bounds ?? super.contentLayoutRect
     }
@@ -92,7 +96,8 @@ final class MainWindowController: NSWindowController {
     nonisolated static let logger = Logger(liloCategory: "MainWindowController")
 
     static let defaultSidebarWidth: CGFloat = 260
-    static let sidebarWidthRange: ClosedRange<CGFloat> = 203...480
+    /// Down to the rail's detent: the chrome folds a narrower sidebar to the rail.
+    static let sidebarWidthRange: ClosedRange<CGFloat> = 150...480
     /// The icon rail's width, the content inset aside: its icons' column.
     static let sidebarRailWidth: CGFloat = 40
     static let contentInset: CGFloat = 8
@@ -656,6 +661,11 @@ final class MainWindowController: NSWindowController {
             window.center()
         }
         window.identifier = NSUserInterfaceItemIdentifier("LiloMainWindow")
+        if Headless.isOn {
+            window.alphaValue = 0
+            window.ignoresMouseEvents = true
+            window.collectionBehavior = [.transient, .ignoresCycle, .stationary]
+        }
         window.restorationClass = MainWindowController.self
         return window
     }

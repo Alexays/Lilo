@@ -102,7 +102,7 @@
     return parts.length ? ' ' + parts.join(' ') : ''
   }
 
-  const readPage = ({ filter = 'all', refId, depth = 15, maxChars = 50000 } = {}) => {
+  const readPage = ({ filter = 'all', refId, depth = 15, maxChars = 50000, viewport = false } = {}) => {
     const root = refId ? element(refId) : document.body
     const lines = []
     let size = 0
@@ -114,17 +114,24 @@
       lines.push(line)
       size += line.length + 1
     }
+    // viewport keeps what shows on or within 100 px of the screen's edge, each line with its box.
+    const margin = 100
     const walk = (el, level) => {
       if (truncated || level > depth || !visible(el)) return
       const r = role(el)
       const isInteractive = interactive(el)
-      const shown = filter === 'interactive' ? isInteractive : r !== null || isInteractive
-      if (shown) emit(filter === 'interactive' ? 0 : level, `${r ?? 'generic'} "${name(el)}" [${ref(el)}]${details(el)}`)
+      const box = viewport ? el.getBoundingClientRect() : null
+      const near = !box || box.left < innerWidth + margin && box.right > -margin && box.top < innerHeight + margin && box.bottom > -margin
+      const shown = near && (filter === 'interactive' ? isInteractive : r !== null || isInteractive)
+      if (shown) {
+        const at = box ? ` box="${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}"` : ''
+        emit(filter === 'interactive' ? 0 : level, `${r ?? 'generic'} "${name(el)}" [${ref(el)}]${details(el)}${at}`)
+      }
       if (isInteractive && filter === 'interactive' && leafRoles.has(r)) return
       const childLevel = shown ? level + 1 : level
       for (const node of (el.shadowRoot ?? el).childNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) walk(node, childLevel)
-        else if (node.nodeType === Node.TEXT_NODE && filter === 'all' && !isInteractive && !(r === 'heading' || r === 'link')) {
+        else if (node.nodeType === Node.TEXT_NODE && filter === 'all' && near && !isInteractive && !(r === 'heading' || r === 'link')) {
           const text = clip(node.textContent, 200)
           if (text) emit(childLevel, `text "${text}"`)
         }
@@ -134,6 +141,94 @@
     if (prefix && !lines.length) return ''
     const header = `${prefix ? 'Frame' : 'Page'}: ${document.title}\nURL: ${clip(location.href, 200)}\nViewport: ${innerWidth}x${innerHeight}, scrolled to ${Math.round(scrollX)},${Math.round(scrollY)}\n`
     return header + lines.join('\n') + (truncated ? `\n[Output truncated at ${maxChars} characters: pass a refId to read one part, or a smaller depth]` : '')
+  }
+
+  // The page's interactive structure as of the last snapshot(), diffed by delta() after an action so
+  // its reply can say what it added, removed or changed, instead of a full read_page. Nothing watches
+  // the page between the two calls.
+  let structure = null
+  let structureText = ''
+  const ariaStates = ['aria-checked', 'aria-pressed', 'aria-expanded', 'aria-selected']
+  const structureEntry = el => {
+    const r = role(el) ?? 'generic'
+    const label = name(el)
+    const detail = details(el)
+    const states = ariaStates.map(attr => el.getAttribute(attr)).filter(Boolean).join(' ')
+    const editable = el.isContentEditable ? clip(el.textContent, 120) : ''
+    const id = ref(el)
+    return [id, { el, label, line: `${r} "${label}" [${id}]${detail}`, sig: `${r}|${label}|${detail}|${states}|${editable}` }]
+  }
+  // Every element read_page lists under filter "all", in document order, into open shadow roots.
+  const collectStructure = (map, depth = 15) => {
+    const walk = (el, level) => {
+      if (level > depth || !visible(el)) return
+      const mapped = role(el) !== null || interactive(el)
+      if (mapped) {
+        const [id, entry] = structureEntry(el)
+        map.set(id, entry)
+      }
+      const childLevel = mapped ? level + 1 : level
+      for (const node of (el.shadowRoot ?? el).childNodes)
+        if (node.nodeType === Node.ELEMENT_NODE) walk(node, childLevel)
+    }
+    if (document.body) walk(document.body, 0)
+  }
+  const snapshot = () => {
+    structure = new Map()
+    collectStructure(structure)
+    structureText = document.body?.innerText ?? ''
+  }
+  // The DOM held still for `quietMs`, or `maxMs` passed: what an action set off (a debounced filter, a
+  // menu's animation) lands within a blink. The observer ends with the wait; nothing runs at idle.
+  const quiet = (quietMs = 120, maxMs = 800) => new Promise(resolve => {
+    let idle, cap
+    const finish = () => { observer.disconnect(); clearTimeout(idle); clearTimeout(cap); resolve() }
+    const observer = new MutationObserver(() => { clearTimeout(idle); idle = setTimeout(finish, quietMs) })
+    idle = setTimeout(finish, quietMs)
+    cap = setTimeout(finish, maxMs)
+    observer.observe(document, { subtree: true, childList: true, attributes: true, characterData: true })
+  })
+  // What changed since snapshot(), as +/- /~ lines. '' when nothing did; a document replaced meanwhile
+  // (the action navigated) has no baseline and says so.
+  const delta = async () => {
+    const before = structure
+    if (!before) {
+      snapshot()
+      return 'The page was replaced since the action began: read_page for the new page'
+    }
+    const wasText = structureText
+    await quiet()
+    const current = new Map()
+    collectStructure(current)
+    const text = document.body?.innerText ?? ''
+    structure = current
+    structureText = text
+    // The element's own text when the line does not already say it: what a status or result shows.
+    const snippet = entry => {
+      const shown = clip(entry.el.innerText ?? entry.el.textContent, 80)
+      return shown && shown.toLowerCase() !== entry.label.toLowerCase() ? ` "${shown}"` : ''
+    }
+    // [mark, old entry or null, new entry or null]: formatted after the cap, so snippets cost only shown lines.
+    const changes = []
+    let added = 0, removed = 0, changed = 0
+    for (const [id, entry] of current) {
+      const old = before.get(id)
+      if (!old) { added++; changes.push(['+', null, entry]) }
+      else if (old.sig !== entry.sig) { changed++; changes.push(['~', old, entry]) }
+    }
+    for (const [id, entry] of before) if (!current.has(id)) { removed++; changes.push(['-', entry, null]) }
+    const textChanged = text !== wasText
+    if (!added && !removed && !changed) return textChanged ? 'Page text changed: read_page or get_page_text for it' : ''
+    const header = `Page changes: +${added} added, -${removed} removed, ~${changed} changed` + (textChanged ? ', text changed' : '')
+    const shown = changes.slice(0, 30).map(([mark, old, entry]) => {
+      if (mark === '+') return `+ ${entry.line}${snippet(entry)}`
+      if (mark === '-') return `- ${entry.line}`
+      return old.line === entry.line
+        ? `~ ${entry.line} (state changed)${snippet(entry)}`
+        : `~ ${old.line} => ${entry.line}${snippet(entry)}`
+    })
+    if (changes.length > shown.length) shown.push(`... and ${changes.length - shown.length} more: read_page for the full page`)
+    return header + '\n' + shown.join('\n')
   }
 
   // Into open shadow roots, as read_page goes: web components hold many pickers and menus.
@@ -181,6 +276,40 @@
       matches.push(`${role(target) ?? 'generic'} "${clip(label)}" [${ref(target)}]${details(target)}`)
     }
     return matches
+  }
+
+  // What a recorded flow stores instead of `ref`: the element's role and name as read_page gives them, its
+  // ordinal among the shown elements sharing both, and whether its value is a secret (password, card,
+  // one-time code) which a flow never stores.
+  const locate = ({ ref: id }) => {
+    const el = element(id)
+    const r = role(el) ?? 'generic'
+    const n = name(el)
+    let nth = 0
+    for (const other of document.body ? elements(document.body) : []) {
+      if (other === el) break
+      if ((role(other) ?? 'generic') === r && name(other) === n && shown(other)) nth++
+    }
+    return { role: r, name: n, nth, sensitive: credential(el) }
+  }
+
+  // Whether keys sent now would land in a secret field. A frame's field is out of reach: counted as one.
+  const focusedSecret = () => {
+    let el = document.activeElement
+    while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement
+    return ['IFRAME', 'FRAME'].includes(el?.tagName) || !!el && credential(el)
+  }
+
+  // A recorded step's locator back to a live ref: the nth shown element with exactly that role and name,
+  // into open shadow roots. A miss, or an element whose name changed since the recording, throws: replay
+  // never picks a near match.
+  const resolveTarget = ({ role: wanted, name: wantedName = '', nth = 0 }) => {
+    let seen = 0
+    for (const el of document.body ? elements(document.body) : []) {
+      if ((role(el) ?? 'generic') !== wanted || name(el) !== wantedName || !shown(el)) continue
+      if (seen++ === nth) return { ref: ref(el) }
+    }
+    throw new Error(`no ${wanted} "${clip(wantedName, 60)}" shows: the page no longer matches the recording`)
   }
 
   // What a click at (x, y) lands on, into open shadow roots.
@@ -431,10 +560,37 @@
     return { status: response.status, statusText: response.statusText, url: response.url, redirected: response.redirected, headers: shown, bytes: size, truncated, body: result }
   }
 
-  // Matched as whole words once lowercased and stripped of accents.
-  const consequentialWords = /\b(send|pay|payment|buy|purchase|order|checkout|delete|transfer|publish|post|tweet|reply|sign ?up|register|subscribe|donate|envoyer|payer|paiement|acheter|commander|supprimer|virement|transferer|publier|poster|repondre|inscription|inscrire|souscrire)\b/
+  // The fallback when a control's form says nothing: verbs matched as whole words (any script), once lowercased
+  // and stripped of accents. "order" is a noun on most pages ("Save order", "Order history"), so it asks only as
+  // the whole label or in a phrase that places one.
+  const commitWords = new RegExp(`(?<!\\p{L})(?:${[
+    'send|pay|payment|buy|purchase|checkout|delete|transfer|publish|post|tweet|reply|sign ?up|register|subscribe|donate',
+    '(?:place|confirm|complete|submit)(?: your| the| my)? order|order now',
+    'envoyer|payer|paiement|acheter|commander|supprimer|virement|transferer|publier|poster|repondre|inscription|inscrire|souscrire',
+    'enviar|pagar|comprar|eliminar|borrar|excluir|publicar|invia|inviare|paga|pagare|acquista|acquistare|elimina|eliminare|pubblica',
+    'senden|absenden|bezahlen|kaufen|löschen|verzenden|betalen|kopen|verwijderen|wyślij|zapłać|kup|usuń|gönder|satın al',
+    'отправить|оплатить|купить|удалить|надіслати|сплатити|купити|видалити'
+  ].join('|').normalize('NFD').replace(/\p{M}/gu, '')})(?!\\p{L})`, 'u')
+  // Scripts written without spaces: no word boundary to match.
+  const commitGlyphs = /支付|付款|购买|購買|购物|删除|刪除|发送|發送|提交订单|提交訂單|購入|削除|送信|支払|결제|구매|삭제|전송/
+  // Fields a form holds only to sign in or to pay: submitting it authenticates, or charges.
+  const credential = el => secret(el) || /\bcc-[a-z-]+/.test(el.autocomplete)
+  // A control submits its form when it is a submit button, or the form itself stands for Enter in a field.
+  const submitsForm = el =>
+    el.tagName === 'FORM' ? el
+      : el.form && (el.matches('input[type=submit], input[type=image]') || el.tagName === 'BUTTON' && !/^(button|reset)$/.test(el.type)) ? el.form
+        : null
+  // The form sends data to another origin with a method that is not GET: it hands the data to a third party.
+  const leavesOrigin = (control, form) => {
+    const attr = key => control !== form && control.getAttribute(key)
+    const method = (attr('formmethod') || form.getAttribute('method') || 'get').toLowerCase()
+    if (method === 'get' || method === 'dialog') return false
+    try { return new URL(attr('formaction') || form.getAttribute('action') || '', document.baseURI).origin !== location.origin } catch { return false }
+  }
   // The label of the control a click on `ref` or at (x, y), or Enter in the focused field, would trigger, when it
-  // sends, pays, buys, orders, deletes, transfers, publishes or signs up; null otherwise.
+  // submits a form that signs in or pays or sends data to another origin, or says it sends, pays, buys, orders,
+  // deletes, transfers, publishes or signs up; null otherwise. The form decides first: a label can be an icon, or
+  // in any language.
   const consequential = ({ ref: id, x, y, enter }) => {
     const controls = 'button, a[href], input[type=submit], input[type=button], input[type=image], [role=button], [role=link], [role=menuitem]'
     const focused = document.activeElement
@@ -466,9 +622,12 @@
       : null)
     if (!target) return null
     const label = name(target) || clip(target.value)
+    const form = submitsForm(target)
     const action = (target.form ?? target).getAttribute?.('action') ?? ''
     const words = `${label} ${action}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-    return consequentialWords.test(words) ? label || clip(action) : null
+    const asks = form && ([...form.elements].some(credential) || leavesOrigin(target, form)) || commitWords.test(words) || commitGlyphs.test(words)
+      || label.trim().toLowerCase() === 'order'
+    return asks ? label || clip(action) || location.host : null
   }
 
   // Screenshots. A requestAnimationFrame never fires in a page that is not painted: the timeout keeps it from hanging.
@@ -534,7 +693,7 @@
   const captureRestore = ({ x, y }) => instantScroll(x, y)
 
   window.__liloAgent = {
-    prefix: () => prefix, readPage, find, hitAt, focusedField, waitFor, text, setValue, rect, scrollState, scrollBy, dropFile, act,
-    request, consequential, captureScroll, captureBox, captureRestore
+    prefix: () => prefix, readPage, find, hitAt, focusedField, waitFor, text, setValue, rect, scrollState, scrollBy, dropFile, act, locate, resolveTarget, focusedSecret,
+    request, consequential, captureScroll, captureBox, captureRestore, snapshot, delta
   }
 })()

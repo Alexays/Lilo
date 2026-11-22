@@ -505,6 +505,11 @@
 				"description": "L'agente attende la tua risposta.",
 				"keywords": "agente approvazione conferma pagamento acquisto ordine elimina invia pubblica"
 			},
+			"agentActionLog": {
+				"title": "Tieni un registro delle azioni dell'agente",
+				"description": "Un file locale elenca ogni chiamata, mai il testo digitato né il contenuto delle pagine.",
+				"keywords": "agente registro cronologia audit azioni riproduzione"
+			},
 			"agentAlwaysAllowed": {
 				"title": "Sempre consentiti",
 				"description": "Gli agenti agiscono su questi siti senza chiedere.",
@@ -538,6 +543,11 @@
 				"title": "Abbreviazioni da tastiera",
 				"description": "Modifica qualsiasi abbreviazione o parti da quelle di Arc.",
 				"keywords": "tastiera abbreviazione tasti comando"
+			},
+			"holdToQuit": {
+				"title": "Tieni premuta l'abbreviazione per uscire",
+				"description": "L'abbreviazione per uscire mostra un avviso; Lilo si chiude solo se i tasti restano premuti.",
+				"keywords": "esci chiudi comando q accidentale tieni"
 			},
 			"newProfile": {
 				"title": "Nuovo profilo",
@@ -868,6 +878,7 @@
 		"pinned": "Fissata",
 		"loading": "Caricamento",
 		"muted": "Audio disattivato",
+		"neverSleeps": "Mai in stop",
 		"playingAudio": "Audio in riproduzione",
 		"terminalCommand": "Comando",
 		"terminalAwaitingFor": "{command} attende una tua risposta da {duration}",
@@ -875,6 +886,7 @@
 		"terminalFailedDetail": "{command} non riuscito (uscita {code}) dopo {duration}",
 		"terminalSucceededDetail": "{command} terminato in {duration}",
 		"closeTab": "Chiudi scheda",
+		"removeFromSplit": "Rimuovi dalla vista divisa",
 		"removePinnedTab": "Rimuovi scheda fissata",
 		"tabName": "Nome della scheda",
 		"removeBookmark": "Rimuovi segnalibro",
@@ -928,13 +940,22 @@
 		"bottom": "Apri sotto",
 		"replace": "Sostituisci"
 	},
+	"paneMove": {
+		"left": "Sposta a sinistra",
+		"right": "Sposta a destra",
+		"top": "Sposta sopra",
+		"bottom": "Sposta sotto",
+		"replace": "Scambia"
+	},
 	"tabSection": {
 		"splitView": "Vista divisa",
 		"folderEmpty": "Cartella vuota",
 		"newTab": "Nuova scheda",
+		"newTabShort": "Nuova",
 		"newTerminal": "Nuovo terminale",
 		"clearUnpinnedTooltip": "Archivia le schede non fissate",
 		"listOptions": "Ordina e raggruppa",
+		"searchTabs": "Cerca nelle schede",
 		"pinnedTabs": "Schede fissate",
 		"openTabs": "Schede aperte",
 		"dropToPin": "Rilascia per fissare",
@@ -1087,6 +1108,7 @@
 		"showFolder": "Mostra cartella dei download",
 		"clearFinished": "Cancella download completati",
 		"dragFile": "Trascina file",
+		"showInFinder": "Mostra nel Finder",
 		"announceDone": "{filename} scaricato",
 		"announceFailed": "Impossibile scaricare {filename}"
 	},
@@ -1168,7 +1190,6 @@
 		"installed": "Installate"
 	},
 	"commandBar": {
-		"showDetails": "Mostra scorciatoie da tastiera",
 		"hintPeek": "Anteprima",
 		"hintCopyLink": "Copia link",
 		"hintCloseTab": "Chiudi scheda",
@@ -1200,6 +1221,7 @@
 		"terminalProgram": "Programma",
 		"hintRun": "Esegui",
 		"hintSplit": "Dividi",
+		"splitFull": "Vista divisa piena ({count} riquadri)",
 		"scopeTabs": "Schede",
 		"scopeBookmarks": "Segnalibri",
 		"scopeHistory": "Cronologia",
@@ -1235,6 +1257,8 @@
 		"sectionOpenTabs": "Schede aperte",
 		"sectionBookmarks": "Segnalibri",
 		"sectionRecentHistory": "Cronologia recente",
+		"sectionFrequentSites": "Siti frequenti",
+		"sectionRecentConversations": "Conversazioni recenti",
 		"sectionHistory": "Cronologia",
 		"sectionSwitchToTab": "Passa alla scheda",
 		"sectionGoTo": "Vai a",
@@ -1430,6 +1454,15 @@
 		"title": "Opzioni WebKit",
 		"resetTitle": "Opzioni modificate",
 		"reloadNote": "Ricarica una pagina perché la modifica abbia effetto"
+	},
+	"little": {
+		"openIn": "Apri in {space}",
+		"openInMenu": "Apri in un altro Spazio",
+		"copyLink": "Copia link",
+		"linkCopied": "Link copiato",
+		"placeholder": "Cerca o inserisci un URL...",
+		"emptyTitle": "Cerca sul web o inserisci un URL",
+		"emptySubtitle": "Scrivi / per cercare tra le pagine visitate."
 	},
 	"urlToast": {
 		"pageActions": "Azioni della pagina",
@@ -2061,6 +2094,7 @@
 		"Hide Others": "Nascondi altre",
 		"Show All": "Mostra tutto",
 		"Quit Lilo": "Esci da Lilo",
+		"Hold %@ to Quit": "Tieni premuto %@ per uscire",
 		"File": "File",
 		"New Tab": "Nuova scheda",
 		"Back to tab": "Torna alla scheda",
@@ -2106,9 +2140,18 @@
 		"New Split View": "Nuova vista divisa",
 		"Split View": "Vista divisa",
 		"Separate Split View": "Separa vista divisa",
+		"Close Split Pane": "Chiudi riquadro diviso",
+		"Maximize Split Pane": "Ingrandisci riquadro diviso",
+		"Move Pane": "Sposta riquadro",
+		"Move Pane Left": "Sposta riquadro diviso a sinistra",
+		"Move Pane Right": "Sposta riquadro diviso a destra",
+		"Move Pane Up": "Sposta riquadro diviso in alto",
+		"Move Pane Down": "Sposta riquadro diviso in basso",
 		"Open in Split View": "Apri in vista divisa",
+		"Split view is full (%lld panes)": "Vista divisa piena (%lld riquadri)",
 		"Hide Element…": "Nascondi elemento…",
 		"Click an element to hide it on this site. Press Esc to cancel.": "Fai clic su un elemento per nasconderlo su questo sito. Premi Esc per annullare.",
+		"Click an element or drag an area. Arrow keys change the element, Return captures, Esc cancels.": "Fai clic su un elemento o trascina un'area. Le frecce cambiano elemento, Invio cattura, Esc annulla.",
 		"Picture in Picture": "Picture in Picture",
 		"Develop": "Sviluppo",
 		"Show Web Inspector": "Mostra Inspector web",
@@ -2198,6 +2241,7 @@
 		"Sleep is back on": "Lo stop è di nuovo attivo",
 		"The battery is below %d%%.": "La batteria è sotto il %d%%.",
 		"The Mac is too hot.": "Il Mac è troppo caldo.",
+		"Never Sleep": "Mai in stop",
 		"Commands kept the Mac awake for the maximum duration.": "I comandi hanno mantenuto attivo il Mac per la durata massima.",
 		"While the lid was closed": "Mentre il coperchio era chiuso",
 		"%d commands finished": {"one": "%d comando terminato", "other": "%d comandi terminati"},

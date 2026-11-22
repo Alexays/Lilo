@@ -173,6 +173,16 @@ final class ConversationBridgeHandler: BridgeHandler {
         }
         guard host.announce(tabId, text: text, context: chips) else { return }
         var blocks: [[String: Any]] = [["type": "text", "text": text]] + images
+        // The saved-flows skill rides the first prompt the way a tab or a selection does: every agent
+        // that can read an attachment learns the flow tools exist, whichever ACP agent the user picked.
+        // Without agent control the tools do not exist, so it waits for the first prompt after it is on.
+        if window.context.settingsStore?.get("agentControlEnabled") == "true",
+           let conversation = host.conversations[tabId], !conversation.flowsSkillSent {
+            conversation.flowsSkillSent = true
+            blocks.append(["type": "resource", "resource": [
+                "uri": "lilo://skills/saved-flows.md", "text": AgentFlows.skill, "mimeType": "text/markdown"
+            ]])
+        }
         for (kind, path, tab) in attachments {
             if let path {
                 let file = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)

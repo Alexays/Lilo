@@ -1,0 +1,3 @@
+kind: Added
+body: 'Split panes get hover controls: a handle at the top of each pane closes it or makes it the only tab, and each pane''s row in the sidebar gets a button that takes it out of the split'
+time: 2026-11-19T15:11:01.936693-08:00
